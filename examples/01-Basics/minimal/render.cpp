@@ -28,9 +28,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 // Use it to perform any initialisation and allocation which is dependent
 // on the period size or sample rate.
 //
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
 // Return true on success; returning false halts the program.
 bool setup(BelaContext *context, void *userData)
 {
@@ -39,8 +36,7 @@ bool setup(BelaContext *context, void *userData)
 
 // render() is called regularly at the highest priority by the audio engine.
 // Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
+// ADCs and DACs (if available).
 void render(BelaContext *context, void *userData)
 {
 
@@ -102,7 +98,7 @@ These arguments are pointers to data structures. The main one that's used is
 `context`, which is a pointer to a data structure containing lots of information 
 you need.
 
-Take a look at what's in the data structure [here]
+Take a look at what's in the data structure in the API reference tab.
 
 You can access any of these bits of information about current audio and sensor 
 settings and pointers to data buffers that are contained in the data structure 

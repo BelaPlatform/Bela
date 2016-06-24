@@ -142,3 +142,15 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
+
+/**
+\example level-meter/render.cpp
+
+Visualise music with leds
+-------------------------
+
+This sketch shows the simplest case of digital out. 
+
+- Connect an LED in series with a 470ohm resistor between every Digital pin 0 - 9 and ground.
+
+*/

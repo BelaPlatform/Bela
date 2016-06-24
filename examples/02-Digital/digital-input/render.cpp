@@ -30,6 +30,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 bool setup(BelaContext *context, void *userData)
 {
+	// Set the mode of digital pins
 	pinMode(context, 0, P8_08, INPUT);
 	pinMode(context, 0, P8_07, OUTPUT);
 	return true;
@@ -69,15 +70,19 @@ a button and turn the LED on and off according to the state of the button.
 - connect the other end of the resistor to both a button and P8_08
 - connect the other end of the button to ground.
 
-You will notice that the LED will normally stay on and will turn off as long as 
+Before using the digital pins we need to set whether they are input or output.
+This is done via `pinMode(context, 0, P8_08, INPUT);`.
+
+You will notice that the LED will normally stay off and will turn on as long as 
 the button is pressed. This is due to the fact that the LED is set to the same 
-value read at input P8_08. When the button is not pressed, P8_08 is `HIGH` and so 
-P8_07 is set to `HIGH` as well, so that the LED conducts and emits light. When 
-the button is pressed, P8_08 goes `LOW` and P8_07 is set to `LOW`, turning off the LED.
+value read at input P8_08. When the button is not pressed, P8_08 is `LOW` and so 
+P8_07 is set to `LOW` as well, so that the LED conducts and emits light. When 
+the button is pressed, P8_08 goes `HIGH` and P8_07 is set to `HIGH`, turning off the LED.
 
-Note that there are two ways of specifying the digital pin: using the GPIO label (e.g. `P8_07`), or using the digital IO index (e.g. 0)
+Note that there are two ways of specifying the digital pin: using the GPIO label (e.g. `P8_07`), 
+or using the digital IO index (e.g. 0)
 
-As an exercise try and change the code so that the LED only turns on when 
+As an exercise try and change the code so that the LED only turns off when 
 the button is pressed.
 */
 
