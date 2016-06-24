@@ -40,7 +40,6 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n=0; n<context->digitalFrames; n++){
     if(count==context->digitalSampleRate*interval){ //if enough samples have elapsed
       count=0; //reset the counter
-    // status=digitalRead(context, 0, P8_07);
       if(status==GPIO_LOW) { //toggle the status
           digitalWrite(context, n, P8_07, status); //write the status to the LED
           status=GPIO_HIGH;

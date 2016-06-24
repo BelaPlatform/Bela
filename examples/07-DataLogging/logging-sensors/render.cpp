@@ -67,6 +67,7 @@ void cleanup(BelaContext *context, void *userData)
 Logging Sensor Data
 ---------------------------
 
-This sketch demonstrates how to log sensor data for later processing or analysis.
+This sketch demonstrates how to log sensor data for later processing or analysis
+and requires more documentation.
 */
 

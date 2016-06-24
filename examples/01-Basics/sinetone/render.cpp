@@ -39,7 +39,7 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		float out = 0.8f * sinf(gPhase);
+		float out = 0.8 * sinf(gPhase);
 		gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
 		if(gPhase > 2.0 * M_PI)
 			gPhase -= 2.0 * M_PI;
@@ -71,8 +71,8 @@ Producing your first bleep!
 This sketch is the hello world of embedded interactive audio. Better known as bleep, it 
 produces a sine tone.
 
-The frequency of the sine tone is determined by a global variable, `gFrequency` 
-(line 12). The sine tone is produced by incrementing the phase of a sin function 
+The frequency of the sine tone is determined by a global variable, `gFrequency`. 
+The sine tone is produced by incrementing the phase of a sin function 
 on every audio frame.
 
 In render() you'll see a nested for loop structure. You'll see this in all Bela projects. 

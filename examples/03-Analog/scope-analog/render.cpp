@@ -31,6 +31,12 @@ Scope scope;
 float gInverseSampleRate;
 float gPhase;
 
+float gAmplitude;
+float gFrequency;
+
+float gIn1;
+float gIn2;
+
 bool setup(BelaContext *context, void *userData)
 {
 
@@ -58,25 +64,26 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
+    for(unsigned int n = 0; n < context->analogFrames; n++){
+        // read analogIn channels 0 and 1
+	    gIn1 = analogRead(context, n, 0);
+	    gIn2 = analogRead(context, n, 1);
+	    
+	    // map in1 to amplitude and in2 to frequency
+	    gAmplitude = gIn1 * 0.8f;
+	    gFrequency = map(gIn2, 0, 1, 100, 1000);
+    }
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 	    
-	    // read analogIn channels 0 and 1
-	    float in1 = analogRead(context, n, 0);
-	    float in2 = analogRead(context, n, 1);
-	    
-	    // map in1 to amplitude and in2 to frequency
-	    float amplitude = in1 * 0.8f;
-	    float frequency = map(in2, 0, 1, 100, 1000);
-	    
 	    // generate a sine wave with the amplitude and frequency 
-	    float out = amplitude * sinf(gPhase);
-	    gPhase += 2.0 * M_PI * frequency * gInverseSampleRate;
+	    float out = gAmplitude * sinf(gPhase);
+	    gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
 		if(gPhase > 2.0 * M_PI)
 			gPhase -= 2.0 * M_PI;
 	    
 	    // log the sine wave and sensor values on the scope
-	    scope.log(out, in1, in2);
+	    scope.log(out, gIn1, gIn2);
 	    
 	    // pass the sine wave to the audio outputs
 	    for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
@@ -120,7 +127,7 @@ scope.setup(3, context->audioSampleRate);
 We can then pass signals to the scope in `render()` using:
 
 ``````
-scope.log(out, in1, in2);
+scope.log(out, gIn1, gIn2);
 ``````
 
 This project also shows as example of `map()` which allows you to re-scale a number 
