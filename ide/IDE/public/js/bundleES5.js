@@ -262,7 +262,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			consoleView.emit('closeNotification', data);
 		});
 		socket.on('project-list', function (project, list) {
-			if (list.indexOf(models.project.getKey('currentProject')) === -1) {
+			//console.log(project, list);
+			if (project && list.indexOf(models.project.getKey('currentProject')) === -1) {
 				// this project has just been deleted
 				console.log('project-list', 'openProject');
 				socket.emit('project-event', { func: 'openProject', currentProject: project });
@@ -270,7 +271,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			models.project.setKey('projectList', list);
 		});
 		socket.on('file-list', function (project, list) {
-			if (project === models.project.getKey('currentProject')) {
+			if (project && project === models.project.getKey('currentProject')) {
 				var currentFilenameFound = false;
 				var _iteratorNormalCompletion = true;
 				var _didIteratorError = false;
@@ -986,10 +987,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "__belaResult",
 				value: function __belaResult(data) {
-					// TODO: work this shit out
-					if (data.stderr && data.stderr.split) _console.log(data.stderr.split(' ').join('&nbsp;'));
+					if (data.stderr && data.stderr.split) _console.warn(data.stderr.split(' ').join('&nbsp;'));
 					if (data.signal) _console.warn(data.signal);
-					console.log(data.signal);
+					//console.log(data.signal)
 				}
 			}, {
 				key: "_building",
@@ -2757,7 +2757,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				};
 
 				$('#runOnBoot').on('change', function () {
-					if ($('#runOnBoot').val()) _this26.emit('run-on-boot', $('#runOnBoot').val());
+					if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--') _this26.emit('run-on-boot', $('#runOnBoot').val());
 				});
 
 				return _this26;
@@ -3868,8 +3868,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					er = arguments[1];
 					if (er instanceof Error) {
 						throw er; // Unhandled 'error' event
-					}
-					throw TypeError('Uncaught, unspecified "error" event.');
+					} else {
+							// At least give some kind of context to the user
+							var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+							err.context = er;
+							throw err;
+						}
 				}
 			}
 

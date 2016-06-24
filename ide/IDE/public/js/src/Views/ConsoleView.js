@@ -179,10 +179,9 @@ class ConsoleView extends View{
 		//_console.warn(log.split(' ').join('&nbsp;'));
 	}
 	__belaResult(data){
-		// TODO: work this shit out
-		if (data.stderr && data.stderr.split) _console.log(data.stderr.split(' ').join('&nbsp;'));
+		if (data.stderr && data.stderr.split) _console.warn(data.stderr.split(' ').join('&nbsp;'));
 		if (data.signal) _console.warn(data.signal);
-		console.log(data.signal)
+		//console.log(data.signal)
 	}
 	
 	_building(status, data){

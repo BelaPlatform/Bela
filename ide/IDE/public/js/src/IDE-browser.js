@@ -206,7 +206,8 @@ socket.on('stop-reply', (data) => {
 	consoleView.emit('closeNotification', data);
 });
 socket.on('project-list', (project, list) =>  {
-	if (list.indexOf(models.project.getKey('currentProject')) === -1){
+	//console.log(project, list);
+	if (project && list.indexOf(models.project.getKey('currentProject')) === -1){
 		// this project has just been deleted
 		console.log('project-list', 'openProject');
 		socket.emit('project-event', {func: 'openProject', currentProject: project});
@@ -214,7 +215,7 @@ socket.on('project-list', (project, list) =>  {
 	models.project.setKey('projectList', list);
 });
 socket.on('file-list', (project, list) => {
-	if (project === models.project.getKey('currentProject')){
+	if (project && project === models.project.getKey('currentProject')){
 		let currentFilenameFound = false;
 		for (let item of list){
 			if (item.name === models.project.getKey('fileName')){
