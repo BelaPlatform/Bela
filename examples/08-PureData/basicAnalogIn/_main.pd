@@ -18,9 +18,9 @@
 #X text 36 409 ADC 2: Audio In R;
 #X obj 43 232 *~ 880;
 #X obj 43 189 adc~ 3 4;
-#X text 101 231 << Analog In 0 controls frequency;
-#X text 101 274 << Analog In 1 controls amplitude;
-#X text 101 188 << Use first two analog ins;
+#X text 121 231 << Analog In 0 controls frequency;
+#X text 121 274 << Analog In 1 controls amplitude;
+#X text 121 188 << Use first two analog ins;
 #X text 37 74 In this example the first two analog inputs are;
 #X text 37 87 used to control the frequency and amplitude of an;
 #X text 37 100 oscillator.;

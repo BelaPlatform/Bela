@@ -14,7 +14,7 @@
 #X obj 82 351 *~;
 #X obj 82 309 *~ 10;
 #X obj 82 330 osc~ 1;
-#X text 133 431 << Output to first analog out;
+#X text 153 431 << Output to first analog out;
 #X obj 82 275 adc~ 3 4;
 #X text 45 84 Just like the BasicAnalogIn example \, the first two
 ;
@@ -23,12 +23,12 @@
 #X text 45 125 a lower range of frequencies (<10Hz).;
 #X text 45 139 Instead of sending this to Bela's stereo output we;
 #X text 45 153 are sending this to the first analog output.;
-#X text 138 274 << Use first two analog ins;
-#X text 138 310 << Analog In 0 controls frequency;
-#X text 138 349 << Analog In 1 controls amplitude;
+#X text 158 274 << Use first two analog ins;
+#X text 158 310 << Analog In 0 controls frequency;
+#X text 158 349 << Analog In 1 controls amplitude;
 #X obj 82 380 *~ 0.5;
 #X obj 82 402 +~ 0.5;
-#X text 138 389 << Rescale output to range 0-1;
+#X text 158 389 << Rescale output to range 0-1;
 #X text 45 167 Note that analog inputs and outputs have a range between
 ;
 #X text 45 181 0 and 1 \, unlike regular audio signals (which have
