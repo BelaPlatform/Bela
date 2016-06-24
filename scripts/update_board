@@ -9,7 +9,7 @@ SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
 
-[ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../../bela-ide/
+[ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../ide/
 
 FILES_TO_COPY="core include Makefile libNE10.a libprussdrv.a examples Doxyfile"
 
