@@ -1,0 +1,213 @@
+#!/bin/bash
+#
+# This script copies the core Bela files to the BeagleBone Black
+# in preparation for building projects. It will remove any existing
+# Bela directory before copying the files over
+
+# Find location of this script so we can locate the rest of the files
+SCRIPTDIR=$(dirname "$0")
+[ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
+. $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
+
+[ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../../bela-ide/
+
+FILES_TO_COPY="core include Makefile libNE10.a libprussdrv.a examples Doxyfile"
+
+# The following variables are manually copied from the Makefile.
+# It is a bit nasty, but here we need to handle the case that the board may be 
+# in any arbitrarily (bad) condition and try to handle it the best we can
+BELA_IDE_SCREEN_NAME=IDE-Bela
+SCREEN_NAME=Bela
+
+usage ()
+{
+    THIS_SCRIPT=`basename "$0"`
+    echo "Usage: $THIS_SCRIPT [--clean] [--no-frills] [-dy ] [-i user@ip] [-b /path/to/remote/Bela]"
+
+    echo "
+    This script updates the core Bela files on the BeagleBone, bringing it up
+    to date with the files in the folder on the host computer.
+    The script must be run once to initialize the board before running any of
+    the other scripts in this directory. It must also be run every time you
+    wish to update the core code.
+    Running this script will discard all changes to the core code on the remote
+    end.
+
+Command line options:    
+    -i arg : allows to set the username and IP address of the remote end (default: $BBB_ADDRESS)
+    -b arg : allows to set the path to the Bela folder on the remote end. Use quotes if you use the \"~\" symbol (default: $BBB_BELA_HOME)
+    --clean : removes all the files in the $BBB_BELA_HOME folder, INCLUDING any source code you may have in the $BBB_BELA_HOME/projects/ subdirectory.
+    -d : skips re-generating Doxygen documentation on the board.
+    -n : do not try to update the IDE.
+    --no-frills : skips some optional commands.
+    -y : does not prompt the user before deleting the remote files.
+    "
+}
+
+signal_handler ()
+{
+  echo
+  exit
+}
+
+trap signal_handler 2 
+
+error_handler () {
+ [ $1 -eq 0 ] && printf "done\n" || { [ -z "$2" ] && printf "\nAn error occurred. Is the board connected?\n" || printf "$2"; exit 1; }
+}
+
+FULL=1
+OPTIND=1
+ALWAYS_YES=0
+RESET_BOARD=0
+DOXYGEN=1
+UPDATE_IDE=1
+while [ "$1" != "" ]; do
+  case $1 in
+    -b)           
+      shift
+      BBB_BELA_HOME=$1
+    ;;
+    -i)
+      shift
+      BBB_ADDRESS=$1
+    ;;
+    --clean)
+      RESET_BOARD=1
+    ;;
+    -d)
+      DOXYGEN=0
+    ;;
+    -n)
+      UPDATE_IDE=0
+    ;;
+    --no-frills)
+      FULL=0
+    ;;
+    -y)          
+       ALWAYS_YES=1
+    ;;
+    *)            
+      usage
+      exit 1
+    ;;
+  esac
+  shift
+done
+
+
+echo $BBB_ADDRESS
+check_board_alive 
+# Check if destination folder exists
+# the StrictHostKeyChecking no should prevent the unkown host prompt
+ssh $BBB_ADDRESS [ -d $BBB_BELA_HOME ] && DESTINATION_EMPTY=0 || DESTINATION_EMPTY=1
+# Set the date on the board
+[ $FULL -eq 1 ] && set_date 
+
+if [ $DESTINATION_EMPTY -eq 0 ];
+then
+  echo "Updating the Bela core code in $BBB_ADDRESS:$BBB_BELA_HOME"
+  if [ $RESET_BOARD -eq 1 ];
+  then
+    printf "DANGER: you are about to perform a HARD RESET, which will DELETE all the  existing files from the folder $BBB_BELA_HOME on the BeagleBone Black.\nAre you sure you want to continue? (y/N) "
+  else
+    printf "All the changes to the CORE files in the remote folder $BBB_BELA_HOME will be LOST. The content of these files/folders will be lost:\n  $FILES_TO_COPY \nYour projects stored in $BBB_BELA_HOME/projects should be safe (and surely you have already backed them up somewhere safe, haven't you?).\nAre you sure you want to continue? (y/N) "
+  fi;
+  if [ $ALWAYS_YES -eq 1 ];
+  then
+    printf "y\n"
+  else 
+    read REPLY;
+    [ -z "$REPLY" ] || { [ "$REPLY" !=  y ]  && [ "$REPLY" != Y ]; } && { echo "Aborting..."; exit 1; }
+  fi
+else
+  echo "Installing Bela core code in $BBB_ADDRESS:$BBB_BELA_HOME"
+fi
+
+echo "Updating Bela core files to remote folder $BBB_BELA_HOME"
+# Stop Bela if running and remove all files
+if [ $FULL -eq 1 ]
+then
+  printf "Stopping Bela..." 
+  ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME idestop stop &>/dev/null; screen -X -S Bela quit &>/dev/null; screen -X -S IDE-Bela quit &>/dev/null; true";
+  error_handler $?
+fi
+
+if [ $RESET_BOARD -eq 1 ];
+then
+  printf "Removing old files..."
+  ssh $BBB_ADDRESS "rm -rf $BBB_BELA_HOME";
+  error_handler $?
+fi
+
+#Check if rsync is available
+[ -z `which rsync` ] && RSYNC_AVAILABLE=0 || RSYNC_AVAILABLE=1
+
+# cd to the home of the project to make the following lines less verbose
+RUN_FOLDER=`pwd`
+cd $SCRIPTDIR/../
+
+printf "Updating files..."
+# Copy relevant files to BeagleBone Black
+if [ $RSYNC_AVAILABLE -eq 1 ];
+then
+  [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
+  rsync -ac --no-t --delete-after --stats $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval $FILTER &&\
+  printf "..." && rsync -ac --no-t libpd.so $BBB_ADDRESS:/usr/lib
+else
+  # if rsync is not available, then clean the folders before copying the files
+  ssh $BBB_ADDRESS "rm -rf $FILES_TO_COPY; mkdir -p $BBB_BELA_HOME" &&\
+  scp -r -q $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME &&\
+  scp -q libpd.so $BBB_ADDRESS:/usr/lib
+fi
+error_handler $?
+# cd back to the original folder.
+cd "$RUN_FOLDER"
+
+# Create remaining directories needed for building
+printf "Creating directory structure on BeagleBone..."
+ssh $BBB_ADDRESS "mkdir -p $BBB_BELA_HOME/build/core $BBB_BELA_HOME/projects"
+error_handler $?
+
+if [ $DOXYGEN -eq 1 ] 
+then 
+  printf "Generating on-board documentation..."
+  ssh $BBB_ADDRESS "cd $BBB_BELA_HOME; rm -rf Documentation/; doxygen &> /dev/null"
+  error_handler $? "\nError while generating Doxygen documentation\n"
+fi
+
+if [ $FULL -eq 1 ]
+then
+  printf "Cleaning build environment..."
+  ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory coreclean &>/dev/null"
+  error_handler $? "\nError cleaning core\n"
+fi
+
+#-------------
+#Installing IDE
+
+if [ $UPDATE_IDE -eq 1 ]
+then
+	[ $ALWAYS_YES -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
+	ls $IDE_FOLDER/scripts/update_IDE >/dev/null 2>/dev/null
+	if [ $? -eq 0 ]
+	then
+	  export BBB_ADDRESS BBB_BELA_HOME
+	  cd $IDE_FOLDER/scripts && ./update_IDE $ALWAYS_YES_FLAG --no-frills
+      [ $FULL -eq 1 ] && ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart" 
+	else
+	  # run the IDE 
+	   printf "\nThe Bela core files were updated on the board, but a valid IDE folder was not found in $IDE_FOLDER/, so the IDE was not updated.
+	You can get a copy of the most up-to-date IDE files from https://github.com/LBDonovan/bela-ide\n"
+	  [ $FULL -eq 1 ] && printf "If there was an older version of the IDE on the board, it is being restarted.\n\n" &&\
+	    ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart &> /dev/null" 
+	fi
+else
+	echo "Not updating the IDE"
+fi
+[ $FULL -eq 1 ] && ssh $BBB_ADDRESS make -C $BBB_BELA_HOME --no-print-directory idestartup nostartup && printf "The board will now run the IDE at startup, but startup of the Bela program has been disabled.\nTo enable it, use the set_startup.sh script.\nTo control the ide use the ide.sh script\n"
+
+[ $ALWAYS_YES -eq 1 ] && printf "\nCore setup complete.\n\n" || {
+  printf '\nSetup complete, press any key to continue . . .\n\n'
+  read -n 1
+}

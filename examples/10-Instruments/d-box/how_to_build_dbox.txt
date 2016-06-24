@@ -1,0 +1,35 @@
+The D-Box code can be built on the board using the scripts included with
+Bela. To build the code, do the following from the scripts/ directory:
+
+./setup_board.sh    # Only if Bela is not already copied to the board
+./build_project.sh -n ../projects/d-box  # -n means don't run yet
+
+You will now need to copy the .dbx sound files to the box. These need to
+be in a directory: /root/d-box/sounds
+
+Log into the board via ssh to create the d-box directory, or run:
+
+ssh root@192.168.7.2 "mkdir /root/d-box"
+
+Now copy the .dbx files from a source of your choice to the board. Assuming
+they are in a directory called "sounds":
+
+scp -r sounds root@192.168.7.2:/root/d-box/
+
+Now you can run the D-Box program to make sure it plays. You will need the
+sensors and matrix connected to the box (i.e. a complete hardware D-Box).
+From the scripts/ directory:
+
+./run_project.sh -f -c "-q 24 -r 25 -t 2 -s -p 2 -l 0 -u 0 -i 1 -n f -g 3 -v"
+
+If this plays properly, the D-Box can then be set to run automatically on boot:
+
+./set_startup.sh -l -c "-q 24 -r 25 -t 2 -s -p 2 -l 0 -u 0 -i 1 -n f -g 3 -v"
+
+If at any time you want to stop the D-Box program running, you can run:
+
+./stop_running.sh
+
+To turn off further autoboot, run:
+
+./set_startup.sh -n

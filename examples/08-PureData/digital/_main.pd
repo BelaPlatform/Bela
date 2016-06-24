@@ -1,0 +1,138 @@
+#N canvas 1005 79 685 1592 10;
+#X obj 60 800 r bela_digitalIn11;
+#X obj 272 800 r bela_digitalIn12;
+#X obj 60 897 adc~ 13 14;
+#X text 56 869 Digital ins \, signal rate;
+#X obj 58 1144 s bela_digitalOut15;
+#X text 56 1040 Digital out \, message rate;
+#X obj 59 695 s bela_setDigital;
+#X obj 82 618 loadbang;
+#X msg 83 473 in 11;
+#X msg 83 530 in 13 ~;
+#X msg 83 501 in 12 message;
+#X msg 83 567 disable 17;
+#X obj 60 943 snapshot~;
+#X obj 194 944 snapshot~;
+#X obj 194 896 loadbang;
+#X obj 60 991 print digitalIn13;
+#X obj 194 991 print digitalIn14;
+#X obj 194 917 metro 200;
+#X obj 60 1245 dac~ 16;
+#X obj 58 1093 metro 500;
+#X obj 58 1118 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+1;
+#X obj 60 1218 phasor~ 300;
+#X text 126 1246 Nice \, anti-aliased square wave;
+#X obj 58 1068 loadbang;
+#X obj 60 1379 dac~ 17;
+#X obj 60 1321 osc~ 300;
+#X obj 205 1321 phasor~ 169;
+#X obj 205 1351 -~ 0.5;
+#X text 56 1290 Sum signals together for unpredictable effects;
+#X obj 61 1537 dac~ 18;
+#X text 56 1190 Digital out \, signal rate;
+#X obj 61 1456 adc~;
+#X obj 61 1483 *~ 0.5;
+#X obj 61 1510 +~ 0.5;
+#X text 58 1426 The ultimate bit-crusher;
+#X msg 82 640 in 11 \, in 12 \, in 13 ~ \, in 14 ~ \, out 15 \, out
+16 ~ \, out 17 ~ \, out 18 ~;
+#X obj 136 1321 osc~ 1;
+#X obj 60 967 change;
+#X obj 194 968 change;
+#X obj 60 822 print digitalIn11;
+#X obj 272 823 print digitalIn12;
+#X text 42 234 Each digital channel can be configured as either an
+input or;
+#X text 42 247 an output. Send messages to bela_setDigital to configure
+the;
+#X text 42 260 digitalPins (needed before using them). Pins settings
+can be;
+#X text 42 273 modified at will during execution. Message-rate input
+pins;
+#X text 42 286 receive messages only when the input changes. Message-rate
+;
+#X text 42 299 output pins will write to the output the most recent
+value;
+#X text 42 312 you send them. Signal-rate inputs and outputs are handled
+as;
+#X text 42 325 regular audio channels. Outputs are thresholded to 0.5
+;
+#X text 42 338 before being written to the actual output. Note that
+each;
+#X text 42 351 pin that is managed adds to the CPU usage \, so only
+activate;
+#X text 42 364 the pins you actually need.;
+#X text 43 119 Digital channels are numbered 11 to 26 \, which corresponds
+to;
+#X text 43 132 Bela's 0 to 15 digital channels. They can be set to
+respond;
+#X text 43 394 First argument is the pin direction Second argument
+is the;
+#X text 43 407 pin number Third argument is the rate \, can be "~"
+or "sig";
+#X text 43 420 for signal-rate or "message" for message-rate. Defaults
+to;
+#X text 43 433 message-rate.;
+#X text 182 577 message containing the pin number;
+#X text 44 20 Digital I/O;
+#X text 44 30 ===========;
+#X text 43 62 Bela's digital inputs and outputs can be addressed from
+;
+#X text 44 88 rate or as signals. Input/output modes and rate need
+;
+#X text 43 101 to be initialised first.;
+#X text 43 75 pd. They can either be received as messages at message
+;
+#X text 182 530 set digital in 2 to input at signal rate;
+#X text 182 564 to stop using a pin (e.g.: to save CPU) \, send a disable
+;
+#X text 182 617 use loadbang to initalise multiple digital pins at
+startup;
+#X text 43 145 at message rate or at signal rate.;
+#X text 42 194 Initialising digital pins;
+#X text 42 204 -------------------------;
+#X text 42 744 Usage examples;
+#X text 42 754 --------------;
+#X text 58 780 Digital in pin 0 \, control rate;
+#X text 270 780 Digital in pin 1 \, control rate;
+#X text 182 499 set digital in 1 to input explicitly specifying message
+rate;
+#X text 182 472 set digital in 0 to input (default message rate);
+#X text 86 1117 Blink that LED!;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X connect 0 0 39 0;
+#X connect 1 0 40 0;
+#X connect 2 0 12 0;
+#X connect 2 1 13 0;
+#X connect 7 0 35 0;
+#X connect 8 0 6 0;
+#X connect 9 0 6 0;
+#X connect 10 0 6 0;
+#X connect 11 0 6 0;
+#X connect 12 0 37 0;
+#X connect 13 0 38 0;
+#X connect 14 0 17 0;
+#X connect 17 0 13 0;
+#X connect 17 0 12 0;
+#X connect 19 0 20 0;
+#X connect 20 0 4 0;
+#X connect 21 0 18 0;
+#X connect 23 0 19 0;
+#X connect 25 0 24 0;
+#X connect 26 0 27 0;
+#X connect 27 0 24 0;
+#X connect 31 0 32 0;
+#X connect 31 1 32 0;
+#X connect 32 0 33 0;
+#X connect 33 0 29 0;
+#X connect 35 0 6 0;
+#X connect 36 0 24 0;
+#X connect 37 0 15 0;
+#X connect 38 0 16 0;

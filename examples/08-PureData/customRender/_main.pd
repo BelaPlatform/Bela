@@ -1,0 +1,109 @@
+#N canvas 959 597 692 1046 10;
+#X obj 45 615 dac~ 1 2;
+#X obj 45 574 *~ 0.1;
+#X obj 45 553 osc~ 440;
+#X text 464 21 ............................;
+#X text 464 31 . ____ ._____ _ .......___ .;
+#X text 464 41 .| __ )| ____| |....../ _ |.;
+#X text 464 61 .| |_) | |___| |___ / ___ |.;
+#X text 464 71 .|____/|_____|_____/_/..._|.io;
+#X text 464 81 ............................;
+#X text 464 51 .| __ || __|.| |...../ _| |.;
+#X text 35 32 Using custom render.cpp files;
+#X text 35 42 =============================;
+#X text 35 58 It is possible to modify the default libpd and heavy
+;
+#X text 35 72 wrapper templates in order to combine c++ code with;
+#X text 35 86 your puredata patches.;
+#X text 35 100 In this example you should hear a tremolo effect being
+;
+#X text 35 114 applied to the output. This is done by taking the output
+;
+#X text 35 128 buffer returned from libpd or heavy and applying further
+;
+#X text 35 142 processing before writing the buffer to the Bela context.
+;
+#X text 35 156 It is also possible to define more input or output channels
+;
+#X text 35 170 within the render.cpp file in order to pass auxiliary
+;
+#X text 35 198 code.;
+#X text 35 184 signals (e.g. envelopes) across the pd patch and the
+c++;
+#X obj 46 716 adc~ 3;
+#X obj 46 738 snapshot~;
+#X obj 97 694 loadbang;
+#X obj 97 716 metro 5;
+#X obj 46 804 * 20;
+#X obj 46 826 + 0.5;
+#X text 94 826 map to exponential range 0.5Hz<->20Hz;
+#X obj 46 848 s tremoloRate;
+#X text 154 848 <<< this receiver doesn't exist in the patch but is
+parsed;
+#X text 36 520 Simple 440Hz sine wave;
+#X text 36 530 ----------------------;
+#X text 36 660 Sending messages to modified render.cpp;
+#X text 36 670 ---------------------------------------;
+#X text 35 211 In this example we are sending float values to a receiver
+;
+#X text 35 225 named 'tremoloRate' which is parsed by the modified
+;
+#X text 35 239 render.cpp file and used to control the rate of the
+tremolo;
+#X text 35 253 effect applied to the output.;
+#X obj 46 760 t f f;
+#X obj 46 782 *;
+#X text 35 267 See the render.cpp file in the project folder for the
+libpd;
+#X text 35 282 implementation. The heavy implementation can be found
+inside;
+#X text 35 295 the enclosed /heavy folder. (This is where custom render.cpp
+;
+#X text 35 309 files for heavy need to be placed when compiling with
+heavy);
+#X text 179 860 by a hook function in the modified render.cpp file.
+;
+#X text 200 897 Bela_floatHook(const char *source \, float value);
+#X text 180 962 For heavy this is:;
+#X text 179 884 For libpd this function is:;
+#X text 200 973 sendHook( double timestamp \, const char *receiverName
+;
+#X text 260 986 \, const HvMessage *const m \, void *userData);
+#X text 180 911 Note that in libpd the receiver name needs to be registered
+;
+#X text 180 925 using the libpd_bind(const char *sym) function (see
+the;
+#X text 180 939 contents of setup());
+#X text 180 1002 The receiver name does not need to be registered anywhere.
+;
+#X text 35 324 Search for 'MODIFICATION' (no quotation marks) inside
+either;
+#X text 35 338 of the render files to inspect all the modifications
+that;
+#X text 36 352 were made for this example.;
+#X text 36 386 Running the patch with the modified render.cpp file
+;
+#X text 36 396 ---------------------------------------------------
+;
+#X text 36 409 If using libpd \, you can simply run this patch from
+the;
+#X text 36 423 Bela IDE. The system will automatically detect the;
+#X text 36 437 modified file use it instead of the template.;
+#X text 36 457 Similarly \, the build script for the Heavy compiler
+;
+#X text 36 471 will detect the presence of a render.cpp file inside
+;
+#X text 36 485 the enclosed /heavy/ folder and bypass the default wrapper.
+;
+#X connect 1 0 0 1;
+#X connect 1 0 0 0;
+#X connect 2 0 1 0;
+#X connect 23 0 24 0;
+#X connect 24 0 40 0;
+#X connect 25 0 26 0;
+#X connect 26 0 24 0;
+#X connect 27 0 28 0;
+#X connect 28 0 30 0;
+#X connect 40 0 41 0;
+#X connect 40 1 41 1;
+#X connect 41 0 27 0;

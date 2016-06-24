@@ -1,0 +1,1 @@
+var scope = require('./scope-browser');

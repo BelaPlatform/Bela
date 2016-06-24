@@ -1,0 +1,283 @@
+/*
+ * RTAudioCommandLine.cpp
+ *
+ *  Created on: Nov 8, 2014
+ *      Author: parallels
+ */
+
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+#include <getopt.h>
+#include "../include/Bela.h"
+
+#define OPT_PRU_FILE 1000
+#define OPT_PGA_GAIN_LEFT 1001
+#define OPT_PGA_GAIN_RIGHT 1002
+#define OPT_PRU_NUMBER 1003
+
+
+enum {
+	kAmplifierMutePin = 61	// P8-26 controls amplifier mute
+};
+
+// Default command-line options for RTAudio
+struct option gDefaultLongOptions[] =
+{
+	{"period", 1, NULL, 'p'},
+	{"verbose", 0, NULL, 'v'},
+	{"use-analog", 1, NULL, 'N'},
+	{"use-digital", 1, NULL, 'G'},
+	{"analog-channels", 1, NULL, 'C'},
+	{"digital-channels", 1, NULL, 'B'},
+	{"mute-speaker", 1, NULL, 'M'},
+	{"dac-level", 1, NULL, 'D'},
+	{"adc-level", 1, NULL, 'A'},
+	{"pga-gain-left", 1, NULL, OPT_PGA_GAIN_LEFT},
+	{"pga-gain-right", 1, NULL, OPT_PGA_GAIN_RIGHT},
+	{"hp-level", 1, NULL, 'H'},
+	{"receive-port", 1, NULL, 'R'},
+	{"transmit-port", 1, NULL, 'T'},
+	{"server-name", 1, NULL, 'S'},
+	{"pru-file", 1, NULL, OPT_PRU_FILE},
+	{"pru-number", 1, NULL, OPT_PRU_NUMBER},
+	{NULL, 0, NULL, 0}
+};
+
+const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:";
+
+// This function sets the default settings for the BelaInitSettings structure
+void Bela_defaultSettings(BelaInitSettings *settings)
+{
+	// Set default values for settings
+	settings->periodSize = 16;
+	settings->useAnalog = 1;
+	settings->useDigital = 1;
+	settings->numAudioInChannels = 2;
+	settings->numAudioOutChannels = 2;
+
+	settings->numAnalogInChannels = 8;
+	settings->numAnalogOutChannels = 8;
+	settings->numDigitalChannels = 16;
+
+	settings->beginMuted = 0;
+	settings->dacLevel = DEFAULT_DAC_LEVEL;
+	settings->adcLevel = DEFAULT_ADC_LEVEL;
+	for(int n = 0; n < 2; n++)
+		settings->pgaGain[n] = DEFAULT_PGA_GAIN;
+	settings->headphoneLevel = DEFAULT_HP_LEVEL;
+	settings->numMuxChannels = 0;
+
+	settings->verbose = 0;
+	settings->pruNumber = 0;
+	settings->pruFilename[0] = '\0';
+
+	// These two deliberately have no command-line flags by default.
+	// A given program might prefer one mode or another, but it's unlikely
+	// the user would want to switch at runtime
+	settings->interleave = 1;
+	settings->analogOutputsPersist = 1;
+
+	settings->codecI2CAddress = CODEC_I2C_ADDRESS;
+	settings->receivePort = 9998;
+	settings->transmitPort = 9999;
+	strcpy(settings->serverName, "127.0.0.1");
+	settings->ampMutePin = kAmplifierMutePin;
+}
+
+// This function drops in place of getopt() in the main() function
+// and handles the initialisation of the RTAudio settings using
+// standard command-line arguments. System default arguments will
+// be stored in settings, otherwise arguments will be returned
+// as getopt() normally does.
+
+int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, const struct option *customLongOptions, BelaInitSettings *settings)
+{
+	static int firstRun = 1;
+	static char totalShortOptions[256];
+	static struct option totalLongOptions[256];
+
+	int c;
+
+	// Prep total option string the first time this is
+	// run. As a getopt() substitute, it will be called repeatedly working its
+	// way through argc and argv.
+	if(firstRun) {
+		firstRun = 0;
+
+		// Copy short options into one string
+		strcpy(totalShortOptions, gDefaultShortOptions);
+		strncat(totalShortOptions, customShortOptions, 256 - strlen(gDefaultShortOptions) - 1);
+
+		// Copy long options into one array
+		int n = 0;
+		while(1) {
+			if(gDefaultLongOptions[n].name == NULL)
+				break;
+			totalLongOptions[n].name = gDefaultLongOptions[n].name;
+			totalLongOptions[n].has_arg = gDefaultLongOptions[n].has_arg;
+			totalLongOptions[n].flag = gDefaultLongOptions[n].flag;
+			totalLongOptions[n].val = gDefaultLongOptions[n].val;
+			n++;
+		}
+
+		// Copy custom options into the array, if present
+		if(customLongOptions == 0) {
+			// Terminate the array
+			totalLongOptions[n].name = NULL;
+			totalLongOptions[n].has_arg = 0;
+			totalLongOptions[n].flag = NULL;
+			totalLongOptions[n].val = 0;
+		}
+		else {
+			int customIndex = 0;
+			while(n < 256) {
+				if(customLongOptions[customIndex].name == NULL)
+					break;
+				totalLongOptions[n].name = customLongOptions[customIndex].name;
+				totalLongOptions[n].has_arg = customLongOptions[customIndex].has_arg;
+				totalLongOptions[n].flag = customLongOptions[customIndex].flag;
+				totalLongOptions[n].val = customLongOptions[customIndex].val;
+				n++;
+				customIndex++;
+			}
+
+			// Terminate the array
+			totalLongOptions[n].name = NULL;
+			totalLongOptions[n].has_arg = 0;
+			totalLongOptions[n].flag = NULL;
+			totalLongOptions[n].val = 0;
+		}
+	}
+
+	while(1) {
+		if ((c = getopt_long(argc, argv, totalShortOptions, totalLongOptions, NULL)) < 0)
+			return c;
+
+		switch (c) {
+		case 'p':
+			settings->periodSize = atoi(optarg);
+			if(settings->periodSize < 1)
+				settings->periodSize = 1;
+			break;
+		case 'v':
+			settings->verbose = 1;
+			break;
+		case 'N':
+			settings->useAnalog = atoi(optarg);
+			break;
+		case 'G':
+			settings->useDigital = atoi(optarg);
+			if(settings->useDigital == 0){
+				settings->numDigitalChannels = 0;
+			}
+			break;
+		case 'C': {
+			// TODO: a different number of channels for inputs and outputs is not yet supported
+			unsigned int numAnalogChannels = atoi(optarg);
+			settings->numAnalogInChannels = numAnalogChannels;
+			settings->numAnalogOutChannels = numAnalogChannels;
+			if(numAnalogChannels >= 8) {
+				// TODO: a different number of channels for inputs and outputs is not yet supported
+
+				// Use multiplexer capelet to run larger numbers of channels
+				if(settings->numAnalogInChannels >= 64)
+					settings->numMuxChannels = 8;
+				else if(settings->numAnalogInChannels >= 32)
+					settings->numMuxChannels = 4;
+				else if(settings->numAnalogInChannels >= 16)
+					settings->numMuxChannels = 2;
+				settings->numAnalogInChannels = 8;
+			}
+			else if(numAnalogChannels >= 4){
+				// TODO: a different number of channels for inputs and outputs is not yet supported
+				settings->numAnalogInChannels = 4;
+				settings->numAnalogOutChannels = 4;
+			}
+			else{
+				// TODO: a different number of channels for inputs and outputs is not yet supported
+				settings->numAnalogInChannels = 2;
+				settings->numAnalogOutChannels = 2;
+			}
+			break;
+		}
+		case 'B':
+			settings->numDigitalChannels = atoi(optarg);
+			if(settings->numDigitalChannels >= 16)
+				settings->numDigitalChannels = 16;
+			else if (settings->numDigitalChannels < 1){
+				settings->numDigitalChannels = 0;
+				settings->useDigital = 0; //TODO: this actually works only if -G 0 is specified after -g 1.
+											 //No worries, though: disabling numDigital will only prevent the pins from being exported.
+			}
+			break;
+		case 'M':
+			settings->beginMuted = atoi(optarg);
+			break;
+		case 'D':
+			settings->dacLevel = atof(optarg);
+			break;
+		case 'A':
+			settings->adcLevel = atof(optarg);
+			break;
+		case 'H':
+			settings->headphoneLevel = atof(optarg);
+			break;
+		case 'R':
+			settings->receivePort = atoi(optarg);
+			break;
+		case 'T':
+			settings->transmitPort = atoi(optarg);
+			break;
+		case 'S':
+			if(strlen(optarg)<MAX_SERVERNAME_LENGTH)
+				strcpy(settings->serverName, optarg);
+			else
+				std::cerr << "Warning: server name is too long (>" << MAX_SERVERNAME_LENGTH << " characters)."
+						" Using default severName Instead ( " << settings->serverName << " ).\n";
+			break;
+		case OPT_PRU_FILE:
+			if(strlen(optarg) < MAX_PRU_FILENAME_LENGTH)
+				strcpy(settings->pruFilename, optarg);
+			else
+				std::cerr << "Warning: filename for the PRU code is too long (>" << MAX_PRU_FILENAME_LENGTH << " characters). Using embedded PRU code instead\n";
+			break;
+		case OPT_PGA_GAIN_LEFT:
+			settings->pgaGain[0] = atof(optarg);
+			break;
+		case OPT_PGA_GAIN_RIGHT:
+			settings->pgaGain[1] = atof(optarg);
+			break;
+		case OPT_PRU_NUMBER:
+			settings->pruNumber = atoi(optarg);
+			break;
+		case '?':
+		default:
+			return c;
+		}
+	}
+}
+
+// This function prints standard usage information for default arguments
+// Call from within your own usage function
+void Bela_usage()
+{
+	std::cerr << "   --period [-p] period:            Set the hardware period (buffer) size in analog samples\n";
+	std::cerr << "   --dac-level [-D] dBs:            Set the DAC output level (0dB max; -63.5dB min)\n";
+	std::cerr << "   --adc-level [-A] dBs:            Set the ADC input level (0dB max; -12dB min)\n";
+	std::cerr << "   --pga-gain-left dBs:             Set the Programmable Gain Amplifier for the left audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
+	std::cerr << "   --pga-gain-right dBs:            Set the Programmable Gain Amplifier for the right audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
+	std::cerr << "   --hp-level [-H] dBs:             Set the headphone output level (0dB max; -63.5dB min)\n";
+	std::cerr << "   --mute-speaker [-M] val:         Set whether to mute the speaker initially (default: no)\n";
+	std::cerr << "   --use-analog [-N] val:           Set whether to use ADC/DAC analog (default: yes)\n";
+	std::cerr << "   --use-digital [-G] val:          Set whether to use digital GPIO channels (default: yes)\n";
+	std::cerr << "   --analog-channels [-C] val:      Set the number of ADC/DAC channels (default: 8)\n";
+	std::cerr << "   --digital-channels [-B] val:     Set the number of GPIO channels (default: 16)\n";
+	std::cerr << "   --receive-port [-R] val:         Set the receive port (default: 9998)\n";
+	std::cerr << "   --transmit-port [-T] val:        Set the transmit port (default: 9999)\n";
+	std::cerr << "   --server-name [-S] val:          Set the destination server name (default: '127.0.0.1')\n";
+	std::cerr << "   --pru-file val:                  Set an optional external file to use for the PRU binary code\n";
+	std::cerr << "   --pru-number val:                Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
+	std::cerr << "   --verbose [-v]:                  Enable verbose logging information\n";
+}
+

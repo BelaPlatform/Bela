@@ -1,0 +1,77 @@
+[ -z "$BBB_USER" ] && BBB_USER="root"
+[ -z "$BBB_HOSTNAME" ] && BBB_HOSTNAME="192.168.7.2"
+[ -z "$BBB_ADDRESS" ] && BBB_ADDRESS="$BBB_USER@$BBB_HOSTNAME"
+[ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="~/Bela/"
+[ -z "$BBB_SCREEN_NAME" ] && BBB_SCREEN_NAME="Bela"
+[ -z "$RUN_PROJECT" ] && RUN_PROJECT=1
+[ -z "$COMMAND_ARGS" ] && COMMAND_ARGS=
+[ -z "$RUN_IN_FOREGROUND" ] && RUN_IN_FOREGROUND=1
+[ -z "$RUN_WITHOUT_SCREEN" ] && RUN_WITHOUT_SCREEN=0
+[ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
+[ -z "$BBB_DEFAULT_PROJECT_NAME" ] && BBB_DEFAULT_PROJECT_NAME="scriptUploadedProject"
+[ -z "$BBB_PROJECT_NAME" ] && BBB_PROJECT_NAME=$BBB_DEFAULT_PROJECT_NAME
+
+trap "echo; exit 0;" 2 9
+folder_has_changed(){
+	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
+	[ -z "$3" ] && FILTER="." || FILTER="$3"
+	# Do not watch hidden files or folders 
+	find "$1" -type f -not -path '*/\.*' -newer "$2" | grep "$FILTER"
+	return $?
+}
+
+wait_for_change(){
+	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
+	[ -z "$4" ] && SLEEP=0.5 || SLEEP="$4"
+	while ! folder_has_changed "$1" "$2" "$3"
+	do
+		sleep $SLEEP;	
+	done
+}
+
+set_date(){
+# an optional parameter will be executed as part of the same ssh session
+	ssh $BBB_ADDRESS "date -s \"`date '+%Y%m%d %T %z'`\" > /dev/null; $1"
+}
+
+check_board_alive(){
+	printf "Checking the board is up and running at $BBB_ADDRESS..."
+	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 $BBB_ADDRESS exit && printf "done\n" || {
+		printf "\nERROR: the board does not respond at $BBB_ADDRESS, check that the address is correct and the board is connected.\n";
+		exit 1;
+	}
+}
+
+build_script_usage_brief(){
+	printf "Usage: $THIS_SCRIPT [-c command-line-args] [-nbfF] [--watch] [--clean]%s <directory-with-source-files>" "$1"
+}
+
+build_script_usage(){
+	echo "	The program can be run in one of the following modes:
+		-f arg : runs in the foreground (default).
+		-b arg : runs in the background (no output is shown)
+
+	When running in the foreground you can stop the currently running program 
+	with ctrl-C.
+	When running in the background, you can use \`./stop_running.sh' to stop
+	the current process and \`./connect_to_project.sh' to see the program's output.
+
+	Other options:
+	--clean : cleans the pre-compiled object files on the board (same as \`-m projectclean').
+	          If the linker issues warnings during a build, or you see that your latest changes are not
+	          being applied to the running program, try to add the --clean flag for the next build and see 
+	          if that fixes it. 
+	
+	--watch: the script will wait for changes in the source folder and when it detects them it
+	         triggers a new build. If you do not run the program with -b, then you will have to
+			 either kill the process or detach from the screen in order for the watchdog to be active.
+	-n : the output will not be run after compiling.
+	-c \"args\" : passes command-line arguments to the Bela program; e
+	              close the argument string in quotes.
+	-p arg : sets the name of the project to in the remote folder (default: $BBB_PROJECT_NAME ) 
+	         do not use spaces in your project names, please
+	-m \"args\" allows to pass arguments to the Makefile before the run target. For instance,
+	           pass -m \`"projectclean"\` or \`-m "distclean"\` to clean project-specific
+	           pre-built objects, or all the pre-built objects, respectively.
+	"
+}

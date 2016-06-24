@@ -1,0 +1,25 @@
+{
+  "name": "bela_ide",
+  "version": "0.1.0",
+  "description": "IDE for Bela",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Liam Donovan",
+  "license": "ISC",
+  "dependencies": {
+    "archiver": "^1.0.0",
+    "bluebird": "^3.3.5",
+    "express": "^4.13.4",
+    "file-type": "^3.8.0",
+    "fs-extra": "^0.28.0",
+    "isbinaryfile": "^3.0.0",
+    "osc-min": "^1.1.1",
+    "pgrep": "0.0.6",
+    "pidusage": "^1.0.1",
+    "socket.io": "^1.4.5",
+    "tree-kill": "^1.0.0"
+  },
+  "devDependencies": {}
+}

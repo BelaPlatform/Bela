@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+  - '0.10'
+  - '0.11'
+
+notifications:
+  email: false
+
+deploy:
+  provider: npm
+  email: me@traviswebb.com
+  api_key:
+    secure: YDaNWRqzi0NUFT2PfxfnnHRM8jjOdSDL4blhGTjKL0qUJC1EajhpCsvI666t0hejjV38l3emTMHiwdbRj7J8MjLkBRYBl3/nLK7OtnT/Cb1sRLSkM74sFHYo4sHT4Z6iIrVlaLfqTYgGYwwa+SjA7HlHKSL6Qb1u/quhFNinl2U=
+  on:
+    tags: true
+    repo: tjwebb/node-pgrep
+    all_branches: true

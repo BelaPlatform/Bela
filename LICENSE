@@ -1,0 +1,105 @@
+Bela: an embedded platform for ultra-low latency audio and sensor processing 
+http://bela.io
+
+A project of the Augmented Instruments Laboratory within the 
+Centre for Digital Music at Queen Mary University of London.
+http://www.eecs.qmul.ac.uk/~andrewm
+
+(c) 2016 Augmented Instruments Laboratory: Andrew McPherson, 
+         Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack, 
+		 Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+
+The Bela software is distributed under the GNU Lesser General Public License
+(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+
+The Bela hardware designs are released under a Creative Commons 
+Attribution-ShareAlike 3.0 Unported license (CC BY-SA 3.0). Details here:
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Bela is provided "as is" without any express or implied warranties.
+
+License and copyright details for dependencies are below.
+
+=============================== prussdrv ===============================
+
+Bela uses libprussdrv (also known as am335x_pru_package) by Texas Instruments.
+Source available at https://github.com/beagleboard/am335x_pru_package
+
+Further information at http://elinux.org/Ti_AM33XX_PRUSSv2 
+
+================================= Ne10 =================================
+
+Selected Bela examples use projectNe10 by ARM, which is distributed
+under a BSD 3-Clause license. Full source available at 
+https://github.com/projectNe10
+
+Copyright notice follows:
+
+/*
+ *  Copyright 2012-15 ARM Limited and Contributors.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the name of ARM Limited nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY ARM LIMITED AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL ARM LIMITED AND CONTRIBUTORS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ 
+/*
+ * See: http://opensource.org/licenses/BSD-3-Clause for template
+*/
+
+================================= libpd =================================
+
+Selected Bela examples use libpd. 
+Full source available at https://github.com/libpd/libpd
+
+Copyright notice follows:
+
+This software is copyrighted by Miller Puckette and others.  The following
+terms (the "Standard Improved BSD License") apply to all files associated with
+the software unless explicitly disclaimed in individual files:
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above  
+   copyright notice, this list of conditions and the following 
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+3. The name of the author may not be used to endorse or promote
+   products derived from this software without specific prior 
+   written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,   
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.

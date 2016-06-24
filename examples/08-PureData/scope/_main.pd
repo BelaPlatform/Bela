@@ -1,0 +1,24 @@
+#N canvas 1035 935 404 295 10;
+#X obj 136 235 dac~ 27 28 29 30;
+#X obj 66 201 osc~ 2321;
+#X obj 143 201 osc~ 12;
+#X obj 288 201 noise~;
+#X obj 207 201 phasor~ 10;
+#X text 16 15 Bela Scope;
+#X text 16 25 ==========;
+#X text 16 81 If you're running this example in the Bela IDE \, simply
+click;
+#X text 16 95 the scope icon to see the signals being visualised.;
+#X text 16 43 You can log any signal to the scope by using the DAC~
+;
+#X text 16 57 outputs 27-30;
+#X text 17 117 If using the build scripts or compiled using Heavy \,
+make;
+#X text 16 146 up the scope in your browser http://192.168.7.2/scope/
+;
+#X text 17 132 sure the IDE is running ( ./ide.sh start ) and then
+bring;
+#X connect 1 0 0 0;
+#X connect 2 0 0 1;
+#X connect 3 0 0 3;
+#X connect 4 0 0 2;

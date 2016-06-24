@@ -1,0 +1,13 @@
+#N canvas 275 573 461 212 10;
+#X obj 39 143 dac~ 1 2;
+#X text 35 32 Hello world!;
+#X text 35 42 ============;
+#X text 95 79 (the sweet sound of success);
+#X obj 39 102 *~ 0.1;
+#X obj 39 81 osc~ 440;
+#X text 238 160 ---------------------------------;
+#X text 238 150 @krighxz / BELA / heavy / 12/2015;
+#X text 262 169 beaglert.cc / enzienaudio.com;
+#X connect 4 0 0 1;
+#X connect 4 0 0 0;
+#X connect 5 0 4 0;

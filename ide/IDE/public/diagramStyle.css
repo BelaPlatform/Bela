@@ -1,0 +1,134 @@
+@font-face {
+    font-family: 'sofia';
+    src: url('fonts/sofia-webfont-copy.woff2') format('woff2'),
+         url('fonts/sofia-webfont-copy.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+#container {
+    align: left;
+    overflow: auto;
+}
+
+#image {
+    width: 350px;
+    text-align: left;
+    margin: 10px auto 40px;
+    padding-bottom: 40px;
+    padding-left: 30px;
+    overflow: auto;
+}
+
+.diagram_text {
+    font-family: sofia;
+    font-size: 12px;
+    line-height: 22px;
+}
+
+.dPin {
+    fill: rgba(0, 255, 0, 0.5);
+    stroke: none;
+}
+.new {
+    fill: rgb(255, 0, 0);
+}
+.gnd {
+    fill: rgba(255, 0, 0, 0.4);
+    stroke: rgb(255, 0, 0);
+}
+.aPin {
+    fill: rgba(255, 255, 0, 0.5);
+    stroke: none;
+}
+.aInPin {
+    fill: rgba(255, 165, 0, 0.6);
+    stroke: none;
+}
+.comms {
+    fill: rgba(0, 0, 255, 0.5); 
+    stroke: none;
+}
+.audio {
+    fill: rgba(155, 48, 255, 0.5);
+    stroke: none;
+}
+.pins{
+    fill: transparent;
+    stroke: #000;
+}
+.util {
+    fill: rgba(255, 14, 154, 0.5);
+    stroke: none;
+}
+.led {
+    fill: rgba(0, 255, 0, 0.6);
+    stroke: none;
+}
+/*
+
+
+#leftside .hi {
+    fill: rgba(255, 255, 0, 0.3);
+    stroke: none;
+}
+header .hi { 
+    background-color: rgba(255, 255, 0, 0.3);
+    line-height: 25px;
+    }
+#rightside .hi {
+    background-color: rgb(255, 255, 0);
+}
+
+#leftside .expl {
+    fill: rgba(0, 255, 0, 0.3);
+    stroke: none;
+}
+header .expl {
+    background-color: rgba(0, 255, 0, 0.3);
+    line-height: 25px;
+}
+#rightside .expl {
+    background-color: rgba(0, 255, 0, 0.5);
+}
+
+
+
+
+#leftside .clar {
+    fill: rgba(255, 0, 0, 0.3);
+    stroke: none;
+}
+li.clar{
+    background-color: rgba(255, 0, 0, 0.3);
+    line-height: 25px;
+}
+#rightside .clar {
+    background-color: rgba(255, 0, 0, 0.4);
+}
+
+
+
+li.cust {
+    background-color: #fff;
+    border: 1px solid red;
+    line-height: 23px;
+}*/
+
+.tooltip {
+
+}
+
+
+
+.tooltipster-content {
+    padding: 0!important;
+    }
+.tipText {
+    position: relative;
+    z-index: 100;
+    background: #fff;
+    padding: 5px 10px;
+    max-width: 500px;
+    color: #666;
+}
