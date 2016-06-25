@@ -14,7 +14,7 @@ class SettingsView extends View {
 		}
 		
 		$('#runOnBoot').on('change', () => {
-			if ($('#runOnBoot').val()) 
+			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
 				this.emit('run-on-boot', $('#runOnBoot').val());
 		});
 		

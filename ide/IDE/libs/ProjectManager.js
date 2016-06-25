@@ -54,15 +54,22 @@ module.exports = {
 	// functions called directly over websocket
 	// project & example events
 	*openProject(data){
-		data.fileList = yield new Promise.coroutine(listFiles)(projectPath+data.currentProject);
-		var settings = yield _getSettings(data.currentProject);
-		for (let key in settings){
-			data[key] = settings[key];
+		try {
+			data.fileList = yield new Promise.coroutine(listFiles)(projectPath+data.currentProject);
+			var settings = yield _getSettings(data.currentProject);
+			for (let key in settings){
+				data[key] = settings[key];
+			}
+			if (data.currentProject !== exampleTempProject) data.exampleName = '';
+			if (!data.gitData) data.gitData = {};
+			data.gitData.currentProject = data.currentProject;
+			data.gitData = yield _co(git, 'info', data.gitData);
 		}
-		if (data.currentProject !== exampleTempProject) data.exampleName = '';
-		if (!data.gitData) data.gitData = {};
-		data.gitData.currentProject = data.currentProject;
-		data.gitData = yield _co(git, 'info', data.gitData);
+		catch(e){
+			data.error = 'failed, could not open project '+data.currentProject;
+			console.log(e.toString());
+			return data;
+		}
 		return yield _co(this, 'openFile', data);
 	},
 	
@@ -115,7 +122,7 @@ module.exports = {
 				return yield _co(this, 'openProject', data);
 			}
 		}
-		data.currentProject = undefined;
+		data.currentProject = '';
 		data.fileName = undefined;
 		data.fileData = '';
 		data.fileList = [];

@@ -84,7 +84,7 @@ In `render()` you'll see a nested for loop structure. You'll see this in all Bel
 The first for loop cycles through `audioFrames`, the second through 
 `audioInChannels` (in this case left 0 and right 1).
 
-You can access any information about current audio and sensor settings you can do the following: 
+You can access any information about current audio and sensor settings like this: 
 `context->name_of_item`. For example `context->audioInChannels` returns current number of input channels,
 `context->audioFrames` returns the current number of audio frames, 
 `context->audioSampleRate` returns the audio sample rate.
@@ -101,7 +101,7 @@ frame and current channel. In this example we have
 the nested for loop structure.
 
 We can write samples to the audio output buffer in a similar way using 
-`audioWrite()`. This has a fourth argument which is the value of the output.
+`audioWrite()`. This has a fourth argument which is the value of to output.
 For example `audioWrite(context, n, ch, value_to_output)`.
 
 Reading and writing from the analog buffers

@@ -105,7 +105,8 @@ cycles through the analog output channels. This needs to be provided with
 arguments as follows `analogWrite(context, n, channel, out)`. Channel is 
 where the you give the address of the analog output pin (in this case we cycle 
 through each pin address in the for loop), out is the variable that holds the 
-desired output (in this case set by the sine wave) and `n` is the frame number.
+desired output (in this case set by the sine wave) and `n` is the frame number 
+(given by the other for loop).
 
 Notice that the phase of the brightness cycle for each led is different. This 
 is achieved by updating a variable that stores a relative phase value. This 

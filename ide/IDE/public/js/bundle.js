@@ -207,7 +207,8 @@ socket.on('stop-reply', (data) => {
 	consoleView.emit('closeNotification', data);
 });
 socket.on('project-list', (project, list) =>  {
-	if (list.indexOf(models.project.getKey('currentProject')) === -1){
+	//console.log(project, list);
+	if (project && list.indexOf(models.project.getKey('currentProject')) === -1){
 		// this project has just been deleted
 		console.log('project-list', 'openProject');
 		socket.emit('project-event', {func: 'openProject', currentProject: project});
@@ -215,7 +216,7 @@ socket.on('project-list', (project, list) =>  {
 	models.project.setKey('projectList', list);
 });
 socket.on('file-list', (project, list) => {
-	if (project === models.project.getKey('currentProject')){
+	if (project && project === models.project.getKey('currentProject')){
 		let currentFilenameFound = false;
 		for (let item of list){
 			if (item.name === models.project.getKey('fileName')){
@@ -802,10 +803,9 @@ class ConsoleView extends View{
 		//_console.warn(log.split(' ').join('&nbsp;'));
 	}
 	__belaResult(data){
-		// TODO: work this shit out
-		if (data.stderr && data.stderr.split) _console.log(data.stderr.split(' ').join('&nbsp;'));
+		if (data.stderr && data.stderr.split) _console.warn(data.stderr.split(' ').join('&nbsp;'));
 		if (data.signal) _console.warn(data.signal);
-		console.log(data.signal)
+		//console.log(data.signal)
 	}
 	
 	_building(status, data){
@@ -2083,7 +2083,7 @@ class SettingsView extends View {
 		}
 		
 		$('#runOnBoot').on('change', () => {
-			if ($('#runOnBoot').val()) 
+			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
 				this.emit('run-on-boot', $('#runOnBoot').val());
 		});
 		
@@ -2993,8 +2993,12 @@ EventEmitter.prototype.emit = function(type) {
       er = arguments[1];
       if (er instanceof Error) {
         throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
       }
-      throw TypeError('Uncaught, unspecified "error" event.');
     }
   }
 
