@@ -322,7 +322,6 @@ UPDATES_DIR?=/root/Bela/updates
 UPDATE_SOURCE_DIR?=/tmp/belaUpdate
 UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board 
 UPDATE_BELA_PATCH?=/tmp/belaPatch
-UPDATE_BELA_BACKUP?=/tmp/belaBak
 UPDATE_BELA_MV_BACKUP?=/tmp/belaMvBak
 
 updateclean: ## Cleans the $(UPDATES_DIR) folder
@@ -337,8 +336,10 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	$(AT) [ -n $(UPDATE_SOURCE_DIR) ] && rm -rf $(UPDATE_SOURCE_DIR) && mkdir -p $(UPDATE_SOURCE_DIR)
 	$(AT) echo Unzipping archive...
 	$(AT) cd $(UPDATE_SOURCE_DIR) && unzip -qq $(UPDATES_DIR)/*zip
+	$(AT) # RemoveMac OSX garbage if it exists
+	$(AT) rm -rf $(UPDATE_SOURCE_DIR)/__MACOSX $(UPDATE_SOURCE_DIR)/.DS_store
 	$(AT) # Strip the top-level folder ( if there is only one )
-	$(AT) DIR=`ls -d $(UPDATE_SOURCE_DIR)` && COUNT=`echo $$DIR | wc -l` &&\
+	$(AT) DIR=`ls -d $(UPDATE_SOURCE_DIR)` && COUNT=`ls $$DIR | wc -l` &&\
 	  [ $$COUNT -eq 1 ] && mv $(UPDATE_SOURCE_DIR)/* /tmp/supertemp && rm -rf $(UPDATE_SOURCE_DIR) && mv /tmp/supertemp $(UPDATE_SOURCE_DIR)
 	
 	$(AT) echo Validating unzipped archive...
@@ -365,29 +366,25 @@ update: stop
 	$(AT) [ -n $(UPDATE_BELA_PATCH) ] && mkdir -p $(UPDATE_BELA_PATCH)
 	$(AT) #TODO: this would allow to trim trailing slashes in case we want to be safer: a="`pwd`/" ; target=${a%/} ; echo $target
 	$(AT) $(MAKE) --no-print-directory coreclean
-	$(AT) echo Backing up $(BELA_DIR) to $(UPDATE_BELA_PATCH) ... | tee -a $(UPDATE_LOG)
+	$(AT) echo Copying $(BELA_DIR) to $(UPDATE_BELA_PATCH) ... | tee -a $(UPDATE_LOG)
 	$(AT) rsync -a --delete-during --exclude Documentation $(BELA_DIR)/ $(UPDATE_BELA_PATCH)
-	$(AT) echo Backing up $(BELA_DIR) to $(UPDATE_BELA_BACKUP) ... | tee -a $(UPDATE_LOG)
-	$(AT) [ -n $(UPDATE_BELA_BACKUP) ] && mkdir -p $(UPDATE_BELA_BACKUP)
-	$(AT) rsync -a --delete-during $(BELA_DIR)/ $(UPDATE_BELA_BACKUP)
-	$(AT) echo Running update script... | tee -a $(UPDATE_LOG)
+	$(AT) echo Applying patch in $(UPDATE_BELA_PATCH)... | tee -a $(UPDATE_LOG)
 	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(UPDATE_BELA_PATCH) ./update_board -y --no-frills
-	$(AT) # If everything went ok, we now have the updated version of $(BELA_DIR) in $(UPDATE_BELA_PATCH) and a backup of $(BELA_DIR) in $(UPDATE_BELA_BACKUP)
+	$(AT) # If everything went ok, we now have the updated version of $(BELA_DIR) in $(UPDATE_BELA_PATCH)
 	$(AT) # So let's operate the magic swap. $(BELA_DIR) is moved to $(UPDATE_BELA_MV_BACKUP) and $(UPDATE_BELA_PATCH) is moved to $(BELA_DIR).
-	$(AT) # If something goes wrong at thie stage, you can always find your old $(BELA_DIR) folder at $(UPDATE_BELA_BACKUP)
 	$(AT) # The fun part is that this Makefile is moved as well...
 	$(AT) # We are about to kill the IDE, so just in case you are running this from within the IDE, we run the remainder of this update in a screen.
 	$(AT) # Output will be logged to $(UPDATE_LOG)
 	$(AT) echo Restoring directory structure... | tee -a $(UPDATE_LOG)
+	$(AT) [ -n $(UPDATE_BELA_MV_BACKUP) ] $(LOG) && rm -rf $(UPDATE_BELA_MV_BACKUP) $(LOG)
 	$(AT) screen -S update-Bela -d -m bash -c '\
-	  [ -n $(UPDATE_BELA_MV_BACKUP) ] $(LOG) && rm -rf $(UPDATE_BELA_MV_BACKUP) $(LOG) &&\
-	  echo Kill the IDE $(LOG) && \
-	  $(MAKE) --no-print-directory idestop $(LOG) &&\
-	  mv $(BELA_DIR) $(UPDATE_BELA_MV_BACKUP) $(LOG) && mv $(UPDATE_BELA_PATCH) $(BELA_DIR) $(LOG) &&\
-	  echo Hope we are still alive here $(LOG) &&\
-	  echo Restart the IDE $(LOG) &&\
-	  make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
-	  echo Update succesful $(LOG); \
-	  ' $(LOG)
+	        echo Kill the IDE $(LOG) && \
+	        $(MAKE) --no-print-directory idestop $(LOG) &&\
+	        mv $(BELA_DIR) $(UPDATE_BELA_MV_BACKUP) $(LOG) && mv $(UPDATE_BELA_PATCH) $(BELA_DIR) $(LOG) &&\
+	        echo Hope we are still alive here $(LOG) &&\
+	        echo Restart the IDE $(LOG) &&\
+	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
+	        echo Update succesful $(LOG); \
+	        ' $(LOG)
 
 .PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe
