@@ -195,7 +195,7 @@ build/core/%.o: ./core/%.S
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=1 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
