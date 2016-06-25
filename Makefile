@@ -319,8 +319,7 @@ ideconnect: ## Brings in the foreground the IDE that currently is running in a s
 
 BELA_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 UPDATES_DIR?=/root/Bela/updates
-UPDATE_SOURCE_DIR_BASE?=/tmp/belaUpdate
-UPDATE_SOURCE_DIR=$(UPDATE_SOURCE_DIR_BASE)/Bela
+UPDATE_SOURCE_DIR?=/tmp/belaUpdate
 UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board 
 UPDATE_BELA_PATCH?=/tmp/belaPatch
 UPDATE_BELA_BACKUP?=/tmp/belaBak
@@ -335,11 +334,11 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	$(AT) #TODO: heuristics on available space. Use unzip -l and df
 	$(AT) echo uncompressed size: `unzip -l \`ls $(UPDATES_DIR)/*.zip\` | tail -n1 | awk '{print $$1}'`
 	$(AT) # Delete and re-create the temp directory (first, make sure it is not an empty string!)
-	$(AT) [ -n $(UPDATE_SOURCE_DIR_BASE) ] && rm -rf $(UPDATE_SOURCE_DIR_BASE) && mkdir -p $(UPDATE_SOURCE_DIR_BASE)
+	$(AT) [ -n $(UPDATE_SOURCE_DIR) ] && rm -rf $(UPDATE_SOURCE_DIR) && mkdir -p $(UPDATE_SOURCE_DIR)
 	$(AT) echo Unzipping archive...
-	$(AT) cd $(UPDATE_SOURCE_DIR_BASE) && unzip -qq $(UPDATES_DIR)/*zip
-#TODO: this should not be needed. Remove comments.  Strip the top-level folder ( if there is only one )
-#@DIR=`ls -d $(UPDATE_SOURCE_DIR)` && COUNT=`echo $$DIR | wc -l` &&\
+	$(AT) cd $(UPDATE_SOURCE_DIR) && unzip -qq $(UPDATES_DIR)/*zip
+	$(AT) # Strip the top-level folder ( if there is only one )
+	$(AT) DIR=`ls -d $(UPDATE_SOURCE_DIR)` && COUNT=`echo $$DIR | wc -l` &&\
 	  [ $$COUNT -eq 1 ] && mv $(UPDATE_SOURCE_DIR)/* /tmp/supertemp && rm -rf $(UPDATE_SOURCE_DIR) && mv /tmp/supertemp $(UPDATE_SOURCE_DIR)
 	
 	$(AT) echo Validating unzipped archive...
