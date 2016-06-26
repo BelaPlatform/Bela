@@ -2782,7 +2782,7 @@ class Console extends EventEmitter {
 			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
 			
 			// create the link and add it to the element
-			var anchor = $('<a></a>').html(err.text).appendTo(div);
+			var anchor = $('<a></a>').html(err.text+', line: '+err.row).appendTo(div);
 			
 			div.appendTo(this.$element);
 			

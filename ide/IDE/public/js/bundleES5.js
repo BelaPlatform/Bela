@@ -3604,7 +3604,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 							// create the link and add it to the element
 
-							anchor = $('<a></a>').html(err.text).appendTo(div);
+							anchor = $('<a></a>').html(err.text + ', line: ' + err.row).appendTo(div);
 
 
 							div.appendTo(_this36.$element);
