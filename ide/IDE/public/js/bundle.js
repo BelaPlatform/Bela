@@ -724,7 +724,7 @@ class ConsoleView extends View{
 		this.on('shell-stderr', data => this.emit('warn', data) );
 		this.on('shell-cwd', cwd => {
 			//console.log('cwd', cwd);
-			shellCWD = 'root@arm ' + cwd.replace('/root', '~') + '#';
+			shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
 			$('#beaglert-consoleInput-pre').html(shellCWD);
 		});
 		this.on('shell-tabcomplete', data => $('#beaglert-consoleInput').val(data) );
@@ -2070,6 +2070,8 @@ function sanitise(name){
 var View = require('./View');
 var popup = require('../popup');
 
+var inputChangedTimeout;
+
 class SettingsView extends View {
 	
 	constructor(className, models, settings){
@@ -2086,6 +2088,8 @@ class SettingsView extends View {
 			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
 				this.emit('run-on-boot', $('#runOnBoot').val());
 		});
+		
+		this.inputJustChanged = false;
 		
 	}
 	
@@ -2108,6 +2112,11 @@ class SettingsView extends View {
 		var func = data.func;
 		var key = data.key;
 		var type = $element.prop('type');
+		
+		if (inputChangedTimeout) clearTimeout(inputChangedTimeout);
+		inputChangedTimeout = setTimeout( () => this.inputJustChanged = false, 100);
+		this.inputJustChanged = true;
+		
 		if (type === 'number' || type === 'text'){
 			if (func && this[func]){
 				this[func](func, key, $element.val());
@@ -2268,10 +2277,17 @@ class SettingsView extends View {
 	_CLArgs(data){
 		var args = '';
 		for (let key in data) {
-
-			// set the input element
-			this.$elements.filterByData('key', key).val(data[key]).prop('checked', (data[key] == 1));
+		
+			let el = this.$elements.filterByData('key', key);
 			
+			// set the input value when neccesary
+			if (el[0].type === 'checkbox') {
+				el.prop('checked', (data[key] == 1));
+			} else if (key === '-C' || (el.val() !== data[key] && !this.inputJustChanged)){
+				//console.log(el.val(), data[key]);
+				el.val(data[key]);
+			}
+
 			// fill in the full string
 			if (key[0] === '-' && key[1] === '-'){
 				args += key+'='+data[key]+' ';
@@ -2766,7 +2782,7 @@ class Console extends EventEmitter {
 			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
 			
 			// create the link and add it to the element
-			var anchor = $('<a></a>').html(err.text).appendTo(div);
+			var anchor = $('<a></a>').html(err.text+', line: '+err.row).appendTo(div);
 			
 			div.appendTo(this.$element);
 			

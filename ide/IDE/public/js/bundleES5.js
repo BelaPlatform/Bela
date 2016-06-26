@@ -859,7 +859,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				});
 				_this2.on('shell-cwd', function (cwd) {
 					//console.log('cwd', cwd);
-					shellCWD = 'root@arm ' + cwd.replace('/root', '~') + '#';
+					shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
 					$('#beaglert-consoleInput-pre').html(shellCWD);
 				});
 				_this2.on('shell-tabcomplete', function (data) {
@@ -2737,6 +2737,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 		var View = require('./View');
 		var popup = require('../popup');
 
+		var inputChangedTimeout;
+
 		var SettingsView = function (_View8) {
 			_inherits(SettingsView, _View8);
 
@@ -2759,6 +2761,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				$('#runOnBoot').on('change', function () {
 					if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--') _this26.emit('run-on-boot', $('#runOnBoot').val());
 				});
+
+				_this26.inputJustChanged = false;
 
 				return _this26;
 			}
@@ -2784,10 +2788,19 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "inputChanged",
 				value: function inputChanged($element, e) {
+					var _this27 = this;
+
 					var data = $element.data();
 					var func = data.func;
 					var key = data.key;
 					var type = $element.prop('type');
+
+					if (inputChangedTimeout) clearTimeout(inputChangedTimeout);
+					inputChangedTimeout = setTimeout(function () {
+						return _this27.inputJustChanged = false;
+					}, 100);
+					this.inputJustChanged = true;
+
 					if (type === 'number' || type === 'text') {
 						if (func && this[func]) {
 							this[func](func, key, $element.val());
@@ -2806,7 +2819,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "restoreDefaultCLArgs",
 				value: function restoreDefaultCLArgs(func) {
-					var _this27 = this;
+					var _this28 = this;
 
 					// build the popup content
 					popup.title('Restoring default project settings');
@@ -2818,7 +2831,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 					popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 						e.preventDefault();
-						_this27.emit('project-settings', { func: func });
+						_this28.emit('project-settings', { func: func });
 						popup.hide();
 					});
 
@@ -2837,7 +2850,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "restoreDefaultIDESettings",
 				value: function restoreDefaultIDESettings(func) {
-					var _this28 = this;
+					var _this29 = this;
 
 					// build the popup content
 					popup.title('Restoring default IDE settings');
@@ -2849,7 +2862,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 					popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 						e.preventDefault();
-						_this28.emit('IDE-settings', { func: func });
+						_this29.emit('IDE-settings', { func: func });
 						popup.hide();
 					});
 
@@ -2862,7 +2875,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "shutdownBBB",
 				value: function shutdownBBB() {
-					var _this29 = this;
+					var _this30 = this;
 
 					// build the popup content
 					popup.title('Shutting down Bela');
@@ -2874,7 +2887,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 					popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 						e.preventDefault();
-						_this29.emit('halt');
+						_this30.emit('halt');
 						popup.hide();
 					});
 
@@ -2906,7 +2919,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "updateBela",
 				value: function updateBela() {
-					var _this30 = this;
+					var _this31 = this;
 
 					// build the popup content
 					popup.title('Updating Bela');
@@ -2931,18 +2944,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 						var file = popup.find('input[type=file]').prop('files')[0];
 						if (file && file.type === 'application/zip') {
 
-							_this30.emit('warning', 'Beginning the update - this may take several minutes');
-							_this30.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
-							_this30.emit('warning', 'Do not use the IDE during the update process!');
+							_this31.emit('warning', 'Beginning the update - this may take several minutes');
+							_this31.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
+							_this31.emit('warning', 'Do not use the IDE during the update process!');
 
 							var reader = new FileReader();
 							reader.onload = function (ev) {
-								return _this30.emit('upload-update', { name: file.name, file: ev.target.result });
+								return _this31.emit('upload-update', { name: file.name, file: ev.target.result });
 							};
 							reader.readAsArrayBuffer(file);
 						} else {
 
-							_this30.emit('warning', 'not a valid update zip archive');
+							_this31.emit('warning', 'not a valid update zip archive');
 						}
 
 						popup.hide();
@@ -2961,8 +2974,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					var args = '';
 					for (var key in data) {
 
-						// set the input element
-						this.$elements.filterByData('key', key).val(data[key]).prop('checked', data[key] == 1);
+						var el = this.$elements.filterByData('key', key);
+
+						// set the input value when neccesary
+						if (el[0].type === 'checkbox') {
+							el.prop('checked', data[key] == 1);
+						} else if (key === '-C' || el.val() !== data[key] && !this.inputJustChanged) {
+							//console.log(el.val(), data[key]);
+							el.val(data[key]);
+						}
 
 						// fill in the full string
 						if (key[0] === '-' && key[1] === '-') {
@@ -3028,13 +3048,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 				// open/close tabs
 
-				var _this31 = _possibleConstructorReturn(this, Object.getPrototypeOf(TabView).call(this, 'tab'));
+				var _this32 = _possibleConstructorReturn(this, Object.getPrototypeOf(TabView).call(this, 'tab'));
 
 				$('#flexit').on('click', function () {
 					if (_tabsOpen) {
-						_this31.closeTabs();
+						_this32.closeTabs();
 					} else {
-						_this31.openTabs();
+						_this32.openTabs();
 					}
 				});
 
@@ -3042,7 +3062,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					if (!_tabsOpen) {
 						if ($(e.currentTarget).prop('id') === 'tab-0' && $('[type=radio]:checked ~ label').prop('id') === 'tab-0') $('#file-explorer').parent().trigger('click');
 
-						_this31.openTabs();
+						_this32.openTabs();
 						e.stopPropagation();
 					}
 				});
@@ -3099,21 +3119,21 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 				layout.init();
 				layout.on('initialised', function () {
-					return _this31.emit('change');
+					return _this32.emit('change');
 				});
 				layout.on('stateChanged', function () {
-					return _this31.emit('change');
+					return _this32.emit('change');
 				});
 
 				$(window).on('resize', function () {
 					if (_tabsOpen) {
-						_this31.openTabs();
+						_this32.openTabs();
 					} else {
-						_this31.closeTabs();
+						_this32.closeTabs();
 					}
 				});
 
-				return _this31;
+				return _this32;
 			}
 
 			_createClass(TabView, [{
@@ -3165,13 +3185,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			function ToolbarView(className, models) {
 				_classCallCheck(this, ToolbarView);
 
-				var _this32 = _possibleConstructorReturn(this, Object.getPrototypeOf(ToolbarView).call(this, className, models));
+				var _this33 = _possibleConstructorReturn(this, Object.getPrototypeOf(ToolbarView).call(this, className, models));
 
-				_this32.$elements.on('click', function (e) {
-					return _this32.buttonClicked($(e.currentTarget), e);
+				_this33.$elements.on('click', function (e) {
+					return _this33.buttonClicked($(e.currentTarget), e);
 				});
 
-				_this32.on('disconnected', function () {
+				_this33.on('disconnected', function () {
 					$('#run').removeClass('spinning');
 				});
 
@@ -3210,7 +3230,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				}).mouseout(function () {
 					$('#control-text-3').html('');
 				});
-				return _this32;
+				return _this33;
 			}
 
 			// UI events
@@ -3367,39 +3387,39 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			function View(CSSClassName, models, settings) {
 				_classCallCheck(this, View);
 
-				var _this33 = _possibleConstructorReturn(this, Object.getPrototypeOf(View).call(this));
+				var _this34 = _possibleConstructorReturn(this, Object.getPrototypeOf(View).call(this));
 
-				_this33.className = CSSClassName;
-				_this33.models = models;
-				_this33.settings = settings;
-				_this33.$elements = $('.' + CSSClassName);
-				_this33.$parents = $('.' + CSSClassName + '-parent');
+				_this34.className = CSSClassName;
+				_this34.models = models;
+				_this34.settings = settings;
+				_this34.$elements = $('.' + CSSClassName);
+				_this34.$parents = $('.' + CSSClassName + '-parent');
 
 				if (models) {
 					for (var i = 0; i < models.length; i++) {
 						models[i].on('change', function (data, changedKeys) {
-							_this33.modelChanged(data, changedKeys);
+							_this34.modelChanged(data, changedKeys);
 						});
 						models[i].on('set', function (data, changedKeys) {
-							_this33.modelSet(data, changedKeys);
+							_this34.modelSet(data, changedKeys);
 						});
 					}
 				}
 
-				_this33.$elements.filter('select').on('change', function (e) {
-					return _this33.selectChanged($(e.currentTarget), e);
+				_this34.$elements.filter('select').on('change', function (e) {
+					return _this34.selectChanged($(e.currentTarget), e);
 				});
-				_this33.$elements.filter('input').on('input', function (e) {
-					return _this33.inputChanged($(e.currentTarget), e);
+				_this34.$elements.filter('input').on('input', function (e) {
+					return _this34.inputChanged($(e.currentTarget), e);
 				});
-				_this33.$elements.filter('input[type=checkbox]').on('change', function (e) {
-					return _this33.inputChanged($(e.currentTarget), e);
+				_this34.$elements.filter('input[type=checkbox]').on('change', function (e) {
+					return _this34.inputChanged($(e.currentTarget), e);
 				});
-				_this33.$elements.filter('button').on('click', function (e) {
-					return _this33.buttonClicked($(e.currentTarget), e);
+				_this34.$elements.filter('button').on('click', function (e) {
+					return _this34.buttonClicked($(e.currentTarget), e);
 				});
 
-				return _this33;
+				return _this34;
 			}
 
 			_createClass(View, [{
@@ -3498,11 +3518,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			function Console() {
 				_classCallCheck(this, Console);
 
-				var _this34 = _possibleConstructorReturn(this, Object.getPrototypeOf(Console).call(this));
+				var _this35 = _possibleConstructorReturn(this, Object.getPrototypeOf(Console).call(this));
 
-				_this34.$element = $('#beaglert-consoleWrapper');
-				_this34.parent = document.getElementById('beaglert-console');
-				return _this34;
+				_this35.$element = $('#beaglert-consoleWrapper');
+				_this35.parent = document.getElementById('beaglert-console');
+				return _this35;
 			}
 
 			_createClass(Console, [{
@@ -3566,7 +3586,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "newErrors",
 				value: function newErrors(errors) {
-					var _this35 = this;
+					var _this36 = this;
 
 					$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 
@@ -3584,18 +3604,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 							// create the link and add it to the element
 
-							anchor = $('<a></a>').html(err.text).appendTo(div);
+							anchor = $('<a></a>').html(err.text + ', line: ' + err.row).appendTo(div);
 
 
-							div.appendTo(_this35.$element);
+							div.appendTo(_this36.$element);
 
 							if (err.currentFile) {
 								div.on('click', function () {
-									return _this35.emit('focus', { line: err.row + 1, column: err.column - 1 });
+									return _this36.emit('focus', { line: err.row + 1, column: err.column - 1 });
 								});
 							} else {
 								div.on('click', function () {
-									return _this35.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
+									return _this36.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
 								});
 							}
 						};
@@ -3698,10 +3718,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "scroll",
 				value: function scroll() {
-					var _this36 = this;
+					var _this37 = this;
 
 					setTimeout(function () {
-						return _this36.parent.scrollTop = _this36.parent.scrollHeight;
+						return _this37.parent.scrollTop = _this37.parent.scrollHeight;
 					}, 0);
 				}
 			}, {

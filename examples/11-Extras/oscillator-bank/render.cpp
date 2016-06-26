@@ -235,7 +235,6 @@ void cleanup(BelaContext *context, void *userData)
 	free(gDAmplitudes);
 }
 
-
 /**
 \example oscillator-bank/render.cpp
 
@@ -245,3 +244,4 @@ Oscillator Bank
 These files demonstrate an oscillator bank implemented in assembly code 
 that is used as part of the d-box project.
 */
+

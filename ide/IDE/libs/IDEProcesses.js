@@ -50,26 +50,32 @@ class buildProcess extends MakeProcess{
 		
 		this.buildError = false;
 		
-		var ret = super.start(project, _args, opts);
-		
-		this.childProcess.stderr.on('data', (data) => {
-			// separate errors from warnings in the stderr of g++
-			var lines = data.split('\n');
-			for (let line of lines){
-				// do not count warnings as buildErrors
-				// this allows the executable to be built and run even with warnings
-				line = line.split(':');
-				if (line.length > 4){
-					if (line[3] === ' error' || line[3] === ' fatal error'){
-						this.buildError = true;
-					} else if (line[3] === ' warning'){
-						//console.log('warning');
+		_co(ProjectManager, 'getCLArgs', project)
+			.then( (CLArgs) => {
+				this.active = false;
+				
+				super.start(project, _args, CLArgs.make);
+				
+				this.childProcess.stderr.on('data', (data) => {
+					// separate errors from warnings in the stderr of g++
+					var lines = data.split('\n');
+					for (let line of lines){
+						// do not count warnings as buildErrors
+						// this allows the executable to be built and run even with warnings
+						line = line.split(':');
+						if (line.length > 4){
+							if (line[3] === ' error' || line[3] === ' fatal error'){
+								this.buildError = true;
+							} else if (line[3] === ' warning'){
+								//console.log('warning');
+							}
+						}
 					}
-				}
-			}
-		});
-		
-		return ret;
+				});
+				
+			});
+
+		return this;
 	}
 	
 	CPU(){
