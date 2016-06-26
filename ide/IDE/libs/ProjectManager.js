@@ -469,7 +469,7 @@ function _getSettings(projectName){
 
 // save the project settings
 function _saveSettings(settings, data){
-	//console.log('saving settings in', projectPath+data.currentProject);
+	//console.log('saving settings', settings, ' in', projectPath+data.currentProject);
 	return fs.outputJSONAsync(projectPath+data.currentProject+'/settings.json', settings)
 		.then( () => settings )
 		.catch( (e) => console.log(e) );
