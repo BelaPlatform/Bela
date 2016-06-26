@@ -57,12 +57,16 @@ do
 	shift
 done
 
-[ -z "$BBB_PROJECT_NAME" ] && BBB_PROJECT_NAME=$BBB_DEFAULT_PROJECT_NAME
 
+[ -z "$BBB_PROJECT_NAME" ] && {
+	echo "ERROR: you need to specify a project name. Here is a list of projects available on your board:"
+	list_available_projects
+	exit 1
+}
 check_project_exists || {
 	echo "ERROR: project $BBB_PROJECT_NAME could not be found at $BBB_ADDRESS:$BBB_PROJECT_HOME. Here is a list of projects available on your board:"
 	list_available_projects
-	exit 1
+	exit 2
 }
 
 MAKE_COMMAND="make QUIET=true --no-print-directory -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS'"
