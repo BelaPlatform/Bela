@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This script stops the Bela program running on the BeagleBone.
 

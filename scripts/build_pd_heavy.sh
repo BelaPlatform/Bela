@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=

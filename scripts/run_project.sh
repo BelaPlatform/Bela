@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This script runs a Bela project that already is on the board 
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This script compiles a Bela project on the BeagleBone Black and
 # optionally runs it. Pass a directory path in the first argument. 

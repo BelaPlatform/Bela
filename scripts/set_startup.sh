@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This script enables or disables running Bela when the board starts
 # up.
