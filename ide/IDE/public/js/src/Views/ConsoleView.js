@@ -100,7 +100,7 @@ class ConsoleView extends View{
 		this.on('shell-stderr', data => this.emit('warn', data) );
 		this.on('shell-cwd', cwd => {
 			//console.log('cwd', cwd);
-			shellCWD = 'root@arm ' + cwd.replace('/root', '~') + '#';
+			shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
 			$('#beaglert-consoleInput-pre').html(shellCWD);
 		});
 		this.on('shell-tabcomplete', data => $('#beaglert-consoleInput').val(data) );

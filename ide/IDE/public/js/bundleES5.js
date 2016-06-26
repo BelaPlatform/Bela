@@ -859,7 +859,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				});
 				_this2.on('shell-cwd', function (cwd) {
 					//console.log('cwd', cwd);
-					shellCWD = 'root@arm ' + cwd.replace('/root', '~') + '#';
+					shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
 					$('#beaglert-consoleInput-pre').html(shellCWD);
 				});
 				_this2.on('shell-tabcomplete', function (data) {
