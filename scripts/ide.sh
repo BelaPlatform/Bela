@@ -9,13 +9,12 @@ SCRIPTDIR=$(dirname "$0")
 
 usage()
 {
-    THIS_SCRIPT=`basename "$0"`
     echo "Usage: $THIS_SCRIPT [start] [stop] [startup] [nostartup] "
     echo "This program controls Bela's IDE.
-    ./$THIS_SCRIPT start -- starts or restarts the IDE
-    ./$THIS_SCRIPT stop -- stops the IDE
-    ./$THIS_SCRIPT startup -- sets the IDE to start at boot
-    ./$THIS_SCRIPT nostartup -- disables the IDE at boot
+    $THIS_SCRIPT start -- starts or restarts the IDE
+    $THIS_SCRIPT stop -- stops the IDE
+    $THIS_SCRIPT startup -- sets the IDE to start at boot
+    $THIS_SCRIPT nostartup -- disables the IDE at boot
     "
 }
 

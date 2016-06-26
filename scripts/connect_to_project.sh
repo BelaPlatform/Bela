@@ -10,19 +10,5 @@ echo "Usage: $THIS_SCRIPT
 	This script brings to the foreground a Bela program that is running in the
 	background, so that you can see its output."
 }
-while [ -n "$1" ]
-do
-	case $1 in 
-	--help|-h|-\?)
-		usage
-		exit
-	;;
-	*)
-		echo "errr$1___"
-		echo "Error: unknown option $1" 
-		usage
-		exit 1
-	;;
-	esac
-done
-ssh -t $BBB_ADDRESS "make -C "$BBB_BELA_HOME" connect"
+check_for_help $1
+ssh -t $BBB_ADDRESS "make --no-print-directory -C "$BBB_BELA_HOME" connect"

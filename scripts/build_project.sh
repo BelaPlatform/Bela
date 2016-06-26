@@ -33,10 +33,8 @@ usage()
 }
 
 RUN_MODE=foreground
-
 WATCH=0
 HOST_SOURCE_PATH=
-BBB_PROJECT_NAME=
 FORCE=0
 EXPERT=0
 while [ -n "$1" ]
@@ -76,19 +74,19 @@ do
 			WATCH=1
 		;;
 		--help|-h|-\?)
-			usage;
-			exit 0;
+			usage
+			exit 0
 		;;
 		-*)
-			echo Error: unknow option $0
+			echo Error: unknown option $1
 			usage_brief
-			exit 1;
+			exit 1
 		;;
 		*)
 			[ -z "$HOST_SOURCE_PATH" ] &&  HOST_SOURCE_PATH=$1 || {
-				echo "Too many options $HOST_SOURCE_PATH $1"
+				echo "Error: too many options $HOST_SOURCE_PATH $1"
 				usage_brief
-				exit 1;
+				exit 1
 			}
 		;;
 	esac
@@ -131,17 +129,7 @@ echo "Stop running process..."
 ssh $BBB_ADDRESS make QUIET=true --no-print-directory -C $BBB_BELA_HOME stop
 
 # check if project exists
-[ $FORCE -eq 1 ] || {
-	check_project_exists $BBB_PROJECT_NAME &&\
-	{
-		printf "Project \`$BBB_PROJECT_NAME' already exists on the board, do you want to overwrite it? Or use the \`-p' option to specify a different name" 
-		interactive 1 
-		[  $_RET1 -eq 0 ] && {
-			echo "Aborting..."
-			exit;
-		}
-	}
-}
+[ $FORCE -eq 1 ] ||	check_project_exists_prompt $BBB_PROJECT_NAME
 
 # This file is used to keep track of when the last upload was made,
 # so to check for modifications if WATCH is active

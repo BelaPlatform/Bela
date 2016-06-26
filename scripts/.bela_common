@@ -9,8 +9,6 @@
 [ -z "$RUN_IN_FOREGROUND" ] && RUN_IN_FOREGROUND=1
 [ -z "$RUN_WITHOUT_SCREEN" ] && RUN_WITHOUT_SCREEN=0
 [ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
-[ -z "$BBB_DEFAULT_PROJECT_NAME" ] && BBB_DEFAULT_PROJECT_NAME="scriptUploadedProject"
-[ -z "$BBB_PROJECT_NAME" ] && BBB_PROJECT_NAME=$BBB_DEFAULT_PROJECT_NAME
 [ -z "$RUN_MODE" ] && RUN_MODE=foreground
 
 THIS_SCRIPT=`basename "$0"`
@@ -48,6 +46,18 @@ check_board_alive(){
 check_project_exists(){
 	ssh $BBB_ADDRESS "[ -d $BBB_PROJECT_HOME/$1 ]"
 	return $?
+}
+
+check_project_exists_prompt(){
+	check_project_exists $1 &&\
+	{
+		printf "Project \`$1' already exists on the board, do you want to overwrite it? Or use the \`-p' option to specify a different name" 
+		interactive 1
+		[  $_RET1 -eq 0 ] && {
+			echo "Aborting..."
+			exit;
+		}
+	}
 }
 
 list_available_projects(){
@@ -98,6 +108,23 @@ interactive(){
 	done
 	_RET1=$REPLY
 	return 0
+}
+
+check_for_help(){
+while [ -n "$1" ]
+do
+	case $1 in
+	--help|-h|-\?)
+		usage
+		exit
+	;;
+	*)
+		echo "Error: unknown option $1"
+		usage
+		exit 1
+	;;
+	esac
+done
 }
 
 case_run_mode() {
@@ -207,7 +234,7 @@ end_options{
 			exit 0;
 		;;
 		-*)
-			echo Error: unknow option $1
+			echo Error: unknown option $1
 			usage_brief
 			exit 1;
 		;;

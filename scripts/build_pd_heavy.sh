@@ -1,13 +1,16 @@
 #!/bin/sh
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
-pdpath=""
+pdpath=
 release=1
-NO_UPLOAD="0"
-WATCH="0"
-FORCE="0"
-#make sure the paths have the trailing / . 
-BBB_DEFAULT_PROJECT_NAME="heavyProject"
+NO_UPLOAD=0
+WATCH=0
+FORCE=0
+COMMAND_ARGS=
+RUN_PROJECT=1
+RUN_MODE=foreground
+EXPERT=0
+
 BELA_PYTHON27=
 
 SCRIPTDIR=$(dirname "$0")
@@ -34,28 +37,34 @@ if [ -z "$BELA_PYTHON27" ]; then
 fi;
 
 
+usage_brief(){
+	printf "Usage: $THIS_SCRIPT path/to/project "
+    printf '[-o] [--noupload] [-r|--release release] '
+	build_script_usage_brief
+	run_script_usage_brief
+	echo
+}
+
 usage ()
 {
-build_script_usage_brief ' [-o] [--noupload] [-r|--release release] '
+usage_brief
 echo "
-        example: build_pd.sh -o ../projects/heavy/hello-world ../projects/heavy/pd/hello-world
+example: build_pd.sh -o ../projects/heavy/hello-world ../projects/heavy/pd/hello-world
       
-        -r allows to build against a specific Heavy release. Default is: $release (stable)
+	-r : builds against a specific Heavy release. Default is: $release (stable)
             ( see revision list here https://enzienaudio.com/a/releases )
+	--noupload : does not use the online compiler, only compiles the current source files.
+	-o arg : sets the path where files returned from the online compiler are stored.
 "
 	build_script_usage
+	run_script_usage
 }
 
+[ -z "$ENZIENAUDIO_COM_PATCH_NAME" ] && ENZIENAUDIO_COM_PATCH_NAME=bela
 
-COMMAND_ARGS=
-RUN_PROJECT=1
-RUN_MODE=foreground
-
-[ $# -lt 2 ]  && {
-	[ -d $1 ] || { usage; exit; }
-}
-while [ "$2" != "" ]; do
-    case $1 in
+while [ -n "$1" ]
+do
+	case $1 in
 		-c)
 			shift
 			COMMAND_ARGS="$1"
@@ -79,6 +88,9 @@ while [ "$2" != "" ]; do
 		--clean)
 			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS projectclean"
 		;;
+		--force)
+			FORCE=1
+		;;
 		-m)
 			shift
 			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS $1"
@@ -86,31 +98,41 @@ while [ "$2" != "" ]; do
 		--watch)
 			WATCH=1
 		;;
-        -o | --output )
+		-o | --output )
 			shift
 			projectpath=$1
-        ;;
-        -r | --release )
+		;;
+		-r | --release )
 			shift
 			release=$1
 		;;
-        -n | --noupload )
+		--noupload )
 			NO_UPLOAD=1
 		;;
-        -h | --help | -\?)
+		--help|-h|-\?)
 			usage
 			exit
 		;;
-        *)
-			usage
+		-*)
+			echo Error: unknown option $1
+			usage_brief
 			exit 1
+		;;
+		*)
+			[ -z "$pdpath" ] && pdpath=$1 || {
+				echo "Error: too many options $pdpath $1"
+				usage_brief
+				exit 1
+			}
     esac
     shift
 done
-pdpath=$1
+
+[ $FORCE -eq 1 ] && EXPERT=1
 
 [ "$NO_UPLOAD" -eq 0 ] && [ -z "$pdpath" ] && { echo "Error: a path to the source folder should be provided"; exit 1; }
-[ -z "$ENZIENAUDIO_COM_PATCH_NAME" ] && ENZIENAUDIO_COM_PATCH_NAME=bela
+
+[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME=`basename "$pdpath"`
 
 if [ -z "$release" ]
 then 
@@ -119,15 +141,23 @@ else
   RELEASE_STRING="-r $release"
 fi
 
-#truncated the destination folder if it does not exist"
-mkdir -p "$projectpath"
 
 # These files will be cleared from $projectpath before calling uploader.py
 #TODO: get a reliable, exhaustive, up-to-date list.
 HEAVY_FILES='Heavy* Hv*'
 
-check_board_alive
-set_date
+[ $EXPERT -eq 0 ] && check_board_alive
+# Not sure if set_date should be taken out by expert mode ...
+# The expert will have to remember to run set_date after powering up the board 
+# in case the updated files are not being rebuilt
+[ $EXPERT -eq 0 ] && set_date
+
+# check if project exists
+[ $FORCE -eq 1 ] ||	check_project_exists_prompt $BBB_PROJECT_NAME
+
+#create the destination folder if it does not exist"
+mkdir -p "$projectpath"
+
 reference_time_file="$projectpath"/
 
 uploadBuildRun(){
@@ -204,22 +234,7 @@ uploadBuildRun(){
         echo "Building project..."
         ssh $BBB_ADDRESS "$MAKE_COMMAND"
     else
-	  case $RUN_MODE in
-		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
-		foreground)
-			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
-		;;
-		screen)
-			ssh $BBB_ADDRESS "$MAKE_COMMAND runscreen"
-		;;
-		screenfg)
-			ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
-		;;
-		*)
-			echo $RUN_MODE
-			error
-		;;
-      esac
+	    case_run_mode
     fi
 } #uploadBuildRun
 

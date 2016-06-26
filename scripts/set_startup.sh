@@ -12,41 +12,65 @@ RUN_IN_LOOP=1
 
 # This path is hard-coded in the Bela image at present.
 
+usage_brief(){
+    echo "Usage: $THIS_SCRIPT [-c command-line-args] [-s] [startup|nostartup] projectname"
+}
 usage()
 {
-    THIS_SCRIPT=`basename "$0"`
-    echo "Usage: $THIS_SCRIPT [-b path-on-beaglebone] [-c command-line-args] [-n] [-s]"
-
     echo "
-    This script enables (by default) or disables running the Bela
-    project at startup. The -n option disables auto-startup, otherwise
-    auto-startup is enabled. The -b option changes the name of the project to
-    set on startup, which is otherwise $BBB_DEFAULT_PROJECT_NAME. The -c option 
-    passes command-line arguments to the Bela program; enclose the argument 
-    string in quotes.
-    The -s option runs the Bela program in single-shot mode.
-    By default, instead, the program is restarted  automatically in the event of a crash."
+    This script enables or disables running a Bela
+    project at startup.
+Options:
+	\`projectname' the name of the project, as saved on the board
+	startup : enables the program at startup (default)
+	nostartup : disables the program at startup
+	-l : runs the program in a loop, so it is restarted in case of crash (default)
+    -s : runs the program in single-shot mode.
+	-c : passes command-line arguments to the Bela program enclose the argument
+	     string in quotes."
 }
 
-OPTIND=1
-
-while getopts "b:c:nhs" opt; do
-    case $opt in
-        b)            BBB_PROJECT_NAME=$OPTARG
-                      ;;
-        c)            COMMAND_ARGS=$OPTARG
-                      ;;
-        n)            ENABLE_STARTUP=0
-                      ;;
-        s)            RUN_IN_LOOP=0
-                      ;;
-        h|\?)         usage
-                      exit 1
+ENABLE_STARTUP=1
+while [ -n "$1" ]
+do
+	case $1 in
+		-c)
+			shift;
+			COMMAND_ARGS="$1";
+		;;
+		-l)
+			RUN_IN_LOOP=1
+		;;
+        -s)
+			RUN_IN_LOOP=0
+		;;
+        --help|-h|-\?)
+			usage
+			exit
+		;;
+		-*)
+			echo Error: unknown option $1
+			usage_brief
+			exit 1;
+		;;
+		startup)
+			ENABLE_STARTUP=1
+		;;
+		nostartup)
+			ENABLE_STARTUP=0
+		;;
+		*)
+			BBB_PROJECT_NAME=$1
+		;;
     esac
+	shift
 done
 
-shift $((OPTIND-1))
-
+[ -z "$BBB_PROJECT_NAME" ] || check_project_exists $BBB_PROJECT_NAME {
+	echo "Error: project $BBB_PROJECT_NAME not found. Available projects on the board are:"
+	list_available_projects
+	exit 1
+}
 MAKE_COMMAND="make --no-print-directory -C $BBB_BELA_HOME PROJECT=$BBB_PROJECT_NAME CL=\"$OPTARG\""
 if [ $ENABLE_STARTUP -eq 0 ]
 then
