@@ -7,8 +7,8 @@ SCRIPTDIR=$(dirname "$0")
 
 usage(){
 echo "Usage: $THIS_SCRIPT
-	This script brings to the foreground a Bela program that is running in the
-	background, so that you can see its output."
+	This script brings to the foreground a Bela program that is running in
+	the background, so that you can see its output."
 }
 check_for_help $1
 ssh -t $BBB_ADDRESS "make --no-print-directory -C "$BBB_BELA_HOME" connect"

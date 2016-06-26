@@ -22,12 +22,15 @@ usage()
     project at startup.
 Options:
 	\`projectname' the name of the project, as saved on the board
+
 	startup : enables the program at startup (default)
 	nostartup : disables the program at startup
-	-l : runs the program in a loop, so it is restarted in case of crash (default)
-    -s : runs the program in single-shot mode.
-	-c : passes command-line arguments to the Bela program enclose the argument
-	     string in quotes."
+
+	-l : runs the program in a loop, so it is restarted in
+	     case it crashes (default)
+	-s : runs the program in single-shot mode.
+	-c : passes command-line arguments to the Bela program. Make sure
+	     you enclose the argument string in quotes."
 }
 
 ENABLE_STARTUP=1
@@ -41,10 +44,10 @@ do
 		-l)
 			RUN_IN_LOOP=1
 		;;
-        -s)
+		-s)
 			RUN_IN_LOOP=0
 		;;
-        --help|-h|-\?)
+		--help|-h|-\?)
 			usage
 			exit
 		;;
@@ -66,7 +69,7 @@ do
 	shift
 done
 
-[ -z "$BBB_PROJECT_NAME" ] || check_project_exists $BBB_PROJECT_NAME {
+[ -z "$BBB_PROJECT_NAME" ] || check_project_exists $BBB_PROJECT_NAME || {
 	echo "Error: project $BBB_PROJECT_NAME not found. Available projects on the board are:"
 	list_available_projects
 	exit 1
