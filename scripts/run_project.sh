@@ -1,70 +1,70 @@
 #!/bin/sh
 #
-# This script runs an already-compiled Bela project on the
-# BeagleBone Black.
+# This script runs a Bela project that already is on the board 
 
 SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
 
-usage()
-{
-    THIS_SCRIPT=`basename "$0"`
-    echo "Usage: $THIS_SCRIPT [-b path-on-beaglebone] [-c command-line-args] [-fF]"
-
-    echo "
-    This script runs a previously compiled Bela project on the 
-    BeagleBone Black. The -c option passes command-line arguments
-    to the Bela program; enclose the argument string in quotes.
-
-    -p arg : sets the name of the project to run (default: $BBB_PROJECT_NAME ) 
-	
-    By default, the project runs in the foreground of the current terminal,
-    within a screen session that can be detached later. The -f argument runs
-    the project in the foreground of the current terminal, without screen, so
-    the output can be piped to another destination. The -b argument runs it
-    in a screen in the background, so no output is shown. The -m argument allows
-    to pass arguments to the Makefile before the run target. For instance,
-    pass -m \`"projectclean"\` or \`-m "distclean"\` to clean project-specific
-    pre-built objects, or all the pre-built objects, respectively."
+   
+THIS_SCRIPT=`basename "$0"`
+usage_brief(){
+    printf "Usage: $THIS_SCRIPT projectname ";
+	run_script_usage_brief
+	echo
 }
 
-OPTIND=1
+usage(){
+	usage_brief
+    echo "\
+	This script runs a Bela project that is already on the board.
+	
+	\`projectname' is the name with which the project was saved on the board
+	in ${BBB_PROJECT_HOME} (defaults to $BBB_DEFAULT_PROJECT_NAME)
+"
+	run_script_usage
+}
 
-while getopts "bc:m:nfFhp:" opt; do
-    case $opt in
-        c)            COMMAND_ARGS=$OPTARG
-                      ;;
-        b)            RUN_IN_FOREGROUND=0
-                      ;;
-        f)            RUN_WITHOUT_SCREEN=1
-                      ;;
-	p)            BBB_PROJECT_NAME=$OPTARG
-		      ;;	
-	m)            BBB_MAKEFILE_OPTIONS=$OPTARG
-	              ;;
-        h|\?)         usage
-                      exit 1
-    esac
+while [ -n "$1" ]
+do
+	case $1 in 
+		-c)
+			shift;
+			COMMAND_ARGS="$1";
+		;;
+		-b)
+			RUN_MODE=screen;
+		;;
+		-f)
+			RUN_MODE=foreground;
+		;;
+		-s)
+			RUN_MODE=screenfg;
+		;;
+		--help|-h|-\?)
+			usage;
+			exit 0;
+		;;
+		-*)
+			echo Error: unknown option $1
+			usage_brief
+			exit 1;
+		;;
+		*)
+			BBB_PROJECT_NAME=$1
+		;;
+	esac
+	shift
 done
 
-shift $((OPTIND-1))
+[ -z "$BBB_PROJECT_NAME" ] && BBB_PROJECT_NAME=$BBB_DEFAULT_PROJECT_NAME
 
-if [ -z "$1" ]
-then
-    BBB_PROJECT_NAME=$BBB_DEFAULT_PROJECT_NAME
-else
-    BBB_PROJECT_NAME=$1
-fi
+check_project_exists || {
+	echo "ERROR: project $BBB_PROJECT_NAME could not be found at $BBB_ADDRESS:$BBB_PROJECT_HOME. Here is a list of projects available on your board:"
+	list_available_projects
+	exit 1
+}
 
-MAKE_COMMAND="make --no-print-directory stop -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS'"
+MAKE_COMMAND="make QUIET=true --no-print-directory -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS'"
 echo "Running $BBB_PROJECT_NAME..."
-if [ $RUN_WITHOUT_SCREEN -eq 1 ]
-then
-    ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
-elif [ $RUN_IN_FOREGROUND -eq 1 ]
-then
-    ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
-else
-    ssh $BBB_ADDRESS "$MAKE_COMMAND runscreen"
-fi
+case_run_mode

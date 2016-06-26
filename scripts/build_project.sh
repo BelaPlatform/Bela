@@ -9,111 +9,143 @@ SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
 
-WATCH="0"
+usage_brief(){
+	printf "Usage: $THIS_SCRIPT path/to/project "
+	build_script_usage_brief
+	run_script_usage_brief
+	echo
+}
+
+
 usage()
 {
-	THIS_SCRIPT=`basename "$0"`
-	build_script_usage_brief
+	usage_brief
 	echo "
 
 	This script copies a directory of source files to the BeagleBone, compiles
 	and runs it. The Bela core files should have first been copied over
 	using the \`update_board' script once.
-	The source directory should contain at least one .c, .cpp, .S or .pd file.
-
+	
+	Folder /path/to/project should contain at least one .c, .cpp, .S or .pd file.
 "
 	build_script_usage
+	run_script_usage
 }
-# UNDOCUMENTED OPTION -s runs in a screen in the foreground 
 
 RUN_MODE=foreground
 
-# We are "whiling" $2 because the last command is going to be the path/to/project
-[ $# -lt 2 ]  && {
-	[ -d $1 ] || { usage; exit; }
-}
-while [ "$2" != "" ]; do
+WATCH=0
+HOST_SOURCE_PATH=
+BBB_PROJECT_NAME=
+FORCE=0
+EXPERT=0
+while [ -n "$1" ]
+do
 	case $1 in
 		-c)
-			shift
-			COMMAND_ARGS="$1"
+			shift;
+			COMMAND_ARGS="$1";
 		;;
 		-b)
-			RUN_MODE=screen
+			RUN_MODE=screen;
 		;;
 		-f)
-			RUN_MODE=foreground
+			RUN_MODE=foreground;
 		;;
 		-s)
-			RUN_MODE=screenfg
+			RUN_MODE=screenfg;
 		;;
 		-n)
-			RUN_PROJECT=0
+			RUN_PROJECT=0;
 		;;
 		-p)
-			shift
-			BBB_PROJECT_NAME="$1"
+			shift;
+			BBB_PROJECT_NAME="$1";
 		;;	
 		--clean)
-			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS projectclean"
+			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS projectclean";
+		;;
+		--force)
+			FORCE=1
 		;;
 		-m)
-			shift
-			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS $1"
+			shift;
+			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS $1";
 		;;
 		--watch)
 			WATCH=1
 		;;
-		-h|-\?)
-			usage
-			exit 0
+		--help|-h|-\?)
+			usage;
+			exit 0;
+		;;
+		-*)
+			echo Error: unknow option $0
+			usage_brief
+			exit 1;
 		;;
 		*)
-			usage
-			exit 1
+			[ -z "$HOST_SOURCE_PATH" ] &&  HOST_SOURCE_PATH=$1 || {
+				echo "Too many options $HOST_SOURCE_PATH $1"
+				usage_brief
+				exit 1;
+			}
 		;;
 	esac
 	shift
 done
 
+[ $FORCE -eq 1 ] && EXPERT=1
 
 # Check that we have a directory containing at least one source file
 # as an argument
 
-if [ -z "$1" ]
+if [ -z "$HOST_SOURCE_PATH" ]
 then
 	usage
 	exit 2
 fi
 
-FIND_STRING="find $* -maxdepth 10000 -type f "
+FIND_STRING="find $HOST_SOURCE_PATH -maxdepth 1 -type f "
 EXTENSIONS_TO_FIND='\.cpp\|\.c\|\.S\|\.pd'
-FOUND_FILES=$($FIND_STRING | grep "$EXTENSIONS_TO_FIND")
+FOUND_FILES=$($FIND_STRING 2>/dev/null | grep "$EXTENSIONS_TO_FIND")
 if [ -z "$FOUND_FILES" ]
 then
 	 printf "ERROR: Please provide a directory containing .c, .cpp, .S or .pd files.\n\n"
 	 exit 1
 fi
 
+[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME=`basename "$HOST_SOURCE_PATH"` 
+
 BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
 BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
 
-echo "Stopping running process..."
-# sets the date and stop running process
-ssh $BBB_ADDRESS "date -s \"`date '+%Y%m%d %T %Z'`\" > /dev/null; mkdir -p $BBB_PROJECT_FOLDER; make QUIET=true --no-print-directory -C $BBB_BELA_HOME stop"
+[ $EXPERT -eq 0 ] && check_board_alive
+# Not sure if set_date should be taken out by expert mode ...
+# The expert will have to remember to run set_date after powering up the board 
+# in case the updated files are not being rebuilt
+[ $EXPERT -eq 0 ] && set_date
 
-#concatenate arguments to form path.
-HOST_SOURCE_PATH= #initially empty, will be filled with input arguments
-for i in "$@" #parse input arguments
-do
-	HOST_SOURCE_PATH+=" $1"
-	shift
-	# Copy new souce files to the board
-done
+# stop running process
+echo "Stop running process..."
+ssh $BBB_ADDRESS make QUIET=true --no-print-directory -C $BBB_BELA_HOME stop
+
+# check if project exists
+[ $FORCE -eq 1 ] || {
+	check_project_exists $BBB_PROJECT_NAME &&\
+	{
+		printf "Project \`$BBB_PROJECT_NAME' already exists on the board, do you want to overwrite it? Or use the \`-p' option to specify a different name" 
+		interactive 1 
+		[  $_RET1 -eq 0 ] && {
+			echo "Aborting..."
+			exit;
+		}
+	}
+}
 
 # This file is used to keep track of when the last upload was made,
 # so to check for modifications if WATCH is active
-reference_time_file="$SCRIPTDIR/../tmp/"
+reference_time_file="$SCRIPTDIR/../tmp/.time$BBB_PROJECT_NAME"
 uploadBuildRun(){
 	[ $WATCH -eq 1 ] && touch $reference_time_file
 	# Copy new source files to the board
@@ -146,26 +178,11 @@ uploadBuildRun(){
 		echo "Building project..."
 		ssh $BBB_ADDRESS "$MAKE_COMMAND"
 	else
-      echo "Building and running project..."
-	  case $RUN_MODE in
-		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
-		foreground)
-			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
-		;;
-		screen)
-			ssh $BBB_ADDRESS "$MAKE_COMMAND runscreen"
-		;;
-		screenfg)
-			ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
-		;;
-		*)
-			echo $RUN_MODE
-			error
-		;;
-      esac
+        echo "Building and running project..."
+	    case_run_mode
 	fi
 }
-# run it once and then (maybe) start waiting for changes
+# run it once and then (in case) start waiting for changes
 uploadBuildRun
 
 if [ $WATCH -ne 0 ]; then

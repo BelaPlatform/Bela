@@ -1,7 +1,8 @@
+#!/bin/bash
 [ -z "$BBB_USER" ] && BBB_USER="root"
 [ -z "$BBB_HOSTNAME" ] && BBB_HOSTNAME="192.168.7.2"
 [ -z "$BBB_ADDRESS" ] && BBB_ADDRESS="$BBB_USER@$BBB_HOSTNAME"
-[ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="~/Bela/"
+[ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="~/Bela"
 [ -z "$BBB_SCREEN_NAME" ] && BBB_SCREEN_NAME="Bela"
 [ -z "$RUN_PROJECT" ] && RUN_PROJECT=1
 [ -z "$COMMAND_ARGS" ] && COMMAND_ARGS=
@@ -10,8 +11,10 @@
 [ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
 [ -z "$BBB_DEFAULT_PROJECT_NAME" ] && BBB_DEFAULT_PROJECT_NAME="scriptUploadedProject"
 [ -z "$BBB_PROJECT_NAME" ] && BBB_PROJECT_NAME=$BBB_DEFAULT_PROJECT_NAME
+[ -z "$RUN_MODE" ] && RUN_MODE=foreground
 
-trap "echo; exit 0;" 2 9
+THIS_SCRIPT=`basename "$0"`
+#trap "echo; exit 0;" 2 9
 folder_has_changed(){
 	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
 	[ -z "$3" ] && FILTER="." || FILTER="$3"
@@ -42,21 +45,103 @@ check_board_alive(){
 	}
 }
 
-build_script_usage_brief(){
-	printf "Usage: $THIS_SCRIPT [-c command-line-args] [-nbfF] [--watch] [--clean]%s <directory-with-source-files>" "$1"
+check_project_exists(){
+	ssh $BBB_ADDRESS "[ -d $BBB_PROJECT_HOME/$1 ]"
+	return $?
 }
 
-build_script_usage(){
-	echo "	The program can be run in one of the following modes:
-		-f arg : runs in the foreground (default).
-		-b arg : runs in the background (no output is shown)
+list_available_projects(){
+	ssh $BBB_ADDRESS "cd $BBB_PROJECT_HOME &&\
+	find -type d -printf '%P\n' | grep -v '^$\|/build$'"
+}
+
+interactive(){
+#interactive(count=1) waits for user input, validates it and sets returned value in _RET1
+	[ -z $1 ] && COUNT=1 || COUNT=$1
+	STR=
+	[ $COUNT -eq 1 ] && STR="(y/n): " || STR="(enter a number between 1 and $COUNT): "
+	while { printf "$STR"; read REPLY; }
+	do
+		if [ $COUNT -eq 1 ]
+		then
+			case $REPLY in
+				y|Y)
+					REPLY=1
+					break;
+				;;
+				n|N)
+					REPLY=0
+					break;
+				;;
+				*)
+					echo "wrong value"
+					continue
+				;;
+			esac
+		else
+			case $REPLY in
+			#check it is a string
+			''|*[!0-9]*) 
+				continue
+			;;
+			*)
+				# check range
+				if [ $REPLY -lt 1 ] || [ $REPLY -gt $COUNT ]
+				then
+					continue
+				else
+					break
+				fi
+			;;
+			esac
+		fi
+	done
+	_RET1=$REPLY
+	return 0
+}
+
+case_run_mode() {
+	  case $RUN_MODE in
+		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
+		foreground)
+			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
+		;;
+		screen)
+			ssh $BBB_ADDRESS "$MAKE_COMMAND runscreen"
+		;;
+		screenfg)
+			ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
+		;;
+      esac
+}
+
+run_script_usage_brief(){
+	printf '[-f|-b] [-c "args"]'
+}
+
+run_script_usage(){
+	echo "Run options:
+	-c \"args\" : passes command-line arguments to the Bela program.
+	            please enclose the args string in quotes.
+
+	-f arg : runs in the foreground (default).
+	-b arg : runs in the background (no output is shown)
 
 	When running in the foreground you can stop the currently running program 
 	with ctrl-C.
 	When running in the background, you can use \`./stop_running.sh' to stop
 	the current process and \`./connect_to_project.sh' to see the program's output.
 
-	Other options:
+"
+# UNDOCUMENTED OPTION -s runs in a screen in the foreground 
+}
+
+build_script_usage_brief(){
+	printf '[-n] [--watch] [--clean] [--force] [-p project-name] [-m "args"]'
+}
+
+build_script_usage(){
+echo "Build options:
 	--clean : cleans the pre-compiled object files on the board (same as \`-m projectclean').
 	          If the linker issues warnings during a build, or you see that your latest changes are not
 	          being applied to the running program, try to add the --clean flag for the next build and see 
@@ -65,13 +150,66 @@ build_script_usage(){
 	--watch: the script will wait for changes in the source folder and when it detects them it
 	         triggers a new build. If you do not run the program with -b, then you will have to
 			 either kill the process or detach from the screen in order for the watchdog to be active.
+	--force: does not prompt to overwrite an existing project. Also activates \`expert mode' which disables some checks and makes the program run faster
 	-n : the output will not be run after compiling.
-	-c \"args\" : passes command-line arguments to the Bela program; e
-	              close the argument string in quotes.
-	-p arg : sets the name of the project to in the remote folder (default: $BBB_PROJECT_NAME ) 
+	-p arg : sets the name of the project in the remote folder 
+	         (defaults to the name of the project folder on the host) 
 	         do not use spaces in your project names, please
 	-m \"args\" allows to pass arguments to the Makefile before the run target. For instance,
-	           pass -m \`"projectclean"\` or \`-m "distclean"\` to clean project-specific
+	           pass \`-m "projectclean"' or \`-m "distclean"' to clean project-specific
 	           pre-built objects, or all the pre-built objects, respectively.
+	           Or \`-m "help"' to see all the options available. 
 	"
 }
+
+# Don't use or eval this, just copy/paste from here
+case_scripts_options='
+run_options{
+		-c)
+			shift;
+			COMMAND_ARGS="$1";
+		;;
+		-b)
+			RUN_MODE=screen;
+		;;
+		-f)
+			RUN_MODE=foreground;
+		;;
+		-s)
+			RUN_MODE=screenfg;
+		;;
+		}
+build_options{
+		-n)
+			RUN_PROJECT=0;
+		;;
+		-p)
+			shift;
+			BBB_PROJECT_NAME="$1";
+		;;	
+		--clean)
+			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS projectclean";
+		;;
+		--force)
+			FORCE=1
+		;;
+		-m)
+			shift;
+			BBB_MAKEFILE_OPTIONS="$BBB_MAKEFILE_OPTIONS $1";
+		;;
+		--watch)
+			WATCH=1
+		;;
+}
+end_options{
+		--help|-h|-\?)
+			usage;
+			exit 0;
+		;;
+		-*)
+			echo Error: unknow option $1
+			usage_brief
+			exit 1;
+		;;
+}
+'
