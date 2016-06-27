@@ -225,7 +225,7 @@ static inline void digitalWriteOnce(BelaContext *context, int frame, int channel
  * \param channel Which digital output to write. 16 pins across the P8 and P9 headers of the
  * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
  * digital_gpio_mapping.h.
- * \param value Direction of the pin (\c INPUT or \c OUTPUT).
+ * \param mode Direction of the pin (\c INPUT or \c OUTPUT).
  */
 static inline void pinMode(BelaContext *context, int frame, int channel, int mode);
 
@@ -243,7 +243,7 @@ static inline void pinMode(BelaContext *context, int frame, int channel, int mod
  * \param channel Which digital output to write. 16 pins across the P8 and P9 headers of the
  * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
  * digital_gpio_mapping.h.
- * \param value Direction of the pin (\c INPUT or \c OUTPUT).
+ * \param mode Direction of the pin (\c INPUT or \c OUTPUT).
  */
 static inline void pinModeOnce(BelaContext *context, int frame, int channel, int mode);
 
