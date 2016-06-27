@@ -131,7 +131,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example samples/render.cpp
+\example samples-piezo/render.cpp
 
 Piezo strike to WAV file playback
 --------------------------------
