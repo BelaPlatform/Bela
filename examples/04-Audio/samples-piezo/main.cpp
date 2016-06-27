@@ -149,7 +149,6 @@ int main(int argc, char *argv[])
 	}
 
 	cout << "Loading file " << fileName << endl;
-	cout << "You can load a custom file with `--file [-f] filename'" << endl;
 
 	// Load file
 	if(initFile(fileName, &sampleData) != 0)

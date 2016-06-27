@@ -23,7 +23,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include <cmath>
 #include "SampleData.h"
 #include <Scope.h>
 
