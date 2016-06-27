@@ -210,7 +210,8 @@ void WriteFile::writeOutput(bool flush){
 		writeLine();
 	}
 	if(fileType == kBinary){
-		int numBinaryElementsToWriteAtOnce = 3*(int)1e5;
+		int numBinaryElementsToWriteAtOnce = 4096;
+		bool wasWritten = false;
 		while(getOffsetFromPointer(binaryReadPointer) > numBinaryElementsToWriteAtOnce){
 			int elementsToEndOfBuffer = bufferLength - binaryReadPointer;
 			int numberElementsToWrite = numBinaryElementsToWriteAtOnce < elementsToEndOfBuffer ?
@@ -220,6 +221,7 @@ void WriteFile::writeOutput(bool flush){
 			if(binaryReadPointer >= bufferLength){
 				binaryReadPointer = 0;
 			}
+			wasWritten = true;
 		}
 		if(flush == true){ // flush all the buffer to the file
 			while(getOffsetFromPointer(binaryReadPointer) != 0){
@@ -227,7 +229,12 @@ void WriteFile::writeOutput(bool flush){
 				if(binaryReadPointer >= bufferLength){
 					binaryReadPointer = 0;
 				}
+				wasWritten = true;
 			}
+		}
+		if(wasWritten){
+			fflush(file);
+			fsync(fileno(file));
 		}
 	}
 }
