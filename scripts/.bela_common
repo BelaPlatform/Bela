@@ -44,6 +44,7 @@ check_board_alive(){
 }
 
 check_project_exists(){
+	[ -z "$1" ] && { echo "Project name is empty\n"; return 1; }
 	ssh $BBB_ADDRESS "[ -d $BBB_PROJECT_HOME/$1 ]"
 	return $?
 }
