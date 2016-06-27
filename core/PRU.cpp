@@ -526,6 +526,10 @@ int PRU::start(char * const filename)
     return 0;
 }
 
+#ifdef PRU_SIGXCPU_BUG_WORKAROUND
+extern bool gProcessAnalog;
+#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
+
 // Main loop to read and write data from/to PRU
 void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 {
@@ -571,6 +575,14 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 #else
 	// Which buffer the PRU was last processing
 	uint32_t lastPRUBuffer = 0;
+#endif
+
+#ifdef PRU_SIGXCPU_BUG_WORKAROUND
+	if(gProcessAnalog == false){
+		context->analogFrames = 0;
+		context->analogInChannels = 0;
+		context->analogOutChannels = 0;
+	}
 #endif
 
 	while(!gShouldStop) {
@@ -650,7 +662,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			context->audioIn[n] = (float)pru_buffer_audio_adc[n + pru_audio_offset] / 32768.0f;
 		}
 #endif
-		
 		if(analog_enabled) {
 			if(mux_channels != 0) {
 				// If multiplexer is enabled, find out which channels we have by pulling out
