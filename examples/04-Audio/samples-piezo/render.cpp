@@ -23,7 +23,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include <sys/types.h>
+#include <cmath>
 #include "SampleData.h"
 #include <Scope.h>
 
@@ -115,76 +115,8 @@ void render(BelaContext *context, void *userData)
 			gReadPtr = -1;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
-			context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
-	}
-
-	// Request that the lower-priority task run at next opportunity
-	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
-}
-
-// Initialise the auxiliary task
-// and print info
-
-bool initialise_trigger()
-{
-	if((gTriggerSamplesTask = Bela_createAuxiliaryTask(&trigger_samples, 50, "bela-trigger-samples")) == 0)
-		return false;
-
-	rt_printf("Press 'a' <enter> to trigger sample,\n"
-			  "      's' <enter> to stop the current playing sample\n"
-			  "      'q' <enter> or ctrl-C to quit\n");
-
-	return true;
-}
-
-// This is a lower-priority call to periodically read keyboard input
-// and trigger samples. By placing it at a lower priority,
-// it has minimal effect on the audio performance but it will take longer to
-// complete if the system is under heavy audio load.
-
-void trigger_samples()
-{
-	// This is not a real-time task because
-	// select() and scanf() are system calls, not handled by Xenomai.
-	// This task will be automatically down graded to "secondary mode"
-	// the first time it is executed.
-
-	char keyStroke = '.';
-
-	fd_set readfds;
-    struct timeval tv;
-    int    fd_stdin;
-	fd_stdin = fileno(stdin);
-	while (!gShouldStop){
-		FD_ZERO(&readfds);
-		FD_SET(fileno(stdin), &readfds);
-		tv.tv_sec = 0;
-		tv.tv_usec = 1000;
-		fflush(stdout);
-		// Check if there are any characters ready to be read
-		int num_readable = select(fd_stdin + 1, &readfds, NULL, NULL, &tv);
-		// if there are, then read them
-		if(num_readable > 0){
-			scanf("%c", &keyStroke);
-			if(keyStroke != '\n'){ // filter out the "\n" (newline) character
-				switch (keyStroke)
-				{
-					case 'a':
-						gReadPtr = 0;
-						break;
-					case 's':
-						gReadPtr = -1;
-						break;
-					case 'q':
-						gShouldStop = true;
-						break;
-					default:
-						break;
-				}
-
-			}
-		}
-		usleep(1000);
+			//context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
+			audioWrite(context, n, channel, out);
 	}
 	
 	// log the piezo input, peakValue from onset detection and audio output on the scope
@@ -238,9 +170,4 @@ to play. We do this by setting `gReadPtr = 0;`.
 This type of onset detection is by no means perfect. Really we should lowpass filter the 
 piezo signal before performing the onset detection algorithm and implement some kind of 
 debounce on the stikes to avoid multiple strikes being detected for a single strike.
-
-Anothe way to trigger the sample is by keyboard input: (a) starts sample playback, (s) 
-stops sample playback. The triggering is treated as a lower priority task than 
-the audio. You can see this at the bottom of the render function: 
-`Bela_scheduleAuxiliaryTask(gTriggerSamplesTask)`;
 */
