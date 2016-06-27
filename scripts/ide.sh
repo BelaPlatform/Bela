@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 
 # set defaults unless variables are already set

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This script runs a Bela project that already is on the board 
 
@@ -63,7 +63,7 @@ done
 	list_available_projects
 	exit 1
 }
-check_project_exists || {
+check_project_exists $BBB_PROJECT_NAME || {
 	echo "ERROR: project $BBB_PROJECT_NAME could not be found at $BBB_ADDRESS:$BBB_PROJECT_HOME. Here is a list of projects available on your board:"
 	list_available_projects
 	exit 2

@@ -51,7 +51,7 @@ check_project_exists(){
 check_project_exists_prompt(){
 	check_project_exists $1 &&\
 	{
-		printf "Project \`$1' already exists on the board, do you want to overwrite it? Or use the \`-p' option to specify a different name" 
+		printf "Project \`$1' already exists on the board, do you want to overwrite it?"
 		interactive 1
 		[  $_RET1 -eq 0 ] && {
 			echo "Aborting..."
