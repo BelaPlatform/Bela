@@ -26,6 +26,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <rtdk.h>
 #include <cmath>
 #include <stdio.h>
+#include <sys/types.h>
 #include "SampleData.h"
 
 SampleData gSampleData;	// User defined structure to get complex data from main
@@ -154,9 +155,10 @@ bool initialise_aux_tasks()
 	if((gInputTask = Bela_createAuxiliaryTask(&read_input, 50, "bela-read-input")) == 0)
 		return false;
 
-	rt_printf("Press 'a' to trigger sample, 's' to stop\n");
-	rt_printf("Press 'z' to low down cut-off freq of 100 Hz, 'x' to raise it up\n");
-	rt_printf("Press 'q' to quit\n");
+	rt_printf("Cut-off frequency: %f\n", gCutFreq);
+	rt_printf("Press 'a' <enter> to trigger sample, 's' to stop\n");
+	rt_printf("      'z' <enter> to low down cut-off freq of 100 Hz, 'x' to raise it up\n");
+	rt_printf("Press 'q' <enter> or ctrl-C to quit\n");
 
 	return true;
 }
@@ -186,36 +188,54 @@ void check_coeff()
 
 void read_input()
 {
-	// This is not a real-time task!
-	// Cos getchar is a system call, not handled by Xenomai.
-	// This task will be automatically down graded.
+	// This is not a real-time task because
+	// select() and scanf() are system calls, not handled by Xenomai.
+	// This task will be automatically down graded to "secondary mode"
+	// the first time it is executed.
 
 	char keyStroke = '.';
 
-	keyStroke =	getchar();
-	while(getchar()!='\n'); // to read the first stroke
-
-	switch (keyStroke)
-	{
-		case 'a':
-			gReadPtr = 0;
-			break;
-		case 's':
-			gReadPtr = -1;
-			break;
-		case 'z':
-			gChangeCoeff = 1;
-			gFreqDelta = -100;
-			break;
-		case 'x':
-			gChangeCoeff = 1;
-			gFreqDelta = 100;
-			break;
-		case 'q':
-			gShouldStop = true;
-			break;
-		default:
-			break;
+	fd_set readfds;
+    struct timeval tv;
+    int    fd_stdin;
+	fd_stdin = fileno(stdin);
+	while (!gShouldStop){
+		FD_ZERO(&readfds);
+		FD_SET(fileno(stdin), &readfds);
+		tv.tv_sec = 0;
+		tv.tv_usec = 1000;
+		fflush(stdout);
+		// Check if there are any characters ready to be read
+		int num_readable = select(fd_stdin + 1, &readfds, NULL, NULL, &tv);
+		// if there are, then read them
+		if(num_readable > 0){
+			scanf("%c", &keyStroke);
+			if(keyStroke != '\n'){ // filter out the "\n" (newline) character
+				switch (keyStroke)
+				{
+					case 'a':
+						gReadPtr = 0;
+						break;
+					case 's':
+						gReadPtr = -1;
+						break;
+					case 'z':
+						gChangeCoeff = 1;
+						gFreqDelta = -100;
+						break;
+					case 'x':
+						gChangeCoeff = 1;
+						gFreqDelta = 100;
+						break;
+					case 'q':
+						gShouldStop = true;
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		usleep(1000);
 	}
 }
 
