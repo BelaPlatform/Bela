@@ -346,7 +346,7 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	$(AT) cd $(UPDATE_SOURCE_DIR) && FAIL=0 && for path in $(UPDATE_REQUIRED_PATHS); do `ls $$path >/dev/null 2>&1` || { FAIL=1; break; }; done;\
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) echo 	...done
-UPDATE_LOG?=~/update.log
+UPDATE_LOG?=/root/update.log
 LOG=>> $(UPDATE_LOG) 2>&1
 updateunsafe: ## Installs the update from $(UPDATES_DIR) in a more brick-friendly way
 	$(AT) echo > $(UPDATE_LOG)
