@@ -420,19 +420,19 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			$('title').html((data.fileName ? data.fileName + ', ' : '') + projectName);
 
 			// set the top-line stuff
-			$('#top-open-project').html(projectName ? 'Open Project: ' + projectName : '');
-			$('#top-open-file').html(data.fileName ? 'Open File: ' + data.fileName : '');
+			$('#top-open-project').html(projectName ? 'Project: ' + projectName : '');
+			$('#top-open-file').html(data.fileName ? 'File: ' + data.fileName : '');
 
 			if (data.exampleName) {
 				$('#top-example-docs').css('visibility', 'visible');
-				$('#top-example-docs-link').prop('href', 'documentation/01-' + data.exampleName + '-example.html');
+				$('#top-example-docs-link').prop('href', 'documentation/' + data.exampleName + '_2render_8cpp-example.html');
 			} else {
 				$('#top-example-docs').css('visibility', 'hidden');
 			}
 		});
 		models.status.on('change', function (data, changedKeys) {
 			if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
-				if (data.running) $('#top-bela-status').html('Running Project: ' + data.runProject);else if (data.building) $('#top-bela-status').html('Building Project: ' + data.buildProject);else $('#top-bela-status').html('');
+				if (data.running) $('#top-bela-status').html('Running: ' + data.runProject);else if (data.building) $('#top-bela-status').html('Building: ' + data.buildProject);else $('#top-bela-status').html('');
 			}
 		});
 
