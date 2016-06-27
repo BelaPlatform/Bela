@@ -4,3 +4,6 @@ projects/
 tmp/
 *.swp
 *.swo
+Release/
+Debug/
+Documentation/
