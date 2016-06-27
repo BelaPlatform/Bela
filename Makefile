@@ -278,7 +278,7 @@ nostartup:
 startuploop: ## Makes PROJECT run at startup and restarts it if it crashes
 startuploop: Bela
 	$(AT) echo "Enabling Bela at startup in a loop..."
-	$(AT) $(STARTUP_COMMAND) 'bash -c "while sleep 0.5 ; do echo Running Bela...;' '; done"' > $(BELA_STARTUP_SCRIPT)
+	$(AT) $(STARTUP_COMMAND) 'bash -c "while sleep 0.6 ; do echo Running Bela...;' '; done"' > $(BELA_STARTUP_SCRIPT)
 
 startup: ## Makes PROJECT run at startup
 startup: Bela
@@ -287,7 +287,7 @@ startup: Bela
 	$(AT) chmod +x $(BELA_STARTUP_SCRIPT)
 stop: ## Stops any Bela program that is currently running
 stop:
-	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
 	$(AT) screen -r -S $(SCREEN_NAME)
