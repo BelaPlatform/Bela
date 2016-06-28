@@ -68,8 +68,8 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	if(context->audioOutChannels <= 2 ||
-		context->analogOutChannels <= 2){
+	if(context->audioOutChannels < 2 ||
+		context->analogOutChannels < 2){
 		printf("Error: for this project, you need at least 2 analog and audio output channels.\n");
 		return false;
 	}
@@ -187,3 +187,13 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
+
+/**
+\example basic-midi/render.cpp
+
+Connecting MIDI devices to Bela!
+-------------------------------
+
+This example needs documentation.
+
+*/
