@@ -23,13 +23,19 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include "SampleData.h"
 #include <Scope.h>
+#include <SampleLoader.h>
+#include <SampleData.h>
+
+#define NUM_CHANNELS 1
+
+string gFilename = "../../samples/sample.wav";
+
+SampleData gSampleData[NUM_CHANNELS];
+
+int gReadPtr;	// Position of last read sample from file
 
 Scope scope;
-
-SampleData gSampleData;	// User defined structure to get complex data from main
-int gReadPtr;			// Position of last read sample from file
 
 float gPiezoInput; // Piezo sensor input
 
@@ -55,9 +61,12 @@ bool setup(BelaContext *context, void *userData)
 		printf("Error: for this project, you need the same number of input and output channels.\n");
 		return false;
 	}
-
-	// Retrieve a parameter passed in from the initAudio() call
-	gSampleData = *(SampleData *)userData;
+	
+    for(int ch=0;ch<NUM_CHANNELS;ch++) {
+        gSampleData[ch].sampleLen = getNumFrames(gFilename);
+    	gSampleData[ch].samples = new float[gSampleData[ch].sampleLen];
+        getSamples(gFilename,gSampleData[ch].samples,ch,0,gSampleData[ch].sampleLen);
+    }
 
 	gReadPtr = -1;
 	
@@ -106,16 +115,18 @@ void render(BelaContext *context, void *userData)
 	    	gReadPtr = 0;  // Start sample playback
 	  	}
 
-		// If triggered...
-		if(gReadPtr != -1)
-			out += gSampleData.samples[gReadPtr++];	// ...read each sample...
+        for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
+            
+            // If triggered...
+		    if(gReadPtr != -1)
+		    	out = gSampleData[channel%NUM_CHANNELS].samples[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= gSampleData.sampleLen)
-			gReadPtr = -1;
-
-		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
-			//context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
-			audioWrite(context, n, channel, out);
+	    	if(gReadPtr >= gSampleData[channel%NUM_CHANNELS].sampleLen)
+		    	gReadPtr = -1;
+		    	
+    		audioWrite(context, n, channel, out);
+    	}
+    	
 	}
 	
 	// log the piezo input, peakValue from onset detection and audio output on the scope
@@ -125,7 +136,8 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	delete[] gSampleData.samples;
+    for(int ch=0;ch<NUM_CHANNELS;ch++)
+    	delete[] gSampleData[ch].samples;
 }
 
 

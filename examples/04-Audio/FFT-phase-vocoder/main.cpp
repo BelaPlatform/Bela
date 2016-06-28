@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(fileName.empty()){
-		fileName = "sample.wav";
+		fileName = "../../samples/sample.wav";
 	}
 
 
