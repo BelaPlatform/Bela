@@ -34,6 +34,12 @@ bool gIsNoteOn = 0;
 int gVelocity = 0;
 float gSamplingPeriod = 0;
 
+/*
+ * This callback is called every time a new input Midi message is available
+ *
+ * Note that this is called in a different thread than the audio processing one.
+ *
+ */
 void midiMessageCallback(MidiChannelMessage message, void* arg){
 	if(arg != NULL){
 		rt_printf("Message from midi port %d: ", *(int*)arg);
@@ -47,14 +53,7 @@ void midiMessageCallback(MidiChannelMessage message, void* arg){
 		rt_printf("v0:%f, ph: %6.5f, gVelocity: %d\n", gFreq, gPhaseIncrement, gVelocity);
 	}
 }
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
+
 Midi midi;
 int gMidiPort0 = 0;
 bool setup(BelaContext *context, void *userData)
@@ -68,8 +67,8 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	if(context->audioOutChannels <= 2 ||
-		context->analogOutChannels <= 2){
+	if(context->audioOutChannels < 2 ||
+		context->analogOutChannels < 2){
 		printf("Error: for this project, you need at least 2 analog and audio output channels.\n");
 		return false;
 	}
@@ -87,6 +86,7 @@ bool setup(BelaContext *context, void *userData)
 enum {kVelocity, kNoteOn, kNoteNumber};
 void render(BelaContext *context, void *userData)
 {
+
 // one way of getting the midi data is to parse them yourself
 //	(you should set midi.enableParser(false) above):
 /*
@@ -133,10 +133,13 @@ void render(BelaContext *context, void *userData)
 			break;
 		}
 	}
-*/
+	*/
+
 	/*
+	 *
+	 * alternatively, you can use the built-in parser (only processes channel messages at the moment).
+	 *
 	int num;
-	//alternatively, you can use the built-in parser (only processes channel messages at the moment).
 	while((num = midi.getParser()->numAvailableMessages()) > 0){
 		static MidiChannelMessage message;
 		message = midi.getParser()->getNextChannelMessage();
@@ -150,6 +153,13 @@ void render(BelaContext *context, void *userData)
 		}
 	}
 	 */
+
+	/*
+	 * A third alternative, the one currently active in this example, is to set a callback 
+	 * which gets called every time a new input message is available.
+	 * See midiMessageCallback above.
+	*/
+
 	// the following block toggles the LED on an Owl pedal
 	// and asks the pedal to return the status of the LED
 	// using MIDI control changes
@@ -187,3 +197,4 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
+
