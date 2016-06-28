@@ -287,7 +287,7 @@ startup: Bela
 	$(AT) chmod +x $(BELA_STARTUP_SCRIPT)
 stop: ## Stops any Bela program that is currently running
 stop:
-	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
 	$(AT) screen -r -S $(SCREEN_NAME)
@@ -329,13 +329,13 @@ updateclean: ## Cleans the $(UPDATES_DIR) folder
 
 checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contains a valid
 	$(AT) echo Validating archive...
-	$(AT) cd $(UPDATES_DIR) && COUNT=`ls -l *.zip | wc -l` && [ $$COUNT -eq 1 ] && rm -rf `ls | grep -v "\.zip$$"`
+	$(AT) cd $(UPDATES_DIR) && COUNT=`ls -l *.zip | wc -l` && [ $$COUNT -eq 1 ] && rm -rf "`ls | grep -v \"\.zip$$\"`"
 	$(AT) #TODO: heuristics on available space. Use unzip -l and df
-	$(AT) echo uncompressed size: `unzip -l \`ls $(UPDATES_DIR)/*.zip\` | tail -n1 | awk '{print $$1}'`
+	$(AT) echo uncompressed size: `unzip -l "$(UPDATES_DIR)/*.zip" | tail -n1 | awk '{print $$1}'`
 	$(AT) # Delete and re-create the temp directory (first, make sure it is not an empty string!)
 	$(AT) [ -n $(UPDATE_SOURCE_DIR) ] && rm -rf $(UPDATE_SOURCE_DIR) && mkdir -p $(UPDATE_SOURCE_DIR)
 	$(AT) echo Unzipping archive...
-	$(AT) cd $(UPDATE_SOURCE_DIR) && unzip -qq $(UPDATES_DIR)/*zip
+	$(AT) cd $(UPDATE_SOURCE_DIR) && unzip -qq "$(UPDATES_DIR)/*zip"
 	$(AT) # RemoveMac OSX garbage if it exists
 	$(AT) rm -rf $(UPDATE_SOURCE_DIR)/__MACOSX $(UPDATE_SOURCE_DIR)/.DS_store
 	$(AT) # Strip the top-level folder ( if there is only one )
