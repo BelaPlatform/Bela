@@ -198,7 +198,6 @@ void cleanup(BelaContext *context, void *userData)
 
 }
 
-<<<<<<< HEAD
 /**
 \example basic-midi/render.cpp
 
@@ -208,5 +207,3 @@ Connecting MIDI devices to Bela!
 This example needs documentation.
 
 */
-=======
->>>>>>> 201dba8b7a33f078bd24d4295688f11512d87cfd
