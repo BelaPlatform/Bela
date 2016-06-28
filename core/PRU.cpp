@@ -606,9 +606,10 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU1_ARM_INTERRUPT);
 #else
 		// Poll
-		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
+		do{
 			rt_task_sleep(sleepTime);
 		}
+		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop);
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
