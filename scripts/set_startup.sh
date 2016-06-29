@@ -70,7 +70,8 @@ do
 done
 
 [ -n "$BBB_PROJECT_NAME" ] || {
-	echo "Error: you need to specify a project name"
+	echo "Error: you need to specify a project name. Available projects on the board are:"
+	list_available_projects
 	usage_brief
 	exit 1
 }
