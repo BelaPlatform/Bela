@@ -1,4 +1,4 @@
-#N canvas 407 244 1093 1038 10;
+#N canvas 407 244 1109 1033 10;
 #X obj 287 400 noise~;
 #X obj 347 418 line~;
 #X msg 349 398 200 \, 10000 50;
@@ -226,6 +226,8 @@
 #X obj 246 992 s~ sheath;
 #X text 569 152 <<< piezo on left audio input;
 #X obj 906 807 r~ drone;
+#X obj 920 398 s led_hit;
+#X text 985 398 <<< to LED;
 #X connect 0 0 14 0;
 #X connect 0 0 15 0;
 #X connect 1 0 14 1;
@@ -327,6 +329,7 @@
 #X connect 75 0 63 0;
 #X connect 77 0 64 0;
 #X connect 78 1 73 0;
+#X connect 78 1 95 0;
 #X connect 79 0 86 0;
 #X connect 80 0 83 1;
 #X connect 81 0 59 0;
