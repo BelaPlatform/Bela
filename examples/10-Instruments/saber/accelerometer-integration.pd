@@ -53,9 +53,6 @@
 #X obj 32 116 s~ x-axis;
 #X obj 182 117 s~ y-axis;
 #X obj 332 117 s~ z-axis;
-#X floatatom 26 68 5 0 0 0 - - -, f 5;
-#X obj 26 87 sig~;
-#X obj 72 80 s~ ax;
 #X obj 95 442 -~ 0.1;
 #X connect 0 0 2 0;
 #X connect 1 0 33 0;
@@ -101,8 +98,5 @@
 #X connect 37 0 36 0;
 #X connect 38 0 40 0;
 #X connect 39 0 50 0;
-#X connect 40 0 57 0;
-#X connect 54 0 55 0;
-#X connect 55 0 33 0;
-#X connect 55 0 56 0;
-#X connect 57 0 39 0;
+#X connect 40 0 54 0;
+#X connect 54 0 39 0;
