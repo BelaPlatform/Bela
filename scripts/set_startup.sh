@@ -69,7 +69,12 @@ do
 	shift
 done
 
-[ -z "$BBB_PROJECT_NAME" ] || check_project_exists $BBB_PROJECT_NAME || {
+[ -n "$BBB_PROJECT_NAME" ] || {
+	echo "Error: you need to specify a project name"
+	usage_brief
+	exit 1
+}
+check_project_exists $BBB_PROJECT_NAME || {
 	echo "Error: project $BBB_PROJECT_NAME not found. Available projects on the board are:"
 	list_available_projects
 	exit 1
