@@ -182,9 +182,6 @@ of;
 #X text 35 87 the accelerometer as well as overall velocity derived
 from;
 #X text 35 102 all three axes.;
-#X text 35 116 This patch should ideally be compiled using Heavy and
-run;
-#X text 35 130 at a block size of 64;
 #X text 1062 30 ............................;
 #X text 1062 40 . ____ ._____ _ .......___ .;
 #X text 1062 50 .| __ )| ____| |....../ _ |.;
@@ -192,6 +189,9 @@ run;
 #X text 1062 80 .|____/|_____|_____/_/..._|.io;
 #X text 1062 90 ............................;
 #X text 1062 60 .| __ || __|.| |...../ _| |.;
+#X text 35 130 at a block size of 64 Libpd is not fast enough.;
+#X text 35 116 This patch needs to be compiled using Heavy and run
+;
 #X connect 1 0 12 0;
 #X connect 2 0 17 0;
 #X connect 3 0 14 0;
