@@ -20,7 +20,7 @@ usage(){
 	This script runs a Bela project that is already on the board.
 	
 	\`projectname' is the name with which the project was saved on the board
-	in ${BBB_PROJECT_HOME} (defaults to $BBB_DEFAULT_PROJECT_NAME)
+	in ${BBB_PROJECT_HOME}
 "
 	run_script_usage
 }

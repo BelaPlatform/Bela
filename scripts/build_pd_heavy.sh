@@ -51,6 +51,11 @@ usage_brief
 echo "
 example: build_pd.sh -o ../projects/heavy/hello-world ../projects/heavy/pd/hello-world
       
+This program compiles a PureData patch using the online Heavy Compiler. Before using this
+script you need to have set up your Enzien Audio account and familiarized yourself with the
+information available here https://github.com/BelaPlatform/Bela/wiki/Running-Puredata-patches-on-Bela#heavy.
+
+Heavy-specific options:
 	-r : builds against a specific Heavy release. Default is: $release (stable)
             ( see revision list here https://enzienaudio.com/a/releases )
 	--noupload : does not use the online compiler, only compiles the current source files.

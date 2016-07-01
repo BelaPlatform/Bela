@@ -37,7 +37,7 @@ set_date(){
 
 check_board_alive(){
 	printf "Checking the board is up and running at $BBB_ADDRESS..."
-	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 $BBB_ADDRESS exit && printf "done\n" || {
+	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 $BBB_ADDRESS exit && printf "done\n" || {
 		printf "\nERROR: the board does not respond at $BBB_ADDRESS, check that the address is correct and the board is connected.\n";
 		exit 1;
 	}

@@ -95,8 +95,6 @@ while [ "$1" != "" ]; do
   shift
 done
 
-
-echo $BBB_ADDRESS
 check_board_alive 
 # Check if destination folder exists
 # the StrictHostKeyChecking no should prevent the unkown host prompt
