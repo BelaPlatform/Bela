@@ -1,13 +1,13 @@
 #!/bin/bash
+# Check if user configuration file exists and use it if it does
+[ -f ~/.belarc ] && . ~/.belarc
+
 [ -z "$BBB_USER" ] && BBB_USER="root"
 [ -z "$BBB_HOSTNAME" ] && BBB_HOSTNAME="192.168.7.2"
 [ -z "$BBB_ADDRESS" ] && BBB_ADDRESS="$BBB_USER@$BBB_HOSTNAME"
 [ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="~/Bela"
-[ -z "$BBB_SCREEN_NAME" ] && BBB_SCREEN_NAME="Bela"
 [ -z "$RUN_PROJECT" ] && RUN_PROJECT=1
 [ -z "$COMMAND_ARGS" ] && COMMAND_ARGS=
-[ -z "$RUN_IN_FOREGROUND" ] && RUN_IN_FOREGROUND=1
-[ -z "$RUN_WITHOUT_SCREEN" ] && RUN_WITHOUT_SCREEN=0
 [ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
 [ -z "$RUN_MODE" ] && RUN_MODE=foreground
 
