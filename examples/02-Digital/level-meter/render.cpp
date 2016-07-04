@@ -149,8 +149,18 @@ void cleanup(BelaContext *context, void *userData)
 Visualise music with leds
 -------------------------
 
-This sketch shows the simplest case of digital out. 
+This example shows how to make an audio level meter with a set of ten LEDs.
 
 - Connect an LED in series with a 470ohm resistor between every Digital pin 0 - 9 and ground.
+
+You will also need to connect an audio adapter to the audio input pins and connect something 
+that can produce an audio signal to this (a laptop, mp3 player, phone or keyboard). The code 
+preforms peak detection on the audio input and lights the LEDs once the amplitude of the 
+input signal passes a certain threshold stored in `gThresholds[i]`. Each LED has its 
+own threshold, the values of which are set in `setup()` and are steps of -3dB. All digital 
+pins are set to output `pinMode(context, 0, i, OUTPUT);` and they are toggled on and off 
+in `render()` when the amplitude passes the threshold for that LED. The LEDs below the 
+current peak value always remain lit to create a classic amplitude peak meter. The audio 
+input is passed through to the output so you can listen as you watch the light show.
 
 */
