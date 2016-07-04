@@ -165,7 +165,6 @@ socket.on('init', (data) => {
 	
 	consoleView.connect();
 	
-	//console.log(data);
 	var timestamp = performance.now()
 	socket.emit('project-event', {func: 'openProject', currentProject: data[2].project, timestamp})	
 	consoleView.emit('openNotification', {func: 'init', timestamp});
@@ -183,6 +182,9 @@ socket.on('init', (data) => {
 	socket.emit('set-time', new Date().toString());
 	
 	documentationView.emit('init');
+	
+	// hack to stop changes to read-only example being overwritten when opening a new tab
+	if (data[2].project === 'exampleTempProject') models.project.once('set', () => projectView.emit('example-changed') );
 	
 });
 
@@ -1843,10 +1845,10 @@ class ProjectView extends View {
 	constructor(className, models){
 		super(className, models);
 		
-		this.exampleChanged = false;
+		//this.exampleChanged = false;
 		this.on('example-changed', () => this.exampleChanged = true );
 	}
-	
+
 	// UI events
 	selectChanged($element, e){
 	
@@ -1993,7 +1995,7 @@ class ProjectView extends View {
 				if (child && child.length && child[0] === '.') continue;
 				$('<li></li>').addClass('sourceFile').html(child).appendTo(ul)
 					.on('click', (e) => {
-					
+
 						if (this.exampleChanged){
 							this.exampleChanged = false;
 							popup.exampleChanged( () => {

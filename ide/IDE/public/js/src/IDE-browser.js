@@ -164,7 +164,6 @@ socket.on('init', (data) => {
 	
 	consoleView.connect();
 	
-	//console.log(data);
 	var timestamp = performance.now()
 	socket.emit('project-event', {func: 'openProject', currentProject: data[2].project, timestamp})	
 	consoleView.emit('openNotification', {func: 'init', timestamp});
@@ -182,6 +181,9 @@ socket.on('init', (data) => {
 	socket.emit('set-time', new Date().toString());
 	
 	documentationView.emit('init');
+	
+	// hack to stop changes to read-only example being overwritten when opening a new tab
+	if (data[2].project === 'exampleTempProject') models.project.once('set', () => projectView.emit('example-changed') );
 	
 });
 
