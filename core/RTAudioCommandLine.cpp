@@ -188,6 +188,7 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 				else if(settings->numAnalogInChannels >= 16)
 					settings->numMuxChannels = 2;
 				settings->numAnalogInChannels = 8;
+				settings->numAnalogOutChannels = 8;
 			}
 			else if(numAnalogChannels >= 4){
 				// TODO: a different number of channels for inputs and outputs is not yet supported

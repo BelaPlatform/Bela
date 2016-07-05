@@ -159,7 +159,7 @@ void render_capetest(int numMatrixFrames, int numAudioFrames, float *audioIn, fl
 bool setup(BelaContext *context, void *userData) {
 	int oscBankHopSize = *(int *)userData;
 
-	if(context->analogOutChannels <= 8 || context->analogInChannels <= 8) {
+	if(context->analogOutChannels < 8 || context->analogInChannels < 8) {
 		printf("Error: D-Box needs at least 8 analog IO channels.\n");
 		return false;
 	}
