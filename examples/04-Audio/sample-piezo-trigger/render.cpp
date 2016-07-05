@@ -52,6 +52,8 @@ float amountBelowPeak = 0.001;
 float rolloffRate = 0.00005;
 int triggered = 0;
 
+float gAudioFramesPerAnalogFrame;
+
 bool setup(BelaContext *context, void *userData)
 {
 
@@ -61,7 +63,7 @@ bool setup(BelaContext *context, void *userData)
 		printf("Error: for this project, you need the same number of input and output channels.\n");
 		return false;
 	}
-	
+
     for(int ch=0;ch<NUM_CHANNELS;ch++) {
         gSampleData[ch].sampleLen = getNumFrames(gFilename);
     	gSampleData[ch].samples = new float[gSampleData[ch].sampleLen];
@@ -70,6 +72,9 @@ bool setup(BelaContext *context, void *userData)
 
 	gReadPtr = -1;
 	
+	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+
+
 	// setup the scope with 3 channels at the audio sample rate
 	scope.setup(3, context->audioSampleRate);
 
@@ -81,13 +86,13 @@ void render(BelaContext *context, void *userData)
     float currentSample;
     float out = 0;
 
-	
-	for(unsigned int n = 0; n < context->analogFrames; n++) {
-		// Read analog input 0, piezo disk
-		gPiezoInput = analogRead(context, n, 0);
-	}
-
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
+
+		if(!(n % gAudioFramesPerAnalogFrame)) {
+			// On even audio samples:
+			// Read analog input 0, piezo disk
+			gPiezoInput = analogRead(context, n, 0);
+		}
 		
 		// Re-centre around 0
 		// DC Offset Filter    y[n] = x[n] - x[n-1] + R * y[n-1]

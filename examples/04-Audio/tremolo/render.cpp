@@ -27,6 +27,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 float gFrequency = 4.0;
 float gPhase;
 float gInverseSampleRate;
+float gAudioFramesPerAnalogFrame;
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -37,6 +38,7 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
+	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;
 	gPhase = 0.0;
 
@@ -47,6 +49,13 @@ void render(BelaContext *context, void *userData)
 {
 	// Nested for loops for audio channels
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
+
+		if(!(n % gAudioFramesPerAnalogFrame)) {
+			// On even audio samples:
+			// Read analog channel 0 and map the range from 0-1 to 0.25-20
+			// use this to set the value of gFrequency
+			gFrequency = map(analogRead(context, n, 0), 0.0, 1.0, 0.25, 20.0);
+		}
 
 		// Generate a sinewave with frequency set by gFrequency
 		// and amplitude from -0.5 to 0.5
@@ -63,16 +72,6 @@ void render(BelaContext *context, void *userData)
 			audioWrite(context, n, channel, (input*lfo));
 		}
 	}
-	
-	// Nested for loops for analog channels
-	for(unsigned int n = 0; n < context->analogFrames; n++) {
-		for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
-			// Read analog channel 0 and map the range from 0-1 to 0.25-20
-			// use this to set the value of gFrequency
-			gFrequency = map(analogRead(context, n, 0), 0.0, 1.0, 0.25, 20.0);
-		}
-	}
-	
 }
 
 void cleanup(BelaContext *context, void *userData)
