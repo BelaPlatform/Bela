@@ -1767,6 +1767,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 		var headerIndeces = ['h', 'hh', 'hpp'];
 
 		var askForOverwrite = true;
+		var uploadingFile = false;
+		var fileQueue = [];
 
 		var FileView = function (_View5) {
 			_inherits(FileView, _View5);
@@ -2134,6 +2136,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				value: function doFileUpload(file) {
 					var _this14 = this;
 
+					if (uploadingFile) {
+						fileQueue.push(file);
+						return;
+					}
+
 					var fileExists = false;
 					var _iteratorNormalCompletion14 = true;
 					var _didIteratorError14 = false;
@@ -2162,6 +2169,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 					if (fileExists && askForOverwrite) {
 
+						uploadingFile = true;
+
 						// build the popup content
 						popup.title('Overwriting file');
 						popup.subtitle('The file ' + file.name + ' already exists in this project. Would you like to overwrite it?');
@@ -2178,9 +2187,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							if (popup.find('input[type=checkbox]').is(':checked')) askForOverwrite = false;
 							_this14.actuallyDoFileUpload(file, true);
 							popup.hide();
+							uploadingFile = false;
+							if (fileQueue.length) _this14.doFileUpload(fileQueue.pop());
 						});
 
-						popup.find('.popup-cancel').on('click', popup.hide);
+						popup.find('.popup-cancel').on('click', function () {
+							popup.hide();
+							uploadingFile = false;
+							if (fileQueue.length) _this14.doFileUpload(fileQueue.pop());
+						});
 
 						popup.show();
 
