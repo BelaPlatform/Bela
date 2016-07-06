@@ -1782,59 +1782,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 				// hack to upload file
 				$('#uploadFileInput').on('change', function (e) {
-					var _iteratorNormalCompletion9 = true;
-					var _didIteratorError9 = false;
-					var _iteratorError9 = undefined;
-
-					try {
-						for (var _iterator9 = e.target.files[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-							var file = _step9.value;
-
-							_this8.doFileUpload(file);
-						}
-					} catch (err) {
-						_didIteratorError9 = true;
-						_iteratorError9 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion9 && _iterator9.return) {
-								_iterator9.return();
-							}
-						} finally {
-							if (_didIteratorError9) {
-								throw _iteratorError9;
-							}
-						}
+					for (var i = 0; i < e.target.files.length; i++) {
+						_this8.doFileUpload(e.target.files[i]);
 					}
 				});
 
 				// drag and drop file upload on editor
 				$('body').on('dragenter dragover drop', function (e) {
 					e.stopPropagation();
+					e.preventDefault();
 					if (e.type === 'drop') {
-						var _iteratorNormalCompletion10 = true;
-						var _didIteratorError10 = false;
-						var _iteratorError10 = undefined;
-
-						try {
-							for (var _iterator10 = e.originalEvent.dataTransfer.files[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-								var file = _step10.value;
-
-								_this8.doFileUpload(file);
-							}
-						} catch (err) {
-							_didIteratorError10 = true;
-							_iteratorError10 = err;
-						} finally {
-							try {
-								if (!_iteratorNormalCompletion10 && _iterator10.return) {
-									_iterator10.return();
-								}
-							} finally {
-								if (_didIteratorError10) {
-									throw _iteratorError10;
-								}
-							}
+						for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
+							_this8.doFileUpload(e.originalEvent.dataTransfer.files[i]);
 						}
 					}
 					return false;
@@ -1959,13 +1918,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					var resources = [];
 					var directories = [];
 
-					var _iteratorNormalCompletion11 = true;
-					var _didIteratorError11 = false;
-					var _iteratorError11 = undefined;
+					var _iteratorNormalCompletion9 = true;
+					var _didIteratorError9 = false;
+					var _iteratorError9 = undefined;
 
 					try {
-						for (var _iterator11 = files[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
-							var item = _step11.value;
+						for (var _iterator9 = files[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+							var item = _step9.value;
 
 
 							if (item.dir) {
@@ -1987,16 +1946,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 						//console.log(headers, sources, resources, directories);
 					} catch (err) {
-						_didIteratorError11 = true;
-						_iteratorError11 = err;
+						_didIteratorError9 = true;
+						_iteratorError9 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion11 && _iterator11.return) {
-								_iterator11.return();
+							if (!_iteratorNormalCompletion9 && _iterator9.return) {
+								_iterator9.return();
 							}
 						} finally {
-							if (_didIteratorError11) {
-								throw _iteratorError11;
+							if (_didIteratorError9) {
+								throw _iteratorError9;
 							}
 						}
 					}
@@ -2046,27 +2005,27 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					if (directories.length) {
 						$('<li></li>').html('Directories:').appendTo($files);
 					}
-					var _iteratorNormalCompletion12 = true;
-					var _didIteratorError12 = false;
-					var _iteratorError12 = undefined;
+					var _iteratorNormalCompletion10 = true;
+					var _didIteratorError10 = false;
+					var _iteratorError10 = undefined;
 
 					try {
-						for (var _iterator12 = directories[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
-							var dir = _step12.value;
+						for (var _iterator10 = directories[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+							var dir = _step10.value;
 
 							$files.append(this.subDirs(dir));
 						}
 					} catch (err) {
-						_didIteratorError12 = true;
-						_iteratorError12 = err;
+						_didIteratorError10 = true;
+						_iteratorError10 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion12 && _iterator12.return) {
-								_iterator12.return();
+							if (!_iteratorNormalCompletion10 && _iterator10.return) {
+								_iterator10.return();
 							}
 						} finally {
-							if (_didIteratorError12) {
-								throw _iteratorError12;
+							if (_didIteratorError10) {
+								throw _iteratorError10;
 							}
 						}
 					}
@@ -2099,13 +2058,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					var _this13 = this;
 
 					var ul = $('<ul></ul>').html(dir.name + ':');
-					var _iteratorNormalCompletion13 = true;
-					var _didIteratorError13 = false;
-					var _iteratorError13 = undefined;
+					var _iteratorNormalCompletion11 = true;
+					var _didIteratorError11 = false;
+					var _iteratorError11 = undefined;
 
 					try {
-						for (var _iterator13 = dir.children[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
-							var child = _step13.value;
+						for (var _iterator11 = dir.children[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+							var child = _step11.value;
 
 							if (!child.dir) $('<li></li>').addClass('sourceFile').html(child.name).data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
 								return _this13.openFile(e);
@@ -2115,16 +2074,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							}
 						}
 					} catch (err) {
-						_didIteratorError13 = true;
-						_iteratorError13 = err;
+						_didIteratorError11 = true;
+						_iteratorError11 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion13 && _iterator13.return) {
-								_iterator13.return();
+							if (!_iteratorNormalCompletion11 && _iterator11.return) {
+								_iterator11.return();
 							}
 						} finally {
-							if (_didIteratorError13) {
-								throw _iteratorError13;
+							if (_didIteratorError11) {
+								throw _iteratorError11;
 							}
 						}
 					}
@@ -2142,27 +2101,27 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					}
 
 					var fileExists = false;
-					var _iteratorNormalCompletion14 = true;
-					var _didIteratorError14 = false;
-					var _iteratorError14 = undefined;
+					var _iteratorNormalCompletion12 = true;
+					var _didIteratorError12 = false;
+					var _iteratorError12 = undefined;
 
 					try {
-						for (var _iterator14 = this.listOfFiles[Symbol.iterator](), _step14; !(_iteratorNormalCompletion14 = (_step14 = _iterator14.next()).done); _iteratorNormalCompletion14 = true) {
-							var item = _step14.value;
+						for (var _iterator12 = this.listOfFiles[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+							var item = _step12.value;
 
 							if (item.name === file.name) fileExists = true;
 						}
 					} catch (err) {
-						_didIteratorError14 = true;
-						_iteratorError14 = err;
+						_didIteratorError12 = true;
+						_iteratorError12 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion14 && _iterator14.return) {
-								_iterator14.return();
+							if (!_iteratorNormalCompletion12 && _iterator12.return) {
+								_iterator12.return();
 							}
 						} finally {
-							if (_didIteratorError14) {
-								throw _iteratorError14;
+							if (_didIteratorError12) {
+								throw _iteratorError12;
 							}
 						}
 					}
@@ -2597,22 +2556,22 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 					if (!examplesDir.length) return;
 
-					var _iteratorNormalCompletion15 = true;
-					var _didIteratorError15 = false;
-					var _iteratorError15 = undefined;
+					var _iteratorNormalCompletion13 = true;
+					var _didIteratorError13 = false;
+					var _iteratorError13 = undefined;
 
 					try {
 						var _loop = function _loop() {
-							var item = _step15.value;
+							var item = _step13.value;
 
 							var ul = $('<ul></ul>').html(item.name + ':');
-							var _iteratorNormalCompletion16 = true;
-							var _didIteratorError16 = false;
-							var _iteratorError16 = undefined;
+							var _iteratorNormalCompletion14 = true;
+							var _didIteratorError14 = false;
+							var _iteratorError14 = undefined;
 
 							try {
 								var _loop2 = function _loop2() {
-									var child = _step16.value;
+									var child = _step14.value;
 
 									if (child && child.length && child[0] === '.') return "continue";
 									$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).on('click', function (e) {
@@ -2641,22 +2600,22 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 									});
 								};
 
-								for (var _iterator16 = item.children[Symbol.iterator](), _step16; !(_iteratorNormalCompletion16 = (_step16 = _iterator16.next()).done); _iteratorNormalCompletion16 = true) {
+								for (var _iterator14 = item.children[Symbol.iterator](), _step14; !(_iteratorNormalCompletion14 = (_step14 = _iterator14.next()).done); _iteratorNormalCompletion14 = true) {
 									var _ret3 = _loop2();
 
 									if (_ret3 === "continue") continue;
 								}
 							} catch (err) {
-								_didIteratorError16 = true;
-								_iteratorError16 = err;
+								_didIteratorError14 = true;
+								_iteratorError14 = err;
 							} finally {
 								try {
-									if (!_iteratorNormalCompletion16 && _iterator16.return) {
-										_iterator16.return();
+									if (!_iteratorNormalCompletion14 && _iterator14.return) {
+										_iterator14.return();
 									}
 								} finally {
-									if (_didIteratorError16) {
-										throw _iteratorError16;
+									if (_didIteratorError14) {
+										throw _iteratorError14;
 									}
 								}
 							}
@@ -2664,20 +2623,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							ul.appendTo($examples);
 						};
 
-						for (var _iterator15 = examplesDir[Symbol.iterator](), _step15; !(_iteratorNormalCompletion15 = (_step15 = _iterator15.next()).done); _iteratorNormalCompletion15 = true) {
+						for (var _iterator13 = examplesDir[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
 							_loop();
 						}
 					} catch (err) {
-						_didIteratorError15 = true;
-						_iteratorError15 = err;
+						_didIteratorError13 = true;
+						_iteratorError13 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion15 && _iterator15.return) {
-								_iterator15.return();
+							if (!_iteratorNormalCompletion13 && _iterator13.return) {
+								_iterator13.return();
 							}
 						} finally {
-							if (_didIteratorError15) {
-								throw _iteratorError15;
+							if (_didIteratorError13) {
+								throw _iteratorError13;
 							}
 						}
 					}
@@ -2712,13 +2671,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				key: "subDirs",
 				value: function subDirs(dir) {
 					var ul = $('<ul></ul>').html(dir.name + ':');
-					var _iteratorNormalCompletion17 = true;
-					var _didIteratorError17 = false;
-					var _iteratorError17 = undefined;
+					var _iteratorNormalCompletion15 = true;
+					var _didIteratorError15 = false;
+					var _iteratorError15 = undefined;
 
 					try {
-						for (var _iterator17 = dir.children[Symbol.iterator](), _step17; !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
-							var _child = _step17.value;
+						for (var _iterator15 = dir.children[Symbol.iterator](), _step15; !(_iteratorNormalCompletion15 = (_step15 = _iterator15.next()).done); _iteratorNormalCompletion15 = true) {
+							var _child = _step15.value;
 
 							if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
 								_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
@@ -2726,16 +2685,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							}
 						}
 					} catch (err) {
-						_didIteratorError17 = true;
-						_iteratorError17 = err;
+						_didIteratorError15 = true;
+						_iteratorError15 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion17 && _iterator17.return) {
-								_iterator17.return();
+							if (!_iteratorNormalCompletion15 && _iterator15.return) {
+								_iterator15.return();
 							}
 						} finally {
-							if (_didIteratorError17) {
-								throw _iteratorError17;
+							if (_didIteratorError15) {
+								throw _iteratorError15;
 							}
 						}
 					}
@@ -3445,29 +3404,29 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			_createClass(View, [{
 				key: "modelChanged",
 				value: function modelChanged(data, changedKeys) {
-					var _iteratorNormalCompletion18 = true;
-					var _didIteratorError18 = false;
-					var _iteratorError18 = undefined;
+					var _iteratorNormalCompletion16 = true;
+					var _didIteratorError16 = false;
+					var _iteratorError16 = undefined;
 
 					try {
-						for (var _iterator18 = changedKeys[Symbol.iterator](), _step18; !(_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done); _iteratorNormalCompletion18 = true) {
-							var value = _step18.value;
+						for (var _iterator16 = changedKeys[Symbol.iterator](), _step16; !(_iteratorNormalCompletion16 = (_step16 = _iterator16.next()).done); _iteratorNormalCompletion16 = true) {
+							var value = _step16.value;
 
 							if (this['_' + value]) {
 								this['_' + value](data[value], data, changedKeys);
 							}
 						}
 					} catch (err) {
-						_didIteratorError18 = true;
-						_iteratorError18 = err;
+						_didIteratorError16 = true;
+						_iteratorError16 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion18 && _iterator18.return) {
-								_iterator18.return();
+							if (!_iteratorNormalCompletion16 && _iterator16.return) {
+								_iterator16.return();
 							}
 						} finally {
-							if (_didIteratorError18) {
-								throw _iteratorError18;
+							if (_didIteratorError16) {
+								throw _iteratorError16;
 							}
 						}
 					}
@@ -3475,29 +3434,29 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			}, {
 				key: "modelSet",
 				value: function modelSet(data, changedKeys) {
-					var _iteratorNormalCompletion19 = true;
-					var _didIteratorError19 = false;
-					var _iteratorError19 = undefined;
+					var _iteratorNormalCompletion17 = true;
+					var _didIteratorError17 = false;
+					var _iteratorError17 = undefined;
 
 					try {
-						for (var _iterator19 = changedKeys[Symbol.iterator](), _step19; !(_iteratorNormalCompletion19 = (_step19 = _iterator19.next()).done); _iteratorNormalCompletion19 = true) {
-							var value = _step19.value;
+						for (var _iterator17 = changedKeys[Symbol.iterator](), _step17; !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
+							var value = _step17.value;
 
 							if (this['__' + value]) {
 								this['__' + value](data[value], data, changedKeys);
 							}
 						}
 					} catch (err) {
-						_didIteratorError19 = true;
-						_iteratorError19 = err;
+						_didIteratorError17 = true;
+						_iteratorError17 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion19 && _iterator19.return) {
-								_iterator19.return();
+							if (!_iteratorNormalCompletion17 && _iterator17.return) {
+								_iterator17.return();
 							}
 						} finally {
-							if (_didIteratorError19) {
-								throw _iteratorError19;
+							if (_didIteratorError17) {
+								throw _iteratorError17;
 							}
 						}
 					}
@@ -3610,13 +3569,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 					$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 
-					var _iteratorNormalCompletion20 = true;
-					var _didIteratorError20 = false;
-					var _iteratorError20 = undefined;
+					var _iteratorNormalCompletion18 = true;
+					var _didIteratorError18 = false;
+					var _iteratorError18 = undefined;
 
 					try {
 						var _loop3 = function _loop3() {
-							var err = _step20.value;
+							var err = _step18.value;
 
 
 							// create the element and add it to the error object
@@ -3640,23 +3599,23 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							}
 						};
 
-						for (var _iterator20 = errors[Symbol.iterator](), _step20; !(_iteratorNormalCompletion20 = (_step20 = _iterator20.next()).done); _iteratorNormalCompletion20 = true) {
+						for (var _iterator18 = errors[Symbol.iterator](), _step18; !(_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done); _iteratorNormalCompletion18 = true) {
 							var div;
 							var anchor;
 
 							_loop3();
 						}
 					} catch (err) {
-						_didIteratorError20 = true;
-						_iteratorError20 = err;
+						_didIteratorError18 = true;
+						_iteratorError18 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion20 && _iterator20.return) {
-								_iterator20.return();
+							if (!_iteratorNormalCompletion18 && _iterator18.return) {
+								_iterator18.return();
 							}
 						} finally {
-							if (_didIteratorError20) {
-								throw _iteratorError20;
+							if (_didIteratorError18) {
+								throw _iteratorError18;
 							}
 						}
 					}

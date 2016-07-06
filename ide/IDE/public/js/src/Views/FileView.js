@@ -17,17 +17,18 @@ class FileView extends View {
 
 		// hack to upload file
 		$('#uploadFileInput').on('change', (e) => {
-			for (let file of e.target.files){
-				this.doFileUpload(file);
+			for (var i=0; i<e.target.files.length; i++){
+				this.doFileUpload(e.target.files[i]);
 			}
 		});
 		
 		// drag and drop file upload on editor
 		$('body').on('dragenter dragover drop', (e) => {
 			e.stopPropagation();
+			e.preventDefault();
 			if (e.type === 'drop'){
-				for (let file of e.originalEvent.dataTransfer.files){
-					this.doFileUpload(file);
+				for (var i=0; i<e.originalEvent.dataTransfer.files.length; i++){
+					this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
 				}
 			}
 			return false;
