@@ -58,25 +58,25 @@ pthread_t logThread;
 
 // general settings
 int gVerbose		= 0;        			// verbose flag
-bool forceKeyboard 	= true;					// activate/deactivate keyboard control
-bool forceSensors	= false;				// activate/deactivate sensor control
-bool forceLog		= true;					// activate/deactivate log on boot partition
-bool useSD   		= true;    				// activate/deactivate file loading from SD [as opposed to emmc]
+bool forceKeyboard 	= false;				// activate/deactivate keyboard control
+bool forceSensors	= true;		    		// activate/deactivate sensor control
+bool forceLog		= false;				// activate/deactivate log on boot partition
+bool useSD   		= false;    			// activate/deactivate file loading from SD [as opposed to emmc]
 bool useAudioTest   = false;    			// activate/deactivate sensors and test audio only
 
 // audio settings
 unsigned int gPeriodSize = 8;				// period size for audio
 char* gPartialFilename = 0;					// name of the partials file to load
-bool gAudioIn = false;						// stereo audio in status
+bool gAudioIn = true;						// stereo audio in status
 
-int touchSensor0Address = 0x0C;				// I2C addresses of touch sensors
-int touchSensor1Address = 0x0B;
-int sensorType = 0;
+int touchSensor0Address = 0x18;				// I2C addresses of touch sensors
+int touchSensor1Address = 0x19;
+int sensorType = 2;
 
 char sdPath[256]			= "/dev/mmcblk0p2";			// system path of the SD, partition 2
 char mountPath[256]			= "/root/d-box/usersounds";	// mount point of SD partition 2 [where user files are]
 char gUserDirName[256] 		= "usersounds";				// Directory in which user analysis files can be found [dir of mountPath]
-char gDefaultDirName[256] 	= "/root/d-box/sounds";		// Directory in which built in analysis files can be found
+char gDefaultDirName[256] 	= ".";		// Directory in which built in analysis files can be found
 char *gDirName;
 bool gIsLoading 			= false;
 int fileCnt 				= 0;

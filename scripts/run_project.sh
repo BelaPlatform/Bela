@@ -20,7 +20,7 @@ usage(){
 	This script runs a Bela project that is already on the board.
 	
 	\`projectname' is the name with which the project was saved on the board
-	in ${BBB_PROJECT_HOME} (defaults to $BBB_DEFAULT_PROJECT_NAME)
+	in ${BBB_PROJECT_HOME}
 "
 	run_script_usage
 }
@@ -58,6 +58,7 @@ do
 done
 
 
+check_board_alive
 [ -z "$BBB_PROJECT_NAME" ] && {
 	echo "ERROR: you need to specify a project name. Here is a list of projects available on your board:"
 	list_available_projects

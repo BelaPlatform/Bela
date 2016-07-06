@@ -311,7 +311,8 @@ void sensorLoop(void *)
 					vel /= (float)(fsrMax-fsrMin);
 
 					vel = 1-vel;
-					dbox_printf("Attack vel: %f\n", vel);
+					if(gVerbose==1)
+				        dbox_printf("Attack vel: %f\n", vel);
 					gOscBanks[gCurrentOscBank]->play(vel);
 					prevVel = vel;
 				}

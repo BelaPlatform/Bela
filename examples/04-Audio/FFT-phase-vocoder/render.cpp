@@ -23,9 +23,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include <rtdk.h>
 #include <ne10/NE10.h>					// NEON FFT library
-#include <cmath>
 #include "SampleData.h"
 #include <Midi.h>
 

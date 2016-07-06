@@ -6,10 +6,10 @@ class ProjectView extends View {
 	constructor(className, models){
 		super(className, models);
 		
-		this.exampleChanged = false;
+		//this.exampleChanged = false;
 		this.on('example-changed', () => this.exampleChanged = true );
 	}
-	
+
 	// UI events
 	selectChanged($element, e){
 	
@@ -156,7 +156,7 @@ class ProjectView extends View {
 				if (child && child.length && child[0] === '.') continue;
 				$('<li></li>').addClass('sourceFile').html(child).appendTo(ul)
 					.on('click', (e) => {
-					
+
 						if (this.exampleChanged){
 							this.exampleChanged = false;
 							popup.exampleChanged( () => {

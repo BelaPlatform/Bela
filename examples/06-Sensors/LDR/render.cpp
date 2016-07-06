@@ -33,21 +33,25 @@ float gLight = 1.0;
 
 // sample counter to print current LDR reading
 int gSampleCount = 0;
+float gAudioFramesPerAnalogFrame;
 
 bool setup(BelaContext *context, void *userData)
 {
+    gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-    
-    for(unsigned int m = 0; m < context->analogFrames; m++) {
-        // read and map the LDR
-        gLDR = map(analogRead(context, m, 1), gDark, gLight, 0.0, 0.5);
-    }
-    
+   
     for(unsigned int n = 0; n < context->audioFrames; n++) {
+
+        if(!(n % gAudioFramesPerAnalogFrame)) {
+            // On even audio samples: 
+            // read and map the LDR
+            gLDR = map(analogRead(context, m, 1), gDark, gLight, 0.0, 0.5);
+        }
         
         /*
         // Uncomment the below code to print the LDR reading to the console

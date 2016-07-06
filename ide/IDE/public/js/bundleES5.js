@@ -221,7 +221,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 			consoleView.connect();
 
-			//console.log(data);
 			var timestamp = performance.now();
 			socket.emit('project-event', { func: 'openProject', currentProject: data[2].project, timestamp: timestamp });
 			consoleView.emit('openNotification', { func: 'init', timestamp: timestamp });
@@ -239,6 +238,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			socket.emit('set-time', new Date().toString());
 
 			documentationView.emit('init');
+
+			// hack to stop changes to read-only example being overwritten when opening a new tab
+			if (data[2].project === 'exampleTempProject') models.project.once('set', function () {
+				return projectView.emit('example-changed');
+			});
 		});
 
 		// project events
@@ -2408,9 +2412,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			function ProjectView(className, models) {
 				_classCallCheck(this, ProjectView);
 
+				//this.exampleChanged = false;
+
 				var _this20 = _possibleConstructorReturn(this, Object.getPrototypeOf(ProjectView).call(this, className, models));
 
-				_this20.exampleChanged = false;
 				_this20.on('example-changed', function () {
 					return _this20.exampleChanged = true;
 				});
