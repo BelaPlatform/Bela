@@ -1,1 +1,0 @@
-var xml="/xml/content.xml",xmlDoc=$.parseXML(xml),$xml=$(xmlDoc),$title=$xml.find("section"),$subTitle=$xml.find("subTitle"),$para=$xml.find("content");$("#content").append("<li><h1>"+$title.text()+"</h1><h2>"+$subTitle[i].text()+"</h2><p>"+$para[i].text()+"</p>");
