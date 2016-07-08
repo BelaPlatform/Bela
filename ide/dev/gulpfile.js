@@ -28,72 +28,25 @@ gulp.task('watch', ['killnode', 'browserify', 'upload', 'restartnode'], function
 	gulp.watch(['../IDE/index.js', '../IDE/libs/**'], ['killnode', 'upload', 'restartnode']);
 	
 	// when the browser js changes, browserify it
-	gulp.watch(['../IDE/public/js/src/**'], ['browserify']);
+	gulp.watch(['./src/**'], ['browserify']);
 	
 	// when the scope browser js changes, browserify it
-	gulp.watch(['../IDE/public/scope/js/src/**'], ['scope-browserify']);
+	gulp.watch(['./scope-src/**'], ['scope-browserify']);
 	
 	// when the less changes, compile it and stick it in public/css
-	gulp.watch(['../IDE/public/less/**'], ['less']);
+	// gulp.watch(['../IDE/public/less/**'], ['less']);
 	
 	// when the browser sources change, upload them without killing node
 	gulp.watch(['../IDE/public/**', 
 		'!../IDE/public/js/bundle.js.map', 
 		'!../IDE/public/scope/js/bundle.js.map', 
-		'!../IDE/public/js/src/**', 
-		'!../IDE/public/js/ace/**', 
-		'!../IDE/public/scope/js/src/**',
-		'!../IDE/public/less/**'
+		'!../IDE/public/js/ace/**'
 	], ['upload-no-kill']);
 	
-	// watch all IDE files (except ace and node_modules) and upload them when changed
-	//gulp.watch(['../IDE/**', '!../IDE/public/js/ace/**', '!../IDE/node_modules/**'], ['upload']);
-	
-	// watch the node.js files and kill the node process when they change
-	//gulp.watch(['../IDE/index.js/', '../IDE/libs/**'], ['killnode']);
-	
 });
 
-gulp.task('upload', ['killnode'], (callback) => {
-
-	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '../IDE/', user+'@'+host+':'+remotePath]);
-	
-	ssh.stdout.setEncoding('utf8');
-	ssh.stdout.on('data', function(data){
-		process.stdout.write(data);
-	});
-	
-	ssh.stderr.setEncoding('utf8');
-	ssh.stderr.on('data', function(data){
-		process.stdout.write('error: '+data);
-	});
-	
-	ssh.on('exit', function(){
-		callback();
-	});
-	
-});
-
-gulp.task('upload-no-kill', (callback) => {
-
-	var ssh = spawn('rsync', ['-av', '--delete', '../IDE/', user+'@'+host+':'+remotePath]);
-	
-	ssh.stdout.setEncoding('utf8');
-	ssh.stdout.on('data', function(data){
-		process.stdout.write(data);
-	});
-	
-	ssh.stderr.setEncoding('utf8');
-	ssh.stderr.on('data', function(data){
-		process.stdout.write('error: '+data);
-	});
-	
-	ssh.on('exit', function(){
-		callback();
-		livereload.reload();
-	});
-	
-});
+gulp.task('upload', ['killnode'], (cb) => rSync(cb, false) );
+gulp.task('upload-no-kill', (cb) => rSync(cb, true) );
 
 gulp.task('nodemodules', ['upload-nodemodules', 'rebuild-nodemodules']);
 
@@ -142,7 +95,8 @@ gulp.task('startnode', startNode);
 gulp.task('restartnode', ['upload'], startNode);
 
 gulp.task('browserify', () => {
-    return browserify('../IDE/public/js/src/main.js', { debug: true })
+    return browserify('src/main.js', { debug: true })
+    	.transform(babelify, {presets: ['es2015']})
         .bundle()
         .on('error', function(error){
     		console.error(error);
@@ -155,8 +109,8 @@ gulp.task('browserify', () => {
         .pipe(gulp.dest('../IDE/public/js/'));
 });
 gulp.task('scope-browserify', () => {
-    return browserify('../IDE/public/scope/js/src/main.js', { debug: true })
-    	.transform(babelify)
+    return browserify('scope-src/main.js', { debug: true })
+    	.transform(babelify, {presets: ['es2015']})
         .bundle()
         .on('error', function(error){
     		console.error(error);
@@ -193,3 +147,24 @@ function startNode(callback){
 
 	callback();
 }
+
+function rSync(callback, reload){
+
+	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '../IDE/', user+'@'+host+':'+remotePath]);
+	
+	ssh.stdout.setEncoding('utf8');
+	ssh.stdout.on('data', function(data){
+		process.stdout.write(data);
+	});
+	
+	ssh.stderr.setEncoding('utf8');
+	ssh.stderr.on('data', function(data){
+		process.stdout.write('error: '+data);
+	});
+	
+	ssh.on('exit', function(){
+		callback();
+		if (reload) livereload.reload();
+	});
+	
+};
