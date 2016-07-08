@@ -128,6 +128,9 @@ p {
 	width: 100%;
 	font-size: 10pt;
 }
+#beaglert-consoleWrapper span{
+	white-space: pre;
+}
 /*.beaglert-console-log-in::before{
 	content: '>';
 	color: inherit;
