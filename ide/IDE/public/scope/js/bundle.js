@@ -488,6 +488,7 @@ var ChannelView = function (_View) {
 			var key = $element.data().key;
 			var channel = $element.data().channel;
 			var value = key === 'color' ? $element.val() : parseFloat($element.val());
+			if (isNaN(value)) return;
 			this.$elements.filterByData('key', key).filterByData('channel', channel).val(value);
 			channelConfig[channel][key] = value;
 			this.emit('channelConfig', channelConfig);
