@@ -12,33 +12,50 @@
 
 #define FRAMES_STORED 2
 
+/*! \brief An oscilloscope which allows data to be visualised in a browser in real time. */
+/**
+ * To use the scope, ensure the Bela IDE is running, and navigate to 
+ * http://192.168.7.2/scope
+ */
 class Scope{
     public:
         Scope();
         
+        /*! \brief Initialise the scope, setting the number of channels and the sample rate */
         /**
-         * Setup the Scope.
+         * This function must be called once during setup. numChannels must be set
+         * to the number of parameters passed in to log() or the channels may not be
+         * displayed correctly. sampleRate must be the rate at which data is logged to
+         * the scope (the rate at which log() is called) in Hz or the x-axis time values
+         * displayed on the scope will be incorrect.
          *
-         * @param numChannels number of channels in the scope.
-         * @param sampleRate sampleRate of the data passed in.
+         * @param numChannels number of channels displayed by the scope.
+         * @param sampleRate sample rate of the data passed in.
          */
         void setup(unsigned int numChannels, float sampleRate);
 
+        /*! \brief Logs a frame of data to the scope. */
         /**
-         * Logs a frame of data to the scope.
-         *
          * Pass one argument per channel (starting from the first), up to the
          * number of channels of the object.
          * Omitted values will be set to 0.
          */
         void log(float chn1, ...);
 
+		/*! \brief Logs a frame of data to the scope. */
         /**
-         * Logs a frame of data to the scope.
+         * Accepts a pointer to an array of floats representing each channel's value in
+         * ascending order.
          *
          * @param values a pointer to an array containing numChannels values.
          */
         void log(float* values);
+        
+        /*! \brief Cause the scope to trigger when set to custom trigger mode. */
+        /**
+         * This method can be used to force the scope to trigger rather than relying on
+         * the typical auto or normal trigger.
+         */
         bool trigger();
         
     private:
