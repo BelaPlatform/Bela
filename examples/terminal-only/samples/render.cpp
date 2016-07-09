@@ -25,7 +25,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 #include <sys/types.h>
 #include "SampleData.h"
-#include <Scope.h>
 
 SampleData gSampleData;	// User defined structure to get complex data from main
 int gReadPtr;			// Position of last read sample from file

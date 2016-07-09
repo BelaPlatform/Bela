@@ -2,6 +2,7 @@
 module.exports = {};
 
 var Model = require('./Models/Model');
+var popup = require('./popup');
 
 // set up models
 var models = {};
@@ -138,7 +139,26 @@ debugView.on('debugger-event', (func) => socket.emit('debugger-event', func) );
 debugView.on('debug-mode', (status) => models.debug.setKey('debugMode', status) );
 
 // documentation view
-var documentationView = new (require('./Views/DocumentationView'))
+var documentationView = new (require('./Views/DocumentationView'));
+documentationView.on('open-example', (example) => {
+	if (projectView.exampleChanged){
+		projectView.exampleChanged = false;
+		popup.exampleChanged( () => {
+			projectView.emit('message', 'project-event', {
+				func: 'openExample',
+				currentProject: example
+			});
+			$('.selectedExample').removeClass('selectedExample');
+		}, undefined, 0, () => projectView.exampleChanged = true );
+		return;
+	}
+		
+	projectView.emit('message', 'project-event', {
+		func: 'openExample',
+		currentProject: example
+	});
+	$('.selectedExample').removeClass('selectedExample');
+});
 
 // git view
 var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);

@@ -170,76 +170,104 @@ typedef struct {
 
 /**
  * \ingroup render
- * \brief Structure holding current audio and sensor settings and pointers to data buffers.
+ * \brief Structure holding audio and sensor settings and pointers to I/O data buffers.
  *
- * This structure is passed to setup(), render() and cleanup(). It is
- * initialised in Bela_initAudio() based on the contents of the BelaInitSettings
- * structure.
+ * This structure is passed to setup(), render() and cleanup() and provides access to 
+ * Bela's I/O functionality. It is initialised in Bela_initAudio() based on the contents 
+ * of the BelaInitSettings structure.
  */
 typedef struct {
 	/// \brief Buffer holding audio input samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's audio input data to be read during render().
+	/// By default the buffer contains data from all the audio input channels arranged
+	/// in interleaved format.
+	///
+	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// conveniently using the audioRead() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	const float * const audioIn;
 
 	/// \brief Buffer holding audio output samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's audio output data to be written during render().
+	/// By default the buffer must contain data from all the audio output channels
+	/// arranged in interleaved format.
+	///
+	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// conveniently using the audioWrite() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	float * const audioOut;
 
 	/// \brief Buffer holding analog input samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's analog input data to be read during render().
+	/// By default the buffer contains data from all the analog input channels arranged
+	/// in interleaved format.
+	///
+	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// conveniently using the analogRead() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	const float * const analogIn;
 
 	/// \brief Buffer holding analog output samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's analog output data to be written during render().
+	/// By default the buffer must contain data from all the analog output channels
+	/// arranged in interleaved format.
+	///
+	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// conveniently using the analogWrite() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	float * const analogOut;
 
 	/// \brief Buffer holding digital input/output samples
 	///
+	/// This buffer allows Bela's digital GPIO data to be read and written during render().
+	///
+	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// conveniently using the digitalRead() and digitalWrite() utilities.
+	///
 	/// \b Note: this element is available in render() only.
 	uint32_t * const digital;
 
-	/// Number of audio frames per period
+	/// \brief The number of audio frames per block
+	///
+	/// This figure can be adjusted in the project settings from 2 to 128 and defaults to
+	/// 16. Reducing it lowers latency but increases CPU consumption.
 	const uint32_t audioFrames;
-	/// Number of input audio channels
+	/// \brief The number of input audio channels
 	const uint32_t audioInChannels;
-	/// Number of output audio channels
+	/// \brief The number of output audio channels
 	const uint32_t audioOutChannels;
-	/// Audio sample rate in Hz (currently always 44100.0)
+	/// \brief The audio sample rate in Hz (currently always 44100.0)
 	const float audioSampleRate;
 
-	/// \brief Number of analog frames per period
+	/// \brief The number of analog frames per period
 	///
 	/// This will be 0 if analog I/O is disabled.
 	const uint32_t analogFrames;
 
-	/// \brief Number of input analog channels
+	/// \brief The number of analog input channels
 	///
 	/// This will be 0 if analog I/O is disabled.
 	const uint32_t analogInChannels;
 
-	/// \brief Number of output analog channels
+	/// \brief The number of analog output channels
 	///
 	/// This will be 0 if analog I/O is disabled.
 	const uint32_t analogOutChannels;
 
 	/// \brief Analog sample rate in Hz
 	///
-	/// The analog sample rate depends on the number of analog channels used. If
-	/// 8 channels are used, the sample rate is 22050. If 4 channels are used, the sample
-	/// rate is 44100. If 2 channels are used, the sample rate is 88200. If analog I/O
-	/// is disabled, the sample rate is 0.
+	/// The analog sample rate can be set in the project settings and is tied to the 
+	/// number of analog channels used. If 8 channels are used, the sample rate is 22050. 
+	/// If 4 channels are used, the sample rate is 44100. If 2 channels are used, the 
+	/// sample rate is 88200. If analog I/O is disabled, the sample rate is 0.
 	const float analogSampleRate;
 
 	/// Number of digital frames per period
@@ -253,7 +281,7 @@ typedef struct {
 
 	/// \brief Number of elapsed audio frames since the start of rendering.
 	///
-	/// This holds the total number of audio frames as of the beginning of the current period. To
+	/// This holds the total number of audio frames as of the beginning of the current block. To
 	/// find the current number of analog or digital frames elapsed, multiply by the ratio of the
 	/// sample rates (e.g. half the number of analog frames will have elapsed if the analog sample
 	/// rate is 22050).

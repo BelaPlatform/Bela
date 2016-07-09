@@ -309,6 +309,7 @@ function isUndefined(arg) {
 module.exports = {};
 
 var Model = require('./Models/Model');
+var popup = require('./popup');
 
 // set up models
 var models = {};
@@ -470,6 +471,27 @@ debugView.on('debug-mode', function (status) {
 
 // documentation view
 var documentationView = new (require('./Views/DocumentationView'))();
+documentationView.on('open-example', function (example) {
+	if (projectView.exampleChanged) {
+		projectView.exampleChanged = false;
+		popup.exampleChanged(function () {
+			projectView.emit('message', 'project-event', {
+				func: 'openExample',
+				currentProject: example
+			});
+			$('.selectedExample').removeClass('selectedExample');
+		}, undefined, 0, function () {
+			return projectView.exampleChanged = true;
+		});
+		return;
+	}
+
+	projectView.emit('message', 'project-event', {
+		func: 'openExample',
+		currentProject: example
+	});
+	$('.selectedExample').removeClass('selectedExample');
+});
 
 // git view
 var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);
@@ -871,7 +893,7 @@ function parseErrors(data) {
 	models.error.setKey('verboseSyntaxError', data);
 }
 
-},{"./Models/Model":3,"./Views/ConsoleView":4,"./Views/DebugView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13}],3:[function(require,module,exports){
+},{"./Models/Model":3,"./Views/ConsoleView":4,"./Views/DebugView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":17}],3:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1613,6 +1635,8 @@ var View = require('./View');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 
+var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
+
 var DocumentationView = function (_View) {
 	_inherits(DocumentationView, _View);
 
@@ -1674,6 +1698,8 @@ var DocumentationView = function (_View) {
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
+					createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext').appendTo($('#contextDocs'));
+					counter += 1;
 					$(xml).find('memberdef').each(function () {
 						var li = createlifrommemberdef($(this), 'contextDocs' + counter);
 						li.appendTo($('#contextDocs'));
@@ -1690,6 +1716,8 @@ var DocumentationView = function (_View) {
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
+					createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h').appendTo($('#utilityDocs'));
+					counter += 1;
 					$(xml).find('memberdef').each(function () {
 						var li = createlifrommemberdef($(this), 'utilityDocs' + counter);
 						li.appendTo($('#utilityDocs'));
@@ -1697,6 +1725,32 @@ var DocumentationView = function (_View) {
 					});
 				}
 			});
+
+			// all classes
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = classes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var item = _step2.value;
+
+					xmlClassDocs(item, this);
+				}
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
 		}
 	}]);
 
@@ -1719,10 +1773,115 @@ function createlifrommemberdef($xml, id) {
 	content.append($('<h3></h3>').html($xml.find('briefdescription > para').html() || ''));
 
 	// main text
-	content.append($('<p></p>').html($xml.find('detaileddescription > para').html() || ''));
+	$xml.find('detaileddescription > para').each(function () {
+		if ($(this).find('parameterlist').length) {
+			content.append('</br><h3>Parameters:</h3>');
+			var ul = $('<ul></ul>');
+			$(this).find('parameteritem').each(function () {
+				var li = $('<li></li>');
+				li.append($('<strong></strong>').html($(this).find('parametername').html() + ': '));
+				$(this).find('parameterdescription>para').each(function () {
+					li.append($('<span></span>').html($(this).html() || ''));
+				});
+				ul.append(li);
+			});
+			content.append(ul);
+		} else {
+			content.append($('<p></p>').html($(this).html() || ''));
+		}
+	});
 
 	li.append(content);
 	return li;
+}
+
+function createlifromxml($xml, id, filename) {
+	var li = $('<li></li>');
+	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
+	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html($xml.find('compoundname').html()));
+
+	var content = $('<div></div>');
+
+	// title
+	//content.append($('<h2></h2>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
+
+	// subtitle
+	content.append($('<h3></h3>').html($xml.find('compounddef > briefdescription > para').html() || ''));
+
+	// main text
+	$xml.find('compounddef > detaileddescription > para').each(function () {
+		if ($(this).find('parameterlist').length) {
+			content.append('</br><h3>Parameters:</h3>');
+			var ul = $('<ul></ul>');
+			$(this).find('parameteritem').each(function () {
+				var li = $('<li></li>');
+				li.append($('<strong></strong>').html($(this).find('parametername').html() + ': '));
+				$(this).find('parameterdescription>para').each(function () {
+					li.append($('<span></span>').html($(this).html() || ''));
+				});
+				ul.append(li);
+			});
+			content.append(ul);
+		} else {
+			content.append($('<p></p>').html($(this).html() || ''));
+		}
+	});
+
+	content.append('</br><a href="http://192.168.7.2/documentation/' + filename + '.html" target="_blank">Full Documentation</a>');
+
+	li.append(content);
+	return li;
+}
+
+function xmlClassDocs(classname, emitter) {
+	var filename = 'class' + classname;
+	var parent = $('#' + classname + 'Docs');
+	$.ajax({
+		type: "GET",
+		url: "documentation_xml?file=" + filename,
+		dataType: "xml",
+		success: function success(xml) {
+			//console.log(xml);
+			var counter = 0;
+			createlifromxml($(xml), classname + counter, filename).appendTo(parent);
+			counter += 1;
+			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname + ')))').each(function () {
+				//console.log($(this));
+				var li = createlifrommemberdef($(this), classname + counter);
+				li.appendTo(parent);
+				counter += 1;
+			});
+
+			// when tab is opened
+			parent.siblings('input').on('change', function () {
+				console.log(classname);
+			});
+
+			$.ajax({
+				type: "GET",
+				url: "documentation_xml?file=" + classname + "_8h",
+				dataType: "xml",
+				success: function success(xml) {
+					//console.log(xml);
+					var includes = $(xml).find('includedby');
+					if (includes.length) {
+						var content = $('#' + classname + '0').siblings('div');
+						content.append($('<p></p>').html('Examples featuring this class:'));
+						includes.each(function () {
+							var include = $(this).html();
+							if (include && include.split && include.split('/')[0] === 'examples') {
+								var link = $('<a></a>').html(include.split('/')[2]);
+								link.on('click', function () {
+									return emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/'));
+								});
+								content.append(link).append('</br>');
+							}
+						});
+					}
+				}
+			});
+		}
+	});
 }
 
 },{"./View":14}],7:[function(require,module,exports){

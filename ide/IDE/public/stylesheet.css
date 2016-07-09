@@ -1117,6 +1117,13 @@ label.docSectionHeader {
 	font-size: 12px;
 	padding: 10px 0;
 }
+.subsections li, .subsections span{
+	cursor: auto;
+}
+.subsections a {
+	text-decoration: underline;
+	cursor: pointer;
+}
 
 .subsections div>h2 { /* title */
 
@@ -1126,6 +1133,9 @@ label.docSectionHeader {
 }
 .subsections div>p { /* content */
 
+}
+.subsections div li {
+	list-style: initial;
 }
 
 
