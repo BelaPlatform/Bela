@@ -60,6 +60,23 @@ class DocumentationView extends View {
 			}
 		});
 		
+		// Scope
+		$.ajax({
+			type: "GET",
+			url: "documentation_xml?file=classScope",
+			dataType: "xml",
+			success: function(xml){
+				//console.log(xml);
+				var counter = 0;
+				$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(Scope)))').each(function(){
+					//console.log($(this));
+					var li = createlifrommemberdef($(this), 'scopeDocs'+counter);
+					li.appendTo($('#scopeDocs'));
+					counter += 1;
+				});
+			}
+		});
+		
 	}
 	
 }
@@ -80,7 +97,23 @@ function createlifrommemberdef($xml, id){
 	content.append($('<h3></h3>').html( $xml.find('briefdescription > para').html() || '' ));
 	
 	// main text
-	content.append($('<p></p>').html( $xml.find('detaileddescription > para').html() || '' ));
+	$xml.find('detaileddescription > para').each(function(){
+		if ($(this).find('parameterlist').length){
+			content.append('</br><h3>Parameters:</h3>');
+			var ul = $('<ul></ul>');
+			$(this).find('parameteritem').each(function(){
+				var li = $('<li></li>');
+				li.append($('<strong></strong>').html( $(this).find('parametername').html()+': ' ));
+				$(this).find('parameterdescription>para').each(function(){
+					li.append($('<span></span>').html( $(this).html() || '' ));
+				});
+				ul.append(li);
+			});
+			content.append(ul);
+		} else {
+			content.append($('<p></p>').html( $(this).html() || '' ));
+		}
+	});
 
 	li.append(content);
 	return li;
