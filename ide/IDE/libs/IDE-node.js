@@ -252,18 +252,25 @@ function socketEvents(socket){
 	
 	// run-on-boot
 	socket.on('run-on-boot', project => {
-		var args;
 		if (project === 'none'){
-			args = ['nostartup'];
+			runOnBoot(socket, ['nostartup']);
 		} else {
-			args = ['startup', 'PROJECT='+project]; 
+			co(ProjectManager, 'getCLArgs', project)
+				.then( (CLArgs) => {
+					var args = '';
+					for (let key in CLArgs) {
+						if (key[0] === '-' && key[1] === '-'){
+							args += key+'='+CLArgs[key]+' ';
+						} else if (key === 'user'){
+							args += CLArgs[key];
+						} else if (key !== 'make'){
+							args += key+CLArgs[key]+' ';
+						}
+					}
+					runOnBoot(socket, ['startup', 'PROJECT='+project, 'CL='+args])
+				});
 		}
-		var proc = spawn('make', args, {cwd: belaPath});
-		proc.stdout.setEncoding('utf-8');
-		proc.stderr.setEncoding('utf-8');
-		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
-		proc.stderr.on('data', data => socket.emit('run-on-boot-log', data) );
-		proc.on('close', () => socket.emit('run-on-boot-log', 'done') );
+		
 	});
 	
 	// shell
@@ -361,11 +368,20 @@ function runOnBootProject(){
 			if (lines[5] === '# Run on startup disabled -- nothing to do here'){
 				project = 'none';
 			} else {
-				project = lines[5].trim().split(' ')[6].split('/').pop();
+				project = lines[5].trim().split(' ')[1].split('/').pop();
 			}
 			return project;
 		})
 		.catch( e => console.log('run-on-boot error', e) );
+}
+
+function runOnBoot(socket, args){
+	var proc = spawn('make', args, {cwd: belaPath});
+		proc.stdout.setEncoding('utf-8');
+		proc.stderr.setEncoding('utf-8');
+		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
+		proc.stderr.on('data', data => socket.emit('run-on-boot-log', data) );
+		proc.on('close', () => socket.emit('run-on-boot-log', 'done') );
 }
 
 function uploadUpdate(data){
