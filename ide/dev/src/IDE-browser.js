@@ -100,6 +100,22 @@ editorView.on('close-notification', data => consoleView.emit('closeNotification'
 editorView.on('editor-changed', () => {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
+editorView.on('goto-docs', (word, id) => {
+	tabView.emit('open-tab', 'tab-5');
+	documentationView.emit('open', id);
+	/*if (index === -1){
+		$('#iDocsLink').removeClass('iDocsVisible').off('click');
+	} else {
+		$('#iDocsLink')
+			.addClass('iDocsVisible')
+			.prop('title', 'View documentation for '+word)
+			.on('click', () => {
+				tabView.emit('open-tab', 'tab-5');
+				documentationView.emit('open', id);
+			});
+	}*/
+});
+editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
@@ -158,6 +174,9 @@ documentationView.on('open-example', (example) => {
 		currentProject: example
 	});
 	$('.selectedExample').removeClass('selectedExample');
+});
+documentationView.on('add-link', (link, type) => {
+	editorView.emit('add-link', link, type);
 });
 
 // git view
@@ -321,6 +340,8 @@ socket.on('shell-event', (evt, data) => consoleView.emit('shell-'+evt, data) )
 // generic log and warn
 socket.on('std-log', text => consoleView.emit('log', text) );
 socket.on('std-warn', text => consoleView.emit('warn', text) );
+
+socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 
 // model events
 // build errors

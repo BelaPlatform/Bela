@@ -303,6 +303,81 @@ function isUndefined(arg) {
 }
 
 },{}],2:[function(require,module,exports){
+"use strict";
+
+function CircularBuffer(capacity) {
+	if (!(this instanceof CircularBuffer)) return new CircularBuffer(capacity);
+	if (typeof capacity != "number" || capacity % 1 != 0 || capacity < 1) throw new TypeError("Invalid capacity");
+
+	this._buffer = new Array(capacity);
+	this._capacity = capacity;
+	this._first = 0;
+	this._size = 0;
+}
+
+CircularBuffer.prototype = {
+	size: function size() {
+		return this._size;
+	},
+	capacity: function capacity() {
+		return this._capacity;
+	},
+	enq: function enq(value) {
+		if (this._first > 0) this._first--;else this._first = this._capacity - 1;
+		this._buffer[this._first] = value;
+		if (this._size < this._capacity) this._size++;
+	},
+	push: function push(value) {
+		if (this._size == this._capacity) {
+			this._buffer[this._first] = value;
+			this._first = (this._first + 1) % this._capacity;
+		} else {
+			this._buffer[(this._first + this._size) % this._capacity] = value;
+			this._size++;
+		}
+	},
+	deq: function deq() {
+		if (this._size == 0) throw new RangeError("dequeue on empty buffer");
+		var value = this._buffer[(this._first + this._size - 1) % this._capacity];
+		this._size--;
+		return value;
+	},
+	pop: function pop() {
+		return this.deq();
+	},
+	shift: function shift() {
+		if (this._size == 0) throw new RangeError("shift on empty buffer");
+		var value = this._buffer[this._first];
+		if (this._first == this._capacity - 1) this._first = 0;else this._first++;
+		this._size--;
+		return value;
+	},
+	get: function get(start, end) {
+		if (this._size == 0 && start == 0 && (end == undefined || end == 0)) return [];
+		if (typeof start != "number" || start % 1 != 0 || start < 0) throw new TypeError("Invalid start");
+		if (start >= this._size) throw new RangeError("Index past end of buffer: " + start);
+
+		if (end == undefined) return this._buffer[(this._first + start) % this._capacity];
+
+		if (typeof end != "number" || end % 1 != 0 || end < 0) throw new TypeError("Invalid end");
+		if (end >= this._size) throw new RangeError("Index past end of buffer: " + end);
+
+		if (this._first + start >= this._capacity) {
+			//make sure first+start and first+end are in a normal range
+			start -= this._capacity; //becomes a negative number
+			end -= this._capacity;
+		}
+		if (this._first + end < this._capacity) return this._buffer.slice(this._first + start, this._first + end + 1);else return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
+	},
+	toarray: function toarray() {
+		if (this._size == 0) return [];
+		return this.get(0, this._size - 1);
+	}
+};
+
+module.exports = CircularBuffer;
+
+},{}],3:[function(require,module,exports){
 'use strict';
 
 // IDE controller
@@ -419,6 +494,24 @@ editorView.on('close-notification', function (data) {
 editorView.on('editor-changed', function () {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
+editorView.on('goto-docs', function (word, id) {
+	tabView.emit('open-tab', 'tab-5');
+	documentationView.emit('open', id);
+	/*if (index === -1){
+ 	$('#iDocsLink').removeClass('iDocsVisible').off('click');
+ } else {
+ 	$('#iDocsLink')
+ 		.addClass('iDocsVisible')
+ 		.prop('title', 'View documentation for '+word)
+ 		.on('click', () => {
+ 			tabView.emit('open-tab', 'tab-5');
+ 			documentationView.emit('open', id);
+ 		});
+ }*/
+});
+editorView.on('highlight-syntax', function (names) {
+	return socket.emit('highlight-syntax', names);
+});
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
@@ -491,6 +584,9 @@ documentationView.on('open-example', function (example) {
 		currentProject: example
 	});
 	$('.selectedExample').removeClass('selectedExample');
+});
+documentationView.on('add-link', function (link, type) {
+	editorView.emit('add-link', link, type);
 });
 
 // git view
@@ -697,6 +793,10 @@ socket.on('std-warn', function (text) {
 	return consoleView.emit('warn', text);
 });
 
+socket.on('syntax-highlighted', function () {
+	return editorView.emit('syntax-highlighted');
+});
+
 // model events
 // build errors
 models.status.on('set', function (data, changedKeys) {
@@ -893,7 +993,7 @@ function parseErrors(data) {
 	models.error.setKey('verboseSyntaxError', data);
 }
 
-},{"./Models/Model":3,"./Views/ConsoleView":4,"./Views/DebugView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":17}],3:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DebugView":6,"./Views/DocumentationView":7,"./Views/EditorView":8,"./Views/FileView":9,"./Views/GitView":10,"./Views/ProjectView":11,"./Views/SettingsView":12,"./Views/TabView":13,"./Views/ToolbarView":14,"./popup":19}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1001,7 +1101,7 @@ function _equals(a, b, log) {
 	}
 }
 
-},{"events":1}],4:[function(require,module,exports){
+},{"events":1}],5:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1363,7 +1463,7 @@ var funcKey = {
 	'stop': 'Stopping'
 };
 
-},{"../console":15,"./View":14}],5:[function(require,module,exports){
+},{"../console":16,"./View":15}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1620,7 +1720,7 @@ function prepareList() {
 	});
 };
 
-},{"./View":14}],6:[function(require,module,exports){
+},{"./View":15}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1646,12 +1746,22 @@ var DocumentationView = function (_View) {
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DocumentationView).call(this, className, models));
 
 		_this.on('init', _this.init);
+
+		_this.on('open', function (id) {
+			_this.closeAll();
+			$('#' + id).prop('checked', 'checked');
+			$('#' + id).parent().parent().siblings('input').prop('checked', 'checked');
+			var offset = $('#' + id).siblings('label').position().top + $('#docTab').scrollTop();
+			if (offset) $('#docTab').scrollTop(offset);
+		});
 		return _this;
 	}
 
 	_createClass(DocumentationView, [{
 		key: 'init',
 		value: function init() {
+
+			var self = this;
 
 			// The API
 			$.ajax({
@@ -1669,7 +1779,7 @@ var DocumentationView = function (_View) {
 						for (var _iterator = apiFuncs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 							var item = _step.value;
 
-							var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter);
+							var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter, self, 'api');
 							li.appendTo($('#APIDocs'));
 							counter += 1;
 						}
@@ -1698,10 +1808,10 @@ var DocumentationView = function (_View) {
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
-					createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext').appendTo($('#contextDocs'));
+					createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext', self, 'contextType').appendTo($('#contextDocs'));
 					counter += 1;
 					$(xml).find('memberdef').each(function () {
-						var li = createlifrommemberdef($(this), 'contextDocs' + counter);
+						var li = createlifrommemberdef($(this), 'contextDocs' + counter, self, 'context');
 						li.appendTo($('#contextDocs'));
 						counter += 1;
 					});
@@ -1716,10 +1826,10 @@ var DocumentationView = function (_View) {
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
-					createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h').appendTo($('#utilityDocs'));
+					createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h', self, 'header').appendTo($('#utilityDocs'));
 					counter += 1;
 					$(xml).find('memberdef').each(function () {
-						var li = createlifrommemberdef($(this), 'utilityDocs' + counter);
+						var li = createlifrommemberdef($(this), 'utilityDocs' + counter, self, 'utility');
 						li.appendTo($('#utilityDocs'));
 						counter += 1;
 					});
@@ -1752,6 +1862,11 @@ var DocumentationView = function (_View) {
 				}
 			}
 		}
+	}, {
+		key: 'closeAll',
+		value: function closeAll() {
+			$('#docsParent').find('input:checked').prop('checked', '');
+		}
 	}]);
 
 	return DocumentationView;
@@ -1759,10 +1874,14 @@ var DocumentationView = function (_View) {
 
 module.exports = DocumentationView;
 
-function createlifrommemberdef($xml, id) {
+function createlifrommemberdef($xml, id, emitter, type) {
+
+	var name = $xml.find('name').html();
+	emitter.emit('add-link', { name: name, id: id }, type);
+
 	var li = $('<li></li>');
 	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html($xml.find('name').html()));
+	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
 
 	var content = $('<div></div>');
 
@@ -1795,10 +1914,14 @@ function createlifrommemberdef($xml, id) {
 	return li;
 }
 
-function createlifromxml($xml, id, filename) {
+function createlifromxml($xml, id, filename, emitter, type) {
+
+	var name = $xml.find('compoundname').html();
+	emitter.emit('add-link', { name: name, id: id }, type);
+
 	var li = $('<li></li>');
 	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html($xml.find('compoundname').html()));
+	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
 
 	var content = $('<div></div>');
 
@@ -1842,12 +1965,15 @@ function xmlClassDocs(classname, emitter) {
 		dataType: "xml",
 		success: function success(xml) {
 			//console.log(xml);
+
 			var counter = 0;
-			createlifromxml($(xml), classname + counter, filename).appendTo(parent);
+			createlifromxml($(xml), classname + counter, filename, emitter, 'typedef').appendTo(parent);
+			emitter.emit('add-link', { name: classname, id: classname + counter }, 'header');
+
 			counter += 1;
 			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname + ')))').each(function () {
 				//console.log($(this));
-				var li = createlifrommemberdef($(this), classname + counter);
+				var li = createlifrommemberdef($(this), classname + counter, emitter, classname);
 				li.appendTo(parent);
 				counter += 1;
 			});
@@ -1884,7 +2010,7 @@ function xmlClassDocs(classname, emitter) {
 	});
 }
 
-},{"./View":14}],7:[function(require,module,exports){
+},{"./View":15}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1903,6 +2029,9 @@ var uploadDelay = 50;
 var uploadBlocked = false;
 var currentFile;
 var imageUrl;
+var activeWords = [];
+var activeWordIDs = [];
+var autoDocs = false;
 
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
@@ -1912,10 +2041,18 @@ var EditorView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(EditorView).call(this, className, models));
 
+		_this.highlights = {};
+
 		_this.editor = ace.edit('editor');
 		ace.require("ace/ext/language_tools");
 
+		_this.parser = require('../parser');
+		_this.parser.init(_this.editor);
+
 		// set syntax mode
+		_this.on('syntax-highlighted', function () {
+			return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
+		});
 		_this.editor.session.setMode('ace/mode/c_cpp');
 		_this.editor.$blockScrolling = Infinity;
 
@@ -1934,7 +2071,21 @@ var EditorView = function (_View) {
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);
 			if (!uploadBlocked) _this.editorChanged();
+			_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 		});
+
+		// fired when the cursor changes position
+		_this.editor.session.selection.on('changeCursor', function () {
+			if (autoDocs) _this.getCurrentWord();
+		});
+
+		/*this.editor.session.on('changeBackMarker', (e) => {
+  	console.log($('.bela-ace-highlight'));
+  	$('.bela-ace-highlight').on('click', (e) => {
+  		console.log('click');
+  		this.getCurrentWord();
+  	});
+  });*/
 
 		// set/clear breakpoints when the gutter is clicked
 		_this.editor.on("guttermousedown", function (e) {
@@ -1956,6 +2107,27 @@ var EditorView = function (_View) {
 
 		_this.on('resize', function () {
 			return _this.editor.resize();
+		});
+
+		_this.on('add-link', function (link, type) {
+
+			if (!_this.highlights[type] || !_this.highlights[type].length) _this.highlights[type] = [];
+
+			_this.highlights[type].push(link);
+
+			/*if (activeWords.indexOf(name) == -1){
+   	activeWords.push(name);
+   	activeWordIDs.push(id);
+   }*/
+			if (_this.linkTimeout) clearTimeout(_this.linkTimeout);
+			_this.linkTimeout = setTimeout(function () {
+				return _this.parser.highlights(_this.highlights);
+			}); //this.emit('highlight-syntax', activeWords), 100);
+		});
+
+		_this.editor.session.on('tokenizerUpdate', function (e) {
+			//console.log('tokenizerUpdate');
+			_this.parser.parse();
 		});
 
 		return _this;
@@ -2055,6 +2227,9 @@ var EditorView = function (_View) {
 				// put the file into the editor
 				this.editor.session.setValue(data, -1);
 
+				// parse the data
+				this.parser.parse();
+
 				// unblock upload
 				uploadBlocked = false;
 
@@ -2099,6 +2274,12 @@ var EditorView = function (_View) {
 			this.editor.setOptions({
 				enableLiveAutocompletion: parseInt(status) === 1
 			});
+		}
+	}, {
+		key: '_autoDocs',
+		value: function _autoDocs(status) {
+			this.parser.enable(status);
+			autoDocs = status;
 		}
 		// readonly status has changed
 
@@ -2197,6 +2378,61 @@ var EditorView = function (_View) {
 				}
 			});
 		}
+	}, {
+		key: 'getCurrentWord',
+		value: function getCurrentWord() {
+			var pos = this.editor.getCursorPosition();
+			//var range = this.editor.session.getAWordRange(pos.row, pos.column);
+			/*var word = this.editor.session.getTextRange(this.editor.session.getAWordRange(pos.row, pos.column)).trim();
+   var index = activeWords.indexOf(word);
+   var id;
+   if (index !== -1) id = activeWordIDs[index]; 
+   //console.log(word, index);
+   this.emit('goto-docs', index, word, id);*/
+
+			var iterator = new TokenIterator(this.editor.getSession(), pos.row, pos.column);
+			var token = iterator.getCurrentToken();
+			if (!token || !token.range) {
+				//console.log('no range');
+				return;
+			}
+
+			//console.log('clicked', token);
+
+			//console.time('searching markers');
+
+			var markers = this.parser.getMarkers();
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = markers[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var marker = _step2.value;
+
+					if (token.range.isEqual(marker.range) && marker.type && marker.type.name && marker.type.id) {
+						//console.log(marker);
+						this.emit('goto-docs', marker.type.name, marker.type.id);
+						break;
+					}
+				}
+
+				//console.timeEnd('searching markers');
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+		}
 	}]);
 
 	return EditorView;
@@ -2204,7 +2440,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"./View":14}],8:[function(require,module,exports){
+},{"../parser":18,"./View":15}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2642,7 +2878,7 @@ function sanitise(name) {
 	return name.replace(/[^a-zA-Z0-9\.\-\/~]/g, '_');
 }
 
-},{"../popup":17,"./View":14}],9:[function(require,module,exports){
+},{"../popup":19,"./View":15}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2841,7 +3077,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":17,"./View":14}],10:[function(require,module,exports){
+},{"../popup":19,"./View":15}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3188,7 +3424,7 @@ function sanitise(name) {
 	return name.replace(/[^a-zA-Z0-9\.\-]/g, '_');
 }
 
-},{"../popup":17,"./View":14}],11:[function(require,module,exports){
+},{"../popup":19,"./View":15}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3500,7 +3736,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":17,"./View":14}],12:[function(require,module,exports){
+},{"../popup":19,"./View":15}],13:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3609,6 +3845,10 @@ var TabView = function (_View) {
 			}
 		});
 
+		_this.on('open-tab', function (id) {
+			return $('#' + id).siblings('label').trigger('click');
+		});
+
 		return _this;
 	}
 
@@ -3651,7 +3891,7 @@ var TabView = function (_View) {
 
 module.exports = new TabView();
 
-},{"./View":14}],13:[function(require,module,exports){
+},{"./View":15}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3866,7 +4106,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"./View":14}],14:[function(require,module,exports){
+},{"./View":15}],15:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3998,7 +4238,7 @@ var View = function (_EventEmitter) {
 
 module.exports = View;
 
-},{"events":1}],15:[function(require,module,exports){
+},{"events":1}],16:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4256,7 +4496,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"events":1}],16:[function(require,module,exports){
+},{"events":1}],17:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -4266,7 +4506,270 @@ $(function () {
 	IDE = require('./IDE-browser');
 });
 
-},{"./IDE-browser":2}],17:[function(require,module,exports){
+},{"./IDE-browser":3}],18:[function(require,module,exports){
+'use strict';
+
+var Range = ace.require('ace/range').Range;
+var Anchor = ace.require('ace/anchor').Anchor;
+var buf = new (require('./CircularBuffer'))(5);
+for (var i = 0; i < buf.capacity(); i++) {
+	buf.enq({});
+}var editor;
+
+var parsingDeclaration = false;
+var parsingBody = false;
+var parsing;
+
+var parensCount = 0;
+
+var includes = [];
+var typedefs = [];
+var markers = [];
+
+var _highlights = {};
+
+var contextType;
+var contextName;
+
+var parser = {
+	init: function init(ed) {
+		editor = ed;
+		this.enabled = false;
+	},
+	enable: function enable(status) {
+		this.enabled = status;
+		this.parse();
+	},
+	highlights: function highlights(hls) {
+		_highlights = hls;
+		contextType = hls.contextType[0].name;
+		_highlights.typerefs = [];
+		//console.log(highlights);
+
+		this.parse();
+	},
+	getMarkers: function getMarkers() {
+		return markers;
+	},
+	getIncludes: function getIncludes() {
+		return includes;
+	},
+	parse: function parse() {
+		var _iteratorNormalCompletion = true;
+		var _didIteratorError = false;
+		var _iteratorError = undefined;
+
+		try {
+			for (var _iterator = markers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				var marker = _step.value;
+
+				editor.session.removeMarker(marker.id);
+			}
+		} catch (err) {
+			_didIteratorError = true;
+			_iteratorError = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion && _iterator.return) {
+					_iterator.return();
+				}
+			} finally {
+				if (_didIteratorError) {
+					throw _iteratorError;
+				}
+			}
+		}
+
+		if (!this.enabled) return;
+		// console.time('parse time');
+
+		var iterator = new TokenIterator(editor.getSession(), 0, 0);
+		var token = iterator.getCurrentToken();
+
+		// are we parsing a file with Bela API included?
+		var parsingAPI = false;
+
+		includes = [];
+		typedefs = [];
+		markers = [];
+
+		while (token) {
+
+			token.range = new Range(iterator.getCurrentTokenRow(), iterator.getCurrentTokenColumn(), iterator.getCurrentTokenRow(), iterator.getCurrentTokenColumn() + token.value.length);
+			//console.log(token);
+
+			if (parsingDeclaration) {
+				parseDeclaration(token);
+			} else if (parsingBody) {
+				parseBody(token);
+			} else {
+
+				// typedefs
+				if (typedefs.length && buf.get(1).type === 'identifier' && typedefs.indexOf(buf.get(1).value) !== -1 && buf.get(0).type === 'text' && buf.get(0).value === ' ' && token.type === 'identifier') {
+					var link = _highlights['typedef'][searchHighlightsFor('typedef', buf.get(1).value)];
+					addMarker(buf.get(1), link);
+					_highlights.typerefs.push({
+						name: token.value,
+						id: link
+					});
+				}
+
+				// includes
+				if (buf.get(0).type === 'keyword' && buf.get(0).value === '#include') {
+
+					var include = token.value.split('<').pop().split('>')[0].split('.')[0];
+
+					if (include === 'Bela') parsingAPI = true;
+
+					if (searchHighlightsFor('header', include) !== -1) {
+						includes.push(include);
+						if (searchHighlightsFor('typedef', include) !== -1) {
+							typedefs.push(include);
+						}
+					}
+
+					// function detection
+				} else if (parsingAPI && buf.get(1).type === 'storage.type' && buf.get(1).value === 'bool' && buf.get(0).type === 'text' && buf.get(0).value === ' ' && token.type === 'identifier' && token.value === 'setup') {
+					//console.log('parsing declaration of setup');
+					parsingDeclaration = true;
+					parsing = token.value;
+					if (_highlights['api']) addMarker(token, _highlights['api'][searchHighlightsFor('api', 'setup')]);
+				} else if (parsingAPI && buf.get(1).type === 'storage.type' && buf.get(1).value === 'void' && buf.get(0).type === 'text' && buf.get(0).value === ' ' && token.type === 'identifier' && token.value === 'render') {
+					//console.log('parsing declaration of  render');
+					parsingDeclaration = true;
+					parsing = token.value;
+					if (_highlights['api']) addMarker(token, _highlights['api'][searchHighlightsFor('api', 'render')]);
+				} else if (parsingAPI && buf.get(1).type === 'storage.type' && buf.get(1).value === 'void' && buf.get(0).type === 'text' && buf.get(0).value === ' ' && token.type === 'identifier' && token.value === 'cleanup') {
+					//console.log('parsing declaration of  cleanup');
+					parsingDeclaration = true;
+					parsing = token.value;
+					if (_highlights['api']) addMarker(token, _highlights['api'][searchHighlightsFor('api', 'cleanup')]);
+				}
+			}
+
+			//if (highlights && highlights.typerefs && highlights.typerefs.length){
+			var index = searchHighlightsFor('typerefs', token.value);
+			if (index !== -1) {
+				addMarker(token, _highlights['typerefs'][index].id);
+			} else if (buf.get(1).type === 'identifier') {
+				var _index = searchHighlightsFor('typerefs', buf.get(1).value);
+				//console.log('typeref index', index, token.value);
+				if (_index !== -1 && buf.get(0).type === 'punctuation.operator' && buf.get(0).value === '.') {
+					var typedef = _highlights['typerefs'][_index].id.name;
+					//let newIndex = searchHighlightsFor(typedef, token.value);
+					//console.log(newIndex, highlights[typedef][newIndex]);
+					addMarker(token, _highlights[typedef][searchHighlightsFor(typedef, token.value)]);
+				}
+			}
+
+			//}
+
+			buf.enq(token);
+			token = iterator.stepForward();
+		}
+		//console.log('includes', includes);
+		//console.log('typedefs', typedefs);
+		//console.log('markers', markers);
+		//console.log(editor.session.getMarkers());
+		//console.timeEnd('parse time');
+	}
+};
+
+function parseDeclaration(token) {
+	if (token.type === 'paren.lparen' && token.value === '(') {
+		parensCount += 1;
+	} else if (token.type === 'paren.rparen' && token.value === ')') {
+		parensCount -= 1;
+		if (parensCount <= 0) {
+			parensCount = 0;
+			// console.log('parsing body of', parsing);
+			parsingDeclaration = false;
+			parsingBody = true;
+		}
+	} else if (buf.get(0).type === 'keyword.operator' && buf.get(0).value === '*' && buf.get(1).type === 'text' && buf.get(1).value === ' ' && buf.get(2).type === 'identifier' && buf.get(2).value === contextType) {
+		contextName = token.value;
+		// console.log('contextName', contextName);
+		addMarker(token, _highlights.contextType[0]);
+		addMarker(buf.get(2), _highlights.contextType[0]);
+	}
+}
+
+function parseBody(token) {
+	if (token.type === 'paren.lparen' && token.value === '{') {
+		parensCount += 1;
+	} else if (token.type === 'paren.rparen' && token.value === '}') {
+		parensCount -= 1;
+		if (parensCount <= 0) {
+			parensCount = 0;
+			// console.log('finished parsing body of', parsing);
+			parsingBody = false;
+		}
+	} else if (token.type === 'identifier' && token.value === contextName) {
+		// console.log('context!');
+		addMarker(token, _highlights.contextType[0]);
+	} else if (buf.get(1).type === 'identifier' && buf.get(1).value === contextName && buf.get(0).type === 'keyword.operator' && buf.get(0).value === '->') {
+		var index = searchHighlightsFor(contextName, token.value);
+		if (index !== -1) addMarker(token, _highlights[contextName][index]);
+	} else if (token.type === 'identifier') {
+		var _index2 = searchHighlightsFor('utility', token.value);
+		if (_index2 !== -1) addMarker(token, _highlights['utility'][_index2]);
+	}
+}
+
+function addMarker(token, type) {
+	var range = token.range;
+	var marker = {
+		token: token,
+		type: type,
+		range: range,
+		id: editor.session.addMarker(range, "bela-ace-highlight", "text"),
+		anchor: new Anchor(editor.session.doc, range.start.row, range.start.column)
+	};
+	marker.anchor.on('change', function (e) {
+		range.setStart(e.value.row, e.value.column);
+		range.setEnd(e.value.row, e.value.column + token.value.length);
+	});
+	markers.push(marker);
+}
+
+function searchHighlightsFor(sub, val) {
+	//console.log('searching', sub)
+	//console.log(highlights[sub]);
+	//console.log('for', val);
+	if (!_highlights || !_highlights[sub]) return -1;
+	var _iteratorNormalCompletion2 = true;
+	var _didIteratorError2 = false;
+	var _iteratorError2 = undefined;
+
+	try {
+		for (var _iterator2 = _highlights[sub][Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+			var item = _step2.value;
+
+			if (item.name === val) {
+				return _highlights[sub].indexOf(item);
+			}
+		}
+	} catch (err) {
+		_didIteratorError2 = true;
+		_iteratorError2 = err;
+	} finally {
+		try {
+			if (!_iteratorNormalCompletion2 && _iterator2.return) {
+				_iterator2.return();
+			}
+		} finally {
+			if (_didIteratorError2) {
+				throw _iteratorError2;
+			}
+		}
+	}
+
+	return -1;
+}
+
+module.exports = parser;
+
+},{"./CircularBuffer":2}],19:[function(require,module,exports){
 'use strict';
 
 var overlay = $('#overlay');
@@ -4345,7 +4848,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.find('.popup-continue').trigger('focus');
 }
 
-},{}]},{},[16])
+},{}]},{},[17])
 
 
 //# sourceMappingURL=bundle.js.map

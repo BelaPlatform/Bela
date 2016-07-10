@@ -90,6 +90,8 @@ class TabView extends View {
 			}
 		});
 		
+		this.on('open-tab', (id) => $('#'+id).siblings('label').trigger('click') );
+		
 	}
 	
 	openTabs(){

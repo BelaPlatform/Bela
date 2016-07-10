@@ -20,9 +20,19 @@ class DocumentationView extends View {
 		super(className, models);
 		
 		this.on('init', this.init);
+		
+		this.on('open', (id) => {
+			this.closeAll();
+			$('#'+id).prop('checked', 'checked');
+			$('#'+id).parent().parent().siblings('input').prop('checked', 'checked');
+			var offset = $('#'+id).siblings('label').position().top + $('#docTab').scrollTop();
+			if (offset) $('#docTab').scrollTop(offset);
+		})
 	}
 	
 	init(){
+	
+		var self = this;
 		
 		// The API
 		$.ajax({
@@ -33,7 +43,7 @@ class DocumentationView extends View {
 				//console.log(xml);
 				var counter = 0;
 				for (let item of apiFuncs){
-					var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains('+item+'))'), 'APIDocs'+counter);
+					var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains('+item+'))'), 'APIDocs'+counter, self, 'api');
 					li.appendTo($('#APIDocs'));
 					counter += 1;
 				}
@@ -48,10 +58,10 @@ class DocumentationView extends View {
 			success: function(xml){
 				//console.log(xml);
 				var counter = 0;
-				createlifromxml($(xml), 'contextDocs'+counter, 'structBelaContext').appendTo($('#contextDocs'));
+				createlifromxml($(xml), 'contextDocs'+counter, 'structBelaContext', self, 'contextType').appendTo($('#contextDocs'));
 				counter += 1;
 				$(xml).find('memberdef').each(function(){
-					var li = createlifrommemberdef($(this), 'contextDocs'+counter);
+					var li = createlifrommemberdef($(this), 'contextDocs'+counter, self, 'context');
 					li.appendTo($('#contextDocs'));
 					counter += 1;
 				});
@@ -66,10 +76,10 @@ class DocumentationView extends View {
 			success: function(xml){
 				//console.log(xml);
 				var counter = 0;
-				createlifromxml($(xml), 'utilityDocs'+counter, 'Utilities_8h').appendTo($('#utilityDocs'));
+				createlifromxml($(xml), 'utilityDocs'+counter, 'Utilities_8h', self, 'header').appendTo($('#utilityDocs'));
 				counter += 1;
 				$(xml).find('memberdef').each(function(){
-					var li = createlifrommemberdef($(this), 'utilityDocs'+counter);
+					var li = createlifrommemberdef($(this), 'utilityDocs'+counter, self, 'utility');
 					li.appendTo($('#utilityDocs'));
 					counter += 1;
 				});
@@ -83,14 +93,22 @@ class DocumentationView extends View {
 		
 	}
 	
+	closeAll(){
+		$('#docsParent').find('input:checked').prop('checked', '');
+	}
+	
 }
 
 module.exports = DocumentationView;
 
-function createlifrommemberdef($xml, id){
+function createlifrommemberdef($xml, id, emitter, type){
+
+	var name = $xml.find('name').html();
+	emitter.emit('add-link', {name, id}, type);
+	
 	var li = $('<li></li>');
 	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html($xml.find('name').html()));
+	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
 	
 	var content = $('<div></div>');
 	
@@ -123,10 +141,14 @@ function createlifrommemberdef($xml, id){
 	return li;
 }
 
-function createlifromxml($xml, id, filename){
+function createlifromxml($xml, id, filename, emitter, type){
+
+	var name = $xml.find('compoundname').html();
+	emitter.emit('add-link', {name, id}, type);
+	
 	var li = $('<li></li>');
 	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html($xml.find('compoundname').html()));
+	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
 	
 	var content = $('<div></div>');
 	
@@ -170,12 +192,15 @@ function xmlClassDocs(classname, emitter){
 		dataType: "xml",
 		success: function(xml){
 			//console.log(xml);
+			
 			var counter = 0;
-			createlifromxml($(xml), classname+counter, filename).appendTo(parent);
+			createlifromxml($(xml), classname+counter, filename, emitter, 'typedef').appendTo(parent);
+			emitter.emit('add-link', {name: classname, id: classname+counter}, 'header');
+			
 			counter += 1;
 			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains('+classname+')))').each(function(){
 				//console.log($(this));
-				var li = createlifrommemberdef($(this), classname+counter);
+				var li = createlifrommemberdef($(this), classname+counter, emitter, classname);
 				li.appendTo(parent);
 				counter += 1;
 			});

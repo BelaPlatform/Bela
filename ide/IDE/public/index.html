@@ -20,6 +20,7 @@
 				<div id="top-open-file"></div>
 				<div id="top-open-project"></div>
 				<div id="top-bela-status"></div>
+				<span id="iDocsLink"></span>
 				<a id="top-example-docs-link" href="documentation/examples.html" target="_blank"><button id="top-example-docs">example docs</button></a>
 			</div>
 			
@@ -282,6 +283,11 @@
 								  		<td>Delete old console records:</td>
 								  		<td><input type="checkbox" id="consoleDelete" class="settingsManager" data-func="setIDESetting" data-key="consoleDelete" value="1" ></td>
 									</tr>
+									
+									<tr>
+								  		<td>Auto-open documentation:</td>
+								  		<td><input type="checkbox" id="autoDocs" class="settingsManager" data-func="setIDESetting" data-key="autoDocs" value="1" ></td>
+									</tr>
 
 									<!--<tr>
 										<td>Verbose debugger output:</td>
@@ -380,10 +386,10 @@
 				    <div class="tab"><!-- Start Doc, Tab 5 -->
 				       <input type="radio" id="tab-5" name="tab-group-1">
 				       <label for="tab-5"><span id="api-ref" title="API Reference" /></label>
-				       <div class="tabContent">
+				       <div id="docTab" class="tabContent">
 				           <h1>Documentation</h1>
 				           <a href="documentation" target="_blank"><button class="doc-button">Full documentation</button></a>
-				           <ul class="sections">
+				           <ul id="docsParent" class="sections">
 				           		<li>
 				           			<input type="checkbox" class="docs" id="tit0">
 									<label for="tit0" class="docSectionHeader">The Bela Context</label>
@@ -533,6 +539,9 @@
 		<script src="js/goldenlayout.js"></script>
 		<script src="js/polyfill.js"></script>
 		<script src="js/bundle.js"></script>
+		<script>
+			TokenIterator = require("ace/token_iterator").TokenIterator;
+		</script>
 
 	</body>
 	

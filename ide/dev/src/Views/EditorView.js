@@ -6,16 +6,25 @@ const uploadDelay = 50;
 var uploadBlocked = false;
 var currentFile;
 var imageUrl;
+var activeWords = [];
+var activeWordIDs = [];
+var autoDocs = false;
 
 class EditorView extends View {
 	
 	constructor(className, models){
 		super(className, models);
 		
+		this.highlights = {};
+				
 		this.editor = ace.edit('editor');
-		ace.require("ace/ext/language_tools");
+		ace.require("ace/ext/language_tools"); 
+		
+		this.parser = require('../parser');
+		this.parser.init(this.editor);
 		
 		// set syntax mode
+		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
 		this.editor.session.setMode('ace/mode/c_cpp');
 		this.editor.$blockScrolling = Infinity;
 		
@@ -34,7 +43,21 @@ class EditorView extends View {
 		this.editor.session.on('change', (e) => {
 			//console.log('upload', !uploadBlocked);
 			if (!uploadBlocked) this.editorChanged();
+			this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 		});
+		
+		// fired when the cursor changes position
+		this.editor.session.selection.on('changeCursor', () => {
+			if (autoDocs) this.getCurrentWord();
+		});
+		
+		/*this.editor.session.on('changeBackMarker', (e) => {
+			console.log($('.bela-ace-highlight'));
+			$('.bela-ace-highlight').on('click', (e) => {
+				console.log('click');
+				this.getCurrentWord();
+			});
+		});*/
 		
 		// set/clear breakpoints when the gutter is clicked
 		this.editor.on("guttermousedown", (e) => { 
@@ -57,6 +80,26 @@ class EditorView extends View {
 		$('#audioControl').find('button').on('click', () => audioSource.start(0) );
 		
 		this.on('resize', () => this.editor.resize() );
+		
+		this.on('add-link', (link, type) => {
+
+			if (!this.highlights[type] || !this.highlights[type].length)
+				this.highlights[type] = [];
+				
+			this.highlights[type].push(link);
+			
+			/*if (activeWords.indexOf(name) == -1){
+				activeWords.push(name);
+				activeWordIDs.push(id);
+			}*/
+			if (this.linkTimeout) clearTimeout(this.linkTimeout);
+			this.linkTimeout = setTimeout(() => this.parser.highlights(this.highlights) )//this.emit('highlight-syntax', activeWords), 100);
+		});
+				
+		this.editor.session.on('tokenizerUpdate', (e) => {
+			//console.log('tokenizerUpdate'); 
+			this.parser.parse();
+		});
 		
 	}
 	
@@ -150,6 +193,9 @@ class EditorView extends View {
 	
 			// put the file into the editor
 			this.editor.session.setValue(data, -1);
+			
+			// parse the data
+			this.parser.parse();
 	
 			// unblock upload
 			uploadBlocked = false;
@@ -190,6 +236,10 @@ class EditorView extends View {
 		this.editor.setOptions({
 			enableLiveAutocompletion: (parseInt(status) === 1)
 		});
+	}
+	_autoDocs(status){
+		this.parser.enable(status);
+		autoDocs = status;
 	}
 	// readonly status has changed
 	_readOnly(status){
@@ -246,6 +296,39 @@ class EditorView extends View {
 				this.editor.session.removeMarker(markers[key].id);
 			}
 		});
+	}
+	
+	getCurrentWord(){
+		var pos = this.editor.getCursorPosition();
+		//var range = this.editor.session.getAWordRange(pos.row, pos.column);
+		/*var word = this.editor.session.getTextRange(this.editor.session.getAWordRange(pos.row, pos.column)).trim();
+		var index = activeWords.indexOf(word);
+		var id;
+		if (index !== -1) id = activeWordIDs[index]; 
+		//console.log(word, index);
+		this.emit('goto-docs', index, word, id);*/
+		
+		var iterator = new TokenIterator(this.editor.getSession(), pos.row, pos.column);
+		var token = iterator.getCurrentToken();
+		if (!token || !token.range){
+			//console.log('no range');
+			return;
+		}
+		
+		//console.log('clicked', token); 
+		
+		//console.time('searching markers');
+		
+		var markers = this.parser.getMarkers();
+		for (let marker of markers){
+			if (token.range.isEqual(marker.range) && marker.type && marker.type.name && marker.type.id){
+				//console.log(marker);
+				this.emit('goto-docs', marker.type.name, marker.type.id);
+				break;
+			}
+		}
+		
+		//console.timeEnd('searching markers');
 	}
 }
 
