@@ -27,7 +27,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 float gFrequency = 4.0;
 float gPhase;
 float gInverseSampleRate;
-float gAudioFramesPerAnalogFrame;
+int gAudioFramesPerAnalogFrame;
 
 bool setup(BelaContext *context, void *userData)
 {

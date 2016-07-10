@@ -52,7 +52,7 @@ float amountBelowPeak = 0.001;
 float rolloffRate = 0.00005;
 int triggered = 0;
 
-float gAudioFramesPerAnalogFrame;
+int gAudioFramesPerAnalogFrame;
 
 bool setup(BelaContext *context, void *userData)
 {
