@@ -74,8 +74,8 @@ void render(BelaContext *context, void *userData)
 
 		if(!(n % gAudioFramesPerAnalogFrame)) {
 			// On even audio samples: read analog inputs and update frequency and amplitude
-			gIn1 = analogRead(context, n, 0);
-	    	gIn2 = analogRead(context, n, 1);
+			gIn1 = analogRead(context, n/gAudioFramesPerAnalogFrame, 0);
+            gIn2 = analogRead(context, n/gAudioFramesPerAnalogFrame, 1);
 	    	gAmplitude = gIn1 * 0.8f;
 	    	gFrequency = map(gIn2, 0, 1, 100, 1000);
 		}
