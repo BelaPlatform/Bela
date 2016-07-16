@@ -6,12 +6,23 @@ Scope::Scope():connected(0), triggerPrimed(false), started(false){}
 // static aux task functions
 void Scope::triggerTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    if (instance->started)
-        instance->doTrigger();
+    while(instance->started && !gShouldStop) {
+        if (instance->triggerTaskFlag){
+            instance->doTrigger();
+            instance->triggerTaskFlag = false;
+        }
+        usleep(1000);
+    }
 }
 void Scope::sendBufferTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    instance->sendBuffer();
+    while(instance->started && !gShouldStop) {
+        if (instance->sendBufferFlag){
+            instance->sendBuffer();
+            instance->sendBufferFlag = false;
+        }
+        usleep(1000);
+    }
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate){
@@ -31,7 +42,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	socket.setPort(SCOPE_UDP_PORT);
 
 	// setup the auxiliary tasks
-	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this, true);
+	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
 	scopeSendBufferTask = Bela_createAuxiliaryTask(Scope::sendBufferTask, BELA_AUDIO_PRIORITY-1, "scopeSendBufferTask", this);
 
     // send an OSC message to address /scope-setup
@@ -74,6 +85,14 @@ void Scope::start(){
     customTriggered = false;
 
     started = true;
+    
+    sendBufferFlag = false;
+    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
+    
+    logCount = 0;
+    triggerTaskFlag = false;
+    Bela_scheduleAuxiliaryTask(scopeTriggerTask);
+    
 }
 
 void Scope::stop(){
@@ -153,6 +172,12 @@ void Scope::postlog(int startingWritePointer){
         writePointer = (writePointer+1)%channelWidth;
         
     }
+    
+    logCount += upSampling;
+    if (logCount > TRIGGER_LOG_COUNT){
+        triggerTaskFlag = true;
+        logCount = 0;
+    }
 }
 
 bool Scope::trigger(){
@@ -165,7 +190,7 @@ bool Scope::trigger(){
 }
 
 void Scope::scheduleSendBufferTask(){
-    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
+    sendBufferFlag = true;
 }
 
 bool Scope::triggered(){
@@ -181,6 +206,7 @@ bool Scope::triggered(){
 }
 
 void Scope::doTrigger(){
+// rt_printf("do trigger\n");
     // iterate over the samples between the read and write pointers and check for / deal with triggers
     while (readPointer != writePointer){
         

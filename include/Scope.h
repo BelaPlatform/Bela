@@ -12,6 +12,8 @@
 
 #define FRAMES_STORED 2
 
+#define TRIGGER_LOG_COUNT 16
+
 /** 
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
  *
@@ -45,8 +47,8 @@ class Scope{
          */
         void log(float chn1, ...);
 
-		/**
-		 * \brief Logs a frame of data to the scope.
+	/**
+	 * \brief Logs a frame of data to the scope.
          *
          * Accepts a pointer to an array of floats representing each channel's value in
          * ascending order.
@@ -94,6 +96,10 @@ class Scope{
         int upSampling;
         int downSampling;
         float holdOff;
+        
+        bool sendBufferFlag;
+        bool triggerTaskFlag;
+        int logCount;
         
         int channelWidth;
         int downSampleCount;
