@@ -21,10 +21,10 @@ var contextType;
 var contextName;
 
 var parser = {
-	init(ed){
+	init(ed, langTools){
 		editor = ed;
 		this.enabled = false;
-		
+		this.langTools = langTools;
 	},
 	
 	enable(status){
@@ -39,6 +39,73 @@ var parser = {
 		//console.log(highlights);
 		
 		this.parse();
+		
+		this.autoComplete();
+	},
+	
+	autoComplete(){
+		
+		// context
+		var contextAutocompleteWords = [];
+		for (let item of highlights[contextName]){
+			contextAutocompleteWords.push(contextName+'->'+item.name);
+		}
+		var contextWordCompleter = {
+			getCompletions: function(editor, session, pos, prefix, callback) {
+				callback(null, contextAutocompleteWords.map(function(word) {
+					return {
+						caption: word,
+						value: word,
+						meta: 'BelaContext'
+					};
+				}));
+
+			}
+		}
+		this.langTools.addCompleter(contextWordCompleter);
+		
+		// class members
+		var classAutocompleteWords = [];
+		for (let typedef of highlights['typedef']){
+			classAutocompleteWords.push(typedef.name);
+		}
+		for (let typeref of highlights['typerefs']){
+			for (let item of highlights[typeref.id.name]){
+				classAutocompleteWords.push(typeref.name+'.'+item.name);
+			}
+		}
+		var classWordCompleter = {
+			getCompletions: function(editor, session, pos, prefix, callback) {
+				callback(null, classAutocompleteWords.map(function(word) {
+					return {
+						caption: word,
+						value: word,
+						meta: 'Bela'
+					};
+				}));
+
+			}
+		}
+		this.langTools.addCompleter(classWordCompleter);
+		
+		// utilities
+		var utilityAutocompleteWords = [];
+		for (let utility of highlights['utility']){
+			utilityAutocompleteWords.push(utility.name);
+		}
+		var utilityWordCompleter = {
+			getCompletions: function(editor, session, pos, prefix, callback) {
+				callback(null, utilityAutocompleteWords.map(function(word) {
+					return {
+						caption: word,
+						value: word,
+						meta: 'Utilities'
+					};
+				}));
+
+			}
+		}
+		this.langTools.addCompleter(utilityWordCompleter);
 		
 	},
 	

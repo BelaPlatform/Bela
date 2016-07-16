@@ -18,10 +18,10 @@ class EditorView extends View {
 		this.highlights = {};
 				
 		this.editor = ace.edit('editor');
-		ace.require("ace/ext/language_tools"); 
+		var langTools = ace.require("ace/ext/language_tools"); 
 		
 		this.parser = require('../parser');
-		this.parser.init(this.editor);
+		this.parser.init(this.editor, langTools);
 		
 		// set syntax mode
 		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));

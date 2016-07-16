@@ -2044,10 +2044,10 @@ var EditorView = function (_View) {
 		_this.highlights = {};
 
 		_this.editor = ace.edit('editor');
-		ace.require("ace/ext/language_tools");
+		var langTools = ace.require("ace/ext/language_tools");
 
 		_this.parser = require('../parser');
-		_this.parser.init(_this.editor);
+		_this.parser.init(_this.editor, langTools);
 
 		// set syntax mode
 		_this.on('syntax-highlighted', function () {
@@ -4532,9 +4532,10 @@ var contextType;
 var contextName;
 
 var parser = {
-	init: function init(ed) {
+	init: function init(ed, langTools) {
 		editor = ed;
 		this.enabled = false;
+		this.langTools = langTools;
 	},
 	enable: function enable(status) {
 		this.enabled = status;
@@ -4547,23 +4548,22 @@ var parser = {
 		//console.log(highlights);
 
 		this.parse();
+
+		this.autoComplete();
 	},
-	getMarkers: function getMarkers() {
-		return markers;
-	},
-	getIncludes: function getIncludes() {
-		return includes;
-	},
-	parse: function parse() {
+	autoComplete: function autoComplete() {
+
+		// context
+		var contextAutocompleteWords = [];
 		var _iteratorNormalCompletion = true;
 		var _didIteratorError = false;
 		var _iteratorError = undefined;
 
 		try {
-			for (var _iterator = markers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-				var marker = _step.value;
+			for (var _iterator = _highlights[contextName][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				var item = _step.value;
 
-				editor.session.removeMarker(marker.id);
+				contextAutocompleteWords.push(contextName + '->' + item.name);
 			}
 		} catch (err) {
 			_didIteratorError = true;
@@ -4576,6 +4576,178 @@ var parser = {
 			} finally {
 				if (_didIteratorError) {
 					throw _iteratorError;
+				}
+			}
+		}
+
+		var contextWordCompleter = {
+			getCompletions: function getCompletions(editor, session, pos, prefix, callback) {
+				callback(null, contextAutocompleteWords.map(function (word) {
+					return {
+						caption: word,
+						value: word,
+						meta: 'BelaContext'
+					};
+				}));
+			}
+		};
+		this.langTools.addCompleter(contextWordCompleter);
+
+		// class members
+		var classAutocompleteWords = [];
+		var _iteratorNormalCompletion2 = true;
+		var _didIteratorError2 = false;
+		var _iteratorError2 = undefined;
+
+		try {
+			for (var _iterator2 = _highlights['typedef'][Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+				var typedef = _step2.value;
+
+				classAutocompleteWords.push(typedef.name);
+			}
+		} catch (err) {
+			_didIteratorError2 = true;
+			_iteratorError2 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion2 && _iterator2.return) {
+					_iterator2.return();
+				}
+			} finally {
+				if (_didIteratorError2) {
+					throw _iteratorError2;
+				}
+			}
+		}
+
+		var _iteratorNormalCompletion3 = true;
+		var _didIteratorError3 = false;
+		var _iteratorError3 = undefined;
+
+		try {
+			for (var _iterator3 = _highlights['typerefs'][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+				var typeref = _step3.value;
+				var _iteratorNormalCompletion5 = true;
+				var _didIteratorError5 = false;
+				var _iteratorError5 = undefined;
+
+				try {
+					for (var _iterator5 = _highlights[typeref.id.name][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+						var _item = _step5.value;
+
+						classAutocompleteWords.push(typeref.name + '.' + _item.name);
+					}
+				} catch (err) {
+					_didIteratorError5 = true;
+					_iteratorError5 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion5 && _iterator5.return) {
+							_iterator5.return();
+						}
+					} finally {
+						if (_didIteratorError5) {
+							throw _iteratorError5;
+						}
+					}
+				}
+			}
+		} catch (err) {
+			_didIteratorError3 = true;
+			_iteratorError3 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion3 && _iterator3.return) {
+					_iterator3.return();
+				}
+			} finally {
+				if (_didIteratorError3) {
+					throw _iteratorError3;
+				}
+			}
+		}
+
+		var classWordCompleter = {
+			getCompletions: function getCompletions(editor, session, pos, prefix, callback) {
+				callback(null, classAutocompleteWords.map(function (word) {
+					return {
+						caption: word,
+						value: word,
+						meta: 'Bela'
+					};
+				}));
+			}
+		};
+		this.langTools.addCompleter(classWordCompleter);
+
+		// utilities
+		var utilityAutocompleteWords = [];
+		var _iteratorNormalCompletion4 = true;
+		var _didIteratorError4 = false;
+		var _iteratorError4 = undefined;
+
+		try {
+			for (var _iterator4 = _highlights['utility'][Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+				var utility = _step4.value;
+
+				utilityAutocompleteWords.push(utility.name);
+			}
+		} catch (err) {
+			_didIteratorError4 = true;
+			_iteratorError4 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion4 && _iterator4.return) {
+					_iterator4.return();
+				}
+			} finally {
+				if (_didIteratorError4) {
+					throw _iteratorError4;
+				}
+			}
+		}
+
+		var utilityWordCompleter = {
+			getCompletions: function getCompletions(editor, session, pos, prefix, callback) {
+				callback(null, utilityAutocompleteWords.map(function (word) {
+					return {
+						caption: word,
+						value: word,
+						meta: 'Utilities'
+					};
+				}));
+			}
+		};
+		this.langTools.addCompleter(utilityWordCompleter);
+	},
+	getMarkers: function getMarkers() {
+		return markers;
+	},
+	getIncludes: function getIncludes() {
+		return includes;
+	},
+	parse: function parse() {
+		var _iteratorNormalCompletion6 = true;
+		var _didIteratorError6 = false;
+		var _iteratorError6 = undefined;
+
+		try {
+			for (var _iterator6 = markers[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+				var marker = _step6.value;
+
+				editor.session.removeMarker(marker.id);
+			}
+		} catch (err) {
+			_didIteratorError6 = true;
+			_iteratorError6 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion6 && _iterator6.return) {
+					_iterator6.return();
+				}
+			} finally {
+				if (_didIteratorError6) {
+					throw _iteratorError6;
 				}
 			}
 		}
@@ -4737,29 +4909,29 @@ function searchHighlightsFor(sub, val) {
 	//console.log(highlights[sub]);
 	//console.log('for', val);
 	if (!_highlights || !_highlights[sub]) return -1;
-	var _iteratorNormalCompletion2 = true;
-	var _didIteratorError2 = false;
-	var _iteratorError2 = undefined;
+	var _iteratorNormalCompletion7 = true;
+	var _didIteratorError7 = false;
+	var _iteratorError7 = undefined;
 
 	try {
-		for (var _iterator2 = _highlights[sub][Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-			var item = _step2.value;
+		for (var _iterator7 = _highlights[sub][Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+			var item = _step7.value;
 
 			if (item.name === val) {
 				return _highlights[sub].indexOf(item);
 			}
 		}
 	} catch (err) {
-		_didIteratorError2 = true;
-		_iteratorError2 = err;
+		_didIteratorError7 = true;
+		_iteratorError7 = err;
 	} finally {
 		try {
-			if (!_iteratorNormalCompletion2 && _iterator2.return) {
-				_iterator2.return();
+			if (!_iteratorNormalCompletion7 && _iterator7.return) {
+				_iterator7.return();
 			}
 		} finally {
-			if (_didIteratorError2) {
-				throw _iteratorError2;
+			if (_didIteratorError7) {
+				throw _iteratorError7;
 			}
 		}
 	}
