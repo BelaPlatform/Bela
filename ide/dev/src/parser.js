@@ -44,6 +44,9 @@ var parser = {
 	},
 	
 	autoComplete(){
+		// console.log(highlights);
+		// console.log(contextName, highlights[contextName]);
+		if (!contextName) return;
 		
 		// context
 		var contextAutocompleteWords = [];

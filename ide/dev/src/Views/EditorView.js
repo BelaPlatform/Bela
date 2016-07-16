@@ -42,8 +42,11 @@ class EditorView extends View {
 		// this function is called when the user modifies the editor
 		this.editor.session.on('change', (e) => {
 			//console.log('upload', !uploadBlocked);
-			if (!uploadBlocked) this.editorChanged();
-			this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
+			if (!uploadBlocked){
+				this.editorChanged();
+				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
+				// console.log('firing tokenizer');
+			}
 		});
 		
 		// fired when the cursor changes position
@@ -97,7 +100,7 @@ class EditorView extends View {
 		});
 				
 		this.editor.session.on('tokenizerUpdate', (e) => {
-			//console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate'); 
 			this.parser.parse();
 		});
 		

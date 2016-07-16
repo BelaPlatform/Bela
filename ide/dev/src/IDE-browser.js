@@ -257,16 +257,6 @@ socket.on('project-list', (project, list) =>  {
 });
 socket.on('file-list', (project, list) => {
 	if (project && project === models.project.getKey('currentProject')){
-		let currentFilenameFound = false;
-		for (let item of list){
-			if (item.name === models.project.getKey('fileName')){
-				currentFilenameFound = true;
-			}
-		}
-		if (!currentFilenameFound){
-			// this file has just been deleted
-			socket.emit('project-event', {func: 'openProject', currentProject: project});
-		}
 		models.project.setKey('fileList', list);
 	}
 });

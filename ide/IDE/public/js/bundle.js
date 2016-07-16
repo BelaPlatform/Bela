@@ -676,38 +676,6 @@ socket.on('project-list', function (project, list) {
 });
 socket.on('file-list', function (project, list) {
 	if (project && project === models.project.getKey('currentProject')) {
-		var currentFilenameFound = false;
-		var _iteratorNormalCompletion = true;
-		var _didIteratorError = false;
-		var _iteratorError = undefined;
-
-		try {
-			for (var _iterator = list[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-				var item = _step.value;
-
-				if (item.name === models.project.getKey('fileName')) {
-					currentFilenameFound = true;
-				}
-			}
-		} catch (err) {
-			_didIteratorError = true;
-			_iteratorError = err;
-		} finally {
-			try {
-				if (!_iteratorNormalCompletion && _iterator.return) {
-					_iterator.return();
-				}
-			} finally {
-				if (_didIteratorError) {
-					throw _iteratorError;
-				}
-			}
-		}
-
-		if (!currentFilenameFound) {
-			// this file has just been deleted
-			socket.emit('project-event', { func: 'openProject', currentProject: project });
-		}
 		models.project.setKey('fileList', list);
 	}
 });
@@ -954,13 +922,13 @@ function parseErrors(data) {
 
 	var currentFileErrors = [],
 	    otherFileErrors = [];
-	var _iteratorNormalCompletion2 = true;
-	var _didIteratorError2 = false;
-	var _iteratorError2 = undefined;
+	var _iteratorNormalCompletion = true;
+	var _didIteratorError = false;
+	var _iteratorError = undefined;
 
 	try {
-		for (var _iterator2 = errors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-			var err = _step2.value;
+		for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+			var err = _step.value;
 
 			if (!err.file || err.file === models.project.getKey('fileName')) {
 				err.currentFile = true;
@@ -972,16 +940,16 @@ function parseErrors(data) {
 			}
 		}
 	} catch (err) {
-		_didIteratorError2 = true;
-		_iteratorError2 = err;
+		_didIteratorError = true;
+		_iteratorError = err;
 	} finally {
 		try {
-			if (!_iteratorNormalCompletion2 && _iterator2.return) {
-				_iterator2.return();
+			if (!_iteratorNormalCompletion && _iterator.return) {
+				_iterator.return();
 			}
 		} finally {
-			if (_didIteratorError2) {
-				throw _iteratorError2;
+			if (_didIteratorError) {
+				throw _iteratorError;
 			}
 		}
 	}
@@ -2070,8 +2038,11 @@ var EditorView = function (_View) {
 		// this function is called when the user modifies the editor
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);
-			if (!uploadBlocked) _this.editorChanged();
-			_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
+			if (!uploadBlocked) {
+				_this.editorChanged();
+				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
+				// console.log('firing tokenizer');
+			}
 		});
 
 		// fired when the cursor changes position
@@ -2126,7 +2097,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			//console.log('tokenizerUpdate');
+			// console.log('tokenizerUpdate');
 			_this.parser.parse();
 		});
 
@@ -4552,6 +4523,9 @@ var parser = {
 		this.autoComplete();
 	},
 	autoComplete: function autoComplete() {
+		// console.log(highlights);
+		// console.log(contextName, highlights[contextName]);
+		if (!contextName) return;
 
 		// context
 		var contextAutocompleteWords = [];
