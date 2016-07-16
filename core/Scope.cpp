@@ -81,22 +81,8 @@ void Scope::stop(){
 }
 
 void Scope::log(float* values){
-	//TODO: contains lots of duplicated code from log(float,...).
-	//TODO: needs refactoring
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
-
-    if (!started) return;
-
-    if (downSampling > 1){
-        if (downSampleCount < downSampling){
-            downSampleCount++;
-            return;
-        }
-        downSampleCount = 1;
-    }
+    
+	if (!prelog()) return;
 
     int startingWritePointer = writePointer;
 
@@ -105,38 +91,12 @@ void Scope::log(float* values){
         buffer[i*channelWidth + writePointer] = values[i];
     }
 
-    writePointer = (writePointer+1)%channelWidth;
-
-    // if upSampling > 1, save repeated samples into the buffer
-    for (int j=1; j<upSampling; j++){
-
-        buffer[writePointer] = buffer[startingWritePointer];
-
-        for (int i=1; i<numChannels; i++) {
-            buffer[i*channelWidth + writePointer] = buffer[i*channelWidth + startingWritePointer];
-        }
-
-        writePointer = (writePointer+1)%channelWidth;
-
-    }
+   postlog(startingWritePointer);
 
 }
 void Scope::log(float chn1, ...){
-
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
     
-    if (!started) return;
-    
-    if (downSampling > 1){
-        if (downSampleCount < downSampling){
-            downSampleCount++;
-            return;
-        }
-        downSampleCount = 1;
-    }
+    if (!prelog()) return;
     
     va_list args;
     va_start (args, chn1);
@@ -151,7 +111,34 @@ void Scope::log(float chn1, ...){
         // channels are stored sequentially in the buffer i.e [[channel1], [channel2], etc...]
         buffer[i*channelWidth + writePointer] = (float)va_arg(args, double);
     }
+    
+    postlog(startingWritePointer);
+    
+    va_end (args);
+    
+}
 
+bool Scope::prelog(){
+    
+    // check for any received OSC messages
+    while (oscServer.messageWaiting()){
+        parseMessage(oscServer.popMessage());
+    }
+    
+    if (!started) return false;
+    
+    if (downSampling > 1){
+        if (downSampleCount < downSampling){
+            downSampleCount++;
+            return false;
+        }
+        downSampleCount = 1;
+    }
+    
+    return true;
+}
+void Scope::postlog(int startingWritePointer){
+    
     writePointer = (writePointer+1)%channelWidth;
     
     // if upSampling > 1, save repeated samples into the buffer
@@ -166,9 +153,6 @@ void Scope::log(float chn1, ...){
         writePointer = (writePointer+1)%channelWidth;
         
     }
-    
-    va_end (args);
-    
 }
 
 bool Scope::trigger(){

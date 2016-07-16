@@ -78,6 +78,8 @@ class Scope{
         void sendBuffer();
         void customTrigger();
         bool triggered();
+        bool prelog();
+        void postlog(int);
         
         // settings
         int numChannels;
