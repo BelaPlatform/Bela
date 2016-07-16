@@ -214,8 +214,8 @@ bool setup(BelaContext *context, void *userData)
 		}
 	}
 
-	midi.readFrom(0);
-	midi.writeTo(0);
+	midi.readFrom("/dev/midi1");
+	midi.writeTo("/dev/midi1");
 #ifdef PARSE_MIDI
 	midi.enableParser(true);
 #else

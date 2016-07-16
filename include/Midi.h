@@ -267,14 +267,14 @@ public:
 	 * @param port Midi port to open
 	 * @return 1 on success, -1 on failure
 	 */
-	int readFrom(int port);
+	int readFrom(const char* port);
 
 	/**
 	 * Open the specified output Midi port and prepares to write to it.
 	 * @param port Midi port to open
 	 * @return 1 on success, -1 on failure
 	 */
-	int writeTo(int port);
+	int writeTo(const char* port);
 
 	/**
 	 * Get received midi bytes, one at a time.
