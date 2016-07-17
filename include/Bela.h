@@ -183,7 +183,14 @@ typedef struct {
 	/// By default the buffer contains data from all the audio input channels arranged
 	/// in interleaved format.
 	///
-	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// Every time render() runs this buffer is filled with a block of new audio samples.
+	/// The block is made up of frames, individual slices of time consisting of one sample
+	/// taken from each audio input channel simultaneously. The number of frames per
+	/// block is given by context->audioFrames, and the number of audio input channels
+	/// by context->audioInChannels. The length of this buffer is the product of these
+	/// two values.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
 	/// conveniently using the audioRead() utility.
 	///
 	/// \b Note: this element is available in render() only.
@@ -195,7 +202,10 @@ typedef struct {
 	/// By default the buffer must contain data from all the audio output channels
 	/// arranged in interleaved format.
 	///
-	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// Every time render() runs it is the job of the developer to fill this buffer with 
+	/// a block of new audio samples, structured in the same way as context->audioIn.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
 	/// conveniently using the audioWrite() utility.
 	///
 	/// \b Note: this element is available in render() only.
@@ -207,7 +217,14 @@ typedef struct {
 	/// By default the buffer contains data from all the analog input channels arranged
 	/// in interleaved format.
 	///
-	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// Every time render() runs this buffer is filled with a block of new analog samples.
+	/// The block is made up of frames, individual slices of time consisting of one sample
+	/// taken from each analog input channel simultaneously. The number of frames per
+	/// block is given by context->analogFrames, and the number of analog input channels
+	/// by context->analogInChannels. The length of this buffer is the product of these
+	/// two values.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
 	/// conveniently using the analogRead() utility.
 	///
 	/// \b Note: this element is available in render() only.
@@ -219,7 +236,10 @@ typedef struct {
 	/// By default the buffer must contain data from all the analog output channels
 	/// arranged in interleaved format.
 	///
-	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// Every time render() runs it is the job of the developer to fill this buffer with 
+	/// a block of new analog samples, structured in the same way as context->analogIn.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
 	/// conveniently using the analogWrite() utility.
 	///
 	/// \b Note: this element is available in render() only.
@@ -237,19 +257,35 @@ typedef struct {
 
 	/// \brief The number of audio frames per block
 	///
-	/// This figure can be adjusted in the project settings from 2 to 128 and defaults to
-	/// 16. Reducing it lowers latency but increases CPU consumption.
+	/// Every time render() runs context->audioIn is filled with a block of new audio 
+	/// samples. The block is made up of frames, individual slices of time consisting of 
+	/// one sample taken from each audio input channel simultaneously. 
+	///
+	/// This value determines the number of audio frames in each block and can be adjusted 
+	/// in the IDE settings tab (or via the command line arguments) from 2 to 128, 
+	/// defaulting to 16. 
+	///
+	/// This value also determines how often render() is called, and reducing it decreases 
+	/// audio latency at the cost of increased CPU consumption.
 	const uint32_t audioFrames;
-	/// \brief The number of input audio channels
+	/// \brief The number of audio input channels
 	const uint32_t audioInChannels;
-	/// \brief The number of output audio channels
+	/// \brief The number of audio output channels
 	const uint32_t audioOutChannels;
 	/// \brief The audio sample rate in Hz (currently always 44100.0)
 	const float audioSampleRate;
 
-	/// \brief The number of analog frames per period
+	/// \brief The number of analog frames per block
 	///
-	/// This will be 0 if analog I/O is disabled.
+	/// Every time render() runs context->analogIn is filled with a block of new analog 
+	/// samples. The block is made up of frames, individual slices of time consisting of 
+	/// one sample taken from each analog input channel simultaneously. 
+	///
+	/// This value determines the number of analog frames in each block. It cannot be
+	/// set directly as it is dependant on the number of audio frames per block 
+	/// (context->audioFrames) and the analog sample rate (context->analogSampleRate).
+	///
+	/// This value will be 0 if analog I/O is disabled.
 	const uint32_t analogFrames;
 
 	/// \brief The number of analog input channels
@@ -264,10 +300,13 @@ typedef struct {
 
 	/// \brief Analog sample rate in Hz
 	///
-	/// The analog sample rate can be set in the project settings and is tied to the 
-	/// number of analog channels used. If 8 channels are used, the sample rate is 22050. 
-	/// If 4 channels are used, the sample rate is 44100. If 2 channels are used, the 
-	/// sample rate is 88200. If analog I/O is disabled, the sample rate is 0.
+	/// This value determines the rate at which each analog input is sampled, and is
+	/// directly related to the number of analog channels available. It can be adjusted 
+	/// in the IDE settings tab (or via the command line arguments) to 22050, 44100
+	/// or 88200, allowing 8, 4, or 2 analog channels respectively. By default, all 8
+	/// channels are sampled at 22050Hz.
+	///
+	/// If analog I/O is disabled, this value is 0.
 	const float analogSampleRate;
 
 	/// Number of digital frames per period
