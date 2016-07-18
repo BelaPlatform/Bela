@@ -10,7 +10,10 @@ class ControlView extends View{
 	
 	// UI events
 	selectChanged($element, e){
-		this.emit('settings-event', $element.data().key, $element.val());
+		var key = $element.data().key;
+		var value = $element.val();
+		if (this[key]) this[key](value);
+		this.emit('settings-event', key, value);
 	}
 	inputChanged($element, e){
 		var key = $element.data().key;
@@ -28,8 +31,19 @@ class ControlView extends View{
 			if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase'){
 				this['_'+key](data[key], data);
 			} else {
+				if (key === 'plotMode') this.plotMode(data[key].value);
 				this.$elements.filterByData('key', key).val(data[key].value);
 			}
+		}
+	}
+	
+	plotMode(val){
+		if (val == 0){
+			if ($('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').removeClass('hidden');
+			if (!$('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').addClass('hidden');
+		} else {
+			if (!$('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').addClass('hidden');
+			if ($('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').removeClass('hidden');
 		}
 	}
 	

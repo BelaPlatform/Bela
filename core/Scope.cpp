@@ -112,20 +112,20 @@ void Scope::setPlotMode(){
         customTriggered = false;
         
     } else if (plotMode == 1){ // frequency domain
-        //inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLENGTH * sizeof (ne10_fft_cpx_float32_t));
-        inFFT = new ne10_fft_cpx_float32_t[FFTLENGTH * sizeof (ne10_fft_cpx_float32_t)];
-    	outFFT = new ne10_fft_cpx_float32_t[FFTLENGTH * sizeof (ne10_fft_cpx_float32_t)];
-    	cfg = ne10_fft_alloc_c2c_float32_neon (FFTLENGTH);
+        //inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
+        inFFT = new ne10_fft_cpx_float32_t[FFTLength * sizeof (ne10_fft_cpx_float32_t)];
+    	outFFT = new ne10_fft_cpx_float32_t[FFTLength * sizeof (ne10_fft_cpx_float32_t)];
+    	cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
     	
     	pointerFFT = 0;
         collectingFFT = true;
 
         // Allocate the window buffer based on the FFT size
-    	windowFFT = (float *)malloc(FFTLENGTH * sizeof(float));
+    	windowFFT = new float[FFTLength];
     
     	// Calculate a Hann window
-    	for(int n = 0; n < FFTLENGTH; n++) {
-    		windowFFT[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(FFTLENGTH - 1)));
+    	for(int n = 0; n < FFTLength; n++) {
+    		windowFFT[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(FFTLength - 1)));
     	}
         
     }
@@ -332,7 +332,7 @@ void Scope::triggerFFT(){
             inFFT[pointerFFT].i = 0;
             pointerFFT += 1;
             
-            if (pointerFFT > FFTLENGTH){
+            if (pointerFFT > FFTLength){
                 collectingFFT = false;
                 doFFT();
                 //pointerFFT = 0;
@@ -341,7 +341,7 @@ void Scope::triggerFFT(){
         } else {
             
             pointerFFT += 1;
-            if (pointerFFT > (FFTLENGTH+holdOffSamples)){
+            if (pointerFFT > (FFTLength+holdOffSamples)){
                 pointerFFT = 0;
                 collectingFFT = true;
             }
@@ -357,7 +357,7 @@ void Scope::triggerFFT(){
 void Scope::doFFT(){
     ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
     
-    float ratio = (float)(FFTLENGTH/2)/frameWidth;
+    float ratio = (float)(FFTLength/2)/frameWidth;
     
     for (int i=0; i<frameWidth; i++){
         float findex = (float)i*ratio;
@@ -367,13 +367,13 @@ void Scope::doFFT(){
         float first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
         float second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
         
-        outBuffer[i] = FFTSCALE * (first + rem * (second - first));
+        outBuffer[i] = FFTScale * (first + rem * (second - first));
     }
     
-    //rt_printf("%i, %f\n", FFTLENGTH, FFTSCALE);
+    //rt_printf("%i, %f\n", FFTLength, FFTScale);
 
-    /*for (int i=0; i<FFTLENGTH/2; i++){
-        outBuffer[i] = FFTSCALE * sqrtf((float)(outFFT[i].r * outFFT[i].r + outFFT[i].i * outFFT[i].i));
+    /*for (int i=0; i<FFTLength/2; i++){
+        outBuffer[i] = FFTScale * sqrtf((float)(outFFT[i].r * outFFT[i].r + outFFT[i].i * outFFT[i].i));
     }*/
     //rt_printf("doing fft\n");
     // socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
@@ -422,6 +422,10 @@ void Scope::parseMessage(oscpkt::Message msg){
         } else if (msg.match("/scope-settings/holdOff").popFloat(floatArg).isOkNoMoreArgs()){
             holdOff = floatArg;
             holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
+        } else if (msg.match("/scope-settings/FFTLength").popInt32(intArg).isOkNoMoreArgs()){
+            FFTLength = intArg;
+            FFTScale = 1.0/((float)intArg);
+            setPlotMode();
         }
     }
 }

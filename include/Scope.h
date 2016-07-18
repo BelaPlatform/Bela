@@ -15,9 +15,6 @@
 
 #define TRIGGER_LOG_COUNT 16
 
-#define FFTLENGTH 1024
-#define FFTSCALE 1.0/FFTLENGTH
-
 /** 
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
  *
@@ -134,6 +131,8 @@ class Scope{
         bool customTriggered;
         
         // FFT
+        int FFTLength;
+        float FFTScale;
         int pointerFFT;
         bool collectingFFT;
         float *windowFFT;

@@ -563,7 +563,10 @@ var ControlView = function (_View) {
 	_createClass(ControlView, [{
 		key: 'selectChanged',
 		value: function selectChanged($element, e) {
-			this.emit('settings-event', $element.data().key, $element.val());
+			var key = $element.data().key;
+			var value = $element.val();
+			if (this[key]) this[key](value);
+			this.emit('settings-event', key, value);
 		}
 	}, {
 		key: 'inputChanged',
@@ -595,6 +598,7 @@ var ControlView = function (_View) {
 					if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase') {
 						this['_' + key](data[key], data);
 					} else {
+						if (key === 'plotMode') this.plotMode(data[key].value);
 						this.$elements.filterByData('key', key).val(data[key].value);
 					}
 				}
@@ -611,6 +615,17 @@ var ControlView = function (_View) {
 						throw _iteratorError;
 					}
 				}
+			}
+		}
+	}, {
+		key: 'plotMode',
+		value: function plotMode(val) {
+			if (val == 0) {
+				if ($('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').removeClass('hidden');
+				if (!$('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').addClass('hidden');
+			} else {
+				if (!$('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').addClass('hidden');
+				if ($('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').removeClass('hidden');
 			}
 		}
 	}, {

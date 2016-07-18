@@ -16,6 +16,7 @@ var settings = {
 	xOffset			: {type: 'integer', value: 0},
 	upSampling		: {type: 'integer', value: 1},
 	downSampling	: {type: 'integer', value: 1},
+	FFTLength		: {type: 'integer', value: 1024},
 	holdOff			: {type: 'float', value: 20}
 }
 
@@ -88,8 +89,8 @@ var scope = {
 		
 		socket.on('settings-event', (key, value) => {
 			if (settings[key]){
-				if (key === 'upSampling' || key === 'downSampling') {
-					this[key]();
+				if (key === 'upSampling' || key === 'downSampling' || key === 'plotMode') {
+					this[key](value);
 					return;
 				}
 				if (settings[key].type === 'integer') value = parseInt(value);
@@ -128,6 +129,22 @@ var scope = {
 			this.webSocket.emit('settings', {downSampling: settings.downSampling});
 			if (scopeConnected)
 				scopeOSC.sendSetting('downSampling', settings['downSampling']);
+		}
+	},
+	
+	plotMode(value){
+		settings.plotMode.value = parseInt(value);
+		if (settings.plotMode.value == 1){
+			settings.upSampling.value = 1;
+			settings.downSampling.value = 1;
+			if (scopeConnected){
+				scopeOSC.sendSetting('upSampling', settings['upSampling']);
+				scopeOSC.sendSetting('downSampling', settings['downSampling']);
+				scopeOSC.sendSetting('plotMode', settings['plotMode']);
+			}
+			this.webSocket.emit('settings', {upSampling: settings.upSampling, downSampling: settings.downSampling});
+		} else {
+			scopeOSC.sendSetting('plotMode', settings['plotMode']);
 		}
 	},
 	
