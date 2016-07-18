@@ -319,19 +319,17 @@ class EditorView extends View {
 		}
 		
 		//console.log('clicked', token); 
-		
-		//console.time('searching markers');
-		
+				
 		var markers = this.parser.getMarkers();
 		for (let marker of markers){
 			if (token.range.isEqual(marker.range) && marker.type && marker.type.name && marker.type.id){
 				//console.log(marker);
 				this.emit('goto-docs', marker.type.name, marker.type.id);
-				break;
+				return;
 			}
 		}
 		
-		//console.timeEnd('searching markers');
+		this.emit('clear-docs');
 	}
 }
 

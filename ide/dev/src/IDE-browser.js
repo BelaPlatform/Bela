@@ -101,20 +101,19 @@ editorView.on('editor-changed', () => {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
 editorView.on('goto-docs', (word, id) => {
-	tabView.emit('open-tab', 'tab-5');
-	documentationView.emit('open', id);
-	/*if (index === -1){
-		$('#iDocsLink').removeClass('iDocsVisible').off('click');
+	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext'){
+		documentationView.emit('open', id);
 	} else {
 		$('#iDocsLink')
 			.addClass('iDocsVisible')
-			.prop('title', 'View documentation for '+word)
-			.on('click', () => {
+			.prop('title', 'cmd + h: '+word)
+			.off('click').on('click', () => {
 				tabView.emit('open-tab', 'tab-5');
 				documentationView.emit('open', id);
 			});
-	}*/
+	}
 });
+editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
 editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
 
 // toolbar view
@@ -518,4 +517,4 @@ var keypress = new window.keypress.Listener();
 keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
 keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
-keypress.simple_combo("meta h", function(){ tabView.emit('open-tab', 'tab-2') });
+keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });

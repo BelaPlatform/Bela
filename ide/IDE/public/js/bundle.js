@@ -495,19 +495,17 @@ editorView.on('editor-changed', function () {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
 editorView.on('goto-docs', function (word, id) {
-	tabView.emit('open-tab', 'tab-5');
-	documentationView.emit('open', id);
-	/*if (index === -1){
- 	$('#iDocsLink').removeClass('iDocsVisible').off('click');
- } else {
- 	$('#iDocsLink')
- 		.addClass('iDocsVisible')
- 		.prop('title', 'View documentation for '+word)
- 		.on('click', () => {
- 			tabView.emit('open-tab', 'tab-5');
- 			documentationView.emit('open', id);
- 		});
- }*/
+	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext') {
+		documentationView.emit('open', id);
+	} else {
+		$('#iDocsLink').addClass('iDocsVisible').prop('title', 'cmd + h: ' + word).off('click').on('click', function () {
+			tabView.emit('open-tab', 'tab-5');
+			documentationView.emit('open', id);
+		});
+	}
+});
+editorView.on('clear-docs', function () {
+	return $('#iDocsLink').removeClass('iDocsVisible').off('click');
 });
 editorView.on('highlight-syntax', function (names) {
 	return socket.emit('highlight-syntax', names);
@@ -974,7 +972,7 @@ keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear');
 });
 keypress.simple_combo("meta h", function () {
-	tabView.emit('open-tab', 'tab-2');
+	$('#iDocsLink').trigger('click');
 });
 
 },{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DebugView":6,"./Views/DocumentationView":7,"./Views/EditorView":8,"./Views/FileView":9,"./Views/GitView":10,"./Views/ProjectView":11,"./Views/SettingsView":12,"./Views/TabView":13,"./Views/ToolbarView":14,"./popup":19}],4:[function(require,module,exports){
@@ -2386,8 +2384,6 @@ var EditorView = function (_View) {
 
 			//console.log('clicked', token);
 
-			//console.time('searching markers');
-
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion2 = true;
 			var _didIteratorError2 = false;
@@ -2400,11 +2396,9 @@ var EditorView = function (_View) {
 					if (token.range.isEqual(marker.range) && marker.type && marker.type.name && marker.type.id) {
 						//console.log(marker);
 						this.emit('goto-docs', marker.type.name, marker.type.id);
-						break;
+						return;
 					}
 				}
-
-				//console.timeEnd('searching markers');
 			} catch (err) {
 				_didIteratorError2 = true;
 				_iteratorError2 = err;
@@ -2419,6 +2413,8 @@ var EditorView = function (_View) {
 					}
 				}
 			}
+
+			this.emit('clear-docs');
 		}
 	}]);
 
@@ -3873,6 +3869,12 @@ var TabView = function (_View) {
 				'max-width': $('#editor').width() + 'px',
 				'max-height': $('#editor').height() + 'px'
 			});
+		}
+	}, {
+		key: 'getOpenTab',
+		value: function getOpenTab() {
+			if (!_tabsOpen) return false;
+			return $('[type=radio]:checked ~ label').prop('for');
 		}
 	}]);
 

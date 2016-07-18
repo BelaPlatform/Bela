@@ -129,6 +129,11 @@ class TabView extends View {
 		
 	}
 	
+	getOpenTab(){
+		if (!_tabsOpen) return false;
+		return $('[type=radio]:checked ~ label').prop('for');
+	}
+	
 }
 
 module.exports = new TabView();

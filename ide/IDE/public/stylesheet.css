@@ -536,7 +536,6 @@ hr.sep {
 .bela-ace-highlight{
 	position: absolute;
 	pointer-events: all;
-	cursor: pointer;
 	border-bottom: 1px solid black;
 	height: 14px!important;
 	opacity: 0.1;
