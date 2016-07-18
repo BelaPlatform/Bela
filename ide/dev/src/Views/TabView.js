@@ -91,6 +91,10 @@ class TabView extends View {
 		});
 		
 		this.on('open-tab', (id) => $('#'+id).siblings('label').trigger('click') );
+		this.on('toggle', () => {
+			if (_tabsOpen) this.closeTabs();
+			else this.openTabs();
+		})
 		
 	}
 	

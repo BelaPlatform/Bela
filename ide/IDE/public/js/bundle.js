@@ -961,6 +961,22 @@ function parseErrors(data) {
 	models.error.setKey('verboseSyntaxError', data);
 }
 
+// hotkeys
+var keypress = new window.keypress.Listener();
+
+keypress.simple_combo("meta s", function () {
+	toolbarView.emit('process-event', 'run');
+});
+keypress.simple_combo("meta o", function () {
+	tabView.emit('toggle');
+});
+keypress.simple_combo("meta k", function () {
+	consoleView.emit('clear');
+});
+keypress.simple_combo("meta h", function () {
+	tabView.emit('open-tab', 'tab-2');
+});
+
 },{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DebugView":6,"./Views/DocumentationView":7,"./Views/EditorView":8,"./Views/FileView":9,"./Views/GitView":10,"./Views/ProjectView":11,"./Views/SettingsView":12,"./Views/TabView":13,"./Views/ToolbarView":14,"./popup":19}],4:[function(require,module,exports){
 'use strict';
 
@@ -3818,6 +3834,9 @@ var TabView = function (_View) {
 
 		_this.on('open-tab', function (id) {
 			return $('#' + id).siblings('label').trigger('click');
+		});
+		_this.on('toggle', function () {
+			if (_tabsOpen) _this.closeTabs();else _this.openTabs();
 		});
 
 		return _this;

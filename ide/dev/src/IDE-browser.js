@@ -511,3 +511,11 @@ function parseErrors(data){
 	models.error.setKey('verboseSyntaxError', data);
 
 }
+
+// hotkeys
+var keypress = new window.keypress.Listener();
+
+keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
+keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
+keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
+keypress.simple_combo("meta h", function(){ tabView.emit('open-tab', 'tab-2') });
