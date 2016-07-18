@@ -8,6 +8,7 @@ var settings = {
 	numChannels		: {type: 'integer', value: 2},
 	sampleRate		: {type: 'float', value: 44100},
 	frameWidth		: {type: 'integer', value: 1280},
+	plotMode		: {type: 'integer', value: 0},
 	triggerMode		: {type: 'integer', value: 0},
 	triggerChannel	: {type: 'integer', value: 0},
 	triggerDir		: {type: 'integer', value: 0},

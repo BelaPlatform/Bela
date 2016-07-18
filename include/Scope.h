@@ -4,6 +4,7 @@
 
 #include <OSCServer.h>
 #include <OSCClient.h>
+#include <ne10/NE10.h>
 #include <stdarg.h>
 
 #define OSC_RECEIVE_PORT 8675
@@ -13,6 +14,9 @@
 #define FRAMES_STORED 2
 
 #define TRIGGER_LOG_COUNT 16
+
+#define FFTLENGTH 1024
+#define FFTSCALE 1.0/FFTLENGTH
 
 /** 
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
@@ -73,7 +77,8 @@ class Scope{
         void parseMessage(oscpkt::Message);
         void start();
         void stop();
-        void doTrigger();
+        void triggerTimeDomain();
+        void triggerFFT();
         void triggerNormal();
         void triggerAuto();
         void scheduleSendBufferTask();
@@ -82,12 +87,15 @@ class Scope{
         bool triggered();
         bool prelog();
         void postlog(int);
+        void setPlotMode();
+        void doFFT();
         
         // settings
         int numChannels;
         float sampleRate;
         int connected;
         int frameWidth;
+        int plotMode;
         int triggerMode;
         int triggerChannel;
         int triggerDir;
@@ -124,6 +132,15 @@ class Scope{
         int autoTriggerCount;
         bool started;
         bool customTriggered;
+        
+        // FFT
+        int pointerFFT;
+        bool collectingFFT;
+        float *windowFFT;
+        
+        ne10_fft_cpx_float32_t* inFFT;
+    	ne10_fft_cpx_float32_t* outFFT;
+        ne10_fft_cfg_float32_t cfg;
         
         // aux tasks
         AuxiliaryTask scopeTriggerTask;

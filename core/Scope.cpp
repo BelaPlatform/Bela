@@ -8,7 +8,11 @@ void Scope::triggerTask(void *ptr){
     Scope *instance = (Scope*)ptr;
     while(instance->started && !gShouldStop) {
         if (instance->triggerTaskFlag){
-            instance->doTrigger();
+            if (instance->plotMode == 0){
+                instance->triggerTimeDomain();
+            } else if (instance->plotMode == 1){
+                instance->triggerFFT();
+            }
             instance->triggerTaskFlag = false;
         }
         usleep(1000);
@@ -64,25 +68,14 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 }
 
 void Scope::start(){
-
-    // resize the buffers
-    channelWidth = frameWidth * FRAMES_STORED;
-    buffer.resize(numChannels*channelWidth);
-    outBuffer.resize(numChannels*frameWidth);
+    
+    if (started) return;
+    
+    setPlotMode();
 
     // reset the pointers
     writePointer = 0;
     readPointer = 0;
-    triggerPointer = 0;
-
-    // reset the trigger
-    triggerPrimed = true;
-    triggerCollecting = false;
-    triggerWaiting = false;
-    triggerCount = 0;
-    downSampleCount = 1;
-    autoTriggerCount = 0;
-    customTriggered = false;
 
     started = true;
     
@@ -97,6 +90,46 @@ void Scope::start(){
 
 void Scope::stop(){
     started = false;
+}
+
+void Scope::setPlotMode(){
+
+    if (plotMode == 0){ // time domain
+    
+        // resize the buffers
+        channelWidth = frameWidth * FRAMES_STORED;
+        buffer.resize(numChannels*channelWidth);
+        outBuffer.resize(numChannels*frameWidth);
+        
+        // reset the trigger
+        triggerPointer = 0;
+        triggerPrimed = true;
+        triggerCollecting = false;
+        triggerWaiting = false;
+        triggerCount = 0;
+        downSampleCount = 1;
+        autoTriggerCount = 0;
+        customTriggered = false;
+        
+    } else if (plotMode == 1){ // frequency domain
+        //inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLENGTH * sizeof (ne10_fft_cpx_float32_t));
+        inFFT = new ne10_fft_cpx_float32_t[FFTLENGTH * sizeof (ne10_fft_cpx_float32_t)];
+    	outFFT = new ne10_fft_cpx_float32_t[FFTLENGTH * sizeof (ne10_fft_cpx_float32_t)];
+    	cfg = ne10_fft_alloc_c2c_float32_neon (FFTLENGTH);
+    	
+    	pointerFFT = 0;
+        collectingFFT = true;
+
+        // Allocate the window buffer based on the FFT size
+    	windowFFT = (float *)malloc(FFTLENGTH * sizeof(float));
+    
+    	// Calculate a Hann window
+    	for(int n = 0; n < FFTLENGTH; n++) {
+    		windowFFT[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(FFTLENGTH - 1)));
+    	}
+        
+    }
+    
 }
 
 void Scope::log(float* values){
@@ -205,7 +238,7 @@ bool Scope::triggered(){
     return false;
 }
 
-void Scope::doTrigger(){
+void Scope::triggerTimeDomain(){
 // rt_printf("do trigger\n");
     // iterate over the samples between the read and write pointers and check for / deal with triggers
     while (readPointer != writePointer){
@@ -290,6 +323,64 @@ void Scope::doTrigger(){
 
 }
 
+void Scope::triggerFFT(){
+    while (readPointer != writePointer){
+        
+        if (collectingFFT){
+            
+            inFFT[pointerFFT].r = (ne10_float32_t)(buffer[readPointer] * windowFFT[pointerFFT]);
+            inFFT[pointerFFT].i = 0;
+            pointerFFT += 1;
+            
+            if (pointerFFT > FFTLENGTH){
+                collectingFFT = false;
+                doFFT();
+                //pointerFFT = 0;
+            }
+            
+        } else {
+            
+            pointerFFT += 1;
+            if (pointerFFT > (FFTLENGTH+holdOffSamples)){
+                pointerFFT = 0;
+                collectingFFT = true;
+            }
+            
+        }
+        
+        // increment the read pointer
+        readPointer = (readPointer+1)%channelWidth;
+    
+    }
+}
+
+void Scope::doFFT(){
+    ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
+    
+    float ratio = (float)(FFTLENGTH/2)/frameWidth;
+    
+    for (int i=0; i<frameWidth; i++){
+        float findex = (float)i*ratio;
+        int index = (int)findex;
+        float rem = findex - index;
+        
+        float first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+        float second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+        
+        outBuffer[i] = FFTSCALE * (first + rem * (second - first));
+    }
+    
+    //rt_printf("%i, %f\n", FFTLENGTH, FFTSCALE);
+
+    /*for (int i=0; i<FFTLENGTH/2; i++){
+        outBuffer[i] = FFTSCALE * sqrtf((float)(outFFT[i].r * outFFT[i].r + outFFT[i].i * outFFT[i].i));
+    }*/
+    //rt_printf("doing fft\n");
+    // socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
+    // done = true;
+    scheduleSendBufferTask();
+}
+
 void Scope::sendBuffer(){
     socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
 }
@@ -309,6 +400,9 @@ void Scope::parseMessage(oscpkt::Message msg){
             stop();
             frameWidth = intArg;
             start();
+        } else if (msg.match("/scope-settings/plotMode").popInt32(intArg).isOkNoMoreArgs()){
+            plotMode = intArg;
+            setPlotMode();
         } else if (msg.match("/scope-settings/triggerMode").popInt32(intArg).isOkNoMoreArgs()){
             triggerMode = intArg;
         } else if (msg.match("/scope-settings/triggerChannel").popInt32(intArg).isOkNoMoreArgs()){

@@ -20,6 +20,10 @@
 			<canvas id="scopeBG"></canvas>
 			<div id="controlPanel" class="hidden scopeControls-parent channelView-parent">
 				<div id="mainColumn" class="cpColumn">
+					Mode: <select class="scopeControls" data-key="plotMode">
+						<option value="0" selected>Time Domain</option>
+						<option value="1">Frequency Domain</option>
+					</select></br></br>
 					X-Axis (ms/div): <button class="scopeControls" data-key="upSampling">up</button><button class="scopeControls" data-key="downSampling">down</button> <span class="xTime-display"></span>ms</br></br>
 					Horizontal Offset: <input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input><input class="scopeControls" data-key="xOffset" type="number" value="0"></input></br></br>
 					Trigger Direction: <select class="scopeControls" data-key="triggerDir">
