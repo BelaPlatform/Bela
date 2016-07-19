@@ -20,12 +20,13 @@
 			<canvas id="scopeBG"></canvas>
 			<div id="controlPanel" class="hidden scopeControls-parent channelView-parent">
 				<div id="mainColumn" class="cpColumn">
+					X-Axis (<span class="xAxisUnits">ms</span>/div): <span class="xUnit-display"></span><span class="xAxisUnits">ms</span></br></br>
+					Zoom: <button class="scopeControls" data-key="upSampling" id="zoomUp">in</button><button class="scopeControls" data-key="downSampling" id="zoomDown">out</button> <span class="zoom-display">100%</span></br></br>
 					Mode: <select class="scopeControls" data-key="plotMode">
 						<option value="0" selected>Time Domain</option>
 						<option value="1">Frequency Domain</option>
 					</select></br></br>
 					<div id="scopeTimeDomainControls">
-						X-Axis (ms/div): <button class="scopeControls" data-key="upSampling">up</button><button class="scopeControls" data-key="downSampling">down</button> <span class="xTime-display"></span>ms</br></br>
 						Horizontal Offset: <input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input><input class="scopeControls" data-key="xOffset" type="number" value="0"></input></br></br>
 						Trigger Direction: <select class="scopeControls" data-key="triggerDir">
 							<option value="0" selected>Positive</option>
@@ -50,7 +51,7 @@
 							<option value="1024">1024</option>
 							<option value="2048">2048</option>
 							<option value="4096">4096</option>
-						</select>
+						</select></br></br>
 					</div>
 					Hold Off(ms): <input  class="scopeControls" data-key="holdOff" type="range" min="0" max="100" value="20" step="0.1"></input><input class="scopeControls" data-key="holdOff" type="number" value="20" step="0.1"></input></br></br>
 				</div>

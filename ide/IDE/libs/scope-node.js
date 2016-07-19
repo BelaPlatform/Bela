@@ -111,7 +111,7 @@ var scope = {
 			this.webSocket.emit('settings', {downSampling: settings.downSampling});
 			if (scopeConnected)
 				scopeOSC.sendSetting('downSampling', settings['downSampling']);
-		} else {
+		} else if (settings.plotMode.value !== 1) {
 			settings.upSampling.value += 1;
 			this.webSocket.emit('settings', {upSampling: settings.upSampling});
 			if (scopeConnected)
@@ -134,18 +134,14 @@ var scope = {
 	
 	plotMode(value){
 		settings.plotMode.value = parseInt(value);
-		if (settings.plotMode.value == 1){
-			settings.upSampling.value = 1;
-			settings.downSampling.value = 1;
-			if (scopeConnected){
-				scopeOSC.sendSetting('upSampling', settings['upSampling']);
-				scopeOSC.sendSetting('downSampling', settings['downSampling']);
-				scopeOSC.sendSetting('plotMode', settings['plotMode']);
-			}
-			this.webSocket.emit('settings', {upSampling: settings.upSampling, downSampling: settings.downSampling});
-		} else {
+		settings.upSampling.value = 1;
+		settings.downSampling.value = 1;
+		if (scopeConnected){
+			scopeOSC.sendSetting('upSampling', settings['upSampling']);
+			scopeOSC.sendSetting('downSampling', settings['downSampling']);
 			scopeOSC.sendSetting('plotMode', settings['plotMode']);
 		}
+		this.webSocket.emit('settings', {upSampling: settings.upSampling, downSampling: settings.downSampling});
 	},
 	
 	workerConnected(socket){

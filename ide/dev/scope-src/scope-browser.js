@@ -19,6 +19,10 @@ var socket = io('/BelaScope');
 controlView.on('settings-event', (key, value) => {
 	socket.emit('settings-event', key, value);
 });
+controlView.on('plotMode', (val) => {
+	settings.setKey('plotMode', {type: 'integer', value: val});
+	//backgroundView._plotMode(val, settings._getData());
+});
 channelView.on('channelConfig', (channelConfig) => {
 	worker.postMessage({
 		event			: 'channelConfig',

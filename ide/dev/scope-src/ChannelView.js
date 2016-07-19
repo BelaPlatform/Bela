@@ -22,8 +22,16 @@ class ChannelView extends View{
 		var channel = $element.data().channel;
 		var value = (key === 'color') ? $element.val() : parseFloat($element.val());
 		if (isNaN(value)) return;
-		this.$elements.filterByData('key', key).filterByData('channel', channel).val(value);
+		this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 		channelConfig[channel][key] = value;
+		this.emit('channelConfig', channelConfig);
+	}
+	
+	setChannelGains(value){
+		this.$elements.filterByData('key', 'yAmplitude').val(value);
+		for (let item of channelConfig){
+			item.yAmplitude = value;
+		}
 		this.emit('channelConfig', channelConfig);
 	}
 	
@@ -51,6 +59,14 @@ class ChannelView extends View{
 		}
 		this.emit('channelConfig', channelConfig);
 		this.$elements = $('.'+this.className);
+	}
+	
+	_plotMode(val){
+		if (val.value == 0){
+			this.setChannelGains(1);
+		} else {
+			this.setChannelGains(0.2);
+		}
 	}
 	
 }

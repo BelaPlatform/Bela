@@ -77,37 +77,38 @@ void Scope::start(){
     Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
     
     logCount = 0;
-    triggerTaskFlag = false;
-    //Bela_scheduleAuxiliaryTask(scopeTriggerTask);
-    
+
 }
 
 void Scope::stop(){
     started = false;
+    if (plotMode == 1){
+        delete inFFT;
+        delete outFFT;
+        delete windowFFT;
+    }
 }
 
 void Scope::setPlotMode(){
 
-    if (plotMode == 0){ // time domain
+    // resize the buffers
+    channelWidth = frameWidth * FRAMES_STORED;
+    buffer.resize(numChannels*channelWidth);
+    outBuffer.resize(numChannels*frameWidth);
     
-        // resize the buffers
-        channelWidth = frameWidth * FRAMES_STORED;
-        buffer.resize(numChannels*channelWidth);
-        outBuffer.resize(numChannels*frameWidth);
+    // reset the trigger
+    triggerPointer = 0;
+    triggerPrimed = true;
+    triggerCollecting = false;
+    triggerWaiting = false;
+    triggerCount = 0;
+    downSampleCount = 1;
+    autoTriggerCount = 0;
+    customTriggered = false;
         
-        // reset the trigger
-        triggerPointer = 0;
-        triggerPrimed = true;
-        triggerCollecting = false;
-        triggerWaiting = false;
-        triggerCount = 0;
-        downSampleCount = 1;
-        autoTriggerCount = 0;
-        customTriggered = false;
-        
-    } else if (plotMode == 1){ // frequency domain
+    if (plotMode == 1){ // frequency domain
         //inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
-        inFFT = new ne10_fft_cpx_float32_t[FFTLength * sizeof (ne10_fft_cpx_float32_t)];
+        inFFT = new ne10_fft_cpx_float32_t[FFTLength];
     	outFFT = new ne10_fft_cpx_float32_t[FFTLength * sizeof (ne10_fft_cpx_float32_t)];
     	cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
     	
@@ -347,18 +348,22 @@ void Scope::triggerFFT(){
 
 void Scope::doFFT(){
     
+    // constants
+    int ptr = readPointer-FFTLength+channelWidth;
+    float ratio = (float)(FFTLength/2)/frameWidth;
+    
     for (int c=0; c<numChannels; c++){
     
-        int ptr = readPointer-FFTLength+channelWidth;
+        // prepare the FFT input & do windowing
         for (int i=0; i<FFTLength; i++){
             inFFT[i].r = (ne10_float32_t)(buffer[(ptr+i)%channelWidth+c*channelWidth] * windowFFT[i]);
             inFFT[i].i = 0;
         }
         
+        // do the FFT
         ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
         
-        float ratio = (float)(FFTLength/2)/frameWidth;
-        
+        // take the magnitude of the complex FFT output, scale it and interpolate
         for (int i=0; i<frameWidth; i++){
             float findex = (float)i*ratio;
             int index = (int)findex;
