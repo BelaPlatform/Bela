@@ -103,7 +103,6 @@ class Scope{
         float holdOff;
         
         bool sendBufferFlag;
-        bool triggerTaskFlag;
         int logCount;
         
         int channelWidth;

@@ -6,16 +6,10 @@ Scope::Scope():connected(0), triggerPrimed(false), started(false){}
 // static aux task functions
 void Scope::triggerTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    while(instance->started && !gShouldStop) {
-        if (instance->triggerTaskFlag){
-            if (instance->plotMode == 0){
-                instance->triggerTimeDomain();
-            } else if (instance->plotMode == 1){
-                instance->triggerFFT();
-            }
-            instance->triggerTaskFlag = false;
-        }
-        usleep(1000);
+    if (instance->plotMode == 0){
+        instance->triggerTimeDomain();
+    } else if (instance->plotMode == 1){
+        instance->triggerFFT();
     }
 }
 void Scope::sendBufferTask(void *ptr){
@@ -84,7 +78,7 @@ void Scope::start(){
     
     logCount = 0;
     triggerTaskFlag = false;
-    Bela_scheduleAuxiliaryTask(scopeTriggerTask);
+    //Bela_scheduleAuxiliaryTask(scopeTriggerTask);
     
 }
 
@@ -208,8 +202,8 @@ void Scope::postlog(int startingWritePointer){
     
     logCount += upSampling;
     if (logCount > TRIGGER_LOG_COUNT){
-        triggerTaskFlag = true;
         logCount = 0;
+        Bela_scheduleAuxiliaryTask(scopeTriggerTask);
     }
 }
 
@@ -326,11 +320,9 @@ void Scope::triggerTimeDomain(){
 void Scope::triggerFFT(){
     while (readPointer != writePointer){
         
+        pointerFFT += 1;
+
         if (collectingFFT){
-            
-            inFFT[pointerFFT].r = (ne10_float32_t)(buffer[readPointer] * windowFFT[pointerFFT]);
-            inFFT[pointerFFT].i = 0;
-            pointerFFT += 1;
             
             if (pointerFFT > FFTLength){
                 collectingFFT = false;
@@ -340,7 +332,6 @@ void Scope::triggerFFT(){
             
         } else {
             
-            pointerFFT += 1;
             if (pointerFFT > (FFTLength+holdOffSamples)){
                 pointerFFT = 0;
                 collectingFFT = true;
@@ -355,29 +346,32 @@ void Scope::triggerFFT(){
 }
 
 void Scope::doFFT(){
-    ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
     
-    float ratio = (float)(FFTLength/2)/frameWidth;
+    for (int c=0; c<numChannels; c++){
     
-    for (int i=0; i<frameWidth; i++){
-        float findex = (float)i*ratio;
-        int index = (int)findex;
-        float rem = findex - index;
+        int ptr = readPointer-FFTLength+channelWidth;
+        for (int i=0; i<FFTLength; i++){
+            inFFT[i].r = (ne10_float32_t)(buffer[(ptr+i)%channelWidth+c*channelWidth] * windowFFT[i]);
+            inFFT[i].i = 0;
+        }
         
-        float first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
-        float second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+        ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
         
-        outBuffer[i] = FFTScale * (first + rem * (second - first));
+        float ratio = (float)(FFTLength/2)/frameWidth;
+        
+        for (int i=0; i<frameWidth; i++){
+            float findex = (float)i*ratio;
+            int index = (int)findex;
+            float rem = findex - index;
+            
+            float first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+            float second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+            
+            outBuffer[c*frameWidth+i] = FFTScale * (first + rem * (second - first));
+        }
+        
     }
     
-    //rt_printf("%i, %f\n", FFTLength, FFTScale);
-
-    /*for (int i=0; i<FFTLength/2; i++){
-        outBuffer[i] = FFTScale * sqrtf((float)(outFFT[i].r * outFFT[i].r + outFFT[i].i * outFFT[i].i));
-    }*/
-    //rt_printf("doing fft\n");
-    // socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
-    // done = true;
     scheduleSendBufferTask();
 }
 
