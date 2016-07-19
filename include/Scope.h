@@ -11,7 +11,7 @@
 #define OSC_SEND_PORT 8676
 #define SCOPE_UDP_PORT 8677
 
-#define FRAMES_STORED 2
+#define FRAMES_STORED 4
 
 #define TRIGGER_LOG_COUNT 16
 

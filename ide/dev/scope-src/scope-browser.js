@@ -59,6 +59,24 @@ $(window).on('resize', () => {
 	settings.setKey('frameHeight', window.innerHeight);
 });
 
+$('#scope').on('mousemove', e => {
+	if (settings.getKey('plotMode') === undefined) return;
+	var plotMode = settings.getKey('plotMode').value;
+	var scale = settings.getKey('downSampling').value / settings.getKey('upSampling').value;
+	var x, y;
+	if (plotMode == 0){
+		x = (1000*scale*(e.clientX-window.innerWidth/2)/settings.getKey('sampleRate').value).toPrecision(4)+'ms';
+		y = (1 - 2*e.clientY/window.innerHeight).toPrecision(3);
+	} else if (plotMode == 1){
+		x = parseInt(settings.getKey('sampleRate').value*e.clientX/(2*window.innerWidth*scale));
+		if (x > 1500) x = (x/1000) + 'khz';
+		else x += 'hz';
+		y = (1 - e.clientY/window.innerHeight).toPrecision(3);
+	}
+	$('#scopeMouseX').html('x: '+x);
+	$('#scopeMouseY').html('y: '+y);
+});
+
 // plotting
 {
 	

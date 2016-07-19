@@ -174,7 +174,7 @@ bool Scope::prelog(){
     
     if (!started) return false;
     
-    if (downSampling > 1){
+    if (plotMode == 0 && downSampling > 1){
         if (downSampleCount < downSampling){
             downSampleCount++;
             return false;
@@ -350,7 +350,7 @@ void Scope::doFFT(){
     
     // constants
     int ptr = readPointer-FFTLength+channelWidth;
-    float ratio = (float)(FFTLength/2)/frameWidth;
+    float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
     
     for (int c=0; c<numChannels; c++){
     
