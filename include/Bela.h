@@ -147,6 +147,7 @@ typedef struct {
 	// determined by the programmer rather than the user
 
 	/// Whether audio/analog data should be interleaved
+	/// <b>TODO: deinterleaved buffers are not implemented yet.</b>
 	int interleave;
 	/// \brief Whether analog outputs should persist to future frames.
 	///

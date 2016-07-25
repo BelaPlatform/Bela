@@ -244,8 +244,13 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Set flags based on init settings
-	if(settings->interleave)
+	if(settings->interleave){
 		gContext.flags |= BELA_FLAG_INTERLEAVED;
+	} else {
+		//TODO: deinterleaved buffers
+		fprintf(stderr, "de-interleaved buffers not yet supported\n");
+		exit(1);
+	}
 	if(settings->analogOutputsPersist)
 		gContext.flags |= BELA_FLAG_ANALOG_OUTPUTS_PERSIST;
 
