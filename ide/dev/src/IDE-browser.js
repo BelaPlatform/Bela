@@ -2,6 +2,7 @@
 module.exports = {};
 
 var Model = require('./Models/Model');
+var popup = require('./popup');
 
 // set up models
 var models = {};
@@ -99,6 +100,21 @@ editorView.on('close-notification', data => consoleView.emit('closeNotification'
 editorView.on('editor-changed', () => {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
+editorView.on('goto-docs', (word, id) => {
+	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext'){
+		documentationView.emit('open', id);
+	} else {
+		$('#iDocsLink')
+			.addClass('iDocsVisible')
+			.prop('title', 'cmd + h: '+word)
+			.off('click').on('click', () => {
+				tabView.emit('open-tab', 'tab-5');
+				documentationView.emit('open', id);
+			});
+	}
+});
+editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
+editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
@@ -138,7 +154,29 @@ debugView.on('debugger-event', (func) => socket.emit('debugger-event', func) );
 debugView.on('debug-mode', (status) => models.debug.setKey('debugMode', status) );
 
 // documentation view
-var documentationView = new (require('./Views/DocumentationView'))
+var documentationView = new (require('./Views/DocumentationView'));
+documentationView.on('open-example', (example) => {
+	if (projectView.exampleChanged){
+		projectView.exampleChanged = false;
+		popup.exampleChanged( () => {
+			projectView.emit('message', 'project-event', {
+				func: 'openExample',
+				currentProject: example
+			});
+			$('.selectedExample').removeClass('selectedExample');
+		}, undefined, 0, () => projectView.exampleChanged = true );
+		return;
+	}
+		
+	projectView.emit('message', 'project-event', {
+		func: 'openExample',
+		currentProject: example
+	});
+	$('.selectedExample').removeClass('selectedExample');
+});
+documentationView.on('add-link', (link, type) => {
+	editorView.emit('add-link', link, type);
+});
 
 // git view
 var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);
@@ -218,16 +256,6 @@ socket.on('project-list', (project, list) =>  {
 });
 socket.on('file-list', (project, list) => {
 	if (project && project === models.project.getKey('currentProject')){
-		let currentFilenameFound = false;
-		for (let item of list){
-			if (item.name === models.project.getKey('fileName')){
-				currentFilenameFound = true;
-			}
-		}
-		if (!currentFilenameFound){
-			// this file has just been deleted
-			socket.emit('project-event', {func: 'openProject', currentProject: project});
-		}
 		models.project.setKey('fileList', list);
 	}
 });
@@ -301,6 +329,8 @@ socket.on('shell-event', (evt, data) => consoleView.emit('shell-'+evt, data) )
 // generic log and warn
 socket.on('std-log', text => consoleView.emit('log', text) );
 socket.on('std-warn', text => consoleView.emit('warn', text) );
+
+socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 
 // model events
 // build errors
@@ -480,3 +510,11 @@ function parseErrors(data){
 	models.error.setKey('verboseSyntaxError', data);
 
 }
+
+// hotkeys
+var keypress = new window.keypress.Listener();
+
+keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
+keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
+keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
+keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });

@@ -170,76 +170,143 @@ typedef struct {
 
 /**
  * \ingroup render
- * \brief Structure holding current audio and sensor settings and pointers to data buffers.
+ * \brief Structure holding audio and sensor settings and pointers to I/O data buffers.
  *
- * This structure is passed to setup(), render() and cleanup(). It is
- * initialised in Bela_initAudio() based on the contents of the BelaInitSettings
- * structure.
+ * This structure is passed to setup(), render() and cleanup() and provides access to 
+ * Bela's I/O functionality. It is initialised in Bela_initAudio() based on the contents 
+ * of the BelaInitSettings structure.
  */
 typedef struct {
 	/// \brief Buffer holding audio input samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's audio input data to be read during render().
+	/// By default the buffer contains data from all the audio input channels arranged
+	/// in interleaved format.
+	///
+	/// Every time render() runs this buffer is filled with a block of new audio samples.
+	/// The block is made up of frames, individual slices of time consisting of one sample
+	/// taken from each audio input channel simultaneously. The number of frames per
+	/// block is given by context->audioFrames, and the number of audio input channels
+	/// by context->audioInChannels. The length of this buffer is the product of these
+	/// two values.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
+	/// conveniently using the audioRead() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	const float * const audioIn;
 
 	/// \brief Buffer holding audio output samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's audio output data to be written during render().
+	/// By default the buffer must contain data from all the audio output channels
+	/// arranged in interleaved format.
+	///
+	/// Every time render() runs it is the job of the developer to fill this buffer with 
+	/// a block of new audio samples, structured in the same way as context->audioIn.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
+	/// conveniently using the audioWrite() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	float * const audioOut;
 
 	/// \brief Buffer holding analog input samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's analog input data to be read during render().
+	/// By default the buffer contains data from all the analog input channels arranged
+	/// in interleaved format.
+	///
+	/// Every time render() runs this buffer is filled with a block of new analog samples.
+	/// The block is made up of frames, individual slices of time consisting of one sample
+	/// taken from each analog input channel simultaneously. The number of frames per
+	/// block is given by context->analogFrames, and the number of analog input channels
+	/// by context->analogInChannels. The length of this buffer is the product of these
+	/// two values.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
+	/// conveniently using the analogRead() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	const float * const analogIn;
 
 	/// \brief Buffer holding analog output samples
 	///
-	/// This buffer may be in either interleaved or non-interleaved format,
-	/// depending on the contents of the BelaInitSettings structure.
+	/// This buffer allows Bela's analog output data to be written during render().
+	/// By default the buffer must contain data from all the analog output channels
+	/// arranged in interleaved format.
+	///
+	/// Every time render() runs it is the job of the developer to fill this buffer with 
+	/// a block of new analog samples, structured in the same way as context->analogIn.
+	///
+	/// The buffer can be accessed manually with standard array notation or more 
+	/// conveniently using the analogWrite() utility.
+	///
 	/// \b Note: this element is available in render() only.
 	float * const analogOut;
 
 	/// \brief Buffer holding digital input/output samples
 	///
+	/// This buffer allows Bela's digital GPIO data to be read and written during render().
+	///
+	/// The buffer can be accessed manually with standard array notation or somewhat more 
+	/// conveniently using the digitalRead() and digitalWrite() utilities.
+	///
 	/// \b Note: this element is available in render() only.
 	uint32_t * const digital;
 
-	/// Number of audio frames per period
+	/// \brief The number of audio frames per block
+	///
+	/// Every time render() runs context->audioIn is filled with a block of new audio 
+	/// samples. The block is made up of frames, individual slices of time consisting of 
+	/// one sample taken from each audio input channel simultaneously. 
+	///
+	/// This value determines the number of audio frames in each block and can be adjusted 
+	/// in the IDE settings tab (or via the command line arguments) from 2 to 128, 
+	/// defaulting to 16. 
+	///
+	/// This value also determines how often render() is called, and reducing it decreases 
+	/// audio latency at the cost of increased CPU consumption.
 	const uint32_t audioFrames;
-	/// Number of input audio channels
+	/// \brief The number of audio input channels
 	const uint32_t audioInChannels;
-	/// Number of output audio channels
+	/// \brief The number of audio output channels
 	const uint32_t audioOutChannels;
-	/// Audio sample rate in Hz (currently always 44100.0)
+	/// \brief The audio sample rate in Hz (currently always 44100.0)
 	const float audioSampleRate;
 
-	/// \brief Number of analog frames per period
+	/// \brief The number of analog frames per block
 	///
-	/// This will be 0 if analog I/O is disabled.
+	/// Every time render() runs context->analogIn is filled with a block of new analog 
+	/// samples. The block is made up of frames, individual slices of time consisting of 
+	/// one sample taken from each analog input channel simultaneously. 
+	///
+	/// This value determines the number of analog frames in each block. It cannot be
+	/// set directly as it is dependant on the number of audio frames per block 
+	/// (context->audioFrames) and the analog sample rate (context->analogSampleRate).
+	///
+	/// This value will be 0 if analog I/O is disabled.
 	const uint32_t analogFrames;
 
-	/// \brief Number of input analog channels
+	/// \brief The number of analog input channels
 	///
 	/// This will be 0 if analog I/O is disabled.
 	const uint32_t analogInChannels;
 
-	/// \brief Number of output analog channels
+	/// \brief The number of analog output channels
 	///
 	/// This will be 0 if analog I/O is disabled.
 	const uint32_t analogOutChannels;
 
 	/// \brief Analog sample rate in Hz
 	///
-	/// The analog sample rate depends on the number of analog channels used. If
-	/// 8 channels are used, the sample rate is 22050. If 4 channels are used, the sample
-	/// rate is 44100. If 2 channels are used, the sample rate is 88200. If analog I/O
-	/// is disabled, the sample rate is 0.
+	/// This value determines the rate at which each analog input is sampled, and is
+	/// directly related to the number of analog channels available. It can be adjusted 
+	/// in the IDE settings tab (or via the command line arguments) to 22050, 44100
+	/// or 88200, allowing 8, 4, or 2 analog channels respectively. By default, all 8
+	/// channels are sampled at 22050Hz.
+	///
+	/// If analog I/O is disabled, this value is 0.
 	const float analogSampleRate;
 
 	/// Number of digital frames per period
@@ -253,7 +320,7 @@ typedef struct {
 
 	/// \brief Number of elapsed audio frames since the start of rendering.
 	///
-	/// This holds the total number of audio frames as of the beginning of the current period. To
+	/// This holds the total number of audio frames as of the beginning of the current block. To
 	/// find the current number of analog or digital frames elapsed, multiply by the ratio of the
 	/// sample rates (e.g. half the number of analog frames will have elapsed if the analog sample
 	/// rate is 22050).

@@ -103,6 +103,10 @@ var c_cppHighlightRules = function() {
                 next : "singleLineComment"
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
+/*            {
+                token : "keyword.bela",
+/*BELA*/        /*regex : ""
+            },*/
             {
                 token : "comment", // multi line comment
                 regex : "\\/\\*",

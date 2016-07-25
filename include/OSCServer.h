@@ -11,7 +11,7 @@
 #define UDP_RECEIVE_MAX_LENGTH 16384
 
 /**
- * OSCServer provides functions for receiving OSC messages in Bela.
+ * \brief OSCServer provides functions for receiving OSC messages in Bela.
  *
  * When an OSC message is received, the message is decoded by the OSCServer off the audio
  * thread and placed in an internal queue. This queue can be polled from the audio thread
@@ -29,7 +29,7 @@ class OSCServer{
         OSCServer();
 
         /**
-		 * Sets the port used to receive OSC messages
+		 * \brief Sets the port used to receive OSC messages
 		 *
 		 * Must be called once during setup()
 		 *
@@ -37,11 +37,9 @@ class OSCServer{
 		 *
 		 */
         void setup(int port);
-        
-        // returns true if messages are queued
-        // audio-thread safe
+
         /**
-		 * Returns true if an OSC message has been received and queued
+		 * \brief Returns true if an OSC message has been received and queued
 		 *
 		 * This method is audio-thread safe, and can be used from render()
 		 *
@@ -52,7 +50,7 @@ class OSCServer{
         bool messageWaiting();
 
         /**
-		 * Removes and returns the oldest message from the queue
+		 * \brief Removes and returns the oldest message from the queue
 		 *
 		 * This method is audio-thread safe, and can be used from render()
 		 *
@@ -66,7 +64,7 @@ class OSCServer{
         oscpkt::Message popMessage();
 
         /**
-		 * Blocks execution until an OSC message is received
+		 * \brief Blocks execution until an OSC message is received
 		 *
 		 * This method is *not* audio-thread safe, and can *not* be used from render()
 		 *

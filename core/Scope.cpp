@@ -6,12 +6,23 @@ Scope::Scope():connected(0), triggerPrimed(false), started(false){}
 // static aux task functions
 void Scope::triggerTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    if (instance->started)
-        instance->doTrigger();
+    while(instance->started && !gShouldStop) {
+        if (instance->triggerTaskFlag){
+            instance->doTrigger();
+            instance->triggerTaskFlag = false;
+        }
+        usleep(1000);
+    }
 }
 void Scope::sendBufferTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    instance->sendBuffer();
+    while(instance->started && !gShouldStop) {
+        if (instance->sendBufferFlag){
+            instance->sendBuffer();
+            instance->sendBufferFlag = false;
+        }
+        usleep(1000);
+    }
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate){
@@ -31,7 +42,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	socket.setPort(SCOPE_UDP_PORT);
 
 	// setup the auxiliary tasks
-	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this, true);
+	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
 	scopeSendBufferTask = Bela_createAuxiliaryTask(Scope::sendBufferTask, BELA_AUDIO_PRIORITY-1, "scopeSendBufferTask", this);
 
     // send an OSC message to address /scope-setup
@@ -74,6 +85,14 @@ void Scope::start(){
     customTriggered = false;
 
     started = true;
+    
+    sendBufferFlag = false;
+    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
+    
+    logCount = 0;
+    triggerTaskFlag = false;
+    Bela_scheduleAuxiliaryTask(scopeTriggerTask);
+    
 }
 
 void Scope::stop(){
@@ -81,22 +100,8 @@ void Scope::stop(){
 }
 
 void Scope::log(float* values){
-	//TODO: contains lots of duplicated code from log(float,...).
-	//TODO: needs refactoring
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
-
-    if (!started) return;
-
-    if (downSampling > 1){
-        if (downSampleCount < downSampling){
-            downSampleCount++;
-            return;
-        }
-        downSampleCount = 1;
-    }
+    
+	if (!prelog()) return;
 
     int startingWritePointer = writePointer;
 
@@ -105,38 +110,12 @@ void Scope::log(float* values){
         buffer[i*channelWidth + writePointer] = values[i];
     }
 
-    writePointer = (writePointer+1)%channelWidth;
-
-    // if upSampling > 1, save repeated samples into the buffer
-    for (int j=1; j<upSampling; j++){
-
-        buffer[writePointer] = buffer[startingWritePointer];
-
-        for (int i=1; i<numChannels; i++) {
-            buffer[i*channelWidth + writePointer] = buffer[i*channelWidth + startingWritePointer];
-        }
-
-        writePointer = (writePointer+1)%channelWidth;
-
-    }
+   postlog(startingWritePointer);
 
 }
 void Scope::log(float chn1, ...){
-
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
     
-    if (!started) return;
-    
-    if (downSampling > 1){
-        if (downSampleCount < downSampling){
-            downSampleCount++;
-            return;
-        }
-        downSampleCount = 1;
-    }
+    if (!prelog()) return;
     
     va_list args;
     va_start (args, chn1);
@@ -151,7 +130,34 @@ void Scope::log(float chn1, ...){
         // channels are stored sequentially in the buffer i.e [[channel1], [channel2], etc...]
         buffer[i*channelWidth + writePointer] = (float)va_arg(args, double);
     }
+    
+    postlog(startingWritePointer);
+    
+    va_end (args);
+    
+}
 
+bool Scope::prelog(){
+    
+    // check for any received OSC messages
+    while (oscServer.messageWaiting()){
+        parseMessage(oscServer.popMessage());
+    }
+    
+    if (!started) return false;
+    
+    if (downSampling > 1){
+        if (downSampleCount < downSampling){
+            downSampleCount++;
+            return false;
+        }
+        downSampleCount = 1;
+    }
+    
+    return true;
+}
+void Scope::postlog(int startingWritePointer){
+    
     writePointer = (writePointer+1)%channelWidth;
     
     // if upSampling > 1, save repeated samples into the buffer
@@ -167,8 +173,11 @@ void Scope::log(float chn1, ...){
         
     }
     
-    va_end (args);
-    
+    logCount += upSampling;
+    if (logCount > TRIGGER_LOG_COUNT){
+        triggerTaskFlag = true;
+        logCount = 0;
+    }
 }
 
 bool Scope::trigger(){
@@ -181,7 +190,7 @@ bool Scope::trigger(){
 }
 
 void Scope::scheduleSendBufferTask(){
-    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
+    sendBufferFlag = true;
 }
 
 bool Scope::triggered(){
@@ -197,6 +206,7 @@ bool Scope::triggered(){
 }
 
 void Scope::doTrigger(){
+// rt_printf("do trigger\n");
     // iterate over the samples between the read and write pointers and check for / deal with triggers
     while (readPointer != writePointer){
         
