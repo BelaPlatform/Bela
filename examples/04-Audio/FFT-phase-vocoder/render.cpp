@@ -73,7 +73,7 @@ enum{
 
 float gDryWet = 1; // mix between the unprocessed and processed sound
 float gPlaybackLive = 0.5f; // mix between the file playback and the live audio input
-float gGain = 1; // overall gain
+float gGain = 300; // overall gain
 float *gInputAudio = NULL;
 Midi midi;
 
@@ -244,7 +244,7 @@ void render(BelaContext* context, void* userData)
 	for(int n = 0; n < numAudioFrames; n++) {
 		if(gReadPtr < gSampleData.sampleLen)
 			gInputAudio[2*n] = gInputAudio[2*n+1] = gSampleData.samples[gReadPtr]*(1-gPlaybackLive) +
-			gPlaybackLive*0.5f*(audioRead(context,n,0)+audioRead(context,n,1));
+				gPlaybackLive*0.5f*(audioRead(context,n,0)+audioRead(context,n,1));
 		else
 			gInputAudio[2*n] = gInputAudio[2*n+1] = 0;
 		if(++gReadPtr >= gSampleData.sampleLen)
