@@ -50,6 +50,8 @@ bool setup(BelaContext *context, void *userData)
 	gReadPtr = -1;
 	if(initialise_trigger() == false)
 		return false;
+
+	// Start the lower-priority task. It will run forever in a loop
 	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
 	
 	return true;
@@ -71,8 +73,6 @@ void render(BelaContext *context, void *userData)
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
 			context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
 	}
-
-	// Request that the lower-priority task run at next opportunity
 }
 
 // Initialise the auxiliary task
