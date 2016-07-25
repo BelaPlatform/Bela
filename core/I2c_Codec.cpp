@@ -55,21 +55,6 @@ int I2c_Codec::startAudio(int dual_rate)
 		return 1;
 	if(setAudioSamplingRate(44100)) //this will automatically find and set K for the given P and R so that Fs=44100
 		return 1;
-//	if(writeRegister(0x03, 0x91))	// PLL register A: enable
-//		return 1;
-//	if(writeRegister(0x04, 0x1C))	// PLL register B
-//		return 1;
-//	if(writeRegister(0x05, 0x52))	// PLL register C
-//		return 1;
-//	if(writeRegister(0x06, 0x40))	// PLL register D
-//		return 1;
-//	if(writeRegister(0x0B, 0x01))	// Audio codec overflow flag register: PLL R = 1
-//		return 1;
-
-//	if(setPllD(5264)) //7.5264 gives 44.1kHz nominal value with a 12MHz master clock
-//		return 1;
-//	if(setPllJ(7))
-//		return 1;
 	if(dual_rate) {
 		if(writeRegister(0x07, 0xEA))	// Codec datapath register: 44.1kHz; dual rate; standard datapath
 			return 1;
@@ -90,15 +75,6 @@ int I2c_Codec::startAudio(int dual_rate)
 		return 1;
 	if(writeRegister(0x0E, 0x00))	// Headset / button press register B: disabled
 		return 1;
-	//TODO: why are the next four lines, if uncommented, executed AFTER this method has returned?
-//	if(setPga(16, 0))   // Left ADC PGA gain control: not muted; 16dB
-//		return 1;
-//	if(setPga(16, 1))	// Right ADC PGA gain control: not muted; 16dB
-//		return 1;
-//	if(writeRegister(0x0F, 0b01000000))	// Left ADC PGA gain control: not muted; 0x20 = 16dB
-//		return 1;
-//	if(writeRegister(0x10, 0b0))	// Right ADC PGA gain control: not muted; 0x20 = 16dB
-//		return 1;
 	if(writeRegister(0x25, 0xC0))	// DAC power/driver register: DAC power on (left and right)
 		return 1;
 	if(writeRegister(0x26, 0x04))	// High power output driver register: Enable short circuit protection
@@ -110,12 +86,17 @@ int I2c_Codec::startAudio(int dual_rate)
 		return 1;
 	if(writeRegister(0x5C, 0x80))	// DAC_R1 to RIGHT_LOP volume control: routed, volume 0dB
 		return 1;
-
 	if(writeHPVolumeRegisters())	// Send DAC to high-power outputs
 		return 1;
 
 	if(writeRegister(0x66, 0x02))	// Clock generation control register: use MCLK, PLL N = 2
 		return 1;
+
+	// wait for the codec to stabilize before unmuting the HP amp.
+	// this gets rid of the loud pop.
+	usleep(10000);
+	// note : a small click persists, but it is unavoidable
+	// (i.e.: fading in the hpVolumeHalfDbs after it is turned on does not remove it).
 
 	if(writeRegister(0x33, 0x0D))	// HPLOUT output level control: output level = 0dB, not muted, powered up
 		return 1;
@@ -125,7 +106,6 @@ int I2c_Codec::startAudio(int dual_rate)
 		return 1;
 	if(writeRegister(0x5D, 0x09))	// RIGHT_LOP output level control: 0dB, not muted, powered up
 		return 1;
-
 	if(writeDACVolumeRegisters(false))	// Unmute and set volume
 		return 1;
 
