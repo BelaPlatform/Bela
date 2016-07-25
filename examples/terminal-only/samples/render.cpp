@@ -30,6 +30,10 @@ The Bela software is distributed under the GNU Lesser General Public License
 SampleData gSampleData;	// User defined structure to get complex data from main
 int gReadPtr;			// Position of last read sample from file
 
+bool initialise_trigger();
+void trigger_samples();
+AuxiliaryTask gTriggerSamplesTask;
+
 bool setup(BelaContext *context, void *userData)
 {
 
@@ -44,6 +48,9 @@ bool setup(BelaContext *context, void *userData)
 	gSampleData = *(SampleData *)userData;
 
 	gReadPtr = -1;
+	if(initialise_trigger() == false)
+		return false;
+	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
 	
 	return true;
 }
@@ -53,6 +60,7 @@ void render(BelaContext *context, void *userData)
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 
+		float out = 0;
 		// If triggered...
 		if(gReadPtr != -1)
 			out += gSampleData.samples[gReadPtr++];	// ...read each sample...
@@ -65,7 +73,6 @@ void render(BelaContext *context, void *userData)
 	}
 
 	// Request that the lower-priority task run at next opportunity
-	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
 }
 
 // Initialise the auxiliary task
