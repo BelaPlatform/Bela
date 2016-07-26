@@ -38,7 +38,7 @@ class DocumentationView extends View {
 		$.ajax({
 			type: "GET",
 			url: "documentation_xml?file=Bela_8h",
-			dataType: "xml",
+			dataType: "html",
 			success: function(xml){
 				//console.log(xml);
 				var counter = 0;
@@ -54,7 +54,7 @@ class DocumentationView extends View {
 		$.ajax({
 			type: "GET",
 			url: "documentation_xml?file=structBelaContext",
-			dataType: "xml",
+			dataType: "html",
 			success: function(xml){
 				//console.log(xml);
 				var counter = 0;
@@ -72,7 +72,7 @@ class DocumentationView extends View {
 		$.ajax({
 			type: "GET",
 			url: "documentation_xml?file=Utilities_8h",
-			dataType: "xml",
+			dataType: "html",
 			success: function(xml){
 				//console.log(xml);
 				var counter = 0;
@@ -189,7 +189,7 @@ function xmlClassDocs(classname, emitter){
 	$.ajax({
 		type: "GET",
 		url: "documentation_xml?file="+filename,
-		dataType: "xml",
+		dataType: "html",
 		success: function(xml){
 			//console.log(xml);
 			
@@ -213,7 +213,7 @@ function xmlClassDocs(classname, emitter){
 			$.ajax({
 				type: "GET",
 				url: "documentation_xml?file="+classname+"_8h",
-				dataType: "xml",
+				dataType: "html",
 				success: function(xml){
 					//console.log(xml);
 					var includes = $(xml).find('includedby');

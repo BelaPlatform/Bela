@@ -29,7 +29,7 @@ var parser = {
 	
 	enable(status){
 		this.enabled = status;
-		this.parse();
+		this.doParse();
 	},
 	
 	highlights(hls){
@@ -38,13 +38,13 @@ var parser = {
 		highlights.typerefs = [];
 		//console.log(highlights);
 		
-		this.parse();
+		this.doParse();
 		
 		this.autoComplete();
 	},
 	
 	autoComplete(){
-		// console.log(highlights);
+		 //console.log(highlights);
 		// console.log(contextName, highlights[contextName]);
 		if (!contextName) return;
 		
@@ -109,7 +109,6 @@ var parser = {
 			}
 		}
 		this.langTools.addCompleter(utilityWordCompleter);
-		
 	},
 	
 	getMarkers(){
@@ -120,7 +119,14 @@ var parser = {
 		return includes;
 	},
 	
-	parse(){
+	parse(callback){
+		
+		if (this.parseTimeout) clearTimeout(this.parseTimeout);
+		this.parseTimeout = setTimeout( () => this.doParse(callback), 100);
+		
+	},
+	
+	doParse(callback){
 		for (let marker of markers){
 			editor.session.removeMarker(marker.id);
 		}
@@ -228,6 +234,9 @@ var parser = {
 			token = iterator.stepForward();
 			
 		}
+		
+		if (callback) callback();
+		
 		//console.log('includes', includes);
 		//console.log('typedefs', typedefs);
 		//console.log('markers', markers);

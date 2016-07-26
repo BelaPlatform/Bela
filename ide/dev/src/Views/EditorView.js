@@ -101,9 +101,11 @@ class EditorView extends View {
 				
 		this.editor.session.on('tokenizerUpdate', (e) => {
 			// console.log('tokenizerUpdate'); 
-			this.parser.parse();
+			this.parser.parse( () => {
+				this.getCurrentWord();
+			});
 		});
-		
+				
 	}
 	
 	editorChanged(){
@@ -315,6 +317,7 @@ class EditorView extends View {
 		var token = iterator.getCurrentToken();
 		if (!token || !token.range){
 			//console.log('no range');
+			this.emit('clear-docs');
 			return;
 		}
 		

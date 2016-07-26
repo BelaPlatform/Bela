@@ -1749,7 +1749,7 @@ var DocumentationView = function (_View) {
 			$.ajax({
 				type: "GET",
 				url: "documentation_xml?file=Bela_8h",
-				dataType: "xml",
+				dataType: "html",
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
@@ -1786,7 +1786,7 @@ var DocumentationView = function (_View) {
 			$.ajax({
 				type: "GET",
 				url: "documentation_xml?file=structBelaContext",
-				dataType: "xml",
+				dataType: "html",
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
@@ -1804,7 +1804,7 @@ var DocumentationView = function (_View) {
 			$.ajax({
 				type: "GET",
 				url: "documentation_xml?file=Utilities_8h",
-				dataType: "xml",
+				dataType: "html",
 				success: function success(xml) {
 					//console.log(xml);
 					var counter = 0;
@@ -1944,7 +1944,7 @@ function xmlClassDocs(classname, emitter) {
 	$.ajax({
 		type: "GET",
 		url: "documentation_xml?file=" + filename,
-		dataType: "xml",
+		dataType: "html",
 		success: function success(xml) {
 			//console.log(xml);
 
@@ -1968,7 +1968,7 @@ function xmlClassDocs(classname, emitter) {
 			$.ajax({
 				type: "GET",
 				url: "documentation_xml?file=" + classname + "_8h",
-				dataType: "xml",
+				dataType: "html",
 				success: function success(xml) {
 					//console.log(xml);
 					var includes = $(xml).find('includedby');
@@ -2112,7 +2112,9 @@ var EditorView = function (_View) {
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
 			// console.log('tokenizerUpdate');
-			_this.parser.parse();
+			_this.parser.parse(function () {
+				_this.getCurrentWord();
+			});
 		});
 
 		return _this;
@@ -2379,6 +2381,7 @@ var EditorView = function (_View) {
 			var token = iterator.getCurrentToken();
 			if (!token || !token.range) {
 				//console.log('no range');
+				this.emit('clear-docs');
 				return;
 			}
 
@@ -4531,7 +4534,7 @@ var parser = {
 	},
 	enable: function enable(status) {
 		this.enabled = status;
-		this.parse();
+		this.doParse();
 	},
 	highlights: function highlights(hls) {
 		_highlights = hls;
@@ -4539,12 +4542,12 @@ var parser = {
 		_highlights.typerefs = [];
 		//console.log(highlights);
 
-		this.parse();
+		this.doParse();
 
 		this.autoComplete();
 	},
 	autoComplete: function autoComplete() {
-		// console.log(highlights);
+		//console.log(highlights);
 		// console.log(contextName, highlights[contextName]);
 		if (!contextName) return;
 
@@ -4721,7 +4724,15 @@ var parser = {
 	getIncludes: function getIncludes() {
 		return includes;
 	},
-	parse: function parse() {
+	parse: function parse(callback) {
+		var _this = this;
+
+		if (this.parseTimeout) clearTimeout(this.parseTimeout);
+		this.parseTimeout = setTimeout(function () {
+			return _this.doParse(callback);
+		}, 100);
+	},
+	doParse: function doParse(callback) {
 		var _iteratorNormalCompletion6 = true;
 		var _didIteratorError6 = false;
 		var _iteratorError6 = undefined;
@@ -4834,6 +4845,9 @@ var parser = {
 			buf.enq(token);
 			token = iterator.stepForward();
 		}
+
+		if (callback) callback();
+
 		//console.log('includes', includes);
 		//console.log('typedefs', typedefs);
 		//console.log('markers', markers);
