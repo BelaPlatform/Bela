@@ -345,6 +345,11 @@ var BackgroundView = function (_View) {
 			ctx.fill();
 			//ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+			if (data.plotMode.value == 1) {
+				this.FFTBG(canvas, ctx);
+				return;
+			}
+
 			var xPixels = xTime * this.models[0].getKey('sampleRate').value / 1000;
 			var numVLines = Math.floor(canvas.width / xPixels);
 
@@ -425,6 +430,7 @@ var BackgroundView = function (_View) {
 				ctx.moveTo(0, canvas.height * i / numHLines);
 				ctx.lineTo(canvas.width, canvas.height * i / numHLines);
 			}
+
 			ctx.stroke();
 
 			//trigger line
@@ -436,10 +442,53 @@ var BackgroundView = function (_View) {
    ctx.stroke();*/
 		}
 	}, {
+		key: 'FFTBG',
+		value: function FFTBG(canvas, ctx) {
+
+			var numVlines = 10;
+
+			//faint lines
+			ctx.strokeStyle = '#000000';
+			ctx.lineWidth = 0.2;
+			ctx.setLineDash([]);
+			ctx.beginPath();
+			for (var i = 0; i <= numVlines; i++) {
+				ctx.moveTo(i * window.innerWidth / numVlines, 0);
+				ctx.lineTo(i * window.innerWidth / numVlines, canvas.height);
+				ctx.moveTo(i * window.innerWidth / numVlines, 0);
+				ctx.lineTo(i * window.innerWidth / numVlines, canvas.height);
+			}
+
+			var numHLines = 6;
+			for (var i = 1; i < numHLines; i++) {
+				ctx.moveTo(0, canvas.height * i / numHLines);
+				ctx.lineTo(canvas.width, canvas.height * i / numHLines);
+			}
+
+			ctx.stroke();
+
+			//fat lines
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+
+			ctx.moveTo(0, 0);
+			ctx.lineTo(0, canvas.height);
+
+			ctx.moveTo(0, canvas.height);
+			ctx.lineTo(canvas.width, canvas.height);
+
+			ctx.stroke();
+		}
+	}, {
 		key: '__xTimeBase',
 		value: function __xTimeBase(value, data) {
 			//console.log(value);
 			this.repaintBG(value, data);
+		}
+	}, {
+		key: '_plotMode',
+		value: function _plotMode(value, data) {
+			this.repaintBG(data.xTimeBase, data);
 		}
 	}]);
 
@@ -489,8 +538,39 @@ var ChannelView = function (_View) {
 			var channel = $element.data().channel;
 			var value = key === 'color' ? $element.val() : parseFloat($element.val());
 			if (isNaN(value)) return;
-			this.$elements.filterByData('key', key).filterByData('channel', channel).val(value);
+			this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 			channelConfig[channel][key] = value;
+			this.emit('channelConfig', channelConfig);
+		}
+	}, {
+		key: 'setChannelGains',
+		value: function setChannelGains(value) {
+			this.$elements.filterByData('key', 'yAmplitude').val(value);
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = channelConfig[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var item = _step.value;
+
+					item.yAmplitude = value;
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
 			this.emit('channelConfig', channelConfig);
 		}
 	}, {
@@ -516,6 +596,15 @@ var ChannelView = function (_View) {
 			}
 			this.emit('channelConfig', channelConfig);
 			this.$elements = $('.' + this.className);
+		}
+	}, {
+		key: '_plotMode',
+		value: function _plotMode(val) {
+			if (val.value == 0) {
+				this.setChannelGains(1);
+			} else {
+				this.setChannelGains(0.2);
+			}
 		}
 	}]);
 
@@ -543,6 +632,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
+var xTime, sampleRate, upSampling, downSampling;
+
 var ControlView = function (_View) {
 	_inherits(ControlView, _View);
 
@@ -563,7 +654,10 @@ var ControlView = function (_View) {
 	_createClass(ControlView, [{
 		key: 'selectChanged',
 		value: function selectChanged($element, e) {
-			this.emit('settings-event', $element.data().key, $element.val());
+			var key = $element.data().key;
+			var value = $element.val();
+			if (this[key]) this[key](value);
+			this.emit('settings-event', key, value);
 		}
 	}, {
 		key: 'inputChanged',
@@ -595,6 +689,7 @@ var ControlView = function (_View) {
 					if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase') {
 						this['_' + key](data[key], data);
 					} else {
+						if (key === 'plotMode') this.plotMode(data[key].value, data);
 						this.$elements.filterByData('key', key).val(data[key].value);
 					}
 				}
@@ -614,19 +709,55 @@ var ControlView = function (_View) {
 			}
 		}
 	}, {
+		key: 'plotMode',
+		value: function plotMode(val, data) {
+			this.emit('plotMode', val, data);
+			if (val == 0) {
+				if ($('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').removeClass('hidden');
+				if (!$('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').addClass('hidden');
+				$('.xAxisUnits').html('ms');
+				$('.xUnit-display').html((xTime * downSampling / upSampling).toPrecision(2));
+				$('#zoomUp').html('in');
+				$('#zoomDown').html('out');
+			} else if (val == 1) {
+				if (!$('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').addClass('hidden');
+				if ($('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').removeClass('hidden');
+				$('.xAxisUnits').html('Hz');
+				$('.xUnit-display').html(sampleRate / 20 * upSampling / downSampling);
+				$('#zoomUp').html('out');
+				$('#zoomDown').html('in');
+			}
+		}
+	}, {
 		key: '_upSampling',
 		value: function _upSampling(value, data) {
-			$('.xTime-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			upSampling = value.value;
+			if (data.plotMode.value == 0) {
+				$('.xUnit-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			} else if (data.plotMode.value == 1) {
+				$('.xUnit-display').html(data.sampleRate.value / 20 * data.upSampling.value / data.downSampling.value);
+			}
+			$('.zoom-display').html(100 * data.upSampling.value / data.downSampling.value + '%');
 		}
 	}, {
 		key: '_downSampling',
 		value: function _downSampling(value, data) {
-			$('.xTime-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			downSampling = value.value;
+			if (data.plotMode.value == 0) {
+				$('.xUnit-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			} else if (data.plotMode.value == 1) {
+				$('.xUnit-display').html(data.sampleRate.value / 20 * data.upSampling.value / data.downSampling.value);
+			}
+			$('.zoom-display').html(100 * data.upSampling.value / data.downSampling.value + '%');
 		}
 	}, {
 		key: '_xTimeBase',
 		value: function _xTimeBase(value, data) {
-			$('.xTime-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			xTime = data.xTimeBase;
+			sampleRate = data.sampleRate.value;
+			if (data.plotMode.value == 0) {
+				$('.xUnit-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			}
 		}
 	}, {
 		key: '__numChannels',
@@ -916,6 +1047,10 @@ var socket = io('/BelaScope');
 controlView.on('settings-event', function (key, value) {
 	socket.emit('settings-event', key, value);
 });
+controlView.on('plotMode', function (val) {
+	settings.setKey('plotMode', { type: 'integer', value: val });
+	//backgroundView._plotMode(val, settings._getData());
+});
 channelView.on('channelConfig', function (channelConfig) {
 	worker.postMessage({
 		event: 'channelConfig',
@@ -950,6 +1085,23 @@ settings.on('set', function (data, changedKeys) {
 $(window).on('resize', function () {
 	settings.setKey('frameWidth', { type: 'integer', value: window.innerWidth });
 	settings.setKey('frameHeight', window.innerHeight);
+});
+
+$('#scope').on('mousemove', function (e) {
+	if (settings.getKey('plotMode') === undefined) return;
+	var plotMode = settings.getKey('plotMode').value;
+	var scale = settings.getKey('downSampling').value / settings.getKey('upSampling').value;
+	var x, y;
+	if (plotMode == 0) {
+		x = (1000 * scale * (e.clientX - window.innerWidth / 2) / settings.getKey('sampleRate').value).toPrecision(4) + 'ms';
+		y = (1 - 2 * e.clientY / window.innerHeight).toPrecision(3);
+	} else if (plotMode == 1) {
+		x = parseInt(settings.getKey('sampleRate').value * e.clientX / (2 * window.innerWidth * scale));
+		if (x > 1500) x = x / 1000 + 'khz';else x += 'hz';
+		y = (1 - e.clientY / window.innerHeight).toPrecision(3);
+	}
+	$('#scopeMouseX').html('x: ' + x);
+	$('#scopeMouseY').html('y: ' + y);
 });
 
 // plotting

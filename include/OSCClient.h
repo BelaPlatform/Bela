@@ -8,7 +8,7 @@
 #include <queue>
 
 /**
- * OSCMessageFactory provides functions for building OSC messages within Bela.
+ * \brief OSCMessageFactory provides functions for building OSC messages within Bela.
  *
  * This class is safe to use on the audio thread.
  *
@@ -24,7 +24,7 @@
 class OSCMessageFactory{
     public:
     	/**
-		 * Sets the address of the OSC message
+		 * \brief Sets the address of the OSC message
 		 *
 		 * Must be called first when creating a message
 		 *
@@ -36,7 +36,7 @@ class OSCMessageFactory{
         OSCMessageFactory& to(std::string address);
         
         /**
-		 * Adds a parameter to an OSC message
+		 * \brief Adds a parameter to an OSC message
 		 *
 		 * Must be called after to() but before end()
 		 *
@@ -54,7 +54,7 @@ class OSCMessageFactory{
         OSCMessageFactory& add(void *ptr, int size);
         
         /**
-		 * Finalises and returns the OSC message
+		 * \brief Finalises and returns the OSC message
 		 *
 		 * Must be called last when creating a message
 		 *
@@ -70,7 +70,7 @@ class OSCMessageFactory{
 };
 
 /**
- * OSCClient provides functions for sending OSC messages from Bela.
+ * \brief OSCClient provides functions for sending OSC messages from Bela.
  *
  * Care must be taken to use the correct methods while running on the audio thread to
  * prevent Xenomai mode switches and audio glitches.
@@ -82,7 +82,7 @@ class OSCClient{
         OSCClient();
         
         /**
-		 * Sets the port and optionally the IP address used to send OSC messages
+		 * \brief Sets the port and optionally the IP address used to send OSC messages
 		 *
 		 * Must be called once during setup()
 		 *
@@ -93,14 +93,14 @@ class OSCClient{
 		 * scheduleTask defaults to true.
 		 *
 		 * @param port the port used to send OSC messages
-		 * @param arg the IP address OSC messages are sent to (defaults to 127.0.0.1)
+		 * @param address the IP address OSC messages are sent to (defaults to 127.0.0.1)
 		 * @param scheduleTask send queued messages (defaults to true)
 		 *
 		 */
         void setup(int port, const char* address="127.0.0.1", bool scheduleTask = true);
         
         /**
-		 * Queue an OSC message to be sent at the end of the current audio block
+		 * \brief Queue an OSC message to be sent at the end of the current audio block
 		 *
 		 * This method is audio-thread safe, and can be used from render()
 		 *
@@ -113,7 +113,7 @@ class OSCClient{
         void queueMessage(oscpkt::Message);
         
         /**
-		 * Send an OSC message immediately *** do not use on audio thread! ***
+		 * \brief Send an OSC message immediately *** do not use on audio thread! ***
 		 *
 		 * This method is *not* audio-thread safe, and can *not* be used from render()
 		 *
@@ -126,7 +126,7 @@ class OSCClient{
         void sendMessageNow(oscpkt::Message);
         
         /**
-		 * Create a new oscpkt::Message object representing an OSC message
+		 * \brief Create a new oscpkt::Message object representing an OSC message
 		 *
 		 * This member is an instance of OSCMessageFactory, which can be used
 		 * to build an OSC message.

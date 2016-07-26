@@ -279,6 +279,26 @@ function socketEvents(socket){
 	
 	// update
 	socket.on('upload-update', uploadUpdate);
+	
+	socket.on('highlight-syntax', names => {
+		//console.log(names);
+		fs.readFileAsync(belaPath+'IDE/public/js/ace/mode-c_cpp.js', 'utf-8')
+			.then( file => {
+				var lines = file.split('\n');
+				for (let i=0; i<lines.length; i++){
+					if (lines[i].indexOf('/*BELA*/') !== -1){
+						var split = lines[i].split('"');
+						split[1] = names.join('|');
+						lines[i] = split.join('"');
+						break;
+					}
+				}
+				return lines.join('\n');
+			})
+			.then( file => fs.writeFileAsync(belaPath+'IDE/public/js/ace/mode-c_cpp.js', file) )
+			.then( () => socket.emit('syntax-highlighted') )
+			.catch( e => console.log('highlight-syntax error', e) );
+	});
 
 }
 
@@ -309,6 +329,7 @@ var SettingsManager = {
 			'cpuMonitoring'			: 1,
 			'cpuMonitoringVerbose'	: 0,
 			'consoleDelete'			: 1,
+			'autoDocs'				: 1,
 			'verboseDebug'			: 0,
 			'useGit'				: 1,
 			'gitAutostage'			: 1

@@ -73,6 +73,13 @@ html, body{
 	display: inline-block;
 	vertical-align: middle;
 }
+.scopeMouse{
+	min-width: 70px;
+    display: inline-block;
+    vertical-align: center;
+    font-family: courier-new monospaced;
+    font-size: small;
+}
 .scopeChannel, #scopeBG{
 	position: absolute;
 	top: 0;

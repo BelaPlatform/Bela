@@ -8,7 +8,10 @@ OSCServer::OSCServer(){}
 // called by messageCheckTask with pointer to OSCServer instance as argument
 void OSCServer::checkMessages(void* ptr){
     OSCServer *instance = (OSCServer*)ptr;
-    instance->messageCheck();
+    while(!gShouldStop){
+        instance->messageCheck();
+        usleep(1000);
+    }
 }
 
 void OSCServer::setup(int _port){
@@ -21,7 +24,8 @@ void OSCServer::setup(int _port){
 void OSCServer::createAuxTasks(){
     char name [30];
     sprintf (name, "OSCReceiveTask %i", port);
-    OSCReceiveTask = Bela_createAuxiliaryTask(OSCServer::checkMessages, BELA_AUDIO_PRIORITY-5, name, this, true);
+    OSCReceiveTask = Bela_createAuxiliaryTask(OSCServer::checkMessages, BELA_AUDIO_PRIORITY-5, name, this);
+    Bela_scheduleAuxiliaryTask(OSCReceiveTask);
 }
 
 void OSCServer::messageCheck(){

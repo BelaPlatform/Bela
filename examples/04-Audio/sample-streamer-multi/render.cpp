@@ -24,7 +24,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
-#include <Scope.h>
 #include <SampleStream.h>
 
 #define NUM_CHANNELS 2    // NUMBER OF CHANNELS IN THE FILE
