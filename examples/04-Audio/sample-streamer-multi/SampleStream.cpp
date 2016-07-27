@@ -29,9 +29,9 @@ int SampleStream::openFile(const char* filename, int numChannels, int bufferLeng
     gBusy = 1;
     
     sf_close(sndfile);
-    
+    sfinfo.format = 0; 
     if (!(sndfile = sf_open (string(filename).c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << filename << endl;
+		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return 1;
 	}
     
