@@ -175,7 +175,7 @@ int Midi::readFrom(const char* port){
 	if(inputPort < 0){
 		return -1;
 	} else {
-		printf("Reading from Midi port %d\n", port);
+		printf("Reading from Midi port %s\n", port);
 		Bela_scheduleAuxiliaryTask(midiInputTask);
 		return 1;
 	}
@@ -187,7 +187,7 @@ int Midi::writeTo(const char* port){
 	if(outputPort < 0){
 		return -1;
 	} else {
-		printf("Writing to Midi port %d\n", port);
+		printf("Writing to Midi port %s\n", port);
 		Bela_scheduleAuxiliaryTask(midiOutputTask);
 		return 1;
 	}
