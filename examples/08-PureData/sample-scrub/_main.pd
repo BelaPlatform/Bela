@@ -35,10 +35,8 @@
 #X obj 36 250 loadbang;
 #X obj 36 355 s sampleLength2;
 #X msg 36 283 read -resize rt.wav exampleTable2;
-#X msg 36 123 read -resize ../../samples/waves.wav exampleTable1;
 #X text 293 285 <<< If you include your own samples in the project
 ;
-#X text 395 163 ../../samples/name_of_file.wav;
 #X obj 42 471 adc~ 3;
 #X text 101 426 Connect two potentiometers to analog in 0 and 1;
 #X text 474 16 ............................;
@@ -48,10 +46,12 @@
 #X text 474 66 .|____/|_____|_____/_/..._|.io;
 #X text 474 76 ............................;
 #X text 474 46 .| __ || __|.| |...../ _| |.;
+#X msg 36 123 read -resize waves.wav exampleTable1;
+#X text 395 163 name_of_file.wav;
 #X connect 2 0 11 0;
 #X connect 3 0 25 0;
 #X connect 11 0 22 0;
-#X connect 12 0 30 0;
+#X connect 12 0 40 0;
 #X connect 14 0 16 0;
 #X connect 16 0 17 0;
 #X connect 17 0 23 0;
@@ -64,5 +64,5 @@
 #X connect 26 0 28 0;
 #X connect 27 0 29 0;
 #X connect 29 0 26 0;
-#X connect 30 0 3 0;
-#X connect 33 0 2 0;
+#X connect 31 0 2 0;
+#X connect 40 0 3 0;
