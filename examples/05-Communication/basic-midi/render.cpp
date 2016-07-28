@@ -55,9 +55,15 @@ void midiMessageCallback(MidiChannelMessage message, void* arg){
 }
 
 Midi midi;
+
+bool gUseAlsa=false;
 const char* gMidiPort0 = "/dev/midi1";
+//bool gUseAlsa=true;
+//const char* gMidiPort0 = "hw:1,0,0";
+
 bool setup(BelaContext *context, void *userData)
 {
+    midi.useAlsa(gUseAlsa);
 	midi.readFrom(gMidiPort0);
 	midi.writeTo(gMidiPort0);
 	midi.enableParser(true);

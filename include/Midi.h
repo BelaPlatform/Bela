@@ -10,6 +10,7 @@
 
 #include <Bela.h>
 #include <vector>
+#include <alsa/asoundlib.h>
 
 typedef unsigned char midi_byte_t;
 
@@ -261,6 +262,11 @@ public:
 		enableParser(callback != NULL); //this needs to be first, as it deletes the parser(if exists)
 		getParser()->setCallback(callback, arg);
 	}
+	/**
+	* Use Alsa raw file mode, or filesystem
+	* @param useAlsa use alsa raw files if true else filesystem 
+	*/
+	void useAlsa(bool useAlsa);
 
 	/**
 	 * Open the specified input Midi port and start reading from it.
@@ -314,6 +320,8 @@ private:
 	void writeOutputLoop();
 	int outputPort;
 	int inputPort;
+	snd_rawmidi_t *alsaIn,*alsaOut;
+	bool useAlsaApi;
 	std::vector<midi_byte_t> inputBytes;
 	unsigned int inputBytesWritePointer;
 	unsigned int inputBytesReadPointer;

@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+
 #define kMidiInput 0
 #define kMidiOutput 1
 
@@ -76,7 +77,8 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 };
 
 
-Midi::Midi(){
+Midi::Midi() 
+    : alsaIn(NULL), alsaOut(NULL), useAlsaApi(false) {
 	outputPort = -1;
 	inputPort = -1;
 	inputParser = 0;
@@ -96,7 +98,18 @@ void Midi::staticConstructor(){
 	midiOutputTask = Bela_createAuxiliaryTask(Midi::midiOutputLoop, 50, "MidiOutupt");
 }
 
-Midi::~Midi(){}
+Midi::~Midi() {
+    if(useAlsaApi) {
+        if(alsaOut){
+            snd_rawmidi_drain(alsaOut);
+            snd_rawmidi_close(alsaOut); 
+        }
+        if(alsaIn){
+            snd_rawmidi_drain(alsaIn);
+            snd_rawmidi_close(alsaIn); 
+        }
+    }
+}
 
 void Midi::enableParser(bool enable){
 	if(enable == true){
@@ -124,7 +137,13 @@ void Midi::midiOutputLoop(){
 void Midi::readInputLoop(){
 	while(!gShouldStop){
 		int maxBytesToRead = inputBytes.size() - inputBytesWritePointer;
-		int ret = read(inputPort, &inputBytes[inputBytesWritePointer], sizeof(midi_byte_t)*maxBytesToRead);
+        int ret = -1;
+
+        if(useAlsaApi && alsaIn) {
+            ret = snd_rawmidi_read(alsaIn,&inputBytes[inputBytesWritePointer],sizeof(midi_byte_t)*maxBytesToRead);
+        } else {
+            ret = read(inputPort, &inputBytes[inputBytesWritePointer], sizeof(midi_byte_t)*maxBytesToRead);
+        }
 		if(ret < 0){
 			if(errno != EAGAIN){ // read() would return EAGAIN when no data are available to read just now
 				rt_printf("Error while reading midi %d\n", errno);
@@ -148,6 +167,12 @@ void Midi::readInputLoop(){
 			usleep(1000);
 		} // otherwise there might be more data ready to be read (we were at the end of the buffer), so don't sleep
 	}
+
+    if(useAlsaApi && alsaIn) {
+        snd_rawmidi_drain(alsaIn);
+        snd_rawmidi_close(alsaIn);
+        alsaIn = NULL;
+    } 
 }
 
 void Midi::writeOutputLoop(){
@@ -160,41 +185,73 @@ void Midi::writeOutputLoop(){
 		if(length == 0){ //nothing to be written
 			continue;
 		}
-		int ret;
-		ret = write(outputPort, &outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
+		int ret = -1;
+        if(useAlsaApi && alsaOut) {
+            ret = snd_rawmidi_write(alsaOut,&outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
+            snd_rawmidi_drain(alsaOut);
+        } else {
+            ret = write(outputPort, &outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
+        }
 		if(ret < 0){ //error occurred
 			rt_printf("error occurred while writing: %d\n", errno);
 			usleep(10000); //wait before retrying
 			continue;
 		}
 	}
+
+    if(useAlsaApi && alsaOut)  {
+        snd_rawmidi_drain(alsaOut);
+        snd_rawmidi_close(alsaOut);
+        alsaOut = NULL;
+    } 
 }
+
+void Midi::useAlsa(bool f) {
+    useAlsaApi = f;
+}
+
 int Midi::readFrom(const char* port){
 	objAddrs[kMidiInput].push_back(this);
-	inputPort = open(port, O_RDONLY | O_NONBLOCK | O_NOCTTY);
-	if(inputPort < 0){
-		return -1;
-	} else {
-		printf("Reading from Midi port %s\n", port);
-		Bela_scheduleAuxiliaryTask(midiInputTask);
-		return 1;
-	}
+    if(useAlsaApi) {
+        int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);    
+        if (err) {
+            rt_printf("readFrom snd_rawmidi_open %s failed: %d\n",port,err);
+            return -1;
+        }
+        rt_printf("Reading from Alsa midi device %s\n", port);
+    } else {
+        inputPort = open(port, O_RDONLY | O_NONBLOCK | O_NOCTTY);
+        if(inputPort < 0){
+            return -1;
+        }
+        rt_printf("Reading from Midi port %s\n", port);
+    }
+    Bela_scheduleAuxiliaryTask(midiInputTask);
+    return 1;
 }
 
 int Midi::writeTo(const char* port){
 	objAddrs[kMidiOutput].push_back(this);
-	outputPort = open(port, O_WRONLY, 0);
-	if(outputPort < 0){
-		return -1;
-	} else {
-		printf("Writing to Midi port %s\n", port);
-		Bela_scheduleAuxiliaryTask(midiOutputTask);
-		return 1;
-	}
+    if(useAlsaApi) {
+        int err = snd_rawmidi_open(NULL, &alsaOut, port,0);    
+        if (err) {
+            rt_printf("writeTo snd_rawmidi_open %s failed: %d\n",port,err);
+            return -1;
+        }
+        rt_printf("Writing to Alsa midi device %s\n", port);
+    } else {
+    	outputPort = open(port, O_WRONLY, 0);
+    	if(outputPort < 0){
+    		return -1;
+    	}
+        rt_printf("Writing to Midi port %s\n", port);
+    }
+    Bela_scheduleAuxiliaryTask(midiOutputTask);
+    return 1;
 }
 
 int Midi::_getInput(){
-	if(inputPort < 0)
+	if( (useAlsaApi && !alsaIn ) || (!useAlsaApi && inputPort < 0) )
 		return -2;
 	if(inputBytesReadPointer == inputBytesWritePointer){
 		return -1; // no bytes to read
@@ -219,17 +276,29 @@ MidiParser* Midi::getParser(){
 	}
 	return inputParser;
 };
-
+ 
 int Midi::writeOutput(midi_byte_t byte){
-	return writeOutput(&byte, 1);
+    int ret = -1;
+    if(useAlsaApi && alsaOut) {
+        ret = snd_rawmidi_write(alsaOut,&byte, 1);
+        snd_rawmidi_drain(alsaOut);
+    } else {
+	   ret = writeOutput(&byte, 1);
+    }
+    return ret;
 }
 
 int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
-	int ret = write(outputPort, bytes, length);
-	if(ret < 0)
-		return -1;
-	else
-		return 1;
+    int ret = -1;
+    if(useAlsaApi && alsaOut) {
+        ret = snd_rawmidi_write(alsaOut, bytes, length);
+        snd_rawmidi_drain(alsaOut);
+    }
+    else {
+        ret = write(outputPort, bytes, length);
+    }
+
+	return (ret < 0 ? -1 : 1);
 }
 
 MidiChannelMessage::MidiChannelMessage(){};
