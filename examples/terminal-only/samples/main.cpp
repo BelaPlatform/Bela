@@ -39,7 +39,7 @@ int initFile(string file, SampleData *smp)//float *& smp)
 {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
-
+	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
 		cout << "Couldn't open file " << file << endl;
 		return 1;
@@ -101,7 +101,7 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --file [-f] filename:    Name of the file to load (default is \"sample.wav\")\n";
+	cerr << "   --file [-f] filename:    Name of the file to load (default is \"../../samples/sample.wav\")\n";
 	cerr << "   --help [-h]:             Print this menu\n";
 }
 
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(fileName.empty()){
-		fileName = "sample.wav";
+		fileName = "../../samples/sample.wav";
 	}
 
 	cout << "Loading file " << fileName << endl;

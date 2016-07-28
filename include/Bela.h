@@ -147,6 +147,7 @@ typedef struct {
 	// determined by the programmer rather than the user
 
 	/// Whether audio/analog data should be interleaved
+	/// <b>TODO: deinterleaved buffers are not implemented yet.</b>
 	int interleave;
 	/// \brief Whether analog outputs should persist to future frames.
 	///
@@ -654,17 +655,41 @@ int Bela_muteSpeakers(int mute);
  * and 99, and usually should be lower than \ref BELA_AUDIO_PRIORITY. Tasks with higher priority always
  * preempt tasks with lower priority.
  *
- * \param functionToCall Function which will run each time the auxiliary task is scheduled.
+ * \param callback Function which will be called each time the auxiliary task is scheduled, unless it is already running.
  * \param priority Xenomai priority level at which the task should run.
  * \param name Name for this task, which should be unique system-wide (no other running program should use this name).
+ * \param arg The argument passed to the callback function.
+ * \param autoSchedule If true, the task will be scheduled at the end of each call to `render()`.
  */
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void*), int priority, const char *name, void* args, bool autoSchedule = false);
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priority, const char *name, bool autoSchedule = false);
+AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg, bool autoSchedule = false);
+AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void), int priority, const char *name, bool autoSchedule = false);
 
 /**
- * \brief Start an auxiliary task so that it can be run.
+ * \brief Run an auxiliary task which has previously been created.
+ *
+ * This function will schedule an auxiliary task to run. 
+ *
+ * If the task is already running, calling this function has no effect.
+ * If the task is not running (e.g.: a previous invocation has returned), the \b callback function defined
+ * in Bela_createAuxiliaryTask() will be called and it will be passed the \b arg pointer as its only parameter.
+ *
+ * This function is typically called from render() to start a lower-priority task. The function
+ * will not run immediately, but only once any active higher priority tasks have finished.
+ *
+ * \param task Task to schedule for running.
+ */
+void Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
+
+void Bela_autoScheduleAuxiliaryTasks();
+
+/**
+ * \brief Initialize an auxiliary task so that it can be scheduled.
+ *
+ * User normally do not need to call this function.
  *
  * This function will start an auxiliary task but will NOT schedule it.
+ * This means that the callback function associated with the task will NOT be executed.
+ *
  * It will also set a flag in the associate InternalAuxiliaryTask to flag the
  * task as "started", so that successive calls to the same function for a given AuxiliaryTask
  * have no effect.
@@ -676,20 +701,6 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priorit
  */
 
 int Bela_startAuxiliaryTask(AuxiliaryTask task);
-/**
- * \brief Run an auxiliary task which has previously been created.
- *
- * This function will schedule an auxiliary task to run. When the task runs, the function in the first
- * argument of createAuxiliaryTaskLoop() will be called.
- *
- * scheduleAuxiliaryTask() is typically called from render() to start a lower-priority task. The function
- * will not run immediately, but only once any active higher priority tasks have finished.
- *
- * \param task Task to schedule for running.
- */
-void Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
-void Bela_autoScheduleAuxiliaryTasks();
-
 /** @} */
 #include <Utilities.h>
 

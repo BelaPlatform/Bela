@@ -30,9 +30,9 @@ int loadSoundFile(const string& path, float **buffer, int *bufferLength)
 {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
-
+	sfinfo.format = 0;
 	if (!(sndfile = sf_open (path.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << path << endl;
+		cout << "Couldn't open file " << path.c_str() << ": " << sf_strerror(sndfile) << endl;
 		return 1;
 	}
 

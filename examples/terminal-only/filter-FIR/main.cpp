@@ -39,9 +39,10 @@ int initFile(string file, SampleData *smp)//float *& smp)
 {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
+    sfinfo.format = 0;
 
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << endl;
+		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return 1;
 	}
 
@@ -101,7 +102,7 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --file [-f] filename:    Name of the file to load (default is \"longsample.wav\")\n";
+	cerr << "   --file [-f] filename:    Name of the file to load (default is \"../../samples/longsample.wav\")\n";
 	cerr << "   --help [-h]:             Print this menu\n";
 }
 
@@ -145,7 +146,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(fileName.empty()){
-		fileName = "longsample.wav";
+		fileName = "../../samples/longsample.wav";
 	}
 
 	if(settings.verbose) {

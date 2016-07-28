@@ -80,7 +80,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example samples/render.cpp
+\example sample-loader/render.cpp
 
 Basic Sample Loader
 --------------------------------

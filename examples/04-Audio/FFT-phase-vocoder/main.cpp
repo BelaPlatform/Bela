@@ -41,11 +41,11 @@ unsigned long long gFirstSeconds, gFirstMicroseconds;
 // Load samples from file
 int initFile(string file, SampleData *smp)//float *& smp)
 {
-  	SNDFILE *sndfile ;
-	SF_INFO sfinfo ;
-
+	SNDFILE *sndfile;
+	SF_INFO sfinfo;
+    sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << endl;
+		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return 1;
 	}
 
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(fileName.empty()){
-		fileName = "../../samples/sample.wav";
+		fileName = "../../samples/longsample.wav";
 	}
 
 

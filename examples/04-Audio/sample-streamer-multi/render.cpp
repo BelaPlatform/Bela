@@ -116,7 +116,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example sampleStreamerMulti/render.cpp
+\example sample-streamer-multi/render.cpp
 
 Multiple playback of large wav files
 ---------------------------
