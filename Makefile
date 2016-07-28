@@ -81,7 +81,7 @@ QUIET?=false
 
 RM := rm -rf
 STATIC_LIBS := ./libprussdrv.a ./libNE10.a
-LIBS = -lrt -lnative -lxenomai -lsndfile
+LIBS = -lrt -lnative -lxenomai -lsndfile -lasound
 
 # refresh library cache and check if libpd is there
 #TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
