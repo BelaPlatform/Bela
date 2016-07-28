@@ -15,27 +15,46 @@
 				<button id="oneShot" style="display:none;">one-shot</button>
 				<a href="" download="scope" id="saveCanvas"><button>Save Image</button></a>
 				<a href="" download="scopeData.csv" id="saveCanvasData"><button>Export Data</button></a>
+				<span id="scopeMouseX" class="scopeMouse"></span>
+				<span id="scopeMouseY" class="scopeMouse"></span>
 			</div>
 			<canvas id="scope"></canvas>
 			<canvas id="scopeBG"></canvas>
 			<div id="controlPanel" class="hidden scopeControls-parent channelView-parent">
 				<div id="mainColumn" class="cpColumn">
-					X-Axis (ms/div): <button class="scopeControls" data-key="upSampling">up</button><button class="scopeControls" data-key="downSampling">down</button> <span class="xTime-display"></span>ms</br></br>
-					Horizontal Offset: <input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input><input class="scopeControls" data-key="xOffset" type="number" value="0"></input></br></br>
-					Trigger Direction: <select class="scopeControls" data-key="triggerDir">
-						<option value="0" selected>Positive</option>
-						<option value="1">Negative</option>
+					X-Axis (<span class="xAxisUnits">ms</span>/div): <span class="xUnit-display"></span><span class="xAxisUnits">ms</span></br></br>
+					Zoom: <button class="scopeControls" data-key="upSampling" id="zoomUp">in</button><button class="scopeControls" data-key="downSampling" id="zoomDown">out</button> <span class="zoom-display">100%</span></br></br>
+					Mode: <select class="scopeControls" data-key="plotMode">
+						<option value="0" selected>Time Domain</option>
+						<option value="1">Frequency Domain</option>
 					</select></br></br>
-					Trigger Level: <input class="scopeControls" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01"></input><input class="scopeControls" data-key="triggerLevel" type="number" value="0" step="0.01"></input></br></br>
-					Trigger Channel: <select  class="scopeControls" data-key="triggerChannel">
-						<option value="0" selected>0</option>
-					</select></br></br>
-					Trigger Mode: <select  class="scopeControls" data-key="triggerMode">
-						<option value="0" selected>Auto</option>
-						<option value="1">Normal</option>
-						<option value="2">Custom</option>
-						<!--<option value="oneShot">One-Shot</option>-->
-					</select></br></br>
+					<div id="scopeTimeDomainControls">
+						Horizontal Offset: <input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input><input class="scopeControls" data-key="xOffset" type="number" value="0"></input></br></br>
+						Trigger Direction: <select class="scopeControls" data-key="triggerDir">
+							<option value="0" selected>Positive</option>
+							<option value="1">Negative</option>
+						</select></br></br>
+						Trigger Level: <input class="scopeControls" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01"></input><input class="scopeControls" data-key="triggerLevel" type="number" value="0" step="0.01"></input></br></br>
+						Trigger Channel: <select  class="scopeControls" data-key="triggerChannel">
+							<option value="0" selected>0</option>
+						</select></br></br>
+						Trigger Mode: <select  class="scopeControls" data-key="triggerMode">
+							<option value="0" selected>Auto</option>
+							<option value="1">Normal</option>
+							<option value="2">Custom</option>
+							<!--<option value="oneShot">One-Shot</option>-->
+						</select></br></br>
+					</div>
+					<div id="scopeFFTControls" class="hidden">
+						FFT Length (samples): <select class="scopeControls" data-key="FFTLength">
+							<option value="128">128</option>
+							<option value="256">256</option>
+							<option value="512">512</option>
+							<option value="1024">1024</option>
+							<option value="2048">2048</option>
+							<option value="4096">4096</option>
+						</select></br></br>
+					</div>
 					Hold Off(ms): <input  class="scopeControls" data-key="holdOff" type="range" min="0" max="100" value="20" step="0.1"></input><input class="scopeControls" data-key="holdOff" type="number" value="20" step="0.1"></input></br></br>
 				</div>
 				<div id="channelViewChannel0" class="cpColumn channelView">

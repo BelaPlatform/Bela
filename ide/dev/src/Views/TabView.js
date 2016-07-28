@@ -90,6 +90,12 @@ class TabView extends View {
 			}
 		});
 		
+		this.on('open-tab', (id) => $('#'+id).siblings('label').trigger('click') );
+		this.on('toggle', () => {
+			if (_tabsOpen) this.closeTabs();
+			else this.openTabs();
+		})
+		
 	}
 	
 	openTabs(){
@@ -121,6 +127,11 @@ class TabView extends View {
 			'max-height': $('#editor').height()+'px'
 		});
 		
+	}
+	
+	getOpenTab(){
+		if (!_tabsOpen) return false;
+		return $('[type=radio]:checked ~ label').prop('for');
 	}
 	
 }

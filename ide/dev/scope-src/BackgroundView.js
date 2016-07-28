@@ -24,6 +24,11 @@ class BackgroundView extends View{
 		ctx.fill();
 		//ctx.clearRect(0, 0, canvas.width, canvas.height);
 		
+		if (data.plotMode.value == 1){
+			this.FFTBG(canvas, ctx);
+			return;
+		}
+		
 		var xPixels = xTime*this.models[0].getKey('sampleRate').value/1000;
 		var numVLines = Math.floor(canvas.width/xPixels);
 
@@ -104,6 +109,7 @@ class BackgroundView extends View{
 			ctx.moveTo(0, canvas.height*i/numHLines);
 			ctx.lineTo(canvas.width, canvas.height*i/numHLines);
 		}
+		
 		ctx.stroke();
 		
 		//trigger line
@@ -115,9 +121,50 @@ class BackgroundView extends View{
 		ctx.stroke();*/
 	}
 	
+	FFTBG(canvas, ctx){
+		
+		var numVlines = 10;
+		
+		//faint lines
+		ctx.strokeStyle = '#000000';
+		ctx.lineWidth = 0.2;
+		ctx.setLineDash([]);
+		ctx.beginPath();
+		for (var i=0; i <= numVlines; i++){
+			ctx.moveTo(i*window.innerWidth/numVlines, 0);
+			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
+			ctx.moveTo(i*window.innerWidth/numVlines, 0);
+			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
+		}
+		
+		var numHLines = 6;
+		for (var i=1; i<numHLines; i++){
+			ctx.moveTo(0, canvas.height*i/numHLines);
+			ctx.lineTo(canvas.width, canvas.height*i/numHLines);
+		}
+		
+		ctx.stroke();
+		
+		//fat lines
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+
+		ctx.moveTo(0, 0);
+		ctx.lineTo(0, canvas.height);
+
+		ctx.moveTo(0, canvas.height);
+		ctx.lineTo(canvas.width, canvas.height);
+			
+		ctx.stroke();
+	}
+	
 	__xTimeBase(value, data){
 		//console.log(value);
 		this.repaintBG(value, data);
+	}
+	
+	_plotMode(value, data){
+		this.repaintBG(data.xTimeBase, data);
 	}
 	
 }

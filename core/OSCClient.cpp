@@ -5,7 +5,10 @@ OSCClient::OSCClient(){}
 
 void OSCClient::sendQueue(void* ptr){
     OSCClient *instance = (OSCClient*)ptr;
-    instance->queueSend();
+    while(!gShouldStop){
+        instance->queueSend();
+        usleep(1000);
+    }
 }
 
 void OSCClient::setup(int _port, const char* _address, bool scheduleTask){

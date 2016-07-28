@@ -6,12 +6,21 @@ Scope::Scope():connected(0), triggerPrimed(false), started(false){}
 // static aux task functions
 void Scope::triggerTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    if (instance->started)
-        instance->doTrigger();
+    if (instance->plotMode == 0){
+        instance->triggerTimeDomain();
+    } else if (instance->plotMode == 1){
+        instance->triggerFFT();
+    }
 }
 void Scope::sendBufferTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    instance->sendBuffer();
+    while(instance->started && !gShouldStop) {
+        if (instance->sendBufferFlag){
+            instance->sendBuffer();
+            instance->sendBufferFlag = false;
+        }
+        usleep(1000);
+    }
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate){
@@ -31,7 +40,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	socket.setPort(SCOPE_UDP_PORT);
 
 	// setup the auxiliary tasks
-	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this, true);
+	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
 	scopeSendBufferTask = Bela_createAuxiliaryTask(Scope::sendBufferTask, BELA_AUDIO_PRIORITY-1, "scopeSendBufferTask", this);
 
     // send an OSC message to address /scope-setup
@@ -53,18 +62,42 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 }
 
 void Scope::start(){
+    
+    if (started) return;
+    
+    setPlotMode();
+
+    // reset the pointers
+    writePointer = 0;
+    readPointer = 0;
+
+    started = true;
+    
+    sendBufferFlag = false;
+    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
+    
+    logCount = 0;
+
+}
+
+void Scope::stop(){
+    started = false;
+    if (plotMode == 1){
+        delete inFFT;
+        delete outFFT;
+        delete windowFFT;
+    }
+}
+
+void Scope::setPlotMode(){
 
     // resize the buffers
     channelWidth = frameWidth * FRAMES_STORED;
     buffer.resize(numChannels*channelWidth);
     outBuffer.resize(numChannels*frameWidth);
-
-    // reset the pointers
-    writePointer = 0;
-    readPointer = 0;
-    triggerPointer = 0;
-
+    
     // reset the trigger
+    triggerPointer = 0;
     triggerPrimed = true;
     triggerCollecting = false;
     triggerWaiting = false;
@@ -72,31 +105,31 @@ void Scope::start(){
     downSampleCount = 1;
     autoTriggerCount = 0;
     customTriggered = false;
+        
+    if (plotMode == 1){ // frequency domain
+        //inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
+        inFFT = new ne10_fft_cpx_float32_t[FFTLength];
+    	outFFT = new ne10_fft_cpx_float32_t[FFTLength * sizeof (ne10_fft_cpx_float32_t)];
+    	cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
+    	
+    	pointerFFT = 0;
+        collectingFFT = true;
 
-    started = true;
-}
-
-void Scope::stop(){
-    started = false;
+        // Allocate the window buffer based on the FFT size
+    	windowFFT = new float[FFTLength];
+    
+    	// Calculate a Hann window
+    	for(int n = 0; n < FFTLength; n++) {
+    		windowFFT[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(FFTLength - 1)));
+    	}
+        
+    }
+    
 }
 
 void Scope::log(float* values){
-	//TODO: contains lots of duplicated code from log(float,...).
-	//TODO: needs refactoring
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
-
-    if (!started) return;
-
-    if (downSampling > 1){
-        if (downSampleCount < downSampling){
-            downSampleCount++;
-            return;
-        }
-        downSampleCount = 1;
-    }
+    
+	if (!prelog()) return;
 
     int startingWritePointer = writePointer;
 
@@ -105,38 +138,12 @@ void Scope::log(float* values){
         buffer[i*channelWidth + writePointer] = values[i];
     }
 
-    writePointer = (writePointer+1)%channelWidth;
-
-    // if upSampling > 1, save repeated samples into the buffer
-    for (int j=1; j<upSampling; j++){
-
-        buffer[writePointer] = buffer[startingWritePointer];
-
-        for (int i=1; i<numChannels; i++) {
-            buffer[i*channelWidth + writePointer] = buffer[i*channelWidth + startingWritePointer];
-        }
-
-        writePointer = (writePointer+1)%channelWidth;
-
-    }
+   postlog(startingWritePointer);
 
 }
 void Scope::log(float chn1, ...){
-
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
     
-    if (!started) return;
-    
-    if (downSampling > 1){
-        if (downSampleCount < downSampling){
-            downSampleCount++;
-            return;
-        }
-        downSampleCount = 1;
-    }
+    if (!prelog()) return;
     
     va_list args;
     va_start (args, chn1);
@@ -151,7 +158,34 @@ void Scope::log(float chn1, ...){
         // channels are stored sequentially in the buffer i.e [[channel1], [channel2], etc...]
         buffer[i*channelWidth + writePointer] = (float)va_arg(args, double);
     }
+    
+    postlog(startingWritePointer);
+    
+    va_end (args);
+    
+}
 
+bool Scope::prelog(){
+    
+    // check for any received OSC messages
+    while (oscServer.messageWaiting()){
+        parseMessage(oscServer.popMessage());
+    }
+    
+    if (!started) return false;
+    
+    if (plotMode == 0 && downSampling > 1){
+        if (downSampleCount < downSampling){
+            downSampleCount++;
+            return false;
+        }
+        downSampleCount = 1;
+    }
+    
+    return true;
+}
+void Scope::postlog(int startingWritePointer){
+    
     writePointer = (writePointer+1)%channelWidth;
     
     // if upSampling > 1, save repeated samples into the buffer
@@ -167,8 +201,11 @@ void Scope::log(float chn1, ...){
         
     }
     
-    va_end (args);
-    
+    logCount += upSampling;
+    if (logCount > TRIGGER_LOG_COUNT){
+        logCount = 0;
+        Bela_scheduleAuxiliaryTask(scopeTriggerTask);
+    }
 }
 
 bool Scope::trigger(){
@@ -181,7 +218,7 @@ bool Scope::trigger(){
 }
 
 void Scope::scheduleSendBufferTask(){
-    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
+    sendBufferFlag = true;
 }
 
 bool Scope::triggered(){
@@ -196,7 +233,8 @@ bool Scope::triggered(){
     return false;
 }
 
-void Scope::doTrigger(){
+void Scope::triggerTimeDomain(){
+// rt_printf("do trigger\n");
     // iterate over the samples between the read and write pointers and check for / deal with triggers
     while (readPointer != writePointer){
         
@@ -280,6 +318,68 @@ void Scope::doTrigger(){
 
 }
 
+void Scope::triggerFFT(){
+    while (readPointer != writePointer){
+        
+        pointerFFT += 1;
+
+        if (collectingFFT){
+            
+            if (pointerFFT > FFTLength){
+                collectingFFT = false;
+                doFFT();
+                //pointerFFT = 0;
+            }
+            
+        } else {
+            
+            if (pointerFFT > (FFTLength+holdOffSamples)){
+                pointerFFT = 0;
+                collectingFFT = true;
+            }
+            
+        }
+        
+        // increment the read pointer
+        readPointer = (readPointer+1)%channelWidth;
+    
+    }
+}
+
+void Scope::doFFT(){
+    
+    // constants
+    int ptr = readPointer-FFTLength+channelWidth;
+    float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
+    
+    for (int c=0; c<numChannels; c++){
+    
+        // prepare the FFT input & do windowing
+        for (int i=0; i<FFTLength; i++){
+            inFFT[i].r = (ne10_float32_t)(buffer[(ptr+i)%channelWidth+c*channelWidth] * windowFFT[i]);
+            inFFT[i].i = 0;
+        }
+        
+        // do the FFT
+        ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
+        
+        // take the magnitude of the complex FFT output, scale it and interpolate
+        for (int i=0; i<frameWidth; i++){
+            float findex = (float)i*ratio;
+            int index = (int)findex;
+            float rem = findex - index;
+            
+            float first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+            float second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+            
+            outBuffer[c*frameWidth+i] = FFTScale * (first + rem * (second - first));
+        }
+        
+    }
+    
+    scheduleSendBufferTask();
+}
+
 void Scope::sendBuffer(){
     socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
 }
@@ -299,6 +399,9 @@ void Scope::parseMessage(oscpkt::Message msg){
             stop();
             frameWidth = intArg;
             start();
+        } else if (msg.match("/scope-settings/plotMode").popInt32(intArg).isOkNoMoreArgs()){
+            plotMode = intArg;
+            setPlotMode();
         } else if (msg.match("/scope-settings/triggerMode").popInt32(intArg).isOkNoMoreArgs()){
             triggerMode = intArg;
         } else if (msg.match("/scope-settings/triggerChannel").popInt32(intArg).isOkNoMoreArgs()){
@@ -318,6 +421,10 @@ void Scope::parseMessage(oscpkt::Message msg){
         } else if (msg.match("/scope-settings/holdOff").popFloat(floatArg).isOkNoMoreArgs()){
             holdOff = floatArg;
             holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
+        } else if (msg.match("/scope-settings/FFTLength").popInt32(intArg).isOkNoMoreArgs()){
+            FFTLength = intArg;
+            FFTScale = 1.0/((float)intArg);
+            setPlotMode();
         }
     }
 }
