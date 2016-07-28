@@ -29,7 +29,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #define NUM_CHANNELS 1
 
-string gFilename = "../../samples/sample.wav";
+string gFilename = "sample.wav";
 
 SampleData gSampleData[NUM_CHANNELS];
 

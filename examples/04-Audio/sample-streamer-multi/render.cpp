@@ -47,7 +47,7 @@ bool setup(BelaContext *context, void *userData)
 {
     
     for(int i=0;i<NUM_STREAMS;i++) {
-        sampleStream[i] = new SampleStream("../../samples/waves.wav",NUM_CHANNELS,BUFFER_LEN);
+        sampleStream[i] = new SampleStream("waves.wav",NUM_CHANNELS,BUFFER_LEN);
     }
     
     // Initialise auxiliary tasks
