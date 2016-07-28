@@ -30,7 +30,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #define NUM_CHANNELS 2    // NUMBER OF CHANNELS IN THE FILE
 #define BUFFER_LEN 22050   // BUFFER LENGTH
 
-string gFilename = "../../samples/waves.wav";
+string gFilename = "waves.wav";
 int gNumFramesInFile;
 
 // Two buffers for each channel:

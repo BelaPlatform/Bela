@@ -101,7 +101,7 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --file [-f] filename:    Name of the file to load (default is \"../../samples/sample.wav\")\n";
+	cerr << "   --file [-f] filename:    Name of the file to load (default is \"sample.wav\")\n";
 	cerr << "   --help [-h]:             Print this menu\n";
 }
 
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(fileName.empty()){
-		fileName = "../../samples/sample.wav";
+		fileName = "sample.wav";
 	}
 
 	cout << "Loading file " << fileName << endl;

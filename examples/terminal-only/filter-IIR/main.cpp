@@ -102,7 +102,7 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --file [-f] filename:    Name of the file to load (default is \"../../samples/longsample.wav\")\n";
+	cerr << "   --file [-f] filename:    Name of the file to load (default is \"longsample.wav\")\n";
 	cerr << "   --cutfreq [-c] freq:     Set the cut off frequency of the filter in Hz\n";
 	cerr << "   --help [-h]:             Print this menu\n";
 }
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(fileName.empty()){
-		fileName = "../../samples/longsample.wav";
+		fileName = "longsample.wav";
 	}
 
 	if(settings.verbose) {
