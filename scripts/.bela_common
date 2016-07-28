@@ -63,7 +63,7 @@ check_project_exists_prompt(){
 
 list_available_projects(){
 	ssh $BBB_ADDRESS "cd $BBB_PROJECT_HOME &&\
-	find -type d -printf '%P\n' | grep -v '^$\|/build$'"
+	find -type d -printf '%P\n' | grep -v '^$\|/build$\|\/\.\|^\.'"
 }
 
 interactive(){

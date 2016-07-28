@@ -13,9 +13,9 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
 {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
-
+	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << endl;
+		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return 1;
 	}
 
@@ -71,11 +71,11 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
 
 int getNumChannels(string file) {
     
-    SNDFILE *sndfile ;
+	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
-
+	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << endl;
+		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return -1;
 	}
 
@@ -84,11 +84,11 @@ int getNumChannels(string file) {
 
 int getNumFrames(string file) {
     
-    SNDFILE *sndfile ;
+	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
-
+	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << endl;
+		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return -1;
 	}
 

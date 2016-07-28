@@ -151,7 +151,7 @@ void cleanup(BelaContext *context, void *userData)
 /**
 \example samples/render.cpp
 
-Piezo strike to WAV file playback
+Keypress to WAV file playback
 --------------------------------
 
 This sketch shows how to playback audio samples from a buffer using
