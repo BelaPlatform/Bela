@@ -332,6 +332,8 @@ socket.on('std-warn', text => consoleView.emit('warn', text) );
 
 socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 
+socket.on('force-reload', () => window.location.reload(true) );
+
 // model events
 // build errors
 models.status.on('set', (data, changedKeys) => {

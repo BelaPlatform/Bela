@@ -174,10 +174,16 @@ class SettingsView extends View {
 		});*/
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
+		
+			console.log('submitted', e);
 			
 			e.preventDefault();
 			
 			var file = popup.find('input[type=file]').prop('files')[0];
+			
+			console.log('input', popup.find('input[type=file]'));
+			console.log('file', file);
+			
 			if (file && file.type === 'application/zip'){
 			
 				this.emit('warning', 'Beginning the update - this may take several minutes');
@@ -195,6 +201,7 @@ class SettingsView extends View {
 			}
 			
 			popup.hide();
+			popup.overlay();
 			
 		});
 		
