@@ -468,7 +468,10 @@ function uploadUpdate(data){
 				
 				proc.on('close', () => {
 					if (stderr.length) reject(stderr);
-					else allSockets.emit('std-log', 'Update completed!');
+					else {
+						allSockets.emit('std-log', 'Update completed! Please refresh the page if this does not happen automatically.');
+						allSockets.emit('force-reload');
+					}
 				});
 				
 			});

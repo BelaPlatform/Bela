@@ -763,6 +763,10 @@ socket.on('syntax-highlighted', function () {
 	return editorView.emit('syntax-highlighted');
 });
 
+socket.on('force-reload', function () {
+	return window.location.reload(true);
+});
+
 // model events
 // build errors
 models.status.on('set', function (data, changedKeys) {
@@ -3626,9 +3630,15 @@ var SettingsView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 
+				console.log('submitted', e);
+
 				e.preventDefault();
 
 				var file = popup.find('input[type=file]').prop('files')[0];
+
+				console.log('input', popup.find('input[type=file]'));
+				console.log('file', file);
+
 				if (file && file.type === 'application/zip') {
 
 					_this6.emit('warning', 'Beginning the update - this may take several minutes');
@@ -3646,6 +3656,7 @@ var SettingsView = function (_View) {
 				}
 
 				popup.hide();
+				popup.overlay();
 			});
 
 			popup.find('.popup-cancel').on('click', popup.hide);
@@ -4953,7 +4964,7 @@ module.exports = parser;
 },{"./CircularBuffer":2}],19:[function(require,module,exports){
 'use strict';
 
-var overlay = $('#overlay');
+var _overlay = $('#overlay');
 var parent = $('#popup');
 var content = $('#popup-content');
 var titleEl = parent.find('h1');
@@ -4962,16 +4973,19 @@ var _formEl = parent.find('form');
 
 var popup = {
 	show: function show() {
-		overlay.addClass('active');
+		_overlay.addClass('active');
 		parent.addClass('active');
 		content.find('input[type=text]').first().trigger('focus');
 	},
 	hide: function hide() {
-		overlay.removeClass('active');
+		_overlay.removeClass('active');
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
 		_formEl.empty();
+	},
+	overlay: function overlay() {
+		_overlay.toggleClass('active');
 	},
 
 
