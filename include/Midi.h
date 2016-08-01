@@ -264,7 +264,7 @@ public:
 	}
 	/**
 	* Use Alsa raw file mode, or filesystem
-	* @param useAlsa use alsa raw files if true else filesystem 
+	* @param useAlsa use alsa raw files if true else filesystem
 	*/
 	void useAlsa(bool useAlsa);
 

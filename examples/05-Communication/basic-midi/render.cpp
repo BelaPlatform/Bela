@@ -63,7 +63,7 @@ const char* gMidiPort0 = "/dev/midi1";
 
 bool setup(BelaContext *context, void *userData)
 {
-    midi.useAlsa(gUseAlsa);
+	midi.useAlsa(gUseAlsa);
 	midi.readFrom(gMidiPort0);
 	midi.writeTo(gMidiPort0);
 	midi.enableParser(true);
