@@ -6,6 +6,8 @@ var verboseDebugOutput = false;
 
 var shellCWD = '~';
 
+var modeSwitches;
+
 class ConsoleView extends View{
 
 	constructor(className, models, settings){
@@ -212,6 +214,14 @@ class ConsoleView extends View{
 	_CPU(data){
 		if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0){
 			_console.log(data.bela.split(' ').join('&nbsp;'));
+		}
+		if (data.modeSwitches && modeSwitches) {
+			let ms = parseInt(data.modeSwitches);
+			if (ms > modeSwitches && ms !== 67117 && ms > 2) _console.warn(ms+' mode switches detected on audio thread!');
+			modeSwitches = ms;
+			//console.log(data.modeSwitches, modeSwitches);
+		} else {
+			modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
 		}
 	}
 	

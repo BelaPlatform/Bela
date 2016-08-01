@@ -1105,6 +1105,8 @@ var verboseDebugOutput = false;
 
 var shellCWD = '~';
 
+var modeSwitches;
+
 var ConsoleView = function (_View) {
 	_inherits(ConsoleView, _View);
 
@@ -1388,6 +1390,14 @@ var ConsoleView = function (_View) {
 		value: function _CPU(data) {
 			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0) {
 				_console.log(data.bela.split(' ').join('&nbsp;'));
+			}
+			if (data.modeSwitches && modeSwitches) {
+				var ms = parseInt(data.modeSwitches);
+				if (ms > modeSwitches && ms !== 67117 && ms > 2) _console.warn(ms + ' mode switches detected on audio thread!');
+				modeSwitches = ms;
+				//console.log(data.modeSwitches, modeSwitches);
+			} else {
+				modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
 			}
 		}
 	}, {
