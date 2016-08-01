@@ -1108,7 +1108,7 @@ WRITE_LOOP_DONE:
      MOV r2, FLAG_MASK_MUX_CONFIG
      AND r2, reg_flags, r2             
      QBEQ MUX_CHANNEL_SAVE_DONE, r2, 0
-     AND r2, reg_pru1_mux_pins, 0x03
+     AND r2, reg_pru1_mux_pins, 0x07
      SBBO r2, reg_comm_addr, COMM_MUX_END_CHANNEL, 4
 MUX_CHANNEL_SAVE_DONE:	
 	

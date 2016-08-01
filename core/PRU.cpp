@@ -449,16 +449,16 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 	if(analog_enabled) {
 #ifdef USE_NEON_FORMAT_CONVERSION
 		if(posix_memalign((void **)&context->analogIn, 16, 
-							context->analogChannels * context->analogFrames * sizeof(float))) {
+							context->analogInChannels * context->analogFrames * sizeof(float))) {
 			printf("Error allocating analog input buffer\n");
 			return 1;
 		}
 		if(posix_memalign((void **)&context->analogOut, 16, 
-							context->analogChannels * context->analogFrames * sizeof(float))) {
+							context->analogOutChannels * context->analogFrames * sizeof(float))) {
 			printf("Error allocating analog output buffer\n");
 			return 1;
 		}
-		last_analog_out_frame = (float *)malloc(context->analogChannels * sizeof(float));
+		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
 
 		if(last_analog_out_frame == 0) {
 			rt_printf("Error: couldn't allocate analog persistence buffer\n");
@@ -476,6 +476,37 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 #endif
 		
 		memset(last_analog_out_frame, 0, context->analogOutChannels * sizeof(float));
+		
+		// Set up multiplexer info
+		if(mux_channels == 2)
+			context->multiplexerChannels = 2;
+		else if(mux_channels == 4)
+			context->multiplexerChannels = 4;
+		else if(mux_channels == 8)
+			context->multiplexerChannels = 8;
+		else
+			context->multiplexerChannels = 1;
+
+		if(context->multiplexerChannels != 1) {
+			// If mux enabled, allocate buffers and set initial values
+			context->multiplexerStartingChannel = 0;
+		
+			// Buffer holds 1 frame of every mux setting for every analog in
+			context->multiplexerAnalogIn = (float *)malloc(context->analogInChannels * context->multiplexerChannels * sizeof(float));
+			if(context->multiplexerAnalogIn == 0) {
+				rt_printf("Error: couldn't allocate audio buffers\n");
+				return 1;
+			}
+		}
+		else {
+			context->multiplexerStartingChannel = 0;
+			context->multiplexerAnalogIn = 0;
+		}
+	}
+	else {
+		context->multiplexerChannels = 1;
+		context->multiplexerStartingChannel = 0;
+		context->multiplexerAnalogIn = 0;		
 	}
 
 	// Allocate digital buffers
@@ -665,14 +696,35 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		if(analog_enabled) {
 			if(mux_channels != 0) {
 				// If multiplexer is enabled, find out which channels we have by pulling out
-				// the place that it ended. 
-				// int lastMuxChannel = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+				// the place that it ended. Based on the buffer size, we can work out the
+				// mux setting for the beginning of the buffer.
+				int lastMuxChannel = pru_buffer_comm[PRU_MUX_END_CHANNEL];
 				
-				// TODO
+				context->multiplexerStartingChannel = (lastMuxChannel - context->analogFrames 
+														+ context->multiplexerChannels) % context->multiplexerChannels;
+				
+				// Write the inputs to the buffer of multiplexed samples
+				if(context->multiplexerAnalogIn != 0) {
+					int multiplexerChannel = lastMuxChannel;
+					for(int n = context->analogFrames - 1; n >= 0; n--) {
+						for(int ch = 0; ch < context->analogInChannels; ch++) {
+							context->multiplexerAnalogIn[multiplexerChannel * context->analogInChannels + ch] =
+								context->analogIn[n * context->analogInChannels + ch];
+						}
+
+						multiplexerChannel--;
+						if(multiplexerChannel < 0)
+							multiplexerChannel = context->multiplexerChannels - 1;
+						// If we have made a full circle of the multiplexer channels, then
+						// stop here.
+						if(multiplexerChannel == lastMuxChannel)
+							break;
+					}
+				}
 			}
 			
 #ifdef USE_NEON_FORMAT_CONVERSION
-			int16_to_float_analog(context->analogChannels * context->analogFrames, 
+			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
 									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
 #else	
 			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
@@ -726,7 +778,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 			// Convert float back to short for SPI output
 #ifdef USE_NEON_FORMAT_CONVERSION
-			float_to_int16_analog(context->analogChannels * context->analogFrames, 
+			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
 								  context->analogOut, (uint16_t*)&pru_buffer_spi_dac[pru_spi_offset]);
 #else		
 			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++) {
@@ -787,6 +839,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		free(context->analogIn);
 		free(context->analogOut);
 		free(last_analog_out_frame);
+		if(context->multiplexerAnalogIn != 0)
+			free(context->multiplexerAnalogIn);
 	}
 
 	if(digital_enabled) {
@@ -796,6 +850,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	context->audioIn = context->audioOut = 0;
 	context->analogIn = context->analogOut = 0;
 	context->digital = 0;
+	context->multiplexerAnalogIn = 0;
 }
 
 // Wait for an interrupt from the PRU indicate it is finished
