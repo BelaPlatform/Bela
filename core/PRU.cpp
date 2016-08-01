@@ -698,14 +698,20 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				// If multiplexer is enabled, find out which channels we have by pulling out
 				// the place that it ended. Based on the buffer size, we can work out the
 				// mux setting for the beginning of the buffer.
-				int lastMuxChannel = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+				int pruMuxReference = pru_buffer_comm[PRU_MUX_END_CHANNEL];
 				
-				context->multiplexerStartingChannel = (lastMuxChannel - context->analogFrames 
-														+ context->multiplexerChannels) % context->multiplexerChannels;
+				// Value from the PRU is ahead by 1 + (frame size % 8); correct that when unrolling here.
+				int multiplexerChannelLastFrame = (pruMuxReference - 1 - (context->analogFrames % 8) + context->multiplexerChannels) 
+													% context->multiplexerChannels;
+				
+				// Add 1, wrapping around, to get the starting channel		
+				context->multiplexerStartingChannel = (multiplexerChannelLastFrame + 1) % context->multiplexerChannels;
 				
 				// Write the inputs to the buffer of multiplexed samples
 				if(context->multiplexerAnalogIn != 0) {
-					int multiplexerChannel = lastMuxChannel;
+					int muxChannelCount = 0;
+					int multiplexerChannel = multiplexerChannelLastFrame;
+
 					for(int n = context->analogFrames - 1; n >= 0; n--) {
 						for(int ch = 0; ch < context->analogInChannels; ch++) {
 							context->multiplexerAnalogIn[multiplexerChannel * context->analogInChannels + ch] =
@@ -717,7 +723,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 							multiplexerChannel = context->multiplexerChannels - 1;
 						// If we have made a full circle of the multiplexer channels, then
 						// stop here.
-						if(multiplexerChannel == lastMuxChannel)
+						if(++muxChannelCount >= context->multiplexerChannels)
 							break;
 					}
 				}
