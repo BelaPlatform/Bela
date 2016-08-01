@@ -3630,16 +3630,16 @@ var SettingsView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 
-				console.log('submitted', e);
+				//console.log('submitted', e);
 
 				e.preventDefault();
 
 				var file = popup.find('input[type=file]').prop('files')[0];
 
-				console.log('input', popup.find('input[type=file]'));
-				console.log('file', file);
+				//console.log('input', popup.find('input[type=file]'));
+				//console.log('file', file);
 
-				if (file && file.type === 'application/zip') {
+				if (file) {
 
 					_this6.emit('warning', 'Beginning the update - this may take several minutes');
 					_this6.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
