@@ -4087,10 +4087,18 @@ var ToolbarView = function (_View) {
 						bela += parseFloat(output[j].cpu);
 					}
 				}
+
+				bela += data.belaLinux * rootCPU;
 			}
 
 			$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
 			$('#bela-cpu').html('Bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+
+			if (bela && ide * rootCPU + bela > 80) {
+				$('#ide-cpu, #bela-cpu').css('color', 'red');
+			} else {
+				$('#ide-cpu, #bela-cpu').css('color', 'black');
+			}
 		}
 	}, {
 		key: '_cpuMonitoring',

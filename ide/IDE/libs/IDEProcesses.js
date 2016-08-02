@@ -5,6 +5,7 @@ var ProjectManager = require('./ProjectManager');
 var pusage = Promise.promisifyAll(require('pidusage'));
 var pgrep = require('pgrep');
 var fs = Promise.promisifyAll(require('fs-extra'));
+var exec = require('child_process').exec;
 
 var belaPath = '/root/Bela/';
 var makePath = belaPath;
@@ -129,7 +130,14 @@ class belaProcess extends MakeProcess{
 						}
 					}
 				}
+				
+				// there's a bug where the name of the linux process gets cut off at 15 characters length
+				this.projectName = project.substring(0, 15);
+				
+				this.mainPID = undefined;
+				
 				super.start(project, args, CLArgs.make);
+
 			});
 		
 		return this;
@@ -138,6 +146,32 @@ class belaProcess extends MakeProcess{
 	CPU(){
 		if (!this.active || !this.pid) return Promise.resolve(0);
 		return fs.readFileAsync('/proc/xenomai/stat', 'utf8');
+	}
+	
+	CPULinux(){
+	
+		if (!this.active || !this.pid) return Promise.resolve(0);
+
+		if (!this.mainPID){
+			return pgrep.exec({
+					name: this.projectName
+				})
+				.then( pids => {
+					this.mainPID = pids[0];
+					return pusage.statAsync(pids[0]);
+				})
+				.catch( e => {
+					console.log(e);
+					return {cpu: 0};
+				});
+		} else {
+			return pusage.statAsync(this.mainPID)
+				.catch( e => {
+					console.log(e);
+					return {cpu: 0};
+				});
+		}
+
 	}
 
 }
