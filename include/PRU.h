@@ -185,7 +185,6 @@ private:
 	bool digital_enabled; // Whether digital is used
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
-	int  mux_channels;   // How many mux channels are used (if enabled)
 	bool gpio_test_pin_enabled; // Whether the test pin was also enabled
 
 

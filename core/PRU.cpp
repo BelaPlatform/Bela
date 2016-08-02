@@ -127,7 +127,6 @@ extern "C" {
 PRU::PRU(InternalBelaContext *input_context)
 : context(input_context), pru_number(0), running(false), analog_enabled(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
-  mux_channels(0),
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
   pru_buffer_digital(0), pru_buffer_audio_dac(0), pru_buffer_audio_adc(0),
@@ -305,7 +304,6 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 	}
 
 	pru_number = pru_num;
-	this->mux_channels = mux_channels;
 
     /* Initialize structure used by prussdrv_pruintc_intc   */
     /* PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h */
@@ -363,8 +361,12 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		pru_buffer_comm[PRU_MUX_CONFIG] = 2;
 	else if(mux_channels == 8)
 		pru_buffer_comm[PRU_MUX_CONFIG] = 3;
-	else
+	else if(mux_channels == 0)
 		pru_buffer_comm[PRU_MUX_CONFIG] = 0;
+	else {
+		rt_printf("Error: %d is not a valid number of multiplexer channels (options: 0 = off, 2, 4, 8).\n", mux_channels);
+		return 1;
+	}
 	
     if(led_enabled) {
     	pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
@@ -485,9 +487,9 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		else if(mux_channels == 8)
 			context->multiplexerChannels = 8;
 		else
-			context->multiplexerChannels = 1;
+			context->multiplexerChannels = 0;
 
-		if(context->multiplexerChannels != 1) {
+		if(context->multiplexerChannels != 0) {
 			// If mux enabled, allocate buffers and set initial values
 			context->multiplexerStartingChannel = 0;
 		
@@ -504,7 +506,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		}
 	}
 	else {
-		context->multiplexerChannels = 1;
+		context->multiplexerChannels = 0;
 		context->multiplexerStartingChannel = 0;
 		context->multiplexerAnalogIn = 0;		
 	}
@@ -694,7 +696,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		}
 #endif
 		if(analog_enabled) {
-			if(mux_channels != 0) {
+			if(context->multiplexerChannels != 0) {
 				// If multiplexer is enabled, find out which channels we have by pulling out
 				// the place that it ended. Based on the buffer size, we can work out the
 				// mux setting for the beginning of the buffer.

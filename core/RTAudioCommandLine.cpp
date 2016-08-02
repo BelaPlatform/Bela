@@ -39,12 +39,13 @@ struct option gDefaultLongOptions[] =
 	{"receive-port", 1, NULL, 'R'},
 	{"transmit-port", 1, NULL, 'T'},
 	{"server-name", 1, NULL, 'S'},
+	{"mux-channels", 1, NULL, 'X'},
 	{"pru-file", 1, NULL, OPT_PRU_FILE},
 	{"pru-number", 1, NULL, OPT_PRU_NUMBER},
 	{NULL, 0, NULL, 0}
 };
 
-const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:";
+const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:X:";
 
 // This function sets the default settings for the BelaInitSettings structure
 void Bela_defaultSettings(BelaInitSettings *settings)
@@ -179,14 +180,6 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			settings->numAnalogOutChannels = numAnalogChannels;
 			if(numAnalogChannels >= 8) {
 				// TODO: a different number of channels for inputs and outputs is not yet supported
-
-				// Use multiplexer capelet to run larger numbers of channels
-				if(settings->numAnalogInChannels >= 64)
-					settings->numMuxChannels = 8;
-				else if(settings->numAnalogInChannels >= 32)
-					settings->numMuxChannels = 4;
-				else if(settings->numAnalogInChannels >= 16)
-					settings->numMuxChannels = 2;
 				settings->numAnalogInChannels = 8;
 				settings->numAnalogOutChannels = 8;
 			}
@@ -237,6 +230,9 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 				std::cerr << "Warning: server name is too long (>" << MAX_SERVERNAME_LENGTH << " characters)."
 						" Using default severName Instead ( " << settings->serverName << " ).\n";
 			break;
+		case 'X':
+			settings->numMuxChannels = atoi(optarg);
+			break;
 		case OPT_PRU_FILE:
 			if(strlen(optarg) < MAX_PRU_FILENAME_LENGTH)
 				strcpy(settings->pruFilename, optarg);
@@ -263,7 +259,7 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 // Call from within your own usage function
 void Bela_usage()
 {
-	std::cerr << "   --period [-p] period:            Set the hardware period (buffer) size in analog samples\n";
+	std::cerr << "   --period [-p] period:            Set the hardware period (buffer) size in audio samples\n";
 	std::cerr << "   --dac-level [-D] dBs:            Set the DAC output level (0dB max; -63.5dB min)\n";
 	std::cerr << "   --adc-level [-A] dBs:            Set the ADC input level (0dB max; -12dB min)\n";
 	std::cerr << "   --pga-gain-left dBs:             Set the Programmable Gain Amplifier for the left audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
@@ -277,6 +273,7 @@ void Bela_usage()
 	std::cerr << "   --receive-port [-R] val:         Set the receive port (default: 9998)\n";
 	std::cerr << "   --transmit-port [-T] val:        Set the transmit port (default: 9999)\n";
 	std::cerr << "   --server-name [-S] val:          Set the destination server name (default: '127.0.0.1')\n";
+	std::cerr << "   --mux-channels [-X] val:         Set the number of channels to use on the multiplexer capelet (default: not used)\n";
 	std::cerr << "   --pru-file val:                  Set an optional external file to use for the PRU binary code\n";
 	std::cerr << "   --pru-number val:                Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
 	std::cerr << "   --verbose [-v]:                  Enable verbose logging information\n";
