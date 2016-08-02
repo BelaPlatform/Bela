@@ -537,9 +537,11 @@ var ChannelView = function (_View) {
 			var key = $element.data().key;
 			var channel = $element.data().channel;
 			var value = key === 'color' ? $element.val() : parseFloat($element.val());
-			if (isNaN(value)) return;
+			console.log(key, channel, value, isNaN(value));
+			if (!(key === 'color') && isNaN(value)) return;
 			this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 			channelConfig[channel][key] = value;
+			console.log(key, channel, value);
 			this.emit('channelConfig', channelConfig);
 		}
 	}, {
@@ -665,7 +667,7 @@ var ControlView = function (_View) {
 			var key = $element.data().key;
 			var value = $element.val();
 			this.emit('settings-event', key, value);
-			this.$elements.filterByData('key', key).val(value);
+			this.$elements.not($element).filterByData('key', key).val(value);
 		}
 	}, {
 		key: 'buttonClicked',
@@ -1052,6 +1054,7 @@ controlView.on('plotMode', function (val) {
 	//backgroundView._plotMode(val, settings._getData());
 });
 channelView.on('channelConfig', function (channelConfig) {
+	console.log(channelConfig);
 	worker.postMessage({
 		event: 'channelConfig',
 		channelConfig: channelConfig

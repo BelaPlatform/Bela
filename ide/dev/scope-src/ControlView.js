@@ -21,7 +21,7 @@ class ControlView extends View{
 		var key = $element.data().key;
 		var value = $element.val();
 		this.emit('settings-event', key, value);
-		this.$elements.filterByData('key', key).val(value);
+		this.$elements.not($element).filterByData('key', key).val(value);
 	}
 	buttonClicked($element, e){
 		this.emit('settings-event', $element.data().key);

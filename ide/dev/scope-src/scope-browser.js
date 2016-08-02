@@ -24,6 +24,7 @@ controlView.on('plotMode', (val) => {
 	//backgroundView._plotMode(val, settings._getData());
 });
 channelView.on('channelConfig', (channelConfig) => {
+console.log(channelConfig);
 	worker.postMessage({
 		event			: 'channelConfig',
 		channelConfig

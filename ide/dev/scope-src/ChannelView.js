@@ -21,9 +21,11 @@ class ChannelView extends View{
 		var key = $element.data().key;
 		var channel = $element.data().channel;
 		var value = (key === 'color') ? $element.val() : parseFloat($element.val());
-		if (isNaN(value)) return;
+		console.log(key, channel, value, isNaN(value));
+		if (!(key === 'color') && isNaN(value)) return;
 		this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 		channelConfig[channel][key] = value;
+		console.log(key, channel, value);
 		this.emit('channelConfig', channelConfig);
 	}
 	
