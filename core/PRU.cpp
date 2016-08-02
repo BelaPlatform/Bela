@@ -125,7 +125,7 @@ extern "C" {
 
 // Constructor: specify a PRU number (0 or 1)
 PRU::PRU(InternalBelaContext *input_context)
-: context(input_context), pru_number(0), running(false), analog_enabled(false),
+: context(input_context), pru_number(1), running(false), analog_enabled(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
@@ -355,16 +355,32 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
     pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
 	
-	if(mux_channels == 2) 
+
+	/* Set up multiplexer info */
+	if(mux_channels == 2) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 1;
-	else if(mux_channels == 4)
+		context->multiplexerChannels = 2;
+	}
+	else if(mux_channels == 4) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 2;
-	else if(mux_channels == 8)
+		context->multiplexerChannels = 4;
+	}
+	else if(mux_channels == 8) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 3;
-	else if(mux_channels == 0)
+		context->multiplexerChannels = 8;
+	}
+	else if(mux_channels == 0) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 0;
+		context->multiplexerChannels = 0;
+	}
 	else {
 		rt_printf("Error: %d is not a valid number of multiplexer channels (options: 0 = off, 2, 4, 8).\n", mux_channels);
+		return 1;
+	}
+	
+	/* Multiplexer only works with 8 analog channels. (It could be made to work with 4, with updates to the PRU code.) */
+	if(context->multiplexerChannels != 0 && context->analogInChannels != 8) {
+		rt_printf("Error: multiplexer capelet can only be used with 8 analog channels.\n");
 		return 1;
 	}
 	
@@ -478,16 +494,6 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 #endif
 		
 		memset(last_analog_out_frame, 0, context->analogOutChannels * sizeof(float));
-		
-		// Set up multiplexer info
-		if(mux_channels == 2)
-			context->multiplexerChannels = 2;
-		else if(mux_channels == 4)
-			context->multiplexerChannels = 4;
-		else if(mux_channels == 8)
-			context->multiplexerChannels = 8;
-		else
-			context->multiplexerChannels = 0;
 
 		if(context->multiplexerChannels != 0) {
 			// If mux enabled, allocate buffers and set initial values
@@ -701,6 +707,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				// the place that it ended. Based on the buffer size, we can work out the
 				// mux setting for the beginning of the buffer.
 				int pruMuxReference = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+			
 				
 				// Value from the PRU is ahead by 1 + (frame size % 8); correct that when unrolling here.
 				int multiplexerChannelLastFrame = (pruMuxReference - 1 - (context->analogFrames % 8) + context->multiplexerChannels) 

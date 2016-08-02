@@ -70,7 +70,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->numMuxChannels = 0;
 
 	settings->verbose = 0;
-	settings->pruNumber = 0;
+	settings->pruNumber = 1;
 	settings->pruFilename[0] = '\0';
 
 	// These two deliberately have no command-line flags by default.
