@@ -15,6 +15,7 @@
 				<button id="oneShot" style="display:none;">one-shot</button>
 				<span id="scopeMouseX" class="scopeMouse"></span>
 				<span id="scopeMouseY" class="scopeMouse"></span>
+				<span id="scopeStatus"></span>
 			</div>
 			<canvas id="scope"></canvas>
 			<canvas id="scopeBG"></canvas>
@@ -142,6 +143,10 @@
 						<h1>Misc</h1>
 						<table>
 							<tbody>
+								<tr>
+									<td>Pause Plotting:</td>
+									<td><button id="pauseButton" class="scopeControls" data-key="scopePause">Pause</button></td>
+								</tr>
 								<tr>
 									<td>Save Image:</td>
 									<td><a href="" download="scope" id="saveCanvas"><button>Save</button></a></td>

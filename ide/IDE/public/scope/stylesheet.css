@@ -134,6 +134,11 @@ html, body{
     font-family: courier-new monospaced;
     font-size: small;
 }
+#scopeStatus{
+	color: red;
+    text-transform: uppercase;
+    font-size: 12px;
+}
 .scopeChannel, #scopeBG{
 	position: absolute;
 	top: 0;

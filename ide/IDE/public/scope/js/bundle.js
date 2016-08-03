@@ -1043,8 +1043,22 @@ var channelView = new (require('./ChannelView'))('channelView', [settings]);
 // socket
 var socket = io('/BelaScope');
 
+var paused = false;
+
 // view events
 controlView.on('settings-event', function (key, value) {
+	if (key === 'scopePause') {
+		if (paused) {
+			paused = false;
+			$('#pauseButton').html('pause');
+			$('#scopeStatus').html('');
+		} else {
+			paused = true;
+			$('#pauseButton').html('resume');
+			$('#scopeStatus').html('paused');
+		}
+		return;
+	}
 	socket.emit('settings-event', key, value);
 });
 controlView.on('plotMode', function (val) {
@@ -1164,7 +1178,8 @@ $('#scope').on('mousemove', function (e) {
 		worker.onmessage = function (e) {
 			frame = e.data;
 			length = Math.floor(frame.length / numChannels);
-			plot = true;
+			// if scope is paused, don't set the plot flag
+			plot = !paused;
 		};
 
 		plotLoop();
