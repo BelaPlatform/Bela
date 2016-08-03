@@ -497,7 +497,7 @@ var BackgroundView = function (_View) {
 
 module.exports = BackgroundView;
 
-},{"./View":6}],3:[function(require,module,exports){
+},{"./View":7}],3:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -619,7 +619,7 @@ $.fn.filterByData = function (prop, val) {
 	});
 };
 
-},{"./View":6}],4:[function(require,module,exports){
+},{"./View":7}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -782,7 +782,7 @@ $.fn.filterByData = function (prop, val) {
 	});
 };
 
-},{"./View":6}],5:[function(require,module,exports){
+},{"./View":7}],5:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -891,6 +891,85 @@ function _equals(a, b, log) {
 }
 
 },{"events":1}],6:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var View = require('./View');
+
+var SliderView = function (_View) {
+	_inherits(SliderView, _View);
+
+	function SliderView(className, models) {
+		_classCallCheck(this, SliderView);
+
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SliderView).call(this, className, models));
+
+		_this.on('set-slider', function (args) {
+			$('#scopeSlider' + args[0].value).find('input[type=range]').prop('min', args[1].value.toFixed(4)).prop('max', args[2].value.toFixed(4)).prop('step', args[3].value.toFixed(8)).val(args[4].value.toFixed(8));
+
+			var inputs = $('#scopeSlider' + args[0].value).find('input[type=number]');
+			console.log(inputs);
+			inputs.filterByData('key', 'min').val(args[1].value.toFixed(4));
+			inputs.filterByData('key', 'max').val(args[2].value.toFixed(4));
+			inputs.filterByData('key', 'step').val(args[3].value.toFixed(8));
+		});
+
+		return _this;
+	}
+
+	_createClass(SliderView, [{
+		key: 'inputChanged',
+		value: function inputChanged($element, e) {
+			console.log($element.data().key, $element.data().slider, $element.val());
+
+			var key = $element.data().key;
+			var slider = $element.data().slider;
+			var value = $element.val();
+
+			if (key === 'value') {
+				this.emit('slider-value', parseInt(slider), parseFloat(value));
+			} else {
+				$element.closest('div.sliderView').find('input[type=range]').prop(key, value);
+			}
+		}
+	}, {
+		key: '_numSliders',
+		value: function _numSliders(val) {
+			var _this2 = this;
+
+			var el = $('#scopeSlider0');
+
+			$('#sliderColumn').empty();
+
+			for (var i = 0; i < val.value; i++) {
+				var slider = el.clone(true).prop('id', 'scopeSlider' + i).appendTo($('#sliderColumn')).css('display', 'block');
+
+				slider.find('input').data('slider', i).on('input', function (e) {
+					return _this2.inputChanged($(e.currentTarget), e);
+				});
+			}
+		}
+	}]);
+
+	return SliderView;
+}(View);
+
+module.exports = SliderView;
+
+$.fn.filterByData = function (prop, val) {
+	return this.filter(function () {
+		return $(this).data(prop) == val;
+	});
+};
+
+},{"./View":7}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1019,12 +1098,12 @@ var View = function (_EventEmitter) {
 
 module.exports = View;
 
-},{"events":1}],7:[function(require,module,exports){
+},{"events":1}],8:[function(require,module,exports){
 'use strict';
 
 var scope = require('./scope-browser');
 
-},{"./scope-browser":8}],8:[function(require,module,exports){
+},{"./scope-browser":9}],9:[function(require,module,exports){
 'use strict';
 
 // worker
@@ -1039,6 +1118,7 @@ var settings = new Model();
 var controlView = new (require('./ControlView'))('scopeControls', [settings]);
 var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
+var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // socket
 var socket = io('/BelaScope');
@@ -1080,6 +1160,10 @@ channelView.on('channelConfig', function (channelConfig) {
 	});
 });
 
+sliderView.on('slider-value', function (slider, value) {
+	return socket.emit('slider-value', slider, value);
+});
+
 // socket events
 socket.on('settings', function (newSettings) {
 	if (newSettings.frameWidth) newSettings.frameWidth.value = window.innerWidth;
@@ -1087,6 +1171,9 @@ socket.on('settings', function (newSettings) {
 	settings.setData(newSettings);
 	//console.log(newSettings);
 	//settings.print();
+});
+socket.on('scope-slider', function (args) {
+	return sliderView.emit('set-slider', args);
 });
 
 // model events
@@ -1221,7 +1308,7 @@ $('#scope').on('mousemove', function (e) {
 	})();
 }
 
-},{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5}]},{},[7])
+},{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5,"./SliderView":6}]},{},[8])
 
 
 //# sourceMappingURL=bundle.js.map

@@ -37,7 +37,7 @@ class Scope{
          * @param numChannels number of channels displayed by the scope.
          * @param sampleRate sample rate of the data passed in.
          */
-        void setup(unsigned int numChannels, float sampleRate);
+        void setup(unsigned int numChannels, float sampleRate, int _numSliders = 0);
 
         /** 
          * \brief Logs a frame of data to the scope.
@@ -65,6 +65,9 @@ class Scope{
          * the typical auto or normal trigger.
          */
         bool trigger();
+        
+        float getSliderValue(int slider);
+        void setSlider(int slider, float min, float max, float step, float value);
         
     private:
         OSCServer oscServer;
@@ -118,6 +121,10 @@ class Scope{
         int readPointer;
         int triggerPointer;
         int customTriggerPointer;
+        
+        // sliders
+        int numSliders;
+        std::vector<float> sliders;
         
         // trigger status
         bool triggerPrimed;

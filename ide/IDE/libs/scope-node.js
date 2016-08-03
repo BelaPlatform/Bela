@@ -17,7 +17,8 @@ var settings = {
 	upSampling		: {type: 'integer', value: 1},
 	downSampling	: {type: 'integer', value: 1},
 	FFTLength		: {type: 'integer', value: 1024},
-	holdOff			: {type: 'float', value: 20}
+	holdOff			: {type: 'float', value: 20},
+	numSliders		: {type: 'integer', value:0}
 }
 
 var UDP_RECIEVE = 8677;
@@ -39,6 +40,7 @@ var scope = {
 		// setup the OSC server
 		scopeOSC.init();
 		scopeOSC.on('scope-setup', (args) => this.scopeConnected(args) );
+		scopeOSC.on('scope-slider', args => this.webSocket.emit('scope-slider', args) );
 		
 		// UDP socket to receive raw scope data from bela scope
 		var scopeUDP = dgram.createSocket('udp4');
@@ -65,9 +67,10 @@ var scope = {
 	
 	scopeConnected(args){
 		
-		if (args[0].type === 'integer' && args[1].type === 'float'){
+		if (args[0].type === 'integer' && args[1].type === 'float' && args[2].type === 'integer'){
 			settings.numChannels = args[0];
 			settings.sampleRate = args[1];
+			settings.numSliders = args[2];
 		} else {
 			console.log('bad setup message args', args);
 			return;
@@ -116,6 +119,8 @@ var scope = {
 				console.log('bad settings-event', key, value);
 			}
 		});
+		
+		socket.on('slider-value', (slider, value) => scopeOSC.sendSliderValue(slider, value) );
 		
 	},
 	

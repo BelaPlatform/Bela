@@ -38,10 +38,7 @@ class scopeOSC extends EventEmitter {
 			console.log('bad OSC address', address);
 			return;
 		}
-		
-		if (address[1] === 'scope-setup'){
-			this.emit('scope-setup', msg.args);
-		}
+		this.emit(address[1], msg.args);
 	}
 	
 	sendSetupReply(settings){
@@ -60,6 +57,22 @@ class scopeOSC extends EventEmitter {
 		this.send({
 			address : '/scope-settings/'+key,
 			args : [value]
+		});
+	}
+	
+	sendSliderValue(slider, value){
+		this.send({
+			address	: '/scope-sliders/value',
+			args	: [
+				{
+					type	: 'integer',
+					value	: slider
+				},
+				{
+					type	: 'float',
+					value	: value
+				}
+			]
 		});
 	}
 	

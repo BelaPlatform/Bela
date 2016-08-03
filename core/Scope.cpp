@@ -23,10 +23,11 @@ void Scope::sendBufferTask(void *ptr){
     }
 }
 
-void Scope::setup(unsigned int _numChannels, float _sampleRate){
+void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders){
     
     numChannels = _numChannels;
     sampleRate = _sampleRate;
+    numSliders = _numSliders;
     
     // setup the OSC server && client
     // used for sending / receiving settings
@@ -42,11 +43,14 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	// setup the auxiliary tasks
 	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
 	scopeSendBufferTask = Bela_createAuxiliaryTask(Scope::sendBufferTask, BELA_AUDIO_PRIORITY-1, "scopeSendBufferTask", this);
+	
+	// setup the sliders
+	sliders.reserve(numSliders);
 
     // send an OSC message to address /scope-setup
     // then wait 1 second for a reply on /scope-setup-reply 
     bool handshakeReceived = false;
-    oscClient.sendMessageNow(oscClient.newMessage.to("/scope-setup").add((int)numChannels).add(sampleRate).end());
+    oscClient.sendMessageNow(oscClient.newMessage.to("/scope-setup").add((int)numChannels).add(sampleRate).add(numSliders).end());
     oscServer.receiveMessageNow(1000);
     while (oscServer.messageWaiting()){
         if (handshakeReceived){
@@ -384,6 +388,22 @@ void Scope::sendBuffer(){
     socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
 }
 
+float Scope::getSliderValue(int slider){
+    return sliders[slider];
+}
+
+void Scope::setSlider(int slider, float min, float max, float step, float value){
+    oscClient.sendMessageNow(
+        oscClient.newMessage.to("/scope-slider")
+            .add(slider)
+            .add(min)
+            .add(max)
+            .add(step)
+            .add(value)
+            .end()
+    );
+}
+
 void Scope::parseMessage(oscpkt::Message msg){
     if (msg.partialMatch("/scope-settings/")){
         int intArg;
@@ -425,6 +445,12 @@ void Scope::parseMessage(oscpkt::Message msg){
             FFTLength = intArg;
             FFTScale = 1.0/((float)intArg);
             setPlotMode();
+        }
+    } else if (msg.partialMatch("/scope-sliders/")){
+        int intArg;
+        float floatArg;
+        if (msg.match("/scope-sliders/value").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs()){
+            sliders[intArg] = floatArg;
         }
     }
 }

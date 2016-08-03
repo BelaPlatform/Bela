@@ -11,6 +11,7 @@ var settings = new Model();
 var controlView = new (require('./ControlView'))('scopeControls', [settings]);
 var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
+var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // socket
 var socket = io('/BelaScope');
@@ -51,6 +52,8 @@ channelView.on('channelConfig', (channelConfig) => {
 	});
 });
 
+sliderView.on('slider-value', (slider, value) => socket.emit('slider-value', slider, value) );
+
 // socket events
 socket.on('settings', (newSettings) => {
 	if (newSettings.frameWidth) newSettings.frameWidth.value = window.innerWidth;
@@ -59,6 +62,7 @@ socket.on('settings', (newSettings) => {
 	//console.log(newSettings);
 	//settings.print();
 });
+socket.on('scope-slider', args => sliderView.emit('set-slider', args) );
 
 // model events
 settings.on('set', (data, changedKeys) => {
