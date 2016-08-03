@@ -162,12 +162,14 @@ class belaProcess extends MakeProcess{
 				})
 				.catch( e => {
 					console.log(e);
+					this.mainPID = undefined;
 					return {cpu: 0};
 				});
 		} else {
 			return pusage.statAsync(this.mainPID)
 				.catch( e => {
 					console.log(e);
+					this.mainPID = undefined;
 					return {cpu: 0};
 				});
 		}
