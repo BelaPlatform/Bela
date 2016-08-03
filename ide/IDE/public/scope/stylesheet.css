@@ -49,9 +49,62 @@ table {
 
 /*start*/
 
+@font-face {
+    font-family: 'inconsolata';
+    src: url('../fonts/inconsolata-webfont.woff2') format('woff2'),
+         url('../fonts/inconsolata-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'sofia';
+    src: url('../fonts/sofia-webfont.woff2') format('woff2'),
+         url('../fonts/sofia-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	padding-top: 0;
+	padding-bottom: 2px;
+	padding-left: 22px;
+	font-size: 11px;
+	font-family: sofia;
+	border: 1px solid #ccc;
+	height: 22px;
+	display: inline;
+	border-radius: 2px;
+	width: 100px;
+	background: #fff url("../images/icons/drop_arrow.png") 5px 6px no-repeat;
+}
+button {
+	line-height: 16px;
+	padding: 0 8px 0;
+	font-family: sofia;
+	background: #eee;
+	color: #aaa;
+	border: 1px solid #ccc;
+	display: inline-block;
+	vertical-align: middle;
+	border-radius: 5px;
+	min-width: 40px;	
+}
+button:hover {
+	cursor: pointer;
+	background: #aaa;
+	color: #fff;
+	box-shadow: 2px 2px 2px #ddd;
+	border: 1px solid #aaa;
+}
+
 html, body{
 	height: 100%;
 	overflow: hidden;
+	font-family: 'sofia';
 }
 .hidden{
 	display: none; !important;
@@ -68,6 +121,7 @@ html, body{
 	left: 0;
 	z-index: 3;
 	text-align: center;
+	padding: 5px;
 }
 .buttonWrapper > button{
 	display: inline-block;
@@ -94,22 +148,48 @@ html, body{
 }
 
 #controlPanel{
-	width: 100%;
 	height: 100%;
 	overflow: hidden;
 	position: absolute;
 	top: 0;
 	left: 0;
 	z-index: 2;
-	background-color: rgba(255, 255, 255, 0.5);
-	padding: 50px;
+	padding: 50px 50px 0 50px;
+	box-sizing: border-box;
 }
 .cpColumn{
 	display: inline-block;
 	vertical-align: top;
-	margin: 1px;
-	padding: 1px;
+	padding: 0 15px;
+	box-sizing: border-box;
+	max-height: 100%;
+	overflow: scroll;
+	background-color: rgba(130,200,137, 0.5);
+}
+.cpColumn table{
+	width: 100%;
+	margin-top: 7px;
+}
+.cpColumn td{
+	width: 120px;
+	text-align: right;
+	padding: 5px;
+	font-size: 14px;
+}
+.cpColumn td + td{
+	text-align: left;
+	width: 190px;
+}
+.cpColumn > div{
+	margin: 20px 0;
+	background-color: rgba(225,242,217, 0.7);
+}
+.cpColumn h1{
+	position: relative;
+	top: 5px;
+	left: 5px;
+	font-size: 18px;
 }
 input[type="number"]{
-	width: 38px;
+	width: 40px;
 }

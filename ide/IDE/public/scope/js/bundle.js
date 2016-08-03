@@ -537,11 +537,9 @@ var ChannelView = function (_View) {
 			var key = $element.data().key;
 			var channel = $element.data().channel;
 			var value = key === 'color' ? $element.val() : parseFloat($element.val());
-			console.log(key, channel, value, isNaN(value));
 			if (!(key === 'color') && isNaN(value)) return;
 			this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 			channelConfig[channel][key] = value;
-			console.log(key, channel, value);
 			this.emit('channelConfig', channelConfig);
 		}
 	}, {
@@ -581,15 +579,15 @@ var ChannelView = function (_View) {
 			var numChannels = val.value;
 			if (numChannels < channelConfig.length) {
 				while (numChannels < channelConfig.length) {
-					$('#channelViewChannel' + (channelConfig.length - 1)).remove();
+					$('#channelViewChannel' + channelConfig.length).remove();
 					channelConfig.pop();
 				}
 			} else if (numChannels > channelConfig.length) {
 				while (numChannels > channelConfig.length) {
 					channelConfig.push(new ChannelConfig());
 					channelConfig[channelConfig.length - 1].color = colours[(channelConfig.length - 1) % colours.length];
-					var el = $('#channelViewChannel0').clone(true).prop('id', 'channelViewChannel' + (channelConfig.length - 1)).appendTo($(this.$parents[0]));
-					el.find('h1').html('Channel ' + (channelConfig.length - 1));
+					var el = $('#channelViewChannel0').clone(true).prop('id', 'channelViewChannel' + channelConfig.length).appendTo($('#channelColumn'));
+					el.find('h1').html('Channel ' + channelConfig.length);
 					el.find('input').each(function () {
 						$(this).data('channel', channelConfig.length - 1);
 					});
@@ -715,15 +713,15 @@ var ControlView = function (_View) {
 		value: function plotMode(val, data) {
 			this.emit('plotMode', val, data);
 			if (val == 0) {
-				if ($('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').removeClass('hidden');
-				if (!$('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').addClass('hidden');
+				if ($('#triggerControls').hasClass('hidden')) $('#triggerControls').removeClass('hidden');
+				if (!$('#FFTControls').hasClass('hidden')) $('#FFTControls').addClass('hidden');
 				$('.xAxisUnits').html('ms');
 				$('.xUnit-display').html((xTime * downSampling / upSampling).toPrecision(2));
 				$('#zoomUp').html('in');
 				$('#zoomDown').html('out');
 			} else if (val == 1) {
-				if (!$('#scopeTimeDomainControls').hasClass('hidden')) $('#scopeTimeDomainControls').addClass('hidden');
-				if ($('#scopeFFTControls').hasClass('hidden')) $('#scopeFFTControls').removeClass('hidden');
+				if (!$('#triggerControls').hasClass('hidden')) $('#triggerControls').addClass('hidden');
+				if ($('#FFTControls').hasClass('hidden')) $('#FFTControls').removeClass('hidden');
 				$('.xAxisUnits').html('Hz');
 				$('.xUnit-display').html(sampleRate / 20 * upSampling / downSampling);
 				$('#zoomUp').html('out');
@@ -767,7 +765,7 @@ var ControlView = function (_View) {
 			var el = this.$elements.filterByData('key', 'triggerChannel');
 			el.empty();
 			for (var i = 0; i < val.value; i++) {
-				var opt = $('<option></option>').html(i).val(i).appendTo(el);
+				var opt = $('<option></option>').html(i + 1).val(i).appendTo(el);
 				if (i === data.triggerChannel.value) opt.prop('selected', 'selected');
 			}
 		}
@@ -1054,7 +1052,6 @@ controlView.on('plotMode', function (val) {
 	//backgroundView._plotMode(val, settings._getData());
 });
 channelView.on('channelConfig', function (channelConfig) {
-	console.log(channelConfig);
 	worker.postMessage({
 		event: 'channelConfig',
 		channelConfig: channelConfig

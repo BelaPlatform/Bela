@@ -21,11 +21,9 @@ class ChannelView extends View{
 		var key = $element.data().key;
 		var channel = $element.data().channel;
 		var value = (key === 'color') ? $element.val() : parseFloat($element.val());
-		console.log(key, channel, value, isNaN(value));
 		if (!(key === 'color') && isNaN(value)) return;
 		this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 		channelConfig[channel][key] = value;
-		console.log(key, channel, value);
 		this.emit('channelConfig', channelConfig);
 	}
 	
@@ -41,7 +39,7 @@ class ChannelView extends View{
 		var numChannels = val.value;
 		if (numChannels < channelConfig.length){
 			while(numChannels < channelConfig.length){
-				$('#channelViewChannel'+(channelConfig.length-1)).remove();
+				$('#channelViewChannel'+(channelConfig.length)).remove();
 				channelConfig.pop();
 			}
 		} else if (numChannels > channelConfig.length){
@@ -50,9 +48,9 @@ class ChannelView extends View{
 				channelConfig[channelConfig.length-1].color = colours[(channelConfig.length-1)%colours.length];
 				var el = $('#channelViewChannel0')
 					.clone(true)
-					.prop('id', 'channelViewChannel'+(channelConfig.length-1))
-					.appendTo($(this.$parents[0]));
-				el.find('h1').html('Channel '+(channelConfig.length-1));
+					.prop('id', 'channelViewChannel'+(channelConfig.length))
+					.appendTo($('#channelColumn'));
+				el.find('h1').html('Channel '+(channelConfig.length));
 				el.find('input').each(function(){
 					$(this).data('channel', channelConfig.length-1)
 				});
