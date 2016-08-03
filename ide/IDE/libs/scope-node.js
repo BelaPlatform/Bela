@@ -160,10 +160,9 @@ var scope = {
 	
 	workerConnected(socket){
 	
-		socket.emit('hi');
+		socket.emit('ready');
 		
 		socket.on('buffer-received', () => {
-			//console.log('received');
 			bufferReceived = true;
 		});
 	}

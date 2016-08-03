@@ -21,6 +21,10 @@ onmessage = function(e){
 	}
 }
 
+socket.on('ready', function(){
+	socket.emit('buffer-received');
+});
+
 socket.on('buffer', function(buf){
 
 	var floatArray = new Float32Array(buf);
