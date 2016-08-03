@@ -259,7 +259,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gAudioCodec = new I2c_Codec();
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
-	if(gPRU->prepareGPIO(1, 1)) {
+	if(gPRU->prepareGPIO(1, settings->enableLED)) {
 		cout << "Error: unable to prepare GPIO for PRU audio\n";
 		return 1;
 	}

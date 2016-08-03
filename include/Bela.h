@@ -142,6 +142,8 @@ typedef struct {
 	char pruFilename[MAX_PRU_FILENAME_LENGTH];
 	/// Whether to use verbose logging
 	int verbose;
+	/// Whether to use the blinking LED to indicate Bela is running
+	int enableLED;
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user
