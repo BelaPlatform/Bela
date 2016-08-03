@@ -133,9 +133,11 @@ ssh $BBB_ADDRESS make QUIET=true --no-print-directory -C $BBB_BELA_HOME stop
 
 # This file is used to keep track of when the last upload was made,
 # so to check for modifications if WATCH is active
-reference_time_file="$SCRIPTDIR/../tmp/.time$BBB_PROJECT_NAME"
+TMP_DIR="$SCRIPTDIR/../tmp"
+reference_time_file="$TMP_DIR/.time$BBB_PROJECT_NAME"
+
 uploadBuildRun(){
-	[ $WATCH -eq 1 ] && touch $reference_time_file
+	[ $WATCH -eq 1 ] && mkdir -p $TMP_DIR && touch $reference_time_file
 	# Copy new source files to the board
 	echo "Copying new source files to BeagleBone..."
 	if [ -z "`which rsync`" ];
