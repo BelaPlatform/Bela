@@ -117,8 +117,8 @@ void render(BelaContext *context, void *userData)
 				gPhases[i] -= 2.0 * M_PI;
 		}
 		
-		for(int ch = 0; ch < context->audioChannels; ch++)
-			context->audioOut[context->audioChannels * n + ch] = sample;
+		for(int ch = 0; ch < context->audioInChannels; ch++)
+			context->audioOut[context->audioInChannels * n + ch] = sample;
 	}
 }
 
