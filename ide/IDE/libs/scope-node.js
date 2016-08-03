@@ -22,6 +22,9 @@ var settings = {
 
 var UDP_RECIEVE = 8677;
 
+var bufferReceived = true;
+var droppedcount = 0;
+
 var scope = {
 	
 	init(io){	
@@ -44,8 +47,19 @@ var scope = {
 		// echo raw scope data over websocket to browser
 		scopeUDP.on('message', (buffer) => {
 			//console.log('raw scope buffer recieved, of length', buffer.length);
+			if (!bufferReceived){
+				//console.log('frame dropped');
+				droppedcount += 1;
+				return;
+			}
+			bufferReceived = false;
 			this.workerSocket.emit('buffer', buffer);
 		});
+		
+		/*setInterval( () => {
+			if(droppedcount) console.log('dropped', droppedcount);
+			droppedcount = 0;
+		}, 1000);*/
 		
 	},
 	
@@ -145,7 +159,13 @@ var scope = {
 	},
 	
 	workerConnected(socket){
+	
 		socket.emit('hi');
+		
+		socket.on('buffer-received', () => {
+			//console.log('received');
+			bufferReceived = true;
+		});
 	}
 	
 };

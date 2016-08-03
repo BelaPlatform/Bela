@@ -43,5 +43,7 @@ socket.on('buffer', function(buf){
 		console.log('frame dropped');
 		
 	}
+	
+	socket.emit('buffer-received');
 
 });
