@@ -24,7 +24,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
-#include <Scope.h>
 #include <SampleStream.h>
 
 #define NUM_CHANNELS 2    // NUMBER OF CHANNELS IN THE FILE
@@ -48,7 +47,7 @@ bool setup(BelaContext *context, void *userData)
 {
     
     for(int i=0;i<NUM_STREAMS;i++) {
-        sampleStream[i] = new SampleStream("../../samples/waves.wav",NUM_CHANNELS,BUFFER_LEN);
+        sampleStream[i] = new SampleStream("waves.wav",NUM_CHANNELS,BUFFER_LEN);
     }
     
     // Initialise auxiliary tasks

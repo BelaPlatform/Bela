@@ -42,7 +42,7 @@ float gSamplingPeriod = 0;
  */
 void midiMessageCallback(MidiChannelMessage message, void* arg){
 	if(arg != NULL){
-		rt_printf("Message from midi port %d: ", *(int*)arg);
+		rt_printf("Message from midi port %s ", (const char*) arg);
 	}
 	message.prettyPrint();
 	if(message.getType() == kmmNoteOn){
@@ -55,13 +55,13 @@ void midiMessageCallback(MidiChannelMessage message, void* arg){
 }
 
 Midi midi;
-int gMidiPort0 = 0;
+const char* gMidiPort0 = "/dev/midi1";
 bool setup(BelaContext *context, void *userData)
 {
 	midi.readFrom(gMidiPort0);
 	midi.writeTo(gMidiPort0);
 	midi.enableParser(true);
-	midi.setParserCallback(midiMessageCallback, &gMidiPort0);
+	midi.setParserCallback(midiMessageCallback, (void*) gMidiPort0);
 	if(context->analogFrames == 0) {
 		rt_printf("Error: this example needs the analog I/O to be enabled\n");
 		return false;

@@ -121,6 +121,9 @@ color: #994409;\
 .ace-chrome .ace_indent-guide {\
 background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==\") right repeat-y;\
 }\
+.ace-chrome .ace_keyword.ace_bela {\
+color: rgb(156, 183, 83);\
+}\
 ";
 
 var dom = require("../lib/dom");

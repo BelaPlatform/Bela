@@ -174,11 +174,17 @@ class SettingsView extends View {
 		});*/
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
+		
+			//console.log('submitted', e);
 			
 			e.preventDefault();
 			
 			var file = popup.find('input[type=file]').prop('files')[0];
-			if (file && file.type === 'application/zip'){
+			
+			//console.log('input', popup.find('input[type=file]'));
+			//console.log('file', file);
+			
+			if (file){
 			
 				this.emit('warning', 'Beginning the update - this may take several minutes');
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
@@ -195,6 +201,7 @@ class SettingsView extends View {
 			}
 			
 			popup.hide();
+			popup.overlay();
 			
 		});
 		

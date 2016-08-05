@@ -5,6 +5,8 @@ var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 
 var askForOverwrite = true;
+var uploadingFile = false;
+var fileQueue = [];
 
 class FileView extends View {
 	
@@ -15,17 +17,18 @@ class FileView extends View {
 
 		// hack to upload file
 		$('#uploadFileInput').on('change', (e) => {
-			for (let file of e.target.files){
-				this.doFileUpload(file);
+			for (var i=0; i<e.target.files.length; i++){
+				this.doFileUpload(e.target.files[i]);
 			}
 		});
 		
 		// drag and drop file upload on editor
 		$('body').on('dragenter dragover drop', (e) => {
 			e.stopPropagation();
+			e.preventDefault();
 			if (e.type === 'drop'){
-				for (let file of e.originalEvent.dataTransfer.files){
-					this.doFileUpload(file);
+				for (var i=0; i<e.originalEvent.dataTransfer.files.length; i++){
+					this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
 				}
 			}
 			return false;
@@ -227,12 +230,19 @@ class FileView extends View {
 	
 	doFileUpload(file){
 	
+		if (uploadingFile){
+			fileQueue.push(file);
+			return;
+		}
+	
 		var fileExists = false;
 		for (let item of this.listOfFiles){
 			if (item.name === file.name) fileExists = true;
 		}
 		
 		if (fileExists && askForOverwrite){
+		
+			uploadingFile = true;
 
 			// build the popup content
 			popup.title('Overwriting file');
@@ -250,9 +260,15 @@ class FileView extends View {
 				if (popup.find('input[type=checkbox]').is(':checked')) askForOverwrite = false;
 				this.actuallyDoFileUpload(file, true);
 				popup.hide();
+				uploadingFile = false;
+				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			});
 		
-			popup.find('.popup-cancel').on('click', popup.hide );
+			popup.find('.popup-cancel').on('click', () => {
+				popup.hide();
+				uploadingFile = false;
+				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
+			});
 		
 			popup.show();
 			

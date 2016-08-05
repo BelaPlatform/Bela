@@ -266,8 +266,8 @@ bool setup(BelaContext *context, void *userData)	{
 	hv_setSendHook(gHeavyContext, sendHook);
 
 	// TODO: change these hardcoded port values and actually change them in the Midi class
-	midi.readFrom(0);
-	midi.writeTo(0);
+	midi.readFrom("/dev/midi1");
+	midi.writeTo("/dev/midi1");
 	midi.enableParser(true);
 
 	if(gScopeChannelsInUse > 0){

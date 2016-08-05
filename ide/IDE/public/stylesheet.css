@@ -108,6 +108,21 @@ p {
     margin-right: 5px;
     visibility: hidden;
 }
+#iDocsLink{
+	float: left;
+    margin-left: -23px;
+    background: url("images/icons/exclamation.png");
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#iDocsLink.iDocsVisible{
+	opacity: 1;
+	transform: scale(1);
+}
 
 #beaglert-console{
 	width: 100%;
@@ -127,6 +142,9 @@ p {
 #beaglert-consoleWrapper{
 	width: 100%;
 	font-size: 10pt;
+}
+#beaglert-consoleWrapper span{
+	white-space: pre;
 }
 /*.beaglert-console-log-in::before{
 	content: '>';
@@ -515,6 +533,17 @@ hr.sep {
 #saveAsName{
 	height: 8px;
 }
+.bela-ace-highlight{
+	position: absolute;
+	pointer-events: all;
+	border-bottom: 1px solid black;
+	height: 14px!important;
+	opacity: 0.1;
+	transition: opacity 0.1s ease-out;
+}
+.bela-ace-highlight:hover{
+	opacity: 1;
+}
 
 #img-display-parent, #pd-svg-parent{
 	display: 'none';
@@ -740,7 +769,7 @@ right: calc(100% - 62px);
     }
 
     .tab h2 {
-    	font-family: sofia, sans-serif;
+    	font-family: inconsolata, monospaced;
     	font-size: 16px;
     	color: #A8E2AD;
     	line-height: 30px;
@@ -1114,6 +1143,13 @@ label.docSectionHeader {
 	font-size: 12px;
 	padding: 10px 0;
 }
+.subsections li, .subsections span{
+	cursor: auto;
+}
+.subsections a {
+	text-decoration: underline;
+	cursor: pointer;
+}
 
 .subsections div>h2 { /* title */
 
@@ -1123,6 +1159,9 @@ label.docSectionHeader {
 }
 .subsections div>p { /* content */
 
+}
+.subsections div li {
+	list-style: initial;
 }
 
 

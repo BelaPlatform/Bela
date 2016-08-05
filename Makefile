@@ -175,11 +175,15 @@ syntax: ## Only checks syntax
 syntax: SYNTAX_FLAG := -fsyntax-only
 syntax: $(PROJECT_OBJS) 
 
+# include all dependencies - necessary to force recompilation when a header is changed
+# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
+-include $(CPP_DEPS) $(C_DEPS) $(ASM_DEPS)
+
 # Rule for Bela core C++ files
 build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) 
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) 
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -195,7 +199,7 @@ build/core/%.o: ./core/%.S
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -203,7 +207,7 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<" -std=c99 $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" -std=c99 $(CFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 

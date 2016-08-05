@@ -24,13 +24,12 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
-#include <Scope.h>
 #include <SampleLoader.h>
 #include <SampleData.h>
 
 #define NUM_CHANNELS 2
 
-string gFilename = "../../samples/waves.wav";
+string gFilename = "waves.wav";
 int gStartFrame = 44100;
 int gEndFrame = 88200;
 int gFrameRange;

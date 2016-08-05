@@ -252,18 +252,25 @@ function socketEvents(socket){
 	
 	// run-on-boot
 	socket.on('run-on-boot', project => {
-		var args;
 		if (project === 'none'){
-			args = ['nostartup'];
+			runOnBoot(socket, ['nostartup']);
 		} else {
-			args = ['startup', 'PROJECT='+project]; 
+			co(ProjectManager, 'getCLArgs', project)
+				.then( (CLArgs) => {
+					var args = '';
+					for (let key in CLArgs) {
+						if (key[0] === '-' && key[1] === '-'){
+							args += key+'='+CLArgs[key]+' ';
+						} else if (key === 'user'){
+							args += CLArgs[key];
+						} else if (key !== 'make'){
+							args += key+CLArgs[key]+' ';
+						}
+					}
+					runOnBoot(socket, ['startup', 'PROJECT='+project, 'CL='+args])
+				});
 		}
-		var proc = spawn('make', args, {cwd: belaPath});
-		proc.stdout.setEncoding('utf-8');
-		proc.stderr.setEncoding('utf-8');
-		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
-		proc.stderr.on('data', data => socket.emit('run-on-boot-log', data) );
-		proc.on('close', () => socket.emit('run-on-boot-log', 'done') );
+		
 	});
 	
 	// shell
@@ -272,6 +279,26 @@ function socketEvents(socket){
 	
 	// update
 	socket.on('upload-update', uploadUpdate);
+	
+	socket.on('highlight-syntax', names => {
+		//console.log(names);
+		fs.readFileAsync(belaPath+'IDE/public/js/ace/mode-c_cpp.js', 'utf-8')
+			.then( file => {
+				var lines = file.split('\n');
+				for (let i=0; i<lines.length; i++){
+					if (lines[i].indexOf('/*BELA*/') !== -1){
+						var split = lines[i].split('"');
+						split[1] = names.join('|');
+						lines[i] = split.join('"');
+						break;
+					}
+				}
+				return lines.join('\n');
+			})
+			.then( file => fs.writeFileAsync(belaPath+'IDE/public/js/ace/mode-c_cpp.js', file) )
+			.then( () => socket.emit('syntax-highlighted') )
+			.catch( e => console.log('highlight-syntax error', e) );
+	});
 
 }
 
@@ -302,6 +329,7 @@ var SettingsManager = {
 			'cpuMonitoring'			: 1,
 			'cpuMonitoringVerbose'	: 0,
 			'consoleDelete'			: 1,
+			'autoDocs'				: 1,
 			'verboseDebug'			: 0,
 			'useGit'				: 1,
 			'gitAutostage'			: 1
@@ -361,11 +389,20 @@ function runOnBootProject(){
 			if (lines[5] === '# Run on startup disabled -- nothing to do here'){
 				project = 'none';
 			} else {
-				project = lines[5].trim().split(' ')[6].split('/').pop();
+				project = lines[5].trim().split(' ')[1].split('/').pop();
 			}
 			return project;
 		})
 		.catch( e => console.log('run-on-boot error', e) );
+}
+
+function runOnBoot(socket, args){
+	var proc = spawn('make', args, {cwd: belaPath});
+		proc.stdout.setEncoding('utf-8');
+		proc.stderr.setEncoding('utf-8');
+		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
+		proc.stderr.on('data', data => socket.emit('run-on-boot-log', data) );
+		proc.on('close', () => socket.emit('run-on-boot-log', 'done') );
 }
 
 function uploadUpdate(data){
@@ -431,7 +468,10 @@ function uploadUpdate(data){
 				
 				proc.on('close', () => {
 					if (stderr.length) reject(stderr);
-					else allSockets.emit('std-log', 'Update completed!');
+					else {
+						allSockets.emit('std-log', 'Update completed! Please refresh the page if this does not happen automatically.');
+						allSockets.emit('force-reload');
+					}
 				});
 				
 			});

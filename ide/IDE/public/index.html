@@ -20,6 +20,7 @@
 				<div id="top-open-file"></div>
 				<div id="top-open-project"></div>
 				<div id="top-bela-status"></div>
+				<span id="iDocsLink"></span>
 				<a id="top-example-docs-link" href="documentation/examples.html" target="_blank"><button id="top-example-docs">example docs</button></a>
 			</div>
 			
@@ -149,7 +150,7 @@
 
 								<table class="tabTable">
 									<tr>
-										<td>Buffer size (audio samples):</td>
+										<td>Block size (audio frames):</td>
 										<td><select id="buffer-size" class="settingsManager small" data-func="setCLArg" data-key="-p">
 											<option value="2">2</option>
 											<option value="4">4</option>
@@ -282,6 +283,11 @@
 								  		<td>Delete old console records:</td>
 								  		<td><input type="checkbox" id="consoleDelete" class="settingsManager" data-func="setIDESetting" data-key="consoleDelete" value="1" ></td>
 									</tr>
+									
+									<tr>
+								  		<td>Highlight Bela keywords:</td>
+								  		<td><input type="checkbox" id="autoDocs" class="settingsManager" data-func="setIDESetting" data-key="autoDocs" value="1" ></td>
+									</tr>
 
 									<!--<tr>
 										<td>Verbose debugger output:</td>
@@ -380,10 +386,10 @@
 				    <div class="tab"><!-- Start Doc, Tab 5 -->
 				       <input type="radio" id="tab-5" name="tab-group-1">
 				       <label for="tab-5"><span id="api-ref" title="API Reference" /></label>
-				       <div class="tabContent">
+				       <div id="docTab" class="tabContent">
 				           <h1>Documentation</h1>
 				           <a href="documentation" target="_blank"><button class="doc-button">Full documentation</button></a>
-				           <ul class="sections">
+				           <ul id="docsParent" class="sections">
 				           		<li>
 				           			<input type="checkbox" class="docs" id="tit0">
 									<label for="tit0" class="docSectionHeader">The Bela Context</label>
@@ -402,12 +408,60 @@
 									<ul id="utilityDocs" class="subsections">
 									</ul>
 								</li>
-								<!--<li>
+								<li>
 									<input type="checkbox" class="docs" id="tit3">
-									<label for="tit3" class="docSectionHeader">Working with Sensors</label>
-									<ul class="subsections">
+									<label for="tit3" class="docSectionHeader">The Scope</label>
+									<ul id="ScopeDocs" class="subsections">
 									</ul>
-								</li>-->
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit4">
+									<label for="tit4" class="docSectionHeader">OSC Server</label>
+									<ul id="OSCServerDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit5">
+									<label for="tit5" class="docSectionHeader">OSC Client</label>
+									<ul id="OSCClientDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit6">
+									<label for="tit6" class="docSectionHeader">OSC Message Factory</label>
+									<ul id="OSCMessageFactoryDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit7">
+									<label for="tit7" class="docSectionHeader">UDP Server</label>
+									<ul id="UdpServerDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit8">
+									<label for="tit8" class="docSectionHeader">UDP Client</label>
+									<ul id="UdpClientDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit9">
+									<label for="tit9" class="docSectionHeader">Midi</label>
+									<ul id="MidiDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit10">
+									<label for="tit10" class="docSectionHeader">Midi Parser</label>
+									<ul id="MidiParserDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit11">
+									<label for="tit11" class="docSectionHeader">WriteFile data logging</label>
+									<ul id="WriteFileDocs" class="subsections">
+									</ul>
+								</li>
 							</ul>
 				       </div><!-- Xenomai --> 
 				    </div><!-- end Doc tab -->
@@ -481,17 +535,14 @@
 		<script src="js/ace/ext-language_tools.js"></script>
 		<script src="socket.io/socket.io.js"></script>
 		<script src="js/jquery.js"></script>
+		<script src="js/keypress.js"></script>
 		<script src="js/pd-fileutils.js"></script>
 		<script src="js/goldenlayout.js"></script>
-		
-		<!-- es5 -->
 		<script src="js/polyfill.js"></script>
-		<script src="js/bundleES5.js"></script>
-		
-		
-		<!-- es6
 		<script src="js/bundle.js"></script>
-		 -->
+		<script>
+			TokenIterator = require("ace/token_iterator").TokenIterator;
+		</script>
 
 	</body>
 	

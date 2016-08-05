@@ -21,6 +21,10 @@ var popup = {
 		formEl.empty();
 	},
 	
+	overlay(){
+		overlay.toggleClass('active');
+	},
+	
 	find: selector => content.find(selector),
 	
 	title: text => titleEl.text(text),
