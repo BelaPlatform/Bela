@@ -22,7 +22,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 */
 
 #include <Bela.h>
+#include <unistd.h>
 
+bool gIsStdoutTty;
 unsigned int gPrintCount = 0;
 
 bool setup(BelaContext *context, void *userData)
@@ -32,6 +34,7 @@ bool setup(BelaContext *context, void *userData)
         return false;
     }
 
+    gIsStdoutTty = isatty(1); // Check if stdout is a terminal
 	return true;
 }
 
@@ -41,7 +44,8 @@ void render(BelaContext *context, void *userData)
     
     if(gPrintCount >= (unsigned int)(context->analogSampleRate * 0.1)) {
         gPrintCount = 0;
-        rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
+		if(gIsStdoutTty)
+			rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
         
         /* Go through each multiplexer setting of each analog input and display the value */
         for(unsigned int input = 0; input < context->analogInChannels; input++) {

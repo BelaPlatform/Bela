@@ -25,6 +25,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <unistd.h>
 
 // Filter info
 float *gFilterLastInputs;
@@ -42,6 +43,7 @@ int gNumOscillators = 0;
 int gWavetableLength = 1024;
 float gAudioSampleRate = 44100.0;
 unsigned long long gAudioFramesElapsed = 0;
+bool gIsStdoutTty;
 
 float *gWavetable;		// Buffer holding the precalculated sine lookup table
 float *gPhases;			// Buffer holding the phase of each oscillator
@@ -117,6 +119,7 @@ bool setup(BelaContext *context, void *userData)
     gMultiplexerChannels = context->multiplexerChannels;
     gAudioSampleRate = context->audioSampleRate;
     
+	gIsStdoutTty = isatty(1); // Check if stdout is a terminal
 	return true;
 }
 
@@ -260,7 +263,8 @@ bool initialise_oscillators(float fundamental_frequency)
 // Do this in a separate thread to avoid loading down the audio thread
 void print_results()
 {
-    rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
+    if(gIsStdoutTty)
+        rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
 
     /* Uncomment to print each of the sample rates in case you want to check  */
     // rt_printf("Sample Rates:\n");
