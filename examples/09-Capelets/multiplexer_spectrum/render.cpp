@@ -138,7 +138,7 @@ void render(BelaContext *context, void *userData)
                             + gCoeffB1 * gFilterLastInputs[filterIndex * 2]
                             + gCoeffB2 * gFilterLastInputs[filterIndex * 2 + 1]
                             - gCoeffA1 * gFilterLastOutputs[filterIndex * 2]
-                            - gCoeffA2 * gFilterLastOutputs[filterIndex * 2];
+                            - gCoeffA2 * gFilterLastOutputs[filterIndex * 2 + 1];
 
             // Save the filter history
             gFilterLastInputs[filterIndex*2 + 1] = gFilterLastInputs[filterIndex*2];
