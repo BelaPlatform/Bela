@@ -1,9 +1,9 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
+ ____  _____ _		  _    
+| __ )| ____| |		 / \   
+|  _ \|  _| | |		/ _ \  
 | |_) | |___| |___ / ___ \ 
-|____/|_____|_____/_/   \_\
+|____/|_____|_____/_/	\_\
 
 The platform for ultra-low latency audio and sensor processing
 
@@ -67,100 +67,100 @@ extern "C" {
 
 bool setup(BelaContext *context, void *userData)
 {
-    if(context->audioOutChannels != 2) {
+	if(context->audioOutChannels != 2) {
 		rt_printf("Error: this example needs stereo audio enabled\n");
 		return false;
 	}
-	
-    if(context->multiplexerChannels == 0 || context->analogFrames == 0) {
-        rt_printf("Please enable the Multiplexer Capelet to run this example.\n");
-        return false;
-    }
-    
-    int totalInputs = context->multiplexerChannels * context->analogInChannels;
-    
-    // Allocate filter buffers: 2 previous samples per filter, 1 filter per input
-    gFilterLastInputs = (float *)malloc(2 * totalInputs * sizeof(float));
-    gFilterLastOutputs = (float *)malloc(2 * totalInputs * sizeof(float));
-    
-    if(gFilterLastInputs == 0 || gFilterLastOutputs == 0) {
-        rt_printf("Unable to allocate memory buffers.\n");
-        return false;
-    }
 
-    memset(gFilterLastInputs, 0, 2 * totalInputs * sizeof(float));
-    memset(gFilterLastOutputs, 0, 2 * totalInputs * sizeof(float));
+	if(context->multiplexerChannels == 0 || context->analogFrames == 0) {
+		rt_printf("Please enable the Multiplexer Capelet to run this example.\n");
+		return false;
+	}
 
-    // Allocate a buffer to hold sample counts (to display actual sample rate)
-    gFilterSampleCounts = (unsigned long long *)malloc(totalInputs * sizeof(unsigned long long));
-    
-    if(gFilterSampleCounts == 0) {
-        rt_printf("Unable to allocate memory buffers.\n");
-        return false;
-    }
-    
-    memset(gFilterSampleCounts, 0, totalInputs * sizeof(unsigned long long));
-    
-    // Initialise filter coefficients. Expected sample rate is 22.05kHz divided by
-    // number of multiplexer channels.
-    calculate_coeff(22050.0 / (float)context->multiplexerChannels, 50.0);
-    
-    // Initiliase the oscillator bank in a harmonic series, one for each input
-    gNumOscillators = totalInputs;
-    if(!initialise_oscillators(55.0))
-        return false;
-    
-    // Set up an aux task to handle the printing
+	int totalInputs = context->multiplexerChannels * context->analogInChannels;
+
+	// Allocate filter buffers: 2 previous samples per filter, 1 filter per input
+	gFilterLastInputs = (float *)malloc(2 * totalInputs * sizeof(float));
+	gFilterLastOutputs = (float *)malloc(2 * totalInputs * sizeof(float));
+
+	if(gFilterLastInputs == 0 || gFilterLastOutputs == 0) {
+		rt_printf("Unable to allocate memory buffers.\n");
+		return false;
+	}
+
+	memset(gFilterLastInputs, 0, 2 * totalInputs * sizeof(float));
+	memset(gFilterLastOutputs, 0, 2 * totalInputs * sizeof(float));
+
+	// Allocate a buffer to hold sample counts (to display actual sample rate)
+	gFilterSampleCounts = (unsigned long long *)malloc(totalInputs * sizeof(unsigned long long));
+
+	if(gFilterSampleCounts == 0) {
+		rt_printf("Unable to allocate memory buffers.\n");
+		return false;
+	}
+
+	memset(gFilterSampleCounts, 0, totalInputs * sizeof(unsigned long long));
+
+	// Initialise filter coefficients. Expected sample rate is 22.05kHz divided by
+	// number of multiplexer channels.
+	calculate_coeff(22050.0 / (float)context->multiplexerChannels, 50.0);
+
+	// Initiliase the oscillator bank in a harmonic series, one for each input
+	gNumOscillators = totalInputs;
+	if(!initialise_oscillators(55.0))
+		return false;
+
+	// Set up an aux task to handle the printing
 	if((gPrintTask = Bela_createAuxiliaryTask(&print_results, 90, "bela-print-results")) == 0)
 		return false;
 
-    // Copy some info from the context to global variables accessible from the aux task
-    gAnalogInChannels = context->analogInChannels;
-    gMultiplexerChannels = context->multiplexerChannels;
-    gAudioSampleRate = context->audioSampleRate;
-    
+	// Copy some info from the context to global variables accessible from the aux task
+	gAnalogInChannels = context->analogInChannels;
+	gMultiplexerChannels = context->multiplexerChannels;
+	gAudioSampleRate = context->audioSampleRate;
+
 	gIsStdoutTty = isatty(1); // Check if stdout is a terminal
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-    for(unsigned int n = 0; n < context->analogFrames; n++) {
-        // Find out which multiplexer channel this frame belongs to
-        int muxChannel = multiplexerChannelForFrame(context, n);
-        
-        // Assign each input to the right filter
-        for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
-            int filterIndex = ch * context->multiplexerChannels + muxChannel;
-            
-            // Read sample
-            float input = analogRead(context, n, ch);
-            
-            // Calculate filtered output
-            float output = gCoeffB0 * input 
-                            + gCoeffB1 * gFilterLastInputs[filterIndex * 2]
-                            + gCoeffB2 * gFilterLastInputs[filterIndex * 2 + 1]
-                            - gCoeffA1 * gFilterLastOutputs[filterIndex * 2]
-                            - gCoeffA2 * gFilterLastOutputs[filterIndex * 2 + 1];
+	for(unsigned int n = 0; n < context->analogFrames; n++) {
+		// Find out which multiplexer channel this frame belongs to
+		int muxChannel = multiplexerChannelForFrame(context, n);
+		
+		// Assign each input to the right filter
+		for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+			int filterIndex = ch * context->multiplexerChannels + muxChannel;
+			
+			// Read sample
+			float input = analogRead(context, n, ch);
+			
+			// Calculate filtered output
+			float output = gCoeffB0 * input 
+							+ gCoeffB1 * gFilterLastInputs[filterIndex * 2]
+							+ gCoeffB2 * gFilterLastInputs[filterIndex * 2 + 1]
+							- gCoeffA1 * gFilterLastOutputs[filterIndex * 2]
+							- gCoeffA2 * gFilterLastOutputs[filterIndex * 2 + 1];
 
-            // Save the filter history
-            gFilterLastInputs[filterIndex*2 + 1] = gFilterLastInputs[filterIndex*2];
-            gFilterLastInputs[filterIndex*2] = input;            
-            gFilterLastOutputs[filterIndex*2 + 1] = gFilterLastOutputs[filterIndex*2];
-            gFilterLastOutputs[filterIndex*2] = output;
-            
-            // Increment count (for determining sample rate)
-            gFilterSampleCounts[filterIndex]++;
-            
-            // Use output to control oscillator amplitude (with some headroom)
-            // Square it to de-emphasise low but nonzero values
-            gAmplitudes[filterIndex] = output * output / 4.0;
-        }
-    }
-    
-    // Render oscillator bank:
-    
-    // Initialise buffer to 0
+			// Save the filter history
+			gFilterLastInputs[filterIndex*2 + 1] = gFilterLastInputs[filterIndex*2];
+			gFilterLastInputs[filterIndex*2] = input;			 
+			gFilterLastOutputs[filterIndex*2 + 1] = gFilterLastOutputs[filterIndex*2];
+			gFilterLastOutputs[filterIndex*2] = output;
+			
+			// Increment count (for determining sample rate)
+			gFilterSampleCounts[filterIndex]++;
+			
+			// Use output to control oscillator amplitude (with some headroom)
+			// Square it to de-emphasise low but nonzero values
+			gAmplitudes[filterIndex] = output * output / 4.0;
+		}
+	}
+
+	// Render oscillator bank:
+
+	// Initialise buffer to 0
 	memset(context->audioOut, 0, 2 * context->audioFrames * sizeof(float));
 
 	// Render audio frames
@@ -169,22 +169,22 @@ void render(BelaContext *context, void *userData)
 			gPhases, gFrequencies, gAmplitudes,
 			gDFrequencies, gDAmplitudes,
 			gWavetable);
-    
-    gPrintCount += context->analogFrames;
-    gAudioFramesElapsed = context->audioFramesElapsed;
-    
-    if(gPrintCount >= (unsigned int)(context->analogSampleRate * 0.1)) {
-        gPrintCount = 0;
-        Bela_scheduleAuxiliaryTask(gPrintTask);
-    }
+
+	gPrintCount += context->analogFrames;
+	gAudioFramesElapsed = context->audioFramesElapsed;
+
+	if(gPrintCount >= (unsigned int)(context->analogSampleRate * 0.1)) {
+		gPrintCount = 0;
+		Bela_scheduleAuxiliaryTask(gPrintTask);
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)
 {
-    free(gFilterLastInputs);
-    free(gFilterLastOutputs);
-    free(gFilterSampleCounts);
-    free(gWavetable);
+	free(gFilterLastInputs);
+	free(gFilterLastOutputs);
+	free(gFilterSampleCounts);
+	free(gWavetable);
 	free(gPhases);
 	free(gFrequencies);
 	free(gAmplitudes);
@@ -239,10 +239,10 @@ bool initialise_oscillators(float fundamental_frequency)
 	if(posix_memalign((void **)&gDAmplitudes, 16, gNumOscillators * sizeof(float))) {
 		rt_printf("Error allocating amplitude derivative buffer\n");
 		return false;
-	}    
-	
+	}	 
+
 	for(int n = 0; n < gNumOscillators; n++) {
-	    // Randomise phases so they don't all line up as a high-amplitude pulse
+		// Randomise phases so they don't all line up as a high-amplitude pulse
 		gPhases[n] = (float)random() / (float)RAND_MAX;
 		
 		// For efficiency, frequency is expressed in change in wavetable position per sample, not Hz or radians
@@ -253,9 +253,9 @@ bool initialise_oscillators(float fundamental_frequency)
 		gAmplitudes[n] = 0.0; 
 		gDFrequencies[n] = gDAmplitudes[n] = 0.0;
 	}
-	
+
 	gAmplitudes[3] = 0.5;
-	
+
 	return true;
 }
 
@@ -263,32 +263,32 @@ bool initialise_oscillators(float fundamental_frequency)
 // Do this in a separate thread to avoid loading down the audio thread
 void print_results()
 {
-    if(gIsStdoutTty)
-        rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
+	if(gIsStdoutTty)
+		rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
 
-    /* Uncomment to print each of the sample rates in case you want to check  */
-    // rt_printf("Sample Rates:\n");
-    // for(unsigned int input = 0; input < gAnalogInChannels; input++) {
-    //     rt_printf("Input %d: ", input);
-    //     for(unsigned int muxChannel = 0; muxChannel < gMultiplexerChannels; muxChannel++) {
-    //         int filterIndex = input * gMultiplexerChannels + muxChannel;
-    //         double rate = gAudioSampleRate * (double)gFilterSampleCounts[filterIndex]
-    //                         / (double)gAudioFramesElapsed;
-    //         rt_printf("%f ", (float)rate);
-    //     }
-    //     rt_printf("\n");
-    // }
-    
-    /* Print each of the filter outputs */
-    for(unsigned int input = 0; input < gAnalogInChannels; input++) {
-        rt_printf("Input %d: ", input);
-        for(unsigned int muxChannel = 0; muxChannel < gMultiplexerChannels; muxChannel++) {
-            int filterIndex = input * gMultiplexerChannels + muxChannel;
-            float sample = gFilterLastOutputs[2*filterIndex];
-            rt_printf("%f ", sample);
-        }
-        rt_printf("\n");
-    }    
+	/* Uncomment to print each of the sample rates in case you want to check  */
+	// rt_printf("Sample Rates:\n");
+	// for(unsigned int input = 0; input < gAnalogInChannels; input++) {
+	//	   rt_printf("Input %d: ", input);
+	//	   for(unsigned int muxChannel = 0; muxChannel < gMultiplexerChannels; muxChannel++) {
+	//		   int filterIndex = input * gMultiplexerChannels + muxChannel;
+	//		   double rate = gAudioSampleRate * (double)gFilterSampleCounts[filterIndex]
+	//						   / (double)gAudioFramesElapsed;
+	//		   rt_printf("%f ", (float)rate);
+	//	   }
+	//	   rt_printf("\n");
+	// }
+
+	/* Print each of the filter outputs */
+	for(unsigned int input = 0; input < gAnalogInChannels; input++) {
+		rt_printf("Input %d: ", input);
+		for(unsigned int muxChannel = 0; muxChannel < gMultiplexerChannels; muxChannel++) {
+			int filterIndex = input * gMultiplexerChannels + muxChannel;
+			float sample = gFilterLastOutputs[2*filterIndex];
+			rt_printf("%f ", sample);
+		}
+		rt_printf("\n");
+	}	 
 }
 
 /**
