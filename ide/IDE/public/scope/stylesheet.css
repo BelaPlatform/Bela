@@ -195,6 +195,18 @@ html, body{
 	left: 5px;
 	font-size: 18px;
 }
+
+div.sliderView{
+	text-align: center;
+}
+
+input[type="range"].sliderView{
+    width: 75%;
+    margin: 7px 0;
+}
+
 input[type="number"]{
 	width: 40px;
+    position: relative;
+    top: -3px;
 }

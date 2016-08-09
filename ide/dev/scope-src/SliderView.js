@@ -9,13 +9,17 @@ class SliderView extends View{
 		this.on('set-slider', args => {
 			$('#scopeSlider'+args[0].value)
 				.find('input[type=range]')
-				.prop('min', args[1].value.toFixed(4))
-				.prop('max', args[2].value.toFixed(4))
-				.prop('step', args[3].value.toFixed(8))
-				.val(args[4].value.toFixed(8));
+					.prop('min', args[1].value.toFixed(4))
+					.prop('max', args[2].value.toFixed(4))
+					.prop('step', args[3].value.toFixed(8))
+					.val(args[4].value.toFixed(8))
+				.siblings('input[type=number]')
+					.prop('min', args[1].value.toFixed(4))
+					.prop('max', args[2].value.toFixed(4))
+					.prop('step', args[3].value.toFixed(8))
+					.val(args[4].value.toFixed(8));
 				
 			var inputs = $('#scopeSlider'+args[0].value).find('input[type=number]');
-			console.log(inputs);
 			inputs.filterByData('key', 'min').val(args[1].value.toFixed(4));
 			inputs.filterByData('key', 'max').val(args[2].value.toFixed(4));
 			inputs.filterByData('key', 'step').val(args[3].value.toFixed(8));
@@ -24,7 +28,6 @@ class SliderView extends View{
 	}
 	
 	inputChanged($element, e){
-		console.log($element.data().key, $element.data().slider, $element.val());
 		
 		var key = $element.data().key;
 		var slider = $element.data().slider;
@@ -33,9 +36,12 @@ class SliderView extends View{
 		if (key === 'value'){
 			this.emit('slider-value', parseInt(slider), parseFloat(value));
 		} else {
-			$element.closest('div.sliderView').find('input[type=range]').prop(key, value);
+			$element.closest('div.sliderView')
+				.find('input[type=range]').prop(key, value)
+				.siblings('input[type=number]').prop(key, value);
 		}
-		
+
+		$element.siblings('input').val(value);
 	}
 	
 	_numSliders(val){
