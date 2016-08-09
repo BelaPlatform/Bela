@@ -11,7 +11,7 @@ SCRIPTDIR=$(dirname "$0")
 
 [ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../ide/
 
-FILES_TO_COPY="core include Makefile libNE10.a libprussdrv.a examples Doxyfile samples"
+FILES_TO_COPY="core include Makefile libNE10.a libprussdrv.a examples Doxyfile"
 
 # The following variables are manually copied from the Makefile.
 # It is a bit nasty, but here we need to handle the case that the board may be 
