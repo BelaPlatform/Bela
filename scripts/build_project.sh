@@ -143,7 +143,7 @@ uploadBuildRun(){
 	if [ -z "`which rsync`" ];
 	then
 		#if rsync is not available, brutally clean the destination folder
-		ssh bbb "make --no-print-directory -C $BBB_BELA_HOME sourceclean PROJECT=$BBB_PROJECT_NAME";
+		ssh $BBB_ADDRESS "make --no-print-directory -C $BBB_BELA_HOME sourceclean PROJECT=$BBB_PROJECT_NAME";
 		#and copy over all the files again
 		scp -r $HOST_SOURCE_PATH "$BBB_NETWORK_TARGET_FOLDER"
 	else
