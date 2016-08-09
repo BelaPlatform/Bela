@@ -4,7 +4,7 @@ var osc = require('osc-min');
 var EventEmitter = require('events').EventEmitter;
 
 // port numbers
-var OSC_RECIEVE = 8676;
+var OSC_RECEIVE = 8676;
 var OSC_SEND = 8675;
 
 class scopeOSC extends EventEmitter {
@@ -16,7 +16,7 @@ class scopeOSC extends EventEmitter {
 	init(){
 		// socket to send and receive OSC messages from bela scope
 		this.socket = dgram.createSocket('udp4');
-		this.socket.bind(OSC_RECIEVE, '127.0.0.1');
+		this.socket.bind(OSC_RECEIVE, '127.0.0.1');
 		
 		this.socket.on('message', (message, info) => this.recieve(message, info));
 	}
