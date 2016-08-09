@@ -139,7 +139,7 @@ then
 fi
 
 #Check if rsync is available
-[ -z `which rsync` ] && RSYNC_AVAILABLE=0 || RSYNC_AVAILABLE=1
+check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
 
 # cd to the home of the project to make the following lines less verbose
 RUN_FOLDER=`pwd`

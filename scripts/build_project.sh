@@ -136,16 +136,19 @@ ssh $BBB_ADDRESS make QUIET=true --no-print-directory -C $BBB_BELA_HOME stop
 TMP_DIR="$SCRIPTDIR/../tmp"
 reference_time_file="$TMP_DIR/.time$BBB_PROJECT_NAME"
 
+#Check if rsync is available
+check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
+
 uploadBuildRun(){
 	[ $WATCH -eq 1 ] && mkdir -p $TMP_DIR && touch $reference_time_file
 	# Copy new source files to the board
 	printf "Copying new source files to BeagleBone..."
-	if [ "$USE_RSYNC" -eq 0 ] || [ -z "`which rsync 2> /dev/null`" ];
+	if [ "$RSYNC_AVAILABLE" -eq 0 ];
 	then
 		echo "using scp..."
-		#if rsync is not available, brutally clean the destination folder
-		ssh $BBB_ADDRESS "make --no-print-directory -C $BBB_BELA_HOME projectclean PROJECT=$BBB_PROJECT_NAME";
-		#and copy over all the files again
+		echo "Cleaning the destination folder..."
+		ssh $BBB_ADDRESS "rm -rf \"$BBB_PROJECT_FOLDER\"; mkdir -p \"$BBB_PROJECT_FOLDER\""
+		echo "Copying the project files"
 		scp -r $HOST_SOURCE_PATH/* "$BBB_NETWORK_TARGET_FOLDER"
 	else
 		#rsync 
