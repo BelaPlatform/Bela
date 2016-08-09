@@ -13,8 +13,9 @@
 				<button id="stopButton" style="display:none;">stop</button>
 				<button id="controlsButton">controls</button>
 				<button id="oneShot" style="display:none;">one-shot</button>
-				<span id="scopeMouseX" class="scopeMouse"></span>
-				<span id="scopeMouseY" class="scopeMouse"></span>
+				<span id="scope-cpu">cpu:</span>
+				<span id="scopeMouseX">x:</span>
+				<span id="scopeMouseY">y:</span>
 				<span id="scopeStatus"></span>
 			</div>
 			<canvas id="scope"></canvas>
@@ -112,6 +113,10 @@
 										<input class="scopeControls" data-key="triggerLevel" type="number" value="0" step="0.01"></input>
 									</td>
 								</tr>
+								<tr>
+									<td>One-Shot:</td>
+									<td><button id="oneshotButton" class="scopeControls" data-key="scopeOneShot">one-shot</button></td>
+								</tr>
 							</tbody>
 						</table>
 					</div>
@@ -144,10 +149,6 @@
 						<table>
 							<tbody>
 								<tr>
-									<td>One-Shot:</td>
-									<td><button id="oneshotButton" class="scopeControls" data-key="scopeOneShot">one-shot</button></td>
-								</tr>
-								<tr>
 									<td>Pause Plotting:</td>
 									<td><button id="pauseButton" class="scopeControls" data-key="scopePause">pause</button></td>
 								</tr>
@@ -158,6 +159,10 @@
 								<tr>
 									<td>Export CSV:</td>
 									<td><a href="" download="scopeData.csv" id="saveCanvasData"><button>Export</button></a></td>
+								</tr>
+								<tr>
+									<td>Dropped Frames:</td>
+									<td><span id="droppedFrames">0</span></td>
 								</tr>
 							</tbody>
 						</table>

@@ -27,6 +27,8 @@ socket.on('ready', function(){
 
 socket.on('buffer', function(buf){
 
+	socket.emit('buffer-received');
+
 	var floatArray = new Float32Array(buf);
 	//console.log("worker: recieved buffer of length "+floatArray.length);
 	//console.log(settings.frameHeight, settings.numChannels.value, settings.frameWidth.value, channelConfig);
@@ -47,7 +49,5 @@ socket.on('buffer', function(buf){
 		console.log('frame dropped');
 		
 	}
-	
-	socket.emit('buffer-received');
 
 });

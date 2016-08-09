@@ -7,7 +7,6 @@ class SliderView extends View{
 		super(className, models);
 		
 		this.on('set-slider', args => {
-		console.log('set-slider', args, $('#scopeSlider'+args[0].value));
 			$('#scopeSlider'+args[0].value)
 				.find('input[type=range]')
 					.prop('min', args[1].value.toFixed(4))

@@ -60,10 +60,10 @@ var scope = {
 			this.workerSocket.emit('buffer', buffer);
 		});
 		
-		/*setInterval( () => {
-			if(droppedcount) console.log('dropped', droppedcount);
+		setInterval( () => {
+			if(scopeConnected && settings.connected.value) this.webSocket.emit('dropped-count', droppedcount);
 			droppedcount = 0;
-		}, 1000);*/
+		}, 1000);
 		
 	},
 	

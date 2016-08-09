@@ -912,7 +912,6 @@ var SliderView = function (_View) {
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SliderView).call(this, className, models));
 
 		_this.on('set-slider', function (args) {
-			console.log('set-slider', args, $('#scopeSlider' + args[0].value));
 			$('#scopeSlider' + args[0].value).find('input[type=range]').prop('min', args[1].value.toFixed(4)).prop('max', args[2].value.toFixed(4)).prop('step', args[3].value.toFixed(8)).val(args[4].value.toFixed(8)).siblings('input[type=number]').prop('min', args[1].value.toFixed(4)).prop('max', args[2].value.toFixed(4)).prop('step', args[3].value.toFixed(8)).val(args[4].value.toFixed(8));
 
 			var inputs = $('#scopeSlider' + args[0].value).find('input[type=number]');
@@ -1125,7 +1124,10 @@ var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
 var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
-// socket
+// main bela socket
+var belaSocket = io('/IDE');
+
+// scope socket
 var socket = io('/BelaScope');
 
 var paused = false,
@@ -1180,6 +1182,12 @@ socket.on('settings', function (newSettings) {
 socket.on('scope-slider', function (args) {
 	return sliderView.emit('set-slider', args);
 });
+socket.on('dropped-count', function (count) {
+	$('#droppedFrames').html(count);
+	if (count > 10) $('#droppedFrames').css('color', 'red');else $('#droppedFrames').css('color', 'black');
+});
+
+belaSocket.on('cpu-usage', CPU);
 
 // model events
 settings.on('set', function (data, changedKeys) {
@@ -1217,6 +1225,62 @@ $('#scope').on('mousemove', function (e) {
 	$('#scopeMouseX').html('x: ' + x);
 	$('#scopeMouseY').html('y: ' + y);
 });
+
+// CPU usage
+function CPU(data) {
+	var ide = data.syntaxCheckProcess + data.buildProcess + data.node + data.gdb;
+	var bela = 0,
+	    rootCPU = 1;
+
+	if (data.bela != 0) {
+
+		// extract the data from the output
+		var lines = data.bela.split('\n');
+		var taskData = [],
+		    output = [];
+		for (var j = 0; j < lines.length; j++) {
+			taskData.push([]);
+			lines[j] = lines[j].split(' ');
+			for (var k = 0; k < lines[j].length; k++) {
+				if (lines[j][k]) {
+					taskData[j].push(lines[j][k]);
+				}
+			}
+		}
+
+		for (var j = 0; j < taskData.length; j++) {
+			if (taskData[j].length) {
+				var proc = {
+					'name': taskData[j][7],
+					'cpu': taskData[j][6],
+					'msw': taskData[j][2],
+					'csw': taskData[j][3]
+				};
+				if (proc.name === 'ROOT') rootCPU = proc.cpu * 0.01;
+				// ignore uninteresting data
+				if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:') {
+					output.push(proc);
+				}
+			}
+		}
+
+		for (var j = 0; j < output.length; j++) {
+			if (output[j].cpu) {
+				bela += parseFloat(output[j].cpu);
+			}
+		}
+
+		bela += data.belaLinux * rootCPU;
+	}
+
+	$('#scope-cpu').html('cpu: ' + (ide * rootCPU + bela).toFixed(1) + '%');
+
+	if (bela && ide * rootCPU + bela > 80) {
+		$('#scope-cpu').css('color', 'red');
+	} else {
+		$('#scope-cpu').css('color', 'black');
+	}
+}
 
 // plotting
 {

@@ -127,11 +127,11 @@ html, body{
 	display: inline-block;
 	vertical-align: middle;
 }
-.scopeMouse{
+.buttonWrapper > span{
 	min-width: 70px;
     display: inline-block;
     vertical-align: center;
-    font-family: courier-new monospaced;
+    font-family: inconsolata;
     font-size: small;
 }
 #scopeStatus{
@@ -198,6 +198,7 @@ html, body{
 
 div.sliderView{
 	text-align: center;
+	width: 240px;
 }
 
 input[type="range"].sliderView{
@@ -209,4 +210,7 @@ input[type="number"]{
 	width: 40px;
     position: relative;
     top: -3px;
+}
+input[type="number"].sliderView{
+	width: 51px;
 }
