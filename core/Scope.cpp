@@ -393,6 +393,7 @@ float Scope::getSliderValue(int slider){
 }
 
 void Scope::setSlider(int slider, float min, float max, float step, float value){
+    sliders[slider] = value;
     oscClient.sendMessageNow(
         oscClient.newMessage.to("/scope-slider")
             .add(slider)

@@ -26,6 +26,8 @@ var UDP_RECIEVE = 8677;
 var bufferReceived = true;
 var droppedcount = 0;
 
+var sliderArgs = [];
+
 var scope = {
 	
 	init(io){	
@@ -39,8 +41,8 @@ var scope = {
 		
 		// setup the OSC server
 		scopeOSC.init();
-		scopeOSC.on('scope-setup', (args) => this.scopeConnected(args) );
-		scopeOSC.on('scope-slider', args => this.webSocket.emit('scope-slider', args) );
+		scopeOSC.on('scope-setup', args => this.scopeConnected(args) );
+		scopeOSC.on('scope-slider', args => this.scopeSlider(args) );
 		
 		// UDP socket to receive raw scope data from bela scope
 		var scopeUDP = dgram.createSocket('udp4');
@@ -78,6 +80,7 @@ var scope = {
 		
 		console.log('scope connected');
 		scopeConnected = true;
+		sliderArgs = [];
 		
 		this.webSocket.emit('settings', settings);
 		
@@ -85,11 +88,24 @@ var scope = {
 			
 	},
 	
+	scopeSlider(args){
+	
+		this.webSocket.emit('scope-slider', args);
+		sliderArgs.push(args);
+
+	},
+	
 	browserConnected(socket){
 		console.log('scope browser connected');
 		
 		// send the settings to the browser
 		socket.emit('settings', settings);
+		
+		if (sliderArgs.length){
+			for (let item of sliderArgs){
+				this.webSocket.emit('scope-slider', item);
+			}
+		}
 		
 		// tell the scope that the browser is connected
 		settings.connected.value = 1;

@@ -912,6 +912,7 @@ var SliderView = function (_View) {
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SliderView).call(this, className, models));
 
 		_this.on('set-slider', function (args) {
+			console.log('set-slider', args, $('#scopeSlider' + args[0].value));
 			$('#scopeSlider' + args[0].value).find('input[type=range]').prop('min', args[1].value.toFixed(4)).prop('max', args[2].value.toFixed(4)).prop('step', args[3].value.toFixed(8)).val(args[4].value.toFixed(8)).siblings('input[type=number]').prop('min', args[1].value.toFixed(4)).prop('max', args[2].value.toFixed(4)).prop('step', args[3].value.toFixed(8)).val(args[4].value.toFixed(8));
 
 			var inputs = $('#scopeSlider' + args[0].value).find('input[type=number]');
@@ -947,6 +948,10 @@ var SliderView = function (_View) {
 			var el = $('#scopeSlider0');
 
 			$('#sliderColumn').empty();
+
+			if (val.value == 0) {
+				el.appendTo($('#sliderColumn')).css('display', 'none');
+			}
 
 			for (var i = 0; i < val.value; i++) {
 				var slider = el.clone(true).prop('id', 'scopeSlider' + i).appendTo($('#sliderColumn')).css('display', 'block');
