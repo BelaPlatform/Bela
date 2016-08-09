@@ -18,9 +18,11 @@ var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
 
-gulp.task('default', ['browserify', 'killnode', 'upload', 'restartnode', 'watch']);
+gulp.task('commit', ['browserify', 'scope-browserify']);
 
-gulp.task('watch', ['killnode', 'browserify', 'upload', 'restartnode'], function(){
+gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
+
+gulp.task('watch', ['upload'], function(){
 
 	livereload.listen();
 	
