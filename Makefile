@@ -55,14 +55,27 @@ else
   PROJECT_DIR := $(abspath projects/$(PROJECT))
 endif
 
+
 ifdef PROJECT
-  $(shell mkdir -p $(PROJECT_DIR)/build build/core)
+  IS_SUPERCOLLIDER_PROJECT?=$(shell for f in "$(PROJECT_DIR)/"*.scd ; do [ -e "$$f" ] && echo "1" && break; echo $$f; done; )
+  ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+# Potentially this could be a default file which starts a server and loads all existing .scd files?
+    SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
+  else
+    $(shell mkdir -p $(PROJECT_DIR)/build build/core)
+  endif
 endif
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 COMMAND_LINE_OPTIONS?=$(CL)
 RUN_FROM?=$(PROJECT_DIR)
-RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+endif
+ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+  RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+else
+  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+endif
 RUN_IDE_COMMAND?=stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
 BELA_AUDIO_THREAD_NAME?=bela-audio 
@@ -219,6 +232,11 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.S
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
+
+ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+$(OUTPUT_FILE):
+
+else
 # This is a nasty kludge: we want to be able to optionally link in a default
 # main file if the user hasn't supplied one. We check for the presence of the main()
 # function, and conditionally call one of two recursive make targets depending on whether
@@ -233,7 +251,7 @@ $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(D
 	$(AT) echo 'Linking...'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -L/usr/xenomai/lib -L/usr/arm-linux-gnueabihf/lib -L/usr/arm-linux-gnueabihf/lib/xenomai -L/usr/lib/arm-linux-gnueabihf -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
-	
+endif
 # Other Targets:
 projectclean: ## Remove the PROJECT's build objects & binary
 	-$(RM) $(PROJECT_DIR)/build/* $(OUTPUT_FILE)
@@ -261,6 +279,7 @@ run: ## Run PROJECT in the foreground
 run: stop Bela
 	$(AT) echo "Running $(RUN_COMMAND)"
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
+
 runide: ## Run PROJECT for IDE (foreground, no buffering)
 runide: stop Bela
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_IDE_COMMAND)
