@@ -7,3 +7,4 @@ tmp/
 Release/
 Debug/
 Documentation/
+*.js.map
