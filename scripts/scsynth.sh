@@ -7,16 +7,16 @@ SCRIPTDIR=$(dirname "$0")
    
 THIS_SCRIPT=`basename "$0"`
 usage_brief(){
-    printf "Usage: $THIS_SCRIPT [start|stop|startup|nostartup] [-c "command-line args" ]";
+    printf "Usage: $THIS_SCRIPT [start|stop|startup|nostartup|connect] [-c \"command-line args\" ]";
 	echo
 }
 
 usage(){
-    echo "Usage: $THIS_SCRIPT [start] [stop] [startup] [nostartup] "
-    echo "This program controls scsynth running on Bela.
+	usage_brief
+	echo "This program controls scsynth running on Bela.
     $THIS_SCRIPT start -- starts or restarts scsynth
     $THIS_SCRIPT stop -- stops scsynth
-	$THIS_SCRIPT connect -- connects to the running scsynth
+    $THIS_SCRIPT connect -- connects to the running scsynth
     $THIS_SCRIPT startup -- sets scsynth to start at boot
     $THIS_SCRIPT nostartup -- disables scsynth at boot
     "
@@ -41,14 +41,11 @@ do
 			usage_brief
 			exit 1;
 		;;
-		*)
-			BBB_PROJECT_NAME=$1
-		;;
 	esac
 	shift
 done
 
-[ -z "$SCSYNTH_MAKE_TARGET" ] && { usage; exit 1; }
+[ -z "$SCSYNTH_MAKE_TARGET" ] && { usage_brief; exit 1; }
 
 [ -z "$COMMAND_ARGS" ] && COMMAND_ARGS_STRING= || COMMAND_ARGS_STRING="SC_CL='$COMMAND_ARGS'"
 [ "$SCSYNTH_MAKE_TARGET" = connect ] && DASH_T="-t" || DASH_T=
