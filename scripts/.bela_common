@@ -140,7 +140,7 @@ done
 }
 
 case_run_mode() {
-	  case $RUN_MODE in
+	case $RUN_MODE in
 		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
 		foreground)
 			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
@@ -151,7 +151,7 @@ case_run_mode() {
 		screenfg)
 			ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
 		;;
-      esac
+	esac
 }
 
 run_script_usage_brief(){

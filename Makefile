@@ -438,4 +438,4 @@ update: stop
 	        echo Update succesful $(LOG); \
 	        ' $(LOG)
 
-.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart
+.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect
