@@ -1139,11 +1139,11 @@ controlView.on('settings-event', function (key, value) {
 		if (paused) {
 			paused = false;
 			$('#pauseButton').html('pause');
-			$('#scopeStatus').html('');
+			$('#scopeStatus').html('waiting');
 		} else {
 			paused = true;
 			$('#pauseButton').html('resume');
-			$('#scopeStatus').html('paused');
+			$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
 		}
 		return;
 	} else if (key === 'scopeOneShot') {
@@ -1152,7 +1152,7 @@ controlView.on('settings-event', function (key, value) {
 			paused = false;
 			$('#pauseButton').html('pause');
 		}
-		$('#scopeStatus').html('waiting');
+		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
 	}
 	socket.emit('settings-event', key, value);
 });
@@ -1308,15 +1308,35 @@ function CPU(data) {
 					ctx.stroke();
 				}
 
-				if (oneShot) {
-					oneShot = false;
-					paused = true;
-					$('#pauseButton').html('resume');
-					$('#scopeStatus').html('paused');
-				}
+				triggerStatus();
 			} /*else {
      console.log('not plotting');
      }*/
+		};
+
+		var triggerStatus = function triggerStatus() {
+
+			if (scopeStatus.hasClass('scope-status-waiting')) scopeStatus.removeClass('scope-status-waiting');
+
+			// hack to restart the fading animation if it is in progress
+			if (scopeStatus.hasClass('scope-status-triggered')) {
+				scopeStatus.removeClass('scope-status-triggered');
+				void scopeStatus[0].offsetWidth;
+			}
+
+			scopeStatus.addClass('scope-status-triggered').html('triggered');
+
+			if (oneShot) {
+				oneShot = false;
+				paused = true;
+				$('#pauseButton').html('resume');
+				scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
+			} else {
+				if (triggerTimeout) clearTimeout(triggerTimeout);
+				triggerTimeout = setTimeout(function () {
+					if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
+				}, 1000);
+			}
 		};
 
 		var canvas = document.getElementById('scope');
@@ -1354,6 +1374,11 @@ function CPU(data) {
 		};
 
 		plotLoop();
+
+		// update the status indicator when triggered
+		var triggerTimeout = void 0;
+		var scopeStatus = $('#scopeStatus');
+
 
 		var saveCanvasData = document.getElementById('saveCanvasData');
 		saveCanvasData.addEventListener('click', function () {

@@ -128,17 +128,37 @@ html, body{
 	vertical-align: middle;
 }
 .buttonWrapper > span{
-	min-width: 70px;
+	min-width: 80px;
     display: inline-block;
     vertical-align: center;
     font-family: inconsolata;
     font-size: small;
 }
 #scopeStatus{
-	color: red;
     text-transform: uppercase;
     font-size: 12px;
 }
+.scope-status-triggered{
+	color: rgb(130,200,137);
+	animation-duration: 1s;
+	animation-name: status-out;
+	animation-timing-function: ease-out;
+}
+.scope-status-waiting{
+	color: red;
+	opacity: 1;
+}
+
+@keyframes status-out {
+  from {
+    opacity: 1;
+  }
+  
+  to {
+    opacity: 0;
+  }
+}
+
 .scopeChannel, #scopeBG{
 	position: absolute;
 	top: 0;
