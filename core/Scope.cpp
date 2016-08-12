@@ -248,6 +248,10 @@ void Scope::triggerTimeDomain(){
             // if we crossed the trigger threshold
             if (triggered()){
                 
+                // float tFirst = fabs(buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)]);
+                // float tSecond = fabs(buffer[channelWidth*triggerChannel+((readPointer+channelWidth)%channelWidth)]);
+                // rt_printf("%f\n", tFirst/(tFirst+tSecond)-0.5f);
+                
                 // stop listening for a trigger
                 triggerPrimed = false;
                 triggerCollecting = true;
@@ -255,7 +259,7 @@ void Scope::triggerTimeDomain(){
                 // save the readpointer at the trigger point
                 triggerPointer = (readPointer-xOffset+channelWidth)%channelWidth;
                 
-                triggerCount = frameWidth/2 - xOffset;
+                triggerCount = frameWidth/2.0f - xOffset;
                 autoTriggerCount = 0;
                 
             } else {
@@ -268,7 +272,7 @@ void Scope::triggerTimeDomain(){
                     // save the readpointer at the trigger point
                     triggerPointer = (readPointer-xOffset+channelWidth)%channelWidth;
                     
-                    triggerCount = frameWidth/2 - xOffset;
+                    triggerCount = frameWidth/2.0f - xOffset;
                     autoTriggerCount = 0;
                 }
             }
@@ -281,11 +285,14 @@ void Scope::triggerTimeDomain(){
             } else {
                 triggerCollecting = false;
                 triggerWaiting = true;
-                triggerCount = frameWidth/2 + holdOffSamples;
+                triggerCount = frameWidth/2.0f + holdOffSamples;
                 
-                // copy the previous to next frameWidth/2 samples into the outBuffer
-                int startptr = (triggerPointer-frameWidth/2 + channelWidth)%channelWidth;
-                int endptr = (triggerPointer+frameWidth/2 + channelWidth)%channelWidth;
+                // copy the previous to next frameWidth/2.0f samples into the outBuffer
+                int startptr = (triggerPointer-(int)(frameWidth/2.0f) + channelWidth)%channelWidth;
+                //int endptr = (triggerPointer+(int)(frameWidth/2.0f) + channelWidth)%channelWidth;
+                int endptr = (startptr + frameWidth)%channelWidth;
+                
+                //rt_printf("%f, %i, %i\n", frameWidth/2.0f, triggerPointer-(int)(frameWidth/2.0f), triggerPointer+(int)(frameWidth/2.0f));
                 
                 if (endptr > startptr){
                     for (int i=0; i<numChannels; i++){

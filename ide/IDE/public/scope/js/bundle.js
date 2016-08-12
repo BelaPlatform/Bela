@@ -1131,7 +1131,10 @@ var belaSocket = io('/IDE');
 var socket = io('/BelaScope');
 
 var paused = false,
-    oneShot = false;
+    oneShot = false,
+    triggerChannel = 0,
+    triggerLevel = 0,
+    xOffset = 0;
 
 // view events
 controlView.on('settings-event', function (key, value) {
@@ -1153,6 +1156,12 @@ controlView.on('settings-event', function (key, value) {
 			$('#pauseButton').html('pause');
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
+	} else if (key === 'triggerChannel') {
+		triggerChannel = parseInt(value);
+	} else if (key === 'triggerLevel') {
+		triggerLevel = parseFloat(value);
+	} else if (key === 'xOffset') {
+		xOffset = parseInt(value);
 	}
 	socket.emit('settings-event', key, value);
 });
@@ -1201,6 +1210,9 @@ settings.on('set', function (data, changedKeys) {
 			settings: data
 		});
 	}
+	triggerChannel = parseInt(data['triggerChannel'].value);
+	triggerLevel = parseFloat(data['triggerLevel'].value);
+	xOffset = parseInt(data['xOffset'].value);
 });
 
 // window events
@@ -1302,7 +1314,7 @@ function CPU(data) {
 					ctx.moveTo(0, frame[i * length]);
 
 					for (var j = 1; j < length; j++) {
-						ctx.lineTo(j, frame[j + i * length]);
+						ctx.lineTo(j - xOff, frame[j + i * length]);
 					}
 
 					ctx.stroke();
@@ -1346,7 +1358,8 @@ function CPU(data) {
 		var width = void 0,
 		    height = void 0,
 		    numChannels = void 0,
-		    channelConfig = [];
+		    channelConfig = [],
+		    xOff = 0;
 		settings.on('change', function (data, changedKeys) {
 			if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
 				canvas.width = window.innerWidth;
@@ -1371,6 +1384,14 @@ function CPU(data) {
 			length = Math.floor(frame.length / numChannels);
 			// if scope is paused, don't set the plot flag
 			plot = !paused;
+
+			// interpolate the trigger sample to get the sub-pixel x-offset
+			if (settings.getKey('plotMode').value == 0) {
+				var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+				var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+				xOff = one / (one + two) - 0.5;
+				console.log(xOff, xOffset);
+			}
 		};
 
 		plotLoop();
