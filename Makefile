@@ -76,7 +76,7 @@ ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
 else
   RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
 endif
-RUN_IDE_COMMAND?=stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
+RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
 BELA_AUDIO_THREAD_NAME?=bela-audio 
 SCREEN_NAME?=Bela
@@ -314,6 +314,7 @@ startup: Bela
 stop: ## Stops any Bela program that is currently running
 stop:
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+	$(AT) killlall scsynth 2>dev>null& killall sclang 2>dev>null& exit 0
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
 	$(AT) screen -r -S $(SCREEN_NAME)
