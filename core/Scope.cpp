@@ -1,7 +1,7 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
 
-Scope::Scope():connected(0), triggerPrimed(false), started(false){}
+Scope::Scope():connected(0), triggerPrimed(false), started(false), upSampling(1), settingUp(true){}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -60,6 +60,8 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
         }
     }
     
+    settingUp = false;
+    
     if (handshakeReceived && connected)
         start();
     
@@ -67,7 +69,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 
 void Scope::start(){
     
-    if (started) return;
+    if (started || settingUp) return;
     
     setPlotMode();
 
@@ -94,6 +96,9 @@ void Scope::stop(){
 }
 
 void Scope::setPlotMode(){
+
+    if (upSampling < 1) upSampling = 1;
+    rt_printf("%i\n", numChannels*frameWidth/upSampling);
 
     // resize the buffers
     channelWidth = frameWidth * FRAMES_STORED;
@@ -193,7 +198,7 @@ void Scope::postlog(int startingWritePointer){
     writePointer = (writePointer+1)%channelWidth;
     
     // if upSampling > 1, save repeated samples into the buffer
-    for (int j=1; j<upSampling; j++){
+    /*for (int j=1; j<upSampling; j++){
         
         buffer[writePointer] = buffer[startingWritePointer];
     
@@ -203,9 +208,9 @@ void Scope::postlog(int startingWritePointer){
     
         writePointer = (writePointer+1)%channelWidth;
         
-    }
+    }*/
     
-    logCount += upSampling;
+    logCount += 1;//upSampling;
     if (logCount > TRIGGER_LOG_COUNT){
         logCount = 0;
         Bela_scheduleAuxiliaryTask(scopeTriggerTask);
@@ -418,15 +423,22 @@ void Scope::parseMessage(oscpkt::Message msg){
         float floatArg;
         if (msg.match("/scope-settings/connected").popInt32(intArg).isOkNoMoreArgs()){
             if (connected == 0 && intArg == 1){
+                rt_printf("connected start\n");
                 start();
             } else if (connected == 1 && intArg == 0){
                 stop();
             }
             connected = intArg;
         } else if (msg.match("/scope-settings/frameWidth").popInt32(intArg).isOkNoMoreArgs()){
-            stop();
-            frameWidth = intArg;
-            start();
+            //if (!settingUp) {
+                rt_printf("recieved frameWidth: %i, %i\n", intArg, upSampling);
+                stop();
+                pixelWidth = intArg;
+                frameWidth = intArg/upSampling;
+                start();
+                //return;
+            //}
+            //pixelWidth = intArg;
         } else if (msg.match("/scope-settings/plotMode").popInt32(intArg).isOkNoMoreArgs()){
             plotMode = intArg;
             setPlotMode();
@@ -441,8 +453,17 @@ void Scope::parseMessage(oscpkt::Message msg){
         } else if (msg.match("/scope-settings/xOffset").popInt32(intArg).isOkNoMoreArgs()){
             xOffset = intArg;
         } else if (msg.match("/scope-settings/upSampling").popInt32(intArg).isOkNoMoreArgs()){
-            upSampling = intArg;
-            holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
+            //if (!settingUp){
+                rt_printf("recieved upSampling: %i\n", intArg);
+                stop();
+                upSampling = intArg;
+                rt_printf("%i\n", pixelWidth);
+                frameWidth = pixelWidth / upSampling;
+                start();
+               // return;
+            //}
+            //upSampling = intArg;
+            // holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
         } else if (msg.match("/scope-settings/downSampling").popInt32(intArg).isOkNoMoreArgs()){
             downSampling = intArg;
             holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);

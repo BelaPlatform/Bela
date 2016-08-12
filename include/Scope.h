@@ -94,6 +94,7 @@ class Scope{
         int numChannels;
         float sampleRate;
         int connected;
+        int pixelWidth;
         int frameWidth;
         int plotMode;
         int triggerMode;
@@ -134,6 +135,7 @@ class Scope{
         int triggerCount;
         int autoTriggerCount;
         bool started;
+        bool settingUp;
         bool customTriggered;
         
         // FFT

@@ -212,7 +212,7 @@ function CPU(data){
 			let one = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset-1] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 			let two = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset  ] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 			xOff = one/(one+two)-0.5;
-			console.log(xOff, xOffset);
+			//console.log(xOff, xOffset);
 		}
 	};
 	

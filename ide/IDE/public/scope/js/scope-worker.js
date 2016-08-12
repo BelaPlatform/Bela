@@ -29,11 +29,38 @@ socket.on('buffer', function(buf){
 
 	socket.emit('buffer-received');
 
-	var floatArray = new Float32Array(buf);
-	//console.log("worker: recieved buffer of length "+floatArray.length);
+	var inArray = new Float32Array(buf);
+	//console.log("worker: recieved buffer of length "+inArray.length);
 	//console.log(settings.frameHeight, settings.numChannels.value, settings.frameWidth.value, channelConfig);
 	
-	if (floatArray.length <= settings.numChannels.value*settings.frameWidth.value){
+	var numChannels = settings.numChannels.value;
+	var upSampling = settings.upSampling.value;
+	
+	var inFrameWidth = parseInt(settings.frameWidth.value/settings.upSampling.value);
+	var outFrameWidth = settings.frameWidth.value;
+	
+	var inArrayWidth = numChannels * inFrameWidth;
+	var outArrayWidth = numChannels * outFrameWidth;
+	
+	var outArray = new Float32Array(outArrayWidth);
+	
+	if (inArray.length !== inArrayWidth) {
+		console.log(inArray.length, inArrayWidth);
+		console.log('frame dropped');
+		return;
+	}
+	
+	for (let channel=0; channel<numChannels; channel++){
+		for (let u=0; u<upSampling; u++){
+			for (let frame=0; frame<inFrameWidth; frame++){
+				outArray[channel*outFrameWidth + frame*upSampling + u] = zero * (1 - (channelConfig[channel].yOffset + inArray[channel*inFrameWidth + frame]) / channelConfig[channel].yAmplitude);
+			}
+		}
+	}
+	
+	postMessage(outArray, [outArray.buffer]);
+	
+	/*if (floatArray.length <= settings.numChannels.value*settings.frameWidth.value){
 	
 		for (var i=0; i<settings.numChannels.value; i++){
 			for (var j=0; j<settings.frameWidth.value; j++){
@@ -48,6 +75,6 @@ socket.on('buffer', function(buf){
 	
 		console.log('frame dropped');
 		
-	}
+	}*/
 
 });
