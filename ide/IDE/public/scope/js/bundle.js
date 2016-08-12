@@ -1134,7 +1134,8 @@ var paused = false,
     oneShot = false,
     triggerChannel = 0,
     triggerLevel = 0,
-    xOffset = 0;
+    xOffset = 0,
+    upSampling = 1;
 
 // view events
 controlView.on('settings-event', function (key, value) {
@@ -1213,6 +1214,7 @@ settings.on('set', function (data, changedKeys) {
 	triggerChannel = parseInt(data['triggerChannel'].value);
 	triggerLevel = parseFloat(data['triggerLevel'].value);
 	xOffset = parseInt(data['xOffset'].value);
+	upSampling = parseInt(data['upSampling'].value);
 });
 
 // window events
@@ -1387,10 +1389,20 @@ function CPU(data) {
 
 			// interpolate the trigger sample to get the sub-pixel x-offset
 			if (settings.getKey('plotMode').value == 0) {
-				var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-				var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-				xOff = one / (one + two) - 0.5;
-				//console.log(xOff, xOffset);
+				if (upSampling == 1) {
+					var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+					var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+					xOff = one / (one + two) - 0.5;
+				} else {
+					for (var i = 0; i <= upSampling * 2; i++) {
+						var _one = frame[Math.floor(triggerChannel * length + length / 2) + xOffset * upSampling - i] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1);
+						var _two = frame[Math.floor(triggerChannel * length + length / 2) + xOffset * upSampling + i] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1);
+						if (_one > triggerLevel && _two < triggerLevel || _one < triggerLevel && _two > triggerLevel) {
+							xOff = i * (Math.abs(_one) / (Math.abs(_one) + Math.abs(_two)) - 1);
+							break;
+						}
+					}
+				}
 			}
 		};
 

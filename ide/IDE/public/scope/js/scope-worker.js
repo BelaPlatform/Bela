@@ -32,6 +32,10 @@ socket.on('buffer', function(buf){
 	var inArray = new Float32Array(buf);
 	//console.log("worker: recieved buffer of length "+inArray.length);
 	//console.log(settings.frameHeight, settings.numChannels.value, settings.frameWidth.value, channelConfig);
+	var triggerChannel = settings.triggerChannel.value;
+	var xOffset = settings.xOffset.value;
+	var triggerLevel = settings.triggerLevel.value;
+	
 	
 	var numChannels = settings.numChannels.value;
 	var upSampling = settings.upSampling.value;
@@ -53,7 +57,9 @@ socket.on('buffer', function(buf){
 	for (let channel=0; channel<numChannels; channel++){
 		for (let u=0; u<upSampling; u++){
 			for (let frame=0; frame<inFrameWidth; frame++){
-				outArray[channel*outFrameWidth + frame*upSampling + u] = zero * (1 - (channelConfig[channel].yOffset + inArray[channel*inFrameWidth + frame]) / channelConfig[channel].yAmplitude);
+				var outIndex = channel*outFrameWidth + frame*upSampling + u;
+				var inIndex = channel*inFrameWidth + frame;
+				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+u*(inArray[inIndex+1]-inArray[inIndex])/upSampling)) / channelConfig[channel].yAmplitude);
 			}
 		}
 	}
