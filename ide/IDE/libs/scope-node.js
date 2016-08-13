@@ -17,6 +17,8 @@ var settings = {
 	upSampling		: {type: 'integer', value: 1},
 	downSampling	: {type: 'integer', value: 1},
 	FFTLength		: {type: 'integer', value: 1024},
+	FFTXAxis		: {type: 'integer', value: 0},
+	FFTYAxis		: {type: 'integer', value: 0},
 	holdOff			: {type: 'float', value: 20},
 	numSliders		: {type: 'integer', value:0}
 }

@@ -146,6 +146,8 @@ class Scope{
         int pointerFFT;
         bool collectingFFT;
         float *windowFFT;
+        int FFTXAxis;
+        int FFTYAxis;
         
         ne10_fft_cpx_float32_t* inFFT;
     	ne10_fft_cpx_float32_t* outFFT;

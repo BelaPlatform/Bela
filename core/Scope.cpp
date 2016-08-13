@@ -1,7 +1,7 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
 
-Scope::Scope():connected(0), triggerPrimed(false), started(false), upSampling(1), downSampling(1), settingUp(true){}
+Scope::Scope():connected(0), upSampling(1), downSampling(1), triggerPrimed(false), started(false), settingUp(true){}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -378,6 +378,7 @@ void Scope::doFFT(){
     // constants
     int ptr = readPointer-FFTLength+channelWidth;
     float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
+    float logConst = -logf(1.0f/(float)frameWidth)/(float)frameWidth;
     
     for (int c=0; c<numChannels; c++){
     
@@ -392,12 +393,28 @@ void Scope::doFFT(){
         
         // take the magnitude of the complex FFT output, scale it and interpolate
         for (int i=0; i<frameWidth; i++){
-            float findex = (float)i*ratio;
-            int index = (int)findex;
-            float rem = findex - index;
             
-            float first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
-            float second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+            float findex, rem = 0.0f;
+            int index;
+            
+            if (FFTXAxis == 0){  // linear
+                findex = (float)i*ratio;
+                index = (int)findex;
+                rem = findex - index;
+            } else if (FFTXAxis == 1){  // logarithmic
+                findex = expf((float)i*logConst);
+                index = (int)(findex*ratio);
+                rem = findex*ratio - index;
+            }
+            
+            float first = 0.0f, second = 0.0f;
+            if (FFTYAxis == 0){ // normalised linear magnitude
+                first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+                second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+            } else if (FFTYAxis == 1){ // decibels
+                first = 10.0f*log10f((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+                second = 10.0f*log10f((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+            }
             
             outBuffer[c*frameWidth+i] = FFTScale * (first + rem * (second - first));
         }
@@ -489,6 +506,10 @@ void Scope::parseMessage(oscpkt::Message msg){
             FFTLength = intArg;
             FFTScale = 1.0/((float)intArg);
             start();
+        } else if (msg.match("/scope-settings/FFTXAxis").popInt32(intArg).isOkNoMoreArgs()){
+            FFTXAxis = intArg;
+        } else if (msg.match("/scope-settings/FFTYAxis").popInt32(intArg).isOkNoMoreArgs()){
+            FFTYAxis = intArg;
         }
     } else if (msg.partialMatch("/scope-sliders/")){
         int intArg;
