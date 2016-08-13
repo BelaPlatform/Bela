@@ -1,7 +1,7 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
 
-Scope::Scope():connected(0), triggerPrimed(false), started(false), upSampling(1), settingUp(true){}
+Scope::Scope():connected(0), triggerPrimed(false), started(false), upSampling(1), downSampling(1), settingUp(true){}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -21,6 +21,11 @@ void Scope::sendBufferTask(void *ptr){
         }
         usleep(1000);
     }
+}
+void Scope::plotModeTask(void *ptr){
+    Scope *instance = (Scope*)ptr;
+    rt_printf("task\n");
+    instance->setPlotMode();
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders){
@@ -43,6 +48,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 	// setup the auxiliary tasks
 	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
 	scopeSendBufferTask = Bela_createAuxiliaryTask(Scope::sendBufferTask, BELA_AUDIO_PRIORITY-1, "scopeSendBufferTask", this);
+	scopePlotModeTask = Bela_createAuxiliaryTask(Scope::plotModeTask, BELA_AUDIO_PRIORITY-3, "scopePlotModeTask", this);
 	
 	// setup the sliders
 	sliders.reserve(numSliders);
@@ -63,15 +69,18 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
     settingUp = false;
     
     if (handshakeReceived && connected)
-        start();
+        start(true);
     
 }
 
-void Scope::start(){
+void Scope::start(bool setup){
     
     if (started || settingUp) return;
     
-    setPlotMode();
+    if (setup)
+        setPlotMode();
+    else
+        Bela_scheduleAuxiliaryTask(scopePlotModeTask);
 
     // reset the pointers
     writePointer = 0;
@@ -96,13 +105,15 @@ void Scope::stop(){
 }
 
 void Scope::setPlotMode(){
-
-    if (upSampling < 1) upSampling = 1;
-    rt_printf("%i\n", numChannels*frameWidth/upSampling);
-
-    // resize the buffers
+    rt_printf("func\n");
+    if (settingUp) return;
+    
+    // setup the input buffer
+    frameWidth = pixelWidth/upSampling;
     channelWidth = frameWidth * FRAMES_STORED;
     buffer.resize(numChannels*channelWidth);
+    
+    // setup the output buffer
     outBuffer.resize(numChannels*frameWidth);
     
     // reset the trigger
@@ -262,22 +273,22 @@ void Scope::triggerTimeDomain(){
                 triggerCollecting = true;
                 
                 // save the readpointer at the trigger point
-                triggerPointer = (readPointer-xOffset+channelWidth)%channelWidth;
+                triggerPointer = (readPointer-xOffsetSamples+channelWidth)%channelWidth;
                 
-                triggerCount = frameWidth/2.0f - xOffset;
+                triggerCount = frameWidth/2.0f - xOffsetSamples;
                 autoTriggerCount = 0;
                 
             } else {
                 // auto triggering
-                if (triggerMode == 0 && (autoTriggerCount++ > (frameWidth+holdOff))){
+                if (triggerMode == 0 && (autoTriggerCount++ > (frameWidth+holdOffSamples))){
                     // it's been a whole frameWidth since we've found a trigger, so auto-trigger anyway
                     triggerPrimed = false;
                     triggerCollecting = true;
                     
                     // save the readpointer at the trigger point
-                    triggerPointer = (readPointer-xOffset+channelWidth)%channelWidth;
+                    triggerPointer = (readPointer-xOffsetSamples+channelWidth)%channelWidth;
                     
-                    triggerCount = frameWidth/2.0f - xOffset;
+                    triggerCount = frameWidth/2.0f - xOffsetSamples;
                     autoTriggerCount = 0;
                 }
             }
@@ -417,31 +428,38 @@ void Scope::setSlider(int slider, float min, float max, float step, float value)
     );
 }
 
+void Scope::setXParams(){
+    if (plotMode == 0){
+        holdOffSamples = (int)(sampleRate*0.001*holdOff/downSampling);
+    } else if (plotMode == 1){
+        holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling);
+    }
+    xOffsetSamples = xOffset/upSampling;
+}
+
 void Scope::parseMessage(oscpkt::Message msg){
     if (msg.partialMatch("/scope-settings/")){
         int intArg;
         float floatArg;
         if (msg.match("/scope-settings/connected").popInt32(intArg).isOkNoMoreArgs()){
             if (connected == 0 && intArg == 1){
-                rt_printf("connected start\n");
+                // rt_printf("connected start\n");
                 start();
             } else if (connected == 1 && intArg == 0){
                 stop();
             }
             connected = intArg;
         } else if (msg.match("/scope-settings/frameWidth").popInt32(intArg).isOkNoMoreArgs()){
-            //if (!settingUp) {
-                rt_printf("recieved frameWidth: %i, %i\n", intArg, upSampling);
-                stop();
-                pixelWidth = intArg;
-                frameWidth = intArg/upSampling;
-                start();
-                //return;
-            //}
-            //pixelWidth = intArg;
+            // rt_printf("recieved frameWidth: %i\n", intArg);
+            stop();
+            pixelWidth = intArg;
+            start();
         } else if (msg.match("/scope-settings/plotMode").popInt32(intArg).isOkNoMoreArgs()){
+            // rt_printf("recieved plotMode: %i\n", intArg);
+            stop();
             plotMode = intArg;
-            setPlotMode();
+            setXParams();
+            start();
         } else if (msg.match("/scope-settings/triggerMode").popInt32(intArg).isOkNoMoreArgs()){
             triggerMode = intArg;
         } else if (msg.match("/scope-settings/triggerChannel").popInt32(intArg).isOkNoMoreArgs()){
@@ -452,28 +470,25 @@ void Scope::parseMessage(oscpkt::Message msg){
             triggerLevel = floatArg;
         } else if (msg.match("/scope-settings/xOffset").popInt32(intArg).isOkNoMoreArgs()){
             xOffset = intArg;
+            setXParams();
         } else if (msg.match("/scope-settings/upSampling").popInt32(intArg).isOkNoMoreArgs()){
-            //if (!settingUp){
-                rt_printf("recieved upSampling: %i\n", intArg);
-                stop();
-                upSampling = intArg;
-                rt_printf("%i\n", pixelWidth);
-                frameWidth = pixelWidth / upSampling;
-                start();
-               // return;
-            //}
-            //upSampling = intArg;
-            // holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
+            // rt_printf("recieved upSampling: %i\n", intArg);
+            stop();
+            upSampling = intArg;
+            setXParams();
+            start();
         } else if (msg.match("/scope-settings/downSampling").popInt32(intArg).isOkNoMoreArgs()){
             downSampling = intArg;
-            holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
+            setXParams();
         } else if (msg.match("/scope-settings/holdOff").popFloat(floatArg).isOkNoMoreArgs()){
             holdOff = floatArg;
-            holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling/downSampling);
+            setXParams();
         } else if (msg.match("/scope-settings/FFTLength").popInt32(intArg).isOkNoMoreArgs()){
+            // rt_printf("recieved FFTLength: %i\n", intArg);
+            stop();
             FFTLength = intArg;
             FFTScale = 1.0/((float)intArg);
-            setPlotMode();
+            start();
         }
     } else if (msg.partialMatch("/scope-sliders/")){
         int intArg;

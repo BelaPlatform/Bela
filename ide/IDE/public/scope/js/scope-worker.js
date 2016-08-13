@@ -40,7 +40,7 @@ socket.on('buffer', function(buf){
 	var numChannels = settings.numChannels.value;
 	var upSampling = settings.upSampling.value;
 	
-	var inFrameWidth = parseInt(settings.frameWidth.value/settings.upSampling.value);
+	var inFrameWidth = Math.floor(settings.frameWidth.value/upSampling);
 	var outFrameWidth = settings.frameWidth.value;
 	
 	var inArrayWidth = numChannels * inFrameWidth;
@@ -49,8 +49,8 @@ socket.on('buffer', function(buf){
 	var outArray = new Float32Array(outArrayWidth);
 	
 	if (inArray.length !== inArrayWidth) {
-		console.log(inArray.length, inArrayWidth);
-		console.log('frame dropped');
+		//console.log(inArray.length, inArrayWidth, inFrameWidth);
+		//console.log('frame dropped');
 		return;
 	}
 	
@@ -59,28 +59,12 @@ socket.on('buffer', function(buf){
 			for (let frame=0; frame<inFrameWidth; frame++){
 				var outIndex = channel*outFrameWidth + frame*upSampling + u;
 				var inIndex = channel*inFrameWidth + frame;
-				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+u*(inArray[inIndex+1]-inArray[inIndex])/upSampling)) / channelConfig[channel].yAmplitude);
+				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+u*((inArray[inIndex+1]||inArray[inIndex])-inArray[inIndex])/upSampling)) / channelConfig[channel].yAmplitude);
 			}
 		}
 	}
 	
 	postMessage(outArray, [outArray.buffer]);
-	
-	/*if (floatArray.length <= settings.numChannels.value*settings.frameWidth.value){
-	
-		for (var i=0; i<settings.numChannels.value; i++){
-			for (var j=0; j<settings.frameWidth.value; j++){
-				var index = i*settings.frameWidth.value + j;
-				floatArray[index] = ( zero * (1 - (channelConfig[i].yOffset+floatArray[index])/channelConfig[i].yAmplitude)  );
-			}
-		}
-		//console.log("worker: passing buffer of length "+floatArray.length);
-		postMessage(floatArray, [floatArray.buffer]);
-		
-	} else {
-	
-		console.log('frame dropped');
-		
-	}*/
+
 
 });

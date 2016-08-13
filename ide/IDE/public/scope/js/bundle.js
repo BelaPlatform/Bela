@@ -1392,7 +1392,7 @@ function CPU(data) {
 				if (upSampling == 1) {
 					var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
 					var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-					xOff = one / (one + two) - 0.5;
+					xOff = one / (one + two) - 1.5;
 				} else {
 					for (var i = 0; i <= upSampling * 2; i++) {
 						var _one = frame[Math.floor(triggerChannel * length + length / 2) + xOffset * upSampling - i] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1);

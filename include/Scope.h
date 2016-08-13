@@ -75,7 +75,7 @@ class Scope{
         UdpClient socket;
         
         void parseMessage(oscpkt::Message);
-        void start();
+        void start(bool setup = false);
         void stop();
         void triggerTimeDomain();
         void triggerFFT();
@@ -89,6 +89,7 @@ class Scope{
         void postlog(int);
         void setPlotMode();
         void doFFT();
+        void setXParams();
         
         // settings
         int numChannels;
@@ -102,6 +103,7 @@ class Scope{
         int triggerDir;
         float triggerLevel;
         int xOffset;
+        int xOffsetSamples;
         int upSampling;
         int downSampling;
         float holdOff;
@@ -155,6 +157,9 @@ class Scope{
         
         AuxiliaryTask scopeSendBufferTask;
         static void sendBufferTask(void*);
+        
+        AuxiliaryTask scopePlotModeTask;
+        static void plotModeTask(void*);
         
 };
 
