@@ -25,23 +25,32 @@ class BackgroundView extends View{
 		//ctx.clearRect(0, 0, canvas.width, canvas.height);
 		
 		if (data.plotMode.value == 1){
-			this.FFTBG(canvas, ctx);
+			this.FFTBG(canvas, ctx, data);
 			return;
 		}
 		
 		var xPixels = xTime*this.models[0].getKey('sampleRate').value/1000;
 		var numVLines = Math.floor(canvas.width/xPixels);
+		var mspersample = xTime*data.downSampling.value/data.upSampling.value;
+		
+		console.log(xTime);
 
 		//faint lines
 		ctx.strokeStyle = '#000000';
+		ctx.fillStyle="grey";
+		ctx.font = "14px inconsolata";
+		ctx.textAlign = "center";
 		ctx.lineWidth = 0.2;
 		ctx.setLineDash([]);
 		ctx.beginPath();
+		ctx.fillText(0, canvas.width/2, canvas.height/2+11);
 		for (var i=1; i<numVLines; i++){
 			ctx.moveTo(canvas.width/2 + i*xPixels, 0);
 			ctx.lineTo(canvas.width/2 + i*xPixels, canvas.height);
+			ctx.fillText((i*mspersample).toPrecision(2), canvas.width/2 + i*xPixels, canvas.height/2+11);
 			ctx.moveTo(canvas.width/2 - i*xPixels, 0);
 			ctx.lineTo(canvas.width/2 - i*xPixels, canvas.height);
+			ctx.fillText((-i*mspersample).toPrecision(2), canvas.width/2 - i*xPixels, canvas.height/2+11);
 		}
 		
 		var numHLines = 6;
@@ -121,20 +130,30 @@ class BackgroundView extends View{
 		ctx.stroke();*/
 	}
 	
-	FFTBG(canvas, ctx){
+	FFTBG(canvas, ctx, data){
 		
 		var numVlines = 10;
 		
 		//faint lines
 		ctx.strokeStyle = '#000000';
-		ctx.lineWidth = 0.2;
+		ctx.fillStyle="grey";
+		ctx.font = "14px inconsolata";
+		ctx.textAlign = "center";
+		ctx.lineWidth = 0.3;
 		ctx.setLineDash([]);
 		ctx.beginPath();
 		for (var i=0; i <= numVlines; i++){
 			ctx.moveTo(i*window.innerWidth/numVlines, 0);
 			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
-			ctx.moveTo(i*window.innerWidth/numVlines, 0);
-			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
+			if (i && i !== numVlines){
+				var val;
+				if (this.models[0].getKey('FFTXAxis').value === 0)
+					val = ((i*22050/numVlines)*data.upSampling.value/data.downSampling.value).toFixed(0);
+				else 
+					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (22050/window.innerWidth) * (data.upSampling.value/data.downSampling.value)).toFixed(0);
+
+				ctx.fillText(val, i*window.innerWidth/numVlines, canvas.height-2);
+			}
 		}
 		
 		var numHLines = 6;
@@ -164,6 +183,13 @@ class BackgroundView extends View{
 	}
 	
 	_plotMode(value, data){
+		this.repaintBG(data.xTimeBase, data);
+	}
+	
+	_upSampling(value, data){
+		this.repaintBG(data.xTimeBase, data);
+	}
+	_downSampling(value, data){
 		this.repaintBG(data.xTimeBase, data);
 	}
 	

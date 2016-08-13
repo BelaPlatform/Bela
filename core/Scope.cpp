@@ -394,18 +394,15 @@ void Scope::doFFT(){
         // take the magnitude of the complex FFT output, scale it and interpolate
         for (int i=0; i<frameWidth; i++){
             
-            float findex, rem = 0.0f;
-            int index;
-            
+            float findex = 0.0f;
             if (FFTXAxis == 0){  // linear
                 findex = (float)i*ratio;
-                index = (int)findex;
-                rem = findex - index;
             } else if (FFTXAxis == 1){  // logarithmic
-                findex = expf((float)i*logConst);
-                index = (int)(findex*ratio);
-                rem = findex*ratio - index;
+                findex = expf((float)i*logConst)*ratio;
             }
+            
+            int index = (int)(findex);
+            float rem = findex - index;
             
             float first = 0.0f, second = 0.0f;
             if (FFTYAxis == 0){ // normalised linear magnitude

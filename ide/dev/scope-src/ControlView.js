@@ -65,7 +65,7 @@ class ControlView extends View{
 		} else if (data.plotMode.value == 1){
 			$('.xUnit-display').html((data.sampleRate.value/20 * data.upSampling.value/data.downSampling.value));
 		}
-		$('.zoom-display').html((100*data.upSampling.value/data.downSampling.value)+'%');
+		$('.zoom-display').html((100*data.upSampling.value/data.downSampling.value).toPrecision(4)+'%');
 	}
 	_downSampling(value, data){
 		downSampling = value.value;
@@ -74,7 +74,7 @@ class ControlView extends View{
 		} else if (data.plotMode.value == 1){
 			$('.xUnit-display').html((data.sampleRate.value/20 * data.upSampling.value/data.downSampling.value));
 		}
-		$('.zoom-display').html((100*data.upSampling.value/data.downSampling.value)+'%');
+		$('.zoom-display').html((100*data.upSampling.value/data.downSampling.value).toPrecision(4)+'%');
 	}
 	_xTimeBase(value, data){
 		xTime = data.xTimeBase;
