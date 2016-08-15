@@ -1,7 +1,7 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
 
-Scope::Scope():connected(0), upSampling(1), downSampling(1), triggerPrimed(false), started(false), settingUp(true){}
+Scope::Scope():connected(0), upSampling(1), downSampling(1), triggerPrimed(false), started(false), settingUp(true), isUsingBuffers(false), isResizing(false){}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -29,7 +29,7 @@ void Scope::plotModeTask(void *ptr){
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders){
-    
+   
     numChannels = _numChannels;
     sampleRate = _sampleRate;
     numSliders = _numSliders;
@@ -97,17 +97,17 @@ void Scope::start(bool setup){
 
 void Scope::stop(){
     started = false;
-    if (plotMode == 1){
-        NE10_FREE(inFFT);
-        NE10_FREE(outFFT);
-		NE10_FREE(cfg);
-        delete[] windowFFT;
-    }
 }
 
 void Scope::setPlotMode(){
-    rt_printf("func\n");
     if (settingUp) return;
+	isResizing = true;
+	while(!gShouldStop && isUsingBuffers){
+		printf("waiting for threads\n");
+		usleep(100000);
+	}
+	FFTLength = newFFTLength;
+    FFTScale = 1.0/((float)FFTLength );
     
     // setup the input buffer
     frameWidth = pixelWidth/upSampling;
@@ -149,11 +149,12 @@ void Scope::setPlotMode(){
     	}
         
     }
-    
+   isResizing = false; 
 }
 
 void Scope::log(float* values){
-    
+	if(isResizing)
+		return;
 	if (!prelog()) return;
 
     int startingWritePointer = writePointer;
@@ -380,6 +381,9 @@ void Scope::triggerFFT(){
 
 void Scope::doFFT(){
     
+	if(isResizing)
+		return;
+	isUsingBuffers = true;
     // constants
     int ptr = readPointer-FFTLength+channelWidth;
     float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
@@ -423,11 +427,16 @@ void Scope::doFFT(){
         
     }
     
+	isUsingBuffers = false;
     scheduleSendBufferTask();
 }
 
 void Scope::sendBuffer(){
+	if(isResizing)
+		return;
+	isUsingBuffers = true;
     socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
+	isUsingBuffers = false;
 }
 
 float Scope::getSliderValue(int slider){
@@ -505,8 +514,7 @@ void Scope::parseMessage(oscpkt::Message msg){
         } else if (msg.match("/scope-settings/FFTLength").popInt32(intArg).isOkNoMoreArgs()){
             // rt_printf("recieved FFTLength: %i\n", intArg);
             stop();
-            FFTLength = intArg;
-            FFTScale = 1.0/((float)intArg);
+            newFFTLength = intArg;
             start();
         } else if (msg.match("/scope-settings/FFTXAxis").popInt32(intArg).isOkNoMoreArgs()){
             FFTXAxis = intArg;

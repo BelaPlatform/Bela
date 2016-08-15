@@ -6,6 +6,8 @@
 #include <OSCClient.h>
 #include <ne10/NE10.h>
 #include <stdarg.h>
+#include <native/mutex.h>
+#include <native/cond.h>
 
 #define OSC_RECEIVE_PORT 8675
 #define OSC_SEND_PORT 8676
@@ -91,6 +93,8 @@ class Scope{
         void doFFT();
         void setXParams();
         
+		bool isUsingBuffers;
+		bool isResizing;
         // settings
         int numChannels;
         float sampleRate;
@@ -142,6 +146,7 @@ class Scope{
         
         // FFT
         int FFTLength;
+		int newFFTLength;
         float FFTScale;
         int pointerFFT;
         bool collectingFFT;
