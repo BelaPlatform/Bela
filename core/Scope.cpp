@@ -98,9 +98,10 @@ void Scope::start(bool setup){
 void Scope::stop(){
     started = false;
     if (plotMode == 1){
-        delete inFFT;
-        delete outFFT;
-        delete windowFFT;
+        NE10_FREE(inFFT);
+        NE10_FREE(outFFT);
+		NE10_FREE(cfg);
+        delete[] windowFFT;
     }
 }
 
@@ -110,7 +111,12 @@ void Scope::setPlotMode(){
     
     // setup the input buffer
     frameWidth = pixelWidth/upSampling;
-    channelWidth = frameWidth * FRAMES_STORED;
+	if(plotMode == 0 ) { // time domain 
+		// let's keep 4 buffers for a greater x-offset range
+		channelWidth = frameWidth * 4;
+	} else {
+		channelWidth = FFTLength;
+	}
     buffer.resize(numChannels*channelWidth);
     
     // setup the output buffer
@@ -127,10 +133,9 @@ void Scope::setPlotMode(){
     customTriggered = false;
         
     if (plotMode == 1){ // frequency domain
-        //inFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
-        inFFT = new ne10_fft_cpx_float32_t[FFTLength];
-    	outFFT = new ne10_fft_cpx_float32_t[FFTLength * sizeof (ne10_fft_cpx_float32_t)];
-    	cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
+		inFFT  = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
+		outFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
+		cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
     	
     	pointerFFT = 0;
         collectingFFT = true;
