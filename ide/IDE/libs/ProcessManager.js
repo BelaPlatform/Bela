@@ -5,6 +5,7 @@ var util = require('util');
 var Promise = require('bluebird');
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
+var execFile = require('child_process').execFile;
 var treeKill = require('tree-kill');
 var pusage = Promise.promisifyAll(require('pidusage'));
 var fs = Promise.promisifyAll(require('fs-extra'));
@@ -233,13 +234,13 @@ class ProcessManager extends EventEmitter {
 	modeSwitches(){
 		if (!this.running()) return Promise.resolve(undefined);
 		return new Promise( (resolve, reject) => {
-			exec('./mode_switches_detector', {cwd: belaPath+'IDE/bin'}, (err, stdout, stderr) => {
-				//console.log(err, stdout, stderr);
-				if (err) reject(err);
+			execFile(belaPath+'IDE/bin/mode_switches_detector', (err, stdout, stderr) => {
+				// console.log(err, stdout, stderr, (stdout === undefined));
+				if (err && stdout === undefined) reject(err);
 				if (stderr) reject(stderr);
 				resolve(stdout);
 			});
-		});
+		}).catch( e => console.log('\nerror in mode_switches_detector\n', e) );
 	}
 	
 	*checkCPU(){
