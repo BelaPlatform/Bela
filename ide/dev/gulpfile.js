@@ -85,7 +85,7 @@ gulp.task('rebuild-nodemodules', ['upload-nodemodules'], (callback) => {
 });
 
 gulp.task('killnode', (callback) => {
-	exec('ssh '+user+'@'+host+' "make -C Bela idestop"', (err) => {
+	exec('ssh '+user+'@'+host+' "make -C Bela idestop; killall node"', (err) => {
 		if (err) console.log('unable to stop node');
 		callback(); // finished task
 	});
