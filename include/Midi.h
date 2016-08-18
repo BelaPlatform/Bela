@@ -294,7 +294,7 @@ public:
 	 * @param byte the Midi byte to write
 	 * @return 1 on success, -1 on error
 	 */
-	int writeOutput(midi_byte_t byte);
+	void writeOutput(midi_byte_t byte);
 
 	/**
 	 * Writes Midi bytes to the output port
@@ -302,7 +302,8 @@ public:
 	 * @param length number of bytes to write
 	 * @return 1 on success, -1 on error
 	 */
-	int writeOutput(midi_byte_t* bytes, unsigned int length);
+	void writeOutput(midi_byte_t* bytes, unsigned int length);
+
 	/**
 	 * Gives access to the midi parser, if it has been activated.
 	 *

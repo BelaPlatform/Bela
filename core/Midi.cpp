@@ -275,30 +275,19 @@ MidiParser* Midi::getParser(){
 		return 0;
 	}
 	return inputParser;
-};
-
-int Midi::writeOutput(midi_byte_t byte){
-	int ret = -1;
-	if(useAlsaApi && alsaOut) {
-		ret = snd_rawmidi_write(alsaOut,&byte, 1);
-		snd_rawmidi_drain(alsaOut);
-	} else {
-	   ret = writeOutput(&byte, 1);
-	}
-	return ret;
 }
 
-int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
-	int ret = -1;
-	if(useAlsaApi && alsaOut) {
-		ret = snd_rawmidi_write(alsaOut, bytes, length);
-		snd_rawmidi_drain(alsaOut);
+void Midi::writeOutput(midi_byte_t byte){
+	outputBytes[outputBytesWritePointer++] = byte;
+	if(outputBytesWritePointer >= outputBytes.size()){
+		outputBytesWritePointer = 0;
 	}
-	else {
-		ret = write(outputPort, bytes, length);
-	}
+}
 
-	return (ret < 0 ? -1 : 1);
+void Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
+	for(unsigned int n = 0; n < length; ++n){
+		writeOutput(bytes[n]);
+	}
 }
 
 MidiChannelMessage::MidiChannelMessage(){};
