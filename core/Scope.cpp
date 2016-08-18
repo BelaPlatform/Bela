@@ -1,7 +1,7 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
 
-Scope::Scope():connected(0), upSampling(1), downSampling(1), triggerPrimed(false), started(false), settingUp(true), isUsingBuffers(false), isResizing(false){}
+Scope::Scope():isUsingOutBuffer(false), isUsingBuffer(false), isResizing(true), connected(0), upSampling(1), downSampling(1), triggerPrimed(false), started(false), settingUp(true) {}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -13,6 +13,7 @@ void Scope::triggerTask(void *ptr){
     }
 }
 void Scope::sendBufferTask(void *ptr){
+// printf("sendBufferTask\n");
     Scope *instance = (Scope*)ptr;
     while(instance->started && !gShouldStop) {
         if (instance->sendBufferFlag){
@@ -24,7 +25,6 @@ void Scope::sendBufferTask(void *ptr){
 }
 void Scope::plotModeTask(void *ptr){
     Scope *instance = (Scope*)ptr;
-    rt_printf("task\n");
     instance->setPlotMode();
 }
 
@@ -73,15 +73,19 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
     
 }
 
-void Scope::start(bool setup){
+void Scope::start(bool setup /* = false */ ){
     
     if (started || settingUp) return;
     
-    if (setup)
+    if (setup){
+// printf("calling set plot mode\n");
         setPlotMode();
-    else
+// printf("returning from set plot mode\n");
+	}
+    else {
+// printf("scheduling scopePlotModeTask\n");
         Bela_scheduleAuxiliaryTask(scopePlotModeTask);
-
+	}
     // reset the pointers
     writePointer = 0;
     readPointer = 0;
@@ -100,10 +104,11 @@ void Scope::stop(){
 }
 
 void Scope::setPlotMode(){
+// printf("running setPlotMode\n");
     if (settingUp) return;
 	isResizing = true;
-	while(!gShouldStop && isUsingBuffers){
-		printf("waiting for threads\n");
+	while(!gShouldStop && (isUsingBuffer || isUsingOutBuffer)){
+// printf("waiting for threads\n");
 		usleep(100000);
 	}
 	FFTLength = newFFTLength;
@@ -149,27 +154,32 @@ void Scope::setPlotMode(){
     	}
         
     }
-   isResizing = false; 
+	isResizing = false; 
+// printf("exited setPlotMode\n");
 }
 
 void Scope::log(float* values){
+	if (!prelog()) return;
 	if(isResizing)
 		return;
-	if (!prelog()) return;
+	isUsingBuffer = true;
 
-    int startingWritePointer = writePointer;
+	int startingWritePointer = writePointer;
 
     // save the logged samples into the buffer
-    for (int i=0; i<numChannels; i++) {
-        buffer[i*channelWidth + writePointer] = values[i];
-    }
+	for (int i=0; i<numChannels; i++) {
+		buffer[i*channelWidth + writePointer] = values[i];
+	}
 
-   postlog(startingWritePointer);
+	postlog(startingWritePointer);
+	isUsingBuffer = false;
 
 }
 void Scope::log(float chn1, ...){
-    
-    if (!prelog()) return;
+	if (!prelog()) return;
+	if(isResizing)
+		return;
+	isUsingBuffer = true;
     
     va_list args;
     va_start (args, chn1);
@@ -188,6 +198,7 @@ void Scope::log(float chn1, ...){
     postlog(startingWritePointer);
     
     va_end (args);
+	isUsingBuffer = false;
     
 }
 
@@ -383,7 +394,8 @@ void Scope::doFFT(){
     
 	if(isResizing)
 		return;
-	isUsingBuffers = true;
+	isUsingBuffer = true;
+	isUsingOutBuffer = true;
     // constants
     int ptr = readPointer-FFTLength+channelWidth;
     float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
@@ -427,16 +439,17 @@ void Scope::doFFT(){
         
     }
     
-	isUsingBuffers = false;
+	isUsingOutBuffer = false;
+	isUsingBuffer = false;
     scheduleSendBufferTask();
 }
 
 void Scope::sendBuffer(){
 	if(isResizing)
 		return;
-	isUsingBuffers = true;
+	isUsingOutBuffer = true;
     socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
-	isUsingBuffers = false;
+	isUsingOutBuffer = false;
 }
 
 float Scope::getSliderValue(int slider){
@@ -467,23 +480,26 @@ void Scope::setXParams(){
 
 void Scope::parseMessage(oscpkt::Message msg){
     if (msg.partialMatch("/scope-settings/")){
+// printf("received scope-settings %s\n", msg.addressPattern().c_str());
         int intArg;
         float floatArg;
         if (msg.match("/scope-settings/connected").popInt32(intArg).isOkNoMoreArgs()){
+// printf("received connected %d\n", intArg);
             if (connected == 0 && intArg == 1){
-                // rt_printf("connected start\n");
+// printf("connected start\n");
                 start();
+// printf("connected started\n");
             } else if (connected == 1 && intArg == 0){
                 stop();
             }
             connected = intArg;
         } else if (msg.match("/scope-settings/frameWidth").popInt32(intArg).isOkNoMoreArgs()){
-            // rt_printf("recieved frameWidth: %i\n", intArg);
+// printf("received frameWidth: %i\n", intArg);
             stop();
             pixelWidth = intArg;
             start();
         } else if (msg.match("/scope-settings/plotMode").popInt32(intArg).isOkNoMoreArgs()){
-            // rt_printf("recieved plotMode: %i\n", intArg);
+// printf("received plotMode: %i\n", intArg);
             stop();
             plotMode = intArg;
             setXParams();
@@ -500,28 +516,36 @@ void Scope::parseMessage(oscpkt::Message msg){
             xOffset = intArg;
             setXParams();
         } else if (msg.match("/scope-settings/upSampling").popInt32(intArg).isOkNoMoreArgs()){
-            // rt_printf("recieved upSampling: %i\n", intArg);
+// printf("received upSampling: %i\n", intArg);
             stop();
             upSampling = intArg;
             setXParams();
             start();
         } else if (msg.match("/scope-settings/downSampling").popInt32(intArg).isOkNoMoreArgs()){
+// printf("received downsampling: %d\n", intArg);
             downSampling = intArg;
             setXParams();
         } else if (msg.match("/scope-settings/holdOff").popFloat(floatArg).isOkNoMoreArgs()){
+// printf("received holdoff: %f\n----\n", floatArg);
             holdOff = floatArg;
             setXParams();
         } else if (msg.match("/scope-settings/FFTLength").popInt32(intArg).isOkNoMoreArgs()){
-            // rt_printf("recieved FFTLength: %i\n", intArg);
+// printf("received FFTLength: %d\n", intArg);
+// printf("stopping\n");
             stop();
             newFFTLength = intArg;
+// printf("fftlength starting\n");
             start();
+// printf("fftlength started\n");
         } else if (msg.match("/scope-settings/FFTXAxis").popInt32(intArg).isOkNoMoreArgs()){
+// printf("received FFTXaxis\n");
             FFTXAxis = intArg;
         } else if (msg.match("/scope-settings/FFTYAxis").popInt32(intArg).isOkNoMoreArgs()){
+// printf("received FFTYaxis\n");
             FFTYAxis = intArg;
         }
     } else if (msg.partialMatch("/scope-sliders/")){
+// printf("received scope-sliders\n");
         int intArg;
         float floatArg;
         if (msg.match("/scope-sliders/value").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs()){

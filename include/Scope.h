@@ -93,7 +93,8 @@ class Scope{
         void doFFT();
         void setXParams();
         
-		bool isUsingBuffers;
+		bool isUsingOutBuffer;
+		bool isUsingBuffer;
 		bool isResizing;
         // settings
         int numChannels;
