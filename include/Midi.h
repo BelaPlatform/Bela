@@ -116,12 +116,14 @@ private:
 	unsigned int readPointer;
 	unsigned int elapsedDataBytes;
 	bool waitingForStatus;
+	bool receivingSysex;
 	void (*messageReadyCallback)(MidiChannelMessage,void*);
 	bool callbackEnabled;
 	void* callbackArg;
 public:
 	MidiParser(){
 		waitingForStatus = true;
+		receivingSysex = false;
 		elapsedDataBytes= 0;
 		messages.resize(100); // 100 is the number of messages that can be buffered
 		writePointer = 0;

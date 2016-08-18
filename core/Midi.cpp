@@ -40,7 +40,7 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 		if(waitingForStatus == true){
 			int statusByte = input[n];
 			MidiMessageType newType = kmmNone;
-			if (statusByte >= 0x80){//it actually is a status byte
+			if (statusByte >= 0x80 && statusByte < 0xF0){//it actually is a status byte
 				for(int n = 0; n < midiMessageStatusBytesLength; n++){ //find the statusByte in the array
 					if(midiMessageStatusBytes[n] == (statusByte&0xf0)){
 						newType = (MidiMessageType)n;
@@ -52,8 +52,21 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				messages[writePointer].setType(newType);
 				messages[writePointer].setChannel((midi_byte_t)(statusByte&0xf));
 				consumedBytes++;
+			} else if (statusByte == 0xF0) {
+				//sysex!!!
+				waitingForStatus = false;
+				receivingSysex = true;
+				rt_printf("Receiving sysex\n");
 			} else { // either something went wrong or it's a system message
 				continue;
+			}
+		} else if (receivingSysex){
+			// Just wait for the message to end
+			rt_printf("%c", input[n]);
+			if(input[n] == 0xF7){
+				receivingSysex = false;
+				waitingForStatus = true;
+				rt_printf("\nCompleted receiving sysex\n");
 			}
 		} else {
 			messages[writePointer].setDataByte(elapsedDataBytes, input[n]);
@@ -77,8 +90,8 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 };
 
 
-Midi::Midi()
-	: alsaIn(NULL), alsaOut(NULL), useAlsaApi(false) {
+Midi::Midi() : 
+alsaIn(NULL), alsaOut(NULL), useAlsaApi(false) {
 	outputPort = -1;
 	inputPort = -1;
 	inputParser = 0;
