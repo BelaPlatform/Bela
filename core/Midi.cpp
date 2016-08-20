@@ -205,6 +205,9 @@ void Midi::writeOutputLoop(){
 		} else {
 			ret = write(outputPort, &outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
 		}
+		outputBytesReadPointer += ret;
+		if(outputBytesReadPointer >= outputBytes.size())
+			outputBytesReadPointer -= outputBytes.size();
 		if(ret < 0){ //error occurred
 			rt_printf("error occurred while writing: %d\n", errno);
 			usleep(10000); //wait before retrying
