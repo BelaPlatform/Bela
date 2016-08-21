@@ -1946,7 +1946,7 @@ function createlifromxml($xml, id, filename, emitter, type) {
 		}
 	});
 
-	content.append('</br><a href="http://192.168.7.2/documentation/' + filename + '.html" target="_blank">Full Documentation</a>');
+	content.append('</br><a href="documentation/' + filename + '.html" target="_blank">Full Documentation</a>');
 
 	li.append(content);
 	return li;
