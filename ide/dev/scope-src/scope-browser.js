@@ -169,14 +169,16 @@ function CPU(data){
 		bela += data.belaLinux * rootCPU;	
 
 	}
-
-	$('#scope-cpu').html('cpu: '+(ide*rootCPU + bela).toFixed(1)+'%');
+	
+	$('#ide-cpu').html('ide: '+(ide*rootCPU).toFixed(1)+'%');
+	$('#bela-cpu').html('bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
 	
 	if (bela && (ide*rootCPU + bela) > 80){
-		$('#scope-cpu').css('color', 'red');
+		$('#ide-cpu, #bela-cpu').css('color', 'red');
 	} else {
-		$('#scope-cpu').css('color', 'black');
+		$('#ide-cpu, #bela-cpu').css('color', 'black');
 	}
+	
 }
 
 // plotting
@@ -261,11 +263,16 @@ function CPU(data){
 	plotLoop();
 	
 	// update the status indicator when triggered
-	let triggerTimeout;
+	let triggerTimeout; 
+	let inactiveTimeout = setTimeout(() => {
+		if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
+	}, 5000);
 	let scopeStatus = $('#scopeStatus');
+	let inactiveOverlay = $('#inactive-overlay');
 	function triggerStatus(){
 	
-		if (scopeStatus.hasClass('scope-status-waiting')) scopeStatus.removeClass('scope-status-waiting');
+		scopeStatus.removeClass('scope-status-waiting');
+		inactiveOverlay.removeClass('inactive-overlay-visible');
 			
 		// hack to restart the fading animation if it is in progress
 		if (scopeStatus.hasClass('scope-status-triggered')){
@@ -285,6 +292,11 @@ function CPU(data){
 			triggerTimeout = setTimeout(() => {
 				if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
 			}, 1000);
+			
+			if (inactiveTimeout) clearTimeout(inactiveTimeout);
+			inactiveTimeout = setTimeout(() => {
+				if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
+			}, 5000);
 		}
 	}
 	

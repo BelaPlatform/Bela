@@ -13,11 +13,13 @@
 				<button id="stopButton" style="display:none;">stop</button>
 				<button id="controlsButton">controls</button>
 				<button id="oneShot" style="display:none;">one-shot</button>
-				<span id="scope-cpu">cpu:</span>
+				<span id="ide-cpu">ide:</span>
+				<span id="bela-cpu">bela:</span>
 				<span id="scopeMouseX">x:</span>
 				<span id="scopeMouseY">y:</span>
 				<span id="scopeStatus" class="scope-status-waiting">waiting</span>
 			</div>
+			<div id="inactive-overlay"></div>
 			<canvas id="scope"></canvas>
 			<canvas id="scopeBG"></canvas>
 			<div id="controlPanel" class="hidden scopeControls-parent channelView-parent">
@@ -67,7 +69,7 @@
 									<td>Hold Off (ms):</td>
 									<td>
 										<input  class="scopeControls" data-key="holdOff" type="range" min="0" max="1000" value="20" step="1"></input>
-										<input class="scopeControls" data-key="holdOff" type="number" value="20" step="1"></input>
+										<input class="scopeControls" data-key="holdOff" type="number" value="20" step="1" min="0"></input>
 									</td>
 								</tr>
 							</tbody>
