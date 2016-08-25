@@ -1,7 +1,15 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
 
-Scope::Scope():isUsingOutBuffer(false), isUsingBuffer(false), isResizing(true), connected(0), upSampling(1), downSampling(1), triggerPrimed(false), started(false), settingUp(true) {}
+Scope::Scope(): isUsingOutBuffer(false), 
+                isUsingBuffer(false), 
+                isResizing(true), 
+                connected(0), 
+                upSampling(1), 
+                downSampling(1), 
+                triggerPrimed(false), 
+                started(false), 
+                settingUp(true) {}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -225,20 +233,7 @@ void Scope::postlog(int startingWritePointer){
     
     writePointer = (writePointer+1)%channelWidth;
     
-    // if upSampling > 1, save repeated samples into the buffer
-    /*for (int j=1; j<upSampling; j++){
-        
-        buffer[writePointer] = buffer[startingWritePointer];
-    
-        for (int i=1; i<numChannels; i++) {
-            buffer[i*channelWidth + writePointer] = buffer[i*channelWidth + startingWritePointer];
-        }
-    
-        writePointer = (writePointer+1)%channelWidth;
-        
-    }*/
-    
-    logCount += 1;//upSampling;
+    logCount += 1;
     if (logCount > TRIGGER_LOG_COUNT){
         logCount = 0;
         Bela_scheduleAuxiliaryTask(scopeTriggerTask);
@@ -280,10 +275,6 @@ void Scope::triggerTimeDomain(){
             
             // if we crossed the trigger threshold
             if (triggered()){
-                
-                // float tFirst = fabs(buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)]);
-                // float tSecond = fabs(buffer[channelWidth*triggerChannel+((readPointer+channelWidth)%channelWidth)]);
-                // rt_printf("%f\n", tFirst/(tFirst+tSecond)-0.5f);
                 
                 // stop listening for a trigger
                 triggerPrimed = false;
@@ -394,8 +385,10 @@ void Scope::doFFT(){
     
 	if(isResizing)
 		return;
+	
 	isUsingBuffer = true;
 	isUsingOutBuffer = true;
+	
     // constants
     int ptr = readPointer-FFTLength+channelWidth;
     float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
@@ -412,29 +405,73 @@ void Scope::doFFT(){
         // do the FFT
         ne10_fft_c2c_1d_float32_neon (outFFT, inFFT, cfg, 0);
         
-        // take the magnitude of the complex FFT output, scale it and interpolate
-        for (int i=0; i<frameWidth; i++){
-            
-            float findex = 0.0f;
-            if (FFTXAxis == 0){  // linear
-                findex = (float)i*ratio;
-            } else if (FFTXAxis == 1){  // logarithmic
-                findex = expf((float)i*logConst)*ratio;
+        if (ratio < 1.0f){
+        
+            // take the magnitude of the complex FFT output, scale it and interpolate
+            for (int i=0; i<frameWidth; i++){
+                
+                float findex = 0.0f;
+                if (FFTXAxis == 0){  // linear
+                    findex = (float)i*ratio;
+                } else if (FFTXAxis == 1){  // logarithmic
+                    findex = expf((float)i*logConst)*ratio;
+                }
+                
+                int index = (int)(findex);
+                float rem = findex - index;
+                
+                float first = 0.0f, second = 0.0f;
+                if (FFTYAxis == 0){ // normalised linear magnitude
+                    first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+                    second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+                } else if (FFTYAxis == 1){ // decibels
+                    first = 10.0f*log10f((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
+                    second = 10.0f*log10f((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+                }
+                
+                outBuffer[c*frameWidth+i] = FFTScale * (first + rem * (second - first));
             }
             
-            int index = (int)(findex);
-            float rem = findex - index;
+        } else {
             
-            float first = 0.0f, second = 0.0f;
-            if (FFTYAxis == 0){ // normalised linear magnitude
-                first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
-                second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
-            } else if (FFTYAxis == 1){ // decibels
-                first = 10.0f*log10f((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
-                second = 10.0f*log10f((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
+            /*float mags[FFTLength/2];
+            for (int i=0; i<FFTLength/2; i++){
+                mags[i] = (float)(outFFT[i].r * outFFT[i].r + outFFT[i].i * outFFT[i].i);
+            }*/
+            
+            for (int i=0; i<frameWidth; i++){
+                
+                float findex = (float)i*ratio;
+                int mindex = 0;
+                int maxdex = 0;
+                if (FFTXAxis == 0){  // linear
+                    mindex = (int)(findex - ratio/2.0f) + 1;
+                    maxdex = (int)(findex + ratio/2.0f);
+                } else if (FFTXAxis == 1){ // logarithmic
+                    mindex = expf(((float)i - 0.5f)*logConst)*ratio;
+                    maxdex = expf(((float)i + 0.5f)*logConst)*ratio;
+                }
+                
+                if (mindex < 0) mindex = 0;
+                if (maxdex >= FFTLength/2) maxdex = FFTLength/2;
+                
+                // do all magnitudes first, then search
+                float maxVal = 0.0f;
+                for (int j=mindex; j<=maxdex; j++){
+                    float mag = (float)(outFFT[j].r * outFFT[j].r + outFFT[j].i * outFFT[j].i);
+                    if (mag > maxVal){
+                        maxVal = mag;
+                    }
+                }
+                
+                if (FFTYAxis == 0){ // normalised linear magnitude
+                    outBuffer[c*frameWidth+i] = FFTScale * sqrtf(maxVal);
+                } else if (FFTYAxis == 1){ // decibels
+                    outBuffer[c*frameWidth+i] = FFTScale * 10.0f*log10f(maxVal);
+                }
+                
             }
             
-            outBuffer[c*frameWidth+i] = FFTScale * (first + rem * (second - first));
         }
         
     }

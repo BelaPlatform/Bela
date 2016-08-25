@@ -61,6 +61,7 @@ class scopeOSC extends EventEmitter {
 	}
 	
 	sendSliderValue(slider, value){
+		if (!value) value = 0;
 		this.send({
 			address	: '/scope-sliders/value',
 			args	: [
