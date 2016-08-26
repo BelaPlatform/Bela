@@ -338,7 +338,9 @@ void Scope::triggerTimeDomain(){
             
             // a trigger has completed, so wait half a framewidth before looking for another
             if (--triggerCount > 0){
-                
+                // make sure holdoff doesn't get reduced while waiting
+                if (triggerCount > frameWidth/2.0f + holdOffSamples) 
+                    triggerCount = frameWidth/2.0f + holdOffSamples;
             } else {
                 triggerWaiting = false;
                 triggerPrimed = true;
@@ -455,7 +457,7 @@ void Scope::doFFT(){
                 if (mindex < 0) mindex = 0;
                 if (maxdex >= FFTLength/2) maxdex = FFTLength/2;
                 
-                // do all magnitudes first, then search
+                // do all magnitudes first, then search? - turns out this doesnt help
                 float maxVal = 0.0f;
                 for (int j=mindex; j<=maxdex; j++){
                     float mag = (float)(outFFT[j].r * outFFT[j].r + outFFT[j].i * outFFT[j].i);
