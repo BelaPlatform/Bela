@@ -74,8 +74,8 @@ class Scope{
         /** 
          * \brief Read the value of a slider
          *
-         * If a slider was created in setup(), the value of that slider at any time can
-         * be read with this function. This allows values in your code to be adjusted in 
+         * If a slider was created in setup(), the value of that slider can be read at 
+         * any time with this function. This allows values in your code to be adjusted in 
          * real-time from the scope's UI.
          * 
          * @param slider the index of the slider to read
@@ -83,7 +83,7 @@ class Scope{
         float getSliderValue(int slider);
         
         /** 
-         * \brief Initialise a sliders value and parameters
+         * \brief Initialise a slider's value and parameters
          *
          * This method can be used to set a slider's value and parameters, including
          * its minimum, maximum, step increment and name. This method is not safe to be
