@@ -495,7 +495,7 @@ float Scope::getSliderValue(int slider){
     return sliders[slider];
 }
 
-void Scope::setSlider(int slider, float min, float max, float step, float value){
+void Scope::setSlider(int slider, float min, float max, float step, float value, std::string name){
     sliders[slider] = value;
     oscClient.sendMessageNow(
         oscClient.newMessage.to("/scope-slider")
@@ -504,6 +504,7 @@ void Scope::setSlider(int slider, float min, float max, float step, float value)
             .add(max)
             .add(step)
             .add(value)
+            .add(name)
             .end()
     );
 }

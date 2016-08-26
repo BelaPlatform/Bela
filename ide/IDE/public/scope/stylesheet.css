@@ -224,6 +224,7 @@ html, body{
 	top: 5px;
 	left: 5px;
 	font-size: 18px;
+	text-align: left;
 }
 
 div.sliderView{

@@ -17,8 +17,10 @@ class SliderView extends View{
 					.prop('min', args[1].value.toFixed(4))
 					.prop('max', args[2].value.toFixed(4))
 					.prop('step', args[3].value.toFixed(8))
-					.val(args[4].value.toFixed(8));
-				
+					.val(args[4].value.toFixed(8))
+				.siblings('h1')
+					.html((args[5].value == 'Slider') ? 'Slider '+args[0].value : args[5].value);
+					
 			var inputs = $('#scopeSlider'+args[0].value).find('input[type=number]');
 			inputs.filterByData('key', 'min').val(args[1].value.toFixed(4));
 			inputs.filterByData('key', 'max').val(args[2].value.toFixed(4));

@@ -34,12 +34,15 @@ class Scope{
          * to the number of parameters passed in to log() or the channels may not be
          * displayed correctly. sampleRate must be the rate at which data is logged to
          * the scope (the rate at which log() is called) in Hz or the x-axis time values
-         * displayed on the scope will be incorrect.
+         * displayed on the scope will be incorrect. numSliders is an optional parameter
+         * which defaults to 0. Passing a non-zero value will create sliders in the 
+         * scope's control panel whose values can be read with scope.getSliderValue().
          *
          * @param numChannels number of channels displayed by the scope.
          * @param sampleRate sample rate of the data passed in.
+         * @param numSliders (optional) number of sliders to create (default is 0)
          */
-        void setup(unsigned int numChannels, float sampleRate, int _numSliders = 0);
+        void setup(unsigned int numChannels, float sampleRate, int numSliders = 0);
 
         /** 
          * \brief Logs a frame of data to the scope.
@@ -68,8 +71,32 @@ class Scope{
          */
         bool trigger();
         
+        /** 
+         * \brief Read the value of a slider
+         *
+         * If a slider was created in setup(), the value of that slider at any time can
+         * be read with this function. This allows values in your code to be adjusted in 
+         * real-time from the scope's UI.
+         * 
+         * @param slider the index of the slider to read
+         */
         float getSliderValue(int slider);
-        void setSlider(int slider, float min, float max, float step, float value);
+        
+        /** 
+         * \brief Initialise a sliders value and parameters
+         *
+         * This method can be used to set a slider's value and parameters, including
+         * its minimum, maximum, step increment and name. This method is not safe to be
+         * called on the audio thread and must be called in setup() only, and not render().
+         * 
+         * @param slider the index of the slider to set
+         * @param min the minimum value of the slider
+         * @param max the maximum value of the slider
+         * @param step the step increment of the slider
+         * @param value the initial value of the slider
+         * @param name (optional) the name of the slider
+         */
+        void setSlider(int slider, float min, float max, float step, float value, std::string name = "Slider");
         
     private:
         OSCServer oscServer;
