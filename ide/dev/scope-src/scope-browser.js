@@ -54,6 +54,10 @@ controlView.on('plotMode', (val) => {
 	settings.setKey('plotMode', {type: 'integer', value: val});
 	//backgroundView._plotMode(val, settings._getData());
 });
+controlView.on('FFTXAxis', (val) => {
+	settings.setKey('FFTXAxis', {type: 'integer', value: val});
+	//backgroundView._plotMode(val, settings._getData());
+});
 channelView.on('channelConfig', (channelConfig) => {
 	worker.postMessage({
 		event			: 'channelConfig',
@@ -115,7 +119,11 @@ $('#scope').on('mousemove', e => {
 		x = (1000*scale*(e.clientX-window.innerWidth/2)/settings.getKey('sampleRate').value).toPrecision(4)+'ms';
 		y = (1 - 2*e.clientY/window.innerHeight).toPrecision(3);
 	} else if (plotMode == 1){
-		x = parseInt(settings.getKey('sampleRate').value*e.clientX/(2*window.innerWidth*scale));
+		if (parseInt(settings.getKey('FFTXAxis').value) === 0){
+			x = parseInt(settings.getKey('sampleRate').value*e.clientX/(2*window.innerWidth*scale));
+		} else {
+			x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (22050/window.innerWidth) * (settings.getKey('upSampling').value/(settings.getKey('downSampling').value)));
+		}
 		if (x > 1500) x = (x/1000) + 'khz';
 		else x += 'hz';
 		y = (1 - e.clientY/window.innerHeight).toPrecision(3);

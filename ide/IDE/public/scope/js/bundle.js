@@ -354,7 +354,7 @@ var BackgroundView = function (_View) {
 			var numVLines = Math.floor(canvas.width / xPixels);
 			var mspersample = xTime * data.downSampling.value / data.upSampling.value;
 
-			console.log(xTime);
+			//console.log(xTime);
 
 			//faint lines
 			ctx.strokeStyle = '#000000';
@@ -469,7 +469,7 @@ var BackgroundView = function (_View) {
 				ctx.lineTo(i * window.innerWidth / numVlines, canvas.height);
 				if (i && i !== numVlines) {
 					var val;
-					if (this.models[0].getKey('FFTXAxis').value === 0) val = (i * 22050 / numVlines * data.upSampling.value / data.downSampling.value).toFixed(0);else val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (22050 / window.innerWidth) * (data.upSampling.value / data.downSampling.value)).toFixed(0);
+					if (parseInt(this.models[0].getKey('FFTXAxis').value) === 0) val = (i * 22050 / numVlines * data.upSampling.value / data.downSampling.value).toFixed(0);else val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (22050 / window.innerWidth) * (data.upSampling.value / data.downSampling.value)).toFixed(0);
 
 					ctx.fillText(val, i * window.innerWidth / numVlines, canvas.height - 2);
 				}
@@ -504,6 +504,11 @@ var BackgroundView = function (_View) {
 	}, {
 		key: '_plotMode',
 		value: function _plotMode(value, data) {
+			this.repaintBG(data.xTimeBase, data);
+		}
+	}, {
+		key: '_FFTXAxis',
+		value: function _FFTXAxis(value, data) {
 			this.repaintBG(data.xTimeBase, data);
 		}
 	}, {
@@ -753,6 +758,11 @@ var ControlView = function (_View) {
 				$('#zoomUp').html('out');
 				$('#zoomDown').html('in');
 			}
+		}
+	}, {
+		key: 'FFTXAxis',
+		value: function FFTXAxis(val, data) {
+			this.emit('FFTXAxis', val, data);
 		}
 	}, {
 		key: '_upSampling',
@@ -1196,6 +1206,10 @@ controlView.on('plotMode', function (val) {
 	settings.setKey('plotMode', { type: 'integer', value: val });
 	//backgroundView._plotMode(val, settings._getData());
 });
+controlView.on('FFTXAxis', function (val) {
+	settings.setKey('FFTXAxis', { type: 'integer', value: val });
+	//backgroundView._plotMode(val, settings._getData());
+});
 channelView.on('channelConfig', function (channelConfig) {
 	worker.postMessage({
 		event: 'channelConfig',
@@ -1258,7 +1272,11 @@ $('#scope').on('mousemove', function (e) {
 		x = (1000 * scale * (e.clientX - window.innerWidth / 2) / settings.getKey('sampleRate').value).toPrecision(4) + 'ms';
 		y = (1 - 2 * e.clientY / window.innerHeight).toPrecision(3);
 	} else if (plotMode == 1) {
-		x = parseInt(settings.getKey('sampleRate').value * e.clientX / (2 * window.innerWidth * scale));
+		if (parseInt(settings.getKey('FFTXAxis').value) === 0) {
+			x = parseInt(settings.getKey('sampleRate').value * e.clientX / (2 * window.innerWidth * scale));
+		} else {
+			x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (22050 / window.innerWidth) * (settings.getKey('upSampling').value / settings.getKey('downSampling').value));
+		}
 		if (x > 1500) x = x / 1000 + 'khz';else x += 'hz';
 		y = (1 - e.clientY / window.innerHeight).toPrecision(3);
 	}

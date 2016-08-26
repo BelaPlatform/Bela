@@ -58,6 +58,10 @@ class ControlView extends View{
 		}
 	}
 	
+	FFTXAxis(val, data){
+		this.emit('FFTXAxis', val, data);
+	}
+	
 	_upSampling(value, data){
 		upSampling = value.value;
 		if (data.plotMode.value == 0){

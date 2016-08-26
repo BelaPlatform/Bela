@@ -33,7 +33,7 @@ class BackgroundView extends View{
 		var numVLines = Math.floor(canvas.width/xPixels);
 		var mspersample = xTime*data.downSampling.value/data.upSampling.value;
 		
-		console.log(xTime);
+		//console.log(xTime);
 
 		//faint lines
 		ctx.strokeStyle = '#000000';
@@ -147,7 +147,7 @@ class BackgroundView extends View{
 			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
 			if (i && i !== numVlines){
 				var val;
-				if (this.models[0].getKey('FFTXAxis').value === 0)
+				if (parseInt(this.models[0].getKey('FFTXAxis').value) === 0)
 					val = ((i*22050/numVlines)*data.upSampling.value/data.downSampling.value).toFixed(0);
 				else 
 					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (22050/window.innerWidth) * (data.upSampling.value/data.downSampling.value)).toFixed(0);
@@ -183,6 +183,9 @@ class BackgroundView extends View{
 	}
 	
 	_plotMode(value, data){
+		this.repaintBG(data.xTimeBase, data);
+	}
+	_FFTXAxis(value, data){
 		this.repaintBG(data.xTimeBase, data);
 	}
 	
