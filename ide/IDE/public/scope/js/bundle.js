@@ -765,6 +765,11 @@ var ControlView = function (_View) {
 			this.emit('FFTXAxis', val, data);
 		}
 	}, {
+		key: 'interpolation',
+		value: function interpolation(val, data) {
+			this.emit('interpolation', val, data);
+		}
+	}, {
 		key: '_upSampling',
 		value: function _upSampling(value, data) {
 			upSampling = value.value;
@@ -1209,6 +1214,12 @@ controlView.on('plotMode', function (val) {
 controlView.on('FFTXAxis', function (val) {
 	settings.setKey('FFTXAxis', { type: 'integer', value: val });
 	//backgroundView._plotMode(val, settings._getData());
+});
+controlView.on('interpolation', function (value) {
+	worker.postMessage({
+		event: 'interpolation',
+		value: value
+	});
 });
 channelView.on('channelConfig', function (channelConfig) {
 	worker.postMessage({

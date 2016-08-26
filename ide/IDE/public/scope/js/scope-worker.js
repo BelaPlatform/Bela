@@ -1,6 +1,6 @@
 importScripts('../../socket.io/socket.io.js');
 
-var settings = {}, channelConfig = [];
+var settings = {}, channelConfig = [], interpolation;
 
 var socket = io('/BelaScopeWorker');
 
@@ -17,6 +17,9 @@ onmessage = function(e){
 		}
 	} else if (e.data.event === 'channelConfig'){
 		channelConfig = e.data.channelConfig;
+		//console.log(channelConfig);
+	} else if (e.data.event === 'interpolation'){
+		interpolation = e.data.value;
 		//console.log(channelConfig);
 	}
 }
@@ -48,6 +51,8 @@ socket.on('buffer', function(buf){
 	
 	var outArray = new Float32Array(outArrayWidth);
 	
+	var interp = parseInt(interpolation) ? false : true;
+	
 	if (inArray.length !== inArrayWidth) {
 		//console.log(inArray.length, inArrayWidth, inFrameWidth);
 		//console.log('frame dropped');
@@ -59,7 +64,8 @@ socket.on('buffer', function(buf){
 			for (let frame=0; frame<inFrameWidth; frame++){
 				let outIndex = channel*outFrameWidth + frame*upSampling + u;
 				let inIndex = channel*inFrameWidth + frame;
-				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+u*(inArray[inIndex+1]-inArray[inIndex])/upSampling)) / channelConfig[channel].yAmplitude);
+				let diff = interp ? u*(inArray[inIndex+1]-inArray[inIndex])/upSampling : 0;
+				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) / channelConfig[channel].yAmplitude);
 			}
 		}
 	}

@@ -20,7 +20,8 @@ var settings = {
 	FFTXAxis		: {type: 'integer', value: 0},
 	FFTYAxis		: {type: 'integer', value: 0},
 	holdOff			: {type: 'float', value: 20},
-	numSliders		: {type: 'integer', value:0}
+	numSliders		: {type: 'integer', value:0},
+	interpolation	: {type: 'integer', value:0}
 }
 
 var UDP_RECIEVE = 8677;

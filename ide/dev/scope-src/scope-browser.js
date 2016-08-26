@@ -58,6 +58,12 @@ controlView.on('FFTXAxis', (val) => {
 	settings.setKey('FFTXAxis', {type: 'integer', value: val});
 	//backgroundView._plotMode(val, settings._getData());
 });
+controlView.on('interpolation', (value) => {
+	worker.postMessage({
+		event			: 'interpolation',
+		value
+	});
+});
 channelView.on('channelConfig', (channelConfig) => {
 	worker.postMessage({
 		event			: 'channelConfig',

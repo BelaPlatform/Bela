@@ -61,6 +61,9 @@ class ControlView extends View{
 	FFTXAxis(val, data){
 		this.emit('FFTXAxis', val, data);
 	}
+	interpolation(val, data){
+		this.emit('interpolation', val, data);
+	}
 	
 	_upSampling(value, data){
 		upSampling = value.value;
