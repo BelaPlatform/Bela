@@ -854,7 +854,8 @@ EXAMPLE_PATH           = examples/01-Basics \
                          examples/08-PureData \
                          examples/09-Capelets \
                          examples/10-Instruments \
-                         examples/11-Extras
+                         examples/11-Extras \
+						 examples/terminal-only
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
