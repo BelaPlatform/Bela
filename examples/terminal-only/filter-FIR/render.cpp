@@ -119,7 +119,7 @@ bool initialise_trigger()
 	if((gTriggerSamplesTask = Bela_createAuxiliaryTask(&trigger_samples, 50, "bela-trigger-samples")) == 0)
 		return false;
 
-	rt_printf("Press 'a' <enter> to trigger sample,\n"
+	rt_printf("Press 'a' <enter> to start playing the sample\n"
 			  "      's' <enter> to stop\n");
 	rt_printf("      'q' <enter> or ctrl-C to quit\n");
 
@@ -194,5 +194,14 @@ void cleanup(BelaContext *context, void *userData)
 Finite Impulse Response Filter
 ------------------------------
 
-This is an example of a finite impulse response filter implementation.
+This scripts needs to be run in a terminal because it requires you to interact with Bela using your computer's keyboard.
+Note that it cannot be run from within the IDE or the IDE's console.
+
+In this project an audio recording processesd through an FIR filter.
+
+To control the playback of the audio sample, use your computer keyboard, by pressing:
+'a' <enter> to start playing the sample
+'s' <enter> to stop
+'q' <enter> or ctrl-C to quit
+
 */
