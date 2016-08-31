@@ -256,13 +256,20 @@ This scripts needs to be run in a terminal because it requires you to interact
 with Bela using your computer's keyboard.
 Note that it CAN NOT be run from within the IDE or the IDE's console.
 
+See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
+
 In this project an audio recording processesd through an IIR filter.
 
 To control the playback of the audio sample, use your computer keyboard, by pressing:
-'z' <enter> to low down cut-off freq 100 Hz
-'x' <enter> to raise it by 100Hz
-'a' <enter> to start playing the sample
-'s' <enter> to stop
-'q' <enter> or ctrl-C to quit
+
+'z' \<enter\> to low down cut-off freq 100 Hz
+
+'x' \<enter\> to raise it by 100Hz
+
+'a' \<enter\> to start playing the sample
+
+'s' \<enter\> to stop
+
+'q' \<enter\> or ctrl-C to quit
 
 */

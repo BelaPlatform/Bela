@@ -157,6 +157,8 @@ This scripts needs to be run in a terminal because it requires you to interact
 with Bela using your computer's keyboard.
 Note that it CAN NOT be run from within the IDE or the IDE's console.
 
+See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
+
 This sketch shows how to playback audio samples from a buffer using
 key strokes.
 
@@ -170,11 +172,11 @@ sample length which we can access as follows: `gSampleData.sampleLen`.
 
 You can trigger the sample with keyboard input:
 
-'a' <enter> to start playing the sample
+'a' \<enter\> to start playing the sample
 
-'s' <enter> to stop
+'s' \<enter\> to stop
 
-'q' <enter> or ctrl-C to quit
+'q' \<enter\> or ctrl-C to quit
 
 Monitoring of the keyboard input is done in a low priority task to avoid
 interfering with the audio processing.
