@@ -56,10 +56,10 @@ void midiMessageCallback(MidiChannelMessage message, void* arg){
 
 Midi midi;
 
-bool gUseAlsa=false;
+bool gUseAlsa = false;
 const char* gMidiPort0 = "/dev/midi1";
-//bool gUseAlsa=true;
-//const char* gMidiPort0 = "hw:1,0,0";
+// bool gUseAlsa = true;
+// const char* gMidiPort0 = "hw:1,0,0";
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -167,18 +167,17 @@ void render(BelaContext *context, void *userData)
 	*/
 
 	// the following block toggles the LED on an Owl pedal
-	// and asks the pedal to return the status of the LED
 	// using MIDI control changes
 	for(unsigned int n = 0; n < context->analogFrames; n++){
 		static int count = 0;
 		static bool state = 0;
 		analogWriteOnce(context, n, 1, state);
-		if(count % 40000 == 0){
+		if(count % 20000 == 0){
 			state = !state;
-			midi_byte_t bytes[6] = {176, 30, (char)(state*127), 176, 67, 30}; // toggle the OWL led and ask for the led status
-			midi.writeOutput(bytes, 6);
+			midi_byte_t bytes[3] = {176, 30, (midi_byte_t)(state*127)}; // toggle the OWL led
+			midi.writeOutput(bytes, 3);
 		}
-		count++;
+		++count;
 	}
 	for(unsigned int n = 0; n < context->audioFrames; n++){
 		if(gIsNoteOn == 1){

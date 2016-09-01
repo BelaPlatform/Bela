@@ -16,7 +16,7 @@ int WriteFile::sleepTimeMs;
 
 void WriteFile::staticConstructor(){
 	if(staticConstructed==true)
-			return;
+		return;
 	staticConstructed=true;
 	threadIsExiting=false;
 	threadRunning=false;
@@ -98,8 +98,11 @@ void WriteFile::writeLine(){
 void WriteFile::setLineLength(int newLineLength){
 	lineLength=newLineLength;
 	free(buffer);
-	bufferLength = lineLength * (int)1e7; // circular buffer of length 1e7 lineLenghts
+	bufferLength = lineLength * (int)1e5; // circular buffer
 	buffer = (float*)malloc(sizeof(float) * bufferLength);
+	if(buffer == NULL){
+		fprintf(stderr, "Unable to allocate memory for the WriteFile buffer\n");
+	}
 }
 
 void WriteFile::log(float value){

@@ -56,7 +56,11 @@ else
 endif
 
 ifdef PROJECT
-  $(shell mkdir -p $(PROJECT_DIR)/build build/core)
+#check if project dir exists and also create build folders in the same spawned shell
+  CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR) && mkdir -p $(PROJECT_DIR)/build && mkdir -p build/core)
+  ifeq ($(CHECK_PROJECT_DIR_EXIST),)
+    $(error $(PROJECT_DIR) does not exist)
+  endif
 endif
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)

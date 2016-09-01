@@ -449,6 +449,10 @@ void Bela_autoScheduleAuxiliaryTasks(){
 // Calculation loop that can be used for other tasks running at a lower
 // priority than the audio thread. Simple wrapper for Xenomai calls.
 // Treat the argument as containing the task structure
+//
+// The purpose of this loop is to keep the task alive between schedulings,
+// so to avoid the overhead of creating and starting the task every time:
+// this way we only requie a "rt_task_resume" to start doing some work
 void auxiliaryTaskLoop(void *taskStruct)
 {
     InternalAuxiliaryTask *task = ((InternalAuxiliaryTask *)taskStruct);
@@ -470,8 +474,16 @@ void auxiliaryTaskLoop(void *taskStruct)
         else
             auxiliary_function();
 
-		// Wait for a notification
-		rt_task_suspend(NULL);
+		// we only suspend if the program is still running
+		// otherwise, if we are during cleanup, the task would hang indefinitely
+		// if rt_task_suspend is called after rt_task_join (below) has
+		// already been called
+		if(!gShouldStop){
+		// Wait for a notification from Bela_scheduleAuxiliaryTask
+			rt_task_suspend(NULL);
+		} else {
+			break;
+		}
 	}
 
 	if(gRTAudioVerbose == 1)

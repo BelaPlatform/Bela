@@ -518,7 +518,6 @@ int Bela_startAudio();
  * This function will stop the Bela audio/sensor system. After this function returns, no further
  * calls to render() will be issued.
  */
-int Bela_startAuxiliaryTask(AuxiliaryTask it);
 void Bela_stopAudio();
 
 /**

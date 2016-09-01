@@ -153,8 +153,14 @@ void cleanup(BelaContext *context, void *userData)
 Keypress to WAV file playback
 --------------------------------
 
+This scripts needs to be run in a terminal because it requires you to interact
+with Bela using your computer's keyboard.
+Note that it CAN NOT be run from within the IDE or the IDE's console.
+
+See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
+
 This sketch shows how to playback audio samples from a buffer using
-key stokes.
+key strokes.
 
 An audio file is loaded into a buffer `SampleData` as `gSampleData`. This is 
 accessed with a read pointer that is incremented at audio rate within the render 
@@ -164,8 +170,14 @@ Note that the read pointer is stopped from incrementing past the length of the
 `gSampleData`. This is achieved by comparing the read pointer value against the 
 sample length which we can access as follows: `gSampleData.sampleLen`.
 
-You can trigger the sample with keyboard input: (a) starts sample playback, (s) 
-stops sample playback. The triggering is treated as a lower priority task than 
-the audio. You can see this at the bottom of the render function: 
-`Bela_scheduleAuxiliaryTask(gTriggerSamplesTask)`;
+You can trigger the sample with keyboard input:
+
+'a' \<enter\> to start playing the sample
+
+'s' \<enter\> to stop
+
+'q' \<enter\> or ctrl-C to quit
+
+Monitoring of the keyboard input is done in a low priority task to avoid
+interfering with the audio processing.
 */

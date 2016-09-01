@@ -40,7 +40,7 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 		if(waitingForStatus == true){
 			int statusByte = input[n];
 			MidiMessageType newType = kmmNone;
-			if (statusByte >= 0x80){//it actually is a status byte
+			if (statusByte >= 0x80 && statusByte < 0xF0){//it actually is a status byte
 				for(int n = 0; n < midiMessageStatusBytesLength; n++){ //find the statusByte in the array
 					if(midiMessageStatusBytes[n] == (statusByte&0xf0)){
 						newType = (MidiMessageType)n;
@@ -52,8 +52,21 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				messages[writePointer].setType(newType);
 				messages[writePointer].setChannel((midi_byte_t)(statusByte&0xf));
 				consumedBytes++;
+			} else if (statusByte == 0xF0) {
+				//sysex!!!
+				waitingForStatus = false;
+				receivingSysex = true;
+				rt_printf("Receiving sysex\n");
 			} else { // either something went wrong or it's a system message
 				continue;
+			}
+		} else if (receivingSysex){
+			// Just wait for the message to end
+			rt_printf("%c", input[n]);
+			if(input[n] == 0xF7){
+				receivingSysex = false;
+				waitingForStatus = true;
+				rt_printf("\nCompleted receiving sysex\n");
 			}
 		} else {
 			messages[writePointer].setDataByte(elapsedDataBytes, input[n]);
@@ -77,8 +90,8 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 };
 
 
-Midi::Midi()
-	: alsaIn(NULL), alsaOut(NULL), useAlsaApi(false) {
+Midi::Midi() : 
+alsaIn(NULL), alsaOut(NULL), useAlsaApi(false) {
 	outputPort = -1;
 	inputPort = -1;
 	inputParser = 0;
@@ -192,6 +205,9 @@ void Midi::writeOutputLoop(){
 		} else {
 			ret = write(outputPort, &outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
 		}
+		outputBytesReadPointer += ret;
+		if(outputBytesReadPointer >= outputBytes.size())
+			outputBytesReadPointer -= outputBytes.size();
 		if(ret < 0){ //error occurred
 			rt_printf("error occurred while writing: %d\n", errno);
 			usleep(10000); //wait before retrying
@@ -275,30 +291,19 @@ MidiParser* Midi::getParser(){
 		return 0;
 	}
 	return inputParser;
-};
-
-int Midi::writeOutput(midi_byte_t byte){
-	int ret = -1;
-	if(useAlsaApi && alsaOut) {
-		ret = snd_rawmidi_write(alsaOut,&byte, 1);
-		snd_rawmidi_drain(alsaOut);
-	} else {
-	   ret = writeOutput(&byte, 1);
-	}
-	return ret;
 }
 
-int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
-	int ret = -1;
-	if(useAlsaApi && alsaOut) {
-		ret = snd_rawmidi_write(alsaOut, bytes, length);
-		snd_rawmidi_drain(alsaOut);
+void Midi::writeOutput(midi_byte_t byte){
+	outputBytes[outputBytesWritePointer++] = byte;
+	if(outputBytesWritePointer >= outputBytes.size()){
+		outputBytesWritePointer = 0;
 	}
-	else {
-		ret = write(outputPort, bytes, length);
-	}
+}
 
-	return (ret < 0 ? -1 : 1);
+void Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
+	for(unsigned int n = 0; n < length; ++n){
+		writeOutput(bytes[n]);
+	}
 }
 
 MidiChannelMessage::MidiChannelMessage(){};
