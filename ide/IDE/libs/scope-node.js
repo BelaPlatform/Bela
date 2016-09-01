@@ -144,6 +144,7 @@ var scope = {
 	},
 	
 	upSampling(){
+	console.log(settings.upSampling, settings.downSampling);
 		if (settings.downSampling.value > 1){
 			settings.downSampling.value -= 1;
 			this.webSocket.emit('settings', {downSampling: settings.downSampling});
@@ -157,6 +158,7 @@ var scope = {
 		}
 	},
 	downSampling(){
+	console.log(settings.upSampling, settings.downSampling);
 		if (settings.upSampling.value > 1){
 			settings.upSampling.value -= 1;
 			this.webSocket.emit('settings', {upSampling: settings.upSampling});

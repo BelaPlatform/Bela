@@ -19,7 +19,7 @@ var belaSocket = io('/IDE');
 // scope socket
 var socket = io('/BelaScope');
 
-var paused = false, oneShot = false, triggerChannel = 0, triggerLevel = 0, xOffset = 0, upSampling = 1;
+var paused = false, oneShot = false;
 
 // view events
 controlView.on('settings-event', (key, value) => {
@@ -41,29 +41,12 @@ controlView.on('settings-event', (key, value) => {
 			$('#pauseButton').html('pause');
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
-	} else if (key === 'triggerChannel'){ 
-		triggerChannel = parseInt(value);
-	} else if (key === 'triggerLevel'){ 
-		triggerLevel = parseFloat(value);
-	} else if (key === 'xOffset'){ 
-		xOffset = parseInt(value);
 	}
 	socket.emit('settings-event', key, value);
+	// console.log(key, value);
+	if (value !== undefined) settings.setKey(key, value);
 });
-controlView.on('plotMode', (val) => {
-	settings.setKey('plotMode', {type: 'integer', value: val});
-	//backgroundView._plotMode(val, settings._getData());
-});
-controlView.on('FFTXAxis', (val) => {
-	settings.setKey('FFTXAxis', {type: 'integer', value: val});
-	//backgroundView._plotMode(val, settings._getData());
-});
-controlView.on('interpolation', (value) => {
-	worker.postMessage({
-		event			: 'interpolation',
-		value
-	});
-});
+
 channelView.on('channelConfig', (channelConfig) => {
 	worker.postMessage({
 		event			: 'channelConfig',
@@ -75,11 +58,19 @@ sliderView.on('slider-value', (slider, value) => socket.emit('slider-value', sli
 
 // socket events
 socket.on('settings', (newSettings) => {
-	if (newSettings.frameWidth) newSettings.frameWidth.value = window.innerWidth;
-	newSettings.frameHeight = window.innerHeight;
-	settings.setData(newSettings);
-	//console.log(newSettings);
-	//settings.print();
+	
+	let obj = {};
+	for (let key in newSettings){
+		obj[key] = newSettings[key].value;
+	}
+	
+	obj.frameWidth = window.innerWidth;
+	obj.frameHeight = window.innerHeight;
+	
+	// console.log(newSettings, obj);
+	settings.setData(obj);
+	
+	controlView.setControls(obj);
 });
 socket.on('scope-slider', args => sliderView.emit('set-slider', args) );
 socket.on('dropped-count', count => {
@@ -95,40 +86,36 @@ belaSocket.on('cpu-usage', CPU);
 // model events
 settings.on('set', (data, changedKeys) => {
 	if (changedKeys.indexOf('frameWidth') !== -1){
-		var xTimeBase = Math.max(Math.floor(1000*(data.frameWidth.value/8)/data.sampleRate.value), 1);
+		var xTimeBase = Math.max(Math.floor(1000*(data.frameWidth/8)/data.sampleRate), 1);
 		settings.setKey('xTimeBase', xTimeBase);
-		socket.emit('settings-event', 'frameWidth', data.frameWidth.value)
+		socket.emit('settings-event', 'frameWidth', data.frameWidth)
 	} else {
 		worker.postMessage({
 			event		: 'settings',
 			settings	: data
 		});
 	}
-	triggerChannel = parseInt(data['triggerChannel'].value);
-	triggerLevel = parseFloat(data['triggerLevel'].value);
-	xOffset = parseInt(data['xOffset'].value);
-	upSampling = parseInt(data['upSampling'].value);
 });
 
 // window events
 $(window).on('resize', () => {
-	settings.setKey('frameWidth', {type: 'integer', value: window.innerWidth});
+	settings.setKey('frameWidth', window.innerWidth);
 	settings.setKey('frameHeight', window.innerHeight);
 });
 
 $('#scope').on('mousemove', e => {
 	if (settings.getKey('plotMode') === undefined) return;
-	var plotMode = settings.getKey('plotMode').value;
-	var scale = settings.getKey('downSampling').value / settings.getKey('upSampling').value;
+	var plotMode = settings.getKey('plotMode');
+	var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
 	var x, y;
 	if (plotMode == 0){
-		x = (1000*scale*(e.clientX-window.innerWidth/2)/settings.getKey('sampleRate').value).toPrecision(4)+'ms';
+		x = (1000*scale*(e.clientX-window.innerWidth/2)/settings.getKey('sampleRate')).toPrecision(4)+'ms';
 		y = (1 - 2*e.clientY/window.innerHeight).toPrecision(3);
 	} else if (plotMode == 1){
-		if (parseInt(settings.getKey('FFTXAxis').value) === 0){
-			x = parseInt(settings.getKey('sampleRate').value*e.clientX/(2*window.innerWidth*scale));
+		if (parseInt(settings.getKey('FFTXAxis')) === 0){
+			x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
 		} else {
-			x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (22050/window.innerWidth) * (settings.getKey('upSampling').value/(settings.getKey('downSampling').value)));
+			x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (22050/window.innerWidth) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
 		}
 		if (x > 1500) x = (x/1000) + 'khz';
 		else x += 'hz';
@@ -202,7 +189,7 @@ function CPU(data){
 	let ctx = canvas.getContext('2d');
 	ctx.lineWidth = 2;
 	
-	let width, height, numChannels, channelConfig = [], xOff = 0;
+	let width, height, numChannels, channelConfig = [], xOff = 0, triggerChannel = 0, triggerLevel = 0, xOffset = 0, upSampling = 1;;
 	settings.on('change', (data, changedKeys) => {
 		if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1){
 			canvas.width = window.innerWidth;
@@ -211,7 +198,19 @@ function CPU(data){
 			height = canvas.height;
 		}
 		if (changedKeys.indexOf('numChannels') !== -1){
-			numChannels = data.numChannels.value;
+			numChannels = data.numChannels;
+		}
+		if (changedKeys.indexOf('triggerChannel') !== -1){
+			triggerChannel = data.triggerChannel;
+		}
+		if (changedKeys.indexOf('triggerLevel') !== -1){
+			triggerLevel = data.triggerLevel;
+		}
+		if (changedKeys.indexOf('xOffset') !== -1){
+			xOffset = data.xOffset;
+		}
+		if (changedKeys.indexOf('upSampling') !== -1){
+			upSampling = data.upSampling;
 		}
 	});
 	channelView.on('channelConfig', (config) => channelConfig = config );
@@ -225,7 +224,7 @@ function CPU(data){
 		plot = !paused;
 		
 		// interpolate the trigger sample to get the sub-pixel x-offset
-		if (settings.getKey('plotMode').value == 0){
+		if (settings.getKey('plotMode') == 0){
 			if (upSampling == 1){
 				let one = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset-1] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 				let two = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
@@ -317,9 +316,9 @@ function CPU(data){
 	let saveCanvasData =  document.getElementById('saveCanvasData');		
 	saveCanvasData.addEventListener('click', function(){
 
-		let downSampling = settings.getKey('downSampling').value;
-		let upSampling = settings.getKey('upSampling').value;
-		let sampleRate = settings.getKey('sampleRate').value;
+		let downSampling = settings.getKey('downSampling');
+		let upSampling = settings.getKey('upSampling');
+		let sampleRate = settings.getKey('sampleRate');
 		
 		let out = "data:text/csv;charset=utf-8,";
 		

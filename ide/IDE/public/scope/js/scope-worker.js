@@ -1,25 +1,39 @@
 importScripts('../../socket.io/socket.io.js');
 
-var settings = {}, channelConfig = [], interpolation;
+var settings = {}, channelConfig = [];
 
 var socket = io('/BelaScopeWorker');
 
-var zero = 0;
+var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0;
+var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
 
 onmessage = function(e){
 	if (!e.data || !e.data.event) return;
 	if (e.data.event === 'settings'){
 		settings = e.data.settings;
-		if (settings.plotMode.value == 0){
+		if (settings.plotMode == 0){
 			zero = settings.frameHeight/2;
-		} else if (settings.plotMode.value == 1){
+		} else if (settings.plotMode == 1){
 			zero = settings.frameHeight;
 		}
+		
+		triggerChannel = settings.triggerChannel;
+		xOffset = settings.xOffset;
+		triggerLevel = settings.triggerLevel;
+	
+		numChannels = settings.numChannels;
+		upSampling = settings.upSampling;
+	
+		inFrameWidth = Math.floor(settings.frameWidth/upSampling);
+		outFrameWidth = settings.frameWidth;
+	
+		inArrayWidth = numChannels * inFrameWidth;
+		outArrayWidth = numChannels * outFrameWidth;
+		
+		interpolation = !settings.interpolation;
+		
 	} else if (e.data.event === 'channelConfig'){
 		channelConfig = e.data.channelConfig;
-		//console.log(channelConfig);
-	} else if (e.data.event === 'interpolation'){
-		interpolation = e.data.value;
 		//console.log(channelConfig);
 	}
 }
@@ -34,28 +48,13 @@ socket.on('buffer', function(buf){
 
 	var inArray = new Float32Array(buf);
 	//console.log("worker: recieved buffer of length "+inArray.length);
-	//console.log(settings.frameHeight, settings.numChannels.value, settings.frameWidth.value, channelConfig);
-	
-	var triggerChannel = settings.triggerChannel.value;
-	var xOffset = settings.xOffset.value;
-	var triggerLevel = settings.triggerLevel.value;
-	
-	var numChannels = settings.numChannels.value;
-	var upSampling = settings.upSampling.value;
-	
-	var inFrameWidth = Math.floor(settings.frameWidth.value/upSampling);
-	var outFrameWidth = settings.frameWidth.value;
-	
-	var inArrayWidth = numChannels * inFrameWidth;
-	var outArrayWidth = numChannels * outFrameWidth;
+	//console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
 	var outArray = new Float32Array(outArrayWidth);
-	
-	var interp = parseInt(interpolation) ? false : true;
-	
+		
 	if (inArray.length !== inArrayWidth) {
 		//console.log(inArray.length, inArrayWidth, inFrameWidth);
-		//console.log('frame dropped');
+		console.log('worker: frame dropped');
 		return;
 	}
 	
@@ -64,7 +63,7 @@ socket.on('buffer', function(buf){
 			for (let frame=0; frame<inFrameWidth; frame++){
 				let outIndex = channel*outFrameWidth + frame*upSampling + u;
 				let inIndex = channel*inFrameWidth + frame;
-				let diff = interp ? u*(inArray[inIndex+1]-inArray[inIndex])/upSampling : 0;
+				let diff = interpolation ? u*(inArray[inIndex+1]-inArray[inIndex])/upSampling : 0;
 				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) / channelConfig[channel].yAmplitude);
 			}
 		}

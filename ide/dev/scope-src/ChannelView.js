@@ -36,7 +36,7 @@ class ChannelView extends View{
 	}
 	
 	_numChannels(val){
-		var numChannels = val.value;
+		var numChannels = val;
 		if (numChannels < channelConfig.length){
 			while(numChannels < channelConfig.length){
 				$('#channelViewChannel'+(channelConfig.length)).remove();
@@ -62,7 +62,7 @@ class ChannelView extends View{
 	}
 	
 	_plotMode(val){
-		if (val.value == 0){
+		if (val == 0){
 			this.setChannelGains(1);
 		} else {
 			this.setChannelGains(0.2);

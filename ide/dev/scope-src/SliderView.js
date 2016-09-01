@@ -52,11 +52,11 @@ class SliderView extends View{
 		
 		$('#sliderColumn').empty();
 		
-		if (val.value == 0){
+		if (val == 0){
 			el.appendTo($('#sliderColumn')).css('display', 'none');
 		}
 		
-		for (var i=0; i<val.value; i++){
+		for (var i=0; i<val; i++){
 			var slider = el
 				.clone(true)
 				.prop('id', 'scopeSlider'+i)

@@ -345,14 +345,14 @@ var BackgroundView = function (_View) {
 			ctx.fill();
 			//ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-			if (data.plotMode.value == 1) {
+			if (data.plotMode == 1) {
 				this.FFTBG(canvas, ctx, data);
 				return;
 			}
 
-			var xPixels = xTime * this.models[0].getKey('sampleRate').value / 1000;
+			var xPixels = xTime * this.models[0].getKey('sampleRate') / 1000;
 			var numVLines = Math.floor(canvas.width / xPixels);
-			var mspersample = xTime * data.downSampling.value / data.upSampling.value;
+			var mspersample = xTime * data.downSampling / data.upSampling;
 
 			//console.log(xTime);
 
@@ -469,7 +469,7 @@ var BackgroundView = function (_View) {
 				ctx.lineTo(i * window.innerWidth / numVlines, canvas.height);
 				if (i && i !== numVlines) {
 					var val;
-					if (parseInt(this.models[0].getKey('FFTXAxis').value) === 0) val = (i * 22050 / numVlines * data.upSampling.value / data.downSampling.value).toFixed(0);else val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (22050 / window.innerWidth) * (data.upSampling.value / data.downSampling.value)).toFixed(0);
+					if (parseInt(this.models[0].getKey('FFTXAxis')) === 0) val = (i * 22050 / numVlines * data.upSampling / data.downSampling).toFixed(0);else val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (22050 / window.innerWidth) * (data.upSampling / data.downSampling)).toFixed(0);
 
 					ctx.fillText(val, i * window.innerWidth / numVlines, canvas.height - 2);
 				}
@@ -520,6 +520,11 @@ var BackgroundView = function (_View) {
 		key: '_downSampling',
 		value: function _downSampling(value, data) {
 			this.repaintBG(data.xTimeBase, data);
+		}
+	}, {
+		key: '_triggerLevel',
+		value: function _triggerLevel(value, data) {
+			//console.log(value, data);
 		}
 	}]);
 
@@ -607,7 +612,7 @@ var ChannelView = function (_View) {
 	}, {
 		key: '_numChannels',
 		value: function _numChannels(val) {
-			var numChannels = val.value;
+			var numChannels = val;
 			if (numChannels < channelConfig.length) {
 				while (numChannels < channelConfig.length) {
 					$('#channelViewChannel' + channelConfig.length).remove();
@@ -631,7 +636,7 @@ var ChannelView = function (_View) {
 	}, {
 		key: '_plotMode',
 		value: function _plotMode(val) {
-			if (val.value == 0) {
+			if (val == 0) {
 				this.setChannelGains(1);
 			} else {
 				this.setChannelGains(0.2);
@@ -687,15 +692,16 @@ var ControlView = function (_View) {
 		value: function selectChanged($element, e) {
 			var key = $element.data().key;
 			var value = $element.val();
-			if (this[key]) this[key](value);
-			this.emit('settings-event', key, value);
+			//if (this[key]) this[key](value);
+			this.emit('settings-event', key, parseFloat(value));
+			this.$elements.not($element).filterByData('key', key).val(value);
 		}
 	}, {
 		key: 'inputChanged',
 		value: function inputChanged($element, e) {
 			var key = $element.data().key;
 			var value = $element.val();
-			this.emit('settings-event', key, value);
+			this.emit('settings-event', key, parseFloat(value));
 			this.$elements.not($element).filterByData('key', key).val(value);
 		}
 	}, {
@@ -720,8 +726,8 @@ var ControlView = function (_View) {
 					if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase') {
 						this['_' + key](data[key], data);
 					} else {
-						if (key === 'plotMode') this.plotMode(data[key].value, data);
-						this.$elements.filterByData('key', key).val(data[key].value);
+						if (key === 'plotMode') this.plotMode(data[key], data);
+						//this.$elements.filterByData('key', key).val(data[key]);
 					}
 				}
 			} catch (err) {
@@ -737,6 +743,13 @@ var ControlView = function (_View) {
 						throw _iteratorError;
 					}
 				}
+			}
+		}
+	}, {
+		key: 'setControls',
+		value: function setControls(data) {
+			for (var key in data) {
+				this.$elements.filterByData('key', key).val(data[key]);
 			}
 		}
 	}, {
@@ -760,44 +773,34 @@ var ControlView = function (_View) {
 			}
 		}
 	}, {
-		key: 'FFTXAxis',
-		value: function FFTXAxis(val, data) {
-			this.emit('FFTXAxis', val, data);
-		}
-	}, {
-		key: 'interpolation',
-		value: function interpolation(val, data) {
-			this.emit('interpolation', val, data);
-		}
-	}, {
 		key: '_upSampling',
 		value: function _upSampling(value, data) {
-			upSampling = value.value;
-			if (data.plotMode.value == 0) {
-				$('.xUnit-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
-			} else if (data.plotMode.value == 1) {
-				$('.xUnit-display').html(data.sampleRate.value / 20 * data.upSampling.value / data.downSampling.value);
+			upSampling = value;
+			if (data.plotMode == 0) {
+				$('.xUnit-display').html((data.xTimeBase * data.downSampling / data.upSampling).toPrecision(2));
+			} else if (data.plotMode == 1) {
+				$('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
 			}
-			$('.zoom-display').html((100 * data.upSampling.value / data.downSampling.value).toPrecision(4) + '%');
+			$('.zoom-display').html((100 * data.upSampling / data.downSampling).toPrecision(4) + '%');
 		}
 	}, {
 		key: '_downSampling',
 		value: function _downSampling(value, data) {
-			downSampling = value.value;
-			if (data.plotMode.value == 0) {
-				$('.xUnit-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
-			} else if (data.plotMode.value == 1) {
-				$('.xUnit-display').html(data.sampleRate.value / 20 * data.upSampling.value / data.downSampling.value);
+			downSampling = value;
+			if (data.plotMode == 0) {
+				$('.xUnit-display').html((data.xTimeBase * data.downSampling / data.upSampling).toPrecision(2));
+			} else if (data.plotMode == 1) {
+				$('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
 			}
-			$('.zoom-display').html((100 * data.upSampling.value / data.downSampling.value).toPrecision(4) + '%');
+			$('.zoom-display').html((100 * data.upSampling / data.downSampling).toPrecision(4) + '%');
 		}
 	}, {
 		key: '_xTimeBase',
 		value: function _xTimeBase(value, data) {
 			xTime = data.xTimeBase;
-			sampleRate = data.sampleRate.value;
-			if (data.plotMode.value == 0) {
-				$('.xUnit-display').html((data.xTimeBase * data.downSampling.value / data.upSampling.value).toPrecision(2));
+			sampleRate = data.sampleRate;
+			if (data.plotMode == 0) {
+				$('.xUnit-display').html((data.xTimeBase * data.downSampling / data.upSampling).toPrecision(2));
 			}
 		}
 	}, {
@@ -805,9 +808,9 @@ var ControlView = function (_View) {
 		value: function __numChannels(val, data) {
 			var el = this.$elements.filterByData('key', 'triggerChannel');
 			el.empty();
-			for (var i = 0; i < val.value; i++) {
+			for (var i = 0; i < val; i++) {
 				var opt = $('<option></option>').html(i + 1).val(i).appendTo(el);
-				if (i === data.triggerChannel.value) opt.prop('selected', 'selected');
+				if (i === data.triggerChannel) opt.prop('selected', 'selected');
 			}
 		}
 	}]);
@@ -989,11 +992,11 @@ var SliderView = function (_View) {
 
 			$('#sliderColumn').empty();
 
-			if (val.value == 0) {
+			if (val == 0) {
 				el.appendTo($('#sliderColumn')).css('display', 'none');
 			}
 
-			for (var i = 0; i < val.value; i++) {
+			for (var i = 0; i < val; i++) {
 				var slider = el.clone(true).prop('id', 'scopeSlider' + i).appendTo($('#sliderColumn')).css('display', 'block');
 
 				slider.find('input').data('slider', i).on('input', function (e) {
@@ -1172,11 +1175,7 @@ var belaSocket = io('/IDE');
 var socket = io('/BelaScope');
 
 var paused = false,
-    oneShot = false,
-    triggerChannel = 0,
-    triggerLevel = 0,
-    xOffset = 0,
-    upSampling = 1;
+    oneShot = false;
 
 // view events
 controlView.on('settings-event', function (key, value) {
@@ -1198,29 +1197,12 @@ controlView.on('settings-event', function (key, value) {
 			$('#pauseButton').html('pause');
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
-	} else if (key === 'triggerChannel') {
-		triggerChannel = parseInt(value);
-	} else if (key === 'triggerLevel') {
-		triggerLevel = parseFloat(value);
-	} else if (key === 'xOffset') {
-		xOffset = parseInt(value);
 	}
 	socket.emit('settings-event', key, value);
+	// console.log(key, value);
+	if (value !== undefined) settings.setKey(key, value);
 });
-controlView.on('plotMode', function (val) {
-	settings.setKey('plotMode', { type: 'integer', value: val });
-	//backgroundView._plotMode(val, settings._getData());
-});
-controlView.on('FFTXAxis', function (val) {
-	settings.setKey('FFTXAxis', { type: 'integer', value: val });
-	//backgroundView._plotMode(val, settings._getData());
-});
-controlView.on('interpolation', function (value) {
-	worker.postMessage({
-		event: 'interpolation',
-		value: value
-	});
-});
+
 channelView.on('channelConfig', function (channelConfig) {
 	worker.postMessage({
 		event: 'channelConfig',
@@ -1234,11 +1216,19 @@ sliderView.on('slider-value', function (slider, value) {
 
 // socket events
 socket.on('settings', function (newSettings) {
-	if (newSettings.frameWidth) newSettings.frameWidth.value = window.innerWidth;
-	newSettings.frameHeight = window.innerHeight;
-	settings.setData(newSettings);
-	//console.log(newSettings);
-	//settings.print();
+
+	var obj = {};
+	for (var key in newSettings) {
+		obj[key] = newSettings[key].value;
+	}
+
+	obj.frameWidth = window.innerWidth;
+	obj.frameHeight = window.innerHeight;
+
+	// console.log(newSettings, obj);
+	settings.setData(obj);
+
+	controlView.setControls(obj);
 });
 socket.on('scope-slider', function (args) {
 	return sliderView.emit('set-slider', args);
@@ -1253,40 +1243,36 @@ belaSocket.on('cpu-usage', CPU);
 // model events
 settings.on('set', function (data, changedKeys) {
 	if (changedKeys.indexOf('frameWidth') !== -1) {
-		var xTimeBase = Math.max(Math.floor(1000 * (data.frameWidth.value / 8) / data.sampleRate.value), 1);
+		var xTimeBase = Math.max(Math.floor(1000 * (data.frameWidth / 8) / data.sampleRate), 1);
 		settings.setKey('xTimeBase', xTimeBase);
-		socket.emit('settings-event', 'frameWidth', data.frameWidth.value);
+		socket.emit('settings-event', 'frameWidth', data.frameWidth);
 	} else {
 		worker.postMessage({
 			event: 'settings',
 			settings: data
 		});
 	}
-	triggerChannel = parseInt(data['triggerChannel'].value);
-	triggerLevel = parseFloat(data['triggerLevel'].value);
-	xOffset = parseInt(data['xOffset'].value);
-	upSampling = parseInt(data['upSampling'].value);
 });
 
 // window events
 $(window).on('resize', function () {
-	settings.setKey('frameWidth', { type: 'integer', value: window.innerWidth });
+	settings.setKey('frameWidth', window.innerWidth);
 	settings.setKey('frameHeight', window.innerHeight);
 });
 
 $('#scope').on('mousemove', function (e) {
 	if (settings.getKey('plotMode') === undefined) return;
-	var plotMode = settings.getKey('plotMode').value;
-	var scale = settings.getKey('downSampling').value / settings.getKey('upSampling').value;
+	var plotMode = settings.getKey('plotMode');
+	var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
 	var x, y;
 	if (plotMode == 0) {
-		x = (1000 * scale * (e.clientX - window.innerWidth / 2) / settings.getKey('sampleRate').value).toPrecision(4) + 'ms';
+		x = (1000 * scale * (e.clientX - window.innerWidth / 2) / settings.getKey('sampleRate')).toPrecision(4) + 'ms';
 		y = (1 - 2 * e.clientY / window.innerHeight).toPrecision(3);
 	} else if (plotMode == 1) {
-		if (parseInt(settings.getKey('FFTXAxis').value) === 0) {
-			x = parseInt(settings.getKey('sampleRate').value * e.clientX / (2 * window.innerWidth * scale));
+		if (parseInt(settings.getKey('FFTXAxis')) === 0) {
+			x = parseInt(settings.getKey('sampleRate') * e.clientX / (2 * window.innerWidth * scale));
 		} else {
-			x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (22050 / window.innerWidth) * (settings.getKey('upSampling').value / settings.getKey('downSampling').value));
+			x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (22050 / window.innerWidth) * (settings.getKey('upSampling') / settings.getKey('downSampling')));
 		}
 		if (x > 1500) x = x / 1000 + 'khz';else x += 'hz';
 		y = (1 - e.clientY / window.innerHeight).toPrecision(3);
@@ -1423,7 +1409,11 @@ function CPU(data) {
 		    height = void 0,
 		    numChannels = void 0,
 		    channelConfig = [],
-		    xOff = 0;
+		    xOff = 0,
+		    triggerChannel = 0,
+		    triggerLevel = 0,
+		    xOffset = 0,
+		    upSampling = 1;;
 		settings.on('change', function (data, changedKeys) {
 			if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
 				canvas.width = window.innerWidth;
@@ -1432,7 +1422,19 @@ function CPU(data) {
 				height = canvas.height;
 			}
 			if (changedKeys.indexOf('numChannels') !== -1) {
-				numChannels = data.numChannels.value;
+				numChannels = data.numChannels;
+			}
+			if (changedKeys.indexOf('triggerChannel') !== -1) {
+				triggerChannel = data.triggerChannel;
+			}
+			if (changedKeys.indexOf('triggerLevel') !== -1) {
+				triggerLevel = data.triggerLevel;
+			}
+			if (changedKeys.indexOf('xOffset') !== -1) {
+				xOffset = data.xOffset;
+			}
+			if (changedKeys.indexOf('upSampling') !== -1) {
+				upSampling = data.upSampling;
 			}
 		});
 		channelView.on('channelConfig', function (config) {
@@ -1450,7 +1452,7 @@ function CPU(data) {
 			plot = !paused;
 
 			// interpolate the trigger sample to get the sub-pixel x-offset
-			if (settings.getKey('plotMode').value == 0) {
+			if (settings.getKey('plotMode') == 0) {
 				if (upSampling == 1) {
 					var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
 					var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
@@ -1482,9 +1484,9 @@ function CPU(data) {
 		var saveCanvasData = document.getElementById('saveCanvasData');
 		saveCanvasData.addEventListener('click', function () {
 
-			var downSampling = settings.getKey('downSampling').value;
-			var upSampling = settings.getKey('upSampling').value;
-			var sampleRate = settings.getKey('sampleRate').value;
+			var downSampling = settings.getKey('downSampling');
+			var upSampling = settings.getKey('upSampling');
+			var sampleRate = settings.getKey('sampleRate');
 
 			var out = "data:text/csv;charset=utf-8,";
 

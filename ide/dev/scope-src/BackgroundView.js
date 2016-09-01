@@ -24,14 +24,14 @@ class BackgroundView extends View{
 		ctx.fill();
 		//ctx.clearRect(0, 0, canvas.width, canvas.height);
 		
-		if (data.plotMode.value == 1){
+		if (data.plotMode == 1){
 			this.FFTBG(canvas, ctx, data);
 			return;
 		}
-		
-		var xPixels = xTime*this.models[0].getKey('sampleRate').value/1000;
+
+		var xPixels = xTime*this.models[0].getKey('sampleRate')/1000;
 		var numVLines = Math.floor(canvas.width/xPixels);
-		var mspersample = xTime*data.downSampling.value/data.upSampling.value;
+		var mspersample = xTime*data.downSampling/data.upSampling;
 		
 		//console.log(xTime);
 
@@ -147,10 +147,10 @@ class BackgroundView extends View{
 			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
 			if (i && i !== numVlines){
 				var val;
-				if (parseInt(this.models[0].getKey('FFTXAxis').value) === 0)
-					val = ((i*22050/numVlines)*data.upSampling.value/data.downSampling.value).toFixed(0);
+				if (parseInt(this.models[0].getKey('FFTXAxis')) === 0)
+					val = ((i*22050/numVlines)*data.upSampling/data.downSampling).toFixed(0);
 				else 
-					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (22050/window.innerWidth) * (data.upSampling.value/data.downSampling.value)).toFixed(0);
+					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (22050/window.innerWidth) * (data.upSampling/data.downSampling)).toFixed(0);
 
 				ctx.fillText(val, i*window.innerWidth/numVlines, canvas.height-2);
 			}
@@ -194,6 +194,10 @@ class BackgroundView extends View{
 	}
 	_downSampling(value, data){
 		this.repaintBG(data.xTimeBase, data);
+	}
+	
+	_triggerLevel(value, data){
+		//console.log(value, data);
 	}
 	
 }

@@ -14,13 +14,14 @@ class ControlView extends View{
 	selectChanged($element, e){
 		var key = $element.data().key;
 		var value = $element.val();
-		if (this[key]) this[key](value);
-		this.emit('settings-event', key, value);
+		//if (this[key]) this[key](value);
+		this.emit('settings-event', key, parseFloat(value));
+		this.$elements.not($element).filterByData('key', key).val(value);
 	}
 	inputChanged($element, e){
 		var key = $element.data().key;
 		var value = $element.val();
-		this.emit('settings-event', key, value);
+		this.emit('settings-event', key, parseFloat(value));
 		this.$elements.not($element).filterByData('key', key).val(value);
 	}
 	buttonClicked($element, e){
@@ -33,9 +34,15 @@ class ControlView extends View{
 			if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase'){
 				this['_'+key](data[key], data);
 			} else {
-				if (key === 'plotMode') this.plotMode(data[key].value, data);
-				this.$elements.filterByData('key', key).val(data[key].value);
+				if (key === 'plotMode') this.plotMode(data[key], data);
+				//this.$elements.filterByData('key', key).val(data[key]);
 			}
+		}
+	}
+	
+	setControls(data){
+		for (let key in data){
+			this.$elements.filterByData('key', key).val(data[key]);
 		}
 	}
 	
@@ -58,45 +65,38 @@ class ControlView extends View{
 		}
 	}
 	
-	FFTXAxis(val, data){
-		this.emit('FFTXAxis', val, data);
-	}
-	interpolation(val, data){
-		this.emit('interpolation', val, data);
-	}
-	
 	_upSampling(value, data){
-		upSampling = value.value;
-		if (data.plotMode.value == 0){
-			$('.xUnit-display').html((data.xTimeBase * data.downSampling.value/data.upSampling.value).toPrecision(2));
-		} else if (data.plotMode.value == 1){
-			$('.xUnit-display').html((data.sampleRate.value/20 * data.upSampling.value/data.downSampling.value));
+		upSampling = value;
+		if (data.plotMode == 0){
+			$('.xUnit-display').html((data.xTimeBase * data.downSampling/data.upSampling).toPrecision(2));
+		} else if (data.plotMode == 1){
+			$('.xUnit-display').html((data.sampleRate/20 * data.upSampling/data.downSampling));
 		}
-		$('.zoom-display').html((100*data.upSampling.value/data.downSampling.value).toPrecision(4)+'%');
+		$('.zoom-display').html((100*data.upSampling/data.downSampling).toPrecision(4)+'%');
 	}
 	_downSampling(value, data){
-		downSampling = value.value;
-		if (data.plotMode.value == 0){
-			$('.xUnit-display').html((data.xTimeBase * data.downSampling.value/data.upSampling.value).toPrecision(2));
-		} else if (data.plotMode.value == 1){
-			$('.xUnit-display').html((data.sampleRate.value/20 * data.upSampling.value/data.downSampling.value));
+		downSampling = value;
+		if (data.plotMode == 0){
+			$('.xUnit-display').html((data.xTimeBase * data.downSampling/data.upSampling).toPrecision(2));
+		} else if (data.plotMode == 1){
+			$('.xUnit-display').html((data.sampleRate/20 * data.upSampling/data.downSampling));
 		}
-		$('.zoom-display').html((100*data.upSampling.value/data.downSampling.value).toPrecision(4)+'%');
+		$('.zoom-display').html((100*data.upSampling/data.downSampling).toPrecision(4)+'%');
 	}
 	_xTimeBase(value, data){
 		xTime = data.xTimeBase;
-		sampleRate = data.sampleRate.value;
-		if (data.plotMode.value == 0){
-			$('.xUnit-display').html((data.xTimeBase * data.downSampling.value/data.upSampling.value).toPrecision(2));
+		sampleRate = data.sampleRate;
+		if (data.plotMode == 0){
+			$('.xUnit-display').html((data.xTimeBase * data.downSampling/data.upSampling).toPrecision(2));
 		}
 	}
 	
 	__numChannels(val, data){
 		var el = this.$elements.filterByData('key', 'triggerChannel');
 		el.empty();
-		for (let i=0; i<val.value; i++){
+		for (let i=0; i<val; i++){
 			let opt = $('<option></option>').html(i+1).val(i).appendTo(el);
-			if (i === data.triggerChannel.value) opt.prop('selected', 'selected'); 
+			if (i === data.triggerChannel) opt.prop('selected', 'selected'); 
 		}
 	}
 	
