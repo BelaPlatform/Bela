@@ -211,7 +211,7 @@ class ConsoleView extends View{
 		}
 	}
 	
-	_CPU(data){
+	/*_CPU(data){
 		if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0){
 			_console.log(data.bela.split(' ').join('&nbsp;'));
 		}
@@ -223,7 +223,7 @@ class ConsoleView extends View{
 		} else {
 			modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
 		}
-	}
+	}*/
 	
 	_consoleDelete(value){
 		_console.setConsoleDelete(parseInt(value));

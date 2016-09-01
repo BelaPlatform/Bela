@@ -404,6 +404,8 @@ p {
 		float: left;
 		color: #424242;
 		text-align: right;
+		font-family: inconsolata;
+		margin-top: 2px;
 	}
 		.status-text:nth-child(3) {
 			margin-right: 0;

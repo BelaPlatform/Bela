@@ -222,6 +222,7 @@ class ProcessManager extends EventEmitter {
 			//console.log(status);
 			this.emit('broadcast-status', status);
 		});
+		belaProcess.on('mode-switch', num => this.emit('mode-switch', num) );
 		
 	}
 	
@@ -231,7 +232,7 @@ class ProcessManager extends EventEmitter {
 		}
 	}
 	
-	modeSwitches(){
+	/*modeSwitches(){
 		if (!this.running()) return Promise.resolve(undefined);
 		return new Promise( (resolve, reject) => {
 			execFile(belaPath+'IDE/bin/mode_switches_detector', (err, stdout, stderr) => {
@@ -241,7 +242,7 @@ class ProcessManager extends EventEmitter {
 				resolve(stdout);
 			});
 		}).catch( e => console.log('\nerror in mode_switches_detector\n', e) );
-	}
+	}*/
 	
 	*checkCPU(){
 		var output = {};
@@ -252,7 +253,6 @@ class ProcessManager extends EventEmitter {
 		output.belaLinux = (yield belaProcess.CPULinux()).cpu;
 		output.node = (yield pusage.statAsync(process.pid)).cpu;
 		output.gdb = yield DebugManager.CPU();
-		output.modeSwitches = yield this.modeSwitches();
 		return output;
 	}
 	

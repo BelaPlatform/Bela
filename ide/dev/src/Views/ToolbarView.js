@@ -2,6 +2,8 @@ var View = require('./View');
 
 // ohhhhh i am a comment
 
+var modeswitches = 0;
+
 class ToolbarView extends View {
 	
 	constructor(className, models){
@@ -167,6 +169,15 @@ class ToolbarView extends View {
 		} else {
 			$('#ide-cpu, #bela-cpu').css('color', 'black');
 		}
+		
+		if (!bela) $('#msw-cpu').html('MSW: --');
+		modeswitches = 0;
+	}
+	
+	__msw(value){
+		$('#msw-cpu').html('MSW: '+value);
+		if (value > modeswitches && value != 2) this.emit('mode-switch-warning', value);
+		modeswitches = value;
 	}
 	
 	_cpuMonitoring(value){

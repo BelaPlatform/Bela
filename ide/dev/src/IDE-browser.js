@@ -132,6 +132,7 @@ toolbarView.on('process-event', (event) => {
 	socket.emit('process-event', data);
 });
 toolbarView.on('clear-console', () => consoleView.emit('clear') );
+toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num+' mode switch'+(num!=1?'es':'')+' detected on the audio thread!') );
 
 // console view
 var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings, models.debug], models.settings);
@@ -282,7 +283,8 @@ socket.on('project-settings-data', (project, settings) => {
 });
 socket.on('IDE-settings-data', (settings) => models.settings.setData(settings) );
 
-socket.on('cpu-usage', (data) => models.status.setKey('CPU', data) );
+socket.on('cpu-usage', data => models.status.setKey('CPU', data) );
+socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
 socket.on('disconnect', () => {
 	consoleView.disconnect();

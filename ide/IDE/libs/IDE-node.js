@@ -304,6 +304,7 @@ function socketEvents(socket){
 
 ProcessManager.on('status', (status, project) => allSockets.emit('status', project, status) );
 ProcessManager.on('broadcast-status', (status) => allSockets.emit('status', status) );
+ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
 
 DebugManager.on('status', (status) =>  allSockets.emit('debugger-data', status) );
 DebugManager.on('variables', (project, variables) =>  allSockets.emit('debugger-variables', project, variables) );

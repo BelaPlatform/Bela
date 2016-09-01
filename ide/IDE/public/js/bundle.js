@@ -529,6 +529,9 @@ toolbarView.on('process-event', function (event) {
 toolbarView.on('clear-console', function () {
 	return consoleView.emit('clear');
 });
+toolbarView.on('mode-switch-warning', function (num) {
+	return consoleView.emit('warn', num + ' mode switch' + (num != 1 ? 'es' : '') + ' detected on the audio thread!');
+});
 
 // console view
 var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings, models.debug], models.settings);
@@ -703,6 +706,9 @@ socket.on('IDE-settings-data', function (settings) {
 
 socket.on('cpu-usage', function (data) {
 	return models.status.setKey('CPU', data);
+});
+socket.on('mode-switch', function (data) {
+	return models.status.setKey('msw', data);
 });
 
 socket.on('disconnect', function () {
@@ -1385,21 +1391,21 @@ var ConsoleView = function (_View) {
 				}
 			}
 		}
-	}, {
-		key: '_CPU',
-		value: function _CPU(data) {
-			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0) {
-				_console.log(data.bela.split(' ').join('&nbsp;'));
-			}
-			if (data.modeSwitches && modeSwitches) {
-				var ms = parseInt(data.modeSwitches);
-				if (ms > modeSwitches && ms !== 67117 && ms > 2) _console.warn(ms + ' mode switches detected on audio thread!');
-				modeSwitches = ms;
-				//console.log(data.modeSwitches, modeSwitches);
-			} else {
-				modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
-			}
-		}
+
+		/*_CPU(data){
+  	if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0){
+  		_console.log(data.bela.split(' ').join('&nbsp;'));
+  	}
+  	if (data.modeSwitches && modeSwitches) {
+  		let ms = parseInt(data.modeSwitches);
+  		if (ms > modeSwitches && ms !== 67117 && ms > 2) _console.warn(ms+' mode switches detected on audio thread!');
+  		modeSwitches = ms;
+  		//console.log(data.modeSwitches, modeSwitches);
+  	} else {
+  		modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
+  	}
+  }*/
+
 	}, {
 		key: '_consoleDelete',
 		value: function _consoleDelete(value) {
@@ -2125,7 +2131,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			// console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate');
 			_this.parser.parse(function () {
 				_this.getCurrentWord();
 			});
@@ -2399,7 +2405,7 @@ var EditorView = function (_View) {
 				return;
 			}
 
-			//console.log('clicked', token); 
+			//console.log('clicked', token);
 
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion2 = true;
@@ -3098,6 +3104,7 @@ var ProjectView = function (_View) {
 		_classCallCheck(this, ProjectView);
 
 		//this.exampleChanged = false;
+
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProjectView).call(this, className, models));
 
 		_this.on('example-changed', function () {
@@ -3446,6 +3453,7 @@ var SettingsView = function (_View) {
 		_classCallCheck(this, SettingsView);
 
 		//this.$elements.filter('input').on('change', (e) => this.selectChanged($(e.currentTarget), e));
+
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SettingsView).call(this, className, models, settings));
 
 		_this.settings.on('change', function (data) {
@@ -3763,7 +3771,8 @@ var TabView = function (_View) {
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs 
+		// open/close tabs
+
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(TabView).call(this, 'tab'));
 
 		$('#flexit').on('click', function () {
@@ -3919,6 +3928,8 @@ var View = require('./View');
 
 // ohhhhh i am a comment
 
+var modeswitches = 0;
+
 var ToolbarView = function (_View) {
 	_inherits(ToolbarView, _View);
 
@@ -4032,7 +4043,7 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '__allErrors',
 		value: function __allErrors(errors) {
-			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
+			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout);
 			if (errors.length) {
 				$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
 			} else {
@@ -4096,6 +4107,16 @@ var ToolbarView = function (_View) {
 			} else {
 				$('#ide-cpu, #bela-cpu').css('color', 'black');
 			}
+
+			if (!bela) $('#msw-cpu').html('MSW: --');
+			modeswitches = 0;
+		}
+	}, {
+		key: '__msw',
+		value: function __msw(value) {
+			$('#msw-cpu').html('MSW: ' + value);
+			if (value > modeswitches && value != 2) this.emit('mode-switch-warning', value);
+			modeswitches = value;
 		}
 	}, {
 		key: '_cpuMonitoring',
@@ -4867,7 +4888,6 @@ var parser = {
 			}
 
 			//}
-
 
 			buf.enq(token);
 			token = iterator.stepForward();
