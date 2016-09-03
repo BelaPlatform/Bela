@@ -120,7 +120,8 @@ void Scope::setPlotMode(){
 		usleep(100000);
 	}
 	FFTLength = newFFTLength;
-    FFTScale = 1.0/((float)FFTLength );
+	FFTScale = 2.0f / (float)FFTLength;
+	FFTLogOffset = 20.0f * log10f(FFTScale);
     
     // setup the input buffer
     frameWidth = pixelWidth/upSampling;
@@ -157,8 +158,11 @@ void Scope::setPlotMode(){
     	windowFFT = new float[FFTLength];
     
     	// Calculate a Hann window
+		// The coherentGain compensates for the loss of energy due to the windowing.
+		// and yields a ~unitary peak for a sinewave centered in the bin.
+		float coherentGain = 0.5f;
     	for(int n = 0; n < FFTLength; n++) {
-    		windowFFT[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(FFTLength - 1)));
+			windowFFT[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(FFTLength - 1))) / coherentGain;
     	}
         
     }
@@ -422,16 +426,18 @@ void Scope::doFFT(){
                 int index = (int)(findex);
                 float rem = findex - index;
                 
-                float first = 0.0f, second = 0.0f;
-                if (FFTYAxis == 0){ // normalised linear magnitude
-                    first = sqrtf((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
-                    second = sqrtf((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
-                } else if (FFTYAxis == 1){ // decibels
-                    first = 10.0f*log10f((float)(outFFT[index].r * outFFT[index].r + outFFT[index].i * outFFT[index].i));
-                    second = 10.0f*log10f((float)(outFFT[index+1].r * outFFT[index+1].r + outFFT[index+1].i * outFFT[index+1].i));
-                }
+				float yAxis[2];
+				for(unsigned int n = 0; n < 2; ++n){
+					float magSquared = outFFT[index + n].r * outFFT[index + n].r + outFFT[index + n].i * outFFT[index + n].i;
+					if (FFTYAxis == 0){ // normalised linear magnitude
+						yAxis[n] = FFTScale * sqrtf(magSquared);
+					} else if (FFTYAxis == 1){ // decibels
+						yAxis[n] = 10.0f * log10f(magSquared) + FFTLogOffset;
+					}
+				}
                 
-                outBuffer[c*frameWidth+i] = FFTScale * (first + rem * (second - first));
+				// linear interpolation
+				outBuffer[c*frameWidth+i] = yAxis[0] + rem * (yAxis[1] - yAxis[0]);
             }
             
         } else {
@@ -469,11 +475,9 @@ void Scope::doFFT(){
                 if (FFTYAxis == 0){ // normalised linear magnitude
                     outBuffer[c*frameWidth+i] = FFTScale * sqrtf(maxVal);
                 } else if (FFTYAxis == 1){ // decibels
-                    outBuffer[c*frameWidth+i] = FFTScale * 10.0f*log10f(maxVal);
+                    outBuffer[c*frameWidth+i] = 10.0f * log10f(maxVal) + FFTLogOffset;
                 }
-                
             }
-            
         }
         
     }

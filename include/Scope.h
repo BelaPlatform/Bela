@@ -176,6 +176,7 @@ class Scope{
         int FFTLength;
 		int newFFTLength;
         float FFTScale;
+		float FFTLogOffset;
         int pointerFFT;
         bool collectingFFT;
         float *windowFFT;
