@@ -177,12 +177,12 @@ class ConsoleView extends View{
 		_console.log(log, 'bela');
 	}
 	__belaLogErr(log, data){
-		//_console.warn(log);
+		_console.warn(log);
 		//_console.warn(log.split(' ').join('&nbsp;'));
 	}
 	__belaResult(data){
-		if (data.stderr && data.stderr.split) _console.warn(data.stderr.split(' ').join('&nbsp;'));
-		if (data.signal) _console.warn(data.signal);
+		//if (data.stderr && data.stderr.split) _console.warn(data.stderr.split(' ').join('&nbsp;'));
+		//if (data.signal) _console.warn(data.signal);
 		//console.log(data.signal)
 	}
 	
@@ -203,11 +203,11 @@ class ConsoleView extends View{
 			_console.fulfill('', timestamp, true);
 		} else {
 			_console.notify('Bela stopped', timestamp, true);
-			if (data && data.belaResult && data.belaResult.signal && data.belaResult.signal !== 'undefined'){
+			/*if (data && data.belaResult && data.belaResult.signal && data.belaResult.signal !== 'undefined'){
 				_console.reject(' with signal '+data.belaResult.signal, timestamp, true);
-			} else {
+			} else {*/
 				_console.fulfill('', timestamp, true);
-			}
+			//}
 		}
 	}
 	
