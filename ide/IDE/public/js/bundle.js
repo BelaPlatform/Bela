@@ -1391,21 +1391,21 @@ var ConsoleView = function (_View) {
 				//}
 			}
 		}
-
-		/*_CPU(data){
-  	if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0){
-  		_console.log(data.bela.split(' ').join('&nbsp;'));
-  	}
-  	if (data.modeSwitches && modeSwitches) {
-  		let ms = parseInt(data.modeSwitches);
-  		if (ms > modeSwitches && ms !== 67117 && ms > 2) _console.warn(ms+' mode switches detected on audio thread!');
-  		modeSwitches = ms;
-  		//console.log(data.modeSwitches, modeSwitches);
-  	} else {
-  		modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
-  	}
-  }*/
-
+	}, {
+		key: '_CPU',
+		value: function _CPU(data) {
+			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0) {
+				_console.log(data.bela.split(' ').join('&nbsp;'));
+			}
+			/*if (data.modeSwitches && modeSwitches) {
+   	let ms = parseInt(data.modeSwitches);
+   	if (ms > modeSwitches && ms !== 67117 && ms > 2) _console.warn(ms+' mode switches detected on audio thread!');
+   	modeSwitches = ms;
+   	//console.log(data.modeSwitches, modeSwitches);
+   } else {
+   	modeSwitches = data.modeSwitches ? parseInt(data.modeSwitches) : data.modeSwitches;
+   }*/
+		}
 	}, {
 		key: '_consoleDelete',
 		value: function _consoleDelete(value) {

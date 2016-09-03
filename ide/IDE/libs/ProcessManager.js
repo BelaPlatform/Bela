@@ -252,7 +252,7 @@ class ProcessManager extends EventEmitter {
 		output.bela = yield belaProcess.CPU();
 		output.belaLinux = (yield belaProcess.CPULinux()).cpu;
 		output.node = (yield pusage.statAsync(process.pid)).cpu;
-		output.gdb = yield DebugManager.CPU();
+		// output.gdb = yield DebugManager.CPU();
 		return output;
 	}
 	
