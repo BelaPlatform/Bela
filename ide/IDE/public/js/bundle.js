@@ -918,7 +918,7 @@ function parseErrors(data) {
 						file: str[0].split('/').pop(),
 						row: str[1] - 1,
 						column: str[2],
-						text: str.slice(4).join(':').slice(1) + '\ncolumn: ' + str[2],
+						text: '[warning] ' + str.slice(4).join(':').slice(1) + '\ncolumn: ' + str[2],
 						type: "warning"
 					});
 				} else {
