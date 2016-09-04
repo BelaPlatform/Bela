@@ -241,6 +241,8 @@ class FileView extends View {
 			if (item.name === sanitise(file.name)) fileExists = true;
 		}
 		
+		if (file.name === 'settings.json') fileExists = true;
+		
 		if (file.name === '_main.pd') forceRebuild = true;
 		
 		if (fileExists && askForOverwrite){

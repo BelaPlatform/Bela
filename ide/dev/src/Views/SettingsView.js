@@ -214,26 +214,32 @@ class SettingsView extends View {
 	// model events
 	_CLArgs(data){
 		var args = '';
-		for (let key in data) {
 		
-			let el = this.$elements.filterByData('key', key);
+		try{
+			for (let key in data) {
+		
+				let el = this.$elements.filterByData('key', key);
 			
-			// set the input value when neccesary
-			if (el[0].type === 'checkbox') {
-				el.prop('checked', (data[key] == 1));
-			} else if (key === '-C' || (el.val() !== data[key] && !this.inputJustChanged)){
-				//console.log(el.val(), data[key]);
-				el.val(data[key]);
-			}
+				// set the input value when neccesary
+				if (el[0].type === 'checkbox') {
+					el.prop('checked', (data[key] == 1));
+				} else if (key === '-C' || (el.val() !== data[key] && !this.inputJustChanged)){
+					//console.log(el.val(), data[key]);
+					el.val(data[key]);
+				}
 
-			// fill in the full string
-			if (key[0] === '-' && key[1] === '-'){
-				args += key+'='+data[key]+' ';
-			} else if (key === 'user'){
-				args += data[key];
-			} else if (key !== 'make'){
-				args += key+data[key]+' ';
+				// fill in the full string
+				if (key[0] === '-' && key[1] === '-'){
+					args += key+'='+data[key]+' ';
+				} else if (key === 'user'){
+					args += data[key];
+				} else if (key !== 'make'){
+					args += key+data[key]+' ';
+				}
 			}
+		}
+		catch(e){
+			this.emit('error', 'Error parsing project settings. Try restoring defaults.');
 		}
 
 		$('#C_L_ARGS').val(args);

@@ -40,6 +40,7 @@ settingsView.on('halt', () => {
 });
 settingsView.on('warning', text => consoleView.emit('warn', text) );
 settingsView.on('upload-update', data => socket.emit('upload-update', data) );
+settingsView.on('error', text => consoleView.emit('warn', text) );
 
 // project view
 var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);

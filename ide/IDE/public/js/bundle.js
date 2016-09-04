@@ -430,6 +430,9 @@ settingsView.on('warning', function (text) {
 settingsView.on('upload-update', function (data) {
 	return socket.emit('upload-update', data);
 });
+settingsView.on('error', function (text) {
+	return consoleView.emit('warn', text);
+});
 
 // project view
 var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);
@@ -2837,6 +2840,8 @@ var FileView = function (_View) {
 				}
 			}
 
+			if (file.name === 'settings.json') fileExists = true;
+
 			if (file.name === '_main.pd') forceRebuild = true;
 
 			if (fileExists && askForOverwrite) {
@@ -3709,26 +3714,31 @@ var SettingsView = function (_View) {
 		key: '_CLArgs',
 		value: function _CLArgs(data) {
 			var args = '';
-			for (var key in data) {
 
-				var el = this.$elements.filterByData('key', key);
+			try {
+				for (var key in data) {
 
-				// set the input value when neccesary
-				if (el[0].type === 'checkbox') {
-					el.prop('checked', data[key] == 1);
-				} else if (key === '-C' || el.val() !== data[key] && !this.inputJustChanged) {
-					//console.log(el.val(), data[key]);
-					el.val(data[key]);
+					var el = this.$elements.filterByData('key', key);
+
+					// set the input value when neccesary
+					if (el[0].type === 'checkbox') {
+						el.prop('checked', data[key] == 1);
+					} else if (key === '-C' || el.val() !== data[key] && !this.inputJustChanged) {
+						//console.log(el.val(), data[key]);
+						el.val(data[key]);
+					}
+
+					// fill in the full string
+					if (key[0] === '-' && key[1] === '-') {
+						args += key + '=' + data[key] + ' ';
+					} else if (key === 'user') {
+						args += data[key];
+					} else if (key !== 'make') {
+						args += key + data[key] + ' ';
+					}
 				}
-
-				// fill in the full string
-				if (key[0] === '-' && key[1] === '-') {
-					args += key + '=' + data[key] + ' ';
-				} else if (key === 'user') {
-					args += data[key];
-				} else if (key !== 'make') {
-					args += key + data[key] + ' ';
-				}
+			} catch (e) {
+				this.emit('error', 'Error parsing project settings. Try restoring defaults.');
 			}
 
 			$('#C_L_ARGS').val(args);
