@@ -65,6 +65,12 @@ fileView.on('message', (event, data) => {
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
+fileView.on('force-rebuild', () => {
+	socket.emit('process-event', {
+		event			: 'rebuild',
+		currentProject	: models.project.getKey('currentProject')
+	});
+});
 
 // editor view
 var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings, models.debug], models.settings);

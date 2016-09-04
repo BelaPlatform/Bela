@@ -91,8 +91,8 @@ class ProcessManager extends EventEmitter {
 	
 	}
 	
-	run(project, data){
-	
+	run(project, data, rebuild){
+
 		this.emptyAllQueues();
 
 		if (this.running()){
@@ -120,7 +120,7 @@ class ProcessManager extends EventEmitter {
 							if (!buildProcess.buildError) belaProcess.start(project);
 						});
 				});
-		} else {
+		} else if (!rebuild){
 			buildProcess.start(project)
 				.queue(function(){
 					if (!buildProcess.buildError) belaProcess.start(project);
@@ -137,6 +137,10 @@ class ProcessManager extends EventEmitter {
 		
 		if (data.debug) 
 			DebugManager.stop();
+	}
+	
+	rebuild(project){
+		this.run(project, undefined, true);
 	}
 	
 	// status events

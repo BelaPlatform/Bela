@@ -7,6 +7,7 @@ var headerIndeces = ['h', 'hh', 'hpp'];
 var askForOverwrite = true;
 var uploadingFile = false;
 var fileQueue = [];
+var forceRebuild = false;
 
 class FileView extends View {
 	
@@ -237,8 +238,10 @@ class FileView extends View {
 	
 		var fileExists = false;
 		for (let item of this.listOfFiles){
-			if (item.name === file.name) fileExists = true;
+			if (item.name === sanitise(file.name)) fileExists = true;
 		}
+		
+		if (file.name === '_main.pd') forceRebuild = true;
 		
 		if (fileExists && askForOverwrite){
 		
@@ -261,12 +264,15 @@ class FileView extends View {
 				this.actuallyDoFileUpload(file, true);
 				popup.hide();
 				uploadingFile = false;
-				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
+				if (fileQueue.length){
+					this.doFileUpload(fileQueue.pop());
+				}
 			});
 		
 			popup.find('.popup-cancel').on('click', () => {
 				popup.hide();
 				uploadingFile = false;
+				forceRebuild = false;
 				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			});
 		
@@ -285,6 +291,10 @@ class FileView extends View {
 		var reader = new FileReader();
 		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
 		reader.readAsArrayBuffer(file);
+		if (forceRebuild && !fileQueue.length){
+			forceRebuild = false;
+			this.emit('force-rebuild');
+		}
 	}
 	
 }

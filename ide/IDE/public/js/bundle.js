@@ -455,6 +455,12 @@ fileView.on('message', function (event, data) {
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
+fileView.on('force-rebuild', function () {
+	socket.emit('process-event', {
+		event: 'rebuild',
+		currentProject: models.project.getKey('currentProject')
+	});
+});
 
 // editor view
 var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings, models.debug], models.settings);
@@ -2466,6 +2472,7 @@ var headerIndeces = ['h', 'hh', 'hpp'];
 var askForOverwrite = true;
 var uploadingFile = false;
 var fileQueue = [];
+var forceRebuild = false;
 
 var FileView = function (_View) {
 	_inherits(FileView, _View);
@@ -2806,7 +2813,7 @@ var FileView = function (_View) {
 				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
 					var item = _step4.value;
 
-					if (item.name === file.name) fileExists = true;
+					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
 				_didIteratorError4 = true;
@@ -2822,6 +2829,8 @@ var FileView = function (_View) {
 					}
 				}
 			}
+
+			if (file.name === '_main.pd') forceRebuild = true;
 
 			if (fileExists && askForOverwrite) {
 
@@ -2844,12 +2853,15 @@ var FileView = function (_View) {
 					_this7.actuallyDoFileUpload(file, true);
 					popup.hide();
 					uploadingFile = false;
-					if (fileQueue.length) _this7.doFileUpload(fileQueue.pop());
+					if (fileQueue.length) {
+						_this7.doFileUpload(fileQueue.pop());
+					}
 				});
 
 				popup.find('.popup-cancel').on('click', function () {
 					popup.hide();
 					uploadingFile = false;
+					forceRebuild = false;
 					if (fileQueue.length) _this7.doFileUpload(fileQueue.pop());
 				});
 
@@ -2871,6 +2883,10 @@ var FileView = function (_View) {
 				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
 			};
 			reader.readAsArrayBuffer(file);
+			if (forceRebuild && !fileQueue.length) {
+				forceRebuild = false;
+				this.emit('force-rebuild');
+			}
 		}
 	}]);
 
