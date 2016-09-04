@@ -4467,11 +4467,17 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'notify',
 		value: function notify(notice, id) {
+
 			if (!enabled) return;
-			this.checkScroll();
+
+			//this.checkScroll();
+			scrollEnabled = true;
+
 			$('#' + id).remove();
 			var el = this.print(notice, 'notify', id);
+
 			this.scroll();
+
 			return el;
 		}
 	}, {

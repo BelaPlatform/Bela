@@ -99,11 +99,17 @@ class Console extends EventEmitter {
 	// if persist is not true, the notification will be removed quickly
 	// otherwise it will just fade
 	notify(notice, id){
+	
 		if (!enabled) return;
-		this.checkScroll();
+		
+		//this.checkScroll();
+		scrollEnabled = true;
+		
 		$('#'+id).remove();
 		var el = this.print(notice, 'notify', id);
+		
 		this.scroll();
+		
 		return el;
 	}
 	
