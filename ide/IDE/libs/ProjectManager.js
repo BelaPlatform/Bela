@@ -532,6 +532,7 @@ function _defaultSettings(){
 		"-A": "0", 		// adc level
 		"--pga-gain-left": "10",
 		"--pga-gain-right": "10",
+		"-X": "0",		// multiplexer capelet
 		"user": '',		// user-defined clargs
 		"make": ''		// user-defined Makefile parameters
 	};

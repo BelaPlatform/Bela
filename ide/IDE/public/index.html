@@ -165,9 +165,9 @@
 									<tr>
 										<td>Analog Channels:</td>
 										<td><select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
-										<option value="2">2</option>
-										<option value="4">4</option>
-										<option value="8">8</option>
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
 								   		</select></td>
 								   	</tr>
 
@@ -183,10 +183,10 @@
 								    <tr>
 								    	<td>Digital Channels:</td>
 								    	<td><select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
-										<option value="2">2</option>
-										<option value="4">4</option>
-										<option value="8">8</option>
-										<option value="16">16</option>
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
+											<option value="16">16</option>
 								   		</select></td>
 								   	</tr>
 
@@ -230,6 +230,16 @@
 										<td>PGA Gain right (dB):</td>
 										<td><input id="pga-right" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63.5" step="0.1" data-key="--pga-gain-right"></input></td>
 									</tr>
+									
+									<tr>
+										<td>Multiplexer Capelet:</td>
+										<td><select id="multiplexer-capelet" class="settingsManager small" data-func="setCLArg" data-key="-X">
+											<option value="0">Not Used</option>
+											<option value="2">16 Channels</option>
+											<option value="4">32 Channels</option>
+											<option value="8">64 Channels</option>
+								   		</select></td>
+								   	</tr>
 
 									<tr>
 										<td>User Command Line Arguments:</td>
