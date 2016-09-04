@@ -555,6 +555,25 @@ function ChannelConfig() {
 var channelConfig = [new ChannelConfig()];
 var colours = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#00ffff', '#ff00ff'];
 
+var tdGainVal = 1,
+    tdOffsetVal = 0,
+    tdGainMin = 0,
+    tdGainMax = 10,
+    tdOffsetMin = -5,
+    tdOffsetMax = 5;
+var FFTNGainVal = 1,
+    FFTNOffsetVal = -0.005,
+    FFTNGainMin = 0,
+    FFTNGainMax = 10,
+    FFTNOffsetMin = -1,
+    FFTNOffsetMax = 1;
+var FFTDGainVal = 70,
+    FFTDOffsetVal = 69,
+    FFTDGainMin = 0,
+    FFTDGainMax = 1000,
+    FFTDOffsetMin = 0,
+    FFTDOffsetMax = 100;
+
 var ChannelView = function (_View) {
 	_inherits(ChannelView, _View);
 
@@ -574,14 +593,15 @@ var ChannelView = function (_View) {
 			var channel = $element.data().channel;
 			var value = key === 'color' ? $element.val() : parseFloat($element.val());
 			if (!(key === 'color') && isNaN(value)) return;
+			if (key === 'yAmplitude' && value == 0) value = 0.001; // prevent amplitude hitting zero
 			this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
 			channelConfig[channel][key] = value;
 			this.emit('channelConfig', channelConfig);
 		}
 	}, {
 		key: 'setChannelGains',
-		value: function setChannelGains(value) {
-			this.$elements.filterByData('key', 'yAmplitude').val(value);
+		value: function setChannelGains(value, min, max) {
+			this.$elements.filterByData('key', 'yAmplitude').val(value).not('input[type=number]').prop('min', min).prop('max', max);
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -610,6 +630,45 @@ var ChannelView = function (_View) {
 			this.emit('channelConfig', channelConfig);
 		}
 	}, {
+		key: 'setChannelOffsets',
+		value: function setChannelOffsets(value, min, max) {
+			this.$elements.filterByData('key', 'yOffset').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = channelConfig[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var item = _step2.value;
+
+					item.yOffset = value;
+				}
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+
+			this.emit('channelConfig', channelConfig);
+		}
+	}, {
+		key: 'resetAll',
+		value: function resetAll() {
+			for (var i = 0; i < channelConfig.length; i++) {
+				this.$elements.filterByData('key', 'yAmplitude').filterByData('channel', i).val(channelConfig[i].yAmplitude);
+				this.$elements.filterByData('key', 'yOffset').filterByData('channel', i).val(channelConfig[i].yOffset);
+			}
+		}
+	}, {
 		key: '_numChannels',
 		value: function _numChannels(val) {
 			var numChannels = val;
@@ -635,11 +694,46 @@ var ChannelView = function (_View) {
 		}
 	}, {
 		key: '_plotMode',
-		value: function _plotMode(val) {
+		value: function _plotMode(val, data) {
+
 			if (val == 0) {
-				this.setChannelGains(1);
+				// time domain
+
+				this.setChannelGains(tdGainVal, tdGainMin, tdGainMax);
+				this.setChannelOffsets(tdOffsetVal, tdOffsetMin, tdOffsetMax);
 			} else {
-				this.setChannelGains(0.2);
+				// FFT
+
+				if (data.FFTYAxis == 0) {
+					// normalised
+
+					this.setChannelGains(FFTNGainVal, FFTNGainMin, FFTNGainMax);
+					this.setChannelOffsets(FFTNOffsetVal, FFTNOffsetMin, FFTNOffsetMax);
+				} else {
+					// decibels
+
+					this.setChannelGains(FFTDGainVal, FFTDGainMin, FFTDGainMax);
+					this.setChannelOffsets(FFTDOffsetVal, FFTDOffsetMin, FFTDOffsetMax);
+				}
+			}
+		}
+	}, {
+		key: '_FFTYAxis',
+		value: function _FFTYAxis(val, data) {
+
+			if (data.plotMode == 1) {
+
+				if (val == 0) {
+					// normalised
+
+					this.setChannelGains(FFTNGainVal, FFTNGainMin, FFTNGainMax);
+					this.setChannelOffsets(FFTNOffsetVal, FFTNOffsetMin, FFTNOffsetMax);
+				} else {
+					// decibels
+
+					this.setChannelGains(FFTDGainVal, FFTDGainMin, FFTDGainMax);
+					this.setChannelOffsets(FFTDOffsetVal, FFTDOffsetMin, FFTDOffsetMax);
+				}
 			}
 		}
 	}]);
