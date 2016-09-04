@@ -2079,6 +2079,9 @@ var EditorView = function (_View) {
 			enableSnippets: true
 		});
 
+		// use hard tabs, not spaces
+		_this.editor.session.setOption('useSoftTabs', false);
+
 		// this function is called when the user modifies the editor
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);

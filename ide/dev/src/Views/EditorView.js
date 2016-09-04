@@ -18,7 +18,7 @@ class EditorView extends View {
 		this.highlights = {};
 				
 		this.editor = ace.edit('editor');
-		var langTools = ace.require("ace/ext/language_tools"); 
+		var langTools = ace.require("ace/ext/language_tools");
 		
 		this.parser = require('../parser');
 		this.parser.init(this.editor, langTools);
@@ -38,6 +38,9 @@ class EditorView extends View {
 			enableLiveAutocompletion: false,
 			enableSnippets: true
 		});
+		
+		// use hard tabs, not spaces
+		this.editor.session.setOption('useSoftTabs', false);
 		
 		// this function is called when the user modifies the editor
 		this.editor.session.on('change', (e) => {
