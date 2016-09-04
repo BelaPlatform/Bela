@@ -151,12 +151,12 @@ if [ $RSYNC_AVAILABLE -eq 1 ];
 then
   [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
   rsync -ac --no-t --delete-after --stats $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval $FILTER &&\
-  printf "..." && rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib
+  printf "..." &&echo  rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib; rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib
 else
   # if rsync is not available, then clean the folders before copying the files
   ssh $BBB_ADDRESS "rm -rf $FILES_TO_COPY; mkdir -p $BBB_BELA_HOME" &&\
   scp -r -q $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME &&\
-  scp -q libpd.so $BBB_ADDRESS:/usr/lib
+  scp -q lib/libpd.so $BBB_ADDRESS:/usr/lib
 fi
 error_handler $?
 # cd back to the original folder.
