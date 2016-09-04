@@ -58,12 +58,12 @@ socket.on('buffer', function(buf){
 		return;
 	}
 	
-	for (let channel=0; channel<numChannels; channel++){
-		for (let u=0; u<upSampling; u++){
-			for (let frame=0; frame<inFrameWidth; frame++){
-				let outIndex = channel*outFrameWidth + frame*upSampling + u;
-				let inIndex = channel*inFrameWidth + frame;
-				let diff = interpolation ? u*(inArray[inIndex+1]-inArray[inIndex])/upSampling : 0;
+	for (var channel=0; channel<numChannels; channel++){
+		for (var u=0; u<upSampling; u++){
+			for (var frame=0; frame<inFrameWidth; frame++){
+				var outIndex = channel*outFrameWidth + frame*upSampling + u;
+				var inIndex = channel*inFrameWidth + frame;
+				var diff = interpolation ? u*(inArray[inIndex+1]-inArray[inIndex])/upSampling : 0;
 				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) / channelConfig[channel].yAmplitude);
 			}
 		}
