@@ -650,6 +650,10 @@ socket.on('init', function (data) {
 	if (data[2].project === 'exampleTempProject') models.project.once('set', function () {
 		return projectView.emit('example-changed');
 	});
+
+	// socket.io timeout	
+	socket.io.engine.pingTimeout = 6000;
+	socket.io.engine.pingInterval = 3000;
 });
 
 // project events
@@ -3959,7 +3963,7 @@ var ToolbarView = function (_View) {
 		});
 
 		_this.on('disconnected', function () {
-			$('#run').removeClass('spinning');
+			$('#run').removeClass('running-button').removeClass('building-button');
 		});
 
 		$('#run').mouseover(function () {
@@ -4139,24 +4143,22 @@ var ToolbarView = function (_View) {
 		value: function _cpuMonitoring(value) {
 			if (parseInt(value)) $('#ide-cpu, #bela-cpu').css('visibility', 'visible');else $('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
 		}
-	}, {
-		key: '_debugBelaRunning',
-		value: function _debugBelaRunning(status) {
-			if (status) {
-				if (!$('#run').hasClass('spinning')) {
-					$('#run').addClass('spinning');
-				}
-			} else {
-				if ($('#run').hasClass('spinning')) {
-					$('#run').removeClass('spinning');
-				}
-			}
-		}
-	}, {
-		key: '_debugRunning',
-		value: function _debugRunning(status) {
-			if (!status && $('#run').hasClass('spinning')) $('#run').removeClass('spinning');
-		}
+
+		/*_debugBelaRunning(status){
+  	if (status){
+  		if (!$('#run').hasClass('spinning')){
+  			$('#run').addClass('spinning');
+  		}
+  	} else {
+  		if ($('#run').hasClass('spinning')){
+  			$('#run').removeClass('spinning');
+  		}
+  	}
+  }
+  _debugRunning(status){
+  	if (!status && $('#run').hasClass('spinning'))  $('#run').removeClass('spinning');
+  }*/
+
 	}]);
 
 	return ToolbarView;
@@ -4379,17 +4381,17 @@ var Console = function (_EventEmitter) {
 			var msgs = text.split('\n');
 			for (var i = 0; i < msgs.length; i++) {
 				if (msgs[i] !== '') {
-					this.print(msgs[i], 'warning', id, function () {
-						var $el = $(this);
-						$el.addClass('beaglert-console-collapsed');
-						$el.on('transitionend', function () {
-							if ($el.hasClass('beaglert-console-collapsed')) {
-								$el.remove();
-							} else {
-								$el.addClass('beaglert-console-collapsed');
-							}
-						});
-					});
+					this.print(msgs[i], 'warning', id); /*, function(){ 
+                                         var $el = $(this);
+                                         $el.addClass('beaglert-console-collapsed');
+                                         $el.on('transitionend', () => {
+                                         if ($el.hasClass('beaglert-console-collapsed')){
+                                         $el.remove();
+                                         } else {
+                                         $el.addClass('beaglert-console-collapsed');
+                                         }
+                                         });
+                                         });*/
 				}
 			}
 			this.scroll();

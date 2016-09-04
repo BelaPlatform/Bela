@@ -116,12 +116,15 @@ p {
     height: 18px;
     cursor: pointer;
     opacity: 0;
-    transform: scale(0);
+    -webkit-transform: scale(0);
+            transform: scale(0);
+    -webkit-transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 #iDocsLink.iDocsVisible{
 	opacity: 1;
-	transform: scale(1);
+	-webkit-transform: scale(1);
+	        transform: scale(1);
 }
 
 #beaglert-console{
@@ -270,19 +273,26 @@ p {
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 	padding: 4px 30px;	
 	background-color: rgba(0, 255, 0, 0.2);
+	-webkit-transition: background-color 1s ease-out, -webkit-transform 0.2s ease-out;
+	transition: background-color 1s ease-out, -webkit-transform 0.2s ease-out;
 	transition: transform 0.2s ease-out, background-color 1s ease-out;
+	transition: transform 0.2s ease-out, background-color 1s ease-out, -webkit-transform 0.2s ease-out;
 }
 
 .beaglert-console-ierror, .beaglert-console-iwarning, .beaglert-console-warning, .beaglert-console-error{
 	cursor: pointer;
+	-webkit-transition: -webkit-transform 0.1s ease-out;
+	transition: -webkit-transform 0.1s ease-out;
 	transition: transform 0.1s ease-out;
+	transition: transform 0.1s ease-out, -webkit-transform 0.1s ease-out;
 }
 .beaglert-console-ierror:hover a, .beaglert-console-iwarning:hover a{
 	text-decoration: underline;
 }
 
 .beaglert-console-collapsed{
-	transform: scaleY(0);
+	-webkit-transform: scaleY(0);
+	        transform: scaleY(0);
 }
 .beaglert-console-faded{
 	background-color: rgba(255, 255, 255, 0.2);
@@ -326,31 +336,54 @@ p {
     white-space: nowrap;
 	padding: 5px;
 	opacity: 0.2;
+	-webkit-transition: opacity 0.3s;
 	transition: opacity 0.3s;
 }
 
 /*====== TOOLBAR ======*/
 
-@keyframes spin {
+@-webkit-keyframes spin {
   from {
-    transform: rotateZ(0);
+    -webkit-transform: rotateZ(0);
+            transform: rotateZ(0);
   }
 
   to {
-    transform: rotateZ(360deg);
+    -webkit-transform: rotateZ(360deg);
+            transform: rotateZ(360deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    -webkit-transform: rotateZ(0);
+            transform: rotateZ(0);
+  }
+
+  to {
+    -webkit-transform: rotateZ(360deg);
+            transform: rotateZ(360deg);
   }
 }
 .running-button{
-	animation-duration: 0.5s;
-	animation-name: spin;
-	animation-iteration-count: infinite;
-	animation-timing-function: linear;
+	-webkit-animation-duration: 0.5s;
+	        animation-duration: 0.5s;
+	-webkit-animation-name: spin;
+	        animation-name: spin;
+	-webkit-animation-iteration-count: infinite;
+	        animation-iteration-count: infinite;
+	-webkit-animation-timing-function: linear;
+	        animation-timing-function: linear;
 }
 .building-button{
-	animation-duration: 1s;
-	animation-name: spin;
-	animation-iteration-count: infinite;
-	animation-timing-function: linear;
+	-webkit-animation-duration: 1s;
+	        animation-duration: 1s;
+	-webkit-animation-name: spin;
+	        animation-name: spin;
+	-webkit-animation-iteration-count: infinite;
+	        animation-iteration-count: infinite;
+	-webkit-animation-timing-function: linear;
+	        animation-timing-function: linear;
 }
 
 #toolbar {
@@ -380,6 +413,7 @@ p {
 		display: inline-block;
 		margin-top: 5px;
 		float: left;
+		-webkit-transition: 0.2s ease-out;
 		transition: 0.2s ease-out;
 	}
 	.control-button-runstop {
@@ -388,6 +422,7 @@ p {
 		display: inline-block;
 		margin-top: 5px;
 		float: left;
+		-webkit-transition: 0.2s ease-out;
 		transition: 0.2s ease-out;
 	}
 	.control-text {
@@ -471,11 +506,9 @@ p {
 	position: absolute;
 	top: -15px;
 	left: calc(100% - 140px);
-	// margin-right: 15px;
 	width: 130px;
 	float: right;
 	display: inline-block;
-	// background-image: url("images/logo_bar13.png");
 }
 
 #status {
@@ -485,7 +518,6 @@ p {
 	height: 31px;
 	left: calc(100% - 195px);
 	background: url("images/icons/status_ok.png");
-	// background: url("images/toolbar.png") -140px 35px;
 	cursor: initial;
 	display: inline;
 }
@@ -505,9 +537,6 @@ hr.sep {
 		border-top: 1px dotted #8c8b8b;
 	border-bottom: 1px dotted #fff;
 	margin-top: 15px;
-	// height: 6px;
-	// background: url("images/hr.png") repeat-x 0 0;
- //    border: 0;
 }
 
 /* ===== EDITOR ===== */
@@ -527,10 +556,6 @@ hr.sep {
 	bottom: 0;
 	left: calc(100% - 60px);
 	background: #e8e8e8;
- //    transition-duration: 0.3s;
-	// -webkit-transition-duration: 0.3s;
- //    -moz-transition-duration: 0.3s;
- //    -o-transition-duration: 0.3s;
 }
 #saveAsName{
 	height: 8px;
@@ -541,6 +566,7 @@ hr.sep {
 	border-bottom: 1px solid black;
 	height: 14px!important;
 	opacity: 0.1;
+	-webkit-transition: opacity 0.1s ease-out;
 	transition: opacity 0.1s ease-out;
 }
 .bela-ace-highlight:hover{
@@ -640,7 +666,6 @@ hr.sep {
 			height: 25px;
 			float: right;
 			clear: right;
-			// margin-top: 3px;
 		}
 
 /* ======= FLEX STUFF ====== */
@@ -676,38 +701,6 @@ right: calc(100% - 300px);
 right: calc(100% - 62px);
 /*animation: right-in 1s both;*/
 }
-// @keyframes left-out {
-// 0% {
-//   width: 67%;
-//   }
-// 100% {
-//   width: 100%;
-//   }
-// }
-// @keyframes left-in {
-// 0% {
-//   width: 100%;
-//   }
-// 100% {
-//   width: 67%;
-//   }
-// }
-// @keyframes right-out {
-// 0% {
-//   right: 0;
-//   }
-// 100% {
-//   right: -33%;
-//   }
-// }
-// @keyframes right-in {
-// 0% {
-//   right: -33%;
-//   }
-// 100% {
-//   right: 0;
-//   }
-// }
 
 
 /* ======= TABS ======== */
@@ -731,6 +724,8 @@ right: calc(100% - 62px);
       height: 30px;
       display: block;t
       border-bottom: 0.25px solid #e9e9e9;
+      -webkit-transition: background 0.2s ease,
+              padding 0.8s linear;
       transition: background 0.2s ease,
               padding 0.8s linear;
     }
@@ -807,10 +802,12 @@ right: calc(100% - 62px);
 		background: url("images/icons/arrow2_25.png") center center no-repeat #e8e8e8;
     	margin-bottom: -3px; 
     	height: 25px;
+    	-webkit-transition: 0.2s;
     	transition: 0.2s;
     	}
 		#tab-0.open {
 			background: url("images/icons/x25.png") center center no-repeat;
+			-webkit-transition: 0.5s;
 			transition: 0.5s;
 			}    
     
@@ -890,8 +887,6 @@ right: calc(100% - 62px);
     [type=radio]:checked ~ label {
       background: #fff;
       z-index: 99;
-      /* border-left: 1px solid #e8e8e8; check popups & tabs when uncommenting this */
-      // box-shadow: 0 2px 10px #e5e5e5;
     }
     [type=radio]:checked ~ label ~ .tabContent {
       z-index: 1;

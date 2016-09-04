@@ -229,6 +229,10 @@ socket.on('init', (data) => {
 	
 	// hack to stop changes to read-only example being overwritten when opening a new tab
 	if (data[2].project === 'exampleTempProject') models.project.once('set', () => projectView.emit('example-changed') );
+
+	// socket.io timeout	
+	socket.io.engine.pingTimeout = 6000;
+	socket.io.engine.pingInterval = 3000;
 	
 });
 

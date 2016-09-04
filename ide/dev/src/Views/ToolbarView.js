@@ -12,7 +12,7 @@ class ToolbarView extends View {
 		this.$elements.on('click', (e) => this.buttonClicked($(e.currentTarget), e));
 		
 		this.on('disconnected', () => {
-			$('#run').removeClass('spinning');
+			$('#run').removeClass('running-button').removeClass('building-button');
 		});
 		
 		$('#run')
@@ -187,7 +187,7 @@ class ToolbarView extends View {
 			$('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
 	}
 	
-	_debugBelaRunning(status){
+	/*_debugBelaRunning(status){
 		if (status){
 			if (!$('#run').hasClass('spinning')){
 				$('#run').addClass('spinning');
@@ -200,7 +200,7 @@ class ToolbarView extends View {
 	}
 	_debugRunning(status){
 		if (!status && $('#run').hasClass('spinning'))  $('#run').removeClass('spinning');
-	}
+	}*/
 	
 }
 
