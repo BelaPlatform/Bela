@@ -2254,14 +2254,14 @@ var EditorView = function (_View) {
 				this.emit('change');
 
 				// focus the editor
-				this._focus(opts.focus);
+				this.__focus(opts.focus);
 			}
 		}
 		// editor focus has changed
 
 	}, {
-		key: '_focus',
-		value: function _focus(data) {
+		key: '__focus',
+		value: function __focus(data) {
 
 			if (data && data.line !== undefined && data.column !== undefined) this.editor.gotoLine(data.line, data.column);
 

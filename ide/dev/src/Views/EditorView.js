@@ -209,13 +209,13 @@ class EditorView extends View {
 			this.emit('change');
 
 			// focus the editor
-			this._focus(opts.focus);
+			this.__focus(opts.focus);
 		
 		}
 		
 	}
 	// editor focus has changed
-	_focus(data){
+	__focus(data){
 
 		if (data && data.line !== undefined && data.column !== undefined)
 			this.editor.gotoLine(data.line, data.column);

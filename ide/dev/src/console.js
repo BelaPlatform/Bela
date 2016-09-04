@@ -52,7 +52,7 @@ class Console extends EventEmitter {
 		var msgs = text.split('\n');
 		for (let i=0;  i<msgs.length; i++){
 			if (msgs[i] !== ''){
-				this.print(msgs[i], 'warning', id, function(){ 
+				this.print(msgs[i], 'warning', id);/*, function(){ 
 					var $el = $(this);
 					$el.addClass('beaglert-console-collapsed');
 					$el.on('transitionend', () => {
@@ -62,7 +62,7 @@ class Console extends EventEmitter {
 							$el.addClass('beaglert-console-collapsed');
 						}
 					});
-				});
+				});*/
 			}
 		}
 		this.scroll();
