@@ -4294,7 +4294,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
-var enabled = true;
+var enabled = true,
+    scrollEnabled = true;
 
 // module variables
 var numElements = 0,
@@ -4341,6 +4342,7 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'log',
 		value: function log(text, css) {
+			this.checkScroll();
 			var msgs = text.split('\n');
 			for (var i = 0; i < msgs.length; i++) {
 				if (msgs[i] !== '' && msgs[i] !== ' ') {
@@ -4354,6 +4356,10 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'warn',
 		value: function warn(text, id) {
+
+			//this.checkScroll();
+			scrollEnabled = true;
+
 			var msgs = text.split('\n');
 			for (var i = 0; i < msgs.length; i++) {
 				if (msgs[i] !== '') {
@@ -4376,6 +4382,9 @@ var Console = function (_EventEmitter) {
 		key: 'newErrors',
 		value: function newErrors(errors) {
 			var _this2 = this;
+
+			//this.checkScroll();
+			scrollEnabled = true;
 
 			$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 
@@ -4441,6 +4450,7 @@ var Console = function (_EventEmitter) {
 		key: 'notify',
 		value: function notify(notice, id) {
 			if (!enabled) return;
+			this.checkScroll();
 			$('#' + id).remove();
 			var el = this.print(notice, 'notify', id);
 			this.scroll();
@@ -4501,6 +4511,15 @@ var Console = function (_EventEmitter) {
 				numElements = 0;
 			}
 		}
+	}, {
+		key: 'checkScroll',
+		value: function checkScroll() {
+			if (this.parent.scrollHeight - this.parent.scrollTop === this.parent.clientHeight) {
+				scrollEnabled = true;
+			} else {
+				scrollEnabled = false;
+			}
+		}
 
 		// force the console to scroll to the bottom
 
@@ -4509,9 +4528,12 @@ var Console = function (_EventEmitter) {
 		value: function scroll() {
 			var _this3 = this;
 
-			setTimeout(function () {
-				return _this3.parent.scrollTop = _this3.parent.scrollHeight;
-			}, 0);
+			if (scrollEnabled) {
+				scrollEnabled = false;
+				setTimeout(function () {
+					return _this3.parent.scrollTop = _this3.parent.scrollHeight;
+				}, 0);
+			}
 		}
 	}, {
 		key: 'setConsoleDelete',

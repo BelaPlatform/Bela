@@ -2,7 +2,7 @@
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
-var enabled = true;
+var enabled = true, scrollEnabled = true;
 
 // module variables
 var numElements = 0, maxElements = 200, consoleDelete = true;
@@ -34,6 +34,7 @@ class Console extends EventEmitter {
 
 	// log an unhighlighted message to the console
 	log(text, css){
+		this.checkScroll();
 		var msgs = text.split('\n');
 		for (let i=0;  i<msgs.length; i++){
 			if (msgs[i] !== '' && msgs[i] !== ' '){
@@ -44,6 +45,10 @@ class Console extends EventEmitter {
 	}
 	// log a warning message to the console
 	warn(text, id){
+	
+		//this.checkScroll();
+		scrollEnabled = true;
+
 		var msgs = text.split('\n');
 		for (let i=0;  i<msgs.length; i++){
 			if (msgs[i] !== ''){
@@ -65,6 +70,9 @@ class Console extends EventEmitter {
 	
 	newErrors(errors){
 	
+		//this.checkScroll();
+		scrollEnabled = true;
+		
 		$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 		
 		for (let err of errors){
@@ -92,6 +100,7 @@ class Console extends EventEmitter {
 	// otherwise it will just fade
 	notify(notice, id){
 		if (!enabled) return;
+		this.checkScroll();
 		$('#'+id).remove();
 		var el = this.print(notice, 'notify', id);
 		this.scroll();
@@ -140,9 +149,20 @@ class Console extends EventEmitter {
 		}
 	}
 	
+	checkScroll(){
+		if (this.parent.scrollHeight-this.parent.scrollTop === this.parent.clientHeight){
+			scrollEnabled = true;
+		} else {
+			scrollEnabled = false;
+		}
+	}
+	
 	// force the console to scroll to the bottom
 	scroll(){
-		setTimeout((() => this.parent.scrollTop = this.parent.scrollHeight), 0);
+		if (scrollEnabled){
+			scrollEnabled = false;
+			setTimeout((() => this.parent.scrollTop = this.parent.scrollHeight), 0);
+		}
 	}
 	
 	setConsoleDelete(to){
