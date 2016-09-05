@@ -120,6 +120,7 @@ static const unsigned int gFirstScopeChannel = 26;
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
+void* gPatch;
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -207,8 +208,8 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_setDigital");
 
 	// open patch       [; pd open file folder(
-	void* patch = libpd_openfile(file, folder);
-	if(patch == NULL){
+	gPatch = libpd_openfile(file, folder);
+	if(gPatch == NULL){
 		printf("Error: file %s/%s is corrupted.\n", folder, file); 
 		return false;
 	}
@@ -418,5 +419,6 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
+	libpd_closefile(gPatch);
 	delete [] gScopeOut;
 }
