@@ -431,7 +431,7 @@ void Scope::doFFT(){
 					float magSquared = outFFT[index + n].r * outFFT[index + n].r + outFFT[index + n].i * outFFT[index + n].i;
 					if (FFTYAxis == 0){ // normalised linear magnitude
 						yAxis[n] = FFTScale * sqrtf(magSquared);
-					} else if (FFTYAxis == 1){ // decibels
+					} else { // Otherwise it is going to be (FFTYAxis == 1): decibels
 						yAxis[n] = 10.0f * log10f(magSquared) + FFTLogOffset;
 					}
 				}
