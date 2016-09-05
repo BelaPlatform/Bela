@@ -500,9 +500,9 @@ function *listFiles(dir, subDir){
 	var output = [];
 	for (let item of contents){
 	
-		let stat = yield fs.statAsync(dir+'/'+item);
+		let stat = yield fs.lstatAsync(dir+'/'+item);
 		
-		//console.log(stat);
+		//console.log(dir+'/'+item);
 		
 		let data = {
 			name: item,
@@ -525,6 +525,7 @@ function *listFiles(dir, subDir){
 function *compareFiles(project, fileName, file){
 	//console.log(project, fileName, file);
 	var savedFile = yield fs.readFileAsync(projectPath+project+'/'+fileName, 'utf-8');
+	if (savedFile !== file) console.log('DISK:', savedFile, 'IDE:', file);
 	return (savedFile !== file);
 }
 
