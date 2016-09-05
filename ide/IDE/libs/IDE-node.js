@@ -247,7 +247,19 @@ function socketEvents(socket){
 	// file list refresh
 	socket.on('list-files', project => {
 		ProjectManager.listFiles(project)
-			.then( list => socket.emit('file-list', project, list) );
+			.then( list => socket.emit('file-list', project, list) )
+			.catch( e => console.log('error refreshing file list', e.toString()) );
+	});
+	
+	// current file comparison
+	socket.on('compare-files', (project, fileName, file) => {
+		if (!project || !fileName || !file) return;
+		ProjectManager.compareFiles(project, fileName, file)
+			.then( result => {
+				if (result)
+					socket.emit('current-file-changed', project, fileName);
+			})
+			.catch( e => console.log('error doing current file comparison', e.toString()) );
 	});
 	
 	// run-on-boot
