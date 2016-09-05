@@ -464,12 +464,19 @@ var BackgroundView = function (_View) {
 			ctx.lineWidth = 0.3;
 			ctx.setLineDash([]);
 			ctx.beginPath();
+
 			for (var i = 0; i <= numVlines; i++) {
 				ctx.moveTo(i * window.innerWidth / numVlines, 0);
 				ctx.lineTo(i * window.innerWidth / numVlines, canvas.height);
 				if (i && i !== numVlines) {
 					var val;
-					if (parseInt(this.models[0].getKey('FFTXAxis')) === 0) val = (i * 22050 / numVlines * data.upSampling / data.downSampling).toFixed(0);else val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (22050 / window.innerWidth) * (data.upSampling / data.downSampling)).toFixed(0);
+					if (parseInt(this.models[0].getKey('FFTXAxis')) === 0) {
+						// linear x axis
+						val = (i * this.models[0].getKey('sampleRate') / (numVlines * 2) * data.upSampling / data.downSampling).toFixed(0);
+						//console.log(val);
+					} else {
+						val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (this.models[0].getKey('sampleRate') / (2 * window.innerWidth)) * (data.upSampling / data.downSampling)).toFixed(0);
+					}
 
 					ctx.fillText(val, i * window.innerWidth / numVlines, canvas.height - 2);
 				}
@@ -1366,7 +1373,7 @@ $('#scope').on('mousemove', function (e) {
 		if (parseInt(settings.getKey('FFTXAxis')) === 0) {
 			x = parseInt(settings.getKey('sampleRate') * e.clientX / (2 * window.innerWidth * scale));
 		} else {
-			x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (22050 / window.innerWidth) * (settings.getKey('upSampling') / settings.getKey('downSampling')));
+			x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (settings.getKey('sampleRate') / (2 * window.innerWidth)) * (settings.getKey('upSampling') / settings.getKey('downSampling')));
 		}
 		if (x > 1500) x = x / 1000 + 'khz';else x += 'hz';
 		y = (1 - e.clientY / window.innerHeight).toPrecision(3);

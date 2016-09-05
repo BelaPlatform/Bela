@@ -115,7 +115,7 @@ $('#scope').on('mousemove', e => {
 		if (parseInt(settings.getKey('FFTXAxis')) === 0){
 			x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
 		} else {
-			x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (22050/window.innerWidth) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+			x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
 		}
 		if (x > 1500) x = (x/1000) + 'khz';
 		else x += 'hz';

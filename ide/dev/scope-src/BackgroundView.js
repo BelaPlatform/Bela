@@ -142,16 +142,19 @@ class BackgroundView extends View{
 		ctx.lineWidth = 0.3;
 		ctx.setLineDash([]);
 		ctx.beginPath();
+				
 		for (var i=0; i <= numVlines; i++){
 			ctx.moveTo(i*window.innerWidth/numVlines, 0);
 			ctx.lineTo(i*window.innerWidth/numVlines, canvas.height);
 			if (i && i !== numVlines){
 				var val;
-				if (parseInt(this.models[0].getKey('FFTXAxis')) === 0)
-					val = ((i*22050/numVlines)*data.upSampling/data.downSampling).toFixed(0);
-				else 
-					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (22050/window.innerWidth) * (data.upSampling/data.downSampling)).toFixed(0);
-
+				if (parseInt(this.models[0].getKey('FFTXAxis')) === 0){	// linear x axis
+					val = ((i*this.models[0].getKey('sampleRate')/(numVlines*2))*data.upSampling/data.downSampling).toFixed(0);
+					//console.log(val);
+				} else {
+					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (this.models[0].getKey('sampleRate')/(2*window.innerWidth)) * (data.upSampling/data.downSampling)).toFixed(0);
+				}
+				
 				ctx.fillText(val, i*window.innerWidth/numVlines, canvas.height-2);
 			}
 		}
