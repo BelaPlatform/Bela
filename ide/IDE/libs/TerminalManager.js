@@ -9,12 +9,6 @@ var path = require('path');
 // bash or sh?
 var shell = 'bash';
 
-// when the IDE is run at startup, the HOME, USER and PATH environmental variables are incorrectly set.
-// we hardcode them here, but if the use or PATH changes, those changes will have to be ported here.
-var HOME = '/root';
-var USER = 'root';
-var PATH = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
-
 // directory in which shell will start
 var startCWD = '~/Bela';
 
@@ -30,13 +24,7 @@ class TerminalManager extends EventEmitter {
 
 	init(){
 	
-		var sh = spawn(shell, {
-			env: {
-				HOME,
-				USER,
-				PATH
-			}
-		})
+		var sh = spawn(shell)
 		
 		sh.stdin.write('cd '+startCWD+'\n');
 		
