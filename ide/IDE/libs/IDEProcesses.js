@@ -18,6 +18,17 @@ class SyntaxCheckProcess extends MakeProcess{
 		super('syntax');
 	}
 	
+	start(project){
+				
+		_co(ProjectManager, 'getCLArgs', project)
+			.then( (CLArgs) => {
+				this.active = false;
+				super.start(project, undefined, CLArgs.make);
+			});
+
+		return this;
+	}
+	
 	CPU(){
 		if (!this.active || !this.pid) return Promise.resolve(0);
 		var makeCPU;
