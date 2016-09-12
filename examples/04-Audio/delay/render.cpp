@@ -74,7 +74,7 @@ void render(BelaContext *context, void *userData)
         
         // Read audio inputs
         out_l = audioRead(context,n,0);
-        out_r = audioRead(context,n,0);
+        out_r = audioRead(context,n,1);
         
         // Increment delay buffer write pointer
         if(++gDelayBufWritePtr>DELAY_BUFFER_SIZE)
