@@ -176,7 +176,7 @@ function socketEvents(socket){
 	
 	// IDE settings
 	socket.on('IDE-settings', (data) => {
-	console.log('IDE-settings', data);
+	//console.log('IDE-settings', data);
 		if (!data.func || !SettingsManager[data.func]) {
 			console.log('bad IDE-settings', data);
 			return;
@@ -250,18 +250,7 @@ function socketEvents(socket){
 			.then( list => socket.emit('file-list', project, list) )
 			.catch( e => console.log('error refreshing file list', e.toString()) );
 	});
-	
-	// current file comparison
-	socket.on('compare-files', (project, fileName, file) => {
-		if (!project || !fileName || !file) return;
-		ProjectManager.compareFiles(project, fileName, file)
-			.then( result => {
-				if (result)
-					socket.emit('current-file-changed', project, fileName);
-			})
-			.catch( e => console.log('error doing current file comparison', e.toString()) );
-	});
-	
+
 	// run-on-boot
 	socket.on('run-on-boot', project => {
 		if (project === 'none'){

@@ -475,7 +475,7 @@ editorView.on('upload', function (fileData) {
 		fileData: fileData,
 		checkSyntax: parseInt(models.settings.getKey('liveSyntaxChecking'))
 	});
-	setCompareFilesInterval(models.project.getKey('currentProject'), models.project.getKey('fileName'), fileData);
+	setCompareFilesInterval();
 });
 editorView.on('breakpoint', function (line) {
 	var breakpoints = models.project.getKey('breakpoints');
@@ -615,16 +615,6 @@ gitView.on('console-warn', function (text) {
 	return consoleView.emit('warn', text);
 });
 
-var compareFilesInterval = setInterval(function () {
-	return socket.emit('compare-files', models.project.getKey('currentProject'), models.project.getKey('fileName'), editorView.getData());
-}, 5000);
-function setCompareFilesInterval(project, fileName, fileData) {
-	if (compareFilesInterval) clearInterval(compareFilesInterval);
-	compareFilesInterval = setInterval(function () {
-		return socket.emit('compare-files', models.project.getKey('currentProject'), models.project.getKey('fileName'), editorView.getData());
-	}, 5000);
-}
-
 // refresh file list
 setInterval(function () {
 	return socket.emit('list-files', models.project.getKey('currentProject'));
@@ -677,6 +667,10 @@ socket.on('project-data', function (data) {
 		debug = data.debug;
 		data.debug = undefined;
 	}
+	if (data.fileCompare) {
+		compareFile(data);
+		return;
+	}
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
 	if (debug) {
@@ -702,14 +696,6 @@ socket.on('project-list', function (project, list) {
 socket.on('file-list', function (project, list) {
 	if (project && project === models.project.getKey('currentProject')) {
 		models.project.setKey('fileList', list);
-	}
-});
-socket.on('file-changed', function (project, fileName) {
-	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
-		console.log('file changed!');
-		models.project.setKey('readOnly', true);
-		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
-		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
 	}
 });
 
@@ -739,6 +725,15 @@ socket.on('disconnect', function () {
 	consoleView.disconnect();
 	toolbarView.emit('disconnected');
 	models.project.setKey('readOnly', true);
+});
+
+socket.on('file-changed', function (project, fileName) {
+	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
+		console.log('file changed!');
+		models.project.setKey('readOnly', true);
+		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
+		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
+	}
 });
 
 socket.on('debugger-data', function (data) {
@@ -797,11 +792,42 @@ socket.on('force-reload', function () {
 	return window.location.reload(true);
 });
 
+var compareFilesInterval,
+    wrongCompares = 0;
+function setCompareFilesInterval() {
+	if (compareFilesInterval) clearInterval(compareFilesInterval);
+	compareFilesInterval = setInterval(function () {
+		socket.emit('project-event', {
+			func: 'openFile',
+			newFile: models.project.getKey('fileName'),
+			currentProject: models.project.getKey('currentProject'),
+			fileCompare: true
+		});
+	}, 5000);
+}
+setCompareFilesInterval();
+
+var wrongCompares = 0;
+function compareFile(data) {
+	if (data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
+		if (data.fileData !== editorView.getData()) {
+			wrongCompares += 1;
+			if (wrongCompares >= 2) {
+				// twice in a row
+				fileChangedPopup(data.fileName);
+				wrongCompares = 0;
+			}
+		} else {
+			wrongCompares = 0;
+		}
+	}
+}
+
 // current file changed
 var fileChangedPopupVisible = false;
-socket.on('current-file-changed', function (project, fileName) {
+function fileChangedPopup(fileName) {
 
-	if (project !== models.project.getKey('currentProject') || fileChangedPopupVisible) return;
+	if (fileChangedPopupVisible) return;
 
 	popup.title('File Changed on Disk');
 	popup.subtitle('Would you like to reload ' + fileName + '?');
@@ -831,7 +857,7 @@ socket.on('current-file-changed', function (project, fileName) {
 
 	popup.show();
 	fileChangedPopupVisible = true;
-});
+}
 
 // model events
 // build errors

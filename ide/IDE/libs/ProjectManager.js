@@ -406,11 +406,8 @@ module.exports = {
 	
 	listFiles(project){
 		return new Promise.coroutine(listFiles)(projectPath+project);
-	},
-	
-	compareFiles(project, fileName, file){
-		return  new Promise.coroutine(compareFiles)(project, fileName, file);
 	}
+	
 }
 
 
@@ -520,13 +517,6 @@ function *listFiles(dir, subDir){
 	//console.log('listFiles exiting dir', dir);
 	//if (!subDir) console.dir(output,{depth:null})
 	return output;
-}
-
-function *compareFiles(project, fileName, file){
-	//console.log(project, fileName, file);
-	var savedFile = yield fs.readFileAsync(projectPath+project+'/'+fileName, 'utf-8');
-	if (savedFile !== file) console.log('DISK:', savedFile, 'IDE:', file);
-	return (savedFile !== file);
 }
 
 // create default project settings
