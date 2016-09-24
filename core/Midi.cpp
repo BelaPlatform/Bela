@@ -16,13 +16,13 @@
 
 midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength]=
 {
-	0x80,
-	0x90,
-	0xA0,
-	0xB0,
-	0xC0,
-	0xD0,
-	0xE0,
+	0x80, /* note off */
+	0x90, /* note on */
+	0xA0, /* polyphonic key pressure */
+	0xB0, /* control change */
+	0xC0, /* program change */
+	0xD0, /* channel key pressure */
+	0xE0, /* pitch bend change */
 	0
 };
 
@@ -304,6 +304,49 @@ void Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 	for(unsigned int n = 0; n < length; ++n){
 		writeOutput(bytes[n]);
 	}
+}
+
+midi_byte_t Midi::makeStatusByte(midi_byte_t statusCode, midi_byte_t channel){
+	return (statusCode & 0xF0) | (channel & 0x0F);
+}
+
+void Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte){
+	midi_byte_t bytes[2] = {makeStatusByte(statusCode, channel), dataByte & 0x7F};
+	writeOutput(bytes, 2);
+}
+
+void Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2){
+	midi_byte_t bytes[3] = {makeStatusByte(statusCode, channel), dataByte1 & 0x7F, dataByte2 & 0x7F};
+	writeOutput(bytes, 3);
+}
+
+void Midi::writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
+	writeMessage(midiMessageStatusBytes[kmmNoteOff], channel, pitch, velocity);
+}
+
+void Midi::writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
+	writeMessage(midiMessageStatusBytes[kmmNoteOn], channel, pitch, velocity);
+}
+
+void Midi::writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure){
+	writeMessage(midiMessageStatusBytes[kmmPolyphonicKeyPressure], channel, pitch, pressure);
+}
+
+void Midi::writeControlChange(midi_byte_t channel, midi_byte_t controller, midi_byte_t value){
+	writeMessage(midiMessageStatusBytes[kmmControlChange], channel, controller, value);
+}
+
+void Midi::writeProgramChange(midi_byte_t channel, midi_byte_t program){
+	writeMessage(midiMessageStatusBytes[kmmProgramChange], channel, program);
+}
+
+void Midi::writeChannelPressure(midi_byte_t channel, midi_byte_t pressure){
+	writeMessage(midiMessageStatusBytes[kmmChannelPressure], channel, pressure);
+}
+
+void Midi::writePitchBend(midi_byte_t channel, uint16_t bend){
+	// the first ``bend'' is clamped with & 0x7F in writeMessage 
+	writeMessage(midiMessageStatusBytes[kmmPitchBend], channel, bend, bend >> 7);
 }
 
 MidiChannelMessage::MidiChannelMessage(){};
