@@ -475,6 +475,7 @@ editorView.on('upload', function (fileData) {
 		fileData: fileData,
 		checkSyntax: parseInt(models.settings.getKey('liveSyntaxChecking'))
 	});
+	setCompareFilesInterval(models.project.getKey('currentProject'), models.project.getKey('fileName'), fileData);
 });
 editorView.on('breakpoint', function (line) {
 	var breakpoints = models.project.getKey('breakpoints');
@@ -614,7 +615,17 @@ gitView.on('console-warn', function (text) {
 	return consoleView.emit('warn', text);
 });
 
-// refresh files
+var compareFilesInterval = setInterval(function () {
+	return socket.emit('compare-files', models.project.getKey('currentProject'), models.project.getKey('fileName'), editorView.getData());
+}, 5000);
+function setCompareFilesInterval(project, fileName, fileData) {
+	if (compareFilesInterval) clearInterval(compareFilesInterval);
+	compareFilesInterval = setInterval(function () {
+		return socket.emit('compare-files', models.project.getKey('currentProject'), models.project.getKey('fileName'), editorView.getData());
+	}, 5000);
+}
+
+// refresh file list
 setInterval(function () {
 	return socket.emit('list-files', models.project.getKey('currentProject'));
 }, 5000);
@@ -784,6 +795,42 @@ socket.on('syntax-highlighted', function () {
 
 socket.on('force-reload', function () {
 	return window.location.reload(true);
+});
+
+// current file changed
+var fileChangedPopupVisible = false;
+socket.on('current-file-changed', function (project, fileName) {
+
+	if (project !== models.project.getKey('currentProject') || fileChangedPopupVisible) return;
+
+	popup.title('File Changed on Disk');
+	popup.subtitle('Would you like to reload ' + fileName + '?');
+
+	var form = [];
+	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
+	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
+
+	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+		fileChangedPopupVisible = false;
+		e.preventDefault();
+		var data = {
+			func: 'openProject',
+			currentProject: models.project.getKey('currentProject'),
+			timestamp: performance.now()
+		};
+		socket.emit('project-event', data);
+		consoleView.emit('openNotification', data);
+		popup.hide();
+	});
+
+	popup.find('.popup-cancel').on('click', function () {
+		popup.hide();
+		fileChangedPopupVisible = false;
+		editorView.emit('upload', editorView.getData());
+	});
+
+	popup.show();
+	fileChangedPopupVisible = true;
 });
 
 // model events
@@ -2147,7 +2194,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			// console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate');
 			_this.parser.parse(function () {
 				_this.getCurrentWord();
 			});
@@ -2421,7 +2468,7 @@ var EditorView = function (_View) {
 				return;
 			}
 
-			//console.log('clicked', token); 
+			//console.log('clicked', token);
 
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion2 = true;
@@ -2454,6 +2501,11 @@ var EditorView = function (_View) {
 			}
 
 			this.emit('clear-docs');
+		}
+	}, {
+		key: 'getData',
+		value: function getData() {
+			return this.editor.getValue();
 		}
 	}]);
 
@@ -3132,6 +3184,7 @@ var ProjectView = function (_View) {
 		_classCallCheck(this, ProjectView);
 
 		//this.exampleChanged = false;
+
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProjectView).call(this, className, models));
 
 		_this.on('example-changed', function () {
@@ -3480,6 +3533,7 @@ var SettingsView = function (_View) {
 		_classCallCheck(this, SettingsView);
 
 		//this.$elements.filter('input').on('change', (e) => this.selectChanged($(e.currentTarget), e));
+
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SettingsView).call(this, className, models, settings));
 
 		_this.settings.on('change', function (data) {
@@ -3802,7 +3856,8 @@ var TabView = function (_View) {
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs 
+		// open/close tabs
+
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(TabView).call(this, 'tab'));
 
 		$('#flexit').on('click', function () {
@@ -4073,7 +4128,7 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '__allErrors',
 		value: function __allErrors(errors) {
-			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
+			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout);
 			if (errors.length) {
 				$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
 			} else {
@@ -4944,7 +4999,6 @@ var parser = {
 			}
 
 			//}
-
 
 			buf.enq(token);
 			token = iterator.stepForward();

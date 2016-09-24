@@ -83,6 +83,7 @@ editorView.on('upload', fileData => {
 		fileData,
 		checkSyntax		: parseInt(models.settings.getKey('liveSyntaxChecking'))
 	});
+	setCompareFilesInterval(models.project.getKey('currentProject'), models.project.getKey('fileName'), fileData);
 });
 editorView.on('breakpoint', line => {
 	var breakpoints = models.project.getKey('breakpoints');
@@ -197,7 +198,13 @@ gitView.on('git-event', data => {
 gitView.on('console', text => consoleView.emit('log', text, 'git') );
 gitView.on('console-warn', text => consoleView.emit('warn', text) );
 
-// refresh files
+var compareFilesInterval = setInterval( () => socket.emit('compare-files', models.project.getKey('currentProject'), models.project.getKey('fileName'), editorView.getData()), 5000);
+function setCompareFilesInterval(project, fileName, fileData){
+	if (compareFilesInterval) clearInterval(compareFilesInterval);
+	compareFilesInterval = setInterval( () => socket.emit('compare-files', models.project.getKey('currentProject'), models.project.getKey('fileName'), editorView.getData()), 5000);
+}
+
+// refresh file list
 setInterval( () => socket.emit('list-files', models.project.getKey('currentProject')), 5000);
 
 // setup socket
@@ -346,6 +353,42 @@ socket.on('std-warn', text => consoleView.emit('warn', text) );
 socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 
 socket.on('force-reload', () => window.location.reload(true) );
+
+// current file changed
+var fileChangedPopupVisible = false;
+socket.on('current-file-changed', (project, fileName) => {
+	
+	if (project !== models.project.getKey('currentProject') || fileChangedPopupVisible) return;
+	
+	popup.title('File Changed on Disk');
+	popup.subtitle('Would you like to reload '+fileName+'?');
+	
+	var form = [];
+	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
+	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
+	
+	popup.form.append(form.join('')).off('submit').on('submit', e => {
+		fileChangedPopupVisible = false;
+		e.preventDefault();
+		var data = {
+			func			: 'openProject', 
+			currentProject	: models.project.getKey('currentProject'),
+			timestamp		: performance.now()
+		};
+		socket.emit('project-event', data);
+		consoleView.emit('openNotification', data);
+		popup.hide();
+	});
+	
+	popup.find('.popup-cancel').on('click', () => {
+		popup.hide();
+		fileChangedPopupVisible = false;
+		editorView.emit('upload', editorView.getData());
+	});
+	
+	popup.show();
+	fileChangedPopupVisible = true;
+});
 
 // model events
 // build errors

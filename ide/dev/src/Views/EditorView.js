@@ -337,6 +337,10 @@ class EditorView extends View {
 		
 		this.emit('clear-docs');
 	}
+	
+	getData(){
+		return this.editor.getValue();
+	}
 }
 
 module.exports = EditorView;
