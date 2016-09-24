@@ -24,16 +24,47 @@ int gBufLength;
 
 float* gInBuf;
 float* gOutBuf;
+#define PARSE_MIDI
+static Midi midi;
 
-void pdnoteon(int ch, int pitch, int vel) {
-  printf("noteon: %d %d %d\n", ch, pitch, vel);
+void Bela_MidiOutNoteOn(int channel, int pitch, int velocity) {
+	rt_printf("noteon: %d %d %d\n", channel, pitch, velocity);
+	midi.writeNoteOn(channel, pitch, velocity);
+}
+
+void Bela_MidiOutControlChange(int channel, int controller, int value) {
+	rt_printf("controlchange: %d %d %d\n", channel, controller, value);
+	midi.writeControlChange(channel, controller, value);
+}
+
+void Bela_MidiOutProgramChange(int channel, int program) {
+	rt_printf("programchange: %d %d\n", channel, program);
+	midi.writeProgramChange(channel, program);
+}
+
+void Bela_MidiOutPitchBend(int channel, int value) {
+	rt_printf("pitchbend: %d %d\n", channel, value);
+	midi.writePitchBend(channel, value);
+}
+
+void Bela_MidiOutAftertouch(int channel, int pressure){
+	rt_printf("channelPressure: %d %d\n", channel, pressure);
+	midi.writeChannelPressure(channel, pressure);
+}
+
+void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
+	rt_printf("polytouch: %d %d %d\n", channel, pitch, pressure);
+	midi.writePolyphonicKeyPressure(channel, pitch, pressure);
+}
+
+void Bela_MidiOutByte(int interface, int byte){
+	rt_printf("interface: %d, byte: %d\n", interface, byte);
+	midi.writeOutput(byte);
 }
 
 void Bela_printHook(const char *recv){
 	rt_printf("%s", recv);
 }
-#define PARSE_MIDI
-static Midi midi;
 static DigitalChannelManager dcm;
 
 void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
@@ -173,7 +204,15 @@ bool setup(BelaContext *context, void *userData)
 	libpd_set_printhook(Bela_printHook);
 	libpd_set_floathook(Bela_floatHook);
 	libpd_set_messagehook(Bela_messageHook);
-	libpd_set_noteonhook(pdnoteon);
+	libpd_set_noteonhook(Bela_MidiOutNoteOn);
+	libpd_set_controlchangehook(Bela_MidiOutControlChange);
+	libpd_set_programchangehook(Bela_MidiOutProgramChange);
+	libpd_set_pitchbendhook(Bela_MidiOutPitchBend);
+	libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
+	libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
+	libpd_set_midibytehook(Bela_MidiOutByte);
+
+
 	//TODO: add hooks for other midi events and generate MIDI output appropriately
 	libpd_init();
 	//TODO: ideally, we would analyse the ASCII of the patch file and find out which in/outs to use
