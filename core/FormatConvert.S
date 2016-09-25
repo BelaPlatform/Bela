@@ -169,11 +169,16 @@ float_to_int16_audio_loop:
 @    r1: inBuffer              Buffer for input samples from render function
 @    r2: outBuffer             Buffer to store output samples for DAC
 
-qFIAn_Input		.qn		Q0.F32
-dFIAn_Input_0	.dn		D0.F32
+qFIAn_Input_Q1	.qn		Q0.F32
+qFIAn_Input_Q2	.qn		Q1.F32
+dFIAn_Input_0,	.dn		D0.F32
 dFIAn_Input_1,	.dn		D1.F32
-qFIAn_Converted	.qn		Q1.U32
-dFIAn_Narrowed	.dn		D4.U16	
+dFIAn_Input_2,	.dn		D2.F32
+dFIAn_Input_3,	.dn		D3.F32
+qFIAn_Converted_1 .qn	Q3.U32
+qFIAn_Converted_2 .qn	Q4.U32
+dFIAn_Narrowed_1 .dn	D10.U16
+dFIAn_Narrowed_2 .dn	D11.U16
 
 	.align	2
 	.global	float_to_int16_analog
@@ -182,23 +187,25 @@ dFIAn_Narrowed	.dn		D4.U16
 	.type	float_to_int16_analog, %function
 	
 float_to_int16_analog:
-	lsr r0, r0, #2
-	lsl r0, r0, #2				@ Clip off the last two bits of numSamples (only multiples of 4 allowed)
+	lsr r0, r0, #3
+	lsl r0, r0, #3				@ Clip off the last three bits of numSamples (only multiples of 8 allowed)
 	cmp r0, #0					@ Check for trivial case: zero samples
 	it eq
 	bxeq lr						@ Return if that's the case
-
 	@ ---- loop: iterate over the number of samples ----
 float_to_int16_analog_loop:
-	vld1 {dFIAn_Input_0, dFIAn_Input_1}, [r1]!		@ Load four floats from inBuffer++
-	vcvt qFIAn_Converted, qFIAn_Input, #16			@ Convert four floats into four Q16.16 fixed points (equiv. to * 65536)
-													@ This will truncate the result to a 32-bit representable value
-	vqmovn dFIAn_Narrowed, qFIAn_Converted			@ Convert four 32-bit unsigned ints to 16-bit unsigned ints, with saturation
-	vst1 {dFIAn_Narrowed}, [r2]!					@ Store ints back into memory
+	vld1 {dFIAn_Input_0, dFIAn_Input_1, dFIAn_Input_2, dFIAn_Input_3}, [r1]!		@ Load eight floats from inBuffer++
+	vcvt qFIAn_Converted_1, qFIAn_Input_Q1, #16			@ Convert four floats into four Q16.16 fixed points (equiv. to * 65536)
+	vcvt qFIAn_Converted_2, qFIAn_Input_Q2, #16			@ Convert four floats into four Q16.16 fixed points (equiv. to * 65536)
+														@ This will truncate the result to a 32-bit representable value
+	vqmovn dFIAn_Narrowed_1, qFIAn_Converted_1			@ Convert four 32-bit unsigned ints to 16-bit unsigned ints, with saturation
+	vqmovn dFIAn_Narrowed_2, qFIAn_Converted_2			@ Convert four 32-bit unsigned ints to 16-bit unsigned ints, with saturation
 
-	subs r0, r0, #4							@ numSamples -= 4
+	subs r0, r0, #8						@ numSamples -= 8
+	vst1 {dFIAn_Narrowed_1, dFIAn_Narrowed_2}, [r2]!					@ Store ints back into memory
+
 	it gt
 	bgt float_to_int16_analog_loop			@ Loop if numSamples > 0
 
 	bx lr
-	
+
