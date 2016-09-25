@@ -57,8 +57,8 @@ void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
 	midi.writePolyphonicKeyPressure(channel, pitch, pressure);
 }
 
-void Bela_MidiOutByte(int interface, int byte){
-	rt_printf("interface: %d, byte: %d\n", interface, byte);
+void Bela_MidiOutByte(int port, int byte){
+	rt_printf("port: %d, byte: %d\n", port, byte);
 	midi.writeOutput(byte);
 }
 
