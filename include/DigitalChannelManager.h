@@ -213,6 +213,7 @@ public:
 	 *
 	 * @param channel the channel to manage.
 	 * @param direction
+	 * @param isMessageRate whether the channel should be managed at audio rate (`false`) or message rate (`true`)
 	 */
 	void manage(unsigned int channel, bool direction, bool isMessageRate){
 		// direction is expected to be one of INPUT or OUTPUT

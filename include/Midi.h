@@ -195,11 +195,9 @@ public:
 	 * If this method is called when numAvailableMessages()==0, then
 	 * a message with all fields set to zero is returned.
 	 *
-	 * @param type the type of the message to retrieve
-	 *
-	 * @return a copy of the oldest message of the give type in the buffer
+	 * @return a copy of the oldest message in the buffer
 	 */
-	MidiChannelMessage getNextChannelMessage(/*MidiMessageType type*/){
+	MidiChannelMessage getNextChannelMessage(){
 		MidiChannelMessage message;
 		message = messages[readPointer];
 		if(message.getType() == kmmNone){
@@ -255,7 +253,7 @@ public:
 	 *
 	 * Internally, it calls enableParser() and the MidiParser::setCallback();
 	 *
-	 * @param newCallback the callback function.
+	 * @param callback the callback function.
 	 * @param arg the second argument to be passed to the callback function.
 	 */
 	void setParserCallback(void (*callback)(MidiChannelMessage, void*), void* arg=NULL){
