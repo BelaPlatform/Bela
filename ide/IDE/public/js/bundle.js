@@ -4525,7 +4525,7 @@ var Console = function (_EventEmitter) {
 
 					// create the link and add it to the element
 
-					anchor = $('<a></a>').html(err.text + ', line: ' + err.row).appendTo(div);
+					anchor = $('<a></a>').html(err.text + ', line: ' + (err.row + 1)).appendTo(div);
 
 
 					div.appendTo(_this2.$element);
