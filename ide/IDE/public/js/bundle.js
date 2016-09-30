@@ -2330,7 +2330,7 @@ var EditorView = function (_View) {
 				uploadBlocked = false;
 
 				// force a syntax check
-				this.emit('change');
+				this.emit('upload', data);
 
 				// focus the editor
 				this.__focus(opts.focus);
