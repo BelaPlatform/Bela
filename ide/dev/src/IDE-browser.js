@@ -123,6 +123,12 @@ editorView.on('goto-docs', (word, id) => {
 });
 editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
 editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
+editorView.on('compare-files', compare => {
+	if (compare)
+		setCompareFilesInterval();
+	else if (compareFilesInterval)
+		clearInterval(compareFilesInterval);
+});
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
@@ -371,6 +377,8 @@ var wrongCompares = 0;
 function compareFile(data){
 	if (data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')){
 		if (data.fileData !== editorView.getData()){
+			console.log('filedata', data.fileData);
+			console.log('editorData', editorView.getData());
 			wrongCompares += 1;
 			if (wrongCompares >= 2){	// twice in a row
 				fileChangedPopup(data.fileName);

@@ -137,6 +137,9 @@ class EditorView extends View {
 			
 			$('#img-display').prop('src', 'media/'+opts.fileName);
 			
+			// stop comparison with file on disk
+			this.emit('compare-files', false);
+			
 		} else if (opts.fileType.indexOf('audio') !== -1){
 			
 			//console.log('opening audio file');
@@ -148,6 +151,9 @@ class EditorView extends View {
 			});
 						
 			$('#audio').prop('src', 'media/'+opts.fileName); 
+			
+			// stop comparison with file on disk
+			this.emit('compare-files', false);
 			
 		} else {
 		
@@ -187,7 +193,7 @@ class EditorView extends View {
 				}
 				
 				// load an empty string into the editor
-				data = '';
+				// data = '';
 			
 			} else {
 			
@@ -213,6 +219,9 @@ class EditorView extends View {
 
 			// focus the editor
 			this.__focus(opts.focus);
+			
+			// start comparison with file on disk
+			this.emit('compare-files', true);
 		
 		}
 		

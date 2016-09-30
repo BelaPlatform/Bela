@@ -520,6 +520,9 @@ editorView.on('clear-docs', function () {
 editorView.on('highlight-syntax', function (names) {
 	return socket.emit('highlight-syntax', names);
 });
+editorView.on('compare-files', function (compare) {
+	if (compare) setCompareFilesInterval();else if (compareFilesInterval) clearInterval(compareFilesInterval);
+});
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
@@ -811,6 +814,8 @@ var wrongCompares = 0;
 function compareFile(data) {
 	if (data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
 		if (data.fileData !== editorView.getData()) {
+			console.log('filedata', data.fileData);
+			console.log('editorData', editorView.getData());
 			wrongCompares += 1;
 			if (wrongCompares >= 2) {
 				// twice in a row
@@ -2263,6 +2268,9 @@ var EditorView = function (_View) {
 				$('#img-display-parent').css('display', 'block');
 
 				$('#img-display').prop('src', 'media/' + opts.fileName);
+
+				// stop comparison with file on disk
+				this.emit('compare-files', false);
 			} else if (opts.fileType.indexOf('audio') !== -1) {
 
 				//console.log('opening audio file');
@@ -2274,6 +2282,9 @@ var EditorView = function (_View) {
 				});
 
 				$('#audio').prop('src', 'media/' + opts.fileName);
+
+				// stop comparison with file on disk
+				this.emit('compare-files', false);
 			} else {
 
 				if (opts.fileType === 'pd') {
@@ -2310,7 +2321,7 @@ var EditorView = function (_View) {
 					}
 
 					// load an empty string into the editor
-					data = '';
+					// data = '';
 				} else {
 
 					// show the editor
@@ -2334,6 +2345,9 @@ var EditorView = function (_View) {
 
 				// focus the editor
 				this.__focus(opts.focus);
+
+				// start comparison with file on disk
+				this.emit('compare-files', true);
 			}
 		}
 		// editor focus has changed
