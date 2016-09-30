@@ -357,6 +357,21 @@ module.exports = {
 		}
 		
 		yield fs.moveAsync(projectPath+data.currentProject+'/'+data.fileName, projectPath+data.currentProject+'/'+data.newFile);
+		
+		// delete the related build files & binary if renaming a source file
+		if (data.fileName.split && data.fileName.indexOf('.') !== -1){
+			var fileName = data.fileName.split('.');
+			var ext = fileName.pop();
+			if (ext === 'cpp' || ext === 'c' || ext === 'S'){
+				yield fs.removeAsync(projectPath+data.currentProject+'/build/'+fileName[0]+'.d')
+					.catch( e => console.log('cant remove', fileName[0]+'.d', e));
+				yield fs.removeAsync(projectPath+data.currentProject+'/build/'+fileName[0]+'.o')
+					.catch( e => console.log('cant remove', fileName[0]+'.o', e));
+				yield fs.removeAsync(projectPath+data.currentProject+'/'+data.currentProject)
+					.catch( e => console.log('cant remove', data.currentProject, e));
+			}
+		}
+		
 		data.fileName = data.newFile;
 		data.newFile = undefined;
 		data.fileList = yield new Promise.coroutine(listFiles)(projectPath+data.currentProject);
@@ -364,7 +379,24 @@ module.exports = {
 	},
 	
 	*deleteFile(data){
+	
+		// delete the file
 		yield fs.removeAsync(projectPath+data.currentProject+'/'+data.fileName);
+		
+		// delete the related build files & binary if deleting a source file
+		if (data.fileName.split && data.fileName.indexOf('.') !== -1){
+			var fileName = data.fileName.split('.');
+			var ext = fileName.pop();
+			if (ext === 'cpp' || ext === 'c' || ext === 'S'){
+				yield fs.removeAsync(projectPath+data.currentProject+'/build/'+fileName[0]+'.d')
+					.catch( e => console.log('cant remove', fileName[0]+'.d', e));
+				yield fs.removeAsync(projectPath+data.currentProject+'/build/'+fileName[0]+'.o')
+					.catch( e => console.log('cant remove', fileName[0]+'.o', e));
+				yield fs.removeAsync(projectPath+data.currentProject+'/'+data.currentProject)
+					.catch( e => console.log('cant remove', data.currentProject, e));
+			}
+		}
+			
 		data.fileList = yield new Promise.coroutine(listFiles)(projectPath+data.currentProject);
 		if (data.fileList.length){
 			for (let item of data.fileList){
