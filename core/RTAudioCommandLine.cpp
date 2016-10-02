@@ -8,6 +8,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
+#include <sstream>
 #include <getopt.h>
 #include "../include/Bela.h"
 
@@ -21,6 +23,8 @@
 enum {
 	kAmplifierMutePin = 61	// P8-26 controls amplifier mute
 };
+
+bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSettings *settings);
 
 // Default command-line options for RTAudio
 struct option gDefaultLongOptions[] =
@@ -241,10 +245,12 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			settings->numMuxChannels = atoi(optarg);
 			break;
 		case 'Y':
-			settings->audioExpanderInputs = atoi(optarg); // TODO: list parse
+			if(!parseAudioExpanderChannels(optarg, true, settings))
+				std::cerr << "Warning: invalid audio expander input channels '" << optarg << "'-- ignoring\n";
 			break;
 		case 'Z':
-			settings->audioExpanderOutputs = atoi(optarg); // TODO: list parse
+			if(!parseAudioExpanderChannels(optarg, false, settings))
+				std::cerr << "Warning: invalid audio expander output channels '" << optarg << "'-- ignoring\n";
 			break;			
 		case OPT_PRU_FILE:
 			if(strlen(optarg) < MAX_PRU_FILENAME_LENGTH)
@@ -297,4 +303,57 @@ void Bela_usage()
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
+
+// ---- internal functions ----
+
+// Turn a string into a list of individual ints
+bool parseCommaSeparatedList(const char *in, std::vector<int>& tokens) {
+	std::string inputString(in);
+    std::stringstream ss(inputString);
+    std::string item;
+	char *p;
+	
+    while (std::getline(ss, item, ',')) {
+		// ignore empty tokens
+		if(!item.empty()) {
+			int value = strtol(item.c_str(), &p, 10);
+			if(!(*p))	// string is a valid number
+        		tokens.push_back(value);
+			else
+				return false;	// invalid token
+		}
+    }
+    
+	return true;
+}
+
+// Parse the argument for the audio expander channels to enable
+bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSettings *settings) {
+	std::vector<int> channels;
+	
+	if(!parseCommaSeparatedList(arg, channels))
+		return false;
+	
+	// Make sure that all channels are within range
+	// Regardless of how many analog channels we're actually using,
+	// the audio expander facility has slots for up to 16
+	for(int i = 0; i < channels.size(); i++)
+		if(channels[i] < 0 || channels[i] >= 16)
+			return false;
+
+	// Now update the audio expander data sructure 
+	if(inputChannel) {
+		// Update the audio expander inputs
+		for(int i = 0; i < channels.size(); i++)	
+			settings->audioExpanderInputs |= (1 << channels[i]);
+	}
+	else {
+		// Update the audio expander outputs
+		for(int i = 0; i < channels.size(); i++)
+			settings->audioExpanderOutputs |= (1 << channels[i]);
+	}
+	
+	return true;
+}
+
 
