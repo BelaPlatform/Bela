@@ -8,11 +8,21 @@
 #include "Midi.h"
 #include <fcntl.h>
 #include <errno.h>
+#include <glob.h>
 
 
 #define kMidiInput 0
 #define kMidiOutput 1
 
+//static void  print_midi_ports          (void);
+//static void  print_card_list           (void);
+//static void  list_midi_devices_on_card (int card);
+//static void  list_subdevice_info       (snd_ctl_t *ctl, int card, int device);
+static int   is_input                  (snd_ctl_t *ctl, int card, int device, int sub);
+static int   is_output                 (snd_ctl_t *ctl, int card, int device, int sub);
+static void  error                     (const char *format, ...);
+
+///////////////////////////////////////////////////////////////////////////
 
 midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength]=
 {
@@ -108,7 +118,7 @@ alsaIn(NULL), alsaOut(NULL), useAlsaApi(false) {
 void Midi::staticConstructor(){
 	staticConstructed = true;
 	midiInputTask = Bela_createAuxiliaryTask(Midi::midiInputLoop, 50, "MidiInput");
-	midiOutputTask = Bela_createAuxiliaryTask(Midi::midiOutputLoop, 50, "MidiOutupt");
+	midiOutputTask = Bela_createAuxiliaryTask(Midi::midiOutputLoop, 50, "MidiOutput");
 }
 
 Midi::~Midi() {
@@ -136,22 +146,45 @@ void Midi::enableParser(bool enable){
 }
 
 void Midi::midiInputLoop(){
+	while(!gShouldStop){
+		for(unsigned int n = 0; n < objAddrs[kMidiInput].size(); n++){
+			objAddrs[kMidiInput][n] -> readInputLoop();
+			//printf("read %d\n", n);
+			usleep(1000);
+		}
+	}
 	for(unsigned int n = 0; n < objAddrs[kMidiInput].size(); n++){
-		objAddrs[kMidiInput][n] -> readInputLoop();
+		if(objAddrs[kMidiInput][n]->useAlsaApi && objAddrs[kMidiInput][n]->alsaIn) {
+			snd_rawmidi_drain(objAddrs[kMidiInput][n]->alsaIn);
+			snd_rawmidi_close(objAddrs[kMidiInput][n]->alsaIn);
+			objAddrs[kMidiInput][n]->alsaIn = NULL;
+		}
 	}
 }
 
 void Midi::midiOutputLoop(){
+	while(!gShouldStop){
+		for(unsigned int n = 0; n < objAddrs[kMidiOutput].size(); n++){
+			objAddrs[kMidiOutput][n] -> writeOutputLoop();
+			usleep(1000);
+		}
+	}
 	for(unsigned int n = 0; n < objAddrs[kMidiOutput].size(); n++){
-		objAddrs[kMidiOutput][n] -> writeOutputLoop();
+		if(objAddrs[kMidiInput][n]->useAlsaApi && objAddrs[kMidiInput][n]->alsaOut) {
+			snd_rawmidi_drain(objAddrs[kMidiOutput][n]->alsaOut);
+			snd_rawmidi_close(objAddrs[kMidiOutput][n]->alsaOut);
+			objAddrs[kMidiOutput][n]->alsaOut = NULL;
+		}
 	}
 }
 
 void Midi::readInputLoop(){
-	while(!gShouldStop){
-		int maxBytesToRead = inputBytes.size() - inputBytesWritePointer;
-		int ret = -1;
 
+	while(!gShouldStop){ 
+	// this keeps going until the buffer is emptied (probably no more than
+	// once or twice)
+		int maxBytesToRead = inputBytes.size() - inputBytesWritePointer;
+		int ret = maxBytesToRead;
 		if(useAlsaApi && alsaIn) {
 			ret = snd_rawmidi_read(alsaIn,&inputBytes[inputBytesWritePointer],sizeof(midi_byte_t)*maxBytesToRead);
 		} else {
@@ -161,8 +194,7 @@ void Midi::readInputLoop(){
 			if(errno != EAGAIN){ // read() would return EAGAIN when no data are available to read just now
 				rt_printf("Error while reading midi %d\n", errno);
 			}
-			usleep(1000);
-			continue;
+			return;
 		}
 		inputBytesWritePointer += ret;
 		if(inputBytesWritePointer == inputBytes.size()){ //wrap pointer around
@@ -176,29 +208,28 @@ void Midi::readInputLoop(){
 				inputParser->parse(&inputByte, 1);
 			}
 		}
-		if(ret < maxBytesToRead){ //no more data to retrieve at the moment
-			usleep(1000);
-		} // otherwise there might be more data ready to be read (we were at the end of the buffer), so don't sleep
-	}
+		if(ret < maxBytesToRead){
+		// no more data to retrieve at the moment
+			return;
+		}
+		// otherwise there might be more data ready to be read (e.g. if we
+		// reached the end of the buffer), so keep going
+	} 
 
-	if(useAlsaApi && alsaIn) {
-		snd_rawmidi_drain(alsaIn);
-		snd_rawmidi_close(alsaIn);
-		alsaIn = NULL;
-	}
 }
 
 void Midi::writeOutputLoop(){
 	while(!gShouldStop){
-		usleep(1000);
+	// this keeps going until the buffer is emptied (probably no more than
+	// once or twice)
 		int length = outputBytesWritePointer - outputBytesReadPointer;
 		if(length < 0){
 			length = outputBytes.size() - outputBytesReadPointer;
 		}
 		if(length == 0){ //nothing to be written
-			continue;
+			break;
 		}
-		int ret = -1;
+		int ret;
 		if(useAlsaApi && alsaOut) {
 			ret = snd_rawmidi_write(alsaOut,&outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
 			snd_rawmidi_drain(alsaOut);
@@ -206,19 +237,15 @@ void Midi::writeOutputLoop(){
 			ret = write(outputPort, &outputBytes[outputBytesReadPointer], sizeof(midi_byte_t)*length);
 		}
 		outputBytesReadPointer += ret;
-		if(outputBytesReadPointer >= outputBytes.size())
+		if(outputBytesReadPointer >= outputBytes.size()){
 			outputBytesReadPointer -= outputBytes.size();
-		if(ret < 0){ //error occurred
-			rt_printf("error occurred while writing: %d\n", errno);
-			usleep(10000); //wait before retrying
-			continue;
+		} else {
+			break;
 		}
-	}
-
-	if(useAlsaApi && alsaOut)  {
-		snd_rawmidi_drain(alsaOut);
-		snd_rawmidi_close(alsaOut);
-		alsaOut = NULL;
+		if(ret < 0){ //error occurred
+			rt_printf("Error occurred while writing: %d\n", strerror(errno));
+			usleep(10000);
+		}
 	}
 }
 
@@ -264,6 +291,112 @@ int Midi::writeTo(const char* port){
 	}
 	Bela_scheduleAuxiliaryTask(midiOutputTask);
 	return 1;
+}
+
+void Midi::createAllPorts(std::vector<Midi*>& ports, bool useAlsaApi, bool useParser){
+	if(useAlsaApi){
+		int card = -1;
+		int status;
+		while((status = snd_card_next(&card)) == 0){
+			if(card < 0){
+				break;
+			}
+			snd_ctl_t *ctl;
+			char name[32];
+			int device = -1;
+			int status;
+   			sprintf(name, "hw:%d", card);
+			if ((status = snd_ctl_open(&ctl, name, 0)) < 0) {
+				error("cannot open control for card %d: %s", card, snd_strerror(status));
+				return;
+			}
+			do {
+				status = snd_ctl_rawmidi_next_device(ctl, &device);
+				if (status < 0) {
+					error("cannot determine device number: %s", snd_strerror(status));
+					break;
+				}
+				if (device >= 0) {
+					printf("device: %d\n", device);
+					snd_rawmidi_info_t *info;
+					snd_rawmidi_info_alloca(&info);
+					snd_rawmidi_info_set_device(info, device);
+					
+					// count subdevices:
+					snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
+					snd_ctl_rawmidi_info(ctl, info);
+					unsigned int subs_in = snd_rawmidi_info_get_subdevices_count(info);
+					snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_OUTPUT);
+					snd_ctl_rawmidi_info(ctl, info);
+					unsigned int subs_out = snd_rawmidi_info_get_subdevices_count(info);
+					//number of subdevices is max (inputs, outputs);
+					unsigned int subs = subs_in > subs_out ? subs_in : subs_out;
+
+					for(unsigned int sub = 0; sub < subs; ++sub){
+						bool in = false;
+						bool out = false;
+						if ((status = is_output(ctl, card, device, sub)) < 0) {
+							error("cannot get rawmidi information %d:%d: %s",
+							card, device, snd_strerror(status));
+							return;
+						} else if (status){
+							out = true;
+							// writeTo
+						}
+
+						if (status == 0) {
+							if ((status = is_input(ctl, card, device, sub)) < 0) {
+								error("cannot get rawmidi information %d:%d: %s",
+								card, device, snd_strerror(status));
+								return;
+							}
+						} else if (status) {
+							in = true;
+							// readfrom
+						}
+
+						if(in || out){
+							ports.resize(ports.size() + 1);
+							unsigned int index = ports.size() - 1;
+							ports[index] = new Midi();
+							ports[index]->useAlsa(true);
+							sprintf(name, "hw:%d,%d,%d", card, device, sub);
+							if(in){
+								printf("Reading from: %s\n", name);
+								ports[index]->readFrom(name);
+							}
+							if(out){
+								printf("Writing to: %s\n", name);
+								ports[index]->writeTo(name);
+							}
+						}
+					}
+				}
+			} while (device >= 0);
+			snd_ctl_close(ctl);
+		}
+	} else {
+		unsigned int numPorts = 0;
+		char** paths = NULL;
+		glob_t pglob;
+		glob("/dev/midi*", 0, NULL, &pglob);
+		numPorts = pglob.gl_pathc;
+		paths = pglob.gl_pathv;
+		ports.resize(numPorts);
+		rt_printf("Number of MIDI devices available: %d\n", numPorts);
+		for(unsigned int n = 0; n < ports.size(); ++n){
+			rt_printf("%s\n", paths[n]);	
+			ports[n] = new Midi();
+			ports[n]->writeTo(paths[n]);
+			ports[n]->readFrom(paths[n]);
+		}
+	}
+}
+
+void Midi::destroyPorts(std::vector<Midi*>& ports){
+	for(unsigned int n = 0; n < ports.size(); ++n){
+		delete ports[n];
+	}
 }
 
 int Midi::_getInput(){
@@ -374,3 +507,278 @@ int MidiChannelMessage::getChannel(){
 //int MidiNoteMessage::getVelocity();
 
 //midi_byte_t MidiProgramChangeMessage::getProgram();
+//
+
+
+// 
+// following code borrowed rom:    Craig Stuart Sapp <craig@ccrma.stanford.edu>
+// https://ccrma.stanford.edu/~craig/articles/linuxmidi/alsa-1.0/alsarawportlist.c
+//
+
+//////////////////////////////
+//
+// print_card_list -- go through the list of available "soundcards"
+//   in the ALSA system, printing their associated numbers and names.
+//   Cards may or may not have any MIDI ports available on them (for 
+//   example, a card might only have an audio interface).
+//
+/*
+static void print_card_list(void) {
+   int status;
+   int card = -1;  // use -1 to prime the pump of iterating through card list
+   char* longname  = NULL;
+   char* shortname = NULL;
+
+   if ((status = snd_card_next(&card)) < 0) {
+      error("cannot determine card number: %s", snd_strerror(status));
+      return;
+   }
+   if (card < 0) {
+      error("no sound cards found");
+      return;
+   }
+   while (card >= 0) {
+      printf("Card %d:", card);
+      if ((status = snd_card_get_name(card, &shortname)) < 0) {
+         error("cannot determine card shortname: %s", snd_strerror(status));
+         break;
+      }
+      if ((status = snd_card_get_longname(card, &longname)) < 0) {
+         error("cannot determine card longname: %s", snd_strerror(status));
+         break;
+      }
+      printf("\tLONG NAME:  %s\n", longname);
+      printf("\tSHORT NAME: %s\n", shortname);
+      if ((status = snd_card_next(&card)) < 0) {
+         error("cannot determine card number: %s", snd_strerror(status));
+         break;
+      }
+   } 
+}
+
+
+
+//////////////////////////////
+//
+// print_midi_ports -- go through the list of available "soundcards",
+//   checking them to see if there are devices/subdevices on them which
+//   can read/write MIDI data.
+//
+
+static void print_midi_ports(void) {
+   int status;
+   int card = -1;  // use -1 to prime the pump of iterating through card list
+
+   if ((status = snd_card_next(&card)) < 0) {
+      error("cannot determine card number: %s", snd_strerror(status));
+      return;
+   }
+   if (card < 0) {
+      error("no sound cards found");
+      return;
+   }
+   printf("\nDir Device    Name\n");
+   printf("====================================\n");
+   while (card >= 0) {
+      list_midi_devices_on_card(card);
+      if ((status = snd_card_next(&card)) < 0) {
+         error("cannot determine card number: %s", snd_strerror(status));
+         break;
+      }
+   } 
+   printf("\n");
+}
+
+
+
+//////////////////////////////
+//
+// list_midi_devices_on_card -- For a particular "card" look at all
+//   of the "devices/subdevices" on it and print information about it
+//   if it can handle MIDI input and/or output.
+//
+
+static void list_midi_devices_on_card(int card) {
+   snd_ctl_t *ctl;
+   char name[32];
+   int device = -1;
+   int status;
+   printf("list_midi_devices_on_card\n");
+   sprintf(name, "hw:%d", card);
+   if ((status = snd_ctl_open(&ctl, name, 0)) < 0) {
+      error("cannot open control for card %d: %s", card, snd_strerror(status));
+      return;
+   }
+   do {
+      status = snd_ctl_rawmidi_next_device(ctl, &device);
+      if (status < 0) {
+         error("cannot determine device number: %s", snd_strerror(status));
+         break;
+      }
+      if (device >= 0) {
+         printf("device: %d\n", device);
+         list_subdevice_info(ctl, card, device);
+      }
+   } while (device >= 0);
+   snd_ctl_close(ctl);
+}
+
+
+
+//////////////////////////////
+//
+// list_subdevice_info -- Print information about a subdevice
+//   of a device of a card if it can handle MIDI input and/or output.
+//
+
+static void list_subdevice_info(snd_ctl_t *ctl, int card, int device) {
+   snd_rawmidi_info_t *info;
+   const char *name;
+   const char *sub_name;
+   int subs, subs_in, subs_out;
+   int sub, in, out;
+   int status;
+
+   snd_rawmidi_info_alloca(&info);
+   snd_rawmidi_info_set_device(info, device);
+
+   snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
+   snd_ctl_rawmidi_info(ctl, info);
+   subs_in = snd_rawmidi_info_get_subdevices_count(info);
+   snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_OUTPUT);
+   snd_ctl_rawmidi_info(ctl, info);
+   subs_out = snd_rawmidi_info_get_subdevices_count(info);
+   subs = subs_in > subs_out ? subs_in : subs_out;
+
+   sub = 0;
+   in = out = 0;
+   if ((status = is_output(ctl, card, device, sub)) < 0) {
+      error("cannot get rawmidi information %d:%d: %s",
+            card, device, snd_strerror(status));
+      return;
+   } else if (status)
+      out = 1;
+
+   if (status == 0) {
+      if ((status = is_input(ctl, card, device, sub)) < 0) {
+         error("cannot get rawmidi information %d:%d: %s",
+               card, device, snd_strerror(status));
+         return;
+      }
+   } else if (status) 
+      in = 1;
+
+   if (status == 0)
+      return;
+
+   name = snd_rawmidi_info_get_name(info);
+   sub_name = snd_rawmidi_info_get_subdevice_name(info);
+   if (sub_name[0] == '\0') {
+      if (subs == 1) {
+         printf("%c%c  hw:%d,%d    %s\n", 
+                in  ? 'I' : ' ', 
+                out ? 'O' : ' ',
+                card, device, name);
+      } else
+         printf("%c%c  hw:%d,%d    %s (%d subdevices)\n",
+                in  ? 'I' : ' ', 
+                out ? 'O' : ' ',
+                card, device, name, subs);
+   } else {
+      sub = 0;
+      for (;;) {
+         printf("%c%c  hw:%d,%d,%d  %s\n",
+                in ? 'I' : ' ', out ? 'O' : ' ',
+                card, device, sub, sub_name);
+         if (++sub >= subs)
+            break;
+
+         in = is_input(ctl, card, device, sub);
+         out = is_output(ctl, card, device, sub);
+         snd_rawmidi_info_set_subdevice(info, sub);
+         if (out) {
+            snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_OUTPUT);
+            if ((status = snd_ctl_rawmidi_info(ctl, info)) < 0) {
+               error("cannot get rawmidi information %d:%d:%d: %s",
+                     card, device, sub, snd_strerror(status));
+               break;
+            } 
+         } else {
+            snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
+            if ((status = snd_ctl_rawmidi_info(ctl, info)) < 0) {
+               error("cannot get rawmidi information %d:%d:%d: %s",
+                     card, device, sub, snd_strerror(status));
+               break;
+            }
+         }
+         sub_name = snd_rawmidi_info_get_subdevice_name(info);
+      }
+   }
+}
+
+*/
+
+//////////////////////////////
+//
+// is_input -- returns true if specified card/device/sub can output MIDI data.
+//
+
+static int is_input(snd_ctl_t *ctl, int card, int device, int sub) {
+   snd_rawmidi_info_t *info;
+   int status;
+
+   snd_rawmidi_info_alloca(&info);
+   snd_rawmidi_info_set_device(info, device);
+   snd_rawmidi_info_set_subdevice(info, sub);
+   snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
+   
+   if ((status = snd_ctl_rawmidi_info(ctl, info)) < 0 && status != -ENXIO) {
+      return status;
+   } else if (status == 0) {
+      return 1;
+   }
+
+   return 0;
+}
+
+
+
+//////////////////////////////
+//
+// is_output -- returns true if specified card/device/sub can output MIDI data.
+//
+
+static int is_output(snd_ctl_t *ctl, int card, int device, int sub) {
+   snd_rawmidi_info_t *info;
+   int status;
+
+   snd_rawmidi_info_alloca(&info);
+   snd_rawmidi_info_set_device(info, device);
+   snd_rawmidi_info_set_subdevice(info, sub);
+   snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_OUTPUT);
+   
+   if ((status = snd_ctl_rawmidi_info(ctl, info)) < 0 && status != -ENXIO) {
+      return status;
+   } else if (status == 0) {
+      return 1;
+   }
+
+   return 0;
+}
+
+
+
+//////////////////////////////
+//
+// error -- print error message
+//
+
+static void error(const char *format, ...) {
+   va_list ap;
+   va_start(ap, format);
+   vfprintf(stderr, format, ap);
+   va_end(ap);
+   putc('\n', stderr);
+}
+
+

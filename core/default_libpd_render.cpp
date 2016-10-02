@@ -25,46 +25,68 @@ int gBufLength;
 float* gInBuf;
 float* gOutBuf;
 #define PARSE_MIDI
-static Midi midi;
+static std::vector<Midi*> midi;
+std::vector<const char*> gMidiPortNames;
+
+static int getPortChannel(int* channel){
+	int port = 0;
+	while(*channel > 16){
+		*channel -= 16;
+		port += 1;
+    }
+	if(port >= midi.size()){
+		// if the port number exceeds the number of ports available, send out
+		// of the first port 
+		port = 0;
+	}
+	return port;
+}
 
 void Bela_MidiOutNoteOn(int channel, int pitch, int velocity) {
-	rt_printf("noteon: %d %d %d\n", channel, pitch, velocity);
-	midi.writeNoteOn(channel, pitch, velocity);
+	int port = getPortChannel(&channel);
+	rt_printf("noteout _ port: %d, channel: %d, pitch: %d, velocity %d\n", port, channel, pitch, velocity);
+	midi[port]->writeNoteOn(channel, pitch, velocity);
 }
 
 void Bela_MidiOutControlChange(int channel, int controller, int value) {
-	rt_printf("controlchange: %d %d %d\n", channel, controller, value);
-	midi.writeControlChange(channel, controller, value);
+	int port = getPortChannel(&channel);
+	rt_printf("ctlout _ port: %d, channel: %d, controller: %d, value: %d\n", port, channel, controller, value);
+	midi[port]->writeControlChange(channel, controller, value);
 }
 
 void Bela_MidiOutProgramChange(int channel, int program) {
-	rt_printf("programchange: %d %d\n", channel, program);
-	midi.writeProgramChange(channel, program);
+	int port = getPortChannel(&channel);
+	rt_printf("pgmout _ port: %d, channel: %d, program: %d\n", port, channel, program);
+	midi[port]->writeProgramChange(channel, program);
 }
 
 void Bela_MidiOutPitchBend(int channel, int value) {
-	rt_printf("pitchbend: %d %d\n", channel, value);
-	midi.writePitchBend(channel, value);
+	int port = getPortChannel(&channel);
+	rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
+	midi[port]->writePitchBend(channel, value);
 }
 
 void Bela_MidiOutAftertouch(int channel, int pressure){
-	rt_printf("channelPressure: %d %d\n", channel, pressure);
-	midi.writeChannelPressure(channel, pressure);
+	int port = getPortChannel(&channel);
+	rt_printf("touchout _ port: %d, channel: %d, pressure: %d\n", port, channel, pressure);
+	midi[port]->writeChannelPressure(channel, pressure);
 }
 
 void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
-	rt_printf("polytouch: %d %d %d\n", channel, pitch, pressure);
-	midi.writePolyphonicKeyPressure(channel, pitch, pressure);
+	int port = getPortChannel(&channel);
+	rt_printf("polytouchout _ port: %d, channel: %d, pitch: %d, pressure: %d\n", port, channel, pitch, pressure);
+	midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 }
 
 void Bela_MidiOutByte(int port, int byte){
 	rt_printf("port: %d, byte: %d\n", port, byte);
-	midi.writeOutput(byte);
+	midi[port]->writeOutput(byte);
 }
 
 void Bela_printHook(const char *recv){
 	rt_printf("%s", recv);
 }
+
 static DigitalChannelManager dcm;
 
 void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
@@ -155,6 +177,10 @@ void* gPatch;
 
 bool setup(BelaContext *context, void *userData)
 {
+	gMidiPortNames.push_back("hw:1,0,0");
+	// add here other devices you need 
+	gMidiPortNames.push_back("hw:1,0,1");
+
     scope.setup(gScopeChannelsInUse, context->audioSampleRate);
     gScopeOut = new float[gScopeChannelsInUse];
 
@@ -183,14 +209,20 @@ bool setup(BelaContext *context, void *userData)
 			dcm.setCallbackArgument(ch, receiverNames[ch]);
 		}
 	}
-
-	midi.readFrom("/dev/midi1");
-	midi.writeTo("/dev/midi1");
+	midi.resize(gMidiPortNames.size());
+	printf("opening %d ports\n", midi.size());
+	for(unsigned int n = 0; n < midi.size(); ++n){
+		midi[n] = new Midi();
+		midi[n]->useAlsa(true);
+		const char* name = gMidiPortNames[n];
+		midi[n]->readFrom(name);
+		midi[n]->writeTo(name);
 #ifdef PARSE_MIDI
-	midi.enableParser(true);
+		midi[n]->enableParser(true);
 #else
-	midi.enableParser(false);
+		midi[n]->enableParser(false);
 #endif /* PARSE_MIDI */
+	}
 //	udpServer.bindToPort(1234);
 
 	gLibpdBlockSize = libpd_blocksize();
@@ -266,80 +298,84 @@ void render(BelaContext *context, void *userData)
 	// the safest thread-safe option to handle MIDI input is to process the MIDI buffer
 	// from the audio thread.
 #ifdef PARSE_MIDI
-	while((num = midi.getParser()->numAvailableMessages()) > 0){
-		static MidiChannelMessage message;
-		message = midi.getParser()->getNextChannelMessage();
-		//message.prettyPrint(); // use this to print beautified message (channel, data bytes)
-		switch(message.getType()){
-			case kmmNoteOn:
-			{
-				int noteNumber = message.getDataByte(0);
-				int velocity = message.getDataByte(1);
-				int channel = message.getChannel();
-				libpd_noteon(channel, noteNumber, velocity);
-				break;
+	for(unsigned int port = 0; port < midi.size(); ++port){
+		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
+			static MidiChannelMessage message;
+			message = midi[port]->getParser()->getNextChannelMessage();
+			rt_printf("On port %d (%s): ", port, gMidiPortNames[port]);
+			message.prettyPrint(); // use this to print beautified message (channel, data bytes)
+			switch(message.getType()){
+				case kmmNoteOn:
+				{
+					int noteNumber = message.getDataByte(0);
+					int velocity = message.getDataByte(1);
+					int channel = message.getChannel();
+					libpd_noteon(channel + port * 16, noteNumber, velocity);
+					break;
+				}
+				case kmmNoteOff:
+				{
+					/* PureData does not seem to handle noteoff messages as per the MIDI specs,
+					 * so that the noteoff velocity is ignored. Here we convert them to noteon
+					 * with a velocity of 0.
+					 */
+					int noteNumber = message.getDataByte(0);
+	//				int velocity = message.getDataByte(1); // would be ignored by Pd
+					int channel = message.getChannel();
+					libpd_noteon(channel + port * 16, noteNumber, 0);
+					break;
+				}
+				case kmmControlChange:
+				{
+					int channel = message.getChannel();
+					int controller = message.getDataByte(0);
+					int value = message.getDataByte(1);
+					libpd_controlchange(channel + port * 16, controller, value);
+					break;
+				}
+				case kmmProgramChange:
+				{
+					int channel = message.getChannel();
+					int program = message.getDataByte(0);
+					libpd_programchange(channel + port * 16, program);
+					break;
+				}
+				case kmmPolyphonicKeyPressure:
+				{
+					int channel = message.getChannel();
+					int pitch = message.getDataByte(0);
+					int value = message.getDataByte(1);
+					libpd_polyaftertouch(channel + port * 16, pitch, value);
+					break;
+				}
+				case kmmChannelPressure:
+				{
+					int channel = message.getChannel();
+					int value = message.getDataByte(0);
+					libpd_aftertouch(channel + port * 16, value);
+					break;
+				}
+				case kmmPitchBend:
+				{
+					int channel = message.getChannel();
+					int value =  ((message.getDataByte(1) << 7)| message.getDataByte(0)) - 8192;
+					libpd_pitchbend(channel + port * 16, value);
+					break;
+				}
+				case kmmNone:
+				case kmmAny:
+					break;
 			}
-			case kmmNoteOff:
-			{
-				/* PureData does not seem to handle noteoff messages as per the MIDI specs,
-				 * so that the noteoff velocity is ignored. Here we convert them to noteon
-				 * with a velocity of 0.
-				 */
-				int noteNumber = message.getDataByte(0);
-//				int velocity = message.getDataByte(1); // would be ignored by Pd
-				int channel = message.getChannel();
-				libpd_noteon(channel, noteNumber, 0);
-				break;
-			}
-			case kmmControlChange:
-			{
-				int channel = message.getChannel();
-				int controller = message.getDataByte(0);
-				int value = message.getDataByte(1);
-				libpd_controlchange(channel, controller, value);
-				break;
-			}
-			case kmmProgramChange:
-			{
-				int channel = message.getChannel();
-				int program = message.getDataByte(0);
-				libpd_programchange(channel, program);
-				break;
-			}
-			case kmmPolyphonicKeyPressure:
-			{
-				int channel = message.getChannel();
-				int pitch = message.getDataByte(0);
-				int value = message.getDataByte(1);
-				libpd_polyaftertouch(channel, pitch, value);
-				break;
-			}
-			case kmmChannelPressure:
-			{
-				int channel = message.getChannel();
-				int value = message.getDataByte(0);
-				libpd_aftertouch(channel, value);
-				break;
-			}
-			case kmmPitchBend:
-			{
-				int channel = message.getChannel();
-				int value =  ((message.getDataByte(1) << 7)| message.getDataByte(0)) - 8192;
-				libpd_pitchbend(channel, value);
-				break;
-			}
-			case kmmNone:
-			case kmmAny:
-				break;
 		}
 	}
 #else
 	int input;
-	while((input = midi.getInput()) >= 0){
-		libpd_midibyte(0, input);
+	for(unsigned int port = 0; port < NUM_MIDI_PORTS; ++port){
+		while((input = midi[port].getInput()) >= 0){
+			libpd_midibyte(port, input);
+		}
 	}
 #endif /* PARSE_MIDI */
-
 	static unsigned int numberOfPdBlocksToProcess = gBufLength / gLibpdBlockSize;
 
 	for(unsigned int tick = 0; tick < numberOfPdBlocksToProcess; ++tick){
