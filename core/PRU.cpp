@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <cerrno>
+#include <cmath>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -130,6 +131,8 @@ PRU::PRU(InternalBelaContext *input_context)
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
   pru_buffer_digital(0), pru_buffer_audio_dac(0), pru_buffer_audio_adc(0),
+  audio_expander_input_history(0), audio_expander_output_history(0),
+  audio_expander_filter_coeff(0),
   xenomai_gpio_fd(-1), xenomai_gpio(0)
 {
 
@@ -144,6 +147,10 @@ PRU::~PRU()
 		cleanupGPIO();
 	if(xenomai_gpio_fd >= 0)
 		close(xenomai_gpio_fd);
+	if(audio_expander_input_history != 0)
+		free(audio_expander_input_history);
+	if(audio_expander_output_history != 0)
+		free(audio_expander_output_history);
 }
 
 // Prepare the GPIO pins needed for the PRU
@@ -510,6 +517,23 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 			context->multiplexerStartingChannel = 0;
 			context->multiplexerAnalogIn = 0;
 		}
+		
+		if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
+			// Audio expander enabled on at least one analog input. Allocate filter buffers
+			// and calculate coefficient.
+			audio_expander_input_history = (float *)malloc(context->analogInChannels * sizeof(float));
+			audio_expander_output_history = (float *)malloc(context->analogInChannels * sizeof(float));
+			if(audio_expander_input_history == 0 || audio_expander_output_history == 0) {
+				rt_printf("Error: couldn't allocate audio expander history buffers\n");
+				return 1;				
+			}
+			
+			for(int n = 0; n < context->analogInChannels; n++)
+				audio_expander_input_history[n] = audio_expander_output_history[n] = 0;
+			
+			float cutoffFreqHz = 10.0; 
+			audio_expander_filter_coeff = 1.0 / ((2.0 * M_PI * cutoffFreqHz / context->analogSampleRate) + 1.0);
+		}
 	}
 	else {
 		context->multiplexerChannels = 0;
@@ -701,6 +725,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			context->audioIn[n] = (float)pru_buffer_audio_adc[n + pru_audio_offset] / 32768.0f;
 		}
 #endif
+		
 		if(analog_enabled) {
 			if(context->multiplexerChannels != 0) {
 				// If multiplexer is enabled, find out which channels we have by pulling out
@@ -746,7 +771,28 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
 			}
 #endif
-
+			
+			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
+				// Audio expander enabled on at least one analog input
+				for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+					if(context->audioExpanderEnabled & (1 << ch)) {
+						// Audio expander enabled on this channel:
+						// apply highpass filter and scale by 2 to get -1 to 1 range
+						// rather than 0-1
+						for(unsigned int n = 0; n < context->analogFrames; n++) {
+							float filteredOut = audio_expander_filter_coeff *
+								(audio_expander_output_history[ch] + 
+								 context->analogIn[n * context->analogInChannels + ch] -
+							     audio_expander_input_history[ch]);
+							
+							audio_expander_input_history[ch] = context->analogIn[n * context->analogInChannels + ch];
+							audio_expander_output_history[ch] = filteredOut;
+							context->analogIn[n * context->analogInChannels + ch] = 2.0 * filteredOut;
+						}
+					}
+				}
+			}
+			
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Initialize the output buffer with the values that were in the last frame of the previous output
 				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
@@ -788,6 +834,24 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				// Remember the content of the last_analog_out_frame
 				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
 					last_analog_out_frame[ch] = context->analogOut[context->analogOutChannels * (context->analogFrames - 1) + ch];
+				}
+			}
+			
+			if((context->audioExpanderEnabled & 0xFFFF0000) != 0) {
+				// Audio expander enabled on at least one analog output
+				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
+					if(context->audioExpanderEnabled & (0x00010000 << ch)) {
+						// Audio expander enabled on this output channel:
+						// We expect the range to be -1 to 1; rescale to
+						// 0 to 0.93, the top value being designed to avoid a
+						// headroom problem on the analog outputs with a sagging
+						// 5V USB supply
+						
+						for(int n = 0; n < context->analogFrames; n++) {
+							context->analogOut[n * context->analogOutChannels + ch] = 
+								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93/2.0);
+						}
+					}
 				}
 			}
 
@@ -856,6 +920,14 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		free(last_analog_out_frame);
 		if(context->multiplexerAnalogIn != 0)
 			free(context->multiplexerAnalogIn);
+		if(audio_expander_input_history != 0) {
+			free(audio_expander_input_history);
+			audio_expander_input_history = 0;
+		}
+		if(audio_expander_output_history != 0) {
+			free(audio_expander_output_history);
+			audio_expander_output_history = 0;
+		}
 	}
 
 	if(digital_enabled) {

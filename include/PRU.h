@@ -120,6 +120,12 @@ typedef struct {
 	/// capelet, this buffer will always be big enough to hold at least one complete cycle of all
 	/// channels. It will be null if the multiplexer capelet is not enabled.
 	float *multiplexerAnalogIn;
+	
+	/// \brief Flags for whether audio expander is enabled on given analog channels.
+	///
+	/// Bits 0-15, when set, indicate audio expander enabled on the analog inputs. Bits 16-31
+	/// indicate audio expander enabled on the analog outputs.
+	uint32_t audioExpanderEnabled;
 
 	/// \brief Other audio/sensor settings
 	///
@@ -197,6 +203,9 @@ private:
 
 	float *last_analog_out_frame;
 	uint32_t *digital_buffer0, *digital_buffer1, *last_digital_buffer;
+	float *audio_expander_input_history;
+	float *audio_expander_output_history;
+	float audio_expander_filter_coeff;
 
 	int xenomai_gpio_fd;	// File descriptor for /dev/mem for fast GPIO
 	uint32_t *xenomai_gpio;	// Pointer to GPIO registers

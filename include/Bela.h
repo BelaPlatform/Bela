@@ -135,6 +135,10 @@ typedef struct {
 	float headphoneLevel;
 	/// How many channels to use on the multiplexer capelet, if enabled
 	int numMuxChannels;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderInputs;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderOutputs;
 
 	/// Which PRU (0 or 1) the code should run on
 	int pruNumber; 
@@ -347,6 +351,12 @@ typedef struct {
 	/// capelet, this buffer will always be big enough to hold at least one complete cycle of all
 	/// channels. It will be null if the multiplexer capelet is not enabled.
 	const float * const multiplexerAnalogIn;	
+	
+	/// \brief Flags for whether audio expander is enabled on given analog channels.
+	///
+	/// Bits 0-15, when set, indicate audio expander enabled on the analog inputs. Bits 16-31
+	/// indicate audio expander enabled on the analog outputs.
+	const uint32_t audioExpanderEnabled;
 
 	/// \brief Other audio/sensor settings
 	///
