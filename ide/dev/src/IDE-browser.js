@@ -54,7 +54,7 @@ projectView.on('message', (event, data) => {
 });
 
 // file view
-var fileView = new (require('./Views/FileView'))('fileManager', [models.project]);
+var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings]);
 fileView.on('message', (event, data) => {
 	if (!data.currentProject && models.project.getKey('currentProject')){
 		data.currentProject = models.project.getKey('currentProject');

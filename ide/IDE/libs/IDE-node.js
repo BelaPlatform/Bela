@@ -332,6 +332,7 @@ var SettingsManager = {
 			'cpuMonitoringVerbose'	: 0,
 			'consoleDelete'			: 1,
 			'autoDocs'				: 1,
+			'viewHiddenFiles'		: 0,
 			'verboseDebug'			: 0,
 			'useGit'				: 1,
 			'gitAutostage'			: 1

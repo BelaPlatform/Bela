@@ -446,7 +446,7 @@ projectView.on('message', function (event, data) {
 });
 
 // file view
-var fileView = new (require('./Views/FileView'))('fileManager', [models.project]);
+var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings]);
 fileView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -2575,6 +2575,8 @@ var askForOverwrite = true;
 var uploadingFile = false;
 var fileQueue = [];
 var forceRebuild = false;
+var viewHiddenFiles = false;
+var firstViewHiddenFiles = true;
 
 var FileView = function (_View) {
 	_inherits(FileView, _View);
@@ -2708,8 +2710,8 @@ var FileView = function (_View) {
 		// model events
 
 	}, {
-		key: '_fileList',
-		value: function _fileList(files, data) {
+		key: '__fileList',
+		value: function __fileList(files, data) {
 			var _this5 = this;
 
 			this.listOfFiles = files;
@@ -2732,6 +2734,9 @@ var FileView = function (_View) {
 				for (var _iterator = files[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var item = _step.value;
 
+
+					// exclude hidden files
+					if (!viewHiddenFiles && (item.name[0] === '.' || item.dir && item.name === 'build' || item.name === 'settings.json' || item.name === data.currentProject)) continue;
 
 					if (item.dir) {
 
@@ -2990,6 +2995,16 @@ var FileView = function (_View) {
 			if (forceRebuild && !fileQueue.length) {
 				forceRebuild = false;
 				this.emit('force-rebuild');
+			}
+		}
+	}, {
+		key: '_viewHiddenFiles',
+		value: function _viewHiddenFiles(val) {
+			viewHiddenFiles = val;
+			if (firstViewHiddenFiles) {
+				firstViewHiddenFiles = false;
+			} else {
+				this.emit('message', 'project-event', { func: 'openProject' });
 			}
 		}
 	}]);

@@ -8,6 +8,8 @@ var askForOverwrite = true;
 var uploadingFile = false;
 var fileQueue = [];
 var forceRebuild = false;
+var viewHiddenFiles = false;
+var firstViewHiddenFiles = true;
 
 class FileView extends View {
 	
@@ -122,8 +124,8 @@ class FileView extends View {
 	}
 	
 	// model events
-	_fileList(files, data){
-	
+	__fileList(files, data){
+
 		this.listOfFiles = files;
 
 		var $files = $('#fileList')
@@ -138,6 +140,9 @@ class FileView extends View {
 		
 		for (let item of files){
 		
+			// exclude hidden files
+			if (!viewHiddenFiles && (item.name[0] === '.' || (item.dir && item.name === 'build') || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+					
 			if (item.dir){
 			
 				directories.push(item);
@@ -296,6 +301,15 @@ class FileView extends View {
 		if (forceRebuild && !fileQueue.length){
 			forceRebuild = false;
 			this.emit('force-rebuild');
+		}
+	}
+	
+	_viewHiddenFiles(val){
+		viewHiddenFiles = val;
+		if (firstViewHiddenFiles){
+			firstViewHiddenFiles = false;
+		} else {
+			this.emit('message', 'project-event', {func: 'openProject'} );
 		}
 	}
 	
