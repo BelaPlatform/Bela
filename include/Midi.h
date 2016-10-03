@@ -11,6 +11,7 @@
 #include <Bela.h>
 #include <vector>
 #include <alsa/asoundlib.h>
+#include <native/pipe.h>
 
 typedef unsigned char midi_byte_t;
 
@@ -347,10 +348,6 @@ public:
 	 */
 	MidiParser* getMidiParser();
 	virtual ~Midi();
-	static void midiInputLoop();
-	static void midiOutputLoop();
-    static bool staticConstructed;
-	static void staticConstructor();
 
 	/**
 	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
@@ -364,8 +361,8 @@ public:
 	static void destroyPorts(std::vector<Midi*>& ports);
 private:
 	int _getInput();
-	void readInputLoop();
-	void writeOutputLoop();
+	static void readInputLoop(void* obj) ;
+	static void writeOutputLoop(void* obj);
 	int outputPort;
 	int inputPort;
 	snd_rawmidi_t *alsaIn,*alsaOut;
@@ -378,9 +375,13 @@ private:
 	unsigned int outputBytesReadPointer;
 	MidiParser* inputParser;
 	bool parserEnabled;
-	static std::vector<Midi*> objAddrs[2];
-	static AuxiliaryTask midiInputTask;
-	static AuxiliaryTask midiOutputTask;
+	AuxiliaryTask midiInputTask;
+	AuxiliaryTask midiOutputTask;
+	char* inId;
+	char* outId;
+	char* outPipeName;
+	RT_PIPE outPipe;
+	//static RT_QUEUE inQueue;
 };
 
 
