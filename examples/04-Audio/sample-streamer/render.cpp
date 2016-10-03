@@ -174,7 +174,7 @@ to detect cases were the buffers havn't been filled in time. These cases can usu
 be mitigated by using a larger buffer size.
 
 Try uploading a large wav file into the project and playing it back. You will need
-specify the amount of channels (#define NUM_CHANNELS) and the name of the file (gFilename).
+specify the amount of channels (`#``define NUM_CHANNELS`) and the name of the file (`gFilename`).
 
 
 */
