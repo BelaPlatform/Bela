@@ -427,11 +427,6 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priorit
         return (AuxiliaryTask)newTask;
 }
 
-void Bela_deleteAuxiliaryTask(AuxiliaryTask task){
-	InternalAuxiliaryTask *taskToDelete = (InternalAuxiliaryTask *)task;
-	rt_task_delete(&taskToDelete->task);
-}
-
 // Schedule a previously created (and started) auxiliary task. It will run when the priority rules next
 // allow it to be scheduled.
 void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
