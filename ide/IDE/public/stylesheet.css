@@ -944,6 +944,12 @@ right: calc(100% - 62px);
     left: -0.75em;
     position: relative;
 }
+span.file-list-size{
+	position: absolute;
+	right: 0;
+	padding: 0;
+	margin-right: 20px;
+}
 #fileList ul:before, #examples ul:before{
 	content: "+";
     display: block;

@@ -2710,8 +2710,8 @@ var FileView = function (_View) {
 		// model events
 
 	}, {
-		key: '__fileList',
-		value: function __fileList(files, data) {
+		key: '_fileList',
+		value: function _fileList(files, data) {
 			var _this5 = this;
 
 			this.listOfFiles = files;
@@ -2744,6 +2744,12 @@ var FileView = function (_View) {
 					} else {
 
 						var ext = item.name.split('.').pop();
+
+						if (item.size < 1000000) {
+							item.size = (item.size / 1000).toFixed(1) + 'kb';
+						} else if (item.size >= 1000000 && item.size < 1000000000) {
+							item.size = (item.size / 1000000).toFixed(1) + 'mb';
+						}
 
 						if (sourceIndeces.indexOf(ext) !== -1) {
 							sources.push(item);
@@ -2790,7 +2796,7 @@ var FileView = function (_View) {
 				$('<li></li>').html('Headers:').appendTo($files);
 			}
 			for (var i = 0; i < headers.length; i++) {
-				$('<li></li>').addClass('sourceFile').html(headers[i].name).data('file', headers[i].name).appendTo($files).on('click', function (e) {
+				$('<li></li>').addClass('sourceFile').html(headers[i].name + '<span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo($files).on('click', function (e) {
 					return _this5.openFile(e);
 				});
 			}
@@ -2799,7 +2805,7 @@ var FileView = function (_View) {
 				$('<li></li>').html('Sources:').appendTo($files);
 			}
 			for (var _i = 0; _i < sources.length; _i++) {
-				$('<li></li>').addClass('sourceFile').html(sources[_i].name).data('file', sources[_i].name).appendTo($files).on('click', function (e) {
+				$('<li></li>').addClass('sourceFile').html(sources[_i].name + '<span class="file-list-size">' + sources[_i].size + '</span>').data('file', sources[_i].name).appendTo($files).on('click', function (e) {
 					return _this5.openFile(e);
 				});
 			}
@@ -2808,7 +2814,7 @@ var FileView = function (_View) {
 				$('<li></li>').html('Resources:').appendTo($files);
 			}
 			for (var _i2 = 0; _i2 < resources.length; _i2++) {
-				$('<li></li>').addClass('sourceFile').html(resources[_i2].name).data('file', resources[_i2].name).appendTo($files).on('click', function (e) {
+				$('<li></li>').addClass('sourceFile').html(resources[_i2].name + '<span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo($files).on('click', function (e) {
 					return _this5.openFile(e);
 				});
 			}
@@ -2877,9 +2883,16 @@ var FileView = function (_View) {
 				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
 					var child = _step3.value;
 
-					if (!child.dir) $('<li></li>').addClass('sourceFile').html(child.name).data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
-						return _this6.openFile(e);
-					});else {
+					if (!child.dir) {
+						if (child.size < 1000000) {
+							child.size = (child.size / 1000).toFixed(1) + 'kb';
+						} else if (child.size >= 1000000 && child.size < 1000000000) {
+							child.size = (child.size / 1000000).toFixed(1) + 'mb';
+						}
+						$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
+							return _this6.openFile(e);
+						});
+					} else {
 						child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
 						ul.append(this.subDirs(child));
 					}
@@ -3004,7 +3017,7 @@ var FileView = function (_View) {
 			if (firstViewHiddenFiles) {
 				firstViewHiddenFiles = false;
 			} else {
-				this.emit('message', 'project-event', { func: 'openProject' });
+				this.emit('message', 'project-event', { func: 'openProject', timestamp: performance.now() });
 			}
 		}
 	}]);

@@ -124,7 +124,7 @@ class FileView extends View {
 	}
 	
 	// model events
-	__fileList(files, data){
+	_fileList(files, data){
 
 		this.listOfFiles = files;
 
@@ -139,7 +139,7 @@ class FileView extends View {
 		var directories = [];
 		
 		for (let item of files){
-		
+
 			// exclude hidden files
 			if (!viewHiddenFiles && (item.name[0] === '.' || (item.dir && item.name === 'build') || item.name === 'settings.json' || item.name === data.currentProject)) continue;
 					
@@ -150,6 +150,12 @@ class FileView extends View {
 			} else {
 			
 				let ext = item.name.split('.').pop();
+				
+				if (item.size < 1000000){
+					item.size = (item.size/1000).toFixed(1)+'kb';
+				} else if (item.size >= 1000000 && item.size < 1000000000){
+					item.size = (item.size/1000000).toFixed(1)+'mb';
+				} 
 			
 				if (sourceIndeces.indexOf(ext) !== -1){
 					sources.push(item);
@@ -176,21 +182,21 @@ class FileView extends View {
 			$('<li></li>').html('Headers:').appendTo($files);
 		}
 		for (let i=0; i<headers.length; i++){
-			$('<li></li>').addClass('sourceFile').html(headers[i].name).data('file', headers[i].name).appendTo($files).on('click', (e) => this.openFile(e));
+			$('<li></li>').addClass('sourceFile').html(headers[i].name+'<span class="file-list-size">'+headers[i].size+'</span>').data('file', headers[i].name).appendTo($files).on('click', (e) => this.openFile(e));
 		}
 		
 		if (sources.length){
 			$('<li></li>').html('Sources:').appendTo($files);
 		}
 		for (let i=0; i<sources.length; i++){
-			$('<li></li>').addClass('sourceFile').html(sources[i].name).data('file', sources[i].name).appendTo($files).on('click', (e) => this.openFile(e));
+			$('<li></li>').addClass('sourceFile').html(sources[i].name+'<span class="file-list-size">'+sources[i].size+'</span>').data('file', sources[i].name).appendTo($files).on('click', (e) => this.openFile(e));
 		}
 		
 		if (resources.length){
 			$('<li></li>').html('Resources:').appendTo($files);
 		}
 		for (let i=0; i<resources.length; i++){
-			$('<li></li>').addClass('sourceFile').html(resources[i].name).data('file', resources[i].name).appendTo($files).on('click', (e) => this.openFile(e));
+			$('<li></li>').addClass('sourceFile').html(resources[i].name+'<span class="file-list-size">'+resources[i].size+'</span>').data('file', resources[i].name).appendTo($files).on('click', (e) => this.openFile(e));
 		}
 		
 		if (directories.length){
@@ -224,9 +230,14 @@ class FileView extends View {
 	subDirs(dir){
 		var ul = $('<ul></ul>').html(dir.name+':');
 		for (let child of dir.children){
-			if (!child.dir)
-				$('<li></li>').addClass('sourceFile').html(child.name).data('file', (dir.dirPath || dir.name)+'/'+child.name).appendTo(ul).on('click', (e) => this.openFile(e));
-			else {
+			if (!child.dir){
+				if (child.size < 1000000){
+					child.size = (child.size/1000).toFixed(1)+'kb';
+				} else if (child.size >= 1000000 && child.size < 1000000000){
+					child.size = (child.size/1000000).toFixed(1)+'mb';
+				} 
+				$('<li></li>').addClass('sourceFile').html(child.name+'<span class="file-list-size">'+child.size+'</span>').data('file', (dir.dirPath || dir.name)+'/'+child.name).appendTo(ul).on('click', (e) => this.openFile(e));
+			} else {
 				child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
 				ul.append(this.subDirs(child));
 			}
@@ -309,7 +320,7 @@ class FileView extends View {
 		if (firstViewHiddenFiles){
 			firstViewHiddenFiles = false;
 		} else {
-			this.emit('message', 'project-event', {func: 'openProject'} );
+			this.emit('message', 'project-event', {func: 'openProject', timestamp: performance.now()} );
 		}
 	}
 	
