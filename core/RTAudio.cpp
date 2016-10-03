@@ -383,8 +383,8 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
 	// Attempt to create the task
-	if(rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create auxiliary task " << name << endl;
+	if(int ret = rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
+		  cout << "Error: unable to create auxiliary task " << name << " : " << strerror(-ret) << endl;
 		  free(newTask);
 		  return 0;
 	}
@@ -402,6 +402,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 
 	return (AuxiliaryTask)newTask;
 }
+
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priority, const char *name, bool autoSchedule)
 {
         InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
@@ -424,6 +425,11 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priorit
         getAuxTasks().push_back(newTask);
         
         return (AuxiliaryTask)newTask;
+}
+
+void Bela_deleteAuxiliaryTask(AuxiliaryTask task){
+	InternalAuxiliaryTask *taskToDelete = (InternalAuxiliaryTask *)task;
+	rt_task_delete(&taskToDelete->task);
 }
 
 // Schedule a previously created (and started) auxiliary task. It will run when the priority rules next
@@ -496,8 +502,8 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 	taskStruct = (InternalAuxiliaryTask *)task;
 	if(taskStruct->started == true)
 		return 0;
-	if(rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
-		cerr << "Error: unable to start Xenomai task " << taskStruct->name << endl;
+	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
+		cerr << "Error: unable to start Xenomai task " << taskStruct->name <<  strerror(-ret) << endl;
 		return -1;
 	}
 	taskStruct->started = true;
@@ -511,8 +517,8 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 int Bela_startAudio()
 {
 	// Create audio thread with high Xenomai priority
-	if(rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create Xenomai audio thread" << endl;
+	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
+		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}
 
