@@ -124,7 +124,7 @@ class belaProcess extends MakeProcess{
 							args += key+'='+CLArgs[key]+' ';
 						} else if (key === 'user'){
 							args += CLArgs[key];
-						} else if (key !== 'make'){
+						} else if (key !== 'make' && key !== 'audioExpander'){
 							args += key+CLArgs[key]+' ';
 						}
 					}

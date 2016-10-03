@@ -992,6 +992,20 @@ right: calc(100% - 62px);
 	.tabTable td + td {
 		text-align: left;
 	}
+	
+#audioExpanderTable {
+	width: 50%;
+	margin: 10px auto;
+}
+#audioExpanderTable tr{
+
+}
+#audioExpanderTable td{
+	text-align: center;
+}
+#audioExpanderTable input{
+	width: auto;
+}
 
 .debug-table td {
 	width: 120px;

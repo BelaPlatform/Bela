@@ -19,8 +19,24 @@ class SettingsView extends View {
 			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
 				this.emit('run-on-boot', $('#runOnBoot').val());
 		});
-		
-		this.inputJustChanged = false;
+				
+		$('.audioExpanderCheck').on('change', e => {
+			var inputs = '', outputs = '';
+			$('.audioExpanderCheck').each(function(){
+				var $this = $(this);
+				if ($this.is(':checked')){
+					if ($this.data('func') === 'input'){
+						inputs += $this.data('channel') + ',';
+					} else {
+						outputs += $this.data('channel') + ',';
+					}
+				}
+			});
+			if (inputs.length) inputs = inputs.slice(0, -1);
+			if (outputs.length) outputs = outputs.slice(0, -1);
+
+			this.emit('project-settings', {func: 'setCLArgs', args: [{key: '-Y', value: inputs}, {key: '-Z', value: outputs}] });
+		});
 		
 	}
 	
@@ -30,6 +46,9 @@ class SettingsView extends View {
 		var key = data.key;
 		if (func && this[func]){
 			this[func](func, key, $element.val());
+		}
+		if (key === '-C'){
+			this.$elements.filterByData('key', key).not($element).val($element.val());
 		}
 	}
 	buttonClicked($element, e){
@@ -43,11 +62,7 @@ class SettingsView extends View {
 		var func = data.func;
 		var key = data.key;
 		var type = $element.prop('type');
-		
-		if (inputChangedTimeout) clearTimeout(inputChangedTimeout);
-		inputChangedTimeout = setTimeout( () => this.inputJustChanged = false, 100);
-		this.inputJustChanged = true;
-		
+		console.log(key);
 		if (type === 'number' || type === 'text'){
 			if (func && this[func]){
 				this[func](func, key, $element.val());
@@ -87,7 +102,6 @@ class SettingsView extends View {
 	}
 	
 	setIDESetting(func, key, value){
-	console.log(func, key, value);
 		this.emit('IDE-settings', {func, key, value: value});
 	}
 	restoreDefaultIDESettings(func){
@@ -205,31 +219,33 @@ class SettingsView extends View {
 	}
 	
 	// model events
-	_CLArgs(data){
-		var args = '';
+	__CLArgs(data){
+
 		for (let key in data) {
 		
+			if (key === '-Y' || key === '-Z'){
+				this.setAudioExpander(key, data[key]);
+				continue;
+			} else if (key === 'audioExpander'){
+				if (data[key] == 1)
+					$('#audioExpanderTable').css('display', 'table');
+				else
+					$('#audioExpanderTable').css('display', 'none');
+			}
+		
 			let el = this.$elements.filterByData('key', key);
-			
-			// set the input value when neccesary
+
+			// set the input value
 			if (el[0].type === 'checkbox') {
 				el.prop('checked', (data[key] == 1));
-			} else if (key === '-C' || (el.val() !== data[key] && !this.inputJustChanged)){
+			} else {
 				//console.log(el.val(), data[key]);
 				el.val(data[key]);
 			}
-
-			// fill in the full string
-			if (key[0] === '-' && key[1] === '-'){
-				args += key+'='+data[key]+' ';
-			} else if (key === 'user'){
-				args += data[key];
-			} else if (key !== 'make'){
-				args += key+data[key]+' ';
-			}
+			
+			
 		}
 
-		$('#C_L_ARGS').val(args);
 	}
 	_IDESettings(data){
 		for (let key in data){
@@ -256,7 +272,45 @@ class SettingsView extends View {
 				$('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
 			}
 		}
+		
+	}
+	
+	useAudioExpander(func, key, val){
+		
+		if (val == 1) {
+			$('#audioExpanderTable').css('display', 'table');
+			this.setCLArg('setCLArg', key, val);
+		} else {
+			$('#audioExpanderTable').css('display', 'none');
+			// clear channel picker
+			$('.audioExpanderCheck').prop('checked', false);
+			this.emit('project-settings', {func: 'setCLArgs', args: [
+				{key: '-Y', value: ''}, 
+				{key: '-Z', value: ''},
+				{key, value: val}
+			] });
+		}
+	}
+	
+	setAudioExpander(key, val){
+		
+		if (!val.length) return;
+		
+		var channels = val.split(',');
 
+		if (!channels.length) return;
+		
+		$('.audioExpanderCheck').each( function(){
+			let $this = $(this);
+			if (($this.data('func') === 'input' && key === '-Y') || ($this.data('func') === 'output' && key === '-Z')){
+				let checked = false;
+				for (let channel of channels){
+					if (channel == $this.data('channel'))
+						checked = true;
+				}	
+				$this.prop('checked', checked);	
+			}
+		});
 		
 	}
 }

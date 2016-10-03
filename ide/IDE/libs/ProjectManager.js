@@ -385,6 +385,14 @@ module.exports = {
 		return yield _saveSettings(settings, data);
 	},
 	
+	*setCLArgs(data){
+		var settings = yield _getSettings(data.currentProject);
+		for (let item of data.args){
+			settings.CLArgs[item.key] = item.value;
+		}
+		return yield _saveSettings(settings, data);
+	},
+	
 	*setCLArg(data){
 		var settings = yield _getSettings(data.currentProject);
 		settings.CLArgs[data.key] = data.value;
@@ -532,9 +540,12 @@ function _defaultSettings(){
 		"-A": "0", 		// adc level
 		"--pga-gain-left": "10",
 		"--pga-gain-right": "10",
-		"-X": "0",		// multiplexer capelet
 		"user": '',		// user-defined clargs
-		"make": ''		// user-defined Makefile parameters
+		"make": '',		// user-defined Makefile parameters
+		"-X": "0",		// multiplexer capelet
+		"audioExpander": "0",	// audio expander capelet
+		"-Y": "",		// audio expander inputs
+		"-Z": ""		// audio expander outputs
 	};
 	return {
 		"fileName"		: "render.cpp",
