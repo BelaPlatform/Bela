@@ -185,8 +185,8 @@ bool setup(BelaContext *context, void *userData)
 {
 	gMidiPortNames.push_back("hw:0,0,0");
 	// add here other devices you need 
-	//gMidiPortNames.push_back("hw:1,0,0");
-	//gMidiPortNames.push_back("hw:1,0,1");
+	gMidiPortNames.push_back("hw:1,0,0");
+	gMidiPortNames.push_back("hw:1,0,1");
 
     scope.setup(gScopeChannelsInUse, context->audioSampleRate);
     gScopeOut = new float[gScopeChannelsInUse];
@@ -219,7 +219,6 @@ bool setup(BelaContext *context, void *userData)
 	midi.resize(gMidiPortNames.size());
 	for(unsigned int n = 0; n < midi.size(); ++n){
 		midi[n] = new Midi();
-		midi[n]->useAlsa(true);
 		const char* name = gMidiPortNames[n];
 		midi[n]->readFrom(name);
 		midi[n]->writeTo(name);

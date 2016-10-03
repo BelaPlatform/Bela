@@ -287,11 +287,6 @@ public:
 		enableParser(callback != NULL); //this needs to be first, as it deletes the parser(if exists)
 		getParser()->setCallback(callback, arg);
 	}
-	/**
-	* Use Alsa raw file mode, or filesystem
-	* @param useAlsa use alsa raw files if true else filesystem
-	*/
-	void useAlsa(bool useAlsa);
 
 	/**
 	 * Open the specified input Midi port and start reading from it.
@@ -353,7 +348,7 @@ public:
 	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
 	 * Ports open with this method should be closed with destroyPorts()
 	 */
-	static void createAllPorts(std::vector<Midi*>& ports, bool useAlsaApi = false, bool useParser = false);
+	static void createAllPorts(std::vector<Midi*>& ports, bool useParser = false);
 
 	/**
 	 * Closes a vector of ports.
@@ -363,16 +358,11 @@ private:
 	int _getInput();
 	static void readInputLoop(void* obj) ;
 	static void writeOutputLoop(void* obj);
-	int outputPort;
-	int inputPort;
 	snd_rawmidi_t *alsaIn,*alsaOut;
-	bool useAlsaApi;
 	std::vector<midi_byte_t> inputBytes;
 	unsigned int inputBytesWritePointer;
 	unsigned int inputBytesReadPointer;
 	std::vector<midi_byte_t> outputBytes;
-	unsigned int outputBytesWritePointer;
-	unsigned int outputBytesReadPointer;
 	MidiParser* inputParser;
 	bool parserEnabled;
 	AuxiliaryTask midiInputTask;
@@ -381,7 +371,6 @@ private:
 	char* outId;
 	char* outPipeName;
 	RT_PIPE outPipe;
-	//static RT_QUEUE inQueue;
 };
 
 
