@@ -511,6 +511,7 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 
 int Bela_startAudio()
 {
+	gShouldStop = 0;
 	// Create audio thread with high Xenomai priority
 	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
 		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
