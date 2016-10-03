@@ -37,6 +37,7 @@ static int getPortChannel(int* channel){
 	if(port >= midi.size()){
 		// if the port number exceeds the number of ports available, send out
 		// of the first port 
+		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
 		port = 0;
 	}
 	return port;
@@ -79,7 +80,12 @@ void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
 }
 
 void Bela_MidiOutByte(int port, int byte){
-	rt_printf("port: %d, byte: %d\n", port, byte);
+	printf("port: %d, byte: %d\n", port, byte);
+	if(port > midi.size()){
+		// if the port is out of range, redirect to the first port.
+		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
+		port = 0;
+	}
 	midi[port]->writeOutput(byte);
 }
 
@@ -177,9 +183,10 @@ void* gPatch;
 
 bool setup(BelaContext *context, void *userData)
 {
-	gMidiPortNames.push_back("hw:1,0,0");
+	gMidiPortNames.push_back("hw:0,0,0");
 	// add here other devices you need 
-	// gMidiPortNames.push_back("hw:1,0,1");
+	//gMidiPortNames.push_back("hw:1,0,0");
+	//gMidiPortNames.push_back("hw:1,0,1");
 
     scope.setup(gScopeChannelsInUse, context->audioSampleRate);
     gScopeOut = new float[gScopeChannelsInUse];
@@ -210,7 +217,6 @@ bool setup(BelaContext *context, void *userData)
 		}
 	}
 	midi.resize(gMidiPortNames.size());
-	printf("opening %d ports\n", midi.size());
 	for(unsigned int n = 0; n < midi.size(); ++n){
 		midi[n] = new Midi();
 		midi[n]->useAlsa(true);
@@ -233,16 +239,19 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	// set hooks before calling libpd_init
-	libpd_set_printhook(Bela_printHook);
-	libpd_set_floathook(Bela_floatHook);
-	libpd_set_messagehook(Bela_messageHook);
-	libpd_set_noteonhook(Bela_MidiOutNoteOn);
-	libpd_set_controlchangehook(Bela_MidiOutControlChange);
-	libpd_set_programchangehook(Bela_MidiOutProgramChange);
-	libpd_set_pitchbendhook(Bela_MidiOutPitchBend);
-	libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
-	libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
-	libpd_set_midibytehook(Bela_MidiOutByte);
+	if(midi.size() > 0){
+		// do not register callbacks if no MIDI device is in use.
+		libpd_set_printhook(Bela_printHook);
+		libpd_set_floathook(Bela_floatHook);
+		libpd_set_messagehook(Bela_messageHook);
+		libpd_set_noteonhook(Bela_MidiOutNoteOn);
+		libpd_set_controlchangehook(Bela_MidiOutControlChange);
+		libpd_set_programchangehook(Bela_MidiOutProgramChange);
+		libpd_set_pitchbendhook(Bela_MidiOutPitchBend);
+		libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
+		libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
+		libpd_set_midibytehook(Bela_MidiOutByte);
+	}
 
 
 	//TODO: add hooks for other midi events and generate MIDI output appropriately
