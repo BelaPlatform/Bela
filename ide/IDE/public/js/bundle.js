@@ -2115,7 +2115,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			// console.log('tokenizerUpdate');
+			// console.log('tokenizerUpdate'); 
 			_this.parser.parse(function () {
 				_this.getCurrentWord();
 			});
@@ -2389,7 +2389,7 @@ var EditorView = function (_View) {
 				return;
 			}
 
-			//console.log('clicked', token);
+			//console.log('clicked', token); 
 
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion2 = true;
@@ -3088,7 +3088,6 @@ var ProjectView = function (_View) {
 		_classCallCheck(this, ProjectView);
 
 		//this.exampleChanged = false;
-
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProjectView).call(this, className, models));
 
 		_this.on('example-changed', function () {
@@ -3437,7 +3436,6 @@ var SettingsView = function (_View) {
 		_classCallCheck(this, SettingsView);
 
 		//this.$elements.filter('input').on('change', (e) => this.selectChanged($(e.currentTarget), e));
-
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SettingsView).call(this, className, models, settings));
 
 		_this.settings.on('change', function (data) {
@@ -3755,8 +3753,7 @@ var TabView = function (_View) {
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs
-
+		// open/close tabs 
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(TabView).call(this, 'tab'));
 
 		$('#flexit').on('click', function () {
@@ -4025,7 +4022,7 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '__allErrors',
 		value: function __allErrors(errors) {
-			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout);
+			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
 			if (errors.length) {
 				$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
 			} else {
@@ -4852,6 +4849,7 @@ var parser = {
 			}
 
 			//}
+
 
 			buf.enq(token);
 			token = iterator.stepForward();

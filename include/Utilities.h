@@ -337,12 +337,8 @@ static inline float analogRead(BelaContext *context, int frame, int channel) {
 // Sets a given analog output channel to a value for the current frame and, if persistent outputs are
 // enabled, for all subsequent frames
 static inline void analogWrite(BelaContext *context, int frame, int channel, float value) {
-	if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
-		for(unsigned int f = frame; f < context->analogFrames; f++)
-			context->analogOut[frame * context->analogOutChannels + channel] = value;
-	}
-	else
-		context->analogOut[frame * context->analogOutChannels + channel] = value;
+	for(unsigned int f = frame; f < context->analogFrames; f++)
+		context->analogOut[f * context->analogOutChannels + channel] = value;
 }
 
 // analogWriteOnce()

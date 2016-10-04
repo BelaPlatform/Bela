@@ -113,7 +113,7 @@ then
 	 exit 1
 fi
 
-[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME=`basename "$HOST_SOURCE_PATH"` 
+[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$HOST_SOURCE_PATH" && pwd))"
 
 BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
 BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
@@ -133,32 +133,35 @@ ssh $BBB_ADDRESS make QUIET=true --no-print-directory -C $BBB_BELA_HOME stop
 
 # This file is used to keep track of when the last upload was made,
 # so to check for modifications if WATCH is active
-reference_time_file="$SCRIPTDIR/../tmp/.time$BBB_PROJECT_NAME"
+TMP_DIR="$SCRIPTDIR/../tmp"
+reference_time_file="$TMP_DIR/.time$BBB_PROJECT_NAME"
+
 uploadBuildRun(){
-	[ $WATCH -eq 1 ] && touch $reference_time_file
+	[ $WATCH -eq 1 ] && mkdir -p $TMP_DIR && touch $reference_time_file
 	# Copy new source files to the board
-	echo "Copying new source files to BeagleBone..."
-	if [ -z "`which rsync`" ];
+	printf "Copying new source files to BeagleBone..."
+	if [ "$USE_RSYNC" -eq 0 ] || [ -z "`which rsync 2> /dev/null`" ];
 	then
+		echo "using scp..."
 		#if rsync is not available, brutally clean the destination folder
-		ssh bbb "make --no-print-directory -C $BBB_BELA_HOME sourceclean PROJECT=$BBB_PROJECT_NAME";
+		ssh $BBB_ADDRESS "make --no-print-directory -C $BBB_BELA_HOME projectclean PROJECT=$BBB_PROJECT_NAME";
 		#and copy over all the files again
-		scp -r $HOST_SOURCE_PATH "$BBB_NETWORK_TARGET_FOLDER"
+		scp -r $HOST_SOURCE_PATH/* "$BBB_NETWORK_TARGET_FOLDER"
 	else
 		#rsync 
 		# --delete makes sure it removes files that are not in the origin folder
 		# -c evaluates changes using md5 checksum instead of file date, so we don't care about time skews 
 		# --no-t makes sure file timestamps are not preserved, so that the Makefile will not think that targets are up to date when replacing files on the BBB
 		#  with older files from the host. This will solve 99% of the issues with Makefile thinking a target is up to date when it is not.
+		echo "using rsync..."
 		rsync -ac --out-format="   %n" --no-t --delete-after --exclude=$BBB_PROJECT_NAME --exclude=build $HOST_SOURCE_PATH"/" "$BBB_NETWORK_TARGET_FOLDER/" #trailing slashes used here make sure rsync does not create another folder inside the target folder
 	fi
 
 	if [ $? -ne 0 ]
 	then
-		echo "Error while copying files"
+		printf "\nError while copying files\n"
 		exit
 	fi
-
 	# Make new Bela executable and run
 	MAKE_COMMAND="make --no-print-directory QUIET=true -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
 	if [ $RUN_PROJECT -eq 0 ]

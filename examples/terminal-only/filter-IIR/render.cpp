@@ -156,8 +156,8 @@ bool initialise_aux_tasks()
 		return false;
 
 	rt_printf("Cut-off frequency: %f\n", gCutFreq);
-	rt_printf("Press 'a' <enter> to trigger sample, 's' to stop\n");
-	rt_printf("      'z' <enter> to low down cut-off freq of 100 Hz, 'x' to raise it up\n");
+	rt_printf("Press 'a' <enter> to start playing the sample, 's' to stop\n");
+	rt_printf("      'z' <enter> to low down cut-off freq by 100 Hz, 'x' to raise it\n");
 	rt_printf("Press 'q' <enter> or ctrl-C to quit\n");
 
 	return true;
@@ -252,5 +252,24 @@ void cleanup(BelaContext *context, void *userData)
 Infinite Impulse Response Filter
 ------------------------------
 
-This is an example of a infinite impulse response filter implementation.
+This scripts needs to be run in a terminal because it requires you to interact
+with Bela using your computer's keyboard.
+Note that it CAN NOT be run from within the IDE or the IDE's console.
+
+See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
+
+In this project an audio recording processesd through an IIR filter.
+
+To control the playback of the audio sample, use your computer keyboard, by pressing:
+
+'z' \<enter\> to low down cut-off freq 100 Hz
+
+'x' \<enter\> to raise it by 100Hz
+
+'a' \<enter\> to start playing the sample
+
+'s' \<enter\> to stop
+
+'q' \<enter\> or ctrl-C to quit
+
 */

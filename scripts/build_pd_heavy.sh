@@ -137,7 +137,7 @@ done
 
 [ "$NO_UPLOAD" -eq 0 ] && [ -z "$pdpath" ] && { echo "Error: a path to the source folder should be provided"; exit 1; }
 
-[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME=`basename "$pdpath"`
+[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$pdpath" && pwd))"
 
 if [ -z "$release" ]
 then 
@@ -217,10 +217,20 @@ uploadBuildRun(){
     
     touch $reference_time_file
     # Transfer the files 
-    rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
-        { [ $NO_UPLOAD -eq 1 ] || scp "$projectpath"/HvContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
-	{ echo "ERROR: while synchronizing files with the BBB. Is the board connected?"; exit 1; }
-
+	if [ "$RSYNC_AVAILABLE" -eq 1 ]
+	then
+		echo rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER"
+		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
+        { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HvContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
+		{ echo "ERROR: while synchronizing files with the BBB. Is the board connected?"; exit 1; }
+	else
+		echo "using scp..."
+		echo "WARNING: it is HEAVILY recommended that you install rsync on your system when building Heavy projects, in order to make compiling much faster"
+		echo "Cleaning the destination folder..."
+		ssh $BBB_ADDRESS "rm -rf \"$BBB_PROJECT_FOLDER\"; mkdir -p \"$BBB_PROJECT_FOLDER\""
+		echo "Copying the project files"
+		scp -r "$projectpath"/* "$BBB_NETWORK_TARGET_FOLDER"
+	fi
     # TODO: rsync should upload a list of modified files, so that the corresponding objects can be deleted
     # TODO: this should be run only when Heavy_bela.h changes. Otherwise render is recompiled every time for no good reason
     #ssh $BBB_ADDRESS "rm -rf ${BBB_PROJECT_FOLDER}/build/render.*" 

@@ -10,6 +10,7 @@
 [ -z "$COMMAND_ARGS" ] && COMMAND_ARGS=
 [ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
 [ -z "$RUN_MODE" ] && RUN_MODE=foreground
+[ -z "$USE_RSYNC" ] && USE_RSYNC=1
 
 THIS_SCRIPT=`basename "$0"`
 #trap "echo; exit 0;" 2 9
@@ -52,7 +53,7 @@ check_project_exists(){
 check_project_exists_prompt(){
 	check_project_exists $1 &&\
 	{
-		printf "Project \`$1' already exists on the board, do you want to overwrite it?"
+		printf "Project \`$1' already exists on the board, do you want to overwrite it? "
 		interactive 1
 		[  $_RET1 -eq 0 ] && {
 			echo "Aborting..."
