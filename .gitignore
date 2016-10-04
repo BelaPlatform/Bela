@@ -1,9 +1,10 @@
 **/.DS_Store
-ide/dev/node_modules
+dev/node_modules
 projects/
 tmp/
 *.swp
 *.swo
+*.orig
 Release/
 Debug/
 Documentation/

@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# This script copies the core BeagleRT files to the BeagleBone Black
+# This script copies the core Bela files to the BeagleBone Black
 # in preparation for building projects. It will remove any existing
-# BeagleRT directory before copying the files over
+# Bela directory before copying the files over
 
 [ -z "$BBB_ADDRESS" ] && BBB_ADDRESS="root@192.168.7.2"
 [ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="~/Bela"
