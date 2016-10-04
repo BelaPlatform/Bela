@@ -2,7 +2,7 @@
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
-release=1
+release=r2016.08
 NO_UPLOAD=0
 WATCH=0
 FORCE=0
@@ -197,8 +197,8 @@ uploadBuildRun(){
 			exit 1; }
     done
 
-    # Apply any Bela-specific patches here 
-    cp "$HVRESOURCES_DIR/HvUtils.h" $projectpath/ || exit 1;
+    # Apply any Bela-specific patches here
+    # ... none at the moment
 
     BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
     BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
