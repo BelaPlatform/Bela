@@ -165,9 +165,9 @@
 									<tr>
 										<td>Analog Channels:</td>
 										<td><select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
-										<option value="2">2</option>
-										<option value="4">4</option>
-										<option value="8">8</option>
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
 								   		</select></td>
 								   	</tr>
 
@@ -183,10 +183,10 @@
 								    <tr>
 								    	<td>Digital Channels:</td>
 								    	<td><select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
-										<option value="2">2</option>
-										<option value="4">4</option>
-										<option value="8">8</option>
-										<option value="16">16</option>
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
+											<option value="16">16</option>
 								   		</select></td>
 								   	</tr>
 
@@ -237,16 +237,84 @@
 									</tr>
 
 									<tr>
-										<td>Full Command Line String:</td>
-										<td><input id="C_L_ARGS" type="text" placeholder="C_L_ARGS" readonly></input></td>
-									</tr>
-									
-									<tr>
 										<td>Make Parameters:</td>
 										<td><input id="make-params" class="settingsManager" data-func="setCLArg" type="text" data-key="make"></input></td>
 									</tr>
 
 								</table>
+								
+								<h1 class="tabTitle">Capelet Settings</h1>
+								
+								<table class="tabTable">
+									<tr>
+										<td>Multiplexer Capelet:</td>
+										<td><select id="multiplexer-capelet" class="settingsManager small" data-func="setCLArg" data-key="-X">
+											<option value="0">Not Used</option>
+											<option value="2">16 Channels</option>
+											<option value="4">32 Channels</option>
+											<option value="8">64 Channels</option>
+								   		</select></td>
+								   	</tr>
+								   	
+								   	<tr>
+										<td>Audio Expander Capelet:</td>
+										<td><select id="audio-expander-capelet" class="settingsManager small" data-func="useAudioExpander" data-key="audioExpander">
+											<option value="0">Not Used</option>
+											<option value="1">Active</option>
+								   		</select></td>
+								   	</tr>
+								   	
+								</table>
+								
+								<table id="audioExpanderTable">
+
+									<tr>
+										<td>Channel</td>
+										<td>Input</td>
+										<td>Output</td>
+									</tr>
+									<tr>
+										<td>0</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>1</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>2</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>3</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>4</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>5</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>6</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>7</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="output" value="0" ></td>
+									</tr>
+								
+								<table>
 
 								<h1 class="tabTitle">IDE Settings</h1>
 								<button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">restore defaults</button></br>
@@ -256,7 +324,6 @@
 									<tr>
 										<td>Autocomplete:</td>
 										<td><input type="checkbox" id="liveAutocompletion" class="settingsManager" data-func="setIDESetting" data-key="liveAutocompletion" value="1" ></td>
-
 									</tr>
 
 									<tr>

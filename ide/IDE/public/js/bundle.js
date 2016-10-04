@@ -710,7 +710,7 @@ socket.on('status', function (status, project) {
 });
 
 socket.on('project-settings-data', function (project, settings) {
-	//console.log('project-settings-data', settings);
+	// console.log('project-settings-data', settings);
 	if (project === models.project.getKey('currentProject')) models.project.setData(settings);
 });
 socket.on('IDE-settings-data', function (settings) {
@@ -3617,7 +3617,24 @@ var SettingsView = function (_View) {
 			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--') _this.emit('run-on-boot', $('#runOnBoot').val());
 		});
 
-		_this.inputJustChanged = false;
+		$('.audioExpanderCheck').on('change', function (e) {
+			var inputs = '',
+			    outputs = '';
+			$('.audioExpanderCheck').each(function () {
+				var $this = $(this);
+				if ($this.is(':checked')) {
+					if ($this.data('func') === 'input') {
+						inputs += $this.data('channel') + ',';
+					} else {
+						outputs += $this.data('channel') + ',';
+					}
+				}
+			});
+			if (inputs.length) inputs = inputs.slice(0, -1);
+			if (outputs.length) outputs = outputs.slice(0, -1);
+
+			_this.emit('project-settings', { func: 'setCLArgs', args: [{ key: '-Y', value: inputs }, { key: '-Z', value: outputs }] });
+		});
 
 		return _this;
 	}
@@ -3631,6 +3648,9 @@ var SettingsView = function (_View) {
 			if (func && this[func]) {
 				this[func](func, key, $element.val());
 			}
+			if (key === '-C') {
+				this.$elements.filterByData('key', key).not($element).val($element.val());
+			}
 		}
 	}, {
 		key: 'buttonClicked',
@@ -3643,19 +3663,11 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'inputChanged',
 		value: function inputChanged($element, e) {
-			var _this2 = this;
-
 			var data = $element.data();
 			var func = data.func;
 			var key = data.key;
 			var type = $element.prop('type');
-
-			if (inputChangedTimeout) clearTimeout(inputChangedTimeout);
-			inputChangedTimeout = setTimeout(function () {
-				return _this2.inputJustChanged = false;
-			}, 100);
-			this.inputJustChanged = true;
-
+			console.log(key);
 			if (type === 'number' || type === 'text') {
 				if (func && this[func]) {
 					this[func](func, key, $element.val());
@@ -3674,7 +3686,7 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'restoreDefaultCLArgs',
 		value: function restoreDefaultCLArgs(func) {
-			var _this3 = this;
+			var _this2 = this;
 
 			// build the popup content
 			popup.title('Restoring default project settings');
@@ -3686,7 +3698,7 @@ var SettingsView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this3.emit('project-settings', { func: func });
+				_this2.emit('project-settings', { func: func });
 				popup.hide();
 			});
 
@@ -3699,13 +3711,12 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'setIDESetting',
 		value: function setIDESetting(func, key, value) {
-			console.log(func, key, value);
 			this.emit('IDE-settings', { func: func, key: key, value: value });
 		}
 	}, {
 		key: 'restoreDefaultIDESettings',
 		value: function restoreDefaultIDESettings(func) {
-			var _this4 = this;
+			var _this3 = this;
 
 			// build the popup content
 			popup.title('Restoring default IDE settings');
@@ -3717,7 +3728,7 @@ var SettingsView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('IDE-settings', { func: func });
+				_this3.emit('IDE-settings', { func: func });
 				popup.hide();
 			});
 
@@ -3730,7 +3741,7 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'shutdownBBB',
 		value: function shutdownBBB() {
-			var _this5 = this;
+			var _this4 = this;
 
 			// build the popup content
 			popup.title('Shutting down Bela');
@@ -3742,7 +3753,7 @@ var SettingsView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this5.emit('halt');
+				_this4.emit('halt');
 				popup.hide();
 			});
 
@@ -3774,7 +3785,7 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'updateBela',
 		value: function updateBela() {
-			var _this6 = this;
+			var _this5 = this;
 
 			// build the popup content
 			popup.title('Updating Bela');
@@ -3805,18 +3816,18 @@ var SettingsView = function (_View) {
 
 				if (file) {
 
-					_this6.emit('warning', 'Beginning the update - this may take several minutes');
-					_this6.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
-					_this6.emit('warning', 'Do not use the IDE during the update process!');
+					_this5.emit('warning', 'Beginning the update - this may take several minutes');
+					_this5.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
+					_this5.emit('warning', 'Do not use the IDE during the update process!');
 
 					var reader = new FileReader();
 					reader.onload = function (ev) {
-						return _this6.emit('upload-update', { name: file.name, file: ev.target.result });
+						return _this5.emit('upload-update', { name: file.name, file: ev.target.result });
 					};
 					reader.readAsArrayBuffer(file);
 				} else {
 
-					_this6.emit('warning', 'not a valid update zip archive');
+					_this5.emit('warning', 'not a valid update zip archive');
 				}
 
 				popup.hide();
@@ -3831,37 +3842,28 @@ var SettingsView = function (_View) {
 		// model events
 
 	}, {
-		key: '_CLArgs',
-		value: function _CLArgs(data) {
-			var args = '';
+		key: '__CLArgs',
+		value: function __CLArgs(data) {
 
-			try {
-				for (var key in data) {
+			for (var key in data) {
 
-					var el = this.$elements.filterByData('key', key);
-
-					// set the input value when neccesary
-					if (el[0].type === 'checkbox') {
-						el.prop('checked', data[key] == 1);
-					} else if (key === '-C' || el.val() !== data[key] && !this.inputJustChanged) {
-						//console.log(el.val(), data[key]);
-						el.val(data[key]);
-					}
-
-					// fill in the full string
-					if (key[0] === '-' && key[1] === '-') {
-						args += key + '=' + data[key] + ' ';
-					} else if (key === 'user') {
-						args += data[key];
-					} else if (key !== 'make') {
-						args += key + data[key] + ' ';
-					}
+				if (key === '-Y' || key === '-Z') {
+					this.setAudioExpander(key, data[key]);
+					continue;
+				} else if (key === 'audioExpander') {
+					if (data[key] == 1) $('#audioExpanderTable').css('display', 'table');else $('#audioExpanderTable').css('display', 'none');
 				}
-			} catch (e) {
-				this.emit('error', 'Error parsing project settings. Try restoring defaults.');
-			}
 
-			$('#C_L_ARGS').val(args);
+				var el = this.$elements.filterByData('key', key);
+
+				// set the input value
+				if (el[0].type === 'checkbox') {
+					el.prop('checked', data[key] == 1);
+				} else {
+					//console.log(el.val(), data[key]);
+					el.val(data[key]);
+				}
+			}
 		}
 	}, {
 		key: '_IDESettings',
@@ -3894,6 +3896,63 @@ var SettingsView = function (_View) {
 					$('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
 				}
 			}
+		}
+	}, {
+		key: 'useAudioExpander',
+		value: function useAudioExpander(func, key, val) {
+
+			if (val == 1) {
+				$('#audioExpanderTable').css('display', 'table');
+				this.setCLArg('setCLArg', key, val);
+			} else {
+				$('#audioExpanderTable').css('display', 'none');
+				// clear channel picker
+				$('.audioExpanderCheck').prop('checked', false);
+				this.emit('project-settings', { func: 'setCLArgs', args: [{ key: '-Y', value: '' }, { key: '-Z', value: '' }, { key: key, value: val }] });
+			}
+		}
+	}, {
+		key: 'setAudioExpander',
+		value: function setAudioExpander(key, val) {
+
+			if (!val.length) return;
+
+			var channels = val.split(',');
+
+			if (!channels.length) return;
+
+			$('.audioExpanderCheck').each(function () {
+				var $this = $(this);
+				if ($this.data('func') === 'input' && key === '-Y' || $this.data('func') === 'output' && key === '-Z') {
+					var checked = false;
+					var _iteratorNormalCompletion = true;
+					var _didIteratorError = false;
+					var _iteratorError = undefined;
+
+					try {
+						for (var _iterator = channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+							var channel = _step.value;
+
+							if (channel == $this.data('channel')) checked = true;
+						}
+					} catch (err) {
+						_didIteratorError = true;
+						_iteratorError = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion && _iterator.return) {
+								_iterator.return();
+							}
+						} finally {
+							if (_didIteratorError) {
+								throw _iteratorError;
+							}
+						}
+					}
+
+					$this.prop('checked', checked);
+				}
+			});
 		}
 	}]);
 

@@ -1108,7 +1108,7 @@ WRITE_LOOP_DONE:
      MOV r2, FLAG_MASK_MUX_CONFIG
      AND r2, reg_flags, r2             
      QBEQ MUX_CHANNEL_SAVE_DONE, r2, 0
-     AND r2, reg_pru1_mux_pins, 0x03
+     AND r2, reg_pru1_mux_pins, 0x07
      SBBO r2, reg_comm_addr, COMM_MUX_END_CHANNEL, 4
 MUX_CHANNEL_SAVE_DONE:	
 	
@@ -1160,6 +1160,15 @@ CLEANUP:
      CLR r2, r2, 1
      SBBO r2, r3, 0, 4      
 SPI_CLEANUP_DONE:
+     // Turn the LED off, if enabled
+     LBBO r3, reg_comm_addr, COMM_LED_ADDRESS, 4
+     QBEQ CLEANUP_DONE, r3, 0		 
+     LBBO r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
+     MOV r1, GPIO_CLEARDATAOUT
+     ADD r3, r3, r1          // Address for GPIO clear register
+     SBBO r2, r3, 0, 4       // Clear GPIO pin	
+
+CLEANUP_DONE:
      // Signal the ARM that we have finished 
      MOV R31.b0, PRU0_ARM_INTERRUPT + 16
      HALT

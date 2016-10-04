@@ -140,10 +140,11 @@ function socketEvents(socket){
 			console.log('bad project-settings', data);
 			return;
 		}
-		
+
 		co(ProjectManager, data.func, data)
 			.then((result) => {
-				allSockets.emit('project-settings-data', data.currentProject, result);
+				if (data.func === 'setCLArg' || data.func === 'setCLArgs') socket.broadcast.emit('project-settings-data', data.currentProject, result);
+				else allSockets.emit('project-settings-data', data.currentProject, result);
 			})
 			.catch((error) => {
 				console.log(error, error.stack.split('\n'), error.toString());

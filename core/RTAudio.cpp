@@ -208,6 +208,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.analogOutChannels = settings->numAnalogOutChannels;
 		unsigned int numAnalogChannelsForSampleRate = settings->numAnalogInChannels;
 		gContext.analogSampleRate = gContext.audioSampleRate * 4.0 / (float)numAnalogChannelsForSampleRate;
+		
+		gContext.audioExpanderEnabled = (settings->audioExpanderInputs & 0xFFFF) |
+										((settings->audioExpanderOutputs & 0xFFFF) << 16);
 	}
 	else {
 		gContext.audioFrames = settings->periodSize;
@@ -216,6 +219,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.analogInChannels = 0;
 		gContext.analogOutChannels = 0;
 		gContext.analogSampleRate = 0;
+		gContext.audioExpanderEnabled = 0;
 	}
 
 	if(gContext.analogInChannels != gContext.analogOutChannels){
@@ -259,7 +263,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gAudioCodec = new I2c_Codec();
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
-	if(gPRU->prepareGPIO(1, 1)) {
+	if(gPRU->prepareGPIO(1, settings->enableLED)) {
 		cout << "Error: unable to prepare GPIO for PRU audio\n";
 		return 1;
 	}

@@ -135,6 +135,10 @@ typedef struct {
 	float headphoneLevel;
 	/// How many channels to use on the multiplexer capelet, if enabled
 	int numMuxChannels;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderInputs;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderOutputs;
 
 	/// Which PRU (0 or 1) the code should run on
 	int pruNumber; 
@@ -142,6 +146,8 @@ typedef struct {
 	char pruFilename[MAX_PRU_FILENAME_LENGTH];
 	/// Whether to use verbose logging
 	int verbose;
+	/// Whether to use the blinking LED to indicate Bela is running
+	int enableLED;
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user
@@ -326,6 +332,31 @@ typedef struct {
 	/// sample rates (e.g. half the number of analog frames will have elapsed if the analog sample
 	/// rate is 22050).
 	const uint64_t audioFramesElapsed;
+	
+	/// \brief Number of multiplexer channels for each analog input.
+	///
+	/// This will be 2, 4 or 8 if the multiplexer capelet is enabled, otherwise it will be 1.
+	/// 2, 4 and 8 correspond to 16, 32 and 64 analog inputs, respectively.
+	const uint32_t multiplexerChannels;
+	
+	/// \brief Multiplexer channel corresponding to the first analog frame.
+	///
+	/// This indicates the multiplexer setting corresponding to the first analog frame in the
+	/// buffer.
+	const uint32_t multiplexerStartingChannel;
+	
+	/// \brief Buffer which holds multiplexed analog inputs, when multiplexer capelet is enabled.
+	///
+	/// Because the analog in buffer size may be smaller than a complete cycle of the multiplexer 
+	/// capelet, this buffer will always be big enough to hold at least one complete cycle of all
+	/// channels. It will be null if the multiplexer capelet is not enabled.
+	const float * const multiplexerAnalogIn;	
+	
+	/// \brief Flags for whether audio expander is enabled on given analog channels.
+	///
+	/// Bits 0-15, when set, indicate audio expander enabled on the analog inputs. Bits 16-31
+	/// indicate audio expander enabled on the analog outputs.
+	const uint32_t audioExpanderEnabled;
 
 	/// \brief Other audio/sensor settings
 	///

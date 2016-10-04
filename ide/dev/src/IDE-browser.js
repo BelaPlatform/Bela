@@ -291,7 +291,7 @@ socket.on('status', (status, project) => {
 });
 
 socket.on('project-settings-data', (project, settings) => {
-	//console.log('project-settings-data', settings);
+	// console.log('project-settings-data', settings);
 	if (project === models.project.getKey('currentProject'))
 		models.project.setData(settings);
 });
