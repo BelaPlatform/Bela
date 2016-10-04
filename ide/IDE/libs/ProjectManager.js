@@ -63,7 +63,7 @@ module.exports = {
 			if (data.currentProject !== exampleTempProject) data.exampleName = '';
 			if (!data.gitData) data.gitData = {};
 			data.gitData.currentProject = data.currentProject;
-			data.gitData = yield _co(git, 'info', data.gitData);
+			data.gitData = yield _co(git, 'info', data.gitData).catch( e => data.error = e.toString() );
 		}
 		catch(e){
 			data.error = 'failed, could not open project '+data.currentProject;
