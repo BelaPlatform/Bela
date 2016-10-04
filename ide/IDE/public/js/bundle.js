@@ -2294,7 +2294,7 @@ var EditorView = function (_View) {
 					this.emit('open-notification', {
 						func: 'editor',
 						timestamp: timestamp,
-						text: 'Rendering pd patch'
+						text: 'This is a preview only. GUI objects will not be updated and you cannot edit the patch (yet).'
 					});
 
 					// render pd patch
@@ -2315,7 +2315,7 @@ var EditorView = function (_View) {
 					} catch (e) {
 						this.emit('close-notification', {
 							timestamp: timestamp,
-							text: 'failed!'
+							text: 'Rendering pd patch failed!'
 						});
 						throw e;
 					}

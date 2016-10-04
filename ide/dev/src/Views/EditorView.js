@@ -164,7 +164,7 @@ class EditorView extends View {
 				this.emit('open-notification', {
 					func: 'editor',
 					timestamp,
-					text: 'Rendering pd patch'
+					text: 'This is a preview only. GUI objects will not be updated and you cannot edit the patch (yet).'
 				});
 		
 				// render pd patch
@@ -187,7 +187,7 @@ class EditorView extends View {
 				catch(e){
 					this.emit('close-notification', {
 						timestamp,
-						text: 'failed!'
+						text: 'Rendering pd patch failed!'
 					});
 					throw e;
 				}
