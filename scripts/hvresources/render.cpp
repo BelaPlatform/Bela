@@ -300,8 +300,8 @@ bool setup(BelaContext *context, void *userData)	{
 	// Set heavy send hook
 	hv_setSendHook(gHeavyContext, sendHook);
 
-	midi.readFrom("/dev/midi1");
-	midi.writeTo("/dev/midi1");
+	midi.readFrom("hw:1,0,0");
+	midi.writeTo("hw:1,0,0");
 	midi.enableParser(true);
 
 	if(gScopeChannelsInUse > 0){

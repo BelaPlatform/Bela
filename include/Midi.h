@@ -11,9 +11,9 @@
 #include <Bela.h>
 #include <vector>
 #include <alsa/asoundlib.h>
+#include <native/pipe.h>
 
 typedef unsigned char midi_byte_t;
-
 
 typedef enum midiMessageType{
 	kmmNoteOff = 0,
@@ -38,6 +38,32 @@ public:
 	virtual ~MidiChannelMessage();
 	MidiMessageType getType();
 	int getChannel();
+	const char* getTypeText(){
+		return getTypeText(getType());
+	}
+	static const char* getTypeText(MidiMessageType type){
+		switch (type) {
+		case kmmNoteOff: 
+			return "note off";
+		case kmmNoteOn:
+			return "note on";
+		case kmmPolyphonicKeyPressure:
+			return "polyphonic aftertouch";
+		case kmmControlChange:
+			return "control change";
+		case kmmProgramChange:
+			return "program change";
+		case kmmChannelPressure:
+			return "channel aftertouch";
+		case kmmPitchBend:
+			return "pitch bend";
+		case kmmAny:
+			return "any";
+		case kmmNone:
+			return "none";
+		}
+	}
+
 	unsigned int getNumDataBytes(){
 		return midiMessageNumDataBytes[(unsigned int)_type];
 	}
@@ -62,7 +88,7 @@ public:
 		_statusByte = 0;
 	}
 	void prettyPrint(){
-		rt_printf("MessageType: %x,  ", this->getType());
+		rt_printf("type: %s,  ", this->getTypeText());
 		rt_printf("channel: %u, ", this->getChannel());
 		for(unsigned int n = 0; n < this->getNumDataBytes(); n++){
 			rt_printf("data%d: %d, ", n + 1, this->getDataByte(n));
@@ -261,11 +287,6 @@ public:
 		enableParser(callback != NULL); //this needs to be first, as it deletes the parser(if exists)
 		getParser()->setCallback(callback, arg);
 	}
-	/**
-	* Use Alsa raw file mode, or filesystem
-	* @param useAlsa use alsa raw files if true else filesystem
-	*/
-	void useAlsa(bool useAlsa);
 
 	/**
 	 * Open the specified input Midi port and start reading from it.
@@ -322,29 +343,34 @@ public:
 	 */
 	MidiParser* getMidiParser();
 	virtual ~Midi();
-	static void midiInputLoop();
-	static void midiOutputLoop();
-    static bool staticConstructed;
-	static void staticConstructor();
+
+	/**
+	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
+	 * Ports open with this method should be closed with destroyPorts()
+	 */
+	static void createAllPorts(std::vector<Midi*>& ports, bool useParser = false);
+
+	/**
+	 * Closes a vector of ports.
+	 */
+	static void destroyPorts(std::vector<Midi*>& ports);
 private:
 	int _getInput();
-	void readInputLoop();
-	void writeOutputLoop();
-	int outputPort;
-	int inputPort;
+	static void readInputLoop(void* obj) ;
+	static void writeOutputLoop(void* obj);
 	snd_rawmidi_t *alsaIn,*alsaOut;
-	bool useAlsaApi;
 	std::vector<midi_byte_t> inputBytes;
 	unsigned int inputBytesWritePointer;
 	unsigned int inputBytesReadPointer;
 	std::vector<midi_byte_t> outputBytes;
-	unsigned int outputBytesWritePointer;
-	unsigned int outputBytesReadPointer;
 	MidiParser* inputParser;
 	bool parserEnabled;
-	static std::vector<Midi*> objAddrs[2];
-	static AuxiliaryTask midiInputTask;
-	static AuxiliaryTask midiOutputTask;
+	AuxiliaryTask midiInputTask;
+	AuxiliaryTask midiOutputTask;
+	char* inId;
+	char* outId;
+	char* outPipeName;
+	RT_PIPE outPipe;
 };
 
 
