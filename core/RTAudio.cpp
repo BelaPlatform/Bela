@@ -334,14 +334,6 @@ void audioLoop(void *)
 	if(gRTAudioVerbose==1)
 		rt_printf("_________________Audio Thread!\n");
 
-	if(!gAmplifierShouldBeginMuted) {
-		// First unmute the amplifier
-		if(Bela_muteSpeakers(0)) {
-			if(gRTAudioVerbose)
-				rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
-		}
-	}
-
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
@@ -524,6 +516,14 @@ int Bela_startAudio()
 	if(gPRU->start(gPRUFilename)) {
 		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename);
 		return -1;
+	}
+
+	if(!gAmplifierShouldBeginMuted) {
+		// First unmute the amplifier
+		if(Bela_muteSpeakers(0)) {
+			if(gRTAudioVerbose)
+				rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
+		}
 	}
 
 	// ready to go
