@@ -422,6 +422,11 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 				xenomai_gpio = 0;
 				close(xenomai_gpio_fd);
 				xenomai_gpio_fd = -1;
+			} else {
+				// actually use the memory, to cause the page fault
+				// now and not later in the audio thread
+				xenomai_gpio[GPIO_SETDATAOUT] = TEST_PIN_MASK;
+				xenomai_gpio[GPIO_CLEARDATAOUT] = TEST_PIN_MASK;
 			}
 		}
 	}
