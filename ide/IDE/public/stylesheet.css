@@ -149,6 +149,9 @@ p {
 #beaglert-consoleWrapper span{
 	white-space: pre;
 }
+#beaglert-consoleWrapper>div{
+	overflow-x: auto;
+}
 /*.beaglert-console-log-in::before{
 	content: '>';
 	color: inherit;
