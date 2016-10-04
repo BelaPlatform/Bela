@@ -239,6 +239,7 @@ function CPU(data){
 					}
 				}
 			}
+			//console.log(xOff);
 		}
 	};
 	
@@ -256,12 +257,14 @@ function CPU(data){
 				ctx.strokeStyle = channelConfig[i].color;
 	
 				ctx.beginPath();
-				ctx.moveTo(0, frame[i*length]);	
+				ctx.moveTo(0, frame[i * length] + xOff*(frame[i * length + 1] - frame[i * length]));
 				
-				for (var j=1; j<length; j++){
+				for (var j=1; (j-xOff)<(length); j++){
 					ctx.lineTo(j-xOff, frame[j+i*length]);
 				}
-	
+				//ctx.lineTo(length, frame[length*(i+1)-1]);
+				//if (!i) console.log(length, j-xOff-1);
+
 				ctx.stroke();
 		
 			}
