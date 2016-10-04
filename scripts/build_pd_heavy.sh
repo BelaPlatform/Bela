@@ -165,6 +165,9 @@ mkdir -p "$projectpath"
 
 reference_time_file="$projectpath"/
 
+#Check if rsync is available
+check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
+
 uploadBuildRun(){
     if [ $NO_UPLOAD -eq 0 ]; then
         # remove old static files to avoid obsolete errors

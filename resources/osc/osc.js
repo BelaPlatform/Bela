@@ -2,12 +2,12 @@ var dgram = require('dgram');
 var osc = require('osc-min');
 
 // port numbers
-var OSC_RECIEVE = 7563;
+var OSC_RECEIVE = 7563;
 var OSC_SEND = 7562;
 
 // socket to send and receive OSC messages from bela
 var socket = dgram.createSocket('udp4');
-socket.bind(OSC_RECIEVE, '127.0.0.1');
+socket.bind(OSC_RECEIVE, '127.0.0.1');
 		
 socket.on('message', (message, info) => {
 

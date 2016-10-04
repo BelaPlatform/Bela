@@ -27,7 +27,7 @@ void usage(const char * processName)
 
 	Bela_usage();
 
-	cerr << "   --help [-h]:                Print this menu\n";
+	cerr << "   --help [-h]:                        Print this menu\n";
 }
 
 int main(int argc, char *argv[])

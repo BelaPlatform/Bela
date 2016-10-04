@@ -113,7 +113,7 @@ static inline void audioWrite(BelaContext *context, int frame, int channel, floa
  * \param frame Which frame (i.e. what time) to read the analog input. Valid values range
  * from 0 to (context->analogFrames - 1).
  * \param channel Which analog input to read. Valid values are between 0 and
- * (context->analogChannels - 1), typically 0 to 7 by default.
+ * (context->analogInChannels - 1), typically 0 to 7 by default.
  * \return Value of the analog input, range 0 to 1.
  */
 static inline float analogRead(BelaContext *context, int frame, int channel);
@@ -131,7 +131,7 @@ static inline float analogRead(BelaContext *context, int frame, int channel);
  * \param frame Which frame (i.e. what time) to write the analog output. Valid values range
  * from 0 to (context->analogFrames - 1).
  * \param channel Which analog output to write. Valid values are between 0 and
- * (context->analogChannels - 1), typically 0 to 7 by default.
+ * (context->analogOutChannels - 1), typically 0 to 7 by default.
  * \param value Value to write to the output, range 0 to 1.
  */
 static inline void analogWrite(BelaContext *context, int frame, int channel, float value);
@@ -152,7 +152,7 @@ static inline void analogWrite(BelaContext *context, int frame, int channel, flo
  * \param frame Which frame (i.e. what time) to write the analog output. Valid values range
  * from 0 to (context->analogFrames - 1).
  * \param channel Which analog output to write. Valid values are between 0 and
- * (context->analogChannels - 1), typically 0 to 7 by default.
+ * (context->analogOutChannels - 1), typically 0 to 7 by default.
  * \param value Value to write to the output, range 0 to 1.
  */
 static inline void analogWriteOnce(BelaContext *context, int frame, int channel, float value);
@@ -246,6 +246,54 @@ static inline void pinMode(BelaContext *context, int frame, int channel, int mod
  * \param mode Direction of the pin (\c INPUT or \c OUTPUT).
  */
 static inline void pinModeOnce(BelaContext *context, int frame, int channel, int mode);
+
+/*
+ * \brief Returns the value of the given multiplexer channel for the given analog input. 
+ *
+ * This function reads an input from the Multiplexer Capelet hardware, which needs to be
+ * attached and enabled by selecting 16, 32 or 64 analog input channels in the command line
+ * arguments. With the Multiplexer Capelet, each analog input can be connected to one of 8
+ * multiplexer channels. This function will return a particular multiplexer channel for a
+ * particular input, with the returned valued being the most recent sample taken from that pin.
+ *
+ * Depending on the block size, it may take longer than a single block to scan all multiplexer
+ * channels. For this reason, successive calls to multiplexerAnalogRead() may return the same
+ * sample. If you want precise timing control on when a multiplexer input was sampled, use
+ * multiplexerChannelForFrame() instead to determine which multiplexer channels were sampled
+ * in a particular block.
+ *
+ * \param context The I/O data structure which is passed by Bela to render().
+ * \param input The analog input to read, i.e. what would be passed as \c channel to analogRead().
+ * Valid values are 0 to (context->analogInChannels - 1).
+ * \param muxChannel Which multiplexer channel to read. Valid values are 0 to 
+ * (context->multiplexerChannels - 1).
+ * \return Value of the analog input from the Multiplexer Capelet.
+ */
+
+static inline float multiplexerAnalogRead(BelaContext *context, int input, int muxChannel);
+
+/*
+ * \brief Returns which multiplexer channel the given analog frame was taken from.
+ * 
+ * This function indicates what the multiplexer setting was for a given analog input frame.
+ * This can be used to work out which pin on the Multiplexer Capelet a given analog input sample 
+ * was taken from. For this function to have any meaning, the Multiplexer Capelet hardware must
+ * be attached and it should be enabled by selecting 16, 32 or 64 analog input channels in the
+ * command line arguments.
+ *
+ * Depending on the block size, it may take longer than a single block to scan all multiplexer
+ * channels. For this reason, each call to render() may contain only a subset of the available
+ * multiplexer channels. This function allows you timing precision by knowing at what frame each
+ * multiplexer reading was taken, but it does not guarantee that all channels can be read in 
+ * any given callback. If you need access to all the multiplexer inputs in every call to render(),
+ * use multiplexerAnalogRead() instead.
+ *
+ * \param context The I/O data structure which is passed by Bela to render().
+ * \param frame The analog frame (i.e. the time) whose multiplexer setting should be queried.
+ * \return Multiplexer channel setting at the given frame.
+ */
+
+static inline unsigned int multiplexerChannelForFrame(BelaContext *context, int frame);
 
 /** @} */
 
@@ -399,7 +447,21 @@ static inline void pinModeOnce(BelaContext *context, int frame, int channel, int
 		context->digital[frame] &= ~(1 << channel);
 }
 
+// multiplexerAnalogRead()
+//
+// Returns the value of the given multiplexer channel for the given analog input. 
+static inline float multiplexerAnalogRead(BelaContext *context, int input, int muxChannel) {
+	return context->multiplexerAnalogIn[muxChannel * context->analogInChannels + input];
+}
 
+// multiplexerChannelForFrame()
+//
+// Returns which multiplexer channel the given analog frame was taken from.
+static inline unsigned int multiplexerChannelForFrame(BelaContext *context, int frame) {
+	if(context->multiplexerChannels <= 1)
+		return 1;
+	return (context->multiplexerStartingChannel + frame) % context->multiplexerChannels;
+}
 
 // map()
 //

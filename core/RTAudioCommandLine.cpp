@@ -8,6 +8,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
+#include <sstream>
 #include <getopt.h>
 #include "../include/Bela.h"
 
@@ -15,11 +17,14 @@
 #define OPT_PGA_GAIN_LEFT 1001
 #define OPT_PGA_GAIN_RIGHT 1002
 #define OPT_PRU_NUMBER 1003
+#define OPT_DISABLE_LED 1004
 
 
 enum {
 	kAmplifierMutePin = 61	// P8-26 controls amplifier mute
 };
+
+bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSettings *settings);
 
 // Default command-line options for RTAudio
 struct option gDefaultLongOptions[] =
@@ -39,12 +44,16 @@ struct option gDefaultLongOptions[] =
 	{"receive-port", 1, NULL, 'R'},
 	{"transmit-port", 1, NULL, 'T'},
 	{"server-name", 1, NULL, 'S'},
+	{"mux-channels", 1, NULL, 'X'},
+	{"audio-expander-inputs", 1, NULL, 'Y'},
+	{"audio-expander-outputs", 1, NULL, 'Z'},
 	{"pru-file", 1, NULL, OPT_PRU_FILE},
 	{"pru-number", 1, NULL, OPT_PRU_NUMBER},
+	{"disable-led", 0, NULL, OPT_DISABLE_LED},
 	{NULL, 0, NULL, 0}
 };
 
-const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:";
+const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:X:Y:Z:";
 
 // This function sets the default settings for the BelaInitSettings structure
 void Bela_defaultSettings(BelaInitSettings *settings)
@@ -67,10 +76,13 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 		settings->pgaGain[n] = DEFAULT_PGA_GAIN;
 	settings->headphoneLevel = DEFAULT_HP_LEVEL;
 	settings->numMuxChannels = 0;
-
+	settings->audioExpanderInputs = 0;
+	settings->audioExpanderOutputs = 0;
+	
 	settings->verbose = 0;
-	settings->pruNumber = 0;
+	settings->pruNumber = 1;
 	settings->pruFilename[0] = '\0';
+	settings->enableLED = 1;
 
 	// These two deliberately have no command-line flags by default.
 	// A given program might prefer one mode or another, but it's unlikely
@@ -179,14 +191,6 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			settings->numAnalogOutChannels = numAnalogChannels;
 			if(numAnalogChannels >= 8) {
 				// TODO: a different number of channels for inputs and outputs is not yet supported
-
-				// Use multiplexer capelet to run larger numbers of channels
-				if(settings->numAnalogInChannels >= 64)
-					settings->numMuxChannels = 8;
-				else if(settings->numAnalogInChannels >= 32)
-					settings->numMuxChannels = 4;
-				else if(settings->numAnalogInChannels >= 16)
-					settings->numMuxChannels = 2;
 				settings->numAnalogInChannels = 8;
 				settings->numAnalogOutChannels = 8;
 			}
@@ -237,6 +241,17 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 				std::cerr << "Warning: server name is too long (>" << MAX_SERVERNAME_LENGTH << " characters)."
 						" Using default severName Instead ( " << settings->serverName << " ).\n";
 			break;
+		case 'X':
+			settings->numMuxChannels = atoi(optarg);
+			break;
+		case 'Y':
+			if(!parseAudioExpanderChannels(optarg, true, settings))
+				std::cerr << "Warning: invalid audio expander input channels '" << optarg << "'-- ignoring\n";
+			break;
+		case 'Z':
+			if(!parseAudioExpanderChannels(optarg, false, settings))
+				std::cerr << "Warning: invalid audio expander output channels '" << optarg << "'-- ignoring\n";
+			break;			
 		case OPT_PRU_FILE:
 			if(strlen(optarg) < MAX_PRU_FILENAME_LENGTH)
 				strcpy(settings->pruFilename, optarg);
@@ -252,6 +267,9 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		case OPT_PRU_NUMBER:
 			settings->pruNumber = atoi(optarg);
 			break;
+		case OPT_DISABLE_LED:
+			settings->enableLED = 0;
+			break;
 		case '?':
 		default:
 			return c;
@@ -263,22 +281,79 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 // Call from within your own usage function
 void Bela_usage()
 {
-	std::cerr << "   --period [-p] period:            Set the hardware period (buffer) size in analog samples\n";
-	std::cerr << "   --dac-level [-D] dBs:            Set the DAC output level (0dB max; -63.5dB min)\n";
-	std::cerr << "   --adc-level [-A] dBs:            Set the ADC input level (0dB max; -12dB min)\n";
-	std::cerr << "   --pga-gain-left dBs:             Set the Programmable Gain Amplifier for the left audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
-	std::cerr << "   --pga-gain-right dBs:            Set the Programmable Gain Amplifier for the right audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
-	std::cerr << "   --hp-level [-H] dBs:             Set the headphone output level (0dB max; -63.5dB min)\n";
-	std::cerr << "   --mute-speaker [-M] val:         Set whether to mute the speaker initially (default: no)\n";
-	std::cerr << "   --use-analog [-N] val:           Set whether to use ADC/DAC analog (default: yes)\n";
-	std::cerr << "   --use-digital [-G] val:          Set whether to use digital GPIO channels (default: yes)\n";
-	std::cerr << "   --analog-channels [-C] val:      Set the number of ADC/DAC channels (default: 8)\n";
-	std::cerr << "   --digital-channels [-B] val:     Set the number of GPIO channels (default: 16)\n";
-	std::cerr << "   --receive-port [-R] val:         Set the receive port (default: 9998)\n";
-	std::cerr << "   --transmit-port [-T] val:        Set the transmit port (default: 9999)\n";
-	std::cerr << "   --server-name [-S] val:          Set the destination server name (default: '127.0.0.1')\n";
-	std::cerr << "   --pru-file val:                  Set an optional external file to use for the PRU binary code\n";
-	std::cerr << "   --pru-number val:                Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
-	std::cerr << "   --verbose [-v]:                  Enable verbose logging information\n";
+	std::cerr << "   --period [-p] period:               Set the hardware period (buffer) size in audio samples\n";
+	std::cerr << "   --dac-level [-D] dBs:               Set the DAC output level (0dB max; -63.5dB min)\n";
+	std::cerr << "   --adc-level [-A] dBs:               Set the ADC input level (0dB max; -12dB min)\n";
+	std::cerr << "   --pga-gain-left dBs:                Set the Programmable Gain Amplifier for the left audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
+	std::cerr << "   --pga-gain-right dBs:               Set the Programmable Gain Amplifier for the right audio channel (0dBmin; 59.5dB max; default: 16dB)\n";
+	std::cerr << "   --hp-level [-H] dBs:                Set the headphone output level (0dB max; -63.5dB min)\n";
+	std::cerr << "   --mute-speaker [-M] val:            Set whether to mute the speaker initially (default: no)\n";
+	std::cerr << "   --use-analog [-N] val:              Set whether to use ADC/DAC analog (default: yes)\n";
+	std::cerr << "   --use-digital [-G] val:             Set whether to use digital GPIO channels (default: yes)\n";
+	std::cerr << "   --analog-channels [-C] val:         Set the number of ADC/DAC channels (default: 8)\n";
+	std::cerr << "   --digital-channels [-B] val:        Set the number of GPIO channels (default: 16)\n";
+	std::cerr << "   --receive-port [-R] val:            Set the receive port (default: 9998)\n";
+	std::cerr << "   --transmit-port [-T] val:           Set the transmit port (default: 9999)\n";
+	std::cerr << "   --server-name [-S] val:             Set the destination server name (default: '127.0.0.1')\n";
+	std::cerr << "   --mux-channels [-X] val:            Set the number of channels to use on the multiplexer capelet (default: not used)\n";
+	std::cerr << "   --audio-expander-inputs [-Y] vals:  Set the analog inputs to use with audio expander (comma-separated list)\n";
+	std::cerr << "   --audio-expander-outputs [-Z] vals: Set the analog outputs to use with audio expander (comma-separated list)\n";
+	std::cerr << "   --pru-file val:                     Set an optional external file to use for the PRU binary code\n";
+	std::cerr << "   --pru-number val:                   Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
+	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
+	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
+
+// ---- internal functions ----
+
+// Turn a string into a list of individual ints
+bool parseCommaSeparatedList(const char *in, std::vector<int>& tokens) {
+	std::string inputString(in);
+    std::stringstream ss(inputString);
+    std::string item;
+	char *p;
+	
+    while (std::getline(ss, item, ',')) {
+		// ignore empty tokens
+		if(!item.empty()) {
+			int value = strtol(item.c_str(), &p, 10);
+			if(!(*p))	// string is a valid number
+        		tokens.push_back(value);
+			else
+				return false;	// invalid token
+		}
+    }
+    
+	return true;
+}
+
+// Parse the argument for the audio expander channels to enable
+bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSettings *settings) {
+	std::vector<int> channels;
+	
+	if(!parseCommaSeparatedList(arg, channels))
+		return false;
+	
+	// Make sure that all channels are within range
+	// Regardless of how many analog channels we're actually using,
+	// the audio expander facility has slots for up to 16
+	for(int i = 0; i < channels.size(); i++)
+		if(channels[i] < 0 || channels[i] >= 16)
+			return false;
+
+	// Now update the audio expander data sructure 
+	if(inputChannel) {
+		// Update the audio expander inputs
+		for(int i = 0; i < channels.size(); i++)	
+			settings->audioExpanderInputs |= (1 << channels[i]);
+	}
+	else {
+		// Update the audio expander outputs
+		for(int i = 0; i < channels.size(); i++)
+			settings->audioExpanderOutputs |= (1 << channels[i]);
+	}
+	
+	return true;
+}
+
 
