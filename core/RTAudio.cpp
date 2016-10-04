@@ -334,41 +334,26 @@ void audioLoop(void *)
 	if(gRTAudioVerbose==1)
 		rt_printf("_________________Audio Thread!\n");
 
-	// PRU audio
-	assert(gAudioCodec != 0 && gPRU != 0);
-
-	if(gAudioCodec->startAudio(0)) {
-		rt_printf("Error: unable to start I2C audio codec\n");
-		gShouldStop = 1;
-	}
-	else {
-		if(gPRU->start(gPRUFilename)) {
-			rt_printf("Error: unable to start PRU from file %s\n", gPRUFilename);
-			gShouldStop = 1;
+	if(!gAmplifierShouldBeginMuted) {
+		// First unmute the amplifier
+		if(Bela_muteSpeakers(0)) {
+			if(gRTAudioVerbose)
+				rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
 		}
-		else {
-			// All systems go. Run the loop; it will end when gShouldStop is set to 1
+	}
 
-			if(!gAmplifierShouldBeginMuted) {
-				// First unmute the amplifier
-				if(Bela_muteSpeakers(0)) {
-					if(gRTAudioVerbose)
-						rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
-				}
-			}
+	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
-			gPRU->loop(&gRTAudioInterrupt, gUserData);
+	gPRU->loop(&gRTAudioInterrupt, gUserData);
 #else
-			gPRU->loop(0, gUserData);
+	gPRU->loop(0, gUserData);
 #endif
-			// Now clean up
-			// gPRU->waitForFinish();
-			gPRU->disable();
-			gAudioCodec->stopAudio();
-			gPRU->cleanupGPIO();
-		}
-	}
+	// Now clean up
+	// gPRU->waitForFinish();
+	gPRU->disable();
+	gAudioCodec->stopAudio();
+	gPRU->cleanupGPIO();
 
 	if(gRTAudioVerbose == 1)
 		rt_printf("audio thread ended\n");
@@ -511,7 +496,6 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 
 int Bela_startAudio()
 {
-	gShouldStop = 0;
 	// Create audio thread with high Xenomai priority
 	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
 		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
@@ -527,9 +511,27 @@ int Bela_startAudio()
 	}
 #endif
 
+	// make sure we have everything
+	assert(gAudioCodec != 0 && gPRU != 0);
+
+	// power up and initialize audio codec
+	if(gAudioCodec->startAudio(0)) {
+		fprintf(stderr, "Error: unable to start I2C audio codec\n");
+		return -1;
+	}
+
+	// initialize and run the PRU
+	if(gPRU->start(gPRUFilename)) {
+		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename);
+		return -1;
+	}
+
+	// ready to go
+	gShouldStop = 0;
+
 	// Start all RT threads
-	if(rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
-		  cout << "Error: unable to start Xenomai audio thread" << endl;
+	if(int ret = rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
+		  cout << "Error: unable to start Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}
 
