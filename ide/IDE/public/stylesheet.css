@@ -1289,9 +1289,8 @@ button.gitManager {
     	font-family: sofia;
     	font-size: 25px;
     	color: #82C889;
-    	display: inline;
-    	line-height: 70px;
-    	padding-bottom: 20px;
+    	line-height: 30px;
+		margin: 20px 0;
 	}
 	#popup p, #popup form {
 		font-family: sofia;
