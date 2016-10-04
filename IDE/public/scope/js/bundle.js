@@ -1384,11 +1384,11 @@ $('#scope').on('mousemove', function (e) {
 
 // CPU usage
 function CPU(data) {
-	var ide = data.syntaxCheckProcess + data.buildProcess + data.node + data.gdb;
+	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 	var bela = 0,
 	    rootCPU = 1;
 
-	if (data.bela != 0) {
+	if (data.bela != 0 && data.bela !== undefined) {
 
 		// extract the data from the output
 		var lines = data.bela.split('\n');
