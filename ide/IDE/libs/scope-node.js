@@ -17,10 +17,19 @@ var settings = {
 	upSampling		: {type: 'integer', value: 1},
 	downSampling	: {type: 'integer', value: 1},
 	FFTLength		: {type: 'integer', value: 1024},
-	holdOff			: {type: 'float', value: 20}
+	FFTXAxis		: {type: 'integer', value: 0},
+	FFTYAxis		: {type: 'integer', value: 0},
+	holdOff			: {type: 'float', value: 20},
+	numSliders		: {type: 'integer', value:0},
+	interpolation	: {type: 'integer', value:0}
 }
 
 var UDP_RECIEVE = 8677;
+
+var bufferReceived = true;
+var droppedcount = 0;
+
+var sliderArgs = [];
 
 var scope = {
 	
@@ -35,7 +44,8 @@ var scope = {
 		
 		// setup the OSC server
 		scopeOSC.init();
-		scopeOSC.on('scope-setup', (args) => this.scopeConnected(args) );
+		scopeOSC.on('scope-setup', args => this.scopeConnected(args) );
+		scopeOSC.on('scope-slider', args => this.scopeSlider(args) );
 		
 		// UDP socket to receive raw scope data from bela scope
 		var scopeUDP = dgram.createSocket('udp4');
@@ -44,16 +54,28 @@ var scope = {
 		// echo raw scope data over websocket to browser
 		scopeUDP.on('message', (buffer) => {
 			//console.log('raw scope buffer recieved, of length', buffer.length);
+			if (!bufferReceived){
+				//console.log('frame dropped');
+				droppedcount += 1;
+				return;
+			}
+			bufferReceived = false;
 			this.workerSocket.emit('buffer', buffer);
 		});
+		
+		setInterval( () => {
+			if(scopeConnected && settings.connected.value) this.webSocket.emit('dropped-count', droppedcount);
+			droppedcount = 0;
+		}, 1000);
 		
 	},
 	
 	scopeConnected(args){
 		
-		if (args[0].type === 'integer' && args[1].type === 'float'){
+		if (args[0].type === 'integer' && args[1].type === 'float' && args[2].type === 'integer'){
 			settings.numChannels = args[0];
 			settings.sampleRate = args[1];
+			settings.numSliders = args[2];
 		} else {
 			console.log('bad setup message args', args);
 			return;
@@ -61,6 +83,7 @@ var scope = {
 		
 		console.log('scope connected');
 		scopeConnected = true;
+		sliderArgs = [];
 		
 		this.webSocket.emit('settings', settings);
 		
@@ -68,11 +91,24 @@ var scope = {
 			
 	},
 	
+	scopeSlider(args){
+	
+		this.webSocket.emit('scope-slider', args);
+		sliderArgs.push(args);
+
+	},
+	
 	browserConnected(socket){
 		console.log('scope browser connected');
 		
 		// send the settings to the browser
 		socket.emit('settings', settings);
+		
+		if (sliderArgs.length){
+			for (let item of sliderArgs){
+				this.webSocket.emit('scope-slider', item);
+			}
+		}
 		
 		// tell the scope that the browser is connected
 		settings.connected.value = 1;
@@ -103,9 +139,12 @@ var scope = {
 			}
 		});
 		
+		socket.on('slider-value', (slider, value) => scopeOSC.sendSliderValue(slider, value) );
+		
 	},
 	
 	upSampling(){
+	console.log(settings.upSampling, settings.downSampling);
 		if (settings.downSampling.value > 1){
 			settings.downSampling.value -= 1;
 			this.webSocket.emit('settings', {downSampling: settings.downSampling});
@@ -119,6 +158,7 @@ var scope = {
 		}
 	},
 	downSampling(){
+	console.log(settings.upSampling, settings.downSampling);
 		if (settings.upSampling.value > 1){
 			settings.upSampling.value -= 1;
 			this.webSocket.emit('settings', {upSampling: settings.upSampling});
@@ -145,7 +185,12 @@ var scope = {
 	},
 	
 	workerConnected(socket){
-		socket.emit('hi');
+	
+		socket.emit('ready');
+		
+		socket.on('buffer-received', () => {
+			bufferReceived = true;
+		});
 	}
 	
 };

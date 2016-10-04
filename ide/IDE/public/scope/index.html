@@ -13,55 +13,251 @@
 				<button id="stopButton" style="display:none;">stop</button>
 				<button id="controlsButton">controls</button>
 				<button id="oneShot" style="display:none;">one-shot</button>
-				<a href="" download="scope" id="saveCanvas"><button>Save Image</button></a>
-				<a href="" download="scopeData.csv" id="saveCanvasData"><button>Export Data</button></a>
-				<span id="scopeMouseX" class="scopeMouse"></span>
-				<span id="scopeMouseY" class="scopeMouse"></span>
+				<span id="ide-cpu">ide:</span>
+				<span id="bela-cpu">bela:</span>
+				<span id="scopeMouseX">x:</span>
+				<span id="scopeMouseY">y:</span>
+				<span id="scopeStatus" class="scope-status-waiting">waiting</span>
 			</div>
+			<div id="inactive-overlay"></div>
 			<canvas id="scope"></canvas>
 			<canvas id="scopeBG"></canvas>
 			<div id="controlPanel" class="hidden scopeControls-parent channelView-parent">
 				<div id="mainColumn" class="cpColumn">
-					X-Axis (<span class="xAxisUnits">ms</span>/div): <span class="xUnit-display"></span><span class="xAxisUnits">ms</span></br></br>
-					Zoom: <button class="scopeControls" data-key="upSampling" id="zoomUp">in</button><button class="scopeControls" data-key="downSampling" id="zoomDown">out</button> <span class="zoom-display">100%</span></br></br>
-					Mode: <select class="scopeControls" data-key="plotMode">
-						<option value="0" selected>Time Domain</option>
-						<option value="1">Frequency Domain</option>
-					</select></br></br>
-					<div id="scopeTimeDomainControls">
-						Horizontal Offset: <input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input><input class="scopeControls" data-key="xOffset" type="number" value="0"></input></br></br>
-						Trigger Direction: <select class="scopeControls" data-key="triggerDir">
-							<option value="0" selected>Positive</option>
-							<option value="1">Negative</option>
-						</select></br></br>
-						Trigger Level: <input class="scopeControls" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01"></input><input class="scopeControls" data-key="triggerLevel" type="number" value="0" step="0.01"></input></br></br>
-						Trigger Channel: <select  class="scopeControls" data-key="triggerChannel">
-							<option value="0" selected>0</option>
-						</select></br></br>
-						Trigger Mode: <select  class="scopeControls" data-key="triggerMode">
-							<option value="0" selected>Auto</option>
-							<option value="1">Normal</option>
-							<option value="2">Custom</option>
-							<!--<option value="oneShot">One-Shot</option>-->
-						</select></br></br>
+				
+					<div id="modeControls">
+						<h1>Plot Mode</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td>Mode:</td>
+									<td>
+										<select class="scopeControls" data-key="plotMode">
+											<option value="0" selected>Time-Domain</option>
+											<option value="1">FFT</option>
+										</select>
+									</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
-					<div id="scopeFFTControls" class="hidden">
-						FFT Length (samples): <select class="scopeControls" data-key="FFTLength">
-							<option value="128">128</option>
-							<option value="256">256</option>
-							<option value="512">512</option>
-							<option value="1024">1024</option>
-							<option value="2048">2048</option>
-							<option value="4096">4096</option>
-						</select></br></br>
+					
+					<div id="axisControls">
+						<h1>X-Axis</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td><span class="xAxisUnits">ms</span>/div:</td>
+									<td><span class="xUnit-display"></span><span class="xAxisUnits">ms</span></td>
+								</tr>
+								<tr>
+									<td>Zoom:</td>
+									<td>
+										<button class="scopeControls" data-key="upSampling" id="zoomUp">in</button>
+										<button class="scopeControls" data-key="downSampling" id="zoomDown">out</button>
+										<span class="zoom-display">100%</span>
+									</td>
+								</tr>
+								<tr>
+									<td>Offset (px):</td>
+									<td>
+										<input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input>
+										<input class="scopeControls" data-key="xOffset" type="number" value="0"></input>
+									</td>
+								</tr>
+								<tr>
+									<td>Hold Off (ms):</td>
+									<td>
+										<input  class="scopeControls" data-key="holdOff" type="range" min="0" max="1000" value="20" step="1"></input>
+										<input class="scopeControls" data-key="holdOff" type="number" value="20" step="1" min="0"></input>
+									</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
-					Hold Off(ms): <input  class="scopeControls" data-key="holdOff" type="range" min="0" max="100" value="20" step="0.1"></input><input class="scopeControls" data-key="holdOff" type="number" value="20" step="0.1"></input></br></br>
+					
+					<div id="triggerControls">
+						<h1>Trigger</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td>Mode:</td>
+									<td>
+										<select  class="scopeControls" data-key="triggerMode">
+											<option value="0" selected>Auto</option>
+											<option value="1">Normal</option>
+											<option value="2">Custom</option>
+											<!--<option value="oneShot">One-Shot</option>-->
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>Channel:</td>
+									<td>
+										<select  class="scopeControls" data-key="triggerChannel">
+											<option value="0" selected>1</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>Direction:</td>
+									<td>
+										<select class="scopeControls" data-key="triggerDir">
+											<option value="0" selected>Positive</option>
+											<option value="1">Negative</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>Level:</td>
+									<td>
+										<input class="scopeControls" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01"></input>
+										<input class="scopeControls" data-key="triggerLevel" type="number" value="0" step="0.01"></input>
+									</td>
+								</tr>
+								<tr>
+									<td>Interpolation:</td>
+									<td>
+										<select class="scopeControls" data-key="interpolation">
+											<option value="0" selected>Linear</option>
+											<option value="1">None</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>One-Shot:</td>
+									<td><button id="oneshotButton" class="scopeControls" data-key="scopeOneShot">one-shot</button></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<div id="FFTControls" class="hidden">
+						<h1>FFT</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td>Length (samples):</td>
+									<td>
+										<select class="scopeControls" data-key="FFTLength">
+											<option value="128">128</option>
+											<option value="256">256</option>
+											<option value="512">512</option>
+											<option value="1024">1024</option>
+											<option value="2048">2048</option>
+											<option value="4096">4096</option>
+											<option value="8192">8192</option>
+											<option value="16384">16384</option>
+											<option value="32768">32768</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>X-Axis:</td>
+									<td>
+										<select class="scopeControls" data-key="FFTXAxis">
+											<option value="0" selected>Linear</option>
+											<option value="1">Logarithmic</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td>Y-Axis:</td>
+									<td>
+										<select class="scopeControls" data-key="FFTYAxis">
+											<option value="0" selected>Normalised</option>
+											<option value="1">Decibels</option>
+										</select>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<div id="miscControls">
+						<h1>Misc</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td>Pause Plotting:</td>
+									<td><button id="pauseButton" class="scopeControls" data-key="scopePause">pause</button></td>
+								</tr>
+								<tr>
+									<td>Save Image:</td>
+									<td><a href="" download="scope" id="saveCanvas"><button>Save</button></a></td>
+								</tr>
+								<tr>
+									<td>Export CSV:</td>
+									<td><a href="" download="scopeData.csv" id="saveCanvasData"><button>Export</button></a></td>
+								</tr>
+								<tr>
+									<td>Dropped Frames:</td>
+									<td><span id="droppedFrames">0</span></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+				</div> <!-- main column -->
+				
+				<div id="channelColumn" class="cpColumn">
+					<div id="channelViewChannel0" class="channelView">
+						<h1>Channel 1</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td>Attenuation:</td>
+									<td>
+										<input class="channelView" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01">
+										<input class="channelView" data-key="yAmplitude" data-channel="0" type="number" value="1" step="0.01"></input>
+									</td>
+								</tr>
+								<tr>
+									<td>Offset:</td>
+									<td>
+										<input class="channelView" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01"></input>
+										<input class="channelView" data-key="yOffset" data-channel="0" type="number" value="0" step="0.01"></input>
+									</td>
+								</tr>
+								<tr>
+									<td>Colour:</td>
+									<td>
+										<input class="channelView" data-key="color" data-channel="0" type="color" value="#ff0000"></input>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
-				<div id="channelViewChannel0" class="cpColumn channelView">
-					<h1>Channel 0</h1></br>
-					Y-Axis (amplitude): <input class="channelView" data-key="yAmplitude" data-channel="0" type="range" min="0" max="2" value="1" step="0.01"><input class="channelView" data-key="yAmplitude" data-channel="0" type="number" value="1" step="0.1"></input></br></br>
-					Vertical Offset: <input class="channelView" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01"></input><input class="channelView" data-key="yOffset" data-channel="0" type="number" value="0" step="0.1"></input></br></br>
-					Colour: <input class="channelView" data-key="color" data-channel="0" type="color" value="#ff0000"></input>
+				
+				<div id="sliderColumn" class="cpColumn">
+					<div id="scopeSlider0" class="sliderView">
+						<h1>Slider</h1>
+						<table>
+							<tbody>
+								<tr>
+									<td>Min:</td>
+									<td>
+										<input class="sliderView" data-key="min" data-slider="0" type="number" value="0" step="0.01"></input>
+									</td>
+								</tr>
+								<tr>
+									<td>Max:</td>
+									<td>
+										<input class="sliderView" data-key="max" data-slider="0" type="number" value="1" step="0.01"></input>
+									</td>
+								</tr>
+								<tr>
+									<td>Step:</td>
+									<td>
+										<input class="sliderView" data-key="step" data-slider="0" type="number" value="0.01" step="0.001"></input>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<input class="sliderView" data-key="value" data-slider="0" type="range" value="0" min="0" max="1" step="0.01"></input>
+						<input class="sliderView" data-key="value" data-slider="0" type="number" value="0" step="0.01"></input>
+					</div>
 				</div>
 				
 			</div>
