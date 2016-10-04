@@ -4261,14 +4261,15 @@ var ToolbarView = function (_View) {
 				$('#ide-cpu, #bela-cpu').css('color', 'black');
 			}
 
-			if (!bela) $('#msw-cpu').html('MSW: --');
+			if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');
 			modeswitches = 0;
 		}
 	}, {
 		key: '__msw',
 		value: function __msw(value) {
 			$('#msw-cpu').html('MSW: ' + value);
-			if (value > modeswitches && value != 2) this.emit('mode-switch-warning', value);
+			if (value > modeswitches) this.emit('mode-switch-warning', value);
+			if (value > 0) $('#msw-cpu').css('color', 'red');
 			modeswitches = value;
 		}
 	}, {
