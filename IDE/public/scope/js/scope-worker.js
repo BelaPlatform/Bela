@@ -63,11 +63,16 @@ socket.on('buffer', function(buf){
 			for (var frame=0; frame<inFrameWidth; frame++){
 				var outIndex = channel*outFrameWidth + frame*upSampling + u;
 				var inIndex = channel*inFrameWidth + frame;
-				var diff = interpolation ? u*(inArray[inIndex+1]-inArray[inIndex])/upSampling : 0;
+				var first = inArray[inIndex]; 
+				var second = (inIndex >= channel*inFrameWidth + inFrameWidth - 1) ? inArray[inIndex] : inArray[inIndex + 1]; 
+				var diff = interpolation ? u*(second-first)/upSampling : 0;
 				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) / channelConfig[channel].yAmplitude);
 			}
 		}
 	}
+//  	for(var n = 0; n < upSampling; ++n){
+// 		outArray[outArray.length - 1 - n] = outArray[outArray.length - upSampling - 1];
+// 	}
 	
 	postMessage(outArray, [outArray.buffer]);
 
