@@ -757,7 +757,12 @@ _.extend(TextRenderer.prototype, NodeRenderer.prototype, {
       .text(this.node.args[0])
       .attr('dy', this.getH()/2 + this.opts.glyphHeight/2)
   },
-  getW: function() { return this.node.args[0].length * this.opts.glyphWidth + this.opts.textPadding * 2 },
+  getW: function() {
+    if(this.node.args.length === 0 && this.node.proto === "text"){
+      this.node.args[0] = "";
+    }
+    return this.node.args[0].length * this.opts.glyphWidth + this.opts.textPadding * 2
+  },
   getH: function() { return this.opts.objMinHeight }
 
 })
