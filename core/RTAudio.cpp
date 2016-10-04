@@ -579,6 +579,9 @@ void Bela_cleanupAudio()
 {
 	cleanup((BelaContext *)&gContext, gUserData);
 
+	// Shut down the prussdrv system
+	gPRU->exitPRUSS();
+
 	// Clean up the auxiliary tasks
 	vector<InternalAuxiliaryTask*>::iterator it;
 	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {

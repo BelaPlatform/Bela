@@ -178,6 +178,9 @@ public:
 	// Turn off the PRU when done
 	void disable();
 
+	// Exit the whole PRU subsystem
+	void exitPRUSS();
+
 	// For debugging:
 	void setGPIOTestPin();
 	void clearGPIOTestPin();
@@ -186,6 +189,7 @@ private:
 	InternalBelaContext *context;	// Overall settings
 
 	int pru_number;		// Which PRU we use
+	bool initialised;	// Whether the prussdrv system is initialised
 	bool running;		// Whether the PRU is running
 	bool analog_enabled;  // Whether SPI ADC and DAC are used
 	bool digital_enabled; // Whether digital is used

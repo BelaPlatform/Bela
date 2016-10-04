@@ -126,7 +126,11 @@ extern "C" {
 
 // Constructor: specify a PRU number (0 or 1)
 PRU::PRU(InternalBelaContext *input_context)
-: context(input_context), pru_number(1), running(false), analog_enabled(false),
+: context(input_context),
+  pru_number(1),
+  running(false),
+  analog_enabled(false),
+  initialised(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
@@ -143,6 +147,7 @@ PRU::~PRU()
 {
 	if(running)
 		disable();
+	exitPRUSS();
 	if(gpio_enabled)
 		cleanupGPIO();
 	if(xenomai_gpio_fd >= 0)
@@ -564,6 +569,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 
 	context->digital = digital_buffer0;
 
+	initialised = true;
 	return 0;
 }
 
@@ -959,8 +965,15 @@ void PRU::disable()
 {
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable(pru_number);
-    prussdrv_exit();
 	running = false;
+}
+
+// Exit the prussdrv subsystem (affects both PRUs)
+void PRU::exitPRUSS()
+{
+	if(initialised)
+	    prussdrv_exit();
+	initialised = false;
 }
 
 // Debugging
