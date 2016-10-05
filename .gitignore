@@ -6,6 +6,7 @@ tmp/
 *.swo
 *.orig
 Release/
+build/
 Debug/
 Documentation/
 *.js.map
