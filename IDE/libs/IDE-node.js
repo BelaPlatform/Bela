@@ -162,7 +162,7 @@ function socketEvents(socket){
 			return;
 		}
 
-		if (data.event === 'upload' && data.fileData){
+		if (data.event === 'upload' && data.fileData && !data.fileCompare){
 			// notify other browser tabs that the file has been updated
 			socket.broadcast.emit('file-changed', data.currentProject, data.newFile);
 		}

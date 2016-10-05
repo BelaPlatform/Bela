@@ -85,6 +85,14 @@ editorView.on('upload', fileData => {
 	});
 	setCompareFilesInterval();
 });
+editorView.on('check-syntax', () => {
+	if (parseInt(models.settings.getKey('liveSyntaxChecking'))){
+		socket.emit('process-event', {
+			event			: 'checkSyntax',
+			currentProject	: models.project.getKey('currentProject'),
+		});
+	}
+});
 editorView.on('breakpoint', line => {
 	var breakpoints = models.project.getKey('breakpoints');
 	for (let i=0; i<breakpoints.length; i++){
@@ -124,9 +132,9 @@ editorView.on('goto-docs', (word, id) => {
 editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
 editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
 editorView.on('compare-files', compare => {
-	if (compare)
+	if (compare && !models.project.getKey('readOnly'))
 		setCompareFilesInterval();
-	else if (compareFilesInterval)
+	else if (!compare && compareFilesInterval)
 		clearInterval(compareFilesInterval);
 });
 
@@ -309,6 +317,7 @@ socket.on('disconnect', () => {
 socket.on('file-changed', (project, fileName) => {
 	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')){
 		console.log('file changed!');
+		if (compareFilesInterval) clearInterval(compareFilesInterval);
 		models.project.setKey('readOnly', true);
 		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
 		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});

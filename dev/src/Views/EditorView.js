@@ -215,7 +215,7 @@ class EditorView extends View {
 			uploadBlocked = false;
 
 			// force a syntax check
-			this.emit('upload', data);
+			this.emit('check-syntax');
 
 			// focus the editor
 			this.__focus(opts.focus);

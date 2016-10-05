@@ -477,6 +477,14 @@ editorView.on('upload', function (fileData) {
 	});
 	setCompareFilesInterval();
 });
+editorView.on('check-syntax', function () {
+	if (parseInt(models.settings.getKey('liveSyntaxChecking'))) {
+		socket.emit('process-event', {
+			event: 'checkSyntax',
+			currentProject: models.project.getKey('currentProject')
+		});
+	}
+});
 editorView.on('breakpoint', function (line) {
 	var breakpoints = models.project.getKey('breakpoints');
 	for (var i = 0; i < breakpoints.length; i++) {
@@ -521,7 +529,7 @@ editorView.on('highlight-syntax', function (names) {
 	return socket.emit('highlight-syntax', names);
 });
 editorView.on('compare-files', function (compare) {
-	if (compare) setCompareFilesInterval();else if (compareFilesInterval) clearInterval(compareFilesInterval);
+	if (compare && !models.project.getKey('readOnly')) setCompareFilesInterval();else if (!compare && compareFilesInterval) clearInterval(compareFilesInterval);
 });
 
 // toolbar view
@@ -733,6 +741,7 @@ socket.on('disconnect', function () {
 socket.on('file-changed', function (project, fileName) {
 	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
 		console.log('file changed!');
+		if (compareFilesInterval) clearInterval(compareFilesInterval);
 		models.project.setKey('readOnly', true);
 		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
 		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
@@ -1095,7 +1104,7 @@ var Model = function (_EventEmitter) {
 	function Model(data) {
 		_classCallCheck(this, Model);
 
-		var _this = _possibleConstructorReturn(this, (Model.__proto__ || Object.getPrototypeOf(Model)).call(this));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Model).call(this));
 
 		var _data = data || {};
 		_this._getData = function () {
@@ -1210,7 +1219,7 @@ var ConsoleView = function (_View) {
 	function ConsoleView(className, models, settings) {
 		_classCallCheck(this, ConsoleView);
 
-		var _this = _possibleConstructorReturn(this, (ConsoleView.__proto__ || Object.getPrototypeOf(ConsoleView)).call(this, className, models, settings));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ConsoleView).call(this, className, models, settings));
 
 		_this.on('clear', function () {
 			return _console.clear();
@@ -1575,7 +1584,7 @@ var DebugView = function (_View) {
 	function DebugView(className, models) {
 		_classCallCheck(this, DebugView);
 
-		var _this = _possibleConstructorReturn(this, (DebugView.__proto__ || Object.getPrototypeOf(DebugView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DebugView).call(this, className, models));
 
 		_this._debugMode(false);
 		return _this;
@@ -1836,7 +1845,7 @@ var DocumentationView = function (_View) {
 	function DocumentationView(className, models) {
 		_classCallCheck(this, DocumentationView);
 
-		var _this = _possibleConstructorReturn(this, (DocumentationView.__proto__ || Object.getPrototypeOf(DocumentationView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DocumentationView).call(this, className, models));
 
 		_this.on('init', _this.init);
 
@@ -2132,7 +2141,7 @@ var EditorView = function (_View) {
 	function EditorView(className, models) {
 		_classCallCheck(this, EditorView);
 
-		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(EditorView).call(this, className, models));
 
 		_this.highlights = {};
 
@@ -2225,7 +2234,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			// console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate');
 			_this.parser.parse(function () {
 				_this.getCurrentWord();
 			});
@@ -2341,7 +2350,7 @@ var EditorView = function (_View) {
 				uploadBlocked = false;
 
 				// force a syntax check
-				this.emit('upload', data);
+				this.emit('check-syntax');
 
 				// focus the editor
 				this.__focus(opts.focus);
@@ -2508,7 +2517,7 @@ var EditorView = function (_View) {
 				return;
 			}
 
-			//console.log('clicked', token); 
+			//console.log('clicked', token);
 
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion2 = true;
@@ -2584,7 +2593,7 @@ var FileView = function (_View) {
 	function FileView(className, models) {
 		_classCallCheck(this, FileView);
 
-		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(FileView).call(this, className, models));
 
 		_this.listOfFiles = [];
 
@@ -3052,7 +3061,7 @@ var GitView = function (_View) {
 	function GitView(className, models, settings) {
 		_classCallCheck(this, GitView);
 
-		var _this = _possibleConstructorReturn(this, (GitView.__proto__ || Object.getPrototypeOf(GitView)).call(this, className, models, settings));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(GitView).call(this, className, models, settings));
 
 		_this.$form = $('#gitForm');
 		_this.$input = $('#gitInput');
@@ -3252,7 +3261,8 @@ var ProjectView = function (_View) {
 		_classCallCheck(this, ProjectView);
 
 		//this.exampleChanged = false;
-		var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
+
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProjectView).call(this, className, models));
 
 		_this.on('example-changed', function () {
 			return _this.exampleChanged = true;
@@ -3600,7 +3610,8 @@ var SettingsView = function (_View) {
 		_classCallCheck(this, SettingsView);
 
 		//this.$elements.filter('input').on('change', (e) => this.selectChanged($(e.currentTarget), e));
-		var _this = _possibleConstructorReturn(this, (SettingsView.__proto__ || Object.getPrototypeOf(SettingsView)).call(this, className, models, settings));
+
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SettingsView).call(this, className, models, settings));
 
 		_this.settings.on('change', function (data) {
 			return _this._IDESettings(data);
@@ -3981,8 +3992,9 @@ var TabView = function (_View) {
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs 
-		var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
+		// open/close tabs
+
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(TabView).call(this, 'tab'));
 
 		$('#flexit').on('click', function () {
 			if (_tabsOpen) {
@@ -4145,7 +4157,7 @@ var ToolbarView = function (_View) {
 	function ToolbarView(className, models) {
 		_classCallCheck(this, ToolbarView);
 
-		var _this = _possibleConstructorReturn(this, (ToolbarView.__proto__ || Object.getPrototypeOf(ToolbarView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ToolbarView).call(this, className, models));
 
 		_this.$elements.on('click', function (e) {
 			return _this.buttonClicked($(e.currentTarget), e);
@@ -4252,7 +4264,7 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '__allErrors',
 		value: function __allErrors(errors) {
-			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
+			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout);
 			if (errors.length) {
 				$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
 			} else {
@@ -4375,7 +4387,7 @@ var View = function (_EventEmitter) {
 	function View(CSSClassName, models, settings) {
 		_classCallCheck(this, View);
 
-		var _this = _possibleConstructorReturn(this, (View.__proto__ || Object.getPrototypeOf(View)).call(this));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(View).call(this));
 
 		_this.className = CSSClassName;
 		_this.models = models;
@@ -4516,7 +4528,7 @@ var Console = function (_EventEmitter) {
 	function Console() {
 		_classCallCheck(this, Console);
 
-		var _this = _possibleConstructorReturn(this, (Console.__proto__ || Object.getPrototypeOf(Console)).call(this));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Console).call(this));
 
 		_this.$element = $('#beaglert-consoleWrapper');
 		_this.parent = document.getElementById('beaglert-console');
@@ -5124,7 +5136,6 @@ var parser = {
 			}
 
 			//}
-
 
 			buf.enq(token);
 			token = iterator.stepForward();

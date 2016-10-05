@@ -321,7 +321,7 @@ var BackgroundView = function (_View) {
 	function BackgroundView(className, models) {
 		_classCallCheck(this, BackgroundView);
 
-		var _this = _possibleConstructorReturn(this, (BackgroundView.__proto__ || Object.getPrototypeOf(BackgroundView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(BackgroundView).call(this, className, models));
 
 		var saveCanvas = document.getElementById('saveCanvas');
 		_this.canvas = document.getElementById('scopeBG');
@@ -587,7 +587,7 @@ var ChannelView = function (_View) {
 	function ChannelView(className, models) {
 		_classCallCheck(this, ChannelView);
 
-		return _possibleConstructorReturn(this, (ChannelView.__proto__ || Object.getPrototypeOf(ChannelView)).call(this, className, models));
+		return _possibleConstructorReturn(this, Object.getPrototypeOf(ChannelView).call(this, className, models));
 	}
 
 	// UI events
@@ -777,7 +777,7 @@ var ControlView = function (_View) {
 	function ControlView(className, models) {
 		_classCallCheck(this, ControlView);
 
-		var _this = _possibleConstructorReturn(this, (ControlView.__proto__ || Object.getPrototypeOf(ControlView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ControlView).call(this, className, models));
 
 		$('#controlsButton').click(function () {
 			return _this.$parents.toggleClass('hidden');
@@ -946,7 +946,7 @@ var Model = function (_EventEmitter) {
 	function Model(data) {
 		_classCallCheck(this, Model);
 
-		var _this = _possibleConstructorReturn(this, (Model.__proto__ || Object.getPrototypeOf(Model)).call(this));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Model).call(this));
 
 		var _data = data || {};
 		_this._getData = function () {
@@ -1054,7 +1054,7 @@ var SliderView = function (_View) {
 	function SliderView(className, models) {
 		_classCallCheck(this, SliderView);
 
-		var _this = _possibleConstructorReturn(this, (SliderView.__proto__ || Object.getPrototypeOf(SliderView)).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SliderView).call(this, className, models));
 
 		_this.on('set-slider', function (args) {
 			$('#scopeSlider' + args[0].value).find('input[type=range]').prop('min', args[1].value).prop('max', args[2].value).prop('step', args[3].value).val(args[4].value).siblings('input[type=number]').prop('min', args[1].value).prop('max', args[2].value).prop('step', args[3].value).val(args[4].value).siblings('h1').html(args[5].value == 'Slider' ? 'Slider ' + args[0].value : args[5].value);
@@ -1137,7 +1137,7 @@ var View = function (_EventEmitter) {
 	function View(CSSClassName, models, settings) {
 		_classCallCheck(this, View);
 
-		var _this = _possibleConstructorReturn(this, (View.__proto__ || Object.getPrototypeOf(View)).call(this));
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(View).call(this));
 
 		_this.className = CSSClassName;
 		_this.models = models;
