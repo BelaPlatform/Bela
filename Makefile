@@ -236,7 +236,7 @@ $(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
 	#backwards compatibility in case pre-compiled header is available.
 # pasm outputs to the same folder, so cd to the project folder before running it
 	$(AT) if [ -z "`which pasm`" ]; then echo 'pasm not found, .p files not compiled.' 1>&2; else \
-	$(AT) cd $(PROJECT_DIR) &&\
+	      cd $(PROJECT_DIR) &&\
 	      pasm "$<" -c && echo ' ...done'; fi
 	$(AT) echo ' '
 
