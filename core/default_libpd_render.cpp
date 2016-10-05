@@ -28,8 +28,8 @@ float* gOutBuf;
 static std::vector<Midi*> midi;
 std::vector<const char*> gMidiPortNames;
 
-static int getPortChannel(int* channel){
-	int port = 0;
+static unsigned int getPortChannel(int* channel){
+	unsigned int port = 0;
 	while(*channel > 16){
 		*channel -= 16;
 		port += 1;
@@ -81,7 +81,7 @@ void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
 
 void Bela_MidiOutByte(int port, int byte){
 	printf("port: %d, byte: %d\n", port, byte);
-	if(port > midi.size()){
+	if(port > (int)midi.size()){
 		// if the port is out of range, redirect to the first port.
 		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
 		port = 0;

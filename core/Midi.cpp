@@ -413,12 +413,12 @@ midi_byte_t Midi::makeStatusByte(midi_byte_t statusCode, midi_byte_t channel){
 }
 
 void Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte){
-	midi_byte_t bytes[2] = {makeStatusByte(statusCode, channel), dataByte & 0x7F};
+	midi_byte_t bytes[2] = {makeStatusByte(statusCode, channel), (midi_byte_t)(dataByte & 0x7F)};
 	writeOutput(bytes, 2);
 }
 
 void Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2){
-	midi_byte_t bytes[3] = {makeStatusByte(statusCode, channel), dataByte1 & 0x7F, dataByte2 & 0x7F};
+	midi_byte_t bytes[3] = {makeStatusByte(statusCode, channel), (midi_byte_t)(dataByte1 & 0x7F), (midi_byte_t)(dataByte2 & 0x7F)};
 	writeOutput(bytes, 3);
 }
 

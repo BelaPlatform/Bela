@@ -128,9 +128,9 @@ extern "C" {
 PRU::PRU(InternalBelaContext *input_context)
 : context(input_context),
   pru_number(1),
+  initialised(false),
   running(false),
   analog_enabled(false),
-  initialised(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
@@ -538,7 +538,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 				return 1;				
 			}
 			
-			for(int n = 0; n < context->analogInChannels; n++)
+			for(unsigned int n = 0; n < context->analogInChannels; n++)
 				audio_expander_input_history[n] = audio_expander_output_history[n] = 0;
 			
 			float cutoffFreqHz = 10.0; 
@@ -754,11 +754,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				
 				// Write the inputs to the buffer of multiplexed samples
 				if(context->multiplexerAnalogIn != 0) {
-					int muxChannelCount = 0;
+					unsigned int muxChannelCount = 0;
 					int multiplexerChannel = multiplexerChannelLastFrame;
 
 					for(int n = context->analogFrames - 1; n >= 0; n--) {
-						for(int ch = 0; ch < context->analogInChannels; ch++) {
+						for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
 							context->multiplexerAnalogIn[multiplexerChannel * context->analogInChannels + ch] =
 								context->analogIn[n * context->analogInChannels + ch];
 						}
@@ -858,7 +858,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 						// headroom problem on the analog outputs with a sagging
 						// 5V USB supply
 						
-						for(int n = 0; n < context->analogFrames; n++) {
+						for(unsigned int n = 0; n < context->analogFrames; n++) {
 							context->analogOut[n * context->analogOutChannels + ch] = 
 								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93/2.0);
 						}

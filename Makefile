@@ -96,7 +96,7 @@ ifneq ($(strip $(TEST_LIBPD)), )
   LIBS += -lpd -lpthread_rt
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_CPPFLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize 
+DEFAULT_CPPFLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_CPPFLAGS)
 
 ifndef COMPILER

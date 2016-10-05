@@ -60,6 +60,7 @@ public:
 		case kmmAny:
 			return "any";
 		case kmmNone:
+		default:
 			return "none";
 		}
 	}

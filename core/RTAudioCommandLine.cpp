@@ -337,19 +337,19 @@ bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSett
 	// Make sure that all channels are within range
 	// Regardless of how many analog channels we're actually using,
 	// the audio expander facility has slots for up to 16
-	for(int i = 0; i < channels.size(); i++)
+	for(unsigned int i = 0; i < channels.size(); i++)
 		if(channels[i] < 0 || channels[i] >= 16)
 			return false;
 
 	// Now update the audio expander data sructure 
 	if(inputChannel) {
 		// Update the audio expander inputs
-		for(int i = 0; i < channels.size(); i++)	
+		for(unsigned int i = 0; i < channels.size(); i++)
 			settings->audioExpanderInputs |= (1 << channels[i]);
 	}
 	else {
 		// Update the audio expander outputs
-		for(int i = 0; i < channels.size(); i++)
+		for(unsigned int i = 0; i < channels.size(); i++)
 			settings->audioExpanderOutputs |= (1 << channels[i]);
 	}
 	
