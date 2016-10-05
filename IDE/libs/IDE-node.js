@@ -314,6 +314,14 @@ DebugManager.on('error', (err) => allSockets.emit('report-error', err) );
 
 TerminalManager.on('shell-event', (evt, data) => allSockets.emit('shell-event', evt, data) );
 
+server.emitter.on('project-error', e => {
+	var msg = 'error compressing project folder';
+	if (e.code === 'ELOOP')
+		msg += ', possibly due to broken symlinks';
+	
+	allSockets.emit('report-error', msg);
+});
+
 // module functions - only accesible from this file
 function co(obj, func, args){
 	return Promise.coroutine(obj[func]).bind(obj)(args);

@@ -3,6 +3,7 @@ var archiver = require('archiver');
 var mime = require('mime');
 var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require('fs-extra'));
+var emitter = new (require('events').EventEmitter)();
 
 var app = express();
 var http = require('http').Server(app);
@@ -35,9 +36,16 @@ app.get('/download', function(req, res){
 			res.setHeader('Content-type', 'application/zip');
 	
 			var archive = archiver('zip');
+			
+			archive.on('error', (e) => {
+				emitter.emit('project-error', e);
+				res.end();
+			});
+
 			archive.pipe(res);
 			archive.directory(belaPath+'projects/'+req.query.project, req.query.project, {name: req.query.project+'.zip'});
 			archive.finalize();
+			
 		}
 	} else if (req.query.all){
 		
@@ -45,6 +53,12 @@ app.get('/download', function(req, res){
 		res.setHeader('Content-type', 'application/zip');
 
 		var archive = archiver('zip');
+		
+		archive.on('error', (e) => {
+			emitter.emit('project-error', e);
+			res.end();
+		});
+		
 		archive.pipe(res);
 		archive.directory(belaPath+'projects', 'projects', {name: 'projects.zip'});
 		archive.finalize();
@@ -69,5 +83,6 @@ app.get('/documentation_xml', function(req, res){
 
 module.exports = {
 	http: http,
-	start: listen
+	start: listen,
+	emitter
 }
