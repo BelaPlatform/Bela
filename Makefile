@@ -75,7 +75,7 @@ BELA_IDE_STARTUP_SCRIPT?=/root/Bela_node.sh
 BELA_IDE_HOME?=/root/Bela/IDE
 # A bug in this version of screen forces us to use two screen names which beginning substrings do not match (Bela, Bela-IDE would cause problems)
 BELA_IDE_SCREEN_NAME?=IDE-Bela
-BELA_IDE_RUN_COMMAND?=cd $(BELA_IDE_HOME) && screen -S $(BELA_IDE_SCREEN_NAME) -d -m bash -c "while true; do /usr/local/bin/node index.js; sleep 0.5; done"
+BELA_IDE_RUN_COMMAND?=cd $(BELA_IDE_HOME) && export USER=root && export HOME=/root && export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && screen -S $(BELA_IDE_SCREEN_NAME) -d -m bash -c "while true; do /usr/local/bin/node index.js; sleep 0.5; done"
 BELA_IDE_STOP_COMMAND?=screen -X -S $(BELA_IDE_SCREEN_NAME) quit > /dev/null 
 
 ifneq (,$(filter $(QUIET_TARGETS),$(MAKECMDGOALS)))
@@ -96,8 +96,9 @@ ifneq ($(strip $(TEST_LIBPD)), )
   LIBS += -lpd -lpthread_rt
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_CPPFLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize 
-DEFAULT_CFLAGS := $(DEFAULT_CPPFLAGS)
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
+DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
+DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c11
 
 ifndef COMPILER
 # check whether clang is installed
@@ -170,8 +171,8 @@ all: Bela
 
 # debug = buildBela debug
 debug: ## Same as Bela but with debug flags and no optimizations
-debug: DEFAULT_CPPFLAGS=-g
-debug: DEFAULT_CFLAGS=-g
+debug: DEFAULT_CPPFLAGS=-g -std=c++11
+debug: DEFAULT_CFLAGS=-g -std=c11
 debug: all
 
 # syntax = check syntax
@@ -211,7 +212,7 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" -std=c99 $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 

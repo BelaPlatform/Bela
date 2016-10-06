@@ -113,7 +113,7 @@ then
 	 exit 1
 fi
 
-[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME=`basename "$HOST_SOURCE_PATH"` 
+[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$HOST_SOURCE_PATH" && pwd))"
 
 BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
 BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
@@ -147,6 +147,7 @@ uploadBuildRun(){
 	then
 		echo "using scp..."
 		echo "Cleaning the destination folder..."
+		#if rsync is not available, brutally clean the destination folder
 		ssh $BBB_ADDRESS "rm -rf \"$BBB_PROJECT_FOLDER\"; mkdir -p \"$BBB_PROJECT_FOLDER\""
 		echo "Copying the project files"
 		scp -r $HOST_SOURCE_PATH/* "$BBB_NETWORK_TARGET_FOLDER"

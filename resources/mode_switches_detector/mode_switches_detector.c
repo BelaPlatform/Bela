@@ -17,5 +17,5 @@ int main(){
 	printf("bprio: %d\n", info.bprio);
 	printf("cprio: %d\n", info.cprio);
 	printf("modeswitches: %d\n", info.modeswitches);
-	
+	return 0;
 }

@@ -208,6 +208,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.analogOutChannels = settings->numAnalogOutChannels;
 		unsigned int numAnalogChannelsForSampleRate = settings->numAnalogInChannels;
 		gContext.analogSampleRate = gContext.audioSampleRate * 4.0 / (float)numAnalogChannelsForSampleRate;
+		
+		gContext.audioExpanderEnabled = (settings->audioExpanderInputs & 0xFFFF) |
+										((settings->audioExpanderOutputs & 0xFFFF) << 16);
 	}
 	else {
 		gContext.audioFrames = settings->periodSize;
@@ -216,6 +219,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.analogInChannels = 0;
 		gContext.analogOutChannels = 0;
 		gContext.analogSampleRate = 0;
+		gContext.audioExpanderEnabled = 0;
 	}
 
 	if(gContext.analogInChannels != gContext.analogOutChannels){
@@ -259,7 +263,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gAudioCodec = new I2c_Codec();
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
-	if(gPRU->prepareGPIO(1, 1)) {
+	if(gPRU->prepareGPIO(1, settings->enableLED)) {
 		cout << "Error: unable to prepare GPIO for PRU audio\n";
 		return 1;
 	}
@@ -334,41 +338,18 @@ void audioLoop(void *)
 	if(gRTAudioVerbose==1)
 		rt_printf("_________________Audio Thread!\n");
 
-	// PRU audio
-	assert(gAudioCodec != 0 && gPRU != 0);
-
-	if(gAudioCodec->startAudio(0)) {
-		rt_printf("Error: unable to start I2C audio codec\n");
-		gShouldStop = 1;
-	}
-	else {
-		if(gPRU->start(gPRUFilename)) {
-			rt_printf("Error: unable to start PRU from file %s\n", gPRUFilename);
-			gShouldStop = 1;
-		}
-		else {
-			// All systems go. Run the loop; it will end when gShouldStop is set to 1
-
-			if(!gAmplifierShouldBeginMuted) {
-				// First unmute the amplifier
-				if(Bela_muteSpeakers(0)) {
-					if(gRTAudioVerbose)
-						rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
-				}
-			}
+	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
-			gPRU->loop(&gRTAudioInterrupt, gUserData);
+	gPRU->loop(&gRTAudioInterrupt, gUserData);
 #else
-			gPRU->loop(0, gUserData);
+	gPRU->loop(0, gUserData);
 #endif
-			// Now clean up
-			// gPRU->waitForFinish();
-			gPRU->disable();
-			gAudioCodec->stopAudio();
-			gPRU->cleanupGPIO();
-		}
-	}
+	// Now clean up
+	// gPRU->waitForFinish();
+	gPRU->disable();
+	gAudioCodec->stopAudio();
+	gPRU->cleanupGPIO();
 
 	if(gRTAudioVerbose == 1)
 		rt_printf("audio thread ended\n");
@@ -383,8 +364,8 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
 	// Attempt to create the task
-	if(rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create auxiliary task " << name << endl;
+	if(int ret = rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
+		  cout << "Error: unable to create auxiliary task " << name << " : " << strerror(-ret) << endl;
 		  free(newTask);
 		  return 0;
 	}
@@ -402,6 +383,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 
 	return (AuxiliaryTask)newTask;
 }
+
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priority, const char *name, bool autoSchedule)
 {
         InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
@@ -496,8 +478,8 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 	taskStruct = (InternalAuxiliaryTask *)task;
 	if(taskStruct->started == true)
 		return 0;
-	if(rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
-		cerr << "Error: unable to start Xenomai task " << taskStruct->name << endl;
+	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
+		cerr << "Error: unable to start Xenomai task " << taskStruct->name <<  strerror(-ret) << endl;
 		return -1;
 	}
 	taskStruct->started = true;
@@ -511,8 +493,8 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 int Bela_startAudio()
 {
 	// Create audio thread with high Xenomai priority
-	if(rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create Xenomai audio thread" << endl;
+	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
+		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}
 
@@ -525,9 +507,35 @@ int Bela_startAudio()
 	}
 #endif
 
+	// make sure we have everything
+	assert(gAudioCodec != 0 && gPRU != 0);
+
+	// power up and initialize audio codec
+	if(gAudioCodec->startAudio(0)) {
+		fprintf(stderr, "Error: unable to start I2C audio codec\n");
+		return -1;
+	}
+
+	// initialize and run the PRU
+	if(gPRU->start(gPRUFilename)) {
+		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename);
+		return -1;
+	}
+
+	if(!gAmplifierShouldBeginMuted) {
+		// First unmute the amplifier
+		if(Bela_muteSpeakers(0)) {
+			if(gRTAudioVerbose)
+				rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
+		}
+	}
+
+	// ready to go
+	gShouldStop = 0;
+
 	// Start all RT threads
-	if(rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
-		  cout << "Error: unable to start Xenomai audio thread" << endl;
+	if(int ret = rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
+		  cout << "Error: unable to start Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}
 
@@ -570,6 +578,9 @@ void Bela_stopAudio()
 void Bela_cleanupAudio()
 {
 	cleanup((BelaContext *)&gContext, gUserData);
+
+	// Shut down the prussdrv system
+	gPRU->exitPRUSS();
 
 	// Clean up the auxiliary tasks
 	vector<InternalAuxiliaryTask*>::iterator it;

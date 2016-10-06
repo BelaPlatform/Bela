@@ -2,7 +2,7 @@
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
-release=1
+release=r2016.08
 NO_UPLOAD=0
 WATCH=0
 FORCE=0
@@ -137,7 +137,7 @@ done
 
 [ "$NO_UPLOAD" -eq 0 ] && [ -z "$pdpath" ] && { echo "Error: a path to the source folder should be provided"; exit 1; }
 
-[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME=`basename "$pdpath"`
+[ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$pdpath" && pwd))"
 
 if [ -z "$release" ]
 then 
@@ -197,8 +197,8 @@ uploadBuildRun(){
 			exit 1; }
     done
 
-    # Apply any Bela-specific patches here 
-    cp "$HVRESOURCES_DIR/HvUtils.h" $projectpath/ || exit 1;
+    # Apply any Bela-specific patches here
+    # ... none at the moment
 
     BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
     BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
@@ -222,6 +222,7 @@ uploadBuildRun(){
     # Transfer the files 
 	if [ "$RSYNC_AVAILABLE" -eq 1 ]
 	then
+		echo rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER"
 		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
         { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HvContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
 		{ echo "ERROR: while synchronizing files with the BBB. Is the board connected?"; exit 1; }

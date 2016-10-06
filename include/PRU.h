@@ -101,6 +101,31 @@ typedef struct {
 	/// sample rates (e.g. half the number of analog frames will have elapsed if the analog sample
 	/// rate is 22050).
 	uint64_t audioFramesElapsed;
+	
+	/// \brief Number of multiplexer channels for each analog input.
+	///
+	/// This will be 2, 4 or 8 if the multiplexer capelet is enabled, otherwise it will be 1.
+	/// 2, 4 and 8 correspond to 16, 32 and 64 analog inputs, respectively.
+	uint32_t multiplexerChannels;
+	
+	/// \brief Multiplexer channel corresponding to the first analog frame.
+	///
+	/// This indicates the multiplexer setting corresponding to the first analog frame in the
+	/// buffer.
+	uint32_t multiplexerStartingChannel;
+	
+	/// \brief Buffer which holds multiplexed analog inputs, when multiplexer capelet is enabled.
+	///
+	/// Because the analog in buffer size may be smaller than a complete cycle of the multiplexer 
+	/// capelet, this buffer will always be big enough to hold at least one complete cycle of all
+	/// channels. It will be null if the multiplexer capelet is not enabled.
+	float *multiplexerAnalogIn;
+	
+	/// \brief Flags for whether audio expander is enabled on given analog channels.
+	///
+	/// Bits 0-15, when set, indicate audio expander enabled on the analog inputs. Bits 16-31
+	/// indicate audio expander enabled on the analog outputs.
+	uint32_t audioExpanderEnabled;
 
 	/// \brief Other audio/sensor settings
 	///
@@ -153,6 +178,9 @@ public:
 	// Turn off the PRU when done
 	void disable();
 
+	// Exit the whole PRU subsystem
+	void exitPRUSS();
+
 	// For debugging:
 	void setGPIOTestPin();
 	void clearGPIOTestPin();
@@ -161,12 +189,12 @@ private:
 	InternalBelaContext *context;	// Overall settings
 
 	int pru_number;		// Which PRU we use
+	bool initialised;	// Whether the prussdrv system is initialised
 	bool running;		// Whether the PRU is running
 	bool analog_enabled;  // Whether SPI ADC and DAC are used
 	bool digital_enabled; // Whether digital is used
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
-	int  mux_channels;   // How many mux channels are used (if enabled)
 	bool gpio_test_pin_enabled; // Whether the test pin was also enabled
 
 
@@ -179,6 +207,9 @@ private:
 
 	float *last_analog_out_frame;
 	uint32_t *digital_buffer0, *digital_buffer1, *last_digital_buffer;
+	float *audio_expander_input_history;
+	float *audio_expander_output_history;
+	float audio_expander_filter_coeff;
 
 	int xenomai_gpio_fd;	// File descriptor for /dev/mem for fast GPIO
 	uint32_t *xenomai_gpio;	// Pointer to GPIO registers

@@ -21,6 +21,14 @@
 #include <string.h>
 #include <DigitalChannelManager.h>
 
+// Bela Midi
+static Midi midi;
+unsigned int hvMidiHashes[7];
+unsigned int gScopeChannelsInUse;
+float* gScopeOut;
+// Bela Scope
+static Scope scope;
+
 /*
  *	HEAVY CONTEXT & BUFFERS
  */
@@ -86,6 +94,7 @@ static void sendHook(
 				}
 			}
 		}
+		return;
 	}
 
 	// Bela digital initialization messages
@@ -126,7 +135,96 @@ static void sendHook(
 			}
 		}
 		dcm.manage(channel, direction, isMessageRate);
+		return;
 	}
+
+	if(strcmp(receiverName, "bela_noteout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 3){
+			return;
+		}
+		midi_byte_t pitch = hv_msg_getFloat(m, 0);
+		midi_byte_t velocity = hv_msg_getFloat(m, 1);
+		midi_byte_t channel = hv_msg_getFloat(m, 2);
+		rt_printf("noteon: %d %d %d\n", channel, pitch, velocity);
+		midi.writeNoteOn(channel, pitch, velocity);
+		return;
+	}
+
+	if(strcmp(receiverName, "bela_ctlout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 3){
+			return;
+		}
+		midi_byte_t value = hv_msg_getFloat(m, 0);
+		midi_byte_t controller = hv_msg_getFloat(m, 1);
+		midi_byte_t channel = hv_msg_getFloat(m, 2);
+		rt_printf("controlchange: %d %d %d\n", channel, controller, value);
+		midi.writeControlChange(channel, controller, value);
+		return;
+	}
+	
+	if(strcmp(receiverName, "bela_pgmout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 2){
+			return;
+		}
+		midi_byte_t program = hv_msg_getFloat(m, 0);
+		midi_byte_t channel = hv_msg_getFloat(m, 1);
+		rt_printf("programchange: %d %d\n", channel, program);
+		midi.writeProgramChange(channel, program);
+		return;
+	}
+
+	if(strcmp(receiverName, "bela_bendout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 2){
+			return;
+		}
+		unsigned int value = hv_msg_getFloat(m, 0) + 8192;
+		midi_byte_t channel = hv_msg_getFloat(m, 1);
+		rt_printf("pitchbend: %d %d\n", channel, value);
+		midi.writePitchBend(channel, value);
+		return;
+	}
+
+	if(strcmp(receiverName, "bela_touchout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 2){
+			return;
+		}
+		midi_byte_t pressure = hv_msg_getFloat(m, 0);
+		midi_byte_t channel = hv_msg_getFloat(m, 1);
+		rt_printf("channelPressure: %d %d\n", channel, pressure);
+		midi.writeChannelPressure(channel, pressure);
+		return;
+	}
+
+	if(strcmp(receiverName, "bela_polytouchout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 3){
+			return;
+		}
+		midi_byte_t pitch = hv_msg_getFloat(m, 0);
+		midi_byte_t pressure = hv_msg_getFloat(m, 1);
+		midi_byte_t channel = hv_msg_getFloat(m, 2);
+		rt_printf("polytouch: %d %d %d\n", channel, pitch, pressure);
+		midi.writePolyphonicKeyPressure(channel, pitch, pressure);
+		return;
+	}
+	
+	if(strcmp(receiverName, "bela_midiout") == 0){
+		int numArgs = hv_msg_getNumElements(m);
+		if(numArgs != 2){
+			return;
+		}
+		midi_byte_t byte = hv_msg_getFloat(m, 0);
+		int port = hv_msg_getFloat(m, 1);
+		rt_printf("port: %d, byte: %d\n", port, byte);
+		midi.writeOutput(byte);
+		return;
+	}
+
 }
 
 
@@ -145,15 +243,6 @@ static const unsigned int gFirstDigitalChannel = 10;
 static const unsigned int gFirstScopeChannel = 26;
 static unsigned int gDigitalSigInChannelsInUse;
 static unsigned int gDigitalSigOutChannelsInUse;
-
-// Bela Midi
-Midi midi;
-unsigned int hvMidiHashes[7];
-// Bela Scope
-Scope scope;
-unsigned int gScopeChannelsInUse;
-float* gScopeOut;
-
 
 bool setup(BelaContext *context, void *userData)	{
 	if(context->audioInChannels != context->audioOutChannels ||
@@ -211,8 +300,8 @@ bool setup(BelaContext *context, void *userData)	{
 	// Set heavy send hook
 	hv_setSendHook(gHeavyContext, sendHook);
 
-	midi.readFrom("/dev/midi1");
-	midi.writeTo("/dev/midi1");
+	midi.readFrom("hw:1,0,0");
+	midi.writeTo("hw:1,0,0");
 	midi.enableParser(true);
 
 	if(gScopeChannelsInUse > 0){

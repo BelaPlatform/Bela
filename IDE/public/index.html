@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Bela IDE</title>
+		<link rel="stylesheet" type="text/css" href="stylesheet.css?v=1" />
+		<link rel="stylesheet" type="text/css" href="goldenlayout-base.css" />
+		<link rel="stylesheet" type="text/css" href="goldenlayout-light-theme.css" />
+		
+	</head>
+	
+	<body>
+
+
+		<!-- <div id="content"> -->
+		<div id="innerContent">
+			<!-- this is the whole left pane, the entire editor is included here: -->
+			
+			<div id="top-line">
+				<div id="top-open-file"></div>
+				<div id="top-open-project"></div>
+				<div id="top-bela-status"></div>
+				<span id="iDocsLink"></span>
+				<a id="top-example-docs-link" href="documentation/examples.html" target="_blank"><button id="top-example-docs">example docs</button></a>
+			</div>
+			
+			<pre id="editor"></pre>
+			
+			<!-- media divs -->
+			<div id="img-display-parent">
+				<img id="img-display"/>
+			</div>
+			<div id="pd-svg-parent">
+				<div id="pd-svg"></div>
+			</div>
+			<div id="audio-parent">
+				<audio id="audio" controls></audio>
+			</div>
+			
+			<!-- Here the right tabbed content starts: -->
+			<div id="right">
+				<div id="tab-parent">
+					<div class="tab" id="flexit">
+					   <input type="radio" id="exp" name="tab-group-1" checked>
+				       <label for="tab-0" id="tab-0"><span id="open-tabs" title="Open Tabs" /></label>
+				       <div class="tabContent">
+				    	</div> 
+				    </div>
+				    
+				    <div class="tab"><!-- Begin File Explorer, Tab 2 -->
+				        <input type="radio" id="tab-2" name="tab-group-1">
+				        <label for="tab-2"><span id="file-explorer" title="File Explorer" /></label>
+				        <div class="tabContent projectManager-parent fileManager-parent"> 
+				        	<!-- <div class="settingsManager-parent"> -->
+								<h1 class="tabTitle">Project Explorer</h1>
+										<h2>Open existing project:</h2>
+											<select id="projects" class="projectManager" data-func="openProject">
+												<option selected>Choose a project from your board</option>
+												
+											</select>
+									<hr class="sep" />
+
+										<h2>Manage projects:</h2>
+										<button class="button projectManager" id="new" data-func="newProject">New project</button>
+										<button class="button projectManager" id="saveas" data-func="saveAs">Save project as ...</button>
+										<button class="button projectManager" id="deleteProject" data-func="deleteProject">Delete project</button>
+										<button class="button projectManager" id="cleanProject" data-func="cleanProject">Clean project</button>
+										
+									<hr class="sep" />
+										<h2>Manage project files:</h2>
+										<button class="button fileManager" data-func="newFile">New file</button>
+										<button class="button fileManager" data-func="uploadFile" id="uploadFile">Upload file</button>
+										<a id="downloadFileLink" href="/download" download><button id="downloadFile"  class="button fileManager">Download file</button></a>
+										<button class="button fileManager" data-func="renameFile">Rename file</button>
+										<button  class="button fileManager" data-func="deleteFile">Delete file</button>
+										<input type="file" id="uploadFileInput" multiple></input>
+
+									
+									<hr class="sep" />
+										<h2>Current project files:</h2>
+										<ul id="fileList">
+										</ul>
+
+
+
+							<!-- </div> -->
+
+<!-- 							<div class="fileManager-parent"> -->
+<!-- 									<div class="proj-expl">
+										<h2 id="fileListTitle">Manage Files:</h2>
+
+									</div> -->
+						   
+						    <hr class="sep" />
+							<div class="gitManager-parent">
+							<h2>Git:</h2>
+							   <div id="noRepo">
+							   		<button class="gitManager" data-func="init">Initialise Repo</button>
+							   </div>
+							   <div id="repo" style="display:none">
+							   <table class="gitTable">
+								    <tr>
+								    	<td><button class="gitManager" data-func="command" data-command="status">Git status</button><button class="gitManager" data-func="command" data-command="log --pretty=oneline">Git log</button></td>
+								    </tr>
+
+								    <tr>
+								    	<td><select id="branches" class="gitManager" data-func="checkout"></select><button class="gitManager" data-func="branch">Create new branch</button></td>
+									</tr>
+
+									<tr>
+										<td><button class="gitManager" data-func="command" data-command="add -A">Stage all changes</button><button class="gitManager" data-func="commit" >Commit</button><button class="gitManager" data-func="command" data-command="checkout -- .">Discard changes</button></td>
+								   <!--<button class="gitManager" data-func="command" data-command="revert HEAD">revert previous commit</button>-->
+								   </tr>
+								   <tr>
+								   		<td><select id="commits" class="gitManager" data-func="checkout"></select></td>
+								   	</tr>
+
+								   	<tr>
+								   		<td><form id="gitForm" class="gitManager">
+								   		
+								   		<p>Git command: <input id="gitInput" type="text"></p>
+								   			</form>
+								   		</td>
+								   	</tr>
+								</table>
+								</div>
+							</div>				           
+				           </br></br></br>
+				        </div> 
+				    </div><!-- end File Explorer tab -->
+				    
+					<div class="tab"><!-- Start Examples, Tab 6 -->
+				       <input type="radio" id="tab-6" name="tab-group-1">
+				       <label for="tab-6"><span id="example-tab" title="Code Examples" /></label>
+				       <div class="tabContent">
+				            <h1>Code Examples</h1>
+							<h2>Open Example Project:</h2>
+							<ul class="projectManager" id="examples" data-func="openExample"></ul>
+				       </div> 
+				    </div><!-- End Examples -->
+				   
+				   	<div class="tab"><!-- Begin Project Settings, Tab 1 -->
+				        <input type="radio" id="tab-1" name="tab-group-1">
+				        <label for="tab-1"><span id="settings" title="Settings"/></label>
+				        <div id="settingsTab" class="tabContent">
+				        	<div class="settingsManager-parent">
+								<!-- TAB 1: PROJECT SETTINGS -->
+								<h1>Project Settings</h1>
+								<button class="settingsManager settings-button" data-func="restoreDefaultCLArgs">Restore defaults</button>
+
+								<table class="tabTable">
+									<tr>
+										<td>Block size (audio frames):</td>
+										<td><select id="buffer-size" class="settingsManager small" data-func="setCLArg" data-key="-p">
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
+											<option value="16">16</option>
+											<option value="32">32</option>
+											<option value="64">64</option>
+											<option value="128">128</option>
+								   			</select>
+										</td>
+									</tr>
+									<tr>
+										<td>Analog Channels:</td>
+										<td><select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
+								   		</select></td>
+								   	</tr>
+
+								   	<tr>
+									   	<td>Analog Sample Rate (Hz):</td>
+									   	<td><select id="analog-samplerate" class="settingsManager small" data-func="setCLArg" data-key="-C">
+											<option value="2">88200</option>
+											<option value="4">44100</option>
+											<option value="8">22050</option>
+									   </select></td>
+								    </tr>
+
+								    <tr>
+								    	<td>Digital Channels:</td>
+								    	<td><select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
+											<option value="2">2</option>
+											<option value="4">4</option>
+											<option value="8">8</option>
+											<option value="16">16</option>
+								   		</select></td>
+								   	</tr>
+
+								   	<tr>
+									    <td>Headphone level (dB):</td> 
+									    <td><input id="hp-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-H"></input></td>
+								    </tr>
+
+								    <tr>
+										<!-- <td>Use Analogue:</td> -->
+										<td>Use Analog:</td>
+										<td><input type="checkbox" id="use-analog" class="settingsManager" data-func="setCLArg" data-key="-N" value="1"></td>
+								   	</tr>
+								   
+								    <tr>
+								    	<td>Use Digital:</td> 
+								    	<td><input type="checkbox" id="use-digital" class="settingsManager" data-func="setCLArg" data-key="-G" value="1"><span></span></td>
+								    </tr>
+								   
+									<tr>
+										<td>Mute Speaker:</td> 
+										<td><input type="checkbox" id="mute-speaker" class="settingsManager" data-func="setCLArg" data-key="-M" value="1"></td>
+									</tr>
+									
+									<tr>
+										<td>DAC level (dB):</td> 
+										<td><input id="dac-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-D"></input></td>
+									</tr>
+									
+									<tr>
+										<td>ADC level (dB):</td>
+										<td><input id="adc-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-A"></input></td>
+									</tr>
+
+									<tr>
+										<td>PGA Gain left (dB):</td>
+										<td><input id="pga-left" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-left"></input></td>
+									</tr>
+
+									<tr>
+										<td>PGA Gain right (dB):</td>
+										<td><input id="pga-right" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-right"></input></td>
+									</tr>
+
+									<tr>
+										<td>User Command Line Arguments:</td>
+										<td><input id="user-clargs" class="settingsManager" data-func="setCLArg" type="text" data-key="user"></input></td>
+									</tr>
+
+									<tr>
+										<td>Make Parameters:</td>
+										<td><input id="make-params" class="settingsManager" data-func="setCLArg" type="text" data-key="make"></input></td>
+									</tr>
+
+								</table>
+								
+								<h1 class="tabTitle">Capelet Settings</h1>
+								
+								<table class="tabTable">
+									<tr>
+										<td>Multiplexer Capelet:</td>
+										<td><select id="multiplexer-capelet" class="settingsManager small" data-func="setCLArg" data-key="-X">
+											<option value="0">Not Used</option>
+											<option value="2">16 Channels</option>
+											<option value="4">32 Channels</option>
+											<option value="8">64 Channels</option>
+								   		</select></td>
+								   	</tr>
+								   	
+								   	<tr>
+										<td>Audio Expander Capelet:</td>
+										<td><select id="audio-expander-capelet" class="settingsManager small" data-func="useAudioExpander" data-key="audioExpander">
+											<option value="0">Not Used</option>
+											<option value="1">Active</option>
+								   		</select></td>
+								   	</tr>
+								   	
+								</table>
+								
+								<table id="audioExpanderTable">
+
+									<tr>
+										<td>Channel</td>
+										<td>Input</td>
+										<td>Output</td>
+									</tr>
+									<tr>
+										<td>0</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>1</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>2</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>3</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>4</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>5</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>6</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="output" value="0" ></td>
+									</tr>
+									<tr>
+										<td>7</td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="input" value="0" ></td>
+										<td><input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="output" value="0" ></td>
+									</tr>
+								
+								<table>
+
+								<h1 class="tabTitle">IDE Settings</h1>
+								<button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">restore defaults</button></br>
+
+								<table class="tabTable">
+
+									<tr>
+										<td>Autocomplete:</td>
+										<td><input type="checkbox" id="liveAutocompletion" class="settingsManager" data-func="setIDESetting" data-key="liveAutocompletion" value="1" ></td>
+									</tr>
+
+									<tr>
+										<td>Syntax Checking:</td>
+										<td><input type="checkbox" id="liveSyntaxChecking" class="settingsManager" data-func="setIDESetting" data-key="liveSyntaxChecking" value="1" ></td>
+									</tr>
+
+									<tr>
+										<td>Verbose build errors:</td>
+										<td><input type="checkbox" id="verboseErrors" class="settingsManager" data-func="setIDESetting" data-key="verboseErrors" value="1" ></td>
+									</tr>
+
+									<tr>
+										<td>CPU monitoring:</td>
+										<td><input type="checkbox" id="cpuMonitoring" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoring" value="1" ></td>
+									</tr>
+									
+									<tr>
+										<td>Xenomai stats:</td>
+										<td><input type="checkbox" id="cpuMonitoringVerbose" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoringVerbose" value="1" ></td>
+									</tr>
+
+									<tr>
+								  		<td>Delete old console records:</td>
+								  		<td><input type="checkbox" id="consoleDelete" class="settingsManager" data-func="setIDESetting" data-key="consoleDelete" value="1" ></td>
+									</tr>
+									
+									<tr>
+								  		<td>Highlight Bela keywords:</td>
+								  		<td><input type="checkbox" id="autoDocs" class="settingsManager" data-func="setIDESetting" data-key="autoDocs" value="1" ></td>
+									</tr>
+									
+									<tr>
+								  		<td>View hidden files:</td>
+								  		<td><input type="checkbox" id="viewHiddenFiles" class="settingsManager" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" ></td>
+									</tr>
+
+									<!--<tr>
+										<td>Verbose debugger output:</td>
+										<td><input type="checkbox" id="verboseDebug" class="settingsManager" data-func="setIDESetting" data-key="verboseDebug" value="1" ></td>
+									</tr>-->
+									<tr>
+										<td>Run project on boot:</td>
+										<td><select id="runOnBoot"></select></td>
+									</tr>
+								</table>
+
+								<h2>Other system functions</h2>
+								<table class="tabTable">
+									<tr>
+										<td>Shut down Beaglebone:</td>
+										<td><button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button></td>
+									</tr>
+									<tr>
+										<td>Download entire projects directory:</td>
+										<td><a href="download?all=all" download><button class="settingsManager">Download All</button></a></td>
+									</tr>
+									<tr>
+										<td>Upload an update patch:</td>
+										<td><button class="settingsManager" data-func="updateBela">Update Bela</button></td>
+									</tr>
+									<tr>
+										<td>Credits and info:</td>
+										<td><button class="settingsManager" data-func="aboutPopup">About Bela</button></td>
+									</tr>
+								</table>							
+						
+							</div><!-- end settingsManager-parent -->
+				        </div> <!-- end tabContent -->
+				    </div><!-- end Project Settings tab -->
+<!--
+				    <div class="tab" >begin Debugger, Tab 3 -->
+						<!-- <input type="radio" id="tab-3" name="tab-group-1">
+						<label for="tab-3"><span id="debugger" title="Debugger" /></label>
+						<div class="tabContent debugger-parent">
+						<h1>Debugger settings</h1>
+						
+						<table class="debug-table">
+							<tr>
+				           		<td><p>Debug mode:</p></td>
+				           		<td><select id="debugMode" class="debugger  small" data-func="debugMode">
+				           		<option value="1"></option>
+				           		<option value="0" selected>Off</option>
+				           		</select>
+							</td>
+							</tr>
+						</table>
+
+
+						<table class="debug-table tabTable">
+							<tr>
+								<td><p>Debugger status:</p></td>
+								<td><span id="debuggerStatus" class="debugger"><p>inactive</p></span></td>
+							</tr>
+
+							<tr>
+								<td>Location:</td>
+								<td><span id="debuggerLocation" class="debugger">n/a</span></td>
+							</tr>
+						</table>
+
+						<div class="debug-buttons">
+							<button id="debugContinue" class="debugger" data-func="debugContinue">Continue</button>
+							<button id="debugStep" class="debugger" data-func="debugStep">Step into</button>
+							<button id="debugNext" class="debugger" data-func="debugNext">Step over</button>
+							<button id="debugFinish" class="debugger" data-func="debugFinish">Step out</button>
+							<button id="debugInterrupt" class="debugger" data-func="debugInterrupt">Interrupt</button>
+						</div>
+				           <div id="listContainer" class="debugger">
+								<ul id="expList">
+							   </ul>
+							</div>
+							</br></br>
+							<div id="backtraceContainer" class="debugger">
+								<ul id="backtraceList"></ul>
+							</div>
+							</br></br></br>
+				       </div> 
+				   </div> --><!-- End debugger tab -->
+
+				   	<div class="tab"><!-- Start GPIO, Tab 4 -->
+				       <input type="radio" id="tab-4" name="tab-group-1">
+				       <label for="tab-4"><span id="gpio-ref" title="Pin Diagram" /></label>
+				       <div class="tabContent">
+				            <h1>Pin Diagram</h1>
+							<object data="diagram.html"> 
+    							Your browser doesn’t support the object tag. 
+							</object>
+				       </div> 
+				    </div><!-- End GPIO -->
+
+				    <div class="tab"><!-- Start Doc, Tab 5 -->
+				       <input type="radio" id="tab-5" name="tab-group-1">
+				       <label for="tab-5"><span id="api-ref" title="API Reference" /></label>
+				       <div id="docTab" class="tabContent">
+				           <h1>Documentation</h1>
+				           <a href="documentation" target="_blank"><button class="doc-button">Full documentation</button></a>
+				           <ul id="docsParent" class="sections">
+				           		<li>
+				           			<input type="checkbox" class="docs" id="tit0">
+									<label for="tit0" class="docSectionHeader">The Bela Context</label>
+									<ul id="contextDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit1">
+									<label for="tit1" class="docSectionHeader">The API</label>
+									<ul id="APIDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit2">
+									<label for="tit2" class="docSectionHeader">Utilities</label>
+									<ul id="utilityDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit3">
+									<label for="tit3" class="docSectionHeader">The Scope</label>
+									<ul id="ScopeDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit4">
+									<label for="tit4" class="docSectionHeader">OSC Server</label>
+									<ul id="OSCServerDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit5">
+									<label for="tit5" class="docSectionHeader">OSC Client</label>
+									<ul id="OSCClientDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit6">
+									<label for="tit6" class="docSectionHeader">OSC Message Factory</label>
+									<ul id="OSCMessageFactoryDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit7">
+									<label for="tit7" class="docSectionHeader">UDP Server</label>
+									<ul id="UdpServerDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit8">
+									<label for="tit8" class="docSectionHeader">UDP Client</label>
+									<ul id="UdpClientDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit9">
+									<label for="tit9" class="docSectionHeader">Midi</label>
+									<ul id="MidiDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit10">
+									<label for="tit10" class="docSectionHeader">Midi Parser</label>
+									<ul id="MidiParserDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit11">
+									<label for="tit11" class="docSectionHeader">WriteFile data logging</label>
+									<ul id="WriteFileDocs" class="subsections">
+									</ul>
+								</li>
+							</ul>
+				       </div><!-- Xenomai --> 
+				    </div><!-- end Doc tab -->
+				    
+				</div><!-- end tabs -->
+			</div> <!-- end right -->
+
+			<!-- TOOLBAR -->
+			<div id="toolbar">
+				<div class="toolbar-wrapper toolBar-parent">
+					<div class="toolbar-control">	 
+						<div class="control-button-runstop toolBar" id="run" data-func="run"></div>
+						<div class="control-button-runstop toolBar" id="stop" data-func="stop"></div>
+						<span id="control-text-1" class="control-text"></span>
+					</div>
+					<div class="toolbar-control">	 
+						<a target="_blank" href=""><div class="control-button" id="new-tab"></div></a>
+						<a id="downloadLink"><div class="control-button" id="download"></div></a>
+						<span id="control-text-2" class="control-text"></span>
+					</div>
+					<div class="toolbar-control">	 
+						<a target="_blank" href="scope"><div class="control-button" id="scope"></div></a>
+						<div class="control-button toolBar" id="console" data-func="clearConsole"></div>
+						<span id="control-text-3" class="control-text"></span>
+					</div>
+					<!-- This is the field for system status text -->
+					<div class="toolbar-control control-text">	
+						<span class="status-text" style="display:none" >Field 1</span> 
+						<span id="ide-cpu" class="status-text"></span>
+						<span id="bela-cpu" class="status-text"></span>
+						<span id="msw-cpu" class="status-text" title="audio-thread modeswitches"></span>
+					</div>
+
+					<!-- This is the image that signifies the status of syntax checking -->
+					<div id="status">
+					</div>
+
+					<!-- This is the Bela logo -->
+					<div id="logo">
+						<img src="images/logo_bar14.png">
+					</div><!-- end logo -->
+
+				</div><!-- end toolbar wrapper -->
+			</div> <!-- end toolbar -->
+
+		</div> <!-- end innerContent -->
+
+		<div id="beaglert-console">
+			<div id="beaglert-consoleWrapper"></div>
+			<form id="beaglert-consoleForm">
+				<div id="beaglert-console-inputLeft">
+					<div id="beaglert-consoleInput-pre"></div>
+				</div>
+				<div id="beaglert-console-inputRight">
+					<input id="beaglert-consoleInput" type="text" autocomplete="off" />
+				</div>
+				<input type="submit" style="visibility: hidden; display: none;" />
+			</form>
+		</div>
+		
+		<div id="overlay">
+		</div>
+		<div id="popup">
+			<div id="popup-content">
+				<h1></h1>
+				<p></p>
+				<form></form>
+			</div>
+		</div>
+
+		<script src="js/ace/ace.js"></script>
+		<script src="js/ace/ext-language_tools.js"></script>
+		<script src="socket.io/socket.io.js"></script>
+		<script src="js/jquery.js"></script>
+		<script src="js/keypress.js"></script>
+		<script src="js/pd-fileutils.js"></script>
+		<script src="js/goldenlayout.js"></script>
+		<script src="js/polyfill.js"></script>
+		<script src="js/bundle.js"></script>
+		<script>
+			TokenIterator = require("ace/token_iterator").TokenIterator;
+		</script>
+
+	</body>
+	
+</html>
