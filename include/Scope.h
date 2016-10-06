@@ -61,7 +61,7 @@ class Scope{
          *
          * @param values a pointer to an array containing numChannels values.
          */
-        void log(float* values);
+        void log(const float* values);
         
         /** 
          * \brief Cause the scope to trigger when set to custom trigger mode.
