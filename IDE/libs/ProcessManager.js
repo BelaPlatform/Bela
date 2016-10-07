@@ -9,6 +9,7 @@ var execFile = require('child_process').execFile;
 var treeKill = require('tree-kill');
 var pusage = Promise.promisifyAll(require('pidusage'));
 var fs = Promise.promisifyAll(require('fs-extra'));
+var toobusy = require('toobusy-js');
 
 var DebugManager = require('./DebugManager');
 
@@ -41,10 +42,11 @@ class ProcessManager extends EventEmitter {
 		if (data.currentProject && data.newFile && data.fileData){
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
-					if (data.checkSyntax) this.checkSyntax(project)
+					console.log(toobusy());
+					if (!toobusy() && data.checkSyntax) this.checkSyntax(project)
 				});
 		} else {
-			if (data.checkSyntax) this.checkSyntax(project);
+			if (!toobusy() && data.checkSyntax) this.checkSyntax(project);
 		}
 		
 		return syntaxCheckProcess;
