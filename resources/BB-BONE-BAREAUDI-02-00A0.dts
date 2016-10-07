@@ -18,6 +18,7 @@
 	/* state the resources this cape uses */
 	exclusive-use =
 		/* the pin header uses */
+		"P9.15",        /* SPI chip select line for the ADC */
 		"P9.31",	/* mcasp0: mcasp0_aclkx */
 		"P9.29",	/* mcasp0: mcasp0_fsx */
 		"P9.28",	/* mcasp0: mcasp0_axr2 */
@@ -39,6 +40,7 @@
 
 			bone_audio_cape_audio_pins: pinmux_bone_audio_cape_audio_pins {
 				pinctrl-single,pins = <
+					0x040 0x27      /* SPI chip select line for the ADC */
 					0x1ac 0x00      /* mcasp0_ahclkx,             MODE0 | INPUT */
 					0x19c 0x22		/* mcasp0_ahclkr, */
 					0x194 0x20      /* mcasp0_fsx,         	      MODE0 | OUTPUT  */
