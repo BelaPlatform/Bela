@@ -371,14 +371,14 @@ socket.on('force-reload', () => window.location.reload(true) );
 var compareFilesInterval, wrongCompares = 0;
 function setCompareFilesInterval(){
 	if (compareFilesInterval) clearInterval(compareFilesInterval);
-	compareFilesInterval = setInterval( () => {
+	/*compareFilesInterval = setInterval( () => {
 		socket.emit('project-event', {
 			func: 'openFile', 
 			newFile: models.project.getKey('fileName'), 
 			currentProject: models.project.getKey('currentProject'),
 			fileCompare: true
 		});
-	}, 5000);
+	}, 5000);*/
 }
 setCompareFilesInterval();
 
