@@ -42,11 +42,16 @@ class ProcessManager extends EventEmitter {
 		if (data.currentProject && data.newFile && data.fileData){
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
-					console.log(toobusy());
-					if (!toobusy() && data.checkSyntax) this.checkSyntax(project)
+					if (toobusy())
+						console.log('toobusy: syntax check');
+					else if (data.checkSyntax) 
+						this.checkSyntax(project);
 				});
 		} else {
-			if (!toobusy() && data.checkSyntax) this.checkSyntax(project);
+			if (toobusy())
+				console.log('toobusy: syntax check');
+			else if (data.checkSyntax) 
+				this.checkSyntax(project);
 		}
 		
 		return syntaxCheckProcess;
@@ -137,8 +142,8 @@ class ProcessManager extends EventEmitter {
 			
 		this.emptyAllQueues();
 		
-		if (data.debug) 
-			DebugManager.stop();
+		/*if (data.debug) 
+			DebugManager.stop();*/
 	}
 	
 	rebuild(project){
@@ -195,7 +200,12 @@ class ProcessManager extends EventEmitter {
 		
 		// build events
 		buildProcess.on('started', () => this.emit('status', buildProcess.project, this.getStatus()) );
-		buildProcess.on('stdout', (data) => this.emit('status', buildProcess.project, {buildLog: data}) );
+		buildProcess.on('stdout', (data) => {
+			if (toobusy())
+				console.log('toobusy!');
+			else
+				this.emit('status', buildProcess.project, {buildLog: data});
+		});
 		//buildProcess.on('stderr', (data) => this.emit('status', {buildLog: data}) );
 		buildProcess.on('cancelled', (data) => {
 		
