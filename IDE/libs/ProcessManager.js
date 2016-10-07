@@ -44,14 +44,19 @@ class ProcessManager extends EventEmitter {
 				.then( () => {
 					if (toobusy())
 						console.log('toobusy: syntax check');
-					else if (data.checkSyntax) 
+					else if (data.checkSyntax){
 						this.checkSyntax(project);
+						// callback to get time of file upload
+						if (data.callback) data.callback();
+					}
 				});
 		} else {
 			if (toobusy())
 				console.log('toobusy: syntax check');
-			else if (data.checkSyntax) 
+			else if (data.checkSyntax){
 				this.checkSyntax(project);
+				if (data.callback) data.callback();
+			}
 		}
 		
 		return syntaxCheckProcess;

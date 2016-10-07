@@ -475,13 +475,13 @@ editorView.on('upload', function (fileData) {
 		fileData: fileData,
 		checkSyntax: parseInt(models.settings.getKey('liveSyntaxChecking'))
 	});
-	setCompareFilesInterval();
 });
 editorView.on('check-syntax', function () {
 	if (parseInt(models.settings.getKey('liveSyntaxChecking'))) {
 		socket.emit('process-event', {
 			event: 'checkSyntax',
-			currentProject: models.project.getKey('currentProject')
+			currentProject: models.project.getKey('currentProject'),
+			newFile: models.project.getKey('fileName')
 		});
 	}
 });
@@ -529,7 +529,10 @@ editorView.on('highlight-syntax', function (names) {
 	return socket.emit('highlight-syntax', names);
 });
 editorView.on('compare-files', function (compare) {
-	if (compare && !models.project.getKey('readOnly')) setCompareFilesInterval();else if (!compare && compareFilesInterval) clearInterval(compareFilesInterval);
+	/*if (compare && !models.project.getKey('readOnly'))
+ 	setCompareFilesInterval();
+ else if (!compare && compareFilesInterval)
+ 	clearInterval(compareFilesInterval);*/
 });
 
 // toolbar view
@@ -678,16 +681,13 @@ socket.on('project-data', function (data) {
 		debug = data.debug;
 		data.debug = undefined;
 	}
-	if (data.fileCompare) {
-		compareFile(data);
-		return;
-	}
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
-	if (debug) {
-		models.debug.setData(debug);
-	}
+	/*if (debug){
+ 	models.debug.setData(debug);
+ }*/
 	if (data.gitData) models.git.setData(data.gitData);
+	setModifiedTimeInterval(data.mtime);
 	//console.log(data);
 	//models.settings.setData(data.settings);
 	//models.project.print();
@@ -804,37 +804,27 @@ socket.on('force-reload', function () {
 	return window.location.reload(true);
 });
 
-var compareFilesInterval,
-    wrongCompares = 0;
-function setCompareFilesInterval() {
-	if (compareFilesInterval) clearInterval(compareFilesInterval);
-	/*compareFilesInterval = setInterval( () => {
- 	socket.emit('project-event', {
- 		func: 'openFile', 
- 		newFile: models.project.getKey('fileName'), 
- 		currentProject: models.project.getKey('currentProject'),
- 		fileCompare: true
- 	});
- }, 5000);*/
-}
-setCompareFilesInterval();
-
-var wrongCompares = 0;
-function compareFile(data) {
+socket.on('mtime', setModifiedTimeInterval);
+socket.on('mtime-compare', function (data) {
 	if (data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
-		if (data.fileData !== editorView.getData()) {
-			console.log('filedata', data.fileData);
-			console.log('editorData', editorView.getData());
-			wrongCompares += 1;
-			if (wrongCompares >= 2) {
-				// twice in a row
-				fileChangedPopup(data.fileName);
-				wrongCompares = 0;
-			}
-		} else {
-			wrongCompares = 0;
-		}
+		// console.log(data, data.fileData, editorView.getData());
+		if (data.fileData !== editorView.getData()) fileChangedPopup(data.fileName);
 	}
+});
+
+var checkModifiedTimeInterval;
+function setModifiedTimeInterval(mtime) {
+	// console.log('received mtime', mtime);
+	if (checkModifiedTimeInterval) clearInterval(checkModifiedTimeInterval);
+	if (!mtime) return;
+	checkModifiedTimeInterval = setInterval(function () {
+		// console.log('sent compare-mtime', mtime);
+		socket.emit('compare-mtime', {
+			currentProject: models.project.getKey('currentProject'),
+			fileName: models.project.getKey('fileName'),
+			mtime: mtime
+		});
+	}, 5000);
 }
 
 // current file changed
