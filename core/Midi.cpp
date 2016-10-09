@@ -92,7 +92,9 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 
 
 Midi::Midi() : 
-alsaIn(NULL), alsaOut(NULL), inId(NULL), outId(NULL), outPipeName(NULL) {
+defaultPort("hw:1,0,0"),
+alsaIn(NULL), alsaOut(NULL), inId(NULL), outId(NULL), outPipeName(NULL)
+{
 	inputParser = 0;
 	size_t inputBytesInitialSize = 1000;
 	inputBytes.resize(inputBytesInitialSize);
@@ -220,6 +222,9 @@ void Midi::writeOutputLoop(void* obj){
 }
 
 int Midi::readFrom(const char* port){
+	if(port == NULL){
+		port = defaultPort;
+	}
 	int size = snprintf(inId, 0, "bela-midiIn_%s", port);
 	inId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(inId, size + 1, "bela-midiIn_%s", port);
@@ -232,13 +237,16 @@ int Midi::readFrom(const char* port){
 			rt_fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
 		return -1;
 	}
-	rt_printf("Reading from Alsa midi device %s\n", port);
+	rt_printf("Reading from ALSA MIDI device %s\n", port);
 	midiInputTask = Bela_createAuxiliaryTask(Midi::readInputLoop, 50, inId, (void*)this);
 	Bela_scheduleAuxiliaryTask(midiInputTask);
 	return 1;
 }
 
 int Midi::writeTo(const char* port){
+	if(port == NULL){
+		port = defaultPort;
+	}
 	int size = snprintf(outId, 0, "bela-midiOut_%s", port);
 	outId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(outId, size + 1, "bela-midiOut_%s", port);
@@ -267,6 +275,7 @@ int Midi::writeTo(const char* port){
 		return -1;
 	}
 	Bela_scheduleAuxiliaryTask(midiOutputTask);
+	rt_printf("Writing to ALSA MIDI device %s\n", port);
 	return 1;
 }
 
