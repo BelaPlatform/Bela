@@ -155,16 +155,24 @@ function socketEvents(socket){
 	// process events
 	socket.on('process-event', (data) => {
 	
-		//console.log('process-event', data);
+		// console.log('process-event', data);
 		
 		if (!data || !data.currentProject || !data.event || !ProcessManager[data.event]){
 			console.log('bad process-event', data);
 			return;
 		}
 
-		if (data.event === 'upload' && data.fileData && !data.fileCompare){
+		if (data.event === 'upload' && data.newFile){
 			// notify other browser tabs that the file has been updated
-			socket.broadcast.emit('file-changed', data.currentProject, data.newFile);
+			if (data.fileData) socket.broadcast.emit('file-changed', data.currentProject, data.newFile);
+			// add on a callback to return the file's uploaded time to the browser
+			data.callback = function(){
+				fs.statAsync(belaPath+'projects/'+data.currentProject+'/'+data.newFile)
+					.then( stat => {
+						if (stat && stat.mtime) socket.emit('mtime', stat.mtime.toString());
+					})
+					.catch ( e => console.log('error stat-ing file after upload', e) );
+			};
 		}
 		
 		ProcessManager[data.event](data.currentProject, data);
@@ -300,6 +308,18 @@ function socketEvents(socket){
 			.then( file => fs.writeFileAsync(belaPath+'IDE/public/js/ace/mode-c_cpp.js', file) )
 			.then( () => socket.emit('syntax-highlighted') )
 			.catch( e => console.log('highlight-syntax error', e) );
+	});
+	
+	socket.on('compare-mtime', data => {
+		
+		if (!data.currentProject || !data.fileName || !data.mtime) return;
+		
+		co(ProjectManager, 'checkModifiedTime', data)
+			.then((result) => {
+				if (!data.abort) socket.emit('mtime-compare', data);
+			})
+			.catch( e => console.log('error checking modified time', e) );
+			
 	});
 
 }

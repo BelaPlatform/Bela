@@ -16,12 +16,19 @@ class SyntaxCheckProcess extends MakeProcess{
 	
 	constructor(){
 		super('syntax');
+		this.readingCLArgs = false;
 	}
 	
 	start(project){
-				
+	
+		if (this.readingCLArgs) return;	
+		this.readingCLArgs = true;
+		
+		//console.log('getting clargs');
 		_co(ProjectManager, 'getCLArgs', project)
 			.then( (CLArgs) => {
+				//console.log('got clargs');
+				this.readingCLArgs = false;
 				this.active = false;
 				super.start(project, undefined, CLArgs.make);
 			});

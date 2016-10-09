@@ -156,6 +156,7 @@ module.exports = {
 		
 			try{
 				let fileData = yield fs.readFileAsync(projectDir + data.newFile, 'utf8');
+				let stat = yield fs.statAsync(projectDir + data.newFile);
 				//.then( fileData => {
 				
 				// newFile was opened succesfully
@@ -167,6 +168,7 @@ module.exports = {
 				data.fileName = data.newFile;
 				data.newFile = undefined;
 				data.fileType = ext;
+				if (stat && stat.mtime && stat.mtime.toString) data.mtime = stat.mtime.toString();
 					
 				//})
 			}
@@ -240,7 +242,7 @@ module.exports = {
 						// the file is image or audio
 						data.fileData = '';
 						data.fileType = fileTypeData.mime;
-						
+												
 						data.readOnly = true;
 						
 						yield new Promise.coroutine(makeSymLink)(projectDir + data.newFile, mediaPath + data.newFile);
@@ -251,6 +253,8 @@ module.exports = {
 						
 							// the file is (probably) binary and can't be displayed in the IDE
 							console.log(data.newFile, 'is binary');
+							
+							if (stat && stat.mtime && stat.mtime.toString) data.mtime = stat.mtime.toString();
 							
 							// return an error
 							data.error = "can't open binary files";
@@ -267,6 +271,8 @@ module.exports = {
 							data.fileData = fileData.toString();
 							data.readOnly = false;
 							data.fileType = ext || 0;
+							
+							if (stat && stat.mtime && stat.mtime.toString) data.mtime = stat.mtime.toString();
 							
 						}
 					}
@@ -442,6 +448,18 @@ module.exports = {
 	*getCLArgs(project){
 		var settings = yield _getSettings(project);
 		return settings.CLArgs;
+	},
+	
+	*checkModifiedTime(data){
+		let stat = yield fs.statAsync(projectPath+data.currentProject+'/'+data.fileName);
+		// console.log(stat.mtime.toString(), data.mtime, (stat.mtime.toString() == data.mtime), typeof stat.mtime.toString(), typeof data.mtime);
+		if (stat.mtime.toString() == data.mtime)
+			data.abort = true;
+		else {
+			data.mtime = stat.mtime.toString();
+			data = yield _co(this, 'openFile', data);
+		}
+		return data;
 	},
 	
 	listFiles(project){
