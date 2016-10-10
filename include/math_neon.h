@@ -132,13 +132,32 @@ extern "C" {
 #define dot4_neon		dot4_neon_sfp
 #endif
 
-/*
-function:	enable_runfast
-			this function enables the floating point runfast mode on the 
-			ARM Cortex A8.  	
+#ifdef __cplusplus
+extern "C" {
+#endif
+/**
+this function enables the floating point runfast mode on the 
+ARM Cortex A8.  	
 */
 void		enable_runfast();
 
+/**
+this function disables the floating point runfast mode on the 
+ARM Cortex A8 vfp unit.
+*/
+void		disable_runfast();
+
+/**
+this function reads the fpscr register of the vfp unit on the
+ARM Cortex A8.
+*/
+unsigned int read_fpscr();
+
+/**
+this function checks whether the floating point runfast mode on the 
+ARM Cortex A8 vfp unit is currently active.
+*/
+int is_runfast();
 
 float dot2_c(float v0[2], float v1[2]);
 float dot2_neon(float v0[2], float v1[2]);
@@ -158,8 +177,6 @@ void normalize4_c(float v[4], float d[4]);
 void normalize4_neon(float v[4], float d[4]);
 
 /**
-function:	matmul2
-
 arguments:  m0 2x2 matrix, m1 2x2 matrix
 
 return: 	d 2x2 matrix
@@ -170,8 +187,6 @@ void		matmul2_neon(float m0[4], float m1[4], float d[4]);
 void		matmul2_c(float m0[4], float m1[4], float d[4]);
 
 /**
-function:	matmul3
-
 arguments:  m0 3x3 matrix, m1 3x3 matrix
 
 return: 	d 3x3 matrix
@@ -182,8 +197,6 @@ void		matmul3_neon(float m0[9], float m1[9], float d[9]);
 void		matmul3_c(float m0[9], float m1[9], float d[9]);
 
 /**
-function:	matmul4
-
 arguments:  m0 4x4 matrix, m1 4x4 matrix
 
 return: 	d 4x4 matrix
@@ -194,8 +207,6 @@ void		matmul4_neon(float m0[16], float m1[16], float d[16]);
 void		matmul4_c(float m0[16], float m1[16], float d[16]);
 
 /**
-function:	matvec2
-
 arguments:  m 2x2 matrix, v 2 element vector
 
 return: 	d 2x2 matrix
@@ -206,7 +217,6 @@ void		matvec2_neon(float m[4], float v[2], float d[2]);
 void		matvec2_c(float m[4], float v[2], float d[2]);
 
 /**
-function:	matvec3
 
 arguments:  m 3x3 matrix, v 3 element vector
 
@@ -218,7 +228,6 @@ void		matvec3_neon(float m[9], float v[3], float d[3]);
 void		matvec3_c(float m[9], float v[3], float d[3]);
 
 /**
-function:	matvec4
 
 arguments:  m 4x4 matrix, v 4 element vector
 
@@ -230,7 +239,6 @@ void		matvec4_neon(float m[16], float v[4], float d[4]);
 void		matvec4_c(float m[16], float v[4], float d[4]);
 
 /**
-function:	sinf
 
 arguments:  x radians
 
@@ -243,7 +251,6 @@ float 		sinf_c(float x);
 float 		sinf_neon_sfp(float x);
 
 /**
-function:	cosf
 
 arguments:  x radians
 
@@ -258,7 +265,6 @@ float 		cosf_c(float x);
 float 		cosf_neon_sfp(float x);
 
 /**
-function:	sincosf
 
 arguments:  x radians, r[2] result array.
 
@@ -273,22 +279,6 @@ void		sincosf_c(float x, float r[2]);
 void		sincosf_neon_sfp(float x, float r[2]);
 
 /**
-function:	sinfv
-
-return: 	the sine function evaluated at x[i] radians 	
-
-expression: r[i] = sin(x[i])	
-
-notes:		faster than evaluating individually.
-			r and x can be the same memory location.
-* 
-* BROKEN --- DO NOT USE THIS FUNCTION
-*/
-void  		sinfv_neon(float *x, int n, float *r);
-void		sinfv_c(float *x, int n, float *r);
-
-/**
-function:	tanf
 
 return: 	the tangent evaluated at x radians.	
 
@@ -301,7 +291,6 @@ float 		tanf_c(float x);
 float 		tanf_neon_sfp(float x);
 
 /**
-function:	atanf
 
 return: 	the arctangent evaluated at x.	
 
@@ -312,7 +301,6 @@ float 		atanf_c(float x);
 float 		atanf_neon_sfp(float x);
 
 /**
-function:	atanf
 
 return: 	the arctangent evaluated at x.	
 
@@ -323,7 +311,6 @@ float 		atan2f_c(float y, float x);
 float 		atan2f_neon_sfp(float y, float x);
 
 /**
-function:	asinf
 
 return: 	the arcsine evaluated at x.	
 
@@ -334,7 +321,6 @@ float 		asinf_c(float x);
 float 		asinf_neon_sfp(float x);
 
 /**
-function:	acosf
 
 return: 	the arcsine evaluated at x.	
 
@@ -345,7 +331,6 @@ float 		acosf_c(float x);
 float 		acosf_neon_sfp(float x);
 
 /**
-function:	sinhf
 
 return: 	the arcsine evaluated at x.	
 
@@ -356,7 +341,6 @@ float 		sinhf_c(float x);
 float 		sinhf_neon_sfp(float x);
 
 /**
-function:	coshf
 
 return: 	the arcsine evaluated at x.	
 
@@ -367,7 +351,6 @@ float 		coshf_c(float x);
 float 		coshf_neon_sfp(float x);
 
 /**
-function:	tanhf
 
 return: 	the arcsine evaluated at x.	
 
@@ -378,7 +361,6 @@ float 		tanhf_c(float x);
 float 		tanhf_neon_sfp(float x);
 
 /**
-function:	expf
 
 return: 	the natural exponential evaluated at x.	
 
@@ -389,7 +371,6 @@ float 		expf_c(float x);
 float 		expf_neon_sfp(float x);
 
 /**
-function:	logf
 
 return: 	the value of the natural logarithm of x.	
 
@@ -402,7 +383,6 @@ float 		logf_c(float x);
 float 		logf_neon_sfp(float x);
 
 /**
-function:	log10f
 
 return: 	the value of the power 10 logarithm of x.	
 
@@ -415,7 +395,6 @@ float 		log10f_c(float x);
 float 		log10f_neon_sfp(float x);
 
 /**
-function:	powf
 
 return: 	x raised to the power of n, x ** n.
 
@@ -423,24 +402,22 @@ expression: r = x ** y
 
 notes:		computed using e ** (y * ln(x))
 */
-float 		powf_neon_sfp(float x, float n);
-float 		powf_c(float x, float n);
 float 		powf_neon_hfp(float x, float n);
+float 		powf_c(float x, float n);
+float 		powf_neon_sfp(float x, float n);
 
 /**
-function:	floorf
 
 return: 	x rounded down (towards negative infinity) to its nearest 
 			integer value.	
 
 notes:		assumes |x| < 2 ** 31
 */
-float 		floorf_neon_sfp(float x);
-float 		floorf_c(float x);
 float 		floorf_neon_hfp(float x);
+float 		floorf_c(float x);
+float 		floorf_neon_sfp(float x);
 
 /**
-function:	ceilf
 
 return: 	x rounded up (towards positive infinity) to its nearest 
 			integer value.	
@@ -452,7 +429,6 @@ float 		ceilf_c(float x);
 float 		ceilf_neon_sfp(float x);
 
 /**
-function:	fabsf
 
 return: 	absolute vvalue of x	
 
@@ -463,7 +439,6 @@ float 		fabsf_neon_hfp(float x);
 float 		fabsf_neon_sfp(float x);
 
 /**
-function:	ldexpf
 
 return: 	the value of m multiplied by 2 to the power of e. 
 
@@ -474,7 +449,6 @@ float 		ldexpf_c(float m, int e);
 float 		ldexpf_neon_sfp(float m, int e);
 
 /**
-function:	frexpf
 
 return: 	the exponent and mantissa of x 
 */
@@ -483,7 +457,6 @@ float 		frexpf_c(float x, int *e);
 float 		frexpf_neon_sfp(float x, int *e);
 
 /**
-function:	fmodf
 
 return: 	the remainder of x divided by y, x % y	
 
@@ -496,7 +469,6 @@ float 		fmodf_c(float x, float y);
 float 		fmodf_neon_sfp(float x, float y);
 
 /**
-function:	modf
 
 return: 	breaks x into the integer (i) and fractional part (return)
 
@@ -507,7 +479,6 @@ float 		modf_c(float x, int *i);
 float 		modf_neon_sfp(float x, int *i);
 
 /**
-function:	sqrtf
 
 return: 	(x^0.5)
 
@@ -519,7 +490,6 @@ float 		sqrtf_neon_sfp(float x);
 
 
 /**
-function:	invsqrtf
 
 return: 	1.0f / (x^0.5)
 
@@ -528,6 +498,46 @@ notes:
 float 		invsqrtf_neon_hfp(float x);
 float 		invsqrtf_c(float x);
 float 		invsqrtf_neon_sfp(float x);
+
+/**
+return: 	the sine function evaluated at x[i] radians 	
+
+expression: r[i] = sin(x[i])	
+
+notes:		faster than evaluating individually.
+			r and x can be the same memory location.
+
+			When compiled with clang,
+			sinfv_c() optimizes groups of 8 samples but is 
+			very slow on any exceeding samples.
+			sinfv_neon() optimizes groups of 4 samples but for 
+			large numbers is over 10% slower than sinfv_c()
+			
+			For n smaller than 4, use sinf_neon() instead
+*/
+void		sinfv_c(float *x, int n, float *r);
+
+/**
+ * Same as sinfv_c()
+ */
+void  		sinfv_neon(float *x, int n, float *r);
+
+// example of using DISTRIBUTE_GROUP_DOC : 
+// // we could also add //!@name add the beginning
+//
+//@{
+//!return: 	the sqrtf function evaluated at x[i]
+//!
+//!expression: r[i] = (x[i])^0.5	
+//!
+//!notes:		faster than evaluating individually.
+//!			r and x can be the same memory location.
+//!			the _c version is slightly faster but less accurate
+//!			than the _neon version
+//!
+void		sqrtfv_c(float *x, int n, float *r);
+void  		sqrtfv_neon(float *x, int n, float *r);
+//@}
 
 #if defined(__cplusplus)
 } /* extern "C" */
