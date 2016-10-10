@@ -170,7 +170,7 @@ void Scope::setPlotMode(){
 // printf("exited setPlotMode\n");
 }
 
-void Scope::log(float* values){
+void Scope::log(const float* values){
 	if (!prelog()) return;
 	if(isResizing)
 		return;

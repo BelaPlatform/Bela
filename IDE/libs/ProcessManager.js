@@ -9,6 +9,7 @@ var execFile = require('child_process').execFile;
 var treeKill = require('tree-kill');
 var pusage = Promise.promisifyAll(require('pidusage'));
 var fs = Promise.promisifyAll(require('fs-extra'));
+var toobusy = require('toobusy-js');
 
 var DebugManager = require('./DebugManager');
 
@@ -41,10 +42,21 @@ class ProcessManager extends EventEmitter {
 		if (data.currentProject && data.newFile && data.fileData){
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
-					if (data.checkSyntax) this.checkSyntax(project)
+					if (toobusy())
+						console.log('toobusy: syntax check');
+					else if (data.checkSyntax){
+						this.checkSyntax(project);
+						// callback to get time of file upload
+						if (data.callback) data.callback();
+					}
 				});
 		} else {
-			if (data.checkSyntax) this.checkSyntax(project);
+			if (toobusy())
+				console.log('toobusy: syntax check');
+			else if (data.checkSyntax){
+				this.checkSyntax(project);
+				if (data.callback) data.callback();
+			}
 		}
 		
 		return syntaxCheckProcess;
@@ -135,8 +147,8 @@ class ProcessManager extends EventEmitter {
 			
 		this.emptyAllQueues();
 		
-		if (data.debug) 
-			DebugManager.stop();
+		/*if (data.debug) 
+			DebugManager.stop();*/
 	}
 	
 	rebuild(project){
@@ -193,7 +205,12 @@ class ProcessManager extends EventEmitter {
 		
 		// build events
 		buildProcess.on('started', () => this.emit('status', buildProcess.project, this.getStatus()) );
-		buildProcess.on('stdout', (data) => this.emit('status', buildProcess.project, {buildLog: data}) );
+		buildProcess.on('stdout', (data) => {
+			if (toobusy())
+				console.log('toobusy!');
+			else
+				this.emit('status', buildProcess.project, {buildLog: data});
+		});
 		//buildProcess.on('stderr', (data) => this.emit('status', {buildLog: data}) );
 		buildProcess.on('cancelled', (data) => {
 		
