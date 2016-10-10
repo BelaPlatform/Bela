@@ -162,8 +162,8 @@ void Midi::readInputLoop(void* obj){
 		);
 		if(ret < 0){
 			// read() would return EAGAIN when no data are available to read just now
-			if(errno != EAGAIN){ 
-				fprintf(stderr, "Error while reading midi %d\n", errno);
+			if(-ret != EAGAIN){ 
+				fprintf(stderr, "Error while reading midi %s\n", strerror(-ret));
 			}
 			continue;
 		}
@@ -292,7 +292,7 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 		int status;
 		sprintf(name, "hw:%d", card);
 		if ((status = snd_ctl_open(&ctl, name, 0)) < 0) {
-			error("cannot open control for card %d: %s", card, snd_strerror(status));
+			error("cannot open control for card %d: %s\n", card, snd_strerror(status));
 			return;
 		}
 		do {
