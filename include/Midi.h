@@ -313,29 +313,29 @@ public:
 	/**
 	 * Writes a Midi byte to the output port
 	 * @param byte the Midi byte to write
-	 * @return 1 on success, -1 on error
+	 * @return 1 on success, 0 if output is not enabled, -1 on error
 	 */
-	void writeOutput(midi_byte_t byte);
+	int writeOutput(midi_byte_t byte);
 
 	/**
 	 * Writes Midi bytes to the output port
 	 * @param bytes an array of bytes to be written
 	 * @param length number of bytes to write
-	 * @return 1 on success, -1 on error
+	 * @return 1 on success, 0 if output is not enabled, -1 on error
 	 */
-	void writeOutput(midi_byte_t* bytes, unsigned int length);
+	int writeOutput(midi_byte_t* bytes, unsigned int length);
 	
 
 	static midi_byte_t makeStatusByte(midi_byte_t statusCode, midi_byte_t dataByte);
-	void writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte);
-	void writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2);
-	void writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
-	void writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
-	void writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure);
-	void writeControlChange(midi_byte_t channel, midi_byte_t controller, midi_byte_t value);
-	void writeProgramChange(midi_byte_t channel, midi_byte_t program);
-	void writeChannelPressure(midi_byte_t channel, midi_byte_t pressure);
-	void writePitchBend(midi_byte_t channel, uint16_t bend);
+	int writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte);
+	int writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2);
+	int writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
+	int writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
+	int writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure);
+	int writeControlChange(midi_byte_t channel, midi_byte_t controller, midi_byte_t value);
+	int writeProgramChange(midi_byte_t channel, midi_byte_t program);
+	int writeChannelPressure(midi_byte_t channel, midi_byte_t pressure);
+	int writePitchBend(midi_byte_t channel, uint16_t bend);
 
 	/**
 	 * Gives access to the midi parser, if it has been activated.
@@ -367,6 +367,8 @@ private:
 	std::vector<midi_byte_t> outputBytes;
 	MidiParser* inputParser;
 	bool parserEnabled;
+	bool inputEnabled;
+	bool outputEnabled;
 	AuxiliaryTask midiInputTask;
 	AuxiliaryTask midiOutputTask;
 	char* inId;

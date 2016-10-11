@@ -92,8 +92,9 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 
 
 Midi::Midi() : 
-defaultPort("hw:1,0,0"),
-alsaIn(NULL), alsaOut(NULL), inId(NULL), outId(NULL), outPipeName(NULL)
+defaultPort("hw:1,0,0"), alsaIn(NULL), alsaOut(NULL),
+inputParser(NULL), parserEnabled(false), inputEnabled(false), outputEnabled(false),
+inId(NULL), outId(NULL), outPipeName(NULL)
 {
 	inputParser = 0;
 	size_t inputBytesInitialSize = 1000;
@@ -232,14 +233,15 @@ int Midi::readFrom(const char* port){
 	int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);
 	if (err) {
 		if(err == -2)
-			rt_printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
+			fprintf(stderr, "MIDI device %s is not ready: %s\n", port, strerror(-err));
 		else
-			rt_fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
+			fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
 		return -1;
 	}
-	rt_printf("Reading from ALSA MIDI device %s\n", port);
+	printf("Reading from ALSA MIDI device %s\n", port);
 	midiInputTask = Bela_createAuxiliaryTask(Midi::readInputLoop, 50, inId, (void*)this);
 	Bela_scheduleAuxiliaryTask(midiInputTask);
+	inputEnabled = true;
 	return 1;
 }
 
@@ -275,7 +277,8 @@ int Midi::writeTo(const char* port){
 		return -1;
 	}
 	Bela_scheduleAuxiliaryTask(midiOutputTask);
-	rt_printf("Writing to ALSA MIDI device %s\n", port);
+	printf("Writing to ALSA MIDI device %s\n", port);
+	outputEnabled = true;
 	return 1;
 }
 
@@ -302,11 +305,9 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 				break;
 			}
 			if (device >= 0) {
-				printf("device: %d\n", device);
 				snd_rawmidi_info_t *info;
 				snd_rawmidi_info_alloca(&info);
 				snd_rawmidi_info_set_device(info, device);
-				
 				// count subdevices:
 				snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
 				snd_ctl_rawmidi_info(ctl, info);
@@ -344,13 +345,16 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 						ports.resize(ports.size() + 1);
 						unsigned int index = ports.size() - 1;
 						ports[index] = new Midi();
+						const char* myName = snd_rawmidi_info_get_name(info);
+						const char* mySubName =  snd_rawmidi_info_get_subdevice_name(info);
 						sprintf(name, "hw:%d,%d,%d", card, device, sub);
 						if(in){
-							printf("Reading from: %s\n", name);
+							printf("Port %d, Reading from: %s, %s %s\n", index, name, myName, mySubName);
 							ports[index]->readFrom(name);
+							ports[index]->enableParser(useParser);
 						}
 						if(out){
-							printf("Writing to: %s\n", name);
+							printf("Port %d, Writing to: %s %s %s\n", index, name, myName, mySubName);
 							ports[index]->writeTo(name);
 						}
 					}
@@ -358,12 +362,6 @@ void Midi::createAllPorts(std::vector<Midi*>& ports, bool useParser){
 			}
 		} while (device >= 0);
 		snd_ctl_close(ctl);
-	}
-}
-
-void Midi::destroyPorts(std::vector<Midi*>& ports){
-	for(unsigned int n = 0; n < ports.size(); ++n){
-		delete ports[n];
 	}
 }
 
@@ -394,14 +392,22 @@ MidiParser* Midi::getParser(){
 	return inputParser;
 }
 
-void Midi::writeOutput(midi_byte_t byte){
+int Midi::writeOutput(midi_byte_t byte){
+	if(!outputEnabled){
+		return 0;
+	}
 	int ret = rt_pipe_write(&outPipe, &byte, 1, P_NORMAL);
 	if(ret < 0){
 		rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
+		return ret;
 	}
+	return 1;
 }
 
-void Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
+int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
+	if(!outputEnabled){
+		return 0;
+	}
 	do {
 		// we make sure the message length does not exceed outputBytes.size(), 
 		// which would result in incomplete messages being retrieved at the other end of the 
@@ -410,54 +416,55 @@ void Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 		int ret = rt_pipe_write(&outPipe, bytes, size, P_NORMAL);
 		if(ret < 0){
 			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
-			break;
+			return -1;
 		} else {
 			length -= ret;
 		}
 	} while (length > 0);
+	return 1;
 }
 
 midi_byte_t Midi::makeStatusByte(midi_byte_t statusCode, midi_byte_t channel){
 	return (statusCode & 0xF0) | (channel & 0x0F);
 }
 
-void Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte){
+int Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte){
 	midi_byte_t bytes[2] = {makeStatusByte(statusCode, channel), (midi_byte_t)(dataByte & 0x7F)};
-	writeOutput(bytes, 2);
+	return writeOutput(bytes, 2);
 }
 
-void Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2){
+int Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2){
 	midi_byte_t bytes[3] = {makeStatusByte(statusCode, channel), (midi_byte_t)(dataByte1 & 0x7F), (midi_byte_t)(dataByte2 & 0x7F)};
-	writeOutput(bytes, 3);
+	return writeOutput(bytes, 3);
 }
 
-void Midi::writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
-	writeMessage(midiMessageStatusBytes[kmmNoteOff], channel, pitch, velocity);
+int Midi::writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
+	return writeMessage(midiMessageStatusBytes[kmmNoteOff], channel, pitch, velocity);
 }
 
-void Midi::writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
-	writeMessage(midiMessageStatusBytes[kmmNoteOn], channel, pitch, velocity);
+int Midi::writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
+	return writeMessage(midiMessageStatusBytes[kmmNoteOn], channel, pitch, velocity);
 }
 
-void Midi::writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure){
-	writeMessage(midiMessageStatusBytes[kmmPolyphonicKeyPressure], channel, pitch, pressure);
+int Midi::writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure){
+	return writeMessage(midiMessageStatusBytes[kmmPolyphonicKeyPressure], channel, pitch, pressure);
 }
 
-void Midi::writeControlChange(midi_byte_t channel, midi_byte_t controller, midi_byte_t value){
-	writeMessage(midiMessageStatusBytes[kmmControlChange], channel, controller, value);
+int Midi::writeControlChange(midi_byte_t channel, midi_byte_t controller, midi_byte_t value){
+	return writeMessage(midiMessageStatusBytes[kmmControlChange], channel, controller, value);
 }
 
-void Midi::writeProgramChange(midi_byte_t channel, midi_byte_t program){
-	writeMessage(midiMessageStatusBytes[kmmProgramChange], channel, program);
+int Midi::writeProgramChange(midi_byte_t channel, midi_byte_t program){
+	return writeMessage(midiMessageStatusBytes[kmmProgramChange], channel, program);
 }
 
-void Midi::writeChannelPressure(midi_byte_t channel, midi_byte_t pressure){
-	writeMessage(midiMessageStatusBytes[kmmChannelPressure], channel, pressure);
+int Midi::writeChannelPressure(midi_byte_t channel, midi_byte_t pressure){
+	return writeMessage(midiMessageStatusBytes[kmmChannelPressure], channel, pressure);
 }
 
-void Midi::writePitchBend(midi_byte_t channel, uint16_t bend){
+int Midi::writePitchBend(midi_byte_t channel, uint16_t bend){
 	// the first ``bend'' is clamped with & 0x7F in writeMessage 
-	writeMessage(midiMessageStatusBytes[kmmPitchBend], channel, bend, bend >> 7);
+	return writeMessage(midiMessageStatusBytes[kmmPitchBend], channel, bend, bend >> 7);
 }
 
 MidiChannelMessage::MidiChannelMessage(){};
