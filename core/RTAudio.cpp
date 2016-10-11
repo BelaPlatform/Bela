@@ -31,6 +31,7 @@
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
 #include "../include/GPIOcontrol.h"
+#include "../include/math_neon.h"
 
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
@@ -129,6 +130,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return -1;
 	}
 	
+	enable_runfast();
 	rt_print_auto_init(1);
 
 	Bela_setVerboseLevel(settings->verbose);
@@ -579,6 +581,7 @@ void Bela_cleanupAudio()
 {
 	cleanup((BelaContext *)&gContext, gUserData);
 
+	disable_runfast();
 	// Shut down the prussdrv system
 	gPRU->exitPRUSS();
 
