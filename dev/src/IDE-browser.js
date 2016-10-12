@@ -153,7 +153,7 @@ toolbarView.on('process-event', (event) => {
 	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
 	socket.emit('process-event', data);
 });
-toolbarView.on('clear-console', () => consoleView.emit('clear') );
+toolbarView.on('clear-console', () => consoleView.emit('clear', true) );
 toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num+' mode switch'+(num!=1?'es':'')+' detected on the audio thread!') );
 
 // console view

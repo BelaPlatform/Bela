@@ -43,7 +43,7 @@ class Console extends EventEmitter {
 	
 		if (suspended) return;
 		
-		if (numElements > maxElements){
+		if (!consoleDelete && numElements > maxElements){
 			//console.log('cleared & rejected', numElements, text.split('\n').length);
 			this.clear(numElements - maxElements/2);
 			suspended = true;
@@ -166,8 +166,8 @@ class Console extends EventEmitter {
 	}
 	
 	// clear the console
-	clear(number){
-		if (!consoleDelete) return;
+	clear(number, force){
+		if (consoleDelete && !force) return;
 		if (number){
 			$("#beaglert-consoleWrapper > div:lt("+parseInt(number)+")").remove();
 			numElements -= parseInt(number);
@@ -196,7 +196,6 @@ class Console extends EventEmitter {
 	setConsoleDelete(to){
 		consoleDelete = to;
 	}
-	
 };
 
 module.exports = new Console();

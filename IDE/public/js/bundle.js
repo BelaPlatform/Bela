@@ -551,7 +551,7 @@ toolbarView.on('process-event', function (event) {
 	socket.emit('process-event', data);
 });
 toolbarView.on('clear-console', function () {
-	return consoleView.emit('clear');
+	return consoleView.emit('clear', true);
 });
 toolbarView.on('mode-switch-warning', function (num) {
 	return consoleView.emit('warn', num + ' mode switch' + (num != 1 ? 'es' : '') + ' detected on the audio thread!');
@@ -1211,8 +1211,8 @@ var ConsoleView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ConsoleView).call(this, className, models, settings));
 
-		_this.on('clear', function () {
-			return _console.clear();
+		_this.on('clear', function (force) {
+			return _console.clear(undefined, force);
 		});
 		_console.on('focus', function (focus) {
 			return _this.emit('focus', focus);
@@ -1484,7 +1484,7 @@ var ConsoleView = function (_View) {
 	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
-			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0) {
+			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela && data.bela.split) {
 				_console.log(data.bela.split(' ').join('&nbsp;'));
 			}
 			/*if (data.modeSwitches && modeSwitches) {
@@ -4556,7 +4556,7 @@ var Console = function (_EventEmitter) {
 
 			if (suspended) return;
 
-			if (numElements > maxElements) {
+			if (!consoleDelete && numElements > maxElements) {
 				//console.log('cleared & rejected', numElements, text.split('\n').length);
 				this.clear(numElements - maxElements / 2);
 				suspended = true;
@@ -4736,8 +4736,8 @@ var Console = function (_EventEmitter) {
 
 	}, {
 		key: 'clear',
-		value: function clear(number) {
-			if (!consoleDelete) return;
+		value: function clear(number, force) {
+			if (consoleDelete && !force) return;
 			if (number) {
 				$("#beaglert-consoleWrapper > div:lt(" + parseInt(number) + ")").remove();
 				numElements -= parseInt(number);
