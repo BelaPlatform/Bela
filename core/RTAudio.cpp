@@ -193,6 +193,22 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gContext.audioInChannels = 2;
 	gContext.audioOutChannels = 2;
 
+	gContext.audioFrames = settings->periodSize;
+
+	// TODO: settings a different number of channels for inputs and outputs is not yet supported
+	//TODO: this will have to change if we change the relationship between the number
+	//of audioInChannels, the periodSize and the number of audio samples 
+	//in the internal PRU loop
+	gContext.pruIntervalsPerBuffer = gContext.audioInChannels * gContext.audioFrames;
+
+	if(gContext.audioFrames != 0){
+		gContext.bufferDuration = gContext.audioFrames * (1000000000ll / gContext.audioSampleRate);
+	} else if (gContext.analogFrames != 0){
+		gContext.bufferDuration = gContext.analogFrames * (1000000000ll / gContext.analogSampleRate);
+	} else if (gContext.digitalFrames != 0){
+		gContext.bufferDuration = gContext.digitalFrames * (1000000000ll / gContext.digitalSampleRate);
+	}
+
 #ifdef PRU_SIGXCPU_BUG_WORKAROUND
 	// TODO: see PRU bug mentioned above. We catch here if useAnalog was set to false, store it in gProcessAnalog
 	// and use this value to decide whether we should process the analogs in PRU::loop, but then we
@@ -202,8 +218,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 #endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 
 	if(settings->useAnalog) {
-		gContext.audioFrames = settings->periodSize;
-
 		// TODO: a different number of channels for inputs and outputs is not yet supported
 		gContext.analogFrames = gContext.audioFrames * 4 / settings->numAnalogInChannels;
 		gContext.analogInChannels = settings->numAnalogInChannels;
@@ -215,8 +229,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 										((settings->audioExpanderOutputs & 0xFFFF) << 16);
 	}
 	else {
-		gContext.audioFrames = settings->periodSize;
-
 		gContext.analogFrames = 0;
 		gContext.analogInChannels = 0;
 		gContext.analogOutChannels = 0;
