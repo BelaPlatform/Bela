@@ -529,10 +529,9 @@ editorView.on('highlight-syntax', function (names) {
 	return socket.emit('highlight-syntax', names);
 });
 editorView.on('compare-files', function (compare) {
-	/*if (compare && !models.project.getKey('readOnly'))
- 	setCompareFilesInterval();
- else if (!compare && compareFilesInterval)
- 	clearInterval(compareFilesInterval);*/
+	compareFiles = compare;
+	// unset the interval
+	if (!compare) setModifiedTimeInterval(undefined);
 });
 
 // toolbar view
@@ -741,7 +740,6 @@ socket.on('disconnect', function () {
 socket.on('file-changed', function (project, fileName) {
 	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
 		console.log('file changed!');
-		if (compareFilesInterval) clearInterval(compareFilesInterval);
 		models.project.setKey('readOnly', true);
 		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
 		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
@@ -806,17 +804,18 @@ socket.on('force-reload', function () {
 
 socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', function (data) {
-	if (data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
+	if (compareFiles && data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
 		// console.log(data, data.fileData, editorView.getData());
 		if (data.fileData !== editorView.getData()) fileChangedPopup(data.fileName);
 	}
 });
 
 var checkModifiedTimeInterval;
+var compareFiles = false;
 function setModifiedTimeInterval(mtime) {
 	// console.log('received mtime', mtime);
 	if (checkModifiedTimeInterval) clearInterval(checkModifiedTimeInterval);
-	if (!mtime) return;
+	if (!mtime || !compareFiles) return;
 	checkModifiedTimeInterval = setInterval(function () {
 		// console.log('sent compare-mtime', mtime);
 		socket.emit('compare-mtime', {
@@ -2321,10 +2320,16 @@ var EditorView = function (_View) {
 
 					// load an empty string into the editor
 					// data = '';
+
+					// start comparison with file on disk
+					this.emit('compare-files', true);
 				} else {
 
 					// show the editor
 					$('#editor').css('display', 'block');
+
+					// stop comparison with file on disk
+					this.emit('compare-files', false);
 				}
 
 				// block upload
@@ -2344,9 +2349,6 @@ var EditorView = function (_View) {
 
 				// focus the editor
 				this.__focus(opts.focus);
-
-				// start comparison with file on disk
-				this.emit('compare-files', true);
 			}
 		}
 		// editor focus has changed

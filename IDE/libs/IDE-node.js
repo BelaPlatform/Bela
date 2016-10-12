@@ -312,6 +312,8 @@ function socketEvents(socket){
 	
 	socket.on('compare-mtime', data => {
 		
+		// console.log('compare-mtime', data);
+		
 		if (!data.currentProject || !data.fileName || !data.mtime) return;
 		
 		co(ProjectManager, 'checkModifiedTime', data)

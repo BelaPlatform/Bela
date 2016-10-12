@@ -194,11 +194,17 @@ class EditorView extends View {
 				
 				// load an empty string into the editor
 				// data = '';
+				
+				// start comparison with file on disk
+				this.emit('compare-files', true);
 			
 			} else {
 			
 				// show the editor
 				$('#editor').css('display', 'block');
+				
+				// stop comparison with file on disk
+				this.emit('compare-files', false);
 				
 			}
 
@@ -219,9 +225,6 @@ class EditorView extends View {
 
 			// focus the editor
 			this.__focus(opts.focus);
-			
-			// start comparison with file on disk
-			this.emit('compare-files', true);
 		
 		}
 		
