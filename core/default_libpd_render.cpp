@@ -183,10 +183,10 @@ void* gPatch;
 
 bool setup(BelaContext *context, void *userData)
 {
-	gMidiPortNames.push_back("hw:0,0,0");
 	// add here other devices you need 
 	gMidiPortNames.push_back("hw:1,0,0");
-	gMidiPortNames.push_back("hw:1,0,1");
+	//gMidiPortNames.push_back("hw:0,0,0");
+	//gMidiPortNames.push_back("hw:1,0,1");
 
     scope.setup(gScopeChannelsInUse, context->audioSampleRate);
     gScopeOut = new float[gScopeChannelsInUse];
