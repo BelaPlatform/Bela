@@ -2123,7 +2123,6 @@ var currentFile;
 var imageUrl;
 var activeWords = [];
 var activeWordIDs = [];
-var autoDocs = false;
 
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
@@ -2140,6 +2139,7 @@ var EditorView = function (_View) {
 
 		_this.parser = require('../parser');
 		_this.parser.init(_this.editor, langTools);
+		_this.parser.enable(true);
 
 		// set syntax mode
 		_this.on('syntax-highlighted', function () {
@@ -2174,7 +2174,7 @@ var EditorView = function (_View) {
 
 		// fired when the cursor changes position
 		_this.editor.session.selection.on('changeCursor', function () {
-			if (autoDocs) _this.getCurrentWord();
+			_this.getCurrentWord();
 		});
 
 		/*this.editor.session.on('changeBackMarker', (e) => {
@@ -2383,12 +2383,6 @@ var EditorView = function (_View) {
 			this.editor.setOptions({
 				enableLiveAutocompletion: parseInt(status) === 1
 			});
-		}
-	}, {
-		key: '_autoDocs',
-		value: function _autoDocs(status) {
-			this.parser.enable(status);
-			autoDocs = status;
 		}
 		// readonly status has changed
 

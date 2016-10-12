@@ -8,7 +8,6 @@ var currentFile;
 var imageUrl;
 var activeWords = [];
 var activeWordIDs = [];
-var autoDocs = false;
 
 class EditorView extends View {
 	
@@ -22,6 +21,7 @@ class EditorView extends View {
 		
 		this.parser = require('../parser');
 		this.parser.init(this.editor, langTools);
+		this.parser.enable(true);
 		
 		// set syntax mode
 		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
@@ -54,7 +54,7 @@ class EditorView extends View {
 		
 		// fired when the cursor changes position
 		this.editor.session.selection.on('changeCursor', () => {
-			if (autoDocs) this.getCurrentWord();
+			this.getCurrentWord();
 		});
 		
 		/*this.editor.session.on('changeBackMarker', (e) => {
@@ -253,10 +253,6 @@ class EditorView extends View {
 		this.editor.setOptions({
 			enableLiveAutocompletion: (parseInt(status) === 1)
 		});
-	}
-	_autoDocs(status){
-		this.parser.enable(status);
-		autoDocs = status;
 	}
 	// readonly status has changed
 	_readOnly(status){
