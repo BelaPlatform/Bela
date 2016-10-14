@@ -10,7 +10,6 @@ models.project = new Model();
 models.settings = new Model();
 models.status = new Model();
 models.error = new Model();
-models.debug = new Model();
 models.git = new Model();
 
 // hack to prevent first status update causing wrong notifications
@@ -25,7 +24,8 @@ tabView.on('change', () => editorView.emit('resize') );
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
+	console.log('project-settings', data);
+	console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 settingsView.on('IDE-settings', (data) => {
@@ -74,7 +74,7 @@ fileView.on('force-rebuild', () => {
 });
 
 // editor view
-var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings, models.debug], models.settings);
+var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings], models.settings);
 editorView.on('upload', fileData => {
 	socket.emit('process-event', {
 		event			: 'upload',
@@ -92,24 +92,6 @@ editorView.on('check-syntax', () => {
 			newFile			: models.project.getKey('fileName')
 		});
 	}
-});
-editorView.on('breakpoint', line => {
-	var breakpoints = models.project.getKey('breakpoints');
-	for (let i=0; i<breakpoints.length; i++){
-		if (breakpoints[i].line === line && breakpoints[i].file === models.project.getKey('fileName')){
-			socket.emit('debugger-event', 'removeBreakpoint', breakpoints[i]);
-			models.project.spliceFromKey('breakpoints', i);
-			return;
-		}
-	}
-	var newBreakpoint = {
-		line,
-		file: models.project.getKey('fileName')
-	};
-	socket.emit('debugger-event', 'addBreakpoint', newBreakpoint);
-	models.project.pushIntoKey('breakpoints', newBreakpoint);
-	//console.log('after', breakpoints);
-	//models.project.setKey('breakpoints', breakpoints);
 });
 editorView.on('open-notification', data => consoleView.emit('openNotification', data) );
 editorView.on('close-notification', data => consoleView.emit('closeNotification', data) );
@@ -138,15 +120,11 @@ editorView.on('compare-files', compare => {
 });
 
 // toolbar view
-var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
+var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings]);
 toolbarView.on('process-event', (event) => {
-	var breakpoints;
-	if (models.debug.getKey('debugMode')) breakpoints = models.project.getKey('breakpoints');
 	var data = {
 		event,
-		currentProject	: models.project.getKey('currentProject'),
-		debug			: models.debug.getKey('debugMode'),
-		breakpoints
+		currentProject	: models.project.getKey('currentProject')
 	};
 	//data.timestamp = performance.now();
 	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
@@ -156,7 +134,7 @@ toolbarView.on('clear-console', () => consoleView.emit('clear', true) );
 toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num+' mode switch'+(num!=1?'es':'')+' detected on the audio thread!') );
 
 // console view
-var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings, models.debug], models.settings);
+var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings], models.settings);
 consoleView.on('focus', (focus) =>  models.project.setKey('focus', focus) );
 consoleView.on('open-file', (fileName, focus) => {
 	var data = {
@@ -169,11 +147,6 @@ consoleView.on('open-file', (fileName, focus) => {
 });
 consoleView.on('input', value => socket.emit('sh-command', value) );
 consoleView.on('tab', cmd => socket.emit('sh-tab', cmd) );
-
-// debugger view
-var debugView = new (require('./Views/DebugView'))('debugger', [models.debug, models.settings, models.project]);
-debugView.on('debugger-event', (func) => socket.emit('debugger-event', func) );
-debugView.on('debug-mode', (status) => models.debug.setKey('debugMode', status) );
 
 // documentation view
 var documentationView = new (require('./Views/DocumentationView'));
@@ -253,16 +226,10 @@ socket.on('init', (data) => {
 
 // project events
 socket.on('project-data', (data) => {
-	var debug;
-	if (data.debug){
-		debug = data.debug
-		data.debug = undefined;
-	}
+
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
-	/*if (debug){
-		models.debug.setData(debug);
-	}*/
+
 	if (data.gitData) models.git.setData(data.gitData);
 	setModifiedTimeInterval(data.mtime);
 	//console.log(data);
@@ -316,35 +283,6 @@ socket.on('file-changed', (project, fileName) => {
 		models.project.setKey('readOnly', true);
 		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
 		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
-	}
-});
-
-socket.on('debugger-data', (data) => {
-//console.log('b', data.debugProject, models.project.getKey('currentProject'), data.debugFile, models.project.getKey('fileName'));
-	if (data.debugProject === undefined || data.debugProject === models.project.getKey('currentProject')){ 
-		//(data.debugFile === undefined || data.debugFile === models.project.getKey('fileName'))){
-		var debugFile = data.debugFile;
-		if (debugFile && debugFile !== models.project.getKey('fileName')){
-			//console.log(debugFile);
-			var newData = {
-				func			: 'openFile',
-				currentProject	: models.project.getKey('currentProject'),
-				fileName		: models.project.getKey('fileName'),
-				newFile			: debugFile,
-				timestamp		: performance.now(),
-				debug			: {debugLine: data.debugLine, debugFile}
-			};
-			consoleView.emit('openNotification', newData);
-			socket.emit('project-event', newData);
-		} else {
-			//console.log(data);
-			models.debug.setData(data);
-		}
-	}
-});
-socket.on('debugger-variables', (project, variables) => {
-	if (project === models.project.getKey('currentProject')){
-		models.debug.setKey('variables', variables);
 	}
 });
 
@@ -429,20 +367,6 @@ function fileChangedPopup(fileName){
 models.status.on('set', (data, changedKeys) => {
 	if (changedKeys.indexOf('syntaxError') !== -1){
 		parseErrors(data.syntaxError);
-	}
-});
-// debug mode
-models.debug.on('change', (data, changedKeys) => {
-	if (changedKeys.indexOf('debugMode') !== -1){
-		//console.log(!data.debugMode, models.debug.getKey('debugRunning'));
-		if (!data.debugMode && models.debug.getKey('debugRunning')) socket.emit('debugger-event', 'stop');
-		var data = {
-			func			: 'cleanProject',
-			currentProject	: models.project.getKey('currentProject'),
-			timestamp		: performance.now()
-		};
-		consoleView.emit('openNotification', data);
-		socket.emit('project-event', data);
 	}
 });
 

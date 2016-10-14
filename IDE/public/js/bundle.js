@@ -392,7 +392,6 @@ models.project = new Model();
 models.settings = new Model();
 models.status = new Model();
 models.error = new Model();
-models.debug = new Model();
 models.git = new Model();
 
 // hack to prevent first status update causing wrong notifications
@@ -409,7 +408,8 @@ tabView.on('change', function () {
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
+	console.log('project-settings', data);
+	console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 settingsView.on('IDE-settings', function (data) {
@@ -466,7 +466,7 @@ fileView.on('force-rebuild', function () {
 });
 
 // editor view
-var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings, models.debug], models.settings);
+var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings], models.settings);
 editorView.on('upload', function (fileData) {
 	socket.emit('process-event', {
 		event: 'upload',
@@ -484,24 +484,6 @@ editorView.on('check-syntax', function () {
 			newFile: models.project.getKey('fileName')
 		});
 	}
-});
-editorView.on('breakpoint', function (line) {
-	var breakpoints = models.project.getKey('breakpoints');
-	for (var i = 0; i < breakpoints.length; i++) {
-		if (breakpoints[i].line === line && breakpoints[i].file === models.project.getKey('fileName')) {
-			socket.emit('debugger-event', 'removeBreakpoint', breakpoints[i]);
-			models.project.spliceFromKey('breakpoints', i);
-			return;
-		}
-	}
-	var newBreakpoint = {
-		line: line,
-		file: models.project.getKey('fileName')
-	};
-	socket.emit('debugger-event', 'addBreakpoint', newBreakpoint);
-	models.project.pushIntoKey('breakpoints', newBreakpoint);
-	//console.log('after', breakpoints);
-	//models.project.setKey('breakpoints', breakpoints);
 });
 editorView.on('open-notification', function (data) {
 	return consoleView.emit('openNotification', data);
@@ -535,15 +517,11 @@ editorView.on('compare-files', function (compare) {
 });
 
 // toolbar view
-var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings, models.debug]);
+var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings]);
 toolbarView.on('process-event', function (event) {
-	var breakpoints;
-	if (models.debug.getKey('debugMode')) breakpoints = models.project.getKey('breakpoints');
 	var data = {
 		event: event,
-		currentProject: models.project.getKey('currentProject'),
-		debug: models.debug.getKey('debugMode'),
-		breakpoints: breakpoints
+		currentProject: models.project.getKey('currentProject')
 	};
 	//data.timestamp = performance.now();
 	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
@@ -557,7 +535,7 @@ toolbarView.on('mode-switch-warning', function (num) {
 });
 
 // console view
-var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings, models.debug], models.settings);
+var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings], models.settings);
 consoleView.on('focus', function (focus) {
 	return models.project.setKey('focus', focus);
 });
@@ -575,15 +553,6 @@ consoleView.on('input', function (value) {
 });
 consoleView.on('tab', function (cmd) {
 	return socket.emit('sh-tab', cmd);
-});
-
-// debugger view
-var debugView = new (require('./Views/DebugView'))('debugger', [models.debug, models.settings, models.project]);
-debugView.on('debugger-event', function (func) {
-	return socket.emit('debugger-event', func);
-});
-debugView.on('debug-mode', function (status) {
-	return models.debug.setKey('debugMode', status);
 });
 
 // documentation view
@@ -675,16 +644,10 @@ socket.on('init', function (data) {
 
 // project events
 socket.on('project-data', function (data) {
-	var debug;
-	if (data.debug) {
-		debug = data.debug;
-		data.debug = undefined;
-	}
+
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
-	/*if (debug){
- 	models.debug.setData(debug);
- }*/
+
 	if (data.gitData) models.git.setData(data.gitData);
 	setModifiedTimeInterval(data.mtime);
 	//console.log(data);
@@ -743,35 +706,6 @@ socket.on('file-changed', function (project, fileName) {
 		models.project.setKey('readOnly', true);
 		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
 		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
-	}
-});
-
-socket.on('debugger-data', function (data) {
-	//console.log('b', data.debugProject, models.project.getKey('currentProject'), data.debugFile, models.project.getKey('fileName'));
-	if (data.debugProject === undefined || data.debugProject === models.project.getKey('currentProject')) {
-		//(data.debugFile === undefined || data.debugFile === models.project.getKey('fileName'))){
-		var debugFile = data.debugFile;
-		if (debugFile && debugFile !== models.project.getKey('fileName')) {
-			//console.log(debugFile);
-			var newData = {
-				func: 'openFile',
-				currentProject: models.project.getKey('currentProject'),
-				fileName: models.project.getKey('fileName'),
-				newFile: debugFile,
-				timestamp: performance.now(),
-				debug: { debugLine: data.debugLine, debugFile: debugFile }
-			};
-			consoleView.emit('openNotification', newData);
-			socket.emit('project-event', newData);
-		} else {
-			//console.log(data);
-			models.debug.setData(data);
-		}
-	}
-});
-socket.on('debugger-variables', function (project, variables) {
-	if (project === models.project.getKey('currentProject')) {
-		models.debug.setKey('variables', variables);
 	}
 });
 
@@ -867,20 +801,6 @@ function fileChangedPopup(fileName) {
 models.status.on('set', function (data, changedKeys) {
 	if (changedKeys.indexOf('syntaxError') !== -1) {
 		parseErrors(data.syntaxError);
-	}
-});
-// debug mode
-models.debug.on('change', function (data, changedKeys) {
-	if (changedKeys.indexOf('debugMode') !== -1) {
-		//console.log(!data.debugMode, models.debug.getKey('debugRunning'));
-		if (!data.debugMode && models.debug.getKey('debugRunning')) socket.emit('debugger-event', 'stop');
-		var data = {
-			func: 'cleanProject',
-			currentProject: models.project.getKey('currentProject'),
-			timestamp: performance.now()
-		};
-		consoleView.emit('openNotification', data);
-		socket.emit('project-event', data);
 	}
 });
 
@@ -1074,7 +994,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DebugView":6,"./Views/DocumentationView":7,"./Views/EditorView":8,"./Views/FileView":9,"./Views/GitView":10,"./Views/ProjectView":11,"./Views/SettingsView":12,"./Views/TabView":13,"./Views/ToolbarView":14,"./popup":19}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1195,8 +1115,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var _console = require('../console');
-
-var verboseDebugOutput = false;
 
 var shellCWD = '~';
 
@@ -1500,37 +1418,6 @@ var ConsoleView = function (_View) {
 		value: function _consoleDelete(value) {
 			_console.setConsoleDelete(parseInt(value));
 		}
-	}, {
-		key: '_verboseDebug',
-		value: function _verboseDebug(value) {
-			verboseDebugOutput = parseInt(value);
-		}
-	}, {
-		key: '__debugReason',
-		value: function __debugReason(reason) {
-			console.log('reason', reason);
-			var timestamp = performance.now();
-			_console.notify(reason, timestamp, true);
-			if (reason === 'exited' || reason === 'exited-signalled') _console.reject('', timestamp, true);else _console.fulfill('', timestamp, false);
-		}
-	}, {
-		key: '_debugSignal',
-		value: function _debugSignal(signal) {
-			console.log('signal', signal);
-			var timestamp = performance.now();
-			_console.notify(signal, timestamp, true);
-			_console.reject('', timestamp, true);
-		}
-	}, {
-		key: '_gdbLog',
-		value: function _gdbLog(data) {
-			if (verboseDebugOutput) _console.log(data);else console.log(data);
-		}
-	}, {
-		key: '__debugBelaLog',
-		value: function __debugBelaLog(data) {
-			_console.log(data);
-		}
 	}]);
 
 	return ConsoleView;
@@ -1554,264 +1441,7 @@ var funcKey = {
 	'stop': 'Stopping'
 };
 
-},{"../console":16,"./View":15}],6:[function(require,module,exports){
-'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var View = require('./View');
-
-var DebugView = function (_View) {
-	_inherits(DebugView, _View);
-
-	function DebugView(className, models) {
-		_classCallCheck(this, DebugView);
-
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DebugView).call(this, className, models));
-
-		_this._debugMode(false);
-		return _this;
-	}
-
-	// UI events
-
-
-	_createClass(DebugView, [{
-		key: 'selectChanged',
-		value: function selectChanged($element, e) {
-			var data = $element.data();
-			var func = data.func;
-			if (func && this[func]) {
-				this[func]($element.val());
-			}
-		}
-	}, {
-		key: 'buttonClicked',
-		value: function buttonClicked($element, e) {
-			this.setLocation('');
-			this.emit('debugger-event', $element.data().func);
-		}
-	}, {
-		key: 'debugMode',
-		value: function debugMode(status) {
-			this.emit('debug-mode', status == true);
-		}
-
-		// model events
-
-	}, {
-		key: '_debugMode',
-		value: function _debugMode(status) {
-			if (!status) {
-				this.$parents.find('button').prop('disabled', 'disabled');
-			}
-		}
-		// debugger process has started or stopped
-
-	}, {
-		key: '_debugRunning',
-		value: function _debugRunning(status) {
-			this.clearVariableList();
-			this.clearBacktrace();
-			this.$parents.find('button').prop('disabled', 'disabled');
-			if (!status) this.setLocation('n/a');
-		}
-		// debugger is doing something
-
-	}, {
-		key: '_debugBelaRunning',
-		value: function _debugBelaRunning(status) {
-			if (!status) {
-				this.$parents.find('button:not(#debugInterrupt)').prop('disabled', '');
-				$('#expList, #backtraceList').removeClass('debuggerOutOfScope');
-			} else {
-				this.$parents.find('button:not(#debugInterrupt)').prop('disabled', 'disabled');
-				$('#expList, #backtraceList').addClass('debuggerOutOfScope');
-			}
-		}
-	}, {
-		key: '_debugInterruptable',
-		value: function _debugInterruptable(status) {
-			if (status) $('#debugInterrupt').prop('disabled', '');else $('#debugInterrupt').prop('disabled', 'disabled');
-		}
-	}, {
-		key: '_debugStatus',
-		value: function _debugStatus(value, data) {
-			if (value) this.setStatus(value);
-		}
-	}, {
-		key: '_debugReason',
-		value: function _debugReason(value) {
-			this.setStatus($('#debuggerStatus').html() + ', ' + value);
-		}
-	}, {
-		key: '_debugLine',
-		value: function _debugLine(line, data) {
-			var location = '';
-			if (data.debugFile) location += data.debugFile + ', line ';
-
-			if (data.debugLine) location += data.debugLine;
-
-			this.setLocation(location);
-		}
-	}, {
-		key: '_variables',
-		value: function _variables(variables) {
-			console.log(variables);
-			this.clearVariableList();
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
-
-			try {
-				for (var _iterator = variables[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var variable = _step.value;
-
-					this.addVariable($('#expList'), variable);
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
-
-			prepareList();
-		}
-	}, {
-		key: '_backtrace',
-		value: function _backtrace(trace) {
-			this.clearBacktrace();
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
-
-			try {
-				for (var _iterator2 = trace[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var item = _step2.value;
-
-					$('<li></li>').text(item).appendTo($('#backtraceList'));
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
-			}
-		}
-
-		// utility methods
-
-	}, {
-		key: 'setStatus',
-		value: function setStatus(value) {
-			$('#debuggerStatus').html(value);
-		}
-	}, {
-		key: 'setLocation',
-		value: function setLocation(value) {
-			$('#debuggerLocation').html(value);
-		}
-	}, {
-		key: 'clearVariableList',
-		value: function clearVariableList() {
-			$('#expList').empty();
-		}
-	}, {
-		key: 'clearBacktrace',
-		value: function clearBacktrace() {
-			$('#backtraceList').empty();
-		}
-	}, {
-		key: 'addVariable',
-		value: function addVariable(parent, variable) {
-			var name;
-			if (variable.key) name = variable.key;else {
-				name = variable.name.split('.');
-				if (name.length) name = name[name.length - 1];
-			}
-			//console.log('adding variable', name, variable);
-			var li = $('<li></li>');
-			var table = $('<table></table>').appendTo(li);
-			$('<td></td>').text(variable.type).addClass('debuggerType').appendTo(table);
-			$('<td></td>').text(name).addClass('debuggerName').appendTo(table);
-			var valTD = $('<td></td>').text(variable.value).addClass('debuggerValue').appendTo(table);
-			li.attr('id', variable.name).appendTo(parent);
-			if (variable.numchild && variable.children && variable.children.length) {
-				var ul = $('<ul></ul>').appendTo(li);
-				var _iteratorNormalCompletion3 = true;
-				var _didIteratorError3 = false;
-				var _iteratorError3 = undefined;
-
-				try {
-					for (var _iterator3 = variable.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-						var child = _step3.value;
-
-						this.addVariable(ul, child);
-					}
-				} catch (err) {
-					_didIteratorError3 = true;
-					_iteratorError3 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion3 && _iterator3.return) {
-							_iterator3.return();
-						}
-					} finally {
-						if (_didIteratorError3) {
-							throw _iteratorError3;
-						}
-					}
-				}
-			}
-			if (variable.value == undefined) {
-				li.addClass('debuggerOutOfScope');
-				valTD.text('out of scope');
-			}
-		}
-	}]);
-
-	return DebugView;
-}(View);
-
-module.exports = DebugView;
-
-function prepareList() {
-	$('#expList').find('li:has(ul)').each(function () {
-		var $this = $(this);
-		if (!$this.hasClass('collapsed')) {
-			$this.click(function (event) {
-				$(this).toggleClass('expanded');
-				$(this).children('ul').toggle('fast');
-				return false;
-			}).addClass('collapsed').children('ul').hide();
-		}
-	});
-};
-
-},{"./View":15}],7:[function(require,module,exports){
+},{"../console":15,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2101,7 +1731,7 @@ function xmlClassDocs(classname, emitter) {
 	});
 }
 
-},{"./View":15}],8:[function(require,module,exports){
+},{"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2183,20 +1813,6 @@ var EditorView = function (_View) {
   		this.getCurrentWord();
   	});
   });*/
-
-		// set/clear breakpoints when the gutter is clicked
-		_this.editor.on("guttermousedown", function (e) {
-			var target = e.domEvent.target;
-			if (target.className.indexOf("ace_gutter-cell") == -1) return;
-			if (!_this.editor.isFocused()) return;
-			if (e.clientX > 25 + target.getBoundingClientRect().left) return;
-
-			var row = e.getDocumentPosition().row;
-
-			_this.emit('breakpoint', row);
-
-			e.stop();
-		});
 
 		$('#audioControl').find('button').on('click', function () {
 			return audioSource.start(0);
@@ -2403,85 +2019,6 @@ var EditorView = function (_View) {
 		key: '_fileName',
 		value: function _fileName(name, data) {
 			currentFile = name;
-			this.__breakpoints(data.breakpoints, data);
-		}
-		// breakpoints have been changed
-
-	}, {
-		key: '__breakpoints',
-		value: function __breakpoints(breakpoints, data) {
-			//console.log('setting breakpoints', breakpoints);
-			this.editor.session.clearBreakpoints();
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
-
-			try {
-				for (var _iterator = breakpoints[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var breakpoint = _step.value;
-
-					if (breakpoint.file === data.fileName) {
-						this.editor.session.setBreakpoint(breakpoint.line);
-					}
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
-		}
-		// debugger highlight line has changed
-
-	}, {
-		key: '__debugLine',
-		value: function __debugLine(line, data) {
-			console.log(line, data.debugFile, currentFile);
-			this.removeDebuggerMarker();
-
-			// add new marker at line
-			if (line && data.debugFile === currentFile) {
-				this.editor.session.addMarker(new Range(line - 1, 0, line - 1, 1), "breakpointMarker", "fullLine");
-				this.editor.gotoLine(line, 0);
-			}
-		}
-		// debugger process has started or stopped
-
-	}, {
-		key: '_debugRunning',
-		value: function _debugRunning(status) {
-			if (!status) {
-				this.removeDebuggerMarker();
-			}
-		}
-	}, {
-		key: '_debugBelaRunning',
-		value: function _debugBelaRunning(status) {
-			if (status) {
-				this.removeDebuggerMarker();
-			}
-		}
-	}, {
-		key: 'removeDebuggerMarker',
-		value: function removeDebuggerMarker() {
-			var _this3 = this;
-
-			var markers = this.editor.session.getMarkers();
-
-			// remove existing marker
-			Object.keys(markers).forEach(function (key, index) {
-				if (markers[key].clazz === 'breakpointMarker') {
-					_this3.editor.session.removeMarker(markers[key].id);
-				}
-			});
 		}
 	}, {
 		key: 'getCurrentWord',
@@ -2506,13 +2043,13 @@ var EditorView = function (_View) {
 			//console.log('clicked', token);
 
 			var markers = this.parser.getMarkers();
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
 
 			try {
-				for (var _iterator2 = markers[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var marker = _step2.value;
+				for (var _iterator = markers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var marker = _step.value;
 
 					if (token.range.isEqual(marker.range) && marker.type && marker.type.name && marker.type.id) {
 						//console.log(marker);
@@ -2521,16 +2058,16 @@ var EditorView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
+				_didIteratorError = true;
+				_iteratorError = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
 					}
 				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
+					if (_didIteratorError) {
+						throw _iteratorError;
 					}
 				}
 			}
@@ -2549,7 +2086,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":18,"./View":15}],9:[function(require,module,exports){
+},{"../parser":17,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3027,7 +2564,7 @@ function sanitise(name) {
 	return name.replace(/[^a-zA-Z0-9\.\-\/~]/g, '_');
 }
 
-},{"../popup":19,"./View":15}],10:[function(require,module,exports){
+},{"../popup":18,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3226,7 +2763,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":19,"./View":15}],11:[function(require,module,exports){
+},{"../popup":18,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3573,7 +3110,7 @@ function sanitise(name) {
 	return name.replace(/[^a-zA-Z0-9\.\-]/g, '_');
 }
 
-},{"../popup":19,"./View":15}],12:[function(require,module,exports){
+},{"../popup":18,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3868,11 +3405,6 @@ var SettingsView = function (_View) {
 			}
 		}
 	}, {
-		key: '_breakpoints',
-		value: function _breakpoints(value, keys) {
-			this.emit('project-settings', { func: 'setBreakpoints', value: value });
-		}
-	}, {
 		key: '_projectList',
 		value: function _projectList(projects, data) {
 
@@ -3956,7 +3488,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":19,"./View":15}],13:[function(require,module,exports){
+},{"../popup":18,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4120,7 +3652,7 @@ var TabView = function (_View) {
 
 module.exports = new TabView();
 
-},{"./View":15}],14:[function(require,module,exports){
+},{"./View":14}],13:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4331,22 +3863,6 @@ var ToolbarView = function (_View) {
 		value: function _cpuMonitoring(value) {
 			if (parseInt(value)) $('#ide-cpu, #bela-cpu').css('visibility', 'visible');else $('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
 		}
-
-		/*_debugBelaRunning(status){
-  	if (status){
-  		if (!$('#run').hasClass('spinning')){
-  			$('#run').addClass('spinning');
-  		}
-  	} else {
-  		if ($('#run').hasClass('spinning')){
-  			$('#run').removeClass('spinning');
-  		}
-  	}
-  }
-  _debugRunning(status){
-  	if (!status && $('#run').hasClass('spinning'))  $('#run').removeClass('spinning');
-  }*/
-
 	}]);
 
 	return ToolbarView;
@@ -4354,7 +3870,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"./View":15}],15:[function(require,module,exports){
+},{"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4486,7 +4002,7 @@ var View = function (_EventEmitter) {
 
 module.exports = View;
 
-},{"events":1}],16:[function(require,module,exports){
+},{"events":1}],15:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4797,7 +4313,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"events":1}],17:[function(require,module,exports){
+},{"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -4807,7 +4323,7 @@ $(function () {
 	IDE = require('./IDE-browser');
 });
 
-},{"./IDE-browser":3}],18:[function(require,module,exports){
+},{"./IDE-browser":3}],17:[function(require,module,exports){
 'use strict';
 
 var Range = ace.require('ace/range').Range;
@@ -5256,7 +4772,7 @@ function searchHighlightsFor(sub, val) {
 
 module.exports = parser;
 
-},{"./CircularBuffer":2}],19:[function(require,module,exports){
+},{"./CircularBuffer":2}],18:[function(require,module,exports){
 'use strict';
 
 var _overlay = $('#overlay');
@@ -5338,7 +4854,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.find('.popup-continue').trigger('focus');
 }
 
-},{}]},{},[17])
+},{}]},{},[16])
 
 
 //# sourceMappingURL=bundle.js.map

@@ -259,9 +259,6 @@ class SettingsView extends View {
 			this.$elements.filterByData('key', key).val(data[key]).prop('checked', data[key]);
 		}
 	}
-	_breakpoints(value, keys){
-		this.emit('project-settings', {func: 'setBreakpoints', value});
-	}
 	_projectList(projects, data){
 
 		var $projects = $('#runOnBoot');

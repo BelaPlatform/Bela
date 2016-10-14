@@ -416,14 +416,7 @@ module.exports = {
 		data.fileData = '';
 		return data;
 	},
-	
-	*setBreakpoints(data){
-	// console.trace('setBreakpoints');
-		var settings = yield _getSettings(data.currentProject);
-		settings.breakpoints = data.value;
-		return yield _saveSettings(settings, data);
-	},
-	
+
 	*setCLArgs(data){
 		var settings = yield _getSettings(data.currentProject);
 		for (let item of data.args){
@@ -442,7 +435,6 @@ module.exports = {
 		var oldSettings = yield _getSettings(data.currentProject);
 		var newSettings = _defaultSettings();
 		newSettings.fileName = oldSettings.fileName;
-		newSettings.breakpoints = oldSettings.breakpoints;
 		return yield _saveSettings(newSettings, data);
 	},
 	
@@ -524,7 +516,7 @@ function _getSettings(projectName){
 		console.log('busy writing settings.json, returned cached settings');
 		return Promise.resolve(settingsBeingWritten);
 	}
-	//console.trace('_getSettings');
+	// console.trace('_getSettings');
 	return fs.readJSONAsync(projectPath+projectName+'/settings.json')
 		.catch((error) => {
 			console.log('project settings.json error', error, error.stack);
@@ -540,7 +532,7 @@ function _getSettings(projectName){
 // save the project settings
 function _saveSettings(settings, data){
 	//console.log('saving settings');//, settings, ' in', projectPath+data.currentProject);
-	//console.trace('_saveSettings');
+	// console.trace('_saveSettings');
 	writingSettings = true;
 	settingsBeingWritten = settings;
 	return fs.outputJSONAsync(projectPath+data.currentProject+'/settings.json', settings)
@@ -619,8 +611,7 @@ function _defaultSettings(){
 	};
 	return {
 		"fileName"		: "render.cpp",
-		CLArgs,
-		"breakpoints"	: []
+		CLArgs
 	};
 }
 

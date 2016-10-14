@@ -11,8 +11,6 @@ var pusage = Promise.promisifyAll(require('pidusage'));
 var fs = Promise.promisifyAll(require('fs-extra'));
 var toobusy = require('toobusy-js');
 
-var DebugManager = require('./DebugManager');
-
 var belaPath = '/root/Bela/';
 var makePath = belaPath;
 var projectPath = belaPath+'projects/';
@@ -165,9 +163,7 @@ class ProcessManager extends EventEmitter {
 		stopProcess.start();
 			
 		this.emptyAllQueues();
-		
-		/*if (data.debug) 
-			DebugManager.stop();*/
+
 	}
 	
 	rebuild(project){
@@ -292,7 +288,6 @@ class ProcessManager extends EventEmitter {
 		if (this.running()) output.bela = yield belaProcess.CPU();
 		if (this.running()) output.belaLinux = (yield belaProcess.CPULinux()).cpu;
 		output.node = (yield pusage.statAsync(process.pid)).cpu;
-		// output.gdb = yield DebugManager.CPU();
 		return output;
 	}
 	

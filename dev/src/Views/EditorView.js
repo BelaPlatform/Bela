@@ -64,25 +64,7 @@ class EditorView extends View {
 				this.getCurrentWord();
 			});
 		});*/
-		
-		// set/clear breakpoints when the gutter is clicked
-		this.editor.on("guttermousedown", (e) => { 
-			var target = e.domEvent.target; 
-			if (target.className.indexOf("ace_gutter-cell") == -1) 
-				return; 
-			if (!this.editor.isFocused()) 
-				return; 
-			if (e.clientX > 25 + target.getBoundingClientRect().left) 
-				return; 
 
-			var row = e.getDocumentPosition().row;
-
-			this.emit('breakpoint', row);
-
-			e.stop();
-
-		});
-		
 		$('#audioControl').find('button').on('click', () => audioSource.start(0) );
 		
 		this.on('resize', () => this.editor.resize() );
@@ -268,50 +250,6 @@ class EditorView extends View {
 	// a new file has been opened
 	_fileName(name, data){
 		currentFile = name;
-		this.__breakpoints(data.breakpoints, data);
-	}
-	// breakpoints have been changed
-	__breakpoints(breakpoints, data){
-		//console.log('setting breakpoints', breakpoints);
-		this.editor.session.clearBreakpoints();
-		for (let breakpoint of breakpoints){
-			if (breakpoint.file === data.fileName){
-				this.editor.session.setBreakpoint(breakpoint.line);
-			}
-		}
-	}
-	// debugger highlight line has changed
-	__debugLine(line, data){
-	console.log(line, data.debugFile, currentFile);
-		this.removeDebuggerMarker();
-		
-		// add new marker at line
-		if (line && data.debugFile === currentFile){
-			this.editor.session.addMarker(new Range(line-1, 0, line-1, 1), "breakpointMarker", "fullLine");
-			this.editor.gotoLine(line, 0);
-		}
-	}
-	// debugger process has started or stopped
-	_debugRunning(status){
-		if (!status){
-			this.removeDebuggerMarker();
-		}
-	}
-	_debugBelaRunning(status){
-		if (status){
-			this.removeDebuggerMarker();
-		}
-	}
-	
-	removeDebuggerMarker(){
-		var markers = this.editor.session.getMarkers();
-		
-		// remove existing marker
-		Object.keys(markers).forEach( (key,index) => {
-			if (markers[key].clazz === 'breakpointMarker'){
-				this.editor.session.removeMarker(markers[key].id);
-			}
-		});
 	}
 	
 	getCurrentWord(){

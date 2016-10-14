@@ -10,7 +10,6 @@ var spawn = require('child_process').spawn;
 // sub_modules
 var ProjectManager = require('./ProjectManager');
 var ProcessManager = require('./ProcessManager');
-var DebugManager = require('./DebugManager');
 var server = require('./fileServer');
 var scope = require('./scope-node');
 var GitManager = require('./GitManager');
@@ -200,14 +199,7 @@ function socketEvents(socket){
 				socket.emit('report-error', error.toString() );
 			});
 	});
-	
-	// debugger
-	socket.on('debugger-event', (func, args) => {
-	//console.log(DebugManager, func, DebugManager[func]);
-		if (DebugManager[func])
-			DebugManager[func](args);
-	});
-	
+
 	// git
 	socket.on('git-event', data => {
 	
@@ -330,10 +322,6 @@ ProcessManager.on('status', (status, project) => allSockets.emit('status', proje
 ProcessManager.on('broadcast-status', (status) => allSockets.emit('status', status) );
 ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
 
-DebugManager.on('status', (status) =>  allSockets.emit('debugger-data', status) );
-DebugManager.on('variables', (project, variables) =>  allSockets.emit('debugger-variables', project, variables) );
-DebugManager.on('error', (err) => allSockets.emit('report-error', err) );
-
 TerminalManager.on('shell-event', (evt, data) => allSockets.emit('shell-event', evt, data) );
 
 server.emitter.on('project-error', e => {
@@ -362,8 +350,7 @@ var SettingsManager = {
 			'cpuMonitoring'			: 1,
 			'cpuMonitoringVerbose'	: 0,
 			'consoleDelete'			: 0,
-			'viewHiddenFiles'		: 0,
-			'verboseDebug'			: 0
+			'viewHiddenFiles'		: 0
 		};
 	},
 
