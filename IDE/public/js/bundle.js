@@ -408,8 +408,8 @@ tabView.on('change', function () {
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	console.log('project-settings', data);
-	console.trace('project-settings');
+	//console.log('project-settings', data);
+	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 settingsView.on('IDE-settings', function (data) {
@@ -463,6 +463,11 @@ fileView.on('force-rebuild', function () {
 		event: 'rebuild',
 		currentProject: models.project.getKey('currentProject')
 	});
+});
+fileView.on('file-rejected', function (filename) {
+	var timestamp = performance.now();
+	consoleView.emit('openNotification', { func: 'fileRejected', timestamp: timestamp });
+	consoleView.emit('closeNotification', { error: '... failed, file ' + filename + ' already exists. Refresh to allow overwriting', timestamp: timestamp });
 });
 
 // editor view
@@ -1438,7 +1443,8 @@ var funcKey = {
 	'renameFile': 'Renaming file',
 	'deleteFile': 'Deleting file',
 	'init': 'Initialising',
-	'stop': 'Stopping'
+	'stop': 'Stopping',
+	'fileRejected': 'Uploading file'
 };
 
 },{"../console":15,"./View":14}],6:[function(require,module,exports){
@@ -2105,6 +2111,7 @@ var headerIndeces = ['h', 'hh', 'hpp'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
+var overwriteAction = '';
 var fileQueue = [];
 var forceRebuild = false;
 var viewHiddenFiles = false;
@@ -2451,7 +2458,10 @@ var FileView = function (_View) {
 		value: function doFileUpload(file) {
 			var _this7 = this;
 
+			//console.log('doFileUpload', file.name);
+
 			if (uploadingFile) {
+				//console.log('queueing upload', file.name);
 				fileQueue.push(file);
 				return;
 			}
@@ -2498,12 +2508,15 @@ var FileView = function (_View) {
 				form.push('<input id="popup-remember-upload" type="checkbox">');
 				form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>');
 				form.push('</br >');
-				form.push('<button type="submit" class="button popup-upload">Upload</button>');
+				form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
 				form.push('<button type="button" class="button popup-cancel">Cancel</button>');
 
 				popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
-					if (popup.find('input[type=checkbox]').is(':checked')) askForOverwrite = false;
+					if (popup.find('input[type=checkbox]').is(':checked')) {
+						askForOverwrite = false;
+						overwriteAction = 'upload';
+					}
 					_this7.actuallyDoFileUpload(file, true);
 					popup.hide();
 					uploadingFile = false;
@@ -2513,6 +2526,10 @@ var FileView = function (_View) {
 				});
 
 				popup.find('.popup-cancel').on('click', function () {
+					if (popup.find('input[type=checkbox]').is(':checked')) {
+						askForOverwrite = false;
+						overwriteAction = 'reject';
+					}
 					popup.hide();
 					uploadingFile = false;
 					forceRebuild = false;
@@ -2522,9 +2539,19 @@ var FileView = function (_View) {
 				popup.show();
 
 				popup.find('.popup-cancel').focus();
+			} else if (fileExists && !askForOverwrite) {
+
+				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
+					//console.log('rejected', file.name);
+					this.emit('file-rejected', file.name);
+				}
+
+				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			} else {
 
 				this.actuallyDoFileUpload(file, !askForOverwrite);
+
+				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			}
 		}
 	}, {
@@ -2532,6 +2559,7 @@ var FileView = function (_View) {
 		value: function actuallyDoFileUpload(file, force) {
 			var _this8 = this;
 
+			//console.log('actuallyDoFileUpload', file.name, force);
 			var reader = new FileReader();
 			reader.onload = function (ev) {
 				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });

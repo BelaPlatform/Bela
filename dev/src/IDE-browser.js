@@ -24,8 +24,8 @@ tabView.on('change', () => editorView.emit('resize') );
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
-	console.log('project-settings', data);
-	console.trace('project-settings');
+	//console.log('project-settings', data);
+	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 settingsView.on('IDE-settings', (data) => {
@@ -71,6 +71,11 @@ fileView.on('force-rebuild', () => {
 		event			: 'rebuild',
 		currentProject	: models.project.getKey('currentProject')
 	});
+});
+fileView.on('file-rejected', filename => {
+	var timestamp = performance.now();
+	consoleView.emit('openNotification', {func: 'fileRejected', timestamp});
+	consoleView.emit('closeNotification', {error: '... failed, file '+filename+' already exists. Refresh to allow overwriting', timestamp});
 });
 
 // editor view

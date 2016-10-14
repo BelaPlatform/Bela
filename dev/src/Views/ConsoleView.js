@@ -244,5 +244,6 @@ var funcKey = {
 	'renameFile'	: 'Renaming file',
 	'deleteFile'	: 'Deleting file',
 	'init'			: 'Initialising',
-	'stop'			: 'Stopping'
+	'stop'			: 'Stopping',
+	'fileRejected'	: 'Uploading file'
 };
