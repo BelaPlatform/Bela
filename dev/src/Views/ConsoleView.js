@@ -13,7 +13,7 @@ class ConsoleView extends View{
 	constructor(className, models, settings){
 		super(className, models, settings);		
 		
-		this.on('clear', () => _console.clear() );
+		this.on('clear', force => _console.clear(undefined, force) );
 		_console.on('focus', (focus) => this.emit('focus', focus) );
 		_console.on('open-file', (fileName, focus) => this.emit('open-file', fileName, focus) );
 		
@@ -212,7 +212,7 @@ class ConsoleView extends View{
 	}
 	
 	_CPU(data){
-		if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0){
+		if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela && data.bela.split){
 			_console.log(data.bela.split(' ').join('&nbsp;'));
 		}
 		/*if (data.modeSwitches && modeSwitches) {
@@ -228,6 +228,7 @@ class ConsoleView extends View{
 	_consoleDelete(value){
 		_console.setConsoleDelete(parseInt(value));
 	}
+	
 	_verboseDebug(value){
 		verboseDebugOutput = parseInt(value);
 	}

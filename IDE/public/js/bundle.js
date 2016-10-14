@@ -529,10 +529,9 @@ editorView.on('highlight-syntax', function (names) {
 	return socket.emit('highlight-syntax', names);
 });
 editorView.on('compare-files', function (compare) {
-	/*if (compare && !models.project.getKey('readOnly'))
- 	setCompareFilesInterval();
- else if (!compare && compareFilesInterval)
- 	clearInterval(compareFilesInterval);*/
+	compareFiles = compare;
+	// unset the interval
+	if (!compare) setModifiedTimeInterval(undefined);
 });
 
 // toolbar view
@@ -551,7 +550,7 @@ toolbarView.on('process-event', function (event) {
 	socket.emit('process-event', data);
 });
 toolbarView.on('clear-console', function () {
-	return consoleView.emit('clear');
+	return consoleView.emit('clear', true);
 });
 toolbarView.on('mode-switch-warning', function (num) {
 	return consoleView.emit('warn', num + ' mode switch' + (num != 1 ? 'es' : '') + ' detected on the audio thread!');
@@ -741,7 +740,6 @@ socket.on('disconnect', function () {
 socket.on('file-changed', function (project, fileName) {
 	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
 		console.log('file changed!');
-		if (compareFilesInterval) clearInterval(compareFilesInterval);
 		models.project.setKey('readOnly', true);
 		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
 		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
@@ -806,17 +804,18 @@ socket.on('force-reload', function () {
 
 socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', function (data) {
-	if (data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
+	if (compareFiles && data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
 		// console.log(data, data.fileData, editorView.getData());
 		if (data.fileData !== editorView.getData()) fileChangedPopup(data.fileName);
 	}
 });
 
 var checkModifiedTimeInterval;
+var compareFiles = false;
 function setModifiedTimeInterval(mtime) {
 	// console.log('received mtime', mtime);
 	if (checkModifiedTimeInterval) clearInterval(checkModifiedTimeInterval);
-	if (!mtime) return;
+	if (!mtime || !compareFiles) return;
 	checkModifiedTimeInterval = setInterval(function () {
 		// console.log('sent compare-mtime', mtime);
 		socket.emit('compare-mtime', {
@@ -1211,8 +1210,8 @@ var ConsoleView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ConsoleView).call(this, className, models, settings));
 
-		_this.on('clear', function () {
-			return _console.clear();
+		_this.on('clear', function (force) {
+			return _console.clear(undefined, force);
 		});
 		_console.on('focus', function (focus) {
 			return _this.emit('focus', focus);
@@ -1484,7 +1483,7 @@ var ConsoleView = function (_View) {
 	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
-			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0) {
+			if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela && data.bela.split) {
 				_console.log(data.bela.split(' ').join('&nbsp;'));
 			}
 			/*if (data.modeSwitches && modeSwitches) {
@@ -2123,7 +2122,6 @@ var currentFile;
 var imageUrl;
 var activeWords = [];
 var activeWordIDs = [];
-var autoDocs = false;
 
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
@@ -2140,6 +2138,7 @@ var EditorView = function (_View) {
 
 		_this.parser = require('../parser');
 		_this.parser.init(_this.editor, langTools);
+		_this.parser.enable(true);
 
 		// set syntax mode
 		_this.on('syntax-highlighted', function () {
@@ -2174,7 +2173,7 @@ var EditorView = function (_View) {
 
 		// fired when the cursor changes position
 		_this.editor.session.selection.on('changeCursor', function () {
-			if (autoDocs) _this.getCurrentWord();
+			_this.getCurrentWord();
 		});
 
 		/*this.editor.session.on('changeBackMarker', (e) => {
@@ -2321,10 +2320,16 @@ var EditorView = function (_View) {
 
 					// load an empty string into the editor
 					// data = '';
+
+					// start comparison with file on disk
+					this.emit('compare-files', true);
 				} else {
 
 					// show the editor
 					$('#editor').css('display', 'block');
+
+					// stop comparison with file on disk
+					this.emit('compare-files', false);
 				}
 
 				// block upload
@@ -2344,9 +2349,6 @@ var EditorView = function (_View) {
 
 				// focus the editor
 				this.__focus(opts.focus);
-
-				// start comparison with file on disk
-				this.emit('compare-files', true);
 			}
 		}
 		// editor focus has changed
@@ -2383,12 +2385,6 @@ var EditorView = function (_View) {
 			this.editor.setOptions({
 				enableLiveAutocompletion: parseInt(status) === 1
 			});
-		}
-	}, {
-		key: '_autoDocs',
-		value: function _autoDocs(status) {
-			this.parser.enable(status);
-			autoDocs = status;
 		}
 		// readonly status has changed
 
@@ -4562,7 +4558,7 @@ var Console = function (_EventEmitter) {
 
 			if (suspended) return;
 
-			if (numElements > maxElements) {
+			if (!consoleDelete && numElements > maxElements) {
 				//console.log('cleared & rejected', numElements, text.split('\n').length);
 				this.clear(numElements - maxElements / 2);
 				suspended = true;
@@ -4742,8 +4738,8 @@ var Console = function (_EventEmitter) {
 
 	}, {
 		key: 'clear',
-		value: function clear(number) {
-			if (!consoleDelete) return;
+		value: function clear(number, force) {
+			if (consoleDelete && !force) return;
 			if (number) {
 				$("#beaglert-consoleWrapper > div:lt(" + parseInt(number) + ")").remove();
 				numElements -= parseInt(number);

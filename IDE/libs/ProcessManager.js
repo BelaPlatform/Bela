@@ -27,6 +27,8 @@ var stopProcess = require('./IDEProcesses').stop;
 
 var childProcesses = {syntaxCheckProcess, buildProcess, belaProcess};
 
+var writingFile = false, dataCached = false, uploadCache = {};
+
 class ProcessManager extends EventEmitter {
 	
 	constructor(){
@@ -37,11 +39,27 @@ class ProcessManager extends EventEmitter {
 	// process functions
 	upload(project, data){
 	
+		if (writingFile){
+			uploadCache = data;
+			dataCached = true;
+			return;
+		}
+	
 		this.emptyAllQueues();
 		
+		writingFile = true;
 		if (data.currentProject && data.newFile && data.fileData){
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
+
+					writingFile = false;
+					
+					if (dataCached){
+						dataCached = false;
+						this.upload(undefined, uploadCache);
+						return;
+					}
+					
 					if (toobusy())
 						console.log('toobusy: syntax check');
 					else if (data.checkSyntax){
@@ -49,6 +67,7 @@ class ProcessManager extends EventEmitter {
 						// callback to get time of file upload
 						if (data.callback) data.callback();
 					}
+					
 				});
 		} else {
 			if (toobusy())

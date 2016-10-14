@@ -312,6 +312,8 @@ function socketEvents(socket){
 	
 	socket.on('compare-mtime', data => {
 		
+		// console.log('compare-mtime', data);
+		
 		if (!data.currentProject || !data.fileName || !data.mtime) return;
 		
 		co(ProjectManager, 'checkModifiedTime', data)
@@ -359,12 +361,9 @@ var SettingsManager = {
 			'verboseErrors'			: 0,
 			'cpuMonitoring'			: 1,
 			'cpuMonitoringVerbose'	: 0,
-			'consoleDelete'			: 1,
-			'autoDocs'				: 1,
+			'consoleDelete'			: 0,
 			'viewHiddenFiles'		: 0,
-			'verboseDebug'			: 0,
-			'useGit'				: 1,
-			'gitAutostage'			: 1
+			'verboseDebug'			: 0
 		};
 	},
 
