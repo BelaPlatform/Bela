@@ -438,37 +438,8 @@ void render(BelaContext *context, void *userData)
 		}
 	} else {
 		static int lastMuxerUpdate = 0;
-		if(lastMuxerUpdate++ == multiplexerArraySize){
+		if(++lastMuxerUpdate == multiplexerArraySize){
 			lastMuxerUpdate = 0;
-			static int count = 0;
-			count++;
-			if( 0 && (count&31) == 0){
-				for(int firstAn = 4; firstAn >= 0; firstAn -= 4){
-					for(int firstMux = 1; firstMux >= 0; --firstMux){
-						for(int an = firstAn; an < firstAn + 4; ++an){
-							for(int mux = firstMux; mux < 8; mux += 2){
-								rt_printf("%.1f, ", multiplexerAnalogRead(context, an, mux));
-								//rt_printf("%d.%d ", an, mux);
-							}
-						}
-						rt_printf("\n");
-					}
-				}
-				rt_printf("\n_\n_\n");
-			}
-			if( 0 && (count&31) == 0){
-				for(int n = 0; n < 16; ++n){
-					rt_printf("%2d   ", n);
-				}
-				for(int n = 0; n < multiplexerArraySize; ++n){
-					if((n&15) == 0){
-						rt_printf("\n");
-					}
-					//rt_printf("%.3f, ", multiplexerAnalogRead(context, 0, 1));
-					rt_printf("%.1f, ", (context->multiplexerAnalogIn[n] > 0.5 )* context->multiplexerAnalogIn[n] );
-				}
-				rt_printf("\n___\n\n");
-			}
 			libpd_write_array(multiplexerArray, 0, (float *const)context->multiplexerAnalogIn, multiplexerArraySize);
 		}
 	}
