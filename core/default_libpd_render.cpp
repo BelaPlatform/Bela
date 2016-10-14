@@ -300,6 +300,7 @@ bool setup(BelaContext *context, void *userData)
 		libpd_start_message(1);
 		libpd_add_float(multiplexerArraySize);
 		libpd_finish_message(multiplexerArray, "resize");
+		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
 	}
 	printf("Array size: %d, multiplexer channels: %d\n",
 		libpd_arraysize(multiplexerArray), context->multiplexerChannels
@@ -441,7 +442,7 @@ void render(BelaContext *context, void *userData)
 			lastMuxerUpdate = 0;
 			static int count = 0;
 			count++;
-			if( 1 && (count&31) == 0){
+			if( 0 && (count&31) == 0){
 				for(int firstAn = 4; firstAn >= 0; firstAn -= 4){
 					for(int firstMux = 1; firstMux >= 0; --firstMux){
 						for(int an = firstAn; an < firstAn + 4; ++an){
@@ -468,7 +469,7 @@ void render(BelaContext *context, void *userData)
 				}
 				rt_printf("\n___\n\n");
 			}
-			//libpd_write_array(multiplexerArray, 0, (float *const)context->multiplexerAnalogIn, multiplexerArraySize);
+			libpd_write_array(multiplexerArray, 0, (float *const)context->multiplexerAnalogIn, multiplexerArraySize);
 		}
 	}
 
