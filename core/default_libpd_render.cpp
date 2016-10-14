@@ -175,12 +175,14 @@ static const unsigned int gChannelsInUse = 30;
 static const unsigned int gFirstAnalogChannel = 2;
 static const unsigned int gFirstDigitalChannel = 10;
 static const unsigned int gFirstScopeChannel = 26;
+static char multiplexerArray[] = {"bela_multiplexer"};
+static int multiplexerArraySize = 0;
+static bool pdMultiplexerActive = false;
 
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
 void* gPatch;
-
 bool setup(BelaContext *context, void *userData)
 {
 	// add here other devices you need 
@@ -285,13 +287,24 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_digitalOut25");
 	libpd_bind("bela_digitalOut26");
 	libpd_bind("bela_setDigital");
-
 	// open patch       [; pd open file folder(
 	gPatch = libpd_openfile(file, folder);
 	if(gPatch == NULL){
 		printf("Error: file %s/%s is corrupted.\n", folder, file); 
 		return false;
 	}
+
+	if(context->multiplexerChannels > 0 && libpd_arraysize(multiplexerArray) >= 0){
+		pdMultiplexerActive = true;
+		multiplexerArraySize = context->multiplexerChannels * context->analogInChannels;
+		libpd_start_message(1);
+		libpd_add_float(multiplexerArraySize);
+		libpd_finish_message(multiplexerArray, "resize");
+	}
+	printf("Array size: %d, multiplexer channels: %d\n",
+		libpd_arraysize(multiplexerArray), context->multiplexerChannels
+	);
+
 	return true;
 }
 
@@ -398,6 +411,7 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 		// then analogs
+	if(!pdMultiplexerActive){
 		// this loop resamples by ZOH, as needed, using m
 		if(context->analogInChannels == 8 ){ //hold the value for two frames
 			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
@@ -421,6 +435,42 @@ void render(BelaContext *context, void *userData)
 				}
 			}
 		}
+	} else {
+		static int lastMuxerUpdate = 0;
+		if(lastMuxerUpdate++ == multiplexerArraySize){
+			lastMuxerUpdate = 0;
+			static int count = 0;
+			count++;
+			if( 1 && (count&31) == 0){
+				for(int firstAn = 4; firstAn >= 0; firstAn -= 4){
+					for(int firstMux = 1; firstMux >= 0; --firstMux){
+						for(int an = firstAn; an < firstAn + 4; ++an){
+							for(int mux = firstMux; mux < 8; mux += 2){
+								rt_printf("%.1f, ", multiplexerAnalogRead(context, an, mux));
+								//rt_printf("%d.%d ", an, mux);
+							}
+						}
+						rt_printf("\n");
+					}
+				}
+				rt_printf("\n_\n_\n");
+			}
+			if( 0 && (count&31) == 0){
+				for(int n = 0; n < 16; ++n){
+					rt_printf("%2d   ", n);
+				}
+				for(int n = 0; n < multiplexerArraySize; ++n){
+					if((n&15) == 0){
+						rt_printf("\n");
+					}
+					//rt_printf("%.3f, ", multiplexerAnalogRead(context, 0, 1));
+					rt_printf("%.1f, ", (context->multiplexerAnalogIn[n] > 0.5 )* context->multiplexerAnalogIn[n] );
+				}
+				rt_printf("\n___\n\n");
+			}
+			//libpd_write_array(multiplexerArray, 0, (float *const)context->multiplexerAnalogIn, multiplexerArraySize);
+		}
+	}
 
 		// Bela digital input
 		// note: in multiple places below we assume that the number of digitals is same as number of audio
