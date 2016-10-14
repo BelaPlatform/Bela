@@ -209,7 +209,7 @@ module.exports = {
 			// if the file is not too big, load it as a buffer and try to find its type
 			
 			let stat = yield fs.statAsync(projectDir + data.newFile).catch( () => {size: 0} );
-			console.log(data.newFile, stat);
+			// console.log(data.newFile, stat);
 			
 			if (stat && stat.size > maxFileSize){
 			
@@ -519,7 +519,7 @@ function _getSettings(projectName){
 	// console.trace('_getSettings');
 	return fs.readJSONAsync(projectPath+projectName+'/settings.json')
 		.catch((error) => {
-			console.log('project settings.json error', error, error.stack);
+			if (error && error.code && error.code !== 'ENOENT') console.log('project settings.json error', error, error.stack);
 			console.log('could not find settings.json in project folder, creating default project settings');
 			
 			// console.log(fs.readFileSync(projectPath+projectName+'/settings.json', 'utf8'));
