@@ -418,6 +418,7 @@ module.exports = {
 	},
 	
 	*setBreakpoints(data){
+	// console.trace('setBreakpoints');
 		var settings = yield _getSettings(data.currentProject);
 		settings.breakpoints = data.value;
 		return yield _saveSettings(settings, data);
@@ -515,12 +516,22 @@ function *_setFile(data){
 	return yield _saveSettings(settings, data);
 }
 
+var writingSettings = false, settingsBeingWritten;
 // return the project settings
 function _getSettings(projectName){
+	// console.log('opening settings.json');
+	if (writingSettings && settingsBeingWritten){
+		console.log('busy writing settings.json, returned cached settings');
+		return Promise.resolve(settingsBeingWritten);
+	}
+	//console.trace('_getSettings');
 	return fs.readJSONAsync(projectPath+projectName+'/settings.json')
 		.catch((error) => {
-			//console.log('settings.json error', error, error.stack);
+			console.log('project settings.json error', error, error.stack);
 			console.log('could not find settings.json in project folder, creating default project settings');
+			
+			// console.log(fs.readFileSync(projectPath+projectName+'/settings.json', 'utf8'));
+			
 			// if there is an error loading the settings object, create a new default one
 			return _saveSettings(_defaultSettings(), {currentProject: projectName});
 		})
@@ -528,9 +539,17 @@ function _getSettings(projectName){
 
 // save the project settings
 function _saveSettings(settings, data){
-	//console.log('saving settings', settings, ' in', projectPath+data.currentProject);
+	//console.log('saving settings');//, settings, ' in', projectPath+data.currentProject);
+	//console.trace('_saveSettings');
+	writingSettings = true;
+	settingsBeingWritten = settings;
 	return fs.outputJSONAsync(projectPath+data.currentProject+'/settings.json', settings)
-		.then( () => settings )
+		.then( () => {
+			//console.log('saved settings');
+			writingSettings = false;
+			settingsBeingWritten = undefined;
+			return settings;
+		})
 		.catch( (e) => console.log(e) );
 }
 
