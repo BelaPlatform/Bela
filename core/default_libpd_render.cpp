@@ -409,31 +409,32 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 		// then analogs
-	if(!pdMultiplexerActive){
-		// this loop resamples by ZOH, as needed, using m
-		if(context->analogInChannels == 8 ){ //hold the value for two frames
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = (audioFrameBase + j) / 2;
-					*p1 = analogRead(context, analogFrame, k);
-				}
-			}
-		} else if(context->analogInChannels == 4){ //write every frame
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = audioFrameBase + j;
-					*p1 = analogRead(context, analogFrame, k);
-				}
-			}
-		} else if(context->analogInChannels == 2){ //drop every other frame
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = (audioFrameBase + j) * 2;
-					*p1 = analogRead(context, analogFrame, k);
-				}
+	// this loop resamples by ZOH, as needed, using m
+	if(context->analogInChannels == 8 ){ //hold the value for two frames
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = (audioFrameBase + j) / 2;
+				*p1 = analogRead(context, analogFrame, k);
 			}
 		}
-	} else {
+	} else if(context->analogInChannels == 4){ //write every frame
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = audioFrameBase + j;
+				*p1 = analogRead(context, analogFrame, k);
+			}
+		}
+	} else if(context->analogInChannels == 2){ //drop every other frame
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = (audioFrameBase + j) * 2;
+				*p1 = analogRead(context, analogFrame, k);
+			}
+		}
+	}
+	if(pdMultiplexerActive){ 
+	// we do not disable regular analog inputs if muxer is active, because user may have bridged them on the board and
+	// they may be using half of them at a high sampling-rate
 		static int lastMuxerUpdate = 0;
 		if(++lastMuxerUpdate == multiplexerArraySize){
 			lastMuxerUpdate = 0;
