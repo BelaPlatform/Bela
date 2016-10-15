@@ -205,7 +205,7 @@ class ProcessManager extends EventEmitter {
 		
 		// syntax events
 		syntaxCheckProcess.on('started', () => this.emit('status', syntaxCheckProcess.project, this.getStatus()) );
-		syntaxCheckProcess.on('stdout', (data) => this.emit('status', syntaxCheckProcess.project, {syntaxLog: data}) );
+		//syntaxCheckProcess.on('stdout', (data) => this.emit('status', syntaxCheckProcess.project, {syntaxLog: data}) );
 		syntaxCheckProcess.on('cancelled', (data) => {
 		//console.log('cancelled');
 			var status = this.getStatus();
