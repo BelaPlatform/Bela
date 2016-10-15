@@ -302,9 +302,6 @@ bool setup(BelaContext *context, void *userData)
 		libpd_finish_message(multiplexerArray, "resize");
 		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
 	}
-	printf("Array size: %d, multiplexer channels: %d\n",
-		libpd_arraysize(multiplexerArray), context->multiplexerChannels
-	);
 
 	return true;
 }
