@@ -42,45 +42,45 @@ float gScale;
 bool setup(BelaContext *context, void *userData)
 {
 	gPhaseIncrement = 2.0 * M_PI * 1.0 / context->audioSampleRate;
-    gScale = 1 / (float)NUM_OSCS * 0.5;
-    
-    srand (time(NULL));
-    
-    for(int k = 0; k < NUM_OSCS; ++k){
-    		// Fill array gFrequencies[k] with random freq between 300 - 2700Hz
-	    	gFrequencies[k] = rand() / (float)RAND_MAX * 2400 + 300;
-	    	// Fill array gFrequenciesLFO[k] with random freq between 0.001 - 0.051Hz
-	    	gFrequenciesLFO[k] = rand() / (float)RAND_MAX * 0.05 + 0.001;
-	    	gPhasesLFO[k] = 0;
-	    }
-    
+	gScale = 1 / (float)NUM_OSCS * 0.5;
+
+	srand (time(NULL));
+
+	for(int k = 0; k < NUM_OSCS; ++k){
+			// Fill array gFrequencies[k] with random freq between 300 - 2700Hz
+			gFrequencies[k] = rand() / (float)RAND_MAX * 2400 + 300;
+			// Fill array gFrequenciesLFO[k] with random freq between 0.001 - 0.051Hz
+			gFrequenciesLFO[k] = rand() / (float)RAND_MAX * 0.05 + 0.001;
+			gPhasesLFO[k] = 0;
+		}
+
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-	    float out[2] = {0};
+		float out[2] = {0};
 	   
-	    for(int k = 0; k < NUM_OSCS; ++k){
-	    	
-	    	// Calculate the LFO amplitude
-	    	float LFO = sinf_neon(gPhasesLFO[k]);
-	        gPhasesLFO[k] += gFrequenciesLFO[k] * gPhaseIncrement;
-			if(gPhasesLFO[k] >  M_PI)
+		for(int k = 0; k < NUM_OSCS; ++k){
+			
+			// Calculate the LFO amplitude
+			float LFO = sinf_neon(gPhasesLFO[k]);
+			gPhasesLFO[k] += gFrequenciesLFO[k] * gPhaseIncrement;
+			if(gPhasesLFO[k] >	M_PI)
 				gPhasesLFO[k] -= 2.0 * M_PI;
-	    	
-	    	// Calculate oscillator sinewaves and output them amplitude modulated
-	    	// by LFO sinewave squared.
-	    	// Outputs from the oscillators are summed in out[], 
+			
+			// Calculate oscillator sinewaves and output them amplitude modulated
+			// by LFO sinewave squared.
+			// Outputs from the oscillators are summed in out[], 
 			// with even numbered oscillators going to the left channel out[0]
 			// and odd numbered oscillators going to the right channel out[1]
-            out[k&1] += sinf_neon(gPhases[k]) * gScale * (LFO*LFO);
-            gPhases[k] += gFrequencies[k] * gPhaseIncrement;
+			out[k&1] += sinf_neon(gPhases[k]) * gScale * (LFO*LFO);
+			gPhases[k] += gFrequencies[k] * gPhaseIncrement;
 			if(gPhases[k] > M_PI)
 				gPhases[k] -= 2.0 * M_PI;
 			
-	    }
+		}
 		audioWrite(context, n, 0, out[0]);
 		audioWrite(context, n, 1, out[1]);
 	}
