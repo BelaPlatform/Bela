@@ -322,16 +322,28 @@ function CPU(data){
 		let downSampling = settings.getKey('downSampling');
 		let upSampling = settings.getKey('upSampling');
 		let sampleRate = settings.getKey('sampleRate');
+		let plotMode = settings.getKey('plotMode');
+		let scale = downSampling/upSampling;
+		let FFTAxis = settings.getKey('FFTXAxis');
 		
+		console.log(FFTAxis)
+				
 		let out = "data:text/csv;charset=utf-8,";
 		
 		for (let i=0; i<length; i++){
-			out += i*downSampling/(upSampling * sampleRate);
+		
+			if (plotMode === 0){		// time domain
+				out += scale*i/sampleRate;
+			} else if (plotMode === 1) {	// FFT
+				out += sampleRate*i/(2*length*scale);
+			}
+			
 			for (let j=0; j<numChannels; j++){
 				out += ','+ ( ( 1 - frame[j*length + i] / (height/2) ) * channelConfig[j].yAmplitude - channelConfig[j].yOffset );
 			}
 			out += '\n';
 		}
+
 
 		this.href = encodeURI(out);
 	});

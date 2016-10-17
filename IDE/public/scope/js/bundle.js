@@ -1591,11 +1591,24 @@ function CPU(data) {
 			var downSampling = settings.getKey('downSampling');
 			var upSampling = settings.getKey('upSampling');
 			var sampleRate = settings.getKey('sampleRate');
+			var plotMode = settings.getKey('plotMode');
+			var scale = downSampling / upSampling;
+			var FFTAxis = settings.getKey('FFTXAxis');
+
+			console.log(FFTAxis);
 
 			var out = "data:text/csv;charset=utf-8,";
 
 			for (var i = 0; i < length; i++) {
-				out += i * downSampling / (upSampling * sampleRate);
+
+				if (plotMode === 0) {
+					// time domain
+					out += scale * i / sampleRate;
+				} else if (plotMode === 1) {
+					// FFT
+					out += sampleRate * i / (2 * length * scale);
+				}
+
 				for (var j = 0; j < numChannels; j++) {
 					out += ',' + ((1 - frame[j * length + i] / (height / 2)) * channelConfig[j].yAmplitude - channelConfig[j].yOffset);
 				}
