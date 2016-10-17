@@ -27,26 +27,24 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <time.h>
 
 
-#define NUM_OSCS 30
+#define NUM_OSCS 40
 
-float gInverseSampleRate;
+float gPhaseIncrement;
 
 float gFrequencies[NUM_OSCS];
 float gPhases[NUM_OSCS];
-float gAmplitudes[NUM_OSCS];
 
 float gFrequenciesLFO[NUM_OSCS];
-float LFO[NUM_OSCS];
 float gPhasesLFO[NUM_OSCS];
 
 float gScale;
 
 bool setup(BelaContext *context, void *userData)
 {
-	gInverseSampleRate = 1.0 / context->audioSampleRate;
+	gPhaseIncrement = 2.0 * M_PI * 1.0 / context->audioSampleRate;
     gScale = 1 / (float)NUM_OSCS * 0.5;
     
-    srand ( time(NULL) );
+    srand (time(NULL));
     
     for(int k = 0; k < NUM_OSCS; ++k){
     		// Fill array gFrequencies[k] with random freq between 300 - 2700Hz
@@ -62,33 +60,29 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-	    float out = 0;
+	    float out[2] = {0};
 	   
 	    for(int k = 0; k < NUM_OSCS; ++k){
 	    	
-	    	LFO[k] = 0;
-	    	
-	    	// Calculate LFO sinewaves
-	    	LFO[k] += sinf_neon(gPhasesLFO[k]);
-	        gPhasesLFO[k] += 2.0 * M_PI * gFrequenciesLFO[k] * gInverseSampleRate;
+	    	// Calculate the LFO amplitude
+	    	float LFO = sinf_neon(gPhasesLFO[k]);
+	        gPhasesLFO[k] += gFrequenciesLFO[k] * gPhaseIncrement;
 			if(gPhasesLFO[k] >  M_PI)
 				gPhasesLFO[k] -= 2.0 * M_PI;
 	    	
 	    	// Calculate oscillator sinewaves and output them amplitude modulated
 	    	// by LFO sinewave squared.
-            out += sinf_neon(gPhases[k]) * gScale * (LFO[k]*LFO[k]);
-            gPhases[k] += 2.0 * M_PI * gFrequencies[k] * gInverseSampleRate;
+	    	// Outputs from the oscillators are summed in out[], 
+			// with even numbered oscillators going to the left channel out[0]
+			// and odd numbered oscillators going to the right channel out[1]
+            out[k&1] += sinf_neon(gPhases[k]) * gScale * (LFO*LFO);
+            gPhases[k] += gFrequencies[k] * gPhaseIncrement;
 			if(gPhases[k] > M_PI)
 				gPhases[k] -= 2.0 * M_PI;
 			
-			// Assign even numbered oscillators to left and odd to right channels	
-			if(k%2 == 0) {
-				audioWrite(context, n, 0, out);
-			} 
-			else {
-				audioWrite(context, n, 1, out);
-			}
 	    }
+		audioWrite(context, n, 0, out[0]);
+		audioWrite(context, n, 1, out[1]);
 	}
 }
 
