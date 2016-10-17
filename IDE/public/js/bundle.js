@@ -3380,6 +3380,8 @@ var SettingsView = function (_View) {
 					_this5.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 					_this5.emit('warning', 'Do not use the IDE during the update process!');
 
+					popup.overlay();
+
 					var reader = new FileReader();
 					reader.onload = function (ev) {
 						return _this5.emit('upload-update', { name: file.name, file: ev.target.result });
@@ -3391,7 +3393,6 @@ var SettingsView = function (_View) {
 				}
 
 				popup.hide();
-				popup.overlay();
 			});
 
 			popup.find('.popup-cancel').on('click', popup.hide);
