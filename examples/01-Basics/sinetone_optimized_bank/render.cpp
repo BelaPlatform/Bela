@@ -27,7 +27,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <time.h>
 
 
-#define NUM_OSCS 32
+#define NUM_OSCS 30
 
 float gInverseSampleRate;
 
@@ -49,8 +49,10 @@ bool setup(BelaContext *context, void *userData)
     srand ( time(NULL) );
     
     for(int k = 0; k < NUM_OSCS; ++k){
-	    	gFrequencies[k] = rand() / (float)RAND_MAX * 2400 + 100;
-	    	gFrequenciesLFO[k] = rand() / (float)RAND_MAX * 0.1;
+    		// Fill array gFrequencies[k] with random freq between 300 - 2700Hz
+	    	gFrequencies[k] = rand() / (float)RAND_MAX * 2400 + 300;
+	    	// Fill array gFrequenciesLFO[k] with random freq between 0.001 - 0.051Hz
+	    	gFrequenciesLFO[k] = rand() / (float)RAND_MAX * 0.05 + 0.001;
 	    	gPhasesLFO[k] = 0;
 	    }
     
@@ -66,21 +68,27 @@ void render(BelaContext *context, void *userData)
 	    	
 	    	LFO[k] = 0;
 	    	
+	    	// Calculate LFO sinewaves
 	    	LFO[k] += sinf_neon(gPhasesLFO[k]);
 	        gPhasesLFO[k] += 2.0 * M_PI * gFrequenciesLFO[k] * gInverseSampleRate;
-			if(gPhasesLFO[k] > 2.0 * M_PI)
+			if(gPhasesLFO[k] >  M_PI)
 				gPhasesLFO[k] -= 2.0 * M_PI;
 	    	
-	    	
+	    	// Calculate oscillator sinewaves and output them amplitude modulated
+	    	// by LFO sinewave squared.
             out += sinf_neon(gPhases[k]) * gScale * (LFO[k]*LFO[k]);
             gPhases[k] += 2.0 * M_PI * gFrequencies[k] * gInverseSampleRate;
-			if(gPhases[k] > 2.0 * M_PI)
+			if(gPhases[k] > M_PI)
 				gPhases[k] -= 2.0 * M_PI;
+			
+			// Assign even numbered oscillators to left and odd to right channels	
+			if(k%2 == 0) {
+				audioWrite(context, n, 0, out);
+			} 
+			else {
+				audioWrite(context, n, 1, out);
+			}
 	    }
-	
-		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
-			audioWrite(context, n, channel, out);
-		}
 	}
 }
 
@@ -91,7 +99,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example sinetone_optimized/render.cpp
+\example sinetone_optimised_bank/render.cpp
 
 Using optimized neon functions
 ---------------------------
