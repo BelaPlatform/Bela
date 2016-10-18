@@ -237,6 +237,9 @@ bool setup(BelaContext *context, void *userData)
 	libpd_set_noteonhook(pdnoteon);
 	//TODO: add hooks for other midi events and generate MIDI output appropriately
 	libpd_init();
+	libpd_add_to_search_path(".");
+	libpd_add_to_search_path("../pd-externals");
+
 	//TODO: ideally, we would analyse the ASCII of the patch file and find out which in/outs to use
 	libpd_init_audio(gChannelsInUse, gChannelsInUse, context->audioSampleRate);
 	gInBuf = libpd_get_sys_soundin();
