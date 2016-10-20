@@ -2,7 +2,7 @@
  * bela-cape-btn daemon for the bela capebutton.
  * 
  * Adapted from:
- * Copyright (C) 2016  Vilniaus Blokas UAB, http://blokas.io/bela
+ * a) Copyright (C) 2016  Vilniaus Blokas UAB, http://blokas.io/bela
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,6 +17,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * and
+ *
+ * SimpleGPIO.cpp
+ * Copyright (c) 2011, RidgeRun
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by the RidgeRun.
+ * 4. Neither the name of the RidgeRun nor the
+ *    names of its contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY RIDGERUN ''AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL RIDGERUN BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
@@ -29,20 +60,25 @@
 #include <poll.h>
 #include <time.h>
 
+#define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define HOMEPAGE_URL "http://bela.io/wiki"
+#define MAX_BUF 64
 
-enum { BELA_CAPE_BTN_VERSION   = 0x0100 };
-enum { INVALID_VERSION       = 0xffff };
-enum { BUTTON_PIN            = 115     }; // The Bela cape button, which is on P9.27 / GPIO3[19]
+enum { BELA_CAPE_BTN_VERSION = 0x0100 };
+enum { INVALID_VERSION = 0xffff };
+enum { DEFAULT_BUTTON_PIN = 115 }; // The Bela cape button, which is on P9.27 / GPIO3[19]
 enum { HOLD_PRESS_TIMEOUT_MS = 2000 };
 
-static const char *const CLICKED_ACTION       = "/root/click.sh";
-static const char *const HOLD_ACTION          = "/root/hold.sh";
-static const char *const BELA_VERSION_FILE = "/sys/kernel/bela/version";
+static char DEFAULT_CLICKED_ACTION[] = "/root/cape_button_click.sh";
+static char DEFAULT_HOLD_ACTION[] = "/root/cape_button_hold.sh";
+
+static char* CLICKED_ACTION;
+static char* HOLD_ACTION;
+static int BUTTON_PIN;
 
 int gpio_is_pin_valid(int pin)
 {
-	return pin >= 0 && pin < 100;
+	return pin >= 0 && pin < 128;
 }
 
 enum edge_e
@@ -53,6 +89,49 @@ enum edge_e
 	E_BOTH    = 3,
 };
 
+/****************************************************************
+ * gpio_export
+ ****************************************************************/
+int gpio_export(unsigned int gpio)
+{
+	int fd, len, result = 0;
+	char buf[MAX_BUF];
+
+	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
+	if (fd < 0) {
+		perror("gpio/export");
+		return fd;
+	}
+
+	len = snprintf(buf, sizeof(buf), "%d", gpio);
+	if(write(fd, buf, len) < 0)
+		result = -1;
+	close(fd);
+
+	return result;
+}
+
+/****************************************************************
+ * gpio_unexport
+ ****************************************************************/
+int gpio_unexport(unsigned int gpio)
+{
+	int fd, len, result = 0;
+	char buf[MAX_BUF];
+
+	fd = open(SYSFS_GPIO_DIR "/unexport", O_WRONLY);
+	if (fd < 0) {
+		perror("gpio/export");
+		return fd;
+	}
+
+	len = snprintf(buf, sizeof(buf), "%d", gpio);
+	if(write(fd, buf, len) < 0)
+		result = -1;
+	close(fd);
+	return result;
+}
+
 int gpio_set_edge(int pin, enum edge_e edge)
 {
 	if (!gpio_is_pin_valid(pin))
@@ -61,9 +140,9 @@ int gpio_set_edge(int pin, enum edge_e edge)
 		return -1;
 	}
 
-	char gpio[64];
+	char gpio[MAX_BUF];
 
-	snprintf(gpio, sizeof(gpio), "/sys/class/gpio/gpio%d/edge", pin);
+	snprintf(gpio, sizeof(gpio), SYSFS_GPIO_DIR "/gpio%d/edge", pin);
 
 	int fd = open(gpio, O_WRONLY);
 	if (fd == -1)
@@ -106,9 +185,9 @@ int gpio_open(int pin)
 		return -1;
 	}
 
-	char gpio[64];
+	char gpio[MAX_BUF];
 
-	snprintf(gpio, sizeof(gpio), "/sys/class/gpio/gpio%d/value", pin);
+	snprintf(gpio, sizeof(gpio), SYSFS_GPIO_DIR "/gpio%d/value", pin);
 
 	int fd = open(gpio, O_RDONLY);
 
@@ -140,39 +219,10 @@ timestamp_ms_t get_timestamp_ms(void)
 	return tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
 }
 
-unsigned short get_kernel_module_version(void)
-{
-	FILE *f = fopen(BELA_VERSION_FILE, "rt");
-
-	if (!f)
-		return INVALID_VERSION;
-
-	unsigned int major;
-	unsigned int minor;
-	int n = fscanf(f, "%u.%u", &major, &minor);
-	fclose(f);
-
-	if (n == 2)
-		return (major & 0xff) << 8 + (minor & 0xff);
-
-	return INVALID_VERSION;
-}
-
 int run(void)
 {
-	unsigned short version = get_kernel_module_version();
-
-	if (version == INVALID_VERSION)
-	{
-		fprintf(stderr, "Reading bela version failed, did the kernel module load successfully?\n");
-		return -EINVAL;
-	}
-	else if (version < 0x0100 || version >= 0x0200)
-	{
-		fprintf(stderr, "The kernel module version (%04x) and bela-cape-btn version (%04x) are incompatible! Please check for updates at " HOMEPAGE_URL "\n", version, BELA_CAPE_BTN_VERSION);
-		return -EINVAL;
-	}
-
+	gpio_export(BUTTON_PIN);
+	
 	int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
 
 	if (err != 0)
@@ -187,6 +237,7 @@ int run(void)
 
 	timestamp_ms_t pressed_at = 0;
 
+	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold...\n", BUTTON_PIN, CLICKED_ACTION, HOLD_ACTION);
 	for (;;)
 	{
 		int result = poll(pfd, 1, -1);
@@ -252,8 +303,11 @@ void print_usage(void)
 {
 	printf("Usage: bela-cape-btn [options]\n"
 		"Options:\n"
-		"\t--help     Display the usage information.\n"
-		"\t--version  Show the version information.\n"
+		"\t--click <arg>  The file to execute when a click is detected.\n"
+		"\t--hold <arg>   The file to execute when a hold is detected.\n"
+		"\t--pin <arg>    The GPIO number to monitor.\n"
+		"\t--help         Display the usage information.\n"
+		"\t--version      Show the version information.\n"
 		"\n"
 		);
 	print_version();
@@ -261,9 +315,49 @@ void print_usage(void)
 
 int main(int argc, char **argv)
 {
+
+	BUTTON_PIN = DEFAULT_BUTTON_PIN;
+	CLICKED_ACTION = DEFAULT_CLICKED_ACTION;
+	HOLD_ACTION = DEFAULT_HOLD_ACTION;
 	int i;
 	for (i=1; i<argc; ++i)
 	{
+		if (strcmp(argv[i], "--pin") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				BUTTON_PIN = atoi(argv[i]);
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
+		if (strcmp(argv[i], "--click") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				CLICKED_ACTION = argv[i];
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
+		if (strcmp(argv[i], "--hold") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				HOLD_ACTION = argv[i];
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
 		if (strcmp(argv[i], "--help") == 0)
 		{
 			print_usage();
