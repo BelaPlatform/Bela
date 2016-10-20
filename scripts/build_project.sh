@@ -26,7 +26,7 @@ usage()
 	and runs it. The Bela core files should have first been copied over
 	using the \`update_board' script once.
 	
-	Folder /path/to/project should contain at least one .c, .cpp, .S or .pd file.
+	Folder /path/to/project should contain at least one .c, .cpp, .S, .pd or .scd file.
 "
 	build_script_usage
 	run_script_usage
@@ -105,11 +105,11 @@ then
 fi
 
 FIND_STRING="find $HOST_SOURCE_PATH -maxdepth 1 -type f "
-EXTENSIONS_TO_FIND='\.cpp\|\.c\|\.S\|\.pd'
+EXTENSIONS_TO_FIND='\.cpp\|\.c\|\.S\|\.pd\|\.scd'
 FOUND_FILES=$($FIND_STRING 2>/dev/null | grep "$EXTENSIONS_TO_FIND")
 if [ -z "$FOUND_FILES" ]
 then
-	 printf "ERROR: Please provide a directory containing .c, .cpp, .S or .pd files.\n\n"
+	 printf "ERROR: Please provide a directory containing .c, .cpp, .S, .pd or .scd files.\n\n"
 	 exit 1
 fi
 

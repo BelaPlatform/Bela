@@ -11,3 +11,4 @@ build/
 Debug/
 Documentation/
 *.js.map
+.plugins/
