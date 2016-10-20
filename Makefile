@@ -230,14 +230,14 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.S
 # Rule for user-supplied assembly files
 $(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
 	$(AT) echo 'Building $(notdir $<)...'
-#	$(AT) echo 'Invoking: PRU Assembler'
-#Note that pasm will most likely run during the syntax check and will actually generate the output ...
-	#check if pasm exists, skip otherwise. This provides (sort of)
-	#backwards compatibility in case pre-compiled header is available.
-# pasm outputs to the same folder, so cd to the project folder before running it
+	$(AT) echo 'Invoking: PRU Assembler'
+	$(AT)#Note that pasm will most likely run during the syntax check and will actually generate the output ...
+	$(AT)#check if pasm exists, skip otherwise. This provides (sort of)
+	$(AT)#backwards compatibility in case pre-compiled header is available.
+	$(AT)#pasm outputs to the same folder, so cd to the project folder before running it
 	$(AT) if [ -z "`which pasm`" ]; then echo 'pasm not found, .p files not compiled.' 1>&2; else \
 	      cd $(PROJECT_DIR) &&\
-	      pasm "$<" -c && echo ' ...done'; fi
+	      pasm "$<" -c >/dev/null && echo ' ...done'; fi
 	$(AT) echo ' '
 
 # This is a nasty kludge: we want to be able to optionally link in a default
