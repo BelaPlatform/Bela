@@ -534,7 +534,7 @@ function parseErrors(data){
 			for (let j=0; j<msg.length; j++){
 		
 				var str = msg[j].split(':');
-				//console.log(str);
+				// console.log(str);
 				// str[0] -> file name + path
 				// str[1] -> row number
 				// str[2] -> column number
@@ -564,6 +564,14 @@ function parseErrors(data){
 						column: str[2],
 						text: '[warning] '+str.slice(4).join(':').slice(1) + '\ncolumn: '+str[2],
 						type: "warning"
+					});
+				} else if (str[0] == 'pasm'){
+					errors.push({
+						file: str[1].split(' ')[1].split('(')[0], 
+						row: parseInt(str[1].split(' ')[1].split('(')[1].split(')')[0])-1,
+						column: '',
+						text: '[pasm] '+str[2].substring(1),
+						type: "error"
 					});
 				} else {
 					//console.log('rejected error string: '+str);
