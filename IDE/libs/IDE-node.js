@@ -10,7 +10,6 @@ var spawn = require('child_process').spawn;
 // sub_modules
 var ProjectManager = require('./ProjectManager');
 var ProcessManager = require('./ProcessManager');
-var DebugManager = require('./DebugManager');
 var server = require('./fileServer');
 var scope = require('./scope-node');
 var GitManager = require('./GitManager');
@@ -155,16 +154,24 @@ function socketEvents(socket){
 	// process events
 	socket.on('process-event', (data) => {
 	
-		//console.log('process-event', data);
+		// console.log('process-event', data);
 		
 		if (!data || !data.currentProject || !data.event || !ProcessManager[data.event]){
 			console.log('bad process-event', data);
 			return;
 		}
 
-		if (data.event === 'upload' && data.fileData){
+		if (data.event === 'upload' && data.newFile){
 			// notify other browser tabs that the file has been updated
-			socket.broadcast.emit('file-changed', data.currentProject, data.newFile);
+			if (data.fileData) socket.broadcast.emit('file-changed', data.currentProject, data.newFile);
+			// add on a callback to return the file's uploaded time to the browser
+			data.callback = function(){
+				fs.statAsync(belaPath+'projects/'+data.currentProject+'/'+data.newFile)
+					.then( stat => {
+						if (stat && stat.mtime) socket.emit('mtime', stat.mtime.toString());
+					})
+					.catch ( e => console.log('error stat-ing file after upload', e) );
+			};
 		}
 		
 		ProcessManager[data.event](data.currentProject, data);
@@ -192,14 +199,7 @@ function socketEvents(socket){
 				socket.emit('report-error', error.toString() );
 			});
 	});
-	
-	// debugger
-	socket.on('debugger-event', (func, args) => {
-	//console.log(DebugManager, func, DebugManager[func]);
-		if (DebugManager[func])
-			DebugManager[func](args);
-	});
-	
+
 	// git
 	socket.on('git-event', data => {
 	
@@ -301,6 +301,20 @@ function socketEvents(socket){
 			.then( () => socket.emit('syntax-highlighted') )
 			.catch( e => console.log('highlight-syntax error', e) );
 	});
+	
+	socket.on('compare-mtime', data => {
+		
+		// console.log('compare-mtime', data);
+		
+		if (!data.currentProject || !data.fileName || !data.mtime) return;
+		
+		co(ProjectManager, 'checkModifiedTime', data)
+			.then((result) => {
+				if (!data.abort) socket.emit('mtime-compare', data);
+			})
+			.catch( e => console.log('error checking modified time', e) );
+			
+	});
 
 }
 
@@ -308,11 +322,15 @@ ProcessManager.on('status', (status, project) => allSockets.emit('status', proje
 ProcessManager.on('broadcast-status', (status) => allSockets.emit('status', status) );
 ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
 
-DebugManager.on('status', (status) =>  allSockets.emit('debugger-data', status) );
-DebugManager.on('variables', (project, variables) =>  allSockets.emit('debugger-variables', project, variables) );
-DebugManager.on('error', (err) => allSockets.emit('report-error', err) );
-
 TerminalManager.on('shell-event', (evt, data) => allSockets.emit('shell-event', evt, data) );
+
+server.emitter.on('project-error', e => {
+	var msg = 'error compressing project folder';
+	if (e.code === 'ELOOP')
+		msg += ', possibly due to broken symlinks';
+	
+	allSockets.emit('report-error', msg);
+});
 
 // module functions - only accesible from this file
 function co(obj, func, args){
@@ -331,12 +349,8 @@ var SettingsManager = {
 			'verboseErrors'			: 0,
 			'cpuMonitoring'			: 1,
 			'cpuMonitoringVerbose'	: 0,
-			'consoleDelete'			: 1,
-			'autoDocs'				: 1,
-			'viewHiddenFiles'		: 0,
-			'verboseDebug'			: 0,
-			'useGit'				: 1,
-			'gitAutostage'			: 1
+			'consoleDelete'			: 0,
+			'viewHiddenFiles'		: 0
 		};
 	},
 

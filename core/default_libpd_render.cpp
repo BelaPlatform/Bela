@@ -175,18 +175,20 @@ static const unsigned int gChannelsInUse = 30;
 static const unsigned int gFirstAnalogChannel = 2;
 static const unsigned int gFirstDigitalChannel = 10;
 static const unsigned int gFirstScopeChannel = 26;
+static char multiplexerArray[] = {"bela_multiplexer"};
+static int multiplexerArraySize = 0;
+static bool pdMultiplexerActive = false;
 
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
 void* gPatch;
-
 bool setup(BelaContext *context, void *userData)
 {
-	gMidiPortNames.push_back("hw:0,0,0");
 	// add here other devices you need 
 	gMidiPortNames.push_back("hw:1,0,0");
-	gMidiPortNames.push_back("hw:1,0,1");
+	//gMidiPortNames.push_back("hw:0,0,0");
+	//gMidiPortNames.push_back("hw:1,0,1");
 
     scope.setup(gScopeChannelsInUse, context->audioSampleRate);
     gScopeOut = new float[gScopeChannelsInUse];
@@ -252,9 +254,12 @@ bool setup(BelaContext *context, void *userData)
 		libpd_set_midibytehook(Bela_MidiOutByte);
 	}
 
-
-	//TODO: add hooks for other midi events and generate MIDI output appropriately
+	//initialize libpd. This clears the search path
 	libpd_init();
+	//Add the current folder to the search path for externals
+	libpd_add_to_search_path(".");
+	libpd_add_to_search_path("../pd-externals");
+
 	//TODO: ideally, we would analyse the ASCII of the patch file and find out which in/outs to use
 	libpd_init_audio(gChannelsInUse, gChannelsInUse, context->audioSampleRate);
 	gInBuf = libpd_get_sys_soundin();
@@ -285,13 +290,22 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_digitalOut25");
 	libpd_bind("bela_digitalOut26");
 	libpd_bind("bela_setDigital");
-
 	// open patch       [; pd open file folder(
 	gPatch = libpd_openfile(file, folder);
 	if(gPatch == NULL){
 		printf("Error: file %s/%s is corrupted.\n", folder, file); 
 		return false;
 	}
+
+	if(context->multiplexerChannels > 0 && libpd_arraysize(multiplexerArray) >= 0){
+		pdMultiplexerActive = true;
+		multiplexerArraySize = context->multiplexerChannels * context->analogInChannels;
+		libpd_start_message(1);
+		libpd_add_float(multiplexerArraySize);
+		libpd_finish_message(multiplexerArray, "resize");
+		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
+	}
+
 	return true;
 }
 
@@ -398,29 +412,38 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 		// then analogs
-		// this loop resamples by ZOH, as needed, using m
-		if(context->analogInChannels == 8 ){ //hold the value for two frames
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = (audioFrameBase + j) / 2;
-					*p1 = analogRead(context, analogFrame, k);
-				}
-			}
-		} else if(context->analogInChannels == 4){ //write every frame
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = audioFrameBase + j;
-					*p1 = analogRead(context, analogFrame, k);
-				}
-			}
-		} else if(context->analogInChannels == 2){ //drop every other frame
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = (audioFrameBase + j) * 2;
-					*p1 = analogRead(context, analogFrame, k);
-				}
+	// this loop resamples by ZOH, as needed, using m
+	if(context->analogInChannels == 8 ){ //hold the value for two frames
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = (audioFrameBase + j) / 2;
+				*p1 = analogRead(context, analogFrame, k);
 			}
 		}
+	} else if(context->analogInChannels == 4){ //write every frame
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = audioFrameBase + j;
+				*p1 = analogRead(context, analogFrame, k);
+			}
+		}
+	} else if(context->analogInChannels == 2){ //drop every other frame
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = (audioFrameBase + j) * 2;
+				*p1 = analogRead(context, analogFrame, k);
+			}
+		}
+	}
+	if(pdMultiplexerActive){ 
+	// we do not disable regular analog inputs if muxer is active, because user may have bridged them on the board and
+	// they may be using half of them at a high sampling-rate
+		static int lastMuxerUpdate = 0;
+		if(++lastMuxerUpdate == multiplexerArraySize){
+			lastMuxerUpdate = 0;
+			libpd_write_array(multiplexerArray, 0, (float *const)context->multiplexerAnalogIn, multiplexerArraySize);
+		}
+	}
 
 		// Bela digital input
 		// note: in multiple places below we assume that the number of digitals is same as number of audio

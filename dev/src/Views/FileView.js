@@ -6,6 +6,7 @@ var headerIndeces = ['h', 'hh', 'hpp'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
+var overwriteAction = '';
 var fileQueue = [];
 var forceRebuild = false;
 var viewHiddenFiles = false;
@@ -247,7 +248,10 @@ class FileView extends View {
 	
 	doFileUpload(file){
 	
+		//console.log('doFileUpload', file.name);
+	
 		if (uploadingFile){
+			//console.log('queueing upload', file.name);
 			fileQueue.push(file);
 			return;
 		}
@@ -273,12 +277,15 @@ class FileView extends View {
 			form.push('<input id="popup-remember-upload" type="checkbox">');
 			form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>')
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-upload">Upload</button>');
+			form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
 			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
 		
 			popup.form.append(form.join('')).off('submit').on('submit', e => {
 				e.preventDefault();
-				if (popup.find('input[type=checkbox]').is(':checked')) askForOverwrite = false;
+				if (popup.find('input[type=checkbox]').is(':checked')){
+					askForOverwrite = false;
+					overwriteAction = 'upload';
+				}
 				this.actuallyDoFileUpload(file, true);
 				popup.hide();
 				uploadingFile = false;
@@ -288,6 +295,10 @@ class FileView extends View {
 			});
 		
 			popup.find('.popup-cancel').on('click', () => {
+				if (popup.find('input[type=checkbox]').is(':checked')){
+					askForOverwrite = false;
+					overwriteAction = 'reject';
+				}
 				popup.hide();
 				uploadingFile = false;
 				forceRebuild = false;
@@ -298,14 +309,28 @@ class FileView extends View {
 			
 			popup.find('.popup-cancel').focus();
 			
-		} else {
+		} else if (fileExists && !askForOverwrite){
 		
+			if (overwriteAction === 'upload')
+				this.actuallyDoFileUpload(file, !askForOverwrite);
+			else {
+				//console.log('rejected', file.name);
+				this.emit('file-rejected', file.name);
+			}
+				
+			if (fileQueue.length) this.doFileUpload(fileQueue.pop());
+			
+		} else {
+			
 			this.actuallyDoFileUpload(file, !askForOverwrite);
+			
+			if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			
 		}
 	}
 	
 	actuallyDoFileUpload(file, force){
+		//console.log('actuallyDoFileUpload', file.name, force);
 		var reader = new FileReader();
 		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
 		reader.readAsArrayBuffer(file);

@@ -188,21 +188,6 @@ class ToolbarView extends View {
 			$('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
 	}
 	
-	/*_debugBelaRunning(status){
-		if (status){
-			if (!$('#run').hasClass('spinning')){
-				$('#run').addClass('spinning');
-			}
-		} else {
-			if ($('#run').hasClass('spinning')){
-				$('#run').removeClass('spinning');
-			}
-		}
-	}
-	_debugRunning(status){
-		if (!status && $('#run').hasClass('spinning'))  $('#run').removeClass('spinning');
-	}*/
-	
 }
 
 module.exports = ToolbarView;

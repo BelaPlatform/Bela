@@ -58,22 +58,33 @@ socket.on('buffer', function(buf){
 		return;
 	}
 	
-	for (var channel=0; channel<numChannels; channel++){
-		for (var u=0; u<upSampling; u++){
-			for (var frame=0; frame<inFrameWidth; frame++){
-				var outIndex = channel*outFrameWidth + frame*upSampling + u;
+	for (var channel=0; channel<numChannels; ++channel){
+		var outIndex;
+		var endOfInArray = (channel + 1) * inFrameWidth;
+		for (var frame=0; frame<inFrameWidth; ++frame){
+			for (var u=0; u<upSampling; ++u){
 				var inIndex = channel*inFrameWidth + frame;
-				var first, second;
-				if (inIndex >= channel*inFrameWidth + inFrameWidth - 1){
-					first = inArray[inIndex-1];
-					second = inArray[inIndex];
-				} else {
-					first = inArray[inIndex];
-					second = inArray[inIndex + 1];
-				}
+				var first = inArray[inIndex];
+				var second = inArray[inIndex + 1 < endOfInArray ? inIndex + 1 : endOfInArray];
 				var diff = interpolation ? u*(second-first)/upSampling : 0;
+				outIndex = channel*outFrameWidth + frame*upSampling + u;
 				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) / channelConfig[channel].yAmplitude);
 			}
+		}
+		// the above will not always get to the end of outArray, depending on the ratio between upSampling and outFrameWidth
+		// fill in the remaining of the buffer
+		var endOfOutArray = (channel + 1) * outFrameWidth;
+		// we could fill with nans or zero-order hold
+		//var fillValue = outArray[outIndex]; // ZOH
+		var fillValue = NaN; // NaN
+		if(interpolation){
+			// if we are interpolating, we will now have a flat line at the end of the frame,
+			// as we have interpolated between two values that are the same
+			// so let's overwrite those as well
+			outIndex -= upSampling;
+		}
+		while(outIndex < endOfOutArray){
+			outArray[outIndex++] = fillValue;
 		}
 	}
 //  	for(var n = 0; n < upSampling; ++n){

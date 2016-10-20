@@ -204,6 +204,8 @@ class SettingsView extends View {
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 				this.emit('warning', 'Do not use the IDE during the update process!');
 				
+				popup.overlay();
+				
 				var reader = new FileReader();
 				reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
 				reader.readAsArrayBuffer(file);
@@ -215,7 +217,6 @@ class SettingsView extends View {
 			}
 			
 			popup.hide();
-			popup.overlay();
 			
 		});
 		
@@ -258,9 +259,6 @@ class SettingsView extends View {
 		for (let key in data){
 			this.$elements.filterByData('key', key).val(data[key]).prop('checked', data[key]);
 		}
-	}
-	_breakpoints(value, keys){
-		this.emit('project-settings', {func: 'setBreakpoints', value});
 	}
 	_projectList(projects, data){
 

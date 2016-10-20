@@ -2,7 +2,7 @@
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
-var enabled = true, scrollEnabled = true;
+var enabled = true, scrollEnabled = true, suspended = false;
 
 // module variables
 var numElements = 0, maxElements = 200, consoleDelete = true;
@@ -24,9 +24,15 @@ class Console extends EventEmitter {
 	
 	print(text, className, id, onClick){
 		if (!enabled) return;
+		
+		// this is a faster way maybe?
+		//var str = '<div '+(id ? 'id="'+id+'" ' : '') +'class="beaglert-console-'+className+'"><span>'+text+'</span></div>';
+		//this.$element.append(str);
+		
 		var el = $('<div></div>').addClass('beaglert-console-'+className).appendTo(this.$element);
 		if (id) el.prop('id', id);
 		$('<span></span>').html(text).appendTo(el);
+		
 		if (numElements++ > maxElements) this.clear(numElements/4);
 		if (onClick) el.on('click', onClick);
 		return el;
@@ -34,14 +40,30 @@ class Console extends EventEmitter {
 
 	// log an unhighlighted message to the console
 	log(text, css){
-		this.checkScroll();
-		var msgs = text.split('\n');
-		for (let i=0;  i<msgs.length; i++){
-			if (msgs[i] !== '' && msgs[i] !== ' '){
-				this.print(msgs[i], css || 'log');
+	
+		if (suspended) return;
+		
+		if (!consoleDelete && numElements > maxElements){
+			//console.log('cleared & rejected', numElements, text.split('\n').length);
+			this.clear(numElements - maxElements/2);
+			suspended = true;
+			setTimeout( () => suspended = false, 1000);
+			this.warn('Too many messages have been printed to the console too quickly. Reduce your printing frequency');
+		} else {
+			this.checkScroll();
+			var msgs = text.split('\n');
+			var str = '';
+			for (let i=0;  i<msgs.length; i++){
+				if (msgs[i] !== '' && msgs[i] !== ' '){
+					//this.print(msgs[i], css || 'log');
+					str += '<div class="beaglert-console-'+(css || 'log')+'"><span>'+msgs[i]+'</span></div>';
+					numElements++;
+				}
 			}
+			this.$element.append(str);
+			if (numElements > maxElements) this.clear(numElements/4);
+			this.scroll();
 		}
-		this.scroll();
 	}
 	// log a warning message to the console
 	warn(text, id){
@@ -144,8 +166,8 @@ class Console extends EventEmitter {
 	}
 	
 	// clear the console
-	clear(number){
-		if (!consoleDelete) return;
+	clear(number, force){
+		if (consoleDelete && !force) return;
 		if (number){
 			$("#beaglert-consoleWrapper > div:lt("+parseInt(number)+")").remove();
 			numElements -= parseInt(number);
@@ -174,7 +196,6 @@ class Console extends EventEmitter {
 	setConsoleDelete(to){
 		consoleDelete = to;
 	}
-	
 };
 
 module.exports = new Console();

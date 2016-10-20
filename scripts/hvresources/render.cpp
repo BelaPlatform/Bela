@@ -28,6 +28,9 @@ unsigned int gScopeChannelsInUse;
 float* gScopeOut;
 // Bela Scope
 static Scope scope;
+static char multiplexerArray[] = {"bela_multiplexer"};
+static int multiplexerArraySize = 0;
+static bool pdMultiplexerActive = false;
 
 /*
  *	HEAVY CONTEXT & BUFFERS
@@ -36,6 +39,7 @@ static Scope scope;
 Hv_bela *gHeavyContext;
 float *gHvInputBuffers = NULL, *gHvOutputBuffers = NULL;
 unsigned int gHvInputChannels = 0, gHvOutputChannels = 0;
+struct HvTable* multiplexerTable = NULL;
 
 float gInverseSampleRate;
 
@@ -317,6 +321,13 @@ bool setup(BelaContext *context, void *userData)	{
 		}
 	}
 	// unlike libpd, no need here to bind the bela_digitalOut.. receivers
+	multiplexerTable = hv_getTableForName(gHeavyContext, multiplexerArray);
+	if(context->multiplexerChannels > 0 && multiplexerTable != NULL){
+		pdMultiplexerActive = true;
+		multiplexerArraySize = context->multiplexerChannels * context->analogInChannels;
+		hv_table_resize(multiplexerTable, multiplexerArraySize);
+		hv_sendFloatToReceiver(gHeavyContext, hv_stringToHash("bela_multiplexerChannels"), context->multiplexerChannels);
+	}
 
 	return true;
 }
@@ -422,6 +433,15 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 	}
+
+	if(pdMultiplexerActive){
+		static int lastMuxerUpdate = 0;
+		if(++lastMuxerUpdate == multiplexerArraySize){
+			lastMuxerUpdate = 0;
+			memcpy(hv_table_getBuffer(multiplexerTable), (float *const)context->multiplexerAnalogIn, multiplexerArraySize * sizeof(float));
+		}
+	}
+
 
 	// Bela digital in
 	// note: in multiple places below we assume that the number of digital frames is same as number of audio

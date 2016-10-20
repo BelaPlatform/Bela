@@ -156,6 +156,7 @@ module.exports = {
 		
 			try{
 				let fileData = yield fs.readFileAsync(projectDir + data.newFile, 'utf8');
+				let stat = yield fs.statAsync(projectDir + data.newFile);
 				//.then( fileData => {
 				
 				// newFile was opened succesfully
@@ -167,6 +168,7 @@ module.exports = {
 				data.fileName = data.newFile;
 				data.newFile = undefined;
 				data.fileType = ext;
+				if (stat && stat.mtime && stat.mtime.toString) data.mtime = stat.mtime.toString();
 					
 				//})
 			}
@@ -207,7 +209,7 @@ module.exports = {
 			// if the file is not too big, load it as a buffer and try to find its type
 			
 			let stat = yield fs.statAsync(projectDir + data.newFile).catch( () => {size: 0} );
-			console.log(data.newFile, stat);
+			// console.log(data.newFile, stat);
 			
 			if (stat && stat.size > maxFileSize){
 			
@@ -240,7 +242,7 @@ module.exports = {
 						// the file is image or audio
 						data.fileData = '';
 						data.fileType = fileTypeData.mime;
-						
+												
 						data.readOnly = true;
 						
 						yield new Promise.coroutine(makeSymLink)(projectDir + data.newFile, mediaPath + data.newFile);
@@ -251,6 +253,8 @@ module.exports = {
 						
 							// the file is (probably) binary and can't be displayed in the IDE
 							console.log(data.newFile, 'is binary');
+							
+							if (stat && stat.mtime && stat.mtime.toString) data.mtime = stat.mtime.toString();
 							
 							// return an error
 							data.error = "can't open binary files";
@@ -267,6 +271,8 @@ module.exports = {
 							data.fileData = fileData.toString();
 							data.readOnly = false;
 							data.fileType = ext || 0;
+							
+							if (stat && stat.mtime && stat.mtime.toString) data.mtime = stat.mtime.toString();
 							
 						}
 					}
@@ -410,13 +416,7 @@ module.exports = {
 		data.fileData = '';
 		return data;
 	},
-	
-	*setBreakpoints(data){
-		var settings = yield _getSettings(data.currentProject);
-		settings.breakpoints = data.value;
-		return yield _saveSettings(settings, data);
-	},
-	
+
 	*setCLArgs(data){
 		var settings = yield _getSettings(data.currentProject);
 		for (let item of data.args){
@@ -435,13 +435,24 @@ module.exports = {
 		var oldSettings = yield _getSettings(data.currentProject);
 		var newSettings = _defaultSettings();
 		newSettings.fileName = oldSettings.fileName;
-		newSettings.breakpoints = oldSettings.breakpoints;
 		return yield _saveSettings(newSettings, data);
 	},
 	
 	*getCLArgs(project){
 		var settings = yield _getSettings(project);
 		return settings.CLArgs;
+	},
+	
+	*checkModifiedTime(data){
+		let stat = yield fs.statAsync(projectPath+data.currentProject+'/'+data.fileName);
+		// console.log(stat.mtime.toString(), data.mtime, (stat.mtime.toString() == data.mtime), typeof stat.mtime.toString(), typeof data.mtime);
+		if (stat.mtime.toString() == data.mtime)
+			data.abort = true;
+		else {
+			data.mtime = stat.mtime.toString();
+			data = yield _co(this, 'openFile', data);
+		}
+		return data;
 	},
 	
 	listFiles(project){
@@ -497,12 +508,22 @@ function *_setFile(data){
 	return yield _saveSettings(settings, data);
 }
 
+var writingSettings = false, settingsBeingWritten;
 // return the project settings
 function _getSettings(projectName){
+	// console.log('opening settings.json');
+	if (writingSettings && settingsBeingWritten){
+		console.log('busy writing settings.json, returned cached settings');
+		return Promise.resolve(settingsBeingWritten);
+	}
+	// console.trace('_getSettings');
 	return fs.readJSONAsync(projectPath+projectName+'/settings.json')
 		.catch((error) => {
-			//console.log('settings.json error', error, error.stack);
+			if (error && error.code && error.code !== 'ENOENT') console.log('project settings.json error', error, error.stack);
 			console.log('could not find settings.json in project folder, creating default project settings');
+			
+			// console.log(fs.readFileSync(projectPath+projectName+'/settings.json', 'utf8'));
+			
 			// if there is an error loading the settings object, create a new default one
 			return _saveSettings(_defaultSettings(), {currentProject: projectName});
 		})
@@ -510,9 +531,17 @@ function _getSettings(projectName){
 
 // save the project settings
 function _saveSettings(settings, data){
-	//console.log('saving settings', settings, ' in', projectPath+data.currentProject);
+	//console.log('saving settings');//, settings, ' in', projectPath+data.currentProject);
+	// console.trace('_saveSettings');
+	writingSettings = true;
+	settingsBeingWritten = settings;
 	return fs.outputJSONAsync(projectPath+data.currentProject+'/settings.json', settings)
-		.then( () => settings )
+		.then( () => {
+			//console.log('saved settings');
+			writingSettings = false;
+			settingsBeingWritten = undefined;
+			return settings;
+		})
 		.catch( (e) => console.log(e) );
 }
 
@@ -582,8 +611,7 @@ function _defaultSettings(){
 	};
 	return {
 		"fileName"		: "render.cpp",
-		CLArgs,
-		"breakpoints"	: []
+		CLArgs
 	};
 }
 
