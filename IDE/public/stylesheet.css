@@ -153,6 +153,7 @@ p {
 #beaglert-consoleWrapper>div{
 	display: inline-block;
     min-width: 100%;
+	box-sizing: border-box;
 }
 /*.beaglert-console-log-in::before{
 	content: '>';
