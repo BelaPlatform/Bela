@@ -129,6 +129,9 @@ ASM_SRCS := $(wildcard $(PROJECT_DIR)/*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
 ASM_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
 
+P_SRCS := $(wildcard $(PROJECT_DIR)/*.p)
+P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
+
 C_SRCS := $(wildcard $(PROJECT_DIR)/*.c)
 C_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.o)))
 C_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
@@ -137,7 +140,7 @@ CPP_SRCS := $(wildcard $(PROJECT_DIR)/*.cpp)
 CPP_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.o)))
 CPP_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
-PROJECT_OBJS = $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+PROJECT_OBJS = $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Core Bela sources
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
@@ -222,6 +225,19 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.S
 #	$(AT) echo 'Invoking: GCC Assembler'
 	$(AT) as  -o "$@" "$<"
 	$(AT) echo ' ...done'
+	$(AT) echo ' '
+
+# Rule for user-supplied assembly files
+$(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
+	$(AT) echo 'Building $(notdir $<)...'
+	$(AT) echo 'Invoking: PRU Assembler'
+	$(AT)#Note that pasm will most likely run during the syntax check and will actually generate the output ...
+	$(AT)#check if pasm exists, skip otherwise. This provides (sort of)
+	$(AT)#backwards compatibility in case pre-compiled header is available.
+	$(AT)#pasm outputs to the same folder, so cd to the project folder before running it
+	$(AT) if [ -z "`which pasm`" ]; then echo 'pasm not found, .p files not compiled.' 1>&2; else \
+	      cd $(PROJECT_DIR) &&\
+	      pasm "$<" -c >/dev/null && echo ' ...done'; fi
 	$(AT) echo ' '
 
 # This is a nasty kludge: we want to be able to optionally link in a default
