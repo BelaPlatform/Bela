@@ -608,7 +608,8 @@ var ChannelView = function (_View) {
 	}, {
 		key: 'setChannelGains',
 		value: function setChannelGains(value, min, max) {
-			this.$elements.filterByData('key', 'yAmplitude').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yAmplitude').not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yAmplitude').val(value);
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -635,11 +636,13 @@ var ChannelView = function (_View) {
 			}
 
 			this.emit('channelConfig', channelConfig);
+			console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
 		}
 	}, {
 		key: 'setChannelOffsets',
 		value: function setChannelOffsets(value, min, max) {
-			this.$elements.filterByData('key', 'yOffset').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yOffset').not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yOffset').val(value);
 			var _iteratorNormalCompletion2 = true;
 			var _didIteratorError2 = false;
 			var _iteratorError2 = undefined;

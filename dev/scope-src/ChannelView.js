@@ -33,14 +33,17 @@ class ChannelView extends View{
 	}
 	
 	setChannelGains(value, min, max){
-		this.$elements.filterByData('key', 'yAmplitude').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+		this.$elements.filterByData('key', 'yAmplitude').not('input[type=number]').prop('min', min).prop('max', max);
+		this.$elements.filterByData('key', 'yAmplitude').val(value);
 		for (let item of channelConfig){
 			item.yAmplitude = value;
 		}
 		this.emit('channelConfig', channelConfig);
+		console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
 	}
 	setChannelOffsets(value, min, max){
-		this.$elements.filterByData('key', 'yOffset').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+		this.$elements.filterByData('key', 'yOffset').not('input[type=number]').prop('min', min).prop('max', max);
+		this.$elements.filterByData('key', 'yOffset').val(value);
 		for (let item of channelConfig){
 			item.yOffset = value;
 		}
