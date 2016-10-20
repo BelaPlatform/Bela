@@ -67,6 +67,7 @@
 enum { BELA_CAPE_BTN_VERSION = 0x0100 };
 enum { INVALID_VERSION = 0xffff };
 enum { DEFAULT_BUTTON_PIN = 115 }; // The Bela cape button, which is on P9.27 / GPIO3[19]
+enum { DEFAULT_PRESSED_VALUE = 0 };
 enum { HOLD_PRESS_TIMEOUT_MS = 2000 };
 
 static char DEFAULT_CLICKED_ACTION[] = "/root/cape_button_click.sh";
@@ -75,6 +76,7 @@ static char DEFAULT_HOLD_ACTION[] = "/root/cape_button_hold.sh";
 static char* CLICKED_ACTION;
 static char* HOLD_ACTION;
 static int BUTTON_PIN;
+static int PRESSED_VALUE;
 
 int gpio_is_pin_valid(int pin)
 {
@@ -237,7 +239,7 @@ int run(void)
 
 	timestamp_ms_t pressed_at = 0;
 
-	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold...\n", BUTTON_PIN, CLICKED_ACTION, HOLD_ACTION);
+	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold. Button is pressed when pin is %s...\n", BUTTON_PIN, CLICKED_ACTION, HOLD_ACTION, PRESSED_VALUE == 0 ? "LOW" : "HIGH");
 	for (;;)
 	{
 		int result = poll(pfd, 1, -1);
@@ -267,7 +269,7 @@ int run(void)
 				break;
 			}
 
-			unsigned long pressed = strtoul(buff, NULL, 10);
+			unsigned long pressed = strtoul(buff, NULL, 10) == PRESSED_VALUE;
 
 			if (pressed)
 			{
@@ -288,9 +290,12 @@ int run(void)
 		}
 	}
 
+	// not that this is ever going to be executed ...
+	// TODO: signal handler
 	gpio_close(fd);
 
 	gpio_set_edge(BUTTON_PIN, E_NONE);
+	gpio_unexport(BUTTON_PIN);
 	return 0;
 }
 
@@ -303,12 +308,17 @@ void print_usage(void)
 {
 	printf("Usage: bela-cape-btn [options]\n"
 		"Options:\n"
-		"\t--click <arg>  The file to execute when a click is detected.\n"
-		"\t--hold <arg>   The file to execute when a hold is detected.\n"
-		"\t--pin <arg>    The GPIO number to monitor.\n"
-		"\t--help         Display the usage information.\n"
-		"\t--version      Show the version information.\n"
-		"\n"
+		"\t--click <arg>   The file to execute when a click is detected. Default: %s\n"
+		"\t--hold <arg>    The file to execute when a hold is detected. Default: %s\n"
+		"\t--pressed <arg> The input value corresponding to pressed status (0 or 1). Default: %d.\n"
+		"\t--pin <arg>     The GPIO number to monitor. Default: %d.\n"
+		"\t--help          Display the usage information.\n"
+		"\t--version       Show the version information.\n"
+		"\n",
+		DEFAULT_CLICKED_ACTION,
+		DEFAULT_HOLD_ACTION,
+		DEFAULT_PRESSED_VALUE,
+		DEFAULT_BUTTON_PIN
 		);
 	print_version();
 }
@@ -319,9 +329,22 @@ int main(int argc, char **argv)
 	BUTTON_PIN = DEFAULT_BUTTON_PIN;
 	CLICKED_ACTION = DEFAULT_CLICKED_ACTION;
 	HOLD_ACTION = DEFAULT_HOLD_ACTION;
+	PRESSED_VALUE = DEFAULT_PRESSED_VALUE;
 	int i;
 	for (i=1; i<argc; ++i)
 	{
+		if (strcmp(argv[i], "--pressed") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				PRESSED_VALUE= atoi(argv[i]);
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
 		if (strcmp(argv[i], "--pin") == 0)
 		{
 			if(i + 1 < argc){
