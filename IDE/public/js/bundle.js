@@ -862,8 +862,8 @@ models.status.on('change', function (data, changedKeys) {
 				console.log('opening project ' + e.state.project + ' file ' + e.state.file);
 				var data = {
 					currentProject: e.state.project,
-					fileName: e.state.file,
-					func: 'openFile',
+					newFile: e.state.file,
+					func: 'openProject',
 					timestamp: performance.now()
 				};
 				consoleView.emit('openNotification', data);
