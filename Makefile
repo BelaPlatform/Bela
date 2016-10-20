@@ -337,7 +337,15 @@ startup: Bela
 stop: ## Stops any Bela program that is currently running
 stop:
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
-	$(AT) killlall scsynth 2>dev>null& killall sclang 2>dev>null& exit 0
+# take care of stale sclang / scsynth processes
+ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+#if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
+	$(AT) killlall scsynth 2>dev>null; killall sclang 2>dev>null; true
+else
+#otherwise, it safe if they are asynchronous (faster). The Bela program will still be able to start as the 
+# audio thread has been killed above
+	$(AT) killlall scsynth 2>dev>null& killall sclang 2>dev>null& true
+endif
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
 	$(AT) screen -r -S $(SCREEN_NAME)
