@@ -340,11 +340,11 @@ stop:
 # take care of stale sclang / scsynth processes
 ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
-	$(AT) killlall scsynth 2>dev>null; killall sclang 2>dev>null; true
+	$(AT) killall scsynth 2>/dev/null; killall sclang 2>/dev/null; true
 else
 #otherwise, it safe if they are asynchronous (faster). The Bela program will still be able to start as the 
 # audio thread has been killed above
-	$(AT) killlall scsynth 2>dev>null& killall sclang 2>dev>null& true
+	$(AT) killall scsynth 2>/dev/null& killall sclang 2>/dev/null& true
 endif
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
