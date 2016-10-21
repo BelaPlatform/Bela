@@ -356,7 +356,7 @@ public:
 	 */
 	static void destroyPorts(std::vector<Midi*>& ports);
 private:
-	const char defaultPort[9];
+	char defaultPort[9];
 	int _getInput();
 	static void readInputLoop(void* obj) ;
 	static void writeOutputLoop(void* obj);
