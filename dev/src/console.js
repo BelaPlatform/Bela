@@ -103,14 +103,22 @@ class Console extends EventEmitter {
 			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
 			
 			// create the link and add it to the element
-			var anchor = $('<a></a>').html(err.text+', line: '+(err.row+1)).appendTo(div);
+			var span = $('<span></span>').html(err.text+', line: '+(err.row+1)).appendTo(div);
+			
+			// add a button to copy the contents to the clipboard
+			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+			var clipboard = new Clipboard(copyButton[0], {
+				target: function(trigger) {
+					return $(trigger).siblings('span')[0];
+				}
+			});
 			
 			div.appendTo(this.$element);
 			
 			if (err.currentFile){
-				div.on('click', () => this.emit('focus', {line: err.row+1, column: err.column-1}) );
+				span.on('click', () => this.emit('focus', {line: err.row+1, column: err.column-1}) );
 			} else {
-				div.on('click', () => this.emit('open-file', err.file, {line: err.row+1, column: err.column-1}) );
+				span.on('click', () => this.emit('open-file', err.file, {line: err.row+1, column: err.column-1}) );
 			}
 			
 		}

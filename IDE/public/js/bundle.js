@@ -4186,17 +4186,26 @@ var Console = function (_EventEmitter) {
 
 					// create the link and add it to the element
 
-					anchor = $('<a></a>').html(err.text + ', line: ' + (err.row + 1)).appendTo(div);
+					span = $('<span></span>').html(err.text + ', line: ' + (err.row + 1)).appendTo(div);
+
+					// add a button to copy the contents to the clipboard
+
+					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+					clipboard = new Clipboard(copyButton[0], {
+						target: function target(trigger) {
+							return $(trigger).siblings('span')[0];
+						}
+					});
 
 
 					div.appendTo(_this2.$element);
 
 					if (err.currentFile) {
-						div.on('click', function () {
+						span.on('click', function () {
 							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
 						});
 					} else {
-						div.on('click', function () {
+						span.on('click', function () {
 							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
 						});
 					}
@@ -4204,7 +4213,9 @@ var Console = function (_EventEmitter) {
 
 				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var div;
-					var anchor;
+					var span;
+					var copyButton;
+					var clipboard;
 
 					_loop();
 				}
