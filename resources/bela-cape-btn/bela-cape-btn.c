@@ -68,6 +68,7 @@ enum { BELA_CAPE_BTN_VERSION = 0x0100 };
 enum { INVALID_VERSION = 0xffff };
 enum { DEFAULT_BUTTON_PIN = 115 }; // The Bela cape button, which is on P9.27 / GPIO3[19]
 enum { DEFAULT_PRESSED_VALUE = 0 };
+enum { DEFAULT_INITIAL_DELAY = 0 };
 enum { HOLD_PRESS_TIMEOUT_MS = 2000 };
 
 static char DEFAULT_CLICKED_ACTION[] = "/root/cape_button_click.sh";
@@ -77,6 +78,7 @@ static char* CLICKED_ACTION;
 static char* HOLD_ACTION;
 static int BUTTON_PIN;
 static int PRESSED_VALUE;
+static int INITIAL_DELAY;
 
 int gpio_is_pin_valid(int pin)
 {
@@ -223,6 +225,10 @@ timestamp_ms_t get_timestamp_ms(void)
 
 int run(void)
 {
+	if(INITIAL_DELAY > 0){
+		printf("Sleeping %d seconds before polling\n", INITIAL_DELAY);
+		usleep(INITIAL_DELAY * 1000000);
+	}
 	gpio_export(BUTTON_PIN);
 	
 	int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
@@ -311,6 +317,7 @@ void print_usage(void)
 		"\t--click <arg>   The file to execute when a click is detected. Default: %s\n"
 		"\t--hold <arg>    The file to execute when a hold is detected. Default: %s\n"
 		"\t--pressed <arg> The input value corresponding to pressed status (0 or 1). Default: %d.\n"
+		"\t--delay <ard>   Postpone the beginning of the polling by <arg> seconds. Default: %d.\n"
 		"\t--pin <arg>     The GPIO number to monitor. Default: %d.\n"
 		"\t--help          Display the usage information.\n"
 		"\t--version       Show the version information.\n"
@@ -318,6 +325,7 @@ void print_usage(void)
 		DEFAULT_CLICKED_ACTION,
 		DEFAULT_HOLD_ACTION,
 		DEFAULT_PRESSED_VALUE,
+		DEFAULT_INITIAL_DELAY,
 		DEFAULT_BUTTON_PIN
 		);
 	print_version();
@@ -330,9 +338,22 @@ int main(int argc, char **argv)
 	CLICKED_ACTION = DEFAULT_CLICKED_ACTION;
 	HOLD_ACTION = DEFAULT_HOLD_ACTION;
 	PRESSED_VALUE = DEFAULT_PRESSED_VALUE;
+	INITIAL_DELAY = DEFAULT_INITIAL_DELAY;
 	int i;
 	for (i=1; i<argc; ++i)
 	{
+		if (strcmp(argv[i], "--delay") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				INITIAL_DELAY = atoi(argv[i]);
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
 		if (strcmp(argv[i], "--pressed") == 0)
 		{
 			if(i + 1 < argc){
