@@ -88,7 +88,7 @@ module.exports = {
 			data.error = 'failed, project '+data.newProject+' already exists!';
 			return data;
 		}
-	console.log('hi', templatePath + (data.projectType || 'C'));
+// 	console.log('hi', templatePath + (data.projectType || 'C'));
 		yield fs.copyAsync(templatePath + (data.projectType || 'C'), projectPath+data.newProject, {clobber: true});
 		data.projectList = yield this.listProjects();
 		data.currentProject = data.newProject;
