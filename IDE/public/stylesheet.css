@@ -148,7 +148,7 @@ p {
 	overflow-x: auto;
 }
 #beaglert-consoleWrapper span{
-
+	white-space: pre-wrap;
 }
 #beaglert-consoleWrapper>div{
 	display: inline-block;

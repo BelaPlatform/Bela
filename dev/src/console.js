@@ -103,7 +103,7 @@ class Console extends EventEmitter {
 			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
 			
 			// create the link and add it to the element
-			var span = $('<span></span>').html(err.text+', line: '+(err.row+1)).appendTo(div);
+			var span = $('<span></span>').html(err.text.split('\n').join(' ')+', line: '+(err.row+1)).appendTo(div);
 			
 			// add a button to copy the contents to the clipboard
 			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);

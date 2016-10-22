@@ -4186,7 +4186,7 @@ var Console = function (_EventEmitter) {
 
 					// create the link and add it to the element
 
-					span = $('<span></span>').html(err.text + ', line: ' + (err.row + 1)).appendTo(div);
+					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 					// add a button to copy the contents to the clipboard
 
