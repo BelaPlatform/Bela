@@ -148,7 +148,7 @@ p {
 	overflow-x: auto;
 }
 #beaglert-consoleWrapper span{
-
+	white-space: pre-wrap;
 }
 #beaglert-consoleWrapper>div{
 	display: inline-block;
@@ -286,13 +286,13 @@ p {
 }
 
 .beaglert-console-ierror, .beaglert-console-iwarning, .beaglert-console-error{
-	cursor: pointer;
 	-webkit-transition: -webkit-transform 0.1s ease-out;
 	transition: -webkit-transform 0.1s ease-out;
 	transition: transform 0.1s ease-out;
 	transition: transform 0.1s ease-out, -webkit-transform 0.1s ease-out;
 }
-.beaglert-console-ierror:hover a, .beaglert-console-iwarning:hover a{
+.beaglert-console-ierror > span:hover, .beaglert-console-iwarning > span:hover{
+	cursor: pointer;
 	text-decoration: underline;
 }
 
@@ -344,6 +344,18 @@ p {
 	opacity: 0.2;
 	-webkit-transition: opacity 0.3s;
 	transition: opacity 0.3s;
+}
+.clipboardButton{
+	margin: -5px 0 -5px 15px;
+	background: url('images/icons/copy-clipboard.png');
+	width: 16px;
+	height: 16px;
+	opacity: 0.5;
+	display: inherit;
+    cursor: pointer;
+}
+.clipboardButton:hover{
+	opacity: 0.7;
 }
 
 /*====== TOOLBAR ======*/
