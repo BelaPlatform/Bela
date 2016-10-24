@@ -204,7 +204,7 @@ class SettingsView extends View {
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 				this.emit('warning', 'Do not use the IDE during the update process!');
 				
-				popup.overlay();
+				popup.hide('keep overlay');
 				
 				var reader = new FileReader();
 				reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
@@ -213,10 +213,9 @@ class SettingsView extends View {
 			} else {
 			
 				this.emit('warning', 'not a valid update zip archive');
+				popup.hide();
 				
 			}
-			
-			popup.hide();
 			
 		});
 		
