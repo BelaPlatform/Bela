@@ -5,12 +5,12 @@ so feel free to report issues here: https://github.com/sensestage/supercollider/
  This file contains code that should be run on your computer from
  within the SuperCollider IDE, while `scsynth` is running on the board.
 
- In order to start `scsynth`, run the `12-SuperCollider/start-scsynth` 
+ In order to start `scsynth`, run the `12-SuperCollider/start-scsynth`
  example project or run the `scripts/scsynth.sh` script from a terminal
  on the host.
 
  You will need to add the class files for the Bela-specific UGens to your
- computer in order to run these scripts. You can get them here 
+ computer in order to run these scripts. You can get them here
  https://github.com/sensestage/bela-remote
  */
 
@@ -22,7 +22,7 @@ s.startAliveThread;
 
 /// AnalogIn
 
-// ak
+// at audio rate
 (
 SynthDef("AnalogIn",{ arg out=0;
 	Out.ar(out,
@@ -34,39 +34,14 @@ SynthDef("AnalogIn",{ arg out=0;
 a = Synth.new("AnalogIn", target: s).postln;
 a.free;
 
-// ak
-(
-SynthDef("AnalogIn",{ arg out=0;
-	Out.ar(out,
-		SinOsc.ar( AnalogIn.ar(
-			Stepper.kr(Impulse.kr(1), 0, 0, 7, 1 ).poll
-		).poll.exprange( 200, 5000 ), 0, 0.1 )
-	)
-}).send(s);
-);
-
-a = Synth.new("AnalogIn", target: s).postln;
-a.free;
-
-// kk
+// at control rate:
+// step through analog inputs - make your own step sequencer!
 (
 SynthDef("AnalogIn",{ arg out=0;
 	Out.ar(out,
 		SinOsc.ar( AnalogIn.kr(
-			0
+			Stepper.kr(Impulse.kr(1), 0, 0, 7, 1 ).poll
 		).poll.exprange( 200, 5000 ), 0, 0.1 )
-	)
-}).send(s);
-);
-
-a = Synth.new("AnalogIn", target: s).postln;
-a.free;
-
-// aa
-(
-SynthDef("AnalogIn",{ arg out=0;
-	Out.ar(out,
-		SinOsc.ar( AnalogIn.ar( Stepper.ar(Impulse.ar(1), 0, 0, 7, 1 ).poll ).poll.exprange( 200, 5000 ), 0, 0.1 )
 	)
 }).send(s);
 );
@@ -77,72 +52,29 @@ a.free;
 
 /// AnalogOut
 
-// aaa
+// at audio rate
 (
 SynthDef("AnalogOut",{ arg out=0;
-	AnalogOut.ar( DC.ar( 0 ), SinOsc.ar( 10, 0, 0.5, 0.5 ) );
-}).send(s);
-);
-
-a = Synth.new("AnalogOut", target: s).postln;
-a.free
-
-// aka
-(
-SynthDef("AnalogOut",{ arg out=0;
-	AnalogOut.ar( 0, SinOsc.ar( 10, 0, 0.5, 0.5 ) );
+	AnalogOut.ar( out, SinOsc.ar( 10, 0, 0.5, 0.5 ) );
 }).send(s);
 );
 
 a = Synth.new("AnalogOut", target: s).postln;
 a.free;
 
-// aak
+// at control rate
 (
 SynthDef("AnalogOut",{ arg out=0;
-	AnalogOut.ar( DC.ar( 0 ), SinOsc.kr( 10, 0, 0.5, 0.5 ) );
-}).send(s);
-);
-
-a = Synth.new("AnalogOut", target: s).postln;
-a.free
-
-// kk
-( // diverted to kk - AnalogOut becomes .kr effectively
-SynthDef("AnalogOut",{ arg out=0;
-	AnalogOut.ar( 0, SinOsc.kr( 10, 0, 0.5, 0.5 ) );
+	AnalogOut.kr( out, SinOsc.kr( 10, 0, 0.5, 0.5 ) );
 }).send(s);
 );
 
 a = Synth.new("AnalogOut", target: s).postln;
 a.free;
 
+// DigitalIn - the input pin cannot be modulated
 
-// kk
-(
-SynthDef("AnalogOut",{ arg out=0;
-	AnalogOut.kr( 0, SinOsc.kr( 10, 0, 0.5, 0.5 ) );
-}).send(s);
-);
-
-a = Synth.new("AnalogOut", target: s).postln;
-a.free;
-
-// kk + warning
-(
-SynthDef("AnalogOut",{ arg out=0;
-	AnalogOut.kr( 0, SinOsc.ar( 10, 0, 0.5, 0.5 ) );
-}).send(s);
-);
-
-a = Synth.new("AnalogOut", target: s).postln;
-a.free;
-
-
-
-// DigitalIn
-
-// a
+// at audio rate
 (
 SynthDef("DigitalIn",{ arg out=0;
 	Out.ar(out,
@@ -154,7 +86,7 @@ SynthDef("DigitalIn",{ arg out=0;
 a = Synth.new("DigitalIn", target: s).postln;
 a.free;
 
-// k
+// at control rate
 (
 SynthDef("DigitalIn",{ arg out=0;
 	Out.ar(out,
@@ -168,11 +100,11 @@ a.free;
 
 
 
-// DigitalOut
+// DigitalOut - the output pin cannot be modulated
 
-// a
+// at audio rate
 (
-SynthDef("DigitalOut",{ arg out=0;
+SynthDef("DigitalOut",{
 	DigitalOut.ar( 0, SinOsc.ar( 10 ) );
 }).send(s);
 );
@@ -180,20 +112,9 @@ SynthDef("DigitalOut",{ arg out=0;
 a = Synth.new("DigitalOut", target: s).postln;
 a.free;
 
-// k + warning
+// at control rate
 (
-SynthDef("DigitalOut",{ arg out=0;
-	DigitalOut.kr( 0, SinOsc.ar( 10 ) );
-}).send(s);
-);
-
-a = Synth.new("DigitalOut", target: s).postln;
-a.free;
-
-
-// k
-(
-SynthDef("DigitalOut",{ arg out=0;
+SynthDef("DigitalOut",{
 	DigitalOut.kr( 0, SinOsc.kr( 10 ) );
 }).send(s);
 );
@@ -201,18 +122,8 @@ SynthDef("DigitalOut",{ arg out=0;
 a = Synth.new("DigitalOut", target: s).postln;
 a.free;
 
-// k + warning
-(
-SynthDef("DigitalOut",{ arg out=0;
-	DigitalOut.ar( 0, SinOsc.kr( 10 ) );
-}).send(s);
-);
 
-a = Synth.new("DigitalOut", target: s).postln;
-a.free;
-
-
-// a-once
+//at audio rate, but use digitalWriteOnce in the backend code
 (
 SynthDef("DigitalOut",{ arg out=0;
 	DigitalOut.ar( 0, SinOsc.ar( 10 ), 1 );
@@ -223,22 +134,12 @@ a = Synth.new("DigitalOut", target: s).postln;
 a.free;
 
 
-
-
 // DigitalIO
 
-( // aaaa once - everything audio rate
+// all arguments at audio-rate
+(
 SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( DC.ar( 0 ), SinOsc.ar( 10 ), K2A.ar( LFPulse.kr( 0.1 ) ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-( // aaak once - pinmode control rate
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( DC.ar( 0 ), SinOsc.ar( 10 ), LFPulse.kr( 0.1 ) ).poll;
+	DigitalIO.ar( out, SinOsc.ar( 10 ), LFPulse.ar( 0.1 ) ).poll; // arguments: digitalpin, outputvalue to write, pin mode
 }).send(s);
 );
 
@@ -246,103 +147,18 @@ a = Synth.new("DigitalIO", target: s).postln;
 a.free;
 
 
-( // aaka once - output value control rate
+// all arguments at control-rate
+(
 SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( DC.ar( 0 ), SinOsc.kr( 10 ), K2A.ar( LFPulse.kr( 0.1 ) ) ).poll;
+	DigitalIO.kr( out, SinOsc.kr( 10 ), LFPulse.kr( 0.1 ) ).poll;
 }).send(s);
 );
 
 a = Synth.new("DigitalIO", target: s).postln;
 a.free;
 
-
-( // aakk once - output value control rate, pinmode control rate
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( DC.ar( 0 ), SinOsc.kr( 10 ), LFPulse.kr( 0.1 ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
+// you can also use any mix of audio-rate and control-rate input arguments, if you use DigitalIO.ar
 
 
-( // akaa once - pin changed at control rate, rest audio
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( 0, SinOsc.ar( 10 ), K2A.ar( LFPulse.kr( 0.1 ) ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-
-( // akak once - pin changed at control rate, output value at audio rate, mode at control rate
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( 0, SinOsc.ar( 10 ), LFPulse.kr( 0.1 ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-( // ak once - pin changed at control rate, output control rate, pinmode control
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( 0, SinOsc.kr( 10 ), LFPulse.kr( 0.1 ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-
-( // akka once - pin changed at control rate, output control rate, pinmode control
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.ar( 0, SinOsc.kr( 10 ), K2A.ar( LFPulse.kr( 0.1 ) ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-
-
-( // kk - warning
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.kr( 0, SinOsc.kr( 10 ), K2A.ar( LFPulse.kr( 0.1 ) ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-( // kk - warning
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.kr( 0, SinOsc.ar( 10 ), LFPulse.kr( 0.1 ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-
-( // kk - warning
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.kr( Stepper.ar( Impulse.ar(1), 0, 7, 1 ), SinOsc.kr( 10 ), LFPulse.kr( 0.1 ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-
-( // kk
-SynthDef("DigitalIO",{ arg out=0;
-	DigitalIO.kr( 0, SinOsc.kr( 10 ), LFPulse.kr( 0.1 ) ).poll;
-}).send(s);
-);
-
-a = Synth.new("DigitalIO", target: s).postln;
-a.free;
-
-//
+// free anything that may still be hanging
 s.freeAll;
