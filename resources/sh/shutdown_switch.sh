@@ -14,13 +14,14 @@ MONITOR_COMMAND=/usr/local/bin/bela-cape-btn
 BUTTON_PIN=115
 CLICK_COMMAND=/root/Bela_capeButtonClick.sh
 HOLD_COMMAND=/root/Bela_capeButtonHold.sh
+INITIAL_DELAY=20
 
 ls $MONITOR_COMMAND &> /dev/null
 if [ $? -eq 0 ];
 then
 # if the $MONITOR_COMMAND exists, run it (cheap)
 	echo Using $MONITOR_COMMAND to poll
-	$MONITOR_COMMAND --pin $BUTTON_PIN --click $CLICK_COMMAND --hold $HOLD_COMMAND
+	$MONITOR_COMMAND --pin $BUTTON_PIN --hold $HOLD_COMMAND --delay $INITIAL_DELAY --monitor-click 0
 else
 #else, just poll the filesystem (expensive!)
 	echo Polling the filesystem.
