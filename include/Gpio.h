@@ -32,12 +32,12 @@ static const uint32_t GPIO_ADDRESSES[4] = {
 class Gpio{
 public:
 	Gpio():
-	fd(-1),
 	oldPin(-1),
+	fd(-1)
 	{};
 
 	~Gpio(){
-		close(fd);
+		close();
 	}
 
 	/**
@@ -53,8 +53,7 @@ public:
 			return -1;
 		}
 		if(fd != -1){
-			gpio_unexport(oldPin);
-			close(fd);
+			close();
 		}
 		oldPin = pin;
 		// gpio_export can fail if the pin has already been exported.
@@ -68,7 +67,6 @@ public:
 		pin = pin - bank * 32;
 		pinMask = 1 << pin;
 		uint32_t gpioBase = GPIO_ADDRESSES[bank];
-		printf("base: %#x, bank: %d, pin: %d\n", gpioBase, bank, pin);
 		gpio = (uint32_t *)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, gpioBase);
 		if(gpio == MAP_FAILED){
 			fprintf(stderr, "Unable to map GPIO pin %u\n", pin);
@@ -84,6 +82,15 @@ public:
 		return 0;
 	}
 	
+	/**
+	 * Closes a currently open GPIO
+	 */
+	void close(){
+		gpio_unexport(oldPin);
+		::close(fd);
+		oldPin = -1;
+		fd = -1;
+	}
 	/**
 	 * Read the GPIO value.
 	 * @return the GPIO value
@@ -115,6 +122,15 @@ public:
 		} else {
 			clear();
 		}
+	}
+
+	/**
+	 * Check if the GPIO is enabled.
+	 *
+	 * @return true if enabled, false otherwise
+	 */
+	bool enabled(){
+		return fd != -1;
 	}
 private:
 	int oldPin;
