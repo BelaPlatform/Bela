@@ -148,6 +148,8 @@ typedef struct {
 	int verbose;
 	/// Whether to use the blinking LED to indicate Bela is running
 	int enableLED;
+	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
+	int enableCapeButtonMonitoring;
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user

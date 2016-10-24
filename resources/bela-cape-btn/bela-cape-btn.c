@@ -69,6 +69,8 @@ enum { INVALID_VERSION = 0xffff };
 enum { DEFAULT_BUTTON_PIN = 115 }; // The Bela cape button, which is on P9.27 / GPIO3[19]
 enum { DEFAULT_PRESSED_VALUE = 0 };
 enum { DEFAULT_INITIAL_DELAY = 0 };
+enum { DEFAULT_MONITOR_CLICK = 0 };
+enum { DEFAULT_MONITOR_HOLD = 1 };
 enum { HOLD_PRESS_TIMEOUT_MS = 2000 };
 
 static char DEFAULT_CLICKED_ACTION[] = "/root/cape_button_click.sh";
@@ -79,6 +81,8 @@ static char* HOLD_ACTION;
 static int BUTTON_PIN;
 static int PRESSED_VALUE;
 static int INITIAL_DELAY;
+static int MONITOR_CLICK;
+static int MONITOR_HOLD;
 
 int gpio_is_pin_valid(int pin)
 {
@@ -245,7 +249,10 @@ int run(void)
 
 	timestamp_ms_t pressed_at = 0;
 
-	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold. Button is pressed when pin is %s...\n", BUTTON_PIN, CLICKED_ACTION, HOLD_ACTION, PRESSED_VALUE == 0 ? "LOW" : "HIGH");
+	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold. Button is pressed when pin is %s...\n", BUTTON_PIN, 
+		MONITOR_CLICK ? CLICKED_ACTION : "(nothing)", 
+		MONITOR_HOLD ? HOLD_ACTION : "(nothing)",
+		PRESSED_VALUE == 0 ? "LOW" : "HIGH");
 	for (;;)
 	{
 		int result = poll(pfd, 1, -1);
@@ -285,11 +292,13 @@ int run(void)
 			{
 				if (timestamp - pressed_at < HOLD_PRESS_TIMEOUT_MS)
 				{
-					system(CLICKED_ACTION);
+					if(MONITOR_CLICK)
+						system(CLICKED_ACTION);
 				}
 				else
 				{
-					system(HOLD_ACTION);
+					if(MONITOR_HOLD)
+						system(HOLD_ACTION);
 				}
 				pressed_at = 0;
 			}
@@ -319,6 +328,8 @@ void print_usage(void)
 		"\t--pressed <arg> The input value corresponding to pressed status (0 or 1). Default: %d.\n"
 		"\t--delay <ard>   Postpone the beginning of the polling by <arg> seconds. Default: %d.\n"
 		"\t--pin <arg>     The GPIO number to monitor. Default: %d.\n"
+		"\t--monitor-click <arg> Whether to monitor the click (0 or 1). Default: %d.\n;"
+		"\t--monitor-hold <arg> Whether to monitor the hold (0 or 1). Default: %d.\n;"
 		"\t--help          Display the usage information.\n"
 		"\t--version       Show the version information.\n"
 		"\n",
@@ -326,8 +337,10 @@ void print_usage(void)
 		DEFAULT_HOLD_ACTION,
 		DEFAULT_PRESSED_VALUE,
 		DEFAULT_INITIAL_DELAY,
-		DEFAULT_BUTTON_PIN
-		);
+		DEFAULT_BUTTON_PIN,
+		DEFAULT_MONITOR_CLICK,
+		DEFAULT_MONITOR_HOLD
+	);
 	print_version();
 }
 
@@ -339,6 +352,8 @@ int main(int argc, char **argv)
 	HOLD_ACTION = DEFAULT_HOLD_ACTION;
 	PRESSED_VALUE = DEFAULT_PRESSED_VALUE;
 	INITIAL_DELAY = DEFAULT_INITIAL_DELAY;
+	MONITOR_CLICK = DEFAULT_MONITOR_CLICK;
+	MONITOR_HOLD = DEFAULT_MONITOR_HOLD;
 	int i;
 	for (i=1; i<argc; ++i)
 	{
@@ -383,6 +398,7 @@ int main(int argc, char **argv)
 			if(i + 1 < argc){
 				++i;
 				CLICKED_ACTION = argv[i];
+				MONITOR_CLICK = 1;
 				continue;
 			} else {
 				fprintf(stderr, "Argument missing\n");
@@ -395,6 +411,31 @@ int main(int argc, char **argv)
 			if(i + 1 < argc){
 				++i;
 				HOLD_ACTION = argv[i];
+				MONITOR_HOLD = 1;
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
+		if (strcmp(argv[i], "--monitor-click") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				MONITOR_CLICK = atoi(argv[i]);
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
+		if (strcmp(argv[i], "--monitor-hold") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				MONITOR_HOLD = atoi(argv[i]);
 				continue;
 			} else {
 				fprintf(stderr, "Argument missing\n");

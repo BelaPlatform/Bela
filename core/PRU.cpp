@@ -106,6 +106,8 @@ short int digitalPins[NUM_DIGITALS] = {
 #define USERLED3_GPIO_BASE  GPIO1_ADDRESS // GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
 
+#define BELA_CAPE_BUTTON_PIN 115
+
 const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
 const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
 
@@ -136,8 +138,7 @@ PRU::PRU(InternalBelaContext *input_context)
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
   pru_buffer_digital(0), pru_buffer_audio_dac(0), pru_buffer_audio_adc(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0),
-  xenomai_gpio_fd(-1), xenomai_gpio(0)
+  audio_expander_filter_coeff(0)
 {
 
 }
@@ -150,8 +151,6 @@ PRU::~PRU()
 	exitPRUSS();
 	if(gpio_enabled)
 		cleanupGPIO();
-	if(xenomai_gpio_fd >= 0)
-		close(xenomai_gpio_fd);
 	if(audio_expander_input_history != 0)
 		free(audio_expander_input_history);
 	if(audio_expander_output_history != 0)
@@ -159,12 +158,10 @@ PRU::~PRU()
 }
 
 // Prepare the GPIO pins needed for the PRU
-// If include_test_pin is set, the GPIO output
-// is also prepared for an output which can be
-// viewed on a scope. If include_led is set,
+//If include_led is set,
 // user LED 3 on the BBB is taken over by the PRU
 // to indicate activity
-int PRU::prepareGPIO(int include_test_pin, int include_led)
+int PRU::prepareGPIO(int include_led)
 {
 	if(context->analogFrames != 0) {
 		// Prepare DAC CS/ pin: output, high to begin
@@ -217,55 +214,6 @@ int PRU::prepareGPIO(int include_test_pin, int include_led)
 		digital_enabled = true;
 	}
 
-	if(include_test_pin) {
-		// Prepare GPIO test output (for debugging), low to begin
-		if(gpio_export(kPruGPIOTestPin)) {
-			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export GPIO test pin\n";
-		}
-		if(gpio_set_dir(kPruGPIOTestPin, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on GPIO test pin\n";
-			return -1;
-		}
-		if(gpio_set_value(kPruGPIOTestPin, LOW)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set value on GPIO test pin\n";
-			return -1;
-		}
-
-		if(gpio_export(kPruGPIOTestPin2)) {
-			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export GPIO test pin 2\n";
-		}
-		if(gpio_set_dir(kPruGPIOTestPin2, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on GPIO test pin 2\n";
-			return -1;
-		}
-		if(gpio_set_value(kPruGPIOTestPin2, LOW)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set value on GPIO test pin 2\n";
-			return -1;
-		}
-
-		if(gpio_export(kPruGPIOTestPin3)) {
-			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export GPIO test pin 3\n";
-		}
-		if(gpio_set_dir(kPruGPIOTestPin3, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on GPIO test pin 3\n";
-			return -1;
-		}
-		if(gpio_set_value(kPruGPIOTestPin3, LOW)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set value on GPIO test pin 3\n";
-			return -1;
-		}
-		gpio_test_pin_enabled = true;
-	}
-
 	if(include_led) {
 		// Turn off system function for LED3 so it can be reused by PRU
 		led_set_trigger(3, "none");
@@ -306,7 +254,7 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mux_channels, bool xenomai_test_pin)
+int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mux_channels, bool capeButtonMonitoring)
 {
 	uint32_t *pruMem = 0;
 
@@ -440,25 +388,8 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 	for(int i = 0; i < PRU_MEM_MCASP_LENGTH / 2; i++)
 		pru_buffer_audio_dac[i] = 0;
 
-	/* If using GPIO test pin for Xenomai (for debugging), initialise the pointer now */
-	if(xenomai_test_pin && xenomai_gpio_fd < 0) {
-		xenomai_gpio_fd = open("/dev/mem", O_RDWR);
-		if(xenomai_gpio_fd < 0)
-			rt_printf("Unable to open /dev/mem for GPIO test pin\n");
-		else {
-			xenomai_gpio = (uint32_t *)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, xenomai_gpio_fd, TEST_PIN_GPIO_BASE);
-			if(xenomai_gpio == MAP_FAILED) {
-				rt_printf("Unable to map GPIO address for test pin\n");
-				xenomai_gpio = 0;
-				close(xenomai_gpio_fd);
-				xenomai_gpio_fd = -1;
-			} else {
-				// actually use the memory, to cause the page fault
-				// now and not later in the audio thread
-				xenomai_gpio[GPIO_SETDATAOUT] = TEST_PIN_MASK;
-				xenomai_gpio[GPIO_CLEARDATAOUT] = TEST_PIN_MASK;
-			}
-		}
+	if(capeButtonMonitoring){
+		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT);
 	}
 
 	// Allocate audio buffers
@@ -686,6 +617,17 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
+		if(belaCapeButton.enabled()){
+			static int belaCapeButtonCount = 0;
+			if(belaCapeButton.read() == 0){
+				if(++belaCapeButtonCount > 10){
+					printf("Button pressed, quitting\n");
+					gShouldStop = true;
+				}
+			} else {
+				belaCapeButtonCount = 0;
+			}
+		}
 
 		if(gShouldStop)
 			break;
@@ -722,11 +664,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// testCount++;
 		//rt_task_sleep(sleepTime*4);
 		//rt_task_sleep(sleepTime/4);
-
-		if(xenomai_gpio != 0) {
-			// Set the test pin high
-			xenomai_gpio[GPIO_SETDATAOUT] = TEST_PIN_MASK;
-		}
 
 		// Convert short (16-bit) samples to float
 #ifdef USE_NEON_FORMAT_CONVERSION
@@ -901,11 +838,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// Increment total number of samples that have elapsed
 		context->audioFramesElapsed += context->audioFrames;
 
-		if(xenomai_gpio != 0) {
-			// Set the test pin high
-			xenomai_gpio[GPIO_CLEARDATAOUT] = TEST_PIN_MASK;
-		}
-		
 		Bela_autoScheduleAuxiliaryTasks();
 
 	}
@@ -976,17 +908,3 @@ void PRU::exitPRUSS()
 	initialised = false;
 }
 
-// Debugging
-void PRU::setGPIOTestPin()
-{
-	if(!xenomai_gpio)
-		return;
-	xenomai_gpio[GPIO_SETDATAOUT] = TEST_PIN2_MASK;
-}
-
-void PRU::clearGPIOTestPin()
-{
-	if(!xenomai_gpio)
-		return;
-	xenomai_gpio[GPIO_CLEARDATAOUT] = TEST_PIN2_MASK;
-}
