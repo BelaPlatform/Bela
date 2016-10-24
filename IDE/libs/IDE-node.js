@@ -407,7 +407,7 @@ function runOnBootProject(){
 			if (lines[5] === '# Run on startup disabled -- nothing to do here'){
 				project = 'none';
 			} else {
-				project = lines[5].trim().split(' ')[1].split('/').pop();
+				project = lines[6].trim().split(' ')[1].split('/').pop();
 			}
 			return project;
 		})
