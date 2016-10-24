@@ -15,6 +15,25 @@
 THIS_SCRIPT=`basename "$0"`
 #trap "echo; exit 0;" 2 9
 
+copy_if_does_not_exist(){
+	_SRC=$1
+	_DEST=$2
+	_FORCE=$3
+	if [ $_FORCE -eq 0 ]
+	then
+		if [ $RSYNC_AVAILABLE -eq 1 ]
+		then 
+			rsync -a --ignore-existing $_SRC $BBB_ADDRESS:$_DEST
+		else
+			ssh $BBB_ADDRESS ls $_DEST &> /dev/null ||\
+			scp -q $_SRC $BBB_ADDRESS:$_DEST
+		fi
+	else
+		# if forced to, do so
+		scp -q $_SRC $BBB_ADDRESS:$_DEST
+	fi
+}
+
 check_rsync(){
 	if [ "$USE_RSYNC" -eq 0 ] || [ -z "`which rsync 2> /dev/null`" ]
 	then
