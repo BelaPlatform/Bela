@@ -5,7 +5,7 @@
 [ -z "$BBB_USER" ] && BBB_USER="root"
 [ -z "$BBB_HOSTNAME" ] && BBB_HOSTNAME="192.168.7.2"
 [ -z "$BBB_ADDRESS" ] && BBB_ADDRESS="$BBB_USER@$BBB_HOSTNAME"
-[ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="~/Bela"
+[ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="/root/Bela"
 [ -z "$RUN_PROJECT" ] && RUN_PROJECT=1
 [ -z "$COMMAND_ARGS" ] && COMMAND_ARGS=
 [ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
@@ -14,6 +14,16 @@
 
 THIS_SCRIPT=`basename "$0"`
 #trap "echo; exit 0;" 2 9
+
+check_rsync(){
+	if [ "$USE_RSYNC" -eq 0 ] || [ -z "`which rsync 2> /dev/null`" ]
+	then
+		return 1
+	else
+		return 0
+	fi
+}
+
 folder_has_changed(){
 	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
 	[ -z "$3" ] && FILTER="." || FILTER="$3"
@@ -130,7 +140,7 @@ done
 }
 
 case_run_mode() {
-	  case $RUN_MODE in
+	case $RUN_MODE in
 		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
 		foreground)
 			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
@@ -141,7 +151,7 @@ case_run_mode() {
 		screenfg)
 			ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
 		;;
-      esac
+	esac
 }
 
 run_script_usage_brief(){

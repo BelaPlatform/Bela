@@ -10,9 +10,10 @@
 
 #include <Bela.h>
 #include <vector>
+#include <alsa/asoundlib.h>
+#include <native/pipe.h>
 
 typedef unsigned char midi_byte_t;
-
 
 typedef enum midiMessageType{
 	kmmNoteOff = 0,
@@ -37,6 +38,33 @@ public:
 	virtual ~MidiChannelMessage();
 	MidiMessageType getType();
 	int getChannel();
+	const char* getTypeText(){
+		return getTypeText(getType());
+	}
+	static const char* getTypeText(MidiMessageType type){
+		switch (type) {
+		case kmmNoteOff: 
+			return "note off";
+		case kmmNoteOn:
+			return "note on";
+		case kmmPolyphonicKeyPressure:
+			return "polyphonic aftertouch";
+		case kmmControlChange:
+			return "control change";
+		case kmmProgramChange:
+			return "program change";
+		case kmmChannelPressure:
+			return "channel aftertouch";
+		case kmmPitchBend:
+			return "pitch bend";
+		case kmmAny:
+			return "any";
+		case kmmNone:
+		default:
+			return "none";
+		}
+	}
+
 	unsigned int getNumDataBytes(){
 		return midiMessageNumDataBytes[(unsigned int)_type];
 	}
@@ -61,14 +89,13 @@ public:
 		_statusByte = 0;
 	}
 	void prettyPrint(){
-		rt_printf("MessageType: %x,  ", this->getType());
+		rt_printf("type: %s,  ", this->getTypeText());
 		rt_printf("channel: %u, ", this->getChannel());
 		for(unsigned int n = 0; n < this->getNumDataBytes(); n++){
 			rt_printf("data%d: %d, ", n + 1, this->getDataByte(n));
 		}
 		rt_printf("\n");
 	}
-
 private:
 	const static int maxDataBytes = 2;
 protected:
@@ -115,12 +142,14 @@ private:
 	unsigned int readPointer;
 	unsigned int elapsedDataBytes;
 	bool waitingForStatus;
+	bool receivingSysex;
 	void (*messageReadyCallback)(MidiChannelMessage,void*);
 	bool callbackEnabled;
 	void* callbackArg;
 public:
 	MidiParser(){
 		waitingForStatus = true;
+		receivingSysex = false;
 		elapsedDataBytes= 0;
 		messages.resize(100); // 100 is the number of messages that can be buffered
 		writePointer = 0;
@@ -193,11 +222,9 @@ public:
 	 * If this method is called when numAvailableMessages()==0, then
 	 * a message with all fields set to zero is returned.
 	 *
-	 * @param type the type of the message to retrieve
-	 *
-	 * @return a copy of the oldest message of the give type in the buffer
+	 * @return a copy of the oldest message in the buffer
 	 */
-	MidiChannelMessage getNextChannelMessage(/*MidiMessageType type*/){
+	MidiChannelMessage getNextChannelMessage(){
 		MidiChannelMessage message;
 		message = messages[readPointer];
 		if(message.getType() == kmmNone){
@@ -253,7 +280,7 @@ public:
 	 *
 	 * Internally, it calls enableParser() and the MidiParser::setCallback();
 	 *
-	 * @param newCallback the callback function.
+	 * @param callback the callback function.
 	 * @param arg the second argument to be passed to the callback function.
 	 */
 	void setParserCallback(void (*callback)(MidiChannelMessage, void*), void* arg=NULL){
@@ -286,7 +313,7 @@ public:
 	/**
 	 * Writes a Midi byte to the output port
 	 * @param byte the Midi byte to write
-	 * @return 1 on success, -1 on error
+	 * @return 1 on success, 0 if output is not enabled, -1 on error
 	 */
 	int writeOutput(midi_byte_t byte);
 
@@ -294,9 +321,22 @@ public:
 	 * Writes Midi bytes to the output port
 	 * @param bytes an array of bytes to be written
 	 * @param length number of bytes to write
-	 * @return 1 on success, -1 on error
+	 * @return 1 on success, 0 if output is not enabled, -1 on error
 	 */
 	int writeOutput(midi_byte_t* bytes, unsigned int length);
+	
+
+	static midi_byte_t makeStatusByte(midi_byte_t statusCode, midi_byte_t dataByte);
+	int writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte);
+	int writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2);
+	int writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
+	int writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
+	int writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure);
+	int writeControlChange(midi_byte_t channel, midi_byte_t controller, midi_byte_t value);
+	int writeProgramChange(midi_byte_t channel, midi_byte_t program);
+	int writeChannelPressure(midi_byte_t channel, midi_byte_t pressure);
+	int writePitchBend(midi_byte_t channel, uint16_t bend);
+
 	/**
 	 * Gives access to the midi parser, if it has been activated.
 	 *
@@ -304,27 +344,37 @@ public:
 	 */
 	MidiParser* getMidiParser();
 	virtual ~Midi();
-	static void midiInputLoop();
-	static void midiOutputLoop();
-    static bool staticConstructed;
-	static void staticConstructor();
+
+	/**
+	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
+	 * Ports open with this method should be closed with destroyPorts()
+	 */
+	static void createAllPorts(std::vector<Midi*>& ports, bool useParser = false);
+
+	/**
+	 * Closes a vector of ports.
+	 */
+	static void destroyPorts(std::vector<Midi*>& ports);
 private:
+	char defaultPort[9];
 	int _getInput();
-	void readInputLoop();
-	void writeOutputLoop();
-	int outputPort;
-	int inputPort;
+	static void readInputLoop(void* obj) ;
+	static void writeOutputLoop(void* obj);
+	snd_rawmidi_t *alsaIn,*alsaOut;
 	std::vector<midi_byte_t> inputBytes;
 	unsigned int inputBytesWritePointer;
 	unsigned int inputBytesReadPointer;
 	std::vector<midi_byte_t> outputBytes;
-	unsigned int outputBytesWritePointer;
-	unsigned int outputBytesReadPointer;
 	MidiParser* inputParser;
 	bool parserEnabled;
-	static std::vector<Midi*> objAddrs[2];
-	static AuxiliaryTask midiInputTask;
-	static AuxiliaryTask midiOutputTask;
+	bool inputEnabled;
+	bool outputEnabled;
+	AuxiliaryTask midiInputTask;
+	AuxiliaryTask midiOutputTask;
+	char* inId;
+	char* outId;
+	char* outPipeName;
+	RT_PIPE outPipe;
 };
 
 

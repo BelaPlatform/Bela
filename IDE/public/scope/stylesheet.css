@@ -1,0 +1,248 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/*start*/
+
+@font-face {
+    font-family: 'inconsolata';
+    src: url('../fonts/inconsolata-webfont.woff2') format('woff2'),
+         url('../fonts/inconsolata-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'sofia';
+    src: url('../fonts/sofia-webfont.woff2') format('woff2'),
+         url('../fonts/sofia-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	padding-top: 0;
+	padding-bottom: 2px;
+	padding-left: 22px;
+	font-size: 11px;
+	font-family: sofia;
+	border: 1px solid #ccc;
+	height: 22px;
+	display: inline;
+	border-radius: 2px;
+	width: 100px;
+	background: #fff url("../images/icons/drop_arrow.png") 5px 6px no-repeat;
+}
+button {
+	line-height: 16px;
+	padding: 0 8px 0;
+	font-family: sofia;
+	background: #eee;
+	color: #aaa;
+	border: 1px solid #ccc;
+	display: inline-block;
+	vertical-align: middle;
+	border-radius: 5px;
+	min-width: 40px;	
+}
+button:hover {
+	cursor: pointer;
+	background: #aaa;
+	color: #fff;
+	box-shadow: 2px 2px 2px #ddd;
+	border: 1px solid #aaa;
+}
+
+html, body{
+	height: 100%;
+	overflow: hidden;
+	font-family: 'sofia';
+}
+.hidden{
+	display: none; !important;
+}
+
+.scopeWrapper{
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+.buttonWrapper{
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 4;
+	text-align: center;
+	padding: 5px;
+}
+.buttonWrapper > button{
+	display: inline-block;
+	vertical-align: middle;
+}
+.buttonWrapper > span{
+	min-width: 80px;
+    display: inline-block;
+    vertical-align: center;
+    font-family: inconsolata;
+    font-size: small;
+}
+#scopeStatus{
+    text-transform: uppercase;
+    font-size: 12px;
+}
+.scope-status-triggered{
+	color: rgb(130,200,137);
+	animation-duration: 1s;
+	animation-name: status-out;
+	animation-timing-function: ease-out;
+}
+.scope-status-waiting{
+	color: red;
+	opacity: 1;
+}
+
+@keyframes status-out {
+  from {
+    opacity: 1;
+  }
+  
+  to {
+    opacity: 0;
+  }
+}
+
+.scopeChannel, #scopeBG, #inactive-overlay{
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+#scope, #scopeBG, #inactive-overlay{
+	width: 100%;
+	height: 100%;
+}
+#scopeBG{
+	z-index: -1;
+}
+#inactive-overlay{
+	z-index: 2;
+	background: black;
+	opacity: 0;
+	transition: opacity 0.1s linear;
+	pointer-events: none;
+}
+#inactive-overlay.inactive-overlay-visible{
+	opacity: 0.15;
+}
+
+#controlPanel{
+	height: 100%;
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 3;
+	padding: 50px 50px 0 50px;
+	box-sizing: border-box;
+}
+.cpColumn{
+	display: inline-block;
+	vertical-align: top;
+	padding: 0 15px;
+	box-sizing: border-box;
+	max-height: 100%;
+	overflow: scroll;
+	background-color: rgba(130,200,137, 0.5);
+}
+.cpColumn table{
+	width: 100%;
+	margin-top: 7px;
+}
+.cpColumn td{
+	width: 120px;
+	text-align: right;
+	padding: 5px;
+	font-size: 14px;
+}
+.cpColumn td + td{
+	text-align: left;
+	width: 190px;
+}
+.cpColumn > div{
+	margin: 20px 0;
+	background-color: rgba(225,242,217, 0.7);
+}
+.cpColumn h1{
+	position: relative;
+	top: 5px;
+	left: 5px;
+	font-size: 18px;
+	text-align: left;
+	margin-bottom: 12px;
+}
+
+div.sliderView{
+	text-align: center;
+	width: 240px;
+}
+
+input[type="range"].sliderView{
+    width: 75%;
+    margin: 7px 0;
+}
+
+input[type="number"]{
+	width: 40px;
+    position: relative;
+    top: -3px;
+}
+input[type="number"].sliderView{
+	width: 51px;
+}

@@ -24,16 +24,75 @@ int gBufLength;
 
 float* gInBuf;
 float* gOutBuf;
+#define PARSE_MIDI
+static std::vector<Midi*> midi;
+std::vector<const char*> gMidiPortNames;
 
-void pdnoteon(int ch, int pitch, int vel) {
-  printf("noteon: %d %d %d\n", ch, pitch, vel);
+static unsigned int getPortChannel(int* channel){
+	unsigned int port = 0;
+	while(*channel > 16){
+		*channel -= 16;
+		port += 1;
+    }
+	if(port >= midi.size()){
+		// if the port number exceeds the number of ports available, send out
+		// of the first port 
+		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
+		port = 0;
+	}
+	return port;
+}
+
+void Bela_MidiOutNoteOn(int channel, int pitch, int velocity) {
+	int port = getPortChannel(&channel);
+	rt_printf("noteout _ port: %d, channel: %d, pitch: %d, velocity %d\n", port, channel, pitch, velocity);
+	midi[port]->writeNoteOn(channel, pitch, velocity);
+}
+
+void Bela_MidiOutControlChange(int channel, int controller, int value) {
+	int port = getPortChannel(&channel);
+	rt_printf("ctlout _ port: %d, channel: %d, controller: %d, value: %d\n", port, channel, controller, value);
+	midi[port]->writeControlChange(channel, controller, value);
+}
+
+void Bela_MidiOutProgramChange(int channel, int program) {
+	int port = getPortChannel(&channel);
+	rt_printf("pgmout _ port: %d, channel: %d, program: %d\n", port, channel, program);
+	midi[port]->writeProgramChange(channel, program);
+}
+
+void Bela_MidiOutPitchBend(int channel, int value) {
+	int port = getPortChannel(&channel);
+	rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
+	midi[port]->writePitchBend(channel, value);
+}
+
+void Bela_MidiOutAftertouch(int channel, int pressure){
+	int port = getPortChannel(&channel);
+	rt_printf("touchout _ port: %d, channel: %d, pressure: %d\n", port, channel, pressure);
+	midi[port]->writeChannelPressure(channel, pressure);
+}
+
+void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
+	int port = getPortChannel(&channel);
+	rt_printf("polytouchout _ port: %d, channel: %d, pitch: %d, pressure: %d\n", port, channel, pitch, pressure);
+	midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
+}
+
+void Bela_MidiOutByte(int port, int byte){
+	printf("port: %d, byte: %d\n", port, byte);
+	if(port > (int)midi.size()){
+		// if the port is out of range, redirect to the first port.
+		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
+		port = 0;
+	}
+	midi[port]->writeOutput(byte);
 }
 
 void Bela_printHook(const char *recv){
 	rt_printf("%s", recv);
 }
-#define PARSE_MIDI
-static Midi midi;
+
 static DigitalChannelManager dcm;
 
 void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
@@ -116,13 +175,21 @@ static const unsigned int gChannelsInUse = 30;
 static const unsigned int gFirstAnalogChannel = 2;
 static const unsigned int gFirstDigitalChannel = 10;
 static const unsigned int gFirstScopeChannel = 26;
+static char multiplexerArray[] = {"bela_multiplexer"};
+static int multiplexerArraySize = 0;
+static bool pdMultiplexerActive = false;
 
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
-
+void* gPatch;
 bool setup(BelaContext *context, void *userData)
 {
+	// add here other devices you need 
+	gMidiPortNames.push_back("hw:1,0,0");
+	//gMidiPortNames.push_back("hw:0,0,0");
+	//gMidiPortNames.push_back("hw:1,0,1");
+
     scope.setup(gScopeChannelsInUse, context->audioSampleRate);
     gScopeOut = new float[gScopeChannelsInUse];
 
@@ -151,14 +218,20 @@ bool setup(BelaContext *context, void *userData)
 			dcm.setCallbackArgument(ch, receiverNames[ch]);
 		}
 	}
-
-	midi.readFrom("/dev/midi1");
-	midi.writeTo("/dev/midi1");
+	printf("Trying to open MIDI devices...\n");
+	midi.resize(gMidiPortNames.size());
+	for(unsigned int n = 0; n < midi.size(); ++n){
+		midi[n] = new Midi();
+		const char* name = gMidiPortNames[n];
+		midi[n]->readFrom(name);
+		midi[n]->writeTo(name);
 #ifdef PARSE_MIDI
-	midi.enableParser(true);
+		midi[n]->enableParser(true);
 #else
-	midi.enableParser(false);
+		midi[n]->enableParser(false);
 #endif /* PARSE_MIDI */
+	}
+	printf("...done opening MIDI devices\n");
 //	udpServer.bindToPort(1234);
 
 	gLibpdBlockSize = libpd_blocksize();
@@ -169,12 +242,23 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	// set hooks before calling libpd_init
-	libpd_set_printhook(Bela_printHook);
-	libpd_set_floathook(Bela_floatHook);
-	libpd_set_messagehook(Bela_messageHook);
-	libpd_set_noteonhook(pdnoteon);
-	//TODO: add hooks for other midi events and generate MIDI output appropriately
+	if(midi.size() > 0){
+		// do not register callbacks if no MIDI device is in use.
+		libpd_set_printhook(Bela_printHook);
+		libpd_set_floathook(Bela_floatHook);
+		libpd_set_messagehook(Bela_messageHook);
+		libpd_set_noteonhook(Bela_MidiOutNoteOn);
+		libpd_set_controlchangehook(Bela_MidiOutControlChange);
+		libpd_set_programchangehook(Bela_MidiOutProgramChange);
+		libpd_set_pitchbendhook(Bela_MidiOutPitchBend);
+		libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
+		libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
+		libpd_set_midibytehook(Bela_MidiOutByte);
+	}
+
+	//initialize libpd. This clears the search path
 	libpd_init();
+	//Add the current folder to the search path for externals
 	libpd_add_to_search_path(".");
 	libpd_add_to_search_path("../pd-externals");
 
@@ -208,13 +292,22 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_digitalOut25");
 	libpd_bind("bela_digitalOut26");
 	libpd_bind("bela_setDigital");
-
 	// open patch       [; pd open file folder(
-	void* patch = libpd_openfile(file, folder);
-	if(patch == NULL){
+	gPatch = libpd_openfile(file, folder);
+	if(gPatch == NULL){
 		printf("Error: file %s/%s is corrupted.\n", folder, file); 
 		return false;
 	}
+
+	if(context->multiplexerChannels > 0 && libpd_arraysize(multiplexerArray) >= 0){
+		pdMultiplexerActive = true;
+		multiplexerArraySize = context->multiplexerChannels * context->analogInChannels;
+		libpd_start_message(1);
+		libpd_add_float(multiplexerArraySize);
+		libpd_finish_message(multiplexerArray, "resize");
+		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
+	}
+
 	return true;
 }
 
@@ -229,80 +322,84 @@ void render(BelaContext *context, void *userData)
 	// the safest thread-safe option to handle MIDI input is to process the MIDI buffer
 	// from the audio thread.
 #ifdef PARSE_MIDI
-	while((num = midi.getParser()->numAvailableMessages()) > 0){
-		static MidiChannelMessage message;
-		message = midi.getParser()->getNextChannelMessage();
-		//message.prettyPrint(); // use this to print beautified message (channel, data bytes)
-		switch(message.getType()){
-			case kmmNoteOn:
-			{
-				int noteNumber = message.getDataByte(0);
-				int velocity = message.getDataByte(1);
-				int channel = message.getChannel();
-				libpd_noteon(channel, noteNumber, velocity);
-				break;
+	for(unsigned int port = 0; port < midi.size(); ++port){
+		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
+			static MidiChannelMessage message;
+			message = midi[port]->getParser()->getNextChannelMessage();
+			rt_printf("On port %d (%s): ", port, gMidiPortNames[port]);
+			message.prettyPrint(); // use this to print beautified message (channel, data bytes)
+			switch(message.getType()){
+				case kmmNoteOn:
+				{
+					int noteNumber = message.getDataByte(0);
+					int velocity = message.getDataByte(1);
+					int channel = message.getChannel();
+					libpd_noteon(channel + port * 16, noteNumber, velocity);
+					break;
+				}
+				case kmmNoteOff:
+				{
+					/* PureData does not seem to handle noteoff messages as per the MIDI specs,
+					 * so that the noteoff velocity is ignored. Here we convert them to noteon
+					 * with a velocity of 0.
+					 */
+					int noteNumber = message.getDataByte(0);
+	//				int velocity = message.getDataByte(1); // would be ignored by Pd
+					int channel = message.getChannel();
+					libpd_noteon(channel + port * 16, noteNumber, 0);
+					break;
+				}
+				case kmmControlChange:
+				{
+					int channel = message.getChannel();
+					int controller = message.getDataByte(0);
+					int value = message.getDataByte(1);
+					libpd_controlchange(channel + port * 16, controller, value);
+					break;
+				}
+				case kmmProgramChange:
+				{
+					int channel = message.getChannel();
+					int program = message.getDataByte(0);
+					libpd_programchange(channel + port * 16, program);
+					break;
+				}
+				case kmmPolyphonicKeyPressure:
+				{
+					int channel = message.getChannel();
+					int pitch = message.getDataByte(0);
+					int value = message.getDataByte(1);
+					libpd_polyaftertouch(channel + port * 16, pitch, value);
+					break;
+				}
+				case kmmChannelPressure:
+				{
+					int channel = message.getChannel();
+					int value = message.getDataByte(0);
+					libpd_aftertouch(channel + port * 16, value);
+					break;
+				}
+				case kmmPitchBend:
+				{
+					int channel = message.getChannel();
+					int value =  ((message.getDataByte(1) << 7)| message.getDataByte(0)) - 8192;
+					libpd_pitchbend(channel + port * 16, value);
+					break;
+				}
+				case kmmNone:
+				case kmmAny:
+					break;
 			}
-			case kmmNoteOff:
-			{
-				/* PureData does not seem to handle noteoff messages as per the MIDI specs,
-				 * so that the noteoff velocity is ignored. Here we convert them to noteon
-				 * with a velocity of 0.
-				 */
-				int noteNumber = message.getDataByte(0);
-//				int velocity = message.getDataByte(1); // would be ignored by Pd
-				int channel = message.getChannel();
-				libpd_noteon(channel, noteNumber, 0);
-				break;
-			}
-			case kmmControlChange:
-			{
-				int channel = message.getChannel();
-				int controller = message.getDataByte(0);
-				int value = message.getDataByte(1);
-				libpd_controlchange(channel, controller, value);
-				break;
-			}
-			case kmmProgramChange:
-			{
-				int channel = message.getChannel();
-				int program = message.getDataByte(0);
-				libpd_programchange(channel, program);
-				break;
-			}
-			case kmmPolyphonicKeyPressure:
-			{
-				int channel = message.getChannel();
-				int pitch = message.getDataByte(0);
-				int value = message.getDataByte(1);
-				libpd_polyaftertouch(channel, pitch, value);
-				break;
-			}
-			case kmmChannelPressure:
-			{
-				int channel = message.getChannel();
-				int value = message.getDataByte(0);
-				libpd_aftertouch(channel, value);
-				break;
-			}
-			case kmmPitchBend:
-			{
-				int channel = message.getChannel();
-				int value =  ((message.getDataByte(1) << 7)| message.getDataByte(0)) - 8192;
-				libpd_pitchbend(channel, value);
-				break;
-			}
-			case kmmNone:
-			case kmmAny:
-				break;
 		}
 	}
 #else
 	int input;
-	while((input = midi.getInput()) >= 0){
-		libpd_midibyte(0, input);
+	for(unsigned int port = 0; port < NUM_MIDI_PORTS; ++port){
+		while((input = midi[port].getInput()) >= 0){
+			libpd_midibyte(port, input);
+		}
 	}
 #endif /* PARSE_MIDI */
-
 	static unsigned int numberOfPdBlocksToProcess = gBufLength / gLibpdBlockSize;
 
 	for(unsigned int tick = 0; tick < numberOfPdBlocksToProcess; ++tick){
@@ -317,29 +414,38 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 		// then analogs
-		// this loop resamples by ZOH, as needed, using m
-		if(context->analogInChannels == 8 ){ //hold the value for two frames
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = (audioFrameBase + j) / 2;
-					*p1 = analogRead(context, analogFrame, k);
-				}
-			}
-		} else if(context->analogInChannels == 4){ //write every frame
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = audioFrameBase + j;
-					*p1 = analogRead(context, analogFrame, k);
-				}
-			}
-		} else if(context->analogInChannels == 2){ //drop every other frame
-			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-					unsigned int analogFrame = (audioFrameBase + j) * 2;
-					*p1 = analogRead(context, analogFrame, k);
-				}
+	// this loop resamples by ZOH, as needed, using m
+	if(context->analogInChannels == 8 ){ //hold the value for two frames
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = (audioFrameBase + j) / 2;
+				*p1 = analogRead(context, analogFrame, k);
 			}
 		}
+	} else if(context->analogInChannels == 4){ //write every frame
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = audioFrameBase + j;
+				*p1 = analogRead(context, analogFrame, k);
+			}
+		}
+	} else if(context->analogInChannels == 2){ //drop every other frame
+		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstAnalogChannel; k < gAnalogChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+				unsigned int analogFrame = (audioFrameBase + j) * 2;
+				*p1 = analogRead(context, analogFrame, k);
+			}
+		}
+	}
+	if(pdMultiplexerActive){ 
+	// we do not disable regular analog inputs if muxer is active, because user may have bridged them on the board and
+	// they may be using half of them at a high sampling-rate
+		static int lastMuxerUpdate = 0;
+		if(++lastMuxerUpdate == multiplexerArraySize){
+			lastMuxerUpdate = 0;
+			libpd_write_array(multiplexerArray, 0, (float *const)context->multiplexerAnalogIn, multiplexerArraySize);
+		}
+	}
 
 		// Bela digital input
 		// note: in multiple places below we assume that the number of digitals is same as number of audio
@@ -421,5 +527,6 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
+	libpd_closefile(gPatch);
 	delete [] gScopeOut;
 }

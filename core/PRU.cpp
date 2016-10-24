@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <cerrno>
+#include <cmath>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -105,6 +106,8 @@ short int digitalPins[NUM_DIGITALS] = {
 #define USERLED3_GPIO_BASE  GPIO1_ADDRESS // GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
 
+#define BELA_CAPE_BUTTON_PIN 115
+
 const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
 const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
 
@@ -125,13 +128,17 @@ extern "C" {
 
 // Constructor: specify a PRU number (0 or 1)
 PRU::PRU(InternalBelaContext *input_context)
-: context(input_context), pru_number(0), running(false), analog_enabled(false),
+: context(input_context),
+  pru_number(1),
+  initialised(false),
+  running(false),
+  analog_enabled(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
-  mux_channels(0),
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
   pru_buffer_digital(0), pru_buffer_audio_dac(0), pru_buffer_audio_adc(0),
-  xenomai_gpio_fd(-1), xenomai_gpio(0)
+  audio_expander_input_history(0), audio_expander_output_history(0),
+  audio_expander_filter_coeff(0)
 {
 
 }
@@ -141,19 +148,20 @@ PRU::~PRU()
 {
 	if(running)
 		disable();
+	exitPRUSS();
 	if(gpio_enabled)
 		cleanupGPIO();
-	if(xenomai_gpio_fd >= 0)
-		close(xenomai_gpio_fd);
+	if(audio_expander_input_history != 0)
+		free(audio_expander_input_history);
+	if(audio_expander_output_history != 0)
+		free(audio_expander_output_history);
 }
 
 // Prepare the GPIO pins needed for the PRU
-// If include_test_pin is set, the GPIO output
-// is also prepared for an output which can be
-// viewed on a scope. If include_led is set,
+//If include_led is set,
 // user LED 3 on the BBB is taken over by the PRU
 // to indicate activity
-int PRU::prepareGPIO(int include_test_pin, int include_led)
+int PRU::prepareGPIO(int include_led)
 {
 	if(context->analogFrames != 0) {
 		// Prepare DAC CS/ pin: output, high to begin
@@ -206,55 +214,6 @@ int PRU::prepareGPIO(int include_test_pin, int include_led)
 		digital_enabled = true;
 	}
 
-	if(include_test_pin) {
-		// Prepare GPIO test output (for debugging), low to begin
-		if(gpio_export(kPruGPIOTestPin)) {
-			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export GPIO test pin\n";
-		}
-		if(gpio_set_dir(kPruGPIOTestPin, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on GPIO test pin\n";
-			return -1;
-		}
-		if(gpio_set_value(kPruGPIOTestPin, LOW)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set value on GPIO test pin\n";
-			return -1;
-		}
-
-		if(gpio_export(kPruGPIOTestPin2)) {
-			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export GPIO test pin 2\n";
-		}
-		if(gpio_set_dir(kPruGPIOTestPin2, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on GPIO test pin 2\n";
-			return -1;
-		}
-		if(gpio_set_value(kPruGPIOTestPin2, LOW)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set value on GPIO test pin 2\n";
-			return -1;
-		}
-
-		if(gpio_export(kPruGPIOTestPin3)) {
-			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export GPIO test pin 3\n";
-		}
-		if(gpio_set_dir(kPruGPIOTestPin3, OUTPUT_PIN)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on GPIO test pin 3\n";
-			return -1;
-		}
-		if(gpio_set_value(kPruGPIOTestPin3, LOW)) {
-			if(gRTAudioVerbose)
-				cout << "Couldn't set value on GPIO test pin 3\n";
-			return -1;
-		}
-		gpio_test_pin_enabled = true;
-	}
-
 	if(include_led) {
 		// Turn off system function for LED3 so it can be reused by PRU
 		led_set_trigger(3, "none");
@@ -295,7 +254,7 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mux_channels, bool xenomai_test_pin)
+int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mux_channels, bool capeButtonMonitoring)
 {
 	uint32_t *pruMem = 0;
 
@@ -305,7 +264,6 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 	}
 
 	pru_number = pru_num;
-	this->mux_channels = mux_channels;
 
     /* Initialize structure used by prussdrv_pruintc_intc   */
     /* PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h */
@@ -357,14 +315,34 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
     pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
 	
-	if(mux_channels == 2) 
+
+	/* Set up multiplexer info */
+	if(mux_channels == 2) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 1;
-	else if(mux_channels == 4)
+		context->multiplexerChannels = 2;
+	}
+	else if(mux_channels == 4) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 2;
-	else if(mux_channels == 8)
+		context->multiplexerChannels = 4;
+	}
+	else if(mux_channels == 8) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 3;
-	else
+		context->multiplexerChannels = 8;
+	}
+	else if(mux_channels == 0) {
 		pru_buffer_comm[PRU_MUX_CONFIG] = 0;
+		context->multiplexerChannels = 0;
+	}
+	else {
+		rt_printf("Error: %d is not a valid number of multiplexer channels (options: 0 = off, 2, 4, 8).\n", mux_channels);
+		return 1;
+	}
+	
+	/* Multiplexer only works with 8 analog channels. (It could be made to work with 4, with updates to the PRU code.) */
+	if(context->multiplexerChannels != 0 && context->analogInChannels != 8) {
+		rt_printf("Error: multiplexer capelet can only be used with 8 analog channels.\n");
+		return 1;
+	}
 	
     if(led_enabled) {
     	pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
@@ -410,20 +388,8 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 	for(int i = 0; i < PRU_MEM_MCASP_LENGTH / 2; i++)
 		pru_buffer_audio_dac[i] = 0;
 
-	/* If using GPIO test pin for Xenomai (for debugging), initialise the pointer now */
-	if(xenomai_test_pin && xenomai_gpio_fd < 0) {
-		xenomai_gpio_fd = open("/dev/mem", O_RDWR);
-		if(xenomai_gpio_fd < 0)
-			rt_printf("Unable to open /dev/mem for GPIO test pin\n");
-		else {
-			xenomai_gpio = (uint32_t *)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, xenomai_gpio_fd, TEST_PIN_GPIO_BASE);
-			if(xenomai_gpio == MAP_FAILED) {
-				rt_printf("Unable to map GPIO address for test pin\n");
-				xenomai_gpio = 0;
-				close(xenomai_gpio_fd);
-				xenomai_gpio_fd = -1;
-			}
-		}
+	if(capeButtonMonitoring){
+		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT);
 	}
 
 	// Allocate audio buffers
@@ -449,16 +415,16 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 	if(analog_enabled) {
 #ifdef USE_NEON_FORMAT_CONVERSION
 		if(posix_memalign((void **)&context->analogIn, 16, 
-							context->analogChannels * context->analogFrames * sizeof(float))) {
+							context->analogInChannels * context->analogFrames * sizeof(float))) {
 			printf("Error allocating analog input buffer\n");
 			return 1;
 		}
 		if(posix_memalign((void **)&context->analogOut, 16, 
-							context->analogChannels * context->analogFrames * sizeof(float))) {
+							context->analogOutChannels * context->analogFrames * sizeof(float))) {
 			printf("Error allocating analog output buffer\n");
 			return 1;
 		}
-		last_analog_out_frame = (float *)malloc(context->analogChannels * sizeof(float));
+		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
 
 		if(last_analog_out_frame == 0) {
 			rt_printf("Error: couldn't allocate analog persistence buffer\n");
@@ -476,6 +442,44 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 #endif
 		
 		memset(last_analog_out_frame, 0, context->analogOutChannels * sizeof(float));
+
+		if(context->multiplexerChannels != 0) {
+			// If mux enabled, allocate buffers and set initial values
+			context->multiplexerStartingChannel = 0;
+		
+			// Buffer holds 1 frame of every mux setting for every analog in
+			context->multiplexerAnalogIn = (float *)malloc(context->analogInChannels * context->multiplexerChannels * sizeof(float));
+			if(context->multiplexerAnalogIn == 0) {
+				rt_printf("Error: couldn't allocate audio buffers\n");
+				return 1;
+			}
+		}
+		else {
+			context->multiplexerStartingChannel = 0;
+			context->multiplexerAnalogIn = 0;
+		}
+		
+		if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
+			// Audio expander enabled on at least one analog input. Allocate filter buffers
+			// and calculate coefficient.
+			audio_expander_input_history = (float *)malloc(context->analogInChannels * sizeof(float));
+			audio_expander_output_history = (float *)malloc(context->analogInChannels * sizeof(float));
+			if(audio_expander_input_history == 0 || audio_expander_output_history == 0) {
+				rt_printf("Error: couldn't allocate audio expander history buffers\n");
+				return 1;				
+			}
+			
+			for(unsigned int n = 0; n < context->analogInChannels; n++)
+				audio_expander_input_history[n] = audio_expander_output_history[n] = 0;
+			
+			float cutoffFreqHz = 10.0; 
+			audio_expander_filter_coeff = 1.0 / ((2.0 * M_PI * cutoffFreqHz / context->analogSampleRate) + 1.0);
+		}
+	}
+	else {
+		context->multiplexerChannels = 0;
+		context->multiplexerStartingChannel = 0;
+		context->multiplexerAnalogIn = 0;		
 	}
 
 	// Allocate digital buffers
@@ -496,6 +500,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 
 	context->digital = digital_buffer0;
 
+	initialised = true;
 	return 0;
 }
 
@@ -612,6 +617,17 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
+		if(belaCapeButton.enabled()){
+			static int belaCapeButtonCount = 0;
+			if(belaCapeButton.read() == 0){
+				if(++belaCapeButtonCount > 10){
+					printf("Button pressed, quitting\n");
+					gShouldStop = true;
+				}
+			} else {
+				belaCapeButtonCount = 0;
+			}
+		}
 
 		if(gShouldStop)
 			break;
@@ -649,11 +665,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		//rt_task_sleep(sleepTime*4);
 		//rt_task_sleep(sleepTime/4);
 
-		if(xenomai_gpio != 0) {
-			// Set the test pin high
-			xenomai_gpio[GPIO_SETDATAOUT] = TEST_PIN_MASK;
-		}
-
 		// Convert short (16-bit) samples to float
 #ifdef USE_NEON_FORMAT_CONVERSION
 		int16_to_float_audio(2 * context->audioFrames, &pru_buffer_audio_adc[pru_audio_offset], context->audioIn);
@@ -662,24 +673,74 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			context->audioIn[n] = (float)pru_buffer_audio_adc[n + pru_audio_offset] / 32768.0f;
 		}
 #endif
+		
 		if(analog_enabled) {
-			if(mux_channels != 0) {
+			if(context->multiplexerChannels != 0) {
 				// If multiplexer is enabled, find out which channels we have by pulling out
-				// the place that it ended. 
-				// int lastMuxChannel = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+				// the place that it ended. Based on the buffer size, we can work out the
+				// mux setting for the beginning of the buffer.
+				int pruMuxReference = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+			
 				
-				// TODO
+				// Value from the PRU is ahead by 1 + (frame size % 8); correct that when unrolling here.
+				int multiplexerChannelLastFrame = (pruMuxReference - 1 - (context->analogFrames % 8) + context->multiplexerChannels) 
+													% context->multiplexerChannels;
+				
+				// Add 1, wrapping around, to get the starting channel		
+				context->multiplexerStartingChannel = (multiplexerChannelLastFrame + 1) % context->multiplexerChannels;
+				
+				// Write the inputs to the buffer of multiplexed samples
+				if(context->multiplexerAnalogIn != 0) {
+					unsigned int muxChannelCount = 0;
+					int multiplexerChannel = multiplexerChannelLastFrame;
+
+					for(int n = context->analogFrames - 1; n >= 0; n--) {
+						for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+							context->multiplexerAnalogIn[multiplexerChannel * context->analogInChannels + ch] =
+								context->analogIn[n * context->analogInChannels + ch];
+						}
+
+						multiplexerChannel--;
+						if(multiplexerChannel < 0)
+							multiplexerChannel = context->multiplexerChannels - 1;
+						// If we have made a full circle of the multiplexer channels, then
+						// stop here.
+						if(++muxChannelCount >= context->multiplexerChannels)
+							break;
+					}
+				}
 			}
 			
 #ifdef USE_NEON_FORMAT_CONVERSION
-			int16_to_float_analog(context->analogChannels * context->analogFrames, 
+			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
 									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
 #else	
 			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
 				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
 			}
 #endif
-
+			
+			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
+				// Audio expander enabled on at least one analog input
+				for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+					if(context->audioExpanderEnabled & (1 << ch)) {
+						// Audio expander enabled on this channel:
+						// apply highpass filter and scale by 2 to get -1 to 1 range
+						// rather than 0-1
+						for(unsigned int n = 0; n < context->analogFrames; n++) {
+							float filteredOut = audio_expander_filter_coeff *
+								(audio_expander_output_history[ch] + 
+								 context->analogIn[n * context->analogInChannels + ch] -
+							     audio_expander_input_history[ch]);
+							
+							audio_expander_input_history[ch] = context->analogIn[n * context->analogInChannels + ch];
+							audio_expander_output_history[ch] = filteredOut;
+							context->analogIn[n * context->analogInChannels + ch] = 2.0 * filteredOut;
+						}
+					}
+				}
+			}
+			
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Initialize the output buffer with the values that were in the last frame of the previous output
 				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
@@ -723,10 +784,28 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 					last_analog_out_frame[ch] = context->analogOut[context->analogOutChannels * (context->analogFrames - 1) + ch];
 				}
 			}
+			
+			if((context->audioExpanderEnabled & 0xFFFF0000) != 0) {
+				// Audio expander enabled on at least one analog output
+				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
+					if(context->audioExpanderEnabled & (0x00010000 << ch)) {
+						// Audio expander enabled on this output channel:
+						// We expect the range to be -1 to 1; rescale to
+						// 0 to 0.93, the top value being designed to avoid a
+						// headroom problem on the analog outputs with a sagging
+						// 5V USB supply
+						
+						for(unsigned int n = 0; n < context->analogFrames; n++) {
+							context->analogOut[n * context->analogOutChannels + ch] = 
+								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93/2.0);
+						}
+					}
+				}
+			}
 
 			// Convert float back to short for SPI output
 #ifdef USE_NEON_FORMAT_CONVERSION
-			float_to_int16_analog(context->analogChannels * context->analogFrames, 
+			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
 								  context->analogOut, (uint16_t*)&pru_buffer_spi_dac[pru_spi_offset]);
 #else		
 			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++) {
@@ -759,11 +838,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// Increment total number of samples that have elapsed
 		context->audioFramesElapsed += context->audioFrames;
 
-		if(xenomai_gpio != 0) {
-			// Set the test pin high
-			xenomai_gpio[GPIO_CLEARDATAOUT] = TEST_PIN_MASK;
-		}
-		
 		Bela_autoScheduleAuxiliaryTasks();
 
 	}
@@ -787,6 +861,16 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		free(context->analogIn);
 		free(context->analogOut);
 		free(last_analog_out_frame);
+		if(context->multiplexerAnalogIn != 0)
+			free(context->multiplexerAnalogIn);
+		if(audio_expander_input_history != 0) {
+			free(audio_expander_input_history);
+			audio_expander_input_history = 0;
+		}
+		if(audio_expander_output_history != 0) {
+			free(audio_expander_output_history);
+			audio_expander_output_history = 0;
+		}
 	}
 
 	if(digital_enabled) {
@@ -796,6 +880,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	context->audioIn = context->audioOut = 0;
 	context->analogIn = context->analogOut = 0;
 	context->digital = 0;
+	context->multiplexerAnalogIn = 0;
 }
 
 // Wait for an interrupt from the PRU indicate it is finished
@@ -812,21 +897,14 @@ void PRU::disable()
 {
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable(pru_number);
-    prussdrv_exit();
 	running = false;
 }
 
-// Debugging
-void PRU::setGPIOTestPin()
+// Exit the prussdrv subsystem (affects both PRUs)
+void PRU::exitPRUSS()
 {
-	if(!xenomai_gpio)
-		return;
-	xenomai_gpio[GPIO_SETDATAOUT] = TEST_PIN2_MASK;
+	if(initialised)
+	    prussdrv_exit();
+	initialised = false;
 }
 
-void PRU::clearGPIOTestPin()
-{
-	if(!xenomai_gpio)
-		return;
-	xenomai_gpio[GPIO_CLEARDATAOUT] = TEST_PIN2_MASK;
-}

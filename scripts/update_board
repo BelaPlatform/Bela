@@ -9,9 +9,9 @@ SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
 
-[ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../ide/
+[ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../IDE
 
-FILES_TO_COPY="core include Makefile libNE10.a libprussdrv.a examples Doxyfile"
+FILES_TO_COPY="core include Makefile lib examples Doxyfile"
 
 # The following variables are manually copied from the Makefile.
 # It is a bit nasty, but here we need to handle the case that the board may be 
@@ -139,7 +139,7 @@ then
 fi
 
 #Check if rsync is available
-[ -z `which rsync` ] && RSYNC_AVAILABLE=0 || RSYNC_AVAILABLE=1
+check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
 
 # cd to the home of the project to make the following lines less verbose
 RUN_FOLDER=`pwd`
@@ -151,16 +151,14 @@ if [ $RSYNC_AVAILABLE -eq 1 ];
 then
   [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
   rsync -ac --no-t --delete-after --stats $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval $FILTER &&\
-  printf "..." && rsync -ac --no-t libpd.so $BBB_ADDRESS:/usr/lib
+  printf "..." &&echo  rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib; rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib
 else
   # if rsync is not available, then clean the folders before copying the files
   ssh $BBB_ADDRESS "rm -rf $FILES_TO_COPY; mkdir -p $BBB_BELA_HOME" &&\
   scp -r -q $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME &&\
-  scp -q libpd.so $BBB_ADDRESS:/usr/lib
+  scp -q lib/libpd.so $BBB_ADDRESS:/usr/lib
 fi
 error_handler $?
-# cd back to the original folder.
-cd "$RUN_FOLDER"
 
 # Create remaining directories needed for building
 printf "Creating directory structure on BeagleBone..."
@@ -184,18 +182,19 @@ fi
 #-------------
 #Installing IDE
 
+pwd
 if [ $UPDATE_IDE -eq 1 ]
 then
 	[ $ALWAYS_YES -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
-	ls $IDE_FOLDER/scripts/update_IDE >/dev/null 2>/dev/null
+	ls ./scripts/update_IDE >/dev/null 2>/dev/null
 	if [ $? -eq 0 ]
 	then
 	  export BBB_ADDRESS BBB_BELA_HOME
-	  cd $IDE_FOLDER/scripts && ./update_IDE $ALWAYS_YES_FLAG --no-frills
+	  ./scripts/update_IDE $ALWAYS_YES_FLAG --no-frills
       [ $FULL -eq 1 ] && ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart" 
 	else
 	  # run the IDE 
-	   printf "\nThe Bela core files were updated on the board, but a valid IDE folder was not found in $IDE_FOLDER/, so the IDE was not updated.
+	   printf "\nThe Bela core files were updated on the board, but a valid IDE folder was not found in $IDE_FOLDER/, so the IDE was not updated
 	You can get a copy of the most up-to-date IDE files from https://github.com/LBDonovan/bela-ide\n"
 	  [ $FULL -eq 1 ] && printf "If there was an older version of the IDE on the board, it is being restarted.\n\n" &&\
 	    ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart &> /dev/null" 
@@ -209,3 +208,6 @@ fi
   printf '\nSetup complete, press any key to continue . . .\n\n'
   read -n 1
 }
+
+# cd back to the original folder.
+cd "$RUN_FOLDER"

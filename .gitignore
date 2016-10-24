@@ -1,9 +1,14 @@
 **/.DS_Store
-ide/dev/node_modules
+dev/node_modules
+IDE/settings.json
 projects/
 tmp/
 *.swp
 *.swo
+*.orig
 Release/
+build/
 Debug/
 Documentation/
+*.js.map
+.plugins/
