@@ -1,4 +1,7 @@
 /**
+  Please note that support for SuperCollider on Bela is still experimental,
+so feel free to report issues here: https://github.com/sensestage/supercollider/issues
+
  This file contains code that should be run on your computer from
  within the SuperCollider IDE, while `scsynth` is running on the board.
 

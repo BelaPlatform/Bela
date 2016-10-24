@@ -1,4 +1,7 @@
 /**
+Please note that support for SuperCollider on Bela is still experimental,
+so feel free to report issues here: https://github.com/sensestage/supercollider/issues
+
 This script exemplifies the use of SuperCollider on Bela.
 When a project contains a `_main.scd` file, `sclang` is started
 and the content of the file is executed.

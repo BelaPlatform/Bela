@@ -1,4 +1,7 @@
 /**
+ * Please note that support for SuperCollider on Bela is still experimental,
+ * so feel free to report issues here: https://github.com/sensestage/supercollider/issues
+ *
  * This script simply starts scsynth, which then waits for messages.
  * Use the code in remote-examples to interact with the board from
  * the SuperCollider IDE running on the host.
