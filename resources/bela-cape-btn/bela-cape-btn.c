@@ -73,10 +73,10 @@ enum { DEFAULT_MONITOR_CLICK = 0 };
 enum { DEFAULT_MONITOR_HOLD = 1 };
 enum { HOLD_PRESS_TIMEOUT_MS = 2000 };
 
-static char DEFAULT_CLICKED_ACTION[] = "/root/cape_button_click.sh";
+static char DEFAULT_CLICK_ACTION[] = "/root/cape_button_click.sh";
 static char DEFAULT_HOLD_ACTION[] = "/root/cape_button_hold.sh";
 
-static char* CLICKED_ACTION;
+static char* CLICK_ACTION;
 static char* HOLD_ACTION;
 static int BUTTON_PIN;
 static int PRESSED_VALUE;
@@ -250,7 +250,7 @@ int run(void)
 	timestamp_ms_t pressed_at = 0;
 
 	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold. Button is pressed when pin is %s...\n", BUTTON_PIN, 
-		MONITOR_CLICK ? CLICKED_ACTION : "(nothing)", 
+		MONITOR_CLICK ? CLICK_ACTION : "(nothing)", 
 		MONITOR_HOLD ? HOLD_ACTION : "(nothing)",
 		PRESSED_VALUE == 0 ? "LOW" : "HIGH");
 	for (;;)
@@ -293,12 +293,16 @@ int run(void)
 				if (timestamp - pressed_at < HOLD_PRESS_TIMEOUT_MS)
 				{
 					if(MONITOR_CLICK)
-						system(CLICKED_ACTION);
+						system(CLICK_ACTION);
+					else
+						printf("Click detected -- no action\n");
 				}
 				else
 				{
 					if(MONITOR_HOLD)
 						system(HOLD_ACTION);
+					else
+						printf("Hold detected -- no action\n");
 				}
 				pressed_at = 0;
 			}
@@ -333,7 +337,7 @@ void print_usage(void)
 		"\t--help          Display the usage information.\n"
 		"\t--version       Show the version information.\n"
 		"\n",
-		DEFAULT_CLICKED_ACTION,
+		DEFAULT_CLICK_ACTION,
 		DEFAULT_HOLD_ACTION,
 		DEFAULT_PRESSED_VALUE,
 		DEFAULT_INITIAL_DELAY,
@@ -348,7 +352,7 @@ int main(int argc, char **argv)
 {
 
 	BUTTON_PIN = DEFAULT_BUTTON_PIN;
-	CLICKED_ACTION = DEFAULT_CLICKED_ACTION;
+	CLICK_ACTION = DEFAULT_CLICK_ACTION;
 	HOLD_ACTION = DEFAULT_HOLD_ACTION;
 	PRESSED_VALUE = DEFAULT_PRESSED_VALUE;
 	INITIAL_DELAY = DEFAULT_INITIAL_DELAY;
@@ -397,7 +401,7 @@ int main(int argc, char **argv)
 		{
 			if(i + 1 < argc){
 				++i;
-				CLICKED_ACTION = argv[i];
+				CLICK_ACTION = argv[i];
 				MONITOR_CLICK = 1;
 				continue;
 			} else {
