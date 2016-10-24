@@ -34,6 +34,10 @@ var parser = {
 	
 	highlights(hls){
 		highlights = hls;
+		if (!hls.contextType || !hls.contextType.length){
+			console.log('parser aborted');
+			return;
+		}
 		contextType = hls.contextType[0].name;
 		highlights.typerefs = [];
 		//console.log(highlights);
