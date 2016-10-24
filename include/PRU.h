@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <native/intr.h>
 #include "../include/Bela.h"
+#include "../include/Gpio.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const
@@ -156,7 +157,7 @@ public:
 	~PRU();
 
 	// Prepare the GPIO pins needed for the PRU
-	int prepareGPIO(int include_test_pin, int include_led);
+	int prepareGPIO(int include_led);
 
 	// Clean up the GPIO at the end
 	void cleanupGPIO();
@@ -164,7 +165,7 @@ public:
 	// Initialise and open the PRU
 	int initialise(int pru_num, int frames_per_buffer,
 				   int spi_channels, int mux_channels = 0, 
-				   bool xenomai_test_pin = false);
+				   bool capeButtonMonitoring = true);
 
 	// Run the code image in pru_rtaudio_bin.h
 	int start(char * const filename);
@@ -180,10 +181,6 @@ public:
 
 	// Exit the whole PRU subsystem
 	void exitPRUSS();
-
-	// For debugging:
-	void setGPIOTestPin();
-	void clearGPIOTestPin();
 
 private:
 	InternalBelaContext *context;	// Overall settings
@@ -211,8 +208,7 @@ private:
 	float *audio_expander_output_history;
 	float audio_expander_filter_coeff;
 
-	int xenomai_gpio_fd;	// File descriptor for /dev/mem for fast GPIO
-	uint32_t *xenomai_gpio;	// Pointer to GPIO registers
+	Gpio belaCapeButton; // Monitoring the bela cape button
 };
 
 
