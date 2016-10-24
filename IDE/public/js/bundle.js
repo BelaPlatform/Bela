@@ -742,6 +742,10 @@ socket.on('force-reload', function () {
 		return window.location.reload(true);
 	}, 1000);
 });
+socket.on('update-error', function (err) {
+	popup.overlay();
+	consoleView.emit('warn', 'Error updating the board, please try a different zip archive');
+});
 
 socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', function (data) {

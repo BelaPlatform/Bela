@@ -494,7 +494,10 @@ function uploadUpdate(data){
 				
 			});
 		})
-		.catch( e => console.log('update error', e.toString()) );
+		.catch( e => {
+			console.log('update error', e.toString());
+			allSockets.emit('update-error', e.toString());
+		});
 }
 
 process.on('uncaughtException', (err) => {

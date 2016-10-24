@@ -305,6 +305,10 @@ socket.on('std-warn', text => consoleView.emit('warn', text) );
 socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 
 socket.on('force-reload', () => setTimeout( () => window.location.reload(true), 1000));
+socket.on('update-error', err => {
+	popup.overlay();
+	consoleView.emit('warn', 'Error updating the board, please try a different zip archive');
+});
 
 socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', data => {
