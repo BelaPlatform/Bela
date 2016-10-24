@@ -304,7 +304,7 @@ socket.on('std-warn', text => consoleView.emit('warn', text) );
 
 socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 
-socket.on('force-reload', () => window.location.reload(true) );
+socket.on('force-reload', () => setTimeout( () => window.location.reload(true), 1000));
 
 socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', data => {

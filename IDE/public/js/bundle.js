@@ -738,7 +738,9 @@ socket.on('syntax-highlighted', function () {
 });
 
 socket.on('force-reload', function () {
-	return window.location.reload(true);
+	return setTimeout(function () {
+		return window.location.reload(true);
+	}, 1000);
 });
 
 socket.on('mtime', setModifiedTimeInterval);
@@ -3389,7 +3391,7 @@ var SettingsView = function (_View) {
 					_this5.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 					_this5.emit('warning', 'Do not use the IDE during the update process!');
 
-					popup.overlay();
+					popup.hide('keep overlay');
 
 					var reader = new FileReader();
 					reader.onload = function (ev) {
@@ -3399,9 +3401,8 @@ var SettingsView = function (_View) {
 				} else {
 
 					_this5.emit('warning', 'not a valid update zip archive');
+					popup.hide();
 				}
-
-				popup.hide();
 			});
 
 			popup.find('.popup-cancel').on('click', popup.hide);
@@ -4837,8 +4838,8 @@ var popup = {
 		parent.addClass('active');
 		content.find('input[type=text]').first().trigger('focus');
 	},
-	hide: function hide() {
-		_overlay.removeClass('active');
+	hide: function hide(keepOverlay) {
+		if (keepOverlay !== 'keep overlay') _overlay.removeClass('active');
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();

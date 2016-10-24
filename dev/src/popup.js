@@ -13,8 +13,8 @@ var popup = {
 		content.find('input[type=text]').first().trigger('focus');
 	},
 	
-	hide(){
-		overlay.removeClass('active');
+	hide(keepOverlay){
+		if (keepOverlay !== 'keep overlay') overlay.removeClass('active');
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
