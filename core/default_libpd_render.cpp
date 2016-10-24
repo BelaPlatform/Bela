@@ -218,6 +218,7 @@ bool setup(BelaContext *context, void *userData)
 			dcm.setCallbackArgument(ch, receiverNames[ch]);
 		}
 	}
+	printf("Trying to open MIDI devices...\n");
 	midi.resize(gMidiPortNames.size());
 	for(unsigned int n = 0; n < midi.size(); ++n){
 		midi[n] = new Midi();
@@ -230,6 +231,7 @@ bool setup(BelaContext *context, void *userData)
 		midi[n]->enableParser(false);
 #endif /* PARSE_MIDI */
 	}
+	printf("...done opening MIDI devices\n");
 //	udpServer.bindToPort(1234);
 
 	gLibpdBlockSize = libpd_blocksize();

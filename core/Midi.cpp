@@ -234,7 +234,7 @@ int Midi::readFrom(const char* port){
 	int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);
 	if (err) {
 		if(err == -2)
-			fprintf(stderr, "MIDI device %s is not ready: %s\n", port, strerror(-err));
+			printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
 		else
 			fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
 		return -1;
