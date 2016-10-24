@@ -155,7 +155,7 @@ class SettingsView extends View {
 		
 		// build the popup content
 		popup.title('About Bela');
-		popup.subtitle('You are using Bela Version 0.1, July 2016. Bela is an open source project licensed under GPL, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London. For more information, visit http://bela.io');
+		popup.subtitle('You are using Bela Version 0.2, October 2016. Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 		var form = [];
 		form.push('<button type="submit" class="button popup-continue">Close</button>');
 		
