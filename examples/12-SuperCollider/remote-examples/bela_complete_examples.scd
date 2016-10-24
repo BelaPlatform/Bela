@@ -10,6 +10,8 @@
  computer in order to run these scripts. You can get them here 
  https://github.com/sensestage/bela-remote
  */
+
+// connect to an already running server on Bela.
 Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
 s.initTree;
 s.startAliveThread;
@@ -71,11 +73,6 @@ a.free;
 
 
 /// AnalogOut
-
-Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
-s.initTree;
-s.startAliveThread;
-
 
 // aaa
 (
@@ -142,11 +139,6 @@ a.free;
 
 // DigitalIn
 
-Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
-s.initTree;
-s.startAliveThread;
-
-
 // a
 (
 SynthDef("DigitalIn",{ arg out=0;
@@ -174,10 +166,6 @@ a.free;
 
 
 // DigitalOut
-
-Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
-s.initTree;
-s.startAliveThread;
 
 // a
 (
@@ -235,12 +223,6 @@ a.free;
 
 
 // DigitalIO
-
-
-Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
-s.initTree;
-s.startAliveThread;
-
 
 ( // aaaa once - everything audio rate
 SynthDef("DigitalIO",{ arg out=0;
