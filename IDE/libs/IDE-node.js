@@ -265,7 +265,7 @@ function socketEvents(socket){
 							args += key+'='+CLArgs[key]+' ';
 						} else if (key === 'user'){
 							args += CLArgs[key];
-						} else if (key !== 'make'){
+						} else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== ''){
 							args += key+CLArgs[key]+' ';
 						}
 					}
