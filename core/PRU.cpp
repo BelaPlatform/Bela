@@ -106,6 +106,8 @@ short int digitalPins[NUM_DIGITALS] = {
 #define USERLED3_GPIO_BASE  GPIO1_ADDRESS // GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
 
+#define BELA_CAPE_BUTTON_PIN 115
+
 const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
 const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
 
@@ -461,6 +463,8 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		}
 	}
 
+	belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT);
+
 	// Allocate audio buffers
 #ifdef USE_NEON_FORMAT_CONVERSION
 	if(posix_memalign((void **)&context->audioIn, 16, 2 * context->audioFrames * sizeof(float))) {
@@ -686,6 +690,16 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
+		static int belaCapeButtonCount = 0;
+		if(belaCapeButton.read() == 0){
+			if(++belaCapeButtonCount > 10){
+				printf("Button pressed, quitting\n");
+				gShouldStop = true;
+			}
+		} else {
+			belaCapeButtonCount = 0;
+		}
+
 
 		if(gShouldStop)
 			break;

@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <native/intr.h>
 #include "../include/Bela.h"
+#include "../include/Gpio.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const
@@ -211,6 +212,7 @@ private:
 	float *audio_expander_output_history;
 	float audio_expander_filter_coeff;
 
+	Gpio belaCapeButton; // Monitoring the bela cape button
 	int xenomai_gpio_fd;	// File descriptor for /dev/mem for fast GPIO
 	uint32_t *xenomai_gpio;	// Pointer to GPIO registers
 };
