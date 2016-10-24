@@ -115,7 +115,7 @@ void WriteFile::log(float value){
 	}
 	if((fileType == kText && writePointer == textReadPointer - 1) ||
 			(fileType == kBinary && writePointer == binaryReadPointer - 1)){
-		fprintf(stderr, "%d %d WriteFile: pointers crossed, you should probably slow down your writing to disk\n", writePointer, binaryReadPointer);
+		rt_fprintf(stderr, "%d %d WriteFile: pointers crossed, you should probably slow down your writing to disk\n", writePointer, binaryReadPointer);
 	}
 	if(threadRunning == false){
 		startThread();
