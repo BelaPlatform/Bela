@@ -4413,6 +4413,10 @@ var parser = {
 	},
 	highlights: function highlights(hls) {
 		_highlights = hls;
+		if (!hls.contextType || !hls.contextType.length) {
+			console.log('parser aborted');
+			return;
+		}
 		contextType = hls.contextType[0].name;
 		_highlights.typerefs = [];
 		//console.log(highlights);
