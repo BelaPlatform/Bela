@@ -198,7 +198,6 @@ fi
 #-------------
 #Installing IDE
 
-pwd
 if [ $UPDATE_IDE -eq 1 ]
 then
 	[ $ALWAYS_YES -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
