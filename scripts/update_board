@@ -4,7 +4,6 @@
 # in preparation for building projects. It will remove any existing
 # Bela directory before copying the files over
 
-set -x
 # Find location of this script so we can locate the rest of the files
 SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
