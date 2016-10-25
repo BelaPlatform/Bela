@@ -32,6 +32,7 @@ copy_if_does_not_exist(){
 		# if forced to, do so
 		scp -q $_SRC $BBB_ADDRESS:$_DEST
 	fi
+	return $?
 }
 
 check_rsync(){
