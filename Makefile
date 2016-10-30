@@ -114,7 +114,7 @@ endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
 DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
-DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c11
+DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
 ifndef COMPILER
 # check whether clang is installed
@@ -159,8 +159,12 @@ CPP_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 PROJECT_OBJS = $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Core Bela sources
+CORE_C_SRCS = $(wildcard core/*.c)
+CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
+CORE_C_DEPS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
+
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
-CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
+CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
 CORE_CPP_DEPS := $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
@@ -202,6 +206,14 @@ syntax: $(PROJECT_OBJS)
 # include all dependencies - necessary to force recompilation when a header is changed
 # (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
 -include $(CPP_DEPS) $(C_DEPS) $(ASM_DEPS)
+
+# Rule for Bela core C files
+build/core/%.o: ./core/%.c
+	$(AT) echo 'Building $(notdir $<)...'
+#	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -no-integrated-as -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) 
+	$(AT) echo ' ...done'
+	$(AT) echo ' '
 
 # Rule for Bela core C++ files
 build/core/%.o: ./core/%.cpp
