@@ -481,7 +481,7 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 	if(taskStruct->started == true)
 		return 0;
 	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
-		cerr << "Error: unable to start Xenomai task " << taskStruct->name <<  strerror(-ret) << endl;
+		cerr << "Error: unable to start Xenomai task " << taskStruct->name << ": " <<  strerror(-ret) << endl;
 		return -1;
 	}
 	taskStruct->started = true;
