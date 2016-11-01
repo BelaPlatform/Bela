@@ -26,6 +26,7 @@
 class Scope{
     public:
         Scope();
+		~Scope();
         
         /**
          * \brief Initialise the scope, setting the number of channels and the sample rate
@@ -103,6 +104,7 @@ class Scope{
         OSCClient oscClient;
         UdpClient socket;
         
+		void dealloc();
         void parseMessage(oscpkt::Message);
         void start(bool setup = false);
         void stop();

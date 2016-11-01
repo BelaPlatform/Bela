@@ -9,7 +9,23 @@ Scope::Scope(): isUsingOutBuffer(false),
                 downSampling(1), 
                 triggerPrimed(false), 
                 started(false), 
-                settingUp(true) {}
+                settingUp(true),
+				windowFFT(NULL),
+				inFFT(NULL),
+				outFFT(NULL),
+				cfg(NULL)
+				{}
+
+Scope::~Scope(){
+	dealloc();
+}
+
+void Scope::dealloc(){
+	delete[] windowFFT;
+	NE10_FREE(inFFT);
+	NE10_FREE(outFFT);
+	NE10_FREE(cfg);
+}
 
 // static aux task functions
 void Scope::triggerTask(void *ptr){
@@ -147,15 +163,15 @@ void Scope::setPlotMode(){
     customTriggered = false;
         
     if (plotMode == 1){ // frequency domain
+		dealloc();
 		inFFT  = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
 		outFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
 		cfg = ne10_fft_alloc_c2c_float32_neon (FFTLength);
+    	windowFFT = new float[FFTLength];
     	
     	pointerFFT = 0;
         collectingFFT = true;
 
-        // Allocate the window buffer based on the FFT size
-    	windowFFT = new float[FFTLength];
     
     	// Calculate a Hann window
 		// The coherentGain compensates for the loss of energy due to the windowing.
