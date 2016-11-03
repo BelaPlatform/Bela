@@ -17,6 +17,22 @@ extern "C" {
 #include <string>
 #include <sstream>
 
+#include <algorithm>
+
+enum { minFirstDigitalChannel = 10 };
+
+static unsigned int gAnalogChannelsInUse;
+static unsigned int gDigitalChannelsInUse;
+static unsigned int gScopeChannelsInUse = 4;
+static unsigned int gLibpdBlockSize;
+static unsigned int gChannelsInUse;
+//static const unsigned int gFirstAudioChannel = 0;
+static unsigned int gFirstAnalogInChannel;
+static unsigned int gFirstAnalogOutChannel;
+static unsigned int gFirstDigitalChannel;
+static unsigned int gLibpdDigitalChannelOffset;
+static unsigned int gFirstScopeChannel;
+
 void Bela_userSettings(BelaInitSettings *settings)
 {
 	settings->uniformSampleRate = 1;
@@ -161,7 +177,6 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
-#define LIBPD_DIGITAL_OFFSET 11 // digitals are preceded by 2 audio and 8 analogs (even if using a different number of analogs)
 
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
 	if(strcmp(source, "bela_setMidi") == 0){
@@ -207,7 +222,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		} else if (libpd_is_float(&argv[0]) == false){
 			return;
 		}
-		int channel = libpd_get_float(&argv[0]) - LIBPD_DIGITAL_OFFSET;
+		int channel = libpd_get_float(&argv[0]) - gLibpdDigitalChannelOffset;
 		if(disable == true){
 			dcm.unmanage(channel);
 			return;
@@ -228,7 +243,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 
 void Bela_floatHook(const char *source, float value){
 	// let's make this as optimized as possible for built-in digital Out parsing
-	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between LIBPD_DIGITAL_OFFSET and (LIBPD_DIGITAL_OFFSET+15)
+	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between gLibpdDigitalChannelOffset and (gLibpdDigitalCHannelOffset+gDigitalChannelsInUse)
 	static int prefixLength = 15; // strlen("bela_digitalOut")
 	if(strncmp(source, "bela_digitalOut", prefixLength)==0){
 		if(source[prefixLength] != 0){ //the two ifs are used instead of if(strlen(source) >= prefixLength+2)
@@ -236,8 +251,8 @@ void Bela_floatHook(const char *source, float value){
 				// quickly convert the suffix to integer, assuming they are numbers, avoiding to call atoi
 				int receiver = ((source[prefixLength] - 48) * 10);
 				receiver += (source[prefixLength+1] - 48);
-				unsigned int channel = receiver - LIBPD_DIGITAL_OFFSET; // go back to the actual Bela digital channel number
-				if(channel < 16){ //16 is the hardcoded value for the number of digital channels
+				unsigned int channel = receiver - gLibpdDigitalChannelOffset; // go back to the actual Bela digital channel number
+				if(channel < gDigitalChannelsInUse){ //number of digital channels
 					dcm.setValue(channel, value);
 				}
 			}
@@ -245,22 +260,28 @@ void Bela_floatHook(const char *source, float value){
 	}
 }
 
-char receiverNames[16][21]={
-	{"bela_digitalIn11"},{"bela_digitalIn12"},{"bela_digitalIn13"},{"bela_digitalIn14"},{"bela_digitalIn15"},
-	{"bela_digitalIn16"},{"bela_digitalIn17"},{"bela_digitalIn18"},{"bela_digitalIn19"},{"bela_digitalIn20"},
-	{"bela_digitalIn21"},{"bela_digitalIn22"},{"bela_digitalIn23"},{"bela_digitalIn24"},{"bela_digitalIn25"},
-	{"bela_digitalIn26"}
-};
+std::vector<std::string> receiverInputNames;
+std::vector<std::string> receiverOutputNames;
+void generateDigitalNames(unsigned int numDigitals)
+{
+	std::string inBaseString = "bela_digitalIn";
+	std::string outBaseString = "bela_digitalOut";
+	for(unsigned int i = 0; i<numDigitals; i++)
+	{
+		receiverInputNames.push_back(inBaseString + std::to_string(i));
+		receiverOutputNames.push_back(outBaseString + std::to_string(i));
+	}
+}
 
-static unsigned int gAnalogChannelsInUse;
-static unsigned int gLibpdBlockSize;
-// 2 audio + (up to)8 analog + (up to) 16 digital + 4 scope outputs
-static const unsigned int gChannelsInUse = 30;
-//static const unsigned int gFirstAudioChannel = 0;
-static const unsigned int gFirstAnalogInChannel = 2;
-static const unsigned int gFirstAnalogOutChannel = 2;
-static const unsigned int gFirstDigitalChannel = 10;
-static const unsigned int gFirstScopeChannel = 26;
+void printDigitalNames()
+{
+	printf("DIGITAL INPUTS\n");
+	for(unsigned int i=0; i<gDigitalChannelsInUse; i++)
+		printf("%s\n", receiverInputNames[i].c_str());
+	printf("DIGITAL OUTPUTS\n");
+	for(unsigned int i=0; i<gDigitalChannelsInUse; i++)
+		printf("%s\n", receiverOutputNames[i].c_str());
+}
 static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
@@ -276,7 +297,6 @@ void fdLoop(void* arg){
 #endif /* PD_THREADED_IO */
 
 Scope scope;
-unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
 void* gPatch;
 bool gDigitalEnabled = 0;
@@ -323,22 +343,41 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	free(str);
-	if(context->analogInChannels > 8 || context->analogOutChannels > 8)
-	{
-		fprintf(stderr, "This project can run with a maximum of 8 analog channels\n");
-		// change LIBPD_DIGITAL_OFFSET if you want more
-		return false;
-	}
+
 	// analog setup
 	gAnalogChannelsInUse = context->analogInChannels;
+	gDigitalChannelsInUse = context->digitalChannels;
+	
+	// Channel distribution
+	gFirstAnalogInChannel = std::max(context->audioInChannels, context->audioOutChannels);
+	gFirstAnalogOutChannel = gFirstAnalogInChannel;
+	gFirstDigitalChannel = gFirstAnalogInChannel + std::max(context->analogInChannels, context->analogOutChannels);
+	if(gFirstDigitalChannel < minFirstDigitalChannel)
+		gFirstDigitalChannel = minFirstDigitalChannel; //for backwards compatibility
+	gLibpdDigitalChannelOffset = gFirstDigitalChannel + 1;
+	gFirstScopeChannel = gFirstDigitalChannel + gDigitalChannelsInUse;
+
+	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
+	
+	// Create receiverNames for digital channels
+	generateDigitalNames(gDigitalChannelsInUse);	
+	
+	printf("Analog channels in use: %d\n", gAnalogChannelsInUse);
+	printf("First analog input channel: %d\n", gFirstAnalogInChannel);
+	printf("First analog output channel: %d\n", gFirstAnalogOutChannel);
+	printf("Digital channels in use: %d\n", gDigitalChannelsInUse);
+	printf("First digital channel: %d\n", gFirstDigitalChannel);
+	printf("First digital channel (libpd): %d\n", gLibpdDigitalChannelOffset);
+	
+	printDigitalNames();
 
 	// digital setup
 	if(gDigitalEnabled)
 	{
 		dcm.setCallback(sendDigitalMessage);
-		if(context->digitalChannels > 0){
-			for(unsigned int ch = 0; ch < context->digitalChannels; ++ch){
-				dcm.setCallbackArgument(ch, receiverNames[ch]);
+		if(gDigitalChannelsInUse > 0){
+			for(unsigned int ch = 0; ch < gDigitalChannelsInUse; ++ch){
+				dcm.setCallbackArgument(ch, &receiverInputNames[ch][0]);
 			}
 		}
 	}
@@ -393,24 +432,8 @@ bool setup(BelaContext *context, void *userData)
 	libpd_finish_message("pd", "dsp");
 
 	// Bind your receivers here
-	libpd_bind("bela_digitalOut11");
-	libpd_bind("bela_digitalOut12");
-	libpd_bind("bela_digitalOut13");
-	libpd_bind("bela_digitalOut14");
-	libpd_bind("bela_digitalOut15");
-	libpd_bind("bela_digitalOut16");
-	libpd_bind("bela_digitalOut17");
-	libpd_bind("bela_digitalOut18");
-	libpd_bind("bela_digitalOut19");
-	libpd_bind("bela_digitalOut20");
-	libpd_bind("bela_digitalOut21");
-	libpd_bind("bela_digitalOut22");
-	libpd_bind("bela_digitalOut23");
-	libpd_bind("bela_digitalOut24");
-	libpd_bind("bela_digitalOut25");
-	libpd_bind("bela_digitalOut26");
-	libpd_bind("bela_setDigital");
-	libpd_bind("bela_setMidi");
+	for(unsigned int i = 0; i < gDigitalChannelsInUse; i++)
+		libpd_bind(receiverOutputNames[i].c_str());
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
