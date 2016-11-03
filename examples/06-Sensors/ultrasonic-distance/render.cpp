@@ -31,8 +31,8 @@ Scope scope;
 int gTriggerInterval = 2646; // how often to send out a trigger. 2646 samples are 60ms 
 int gMinPulseLength = 7; //to avoid spurious readings
 float gRescale = 58; // taken from the datasheet
-unsigned int gTriggerAnalogOutChannel = 0; //channel to be connected to the module's TRIGGER pin
-unsigned int gEchoDigitalInPin = 1; //channel to be connected to the modules's ECHO pin (digital pin 1)
+unsigned int gTriggerAnalogOutChannel = 0; //channel to be connected to the module's TRIGGER pin - check the pin diagram in the IDE
+unsigned int gEchoDigitalInPin = 1; //channel to be connected to the modules's ECHO pin (digital pin 1) - check the pin diagram in the IDE
 int gTriggerCount = 0;
 int gPrintfCount = 0;
 
@@ -72,8 +72,8 @@ void render(BelaContext *context, void *userData)
             }
             ++count;
         }
-        // Logging to the scope the pulse inputs (digital pin 1) and the distance
-        scope.log(digitalRead(context, n, 1), distance/100);
+        // Logging to the scope the pulse inputs (gEchoDigitalInPin) and the distance
+        scope.log(digitalRead(context, n, gEchoDigitalInPin), distance/100);
     }
 }
 
@@ -113,7 +113,7 @@ It is important that the 5V ECHO output from the module *is not* connected
 straight to Bela's digital inputs, as that would most likely kill the BeagleBone Black
 (digital I/Os are 3.3V tolerant). You will need to use a passive resistor divider from the 
 HC-SR04's ECHO output to scale down the voltage before connecting it to the digital input 
-on digital pin 1.
+on gEchoDigitalInPin.
 
 Bela's digital outputs are 3.3V and this does not guarantee that they would work when 
 connected to the module's TRIGGER input, so we use here one of the analog outputs (which

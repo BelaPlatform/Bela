@@ -24,9 +24,11 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 
+int gOutputPin = 0; // digital pin 0 - check the pin diagram in the IDE
+
 bool setup(BelaContext *context, void *userData)
 {
-    pinMode(context, 0, 0, OUTPUT); // Set digital pin 0 as output
+    pinMode(context, 0, gOutputPin, OUTPUT); // Set gOutputPin as output
 	return true;
 }
 
@@ -39,11 +41,11 @@ void render(BelaContext *context, void *userData)
     if(count==context->digitalSampleRate*interval){ //if enough samples have elapsed
       count=0; //reset the counter
       if(status==GPIO_LOW) { //toggle the status
-          digitalWrite(context, n, 0, status); //write the status to the LED (pin 0)
+          digitalWrite(context, n, gOutputPin, status); //write the status to the LED (gOutputPin)
           status=GPIO_HIGH;
       }
       else {
-          digitalWrite(context, n, 0, status); //write the status to the LED (pin 0)
+          digitalWrite(context, n, gOutputPin, status); //write the status to the LED (gOutputPin)
           status=GPIO_LOW;
       }
     }
@@ -65,15 +67,15 @@ Blinking an LED
 
 This sketch shows the simplest case of digital out. 
 
-- Connect an LED in series with a 470ohm resistor between digital pin 0 and ground. 
+- Connect an LED in series with a 470ohm resistor between digital pin gOutputPin and ground. 
 
 The led is blinked on and off by setting the digital pin `HIGH` and `LOW` every interval seconds which is set in 
 `render()`.
 
 In `setup()` the pin mode must be set to output mode via `pinMode()`. For example: 
-`pinMode(context, 0, 0, OUTPUT)`. 
+`pinMode(context, 0, gOutputPin, OUTPUT)`. 
 In `render()` the output of the digital pins is set by `digitalWrite()`. For example: 
-`digitalWrite(context, n, 0, status)` where `status` can be equal to 
+`digitalWrite(context, n, gOutputPin, status)` where `status` can be equal to 
 either `HIGH` or `LOW`. When set `HIGH` the pin will give 3.3V, when set to 
 `LOW` 0V.
 
