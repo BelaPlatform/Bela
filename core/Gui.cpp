@@ -1,52 +1,117 @@
 #include <Gui.h>
-#include <seasocks/IgnoringLogger.h>
-#include <seasocks/Server.h>
-#include <seasocks/WebSocket.h>
-#include <memory> // for shared pointers
+#include <WSServer.h>
 #include <JSON.h>
+#include <memory> // for shared pointers
 
-#define GUI_PORT 4321
 
-static AuxTaskNonRT ws_server_task;
-satic seasocks::Server* server;
-static std::set<seasocks::WebSocket *> connections
-
-struct GuiDataHandler : seasocks::WebSocket::Handler 
+int Gui::setup() 
 {
-	void onConnect(seasocks::WebSocket *socket) override
-	{ 
-		connections.insert(socket);
-	}
-	void onData(seasocks:: WebSocket *, const char *data) override
-	{
-		JSONValue *value = JSON::Parse(data);
-		if (value == NULL || !value->IsObject()){
-			printf("could not parse JSON:\n%s\n", data);
-			return;
+	// Set up the websocket server
+	ws_server = std::unique_ptr>WSServer>(new WSServer());
+	ws_server->setup(port);
+	ws_server->addAddress("gui",
+		// onData()
+		[this](std::string address, void* buf)
+		{
+			ws_onData((const char*) buf);
+		},
+		// onConnect()
+		[this](std::string address)
+		{
+			ws_connect();
+		},
+		// onDisconnect()
+		[this](std::string address)
+		{
 		}
-		
-		JSONObject root = value->AsObject();
-	}
-	void onDisconnect(seasocks::WebSocket *socket) override
-	{
-		connections.erase(socket);
-	}
-};
+	);
+}	
 
-void ws_server_task_func() 
+/*
+ * Called when websocket is connected.
+ * Communication is started here with the server sending a 'connection' JSON object
+ * with initial settings.
+ * The client replies with 'connection-ack', which should be parsed accordingly.
+ */
+void Gui::ws_connect()
 {
-	auto logger = std::make_shared<seasocks::IgnoringLogger>();
-	seasocks::Server _server(logger);
-	server = &_server;
-	server->addWebSocketHandler("/gui"i, std::make_shared<GuiDataHandler>());
-	server->serve("/dev/null", SCOPE_WS_PORT);
+	// send connection JSON 
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"connection");
+
+	// Parse whatever needs to be parsed on connection
+
+	JSONValue *value = new JSONValue(root);
+	std::wstring wide = value->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	ws_server->send("gui", str.c_str());
 }
-void gui_ws_setup()
+/*
+ *  on_data callback for scope_control websocket
+ *  runs on the (linux priority) seasocks thread
+ */
+void Gui::ws_onData(const char* data){
+	
+	// parse the data into a JSONValue
+	JSONValue *value = JSON::Parse(data);
+	if (value == NULL || !value->IsObject()){
+		printf("could not parse JSON:\n%s\n", data);
+		return;
+	}
+	
+	// look for the "event" key
+	JSONObject root = value->AsObject();
+	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+		std::wstring event = root[L"event"]->AsString();
+		if (event.compare(L"connection-reply") == 0){
+
+		} else if (event.compare(L"slider") == 0){
+			int slider = -1;
+			float value = 0.0f;
+			if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
+				slider = (int)root[L"slider"]->AsNumber();
+			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
+				value = (float)root[L"value"]->AsNumber();
+				
+			sliders.at(slider).value = value;
+			sliders.at(slider).changed = true;
+		}
+		return;
+	}
+}
+
+bool Gui::sliderChanged(int slider)
 {
-	ws_server_task.create("ws_server_task", ws_server_task_func);
-	ws_server_task.schedule();
+	return sliders[slider].changed;
 }
-void gui_ws_cleanup()
+
+float Gui::getSliderValue(int slider)
 {
-	ws_server_task.cleanup();
+	sliders[slider].changed = false;
+	return sliders[slider].value;
 }
+
+void Gui::setSlider(int index, float min, float max, float step, float value, std::string name)
+{
+	sliders.at(index).value = value;
+	sliders.at(index).min = min;
+	sliders.at(index).max = max;
+	sliders.at(index).step = step;
+	sliders.at(index).name = name;
+	sliders.at(index).w_name = std::wstring(name.begin(), name.end());
+}
+
+void Gui::sendSlider(GuiSlider* slider){
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"set-slider");
+	root[L"slider"] = new JSONValue(slider->index);
+	root[L"value"] = new JSONValue(slider->value);
+	root[L"min"] = new JSONValue(slider->min);
+	root[L"max"] = new JSONValue(slider->max);
+	root[L"step"] = new JSONValue(slider->step);
+	root[L"name"] = new JSONValue(slider->w_name);
+	JSONValue *json = new JSONValue(root);
+	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
+	std::wstring wide = json->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	ws_server->send("scope_control", str.c_str());
