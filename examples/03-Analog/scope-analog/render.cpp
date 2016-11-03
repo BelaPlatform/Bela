@@ -82,9 +82,9 @@ void render(BelaContext *context, void *userData)
 	    
 	    // generate a sine wave with the amplitude and frequency 
 	    float out = gAmplitude * sinf(gPhase);
-	    gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
+	    gPhase += 2.0f * M_PI * gFrequency * gInverseSampleRate;
+		if(gPhase > 1.0f * M_PI)
+			gPhase -= 2.0f * M_PI;
 	    
 	    // log the sine wave and sensor values on the scope
 	    scope.log(out, gIn1, gIn2);
@@ -93,7 +93,6 @@ void render(BelaContext *context, void *userData)
 	    for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
 	        audioWrite(context, n, channel, out);
 	    }
-			
 
 	}
 }
