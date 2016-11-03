@@ -64,13 +64,13 @@ int main(int argc, char *argv[])
 
 	// Initialise the PRU audio device
 	if(Bela_initAudio(&settings, 0) != 0) {
-		cout << "Error: unable to initialise audio" << endl;
+		fprintf(stderr,"Error: unable to initialise audio\n");
 		return -1;
 	}
 
 	// Start the audio device running
 	if(Bela_startAudio()) {
-		cout << "Error: unable to start real-time audio" << endl;
+		fprintf(stderr,"Error: unable to start real-time audio\n"); 
 		// Stop the audio device
 		Bela_stopAudio();
 		// Clean up any resources allocated for audio

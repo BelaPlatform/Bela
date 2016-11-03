@@ -500,7 +500,7 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 
 	if(write(i2C_file, buf, 2) != 2)
 	{
-		cout << "Failed to write register " << reg << " on codec\n";
+		fprintf(stderr,"Failed to write register %u on codec\n", reg);
 		return 1;
 	}
 

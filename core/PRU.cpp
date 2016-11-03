@@ -26,7 +26,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cstdio>
-#include <cerrno>
 #include <cmath>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -284,32 +283,32 @@ int PRU::prepareGPIO(int include_led)
 		// Prepare DAC CS/ pin: output, high to begin
 		if(gpio_export(kPruGPIODACSyncPin)) {
 			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export DAC sync pin\n";
+				fprintf(stderr, "Warning: couldn't export DAC sync pin\n");
 		}
 		if(gpio_set_dir(kPruGPIODACSyncPin, OUTPUT_PIN)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on DAC sync pin\n";
+				fprintf(stderr, "Couldn't set direction on DAC sync pin\n");
 			return -1;
 		}
 		if(gpio_set_value(kPruGPIODACSyncPin, HIGH)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set value on DAC sync pin\n";
+				fprintf(stderr, "Couldn't set value on DAC sync pin\n");
 			return -1;
 		}
 
 		// Prepare ADC CS/ pin: output, high to begin
 		if(gpio_export(kPruGPIOADCSyncPin)) {
 			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export ADC sync pin\n";
+				fprintf(stderr, "Warning: couldn't export ADC sync pin\n");
 		}
 		if(gpio_set_dir(kPruGPIOADCSyncPin, OUTPUT_PIN)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on ADC sync pin\n";
+				fprintf(stderr, "Couldn't set direction on ADC sync pin\n");
 			return -1;
 		}
 		if(gpio_set_value(kPruGPIOADCSyncPin, HIGH)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set value on ADC sync pin\n";
+				fprintf(stderr, "Couldn't set value on ADC sync pin\n");
 			return -1;
 		}
 
@@ -320,11 +319,11 @@ int PRU::prepareGPIO(int include_led)
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
 			if(gpio_export(digitalPins[i])) {
 				if(gRTAudioVerbose)
-					cerr << "Warning: couldn't export digital GPIO pin " << digitalPins[i] << "\n"; // this is left as a warning because if the pin has been exported by somebody else, can still be used
+					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , digitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
 			}
 			if(gpio_set_dir(digitalPins[i], INPUT_PIN)) {
 				if(gRTAudioVerbose)
-					cerr << "Error: Couldn't set direction on digital GPIO pin " << digitalPins[i] << "\n";
+					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , digitalPins[i]);
 				return -1;
 			}
 		}
