@@ -93,7 +93,7 @@ For example `audioWrite(context, n, ch, value_to_output)`.
 Reading and writing from the analog buffers
 -------------------------------------------
 
-The same is true for `analogRead()`, `analogWrite()` and `analogWriteOnce()`.
+The same is true for `analogRead()` and `analogWriteOnce()`.
 
 Note that for the analog channels we write to and read from the buffers in a separate set 
 of nested for loops. This is because the they are sampled at half audio rate by default. 
@@ -101,7 +101,7 @@ The first of these for loops cycles through `analogFrames`, the second through
 `analogInChannels`.
 
 By setting `audioWrite(context, n, ch, audioRead(context, n, ch))` and
-`analogWrite(context, n, ch, analogRead(context, n, ch))` we have a simple 
+`analogWriteOnce(context, n, ch, analogRead(context, n, ch))` we have a simple 
 passthrough of audio input to output and analog input to output.
 
 
