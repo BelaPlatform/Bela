@@ -179,6 +179,6 @@ export default class BelaControl extends BelaWebSocket {
 	}
 
 	loadResource(path, module=false) {
-		 utils.loadScript(path, "head", this.handler.iframeEl.contentWindow.document, module);
+		return utils.loadScript(path, "head", this.handler.iframeEl.contentWindow.document, module);
 	}
 }
