@@ -14,6 +14,7 @@ s = Server.default;
 s.options.numAnalogInChannels = 8;
 s.options.numAnalogOutChannels = 8;
 s.options.numDigitalChannels = 16;
+s.options.maxLogins = 64;  	   // set max number of clients
 
 s.options.pgaGainLeft = 4;     // sets the pga gain of the left channel to 4 dB
 s.options.pgaGainRight = 5;    // sets the pga gain of the right channel to 5 dB
