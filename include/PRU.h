@@ -9,7 +9,9 @@
 #define PRU_H_
 
 #include <stdint.h>
+#ifdef BELA_USE_XENOMAI_INTERRUPTS
 #include <native/intr.h>
+#endif
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 

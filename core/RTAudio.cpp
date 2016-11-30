@@ -24,7 +24,9 @@
 #include <sys/mman.h>
 #include <native/task.h>
 #include <native/timer.h>
+#ifdef BELA_USE_XENOMAI_INTERRUPTS
 #include <native/intr.h>
+#endif
 #include <rtdk.h>
 
 #include "../include/Bela.h"

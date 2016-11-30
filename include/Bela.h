@@ -735,6 +735,10 @@ void Bela_autoScheduleAuxiliaryTasks();
 int Bela_startAuxiliaryTask(AuxiliaryTask task);
 /** @} */
 #include <Utilities.h>
+#undef BELA_USE_XENOMAI_INTERRUPTS
+#ifndef BELA_USE_XENOMAI_INTERRUPTS
+#define RT_INTR void
+#endif
 
 /**\cond HIDDEN_SYMBOLS
 // TODO: There is a bug in the PRU code that prevents it from working when SPI is disabled.

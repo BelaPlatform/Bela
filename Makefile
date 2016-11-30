@@ -19,6 +19,7 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
+LDFLAGS=-ltrank  -lalchemy -lcopperplate /usr/xenomai/lib/xenomai/bootstrap.o -Wl,--wrap=main -Wl,--dynamic-list=/usr/xenomai/lib/dynlist.ld -L/usr/xenomai/lib -lcobalt -lpthread -lrt -march=armv7-a
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -101,7 +102,7 @@ QUIET?=false
 
 RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
-LIBS = -lrt -lnative -lxenomai -lsndfile -lasound 
+LIBS = 
 
 # refresh library cache and check if libpd is there
 #TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
@@ -109,12 +110,11 @@ LIBPD_PATH = /usr/lib/libpd.so
 TEST_LIBPD := $(shell which $(LIBPD_PATH))
 ifneq ($(strip $(TEST_LIBPD)), )
 # if libpd is there, link it in
-  LIBS += -lpd -lpthread_rt
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
 DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
-DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
-DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
+DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11  -I/usr/xenomai/include/trank -D__XENO_COMPAT__ -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -march=armv7-a -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy
+DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11 -I/usr/xenomai/include/trank -D__XENO_COMPAT__ -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -march=armv7-a -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy
 
 ifndef COMPILER
 # check whether clang is installed
@@ -211,7 +211,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -no-integrated-as -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) 
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
