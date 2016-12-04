@@ -19,7 +19,7 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-LDFLAGS=-ltrank  -lalchemy -lcopperplate /usr/xenomai/lib/xenomai/bootstrap.o -Wl,--wrap=main -Wl,--dynamic-list=/usr/xenomai/lib/dynlist.ld -L/usr/xenomai/lib -lcobalt -lpthread -lrt -march=armv7-a
+LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -march=armv7-a
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -102,7 +102,6 @@ QUIET?=false
 
 RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
-LIBS = -lasound
 
 # refresh library cache and check if libpd is there
 #TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
@@ -112,9 +111,9 @@ ifneq ($(strip $(TEST_LIBPD)), )
 # if libpd is there, link it in
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
-DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11  -I/usr/xenomai/include/trank -D__XENO_COMPAT__ -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -march=armv7-a -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy
-DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11 -I/usr/xenomai/include/trank -D__XENO_COMPAT__ -I/usr/xenomai/include/cobalt -I/usr/xenomai/include -march=armv7-a -D_GNU_SOURCE -D_REENTRANT -D__COBALT__ -I/usr/xenomai/include/alchemy
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize `/usr/xenomai/bin/xeno-config --cflags --skin=native`
+DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
+DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
 ifndef COMPILER
 # check whether clang is installed
@@ -348,7 +347,7 @@ startup: Bela
 
 stop: ## Stops any Bela program that is currently running
 stop:
-	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/sched/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
 ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
