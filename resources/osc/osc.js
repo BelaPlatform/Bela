@@ -83,9 +83,9 @@ function sendOscTest(){
 			{type: 'float', value: 3.14}
 		]
 	});
-	console.time(baseTimeString + count);
-	count++;
 	socket.send(buffer, 0, buffer.length, remotePort, remoteIp, function(err) {
+		console.time(baseTimeString + count);
+		count++;
 		if (err) console.log(err);
 	});
 }
