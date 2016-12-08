@@ -1,11 +1,32 @@
 var dgram = require('dgram');
 var osc = require('osc-min');
-
-// IPs and ports
-var localIp = '127.0.0.1';
+// Default IPs and ports
+var localIp = '0.0.0.0';
 var localPort = 7563;
 var remoteIp = '127.0.0.1';
 var remotePort = 7562;
+
+var args = process.argv;
+if(args.length > 2){
+	if(args[2] == 'help'){
+		console.log([
+		"Usage: ",
+		"`node osc <remoteIp> <remotePort> <localIp> <localPort>`",
+		"All parameters are optional, defaults to:",
+		"`node osc "+remoteIp+" "+remotePort+" "+localIp+" "+localPort+"`"
+		].join("\n"));
+		return;
+	}
+	remoteIp = args[2];
+	if(args.length > 3)
+		remotePort = args[3];
+	if(args.length > 4)
+		localIp = args[4];
+	if(args.length > 5)
+		remotePort = args[5];
+}
+
+console.log("send to: "+remoteIp+":"+remotePort+", receive on: "+localIp+":"+localPort)
 
 
 // socket to send and receive OSC messages from bela
