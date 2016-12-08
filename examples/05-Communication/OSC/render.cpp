@@ -45,12 +45,14 @@ int parseMessage(oscpkt::Message msg){
     return intArg;
 }
 
+int localPort = 7562;
+int remotePort = 7563;
+const char* remoteIp = "10.34.13.70";
+
 bool setup(BelaContext *context, void *userData)
 {
-    // setup the OSC server to receive on port 7562
-    oscServer.setup(7562);
-    // setup the OSC client to send on port 7563
-    oscClient.setup(7563, "10.34.13.70");
+    oscServer.setup(localPort);
+    oscClient.setup(remotePort, remoteIp);
     
     // the following code sends an OSC message to address /osc-setup
     // then waits 1 second for a reply on /osc-setup-reply
