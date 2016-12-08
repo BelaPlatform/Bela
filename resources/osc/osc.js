@@ -1,13 +1,16 @@
 var dgram = require('dgram');
 var osc = require('osc-min');
 
-// port numbers
-var OSC_RECEIVE = 7563;
-var OSC_SEND = 7562;
+// IPs and ports
+var localIp = '127.0.0.1';
+var localPort = 7563;
+var remoteIp = '127.0.0.1';
+var remotePort = 7562;
+
 
 // socket to send and receive OSC messages from bela
 var socket = dgram.createSocket('udp4');
-socket.bind(OSC_RECEIVE, '127.0.0.1');
+socket.bind(localPort, localIp);
 		
 socket.on('message', (message, info) => {
 
@@ -23,6 +26,8 @@ socket.on('message', (message, info) => {
 	
 });
 
+var baseTimeString = "roundtripLatency";
+var count = 0;
 function parseMessage(msg){
 
 	var address = msg.address.split('/');
@@ -39,7 +44,13 @@ function parseMessage(msg){
 		setInterval(sendOscTest, 1000);
 		
 	} else if (address[1] === 'osc-acknowledge'){
-		console.log('received osc-acknowledge', msg.args);
+		if(msg.args[0].type != 'integer'){
+			console.log("Unexpected type for argument 0: " + msg.args[0].type);
+			return;
+		}
+		var receivedCount = msg.args[0].value;
+		console.timeEnd(baseTimeString + receivedCount);
+		//console.log('received osc-acknowledge', msg.args);
 	}
 }
 
@@ -47,18 +58,20 @@ function sendOscTest(){
 	var buffer = osc.toBuffer({
 		address : '/osc-test',
 		args 	: [
-			{type: 'integer', value: 78},
+			{type: 'integer', value: count},
 			{type: 'float', value: 3.14}
 		]
 	});
-	socket.send(buffer, 0, buffer.length, OSC_SEND, '127.0.0.1', function(err) {
+	console.time(baseTimeString + count);
+	count++;
+	socket.send(buffer, 0, buffer.length, remotePort, remoteIp, function(err) {
 		if (err) console.log(err);
 	});
 }
 
 function sendHandshakeReply(){
 	var buffer = osc.toBuffer({ address : '/osc-setup-reply' });
-	socket.send(buffer, 0, buffer.length, OSC_SEND, '127.0.0.1', function(err) {
+	socket.send(buffer, 0, buffer.length, remotePort, remoteIp, function(err) {
 		if (err) console.log(err);
 	});
 }
