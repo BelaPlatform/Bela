@@ -1,0 +1,550 @@
+/dts-v1/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+	part_number = "BELA_CORE_PINS";
+	exclusive-use = "P9.17", "spi0_cs0", "P9.18", "spi0_d1", "P9.22", "spi0_sclk", "P9.26", "i2c1_sda", "P9.24", "i2c1_scl", "P9.31", "mcasp0_aclkx", "P9.29", "mcasp0_fsx", "P9.30", "mcasp0_axr0", "P9.28", "mcasp0_axr2", "P9.27", "gpio3_19", "P9.25", "mcasp0_ahclkx", "P9.15", "gpio1_16", "P8.26", "gpio1_29", "P9.22", "spi0_sclk", "P9.21", "spi0_d0";
+
+	fragment@0 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_17_0x10 {
+				pinctrl-single,pins = <0x15c 0x10>;
+				linux,phandle = <0x1>;
+				phandle = <0x1>;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_17_0x10_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x1>;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_18_0x10 {
+				pinctrl-single,pins = <0x158 0x10>;
+				linux,phandle = <0x2>;
+				phandle = <0x2>;
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_18_0x10_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x2>;
+			};
+		};
+	};
+
+	fragment@4 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_22_0x30 {
+				pinctrl-single,pins = <0x150 0x30>;
+				linux,phandle = <0x3>;
+				phandle = <0x3>;
+			};
+		};
+	};
+
+	fragment@5 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_22_0x30_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x3>;
+			};
+		};
+	};
+
+	fragment@6 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_21_0x30 {
+				pinctrl-single,pins = <0x154 0x30>;
+				linux,phandle = <0x4>;
+				phandle = <0x4>;
+			};
+		};
+	};
+
+	fragment@7 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_21_0x30_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x4>;
+			};
+		};
+	};
+
+	fragment@8 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_26_0x73 {
+				pinctrl-single,pins = <0x180 0x73>;
+				linux,phandle = <0x5>;
+				phandle = <0x5>;
+			};
+		};
+	};
+
+	fragment@9 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_26_0x73_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x5>;
+			};
+		};
+	};
+
+	fragment@10 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_24_0x73 {
+				pinctrl-single,pins = <0x184 0x73>;
+				linux,phandle = <0x6>;
+				phandle = <0x6>;
+			};
+		};
+	};
+
+	fragment@11 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_24_0x73_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x6>;
+			};
+		};
+	};
+
+	fragment@12 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_31_0x20 {
+				pinctrl-single,pins = <0x190 0x20>;
+				linux,phandle = <0x7>;
+				phandle = <0x7>;
+			};
+		};
+	};
+
+	fragment@13 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_31_0x20_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x7>;
+			};
+		};
+	};
+
+	fragment@14 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_29_0x20 {
+				pinctrl-single,pins = <0x194 0x20>;
+				linux,phandle = <0x8>;
+				phandle = <0x8>;
+			};
+		};
+	};
+
+	fragment@15 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_29_0x20_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x8>;
+			};
+		};
+	};
+
+	fragment@16 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_30_0x20 {
+				pinctrl-single,pins = <0x198 0x20>;
+				linux,phandle = <0x9>;
+				phandle = <0x9>;
+			};
+		};
+	};
+
+	fragment@17 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_30_0x20_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0x9>;
+			};
+		};
+	};
+
+	fragment@18 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_28_0x22 {
+				pinctrl-single,pins = <0x19c 0x22>;
+				linux,phandle = <0xa>;
+				phandle = <0xa>;
+			};
+		};
+	};
+
+	fragment@19 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_28_0x22_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0xa>;
+			};
+		};
+	};
+
+	fragment@20 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_27_0x37 {
+				pinctrl-single,pins = <0x1a4 0x37>;
+				linux,phandle = <0xb>;
+				phandle = <0xb>;
+			};
+		};
+	};
+
+	fragment@21 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_27_0x37_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0xb>;
+			};
+		};
+	};
+
+	fragment@22 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_25_0x0 {
+				pinctrl-single,pins = <0x1ac 0x0>;
+				linux,phandle = <0xc>;
+				phandle = <0xc>;
+			};
+		};
+	};
+
+	fragment@23 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_25_0x0_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0xc>;
+			};
+		};
+	};
+
+	fragment@24 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P9_15_0x27 {
+				pinctrl-single,pins = <0x40 0x27>;
+				linux,phandle = <0xd>;
+				phandle = <0xd>;
+			};
+		};
+	};
+
+	fragment@25 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P9_15_0x27_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0xd>;
+			};
+		};
+	};
+
+	fragment@26 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			pinmux_bs_pinmode_P8_26_0x37 {
+				pinctrl-single,pins = <0x7c 0x37>;
+				linux,phandle = <0xe>;
+				phandle = <0xe>;
+			};
+		};
+	};
+
+	fragment@27 {
+		target = <0xdeadbeef>;
+
+		__overlay__ {
+
+			bs_pinmode_P8_26_0x37_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <0xe>;
+			};
+		};
+	};
+
+	__symbols__ {
+		bs_pinmode_P9_17_0x10 = "/fragment@0/__overlay__/pinmux_bs_pinmode_P9_17_0x10";
+		bs_pinmode_P9_18_0x10 = "/fragment@2/__overlay__/pinmux_bs_pinmode_P9_18_0x10";
+		bs_pinmode_P9_22_0x30 = "/fragment@4/__overlay__/pinmux_bs_pinmode_P9_22_0x30";
+		bs_pinmode_P9_21_0x30 = "/fragment@6/__overlay__/pinmux_bs_pinmode_P9_21_0x30";
+		bs_pinmode_P9_26_0x73 = "/fragment@8/__overlay__/pinmux_bs_pinmode_P9_26_0x73";
+		bs_pinmode_P9_24_0x73 = "/fragment@10/__overlay__/pinmux_bs_pinmode_P9_24_0x73";
+		bs_pinmode_P9_31_0x20 = "/fragment@12/__overlay__/pinmux_bs_pinmode_P9_31_0x20";
+		bs_pinmode_P9_29_0x20 = "/fragment@14/__overlay__/pinmux_bs_pinmode_P9_29_0x20";
+		bs_pinmode_P9_30_0x20 = "/fragment@16/__overlay__/pinmux_bs_pinmode_P9_30_0x20";
+		bs_pinmode_P9_28_0x22 = "/fragment@18/__overlay__/pinmux_bs_pinmode_P9_28_0x22";
+		bs_pinmode_P9_27_0x37 = "/fragment@20/__overlay__/pinmux_bs_pinmode_P9_27_0x37";
+		bs_pinmode_P9_25_0x0 = "/fragment@22/__overlay__/pinmux_bs_pinmode_P9_25_0x0";
+		bs_pinmode_P9_15_0x27 = "/fragment@24/__overlay__/pinmux_bs_pinmode_P9_15_0x27";
+		bs_pinmode_P8_26_0x37 = "/fragment@26/__overlay__/pinmux_bs_pinmode_P8_26_0x37";
+	};
+
+	__local_fixups__ {
+
+		fragment@1 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_17_0x10_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@3 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_18_0x10_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@5 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_22_0x30_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@7 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_21_0x30_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@9 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_26_0x73_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@11 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_24_0x73_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@13 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_31_0x20_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@15 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_29_0x20_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@17 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_30_0x20_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@19 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_28_0x22_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@21 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_27_0x37_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@23 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_25_0x0_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@25 {
+
+			__overlay__ {
+
+				bs_pinmode_P9_15_0x27_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+
+		fragment@27 {
+
+			__overlay__ {
+
+				bs_pinmode_P8_26_0x37_pinmux {
+					pinctrl-0 = <0x0>;
+				};
+			};
+		};
+	};
+
+	__fixups__ {
+		am33xx_pinmux = "/fragment@0:target:0", "/fragment@2:target:0", "/fragment@4:target:0", "/fragment@6:target:0", "/fragment@8:target:0", "/fragment@10:target:0", "/fragment@12:target:0", "/fragment@14:target:0", "/fragment@16:target:0", "/fragment@18:target:0", "/fragment@20:target:0", "/fragment@22:target:0", "/fragment@24:target:0", "/fragment@26:target:0";
+		ocp = "/fragment@1:target:0", "/fragment@3:target:0", "/fragment@5:target:0", "/fragment@7:target:0", "/fragment@9:target:0", "/fragment@11:target:0", "/fragment@13:target:0", "/fragment@15:target:0", "/fragment@17:target:0", "/fragment@19:target:0", "/fragment@21:target:0", "/fragment@23:target:0", "/fragment@25:target:0", "/fragment@27:target:0";
+	};
+};
