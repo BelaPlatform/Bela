@@ -47,7 +47,7 @@ int parseMessage(oscpkt::Message msg){
 
 int localPort = 7562;
 int remotePort = 7563;
-const char* remoteIp = "10.34.13.70";
+const char* remoteIp = "127.0.0.1";
 
 bool setup(BelaContext *context, void *userData)
 {
