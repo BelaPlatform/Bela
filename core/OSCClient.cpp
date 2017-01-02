@@ -25,7 +25,7 @@ void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
 void OSCClient::createAuxTasks(){
     char name [30];
     sprintf (name, "OSCSendTask %i", port);
-    OSCSendTask = Bela_createAuxiliaryTask(sendQueue, BELA_AUDIO_PRIORITY-5, name, this, true);
+    OSCSendTask = Bela_createAuxiliaryTask(sendQueue, BELA_AUDIO_PRIORITY-5, name, this);
 }
 
 void OSCClient::queueMessage(oscpkt::Message msg){

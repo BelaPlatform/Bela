@@ -361,7 +361,7 @@ void audioLoop(void *)
 // (equal or lower) priority. Audio priority is defined in BELA_AUDIO_PRIORITY;
 // priority should be generally be less than this.
 // Returns an (opaque) pointer to the created task on success; 0 on failure
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args, bool autoSchedule)
+AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
@@ -379,35 +379,11 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	newTask->started = false;
 	newTask->args = args;
 	newTask->hasArgs = true;
-    newTask->autoSchedule = autoSchedule;
+    newTask->autoSchedule = false;
     
 	getAuxTasks().push_back(newTask);
 
 	return (AuxiliaryTask)newTask;
-}
-
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priority, const char *name, bool autoSchedule)
-{
-        InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
-        
-        // Attempt to create the task
-        if(rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
-                  cout << "Error: unable to create auxiliary task " << name << endl;
-                  free(newTask);
-                  return 0;
-        }
-        
-        // Populate the rest of the data structure and store it in the vector
-        newTask->function = functionToCall;
-        newTask->name = strdup(name);
-        newTask->priority = priority;
-        newTask->started = false;
-        newTask->hasArgs = false;
-        newTask->autoSchedule = autoSchedule;
-        
-        getAuxTasks().push_back(newTask);
-        
-        return (AuxiliaryTask)newTask;
 }
 
 // Schedule a previously created (and started) auxiliary task. It will run when the priority rules next
