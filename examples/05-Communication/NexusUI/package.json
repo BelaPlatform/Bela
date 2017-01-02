@@ -1,0 +1,16 @@
+{
+  "name": "nexusui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0",
+    "osc-min": "^1.1.1",
+    "socketio": "^1.0.0"
+  }
+}

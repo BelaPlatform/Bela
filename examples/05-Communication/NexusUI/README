@@ -1,0 +1,15 @@
+/***** README *****/
+This example shows how to connect nexusUI browser-based gui components to Bela.
+
+To run, first save the project with the name 'NexusUI' using the 'Save project as ...' button in the project explorer tab. Then run the following commands in the IDE's console (or in a terminal):
+
+```
+cd projects/NexusUI
+node index.js &
+```
+
+A node.js webserver is now launched and index.html should be accessible in your browser at `http://192.168.7.2:3000/`.
+
+Finally run Bela by clicking the run button on the IDE toolbar. The value of the nexusUI slider should now be printed to the IDE's console whenever it is changed.
+
+To stop the node.js webserver, run `pkill node` in the IDE's console.
