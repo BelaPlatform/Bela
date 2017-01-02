@@ -28,8 +28,14 @@
 #ifndef BELA_H_
 #define BELA_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <rtdk.h>
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
@@ -100,6 +106,8 @@
  * Flag for BelaContext. If set, indicates the user will be warned if an underrun occurs
  */
 #define BELA_FLAG_DETECT_UNDERRUNS	(1 << 2)	// Set if the user will be displayed a message when an underrun occurs
+
+struct option;
 
 /**
  * \ingroup control
@@ -705,8 +713,12 @@ int Bela_muteSpeakers(int mute);
  * \param arg The argument passed to the callback function.
  * \param autoSchedule If true, the task will be scheduled at the end of each call to `render()`.
  */
+#if 0
 AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg, bool autoSchedule = false);
 AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void), int priority, const char *name, bool autoSchedule = false);
+#else
+AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg);
+#endif
 
 /**
  * \brief Run an auxiliary task which has previously been created.
@@ -750,6 +762,10 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task);
 #undef BELA_USE_XENOMAI_INTERRUPTS
 #ifndef BELA_USE_XENOMAI_INTERRUPTS
 #define RT_INTR void
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* BELA_H_ */

@@ -20,7 +20,7 @@ void WriteFile::staticConstructor(){
 	staticConstructed=true;
 	threadIsExiting=false;
 	threadRunning=false;
-	writeAllFilesTask = Bela_createAuxiliaryTask(WriteFile::run, 60, "writeAllFilesTask");
+	writeAllFilesTask = Bela_createAuxiliaryTask(WriteFile::run, 60, "writeAllFilesTask", NULL);
 }
 
 WriteFile::WriteFile(){
@@ -287,7 +287,7 @@ void WriteFile::sanitizeString(char* string){
 	}
 }
 
-void WriteFile::run(){
+void WriteFile::run(void* arg){
 	threadRunning = true;
 	writeAllHeaders();
 	while(threadShouldExit()==false){
