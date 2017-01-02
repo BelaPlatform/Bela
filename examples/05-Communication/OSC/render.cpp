@@ -33,7 +33,7 @@ OSCClient oscClient;
 
 // parse messages received by OSC Server
 // msg is Message class of oscpkt: http://gruntthepeon.free.fr/oscpkt/
-void parseMessage(oscpkt::Message msg){
+int parseMessage(oscpkt::Message msg){
     
     rt_printf("received message to: %s\n", msg.addressPattern().c_str());
     
@@ -42,15 +42,17 @@ void parseMessage(oscpkt::Message msg){
     if (msg.match("/osc-test").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs()){
         rt_printf("received int %i and float %f\n", intArg, floatArg);
     }
-    
+    return intArg;
 }
+
+int localPort = 7562;
+int remotePort = 7563;
+const char* remoteIp = "127.0.0.1";
 
 bool setup(BelaContext *context, void *userData)
 {
-    // setup the OSC server to receive on port 7562
-    oscServer.setup(7562);
-    // setup the OSC client to send on port 7563
-    oscClient.setup(7563);
+    oscServer.setup(localPort);
+    oscClient.setup(remotePort, remoteIp);
     
     // the following code sends an OSC message to address /osc-setup
     // then waits 1 second for a reply on /osc-setup-reply
@@ -76,8 +78,8 @@ void render(BelaContext *context, void *userData)
 {
     // receive OSC messages, parse them, and send back an acknowledgment
     while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-        oscClient.queueMessage(oscClient.newMessage.to("/osc-acknowledge").add(5).add(4.2f).add(std::string("OSC message received")).end());
+        int count = parseMessage(oscServer.popMessage());
+        oscClient.queueMessage(oscClient.newMessage.to("/osc-acknowledge").add(count).add(4.2f).add(std::string("OSC message received")).end());
     }
 }
 
