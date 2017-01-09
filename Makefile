@@ -106,7 +106,7 @@ LIBS = -lrt -lnative -lxenomai -lsndfile -lasound
 # refresh library cache and check if libpd is there
 #TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
 LIBPD_PATH = /usr/lib/libpd.so
-TEST_LIBPD := $(shell which $(LIBPD_PATH))
+TEST_LIBPD := $(shell [ -e $(LIBPD_PATH) ] && echo yes)
 ifneq ($(strip $(TEST_LIBPD)), )
 # if libpd is there, link it in
   LIBS += -lpd -lpthread_rt
