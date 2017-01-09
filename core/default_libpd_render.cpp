@@ -80,7 +80,7 @@ void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
 }
 
 void Bela_MidiOutByte(int port, int byte){
-	printf("port: %d, byte: %d\n", port, byte);
+	rt_printf("port: %d, byte: %d\n", port, byte);
 	if(port > (int)midi.size()){
 		// if the port is out of range, redirect to the first port.
 		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
