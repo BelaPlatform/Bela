@@ -12,14 +12,14 @@
 #include <vector>
 #include "prio.h"
 #include "sensors.h"
-#include "OscillatorBank.h"
+#include "DboxOscillatorBank.h"
 #include "DboxSensors.h"
 
 
 //----------------------------------------
 // main extern variables
 //----------------------------------------
-extern vector<OscillatorBank*> gOscBanks;
+extern vector<DboxOscillatorBank*> gOscBanks;
 extern int gCurrentOscBank;
 extern int gNextOscBank;
 extern int gShouldStop;

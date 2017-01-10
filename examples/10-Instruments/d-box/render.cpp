@@ -10,7 +10,7 @@
 
 #include "StatusLED.h"
 #include "config.h"
-#include "OscillatorBank.h"
+#include <DboxOscillatorBank.h>
 #include "FeedbackOscillator.h"
 #include "ADSR.h"
 #include "FIRfilter.h"
@@ -45,7 +45,7 @@
 
 #define N_OCT		4.0	// maximum number of octaves on sensor 1
 
-extern vector<OscillatorBank*> gOscBanks;
+extern vector<DboxOscillatorBank*> gOscBanks;
 extern int gCurrentOscBank;
 extern int gNextOscBank;
 extern PRU *gPRU;
@@ -131,7 +131,7 @@ AuxiliaryTask gMediumPriorityRender, gLowPriorityRender;
 
 extern "C" {
 	// Function prototype for ARM assembly implementation of oscillator bank
-	void oscillator_bank_neon(int numAudioFrames, float *audioOut,
+	void dbox_oscillator_bank_neon(int numAudioFrames, float *audioOut,
 							  int activePartialNum, int lookupTableSize,
 							  float *phases, float *frequencies, float *amplitudes,
 							  float *freqDerivatives, float *ampDerivatives,
@@ -188,7 +188,7 @@ bool setup(BelaContext *context, void *userData) {
 	memset(gOscillatorBuffer2, 0, oscBankHopSize * context->audioOutChannels * sizeof(float));
 
 	// Initialise the dynamic wavetable used by the oscillator bank
-	// It should match the size of the static one already allocated in the OscillatorBank object
+	// It should match the size of the static one already allocated in the DboxOscillatorBank object
 	// Don't forget a guard point at the end of the table
 	gDynamicWavetableLength = gOscBanks[gCurrentOscBank]->lookupTableSize;
 	if(posix_memalign((void **)&gDynamicWavetable, 8, (gDynamicWavetableLength + 1) * sizeof(float))) {
@@ -272,7 +272,7 @@ void render(BelaContext *context, void *userData)
 		while(framesRemaining > 0) {
 			if(gOscBanks[gCurrentOscBank]->hopCounter >= framesRemaining) {
 				/* More frames left in this hop than we need this time. Render and finish */
-				oscillator_bank_neon(framesRemaining, audioOutWithOffset,
+				dbox_oscillator_bank_neon(framesRemaining, audioOutWithOffset,
 									 gOscBanks[gCurrentOscBank]->actPartNum, gOscBanks[gCurrentOscBank]->lookupTableSize,
 									 gOscBanks[gCurrentOscBank]->oscillatorPhases, gOscBanks[gCurrentOscBank]->oscillatorNormFrequencies,
 									 gOscBanks[gCurrentOscBank]->oscillatorAmplitudes,
@@ -288,7 +288,7 @@ void render(BelaContext *context, void *userData)
 				/* More frames to render than are left in this hop. Render and decrement the
 				 * number of remaining frames; then advance to the next oscillator frame.
 				 */
-				oscillator_bank_neon(gOscBanks[gCurrentOscBank]->hopCounter, audioOutWithOffset,
+				dbox_oscillator_bank_neon(gOscBanks[gCurrentOscBank]->hopCounter, audioOutWithOffset,
 									 gOscBanks[gCurrentOscBank]->actPartNum, gOscBanks[gCurrentOscBank]->lookupTableSize,
 									 gOscBanks[gCurrentOscBank]->oscillatorPhases, gOscBanks[gCurrentOscBank]->oscillatorNormFrequencies,
 									 gOscBanks[gCurrentOscBank]->oscillatorAmplitudes,
@@ -599,7 +599,7 @@ void render_medium_prio()
 		/* Render one frame into the write buffer */
 		memset(gOscillatorBufferWrite, 0, gOscBanks[gCurrentOscBank]->hopCounter * 2 * sizeof(float)); /* assumes 2 audio channels */
 
-		oscillator_bank_neon(gOscBanks[gCurrentOscBank]->hopCounter, gOscillatorBufferWrite,
+		dbox_oscillator_bank_neon(gOscBanks[gCurrentOscBank]->hopCounter, gOscillatorBufferWrite,
 							 gOscBanks[gCurrentOscBank]->actPartNum, gOscBanks[gCurrentOscBank]->lookupTableSize,
 							 gOscBanks[gCurrentOscBank]->oscillatorPhases, gOscBanks[gCurrentOscBank]->oscillatorNormFrequencies,
 							 gOscBanks[gCurrentOscBank]->oscillatorAmplitudes,
@@ -663,7 +663,7 @@ void render_medium_prio()
 // State should be transferred in via global variables
 void render_low_prio()
 {
-	gPRU->setGPIOTestPin();
+	// gPRU->setGPIOTestPin();
 	if(gDynamicWavetableNeedsRender) {
 		// Find amplitude of wavetable
 		float meanAmplitude = 0;
@@ -723,7 +723,7 @@ void render_low_prio()
 		gStatusLED.blink(25, 75);	// Blink quickly until load finished
 	else
 		gStatusLED.blink(250 / gOscBanks[gCurrentOscBank]->getSpeed(), 250 / gOscBanks[gCurrentOscBank]->getSpeed());
-	gPRU->clearGPIOTestPin();
+	// gPRU->clearGPIOTestPin();
 
 //	static int counter = 32;
 //	if(--counter == 0) {
