@@ -663,7 +663,6 @@ void render_medium_prio()
 // State should be transferred in via global variables
 void render_low_prio()
 {
-	// gPRU->setGPIOTestPin();
 	if(gDynamicWavetableNeedsRender) {
 		// Find amplitude of wavetable
 		float meanAmplitude = 0;
@@ -723,7 +722,6 @@ void render_low_prio()
 		gStatusLED.blink(25, 75);	// Blink quickly until load finished
 	else
 		gStatusLED.blink(250 / gOscBanks[gCurrentOscBank]->getSpeed(), 250 / gOscBanks[gCurrentOscBank]->getSpeed());
-	// gPRU->clearGPIOTestPin();
 
 //	static int counter = 32;
 //	if(--counter == 0) {
