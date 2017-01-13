@@ -35,6 +35,9 @@ class MidiChannelMessage{
 public:
 	MidiChannelMessage();
 	MidiChannelMessage(MidiMessageType type);
+	midi_byte_t getStatusByte(){
+		return _statusByte;
+	}
 	virtual ~MidiChannelMessage();
 	MidiMessageType getType();
 	int getChannel();
