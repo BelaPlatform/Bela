@@ -172,12 +172,10 @@ uploadBuildRun(){
     if [ $NO_UPLOAD -eq 0 ]; then
         # remove old static files to avoid obsolete errors
         # make sure the path is not empty, so avoiding to rm -rf / by mistake 
-        [ -z $projectpath ] && { echo 'ERROR: $projectpath is empty.'; exit 0; } 
-        # use -rf to prevent warnings in case they do not exist
-        for file in $HEAVY_FILES
-	    do 
-	        rm -rf "$projectpath"/$file
-	    done
+        [ -z "$projectpath" ] && { echo 'ERROR: $projectpath is empty.'; exit 0; } 
+        # use -rf to prevent warnings in case the folder does not exist
+		rm -rf "$projectpath"
+		rm -rf "$projectpath"
         
 		echo "Invoking the online compiler..."
         # invoke the online compiler
@@ -206,13 +204,15 @@ uploadBuildRun(){
     # check how to copy/sync render.cpp file...
     # check if custom heavy/render.cpp file is provided in the input folder
     # TODO: extend this to all non-Pd files
-    CUSTOM_RENDER_SOURCE_PATH="$pdpath/heavy/render.cpp"
-    if [ -f "$CUSTOM_RENDER_SOURCE_PATH" ]; then
-        echo "Found custom heavy/render.cpp file in input folder, using that one instead of the default one.";
-        cp "$CUSTOM_RENDER_SOURCE_PATH" "$projectpath/render.cpp" || exit 1
+	CUSTOM_HEAVY_SOURCE_PATH="$pdpath/heavy/"
+    if [ -e "$CUSTOM_HEAVY_SOURCE_PATH" ] && [ "$(ls $CUSTOM_HEAVY_SOURCE_PATH)" ]; then
+	# if PROJECTNAME/heavy/ exists and is not empty, then copy the whole folder content 
+        echo "Found custom heavy/ folder in the project folder, using those files instead of the default render.cpp:"
+		ls "$CUSTOM_HEAVY_SOURCE_PATH"
+        cp "$CUSTOM_HEAVY_SOURCE_PATH"/* "$projectpath/" || exit 1
     else
         echo "Using Heavy default render.cpp"
-        cp "$HVRESOURCES_DIR/render.cpp" "$projectpath/render.cpp" || exit 1
+        cp "$HVRESOURCES_DIR/render.cpp" "$projectpath/" || exit 1
     fi
     
     echo "Updating files on board..."
@@ -222,7 +222,6 @@ uploadBuildRun(){
     # Transfer the files 
 	if [ "$RSYNC_AVAILABLE" -eq 1 ]
 	then
-		echo rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER"
 		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
         { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HvContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
 		{ echo "ERROR: while synchronizing files with the BBB. Is the board connected?"; exit 1; }
