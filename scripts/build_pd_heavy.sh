@@ -160,8 +160,6 @@ HEAVY_FILES='Heavy* Hv*'
 # check if project exists
 [ $FORCE -eq 1 ] ||	check_project_exists_prompt $BBB_PROJECT_NAME
 
-#create the destination folder if it does not exist"
-mkdir -p "$projectpath"
 
 reference_time_file="$projectpath"/
 
@@ -173,9 +171,10 @@ uploadBuildRun(){
         # remove old static files to avoid obsolete errors
         # make sure the path is not empty, so avoiding to rm -rf / by mistake 
         [ -z "$projectpath" ] && { echo 'ERROR: $projectpath is empty.'; exit 0; } 
-        # use -rf to prevent warnings in case the folder does not exist
+		#empty destination folder
 		rm -rf "$projectpath"
-		rm -rf "$projectpath"
+		#recreate the destination folder"
+		mkdir -p "$projectpath"
         
 		echo "Invoking the online compiler..."
         # invoke the online compiler
