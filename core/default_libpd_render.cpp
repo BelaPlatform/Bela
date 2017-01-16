@@ -386,6 +386,15 @@ void render(BelaContext *context, void *userData)
 					libpd_pitchbend(channel + port * 16, value);
 					break;
 				}
+				case kmmSystem:
+				// currently Bela only handles sysrealtime, and it does so pretending it is a channel message with no data bytes, so we have to re-assemble the status byte
+				{
+					int channel = message.getChannel();
+					int status = message.getStatusByte();
+					int byte = channel | status;
+					libpd_sysrealtime(port, byte);
+					break;
+				}
 				case kmmNone:
 				case kmmAny:
 					break;
