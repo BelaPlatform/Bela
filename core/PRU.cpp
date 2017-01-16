@@ -91,6 +91,8 @@ short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_15,
 };
 
+#define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
+
 #define GPIO0_ADDRESS 		0x44E07000
 #define GPIO1_ADDRESS 		0x4804C000
 #define GPIO_SIZE			0x198
@@ -307,9 +309,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     /* Set up flags */
     pru_buffer_comm[PRU_SHOULD_STOP] = 0;
     pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
-	// this is / 4 because the loop is unrolled by 
-	// a factor of two and each loop writes two samples 
-    pru_buffer_comm[PRU_BUFFER_FRAMES] = context->pruIntervalsPerBuffer / 4;
+    pru_buffer_comm[PRU_BUFFER_FRAMES] = context->analogFrames;
     pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
@@ -546,7 +546,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
 	}
-	RTIME sleepTime = context->bufferDuration / 4.f;
+	unsigned int analogChannels = context->analogInChannels;
+	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (analogChannels / 2) * context->analogFrames / 4;
 #endif
 
 	uint32_t pru_audio_offset, pru_spi_offset;
@@ -872,7 +873,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
 
 	// Wait two buffer lengths for the PRU to finish
-	rt_task_sleep(context->bufferDuration * 2);
+	rt_task_sleep(PRU_SAMPLE_INTERVAL_NS * context->analogFrames * 4 * 2);
 
 	// Clean up after ourselves
 	free(context->audioIn);
