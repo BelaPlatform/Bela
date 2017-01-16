@@ -29,10 +29,11 @@ midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength]=
 	0xC0, /* program change */
 	0xD0, /* channel key pressure */
 	0xE0, /* pitch bend change */
+	0xF0, /* system message */
 	0
 };
 
-unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength]={2, 2, 2, 2, 1, 1, 2, 0};
+unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength]={2, 2, 2, 2, 1, 1, 2, 0, 0};
 
 int MidiParser::parse(midi_byte_t* input, unsigned int length){
 	unsigned int consumedBytes = 0;
@@ -41,7 +42,8 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 		if(waitingForStatus == true){
 			int statusByte = input[n];
 			MidiMessageType newType = kmmNone;
-			if (statusByte >= 0x80 && statusByte < 0xF0){//it actually is a status byte
+			if ((statusByte >= 0x80 && statusByte < 0xF0) || (statusByte >= 0xF8)){
+			//it actually is a channel status byte OR a system real time message
 				for(int n = 0; n < midiMessageStatusBytesLength; n++){ //find the statusByte in the array
 					if(midiMessageStatusBytes[n] == (statusByte&0xf0)){
 						newType = (MidiMessageType)n;
@@ -58,7 +60,7 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				waitingForStatus = false;
 				receivingSysex = true;
 				rt_printf("Receiving sysex\n");
-			} else { // either something went wrong or it's a system message
+			} else { // other system common
 				continue;
 			}
 		} else if (receivingSysex){
@@ -72,17 +74,17 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 		} else {
 			messages[writePointer].setDataByte(elapsedDataBytes, input[n]);
 			elapsedDataBytes++;
-			if(elapsedDataBytes == messages[writePointer].getNumDataBytes()){
-				// done with the current message
-				// call the callback if available
-				if(isCallbackEnabled() == true){
-					messageReadyCallback(getNextChannelMessage(), callbackArg);
-				}
-				waitingForStatus = true;
-				writePointer++;
-				if(writePointer == messages.size()){
-					writePointer = 0;
-				}
+		}
+		if(elapsedDataBytes == messages[writePointer].getNumDataBytes()){
+			// done with the current message
+			// call the callback if available
+			if(isCallbackEnabled() == true){
+				messageReadyCallback(getNextChannelMessage(), callbackArg);
+			}
+			waitingForStatus = true;
+			writePointer++;
+			if(writePointer == messages.size()){
+				writePointer = 0;
 			}
 		}
 	}
