@@ -18,6 +18,7 @@
 #define OPT_PGA_GAIN_RIGHT 1002
 #define OPT_PRU_NUMBER 1003
 #define OPT_DISABLE_LED 1004
+#define OPT_DISABLE_CAPE_BUTTON 1005
 
 
 enum {
@@ -50,6 +51,7 @@ struct option gDefaultLongOptions[] =
 	{"pru-file", 1, NULL, OPT_PRU_FILE},
 	{"pru-number", 1, NULL, OPT_PRU_NUMBER},
 	{"disable-led", 0, NULL, OPT_DISABLE_LED},
+	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
 	{NULL, 0, NULL, 0}
 };
 
@@ -83,6 +85,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->pruNumber = 1;
 	settings->pruFilename[0] = '\0';
 	settings->enableLED = 1;
+	settings->enableCapeButtonMonitoring = 1;
 
 	// These two deliberately have no command-line flags by default.
 	// A given program might prefer one mode or another, but it's unlikely
@@ -270,6 +273,9 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		case OPT_DISABLE_LED:
 			settings->enableLED = 0;
 			break;
+		case  OPT_DISABLE_CAPE_BUTTON:
+			settings->enableCapeButtonMonitoring = 0;
+			break;
 		case '?':
 		default:
 			return c;
@@ -301,6 +307,7 @@ void Bela_usage()
 	std::cerr << "   --pru-file val:                     Set an optional external file to use for the PRU binary code\n";
 	std::cerr << "   --pru-number val:                   Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
+	std::cerr << "   --disable-cape-button-monitoring    Disable the monitoring of the Bela cape button (which otherwise stops the running program)\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
 

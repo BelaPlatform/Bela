@@ -277,7 +277,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gAudioCodec = new I2c_Codec();
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
-	if(gPRU->prepareGPIO(1, settings->enableLED)) {
+	if(gPRU->prepareGPIO(settings->enableLED)) {
 		cout << "Error: unable to prepare GPIO for PRU audio\n";
 		return 1;
 	}
@@ -289,7 +289,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	if(gPRU->initialise(settings->pruNumber, gContext.analogFrames, analogChannels,
-		 				settings->numMuxChannels, true)) {
+		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
 		cout << "Error: unable to initialise PRU\n";
 		return 1;
 	}
@@ -493,7 +493,7 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 	if(taskStruct->started == true)
 		return 0;
 	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
-		cerr << "Error: unable to start Xenomai task " << taskStruct->name <<  strerror(-ret) << endl;
+		cerr << "Error: unable to start Xenomai task " << taskStruct->name << ": " <<  strerror(-ret) << endl;
 		return -1;
 	}
 	taskStruct->started = true;

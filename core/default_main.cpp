@@ -68,6 +68,10 @@ int main(int argc, char *argv[])
 	// Start the audio device running
 	if(Bela_startAudio()) {
 		cout << "Error: unable to start real-time audio" << endl;
+		// Stop the audio device
+		Bela_stopAudio();
+		// Clean up any resources allocated for audio
+		Bela_cleanupAudio();
 		return -1;
 	}
 

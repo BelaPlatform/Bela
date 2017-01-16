@@ -2,8 +2,6 @@
 var View = require('./View');
 var _console = require('../console');
 
-var verboseDebugOutput = false;
-
 var shellCWD = '~';
 
 var modeSwitches;
@@ -13,7 +11,7 @@ class ConsoleView extends View{
 	constructor(className, models, settings){
 		super(className, models, settings);		
 		
-		this.on('clear', () => _console.clear() );
+		this.on('clear', force => _console.clear(undefined, force) );
 		_console.on('focus', (focus) => this.emit('focus', focus) );
 		_console.on('open-file', (fileName, focus) => this.emit('open-file', fileName, focus) );
 		
@@ -212,7 +210,7 @@ class ConsoleView extends View{
 	}
 	
 	_CPU(data){
-		if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela != 0){
+		if (parseInt(this.settings.getKey('cpuMonitoringVerbose')) && data.bela && data.bela.split){
 			_console.log(data.bela.split(' ').join('&nbsp;'));
 		}
 		/*if (data.modeSwitches && modeSwitches) {
@@ -228,33 +226,6 @@ class ConsoleView extends View{
 	_consoleDelete(value){
 		_console.setConsoleDelete(parseInt(value));
 	}
-	_verboseDebug(value){
-		verboseDebugOutput = parseInt(value);
-	}
-	
-	__debugReason(reason){
-		console.log('reason', reason);
-		var timestamp = performance.now();
-		_console.notify(reason, timestamp, true);
-		if (reason === 'exited' || reason === 'exited-signalled')
-			_console.reject('', timestamp, true);
-		else 
-			_console.fulfill('', timestamp, false);
-	}
-	_debugSignal(signal){
-		console.log('signal', signal);
-		var timestamp = performance.now();
-		_console.notify(signal, timestamp, true);
-		_console.reject('', timestamp, true);
-	}
-	_gdbLog(data){
-		if (verboseDebugOutput) _console.log(data);
-		else console.log(data);
-	}
-	__debugBelaLog(data){
-		_console.log(data);
-	}
-
 	
 }
 
@@ -273,5 +244,6 @@ var funcKey = {
 	'renameFile'	: 'Renaming file',
 	'deleteFile'	: 'Deleting file',
 	'init'			: 'Initialising',
-	'stop'			: 'Stopping'
+	'stop'			: 'Stopping',
+	'fileRejected'	: 'Uploading file'
 };

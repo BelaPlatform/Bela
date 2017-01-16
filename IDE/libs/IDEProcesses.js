@@ -143,7 +143,7 @@ class belaProcess extends MakeProcess{
 						if (key[0] === '-' && key[1] === '-'){
 							args += key+'='+CLArgs[key]+' ';
 						} else if (key === 'user'){
-							args += CLArgs[key];
+							args += CLArgs[key]+' ';
 						} else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== ''){
 							args += key+CLArgs[key]+' ';
 						}
@@ -154,6 +154,7 @@ class belaProcess extends MakeProcess{
 				this.projectName = project.substring(0, 15);
 				
 				this.mainPID = undefined;
+				this.pgrepErrors = 0;
 				
 				super.start(project, args, CLArgs.make);
 				
@@ -179,19 +180,23 @@ class belaProcess extends MakeProcess{
 		if (!this.active || !this.pid) return Promise.resolve(0);
 
 		if (!this.mainPID){
+			if (this.pgrepErrors > 2) return new Promise.resolve(0);
 			return pgrep.exec({
 					name: this.projectName
 				})
 				.then( pids => {
+					if (this.pgrepErrors > 0) console.log('pgrep succeeded')
 					this.mainPID = pids[0];
 					return pusage.statAsync(pids[0]);
 				})
 				.catch( e => {
-					console.log(e);
+					console.log('error running pgrep', this.projectName, this.pgrepErrors);
 					this.mainPID = undefined;
+					this.pgrepErrors += 1;
+					if (this.pgrepErrors > 2) console.log('pgrep abandoned');
 					return {cpu: 0};
 				});
-		} else {
+		} else if (this.mainPID){
 			return pusage.statAsync(this.mainPID)
 				.catch( e => {
 					console.log(e);

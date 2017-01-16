@@ -20,26 +20,15 @@ http://www.eecs.qmul.ac.uk/~andrewm
 The Bela software is distributed under the GNU Lesser General Public License
 (LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
-
-
 #include <Bela.h>
-#include <rtdk.h>
-#include <cstdlib>
-#include <cmath>
-#include <cstring>
-#include <time.h>
+#include <stdlib.h> //random
+#include <math.h> //sinf
+#include <time.h> //time
+#include <OscillatorBank.h>
 
 const float kMinimumFrequency = 20.0f;
 const float kMaximumFrequency = 8000.0f;
 
-float *gWavetable;		// Buffer holding the precalculated sine lookup table
-float *gPhases;			// Buffer holding the phase of each oscillator
-float *gFrequencies;	// Buffer holding the frequencies of each oscillator
-float *gAmplitudes;		// Buffer holding the amplitudes of each oscillator
-float *gDFrequencies;	// Buffer holding the derivatives of frequency
-float *gDAmplitudes;	// Buffer holding the derivatives of amplitude
-
-float gAudioSampleRate;
 int gSampleCount;		// Sample counter for indicating when to update frequencies
 float gNewMinFrequency;
 float gNewMaxFrequency;
@@ -50,90 +39,41 @@ AuxiliaryTask gFrequencyUpdateTask;
 // These settings are carried over from main.cpp
 // Setting global variables is an alternative approach
 // to passing a structure to userData in setup()
-
-extern int gNumOscillators;
-extern int gWavetableLength;
+int gNumOscillators = 500;
+int gWavetableLength = 1024;
 
 void recalculate_frequencies();
-
-extern "C" {
-	// Function prototype for ARM assembly implementation of oscillator bank
-	void oscillator_bank_neon(int numAudioFrames, float *audioOut,
-							  int activePartialNum, int lookupTableSize,
-							  float *phases, float *frequencies, float *amplitudes,
-							  float *freqDerivatives, float *ampDerivatives,
-							  float *lookupTable);
-}
-
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
+OscillatorBank osc;
 bool setup(BelaContext *context, void *userData)
 {
-	srandom(time(NULL));
-
 	if(context->audioOutChannels != 2) {
 		rt_printf("Error: this example needs stereo audio enabled\n");
 		return false;
 	}
 
-	// Initialise the sine wavetable
-	if(posix_memalign((void **)&gWavetable, 8, (gWavetableLength + 1) * sizeof(float))) {
-		rt_printf("Error allocating wavetable\n");
-		return false;
+	srandom(time(NULL));
+	osc.init(gWavetableLength, gNumOscillators, context->audioSampleRate);
+	
+	// Fill in the wavetable with one period of your waveform
+	float* wavetable = osc.getWavetable();
+	for(int n = 0; n < osc.getWavetableLength() + 1; n++){
+		wavetable[n] = sinf(2.0 * M_PI * (float)n / (float)osc.getWavetableLength());
 	}
-	for(int n = 0; n < gWavetableLength + 1; n++)
-		gWavetable[n] = sinf(2.0 * M_PI * (float)n / (float)gWavetableLength);
-
-	// Allocate the other buffers
-	if(posix_memalign((void **)&gPhases, 16, gNumOscillators * sizeof(float))) {
-		rt_printf("Error allocating phase buffer\n");
-		return false;
-	}
-	if(posix_memalign((void **)&gFrequencies, 16, gNumOscillators * sizeof(float))) {
-		rt_printf("Error allocating frequency buffer\n");
-		return false;
-	}
-	if(posix_memalign((void **)&gAmplitudes, 16, gNumOscillators * sizeof(float))) {
-		rt_printf("Error allocating amplitude buffer\n");
-		return false;
-	}
-	if(posix_memalign((void **)&gDFrequencies, 16, gNumOscillators * sizeof(float))) {
-		rt_printf("Error allocating frequency derivative buffer\n");
-		return false;
-	}
-	if(posix_memalign((void **)&gDAmplitudes, 16, gNumOscillators * sizeof(float))) {
-		rt_printf("Error allocating amplitude derivative buffer\n");
-		return false;
-	}
-
-	// Initialise buffer contents
-
+	
+	// Initialise frequency and amplitude
 	float freq = kMinimumFrequency;
 	float increment = (kMaximumFrequency - kMinimumFrequency) / (float)gNumOscillators;
-
 	for(int n = 0; n < gNumOscillators; n++) {
-		gPhases[n] = 0.0;
-
 		if(context->analogFrames == 0) {
-			// Random frequencies when used without matrix
-			gFrequencies[n] = kMinimumFrequency + (kMaximumFrequency - kMinimumFrequency) * ((float)random() / (float)RAND_MAX);
+			// Random frequencies when used without analogInputs
+			osc.setFrequency(n, kMinimumFrequency + (kMaximumFrequency - kMinimumFrequency) * ((float)random() / (float)RAND_MAX));
 		}
 		else {
-			// Constant spread of frequencies when used with matrix
-			gFrequencies[n] = freq;
+			// Constant spread of frequencies when used with analogInputs
+			osc.setFrequency(n, freq);
 			freq += increment;
 		}
-
-		// For efficiency, frequency is expressed in change in wavetable position per sample, not Hz or radians
-		gFrequencies[n] *= (float)gWavetableLength / context->audioSampleRate;
-		gAmplitudes[n] = ((float)random() / (float)RAND_MAX) / (float)gNumOscillators;
-		gDFrequencies[n] = gDAmplitudes[n] = 0.0;
+		osc.setAmplitude(n, (float)random() / (float)RAND_MAX / (float)gNumOscillators);
 	}
 
 	increment = 0;
@@ -146,8 +86,7 @@ bool setup(BelaContext *context, void *userData)
 		float newFreq = freq * randScale;
 
 		// For efficiency, frequency is expressed in change in wavetable position per sample, not Hz or radians
-		gFrequencies[n] = newFreq * (float)gWavetableLength / context->audioSampleRate;
-
+		osc.setFrequency(n, newFreq);
 		freq += increment;
 	}
 
@@ -155,10 +94,6 @@ bool setup(BelaContext *context, void *userData)
 	if((gFrequencyUpdateTask = Bela_createAuxiliaryTask(&recalculate_frequencies, 85, "bela-update-frequencies")) == 0)
 		return false;
 
-	//for(int n = 0; n < gNumOscillators; n++)
-	//	rt_printf("%f\n", gFrequencies[n]);
-
-	gAudioSampleRate = context->audioSampleRate;
 	gSampleCount = 0;
 
 	return true;
@@ -171,16 +106,14 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	// Initialise buffer to 0
-	memset(context->audioOut, 0, 2 * context->audioFrames * sizeof(float));
 
+	float arr[context->audioFrames];
 	// Render audio frames
-	oscillator_bank_neon(context->audioFrames, context->audioOut,
-			gNumOscillators, gWavetableLength,
-			gPhases, gFrequencies, gAmplitudes,
-			gDFrequencies, gDAmplitudes,
-			gWavetable);
-
+	osc.process(context->audioFrames, arr);
+	for(unsigned int n = 0; n < context->audioFrames; ++n){
+		audioWrite(context, n, 0, arr[n]);
+		audioWrite(context, n, 1, arr[n]);
+	}
 	if(context->analogFrames != 0 && (gSampleCount += context->audioFrames) >= 128) {
 		gSampleCount = 0;
 		gNewMinFrequency = map(context->analogIn[0], 0, 1.0, 1000.0f, 8000.0f);
@@ -194,7 +127,7 @@ void render(BelaContext *context, void *userData)
 		}
 
 		// Request that the lower-priority task run at next opportunity
-		//Bela_scheduleAuxiliaryTask(gFrequencyUpdateTask);
+		Bela_scheduleAuxiliaryTask(gFrequencyUpdateTask);
 	}
 }
 
@@ -214,9 +147,7 @@ void recalculate_frequencies()
 		float randScale = 0.99 + .02 * (float)random() / (float)RAND_MAX;
 		float newFreq = freq * randScale;
 
-		// For efficiency, frequency is expressed in change in wavetable position per sample, not Hz or radians
-		gFrequencies[n] = newFreq * (float)gWavetableLength / gAudioSampleRate;
-
+		osc.setFrequency(n, newFreq);
 		freq += increment;
 	}
 }
@@ -226,14 +157,7 @@ void recalculate_frequencies()
 // Release any resources that were allocated in setup().
 
 void cleanup(BelaContext *context, void *userData)
-{
-	free(gWavetable);
-	free(gPhases);
-	free(gFrequencies);
-	free(gAmplitudes);
-	free(gDFrequencies);
-	free(gDAmplitudes);
-}
+{}
 
 /**
 \example oscillator-bank/render.cpp
@@ -241,7 +165,28 @@ void cleanup(BelaContext *context, void *userData)
 Oscillator Bank
 ----------------------
 
-These files demonstrate an oscillator bank implemented in assembly code 
-that is used as part of the d-box project.
-*/
+These files demonstrate the ultra-efficient oscillator bank class.
 
+OscillatorBank::init() allocates the needed buffers.
+
+OscillatorBank::getWavetable() gives access to the wavetable. The 
+user has to populate it with one period of the desired waveform. 
+Note that the length of the waveform is (getWavetableLength() + 1)
+and the last sample must be the same as the first sample.
+
+OscillatorBank::setAmplitude() and OscillatorBank::setFrequency() can 
+be used to set the amplitude and frequency of individual oscillators.
+These can be changed at any point during the execution of the program.
+
+OscillatorBank::process(int frames, float* output) writes *frames*
+values to the *output* array.
+
+This program can run with a large number of  oscillators (> 500, depending on the
+settings in use). Updating the frequencies of a large number of oscillators from within 
+render(), for every sample or for every block would add significatively to the
+computational load. For this reason, we factored out the frequency update in an
+AuxiliaryTask which runs at most every 128 samples. If needed, the AuxiliaryTask
+will split the load over time across multiple calls to render(), thus avoiding
+audio dropouts.
+
+*/

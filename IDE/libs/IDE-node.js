@@ -10,7 +10,6 @@ var spawn = require('child_process').spawn;
 // sub_modules
 var ProjectManager = require('./ProjectManager');
 var ProcessManager = require('./ProcessManager');
-var DebugManager = require('./DebugManager');
 var server = require('./fileServer');
 var scope = require('./scope-node');
 var GitManager = require('./GitManager');
@@ -200,14 +199,7 @@ function socketEvents(socket){
 				socket.emit('report-error', error.toString() );
 			});
 	});
-	
-	// debugger
-	socket.on('debugger-event', (func, args) => {
-	//console.log(DebugManager, func, DebugManager[func]);
-		if (DebugManager[func])
-			DebugManager[func](args);
-	});
-	
+
 	// git
 	socket.on('git-event', data => {
 	
@@ -272,8 +264,8 @@ function socketEvents(socket){
 						if (key[0] === '-' && key[1] === '-'){
 							args += key+'='+CLArgs[key]+' ';
 						} else if (key === 'user'){
-							args += CLArgs[key];
-						} else if (key !== 'make'){
+							args += CLArgs[key]+' ';
+						} else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== ''){
 							args += key+CLArgs[key]+' ';
 						}
 					}
@@ -312,6 +304,8 @@ function socketEvents(socket){
 	
 	socket.on('compare-mtime', data => {
 		
+		// console.log('compare-mtime', data);
+		
 		if (!data.currentProject || !data.fileName || !data.mtime) return;
 		
 		co(ProjectManager, 'checkModifiedTime', data)
@@ -327,10 +321,6 @@ function socketEvents(socket){
 ProcessManager.on('status', (status, project) => allSockets.emit('status', project, status) );
 ProcessManager.on('broadcast-status', (status) => allSockets.emit('status', status) );
 ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
-
-DebugManager.on('status', (status) =>  allSockets.emit('debugger-data', status) );
-DebugManager.on('variables', (project, variables) =>  allSockets.emit('debugger-variables', project, variables) );
-DebugManager.on('error', (err) => allSockets.emit('report-error', err) );
 
 TerminalManager.on('shell-event', (evt, data) => allSockets.emit('shell-event', evt, data) );
 
@@ -359,12 +349,8 @@ var SettingsManager = {
 			'verboseErrors'			: 0,
 			'cpuMonitoring'			: 1,
 			'cpuMonitoringVerbose'	: 0,
-			'consoleDelete'			: 1,
-			'autoDocs'				: 1,
-			'viewHiddenFiles'		: 0,
-			'verboseDebug'			: 0,
-			'useGit'				: 1,
-			'gitAutostage'			: 1
+			'consoleDelete'			: 0,
+			'viewHiddenFiles'		: 0
 		};
 	},
 
@@ -421,7 +407,7 @@ function runOnBootProject(){
 			if (lines[5] === '# Run on startup disabled -- nothing to do here'){
 				project = 'none';
 			} else {
-				project = lines[5].trim().split(' ')[1].split('/').pop();
+				project = lines[6].trim().split(' ')[1].split('/').pop();
 			}
 			return project;
 		})
@@ -508,7 +494,10 @@ function uploadUpdate(data){
 				
 			});
 		})
-		.catch( e => console.log('update error', e.toString()) );
+		.catch( e => {
+			console.log('update error', e.toString());
+			allSockets.emit('update-error', e.toString());
+		});
 }
 
 process.on('uncaughtException', (err) => {

@@ -11,8 +11,6 @@ var pusage = Promise.promisifyAll(require('pidusage'));
 var fs = Promise.promisifyAll(require('fs-extra'));
 var toobusy = require('toobusy-js');
 
-var DebugManager = require('./DebugManager');
-
 var belaPath = '/root/Bela/';
 var makePath = belaPath;
 var projectPath = belaPath+'projects/';
@@ -27,6 +25,8 @@ var stopProcess = require('./IDEProcesses').stop;
 
 var childProcesses = {syntaxCheckProcess, buildProcess, belaProcess};
 
+var writingFile = false, dataCached = false, uploadCache = {};
+
 class ProcessManager extends EventEmitter {
 	
 	constructor(){
@@ -37,11 +37,27 @@ class ProcessManager extends EventEmitter {
 	// process functions
 	upload(project, data){
 	
+		if (writingFile){
+			uploadCache = data;
+			dataCached = true;
+			return;
+		}
+	
 		this.emptyAllQueues();
 		
+		writingFile = true;
 		if (data.currentProject && data.newFile && data.fileData){
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
+
+					writingFile = false;
+					
+					if (dataCached){
+						dataCached = false;
+						this.upload(undefined, uploadCache);
+						return;
+					}
+					
 					if (toobusy())
 						console.log('toobusy: syntax check');
 					else if (data.checkSyntax){
@@ -49,6 +65,7 @@ class ProcessManager extends EventEmitter {
 						// callback to get time of file upload
 						if (data.callback) data.callback();
 					}
+					
 				});
 		} else {
 			if (toobusy())
@@ -146,9 +163,7 @@ class ProcessManager extends EventEmitter {
 		stopProcess.start();
 			
 		this.emptyAllQueues();
-		
-		/*if (data.debug) 
-			DebugManager.stop();*/
+
 	}
 	
 	rebuild(project){
@@ -190,7 +205,7 @@ class ProcessManager extends EventEmitter {
 		
 		// syntax events
 		syntaxCheckProcess.on('started', () => this.emit('status', syntaxCheckProcess.project, this.getStatus()) );
-		syntaxCheckProcess.on('stdout', (data) => this.emit('status', syntaxCheckProcess.project, {syntaxLog: data}) );
+		//syntaxCheckProcess.on('stdout', (data) => this.emit('status', syntaxCheckProcess.project, {syntaxLog: data}) );
 		syntaxCheckProcess.on('cancelled', (data) => {
 		//console.log('cancelled');
 			var status = this.getStatus();
@@ -273,7 +288,6 @@ class ProcessManager extends EventEmitter {
 		if (this.running()) output.bela = yield belaProcess.CPU();
 		if (this.running()) output.belaLinux = (yield belaProcess.CPULinux()).cpu;
 		output.node = (yield pusage.statAsync(process.pid)).cpu;
-		// output.gdb = yield DebugManager.CPU();
 		return output;
 	}
 	

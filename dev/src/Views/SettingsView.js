@@ -155,7 +155,7 @@ class SettingsView extends View {
 		
 		// build the popup content
 		popup.title('About Bela');
-		popup.subtitle('You are using Bela Version 0.1, July 2016. Bela is an open source project licensed under GPL, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London. For more information, visit http://bela.io');
+		popup.subtitle('You are using Bela Version 0.2, October 2016. Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 		var form = [];
 		form.push('<button type="submit" class="button popup-continue">Close</button>');
 		
@@ -204,6 +204,8 @@ class SettingsView extends View {
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 				this.emit('warning', 'Do not use the IDE during the update process!');
 				
+				popup.hide('keep overlay');
+				
 				var reader = new FileReader();
 				reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
 				reader.readAsArrayBuffer(file);
@@ -211,11 +213,9 @@ class SettingsView extends View {
 			} else {
 			
 				this.emit('warning', 'not a valid update zip archive');
+				popup.hide();
 				
 			}
-			
-			popup.hide();
-			popup.overlay();
 			
 		});
 		
@@ -258,9 +258,6 @@ class SettingsView extends View {
 		for (let key in data){
 			this.$elements.filterByData('key', key).val(data[key]).prop('checked', data[key]);
 		}
-	}
-	_breakpoints(value, keys){
-		this.emit('project-settings', {func: 'setBreakpoints', value});
 	}
 	_projectList(projects, data){
 

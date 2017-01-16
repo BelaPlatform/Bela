@@ -15,6 +15,26 @@
 THIS_SCRIPT=`basename "$0"`
 #trap "echo; exit 0;" 2 9
 
+copy_if_does_not_exist(){
+	_SRC=$1
+	_DEST=$2
+	_FORCE=$3
+	if [ $_FORCE -eq 0 ]
+	then
+		if [ $RSYNC_AVAILABLE -eq 1 ]
+		then 
+			rsync -a --ignore-existing $_SRC $BBB_ADDRESS:$_DEST
+		else
+			ssh $BBB_ADDRESS ls $_DEST &> /dev/null ||\
+			scp -q $_SRC $BBB_ADDRESS:$_DEST
+		fi
+	else
+		# if forced to, do so
+		scp -q $_SRC $BBB_ADDRESS:$_DEST
+	fi
+	return $?
+}
+
 check_rsync(){
 	if [ "$USE_RSYNC" -eq 0 ] || [ -z "`which rsync 2> /dev/null`" ]
 	then
@@ -140,7 +160,7 @@ done
 }
 
 case_run_mode() {
-	  case $RUN_MODE in
+	case $RUN_MODE in
 		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
 		foreground)
 			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
@@ -151,7 +171,7 @@ case_run_mode() {
 		screenfg)
 			ssh -t $BBB_ADDRESS "$MAKE_COMMAND runscreenfg"
 		;;
-      esac
+	esac
 }
 
 run_script_usage_brief(){

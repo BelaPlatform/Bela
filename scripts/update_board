@@ -10,7 +10,7 @@ SCRIPTDIR=$(dirname "$0")
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
 
 [ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../IDE
-
+[ -z "$FORCE_REPLACE" ] && FORCE_REPLACE=0
 FILES_TO_COPY="core include Makefile lib examples Doxyfile"
 
 # The following variables are manually copied from the Makefile.
@@ -40,6 +40,7 @@ Command line options:
     -d : skips re-generating Doxygen documentation on the board.
     -n : do not try to update the IDE.
     --no-frills : skips some optional commands.
+	--replace-user: replace user-editable scripts.
     -y : does not prompt the user before deleting the remote files.
     "
 }
@@ -72,8 +73,12 @@ while [ "$1" != "" ]; do
       shift
       BBB_ADDRESS=$1
     ;;
+	--replace-user)
+	  FORCE_REPLACE=1
+	;;
     --clean)
       RESET_BOARD=1
+	  FORCE_REPLACE=1
     ;;
     -d)
       DOXYGEN=0
@@ -151,16 +156,25 @@ if [ $RSYNC_AVAILABLE -eq 1 ];
 then
   [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
   rsync -ac --no-t --delete-after --stats $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval $FILTER &&\
-  printf "..." &&echo  rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib; rsync -ac --no-t lib/libpd.so $BBB_ADDRESS:/usr/lib
+  printf "..."
 else
   # if rsync is not available, then clean the folders before copying the files
   ssh $BBB_ADDRESS "rm -rf $FILES_TO_COPY; mkdir -p $BBB_BELA_HOME" &&\
-  scp -r -q $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME &&\
-  scp -q lib/libpd.so $BBB_ADDRESS:/usr/lib
+  scp -r -q $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME
 fi
 error_handler $?
-# cd back to the original folder.
-cd "$RUN_FOLDER"
+
+# a bunch of files to be copied manually to special locations
+scp -q lib/libpd.so $BBB_ADDRESS:/usr/lib &&
+scp -q resources/bin/pasm $BBB_ADDRESS:/usr/local/bin/ &&\
+scp -qr resources/bela-cape-btn $BBB_ADDRESS:/tmp &&\
+ssh $BBB_ADDRESS "make -C /tmp/bela-cape-btn install && rm -rf /tmp/bela-cape-btn"
+# the below files could be user-customized, so copy them if they do not exist or forced to do so
+copy_if_does_not_exist resources/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
+copy_if_does_not_exist resources/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
+
+
+error_handler $?
 
 # Create remaining directories needed for building
 printf "Creating directory structure on BeagleBone..."
@@ -187,11 +201,11 @@ fi
 if [ $UPDATE_IDE -eq 1 ]
 then
 	[ $ALWAYS_YES -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
-	ls ./update_IDE >/dev/null 2>/dev/null
+	ls ./scripts/update_IDE >/dev/null 2>/dev/null
 	if [ $? -eq 0 ]
 	then
 	  export BBB_ADDRESS BBB_BELA_HOME
-	  ./update_IDE $ALWAYS_YES_FLAG --no-frills
+	  ./scripts/update_IDE $ALWAYS_YES_FLAG --no-frills
       [ $FULL -eq 1 ] && ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart" 
 	else
 	  # run the IDE 
@@ -209,3 +223,6 @@ fi
   printf '\nSetup complete, press any key to continue . . .\n\n'
   read -n 1
 }
+
+# cd back to the original folder.
+cd "$RUN_FOLDER"

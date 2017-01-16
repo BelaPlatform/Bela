@@ -92,10 +92,11 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 
 
 Midi::Midi() : 
-defaultPort("hw:1,0,0"), alsaIn(NULL), alsaOut(NULL),
+alsaIn(NULL), alsaOut(NULL),
 inputParser(NULL), parserEnabled(false), inputEnabled(false), outputEnabled(false),
 inId(NULL), outId(NULL), outPipeName(NULL)
 {
+	sprintf(defaultPort, "%s", "hw:1,0,0"); // a bug in gcc<4.10 prevents initialization with defaultPort("hw:1,0,0") in the initialization list
 	inputParser = 0;
 	size_t inputBytesInitialSize = 1000;
 	inputBytes.resize(inputBytesInitialSize);
@@ -233,7 +234,7 @@ int Midi::readFrom(const char* port){
 	int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);
 	if (err) {
 		if(err == -2)
-			fprintf(stderr, "MIDI device %s is not ready: %s\n", port, strerror(-err));
+			printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
 		else
 			fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
 		return -1;

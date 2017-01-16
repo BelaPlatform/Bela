@@ -19,7 +19,7 @@
 
 @ Registers:
 @    r0: numAudioFrames        How many frames to render
-@    r1: audioOut              Buffer for audio output samples [stereo]
+@    r1: audioOut              Buffer for audio output samples
 @    r2: activePartialNum      How many active partials to render
 @    r3: lookupTableSize       Size of lookup table
 @    ---- other arguments start on the stack and are moved: -----
@@ -128,19 +128,19 @@ oscbank_sample_loop:
 	vcvt qBaseInts, qPhases					@ Take floor of new phases
 	vmul q0.f32, q0.f32, qAmps				@ Multiply samples by current amplitude
 
-	vld1 dSample, [r1]						@ Load the current stereo samples
+	vld1 dSample[0], [r1]					@ Load the current sample
 	vpadd d2.f32, d0.f32, d1.f32			@ Pairwise accumulate q0 (output sample) into d2
 
 	vand q2, q2, qBaseInts					@ Logical AND of new phase int leaves 1 bit set only if phase >= table size
-	vpadd d3.f32, d2.f32, d2.f32			@ Pairwise accumulate d2 into d0 --> d0[0] and d0[1] both hold total of 4 oscillators
+	vpadd d3.f32, d2.f32, d2.f32			@ Pairwise accumulate d2 into d0 --> d0[0]
 	vadd qAmps, qAmps, qAmpDs				@ Update amplitudes
 	vcvt q0.f32, q2.u32						@ Convert int back to float after AND operation
 
-	vadd  dSample, dSample, d3.f32			@ Add oscillator outputs to each channel
+	vadd  dSample, dSample, d3.f32			@ Add oscillator outputs to current sample
 
 	subs r0, r0, #1							@ numFrames--
 	vsub qPhases, qPhases, q0.f32			@ Keep phases in table range
-	vst1 dSample, [r1]!						@ Store back in buffer and increment by 8
+	vst1 dSample[0], [r1]!						@ Store back in buffer and increment by 8
 
 	it gt
 	bgt oscbank_sample_loop					@ Loop if numFrames > 0

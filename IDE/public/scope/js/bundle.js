@@ -321,7 +321,7 @@ var BackgroundView = function (_View) {
 	function BackgroundView(className, models) {
 		_classCallCheck(this, BackgroundView);
 
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(BackgroundView).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, (BackgroundView.__proto__ || Object.getPrototypeOf(BackgroundView)).call(this, className, models));
 
 		var saveCanvas = document.getElementById('saveCanvas');
 		_this.canvas = document.getElementById('scopeBG');
@@ -587,7 +587,7 @@ var ChannelView = function (_View) {
 	function ChannelView(className, models) {
 		_classCallCheck(this, ChannelView);
 
-		return _possibleConstructorReturn(this, Object.getPrototypeOf(ChannelView).call(this, className, models));
+		return _possibleConstructorReturn(this, (ChannelView.__proto__ || Object.getPrototypeOf(ChannelView)).call(this, className, models));
 	}
 
 	// UI events
@@ -608,7 +608,8 @@ var ChannelView = function (_View) {
 	}, {
 		key: 'setChannelGains',
 		value: function setChannelGains(value, min, max) {
-			this.$elements.filterByData('key', 'yAmplitude').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yAmplitude').not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yAmplitude').val(value);
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -635,11 +636,13 @@ var ChannelView = function (_View) {
 			}
 
 			this.emit('channelConfig', channelConfig);
+			console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
 		}
 	}, {
 		key: 'setChannelOffsets',
 		value: function setChannelOffsets(value, min, max) {
-			this.$elements.filterByData('key', 'yOffset').val(value).not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yOffset').not('input[type=number]').prop('min', min).prop('max', max);
+			this.$elements.filterByData('key', 'yOffset').val(value);
 			var _iteratorNormalCompletion2 = true;
 			var _didIteratorError2 = false;
 			var _iteratorError2 = undefined;
@@ -777,7 +780,7 @@ var ControlView = function (_View) {
 	function ControlView(className, models) {
 		_classCallCheck(this, ControlView);
 
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ControlView).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, (ControlView.__proto__ || Object.getPrototypeOf(ControlView)).call(this, className, models));
 
 		$('#controlsButton').click(function () {
 			return _this.$parents.toggleClass('hidden');
@@ -946,7 +949,7 @@ var Model = function (_EventEmitter) {
 	function Model(data) {
 		_classCallCheck(this, Model);
 
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Model).call(this));
+		var _this = _possibleConstructorReturn(this, (Model.__proto__ || Object.getPrototypeOf(Model)).call(this));
 
 		var _data = data || {};
 		_this._getData = function () {
@@ -1054,7 +1057,7 @@ var SliderView = function (_View) {
 	function SliderView(className, models) {
 		_classCallCheck(this, SliderView);
 
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SliderView).call(this, className, models));
+		var _this = _possibleConstructorReturn(this, (SliderView.__proto__ || Object.getPrototypeOf(SliderView)).call(this, className, models));
 
 		_this.on('set-slider', function (args) {
 			$('#scopeSlider' + args[0].value).find('input[type=range]').prop('min', args[1].value).prop('max', args[2].value).prop('step', args[3].value).val(args[4].value).siblings('input[type=number]').prop('min', args[1].value).prop('max', args[2].value).prop('step', args[3].value).val(args[4].value).siblings('h1').html(args[5].value == 'Slider' ? 'Slider ' + args[0].value : args[5].value);
@@ -1137,7 +1140,7 @@ var View = function (_EventEmitter) {
 	function View(CSSClassName, models, settings) {
 		_classCallCheck(this, View);
 
-		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(View).call(this));
+		var _this = _possibleConstructorReturn(this, (View.__proto__ || Object.getPrototypeOf(View)).call(this));
 
 		_this.className = CSSClassName;
 		_this.models = models;
@@ -1591,11 +1594,32 @@ function CPU(data) {
 			var downSampling = settings.getKey('downSampling');
 			var upSampling = settings.getKey('upSampling');
 			var sampleRate = settings.getKey('sampleRate');
+			var plotMode = settings.getKey('plotMode');
+			var scale = downSampling / upSampling;
+			var FFTAxis = settings.getKey('FFTXAxis');
+
+			console.log(FFTAxis);
 
 			var out = "data:text/csv;charset=utf-8,";
 
 			for (var i = 0; i < length; i++) {
-				out += i * downSampling / (upSampling * sampleRate);
+
+				if (plotMode === 0) {
+					// time domain
+					out += scale * i / sampleRate;
+				} else if (plotMode === 1) {
+					// FFT
+
+					if (parseInt(settings.getKey('FFTXAxis')) === 0) {
+						// linear x-axis
+						out += sampleRate * i / (2 * length * scale);
+						// x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
+					} else {
+						out += Math.pow(Math.E, -Math.log(1 / length) * i / length) * sampleRate / (2 * length) + upSampling / downSampling;
+						// x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+					}
+				}
+
 				for (var j = 0; j < numChannels; j++) {
 					out += ',' + ((1 - frame[j * length + i] / (height / 2)) * channelConfig[j].yAmplitude - channelConfig[j].yOffset);
 				}

@@ -322,16 +322,36 @@ function CPU(data){
 		let downSampling = settings.getKey('downSampling');
 		let upSampling = settings.getKey('upSampling');
 		let sampleRate = settings.getKey('sampleRate');
+		let plotMode = settings.getKey('plotMode');
+		let scale = downSampling/upSampling;
+		let FFTAxis = settings.getKey('FFTXAxis');
 		
+		console.log(FFTAxis)
+				
 		let out = "data:text/csv;charset=utf-8,";
 		
 		for (let i=0; i<length; i++){
-			out += i*downSampling/(upSampling * sampleRate);
+		
+			if (plotMode === 0){		// time domain
+				out += scale*i/sampleRate;
+			} else if (plotMode === 1) {	// FFT
+				
+				if (parseInt(settings.getKey('FFTXAxis')) === 0){ // linear x-axis
+					out += sampleRate*i/(2*length*scale);
+					// x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
+				} else {
+					out += Math.pow(Math.E, -(Math.log(1/length))*i/length) * sampleRate/(2*length) + upSampling/downSampling;
+					// x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+				}
+				
+			}
+			
 			for (let j=0; j<numChannels; j++){
 				out += ','+ ( ( 1 - frame[j*length + i] / (height/2) ) * channelConfig[j].yAmplitude - channelConfig[j].yOffset );
 			}
 			out += '\n';
 		}
+
 
 		this.href = encodeURI(out);
 	});

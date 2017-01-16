@@ -54,9 +54,12 @@ class ProjectView extends View {
 		form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
 		form.push('<label for="popup-PD">Pure Data</label>')
 		form.push('</br>');
+		form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
+		form.push('<label for="popup-SC">SuperCollider</label>')
+		form.push('</br>');
 		form.push('<input type="text" placeholder="Enter your project name">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup-save">Save</button>');
+		form.push('<button type="submit" class="button popup-save">Create</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
