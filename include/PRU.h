@@ -13,8 +13,6 @@
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 
-#define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
-
 /**
  * Internal version of the BelaContext struct which does not have const
  * elements, so it can be modified by the code. When it's passed to the user
@@ -139,12 +137,6 @@ typedef struct {
 	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
 	/// persist for future frames. If not set, writes affect one frame only.
 	uint32_t flags;
-
-	/// \brief The duration of a buffer in the real-world (expressed in nanoseconds)
-	long long int bufferDuration;
-
-	/// \brief The number of PRU internal loops in a buffer.
-	uint32_t pruIntervalsPerBuffer;
 } InternalBelaContext;
 
 

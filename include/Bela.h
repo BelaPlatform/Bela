@@ -369,12 +369,6 @@ typedef struct {
 	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
 	/// persist for future frames. If not set, writes affect one frame only.
 	const uint32_t flags;
-
-	/// \brief The duration of a buffer in the real-world (expressed in nanoseconds)
-	const long long int bufferDuration;
-
-	/// \brief The number of PRU internal loops in a buffer.
-	const uint32_t pruIntervalsPerBuffer;
 } BelaContext;
 
 /** \ingroup auxtask
@@ -749,7 +743,7 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task);
 // in RTAudio.cpp and PRU.cpp to store the actual value of analog_enabled. To reproduce the bug,
 // undefine the line below and run with -N0 (analog disabled)
  */
-#undef PRU_SIGXCPU_BUG_WORKAROUND
+#define PRU_SIGXCPU_BUG_WORKAROUND
 /**
  * \endcond
  */
