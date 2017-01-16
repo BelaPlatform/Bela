@@ -179,6 +179,13 @@ static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 
+void fdLoop(void*){
+	while(!gShouldStop){
+		libpd_sys_microsleep(0);
+		usleep(3000);
+	}
+}
+
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
@@ -307,6 +314,10 @@ bool setup(BelaContext *context, void *userData)
 		libpd_finish_message(multiplexerArray, "resize");
 		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
 	}
+
+	AuxiliaryTask fdTask;
+	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
+	Bela_scheduleAuxiliaryTask(fdTask);
 
 	return true;
 }
