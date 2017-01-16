@@ -335,7 +335,15 @@ function CPU(data){
 			if (plotMode === 0){		// time domain
 				out += scale*i/sampleRate;
 			} else if (plotMode === 1) {	// FFT
-				out += sampleRate*i/(2*length*scale);
+				
+				if (parseInt(settings.getKey('FFTXAxis')) === 0){ // linear x-axis
+					out += sampleRate*i/(2*length*scale);
+					// x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
+				} else {
+					out += Math.pow(Math.E, -(Math.log(1/length))*i/length) * sampleRate/(2*length) + upSampling/downSampling;
+					// x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+				}
+				
 			}
 			
 			for (let j=0; j<numChannels; j++){

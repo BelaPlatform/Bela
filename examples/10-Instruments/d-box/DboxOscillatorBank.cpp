@@ -1,5 +1,5 @@
 /*
- * OscillatorBank.cpp
+ * DboxOscillatorBank.cpp
  *
  *  Created on: May 23, 2014
  *      Author: Victor Zappi and Andrew McPherson
@@ -31,23 +31,23 @@
 
 #include <stdlib.h>
 
-#include "OscillatorBank.h"
+#include "DboxOscillatorBank.h"
 
-OscillatorBank::OscillatorBank() {
+DboxOscillatorBank::DboxOscillatorBank() {
 	loaded = false;
 }
 
-OscillatorBank::OscillatorBank(string filename, int hopsize, int samplerate) {
+DboxOscillatorBank::DboxOscillatorBank(string filename, int hopsize, int samplerate) {
 	loaded = false;
 	loadFile(filename.c_str(), hopsize, samplerate);
 }
 
-OscillatorBank::OscillatorBank(char *filename, int hopsize, int samplerate) {
+DboxOscillatorBank::DboxOscillatorBank(char *filename, int hopsize, int samplerate) {
 	loaded = false;
 	loadFile(filename, hopsize, samplerate);
 }
 
-OscillatorBank::~OscillatorBank() {
+DboxOscillatorBank::~DboxOscillatorBank() {
 	free(oscillatorPhases);
 	free(oscillatorNextNormFreq);
 	free(oscillatorNextAmp);
@@ -68,7 +68,7 @@ OscillatorBank::~OscillatorBank() {
 	delete[] nyquistCut;
 }
 
-bool OscillatorBank::initBank(int oversamp) {
+bool DboxOscillatorBank::initBank(int oversamp) {
 	if (!loaded)
 		return false;
 
@@ -178,7 +178,7 @@ bool OscillatorBank::initBank(int oversamp) {
 	return true;
 }
 
-void OscillatorBank::resetOscillators() {
+void DboxOscillatorBank::resetOscillators() {
 	currentHop			= -1;
 	loopDir				= 1;
 	loopDirShift 		= 0;
@@ -209,7 +209,7 @@ void OscillatorBank::resetOscillators() {
 	state = bank_playing;
 }
 
-void OscillatorBank::nextHop() {
+void DboxOscillatorBank::nextHop() {
 	hopSize = oscBankHopSize;
 
 	// copy phases, next freqs and next amps from previous frame
@@ -243,7 +243,7 @@ void OscillatorBank::nextHop() {
 		nextPartialHop();
 }
 
-void OscillatorBank::nextOscBankHop() {
+void DboxOscillatorBank::nextOscBankHop() {
 	int parIndex, localHop;
 	float parDamp = 1;
 	int currentPartialHop = (currentHop / overSampling) + loopDirShift;
@@ -373,7 +373,7 @@ void OscillatorBank::nextOscBankHop() {
 		addFakeOsc();
 }
 
-void OscillatorBank::nextPartialHop() {
+void DboxOscillatorBank::nextPartialHop() {
 	unsigned int parIndex, localHop;
 	float parDamp = 1;
 	int currentPartialHop = currentHop / overSampling;
@@ -546,7 +546,7 @@ void OscillatorBank::nextPartialHop() {
 	updatePrevControls();
 }
 
-void OscillatorBank::addFakeOsc() {
+void DboxOscillatorBank::addFakeOsc() {
 	// ...calculate difference
 	int newPartNum = (actPartNum + 3) & ~0x3;
 	// ...add fake oscillators until total num is multiple of 4
@@ -561,7 +561,7 @@ void OscillatorBank::addFakeOsc() {
 	actPartNum = newPartNum;
 }
 
-void OscillatorBank::play(float vel) {
+void DboxOscillatorBank::play(float vel) {
 	// set attack and release params according to velocity
 	//adsr.setAttackRate((minAttackTime + ((1 - vel) * deltaAttackTime)) * rate);
 	adsr.setAttackRate(minAttackTime * rate);
@@ -578,13 +578,13 @@ void OscillatorBank::play(float vel) {
 // private methods
 //---------------------------------------------------------------------------------------------------------------------------
 
-bool OscillatorBank::loader(char *filename, int hopsize, int samplerate) {
+bool DboxOscillatorBank::loader(char *filename, int hopsize, int samplerate) {
 	rate = samplerate;
 	loaded = parser.parseFile(filename, hopsize, samplerate);
 	return loaded;
 }
 
-int OscillatorBank::jumpToHop() {
+int DboxOscillatorBank::jumpToHop() {
 	int jumpGap = abs(jumpHop - currentHop / overSampling); // gaps in partial reference
 
 	// can't jump to self dude
@@ -839,7 +839,7 @@ int OscillatorBank::jumpToHop() {
 	return 0;
 }
 
-int OscillatorBank::nextEnvState() {
+int DboxOscillatorBank::nextEnvState() {
 	/*
 	 envState = Attack.getState();	// to determine what state we are in [attack, decay, sustain, release]
 
@@ -873,7 +873,7 @@ int OscillatorBank::nextEnvState() {
 	return 0;
 }
 
-void OscillatorBank::checkDirection() {
+void DboxOscillatorBank::checkDirection() {
 	// end of the loop or end of file
 	if (((currentHop >= loopEndHop) && (loopDir == 1))
 			|| ((currentHop >= lastHop) && (loopDir == 1))) {
@@ -889,7 +889,7 @@ void OscillatorBank::checkDirection() {
 	}
 }
 
-void OscillatorBank::checkSpeed() {
+void DboxOscillatorBank::checkSpeed() {
 	// speed control [alike on highways, LOL]
 	if (nextSpeed > 0) {
 		nextSpeed = (nextSpeed < maxSpeed) ? nextSpeed : maxSpeed;
@@ -900,7 +900,7 @@ void OscillatorBank::checkSpeed() {
 	hopCounter = hopSize / speed;
 }
 
-int OscillatorBank::checkJump() {
+int DboxOscillatorBank::checkJump() {
 	//check if has to jump somewhere
 	if (jumpHop > -1) {
 		// needs to jump!
@@ -910,7 +910,7 @@ int OscillatorBank::checkJump() {
 	return 1; // no jump
 }
 
-bool OscillatorBank::checkOversampling() {
+bool DboxOscillatorBank::checkOversampling() {
 	//TODO fix this, but need andrew to fix oversampling multiple of period size
 	// if partialsHopSize is not a multiple of oversampling, change hop size to periodically match next partial hop
 	if (hopSizeReminder > 0) {
@@ -925,7 +925,7 @@ bool OscillatorBank::checkOversampling() {
 	return false; // ,otherwise mark next hop as osc bank hop
 }
 
-void OscillatorBank::updatePrevControls() {
+void DboxOscillatorBank::updatePrevControls() {
 	prevAdsrVal = adsrVal;
 	prevAmpTh = ampTh;
 	prevHopNumTh = hopNumTh;
@@ -936,7 +936,7 @@ void OscillatorBank::updatePrevControls() {
 	memcpy(prevFilterQ, filterQ, filterNum * sizeof(float));
 }
 
-float OscillatorBank::calculateParDamping(int parIndex, int hopNTh,
+float DboxOscillatorBank::calculateParDamping(int parIndex, int hopNTh,
 		float adsrVl, float nextFreq, int filNum, float *filFreq, float *filQ) {
 	float parDamp = 1;
 
