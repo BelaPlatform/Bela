@@ -11,7 +11,7 @@
 	.arch armv7-a
 	.fpu neon
 
-@ 	void oscillator_bank_neon(int numAudioFrames, float *audioOut,
+@ 	void dbox_oscillator_bank_neon(int numAudioFrames, float *audioOut,
 @							  int activePartialNum, int lookupTableSize,
 @							  float *phases, float *frequencies, float *amplitudes,
 @							  float *freqDerivatives, float *ampDerivatives,
@@ -40,11 +40,11 @@
 @    lookupTable: 4-byte boundary (TODO: check this)
 
 	.align	2
-	.global	oscillator_bank_neon
+	.global	dbox_oscillator_bank_neon
 	.thumb
 	.thumb_func
-	.type	oscillator_bank_neon, %function
-oscillator_bank_neon:
+	.type	dbox_oscillator_bank_neon, %function
+dbox_oscillator_bank_neon:
 
 
 dSample		.dn		D6.F32

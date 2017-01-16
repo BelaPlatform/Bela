@@ -106,7 +106,7 @@ LIBS = -lrt -lnative -lxenomai -lsndfile -lasound
 # refresh library cache and check if libpd is there
 #TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
 LIBPD_PATH = /usr/lib/libpd.so
-TEST_LIBPD := $(shell which $(LIBPD_PATH))
+TEST_LIBPD := $(shell [ -e $(LIBPD_PATH) ] && echo yes)
 ifneq ($(strip $(TEST_LIBPD)), )
 # if libpd is there, link it in
   LIBS += -lpd -lpthread_rt
@@ -122,16 +122,26 @@ ifndef COMPILER
   ifneq ($(strip $(TEST_COMPILER)), )
     #if it is installed, use it
     COMPILER := clang
+	CLANG_PATH:=$(TEST_COMPILER)
   else
-    COMPILER := gcc
+    # just in case the PATH is broken, check for the full path to clang
+	# this is a workaround for people with old IDE startup script (without /usr/local/bin in the $PATH)
+    CLANG_PATH:=/usr/local/bin/clang
+    TEST_COMPILER := $(shell [ -e $(CLANG_PATH) ] && echo yes)
+    $(warning $(TEST_COMPILER))
+    ifneq ($(strip $(TEST_COMPILER)), )
+      COMPILER := clang
+    else
+      COMPILER := gcc
+	endif
   endif
 endif
 
 ifeq ($(COMPILER), clang)
-  CC=clang
-  CXX=clang++
-  DEFAULT_CPPFLAGS += -DNDEBUG 
-  DEFAULT_CFLAGS += -DNDEBUG
+  CC=$(CLANG_PATH)
+  CXX=$(CLANG_PATH)++
+  DEFAULT_CPPFLAGS += -DNDEBUG -no-integrated-as
+  DEFAULT_CFLAGS += -DNDEBUG -no-integrated-as
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
@@ -211,7 +221,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -no-integrated-as -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) 
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
