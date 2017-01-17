@@ -746,15 +746,4 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task);
 #define RT_INTR void
 #endif
 
-/**\cond HIDDEN_SYMBOLS
-// TODO: There is a bug in the PRU code that prevents it from working when SPI is disabled.
-// To work around it, we leave the SPI enabled ( as it does not affect the load of the ARM core), but
-// we avoid processing the analog channels, to save CPU time. We use global variable gProcessAnalog
-// in RTAudio.cpp and PRU.cpp to store the actual value of analog_enabled. To reproduce the bug,
-// undefine the line below and run with -N0 (analog disabled)
- */
-#define PRU_SIGXCPU_BUG_WORKAROUND
-/**
- * \endcond
- */
 #endif /* BELA_H_ */
