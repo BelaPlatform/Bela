@@ -12,3 +12,4 @@
 /Documentation/
 *.js.map
 /.plugins/
+/updates/
