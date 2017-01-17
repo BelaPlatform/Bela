@@ -178,7 +178,7 @@ uploadBuildRun(){
         
 		echo "Invoking the online compiler..."
         # invoke the online compiler
-        "$BELA_PYTHON27" $HVRESOURCES_DIR/uploader.py "$pdpath"/ -n $ENZIENAUDIO_COM_PATCH_NAME -g c -o "$projectpath" $RELEASE_STRING ||\
+        "$BELA_PYTHON27" $HVRESOURCES_DIR/uploader.py "$pdpath"/ -n $ENZIENAUDIO_COM_PATCH_NAME -g c-src -o "$projectpath" $RELEASE_STRING ||\
             { echo "ERROR: an error occurred while executing the uploader.py script"; exit $?; }
     fi;
 
