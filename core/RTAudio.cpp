@@ -70,7 +70,7 @@ vector<InternalAuxiliaryTask*> &getAuxTasks(){
 }
 
 // Flag which tells the audio task to stop
-int gShouldStop = false;
+int volatile gShouldStop = false;
 
 // general settings
 char gPRUFilename[MAX_PRU_FILENAME_LENGTH];		// Path to PRU binary file (internal code if empty)_
