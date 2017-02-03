@@ -1,0 +1,59 @@
+#N canvas 1905 153 656 668 10;
+#X text 44 51 Basic analog out;
+#X text 44 61 ================;
+#X text 45 548 DAC 3: Analog Out 0;
+#X text 45 558 DAC 4: Analog Out 1;
+#X text 45 568 DAC 5: Analog Out 2;
+#X text 45 578 DAC 6: Analog Out 3;
+#X text 45 598 DAC 8: Analog Out 5;
+#X text 45 588 DAC 7: Analog Out 4;
+#X text 45 608 DAC 9: Analog Out 6;
+#X text 45 618 DAC 10: Analog Out 7;
+#X text 45 538 DAC 2: Audio Out R;
+#X text 45 528 DAC 1: Audio Out L;
+#X obj 82 351 *~;
+#X obj 82 309 *~ 10;
+#X obj 82 330 osc~ 1;
+#X text 153 431 << Output to first analog out;
+#X obj 82 275 adc~ 3 4;
+#X text 45 84 Just like the BasicAnalogIn example \, the first two
+;
+#X text 45 98 analog inputs are used to control the frequency and;
+#X text 45 111 amplitude of an oscillator \, this time outputting;
+#X text 45 125 a lower range of frequencies (<10Hz).;
+#X text 45 139 Instead of sending this to Bela's stereo output we;
+#X text 45 153 are sending this to the first analog output.;
+#X text 158 274 << Use first two analog ins;
+#X text 158 310 << Analog In 0 controls frequency;
+#X text 158 349 << Analog In 1 controls amplitude;
+#X obj 82 380 *~ 0.5;
+#X obj 82 402 +~ 0.5;
+#X text 158 389 << Rescale output to range 0-1;
+#X text 45 167 Note that analog inputs and outputs have a range between
+;
+#X text 45 181 0 and 1 \, unlike regular audio signals (which have
+a;
+#X text 45 195 range between -1 and 1). Hence we rescale the output
+;
+#X text 45 209 of the oscillator in order to preserve the full range
+;
+#X text 45 223 of the sinusoidal signal.;
+#X obj 82 432 dac~ 3;
+#X text 44 490 ------------;
+#X text 44 482 DAC routing:;
+#X text 45 502 DAC channels 3-10 are used to address the analog inputs:
+;
+#X text 435 42 ............................;
+#X text 435 52 . ____ ._____ _ .......___ .;
+#X text 435 62 .| __ )| ____| |....../ _ |.;
+#X text 435 82 .| |_) | |___| |___ / ___ |.;
+#X text 435 92 .|____/|_____|_____/_/..._|.io;
+#X text 435 102 ............................;
+#X text 435 72 .| __ || __|.| |...../ _| |.;
+#X connect 12 0 26 0;
+#X connect 13 0 14 0;
+#X connect 14 0 12 0;
+#X connect 16 0 13 0;
+#X connect 16 1 12 1;
+#X connect 26 0 27 0;
+#X connect 27 0 34 0;
