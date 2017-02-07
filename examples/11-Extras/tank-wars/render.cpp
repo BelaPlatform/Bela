@@ -78,7 +78,7 @@ float gSoundProjectileOscillatorPhase = 0;
 float gSoundProjectileOscillatorGain = 0.2;
 float gOscillatorPhaseScaler = 0;
 
-void screen_update();
+void screen_update(void*);
 
 // setup() is called once before the audio rendering starts.
 // Use it to perform any initialisation and allocation which is dependent
@@ -311,7 +311,7 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
-void screen_update()
+void screen_update(void*)
 {
 	// If we should restart, reinitialise the game
 	if(gGameShouldRestart) {

@@ -61,7 +61,7 @@ AuxiliaryTask gFFTTask;
 int gFFTInputBufferPointer = 0;
 int gFFTOutputBufferPointer = 0;
 
-void process_fft_background();
+void process_fft_background(void*);
 
 
 int gEffect = 0; // change this here or with midi CC
@@ -225,7 +225,7 @@ void process_fft(float *inBuffer, int inWritePointer, float *outBuffer, int outW
 }
 
 // Function to process the FFT in a thread at lower priority
-void process_fft_background() {
+void process_fft_background(void*) {
 	process_fft(gInputBuffer, gFFTInputBufferPointer, gOutputBuffer, gFFTOutputBufferPointer);
 }
 

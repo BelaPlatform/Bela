@@ -38,7 +38,7 @@ int writePointer=0;
 int readPointer=writePointer+1;
 AuxiliaryTask updatePll;
 
-void updatePllFunction(){
+void updatePllFunction(void*){
 	static int count = 0;
 	while(!gShouldStop){
 		gAudioCodec->setPllD(D);

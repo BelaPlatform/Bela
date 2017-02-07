@@ -49,7 +49,7 @@ int gDoneLoadingBuffer = 1;
 
 AuxiliaryTask gFillBufferTask;
 
-void fillBuffer() {
+void fillBuffer(void*) {
     
     // increment buffer read pointer by buffer length
     gBufferReadPtr+=BUFFER_LEN;
