@@ -701,7 +701,7 @@ int Bela_muteSpeakers(int mute);
  *
  * This function creates a new auxiliary task which, when scheduled, runs the function specified
  * in the first argument. Note that the task does not run until scheduleAuxiliaryTask() is called.
- * Auxiliary tasks should be created in setup() and never in render() itself.
+ * Auxiliary tasks should be created in `setup()` and never in `render()` itself.
  *
  * The second argument specifies the real-time priority. Valid values are between 0
  * and 99, and usually should be lower than \ref BELA_AUDIO_PRIORITY. Tasks with higher priority always
@@ -711,7 +711,6 @@ int Bela_muteSpeakers(int mute);
  * \param priority Xenomai priority level at which the task should run.
  * \param name Name for this task, which should be unique system-wide (no other running program should use this name).
  * \param arg The argument passed to the callback function.
- * \param autoSchedule If true, the task will be scheduled at the end of each call to `render()`.
  */
 AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg
 #ifdef __cplusplus
