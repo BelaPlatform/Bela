@@ -59,7 +59,7 @@ AuxiliaryTask i2cTask;		// Auxiliary task to read I2C
 int readCount = 0;			// How long until we read again...
 int readIntervalSamples = 0; // How many samples between reads
 
-void readMPR121();
+void readMPR121(void*);
 
 // setup() is called once before the audio rendering starts.
 // Use it to perform any initialisation and allocation which is dependent
@@ -132,7 +132,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 // Auxiliary task to read the I2C board
-void readMPR121()
+void readMPR121(void*)
 {
 	for(int i = 0; i < NUM_TOUCH_PINS; i++) {
 		sensorValue[i] = -(mpr121.filteredData(i) - mpr121.baselineData(i));

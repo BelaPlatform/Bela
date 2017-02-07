@@ -148,8 +148,8 @@ void wavetable_interpolate(int numSamplesIn, int numSamplesOut,
 inline float hysteresis_oscillator(float input, float risingThreshold,
 									float fallingThreshold, bool *rising);
 
-void render_medium_prio();
-void render_low_prio();
+void render_medium_prio(void*);
+void render_low_prio(void*);
 
 #ifdef DBOX_CAPE_TEST
 void render_capetest(int numMatrixFrames, int numAudioFrames, float *audioIn, float *audioOut,
@@ -590,7 +590,7 @@ void render(BelaContext *context, void *userData)
 }
 
 // Medium-priority render function used for audio hop calculations
-void render_medium_prio()
+void render_medium_prio(void*)
 {
 
 	if(gOscillatorNeedsRender) {
@@ -661,7 +661,7 @@ void render_medium_prio()
 
 // Lower-priority render function which performs matrix calculations
 // State should be transferred in via global variables
-void render_low_prio()
+void render_low_prio(void*)
 {
 	if(gDynamicWavetableNeedsRender) {
 		// Find amplitude of wavetable
