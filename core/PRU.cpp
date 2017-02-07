@@ -115,7 +115,6 @@ const unsigned int PRU::kPruGPIOTestPin = 60;	// GPIO1(28); P9-12
 const unsigned int PRU::kPruGPIOTestPin2 = 31;	// GPIO0(31); P9-13
 const unsigned int PRU::kPruGPIOTestPin3 = 26;	// GPIO0(26); P8-14
 
-extern int gShouldStop;
 extern int gRTAudioVerbose;
 
 // These four functions are written in assembly in FormatConvert.S

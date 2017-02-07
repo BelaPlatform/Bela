@@ -385,7 +385,7 @@ typedef void* AuxiliaryTask;	// Opaque data type to keep track of aux tasks
  * to indicate that audio processing should terminate. Calling Bela_stopAudio()
  * has the effect of setting this to \c true.
  */
-extern int gShouldStop;
+extern int volatile gShouldStop;
 
 // *** User-defined render functions ***
 
