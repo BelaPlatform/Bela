@@ -78,9 +78,6 @@ int gRTAudioVerbose = 0;   						// Verbosity level for debugging
 int gAmplifierMutePin = -1;
 int gAmplifierShouldBeginMuted = 0;
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-bool gProcessAnalog;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 
 // Context which holds all the audio/sensor data passed to the render routines
 InternalBelaContext gContext;
@@ -192,14 +189,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// TODO: settings a different number of channels for inputs and outputs is not yet supported
 	gContext.audioInChannels = 2;
 	gContext.audioOutChannels = 2;
-
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	// TODO: see PRU bug mentioned above. We catch here if useAnalog was set to false, store it in gProcessAnalog
-	// and use this value to decide whether we should process the analogs in PRU::loop, but then we
-	// set it to true so that the PRU is init'd and the code runs AS IF the analogs were in use.
-	gProcessAnalog = settings->useAnalog;
-	settings->useAnalog = true;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 
 	if(settings->useAnalog) {
 		gContext.audioFrames = settings->periodSize;
