@@ -393,7 +393,7 @@ typedef void* AuxiliaryTask;	// Opaque data type to keep track of aux tasks
  * to indicate that audio processing should terminate. Calling Bela_stopAudio()
  * has the effect of setting this to \c true.
  */
-extern int gShouldStop;
+extern int volatile gShouldStop;
 
 // *** User-defined render functions ***
 
@@ -747,17 +747,6 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task);
 /** @} */
 #include <Utilities.h>
 
-/**\cond HIDDEN_SYMBOLS
-// TODO: There is a bug in the PRU code that prevents it from working when SPI is disabled.
-// To work around it, we leave the SPI enabled ( as it does not affect the load of the ARM core), but
-// we avoid processing the analog channels, to save CPU time. We use global variable gProcessAnalog
-// in RTAudio.cpp and PRU.cpp to store the actual value of analog_enabled. To reproduce the bug,
-// undefine the line below and run with -N0 (analog disabled)
- */
-#define PRU_SIGXCPU_BUG_WORKAROUND
-/**
- * \endcond
- */
 #ifdef __cplusplus
 }
 #endif

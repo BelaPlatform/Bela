@@ -115,7 +115,6 @@ const unsigned int PRU::kPruGPIOTestPin = 60;	// GPIO1(28); P9-12
 const unsigned int PRU::kPruGPIOTestPin2 = 31;	// GPIO0(31); P9-13
 const unsigned int PRU::kPruGPIOTestPin3 = 26;	// GPIO0(26); P8-14
 
-extern int gShouldStop;
 extern int gRTAudioVerbose;
 
 // These four functions are written in assembly in FormatConvert.S
@@ -309,7 +308,12 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     /* Set up flags */
     pru_buffer_comm[PRU_SHOULD_STOP] = 0;
     pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
-    pru_buffer_comm[PRU_BUFFER_FRAMES] = context->analogFrames;
+    unsigned int pruFrames;
+    if(analog_enabled)
+        pruFrames = context->analogFrames;
+    else
+        pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
+    pru_buffer_comm[PRU_BUFFER_FRAMES] = pruFrames;
     pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
@@ -531,23 +535,18 @@ int PRU::start(char * const filename)
     return 0;
 }
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-extern bool gProcessAnalog;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
-
 // Main loop to read and write data from/to PRU
 void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
 #else
-	// Polling interval is 1/4 of the period
 	if(context->analogInChannels != context->analogOutChannels){
 		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
 	}
-	unsigned int analogChannels = context->analogInChannels;
-	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (analogChannels / 2) * context->analogFrames / 4;
+	// Polling interval is 1/4 of the period
+	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
 #endif
 
 	uint32_t pru_audio_offset, pru_spi_offset;
@@ -582,13 +581,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	uint32_t lastPRUBuffer = 0;
 #endif
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	if(gProcessAnalog == false){
-		context->analogFrames = 0;
-		context->analogInChannels = 0;
-		context->analogOutChannels = 0;
-	}
-#endif
 
 	while(!gShouldStop) {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
