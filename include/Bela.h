@@ -90,6 +90,10 @@
  * Flag for BelaContext. If set, indicates analog outputs persist for future frames.
  */
 #define BELA_FLAG_ANALOG_OUTPUTS_PERSIST	(1 << 1)	// Set if analog/digital outputs persist for future buffers
+/**
+ * Flag for BelaContext. If set, indicates the user will be warned if an underrun occurs
+ */
+#define BELA_FLAG_DETECT_UNDERRUNS	(1 << 2)	// Set if the user will be displayed a message when an underrun occurs
 
 /**
  * \ingroup control
@@ -144,6 +148,8 @@ typedef struct {
 	int pruNumber; 
 	/// The external .bin file to load. If empty will use PRU code from pru_rtaudio_bin.h
 	char pruFilename[MAX_PRU_FILENAME_LENGTH];
+	/// Whether to detect and log underruns
+	int detectUnderruns;
 	/// Whether to use verbose logging
 	int verbose;
 	/// Whether to use the blinking LED to indicate Bela is running

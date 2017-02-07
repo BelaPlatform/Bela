@@ -262,6 +262,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->analogOutputsPersist)
 		gContext.flags |= BELA_FLAG_ANALOG_OUTPUTS_PERSIST;
 
+	if(settings->detectUnderruns)
+		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
+
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
 	gAudioCodec = new I2c_Codec();
