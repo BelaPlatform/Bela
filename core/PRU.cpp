@@ -644,8 +644,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// Check for underruns by comparing the number of samples reported
 		// by the PRU with a local counter
 
-		//TODO: Properly detect underruns
-		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS && 0) {
+		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 		// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 		// half as many analog frames as audio frames
 			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
@@ -654,6 +653,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			// we initialize lastPruFrameCount the first time we get here,
 			// just in case the PRU is already ahead of us
 			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
+
 #ifdef CTAG_FACE_8CH
 //TODO :  factor out the number of channels
 			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 4;
