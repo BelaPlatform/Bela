@@ -49,7 +49,6 @@ typedef struct {
 	bool started;
 	bool hasArgs;
 	void* args;
-	bool autoSchedule;
 } InternalAuxiliaryTask;
 
 // Real-time tasks and objects
@@ -379,7 +378,6 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	newTask->started = false;
 	newTask->args = args;
 	newTask->hasArgs = true;
-    newTask->autoSchedule = false;
     
 	getAuxTasks().push_back(newTask);
 
@@ -396,14 +394,6 @@ void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
                                            // A safer approach would use rt_task_inquire()
 	}
 	rt_task_resume(&taskToSchedule->task);
-}
-void Bela_autoScheduleAuxiliaryTasks(){
-    vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-	    if ((InternalAuxiliaryTask *)(*it)->autoSchedule){
-    		Bela_scheduleAuxiliaryTask(*it);
-	    }
-	}
 }
 
 // Calculation loop that can be used for other tasks running at a lower
