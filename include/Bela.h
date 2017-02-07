@@ -713,12 +713,11 @@ int Bela_muteSpeakers(int mute);
  * \param arg The argument passed to the callback function.
  * \param autoSchedule If true, the task will be scheduled at the end of each call to `render()`.
  */
-#if 0
-AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg, bool autoSchedule = false);
-AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void), int priority, const char *name, bool autoSchedule = false);
-#else
-AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg);
-#endif
+AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg
+#ifdef __cplusplus
+= NULL
+#endif /* __cplusplus */
+);
 
 /**
  * \brief Run an auxiliary task which has previously been created.

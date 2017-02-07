@@ -900,8 +900,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// Increment total number of samples that have elapsed
 		context->audioFramesElapsed += context->audioFrames;
 
-		Bela_autoScheduleAuxiliaryTasks();
-
 	}
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
