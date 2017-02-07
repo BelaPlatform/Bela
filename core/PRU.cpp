@@ -609,28 +609,28 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
-#define CHECK_UNDERRUNS
-#ifdef CHECK_UNDERRUNS
 		// Check for underruns by comparing the number of samples reported
 		// by the PRU with a local counter
 
+		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 		// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 		// half as many analog frames as audio frames
-		static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
-		// read the PRU counter
-		uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
-		// we initialize lastPruFrameCount the first time we get here,
-		// just in case the PRU is already ahead of us
-		static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
-		uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
-		if(pruFrameCount != expectedFrameCount)
-		{
-			// don't print a warning if we are stopping
-			if(!gShouldStop)
-				rt_fprintf(stderr, "Dropped %u blocks\n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
+			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
+			// read the PRU counter
+			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
+			// we initialize lastPruFrameCount the first time we get here,
+			// just in case the PRU is already ahead of us
+			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
+			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
+			if(pruFrameCount != expectedFrameCount)
+			{
+				// don't print a warning if we are stopping
+				if(!gShouldStop)
+					rt_fprintf(stderr, "Underrun detected: %u blocks dropped \n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
+			}
+			lastPruFrameCount = pruFrameCount;
 		}
-		lastPruFrameCount = pruFrameCount;
-#endif
+
 		if(belaCapeButton.enabled()){
 			static int belaCapeButtonCount = 0;
 			if(belaCapeButton.read() == 0){
