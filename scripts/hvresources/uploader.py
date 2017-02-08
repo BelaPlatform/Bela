@@ -60,11 +60,10 @@ __HV_UPLOADER_SERVICE_TOKEN = \
 __SUPPORTED_GENERATOR_SET = {
     "c-src",
     "web-local", "web-js",
-    "pdext-src", "pdext-macos-x86", "pdext-macos-x64",
-    "unity-src", "unity-macos", "unity-macos-x86", "unity-macos-x64", "unity-linux-x64", "unity-android-armv7s", "unity-android-arm64",
-    "wwise-src", "wwise-win-x64",
-    "vst2-src", "vst2-macos-x64", "vst2-win-x86", "vst2-win-x64", "vst2-linux-x64",
-    "fabric-src", "fabric-macos-x86", "fabric-macos-x64", "fabric-macos-x86", "fabric-win-x64"
+    "fabric-src", "fabric-macos-x64", "fabric-win-x86", "fabric-win-x64", "fabric-linux-x64", "fabric-android-armv7a",
+    "unity-src", "unity-macos-x64", "unity-win-x86", "unity-win-x64", "unity-linux-x64", "unity-android-armv7a",
+    "wwise-src", "wwise-macos-x64", "wwise-win-x86", "wwise-win-x64",  "wwise-linux-x64", "wwise-ios-armv7a"
+    "vst2-src", "vst2-macos-x64", "vst2-win-x86", "vst2-win-x64", "vst2-linux-x64"
 }
 
 def __zip_dir(in_dir, zip_path, file_filter=None):
@@ -95,7 +94,7 @@ def __get_file_url_stub_for_generator(json_api, g):
 
 
 
-def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False):
+def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False, service_token=None):
     """ Upload a directory to the Heavy Cloud Service.
 
         Parameters
@@ -193,9 +192,27 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                 # if an owner is not supplied, default to the user name in the token
                 owner = payload["name"]
         except Exception as e:
-            print "The user token is not valid. Generate a new one at https://enzienaudio.com/h/<username>/settings."
+            print "The user token is invalid. Generate a new one at https://enzienaudio.com/h/<username>/settings."
             exit_code = ErrorCodes.CODE_INVALID_TOKEN
             raise e
+
+        # if there is a user-supplied service token, do a basic validity check
+        if service_token:
+            try:
+                # check the valifity of the token
+                payload = json.loads(base64.urlsafe_b64decode(token.split(".")[1]))
+                payload["startDate"] = datetime.datetime.strptime(payload["startDate"], "%Y-%m-%dT%H:%M:%S.%f")
+
+                # ensure that the token is valid
+                now = datetime.datetime.utcnow()
+                assert payload["startDate"] <= now
+
+                assert "service" in payload, "'service' field required in service token payload."
+            except Exception as e:
+                print "The supplied service token is invalid. A default token will be used."
+                service_token = __HV_UPLOADER_SERVICE_TOKEN
+        else:
+            service_token = __HV_UPLOADER_SERVICE_TOKEN
 
         # parse the optional release argument
         if release:
@@ -255,7 +272,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
             headers={
                 "Accept": "application/json",
                 "Authorization": "Bearer " + token,
-                "X-Heavy-Service-Token": __HV_UPLOADER_SERVICE_TOKEN
+                "X-Heavy-Service-Token": service_token
             },
             files={"file": (os.path.basename(zip_path), open(zip_path, "rb"), "application/zip")})
         r.raise_for_status()
@@ -287,14 +304,21 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
             for i,g in enumerate(generators):
                 file_url = urlparse.urljoin(
                     domain,
-                    os.path.join(reply_json["data"]["links"]["html"], "/".join(g.split("-")), "archive.zip"))
+                    "/".join([
+                        reply_json["data"]["links"]["html"],
+                        g.replace("-", "/"),
+                        "archive.zip"
+                    ])
+                )
                 if file_url and (len(output_dirs) > i or b):
                     r = requests.get(
                         file_url,
                         headers={
-                            "Authorization": "Bearer " + token,
-                            "X-Heavy-Service-Token": __HV_UPLOADER_SERVICE_TOKEN
-                        })
+                            #"Authorization": "Bearer " + token,
+                            "X-Heavy-Service-Token": service_token
+                        },
+                        timeout=None # some builds can take a very long time
+                    )
                     r.raise_for_status()
 
                     # write the reply to a temporary file
@@ -311,8 +335,8 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                         os.makedirs(target_dir) # ensure that the output directory exists
                     __unzip(c_zip_path, target_dir)
 
-                    if g == "c" and y:
-                        keep_files = ("_{0}.h".format(name), "_{0}.c".format(name))
+                    if g == "c-src" and y:
+                        keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
                         for f in os.listdir(target_dir):
                             if not f.endswith(keep_files):
                                 os.remove(os.path.join(target_dir, f));
@@ -408,6 +432,9 @@ def main():
         "--clear_token",
         help="Clears the exsiting token and asks for a new one from the command line.",
         action="count")
+    parser.add_argument(
+        "--service_token",
+        help="Use a custom service token.")
     args = parser.parse_args()
 
     exit_code, reponse_obj = upload(
@@ -423,7 +450,8 @@ def main():
         domain=args.domain,
         verbose=args.verbose,
         token=args.token,
-        clear_token=args.clear_token)
+        clear_token=args.clear_token,
+        service_token=args.service_token)
 
     # exit and return the exit code
     sys.exit(exit_code)
@@ -493,4 +521,3 @@ An example of the server response:
   ]
 }
 """
-
