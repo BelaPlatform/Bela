@@ -179,6 +179,13 @@ static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 
+void fdLoop(void*){
+	while(!gShouldStop){
+		libpd_sys_microsleep(0);
+		usleep(3000);
+	}
+}
+
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
@@ -308,6 +315,10 @@ bool setup(BelaContext *context, void *userData)
 		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
 	}
 
+	AuxiliaryTask fdTask;
+	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
+	Bela_scheduleAuxiliaryTask(fdTask);
+
 	return true;
 }
 
@@ -384,6 +395,15 @@ void render(BelaContext *context, void *userData)
 					int channel = message.getChannel();
 					int value =  ((message.getDataByte(1) << 7)| message.getDataByte(0)) - 8192;
 					libpd_pitchbend(channel + port * 16, value);
+					break;
+				}
+				case kmmSystem:
+				// currently Bela only handles sysrealtime, and it does so pretending it is a channel message with no data bytes, so we have to re-assemble the status byte
+				{
+					int channel = message.getChannel();
+					int status = message.getStatusByte();
+					int byte = channel | status;
+					libpd_sysrealtime(port, byte);
 					break;
 				}
 				case kmmNone:

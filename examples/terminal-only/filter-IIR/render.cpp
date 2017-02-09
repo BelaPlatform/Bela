@@ -50,12 +50,12 @@ bool initialise_aux_tasks();
 // Task for handling the update of the frequencies using the matrix
 AuxiliaryTask gChangeCoeffTask;
 
-void check_coeff();
+void check_coeff(void*);
 
 // Task for handling the update of the frequencies using the matrix
 AuxiliaryTask gInputTask;
 
-void read_input();
+void read_input(void*);
 
 
 extern float gCutFreq;
@@ -166,7 +166,7 @@ bool initialise_aux_tasks()
 // Check if cut-off freq has been changed
 // and new coefficients are needed
 
-void check_coeff()
+void check_coeff(void*)
 {
 	if(gChangeCoeff == 1)
 	{
@@ -186,7 +186,7 @@ void check_coeff()
 // it has minimal effect on the audio performance but it will take longer to
 // complete if the system is under heavy audio load.
 
-void read_input()
+void read_input(void*)
 {
 	// This is not a real-time task because
 	// select() and scanf() are system calls, not handled by Xenomai.

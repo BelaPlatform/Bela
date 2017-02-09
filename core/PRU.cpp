@@ -308,7 +308,12 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     /* Set up flags */
     pru_buffer_comm[PRU_SHOULD_STOP] = 0;
     pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
-    pru_buffer_comm[PRU_BUFFER_FRAMES] = context->analogFrames;
+    unsigned int pruFrames;
+    if(analog_enabled)
+        pruFrames = context->analogFrames;
+    else
+        pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
+    pru_buffer_comm[PRU_BUFFER_FRAMES] = pruFrames;
     pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
@@ -530,23 +535,18 @@ int PRU::start(char * const filename)
     return 0;
 }
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-extern bool gProcessAnalog;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
-
 // Main loop to read and write data from/to PRU
 void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
 #else
-	// Polling interval is 1/4 of the period
 	if(context->analogInChannels != context->analogOutChannels){
 		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
 	}
-	unsigned int analogChannels = context->analogInChannels;
-	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (analogChannels / 2) * context->analogFrames / 4;
+	// Polling interval is 1/4 of the period
+	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
 #endif
 
 	uint32_t pru_audio_offset, pru_spi_offset;
@@ -581,13 +581,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	uint32_t lastPRUBuffer = 0;
 #endif
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	if(gProcessAnalog == false){
-		context->analogFrames = 0;
-		context->analogInChannels = 0;
-		context->analogOutChannels = 0;
-	}
-#endif
 
 	while(!gShouldStop) {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
@@ -616,6 +609,28 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
+		// Check for underruns by comparing the number of samples reported
+		// by the PRU with a local counter
+
+		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
+		// If analog is disabled, then PRU assumes 8 analog channels, and therefore
+		// half as many analog frames as audio frames
+			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
+			// read the PRU counter
+			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
+			// we initialize lastPruFrameCount the first time we get here,
+			// just in case the PRU is already ahead of us
+			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
+			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
+			if(pruFrameCount != expectedFrameCount)
+			{
+				// don't print a warning if we are stopping
+				if(!gShouldStop)
+					rt_fprintf(stderr, "Underrun detected: %u blocks dropped \n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
+			}
+			lastPruFrameCount = pruFrameCount;
+		}
+
 		if(belaCapeButton.enabled()){
 			static int belaCapeButtonCount = 0;
 			if(belaCapeButton.read() == 0){
@@ -836,8 +851,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		// Increment total number of samples that have elapsed
 		context->audioFramesElapsed += context->audioFrames;
-
-		Bela_autoScheduleAuxiliaryTasks();
 
 	}
 

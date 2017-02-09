@@ -36,7 +36,7 @@ int gWriteBufferPointers[10], gReadBufferPointers[10];
 // Task to analyse and print results which would otherwise be too slow for render()
 AuxiliaryTask gAnalysisTask;
 
-void analyseResults();
+void analyseResults(void*);
 
 // setup() is called once before the audio rendering starts.
 // Use it to perform any initialisation and allocation which is dependent
@@ -137,7 +137,7 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
-void analyseResults()
+void analyseResults(void*)
 {
 	rt_printf("\e[1;1H\e[2J");	// Command to clear the screen
 

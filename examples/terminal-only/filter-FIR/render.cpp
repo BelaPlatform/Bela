@@ -46,7 +46,7 @@ void initialise_filter(BelaContext *context);
 AuxiliaryTask gTriggerSamplesTask;
 
 bool initialise_trigger();
-void trigger_samples();
+void trigger_samples(void*);
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -131,7 +131,7 @@ bool initialise_trigger()
 // it has minimal effect on the audio performance but it will take longer to
 // complete if the system is under heavy audio load.
 
-void trigger_samples()
+void trigger_samples(void*)
 {
 	// This is not a real-time task because
 	// select() and scanf() are system calls, not handled by Xenomai.

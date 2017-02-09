@@ -114,7 +114,7 @@ public:
     static void writeAllOutputs(bool flush);
     static void startThread();
     static void stopThread();
-    static void run();
+    static void run(void*);
 };
 
 #endif /* WRITEMFILE_H_ */

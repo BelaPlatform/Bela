@@ -54,7 +54,7 @@ float *gDAmplitudes;	// Buffer holding the derivatives of amplitude
 
 void calculate_coeff(float sampleRate, float cutFreq);
 bool initialise_oscillators(float fundamental_frequency);
-void print_results();
+void print_results(void*);
 
 extern "C" {
 	// Function prototype for ARM assembly implementation of oscillator bank
@@ -261,7 +261,7 @@ bool initialise_oscillators(float fundamental_frequency)
 
 // Print the current state of each of the filters
 // Do this in a separate thread to avoid loading down the audio thread
-void print_results()
+void print_results(void*)
 {
 	if(gIsStdoutTty)
 		rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
