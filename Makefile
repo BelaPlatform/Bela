@@ -128,7 +128,6 @@ ifndef COMPILER
 	# this is a workaround for people with old IDE startup script (without /usr/local/bin in the $PATH)
     CLANG_PATH:=/usr/local/bin/clang
     TEST_COMPILER := $(shell [ -e $(CLANG_PATH) ] && echo yes)
-    $(warning $(TEST_COMPILER))
     ifneq ($(strip $(TEST_COMPILER)), )
       COMPILER := clang
     else
