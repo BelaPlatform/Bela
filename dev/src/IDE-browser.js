@@ -49,6 +49,7 @@ projectView.on('message', (event, data) => {
 		data.currentProject = models.project.getKey('currentProject');
 	}
 	data.timestamp = performance.now();
+// 	console.log('here', event, data);
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
@@ -318,6 +319,17 @@ socket.on('mtime-compare', data => {
 			fileChangedPopup(data.fileName);
 	}
 });
+
+socket.on('rebuild-project', project => {
+	if (project){
+		projectView.emit('message', 'project-event', {currentProject: project, func: 'openProject'});
+// 		console.log('opening project', project);
+	}
+		
+	setTimeout(function(){
+		toolbarView.emit('process-event', 'run');
+	}, 1000);
+})
 
 var checkModifiedTimeInterval;
 var compareFiles = false;
