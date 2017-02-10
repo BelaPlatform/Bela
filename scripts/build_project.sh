@@ -199,7 +199,7 @@ uploadBuildRun(){
 	if [ "$GET" -eq 1 ]
 	then
 		echo "Asking the IDE to rebuild currently active project"
-		curl $BBB_HOSTNAME/build-project
+		curl "$BBB_HOSTNAME/rebuild-project?project=$BBB_PROJECT_NAME"
 	else
 		# Make new Bela executable and run
 		MAKE_COMMAND="make --no-print-directory QUIET=true -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
