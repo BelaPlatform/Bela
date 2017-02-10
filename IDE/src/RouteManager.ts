@@ -74,8 +74,8 @@ export function doxygen(req: express.Request, res: express.Response){
 		.catch( () => res.status(500).send('file '+req.query.file+'.xml not found') );
 }
 
-export function rebuild_project(reg: express.Request, res: express.Response){
-	console.log('request received');
-	socket_manager.broadcast('rebuild-project', '');
+export function rebuild_project(req: express.Request, res: express.Response){
+	console.log('request received, project ', req.query.project);
+	socket_manager.broadcast('rebuild-project', req.query.project);
 	res.status(200).send();
 }

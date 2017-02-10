@@ -342,8 +342,16 @@ socket.on('mtime-compare', data => {
 	}
 });
 
-socket.on('rebuild-project', () => {
-	toolbarView.emit('process-event', 'run');
+socket.on('rebuild-project', project => {
+	let timeout = 0;
+	if (project){
+		projectView.emit('message', 'project-event', {currentProject: project, func: 'openProject'});
+		console.log('opening project', project);
+		timeout = 1000;
+	}
+	setTimeout(function(){
+		toolbarView.emit('process-event', 'run');
+	}, timeout);
 })
 
 var checkModifiedTimeInterval;
