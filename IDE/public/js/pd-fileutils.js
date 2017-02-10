@@ -11267,12 +11267,20 @@ var recursParse = function(txt) {
           }
         }
 
+		var pushArgs;
+        if (elementType === 'text')
+			// if it is a comment, no need to parse this recursively.
+			// Just strip the " \,"
+			pushArgs = [args[0].replace(" \\,", ",").replace(" \\;", ";")];
+		else 
+			pushArgs = parseArgs(args);
+
         // Add the object to the graph
         patch.nodes.push({
           id: nextId(),
           proto: proto,
           layout: layout,
-          args: parseArgs(args)
+          args: pushArgs
         })
 
       // ---- array : start of an array definition ---- //
