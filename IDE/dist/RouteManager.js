@@ -72,3 +72,9 @@ function doxygen(req, res) {
         .catch(function () { return res.status(500).send('file ' + req.query.file + '.xml not found'); });
 }
 exports.doxygen = doxygen;
+function rebuild_project(reg, res) {
+    console.log('request received');
+    socket_manager.broadcast('rebuild-project', '');
+    res.status(200).send();
+}
+exports.rebuild_project = rebuild_project;

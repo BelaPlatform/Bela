@@ -125,6 +125,8 @@ function setup_routes(app: express.Application){
 	app.get('/download', routes.download);
 	// doxygen xml
 	app.get('/documentation_xml', routes.doxygen);
+	// endpoint to trigger a project build
+	app.get('/rebuild-project', routes.rebuild_project);
 	// examples
 	app.use('/examples', express.static(paths.examples));
   // libs

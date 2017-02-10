@@ -342,6 +342,10 @@ socket.on('mtime-compare', data => {
 	}
 });
 
+socket.on('rebuild-project', () => {
+	toolbarView.emit('process-event', 'run');
+})
+
 var checkModifiedTimeInterval;
 var compareFiles = false;
 function setModifiedTimeInterval(mtime){
