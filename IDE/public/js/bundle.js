@@ -752,7 +752,15 @@ socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', function (data) {
 	if (compareFiles && data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
 		// console.log(data, data.fileData, editorView.getData());
-		if (data.fileData !== editorView.getData()) fileChangedPopup(data.fileName);
+		if (data.fileData !== editorView.getData()) {
+			var data = {
+				func: 'openProject',
+				currentProject: models.project.getKey('currentProject'),
+				timestamp: performance.now()
+			};
+			socket.emit('project-event', data);
+			consoleView.emit('openNotification', data);
+		}
 	}
 });
 
