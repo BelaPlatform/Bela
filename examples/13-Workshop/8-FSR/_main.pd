@@ -1,5 +1,5 @@
 #N canvas 489 23 483 627 10;
-#X obj 39 209 dac~ 1 2;
+#X obj 39 239 dac~ 1 2;
 #X text 35 32 Rubber Duckie;
 #X text 35 42 =============;
 #X text 251 15 ............................;
@@ -14,7 +14,6 @@
 #X text 113 176 <<< open this abstraction to see how the model works
 ;
 #X text 113 141 <<< calculate differential on input signal;
-#X obj 39 107 adc~ 3;
 #X text 53 260 .........................................................
 ;
 #X text 53 270 .........................==~~~~..........................
@@ -78,7 +77,10 @@
 #X text 53 380 ..............7$$$$ZZZOZ$|\\\$7777?????++++++=+===..........
 ;
 #X text 113 107 <<< use FSR on analog input 0;
+#X obj 39 107 adc~ 6;
+#X obj 39 198 *~ 0.1;
 #X connect 10 0 11 0;
-#X connect 11 0 0 0;
-#X connect 11 0 0 1;
-#X connect 14 0 10 0;
+#X connect 11 0 47 0;
+#X connect 46 0 10 0;
+#X connect 47 0 0 0;
+#X connect 47 0 0 1;

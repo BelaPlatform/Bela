@@ -1,14 +1,11 @@
 #N canvas 0 22 675 404 10;
-#X obj 60 303 s bela_digitalOut15;
 #X text 58 199 Digital out \, message rate;
-#X obj 60 252 metro 500;
-#X obj 60 277 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+#X obj 60 277 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
 1;
 #X obj 60 227 loadbang;
 #X text 88 276 Blink that LED!;
 #X obj 64 149 s bela_setDigital;
 #X obj 64 102 loadbang;
-#X msg 64 124 out 15;
 #X text 134 122 initialise the pin to output;
 #X text 463 11 ............................;
 #X text 463 21 . ____ ._____ _ .......___ .;
@@ -19,8 +16,11 @@
 #X text 463 41 .| __ || __|.| |...../ _| |.;
 #X text 64 30 Digital Output;
 #X text 64 40 ===============;
-#X connect 2 0 3 0;
-#X connect 3 0 0 0;
-#X connect 4 0 2 0;
-#X connect 7 0 8 0;
-#X connect 8 0 6 0;
+#X msg 64 124 out 17;
+#X obj 60 303 s bela_digitalOut17;
+#X obj 60 252 metro 200;
+#X connect 1 0 17 0;
+#X connect 2 0 18 0;
+#X connect 5 0 16 0;
+#X connect 16 0 4 0;
+#X connect 18 0 1 0;
