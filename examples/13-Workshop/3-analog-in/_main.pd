@@ -1,4 +1,4 @@
-#N canvas 406 75 703 549 10;
+#N canvas 406 75 640 544 10;
 #X obj 43 253 osc~ 440;
 #X obj 43 306 dac~;
 #X obj 43 274 *~;
@@ -38,14 +38,9 @@
 #X text 37 128 0 and 1 \, unlike regular audio signals (which have
 a;
 #X text 37 142 range between -1 and 1).;
-#X obj 393 306 dac~ 27 28;
-#X obj 393 269 adc~ 3 4;
-#X text 471 284 << Use the scope to visualise;
 #X connect 0 0 2 0;
 #X connect 2 0 1 0;
 #X connect 2 0 1 1;
 #X connect 17 0 0 0;
 #X connect 18 0 17 0;
 #X connect 18 1 2 1;
-#X connect 37 0 36 0;
-#X connect 37 1 36 1;
