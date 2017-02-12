@@ -73,16 +73,34 @@
 #X msg 630 375 start;
 #X msg 658 169 in 18 message;
 #X obj 631 262 r bela_digitalIn18;
-#X text 890 252 to audio in left.;
-#X text 890 228 Hardware: connect a button to P9_14 \, connect two
+#X text 889 195 Hardware: connect a button to P9_14 \, connect two
 analog;
-#X text 890 264 You can adjust the input gain of your sound source
-;
-#X text 890 278 setting pga-gain-left in the IDE.;
-#X text 890 240 sensors to analog in 0 and 1 \, connect a sound source
+#X text 890 208 sensors to analog in 0 and 1 \, connect a sound source
 ;
 #X obj 21 249 adc~ 3;
 #X obj 303 275 adc~ 4;
+#X text 891 380 sample playback at the original speed (use \, e.g.:
+;
+#X text 891 237 Task1: playback \$0-table1 using the sensor connected
+to;
+#X text 891 248 analog in 0 The voltage outputof the sensor controls
+;
+#X text 891 260 the position of the playhead in the table.;
+#X text 891 282 Task2: use the button to control the recording of a
+sample;
+#X text 891 293 from your sound source. Use the scope to check that
+your;
+#X text 891 304 audio input is working properly.;
+#X text 891 369 Task3: connect another button and use it to trigger
+;
+#X text 891 315 You can adjust the input gain of your sound source
+in the;
+#X text 891 326 IDE with "pga-gain-left".;
+#X text 891 336 Playback the recorded sample with the sensor connected
+to;
+#X text 891 346 analog in 1;
+#X text 891 392 [tabplay~].;
+#X text 890 220 to left audio input.;
 #X connect 2 0 7 0;
 #X connect 7 0 45 0;
 #X connect 8 0 46 0;
@@ -115,5 +133,5 @@ analog;
 #X connect 62 0 27 0;
 #X connect 63 0 32 1;
 #X connect 63 0 31 0;
-#X connect 69 0 2 0;
-#X connect 70 0 22 0;
+#X connect 66 0 2 0;
+#X connect 67 0 22 0;
