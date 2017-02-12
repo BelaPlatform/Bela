@@ -11271,7 +11271,7 @@ var recursParse = function(txt) {
         if (elementType === 'text')
 			// if it is a comment, no need to parse this recursively.
 			// Just strip the " \,"
-			pushArgs = [args[0].replace(" \\,", ",").replace(" \\;", ";")];
+			pushArgs = [args[0].replace(" \\,", ",").replace(" \\;", ";").replace(/\\\$/g, "$")];
 		else 
 			pushArgs = parseArgs(args);
 

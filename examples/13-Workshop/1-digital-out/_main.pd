@@ -1,6 +1,6 @@
 #N canvas 0 22 675 404 10;
 #X text 58 199 Digital out \, message rate;
-#X obj 60 277 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+#X obj 60 277 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
 #X obj 60 227 loadbang;
 #X text 88 276 Blink that LED!;
@@ -19,6 +19,11 @@
 #X msg 64 124 out 17;
 #X obj 60 303 s bela_digitalOut17;
 #X obj 60 252 metro 200;
+#X text 400 215 Task: change the rate of flashing;
+#X text 400 164 Hardware: connect an LED to P9_12 \, see;
+#X text 400 177 attached diagram and Bela pin diagram.;
+#X text 200 29 to access the Bela IDE.;
+#X text 200 17 Go to webpage http://192.168.7.2;
 #X connect 1 0 17 0;
 #X connect 2 0 18 0;
 #X connect 5 0 16 0;
