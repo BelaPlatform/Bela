@@ -25,8 +25,10 @@
 #X text 218 209 << Analog In 1 controls LFO frequency;
 #X text 217 231 << Analog In 0 controls oscillator frequency;
 #X obj 147 189 *~ 60;
-#X text 601 354 << Use the scope to visualise;
-#X obj 518 355 dac~ 27 28;
+#X text 213 426 << Use the scope to visualise;
+#X obj 130 427 dac~ 27 28;
+#X text 641 317 the effect of AM in the frequency domain.;
+#X text 641 305 Task: use the scope's FFT setting to visualize;
 #X connect 0 0 20 0;
 #X connect 0 1 24 0;
 #X connect 2 0 3 0;

@@ -52,6 +52,9 @@ a;
 #X text 518 432 << Use the scope to visualise;
 #X obj 395 433 dac~ 27 28 29 30;
 #X text 45 125 a lower range of frequencies (<20Hz).;
+#X text 497 261 Task: use Bela scope to visualize the output \,;
+#X text 497 273 adjust the trigger settings to stabilize the signal.
+;
 #X connect 12 0 24 0;
 #X connect 13 0 12 0;
 #X connect 15 0 43 0;
