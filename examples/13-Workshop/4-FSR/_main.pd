@@ -76,8 +76,8 @@
 ;
 #X text 53 380 ..............7$$$$ZZZOZ$|\\\$7777?????++++++=+===..........
 ;
-#X text 113 107 <<< use FSR on analog input 0;
-#X obj 39 107 adc~ 6;
+#X text 113 107 <<< use FSR on analog input 1;
+#X obj 39 107 adc~ 4;
 #X obj 39 204 *~ 0.1;
 #X connect 10 0 11 0;
 #X connect 11 0 47 0;
