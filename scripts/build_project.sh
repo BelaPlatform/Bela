@@ -189,6 +189,7 @@ uploadBuildRun(){
 		#  with older files from the host. This will solve 99% of the issues with Makefile thinking a target is up to date when it is not.
 		echo "using rsync..."
 		rsync -ac --out-format="   %n" --no-t --delete-after --exclude="$BBB_PROJECT_NAME" --exclude=build --exclude="settings.json" "$HOST_SOURCE_PATH""/" "$BBB_NETWORK_TARGET_FOLDER/" #trailing slashes used here make sure rsync does not create another folder inside the target folder
+		[ "$FIRST_RUN" -eq 1 ] && [ -f "$HOST_SOURCE_PATH/settings.json" ] && rsync -ac --out-format="   %n" --no-t --ignore-existing "$HOST_SOURCE_PATH""/"settings.json  "$BBB_NETWORK_TARGET_FOLDER/" #trailing slashes used here make sure rsync does not create another folder inside the target folder
 		FIRST_RUN=0
 	fi
 
