@@ -26,19 +26,25 @@
 #X text 217 231 << Analog In 0 controls oscillator frequency;
 #X obj 147 189 *~ 60;
 #X text 213 426 << Use the scope to visualise;
-#X obj 130 427 dac~ 27 28;
-#X text 641 317 the effect of AM in the frequency domain.;
-#X text 641 305 Task: use the scope's FFT setting to visualize;
+#X obj 144 426 dac~ 27 28;
+#X text 641 313 the effect of AM in the frequency domain.;
+#X text 641 287 and send the LFO to it.;
+#X text 641 261 adjust the trigger settings to stabilize the signal.
+;
+#X text 641 249 Task1: use Bela scope to visualize the signals \,;
+#X text 641 275 Task2: connect the LED to analog output 0 [dac~ 3]
+;
+#X text 641 301 Task3: use the scope's FFT setting to visualize;
 #X connect 0 0 20 0;
 #X connect 0 1 24 0;
 #X connect 2 0 3 0;
 #X connect 3 0 13 1;
 #X connect 3 0 14 2;
-#X connect 3 0 26 1;
+#X connect 3 0 26 0;
 #X connect 11 0 2 0;
 #X connect 13 0 14 0;
 #X connect 13 0 14 1;
-#X connect 13 0 26 0;
+#X connect 13 0 26 1;
 #X connect 20 0 21 0;
 #X connect 21 0 13 0;
 #X connect 24 0 11 0;

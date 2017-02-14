@@ -1,5 +1,5 @@
 #N canvas 106 45 676 441 10;
-#X obj 60 297 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+#X obj 60 297 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
 1;
 #X text 88 296 Blink that LED!;
 #X obj 64 149 s bela_setDigital;
@@ -18,12 +18,17 @@
 #X obj 60 353 s bela_digitalOut17;
 #X msg 64 124 in 18 \, out 17;
 #X obj 60 245 r bela_digitalIn18;
-#X text 415 155 Hardware: connect a button to P9_14 \, see;
-#X text 415 169 attached diagram and Bela pin diagram.;
-#X text 415 218 Task1: print the value of the button;
-#X text 415 246 Task2: make it push-on push-off;
-#X text 415 259 Task3: add a debouncer using [delay].;
-#X text 415 232 to the console of the IDE.;
+#X text 385 155 Hardware: connect a button to P9_14 \, see;
+#X text 385 169 attached diagram and Bela pin diagram.;
+#X text 385 218 Task1: print the value of the button;
+#X text 385 232 to the console of the IDE.;
+#X text 385 248 Task2: trigger the;
+#X text 534 248 with each button down;
+#X text 385 262 Task3: make it push-on push-off;
+#X text 385 276 Task4: alternate between [kick] and;
+#X text 385 291 Task5: add a debouncer using [delay].;
+#X obj 503 247 kick;
+#X obj 609 274 snare;
 #X connect 0 0 15 0;
 #X connect 3 0 16 0;
 #X connect 16 0 2 0;
