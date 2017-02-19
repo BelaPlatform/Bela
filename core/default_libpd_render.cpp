@@ -190,8 +190,13 @@ Scope scope;
 unsigned int gScopeChannelsInUse = 4;
 float* gScopeOut;
 void* gPatch;
+bool gDigitalEnabled = 0;
+
 bool setup(BelaContext *context, void *userData)
 {
+	if(context->digitalFrames > 0 && context->digitalChannels > 0)
+		gDigitalEnabled = 1;
+
 	// add here other devices you need 
 	gMidiPortNames.push_back("hw:1,0,0");
 	//gMidiPortNames.push_back("hw:0,0,0");
@@ -219,10 +224,13 @@ bool setup(BelaContext *context, void *userData)
 	gAnalogChannelsInUse = context->analogInChannels;
 
 	// digital setup
-	dcm.setCallback(sendDigitalMessage);
-	if(context->digitalChannels > 0){
-		for(unsigned int ch = 0; ch < context->digitalChannels; ++ch){
-			dcm.setCallbackArgument(ch, receiverNames[ch]);
+	if(gDigitalEnabled)
+	{
+		dcm.setCallback(sendDigitalMessage);
+		if(context->digitalChannels > 0){
+			for(unsigned int ch = 0; ch < context->digitalChannels; ++ch){
+				dcm.setCallbackArgument(ch, receiverNames[ch]);
+			}
 		}
 	}
 	printf("Trying to open MIDI devices...\n");
@@ -467,6 +475,8 @@ void render(BelaContext *context, void *userData)
 		}
 	}
 
+	if(gDigitalEnabled)
+	{
 		// Bela digital input
 		// note: in multiple places below we assume that the number of digitals is same as number of audio
 		// digital in at message-rate
@@ -482,6 +492,7 @@ void render(BelaContext *context, void *userData)
 				}
 			}
 		}
+	}
 
 		libpd_process_sys(); // process the block
 
@@ -489,17 +500,22 @@ void render(BelaContext *context, void *userData)
 		// digital out at signal-rate
 		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
 			unsigned int digitalFrame = (audioFrameBase + j);
-			for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstDigitalChannel;
-					k < context->digitalChannels; k++, p1 += gLibpdBlockSize) {
-				if(dcm.isSignalRate(k) && dcm.isOutput(k)){ // only process output channels that are handled at signal rate
-					digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
+			if(gDigitalEnabled)
+			{
+				for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstDigitalChannel;
+						k < context->digitalChannels; k++, p1 += gLibpdBlockSize) {
+					if(dcm.isSignalRate(k) && dcm.isOutput(k)){ // only process output channels that are handled at signal rate
+						digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
+					}
 				}
 			}
 		}
 
+	if(gDigitalEnabled)
+	{
 		// digital out at message-rate
 		dcm.processOutput(&context->digital[audioFrameBase], gLibpdBlockSize);
-
+	}
 		//audio
 		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; j++, p0++) {
 			for (k = 0, p1 = p0; k < context->audioOutChannels; k++, p1 += gLibpdBlockSize) {
