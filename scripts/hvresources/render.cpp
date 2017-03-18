@@ -27,7 +27,7 @@ unsigned int hvMidiHashes[7];
 unsigned int gScopeChannelsInUse;
 float* gScopeOut;
 // Bela Scope
-static Scope scope;
+static Scope* scope = NULL;
 static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
@@ -220,6 +220,7 @@ static unsigned int gDigitalSigInChannelsInUse;
 static unsigned int gDigitalSigOutChannelsInUse;
 
 bool setup(BelaContext *context, void *userData)	{
+	// scope = new Scope();
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context->analogOutChannels){
 		// It should actually work, but let's test it before releasing it!
@@ -280,8 +281,10 @@ bool setup(BelaContext *context, void *userData)	{
 	midi.enableParser(true);
 
 	if(gScopeChannelsInUse > 0){
+		fprintf(stderr, "Scope currently not supported, see #265 https://github.com/BelaPlatform/Bela/issues/265 \n");
+		exit(1);
 		// block below copy/pasted from libpd, except
-		scope.setup(gScopeChannelsInUse, context->audioSampleRate);
+		scope->setup(gScopeChannelsInUse, context->audioSampleRate);
 		gScopeOut = new float[gScopeChannelsInUse];
 	}
 	// Bela digital
@@ -292,7 +295,7 @@ bool setup(BelaContext *context, void *userData)	{
 		}
 	}
 	// unlike libpd, no need here to bind the bela_digitalOut.. receivers
-	multiplexerTableHash = hv_string_to_hash(multiplexerArray);
+	multiplexerTableHash = hv_stringToHash(multiplexerArray);
 	if(context->multiplexerChannels > 0){
 		pdMultiplexerActive = true;
 		multiplexerArraySize = context->multiplexerChannels * context->analogInChannels;
@@ -445,6 +448,14 @@ void render(BelaContext *context, void *userData)
 	//hv_sendMessageToReceiverV(gHeavyContext, "bela_bang", 0.0f, "b");
 
 	hv_processInline(gHeavyContext, gHvInputBuffers, gHvOutputBuffers, context->audioFrames);
+	/*
+	for(int n = 0; n < context->audioFrames*gHvOutputChannels; ++n)
+	{
+		printf("%.3f, ", gHvOutputBuffers[n]);
+		if(n % context->audioFrames == context->audioFrames - 1)
+			printf("\n");
+	}
+	*/
 
 	// Bela digital out
 	// Bela digital out at signal-rate
@@ -483,7 +494,7 @@ void render(BelaContext *context, void *userData)
 			for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
 				gScopeOut[k] = *p1;
 			}
-			scope.log(gScopeOut);
+			scope->log(gScopeOut);
 		}
 	}
 
@@ -516,4 +527,5 @@ void cleanup(BelaContext *context, void *userData)
 	free(gHvInputBuffers);
 	free(gHvOutputBuffers);
 	delete[] gScopeOut;
+	delete scope;
 }
