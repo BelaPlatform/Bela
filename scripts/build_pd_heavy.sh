@@ -2,7 +2,7 @@
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
-release=r2016.08
+release=r2017.02
 NO_UPLOAD=0
 WATCH=0
 FORCE=0
@@ -215,14 +215,14 @@ uploadBuildRun(){
     fi
     
     echo "Updating files on board..."
-    # HvContext* files tend to hang when transferring with rsync because they are very large and -c checksum takes a lot, I guess
+    # HeavyContext* files tend to hang when transferring with rsync because they are very large and -c checksum takes a lot, I guess
     
     touch $reference_time_file
     # Transfer the files 
 	if [ "$RSYNC_AVAILABLE" -eq 1 ]
 	then
-		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
-        { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HvContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
+		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HeavyContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
+        { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HeavyContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
 		{ echo "ERROR: while synchronizing files with the BBB. Is the board connected?"; exit 1; }
 	else
 		echo "using scp..."
