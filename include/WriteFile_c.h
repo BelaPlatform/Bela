@@ -20,7 +20,7 @@ void WriteFile_setHeader(WriteFile* file, const char* newHeader);
 void WriteFile_setFooter(WriteFile* file, const char* newFooter);
 void WriteFile_logArray(WriteFile* file, const float* array, int length);
 void WriteFile_log(WriteFile* file, float value);
-void WriteFile_init(WriteFile* file, const char* filename);
+void WriteFile_init(WriteFile* file, const char* filename, int length);
 int WriteFile_getOffset(WriteFile* file);
 float WriteFile_getBufferStatus(WriteFile* file);
 
