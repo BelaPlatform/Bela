@@ -9,9 +9,9 @@ var babelify = require('babelify');
 var source = require('vinyl-source-stream');
 var sourcemaps = require('gulp-sourcemaps');
 var buffer = require('vinyl-buffer');
-var less = require('gulp-less');
 var rsync = require('gulp-rsync');
 var debug = require('gulp-debug');
+var sass = require('gulp-sass');
 
 var host = '192.168.7.2';
 var user = 'root';
@@ -34,9 +34,9 @@ gulp.task('watch', ['upload'], function(){
 	
 	// when the scope browser js changes, browserify it
 	gulp.watch(['./scope-src/**'], ['scope-browserify']);
-	
-	// when the less changes, compile it and stick it in public/css
-	// gulp.watch(['../IDE/public/less/**'], ['less']);
+
+	// when the sass changes, compile it and stick it in IDE/public
+	gulp.watch(['./sass/**'], ['sass']);
 	
 	// when the browser sources change, upload them without killing node
 	gulp.watch(['../IDE/public/**', 
@@ -125,10 +125,10 @@ gulp.task('scope-browserify', () => {
         .pipe(gulp.dest('../IDE/public/scope/js/'));
 });
 
-gulp.task('less', () => {
-	gulp.src('../IDE/public/less/*.less')
+gulp.task('sass', () => {
+	 return gulp.src('./sass/**/*.scss')
 		.pipe(sourcemaps.init())
-		.pipe(less())
+		.pipe(sass().on('error', sass.logError))
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest('../IDE/public/css/'));
 });
