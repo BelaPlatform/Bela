@@ -497,20 +497,24 @@ update: stop
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
 LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS)
-$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
-	gcc -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
+lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
+	$(AT) echo Building lib/$(LIB_EXTRA_SO)
+	$(AT) gcc -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
 
-$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
-	ar rcs lib/$(LIB_EXTRA_A) $(LIB_EXTRA_OBJS)
+lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_EXTRA_A)
+	$(AT) ar rcs lib/$(LIB_EXTRA_A) $(LIB_EXTRA_OBJS)
 
 LIB_SO =libbela.so
 LIB_A = libbela.a
 LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a 
-$(LIB_SO): $(LIB_OBJS)
-	gcc -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
+lib/$(LIB_SO): $(LIB_OBJS)
+	$(AT) echo Building lib/$(LIB_SO)
+	$(AT) gcc -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
 
-$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
-	ar rcs lib/$(LIB_A) $(LIB_OBJS)
+lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_A)
+	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
 
 lib: lib/libbelaextra.so lib/libbelaextra.a lib/libbela.so lib/libbela.a
 	
