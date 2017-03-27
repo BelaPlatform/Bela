@@ -507,7 +507,7 @@ lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 
 LIB_SO =libbela.so
 LIB_A = libbela.a
-LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a 
+LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a build/core/Gpio.o
 lib/$(LIB_SO): $(LIB_OBJS)
 	$(AT) echo Building lib/$(LIB_SO)
 	$(AT) gcc -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
