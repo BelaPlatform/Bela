@@ -11,104 +11,143 @@
 / {
 	compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
 
-	/* identification */
+	/** identification **/
 	part-number = "BELA";
 	version = "00A0", "A0";
 
+	/** the pin header uses **/
 	exclusive-use =
-		/* the pin header uses */
-		"P9.31",	/* mcasp0: mcasp0_aclkx */
-		"P9.29",	/* mcasp0: mcasp0_fsx */
-		"P9.28",	/* mcasp0: mcasp0_axr2 */
-		"P9.25",	/* mcasp0: mcasp0_ahclkx */
-		"P8.41",	/* pru1: pr1_pru1_pru_r30_4 */
-		"P8.42",	/* pru1: pr1_pru1_pru_r30_5 */
-		"P8.43",	/* pru1: pr1_pru1_pru_r30_2 */
-		"P8.44",	/* pru1: pr1_pru1_pru_r30_3 */
-		"P8.45",	/* pru1: pr1_pru1_pru_r30_0 */
-		"P8.46",	/* pru1: pr1_pru1_pru_r30_1 */
-		"P9.27",	/* gpio3_19 (Bela button) */
-		/* the hardware ip uses */
-		"gpio1_18", "gpio1_19",
-		"mcasp0", "pru0", "pru1";
 
-	/* Pinmux settings */
+		/* 
+			P8.21 and P8.22 are only used for initial configuration
+			of tlv320aic3104 via i2c2 => not listed below
+		*/
+
+		/* McASP */
+		"P9.31",
+		"P9.29",
+		"P9.28",
+		"P9.25",
+		"P9.30",
+
+		/* PRU */
+		"P8.41",
+		"P8.42",
+		"P8.43",
+		"P8.44",
+		"P8.45",
+		"P8.46",
+
+		/* Digital i/o */
+		"P8.7",
+		"P8.8",
+		"P8.9",
+		"P8.10",
+		"P8.11",
+		"P8.12",
+		"P9.12",
+		"P9.14",
+		"P8.15",
+		"P8.16",
+		"P8.18",
+		"P8.27",
+		"P8.28",
+		"P8.29",
+		"P8.30",
+
+		/* Broken out i2c bus on Bela header */
+		"P9.26",
+		"P9.24",
+
+		/* Bela button */
+		"P9.27",
+
+		/* the hardware ip uses */
+
+			/* GPIO */
+			"gpio2_2", "gpio2_3", "gpio2_5", "gpio2_4", "gpio1_13", "gpio2_13",
+			"gpio1_28", "gpio1_18","gpio1_15", "gpio1_14", "gpio1_19", "gpio2_1",
+			"gpio2_22", "gpio2_24", "gpio2_23", "gpio2_25", "gpio3_19",
+
+			/* Misc */
+			"mcasp0", "pru0", "pru1", "i2c1";
+
+	/** Pinmux settings **/
 	fragment@0 {
 		target = <&am33xx_pinmux>;
 		__overlay__ {
 
+			/* Pin mux for McASP */
 			bone_audio_cape_audio_pins: pinmux_bone_audio_cape_audio_pins {
 				pinctrl-single,pins = <
-					0x1ac 0x00 /* mcasp0_ahclkx, MODE0 | INPUT */
-					0x19c 0x22 /* mcasp0_ahclkr, */
-					0x194 0x20 /* mcasp0_fsx, MODE0 | OUTPUT  */
-					0x190 0x20 /* mcasp0_aclkr.mcasp0_aclkx, MODE0 | OUTPUT_PULLDOWN */
-					0x198 0x20
+					0x1ac 0x00 /* mcasp0_ahclkx, 	P9_25 | MODE0 | INPUT_PULLDOWN */
+					0x19c 0x22 /* mcasp0_axr2, 		P9_28 | MODE2 | OUTPUT_PULLDOWN */
+					0x194 0x20 /* mcasp0_fsx, 		P9_29 | MODE0 | OUTPUT_PULLDOWN */
+					0x190 0x20 /* mcasp0_ahclk, 	P9_31 | MODE0 | OUTPUT_PULLDOWN */
+					0x198 0x20 /* mcasp0_axr0, 		P9_30 | MODE0 | OUTPUT_PULLDOWN */
 				>;
 			};
 
+			/* Pin mux for PRU */
 			pru_bela_pins: pinmux_pru_bela_pins {
 				pinctrl-single,pins = <
-					0x0b0 0x25 /* lcd_data4.pr1_pru1_pru_r30_4, MODE5 | OUTPUT | PRU */
-					0x0b4 0x25 /* lcd_data5.pr1_pru1_pru_r30_5, MODE5 | OUTPUT | PRU */
-					0x0ac 0x25 /* lcd_data3.pr1_pru1_pru_r30_3, MODE5 | OUTPUT | PRU */
-					0x0a0 0x25 /* lcd_data0.pr1_pru1_pru_r30_0, MODE5 | OUTPUT | PRU */
-					0x0a4 0x25 /* lcd_data1.pr1_pru1_pru_r30_1, MODE5 | OUTPUT | PRU */
-					0x0a8 0x25 /* lcd_data2.pr1_pru1_pru_r30_2, MODE5 | OUTPUT | PRU */
+					0x0b0 0x25 /* pr1_pru1_pru_r30_4,	P8_41 | MODE5 | OUTPUT_PULLDOWN */
+					0x0b4 0x25 /* pr1_pru1_pru_r30_5,	P8_42 | MODE5 | OUTPUT_PULLDOWN */
+					0x0ac 0x25 /* pr1_pru1_pru_r30_3,	P8_44 | MODE5 | OUTPUT_PULLDOWN */
+					0x0a0 0x25 /* pr1_pru1_pru_r30_0,	P8_45 | MODE5 | OUTPUT_PULLDOWN */
+					0x0a4 0x25 /* pr1_pru1_pru_r30_1,	P8_46 | MODE5 | OUTPUT_PULLDOWN */
+					0x0a8 0x25 /* pr1_pru1_pru_r30_2,	P8_43 | MODE5 | OUTPUT_PULLDOWN */
 				>;
 			};
 
+			/* Pin mux for Bela button */
 			bela_button_pin: pinmux_bela_button_pin {
-				pinctrl-single,pins = <0x1a4 0x37>;
+				pinctrl-single,pins = <
+					0x1a4 0x37 /* gpio3[19], 	P9_27 | MODE7 | OUTPUT_PULLUP */
+				>;
 			};
 
+			/* Pin mux for Bela digital i/o */
 			gpio_bela_pins: pinmux_gpio_bela_pins {
 				pinctrl-single,pins = <
-					0x90 0x27 
-					0x94 0x27 
-					0x9c 0x27 
-					0x98 0x27 
-					0x34 0x27 
-					0x30 0x27 
-					0x78 0x27 
-					0x48 0x27 
-					0x3c 0x27 
-					0x38 0x27 
-					0x4c 0x27 
-					0x8c 0x27 
-					0xe0 0x27 
-					0xe8 0x27 
-					0xe4 0x27 
-					0xec 0x27
+					0x090 0x27 /* gpio2[2], 	P8_07 | MODE7 | OUTPUT_PULLDOWN */
+					0x094 0x27 /* gpio2[3], 	P8_08 | MODE7 | OUTPUT_PULLDOWN */
+					0x09c 0x27 /* gpio2[5], 	P8_09 | MODE7 | OUTPUT_PULLDOWN */
+					0x098 0x27 /* gpio2[4], 	P8_10 | MODE7 | OUTPUT_PULLDOWN */
+					0x034 0x27 /* gpio1[13],	P8_11 | MODE7 | OUTPUT_PULLDOWN */
+					0x030 0x27 /* gpio2[13],	P8_12 | MODE7 | OUTPUT_PULLDOWN */
+					0x078 0x27 /* gpio1[28],	P9_12 | MODE7 | OUTPUT_PULLDOWN */
+					0x048 0x27 /* gpio1[18],	P9_14 | MODE7 | OUTPUT_PULLDOWN */
+					0x03c 0x27 /* gpio1[15],	P8_15 | MODE7 | OUTPUT_PULLDOWN */
+					0x038 0x27 /* gpio1[14], 	P8_16 | MODE7 | OUTPUT_PULLDOWN */
+					0x04c 0x27 /* gpio1[19],	P9_16 | MODE7 | OUTPUT_PULLDOWN */
+					0x08c 0x27 /* gpio2[1], 	P8_18 | MODE7 | OUTPUT_PULLDOWN */
+					0x0e0 0x27 /* gpio2[22],	P8_27 | MODE7 | OUTPUT_PULLDOWN */
+					0x0e8 0x27 /* gpio2[24],	P8_28 | MODE7 | OUTPUT_PULLDOWN */
+					0x0e4 0x27 /* gpio2[23],	P8_29 | MODE7 | OUTPUT_PULLDOWN */
+					0x0ec 0x27 /* gpio2[25],	P8_30 | MODE7 | OUTPUT_PULLDOWN */
 				>;
 			};
 
-			/* TODO: Check if i2c1 is required by Bela (took from am335x-boneblack.dts Bela master branch) */
+			/* Pin mux for i2c on Bela header */
 			i2c1_pins: pinmux_i2c1_pins {
 				pinctrl-single,pins = <
-					0x180 0x73
-					0x184 0x73
+					0x180 0x73 /* i2c1_sda, 	P9_26 | MODE3 | OUTPUT_PULLUP | SLEWCTRL_SLOW */
+					0x184 0x73 /* i2c1_scl,		P9_24 | MODE3 | OUTPUT_PULLUP | SLEWCTRL_SLOW */
 				>;
 			};
 
-			/* TODO: Check if i2c2 is required by Bela (took from am335x-boneblack.dts Bela master branch) */
+			/* Pin mux for tlv320aic3104 audio codec control */
 			i2c2_pins: pinmux_i2c2_pins {
 				pinctrl-single,pins = <
-					0x150 0x72 	/* spi0_scl.i2c2_sda,SLEWCTRL_SLOW | INPUT_PULLUP |MODE2 */
-					0x154 0x72	/* spi0_d0.i2c2_scl,SLEWCTRL_SLOW | INPUT_PULLUP | MODE2 */
+					0x150 0x72 /* i2c2_sda,		P9_22 | MODE2 | OUTPUT_PULLUP | SLEWCTRL_SLOW */
+					0x154 0x72 /* i2c2_scl, 	P9_21 | MODE2 | OUTPUT_PULLUP | SLECCTRL_SLOW */
 				>;
 			};
-
-			/* TODO: Check if reset ctl pin is required by Bela (took from am335x-boneblack.dts Bela master branch) */
-			/*rstctl_pins: pinmux_rstctl_pins {
-				pinctrl-single,pins = <
-					0x50 0x17
-				>;
-			};*/
 		};
 	};
 
-	/* McASP (DAI of AM335X) */
+	/** McASP **/
 	fragment@1 {
 		target = <&mcasp0>;
 		__overlay__ {
@@ -131,26 +170,28 @@
 		};
 	};
 
-	/* PRU */
+	/** PRU **/
 	fragment@2 {
 		target = <&pruss>;
 		__overlay__ {
-			status = "okay";
-
 			pinctrl-names = "default";
 			pinctrl-0 = <&pru_bela_pins>;
+
+			status = "okay";
 		};
 	};
 
-	/* Pinmux for Bela button */
+	/** Bela button **/
 	fragment@3 {
 		target = <&ocp>;
         __overlay__ {
             bela_button_pin_mux {
-                compatible = "bone-pinmux-helper";
-                status = "okay";
-                pinctrl-names = "default";
+            	pinctrl-names = "default";
                 pinctrl-0 = <&bela_button_pin>;
+
+                compatible = "bone-pinmux-helper";
+
+                status = "okay";  
             };
         };
 	};
