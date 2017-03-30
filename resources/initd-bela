@@ -8,10 +8,10 @@
 # Carry out specific functions when asked to by the system
 case "$1" in
   start)
-    echo "Adding Bela PRU Overlay..."
-    echo BB-BONE-PRU-BELA > /sys/devices/bone_capemgr.9/slots
-    echo "Adding Bela Audio Cape Overlay..."
-    echo BB-BONE-BAREAUDI-02 > /sys/devices/bone_capemgr.9/slots
+    echo "Adding Bela Overlay..."
+    echo BELA > /sys/devices/platform/bone_capemgr/slots
+    echo "Enabling interface and functional clock of McASP..."
+    /root/Bela/resources/bin/devmem2 0x44E00034 w 0x30002 >> /dev/null
     cd /root
     sh Bela_startup.sh
     sh Bela_node.sh

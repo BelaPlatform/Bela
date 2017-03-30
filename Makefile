@@ -14,12 +14,12 @@
 ## COMPILER=            -- compiler to use (clang or gcc)
 ## LDFLAGS=                -- linker flags (e.g.: -L. ) 
 ## LDLIBS=                -- libs to link in (e.g.: -lm )
-## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
+##AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
 ###
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -march=armv7-a
+LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -110,8 +110,9 @@ TEST_LIBPD := $(shell which $(LIBPD_PATH))
 ifneq ($(strip $(TEST_LIBPD)), )
 # if libpd is there, link it in
 endif
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize `/usr/xenomai/bin/xeno-config --cflags --skin=native`
+INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10
+DEFAULT_XENOMAI_CFLAGS := `/usr/xenomai/bin/xeno-config --cflags --skin=native`
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize  $(DEFAULT_XENOMAI_CFLAGS)
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
@@ -193,8 +194,8 @@ all: Bela
 
 # debug = buildBela debug
 debug: ## Same as Bela but with debug flags and no optimizations
-debug: DEFAULT_CPPFLAGS=-g -std=c++11
-debug: DEFAULT_CFLAGS=-g -std=c11
+debug: DEFAULT_CPPFLAGS=-g -std=c++11 $(DEFAULT_XENOMAI_CFLAGS)
+debug: DEFAULT_CFLAGS=-g -std=c11 $(DEFAULT_XENOMAI_CFLAGS)  -std=gnu11
 debug: all
 
 # syntax = check syntax
