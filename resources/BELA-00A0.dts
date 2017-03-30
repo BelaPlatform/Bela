@@ -61,6 +61,50 @@
 			bela_button_pin: pinmux_bela_button_pin {
 				pinctrl-single,pins = <0x1a4 0x37>;
 			};
+
+			gpio_bela_pins: pinmux_gpio_bela_pins {
+				pinctrl-single,pins = <
+					0x90 0x27 
+					0x94 0x27 
+					0x9c 0x27 
+					0x98 0x27 
+					0x34 0x27 
+					0x30 0x27 
+					0x78 0x27 
+					0x48 0x27 
+					0x3c 0x27 
+					0x38 0x27 
+					0x4c 0x27 
+					0x8c 0x27 
+					0xe0 0x27 
+					0xe8 0x27 
+					0xe4 0x27 
+					0xec 0x27
+				>;
+			};
+
+			/* TODO: Check if i2c1 is required by Bela (took from am335x-boneblack.dts Bela master branch) */
+			i2c1_pins: pinmux_i2c1_pins {
+				pinctrl-single,pins = <
+					0x180 0x73
+					0x184 0x73
+				>;
+			};
+
+			/* TODO: Check if i2c2 is required by Bela (took from am335x-boneblack.dts Bela master branch) */
+			i2c2_pins: pinmux_i2c2_pins {
+				pinctrl-single,pins = <
+					0x150 0x72 	/* spi0_scl.i2c2_sda,SLEWCTRL_SLOW | INPUT_PULLUP |MODE2 */
+					0x154 0x72	/* spi0_d0.i2c2_scl,SLEWCTRL_SLOW | INPUT_PULLUP | MODE2 */
+				>;
+			};
+
+			/* TODO: Check if reset ctl pin is required by Bela (took from am335x-boneblack.dts Bela master branch) */
+			/*rstctl_pins: pinmux_rstctl_pins {
+				pinctrl-single,pins = <
+					0x50 0x17
+				>;
+			};*/
 		};
 	};
 
