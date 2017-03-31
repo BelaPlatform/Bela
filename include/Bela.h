@@ -560,6 +560,16 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData);
 int Bela_startAudio();
 
 /**
+ * \brief Begin processing audio and sensor data in the same thread as the caller.
+ *
+ * This function will start the Bela audio/sensor system. After this function is called, the
+ * system will make periodic calls to render() until Bela_stopAudio() is called.
+ *
+ * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_runInSameThread();
+
+/**
  * \brief Stop processing audio and sensor data.
  *
  * This function will stop the Bela audio/sensor system. After this function returns, no further

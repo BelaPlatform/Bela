@@ -334,23 +334,7 @@ void audioLoop(void *)
 		rt_printf("audio thread ended\n");
 }
 
-int Bela_startAudio()
-{
-	// Create audio thread with high Xenomai priority
-	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
-		  return -1;
-	}
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	// Create an interrupt which the audio thread receives from the PRU
-	int result = 0;
-	if((result = rt_intr_create(&gRTAudioInterrupt, gRTAudioInterruptName, PRU_RTAUDIO_IRQ, I_NOAUTOENA)) != 0) {
-		cout << "Error: unable to create Xenomai interrupt for PRU (error " << result << ")" << endl;
-		return -1;
-	}
-#endif
-
+static int startAudioInline(){
 	// make sure we have everything
 	assert(gAudioCodec != 0 && gPRU != 0);
 
@@ -376,6 +360,67 @@ int Bela_startAudio()
 
 	// ready to go
 	gShouldStop = 0;
+	return 0;
+}
+
+int Bela_runInSameThread()
+{
+	RT_TASK thisTask;
+	int ret = 0;
+
+	// do the initialization
+	ret = startAudioInline();
+	if(ret < 0)
+		return ret;
+
+	// turn the current thread into a Xenomai task: we become the audio thread
+	ret = rt_task_shadow(&thisTask, gRTAudioThreadName, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU);
+	if(ret == -EBUSY){
+	// task already is a Xenomai task:
+	// let's only re-adjust the priority
+		ret = rt_task_set_priority(&thisTask, BELA_AUDIO_PRIORITY);
+	}
+
+	if(ret < 0)
+	{
+		cout << "Error: unable to shadow Xenomai audio thread: " << strerror(-ret) << endl;
+		return ret;	
+	}
+
+	ret = Bela_startAllAuxiliaryTasks();
+	if(ret < 0)
+		return ret;
+
+	// this starts the infinite loop that can only be broken out of
+	// by setting gShouldStop = 1
+	audioLoop(NULL);
+
+	// Once you get out of it, cleanup:
+	Bela_stopAudio();
+	Bela_cleanupAudio();
+	return ret;
+}
+
+int Bela_startAudio()
+{
+	// Create audio thread with high Xenomai priority
+	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
+		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
+		  return -1;
+	}
+
+#ifdef BELA_USE_XENOMAI_INTERRUPTS
+	// Create an interrupt which the audio thread receives from the PRU
+	int result = 0;
+	if((result = rt_intr_create(&gRTAudioInterrupt, gRTAudioInterruptName, PRU_RTAUDIO_IRQ, I_NOAUTOENA)) != 0) {
+		cout << "Error: unable to create Xenomai interrupt for PRU (error " << result << ")" << endl;
+		return -1;
+	}
+#endif
+
+	int ret = startAudioInline();
+	if(ret < 0)
+		return ret;
 
 	// Start all RT threads
 	if(int ret = rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
@@ -383,7 +428,7 @@ int Bela_startAudio()
 		  return -1;
 	}
 
-	int ret = Bela_startAllAuxiliaryTasks();
+	ret = Bela_startAllAuxiliaryTasks();
 	return ret;
 }
 
