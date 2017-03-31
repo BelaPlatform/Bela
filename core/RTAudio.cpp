@@ -395,9 +395,8 @@ int Bela_runInSameThread()
 	// by setting gShouldStop = 1
 	audioLoop(NULL);
 
-	// Once you get out of it, cleanup:
+	// Once you get out of it, stop properly (in case you didn't already):
 	Bela_stopAudio();
-	Bela_cleanupAudio();
 	return ret;
 }
 
