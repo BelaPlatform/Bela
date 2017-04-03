@@ -34,6 +34,23 @@
 / {
 	model = "TI AM335x BeagleBone Green";
 	compatible = "ti,am335x-bone-green", "ti,am335x-bone-black", "ti,am335x-bone", "ti,am33xx";
+
+	/*
+		Optional SW SPI interface to configure AD1938 codec of CTAG face2|4 Audio Card
+	*/
+	spi_gpio: spi_gpio {
+		compatible = "spi-gpio";
+		#address-cells = <1>;
+		ranges;
+
+		gpio-sck = <&gpio0 11 0>; 				//P8.32
+		gpio-mosi = <&gpio0 9 0>;				//P8.33
+		gpio-miso = <&gpio0 26 0>;				//P8.14
+		cs-gpios = <&gpio0 27 0 &gpio0 10 0>; 	//P8.17 / P8.31
+		num-chipselects = <2>;
+
+		status = "disabled";
+	};
 };
 
 &ldo3_reg {
