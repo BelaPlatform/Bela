@@ -179,7 +179,7 @@
 #endif
 
 #define MCASP_DATA_MASK 	0xFFFF		// 16 bit data
-#define MCASP_DATA_FORMAT	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+#define MCASP_DATA_FORMAT	0x80FC		// MSB first, 0 bit delay, 32 bits, CFG bus, ROR 16bits
 
 #define C_MCASP_MEM             C28     	// Shared PRU mem
 

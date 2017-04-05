@@ -10,6 +10,7 @@
  *  Queen Mary University of London
  */
 
+//TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,7 @@
 #include "../include/Bela.h"
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
+#include "../include/Spi_Codec.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/math_neon.h"
 
@@ -64,7 +66,8 @@ const char gRTAudioInterruptName[] = "bela-pru-irq";
 #endif
 
 PRU *gPRU = 0;
-I2c_Codec *gAudioCodec = 0;
+//I2c_Codec *gAudioCodec = 0;
+Spi_Codec *gAudioCodecSpi = 0;
 
 vector<InternalAuxiliaryTask*> &getAuxTasks(){
 	static vector<InternalAuxiliaryTask*> auxTasks;
@@ -189,7 +192,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	gContext.audioSampleRate = 44100.0;
+	gContext.audioSampleRate = 48000.0;
 
 	// TODO: settings a different number of channels for inputs and outputs is not yet supported
 	gContext.audioInChannels = 2;
@@ -267,7 +270,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
-	gAudioCodec = new I2c_Codec();
+	//gAudioCodec = new I2c_Codec();
+	gAudioCodecSpi = new Spi_Codec();
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(gPRU->prepareGPIO(settings->enableLED)) {
@@ -287,6 +291,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
+	/*
 	// Prepare the audio codec, which clocks the whole system
 	if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
 		cout << "Unable to open codec I2C\n";
@@ -296,6 +301,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		cout << "Error: unable to initialise audio codec\n";
 		return 1;
 	}
+	*/
+	gAudioCodecSpi->initCodec();
+	//gAudioCodecSpi->dumpRegisters();
 
 	// Set default volume levels
 	Bela_setDACLevel(settings->dacLevel);
@@ -355,7 +363,8 @@ void audioLoop(void *)
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
-	gAudioCodec->stopAudio();
+	//gAudioCodec->stopAudio();
+	gAudioCodecSpi->stopAudio();
 	gPRU->cleanupGPIO();
 
 	if(gRTAudioVerbose == 1)
@@ -515,13 +524,17 @@ int Bela_startAudio()
 #endif
 
 	// make sure we have everything
-	assert(gAudioCodec != 0 && gPRU != 0);
+	//assert(gAudioCodec != 0 && gPRU != 0);
+	assert(gAudioCodecSpi != 0 && gPRU != 0);
 
+	/*
 	// power up and initialize audio codec
 	if(gAudioCodec->startAudio(0)) {
 		fprintf(stderr, "Error: unable to start I2C audio codec\n");
 		return -1;
 	}
+	*/
+	gAudioCodecSpi->startAudio();
 
 	// initialize and run the PRU
 	if(gPRU->start(gPRUFilename)) {
@@ -612,8 +625,10 @@ void Bela_cleanupAudio()
 
 	if(gPRU != 0)
 		delete gPRU;
-	if(gAudioCodec != 0)
-		delete gAudioCodec;
+	//if(gAudioCodec != 0)
+	//	delete gAudioCodec;
+	if (gAudioCodecSpi != 0)
+		delete gAudioCodecSpi;
 
 	if(gAmplifierMutePin >= 0)
 		gpio_unexport(gAmplifierMutePin);
@@ -624,26 +639,42 @@ void Bela_cleanupAudio()
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setDACLevel(float decibels)
 {
+	/*
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setDACVolume((int)floorf(decibels * 2.0 + 0.5));
+	*/
+	//TODO: Implement for AD1938 codec
+
+	return 0;
 }
 
 // Set the level of the ADC
 // 0dB is the maximum, -12dB is the minimum; 1.5dB steps
 int Bela_setADCLevel(float decibels)
 {
+	/*
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setADCVolume((int)floorf(decibels * 2.0 + 0.5));
+	*/
+
+	//TODO: Implement for AD1938 codec
+
+	return 0;
 }
 
 // Set the level of the Programmable Gain Amplifier
 // 59.5dB is maximum, 0dB is minimum; 0.5dB steps
 int Bela_setPgaGain(float decibels, int channel){
+	/*
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setPga(decibels, channel);
+	*/
+
+	//Nothing to be done for CTAG face
+	return 0;
 }
 
 // Set the level of the onboard headphone amplifier; affects headphone
@@ -651,9 +682,14 @@ int Bela_setPgaGain(float decibels, int channel){
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setHeadphoneLevel(float decibels)
 {
+	/*
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setHPVolume((int)floorf(decibels * 2.0 + 0.5));
+	*/
+
+	//Nothing to be done for CTAG face
+	return 0;
 }
 
 // Mute or unmute the onboard speaker amplifiers
