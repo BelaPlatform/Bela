@@ -1,9 +1,9 @@
-#N canvas 0 22 1280 770 10;
+#N canvas 0 4 1280 770 10;
 #N canvas 0 22 450 278 (subpatch) 0;
 #X array \$0-table1 65238 float 2;
 #X coords 0 1 65238 -1 200 140 1 0 0;
 #X restore 23 511 graph;
-#X obj 144 480 dac~;
+#X obj 164 480 dac~;
 #X obj 20 319 lop~ 1;
 #X text 20 28 Load sample into table and scrub using analog input;
 #X text 20 38 ===================================================;
@@ -35,7 +35,7 @@
 #X text 595 103 \$0-table2 can store up to 10 seconds of audio at 44100kHz.
 ;
 #X obj 658 191 s bela_setDigital;
-#X obj 659 148 loadbang;
+#X obj 658 148 loadbang;
 #X text 596 121 Initialize Bela digital: use digital 0 as an input
 ;
 #X text 225 182 just change the path to the file name;
@@ -52,12 +52,12 @@
 #X text 770 257 0: non-pressed;
 #X text 770 273 1: pressed;
 #X obj 557 428 tabwrite~ \$0-table2;
-#X text 776 416 timer returns the duration of the recorded sample;
+#X text 568 500 timer returns the duration of the recorded sample;
 #X obj 19 89 \$0;
 #X obj 20 431 tabread4~ \$0-table1;
 #X obj 303 428 tabread4~ \$0-table2;
 #X obj 712 450 timer 1 sample;
-#X text 775 428 (interval between start and stop) in samples;
+#X text 567 512 (interval between start and stop) in samples;
 #X obj 712 476 s \$0-sampleLength2;
 #X obj 318 351 r \$0-sampleLength2;
 #X obj 35 354 r \$0-sampleLength1;
@@ -99,8 +99,8 @@ in the;
 #X text 891 336 Playback the recorded sample with the sensor connected
 to;
 #X text 891 346 analog in 1;
-#X text 891 392 [tabplay~].;
 #X text 890 220 to left audio input.;
+#X text 891 392 [tabplay~]).;
 #X connect 2 0 7 0;
 #X connect 7 0 45 0;
 #X connect 8 0 46 0;

@@ -194,7 +194,7 @@
         "y": "235",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 0 - (Pd: [adc~ 3])",
+        "text": "Analog OUT, Pin 0 - (Pd: [dac~ 3])",
         "tip": "tooltip"
         },
     {
@@ -203,7 +203,7 @@
         "y": "249",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 1 - (Pd: [adc~ 4])",
+        "text": "Analog OUT, Pin 1 - (Pd: [dac~ 4])",
         "tip": "tooltip"
         },
     {
@@ -212,7 +212,7 @@
         "y": "263",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 2 - (Pd: [adc~ 5])",
+        "text": "Analog OUT, Pin 2 - (Pd: [dac~ 5])",
         "tip": "tooltip"
         },
     {
@@ -221,7 +221,7 @@
         "y": "277",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 3 - (Pd: [adc~ 6])",
+        "text": "Analog OUT, Pin 3 - (Pd: [dac~ 6])",
         "tip": "tooltip"
         },
     {
@@ -230,7 +230,7 @@
         "y": "291",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 4 - (Pd: [adc~ 7])",
+        "text": "Analog OUT, Pin 4 - (Pd: [dac~ 7])",
         "tip": "tooltip"
         },
     {
@@ -239,7 +239,7 @@
         "y": "305",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 5 - (Pd: [adc~ 8])",
+        "text": "Analog OUT, Pin 5 - (Pd: [dac~ 8])",
         "tip": "tooltip"
         },
     {
@@ -248,7 +248,7 @@
         "y": "319",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 6 - (Pd: [adc~ 9])",
+        "text": "Analog OUT, Pin 6 - (Pd: [dac~ 9])",
         "tip": "tooltip"
         },
     {
@@ -257,7 +257,7 @@
         "y": "333",
         "width": "10",
         "height": "10",
-        "text": "Analog OUT, Pin 7 - (Pd: [adc~ 10])",
+        "text": "Analog OUT, Pin 7 - (Pd: [dac~ 10])",
         "tip": "tooltip"    
         },
     {

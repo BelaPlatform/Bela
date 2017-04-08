@@ -38,7 +38,7 @@ three;
 #X text 453 192 you now have 4 analog sensors;
 #X text 454 250 Task 1: choose the best mapping for these;
 #X text 454 262 4 sensors;
-#X text 454 275 Task 2: map them to an appropraite range;
+#X text 454 275 Task 2: map them to an appropriate range;
 #X text 454 287 using Bela scope.;
 #X text 454 302 Task 3: open [simple-sequencer] and find out;
 #X text 454 314 how to use it sequence the fm synth;
