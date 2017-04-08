@@ -33,10 +33,6 @@
 #include "../include/GPIOcontrol.h"
 #include "../include/math_neon.h"
 
-int Bela_startAllAuxiliaryTasks();
-void Bela_stopAllAuxiliaryTasks();
-void Bela_deleteAllAuxiliaryTasks();
-
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
 

@@ -759,6 +759,10 @@ void Bela_autoScheduleAuxiliaryTasks();
  */
 
 int Bela_startAuxiliaryTask(AuxiliaryTask task);
+int Bela_startAllAuxiliaryTasks();
+void Bela_stopAllAuxiliaryTasks();
+void Bela_deleteAllAuxiliaryTasks();
+
 /** @} */
 #include <Utilities.h>
 

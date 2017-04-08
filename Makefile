@@ -496,7 +496,7 @@ update: stop
 
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
-LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS)
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
 lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
 	$(AT) echo Building lib/$(LIB_EXTRA_SO)
 	$(AT) gcc -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
