@@ -11109,8 +11109,7 @@ var _reverseString = function(s) { return s.split("").reverse().join("") }
 
 // Parses argument to a string or a number.
 var parseArg = exports.parseArg = function(arg) {
-  var parsed = pdParseFloat(arg)
-  if (_.isNumber(parsed) && !isNaN(parsed)) return parsed
+  if (_.isNumber(arg) && !isNaN(arg)) return arg
   else if (_.isString(arg)) {
     var matched, arg = arg.substr(0)
     // Unescape special characters
