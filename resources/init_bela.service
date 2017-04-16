@@ -1,0 +1,10 @@
+[Unit]
+Description=Bela Initialisation Service
+After=multi-user.target
+
+[Service]
+ExecStart=/root/Bela/resources/init_bela.sh
+Type=simple
+
+[Install]
+WantedBy=default.target
