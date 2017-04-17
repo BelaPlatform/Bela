@@ -791,7 +791,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 						
 						for(unsigned int n = 0; n < context->analogFrames; n++) {
 							context->analogOut[n * context->analogOutChannels + ch] = 
-								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93/2.0);
+								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93f/2.f);
 						}
 					}
 				}
