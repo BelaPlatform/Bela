@@ -43,6 +43,12 @@ using namespace std;
 //  is verified over extended use)
 #undef USE_NEON_FORMAT_CONVERSION
 
+#ifdef USE_NEON_FORMAT_CONVERSION
+#ifdef BELA_MODULAR
+#error BELA_MODULAR is incompatible with USE_NEON_FORMAT_CONVERSION
+#endif
+#endif
+
 // PRU memory: PRU0 and PRU1 RAM are 8kB (0x2000) long each
 //             PRU-SHARED RAM is 12kB (0x3000) long
 
@@ -540,14 +546,18 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
-#else
+#else /* BELA_USE_XENOMAI_INTERRUPTS */
 	if(context->analogInChannels != context->analogOutChannels){
 		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
 	}
+#ifdef BELA_MODULAR // get extra CPU time, but could make the board unresponsive
+	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 16;
+#else /* BELA_MODULAR */
 	// Polling interval is 1/4 of the period
 	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
-#endif
+#endif /* BELA_MODULAR */
+#endif /* BELA_USE_XENOMAI_INTERRUPTS */
 
 	uint32_t pru_audio_offset, pru_spi_offset;
 
@@ -710,7 +720,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
 #else	
 			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
+#ifdef BELA_MODULAR // invert input
+				context->analogIn[n] = 1 - (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+#else
 				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+#endif
 			}
 #endif
 			
@@ -760,7 +774,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 				uint16_t outputs = ~inputs; // half-word has 1 for outputs and 0 for inputs;
 				context->digital[n] = (last_digital_buffer[context->digitalFrames - 1] & (outputs << 16)) | // keep output values set in the last frame of the previous buffer
+#ifdef BELA_MODULAR // invert inputs
+									   (~context->digital[n] & (inputs << 16))   | // inputs from current context->digital[n];
+#else
 									   (context->digital[n] & (inputs << 16))   | // inputs from current context->digital[n];
+#endif
 									   (last_digital_buffer[n] & (inputs));     // keep pin configuration from previous context->digital[n]
 //                    context->digital[n]=digitalBufferTemp[n]; //ignores inputs
 			}
@@ -803,7 +821,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 								  context->analogOut, (uint16_t*)&pru_buffer_spi_dac[pru_spi_offset]);
 #else		
 			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++) {
+#ifdef BELA_MODULAR // invert output
+				int out = (1 - context->analogOut[n]) * 65536.0f;
+#else
 				int out = context->analogOut[n] * 65536.0f;
+#endif
 				if(out < 0) out = 0;
 				else if(out > 65535) out = 65535;
 				pru_buffer_spi_dac[n + pru_spi_offset] = (uint16_t)out;
@@ -822,7 +844,15 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		float_to_int16_audio(2 * context->audioFrames, context->audioOut, &pru_buffer_audio_dac[pru_audio_offset]);
 #else	
 		for(unsigned int n = 0; n < context->audioOutChannels * context->audioFrames; n++) {
+#ifdef BELA_MODULAR // invert audio output
+			// this compensates for the fact that we are currently using the
+			// headphones output, which has a polarity inversion,
+			// but we should use the line out instead, which would not require
+			// this correction.
+			int out = context->audioOut[n] * -32768.0f;
+#else
 			int out = context->audioOut[n] * 32768.0f;
+#endif
 			if(out < -32768) out = -32768;
 			else if(out > 32767) out = 32767;
 			pru_buffer_audio_dac[n + pru_audio_offset] = (int16_t)out;

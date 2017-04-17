@@ -28,6 +28,11 @@
 #ifndef BELA_H_
 #define BELA_H_
 
+/**
+ * Inverts I/O signals as appropriate for the BelaModular.
+ */
+#define BELA_MODULAR
+
 #ifdef __cplusplus
 extern "C"
 {
