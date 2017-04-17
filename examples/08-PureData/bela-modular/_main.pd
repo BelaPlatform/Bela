@@ -26,12 +26,9 @@
 #X obj 51 142 dac~ 1 2;
 #X obj 139 148 adc~ 3 4 5 6 7 8 9 10;
 #X obj 131 255 dac~ 3 4 5 6 7 8 9 10;
-#X obj 385 99 adc~ 11 12 19 20;
-#X obj 304 213 dac~ 13 14 22 17;
 #X text 142 124 Loopback analogs;
 #X text 45 71 Loopback audio;
 #X text 308 182 Loopback digitals;
-#X obj 437 218 dac~ 15 16 18 21;
 #X text 449 197 Send digital ins to LEDS;
 #X text 289 383 Send something to the scope;
 #X msg 765 31 in 11 ~ \, in 12 ~ \, out 13 ~ \, out 14 ~ \, out 15
@@ -44,8 +41,11 @@
 #X text 608 341 LED 2: dac~ 20;
 #X msg 765 272 in 23 ~ \, in 24 ~ \, out 25 ~ \, out 26 ~ \, out 19
 ~ \, out 20 ~;
-#X connect 2 0 35 0;
-#X connect 17 0 42 0;
+#X obj 437 218 dac~ 15 16 19 20;
+#X obj 304 213 dac~ 13 14 25 26;
+#X obj 385 99 adc~ 11 12 23 24;
+#X connect 2 0 32 0;
+#X connect 17 0 39 0;
 #X connect 23 0 24 0;
 #X connect 23 1 24 1;
 #X connect 25 0 0 0;
@@ -58,15 +58,15 @@
 #X connect 25 5 26 5;
 #X connect 25 6 26 6;
 #X connect 25 7 26 7;
-#X connect 27 0 28 0;
-#X connect 27 0 32 0;
-#X connect 27 0 0 2;
-#X connect 27 1 28 1;
-#X connect 27 1 32 1;
-#X connect 27 2 28 2;
-#X connect 27 2 32 2;
-#X connect 27 2 0 3;
-#X connect 27 3 28 3;
-#X connect 27 3 32 3;
-#X connect 35 0 1 0;
-#X connect 42 0 16 0;
+#X connect 32 0 1 0;
+#X connect 39 0 16 0;
+#X connect 42 0 0 2;
+#X connect 42 0 40 0;
+#X connect 42 0 41 0;
+#X connect 42 1 40 1;
+#X connect 42 1 41 1;
+#X connect 42 2 0 3;
+#X connect 42 2 40 2;
+#X connect 42 2 41 2;
+#X connect 42 3 40 3;
+#X connect 42 3 41 3;
