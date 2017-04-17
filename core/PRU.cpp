@@ -721,7 +721,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 #else	
 			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
 #ifdef BELA_MODULAR // invert input
-				context->analogIn[n] = 1 - (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+				context->analogIn[n] = 1.f - (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
 #else
 				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
 #endif
@@ -822,7 +822,10 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 #else		
 			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++) {
 #ifdef BELA_MODULAR // invert output
-				int out = (1 - context->analogOut[n]) * 65536.0f;
+						// also rescale it to 0.93 to avoid
+						// headroom problem on the analog outputs with a sagging
+						// 5V USB supply
+				int out = (1.f - context->analogOut[n]) * 65536.0f * 0.93f;
 #else
 				int out = context->analogOut[n] * 65536.0f;
 #endif
