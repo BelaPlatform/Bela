@@ -720,8 +720,14 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
 #else	
 			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
-#ifdef BELA_MODULAR // invert input
-				context->analogIn[n] = 1.f - (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+#ifdef BELA_MODULAR // invert input and account for a maximum input of 3.3V
+				const float analogInMax = 0.79f;
+				context->analogIn[n] = 1 - (float)pru_buffer_spi_adc[n + pru_spi_offset] / (65536.0f * analogInMax);
+				// clamp it to avoid reading out of range values
+				if(context->analogIn[n] < 0)
+					context->analogIn[n] = 0;
+				if(context->analogIn[n] > 1)
+					context->analogIn[n] = 1;
 #else
 				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
 #endif
