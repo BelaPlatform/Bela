@@ -77,11 +77,9 @@ int Spi_Codec::initCodec(){
 	writeRegister(REG_PLL_CLK_CONTROL_1, 0x00);
 	// 48 kHz sample rate, SDATA delay = 0, TDM mode
 	writeRegister(REG_DAC_CONTROL_0, 0x48); //TDM mode
-	//writeRegister(REG_DAC_CONTROL_0, 0x88); //DSP_A (AUX) mode
-	// Latch in mid cycle, 2 channels, inverted bclock, normal wclock, bclock / wclock in master mode
-	//writeRegister(REG_DAC_CONTROL_1, 0xB0);
-	// inverted bclock, inverted wclock
-	writeRegister(REG_DAC_CONTROL_1, 0xB8);
+	// Latch in mid cycle, 8 channels, inverted bclock, inverted wclock, bclock / wclock in master mode
+	writeRegister(REG_DAC_CONTROL_1, 0xBC);
+	//writeRegister(REG_DAC_CONTROL_1, 0xB8); //2 channels working
 	// Unmute DACs, 16 bit word width, noninverted DAC output polarity
 	writeRegister(REG_DAC_CONTROL_2, 0x18);
 	// Unmute all DACs
@@ -106,11 +104,9 @@ int Spi_Codec::initCodec(){
 	writeRegister(REG_ADC_CONTROL_0, 0x00);
 	// 16 bit word width, SDATA delay = 0, TDM mode, latch in mid cycle
 	writeRegister(REG_ADC_CONTROL_1, 0x27); //TDM mode
-	//writeRegister(REG_ADC_CONTROL_1, 0x47); //DSP_A (AUX) mode
-	// wclock format = 50/50, inverted bclock, normal wclock, bclock / wclock is master
-	//writeRegister(REG_ADC_CONTROL_2, 0x4A);
-	// inverted bclock, inverted wclock
-	writeRegister(REG_ADC_CONTROL_2, 0x4E);
+	// wclock format = 50/50, 8 channels, inverted bclock, inverted wclock, bclock / wclock is master
+	writeRegister(REG_ADC_CONTROL_2, 0x6E);
+	//writeRegister(REG_ADC_CONTROL_2, 0x4E); // 2 channels working
 	
 	return 0;
 }
