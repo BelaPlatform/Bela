@@ -3,8 +3,7 @@
 /IDE/settings.json
 /projects/
 /tmp/
-*.swp
-*.swo
+*.sw?
 *.orig
 /Release/
 /build/
