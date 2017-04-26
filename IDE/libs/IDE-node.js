@@ -269,7 +269,7 @@ function socketEvents(socket){
 							args += key+CLArgs[key]+' ';
 						}
 					}
-					runOnBoot(socket, ['startup', 'PROJECT='+project, 'CL='+args])
+					runOnBoot(socket, ['startuploop', 'PROJECT='+project, 'CL='+args])
 				});
 		}
 		
