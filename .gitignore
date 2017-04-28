@@ -3,8 +3,7 @@
 /IDE/settings.json
 /projects/
 /tmp/
-*.swp
-*.swo
+*.sw?
 *.orig
 /Release/
 /build/
@@ -12,3 +11,4 @@
 /Documentation/
 *.js.map
 /.plugins/
+/updates/

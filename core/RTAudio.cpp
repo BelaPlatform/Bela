@@ -49,7 +49,6 @@ typedef struct {
 	bool started;
 	bool hasArgs;
 	void* args;
-	bool autoSchedule;
 } InternalAuxiliaryTask;
 
 // Real-time tasks and objects
@@ -70,7 +69,7 @@ vector<InternalAuxiliaryTask*> &getAuxTasks(){
 }
 
 // Flag which tells the audio task to stop
-int gShouldStop = false;
+int volatile gShouldStop = false;
 
 // general settings
 char gPRUFilename[MAX_PRU_FILENAME_LENGTH];		// Path to PRU binary file (internal code if empty)_
@@ -78,9 +77,6 @@ int gRTAudioVerbose = 0;   						// Verbosity level for debugging
 int gAmplifierMutePin = -1;
 int gAmplifierShouldBeginMuted = 0;
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-bool gProcessAnalog;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 
 // Context which holds all the audio/sensor data passed to the render routines
 InternalBelaContext gContext;
@@ -193,14 +189,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gContext.audioInChannels = 2;
 	gContext.audioOutChannels = 2;
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	// TODO: see PRU bug mentioned above. We catch here if useAnalog was set to false, store it in gProcessAnalog
-	// and use this value to decide whether we should process the analogs in PRU::loop, but then we
-	// set it to true so that the PRU is init'd and the code runs AS IF the analogs were in use.
-	gProcessAnalog = settings->useAnalog;
-	settings->useAnalog = true;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
-
 	if(settings->useAnalog) {
 		gContext.audioFrames = settings->periodSize;
 
@@ -259,6 +247,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	if(settings->analogOutputsPersist)
 		gContext.flags |= BELA_FLAG_ANALOG_OUTPUTS_PERSIST;
+
+	if(settings->detectUnderruns)
+		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
@@ -361,7 +352,7 @@ void audioLoop(void *)
 // (equal or lower) priority. Audio priority is defined in BELA_AUDIO_PRIORITY;
 // priority should be generally be less than this.
 // Returns an (opaque) pointer to the created task on success; 0 on failure
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args, bool autoSchedule)
+AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
@@ -379,35 +370,10 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	newTask->started = false;
 	newTask->args = args;
 	newTask->hasArgs = true;
-    newTask->autoSchedule = autoSchedule;
     
 	getAuxTasks().push_back(newTask);
 
 	return (AuxiliaryTask)newTask;
-}
-
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priority, const char *name, bool autoSchedule)
-{
-        InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
-        
-        // Attempt to create the task
-        if(rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
-                  cout << "Error: unable to create auxiliary task " << name << endl;
-                  free(newTask);
-                  return 0;
-        }
-        
-        // Populate the rest of the data structure and store it in the vector
-        newTask->function = functionToCall;
-        newTask->name = strdup(name);
-        newTask->priority = priority;
-        newTask->started = false;
-        newTask->hasArgs = false;
-        newTask->autoSchedule = autoSchedule;
-        
-        getAuxTasks().push_back(newTask);
-        
-        return (AuxiliaryTask)newTask;
 }
 
 // Schedule a previously created (and started) auxiliary task. It will run when the priority rules next
@@ -420,14 +386,6 @@ void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
                                            // A safer approach would use rt_task_inquire()
 	}
 	rt_task_resume(&taskToSchedule->task);
-}
-void Bela_autoScheduleAuxiliaryTasks(){
-    vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-	    if ((InternalAuxiliaryTask *)(*it)->autoSchedule){
-    		Bela_scheduleAuxiliaryTask(*it);
-	    }
-	}
 }
 
 // Calculation loop that can be used for other tasks running at a lower

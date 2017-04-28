@@ -36,7 +36,7 @@ int gStopThreads = 0;
 int gTaskStopped = 0;
 int gCount = 0;
 
-void fillBuffers() {
+void fillBuffers(void*) {
     for(int i=0;i<NUM_STREAMS;i++) {
         if(sampleStream[i]->bufferNeedsFilled())
             sampleStream[i]->fillBuffer();

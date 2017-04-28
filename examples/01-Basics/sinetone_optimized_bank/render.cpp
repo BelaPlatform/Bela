@@ -93,7 +93,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example sinetone_optimised_bank/render.cpp
+\example sinetone_optimized_bank/render.cpp
 
 Using optimized neon functions
 ---------------------------
