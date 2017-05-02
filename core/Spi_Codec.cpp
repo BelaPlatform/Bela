@@ -26,10 +26,6 @@
 const char SPIDEV_GPIO_CS0[] = "/dev/spidev32766.0";
 const char SPIDEV_GPIO_CS1[] = "/dev/spidev32766.1";
 
-const unsigned char AD1938_INIT_CONFIG[] = {
-	0x4
-};
-
 Spi_Codec::Spi_Codec(){
 	if ((_fd_master = open(SPIDEV_GPIO_CS0, O_RDWR)) < 0)
 		rt_printf("Failed to open spidev device for master codec.\n");
@@ -72,14 +68,13 @@ unsigned char Spi_Codec::readRegister(unsigned char reg, CODEC_TYPE codec){
 
 int Spi_Codec::initCodec(){
 	// disable PLL, enable DAC / ADC
-	writeRegister(REG_PLL_CLK_CONTROL_0, 0x81);
+	writeRegister(REG_PLL_CLK_CONTROL_0, 0x85);
 	// DAC / ADC clock source = PLL, On-chip voltage reference enabled
 	writeRegister(REG_PLL_CLK_CONTROL_1, 0x00);
-	// 48 kHz sample rate, SDATA delay = 0, TDM mode
-	writeRegister(REG_DAC_CONTROL_0, 0x48); //TDM mode
+	// 48 kHz sample rate, SDATA delay = 1, TDM mode
+	writeRegister(REG_DAC_CONTROL_0, 0x40);
 	// Latch in mid cycle, 8 channels, inverted bclock, inverted wclock, bclock / wclock in master mode
-	writeRegister(REG_DAC_CONTROL_1, 0xBC);
-	//writeRegister(REG_DAC_CONTROL_1, 0xB8); //2 channels working
+	writeRegister(REG_DAC_CONTROL_1, 0x3C);
 	// Unmute DACs, 16 bit word width, noninverted DAC output polarity
 	writeRegister(REG_DAC_CONTROL_2, 0x18);
 	// Unmute all DACs
@@ -102,16 +97,15 @@ int Spi_Codec::initCodec(){
 	writeRegister(REG_DAC_VOLUME_R4, 0x00);
 	// Power up ADCs, unmute ADCs, disable high pass filter, 48 kHz sample rate
 	writeRegister(REG_ADC_CONTROL_0, 0x00);
-	// 16 bit word width, SDATA delay = 0, TDM mode, latch in mid cycle
-	writeRegister(REG_ADC_CONTROL_1, 0x27); //TDM mode
+	// 16 bit word width, SDATA delay = 1, TDM mode, latch in mid cycle
+	writeRegister(REG_ADC_CONTROL_1, 0x23);
 	// wclock format = 50/50, 8 channels, inverted bclock, inverted wclock, bclock / wclock is master
-	writeRegister(REG_ADC_CONTROL_2, 0x6E);
-	//writeRegister(REG_ADC_CONTROL_2, 0x4E); // 2 channels working
+	writeRegister(REG_ADC_CONTROL_2, 0x24);
 	
 	return 0;
 }
 
-int Spi_Codec::startAudio(){
+int Spi_Codec::startAudio(int dummy_parameter){
 	// enable PLL / DAC / ADC
 	writeRegister(REG_PLL_CLK_CONTROL_0, 0x84);
 
@@ -217,6 +211,7 @@ int Spi_Codec::dumpRegisters(){
 }
 
 int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t bytes, CODEC_TYPE codec){
+	int ret;
 
 	struct spi_ioc_transfer tr;
 	memset(&tr, 0, sizeof(tr));
@@ -228,16 +223,18 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 	int fd;
 	codec == MASTER_CODEC ? fd = _fd_master : fd = _fd_slave;
 
-	if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) < 0){
-		rt_printf("Error during SPI transmission for CTAG face.\n");
+	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+	if (ret < 0){
+		rt_printf("Error during SPI transmission for CTAG face: %d\n", ret);
 		return 1;
 	}
 
 	if (!(tx_buf[0] & 1)){ //verify registers, if new value has been written
 		unsigned char origValue = tx_buf[2];
 		tx_buf[0] = tx_buf[0] | 0x1; //set read only flag
-		if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) < 0){
-			rt_printf("Error in SPI transmission during verification of register values of CTAG face.\n");
+		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+		if (ret < 0){
+			rt_printf("Error in SPI transmission during verification of register values of CTAG face: %d\n", ret);
 			return 1;
 		}
 		if (origValue != rx_buf[2] && tx_buf[1] != REG_PLL_CLK_CONTROL_1){

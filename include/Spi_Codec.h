@@ -44,7 +44,7 @@ public:
 	unsigned char readRegister(unsigned char reg, CODEC_TYPE codec = MASTER_CODEC);
 
 	int initCodec();
-	int startAudio();
+	int startAudio(int dummy_parameter = 0);
 	int stopAudio();
 	int setAudioSamplingRate(unsigned int newSamplingRate);
 	unsigned int getAudioSamplingRate();

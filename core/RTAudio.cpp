@@ -12,6 +12,8 @@
 
 //TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
 
+//#define CTAG_FACE_8CH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,8 +68,13 @@ const char gRTAudioInterruptName[] = "bela-pru-irq";
 #endif
 
 PRU *gPRU = 0;
-//I2c_Codec *gAudioCodec = 0;
-Spi_Codec *gAudioCodecSpi = 0;
+#ifdef CTAG_FACE_8CH
+	Spi_Codec *gAudioCodec = 0;
+#else
+	I2c_Codec *gAudioCodec = 0;
+#endif
+
+
 
 vector<InternalAuxiliaryTask*> &getAuxTasks(){
 	static vector<InternalAuxiliaryTask*> auxTasks;
@@ -189,11 +196,20 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	gContext.audioSampleRate = 48000.0;
+	#ifdef CTAG_FACE_8CH
+		gContext.audioSampleRate = 48000.0;
+	#else
+		gContext.audioSampleRate = 44100.0;
+	#endif
 
 	// TODO: settings a different number of channels for inputs and outputs is not yet supported
-	gContext.audioInChannels = 2;
-	gContext.audioOutChannels = 2;
+	#ifdef CTAG_FACE_8CH
+		gContext.audioInChannels = 8;
+		gContext.audioOutChannels = 8;
+	#else
+		gContext.audioInChannels = 2;
+		gContext.audioOutChannels = 2;
+	#endif
 
 	if(settings->useAnalog) {
 		gContext.audioFrames = settings->periodSize;
@@ -259,8 +275,13 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
-	//gAudioCodec = new I2c_Codec();
-	gAudioCodecSpi = new Spi_Codec();
+	#ifdef CTAG_FACE_8CH
+		gAudioCodec = new Spi_Codec();
+	#else
+		gAudioCodec = new I2c_Codec();
+	#endif
+ 	
+	
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(gPRU->prepareGPIO(settings->enableLED)) {
@@ -280,19 +301,20 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	/*
-	// Prepare the audio codec, which clocks the whole system
-	if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
-		cout << "Unable to open codec I2C\n";
-		return 1;
-	}
-	if(gAudioCodec->initCodec()) {
-		cout << "Error: unable to initialise audio codec\n";
-		return 1;
-	}
-	*/
-	gAudioCodecSpi->initCodec();
-	//gAudioCodecSpi->dumpRegisters();
+	#ifdef CTAG_FACE_8CH
+		gAudioCodec->initCodec();
+		//gAudioCodec->dumpRegisters();
+	#else
+		// Prepare the audio codec, which clocks the whole system
+		if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
+			cout << "Unable to open codec I2C\n";
+			return 1;
+		}
+		if(gAudioCodec->initCodec()) {
+			cout << "Error: unable to initialise audio codec\n";
+			return 1;
+		}
+	#endif
 
 	// Set default volume levels
 	Bela_setDACLevel(settings->dacLevel);
@@ -352,8 +374,7 @@ void audioLoop(void *)
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
-	//gAudioCodec->stopAudio();
-	gAudioCodecSpi->stopAudio();
+	gAudioCodec->stopAudio();
 	gPRU->cleanupGPIO();
 
 	if(gRTAudioVerbose == 1)
@@ -513,17 +534,13 @@ int Bela_startAudio()
 #endif
 
 	// make sure we have everything
-	//assert(gAudioCodec != 0 && gPRU != 0);
-	assert(gAudioCodecSpi != 0 && gPRU != 0);
+	assert(gAudioCodec != 0 && gPRU != 0);
 
-	/*
 	// power up and initialize audio codec
 	if(gAudioCodec->startAudio(0)) {
 		fprintf(stderr, "Error: unable to start I2C audio codec\n");
 		return -1;
 	}
-	*/
-	gAudioCodecSpi->startAudio();
 
 	// initialize and run the PRU
 	if(gPRU->start(gPRUFilename)) {
@@ -614,10 +631,8 @@ void Bela_cleanupAudio()
 
 	if(gPRU != 0)
 		delete gPRU;
-	//if(gAudioCodec != 0)
-	//	delete gAudioCodec;
-	if (gAudioCodecSpi != 0)
-		delete gAudioCodecSpi;
+	if(gAudioCodec != 0)
+		delete gAudioCodec;
 
 	if(gAmplifierMutePin >= 0)
 		gpio_unexport(gAmplifierMutePin);

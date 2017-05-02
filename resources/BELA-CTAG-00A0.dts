@@ -12,8 +12,8 @@
 	compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
 
 	/* identification */
-	part-number = "BB-SPIDEV-GPIO";
-	version = "00A0";
+	part-number = "BELA-CTAG";
+	version = "00A0", "A0";
 
 	/* state the resources this cape uses */
 	exclusive-use =
@@ -31,11 +31,11 @@
 		__overlay__ {
 			bb_spi_gpio_pins: pinmux_bb_spi_gpio_pins {
 				pinctrl-single,pins = <
-					0x0DC 0x37 	/* spi_sclk, 	MODE7 | INPUT_PULLUP | SPI_SCLK P8_32 */
-                    0x028 0x37	/* spi_miso, 	MODE7 | INPUT_PULLUP | SPI_MISO P8_14 */
-                    0x0D4 0x17	/* spi_mosi, 	MODE7 | OUTPUT_PULLUP | SPI_MOSI P8_33 */
-                    0x02C 0x17	/* spi_cs0, 	MODE7 | OUTPUT_PULLUP | SPI_CS0 P8_17 */
-					0x0D8 0x17	/* spi_cs1,		MODE7 | OUTPUT_PULLUP | SPI_CS1 P8_31 */
+					0x0DC 0x37 /* spi_sclk, 	MODE7 | INPUT_PULLUP | SPI_SCLK P8_32 */
+					0x028 0x37 /* spi_miso, 	MODE7 | INPUT_PULLUP | SPI_MISO P8_14 */
+					0x0D4 0x17 /* spi_mosi, 	MODE7 | OUTPUT_PULLUP | SPI_MOSI P8_33 */
+					0x02C 0x17 /* spi_cs0, 		MODE7 | OUTPUT_PULLUP | SPI_CS0 P8_17 */
+					0x0D8 0x17 /* spi_cs1,		MODE7 | OUTPUT_PULLUP | SPI_CS1 P8_31 */
 				>;
 			};
 		};
