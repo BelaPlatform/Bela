@@ -179,7 +179,21 @@
 #endif
 
 #define MCASP_DATA_MASK 	0xFFFF		// 16 bit data
-#define MCASP_DATA_FORMAT	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+
+#define TLV320_MODE_I2S
+
+#ifdef TLV320_MODE_I2S
+#define MCASP_AFSRCTL_VALUE 0x101		// 2-slot TDM I2S mode, falling edge means beginning of frame
+#define MCASP_DATA_FORMAT_VALUE	0x1807C		// MSB first, 1 bit delay, 16 bits, CFG bus, ROR 16bits
+#define MCASP_ACLKXCTL_VALUE 0x80		// Transmit on rising edge, sync. xmit and recv
+#endif
+
+#ifdef TLV320_MODE_DSP
+#define MCASP_AFSRCTL_VALUE 0x100		// 2-slot TDM I2S mode, rising edge means beginning of frame
+#define MCASP_ACLKXCTL_VALUE 0x00		// Transmit on falling edge, sync. xmit and recv
+#define MCASP_DATA_FORMAT_VALUE	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+#endif
+
 
 #define C_MCASP_MEM             C28     	// Shared PRU mem
 
@@ -781,16 +795,16 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_DLBCTL, 0x00
     MCASP_REG_WRITE MCASP_DITCTL, 0x00
     MCASP_REG_WRITE MCASP_RMASK, MCASP_DATA_MASK	// 16 bit data receive
-    MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT	// Set data format
-    MCASP_REG_WRITE MCASP_AFSRCTL, 0x100		// I2S mode
+    MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT_VALUE	// Set data format
+    MCASP_REG_WRITE MCASP_AFSRCTL, MCASP_AFSRCTL_VALUE
     MCASP_REG_WRITE MCASP_ACLKRCTL, 0x80		// Sample on rising edge
     MCASP_REG_WRITE MCASP_AHCLKRCTL, 0x8001		// Internal clock, not inv, /2; irrelevant?
     MCASP_REG_WRITE MCASP_RTDM, 0x03		// Enable TDM slots 0 and 1
     MCASP_REG_WRITE MCASP_RINTCTL, 0x00		// No interrupts
     MCASP_REG_WRITE MCASP_XMASK, MCASP_DATA_MASK	// 16 bit data transmit
-    MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT	// Set data format
+    MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT_VALUE	// Set data format
     MCASP_REG_WRITE MCASP_AFSXCTL, 0x100		// I2S mode
-    MCASP_REG_WRITE MCASP_ACLKXCTL, 0x00		// Transmit on rising edge, sync. xmit and recv
+    MCASP_REG_WRITE MCASP_ACLKXCTL, MCASP_ACLKXCTL_VALUE
     MCASP_REG_WRITE MCASP_AHCLKXCTL, 0x8001		// External clock from AHCLKX
     MCASP_REG_WRITE MCASP_XTDM, 0x03		// Enable TDM slots 0 and 1
     MCASP_REG_WRITE MCASP_XINTCTL, 0x00		// No interrupts
@@ -978,6 +992,7 @@ MCASP_WAIT_RSTAT_LOW:
 
      // Mask low word and store in ADC data register
      MCASP_REG_READ_EXT MCASP_RBUF, r3
+     //MCASP_REG_READ_EXT MCASP_RSLOT, r3
      MOV r2, 0xFFFF
      AND reg_mcasp_adc_data, r3, r2
      QBA MCASP_ADC_DONE
@@ -990,6 +1005,7 @@ MCASP_WAIT_RSTAT_HIGH:
 
      // Read data and shift 16 bits to the left (into the high word)
      MCASP_REG_READ_EXT MCASP_RBUF, r3
+     //MCASP_REG_READ_EXT MCASP_RSLOT, r3
      LSL r3, r3, 16
      OR reg_mcasp_adc_data, reg_mcasp_adc_data, r3
 

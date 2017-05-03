@@ -65,7 +65,7 @@ int I2c_Codec::startAudio(int dual_rate)
 	}
 	if(writeRegister(0x08, 0xC0))	// Audio serial control register A: BLCK, WCLK outputs
 		return 1;
-	if(writeRegister(0x09, 0x40))	// Audio serial control register B: DSP mode, word len 16 bits
+	if(writeRegister(0x09, 0x0))	// Audio serial control register B: I2S mode, word len 16 bits
 		return 1;
 	if(writeRegister(0x0A, 0x00))	// Audio serial control register C: 0 bit offset
 		return 1;
