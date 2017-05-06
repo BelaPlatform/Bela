@@ -364,21 +364,21 @@ connect: ## Connects to the running Bela program (if any), can detach with ctrl-
 	
 idestart: ## Starts the on-board IDE
 idestart: idestop
-        $(AT) systemctl restart bela_ide
+	$(AT) systemctl restart bela_ide
 
 idestop: ## Stops the on-board IDE
-        $(AT) systemctl stop bela_ide
+	$(AT) systemctl stop bela_ide
 
 idestartup: ## Enables the IDE at startup
-        $(AT) echo "Enabling the IDE at startup"
-        $(AT) systemctl enable bela_ide
+	$(AT) echo "Enabling the IDE at startup"
+	$(AT) systemctl enable bela_ide
 
 idenostartup: ## Disables the IDE at startup
-        $(AT) echo "Disabling the IDE at startup"
-        $(AT) systemctl disable bela_ide
+	$(AT) echo "Disabling the IDE at startup"
+	$(AT) systemctl disable bela_ide
 
 ideconnect: ## Brings up the IDE's log
-        $(AT) journalctl -fu bela_ide
+	$(AT) journalctl -fu bela_ide
 
 SCSYNTH_SCREEN_NAME=scsynth
 SCSYNTH_RUN_COMMAND=screen -S $(SCSYNTH_SCREEN_NAME) -d -m scsynth $(SC_CL)
