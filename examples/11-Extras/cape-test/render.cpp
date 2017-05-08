@@ -1,10 +1,25 @@
 /*
- * render.cpp
- *
- *  Created on: Oct 24, 2014
- *      Author: parallels
- */
+ ____  _____ _        _    
+| __ )| ____| |      / \   
+|  _ \|  _| | |     / _ \  
+| |_) | |___| |___ / ___ \ 
+|____/|_____|_____/_/   \_\
 
+The platform for ultra-low latency audio and sensor processing
+
+http://bela.io
+
+A project of the Augmented Instruments Laboratory within the
+Centre for Digital Music at Queen Mary University of London.
+http://www.eecs.qmul.ac.uk/~andrewm
+
+(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
+	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
+	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+
+The Bela software is distributed under the GNU Lesser General Public License
+(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+*/
 
 #include <Bela.h>
 #include <cmath>
@@ -12,12 +27,13 @@
 #define ANALOG_LOW	(2048.0 / 65536.0)
 #define ANALOG_HIGH (50000.0 / 65536.0)
 
-const int gDACPinOrder[] = {6, 4, 2, 0, 1, 3, 5, 7};
+const int gDACPinOrder[] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 enum {
 	kStateTestingAudioLeft = 0,
 	kStateTestingAudioRight,
-	kStateTestingAudioDone
+	kStateTestingAudioDone,
+	kStateTestingNone
 };
 
 uint64_t gLastErrorFrame = 0;
@@ -29,33 +45,21 @@ int gEnvelopeLastChannel = 0;
 float gPositivePeakLevels[2] = {0, 0};
 float gNegativePeakLevels[2] = {0, 0};
 float gPeakLevelDecayRate = 0.999;
+int gAnalogTestSuccessCounter = 0;
 const float gPeakLevelLowThreshold = 0.02;
 const float gPeakLevelHighThreshold = 0.2;
 const float gDCOffsetThreshold = 0.1;
-int gAudioTestState = kStateTestingAudioLeft;
+int gAudioTestState = kStateTestingNone;
 int gAudioTestStateSampleCount = 0;
 int gAudioTestSuccessCounter = 0;
 const int gAudioTestSuccessCounterThreshold = 64;
 const int gAudioTestStateSampleThreshold = 16384;
 
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
-
 bool setup(BelaContext *context, void *userData)
 {
+	printf("To prepare for this test you should physically connect each audio and analog output back to its respective input\n");
 	return true;
 }
-
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
 
 void render(BelaContext *context, void *userData)
 {
@@ -63,6 +67,11 @@ void render(BelaContext *context, void *userData)
 	static int sampleCounter = 0;
 	static int invertChannel = 0;
 	float frequency = 0;
+
+	if(gAudioTestState == kStateTestingNone){
+		gAudioTestState = kStateTestingAudioLeft;
+		rt_printf("Testing audio left\n");
+	}
 
 	// Play a sine wave on the audio output
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
@@ -103,6 +112,8 @@ void render(BelaContext *context, void *userData)
 					// Successful test: increment counter
 					gAudioTestSuccessCounter++;
 					if(gAudioTestSuccessCounter >= gAudioTestSuccessCounterThreshold) {
+						rt_printf("Audio Left test succesful\n");
+						rt_printf("Testing audio Right\n");
 						gAudioTestState = kStateTestingAudioRight;
 						gAudioTestStateSampleCount = 0;
 						gAudioTestSuccessCounter = 0;
@@ -151,6 +162,8 @@ void render(BelaContext *context, void *userData)
 					if(gAudioTestSuccessCounter >= gAudioTestSuccessCounterThreshold) {
 						gAudioTestSuccessCounter = 0;							
 						gAudioTestStateSampleCount = 0;
+						rt_printf("Audio Right test succesful\n");
+						rt_printf("Testing analog\n");
 						gAudioTestState = kStateTestingAudioDone;
 					}
 				}
@@ -232,14 +245,18 @@ void render(BelaContext *context, void *userData)
 			for(int k = 0; k < 8; k++) {
 				if(k == invertChannel) {
 					if(context->analogIn[n*8 + k] < ANALOG_HIGH) {
-						rt_printf("FAIL [output %d, input %d] -- output HIGH input %f (inverted)\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f (inverted)\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
 						gLastErrorFrame = context->audioFramesElapsed + n;
+					} else {
+						++gAnalogTestSuccessCounter;
 					}
 				}
 				else {
 					if(context->analogIn[n*8 + k] > ANALOG_LOW) {
-						rt_printf("FAIL [output %d, input %d] -- output LOW --> input %f\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+						rt_printf("Analog FAIL [output %d, input %d] -- output LOW --> input %f\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
 						gLastErrorFrame = context->audioFramesElapsed + n;
+					} else {
+						++gAnalogTestSuccessCounter;
 					}
 				}
 			}
@@ -248,14 +265,18 @@ void render(BelaContext *context, void *userData)
 			for(int k = 0; k < 8; k++) {
 				if(k == invertChannel) {
 					if(context->analogIn[n*8 + k] > ANALOG_LOW) {
-						rt_printf("FAIL [output %d, input %d] -- output LOW input %f (inverted)\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+						rt_printf("Analog FAIL [output %d, input %d] -- output LOW input %f (inverted)\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
 						gLastErrorFrame = context->audioFramesElapsed + n;
+					} else {
+						++gAnalogTestSuccessCounter;
 					}
 				}
 				else {
 					if(context->analogIn[n*8 + k] < ANALOG_HIGH) {
-						rt_printf("FAIL [output %d, input %d] -- output HIGH input %f\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
 						gLastErrorFrame = context->audioFramesElapsed + n;
+					} else {
+						++gAnalogTestSuccessCounter;
 					}
 				}
 			}
@@ -267,13 +288,28 @@ void render(BelaContext *context, void *userData)
 			if(invertChannel >= 8)
 				invertChannel = 0;
 		}
+		if(gAnalogTestSuccessCounter >= 500) {
+			static bool notified = false;
+			if(!notified)
+				rt_printf("Analog test successful\n");
+			notified = true;
+		}
 	}
-}
 
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
+}
 
 void cleanup(BelaContext *context, void *userData)
 {
 
 }
+
+/**
+ * \example cape-test/render.cpp
+ *
+ * Testing the functionalities of the Bela cape
+ * -----------------------------------------
+ *
+ *  This program checks that audio and analog I/O work properly.
+ *  You should physically connect each audio and analog output back to its
+ *  respective input.
+ */
