@@ -30,7 +30,7 @@
 		"P9.25",
 		"P9.30",
 
-		/* PRU for mutliplexer capelet */
+		/* PRU */
 		"P8.41",
 		"P8.42",
 		"P8.43",
