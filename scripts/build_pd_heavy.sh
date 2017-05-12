@@ -143,7 +143,7 @@ if [ -z "$release" ]
 then 
   RELEASE_STRING=
 else 
-  RELEASE_STRING="-r $release"
+  RELEASE_STRING="-rr -r $release"
 fi
 
 
