@@ -175,8 +175,6 @@
 		target = <&pruss>;
 		__overlay__ {
 			pinctrl-names = "default";
-			pinctrl-0 = <&pru_bela_pins>;
-
 			status = "okay";
 		};
 	};
