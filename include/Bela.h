@@ -34,6 +34,12 @@
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 
+#ifdef _XENOMAI_TRANK_RTDK_H
+#define XENOMAI_MAJOR 3
+#else
+#define XENOMAI_MAJOR 2
+#endif
+
 // Useful constants
 
 /** \cond PRIVATE */
