@@ -254,9 +254,14 @@ int Midi::writeTo(const char* port){
 	outId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(outId, size + 1, "bela-midiOut_%s", port);
 
- 	size = snprintf(outPipeName, 0, "/proc/xenomai/registry/native/pipes/%s", port);
+#if XENOMAI_MAJOR == 3
+	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/%s";
+#else
+	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/%s";
+#endif
+	size = snprintf(outPipeName, 0, outPipeNameTemplateString, port);
 	outPipeName = (char*)malloc((size + 1)*sizeof(char));
-	snprintf(outPipeName, size + 1, "/proc/xenomai/registry/native/pipes/%s", port);
+	snprintf(outPipeName, size + 1, outPipeNameTemplateString, port);
 	//printf("Created pipe: %s\n", outPipeName);	
 	int ret;
 	ret = rt_pipe_delete(&outPipe);
