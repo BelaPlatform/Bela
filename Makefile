@@ -24,7 +24,8 @@ include/pru_rtaudio_bin.h: pru_rtaudio.p
 	pasm -V2 -L -c pru_rtaudio.p
 	mv pru_rtaudio_bin.h include/
 
-LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound
+LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound -lsndfile
+>>>>>>> 5f4ba00... Re-added libsndfile to the linker flags
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
