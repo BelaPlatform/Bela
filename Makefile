@@ -19,7 +19,7 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound
+LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound -lsndfile
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
