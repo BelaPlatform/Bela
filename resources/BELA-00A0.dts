@@ -30,7 +30,7 @@
 		"P9.25",
 		"P9.30",
 
-		/* PRU for mutliplexer capelet */
+		/* PRU */
 		"P8.41",
 		"P8.42",
 		"P8.43",
@@ -72,125 +72,15 @@
 			/* Misc */
 			"mcasp0", "pru0", "pru1", "i2c1";
 
-	/** Pinmux settings **/
+	/** Dummy property to correctly load device tree overlay **/
 	fragment@0 {
 		target = <&am33xx_pinmux>;
 		__overlay__ {
 
-			/* Pin mux for McASP */
-			bone_audio_cape_audio_pins: pinmux_bone_audio_cape_audio_pins {
-				pinctrl-single,pins = <
-					0x1ac 0x00 /* mcasp0_ahclkx, 	P9_25 | MODE0 | INPUT_PULLDOWN */
-					0x19c 0x22 /* mcasp0_axr2, 		P9_28 | MODE2 | OUTPUT_PULLDOWN */
-					0x194 0x20 /* mcasp0_fsx, 		P9_29 | MODE0 | OUTPUT_PULLDOWN */
-					0x190 0x20 /* mcasp0_ahclk, 	P9_31 | MODE0 | OUTPUT_PULLDOWN */
-					0x198 0x20 /* mcasp0_axr0, 		P9_30 | MODE0 | OUTPUT_PULLDOWN */
-				>;
-			};
-
-			/* Pin mux for PRU GPIOs for multiplexer capelet */
-			pru_bela_pins: pinmux_pru_bela_pins {
-				pinctrl-single,pins = <
-					0x0b0 0x25 /* pr1_pru1_pru_r30_4,	P8_41 | MODE5 | OUTPUT_PULLDOWN */
-					0x0b4 0x25 /* pr1_pru1_pru_r30_5,	P8_42 | MODE5 | OUTPUT_PULLDOWN */
-					0x0ac 0x25 /* pr1_pru1_pru_r30_3,	P8_44 | MODE5 | OUTPUT_PULLDOWN */
-					0x0a0 0x25 /* pr1_pru1_pru_r30_0,	P8_45 | MODE5 | OUTPUT_PULLDOWN */
-					0x0a4 0x25 /* pr1_pru1_pru_r30_1,	P8_46 | MODE5 | OUTPUT_PULLDOWN */
-					0x0a8 0x25 /* pr1_pru1_pru_r30_2,	P8_43 | MODE5 | OUTPUT_PULLDOWN */
-				>;
-			};
-
-			/* Pin mux for Bela button */
-			bela_button_pin: pinmux_bela_button_pin {
-				pinctrl-single,pins = <
-					0x1a4 0x37 /* gpio3[19], 	P9_27 | MODE7 | OUTPUT_PULLUP */
-				>;
-			};
-
-			/* Pin mux for Bela digital i/o */
-			gpio_bela_pins: pinmux_gpio_bela_pins {
-				pinctrl-single,pins = <
-					0x090 0x27 /* gpio2[2], 	P8_07 | MODE7 | OUTPUT_PULLDOWN */
-					0x094 0x27 /* gpio2[3], 	P8_08 | MODE7 | OUTPUT_PULLDOWN */
-					0x09c 0x27 /* gpio2[5], 	P8_09 | MODE7 | OUTPUT_PULLDOWN */
-					0x098 0x27 /* gpio2[4], 	P8_10 | MODE7 | OUTPUT_PULLDOWN */
-					0x034 0x27 /* gpio1[13],	P8_11 | MODE7 | OUTPUT_PULLDOWN */
-					0x030 0x27 /* gpio2[13],	P8_12 | MODE7 | OUTPUT_PULLDOWN */
-					0x078 0x27 /* gpio1[28],	P9_12 | MODE7 | OUTPUT_PULLDOWN */
-					0x048 0x27 /* gpio1[18],	P9_14 | MODE7 | OUTPUT_PULLDOWN */
-					0x03c 0x27 /* gpio1[15],	P8_15 | MODE7 | OUTPUT_PULLDOWN */
-					0x038 0x27 /* gpio1[14], 	P8_16 | MODE7 | OUTPUT_PULLDOWN */
-					0x04c 0x27 /* gpio1[19],	P9_16 | MODE7 | OUTPUT_PULLDOWN */
-					0x08c 0x27 /* gpio2[1], 	P8_18 | MODE7 | OUTPUT_PULLDOWN */
-					0x0e0 0x27 /* gpio2[22],	P8_27 | MODE7 | OUTPUT_PULLDOWN */
-					0x0e8 0x27 /* gpio2[24],	P8_28 | MODE7 | OUTPUT_PULLDOWN */
-					0x0e4 0x27 /* gpio2[23],	P8_29 | MODE7 | OUTPUT_PULLDOWN */
-					0x0ec 0x27 /* gpio2[25],	P8_30 | MODE7 | OUTPUT_PULLDOWN */
-				>;
-			};
-
-			/* Pin mux for i2c on Bela header */
-			i2c1_pins: pinmux_i2c1_pins {
-				pinctrl-single,pins = <
-					0x180 0x73 /* i2c1_sda, 	P9_26 | MODE3 | OUTPUT_PULLUP | SLEWCTRL_SLOW */
-					0x184 0x73 /* i2c1_scl,		P9_24 | MODE3 | OUTPUT_PULLUP | SLEWCTRL_SLOW */
-				>;
-			};
-
-			/* Pin mux for tlv320aic3104 audio codec control */
-			i2c2_pins: pinmux_i2c2_pins {
-				pinctrl-single,pins = <
-					0x150 0x72 /* i2c2_sda,		P9_22 | MODE2 | OUTPUT_PULLUP | SLEWCTRL_SLOW */
-					0x154 0x72 /* i2c2_scl, 	P9_21 | MODE2 | OUTPUT_PULLUP | SLECCTRL_SLOW */
-				>;
+			
+			dummy_pins: pinmux_dummy_pins {
+				pinctrl-single,pins = <>;
 			};
 		};
-	};
-
-	/** McASP **/
-	fragment@1 {
-		target = <&mcasp0>;
-		__overlay__ {
-			pinctrl-names = "default";
-			pinctrl-0 = <&bone_audio_cape_audio_pins>;
-
-			status = "okay";
-
-			op-mode = <0>;	/* MCASP_IIS_MODE */
-			tdm-slots = <2>;
-			num-serializer = <16>;
-			serial-dir = <  /* 0: INACTIVE, 1: TX, 2: RX */
-				2 0 1 0
-				0 0 0 0
-				0 0 0 0
-				0 0 0 0
-			>;
-			tx-num-evt = <1>;
-			rx-num-evt = <1>;
-		};
-	};
-
-	/** PRU **/
-	fragment@2 {
-		target = <&pruss>;
-		__overlay__ {
-			pinctrl-names = "default";
-			status = "okay";
-		};
-	};
-
-	/** Bela button **/
-	fragment@3 {
-		target = <&ocp>;
-        __overlay__ {
-            bela_button_pin_mux {
-            	pinctrl-names = "default";
-                pinctrl-0 = <&bela_button_pin>;
-
-                compatible = "bone-pinmux-helper";
-
-                status = "okay";  
-            };
-        };
 	};
 };
