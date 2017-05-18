@@ -418,6 +418,11 @@ const unsigned int PRUcode[] =  {
      0x244804dc,
      0x24c1949c,
      0xe1003c9b,
+     0x240003c2,
+     0x24000282,
+     0x2444e0c3,
+     0x24003483,
+     0xe1002382,
      0x240000fb,
      0xe1443d9b,
      0x240000fb,
@@ -647,7 +652,11 @@ const unsigned int PRUcode[] =  {
      0x79000002,
      0x0b10eee7,
      0xf1c03d82,
+<<<<<<< HEAD
      0xd500e28c,
+=======
+     0xd500e28a,
+>>>>>>> ddfa09f... enable MCASP interface clock in PRU code
      0xcf05e2fe,
      0x10e7e7fb,
      0x240208fc,
@@ -717,7 +726,11 @@ const unsigned int PRUcode[] =  {
      0x4902e904,
      0x1101eafb,
      0x6900fb08,
+<<<<<<< HEAD
      0x2102cb00,
+=======
+     0x2102cd00,
+>>>>>>> ddfa09f... enable MCASP interface clock in PRU code
      0x1103e1fb,
      0x6900fb05,
      0xf100269b,

@@ -1,14 +1,17 @@
 .origin 0
 .entrypoint START
 
-//#define CTAG_FACE_8CH
+//#define BELA_TLV_CODEC
+#define CTAG_FACE_8CH
+//#define CTAG_BEAST_16CH
 
-#define DBOX_CAPE   // Define this to use new cape hardware
-    
-#define CLOCK_BASE  0x44E00000
-#define CLOCK_SPI0  0x4C
-#define CLOCK_SPI1  0x50
-#define CLOCK_L4LS  0x60
+#define DBOX_CAPE	// Define this to use new cape hardware
+	
+#define CLOCK_BASE   0x44E00000
+#define CLOCK_MCASP0 0x34
+#define CLOCK_SPI0   0x4C
+#define CLOCK_SPI1   0x50
+#define CLOCK_L4LS   0x60
 
 #define SCRATCHPAD_ID_BANK0 10
 #define SCRATCHPAD_ID_BANK1 11
@@ -33,6 +36,23 @@
 #define SPI_CH1CTRL   0x48
 #define SPI_CH1TX     0x4C
 #define SPI_CH1RX     0x50
+#define SPI_XFERLEVEL 0x7C
+
+// SPI interrupts
+#define SPI_INTR_BIT_TX0_EMPTY 0
+#define SPI_INTR_BIT_TX0_UNDERFLOW 1
+#define SPI_INTR_BIT_RX0_FULL 2
+#define SPI_INTR_BIT_RX0_OVERFLOW 3
+#define SPI_INTR_BIT_TX1_EMPTY 4
+#define SPI_INTR_BIT_TX1_UNDERFLOW 5
+#define SPI_INTR_BIT_RX1_FULL 6
+#define SPI_INTR_BIT_TX2_EMPTY 8
+#define SPI_INTR_BIT_TX2_UNDERFLOW 9
+#define SPI_INTR_BIT_RX2_FULL 10
+#define SPI_INTR_BIT_TX3_EMPTY 12
+#define SPI_INTR_BIT_TX3_UNDERFLOW 13
+#define SPI_INTR_BIT_RX3_FULL 14
+#define SPI_INTR_BIT_EOW 17 // end of word
 
 #define GPIO0 0x44E07000
 #define GPIO1 0x4804C000
@@ -78,23 +98,24 @@
 #define AD7699_CHANNEL_OFFSET 9      // 7 bits offset of a 14-bit left-justified word
 #define AD7699_SEQ_OFFSET     3      // sequencer (0 = disable, 3 = scan all)
 
-#define SHARED_COMM_MEM_BASE  0x00010000  // Location where comm flags are written
-#define COMM_SHOULD_STOP      0       // Set to be nonzero when loop should stop
-#define COMM_CURRENT_BUFFER   4           // Which buffer we are on
-#define COMM_BUFFER_FRAMES    8           // How many frames per buffer
-#define COMM_SHOULD_SYNC      12          // Whether to synchronise to an external clock
-#define COMM_SYNC_ADDRESS     16          // Which memory address to find the GPIO on
-#define COMM_SYNC_PIN_MASK    20          // Which pin to read for the sync
-#define COMM_LED_ADDRESS      24          // Which memory address to find the status LED on
-#define COMM_LED_PIN_MASK     28          // Which pin to write to change LED
-#define COMM_FRAME_COUNT      32      // How many frames have elapse since beginning
-#define COMM_USE_SPI          36          // Whether or not to use SPI ADC and DAC
-#define COMM_NUM_CHANNELS     40      // Low 2 bits indicate 8 [0x3], 4 [0x1] or 2 [0x0] channels
-#define COMM_USE_DIGITAL      44      // Whether or not to use DIGITAL
-#define COMM_PRU_NUMBER       48          // Which PRU this code is running on
-#define COMM_MUX_CONFIG       52          // Whether to use the mux capelet, and how many channels
-#define COMM_MUX_END_CHANNEL  56          // Which mux channel the last buffer ended on
-    
+#define SHARED_COMM_MEM_BASE  		0x00010000  // Location where comm flags are written
+#define COMM_SHOULD_STOP      		0       	// Set to be nonzero when loop should stop
+#define COMM_CURRENT_BUFFER   		4           // Which buffer we are on
+#define COMM_BUFFER_MCASP_FRAMES    8           // How many frames per buffer for audio
+#define COMM_SHOULD_SYNC      		12          // Whether to synchronise to an external clock
+#define COMM_SYNC_ADDRESS     		16          // Which memory address to find the GPIO on
+#define COMM_SYNC_PIN_MASK    		20          // Which pin to read for the sync
+#define COMM_LED_ADDRESS      		24          // Which memory address to find the status LED on
+#define COMM_LED_PIN_MASK     		28          // Which pin to write to change LED
+#define COMM_FRAME_COUNT      		32      	// How many frames have elapse since beginning
+#define COMM_USE_SPI          		36          // Whether or not to use SPI ADC and DAC
+#define COMM_NUM_CHANNELS     		40      	// Low 2 bits indicate 8 [0x3], 4 [0x1] or 2 [0x0] channels
+#define COMM_USE_DIGITAL      		44      	// Whether or not to use DIGITAL
+#define COMM_PRU_NUMBER       		48          // Which PRU this code is running on
+#define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
+#define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
+#define COMM_BUFFER_SPI_FRAMES 		60    		// How many frames per buffer for analog i/o
+
 // General constants for local PRU peripherals (used for interrupt configuration)
 #define PRU_ICSS_INTC_LOCAL     0x00020000
 #define PRU_ICSS_CFG_LOCAL      0x00026000
@@ -265,24 +286,40 @@
 #define MCASP_OUTPUT_PINS       (1 << 3)    // Which pins are outputs
 #endif
 
+//TODO: Update comments according to config
 #define MCASP_DATA_MASK     0xFFFF      // 16 bit data
+
 #ifdef CTAG_FACE_8CH
 #define MCASP_DATA_FORMAT 0x180F4       // MSB first, 1 bit delay, 32 bits, DAT bus, ROR 16bits
-#define MCASP_ACLKRCTL_VALUE 0x80       // 0x180080 in ALSA driver
-#define MCASP_ACLKXCTL_VALUE 0x80       // 0x180080 in ALSA driver
-#define MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S mode (0x010 un ALSA driver)
-#define MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S mode (0x410 in ALSA driver) 
-#define MCASP_RTDM_VALUE 0xFF           // (0x00 in ALSA driver)
-#define MCASP_XTDM_VALUE 0xFF           // Enable TDM slots 0 to 7 (0xFF in ALSA driver)
-#else
-#define MCASP_DATA_FORMAT   0x8074      // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
+#define MCASP_ACLKRCTL_VALUE 0x80       // 
+#define MCASP_ACLKXCTL_VALUE 0x80       // 
+#define MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S mode
+#define MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S mode
+#define MCASP_RTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
+#define MCASP_XTDM_VALUE 0xFF           // 
+#endif
+
+#ifdef CTAG_BEAST_16CH
+#define MCASP_DATA_FORMAT 0x180F4       // MSB first, 1 bit delay, 32 bits, DAT bus, ROR 16bits
+#define MCASP_ACLKRCTL_VALUE 0x80       // 
+#define MCASP_ACLKXCTL_VALUE 0x80       // 
+#define MCASP_AFSRCTL_VALUE 0x810       // 
+#define MCASP_AFSXCTL_VALUE 0x810       // 
+#define MCASP_RTDM_VALUE 0xFFFF         // 
+#define MCASP_XTDM_VALUE 0xFFFF         // 
+#endif
+
+#ifdef BELA_TLV_CODEC
+#define MCASP_DATA_FORMAT_TX   0x18074      // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
+#define MCASP_DATA_FORMAT_RX   0x28074      // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits (no idea why ADCs have to be configured with 2 bit delay)
 #define MCASP_ACLKRCTL_VALUE 0x00
 #define MCASP_ACLKXCTL_VALUE 0x00
 #define MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S mode
-#define MCASP_AFSXCTL_VALUE 0x100       // 2 Slot I2S mode
+#define MCASP_AFSXCTL_VALUE 0x101       // 2 Slot I2S mode
 #define MCASP_RTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define MCASP_XTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #endif
+
 #define C_MCASP_MEM             C28         // Shared PRU mem
 
 // Flags for the flags register
@@ -293,6 +330,7 @@
 #define FLAG_BIT_MCASP_RX_FIRST_FRAME    4
 #define FLAG_BIT_MCASP_TX_PROCESSED		5
 #define FLAG_BIT_MCASP_RX_PROCESSED		6
+#define FLAG_BIT_MCSPI_FIRST_FOUR_CH	7
 
 #define FLAG_BIT_MUX_CONFIG0     8      // Mux capelet configuration:
 #define FLAG_BIT_MUX_CONFIG1     9      // 00 = off, 01 = 2 ch., 10 = 4 ch., 11 = 8 ch.
@@ -305,14 +343,13 @@
 #define MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words after.
 // 256 is the maximum number of frames allowed
 
-#define reg_digital_current r6  // Pointer to current storage location of DIGITAL
+#define reg_digital_current r6  	// Pointer to current storage location of DIGITAL
 #define reg_num_channels    r9      // Number of SPI ADC/DAC channels to use
 #define reg_frame_current   r10     // Current frame count in SPI ADC/DAC transfer
-#define reg_frame_total     r11     // Total frame count for SPI ADC/DAC
+#define reg_frame_mcasp_total     r11     // Total frame count for SPI ADC/DAC
 #define reg_dac_data        r12     // Current dword for SPI DAC
 #define reg_adc_data        r13     // Current dword for SPI ADC
-#define reg_mcasp_dac_data  r14     // Current dword for McASP DAC
-#define reg_mcasp_adc_data  r15     // Current dword for McASP ADC
+#define reg_frame_spi_total r15     // Current dword for McASP ADC
 #define reg_dac_buf0        r16     // Start pointer to SPI DAC buffer 0
 #define reg_dac_buf1        r17     // Start pointer to SPI DAC buffer 1
 #define reg_dac_current     r18     // Pointer to current storage location of SPI DAC
@@ -701,10 +738,9 @@ GPIO_DONE:
 
 // Write to data port beyond 0xFF boundary
 .macro MCASP_WRITE_TO_DATAPORT
-.mparam value
-    MOV r27, value
+.mparam start_reg, num_bytes
     MOV r28, MCASP_DATAPORT
-    SBBO r27, r28, 0, 4
+    SBBO start_reg, r28, 0, num_bytes
 .endm
 
 // Read a McASP register
@@ -723,9 +759,9 @@ GPIO_DONE:
 
 // Read from data port beyond 0xFF boundary
 .macro MCASP_READ_FROM_DATAPORT
-.mparam value
+.mparam start_reg, num_bytes
     MOV r28, MCASP_DATAPORT
-    LBBO value, r28, 0, 4
+    LBBO start_reg, r28, 0, num_bytes
 .endm
     
 // Set a bit and wait for it to come up
@@ -739,21 +775,6 @@ POLL:
      LBBO r28, reg_mcasp_addr, reg, 4
      AND r28, r28, r27
      QBEQ POLL, r28, 0
-.endm
-
-.macro MCASP_TEST_WFIFO
-     //TODO: Fill McASP tx fifo here and check for correct word count in WFIFOSTS
-     MCASP_WRITE_TO_DATAPORT 0x00000000
-     MCASP_WRITE_TO_DATAPORT 0x00000000
-     MCASP_WRITE_TO_DATAPORT 0x00000000
-     MCASP_WRITE_TO_DATAPORT 0x00000000
-     
-     MCASP_REG_READ_EXT MCASP_WFIFOSTS, r4
-     MCASP_REG_READ_EXT MCASP_RFIFOSTS, r5
-     MCASP_REG_READ_EXT MCASP_XSTAT, r6
-     MCASP_REG_READ_EXT MCASP_RSTAT, r7
-
-     HALT
 .endm
 
 // Multiplexer Capelet: Increment channel on muxes 0-3
@@ -829,16 +850,11 @@ START:
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_EISR, (0x00000000 | PRU_SYS_EV_MCASP_RX_INTR)
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_EISR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
 
-     // Clear McASP status bits
-     //MCASP_REG_WRITE_EXT MCASP_XSTAT, 0xFF
-     //MCASP_REG_WRITE_EXT MCASP_RSTAT, 0xFF
-
      // Enable all host interrupts (0/1: PRU, 2-9: ARM)
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_HIER, 0x3FF
 
      // Globally enable all interrupts
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_GER, 0x1
-
 PRU_INTC_INIT_DONE:
 
      // Load useful registers for addressing SPI
@@ -869,6 +885,10 @@ PRU_NUMBER_CHECK_DONE:
      LBCO r0, C4, 4, 4
      CLR r0, r0, 4
      SBCO r0, C4, 4, 4
+
+     // Clear McSPI irq status bits
+     MOV r2, 0x7F
+     SBBO r2, reg_spi_addr, SPI_IRQSTATUS, 4
 
      // Clear flags
      MOV reg_flags, 0
@@ -947,8 +967,9 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_CH0CTRL, 4
      SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
   
-     // Set to master; chip select lines enabled (CS0 used for DAC)
-     MOV r2, 0x00
+     // Set to master; chip select lines enabled (CS0 used for DAC); 
+     // Multiple word access via OCP bus (TODO: evaluate performance)
+     MOV r2, 0x80
      SBBO r2, reg_spi_addr, SPI_MODULCTRL, 4
   
      // Configure CH0 for DAC
@@ -962,6 +983,11 @@ SPI_WAIT_RESET:
      // Enable interrupts TX0_EMPTY__ENABLE for DACs and RX1_FULL__ENABLE for ADCs
      MOV r2, 0x41
      SBBO r2, reg_spi_addr, SPI_IRQENABLE, 4
+
+     // Set buffer level threshold for interrupts (14 words (7ch) for tx and rx)
+     // TODO: Configure dynamically for variable number of channels
+     MOV r2, 0xE0E
+     SBBO r2, reg_spi_addr, SPI_XFERLEVEL, 4
    
      // Turn on SPI channels
      MOV r2, 0x01
@@ -986,8 +1012,14 @@ SPI_WAIT_RESET:
 
      MOV r2, AD7699_CFG_MASK | (0x01 << AD7699_CHANNEL_OFFSET)
      ADC_WRITE r2, r2
-SPI_INIT_DONE:
-    
+
+SPI_INIT_DONE:	
+	
+    // enable MCASP interface clock in PRCM
+    MOV r2, 0x30002
+    MOV r3, CLOCK_BASE + CLOCK_MCASP0
+    SBBO r2, r3, 0, 4
+
     // Prepare McASP0 for audio
     MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
     MCASP_REG_WRITE_EXT MCASP_WFIFOCTL, 0x1 // Configure FIFOs
@@ -1007,14 +1039,30 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_DLBCTL, 0x00
     MCASP_REG_WRITE MCASP_DITCTL, 0x00
     MCASP_REG_WRITE MCASP_RMASK, MCASP_DATA_MASK    // 16 bit data receive
+#ifdef CTAG_FACE_8CH
     MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT   // Set data format
+#endif
+#ifdef CTAG_BEAST_16CH
+	MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT   // Set data format
+#endif
+#ifdef BELA_TLV_CODEC
+    MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT_RX   // Set data format
+#endif
     MCASP_REG_WRITE MCASP_AFSRCTL, MCASP_AFSRCTL_VALUE  // Set receive frameclock
     MCASP_REG_WRITE MCASP_ACLKRCTL, MCASP_ACLKRCTL_VALUE // Set receive bitclock        
     MCASP_REG_WRITE MCASP_AHCLKRCTL, 0x8001     // Internal clock, not inv, /2; irrelevant?
     MCASP_REG_WRITE MCASP_RTDM, MCASP_RTDM_VALUE
     MCASP_REG_WRITE MCASP_RINTCTL, 0x80     // Enable receive start of frame interrupt
     MCASP_REG_WRITE MCASP_XMASK, MCASP_DATA_MASK    // 16 bit data transmit
+#ifdef CTAG_FACE_8CH
     MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT   // Set data format
+#endif
+#ifdef CTAG_BEAST_16CH
+	MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT   // Set data format
+#endif
+#ifdef BELA_TLV_CODEC
+    MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT_TX   // Set data format
+#endif
     MCASP_REG_WRITE MCASP_AFSXCTL, MCASP_AFSXCTL_VALUE // Set transmit frameclock
     MCASP_REG_WRITE MCASP_ACLKXCTL, MCASP_ACLKXCTL_VALUE // Set transmit bitclock
     MCASP_REG_WRITE MCASP_AHCLKXCTL, 0x8001     // External clock from AHCLKX
@@ -1055,37 +1103,58 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 3)  // Set RSMRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 11) // Set XSMRST
 
 // Write a full frame to transmit FIFOs to prevent underflow and keep slots synced
-// (This leads to one sample offset. Could be improved)
+// Can be probably ignored if first underrun gets ignored for better performance => TODO: test
 #ifdef CTAG_FACE_8CH
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
-#else
-MCASP_WRITE_TO_DATAPORT 0x00
-MCASP_WRITE_TO_DATAPORT 0x00
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+#endif
+#ifdef CTAG_BEAST_16CH
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+#endif
+#ifdef BELA_TLV_CODEC
+MCASP_WRITE_TO_DATAPORT 0x00, 4
+MCASP_WRITE_TO_DATAPORT 0x00, 4
 #endif
 
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)  // Set RFRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
 
 // Initialisation
-    LBBO reg_frame_total, reg_comm_addr, COMM_BUFFER_FRAMES, 4  // Total frame count (SPI; 0.5x-2x for McASP)
+    LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count (0.5x-2x for McASP)
+    LBBO reg_frame_spi_total, reg_comm_addr, COMM_BUFFER_SPI_FRAMES, 4 // Total frame count for SPI
     MOV reg_dac_buf0, 0                      // DAC buffer 0 start pointer
-    LSL reg_dac_buf1, reg_frame_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
+    LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
     LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
     LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
     MOV reg_mcasp_buf0, 0            // McASP DAC buffer 0 start pointer
-    LSL reg_mcasp_buf1, reg_frame_total, r2  // McASP DAC buffer 1 start pointer = 2[ch]*2[bytes]*(N/4)[samples/spi]*bufsize
+    LSL reg_mcasp_buf1, reg_frame_mcasp_total, r2  // McASP DAC buffer 1 start pointer = 2[ch]*2[bytes]*(N/4)[samples/spi]*bufsize
     CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
-    CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
-    CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
+    SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
+    SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
     CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED // Jump not NEXT_FRAME label if both ADCs and DACs have been processed
     CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
+    SET reg_flags, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
     MOV r2, 0
     SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
 /* This block of code is not really needed, as the memory is initialized by ARM before the PRU is started.
@@ -1151,20 +1220,21 @@ MCASP_ADC_WAIT_BEFORE_LOOP:
      QBNE MCASP_DAC_WAIT_BEFORE_LOOP, reg_dac_current, 0
 #endif
 */
+
 WRITE_ONE_BUFFER:
 
      // Write a single buffer of DAC samples and read a buffer of ADC samples
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
      LMBD r2, reg_num_channels, 1       // 1, 2 or 3 for 2, 4 or 8 channels
-     LSL reg_adc_current, reg_frame_total, r2
+     LSL reg_adc_current, reg_frame_spi_total, r2
      LSL reg_adc_current, reg_adc_current, 2   // N * 2 * 2 * bufsize
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
-    MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
+     MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
 #ifdef CTAG_FACE_8CH
 // TODO: compute reg_mcasp_adc_current appropriately, considering you have now 8 channels
 #endif
-     LSL reg_mcasp_adc_current, reg_frame_total, r2 // McASP ADC: starts (N/2)*2*2*bufsize beyond DAC
+     LSL reg_mcasp_adc_current, reg_frame_mcasp_total, r2 // McASP ADC: starts (N/2)*2*2*bufsize beyond DAC
      LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
      ADC reg_mcasp_adc_current, reg_mcasp_adc_current, reg_mcasp_dac_current
      MOV reg_frame_current, 0
@@ -1178,7 +1248,7 @@ DIGITAL_BASE_CHECK_DONE:
 
 // Here new block of audio is processed
 WRITE_LOOP:
-     MOV r1, 0
+     MOV r1, 0 //TODO: Check if really required
 
 /* ########## EVENT LOOP BEGIN ########## */
 EVENT_LOOP:
@@ -1200,7 +1270,9 @@ HANDLE_INTERRUPT:
      PRU_ICSS_INTC_REG_READ_EXT INTC_REG_SECR1, r27
      QBBS MCASP_TX_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCASP_TX_INTR
      QBBS MCASP_RX_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCASP_RX_INTR
-     //QBBS SYSTEM_EVENT_44_RECEIVED, r10, PRU_SECR1_SYS_EV_MCSPI_INTR
+     QBBS MCSPI_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCSPI_INTR
+
+     //TODO: Check for overruns / underruns here (e.g. every 8 blocks)
 
      JMP EVENT_LOOP
 /* ########## INTERRUPT HANDLER END ########## */
@@ -1212,19 +1284,26 @@ MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x40 // clear XSTAFRM status bit
 
-     // Check if we are in first frame period. If yes, transmit full frame to FIFO.
-     // Otherwise jump back to event loop
-     QBBS MCASP_TX_ISR_END, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME
+     // Check if we are in first frame period. If true, transmit full frame to FIFO.
+     // Otherwise toggle flag and jump back to event loop
+     QBBC MCASP_TX_ISR_END, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME
 
+PROCESS_AUDIO_TX:
+set r30.t0
      // Temporarily save register states in scratchpad to have enough space for full audio frame.
-     // r16 and r17 are used as temp registers
+     // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
      // Load audio frame from memory and increment pointer to next frame
 #ifdef CTAG_FACE_8CH
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 16
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 16
-#else
+#endif
+#ifdef CTAG_BEAST_16CH
+	 LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 32
+     ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 32
+#endif
+#ifdef BELA_TLV_CODEC
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4
 #endif
@@ -1232,39 +1311,51 @@ MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
      //TODO: Change data structure in RAM to 32 bit samples 
      //     => no masking and shifting required
      //     => support for 24 bit audio
-     MOV r16, 0xFFFF
-     AND r16, r16, r0
-     MCASP_WRITE_TO_DATAPORT r16
-     LSR r16, r0, 16
-     MCASP_WRITE_TO_DATAPORT r16
+     MOV r17, 0xFFFF
+     AND r8, r17, r0
+     LSR r9, r0, 16
 
 #ifdef CTAG_FACE_8CH
-     MOV r16, 0xFFFF
-     AND r16, r16, r1
-     MCASP_WRITE_TO_DATAPORT r16
-     LSR r16, r1, 16
-     MCASP_WRITE_TO_DATAPORT r16
+     AND r10, r17, r1
+     LSR r11, r1, 16
+     AND r12, r17, r2
+     LSR r13, r2, 16
+     AND r14, r17, r3
+     LSR r15, r3, 16
+     MCASP_WRITE_TO_DATAPORT r8, 32
+#endif
+#ifdef CTAG_BEAST_16CH
+	 // Note: Could be optimized by only using single operation to write data to McASP FIFO,
+	 // but 24 registers need to be free for use
+	 AND r10, r17, r1
+     LSR r11, r1, 16
+     AND r12, r17, r2
+     LSR r13, r2, 16
+     AND r14, r17, r3
+     LSR r15, r3, 16
+     MCASP_WRITE_TO_DATAPORT r8, 32
 
-     MOV r16, 0xFFFF
-     AND r16, r16, r2
-     MCASP_WRITE_TO_DATAPORT r16
-     LSR r16, r2, 16
-     MCASP_WRITE_TO_DATAPORT r16
-
-     MOV r16, 0xFFFF
-     AND r16, r16, r3
-     MCASP_WRITE_TO_DATAPORT r16
-     LSR r16, r3, 16
-     MCASP_WRITE_TO_DATAPORT r16
+     AND r8, r17, r4
+     LSR r9, r4, 16
+     AND r10, r17, r5
+     LSR r11, r5, 16
+     AND r12, r17, r6
+     LSR r13, r6, 16
+     AND r14, r17, r7
+     LSR r15, r7, 16
+     MCASP_WRITE_TO_DATAPORT r8, 32
+#endif
+#ifdef BELA_TLV_CODEC
+     MCASP_WRITE_TO_DATAPORT r8, 8
 #endif
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
 
+clr r30.t0
 MCASP_TX_ISR_END:
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_TX_FIRST_FRAME) // toggle frame flag
      JMP EVENT_LOOP
-     //JMP NEXT_FRAME
 /* ########## McASP TX ISR END ########## */
 
 
@@ -1274,71 +1365,311 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_RX_INTR)
      MCASP_REG_WRITE_EXT MCASP_RSTAT, 0x40 // clear XSTAFRM status bit
 
-     // Check if we are in first frame period. If yes, load full frame from FIFO.
-     // Otherwise toggle frame period bit and jump back to event loop
-     QBBS MCASP_RX_ISR_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
-     set r30.t1
+	 // Check if we are in first frame period. 
+	 // If true, load full audio frame from FIFO and process SPI afterwards.
+	 // Otherwise toggle flag and jump back to event loop.
+	 QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
 
+PROCESS_AUDIO_RX:
+set r30.t1
      // Temporarily save register states in scratchpad to have enough space for full audio frame
-     // r16 and r17 are used as temp registers
-     XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0     
+     // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
+     XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
      //TODO: Change data structure in RAM to 32 bit samples 
      //     => no masking and shifting required
      //     => support for 24 bit audio
-     MCASP_READ_FROM_DATAPORT r16
+     //TODO: Avoid masking and shifting by simply moving sample to word (e.g. MOV r0.w0 value)
      MOV r17, 0xFFFF
-     AND r0, r16, r17
-     MCASP_READ_FROM_DATAPORT r16
-     LSL r16, r16, 16
-     OR r0, r0, r16
-
 #ifdef CTAG_FACE_8CH
-     MCASP_READ_FROM_DATAPORT r16
-     MOV r17, 0xFFFF
-     AND r1, r16, r17
-     MCASP_READ_FROM_DATAPORT r16
-     LSL r16, r16, 16
+     MCASP_READ_FROM_DATAPORT r8, 32
+     AND r0, r8, r17
+     LSL r16, r9, 16
+     OR r0, r0, r16
+     AND r1, r10, r17
+     LSL r16, r11, 16
      OR r1, r1, r16
-
-     MCASP_READ_FROM_DATAPORT r16
-     MOV r17, 0xFFFF
-     AND r2, r16, r17
-     MCASP_READ_FROM_DATAPORT r16
-     LSL r16, r16, 16
+     AND r2, r12, r17
+     LSL r16, r13, 16
      OR r2, r2, r16
-
-     MCASP_READ_FROM_DATAPORT r16
-     MOV r17, 0xFFFF
-     AND r3, r16, r17
-     MCASP_READ_FROM_DATAPORT r16
-     LSL r16, r16, 16
+     AND r3, r14, r17
+     LSL r16, r15, 16
      OR r3, r3, r16
 
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
-#else
+#endif
+#ifdef CTAG_BEAST_16CH
+	 // Check if there is at least one full frame in FIFO.
+	 // This is only required for CTAG Beast
+	 MCASP_REG_READ_EXT MCASP_RFIFOSTS, r27
+	 QBEQ SKIP_AUDIO_RX_FRAME, r27, 0
+
+	 // TODO: Optimize by only using on operation to read data from McASP FIFO.
+	 // Channels are swaped for master and slave codec to match correct channel order.
+	 MCASP_READ_FROM_DATAPORT r8, 32
+     AND r0, r12, r17
+     LSL r16, r13, 16
+     OR r0, r0, r16
+     AND r1, r14, r17
+     LSL r16, r15, 16
+     OR r1, r1, r16
+     AND r2, r8, r17
+     LSL r16, r9, 16
+     OR r2, r2, r16
+     AND r3, r10, r17
+     LSL r16, r11, 16
+     OR r3, r3, r16
+     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
+
+     MCASP_READ_FROM_DATAPORT r8, 32
+     AND r0, r8, r17
+     LSL r16, r9, 16
+     OR r0, r0, r16
+     AND r1, r10, r17
+     LSL r16, r11, 16
+     OR r1, r1, r16
+     AND r2, r12, r17
+     LSL r16, r13, 16
+     OR r2, r2, r16
+     AND r3, r14, r17
+     LSL r16, r15, 16
+     OR r3, r3, r16
+     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
+
+SKIP_AUDIO_RX_FRAME:
+#endif
+
+#ifdef BELA_TLV_CODEC
+     MCASP_READ_FROM_DATAPORT r8, 32
+     AND r0, r8, r17
+     LSL r16, r9, 16
+     OR r0, r0, r16
+
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4 // increment memory pointer
 #endif
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
+clr r30.t1
 
-MCASP_RX_ISR_END:     
-     XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_RX_FIRST_FRAME) // toggle frame flag
-     JMP EVENT_LOOP
-     //JMP NEXT_FRAME
+MCASP_RX_ISR_END:
 /* ########## McASP RX ISR END ########## */
+
+	 // Skip analog processing if SPI is disabled
+     QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_USE_SPI
+
+/* ########## McSPI ISR BEGIN ########## */
+PROCESS_SPI_BEGIN:
+set r30.t2
+     // Temporarily save register states in scratchpad to have enough space for SPI data
+     // r0 - r3 are used for ADC data. r4 - r17 are used as temp registers
+     // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
+     XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
+
+     // Analog ADC data is saved in r0-r1 and analog DAC data is saved in r2-r3 (four samples each)
+     LBCO r2, C_ADC_DAC_MEM, reg_dac_current, 8
+     ADD reg_dac_current, reg_dac_current, 8
+
+     // DAC: transmit low word (first in little endian)
+     MOV r16, 2 // Write channel 0
+     MOV r17, 0xFFFF
+     AND r4, r2, r17
+     LSL r4, r4, AD5668_DATA_OFFSET
+     MOV r5, (0x03 << AD5668_COMMAND_OFFSET)
+     OR r4, r4, r5
+     DAC_CHANNEL_REORDER r5, r16
+     LSL r5, r5, AD5668_ADDRESS_OFFSET
+     OR r4, r4, r5
+     DAC_WRITE r4
+
+     MOV r0, 0 // Initialize register for first two samples
+     MOV r16, 2 // Read channel 0 (can be deleted)
+     LSL r16, r16, AD7699_CHANNEL_OFFSET
+     MOV r17, AD7699_CFG_MASK
+     OR r16, r16, r17
+     ADC_WRITE r16, r16 // Get first sample
+     MOV r17, 0xFFFF // Mask low word
+     AND r0, r16, r17
+
+	 // DAC: transmit high word (second in little endian)
+	 MOV r16, 3 // Write channel 1
+     LSR r4, r2, 16
+     LSL r4, r4, AD5668_DATA_OFFSET
+     MOV r5, (0x03 << AD5668_COMMAND_OFFSET)
+     OR r4, r4, r5
+     DAC_CHANNEL_REORDER r5, r16
+     LSL r5, r5, AD5668_ADDRESS_OFFSET
+     OR r4, r4, r5
+     DAC_WRITE r4     
+
+     MOV r16, 3 // Read channel 1 (can be deleted)
+     LSL r16, r16, AD7699_CHANNEL_OFFSET
+     MOV r17, AD7699_CFG_MASK
+     OR r16, r16, r17
+     ADC_WRITE r16, r16 // Get second sample
+     LSL r16, r16, 16 // Move result to high word
+     OR r0, r0, r16
+
+     // DAC: transmit low word (first in little endian)
+     MOV r16, 0 // Write channel 2
+     MOV r17, 0xFFFF
+     AND r4, r3, r17
+     LSL r4, r4, AD5668_DATA_OFFSET
+     MOV r5, (0x03 << AD5668_COMMAND_OFFSET)
+     OR r4, r4, r5
+     DAC_CHANNEL_REORDER r5, r16
+     LSL r5, r5, AD5668_ADDRESS_OFFSET
+     OR r4, r4, r5
+     DAC_WRITE r4
+
+     MOV r1, 0 // Initialize register for next two samples
+     MOV r16, 0 // Read channel 2 (can be deleted)
+     LSL r16, r16, AD7699_CHANNEL_OFFSET
+     MOV r17, AD7699_CFG_MASK
+     OR r16, r16, r17
+     ADC_WRITE r16, r16 // Get first sample
+     MOV r17, 0xFFFF // Mask low word
+     AND r1, r16, r17
+
+     // DAC: transmit high word (second in little endian)
+	 MOV r16, 1 // Write channel 3
+     LSR r4, r3, 16
+     LSL r4, r4, AD5668_DATA_OFFSET
+     MOV r5, (0x03 << AD5668_COMMAND_OFFSET)
+     OR r4, r4, r5
+     DAC_CHANNEL_REORDER r5, r16
+     LSL r5, r5, AD5668_ADDRESS_OFFSET
+     OR r4, r4, r5
+     DAC_WRITE r4  
+
+     MOV r16, 1 // Read channel 3 (can be deleted)
+     LSL r16, r16, AD7699_CHANNEL_OFFSET
+     MOV r17, AD7699_CFG_MASK
+     OR r16, r16, r17
+     ADC_WRITE r16, r16 // Get second sample
+     LSL r16, r16, 16 // Move result to high word
+     OR r1, r1, r16
+
+     // Store 4 ADC samples in memory
+     SBCO r0, C_ADC_DAC_MEM, reg_adc_current, 8
+     ADD reg_adc_current, reg_adc_current, 8
+
+     XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
+
+     // Toggle flag to check on which SPI channels we are (i.e. ch0-ch3 or ch4-ch7)
+     XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCSPI_FIRST_FOUR_CH)
+
+PROCESS_SPI_END:
+	 XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_RX_FIRST_FRAME) // Toggle frame flag
+clr r30.t2
+
+     JMP EVENT_LOOP
+/* ########## McSPI ISR END ########## */
+
+
+/* ########## McSPI (analog) ISR BEGIN ########## */
+MCSPI_INTR_RECEIVED: // SINTERRUPTN
+     // Clear system event
+     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCSPI_INTR)
+
+     // Check which kind of interrupt was received
+     LBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+     QBBS MCSPI_INTR_TX0_EMPTY, r27, SPI_INTR_BIT_TX0_EMPTY
+     QBBS MCSPI_INTR_RX1_FULL, r27, SPI_INTR_BIT_RX1_FULL
+
+     // Clear all interrupt status bits
+     //TODO: Check if it is safer to only delete specific interrupts
+     MOV r27, 0x7F
+     SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+
+     JMP EVENT_LOOP
+
+MCSPI_INTR_TX0_EMPTY:
+	 MOV r27, (1 << SPI_INTR_BIT_TX0_EMPTY)
+	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+	 //HALT
+
+	 //TODO: Handle tx0 empty interrupt here
+
+	 JMP EVENT_LOOP
+
+MCSPI_INTR_RX1_FULL:
+	 MOV r27, (1 << SPI_INTR_BIT_RX1_FULL)
+	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+	 //HALT
+
+	 //TODO: Handle rx1 full interrupt here
+
+	 JMP EVENT_LOOP
+/* ########## McSPI (analog) ISR END ########## */
 
 
 NEXT_FRAME:
-	 set r30.t0
 	 CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
      CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
-     LSL r14, reg_frame_total, 1
+
+#ifdef CTAG_FACE_8CH
+     // Set reg frames total based on number of analog channels
+     // 8 analog ch => LSR 1
+     // 4 analog ch => LSR 2
+     // 2 analog ch => LSR 3
+     QBEQ CTAG_FACE_8CH_ANALOG_8, reg_num_channels, 0x8
+     QBEQ CTAG_FACE_8CH_ANALOG_4, reg_num_channels, 0x4
+     QBEQ CTAG_FACE_8CH_ANALOG_2, reg_num_channels, 0x2
+
+CTAG_FACE_8CH_ANALOG_8: // Eight channels
+     LSR r14, reg_frame_mcasp_total, 1
+     JMP CTAG_FACE_8CH_ANALOG_CFG_END
+CTAG_FACE_8CH_ANALOG_4: // Four channels
+	 LSR r14, reg_frame_mcasp_total, 2
+	 JMP CTAG_FACE_8CH_ANALOG_CFG_END
+CTAG_FACE_8CH_ANALOG_2: // Two channels
+	 LSR r14, reg_frame_mcasp_total, 3
+CTAG_FACE_8CH_ANALOG_CFG_END:
+#endif
+
+#ifdef CTAG_BEAST_16CH
+     // Set reg frames total based on number of analog channels
+     // 8 analog ch => LSR 2
+     // 4 analog ch => LSR 3
+     // 2 analog ch => LSR 4
+     QBEQ CTAG_FACE_16CH_ANALOG_8, reg_num_channels, 0x8
+     QBEQ CTAG_FACE_16CH_ANALOG_4, reg_num_channels, 0x4
+     QBEQ CTAG_FACE_16CH_ANALOG_2, reg_num_channels, 0x2
+
+CTAG_FACE_16CH_ANALOG_8: // Eight channels
+	 LSR r14, reg_frame_mcasp_total, 2
+	 JMP CTAG_FACE_16CH_ANALOG_CFG_END
+CTAG_FACE_16CH_ANALOG_4: // Four channels
+	 LSR r14, reg_frame_mcasp_total, 3
+	 JMP CTAG_FACE_16CH_ANALOG_CFG_END
+CTAG_FACE_16CH_ANALOG_2: // Two channels
+	 LSR r14, reg_frame_mcasp_total, 4
+CTAG_FACE_16CH_ANALOG_CFG_END:
+#endif
+
+#ifdef BELA_TLV_CODEC
+     // Set reg frames total based on number of analog channels
+     // 8 analog ch => LSL 1
+     // 4 analog ch => no shifting
+     // 2 analog ch => LSR 1
+     QBEQ BELA_TLV_ANALOG_8, reg_num_channels, 0x8
+     QBEQ BELA_TLV_ANALOG_CFG_END, reg_num_channels, 0x4
+     QBEQ BELA_TLV_ANALOG_2, reg_num_channels, 0x2
+
+BELA_TLV_ANALOG_8: // Eight channels
+     LSL r14, reg_frame_mcasp_total, 1
+     JMP BELA_TLV_ANALOG_CFG_END
+BELA_TLV_ANALOG_2: // Two channels
+	 LSR r14, reg_frame_mcasp_total, 1
+BELA_TLV_ANALOG_CFG_END:
+#endif
+
      ADD reg_frame_current, reg_frame_current, 1
-     clr r30.t0
      QBNE EVENT_LOOP, reg_frame_current, r14
 
 ALL_FRAMES_PROCESSED:
@@ -1351,16 +1682,6 @@ ALL_FRAMES_PROCESSED:
      MOV reg_mcasp_buf0, reg_mcasp_buf1
      MOV reg_mcasp_buf1, r2
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_BUFFER1) //flip the buffer flag
-
-     // If multiplexer capelet is enabled, save which channel we got to
-     // Muxes 0-3 change at a different time than muxes 4-7 but the first
-     // of these is sufficient to capture where we are
-     MOV r2, FLAG_MASK_MUX_CONFIG
-     AND r2, reg_flags, r2             
-     QBEQ MUX_CHANNEL_SAVE_DONE, r2, 0
-     AND r2, reg_pru1_mux_pins, 0x07
-     SBBO r2, reg_comm_addr, COMM_MUX_END_CHANNEL, 4
-MUX_CHANNEL_SAVE_DONE:  
     
      // Notify ARM of buffer swap
      AND r2, reg_flags, (1 << FLAG_BIT_BUFFER1)    // Mask out every but low bit
@@ -1369,7 +1690,7 @@ MUX_CHANNEL_SAVE_DONE:
     
      // Increment the frame count in the comm buffer (for status monitoring)
      LBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4
-     ADD r2, r2, reg_frame_total
+     ADD r2, r2, reg_frame_mcasp_total
      SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4
 
      // If LED blink enabled, toggle every 4096 frames
