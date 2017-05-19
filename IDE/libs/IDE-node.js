@@ -19,7 +19,7 @@ var TerminalManager = require('./TerminalManager');
 var allSockets;
 var belaPath = '/root/Bela/';
 var updatePath = belaPath+'updates/';
-var startupScript = '/root/Bela_startup.sh';
+var startupEnv = '/opt/Bela/startup_env';
 
 // settings
 var cpuMonitoring = false;
@@ -399,15 +399,20 @@ var SettingsManager = {
 };
 
 function runOnBootProject(){
-	// parse Bela_startup.sh
-	return fs.readFileAsync(startupScript, 'utf-8')
+	return fs.readFileAsync(startupEnv, 'utf-8')
 		.then( file => {
-			var project;
+			var project = 'none';
 			var lines = file.split('\n');
-			if (lines[5] === '# Run on startup disabled -- nothing to do here'){
-				project = 'none';
-			} else {
-				project = lines[6].trim().split(' ')[1].split('/').pop();
+			for (let line of lines){
+				line = line.split('=');
+				if (line[0] === 'ACTIVE' && line[1] === '0'){
+					console.log('no project set to run on boot');
+					continue;
+				} else if (line[0] === 'PROJECT'){
+					console.log('project', line[1], 'set to run on boot');
+					project = line[1];
+					continue;
+				}
 			}
 			return project;
 		})
