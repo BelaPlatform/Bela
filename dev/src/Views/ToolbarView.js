@@ -116,10 +116,9 @@ class ToolbarView extends View {
 	}
 	
 	_CPU(data){
-
 		var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 		var bela = 0, rootCPU = 1;
-		
+
 		if (data.bela != 0 && data.bela !== undefined){
 		
 			// extract the data from the output
@@ -138,14 +137,14 @@ class ToolbarView extends View {
 			for (var j=0; j<taskData.length; j++){
 				if (taskData[j].length){
 					var proc = {
-						'name'	: taskData[j][7],
-						'cpu'	: taskData[j][6],
+						'name'	: taskData[j][8],
+						'cpu'	: taskData[j][7],
 						'msw'	: taskData[j][2],
 						'csw'	: taskData[j][3]
 					};
-					if (proc.name === 'ROOT') rootCPU = proc.cpu*0.01;
+					if (proc.name === '[ROOT]') rootCPU = proc.cpu*0.01;
 					// ignore uninteresting data
-					if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:'){
+					if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:'){
 						output.push(proc);
 					}
 				}
