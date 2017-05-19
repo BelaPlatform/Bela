@@ -172,7 +172,7 @@ class belaProcess extends MakeProcess{
 	
 	CPU(){
 		if (!this.active || !this.pid) return Promise.resolve(0);
-		return fs.readFileAsync('/proc/xenomai/stat', 'utf8');
+		return fs.readFileAsync('/proc/xenomai/sched/stat', 'utf8');
 	}
 	
 	CPULinux(){
