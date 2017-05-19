@@ -411,12 +411,28 @@ function runOnBootProject(){
 				} else if (line[0] === 'PROJECT'){
 					console.log('project', line[1], 'set to run on boot');
 					project = line[1];
+					listenToRunOnBoot();
 					continue;
 				}
 			}
 			return project;
 		})
 		.catch( e => console.log('run-on-boot error', e) );
+}
+
+function listenToRunOnBoot(){
+	var proc = spawn('journalctl', ['-fu', 'bela_startup']);
+	proc.stdout.setEncoding('utf8');
+	proc.stdout.on('data', data => {
+		if (data) allSockets.emit('run-on-boot-log', data);
+	} );
+	proc.stderr.setEncoding('utf8');
+	proc.stderr.on('data', data => {
+		if (data) allSockets.emit('run-on-boot-log', data);
+	} );
+	proc.stdout.on('close', () => {
+		allSockets.emit('run-on-boot-log', 'Project running at boot has stopped');
+	});
 }
 
 function runOnBoot(socket, args){
