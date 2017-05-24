@@ -583,6 +583,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 
 	while(!gShouldStop) {
+
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 		// Wait for PRU to move to change buffers;
 		// PRU will send an interrupts which we wait for
@@ -609,27 +610,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
-		// Check for underruns by comparing the number of samples reported
-		// by the PRU with a local counter
-
-		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
-		// If analog is disabled, then PRU assumes 8 analog channels, and therefore
-		// half as many analog frames as audio frames
-			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
-			// read the PRU counter
-			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
-			// we initialize lastPruFrameCount the first time we get here,
-			// just in case the PRU is already ahead of us
-			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
-			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
-			if(pruFrameCount != expectedFrameCount)
-			{
-				// don't print a warning if we are stopping
-				if(!gShouldStop)
-					rt_fprintf(stderr, "Underrun detected: %u blocks dropped \n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
-			}
-			lastPruFrameCount = pruFrameCount;
-		}
 
 		if(belaCapeButton.enabled()){
 			static int belaCapeButtonCount = 0;
@@ -811,7 +791,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 						
 						for(unsigned int n = 0; n < context->analogFrames; n++) {
 							context->analogOut[n * context->analogOutChannels + ch] = 
-								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93/2.0);
+								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93f/2.f);
 						}
 					}
 				}
@@ -849,7 +829,31 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		}
 #endif
 
-		// Increment total number of samples that have elapsed
+		// Check for underruns by comparing the number of samples reported
+		// by the PRU with a local counter
+		// This is a pessimistic approach: you will occasionally get an underrun warning
+		// without a glitch actually occurring, but you will be right there on the edge anyhow.
+
+		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
+			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
+			// half as many analog frames as audio frames
+			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
+			// read the PRU counter
+			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
+			// we initialize lastPruFrameCount the first time we get here,
+			// just in case the PRU is already ahead of us
+			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
+			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
+			if(pruFrameCount > expectedFrameCount)
+			{
+				// don't print a warning if we are stopping
+				if(!gShouldStop)
+					rt_fprintf(stderr, "Underrun detected: %u blocks dropped\n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
+			}
+			lastPruFrameCount = pruFrameCount;
+		}
+
+		// Increment total number of samples that have elapsed.
 		context->audioFramesElapsed += context->audioFrames;
 
 	}
