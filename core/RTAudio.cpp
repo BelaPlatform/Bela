@@ -65,7 +65,8 @@ InternalBelaContext gContext;
 
 // User data passed in from main()
 void *gUserData;
-BelaInitSettings* gBelaSettings;
+void (*gBelaRender)(BelaContext*, void*);
+void (*gBelaCleanup)(BelaContext*, void*);
 
 // initAudio() prepares the infrastructure for running PRU-based real-time
 // audio, but does not actually start the calculations.
@@ -87,12 +88,13 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// We can't have more than one instance at a time, but we can tell via
 	// the Xenomai task info. We expect the rt_task_bind call to fail so if it
 	// doesn't then it means something else is running.
-	gBelaSettings = settings;
 	if(!settings->render)
 	{
 		cout << "Error: no audio callback defined. Make sure you set settings->render to point to your audio callback\n";
 		return -1;
 	}
+	gBelaRender = settings->render;
+	gBelaCleanup = settings->cleanup;
 	RT_TASK otherBelaTask;
 	int returnVal = rt_task_bind(&otherBelaTask, gRTAudioThreadName, TM_NONBLOCK);
 	if(returnVal == 0) {
@@ -325,7 +327,7 @@ void audioLoop(void *)
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	gPRU->loop(&gRTAudioInterrupt, gUserData, gBelaSettings->render);
 #else
-	gPRU->loop(0, gUserData, gBelaSettings->render);
+	gPRU->loop(0, gUserData, gBelaRender);
 #endif
 	// Now clean up
 	// gPRU->waitForFinish();
@@ -454,8 +456,8 @@ void Bela_stopAudio()
 // Free any resources associated with PRU real-time audio
 void Bela_cleanupAudio()
 {
-	if(gBelaSettings->cleanup)
-		(*gBelaSettings->cleanup)((BelaContext *)&gContext, gUserData);
+	if(gBelaCleanup)
+		(*gBelaCleanup)((BelaContext *)&gContext, gUserData);
 
 	disable_runfast();
 	// Shut down the prussdrv system
