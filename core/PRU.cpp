@@ -536,7 +536,7 @@ int PRU::start(char * const filename)
 }
 
 // Main loop to read and write data from/to PRU
-void PRU::loop(RT_INTR *pru_interrupt, void *userData)
+void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext*, void*))
 {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
@@ -768,7 +768,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		// Call user render function
         // ***********************
-		render((BelaContext *)context, userData);
+		(*render)((BelaContext *)context, userData);
 		// ***********************
 
 		if(analog_enabled) {

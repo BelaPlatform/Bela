@@ -45,6 +45,9 @@ int main(int argc, char *argv[])
 
 	// Set default settings
 	Bela_defaultSettings(&settings);
+	settings.setup = setup;
+	settings.render = render;
+	settings.cleanup = cleanup;
 
 	// Parse command-line arguments
 	while (1) {

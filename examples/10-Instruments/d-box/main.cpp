@@ -292,6 +292,9 @@ void parseArguments(arg_data args, BelaInitSettings *settings)
 	int tmp = -1;
 
 	Bela_defaultSettings(settings);
+	settings->setup = setup;
+	settings->render = render;
+	settings->cleanup = cleanup;
 
 	while (1)
 	{
