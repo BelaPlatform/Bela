@@ -6,6 +6,7 @@ var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require('fs-extra'));
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
+var archiver = require('archiver');
 
 // sub_modules
 var ProjectManager = require('./ProjectManager');
@@ -314,6 +315,36 @@ function socketEvents(socket){
 			})
 			.catch( e => console.log('error checking modified time', e) );
 			
+	});
+
+	socket.on('heavy-upload', project => {
+		var output = fs.createWriteStream(belaPath+'IDE/heavyUpload.zip');
+		var archive = archiver('zip', {
+		    zlib: { level: 9 } // Sets the compression level.
+		});
+		// listen for all archive data to be written
+		output.on('close', function() {
+			console.log('pd files zipped');
+			fs.readFileAsync(belaPath+'IDE/heavyUpload.zip')
+				.then(file => {
+					socket.emit('heavyUploadZip', file);
+				})
+				.catch(e => console.log('error opening heavy upload zip', e.toString()));
+		});
+	
+		// good practice to catch this error explicitly
+		archive.on('error', function(err) {
+			throw err;
+		});
+	
+		// pipe archive data to the file
+		archive.pipe(output);
+		
+		// append files from a glob pattern
+		archive.glob('*.pd', {cwd: belaPath+'projects/'+project});
+
+		// finalize the archive (ie we are done appending files but streams have to finish yet)
+		archive.finalize();
 	});
 
 }

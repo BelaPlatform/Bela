@@ -755,6 +755,34 @@ socket.on('mtime-compare', function (data) {
 	}
 });
 
+$('#heavyUpload').on('click', function (e) {
+	socket.emit('heavy-upload', models.project.getKey('currentProject'));
+});
+socket.on('heavyUploadZip', function (file) {
+	console.log('heavy zip received');
+	console.log(file);
+	var userName = "giuliomoro";
+	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wMS0xM1QxMzowOToxOS42MTAwNTkiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.F21KA1JiRpyNpbIRQYqmOCEvf1cpL9z8elEkEg9f1Qk=";
+	var serviceToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzZXJ2aWNlIjogImJlbGEiLCAic2VydmljZURhdGUiOiAiMjAxNy0wNS0yNFQxMTozNToyNS45NDEwMjIifQ==.SUDS5awhV4VZGT7zCzY_W3GGlPs4WnrgRb-OwSAT-Cc=";
+	$.ajax('https://beta.enzienaudio.com/a/patches/' + userName + '/bela/jobs/', {
+		type: "POST",
+		headers: {
+			Accept: "application/json",
+			Authorization: "Bearer " + userToken,
+			"X-Heavy-Service-Token": serviceToken
+		},
+		files: { "file": file },
+		crossDomain: true,
+		success: function success(result) {
+			console.log('done!');
+			console.log(result);
+		},
+		error: function error(xhr, status) {
+			console.log('request error', status);
+		}
+	});
+});
+
 var checkModifiedTimeInterval;
 var compareFiles = false;
 function setModifiedTimeInterval(mtime) {
