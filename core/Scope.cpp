@@ -1,5 +1,6 @@
 /***** Scope.cpp *****/
 #include <Scope.h>
+#include <scope_ws.h>
 
 Scope::Scope(): isUsingOutBuffer(false), 
                 isUsingBuffer(false), 
@@ -36,17 +37,6 @@ void Scope::triggerTask(void *ptr){
         instance->triggerFFT();
     }
 }
-void Scope::sendBufferTask(void *ptr){
-// printf("sendBufferTask\n");
-    Scope *instance = (Scope*)ptr;
-    while(instance->started && !gShouldStop) {
-        if (instance->sendBufferFlag){
-            instance->sendBuffer();
-            instance->sendBufferFlag = false;
-        }
-        usleep(1000);
-    }
-}
 void Scope::plotModeTask(void *ptr){
     Scope *instance = (Scope*)ptr;
     instance->setPlotMode();
@@ -64,15 +54,13 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
     oscServer.setup(OSC_RECEIVE_PORT);
     oscClient.setup(OSC_SEND_PORT, "127.0.0.1", false);
 
-    // setup the udp socket
-    // used for sending raw frame data
-    socket.setServer("127.0.0.1");
-	socket.setPort(SCOPE_UDP_PORT);
-
 	// setup the auxiliary tasks
 	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
-	scopeSendBufferTask = Bela_createAuxiliaryTask(Scope::sendBufferTask, BELA_AUDIO_PRIORITY-1, "scopeSendBufferTask", this);
+	sendBufferTask.create("scope-send-buffer", scope_ws_send);
 	scopePlotModeTask = Bela_createAuxiliaryTask(Scope::plotModeTask, BELA_AUDIO_PRIORITY-3, "scopePlotModeTask", this);
+	
+	// set up the websocket server
+	scope_ws_setup();
 	
 	// setup the sliders
 	sliders.reserve(numSliders);
@@ -117,8 +105,7 @@ void Scope::start(bool setup /* = false */ ){
     started = true;
     
     sendBufferFlag = false;
-    Bela_scheduleAuxiliaryTask(scopeSendBufferTask);
-    
+
     logCount = 0;
 
 }
@@ -269,10 +256,6 @@ bool Scope::trigger(){
     return false;
 }
 
-void Scope::scheduleSendBufferTask(){
-    sendBufferFlag = true;
-}
-
 bool Scope::triggered(){
     if (triggerMode == 0 || triggerMode == 1){  // normal or auto trigger
         return (!triggerDir && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel // positive trigger direction
@@ -350,8 +333,12 @@ void Scope::triggerTimeDomain(){
                 }
                 
                 // the whole frame has been saved in outBuffer, so send it
-                scheduleSendBufferTask();
-                
+                if (!isResizing){
+                	isUsingOutBuffer = true;
+	                sendBufferTask.schedule(&outBuffer[0], outBuffer.size());
+	                isUsingOutBuffer = false;
+                }
+
             }
             
         } else if (triggerWaiting){
@@ -500,15 +487,7 @@ void Scope::doFFT(){
     
 	isUsingOutBuffer = false;
 	isUsingBuffer = false;
-    scheduleSendBufferTask();
-}
-
-void Scope::sendBuffer(){
-	if(isResizing)
-		return;
-	isUsingOutBuffer = true;
-    socket.send(&(outBuffer[0]), outBuffer.size()*sizeof(float));
-	isUsingOutBuffer = false;
+    sendBufferTask.schedule(&(outBuffer[0]), outBuffer.size());
 }
 
 float Scope::getSliderValue(int slider){

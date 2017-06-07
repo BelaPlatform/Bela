@@ -1,8 +1,9 @@
-importScripts('../../socket.io/socket.io.js');
+// importScripts('../../socket.io/socket.io.js');
 
 var settings = {}, channelConfig = [];
 
-var socket = io('/BelaScopeWorker');
+var socket = new WebSocket("ws://192.168.7.2:5432/scope_data");
+socket.binaryType = 'arraybuffer';
 
 var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0;
 var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
@@ -38,16 +39,14 @@ onmessage = function(e){
 	}
 }
 
-socket.on('ready', function(){
-	socket.emit('buffer-received');
-});
+socket.onopen = function(){
+	console.log('connected');
+};
 
-socket.on('buffer', function(buf){
+socket.onmessage = function(e){
 
-	socket.emit('buffer-received');
-
-	var inArray = new Float32Array(buf);
-	//console.log("worker: recieved buffer of length "+inArray.length);
+	var inArray = new Float32Array(e.data);
+// 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
 	//console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
 	var outArray = new Float32Array(outArrayWidth);
@@ -93,4 +92,4 @@ socket.on('buffer', function(buf){
 	
 	postMessage(outArray, [outArray.buffer]);
 
-});
+};

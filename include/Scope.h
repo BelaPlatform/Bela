@@ -6,10 +6,10 @@
 #include <OSCClient.h>
 #include <ne10/NE10.h>
 #include <stdarg.h>
+#include <Aux_Task.h>
 
 #define OSC_RECEIVE_PORT 8675
 #define OSC_SEND_PORT 8676
-#define SCOPE_UDP_PORT 8677
 
 #define FRAMES_STORED 8
 
@@ -21,11 +21,11 @@
  * To use the scope, ensure the Bela IDE is running, and navigate to 
  * http://192.168.7.2/scope
  */
-class Scope{
+class newScope{
     public:
-        Scope();
-		~Scope();
-        
+        newScope();
+		~newScope();
+		
         /**
          * \brief Initialise the scope, setting the number of channels and the sample rate
          *
@@ -100,8 +100,7 @@ class Scope{
     private:
         OSCServer oscServer;
         OSCClient oscClient;
-        UdpClient socket;
-        
+
 		void dealloc();
         void parseMessage(oscpkt::Message);
         void start(bool setup = false);
@@ -110,8 +109,6 @@ class Scope{
         void triggerFFT();
         void triggerNormal();
         void triggerAuto();
-        void scheduleSendBufferTask();
-        void sendBuffer();
         void customTrigger();
         bool triggered();
         bool prelog();
@@ -190,13 +187,12 @@ class Scope{
         // aux tasks
         AuxiliaryTask scopeTriggerTask;
         static void triggerTask(void*);
-        
-        AuxiliaryTask scopeSendBufferTask;
-        static void sendBufferTask(void*);
-        
+
         AuxiliaryTask scopePlotModeTask;
         static void plotModeTask(void*);
         
+        Aux_Task<float> sendBufferTask;
+        static void sendBuffer(float* buf, int size);
 };
 
 #endif
