@@ -322,39 +322,63 @@ socket.on('mtime-compare', data => {
 $('#heavyUpload').on('click', e => {
 	socket.emit('heavy-upload', models.project.getKey('currentProject'));
 });
-socket.on('heavyUploadZip', (file, userToken, project) => {
-	console.log('heavy zip received');
-	console.log(file);
+socket.on('heavy-token-request', (project) => {
+	popup.title('Please Enter Your Heavy User Token');
+	popup.subtitle('see https://beta.enzienaudio.com for details');
 	
-// 	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wNi0wOFQxMzozNDoxMC40MjQ2MTgiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.3CE-6Er9XXyAVmYCtx7-yq3ERH54YJJS0laA7deUccQ=";
-	var userName = JSON.parse(atob(userToken.split('.')[1])).name;
+	var form = [];
+	form.push('<input type="text" placeholder="Enter your user token">');
+	form.push('</br>');
+	form.push('<button type="submit" class="button popup-save">Ok</button>');
+	form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+	
+	popup.form.append(form.join('')).off('submit').on('submit', e => {
+		e.preventDefault();
+		var token = popup.find('input[type=text]').val();
+		try{
+			var userName = JSON.parse(atob(token.split('.')[1])).name;
+			console.log('username:', userName);
+		}
+		catch(e){
+			consoleView.emit('warn', 'there was an error with your user token: '+e.toString());
+			popup.hide();
+			return;
+		}
+		socket.emit('heavy-token', project, token);
+		popup.hide();
+	});
+	
+	popup.find('.popup-cancel').on('click', () => {
+		popup.hide();
+	});
+	
+	popup.show();
+});
+
+socket.on('heavyUploadZip', (file, userToken, project) => {
+	console.log('received heavy archive from bela');
+	
+	var userName;
+	try{
+		userName = JSON.parse(atob(userToken.split('.')[1])).name;
+	}
+	catch(e){
+		consoleView.emit('warn', 'there was an error with your user token: '+e.toString());
+		return;
+	}
+	var server_url = "https://beta.enzienaudio.com";
 	var serviceToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzZXJ2aWNlIjogImJlbGEiLCAic2VydmljZURhdGUiOiAiMjAxNy0wNS0yNFQxMTozNToyNS45NDEwMjIifQ==.SUDS5awhV4VZGT7zCzY_W3GGlPs4WnrgRb-OwSAT-Cc=";
-	// store userToken in ~/.heavy/token
 	
 	var formData = new FormData();
-	
-// 	var dataView = new DataView(file);
-// 	// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
-// 	var decoder = new TextDecoder('utf-8');
-// 	var decodedString = decoder.decode(dataView);
+    formData.append("file", new File([file], 'archive.zip', { type: "application/zip" }));
 
-	var f = new File([file], 'archive.zip', { type: "application/zip" });
-
-    // add assoc key values, this will be posts values
-    formData.append("file", f);
-//     formData.append("upload_file", true);
-    
-    for (let key of formData.keys()){
-		console.log(key);
-	}
-	for (let value of formData.values()){
-		console.log(value);
-	}
+	var timestamp = performance.now();
+	consoleView.emit('openNotification', {
+		func: 'editor',
+		text: 'compiling patch with Heavy using username '+userName+', please wait',
+		timestamp
+	});
 	
-	var server_url = "https://beta.enzienaudio.com";
-	
-	var timer = performance.now();
-
 	$.ajax(server_url+'/a/patches/'+userName+'/bela/jobs/', {
 		type: "POST",
 		headers: {
@@ -367,27 +391,29 @@ socket.on('heavyUploadZip', (file, userToken, project) => {
 		contentType: false,
 		crossDomain: true,
 		success: result => {
-		
-			console.log(performance.now() - timer);
-			console.log('done1');
+			console.log('first heavy request complete');
 			var req = new XMLHttpRequest();
 			req.open("GET", server_url+result.data.links.html+'/bela/linux/armv7a/archive.zip', true);
 			req.responseType = "arraybuffer";
-
 			req.onload = function(e) {
-				console.log('done2');
-				console.log(performance.now() - timer);
-				console.log(req.response);
-				socket.emit('heavy-download', req.response, project);
+				console.log('final heavy request complete');
+				socket.emit('heavy-download', req.response, project, timestamp);
 			};
-
+			req.onerror = function(){
+				consoleView.emit('closeNotification', {error: 'request failed', timestamp});
+			};
 			req.send();
-
 		},
 		error: function(xhr, status){
-			console.log('request error', status);
+// 			console.log('request error', status);
+			consoleView.emit('closeNotification', {error: status, timestamp});
 		}
 	});
+});
+
+socket.on('heavy-complete', (project, timestamp) => {
+	consoleView.emit('closeNotification', {timestamp});
+	socket.emit('process-event', {event: 'run', currentProject: project});
 });
 
 var checkModifiedTimeInterval;

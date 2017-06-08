@@ -758,81 +758,60 @@ socket.on('mtime-compare', function (data) {
 $('#heavyUpload').on('click', function (e) {
 	socket.emit('heavy-upload', models.project.getKey('currentProject'));
 });
-socket.on('heavyUploadZip', function (file, userToken, project) {
-	console.log('heavy zip received');
-	console.log(file);
+socket.on('heavy-token-request', function (project) {
+	popup.title('Please Enter Your Heavy User Token');
+	popup.subtitle('see https://beta.enzienaudio.com for details');
 
-	// 	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wNi0wOFQxMzozNDoxMC40MjQ2MTgiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.3CE-6Er9XXyAVmYCtx7-yq3ERH54YJJS0laA7deUccQ=";
-	var userName = JSON.parse(atob(userToken.split('.')[1])).name;
+	var form = [];
+	form.push('<input type="text" placeholder="Enter your user token">');
+	form.push('</br>');
+	form.push('<button type="submit" class="button popup-save">Ok</button>');
+	form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+
+	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+		e.preventDefault();
+		var token = popup.find('input[type=text]').val();
+		try {
+			var userName = JSON.parse(atob(token.split('.')[1])).name;
+			console.log('username:', userName);
+		} catch (e) {
+			consoleView.emit('warn', 'there was an error with your user token: ' + e.toString());
+			popup.hide();
+			return;
+		}
+		socket.emit('heavy-token', project, token);
+		popup.hide();
+	});
+
+	popup.find('.popup-cancel').on('click', function () {
+		popup.hide();
+	});
+
+	popup.show();
+});
+
+socket.on('heavyUploadZip', function (file, userToken, project) {
+	console.log('received heavy archive from bela');
+
+	var userName;
+	try {
+		userName = JSON.parse(atob(userToken.split('.')[1])).name;
+	} catch (e) {
+		consoleView.emit('warn', 'there was an error with your user token: ' + e.toString());
+		return;
+	}
+	var server_url = "https://beta.enzienaudio.com";
 	var serviceToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzZXJ2aWNlIjogImJlbGEiLCAic2VydmljZURhdGUiOiAiMjAxNy0wNS0yNFQxMTozNToyNS45NDEwMjIifQ==.SUDS5awhV4VZGT7zCzY_W3GGlPs4WnrgRb-OwSAT-Cc=";
-	// store userToken in ~/.heavy/token
 
 	var formData = new FormData();
+	formData.append("file", new File([file], 'archive.zip', { type: "application/zip" }));
 
-	// 	var dataView = new DataView(file);
-	// 	// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
-	// 	var decoder = new TextDecoder('utf-8');
-	// 	var decodedString = decoder.decode(dataView);
-
-	var f = new File([file], 'archive.zip', { type: "application/zip" });
-
-	// add assoc key values, this will be posts values
-	formData.append("file", f);
-	//     formData.append("upload_file", true);
-
-	var _iteratorNormalCompletion = true;
-	var _didIteratorError = false;
-	var _iteratorError = undefined;
-
-	try {
-		for (var _iterator = formData.keys()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-			var key = _step.value;
-
-			console.log(key);
-		}
-	} catch (err) {
-		_didIteratorError = true;
-		_iteratorError = err;
-	} finally {
-		try {
-			if (!_iteratorNormalCompletion && _iterator.return) {
-				_iterator.return();
-			}
-		} finally {
-			if (_didIteratorError) {
-				throw _iteratorError;
-			}
-		}
-	}
-
-	var _iteratorNormalCompletion2 = true;
-	var _didIteratorError2 = false;
-	var _iteratorError2 = undefined;
-
-	try {
-		for (var _iterator2 = formData.values()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-			var value = _step2.value;
-
-			console.log(value);
-		}
-	} catch (err) {
-		_didIteratorError2 = true;
-		_iteratorError2 = err;
-	} finally {
-		try {
-			if (!_iteratorNormalCompletion2 && _iterator2.return) {
-				_iterator2.return();
-			}
-		} finally {
-			if (_didIteratorError2) {
-				throw _iteratorError2;
-			}
-		}
-	}
-
-	var server_url = "https://beta.enzienaudio.com";
-
-	var timer = performance.now();
+	var timestamp = performance.now();
+	consoleView.emit('openNotification', {
+		func: 'editor',
+		text: 'compiling patch with Heavy using username ' + userName + ', please wait',
+		timestamp: timestamp
+	});
 
 	$.ajax(server_url + '/a/patches/' + userName + '/bela/jobs/', {
 		type: "POST",
@@ -846,26 +825,29 @@ socket.on('heavyUploadZip', function (file, userToken, project) {
 		contentType: false,
 		crossDomain: true,
 		success: function success(result) {
-
-			console.log(performance.now() - timer);
-			console.log('done1');
+			console.log('first heavy request complete');
 			var req = new XMLHttpRequest();
 			req.open("GET", server_url + result.data.links.html + '/bela/linux/armv7a/archive.zip', true);
 			req.responseType = "arraybuffer";
-
 			req.onload = function (e) {
-				console.log('done2');
-				console.log(performance.now() - timer);
-				console.log(req.response);
-				socket.emit('heavy-download', req.response, project);
+				console.log('final heavy request complete');
+				socket.emit('heavy-download', req.response, project, timestamp);
 			};
-
+			req.onerror = function () {
+				consoleView.emit('closeNotification', { error: 'request failed', timestamp: timestamp });
+			};
 			req.send();
 		},
 		error: function error(xhr, status) {
-			console.log('request error', status);
+			// 			console.log('request error', status);
+			consoleView.emit('closeNotification', { error: status, timestamp: timestamp });
 		}
 	});
+});
+
+socket.on('heavy-complete', function (project, timestamp) {
+	consoleView.emit('closeNotification', { timestamp: timestamp });
+	socket.emit('process-event', { event: 'run', currentProject: project });
 });
 
 var checkModifiedTimeInterval;
@@ -1071,13 +1053,13 @@ function parseErrors(data) {
 
 	var currentFileErrors = [],
 	    otherFileErrors = [];
-	var _iteratorNormalCompletion3 = true;
-	var _didIteratorError3 = false;
-	var _iteratorError3 = undefined;
+	var _iteratorNormalCompletion = true;
+	var _didIteratorError = false;
+	var _iteratorError = undefined;
 
 	try {
-		for (var _iterator3 = errors[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-			var err = _step3.value;
+		for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+			var err = _step.value;
 
 			if (!err.file || err.file === models.project.getKey('fileName')) {
 				err.currentFile = true;
@@ -1089,16 +1071,16 @@ function parseErrors(data) {
 			}
 		}
 	} catch (err) {
-		_didIteratorError3 = true;
-		_iteratorError3 = err;
+		_didIteratorError = true;
+		_iteratorError = err;
 	} finally {
 		try {
-			if (!_iteratorNormalCompletion3 && _iterator3.return) {
-				_iterator3.return();
+			if (!_iteratorNormalCompletion && _iterator.return) {
+				_iterator.return();
 			}
 		} finally {
-			if (_didIteratorError3) {
-				throw _iteratorError3;
+			if (_didIteratorError) {
+				throw _iteratorError;
 			}
 		}
 	}
