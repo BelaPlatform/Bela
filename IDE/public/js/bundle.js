@@ -758,24 +758,109 @@ socket.on('mtime-compare', function (data) {
 $('#heavyUpload').on('click', function (e) {
 	socket.emit('heavy-upload', models.project.getKey('currentProject'));
 });
-socket.on('heavyUploadZip', function (file) {
+socket.on('heavyUploadZip', function (file, userToken, project) {
 	console.log('heavy zip received');
 	console.log(file);
-	var userName = "giuliomoro";
-	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wMS0xM1QxMzowOToxOS42MTAwNTkiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.F21KA1JiRpyNpbIRQYqmOCEvf1cpL9z8elEkEg9f1Qk=";
+
+	// 	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wNi0wOFQxMzozNDoxMC40MjQ2MTgiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.3CE-6Er9XXyAVmYCtx7-yq3ERH54YJJS0laA7deUccQ=";
+	var userName = JSON.parse(atob(userToken.split('.')[1])).name;
 	var serviceToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzZXJ2aWNlIjogImJlbGEiLCAic2VydmljZURhdGUiOiAiMjAxNy0wNS0yNFQxMTozNToyNS45NDEwMjIifQ==.SUDS5awhV4VZGT7zCzY_W3GGlPs4WnrgRb-OwSAT-Cc=";
-	$.ajax('https://beta.enzienaudio.com/a/patches/' + userName + '/bela/jobs/', {
+	// store userToken in ~/.heavy/token
+
+	var formData = new FormData();
+
+	// 	var dataView = new DataView(file);
+	// 	// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+	// 	var decoder = new TextDecoder('utf-8');
+	// 	var decodedString = decoder.decode(dataView);
+
+	var f = new File([file], 'archive.zip', { type: "application/zip" });
+
+	// add assoc key values, this will be posts values
+	formData.append("file", f);
+	//     formData.append("upload_file", true);
+
+	var _iteratorNormalCompletion = true;
+	var _didIteratorError = false;
+	var _iteratorError = undefined;
+
+	try {
+		for (var _iterator = formData.keys()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+			var key = _step.value;
+
+			console.log(key);
+		}
+	} catch (err) {
+		_didIteratorError = true;
+		_iteratorError = err;
+	} finally {
+		try {
+			if (!_iteratorNormalCompletion && _iterator.return) {
+				_iterator.return();
+			}
+		} finally {
+			if (_didIteratorError) {
+				throw _iteratorError;
+			}
+		}
+	}
+
+	var _iteratorNormalCompletion2 = true;
+	var _didIteratorError2 = false;
+	var _iteratorError2 = undefined;
+
+	try {
+		for (var _iterator2 = formData.values()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+			var value = _step2.value;
+
+			console.log(value);
+		}
+	} catch (err) {
+		_didIteratorError2 = true;
+		_iteratorError2 = err;
+	} finally {
+		try {
+			if (!_iteratorNormalCompletion2 && _iterator2.return) {
+				_iterator2.return();
+			}
+		} finally {
+			if (_didIteratorError2) {
+				throw _iteratorError2;
+			}
+		}
+	}
+
+	var server_url = "https://beta.enzienaudio.com";
+
+	var timer = performance.now();
+
+	$.ajax(server_url + '/a/patches/' + userName + '/bela/jobs/', {
 		type: "POST",
 		headers: {
 			Accept: "application/json",
 			Authorization: "Bearer " + userToken,
 			"X-Heavy-Service-Token": serviceToken
 		},
-		files: { "file": file },
+		data: formData,
+		processData: false,
+		contentType: false,
 		crossDomain: true,
 		success: function success(result) {
-			console.log('done!');
-			console.log(result);
+
+			console.log(performance.now() - timer);
+			console.log('done1');
+			var req = new XMLHttpRequest();
+			req.open("GET", server_url + result.data.links.html + '/bela/linux/armv7a/archive.zip', true);
+			req.responseType = "arraybuffer";
+
+			req.onload = function (e) {
+				console.log('done2');
+				console.log(performance.now() - timer);
+				console.log(req.response);
+				socket.emit('heavy-download', req.response, project);
+			};
+
+			req.send();
 		},
 		error: function error(xhr, status) {
 			console.log('request error', status);
@@ -986,13 +1071,13 @@ function parseErrors(data) {
 
 	var currentFileErrors = [],
 	    otherFileErrors = [];
-	var _iteratorNormalCompletion = true;
-	var _didIteratorError = false;
-	var _iteratorError = undefined;
+	var _iteratorNormalCompletion3 = true;
+	var _didIteratorError3 = false;
+	var _iteratorError3 = undefined;
 
 	try {
-		for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-			var err = _step.value;
+		for (var _iterator3 = errors[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+			var err = _step3.value;
 
 			if (!err.file || err.file === models.project.getKey('fileName')) {
 				err.currentFile = true;
@@ -1004,16 +1089,16 @@ function parseErrors(data) {
 			}
 		}
 	} catch (err) {
-		_didIteratorError = true;
-		_iteratorError = err;
+		_didIteratorError3 = true;
+		_iteratorError3 = err;
 	} finally {
 		try {
-			if (!_iteratorNormalCompletion && _iterator.return) {
-				_iterator.return();
+			if (!_iteratorNormalCompletion3 && _iterator3.return) {
+				_iterator3.return();
 			}
 		} finally {
-			if (_didIteratorError) {
-				throw _iteratorError;
+			if (_didIteratorError3) {
+				throw _iteratorError3;
 			}
 		}
 	}

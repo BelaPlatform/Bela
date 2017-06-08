@@ -322,24 +322,67 @@ socket.on('mtime-compare', data => {
 $('#heavyUpload').on('click', e => {
 	socket.emit('heavy-upload', models.project.getKey('currentProject'));
 });
-socket.on('heavyUploadZip', file => {
+socket.on('heavyUploadZip', (file, userToken, project) => {
 	console.log('heavy zip received');
 	console.log(file);
-	var userName = "giuliomoro";
-	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wMS0xM1QxMzowOToxOS42MTAwNTkiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.F21KA1JiRpyNpbIRQYqmOCEvf1cpL9z8elEkEg9f1Qk=";
+	
+// 	var userToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdGFydERhdGUiOiAiMjAxNy0wNi0wOFQxMzozNDoxMC40MjQ2MTgiLCAibmFtZSI6ICJnaXVsaW9tb3JvIn0=.3CE-6Er9XXyAVmYCtx7-yq3ERH54YJJS0laA7deUccQ=";
+	var userName = JSON.parse(atob(userToken.split('.')[1])).name;
 	var serviceToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzZXJ2aWNlIjogImJlbGEiLCAic2VydmljZURhdGUiOiAiMjAxNy0wNS0yNFQxMTozNToyNS45NDEwMjIifQ==.SUDS5awhV4VZGT7zCzY_W3GGlPs4WnrgRb-OwSAT-Cc=";
-	$.ajax('https://beta.enzienaudio.com/a/patches/'+userName+'/bela/jobs/', {
+	// store userToken in ~/.heavy/token
+	
+	var formData = new FormData();
+	
+// 	var dataView = new DataView(file);
+// 	// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+// 	var decoder = new TextDecoder('utf-8');
+// 	var decodedString = decoder.decode(dataView);
+
+	var f = new File([file], 'archive.zip', { type: "application/zip" });
+
+    // add assoc key values, this will be posts values
+    formData.append("file", f);
+//     formData.append("upload_file", true);
+    
+    for (let key of formData.keys()){
+		console.log(key);
+	}
+	for (let value of formData.values()){
+		console.log(value);
+	}
+	
+	var server_url = "https://beta.enzienaudio.com";
+	
+	var timer = performance.now();
+
+	$.ajax(server_url+'/a/patches/'+userName+'/bela/jobs/', {
 		type: "POST",
 		headers: {
 			Accept: "application/json",
 			Authorization: "Bearer " + userToken,
 			"X-Heavy-Service-Token": serviceToken,
 		},
-		files: {"file": file},
+		data: formData,
+		processData: false,
+		contentType: false,
 		crossDomain: true,
 		success: result => {
-			console.log('done!');
-			console.log(result);
+		
+			console.log(performance.now() - timer);
+			console.log('done1');
+			var req = new XMLHttpRequest();
+			req.open("GET", server_url+result.data.links.html+'/bela/linux/armv7a/archive.zip', true);
+			req.responseType = "arraybuffer";
+
+			req.onload = function(e) {
+				console.log('done2');
+				console.log(performance.now() - timer);
+				console.log(req.response);
+				socket.emit('heavy-download', req.response, project);
+			};
+
+			req.send();
+
 		},
 		error: function(xhr, status){
 			console.log('request error', status);

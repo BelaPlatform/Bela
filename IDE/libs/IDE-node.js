@@ -327,7 +327,7 @@ function socketEvents(socket){
 			console.log('pd files zipped');
 			fs.readFileAsync(belaPath+'IDE/heavyUpload.zip')
 				.then(file => {
-					socket.emit('heavyUploadZip', file);
+					socket.emit('heavyUploadZip', file, project);
 				})
 				.catch(e => console.log('error opening heavy upload zip', e.toString()));
 		});
@@ -345,6 +345,22 @@ function socketEvents(socket){
 
 		// finalize the archive (ie we are done appending files but streams have to finish yet)
 		archive.finalize();
+	});
+	
+	socket.on('heavy-download', (file, project) => {
+	console.log('ohai');
+		fs.writeFileAsync('/tmp/bela-heavy.zip', file)
+			.then(() => fs.copyAsync(belaPath+'scripts/hvresources/render.cpp', belaPath+'projects/'+project+'/render.cpp'))
+			.then(() => {
+				console.log('done');
+				exec('PROJECT_DIR="'+belaPath+'projects/'+project+'" FILENAME="/tmp/bela-heavy.zip";TMP_DIR="/tmp/bela-heavy-unzip"; rm -rf $TMP_DIR; mkdir -p "$TMP_DIR"; unzip -qq -d "$TMP_DIR" "$FILENAME" && TMP_ZIP=$(ls $TMP_DIR/*.zip) && unzip -qq -d "$TMP_DIR" "$TMP_ZIP" && rm -rf "$TMP_ZIP" && mkdir -p "$PROJECT_DIR"/build && mv "$TMP_DIR"/*.o "$PROJECT_DIR"/build/ && mv "$TMP_DIR"/* "$PROJECT_DIR"/ && touch "$PROJECT_DIR"/build/*', (err, stdout, stderr) => {
+					if (err) return err;
+					if (stderr) console.log('stderr', stderr);
+					if (stdout) console.log(stdout);
+					console.log('unzipped');
+				});
+			})
+			.catch(e => console.log('error processing heavy download zip', e.toString()));
 	});
 
 }
