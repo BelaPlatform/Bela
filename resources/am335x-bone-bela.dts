@@ -193,3 +193,10 @@
 		#gpio-cells = <2>;
 	};
 };
+
+&spi0 {
+       pinctrl-names = "default";
+       pinctrl-0 = <&bela_spi0_pins>;
+
+       status = "okay";
+};
