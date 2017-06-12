@@ -144,8 +144,8 @@
 	/* Pinmux for tlv320aic3104 audio codec control */
 	bela_i2c2_pins: pinmux_bela_i2c2_pins {
 		pinctrl-single,pins = <
-			0x150 0x72 /* i2c2_sda,				P9_22 | MODE2 | INPUT_PULLUP | SLEWCTRL_SLOW */
-			0x154 0x72 /* i2c2_scl, 			P9_21 | MODE2 | INPUT_PULLUP | SLECCTRL_SLOW */
+			0x178 0x73 /* i2c2_sda,				P9_20 | MODE3 | INPUT_PULLUP | SLEWCTRL_SLOW */
+			0x17c 0x73 /* i2c2_scl, 			P9_19 | MODE3 | INPUT_PULLUP | SLECCTRL_SLOW */
 		>;
 	};
 
