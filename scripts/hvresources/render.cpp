@@ -230,11 +230,10 @@ static unsigned int gDigitalSigInChannelsInUse;
 static unsigned int gDigitalSigOutChannelsInUse;
 
 bool setup(BelaContext *context, void *userData)	{
-	// scope = new Scope();
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context->analogOutChannels){
 		// It should actually work, but let's test it before releasing it!
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return false;
 	}
 	/* HEAVY */
@@ -291,9 +290,11 @@ bool setup(BelaContext *context, void *userData)	{
 	midi.enableParser(true);
 
 	if(gScopeChannelsInUse > 0){
-		fprintf(stderr, "Scope currently not supported, see #265 https://github.com/BelaPlatform/Bela/issues/265 \n");
+#if __clang_major__ == 3 && __clang_minor__ == 8
+		fprintf(stderr, "Scope currently not supported when compiling heavy with clang3.8, see #265 https://github.com/BelaPlatform/Bela/issues/265. You should specify `COMPILER gcc;` in your Makefile options\n");
 		exit(1);
-		// block below copy/pasted from libpd, except
+#endif
+		scope = new Scope();
 		scope->setup(gScopeChannelsInUse, context->audioSampleRate);
 		gScopeOut = new float[gScopeChannelsInUse];
 	}
