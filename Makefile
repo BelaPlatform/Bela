@@ -25,7 +25,6 @@ include/pru_rtaudio_bin.h: pru_rtaudio.p
 	mv pru_rtaudio_bin.h include/
 
 LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound -lsndfile
->>>>>>> 5f4ba00... Re-added libsndfile to the linker flags
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -115,11 +114,19 @@ TEST_LIBPD := $(shell [ -e $(LIBPD_PATH) ] && echo yes)
 ifneq ($(strip $(TEST_LIBPD)), )
 # if libpd is there, link it in
 endif
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10
-DEFAULT_XENOMAI_CFLAGS := `/usr/xenomai/bin/xeno-config --cflags --skin=native`
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize  $(DEFAULT_XENOMAI_CFLAGS)
+INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
+# Xenomai flags and cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
+DEFAULT_XENOMAI_CFLAGS := $(shell /usr/xenomai/bin/xeno-config --cflags --skin=native)
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=native --ldflags)
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
+LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -lasound -lsndfile
 
 ifndef COMPILER
 # check whether clang is installed
@@ -301,7 +308,7 @@ $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(D
 	$(eval DEFAULT_PD_CONDITIONAL :=\
 	    $(shell bash -c '{ ls $(PROJECT_DIR)/*.pd &>/dev/null && [ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "render.*BelaContext" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -L/usr/xenomai/lib -L/usr/arm-linux-gnueabihf/lib -L/usr/arm-linux-gnueabihf/lib/xenomai -L/usr/lib/arm-linux-gnueabihf -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
 endif
 # Other Targets:
