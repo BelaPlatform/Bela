@@ -10,11 +10,13 @@ The platform for ultra-low latency audio and sensor processing
 
 To get started: jump [here](https://github.com/BelaPlatform/Bela/wiki/Getting-started-with-Bela)
 
+
+
 http://bela.io
 
 A project of the Augmented Instruments Laboratory within the
 Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+http://instrumentslab.org
 
 (c) 2016-2017 Augmented Instruments Laboratory: Andrew McPherson,
 	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
