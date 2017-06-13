@@ -1,15 +1,25 @@
 /*
- * render.cpp
- *
- *  Template render.cpp file for on-board heavy compiling
- *
- *  N.B. this is currently *not* compatible with foleyDesigner source files!
- *
- *  Created on: November 5, 2015
- *
- *  Christian Heinrichs
- *
- */
+ ____  _____ _        _    
+| __ )| ____| |      / \   
+|  _ \|  _| | |     / _ \  
+| |_) | |___| |___ / ___ \ 
+|____/|_____|_____/_/   \_\
+
+The platform for ultra-low latency audio and sensor processing
+
+http://bela.io
+
+A project of the Augmented Instruments Laboratory within the
+Centre for Digital Music at Queen Mary University of London.
+http://www.eecs.qmul.ac.uk/~andrewm
+
+(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
+	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
+	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+
+The Bela software is distributed under the GNU Lesser General Public License
+(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+*/
 
 #include <Bela.h>
 #include <Midi.h>
