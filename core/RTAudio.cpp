@@ -211,6 +211,14 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.audioOutChannels = 2;
 	#endif
 
+#ifdef PRU_SIGXCPU_BUG_WORKAROUND
+	// TODO: see PRU bug mentioned above. We catch here if useAnalog was set to false, store it in gProcessAnalog
+	// and use this value to decide whether we should process the analogs in PRU::loop, but then we
+	// set it to true so that the PRU is init'd and the code runs AS IF the analogs were in use.
+	gProcessAnalog = settings->useAnalog;
+	settings->useAnalog = true;
+#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
+
 	if(settings->useAnalog) {
 		gContext.audioFrames = settings->periodSize;
 

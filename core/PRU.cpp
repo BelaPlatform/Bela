@@ -328,7 +328,17 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
     pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
-	
+
+    /* Set up flags - FROM PUBLIC CODE - CAN BE REMOVED */
+/*
+    pru_buffer_comm[PRU_SHOULD_STOP] = 0;
+    pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
+    pru_buffer_comm[PRU_BUFFER_FRAMES] = context->analogFrames;
+    pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
+    pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
+    pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
+    pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
+*/
 
 	/* Set up multiplexer info */
 	if(mux_channels == 2) {
@@ -596,6 +606,13 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	uint32_t lastPRUBuffer = 0;
 #endif
 
+#ifdef PRU_SIGXCPU_BUG_WORKAROUND
+	if(gProcessAnalog == false){
+		context->analogFrames = 0;
+		context->analogInChannels = 0;
+		context->analogOutChannels = 0;
+	}
+#endif
 
 	while(!gShouldStop) {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
@@ -882,6 +899,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		// Increment total number of samples that have elapsed
 		context->audioFramesElapsed += context->audioFrames;
+
+		Bela_autoScheduleAuxiliaryTasks();
 
 	}
 
