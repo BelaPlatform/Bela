@@ -46,15 +46,13 @@ public:
 	int initCodec();
 	int startAudio(int dummy_parameter = 0);
 	int stopAudio();
-	int setAudioSamplingRate(unsigned int newSamplingRate);
-	unsigned int getAudioSamplingRate();
 	int setDACVolume(int halfDbSteps);
-	int setTDMSlots(unsigned int slots);
-	int getTDMSlots();
 	int dumpRegisters();
 
 private:
 	int _fd_master, _fd_slave;
+	int _dacVolumethreeEighthsDbs;
+	int _writeDACVolumeRegisters(bool mute);
 	int _spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t bytes, CODEC_TYPE codec = MASTER_CODEC);
 };
 

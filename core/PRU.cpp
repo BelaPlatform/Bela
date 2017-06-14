@@ -12,7 +12,8 @@
  *  Created on: May 27, 2014
  *      Author: andrewm
  */
-//#define CTAG_FACE_8CH
+#define CTAG_FACE_8CH
+//#define CTAG_BEAST_16CH
 
 #include "../include/PRU.h"
 #include "../include/prussdrv.h"
@@ -21,6 +22,7 @@
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
 #include "../include/pru_rtaudio_bin.h"
+#include "../include/Gpio.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -57,21 +59,22 @@ using namespace std;
 											// 256 is the maximum number of frames allowed
 
 // Offsets within CPU <-> PRU communication memory (4 byte slots)
-#define PRU_SHOULD_STOP 	0
-#define PRU_CURRENT_BUFFER  1
-#define PRU_BUFFER_FRAMES   2
-#define PRU_SHOULD_SYNC     3
-#define PRU_SYNC_ADDRESS    4
-#define PRU_SYNC_PIN_MASK   5
-#define PRU_LED_ADDRESS	     6
-#define PRU_LED_PIN_MASK     7
-#define PRU_FRAME_COUNT      8
-#define PRU_USE_SPI          9
-#define PRU_SPI_NUM_CHANNELS 10
-#define PRU_USE_DIGITAL      11
-#define PRU_PRU_NUMBER       12
-#define PRU_MUX_CONFIG       13
-#define PRU_MUX_END_CHANNEL  14
+#define PRU_SHOULD_STOP 		0
+#define PRU_CURRENT_BUFFER  	1
+#define PRU_BUFFER_MCASP_FRAMES 2
+#define PRU_SHOULD_SYNC     	3
+#define PRU_SYNC_ADDRESS    	4
+#define PRU_SYNC_PIN_MASK   	5
+#define PRU_LED_ADDRESS	     	6
+#define PRU_LED_PIN_MASK     	7
+#define PRU_FRAME_COUNT      	8
+#define PRU_USE_SPI          	9
+#define PRU_SPI_NUM_CHANNELS 	10
+#define PRU_USE_DIGITAL      	11
+#define PRU_PRU_NUMBER       	12
+#define PRU_MUX_CONFIG       	13
+#define PRU_MUX_END_CHANNEL  	14
+#define PRU_BUFFER_SPI_FRAMES 	15
 
 short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_0,
@@ -288,6 +291,8 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 #ifdef CTAG_FACE_8CH
 //TODO :  factor out the number of channels
 	pru_buffer_audio_adc = &pru_buffer_audio_dac[16 * context->audioFrames];
+#elif defined(CTAG_BEAST_16CH)
+	pru_buffer_audio_adc = &pru_buffer_audio_dac[32 * context->audioFrames];
 #else
 	pru_buffer_audio_adc = &pru_buffer_audio_dac[4 * context->audioFrames];
 #endif
@@ -319,26 +324,19 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
         pruFrames = context->analogFrames;
     else
         pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
+    pru_buffer_comm[PRU_BUFFER_SPI_FRAMES] = pruFrames;
 #ifdef CTAG_FACE_8CH
 //TODO :  factor out the number of channels
     pruFrames *= 4;
+#elif defined(CTAG_BEAST_16CH)
+    pruFrames *= 8;
 #endif
-    pru_buffer_comm[PRU_BUFFER_FRAMES] = pruFrames;
+    pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruFrames;
     pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
     pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
     pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
 
-    /* Set up flags - FROM PUBLIC CODE - CAN BE REMOVED */
-/*
-    pru_buffer_comm[PRU_SHOULD_STOP] = 0;
-    pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
-    pru_buffer_comm[PRU_BUFFER_FRAMES] = context->analogFrames;
-    pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
-    pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
-    pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
-    pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
-*/
 
 	/* Set up multiplexer info */
 	if(mux_channels == 2) {
@@ -567,11 +565,14 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	}
 	// Polling interval is 1/4 of the period
 #ifdef CTAG_FACE_8CH
-// TODO: should actually redefine PRU_SAMPLE_INTERVAL_NS instead
+	//TODO: Recommendation by Giulio: context->audioFrames / context->audioSampleRate / 4.f * 1000000000. => not working (kernel freeze)
+	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
+#elif defined(CTAG_BEAST_16CH)
 	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
 #else
 	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
 #endif
+	//sleepTime = context->audioFrames / context->audioSampleRate / 4.f * 1000000000.f;
 #endif
 
 	uint32_t pru_audio_offset, pru_spi_offset;
@@ -606,14 +607,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 	uint32_t lastPRUBuffer = 0;
 #endif
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	if(gProcessAnalog == false){
-		context->analogFrames = 0;
-		context->analogInChannels = 0;
-		context->analogOutChannels = 0;
-	}
-#endif
 
+	
 	while(!gShouldStop) {
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
@@ -722,17 +717,13 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 #ifdef USE_NEON_FORMAT_CONVERSION
 		int16_to_float_audio(2 * context->audioFrames, &pru_buffer_audio_adc[pru_audio_offset], context->audioIn);
 #else
-#ifdef CTAG_FACE_8CH
 		if(context->audioOutChannels != context->audioInChannels){
 			fprintf(stderr, "Error: a different number of I/O channels is not supported");
 			gShouldStop = true;
 			exit(1);
 		}
-// TODO: context->audioInChannels should be good also for when CTAG_FACE_8CH is not defined
-		for(unsigned int n = 0; n < context->audioInChannels * context->audioFrames; n++) {
-#else
-		for(unsigned int n = 0; n < 2 * context->audioFrames; n++) {
-#endif
+		int audioInChannels = context->audioInChannels > 8 ? 8 : context->audioInChannels;
+		for(unsigned int n = 0; n < audioInChannels * context->audioFrames; n++) {
 			context->audioIn[n] = (float)pru_buffer_audio_adc[n + pru_audio_offset] / 32768.0f;
 		}
 #endif
@@ -903,7 +894,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// This is a pessimistic approach: you will occasionally get an underrun warning
 		// without a glitch actually occurring, but you will be right there on the edge anyhow.
 
-		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
+		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS && 0) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
 			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
@@ -912,7 +903,15 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			// we initialize lastPruFrameCount the first time we get here,
 			// just in case the PRU is already ahead of us
 			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
+
+#ifdef CTAG_FACE_8CH
+//TODO :  factor out the number of channels
+			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 4;
+#elif defined(CTAG_BEAST_16CH)
+			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 8;
+#else
 			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
+#endif
 			if(pruFrameCount > expectedFrameCount)
 			{
 				// don't print a warning if we are stopping
