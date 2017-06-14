@@ -37,6 +37,10 @@
 #ifndef SIMPLEGPIO_H_
 #define SIMPLEGPIO_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
  /****************************************************************
  * Constants
  ****************************************************************/
@@ -73,5 +77,9 @@ int gpio_read(int fd, unsigned int *value);
 int gpio_dismiss(int fd, unsigned int gpio);
 
 int led_set_trigger(unsigned int lednum, const char *trigger);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SIMPLEGPIO_H_ */

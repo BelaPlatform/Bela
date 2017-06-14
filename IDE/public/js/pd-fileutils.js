@@ -11109,8 +11109,7 @@ var _reverseString = function(s) { return s.split("").reverse().join("") }
 
 // Parses argument to a string or a number.
 var parseArg = exports.parseArg = function(arg) {
-  var parsed = pdParseFloat(arg)
-  if (_.isNumber(parsed) && !isNaN(parsed)) return parsed
+  if (_.isNumber(arg) && !isNaN(arg)) return arg
   else if (_.isString(arg)) {
     var matched, arg = arg.substr(0)
     // Unescape special characters
@@ -11207,8 +11206,12 @@ var recursParse = function(txt) {
     } else if (chunkType === '#X') {
       var elementType = tokens[1]
 
+      // ---- declare: ignore the declaration (if a obj declare is present, it will be handled as a regular object below) ---- //
+	  if (elementType === 'declare') {
+      } 
+
       // ---- restore : ends a canvas definition ---- //
-      if (elementType === 'restore') {
+      else if (elementType === 'restore') {
         var layout = {x: parseInt(tokens[2], 10), y: parseInt(tokens[3], 10)}
           , canvasType = tokens[4]
           , args = []
@@ -11267,12 +11270,20 @@ var recursParse = function(txt) {
           }
         }
 
+		var pushArgs;
+        if (elementType === 'text')
+			// if it is a comment, no need to parse this recursively.
+			// Just strip the " \,"
+			pushArgs = [args[0].replace(" \\,", ",").replace(" \\;", ";").replace(/\\\$/g, "$")];
+		else 
+			pushArgs = parseArgs(args);
+
         // Add the object to the graph
         patch.nodes.push({
           id: nextId(),
           proto: proto,
           layout: layout,
-          args: parseArgs(args)
+          args: pushArgs
         })
 
       // ---- array : start of an array definition ---- //

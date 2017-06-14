@@ -2,7 +2,7 @@
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
-release=r2016.08
+release=r2017.02
 NO_UPLOAD=0
 WATCH=0
 FORCE=0
@@ -143,7 +143,7 @@ if [ -z "$release" ]
 then 
   RELEASE_STRING=
 else 
-  RELEASE_STRING="-r $release"
+  RELEASE_STRING="-rr -r $release"
 fi
 
 
@@ -160,8 +160,6 @@ HEAVY_FILES='Heavy* Hv*'
 # check if project exists
 [ $FORCE -eq 1 ] ||	check_project_exists_prompt $BBB_PROJECT_NAME
 
-#create the destination folder if it does not exist"
-mkdir -p "$projectpath"
 
 reference_time_file="$projectpath"/
 
@@ -172,16 +170,15 @@ uploadBuildRun(){
     if [ $NO_UPLOAD -eq 0 ]; then
         # remove old static files to avoid obsolete errors
         # make sure the path is not empty, so avoiding to rm -rf / by mistake 
-        [ -z $projectpath ] && { echo 'ERROR: $projectpath is empty.'; exit 0; } 
-        # use -rf to prevent warnings in case they do not exist
-        for file in $HEAVY_FILES
-	    do 
-	        rm -rf "$projectpath"/$file
-	    done
+        [ -z "$projectpath" ] && { echo 'ERROR: $projectpath is empty.'; exit 0; } 
+		#empty destination folder
+		rm -rf "$projectpath"
+		#recreate the destination folder"
+		mkdir -p "$projectpath"
         
 		echo "Invoking the online compiler..."
         # invoke the online compiler
-        "$BELA_PYTHON27" $HVRESOURCES_DIR/uploader.py "$pdpath"/ -n $ENZIENAUDIO_COM_PATCH_NAME -g c -o "$projectpath" $RELEASE_STRING ||\
+        "$BELA_PYTHON27" $HVRESOURCES_DIR/uploader.py "$pdpath"/ -n $ENZIENAUDIO_COM_PATCH_NAME -g c-src -o "$projectpath" $RELEASE_STRING ||\
             { echo "ERROR: an error occurred while executing the uploader.py script"; exit $?; }
     fi;
 
@@ -206,25 +203,26 @@ uploadBuildRun(){
     # check how to copy/sync render.cpp file...
     # check if custom heavy/render.cpp file is provided in the input folder
     # TODO: extend this to all non-Pd files
-    CUSTOM_RENDER_SOURCE_PATH="$pdpath/heavy/render.cpp"
-    if [ -f "$CUSTOM_RENDER_SOURCE_PATH" ]; then
-        echo "Found custom heavy/render.cpp file in input folder, using that one instead of the default one.";
-        cp "$CUSTOM_RENDER_SOURCE_PATH" "$projectpath/render.cpp" || exit 1
+	CUSTOM_HEAVY_SOURCE_PATH="$pdpath/heavy/"
+    if [ -e "$CUSTOM_HEAVY_SOURCE_PATH" ] && [ "$(ls $CUSTOM_HEAVY_SOURCE_PATH)" ]; then
+	# if PROJECTNAME/heavy/ exists and is not empty, then copy the whole folder content 
+        echo "Found custom heavy/ folder in the project folder, using those files instead of the default render.cpp:"
+		ls "$CUSTOM_HEAVY_SOURCE_PATH"
+        cp "$CUSTOM_HEAVY_SOURCE_PATH"/* "$projectpath/" || exit 1
     else
         echo "Using Heavy default render.cpp"
-        cp "$HVRESOURCES_DIR/render.cpp" "$projectpath/render.cpp" || exit 1
+        cp "$HVRESOURCES_DIR/render.cpp" "$projectpath/" || exit 1
     fi
     
     echo "Updating files on board..."
-    # HvContext* files tend to hang when transferring with rsync because they are very large and -c checksum takes a lot, I guess
+    # HeavyContext* files tend to hang when transferring with rsync because they are very large and -c checksum takes a lot, I guess
     
     touch $reference_time_file
     # Transfer the files 
 	if [ "$RSYNC_AVAILABLE" -eq 1 ]
 	then
-		echo rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER"
-		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HvContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
-        { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HvContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
+		rsync -ac --out-format="   %n" --no-t --delete-during --exclude='HeavyContext_'$ENZIENAUDIO_COM_PATCH_NAME'.*' --exclude=build --exclude=$BBB_PROJECT_NAME "$projectpath"/ "$BBB_NETWORK_TARGET_FOLDER" &&\
+        { [ $NO_UPLOAD -eq 1 ] || scp -rp "$projectpath"/HeavyContext* $BBB_NETWORK_TARGET_FOLDER; } ||\
 		{ echo "ERROR: while synchronizing files with the BBB. Is the board connected?"; exit 1; }
 	else
 		echo "using scp..."
@@ -246,7 +244,7 @@ uploadBuildRun(){
     # Make new Bela executable and run
     # It does not look very nice that we type the same things over and over
     # but that is because each line is an ssh session in its own right
-    MAKE_COMMAND="make --no-print-directory QUIET=true -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
+    MAKE_COMMAND="make --no-print-directory COMPILER=gcc QUIET=true -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
     if [ $RUN_PROJECT -eq 0 ]
     then
         echo "Building project..."

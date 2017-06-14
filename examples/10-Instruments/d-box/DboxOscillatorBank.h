@@ -1,12 +1,12 @@
 /*
- * OscillatorBank.h
+ * DboxOscillatorBank.h
  *
  *  Created on: May 23, 2014
  *      Author: Victor Zappi and Andrew McPherson
  */
 
-#ifndef OSCILLATORBANK_H_
-#define OSCILLATORBANK_H_
+#ifndef DBOXOSCILLATORBANK_H_
+#define DBOXOSCILLATORBANK_H_
 
 
 #include <string>
@@ -19,13 +19,13 @@ using namespace std;
 
 enum OscBankstates {bank_stopped, bank_playing, bank_toreset};
 
-class OscillatorBank
+class DboxOscillatorBank
 {
 public:
-	OscillatorBank();
-	OscillatorBank(string filename, int hopsize=-1, int samplerate=44100);
-	OscillatorBank(char *filename, int hopsize=-1, int samplerate=44100);
-	~OscillatorBank();
+	DboxOscillatorBank();
+	DboxOscillatorBank(string filename, int hopsize=-1, int samplerate=44100);
+	DboxOscillatorBank(char *filename, int hopsize=-1, int samplerate=44100);
+	~DboxOscillatorBank();
 	float *oscillatorPhases;
 	float *oscillatorNormFrequencies;
 	float *oscillatorNormFreqDerivatives;
@@ -139,17 +139,17 @@ private:
 							  int filNum, float *filFreq, float *filQ);
 };
 
-inline bool OscillatorBank::loadFile(string filename, int hopsize, int samplerate)
+inline bool DboxOscillatorBank::loadFile(string filename, int hopsize, int samplerate)
 {
 	return loader((char *)filename.c_str(), hopsize, samplerate);
 }
 
-inline bool OscillatorBank::loadFile(char *filename, int hopsize, int samplerate)
+inline bool DboxOscillatorBank::loadFile(char *filename, int hopsize, int samplerate)
 {
 	return loader(filename, hopsize, samplerate);
 }
 
-inline void OscillatorBank::setLoopHops(int start, int end)
+inline void DboxOscillatorBank::setLoopHops(int start, int end)
 {
 	if(start > end)
 		end = start;
@@ -167,18 +167,18 @@ inline void OscillatorBank::setLoopHops(int start, int end)
 	loopEndHop	 = end*overSampling;
 }
 
-inline void OscillatorBank::stop()
+inline void DboxOscillatorBank::stop()
 {
 	note = false;
 	adsr.gate(0);
 }
 
-inline float OscillatorBank::getFrequencyScaler()
+inline float DboxOscillatorBank::getFrequencyScaler()
 {
 	return frequencyScaler;
 }
 
-inline void OscillatorBank::afterTouch(float vel)
+inline void DboxOscillatorBank::afterTouch(float vel)
 {
 	hopNumTh = log((1-vel)+1)/log(2)*20000;
 	if(adsr.getState()==env_attack)
@@ -186,32 +186,32 @@ inline void OscillatorBank::afterTouch(float vel)
 	adsr.setReleaseRate( (minReleaseTime+(1-vel)*deltaReleaseTime)* rate );
 }
 
-inline int OscillatorBank::getEnvelopeState()
+inline int DboxOscillatorBank::getEnvelopeState()
 {
 	return envState;
 }
 
-inline void OscillatorBank::setSpeed(float sp)
+inline void DboxOscillatorBank::setSpeed(float sp)
 {
 	nextSpeed = sp;
 }
 
-inline float OscillatorBank::getSpeed()
+inline float DboxOscillatorBank::getSpeed()
 {
 	return speed;
 }
 
-inline float OscillatorBank::getMaxSpeed()
+inline float DboxOscillatorBank::getMaxSpeed()
 {
 	return maxSpeed;
 }
 
-inline float OscillatorBank::getMinSpeed()
+inline float DboxOscillatorBank::getMinSpeed()
 {
 	return minSpeed;
 }
 
-inline void OscillatorBank::setJumpHop(int hop)
+inline void DboxOscillatorBank::setJumpHop(int hop)
 {
 	if(hop<0)
 		return;
@@ -219,7 +219,7 @@ inline void OscillatorBank::setJumpHop(int hop)
 	jumpHop = hop;
 }
 
-inline void OscillatorBank::setDirection(int dir)
+inline void DboxOscillatorBank::setDirection(int dir)
 {
 	if(dir>=0)
 	{
@@ -233,8 +233,8 @@ inline void OscillatorBank::setDirection(int dir)
 	}
 }
 
-inline int OscillatorBank::getLastHop()
+inline int DboxOscillatorBank::getLastHop()
 {
 	return lastHop;
 }
-#endif /* OSCILLATORBANK_H_ */
+#endif /* DBOXOSCILLATORBANK_H_ */

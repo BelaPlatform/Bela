@@ -40,6 +40,7 @@ private:
 	WriteFileType fileType;
 	static int sleepTimeMs;
 	FILE *file;
+	char* _filename;
 	void writeLine();
 	void writeHeader();
 	void writeFooter();
@@ -92,7 +93,7 @@ public:
 	void setFooter(const char* newFooter);
 	void log(const float* array, int length);
 	void log(float value);
-	void init(const char* filename);
+	void init(const char* filename, bool overwrite = false);
 
 	/**
 	 * Gets the distance between the write and read pointers of
@@ -114,7 +115,15 @@ public:
     static void writeAllOutputs(bool flush);
     static void startThread();
     static void stopThread();
-    static void run();
+    static void run(void*);
+	/**
+	 * Returns a unique filename by appending a number at the end of the original
+	 * filename.
+	 *
+	 * @return a pointer to the unique filaname. This MUST be freed by the
+	 * invoking function.
+	 */
+	static char* generateUniqueFilename(const char* original);
 };
 
 #endif /* WRITEMFILE_H_ */

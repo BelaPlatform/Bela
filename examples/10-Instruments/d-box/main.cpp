@@ -25,6 +25,7 @@
 #include <sys/mount.h>	// mount()
 #include <sys/time.h>	// elapsed time
 #include <ne10/NE10.h>	// neon library
+#include <algorithm>    // std::sort
 
 // thread priority
 #include <pthread.h>
@@ -36,7 +37,7 @@
 #include <Bela.h>
 #include "config.h"
 #include "sensors.h"
-#include "OscillatorBank.h"
+#include "DboxOscillatorBank.h"
 #include "StatusLED.h"
 #include "logger.h"
 
@@ -45,7 +46,7 @@ using namespace std;
 //----------------------------------------
 // main variables
 //----------------------------------------
-vector<OscillatorBank*> gOscBanks;
+vector<DboxOscillatorBank*> gOscBanks;
 int gCurrentOscBank = 0;
 int gNextOscBank = 0;
 int oscBnkOversampling 				 = 1;	// oscillator bank frame oversampling
@@ -165,7 +166,7 @@ void loadAudioFiles(bool loadFirstFile)
 		strcat(fullFileName, "/");
 		strncat(fullFileName, files[0].c_str(), 255 - strlen(gDirName));
 		dbox_printf("Loading first file %s...\n", fullFileName);
-		OscillatorBank *bank = new OscillatorBank(fullFileName);
+		DboxOscillatorBank *bank = new DboxOscillatorBank(fullFileName);
 		if(bank->initBank(oscBnkOversampling)) {
 			bank->setLoopHops(100, bank->getLastHop());
 			gOscBanks.push_back(bank);
@@ -178,7 +179,7 @@ void loadAudioFiles(bool loadFirstFile)
 			strcat(fullFileName, "/");
 			strncat(fullFileName, files[i].c_str(), 255 - strlen(gDirName));
 			dbox_printf("Loading file %s...\n", fullFileName);
-			OscillatorBank *bank = new OscillatorBank(fullFileName);
+			DboxOscillatorBank *bank = new DboxOscillatorBank(fullFileName);
 			if(bank->initBank(oscBnkOversampling)) {
 				bank->setLoopHops(100, bank->getLastHop());
 				gOscBanks.push_back(bank);

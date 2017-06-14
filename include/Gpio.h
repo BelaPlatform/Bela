@@ -73,11 +73,10 @@ public:
 			return -2;
 		}
 		// actually use the memmapped memory,
-		// to avoid mode switches later
+		// to avoid mode switches later:
+		// read the current value
 		int value = read();
-		set();
-		clear();
-		// then reset the to its original value
+		// and write it back
 		write(value);
 		return 0;
 	}

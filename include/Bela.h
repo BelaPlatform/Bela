@@ -28,8 +28,14 @@
 #ifndef BELA_H_
 #define BELA_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <rtdk.h>
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
@@ -100,6 +106,8 @@
  * Flag for BelaContext. If set, indicates the user will be warned if an underrun occurs
  */
 #define BELA_FLAG_DETECT_UNDERRUNS	(1 << 2)	// Set if the user will be displayed a message when an underrun occurs
+
+struct option;
 
 /**
  * \ingroup control
@@ -397,7 +405,7 @@ typedef void* AuxiliaryTask;	// Opaque data type to keep track of aux tasks
  * to indicate that audio processing should terminate. Calling Bela_stopAudio()
  * has the effect of setting this to \c true.
  */
-extern int gShouldStop;
+extern int volatile gShouldStop;
 
 // *** User-defined render functions ***
 
@@ -693,7 +701,7 @@ int Bela_muteSpeakers(int mute);
  *
  * This function creates a new auxiliary task which, when scheduled, runs the function specified
  * in the first argument. Note that the task does not run until scheduleAuxiliaryTask() is called.
- * Auxiliary tasks should be created in setup() and never in render() itself.
+ * Auxiliary tasks should be created in `setup()` and never in `render()` itself.
  *
  * The second argument specifies the real-time priority. Valid values are between 0
  * and 99, and usually should be lower than \ref BELA_AUDIO_PRIORITY. Tasks with higher priority always
@@ -703,10 +711,12 @@ int Bela_muteSpeakers(int mute);
  * \param priority Xenomai priority level at which the task should run.
  * \param name Name for this task, which should be unique system-wide (no other running program should use this name).
  * \param arg The argument passed to the callback function.
- * \param autoSchedule If true, the task will be scheduled at the end of each call to `render()`.
  */
-AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg, bool autoSchedule = false);
-AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void), int priority, const char *name, bool autoSchedule = false);
+AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, const char *name, void* arg
+#ifdef __cplusplus
+= NULL
+#endif /* __cplusplus */
+);
 
 /**
  * \brief Run an auxiliary task which has previously been created.
@@ -752,15 +762,8 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task);
 #define RT_INTR void
 #endif
 
-/**\cond HIDDEN_SYMBOLS
-// TODO: There is a bug in the PRU code that prevents it from working when SPI is disabled.
-// To work around it, we leave the SPI enabled ( as it does not affect the load of the ARM core), but
-// we avoid processing the analog channels, to save CPU time. We use global variable gProcessAnalog
-// in RTAudio.cpp and PRU.cpp to store the actual value of analog_enabled. To reproduce the bug,
-// undefine the line below and run with -N0 (analog disabled)
- */
-#define PRU_SIGXCPU_BUG_WORKAROUND
-/**
- * \endcond
- */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* BELA_H_ */

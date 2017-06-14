@@ -1,11 +1,32 @@
-# Copyright 2015,2016 Enzien Audio, Ltd. All Rights Reserved.
+#!/usr/bin/env python
+
+# Copyright (c) 2015-2017 Enzien Audio, Ltd. (info@enzienaudio.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import argparse
+import base64
 import datetime
 import getpass
 import json
 import os
-import requests # http://docs.python-requests.org/en/master/api/#exceptions
+import requests
 import shutil
 import stat
 import sys
@@ -39,6 +60,8 @@ class ErrorCodes(object):
     CODE_CONNECTION_ERROR = 7 # HTTPS connection could not be made to the server
     CODE_CONNECTION_TIMEOUT = 8 # HTTPS connection has timed out
     CODE_CONNECTION_400_500 = 9 # a 400 or 500 error has occured
+    CODE_INVALID_TOKEN = 10 # the user token could not be parsed
+    CODE_NEW_PATCH_FAIL = 11 # a new patch could not be made
     CODE_EXCEPTION = 125 # a generic execption has occurred
 
 class UploaderException(Exception):
@@ -50,17 +73,22 @@ class UploaderException(Exception):
 # the maxmimum file upload size of 1MB
 __HV_MAX_UPLOAD_SIZE = 1 * 1024*1024
 
+__HV_UPLOADER_SERVICE_TOKEN = \
+    "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9." \
+    "eyJzdGFydERhdGUiOiAiMjAxNi0xMi0xNVQyMzoyNToxMC4wOTU2MjIiLCAic2VydmljZSI6ICJoZWF2eV91cGxvYWRlciJ9." \
+    "w2o1_RttJUAiq6WyN0J7MhDsaSseISzgDAQ9aP9Di6M="
+
 __SUPPORTED_GENERATOR_SET = {
-    "c", "js",
-    "pdext", "pdext-osx",
-    "unity", "unity-osx", "unity-win-x86", "unity-win-x86_64",
-    "wwise", "wwise-win-x86_64",
-    "vst2", "vst2-osx", "vst2-win-x86_64",
-    "fabric", "fabric-osx", "fabric-win-x86_64"
+    "c-src",
+    "web-local", "web-js",
+    "fabric-src", "fabric-macos-x64", "fabric-win-x86", "fabric-win-x64", "fabric-linux-x64", "fabric-android-armv7a",
+    "unity-src", "unity-macos-x64", "unity-win-x86", "unity-win-x64", "unity-linux-x64", "unity-android-armv7a",
+    "wwise-src", "wwise-macos-x64", "wwise-win-x86", "wwise-win-x64",  "wwise-linux-x64", "wwise-ios-armv7a"
+    "vst2-src", "vst2-macos-x64", "vst2-win-x86", "vst2-win-x64", "vst2-linux-x64"
 }
 
 def __zip_dir(in_dir, zip_path, file_filter=None):
-    """Recursively zip an entire directory with an optional file filter
+    """ Recursively zip an entire directory with an optional file filter
     """
     zf = zipfile.ZipFile(zip_path, mode="w", compression=zipfile.ZIP_DEFLATED)
     for subdir, dirs, files in os.walk(in_dir):
@@ -72,22 +100,22 @@ def __zip_dir(in_dir, zip_path, file_filter=None):
     return zip_path
 
 def __unzip(zip_path, target_dir):
-    """Unzip a file to a given directory. All destination files are overwritten.
+    """ Unzip a file to a given directory. All destination files are overwritten.
     """
     zipfile.ZipFile(zip_path).extractall(target_dir)
 
-def __get_file_url_for_generator(json_api, g):
-    """Returns the file link for a specific generator.
-    Returns None if no link could be found.
+def __get_file_url_stub_for_generator(json_api, g):
+    """ Returns the file link for a specific generator.
+        Returns None if no link could be found.
     """
     for i in json_api["included"]:
-        if g == i["generator"]:
+        if (i["type"] == "file") and (g == i["data"]["buildId"]):
             return i["links"]["self"]
     return None # by default, return None
 
 
 
-def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, x=False, z=False, noverify=False, verbose=False, token=None):
+def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False, service_token=None, force_new_patch=False):
     """ Upload a directory to the Heavy Cloud Service.
 
         Parameters
@@ -102,6 +130,10 @@ def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=F
         name : str, optional
             The name of the patch.
             If no argument is given, the name "heavy" is used.
+
+        owner : str, optional
+            The name of the owner of the patch. Usually this is an organisation.
+            If no argument is given, the submitting user name is used.
 
         generators : list, optional
             A list of generators e.g. 'c', 'unity', or 'vst2-x86'
@@ -120,21 +152,21 @@ def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=F
             Disable the validity check for a requested release. Forces sending a
             release request to the server.
 
-        x : bool, optional
-            If True, don't save the returned token. False by default.
-
-        z : bool, optional
-            If True, force the user to supply the username and password. False by default.
-
-        noverify : bool, optional
-            If True, don't verify the HTTPS connection to the server. False by default. NOT RECOMMENDED unless you know what you are doing.
-
         verbose : bool, optional
             False by default.
 
         token : str, optional
             The token used to identify the user to Heavy Cloud Service.
-            By default the user will be prompted for a username/password, or a stored token will be used.
+            By default the stored token will be used.
+
+        clear_token : bool, optional
+            Clears and ignores any existing stored tokens. Requests a new one from the command line.
+
+        service_token : str, optional
+            Pass an optional service token to be used instead of the default heavy_uploader.
+
+        force_new_patch : bool, optional
+            Indicate that a new patch should be created with the given name, if it does not yet exist.
     """
     # https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
@@ -150,27 +182,70 @@ def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=F
         # token should be stored in ~/.heavy/token
         token_path = os.path.expanduser(os.path.join("~/", ".heavy", "token"))
 
-        if token is not None:
-            # check if token has been passed as a command line arg...
-            post_data["credentials"] = {"token": token}
-        elif os.path.exists(token_path) and not z:
-            # ...or if it is stored in the user's home directory
-            with open(token_path, "r") as f:
-                post_data["credentials"] = {"token": f.read()}
-        else:
-            # otherwise, get the username and password
-            post_data["credentials"] = {
-                "username": raw_input("Enter username: "),
-                "password": getpass.getpass("Enter password: ")
-            }
+        if token is None:
+            if os.path.exists(token_path):
+                if clear_token:
+                    os.remove(token_path)
+                else:
+                    with open(token_path, "r") as f:
+                        token = f.read()
+
+            if token is None:
+                print "Please provide a user token from enzienaudio.com. " \
+                "Create or copy one from https://enzienaudio.com/h/<username>/settings."
+                token = getpass.getpass("Enter user token: ")
+
+                # write token to file
+                if not os.path.exists(os.path.dirname(token_path)):
+                    # ensure that the .heavy directory exists
+                    os.makedirs(os.path.dirname(token_path))
+                with open(token_path, "w") as f:
+                    f.write(token)
+                os.chmod(token_path, stat.S_IRUSR | stat.S_IWUSR) # force rw------- permissions on the file
 
         tick = time.time()
+
+        # check the validity of the token
+        try:
+            # check the valifity of the token
+            payload = json.loads(base64.urlsafe_b64decode(token.split(".")[1]))
+            payload["startDate"] = datetime.datetime.strptime(payload["startDate"], "%Y-%m-%dT%H:%M:%S.%f")
+
+            # ensure that the token is valid
+            now = datetime.datetime.utcnow()
+            assert payload["startDate"] <= now
+
+            if owner is None:
+                # if an owner is not supplied, default to the user name in the token
+                owner = payload["name"]
+        except Exception as e:
+            print "The user token is invalid. Generate a new one at https://enzienaudio.com/h/<username>/settings/."
+            exit_code = ErrorCodes.CODE_INVALID_TOKEN
+            raise e
+
+        # if there is a user-supplied service token, do a basic validity check
+        if service_token:
+            try:
+                # check the valifity of the token
+                payload = json.loads(base64.urlsafe_b64decode(token.split(".")[1]))
+                payload["startDate"] = datetime.datetime.strptime(payload["startDate"], "%Y-%m-%dT%H:%M:%S.%f")
+
+                # ensure that the token is valid
+                now = datetime.datetime.utcnow()
+                assert payload["startDate"] <= now
+
+                assert "service" in payload, "'service' field required in service token payload."
+            except Exception as e:
+                print "The supplied service token is invalid. A default token will be used."
+                service_token = __HV_UPLOADER_SERVICE_TOKEN
+        else:
+            service_token = __HV_UPLOADER_SERVICE_TOKEN
 
         # parse the optional release argument
         if release:
             if not release_override:
                 # check the validity of the current release
-                releases_json = requests.get(urlparse.urljoin(domain, "/a/releases")).json()
+                releases_json = requests.get(urlparse.urljoin(domain, "/a/releases/")).json()
                 if release in releases_json:
                     today = datetime.datetime.now()
                     valid_until = datetime.datetime.strptime(releases_json[release]["validUntil"], "%Y-%m-%d")
@@ -214,102 +289,71 @@ def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=F
                 "The target directory, zipped, is {0} bytes. The maximum upload size of 1MB.".format(
                     os.stat(zip_path).st_size))
 
-        post_data["name"] = name
+        # the outputs to generate
+        generators = list({s.lower() for s in set(generators or [])} & __SUPPORTED_GENERATOR_SET)
 
-        # the outputs to generate (always include c)
-        post_data["gen"] = list(({"c"} | {s.lower() for s in set(generators)}) & __SUPPORTED_GENERATOR_SET)
+        # check if the patch exists already. Ask to create it if it doesn't exist
+        r = requests.get(
+            urlparse.urljoin(domain, "/a/patches/{0}/{1}/".format(owner, name)),
+            headers={
+                "Accept": "application/json",
+                "Authorization": "Bearer " + token,
+                "X-Heavy-Service-Token": service_token
+            })
+        r.raise_for_status()
+        reply_json = r.json()
+        if "errors" in reply_json:
+            if reply_json["errors"][0]["status"] == "404":
+                # the patch does not exist
+                if force_new_patch:
+                    create_new_patch = True
+                else:
+                    create_new_patch = raw_input("A patch called \"{0}\" does not exist for owner \"{1}\". Create it? (y/n):".format(name, owner))
+                    create_new_patch = (create_new_patch == "y")
+                if create_new_patch:
+                    r = requests.post(
+                        urlparse.urljoin(domain, "/a/patches/"),
+                        data={"owner_name":owner, "name":name},
+                        headers={
+                            "Accept": "application/json",
+                            "Authorization": "Bearer " + token,
+                            "X-Heavy-Service-Token": service_token
+                        })
+                    r.raise_for_status()
+                    reply_json = r.json()
+                    if "errors" in reply_json:
+                        raise UploaderException(
+                            ErrorCodes.CODE_NEW_PATCH_FAIL,
+                            reply_json["errors"][0]["detail"])
+                    else:
+                        pass # no errors? everything is cool! Proceed.
+                else:
+                    UploaderException(
+                        ErrorCodes.CODE_NEW_PATCH_FAIL,
+                        "A patch called \"{0}\" does not exist for owner \"{1}\"".format(owner, name))
+            else:
+                raise UploaderException(
+                    ErrorCodes.CODE_NEW_PATCH_FAIL,
+                    reply_json["errors"][0]["detail"])
+        else:
+            pass # the patch exists, move on
 
         # upload the job, get the response back
-        # NOTE(mhroth): multipart-encoded file can only be sent as a flat dictionary,
-        # but we want to send a json encoded deep dictionary. So we do a bit of a hack.
         r = requests.post(
-            urlparse.urljoin(domain, "/a/heavy"),
-            data={"json":json.dumps(post_data)},
-            files={"file": (os.path.basename(zip_path), open(zip_path, "rb"), "application/zip")},
-            verify=False if noverify else True)
+            urlparse.urljoin(domain, "/a/patches/{0}/{1}/jobs/".format(owner, name)),
+            data=post_data,
+            headers={
+                "Accept": "application/json",
+                "Authorization": "Bearer " + token,
+                "X-Heavy-Service-Token": service_token
+            },
+            files={"file": (os.path.basename(zip_path), open(zip_path, "rb"), "application/zip")})
         r.raise_for_status()
 
-        """
-        {
-          "data": {
-            "compileTime": 0.05078411102294922,
-            "id": "mhroth/asdf/Edp2G",
-            "slug": "Edp2G",
-            "index": 3,
-            "links": {
-              "files": {
-                "linkage": [
-                  {
-                    "id": "mhroth/asdf/Edp2G/c",
-                    "type": "file"
-                  }
-                ],
-                "self": "https://enzienaudio.com/h/mhroth/asdf/Edp2G/files"
-              },
-              "project": {
-                "linkage": {
-                  "id": "mhroth/asdf",
-                  "type": "project"
-                },
-                "self": "https://enzienaudio.com/h/mhroth/asdf"
-              },
-              "self": "https://enzienaudio.com/h/mhroth/asdf/Edp2G",
-              "user": {
-                "linkage": {
-                  "id": "mhroth",
-                  "type": "user"
-                },
-                "self": "https://enzienaudio.com/h/mhroth"
-              }
-            },
-            "type": "job"
-          },
-          "included": [
-            {
-              "filename": "file.c.zip",
-              "generator": "c",
-              "id": "mhroth/asdf/Edp2G/c",
-              "links": {
-                "self": "https://enzienaudio.com/h/mhroth/asdf/Edp2G/c/file.c.zip"
-              },
-              "mime": "application/zip",
-              "type": "file"
-            }
-          ],
-          "warnings": [
-            {"details": "blah blah blah"}
-          ],
-          "meta": {
-            "token": "11AS0qPRmjTUHEMSovPEvzjodnzB1xaz",
-            "release": "r2016.07.05"
-          }
-        }
-        """
-        # decode the JSON API response
+        # decode the JSON API response (See below for an example response)
         reply_json = r.json()
         if verbose:
-            print json.dumps(
-                reply_json,
-                sort_keys=True,
-                indent=2,
-                separators=(",", ": "))
-
-        # update the api token, if present
-        if "token" in reply_json.get("meta",{}) and not x:
-            if token is not None:
-                if reply_json["meta"]["token"] != token:
-                    print "WARNING: Token returned by API is not the same as the "
-                    "token supplied at the command line. (old = %s, new = %s)".format(
-                        token,
-                        reply_json["meta"]["token"])
-            else:
-                if not os.path.exists(os.path.dirname(token_path)):
-                    # ensure that the .heavy directory exists
-                    os.makedirs(os.path.dirname(token_path))
-                with open(token_path, "w") as f:
-                    f.write(reply_json["meta"]["token"])
-                # force rw------- permissions on the file
-                os.chmod(token_path, stat.S_IRUSR | stat.S_IWUSR)
+            print json.dumps(reply_json, sort_keys=True, indent=2, separators=(",", ": "))
 
         # print any warnings
         for i,x in enumerate(reply_json.get("warnings",[])):
@@ -323,45 +367,61 @@ def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=F
                     Colours.red, Colours.end, x["detail"], i+1)
             raise UploaderException(ErrorCodes.CODE_HEAVY_COMPILE_ERRORS)
 
-        # retrieve all requested files
-        for i,g in enumerate(generators):
-            file_url = __get_file_url_for_generator(reply_json, g)
-            if file_url and (len(output_dirs) > i or b):
-                r = requests.get(
-                    file_url,
-                    cookies={"token": reply_json["meta"]["token"]},
-                    verify=False if noverify else True)
-                r.raise_for_status()
+        print "Job URL:", urlparse.urljoin(domain, reply_json["data"]["links"]["html"])
+        print "Heavy release:", reply_json["data"]["attributes"]["release"]
 
-                # write the reply to a temporary file
-                c_zip_path = os.path.join(temp_dir, "archive.{0}.zip".format(g))
-                with open(c_zip_path, "wb") as f:
-                    f.write(r.content)
+        if len(generators) > 0:
+            print "Downloaded files placed in:"
 
-                # unzip the files to where they belong
-                if b:
-                    target_dir = os.path.join(os.path.abspath(os.path.expanduser(output_dirs[0])), g)
+            # retrieve all requested files
+            for i,g in enumerate(generators):
+                file_url = urlparse.urljoin(
+                    domain,
+                    "/".join([
+                        reply_json["data"]["links"]["html"],
+                        g.replace("-", "/"),
+                        "archive.zip"
+                    ])
+                )
+                if file_url and (len(output_dirs) > i or b):
+                    r = requests.get(
+                        file_url,
+                        headers={
+                            "Authorization": "Bearer " + token,
+                            "X-Heavy-Service-Token": service_token
+                        },
+                        timeout=None # some builds can take a very long time
+                    )
+                    r.raise_for_status()
+
+                    # write the reply to a temporary file
+                    c_zip_path = os.path.join(temp_dir, "archive.{0}.zip".format(g))
+                    with open(c_zip_path, "wb") as f:
+                        f.write(r.content)
+
+                    # unzip the files to where they belong
+                    if b:
+                        target_dir = os.path.join(os.path.abspath(os.path.expanduser(output_dirs[0])), g)
+                    else:
+                        target_dir = os.path.abspath(os.path.expanduser(output_dirs[i]))
+                    if not os.path.exists(target_dir):
+                        os.makedirs(target_dir) # ensure that the output directory exists
+                    __unzip(c_zip_path, target_dir)
+
+                    if g == "c-src" and y:
+                        keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
+                        for f in os.listdir(target_dir):
+                            if not f.endswith(keep_files):
+                                os.remove(os.path.join(target_dir, f));
+
+                    print "  * {0}: {1}".format(g, target_dir)
                 else:
-                    target_dir = os.path.abspath(os.path.expanduser(output_dirs[i]))
-                if not os.path.exists(target_dir):
-                    os.makedirs(target_dir) # ensure that the output directory exists
-                __unzip(c_zip_path, target_dir)
+                    print "  * {0}Warning:{1} {2} files could not be retrieved.".format(
+                        Colours.yellow, Colours.end,
+                        g)
 
-                if g == "c" and y:
-                    keep_files = ("_{0}.h".format(name), "_{0}.c".format(name))
-                    for f in os.listdir(target_dir):
-                        if not f.endswith(keep_files):
-                            os.remove(os.path.join(target_dir, f));
+        print "Total request time: {0}ms".format(int(1000.0*(time.time()-tick)))
 
-                print "{0} files placed in {1}".format(g, target_dir)
-            else:
-                print "{0}Warning:{1} {2} files could not be retrieved.".format(
-                    Colours.yellow, Colours.end,
-                    g)
-
-            print "Job URL:", reply_json["data"]["links"]["self"]
-            print "Total request time: {0}ms".format(int(1000.0*(time.time()-tick)))
-            print "Heavy release:", reply_json.get("meta",{}).get("release", "dev")
     except UploaderException as e:
         exit_code = e.code
         if e.message:
@@ -376,12 +436,13 @@ def upload(input_dir, output_dirs=None, name=None, generators=None, b=False, y=F
         if e.response.status_code == requests.codes.unauthorized:
             print "{0}Error:{1} Unknown username or password.".format(Colours.red, Colours.end)
         else:
-            print "{0}Error:{1} An HTTP error has occurred.\n{2}".format(Colours.red, Colours.end, e)
+            print "{0}Error:{1} An HTTP error has occurred with URL {2}\n{3}".format(Colours.red, Colours.end, e.request.path_url, e)
         exit_code = ErrorCodes.CODE_CONNECTION_400_500
     except Exception as e:
-        exit_code = ErrorCodes.CODE_EXCEPTION
+        # a generic catch for any other exception
+        exit_code = exit_code if exit_code != ErrorCodes.CODE_OK else ErrorCodes.CODE_EXCEPTION
         print "{0}Error:{1} ({2}) {3}".format(Colours.red, Colours.end, e.__class__, e)
-        print "Getting a weird error? Get the latest uploader at https://enzienaudio.com/static/uploader.py, or check for issues at https://github.com/enzienaudio/heavy/issues."
+        print "Getting a weird error? Get the latest version with 'pip install hv-uploader -U', or check for issues at https://github.com/enzienaudio/heavy/issues."
     finally:
         if temp_dir:
             shutil.rmtree(temp_dir) # delete the temporary directory no matter what
@@ -401,9 +462,11 @@ def main():
         default="heavy",
         help="Patch name. If it doesn't exist on the Heavy site, the uploader will fail.")
     parser.add_argument(
+        "--owner",
+        help="The name of the owner of patch. Usually this is of an organisation.")
+    parser.add_argument(
         "-g", "--gen",
         nargs="+",
-        default=["c"],
         help="List of generator outputs. Currently supported generators are '" + "', '".join(sorted(__SUPPORTED_GENERATOR_SET)) + "'.")
     parser.add_argument(
         "-b",
@@ -427,45 +490,45 @@ def main():
         help="Send a request for a specific release to the server without checking for validity first.",
         action="count")
     parser.add_argument(
-        "-d", "--domain",
-        default="https://enzienaudio.com",
-        help="Domain. Default is https://enzienaudio.com.")
-    parser.add_argument(
-        "-x",
-        help="Don't save the returned token.",
-        action="count")
-    parser.add_argument(
-        "-z",
-        help="Force the use of a password, regardless of saved token.",
-        action="count")
-    parser.add_argument(
-        "--noverify",
-        help="Don't verify the SSL connection. This is generally a very bad idea.",
-        action="count")
-    parser.add_argument(
         "-v", "--verbose",
         help="Show debugging information.",
         action="count")
     parser.add_argument(
         "-t", "--token",
         help="Use the specified token.")
+    parser.add_argument(
+        "--clear_token",
+        help="Clears the exsiting token and asks for a new one from the command line.",
+        action="count")
+    parser.add_argument(
+        "--service_token",
+        help="Use a custom service token.")
+    parser.add_argument(
+        "-d", "--domain",
+        default="https://enzienaudio.com",
+        help="Domain. Default is https://enzienaudio.com.")
+    parser.add_argument(
+        "--force_new_patch",
+        help="Create a new patch if the given name doesn't already exist.",
+        action="count")
     args = parser.parse_args()
 
     exit_code, reponse_obj = upload(
         input_dir=args.input_dir,
         output_dirs=args.out,
         name=args.name,
+        owner=args.owner,
         generators=args.gen,
         b=args.b,
         y=args.y,
         release=args.release,
         release_override=args.rr,
         domain=args.domain,
-        x=args.x,
-        z=args.z,
-        noverify=args.noverify,
         verbose=args.verbose,
-        token=args.token)
+        token=args.token,
+        clear_token=args.clear_token,
+        service_token=args.service_token,
+        force_new_patch=args.force_new_patch)
 
     # exit and return the exit code
     sys.exit(exit_code)
@@ -474,3 +537,64 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""
+An example of the server response:
+
+{
+  "data": {
+    "attributes": {
+      "compileTime": 0.266899,
+      "index": 188,
+      "release": "r2016.11",
+      "submittedAt": "2016-12-23T12:49:04.500000",
+      "warnings": []
+    },
+    "id": "mhroth/test_osc/188",
+    "links": {
+      "html": "/h/mhroth/test_osc/188",
+      "self": "/a/jobs/mhroth/test_osc/188"
+    },
+    "relationships": {
+      "files": {
+        "data": [
+          {
+            "id": "mhroth/test_osc/188/c/src",
+            "type": "file"
+          }
+        ]
+      },
+      "patch": {
+        "links": {
+          "html": "/h/mhroth/test_osc",
+          "self": "/a/patches/mhroth/test_osc"
+        }
+      },
+      "submittedBy": {
+        "links": {
+          "html": "/h/mhroth",
+          "self": "/a/users/mhroth"
+        }
+      }
+    },
+    "type": "job"
+  },
+  "included": [
+    {
+      "data": {
+        "buildId": "c-src",
+        "compileTime": 0.266899,
+        "date": "2016-12-23T12:49:04.500000",
+        "mime": "application/zip",
+        "size": 51484
+      },
+      "id": "mhroth/test_osc/188/c/src",
+      "links": {
+        "self": "/h/mhroth/test_osc/188/c/src/archive.zip"
+      },
+      "type": "file"
+    }
+  ]
+}
+"""

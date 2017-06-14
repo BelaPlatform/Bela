@@ -42,7 +42,7 @@ AuxiliaryTask gFrequencyUpdateTask;
 int gNumOscillators = 500;
 int gWavetableLength = 1024;
 
-void recalculate_frequencies();
+void recalculate_frequencies(void*);
 OscillatorBank osc;
 bool setup(BelaContext *context, void *userData)
 {
@@ -136,7 +136,7 @@ void render(BelaContext *context, void *userData)
 // it has minimal effect on the audio performance but it will take longer to
 // complete if the system is under heavy audio load.
 
-void recalculate_frequencies()
+void recalculate_frequencies(void*)
 {
 	float freq = gNewMinFrequency;
 	float increment = (gNewMaxFrequency - gNewMinFrequency) / (float)gNumOscillators;

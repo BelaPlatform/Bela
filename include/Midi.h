@@ -23,10 +23,11 @@ typedef enum midiMessageType{
 	kmmProgramChange,
 	kmmChannelPressure,
 	kmmPitchBend,
+	kmmSystem,
 	kmmNone,
 	kmmAny,
 } MidiMessageType;
-#define midiMessageStatusBytesLength 7+2 //2 being kmmNone and kmmAny
+#define midiMessageStatusBytesLength 8+2 //2 being kmmNone and kmmAny
 
 extern midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength];
 extern unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength];
@@ -35,6 +36,9 @@ class MidiChannelMessage{
 public:
 	MidiChannelMessage();
 	MidiChannelMessage(MidiMessageType type);
+	midi_byte_t getStatusByte(){
+		return _statusByte;
+	}
 	virtual ~MidiChannelMessage();
 	MidiMessageType getType();
 	int getChannel();
@@ -57,6 +61,8 @@ public:
 			return "channel aftertouch";
 		case kmmPitchBend:
 			return "pitch bend";
+		case kmmSystem:
+			return "system";
 		case kmmAny:
 			return "any";
 		case kmmNone:
