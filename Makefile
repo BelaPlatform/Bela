@@ -101,13 +101,13 @@ QUIET?=false
 RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
 
-# refresh library cache and check if libpd is there
-#TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
-LIBPD_PATH = /usr/lib/libpd.so
-TEST_LIBPD := $(shell [ -e $(LIBPD_PATH) ] && echo yes)
+# check if ldconfig knows about libpd, link it in.
+TEST_LIBPD := $(shell ldconfig -p | grep "libpd\.so")
 ifneq ($(strip $(TEST_LIBPD)), )
-# if libpd is there, link it in
+  # if ldconfig knows about libpd, link it in.
+  LIBS += -lpd -lpthread
 endif
+
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
 # Xenomai flags and cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(shell /usr/xenomai/bin/xeno-config --cflags --skin=native)
@@ -120,7 +120,7 @@ DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -lasound -lsndfile
+LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -lasound -lsndfile -Llib/
 
 ifndef COMPILER
 # check whether clang is installed
