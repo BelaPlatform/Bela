@@ -100,6 +100,9 @@ void *gUserData;
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
+	// reset this, in case it has been set before
+	gShouldStop = 0;
+
 	// First check if there's a Bela program already running on the board.
 	// We can't have more than one instance at a time, but we can tell via
 	// the Xenomai task info. We expect the rt_task_bind call to fail so if it
