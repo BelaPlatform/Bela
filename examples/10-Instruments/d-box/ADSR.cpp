@@ -25,7 +25,7 @@ ADSR::ADSR(void) {
     setAttackRate(0);
     setDecayRate(0);
     setReleaseRate(0);
-    setSustainLevel(1.0);
+    setSustainLevel(1.f);
     setTargetRatioA(0.3);
     setTargetRatioDR(0.0001);
 }
@@ -36,41 +36,41 @@ ADSR::~ADSR(void) {
 void ADSR::setAttackRate(float rate) {
     attackRate = rate;
     attackCoef = calcCoef(rate, targetRatioA);
-    attackBase = (1.0 + targetRatioA) * (1.0 - attackCoef);
+    attackBase = (1.f + targetRatioA) * (1.f - attackCoef);
 }
 
 void ADSR::setDecayRate(float rate) {
     decayRate = rate;
     decayCoef = calcCoef(rate, targetRatioDR);
-    decayBase = (sustainLevel - targetRatioDR) * (1.0 - decayCoef);
+    decayBase = (sustainLevel - targetRatioDR) * (1.f - decayCoef);
 }
 
 void ADSR::setReleaseRate(float rate) {
     releaseRate = rate;
     releaseCoef = calcCoef(rate, targetRatioDR);
-    releaseBase = -targetRatioDR * (1.0 - releaseCoef);
+    releaseBase = -targetRatioDR * (1.f - releaseCoef);
 }
 
 float ADSR::calcCoef(float rate, float targetRatio) {
-    return exp(-log((1.0 + targetRatio) / targetRatio) / rate);
+    return exp(-log((1.f + targetRatio) / targetRatio) / rate);
 }
 
 void ADSR::setSustainLevel(float level) {
     sustainLevel = level;
-    decayBase = (sustainLevel - targetRatioDR) * (1.0 - decayCoef);
+    decayBase = (sustainLevel - targetRatioDR) * (1.f - decayCoef);
 }
 
 void ADSR::setTargetRatioA(float targetRatio) {
     if (targetRatio < 0.000000001)
         targetRatio = 0.000000001;  // -180 dB
     targetRatioA = targetRatio;
-    attackBase = (1.0 + targetRatioA) * (1.0 - attackCoef);
+    attackBase = (1.f + targetRatioA) * (1.f - attackCoef);
 }
 
 void ADSR::setTargetRatioDR(float targetRatio) {
     if (targetRatio < 0.000000001)
         targetRatio = 0.000000001;  // -180 dB
     targetRatioDR = targetRatio;
-    decayBase = (sustainLevel - targetRatioDR) * (1.0 - decayCoef);
-    releaseBase = -targetRatioDR * (1.0 - releaseCoef);
+    decayBase = (sustainLevel - targetRatioDR) * (1.f - decayCoef);
+    releaseBase = -targetRatioDR * (1.f - releaseCoef);
 }

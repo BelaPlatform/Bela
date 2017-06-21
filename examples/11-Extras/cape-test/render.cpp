@@ -81,24 +81,24 @@ void render(BelaContext *context, void *userData)
 		for(int ch = 0; ch < 2; ch++) {
 			if(context->audioIn[2*n + ch] > gPositivePeakLevels[ch])
 				gPositivePeakLevels[ch] = context->audioIn[2*n + ch];
-			gPositivePeakLevels[ch] += 0.1;
+			gPositivePeakLevels[ch] += 0.1f;
 			gPositivePeakLevels[ch] *= gPeakLevelDecayRate;
-			gPositivePeakLevels[ch] -= 0.1;
+			gPositivePeakLevels[ch] -= 0.1f;
 			if(context->audioIn[2*n + ch] < gNegativePeakLevels[ch])
 				gNegativePeakLevels[ch] = context->audioIn[2*n + ch];
-			gNegativePeakLevels[ch] -= 0.1;			
+			gNegativePeakLevels[ch] -= 0.1f;
 			gNegativePeakLevels[ch] *= gPeakLevelDecayRate;
-			gNegativePeakLevels[ch] += 0.1;
+			gNegativePeakLevels[ch] += 0.1f;
 		}
 		
 		if(gAudioTestState == kStateTestingAudioLeft) {
-			context->audioOut[2*n] = 0.2 * sinf(phase);
+			context->audioOut[2*n] = 0.2f * sinf(phase);
 			context->audioOut[2*n + 1] = 0;		
 			
 			frequency = 3000.0;
-			phase += 2.0 * M_PI * frequency / 44100.0;
-			if(phase >= 2.0 * M_PI)
-				phase -= 2.0 * M_PI;
+			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
+			if(phase >= M_PI)
+				phase -= 2.0f * (float)M_PI;
 			
 			gAudioTestStateSampleCount++;
 			if(gAudioTestStateSampleCount >= gAudioTestStateSampleThreshold) {
@@ -142,12 +142,12 @@ void render(BelaContext *context, void *userData)
 		}
 		else if(gAudioTestState == kStateTestingAudioRight) {
 			context->audioOut[2*n] = 0;
-			context->audioOut[2*n + 1] = 0.2 * sinf(phase);
+			context->audioOut[2*n + 1] = 0.2f * sinf(phase);
 			
 			frequency = 3000.0;
-			phase += 2.0 * M_PI * frequency / 44100.0;
-			if(phase >= 2.0 * M_PI)
-				phase -= 2.0 * M_PI;
+			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
+			if(phase >= M_PI)
+				phase -= 2.0f * (float)M_PI;
 			
 			gAudioTestStateSampleCount++;
 			if(gAudioTestStateSampleCount >= gAudioTestStateSampleThreshold) {
@@ -195,7 +195,8 @@ void render(BelaContext *context, void *userData)
 
 			// If one second has gone by with no error, play one sound, else
 			// play another
-			if(context->audioFramesElapsed + n - gLastErrorFrame > 44100) {
+			if(context->audioFramesElapsed + n - gLastErrorFrame > context->audioSampleRate)
+			{
 				gEnvelopeValueL *= gEnvelopeDecayRate;
 				gEnvelopeValueR *= gEnvelopeDecayRate;
 				gEnvelopeSampleCount++;
@@ -208,16 +209,15 @@ void render(BelaContext *context, void *userData)
 					gEnvelopeSampleCount = 0;
 				}
 				frequency = 880.0;
-			}
-			else {
+			} else {
 				gEnvelopeValueL = gEnvelopeValueR = 0.5;
 				gEnvelopeLastChannel = 0;
 				frequency = 220.0;
 			}
 
-			phase += 2.0 * M_PI * frequency / 44100.0;
-			if(phase >= 2.0 * M_PI)
-				phase -= 2.0 * M_PI;
+			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
+			if(phase >= M_PI)
+				phase -= 2.0f * (float)M_PI;
 		}
 	}
 

@@ -21,19 +21,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 (LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
 
-
-/*
- * AIR-HARP
- * Physically modelled strings using waveguide junctions and mass-spring-dampers
- * controllable using an accelerometer
- *
- * render.cpp
- *
- * Christian Heinrichs 04/2015
- *
- */
-
-
 #include "MassSpringDamper.h"
 #include "String.h"
 #include "Plectrum.h"
@@ -123,7 +110,7 @@ void render(BelaContext *context, void *userData)
 
 	float lastAccel = 0;
 
-	for(int n = 0; n < context->audioFrames; n++) {
+	for(unsigned int n = 0; n < context->audioFrames; n++) {
 
 		/*
 		 *
@@ -227,10 +214,13 @@ void render(BelaContext *context, void *userData)
 }
 
 
-// cleanup_render() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in initialise_render().
-
 void cleanup(BelaContext *context, void *userData)
-{
+{}
 
-}
+/**
+\example airharp/render.cpp
+
+ * Physically modelled strings using waveguide junctions and mass-spring-dampers
+ * controllable using an accelerometer
+ *
+ */

@@ -33,7 +33,7 @@ int gSampleCount;		// Sample counter for indicating when to update frequencies
 float gNewMinFrequency;
 float gNewMaxFrequency;
 
-// Task for handling the update of the frequencies using the matrix
+// Task for handling the update of the frequencies using the analog inputs
 AuxiliaryTask gFrequencyUpdateTask;
 
 // These settings are carried over from main.cpp
@@ -99,11 +99,6 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
-
 void render(BelaContext *context, void *userData)
 {
 
@@ -132,7 +127,7 @@ void render(BelaContext *context, void *userData)
 }
 
 // This is a lower-priority call to update the frequencies which will happen
-// periodically when the matrix is enabled. By placing it at a lower priority,
+// periodically when the analog inputs are enabled. By placing it at a lower priority,
 // it has minimal effect on the audio performance but it will take longer to
 // complete if the system is under heavy audio load.
 
@@ -151,10 +146,6 @@ void recalculate_frequencies(void*)
 		freq += increment;
 	}
 }
-
-
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
 
 void cleanup(BelaContext *context, void *userData)
 {}

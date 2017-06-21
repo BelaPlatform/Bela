@@ -70,7 +70,7 @@ void render(BelaContext *context, void *userData)
 			gReadPtr = -1;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
-			context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
+			audioWrite(context, n, channel, out);;	// ...and put it in both left and right channel
 	}
 }
 

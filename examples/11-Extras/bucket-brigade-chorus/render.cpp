@@ -68,14 +68,14 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	static float lfoPhase=0;
-	float amplitude = lfoAmplitude * 4700; // range of variation around D. D has to be between [0 9999]
-	lfoPhase+=lfoRate*2*M_PI*context->audioFrames/context->audioSampleRate;
-	D=amplitude+amplitude*sinf(lfoPhase);
+	float amplitude = lfoAmplitude * 4700.f; // range of variation around D. D has to be between [0 9999]
+	lfoPhase += lfoRate * 2.f * (float)M_PI * context->audioFrames / context->audioSampleRate;
+	D = amplitude + amplitude*sinf(lfoPhase);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		float input = audioRead(context, n, 0) + audioRead(context, n, 1);
 	    delay[writePointer++] = input + delay[readPointer]*feedback;
-	    float output = (input + 0.9*delay[readPointer++] ) * 0.5;
+	    float output = (input + 0.9f*delay[readPointer++] ) * 0.5f;
 		audioWrite(context, n, 0, output);
 		audioWrite(context, n, 1, output);
 		if(writePointer>=delayLength)
@@ -85,10 +85,23 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
-// cleanup_render() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in initialise_render().
-
 void cleanup(BelaContext *context, void *userData)
 {
     
 }
+
+/**
+
+\example bucket-brigate-chorus/render.cpp
+
+This example shows how the master clock driving the audio converter can be
+modulated in order to achieve what in principle is a perfect virtual-analog
+emulation of a Bucket-Brigade based chorus effect, of the likes of those found
+on string machines and analog chorus and flanger effects. Read more on BBDs
+[here](http://dafx10.iem.at/papers/RaffelSmith_DAFx10_P42.pdf).
+
+In practice in this example you get some distortion due to the PLL of the clock
+being adjusted over time. Disabling the analog I/O should allow for wider variations (larger values of `lfoAmplitude`).
+*
+*/
+

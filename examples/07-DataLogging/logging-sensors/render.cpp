@@ -31,6 +31,18 @@ WriteFile file2;
 
 bool setup(BelaContext *context, void *userData)
 {
+	if(!context->flags & BELA_FLAG_INTERLEAVED)
+	{
+		fprintf(stderr, "Error: this example requires that we use interleaved buffers\n");
+		return false;
+	}
+
+	if(context->analogInChannels < 5)
+	{
+		fprintf(stderr, "Error: this example requires at least 5 analog inputs to be enabled\n");
+		return false;
+	}
+		
 	file1.init("out.bin"); //set the file name to write to
 	file1.setEchoInterval(10000); // only print to the console every 10000 calls to log
 	file1.setFileType(kBinary);
@@ -44,14 +56,17 @@ bool setup(BelaContext *context, void *userData)
 	file2.setFormat("%.4f\n"); // set the format that you want to use for your output. Please use %f only (with modifiers)
 	file2.setFileType(kText);
 	file2.setEchoInterval(10000); // only print to the console 1 line every other 10000
+
 	return true; 
 }
 
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->analogFrames; ++n) {
-		file1.log(&(context->analogIn[n*context->analogFrames]), 2); // log an array of values
-		file2.log(context->analogIn[n*context->analogFrames]); // log a single value
+		// We are accessing the analogIn buffers directly instead of using the analogRead() function
+		// This way we can get a pointer to it and pass it to `WriteFile::log()` directly
+		file1.log(&(context->analogIn[n*context->analogFrames]), 4); // log an array of values: the first 4 channels from analog input
+		file2.log(analogRead(context, n, 4)); // log a single value from channel 4
 	}
 }
 

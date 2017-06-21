@@ -45,9 +45,9 @@ void render(BelaContext *context, void *userData)
 	    for(int k = 0; k < gNumOscillators; ++k){
             out += sinf_neon(gPhase) * gScale;
 	    }
-		gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
+		gPhase += 2.0f * (float)M_PI * gFrequency * gInverseSampleRate;
+		if(gPhase > M_PI)
+			gPhase -= 2.0f * (float)M_PI;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
 			audioWrite(context, n, channel, out);

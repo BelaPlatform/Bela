@@ -28,7 +28,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 Scope scope;
 
-int gAudioFramesPerAnalogFrame;
+int gAudioFramesPerAnalogFrame = 0;
 float gInverseSampleRate;
 float gPhase;
 
@@ -47,9 +47,9 @@ bool setup(BelaContext *context, void *userData)
     // setup the scope with 3 channels at the audio sample rate
 	scope.setup(3, context->audioSampleRate);
 	
-	// Check if analog channels are enabled
-	if(context->analogFrames == 0 || context->analogFrames > context->audioFrames) {
-		rt_printf("Error: this example needs analog enabled, with 4 or 8 channels\n");
+	if(context->analogSampleRate > context->audioSampleRate)
+	{
+		fprintf(stderr, "Error: for this project the sampling rate of the analog inputs has to be <= the audio sample rate\n");
 		return false;
 	}
 
@@ -60,7 +60,8 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	
-	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+	if(context->analogFrames)
+		gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;
 	gPhase = 0.0;
 
@@ -72,8 +73,8 @@ void render(BelaContext *context, void *userData)
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 
-		if(!(n % gAudioFramesPerAnalogFrame)) {
-			// On even audio samples: read analog inputs and update frequency and amplitude
+		if(gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {
+			// read analog inputs and update frequency and amplitude
 			gIn1 = analogRead(context, n/gAudioFramesPerAnalogFrame, 0);
             gIn2 = analogRead(context, n/gAudioFramesPerAnalogFrame, 1);
 	    	gAmplitude = gIn1 * 0.8f;
@@ -82,9 +83,9 @@ void render(BelaContext *context, void *userData)
 	    
 	    // generate a sine wave with the amplitude and frequency 
 	    float out = gAmplitude * sinf(gPhase);
-	    gPhase += 2.0f * M_PI * gFrequency * gInverseSampleRate;
-		if(gPhase > 1.0f * M_PI)
-			gPhase -= 2.0f * M_PI;
+	    gPhase += 2.0f * (float)M_PI * gFrequency * gInverseSampleRate;
+		if(gPhase > M_PI)
+			gPhase -= 2.0f * (float)M_PI;
 	    
 	    // log the sine wave and sensor values on the scope
 	    scope.log(out, gIn1, gIn2);

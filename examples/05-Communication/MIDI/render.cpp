@@ -79,12 +79,6 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
-
-
 enum {kVelocity, kNoteOn, kNoteNumber};
 void render(BelaContext *context, void *userData)
 {
@@ -170,7 +164,7 @@ void render(BelaContext *context, void *userData)
 		analogWriteOnce(context, n, 1, state);
 		if(count % 20000 == 0){
 			state = !state;
-			midi_byte_t bytes[3] = {176, 30, (midi_byte_t)(state*127)}; // toggle the OWL led
+			midi_byte_t bytes[3] = {176, 30, (midi_byte_t)(state*127)}; // send a control change output
 			midi.writeOutput(bytes, 3);
 		}
 		++count;
@@ -179,8 +173,8 @@ void render(BelaContext *context, void *userData)
 		if(gIsNoteOn == 1){
 			static float phase = 0;
 			phase += gPhaseIncrement;
-			if(phase > 2 * M_PI)
-				phase -= 2 * M_PI;
+			if(phase > M_PI)
+				phase -= 2.f * (float)M_PI;
 			float value = sinf(phase) * gVelocity/128.0f;
 			audioWrite(context, n, 0, value);
 			audioWrite(context, n, 1, value);
@@ -190,9 +184,6 @@ void render(BelaContext *context, void *userData)
 		}
 	}
 }
-
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
 
 void cleanup(BelaContext *context, void *userData)
 {

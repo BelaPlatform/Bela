@@ -40,7 +40,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n=0; n<context->digitalFrames; n++){
 		int status=digitalRead(context, 0, P8_08); //read the value of the button
 		digitalWriteOnce(context, n, P8_07, status); //write the status to the LED
-		float out = 0.1 * status * rand() / (float)RAND_MAX * 2 - 1; //generate some noise, gated by the button
+		float out = 0.1f * status * rand() / (float)RAND_MAX * 2.f - 1.f; //generate some noise, gated by the button
 		for(unsigned int j = 0; j < context->audioOutChannels; j++){
 			audioWrite(context, n, j, out); //write the audio output
 		}

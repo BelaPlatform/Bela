@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <time.h>
 
-int gAudioFramesPerMatrixFrame = 2; // Ratio in audio to matrix sample rate
+int gAudioFramesPerAnalogFrame = 2; // Ratio in audio to analog sample rate
 
 int gInputTank1Angle = 0;		// Inputs for the cannon angles
 int gInputTank2Angle = 1;
@@ -80,15 +80,6 @@ float gOscillatorPhaseScaler = 0;
 
 void screen_update(void*);
 
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
-
 bool setup(BelaContext *context, void *userData)
 {
 	srandom(time(NULL));
@@ -100,7 +91,7 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	// Initialise audio variables
-	gAudioFramesPerMatrixFrame = context->audioFrames / context->analogFrames;
+	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gOscillatorPhaseScaler = 2.0 * M_PI / context->audioSampleRate;
 
 	// Initialise the screen buffers
@@ -152,17 +143,12 @@ void swap_buffers()
 	gScreenNextBufferReady = false;
 }
 
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
-
 void render(BelaContext *context, void *userData)
 {
 	int audioIndex = 0;
 
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
-		for(int k = 0; k < gAudioFramesPerMatrixFrame; k++) {
+		for(int k = 0; k < gAudioFramesPerAnalogFrame; k++) {
 			// Render music and sound
 			float audioSample = 0;
 
@@ -192,8 +178,8 @@ void render(BelaContext *context, void *userData)
 
 				gSoundProjectileOscillatorPhase += gOscillatorPhaseScaler * constrain(map(gameStatusProjectileHeight(),
 						1.0, 0, 300, 2000), 200, 6000);
-				if(gSoundProjectileOscillatorPhase > 2.0 * M_PI)
-					gSoundProjectileOscillatorPhase -= 2.0 * M_PI;
+				if(gSoundProjectileOscillatorPhase > M_PI)
+					gSoundProjectileOscillatorPhase -= 2.f * M_PI;
 			}
 
 			context->audioOut[2*audioIndex] = context->audioOut[2*audioIndex + 1] = audioSample;
@@ -221,7 +207,7 @@ void render(BelaContext *context, void *userData)
 					// fire depending on whose turn it is
 					float strength = map(gLauncherPeakValue,
 									     gLauncherMinimumPeak, 1.0,
-										 0.5f, 10.0f);
+										 0.5, 10.0);
 					setTank1CannonStrength(strength);
 					setTank2CannonStrength(strength);
 					fireProjectile();
@@ -257,12 +243,12 @@ void render(BelaContext *context, void *userData)
 			swap_buffers();
 		}
 
-		// Push current screen buffer to the matrix output
+		// Push current screen buffer to the analog output
 		if(gScreenBufferReadPointer < gScreenBufferReadLength - 1) {
 			float x = gScreenBufferRead[gScreenBufferReadPointer++];
 			float y = gScreenBufferRead[gScreenBufferReadPointer++];
 
-			// Rescale screen coordinates to matrix ranges; invert the Y
+			// Rescale screen coordinates to analog ranges; invert the Y
 			// coordinate to go from normal screen coordinates to scope coordinates
 			analogWriteOnce(context, n, gOutputX, constrain(map(x, 0, gScreenWidth, 0, 1.0), 0, 1.0));
 			analogWriteOnce(context, n, gOutputY, constrain(map(y, 0, gScreenHeight, 1.0, 0), 0, 1.0));
@@ -282,7 +268,7 @@ void render(BelaContext *context, void *userData)
 
 			// After 5 seconds, restart the game
 			gSamplesSinceFinish++;
-			if(gSamplesSinceFinish > 22050*5)
+			if(gSamplesSinceFinish > context->analogSampleRate * 5)
 				gGameShouldRestart = true;
 		}
 		else if(gameStatusProjectileInMotion()) {
@@ -326,9 +312,6 @@ void screen_update(void*)
 	// Flag it as ready to go
 	gScreenNextBufferReady = true;
 }
-
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
 
 void cleanup(BelaContext *context, void *userData)
 {

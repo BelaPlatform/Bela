@@ -42,7 +42,7 @@ ne10_float32_t *gFIRfilterState;
 
 void initialise_filter(BelaContext *context);
 
-// Task for handling the update of the frequencies using the matrix
+// Task for handling the update of the frequencies using the analog inputs
 AuxiliaryTask gTriggerSamplesTask;
 
 bool initialise_trigger();
@@ -91,9 +91,8 @@ void render(BelaContext *context, void *userData)
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
-				context->audioOut[n * context->audioOutChannels + channel] = gFIRfilterOut[n];	// ...and put it in both left and right channel
+			audioWrite(context, n, channel, gFIRfilterOut[n]);	// ...and put it in both left and right channel
 	}
-
 
 	// Request that the lower-priority task run at next opportunity
 	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
