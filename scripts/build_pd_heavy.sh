@@ -2,7 +2,7 @@
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
-release=r2017.02
+release=
 NO_UPLOAD=0
 WATCH=0
 FORCE=0
@@ -244,7 +244,7 @@ uploadBuildRun(){
     # Make new Bela executable and run
     # It does not look very nice that we type the same things over and over
     # but that is because each line is an ssh session in its own right
-    MAKE_COMMAND="make --no-print-directory QUIET=true -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
+    MAKE_COMMAND="make --no-print-directory COMPILER=gcc QUIET=true -C $BBB_BELA_HOME PROJECT='$BBB_PROJECT_NAME' CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
     if [ $RUN_PROJECT -eq 0 ]
     then
         echo "Building project..."

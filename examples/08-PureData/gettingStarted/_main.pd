@@ -1,4 +1,4 @@
-#N canvas 736 167 442 1518 10;
+#N canvas 736 22 442 722 10;
 #X text 32 20 Using Puredata (libpd) on Bela;
 #X text 32 30 ==============================;
 #X obj 100 598 osc~ 440;
@@ -179,6 +179,15 @@ or;
 #X text 33 1047 initialise \, read and write to digital pins as well
 as some;
 #X text 33 1060 usage examples;
+#X text 33 2093 When sending a message from a Pd-heavy patch to a receiver
+;
+#X obj 87 2143 send bela_setDigital @hv_param;
+#X text 33 2103 in the C++ wrapper (e.g.: when sending to bela_setDigital
+\,;
+#X text 33 2113 or if you add any custom receivers in there) you need
+;
+#X text 33 2123 to add @hv_param to the name of your receiver \, e.g.:
+;
 #X connect 2 0 3 0;
 #X connect 3 0 4 0;
 #X connect 3 0 4 1;
