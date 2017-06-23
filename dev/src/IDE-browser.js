@@ -324,7 +324,7 @@ $('#heavyUpload').on('click', e => {
 });
 socket.on('heavy-token-request', (project) => {
 	popup.title('Please Enter Your Heavy User Token');
-	popup.subtitle('see https://beta.enzienaudio.com for details');
+	popup.subtitle('see https://enzienaudio.com/getmytokens for details');
 	
 	var form = [];
 	form.push('<input type="text" placeholder="Enter your user token">');
@@ -366,7 +366,7 @@ socket.on('heavyUploadZip', (file, userToken, project) => {
 		consoleView.emit('warn', 'there was an error with your user token: '+e.toString());
 		return;
 	}
-	var server_url = "https://beta.enzienaudio.com";
+	var server_url = "https://enzienaudio.com";
 	var serviceToken = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzZXJ2aWNlIjogImJlbGEiLCAic2VydmljZURhdGUiOiAiMjAxNy0wNS0yNFQxMTozNToyNS45NDEwMjIifQ==.SUDS5awhV4VZGT7zCzY_W3GGlPs4WnrgRb-OwSAT-Cc=";
 	
 	var formData = new FormData();
