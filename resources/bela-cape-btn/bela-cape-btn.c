@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -227,13 +228,22 @@ timestamp_ms_t get_timestamp_ms(void)
 	return tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
 }
 
+volatile int gShouldStop;
+int verbose;
+// Handle Ctrl-C by requesting that the polling loop stops
+void interrupt_handler(int var)
+{
+	gShouldStop = 1;
+}
+
 int run(void)
 {
 	if(INITIAL_DELAY > 0){
 		printf("Sleeping %d seconds before polling\n", INITIAL_DELAY);
 		usleep(INITIAL_DELAY * 1000000);
 	}
-	gpio_export(BUTTON_PIN);
+	int ret = gpio_export(BUTTON_PIN);
+	int shouldUnexport = (ret == 0);
 	
 	int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
 
@@ -253,17 +263,37 @@ int run(void)
 		MONITOR_CLICK ? CLICK_ACTION : "(nothing)", 
 		MONITOR_HOLD ? HOLD_ACTION : "(nothing)",
 		PRESSED_VALUE == 0 ? "LOW" : "HIGH");
-	for (;;)
+	signal(SIGINT, interrupt_handler);
+	signal(SIGTERM, interrupt_handler);
+	gShouldStop = 0;
+	while(!gShouldStop)
 	{
-		int result = poll(pfd, 1, -1);
+		int pollTime;
+		// set a timeout for the poll:
+		if(pressed_at)
+		{
+			// if it's already pressed, wait as long as
+			// needed to detect a HOLD
+			pollTime = HOLD_PRESS_TIMEOUT_MS + 1;
+		}
+		else
+		{
+			// otherwise wait forever
+			pollTime = -1;
+		}
+		if(verbose)
+			printf("Polling with timeout %d\n", pollTime);
+		int result = poll(pfd, 1, pollTime);
+		if(verbose)
+			printf("Finished polling: %d\n", result);
 
 		if (result == -1)
 			break;
 
-		if (result == 0)
+		if (result == 0 && !pressed_at)
 			continue;
 
-		if (pfd[0].revents & POLLPRI)
+		if (pfd[0].revents & POLLPRI || pressed_at)
 		{
 			timestamp_ms_t timestamp = get_timestamp_ms();
 
@@ -283,8 +313,10 @@ int run(void)
 			}
 
 			unsigned long pressed = strtoul(buff, NULL, 10) == PRESSED_VALUE;
+			if(verbose)
+				printf("Pressed: %d\n", pressed);
 
-			if (pressed)
+			if (pressed && !pressed_at)
 			{
 				pressed_at = timestamp;
 			}
@@ -309,12 +341,13 @@ int run(void)
 		}
 	}
 
-	// not that this is ever going to be executed ...
-	// TODO: signal handler
+	if(verbose)
+		printf("Cleaning up...\n");
 	gpio_close(fd);
 
 	gpio_set_edge(BUTTON_PIN, E_NONE);
-	gpio_unexport(BUTTON_PIN);
+	if(shouldUnexport)
+		gpio_unexport(BUTTON_PIN);
 	return 0;
 }
 
@@ -358,6 +391,7 @@ int main(int argc, char **argv)
 	INITIAL_DELAY = DEFAULT_INITIAL_DELAY;
 	MONITOR_CLICK = DEFAULT_MONITOR_CLICK;
 	MONITOR_HOLD = DEFAULT_MONITOR_HOLD;
+	verbose = 0;
 	int i;
 	for (i=1; i<argc; ++i)
 	{
@@ -451,6 +485,10 @@ int main(int argc, char **argv)
 		{
 			print_usage();
 			return 0;
+		}
+		else if (strcmp(argv[i], "--verbose") == 0)
+		{
+			verbose = 1;
 		}
 		else if (strcmp(argv[i], "--version") == 0)
 		{

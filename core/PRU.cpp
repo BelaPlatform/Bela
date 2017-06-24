@@ -393,7 +393,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		pru_buffer_audio_dac[i] = 0;
 
 	if(capeButtonMonitoring){
-		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT);
+		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
 	}
 
 	// Allocate audio buffers
