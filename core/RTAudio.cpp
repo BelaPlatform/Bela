@@ -299,28 +299,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	Bela_setHeadphoneLevel(settings->headphoneLevel);
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	unsigned int stashAnalogFrames = gContext.analogFrames;
-	unsigned int stashAnalogInChannels = gContext.analogInChannels;
-	unsigned int stashAnalogOutChannels = gContext.analogOutChannels;
-	if(gProcessAnalog == false){
-		gContext.analogFrames = 0;
-		gContext.analogInChannels = 0;
-		gContext.analogOutChannels = 0;
-	}
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 	// Call the user-defined initialisation function
 	if(!setup((BelaContext *)&gContext, userData)) {
 		cout << "Couldn't initialise audio rendering\n";
 		return 1;
 	}
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	if(gProcessAnalog == false){
-		gContext.analogFrames = stashAnalogFrames;
-		gContext.analogInChannels = stashAnalogInChannels;
-		gContext.analogOutChannels = stashAnalogOutChannels;
-	}
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 	return 0;
 }
 
