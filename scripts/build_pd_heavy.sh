@@ -2,7 +2,7 @@
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
-release=r2017.02
+release=
 NO_UPLOAD=0
 WATCH=0
 FORCE=0
