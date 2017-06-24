@@ -26,7 +26,6 @@ import datetime
 import getpass
 import json
 import os
-import requests
 import shutil
 import stat
 import sys
@@ -34,6 +33,8 @@ import tempfile
 import time
 import urlparse
 import zipfile
+
+import requests
 
 class Colours:
     purple = "\033[95m"
@@ -80,6 +81,7 @@ __HV_UPLOADER_SERVICE_TOKEN = \
 
 __SUPPORTED_GENERATOR_SET = {
     "c-src",
+    "bela-linux-armv7a",
     "web-local", "web-js",
     "fabric-src", "fabric-macos-x64", "fabric-win-x86", "fabric-win-x64", "fabric-linux-x64", "fabric-android-armv7a",
     "unity-src", "unity-macos-x64", "unity-win-x86", "unity-win-x64", "unity-linux-x64", "unity-android-armv7a",
@@ -192,7 +194,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
 
             if token is None:
                 print "Please provide a user token from enzienaudio.com. " \
-                "Create or copy one from https://enzienaudio.com/h/<username>/settings."
+                "Create or copy one from https://enzienaudio.com/getmytokens/."
                 token = getpass.getpass("Enter user token: ")
 
                 # write token to file
@@ -241,11 +243,14 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         else:
             service_token = __HV_UPLOADER_SERVICE_TOKEN
 
+        # create the session to pool all requests
+        s = requests.Session()
+
         # parse the optional release argument
         if release:
             if not release_override:
                 # check the validity of the current release
-                releases_json = requests.get(urlparse.urljoin(domain, "/a/releases/")).json()
+                releases_json = s.get(urlparse.urljoin(domain, "/a/releases/")).json()
                 if release in releases_json:
                     today = datetime.datetime.now()
                     valid_until = datetime.datetime.strptime(releases_json[release]["validUntil"], "%Y-%m-%d")
@@ -293,7 +298,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         generators = list({s.lower() for s in set(generators or [])} & __SUPPORTED_GENERATOR_SET)
 
         # check if the patch exists already. Ask to create it if it doesn't exist
-        r = requests.get(
+        r = s.get(
             urlparse.urljoin(domain, "/a/patches/{0}/{1}/".format(owner, name)),
             headers={
                 "Accept": "application/json",
@@ -311,9 +316,9 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                     create_new_patch = raw_input("A patch called \"{0}\" does not exist for owner \"{1}\". Create it? (y/n):".format(name, owner))
                     create_new_patch = (create_new_patch == "y")
                 if create_new_patch:
-                    r = requests.post(
+                    r = s.post(
                         urlparse.urljoin(domain, "/a/patches/"),
-                        data={"owner_name":owner, "name":name},
+                        data={"owner_name":owner, "name":name, "public":"true"},
                         headers={
                             "Accept": "application/json",
                             "Authorization": "Bearer " + token,
@@ -339,7 +344,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
             pass # the patch exists, move on
 
         # upload the job, get the response back
-        r = requests.post(
+        r = s.post(
             urlparse.urljoin(domain, "/a/patches/{0}/{1}/jobs/".format(owner, name)),
             data=post_data,
             headers={
@@ -347,6 +352,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                 "Authorization": "Bearer " + token,
                 "X-Heavy-Service-Token": service_token
             },
+            timeout=None, # some builds can take a very long time
             files={"file": (os.path.basename(zip_path), open(zip_path, "rb"), "application/zip")})
         r.raise_for_status()
 
@@ -384,7 +390,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                     ])
                 )
                 if file_url and (len(output_dirs) > i or b):
-                    r = requests.get(
+                    r = s.get(
                         file_url,
                         headers={
                             "Authorization": "Bearer " + token,
@@ -412,7 +418,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                         keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
                         for f in os.listdir(target_dir):
                             if not f.endswith(keep_files):
-                                os.remove(os.path.join(target_dir, f));
+                                os.remove(os.path.join(target_dir, f))
 
                     print "  * {0}: {1}".format(g, target_dir)
                 else:
@@ -433,7 +439,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         print "{0}Error:{1} Connection to server timed out. The server might be overloaded. Try again later?\n{2}".format(Colours.red, Colours.end, e)
         exit_code = ErrorCodes.CODE_CONNECTION_TIMEOUT
     except requests.HTTPError as e:
-        if e.response.status_code == requests.codes.unauthorized:
+        if e.response.status_code == requests.status_codes.codes.unauthorized:
             print "{0}Error:{1} Unknown username or password.".format(Colours.red, Colours.end)
         else:
             print "{0}Error:{1} An HTTP error has occurred with URL {2}\n{3}".format(Colours.red, Colours.end, e.request.path_url, e)
