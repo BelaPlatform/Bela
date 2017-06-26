@@ -163,8 +163,8 @@ public:
 	void cleanupGPIO();
 
 	// Initialise and open the PRU
-	int initialise(int pru_num, int frames_per_buffer,
-				   int spi_channels, int mux_channels = 0, 
+	int initialise(int pru_num, bool uniformSampleRate,
+				   int mux_channels = 0,
 				   bool capeButtonMonitoring = true);
 
 	// Run the code image in pru_rtaudio_bin.h
@@ -190,6 +190,10 @@ private:
 	bool running;		// Whether the PRU is running
 	bool analog_enabled;  // Whether SPI ADC and DAC are used
 	bool digital_enabled; // Whether digital is used
+	float analogs_per_audio; // How many analog frames per each audio frame
+	bool uniform_sample_rate; // Should the sampling rate of the analog and audio forced to be the same, as far as ARM is concerned
+	bool hardware_analog_sample_rate; // The actual sample rate of the analog channels, as far as the PRU is concerned
+	int hardware_analog_frames; // The actual number of frames for the analog channels, as far as the PRU is concerned
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
 	bool gpio_test_pin_enabled; // Whether the test pin was also enabled

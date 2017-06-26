@@ -270,7 +270,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	if(gPRU->initialise(settings->pruNumber, gContext.analogFrames, analogChannels,
+	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
 		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
 		cout << "Error: unable to initialise PRU\n";
 		return 1;
