@@ -27,7 +27,7 @@ signal_handler ()
 
 print_continue ()
 {
-	printf "Program stopped, run\n$0 --start $EXAMPLE\n to continue from here\n";
+	printf "Program stopped, run\n$ORIGINAL_COMMAND --start $EXAMPLE\n to continue from here\n";
 }
 
 print_summary ()
@@ -74,10 +74,13 @@ SUCCESS=0
 
 trap signal_handler 2 
 
+ORIGINAL_COMMAND="$0"
+
 while [ -n "$1" ]
 do
 	case $1 in
 	--continue)
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --continue"
 		CONTINUE=1
 	;;
 	--start)
@@ -87,6 +90,7 @@ do
 	;;
 	--distcc)
 		echo "Using distcc"
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --distcc"
 		export COMPILER="distcc arm-linux-gnueabihf-gcc"
 		export CC="distcc arm-linux-gnueabihf-gcc"
 		export CXX="distcc arm-linux-gnueabihf-g++"
@@ -94,11 +98,13 @@ do
 	;;
 	--only)
 		shift
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --only $@"
 		EXAMPLES_TO_RUN=$@
 		echo "Only running: $EXAMPLES_TO_RUN"
 		break
 	;;
 	--verbose)
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --verbose"
 		MAKE_OUT="/dev/stdout";
 	;;
 	*)

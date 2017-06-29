@@ -175,6 +175,9 @@ typedef struct {
 	///
 	/// n.b. digital pins always persist, audio never does
 	int analogOutputsPersist;
+	/// \brief Whether the analog channels should be resampled to
+	/// audio sampling rate.
+	int uniformSampleRate;
 
 	// These items are hardware-dependent and should only be changed
 	// to run on different hardware
