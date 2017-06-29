@@ -253,8 +253,10 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mux_channels, bool capeButtonMonitoring)
+int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
 {
+	hardware_analog_sample_rate = context->analogSampleRate;
+	hardware_analog_frames = context->analogFrames;
 	uint32_t *pruMem = 0;
 
 	if(!gpio_enabled) {
@@ -291,7 +293,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		pru_buffer_spi_dac = (uint16_t *)&pruMem[PRU_MEM_DAC_OFFSET/sizeof(uint32_t)];
 
 		/* ADC memory starts after N(ch)*2(buffers)*bufsize samples */
-		pru_buffer_spi_adc = &pru_buffer_spi_dac[2 * context->analogInChannels * context->analogFrames];
+		pru_buffer_spi_adc = &pru_buffer_spi_dac[2 * context->analogInChannels * hardware_analog_frames];
 	}
 	else {
 		pru_buffer_spi_dac = pru_buffer_spi_adc = 0;
@@ -310,9 +312,9 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
     unsigned int pruFrames;
     if(analog_enabled)
-        pruFrames = context->analogFrames;
+        pruFrames = hardware_analog_frames;
     else
-        pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
+        pruFrames = hardware_analog_frames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
     pru_buffer_comm[PRU_BUFFER_FRAMES] = pruFrames;
     pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
@@ -393,11 +395,45 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		pru_buffer_audio_dac[i] = 0;
 
 	if(capeButtonMonitoring){
-		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT);
+		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
+	}
+
+	// after setting all PRU settings, we adjust
+	// the "software" sampling rate with appropriate
+	// allowing for "resampling" as/if required
+	uniform_sample_rate = uniformSampleRate;
+	if(uniform_sample_rate)
+	{
+		if(context->analogInChannels != context->analogOutChannels)
+		{
+			fprintf(stderr, "Different numbers of inputs and outputs is not supported yet\n");
+			return 1;
+
+		}
+
+		if(context->analogInChannels == 8)
+			analogs_per_audio = 0.5;
+		else if (context->analogInChannels == 4)
+			analogs_per_audio = 1;
+		else if (context->analogInChannels == 2)
+			analogs_per_audio = 2;
+		else if (context->analogInChannels != 0)
+		{
+			fprintf(stderr, "Unsupported number of analog channels\n", analogs_per_audio);
+			return 1;
+		}
+		printf("Using %f analogs per audio\n", analogs_per_audio);
+		context->analogSampleRate = context->audioSampleRate;
+		context->analogFrames = context->audioFrames;
 	}
 
 	// Allocate audio buffers
 #ifdef USE_NEON_FORMAT_CONVERSION
+	if(uniform_sample_rate && context->analogFrames != hardaware_analog_frames)
+	{
+		fprintf(stderr, "Error: using uniform_sample_rate is not allowed with USE_NEON_FORMAT_CONVERSION\n");
+		return 1;
+	}
 	if(posix_memalign((void **)&context->audioIn, 16, 2 * context->audioFrames * sizeof(float))) {
 		printf("Error allocating audio input buffer\n");
 		return 1;
@@ -648,7 +684,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				return;
 			}
 	    	unsigned int analogChannels = context->analogInChannels;
-			pru_spi_offset = context->analogFrames * analogChannels;
+			pru_spi_offset = hardware_analog_frames * analogChannels;
 			if(digital_enabled)
 				context->digital = digital_buffer1;
 		}
@@ -706,13 +742,45 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			}
 			
 #ifdef USE_NEON_FORMAT_CONVERSION
+			// TODO: add support for different analogs_per_audio ratios
 			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
 									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
-#else	
-			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
-				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+#else
+			if(uniform_sample_rate && analogs_per_audio == 0.5)
+			{
+				int channels = context->analogInChannels;
+				for(unsigned int f = 0; f < hardware_analog_frames; ++f)
+				{
+					for(unsigned int ch = 0; ch < channels; ++ch)
+					{
+						float value = (float)pru_buffer_spi_adc[f * channels + ch + pru_spi_offset] / 65536.0f;
+						int firstFrame = channels * 2 * f + ch;
+						context->analogIn[firstFrame] = value;
+						context->analogIn[firstFrame + channels] = value;
+					}
+				}
 			}
-#endif
+			else if (!uniform_sample_rate || analogs_per_audio == 1)
+				for(unsigned int n = 0;
+					n < context->analogInChannels * context->analogFrames;
+					++n)
+				{
+					float value = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+					context->analogIn[n] = value;
+				}
+			else if (uniform_sample_rate && analogs_per_audio == 2)
+			{
+				int channels = context->analogInChannels;
+				for(unsigned int f = 0; f < hardware_analog_frames; f += 2)
+				{
+					for(unsigned int ch = 0; ch < channels; ++ch)
+					{
+						float value = (float)pru_buffer_spi_adc[f * channels + ch  + pru_spi_offset] / 65536.0f;
+						context->analogIn[(f / 2) * channels + ch] = value;
+					}
+				}
+			}
+	#endif
 			
 			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
 				// Audio expander enabled on at least one analog input
@@ -802,11 +870,47 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
 								  context->analogOut, (uint16_t*)&pru_buffer_spi_dac[pru_spi_offset]);
 #else		
-			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++) {
-				int out = context->analogOut[n] * 65536.0f;
-				if(out < 0) out = 0;
-				else if(out > 65535) out = 65535;
-				pru_buffer_spi_dac[n + pru_spi_offset] = (uint16_t)out;
+			if(uniform_sample_rate && analogs_per_audio == 0.5)
+			{
+				unsigned int channels = context->analogOutChannels;
+				for(unsigned int f = 0; f < hardware_analog_frames; ++f)
+				{
+					for(unsigned int ch = 0; ch < channels; ++ch)
+					{
+						int out = context->analogOut[f * channels * 2 + ch] * 65536.0f;
+						if(out < 0) out = 0;
+						else if(out > 65535) out = 65535;
+						pru_buffer_spi_dac[f * channels + ch + pru_spi_offset] = (uint16_t)out;
+					}
+				}
+			}
+			else if(!uniform_sample_rate || analogs_per_audio == 1)
+			{
+				for(unsigned int n = 0;
+					n < context->analogOutChannels * context->analogFrames;
+					++n)
+				{
+					int out = context->analogOut[n] * 65536.0f;
+					if(out < 0) out = 0;
+					else if(out > 65535) out = 65535;
+					pru_buffer_spi_dac[n + pru_spi_offset] = (uint16_t)out;
+				}
+			}
+			else if(uniform_sample_rate && analogs_per_audio == 2)
+			{
+				unsigned int channels = context->analogOutChannels;
+				for(unsigned int f = 0; f < hardware_analog_frames; f += 2)
+				{
+					for(unsigned int ch = 0; ch < channels; ++ch)
+					{
+						int out = context->analogOut[f * channels / 2 + ch] * 65536.0f;
+						if(out < 0) out = 0;
+						else if(out > 65535) out = 65535;
+						unsigned int firstFrame = f * channels + ch + pru_spi_offset;
+						pru_buffer_spi_dac[firstFrame] = (uint16_t)out;
+						pru_buffer_spi_dac[firstFrame + channels] = (uint16_t)out;
+					}
+				}
 			}
 #endif
 		}
@@ -837,7 +941,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
-			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
+			static uint32_t pruFramesPerBlock = hardware_analog_frames ? hardware_analog_frames : hardware_analog_frames / 2;
 			// read the PRU counter
 			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,
