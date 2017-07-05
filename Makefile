@@ -112,7 +112,7 @@ ifneq ($(strip $(TEST_LIBPD)), )
   LIBS += -lpd -lpthread_rt
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
@@ -139,14 +139,12 @@ endif
 ifeq ($(COMPILER), clang)
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
-  DEFAULT_CPPFLAGS += -DNDEBUG -no-integrated-as
-  DEFAULT_CFLAGS += -DNDEBUG -no-integrated-as
+  DEFAULT_CPPFLAGS += -no-integrated-as
+  DEFAULT_CFLAGS += -no-integrated-as
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
-    DEFAULT_CPPFLAGS += --fast-math
-    DEFAULT_CFLAGS += --fast-math
   endif
 endif
 
