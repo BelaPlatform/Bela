@@ -58,6 +58,7 @@ public:
 	~I2c_Codec();
 
 private:
+	configureDCRemovalIIR(); //called by startAudio()
 	bool running;
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;
