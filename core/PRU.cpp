@@ -314,7 +314,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
     if(analog_enabled)
         pruFrames = hardware_analog_frames;
     else
-        pruFrames = hardware_analog_frames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
+        pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
     pru_buffer_comm[PRU_BUFFER_FRAMES] = pruFrames;
     pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
     pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
@@ -941,7 +941,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
-			static uint32_t pruFramesPerBlock = hardware_analog_frames ? hardware_analog_frames : hardware_analog_frames / 2;
+			static uint32_t pruFramesPerBlock = hardware_analog_frames ? hardware_analog_frames : context->audioFrames / 2;
 			// read the PRU counter
 			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,
