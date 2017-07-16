@@ -192,7 +192,7 @@ private:
 	bool digital_enabled; // Whether digital is used
 	float analogs_per_audio; // How many analog frames per each audio frame
 	bool uniform_sample_rate; // Should the sampling rate of the analog and audio forced to be the same, as far as ARM is concerned
-	bool hardware_analog_sample_rate; // The actual sample rate of the analog channels, as far as the PRU is concerned
+	float hardware_analog_sample_rate; // The actual sample rate of the analog channels, as far as the PRU is concerned
 	int hardware_analog_frames; // The actual number of frames for the analog channels, as far as the PRU is concerned
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
