@@ -695,12 +695,13 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		//rt_task_sleep(sleepTime*4);
 		//rt_task_sleep(sleepTime/4);
 
+		int16_t* audio_adc_pru_buffer = pru_buffer_audio_adc + pru_audio_offset;
 		// Convert short (16-bit) samples to float
 #ifdef USE_NEON_FORMAT_CONVERSION
-		int16_to_float_audio(2 * context->audioFrames, &pru_buffer_audio_adc[pru_audio_offset], context->audioIn);
+		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
 #else
 		for(unsigned int n = 0; n < 2 * context->audioFrames; n++) {
-			context->audioIn[n] = (float)pru_buffer_audio_adc[n + pru_audio_offset] / 32768.0f;
+			context->audioIn[n] = (float)audio_adc_pru_buffer[n] / 32768.0f;
 		}
 #endif
 		
@@ -741,10 +742,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				}
 			}
 			
+			uint16_t* adc_pru_buffer = pru_buffer_spi_adc + pru_spi_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
 			// TODO: add support for different analogs_per_audio ratios
 			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
-									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
+									adc_pru_buffer, context->analogIn);
 #else
 			if(uniform_sample_rate && analogs_per_audio == 0.5)
 			{
@@ -753,7 +755,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				{
 					for(unsigned int ch = 0; ch < channels; ++ch)
 					{
-						float value = (float)pru_buffer_spi_adc[f * channels + ch + pru_spi_offset] / 65536.0f;
+						float value = (float)adc_pru_buffer[f * channels + ch] / 65536.0f;
 						int firstFrame = channels * 2 * f + ch;
 						context->analogIn[firstFrame] = value;
 						context->analogIn[firstFrame + channels] = value;
@@ -761,13 +763,15 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				}
 			}
 			else if (!uniform_sample_rate || analogs_per_audio == 1)
+			{
 				for(unsigned int n = 0;
 					n < context->analogInChannels * context->analogFrames;
 					++n)
 				{
-					float value = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+					float value = (float)adc_pru_buffer[n] / 65536.0f;
 					context->analogIn[n] = value;
 				}
+			}
 			else if (uniform_sample_rate && analogs_per_audio == 2)
 			{
 				int channels = context->analogInChannels;
@@ -775,7 +779,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 				{
 					for(unsigned int ch = 0; ch < channels; ++ch)
 					{
-						float value = (float)pru_buffer_spi_adc[f * channels + ch  + pru_spi_offset] / 65536.0f;
+						float value = (float)adc_pru_buffer[f * channels + ch] / 65536.0f;
 						context->analogIn[(f / 2) * channels + ch] = value;
 					}
 				}
@@ -797,7 +801,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 							
 							audio_expander_input_history[ch] = context->analogIn[n * context->analogInChannels + ch];
 							audio_expander_output_history[ch] = filteredOut;
-							context->analogIn[n * context->analogInChannels + ch] = 2.0 * filteredOut;
+							context->analogIn[n * context->analogInChannels + ch] = 2.0f * filteredOut;
 						}
 					}
 				}
@@ -805,8 +809,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Initialize the output buffer with the values that were in the last frame of the previous output
-				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
-					for(unsigned int n = 0; n < context->analogFrames; n++){
+				for(unsigned int ch = 0; ch < context->analogOutChannels; ++ch){
+					for(unsigned int n = 0; n < context->analogFrames; ++n){
 						context->analogOut[n * context->analogOutChannels + ch] = last_analog_out_frame[ch];
 					}
 				}
@@ -866,9 +870,10 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			}
 
 			// Convert float back to short for SPI output
+			uint16_t* dac_pru_buffer = pru_buffer_spi_dac + pru_spi_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
 			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
-								  context->analogOut, (uint16_t*)&pru_buffer_spi_dac[pru_spi_offset]);
+								  context->analogOut, dac_pru_buffer);
 #else		
 			if(uniform_sample_rate && analogs_per_audio == 0.5)
 			{
@@ -880,7 +885,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 						int out = context->analogOut[f * channels * 2 + ch] * 65536.0f;
 						if(out < 0) out = 0;
 						else if(out > 65535) out = 65535;
-						pru_buffer_spi_dac[f * channels + ch + pru_spi_offset] = (uint16_t)out;
+						dac_pru_buffer[f * channels + ch] = (uint16_t)out;
 					}
 				}
 			}
@@ -893,7 +898,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 					int out = context->analogOut[n] * 65536.0f;
 					if(out < 0) out = 0;
 					else if(out > 65535) out = 65535;
-					pru_buffer_spi_dac[n + pru_spi_offset] = (uint16_t)out;
+					dac_pru_buffer[n] = (uint16_t)out;
 				}
 			}
 			else if(uniform_sample_rate && analogs_per_audio == 2)
@@ -906,9 +911,9 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 						int out = context->analogOut[f * channels / 2 + ch] * 65536.0f;
 						if(out < 0) out = 0;
 						else if(out > 65535) out = 65535;
-						unsigned int firstFrame = f * channels + ch + pru_spi_offset;
-						pru_buffer_spi_dac[firstFrame] = (uint16_t)out;
-						pru_buffer_spi_dac[firstFrame + channels] = (uint16_t)out;
+						unsigned int firstFrame = f * channels + ch;
+						dac_pru_buffer[firstFrame] = (uint16_t)out;
+						dac_pru_buffer[firstFrame + channels] = (uint16_t)out;
 					}
 				}
 			}
@@ -922,14 +927,15 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		}
 
         // Convert float back to short for audio
+		int16_t* audio_dac_pru_buffer = pru_buffer_audio_dac + pru_audio_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
-		float_to_int16_audio(2 * context->audioFrames, context->audioOut, &pru_buffer_audio_dac[pru_audio_offset]);
+		float_to_int16_audio(2 * context->audioFrames, context->audioOut, audio_dac_pru_buffer);
 #else	
 		for(unsigned int n = 0; n < context->audioOutChannels * context->audioFrames; n++) {
 			int out = context->audioOut[n] * 32768.0f;
 			if(out < -32768) out = -32768;
 			else if(out > 32767) out = 32767;
-			pru_buffer_audio_dac[n + pru_audio_offset] = (int16_t)out;
+			audio_dac_pru_buffer[n] = (int16_t)out;
 		}
 #endif
 
