@@ -23,7 +23,6 @@ s.options.speakerMuted = 0;    // the speakers are not muted (so active)
 s.options.dacLevel = -5;       // sets the gain of the dac to -5 dB
 s.options.adcLevel = -3;       // sets the gain of the adc to -3 dB
 s.options.numMultiplexChannels = 0; // do not enable multiplexer channels
-s.options.belaPRU = 0;         // select the PRU on which Bela audio will run
 
 s.options.blockSize = 16;
 s.options.numInputBusChannels = 2;
