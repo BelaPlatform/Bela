@@ -84,6 +84,9 @@ void (*gBelaCleanup)(BelaContext*, void*);
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
+	// reset this, in case it has been set before
+	gShouldStop = 0;
+
 	// First check if there's a Bela program already running on the board.
 	// We can't have more than one instance at a time, but we can tell via
 	// the Xenomai task info. We expect the rt_task_bind call to fail so if it
@@ -231,11 +234,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// Set flags based on init settings
 	if(settings->interleave){
 		gContext.flags |= BELA_FLAG_INTERLEAVED;
-	} else {
-		//TODO: deinterleaved buffers
-		fprintf(stderr, "de-interleaved buffers not yet supported\n");
-		exit(1);
 	}
+
 	if(settings->analogOutputsPersist)
 		gContext.flags |= BELA_FLAG_ANALOG_OUTPUTS_PERSIST;
 
@@ -258,7 +258,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	if(gPRU->initialise(settings->pruNumber, gContext.analogFrames, analogChannels,
+	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
 		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
 		cout << "Error: unable to initialise PRU\n";
 		return 1;
@@ -287,28 +287,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	Bela_setHeadphoneLevel(settings->headphoneLevel);
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	unsigned int stashAnalogFrames = gContext.analogFrames;
-	unsigned int stashAnalogInChannels = gContext.analogInChannels;
-	unsigned int stashAnalogOutChannels = gContext.analogOutChannels;
-	if(gProcessAnalog == false){
-		gContext.analogFrames = 0;
-		gContext.analogInChannels = 0;
-		gContext.analogOutChannels = 0;
-	}
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 	// Call the user-defined initialisation function
 	if(settings->setup && !(*settings->setup)((BelaContext *)&gContext, userData)) {
 		cout << "Couldn't initialise audio rendering\n";
 		return 1;
 	}
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	if(gProcessAnalog == false){
-		gContext.analogFrames = stashAnalogFrames;
-		gContext.analogInChannels = stashAnalogInChannels;
-		gContext.analogOutChannels = stashAnalogOutChannels;
-	}
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 	return 0;
 }
 

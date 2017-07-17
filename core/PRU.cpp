@@ -20,6 +20,7 @@
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
 #include "../include/pru_rtaudio_bin.h"
+#include "../include/Utilities.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -253,8 +254,10 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mux_channels, bool capeButtonMonitoring)
+int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
 {
+	hardware_analog_sample_rate = context->analogSampleRate;
+	hardware_analog_frames = context->analogFrames;
 	uint32_t *pruMem = 0;
 
 	if(!gpio_enabled) {
@@ -291,7 +294,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		pru_buffer_spi_dac = (uint16_t *)&pruMem[PRU_MEM_DAC_OFFSET/sizeof(uint32_t)];
 
 		/* ADC memory starts after N(ch)*2(buffers)*bufsize samples */
-		pru_buffer_spi_adc = &pru_buffer_spi_dac[2 * context->analogInChannels * context->analogFrames];
+		pru_buffer_spi_adc = &pru_buffer_spi_dac[2 * context->analogInChannels * hardware_analog_frames];
 	}
 	else {
 		pru_buffer_spi_dac = pru_buffer_spi_adc = 0;
@@ -310,7 +313,7 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
     pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
     unsigned int pruFrames;
     if(analog_enabled)
-        pruFrames = context->analogFrames;
+        pruFrames = hardware_analog_frames;
     else
         pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
     pru_buffer_comm[PRU_BUFFER_FRAMES] = pruFrames;
@@ -393,11 +396,45 @@ int PRU::initialise(int pru_num, int frames_per_buffer, int spi_channels, int mu
 		pru_buffer_audio_dac[i] = 0;
 
 	if(capeButtonMonitoring){
-		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT);
+		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
+	}
+
+	// after setting all PRU settings, we adjust
+	// the "software" sampling rate with appropriate
+	// allowing for "resampling" as/if required
+	uniform_sample_rate = uniformSampleRate;
+	if(uniform_sample_rate)
+	{
+		if(context->analogInChannels != context->analogOutChannels)
+		{
+			fprintf(stderr, "Different numbers of inputs and outputs is not supported yet\n");
+			return 1;
+
+		}
+
+		if(context->analogInChannels == 8)
+			analogs_per_audio = 0.5;
+		else if (context->analogInChannels == 4)
+			analogs_per_audio = 1;
+		else if (context->analogInChannels == 2)
+			analogs_per_audio = 2;
+		else if (context->analogInChannels != 0)
+		{
+			fprintf(stderr, "Unsupported number of analog channels\n", analogs_per_audio);
+			return 1;
+		}
+		printf("Using %f analogs per audio\n", analogs_per_audio);
+		context->analogSampleRate = context->audioSampleRate;
+		context->analogFrames = context->audioFrames;
 	}
 
 	// Allocate audio buffers
 #ifdef USE_NEON_FORMAT_CONVERSION
+	if(uniform_sample_rate && context->analogFrames != hardaware_analog_frames)
+	{
+		fprintf(stderr, "Error: using uniform_sample_rate is not allowed with USE_NEON_FORMAT_CONVERSION\n");
+		return 1;
+	}
 	if(posix_memalign((void **)&context->audioIn, 16, 2 * context->audioFrames * sizeof(float))) {
 		printf("Error allocating audio input buffer\n");
 		return 1;
@@ -582,6 +619,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 #endif
 
 
+	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	while(!gShouldStop) {
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
@@ -648,7 +686,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 				return;
 			}
 	    	unsigned int analogChannels = context->analogInChannels;
-			pru_spi_offset = context->analogFrames * analogChannels;
+			pru_spi_offset = hardware_analog_frames * analogChannels;
 			if(digital_enabled)
 				context->digital = digital_buffer1;
 		}
@@ -659,12 +697,30 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 		//rt_task_sleep(sleepTime*4);
 		//rt_task_sleep(sleepTime/4);
 
+		int16_t* audio_adc_pru_buffer = pru_buffer_audio_adc + pru_audio_offset;
 		// Convert short (16-bit) samples to float
 #ifdef USE_NEON_FORMAT_CONVERSION
-		int16_to_float_audio(2 * context->audioFrames, &pru_buffer_audio_adc[pru_audio_offset], context->audioIn);
+		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
+		// TODO: implement non-interlaved
 #else
-		for(unsigned int n = 0; n < 2 * context->audioFrames; n++) {
-			context->audioIn[n] = (float)pru_buffer_audio_adc[n + pru_audio_offset] / 32768.0f;
+		if(interleaved)
+		{
+			for(unsigned int n = 0; n < context->audioInChannels * context->audioFrames; n++) {
+				context->audioIn[n] = (float)audio_adc_pru_buffer[n] / 32768.0f;
+			}
+		}
+		else
+		{
+			for(unsigned int f = 0; f < context->audioFrames; ++f)
+			{
+				for(unsigned int c = 0; c < context->audioInChannels; ++c)
+				{
+					unsigned int srcIdx = f * context->audioInChannels + c;
+					unsigned int dstIdx = c * context->audioFrames + f;
+					float value = (float)audio_adc_pru_buffer[srcIdx] / 32768.0f;
+					context->audioIn[dstIdx] = value;
+				}
+			}
 		}
 #endif
 		
@@ -705,31 +761,140 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 				}
 			}
 			
+			uint16_t* adc_pru_buffer = pru_buffer_spi_adc + pru_spi_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
+			// TODO: add support for different analogs_per_audio ratios
 			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
-									&pru_buffer_spi_adc[pru_spi_offset], context->analogIn);
-#else	
-			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; n++) {
-				context->analogIn[n] = (float)pru_buffer_spi_adc[n + pru_spi_offset] / 65536.0f;
+									adc_pru_buffer, context->analogIn);
+#else
+			if(uniform_sample_rate && analogs_per_audio == 0.5)
+			{
+				int channels = context->analogInChannels;
+				unsigned int frames = hardware_analog_frames;
+				if(interleaved)
+				{
+					for(unsigned int f = 0; f < frames; ++f)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							float value = (float)adc_pru_buffer[f * channels + c] / 65536.0f;
+							int firstFrame = channels * 2 * f + c;
+							context->analogIn[firstFrame] = value;
+							context->analogIn[firstFrame + channels] = value;
+						}
+					}
+				}
+				else
+				{
+					for(unsigned int f = 0; f < frames; ++f)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							unsigned int srcIdx = f * channels + c;
+							unsigned int dstIdx = frames * c * 2 + f * 2;
+							float value = (float)adc_pru_buffer[srcIdx] / 65536.0f;
+							context->analogIn[dstIdx] = value;
+							context->analogIn[dstIdx + 1] = value;
+						}
+					}
+				}
 			}
-#endif
+			else if (!uniform_sample_rate || analogs_per_audio == 1)
+			{
+				if(interleaved)
+				{
+					for(unsigned int n = 0;
+						n < context->analogInChannels * context->analogFrames;
+						++n)
+					{
+						float value = (float)adc_pru_buffer[n] / 65536.0f;
+						context->analogIn[n] = value;
+					}
+				}
+				else
+				{
+					for(unsigned int f = 0; f < context->analogFrames; ++f)
+					{
+						for(unsigned int c = 0; c < context->analogInChannels; ++c)
+						{
+							unsigned int srcIdx = context->analogInChannels * f + c;
+							unsigned int dstIdx = context->analogFrames * c + f;
+							float value = (float)adc_pru_buffer[srcIdx] / 65536.0f;
+							context->analogIn[dstIdx] = value;
+						}
+					}
+				}
+			}
+			else if (uniform_sample_rate && analogs_per_audio == 2)
+			{
+				unsigned int channels = context->analogInChannels;
+				unsigned int frames = hardware_analog_frames;
+				if(interleaved)
+				{
+					for(unsigned int f = 0; f < frames; f += 2)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							float value = (float)adc_pru_buffer[f * channels + c] / 65536.0f;
+							context->analogIn[(f / 2) * channels + c] = value;
+						}
+					}
+				}
+				else
+				{
+					for(unsigned int f = 0; f < frames; f += 2)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							unsigned int srcIdx = f * channels + c;
+							unsigned int dstIdx = c * (frames / 2) + f / 2;
+							float value = (float)adc_pru_buffer[srcIdx] / 65536.0f;
+							context->analogIn[dstIdx] = value;
+						}
+					}
+				}
+			}
+	#endif
 			
 			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
 				// Audio expander enabled on at least one analog input
-				for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
-					if(context->audioExpanderEnabled & (1 << ch)) {
-						// Audio expander enabled on this channel:
-						// apply highpass filter and scale by 2 to get -1 to 1 range
-						// rather than 0-1
-						for(unsigned int n = 0; n < context->analogFrames; n++) {
-							float filteredOut = audio_expander_filter_coeff *
-								(audio_expander_output_history[ch] + 
-								 context->analogIn[n * context->analogInChannels + ch] -
-							     audio_expander_input_history[ch]);
-							
-							audio_expander_input_history[ch] = context->analogIn[n * context->analogInChannels + ch];
-							audio_expander_output_history[ch] = filteredOut;
-							context->analogIn[n * context->analogInChannels + ch] = 2.0 * filteredOut;
+				if(interleaved)
+				{
+					for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+						if(context->audioExpanderEnabled & (1 << ch)) {
+							// Audio expander enabled on this channel:
+							// apply highpass filter and scale by 2 to get -1 to 1 range
+							// rather than 0-1
+							for(unsigned int n = 0; n < context->analogFrames; n++) {
+								float filteredOut = audio_expander_filter_coeff *
+									(audio_expander_output_history[ch] + 
+									 context->analogIn[n * context->analogInChannels + ch] -
+									 audio_expander_input_history[ch]);
+								
+								audio_expander_input_history[ch] = context->analogIn[n * context->analogInChannels + ch];
+								audio_expander_output_history[ch] = filteredOut;
+								context->analogIn[n * context->analogInChannels + ch] = 2.0f * filteredOut;
+							}
+						}
+					}
+				}
+				else
+				{
+					for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+						if(context->audioExpanderEnabled & (1 << ch)) {
+							// Audio expander enabled on this channel:
+							// apply highpass filter and scale by 2 to get -1 to 1 range
+							// rather than 0-1
+							for(unsigned int n = 0; n < context->analogFrames; n++) {
+								float filteredOut = audio_expander_filter_coeff *
+									(audio_expander_output_history[ch] + 
+									 context->analogIn[ch * context->analogFrames + n] -
+									 audio_expander_input_history[ch]);
+								
+								audio_expander_input_history[ch] = context->analogIn[ch * context->analogFrames + n];
+								audio_expander_output_history[ch] = filteredOut;
+								context->analogIn[ch * context->analogFrames + n] = 2.0f * filteredOut;
+							}
 						}
 					}
 				}
@@ -737,10 +902,15 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 			
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Initialize the output buffer with the values that were in the last frame of the previous output
-				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
-					for(unsigned int n = 0; n < context->analogFrames; n++){
-						context->analogOut[n * context->analogOutChannels + ch] = last_analog_out_frame[ch];
-					}
+				if(interleaved)
+				{
+					for(unsigned int ch = 0; ch < context->analogOutChannels; ++ch)
+						analogWrite((BelaContext*)context, 0, ch, last_analog_out_frame[ch]);
+				}
+				else
+				{
+					for(unsigned int ch = 0; ch < context->analogOutChannels; ++ch)
+						analogWriteNI((BelaContext*)context, 0, ch, last_analog_out_frame[ch]);
 				}
 			}
 			else {
@@ -774,39 +944,157 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 		if(analog_enabled) {
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Remember the content of the last_analog_out_frame
-				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
-					last_analog_out_frame[ch] = context->analogOut[context->analogOutChannels * (context->analogFrames - 1) + ch];
+				if(interleaved)
+				{
+					for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
+						last_analog_out_frame[ch] = context->analogOut[context->analogOutChannels * (context->analogFrames - 1) + ch];
+					}
+				}
+				else
+				{
+					for(unsigned int ch = 0; ch < context->analogOutChannels; ch++){
+						last_analog_out_frame[ch] = context->analogOut[ch * context->analogFrames + context->analogFrames - 1];
+					}
 				}
 			}
 			
 			if((context->audioExpanderEnabled & 0xFFFF0000) != 0) {
 				// Audio expander enabled on at least one analog output
-				for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
-					if(context->audioExpanderEnabled & (0x00010000 << ch)) {
-						// Audio expander enabled on this output channel:
-						// We expect the range to be -1 to 1; rescale to
-						// 0 to 0.93, the top value being designed to avoid a
-						// headroom problem on the analog outputs with a sagging
-						// 5V USB supply
-						
-						for(unsigned int n = 0; n < context->analogFrames; n++) {
-							context->analogOut[n * context->analogOutChannels + ch] = 
-								(context->analogOut[n * context->analogOutChannels + ch] + 1) * (0.93f/2.f);
+				// We expect the range to be -1 to 1; rescale to
+				// 0 to 0.93, the top value being designed to avoid a
+				// headroom problem on the analog outputs with a sagging
+				// 5V USB supply
+				
+				if(interleaved)
+				{
+					for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
+						if(context->audioExpanderEnabled & (0x00010000 << ch)) {
+							// Audio expander enabled on this output channel:
+							for(unsigned int n = 0; n < context->analogFrames; n++) {
+								context->analogOut[n * context->analogOutChannels + ch] = 
+									(context->analogOut[n * context->analogOutChannels + ch] + 1.f) * (0.93f/2.f);
+							}
+						}
+					}
+				}
+				else
+				{
+					for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
+						if(context->audioExpanderEnabled & (0x00010000 << ch)) {
+							// Audio expander enabled on this output channel:
+							for(unsigned int n = 0; n < context->analogFrames; n++) {
+								context->analogOut[ch * context->analogFrames + n] = 
+									(context->analogOut[ch * context->analogFrames + n] + 1.f) * (0.93f/2.f);
+							}
 						}
 					}
 				}
 			}
 
 			// Convert float back to short for SPI output
+			uint16_t* dac_pru_buffer = pru_buffer_spi_dac + pru_spi_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
 			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
-								  context->analogOut, (uint16_t*)&pru_buffer_spi_dac[pru_spi_offset]);
+								  context->analogOut, dac_pru_buffer);
 #else		
-			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++) {
-				int out = context->analogOut[n] * 65536.0f;
-				if(out < 0) out = 0;
-				else if(out > 65535) out = 65535;
-				pru_buffer_spi_dac[n + pru_spi_offset] = (uint16_t)out;
+			if(uniform_sample_rate && analogs_per_audio == 0.5)
+			{
+				unsigned int channels = context->analogOutChannels;
+				unsigned int frames = hardware_analog_frames;
+				if(interleaved)
+				{
+					for(unsigned int f = 0; f < frames; ++f)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							int out = context->analogOut[f * channels * 2 + c] * 65536.0f;
+							if(out < 0) out = 0;
+							else if(out > 65535) out = 65535;
+							dac_pru_buffer[f * channels + c] = (uint16_t)out;
+						}
+					}
+				}
+				else
+				{
+					for(unsigned int f = 0; f < frames; ++f)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							unsigned int srcIdx = c * frames * 2 + f * 2;
+							unsigned int dstIdx = f * channels + c;
+							int out = context->analogOut[srcIdx] * 65536.0f;
+							if(out < 0) out = 0;
+							else if(out > 65535) out = 65535;
+							dac_pru_buffer[dstIdx] = (uint16_t)out;
+						}
+					}
+				}
+			}
+			else if(!uniform_sample_rate || analogs_per_audio == 1)
+			{
+				unsigned int frames = context->analogFrames;
+				unsigned int channels = context->analogOutChannels;
+				if(interleaved)
+				{
+					for(unsigned int n = 0; n < frames * channels; ++n)
+					{
+						int out = context->analogOut[n] * 65536.0f;
+						if(out < 0) out = 0;
+						else if(out > 65535) out = 65535;
+						dac_pru_buffer[n] = (uint16_t)out;
+					}
+				}
+				else
+				{
+					for(unsigned int f = 0; f < frames; ++f)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							unsigned int srcIdx = c * frames + f;
+							unsigned int dstIdx = f * channels + c;
+							int out = context->analogOut[srcIdx] * 65536.0f;
+							if(out < 0) out = 0;
+							else if(out > 65535) out = 65535;
+							dac_pru_buffer[dstIdx] = (uint16_t)out;
+						}
+					}
+				}
+			}
+			else if(uniform_sample_rate && analogs_per_audio == 2)
+			{
+				unsigned int channels = context->analogOutChannels;
+				unsigned int frames = hardware_analog_frames;
+				if(interleaved)
+				{
+					for(unsigned int f = 0; f < frames; f += 2)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							int out = context->analogOut[f * channels / 2 + c] * 65536.0f;
+							if(out < 0) out = 0;
+							else if(out > 65535) out = 65535;
+							unsigned int firstFrame = f * channels + c;
+							dac_pru_buffer[firstFrame] = (uint16_t)out;
+							dac_pru_buffer[firstFrame + channels] = (uint16_t)out;
+						}
+					}
+				}
+				else
+				{
+					for(unsigned int f = 0; f < frames; f += 2)
+					{
+						for(unsigned int c = 0; c < channels; ++c)
+						{
+							unsigned int srcIdx = frames / 2 * c + f / 2;
+							unsigned int dstIdx = f * channels + c;
+							int out = context->analogOut[srcIdx] * 65536.0f;
+							if(out < 0) out = 0;
+							else if(out > 65535) out = 65535;
+							dac_pru_buffer[dstIdx] = (uint16_t)out;
+							dac_pru_buffer[dstIdx + channels] = (uint16_t)out;
+						}
+					}
+				}
 			}
 #endif
 		}
@@ -818,14 +1106,33 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 		}
 
         // Convert float back to short for audio
+		int16_t* audio_dac_pru_buffer = pru_buffer_audio_dac + pru_audio_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
-		float_to_int16_audio(2 * context->audioFrames, context->audioOut, &pru_buffer_audio_dac[pru_audio_offset]);
+		float_to_int16_audio(2 * context->audioFrames, context->audioOut, audio_dac_pru_buffer);
 #else	
-		for(unsigned int n = 0; n < context->audioOutChannels * context->audioFrames; n++) {
-			int out = context->audioOut[n] * 32768.0f;
-			if(out < -32768) out = -32768;
-			else if(out > 32767) out = 32767;
-			pru_buffer_audio_dac[n + pru_audio_offset] = (int16_t)out;
+		if(interleaved)
+		{
+			for(unsigned int n = 0; n < context->audioOutChannels * context->audioFrames; n++) {
+				int out = context->audioOut[n] * 32768.0f;
+				if(out < -32768) out = -32768;
+				else if(out > 32767) out = 32767;
+				audio_dac_pru_buffer[n] = (int16_t)out;
+			}
+		}
+		else
+		{
+			for(unsigned int f = 0; f < context->audioFrames; ++f)
+			{
+				for(unsigned int c = 0; c < context->audioOutChannels; ++c)
+				{
+					unsigned int srcIdx = c * context->audioFrames + f;
+					unsigned int dstIdx = f * context->audioOutChannels + c;
+					int out = context->audioOut[srcIdx] * 32768.0f;
+					if(out < -32768) out = -32768;
+					else if(out > 32767) out = 32767;
+					audio_dac_pru_buffer[dstIdx] = (int16_t)out;
+				}
+			}
 		}
 #endif
 
@@ -837,7 +1144,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
-			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
+			static uint32_t pruFramesPerBlock = hardware_analog_frames ? hardware_analog_frames : context->audioFrames / 2;
 			// read the PRU counter
 			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,

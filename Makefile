@@ -112,7 +112,7 @@ ifneq ($(strip $(TEST_LIBPD)), )
   LIBS += -lpd -lpthread_rt
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
@@ -139,14 +139,12 @@ endif
 ifeq ($(COMPILER), clang)
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
-  DEFAULT_CPPFLAGS += -DNDEBUG -no-integrated-as
-  DEFAULT_CFLAGS += -DNDEBUG -no-integrated-as
+  DEFAULT_CPPFLAGS += -no-integrated-as
+  DEFAULT_CFLAGS += -no-integrated-as
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
-    DEFAULT_CPPFLAGS += --fast-math
-    DEFAULT_CFLAGS += --fast-math
   endif
 endif
 
@@ -165,7 +163,7 @@ CPP_SRCS := $(wildcard $(PROJECT_DIR)/*.cpp)
 CPP_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.o)))
 CPP_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
-PROJECT_OBJS = $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
@@ -493,7 +491,6 @@ update: stop
 	        echo Update succesful $(LOG); \
 	        ' $(LOG)
 
-
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
 LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
@@ -519,5 +516,26 @@ lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 lib: lib/libbelaextra.so lib/libbelaextra.a lib/libbela.so lib/libbela.a
 	
 
+HEAVY_TMP_DIR=/tmp/heavy-bela/
+HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
+HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
+HEAVY_OBJ_TARGET_DIR=$(PROJECT_DIR)/build
+HEAVY_OBJ_FILES=$(HEAVY_TMP_DIR)/*.o
+heavy-unzip-archive:
+	$(AT) [ -z "$(HEAVY_ARCHIVE)" ] && { echo "You should specify the path to the Heavy archive with HEAVY_ARCHIVE=" >&2; false; } || true
+	$(AT) [ -f "$(HEAVY_ARCHIVE)" ] || { echo "File $(HEAVY_ARCHIVE) not found" >&2; false; }
+	$(AT) rm -rf $(HEAVY_TMP_DIR)
+	$(AT) mkdir -p $(HEAVY_TMP_DIR)
+	$(AT) unzip -qq -d $(HEAVY_TMP_DIR) $(HEAVY_ARCHIVE) && rm -rf $(HEAVY_ARCHIVE)
+# For each source file, check if it already exists at the destination. If it
+# does not, or if it is `diff`erent, then mv the source file to the destination
+# We do all of this instead of simply touching all the src and obj files so
+# that we make sure that the prerequsites of `render.o` are not more recent
+# than the target unless they actually have changed.
+	$(AT) for file in $(HEAVY_SRC_FILES); do dest="$(HEAVY_SRC_TARGET_DIR)/`basename $$file`"; diff -q "$$file" "$$dest" 2>/dev/null || { mv "$$file" "$$dest"; touch "$$dest"; } ; done
+# For each object file, move it to the destination and make sure it is older than the source
+	$(AT) for file in $(HEAVY_OBJ_FILES); do touch "$$file"; mv "$$file" "$(HEAVY_OBJ_TARGET_DIR)"; done
+# If there is no render.cpp, copy the default Heavy one
+	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ ; echo "DID COPY"; }
 
 .PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib

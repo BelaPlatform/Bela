@@ -369,6 +369,9 @@ typedef struct {
 	///
 	/// n.b. digital pins always persist, audio never does
 	int analogOutputsPersist;
+	/// \brief Whether the analog channels should be resampled to
+	/// audio sampling rate.
+	int uniformSampleRate;
 
 	// Pointers to the user-defined functions
 	bool (*setup)(BelaContext*, void*);

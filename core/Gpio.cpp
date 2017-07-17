@@ -1,6 +1,6 @@
 #include "../include/Gpio.h"
 
-int Gpio::open(unsigned int pin, unsigned int direction){
+int Gpio::open(unsigned int pin, unsigned int direction, bool unexport){
 	if(pin >= 128){
 		return -1;
 	}
@@ -9,8 +9,13 @@ int Gpio::open(unsigned int pin, unsigned int direction){
 	}
 	oldPin = pin;
 	// gpio_export can fail if the pin has already been exported.
-	// We don't care.
-	gpio_export(pin);
+	// if that is the case, let's make a note of it so we do not 
+	// unexport it when we are done.
+	int ret = gpio_export(pin);
+	if(ret == 0 && unexport)
+		shouldUnexport = true;
+	else
+		shouldUnexport = false;
 	if(gpio_set_dir(pin, direction) < 0){
 		return -1;
 	}
@@ -34,7 +39,8 @@ int Gpio::open(unsigned int pin, unsigned int direction){
 }
 
 void Gpio::close(){
-	gpio_unexport(oldPin);
+	if(shouldUnexport)
+		gpio_unexport(oldPin);
 	::close(fd);
 	oldPin = -1;
 	fd = -1;

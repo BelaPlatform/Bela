@@ -20,6 +20,7 @@
 #define OPT_DISABLE_LED 1004
 #define OPT_DISABLE_CAPE_BUTTON 1005
 #define OPT_DETECT_UNDERRUNS 1006
+#define OPT_UNIFORM_SAMPLE_RATE 1007
 
 
 enum {
@@ -54,6 +55,7 @@ struct option gDefaultLongOptions[] =
 	{"detect-underruns", 1, NULL, OPT_DETECT_UNDERRUNS},
 	{"disable-led", 0, NULL, OPT_DISABLE_LED},
 	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
+	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
 	{NULL, 0, NULL, 0}
 };
 
@@ -95,6 +97,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	// the user would want to switch at runtime
 	settings->interleave = 1;
 	settings->analogOutputsPersist = 1;
+	settings->uniformSampleRate = 0;
 
 	// initialize the user-defined functions.
 	// render is the only one that needs to be defined by the user in order
@@ -286,8 +289,12 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		case OPT_DISABLE_LED:
 			settings->enableLED = 0;
 			break;
-		case  OPT_DISABLE_CAPE_BUTTON:
+		case OPT_DISABLE_CAPE_BUTTON:
 			settings->enableCapeButtonMonitoring = 0;
+			break;
+		case OPT_UNIFORM_SAMPLE_RATE:
+			settings->uniformSampleRate = 1;
+			printf("Uniform sample rate\n");
 			break;
 		case '?':
 		default:
@@ -322,6 +329,7 @@ void Bela_usage()
 	std::cerr << "   --detect-underruns val:             Set whether to warn the user in case of underruns (options: 0 or 1, default: 1)\n";
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
 	std::cerr << "   --disable-cape-button-monitoring    Disable the monitoring of the Bela cape button (which otherwise stops the running program)\n";
+	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
 

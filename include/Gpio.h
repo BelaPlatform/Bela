@@ -45,11 +45,12 @@ public:
 	 *
 	 * @param pin the GPIO pin ( 0 <= pin < 128)
 	 * @param direction one of INPUT or OUTPUT
+	 * @param unexport if `false`, it will not try to unexport the pin when calling `close()`
 	 *
 	 * @return 0 if success, -1 otherwise;
 	 */
-	int open(unsigned int pin, unsigned int direction);
-
+	int open(unsigned int pin, unsigned int direction, bool unexport = true);
+	
 	/**
 	 * Closes a currently open GPIO
 	 */
@@ -97,6 +98,7 @@ public:
 		return fd != -1;
 	}
 private:
+	bool shouldUnexport;
 	int oldPin;
 	int fd;	
 	uint32_t pinMask;
