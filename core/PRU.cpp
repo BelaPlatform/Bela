@@ -420,7 +420,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 			analogs_per_audio = 2;
 		else if (context->analogInChannels != 0)
 		{
-			fprintf(stderr, "Unsupported number of analog channels\n", analogs_per_audio);
+			fprintf(stderr, "Unsupported number of analog channels (%d)\n", analogs_per_audio);
 			return 1;
 		}
 		printf("Using %f analogs per audio\n", analogs_per_audio);

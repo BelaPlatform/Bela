@@ -92,12 +92,14 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->enableLED = 1;
 	settings->enableCapeButtonMonitoring = 1;
 
-	// These two deliberately have no command-line flags by default.
-	// A given program might prefer one mode or another, but it's unlikely
-	// the user would want to switch at runtime
+	// These deliberately have no command-line flags by default,
+	// as it is unlikely the user would want to switch them
+	// at runtime
 	settings->interleave = 1;
 	settings->analogOutputsPersist = 1;
 	settings->uniformSampleRate = 0;
+	settings->audioThreadStackSize = 1 << 17;
+	settings->auxiliaryTaskStackSize = 1 << 17;
 
 	settings->codecI2CAddress = CODEC_I2C_ADDRESS;
 	settings->receivePort = 9998;

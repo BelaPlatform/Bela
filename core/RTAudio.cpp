@@ -76,6 +76,8 @@ char gPRUFilename[MAX_PRU_FILENAME_LENGTH];		// Path to PRU binary file (interna
 int gRTAudioVerbose = 0;   						// Verbosity level for debugging
 int gAmplifierMutePin = -1;
 int gAmplifierShouldBeginMuted = 0;
+static unsigned int gAudioThreadStackSize;
+unsigned int gAuxiliaryTaskStackSize;
 
 
 // Context which holds all the audio/sensor data passed to the render routines
@@ -102,6 +104,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
 	// reset this, in case it has been set before
 	gShouldStop = 0;
+	gAudioThreadStackSize = settings->audioThreadStackSize;
+	gAuxiliaryTaskStackSize = settings->auxiliaryTaskStackSize;
 
 	// First check if there's a Bela program already running on the board.
 	// We can't have more than one instance at a time, but we can tell via
@@ -340,7 +344,8 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
 	// Attempt to create the task
-	if(int ret = rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
+	unsigned int stackSize = gAuxiliaryTaskStackSize;
+	if(int ret = rt_task_create(&(newTask->task), name, stackSize, priority, T_JOINABLE | T_FPU)) {
 		  cout << "Error: unable to create auxiliary task " << name << " : " << strerror(-ret) << endl;
 		  free(newTask);
 		  return 0;
@@ -436,7 +441,8 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 int Bela_startAudio()
 {
 	// Create audio thread with high Xenomai priority
-	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
+	unsigned int stackSize = gAudioThreadStackSize;
+	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, stackSize, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
 		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}

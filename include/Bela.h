@@ -178,6 +178,12 @@ typedef struct {
 	/// \brief Whether the analog channels should be resampled to
 	/// audio sampling rate.
 	int uniformSampleRate;
+	//// \brief The requested stack size for the audio thread. Defaults
+	// to 128KiB
+	unsigned int audioThreadStackSize;
+	//// \brief The requested stack size for each AuxilaryTask. Defaults
+	// to 128KiB
+	unsigned int auxiliaryTaskStackSize;
 
 	// These items are hardware-dependent and should only be changed
 	// to run on different hardware
