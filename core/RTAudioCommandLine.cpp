@@ -101,6 +101,13 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->audioThreadStackSize = 1 << 17;
 	settings->auxiliaryTaskStackSize = 1 << 17;
 
+	// initialize the user-defined functions.
+	// render is the only one that needs to be defined by the user in order
+	// for the audio to start.
+	settings->setup = NULL;
+	settings->render = NULL;
+	settings->cleanup = NULL;
+
 	settings->codecI2CAddress = CODEC_I2C_ADDRESS;
 	settings->receivePort = 9998;
 	settings->transmitPort = 9999;

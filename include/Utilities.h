@@ -433,12 +433,14 @@ static inline void analogWriteOnceNI(BelaContext *context, int frame, int channe
 // Sets a given analog output channel to a value for the current frame and, if persistent outputs are
 // enabled, for all subsequent frames
 static inline void analogWrite(BelaContext *context, int frame, int channel, float value) {
-	for(unsigned int f = frame; f < context->analogFrames; f++)
+	unsigned int f;
+	for(f = frame; f < context->analogFrames; f++)
 		analogWriteOnce(context, f, channel, value);
 }
 
 static inline void analogWriteNI(BelaContext *context, int frame, int channel, float value) {
-	for(unsigned int f = frame; f < context->analogFrames; f++)
+	unsigned int f;
+	for(f = frame; f < context->analogFrames; f++)
 		analogWriteOnceNI(context, f, channel, value);
 }
 
@@ -453,7 +455,8 @@ static inline int digitalRead(BelaContext *context, int frame, int channel) {
 //
 // Sets a given digital output channel to a value for the current frame and all subsequent frames
 static inline void digitalWrite(BelaContext *context, int frame, int channel, int value) {
-	for(unsigned int f = frame; f < context->digitalFrames; f++) {
+	unsigned int f;
+	for(f = frame; f < context->digitalFrames; f++) {
 		if(value)
 			context->digital[f] |= 1 << (channel + 16);
 		else
@@ -475,7 +478,8 @@ static inline void digitalWriteOnce(BelaContext *context, int frame, int channel
 //
 // Sets the direction of a digital pin for the current frame and all subsequent frames
 static inline void pinMode(BelaContext *context, int frame, int channel, int mode) {
-	for(unsigned int f = frame; f < context->digitalFrames; f++) {
+	unsigned int f;
+	for(f = frame; f < context->digitalFrames; f++) {
 		if(mode == INPUT)
 			context->digital[f] |= (1 << channel);
 		else

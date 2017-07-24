@@ -261,7 +261,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	uint32_t *pruMem = 0;
 
 	if(!gpio_enabled) {
-		rt_printf("initialise() called before GPIO enabled\n");
+		fprintf(stderr, "PRU::initialise() called before GPIO enabled\n");
 		return 1;
 	}
 
@@ -274,8 +274,8 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
     /* Allocate and initialize memory */
     prussdrv_init();
     if(prussdrv_open(PRU_EVTOUT_0)) {
-    	rt_printf("Failed to open PRU driver\n");
-    	return 1;
+		fprintf(stderr, "Failed to open PRU driver\n");
+		return 1;
     }
 
     /* Map PRU's INTC */
@@ -341,13 +341,13 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		context->multiplexerChannels = 0;
 	}
 	else {
-		rt_printf("Error: %d is not a valid number of multiplexer channels (options: 0 = off, 2, 4, 8).\n", mux_channels);
+		fprintf(stderr, "Error: %d is not a valid number of multiplexer channels (options: -1 = off, 2, 4, 8).\n", mux_channels);
 		return 1;
 	}
 	
 	/* Multiplexer only works with 8 analog channels. (It could be made to work with 4, with updates to the PRU code.) */
 	if(context->multiplexerChannels != 0 && context->analogInChannels != 8) {
-		rt_printf("Error: multiplexer capelet can only be used with 8 analog channels.\n");
+		fprintf(stderr, "Error: multiplexer capelet can only be used with 8 analog channels.\n");
 		return 1;
 	}
 	
@@ -362,8 +362,8 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
     if(analog_enabled) {
     	pru_buffer_comm[PRU_USE_SPI] = 1;
     	if(context->analogInChannels != context->analogOutChannels){
-    		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-    		return 1;
+			fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+			return 1;
     	}
     	unsigned int analogChannels = context->analogInChannels;
     	pru_buffer_comm[PRU_SPI_NUM_CHANNELS] = analogChannels;
@@ -420,10 +420,9 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 			analogs_per_audio = 2;
 		else if (context->analogInChannels != 0)
 		{
-			fprintf(stderr, "Unsupported number of analog channels (%d)\n", analogs_per_audio);
+			fprintf(stderr, "Unsupported number of analog channels per audio channels: %.3f\n", analogs_per_audio);
 			return 1;
 		}
-		printf("Using %f analogs per audio\n", analogs_per_audio);
 		context->analogSampleRate = context->audioSampleRate;
 		context->analogFrames = context->audioFrames;
 	}
@@ -436,18 +435,18 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		return 1;
 	}
 	if(posix_memalign((void **)&context->audioIn, 16, 2 * context->audioFrames * sizeof(float))) {
-		printf("Error allocating audio input buffer\n");
+		fprintf(stderr, "Error allocating audio input buffer\n");
 		return 1;
 	}
 	if(posix_memalign((void **)&context->audioOut, 16, 2 * context->audioFrames * sizeof(float))) {
-		printf("Error allocating audio output buffer\n");
+		fprintf(stderr, "Error allocating audio output buffer\n");
 		return 1;
 	}
 #else
 	context->audioIn = (float *)malloc(2 * context->audioFrames * sizeof(float));
 	context->audioOut = (float *)malloc(2 * context->audioFrames * sizeof(float));
 	if(context->audioIn == 0 || context->audioOut == 0) {
-		rt_printf("Error: couldn't allocate audio buffers\n");
+		fprintf(stderr, "Error: couldn't allocate audio buffers\n");
 		return 1;
 	}
 #endif
@@ -457,18 +456,18 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 #ifdef USE_NEON_FORMAT_CONVERSION
 		if(posix_memalign((void **)&context->analogIn, 16, 
 							context->analogInChannels * context->analogFrames * sizeof(float))) {
-			printf("Error allocating analog input buffer\n");
+			fprintf(stderr, "Error allocating analog input buffer\n");
 			return 1;
 		}
 		if(posix_memalign((void **)&context->analogOut, 16, 
 							context->analogOutChannels * context->analogFrames * sizeof(float))) {
-			printf("Error allocating analog output buffer\n");
+			fprintf(stderr, "Error allocating analog output buffer\n");
 			return 1;
 		}
 		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
 
 		if(last_analog_out_frame == 0) {
-			rt_printf("Error: couldn't allocate analog persistence buffer\n");
+			fprintf(stderr, "Error: couldn't allocate analog persistence buffer\n");
 			return 1;
 		}		
 #else
@@ -477,7 +476,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
 
 		if(context->analogIn == 0 || context->analogOut == 0 || last_analog_out_frame == 0) {
-			rt_printf("Error: couldn't allocate analog buffers\n");
+			fprintf(stderr, "Error: couldn't allocate analog buffers\n");
 			return 1;
 		}
 #endif
@@ -491,7 +490,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 			// Buffer holds 1 frame of every mux setting for every analog in
 			context->multiplexerAnalogIn = (float *)malloc(context->analogInChannels * context->multiplexerChannels * sizeof(float));
 			if(context->multiplexerAnalogIn == 0) {
-				rt_printf("Error: couldn't allocate audio buffers\n");
+				fprintf(stderr, "Error: couldn't allocate audio buffers\n");
 				return 1;
 			}
 		}
@@ -506,7 +505,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 			audio_expander_input_history = (float *)malloc(context->analogInChannels * sizeof(float));
 			audio_expander_output_history = (float *)malloc(context->analogInChannels * sizeof(float));
 			if(audio_expander_input_history == 0 || audio_expander_output_history == 0) {
-				rt_printf("Error: couldn't allocate audio expander history buffers\n");
+				fprintf(stderr, "Error: couldn't allocate audio expander history buffers\n");
 				return 1;				
 			}
 			
@@ -529,7 +528,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	if(digital_enabled) {
 		last_digital_buffer = (uint32_t *)malloc(context->digitalFrames * sizeof(uint32_t)); //temp buffer to hold previous states
 		if(last_digital_buffer == 0) {
-			rt_printf("Error: couldn't allocate digital buffers\n");
+			fprintf(stderr, "Error: couldn't allocate digital buffers\n");
 			return 1;
 		}
 
@@ -554,16 +553,16 @@ int PRU::start(char * const filename)
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
 		if(gRTAudioVerbose)
-			rt_printf("Using embedded PRU code\n");
+			printf("Using embedded PRU code\n");
 		if(prussdrv_exec_code(pru_number, PRUcode, sizeof(PRUcode))) {
-			rt_printf("Failed to execute PRU code\n");
+			fprintf(stderr, "Failed to execute PRU code\n");
 			return 1;
 		}
 	} else {
 		if(gRTAudioVerbose)
-			rt_printf("Using PRU code from %s\n",filename);
+			printf("Using PRU code from %s\n",filename);
 		if(prussdrv_exec_program(pru_number, filename)) {
-			rt_printf("Failed to execute PRU code from %s\n", filename);
+			fprintf(stderr, "Failed to execute PRU code from %s\n", filename);
 			return 1;
 		}
 	}
@@ -573,13 +572,13 @@ int PRU::start(char * const filename)
 }
 
 // Main loop to read and write data from/to PRU
-void PRU::loop(RT_INTR *pru_interrupt, void *userData)
+void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext*, void*))
 {
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
 #else
 	if(context->analogInChannels != context->analogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
 	}
 	// Polling interval is 1/4 of the period
@@ -633,7 +632,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 			else if(result == -ETIMEDOUT)
 				rt_printf("Warning: PRU timeout!\n");
 			else {
-				rt_printf("Error: wait for interrupt failed (%d)\n", result);
+				fprintf(stderr, "Error: wait for interrupt failed (%d)\n", result);
 				gShouldStop = 1;
 			}
 		}
@@ -676,13 +675,13 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		else {
 			// PRU is on buffer 0. We read and write to buffer 1
 			if(context->audioInChannels != context->audioOutChannels){
-				printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+				fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 				return;
 			}
 			unsigned int audioChannels = context->audioInChannels;
 			pru_audio_offset = context->audioFrames * audioChannels;
 			if(context->analogInChannels != context->analogOutChannels){
-				printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+				fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 				return;
 			}
 	    	unsigned int analogChannels = context->analogInChannels;
@@ -769,7 +768,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 #else
 			if(uniform_sample_rate && analogs_per_audio == 0.5)
 			{
-				int channels = context->analogInChannels;
+				unsigned int channels = context->analogInChannels;
 				unsigned int frames = hardware_analog_frames;
 				if(interleaved)
 				{
@@ -938,7 +937,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 
 		// Call user render function
         // ***********************
-		render((BelaContext *)context, userData);
+		(*render)((BelaContext *)context, userData);
 		// ***********************
 
 		if(analog_enabled) {

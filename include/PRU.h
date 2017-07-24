@@ -170,8 +170,8 @@ public:
 	// Run the code image in pru_rtaudio_bin.h
 	int start(char * const filename);
 
-	// Loop: read and write data from the PRU
-	void loop(RT_INTR *pru_interrupt, void *userData);
+	// Loop: read and write data from the PRU and call the user-defined audio callback
+	void loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext*, void*));
 
 	// Wait for an interrupt from the PRU indicate it is finished
 	void waitForFinish();

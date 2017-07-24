@@ -20,7 +20,7 @@
 .DEFAULT_GOAL := Bela
 
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
+NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib libbela.so 
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
@@ -172,6 +172,8 @@ CORE_C_DEPS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o
+EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 CORE_CPP_DEPS := $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
@@ -218,7 +220,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -226,7 +228,7 @@ build/core/%.o: ./core/%.c
 build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) 
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -489,6 +491,31 @@ update: stop
 	        echo Update succesful $(LOG); \
 	        ' $(LOG)
 
+LIB_EXTRA_SO = libbelaextra.so
+LIB_EXTRA_A = libbelaextra.a
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
+lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
+	$(AT) echo Building lib/$(LIB_EXTRA_SO)
+	$(AT) gcc -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
+
+lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_EXTRA_A)
+	$(AT) ar rcs lib/$(LIB_EXTRA_A) $(LIB_EXTRA_OBJS)
+
+LIB_SO =libbela.so
+LIB_A = libbela.a
+LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a build/core/Gpio.o
+lib/$(LIB_SO): $(LIB_OBJS)
+	$(AT) echo Building lib/$(LIB_SO)
+	$(AT) gcc -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
+
+lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_A)
+	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
+
+lib: lib/libbelaextra.so lib/libbelaextra.a lib/libbela.so lib/libbela.a
+	
+
 HEAVY_TMP_DIR=/tmp/heavy-bela/
 HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
 HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
@@ -511,4 +538,4 @@ heavy-unzip-archive:
 # If there is no render.cpp, copy the default Heavy one
 	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ ; echo "DID COPY"; }
 
-.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect
+.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib
