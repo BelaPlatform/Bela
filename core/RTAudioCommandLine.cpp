@@ -104,9 +104,12 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	// initialize the user-defined functions.
 	// render is the only one that needs to be defined by the user in order
 	// for the audio to start.
-	settings->setup = NULL;
-	settings->render = NULL;
-	settings->cleanup = NULL;
+	// TODO: these defaults are provided here for backwards-compatibility,
+	// but should be set to NULL instead. That will be a breaking change
+	// for those existing projects with a custom main file
+	settings->setup = setup;
+	settings->render = render;
+	settings->cleanup = cleanup;
 
 	settings->codecI2CAddress = CODEC_I2C_ADDRESS;
 	settings->receivePort = 9998;
