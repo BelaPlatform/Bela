@@ -636,7 +636,7 @@ var ChannelView = function (_View) {
 			}
 
 			this.emit('channelConfig', channelConfig);
-			console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
+			// console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
 		}
 	}, {
 		key: 'setChannelOffsets',
@@ -772,7 +772,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
-var xTime, sampleRate, upSampling, downSampling;
+var xTime,
+    sampleRate,
+    upSampling = 1,
+    downSampling = 1;
 
 var ControlView = function (_View) {
 	_inherits(ControlView, _View);
@@ -811,7 +814,27 @@ var ControlView = function (_View) {
 	}, {
 		key: 'buttonClicked',
 		value: function buttonClicked($element, e) {
-			this.emit('settings-event', $element.data().key);
+			if ($element.data().key === 'upSampling') {
+				if (downSampling > 1) {
+					downSampling -= 1;
+					this.emit('settings-event', 'downSampling', downSampling);
+				} else {
+					upSampling += 1;
+					this.emit('settings-event', 'upSampling', upSampling);
+				}
+				// this._upSampling();
+			} else if ($element.data().key === 'downSampling') {
+				if (upSampling > 1) {
+					upSampling -= 1;
+					this.emit('settings-event', 'upSampling', upSampling);
+				} else {
+					downSampling += 1;
+					this.emit('settings-event', 'downSampling', downSampling);
+				}
+				// this._downSampling();
+			} else {
+				this.emit('settings-event', $element.data().key);
+			}
 		}
 
 		// settings model events
@@ -885,7 +908,7 @@ var ControlView = function (_View) {
 			} else if (data.plotMode == 1) {
 				$('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
 			}
-			$('.zoom-display').html((100 * data.upSampling / data.downSampling).toPrecision(4) + '%');
+			$('.zoom-display').html((100 * upSampling / downSampling).toPrecision(4) + '%');
 		}
 	}, {
 		key: '_downSampling',
@@ -896,7 +919,7 @@ var ControlView = function (_View) {
 			} else if (data.plotMode == 1) {
 				$('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
 			}
-			$('.zoom-display').html((100 * data.upSampling / data.downSampling).toPrecision(4) + '%');
+			$('.zoom-display').html((100 * upSampling / downSampling).toPrecision(4) + '%');
 		}
 	}, {
 		key: '_xTimeBase',
@@ -1060,12 +1083,12 @@ var SliderView = function (_View) {
 		var _this = _possibleConstructorReturn(this, (SliderView.__proto__ || Object.getPrototypeOf(SliderView)).call(this, className, models));
 
 		_this.on('set-slider', function (args) {
-			$('#scopeSlider' + args[0].value).find('input[type=range]').prop('min', args[1].value).prop('max', args[2].value).prop('step', args[3].value).val(args[4].value).siblings('input[type=number]').prop('min', args[1].value).prop('max', args[2].value).prop('step', args[3].value).val(args[4].value).siblings('h1').html(args[5].value == 'Slider' ? 'Slider ' + args[0].value : args[5].value);
+			$('#scopeSlider' + args.slider).find('input[type=range]').prop('min', args.min).prop('max', args.max).prop('step', args.step).val(args.value).siblings('input[type=number]').prop('min', args.min).prop('max', args.max).prop('step', args.step).val(args.value).siblings('h1').html(args.name == 'Slider' ? 'Slider ' + args.slider : args.name);
 
-			var inputs = $('#scopeSlider' + args[0].value).find('input[type=number]');
-			inputs.filterByData('key', 'min').val(args[1].value);
-			inputs.filterByData('key', 'max').val(args[2].value);
-			inputs.filterByData('key', 'step').val(args[3].value);
+			var inputs = $('#scopeSlider' + args.slider).find('input[type=number]');
+			inputs.filterByData('key', 'min').val(args.min);
+			inputs.filterByData('key', 'max').val(args.max);
+			inputs.filterByData('key', 'step').val(args.step);
 		});
 
 		return _this;
@@ -1260,6 +1283,10 @@ var scope = require('./scope-browser');
 
 // worker
 
+var _settings$setData;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var worker = new Worker("js/scope-worker.js");
 
 // models
@@ -1275,14 +1302,65 @@ var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 // main bela socket
 var belaSocket = io('/IDE');
 
-// scope socket
-var socket = io('/BelaScope');
+// scope websocket
+var ws;
+
+ws = new WebSocket("ws://192.168.7.2:5432/scope_control");
+var ws_onerror = function ws_onerror(e) {
+	setTimeout(function () {
+		ws = new WebSocket("ws://192.168.7.2:5432/scope_control");
+		ws.onerror = ws_onerror;
+		ws.onopen = ws_onopen;
+		ws.onmessage = ws_onmessage;
+	}, 500);
+};
+ws.onerror = ws_onerror;
+
+var ws_onopen = function ws_onopen() {
+	ws.binaryType = 'arraybuffer';
+	console.log('scope control websocket open');
+	ws.onclose = ws_onerror;
+	ws.onerror = undefined;
+};
+ws.onopen = ws_onopen;
+
+var ws_onmessage = function ws_onmessage(msg) {
+	// console.log('recieved scope control message:', msg.data);
+	var data;
+	try {
+		data = JSON.parse(msg.data);
+	} catch (e) {
+		console.log('could not parse scope control data:', e);
+		return;
+	}
+	if (data.event == 'connection') {
+		delete data.event;
+		data.frameWidth = window.innerWidth;
+		data.frameHeight = window.innerHeight;
+		settings.setData(data);
+
+		var obj = settings._getData();
+		obj.event = "connection-reply";
+		var out;
+		try {
+			out = JSON.stringify(obj);
+		} catch (e) {
+			console.log('could not stringify settings:', e);
+			return;
+		}
+		if (ws.readyState === 1) ws.send(out);
+	} else if (data.event == 'set-slider') {
+		sliderView.emit('set-slider', data);
+	}
+};
+ws.onmessage = ws_onmessage;
 
 var paused = false,
     oneShot = false;
 
 // view events
 controlView.on('settings-event', function (key, value) {
+	if (value === undefined) return;
 	if (key === 'scopePause') {
 		if (paused) {
 			paused = false;
@@ -1302,9 +1380,17 @@ controlView.on('settings-event', function (key, value) {
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
 	}
-	socket.emit('settings-event', key, value);
-	// console.log(key, value);
-	if (value !== undefined) settings.setKey(key, value);
+	var obj = {};
+	obj[key] = value;
+	var out;
+	try {
+		out = JSON.stringify(obj);
+	} catch (e) {
+		console.log('error creating settings JSON', e);
+		return;
+	}
+	if (ws.readyState === 1) ws.send(out);
+	settings.setKey(key, value);
 });
 
 channelView.on('channelConfig', function (channelConfig) {
@@ -1315,31 +1401,15 @@ channelView.on('channelConfig', function (channelConfig) {
 });
 
 sliderView.on('slider-value', function (slider, value) {
-	return socket.emit('slider-value', slider, value);
-});
-
-// socket events
-socket.on('settings', function (newSettings) {
-
-	var obj = {};
-	for (var key in newSettings) {
-		obj[key] = newSettings[key].value;
+	var obj = { event: "slider", slider: slider, value: value };
+	var out;
+	try {
+		out = JSON.stringify(obj);
+	} catch (e) {
+		console.log('could not stringify slider json:', e);
+		return;
 	}
-
-	obj.frameWidth = window.innerWidth;
-	obj.frameHeight = window.innerHeight;
-
-	// console.log(newSettings, obj);
-	settings.setData(obj);
-
-	controlView.setControls(obj);
-});
-socket.on('scope-slider', function (args) {
-	return sliderView.emit('set-slider', args);
-});
-socket.on('dropped-count', function (count) {
-	$('#droppedFrames').html(count);
-	if (count > 10) $('#droppedFrames').css('color', 'red');else $('#droppedFrames').css('color', 'black');
+	if (ws.readyState === 1) ws.send(out);
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -1349,7 +1419,14 @@ settings.on('set', function (data, changedKeys) {
 	if (changedKeys.indexOf('frameWidth') !== -1) {
 		var xTimeBase = Math.max(Math.floor(1000 * (data.frameWidth / 8) / data.sampleRate), 1);
 		settings.setKey('xTimeBase', xTimeBase);
-		socket.emit('settings-event', 'frameWidth', data.frameWidth);
+		var out;
+		try {
+			out = JSON.stringify({ frameWidth: data.frameWidth });
+		} catch (e) {
+			console.log('unable to stringify framewidth', e);
+			return;
+		}
+		if (ws.readyState === 1) ws.send(out);
 	} else {
 		worker.postMessage({
 			event: 'settings',
@@ -1598,7 +1675,7 @@ function CPU(data) {
 			var scale = downSampling / upSampling;
 			var FFTAxis = settings.getKey('FFTXAxis');
 
-			console.log(FFTAxis);
+			// console.log(FFTAxis)
 
 			var out = "data:text/csv;charset=utf-8,";
 
@@ -1630,6 +1707,25 @@ function CPU(data) {
 		});
 	})();
 }
+
+settings.setData((_settings$setData = {
+	numChannels: 2,
+	sampleRate: 44100,
+	numSliders: 0,
+	frameWidth: 1280,
+	plotMode: 0,
+	triggerMode: 0,
+	triggerChannel: 0,
+	triggerDir: 0,
+	triggerLevel: 0,
+	xOffset: 0,
+	upSampling: 1,
+	downSampling: 1,
+	FFTLength: 1024,
+	FFTXAxis: 0,
+	FFTYAxis: 0,
+	holdOff: 20
+}, _defineProperty(_settings$setData, 'numSliders', 0), _defineProperty(_settings$setData, 'interpolation', 0), _settings$setData));
 
 },{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5,"./SliderView":6}]},{},[8])
 

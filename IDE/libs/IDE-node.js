@@ -11,7 +11,6 @@ var spawn = require('child_process').spawn;
 var ProjectManager = require('./ProjectManager');
 var ProcessManager = require('./ProcessManager');
 var server = require('./fileServer');
-var scope = require('./scope-node');
 var GitManager = require('./GitManager');
 var TerminalManager = require('./TerminalManager');
 
@@ -48,9 +47,6 @@ function IDE(){
 			.then( output => allSockets.emit('cpu-usage', output) );
 			
 	}, 1000);
-	
-	// scope
-	scope.init(io);
 	
 	// shell
 	TerminalManager.init();

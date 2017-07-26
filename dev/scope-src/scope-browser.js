@@ -16,13 +16,66 @@ var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 // main bela socket
 var belaSocket = io('/IDE');
 
-// scope socket
-var socket = io('/BelaScope');
+// scope websocket
+var ws;
+
+ws = new WebSocket("ws://192.168.7.2:5432/scope_control");
+var ws_onerror = function(e){
+	setTimeout(() => {
+		ws = new WebSocket("ws://192.168.7.2:5432/scope_control");
+		ws.onerror = ws_onerror;
+		ws.onopen = ws_onopen;
+		ws.onmessage = ws_onmessage;
+	}, 500);
+};
+ws.onerror = ws_onerror;
+
+var ws_onopen = function(){
+	ws.binaryType = 'arraybuffer';
+	console.log('scope control websocket open');
+	ws.onclose = ws_onerror;
+	ws.onerror = undefined;
+};
+ws.onopen = ws_onopen;
+
+var ws_onmessage = function(msg){
+	// console.log('recieved scope control message:', msg.data);
+	var data;
+	try{
+		data = JSON.parse(msg.data);
+	}
+	catch(e){
+		console.log('could not parse scope control data:', e);
+		return;
+	}
+	if (data.event == 'connection'){
+		delete data.event;
+		data.frameWidth = window.innerWidth;
+		data.frameHeight = window.innerHeight;	
+		settings.setData(data);
+
+		var obj = settings._getData();
+		obj.event = "connection-reply";
+		var out;
+		try{
+			out = JSON.stringify(obj);
+		}
+		catch(e){
+			console.log('could not stringify settings:', e);
+			return;
+		}
+		if (ws.readyState === 1) ws.send(out);
+	} else if (data.event == 'set-slider'){
+		sliderView.emit('set-slider', data);
+	}
+};
+ws.onmessage = ws_onmessage;
 
 var paused = false, oneShot = false;
 
 // view events
 controlView.on('settings-event', (key, value) => {
+	if (value === undefined) return;
 	if (key === 'scopePause'){
 		if (paused){
 			paused = false;
@@ -42,9 +95,18 @@ controlView.on('settings-event', (key, value) => {
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
 	}
-	socket.emit('settings-event', key, value);
-	// console.log(key, value);
-	if (value !== undefined) settings.setKey(key, value);
+	var obj = {};
+	obj[key] = value;
+	var out;
+	try{
+		out = JSON.stringify(obj);
+	}
+	catch(e){
+		console.log('error creating settings JSON', e);
+		return;
+	}
+	if (ws.readyState === 1) ws.send(out);
+	settings.setKey(key, value);
 });
 
 channelView.on('channelConfig', (channelConfig) => {
@@ -54,31 +116,17 @@ channelView.on('channelConfig', (channelConfig) => {
 	});
 });
 
-sliderView.on('slider-value', (slider, value) => socket.emit('slider-value', slider, value) );
-
-// socket events
-socket.on('settings', (newSettings) => {
-	
-	let obj = {};
-	for (let key in newSettings){
-		obj[key] = newSettings[key].value;
+sliderView.on('slider-value', (slider, value) => {
+	var obj = {event: "slider", slider, value};
+	var out;
+	try{
+		out = JSON.stringify(obj);
 	}
-	
-	obj.frameWidth = window.innerWidth;
-	obj.frameHeight = window.innerHeight;
-	
-	// console.log(newSettings, obj);
-	settings.setData(obj);
-	
-	controlView.setControls(obj);
-});
-socket.on('scope-slider', args => sliderView.emit('set-slider', args) );
-socket.on('dropped-count', count => {
-	$('#droppedFrames').html(count);
-	if (count > 10)
-		$('#droppedFrames').css('color', 'red');
-	else
-		$('#droppedFrames').css('color', 'black');
+	catch(e){
+		console.log('could not stringify slider json:', e);
+		return;
+	}
+	if (ws.readyState === 1) ws.send(out)
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -88,7 +136,15 @@ settings.on('set', (data, changedKeys) => {
 	if (changedKeys.indexOf('frameWidth') !== -1){
 		var xTimeBase = Math.max(Math.floor(1000*(data.frameWidth/8)/data.sampleRate), 1);
 		settings.setKey('xTimeBase', xTimeBase);
-		socket.emit('settings-event', 'frameWidth', data.frameWidth)
+		var out;
+		try{
+			out = JSON.stringify({frameWidth: data.frameWidth});
+		}
+		catch(e){
+			console.log('unable to stringify framewidth', e);
+			return;
+		}
+		if (ws.readyState === 1) ws.send(out);
 	} else {
 		worker.postMessage({
 			event		: 'settings',
@@ -326,7 +382,7 @@ function CPU(data){
 		let scale = downSampling/upSampling;
 		let FFTAxis = settings.getKey('FFTXAxis');
 		
-		console.log(FFTAxis)
+		// console.log(FFTAxis)
 				
 		let out = "data:text/csv;charset=utf-8,";
 		
@@ -358,7 +414,26 @@ function CPU(data){
 	
 }
 
-
+settings.setData({
+	numChannels	: 2,
+	sampleRate	: 44100,
+	numSliders	: 0,
+	frameWidth	: 1280,
+	plotMode	: 0,
+	triggerMode	: 0,
+	triggerChannel	: 0,
+	triggerDir	: 0,
+	triggerLevel	: 0,
+	xOffset		: 0,
+	upSampling	: 1,
+	downSampling	: 1,
+	FFTLength	: 1024,
+	FFTXAxis	: 0,
+	FFTYAxis	: 0,
+	holdOff		: 20,
+	numSliders	: 0,
+	interpolation	: 0
+});
 
 
 

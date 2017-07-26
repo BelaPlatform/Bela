@@ -1,9 +1,24 @@
-// importScripts('../../socket.io/socket.io.js');
 
 var settings = {}, channelConfig = [];
 
-var socket = new WebSocket("ws://192.168.7.2:5432/scope_data");
-socket.binaryType = 'arraybuffer';
+var ws = new WebSocket("ws://192.168.7.2:5432/scope_data");
+var ws_onerror = function(e){
+	setTimeout(() => {
+		ws = new WebSocket("ws://192.168.7.2:5432/scope_data");
+		ws.onerror = ws_onerror;
+		ws.onopen = ws_onopen;
+		ws.onmessage = ws_onmessage;
+	}, 500);
+};
+ws.onerror = ws_onerror;
+
+var ws_onopen = function(){
+	ws.binaryType = 'arraybuffer';
+	console.log('scope data websocket open');
+	ws.onclose = ws_onerror;
+	ws.onerror = undefined;
+};
+ws.onopen = ws_onopen;
 
 var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0;
 var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
@@ -39,20 +54,16 @@ onmessage = function(e){
 	}
 }
 
-socket.onopen = function(){
-	console.log('connected');
-};
-
-socket.onmessage = function(e){
+var ws_onmessage = function(e){
 
 	var inArray = new Float32Array(e.data);
 // 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
-	//console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
+//	console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
 	var outArray = new Float32Array(outArrayWidth);
 		
 	if (inArray.length !== inArrayWidth) {
-		//console.log(inArray.length, inArrayWidth, inFrameWidth);
+		console.log(inArray.length, inArrayWidth, inFrameWidth);
 		console.log('worker: frame dropped');
 		return;
 	}
@@ -93,3 +104,4 @@ socket.onmessage = function(e){
 	postMessage(outArray, [outArray.buffer]);
 
 };
+ws.onmessage = ws_onmessage;

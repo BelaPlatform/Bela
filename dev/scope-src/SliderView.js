@@ -7,24 +7,24 @@ class SliderView extends View{
 		super(className, models);
 		
 		this.on('set-slider', args => {
-			$('#scopeSlider'+args[0].value)
+			$('#scopeSlider'+args.slider)
 				.find('input[type=range]')
-					.prop('min', args[1].value)
-					.prop('max', args[2].value)
-					.prop('step', args[3].value)
-					.val(args[4].value)
+					.prop('min', args.min)
+					.prop('max', args.max)
+					.prop('step', args.step)
+					.val(args.value)
 				.siblings('input[type=number]')
-					.prop('min', args[1].value)
-					.prop('max', args[2].value)
-					.prop('step', args[3].value)
-					.val(args[4].value)
+					.prop('min', args.min)
+					.prop('max', args.max)
+					.prop('step', args.step)
+					.val(args.value)
 				.siblings('h1')
-					.html((args[5].value == 'Slider') ? 'Slider '+args[0].value : args[5].value);
+					.html((args.name == 'Slider') ? 'Slider '+args.slider : args.name);
 					
-			var inputs = $('#scopeSlider'+args[0].value).find('input[type=number]');
-			inputs.filterByData('key', 'min').val(args[1].value);
-			inputs.filterByData('key', 'max').val(args[2].value);
-			inputs.filterByData('key', 'step').val(args[3].value);
+			var inputs = $('#scopeSlider'+args.slider).find('input[type=number]');
+			inputs.filterByData('key', 'min').val(args.min);
+			inputs.filterByData('key', 'max').val(args.max);
+			inputs.filterByData('key', 'step').val(args.step);
 		});
 		
 	}
