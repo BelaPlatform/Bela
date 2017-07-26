@@ -556,11 +556,11 @@ var View = require('./View');
 function ChannelConfig() {
 	this.yAmplitude = 1;
 	this.yOffset = 0;
-	this.color = '#ff0000';
+	this.color = '0xff0000';
 }
 
 var channelConfig = [new ChannelConfig()];
-var colours = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#00ffff', '#ff00ff'];
+var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xffff00', '0x00ffff', '0xff00ff'];
 
 var tdGainVal = 1,
     tdOffsetVal = 0,
@@ -598,7 +598,7 @@ var ChannelView = function (_View) {
 		value: function inputChanged($element, e) {
 			var key = $element.data().key;
 			var channel = $element.data().channel;
-			var value = key === 'color' ? $element.val() : parseFloat($element.val());
+			var value = key === 'color' ? $element.val().replace('#', '0x') : parseFloat($element.val());
 			if (!(key === 'color') && isNaN(value)) return;
 			if (key === 'yAmplitude' && value == 0) value = 0.001; // prevent amplitude hitting zero
 			this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
@@ -696,7 +696,7 @@ var ChannelView = function (_View) {
 					el.find('input').each(function () {
 						$(this).data('channel', channelConfig.length - 1);
 					});
-					el.find('input[type=color]').val(colours[(channelConfig.length - 1) % colours.length]);
+					el.find('input[type=color]').val(colours[(channelConfig.length - 1) % colours.length].replace('0x', '#'));
 				}
 			}
 			this.emit('channelConfig', channelConfig);
@@ -1299,6 +1299,29 @@ var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
 var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
+// Pixi.js renderer and stage
+var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, { transparent: true });
+renderer.view.style.position = "absolute";
+renderer.view.style.display = "block";
+renderer.autoResize = true;
+$('.scopeWrapper').append(renderer.view);
+var stage = new PIXI.Container();
+
+var graphics = new PIXI.Graphics();
+stage.addChild(graphics);
+graphics.lineStyle(1, 0x0000FF, 1);
+
+graphics.moveTo(0, 50);
+graphics.lineTo(50, 50); //draw min Y line
+graphics.moveTo(0, 100);
+graphics.lineTo(50, 100); //draw max Y line
+
+graphics.moveTo(60, 50);
+graphics.lineTo(60 + 0.1, 100);
+graphics.lineTo(60 + 0.2, 50);
+
+renderer.render(stage);
+
 // main bela socket
 var belaSocket = io('/IDE');
 
@@ -1524,18 +1547,18 @@ function CPU(data) {
 	(function () {
 		var plotLoop = function plotLoop() {
 			requestAnimationFrame(plotLoop);
-
+			// console.log(channelConfig[0].color.replace('#', '0x'));	
 			if (plot) {
 
 				plot = false;
-				ctx.clearRect(0, 0, width, height);
+				ctx.clear();
 				//console.log('plotting');
 
 				for (var i = 0; i < numChannels; i++) {
 
-					ctx.strokeStyle = channelConfig[i].color;
+					ctx.lineStyle(1, channelConfig[i].color, 1);
 
-					ctx.beginPath();
+					// ctx.beginPath();
 					ctx.moveTo(0, frame[i * length] + xOff * (frame[i * length + 1] - frame[i * length]));
 
 					for (var j = 1; j - xOff < length; j++) {
@@ -1544,8 +1567,10 @@ function CPU(data) {
 					//ctx.lineTo(length, frame[length*(i+1)-1]);
 					//if (!i) console.log(length, j-xOff-1);
 
-					ctx.stroke();
+					// ctx.stroke();
 				}
+
+				renderer.render(stage);
 
 				triggerStatus();
 			} /*else {
@@ -1584,9 +1609,12 @@ function CPU(data) {
 			}
 		};
 
-		var canvas = document.getElementById('scope');
-		var ctx = canvas.getContext('2d');
-		ctx.lineWidth = 2;
+		// let canvas = document.getElementById('scope');
+		// let ctx = canvas.getContext('2d');
+		// ctx.lineWidth = 2;
+		var ctx = new PIXI.Graphics();
+		stage.addChild(ctx);
+		ctx.lineStyle(1, 0x0000FF, 1);
 
 		var width = void 0,
 		    height = void 0,
@@ -1599,10 +1627,9 @@ function CPU(data) {
 		    upSampling = 1;;
 		settings.on('change', function (data, changedKeys) {
 			if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
-				canvas.width = window.innerWidth;
-				width = canvas.width;
-				canvas.height = window.innerHeight;
-				height = canvas.height;
+				width = window.innerWidth;
+				height = window.innerHeight;
+				renderer.resize(width, height);
 			}
 			if (changedKeys.indexOf('numChannels') !== -1) {
 				numChannels = data.numChannels;
