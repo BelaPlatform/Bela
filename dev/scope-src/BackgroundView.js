@@ -3,12 +3,12 @@ var View = require('./View');
 
 class BackgroundView extends View{
 
-	constructor(className, models){
+	constructor(className, models, renderer){
 		super(className, models);
 		var saveCanvas =  document.getElementById('saveCanvas');
 		this.canvas = document.getElementById('scopeBG');
 		saveCanvas.addEventListener('click', () => {
-			this.canvas.getContext('2d').drawImage(document.getElementById('scope'), 0, 0);
+			this.canvas.getContext('2d').drawImage(renderer.view, 0, 0);
 			saveCanvas.href = this.canvas.toDataURL();
 			this.repaintBG();
 		});

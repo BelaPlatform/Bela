@@ -318,7 +318,7 @@ var View = require('./View');
 var BackgroundView = function (_View) {
 	_inherits(BackgroundView, _View);
 
-	function BackgroundView(className, models) {
+	function BackgroundView(className, models, renderer) {
 		_classCallCheck(this, BackgroundView);
 
 		var _this = _possibleConstructorReturn(this, (BackgroundView.__proto__ || Object.getPrototypeOf(BackgroundView)).call(this, className, models));
@@ -326,7 +326,7 @@ var BackgroundView = function (_View) {
 		var saveCanvas = document.getElementById('saveCanvas');
 		_this.canvas = document.getElementById('scopeBG');
 		saveCanvas.addEventListener('click', function () {
-			_this.canvas.getContext('2d').drawImage(document.getElementById('scope'), 0, 0);
+			_this.canvas.getContext('2d').drawImage(renderer.view, 0, 0);
 			saveCanvas.href = _this.canvas.toDataURL();
 			_this.repaintBG();
 		});
@@ -1293,12 +1293,6 @@ var worker = new Worker("js/scope-worker.js");
 var Model = require('./Model');
 var settings = new Model();
 
-// views
-var controlView = new (require('./ControlView'))('scopeControls', [settings]);
-var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
-var channelView = new (require('./ChannelView'))('channelView', [settings]);
-var sliderView = new (require('./SliderView'))('sliderView', [settings]);
-
 // Pixi.js renderer and stage
 var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, { transparent: true });
 renderer.view.style.position = "absolute";
@@ -1307,20 +1301,11 @@ renderer.autoResize = true;
 $('.scopeWrapper').append(renderer.view);
 var stage = new PIXI.Container();
 
-var graphics = new PIXI.Graphics();
-stage.addChild(graphics);
-graphics.lineStyle(1, 0x0000FF, 1);
-
-graphics.moveTo(0, 50);
-graphics.lineTo(50, 50); //draw min Y line
-graphics.moveTo(0, 100);
-graphics.lineTo(50, 100); //draw max Y line
-
-graphics.moveTo(60, 50);
-graphics.lineTo(60 + 0.1, 100);
-graphics.lineTo(60 + 0.2, 50);
-
-renderer.render(stage);
+// views
+var controlView = new (require('./ControlView'))('scopeControls', [settings]);
+var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
+var channelView = new (require('./ChannelView'))('channelView', [settings]);
+var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // main bela socket
 var belaSocket = io('/IDE');
@@ -1383,7 +1368,6 @@ var paused = false,
 
 // view events
 controlView.on('settings-event', function (key, value) {
-	if (value === undefined) return;
 	if (key === 'scopePause') {
 		if (paused) {
 			paused = false;
@@ -1403,6 +1387,7 @@ controlView.on('settings-event', function (key, value) {
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
 	}
+	if (value === undefined) return;
 	var obj = {};
 	obj[key] = value;
 	var out;
@@ -1464,7 +1449,7 @@ $(window).on('resize', function () {
 	settings.setKey('frameHeight', window.innerHeight);
 });
 
-$('#scope').on('mousemove', function (e) {
+$(window).on('mousemove', function (e) {
 	if (settings.getKey('plotMode') === undefined) return;
 	var plotMode = settings.getKey('plotMode');
 	var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
@@ -1510,14 +1495,14 @@ function CPU(data) {
 		for (var j = 0; j < taskData.length; j++) {
 			if (taskData[j].length) {
 				var proc = {
-					'name': taskData[j][7],
-					'cpu': taskData[j][6],
+					'name': taskData[j][8],
+					'cpu': taskData[j][7],
 					'msw': taskData[j][2],
 					'csw': taskData[j][3]
 				};
-				if (proc.name === 'ROOT') rootCPU = proc.cpu * 0.01;
+				if (proc.name === '[ROOT]') rootCPU = proc.cpu * 0.01;
 				// ignore uninteresting data
-				if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:') {
+				if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:') {
 					output.push(proc);
 				}
 			}
@@ -1532,8 +1517,8 @@ function CPU(data) {
 		bela += data.belaLinux * rootCPU;
 	}
 
-	$('#ide-cpu').html('ide: ' + (ide * rootCPU).toFixed(1) + '%');
-	$('#bela-cpu').html('bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+	$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
+	$('#bela-cpu').html('Bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
 	if (bela && ide * rootCPU + bela > 80) {
 		$('#ide-cpu, #bela-cpu').css('color', 'red');
@@ -1609,12 +1594,8 @@ function CPU(data) {
 			}
 		};
 
-		// let canvas = document.getElementById('scope');
-		// let ctx = canvas.getContext('2d');
-		// ctx.lineWidth = 2;
 		var ctx = new PIXI.Graphics();
 		stage.addChild(ctx);
-		ctx.lineStyle(1, 0x0000FF, 1);
 
 		var width = void 0,
 		    height = void 0,
@@ -1751,7 +1732,7 @@ settings.setData((_settings$setData = {
 	FFTLength: 1024,
 	FFTXAxis: 0,
 	FFTYAxis: 0,
-	holdOff: 20
+	holdOff: 0
 }, _defineProperty(_settings$setData, 'numSliders', 0), _defineProperty(_settings$setData, 'interpolation', 0), _settings$setData));
 
 },{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5,"./SliderView":6}]},{},[8])

@@ -68,8 +68,8 @@
 								<tr>
 									<td>Hold Off (ms):</td>
 									<td>
-										<input  class="scopeControls" data-key="holdOff" type="range" min="0" max="1000" value="20" step="1"></input>
-										<input class="scopeControls" data-key="holdOff" type="number" value="20" step="1" min="0"></input>
+										<input  class="scopeControls" data-key="holdOff" type="range" min="0" max="1000" value="0" step="1"></input>
+										<input class="scopeControls" data-key="holdOff" type="number" value="0" step="1" min="0"></input>
 									</td>
 								</tr>
 							</tbody>
@@ -143,7 +143,7 @@
 											<option value="128">128</option>
 											<option value="256">256</option>
 											<option value="512">512</option>
-											<option value="1024">1024</option>
+											<option value="1024" selected>1024</option>
 											<option value="2048">2048</option>
 											<option value="4096">4096</option>
 											<option value="8192">8192</option>
@@ -189,10 +189,6 @@
 								<tr>
 									<td>Export CSV:</td>
 									<td><a href="" download="scopeData.csv" id="saveCanvasData"><button>Export</button></a></td>
-								</tr>
-								<tr>
-									<td>Dropped Frames:</td>
-									<td><span id="droppedFrames">0</span></td>
 								</tr>
 							</tbody>
 						</table>

@@ -7,12 +7,6 @@ var worker = new Worker("js/scope-worker.js");
 var Model = require('./Model');
 var settings = new Model();
 
-// views
-var controlView = new (require('./ControlView'))('scopeControls', [settings]);
-var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
-var channelView = new (require('./ChannelView'))('channelView', [settings]);
-var sliderView = new (require('./SliderView'))('sliderView', [settings]);
-
 // Pixi.js renderer and stage
 var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, {transparent: true});
 renderer.view.style.position = "absolute";
@@ -21,20 +15,11 @@ renderer.autoResize = true;
 $('.scopeWrapper').append(renderer.view);
 var stage = new PIXI.Container();
 
-var graphics = new PIXI.Graphics();
-    stage.addChild(graphics);
-    graphics.lineStyle(1, 0x0000FF, 1);
-
-    graphics.moveTo(0, 50);
-    graphics.lineTo(50, 50);//draw min Y line
-    graphics.moveTo(0, 100);
-    graphics.lineTo(50, 100);//draw max Y line
-
-    graphics.moveTo(60, 50);
-    graphics.lineTo(60 + 0.1, 100);
-    graphics.lineTo(60 + 0.2, 50);
-
-renderer.render(stage);
+// views
+var controlView = new (require('./ControlView'))('scopeControls', [settings]);
+var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
+var channelView = new (require('./ChannelView'))('channelView', [settings]);
+var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // main bela socket
 var belaSocket = io('/IDE');
@@ -98,7 +83,6 @@ var paused = false, oneShot = false;
 
 // view events
 controlView.on('settings-event', (key, value) => {
-	if (value === undefined) return;
 	if (key === 'scopePause'){
 		if (paused){
 			paused = false;
@@ -118,6 +102,7 @@ controlView.on('settings-event', (key, value) => {
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
 	}
+	if (value === undefined) return;
 	var obj = {};
 	obj[key] = value;
 	var out;
@@ -182,7 +167,7 @@ $(window).on('resize', () => {
 	settings.setKey('frameHeight', window.innerHeight);
 });
 
-$('#scope').on('mousemove', e => {
+$(window).on('mousemove', e => {
 	if (settings.getKey('plotMode') === undefined) return;
 	var plotMode = settings.getKey('plotMode');
 	var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
@@ -208,7 +193,7 @@ $('#scope').on('mousemove', e => {
 function CPU(data){
 	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 	var bela = 0, rootCPU = 1;
-	
+
 	if (data.bela != 0 && data.bela !== undefined){
 	
 		// extract the data from the output
@@ -227,14 +212,14 @@ function CPU(data){
 		for (var j=0; j<taskData.length; j++){
 			if (taskData[j].length){
 				var proc = {
-					'name'	: taskData[j][7],
-					'cpu'	: taskData[j][6],
+					'name'	: taskData[j][8],
+					'cpu'	: taskData[j][7],
 					'msw'	: taskData[j][2],
 					'csw'	: taskData[j][3]
 				};
-				if (proc.name === 'ROOT') rootCPU = proc.cpu*0.01;
+				if (proc.name === '[ROOT]') rootCPU = proc.cpu*0.01;
 				// ignore uninteresting data
-				if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:'){
+				if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:'){
 					output.push(proc);
 				}
 			}
@@ -249,27 +234,21 @@ function CPU(data){
 		bela += data.belaLinux * rootCPU;	
 
 	}
-	
-	$('#ide-cpu').html('ide: '+(ide*rootCPU).toFixed(1)+'%');
-	$('#bela-cpu').html('bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
+
+	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
+	$('#bela-cpu').html('Bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
 	
 	if (bela && (ide*rootCPU + bela) > 80){
 		$('#ide-cpu, #bela-cpu').css('color', 'red');
 	} else {
 		$('#ide-cpu, #bela-cpu').css('color', 'black');
 	}
-	
 }
 
 // plotting
 {
-	
-	// let canvas = document.getElementById('scope');
-	// let ctx = canvas.getContext('2d');
-	// ctx.lineWidth = 2;
 	let ctx = new PIXI.Graphics;
 	stage.addChild(ctx);
-    	ctx.lineStyle(1, 0x0000FF, 1);
 	
 	let width, height, numChannels, channelConfig = [], xOff = 0, triggerChannel = 0, triggerLevel = 0, xOffset = 0, upSampling = 1;;
 	settings.on('change', (data, changedKeys) => {
@@ -457,7 +436,7 @@ settings.setData({
 	FFTLength	: 1024,
 	FFTXAxis	: 0,
 	FFTYAxis	: 0,
-	holdOff		: 20,
+	holdOff		: 0,
 	numSliders	: 0,
 	interpolation	: 0
 });
