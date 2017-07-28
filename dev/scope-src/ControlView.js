@@ -51,7 +51,7 @@ class ControlView extends View{
 	// settings model events
 	modelChanged(data, changedKeys){
 		for (let key of changedKeys){
-			if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase'){
+			if (this['_'+key]){
 				this['_'+key](data[key], data);
 			} else {
 				if (key === 'plotMode') this.plotMode(data[key], data);
@@ -120,6 +120,21 @@ class ControlView extends View{
 		}
 	}
 	
+	_triggerMode(value){
+		this.$elements.filterByData('key', 'triggerMode').val(value);
+	}
+	
+	_triggerChannel(value){
+		this.$elements.filterByData('key', 'triggerChannel').val(value);
+	}
+
+	_triggerDir(value){
+		this.$elements.filterByData('key', 'triggerDir').val(value);
+	}
+
+	_triggerLevel(value){
+		this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
+	}
 }
 
 module.exports = ControlView;

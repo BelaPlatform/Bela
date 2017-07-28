@@ -851,7 +851,7 @@ var ControlView = function (_View) {
 				for (var _iterator = changedKeys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var key = _step.value;
 
-					if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase') {
+					if (this['_' + key]) {
 						this['_' + key](data[key], data);
 					} else {
 						if (key === 'plotMode') this.plotMode(data[key], data);
@@ -940,6 +940,26 @@ var ControlView = function (_View) {
 				var opt = $('<option></option>').html(i + 1).val(i).appendTo(el);
 				if (i === data.triggerChannel) opt.prop('selected', 'selected');
 			}
+		}
+	}, {
+		key: '_triggerMode',
+		value: function _triggerMode(value) {
+			this.$elements.filterByData('key', 'triggerMode').val(value);
+		}
+	}, {
+		key: '_triggerChannel',
+		value: function _triggerChannel(value) {
+			this.$elements.filterByData('key', 'triggerChannel').val(value);
+		}
+	}, {
+		key: '_triggerDir',
+		value: function _triggerDir(value) {
+			this.$elements.filterByData('key', 'triggerDir').val(value);
+		}
+	}, {
+		key: '_triggerLevel',
+		value: function _triggerLevel(value) {
+			this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
 		}
 	}]);
 
@@ -1362,6 +1382,10 @@ var ws_onmessage = function ws_onmessage(msg) {
 		if (ws.readyState === 1) ws.send(out);
 	} else if (data.event == 'set-slider') {
 		sliderView.emit('set-slider', data);
+	} else if (data.event == 'set-setting') {
+		if (settings.getKey(data.setting) !== undefined) {
+			settings.setKey(data.setting, data.value);
+		}
 	}
 };
 ws.onmessage = ws_onmessage;
@@ -1630,21 +1654,22 @@ function CPU(data) {
 
 			// interpolate the trigger sample to get the sub-pixel x-offset
 			if (settings.getKey('plotMode') == 0) {
-				if (upSampling == 1) {
-					var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-					var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-					xOff = one / (one + two) - 1.5;
-				} else {
-					for (var i = 0; i <= upSampling * 2; i++) {
-						var _one = frame[Math.floor(triggerChannel * length + length / 2) + xOffset * upSampling - i] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1);
-						var _two = frame[Math.floor(triggerChannel * length + length / 2) + xOffset * upSampling + i] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1);
-						if (_one > triggerLevel && _two < triggerLevel || _one < triggerLevel && _two > triggerLevel) {
-							xOff = i * (Math.abs(_one) / (Math.abs(_one) + Math.abs(_two)) - 1);
-							break;
-						}
-					}
-				}
-				//console.log(xOff);
+				//		if (upSampling == 1){
+				var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+				var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+				xOff = one / (one + two) - 1.5;
+				/*		} else {
+    			for (var i=0; i<=(upSampling*2); i++){
+    				let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
+    				let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
+    				if ((one > triggerLevel && two < triggerLevel) || (one < triggerLevel && two > triggerLevel)){
+    					xOff = i*(Math.abs(one)/(Math.abs(one)+Math.abs(two))-1);
+    					break;
+    				}
+    			}
+    		}
+    		console.log(xOff);
+    */if (isNaN(xOff)) xOff = 0;
 			}
 		};
 

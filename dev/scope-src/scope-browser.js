@@ -78,6 +78,10 @@ var ws_onmessage = function(msg){
 		if (ws.readyState === 1) ws.send(out);
 	} else if (data.event == 'set-slider'){
 		sliderView.emit('set-slider', data);
+	} else if (data.event == 'set-setting'){
+		if (settings.getKey(data.setting) !== undefined) {
+			settings.setKey(data.setting, data.value);
+		}
 	}
 };
 ws.onmessage = ws_onmessage;
