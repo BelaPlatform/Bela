@@ -1348,6 +1348,8 @@ var ws_onmessage = function ws_onmessage(msg) {
 		data.frameHeight = window.innerHeight;
 		settings.setData(data);
 
+		if (settings.getKey('triggerChannel') >= data.numChannels) settings.setKey('triggerChannel', 0);
+
 		var obj = settings._getData();
 		obj.event = "connection-reply";
 		var out;
