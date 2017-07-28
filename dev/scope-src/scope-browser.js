@@ -305,38 +305,22 @@ function CPU(data){
 	
 	function plotLoop(){
 		requestAnimationFrame(plotLoop);
-	// console.log(channelConfig[0].color.replace('#', '0x'));	
 		if (plot){
-		
 			plot = false;
 			ctx.clear();
-			//console.log('plotting');
-			
 			for (var i=0; i<numChannels; i++){
-
 				ctx.lineStyle(1, channelConfig[i].color, 1);
-	
-				// ctx.beginPath();
-				ctx.moveTo(0, frame[i * length] + xOff*(frame[i * length + 1] - frame[i * length]));
-				
-				for (var j=1; (j-xOff)<(length); j++){
-					ctx.lineTo(j-xOff, frame[j+i*length]);
+				let iLength = i*length;
+				ctx.moveTo(0, frame[iLength] + xOff*(frame[iLength + 1] - frame[iLength]));
+				for (var j=1; (j-xOff)<length; j++){
+					ctx.lineTo(j-xOff, frame[j+iLength]);
 				}
-				//ctx.lineTo(length, frame[length*(i+1)-1]);
-				//if (!i) console.log(length, j-xOff-1);
-
-				// ctx.stroke();
-		
 			}
-			
 			renderer.render(stage);
-
 			triggerStatus();
-		
 		} /*else {
 			console.log('not plotting');
 		}*/
-		
 	}
 	plotLoop();
 	
@@ -349,16 +333,7 @@ function CPU(data){
 	let inactiveOverlay = $('#inactive-overlay');
 	function triggerStatus(){
 	
-		scopeStatus.removeClass('scope-status-waiting');
 		inactiveOverlay.removeClass('inactive-overlay-visible');
-			
-		// hack to restart the fading animation if it is in progress
-		if (scopeStatus.hasClass('scope-status-triggered')){
-			scopeStatus.removeClass('scope-status-triggered');
-			void scopeStatus[0].offsetWidth;
-		}
-		
-		scopeStatus.addClass('scope-status-triggered').html('triggered');
 		
 		if (oneShot){
 			oneShot = false;
@@ -366,6 +341,7 @@ function CPU(data){
 			$('#pauseButton').html('resume');
 			scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
 		} else {
+			scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
 			if (triggerTimeout) clearTimeout(triggerTimeout);
 			triggerTimeout = setTimeout(() => {
 				if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
