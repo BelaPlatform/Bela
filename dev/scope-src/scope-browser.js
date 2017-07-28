@@ -292,11 +292,11 @@ function CPU(data){
 		
 		// interpolate the trigger sample to get the sub-pixel x-offset
 		if (settings.getKey('plotMode') == 0){
-			if (upSampling == 1){
+	//		if (upSampling == 1){
 				let one = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset-1] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 				let two = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 				xOff = (one/(one+two)-1.5);
-			} else {
+	/*		} else {
 				for (var i=0; i<=(upSampling*2); i++){
 					let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
 					let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
@@ -306,7 +306,8 @@ function CPU(data){
 					}
 				}
 			}
-			//console.log(xOff);
+			console.log(xOff);
+	*/		if (isNaN(xOff)) xOff = 0;
 		}
 	};
 	
