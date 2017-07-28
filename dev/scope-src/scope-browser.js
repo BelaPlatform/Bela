@@ -183,7 +183,11 @@ $(window).on('mousemove', e => {
 		}
 		if (x > 1500) x = (x/1000) + 'khz';
 		else x += 'hz';
-		y = (1 - e.clientY/window.innerHeight).toPrecision(3);
+		if (parseInt(settings.getKey('FFTYAxis')) === 0){
+			y = (1 - e.clientY/window.innerHeight).toPrecision(3);
+		} else {
+			y = ((-70*e.clientY/window.innerHeight).toPrecision(3)) + 'db';
+		}
 	}
 	$('#scopeMouseX').html('x: '+x);
 	$('#scopeMouseY').html('y: '+y);
