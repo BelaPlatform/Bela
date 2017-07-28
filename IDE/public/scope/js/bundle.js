@@ -557,6 +557,7 @@ function ChannelConfig() {
 	this.yAmplitude = 1;
 	this.yOffset = 0;
 	this.color = '0xff0000';
+	this.lineWeight = 1.5;
 }
 
 var channelConfig = [new ChannelConfig()];
@@ -1540,7 +1541,7 @@ function CPU(data) {
 				plot = false;
 				ctx.clear();
 				for (var i = 0; i < numChannels; i++) {
-					ctx.lineStyle(1, channelConfig[i].color, 1);
+					ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
 					var iLength = i * length;
 					ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));
 					for (var j = 1; j - xOff < length; j++) {
