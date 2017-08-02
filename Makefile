@@ -221,16 +221,16 @@ DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN)
 # Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
-DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init)
+DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init) # | sed "s/-Wl,@[a-Z_/]*.wrappers //g")
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 # remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out $wildcard(*/usr/xenomai/lib/cobalt.wrappers), $(DEFAULT_XENOMAI_LDFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
 
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG
-DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
+DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -lasound -lsndfile -Llib/
+LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -Llib/ -lasound -lsndfile -lseasocks -lz
 
 ifndef COMPILER
 # check whether clang is installed
