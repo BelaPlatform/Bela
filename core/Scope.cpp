@@ -1,16 +1,12 @@
-/***** Scope.cpp *****/
 #include <Scope.h>
-#include <scope_ws.h>
 
 Scope::Scope(): isUsingOutBuffer(false), 
                 isUsingBuffer(false), 
                 isResizing(true), 
-                connected(0), 
                 upSampling(1), 
                 downSampling(1), 
                 triggerPrimed(false), 
                 started(false), 
-                settingUp(true),
 				windowFFT(NULL),
 				inFFT(NULL),
 				outFFT(NULL),
@@ -19,6 +15,9 @@ Scope::Scope(): isUsingOutBuffer(false),
 
 Scope::~Scope(){
 	dealloc();
+	sendBufferTask.cleanup();
+	scopeTriggerTask.cleanup();
+	scope_ws_cleanup();
 }
 
 void Scope::dealloc(){
@@ -28,18 +27,13 @@ void Scope::dealloc(){
 	NE10_FREE(cfg);
 }
 
-// static aux task functions
-void Scope::triggerTask(void *ptr){
-    Scope *instance = (Scope*)ptr;
+void Scope::triggerTask(void* ptr){
+	Scope *instance = (Scope*)ptr;
     if (instance->plotMode == 0){
         instance->triggerTimeDomain();
     } else if (instance->plotMode == 1){
         instance->triggerFFT();
     }
-}
-void Scope::plotModeTask(void *ptr){
-    Scope *instance = (Scope*)ptr;
-    instance->setPlotMode();
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders){
@@ -47,66 +41,27 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
     numChannels = _numChannels;
     sampleRate = _sampleRate;
     numSliders = _numSliders;
-    
-    // setup the OSC server && client
-    // used for sending / receiving settings
-    // oscClient has it's send task turned off, as we only need to send one handshake message
-    oscServer.setup(OSC_RECEIVE_PORT);
-    oscClient.setup(OSC_SEND_PORT, "127.0.0.1", false);
-
-	// setup the auxiliary tasks
-	scopeTriggerTask = Bela_createAuxiliaryTask(Scope::triggerTask, BELA_AUDIO_PRIORITY-2, "scopeTriggerTask", this);
-	sendBufferTask.create("scope-send-buffer", scope_ws_send);
-	scopePlotModeTask = Bela_createAuxiliaryTask(Scope::plotModeTask, BELA_AUDIO_PRIORITY-3, "scopePlotModeTask", this);
 	
 	// set up the websocket server
-	scope_ws_setup();
+	scope_ws_setup(this);
+
+	// setup the auxiliary tasks
+	scopeTriggerTask.create("scope-trigger-task", Scope::triggerTask, (void*)this);
+	sendBufferTask.create("scope-send-buffer", scope_ws_send);
 	
 	// setup the sliders
 	sliders.reserve(numSliders);
-
-    // send an OSC message to address /scope-setup
-    // then wait 1 second for a reply on /scope-setup-reply 
-    bool handshakeReceived = false;
-    oscClient.sendMessageNow(oscClient.newMessage.to("/scope-setup").add((int)numChannels).add(sampleRate).add(numSliders).end());
-    oscServer.receiveMessageNow(1000);
-    while (oscServer.messageWaiting()){
-        if (handshakeReceived){
-            parseMessage(oscServer.popMessage());
-        } else if (oscServer.popMessage().match("/scope-setup-reply")){
-            handshakeReceived = true;
-        }
-    }
-    
-    settingUp = false;
-    
-    if (handshakeReceived && connected)
-        start(true);
     
 }
 
-void Scope::start(bool setup /* = false */ ){
-    
-    if (started || settingUp) return;
-    
-    if (setup){
-// printf("calling set plot mode\n");
-        setPlotMode();
-// printf("returning from set plot mode\n");
-	}
-    else {
-// printf("scheduling scopePlotModeTask\n");
-        Bela_scheduleAuxiliaryTask(scopePlotModeTask);
-	}
-    // reset the pointers
+void Scope::start(){
+
+	// reset the pointers
     writePointer = 0;
     readPointer = 0;
 
-    started = true;
-    
-    sendBufferFlag = false;
-
     logCount = 0;
+    started = true;
 
 }
 
@@ -115,11 +70,10 @@ void Scope::stop(){
 }
 
 void Scope::setPlotMode(){
-// printf("running setPlotMode\n");
-    if (settingUp) return;
+// printf("setPlotMode\n");
 	isResizing = true;
 	while(!gShouldStop && (isUsingBuffer || isUsingOutBuffer)){
-// printf("waiting for threads\n");
+		// printf("waiting for threads\n");
 		usleep(100000);
 	}
 	FFTLength = newFFTLength;
@@ -129,8 +83,7 @@ void Scope::setPlotMode(){
     // setup the input buffer
     frameWidth = pixelWidth/upSampling;
 	if(plotMode == 0 ) { // time domain 
-		// let's keep 4 buffers for a greater x-offset range
-		channelWidth = frameWidth * 4;
+		channelWidth = frameWidth * FRAMES_STORED;
 	} else {
 		channelWidth = FFTLength;
 	}
@@ -158,7 +111,6 @@ void Scope::setPlotMode(){
     	
     	pointerFFT = 0;
         collectingFFT = true;
-
     
     	// Calculate a Hann window
 		// The coherentGain compensates for the loss of energy due to the windowing.
@@ -170,37 +122,28 @@ void Scope::setPlotMode(){
         
     }
 	isResizing = false; 
-// printf("exited setPlotMode\n");
+// printf("end setPlotMode\n");
 }
 
 void Scope::log(const float* values){
+	
 	if (!prelog()) return;
-	if(isResizing)
-		return;
-	isUsingBuffer = true;
-
-	int startingWritePointer = writePointer;
 
     // save the logged samples into the buffer
 	for (int i=0; i<numChannels; i++) {
 		buffer[i*channelWidth + writePointer] = values[i];
 	}
 
-	postlog(startingWritePointer);
-	isUsingBuffer = false;
+	postlog();
 
 }
 void Scope::log(float chn1, ...){
+	
 	if (!prelog()) return;
-	if(isResizing)
-		return;
-	isUsingBuffer = true;
     
     va_list args;
     va_start (args, chn1);
     
-    int startingWritePointer = writePointer;
-  
     // save the logged samples into the buffer
     buffer[writePointer] = chn1;
 
@@ -210,21 +153,13 @@ void Scope::log(float chn1, ...){
         buffer[i*channelWidth + writePointer] = (float)va_arg(args, double);
     }
     
-    postlog(startingWritePointer);
-    
+    postlog();
     va_end (args);
-	isUsingBuffer = false;
-    
 }
 
 bool Scope::prelog(){
-    
-    // check for any received OSC messages
-    while (oscServer.messageWaiting()){
-        parseMessage(oscServer.popMessage());
-    }
-    
-    if (!started) return false;
+	
+    if (!started || isResizing || isUsingBuffer) return false;
     
     if (plotMode == 0 && downSampling > 1){
         if (downSampleCount < downSampling){
@@ -234,16 +169,18 @@ bool Scope::prelog(){
         downSampleCount = 1;
     }
     
+	isUsingBuffer = true;
     return true;
 }
-void Scope::postlog(int startingWritePointer){
-    
+
+void Scope::postlog(){
+	
+	isUsingBuffer = false;
     writePointer = (writePointer+1)%channelWidth;
-    
-    logCount += 1;
-    if (logCount > TRIGGER_LOG_COUNT){
+	
+    if (logCount++ > TRIGGER_LOG_COUNT){
         logCount = 0;
-        Bela_scheduleAuxiliaryTask(scopeTriggerTask);
+        scopeTriggerTask.schedule();
     }
 }
 
@@ -258,10 +195,15 @@ bool Scope::trigger(){
 
 bool Scope::triggered(){
     if (triggerMode == 0 || triggerMode == 1){  // normal or auto trigger
-        return (!triggerDir && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel // positive trigger direction
+        return ((triggerDir==0) && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel // positive trigger direction
                 && buffer[channelWidth*triggerChannel+readPointer] >= triggerLevel) || 
-                (triggerDir && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel // negative trigger direciton
-                && buffer[channelWidth*triggerChannel+readPointer] <= triggerLevel);
+                ((triggerDir==1) && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel // negative trigger direciton
+                && buffer[channelWidth*triggerChannel+readPointer] <= triggerLevel) ||
+                ((triggerDir==2) && 																								// bi-directional trigger
+                	((buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel
+                	&& buffer[channelWidth*triggerChannel+readPointer] >= triggerLevel) || 
+                	(buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel
+	                && buffer[channelWidth*triggerChannel+readPointer] <= triggerLevel)));
     } else if (triggerMode == 2){   // custom trigger
         return (customTriggered && readPointer == customTriggerPointer);
     }
@@ -269,7 +211,7 @@ bool Scope::triggered(){
 }
 
 void Scope::triggerTimeDomain(){
-// rt_printf("do trigger\n");
+// printf("do trigger %i, %i\n", readPointer, writePointer);
     // iterate over the samples between the read and write pointers and check for / deal with triggers
     while (readPointer != writePointer){
         
@@ -278,7 +220,7 @@ void Scope::triggerTimeDomain(){
             
             // if we crossed the trigger threshold
             if (triggered()){
-                
+				
                 // stop listening for a trigger
                 triggerPrimed = false;
                 triggerCollecting = true;
@@ -305,7 +247,7 @@ void Scope::triggerTimeDomain(){
             }
             
         } else if (triggerCollecting){
-            
+			
             // a trigger has been detected, and we are collecting the second half of the triggered frame
             if (--triggerCount > 0){
                 
@@ -314,31 +256,33 @@ void Scope::triggerTimeDomain(){
                 triggerWaiting = true;
                 triggerCount = frameWidth/2.0f + holdOffSamples;
                 
-                // copy the previous to next frameWidth/2.0f samples into the outBuffer
-                int startptr = (triggerPointer-(int)(frameWidth/2.0f) + channelWidth)%channelWidth;
-                //int endptr = (triggerPointer+(int)(frameWidth/2.0f) + channelWidth)%channelWidth;
-                int endptr = (startptr + frameWidth)%channelWidth;
-                
-                //rt_printf("%f, %i, %i\n", frameWidth/2.0f, triggerPointer-(int)(frameWidth/2.0f), triggerPointer+(int)(frameWidth/2.0f));
-                
-                if (endptr > startptr){
-                    for (int i=0; i<numChannels; i++){
-                        std::copy(&buffer[channelWidth*i+startptr], &buffer[channelWidth*i+endptr], outBuffer.begin()+(i*frameWidth));
-                    }
-                } else {
-                    for (int i=0; i<numChannels; i++){
-                        std::copy(&buffer[channelWidth*i+startptr], &buffer[channelWidth*(i+1)], outBuffer.begin()+(i*frameWidth));
-                        std::copy(&buffer[channelWidth*i], &buffer[channelWidth*i+endptr], outBuffer.begin()+((i+1)*frameWidth-endptr));
-                    }
-                }
-                
-                // the whole frame has been saved in outBuffer, so send it
                 if (!isResizing){
-                	isUsingOutBuffer = true;
-	                sendBufferTask.schedule(&outBuffer[0], outBuffer.size());
-	                isUsingOutBuffer = false;
+					isUsingBuffer = true;
+					isUsingOutBuffer = true;
+					
+					// copy the previous to next frameWidth/2.0f samples into the outBuffer
+					int startptr = (triggerPointer-(int)(frameWidth/2.0f) + channelWidth)%channelWidth;
+					int endptr = (startptr + frameWidth)%channelWidth;
+					
+					if (endptr > startptr){
+						for (int i=0; i<numChannels; i++){
+							std::copy(&buffer[channelWidth*i+startptr], &buffer[channelWidth*i+endptr], outBuffer.begin()+(i*frameWidth));
+						}
+					} else {
+						for (int i=0; i<numChannels; i++){
+							std::copy(&buffer[channelWidth*i+startptr], &buffer[channelWidth*(i+1)], outBuffer.begin()+(i*frameWidth));
+							std::copy(&buffer[channelWidth*i], &buffer[channelWidth*i+endptr], outBuffer.begin()+((i+1)*frameWidth-endptr));
+						}
+					}
+					isUsingBuffer = false;
+					
+					// the whole frame has been saved in outBuffer, so send it
+					sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
+					// rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
+					
+					isUsingOutBuffer = false;
                 }
-
+				
             }
             
         } else if (triggerWaiting){
@@ -372,7 +316,6 @@ void Scope::triggerFFT(){
             if (pointerFFT > FFTLength){
                 collectingFFT = false;
                 doFFT();
-                //pointerFFT = 0;
             }
             
         } else {
@@ -391,11 +334,10 @@ void Scope::triggerFFT(){
 }
 
 void Scope::doFFT(){
-    
+
 	if(isResizing)
 		return;
 	
-	isUsingBuffer = true;
 	isUsingOutBuffer = true;
 	
     // constants
@@ -403,8 +345,9 @@ void Scope::doFFT(){
     float ratio = (float)(FFTLength/2)/(frameWidth*downSampling);
     float logConst = -logf(1.0f/(float)frameWidth)/(float)frameWidth;
     
+    isUsingBuffer = true;
     for (int c=0; c<numChannels; c++){
-    
+    	
         // prepare the FFT input & do windowing
         for (int i=0; i<FFTLength; i++){
             inFFT[i].r = (ne10_float32_t)(buffer[(ptr+i)%channelWidth+c*channelWidth] * windowFFT[i]);
@@ -485,27 +428,26 @@ void Scope::doFFT(){
         
     }
     
-	isUsingOutBuffer = false;
 	isUsingBuffer = false;
-    sendBufferTask.schedule(&(outBuffer[0]), outBuffer.size());
+	
+	sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
+    // rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
+
+    isUsingOutBuffer = false;
+}
+
+bool Scope::sliderChanged(int slider){
+	return sliders[slider].changed;
 }
 
 float Scope::getSliderValue(int slider){
-    return sliders[slider];
+	sliders[slider].changed = false;
+    return sliders[slider].value;
 }
 
 void Scope::setSlider(int slider, float min, float max, float step, float value, std::string name){
-    sliders[slider] = value;
-    oscClient.sendMessageNow(
-        oscClient.newMessage.to("/scope-slider")
-            .add(slider)
-            .add(min)
-            .add(max)
-            .add(step)
-            .add(value)
-            .add(name)
-            .end()
-    );
+    sliders[slider].value = value;
+    scope_ws_set_slider(slider, min, max, step, value, name);
 }
 
 void Scope::setXParams(){
@@ -517,78 +459,60 @@ void Scope::setXParams(){
     xOffsetSamples = xOffset/upSampling;
 }
 
-void Scope::parseMessage(oscpkt::Message msg){
-    if (msg.partialMatch("/scope-settings/")){
-// printf("received scope-settings %s\n", msg.addressPattern().c_str());
-        int intArg;
-        float floatArg;
-        if (msg.match("/scope-settings/connected").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received connected %d\n", intArg);
-            if (connected == 0 && intArg == 1){
-// printf("connected start\n");
-                start();
-// printf("connected started\n");
-            } else if (connected == 1 && intArg == 0){
-                stop();
-            }
-            connected = intArg;
-        } else if (msg.match("/scope-settings/frameWidth").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received frameWidth: %i\n", intArg);
-            stop();
-            pixelWidth = intArg;
-            start();
-        } else if (msg.match("/scope-settings/plotMode").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received plotMode: %i\n", intArg);
-            stop();
-            plotMode = intArg;
-            setXParams();
-            start();
-        } else if (msg.match("/scope-settings/triggerMode").popInt32(intArg).isOkNoMoreArgs()){
-            triggerMode = intArg;
-        } else if (msg.match("/scope-settings/triggerChannel").popInt32(intArg).isOkNoMoreArgs()){
-            triggerChannel = intArg;
-        } else if (msg.match("/scope-settings/triggerDir").popInt32(intArg).isOkNoMoreArgs()){
-            triggerDir = intArg;
-        } else if (msg.match("/scope-settings/triggerLevel").popFloat(floatArg).isOkNoMoreArgs()){
-            triggerLevel = floatArg;
-        } else if (msg.match("/scope-settings/xOffset").popInt32(intArg).isOkNoMoreArgs()){
-            xOffset = intArg;
-            setXParams();
-        } else if (msg.match("/scope-settings/upSampling").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received upSampling: %i\n", intArg);
-            stop();
-            upSampling = intArg;
-            setXParams();
-            start();
-        } else if (msg.match("/scope-settings/downSampling").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received downsampling: %d\n", intArg);
-            downSampling = intArg;
-            setXParams();
-        } else if (msg.match("/scope-settings/holdOff").popFloat(floatArg).isOkNoMoreArgs()){
-// printf("received holdoff: %f\n----\n", floatArg);
-            holdOff = floatArg;
-            setXParams();
-        } else if (msg.match("/scope-settings/FFTLength").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received FFTLength: %d\n", intArg);
-// printf("stopping\n");
-            stop();
-            newFFTLength = intArg;
-// printf("fftlength starting\n");
-            start();
-// printf("fftlength started\n");
-        } else if (msg.match("/scope-settings/FFTXAxis").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received FFTXaxis\n");
-            FFTXAxis = intArg;
-        } else if (msg.match("/scope-settings/FFTYAxis").popInt32(intArg).isOkNoMoreArgs()){
-// printf("received FFTYaxis\n");
-            FFTYAxis = intArg;
-        }
-    } else if (msg.partialMatch("/scope-sliders/")){
-// printf("received scope-sliders\n");
-        int intArg;
-        float floatArg;
-        if (msg.match("/scope-sliders/value").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs()){
-            sliders[intArg] = floatArg;
-        }
-    }
+void Scope::setTrigger(int mode, int channel, int dir, float level){
+	triggerMode = mode;
+	triggerChannel = channel;
+	triggerDir = dir;
+	triggerLevel = level;
+	scope_ws_set_setting(L"triggerMode", mode);
+	scope_ws_set_setting(L"triggerChannel", channel);
+	scope_ws_set_setting(L"triggerDir", dir);
+	scope_ws_set_setting(L"triggerLevel", level);
+}
+
+void Scope::setSetting(std::wstring setting, float value){
+	if (setting.compare(L"frameWidth") == 0){
+		stop();
+        pixelWidth = (int)value;
+        setPlotMode();
+        start();
+	} else if (setting.compare(L"plotMode") == 0){
+		stop();
+        plotMode = (int)value;
+        setPlotMode();
+        setXParams();
+        start();
+	} else if (setting.compare(L"triggerMode") == 0){
+		triggerMode = (int)value;
+	} else if (setting.compare(L"triggerChannel") == 0){
+		triggerChannel = (int)value;
+	} else if (setting.compare(L"triggerDir") == 0){
+		triggerDir = (int)value;
+	} else if (setting.compare(L"triggerLevel") == 0){
+		triggerLevel = value;
+	} else if (setting.compare(L"xOffset") == 0){
+        xOffset = (int)value;
+        setXParams();
+	} else if (setting.compare(L"upSampling") == 0){
+		stop();
+        upSampling = (int)value;
+        setPlotMode();
+        setXParams();
+        start();
+	} else if (setting.compare(L"downSampling") == 0){
+        downSampling = (int)value;
+	} else if (setting.compare(L"holdOff") == 0){
+		holdOff = value;
+		setXParams();
+	} else if (setting.compare(L"FFTLength") == 0){
+        stop();
+        newFFTLength = (int)value;
+        setPlotMode();
+        setXParams();
+        start();
+	} else if (setting.compare(L"FFTXAxis") == 0){
+        FFTXAxis = (int)value;
+	} else if (setting.compare(L"FFTYAxis") == 0){
+        FFTYAxis = (int)value;
+	}
 }
