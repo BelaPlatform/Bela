@@ -6,7 +6,7 @@
 #include <native/queue.h>
 #include <Bela.h>
 
-#define AUX_RT_POOL_SIZE 100000
+#define AUX_RT_POOL_SIZE 500000
 
 class Aux_Task_rt{
 	public:

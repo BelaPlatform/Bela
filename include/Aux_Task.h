@@ -5,7 +5,7 @@
 #include <native/task.h>
 #include <native/pipe.h>
 
-#define AUX_MAX_BUFFER_SIZE 100000
+#define AUX_MAX_BUFFER_SIZE 500000
 
 class Aux_Task{
 	public:
