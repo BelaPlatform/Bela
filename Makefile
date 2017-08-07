@@ -536,6 +536,6 @@ heavy-unzip-archive:
 # For each object file, move it to the destination and make sure it is older than the source
 	$(AT) for file in $(HEAVY_OBJ_FILES); do touch "$$file"; mv "$$file" "$(HEAVY_OBJ_TARGET_DIR)"; done
 # If there is no render.cpp, copy the default Heavy one
-	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ ; echo "DID COPY"; }
+	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
 
 .PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib
