@@ -3877,7 +3877,7 @@ var ToolbarView = function (_View) {
 					}
 				}
 
-				bela += data.belaLinux * rootCPU;
+				if (data.belaLinux) bela += data.belaLinux * rootCPU;
 			}
 
 			$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
