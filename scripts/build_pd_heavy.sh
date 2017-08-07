@@ -48,7 +48,7 @@ usage ()
 {
 usage_brief
 echo "
-example: build_pd.sh -o ../projects/heavy/hello-world ../projects/heavy/pd/hello-world
+example: $THIS_SCRIPT ../projects/heavy/pd/hello-world
       
 This program compiles a PureData patch using the online Heavy Compiler. Before using this
 script you need to have set up your Enzien Audio account and familiarized yourself with the
@@ -137,8 +137,6 @@ do
     shift
 done
 
-[ $FORCE -eq 1 ] && EXPERT=1
-
 [ "$NO_UPLOAD" -eq 0 ] && [ -z "$pdpath" ] && { echo "Error: a path to the source folder should be provided"; exit 1; }
 
 [ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$pdpath" && pwd))"
@@ -155,11 +153,8 @@ fi
 #TODO: get a reliable, exhaustive, up-to-date list.
 HEAVY_FILES='Heavy* Hv*'
 
-[ $EXPERT -eq 0 ] && check_board_alive
-# Not sure if set_date should be taken out by expert mode ...
-# The expert will have to remember to run set_date after powering up the board 
-# in case the updated files are not being rebuilt
-[ $EXPERT -eq 0 ] && set_date
+# The expert will have to remember to run set_date after powering up the board if needed
+[ $EXPERT -eq 0 ] && check_board_alive_and_set_date
 
 # check if project exists
 [ $FORCE -eq 1 ] ||	check_project_exists_prompt $BBB_PROJECT_NAME
@@ -225,7 +220,7 @@ uploadBuildRun(){
 		# copy the archive
 		scp "$projectpath/$ARCHIVE_NAME" $BBB_ADDRESS:$BBB_ARCHIVE_PATH
 		rm "$projectpath/$ARCHIVE_NAME"
-		ssh $BBB_ADDRESS bash -c "'mkdir -p '"$BBB_BELA_HOME"'/projects/'"$BBB_PROJECT_NAME"' && $MAKE_COMMAND_BASE heavy-unzip-archive HEAVY_ARCHIVE=$BBB_ARCHIVE_PATH'" || exit 1
+		ssh $BBB_ADDRESS "mkdir -p '$BBB_BELA_HOME/projects/$BBB_PROJECT_NAME' && $MAKE_COMMAND_BASE heavy-unzip-archive HEAVY_ARCHIVE=$BBB_ARCHIVE_PATH" || exit 1
         # in this case, most files at the destination will not exist in the
         # source folder, as the latter will only contain the zip archive and
         # any files (if any) from the heavy/ subfolder OR the default heavy
