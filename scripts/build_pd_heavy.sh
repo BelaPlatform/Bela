@@ -225,7 +225,7 @@ uploadBuildRun(){
 		# copy the archive
 		scp "$projectpath/$ARCHIVE_NAME" $BBB_ADDRESS:$BBB_ARCHIVE_PATH
 		rm "$projectpath/$ARCHIVE_NAME"
-		ssh $BBB_ADDRESS $MAKE_COMMAND_BASE heavy-unzip-archive HEAVY_ARCHIVE=$BBB_ARCHIVE_PATH || exit 1
+		ssh $BBB_ADDRESS bash -c "'mkdir -p '"$BBB_BELA_HOME"'/projects/'"$BBB_PROJECT_NAME"' && $MAKE_COMMAND_BASE heavy-unzip-archive HEAVY_ARCHIVE=$BBB_ARCHIVE_PATH'" || exit 1
         # in this case, most files at the destination will not exist in the
         # source folder, as the latter will only contain the zip archive and
         # any files (if any) from the heavy/ subfolder OR the default heavy
