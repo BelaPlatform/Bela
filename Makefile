@@ -186,50 +186,50 @@ else
   endif
 endif
 
+ALL_DEPS=
 ASM_SRCS := $(wildcard $(PROJECT_DIR)/*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
-ASM_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
 
 P_SRCS := $(wildcard $(PROJECT_DIR)/*.p)
 P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
 
 C_SRCS := $(wildcard $(PROJECT_DIR)/*.c)
 C_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.o)))
-C_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
 
 CPP_SRCS := $(wildcard $(PROJECT_DIR)/*.cpp)
 CPP_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.o)))
-CPP_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
 PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
 CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
-CORE_C_DEPS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
 CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
-CORE_CPP_DEPS := $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
-CORE_ASM_DEPS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
-
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
 DEFAULT_MAIN_OBJS := ./build/core/default_main.o
-DEFAULT_MAIN_CPP_DEPS := ./build/core/default_main.d
+ALL_DEPS += ./build/core/default_main.d
 
 # Objects for a system-supplied default render() file for libpd projects,
 # if the user only wants to provide the Pd files.
 DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
 DEFAULT_PD_OBJS := ./build/core/default_libpd_render.o
-DEFAULT_PD_CPP_DEPS := ./build/core/default_libpd_render.d
+ALL_DEPS += ./build/core/default_libpd_render.d
 
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
@@ -245,14 +245,14 @@ debug: DEFAULT_CPPFLAGS=-g -std=c++11
 debug: DEFAULT_CFLAGS=-g -std=c11
 debug: all
 
+# include all dependencies - necessary to force recompilation when a header is changed
+# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
+-include $(ALL_DEPS)
+
 # syntax = check syntax
 syntax: ## Only checks syntax
 syntax: SYNTAX_FLAG := -fsyntax-only
 syntax: $(PROJECT_OBJS) 
-
-# include all dependencies - necessary to force recompilation when a header is changed
-# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
--include $(CPP_DEPS) $(C_DEPS) $(ASM_DEPS)
 
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
