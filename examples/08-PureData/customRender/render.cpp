@@ -33,8 +33,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 #include <DigitalChannelManager.h>
 #include <cmath>
-#include <I2c_Codec.h>
-#include <PRU.h>
 #include <stdio.h>
 #include <libpd/z_libpd.h>
 #include <libpd/s_stuff.h>
