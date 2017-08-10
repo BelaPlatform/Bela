@@ -57,29 +57,67 @@ endif
 
 
 ifdef PROJECT
-#check if project dir exists and also create build folders in the same spawned shell
-  CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR) && mkdir -p $(PROJECT_DIR)/build && mkdir -p build/core)
-  ifeq ($(CHECK_PROJECT_DIR_EXIST),)
-    $(error $(PROJECT_DIR) does not exist)
-  endif
-  IS_SUPERCOLLIDER_PROJECT?=$(shell for f in "$(PROJECT_DIR)/"*.scd ; do [ -e "$$f" ] && echo "1" && break; echo $$f; done; )
-  ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-# Potentially this could be a default file which starts a server and loads all existing .scd files?
-    SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
-  else
-    $(shell mkdir -p $(PROJECT_DIR)/build build/core)
-  endif
+
+#check if project dir exists
+CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR))
+ifeq ($(CHECK_PROJECT_DIR_EXIST),)
+$(error $(PROJECT_DIR) does not exist)
 endif
+SHOULD_BUILD=true
+PROJECT_TYPE=invalid
+RUN_FILE?=$(PROJECT_DIR)/run.sh
+SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
+LIBPD_FILE=$(PROJECT_DIR)/_main.pd
+HAS_RUN_FILE=false
+
+FILE_LIST:= $(wildcard $(PROJECT_DIR)/*)
+ifeq ($(filter $(RUN_FILE),$(FILE_LIST)),$(RUN_FILE))
+SHOULD_BUILD=false
+HAS_RUN_FILE=true
+PROJECT_TYPE=custom
+endif
+ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
+PROJECT_TYPE=sc
+SHOULD_BUILD=false
+else
+ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
+PROJECT_TYPE=libpd
+else
+ifneq ($(filter %.c %.cpp %.cc,$(FILE_LIST)),)
+PROJECT_TYPE=cpp
+endif
+endif
+endif
+
+ifeq ($(AT),)
+$(info Automatically detected PROJECT_TYPE: $(PROJECT_TYPE) )
+endif
+
+
+ifeq ($(PROJECT_TYPE),invalid)
+ifeq ($(HAS_RUN_FILE),false)
+$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(RUN_FILE)) file )
+endif
+endif
+
+ifeq ($(SHOULD_BUILD),true)
+#create build directories
+$(shell mkdir -p $(PROJECT_DIR)/build build/core )
+endif
+
+endif # ifdef PROJECT
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 COMMAND_LINE_OPTIONS?=$(CL)
 RUN_FROM?=$(PROJECT_DIR)
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-endif
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-  RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+ifeq ($(HAS_RUN_FILE),true)
+RUN_COMMAND?=bash $(RUN_FILE)
 else
-  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+ifeq ($(PROJECT_TYPE),sc)
+RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+else
+RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+endif
 endif
 RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
@@ -278,10 +316,9 @@ $(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
 	$(AT) echo ' '
 
 
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-# if it is a supercollider project, there are no dependencies to compile, only run
+ifeq ($(SHOULD_BUILD),false)
+# if it is a project that does not require build, there are no dependencies to compile, nor a binary to generate
 $(OUTPUT_FILE):
-
 else
 # This is a nasty kludge: we want to be able to optionally link in a default
 # main file if the user hasn't supplied one. We check for the presence of the main()
@@ -291,9 +328,11 @@ else
 $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
-	$(AT) #If there is a .pd file AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
+ifeq ($(PROJECT_TYPE),libpd)
+#If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ ls $(PROJECT_DIR)/*.pd &>/dev/null && [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+	    $(shell bash -c '{ [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+endif
 	$(AT) echo 'Linking...'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -L/usr/xenomai/lib -L/usr/arm-linux-gnueabihf/lib -L/usr/arm-linux-gnueabihf/lib/xenomai -L/usr/lib/arm-linux-gnueabihf -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
@@ -359,7 +398,7 @@ stop: ## Stops any Bela program that is currently running
 stop:
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+ifeq ($(PROJECT_TYPE),sc)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
 	$(AT) killall scsynth 2>/dev/null; killall sclang 2>/dev/null; true
 else
