@@ -65,9 +65,9 @@ int I2c_Codec::startAudio(int dual_rate)
 	}
 	if(writeRegister(0x08, 0xC0))	// Audio serial control register A: BLCK, WCLK outputs
 		return 1;
-	if(writeRegister(0x09, 0x40))	// Audio serial control register B: DSP mode, word len 16 bits
+	if(writeRegister(0x09, 0x00))	// Audio serial control register B: I2S mode, word len 16 bits
 		return 1;
-	if(writeRegister(0x0A, 0x00))	// Audio serial control register C: 0 bit offset
+	if(writeRegister(0x0A, 0x01))	// Audio serial control register C: 1 bit offset
 		return 1;
 	if(writeRegister(0x0C, 0x00))	// Digital filter register: disabled
 		return 1;
@@ -401,6 +401,26 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 		cout << "Failed to write register " << reg << " on codec\n";
 		return 1;
 	}
+
+	return 0;
+}
+
+// Put codec to Hi-z (required for CTAG face)
+int I2c_Codec::disable(){
+	if (writeRegister(0x0, 0)) // Select page 0
+		return 1;
+	if(writeRegister(0x01, 0x80)) // Reset codec to defaults
+		return 1;
+	if (writeRegister(0x08, 0xE0)) // Put codec in master mode (required for hi-z mode)
+		return 1;
+	if(writeRegister(0x03, 0x11)) // PLL register A: disable
+		return 1;
+	if (writeRegister(0x24, 0x44)) // Power down left and right ADC
+		return 1;
+	if (writeRegister(0x25, 0x00)) // DAC power/driver register: power off
+		return 1;
+	if (writeRegister(0x5E, 0xC0)) // Power fully down left and right DAC
+		return 1;
 
 	return 0;
 }
