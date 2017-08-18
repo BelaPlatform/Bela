@@ -572,9 +572,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 #else
 	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
 #endif
-	//sleepTime = context->audioFrames / context->audioSampleRate / 4.f * 1000000000.f;
 #endif
-
+	
 	uint32_t pru_audio_offset, pru_spi_offset;
 
 	// Before starting, look at the last state of the analog and digital outputs which might
@@ -894,7 +893,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData)
 		// This is a pessimistic approach: you will occasionally get an underrun warning
 		// without a glitch actually occurring, but you will be right there on the edge anyhow.
 
-		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS && 0) {
+		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
 			static uint32_t pruFramesPerBlock = context->analogFrames ? context->analogFrames : context->audioFrames / 2;
