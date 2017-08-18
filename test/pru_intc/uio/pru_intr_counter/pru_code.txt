@@ -1,0 +1,344 @@
+Source File 1 : 'pru_code.p' (89 Instructions Generated)
+
+    1 :                   : /**
+    2 :                   :  * PRU test test programm
+    3 :                   :  * Notes:
+    4 :                   :  *  - r0, r1, r2 are used in macros!
+    5 :                   :  */
+    6 :                   : 
+    7 :                   : /* Local addresses */
+    8 :                   : #define PRU_ICSS_INTC_LOCAL 0x00020000
+    9 :                   : #define PRU_ICSS_CFG_LOCAL 0x00026000
+   10 :                   : 
+   11 :                   : /* Global base addresses */
+   12 :                   : #define MCASP0_BASE 0x48038000
+   13 :                   : #define MCSPI0_BASE 0x48030100
+   14 :                   : 
+   15 :                   : /* Misc */
+   16 :                   : #define PRU0_CONTROL_REGISTER_OFFSET 0x22000
+   17 :                   : 
+   18 :                   : /* PRU INTC registers */
+   19 :                   : #define INTC_REG_GER    0x10    // global host interrupt enable register
+   20 :                   : #define INTC_REG_SISR   0x20    // system event status indexed set register (allows setting the status of an event) - write only
+   21 :                   : #define INTC_REG_SICR   0x24    // system event status indexed clear register (allows clearing the status of an event) - write only
+   22 :                   : #define INTC_REG_EISR   0x28    // system event enable indexed set register (allows enabling an event) - write only
+   23 :                   : #define INTC_REG_EICR   0x2C    // system event enable indexed clear register (allows disabling an event) - write only
+   24 :                   : #define INTC_REG_HIEISR 0x34    // host interrupt enable indexed set register (allows enabling a host interrupt output)
+   25 :                   : #define INTC_REG_HIDISR 0x38    // host interrupt enable indexed clear register (allows disabling a host interrupt output)
+   26 :                   : #define INTC_REG_SRSR0  0x200   // system event status raw/set register0 (show the pending enabled status of the system events 0 to 31)
+   27 :                   : #define INTC_REG_SRSR1  0x204   // system event status raw/set register0 (show the pending enabled status of the system events 32 to 63)
+   28 :                   : #define INTC_REG_SECR0  0x280   // system event status enabled/clear register0 (show the pending enabled status of the system events 0 to 31)
+   29 :                   : #define INTC_REG_SECR1  0x284   // system event status enabled/clear register1 (show the pending enabled status of the system events 32 to 63)
+   30 :                   : #define INTC_REG_ESR0   0x300   // system event enable set register0 (enables system events 0 to 31 to trigger outputs)
+   31 :                   : #define INTC_REG_ESR1   0x304   // system event enable set register1 (enables system events 32 to 64 to trigger outputs)
+   32 :                   : #define INTC_REG_ECR0   0x380   // system event enable clear register0 (disables system events 0 to 31 to map to channels)
+   33 :                   : #define INTC_REG_ECR1   0x384   // system event enable clear register1 (disables system events 32 to 63 to map to channels)
+   34 :                   : #define INTC_REG_CMR0   0x400   // channel map register for system events 0 to 3
+   35 :                   : #define INTC_REG_CMR1   0x404   // channel map register for system events 4 to 7
+   36 :                   : #define INTC_REG_CMR2   0x408   // channel map register for system events 8 to 11
+   37 :                   : #define INTC_REG_CMR3   0x40C   // channel map register for system events 12 to 15
+   38 :                   : #define INTC_REG_CMR4   0x410   // channel map register for system events 16 to 19
+   39 :                   : #define INTC_REG_CMR5   0x414   // channel map register for system events 20 to 23
+   40 :                   : #define INTC_REG_CMR6   0x418   // channel map register for system events 24 to 27
+   41 :                   : #define INTC_REG_CMR7   0x41C   // channel map register for system events 28 to 31
+   42 :                   : #define INTC_REG_CMR8   0x420   // channel map register for system events 32 to 35
+   43 :                   : #define INTC_REG_CMR9   0x424   // channel map register for system events 36 to 39
+   44 :                   : #define INTC_REG_CMR10  0x428   // channel map register for system events 40 to 43
+   45 :                   : #define INTC_REG_CMR11  0x42C   // channel map register for system events 44 to 47
+   46 :                   : #define INTC_REG_CMR12  0x430   // channel map register for system events 48 to 51
+   47 :                   : #define INTC_REG_CMR13  0x434   // channel map register for system events 52 to 55
+   48 :                   : #define INTC_REG_CMR14  0x438   // channel map register for system events 56 to 59
+   49 :                   : #define INTC_REG_CMR15  0x43C   // channel map register for system events 60 to 63
+   50 :                   : #define INTC_REG_HMR0   0x800   // host interrupt map register for channels 0 - 3
+   51 :                   : #define INTC_REG_HMR1   0x804   // host interrupt map register for channels 4 - 7
+   52 :                   : #define INTC_REG_HMR2   0x808   // host interrupt map register for channels 8 - 9
+   53 :                   : #define INTC_REG_SIPR0  0xD00   // system event polarity register0 (define the polarity of the system events 0 to 31)
+   54 :                   : #define INTC_REG_SIPR1  0xD04   // system event polarity register0 (define the polarity of the system events 32 to 63)
+   55 :                   : #define INTC_REG_SITR0  0xD80   // system event type register0 (define the type of the system events 0 to 31)
+   56 :                   : #define INTC_REG_SITR1  0xD84   // system event type register0 (define the type of the system events 32 to 63)
+   57 :                   : #define INTC_REG_HIER   0x1500  // host interrupt enable registers (enable / disable individual host interrupts)
+   58 :                   : 
+   59 :                   : /* PRU INTC bits */
+   60 :                   : #define INTC_INTERRUPT_BIT_CH0    30
+   61 :                   : #define INTC_INTERRUPT_BIT_CH1    31
+   62 :                   : #define SECR_BIT_SYSTEM_EVENT_44  12 // SINTERRUPTN (McSPI0)
+   63 :                   : #define SECR_BIT_SYSTEM_EVENT_54  22 // mcasp_r_intr_pend (McASP0 Rx)
+   64 :                   : #define SECR_BIT_SYSTEM_EVENT_55  23 // mcasp_x_intr_pend (McASP0 Tx)
+   65 :                   : 
+   66 :                   : /* PRU CFG registers */
+   67 :                   : #define CFG_REV_ID          0x0
+   68 :                   : #define CFG_SYSCFG          0x4
+   69 :                   : #define CFG_REG_GPCFG0      0x8
+   70 :                   : #define CFG_GPCFG1          0xC
+   71 :                   : #define CFG_CGR             0x10
+   72 :                   : #define CFG_ISRP            0x14
+   73 :                   : #define CFG_ISP             0x18 
+   74 :                   : #define CFG_IESP            0x1C
+   75 :                   : #define CFG_IECP            0x20
+   76 :                   : #define CFG_PMAO            0x28
+   77 :                   : #define CFG_MII_RT          0x2C
+   78 :                   : #define CFG_IEPCLK          0x30
+   79 :                   : #define CFG_SPP             0x34
+   80 :                   : #define CFG_PIN_MX          0x40
+   81 :                   : 
+   82 :                   : /* PRU constants */
+   83 :                   : #define CONST_PRUCFG  C4
+   84 :                   : 
+   85 :                   : /* McASP registers */
+   86 :                   : #define MCASP_RINTCTL   0x7C
+   87 :                   : #define MCASP_XINTCTL   0xBC
+   88 :                   : #define MCASP_RSTAT     0x80
+   89 :                   : #define MCASP_XSTAT     0xC0
+   90 :                   : 
+   91 :                   : /* McSPI registers */
+   92 :                   : #define MCSPI_IRQSTATUS 0x18
+   93 :                   : #define MCSPI_IRQENABLE 0x1C
+   94 :                   : 
+   95 :                   : /** 
+   96 :                   :  * Helpers
+   97 :                   :  */
+   98 :                   : 
+   99 :                   : /* Clear all registers */
+  100 :                   : .macro CLEAR_REGS
+  101 :                   :   MOV r0, 0x0
+  102 :                   :   MOV r1, 0x0
+  103 :                   :   MOV r2, 0x0
+  104 :                   :   MOV r3, 0x0
+  105 :                   :   MOV r4, 0x0
+  106 :                   :   MOV r5, 0x0
+  107 :                   :   MOV r6, 0x0
+  108 :                   :   MOV r7, 0x0
+  109 :                   :   MOV r8, 0x0
+  110 :                   :   MOV r9, 0x0
+  111 :                   :   MOV r10, 0x0
+  112 :                   :   MOV r11, 0x0
+  113 :                   :   MOV r12, 0x0
+  114 :                   :   MOV r13, 0x0
+  115 :                   :   MOV r14, 0x0
+  116 :                   :   MOV r15, 0x0
+  117 :                   :   MOV r16, 0x0
+  118 :                   :   MOV r17, 0x0
+  119 :                   :   MOV r18, 0x0
+  120 :                   :   MOV r19, 0x0
+  121 :                   :   MOV r20, 0x0
+  122 :                   :   MOV r21, 0x0
+  123 :                   :   MOV r22, 0x0
+  124 :                   :   MOV r23, 0x0
+  125 :                   :   MOV r24, 0x0
+  126 :                   :   MOV r25, 0x0
+  127 :                   :   MOV r26, 0x0
+  128 :                   :   MOV r27, 0x0
+  129 :                   :   MOV r28, 0x0
+  130 :                   :   MOV r29, 0x0
+  131 :                   :   //MOV r30, 0x0
+  132 :                   :   //MOV r31, 0x0
+  133 :                   : .endm
+  134 :                   : 
+  135 :                   : /* Endless loop for debugging */
+  136 :                   : .macro ENDLESS_LOOP
+  137 :                   : BEGIN:
+  138 :                   :   JMP BEGIN
+  139 :                   : .endm
+  140 :                   : 
+  141 :                   : /* Read register of PRU INTC beyond the 0xFF boundary */
+  142 :                   : .macro PRU_ICSS_INTC_REG_READ_EXT
+  143 :                   : .mparam reg, value
+  144 :                   :   MOV r0, PRU_ICSS_INTC_LOCAL
+  145 :                   :   MOV r1, reg
+  146 :                   :   ADD r1, r0, r1
+  147 :                   :   LBBO value, r1, 0, 4
+  148 :                   : .endm
+  149 :                   : 
+  150 :                   : /* Write register of PRU INTC beyond the 0xFF boundary */
+  151 :                   : .macro PRU_ICSS_INTC_REG_WRITE_EXT
+  152 :                   : .mparam reg, value
+  153 :                   :   MOV r0, PRU_ICSS_INTC_LOCAL
+  154 :                   :   MOV r1, reg
+  155 :                   :   ADD r1, r0, r1
+  156 :                   :   MOV r2, value
+  157 :                   :   SBBO r2, r1, 0, 4
+  158 :                   : .endm
+  159 :                   : 
+  160 :                   : /* Read register of PRU CFG beyond the 0xFF boundary */
+  161 :                   : .macro PRU_ICSS_CFG_REG_READ_EXT
+  162 :                   : .mparam reg, value
+  163 :                   :   MOV r0, PRU_ICSS_CFG_LOCAL
+  164 :                   :   MOV r1, reg
+  165 :                   :   ADD r1, r0, r1
+  166 :                   :   LBBO value, r1, 0, 4
+  167 :                   : .endm
+  168 :                   : 
+  169 :                   : /* Write register of PRU CFG beyond the 0xFF boundary */
+  170 :                   : .macro PRU_ICSS_CFG_REG_WRITE_EXT
+  171 :                   : .mparam reg, value
+  172 :                   :   MOV r0, PRU_ICSS_CFG_LOCAL
+  173 :                   :   MOV r1, reg
+  174 :                   :   ADD r1, r0, r1
+  175 :                   :   MOV r2, value
+  176 :                   :   SBBO r2, r1, 0, 4
+  177 :                   : .endm
+  178 :                   : 
+  179 :                   : /* Read register of McASP beyond the 0xFF boundary */
+  180 :                   : .macro MCASP_REG_READ_EXT
+  181 :                   : .mparam reg, value
+  182 :                   :   MOV r0, MCASP0_BASE
+  183 :                   :   MOV r1, reg
+  184 :                   :   ADD r1, r0, r1
+  185 :                   :   LBBO value, r1, 0, 4
+  186 :                   : .endm
+  187 :                   : 
+  188 :                   : /* Write register of McASP beyond the 0xFF boundary */
+  189 :                   : .macro MCASP_REG_WRITE_EXT
+  190 :                   : .mparam reg, value
+  191 :                   :   MOV r0, MCASP0_BASE
+  192 :                   :   MOV r1, reg
+  193 :                   :   ADD r1, r0, r1
+  194 :                   :   MOV r2, value
+  195 :                   :   SBBO r2, r1, 0, 4
+  196 :                   : .endm
+  197 :                   : 
+  198 :                   : /* Read register of McSPI beyond the 0xFF boundary */
+  199 :                   : .macro MCSPI_REG_READ_EXT
+  200 :                   : .mparam reg, value
+  201 :                   :   MOV r0, MCSPI0_BASE
+  202 :                   :   MOV r1, reg
+  203 :                   :   ADD r1, r0, r1
+  204 :                   :   LBBO value, r1, 0, 4
+  205 :                   : .endm
+  206 :                   : 
+  207 :                   : /* Write register of McSPI beyond the 0xFF boundary */
+  208 :                   : .macro MCSPI_REG_WRITE_EXT
+  209 :                   : .mparam reg, value
+  210 :                   :   MOV r0, MCSPI0_BASE
+  211 :                   :   MOV r1, reg
+  212 :                   :   ADD r1, r0, r1
+  213 :                   :   MOV r2, value
+  214 :                   :   SBBO r2, r1, 0, 4
+  215 :                   : .endm
+  216 :                   : 
+  217 :                   : 
+  218 :                   : /**
+  219 :                   :  * Main
+  220 :                   :  */
+  221 :                   : .origin 0
+  222 :                   : .entrypoint START
+  223 :                   : START:
+  224 :                   : 
+  225 :                   :   // Enable OCP master port (required to access external peripherals)
+  226 : 0x0000 0x91042480 :   LBCO      r0, CONST_PRUCFG, 4, 4
+  227 : 0x0001 0x1d04e0e0 :   CLR       r0, r0, 4         // Clear SYSCFG[STANDBY_INIT] to enable OCP master port
+  228 : 0x0002 0x81042480 :   SBCO      r0, CONST_PRUCFG, 4, 4
+  229 :                   : 
+  230 :                   :   //MCASP_REG_WRITE_EXT MCASP_RSTAT, 0xFF
+  231 :                   :   //MCASP_REG_WRITE_EXT MCASP_XSTAT, 0xFF
+  232 :                   : 
+  233 :                   :   //MCASP_REG_WRITE_EXT MCASP_XINTCTL, 0x10 // Enable last slot interrupt
+  234 :                   :   //MCASP_REG_WRITE_EXT MCASP_RINTCTL, 0x10 // Enable last slot interrupt
+  235 :                   :   //MCASP_REG_READ_EXT MCASP_XINTCTL, r23
+  236 :                   :   //MCASP_REG_READ_EXT MCASP_RINTCTL, r24
+  237 :                   : 
+  238 :                   :   /*
+  239 :                   :     Clear all registers
+  240 :                   :   */
+  241 : 0x0003 0x240000e0 :   CLEAR_REGS
+      : 0x0004 0x240000e1 : 
+      : 0x0005 0x240000e2 : 
+      : 0x0006 0x240000e3 : 
+      : 0x0007 0x240000e4 : 
+      : 0x0008 0x240000e5 : 
+      : 0x0009 0x240000e6 : 
+      : 0x000a 0x240000e7 : 
+      : 0x000b 0x240000e8 : 
+      : 0x000c 0x240000e9 : 
+      : 0x000d 0x240000ea : 
+      : 0x000e 0x240000eb : 
+      : 0x000f 0x240000ec : 
+      : 0x0010 0x240000ed : 
+      : 0x0011 0x240000ee : 
+      : 0x0012 0x240000ef : 
+      : 0x0013 0x240000f0 : 
+      : 0x0014 0x240000f1 : 
+      : 0x0015 0x240000f2 : 
+      : 0x0016 0x240000f3 : 
+      : 0x0017 0x240000f4 : 
+      : 0x0018 0x240000f5 : 
+      : 0x0019 0x240000f6 : 
+      : 0x001a 0x240000f7 : 
+      : 0x001b 0x240000f8 : 
+      : 0x001c 0x240000f9 : 
+      : 0x001d 0x240000fa : 
+      : 0x001e 0x240000fb : 
+      : 0x001f 0x240000fc : 
+      : 0x0020 0x240000fd : 
+  242 :                   : 
+  243 :                   :   /*
+  244 :                   :     Initalize variables for counter
+  245 :                   :   */
+  246 : 0x0021 0x240001e3 :   MOV r3, 0x1 // for incrementation
+  247 : 0x0022 0x240000f4 :   MOV r20, 0x0 // counter for system event 54
+  248 : 0x0023 0x240000f5 :   MOV r21, 0x0 // counter for system event 55
+  249 :                   : 
+  250 :                   :   CHECK_INTERRUPT_BIT:
+  251 : 0x0024 0xd11eff02 :     QBBS INTERRUPT_RECEIVED, r31, INTC_INTERRUPT_BIT_CH0
+  252 : 0x0025 0x21002400 :     JMP CHECK_INTERRUPT_BIT
+  253 :                   : 
+  254 :                   :   INTERRUPT_RECEIVED:
+  255 : 0x0026 0x240002c0 :     PRU_ICSS_INTC_REG_READ_EXT INTC_REG_SECR1, r10
+      : 0x0027 0x24000080 : 
+      : 0x0028 0x240284e1 : 
+      : 0x0029 0x00e1e0e1 : 
+      : 0x002a 0xf100218a : 
+  256 : 0x002b 0xd10cea04 :     QBBS SYSTEM_EVENT_44_RECEIVED, r10, SECR_BIT_SYSTEM_EVENT_44
+  257 : 0x002c 0xd116ea11 :     QBBS SYSTEM_EVENT_54_RECEIVED, r10, SECR_BIT_SYSTEM_EVENT_54
+  258 : 0x002d 0xd117ea1e :     QBBS SYSTEM_EVENT_55_RECEIVED, r10, SECR_BIT_SYSTEM_EVENT_55
+  259 : 0x002e 0x21002400 :     JMP CHECK_INTERRUPT_BIT
+  260 :                   : 
+  261 :                   :   SYSTEM_EVENT_44_RECEIVED: // SPI
+  262 : 0x002f 0x00f3e3f3 :     ADD r19, r3, r19
+  263 : 0x0030 0x240002c0 :     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | 44) // clear system event 44
+      : 0x0031 0x24000080 : 
+      : 0x0032 0x240024e1 : 
+      : 0x0033 0x00e1e0e1 : 
+      : 0x0034 0x24002ce2 : 
+      : 0x0035 0xe1002182 : 
+  264 : 0x0036 0x244803c0 :     MCSPI_REG_WRITE_EXT MCSPI_IRQSTATUS, 0x41
+      : 0x0037 0x24010080 : 
+      : 0x0038 0x240018e1 : 
+      : 0x0039 0x00e1e0e1 : 
+      : 0x003a 0x240041e2 : 
+      : 0x003b 0xe1002182 : 
+  265 : 0x003c 0x21002400 :     JMP CHECK_INTERRUPT_BIT
+  266 :                   : 
+  267 :                   :   SYSTEM_EVENT_54_RECEIVED: // mcasp_r_intr_pend
+  268 : 0x003d 0x00f4e3f4 :     ADD r20, r3, r20
+  269 : 0x003e 0x240002c0 :     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | 54) // clear system event 54
+      : 0x003f 0x24000080 : 
+      : 0x0040 0x240024e1 : 
+      : 0x0041 0x00e1e0e1 : 
+      : 0x0042 0x240036e2 : 
+      : 0x0043 0xe1002182 : 
+  270 : 0x0044 0x244803c0 :     MCASP_REG_WRITE_EXT MCASP_RSTAT, 0x10 // clear XLAST status bit
+      : 0x0045 0x24800080 : 
+      : 0x0046 0x240080e1 : 
+      : 0x0047 0x00e1e0e1 : 
+      : 0x0048 0x240010e2 : 
+      : 0x0049 0xe1002182 : 
+  271 : 0x004a 0x21002400 :     JMP CHECK_INTERRUPT_BIT
+  272 :                   : 
+  273 :                   :   SYSTEM_EVENT_55_RECEIVED: // mcasp_x_intr_pend
+  274 : 0x004b 0x00f5e3f5 :     ADD r21, r3, r21
+  275 : 0x004c 0x240002c0 :     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | 55) // clear system event 55
+      : 0x004d 0x24000080 : 
+      : 0x004e 0x240024e1 : 
+      : 0x004f 0x00e1e0e1 : 
+      : 0x0050 0x240037e2 : 
+      : 0x0051 0xe1002182 : 
+  276 : 0x0052 0x244803c0 :     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x10 // clear XLAST status bit
+      : 0x0053 0x24800080 : 
+      : 0x0054 0x2400c0e1 : 
+      : 0x0055 0x00e1e0e1 : 
+      : 0x0056 0x240010e2 : 
+      : 0x0057 0xe1002182 : 
+  277 : 0x0058 0x21002400 :     JMP CHECK_INTERRUPT_BIT
+  278 :                   : 
+

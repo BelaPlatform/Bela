@@ -19,6 +19,11 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
+build/core/PRU.o: include/pru_rtaudio_bin.h
+include/pru_rtaudio_bin.h: pru_rtaudio.p
+	pasm -V2 -L -c pru_rtaudio.p
+	mv pru_rtaudio_bin.h include/
+
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)

@@ -33,7 +33,7 @@ struct option gDefaultLongOptions[] =
 {
 	{"period", 1, NULL, 'p'},
 	{"verbose", 0, NULL, 'v'},
-	{"use-analog", 1, NULL, 'N'},
+	{"use-analog", 0, NULL, 'N'},
 	{"use-digital", 1, NULL, 'G'},
 	{"analog-channels", 1, NULL, 'C'},
 	{"digital-channels", 1, NULL, 'B'},
