@@ -1,4 +1,4 @@
-#N canvas 959 597 692 1046 10;
+#N canvas 394 1 692 722 10;
 #X obj 45 615 dac~ 1 2;
 #X obj 45 574 *~ 0.1;
 #X obj 45 553 osc~ 440;
@@ -37,8 +37,7 @@ c++;
 #X obj 46 804 * 20;
 #X obj 46 826 + 0.5;
 #X text 94 826 map to exponential range 0.5Hz<->20Hz;
-#X obj 46 848 s tremoloRate;
-#X text 154 848 <<< this receiver doesn't exist in the patch but is
+#X text 194 848 <<< this receiver doesn't exist in the patch but is
 parsed;
 #X text 36 520 Simple 440Hz sine wave;
 #X text 36 530 ----------------------;
@@ -61,21 +60,19 @@ inside;
 ;
 #X text 35 309 files for heavy need to be placed when compiling with
 heavy);
-#X text 179 860 by a hook function in the modified render.cpp file.
+#X text 219 860 by a hook function in the modified render.cpp file.
 ;
-#X text 200 897 Bela_floatHook(const char *source \, float value);
-#X text 180 962 For heavy this is:;
-#X text 179 884 For libpd this function is:;
-#X text 200 973 sendHook( double timestamp \, const char *receiverName
+#X text 240 897 Bela_floatHook(const char *source \, float value);
+#X text 220 962 For heavy this is:;
+#X text 219 884 For libpd this function is:;
+#X text 240 973 sendHook( double timestamp \, const char *receiverName
 ;
-#X text 260 986 \, const HvMessage *const m \, void *userData);
-#X text 180 911 Note that in libpd the receiver name needs to be registered
+#X text 300 986 \, const HvMessage *const m \, void *userData);
+#X text 220 911 Note that in libpd the receiver name needs to be registered
 ;
-#X text 180 925 using the libpd_bind(const char *sym) function (see
+#X text 220 925 using the libpd_bind(const char *sym) function (see
 the;
-#X text 180 939 contents of setup());
-#X text 180 1002 The receiver name does not need to be registered anywhere.
-;
+#X text 220 939 contents of setup());
 #X text 35 324 Search for 'MODIFICATION' (no quotation marks) inside
 either;
 #X text 35 338 of the render files to inspect all the modifications
@@ -95,15 +92,25 @@ the;
 ;
 #X text 36 485 the enclosed /heavy/ folder and bypass the default wrapper.
 ;
+#X obj 46 848 s tremoloRate @hv_param;
+#X text 33 895 The "@hv_param" parameter;
+#X text 33 905 is required by Heavy;
+#X text 33 915 and it is ignored by libpd;
+#X text 220 1002 The receiver name does not need to be registered anywhere
+\,;
+#X text 143 874 ^;
+#X text 143 868 ^;
+#X text 143 880 ^;
+#X text 220 1012 but we need to use the @hv_param bit.;
 #X connect 1 0 0 1;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
 #X connect 23 0 24 0;
-#X connect 24 0 40 0;
+#X connect 24 0 39 0;
 #X connect 25 0 26 0;
 #X connect 26 0 24 0;
 #X connect 27 0 28 0;
-#X connect 28 0 30 0;
-#X connect 40 0 41 0;
-#X connect 40 1 41 1;
-#X connect 41 0 27 0;
+#X connect 28 0 65 0;
+#X connect 39 0 40 0;
+#X connect 39 1 40 1;
+#X connect 40 0 27 0;

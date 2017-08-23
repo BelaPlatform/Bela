@@ -157,7 +157,8 @@ class ToolbarView extends View {
 				}
 			}
 
-			bela += data.belaLinux * rootCPU;	
+			if(data.belaLinux)
+				bela += data.belaLinux * rootCPU;
 
 		}
 

@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var sanitise = require('../utils').sanitise;
 
 class ProjectView extends View {
 	
@@ -228,7 +229,3 @@ class ProjectView extends View {
 
 module.exports = ProjectView;
 
-// replace all non alpha-numeric chars other than '-' and '.' with '_'
-function sanitise(name){
-	return name.replace(/[^a-zA-Z0-9\.\-]/g, '_');
-}

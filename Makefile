@@ -20,7 +20,7 @@
 .DEFAULT_GOAL := Bela
 
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
+NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib libbela.so 
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
@@ -57,29 +57,67 @@ endif
 
 
 ifdef PROJECT
-#check if project dir exists and also create build folders in the same spawned shell
-  CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR) && mkdir -p $(PROJECT_DIR)/build && mkdir -p build/core)
-  ifeq ($(CHECK_PROJECT_DIR_EXIST),)
-    $(error $(PROJECT_DIR) does not exist)
-  endif
-  IS_SUPERCOLLIDER_PROJECT?=$(shell for f in "$(PROJECT_DIR)/"*.scd ; do [ -e "$$f" ] && echo "1" && break; echo $$f; done; )
-  ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-# Potentially this could be a default file which starts a server and loads all existing .scd files?
-    SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
-  else
-    $(shell mkdir -p $(PROJECT_DIR)/build build/core)
-  endif
+
+#check if project dir exists
+CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR))
+ifeq ($(CHECK_PROJECT_DIR_EXIST),)
+$(error $(PROJECT_DIR) does not exist)
 endif
+SHOULD_BUILD=true
+PROJECT_TYPE=invalid
+RUN_FILE?=$(PROJECT_DIR)/run.sh
+SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
+LIBPD_FILE=$(PROJECT_DIR)/_main.pd
+HAS_RUN_FILE=false
+
+FILE_LIST:= $(wildcard $(PROJECT_DIR)/*)
+ifeq ($(filter $(RUN_FILE),$(FILE_LIST)),$(RUN_FILE))
+SHOULD_BUILD=false
+HAS_RUN_FILE=true
+PROJECT_TYPE=custom
+endif
+ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
+PROJECT_TYPE=sc
+SHOULD_BUILD=false
+else
+ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
+PROJECT_TYPE=libpd
+else
+ifneq ($(filter %.c %.cpp %.cc,$(FILE_LIST)),)
+PROJECT_TYPE=cpp
+endif
+endif
+endif
+
+ifeq ($(AT),)
+$(info Automatically detected PROJECT_TYPE: $(PROJECT_TYPE) )
+endif
+
+
+ifeq ($(PROJECT_TYPE),invalid)
+ifeq ($(HAS_RUN_FILE),false)
+$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(RUN_FILE)) file )
+endif
+endif
+
+ifeq ($(SHOULD_BUILD),true)
+#create build directories
+$(shell mkdir -p $(PROJECT_DIR)/build build/core )
+endif
+
+endif # ifdef PROJECT
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 COMMAND_LINE_OPTIONS?=$(CL)
 RUN_FROM?=$(PROJECT_DIR)
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-endif
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-  RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+ifeq ($(HAS_RUN_FILE),true)
+RUN_COMMAND?=bash $(RUN_FILE)
 else
-  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+ifeq ($(PROJECT_TYPE),sc)
+RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+else
+RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+endif
 endif
 RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
@@ -112,7 +150,7 @@ ifneq ($(strip $(TEST_LIBPD)), )
   LIBS += -lpd -lpthread_rt
 endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
@@ -139,59 +177,59 @@ endif
 ifeq ($(COMPILER), clang)
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
-  DEFAULT_CPPFLAGS += -DNDEBUG -no-integrated-as
-  DEFAULT_CFLAGS += -DNDEBUG -no-integrated-as
+  DEFAULT_CPPFLAGS += -no-integrated-as
+  DEFAULT_CFLAGS += -no-integrated-as
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
-    DEFAULT_CPPFLAGS += --fast-math
-    DEFAULT_CFLAGS += --fast-math
   endif
 endif
 
+ALL_DEPS=
 ASM_SRCS := $(wildcard $(PROJECT_DIR)/*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
-ASM_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
 
 P_SRCS := $(wildcard $(PROJECT_DIR)/*.p)
 P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
 
 C_SRCS := $(wildcard $(PROJECT_DIR)/*.c)
 C_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.o)))
-C_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
 
 CPP_SRCS := $(wildcard $(PROJECT_DIR)/*.cpp)
 CPP_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.o)))
-CPP_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
-PROJECT_OBJS = $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
 CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
-CORE_C_DEPS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CPP_DEPS := $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o
+EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
-CORE_ASM_DEPS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
-
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
 DEFAULT_MAIN_OBJS := ./build/core/default_main.o
-DEFAULT_MAIN_CPP_DEPS := ./build/core/default_main.d
+ALL_DEPS += ./build/core/default_main.d
 
 # Objects for a system-supplied default render() file for libpd projects,
 # if the user only wants to provide the Pd files.
 DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
 DEFAULT_PD_OBJS := ./build/core/default_libpd_render.o
-DEFAULT_PD_CPP_DEPS := ./build/core/default_libpd_render.d
+ALL_DEPS += ./build/core/default_libpd_render.d
 
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
@@ -207,20 +245,20 @@ debug: DEFAULT_CPPFLAGS=-g -std=c++11
 debug: DEFAULT_CFLAGS=-g -std=c11
 debug: all
 
+# include all dependencies - necessary to force recompilation when a header is changed
+# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
+-include $(ALL_DEPS)
+
 # syntax = check syntax
 syntax: ## Only checks syntax
 syntax: SYNTAX_FLAG := -fsyntax-only
 syntax: $(PROJECT_OBJS) 
 
-# include all dependencies - necessary to force recompilation when a header is changed
-# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
--include $(CPP_DEPS) $(C_DEPS) $(ASM_DEPS)
-
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -228,7 +266,7 @@ build/core/%.o: ./core/%.c
 build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) 
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -278,10 +316,9 @@ $(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
 	$(AT) echo ' '
 
 
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-# if it is a supercollider project, there are no dependencies to compile, only run
+ifeq ($(SHOULD_BUILD),false)
+# if it is a project that does not require build, there are no dependencies to compile, nor a binary to generate
 $(OUTPUT_FILE):
-
 else
 # This is a nasty kludge: we want to be able to optionally link in a default
 # main file if the user hasn't supplied one. We check for the presence of the main()
@@ -291,9 +328,11 @@ else
 $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
-	$(AT) #If there is a .pd file AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
+ifeq ($(PROJECT_TYPE),libpd)
+#If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ ls $(PROJECT_DIR)/*.pd &>/dev/null && [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+	    $(shell bash -c '{ [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+endif
 	$(AT) echo 'Linking...'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -L/usr/xenomai/lib -L/usr/arm-linux-gnueabihf/lib -L/usr/arm-linux-gnueabihf/lib/xenomai -L/usr/lib/arm-linux-gnueabihf -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
@@ -359,7 +398,7 @@ stop: ## Stops any Bela program that is currently running
 stop:
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+ifeq ($(PROJECT_TYPE),sc)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
 	$(AT) killall scsynth 2>/dev/null; killall sclang 2>/dev/null; true
 else
@@ -491,4 +530,51 @@ update: stop
 	        echo Update succesful $(LOG); \
 	        ' $(LOG)
 
-.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect
+LIB_EXTRA_SO = libbelaextra.so
+LIB_EXTRA_A = libbelaextra.a
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
+lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
+	$(AT) echo Building lib/$(LIB_EXTRA_SO)
+	$(AT) gcc -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
+
+lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_EXTRA_A)
+	$(AT) ar rcs lib/$(LIB_EXTRA_A) $(LIB_EXTRA_OBJS)
+
+LIB_SO =libbela.so
+LIB_A = libbela.a
+LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a build/core/Gpio.o
+lib/$(LIB_SO): $(LIB_OBJS)
+	$(AT) echo Building lib/$(LIB_SO)
+	$(AT) gcc -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
+
+lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_A)
+	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
+
+lib: lib/libbelaextra.so lib/libbelaextra.a lib/libbela.so lib/libbela.a
+	
+
+HEAVY_TMP_DIR=/tmp/heavy-bela/
+HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
+HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
+HEAVY_OBJ_TARGET_DIR=$(PROJECT_DIR)/build
+HEAVY_OBJ_FILES=$(HEAVY_TMP_DIR)/*.o
+heavy-unzip-archive:
+	$(AT) [ -z "$(HEAVY_ARCHIVE)" ] && { echo "You should specify the path to the Heavy archive with HEAVY_ARCHIVE=" >&2; false; } || true
+	$(AT) [ -f "$(HEAVY_ARCHIVE)" ] || { echo "File $(HEAVY_ARCHIVE) not found" >&2; false; }
+	$(AT) rm -rf $(HEAVY_TMP_DIR)
+	$(AT) mkdir -p $(HEAVY_TMP_DIR)
+	$(AT) unzip -qq -d $(HEAVY_TMP_DIR) $(HEAVY_ARCHIVE) && rm -rf $(HEAVY_ARCHIVE)
+# For each source file, check if it already exists at the destination. If it
+# does not, or if it is `diff`erent, then mv the source file to the destination
+# We do all of this instead of simply touching all the src and obj files so
+# that we make sure that the prerequsites of `render.o` are not more recent
+# than the target unless they actually have changed.
+	$(AT) for file in $(HEAVY_SRC_FILES); do dest="$(HEAVY_SRC_TARGET_DIR)/`basename $$file`"; diff -q "$$file" "$$dest" 2>/dev/null || { mv "$$file" "$$dest"; touch "$$dest"; } ; done
+# For each object file, move it to the destination and make sure it is older than the source
+	$(AT) for file in $(HEAVY_OBJ_FILES); do touch "$$file"; mv "$$file" "$(HEAVY_OBJ_TARGET_DIR)"; done
+# If there is no render.cpp, copy the default Heavy one
+	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
+
+.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib

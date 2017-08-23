@@ -102,8 +102,6 @@ do
 	shift
 done
 
-[ $FORCE -eq 1 ] && EXPERT=1
-
 # Check that we have a directory containing at least one source file
 if [ -z "$HOST_SOURCE_PATH" ]
 then
@@ -151,11 +149,8 @@ fi
 BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
 BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
 
-[ $EXPERT -eq 0 ] && check_board_alive
-# Not sure if set_date should be taken out by expert mode ...
-# The expert will have to remember to run set_date after powering up the board 
-# in case the updated files are not being rebuilt
-[ $EXPERT -eq 0 ] && set_date
+# The expert will have to remember to run set_date after powering up the board if needed
+[ $EXPERT -eq 0 ] && check_board_alive_and_set_date
 
 # stop running process
 echo "Stop running process..."

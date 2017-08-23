@@ -11,7 +11,7 @@ SCRIPTDIR=$(dirname "$0")
 
 [ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../IDE
 [ -z "$FORCE_REPLACE" ] && FORCE_REPLACE=0
-FILES_TO_COPY="core include Makefile lib examples Doxyfile"
+FILES_TO_COPY="core include Makefile lib examples Doxyfile scripts resources pru_rtaudio.p"
 
 # The following variables are manually copied from the Makefile.
 # It is a bit nasty, but here we need to handle the case that the board may be 
@@ -100,12 +100,9 @@ while [ "$1" != "" ]; do
   shift
 done
 
-check_board_alive 
+check_board_alive_and_set_date
 # Check if destination folder exists
-# the StrictHostKeyChecking no should prevent the unkown host prompt
 ssh $BBB_ADDRESS [ -d $BBB_BELA_HOME ] && DESTINATION_EMPTY=0 || DESTINATION_EMPTY=1
-# Set the date on the board
-[ $FULL -eq 1 ] && set_date 
 
 if [ $DESTINATION_EMPTY -eq 0 ];
 then

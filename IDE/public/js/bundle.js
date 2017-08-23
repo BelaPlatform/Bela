@@ -2139,6 +2139,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var sanitise = require('../utils').sanitise;
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -2621,12 +2622,7 @@ var FileView = function (_View) {
 
 module.exports = FileView;
 
-// replace all non alpha-numeric chars other than '-' and '.' with '_'
-function sanitise(name) {
-	return name.replace(/[^a-zA-Z0-9\.\-\/~]/g, '_');
-}
-
-},{"../popup":18,"./View":14}],9:[function(require,module,exports){
+},{"../popup":18,"../utils":19,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2838,6 +2834,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var sanitise = require('../utils').sanitise;
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -3169,12 +3166,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-// replace all non alpha-numeric chars other than '-' and '.' with '_'
-function sanitise(name) {
-	return name.replace(/[^a-zA-Z0-9\.\-]/g, '_');
-}
-
-},{"../popup":18,"./View":14}],11:[function(require,module,exports){
+},{"../popup":18,"../utils":19,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3897,7 +3889,7 @@ var ToolbarView = function (_View) {
 					}
 				}
 
-				bela += data.belaLinux * rootCPU;
+				if (data.belaLinux) bela += data.belaLinux * rootCPU;
 			}
 
 			$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
@@ -4931,6 +4923,16 @@ function example(cb, arg, delay, cancelCb) {
 
 	popup.find('.popup-continue').trigger('focus');
 }
+
+},{}],19:[function(require,module,exports){
+'use strict';
+
+// replace most non alpha-numeric chars with '_'
+function sanitise(name) {
+	return name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
+}
+
+module.exports.sanitise = sanitise;
 
 },{}]},{},[16])
 
