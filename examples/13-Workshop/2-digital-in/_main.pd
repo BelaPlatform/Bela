@@ -1,5 +1,5 @@
-#N canvas 106 45 676 441 10;
-#X obj 60 297 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+#N canvas 106 45 674 519 10;
+#X obj 60 297 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
 #X text 88 296 Blink that LED!;
 #X obj 64 149 s bela_setDigital;
@@ -24,11 +24,11 @@
 #X text 385 232 to the console of the IDE.;
 #X text 385 248 Task2: trigger the;
 #X text 534 248 with each button down;
-#X text 385 262 Task3: make it push-on push-off;
 #X text 385 276 Task4: alternate between [kick] and;
 #X text 385 291 Task5: add a debouncer using [delay].;
-#X obj 503 247 kick;
+#X obj 502 248 kick;
 #X obj 609 274 snare;
+#X text 385 262 Task3: make it trigger only on push;
 #X connect 0 0 15 0;
 #X connect 3 0 16 0;
 #X connect 16 0 2 0;

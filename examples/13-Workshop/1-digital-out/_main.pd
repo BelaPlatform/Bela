@@ -18,14 +18,14 @@
 #X text 64 40 ===============;
 #X msg 64 124 out 17;
 #X obj 60 303 s bela_digitalOut17;
-#X obj 60 252 metro 200;
 #X text 400 215 Task: change the rate of flashing;
 #X text 400 164 Hardware: connect an LED to P9_12 \, see;
 #X text 400 177 attached diagram and Bela pin diagram.;
 #X text 200 29 to access the Bela IDE.;
 #X text 200 17 Go to webpage http://192.168.7.2;
+#X obj 60 252 metro 1000;
 #X connect 1 0 17 0;
-#X connect 2 0 18 0;
+#X connect 2 0 23 0;
 #X connect 5 0 16 0;
 #X connect 16 0 4 0;
-#X connect 18 0 1 0;
+#X connect 23 0 1 0;
