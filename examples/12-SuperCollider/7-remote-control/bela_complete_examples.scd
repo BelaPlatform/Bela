@@ -1,18 +1,11 @@
-/**
-  Please note that support for SuperCollider on Bela is still experimental,
-so feel free to report issues here: https://github.com/sensestage/supercollider/issues
+/*****
+Run the code below from the SuperCollider IDE after you started scsynth on Bela (see -main.scd)
 
- This file contains code that should be run on your computer from
- within the SuperCollider IDE, while `scsynth` is running on the board.
+Make sure you have the Bela Remote SC classes are in the extensions directory of your SC installation.
+Get them here: https://github.com/sensestage/bela-remote
 
- In order to start `scsynth`, run the `12-SuperCollider/start-scsynth`
- example project or run the `scripts/scsynth.sh` script from a terminal
- on the host.
-
- You will need to add the class files for the Bela-specific UGens to your
- computer in order to run these scripts. You can get them here
- https://github.com/sensestage/bela-remote
- */
+(c) 2017: Jonathan Reus, Marije Baalman, Giulio Moro, Andrew McPherson
+*****/
 
 // connect to an already running server on Bela.
 Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));

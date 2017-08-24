@@ -117,7 +117,7 @@ def __get_file_url_stub_for_generator(json_api, g):
 
 
 
-def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False, service_token=None, force_new_patch=False):
+def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False, service_token=None, force_new_patch=False, archive_only=False):
     """ Upload a directory to the Heavy Cloud Service.
 
         Parameters
@@ -169,6 +169,9 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
 
         force_new_patch : bool, optional
             Indicate that a new patch should be created with the given name, if it does not yet exist.
+
+        archive_only : bool, optional
+            Only retrieve the archive from the server and place it in the destination folder without unzipping it.
     """
     # https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
@@ -412,9 +415,13 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                         target_dir = os.path.abspath(os.path.expanduser(output_dirs[i]))
                     if not os.path.exists(target_dir):
                         os.makedirs(target_dir) # ensure that the output directory exists
-                    __unzip(c_zip_path, target_dir)
+                    if archive_only:
+                        dest_zip_path = os.path.join(target_dir, os.path.basename(c_zip_path))
+                        os.rename(c_zip_path, dest_zip_path)
+                    else:
+                        __unzip(c_zip_path, target_dir)
 
-                    if g == "c-src" and y:
+                    if g == "c-src" and y and not archive_only:
                         keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
                         for f in os.listdir(target_dir):
                             if not f.endswith(keep_files):
@@ -517,6 +524,10 @@ def main():
         "--force_new_patch",
         help="Create a new patch if the given name doesn't already exist.",
         action="count")
+    parser.add_argument(
+        "--archive_only",
+        help="Only retrieve the archive from the server, do not unzip it.",
+        action="count")
     args = parser.parse_args()
 
     exit_code, reponse_obj = upload(
@@ -534,7 +545,8 @@ def main():
         token=args.token,
         clear_token=args.clear_token,
         service_token=args.service_token,
-        force_new_patch=args.force_new_patch)
+        force_new_patch=args.force_new_patch,
+        archive_only = args.archive_only)
 
     # exit and return the exit code
     sys.exit(exit_code)

@@ -89,6 +89,11 @@
 static inline float audioRead(BelaContext *context, int frame, int channel);
 
 /**
+ * Non-interleaved version of audioRead()
+ */
+static inline float audioReadNI(BelaContext *context, int frame, int channel);
+
+/**
  * \brief Write an audio output, specifying the frame number (when to write) and the channel.
  *
  * This function sets the value of an audio output, at the time indicated by \c frame. Valid
@@ -104,6 +109,11 @@ static inline float audioRead(BelaContext *context, int frame, int channel);
 static inline void audioWrite(BelaContext *context, int frame, int channel, float value);
 
 /**
+ * Non-interleaved version of audioWrite()
+ */
+static inline void audioWriteNI(BelaContext *context, int frame, int channel, float value);
+
+/**
  * \brief Read an analog input, specifying the frame number (when to read) and the channel.
  *
  * This function returns the value of an analog input, at the time indicated by \c frame.
@@ -117,6 +127,11 @@ static inline void audioWrite(BelaContext *context, int frame, int channel, floa
  * \return Value of the analog input, range 0 to 1.
  */
 static inline float analogRead(BelaContext *context, int frame, int channel);
+
+/**
+ * Non-interleaved version of analogRead()
+ */
+static inline float analogReadNI(BelaContext *context, int frame, int channel);
 
 /**
  * \brief Write an analog output, specifying the frame number (when to write) and the channel.
@@ -135,6 +150,11 @@ static inline float analogRead(BelaContext *context, int frame, int channel);
  * \param value Value to write to the output, range 0 to 1.
  */
 static inline void analogWrite(BelaContext *context, int frame, int channel, float value);
+
+/**
+ * Non-interleaved version of analogWrite()
+ */
+static inline void analogWriteNI(BelaContext *context, int frame, int channel, float value);
 
 /**
  * \brief Write an analog output, specifying the frame number (when to write) and the channel.
@@ -156,6 +176,11 @@ static inline void analogWrite(BelaContext *context, int frame, int channel, flo
  * \param value Value to write to the output, range 0 to 1.
  */
 static inline void analogWriteOnce(BelaContext *context, int frame, int channel, float value);
+
+/**
+ * Non-interleaved version of analogWriteNI();
+ */
+static inline void analogWriteOnceNI(BelaContext *context, int frame, int channel, float value);
 
 /**
  * \brief Read a digital input, specifying the frame number (when to read) and the pin.
@@ -366,11 +391,19 @@ static inline float audioRead(BelaContext *context, int frame, int channel) {
 	return context->audioIn[frame * context->audioInChannels + channel];
 }
 
+static inline float audioReadNI(BelaContext *context, int frame, int channel) {
+	return context->audioIn[channel * context->audioFrames + frame];
+}
+
 // audioWrite()
 //
 // Sets a given audio output channel to a value for the current frame
 static inline void audioWrite(BelaContext *context, int frame, int channel, float value) {
 	context->audioOut[frame * context->audioOutChannels + channel] = value;
+}
+
+static inline void audioWriteNI(BelaContext *context, int frame, int channel, float value) {
+	context->audioOut[channel * context->audioFrames + frame] = value;
 }
 
 // analogRead()
@@ -380,13 +413,8 @@ static inline float analogRead(BelaContext *context, int frame, int channel) {
 	return context->analogIn[frame * context->analogInChannels + channel];
 }
 
-// analogWrite()
-//
-// Sets a given analog output channel to a value for the current frame and, if persistent outputs are
-// enabled, for all subsequent frames
-static inline void analogWrite(BelaContext *context, int frame, int channel, float value) {
-	for(unsigned int f = frame; f < context->analogFrames; f++)
-		context->analogOut[f * context->analogOutChannels + channel] = value;
+static inline float analogReadNI(BelaContext *context, int frame, int channel) {
+	return context->analogIn[channel * context->analogFrames + frame];
 }
 
 // analogWriteOnce()
@@ -394,6 +422,26 @@ static inline void analogWrite(BelaContext *context, int frame, int channel, flo
 // Sets a given channel to a value for only the current frame
 static inline void analogWriteOnce(BelaContext *context, int frame, int channel, float value) {
 	context->analogOut[frame * context->analogOutChannels + channel] = value;
+}
+
+static inline void analogWriteOnceNI(BelaContext *context, int frame, int channel, float value) {
+	context->analogOut[channel * context->analogFrames + frame] = value;
+}
+
+// analogWrite()
+//
+// Sets a given analog output channel to a value for the current frame and, if persistent outputs are
+// enabled, for all subsequent frames
+static inline void analogWrite(BelaContext *context, int frame, int channel, float value) {
+	unsigned int f;
+	for(f = frame; f < context->analogFrames; f++)
+		analogWriteOnce(context, f, channel, value);
+}
+
+static inline void analogWriteNI(BelaContext *context, int frame, int channel, float value) {
+	unsigned int f;
+	for(f = frame; f < context->analogFrames; f++)
+		analogWriteOnceNI(context, f, channel, value);
 }
 
 // digitalRead()
@@ -407,7 +455,8 @@ static inline int digitalRead(BelaContext *context, int frame, int channel) {
 //
 // Sets a given digital output channel to a value for the current frame and all subsequent frames
 static inline void digitalWrite(BelaContext *context, int frame, int channel, int value) {
-	for(unsigned int f = frame; f < context->digitalFrames; f++) {
+	unsigned int f;
+	for(f = frame; f < context->digitalFrames; f++) {
 		if(value)
 			context->digital[f] |= 1 << (channel + 16);
 		else
@@ -429,7 +478,8 @@ static inline void digitalWriteOnce(BelaContext *context, int frame, int channel
 //
 // Sets the direction of a digital pin for the current frame and all subsequent frames
 static inline void pinMode(BelaContext *context, int frame, int channel, int mode) {
-	for(unsigned int f = frame; f < context->digitalFrames; f++) {
+	unsigned int f;
+	for(f = frame; f < context->digitalFrames; f++) {
 		if(mode == INPUT)
 			context->digital[f] |= (1 << channel);
 		else

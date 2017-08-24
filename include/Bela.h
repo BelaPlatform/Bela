@@ -104,94 +104,6 @@ extern "C"
 struct option;
 
 /**
- * \ingroup control
- * \brief Structure containing initialisation parameters for the real-time
- * audio control system.
- *
- * This structure is initialised using Bela_defaultSettings(). Its contents
- * are used up through the point of calling
- * Bela_initAudio() at which point it is no longer needed.
- */
-typedef struct {
-	// These items might be adjusted by the user:
-
-	/// \brief Number of (analog) frames per period.
-	///
-	/// Number of audio frames depends on relative sample rates of the two. By default,
-	/// audio is twice the sample rate, so has twice the period size.
-	int periodSize;
-	/// Whether to use the analog input and output
-	int useAnalog;
-	/// Whether to use the 16 programmable GPIOs
-	int useDigital;
-	/// How many audio input channels
-	int numAudioInChannels;
-	/// How many audio out channels
-	int numAudioOutChannels;
-	/// How many analog input channels
-	int numAnalogInChannels;
-	/// How many analog output channels
-	int numAnalogOutChannels;
-	/// How many channels for the GPIOs
-	int numDigitalChannels;
-
-	/// Whether to begin with the speakers muted
-	int beginMuted;
-	/// Level for the audio DAC output
-	float dacLevel;
-	/// Level for the audio ADC input
-	float adcLevel;
-	/// Gains for the PGA, left and right channels
-	float pgaGain[2];
-	/// Level for the headphone output
-	float headphoneLevel;
-	/// How many channels to use on the multiplexer capelet, if enabled
-	int numMuxChannels;
-	/// Which audio expander settings to use on the input
-	unsigned int audioExpanderInputs;
-	/// Which audio expander settings to use on the input
-	unsigned int audioExpanderOutputs;
-
-	/// Which PRU (0 or 1) the code should run on
-	int pruNumber; 
-	/// The external .bin file to load. If empty will use PRU code from pru_rtaudio_bin.h
-	char pruFilename[MAX_PRU_FILENAME_LENGTH];
-	/// Whether to detect and log underruns
-	int detectUnderruns;
-	/// Whether to use verbose logging
-	int verbose;
-	/// Whether to use the blinking LED to indicate Bela is running
-	int enableLED;
-	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
-	int enableCapeButtonMonitoring;
-
-	// These items are application-dependent but should probably be
-	// determined by the programmer rather than the user
-
-	/// Whether audio/analog data should be interleaved
-	/// <b>TODO: deinterleaved buffers are not implemented yet.</b>
-	int interleave;
-	/// \brief Whether analog outputs should persist to future frames.
-	///
-	/// n.b. digital pins always persist, audio never does
-	int analogOutputsPersist;
-
-	// These items are hardware-dependent and should only be changed
-	// to run on different hardware
-
-	/// Where the codec can be found on the I2C bus
-	int codecI2CAddress;
-	/// Pin where amplifier mute can be found
-	int ampMutePin;
-	/// Port where the UDP server will listen
-	int receivePort;
-	/// Port where the UDP client will transmit
-	int transmitPort;
-	char serverName[MAX_SERVERNAME_LENGTH];
-} BelaInitSettings;
-
-
-/**
  * \ingroup render
  * \brief Structure holding audio and sensor settings and pointers to I/O data buffers.
  *
@@ -385,6 +297,105 @@ typedef struct {
 	const uint32_t flags;
 } BelaContext;
 
+/**
+ * \ingroup control
+ * \brief Structure containing initialisation parameters for the real-time
+ * audio control system.
+ *
+ * This structure is initialised using Bela_defaultSettings(). Its contents
+ * are used up through the point of calling
+ * Bela_initAudio() at which point it is no longer needed.
+ */
+typedef struct {
+	// These items might be adjusted by the user:
+
+	/// \brief Number of (analog) frames per period.
+	///
+	/// Number of audio frames depends on relative sample rates of the two. By default,
+	/// audio is twice the sample rate, so has twice the period size.
+	int periodSize;
+	/// Whether to use the analog input and output
+	int useAnalog;
+	/// Whether to use the 16 programmable GPIOs
+	int useDigital;
+	/// How many audio input channels
+	int numAudioInChannels;
+	/// How many audio out channels
+	int numAudioOutChannels;
+	/// How many analog input channels
+	int numAnalogInChannels;
+	/// How many analog output channels
+	int numAnalogOutChannels;
+	/// How many channels for the GPIOs
+	int numDigitalChannels;
+
+	/// Whether to begin with the speakers muted
+	int beginMuted;
+	/// Level for the audio DAC output
+	float dacLevel;
+	/// Level for the audio ADC input
+	float adcLevel;
+	/// Gains for the PGA, left and right channels
+	float pgaGain[2];
+	/// Level for the headphone output
+	float headphoneLevel;
+	/// How many channels to use on the multiplexer capelet, if enabled
+	int numMuxChannels;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderInputs;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderOutputs;
+
+	/// Which PRU (0 or 1) the code should run on
+	int pruNumber;
+	/// The external .bin file to load. If empty will use PRU code from pru_rtaudio_bin.h
+	char pruFilename[MAX_PRU_FILENAME_LENGTH];
+	/// Whether to detect and log underruns
+	int detectUnderruns;
+	/// Whether to use verbose logging
+	int verbose;
+	/// Whether to use the blinking LED to indicate Bela is running
+	int enableLED;
+	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
+	int enableCapeButtonMonitoring;
+
+	// These items are application-dependent but should probably be
+	// determined by the programmer rather than the user
+
+	/// Whether audio/analog data should be interleaved
+	int interleave;
+	/// \brief Whether analog outputs should persist to future frames.
+	///
+	/// n.b. digital pins always persist, audio never does
+	int analogOutputsPersist;
+	/// \brief Whether the analog channels should be resampled to
+	/// audio sampling rate.
+	int uniformSampleRate;
+	//// \brief The requested stack size for the audio thread. Defaults
+	// to 128KiB
+	unsigned int audioThreadStackSize;
+	//// \brief The requested stack size for each AuxilaryTask. Defaults
+	// to 128KiB
+	unsigned int auxiliaryTaskStackSize;
+
+	// Pointers to the user-defined functions
+	bool (*setup)(BelaContext*, void*);
+	void (*render)(BelaContext*, void*);
+	void (*cleanup)(BelaContext*, void*);
+	// These items are hardware-dependent and should only be changed
+	// to run on different hardware
+
+	/// Where the codec can be found on the I2C bus
+	int codecI2CAddress;
+	/// Pin where amplifier mute can be found
+	int ampMutePin;
+	/// Port where the UDP server will listen
+	int receivePort;
+	/// Port where the UDP client will transmit
+	int transmitPort;
+	char serverName[MAX_SERVERNAME_LENGTH];
+} BelaInitSettings;
+
 /** \ingroup auxtask
  *
  * Auxiliary task variable. Auxiliary tasks are created using createAuxiliaryTask() and
@@ -558,6 +569,16 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData);
  * \return 0 on success, or nonzero if an error occurred.
  */
 int Bela_startAudio();
+
+/**
+ * \brief Begin processing audio and sensor data in the same thread as the caller.
+ *
+ * This function will start the Bela audio/sensor system. After this function is called, the
+ * system will make periodic calls to render() until Bela_stopAudio() is called.
+ *
+ * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_runInSameThread();
 
 /**
  * \brief Stop processing audio and sensor data.
@@ -749,6 +770,10 @@ void Bela_autoScheduleAuxiliaryTasks();
  */
 
 int Bela_startAuxiliaryTask(AuxiliaryTask task);
+int Bela_startAllAuxiliaryTasks();
+void Bela_stopAllAuxiliaryTasks();
+void Bela_deleteAllAuxiliaryTasks();
+
 /** @} */
 #include <Utilities.h>
 
