@@ -8,6 +8,8 @@
 SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
 . $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
+[ -z "$BELA_EXPERT_MODE" ] && BELA_EXPERT_MODE=0
+[ -z "$BELA_DONT_RUN_FIRST" ] && BELA_DONT_RUN_FIRST=0
 
 usage_brief(){
 	printf "Usage: $THIS_SCRIPT path/to/project "
@@ -37,6 +39,9 @@ WATCH=0
 HOST_SOURCE_PATH=
 FORCE=0
 EXPERT=0
+GET=0
+OPEN=0
+FIRST_RUN=1
 while [ -n "$1" ]
 do
 	case $1 in
@@ -107,8 +112,8 @@ EXTENSIONS_TO_FIND='\.cpp\|\.c\|\.S\|\.pd\|\.scd'
 FOUND_FILES=$($FIND_STRING 2>/dev/null | grep "$EXTENSIONS_TO_FIND")
 if [ -z "$FOUND_FILES" ]
 then
-	 printf "ERROR: Please provide a directory containing .c, .cpp, .S, .pd or .scd files.\n\n"
-	 exit 1
+	printf "ERROR: Please provide a directory containing .c, .cpp, .S, .pd or .scd files.\n\n"
+	exit 1
 fi
 
 [ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$HOST_SOURCE_PATH" && pwd))"
@@ -117,7 +122,7 @@ BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no 
 BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
 
 # The expert will have to remember to run set_date after powering up the board if needed
-[ $EXPERT -eq 0 ] && check_board_alive_and_set_date
+[ "$BELA_EXPERT_MODE" -eq 0 ] && check_board_alive_and_set_date
 
 # stop running process
 echo "Stop running process..."
@@ -135,7 +140,7 @@ reference_time_file="$TMP_DIR/.time$BBB_PROJECT_NAME"
 check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
 
 uploadBuildRun(){
-	[ $WATCH -eq 1 ] && mkdir -p $TMP_DIR && touch $reference_time_file
+	[ $WATCH -eq 1 ] && mkdir -p "$TMP_DIR" && touch "$reference_time_file"
 	# Copy new source files to the board
 	printf "Copying new source files to BeagleBone..."
 	if [ "$RSYNC_AVAILABLE" -eq 0 ];
@@ -172,8 +177,14 @@ uploadBuildRun(){
 	    case_run_mode
 	fi
 }
-# run it once and then (in case) start waiting for changes
-uploadBuildRun
+
+# run it once (or just touch the time_file)  and then (in case) start waiting for changes
+if [ "$BELA_DONT_RUN_FIRST" -eq 0 ]
+then
+	uploadBuildRun
+else
+	[ $WATCH -eq 1 ] && mkdir -p "$TMP_DIR" && touch "$reference_time_file"
+fi
 
 if [ $WATCH -ne 0 ]; then
 	while true
