@@ -51,7 +51,8 @@ folder_has_changed(){
 	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
 	[ -z "$3" ] && FILTER="." || FILTER="$3"
 	# Do not watch hidden files or folders 
-	find "$1" -type f -not -path '*/\.*' -newer "$2" | grep "$FILTER"
+	REALPATH=$(cd "$1" && pwd)
+	find "$REALPATH" -type f -not -path '*/\.*' -newer "$2" | grep "$FILTER"
 	return $?
 }
 
