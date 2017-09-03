@@ -82,13 +82,13 @@ char hvDigitalInHashes[16][21]={
 	{"bela_digitalIn26"}
 };
 
+// For a message to be received here, you need to use the following syntax in Pd:
+// [send receiverName @hv_param]
 static void sendHook(
 		HeavyContextInterface *context,
 		const char *receiverName,
 		hv_uint32_t sendHash,
 		const HvMessage *m) {
-
-	// Bela digital
 
 	// Bela digital run-time messages
 
@@ -158,7 +158,7 @@ static void sendHook(
 			midi.writeNoteOn(channel, pitch, velocity);
 			break;
 		}
-		case 0xD44F9083: { // "bela_ctlout"
+		case 0xD44F9083: { // bela_ctlout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t value = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t controller = (midi_byte_t) hv_msg_getFloat(m, 1);
@@ -253,7 +253,7 @@ bool setup(BelaContext *context, void *userData)	{
 	hvMidiHashes[kmmChannelPressure] = hv_stringToHash("__hv_touchin");
 	hvMidiHashes[kmmPitchBend] = hv_stringToHash("__hv_bendin");
 
-	gHeavyContext = hv_bela_new(context->audioSampleRate);
+	gHeavyContext = hv_bela_new_with_options(context->audioSampleRate, 10, 2, 0);
 
 	gHvInputChannels = hv_getNumInputChannels(gHeavyContext);
 	gHvOutputChannels = hv_getNumOutputChannels(gHeavyContext);
@@ -306,6 +306,8 @@ bool setup(BelaContext *context, void *userData)	{
 		}
 	}
 	// unlike libpd, no need here to bind the bela_digitalOut.. receivers
+	// but make sure you do something like [send receiverName @hv_param]
+	// when you want to send a message from Heavy to the wrapper.
 	multiplexerTableHash = hv_stringToHash(multiplexerArray);
 	if(context->multiplexerChannels > 0){
 		pdMultiplexerActive = true;

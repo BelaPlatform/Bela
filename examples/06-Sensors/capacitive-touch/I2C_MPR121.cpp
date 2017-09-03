@@ -94,7 +94,7 @@ uint16_t  I2C_MPR121::touched(void) {
 
 
 uint8_t I2C_MPR121::readRegister8(uint8_t reg) {
-    unsigned char inbuf, outbuf;
+    i2c_char_t inbuf, outbuf;
     struct i2c_rdwr_ioctl_data packets;
     struct i2c_msg messages[2];
 
@@ -127,7 +127,7 @@ uint8_t I2C_MPR121::readRegister8(uint8_t reg) {
 }
 
 uint16_t I2C_MPR121::readRegister16(uint8_t reg) {
-    unsigned char inbuf[2], outbuf;
+    i2c_char_t inbuf[2], outbuf;
     struct i2c_rdwr_ioctl_data packets;
     struct i2c_msg messages[2];
 

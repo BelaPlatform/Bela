@@ -11,6 +11,9 @@
 [ -z "$BBB_PROJECT_HOME" ] && BBB_PROJECT_HOME="${BBB_BELA_HOME}/projects/"
 [ -z "$RUN_MODE" ] && RUN_MODE=foreground
 [ -z "$USE_RSYNC" ] && USE_RSYNC=1
+#check if the sleep we are using supports float
+sleep 0.0001 2>/dev/null && SLEEP_SUPPORTS_FLOAT=1 || SLEEP_SUPPORTS_FLOAT=0
+[ -z "$DEFAULT_SLEEP_WHEN_WATCHING" ] && [ $SLEEP_SUPPORTS_FLOAT -eq 1 ] && DEFAULT_SLEEP_WHEN_WATCHING=0.5 || DEFAULT_SLEEP_WHEN_WATCHING=1
 
 THIS_SCRIPT=`basename "$0"`
 #trap "echo; exit 0;" 2 9
@@ -48,27 +51,23 @@ folder_has_changed(){
 	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
 	[ -z "$3" ] && FILTER="." || FILTER="$3"
 	# Do not watch hidden files or folders 
-	find "$1" -type f -not -path '*/\.*' -newer "$2" | grep "$FILTER"
+	REALPATH=$(cd "$1" && pwd)
+	find "$REALPATH" -type f -not -path '*/\.*' -newer "$2" | grep "$FILTER"
 	return $?
 }
 
 wait_for_change(){
 	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
-	[ -z "$4" ] && SLEEP=0.5 || SLEEP="$4"
+	[ -z "$4" ] && SLEEP=$DEFAULT_SLEEP_WHEN_WATCHING || SLEEP="$4"
 	while ! folder_has_changed "$1" "$2" "$3"
 	do
 		sleep $SLEEP;	
 	done
 }
 
-set_date(){
-# an optional parameter will be executed as part of the same ssh session
-	ssh $BBB_ADDRESS "date -s \"`date '+%Y%m%d %T %z'`\" > /dev/null; $1"
-}
-
-check_board_alive(){
+check_board_alive_and_set_date(){
 	printf "Checking the board is up and running at $BBB_ADDRESS..."
-	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 $BBB_ADDRESS exit && printf "done\n" || {
+	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 $BBB_ADDRESS "date -s \"`date '+%Y%m%d %T %z'`\" > /dev/null" && printf "done\n" || {
 		printf "\nERROR: the board does not respond at $BBB_ADDRESS, check that the address is correct and the board is connected.\n";
 		exit 1;
 	}
