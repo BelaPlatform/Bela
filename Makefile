@@ -84,7 +84,7 @@ endif
 ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
   RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
 else
-  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS) --session=bela
+  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS) #--session=bela
 endif
 RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
@@ -113,14 +113,19 @@ ifneq ($(strip $(TEST_LIBPD)), )
   LIBS += -lpd -lpthread
 endif
 
+XENOMAI_SKIN=posix
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
-# Xenomai flags and cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
-DEFAULT_XENOMAI_CFLAGS := $(shell /usr/xenomai/bin/xeno-config --cflags --skin=native)
+# Xenomai flags
+DEFAULT_XENOMAI_CFLAGS := $(shell /usr/xenomai/bin/xeno-config --cflags --skin=$(XENOMAI_SKIN))
+DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN)
+# Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
-DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=native --ldflags)
+DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=$(XENOMAI_SKIN) --ldflags)
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+# remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out $wildcard(*/usr/xenomai/lib/cobalt.wrappers), $(DEFAULT_XENOMAI_LDFLAGS))
 
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11

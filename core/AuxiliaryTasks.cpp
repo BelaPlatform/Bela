@@ -1,15 +1,30 @@
 #include "../include/Bela.h"
-#include <native/task.h>
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
+#include <string.h>
+
+#if defined(XENOMAI_SKIN_native)
+#include <native/task.h>
+#endif
+
+#if defined(XENOMAI_SKIN_posix)
+#include <cobalt/pthread.h>
+#endif
+
+#include "../include/xenomai_wraps.h"
 
 using namespace std;
 //
 // Data structure to keep track of auxiliary tasks we
 // can schedule
 typedef struct {
+#ifdef XENOMAI_SKIN_native
 	RT_TASK task;
+#endif
+#ifdef XENOMAI_SKIN_posix
+	pthread_t task;
+#endif
 	void (*argfunction)(void*);
 	void (*function)(void);
 	char *name;
@@ -33,6 +48,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 {
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
+#ifdef XENOMAI_SKIN_native
 	// Attempt to create the task
 	unsigned int stackSize = gAuxiliaryTaskStackSize;
 	if(int ret = rt_task_create(&(newTask->task), name, stackSize, priority, T_JOINABLE | T_FPU)) {
@@ -40,6 +56,11 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 		free(newTask);
 		return 0;
 	}
+#endif
+#ifdef XENOMAI_SKIN_posix
+	fprintf(stderr, "AuxiliaryTask not supported with POSIX Xenomai API\n");
+	exit(1);
+#endif
 
 	// Populate the rest of the data structure and store it in the vector
 	newTask->argfunction = functionToCall;
@@ -63,7 +84,9 @@ void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 		Bela_startAuxiliaryTask(task); // is started (or ready to be resumed), but it probably is the fastest.
                                            // A safer approach would use rt_task_inquire()
 	}
+#ifdef XENOMAI_SKIN_native
 	rt_task_resume(&taskToSchedule->task);
+#endif
 }
 
 // Calculation loop that can be used for other tasks running at a lower
@@ -82,7 +105,9 @@ void auxiliaryTaskLoop(void *taskStruct)
     void (*auxiliary_function)(void) = task->function;
     
 	// Wait for a notification
+#ifdef XENOMAI_SKIN_native
 	rt_task_suspend(NULL);
+#endif
 
 	while(!gShouldStop) {
 		// Then run the calculations
@@ -97,7 +122,9 @@ void auxiliaryTaskLoop(void *taskStruct)
 		// already been called
 		if(!gShouldStop){
 		// Wait for a notification from Bela_scheduleAuxiliaryTask
+#ifdef XENOMAI_SKIN_native
 			rt_task_suspend(NULL);
+#endif
 		} else {
 			break;
 		}
@@ -110,10 +137,12 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 	taskStruct = (InternalAuxiliaryTask *)task;
 	if(taskStruct->started == true)
 		return 0;
+#ifdef XENOMAI_SKIN_native
 	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
 		cerr << "Error: unable to start Xenomai task " << taskStruct->name << ": " <<  strerror(-ret) << endl;
 		return -1;
 	}
+#endif
 	taskStruct->started = true;
 	return 0;
 }
@@ -142,8 +171,10 @@ void Bela_stopAllAuxiliaryTasks()
 		InternalAuxiliaryTask *taskStruct = *it;
 
 		// Wake up each thread and join it
+#ifdef XENOMAI_SKIN_native
 		rt_task_resume(&(taskStruct->task));
 		rt_task_join(&(taskStruct->task));
+#endif
 	}
 }
 
@@ -155,8 +186,9 @@ void Bela_deleteAllAuxiliaryTasks()
 		InternalAuxiliaryTask *taskStruct = *it;
 
 		// Delete the task
+#ifdef XENOMAI_SKIN_native
 		rt_task_delete(&taskStruct->task);
-
+#endif
 		// Free the name string and the struct itself
 		free(taskStruct->name);
 		free(taskStruct);
