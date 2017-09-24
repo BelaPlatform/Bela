@@ -24,14 +24,22 @@
 #include <assert.h>
 #include <vector>
 
-// Xenomai-specific includes
 #include <sys/mman.h>
+
+// Xenomai-specific includes
+#if defined(XENOMAI_SKIN_native)
 #include <native/task.h>
 #include <native/timer.h>
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 #include <native/intr.h>
 #endif
 #include <rtdk.h>
+#endif
+
+#if defined(XENOMAI_SKIN_posix)
+#include <cobalt/pthread.h>
+#endif
+#include "../include/xenomai_wraps.h"
 
 #include "../include/Bela.h"
 #include "../include/PRU.h"
@@ -46,7 +54,12 @@
 using namespace std;
 
 // Real-time tasks and objects
+#ifdef XENOMAI_SKIN_native
 RT_TASK gRTAudioThread;
+#endif
+#ifdef XENOMAI_SKIN_posix
+pthread_t gRTAudioThread;
+#endif
 const char gRTAudioThreadName[] = "bela-audio";
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
@@ -117,6 +130,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	gBelaRender = settings->render;
 	gBelaCleanup = settings->cleanup;
+#ifdef XENOMAI_SKIN_native
 	RT_TASK otherBelaTask;
 	int returnVal = rt_task_bind(&otherBelaTask, gRTAudioThreadName, TM_NONBLOCK);
 	if(returnVal == 0) {
@@ -128,6 +142,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		cout << "Error " << returnVal << " occurred determining if another Bela task is running.\n";
 		return -1;
 	}
+#endif
+#ifdef XENOMAI_SKIN_posix
+#warning No check is currently in place to test for another thread which is already running
+#endif
 	
 	// Sanity checks
 	if(settings->pruNumber < 0 || settings->pruNumber > 1) {
@@ -140,7 +158,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	
 	enable_runfast();
+#ifdef XENOMAI_SKIN_native
 	rt_print_auto_init(1);
+#endif
 
 	Bela_setVerboseLevel(settings->verbose);
 	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
@@ -406,6 +426,7 @@ static int startAudioInline(){
 
 int Bela_runInSameThread()
 {
+#ifdef XENOMAI_SKIN_native
 	RT_TASK thisTask;
 	int ret = 0;
 
@@ -439,16 +460,25 @@ int Bela_runInSameThread()
 	// Once you get out of it, stop properly (in case you didn't already):
 	Bela_stopAudio();
 	return ret;
+#endif
+#ifdef XENOMAI_SKIN_posix
+	fprintf(stderr, "Turning the current thread into the audio thread is not supported with the POSIX skin.\n");
+	exit(1);
+#endif
 }
 
 int Bela_startAudio()
 {
 	// Create audio thread with high Xenomai priority
 	unsigned int stackSize = gAudioThreadStackSize;
-	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, stackSize, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
+	int ret;
+#ifdef XENOMAI_SKIN_native
+	if(ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, stackSize, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU))
+	{
 		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}
+#endif
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	// Create an interrupt which the audio thread receives from the PRU
@@ -459,15 +489,26 @@ int Bela_startAudio()
 	}
 #endif
 
-	int ret = startAudioInline();
+	ret = startAudioInline();
 	if(ret < 0)
 		return ret;
 
 	// Start all RT threads
-	if(int ret = rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
+#ifdef XENOMAI_SKIN_native
+	if(ret = rt_task_start(&gRTAudioThread, &audioLoop, 0))
+	{
 		  cout << "Error: unable to start Xenomai audio thread: " << strerror(-ret) << endl;
 		  return -1;
 	}
+#endif
+#ifdef XENOMAI_SKIN_posix
+	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, BELA_AUDIO_PRIORITY, stackSize, (pthread_callback_t*)audioLoop, NULL);
+	if(ret)
+	{
+		fprintf(stderr, "Error: unable to start Xenomai audio thread: %d %s\n", ret, strerror(-ret));
+		return -1;
+	}
+#endif
 
 	ret = Bela_startAllAuxiliaryTasks();
 	return ret;
@@ -485,7 +526,13 @@ void Bela_stopAudio()
 		cout << "Stopping audio...\n";
 
 	// Now wait for threads to respond and actually stop...
+#ifdef XENOMAI_SKIN_native
 	rt_task_join(&gRTAudioThread);
+#endif
+#ifdef XENOMAI_SKIN_posix
+	void* threadReturnValue;
+	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
+#endif
 
 	Bela_stopAllAuxiliaryTasks();
 }
@@ -507,7 +554,12 @@ void Bela_cleanupAudio()
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	rt_intr_delete(&gRTAudioInterrupt);
 #endif
+#ifdef XENOMAI_SKIN_native
 	rt_task_delete(&gRTAudioThread);
+#endif
+#ifdef XENOMAI_SKIN_posix
+	printf("Not sure if we should emulate rt_taks_delete\n");
+#endif
 
 	if(gPRU != 0)
 		delete gPRU;

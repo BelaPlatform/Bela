@@ -36,11 +36,12 @@ extern "C"
 #include <stdint.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <rtdk.h>
+#include <stdio.h>
+//#include <rtdk.h>
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 
-#ifdef _XENOMAI_TRANK_RTDK_H
+#if defined(_XENOMAI_TRANK_RTDK_H) || defined(XENOMAI_SKIN_posix)
 #define XENOMAI_MAJOR 3
 #else
 #define XENOMAI_MAJOR 2

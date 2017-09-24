@@ -34,11 +34,21 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-// Xenomai-specific includes
 #include <sys/mman.h>
+#include <string.h>
+
+// Xenomai-specific includes
+#if defined(XENOMAI_SKIN_native)
 #include <native/task.h>
 #include <native/timer.h>
 #include <rtdk.h>
+#endif
+
+#if defined(XENOMAI_SKIN_posix)
+#include <cobalt/pthread.h>
+#endif
+
+#include "../include/xenomai_wraps.h"
 
 using namespace std;
 
@@ -654,11 +664,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 	// Polling interval is 1/4 of the period
 #ifdef CTAG_FACE_8CH
 	//TODO: Recommendation by Giulio: context->audioFrames / context->audioSampleRate / 4.f * 1000000000. => not working (kernel freeze)
-	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
+	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
 #elif defined(CTAG_BEAST_16CH)
-	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
+	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
 #else
-	RTIME sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
+	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
 #endif
 	//sleepTime = context->audioFrames / context->audioSampleRate / 4.f * 1000000000.f;
 #endif
@@ -683,10 +693,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 			last_digital_buffer[n] = context->digital[n];
 		}
 	}
-
-	// TESTING
-	// uint32_t testCount = 0;
-	// RTIME startTime = rt_timer_read();
 
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	int result;
@@ -719,7 +725,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 #else
 		// Poll
 		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
-			rt_task_sleep(sleepTime);
+			task_sleep_ns(sleepTime);
 		}
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
@@ -1263,7 +1269,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
 
 	// Wait two buffer lengths for the PRU to finish
-	rt_task_sleep(PRU_SAMPLE_INTERVAL_NS * context->analogFrames * 4 * 2);
+	task_sleep_ns(8 * sleepTime);
 
 	// Clean up after ourselves
 	free(context->audioIn);
