@@ -76,6 +76,20 @@ SHOULD_BUILD=false
 HAS_RUN_FILE=true
 PROJECT_TYPE=custom
 endif
+
+# if heavy-unzip-archive, then we should have a HEAVY_ARCHIVE=...
+ifeq (heavy-unzip-archive,$(filter heavy-unzip-archive,$(MAKECMDGOALS)))
+# which hopefully points to a valid  Heavy zip archive.
+ifeq (,$(HEAVY_ARCHIVE))
+$(error Missing HEAVY_ARCHIVE=... for target heavy-unzip-archive)
+else
+# If that is the case, then we can consider this project a cpp project
+# (assuming there are some other targets AFTER heavy-unzip-archive,
+# otherwise it will fail miserably)
+PROJECT_TYPE=cpp
+endif
+endif # heavy-unzip-archive
+
 ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
 PROJECT_TYPE=sc
 SHOULD_BUILD=false
