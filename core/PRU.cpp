@@ -50,6 +50,7 @@
 
 #include "../include/xenomai_wraps.h"
 
+bool memcp = true;
 using namespace std;
 
 // Select whether to use NEON-based sample conversion
@@ -149,6 +150,8 @@ PRU::PRU(InternalBelaContext *input_context)
   analog_enabled(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   gpio_test_pin_enabled(false),
+  pru_dataram(nullptr), pru_sharedram(nullptr),
+  pru_dataram_mirror(nullptr), pru_sharedram_mirror(nullptr),
   pru_buffer_comm(0), pru_buffer_spi_dac(0), pru_buffer_spi_adc(0),
   pru_buffer_digital(0), pru_buffer_audio_dac(0), pru_buffer_audio_adc(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
@@ -160,6 +163,8 @@ PRU::PRU(InternalBelaContext *input_context)
 // Destructor
 PRU::~PRU()
 {
+	free(pru_dataram_mirror);
+	free(pru_sharedram_mirror);
 	if(running)
 		disable();
 	exitPRUSS();
@@ -272,7 +277,6 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 {
 	hardware_analog_sample_rate = context->analogSampleRate;
 	hardware_analog_frames = context->analogFrames;
-	uint32_t *pruMem = 0;
 
 	if(!gpio_enabled) {
 		fprintf(stderr, "PRU::initialise() called before GPIO enabled\n");
@@ -295,10 +299,14 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
     /* Map PRU's INTC */
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
+	pru_sharedram_mirror = (uint32_t*)calloc(1, 16384);
+	pru_dataram_mirror = (uint32_t*)calloc(1, 16384);
+
     /* Map PRU memory to pointers */
-	prussdrv_map_prumem (PRUSS0_SHARED_DATARAM, (void **)&pruMem);
-    pru_buffer_comm = (uint32_t *)&pruMem[PRU_MEM_COMM_OFFSET/sizeof(uint32_t)];
-	pru_buffer_audio_dac = (int16_t *)&pruMem[PRU_MEM_MCASP_OFFSET/sizeof(uint32_t)];
+	prussdrv_map_prumem (PRUSS0_SHARED_DATARAM, (void **)&pru_sharedram);
+    pru_buffer_comm = (uint32_t *)&pru_sharedram[PRU_MEM_COMM_OFFSET/sizeof(uint32_t)];
+	pru_buffer_audio_dac = (int16_t *)&pru_sharedram_mirror[PRU_MEM_MCASP_OFFSET/sizeof(uint32_t)];
+
 
 	/* ADC memory starts 2(ch)*2(buffers)*bufsize samples later */
 #ifdef CTAG_FACE_8CH
@@ -311,8 +319,8 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 #endif
 
 	if(analog_enabled) {
-		prussdrv_map_prumem (pru_number == 0 ? PRUSS0_PRU0_DATARAM : PRUSS0_PRU1_DATARAM, (void **)&pruMem);
-		pru_buffer_spi_dac = (uint16_t *)&pruMem[PRU_MEM_DAC_OFFSET/sizeof(uint32_t)];
+		prussdrv_map_prumem (pru_number == 0 ? PRUSS0_PRU0_DATARAM : PRUSS0_PRU1_DATARAM, (void **)&pru_dataram);
+		pru_buffer_spi_dac = (uint16_t *)&pru_dataram_mirror[PRU_MEM_DAC_OFFSET/sizeof(uint32_t)];
 
 		/* ADC memory starts after N(ch)*2(buffers)*bufsize samples */
 		pru_buffer_spi_adc = &pru_buffer_spi_dac[2 * context->analogInChannels * hardware_analog_frames];
@@ -322,8 +330,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	}
 
 	if(digital_enabled) {
-		prussdrv_map_prumem (PRUSS0_SHARED_DATARAM, (void **)&pruMem);
-		pru_buffer_digital = (uint32_t *)&pruMem[PRU_MEM_DIGITAL_OFFSET/sizeof(uint32_t)];
+		pru_buffer_digital = (uint32_t *)&pru_sharedram_mirror[PRU_MEM_DIGITAL_OFFSET/sizeof(uint32_t)];
 	}
 	else {
 		pru_buffer_digital = 0;
@@ -773,6 +780,11 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 				context->digital = digital_buffer1;
 		}
 
+		unsigned int audioOutSize = context->audioFrames * sizeof(int16_t) * context->audioOutChannels;
+		unsigned int audioInSize = context->audioFrames * sizeof(int16_t) * context->audioInChannels;
+		unsigned int analogOutSize = context->analogFrames * sizeof(uint16_t) * context->analogOutChannels;
+		unsigned int analogInSize = context->analogFrames * sizeof(uint16_t) * context->analogInChannels;
+		//printf("audioOutOffset: %d, audioOutSize: %d,\n", audioOutOffset, audioOutSize);
 		// FIXME: some sort of margin is needed here to prevent the audio
 		// code from completely eating the Linux system
 		// testCount++;
@@ -780,6 +792,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 		//rt_task_sleep(sleepTime/4);
 
 		int16_t* audio_adc_pru_buffer = pru_buffer_audio_adc + pru_audio_offset;
+		int16_t* audio_adc_pru_buffer_actual = (int16_t *)&pru_sharedram[PRU_MEM_MCASP_OFFSET/sizeof(uint32_t)] + 2 * context->audioFrames * context->audioInChannels + pru_audio_offset;
+		if(memcp) memcpy(audio_adc_pru_buffer, audio_adc_pru_buffer_actual, audioInSize);
 		// Convert short (16-bit) samples to float
 #ifdef USE_NEON_FORMAT_CONVERSION
 		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
@@ -850,6 +864,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 			}
 			
 			uint16_t* adc_pru_buffer = pru_buffer_spi_adc + pru_spi_offset;
+			uint16_t* adc_pru_buffer_actual = (uint16_t *)&pru_dataram[PRU_MEM_DAC_OFFSET/sizeof(uint32_t)] + 2 * context->analogOutChannels * hardware_analog_frames + pru_spi_offset;
+			if(memcp) memcpy(adc_pru_buffer, adc_pru_buffer_actual, analogInSize);
 #ifdef USE_NEON_FORMAT_CONVERSION
 			// TODO: add support for different analogs_per_audio ratios
 			int16_to_float_analog(context->analogInChannels * context->analogFrames, 
@@ -1079,8 +1095,9 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 				}
 			}
 
-			// Convert float back to short for SPI output
+			uint16_t* dac_pru_buffer_actual = (uint16_t *)&pru_dataram[PRU_MEM_DAC_OFFSET/sizeof(uint32_t)] + pru_spi_offset;
 			uint16_t* dac_pru_buffer = pru_buffer_spi_dac + pru_spi_offset;
+			// Convert float back to short for SPI output
 #ifdef USE_NEON_FORMAT_CONVERSION
 			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
 								  context->analogOut, dac_pru_buffer);
@@ -1185,6 +1202,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 				}
 			}
 #endif
+			//rt_printf("%d\n", (unsigned int)dac_pru_buffer[0]);
+			if(memcp) memcpy(dac_pru_buffer_actual, dac_pru_buffer, analogOutSize);
 		}
 
 		if(digital_enabled) { // keep track of past digital values
@@ -1195,6 +1214,8 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 
         // Convert float back to short for audio
 		int16_t* audio_dac_pru_buffer = pru_buffer_audio_dac + pru_audio_offset;
+		int16_t* pru_buffer_audio_dac_actual = (int16_t *)&pru_sharedram[PRU_MEM_MCASP_OFFSET/sizeof(uint32_t)];
+		int16_t* audio_dac_pru_buffer_actual = pru_buffer_audio_dac_actual + pru_audio_offset;
 #ifdef USE_NEON_FORMAT_CONVERSION
 		float_to_int16_audio(2 * context->audioFrames, context->audioOut, audio_dac_pru_buffer);
 #else	
@@ -1223,6 +1244,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 			}
 		}
 #endif
+	if(memcp) memcpy(audio_dac_pru_buffer_actual, audio_dac_pru_buffer, audioOutSize);
 
 		// Check for underruns by comparing the number of samples reported
 		// by the PRU with a local counter

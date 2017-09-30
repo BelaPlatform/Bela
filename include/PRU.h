@@ -201,6 +201,10 @@ private:
 	bool gpio_test_pin_enabled; // Whether the test pin was also enabled
 
 
+	uint32_t *pru_dataram;
+	uint32_t *pru_sharedram;
+	uint32_t *pru_dataram_mirror;
+	uint32_t *pru_sharedram_mirror;
 	volatile uint32_t *pru_buffer_comm;
 	uint16_t *pru_buffer_spi_dac;
 	uint16_t *pru_buffer_spi_adc;
