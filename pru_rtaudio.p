@@ -59,8 +59,11 @@
 #define GPIO_CLEARDATAOUT 0x190
 #define GPIO_SETDATAOUT 0x194
 
-#define PRU0_ARM_INTERRUPT 19   // Interrupt signalling we're done
-#define PRU1_ARM_INTERRUPT 20   // Interrupt signalling a block is ready
+// See am335x TRM 4.4.1.2.2 Event Interface Mapping (R31): PRU System Events:
+// "The output channels [of R31] 0-15 are connected to the PRU-ICSS INTC system events 16-31, respectively. This allows the PRU to assert one of the system events 16-31 by writing to its own R31 register."
+// We will be writing to output channel 4, which is system event 20 of the PRU-ICSS INTC
+#define PRU_SYSTEM_EVENT_RTDM 20
+#define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
 #ifdef DBOX_CAPE
@@ -1686,7 +1689,8 @@ ALL_FRAMES_PROCESSED:
      // Notify ARM of buffer swap
      AND r2, reg_flags, (1 << FLAG_BIT_BUFFER1)    // Mask out every but low bit
      SBBO r2, reg_comm_addr, COMM_CURRENT_BUFFER, 4
-     MOV R31.b0, PRU1_ARM_INTERRUPT + 16           // Interrupt to host loop
+
+     MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE // Interrupt to rtdm driver on ARM
     
      // Increment the frame count in the comm buffer (for status monitoring)
      LBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4
@@ -1741,5 +1745,5 @@ SPI_CLEANUP_DONE:
 
 CLEANUP_DONE:
      // Signal the ARM that we have finished 
-     MOV R31.b0, PRU0_ARM_INTERRUPT + 16
+     MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
      HALT

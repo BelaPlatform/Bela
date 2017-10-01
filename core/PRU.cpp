@@ -37,6 +37,17 @@
 #include <sys/mman.h>
 #include <string.h>
 
+#define BELA_USE_RTDM
+
+#if !(defined(BELA_USE_XENOMAI_INTERRUPTS) || defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
+#error Define one of BELA_USE_XENOMAI_INTERRUPTS, BELA_USE_POLL, BELA_USE_RTDM
+#endif
+
+#ifdef BELA_USE_RTDM
+static char rtdm_driver[] = "/dev/rtdm/rtdm_hello_0";
+static int rtdm_fd;
+#endif
+
 // Xenomai-specific includes
 #if defined(XENOMAI_SKIN_native)
 #include <native/task.h>
@@ -285,10 +296,6 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 
 	pru_number = pru_num;
 
-    /* Initialize structure used by prussdrv_pruintc_intc   */
-    /* PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h */
-    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-
     /* Allocate and initialize memory */
     prussdrv_init();
     if(prussdrv_open(PRU_EVTOUT_0)) {
@@ -296,8 +303,14 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		return 1;
     }
 
+#ifdef BELA_USE_XENOMAI_INTERRUPTS
+    /* Initialize structure used by prussdrv_pruintc_intc   */
+    /* PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h */
+    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+
     /* Map PRU's INTC */
     prussdrv_pruintc_init(&pruss_intc_initdata);
+ #endif
 
 	pru_sharedram_mirror = (uint32_t*)calloc(1, 16384);
 	pru_dataram_mirror = (uint32_t*)calloc(1, 16384);
@@ -626,8 +639,10 @@ static int maskMcAspInterrupt()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
+#ifdef BELA_USE_XENOMAI_INTERRUPTS
 	/* Clear any old interrupt */
 	prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+#endif
 
 	/* The PRU will enable the McASP interrupts. Here we mask
 	 * them out from ARM so that they do not hang the CPU. */
@@ -636,6 +651,18 @@ int PRU::start(char * const filename)
 		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
 		return 1;
 	}
+
+#ifdef BELA_USE_RTDM
+	// Open RTDM driver
+	// NOTE: if this is moved later on, (e.g.: at the beginning of loop())
+	// it will often hang the system (especially for small blocksizes).
+	// Not sure why this would happen, perhaps a race condition between the PRU
+	// and the rtdm_driver?
+	if ((rtdm_fd = open(rtdm_driver, O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open the kernel driver: %d\n", rtdm_fd);
+		return 1;
+	}
+#endif
 
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
@@ -661,6 +688,7 @@ int PRU::start(char * const filename)
 // Main loop to read and write data from/to PRU
 void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext*, void*))
 {
+
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
 #else
@@ -729,13 +757,20 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 
 		// Clear pending PRU interrupt
 		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU1_ARM_INTERRUPT);
-#else
+#endif
+#ifdef BELA_USE_POLL
 		// Poll
 		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
 			task_sleep_ns(sleepTime);
 		}
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
+#endif
+#ifdef BELA_USE_RTDM
+		int value;
+		//rt_printf("Blocking\n");
+		read(rtdm_fd, &value, sizeof(value));
+		//rt_printf("read\n");
 #endif
 
 		if(belaCapeButton.enabled()){
@@ -1023,7 +1058,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 			}
 		}
 
-        if(digital_enabled){
+		if(digital_enabled){
 			// Use past digital values to initialize the array properly.
 			// For each frame:
 			// - pins previously set as outputs will keep the output value they had in the last frame of the previous buffer,
@@ -1285,6 +1320,9 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 #ifdef BELA_USE_XENOMAI_INTERRUPTS
 	// Turn off the interrupt for the PRU if it isn't already off
 	rt_intr_disable(pru_interrupt);
+#endif
+#if defined(BELA_USE_RTDM)
+        close(rtdm_fd);
 #endif
 
 	// Tell PRU to stop
