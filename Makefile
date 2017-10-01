@@ -19,16 +19,18 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-build/core/PRU.o: include/pru_rtaudio_bin.h
-include/pru_rtaudio_bin.h: pru_rtaudio.p
-	pasm -V2 -L -c pru_rtaudio.p
-	mv pru_rtaudio_bin.h include/
-
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
+
+BELA_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+UPDATES_DIR?=/root/Bela/updates
+UPDATE_SOURCE_DIR?=/tmp/belaUpdate
+UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board
+UPDATE_BELA_PATCH?=/tmp/belaPatch
+UPDATE_BELA_MV_BACKUP?=/tmp/belaMvBak
 
 # Type `$ make help` to get a description of the functionalities of this Makefile.
 help: ## Show this help
@@ -76,8 +78,15 @@ ifdef PROJECT
   endif
 endif
 
-OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 COMMAND_LINE_OPTIONS?=$(CL)
+ifeq ($(RUN_WITH_PRU_BIN),true)
+COMMAND_LINE_OPTIONS := --pru-file $(BELA_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
+run: pru_rtaudio.bin
+else
+build/core/PRU.o: include/pru_rtaudio_bin.h
+endif
+
+OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 RUN_FROM?=$(PROJECT_DIR)
 ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
 endif
@@ -256,6 +265,19 @@ build/core/%.o: ./core/%.S
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
+pru_rtaudio.bin: pru_rtaudio.p
+	$(AT) echo 'Building $<...'
+	$(AT) pasm -V2 -b pru_rtaudio.p > /dev/null
+	$(AT) echo ' ...done'
+	$(AT) echo ' '
+
+include/pru_rtaudio_bin.h: pru_rtaudio.p
+	$(AT) echo 'Building $<...'
+	$(AT) pasm -V2 -L -c pru_rtaudio.p > /dev/null
+	$(AT) mv pru_rtaudio_bin.h include/
+	$(AT) echo ' ...done'
+	$(AT) echo ' '
+
 # Rule for user-supplied C++ files
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
@@ -430,13 +452,6 @@ scsynthstartup: ## Enables scsynth at startup
 scsynthnostartup: ## Disables scsynth at startup
 scsynthnostartup: nostartup
 	$(AT) echo "Disabling scsynth at startup...done"
-
-BELA_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-UPDATES_DIR?=/root/Bela/updates
-UPDATE_SOURCE_DIR?=/tmp/belaUpdate
-UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board 
-UPDATE_BELA_PATCH?=/tmp/belaPatch
-UPDATE_BELA_MV_BACKUP?=/tmp/belaMvBak
 
 updateclean: ## Cleans the $(UPDATES_DIR) folder
 	$(AT) [ -n $(UPDATE_DIR) ] && rm -rf $(UPDATE_DIR) && mkdir -p $(UPDATE_DIR)
