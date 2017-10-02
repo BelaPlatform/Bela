@@ -18,6 +18,16 @@
 #include <cmath>
 #include <vector>
 
+#ifdef XENOMAI_SKIN_native
+#include <native/timer.h>
+// xenomai timer
+SRTIME prevChangeNs = 0;
+#endif
+#ifdef XENOMAI_SKIN_posix
+// xenomai timer
+long long int prevChangeNs = 0;
+#endif
+
 #undef DBOX_CAPE_TEST
 
 // Mappings from pin numbers on PCB to actual DAC channels
@@ -102,9 +112,6 @@ float gLoopPointMin = 0, gLoopPointMax	= 0;
 
 // multiplier to activate or mute audio in
 int audioInStatus = 0;
-
-// xenomai timer
-SRTIME prevChangeNs = 0;
 
 // pitch vars
 float octaveSplitter;
@@ -631,11 +638,19 @@ void render_medium_prio(void*)
 		}
 #endif
 
+#ifdef XENOMAI_SKIN_native
 		RTIME ticks		= rt_timer_read();
 		SRTIME ns		= rt_timer_tsc2ns(ticks);
 		SRTIME delta 	= ns-prevChangeNs;
+#endif
+#ifdef XENOMAI_SKIN_posix
+		struct timespec tp;
+		clock_gettime(CLOCK_HOST_REALTIME, &tp);
+		long long int ns  = tp.tv_sec * 1000000000 + tp.tv_nsec;
+		long long int delta = ns - prevChangeNs;
+#endif
 
-		// switch to next bank cannot be too frequent, to avoid seg fault! [for example sef fault happens when removing both VDD and GND from breadboard]
+		// switch to next bank cannot be too frequent, to avoid segfault! [for example segfault happens when removing both VDD and GND from breadboard]
 		if(gNextOscBank != gCurrentOscBank && delta>100000000) {
 
 			/*printf("ticks %llu\n", (unsigned long long)ticks);

@@ -42,7 +42,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <cmath>
 #include <stdio.h>
 #include <cstdlib>
-#include <rtdk.h>
 
 #define ACCEL_BUF_SIZE 8
 #define NUMBER_OF_STRINGS 9

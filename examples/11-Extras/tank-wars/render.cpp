@@ -8,7 +8,6 @@
 
 #include <Bela.h>
 #include "game.h"
-#include <rtdk.h>
 #include <cmath>
 #include <cstdlib>
 #include <time.h>

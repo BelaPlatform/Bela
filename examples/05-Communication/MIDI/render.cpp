@@ -25,7 +25,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 #include <Midi.h>
 #include <stdlib.h>
-#include <rtdk.h>
 #include <cmath>
 
 float gFreq;
