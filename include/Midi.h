@@ -11,7 +11,9 @@
 #include <Bela.h>
 #include <vector>
 #include <alsa/asoundlib.h>
+#ifdef XENOMAI_SKIN_native
 #include <native/pipe.h>
+#endif
 
 typedef unsigned char midi_byte_t;
 
@@ -380,7 +382,12 @@ private:
 	char* inId;
 	char* outId;
 	char* outPipeName;
+#ifdef XENOMAI_SKIN_native
 	RT_PIPE outPipe;
+#endif
+#ifdef XENOMAI_SKIN_posix
+	int sock;
+#endif
 };
 
 
