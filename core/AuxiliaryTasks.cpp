@@ -24,13 +24,13 @@ typedef struct {
 #endif
 #ifdef XENOMAI_SKIN_posix
 	pthread_t task;
+	pthread_cond_t cond;
+	pthread_mutex_t mutex;
 #endif
 	void (*argfunction)(void*);
-	void (*function)(void);
 	char *name;
 	int priority;
 	bool started;
-	bool hasArgs;
 	void* args;
 } InternalAuxiliaryTask;
 
@@ -38,6 +38,8 @@ vector<InternalAuxiliaryTask*> &getAuxTasks(){
 	static vector<InternalAuxiliaryTask*> auxTasks;
 	return auxTasks;
 }
+
+void auxiliaryTaskLoop(void *taskStruct);
 
 // Create a calculation loop which can run independently of the audio, at a different
 // (equal or lower) priority. Audio priority is defined in BELA_AUDIO_PRIORITY;
@@ -48,35 +50,48 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 {
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
-#ifdef XENOMAI_SKIN_native
-	// Attempt to create the task
-	unsigned int stackSize = gAuxiliaryTaskStackSize;
-	if(int ret = rt_task_create(&(newTask->task), name, stackSize, priority, T_JOINABLE | T_FPU)) {
-		cout << "Error: unable to create auxiliary task " << name << " : " << strerror(-ret) << endl;
-		free(newTask);
-		return 0;
-	}
-#endif
-#ifdef XENOMAI_SKIN_posix
-	fprintf(stderr, "AuxiliaryTask not supported with POSIX Xenomai API\n");
-	exit(1);
-#endif
-
-	// Populate the rest of the data structure and store it in the vector
+	// Populate the rest of the data structure
 	newTask->argfunction = functionToCall;
 	newTask->name = strdup(name);
 	newTask->priority = priority;
 	newTask->started = false;
 	newTask->args = args;
-	newTask->hasArgs = true;
-    
-	getAuxTasks().push_back(newTask);
+	// Attempt to create the task
+	unsigned int stackSize = gAuxiliaryTaskStackSize;
+#ifdef XENOMAI_SKIN_native
+	if(int ret = rt_task_create(&(newTask->task), name, stackSize, priority, T_JOINABLE | T_FPU))
+#endif
+#ifdef XENOMAI_SKIN_posix
+	if(int ret = __wrap_pthread_cond_init(&(newTask->cond), NULL))
+	{
+		fprintf(stderr, "Error: unable to create condition variable for auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
+		free(newTask);
+		return 0;
+	}
+	if(int ret = __wrap_pthread_mutex_init(&(newTask->mutex), NULL))
+	{
+		fprintf(stderr, "Error: unable to initialize mutex for auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
+		free(newTask);
+		return 0;
+	}
+	// Upon calling this function, the thread will start and immediately wait
+	// on the condition variable.
+	if(int ret = create_and_start_thread(&(newTask->task), name, priority, stackSize,(pthread_callback_t*)auxiliaryTaskLoop, newTask))
+#endif
+	{
+		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
+		free(newTask);
+		return 0;
+	}
 
+	// If all went well, we store the data structure in the vector
+	getAuxTasks().push_back(newTask);
 	return (AuxiliaryTask)newTask;
 }
 
-// Schedule a previously created (and started) auxiliary task. It will run when the priority rules next
-// allow it to be scheduled.
+// Schedule a previously created (and started) auxiliary task. It will run when
+// the priority rules next allow it to be scheduled. If the task is already
+// running from a previous call, then this will do nothing (lost wakeup).
 void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 {
 	InternalAuxiliaryTask *taskToSchedule = (InternalAuxiliaryTask *)task;
@@ -87,34 +102,48 @@ void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 #ifdef XENOMAI_SKIN_native
 	rt_task_resume(&taskToSchedule->task);
 #endif
+#ifdef XENOMAI_SKIN_posix
+	if(int ret = __wrap_pthread_mutex_trylock(&taskToSchedule->mutex))
+	{
+		rt_fprintf(stderr, "Unable to schedule auxiliary task: %d %s\n", ret, strerror(-ret));
+	} else {
+		ret = __wrap_pthread_cond_signal(&taskToSchedule->cond);
+		__wrap_pthread_mutex_unlock(&taskToSchedule->mutex);
+	}
+#endif
 }
 
+static void suspendCurrentTask(InternalAuxiliaryTask* task)
+{
+#ifdef XENOMAI_SKIN_native
+	rt_task_suspend(NULL);
+#endif
+#ifdef XENOMAI_SKIN_posix
+	__wrap_pthread_mutex_lock(&task->mutex);
+	__wrap_pthread_cond_wait(&task->cond, &task->mutex);
+	__wrap_pthread_mutex_unlock(&task->mutex);
+#endif
+}
 // Calculation loop that can be used for other tasks running at a lower
 // priority than the audio thread. Simple wrapper for Xenomai calls.
 // Treat the argument as containing the task structure
 //
 // The purpose of this loop is to keep the task alive between schedulings,
 // so to avoid the overhead of creating and starting the task every time:
-// this way we only requie a "rt_task_resume" to start doing some work
+// this way we only require a "rt_task_resume" to start doing some work
 void auxiliaryTaskLoop(void *taskStruct)
 {
-    InternalAuxiliaryTask *task = ((InternalAuxiliaryTask *)taskStruct);
+	InternalAuxiliaryTask *task = ((InternalAuxiliaryTask *)taskStruct);
     
 	// Get function to call from the argument
 	void (*auxiliary_argfunction)(void* args) = task->argfunction;
-    void (*auxiliary_function)(void) = task->function;
     
 	// Wait for a notification
-#ifdef XENOMAI_SKIN_native
-	rt_task_suspend(NULL);
-#endif
+	suspendCurrentTask(task);
 
 	while(!gShouldStop) {
 		// Then run the calculations
-		if (task->hasArgs)
-    	    auxiliary_argfunction(task->args);
-        else
-            auxiliary_function();
+		auxiliary_argfunction(task->args);
 
 		// we only suspend if the program is still running
 		// otherwise, if we are during cleanup, the task would hang indefinitely
@@ -122,9 +151,7 @@ void auxiliaryTaskLoop(void *taskStruct)
 		// already been called
 		if(!gShouldStop){
 		// Wait for a notification from Bela_scheduleAuxiliaryTask
-#ifdef XENOMAI_SKIN_native
-			rt_task_suspend(NULL);
-#endif
+			suspendCurrentTask(task);
 		} else {
 			break;
 		}
@@ -142,6 +169,10 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 		cerr << "Error: unable to start Xenomai task " << taskStruct->name << ": " <<  strerror(-ret) << endl;
 		return -1;
 	}
+#endif
+#ifdef XENOMAI_SKIN_posix
+	// The task has already been started upon creation.
+	// It is currently waiting on a condition variable.
 #endif
 	taskStruct->started = true;
 	return 0;
@@ -171,9 +202,21 @@ void Bela_stopAllAuxiliaryTasks()
 		InternalAuxiliaryTask *taskStruct = *it;
 
 		// Wake up each thread and join it
+		// each thread should be checking on gShouldStop, which
+		// should be true at this point. Let's make sure it is:
+		gShouldStop = 1;
 #ifdef XENOMAI_SKIN_native
-		rt_task_resume(&(taskStruct->task));
+		rt_task_resume(&taskStruct->task);
 		rt_task_join(&(taskStruct->task));
+#endif
+#ifdef XENOMAI_SKIN_posix
+		// REALLY lock the lock: we really must call _cond_signal here
+		__wrap_pthread_mutex_lock(&taskStruct->mutex);
+		__wrap_pthread_cond_signal(&taskStruct->cond);
+		__wrap_pthread_mutex_unlock(&taskStruct->mutex);
+
+		void* threadReturnValue;
+		__wrap_pthread_join(taskStruct->task, &threadReturnValue);
 #endif
 	}
 }
@@ -188,6 +231,11 @@ void Bela_deleteAllAuxiliaryTasks()
 		// Delete the task
 #ifdef XENOMAI_SKIN_native
 		rt_task_delete(&taskStruct->task);
+#endif
+#ifdef XENOMAI_SKIN_posix
+		pthread_cancel(taskStruct->task);
+		__wrap_pthread_cond_destroy(&taskStruct->cond);
+		__wrap_pthread_mutex_destroy(&taskStruct->mutex);
 #endif
 		// Free the name string and the struct itself
 		free(taskStruct->name);

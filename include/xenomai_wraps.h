@@ -86,7 +86,7 @@ static int setup_thread_attributes(pthread_attr_t *attr, int stackSize, int prio
 	}
 	if(pthread_attr_setstacksize(attr, stackSize))
 	{
-		fprintf(stderr, "Error: unable to set stack size\n");
+		fprintf(stderr, "Error: unable to set stack size to %d\n", stackSize);
 		return -1;
 	}
 	setup_sched_parameters(attr, prio);
@@ -95,10 +95,14 @@ static int setup_thread_attributes(pthread_attr_t *attr, int stackSize, int prio
 static int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
-	setup_thread_attributes(&attr, stackSize, priority);
-	int ret = __wrap_pthread_create(task, &attr, callback, arg);
-	if(ret)
+	if(int ret = setup_thread_attributes(&attr, stackSize, priority))
+	{
 		return ret;
+	}
+	if(int ret = __wrap_pthread_create(task, &attr, callback, arg))
+	{
+		return ret;
+	}
 	pthread_setname_np(*task, taskName);
 	pthread_attr_destroy(&attr);
 	return 0;

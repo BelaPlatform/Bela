@@ -23,7 +23,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>	// to schedule lower prio parallel process
-#include <rtdk.h>
 #include <cmath>
 #include <stdio.h>
 #include <sys/types.h>

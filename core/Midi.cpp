@@ -10,6 +10,13 @@
 #include <errno.h>
 #include <glob.h>
 
+#ifdef XENOMAI_SKIN_posix
+#include <rtdm/ipc.h>
+#if XENOMAI_MAJOR == 2
+	#error Posix skin under Xenomai 2.6 is not supported (need to check the pipe)
+#endif
+#endif
+
 
 #define kMidiInput 0
 #define kMidiOutput 1
@@ -97,6 +104,9 @@ Midi::Midi() :
 alsaIn(NULL), alsaOut(NULL),
 inputParser(NULL), parserEnabled(false), inputEnabled(false), outputEnabled(false),
 inId(NULL), outId(NULL), outPipeName(NULL)
+#ifdef XENOMAI_SKIN_posix
+	, sock(0)
+#endif
 {
 	sprintf(defaultPort, "%s", "hw:1,0,0"); // a bug in gcc<4.10 prevents initialization with defaultPort("hw:1,0,0") in the initialization list
 	inputParser = 0;
@@ -113,7 +123,12 @@ Midi::~Midi() {
 	free(outPipeName);
 	// dummy write so that `poll` stops polling ! 
 	//rt_pipe_write(&outPipe, NULL, 0, P_NORMAL); // does not work :(
+#ifdef XENOMAI_SKIN_native
 	rt_pipe_delete(&outPipe);
+#endif
+#ifdef XENOMAI_SKIN_posix
+	close(sock);
+#endif
 	if(alsaOut){
 		snd_rawmidi_drain(alsaOut);
 		snd_rawmidi_close(alsaOut);
@@ -191,7 +206,7 @@ void Midi::writeOutputLoop(void* obj){
 	//printf("Opening outPipe %s\n", that->outPipeName);
 	int pipe_fd = open(that->outPipeName, O_RDWR);
 	if (pipe_fd < 0){
-		fprintf(stderr, "could not open out pipe: %s\n", strerror(-pipe_fd));
+		fprintf(stderr, "could not open out pipe %s: %s\n", that->outPipeName, strerror(-pipe_fd));
 		return;
 	}
 	void* data = &that->outputBytes.front();
@@ -248,6 +263,59 @@ int Midi::readFrom(const char* port){
 	return 1;
 }
 
+// from xenomai-3/demo/posix/cobalt/xddp-echo.c
+static int createPipe(const char* portName)
+{ 
+	/*
+	 * Get a datagram socket to bind to the RT endpoint. Each
+	 * endpoint is represented by a port number within the XDDP
+	 * protocol namespace.
+	 */
+	int s = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+	if (s < 0) {
+		fprintf(stderr, "Failed call to socket\n");
+		return -1;
+	}
+
+	/*
+	 * Set a port label. This name will be registered when
+	 * binding
+	 */
+	struct rtipc_port_label plabel;
+	strcpy(plabel.label, portName);
+	int ret = setsockopt(s, SOL_XDDP, XDDP_LABEL,
+			 &plabel, sizeof(plabel));
+	/*
+	 * Set a local 16k pool for the RT endpoint. Memory needed to
+	 * convey datagrams will be pulled from this pool, instead of
+	 * Xenomai's system pool.
+	 */
+	int poolsz = 16384; /* bytes */
+	ret = setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
+			 &poolsz, sizeof(poolsz));
+	if (ret)
+	{
+		fprintf(stderr, "Failed call to setsockopt\n");
+		return -1;
+	}
+
+	/*
+	 * Bind the socket to the port, to setup a proxy to channel
+	 * traffic to/from the Linux domain.
+	 */
+	struct sockaddr_ipc saddr;
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.sipc_family = AF_RTIPC;
+	saddr.sipc_port = -1; // automatically assign port number
+	ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
+	if (ret)
+	{
+		fprintf(stderr, "Failed call to bind\n");
+		return -1;
+	}
+	return s;
+}
+
 int Midi::writeTo(const char* port){
 	if(port == NULL){
 		port = defaultPort;
@@ -261,14 +329,20 @@ int Midi::writeTo(const char* port){
 #else
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/%s";
 #endif
-	size = snprintf(outPipeName, 0, outPipeNameTemplateString, port);
+	size = snprintf(outPipeName, 0, outPipeNameTemplateString, outId);
 	outPipeName = (char*)malloc((size + 1)*sizeof(char));
-	snprintf(outPipeName, size + 1, outPipeNameTemplateString, port);
-	//printf("Created pipe: %s\n", outPipeName);	
+	snprintf(outPipeName, size + 1, outPipeNameTemplateString, outId);
 	int ret;
+#ifdef XENOMAI_SKIN_native
 	ret = rt_pipe_delete(&outPipe);
 	ret = rt_pipe_create(&outPipe, port, P_MINOR_AUTO, 4096);
 	if(ret < 0){
+#endif
+#ifdef XENOMAI_SKIN_posix
+	ret = createPipe(outId);
+	sock = ret;
+	if(ret <= 0){
+#endif
 		fprintf(stderr, "Error while creating pipe %s: %s\n", outId, strerror(-ret));
 		return -1;
 	}
@@ -401,15 +475,7 @@ MidiParser* Midi::getParser(){
 }
 
 int Midi::writeOutput(midi_byte_t byte){
-	if(!outputEnabled){
-		return 0;
-	}
-	int ret = rt_pipe_write(&outPipe, &byte, 1, P_NORMAL);
-	if(ret < 0){
-		rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
-		return ret;
-	}
-	return 1;
+	return writeOutput(&byte, sizeof(byte));
 }
 
 int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
@@ -418,11 +484,17 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 	}
 	do {
 		// we make sure the message length does not exceed outputBytes.size(), 
-		// which would result in incomplete messages being retrieved at the other end of the 
-		// pipe.
+		// which would result in incomplete messages being retrieved at
+		// the other end of the pipe.
 		ssize_t size = length < outputBytes.size() ? length : outputBytes.size();
+#ifdef XENOMAI_SKIN_native
 		int ret = rt_pipe_write(&outPipe, bytes, size, P_NORMAL);
 		if(ret < 0){
+#endif
+#ifdef XENOMAI_SKIN_posix
+		int ret = sendto(sock, bytes, size, 0, NULL, 0);
+		if (ret != size){
+#endif
 			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
 			return -1;
 		} else {

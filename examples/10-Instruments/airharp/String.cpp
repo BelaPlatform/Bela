@@ -11,7 +11,6 @@
 #include "Waveguide.h"
 
 #include "../include/Utilities.h"
-#include <rtdk.h>
 #include <cmath>
 #include <stdio.h>
 #include <cstdlib>

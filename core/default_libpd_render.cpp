@@ -561,6 +561,11 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
+	for(auto a : midi)
+	{
+		printf("Deleting %p\n", a);
+		delete a;
+	}
 	libpd_closefile(gPatch);
 	delete [] gScopeOut;
 }

@@ -24,7 +24,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
-#include <rtdk.h>
 #include "I2C_MPR121.h"
 
 // How many pins there are
