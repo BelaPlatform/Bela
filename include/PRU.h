@@ -141,7 +141,7 @@ typedef struct {
 	uint32_t flags;
 } InternalBelaContext;
 
-
+class PruMemory;
 class PRU
 {
 private:
@@ -185,6 +185,7 @@ public:
 	void exitPRUSS();
 
 private:
+	void initialisePruCommon();
 	InternalBelaContext *context;	// Overall settings
 
 	int pru_number;		// Which PRU we use
@@ -194,26 +195,16 @@ private:
 	bool digital_enabled; // Whether digital is used
 	float analogs_per_audio; // How many analog frames per each audio frame
 	bool uniform_sample_rate; // Should the sampling rate of the analog and audio forced to be the same, as far as ARM is concerned
-	float hardware_analog_sample_rate; // The actual sample rate of the analog channels, as far as the PRU is concerned
 	int hardware_analog_frames; // The actual number of frames for the analog channels, as far as the PRU is concerned
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
 	bool gpio_test_pin_enabled; // Whether the test pin was also enabled
 
-
-	uint32_t *pru_dataram;
-	uint32_t *pru_sharedram;
-	uint32_t *pru_dataram_mirror;
-	uint32_t *pru_sharedram_mirror;
+	PruMemory* pruMemory;
 	volatile uint32_t *pru_buffer_comm;
-	uint16_t *pru_buffer_spi_dac;
-	uint16_t *pru_buffer_spi_adc;
-	uint32_t *pru_buffer_digital;
-	int16_t *pru_buffer_audio_dac;
-	int16_t *pru_buffer_audio_adc;
 
 	float *last_analog_out_frame;
-	uint32_t *digital_buffer0, *digital_buffer1, *last_digital_buffer;
+	uint32_t *last_digital_buffer;
 	float *audio_expander_input_history;
 	float *audio_expander_output_history;
 	float audio_expander_filter_coeff;
