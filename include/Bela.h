@@ -783,10 +783,6 @@ void Bela_deleteAllAuxiliaryTasks();
 
 /** @} */
 #include <Utilities.h>
-#undef BELA_USE_XENOMAI_INTERRUPTS
-#ifndef BELA_USE_XENOMAI_INTERRUPTS
-#define RT_INTR void
-#endif
 
 #ifdef __cplusplus
 }

@@ -30,9 +30,6 @@
 #if defined(XENOMAI_SKIN_native)
 #include <native/task.h>
 #include <native/timer.h>
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-#include <native/intr.h>
-#endif
 #include <rtdk.h>
 #endif
 
@@ -61,11 +58,6 @@ RT_TASK gRTAudioThread;
 pthread_t gRTAudioThread;
 #endif
 const char gRTAudioThreadName[] = "bela-audio";
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-RT_INTR gRTAudioInterrupt;
-const char gRTAudioInterruptName[] = "bela-pru-irq";
-#endif
 
 PRU *gPRU = 0;
 #ifdef CTAG_FACE_8CH
@@ -379,12 +371,7 @@ void audioLoop(void *)
 		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	gPRU->loop(&gRTAudioInterrupt, gUserData, gBelaSettings->render);
-#else
-	gPRU->loop(0, gUserData, gBelaRender);
-#endif
+	gPRU->loop(gUserData, gBelaRender);
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
@@ -480,15 +467,6 @@ int Bela_startAudio()
 	}
 #endif
 
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	// Create an interrupt which the audio thread receives from the PRU
-	int result = 0;
-	if((result = rt_intr_create(&gRTAudioInterrupt, gRTAudioInterruptName, PRU_RTAUDIO_IRQ, I_NOAUTOENA)) != 0) {
-		cout << "Error: unable to create Xenomai interrupt for PRU (error " << result << ")" << endl;
-		return -1;
-	}
-#endif
-
 	ret = startAudioInline();
 	if(ret < 0)
 		return ret;
@@ -551,9 +529,6 @@ void Bela_cleanupAudio()
 	void Bela_deleteAllAuxiliaryTasks();
 
 	// Delete the audio task and its interrupt
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	rt_intr_delete(&gRTAudioInterrupt);
-#endif
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&gRTAudioThread);
 #endif

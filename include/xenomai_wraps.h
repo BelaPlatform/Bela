@@ -2,10 +2,6 @@
 #error Xenomai skin unsupported or not defined
 #endif
 
-#if defined(BELA_USE_XENOMAI_INTERRUPTS) && !defined(XENOMAI_SKIN_native)
-#error Interrupts are only supported with the Xenomai native skin
-#endif
-
 #include <time.h>
 #ifdef __cplusplus
 extern "C" {

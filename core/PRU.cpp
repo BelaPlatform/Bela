@@ -38,10 +38,10 @@
 #include <sys/mman.h>
 #include <string.h>
 
-#define BELA_USE_POLL
+#define BELA_USE_RTDM
 
-#if !(defined(BELA_USE_XENOMAI_INTERRUPTS) || defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
-#error Define one of BELA_USE_XENOMAI_INTERRUPTS, BELA_USE_POLL, BELA_USE_RTDM
+#if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
+#error Define one of BELA_USE_POLL, BELA_USE_RTDM
 #endif
 
 #ifdef BELA_USE_RTDM
@@ -62,7 +62,6 @@ static int rtdm_fd;
 
 #include "../include/xenomai_wraps.h"
 
-bool memcp = true;
 using namespace std;
 
 // Select whether to use NEON-based sample conversion
@@ -80,7 +79,9 @@ using namespace std;
 #define PRU_MEM_COMM_OFFSET 0x0    // Offset within PRU-SHARED RAM
 #define PRU_MEM_DIGITAL_OFFSET 0x1000 //Offset within PRU-SHARED RAM
 #define MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words.
-					// 256 is the maximum number of frames allowed
+                                         // 256 is the maximum number of frames allowed
+extern int gRTAudioVerbose;
+
 class PruMemory
 {
 public:
@@ -126,12 +127,14 @@ public:
 				digitalUint32View[i] = 0x0000ffff;
 			}
 		}
-		printf("pru memory:\n");
-		printf("digital: %p %p\n", pruDigitalStart[0], pruDigitalStart[1]);
-		printf("audio: %p %p %p %p\n", pruAudioOutStart[0], pruAudioOutStart[1], pruAudioInStart[0], pruAudioInStart[1]);
-		printf("analog: %p %p %p %p\n", pruAnalogOutStart[0], pruAnalogOutStart[1], pruAnalogInStart[0], pruAnalogInStart[1]);
+		if(gRTAudioVerbose)
+		{
+			printf("PRU memory mapped to ARM:\n");
+			printf("digital: %p %p\n", pruDigitalStart[0], pruDigitalStart[1]);
+			printf("audio: %p %p %p %p\n", pruAudioOutStart[0], pruAudioOutStart[1], pruAudioInStart[0], pruAudioInStart[1]);
+			printf("analog: %p %p %p %p\n", pruAnalogOutStart[0], pruAnalogOutStart[1], pruAnalogInStart[0], pruAnalogInStart[1]);
+		}
 	}
-
 	void copyFromPru(int buffer)
 	{
 		// buffer must be 0 or 1
@@ -171,22 +174,22 @@ private:
 };
 
 // Offsets within CPU <-> PRU communication memory (4 byte slots)
-#define PRU_SHOULD_STOP 		0
-#define PRU_CURRENT_BUFFER  	1
+#define PRU_SHOULD_STOP         0
+#define PRU_CURRENT_BUFFER      1
 #define PRU_BUFFER_MCASP_FRAMES 2
-#define PRU_SHOULD_SYNC     	3
-#define PRU_SYNC_ADDRESS    	4
-#define PRU_SYNC_PIN_MASK   	5
-#define PRU_LED_ADDRESS	     	6
-#define PRU_LED_PIN_MASK     	7
-#define PRU_FRAME_COUNT      	8
-#define PRU_USE_SPI          	9
-#define PRU_SPI_NUM_CHANNELS 	10
-#define PRU_USE_DIGITAL      	11
-#define PRU_PRU_NUMBER       	12
-#define PRU_MUX_CONFIG       	13
-#define PRU_MUX_END_CHANNEL  	14
-#define PRU_BUFFER_SPI_FRAMES 	15
+#define PRU_SHOULD_SYNC         3
+#define PRU_SYNC_ADDRESS        4
+#define PRU_SYNC_PIN_MASK       5
+#define PRU_LED_ADDRESS         6
+#define PRU_LED_PIN_MASK        7
+#define PRU_FRAME_COUNT         8
+#define PRU_USE_SPI             9
+#define PRU_SPI_NUM_CHANNELS   10
+#define PRU_USE_DIGITAL        11
+#define PRU_PRU_NUMBER         12
+#define PRU_MUX_CONFIG         13
+#define PRU_MUX_END_CHANNEL    14
+#define PRU_BUFFER_SPI_FRAMES  15
 
 short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_0,
@@ -230,8 +233,6 @@ const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
 const unsigned int PRU::kPruGPIOTestPin = 60;	// GPIO1(28); P9-12
 const unsigned int PRU::kPruGPIOTestPin2 = 31;	// GPIO0(31); P9-13
 const unsigned int PRU::kPruGPIOTestPin3 = 26;	// GPIO0(26); P8-14
-
-extern int gRTAudioVerbose;
 
 // These four functions are written in assembly in FormatConvert.S
 extern "C" {
@@ -388,15 +389,6 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		fprintf(stderr, "Failed to open PRU driver\n");
 		return 1;
     }
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-    /* Initialize structure used by prussdrv_pruintc_intc   */
-    /* PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h */
-    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-
-    /* Map PRU's INTC */
-    prussdrv_pruintc_init(&pruss_intc_initdata);
- #endif
 
 #ifdef CTAG_FACE_8CH
 //TODO :  check that this ifdef block is not needed
@@ -679,10 +671,6 @@ int PRU::start(char * const filename)
 	pruMemory = new PruMemory(pru_number, context);
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	/* Clear any old interrupt */
-	prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-#endif
 
 	/* The PRU will enable the McASP interrupts. Here we mask
 	 * them out from ARM so that they do not hang the CPU. */
@@ -726,7 +714,7 @@ int PRU::start(char * const filename)
 }
 
 // Main loop to read and write data from/to PRU
-void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext*, void*))
+void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
 {
 
 	// these pointers will be constant throughout the lifetime of pruMemory
@@ -735,9 +723,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 	int16_t* audioInRaw = pruMemory->getAudioInPtr();
 	int16_t* audioOutRaw = pruMemory->getAudioOutPtr();
 	context->digital = pruMemory->getDigitalPtr();
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	RTIME irqTimeout = PRU_SAMPLE_INTERVAL_NS * 1024;	// Timeout for PRU interrupt: about 10ms, much longer than any expected period
-#endif
 	if(context->analogInChannels != context->analogOutChannels){
 		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
@@ -774,26 +759,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	while(!gShouldStop) {
 
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-		// Wait for PRU to move to change buffers;
-		// PRU will send an interrupts which we wait for
-		rt_intr_enable(pru_interrupt);
-		while(!gShouldStop) {
-			int result;
-			result = rt_intr_wait(pru_interrupt, irqTimeout);
-			if(result >= 0)
-				break;
-			else if(result == -ETIMEDOUT)
-				rt_printf("Warning: PRU timeout!\n");
-			else {
-				fprintf(stderr, "Error: wait for interrupt failed (%d)\n", result);
-				gShouldStop = 1;
-			}
-		}
-
-		// Clear pending PRU interrupt
-		prussdrv_pru_clear_event(PRU_EVTOUT_1, PRU1_ARM_INTERRUPT);
-#endif
 #ifdef BELA_USE_POLL
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
@@ -807,9 +772,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 #endif
 #ifdef BELA_USE_RTDM
 		int value;
-		//rt_printf("Blocking\n");
 		read(rtdm_fd, &value, sizeof(value));
-		//rt_printf("read\n");
 #endif
 
 		if(belaCapeButton.enabled()){
@@ -1312,10 +1275,6 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 
 	}
 
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	// Turn off the interrupt for the PRU if it isn't already off
-	rt_intr_disable(pru_interrupt);
-#endif
 #if defined(BELA_USE_RTDM)
         close(rtdm_fd);
 #endif
@@ -1361,8 +1320,14 @@ void PRU::waitForFinish()
 {
 	if(!running)
 		return;
-    prussdrv_pru_wait_event (PRU_EVTOUT_0);
-	prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+#ifdef BELA_USE_POLL
+	// nothing to wait for
+#endif
+#ifdef BELA_USE_RTDM
+	int value;
+	read(rtdm_fd, &value, sizeof(value));
+#endif
+	return;
 }
 
 // Turn off the PRU when done

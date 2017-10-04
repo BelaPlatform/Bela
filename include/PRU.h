@@ -9,9 +9,6 @@
 #define PRU_H_
 
 #include <stdint.h>
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-#include <native/intr.h>
-#endif
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 
@@ -173,7 +170,7 @@ public:
 	int start(char * const filename);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
-	void loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext*, void*));
+	void loop(void *userData, void(*render)(BelaContext*, void*));
 
 	// Wait for an interrupt from the PRU indicate it is finished
 	void waitForFinish();
