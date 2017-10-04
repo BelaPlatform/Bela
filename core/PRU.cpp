@@ -771,6 +771,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
 #endif
 #ifdef BELA_USE_RTDM
+		// make sure we always sleep a tiny bit to prevent hanging the board
+		task_sleep_ns(sleepTime / 2);
 		int value;
 		read(rtdm_fd, &value, sizeof(value));
 #endif
