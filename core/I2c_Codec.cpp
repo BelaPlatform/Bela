@@ -14,6 +14,7 @@
 
 #include "../include/I2c_Codec.h"
 
+#define TLV320_DSP_MODE
 I2c_Codec::I2c_Codec()
 : running(false), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
 {}
@@ -71,9 +72,17 @@ int I2c_Codec::startAudio(int dual_rate)
 	}
 	if(writeRegister(0x08, 0xC0))	// Audio serial control register A: BLCK, WCLK outputs
 		return 1;
-	if(writeRegister(0x09, 0x00))	// Audio serial control register B: I2S mode, word len 16 bits
+#ifdef TLV320_DSP_MODE // to use with old PRU code
+	if(writeRegister(0x09, 0x40))   // Audio serial control register B: DSP mode, word len 16 bits
+#else
+	if(writeRegister(0x09, 0x00))   // Audio serial control register B: I2S mode, word len 16 bits
+#endif
 		return 1;
-	if(writeRegister(0x0A, 0x01))	// Audio serial control register C: 1 bit offset
+#ifdef TLV320_DSP_MODE // to use with old PRU code
+	if(writeRegister(0x0A, 0x00))   // Audio serial control register C: 0 bit offset
+#else
+	if(writeRegister(0x0A, 0x01))   // Audio serial control register C: 1 bit offset
+#endif
 		return 1;
 	if(writeRegister(0x0D, 0x00))	// Headset / button press register A: disabled
 		return 1;
