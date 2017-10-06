@@ -57,7 +57,7 @@ RT_TASK gRTAudioThread;
 #ifdef XENOMAI_SKIN_posix
 pthread_t gRTAudioThread;
 #endif
-const char gRTAudioThreadName[] = "bela-audio";
+static const char gRTAudioThreadName[] = "bela-audio";
 
 PRU *gPRU = 0;
 #ifdef CTAG_FACE_8CH
@@ -70,14 +70,14 @@ PRU *gPRU = 0;
 	I2c_Codec *gAudioCodec = 0;
 #endif
 
-// Flag which tells the audio task to stop
-int volatile gShouldStop = false;
+int volatile gShouldStop = false; // Flag which tells the audio task to stop
+int gRTAudioVerbose = 0; // Verbosity level for debugging
 
 // general settings
-char gPRUFilename[MAX_PRU_FILENAME_LENGTH];		// Path to PRU binary file (internal code if empty)_
-int gRTAudioVerbose = 0;   						// Verbosity level for debugging
-int gAmplifierMutePin = -1;
-int gAmplifierShouldBeginMuted = 0;
+static char gPRUFilename[MAX_PRU_FILENAME_LENGTH]; // Path to PRU binary file (internal code if empty)_
+static int gAmplifierMutePin = -1;
+static int gAmplifierShouldBeginMuted = 0;
+static bool gHighPerformanceMode = 0;
 static unsigned int gAudioThreadStackSize;
 unsigned int gAuxiliaryTaskStackSize;
 
@@ -157,6 +157,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	Bela_setVerboseLevel(settings->verbose);
 	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
 	gUserData = userData;
+
+	gHighPerformanceMode = settings->highPerformanceMode;
+	if(gRTAudioVerbose && gHighPerformanceMode) {
+		cout << "Starting in high-performance mode\n";
+	}
 
 	// Initialise context data structure
 	memset(&gContext, 0, sizeof(BelaContext));
@@ -371,7 +376,7 @@ void audioLoop(void *)
 		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
-	gPRU->loop(gUserData, gBelaRender);
+	gPRU->loop(gUserData, gBelaRender, gHighPerformanceMode);
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
@@ -510,6 +515,10 @@ void Bela_stopAudio()
 #ifdef XENOMAI_SKIN_posix
 	void* threadReturnValue;
 	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
+	if(ret)
+	{
+		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));
+	}
 #endif
 
 	Bela_stopAllAuxiliaryTasks();
@@ -528,12 +537,12 @@ void Bela_cleanupAudio()
 	// Clean up the auxiliary tasks
 	void Bela_deleteAllAuxiliaryTasks();
 
-	// Delete the audio task and its interrupt
+	// Delete the audio task
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&gRTAudioThread);
 #endif
 #ifdef XENOMAI_SKIN_posix
-	printf("Not sure if we should emulate rt_taks_delete\n");
+	pthread_cancel(gRTAudioThread);
 #endif
 
 	if(gPRU != 0)

@@ -21,6 +21,7 @@
 #define OPT_DISABLE_CAPE_BUTTON 1005
 #define OPT_DETECT_UNDERRUNS 1006
 #define OPT_UNIFORM_SAMPLE_RATE 1007
+#define OPT_HIGH_PERFORMANCE_MODE 1008
 
 
 enum {
@@ -55,6 +56,7 @@ struct option gDefaultLongOptions[] =
 	{"detect-underruns", 1, NULL, OPT_DETECT_UNDERRUNS},
 	{"disable-led", 0, NULL, OPT_DISABLE_LED},
 	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
+	{"high-performance-mode", 0, NULL, OPT_HIGH_PERFORMANCE_MODE},
 	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
 	{NULL, 0, NULL, 0}
 };
@@ -91,6 +93,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->detectUnderruns = 1;
 	settings->enableLED = 1;
 	settings->enableCapeButtonMonitoring = 1;
+	settings->highPerformanceMode = 0;
 
 	// These deliberately have no command-line flags by default,
 	// as it is unlikely the user would want to switch them
@@ -294,6 +297,9 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		case OPT_DISABLE_CAPE_BUTTON:
 			settings->enableCapeButtonMonitoring = 0;
 			break;
+		case OPT_HIGH_PERFORMANCE_MODE:
+			settings->highPerformanceMode = 1;
+			break;
 		case OPT_UNIFORM_SAMPLE_RATE:
 			settings->uniformSampleRate = 1;
 			printf("Uniform sample rate\n");
@@ -331,6 +337,7 @@ void Bela_usage()
 	std::cerr << "   --detect-underruns val:             Set whether to warn the user in case of underruns (options: 0 or 1, default: 1)\n";
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
 	std::cerr << "   --disable-cape-button-monitoring    Disable the monitoring of the Bela cape button (which otherwise stops the running program)\n";
+	std::cerr << "   --high-performance-mode             Gives more CPU to the Bela process. The system may become unresponsive and you will have to use the button on the Bela cape when you want to stop it.\n";
 	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }

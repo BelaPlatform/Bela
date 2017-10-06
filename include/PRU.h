@@ -170,7 +170,7 @@ public:
 	int start(char * const filename);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
-	void loop(void *userData, void(*render)(BelaContext*, void*));
+	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode);
 
 	// Wait for an interrupt from the PRU indicate it is finished
 	void waitForFinish();

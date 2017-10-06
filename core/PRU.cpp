@@ -714,7 +714,7 @@ int PRU::start(char * const filename)
 }
 
 // Main loop to read and write data from/to PRU
-void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
+void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode)
 {
 
 	// these pointers will be constant throughout the lifetime of pruMemory
@@ -735,6 +735,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
 #else
 	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
 #endif
+	if(highPerformanceMode) // sleep less, more CPU available for us
+		sleepTime /= 4;
 	//sleepTime = context->audioFrames / context->audioSampleRate / 4.f * 1000000000.f;
 
 	// Before starting, look at the last state of the analog and digital outputs which might
@@ -764,7 +766,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
 		static uint32_t lastPRUBuffer = 0;
 		// Poll
 		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
-			//printf("sleep %d\n", lastPRUBuffer);
 			task_sleep_ns(sleepTime);
 		}
 
@@ -772,7 +773,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
 #endif
 #ifdef BELA_USE_RTDM
 		// make sure we always sleep a tiny bit to prevent hanging the board
-		task_sleep_ns(sleepTime / 2);
+		if(!highPerformanceMode) // unless the user requested us not to.
+			task_sleep_ns(sleepTime / 2);
 		int ret = read(rtdm_fd, NULL, 0);
 		if(ret < 0)
 		{

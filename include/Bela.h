@@ -365,6 +365,11 @@ typedef struct {
 	int enableLED;
 	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
 	int enableCapeButtonMonitoring;
+	/// Whether to use high-performance mode: gives more CPU to
+	/// the Bela task. The Linux part of the board and the IDE may
+	/// freeze while the program is running. Use the button on the
+	/// Bela cape to forcefully stop the running program 
+	int highPerformanceMode;
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user
