@@ -45,7 +45,7 @@
 #endif
 
 #ifdef BELA_USE_RTDM
-static char rtdm_driver[] = "/dev/rtdm/rtdm_hello_0";
+static char rtdm_driver[] = "/dev/rtdm/rtdm_pruss_irq_0";
 static int rtdm_fd;
 #endif
 
