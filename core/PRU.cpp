@@ -687,7 +687,7 @@ int PRU::start(char * const filename)
 	// Not sure why this would happen, perhaps a race condition between the PRU
 	// and the rtdm_driver?
 	if ((rtdm_fd = open(rtdm_driver, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open the kernel driver: %d\n", rtdm_fd);
+		fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\nMaybe try \n  modprobe rtdm_pruss_irq\n?\n", rtdm_fd, strerror(-rtdm_fd));
 		return 1;
 	}
 #endif
@@ -773,8 +773,11 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*))
 #ifdef BELA_USE_RTDM
 		// make sure we always sleep a tiny bit to prevent hanging the board
 		task_sleep_ns(sleepTime / 2);
-		int value;
-		read(rtdm_fd, &value, sizeof(value));
+		int ret = read(rtdm_fd, NULL, 0);
+		if(ret < 0)
+		{
+			rt_fprintf(stderr, "PRU interrupt timeout\n");
+		}
 #endif
 
 		if(belaCapeButton.enabled()){
