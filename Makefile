@@ -221,7 +221,7 @@ DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN)
 # Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
-DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=$(XENOMAI_SKIN) --ldflags)
+DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init)
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 # remove posix wrappers if present: explicitly call __wrap_pthread_... when needed

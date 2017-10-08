@@ -34,6 +34,7 @@
 #endif
 
 #if defined(XENOMAI_SKIN_posix)
+#include <xenomai/init.h>
 #include <cobalt/pthread.h>
 #endif
 #include "../include/xenomai_wraps.h"
@@ -106,6 +107,14 @@ void (*gBelaCleanup)(BelaContext*, void*);
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
+#if (XENOMAI_MAJOR == 3)
+	// initialize Xenomai with manual bootstrapping
+	{
+		int argc = 0;
+		char *const *argv;
+		xenomai_init(&argc, &argv);
+	}
+#endif
 	// reset this, in case it has been set before
 	gShouldStop = 0;
 	gAudioThreadStackSize = settings->audioThreadStackSize;
