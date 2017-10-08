@@ -57,6 +57,7 @@ RT_TASK gRTAudioThread;
 #endif
 #ifdef XENOMAI_SKIN_posix
 pthread_t gRTAudioThread;
+int gXenomaiInited = 0;
 #endif
 static const char gRTAudioThreadName[] = "bela-audio";
 
@@ -81,7 +82,6 @@ static int gAmplifierShouldBeginMuted = 0;
 static bool gHighPerformanceMode = 0;
 static unsigned int gAudioThreadStackSize;
 unsigned int gAuxiliaryTaskStackSize;
-
 
 // Context which holds all the audio/sensor data passed to the render routines
 InternalBelaContext gContext;
@@ -109,10 +109,12 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
 #if (XENOMAI_MAJOR == 3)
 	// initialize Xenomai with manual bootstrapping
+	if(!gXenomaiInited)
 	{
 		int argc = 0;
 		char *const *argv;
 		xenomai_init(&argc, &argv);
+		gXenomaiInited = 1;
 	}
 #endif
 	// reset this, in case it has been set before

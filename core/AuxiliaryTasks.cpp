@@ -4,12 +4,13 @@
 #include <iostream>
 #include <string.h>
 
-#if defined(XENOMAI_SKIN_native)
+#ifdef XENOMAI_SKIN_native
 #include <native/task.h>
 #endif
 
-#if defined(XENOMAI_SKIN_posix)
+#ifdef XENOMAI_SKIN_posix
 #include <cobalt/pthread.h>
+extern int gXenomaiInited;
 #endif
 
 #include "../include/xenomai_wraps.h"
@@ -48,6 +49,14 @@ void auxiliaryTaskLoop(void *taskStruct);
 extern unsigned int gAuxiliaryTaskStackSize;
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
+#ifdef XENOMAI_SKIN_posix
+	// if a program calls this before xenomai is inited, let's init it here with empty arguments.
+	if(!gXenomaiInited)
+	{
+		fprintf(stderr, "Error: You shuold call Bela_initAudio() before calling Bela_createAuxiliaryTask()\n");
+		return 0;
+	}
+#endif
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
 	// Populate the rest of the data structure
