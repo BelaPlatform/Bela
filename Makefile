@@ -14,13 +14,13 @@
 ## COMPILER=            -- compiler to use (clang or gcc)
 ## LDFLAGS=                -- linker flags (e.g.: -L. ) 
 ## LDLIBS=                -- libs to link in (e.g.: -lm )
-##AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
+## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
 ###
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
+NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
@@ -64,19 +64,6 @@ endif
 
 
 ifdef PROJECT
-#check if project dir exists and also create build folders in the same spawned shell
-  CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR) && mkdir -p $(PROJECT_DIR)/build && mkdir -p build/core)
-  ifeq ($(CHECK_PROJECT_DIR_EXIST),)
-    $(error $(PROJECT_DIR) does not exist)
-  endif
-  IS_SUPERCOLLIDER_PROJECT?=$(shell for f in "$(PROJECT_DIR)/"*.scd ; do [ -e "$$f" ] && echo "1" && break; echo $$f; done; )
-  ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-# Potentially this could be a default file which starts a server and loads all existing .scd files?
-    SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
-  else
-    $(shell mkdir -p $(PROJECT_DIR)/build build/core)
-  endif
-endif
 
 COMMAND_LINE_OPTIONS?=$(CL)
 ifeq ($(RUN_WITH_PRU_BIN),true)
@@ -86,25 +73,125 @@ else
 build/core/PRU.o: include/pru_rtaudio_bin.h
 endif
 
-OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
-RUN_FROM?=$(PROJECT_DIR)
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+#check if project dir exists
+CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR))
+ifeq ($(CHECK_PROJECT_DIR_EXIST),)
+$(error $(PROJECT_DIR) does not exist)
 endif
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-  RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+SHOULD_BUILD=true
+PROJECT_TYPE=invalid
+RUN_FILE?=$(PROJECT_DIR)/run.sh
+SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
+LIBPD_FILE=$(PROJECT_DIR)/_main.pd
+HAS_RUN_FILE=false
+
+FILE_LIST:= $(wildcard $(PROJECT_DIR)/*)
+ifeq ($(filter $(RUN_FILE),$(FILE_LIST)),$(RUN_FILE))
+SHOULD_BUILD=false
+HAS_RUN_FILE=true
+PROJECT_TYPE=custom
+endif
+
+# if heavy-unzip-archive, then we should have a HEAVY_ARCHIVE=...
+ifeq (heavy-unzip-archive,$(filter heavy-unzip-archive,$(MAKECMDGOALS)))
+# which hopefully points to a valid  Heavy zip archive.
+ifeq (,$(HEAVY_ARCHIVE))
+$(error Missing HEAVY_ARCHIVE=... for target heavy-unzip-archive)
 else
-  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS) #--session=bela
+# If that is the case, then we can consider this project a cpp project
+# (assuming there are some other targets AFTER heavy-unzip-archive,
+# otherwise it will fail miserably)
+PROJECT_TYPE=cpp
 endif
+endif # heavy-unzip-archive
+
+ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
+PROJECT_TYPE=sc
+SHOULD_BUILD=false
+else
+ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
+PROJECT_TYPE=libpd
+else
+ifneq ($(filter %.c %.cpp %.cc,$(FILE_LIST)),)
+PROJECT_TYPE=cpp
+endif
+endif
+endif
+
+ifeq ($(AT),)
+$(info Automatically detected PROJECT_TYPE: $(PROJECT_TYPE) )
+endif
+ifeq ($(PROJECT_TYPE),invalid)
+ifeq ($(HAS_RUN_FILE),false)
+$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(RUN_FILE)) file )
+endif
+endif
+
+ifeq ($(SHOULD_BUILD),true)
+#create build directories
+$(shell mkdir -p $(PROJECT_DIR)/build build/core )
+endif
+
+endif # ifdef PROJECT
+
+OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
+COMMAND_LINE_OPTIONS?=$(CL)
+RUN_FROM?=$(PROJECT_DIR)
+ifeq ($(HAS_RUN_FILE),true)
+RUN_COMMAND?=bash $(RUN_FILE)
+else
+ifeq ($(PROJECT_TYPE),sc)
+RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+else
+RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+endif
+endif
+
 RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
-SCREEN_NAME?=Bela
 BELA_IDE_HOME?=/root/Bela/IDE
-# A bug in this version of screen forces us to use two screen names which beginning substrings do not match (Bela, Bela-IDE would cause problems)
-BELA_IDE_SCREEN_NAME?=IDE-Bela
-BELA_IDE_RUN_COMMAND?=cd $(BELA_IDE_HOME) && node index.js
-BELA_IDE_STOP_COMMAND?=screen -X -S $(BELA_IDE_SCREEN_NAME) quit > /dev/null 
+
+# Find out what system we are running on and set system-specific variables
+DEBIAN_VERSION=stretch
+XENOMAI_VERSION=3
+ifeq ($(XENOMAI_VERSION),2.6)
+XENOMAI_STAT_PATH=/proc/xenomai/stat
+LIBPD_LIBS=-lpd -lpthread_rt
+endif
+ifeq ($(XENOMAI_VERSION),3)
+XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
+LIBPD_LIBS=-lpd -lpthread
+endif
+
+# This is used to run Bela projects from the terminal in the background
+# On wheezy, it is also used for running Bela at startup
+SCREEN_NAME?=Bela
+
+ifeq ($(DEBIAN_VERSION), stretch)
 BELA_STARTUP_ENV?=/opt/Bela/startup_env
 
+BELA_ENABLE_STARTUP_COMMAND=printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV) && systemctl enable bela_startup
+BELA_DISABLE_STARTUP_COMMAND=printf "ACTIVE=0" > $(BELA_STARTUP_ENV) && systemctl disable bela_startup
+BELA_IDE_START_COMMAND=systemctl restart bela_ide
+BELA_IDE_STOP_COMMAND=systemctl stop bela_ide
+BELA_IDE_ENABLE_STARTUP_COMMAND=systemctl enable bela_ide
+BELA_IDE_DISABLE_STARTUP_COMMAND=systemctl disable bela_ide
+BELA_IDE_CONNECT_COMMAND=journalctl -fu bela_ide
+endif
+ifeq ($(DEBIAN_VERSION), wheezy)
+BELA_IDE_SCREEN_NAME?=IDE-Bela
+BELA_IDE_STARTUP_SCRIPT?=/root/Bela_node.sh
+BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
+STARTUP_COMMAND=printf "\#!/bin/sh\n\#\n\# This file is autogenerated by Bela. Do not edit!\n\necho Running Bela...\nexport PATH=\"$$PATH:/usr/local/bin\"\n cd $(RUN_FROM) && screen -S $(SCREEN_NAME) -d -m %s $(RUN_COMMAND) %s\n"
+
+BELA_ENABLE_STARTUP_COMMAND=$(STARTUP_COMMAND) > $(BELA_STARTUP_SCRIPT) && chmod +x $(BELA_STARTUP_SCRIPT)
+BELA_DISABLE_STARTUP_COMMAND=printf "#!/bin/sh\n#\n\n# This file is autogenerated by Bela. Do not edit!\n\n# Run on startup disabled -- nothing to do here\n" > $(BELA_STARTUP_SCRIPT)
+BELA_IDE_START_COMMAND?=cd $(BELA_IDE_HOME) && export USER=root && export HOME=/root && export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && screen -S $(BELA_IDE_SCREEN_NAME) -d -m bash -c "while true; do /usr/local/bin/node index.js; sleep 0.5; done"
+BELA_IDE_STOP_COMMAND?=screen -X -S $(BELA_IDE_SCREEN_NAME) quit > /dev/null || true
+BELA_IDE_ENABLE_STARTUP_COMMAND?=printf '\#!/bin/sh\n\#\n\# This file is autogenerated by Bela. Do not edit!\n\necho Running the Bela IDE...\n$(BELA_IDE_START_COMMAND)\n' > $(BELA_IDE_STARTUP_SCRIPT)
+BELA_IDE_DISABLE_STARTUP_COMMAND?=printf "#!/bin/sh\n#\n\n# This file is autogenerated by Bela. Do not edit!\n\n# The Bela IDE is disabled on startup.\n" > $(BELA_IDE_STARTUP_SCRIPT)
+BELA_IDE_CONNECT_COMMAND=screen -r -S $(BELA_IDE_SCREEN_NAME)
+endif
 SC_CL?=-u 57110 -z 16 -J 8 -K 8 -G 16 -i 2 -o 2
 
 ifneq (,$(filter $(QUIET_TARGETS),$(MAKECMDGOALS)))
@@ -115,11 +202,15 @@ QUIET?=false
 RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
 
-# check if ldconfig knows about libpd, link it in.
-TEST_LIBPD := $(shell ldconfig -p | grep "libpd\.so")
-ifneq ($(strip $(TEST_LIBPD)), )
-  # if ldconfig knows about libpd, link it in.
-  LIBS += -lpd -lpthread
+ifeq ($(PROJECT_TYPE),libpd)
+  # check if ldconfig knows about libpd
+  TEST_LIBPD := $(shell ldconfig -p | grep "libpd\.so")
+  ifneq ($(strip $(TEST_LIBPD)), )
+    # if ldconfig knows about libpd, link it in.
+    LIBS += $(LIBPD_LIBS)
+  else # Or print a "meaningful" error
+    $(error "Project $(PROJECT_NAME) was detected as a Pd project, but no libpd is available on the system.")
+  endif
 endif
 
 XENOMAI_SKIN=posix
@@ -136,7 +227,7 @@ DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 # remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out $wildcard(*/usr/xenomai/lib/cobalt.wrappers), $(DEFAULT_XENOMAI_LDFLAGS))
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -lasound -lsndfile -Llib/
@@ -170,53 +261,57 @@ else
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
-    DEFAULT_CPPFLAGS += --fast-math
-    DEFAULT_CFLAGS += --fast-math
   endif
 endif
 
+ALL_DEPS=
 ASM_SRCS := $(wildcard $(PROJECT_DIR)/*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
-ASM_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
 
 P_SRCS := $(wildcard $(PROJECT_DIR)/*.p)
 P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
 
 C_SRCS := $(wildcard $(PROJECT_DIR)/*.c)
 C_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.o)))
-C_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
 
 CPP_SRCS := $(wildcard $(PROJECT_DIR)/*.cpp)
 CPP_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.o)))
-CPP_DEPS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
-PROJECT_OBJS = $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
 CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
-CORE_C_DEPS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CPP_DEPS := $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o
+EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
-CORE_ASM_DEPS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
-
+ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
 DEFAULT_MAIN_OBJS := ./build/core/default_main.o
-DEFAULT_MAIN_CPP_DEPS := ./build/core/default_main.d
+ALL_DEPS += ./build/core/default_main.d
 
 # Objects for a system-supplied default render() file for libpd projects,
 # if the user only wants to provide the Pd files.
 DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
 DEFAULT_PD_OBJS := ./build/core/default_libpd_render.o
-DEFAULT_PD_CPP_DEPS := ./build/core/default_libpd_render.d
+ALL_DEPS += ./build/core/default_libpd_render.d
+
+# include all dependencies - necessary to force recompilation when a header is changed
+# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
+-include $(ALL_DEPS)
 
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
@@ -237,15 +332,11 @@ syntax: ## Only checks syntax
 syntax: SYNTAX_FLAG := -fsyntax-only
 syntax: $(PROJECT_OBJS) 
 
-# include all dependencies - necessary to force recompilation when a header is changed
-# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
--include $(CPP_DEPS) $(C_DEPS) $(ASM_DEPS)
-
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -253,7 +344,7 @@ build/core/%.o: ./core/%.c
 build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) 
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -316,10 +407,9 @@ $(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
 	$(AT) echo ' '
 
 
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
-# if it is a supercollider project, there are no dependencies to compile, only run
+ifeq ($(SHOULD_BUILD),false)
+# if it is a project that does not require build, there are no dependencies to compile, nor a binary to generate
 $(OUTPUT_FILE):
-
 else
 # This is a nasty kludge: we want to be able to optionally link in a default
 # main file if the user hasn't supplied one. We check for the presence of the main()
@@ -328,10 +418,12 @@ else
 # line below. Surely there's a better way to do this?
 $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
-	    $(shell bash -c '[ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
-	$(AT) #If there is a .pd file AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
+	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
+ifeq ($(PROJECT_TYPE),libpd)
+#If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ ls $(PROJECT_DIR)/*.pd &>/dev/null && [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+endif
 	$(AT) echo 'Linking...'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
@@ -379,23 +471,29 @@ runscreenfg: stop $(OUTPUT_FILE)
 nostartup: ## No Bela project runs at startup 
 nostartup:
 	$(AT) echo "Disabling Bela at startup..."
-	$(AT) printf "ACTIVE=0" > $(BELA_STARTUP_ENV)
-	$(AT) systemctl disable bela_startup
+	$(AT) $(BELA_DISABLE_STARTUP_COMMAND)
 
 startuploop: ## Makes PROJECT run at startup and restarts it if it crashes
+ifeq (DEBIAN_VERSION,wheezy)
+startuploop: Bela
+	$(AT) echo "Enabling Bela at startup in a loop..."
+	$(AT) $(STARTUP_COMMAND) 'bash -c "while sleep 0.6 ; do echo Running Bela...;' '; done"' > $(BELA_STARTUP_SCRIPT)
+endif
+ifeq ($(DEBIAN_VERSION),stretch)
+#TODO: we don't have a proper implementation of the loop for stretch yet
 startuploop: Bela startup
+endif
 
 startup: ## Makes PROJECT run at startup
 startup: Bela
 	$(AT) echo "Enabling Bela at startup..."
-	$(AT) printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV)
-	$(AT) systemctl enable bela_startup
+	$(AT) $(BELA_ENABLE_STARTUP_COMMAND)
 
 stop: ## Stops any Bela program that is currently running
 stop:
-	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/sched/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) $(XENOMAI_STAT_PATH) | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
-ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
+ifeq ($(PROJECT_TYPE),sc)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
 	$(AT) killall scsynth 2>/dev/null; killall sclang 2>/dev/null; true
 else
@@ -404,29 +502,35 @@ else
 	$(AT) killall scsynth 2>/dev/null& killall sclang 2>/dev/null& true
 endif
 
+ifeq ($(DEBIAN_VERSION),stretch)
 connect_startup: ## Connects to Bela program running at startup
 	$(AT) journalctl -fu bela_startup
+endif
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
 	$(AT) screen -r -S $(SCREEN_NAME)
 	
 idestart: ## Starts the on-board IDE
 idestart: idestop
-	$(AT) systemctl restart bela_ide
+	$(AT) printf "Starting IDE..."
+	$(AT) $(BELA_IDE_START_COMMAND)
+	$(AT) printf "done\n"
 
 idestop: ## Stops the on-board IDE
-	$(AT) systemctl stop bela_ide
+	$(AT) printf "Stopping currently running IDE..."
+	$(AT) $(BELA_IDE_STOP_COMMAND)
+	$(AT) printf "done\n"
 
 idestartup: ## Enables the IDE at startup
 	$(AT) echo "Enabling the IDE at startup"
-	$(AT) systemctl enable bela_ide
+	$(AT) $(BELA_IDE_ENABLE_STARTUP_COMMAND)
 
 idenostartup: ## Disables the IDE at startup
 	$(AT) echo "Disabling the IDE at startup"
-	$(AT) systemctl disable bela_ide
+	$(AT) $(BELA_IDE_DISABLE_STARTUP_COMMAND)
 
 ideconnect: ## Brings up the IDE's log
-	$(AT) journalctl -fu bela_ide
+	$(AT) $(BELA_IDE_CONNECT_COMMAND)
 
 SCSYNTH_SCREEN_NAME=scsynth
 SCSYNTH_RUN_COMMAND=screen -S $(SCSYNTH_SCREEN_NAME) -d -m scsynth $(SC_CL)
@@ -516,4 +620,50 @@ update: stop
 	        echo Update succesful $(LOG); \
 	        ' $(LOG)
 
-.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect
+LIB_EXTRA_SO = libbelaextra.so
+LIB_EXTRA_A = libbelaextra.a
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
+lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
+	$(AT) echo Building lib/$(LIB_EXTRA_SO)
+	$(AT) $(CXX) -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
+
+lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_EXTRA_A)
+	$(AT) ar rcs lib/$(LIB_EXTRA_A) $(LIB_EXTRA_OBJS)
+
+LIB_SO =libbela.so
+LIB_A = libbela.a
+LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a build/core/Gpio.o
+lib/$(LIB_SO): $(LIB_OBJS)
+	$(AT) echo Building lib/$(LIB_SO)
+	$(AT) $(CXX) -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
+
+lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
+	$(AT) echo Building lib/$(LIB_A)
+	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
+
+lib: lib/libbela.so lib/libbela.a lib/libbelaextra.so lib/libbelaextra.a
+
+HEAVY_TMP_DIR=/tmp/heavy-bela/
+HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
+HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
+HEAVY_OBJ_TARGET_DIR=$(PROJECT_DIR)/build
+HEAVY_OBJ_FILES=$(HEAVY_TMP_DIR)/*.o
+heavy-unzip-archive:
+	$(AT) [ -z "$(HEAVY_ARCHIVE)" ] && { echo "You should specify the path to the Heavy archive with HEAVY_ARCHIVE=" >&2; false; } || true
+	$(AT) [ -f "$(HEAVY_ARCHIVE)" ] || { echo "File $(HEAVY_ARCHIVE) not found" >&2; false; }
+	$(AT) rm -rf $(HEAVY_TMP_DIR)
+	$(AT) mkdir -p $(HEAVY_TMP_DIR)
+	$(AT) unzip -qq -d $(HEAVY_TMP_DIR) $(HEAVY_ARCHIVE) && rm -rf $(HEAVY_ARCHIVE)
+# For each source file, check if it already exists at the destination. If it
+# does not, or if it is `diff`erent, then mv the source file to the destination
+# We do all of this instead of simply touching all the src and obj files so
+# that we make sure that the prerequsites of `render.o` are not more recent
+# than the target unless they actually have changed.
+	$(AT) for file in $(HEAVY_SRC_FILES); do dest="$(HEAVY_SRC_TARGET_DIR)/`basename $$file`"; diff -q "$$file" "$$dest" 2>/dev/null || { mv "$$file" "$$dest"; touch "$$dest"; } ; done
+# For each object file, move it to the destination and make sure it is older than the source
+	$(AT) for file in $(HEAVY_OBJ_FILES); do touch "$$file"; mv "$$file" "$(HEAVY_OBJ_TARGET_DIR)"; done
+# If there is no render.cpp, copy the default Heavy one
+	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
+
+.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib
