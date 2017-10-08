@@ -758,10 +758,9 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, co
  * will not run immediately, but only once any active higher priority tasks have finished.
  *
  * \param task Task to schedule for running.
+ * \return 0 if the task was successfully scheduled, a positive error number otherwise. The most frequent error will be EBUSY, if the task was still running as a consequence of a previous call.
  */
-void Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
-
-void Bela_autoScheduleAuxiliaryTasks();
+int Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
 
 /**
  * \brief Initialize an auxiliary task so that it can be scheduled.

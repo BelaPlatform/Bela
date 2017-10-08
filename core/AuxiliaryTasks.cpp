@@ -73,7 +73,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 #ifdef XENOMAI_SKIN_posix
 	if(int ret = __wrap_pthread_cond_init(&(newTask->cond), NULL))
 	{
-		fprintf(stderr, "Error: unable to create condition variable for auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
+		fprintf(stderr, "Error: unable to create condition variable for auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
 		free(newTask);
 		return 0;
 	}
@@ -101,7 +101,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 // Schedule a previously created (and started) auxiliary task. It will run when
 // the priority rules next allow it to be scheduled. If the task is already
 // running from a previous call, then this will do nothing (lost wakeup).
-void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
+int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 {
 	InternalAuxiliaryTask *taskToSchedule = (InternalAuxiliaryTask *)task;
 	if(taskToSchedule->started == false){ // Note: this is not the safest method to check if a task
@@ -114,10 +114,12 @@ void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 #ifdef XENOMAI_SKIN_posix
 	if(int ret = __wrap_pthread_mutex_trylock(&taskToSchedule->mutex))
 	{
-		rt_fprintf(stderr, "Unable to schedule auxiliary task: %d %s\n", ret, strerror(-ret));
+		// If we cannot get the lock, then the task is probably still running.
+		return ret;
 	} else {
 		ret = __wrap_pthread_cond_signal(&taskToSchedule->cond);
 		__wrap_pthread_mutex_unlock(&taskToSchedule->mutex);
+		return 0;
 	}
 #endif
 }
