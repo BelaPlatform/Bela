@@ -255,8 +255,8 @@ endif
 ifeq ($(COMPILER), clang)
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
-  DEFAULT_CPPFLAGS += -DNDEBUG -no-integrated-as
-  DEFAULT_CFLAGS += -DNDEBUG -no-integrated-as
+  DEFAULT_CPPFLAGS += -DNDEBUG # Maybe we should add back in -no-integrated-as?
+  DEFAULT_CFLAGS += -DNDEBUG
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
@@ -323,8 +323,8 @@ all: Bela
 
 # debug = buildBela debug
 debug: ## Same as Bela but with debug flags and no optimizations
-debug: DEFAULT_CPPFLAGS=-g -std=c++11 $(DEFAULT_XENOMAI_CFLAGS)
-debug: DEFAULT_CFLAGS=-g -std=c11 $(DEFAULT_XENOMAI_CFLAGS)  -std=gnu11
+debug: DEFAULT_CPPFLAGS=-g -std=c++11 $(DEFAULT_XENOMAI_CFLAGS) -mfpu=neon
+debug: DEFAULT_CFLAGS=-g -std=c11 $(DEFAULT_XENOMAI_CFLAGS)  -std=gnu11 -mfpu=neon
 debug: all
 
 # syntax = check syntax
@@ -336,7 +336,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
