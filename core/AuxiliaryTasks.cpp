@@ -110,6 +110,12 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 	}
 #ifdef XENOMAI_SKIN_native
 	rt_task_resume(&taskToSchedule->task);
+	// the return value here is hardcoded: returns success
+	// regardless of whether the task is actually scheduled or was
+	// already running. Finding out whether it was successful or not
+	// would require some overhead, through a call to rt_task_inquire,
+	// so we leave it out for now.
+	return 0;
 #endif
 #ifdef XENOMAI_SKIN_posix
 	if(int ret = __wrap_pthread_mutex_trylock(&taskToSchedule->mutex))
