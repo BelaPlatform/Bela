@@ -64,7 +64,7 @@ void Aux_Task::__create(){
 	}
 	// start the xenomai task
 #ifdef XENOMAI_SKIN_native
-	if (int ret = rt_task_start(&task, Aux_Task::loop, this));
+	if (int ret = rt_task_start(&task, Aux_Task::loop, this))
 #endif
 #ifdef XENOMAI_SKIN_posix
 	if(int ret = create_and_start_thread(&thread, name, priority, stackSize, (pthread_callback_t*)Aux_Task::loop, this))
