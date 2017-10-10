@@ -35,7 +35,7 @@ void Aux_Task::create(const char* _name, void(*_callback)(void* ptr), void* _poi
 void Aux_Task::__create(){
 	// create the xenomai task
 	int priority = 0;
-	int stackSize = 65536 * 2;
+	int stackSize = 65536 * 4;
 #ifdef XENOMAI_SKIN_native //posix skin does evertything in one go below
 	if (int ret = rt_task_create(&task, name, stackSize, priority, T_JOINABLE))
 
@@ -53,7 +53,8 @@ void Aux_Task::__create(){
 	if(ret < 0)
 #endif
 #ifdef XENOMAI_SKIN_posix
-	int ret = createXenomaiPipe(p_name, stackSize);
+	int pipeSize = 65536 * 10;
+	int ret = createXenomaiPipe(p_name, pipeSize);
 	pipeSocket = ret;
 	if(ret <= 0)
 #endif
