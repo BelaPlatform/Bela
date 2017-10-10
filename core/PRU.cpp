@@ -44,8 +44,6 @@
 	#error TODO: load different PRU code
 #endif
 
-#define BELA_USE_RTDM
-
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
 #error Define one of BELA_USE_POLL, BELA_USE_RTDM
 #endif
