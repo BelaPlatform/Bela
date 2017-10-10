@@ -12,8 +12,6 @@
  *  Created on: May 27, 2014
  *      Author: andrewm
  */
-//#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
 
 #include "../include/PRU.h"
 #include "../include/prussdrv.h"
@@ -37,6 +35,14 @@
 
 #include <sys/mman.h>
 #include <string.h>
+
+//#define CTAG_FACE_8CH
+//#define CTAG_BEAST_16CH
+
+#if (defined(CTAGE_FACE_8CH) || defined(CTAG_FACE_16CH))
+	#define PRU_USES_MCASP_IRQ
+	#error TODO: load different PRU code
+#endif
 
 #define BELA_USE_RTDM
 
@@ -557,6 +563,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	return 0;
 }
 
+#ifdef PRU_USES_MCASP_IRQ
 static int devMemWrite(off_t target, uint32_t* value)
 {
 	const unsigned long MAP_SIZE = 4096UL;
@@ -601,6 +608,8 @@ static int maskMcAspInterrupt()
 	} else
 		return 0;
 }
+#endif /* PRU_USES_MCASP_IRQ */
+
 void PRU::initialisePruCommon()
 {
     /* Set up flags */
@@ -675,11 +684,14 @@ int PRU::start(char * const filename)
 
 	/* The PRU will enable the McASP interrupts. Here we mask
 	 * them out from ARM so that they do not hang the CPU. */
+#ifdef PRU_USES_MCASP_IRQ
 	if(maskMcAspInterrupt() < 0)
 	{
 		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
 		return 1;
 	}
+	#warning TODO: unmask interrupt when program stops
+#endif
 
 #ifdef BELA_USE_RTDM
 	// Open RTDM driver
