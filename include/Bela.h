@@ -37,7 +37,14 @@ extern "C"
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdio.h>
-//#include <rtdk.h>
+// these functions are currently provided by xenomai.
+// We put these declarations here so we do not have to include
+// Xenomai specific files
+int rt_printf(const char *format, ...);
+int rt_fprintf(FILE *stream, const char *format, ...);
+int rt_vprintf(const char *format, va_list ap);
+int rt_vfprintf(FILE *stream, const char *format, va_list ap);
+
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 

@@ -22,9 +22,9 @@ const char SPIDEV_GPIO_CS1[] = "/dev/spidev32766.1";
 
 Spi_Codec::Spi_Codec(){
 	if ((_fd_master = open(SPIDEV_GPIO_CS0, O_RDWR)) < 0)
-		rt_printf("Failed to open spidev device for master codec.\n");
+		printf("Failed to open spidev device for master codec.\n");
 	if ((_fd_slave = open(SPIDEV_GPIO_CS1, O_RDWR)) < 0)
-		rt_printf("Failed to open spidev device for slave codec.\n");
+		printf("Failed to open spidev device for slave codec.\n");
 }
 
 Spi_Codec::~Spi_Codec(){
@@ -165,9 +165,9 @@ int Spi_Codec::setDACVolume(int halfDbSteps){
 
 int Spi_Codec::dumpRegisters(){
 	for (unsigned char i=0; i <= 16; i++){
-		rt_printf("AD1938 Master Register %d: 0x%X\n", i, readRegister(i));
+		printf("AD1938 Master Register %d: 0x%X\n", i, readRegister(i));
 #ifdef CTAG_BEAST_16CH
-		rt_printf("AD1938 Slave Register  %d: 0x%X\n", i, readRegister(i, SLAVE_CODEC));
+		printf("AD1938 Slave Register  %d: 0x%X\n", i, readRegister(i, SLAVE_CODEC));
 #endif
 	}
 
@@ -250,7 +250,7 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 0){
-		rt_printf("Error during SPI transmission for CTAG face: %d\n", ret);
+		printf("Error during SPI transmission for CTAG face: %d\n", ret);
 		return 1;
 	}
 
@@ -259,11 +259,11 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 		tx_buf[0] = tx_buf[0] | 0x1; // Set read only flag
 		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 		if (ret < 0){
-			rt_printf("Error in SPI transmission during verification of register values of CTAG face: %d\n", ret);
+			printf("Error in SPI transmission during verification of register values of CTAG face: %d\n", ret);
 			return 1;
 		}
 		if (origValue != rx_buf[2] && tx_buf[1] != REG_PLL_CLK_CONTROL_1){
-			rt_printf("Verification of new value for register 0x%X of CTAG face has been failed (original value: 0x%X, new value: 0x%X).\n", tx_buf[1], origValue, rx_buf[2]);
+			printf("Verification of new value for register 0x%X of CTAG face has been failed (original value: 0x%X, new value: 0x%X).\n", tx_buf[1], origValue, rx_buf[2]);
 			return 1;
 		}
 		tx_buf[0] = tx_buf[0] & 0x0; // Reset write only flag

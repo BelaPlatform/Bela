@@ -3,6 +3,7 @@
 #define __Aux_Task_RT_H_INCLUDED__ 
 
 #ifdef XENOMAI_SKIN_native
+#include <rtdk.h>
 #include <native/task.h>
 #include <native/queue.h>
 #endif
