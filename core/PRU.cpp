@@ -383,12 +383,13 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 
 	pru_number = pru_num;
 
-    /* Allocate and initialize memory */
-    prussdrv_init();
-    if(prussdrv_open(PRU_EVTOUT_0)) {
+	/* Allocate and initialize memory */
+	prussdrv_init();
+	if(prussdrv_open(PRU_EVTOUT_0)) {
 		fprintf(stderr, "Failed to open PRU driver\n");
 		return 1;
-    }
+	}
+	pruMemory = new PruMemory(pru_number, context);
 
 #ifdef CTAG_FACE_8CH
 //TODO :  check that this ifdef block is not needed
@@ -539,6 +540,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	}
 
 	if(digital_enabled) {
+		context->digital = pruMemory->getDigitalPtr();
 		last_digital_buffer = (uint32_t *)malloc(context->digitalFrames * sizeof(uint32_t)); //temp buffer to hold previous states
 		if(last_digital_buffer == 0) {
 			fprintf(stderr, "Error: couldn't allocate digital buffers\n");
@@ -668,7 +670,6 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
-	pruMemory = new PruMemory(pru_number, context);
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
 
@@ -722,7 +723,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	uint16_t* analogOutRaw = pruMemory->getAnalogOutPtr();
 	int16_t* audioInRaw = pruMemory->getAudioInPtr();
 	int16_t* audioOutRaw = pruMemory->getAudioOutPtr();
-	context->digital = pruMemory->getDigitalPtr();
 	if(context->analogInChannels != context->analogOutChannels){
 		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return;
