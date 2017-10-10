@@ -2,9 +2,13 @@
 #ifndef __Aux_Task_H_INCLUDED__
 #define __Aux_Task_H_INCLUDED__ 
 
+#ifdef XENOMAI_SKIN_native
 #include <native/task.h>
 #include <native/pipe.h>
-
+#endif
+#ifdef XENOMAI_SKIN_posix
+#include <cobalt/pthread.h>
+#endif
 #define AUX_MAX_BUFFER_SIZE 500000
 
 class Aux_Task{
@@ -23,8 +27,14 @@ class Aux_Task{
 		void cleanup();
 		
 	private:
+#ifdef XENOMAI_SKIN_native
 		RT_TASK task;
 		RT_PIPE pipe;
+#endif
+#ifdef XENOMAI_SKIN_posix
+		pthread_t thread;
+		int pipeSocket;
+#endif
 		
 		const char* name;
 		int pipe_fd;

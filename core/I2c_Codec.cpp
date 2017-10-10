@@ -108,6 +108,9 @@ int I2c_Codec::startAudio(int dual_rate)
 	//Set-up hardware high-pass filter for DC removal
 	if(configureDCRemovalIIR())
 		return 1;
+	if(writeRegister(25, 0b10000000))	// Enable mic bias 2.5V
+		return 1;
+
 	
 	// wait for the codec to stabilize before unmuting the HP amp.
 	// this gets rid of the loud pop.

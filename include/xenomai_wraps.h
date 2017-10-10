@@ -3,6 +3,8 @@
 #endif
 
 #include <time.h>
+#include <stdio.h>
+#include <string.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,6 +19,7 @@ int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(
 typedef RTIME time_ns_t;
 #endif
 #ifdef XENOMAI_SKIN_posix
+#include <rtdm/ipc.h>
 typedef long long int time_ns_t;
 typedef void *(pthread_callback_t)(void *);
 #endif
@@ -80,6 +83,10 @@ static int setup_thread_attributes(pthread_attr_t *attr, int stackSize, int prio
 		fprintf(stderr, "Error: unable to set detachstate\n");
 		return -1;
 	}
+	if(stackSize <= 0)
+	{
+		stackSize = 65536;
+	}
 	if(pthread_attr_setstacksize(attr, stackSize))
 	{
 		fprintf(stderr, "Error: unable to set stack size to %d\n", stackSize);
@@ -102,6 +109,59 @@ static int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	pthread_setname_np(*task, taskName);
 	pthread_attr_destroy(&attr);
 	return 0;
+}
+// from xenomai-3/demo/posix/cobalt/xddp-echo.c
+static int createXenomaiPipe(const char* portName, int poolsz)
+{
+	/*
+	 * Get a datagram socket to bind to the RT endpoint. Each
+	 * endpoint is represented by a port number within the XDDP
+	 * protocol namespace.
+	 */
+	int s = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+	if (s < 0) {
+		fprintf(stderr, "Failed call to socket\n");
+		return -1;
+	}
+
+	/*
+	 * Set a port label. This name will be registered when
+	 * binding
+	 */
+	struct rtipc_port_label plabel;
+	strcpy(plabel.label, portName);
+	int ret = setsockopt(s, SOL_XDDP, XDDP_LABEL,
+			 &plabel, sizeof(plabel));
+	/*
+	 * Set a local pool for the RT endpoint. Memory needed to
+	 * convey datagrams will be pulled from this pool, instead of
+	 * Xenomai's system pool.
+	 */
+	if(poolsz == 0)
+		poolsz = 16384; /* bytes */
+	ret = setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
+			 &poolsz, sizeof(poolsz));
+	if (ret)
+	{
+		fprintf(stderr, "Failed call to setsockopt\n");
+		return -1;
+	}
+
+	/*
+	 * Bind the socket to the port, to setup a proxy to channel
+	 * traffic to/from the Linux domain.
+	 */
+	struct sockaddr_ipc saddr;
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.sipc_family = AF_RTIPC;
+	saddr.sipc_port = -1; // automatically assign port number
+	ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
+	if (ret)
+	{
+		fprintf(stderr, "Failed call to bind\n");
+		return -1;
+	}
+	return s;
 }
 #endif
 

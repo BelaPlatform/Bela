@@ -2,8 +2,15 @@
 #ifndef __Aux_Task_RT_H_INCLUDED__
 #define __Aux_Task_RT_H_INCLUDED__ 
 
+#ifdef XENOMAI_SKIN_native
 #include <native/task.h>
 #include <native/queue.h>
+#endif
+#ifdef XENOMAI_SKIN_posix
+#include <cobalt/pthread.h>
+#include <cobalt/mqueue.h>
+#endif
+
 #include <Bela.h>
 
 #define AUX_RT_POOL_SIZE 500000
@@ -24,8 +31,14 @@ class Aux_Task_rt{
 		void cleanup();
 		
 	private:
+#ifdef XENOMAI_SKIN_native
 		RT_TASK task;
 		RT_QUEUE queue;
+#endif
+#ifdef XENOMAI_SKIN_posix
+		pthread_t thread;
+		mqd_t queueDesc;
+#endif
 		
 		const char* name;
 		int priority;

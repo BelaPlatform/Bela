@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <glob.h>
+#include "../include/xenomai_wraps.h"
 
 #ifdef XENOMAI_SKIN_posix
 #include <rtdm/ipc.h>
@@ -263,59 +264,6 @@ int Midi::readFrom(const char* port){
 	return 1;
 }
 
-// from xenomai-3/demo/posix/cobalt/xddp-echo.c
-static int createPipe(const char* portName)
-{ 
-	/*
-	 * Get a datagram socket to bind to the RT endpoint. Each
-	 * endpoint is represented by a port number within the XDDP
-	 * protocol namespace.
-	 */
-	int s = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
-	if (s < 0) {
-		fprintf(stderr, "Failed call to socket\n");
-		return -1;
-	}
-
-	/*
-	 * Set a port label. This name will be registered when
-	 * binding
-	 */
-	struct rtipc_port_label plabel;
-	strcpy(plabel.label, portName);
-	int ret = setsockopt(s, SOL_XDDP, XDDP_LABEL,
-			 &plabel, sizeof(plabel));
-	/*
-	 * Set a local 16k pool for the RT endpoint. Memory needed to
-	 * convey datagrams will be pulled from this pool, instead of
-	 * Xenomai's system pool.
-	 */
-	int poolsz = 16384; /* bytes */
-	ret = setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
-			 &poolsz, sizeof(poolsz));
-	if (ret)
-	{
-		fprintf(stderr, "Failed call to setsockopt\n");
-		return -1;
-	}
-
-	/*
-	 * Bind the socket to the port, to setup a proxy to channel
-	 * traffic to/from the Linux domain.
-	 */
-	struct sockaddr_ipc saddr;
-	memset(&saddr, 0, sizeof(saddr));
-	saddr.sipc_family = AF_RTIPC;
-	saddr.sipc_port = -1; // automatically assign port number
-	ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
-	if (ret)
-	{
-		fprintf(stderr, "Failed call to bind\n");
-		return -1;
-	}
-	return s;
-}
-
 int Midi::writeTo(const char* port){
 	if(port == NULL){
 		port = defaultPort;
@@ -339,7 +287,7 @@ int Midi::writeTo(const char* port){
 	if(ret < 0){
 #endif
 #ifdef XENOMAI_SKIN_posix
-	ret = createPipe(outId);
+	ret = createXenomaiPipe(outId, 0);
 	sock = ret;
 	if(ret <= 0){
 #endif
