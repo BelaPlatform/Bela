@@ -166,10 +166,12 @@ ifeq ($(AT),)
 endif
 
 ifeq ($(XENOMAI_VERSION),2.6)
+XENOMAI_MAJOR=2
 XENOMAI_STAT_PATH=/proc/xenomai/stat
 LIBPD_LIBS=-lpd -lpthread_rt
 endif
 ifeq ($(XENOMAI_VERSION),3)
+XENOMAI_MAJOR=3
 XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
 LIBPD_LIBS=-lpd -lpthread
 endif
@@ -228,7 +230,7 @@ endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
 # Xenomai flags
 DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
-DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN)
+DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
 # Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
@@ -252,7 +254,7 @@ endif
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE)
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -Llib/ -lasound -lsndfile -lseasocks -lz
+LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -Llib/ -lasound -lsndfile -lseasocks
 
 ifndef COMPILER
 # check whether clang is installed

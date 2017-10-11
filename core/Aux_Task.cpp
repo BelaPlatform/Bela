@@ -1,7 +1,7 @@
 /***** Aux_Task.cpp *****/
+#include "../include/Bela.h"
 #include <Aux_Task.h>
 #include "../include/xenomai_wraps.h"
-#include <Bela.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -114,11 +114,10 @@ void Aux_Task::cleanup(){
 
 void Aux_Task::openPipe(){
 	char rtp_name [50];
-#if XENOMAI_MAJOR == 3
+#if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/p_%s";
 #else
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/p_%s";
-	#warning TODO: check path for the pipe on Xenomai 2.6
 #endif
 	sprintf (rtp_name, outPipeNameTemplateString, name);
 	pipe_fd = open(rtp_name, O_RDWR);

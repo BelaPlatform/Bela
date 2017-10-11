@@ -9,7 +9,7 @@
 #endif
 
 #ifdef XENOMAI_SKIN_posix
-#include <cobalt/pthread.h>
+#include <pthread.h>
 extern int gXenomaiInited;
 #endif
 
@@ -233,7 +233,12 @@ void Bela_stopAllAuxiliaryTasks()
 		__wrap_pthread_mutex_unlock(&taskStruct->mutex);
 
 		void* threadReturnValue;
+#if XENOMAI_MAJOR == 2
+		pthread_join(taskStruct->task, &threadReturnValue);
+#endif
+#if XENOMAI_MAJOR == 3
 		__wrap_pthread_join(taskStruct->task, &threadReturnValue);
+#endif
 #endif
 	}
 }

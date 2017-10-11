@@ -11,14 +11,6 @@
 #include <glob.h>
 #include "../include/xenomai_wraps.h"
 
-#ifdef XENOMAI_SKIN_posix
-#include <rtdm/ipc.h>
-#if XENOMAI_MAJOR == 2
-	#error Posix skin under Xenomai 2.6 is not supported (need to check the pipe)
-#endif
-#endif
-
-
 #define kMidiInput 0
 #define kMidiOutput 1
 

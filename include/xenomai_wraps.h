@@ -1,3 +1,10 @@
+#ifndef XENOMAI_WRAPS_H
+#define XENOMAI_WRAPS_H
+
+#include "Bela.h"
+#if !defined(XENOMAI_MAJOR)
+#error Xenomai version not set
+#endif
 #if !defined(XENOMAI_SKIN_native) && !defined(XENOMAI_SKIN_posix)
 #error Xenomai skin unsupported or not defined
 #endif
@@ -5,13 +12,36 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 #ifdef XENOMAI_SKIN_posix
+#include <pthread.h>
 int __wrap_nanosleep(const struct timespec *req, struct timespec *rem);
-int __pthread_join(pthread_t thread, void **retval);
 int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+#if XENOMAI_MAJOR == 3
+int __wrap_pthread_join(pthread_t thread, void **retval);
+#endif
+
+int __wrap_pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);
+int __wrap_pthread_mutex_destroy(pthread_mutex_t *mutex);
+int __wrap_pthread_mutex_lock(pthread_mutex_t *mutex);
+int __wrap_pthread_mutex_trylock(pthread_mutex_t *mutex);
+int __wrap_pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+int __wrap_pthread_cond_destroy(pthread_cond_t *cond);
+int __wrap_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr);
+int __wrap_pthread_cond_signal(pthread_cond_t *cond);
+int __wrap_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+
+
+
+#include <mqueue.h>
+mqd_t __wrap_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
+int __wrap_mq_close(mqd_t mqdes);
+ssize_t __wrap_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
+int __wrap_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio);
 #endif
 
 #ifdef XENOMAI_SKIN_native
@@ -19,7 +49,11 @@ int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(
 typedef RTIME time_ns_t;
 #endif
 #ifdef XENOMAI_SKIN_posix
+#if XENOMAI_MAJOR == 3
 #include <rtdm/ipc.h>
+#else
+#include <rtdm/rtipc.h>
+#endif
 typedef long long int time_ns_t;
 typedef void *(pthread_callback_t)(void *);
 #endif
@@ -39,7 +73,6 @@ static inline int task_sleep_ns(long long int timens)
 }
 
 #ifdef XENOMAI_SKIN_posix
-#include <cobalt/pthread.h>
 #include <error.h>
 //void error(int exitCode, int errno, char* message)
 //{
@@ -168,3 +201,5 @@ static int createXenomaiPipe(const char* portName, int poolsz)
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* XENOMAI_WRAPS_H */

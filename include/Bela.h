@@ -48,12 +48,6 @@ int rt_vfprintf(FILE *stream, const char *format, va_list ap);
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 
-#if defined(_XENOMAI_TRANK_RTDK_H) || defined(XENOMAI_SKIN_posix)
-#define XENOMAI_MAJOR 3
-#else
-#define XENOMAI_MAJOR 2
-#endif
-
 // Useful constants
 
 /** \cond PRIVATE */

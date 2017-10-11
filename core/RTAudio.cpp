@@ -26,7 +26,13 @@
 
 #include <sys/mman.h>
 
+#include "../include/Bela.h"
+
 // Xenomai-specific includes
+#if XENOMAI_MAJOR == 3
+#include <xenomai/init.h>
+#endif
+
 #if defined(XENOMAI_SKIN_native)
 #include <native/task.h>
 #include <native/timer.h>
@@ -34,12 +40,14 @@
 #endif
 
 #if defined(XENOMAI_SKIN_posix)
-#include <xenomai/init.h>
-#include <cobalt/pthread.h>
+#if XENOMAI_MAJOR == 2
+#include <rtdk.h> // for rt_print_auto_init()
 #endif
+#include <pthread.h>
+#endif
+
 #include "../include/xenomai_wraps.h"
 
-#include "../include/Bela.h"
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
@@ -526,7 +534,12 @@ void Bela_stopAudio()
 #endif
 #ifdef XENOMAI_SKIN_posix
 	void* threadReturnValue;
+#if XENOMAI_MAJOR == 2
+	int ret = pthread_join(gRTAudioThread, &threadReturnValue);
+#endif
+#if XENOMAI_MAJOR == 3
 	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
+#endif
 	if(ret)
 	{
 		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));

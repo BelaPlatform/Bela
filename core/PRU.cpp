@@ -61,7 +61,7 @@ static int rtdm_fd;
 #endif
 
 #if defined(XENOMAI_SKIN_posix)
-#include <cobalt/pthread.h>
+#include <pthread.h>
 #endif
 
 #include "../include/xenomai_wraps.h"

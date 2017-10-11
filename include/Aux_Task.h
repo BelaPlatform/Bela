@@ -7,9 +7,11 @@
 #include <native/task.h>
 #include <native/pipe.h>
 #endif
+
 #ifdef XENOMAI_SKIN_posix
-#include <cobalt/pthread.h>
+#include <pthread.h>
 #endif
+
 #define AUX_MAX_BUFFER_SIZE 500000
 
 class Aux_Task{

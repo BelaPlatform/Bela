@@ -2,17 +2,20 @@
 #ifndef __Aux_Task_RT_H_INCLUDED__
 #define __Aux_Task_RT_H_INCLUDED__ 
 
+#include <Bela.h>
+
 #ifdef XENOMAI_SKIN_native
 #include <rtdk.h>
 #include <native/task.h>
 #include <native/queue.h>
 #endif
-#ifdef XENOMAI_SKIN_posix
-#include <cobalt/pthread.h>
-#include <cobalt/mqueue.h>
-#endif
 
-#include <Bela.h>
+#ifdef XENOMAI_SKIN_posix
+#include <fcntl.h>           /* For O_* constants */
+#include <sys/stat.h>        /* For mode constants */
+#include <pthread.h>
+#include <mqueue.h>
+#endif
 
 #define AUX_RT_POOL_SIZE 500000
 

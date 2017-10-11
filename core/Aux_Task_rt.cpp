@@ -89,7 +89,7 @@ void Aux_Task_rt::schedule(void* buf, size_t size){
 	rt_queue_send(&queue, q_buf, size, Q_NORMAL);
 #endif
 #ifdef XENOMAI_SKIN_posix
-	if(int ret = mq_send(queueDesc, (char*)buf, size, 0))
+	if(int ret = __wrap_mq_send(queueDesc, (char*)buf, size, 0))
 	{
 		fprintf(stderr, "Unable to send message to queue for task %s: (%d) %s\n", name, errno, strerror(errno));
 		return;
@@ -111,7 +111,7 @@ void Aux_Task_rt::cleanup(){
 #endif
 #ifdef XENOMAI_SKIN_posix
 	//pthread_cancel(thread);
-	mq_close(queueDesc);
+	__wrap_mq_close(queueDesc);
 #warning should call mq_unlink(queueName);
 #endif
 }
@@ -130,7 +130,7 @@ void Aux_Task_rt::empty_loop(){
 	while(!gShouldStop)
 	{
 		unsigned int prio;
-		ssize_t ret = mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
 			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
@@ -155,7 +155,7 @@ void Aux_Task_rt::str_loop(){
 	while(!gShouldStop)
 	{
 		unsigned int prio;
-		ssize_t ret = mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
 			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
@@ -180,7 +180,7 @@ void Aux_Task_rt::buf_loop(){
 	while(!gShouldStop)
 	{
 		unsigned int prio;
-		ssize_t ret = mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
 			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
@@ -205,7 +205,7 @@ void Aux_Task_rt::ptr_loop(){
 	while(!gShouldStop)
 	{
 		unsigned int prio;
-		ssize_t ret = mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
 			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
