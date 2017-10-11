@@ -3700,6 +3700,7 @@ var View = require('./View');
 // ohhhhh i am a comment
 
 var modeswitches = 0;
+var NORMAL_MSW = 1;
 
 var ToolbarView = function (_View) {
 	_inherits(ToolbarView, _View);
@@ -3791,7 +3792,9 @@ var ToolbarView = function (_View) {
 				$('#run').removeClass('building-button').addClass('running-button');
 			} else {
 				$('#run').removeClass('running-button');
-				$('#bela-cpu').html('CPU: --');
+				$('#bela-cpu').html('CPU: --').css('color', 'black');
+				$('#msw-cpu').html('MSW: --').css('color', 'black');
+				modeswitches = 0;
 			}
 		}
 	}, {
@@ -3854,6 +3857,7 @@ var ToolbarView = function (_View) {
 							'csw': taskData[j][3]
 						};
 						if (proc.name === '[ROOT]') rootCPU = proc.cpu * 0.01;
+						if (proc.name === 'bela-audio') this.mode_switches(proc.msw - NORMAL_MSW);
 						// ignore uninteresting data
 						if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:') {
 							output.push(proc);
@@ -3871,7 +3875,6 @@ var ToolbarView = function (_View) {
 			}
 
 			//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-			console.log('bela:', bela, data);
 			$('#bela-cpu').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
 			//	if (bela && (ide*rootCPU + bela) > 80){
@@ -3880,22 +3883,21 @@ var ToolbarView = function (_View) {
 			} else {
 				$('#bela-cpu').css('color', 'black');
 			}
-
-			if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');
-			modeswitches = 0;
-		}
-	}, {
-		key: '__msw',
-		value: function __msw(value) {
-			$('#msw-cpu').html('MSW: ' + value);
-			if (value > modeswitches) this.emit('mode-switch-warning', value);
-			if (value > 0) $('#msw-cpu').css('color', 'red');
-			modeswitches = value;
 		}
 	}, {
 		key: '_cpuMonitoring',
 		value: function _cpuMonitoring(value) {
 			if (parseInt(value)) $('#ide-cpu, #bela-cpu').css('visibility', 'visible');else $('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
+		}
+	}, {
+		key: 'mode_switches',
+		value: function mode_switches(value) {
+			$('#msw-cpu').html('MSW: ' + value);
+			if (value > modeswitches) {
+				this.emit('mode-switch-warning', value);
+				$('#msw-cpu').css('color', 'red');
+			}
+			modeswitches = value;
 		}
 	}]);
 

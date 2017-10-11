@@ -3,6 +3,7 @@ var View = require('./View');
 // ohhhhh i am a comment
 
 var modeswitches = 0;
+var NORMAL_MSW = 1;
 
 class ToolbarView extends View {
 	
@@ -90,7 +91,9 @@ class ToolbarView extends View {
 			$('#run').removeClass('building-button').addClass('running-button');
 		} else {
 			$('#run').removeClass('running-button');
-			$('#bela-cpu').html('CPU: --');
+			$('#bela-cpu').html('CPU: --').css('color', 'black');
+			$('#msw-cpu').html('MSW: --').css('color', 'black');
+			modeswitches = 0;
 		}
 	}
 	__building(status){
@@ -144,6 +147,7 @@ class ToolbarView extends View {
 						'csw'	: taskData[j][3]
 					};
 					if (proc.name === '[ROOT]') rootCPU = proc.cpu*0.01;
+					if (proc.name === 'bela-audio') this.mode_switches(proc.msw-NORMAL_MSW);
 					// ignore uninteresting data
 					if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:'){
 						output.push(proc);
@@ -163,7 +167,6 @@ class ToolbarView extends View {
 		}
 
 	//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-		console.log('bela:', bela, data);
 		$('#bela-cpu').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
 		
 	//	if (bela && (ide*rootCPU + bela) > 80){
@@ -173,15 +176,6 @@ class ToolbarView extends View {
 			$('#bela-cpu').css('color', 'black');
 		}
 		
-		if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');
-		modeswitches = 0;
-	}
-	
-	__msw(value){
-		$('#msw-cpu').html('MSW: '+value);
-		if (value > modeswitches) this.emit('mode-switch-warning', value);
-		if (value > 0) $('#msw-cpu').css('color', 'red');
-		modeswitches = value;
 	}
 	
 	_cpuMonitoring(value){
@@ -191,6 +185,14 @@ class ToolbarView extends View {
 			$('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
 	}
 	
+	mode_switches(value){
+		$('#msw-cpu').html('MSW: '+value);
+		if (value > modeswitches){
+			this.emit('mode-switch-warning', value);
+			$('#msw-cpu').css('color', 'red');
+		}
+		modeswitches = value;
+	}
 }
 
 module.exports = ToolbarView;
