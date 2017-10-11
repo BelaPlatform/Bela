@@ -107,6 +107,22 @@ void (*gBelaCleanup)(BelaContext*, void*);
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
+	// Before we go ahead, let's check if Bela is alreadt running:
+	// check if another real-time thread of the same name is already running.
+	char command[200];
+#if (XENOMAI_MAJOR == 2)
+	char pathToXenomaiStat[] = "/proc/xenomai/stat";
+#endif
+#if (XENOMAI_MAJOR == 3)
+	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
+#endif
+	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
+	int ret = system(command);
+	if(ret == 0)
+	{
+		cerr << "Error: Bela is already running in another process. Cannot start.\n";
+		return -1;
+	}
 #if (XENOMAI_MAJOR == 3)
 	// initialize Xenomai with manual bootstrapping
 	if(!gXenomaiInited)
@@ -117,6 +133,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gXenomaiInited = 1;
 	}
 #endif
+#if defined(XENOMAI_SKIN_native) || XENOMAI_MAJOR == 2
+	rt_print_auto_init(1);
+#endif
+
 	// reset this, in case it has been set before
 	gShouldStop = 0;
 	gAudioThreadStackSize = settings->audioThreadStackSize;
@@ -133,22 +153,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	gBelaRender = settings->render;
 	gBelaCleanup = settings->cleanup;
-#ifdef XENOMAI_SKIN_native
-	RT_TASK otherBelaTask;
-	int returnVal = rt_task_bind(&otherBelaTask, gRTAudioThreadName, TM_NONBLOCK);
-	if(returnVal == 0) {
-		cout << "Error: Bela is already running in another process. Cannot start.\n";
-		rt_task_unbind(&otherBelaTask);
-		return -1;
-	}
-	else if(returnVal != -EWOULDBLOCK && returnVal != -ETIMEDOUT) {
-		cout << "Error " << returnVal << " occurred determining if another Bela task is running.\n";
-		return -1;
-	}
-#endif
-#ifdef XENOMAI_SKIN_posix
-#warning No check is currently in place to test for another thread which is already running
-#endif
 	
 	// Sanity checks
 	if(settings->pruNumber < 0 || settings->pruNumber > 1) {
@@ -161,9 +165,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	
 	enable_runfast();
-#ifdef XENOMAI_SKIN_native
-	rt_print_auto_init(1);
-#endif
 
 	Bela_setVerboseLevel(settings->verbose);
 	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
