@@ -3793,6 +3793,7 @@ var ToolbarView = function (_View) {
 				$('#run').removeClass('building-button').addClass('running-button');
 			} else {
 				$('#run').removeClass('running-button');
+				$('#bela-cpu').html('CPU: --');
 			}
 		}
 	}, {
@@ -3826,7 +3827,7 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
-			var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
+			//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 			var bela = 0,
 			    rootCPU = 1;
 
@@ -3871,13 +3872,15 @@ var ToolbarView = function (_View) {
 				if (data.belaLinux) bela += data.belaLinux * rootCPU;
 			}
 
-			$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
-			$('#bela-cpu').html('Bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+			//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
+			console.log('bela:', bela, data);
+			$('#bela-cpu').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
-			if (bela && ide * rootCPU + bela > 80) {
-				$('#ide-cpu, #bela-cpu').css('color', 'red');
+			//	if (bela && (ide*rootCPU + bela) > 80){
+			if (bela && bela > 80) {
+				$('#bela-cpu').css('color', 'red');
 			} else {
-				$('#ide-cpu, #bela-cpu').css('color', 'black');
+				$('#bela-cpu').css('color', 'black');
 			}
 
 			if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');

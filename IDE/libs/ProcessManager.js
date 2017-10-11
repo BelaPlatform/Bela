@@ -283,11 +283,11 @@ class ProcessManager extends EventEmitter {
 	*checkCPU(){
 		var output = {};
 		//console.log(this);
-		if (this.checkingSyntax()) output.syntaxCheckProcess = yield syntaxCheckProcess.CPU();
-		if (this.building()) output.buildProcess = yield buildProcess.CPU();
+		// if (this.checkingSyntax()) output.syntaxCheckProcess = yield syntaxCheckProcess.CPU();
+		// if (this.building()) output.buildProcess = yield buildProcess.CPU();
 		if (this.running()) output.bela = yield belaProcess.CPU();
 		if (this.running()) output.belaLinux = (yield belaProcess.CPULinux()).cpu;
-		output.node = (yield pusage.statAsync(process.pid)).cpu;
+		// output.node = (yield pusage.statAsync(process.pid)).cpu;
 		return output;
 	}
 	

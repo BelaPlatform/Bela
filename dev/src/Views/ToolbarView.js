@@ -90,6 +90,7 @@ class ToolbarView extends View {
 			$('#run').removeClass('building-button').addClass('running-button');
 		} else {
 			$('#run').removeClass('running-button');
+			$('#bela-cpu').html('CPU: --');
 		}
 	}
 	__building(status){
@@ -116,7 +117,7 @@ class ToolbarView extends View {
 	}
 	
 	_CPU(data){
-		var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
+	//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 		var bela = 0, rootCPU = 1;
 
 		if (data.bela != 0 && data.bela !== undefined){
@@ -161,13 +162,15 @@ class ToolbarView extends View {
 
 		}
 
-		$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-		$('#bela-cpu').html('Bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
+	//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
+		console.log('bela:', bela, data);
+		$('#bela-cpu').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
 		
-		if (bela && (ide*rootCPU + bela) > 80){
-			$('#ide-cpu, #bela-cpu').css('color', 'red');
+	//	if (bela && (ide*rootCPU + bela) > 80){
+		if (bela && bela > 80) {
+			$('#bela-cpu').css('color', 'red');
 		} else {
-			$('#ide-cpu, #bela-cpu').css('color', 'black');
+			$('#bela-cpu').css('color', 'black');
 		}
 		
 		if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');
