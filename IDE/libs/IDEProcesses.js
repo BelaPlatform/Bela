@@ -12,6 +12,19 @@ var belaPath = '/root/Bela/';
 var makePath = belaPath;
 var projectPath = belaPath+'projects/';
 
+var xenomaiStatPath = '/proc/xenomai/sched/stat';
+// check which xenomai version we are on
+exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
+	if (err){
+		console.log('error reading xenomai version');
+		return;
+	}	
+	if (stdout.includes('2.6.3'))
+		xenomaiStatPath = '/proc/xenomai/stat';
+	else
+		xenomaiStatPath = '/proc/xenomai/sched/stat';
+});
+
 class SyntaxCheckProcess extends MakeProcess{
 	
 	constructor(){
@@ -165,7 +178,7 @@ class belaProcess extends MakeProcess{
 	
 	CPU(){
 		if (!this.active || !this.pid) return Promise.resolve(0);
-		return fs.readFileAsync('/proc/xenomai/sched/stat', 'utf8');
+		return fs.readFileAsync(xenomaiStatPath, 'utf8');
 	}
 	
 	CPULinux(){

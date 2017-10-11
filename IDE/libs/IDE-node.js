@@ -68,7 +68,8 @@ function socketConnected(socket){
 		ProjectManager.listProjects(), 
 		new Promise.coroutine(ProjectManager.listExamples)(), 
 		SettingsManager.getSettings(),
-		runOnBootProject()
+		runOnBootProject(),
+		getXenomaiVersion()
 	]).then( result => {
 		result.push(ProcessManager.getStatus());
 		socket.emit('init', result)
@@ -393,6 +394,18 @@ var SettingsManager = {
 	}
 
 };
+
+function getXenomaiVersion(){
+	return new Promise(function(resolve, reject){
+		exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
+			if (err){
+				console.log('error reading xenomai version');
+				reject(err);
+			}
+			resolve(stdout);
+		});
+	});
+}
 
 function runOnBootProject(){
 	return fs.readFileAsync(startupEnv, 'utf-8')

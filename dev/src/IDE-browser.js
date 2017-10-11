@@ -199,7 +199,7 @@ var socket = io('/IDE');
 socket.on('report-error', (error) => consoleView.emit('warn', error.message || error) );
 
 socket.on('init', (data) => {
-	
+
 	consoleView.connect();
 	
 	var timestamp = performance.now()
@@ -211,7 +211,9 @@ socket.on('init', (data) => {
 	
 	$('#runOnBoot').val(data[3]);
 	
-	models.status.setData(data[4]);
+	models.settings.setKey('xenomaiVersion', data[4]);
+
+	models.status.setData(data[5]);
 	
 	//models.project.print();
 	//models.settings.print();
