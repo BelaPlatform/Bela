@@ -677,12 +677,9 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
-	pru_buffer_comm = pruMemory->getPruBufferComm();
-	initialisePruCommon();
-
+#ifdef PRU_USES_MCASP_IRQ
 	/* The PRU will enable the McASP interrupts. Here we mask
 	 * them out from ARM so that they do not hang the CPU. */
-#ifdef PRU_USES_MCASP_IRQ
 	if(maskMcAspInterrupt() < 0)
 	{
 		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
@@ -698,10 +695,21 @@ int PRU::start(char * const filename)
 	// Not sure why this would happen, perhaps a race condition between the PRU
 	// and the rtdm_driver?
 	if ((rtdm_fd = open(rtdm_driver, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\nMaybe try \n  modprobe rtdm_pruss_irq\n?\n", rtdm_fd, strerror(-rtdm_fd));
+		fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\n", errno, strerror(errno));
+		if(errno == EBUSY) // Device or resource busy
+		{
+			fprintf(stderr, "Another program is already running?\n");
+		}
+		if(errno == ENOENT) // No such file or directory
+		{
+			fprintf(stderr, "Maybe try\n  modprobe rtdm_pruss_irq\n?\n");
+		}
 		return 1;
 	}
 #endif
+
+	pru_buffer_comm = pruMemory->getPruBufferComm();
+	initialisePruCommon();
 
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
@@ -788,7 +796,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		int ret = read(rtdm_fd, NULL, 0);
 		if(ret < 0)
 		{
-			rt_fprintf(stderr, "PRU interrupt timeout\n");
+			rt_fprintf(stderr, "PRU interrupt timeout, %d %d %s\n", ret, errno, strerror(errno));
+			task_sleep_ns(100000000);
 		}
 #endif
 

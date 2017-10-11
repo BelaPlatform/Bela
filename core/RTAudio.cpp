@@ -410,7 +410,7 @@ static int startAudioInline(){
 
 	// initialize and run the PRU
 	if(gPRU->start(gPRUFilename)) {
-		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename);
+		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);
 		return -1;
 	}
 
