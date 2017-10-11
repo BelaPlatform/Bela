@@ -1,6 +1,6 @@
-/***** Aux_Task.h *****/
-#ifndef __Aux_Task_H_INCLUDED__
-#define __Aux_Task_H_INCLUDED__ 
+/***** AuxTaskNonRT.h *****/
+#ifndef __AuxTaskNonRT_H_INCLUDED__
+#define __AuxTaskNonRT_H_INCLUDED__ 
 
 #ifdef XENOMAI_SKIN_native
 #include <rtdk.h>
@@ -14,9 +14,9 @@
 
 #define AUX_MAX_BUFFER_SIZE 500000
 
-class Aux_Task{
+class AuxTaskNonRT{
 	public:
-		Aux_Task(){}
+		AuxTaskNonRT(){}
 		
 		void create(const char* _name, void(*_callback)());
 		void create(const char* _name, void(*_callback)(const char* str));

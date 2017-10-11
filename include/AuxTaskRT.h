@@ -1,4 +1,4 @@
-/***** Aux_Task_rt.h *****/
+/***** AuxTaskRT.h *****/
 #ifndef __Aux_Task_RT_H_INCLUDED__
 #define __Aux_Task_RT_H_INCLUDED__ 
 
@@ -19,9 +19,9 @@
 
 #define AUX_RT_POOL_SIZE 500000
 
-class Aux_Task_rt{
+class AuxTaskRT{
 	public:
-		Aux_Task_rt(){}
+		AuxTaskRT(){}
 		
 		void create(const char* _name, void(*_callback)(), int _priority = BELA_AUDIO_PRIORITY-5);
 		void create(const char* _name, void(*_callback)(const char* str), int _priority = BELA_AUDIO_PRIORITY-5);

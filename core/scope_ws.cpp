@@ -8,7 +8,7 @@
 
 #define SCOPE_WS_PORT 5432
 
-static Aux_Task ws_server_task;
+static AuxTaskNonRT ws_server_task;
 static Scope* scope;
 static seasocks::Server* server;
 static std::set<seasocks::WebSocket *> dataConnections;

@@ -1,30 +1,30 @@
-/***** Aux_Task.cpp *****/
+/***** AuxTaskNonRT.cpp *****/
 #include "../include/Bela.h"
-#include <Aux_Task.h>
+#include <AuxTaskNonRT.h>
 #include "../include/xenomai_wraps.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
 
-void Aux_Task::create(const char* _name, void(*_callback)()){
+void AuxTaskNonRT::create(const char* _name, void(*_callback)()){
 	name = _name;
 	empty_callback = _callback;
 	mode = 0;
 	__create();
 }
-void Aux_Task::create(const char* _name, void(*_callback)(const char* str)){
+void AuxTaskNonRT::create(const char* _name, void(*_callback)(const char* str)){
 	name = _name;
 	str_callback = _callback;
 	mode = 1;
 	__create();
 }
-void Aux_Task::create(const char* _name, void(*_callback)(void* buf, int size)){
+void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* buf, int size)){
 	name = _name;
 	buf_callback = _callback;
 	mode = 2;
 	__create();
 }
-void Aux_Task::create(const char* _name, void(*_callback)(void* ptr), void* _pointer){
+void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* ptr), void* _pointer){
 	name = _name;
 	ptr_callback = _callback;
 	pointer = _pointer;
@@ -32,7 +32,7 @@ void Aux_Task::create(const char* _name, void(*_callback)(void* ptr), void* _poi
 	__create();
 }
 
-void Aux_Task::__create(){
+void AuxTaskNonRT::__create(){
 	// create the xenomai task
 	int priority = 0;
 	int stackSize = 65536 * 4;
@@ -40,7 +40,7 @@ void Aux_Task::__create(){
 	if (int ret = rt_task_create(&task, name, stackSize, priority, T_JOINABLE))
 
 	{
-		fprintf(stderr, "Unable to create Aux_Task %s: %i\n", name, ret);
+		fprintf(stderr, "Unable to create AuxTaskNonRT %s: %i\n", name, ret);
 		return;
 	}
 #endif
@@ -59,23 +59,23 @@ void Aux_Task::__create(){
 	if(ret <= 0)
 #endif
 	{
-		fprintf(stderr, "Unable to create Aux_Task %s pipe %s: (%i) %s\n", name, p_name, ret, strerror(ret));
+		fprintf(stderr, "Unable to create AuxTaskNonRT %s pipe %s: (%i) %s\n", name, p_name, ret, strerror(ret));
 		return;
 	}
 	// start the xenomai task
 #ifdef XENOMAI_SKIN_native
-	if (int ret = rt_task_start(&task, Aux_Task::loop, this))
+	if (int ret = rt_task_start(&task, AuxTaskNonRT::loop, this))
 #endif
 #ifdef XENOMAI_SKIN_posix
-	if(int ret = create_and_start_thread(&thread, name, priority, stackSize, (pthread_callback_t*)Aux_Task::loop, this))
+	if(int ret = create_and_start_thread(&thread, name, priority, stackSize, (pthread_callback_t*)AuxTaskNonRT::loop, this))
 #endif
 	{
-		fprintf(stderr, "Unable to start Aux_Task %s: %i, %s\n", name, ret, strerror(ret));
+		fprintf(stderr, "Unable to start AuxTaskNonRT %s: %i, %s\n", name, ret, strerror(ret));
 		return;
 	}
 }
 
-void Aux_Task::schedule(void* ptr, size_t size){
+void AuxTaskNonRT::schedule(void* ptr, size_t size){
 #ifdef XENOMAI_SKIN_native
 	int ret = rt_pipe_write(&pipe, ptr, size, P_NORMAL);
 #endif
@@ -87,15 +87,15 @@ void Aux_Task::schedule(void* ptr, size_t size){
 		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name, errno, strerror(errno), size);
 	}
 }
-void Aux_Task::schedule(const char* str){
+void AuxTaskNonRT::schedule(const char* str){
 	schedule((void*)str, strlen(str));
 }
-void Aux_Task::schedule(){
+void AuxTaskNonRT::schedule(){
 	char t = 0;
 	schedule((void*)&t, 1);
 }
 
-void Aux_Task::cleanup(){
+void AuxTaskNonRT::cleanup(){
 	close(pipe_fd);
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&task);
@@ -112,7 +112,7 @@ void Aux_Task::cleanup(){
 #endif
 }
 
-void Aux_Task::openPipe(){
+void AuxTaskNonRT::openPipe(){
 	char rtp_name [50];
 #if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/p_%s";
@@ -122,12 +122,12 @@ void Aux_Task::openPipe(){
 	sprintf (rtp_name, outPipeNameTemplateString, name);
 	pipe_fd = open(rtp_name, O_RDWR);
 	if (pipe_fd < 0){
-		fprintf(stderr, "Aux_Task %s: could not open pipe %s: (%i) %s\n", name, rtp_name,  errno, strerror(errno));
+		fprintf(stderr, "AuxTaskNonRT %s: could not open pipe %s: (%i) %s\n", name, rtp_name,  errno, strerror(errno));
 		return;
 	}
 }
 
-void Aux_Task::empty_loop(){
+void AuxTaskNonRT::empty_loop(){
 	void* buf = malloc(1);;
 	while(!gShouldStop){
 		read(pipe_fd, buf, 1);
@@ -135,7 +135,7 @@ void Aux_Task::empty_loop(){
 	}
 	free(buf);
 }
-void Aux_Task::str_loop(){
+void AuxTaskNonRT::str_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
 	while(!gShouldStop){
 		read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
@@ -143,7 +143,7 @@ void Aux_Task::str_loop(){
 	}
 	free(buf);
 }
-void Aux_Task::buf_loop(){
+void AuxTaskNonRT::buf_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
 	while(!gShouldStop){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
@@ -151,7 +151,7 @@ void Aux_Task::buf_loop(){
 	}
 	free(buf);
 }
-void Aux_Task::ptr_loop(){
+void AuxTaskNonRT::ptr_loop(){
 	void* buf = malloc(1);
 	while(!gShouldStop){
 		read(pipe_fd, buf, 1);
@@ -160,8 +160,8 @@ void Aux_Task::ptr_loop(){
 	free(buf);
 }
 
-void Aux_Task::loop(void* ptr){
-	Aux_Task *instance = (Aux_Task*)ptr;
+void AuxTaskNonRT::loop(void* ptr){
+	AuxTaskNonRT *instance = (AuxTaskNonRT*)ptr;
 	instance->openPipe();
 	if (instance->mode == 0){
 		instance->empty_loop();

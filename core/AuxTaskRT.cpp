@@ -1,31 +1,31 @@
-/***** Aux_Task_rt.cpp *****/
-#include <Aux_Task_rt.h>
+/***** AuxTaskRT.cpp *****/
+#include <AuxTaskRT.h>
 #include "../include/xenomai_wraps.h"
 #include <Bela.h>
 #include <stdlib.h>
 
-void Aux_Task_rt::create(const char* _name, void (*_callback)(), int _priority){
+void AuxTaskRT::create(const char* _name, void (*_callback)(), int _priority){
 	name = _name;
 	priority = _priority;
 	empty_callback = _callback;
 	mode = 0;
 	__create();
 }
-void Aux_Task_rt::create(const char* _name, void (*_callback)(const char* str), int _priority){
+void AuxTaskRT::create(const char* _name, void (*_callback)(const char* str), int _priority){
 	name = _name;
 	priority = _priority;
 	str_callback = _callback;
 	mode = 1;
 	__create();
 }
-void Aux_Task_rt::create(const char* _name, void (*_callback)(void* buf, int size), int _priority){
+void AuxTaskRT::create(const char* _name, void (*_callback)(void* buf, int size), int _priority){
 	name = _name;
 	priority = _priority;
 	buf_callback = _callback;
 	mode = 2;
 	__create();
 }
-void Aux_Task_rt::create(const char* _name, void (*_callback)(void* ptr), void* _pointer, int _priority){
+void AuxTaskRT::create(const char* _name, void (*_callback)(void* ptr), void* _pointer, int _priority){
 	name = _name;
 	priority = _priority;
 	pointer = _pointer;
@@ -34,13 +34,13 @@ void Aux_Task_rt::create(const char* _name, void (*_callback)(void* ptr), void* 
 	__create();
 }
 
-void Aux_Task_rt::__create(){
+void AuxTaskRT::__create(){
 	
 	// create the xenomai task
 	int stackSize = 0;
 #ifdef XENOMAI_SKIN_native //posix skin does evertything in one go below
 	if (int ret = rt_task_create(&task, name, stackSize, priority, T_JOINABLE)){
-		fprintf(stderr, "Unable to create Aux_Task_rt %s: %i\n", name, ret);
+		fprintf(stderr, "Unable to create AuxTaskRT %s: %i\n", name, ret);
 		return;
 	}
 #endif
@@ -51,7 +51,7 @@ void Aux_Task_rt::__create(){
 	sprintf (q_name, "q_%s", name);
 	if (int ret = rt_queue_create(&queue, q_name, AUX_RT_POOL_SIZE, Q_UNLIMITED, Q_PRIO))
 	{
-		fprintf(stderr, "Unable to create Aux_Task_rt %s queue: %i\n", name, ret);
+		fprintf(stderr, "Unable to create AuxTaskRT %s queue: %i\n", name, ret);
 		return;
 	}
 #endif 
@@ -70,19 +70,19 @@ void Aux_Task_rt::__create(){
 	
 	// start the xenomai task
 #ifdef XENOMAI_SKIN_native
-	if (int ret = rt_task_start(&task, Aux_Task_rt::loop, this))
+	if (int ret = rt_task_start(&task, AuxTaskRT::loop, this))
 #endif
 #ifdef XENOMAI_SKIN_posix
-	if(int ret = create_and_start_thread(&thread, name, priority, stackSize, (pthread_callback_t*)Aux_Task_rt::loop, this))
+	if(int ret = create_and_start_thread(&thread, name, priority, stackSize, (pthread_callback_t*)AuxTaskRT::loop, this))
 #endif
 	{
-		fprintf(stderr, "Unable to start Aux_Task_rt %s: %i\n", name, ret);
+		fprintf(stderr, "Unable to start AuxTaskRT %s: %i\n", name, ret);
 		return;
 	}
 	
 }
 
-void Aux_Task_rt::schedule(void* buf, size_t size){
+void AuxTaskRT::schedule(void* buf, size_t size){
 #ifdef XENOMAI_SKIN_native
 	void* q_buf = rt_queue_alloc(&queue, size);
 	memcpy(q_buf, buf, size);
@@ -96,15 +96,15 @@ void Aux_Task_rt::schedule(void* buf, size_t size){
 	}
 #endif
 }
-void Aux_Task_rt::schedule(const char* str){
+void AuxTaskRT::schedule(const char* str){
 	schedule((void*)str, strlen(str));
 }
-void Aux_Task_rt::schedule(){
+void AuxTaskRT::schedule(){
 	char t = 0;
 	schedule(&t, 1);
 }
 
-void Aux_Task_rt::cleanup(){
+void AuxTaskRT::cleanup(){
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&task);
 	rt_queue_delete(&queue);
@@ -116,7 +116,7 @@ void Aux_Task_rt::cleanup(){
 #endif
 }
 
-void Aux_Task_rt::empty_loop(){
+void AuxTaskRT::empty_loop(){
 #ifdef XENOMAI_SKIN_native
 	while(!gShouldStop){
 		void* buf;
@@ -141,7 +141,7 @@ void Aux_Task_rt::empty_loop(){
 	free(buffer);
 #endif
 }
-void Aux_Task_rt::str_loop(){
+void AuxTaskRT::str_loop(){
 #ifdef XENOMAI_SKIN_native
 	while(!gShouldStop){
 		void* buf;
@@ -166,7 +166,7 @@ void Aux_Task_rt::str_loop(){
 	free(buffer);
 #endif
 }
-void Aux_Task_rt::buf_loop(){
+void AuxTaskRT::buf_loop(){
 #ifdef XENOMAI_SKIN_native
 	while(!gShouldStop){
 		void* buf;
@@ -191,7 +191,7 @@ void Aux_Task_rt::buf_loop(){
 	free(buffer);
 #endif
 }
-void Aux_Task_rt::ptr_loop(){
+void AuxTaskRT::ptr_loop(){
 #ifdef XENOMAI_SKIN_native
 	while(!gShouldStop){
 		void* buf;
@@ -217,8 +217,8 @@ void Aux_Task_rt::ptr_loop(){
 #endif
 }
 
-void Aux_Task_rt::loop(void* ptr){
-	Aux_Task_rt *instance = (Aux_Task_rt*)ptr;
+void AuxTaskRT::loop(void* ptr){
+	AuxTaskRT *instance = (AuxTaskRT*)ptr;
 #ifdef XENOMAI_SKIN_native
 	rt_print_auto_init(1);
 #endif

@@ -5,8 +5,8 @@
 #include <ne10/NE10.h>
 #include <vector>
 #include <string>
-#include <Aux_Task.h>
-#include <Aux_Task_rt.h>
+#include <AuxTaskNonRT.h>
+#include <AuxTaskRT.h>
 
 #define FRAMES_STORED 4
 
@@ -204,8 +204,8 @@ class Scope{
         ne10_fft_cpx_float32_t* outFFT;
         ne10_fft_cfg_float32_t cfg;
         
-        Aux_Task sendBufferTask;
-        Aux_Task_rt scopeTriggerTask;
+        AuxTaskNonRT sendBufferTask;
+        AuxTaskRT scopeTriggerTask;
         static void triggerTask(void* ptr);
 		
 		void setSetting(std::wstring setting, float value);
