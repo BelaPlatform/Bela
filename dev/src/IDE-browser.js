@@ -1,4 +1,4 @@
-// IDE controller
+//// IDE controller
 module.exports = {};
 
 var Model = require('./Models/Model');
@@ -274,7 +274,7 @@ socket.on('project-settings-data', (project, settings) => {
 socket.on('IDE-settings-data', (settings) => models.settings.setData(settings) );
 
 socket.on('cpu-usage', data => models.status.setKey('CPU', data) );
-socket.on('mode-switch', data => models.status.setKey('msw', data) );
+//socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
 socket.on('disconnect', () => {
 	consoleView.disconnect();

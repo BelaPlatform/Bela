@@ -158,13 +158,6 @@ class belaProcess extends MakeProcess{
 				
 				super.start(project, args, CLArgs.make);
 				
-				var msd = spawn('stdbuf', ['-i0', '-e0', '-o0', belaPath+'IDE/bin/mode_switches_detector', "--session=bela"]);
-				msd.stdout.setEncoding('utf8');
-				msd.stderr.setEncoding('utf8');
-				msd.stdout.on('data', data => this.emit('mode-switch', data.trim()) );
-				msd.stderr.on('data', data => console.log('msd stderr:', data.trim()) );
-				msd.on('close', code => console.log('msd exited with code', code) );
-
 			});
 		
 		return this;

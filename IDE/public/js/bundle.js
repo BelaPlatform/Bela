@@ -380,7 +380,7 @@ module.exports = CircularBuffer;
 },{}],3:[function(require,module,exports){
 'use strict';
 
-// IDE controller
+//// IDE controller
 module.exports = {};
 
 var Model = require('./Models/Model');
@@ -695,9 +695,7 @@ socket.on('IDE-settings-data', function (settings) {
 socket.on('cpu-usage', function (data) {
 	return models.status.setKey('CPU', data);
 });
-socket.on('mode-switch', function (data) {
-	return models.status.setKey('msw', data);
-});
+//socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
 socket.on('disconnect', function () {
 	consoleView.disconnect();

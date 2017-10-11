@@ -316,7 +316,7 @@ function socketEvents(socket){
 
 ProcessManager.on('status', (status, project) => allSockets.emit('status', project, status) );
 ProcessManager.on('broadcast-status', (status) => allSockets.emit('status', status) );
-ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
+//ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
 
 TerminalManager.on('shell-event', (evt, data) => allSockets.emit('shell-event', evt, data) );
 

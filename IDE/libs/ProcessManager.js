@@ -258,7 +258,7 @@ class ProcessManager extends EventEmitter {
 			//console.log(status);
 			this.emit('broadcast-status', status);
 		});
-		belaProcess.on('mode-switch', num => this.emit('mode-switch', num) );
+	//	belaProcess.on('mode-switch', num => this.emit('mode-switch', num) );
 		
 	}
 	
