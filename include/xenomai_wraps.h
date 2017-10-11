@@ -38,7 +38,7 @@ int __wrap_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 
 
 #include <mqueue.h>
-mqd_t __wrap_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr);
+mqd_t __wrap_mq_open(const char *name, int oflags, ...);
 int __wrap_mq_close(mqd_t mqdes);
 ssize_t __wrap_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
 int __wrap_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio);
@@ -139,7 +139,15 @@ static int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	{
 		return ret;
 	}
+#if XENOMAI_MAJOR == 2
+	// note the different spelling. Worst thing is that 
+	// pthread_setname_np would still compile and run (because it is a POSIX
+	// extension provided by Linux), but would not have the desired effect.
+	pthread_set_name_np(*task, taskName);
+#endif
+#if XENOMAI_MAJOR == 3
 	pthread_setname_np(*task, taskName);
+#endif
 	pthread_attr_destroy(&attr);
 	return 0;
 }

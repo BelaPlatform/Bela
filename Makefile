@@ -157,7 +157,7 @@ DEBIAN_VERSION=$(shell grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/
 # Lazily, let's assume if we are not on 2.6 we are on 3. I sincerely hope we will survive till Xenomai 4 to see this fail
 XENOMAI_VERSION=$(shell $(XENO_CONFIG) --version | grep -o "2\.6" || echo "3")
 ifeq ($(XENOMAI_VERSION),2.6)
-  XENOMAI_SKIN=native
+  XENOMAI_SKIN=posix
 else
   XENOMAI_SKIN=posix
 endif
