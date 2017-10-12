@@ -4,8 +4,7 @@ var View = require('./View');
 
 var modeswitches = 0;
 var NORMAL_MSW = 1;
-var CPULines;
-var rootCPU = 1;
+var nameIndex, CPUIndex, rootName, IRQName;
 
 class ToolbarView extends View {
 	
@@ -123,15 +122,22 @@ class ToolbarView extends View {
 
 	_xenomaiVersion(ver){
 		console.log('xenomai version:', ver);
-		if (ver.includes('2.6.3'))
-			CPULines = CPU2;
-		else
-			CPULines = CPU3;
+		if (ver.includes('2.6')){
+			nameIndex = 7;
+			CPUIndex = 6;
+			rootName = 'ROOT';
+			IRQName = 'IRQ67:';
+		} else {
+			nameIndex = 8;
+			CPUIndex = 7;
+			rootName = '[ROOT]';
+			IRQName = '[IRQ16:';
+		}
 	}
 
 	_CPU(data){
 	//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
-		var bela = 0;
+		var bela = 0, rootCPU = 1;
 
 		if (data.bela != 0 && data.bela !== undefined){
 		
@@ -148,7 +154,23 @@ class ToolbarView extends View {
 				}
 			}
 			
-			var output = CPULines(taskData, this.mode_switches);
+			var output = [];
+			for (var j=0; j<taskData.length; j++){
+				if (taskData[j].length){
+					var proc = {
+						'name'	: taskData[j][nameIndex],
+						'cpu'	: taskData[j][CPUIndex],
+						'msw'	: taskData[j][2],
+						'csw'	: taskData[j][3]
+					};
+					if (proc.name === rootName) rootCPU = proc.cpu*0.01;
+					if (proc.name === 'bela-audio') this.mode_switches(proc.msw-NORMAL_MSW);
+					// ignore uninteresting data
+					if (proc && proc.name && proc.name !== rootName && proc.name !== 'NAME' && proc.name !== IRQName){
+						output.push(proc);
+					}
+				}
+			}
 
 			for (var j=0; j<output.length; j++){
 				if (output[j].cpu){
@@ -188,50 +210,6 @@ class ToolbarView extends View {
 		}
 		modeswitches = value;
 	}
-}
-
-
-function CPU2(taskData, msw_func){
-	var output = [];
-	for (var j=0; j<taskData.length; j++){
-		if (taskData[j].length){
-			var proc = {
-				'name'	: taskData[j][7],
-				'cpu'	: taskData[j][6],
-				'msw'	: taskData[j][2],
-				'csw'	: taskData[j][3]
-			};
-			if (proc.name === 'ROOT') rootCPU = proc.cpu*0.01;
-			if (proc.name === 'bela-audio') msw_func(proc.msw-NORMAL_MSW);
-			// ignore uninteresting data
-			if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ67:'){
-				output.push(proc);
-			}
-		}
-	}
-	return output;
-}
-function CPU3(taskData, msw_func){
-
-	var output = [];
-	for (var j=0; j<taskData.length; j++){
-		if (taskData[j].length){
-			var proc = {
-				'name'	: taskData[j][8],
-				'cpu'	: taskData[j][7],
-				'msw'	: taskData[j][2],
-				'csw'	: taskData[j][3]
-			};
-			if (proc.name === '[ROOT]') rootCPU = proc.cpu*0.01;
-			if (proc.name === 'bela-audio') msw_func(proc.msw-NORMAL_MSW);
-			// ignore uninteresting data
-			if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:'){
-				output.push(proc);
-			}
-		}
-	}
-
-	return output;
 }
 
 module.exports = ToolbarView;
