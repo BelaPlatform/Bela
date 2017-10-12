@@ -122,7 +122,7 @@ class ToolbarView extends View {
 	}
 
 	_xenomaiVersion(ver){
-		console.log('version', ver);
+		console.log('xenomai version:', ver);
 		if (ver.includes('2.6.3'))
 			CPULines = CPU2;
 		else
@@ -132,7 +132,7 @@ class ToolbarView extends View {
 	_CPU(data){
 	//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 		var bela = 0;
-console.log(data);
+
 		if (data.bela != 0 && data.bela !== undefined){
 		
 			// extract the data from the output
