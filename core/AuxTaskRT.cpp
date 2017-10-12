@@ -112,7 +112,7 @@ void AuxTaskRT::cleanup(){
 #ifdef XENOMAI_SKIN_posix
 	//pthread_cancel(thread);
 	__wrap_mq_close(queueDesc);
-#warning should call mq_unlink(queueName);
+#warning should call __wrap_mq_unlink(queueName);
 #endif
 }
 

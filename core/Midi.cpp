@@ -432,7 +432,7 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 		if(ret < 0){
 #endif
 #ifdef XENOMAI_SKIN_posix
-		int ret = sendto(sock, bytes, size, 0, NULL, 0);
+		int ret = __wrap_sendto(sock, bytes, size, 0, NULL, 0);
 		if (ret != size){
 #endif
 			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));

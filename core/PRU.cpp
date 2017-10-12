@@ -570,12 +570,12 @@ static int devMemWrite(off_t target, uint32_t* value)
 	void *map_base, *virt_addr;
 	uint32_t writeval = *value;
 
-	if((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1)
+	if((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) // NOWRAP
 	{
 		fprintf(stderr, "Unable to open /dev/mem: %d %s\n", fd, strerror(-fd));
 		return -1;
 	}
-	map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK);
+	map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK); // NOWRAP
 	if(map_base == (void *) -1)
 	{
 		fprintf(stderr, "Unable to mmap %ld\n", target);
@@ -694,7 +694,7 @@ int PRU::start(char * const filename)
 	// it will often hang the system (especially for small blocksizes).
 	// Not sure why this would happen, perhaps a race condition between the PRU
 	// and the rtdm_driver?
-	if ((rtdm_fd = open(rtdm_driver, O_RDWR)) < 0) {
+	if ((rtdm_fd = __wrap_open(rtdm_driver, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\n", errno, strerror(errno));
 		if(errno == EBUSY) // Device or resource busy
 		{
@@ -793,7 +793,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// make sure we always sleep a tiny bit to prevent hanging the board
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
-		int ret = read(rtdm_fd, NULL, 0);
+		int ret = __wrap_read(rtdm_fd, NULL, 0);
 		if(ret < 0)
 		{
 			rt_fprintf(stderr, "PRU interrupt timeout, %d %d %s\n", ret, errno, strerror(errno));
@@ -1302,7 +1302,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	}
 
 #if defined(BELA_USE_RTDM)
-        close(rtdm_fd);
+        __wrap_close(rtdm_fd);
 #endif
 
 	// Tell PRU to stop

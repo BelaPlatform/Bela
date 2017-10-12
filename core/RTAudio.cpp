@@ -535,7 +535,7 @@ void Bela_stopAudio()
 #ifdef XENOMAI_SKIN_posix
 	void* threadReturnValue;
 #if XENOMAI_MAJOR == 2
-	int ret = pthread_join(gRTAudioThread, &threadReturnValue);
+	int ret = pthread_join(gRTAudioThread, &threadReturnValue); // NOWRAP xenomai 2.6 does not have a wrapper for pthread_join
 #endif
 #if XENOMAI_MAJOR == 3
 	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);

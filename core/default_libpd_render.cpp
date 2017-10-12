@@ -87,8 +87,8 @@ void Bela_MidiOutByte(int port, int byte){
 	midi[port]->writeOutput(byte);
 }
 
-void Bela_printHook(const char *recv){
-	rt_printf("%s", recv);
+void Bela_printHook(const char *received){
+	rt_printf("%s", received);
 }
 
 static DigitalChannelManager dcm;
@@ -287,7 +287,7 @@ bool setup(BelaContext *context, void *userData)
 	gBufLength = max(gLibpdBlockSize, context->audioFrames);
 
 
-	// bind your receivers here
+	// Bind your receivers here
 	libpd_bind("bela_digitalOut11");
 	libpd_bind("bela_digitalOut12");
 	libpd_bind("bela_digitalOut13");
