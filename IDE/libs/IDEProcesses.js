@@ -19,7 +19,7 @@ exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
 		console.log('error reading xenomai version');
 		return;
 	}	
-	if (stdout.includes('2.6.3'))
+	if (stdout.includes('2.6'))
 		xenomaiStatPath = '/proc/xenomai/stat';
 	else
 		xenomaiStatPath = '/proc/xenomai/sched/stat';
