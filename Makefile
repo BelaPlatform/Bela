@@ -236,10 +236,11 @@ DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOM
 # Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
+SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
 ifeq ($(XENOMAI_VERSION),2.6)
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags) # | sed "s/-Wl,@[a-Z_/]*.wrappers //g")
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
 else
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init) # | sed "s/-Wl,@[a-Z_/]*.wrappers //g")
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
 endif
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
@@ -362,7 +363,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC -W-no-unused-functions
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC -Wno-unused-function
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -370,7 +371,7 @@ build/core/%.o: ./core/%.c
 build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC -W-no-unused-functions
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC -Wno-unused-function
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 

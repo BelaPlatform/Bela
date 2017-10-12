@@ -86,9 +86,9 @@ static void setup_sched_parameters(pthread_attr_t *attr, int prio)
 	struct sched_param p;
 	int ret;
 	
-	ret = pthread_attr_init(attr);
+	ret = __wrap_pthread_attr_init(attr);
 	if (ret)
-		error(1, ret, "pthread_attr_init()");
+		error(1, ret, "__wrap_pthread_attr_init()");
 
 	ret = pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED);
 	if (ret)
@@ -106,7 +106,7 @@ static void setup_sched_parameters(pthread_attr_t *attr, int prio)
 
 static int setup_thread_attributes(pthread_attr_t *attr, int stackSize, int prio)
 {
-	if(pthread_attr_init(attr))
+	if(__wrap_pthread_attr_init(attr))
 	{
 		fprintf(stderr, "Error: unable to init thread attributes\n");
 		return -1;
@@ -143,10 +143,10 @@ static int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	// note the different spelling. Worst thing is that 
 	// pthread_setname_np would still compile and run (because it is a POSIX
 	// extension provided by Linux), but would not have the desired effect.
-	pthread_set_name_np(*task, taskName);
+	__wrap_pthread_set_name_np(*task, taskName);
 #endif
 #if XENOMAI_MAJOR == 3
-	pthread_setname_np(*task, taskName);
+	__wrap_pthread_setname_np(*task, taskName);
 #endif
 	pthread_attr_destroy(&attr);
 	return 0;
@@ -159,7 +159,7 @@ static int createXenomaiPipe(const char* portName, int poolsz)
 	 * endpoint is represented by a port number within the XDDP
 	 * protocol namespace.
 	 */
-	int s = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+	int s = __wrap_socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
 	if (s < 0) {
 		fprintf(stderr, "Failed call to socket\n");
 		return -1;
@@ -171,7 +171,7 @@ static int createXenomaiPipe(const char* portName, int poolsz)
 	 */
 	struct rtipc_port_label plabel;
 	strcpy(plabel.label, portName);
-	int ret = setsockopt(s, SOL_XDDP, XDDP_LABEL,
+	int ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_LABEL,
 			 &plabel, sizeof(plabel));
 	/*
 	 * Set a local pool for the RT endpoint. Memory needed to
@@ -180,11 +180,11 @@ static int createXenomaiPipe(const char* portName, int poolsz)
 	 */
 	if(poolsz == 0)
 		poolsz = 16384; /* bytes */
-	ret = setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
+	ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
 			 &poolsz, sizeof(poolsz));
 	if (ret)
 	{
-		fprintf(stderr, "Failed call to setsockopt\n");
+		fprintf(stderr, "Failed call to __wrap_setsockopt\n");
 		return -1;
 	}
 
@@ -196,10 +196,10 @@ static int createXenomaiPipe(const char* portName, int poolsz)
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sipc_family = AF_RTIPC;
 	saddr.sipc_port = -1; // automatically assign port number
-	ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
+	ret = __wrap_bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
 	if (ret)
 	{
-		fprintf(stderr, "Failed call to bind\n");
+		fprintf(stderr, "Failed call to __wrap_bind\n");
 		return -1;
 	}
 	return s;

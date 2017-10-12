@@ -234,7 +234,7 @@ void Bela_stopAllAuxiliaryTasks()
 
 		void* threadReturnValue;
 #if XENOMAI_MAJOR == 2
-		pthread_join(taskStruct->task, &threadReturnValue);
+		pthread_join(taskStruct->task, &threadReturnValue); // NOWRAP: Xenomai 2.6 does not have a wrapper for this.
 #endif
 #if XENOMAI_MAJOR == 3
 		__wrap_pthread_join(taskStruct->task, &threadReturnValue);
@@ -265,4 +265,3 @@ void Bela_deleteAllAuxiliaryTasks()
 	}
 	getAuxTasks().clear();
 }
-

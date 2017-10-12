@@ -248,7 +248,7 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 	int fd;
 	codec == MASTER_CODEC ? fd = _fd_master : fd = _fd_slave;
 
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr); // NOWRAP
 	if (ret < 0){
 		printf("Error during SPI transmission for CTAG face: %d\n", ret);
 		return 1;
@@ -257,7 +257,7 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 	if (!(tx_buf[0] & 1)){ // Verify registers, if new value has been written
 		unsigned char origValue = tx_buf[2];
 		tx_buf[0] = tx_buf[0] | 0x1; // Set read only flag
-		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr); // NOWRAP
 		if (ret < 0){
 			printf("Error in SPI transmission during verification of register values of CTAG face: %d\n", ret);
 			return 1;

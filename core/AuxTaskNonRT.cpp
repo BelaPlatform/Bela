@@ -80,7 +80,7 @@ void AuxTaskNonRT::schedule(void* ptr, size_t size){
 	int ret = rt_pipe_write(&pipe, ptr, size, P_NORMAL);
 #endif
 #ifdef XENOMAI_SKIN_posix
-	int ret = sendto(pipeSocket, ptr, size, 0, NULL, 0);
+	int ret = __wrap_sendto(pipeSocket, ptr, size, 0, NULL, 0);
 #endif
 	if(ret < 0)
 	{
@@ -106,7 +106,7 @@ void AuxTaskNonRT::cleanup(){
 	// Currently they are probably just hanging on the pipes
 	// However the three lines below cause a segfault after the first time they are run
 	// char ptr[1];
-	// int ret = sendto(pipeSocket, ptr, 1, 0, NULL, 0); // unblock the pipe
+	// int ret = __wrap_sendto(pipeSocket, ptr, 1, 0, NULL, 0); // unblock the pipe
 	// pthread_cancel(thread);
 	// also we should join them!
 #endif
