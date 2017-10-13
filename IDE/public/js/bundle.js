@@ -3336,7 +3336,7 @@ var SettingsView = function (_View) {
 
 			// build the popup content
 			popup.title('About Bela');
-			popup.subtitle('You are using Bela Version 0.2.1, August 2017. Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+			popup.subtitle('You are using Bela Version 0.3.0, October 2017. Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 			var form = [];
 			form.push('<button type="submit" class="button popup-continue">Close</button>');
 
@@ -3883,7 +3883,7 @@ var ToolbarView = function (_View) {
 						}
 					}
 				}
-				console.log(output);
+
 				for (var j = 0; j < output.length; j++) {
 					if (output[j].cpu) {
 						bela += parseFloat(output[j].cpu);
@@ -3922,49 +3922,6 @@ var ToolbarView = function (_View) {
 
 	return ToolbarView;
 }(View);
-
-function CPU2(taskData, msw_func) {
-	var output = [];
-	for (var j = 0; j < taskData.length; j++) {
-		if (taskData[j].length) {
-			var proc = {
-				'name': taskData[j][7],
-				'cpu': taskData[j][6],
-				'msw': taskData[j][2],
-				'csw': taskData[j][3]
-			};
-			if (proc.name === 'ROOT') rootCPU = proc.cpu * 0.01;
-			if (proc.name === 'bela-audio') msw_func(proc.msw - NORMAL_MSW);
-			// ignore uninteresting data
-			if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ67:') {
-				output.push(proc);
-			}
-		}
-	}
-	return output;
-}
-function CPU3(taskData, msw_func) {
-
-	var output = [];
-	for (var j = 0; j < taskData.length; j++) {
-		if (taskData[j].length) {
-			var proc = {
-				'name': taskData[j][8],
-				'cpu': taskData[j][7],
-				'msw': taskData[j][2],
-				'csw': taskData[j][3]
-			};
-			if (proc.name === '[ROOT]') rootCPU = proc.cpu * 0.01;
-			if (proc.name === 'bela-audio') msw_func(proc.msw - NORMAL_MSW);
-			// ignore uninteresting data
-			if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:') {
-				output.push(proc);
-			}
-		}
-	}
-
-	return output;
-}
 
 module.exports = ToolbarView;
 
