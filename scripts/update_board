@@ -169,8 +169,12 @@ ssh $BBB_ADDRESS "make -C /tmp/bela-cape-btn install && rm -rf /tmp/bela-cape-bt
 # the below files could be user-customized, so copy them if they do not exist or forced to do so
 copy_if_does_not_exist resources/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
 copy_if_does_not_exist resources/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
-
-
+DEBIAN_VERSION=`get_board_debian_version`
+if [ "$DEBIAN_VERSION" = wheezy ]
+then
+	scp -r resources/wheezy/ bbb:
+	ssh $BBB_ADDRESS "dpkg -l libseasocks-dev 2>&1 > /dev/null || dpkg -i wheezy/deb/* && ldconfig"
+fi
 error_handler $?
 
 # Create remaining directories needed for building
