@@ -264,7 +264,7 @@ int Midi::writeTo(const char* port){
 	outId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(outId, size + 1, "bela-midiOut_%s", port);
 
-#if XENOMAI_MAJOR == 3
+#if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/%s";
 #else
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/%s";

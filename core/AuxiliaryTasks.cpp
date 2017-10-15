@@ -49,11 +49,11 @@ void auxiliaryTaskLoop(void *taskStruct);
 extern unsigned int gAuxiliaryTaskStackSize;
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
-#ifdef XENOMAI_SKIN_posix
+#if XENOMAI_MAJOR == 3
 	// if a program calls this before xenomai is inited, let's init it here with empty arguments.
 	if(!gXenomaiInited)
 	{
-		fprintf(stderr, "Error: You shuold call Bela_initAudio() before calling Bela_createAuxiliaryTask()\n");
+		fprintf(stderr, "Error: You should call Bela_initAudio() before calling Bela_createAuxiliaryTask()\n");
 		return 0;
 	}
 #endif
@@ -233,12 +233,7 @@ void Bela_stopAllAuxiliaryTasks()
 		__wrap_pthread_mutex_unlock(&taskStruct->mutex);
 
 		void* threadReturnValue;
-#if XENOMAI_MAJOR == 2
-		pthread_join(taskStruct->task, &threadReturnValue); // NOWRAP: Xenomai 2.6 does not have a wrapper for this.
-#endif
-#if XENOMAI_MAJOR == 3
 		__wrap_pthread_join(taskStruct->task, &threadReturnValue);
-#endif
 #endif
 	}
 }

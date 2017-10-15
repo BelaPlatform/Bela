@@ -65,6 +65,8 @@ RT_TASK gRTAudioThread;
 #endif
 #ifdef XENOMAI_SKIN_posix
 pthread_t gRTAudioThread;
+#endif
+#if XENOMAI_MAJOR == 3
 int gXenomaiInited = 0;
 #endif
 static const char gRTAudioThreadName[] = "bela-audio";
@@ -534,12 +536,7 @@ void Bela_stopAudio()
 #endif
 #ifdef XENOMAI_SKIN_posix
 	void* threadReturnValue;
-#if XENOMAI_MAJOR == 2
-	int ret = pthread_join(gRTAudioThread, &threadReturnValue); // NOWRAP xenomai 2.6 does not have a wrapper for pthread_join
-#endif
-#if XENOMAI_MAJOR == 3
 	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
-#endif
 	if(ret)
 	{
 		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));

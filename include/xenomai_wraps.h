@@ -18,12 +18,13 @@ extern "C" {
 #endif
 #ifdef XENOMAI_SKIN_posix
 #include <pthread.h>
+#include <mqueue.h>
+#include <sys/socket.h>
+
+// Forward declare __wrap_ versions of POSIX calls.
+// At link time, Xenomai will provide implementations for these
 int __wrap_nanosleep(const struct timespec *req, struct timespec *rem);
 int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
-#if XENOMAI_MAJOR == 3
-int __wrap_pthread_join(pthread_t thread, void **retval);
-#endif
-
 int __wrap_pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);
 int __wrap_pthread_mutex_destroy(pthread_mutex_t *mutex);
 int __wrap_pthread_mutex_lock(pthread_mutex_t *mutex);
@@ -35,14 +36,30 @@ int __wrap_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *att
 int __wrap_pthread_cond_signal(pthread_cond_t *cond);
 int __wrap_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 
+int __wrap_socket(int protocol_family, int socket_type, int protocol);
+int __wrap_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
+int __wrap_bind(int fd, const struct sockaddr *my_addr, socklen_t addrlen);
+ssize_t __wrap_sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen);
 
-
-#include <mqueue.h>
 mqd_t __wrap_mq_open(const char *name, int oflags, ...);
 int __wrap_mq_close(mqd_t mqdes);
 ssize_t __wrap_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
 int __wrap_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio);
+int __wrap_mq_unlink(const char *name);
+
+// Handle difference between posix API of Xenomai 2.6 and Xenomai 3
+// Some functions are not wrapped by Xenomai 2.6, so we redefine the __wrap
+// to the actual POSIX service for Xenomai 2.6 while we simply forward declare
+// the __wrap_ version for Xenomai 3
+#if XENOMAI_MAJOR == 2
+#define __wrap_pthread_join(a,b) pthread_join(a,b) // NOWRAP
+#define __wrap_pthread_attr_init(a) pthread_attr_init(a) // NOWRAP
 #endif
+#if XENOMAI_MAJOR == 3
+int __wrap_pthread_join(pthread_t thread, void **retval);
+int __wrap_pthread_attr_init(pthread_attr_t *attr);
+#endif
+#endif /* XENOMAI_SKIN_posix */
 
 #ifdef XENOMAI_SKIN_native
 #include <native/task.h>
@@ -57,7 +74,6 @@ typedef RTIME time_ns_t;
 typedef long long int time_ns_t;
 typedef void *(pthread_callback_t)(void *);
 #endif
-
 
 static inline int task_sleep_ns(long long int timens)
 {
@@ -143,7 +159,7 @@ static int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	// note the different spelling. Worst thing is that 
 	// pthread_setname_np would still compile and run (because it is a POSIX
 	// extension provided by Linux), but would not have the desired effect.
-	__wrap_pthread_set_name_np(*task, taskName);
+	pthread_set_name_np(*task, taskName);
 #endif
 #if XENOMAI_MAJOR == 3
 	__wrap_pthread_setname_np(*task, taskName);
@@ -204,7 +220,7 @@ static int createXenomaiPipe(const char* portName, int poolsz)
 	}
 	return s;
 }
-#endif
+#endif /* XENOMAI_SKIN_posix */
 
 #ifdef __cplusplus
 }
