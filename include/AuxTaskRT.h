@@ -42,6 +42,7 @@ class AuxTaskRT{
 #ifdef XENOMAI_SKIN_posix
 		pthread_t thread;
 		mqd_t queueDesc;
+		char queueName [100];
 #endif
 		
 		const char* name;

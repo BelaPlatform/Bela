@@ -46,24 +46,23 @@ void AuxTaskRT::__create(){
 #endif
 	
 	// create a queue, with prefixed name
-	char q_name [30];
 #ifdef XENOMAI_SKIN_native
-	sprintf (q_name, "q_%s", name);
-	if (int ret = rt_queue_create(&queue, q_name, AUX_RT_POOL_SIZE, Q_UNLIMITED, Q_PRIO))
+	sprintf (queueName, "q_%s", name);
+	if (int ret = rt_queue_create(&queue, queueName, AUX_RT_POOL_SIZE, Q_UNLIMITED, Q_PRIO))
 	{
 		fprintf(stderr, "Unable to create AuxTaskRT %s queue: %i\n", name, ret);
 		return;
 	}
 #endif 
 #ifdef XENOMAI_SKIN_posix
-	sprintf (q_name, "/q_%s", name);
+	sprintf (queueName, "/q_%s", name);
 	struct mq_attr attr;
 	attr.mq_maxmsg = 100; 
 	attr.mq_msgsize = 100000;
-    	queueDesc = __wrap_mq_open(q_name, O_CREAT | O_RDWR, 0644, &attr);
+	queueDesc = __wrap_mq_open(queueName, O_CREAT | O_RDWR, 0644, &attr);
 	if(queueDesc < 0)
 	{
-		fprintf(stderr, "Unable to open message queue %s: (%d) %s\n", q_name, errno, strerror(errno));
+		fprintf(stderr, "Unable to open message queue %s: (%d) %s\n", queueName, errno, strerror(errno));
 		return;
 	}
 #endif
@@ -89,9 +88,9 @@ void AuxTaskRT::schedule(void* buf, size_t size){
 	rt_queue_send(&queue, q_buf, size, Q_NORMAL);
 #endif
 #ifdef XENOMAI_SKIN_posix
-	if(int ret = __wrap_mq_send(queueDesc, (char*)buf, size, 0))
+	if(__wrap_mq_send(queueDesc, (char*)buf, size, 0))
 	{
-		fprintf(stderr, "Unable to send message to queue for task %s: (%d) %s\n", name, errno, strerror(errno));
+		if(!gShouldStop) fprintf(stderr, "Unable to send message to queue for task %s: (%d) %s\n", name, errno, strerror(errno));
 		return;
 	}
 #endif
@@ -112,7 +111,7 @@ void AuxTaskRT::cleanup(){
 #ifdef XENOMAI_SKIN_posix
 	//pthread_cancel(thread);
 	__wrap_mq_close(queueDesc);
-#warning should call __wrap_mq_unlink(queueName);
+	__wrap_mq_unlink(queueName);
 #endif
 }
 
@@ -133,7 +132,7 @@ void AuxTaskRT::empty_loop(){
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
+			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
 			return;
 		}
 		empty_callback();
@@ -158,7 +157,7 @@ void AuxTaskRT::str_loop(){
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
+			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
 			return;
 		}
 		str_callback((const char*)buffer);
@@ -183,7 +182,7 @@ void AuxTaskRT::buf_loop(){
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
+			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
 			return;
 		}
 		buf_callback((void*)buffer, ret);
@@ -208,7 +207,7 @@ void AuxTaskRT::ptr_loop(){
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
+			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
 			return;
 		}
 		ptr_callback(pointer);
