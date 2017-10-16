@@ -365,8 +365,8 @@ void print_usage(void)
 		"\t--pressed <arg> The input value corresponding to pressed status (0 or 1). Default: %d.\n"
 		"\t--delay <ard>   Postpone the beginning of the polling by <arg> seconds. Default: %d.\n"
 		"\t--pin <arg>     The GPIO number to monitor. Default: %d.\n"
-		"\t--monitor-click <arg> Whether to monitor the click (0 or 1). Default: %d.\n;"
-		"\t--monitor-hold <arg> Whether to monitor the hold (0 or 1). Default: %d.\n;"
+		"\t--monitor-click <arg> Whether to monitor the click (0 or 1). Default: %d.\n"
+		"\t--monitor-hold  <arg> Whether to monitor the hold (0 or 1). Default: %d.\n"
 		"\t--help          Display the usage information.\n"
 		"\t--version       Show the version information.\n"
 		"\n",
