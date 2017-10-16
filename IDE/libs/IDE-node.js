@@ -445,7 +445,10 @@ function listenToRunOnBoot(){
 }
 
 function runOnBoot(socket, args){
-	var proc = spawn('make', args, {cwd: belaPath});
+	args.push("-C");
+	args.push(belaPath);
+	console.log("On boot:", args);
+	var proc = spawn('make', args);
 		proc.stdout.setEncoding('utf-8');
 		proc.stderr.setEncoding('utf-8');
 		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
