@@ -576,7 +576,7 @@ void render(BelaContext *context, void *userData)
 				} else {
 					if(ch >= context->audioOutChannels)	{
 						int m = n/2;
-						context->analogOut[m * context->analogFrames + (ch-context->audioOutChannels)] = constrain(gHvOutputBuffers[ch*context->audioFrames + n],0.0,1.0);
+						context->analogOut[m * context->analogOutChannels + (ch-context->audioOutChannels)] = gHvOutputBuffers[ch*context->audioFrames + n];
 					} else {
 						context->audioOut[n * context->audioOutChannels + ch] = gHvOutputBuffers[ch * context->audioFrames + n] * lfo; // MODIFICATION (* lfo)
 					}
