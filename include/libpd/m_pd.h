@@ -9,8 +9,8 @@ extern "C" {
 #endif
 
 #define PD_MAJOR_VERSION 0
-#define PD_MINOR_VERSION 46
-#define PD_BUGFIX_VERSION 6
+#define PD_MINOR_VERSION 48
+#define PD_BUGFIX_VERSION 0
 #define PD_TEST_VERSION ""
 extern int pd_compatibilitylevel;   /* e.g., 43 for pd 0.43 compatibility */
 
@@ -39,12 +39,15 @@ extern int pd_compatibilitylevel;   /* e.g., 43 for pd 0.43 compatibility */
 #define EXTERN extern
 #endif /* _WIN32 */
 
-    /* and depending on the compiler, hidden data structures are
-    declared differently: */
-#if defined( __GNUC__) || defined( __BORLANDC__ ) || defined( __MWERKS__ )
-#define EXTERN_STRUCT struct
-#else
+    /* On most c compilers, you can just say "struct foo;" to declare a
+    structure whose elements are defined elsewhere.  On MSVC, when compiling
+    C (but not C++) code, you have to say "extern struct foo;".  So we make
+    a stupid macro: */
+#if defined(_MSC_VER) && !defined(_LANGUAGE_C_PLUS_PLUS) \
+    && !defined(__cplusplus)
 #define EXTERN_STRUCT extern struct
+#else
+#define EXTERN_STRUCT struct
 #endif
 
 /* Define some attributes, specific to the compiler */
@@ -137,7 +140,7 @@ typedef struct _gstub
 typedef struct _gpointer           /* pointer to a gobj in a glist */
 {
     union
-    {   
+    {
         struct _scalar *gp_scalar;  /* scalar we're in (if glist) */
         union word *gp_w;           /* raw data (if array) */
     } gp_un;
@@ -165,7 +168,7 @@ typedef enum
     A_COMMA,
     A_DEFFLOAT,
     A_DEFSYM,
-    A_DOLLAR, 
+    A_DOLLAR,
     A_DOLLSYM,
     A_GIMME,
     A_CANT
@@ -262,18 +265,6 @@ typedef void (*t_gotfn)(void *x, ...);
 /* ---------------- pre-defined objects and symbols --------------*/
 EXTERN t_pd pd_objectmaker;     /* factory for creating "object" boxes */
 EXTERN t_pd pd_canvasmaker;     /* factory for creating canvases */
-EXTERN t_symbol s_pointer;
-EXTERN t_symbol s_float;
-EXTERN t_symbol s_symbol;
-EXTERN t_symbol s_bang;
-EXTERN t_symbol s_list;
-EXTERN t_symbol s_anything;
-EXTERN t_symbol s_signal;
-EXTERN t_symbol s__N;
-EXTERN t_symbol s__X;
-EXTERN t_symbol s_x;
-EXTERN t_symbol s_y;
-EXTERN t_symbol s_;
 
 /* --------- prototypes from the central message system ----------- */
 EXTERN void pd_typedmess(t_pd *x, t_symbol *s, int argc, t_atom *argv);
@@ -344,7 +335,7 @@ EXTERN t_binbuf *binbuf_new(void);
 EXTERN void binbuf_free(t_binbuf *x);
 EXTERN t_binbuf *binbuf_duplicate(t_binbuf *y);
 
-EXTERN void binbuf_text(t_binbuf *x, char *text, size_t size);
+EXTERN void binbuf_text(t_binbuf *x, const char *text, size_t size);
 EXTERN void binbuf_gettext(t_binbuf *x, char **bufp, int *lengthp);
 EXTERN void binbuf_clear(t_binbuf *x);
 EXTERN void binbuf_add(t_binbuf *x, int argc, t_atom *argv);
@@ -442,6 +433,9 @@ EXTERN void canvas_makefilename(t_glist *c, char *file,
 EXTERN t_symbol *canvas_getdir(t_glist *x);
 EXTERN char sys_font[]; /* default typeface set in s_main.c */
 EXTERN char sys_fontweight[]; /* default font weight set in s_main.c */
+EXTERN int sys_hostfontsize(int fontsize, int zoom);
+EXTERN int sys_zoomfontwidth(int fontsize, int zoom, int worstcase);
+EXTERN int sys_zoomfontheight(int fontsize, int zoom, int worstcase);
 EXTERN int sys_fontwidth(int fontsize);
 EXTERN int sys_fontheight(int fontsize);
 EXTERN void canvas_dataproperties(t_glist *x, t_scalar *sc, t_binbuf *b);
@@ -455,7 +449,7 @@ EXTERN_STRUCT _widgetbehavior;
 
 EXTERN_STRUCT _parentwidgetbehavior;
 #define t_parentwidgetbehavior struct _parentwidgetbehavior
-EXTERN t_parentwidgetbehavior *pd_getparentwidget(t_pd *x);
+EXTERN const t_parentwidgetbehavior *pd_getparentwidget(t_pd *x);
 
 /* -------------------- classes -------------- */
 
@@ -470,7 +464,7 @@ EXTERN t_parentwidgetbehavior *pd_getparentwidget(t_pd *x);
 
 EXTERN t_class *class_new(t_symbol *name, t_newmethod newmethod,
     t_method freemethod, size_t size, int flags, t_atomtype arg1, ...);
-EXTERN void class_addcreator(t_newmethod newmethod, t_symbol *s, 
+EXTERN void class_addcreator(t_newmethod newmethod, t_symbol *s,
     t_atomtype type1, ...);
 EXTERN void class_addmethod(t_class *c, t_method fn, t_symbol *sel,
     t_atomtype arg1, ...);
@@ -481,9 +475,9 @@ EXTERN void class_addsymbol(t_class *c, t_method fn);
 EXTERN void class_addlist(t_class *c, t_method fn);
 EXTERN void class_addanything(t_class *c, t_method fn);
 EXTERN void class_sethelpsymbol(t_class *c, t_symbol *s);
-EXTERN void class_setwidget(t_class *c, t_widgetbehavior *w);
-EXTERN void class_setparentwidget(t_class *c, t_parentwidgetbehavior *w);
-EXTERN t_parentwidgetbehavior *class_parentwidget(t_class *c);
+EXTERN void class_setwidget(t_class *c, const t_widgetbehavior *w);
+EXTERN void class_setparentwidget(t_class *c, const t_parentwidgetbehavior *w);
+EXTERN const t_parentwidgetbehavior *class_parentwidget(t_class *c);
 EXTERN char *class_getname(t_class *c);
 EXTERN char *class_gethelpname(t_class *c);
 EXTERN char *class_gethelpdir(t_class *c);
@@ -552,7 +546,7 @@ EXTERN int sys_close(int fd);
 EXTERN FILE *sys_fopen(const char *filename, const char *mode);
 EXTERN int sys_fclose(FILE *stream);
 
-/* ------------  threading ------------------- */ 
+/* ------------  threading ------------------- */
 EXTERN void sys_lock(void);
 EXTERN void sys_unlock(void);
 EXTERN int sys_trylock(void);
@@ -652,7 +646,7 @@ EXTERN t_float dbtopow(t_float);
 
 EXTERN t_float q8_sqrt(t_float);
 EXTERN t_float q8_rsqrt(t_float);
-#ifndef N32     
+#ifndef N32
 EXTERN t_float qsqrt(t_float);  /* old names kept for extern compatibility */
 EXTERN t_float qrsqrt(t_float);
 #endif
@@ -720,45 +714,166 @@ defined, there is a "te_xpix" field in objects, not a "te_xpos" as before: */
 #ifndef _MSC_VER /* Microoft compiler can't handle "inline" function/macros */
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 /* a test for NANs and denormals.  Should only be necessary on i386. */
-# if PD_FLOATSIZE == 32
-static inline int PD_BADFLOAT(t_sample f) {
-  t_sampleint_union u;
-  u.f=f;
-  return ((u.i & 0x7f800000)==0) || ((u.i&0x7f800000)==0x7f800000);
+#if PD_FLOATSIZE == 32
+
+typedef  union
+{
+    t_float f;
+    unsigned int ui;
+}t_bigorsmall32;
+
+static inline int PD_BADFLOAT(t_float f)  /* malformed float */
+{
+    t_bigorsmall32 pun;
+    pun.f = f;
+    pun.ui &= 0x7f800000;
+    return((pun.ui == 0) | (pun.ui == 0x7f800000));
 }
-/* more stringent test: anything not between 1e-19 and 1e19 in absolute val */
-static inline int PD_BIGORSMALL(t_sample f) {
-  t_sampleint_union u;
-  u.f=f;
-  return ((u.i & 0x60000000)==0) || ((u.i & 0x60000000)==0x60000000);
+
+static inline int PD_BIGORSMALL(t_float f)  /* exponent outside (-64,64) */
+{
+    t_bigorsmall32 pun;
+    pun.f = f;
+    return((pun.ui & 0x20000000) == ((pun.ui >> 1) & 0x20000000));
 }
-# else
-#  warning 64bit mode: BIGORSMALL not implemented yet
-#  define PD_BADFLOAT(f) 0
-#  define PD_BIGORSMALL(f) 0
-# endif
-#else
-# define PD_BADFLOAT(f) 0
-# define PD_BIGORSMALL(f) 0
+
+#elif PD_FLOATSIZE == 64
+
+typedef  union
+{
+    t_float f;
+    unsigned int ui[2];
+}t_bigorsmall64;
+
+static inline int PD_BADFLOAT(t_float f)  /* malformed double */
+{
+    t_bigorsmall64 pun;
+    pun.f = f;
+    pun.ui[1] &= 0x7ff00000;
+    return((pun.ui[1] == 0) | (pun.ui[1] == 0x7ff00000));
+}
+
+static inline int PD_BIGORSMALL(t_float f)  /* exponent outside (-512,512) */
+{
+    t_bigorsmall64 pun;
+    pun.f = f;
+    return((pun.ui[1] & 0x20000000) == ((pun.ui[1] >> 1) & 0x20000000));
+}
+
+#endif /* PD_FLOATSIZE */
+#else /* not INTEL or ARM */
+#define PD_BADFLOAT(f) 0
+#define PD_BIGORSMALL(f) 0
 #endif
+
 #else   /* _MSC_VER */
+#if PD_FLOATSIZE == 32
 #define PD_BADFLOAT(f) ((((*(unsigned int*)&(f))&0x7f800000)==0) || \
     (((*(unsigned int*)&(f))&0x7f800000)==0x7f800000))
 /* more stringent test: anything not between 1e-19 and 1e19 in absolute val */
 #define PD_BIGORSMALL(f) ((((*(unsigned int*)&(f))&0x60000000)==0) || \
     (((*(unsigned int*)&(f))&0x60000000)==0x60000000))
+#else   /* 64 bits... don't know what to do here */
+#define PD_BADFLOAT(f) (!(((f) >= 0) || ((f) <= 0)))
+#define PD_BIGORSMALL(f) ((f) > 1e150 || (f) <  -1e150 \
+    || (f) > -1e-150 && (f) < 1e-150 )
+#endif
 #endif /* _MSC_VER */
     /* get version number at run time */
 EXTERN void sys_getversion(int *major, int *minor, int *bugfix);
 
-EXTERN_STRUCT _pdinstance;
-#define t_pdinstance struct _pdinstance       /* m_imp.h */
+EXTERN_STRUCT _instancemidi;
+#define t_instancemidi struct _instancemidi
+
+EXTERN_STRUCT _instanceinter;
+#define t_instanceinter struct _instanceinter
+
+EXTERN_STRUCT _instancecanvas;
+#define t_instancecanvas struct _instancecanvas
+
+EXTERN_STRUCT _instanceugen;
+#define t_instanceugen struct _instanceugen
+
+EXTERN_STRUCT _instancestuff;
+#define t_instancestuff struct _instancestuff
+
+#ifndef PDTHREADS
+#define PDTHREADS 1
+#endif
+
+struct _pdinstance
+{
+    double pd_systime;          /* global time in Pd ticks */
+    t_clock *pd_clock_setlist;  /* list of set clocks */
+    t_canvas *pd_canvaslist;    /* list of all root canvases */
+    int pd_instanceno;          /* ordinal number of this instance */
+    t_symbol **pd_symhash;      /* symbol table hash table */
+    t_instancemidi *pd_midi;    /* private stuff for x_midi.c */
+    t_instanceinter *pd_inter;  /* private stuff for s_inter.c */
+    t_instanceugen *pd_ugen;    /* private stuff for d_ugen.c */
+    t_instancecanvas *pd_gui;   /* semi-private stuff in g_canvas.h */
+    t_instancestuff *pd_stuff;  /* semi-private stuff in s_stuff.h */
+    t_pd *pd_newest;            /* most recently created object */
+#ifdef PDINSTANCE
+    t_symbol  pd_s_pointer;
+    t_symbol  pd_s_float;
+    t_symbol  pd_s_symbol;
+    t_symbol  pd_s_bang;
+    t_symbol  pd_s_list;
+    t_symbol  pd_s_anything;
+    t_symbol  pd_s_signal;
+    t_symbol  pd_s__N;
+    t_symbol  pd_s__X;
+    t_symbol  pd_s_x;
+    t_symbol  pd_s_y;
+    t_symbol  pd_s_;
+#endif
+#if PDTHREADS
+    int pd_islocked;
+#endif
+};
+#define t_pdinstance struct _pdinstance
+EXTERN t_pdinstance pd_maininstance;
 
 /* m_pd.c */
-
+#ifdef PDINSTANCE
 EXTERN t_pdinstance *pdinstance_new( void);
 EXTERN void pd_setinstance(t_pdinstance *x);
 EXTERN void pdinstance_free(t_pdinstance *x);
+#endif /* PDINSTANCE */
+
+#if defined(PDTHREADS) && defined(PDINSTANCE)
+#define PERTHREAD __thread
+#else
+#define PERTHREAD
+#endif
+
+#ifdef PDINSTANCE
+EXTERN PERTHREAD t_pdinstance *pd_this;
+EXTERN t_pdinstance **pd_instances;
+EXTERN int pd_ninstances;
+#else
+#define pd_this (&pd_maininstance)
+#endif /* PDINSTANCE */
+
+#ifdef PDINSTANCE
+#define s_pointer   (pd_this->pd_s_pointer)
+#define s_float     (pd_this->pd_s_float)
+#define s_symbol    (pd_this->pd_s_symbol)
+#define s_bang      (pd_this->pd_s_bang)
+#define s_list      (pd_this->pd_s_list)
+#define s_anything  (pd_this->pd_s_anything)
+#define s_signal    (pd_this->pd_s_signal)
+#define s__N        (pd_this->pd_s__N)
+#define s__X        (pd_this->pd_s__X)
+#define s_x         (pd_this->pd_s_x)
+#define s_y         (pd_this->pd_s_y)
+#define s_          (pd_this->pd_s_)
+#else
+EXTERN t_symbol s_pointer, s_float, s_symbol, s_bang, s_list, s_anything,
+  s_signal, s__N, s__X, s_x, s_y, s_;
+#endif
+
 EXTERN t_canvas *pd_getcanvaslist(void);
 EXTERN int pd_getdspstate(void);
 

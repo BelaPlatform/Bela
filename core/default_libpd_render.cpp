@@ -10,7 +10,9 @@
 #include <cmath>
 #include <stdio.h>
 #include <libpd/z_libpd.h>
+extern "C" {
 #include <libpd/s_stuff.h>
+};
 #include <UdpServer.h>
 #include <Midi.h>
 #include <Scope.h>
@@ -177,9 +179,10 @@ static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 
-void fdLoop(void*){
+void fdLoop(void* arg){
+	t_pdinstance* pd_that = (t_pdinstance*)arg;
 	while(!gShouldStop){
-		libpd_sys_microsleep(0);
+		sys_doio(pd_that);
 		usleep(3000);
 	}
 }
@@ -277,8 +280,8 @@ bool setup(BelaContext *context, void *userData)
 
 	//TODO: ideally, we would analyse the ASCII of the patch file and find out which in/outs to use
 	libpd_init_audio(gChannelsInUse, gChannelsInUse, context->audioSampleRate);
-	gInBuf = libpd_get_sys_soundin();
-	gOutBuf = libpd_get_sys_soundout();
+	gInBuf = get_sys_soundin();
+	gOutBuf = get_sys_soundout();
 
 	libpd_start_message(1); // one entry in list
 	libpd_add_float(1.0f);
@@ -321,8 +324,9 @@ bool setup(BelaContext *context, void *userData)
 		libpd_float("bela_multiplexerChannels", context->multiplexerChannels);
 	}
 
+	sys_dontmanageio(1); // Tell Pd that we will manage the io loop
 	AuxiliaryTask fdTask;
-	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
+	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", (void*)pd_this);
 	Bela_scheduleAuxiliaryTask(fdTask);
 
 	return true;
@@ -563,7 +567,6 @@ void cleanup(BelaContext *context, void *userData)
 {
 	for(auto a : midi)
 	{
-		printf("Deleting %p\n", a);
 		delete a;
 	}
 	libpd_closefile(gPatch);
