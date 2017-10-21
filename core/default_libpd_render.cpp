@@ -13,6 +13,8 @@ extern "C" {
 #include <UdpServer.h>
 #include <Midi.h>
 #include <Scope.h>
+#include <string>
+#include <sstream>
 
 void Bela_userSettings(BelaInitSettings *settings)
 {
@@ -25,7 +27,66 @@ float* gInBuf;
 float* gOutBuf;
 #define PARSE_MIDI
 static std::vector<Midi*> midi;
-std::vector<const char*> gMidiPortNames;
+std::vector<std::string> gMidiPortNames;
+
+void dumpMidi()
+{
+	if(midi.size() == 0)
+	{
+		printf("No MIDI device enabled\n");
+		return;
+	}
+	printf("The following MIDI devices are enabled:\n");
+	printf("%4s%20s %3s %3s %s\n",
+			"Num",
+			"Name",
+			"In",
+			"Out",
+			"Pd channels"
+	      );
+	for(unsigned int n = 0; n < midi.size(); ++n)
+	{
+		printf("[%2d]%20s %3s %3s (%d-%d)\n", 
+			n,
+			gMidiPortNames[n].c_str(),
+			midi[n]->isInputEnabled() ? "x" : "_",
+			midi[n]->isOutputEnabled() ? "x" : "_",
+			n * 16 + 1,
+			n * 16 + 16
+		);
+	}
+}
+
+Midi* openMidiDevice(std::string name, bool verboseSuccess = false, bool verboseError = false)
+{
+	Midi* newMidi;
+	newMidi = new Midi();
+	newMidi->readFrom(name.c_str());
+	newMidi->writeTo(name.c_str());
+#ifdef PARSE_MIDI
+	newMidi->enableParser(true);
+#else
+	newMidi->enableParser(false);
+#endif /* PARSE_MIDI */
+	if(newMidi->isOutputEnabled())
+	{
+		if(verboseSuccess)
+			printf("Opened MIDI device %s as output\n", name.c_str());
+	}
+	if(newMidi->isInputEnabled())
+	{
+		if(verboseSuccess)
+			printf("Opened MIDI device %s as input\n", name.c_str());
+	}
+	if(!newMidi->isInputEnabled() && !newMidi->isOutputEnabled())
+	{
+		if(verboseError)
+			fprintf(stderr, "Failed to open  MIDI device %s\n", name.c_str());
+		return nullptr;
+	} else {
+		return newMidi;
+	}
+}
 
 static unsigned int getPortChannel(int* channel){
 	unsigned int port = 0;
@@ -102,6 +163,29 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 #define LIBPD_DIGITAL_OFFSET 11 // digitals are preceded by 2 audio and 8 analogs (even if using a different number of analogs)
 
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
+	if(strcmp(source, "bela_setMidi") == 0){
+		int num[3] = {0, 0, 0};
+		for(int n = 0; n < argc && n < 3; ++n)
+		{
+			if(!libpd_is_float(&argv[n]))
+			{
+				fprintf(stderr, "Wrong format for Bela_setMidi, expected:[hw 1 0 0(");
+				return;
+			}
+			num[n] = libpd_get_float(&argv[n]);
+		}
+		std::ostringstream deviceName;
+		deviceName << symbol << ":" << num[0] << "," << num[1] << "," << num[2];
+		printf("Adding Midi device: %s\n", deviceName.str().c_str());
+		Midi* newMidi = openMidiDevice(deviceName.str(), false, true);
+		if(newMidi)
+		{
+			midi.push_back(newMidi);
+			gMidiPortNames.push_back(deviceName.str());
+		}
+		dumpMidi();
+		return;
+	}
 	if(strcmp(source, "bela_setDigital") == 0){
 		// symbol is the direction, argv[0] is the channel, argv[1] (optional)
 		// is signal("sig" or "~") or message("message", default) rate
@@ -137,6 +221,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			}
 		}
 		dcm.manage(channel, direction, isMessageRate);
+		return;
 	}
 }
 
@@ -187,6 +272,7 @@ void fdLoop(void* arg){
 		usleep(3000);
 	}
 }
+
 
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
@@ -251,20 +337,22 @@ bool setup(BelaContext *context, void *userData)
 		}
 	}
 
-	printf("Trying to open MIDI devices...\n");
-	midi.resize(gMidiPortNames.size());
-	for(unsigned int n = 0; n < midi.size(); ++n){
-		midi[n] = new Midi();
-		const char* name = gMidiPortNames[n];
-		midi[n]->readFrom(name);
-		midi[n]->writeTo(name);
-#ifdef PARSE_MIDI
-		midi[n]->enableParser(true);
-#else
-		midi[n]->enableParser(false);
-#endif /* PARSE_MIDI */
+	for(unsigned int n = 0; n < gMidiPortNames.size(); ++n)
+	{
 	}
-	printf("...done opening MIDI devices\n");
+	unsigned int n = 0;
+	while(n < gMidiPortNames.size())
+	{
+		Midi* newMidi = openMidiDevice(gMidiPortNames[n], false, false);
+		if(newMidi)
+		{
+			midi.push_back(newMidi);
+			++n;
+		} else {
+			gMidiPortNames.erase(gMidiPortNames.begin() + n);
+		}
+	}
+	dumpMidi();
 
 	// check that we are not running with a blocksize smaller than gLibPdBlockSize
 	gLibpdBlockSize = libpd_blocksize();
@@ -274,19 +362,16 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	// set hooks before calling libpd_init
-	if(midi.size() > 0){
-		// do not register callbacks if no MIDI device is in use.
-		libpd_set_printhook(Bela_printHook);
-		libpd_set_floathook(Bela_floatHook);
-		libpd_set_messagehook(Bela_messageHook);
-		libpd_set_noteonhook(Bela_MidiOutNoteOn);
-		libpd_set_controlchangehook(Bela_MidiOutControlChange);
-		libpd_set_programchangehook(Bela_MidiOutProgramChange);
-		libpd_set_pitchbendhook(Bela_MidiOutPitchBend);
-		libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
-		libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
-		libpd_set_midibytehook(Bela_MidiOutByte);
-	}
+	libpd_set_printhook(Bela_printHook);
+	libpd_set_floathook(Bela_floatHook);
+	libpd_set_messagehook(Bela_messageHook);
+	libpd_set_noteonhook(Bela_MidiOutNoteOn);
+	libpd_set_controlchangehook(Bela_MidiOutControlChange);
+	libpd_set_programchangehook(Bela_MidiOutProgramChange);
+	libpd_set_pitchbendhook(Bela_MidiOutPitchBend);
+	libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
+	libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
+	libpd_set_midibytehook(Bela_MidiOutByte);
 
 	//initialize libpd. This clears the search path
 	libpd_init();
@@ -322,6 +407,7 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_digitalOut25");
 	libpd_bind("bela_digitalOut26");
 	libpd_bind("bela_setDigital");
+	libpd_bind("bela_setMidi");
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
@@ -362,7 +448,7 @@ void render(BelaContext *context, void *userData)
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
 			message = midi[port]->getParser()->getNextChannelMessage();
-			rt_printf("On port %d (%s): ", port, gMidiPortNames[port]);
+			rt_printf("On port %d (%s): ", port, gMidiPortNames[port].c_str());
 			message.prettyPrint(); // use this to print beautified message (channel, data bytes)
 			switch(message.getType()){
 				case kmmNoteOn:
