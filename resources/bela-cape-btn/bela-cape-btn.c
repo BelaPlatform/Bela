@@ -65,6 +65,9 @@
 #define HOMEPAGE_URL "http://bela.io/wiki"
 #define MAX_BUF 64
 
+#define POLL
+//#define EDGE // This is more efficient as it gets IRQ from the kernel. When using it, check in `dmesg` that there are no OOOOPS
+
 enum { BELA_CAPE_BTN_VERSION = 0x0100 };
 enum { INVALID_VERSION = 0xffff };
 enum { DEFAULT_BUTTON_PIN = 115 }; // The Bela cape button, which is on P9.27 / GPIO3[19]
@@ -90,6 +93,7 @@ int gpio_is_pin_valid(int pin)
 	return pin >= 0 && pin < 128;
 }
 
+#ifdef EDGE
 enum edge_e
 {
 	E_NONE    = 0,
@@ -97,6 +101,7 @@ enum edge_e
 	E_FALLING = 2,
 	E_BOTH    = 3,
 };
+#endif
 
 /****************************************************************
  * gpio_export
@@ -141,6 +146,7 @@ int gpio_unexport(unsigned int gpio)
 	return result;
 }
 
+#ifdef EDGE
 int gpio_set_edge(int pin, enum edge_e edge)
 {
 	if (!gpio_is_pin_valid(pin))
@@ -184,6 +190,40 @@ int gpio_set_edge(int pin, enum edge_e edge)
 		return -1;
 	}
 	return 0;
+}
+#endif /* EDGE */
+
+enum PIN_DIRECTION{
+	INPUT_PIN=0,
+	OUTPUT_PIN=1
+};
+/****************************************************************
+ * gpio_set_dir
+ ****************************************************************/
+int gpio_set_dir(unsigned int gpio, int out_flag)
+{
+	int fd, result = 0;
+	char buf[MAX_BUF];
+
+	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%d/direction", gpio);
+
+	fd = open(buf, O_WRONLY);
+	if (fd < 0) {
+		perror("gpio/direction");
+		return fd;
+	}
+
+	if (out_flag == OUTPUT_PIN) {
+		if(write(fd, "out", 4) < 0)
+			result = -1;
+	}
+	else {
+		if(write(fd, "in", 3) < 0)
+			result = -1;
+	}
+
+	close(fd);
+	return result;
 }
 
 int gpio_open(int pin)
@@ -236,6 +276,25 @@ void interrupt_handler(int var)
 	gShouldStop = 1;
 }
 
+int is_pressed(int fd)
+{
+	char buff[16];
+	memset(buff, 0, sizeof(buff));
+	int n = read(fd, buff, sizeof(buff));
+	if (n == 0)
+	{
+		fprintf(stderr, "Reading value returned 0\n");
+		return -1;
+	}
+
+	if (lseek(fd, SEEK_SET, 0) == -1)
+	{
+		fprintf(stderr, "Rewinding failed. Error %d\n", errno);
+		return -1;
+	}
+	return strtoul(buff, NULL, 10) == PRESSED_VALUE;
+}
+
 int run(void)
 {
 	if(INITIAL_DELAY > 0){
@@ -245,17 +304,21 @@ int run(void)
 	int ret = gpio_export(BUTTON_PIN);
 	int shouldUnexport = (ret == 0);
 	
+#ifdef EDGE
 	int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
-
 	if (err != 0)
 		return err;
+#endif
 
+	gpio_set_dir(BUTTON_PIN, INPUT_PIN);
 	int fd = gpio_open(BUTTON_PIN);
 
+#ifdef EDGE
 	struct pollfd pfd[1];
 
 	pfd[0].fd = fd;
 	pfd[0].events = POLLPRI;
+#endif
 
 	timestamp_ms_t pressed_at = 0;
 
@@ -281,11 +344,12 @@ int run(void)
 			// otherwise wait forever
 			pollTime = -1;
 		}
+#ifdef EDGE
 		if(verbose)
-			printf("Polling with timeout %d\n", pollTime);
+			printf("Detecting edge with timeout %d\n", pollTime);
 		int result = poll(pfd, 1, pollTime);
 		if(verbose)
-			printf("Finished polling: %d\n", result);
+			printf("Finished detecting edge: %d\n", result);
 
 		if (result == -1)
 			break;
@@ -293,26 +357,55 @@ int run(void)
 		if (result == 0 && !pressed_at)
 			continue;
 
-		if (pfd[0].revents & POLLPRI || pressed_at)
+		if (pfd[0].revents & POLLPRI || pollTime >= 0) // well ... this should be the case by definition
+#endif
+#ifdef POLL
+		{
+			int polling_start_value = is_pressed(fd);
+
+			if(polling_start_value < 0)
+			{
+				printf("read failed\n");
+			} else { 
+				if(verbose)
+					printf("polling_start_value: %d\n", polling_start_value);
+			}
+
+			timestamp_ms_t polling_start_timestamp = get_timestamp_ms();
+			while(!gShouldStop)
+			{
+				usleep(40000);
+				int new_value = is_pressed(fd);
+				if(new_value < 0)
+				{
+					fprintf(stderr, "read returned %d\n", new_value);
+					usleep(1000000);
+					continue;
+				}
+				if(polling_start_value != new_value) // the poor man's "edge detector"
+				{
+					break;
+				}
+				if(pollTime > 0) // if we actually have a timeout, it's the poor man's "edge detector with timeout"
+				{
+					timestamp_ms_t timestamp = get_timestamp_ms();
+					timestamp_ms_t elapsed = timestamp - polling_start_timestamp;
+					if(elapsed > pollTime)
+					{
+						break;
+					}
+				}
+			}
+		}
+		// The following block is unconditional when POLLing
+#endif /* POLL */
 		{
 			timestamp_ms_t timestamp = get_timestamp_ms();
 
-			char buff[16];
-			memset(buff, 0, sizeof(buff));
-			int n = read(fd, buff, sizeof(buff));
-			if (n == 0)
-			{
-				fprintf(stderr, "Reading value returned 0\n");
+			int pressed = is_pressed(fd);
+			if(pressed < 0)
 				break;
-			}
 
-			if (lseek(fd, SEEK_SET, 0) == -1)
-			{
-				fprintf(stderr, "Rewinding failed. Error %d\n", errno);
-				break;
-			}
-
-			unsigned long pressed = strtoul(buff, NULL, 10) == PRESSED_VALUE;
 			if(verbose)
 				printf("Pressed: %d\n", pressed);
 
@@ -345,7 +438,9 @@ int run(void)
 		printf("Cleaning up...\n");
 	gpio_close(fd);
 
+#ifdef EDGE
 	gpio_set_edge(BUTTON_PIN, E_NONE);
+#endif
 	if(shouldUnexport)
 		gpio_unexport(BUTTON_PIN);
 	return 0;
@@ -383,7 +478,6 @@ void print_usage(void)
 
 int main(int argc, char **argv)
 {
-
 	BUTTON_PIN = DEFAULT_BUTTON_PIN;
 	CLICK_ACTION = DEFAULT_CLICK_ACTION;
 	HOLD_ACTION = DEFAULT_HOLD_ACTION;
