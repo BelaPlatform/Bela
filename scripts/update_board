@@ -172,8 +172,7 @@ copy_if_does_not_exist resources/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
 DEBIAN_VERSION=`get_board_debian_version`
 if [ "$DEBIAN_VERSION" = wheezy ]
 then
-	scp -r resources/wheezy/ bbb:
-	ssh $BBB_ADDRESS "dpkg -l libseasocks-dev 2>&1 > /dev/null || dpkg -i wheezy/deb/* && ldconfig"
+	ssh $BBB_ADDRESS "dpkg -l libseasocks-dev 2>&1 > /dev/null || dpkg -i $BBB_BELA_HOME/resources/wheezy/deb/libseasocks-dev*deb && ldconfig"
 fi
 error_handler $?
 

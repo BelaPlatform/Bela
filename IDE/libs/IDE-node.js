@@ -430,22 +430,30 @@ function runOnBootProject(){
 }
 
 function listenToRunOnBoot(){
-	var proc = spawn('journalctl', ['-fu', 'bela_startup']);
-	proc.stdout.setEncoding('utf8');
-	proc.stdout.on('data', data => {
-		if (data) allSockets.emit('run-on-boot-log', data);
-	} );
-	proc.stderr.setEncoding('utf8');
-	proc.stderr.on('data', data => {
-		if (data) allSockets.emit('run-on-boot-log', data);
-	} );
-	proc.stdout.on('close', () => {
-		allSockets.emit('run-on-boot-log', 'Project running at boot has stopped');
-	});
+	getXenomaiVersion()
+		.then( ver => {
+			if (!ver.includes('2.6')){
+				var proc = spawn('journalctl', ['-fu', 'bela_startup']);
+				proc.stdout.setEncoding('utf8');
+				proc.stdout.on('data', data => {
+					if (data) allSockets.emit('run-on-boot-log', data);
+				} );
+				proc.stderr.setEncoding('utf8');
+				proc.stderr.on('data', data => {
+					if (data) allSockets.emit('run-on-boot-log', data);
+				} );
+				proc.stdout.on('close', () => {
+					allSockets.emit('run-on-boot-log', 'Project running at boot has stopped');
+				});
+			}
+		});
 }
 
 function runOnBoot(socket, args){
-	var proc = spawn('make', args, {cwd: belaPath});
+	args.push("-C");
+	args.push(belaPath);
+	console.log("On boot:", args);
+	var proc = spawn('make', args);
 		proc.stdout.setEncoding('utf-8');
 		proc.stderr.setEncoding('utf-8');
 		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
