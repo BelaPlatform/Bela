@@ -116,6 +116,10 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->transmitPort = 9999;
 	strcpy(settings->serverName, "127.0.0.1");
 	settings->ampMutePin = kAmplifierMutePin;
+	if(Bela_userSettings != NULL)
+	{
+		Bela_userSettings(settings);
+	}
 }
 
 // This function drops in place of getopt() in the main() function

@@ -27,6 +27,9 @@
 
 #ifndef BELA_H_
 #define BELA_H_
+#define BELA_MAJOR_VERSION 1
+#define BELA_MINOR_VERSION 0
+#define BELA_BUGFIX_VERSION 0
 
 #ifdef __cplusplus
 extern "C"
@@ -511,6 +514,20 @@ void cleanup(BelaContext *context, void *userData);
  * \param settings Structure holding initialisation data for Bela.
  */
 void Bela_defaultSettings(BelaInitSettings *settings);
+
+#pragma weak Bela_userSettings
+/**
+ * \brief Initialise the data structure containing settings for Bela.
+ *
+ * This function fwill be called by Bela_defaultSettings() after the settings have been
+ * initialied. It has weak linking so the user is free - but not forced to - define it.
+ * It can be used to override some of the default settings if the user code does not have 
+ * access to the call to Bela_defaultSettings() (e.g.: because it is handled by the backend
+ * code).
+ *
+ * \param settings Structure holding initialisation data for Bela.
+ */
+void Bela_userSettings(BelaInitSettings *settings);
 
 /**
  * \brief Get long options from command line argument list, including Bela standard options
