@@ -243,13 +243,8 @@ int Midi::readFrom(const char* port){
 
 	int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);
 	if (err) {
-		if(err == -2)
-			printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
-		else
-			fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
-		return -1;
+		return err;
 	}
-	printf("Reading from ALSA MIDI device %s\n", port);
 	midiInputTask = Bela_createAuxiliaryTask(Midi::readInputLoop, 50, inId, (void*)this);
 	Bela_scheduleAuxiliaryTask(midiInputTask);
 	inputEnabled = true;
@@ -288,18 +283,13 @@ int Midi::writeTo(const char* port){
 	}
 	int err = snd_rawmidi_open(NULL, &alsaOut, port,0);
 	if (err) {
-		if(err == -2)
-			rt_printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
-		else
-			rt_fprintf(stderr, "Error during snd_rawmidi_open on %s: %s\n", port, strerror(-err));
-		return -1;
+		return err;
 	}
 	midiOutputTask = Bela_createAuxiliaryTask(writeOutputLoop, 45, outId, (void*)this);
 	if(midiOutputTask == 0){
 		return -1;
 	}
 	Bela_scheduleAuxiliaryTask(midiOutputTask);
-	printf("Writing to ALSA MIDI device %s\n", port);
 	outputEnabled = true;
 	return 1;
 }
@@ -442,6 +432,16 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 		}
 	} while (length > 0);
 	return 1;
+}
+
+bool Midi::isInputEnabled()
+{
+	return inputEnabled;
+}
+
+bool Midi::isOutputEnabled()
+{
+	return outputEnabled;
 }
 
 midi_byte_t Midi::makeStatusByte(midi_byte_t statusCode, midi_byte_t channel){

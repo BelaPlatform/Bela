@@ -353,6 +353,10 @@ public:
 	MidiParser* getMidiParser();
 	virtual ~Midi();
 
+	bool isInputEnabled();
+
+	bool isOutputEnabled();
+
 	/**
 	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
 	 * Ports open with this method should be closed with destroyPorts()
