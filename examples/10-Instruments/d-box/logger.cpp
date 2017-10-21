@@ -179,7 +179,7 @@ void *logLoop(void *)
 		usleep(5000);
 	}
 
-	if(logFile!=NULL)
+	if(logFile.is_open())
 		logFile.close();
 
 	dbox_printf("log thread ended\n");
