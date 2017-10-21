@@ -350,8 +350,8 @@ all: Bela
 
 # debug = buildBela debug
 debug: ## Same as Bela but with debug flags and no optimizations
-debug: DEFAULT_CPPFLAGS+=-g -std=c++11 $(DEFAULT_XENOMAI_CFLAGS) -D$(BELA_USE_DEFINE) -mfpu=neon
-debug: DEFAULT_CFLAGS=-g -std=c11 $(DEFAULT_XENOMAI_CFLAGS) -D$(BELA_USE_DEFINE) -std=gnu11 -mfpu=neon
+debug: DEFAULT_CPPFLAGS=-g -std=c++11 $(DEFAULT_XENOMAI_CFLAGS) -D$(BELA_USE_DEFINE) -mfpu=neon -O0
+debug: DEFAULT_CFLAG=-g -std=c11 $(DEFAULT_XENOMAI_CFLAGS) -D$(BELA_USE_DEFINE) -std=gnu11 -mfpu=neon -O0
 debug: all
 
 # syntax = check syntax
