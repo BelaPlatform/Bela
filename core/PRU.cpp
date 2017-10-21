@@ -755,6 +755,13 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #endif
 	if(highPerformanceMode) // sleep less, more CPU available for us
 		sleepTime /= 4;
+#ifdef BELA_USE_RTDM
+	// If we have ultra-small block sizes, sleeping is just detrimental: disable it 
+	// by enabling highPerformanceMode
+	if(context->audioFrames <= 2)
+		highPerformanceMode = true;
+#endif
+
 	//sleepTime = context->audioFrames / context->audioSampleRate / 4.f * 1000000000.f;
 
 	// Before starting, look at the last state of the analog and digital outputs which might
@@ -1308,8 +1315,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	// Tell PRU to stop
 	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
 
-	// Wait two buffer lengths for the PRU to finish
-	task_sleep_ns(8 * sleepTime);
+	// Wait for the PRU to finish
+	task_sleep_ns(100000000);
 
 	// Clean up after ourselves
 	free(context->audioIn);
