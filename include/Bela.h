@@ -562,6 +562,11 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions,
  */
 void Bela_usage();
 
+/** 
+ * \brief Get the version of Bela you are running.
+ */
+void Bela_getVersion(int* major, int* minor, int* bugfix);
+
 /**
  * \brief Set level of verbose (debugging) printing.
  *

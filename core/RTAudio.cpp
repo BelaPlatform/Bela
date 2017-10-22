@@ -658,6 +658,13 @@ int Bela_muteSpeakers(int mute)
 #endif
 }
 
+void Bela_getVersion(int* major, int* minor, int* bugfix)
+{
+	*major = BELA_MAJOR_VERSION;
+	*minor = BELA_MINOR_VERSION;
+	*bugfix = BELA_BUGFIX_VERSION;
+}
+
 // Set the verbosity level
 void Bela_setVerboseLevel(int level)
 {
