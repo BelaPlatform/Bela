@@ -226,7 +226,10 @@ void Midi::writeOutputLoop(void* obj){
 				// write the received message to the output
 				ret = snd_rawmidi_write(that->alsaOut, data, ret);
 				// make sure it is written
-				snd_rawmidi_drain(that->alsaOut);
+				// NOTE:using _drain actually increases the latency
+				// under heavy load, so we leave it out and
+				// leave it to the driver to figure out.
+				//snd_rawmidi_drain(that->alsaOut);
 			}
 		}
 	}
