@@ -264,6 +264,7 @@ static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 
+#ifdef PD_THREADED_IO
 void fdLoop(void* arg){
 	t_pdinstance* pd_that = (t_pdinstance*)arg;
 	while(!gShouldStop){
@@ -271,7 +272,7 @@ void fdLoop(void* arg){
 		usleep(3000);
 	}
 }
-
+#endif /* PD_THREADED_IO */
 
 Scope scope;
 unsigned int gScopeChannelsInUse = 4;
@@ -281,6 +282,10 @@ bool gDigitalEnabled = 0;
 
 bool setup(BelaContext *context, void *userData)
 {
+	// Check Pd's version
+	int major, minor, bugfix;
+	sys_getversion(&major, &minor, &bugfix);
+	printf("Running Pd %d.%d-%d\n", major, minor, bugfix);
 	// We requested in Bela_userSettings() to have uniform sampling rate for audio
 	// and analog and non-interleaved buffers.
 	// So let's check this actually happened
@@ -431,10 +436,12 @@ bool setup(BelaContext *context, void *userData)
 
 	// Tell Pd that we will manage the io loop,
 	// and we do so in an Auxiliary Task
+#ifdef PD_THREADED_IO
 	sys_dontmanageio(1);
 	AuxiliaryTask fdTask;
 	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", (void*)pd_this);
 	Bela_scheduleAuxiliaryTask(fdTask);
+#endif /* PD_THREADED_IO */
 
 	return true;
 }
