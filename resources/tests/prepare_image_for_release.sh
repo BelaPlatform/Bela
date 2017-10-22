@@ -1,8 +1,8 @@
 #!/bin/bash -e
 BELA_DIR=/root/Bela/
+[ -z "$NOCLEAN" ] || make -C $BELA_DIR coreclean
 [ -z "$NOTEST" ] || $BELA_DIR/resources/tests/build_all_examples.sh --distcc
 [ -z "$NOCLEAN" ] || rm -rf $BELA_DIR/projects/
-[ -z "$NOCLEAN" ] || make -C $BELA_DIR coreclean
 make -C $BELA_DIR EXAMPLE=01-Basics/sinetone PROJECT=basic
 # fuck OSX
 find $BELA_DIR -iname .DS_Store -exec rm {} \;

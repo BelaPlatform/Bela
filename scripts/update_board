@@ -161,18 +161,22 @@ else
 fi
 error_handler $?
 
-# a bunch of files to be copied manually to special locations
-scp -q lib/libpd.so $BBB_ADDRESS:/usr/lib &&
-scp -q resources/bin/pasm $BBB_ADDRESS:/usr/local/bin/ &&\
-scp -qr resources/bela-cape-btn $BBB_ADDRESS:/tmp &&\
-ssh $BBB_ADDRESS "make -C /tmp/bela-cape-btn install && rm -rf /tmp/bela-cape-btn"
-# the below files could be user-customized, so copy them if they do not exist or forced to do so
-copy_if_does_not_exist resources/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
-copy_if_does_not_exist resources/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
+# a bunch of files to be processed manually to special locations
+ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME/resources/bela-cape-btn install"
+
+# remove stale version of libpd on old images
+ssh $BBB_ADDRESS rm -rf /usr/lib/libpd.so $BBB_BELA_HOME/lib/libpd.so
+
 DEBIAN_VERSION=`get_board_debian_version`
+# Install system-specific packages
+ssh $BBB_ADDRESS "dpkg -i $BBB_BELA_HOME/resources/$DEBIAN_VERSION/deb/*.deb && ldconfig"
+error_handler $?
+
 if [ "$DEBIAN_VERSION" = wheezy ]
 then
-	ssh $BBB_ADDRESS "dpkg -l libseasocks-dev 2>&1 > /dev/null || dpkg -i $BBB_BELA_HOME/resources/wheezy/deb/libseasocks-dev*deb && ldconfig"
+	# the below files could be user-customized, so copy them if they do not exist or forced to do so
+	copy_if_does_not_exist resources/wheezy/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
+	copy_if_does_not_exist resources/wheezy/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
 fi
 error_handler $?
 
