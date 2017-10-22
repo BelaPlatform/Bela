@@ -256,7 +256,6 @@ static unsigned int gLibpdBlockSize;
 // 2 audio + (up to)8 analog + (up to) 16 digital + 4 scope outputs
 static const unsigned int gChannelsInUse = 30;
 //static const unsigned int gFirstAudioChannel = 0;
-static const unsigned int gFirstAnalogChannel = 2;
 static const unsigned int gFirstAnalogInChannel = 2;
 static const unsigned int gFirstAnalogOutChannel = 2;
 static const unsigned int gFirstDigitalChannel = 10;
