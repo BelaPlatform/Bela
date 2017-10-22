@@ -63,23 +63,32 @@ else
 endif
 
 
-ifdef PROJECT
 
 COMMAND_LINE_OPTIONS?=$(CL)
 ifeq ($(RUN_WITH_PRU_BIN),true)
+# Only use this one for development. You may have to run it without this option at least once, to generate 
+# include/pru_rtaudio_bin.h
+ifndef PROJECT
+$(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
+endif # ifndef PROJECT
 COMMAND_LINE_OPTIONS := --pru-file $(BELA_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
 else
 build/core/PRU.o: include/pru_rtaudio_bin.h
-endif
+endif #ifeq($(RUN_WITH_PRU_BIN),true)
+
+ifdef PROJECT
 
 #check if project dir exists
 CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR))
 ifeq ($(CHECK_PROJECT_DIR_EXIST),)
 $(error $(PROJECT_DIR) does not exist)
 endif
+# set default values
 SHOULD_BUILD=true
 PROJECT_TYPE=invalid
+RUN_PREREQUISITES=
+
 RUN_FILE?=$(PROJECT_DIR)/run.sh
 SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
 LIBPD_FILE=$(PROJECT_DIR)/_main.pd
@@ -108,6 +117,7 @@ endif # heavy-unzip-archive
 ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
 PROJECT_TYPE=sc
 SHOULD_BUILD=false
+RUN_PREREQUISITES=lib/libbela.so
 else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
 PROJECT_TYPE=libpd
@@ -135,7 +145,6 @@ endif
 endif # ifdef PROJECT
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
-COMMAND_LINE_OPTIONS?=$(CL)
 RUN_FROM?=$(PROJECT_DIR)
 ifeq ($(HAS_RUN_FILE),true)
 RUN_COMMAND?=bash $(RUN_FILE)
@@ -450,12 +459,12 @@ ifeq ($(PROJECT_TYPE),libpd)
 #If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
 	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
-endif
+endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
-endif
-# Other Targets:
+endif # ifeq ($(SHOULD_BUILD),false)
+
 projectclean: ## Remove the PROJECT's build objects & binary
 	-$(RM) $(PROJECT_DIR)/build/* $(OUTPUT_FILE)
 	-@echo ' '	
@@ -465,6 +474,7 @@ clean: projectclean
 
 coreclean: ## Remove the core's build objects
 	-$(RM) build/core/*
+	-$(RM) include/pru_rtaudio_bin.h
 
 prompt:
 	$(AT) printf "Warning: you are about to DELETE the projects/ folder and its content. This operation cannot be undone. Continue? (y/N) "
@@ -479,12 +489,12 @@ distcleannoprompt: ## Same as distclean, but does not prompt for confirmation. U
 
 runfg: run
 run: ## Run PROJECT in the foreground
-run: stop Bela
+run: stop Bela $(RUN_PREREQUISITES)
 	$(AT) echo "Running $(RUN_COMMAND)"
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
 
 runide: ## Run PROJECT for IDE (foreground, no buffering)
-runide: stop Bela
+runide: stop Bela $(RUN_PREREQUISITES)
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_IDE_COMMAND)
 runscreen: ## Run PROJECT in the background (detached screen)
 runscreen: stop $(OUTPUT_FILE)
