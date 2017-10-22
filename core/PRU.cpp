@@ -552,8 +552,8 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		}
 
 		for(unsigned int n = 0; n < context->digitalFrames; n++){
-			// Initialize lastDigitalFrames to all inputs
-			last_digital_buffer[n] = 0x0000ffff;
+			// Initialize default value for digitals to all inputs
+			context->digital[n] = 0x0000ffff;
 		}
 	}
 
@@ -728,8 +728,8 @@ int PRU::start(char * const filename)
 		}
 	}
 
-    running = true;
-    return 0;
+	running = true;
+	return 0;
 }
 
 // Main loop to read and write data from/to PRU
