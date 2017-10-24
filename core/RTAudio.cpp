@@ -13,7 +13,7 @@
 //TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
 
 //#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
+#define CTAG_BEAST_16CH
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,10 +55,7 @@ const char gRTAudioInterruptName[] = "bela-pru-irq";
 #endif
 
 PRU *gPRU = 0;
-#ifdef CTAG_FACE_8CH
-	Spi_Codec *gAudioCodec = 0;
-	I2c_Codec *gNotUsedCodec = 0;
-#elif defined(CTAG_BEAST_16CH)
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 	Spi_Codec *gAudioCodec = 0;
 	I2c_Codec *gNotUsedCodec = 0;
 #else
@@ -196,9 +193,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	#ifdef CTAG_FACE_8CH
-		gContext.audioSampleRate = 48000.0;
-	#elif defined(CTAG_BEAST_16CH)
+	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 		gContext.audioSampleRate = 48000.0;
 	#else
 		gContext.audioSampleRate = 44100.0;
@@ -277,13 +272,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
-	#ifdef CTAG_FACE_8CH
+	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 		gNotUsedCodec = new I2c_Codec();
 		gNotUsedCodec->disable(); // Put not used codec in high impedance state
-		gAudioCodec = new Spi_Codec();
-	#elif defined(CTAG_BEAST_16CH)
-		gNotUsedCodec = new I2c_Codec();
-		gNotUsedCodec->disable();
 		gAudioCodec = new Spi_Codec();
 	#else
 		gAudioCodec = new I2c_Codec();
@@ -309,10 +300,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	#ifdef CTAG_FACE_8CH
-		gAudioCodec->initCodec();
-		//gAudioCodec->dumpRegisters();
-	#elif defined(CTAG_BEAST_16CH)
+	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 		gAudioCodec->initCodec();
 		//gAudioCodec->dumpRegisters();
 	#else
@@ -536,8 +524,7 @@ int Bela_setADCLevel(float decibels)
 {
 
 // AD1938 audio codec has no ADC volume controls
-#ifdef CTAG_FACE_8CH
-#elif defined(CTAG_BEAST_16CH)
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 #else
 	if(gAudioCodec == 0)
 		return -1;
@@ -551,8 +538,7 @@ int Bela_setADCLevel(float decibels)
 // 59.5dB is maximum, 0dB is minimum; 0.5dB steps
 int Bela_setPgaGain(float decibels, int channel){
 //Nothing to be done for CTAG audio cards
-#ifdef CTAG_FACE_8CH
-#elif defined(CTAG_BEAST_16CH)
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 #else
 	if(gAudioCodec == 0)
 		return -1;
@@ -568,8 +554,7 @@ int Bela_setPgaGain(float decibels, int channel){
 int Bela_setHeadphoneLevel(float decibels)
 {
 //Nothing to be done for CTAG audio cards
-#ifdef CTAG_FACE_8CH
-#elif defined(CTAG_BEAST_16CH)
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 #else
 	if(gAudioCodec == 0)
 		return -1;
@@ -584,10 +569,7 @@ int Bela_setHeadphoneLevel(float decibels)
 int Bela_muteSpeakers(int mute)
 {
 //Nothing to be done for CTAG audio cards
-#ifdef CTAG_FACE_8CH
-	return 0;
-#elif defined(CTAG_BEAST_16CH)
-	//TODO: Implement for both AD1938 codecs
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
 	return 0;
 #else
 	int pinValue = mute ? LOW : HIGH;
