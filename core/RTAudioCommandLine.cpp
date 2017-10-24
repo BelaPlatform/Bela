@@ -101,8 +101,8 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->interleave = 1;
 	settings->analogOutputsPersist = 1;
 	settings->uniformSampleRate = 0;
-	settings->audioThreadStackSize = 1 << 17;
-	settings->auxiliaryTaskStackSize = 1 << 17;
+	settings->audioThreadStackSize = 1 << 20;
+	settings->auxiliaryTaskStackSize = 1 << 20;
 
 	// initialize the user-defined functions.
 	// render is the only one that needs to be defined by the user in order

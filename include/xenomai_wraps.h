@@ -101,11 +101,6 @@ static void setup_sched_parameters(pthread_attr_t *attr, int prio)
 {
 	struct sched_param p;
 	int ret;
-	
-	ret = __wrap_pthread_attr_init(attr);
-	if (ret)
-		error(1, ret, "__wrap_pthread_attr_init()");
-
 	ret = pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED);
 	if (ret)
 		error(1, ret, "pthread_attr_setinheritsched()");
@@ -120,13 +115,8 @@ static void setup_sched_parameters(pthread_attr_t *attr, int prio)
 		error(1, ret, "pthread_attr_setschedparam()");
 }
 
-static int setup_thread_attributes(pthread_attr_t *attr, int stackSize, int prio)
+static int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
 {
-	if(__wrap_pthread_attr_init(attr))
-	{
-		fprintf(stderr, "Error: unable to init thread attributes\n");
-		return -1;
-	}
 	if(pthread_attr_setdetachstate(attr, PTHREAD_CREATE_JOINABLE))
 	{
 		fprintf(stderr, "Error: unable to set detachstate\n");
@@ -147,7 +137,12 @@ static int setup_thread_attributes(pthread_attr_t *attr, int stackSize, int prio
 static int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
-	if(int ret = setup_thread_attributes(&attr, stackSize, priority))
+	if(__wrap_pthread_attr_init(&attr))
+	{
+		fprintf(stderr, "Error: unable to init thread attributes\n");
+		return -1;
+	}
+	if(int ret = set_thread_stack_and_priority(&attr, stackSize, priority))
 	{
 		return ret;
 	}
@@ -164,6 +159,13 @@ static int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 #if XENOMAI_MAJOR == 3
 	__wrap_pthread_setname_np(*task, taskName);
 #endif
+	// check that effective parameters match the ones we requested
+	//pthread_attr_t actualAttr;
+	//pthread_getattr_np(*task, &actualAttr);
+	//size_t stk;
+	//pthread_attr_getstacksize(&actualAttr, &stk);
+	//printf("measured stack: %d, requested stack: %d\n", stk, stackSize);
+
 	pthread_attr_destroy(&attr);
 	return 0;
 }
