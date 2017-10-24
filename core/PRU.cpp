@@ -13,7 +13,7 @@
  *      Author: andrewm
  */
 //#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
+#define CTAG_BEAST_16CH
 
 #include "../include/PRU.h"
 #include "../include/prussdrv.h"
@@ -779,12 +779,7 @@ void PRU::loop(RT_INTR *pru_interrupt, void *userData, void(*render)(BelaContext
 		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
 		// TODO: implement non-interlaved
 #else
-
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-		int audioInChannels = context->audioInChannels > 8 ? 8 : context->audioInChannels;
-#else 
 		int audioInChannels = context->audioInChannels;
-#endif /* defined CTAG */
 		if(interleaved)
 		{
 			for(unsigned int n = 0; n < audioInChannels * context->audioFrames; n++) {
