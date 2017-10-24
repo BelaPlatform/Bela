@@ -1,9 +1,9 @@
 .origin 0
 .entrypoint START
 
-#define BELA_TLV_CODEC
+//#define BELA_TLV_CODEC
 //#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
+#define CTAG_BEAST_16CH
 
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
@@ -1637,19 +1637,19 @@ CTAG_FACE_8CH_ANALOG_CFG_END:
      // 8 analog ch => LSR 2
      // 4 analog ch => LSR 3
      // 2 analog ch => LSR 4
-     QBEQ CTAG_FACE_16CH_ANALOG_8, reg_num_channels, 0x8
-     QBEQ CTAG_FACE_16CH_ANALOG_4, reg_num_channels, 0x4
-     QBEQ CTAG_FACE_16CH_ANALOG_2, reg_num_channels, 0x2
+     QBEQ CTAG_BEAST_16CH_ANALOG_8, reg_num_channels, 0x8
+     QBEQ CTAG_BEAST_16CH_ANALOG_4, reg_num_channels, 0x4
+     QBEQ CTAG_BEAST_16CH_ANALOG_2, reg_num_channels, 0x2
 
-CTAG_FACE_16CH_ANALOG_8: // Eight channels
+CTAG_BEAST_16CH_ANALOG_8: // Eight channels
 	 LSR r14, reg_frame_mcasp_total, 2
-	 JMP CTAG_FACE_16CH_ANALOG_CFG_END
-CTAG_FACE_16CH_ANALOG_4: // Four channels
+	 JMP CTAG_BEAST_16CH_ANALOG_CFG_END
+CTAG_BEAST_16CH_ANALOG_4: // Four channels
 	 LSR r14, reg_frame_mcasp_total, 3
-	 JMP CTAG_FACE_16CH_ANALOG_CFG_END
-CTAG_FACE_16CH_ANALOG_2: // Two channels
+	 JMP CTAG_BEAST_16CH_ANALOG_CFG_END
+CTAG_BEAST_16CH_ANALOG_2: // Two channels
 	 LSR r14, reg_frame_mcasp_total, 4
-CTAG_FACE_16CH_ANALOG_CFG_END:
+CTAG_BEAST_16CH_ANALOG_CFG_END:
 #endif
 
 #ifdef BELA_TLV_CODEC
