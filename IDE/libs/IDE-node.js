@@ -473,28 +473,21 @@ function uploadUpdate(data){
 			
 			return new Promise( (resolve, reject) => {
 				
-				let stdout = [], stderr = [];
-				
-				var proc = spawn('make', ['checkupdate'], {cwd: belaPath});
+				var proc = spawn('make', ['-C', belaPath, 'checkupdate']);
 				
 				proc.stdout.setEncoding('utf8');
 				proc.stderr.setEncoding('utf8');
 				
 				proc.stdout.on('data', (data) => {
 					console.log('stdout', data);
-					stdout.push(data);
 					allSockets.emit('std-log', data);
 				});
 				proc.stderr.on('data', (data) => {
 					console.log('stderr', data);
-					stderr.push(data);
 					allSockets.emit('std-warn', data);
 				});
 				
-				proc.on('close', () => {
-					if (stderr.length) reject(stderr);
-					else resolve(stdout);
-				});
+				proc.on('close', resolve );
 				
 			});
 		})
@@ -504,30 +497,24 @@ function uploadUpdate(data){
 			
 			return new Promise( (resolve, reject) => {
 				
-				let stdout = [], stderr = [];
-				
-				var proc = spawn('make', ['update'], {cwd: belaPath});
+				var proc = spawn('make', ['-C', belaPath, 'update']);
 				
 				proc.stdout.setEncoding('utf8');
 				proc.stderr.setEncoding('utf8');
 				
 				proc.stdout.on('data', (data) => {
 					console.log('stdout', data);
-					stdout.push(data);
 					allSockets.emit('std-log', data);
 				});
 				proc.stderr.on('data', (data) => {
 					console.log('stderr', data);
-					stderr.push(data);
 					allSockets.emit('std-warn', data);
 				});
 				
 				proc.on('close', () => {
-					if (stderr.length) reject(stderr);
-					else {
-						allSockets.emit('std-log', 'Update completed! Please refresh the page if this does not happen automatically.');
-						allSockets.emit('force-reload');
-					}
+					allSockets.emit('std-log', 'Update completed! Please refresh the page if this does not happen automatically.');
+					allSockets.emit('force-reload');
+					resolve();
 				});
 				
 			});
