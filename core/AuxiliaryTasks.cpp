@@ -88,7 +88,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	if(int ret = create_and_start_thread(&(newTask->task), name, priority, stackSize,(pthread_callback_t*)auxiliaryTaskLoop, newTask))
 #endif
 	{
-		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
+		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
 		free(newTask);
 		return 0;
 	}
