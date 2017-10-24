@@ -1,9 +1,9 @@
 .origin 0
 .entrypoint START
 
-//#define BELA_TLV_CODEC
+#define BELA_TLV_CODEC
 //#define CTAG_FACE_8CH
-#define CTAG_BEAST_16CH
+//#define CTAG_BEAST_16CH
 
 #define DBOX_CAPE	// Define this to use new cape hardware
 	

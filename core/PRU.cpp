@@ -13,7 +13,7 @@
  *      Author: andrewm
  */
 //#define CTAG_FACE_8CH
-#define CTAG_BEAST_16CH
+//#define CTAG_BEAST_16CH
 
 #include "../include/PRU.h"
 #include "../include/prussdrv.h"

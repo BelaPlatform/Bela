@@ -6,7 +6,7 @@
 
 #include "../include/Spi_Codec.h"
 
-#define CTAG_BEAST_16CH
+//#define CTAG_BEAST_16CH
 
 #include <unistd.h>
 #include <fcntl.h>

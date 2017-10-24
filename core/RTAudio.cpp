@@ -13,7 +13,7 @@
 //TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
 
 //#define CTAG_FACE_8CH
-#define CTAG_BEAST_16CH
+//#define CTAG_BEAST_16CH
 
 #include <stdio.h>
 #include <stdlib.h>
