@@ -6,7 +6,7 @@
 
 #include "../include/Spi_Codec.h"
 
-//#define CTAG_BEAST_16CH
+#define CTAG_BEAST_16CH
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -68,13 +68,13 @@ int Spi_Codec::initCodec(){
 	// 48 kHz sample rate, SDATA delay = 1, TDM mode
 	writeRegister(REG_DAC_CONTROL_0, 0x40);
 #ifdef CTAG_BEAST_16CH
-	// Latch in mid cycle, 16 channels, inverted bclock, inverted wclock, bclock / wclock in slave mode
+	// Latch in mid cycle, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
 	writeRegister(REG_DAC_CONTROL_1, 0x0E);
 #else
-	// Latch in mid cycle, 8 channels, inverted bclock, inverted wclock, bclock / wclock in slave mode
+	// Latch in mid cycle, 8 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
 	writeRegister(REG_DAC_CONTROL_1, 0x0C);
 #endif
-	// Unmute DACs, 16 bit word width, noninverted DAC output polarity
+	// Unmute DACs, 16 bit word width, noninverted DAC output polarity, flat de-emphasis
 	writeRegister(REG_DAC_CONTROL_2, 0x18);
 	// Unmute all DACs
 	writeRegister(REG_DAC_CHANNEL_MUTES, 0x00);
@@ -99,10 +99,10 @@ int Spi_Codec::initCodec(){
 	// 16 bit word width, SDATA delay = 1, TDM mode, latch in mid cycle
 	writeRegister(REG_ADC_CONTROL_1, 0x23);
 #ifdef CTAG_BEAST_16CH
-	// wclock format = 50/50, 16 channels, inverted bclock, inverted wclock, bclock / wclock is master
+	// wclock format = 50/50, 16 channels, normal bclock, inverted wclock, bclock / wclock in master mode
 	writeRegister(REG_ADC_CONTROL_2, 0x7C);
 #else
-	// wclock format = 50/50, 8 channels, inverted bclock, inverted wclock, bclock / wclock is master
+	// wclock format = 50/50, 8 channels, normal bclock, inverted wclock, bclock / wclock in master mode
 	writeRegister(REG_ADC_CONTROL_2, 0x6C);
 #endif
 
@@ -113,9 +113,9 @@ int Spi_Codec::initCodec(){
 	writeRegister(REG_PLL_CLK_CONTROL_1, 0x00, SLAVE_CODEC);
 	// 48 kHz sample rate, SDATA delay = 1, TDM mode
 	writeRegister(REG_DAC_CONTROL_0, 0x40, SLAVE_CODEC);
-	// Latch in mid cycle, 16 channels, inverted bclock, inverted wclock, bclock / wclock in slave mode
+	// Latch in mid cycle, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
 	writeRegister(REG_DAC_CONTROL_1, 0x0E, SLAVE_CODEC);
-	// Unmute DACs, 16 bit word width, noninverted DAC output polarity
+	// Unmute DACs, 16 bit word width, noninverted DAC output polarity, flat de-emphasis
 	writeRegister(REG_DAC_CONTROL_2, 0x18, SLAVE_CODEC);
 	// Unmute all DACs
 	writeRegister(REG_DAC_CHANNEL_MUTES, 0x00, SLAVE_CODEC);
@@ -139,7 +139,7 @@ int Spi_Codec::initCodec(){
 	writeRegister(REG_ADC_CONTROL_0, 0x00, SLAVE_CODEC);
 	// 16 bit word width, SDATA delay = 1, TDM mode, latch in mid cycle
 	writeRegister(REG_ADC_CONTROL_1, 0x23, SLAVE_CODEC);
-	// wclock format = 50/50, 16 channels, inverted bclock, inverted wclock, bclock / wclock is master
+	// wclock format = 50/50, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
 	writeRegister(REG_ADC_CONTROL_2, 0x34, SLAVE_CODEC);
 #endif
 	
@@ -147,12 +147,12 @@ int Spi_Codec::initCodec(){
 }
 
 int Spi_Codec::startAudio(int dummy_parameter){
-	// enable PLL / DAC / ADC
+	// Enable PLL / DAC / ADC
 	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x84);
 }
 
 int Spi_Codec::stopAudio(){
-	// edisable PLL / DAC / ADC
+	// Disable PLL / DAC / ADC
 	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x81);
 }
 
@@ -172,6 +172,26 @@ int Spi_Codec::dumpRegisters(){
 	}
 
 	return 0;
+}
+
+bool Spi_Codec::masterIsDetectable(){
+	unsigned char statusReg = 0;
+
+	// Detect master codec by writing and reading back a test value
+	writeRegister(REG_DAC_CONTROL_2, 0x18, MASTER_CODEC);
+	statusReg = readRegister(REG_DAC_CONTROL_2, MASTER_CODEC);
+	
+	return (statusReg == 0x18);
+}
+
+bool Spi_Codec::slaveIsDetectable(){
+	unsigned char statusReg = 0;
+
+	// Detect slave codec by writing and reading back a test value
+	writeRegister(REG_DAC_CONTROL_2, 0x18, SLAVE_CODEC);
+	statusReg = readRegister(REG_DAC_CONTROL_2, SLAVE_CODEC);
+
+	return (statusReg == 0x18);
 }
 
 int Spi_Codec::_writeDACVolumeRegisters(bool mute){
@@ -250,10 +270,17 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 0){
-		rt_printf("Error during SPI transmission for CTAG face: %d\n", ret);
+		rt_printf("Error during SPI transmission with CTAG Audio Card: %d\n", ret);
 		return 1;
 	}
 
+	// The following code was used to verify a correct SPI transmission with the external
+	// audio codecs. To check if the codecs (master and slave) are available, two 
+	// dedicated member functions (masterIsDetectable and slaveIsDetectable) have
+	// been added to Spi_Codec class. The availability is checked by writing and reading
+	// back a test value. Hence, the verification of the register contents can be 
+	// omitted here. Still, this code may be useful in the future.
+	/*
 	if (!(tx_buf[0] & 1)){ // Verify registers, if new value has been written
 		unsigned char origValue = tx_buf[2];
 		tx_buf[0] = tx_buf[0] | 0x1; // Set read only flag
@@ -268,6 +295,7 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 		}
 		tx_buf[0] = tx_buf[0] & 0x0; // Reset write only flag
 	}
+	*/
  
 	return 0;
 }
