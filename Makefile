@@ -30,7 +30,7 @@ UPDATES_DIR?=/root/Bela/updates
 UPDATE_SOURCE_DIR?=/tmp/belaUpdate
 UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board
 UPDATE_BELA_PATCH?=/tmp/belaPatch
-UPDATE_BELA_MV_BACKUP?=/tmp/belaMvBak
+UPDATE_BELA_MV_BACKUP?=$(BELA_DIR)/../_BelaUpdateBackup
 
 # Type `$ make help` to get a description of the functionalities of this Makefile.
 help: ## Show this help
