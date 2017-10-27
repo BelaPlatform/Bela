@@ -286,36 +286,35 @@
 #define MCASP_OUTPUT_PINS       (1 << 3)    // Which pins are outputs
 #endif
 
-//TODO: Update comments according to config
 #define MCASP_DATA_MASK     0xFFFF      // 16 bit data
 
 #ifdef CTAG_FACE_8CH
 #define MCASP_DATA_FORMAT 0x180F4       // MSB first, 1 bit delay, 32 bits, DAT bus, ROR 16bits
-#define MCASP_ACLKRCTL_VALUE 0x80       // 
-#define MCASP_ACLKXCTL_VALUE 0x80       // 
-#define MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S mode
-#define MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S mode
+#define MCASP_ACLKRCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_ACLKXCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S, external clk, polarity (rising edge), single word
+#define MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S, external clk, polarity (rising edge), single word
 #define MCASP_RTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
-#define MCASP_XTDM_VALUE 0xFF           // 
+#define MCASP_XTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
 #endif
 
 #ifdef CTAG_BEAST_16CH
 #define MCASP_DATA_FORMAT 0x180F4       // MSB first, 1 bit delay, 32 bits, DAT bus, ROR 16bits
-#define MCASP_ACLKRCTL_VALUE 0x80       // 
-#define MCASP_ACLKXCTL_VALUE 0x80       // 
-#define MCASP_AFSRCTL_VALUE 0x810       // 
-#define MCASP_AFSXCTL_VALUE 0x810       // 
-#define MCASP_RTDM_VALUE 0xFFFF         // 
-#define MCASP_XTDM_VALUE 0xFFFF         // 
+#define MCASP_ACLKRCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_ACLKXCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_AFSRCTL_VALUE 0x810       // 16 Slot I2S, external clk, polarity (rising edge), single word
+#define MCASP_AFSXCTL_VALUE 0x810       // 16 Slot I2S, external clk, polarity (rising edge), single word
+#define MCASP_RTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
+#define MCASP_XTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
 #endif
 
 #ifdef BELA_TLV_CODEC
-#define MCASP_DATA_FORMAT_TX   0x18074      // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
-#define MCASP_DATA_FORMAT_RX   0x28074      // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits (no idea why ADCs have to be configured with 2 bit delay)
-#define MCASP_ACLKRCTL_VALUE 0x00
-#define MCASP_ACLKXCTL_VALUE 0x00
-#define MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S mode
-#define MCASP_AFSXCTL_VALUE 0x101       // 2 Slot I2S mode
+#define MCASP_DATA_FORMAT_TX 0x18074    // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
+#define MCASP_DATA_FORMAT_RX 0x28074    // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits
+#define MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)         
+#define MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge) 
+#define MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
+#define MCASP_AFSXCTL_VALUE 0x101       // 2 Slot I2S, external clk, polarity (falling edge), single bit
 #define MCASP_RTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define MCASP_XTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #endif
