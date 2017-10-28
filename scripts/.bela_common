@@ -72,7 +72,7 @@ get_board_debian_version(){
 check_board_alive_and_set_date(){
 	printf "Checking the board is up and running at $BBB_ADDRESS..."
 	# Clear the host if it is cached in ~/.ssh/known_hosts.
-	ssh-keygen -R $BBB_HOSTNAME &> /dev/null
+	ssh-keygen -R $BBB_HOSTNAME &> /dev/null || true
 	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 $BBB_ADDRESS "date -s \"`date '+%Y%m%d %T %z'`\" > /dev/null" && printf "done\n" || {
 		printf "\nERROR: the board does not respond at $BBB_ADDRESS, check that the address is correct and the board is connected.\n";
 		exit 1;
