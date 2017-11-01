@@ -117,7 +117,7 @@ endif # heavy-unzip-archive
 ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
 PROJECT_TYPE=sc
 SHOULD_BUILD=false
-RUN_PREREQUISITES=lib/libbela.so
+RUN_PREREQUISITES+=lib/libbela.so
 else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
 PROJECT_TYPE=libpd
@@ -488,11 +488,14 @@ distcleannoprompt: ## Same as distclean, but does not prompt for confirmation. U
 	-$(RM) build/source/* $(CORE_OBJS) $(CORE_CPP_DEPS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_MAIN_CPP_DEPS) $(OUTPUT_FILE)
 	-@echo ' '
 
-runfg: run
-run: ## Run PROJECT in the foreground
-run: stop Bela $(RUN_PREREQUISITES)
+runonly: ## Run PROJECT in the foreground
+runonly:
 	$(AT) echo "Running $(RUN_COMMAND)"
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
+
+runfg: run
+run: ## Run PROJECT in the foreground after stopping previously running one
+run: stop Bela $(RUN_PREREQUISITES) runonly
 
 runide: ## Run PROJECT for IDE (foreground, no buffering)
 runide: stop Bela $(RUN_PREREQUISITES)
@@ -522,7 +525,7 @@ startup: startuploop # compatibility only
 stop: ## Stops any Bela program that is currently running
 stop:
 ifeq ($(DEBIAN_VERSION),stretch)
-	$(AT) systemctl stop bela_startup
+	$(AT) systemctl stop bela_startup || true
 endif
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) $(XENOMAI_STAT_PATH) | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
