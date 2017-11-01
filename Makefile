@@ -489,13 +489,13 @@ distcleannoprompt: ## Same as distclean, but does not prompt for confirmation. U
 	-@echo ' '
 
 runonly: ## Run PROJECT in the foreground
-runonly:
+runonly: $(RUN_PREREQUISITES)
 	$(AT) echo "Running $(RUN_COMMAND)"
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
 
 runfg: run
 run: ## Run PROJECT in the foreground after stopping previously running one
-run: stop Bela $(RUN_PREREQUISITES) runonly
+run: stop Bela runonly
 
 runide: ## Run PROJECT for IDE (foreground, no buffering)
 runide: stop Bela $(RUN_PREREQUISITES)
