@@ -421,7 +421,7 @@ settingsView.on('run-on-boot', function (project) {
 	return socket.emit('run-on-boot', project);
 });
 settingsView.on('halt', function () {
-	socket.emit('sh-command', 'halt');
+	socket.emit('shutdown');
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', function (text) {

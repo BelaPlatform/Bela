@@ -313,6 +313,11 @@ function socketEvents(socket){
 			
 	});
 
+	// shutdown
+	socket.on('shutdown', () => {
+		exec('shutdown -h now', (err, stdout, stderr) => console.log('shutting down', err, stdout, stderr) );
+	});
+
 }
 
 ProcessManager.on('status', (status, project) => allSockets.emit('status', project, status) );

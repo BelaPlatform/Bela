@@ -35,7 +35,7 @@ settingsView.on('IDE-settings', (data) => {
 });
 settingsView.on('run-on-boot', project => socket.emit('run-on-boot', project) );
 settingsView.on('halt', () => {
-	socket.emit('sh-command', 'halt');
+	socket.emit('shutdown');
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', text => consoleView.emit('warn', text) );
