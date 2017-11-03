@@ -257,6 +257,9 @@
 #define MCASP_RFIFOSTS          0x100C
 
 #define MCASP_XSTAT_XUNDRN_BIT          0        // Bit to test if there was an underrun
+#define MCASP_XSTAT_XSYNCERR_BIT        1        // Bit to test if there was an unexpected transmit frame sync
+#define MCASP_XSTAT_XCKFAIL_BIT         2        // Bit to test if there was a transmit clock failure
+#define MCASP_XSTAT_XDMAERR_BIT         7        // Bit to test if there was a transmit DMA error
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
     
@@ -820,6 +823,14 @@ DONE:
 
     
 START:
+     // Initialize scratchpad 2 for test data
+     MOV r0, 0
+     MOV r1, 0
+     MOV r2, 0
+     MOV r3, 0
+     MOV r4, 0
+     XOUT SCRATCHPAD_ID_BANK2, r0, 20
+
      // Configure PRU to receive external events
      PRU_ICSS_CFG_REG_WRITE_EXT CFG_REG_MII_RT, 0x0
 
@@ -1101,6 +1112,10 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 10) // Set XSRCLR
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 3)  // Set RSMRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 11) // Set XSMRST
 
+// Seems to be not required (was used to avoid transmit clock failure)
+//MCASP_REG_WRITE MCASP_XSTAT, 0xFF
+//MCASP_REG_WRITE MCASP_RSTAT, 0xFF
+
 // Write a full frame to transmit FIFOs to prevent underflow and keep slots synced
 // Can be probably ignored if first underrun gets ignored for better performance => TODO: test
 #ifdef CTAG_FACE_8CH
@@ -1283,12 +1298,56 @@ MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x40 // clear XSTAFRM status bit
 
+     // Count error interrupts for test purposes
+     // - r0 used for transmit underrun counter
+     // - r1 used for unexpected transmit frame sync
+     // - r2 used for transmit clock failure
+     // - r3 used for transmit DMA error
+     // - r4 used for McASP XSTAT reg content
+
+     // Offload r0-r4 to scratchpad 1 and load data from scratchpad 2
+     XOUT SCRATCHPAD_ID_BANK1, r0, 20
+     XIN SCRATCHPAD_ID_BANK2, r0, 20
+
+MCASP_TX_ERROR_HANDLE_START:
+     // Load McASP XSTAT register content and check if error occurred
+     MCASP_REG_READ_EXT MCASP_XSTAT, r4
+
+     QBBS MCASP_TX_UNDERRUN_OCCURRED, r4, MCASP_XSTAT_XUNDRN_BIT
+     QBBS MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED, r4, MCASP_XSTAT_XSYNCERR_BIT
+     QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT
+     QBBS MCASP_TX_DMA_ERROR_OCCURRED, r4, MCASP_XSTAT_XDMAERR_BIT
+
+     JMP MCASP_TX_ERROR_HANDLE_END
+
+MCASP_TX_UNDERRUN_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x1 // Clear underrun bit (0)
+     ADD r0, r0, 1
+     JMP START
+
+MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x2 // Clear frame sync error bit (1)
+     ADD r1, r1, 1
+     JMP MCASP_TX_ERROR_HANDLE_START
+
+MCASP_TX_CLOCK_FAILURE_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x4 // Clear clock failure bit (2)
+     ADD r2, r2, 1
+     JMP MCASP_TX_ERROR_HANDLE_START
+
+MCASP_TX_DMA_ERROR_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x80 // Clear DMA error bit (7)
+     ADD r3, r3, 1
+
+MCASP_TX_ERROR_HANDLE_END:
+     // Offload test data to scratchpad 2 and reload register contents from scratchpad 1
+     XOUT SCRATCHPAD_ID_BANK2, r0, 20
+     XIN SCRATCHPAD_ID_BANK1, r0, 20
+
      // Check if we are in first frame period. If true, transmit full frame to FIFO.
      // Otherwise toggle flag and jump back to event loop
      QBBC MCASP_TX_ISR_END, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME
 
-PROCESS_AUDIO_TX:
-set r30.t0
      // Temporarily save register states in scratchpad to have enough space for full audio frame.
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
@@ -1351,7 +1410,6 @@ set r30.t0
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
 
-clr r30.t0
 MCASP_TX_ISR_END:
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_TX_FIRST_FRAME) // toggle frame flag
      JMP EVENT_LOOP
@@ -1362,23 +1420,21 @@ MCASP_TX_ISR_END:
 MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      // Clear system event and status bit
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_RX_INTR)
-     MCASP_REG_WRITE_EXT MCASP_RSTAT, 0x40 // clear XSTAFRM status bit
+     MCASP_REG_WRITE_EXT MCASP_RSTAT, 0x40 // clear RSTAFRM status bit
 
 	 // Check if we are in first frame period. 
 	 // If true, load full audio frame from FIFO and process SPI afterwards.
 	 // Otherwise toggle flag and jump back to event loop.
 	 QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
 
-PROCESS_AUDIO_RX:
-set r30.t1
      // Temporarily save register states in scratchpad to have enough space for full audio frame
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
-     //TODO: Change data structure in RAM to 32 bit samples 
+     // TODO: Change data structure in RAM to 32 bit samples 
      //     => no masking and shifting required
      //     => support for 24 bit audio
-     //TODO: Avoid masking and shifting by simply moving sample to word (e.g. MOV r0.w0 value)
+     // TODO: Avoid masking and shifting by simply moving sample to word (e.g. MOV r0.w0 value)
      MOV r17, 0xFFFF
 #ifdef CTAG_FACE_8CH
      MCASP_READ_FROM_DATAPORT r8, 32
@@ -1453,7 +1509,6 @@ SKIP_AUDIO_RX_FRAME:
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
-clr r30.t1
 
 MCASP_RX_ISR_END:
 /* ########## McASP RX ISR END ########## */
@@ -1739,6 +1794,7 @@ SPI_CLEANUP_DONE:
      SBBO r2, r3, 0, 4       // Clear GPIO pin  
 
 CLEANUP_DONE:
+     XIN SCRATCHPAD_ID_BANK2, r0, 20 // Load test data from scratchpad 2 for evaluation
      // Signal the ARM that we have finished 
      MOV R31.b0, PRU0_ARM_INTERRUPT + 16
      HALT
