@@ -102,6 +102,6 @@ private:
 	int oldPin;
 	int fd;	
 	uint32_t pinMask;
-	uint32_t* gpio;
+	volatile uint32_t* gpio;
 };
 #endif /* _GPIO_H_INCLUDED_ */
