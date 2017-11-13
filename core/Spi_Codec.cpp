@@ -5,8 +5,11 @@
  */
 
 #include "../include/Spi_Codec.h"
+#include "../include/GPIOcontrol.h"
 
 //#define CTAG_BEAST_16CH
+
+#define RESET_PIN 81 // GPIO2(17) P8.34
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -21,15 +24,28 @@ const char SPIDEV_GPIO_CS0[] = "/dev/spidev32766.0";
 const char SPIDEV_GPIO_CS1[] = "/dev/spidev32766.1";
 
 Spi_Codec::Spi_Codec(){
+	// Open SPI devices
 	if ((_fd_master = open(SPIDEV_GPIO_CS0, O_RDWR)) < 0)
 		rt_printf("Failed to open spidev device for master codec.\n");
 	if ((_fd_slave = open(SPIDEV_GPIO_CS1, O_RDWR)) < 0)
 		rt_printf("Failed to open spidev device for slave codec.\n");
+
+    // Prepare reset pin and reset audio codec(s)
+    if(gpio_export(RESET_PIN)) {
+        std::cout << "Warning: couldn't reset pin for audio codecs\n";
+    }
+    if(gpio_set_dir(RESET_PIN, OUTPUT_PIN)) {
+        std::cout << "Couldn't set direction on audio codec reset pin\n";
+    }
+    if(gpio_set_value(RESET_PIN, LOW)) {
+        std::cout << "Couldn't set value on audio codec reset pin\n";
+    }
 }
 
 Spi_Codec::~Spi_Codec(){
 	close(_fd_master);
 	close(_fd_slave);
+    gpio_unexport(RESET_PIN);
 }
 
 int Spi_Codec::writeRegister(unsigned char reg, unsigned char value, CODEC_TYPE codec){
@@ -61,6 +77,11 @@ unsigned char Spi_Codec::readRegister(unsigned char reg, CODEC_TYPE codec){
 }
 
 int Spi_Codec::initCodec(){
+    // Wake up audio codec(s)
+    if(gpio_set_value(RESET_PIN, HIGH)) {
+        std::cout << "Couldn't set value on audio codec pin\n";
+        return -1;
+    }
 
 	// Initialize slave codec
 #ifdef CTAG_BEAST_16CH
@@ -195,6 +216,22 @@ bool Spi_Codec::slaveIsDetectable(){
 	statusReg = readRegister(REG_DAC_CONTROL_2, SLAVE_CODEC);
 
 	return (statusReg == 0x18);
+}
+
+int Spi_Codec::reset(){
+    if(gpio_set_value(RESET_PIN, LOW)) {
+        std::cout << "Couldn't set value on audio codec pin\n";
+        return -1;
+    }
+
+    usleep(100000); // 100 ms
+
+    if(gpio_set_value(RESET_PIN, HIGH)) {
+        std::cout << "Couldn't set value on audio codec pin\n";
+        return -1;
+    }
+
+    return 0;
 }
 
 int Spi_Codec::_writeDACVolumeRegisters(bool mute){
