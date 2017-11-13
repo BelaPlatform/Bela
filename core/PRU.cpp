@@ -73,6 +73,10 @@ using namespace std;
 //  is verified over extended use)
 #undef USE_NEON_FORMAT_CONVERSION
 
+#if defined(USE_NEON_FORMAT_CONVERSION) && defined (BELA_MODULAR)
+#error BELA_MODULAR is incompatible with USE_NEON_FORMAT_CONVERSION
+#endif
+
 // PRU memory: PRU0- and PRU1- DATA RAM are 8kB (0x2000) long each
 //             PRU-SHARED RAM is 12kB (0x3000) long
 
@@ -998,6 +1002,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 					}
 				}
 			}
+#ifdef BELA_MODULAR // invert input and account for a maximum input of 3.3V
+			const float analogInMax = 0.79f;
+			for(unsigned int n = 0; n < context->analogInChannels * context->analogInFrames; ++n)
+			{
+				context->analogIn[n] = 1 - context->analogIn[n] / analogInMax;
+				// clip it to avoid reading out of range values
+				if(context->analogIn[n] > 1)
+					context->analogIn[n] = 1;
+			}
+#endif /* BELA_MODULAR */
 #endif /* USE_NEON_FORMAT_CONVERSION */
 			
 			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
@@ -1069,12 +1083,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			// - pins previously set as outputs will keep the output value they had in the last frame of the previous buffer,
 			// - pins previously set as inputs will carry the newly read input value
 
-			for(unsigned int n = 0; n < context->digitalFrames; n++){
+			for(unsigned int n = 0; n < context->digitalFrames; ++n){
 				uint16_t inputs = last_digital_buffer[n] & 0xffff; // half-word, has 1 for inputs and 0 for outputs
 
 				uint16_t outputs = ~inputs; // half-word has 1 for outputs and 0 for inputs;
 				context->digital[n] = (last_digital_buffer[context->digitalFrames - 1] & (outputs << 16)) | // keep output values set in the last frame of the previous buffer
+#ifdef BELA_MODULAR // invert inputs
+									   (~context->digital[n] & (inputs << 16))   | // inputs from current context->digital[n];
+#else /* BELA_MODULAR */
 									   (context->digital[n] & (inputs << 16))   | // inputs from current context->digital[n];
+#endif /* BELA_MODULAR */
 									   (last_digital_buffer[n] & (inputs));     // keep pin configuration from previous context->digital[n]
 //                    context->digital[n]=digitalBufferTemp[n]; //ignores inputs
 			}
@@ -1086,6 +1104,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// ***********************
 
 		if(analog_enabled) {
+#ifdef BELA_MODULAR // invert output
+			for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++)
+			{
+				// also rescale it to avoid
+				// headroom problem on the analog outputs with a sagging
+				// 5V USB supply
+				const float analogOutMax = 0.93;
+				context->analogOut[n] = (1.f - context->analogOut[n]) * analogOutMax;
+			}
+#endif /* BELA_MODULAR */
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Remember the content of the last_analog_out_frame
 				if(interleaved)

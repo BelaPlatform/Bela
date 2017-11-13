@@ -457,7 +457,11 @@ static inline int digitalRead(BelaContext *context, int frame, int channel) {
 static inline void digitalWrite(BelaContext *context, int frame, int channel, int value) {
 	unsigned int f;
 	for(f = frame; f < context->digitalFrames; f++) {
+#ifdef BELA_MODULAR // invert output
+		if(!value)
+#else
 		if(value)
+#endif
 			context->digital[f] |= 1 << (channel + 16);
 		else
 			context->digital[f] &= ~(1 << (channel + 16));
@@ -468,7 +472,11 @@ static inline void digitalWrite(BelaContext *context, int frame, int channel, in
 //
 // Sets a given digital output channel to a value for the current frame only
 static inline void digitalWriteOnce(BelaContext *context, int frame, int channel, int value) {
+#ifdef BELA_MODULAR // invert output
+	if(!value)
+#else
 	if(value)
+#endif
 		context->digital[frame] |= 1 << (channel + 16);
 	else
 		context->digital[frame] &= ~(1 << (channel + 16));
