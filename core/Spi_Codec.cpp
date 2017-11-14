@@ -79,7 +79,7 @@ unsigned char Spi_Codec::readRegister(unsigned char reg, CODEC_TYPE codec){
 int Spi_Codec::initCodec(){
     // Wake up audio codec(s)
     if(gpio_set_value(RESET_PIN, HIGH)) {
-        std::cout << "Couldn't set value on audio codec pin\n";
+        std::cout << "Couldn't set value on audio codec reset pin\n";
         return -1;
     }
 
@@ -220,14 +220,14 @@ bool Spi_Codec::slaveIsDetectable(){
 
 int Spi_Codec::reset(){
     if(gpio_set_value(RESET_PIN, LOW)) {
-        std::cout << "Couldn't set value on audio codec pin\n";
+        std::cout << "Couldn't set value on audio codec reset pin\n";
         return -1;
     }
 
     usleep(100000); // 100 ms
 
     if(gpio_set_value(RESET_PIN, HIGH)) {
-        std::cout << "Couldn't set value on audio codec pin\n";
+        std::cout << "Couldn't set value on audio codec reset pin\n";
         return -1;
     }
 
