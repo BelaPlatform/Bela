@@ -34,7 +34,7 @@
 /**
  * Inverts I/O signals as appropriate for the BelaModular.
  */
-#undef BELA_MODULAR
+#define BELA_MODULAR
 
 #ifdef __cplusplus
 extern "C"

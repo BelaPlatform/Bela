@@ -1003,8 +1003,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 				}
 			}
 #ifdef BELA_MODULAR // invert input and account for a maximum input of 3.3V
-			const float analogInMax = 0.79f;
-			for(unsigned int n = 0; n < context->analogInChannels * context->analogInFrames; ++n)
+			const float analogInMax = 0.81f;
+			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; ++n)
 			{
 				context->analogIn[n] = 1 - context->analogIn[n] / analogInMax;
 				// clip it to avoid reading out of range values
