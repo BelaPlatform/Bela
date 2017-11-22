@@ -38,10 +38,16 @@
 #define PRU_SYSTEM_EVENT_RTDM 20
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
+#define PB_CAPE
+
 #define C_ADC_DAC_MEM C24     // PRU0 mem
 #ifdef DBOX_CAPE
 #define DAC_GPIO      GPIO0
+#ifdef PB_CAPE
+#define DAC_CS_PIN    (1<<6) // GPIO0:5 = P9 pin 17
+#else
 #define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
+#endif
 #else
 #define DAC_GPIO      GPIO1
 #define DAC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
@@ -58,12 +64,18 @@
 #define AD5668_REF_OFFSET     0
 
 #ifdef DBOX_CAPE
+#ifdef PB_CAPE
+#define ADC_GPIO      GPIO0
+#define ADC_CS_PIN    (1<<5) // GPIO1:5 = P1 pin 6
+#else
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
+#endif
 #else
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<17) // GPIO1:17 = P9 pin 23
 #endif
+
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL        16      // Word length
 #define ADC_CLK_MODE  0       // SPI mode
