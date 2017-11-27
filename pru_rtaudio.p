@@ -1425,7 +1425,7 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
 	 // Check if we are in first frame period. 
 	 // If true, load full audio frame from FIFO and process SPI afterwards.
 	 // Otherwise toggle flag and jump back to event loop.
-	 QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
+	 QBBC PROCESS_DIGITAL_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
 
      // Temporarily save register states in scratchpad to have enough space for full audio frame
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
@@ -1518,7 +1518,6 @@ MCASP_RX_ISR_END:
 
 /* ########## McSPI ISR BEGIN ########## */
 PROCESS_SPI_BEGIN:
-set r30.t2
      // Temporarily save register states in scratchpad to have enough space for SPI data
      // r0 - r3 are used for ADC data. r4 - r17 are used as temp registers
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
@@ -1613,13 +1612,35 @@ set r30.t2
      ADD reg_adc_current, reg_adc_current, 8
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
+/*
+     //r27 is actually r27, so do not use r27 from here to ...
+     LBBO r27, reg_digital_current, 0, 4 
+     JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
+     SBBO r27, reg_digital_current, 0,   4 
+     //..here you can start using r27 again
 
+     ADD reg_digital_current, reg_digital_current, 4 //increment pointer
+*/
      // Toggle flag to check on which SPI channels we are (i.e. ch0-ch3 or ch4-ch7)
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCSPI_FIRST_FOUR_CH)
 
 PROCESS_SPI_END:
+
+     // Skip digital processing if digital IOs are disabled
+     QBBC PROCESS_DIGITAL_END, reg_flags, FLAG_BIT_USE_DIGITAL
+PROCESS_DIGITAL_BEGIN:
+
+     //r27 is actually r27, so do not use r27 from here to ...
+     LBBO r27, reg_digital_current, 0, 4 
+     JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
+     SBBO r27, reg_digital_current, 0,   4 
+     //..here you can start using r27 again
+
+     ADD reg_digital_current, reg_digital_current, 4 //increment pointer
+
+PROCESS_DIGITAL_END:
+
 	 XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_RX_FIRST_FRAME) // Toggle frame flag
-clr r30.t2
 
      JMP EVENT_LOOP
 /* ########## McSPI ISR END ########## */
