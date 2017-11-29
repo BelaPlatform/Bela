@@ -563,9 +563,6 @@ void Bela_cleanupAudio()
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&gRTAudioThread);
 #endif
-#ifdef XENOMAI_SKIN_posix
-	pthread_cancel(gRTAudioThread);
-#endif
 
 	if(gPRU != 0)
 		delete gPRU;
