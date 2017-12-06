@@ -26,7 +26,7 @@ class I2c_Codec : public I2c
 	short unsigned int pllP;
 	short unsigned int pllR;
 public:
-	int writeRegister(unsigned int reg, unsigned int value);
+	int writeRegister(unsigned int reg, unsigned char value);
 
 	int initCodec();
 	int startAudio(int dual_rate);
@@ -52,8 +52,6 @@ public:
 	int setHPVolume(int halfDbSteps);
 	int writeHPVolumeRegisters();
 	int disable();
-
-	int readI2C();
 
 	I2c_Codec();
 	~I2c_Codec();
