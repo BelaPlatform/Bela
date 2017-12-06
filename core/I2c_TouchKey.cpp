@@ -32,7 +32,7 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 	char buf[3] = { 0x00, 0x01, 0x00 }; // code for centroid mode
 	if(write(i2C_file, buf, 3) !=3)
 	{
-		cout << "Failed to set TouchKey in \"Centroid Mode\" " << endl;
+		fprintf(stderr, "Failed to set TouchKey in \"Centroid Mode\"\n");
 		return 1;
 	}
 
@@ -41,7 +41,7 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 	char buf4[4] = { 0x00, 0x07, 0x00, 0x64}; // code for change minimum touch area
 	if(write(i2C_file, buf4, 4) !=4)
 	{
-		cout << "Failed to set TouchKey minimum touch size" << endl;
+		fprintf(stderr, "Failed to set TouchKey minimum touch size\n");
 		return 1;
 	}
 
@@ -54,7 +54,7 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 
 	if(write(i2C_file, buf, 1) !=1)
 	{
-		cout << "Failed to prepare data collection " << endl;
+		fprintf(stderr, "Failed to prepare TouchKey data collection\n");
 		return 2;
 	}
 
@@ -71,13 +71,13 @@ int I2c_TouchKey::readI2C()
 	bytesRead = read(i2C_file, dataBuffer, numBytesToRead);
 	if (bytesRead != numBytesToRead)
 	{
-		cout << "Failure to read Byte Stream" << endl;
+		fprintf(stderr, "Failure to read Byte Stream\n");
 		return 2;
 	}
-	/*cout << NUM_BYTES << " bytes read" << endl;
+	/*printf("%d bytes read\n", NUM_BYTES);
 	for(int j=0; j<9; j++)
-		cout << "\t" << (int)dataBuffer[j];
-	cout << endl;
+		printf("\t %d", (int)dataBuffer[j]);
+	printf("\n");
 	*/
 
 	touchCount = 0;
@@ -156,11 +156,11 @@ int I2c_TouchKey::readI2C()
 	for(int i = 0; i < bytesRead; i++) {
 		printf("%2X ", dataBuffer[i]);
 	}
-	cout << touchCount << " touches: ";
+	printf("%d touches: ", touchCount);
 	for(int i = 0; i < touchCount; i++) {
-		cout << "(" << sliderPosition[i] << ", " << sliderSize[i] << ") ";
+		printf("(%d, %d) ", sliderPosition[i], sliderSize[i]) ;
 	}
-	cout << "H = " << sliderPositionH << endl;
+	printf("H = %d\n", sliderPositionH);
 #endif
 
 	return 0;
