@@ -7,7 +7,6 @@
 
 
 #include "I2C_MPR121.h"
-#include <iostream>
 
 I2C_MPR121::I2C_MPR121() {
 
@@ -95,69 +94,15 @@ uint16_t  I2C_MPR121::touched(void) {
 
 
 uint8_t I2C_MPR121::readRegister8(uint8_t reg) {
-    i2c_char_t inbuf, outbuf;
-    struct i2c_rdwr_ioctl_data packets;
-    struct i2c_msg messages[2];
-
-    /*
-     * In order to read a register, we first do a "dummy write" by writing
-     * 0 bytes to the register we want to read from.  This is similar to
-     * the packet in set_i2c_register, except it's 1 byte rather than 2.
-     */
-    outbuf = reg;
-    messages[0].addr  = 0x5A;
-    messages[0].flags = 0;
-    messages[0].len   = sizeof(outbuf);
-    messages[0].buf   = &outbuf;
-
-    /* The data will get returned in this structure */
-    messages[1].addr  = 0x5A;
-    messages[1].flags = I2C_M_RD/* | I2C_M_NOSTART*/;
-    messages[1].len   = sizeof(inbuf);
-    messages[1].buf   = &inbuf;
-
-    /* Send the request to the kernel and get the result back */
-    packets.msgs      = messages;
-    packets.nmsgs     = 2;
-    if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-        rt_printf("Unable to send data");
-        return 0;
-    }
-
-    return inbuf;
+	i2c_char_t value;
+	readRegisters(reg, (i2c_char_t*)&value, sizeof(value));
+	return value;
 }
 
 uint16_t I2C_MPR121::readRegister16(uint8_t reg) {
-    i2c_char_t inbuf[2], outbuf;
-    struct i2c_rdwr_ioctl_data packets;
-    struct i2c_msg messages[2];
-
-    /*
-     * In order to read a register, we first do a "dummy write" by writing
-     * 0 bytes to the register we want to read from.  This is similar to
-     * the packet in set_i2c_register, except it's 1 byte rather than 2.
-     */
-    outbuf = reg;
-    messages[0].addr  = _i2c_address;
-    messages[0].flags = 0;
-    messages[0].len   = sizeof(outbuf);
-    messages[0].buf   = &outbuf;
-
-    /* The data will get returned in this structure */
-    messages[1].addr  = _i2c_address;
-    messages[1].flags = I2C_M_RD/* | I2C_M_NOSTART*/;
-    messages[1].len   = sizeof(inbuf);
-    messages[1].buf   = inbuf;
-
-    /* Send the request to the kernel and get the result back */
-    packets.msgs      = messages;
-    packets.nmsgs     = 2;
-    if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-        rt_printf("Unable to send data");
-        return 0;
-    }
-
-    return (uint16_t)inbuf[0] | (((uint16_t)inbuf[1]) << 8);
+	i2c_char_t inbuf[2];
+	readRegisters(reg, inbuf, sizeof(inbuf));
+	return (uint16_t)inbuf[0] | (((uint16_t)inbuf[1]) << 8);
 }
 
 /**************************************************************************/
@@ -166,12 +111,6 @@ uint16_t I2C_MPR121::readRegister16(uint8_t reg) {
 */
 /**************************************************************************/
 void I2C_MPR121::writeRegister(uint8_t reg, uint8_t value) {
-	uint8_t buf[2] = { reg, value };
-
-	if(write(i2C_file, buf, 2) != 2)
-	{
-		std::cout << "Failed to write register " << (int)reg << " on MPR121\n";
-		return;
-	}
+	writeRegisters(reg, (i2c_char_t*)&value, sizeof(value));
 }
 
