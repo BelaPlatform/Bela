@@ -497,17 +497,9 @@ int I2c_Codec::stopAudio()
 }
 
 // Write a specific register on the codec
-int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
+int I2c_Codec::writeRegister(unsigned int reg, unsigned char value)
 {
-	char buf[2] = { static_cast<char>(reg & 0xFF), static_cast<char>(value & 0xFF) };
-
-	if(write(i2C_file, buf, 2) != 2)
-	{
-		verbose && fprintf(stderr, "Failed to write register %d on I2c codec\n", reg);
-		return 1;
-	}
-
-	return 0;
+	return writeRegisters(i2C_address, reg, &value, 1);
 }
 
 // Put codec to Hi-z (required for CTAG face)
@@ -527,13 +519,6 @@ int I2c_Codec::disable(){
 	if (writeRegister(0x5E, 0xC0)) // Power fully down left and right DAC
 		return 1;
 
-	return 0;
-}
-
-
-int I2c_Codec::readI2C()
-{
-	// Nothing to do here, we only write the registers
 	return 0;
 }
 
