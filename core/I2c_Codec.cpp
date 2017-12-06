@@ -496,7 +496,7 @@ int I2c_Codec::stopAudio()
 // Write a specific register on the codec
 int I2c_Codec::writeRegister(unsigned int reg, unsigned char value)
 {
-	return writeRegisters(i2C_address, reg, &value, 1);
+	return writeRegisters(reg, &value, 1);
 }
 
 // Put codec to Hi-z (required for CTAG face)
