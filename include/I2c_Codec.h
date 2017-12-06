@@ -31,7 +31,7 @@ public:
 		TLV320AIC3106,
 	} CodecType;
 	
-	int writeRegister(unsigned int reg, unsigned int value);
+	int writeRegister(unsigned int reg, unsigned char value);
 	int readRegister(unsigned int reg);
 
 	int initCodec();
@@ -66,7 +66,6 @@ public:
 	int reset(){ return 0; } // Not needed for audio codec on Bela cape
 
 	void setVerbose(bool isVerbose);
-
 	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
 	~I2c_Codec();
 
