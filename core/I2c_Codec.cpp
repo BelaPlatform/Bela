@@ -893,7 +893,7 @@ int I2c_Codec::stopAudio()
 // Write a specific register on the codec
 int I2c_Codec::writeRegister(unsigned int reg, unsigned char value)
 {
-	return writeRegisters(i2C_address, reg, &value, 1);
+	return writeRegisters(reg, (i2c_char_t*)&value, 1);
 }
 
 // Read a specific register on the codec

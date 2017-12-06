@@ -35,16 +35,17 @@ public:
 	I2c(I2c&&) = delete;
 	int initI2C_RW(int bus, int defaultAddress, int ignored = 0);
 	int closeI2C();
-	int readRegisters(unsigned char address, unsigned char reg, unsigned char *inbuf, unsigned int size);
-	int writeRegisters(unsigned char address, unsigned char reg, unsigned char *inbuf, unsigned int size);
+	int readRegisters(i2c_char_t reg, i2c_char_t *inbuf, unsigned int size);
+	int writeRegisters(i2c_char_t reg, i2c_char_t *inbuf, unsigned int size);
+	void setAddress(int address);
 	virtual ~I2c();
 };
 
 
-inline int I2c::initI2C_RW(int bus, int defaultAddress, int)
+inline int I2c::initI2C_RW(int bus, int address, int)
 {
 	i2C_bus = bus;
-	i2C_address = defaultAddress;
+	setAddress(address);
 
 	// open I2C device as a file
 	char namebuf[MAX_BUF_NAME];
@@ -97,12 +98,11 @@ inline I2c::~I2c()
 //writeRegisters() and readRegisters(): with a little help from https://www.linuxquestions.org/questions/programming-9/reading-data-via-i2c-dev-4175499069/
 //also interesting: read the source of linux/i2c-dev.h
 inline int I2c::writeRegisters(
-	unsigned char addr,
-	unsigned char reg,
-	unsigned char* values,
+	i2c_char_t reg,
+	i2c_char_t *values,
 	unsigned int size)
 {
-	unsigned char outbuf[1 + size];
+	i2c_char_t outbuf[1 + size];
 	struct i2c_rdwr_ioctl_data packets;
 	struct i2c_msg messages[1];
 
@@ -115,7 +115,7 @@ inline int I2c::writeRegisters(
 	*/
 	memcpy((void*)(outbuf + 1), (void*)values, size);
 
-	messages[0].addr = addr;
+	messages[0].addr = i2C_address;
 	messages[0].flags = 0;
 	messages[0].len = sizeof(outbuf);
 	messages[0].buf = outbuf;
@@ -130,12 +130,11 @@ inline int I2c::writeRegisters(
 }
 
 inline int I2c::readRegisters(
-	unsigned char addr,
-	unsigned char reg,
-	unsigned char *inbuf,
+	i2c_char_t reg,
+	i2c_char_t *inbuf,
 	unsigned int size)
 {
-	unsigned char outbuf[1];
+	i2c_char_t outbuf[1];
 	struct i2c_rdwr_ioctl_data packets;
 	struct i2c_msg messages[2];
 
@@ -144,13 +143,13 @@ inline int I2c::readRegisters(
 	* 0 bytes to the register we want to read from.
 	*/
 	outbuf[0] = reg;
-	messages[0].addr = addr;
+	messages[0].addr = i2C_address;
 	messages[0].flags = 0;
 	messages[0].len = sizeof(outbuf);
 	messages[0].buf = outbuf;
 
 	/* The data will get returned in this structure */
-	messages[1].addr = addr;
+	messages[1].addr = i2C_address;
 	messages[1].flags = I2C_M_RD;
 	messages[1].len = sizeof(inbuf[0]) * size;
 	messages[1].buf = inbuf;
@@ -162,4 +161,9 @@ inline int I2c::readRegisters(
 		return 1;
 	}
 	return 0;
+}
+
+inline void I2c::setAddress(int address)
+{
+	i2C_address = address;
 }

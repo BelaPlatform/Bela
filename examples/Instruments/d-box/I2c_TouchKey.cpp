@@ -168,9 +168,9 @@ int I2c_TouchKey::readI2C()
 	}
 	printf("%d touches: ", touchCount);
 	for(int i = 0; i < touchCount; i++) {
-		printf("(%d, %d) ", sliderPosition[i], sliderSize[i]) ;
+		printf("(%f, %f) ", sliderPosition[i], sliderSize[i]) ;
 	}
-	printf("H = %d\n", sliderPositionH);
+	printf("H = %f\n", sliderPositionH);
 #endif
 
 	return 0;
