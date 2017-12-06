@@ -27,7 +27,7 @@ class I2c_Codec : public I2c, public AudioCodec
 	short unsigned int pllP;
 	short unsigned int pllR;
 public:
-	int writeRegister(unsigned int reg, unsigned int value);
+	int writeRegister(unsigned int reg, unsigned char value);
 
 	int initCodec();
 	int startAudio(int dual_rate);
@@ -57,9 +57,7 @@ public:
 	int disable();
 	int reset(){ return 0; } // Not needed for audio codec on Bela cape
 
-	int readI2C();
 	void setVerbose(bool isVerbose);
-
 	I2c_Codec(int i2cBus, int I2cAddress, bool verbose = false);
 	~I2c_Codec();
 
