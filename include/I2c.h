@@ -36,7 +36,10 @@ public:
 	int initI2C_RW(int bus, int defaultAddress, int ignored = 0);
 	int closeI2C();
 	int readRegisters(i2c_char_t reg, i2c_char_t *inbuf, unsigned int size);
-	int writeRegisters(i2c_char_t reg, i2c_char_t *inbuf, unsigned int size);
+	int writeRegisters(i2c_char_t reg, i2c_char_t *values, unsigned int size);
+	//int read(i2c_char_t *inbuf, unsigned int size);
+	//int write(i2c_char_t *outbuf, unsigned int size);
+	//int writeRead(i2c_char_t* outbuf, unsigned int writeSize, i2c_char_t* inbuf, unsigned int readSize);
 	void setAddress(int address);
 	virtual ~I2c();
 };
