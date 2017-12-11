@@ -6,6 +6,7 @@
 #include <DigitalChannelManager.h>
 #include <cmath>
 #include <stdio.h>
+#define PD_THREADED_IO
 #include <libpd/z_libpd.h>
 extern "C" {
 #include <libpd/s_stuff.h>
@@ -25,9 +26,17 @@ void Bela_userSettings(BelaInitSettings *settings)
 
 float* gInBuf;
 float* gOutBuf;
+#define LIBPD_I2C
 #define PARSE_MIDI
 static std::vector<Midi*> midi;
 std::vector<std::string> gMidiPortNames;
+#ifdef LIBPD_I2C
+#include <I2cRt.h>
+I2cRt i2c;
+bool i2cEnabled = false;
+unsigned int maxI2cMsgPerCallback = 100;
+unsigned int maxI2cInbuf = 256;
+#endif
 
 void dumpMidi()
 {
@@ -223,6 +232,110 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		dcm.manage(channel, direction, isMessageRate);
 		return;
 	}
+#ifdef LIBPD_I2C
+	if(strcmp(source, "bela_i2c") == 0)
+	{
+		t_atom* a;
+		if(strcmp(symbol, "open") == 0)
+		{
+			a = &argv[0];
+			if(!libpd_is_float(a))
+			{
+				fprintf(stderr, "bela_i2c: first argument to `open` must be a float (number of i2c bus)\n");
+				return;
+			}
+			int bus = (int)libpd_get_float(a);
+			int address;
+			if(argc < 2)
+				address = 0;
+			else
+			{
+				a = &argv[1];
+				if(!libpd_is_float(a))
+				{
+					fprintf(stderr, "bela_i2c: second argument to `open` must be a float (address, default 0)\n");
+					return;
+				}
+				address = libpd_get_float(a);
+			}
+			i2c.initI2C_RW(bus, address);
+			i2cEnabled = true;
+			//TODO: (re-)enable the i2c I/O in a thread-safe way
+			return;
+		}
+		if(strcmp(symbol, "address") == 0)
+		{
+			a = &argv[0];
+			if(!libpd_is_float(a))
+			{
+				fprintf(stderr, "bela_i2c: argument to `address` must be a float (i2c address of device)\n");
+				return;
+			}
+			int address = libpd_get_float(a);
+			i2c.setAddress(address);
+			return;
+		}
+		if(strcmp(symbol, "read") == 0)
+		{
+			a = &argv[0];
+			if(!libpd_is_float(a))
+			{
+				fprintf(stderr, "bela_i2c: argument to `read` must be a float (number of bytes to read)\n");
+				return;
+			}
+			int size = libpd_get_float(a);
+			i2c.readRt(size);
+			return;
+		}
+		if(strcmp(symbol, "write") == 0)
+		{
+			unsigned int writeSize = argc;
+			i2c_char_t outbuf[writeSize];
+			for(int n = 0; n < argc; n++)
+			{
+				a = &argv[n];
+				if(!libpd_is_float(a))
+				{
+					rt_fprintf(stderr, "bela_i2c: arguments to `write` must be floats (values to write)\n");
+					return;
+				}
+				i2c_char_t byte = libpd_get_float(a);
+				outbuf[n] = byte;
+			}
+			if(i2c.writeRt(outbuf, sizeof(outbuf)))
+			{
+				rt_fprintf(stderr, "Failed to write %d bytes to i2c bus\n", sizeof(outbuf));
+				return;
+			}
+			return;
+		}
+		if(strcmp(symbol, "writeRead") == 0)
+		{
+			unsigned int writeSize = argc - 1;
+			i2c_char_t outbuf[writeSize];
+			for(int n = 0; n < argc - 1; n++)
+			{
+				a = &argv[n];
+				if(!libpd_is_float(a))
+				{
+					rt_fprintf(stderr, "bela_i2c: arguments to `writeread` must be floats (values to write, last one is number of bytes to read)\n");
+					return;
+				}
+				i2c_char_t byte = libpd_get_float(a);
+				outbuf[n] = byte;
+			}
+			a = &argv[argc];
+			if(!libpd_is_float(a))
+			{
+				fprintf(stderr, "bela_i2c: arguments to `writeread` must be floats (values to write, last one is number of bytes to read)\n");
+				return;
+			}
+			unsigned int readSize  = libpd_get_float(a);
+			i2c.writeReadRt(outbuf, sizeof(outbuf), readSize);
+			return;
+		}
+	}
+#endif /* LIBPD_I2C */
 }
 
 void Bela_floatHook(const char *source, float value){
@@ -268,6 +381,12 @@ static bool pdMultiplexerActive = false;
 void fdLoop(void* arg){
 	t_pdinstance* pd_that = (t_pdinstance*)arg;
 	while(!gShouldStop){
+#ifdef LIBPD_I2C
+		if(i2cEnabled)
+		{
+			i2c.doIo();
+		}
+#endif /* LIBPD_I2C */
 		sys_doio(pd_that);
 		usleep(3000);
 	}
@@ -412,6 +531,7 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_digitalOut26");
 	libpd_bind("bela_setDigital");
 	libpd_bind("bela_setMidi");
+	libpd_bind("bela_i2c");
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
@@ -448,8 +568,37 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	int num;
+#ifdef LIBPD_I2C
+	i2c_char_t inbuf[maxI2cInbuf];
+	if(i2cEnabled)
+	{
+		for(unsigned int n = 0; n < maxI2cMsgPerCallback; ++n)
+		{
+			I2cRt::Msg msg = i2c.retrieveMessage();
+			if (msg.status == I2cRt::MsgStatus::noMessage) {
+				break;
+			}
+			if(msg.status == I2cRt::MsgStatus::success)
+			{
+				if(msg.type == I2cRt::MsgType::writeRead || msg.type == I2cRt::MsgType::read)
+				{
+					if(msg.readSize <= maxI2cInbuf)
+						memcpy(inbuf, msg.payload, msg.readSize);
+					rt_printf("read %d bytes: ", msg.readSize);
+					for(int n = 0; n < msg.readSize; ++n)
+						rt_printf("%d ", msg.payload[n]);
+					rt_printf("\n");
+				}
+				else
+					rt_printf("Success writing\n");
+			} else {
+				rt_fprintf(stderr, "bela_i2c: error while communicating with the device\n");
+			}
+		}
+	}
+#endif /* LIBPD_I2C */
 #ifdef PARSE_MIDI
+	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
