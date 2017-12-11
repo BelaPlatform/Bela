@@ -31,8 +31,7 @@ private:
 	int numBytesToRead;
 
 	// read NUM_BYTES bytes, which have to be properly parsed
-	char dataBuffer[MAX_SENSOR_BYTES];
-	int bytesRead;
+	i2c_char_t dataBuffer[MAX_SENSOR_BYTES];
 
 	int rawSliderPosition[5];
 	int rawSliderPositionH;
