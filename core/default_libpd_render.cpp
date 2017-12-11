@@ -168,6 +168,7 @@ I2cRt i2c;
 bool i2cEnabled = false;
 unsigned int maxI2cMsgPerCallback = 100;
 unsigned int maxI2cInbuf = 256;
+char i2cReceiverName[] = "bela_i2c_in";
 #endif // LIBPD_I2C
 
 void dumpMidi()
@@ -584,6 +585,22 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 	if(strcmp(source, "bela_i2c") == 0)
 	{
 		t_atom* a;
+		if(strcmp(symbol, "debug") == 0)
+		{
+			int debugMode = 1;
+			if(argc)
+			{
+				a = &argv[0];
+				if(!libpd_is_float(a))
+				{
+					fprintf(stderr, "bela_i2c: argument to `debug` must be a float (0 for disabling debug)\n");
+					return;
+				}
+				debugMode = (int)libpd_get_float(a);
+			}
+			i2c.setDebug(debugMode);
+			return;
+		}
 		if(strcmp(symbol, "open") == 0)
 		{
 			a = &argv[0];
@@ -1095,17 +1112,27 @@ void render(BelaContext *context, void *userData)
 			{
 				if(msg.type == I2cRt::MsgType::writeRead || msg.type == I2cRt::MsgType::read)
 				{
-					if(msg.readSize <= maxI2cInbuf)
-						memcpy(inbuf, msg.payload, msg.readSize);
-					rt_printf("read %d bytes: ", msg.readSize);
+					if(libpd_start_message(msg.readSize))
+					{
+						libpd_float(i2cReceiverName, -2);
+						break;
+					}
+
 					for(int n = 0; n < msg.readSize; ++n)
-						rt_printf("%d ", msg.payload[n]);
-					rt_printf("\n");
+					{
+						libpd_add_float(msg.payload[n]);
+					}
+					libpd_finish_list(i2cReceiverName);
+					//rt_printf("read %d bytes: ", msg.readSize);
+					//for(int n = 0; n < msg.readSize; ++n)
+						//rt_printf("%d ", msg.payload[n]);
+					//rt_printf("\n");
 				}
-				else
-					rt_printf("Success writing\n");
+				//else
+					//rt_printf("Success writing\n");
 			} else {
 				rt_fprintf(stderr, "bela_i2c: error while communicating with the device\n");
+				libpd_float(i2cReceiverName, -1);
 			}
 		}
 	}
