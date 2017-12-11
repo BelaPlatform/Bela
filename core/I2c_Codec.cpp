@@ -899,32 +899,11 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned char value)
 // Read a specific register on the codec
 int I2c_Codec::readRegister(unsigned int reg)
 {	
-    i2c_char_t inbuf, outbuf;
-    struct i2c_rdwr_ioctl_data packets;
-    struct i2c_msg messages[2];
-
-	/* Reading a register involves a repeated start condition which needs ioctl() */
-    outbuf = reg;
-    messages[0].addr  = i2C_address;
-    messages[0].flags = 0;
-    messages[0].len   = sizeof(outbuf);
-    messages[0].buf   = &outbuf;
-
-    /* The data will get returned in this structure */
-    messages[1].addr  = i2C_address;
-    messages[1].flags = I2C_M_RD/* | I2C_M_NOSTART*/;
-    messages[1].len   = sizeof(inbuf);
-    messages[1].buf   = &inbuf;
-
-    /* Send the request to the kernel and get the result back */
-    packets.msgs      = messages;
-    packets.nmsgs     = 2;
-    if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-        verbose && fprintf(stderr, "Failed to read register %d on I2c codec\n", reg);
-        return -1;
-    }
-
-    return inbuf;	
+	i2c_char_t inbuf[1];
+	int ret = readRegisters(reg, inbuf, sizeof(inbuf));
+	if(ret)
+		return ret;
+	return inbuf[0];
 }
 
 // Put codec to Hi-z (required for CTAG face)
