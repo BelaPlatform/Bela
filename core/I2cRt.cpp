@@ -86,7 +86,7 @@ void I2cRt::doIo()
 				fprintf(stderr, "Full on panic on I2C: unexpected number of byets available in the toIo ringbuffer\n");
 				continue;
 			}
-			rb_read_from_buffer(toIo, (char*)&outbuf, writeSize);
+			int ret = rb_read_from_buffer(toIo, (char*)&outbuf, writeSize);
 		}
 #if 0
 		printf("Doing Io for message: ");
@@ -105,16 +105,13 @@ void I2cRt::doIo()
 		switch(msg.type)
 		{
 			case MsgType::write:
-				//ret = I2c::write(outbuf, writeSize);
-				ret = writeRegisters(outbuf[0], outbuf + 1, writeSize - 1);
+				ret = I2c::write(outbuf, writeSize);
 			break;
 			case MsgType::read:
-				ret = 0;
-				//ret = I2c::read(inbuf, readSize);
+				ret = I2c::read(inbuf, readSize);
 			break;
 			case MsgType::writeRead:
-				ret = readRegisters(outbuf[0], inbuf, readSize);
-				//ret = I2c::writeRead(outbuf, writeSize, inbuf, readSize);
+				ret = I2c::writeRead(outbuf, writeSize, inbuf, readSize);
 			break;
 			default:
 				ret = -1;
@@ -123,7 +120,7 @@ void I2cRt::doIo()
 		{
 			// send back a failure
 			msg.status = MsgStatus::failure;
-			rb_write_to_buffer(fromIo, 2, (char*)&msg, sizeof(msg)); // do not check for space avaiable or return value
+			rb_write_to_buffer(fromIo, 1, (char*)&msg, sizeof(msg)); // do not check for space available or return value
 			continue;
 		}
 		msg.status = MsgStatus::success;
@@ -135,11 +132,52 @@ void I2cRt::doIo()
 			while(!ioShouldStop() && rb_available_to_write(fromIo) < sizeof(msg) + readSize)
 				usleep(10000);
 			// - write the message followed by the payload
-			rb_write_to_buffer(fromIo, 2, (char*)&msg, sizeof(msg), (char*)&inbuf, readSize);
+			rb_write_to_buffer(fromIo, 2,
+					(char*)&msg, sizeof(msg),
+					(char*)&inbuf, readSize
+				);
 		} else {
-			rb_write_to_buffer(fromIo, 2, (char*)&msg, sizeof(msg));
+			rb_write_to_buffer(fromIo, 1, (char*)&msg, sizeof(msg));
 		}
 	}
+}
+
+int I2cRt::msgToIo(MsgType type, i2c_char_t* outbuf, unsigned int writeSize, unsigned int readSize)
+{
+	Msg msg;
+	msg.type = type;
+	msg.readSize = readSize;
+	msg.writeSize = writeSize;
+	// if the buffer is full, discard the new message and return failure
+	if(rb_available_to_write(toIo) < sizeof(msg) + writeSize)
+		return 1;
+	if(outbuf)
+	{
+		rb_write_to_buffer(toIo, 2,
+				(char*)&msg, sizeof(msg),
+				(char*)outbuf, writeSize
+			);
+	} else {
+		rb_write_to_buffer(toIo, 1,
+				(char*)&msg, sizeof(msg)
+			);
+	}
+	return 0;
+}
+
+int I2cRt::readRt(unsigned int readSize)
+{
+	return msgToIo(MsgType::read, NULL, 0, readSize);
+}
+
+int I2cRt::writeRt(i2c_char_t* outbuf, unsigned int writeSize)
+{
+	return msgToIo(MsgType::write, outbuf, writeSize, 0);
+}
+
+int I2cRt::writeReadRt(i2c_char_t* outbuf, unsigned int writeSize, unsigned int readSize)
+{
+	return msgToIo(MsgType::writeRead, outbuf, writeSize, readSize);
 }
 
 int I2cRt::writeRegistersRt(
@@ -147,34 +185,20 @@ int I2cRt::writeRegistersRt(
 	i2c_char_t *values,
 	unsigned int size)
 {
-	Msg msg;
-	// if the buffer is full, discard the new message and return failure
-	if(rb_available_to_write(toIo) < sizeof(msg) + size)
-		return 1;
-	msg.type = MsgType::write;
-	msg.readSize = 0;
-	msg.writeSize = size + 1; // + 1 for the reg
-	rb_write_to_buffer(toIo, 3,
-			(char*)&msg, sizeof(msg),
-			(char*)&reg, sizeof(reg),
-			(char*)values, size
-		);
-	return 0;
+	unsigned int writeSize = size + 1;
+	i2c_char_t outbuf[writeSize];
+	outbuf[0] = reg;
+	memcpy((void*)(outbuf + 1), values, size);
+	return writeRt(outbuf, writeSize);
 }
 
 int I2cRt::readRegistersRt(
 	i2c_char_t reg,
-	unsigned int size)
+	unsigned int readSize)
 {
-	Msg msg;
-	// if the buffer is full, discard the new message and return failure
-	if(rb_available_to_write(toIo) < sizeof(msg) + sizeof(reg))
-		return 1;
-	msg.type = MsgType::writeRead;
-	msg.readSize = size;
-	msg.writeSize = 1;
-	rb_write_to_buffer(toIo, 2, (char*)&msg, sizeof(msg), (char*)&reg, sizeof(reg));
-	return 0;
+	i2c_char_t outbuf[1];
+	outbuf[0] = reg;
+	return writeReadRt(outbuf, sizeof(outbuf), readSize);
 }
 
 I2cRt::Msg I2cRt::retrieveMessage()
