@@ -39,8 +39,8 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 
 	numBytesToRead = kSensorBytes[sensorType];
 
-	char buf[3] = { 0x00, 0x01, 0x00 }; // code for centroid mode
-	if(write(i2C_file, buf, 3) !=3)
+	i2c_char_t buf[3] = { 0x00, 0x01, 0x00 }; // code for centroid mode
+	if(write(buf, 3))
 	{
 		fprintf(stderr, "Failed to set TouchKey in \"Centroid Mode\"\n");
 		return 1;
@@ -48,8 +48,8 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 
 	usleep(5000); // need to give TouchKey enough time to process command
 
-	char buf4[4] = { 0x00, 0x07, 0x00, 0x64}; // code for change minimum touch area
-	if(write(i2C_file, buf4, 4) !=4)
+	i2c_char_t buf4[4] = { 0x00, 0x07, 0x00, 0x64}; // code for change minimum touch area
+	if(write(buf4, 4))
 	{
 		fprintf(stderr, "Failed to set TouchKey minimum touch size\n");
 		return 1;
@@ -62,7 +62,7 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 	else
 		buf[0] = 0x06; // code for data collection
 
-	if(write(i2C_file, buf, 1) !=1)
+	if(write(buf, 1))
 	{
 		fprintf(stderr, "Failed to prepare TouchKey data collection\n");
 		return 2;
@@ -75,11 +75,9 @@ int I2c_TouchKey::initTouchKey(int sensorTypeToUse)
 	return 0;
 }
 
-
 int I2c_TouchKey::readI2C()
 {
-	bytesRead = read(i2C_file, dataBuffer, numBytesToRead);
-	if (bytesRead != numBytesToRead)
+	if(read(dataBuffer, numBytesToRead))
 	{
 		fprintf(stderr, "Failure to read Byte Stream\n");
 		return 2;
@@ -163,7 +161,7 @@ int I2c_TouchKey::readI2C()
 		sliderPositionH = -1.0;
 
 #ifdef DEBUG_I2C_TOUCHKEY
-	for(int i = 0; i < bytesRead; i++) {
+	for(int i = 0; i < numBytesToRead; ++i) {
 		printf("%2X ", dataBuffer[i]);
 	}
 	printf("%d touches: ", touchCount);
