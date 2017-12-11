@@ -32,10 +32,14 @@ public:
 		int writeSize;
 		i2c_char_t* payload;
 	} Msg;
+	int readRt(unsigned int readSize);
+	int writeRt(i2c_char_t* outbuf, unsigned int writeSize);
+	int writeReadRt(i2c_char_t* outbuf, unsigned int writeSize, unsigned int readSize);
 	int writeRegistersRt(i2c_char_t reg, i2c_char_t *values, unsigned int size);
 	int readRegistersRt(i2c_char_t reg, unsigned int size);
 	Msg retrieveMessage();
 private:
+	int msgToIo(MsgType type, i2c_char_t* outbuf, unsigned int writeSize, unsigned int readSize);
 	Msg failedReadingFromIo();
 	ring_buffer* toIo;
 	ring_buffer* fromIo;
