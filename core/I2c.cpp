@@ -7,7 +7,6 @@
 #include <sys/ioctl.h>
 
 #define MAX_BUF_NAME 64
-#undef DEBUG_I2C
 
 int I2c::initI2C_RW(int bus, int address, int)
 {
@@ -31,6 +30,8 @@ int I2c::initI2C_RW(int bus, int address, int)
 		fprintf(stderr, "I2C_SLAVE address: %d failed...\n", i2C_address);
 		return 2;
 	}
+	if(debugMode)
+		printf("(fd %d): %s, address: %d\n", i2C_file, namebuf, i2C_address);
 
 	return 0;
 }
@@ -155,9 +156,9 @@ void I2c::makeWriteMessage(struct i2c_msg* message, i2c_char_t* outbuf, unsigned
 
 int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 {
-#ifdef DEBUG_I2C
+	if(debugMode)
 	{
-		//printf("(fd %d) DEBUG_I2C_START pre ioctl: \n", i2C_file);
+		printf("(fd %d) transaction. Address: %d\n", i2C_file, i2C_address);
 		for(int n = 0; n < packets->nmsgs; ++n)
 		{
 			i2c_msg msg = packets->msgs[n];
@@ -172,11 +173,10 @@ int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 			}
 			printf("\n");
 		}
-		//printf("(fd %d) ---DEBUG_I2_STOP pre ioctl----------------\n", i2C_file);
 	}
-#endif /* DEBUG_I2C */
 	int ret = ioctl(i2C_file, I2C_RDWR, packets);
-#ifdef DEBUG_I2C
+	if(debugMode)
+	{
 		for(int n = 0; n < packets->nmsgs; ++n)
 		{
 			i2c_msg msg = packets->msgs[n];
@@ -190,9 +190,14 @@ int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 				printf("\n");
 			}
 		}
-#endif /* DEBUG_I2C */
+	}
 	if(ret < 0) {
 		return 1;
 	}
 	return 0;
+}
+
+void I2c::setDebug(int newDebugMode)
+{
+	debugMode = newDebugMode;
 }

@@ -86,7 +86,7 @@ void I2cRt::doIo()
 				fprintf(stderr, "Full on panic on I2C: unexpected number of byets available in the toIo ringbuffer\n");
 				continue;
 			}
-			int ret = rb_read_from_buffer(toIo, (char*)&outbuf, writeSize);
+			rb_read_from_buffer(toIo, (char*)&outbuf, writeSize);
 		}
 #if 0
 		printf("Doing Io for message: ");
