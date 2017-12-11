@@ -33,6 +33,7 @@ protected:
 	int i2C_bus;
 	int i2C_address;
 	int i2C_file = 0;
+	bool debugMode = 0;
 
 public:
 	int initI2C_RW(int bus, int defaultAddress, int ignored = 0);
@@ -47,6 +48,7 @@ public:
 	void makeReadMessage(struct i2c_msg* message, i2c_char_t* inbuf, unsigned int readSize);
 	void makeWriteMessage(struct i2c_msg* message, i2c_char_t* outbuf, unsigned int writeSize);
 	int doIoctl(i2c_rdwr_ioctl_data* packets);
+	void setDebug(int debugMode);
 };
 
 #endif /* I2C_H_ */
