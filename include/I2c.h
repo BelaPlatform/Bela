@@ -35,15 +35,17 @@ public:
 	I2c(I2c&&) = delete;
 	int initI2C_RW(int bus, int defaultAddress, int ignored = 0);
 	int closeI2C();
+	int read(i2c_char_t *inbuf, unsigned int size);
+	int write(i2c_char_t *outbuf, unsigned int size);
+	int writeRead(i2c_char_t* outbuf, unsigned int writeSize, i2c_char_t* inbuf, unsigned int readSize);
+	void setAddress(int address);
 	int readRegisters(i2c_char_t reg, i2c_char_t *inbuf, unsigned int size);
 	int writeRegisters(i2c_char_t reg, i2c_char_t *values, unsigned int size);
-	//int read(i2c_char_t *inbuf, unsigned int size);
-	//int write(i2c_char_t *outbuf, unsigned int size);
-	//int writeRead(i2c_char_t* outbuf, unsigned int writeSize, i2c_char_t* inbuf, unsigned int readSize);
-	void setAddress(int address);
 	virtual ~I2c();
+	void makeReadMessage(struct i2c_msg* message, i2c_char_t* inbuf, unsigned int readSize);
+	void makeWriteMessage(struct i2c_msg* message, i2c_char_t* outbuf, unsigned int writeSize);
+	int doIoctl(i2c_rdwr_ioctl_data* packets);
 };
-
 
 inline int I2c::initI2C_RW(int bus, int address, int)
 {
@@ -62,7 +64,7 @@ inline int I2c::initI2C_RW(int bus, int address, int)
 
 	// target device as slave
 	// this is useless if you only use I2C_RDWR, but is needed if you use
-	// write() or read()
+	// ::write() or ::read()
 	if (ioctl(i2C_file, I2C_SLAVE, i2C_address) < 0){
 		fprintf(stderr, "I2C_SLAVE address: %d failed...\n", i2C_address);
 		return 2;
@@ -85,12 +87,12 @@ inline int I2c::closeI2C()
 
 inline ssize_t I2c::readBytes(void *buf, size_t count)
 {
-	return read(i2C_file, buf, count);
+	return read((i2c_char_t*)buf, count);
 }
 
 inline ssize_t I2c::writeBytes(const void *buf, size_t count)
 {
-	return write(i2C_file, buf, count);
+	return write((i2c_char_t*)buf, count);
 }
 
 inline I2c::~I2c()
@@ -106,9 +108,6 @@ inline int I2c::writeRegisters(
 	unsigned int size)
 {
 	i2c_char_t outbuf[1 + size];
-	struct i2c_rdwr_ioctl_data packets;
-	struct i2c_msg messages[1];
-
 	/* The first byte indicates which register we'll write */
 	outbuf[0] = reg;
 
@@ -118,55 +117,85 @@ inline int I2c::writeRegisters(
 	*/
 	memcpy((void*)(outbuf + 1), (void*)values, size);
 
-	messages[0].addr = i2C_address;
-	messages[0].flags = 0;
-	messages[0].len = sizeof(outbuf);
-	messages[0].buf = outbuf;
-
-	/* Transfer the i2c packets to the kernel and verify it worked */
-	packets.msgs  = messages;
-	packets.nmsgs = 1;
-	if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-		return 1;
-	}
-	return 0;
+	return write(outbuf, sizeof(outbuf));
 }
 
 inline int I2c::readRegisters(
 	i2c_char_t reg,
 	i2c_char_t *inbuf,
-	unsigned int size)
+	unsigned int readSize)
 {
 	i2c_char_t outbuf[1];
-	struct i2c_rdwr_ioctl_data packets;
-	struct i2c_msg messages[2];
 
 	/*
 	* In order to read a register, we first do a "dummy write" by writing
 	* 0 bytes to the register we want to read from.
 	*/
 	outbuf[0] = reg;
-	messages[0].addr = i2C_address;
-	messages[0].flags = 0;
-	messages[0].len = sizeof(outbuf);
-	messages[0].buf = outbuf;
 
-	/* The data will get returned in this structure */
-	messages[1].addr = i2C_address;
-	messages[1].flags = I2C_M_RD;
-	messages[1].len = sizeof(inbuf[0]) * size;
-	messages[1].buf = inbuf;
-
-	/* Send the request to the kernel and get the result back */
-	packets.msgs = messages;
-	packets.nmsgs = 2;
-	if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
-		return 1;
-	}
-	return 0;
+	return writeRead(outbuf, sizeof(outbuf), inbuf, readSize);
 }
 
 inline void I2c::setAddress(int address)
 {
 	i2C_address = address;
+}
+
+inline int I2c::read(i2c_char_t *inbuf, unsigned int size)
+{
+	struct i2c_rdwr_ioctl_data packets;
+	struct i2c_msg messages[1];
+	makeReadMessage(&messages[0], inbuf, size);
+	packets.msgs = messages;
+	packets.nmsgs = 1;
+	return doIoctl(&packets);
+}
+
+inline int I2c::write(i2c_char_t *outbuf, unsigned int size)
+{
+	struct i2c_rdwr_ioctl_data packets;
+	struct i2c_msg messages[1];
+	makeWriteMessage(&messages[0], outbuf, size);
+	packets.msgs = messages;
+	packets.nmsgs = 1;
+	return doIoctl(&packets);
+}
+
+inline int I2c::writeRead(i2c_char_t* outbuf, unsigned int writeSize, i2c_char_t* inbuf, unsigned int readSize)
+{
+	//this is called a repeated start: write and read in a single transaction
+	//with two START and only one STOP
+	//It is achieved by putting two messages (write, read) into packets
+	struct i2c_rdwr_ioctl_data packets;
+	struct i2c_msg messages[2];
+	makeWriteMessage(&messages[0], outbuf, writeSize);
+	makeReadMessage(&messages[1], inbuf, readSize);
+	packets.msgs = messages;
+	packets.nmsgs = 2;
+	return doIoctl(&packets);
+}
+
+inline void I2c::makeReadMessage(struct i2c_msg* message, i2c_char_t* inbuf, unsigned int readSize)
+{
+	message->addr = i2C_address;
+	message->flags = I2C_M_RD;
+	message->len = readSize;
+	message->buf = inbuf;
+}
+
+inline void I2c::makeWriteMessage(struct i2c_msg* message, i2c_char_t* outbuf, unsigned int writeSize)
+{
+	message->addr = i2C_address;
+	message->flags = 0;
+	message->len = writeSize;
+	message->buf = outbuf;
+}
+
+inline int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
+{
+	int ret = ioctl(i2C_file, I2C_RDWR, packets);
+	if(ret < 0) {
+		return 1;
+	}
+	return 0;
 }
