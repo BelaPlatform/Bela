@@ -6,6 +6,8 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
+#undef DEBUG_I2C
+
 int I2c::initI2C_RW(int bus, int address, int)
 {
 	i2C_bus = bus;
@@ -144,7 +146,42 @@ void I2c::makeWriteMessage(struct i2c_msg* message, i2c_char_t* outbuf, unsigned
 
 int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 {
+#ifdef DEBUG_I2C
+	{
+		//printf("(fd %d) DEBUG_I2C_START pre ioctl: \n", i2C_file);
+		for(int n = 0; n < packets->nmsgs; ++n)
+		{
+			i2c_msg msg = packets->msgs[n];
+			printf("(fd %d) message[%d]: %s %d bytes", i2C_file, n, msg.flags == I2C_M_RD ? "read" : "write", msg.len);
+			if(msg.flags == 0)
+			{
+				printf(": ");
+				for(int j = 0; j < msg.len; ++j)
+				{
+					printf("%d ", msg.buf[j]);
+				}
+			}
+			printf("\n");
+		}
+		//printf("(fd %d) ---DEBUG_I2_STOP pre ioctl----------------\n", i2C_file);
+	}
+#endif /* DEBUG_I2C */
 	int ret = ioctl(i2C_file, I2C_RDWR, packets);
+#ifdef DEBUG_I2C
+		for(int n = 0; n < packets->nmsgs; ++n)
+		{
+			i2c_msg msg = packets->msgs[n];
+			if(msg.flags == I2C_M_RD)
+			{
+				printf("(fd %d) Read %d bytes: ", i2C_file, msg.len);
+				for(int j = 0; j < msg.len; ++j)
+				{
+					printf("%d ", msg.buf[j]);
+				}
+				printf("\n");
+			}
+		}
+#endif /* DEBUG_I2C */
 	if(ret < 0) {
 		return 1;
 	}
