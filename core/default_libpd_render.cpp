@@ -165,7 +165,6 @@ std::vector<std::string> gMidiPortNames;
 I2cRt i2c;
 bool i2cEnabled = false;
 unsigned int maxI2cMsgPerCallback = 100;
-unsigned int maxI2cInbuf = 256;
 char i2cReceiverName[] = "bela_i2c_in";
 #endif
 
@@ -653,7 +652,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			}
 			return;
 		}
-		if(strcmp(symbol, "writeRead") == 0)
+		if(strcmp(symbol, "writeread") == 0)
 		{
 			unsigned int writeSize = argc - 1;
 			i2c_char_t outbuf[writeSize];
@@ -668,7 +667,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				i2c_char_t byte = libpd_get_float(a);
 				outbuf[n] = byte;
 			}
-			a = &argv[argc];
+			a = &argv[argc - 1];
 			if(!libpd_is_float(a))
 			{
 				fprintf(stderr, "bela_i2c: arguments to `writeread` must be floats (values to write, last one is number of bytes to read)\n");
@@ -1078,7 +1077,6 @@ void render(BelaContext *context, void *userData)
 	}
 #endif // ENABLE_TRILL
 #ifdef LIBPD_I2C
-	i2c_char_t inbuf[maxI2cInbuf];
 	if(i2cEnabled)
 	{
 		for(unsigned int n = 0; n < maxI2cMsgPerCallback; ++n)
