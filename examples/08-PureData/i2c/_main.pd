@@ -1,0 +1,126 @@
+#N canvas 139 38 1029 639 10;
+#X obj 34 88 loadbang;
+#X obj 667 386 print i2c_in;
+#X msg 64 274 open 2 24;
+#X text 16 158 By enabling debug;
+#X text 16 168 you can get a log;
+#X text 16 168 you can get a log;
+#X text 16 188 console;
+#X text 178 150 http://www.ti.com/lit/ds/symlink/tlv320aic3104.pdf
+;
+#X text 178 172 fiter for left and right DAC channels respectively.
+;
+#X text -1 244 where the parameters are;
+#X text -1 254 bus number and address;
+#X text -1 234 We start with the `open` message;
+#X text 670 433 We are interested in setting;
+#X obj 628 456 & 250;
+#X obj 582 423 moses 0;
+#X obj 489 474 print i2c_in error;
+#X text 692 520 We want to toggle bits D0 and D2 between;
+#X text 692 530 0 and 1 \, so we do a bitwise OR;
+#X text 692 540 with 0b000 (0) or 0b101 (5) \, respectively;
+#X obj 660 505 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 628 548 |;
+#X obj 660 525 * 5;
+#X obj 628 480 t f b;
+#X msg 628 572 write 12 \$1;
+#X text 664 348 it will be sent to bela_i2c_in;
+#X text 143 355 We want to read register 12;
+#X text 143 365 The codec requires a "repeated start";
+#X text 143 406 We use writeRead to write the register number;
+#X text 143 416 and read one byte in the same transaction.;
+#X text 144 427 The last argument is the number of bytes to read \,
+;
+#X text 143 375 transaction: in order to READ one or more;
+#X text 143 385 registers you need to WRITE the number of the;
+#X text 143 395 first register you want to read.;
+#X msg 138 453 writeread 12 1;
+#X obj 19 584 dac~;
+#X obj 31 557 *~ 0.1;
+#X text 15 483 Listen to the;
+#X text 15 493 de-emphasis;
+#X text 15 503 filter being;
+#X text 15 513 toggled;
+#X text 665 317 When the result of the read;
+#X text 664 338 we requested is ready \,;
+#X text 178 48 The TLV3201AIC3104 codec is connected on;
+#X text 178 28 If you have a Bela cape \, you have at least;
+#X text 178 68 In this examples we write some register \,;
+#X text 178 78 and read them back.;
+#X obj 30 536 noise~ 200;
+#X msg 629 36 debug 1;
+#X msg 699 36 debug 0;
+#X text 626 21 Enable/disable console logging;
+#X msg 628 85 open 2 24;
+#X msg 629 124 address 25;
+#X msg 629 163 write 11 58 19;
+#X text 627 186 Request to read 13 bytes;
+#X msg 629 200 read 13;
+#X text 625 110 ... the address can be changed any time with:;
+#X text 625 70 The bus is unique for the whole patch ...;
+#X text 627 149 Write some bytes;
+#X text 627 243 (the last number is the number of bytes to read);
+#X msg 629 257 writeread 1 2 3 13;
+#X text 625 60 Open device on i2c bus 2 \, address 24;
+#X text 665 327 (or writeread) operation;
+#X text 627 222 Write some bytes and request to read back 13 bytes
+;
+#X text 627 233 all in the same I2C transaction("repeated start").
+;
+#X text 16 178 of the I/O to the;
+#X obj 34 109 t b b b;
+#X text 178 38 one I2C device on board: the audio codec.;
+#X text 178 58 I2C bus 2 \, at address 24;
+#X obj 138 305 delay 500;
+#X msg 12 207 debug 0;
+#X obj 138 325 metro 500;
+#X text 627 5 Reference for;
+#X obj 722 4 send bela_i2c;
+#X obj 667 364 receive bela_i2c_in;
+#X text 143 437 all the other arguments are the bytes to write.;
+#X text 178 8 How to deal with I2c from Pd on Bela;
+#X text 178 88 If you have an I2C device that you want to use \,;
+#X text 178 108 implementation.;
+#X text 178 98 you will need its datasheet and/or a reference;
+#X text 178 140 In our case we read the register map from the datasheet
+;
+#X text 178 162 Bits D2 and D0 of register 12 control the de-emphasis
+;
+#X text 178 192 and then we toggle bits D2 and D0 \, while leaving
+the;
+#X text 178 202 other bits unaffected \, thus toggling de-emphasis.
+;
+#X text 178 182 In this patch we read the current state of register
+12;
+#X text 670 443 bits 0 and 2 First thing we do.;
+#X text 670 453 we set both to 0 \, while leaving the;
+#X text 670 463 other bits untouched. To do so \, we do;
+#X text 670 473 a bitwise AND with 0b11111010 (250);
+#X text 514 443 Values < 0;
+#X text 514 453 are errors;
+#X obj 139 494 send bela_i2c;
+#X connect 0 0 65 0;
+#X connect 2 0 90 0;
+#X connect 13 0 22 0;
+#X connect 14 0 15 0;
+#X connect 14 1 13 0;
+#X connect 19 0 21 0;
+#X connect 20 0 23 0;
+#X connect 21 0 20 1;
+#X connect 22 0 20 0;
+#X connect 22 1 19 0;
+#X connect 23 0 90 0;
+#X connect 33 0 90 0;
+#X connect 35 0 34 0;
+#X connect 35 0 34 1;
+#X connect 46 0 35 0;
+#X connect 65 0 68 0;
+#X connect 65 1 2 0;
+#X connect 65 2 69 0;
+#X connect 68 0 70 0;
+#X connect 69 0 90 0;
+#X connect 70 0 33 0;
+#X connect 73 0 1 0;
+#X connect 73 0 14 0;
