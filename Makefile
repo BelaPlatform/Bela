@@ -285,11 +285,12 @@ ifndef COMPILER
       COMPILER := clang
     else
       COMPILER := gcc
-	endif
+    endif
   endif
 endif
 
 ifeq ($(COMPILER), clang)
+  CLANG_PATH?=/usr/bin/clang
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
   DEFAULT_CPPFLAGS += -DNDEBUG # Maybe we should add back in -no-integrated-as?
@@ -298,6 +299,7 @@ else
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
+    LDFLAGS+=-fno-pie -no-pie
   endif
 endif
 
