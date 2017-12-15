@@ -6,9 +6,7 @@
 #X text 16 168 you can get a log;
 #X text 16 168 you can get a log;
 #X text 16 188 console;
-#X text 178 150 http://www.ti.com/lit/ds/symlink/tlv320aic3104.pdf
-;
-#X text 178 172 fiter for left and right DAC channels respectively.
+#X text 178 160 http://www.ti.com/lit/ds/symlink/tlv320aic3104.pdf
 ;
 #X text -1 244 where the parameters are;
 #X text -1 254 bus number and address;
@@ -27,7 +25,6 @@
 #X obj 628 480 t f b;
 #X msg 628 572 write 12 \$1;
 #X text 664 348 it will be sent to bela_i2c_in;
-#X text 143 355 We want to read register 12;
 #X text 143 365 The codec requires a "repeated start";
 #X text 143 406 We use writeRead to write the register number;
 #X text 143 416 and read one byte in the same transaction.;
@@ -80,19 +77,15 @@
 #X obj 722 4 send bela_i2c;
 #X obj 667 364 receive bela_i2c_in;
 #X text 143 437 all the other arguments are the bytes to write.;
-#X text 178 8 How to deal with I2c from Pd on Bela;
-#X text 178 88 If you have an I2C device that you want to use \,;
-#X text 178 108 implementation.;
-#X text 178 98 you will need its datasheet and/or a reference;
-#X text 178 140 In our case we read the register map from the datasheet
+#X text 178 150 In our case we read the register map from the datasheet
 ;
-#X text 178 162 Bits D2 and D0 of register 12 control the de-emphasis
+#X text 178 172 Bits D2 and D0 of register 12 control the de-emphasis
 ;
-#X text 178 192 and then we toggle bits D2 and D0 \, while leaving
+#X text 178 202 and then we toggle bits D2 and D0 \, while leaving
 the;
-#X text 178 202 other bits unaffected \, thus toggling de-emphasis.
+#X text 178 212 other bits unaffected \, thus toggling de-emphasis.
 ;
-#X text 178 182 In this patch we read the current state of register
+#X text 178 192 In this patch we read the current state of register
 12;
 #X text 670 443 bits 0 and 2 First thing we do.;
 #X text 670 453 we set both to 0 \, while leaving the;
@@ -101,26 +94,34 @@ the;
 #X text 514 443 Values < 0;
 #X text 514 453 are errors;
 #X obj 139 494 send bela_i2c;
-#X connect 0 0 65 0;
-#X connect 2 0 90 0;
-#X connect 13 0 22 0;
-#X connect 14 0 15 0;
-#X connect 14 1 13 0;
-#X connect 19 0 21 0;
-#X connect 20 0 23 0;
-#X connect 21 0 20 1;
-#X connect 22 0 20 0;
-#X connect 22 1 19 0;
-#X connect 23 0 90 0;
-#X connect 33 0 90 0;
-#X connect 35 0 34 0;
-#X connect 35 0 34 1;
-#X connect 46 0 35 0;
-#X connect 65 0 68 0;
-#X connect 65 1 2 0;
-#X connect 65 2 69 0;
-#X connect 68 0 70 0;
-#X connect 69 0 90 0;
-#X connect 70 0 33 0;
-#X connect 73 0 1 0;
-#X connect 73 0 14 0;
+#X text 178 182 filter for left and right DAC channels respectively.
+;
+#X text 143 355 We want to read register 12;
+#X text 178 8 How to deal with I2C from Pd on Bela;
+#X text 178 98 want to use \, you can plug that into bus 1;
+#X text 178 108 You will need the device's datasheet and/or;
+#X text 178 118 a reference implementation.;
+#X text 178 88 If you have a different I2C device that you;
+#X connect 0 0 63 0;
+#X connect 2 0 84 0;
+#X connect 12 0 21 0;
+#X connect 13 0 14 0;
+#X connect 13 1 12 0;
+#X connect 18 0 20 0;
+#X connect 19 0 22 0;
+#X connect 20 0 19 1;
+#X connect 21 0 19 0;
+#X connect 21 1 18 0;
+#X connect 22 0 84 0;
+#X connect 31 0 84 0;
+#X connect 33 0 32 0;
+#X connect 33 0 32 1;
+#X connect 44 0 33 0;
+#X connect 63 0 66 0;
+#X connect 63 1 2 0;
+#X connect 63 2 67 0;
+#X connect 66 0 68 0;
+#X connect 67 0 84 0;
+#X connect 68 0 31 0;
+#X connect 71 0 1 0;
+#X connect 71 0 13 0;
