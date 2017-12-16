@@ -22,9 +22,9 @@ class I2c
 {
 
 protected:
-	int i2C_bus;
-	int i2C_address;
-	int i2C_file = 0;
+	int i2cBus;
+	int i2cAddress;
+	int i2cFile = 0;
 	bool debugMode = 0;
 
 public:
