@@ -63,12 +63,22 @@ void* I2cRt::doIoLoop(void* arg)
 	return NULL;
 }
 
+bool I2cRt::isIoBufferEmpty()
+{
+	return !rb_available_to_read(toIo);
+}
+
 void I2cRt::doIo()
 {
-	while(rb_available_to_read(toIo))
+	while(!isIoBufferEmpty())
 	{
 		Msg msg;
-		rb_read_from_buffer(toIo, (char*)&msg, sizeof(Msg));
+		int ret = rb_read_from_buffer(toIo, (char*)&msg, sizeof(Msg));
+		if(ret < 0)
+		{
+			drainToIo();
+			break;
+		}
 		unsigned int writeSize = msg.writeSize;
 		unsigned int readSize = msg.readSize;
 		i2c_char_t inbuf[readSize];
@@ -80,28 +90,26 @@ void I2cRt::doIo()
 			int available = rb_available_to_read(toIo);
 			if(available < writeSize)
 			{
-				// unexpected, everything is probably screwed by now
-				// so let's drain the buffer and continue
-				rb_read_from_buffer(toIo, (char*)&outbuf, available);
-				fprintf(stderr, "Full on panic on I2C: unexpected number of byets available in the toIo ringbuffer\n");
-				continue;
+				drainToIo();
+				break;
 			}
-			rb_read_from_buffer(toIo, (char*)&outbuf, writeSize);
 		}
-#if 0
-		printf("Doing Io for message: ");
-		printf("type: %d, readSize: %d, writeSize: %d, ", msg.type, msg.readSize, msg.writeSize);
-		if(writeSize > 0)
+		rb_read_from_buffer(toIo, (char*)&outbuf, writeSize);
+		if(debugMode)
 		{
-			printf("payload: ");
-			for(int n = 0; n < writeSize; ++n)
+			printf("I2c: Doing Io for message: ");
+			printf("type: %d, address: %d, readSize: %d, writeSize: %d, ", msg.type, msg.address, msg.readSize, msg.writeSize);
+			if(writeSize > 0)
 			{
-				printf("%#2x ", outbuf[n]);
+				printf("payload: ");
+				for(int n = 0; n < writeSize; ++n)
+				{
+					printf("%#2x ", outbuf[n]);
+				}
+				printf("\n");
 			}
-			printf("\n");
 		}
-#endif
-		int ret;
+		setAddress(msg.address);
 		switch(msg.type)
 		{
 			case MsgType::write:
@@ -148,6 +156,7 @@ int I2cRt::msgToIo(MsgType type, i2c_char_t* outbuf, unsigned int writeSize, uns
 	msg.type = type;
 	msg.readSize = readSize;
 	msg.writeSize = writeSize;
+	msg.address = i2cAddressRt;
 	// if the buffer is full, discard the new message and return failure
 	if(rb_available_to_write(toIo) < sizeof(msg) + writeSize)
 		return 1;
@@ -178,6 +187,12 @@ int I2cRt::writeRt(i2c_char_t* outbuf, unsigned int writeSize)
 int I2cRt::writeReadRt(i2c_char_t* outbuf, unsigned int writeSize, unsigned int readSize)
 {
 	return msgToIo(MsgType::writeRead, outbuf, writeSize, readSize);
+}
+
+void I2cRt::setAddressRt(int address)
+{
+	i2cAddressRt = address;
+	printf("i2cAddressRt: %d\n", i2cAddressRt);
 }
 
 int I2cRt::writeRegistersRt(
@@ -247,3 +262,12 @@ bool I2cRt::ioShouldStop()
 	return shouldStop;
 }
 
+void I2cRt::drainToIo()
+{
+	// unexpected, everything is probably screwed by now
+	// so let's drain the buffer and continue
+	int available = rb_available_to_read(toIo);
+	char outbuf[available];
+	rb_read_from_buffer(toIo, (char*)&outbuf, available);
+	fprintf(stderr, "Full-on panic on I2C: unexpected number of bytes available in the toIo ringbuffer\n");
+}

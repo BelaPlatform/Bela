@@ -602,6 +602,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				address = libpd_get_float(a);
 			}
 			i2c.initI2C_RW(bus, address);
+			i2c.setAddressRt(address);
 			i2cEnabled = true;
 			//TODO: (re-)enable the i2c I/O in a thread-safe way
 			return;
@@ -615,7 +616,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				return;
 			}
 			int address = libpd_get_float(a);
-			i2c.setAddress(address);
+			i2c.setAddressRt(address);
 			return;
 		}
 		if(strcmp(symbol, "read") == 0)
