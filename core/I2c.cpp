@@ -10,14 +10,14 @@
 
 int I2c::initI2C_RW(int bus, int address, int)
 {
-	i2C_bus = bus;
+	i2cBus = bus;
 	setAddress(address);
 
 	// open I2C device as a file
 	char namebuf[MAX_BUF_NAME];
-	snprintf(namebuf, sizeof(namebuf), "/dev/i2c-%d", i2C_bus);
+	snprintf(namebuf, sizeof(namebuf), "/dev/i2c-%d", i2cBus);
 
-	if ((i2C_file = open(namebuf, O_RDWR)) < 0)
+	if ((i2cFile = open(namebuf, O_RDWR)) < 0)
 	{
 		fprintf(stderr, "Failed to open %s I2C Bus\n", namebuf);
 		return(1);
@@ -26,25 +26,25 @@ int I2c::initI2C_RW(int bus, int address, int)
 	// target device as slave
 	// this is useless if you only use I2C_RDWR, but is needed if you use
 	// ::write() or ::read()
-	if (ioctl(i2C_file, I2C_SLAVE, i2C_address) < 0){
-		fprintf(stderr, "I2C_SLAVE address: %d failed...\n", i2C_address);
+	if (ioctl(i2cFile, I2C_SLAVE, i2cAddress) < 0){
+		fprintf(stderr, "I2C_SLAVE address: %d failed...\n", i2cAddress);
 		return 2;
 	}
 	if(debugMode)
-		printf("(fd %d): %s, address: %d\n", i2C_file, namebuf, i2C_address);
+		printf("(fd %d): %s, address: %d\n", i2cFile, namebuf, i2cAddress);
 
 	return 0;
 }
 
 int I2c::closeI2C()
 {
-	if(i2C_file > 0) {
-		if(close(i2C_file) > 0)
+	if(i2cFile > 0) {
+		if(close(i2cFile) > 0)
 			return 1;
 		else
-			i2C_file = -1;
+			i2cFile = -1;
 	}
-	i2C_file = 0;
+	i2cFile = 0;
 	return 0;
 }
 
@@ -101,7 +101,7 @@ int I2c::readRegisters(
 
 void I2c::setAddress(int address)
 {
-	i2C_address = address;
+	i2cAddress = address;
 }
 
 int I2c::read(i2c_char_t *inbuf, unsigned int size)
@@ -140,7 +140,7 @@ int I2c::writeRead(i2c_char_t* outbuf, unsigned int writeSize, i2c_char_t* inbuf
 
 void I2c::makeReadMessage(struct i2c_msg* message, i2c_char_t* inbuf, unsigned int readSize)
 {
-	message->addr = i2C_address;
+	message->addr = i2cAddress;
 	message->flags = I2C_M_RD;
 	message->len = readSize;
 	message->buf = inbuf;
@@ -148,7 +148,7 @@ void I2c::makeReadMessage(struct i2c_msg* message, i2c_char_t* inbuf, unsigned i
 
 void I2c::makeWriteMessage(struct i2c_msg* message, i2c_char_t* outbuf, unsigned int writeSize)
 {
-	message->addr = i2C_address;
+	message->addr = i2cAddress;
 	message->flags = 0;
 	message->len = writeSize;
 	message->buf = outbuf;
@@ -158,11 +158,11 @@ int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 {
 	if(debugMode)
 	{
-		printf("(fd %d) transaction. Address: %d\n", i2C_file, i2C_address);
+		printf("(fd %d) transaction. Address: %d\n", i2cFile, i2cAddress);
 		for(int n = 0; n < packets->nmsgs; ++n)
 		{
 			i2c_msg msg = packets->msgs[n];
-			printf("(fd %d) message[%d]: %s %d bytes", i2C_file, n, msg.flags == I2C_M_RD ? "read" : "write", msg.len);
+			printf("(fd %d) message[%d]: %s %d bytes", i2cFile, n, msg.flags == I2C_M_RD ? "read" : "write", msg.len);
 			if(msg.flags == 0)
 			{
 				printf(": ");
@@ -174,7 +174,7 @@ int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 			printf("\n");
 		}
 	}
-	int ret = ioctl(i2C_file, I2C_RDWR, packets);
+	int ret = ioctl(i2cFile, I2C_RDWR, packets);
 	if(debugMode)
 	{
 		for(int n = 0; n < packets->nmsgs; ++n)
@@ -182,7 +182,7 @@ int I2c::doIoctl(i2c_rdwr_ioctl_data* packets)
 			i2c_msg msg = packets->msgs[n];
 			if(msg.flags == I2C_M_RD)
 			{
-				printf("(fd %d) Read %d bytes: ", i2C_file, msg.len);
+				printf("(fd %d) Read %d bytes: ", i2cFile, msg.len);
 				for(int j = 0; j < msg.len; ++j)
 				{
 					printf("%d ", msg.buf[j]);
