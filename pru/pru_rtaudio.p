@@ -812,11 +812,6 @@ SPI_NUM_CHANNELS_DONE:
      MOV r3, CLOCK_BASE + CLOCK_SPI0
      SBBO r2, r3, 0, 4
 
-     // enable MCASP interface clock in PRCM
-     MOV r2, 0x30002
-     MOV r3, CLOCK_BASE + CLOCK_MCASP0
-     SBBO r2, r3, 0, 4
-
      // Reset SPI and wait for finish
      MOV r2, 0x02
      SBBO r2, reg_spi_addr, SPI_SYSCONFIG, 4
@@ -866,7 +861,12 @@ SPI_WAIT_RESET:
      MOV r2, AD7699_CFG_MASK | (0x01 << AD7699_CHANNEL_OFFSET)
      ADC_WRITE r2, r2
 SPI_INIT_DONE:	
-	
+
+    // enable MCASP interface clock in PRCM
+    MOV r2, 0x30002
+    MOV r3, CLOCK_BASE + CLOCK_MCASP0
+    SBBO r2, r3, 0, 4
+
     // Prepare McASP0 for audio
     MCASP_REG_WRITE MCASP_GBLCTL, 0			// Disable McASP
     MCASP_REG_WRITE_EXT MCASP_SRCTL0, 0		// All serialisers off
