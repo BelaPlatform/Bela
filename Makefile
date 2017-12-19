@@ -193,7 +193,7 @@ SCREEN_NAME?=Bela
 # These are parsed by the IDE to understand if a program is active at startup
 BELA_STARTUP_ENV?=/opt/Bela/startup_env
 BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV)
-BELA_PRE_DISABLE_STARTUP_COMMAND=printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
+BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
 
 ifeq ($(DEBIAN_VERSION), stretch)
 BELA_ENABLE_STARTUP_COMMAND=systemctl enable bela_startup && $(BELA_POST_ENABLE_STARTUP_COMMAND) 
