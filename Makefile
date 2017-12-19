@@ -551,7 +551,7 @@ connect: ## Connects to the running Bela program (if any), can detach with ctrl-
 idestart: ## Starts the on-board IDE
 ifeq ($(DEBIAN_VERSION),wheezy)
 # on stretch, idestart does not require idestop.
-	idestart: idestop
+idestart: idestop
 endif
 	$(AT) printf "Starting IDE..."
 	$(AT) $(BELA_IDE_START_COMMAND)
