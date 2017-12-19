@@ -25,7 +25,7 @@ int I2c_Codec::initCodec()
 	// Write the reset register of the codec
 	if(writeRegister(0x01, 0x80)) // Software reset register
 	{
-		cout << "Failed to reset codec\n";
+		fprintf(stderr, "Failed to reset codec\n");
 		return 1;
 	}
 
@@ -239,7 +239,7 @@ int I2c_Codec::setPllJ(short unsigned int j){
 			return 1;
 	}
 	if(writeRegister(0x04, j<<2)){	// PLL register B: j<<2
-		printf("I2C error while writing PLL j: %d", j);
+		fprintf(stderr, "I2C error while writing PLL j: %d", j);
 		return 1;
 	}
 	pllJ=j;
@@ -251,11 +251,11 @@ int I2c_Codec::setPllD(unsigned int d){
 	if(d  >9999)
 		return 1;
 	if(writeRegister(0x05, (d>>6)&255)){ // PLL register C: part 1 : 8 most significant bytes of a 14bit integer
-		printf("I2C error while writing PLL d part 1 : %d", d);
+		fprintf(stderr, "I2C error while writing PLL d part 1 : %d", d);
 		return 1;
 	}
 	if(writeRegister(0x06, (d<<2)&255)){	// PLL register D: D=5264, part 2
-		printf("I2C error while writing PLL d part 2 : %d", d);
+		fprintf(stderr, "I2C error while writing PLL d part 2 : %d", d);
 		return 1;
 	}
 	pllD=d;
@@ -276,7 +276,7 @@ int I2c_Codec::setPllP(short unsigned int p){
 	else
 		bits = bits | p; // other values are written with their binary representation.
 	if(writeRegister(0x03, bits)){	// PLL register B: j<<2
-		printf("I2C error while writing PLL p: %d", p);
+		fprintf(stderr, "I2C error while writing PLL p: %d", p);
 		return 1;
 	}
 	pllP = p;
@@ -293,7 +293,7 @@ int I2c_Codec::setPllR(unsigned int r){
 	else
 		bits |= r; // other values are written with their binary representation.
 	if(writeRegister(0x0B, bits)){	// PLL register B: j<<2
-			printf("I2C error while writing PLL r: %d", r);
+			fprintf(stderr, "I2C error while writing PLL r: %d", r);
 			return 1;
 		}
 	pllR = r;

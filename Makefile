@@ -193,7 +193,7 @@ SCREEN_NAME?=Bela
 # These are parsed by the IDE to understand if a program is active at startup
 BELA_STARTUP_ENV?=/opt/Bela/startup_env
 BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV)
-BELA_PRE_DISABLE_STARTUP_COMMAND=printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
+BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
 
 ifeq ($(DEBIAN_VERSION), stretch)
 BELA_ENABLE_STARTUP_COMMAND=systemctl enable bela_startup && $(BELA_POST_ENABLE_STARTUP_COMMAND) 
@@ -285,11 +285,12 @@ ifndef COMPILER
       COMPILER := clang
     else
       COMPILER := gcc
-	endif
+    endif
   endif
 endif
 
 ifeq ($(COMPILER), clang)
+  CLANG_PATH?=/usr/bin/clang
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
   DEFAULT_CPPFLAGS += -DNDEBUG # Maybe we should add back in -no-integrated-as?
@@ -298,6 +299,7 @@ else
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
+    LDFLAGS+=-fno-pie -no-pie
   endif
 endif
 
@@ -549,7 +551,7 @@ connect: ## Connects to the running Bela program (if any), can detach with ctrl-
 idestart: ## Starts the on-board IDE
 ifeq ($(DEBIAN_VERSION),wheezy)
 # on stretch, idestart does not require idestop.
-	idestart: idestop
+idestart: idestop
 endif
 	$(AT) printf "Starting IDE..."
 	$(AT) $(BELA_IDE_START_COMMAND)
