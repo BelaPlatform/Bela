@@ -176,6 +176,8 @@ error_handler $?
 
 if [ "$DEBIAN_VERSION" = wheezy ]
 then
+	# post-installation trigger for libseasocks
+	ssh $BBB_ADDRESS "ln -s /usr/local/lib/libseasocks.so.1 /usr/local/lib/libseasocks.so; ldconfig /usr/local/lib"
 	# the below files could be user-customized, so copy them if they do not exist or forced to do so
 	copy_if_does_not_exist resources/wheezy/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
 	copy_if_does_not_exist resources/wheezy/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
