@@ -14,12 +14,12 @@
  */
 
 #include "../include/PRU.h"
+#include "../include/PruBinary.h"
 #include "../include/prussdrv.h"
 #include "../include/pruss_intc_mapping.h"
 #include "../include/digital_gpio_mapping.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
-#include "../include/pru_rtaudio_bin.h"
 #include "../include/Gpio.h"
 #include "../include/Utilities.h"
 
@@ -41,7 +41,6 @@
 
 #if (defined(CTAGE_FACE_8CH) || defined(CTAG_FACE_16CH))
 	#define PRU_USES_MCASP_IRQ
-	#error TODO: load different PRU code
 #endif
 
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
@@ -710,6 +709,12 @@ int PRU::start(char * const filename)
 
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
+
+#ifdef PRU_USES_MCASP_IRQ
+	const unsigned int* PRUcode = IrqPruCode::getBinary();
+#else /* PRU_USES_MCASP_IRQ */
+	const unsigned int* PRUcode = NonIrqPruCode::getBinary();
+#endif /* PRU_USES_MCASP_IRQ */
 
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
