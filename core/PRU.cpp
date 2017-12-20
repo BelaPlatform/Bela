@@ -711,16 +711,18 @@ int PRU::start(char * const filename)
 	initialisePruCommon();
 
 #ifdef PRU_USES_MCASP_IRQ
-	const unsigned int* PRUcode = IrqPruCode::getBinary();
+	const unsigned int* pruCode = IrqPruCode::getBinary();
+	const unsigned int pruCodeSize = IrqPruCode::getBinarySize();
 #else /* PRU_USES_MCASP_IRQ */
-	const unsigned int* PRUcode = NonIrqPruCode::getBinary();
+	const unsigned int* pruCode = NonIrqPruCode::getBinary();
+	const unsigned int pruCodeSize = NonIrqPruCode::getBinarySize();
 #endif /* PRU_USES_MCASP_IRQ */
 
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
 		if(gRTAudioVerbose)
 			printf("Using embedded PRU code\n");
-		if(prussdrv_exec_code(pru_number, PRUcode, sizeof(PRUcode))) {
+		if(prussdrv_exec_code(pru_number, pruCode, pruCodeSize)) {
 			fprintf(stderr, "Failed to execute PRU code\n");
 			return 1;
 		}

@@ -10,6 +10,10 @@ namespace NonIrqPruCode
 	{
 		return PRUcode;
 	}
+	unsigned int getBinarySize()
+	{
+		return sizeof(PRUcode);
+	}
 };
 
 namespace IrqPruCode
@@ -18,6 +22,10 @@ namespace IrqPruCode
 	const unsigned int* getBinary()
 	{
 		return PRUcode;
+	}
+	unsigned int getBinarySize()
+	{
+		return sizeof(PRUcode);
 	}
 };
 
