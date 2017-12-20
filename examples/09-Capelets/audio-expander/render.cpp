@@ -50,9 +50,9 @@ void render(BelaContext *context, void *userData)
 			inAcc[ch] += in;
 			++inAccCount[ch];
 
-			float out = 0.4 * sinf(gPhase[ch]);
+			float out = 0.4f * sinf(gPhase[ch]);
 			gPhase[ch] += 2.f * (float)M_PI * gFreq[ch] / context->audioSampleRate;
-			if(gPhase[ch] > (float)M_PI)
+			if(gPhase[ch] > M_PI)
 				gPhase[ch] -= 2.f * (float)M_PI;
 			audioWrite(context, n, ch, out);
 		}
