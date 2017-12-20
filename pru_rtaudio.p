@@ -257,6 +257,9 @@
 #define MCASP_RFIFOSTS          0x100C
 
 #define MCASP_XSTAT_XUNDRN_BIT          0        // Bit to test if there was an underrun
+#define MCASP_XSTAT_XSYNCERR_BIT        1        // Bit to test if there was an unexpected transmit frame sync
+#define MCASP_XSTAT_XCKFAIL_BIT         2        // Bit to test if there was a transmit clock failure
+#define MCASP_XSTAT_XDMAERR_BIT         7        // Bit to test if there was a transmit DMA error
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
     
@@ -286,36 +289,35 @@
 #define MCASP_OUTPUT_PINS       (1 << 3)    // Which pins are outputs
 #endif
 
-//TODO: Update comments according to config
 #define MCASP_DATA_MASK     0xFFFF      // 16 bit data
 
 #ifdef CTAG_FACE_8CH
 #define MCASP_DATA_FORMAT 0x180F4       // MSB first, 1 bit delay, 32 bits, DAT bus, ROR 16bits
-#define MCASP_ACLKRCTL_VALUE 0x80       // 
-#define MCASP_ACLKXCTL_VALUE 0x80       // 
-#define MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S mode
-#define MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S mode
+#define MCASP_ACLKRCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_ACLKXCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S, external clk, polarity (rising edge), single word
+#define MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S, external clk, polarity (rising edge), single word
 #define MCASP_RTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
-#define MCASP_XTDM_VALUE 0xFF           // 
+#define MCASP_XTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
 #endif
 
 #ifdef CTAG_BEAST_16CH
 #define MCASP_DATA_FORMAT 0x180F4       // MSB first, 1 bit delay, 32 bits, DAT bus, ROR 16bits
-#define MCASP_ACLKRCTL_VALUE 0x80       // 
-#define MCASP_ACLKXCTL_VALUE 0x80       // 
-#define MCASP_AFSRCTL_VALUE 0x810       // 
-#define MCASP_AFSXCTL_VALUE 0x810       // 
-#define MCASP_RTDM_VALUE 0xFFFF         // 
-#define MCASP_XTDM_VALUE 0xFFFF         // 
+#define MCASP_ACLKRCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_ACLKXCTL_VALUE 0x80       // External clk, polarity (rising edge)
+#define MCASP_AFSRCTL_VALUE 0x810       // 16 Slot I2S, external clk, polarity (rising edge), single word
+#define MCASP_AFSXCTL_VALUE 0x810       // 16 Slot I2S, external clk, polarity (rising edge), single word
+#define MCASP_RTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
+#define MCASP_XTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
 #endif
 
 #ifdef BELA_TLV_CODEC
-#define MCASP_DATA_FORMAT_TX   0x18074      // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
-#define MCASP_DATA_FORMAT_RX   0x28074      // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits (no idea why ADCs have to be configured with 2 bit delay)
-#define MCASP_ACLKRCTL_VALUE 0x00
-#define MCASP_ACLKXCTL_VALUE 0x00
-#define MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S mode
-#define MCASP_AFSXCTL_VALUE 0x101       // 2 Slot I2S mode
+#define MCASP_DATA_FORMAT_TX 0x18074    // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
+#define MCASP_DATA_FORMAT_RX 0x28074    // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits
+#define MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)         
+#define MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge) 
+#define MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
+#define MCASP_AFSXCTL_VALUE 0x101       // 2 Slot I2S, external clk, polarity (falling edge), single bit
 #define MCASP_RTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define MCASP_XTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #endif
@@ -821,6 +823,14 @@ DONE:
 
     
 START:
+     // Initialize scratchpad 2 for test data
+     MOV r0, 0
+     MOV r1, 0
+     MOV r2, 0
+     MOV r3, 0
+     MOV r4, 0
+     XOUT SCRATCHPAD_ID_BANK2, r0, 20
+
      // Configure PRU to receive external events
      PRU_ICSS_CFG_REG_WRITE_EXT CFG_REG_MII_RT, 0x0
 
@@ -1102,6 +1112,10 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 10) // Set XSRCLR
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 3)  // Set RSMRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 11) // Set XSMRST
 
+// Seems to be not required (was used to avoid transmit clock failure)
+//MCASP_REG_WRITE MCASP_XSTAT, 0xFF
+//MCASP_REG_WRITE MCASP_RSTAT, 0xFF
+
 // Write a full frame to transmit FIFOs to prevent underflow and keep slots synced
 // Can be probably ignored if first underrun gets ignored for better performance => TODO: test
 #ifdef CTAG_FACE_8CH
@@ -1270,9 +1284,7 @@ HANDLE_INTERRUPT:
      PRU_ICSS_INTC_REG_READ_EXT INTC_REG_SECR1, r27
      QBBS MCASP_TX_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCASP_TX_INTR
      QBBS MCASP_RX_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCASP_RX_INTR
-     QBBS MCSPI_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCSPI_INTR
-
-     //TODO: Check for overruns / underruns here (e.g. every 8 blocks)
+     //QBBS MCSPI_INTR_RECEIVED, r27, PRU_SECR1_SYS_EV_MCSPI_INTR
 
      JMP EVENT_LOOP
 /* ########## INTERRUPT HANDLER END ########## */
@@ -1284,12 +1296,56 @@ MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x40 // clear XSTAFRM status bit
 
+     // Count error interrupts for test purposes
+     // - r0 used for transmit underrun counter
+     // - r1 used for unexpected transmit frame sync
+     // - r2 used for transmit clock failure
+     // - r3 used for transmit DMA error
+     // - r4 used for McASP XSTAT reg content
+
+     // Offload r0-r4 to scratchpad 1 and load data from scratchpad 2
+     XOUT SCRATCHPAD_ID_BANK1, r0, 20
+     XIN SCRATCHPAD_ID_BANK2, r0, 20
+
+MCASP_TX_ERROR_HANDLE_START:
+     // Load McASP XSTAT register content and check if error occurred
+     MCASP_REG_READ_EXT MCASP_XSTAT, r4
+
+     QBBS MCASP_TX_UNDERRUN_OCCURRED, r4, MCASP_XSTAT_XUNDRN_BIT
+     QBBS MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED, r4, MCASP_XSTAT_XSYNCERR_BIT
+     QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT
+     QBBS MCASP_TX_DMA_ERROR_OCCURRED, r4, MCASP_XSTAT_XDMAERR_BIT
+
+     JMP MCASP_TX_ERROR_HANDLE_END
+
+MCASP_TX_UNDERRUN_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x1 // Clear underrun bit (0)
+     ADD r0, r0, 1
+     JMP START
+
+MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x2 // Clear frame sync error bit (1)
+     ADD r1, r1, 1
+     JMP MCASP_TX_ERROR_HANDLE_START
+
+MCASP_TX_CLOCK_FAILURE_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x4 // Clear clock failure bit (2)
+     ADD r2, r2, 1
+     JMP MCASP_TX_ERROR_HANDLE_START
+
+MCASP_TX_DMA_ERROR_OCCURRED:
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x80 // Clear DMA error bit (7)
+     ADD r3, r3, 1
+
+MCASP_TX_ERROR_HANDLE_END:
+     // Offload test data to scratchpad 2 and reload register contents from scratchpad 1
+     XOUT SCRATCHPAD_ID_BANK2, r0, 20
+     XIN SCRATCHPAD_ID_BANK1, r0, 20
+
      // Check if we are in first frame period. If true, transmit full frame to FIFO.
      // Otherwise toggle flag and jump back to event loop
      QBBC MCASP_TX_ISR_END, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME
 
-PROCESS_AUDIO_TX:
-set r30.t0
      // Temporarily save register states in scratchpad to have enough space for full audio frame.
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
@@ -1352,7 +1408,6 @@ set r30.t0
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
 
-clr r30.t0
 MCASP_TX_ISR_END:
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_TX_FIRST_FRAME) // toggle frame flag
      JMP EVENT_LOOP
@@ -1363,23 +1418,21 @@ MCASP_TX_ISR_END:
 MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      // Clear system event and status bit
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_RX_INTR)
-     MCASP_REG_WRITE_EXT MCASP_RSTAT, 0x40 // clear XSTAFRM status bit
+     MCASP_REG_WRITE_EXT MCASP_RSTAT, 0x40 // clear RSTAFRM status bit
 
 	 // Check if we are in first frame period. 
 	 // If true, load full audio frame from FIFO and process SPI afterwards.
 	 // Otherwise toggle flag and jump back to event loop.
-	 QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
+	 QBBC PROCESS_DIGITAL_END, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
 
-PROCESS_AUDIO_RX:
-set r30.t1
      // Temporarily save register states in scratchpad to have enough space for full audio frame
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
-     //TODO: Change data structure in RAM to 32 bit samples 
+     // TODO: Change data structure in RAM to 32 bit samples 
      //     => no masking and shifting required
      //     => support for 24 bit audio
-     //TODO: Avoid masking and shifting by simply moving sample to word (e.g. MOV r0.w0 value)
+     // TODO: Avoid masking and shifting by simply moving sample to word (e.g. MOV r0.w0 value)
      MOV r17, 0xFFFF
 #ifdef CTAG_FACE_8CH
      MCASP_READ_FROM_DATAPORT r8, 32
@@ -1405,7 +1458,7 @@ set r30.t1
 	 MCASP_REG_READ_EXT MCASP_RFIFOSTS, r27
 	 QBEQ SKIP_AUDIO_RX_FRAME, r27, 0
 
-	 // TODO: Optimize by only using on operation to read data from McASP FIFO.
+	 // TODO: Optimize by only using single operation to read data from McASP FIFO.
 	 // Channels are swaped for master and slave codec to match correct channel order.
 	 MCASP_READ_FROM_DATAPORT r8, 32
      AND r0, r12, r17
@@ -1454,17 +1507,14 @@ SKIP_AUDIO_RX_FRAME:
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
-clr r30.t1
 
 MCASP_RX_ISR_END:
 /* ########## McASP RX ISR END ########## */
 
+/* ########## PROCESS ANALOG AND DIGITAL BEGIN ########## */
 	 // Skip analog processing if SPI is disabled
      QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_USE_SPI
 
-/* ########## McSPI ISR BEGIN ########## */
-PROCESS_SPI_BEGIN:
-set r30.t2
      // Temporarily save register states in scratchpad to have enough space for SPI data
      // r0 - r3 are used for ADC data. r4 - r17 are used as temp registers
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
@@ -1475,7 +1525,12 @@ set r30.t2
      ADD reg_dac_current, reg_dac_current, 8
 
      // DAC: transmit low word (first in little endian)
-     MOV r16, 2 // Write channel 0
+     QBBC ANALOG_CHANNEL_4, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+     MOV r16, 0 // Write channel 0
+     JMP ANALOG_CHANNEL_4_END
+ANALOG_CHANNEL_4:
+     MOV r16, 4 // Write channel 4
+ANALOG_CHANNEL_4_END:
      MOV r17, 0xFFFF
      AND r4, r2, r17
      LSL r4, r4, AD5668_DATA_OFFSET
@@ -1487,7 +1542,6 @@ set r30.t2
      DAC_WRITE r4
 
      MOV r0, 0 // Initialize register for first two samples
-     MOV r16, 2 // Read channel 0 (can be deleted)
      LSL r16, r16, AD7699_CHANNEL_OFFSET
      MOV r17, AD7699_CFG_MASK
      OR r16, r16, r17
@@ -1496,7 +1550,12 @@ set r30.t2
      AND r0, r16, r17
 
 	 // DAC: transmit high word (second in little endian)
-	 MOV r16, 3 // Write channel 1
+     QBBC ANALOG_CHANNEL_5, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+	 MOV r16, 1 // Write channel 1
+     JMP ANALOG_CHANNEL_5_END
+ANALOG_CHANNEL_5:
+     MOV r16, 5 // Write channel 5
+ANALOG_CHANNEL_5_END:
      LSR r4, r2, 16
      LSL r4, r4, AD5668_DATA_OFFSET
      MOV r5, (0x03 << AD5668_COMMAND_OFFSET)
@@ -1506,7 +1565,6 @@ set r30.t2
      OR r4, r4, r5
      DAC_WRITE r4     
 
-     MOV r16, 3 // Read channel 1 (can be deleted)
      LSL r16, r16, AD7699_CHANNEL_OFFSET
      MOV r17, AD7699_CFG_MASK
      OR r16, r16, r17
@@ -1515,7 +1573,12 @@ set r30.t2
      OR r0, r0, r16
 
      // DAC: transmit low word (first in little endian)
-     MOV r16, 0 // Write channel 2
+     QBBC ANALOG_CHANNEL_6, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+     MOV r16, 2 // Write channel 2
+     JMP ANALOG_CHANNEL_6_END
+ANALOG_CHANNEL_6:
+     MOV r16, 6 // Write channel 6
+ANALOG_CHANNEL_6_END:
      MOV r17, 0xFFFF
      AND r4, r3, r17
      LSL r4, r4, AD5668_DATA_OFFSET
@@ -1527,7 +1590,6 @@ set r30.t2
      DAC_WRITE r4
 
      MOV r1, 0 // Initialize register for next two samples
-     MOV r16, 0 // Read channel 2 (can be deleted)
      LSL r16, r16, AD7699_CHANNEL_OFFSET
      MOV r17, AD7699_CFG_MASK
      OR r16, r16, r17
@@ -1536,7 +1598,12 @@ set r30.t2
      AND r1, r16, r17
 
      // DAC: transmit high word (second in little endian)
-	 MOV r16, 1 // Write channel 3
+     QBBC ANALOG_CHANNEL_7, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+	 MOV r16, 3 // Write channel 3
+     JMP ANALOG_CHANNEL_7_END
+ANALOG_CHANNEL_7:
+     MOV r16, 7 // Write channel 7
+ANALOG_CHANNEL_7_END:
      LSR r4, r3, 16
      LSL r4, r4, AD5668_DATA_OFFSET
      MOV r5, (0x03 << AD5668_COMMAND_OFFSET)
@@ -1546,7 +1613,6 @@ set r30.t2
      OR r4, r4, r5
      DAC_WRITE r4  
 
-     MOV r16, 1 // Read channel 3 (can be deleted)
      LSL r16, r16, AD7699_CHANNEL_OFFSET
      MOV r17, AD7699_CFG_MASK
      OR r16, r16, r17
@@ -1560,18 +1626,35 @@ set r30.t2
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
 
-     // Toggle flag to check on which SPI channels we are (i.e. ch0-ch3 or ch4-ch7)
+     // Toggle flag to check on which SPI channels (i.e. ch0-ch3 or ch4-ch7) we are, 
+     // if eight analog IO channels are used
+     QBNE PROCESS_SPI_END, reg_num_channels, 8
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCSPI_FIRST_FOUR_CH)
 
 PROCESS_SPI_END:
+
+     // Skip digital processing if digital IOs are disabled
+     QBBC PROCESS_DIGITAL_END, reg_flags, FLAG_BIT_USE_DIGITAL
+
+     //r27 is actually r27, so do not use r27 from here to ...
+     LBBO r27, reg_digital_current, 0, 4 
+     JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
+     SBBO r27, reg_digital_current, 0,   4 
+     //..here you can start using r27 again
+
+     ADD reg_digital_current, reg_digital_current, 4 //increment pointer
+
+PROCESS_DIGITAL_END:
+
 	 XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_RX_FIRST_FRAME) // Toggle frame flag
-clr r30.t2
 
      JMP EVENT_LOOP
-/* ########## McSPI ISR END ########## */
+/* ########## PROCESS ANALOG AND DIGITAL END ########## */
 
 
 /* ########## McSPI (analog) ISR BEGIN ########## */
+// This ISR is currently not used, but is probably useful in future (McSPI interrupts)
+/*
 MCSPI_INTR_RECEIVED: // SINTERRUPTN
      // Clear system event
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCSPI_INTR)
@@ -1605,6 +1688,7 @@ MCSPI_INTR_RX1_FULL:
 	 //TODO: Handle rx1 full interrupt here
 
 	 JMP EVENT_LOOP
+*/
 /* ########## McSPI (analog) ISR END ########## */
 
 
@@ -1740,6 +1824,7 @@ SPI_CLEANUP_DONE:
      SBBO r2, r3, 0, 4       // Clear GPIO pin  
 
 CLEANUP_DONE:
+     XIN SCRATCHPAD_ID_BANK2, r0, 20 // Load test data from scratchpad 2 for evaluation
      // Signal the ARM that we have finished 
      MOV R31.b0, PRU0_ARM_INTERRUPT + 16
      HALT

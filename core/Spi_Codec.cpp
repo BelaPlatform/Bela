@@ -5,8 +5,11 @@
  */
 
 #include "../include/Spi_Codec.h"
+#include "../include/GPIOcontrol.h"
 
 //#define CTAG_BEAST_16CH
+
+#define RESET_PIN 81 // GPIO2(17) P8.34
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -21,15 +24,28 @@ const char SPIDEV_GPIO_CS0[] = "/dev/spidev32766.0";
 const char SPIDEV_GPIO_CS1[] = "/dev/spidev32766.1";
 
 Spi_Codec::Spi_Codec(){
+	// Open SPI devices
 	if ((_fd_master = open(SPIDEV_GPIO_CS0, O_RDWR)) < 0)
 		rt_printf("Failed to open spidev device for master codec.\n");
 	if ((_fd_slave = open(SPIDEV_GPIO_CS1, O_RDWR)) < 0)
 		rt_printf("Failed to open spidev device for slave codec.\n");
+
+    // Prepare reset pin and reset audio codec(s)
+    if(gpio_export(RESET_PIN)) {
+        std::cout << "Warning: couldn't reset pin for audio codecs\n";
+    }
+    if(gpio_set_dir(RESET_PIN, OUTPUT_PIN)) {
+        std::cout << "Couldn't set direction on audio codec reset pin\n";
+    }
+    if(gpio_set_value(RESET_PIN, LOW)) {
+        std::cout << "Couldn't set value on audio codec reset pin\n";
+    }
 }
 
 Spi_Codec::~Spi_Codec(){
 	close(_fd_master);
 	close(_fd_slave);
+    gpio_unexport(RESET_PIN);
 }
 
 int Spi_Codec::writeRegister(unsigned char reg, unsigned char value, CODEC_TYPE codec){
@@ -61,8 +77,53 @@ unsigned char Spi_Codec::readRegister(unsigned char reg, CODEC_TYPE codec){
 }
 
 int Spi_Codec::initCodec(){
-	// disable PLL, enable DAC / ADC
-	writeRegister(REG_PLL_CLK_CONTROL_0, 0x85);
+    // Wake up audio codec(s)
+    if(gpio_set_value(RESET_PIN, HIGH)) {
+        std::cout << "Couldn't set value on audio codec reset pin\n";
+        return -1;
+    }
+
+	// Initialize slave codec
+#ifdef CTAG_BEAST_16CH
+	// Enable PLL, enable DAC / ADC
+	writeRegister(REG_PLL_CLK_CONTROL_0, 0xBC, SLAVE_CODEC);
+	// DAC / ADC clock source = PLL, On-chip voltage reference enabled
+	writeRegister(REG_PLL_CLK_CONTROL_1, 0x00, SLAVE_CODEC);
+	// 48 kHz sample rate, SDATA delay = 1, TDM mode
+	writeRegister(REG_DAC_CONTROL_0, 0x40, SLAVE_CODEC);
+	// Latch in mid cycle, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
+	writeRegister(REG_DAC_CONTROL_1, 0x0E, SLAVE_CODEC);
+	// Unmute DACs, 16 bit word width, noninverted DAC output polarity, flat de-emphasis
+	writeRegister(REG_DAC_CONTROL_2, 0x18, SLAVE_CODEC);
+	// Unmute all DACs
+	writeRegister(REG_DAC_CHANNEL_MUTES, 0x00, SLAVE_CODEC);
+	// Volume DAC1 L = 0dB
+	writeRegister(REG_DAC_VOLUME_L1, 0x00, SLAVE_CODEC);
+	// Volume DAC1 R = 0dB
+	writeRegister(REG_DAC_VOLUME_R1, 0x00, SLAVE_CODEC);
+	// Volume DAC2 L = 0dB
+	writeRegister(REG_DAC_VOLUME_L2, 0x00, SLAVE_CODEC);
+	// Volume DAC2 R = 0dB
+	writeRegister(REG_DAC_VOLUME_R2, 0x00, SLAVE_CODEC);
+	// Volume DAC3 L = 0dB
+	writeRegister(REG_DAC_VOLUME_L3, 0x00, SLAVE_CODEC);
+	// Volume DAC3 R = 0dB
+	writeRegister(REG_DAC_VOLUME_R3, 0x00, SLAVE_CODEC);
+	// Volume DAC4 L = 0dB
+	writeRegister(REG_DAC_VOLUME_L4, 0x00, SLAVE_CODEC);
+	// Volume DAC4 R = 0dB
+	writeRegister(REG_DAC_VOLUME_R4, 0x00, SLAVE_CODEC);
+	// Power up ADCs, unmute ADCs, disable high pass filter, 48 kHz sample rate
+	writeRegister(REG_ADC_CONTROL_0, 0x00, SLAVE_CODEC);
+	// 16 bit word width, SDATA delay = 1, TDM mode, latch in mid cycle
+	writeRegister(REG_ADC_CONTROL_1, 0x23, SLAVE_CODEC);
+	// wclock format = 50/50, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
+	writeRegister(REG_ADC_CONTROL_2, 0x34, SLAVE_CODEC);
+#endif
+
+	// Initialize master codec
+	// Disable PLL, enable DAC / ADC
+	writeRegister(REG_PLL_CLK_CONTROL_0, 0x9D);
 	// DAC / ADC clock source = PLL, On-chip voltage reference enabled
 	writeRegister(REG_PLL_CLK_CONTROL_1, 0x00);
 	// 48 kHz sample rate, SDATA delay = 1, TDM mode
@@ -105,55 +166,18 @@ int Spi_Codec::initCodec(){
 	// wclock format = 50/50, 8 channels, normal bclock, inverted wclock, bclock / wclock in master mode
 	writeRegister(REG_ADC_CONTROL_2, 0x6C);
 #endif
-
-#ifdef CTAG_BEAST_16CH
-	// enable PLL, enable DAC / ADC
-	writeRegister(REG_PLL_CLK_CONTROL_0, 0xA4, SLAVE_CODEC);
-	// DAC / ADC clock source = PLL, On-chip voltage reference enabled
-	writeRegister(REG_PLL_CLK_CONTROL_1, 0x00, SLAVE_CODEC);
-	// 48 kHz sample rate, SDATA delay = 1, TDM mode
-	writeRegister(REG_DAC_CONTROL_0, 0x40, SLAVE_CODEC);
-	// Latch in mid cycle, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
-	writeRegister(REG_DAC_CONTROL_1, 0x0E, SLAVE_CODEC);
-	// Unmute DACs, 16 bit word width, noninverted DAC output polarity, flat de-emphasis
-	writeRegister(REG_DAC_CONTROL_2, 0x18, SLAVE_CODEC);
-	// Unmute all DACs
-	writeRegister(REG_DAC_CHANNEL_MUTES, 0x00, SLAVE_CODEC);
-	// Volume DAC1 L = 0dB
-	writeRegister(REG_DAC_VOLUME_L1, 0x00, SLAVE_CODEC);
-	// Volume DAC1 R = 0dB
-	writeRegister(REG_DAC_VOLUME_R1, 0x00, SLAVE_CODEC);
-	// Volume DAC2 L = 0dB
-	writeRegister(REG_DAC_VOLUME_L2, 0x00, SLAVE_CODEC);
-	// Volume DAC2 R = 0dB
-	writeRegister(REG_DAC_VOLUME_R2, 0x00, SLAVE_CODEC);
-	// Volume DAC3 L = 0dB
-	writeRegister(REG_DAC_VOLUME_L3, 0x00, SLAVE_CODEC);
-	// Volume DAC3 R = 0dB
-	writeRegister(REG_DAC_VOLUME_R3, 0x00, SLAVE_CODEC);
-	// Volume DAC4 L = 0dB
-	writeRegister(REG_DAC_VOLUME_L4, 0x00, SLAVE_CODEC);
-	// Volume DAC4 R = 0dB
-	writeRegister(REG_DAC_VOLUME_R4, 0x00, SLAVE_CODEC);
-	// Power up ADCs, unmute ADCs, disable high pass filter, 48 kHz sample rate
-	writeRegister(REG_ADC_CONTROL_0, 0x00, SLAVE_CODEC);
-	// 16 bit word width, SDATA delay = 1, TDM mode, latch in mid cycle
-	writeRegister(REG_ADC_CONTROL_1, 0x23, SLAVE_CODEC);
-	// wclock format = 50/50, 16 channels, normal bclock, inverted wclock, bclock / wclock in slave mode
-	writeRegister(REG_ADC_CONTROL_2, 0x34, SLAVE_CODEC);
-#endif
 	
 	return 0;
 }
 
 int Spi_Codec::startAudio(int dummy_parameter){
-	// Enable PLL / DAC / ADC
-	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x84);
+	// Enable PLL
+	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x9C);
 }
 
 int Spi_Codec::stopAudio(){
-	// Disable PLL / DAC / ADC
-	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x81);
+	// Disable PLL
+	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x9D);
 }
 
 int Spi_Codec::setDACVolume(int halfDbSteps){
@@ -192,6 +216,22 @@ bool Spi_Codec::slaveIsDetectable(){
 	statusReg = readRegister(REG_DAC_CONTROL_2, SLAVE_CODEC);
 
 	return (statusReg == 0x18);
+}
+
+int Spi_Codec::reset(){
+    if(gpio_set_value(RESET_PIN, LOW)) {
+        std::cout << "Couldn't set value on audio codec reset pin\n";
+        return -1;
+    }
+
+    usleep(100000); // 100 ms
+
+    if(gpio_set_value(RESET_PIN, HIGH)) {
+        std::cout << "Couldn't set value on audio codec reset pin\n";
+        return -1;
+    }
+
+    return 0;
 }
 
 int Spi_Codec::_writeDACVolumeRegisters(bool mute){

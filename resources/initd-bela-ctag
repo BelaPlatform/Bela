@@ -10,12 +10,6 @@ case "$1" in
   start)
     /root/Bela/resources/bin/devmem2 0x44E00034 w 0x30002 >> /dev/null # Enable functional and interface clock of McASP
     /root/Bela/resources/bin/devmem2 0x482000CC w 0x30000 >> /dev/null # Disable McASP interrupt in INTC
-    echo 81 > /sys/class/gpio/export
-    echo out > /sys/class/gpio/gpio81/direction
-    echo 0 > /sys/class/gpio/gpio81/value
-    sleep 1
-    echo 1 > /sys/class/gpio/gpio81/value
-    sleep 1
     echo "Adding overlay for CTAG face"
     echo BELA-CTAG > /sys/devices/platform/bone_capemgr/slots
     ;;
