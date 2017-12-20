@@ -48,6 +48,9 @@ public:
 	int stopAudio();
 	int setDACVolume(int halfDbSteps);
 	int dumpRegisters();
+	int reset(); // Hard reset of codec(s)
+	bool masterIsDetectable(); // CTAG face2|4
+	bool slaveIsDetectable();  // CTAG Beast
 
 private:
 	int _fd_master, _fd_slave;
