@@ -137,12 +137,16 @@ $(error Invalid/empty project. A project needs to have at least one .cpp or .c o
 endif
 endif
 
-ifeq ($(SHOULD_BUILD),true)
-#create build directories
-$(shell mkdir -p $(PROJECT_DIR)/build build/core build/pru )
-endif
-
 endif # ifdef PROJECT
+
+BUILD_DIRS=build/core build/pru
+ifneq ($(PROJECT_DIR),)
+ifeq ($(SHOULD_BUILD),true)
+BUILD_DIRS+=$(PROJECT_DIR)/build
+endif
+endif
+#create build directories, should probably be conditional to PROJECT or lib
+$(shell mkdir -p  $(BUILD_DIRS))
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 RUN_FROM?=$(PROJECT_DIR)
