@@ -74,7 +74,7 @@ endif # ifndef PROJECT
 COMMAND_LINE_OPTIONS := --pru-file $(BELA_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
 else
-build/core/PRU.o: include/pru_rtaudio_bin.h
+build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
 endif #ifeq($(RUN_WITH_PRU_BIN),true)
 
 ifdef PROJECT
@@ -139,7 +139,7 @@ endif
 
 ifeq ($(SHOULD_BUILD),true)
 #create build directories
-$(shell mkdir -p $(PROJECT_DIR)/build build/core )
+$(shell mkdir -p $(PROJECT_DIR)/build build/core build/pru )
 endif
 
 endif # ifdef PROJECT
@@ -259,7 +259,7 @@ ifeq ($(PROJECT_TYPE),libpd)
 LIBS += $(LIBPD_LIBS)
 endif
 
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
+INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ -I./build/pru/
 ifeq ($(XENOMAI_VERSION),2.6)
   BELA_USE_DEFINE=BELA_USE_POLL
 endif
@@ -398,16 +398,16 @@ build/core/%.o: ./core/%.S
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
-pru_rtaudio.bin: pru_rtaudio.p
+%.bin: pru/%.p
 	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -b pru_rtaudio.p > /dev/null
+	$(AT) pasm -V2 -b "$<" > /dev/null
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
-include/pru_rtaudio_bin.h: pru_rtaudio.p
+build/pru/%_bin.h: pru/%.p
 	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -L -c pru_rtaudio.p > /dev/null
-	$(AT) mv pru_rtaudio_bin.h include/
+	$(AT) pasm -V2 -L -c "$<" > /dev/null
+	$(AT) mv "$(@:build/pru/%=%)" build/pru/
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
