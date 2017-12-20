@@ -841,13 +841,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
 		// TODO: implement non-interlaved
 #else
-
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-		//TODO: @henrix: what is this about?
-		int audioInChannels = context->audioInChannels > 8 ? 8 : context->audioInChannels;
-#else 
 		int audioInChannels = context->audioInChannels;
-#endif /* defined CTAG */
 		if(interleaved)
 		{
 			for(unsigned int n = 0; n < audioInChannels * context->audioFrames; n++) {
