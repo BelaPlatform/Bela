@@ -161,27 +161,55 @@ RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
 BELA_IDE_HOME?=/root/Bela/IDE
 XENO_CONFIG=/usr/xenomai/bin/xeno-config
+XENOMAI_SKIN=posix
 
 # Find out what system we are running on and set system-specific variables
+# We cache these in $(SYSTEM_SPECIFIC_MAKEFILE) after every boot
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+-include $(SYSTEM_SPECIFIC_MAKEFILE)
+ifeq ($(DEBIAN_VERSION),)
+# If they are not there, let's go find out ...
 DEBIAN_VERSION=$(shell grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/g")
 # Lazily, let's assume if we are not on 2.6 we are on 3. I sincerely hope we will survive till Xenomai 4 to see this fail
 XENOMAI_VERSION=$(shell $(XENO_CONFIG) --version | grep -o "2\.6" || echo "3")
-ifeq ($(XENOMAI_VERSION),2.6)
-  XENOMAI_SKIN=posix
-else
-  XENOMAI_SKIN=posix
-endif
-ifeq ($(AT),)
-  $(info Running on __$(DEBIAN_VERSION)__ with Xenomai __$(XENOMAI_VERSION)__, skin __$(XENOMAI_SKIN)__)
-endif
 
 ifeq ($(XENOMAI_VERSION),2.6)
 XENOMAI_MAJOR=2
+endif
+ifeq ($(XENOMAI_VERSION),3)
+XENOMAI_MAJOR=3
+endif
+
+# Xenomai flags
+DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
+DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
+# Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
+SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
+ifeq ($(XENOMAI_VERSION),2.6)
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
+else
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
+endif
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+# remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
+
+#... and cache them to the file
+$(shell printf "DEBIAN_VERSION=$(DEBIAN_VERSION)\nXENOMAI_VERSION=$(XENOMAI_VERSION)\nDEFAULT_XENOMAI_CFLAGS=$(DEFAULT_XENOMAI_CFLAGS)\nDEFAULT_XENOMAI_LDFLAGS=$(DEFAULT_XENOMAI_LDFLAGS)\nXENOMAI_MAJOR=$(XENOMAI_MAJOR)\n" > $(SYSTEM_SPECIFIC_MAKEFILE) )
+endif  # ifeq ($(DEBIAN_VERSION),)
+
+ifeq ($(AT),)
+  $(info Running on __$(DEBIAN_VERSION)__ with Xenomai __$(XENOMAI_VERSION)__)
+endif
+
+ifeq ($(XENOMAI_VERSION),2.6)
 XENOMAI_STAT_PATH=/proc/xenomai/stat
 LIBPD_LIBS=-lpd -lpthread_rt
 endif
 ifeq ($(XENOMAI_VERSION),3)
-XENOMAI_MAJOR=3
 XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
 LIBPD_LIBS=-lpd -lpthread
 endif
@@ -228,35 +256,10 @@ RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
 
 ifeq ($(PROJECT_TYPE),libpd)
-  # check if ldconfig knows about libpd
-  TEST_LIBPD := $(shell ldconfig -p | grep "libpd\.so")
-  ifneq ($(strip $(TEST_LIBPD)), )
-    # if ldconfig knows about libpd, link it in.
-    LIBS += $(LIBPD_LIBS)
-  else # Or print a "meaningful" error
-    $(error "Project $(PROJECT_NAME) was detected as a Pd project, but no libpd is available on the system.")
-  endif
+LIBS += $(LIBPD_LIBS)
 endif
-
 
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
-# Xenomai flags
-DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
-DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
-# Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
-DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
-DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
-SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
-ifeq ($(XENOMAI_VERSION),2.6)
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
-else
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
-endif
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
-# remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
-
 ifeq ($(XENOMAI_VERSION),2.6)
   BELA_USE_DEFINE=BELA_USE_POLL
 endif
