@@ -39,7 +39,7 @@
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
 
-#if (defined(CTAGE_FACE_8CH) || defined(CTAG_FACE_16CH))
+#if (defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH))
 	#define PRU_USES_MCASP_IRQ
 #endif
 
