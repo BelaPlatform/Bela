@@ -1459,7 +1459,7 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
 	 // Check if there is at least one full frame in FIFO.
 	 // This is only required for CTAG Beast
 	 MCASP_REG_READ_EXT MCASP_RFIFOSTS, r27
-	 QBEQ SKIP_AUDIO_RX_FRAME, r27, 0
+	 QBGT SKIP_AUDIO_RX_FRAME, r27, 2
 
 	 // TODO: Optimize by only using single operation to read data from McASP FIFO.
 	 // Channels are swaped for master and slave codec to match correct channel order.
