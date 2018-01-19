@@ -629,7 +629,7 @@ updateunsafe: ## Installs the update from $(UPDATES_DIR) in a more brick-friend
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(BELA_DIR) ./update_board -y --no-frills
 	$(AT) screen -S update-Bela -d -m bash -c "echo Restart the IDE $(LOG) &&\
-	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update succesful $(LOG);" $(LOG)
+	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update successful $(LOG);" $(LOG)
 update: ## Installs the update from $(UPDATES_DIR)
 update: stop
 	$(AT) # Truncate the log file
@@ -658,7 +658,7 @@ update: stop
 	        echo Hope we are still alive here $(LOG) &&\
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
-	        echo Update succesful $(LOG); \
+	        echo Update successful $(LOG); \
 	        ' $(LOG)
 
 LIB_EXTRA_SO = libbelaextra.so
