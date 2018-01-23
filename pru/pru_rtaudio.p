@@ -38,12 +38,12 @@
 #define PRU_SYSTEM_EVENT_RTDM 20
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
-#define PB_CAPE
+#define BELA_MINI
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
 #ifdef DBOX_CAPE
 #define DAC_GPIO      GPIO0
-#ifdef PB_CAPE
+#ifdef BELA_MINI
 #define DAC_CS_PIN    (1<<6) // GPIO0:5 = P9 pin 17
 #else
 #define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
@@ -64,7 +64,7 @@
 #define AD5668_REF_OFFSET     0
 
 #ifdef DBOX_CAPE
-#ifdef PB_CAPE
+#ifdef BELA_MINI
 #define ADC_GPIO      GPIO0
 #define ADC_CS_PIN    (1<<5) // GPIO1:5 = P1 pin 6
 #else
@@ -314,9 +314,24 @@ DIGITAL:
 //r8 will contain GPIO1_SETDATAOUT
     MOV r8, 0 
     MOV r7, 0
-//map GPIO_ANALOG to gpio1 pins,
+//map GPIO to gpio1 pins,
 //r2 is gpio1_oe, r8 is gpio1_setdataout, r7 is gpio1_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r2,r7,r8
+#ifdef BELA_MINI
+    SET_GPIO_BITS r2, r8, r7, 18, 0, r27
+    SET_GPIO_BITS r2, r8, r7, 27, 1, r27
+    SET_GPIO_BITS r2, r8, r7, 26, 2, r27
+    SET_GPIO_BITS r2, r8, r7, 25, 3, r27
+    SET_GPIO_BITS r2, r8, r7, 28, 4, r27
+    SET_GPIO_BITS r2, r8, r7, 20, 5, r27
+    SET_GPIO_BITS r2, r8, r7, 15, 6, r27
+    SET_GPIO_BITS r2, r8, r7, 14, 8, r27
+    SET_GPIO_BITS r2, r8, r7, 12, 9, r27
+    SET_GPIO_BITS r2, r8, r7, 9, 10, r27
+    SET_GPIO_BITS r2, r8, r7, 8, 11, r27
+    SET_GPIO_BITS r2, r8, r7, 10, 14, r27
+    SET_GPIO_BITS r2, r8, r7, 11, 15, r27
+#else /* BELA_MINI */
     SET_GPIO_BITS r2, r8, r7, 13, 4, r27
     SET_GPIO_BITS r2, r8, r7, 12, 5, r27
     SET_GPIO_BITS r2, r8, r7, 28, 6, r27
@@ -324,6 +339,7 @@ DIGITAL:
     SET_GPIO_BITS r2, r8, r7, 15, 8, r27
     SET_GPIO_BITS r2, r8, r7, 14, 9, r27
     SET_GPIO_BITS r2, r8, r7, 19, 10, r27
+#endif /* BELA_MINI */
 //set the output enable register for gpio1.
     MOV r3, GPIO1 | GPIO_OE  //use r3 as a temp register
     SBBO r2, r3, 0, 4 //takes two cycles (10ns)
@@ -341,9 +357,14 @@ DIGITAL:
 //r5 will contain GPIO2_SETDATAOUT
     MOV r5, 0
     MOV r4, 0 
-//map GPIO_ANALOG to gpio2 pins
+//map GPIO to gpio2 pins
 //r3 is gpio2_oe, r5 is gpio2_setdataout, r4 is gpio2_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r3,r4,r5
+#ifdef BELA_MINI
+    SET_GPIO_BITS r3, r5, r4, 0, 7, r27
+    SET_GPIO_BITS r3, r5, r4, 22, 12, r27
+    SET_GPIO_BITS r3, r5, r4, 24, 13, r27
+#else /* BELA_MINI */
     SET_GPIO_BITS r3, r5, r4, 2, 0, r27
     SET_GPIO_BITS r3, r5, r4, 3, 1, r27
     SET_GPIO_BITS r3, r5, r4, 5, 2, r27
@@ -353,6 +374,7 @@ DIGITAL:
     SET_GPIO_BITS r3, r5, r4, 24, 13, r27
     SET_GPIO_BITS r3, r5, r4, 23, 14, r27
     SET_GPIO_BITS r3, r5, r4, 25, 15, r27
+#endif /* BELA_MINI */
 //set the output enable register for gpio2.
     MOV r2, GPIO2 | GPIO_OE  //use r2 as a temp registerp
     SBBO r3, r2, 0, 4 //takes two cycles (10ns)
@@ -371,7 +393,26 @@ DIGITAL:
     LBBO r3, r3, 0, 4
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
+#ifdef BELA_MINI
 //GPIO1
+    READ_GPIO_BITS r2, 18, 0, r27
+    READ_GPIO_BITS r2, 27, 1, r27
+    READ_GPIO_BITS r2, 26, 2, r27
+    READ_GPIO_BITS r2, 25, 3, r27
+    READ_GPIO_BITS r2, 28, 4, r27
+    READ_GPIO_BITS r2, 20, 5, r27
+    READ_GPIO_BITS r2, 15, 6, r27
+    READ_GPIO_BITS r2, 14, 8, r27
+    READ_GPIO_BITS r2, 12, 9, r27
+    READ_GPIO_BITS r2, 9, 10, r27
+    READ_GPIO_BITS r2, 8, 11, r27
+    READ_GPIO_BITS r2, 10, 14, r27
+    READ_GPIO_BITS r2, 11, 15, r27
+//GPIO2
+    READ_GPIO_BITS r3, 0, 7, r27
+    READ_GPIO_BITS r3, 22, 12, r27
+    READ_GPIO_BITS r3, 24, 13, r27
+#else /* BELA_MINI */
     READ_GPIO_BITS r2, 13, 4, r27
     READ_GPIO_BITS r2, 12, 5, r27
     READ_GPIO_BITS r2, 28, 6, r27
@@ -389,6 +430,7 @@ DIGITAL:
     READ_GPIO_BITS r3, 24, 13, r27
     READ_GPIO_BITS r3, 23, 14, r27
     READ_GPIO_BITS r3, 25, 15, r27
+#endif /* BELA_MINI */
 //r2, r3 are now unused
 
 //now all the setdataout and cleardataout are ready to be written to the GPIO register.
