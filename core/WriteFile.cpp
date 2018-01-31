@@ -26,7 +26,6 @@ void WriteFile::staticConstructor(){
 }
 
 WriteFile::WriteFile(){
-	buffer = NULL;
 	format = NULL;
 	header = NULL;
 	footer = NULL;
@@ -86,7 +85,7 @@ char* WriteFile::generateUniqueFilename(const char* original)
 	}
 }
 
-void WriteFile::init(const char* filename, bool overwrite){ //if you do not call this before using the object, results are undefined
+void WriteFile::init(const char* filename, bool overwrite){
 	if(!overwrite)
 	{
 		_filename = generateUniqueFilename(filename);
@@ -98,7 +97,6 @@ void WriteFile::init(const char* filename, bool overwrite){ //if you do not call
 	variableOpen = false;
 	lineLength = 0;
 	setEcho(false);
-	bufferLength = 0;
 	textReadPointer = 0;
 	binaryReadPointer = 0;
 	writePointer = 0;
@@ -116,7 +114,7 @@ void WriteFile::init(const char* filename, bool overwrite){ //if you do not call
 void WriteFile::setFileType(WriteFileType newFileType){
 	fileType = newFileType;
 	if(fileType == kBinary)
-		setLineLength(1);
+		setBufferSize(1e7);
 }
 void WriteFile::setEcho(bool newEcho){
 	echo=newEcho;
@@ -128,6 +126,12 @@ void WriteFile::setEchoInterval(int newEchoPeriod){
 	else
 		echo = false;
 }
+
+void WriteFile::setBufferSize(unsigned int newSize)
+{
+	buffer.resize(newSize);
+}
+
 void WriteFile::print(const char* string){
 	if(echo == true){
 		echoedLines++;
@@ -149,8 +153,8 @@ void WriteFile::writeLine(){
 								formatTokens[n], buffer[textReadPointer]);
 			stringBufferPointer += numOfCharsWritten;
 			textReadPointer++;
-			if(textReadPointer >= bufferLength){
-				textReadPointer -= bufferLength;
+			if(textReadPointer >= buffer.size()){
+				textReadPointer -= buffer.size();
 			}
 		}
 		print(stringBuffer);
@@ -158,21 +162,17 @@ void WriteFile::writeLine(){
 }
 
 void WriteFile::setLineLength(int newLineLength){
-	lineLength=newLineLength;
-	free(buffer);
-	bufferLength = lineLength * (int)1e5; // circular buffer
-	buffer = (float*)malloc(sizeof(float) * bufferLength);
-	if(buffer == NULL){
-		fprintf(stderr, "Unable to allocate memory for the WriteFile buffer\n");
-	}
+	lineLength = newLineLength;
+	if(buffer.size() == 0)
+		setBufferSize(lineLength * 1e5);
 }
 
 void WriteFile::log(float value){
-	if(fileType != kBinary && (format == NULL || buffer == NULL))
+	if(fileType != kBinary && (format == NULL || buffer.size() == 0))
 		return;
 	buffer[writePointer] = value;
 	writePointer++;
-	if(writePointer == bufferLength){
+	if(writePointer == buffer.size()){
 		writePointer = 0;
 	}
 	if((fileType == kText && writePointer == textReadPointer - 1) ||
@@ -192,7 +192,6 @@ void WriteFile::log(const float* array, int length){
 
 WriteFile::~WriteFile() {
 	free(format);
-	free(buffer);
 	free(header);
 	free(footer);
 	free(stringBuffer);
@@ -252,13 +251,13 @@ bool WriteFile::isThreadRunning(){
 }
 
 float WriteFile::getBufferStatus(){
-	return 1-getOffset()/(float)bufferLength;
+	return 1-getOffset()/(float)buffer.size();
 }
 
 int WriteFile::getOffsetFromPointer(int aReadPointer){
 	int offset = writePointer - aReadPointer;
 		if( offset < 0)
-			offset += bufferLength;
+			offset += buffer.size();
 		return offset;
 }
 int WriteFile::getOffset(){
@@ -279,12 +278,12 @@ void WriteFile::writeOutput(bool flush){
 		int numBinaryElementsToWriteAtOnce = 4096;
 		bool wasWritten = false;
 		while(getOffsetFromPointer(binaryReadPointer) > numBinaryElementsToWriteAtOnce){
-			int elementsToEndOfBuffer = bufferLength - binaryReadPointer;
+			int elementsToEndOfBuffer = buffer.size() - binaryReadPointer;
 			int numberElementsToWrite = numBinaryElementsToWriteAtOnce < elementsToEndOfBuffer ?
 					numBinaryElementsToWriteAtOnce : elementsToEndOfBuffer;
 			numberElementsToWrite = fwrite(&(buffer[binaryReadPointer]), sizeof(float), numberElementsToWrite, file);
 			binaryReadPointer += numberElementsToWrite;
-			if(binaryReadPointer >= bufferLength){
+			if(binaryReadPointer >= buffer.size()){
 				binaryReadPointer = 0;
 			}
 			wasWritten = true;
@@ -292,7 +291,7 @@ void WriteFile::writeOutput(bool flush){
 		if(flush == true){ // flush all the buffer to the file
 			while(getOffsetFromPointer(binaryReadPointer) != 0){
 				binaryReadPointer += fwrite(&(buffer[binaryReadPointer]), sizeof(float), 1, file);
-				if(binaryReadPointer >= bufferLength){
+				if(binaryReadPointer >= buffer.size()){
 					binaryReadPointer = 0;
 				}
 				wasWritten = true;

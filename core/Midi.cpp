@@ -60,6 +60,7 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				waitingForStatus = false;
 				receivingSysex = true;
 				rt_printf("Receiving sysex\n");
+				continue;
 			} else { // other system common
 				continue;
 			}
@@ -71,6 +72,7 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				waitingForStatus = true;
 				rt_printf("\nCompleted receiving sysex\n");
 			}
+			continue;
 		} else {
 			messages[writePointer].setDataByte(elapsedDataBytes, input[n]);
 			elapsedDataBytes++;

@@ -74,7 +74,7 @@ endif # ifndef PROJECT
 COMMAND_LINE_OPTIONS := --pru-file $(BELA_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
 else
-build/core/PRU.o: include/pru_rtaudio_bin.h
+build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
 endif #ifeq($(RUN_WITH_PRU_BIN),true)
 
 ifdef PROJECT
@@ -137,12 +137,16 @@ $(error Invalid/empty project. A project needs to have at least one .cpp or .c o
 endif
 endif
 
-ifeq ($(SHOULD_BUILD),true)
-#create build directories
-$(shell mkdir -p $(PROJECT_DIR)/build build/core )
-endif
-
 endif # ifdef PROJECT
+
+BUILD_DIRS=build/core build/pru
+ifneq ($(PROJECT_DIR),)
+ifeq ($(SHOULD_BUILD),true)
+BUILD_DIRS+=$(PROJECT_DIR)/build
+endif
+endif
+#create build directories, should probably be conditional to PROJECT or lib
+$(shell mkdir -p  $(BUILD_DIRS))
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 RUN_FROM?=$(PROJECT_DIR)
@@ -161,27 +165,55 @@ RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
 BELA_IDE_HOME?=/root/Bela/IDE
 XENO_CONFIG=/usr/xenomai/bin/xeno-config
+XENOMAI_SKIN=posix
 
 # Find out what system we are running on and set system-specific variables
+# We cache these in $(SYSTEM_SPECIFIC_MAKEFILE) after every boot
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+-include $(SYSTEM_SPECIFIC_MAKEFILE)
+ifeq ($(DEBIAN_VERSION),)
+# If they are not there, let's go find out ...
 DEBIAN_VERSION=$(shell grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/g")
 # Lazily, let's assume if we are not on 2.6 we are on 3. I sincerely hope we will survive till Xenomai 4 to see this fail
 XENOMAI_VERSION=$(shell $(XENO_CONFIG) --version | grep -o "2\.6" || echo "3")
-ifeq ($(XENOMAI_VERSION),2.6)
-  XENOMAI_SKIN=posix
-else
-  XENOMAI_SKIN=posix
-endif
-ifeq ($(AT),)
-  $(info Running on __$(DEBIAN_VERSION)__ with Xenomai __$(XENOMAI_VERSION)__, skin __$(XENOMAI_SKIN)__)
-endif
 
 ifeq ($(XENOMAI_VERSION),2.6)
 XENOMAI_MAJOR=2
+endif
+ifeq ($(XENOMAI_VERSION),3)
+XENOMAI_MAJOR=3
+endif
+
+# Xenomai flags
+DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
+DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
+# Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
+SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
+ifeq ($(XENOMAI_VERSION),2.6)
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
+else
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
+endif
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+# remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
+
+#... and cache them to the file
+$(shell printf "DEBIAN_VERSION=$(DEBIAN_VERSION)\nXENOMAI_VERSION=$(XENOMAI_VERSION)\nDEFAULT_XENOMAI_CFLAGS=$(DEFAULT_XENOMAI_CFLAGS)\nDEFAULT_XENOMAI_LDFLAGS=$(DEFAULT_XENOMAI_LDFLAGS)\nXENOMAI_MAJOR=$(XENOMAI_MAJOR)\n" > $(SYSTEM_SPECIFIC_MAKEFILE) )
+endif  # ifeq ($(DEBIAN_VERSION),)
+
+ifeq ($(AT),)
+  $(info Running on __$(DEBIAN_VERSION)__ with Xenomai __$(XENOMAI_VERSION)__)
+endif
+
+ifeq ($(XENOMAI_VERSION),2.6)
 XENOMAI_STAT_PATH=/proc/xenomai/stat
 LIBPD_LIBS=-lpd -lpthread_rt
 endif
 ifeq ($(XENOMAI_VERSION),3)
-XENOMAI_MAJOR=3
 XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
 LIBPD_LIBS=-lpd -lpthread
 endif
@@ -228,35 +260,10 @@ RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
 
 ifeq ($(PROJECT_TYPE),libpd)
-  # check if ldconfig knows about libpd
-  TEST_LIBPD := $(shell ldconfig -p | grep "libpd\.so")
-  ifneq ($(strip $(TEST_LIBPD)), )
-    # if ldconfig knows about libpd, link it in.
-    LIBS += $(LIBPD_LIBS)
-  else # Or print a "meaningful" error
-    $(error "Project $(PROJECT_NAME) was detected as a Pd project, but no libpd is available on the system.")
-  endif
+LIBS += $(LIBPD_LIBS)
 endif
 
-
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
-# Xenomai flags
-DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
-DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
-# Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
-DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
-DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
-SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
-ifeq ($(XENOMAI_VERSION),2.6)
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
-else
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
-endif
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
-# remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
-DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
-
+INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ -I./build/pru/
 ifeq ($(XENOMAI_VERSION),2.6)
   BELA_USE_DEFINE=BELA_USE_POLL
 endif
@@ -328,7 +335,7 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
@@ -395,16 +402,16 @@ build/core/%.o: ./core/%.S
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
-pru_rtaudio.bin: pru_rtaudio.p
+%.bin: pru/%.p
 	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -b pru_rtaudio.p > /dev/null
+	$(AT) pasm -V2 -b "$<" > /dev/null
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
-include/pru_rtaudio_bin.h: pru_rtaudio.p
+build/pru/%_bin.h: pru/%.p
 	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -L -c pru_rtaudio.p > /dev/null
-	$(AT) mv pru_rtaudio_bin.h include/
+	$(AT) pasm -V2 -L -c "$<" > /dev/null
+	$(AT) mv "$(@:build/pru/%=%)" build/pru/
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -629,7 +636,7 @@ updateunsafe: ## Installs the update from $(UPDATES_DIR) in a more brick-friend
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(BELA_DIR) ./update_board -y --no-frills
 	$(AT) screen -S update-Bela -d -m bash -c "echo Restart the IDE $(LOG) &&\
-	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update succesful $(LOG);" $(LOG)
+	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update successful $(LOG);" $(LOG)
 update: ## Installs the update from $(UPDATES_DIR)
 update: stop
 	$(AT) # Truncate the log file
@@ -658,7 +665,7 @@ update: stop
 	        echo Hope we are still alive here $(LOG) &&\
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
-	        echo Update succesful $(LOG); \
+	        echo Update successful $(LOG); \
 	        ' $(LOG)
 
 LIB_EXTRA_SO = libbelaextra.so

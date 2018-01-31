@@ -20,6 +20,10 @@ void WriteFile_setEchoInterval(WriteFile* file, int newPeriod)
 {
 	file->setEchoInterval(newPeriod);
 }
+void WriteFile_setBufferSize(WriteFile* file, unsigned int newSize)
+{
+	file->setBufferSize(newSize);
+}
 void WriteFile_setFormat(WriteFile* file, const char* newFormat)
 {
 	file->setFormat(newFormat);

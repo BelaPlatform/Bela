@@ -33,11 +33,22 @@ float gLight = 1.0;
 
 // sample counter to print current LDR reading
 int gSampleCount = 0;
-int gAudioFramesPerAnalogFrame;
+int gAudioFramesPerAnalogFrame = 0;
 
 bool setup(BelaContext *context, void *userData)
 {
-    gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+	if(!context->analogInChannels)
+	{
+		fprintf(stderr, "Error: This example requires analog inputs to be enabled");
+		return false;
+	}
+	if(context->analogSampleRate > context->audioSampleRate)
+	{
+		fprintf(stderr, "Error: for this project the sampling rate of the analog inputs has to be <= the audio sample rate\n");
+		return false;
+	}
+	if(context->analogFrames)
+		gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 
 	return true;
 }
@@ -47,8 +58,7 @@ void render(BelaContext *context, void *userData)
    
     for(unsigned int n = 0; n < context->audioFrames; n++) {
 
-        if(!(n % gAudioFramesPerAnalogFrame)) {
-            // On even audio samples: 
+        if(gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {
             // read and map the LDR
             gLDR = map(analogRead(context, n, 1), gDark, gLight, 0.0, 0.5);
         }
@@ -66,7 +76,7 @@ void render(BelaContext *context, void *userData)
         */
         
         // generate some noise with random number generator
-        gNoise = 0.1 * ( rand() / (float)RAND_MAX * 2 - 1);
+        gNoise = 0.1f * ( rand() / (float)RAND_MAX * 2.f - 1.f);
         
         for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
              // output the noise multiplied by the LDR reading

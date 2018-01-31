@@ -35,11 +35,11 @@ Scope scope;
 
 bool setup(BelaContext *context, void *userData)
 {
-    // tell the scope how many channels and the sample rate
-    scope.setup(3, context->audioSampleRate);
+	// tell the scope how many channels and the sample rate
+	scope.setup(3, context->audioSampleRate);
 
-    gPhase = 0;
-    gInverseSampleRate = 1.0f/context->audioSampleRate;
+	gPhase = 0;
+	gInverseSampleRate = 1.0f/context->audioSampleRate;
     
 	return true;
 }
@@ -48,27 +48,28 @@ float lastOut = 0.0;
 float lastOut2 = 0.0;
 void render(BelaContext *context, void *userData)
 {
-    // iterate over the audio frames and create three oscillators, seperated in phase by PI/2
-    for (unsigned int n=0; n<context->audioFrames; n++){
-        float out = 0.8f * sinf(gPhase);
-        float out2 = 0.8f * sinf(gPhase - M_PI/2);
-		float out3 = 0.8f * sinf(gPhase + M_PI/2);
-		gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
+	// iterate over the audio frames and create three oscillators, seperated in phase by PI/2
+	for (unsigned int n = 0; n < context->audioFrames; ++n)
+	{
+		float out = 0.8f * sinf(gPhase);
+		float out2 = 0.8f * sinf(gPhase - (float)M_PI/2.f);
+		float out3 = 0.8f * sinf(gPhase + (float)M_PI/2.f);
+		gPhase += 2.0f * (float)M_PI * gFrequency * gInverseSampleRate;
+		if(gPhase > M_PI)
+			gPhase -= 2.0f * (float)M_PI;
 			
 		// log the three oscillators to the scope
-        scope.log(out, out2, out3);
+		scope.log(out, out2, out3);
         
-        // optional - tell the scope to trigger when oscillator 1 becomes less than oscillator 2
-        // note this has no effect unless trigger mode is set to custom in the scope UI
-        if (lastOut >= lastOut2 && out < out2){
-            scope.trigger();
-        }
-        
-        lastOut = out;
-        lastOut2 = out2;
-    }
+		// optional - tell the scope to trigger when oscillator 1 becomes less than oscillator 2
+		// note this has no effect unless trigger mode is set to custom in the scope UI
+		if (lastOut >= lastOut2 && out < out2){
+			scope.trigger();
+		}
+
+		lastOut = out;
+		lastOut2 = out2;
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)

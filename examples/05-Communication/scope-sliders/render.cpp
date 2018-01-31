@@ -64,16 +64,16 @@ void render(BelaContext *context, void *userData)
 		float out3 = 0.8f * sinf(gPhase3);
 		
 		// set the frequencies of the oscillators to the values read from the sliders
-		gPhase += 2.0 * M_PI * scope.getSliderValue(0) * gInverseSampleRate;
-		gPhase2 += 2.0 * M_PI * scope.getSliderValue(1) * gInverseSampleRate;
-		gPhase3 += 2.0 * M_PI * scope.getSliderValue(2) * gInverseSampleRate;
+		gPhase += 2.0f * (float)M_PI * scope.getSliderValue(0) * gInverseSampleRate;
+		gPhase2 += 2.0f * (float)M_PI * scope.getSliderValue(1) * gInverseSampleRate;
+		gPhase3 += 2.0f * (float)M_PI * scope.getSliderValue(2) * gInverseSampleRate;
 		
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
-		if(gPhase2 > 2.0 * M_PI)
-			gPhase2 -= 2.0 * M_PI;
-		if(gPhase3 > 2.0 * M_PI)
-			gPhase3 -= 2.0 * M_PI;
+		if(gPhase > M_PI)
+			gPhase -= 2.0f * (float)M_PI;
+		if(gPhase2 > M_PI)
+			gPhase2 -= 2.0f * (float)M_PI;
+		if(gPhase3 > M_PI)
+			gPhase3 -= 2.0f * (float)M_PI;
 			
 		// log the three oscillators to the scope
         scope.log(out, out2, out3);

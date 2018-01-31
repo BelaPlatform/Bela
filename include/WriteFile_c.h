@@ -15,6 +15,7 @@ void WriteFile_delete(WriteFile* file);
 void WriteFile_setFileType(WriteFile* file, WriteFileType newFileType);
 void WriteFile_setEcho(WriteFile* file, int newEcho);
 void WriteFile_setEchoInterval(WriteFile* file, int newPeriod);
+void WriteFile_setBufferSize(WriteFile* file, unsigned int newSize);
 void WriteFile_setFormat(WriteFile* file, const char* newFormat);
 void WriteFile_setHeader(WriteFile* file, const char* newHeader);
 void WriteFile_setFooter(WriteFile* file, const char* newFooter);

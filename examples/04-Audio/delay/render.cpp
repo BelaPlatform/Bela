@@ -95,7 +95,7 @@ void render(BelaContext *context, void *userData)
         // Apply the butterworth filter (y = a0*x0 + a1*x1 + a2*x2 + a3*y1 + a4*y2)
         del_input_l = gDel_a0*del_input_l
                     + gDel_a1*gDel_x1_l
-                    + gDel_a2*gDel_x2_l;
+                    + gDel_a2*gDel_x2_l
                     + gDel_a3*gDelayBuffer_l[(gDelayBufWritePtr-1+DELAY_BUFFER_SIZE)%DELAY_BUFFER_SIZE]
                     + gDel_a4*gDelayBuffer_l[(gDelayBufWritePtr-2+DELAY_BUFFER_SIZE)%DELAY_BUFFER_SIZE];
         
@@ -108,7 +108,7 @@ void render(BelaContext *context, void *userData)
         // Repeat process for the right channel
         del_input_r = gDel_a0*del_input_r
                     + gDel_a1*gDel_x1_r
-                    + gDel_a2*gDel_x2_r;
+                    + gDel_a2*gDel_x2_r
                     + gDel_a3*gDelayBuffer_r[(gDelayBufWritePtr-1+DELAY_BUFFER_SIZE)%DELAY_BUFFER_SIZE]
                     + gDel_a4*gDelayBuffer_r[(gDelayBufWritePtr-2+DELAY_BUFFER_SIZE)%DELAY_BUFFER_SIZE];
     
