@@ -13,7 +13,7 @@
 [ -z "$USE_RSYNC" ] && USE_RSYNC=1
 #check if the sleep we are using supports float
 sleep 0.0001 2>/dev/null && SLEEP_SUPPORTS_FLOAT=1 || SLEEP_SUPPORTS_FLOAT=0
-[ -z "$DEFAULT_SLEEP_WHEN_WATCHING" ] && [ $SLEEP_SUPPORTS_FLOAT -eq 1 ] && DEFAULT_SLEEP_WHEN_WATCHING=0.5 || DEFAULT_SLEEP_WHEN_WATCHING=1
+[ -z "$DEFAULT_SLEEP_WHEN_WATCHING" ] && [ $SLEEP_SUPPORTS_FLOAT -eq 1 ] && DEFAULT_SLEEP_WHEN_WATCHING=0.2 || DEFAULT_SLEEP_WHEN_WATCHING=1
 
 THIS_SCRIPT=`basename "$0"`
 #trap "echo; exit 0;" 2 9
@@ -270,6 +270,12 @@ build_options{
 		;;
 		--watch)
 			WATCH=1
+		;;
+		--get)
+			GET=1
+		;;
+		--open)
+			OPEN=1
 		;;
 }
 end_options{

@@ -105,6 +105,12 @@ do
 		--watch)
 			WATCH=1
 		;;
+		--get)
+			GET=1
+		;;
+		--open)
+			OPEN=1
+		;;
 		-o | --output )
 			shift
 			projectpath=$1
@@ -262,15 +268,21 @@ uploadBuildRun(){
     #if [ $NO_UPLOAD -eq 0 ]; then
     #    ssh $BBB_ADDRESS "rm -rf "$BBB_PROJECT_FOLDER/$BBB_PROJECT_NAME;
     #fi;
+	if [ "$GET" -eq 1 ]
+	then
+		echo "Asking the IDE to rebuild currently active project"
+		curl "$BBB_HOSTNAME/rebuild-project?project=$BBB_PROJECT_NAME"
+	else
     # Make new Bela executable and run
-    MAKE_COMMAND="$MAKE_COMMAND_BASE CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
-    if [ $RUN_PROJECT -eq 0 ]
-    then
-        echo "Building project..."
-        ssh $BBB_ADDRESS "$MAKE_COMMAND"
-    else
-	    case_run_mode
-    fi
+		MAKE_COMMAND="$MAKE_COMMAND_BASE CL='$COMMAND_ARGS' $BBB_MAKEFILE_OPTIONS"
+		if [ $RUN_PROJECT -eq 0 ]
+		then
+			echo "Building project..."
+			ssh $BBB_ADDRESS "$MAKE_COMMAND"
+		else
+			case_run_mode
+		fi
+	fi
 } #uploadBuildRun
 
 uploadBuildRun
