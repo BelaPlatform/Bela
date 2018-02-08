@@ -1,0 +1,13 @@
+#N canvas 0 22 450 300 10;
+#X obj 108 176 osc~, f 6;
+#X obj 108 151 line~;
+#X msg 108 126 200 \, 0 100;
+#X obj 108 93 inlet;
+#X obj 108 231 outlet~;
+#X text 194 125 Kick drum 101;
+#X obj 108 203 hip~ 1;
+#X connect 0 0 6 0;
+#X connect 1 0 0 0;
+#X connect 2 0 1 0;
+#X connect 3 0 2 0;
+#X connect 6 0 4 0;

@@ -1,0 +1,18 @@
+#N canvas 146 59 242 239 10;
+#X obj 37 61 outlet~;
+#X obj 57 81 outlet~;
+#X obj 77 101 outlet~;
+#X obj 97 121 outlet~;
+#X obj 117 141 outlet~;
+#X obj 137 161 outlet~;
+#X obj 157 181 outlet~;
+#X obj 177 201 outlet~;
+#X obj 38 23 adc~ \$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8;
+#X connect 8 0 0 0;
+#X connect 8 1 1 0;
+#X connect 8 2 2 0;
+#X connect 8 3 3 0;
+#X connect 8 4 4 0;
+#X connect 8 5 5 0;
+#X connect 8 6 6 0;
+#X connect 8 7 7 0;

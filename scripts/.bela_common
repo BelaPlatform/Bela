@@ -215,6 +215,7 @@ echo "Build options:
 	         triggers a new build. If you do not run the program with -b, then you will have to
 			 either kill the process or detach from the screen in order for the watchdog to be active.
 	--force: does not prompt to overwrite an existing project. Also activates \`expert mode' which disables some checks and makes the program run faster
+	--get : will send a GET request to the IDE to run the project in the IDE.
 	-n : the output will not be run after compiling.
 	-p arg : sets the name of the project in the remote folder 
 	         (defaults to the name of the project folder on the host) 
@@ -222,8 +223,14 @@ echo "Build options:
 	-m \"args\" allows to pass arguments to the Makefile before the run target. For instance,
 	           pass \`-m "projectclean"' or \`-m "distclean"' to clean project-specific
 	           pre-built objects, or all the pre-built objects, respectively.
-	           Or \`-m "help"' to see all the options available. 
+	           Or \`-m "help"' to see all the options available.\
 	"
+	case "$OSTYPE" in
+		darwin*)
+			echo "\
+	--open : will open the file or project folder with your system viewer."
+		;;
+	esac
 }
 
 # Don't use or eval this, just copy/paste from here

@@ -333,6 +333,9 @@ server.emitter.on('project-error', e => {
 	
 	allSockets.emit('report-error', msg);
 });
+server.emitter.on('rebuild-project', project => {
+	allSockets.emit('rebuild-project', project);
+});
 
 // module functions - only accesible from this file
 function co(obj, func, args){
