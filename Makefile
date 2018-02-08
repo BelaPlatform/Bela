@@ -698,7 +698,7 @@ HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
 HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
 HEAVY_OBJ_TARGET_DIR=$(PROJECT_DIR)/build
 HEAVY_OBJ_FILES=$(HEAVY_TMP_DIR)/*.o
-heavy-unzip-archive:
+heavy-unzip-archive: stop
 	$(AT) [ -z "$(HEAVY_ARCHIVE)" ] && { echo "You should specify the path to the Heavy archive with HEAVY_ARCHIVE=" >&2; false; } || true
 	$(AT) [ -f "$(HEAVY_ARCHIVE)" ] || { echo "File $(HEAVY_ARCHIVE) not found" >&2; false; }
 	$(AT) rm -rf $(HEAVY_TMP_DIR)
