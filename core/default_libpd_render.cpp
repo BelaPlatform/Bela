@@ -6,6 +6,7 @@
 #include <DigitalChannelManager.h>
 #include <cmath>
 #include <stdio.h>
+#define PD_THREADED_IO
 #include <libpd/z_libpd.h>
 extern "C" {
 #include <libpd/s_stuff.h>
