@@ -11,7 +11,7 @@ SCRIPTDIR=$(dirname "$0")
 
 [ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../IDE
 [ -z "$FORCE_REPLACE" ] && FORCE_REPLACE=0
-FILES_TO_COPY="core include Makefile lib examples Doxyfile scripts resources pru_rtaudio.p"
+FILES_TO_COPY="core include Makefile lib examples Doxyfile scripts resources pru"
 
 # The following variables are manually copied from the Makefile.
 # It is a bit nasty, but here we need to handle the case that the board may be 
@@ -176,6 +176,8 @@ error_handler $?
 
 if [ "$DEBIAN_VERSION" = wheezy ]
 then
+	# post-installation trigger for libseasocks
+	ssh $BBB_ADDRESS "ln -f -s /usr/local/lib/libseasocks.so.1 /usr/local/lib/libseasocks.so && ldconfig /usr/local/lib" &&\
 	# the below files could be user-customized, so copy them if they do not exist or forced to do so
 	copy_if_does_not_exist resources/wheezy/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
 	copy_if_does_not_exist resources/wheezy/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE

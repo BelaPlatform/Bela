@@ -27,18 +27,26 @@ The Bela software is distributed under the GNU Lesser General Public License
 float gFrequency = 4.0;
 float gPhase;
 float gInverseSampleRate;
-int gAudioFramesPerAnalogFrame;
+int gAudioFramesPerAnalogFrame = 0;
+
 
 bool setup(BelaContext *context, void *userData)
 {
 	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
+		fprintf(stderr, "Error: for this project, you need the same number of input and output channels.\n");
 		return false;
 	}
 
-	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+	if(context->analogSampleRate > context->audioSampleRate)
+	{
+		fprintf(stderr, "Error: for this project the sampling rate of the analog inputs has to be <= the audio sample rate\n");
+		return false;
+	}
+
+	if(context->audioFrames)
+		gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;
 	gPhase = 0.0;
 
@@ -50,8 +58,7 @@ void render(BelaContext *context, void *userData)
 	// Nested for loops for audio channels
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 
-		if(!(n % gAudioFramesPerAnalogFrame)) {
-			// On even audio samples:
+		if(gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {
 			// Read analog channel 0 and map the range from 0-1 to 0.25-20
 			// use this to set the value of gFrequency
 			gFrequency = map(analogRead(context, n, 0), 0.0, 1.0, 0.25, 20.0);
@@ -59,15 +66,15 @@ void render(BelaContext *context, void *userData)
 
 		// Generate a sinewave with frequency set by gFrequency
 		// and amplitude from -0.5 to 0.5
-		float lfo = sinf(gPhase) * 0.5;
+		float lfo = sinf(gPhase) * 0.5f;
 		// Keep track and wrap the phase of the sinewave
-		gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
+		gPhase += 2.0f * (float)M_PI * gFrequency * gInverseSampleRate;
+		if(gPhase > M_PI)
+			gPhase -= 2.0f * (float)M_PI;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
 			// Read the audio input and half the amplitude
-			float input = audioRead(context, n, channel) * 0.5;
+			float input = audioRead(context, n, channel) * 0.5f;
 			// Write to audio output the audio input multiplied by the sinewave
 			audioWrite(context, n, channel, (input*lfo));
 		}

@@ -1,5 +1,5 @@
 #!/bin/bash
-SOURCE_DTS=src/arm/am335x-bone-bela.dts
+SOURCE_DTS=/opt/dtb-rebuilder/src/arm/am335x-bone-bela-common.dtsi
 TMP=/tmp/parsedtsmp 
 TMP2=/tmp/parsedtsmp2
 PINMUX_FROM_DTS=pinmux-from-dts

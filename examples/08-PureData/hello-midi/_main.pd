@@ -1,4 +1,4 @@
-#N canvas 461 525 651 756 10;
+#N canvas 184 14 1013 730 10;
 #X obj 45 706 dac~ 1 2;
 #X obj 45 663 *~ 0.1;
 #X obj 45 262 mtof;
@@ -36,9 +36,9 @@
 #X text 43 66 with a midi controller. Note and control messages can
 be;
 #X text 43 80 obtained using the;
-#X obj 169 80 notein;
+#X obj 179 79 notein;
 #X text 233 80 and;
-#X obj 260 80 ctlin;
+#X obj 270 80 ctlin;
 #X text 315 80 objects.;
 #X text 43 104 Most midi devices should be compatible when plugged
 into;
@@ -50,6 +50,18 @@ into;
 #X text 445 55 .|____/|_____|_____/_/..._|.io;
 #X text 445 65 ............................;
 #X text 445 35 .| __ || __|.| |...../ _| |.;
+#X obj 518 178 loadbang;
+#X msg 518 204 hw 0 0 0;
+#X text 507 102 By default \, port hw:1 \, 0 \, 0 is open;
+#X obj 518 231 send bela_setMidi;
+#X text 507 112 (if it exists). This normally is;
+#X text 507 122 the first USB MIDI device plugged in.;
+#X text 507 132 You can open moreports by sending a;
+#X text 507 142 message to bela_setMidi. For instance \,;
+#X text 639 175 On v0.3 (or above) images \,;
+#X text 639 185 hw:0 \, 0 \, 0 is the virtual port;
+#X text 639 195 that shows up on the host computer.;
+#X text 507 152 in order to open hw:0 \, 0 \, 0 \, do:;
 #X connect 1 0 0 1;
 #X connect 1 0 0 0;
 #X connect 2 0 3 0;
@@ -80,3 +92,5 @@ into;
 #X connect 22 0 15 0;
 #X connect 23 0 1 1;
 #X connect 30 0 23 0;
+#X connect 47 0 48 0;
+#X connect 48 0 50 0;

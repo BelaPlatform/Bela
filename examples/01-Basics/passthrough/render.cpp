@@ -40,13 +40,6 @@ void render(BelaContext *context, void *userData)
 	// Simplest possible case: pass inputs through to outputs
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		for(unsigned int ch = 0; ch < context->audioInChannels; ch++){
-			// Two equivalent ways to write this code
-
-			// The long way, using the buffers directly:
-			// context->audioOut[n * context->audioOutChannels + ch] =
-			// 		context->audioIn[n * context->audioInChannels + ch];
-
-			// Or using the macros:
 			audioWrite(context, n, ch, audioRead(context, n, ch));
 		}
 	}
@@ -54,13 +47,6 @@ void render(BelaContext *context, void *userData)
 	// Same with analog channels
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
 		for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
-			// Two equivalent ways to write this code
-
-			// The long way, using the buffers directly:
-			// context->analogOut[n * context->analogOutChannels + ch] =
-			//  	context->analogIn[n * context->analogInChannels + ch];
-
-			// Or using the macros:
 			analogWrite(context, n, ch, analogRead(context, n, ch));
 		}
 	}
