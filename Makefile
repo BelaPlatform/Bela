@@ -636,7 +636,7 @@ updateunsafe: ## Installs the update from $(UPDATES_DIR) in a more brick-friend
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(BELA_DIR) ./update_board -y --no-frills
 	$(AT) screen -S update-Bela -d -m bash -c "echo Restart the IDE $(LOG) &&\
-	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update succesful $(LOG);" $(LOG)
+	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update successful $(LOG);" $(LOG)
 update: ## Installs the update from $(UPDATES_DIR)
 update: stop
 	$(AT) # Truncate the log file
@@ -665,7 +665,7 @@ update: stop
 	        echo Hope we are still alive here $(LOG) &&\
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
-	        echo Update succesful $(LOG); \
+	        echo Update successful $(LOG); \
 	        ' $(LOG)
 
 LIB_EXTRA_SO = libbelaextra.so
@@ -698,7 +698,7 @@ HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
 HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
 HEAVY_OBJ_TARGET_DIR=$(PROJECT_DIR)/build
 HEAVY_OBJ_FILES=$(HEAVY_TMP_DIR)/*.o
-heavy-unzip-archive:
+heavy-unzip-archive: stop
 	$(AT) [ -z "$(HEAVY_ARCHIVE)" ] && { echo "You should specify the path to the Heavy archive with HEAVY_ARCHIVE=" >&2; false; } || true
 	$(AT) [ -f "$(HEAVY_ARCHIVE)" ] || { echo "File $(HEAVY_ARCHIVE) not found" >&2; false; }
 	$(AT) rm -rf $(HEAVY_TMP_DIR)

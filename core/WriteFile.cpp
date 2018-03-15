@@ -191,6 +191,11 @@ void WriteFile::log(const float* array, int length){
 }
 
 WriteFile::~WriteFile() {
+	// this will disable all instances when
+	// you destroy the first one, but at least it's safe
+	stopThread();
+	while(threadRunning)
+		usleep(100000);
 	free(format);
 	free(header);
 	free(footer);
