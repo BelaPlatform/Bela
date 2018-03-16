@@ -36,12 +36,8 @@
 #include <sys/mman.h>
 #include <string.h>
 
-//#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
-
-#if (defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH))
-	#define PRU_USES_MCASP_IRQ
-#endif
+// CTAG TODO: make this dependent on the pru code in use
+#define PRU_USES_MCASP_IRQ
 
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
 #error Define one of BELA_USE_POLL, BELA_USE_RTDM
@@ -212,8 +208,6 @@ short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_14,
 		GPIO_NO_BIT_15,
 };
-
-#define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
 
 #define GPIO0_ADDRESS 		0x44E07000
 #define GPIO1_ADDRESS 		0x4804C000
@@ -393,15 +387,6 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 		return 1;
 	}
 	pruMemory = new PruMemory(pru_number, context);
-
-#ifdef CTAG_FACE_8CH
-//TODO :  check that this ifdef block is not needed
-	//pru_buffer_audio_adc = &pru_buffer_audio_dac[16 * context->audioFrames];
-#elif defined(CTAG_BEAST_16CH)
-	//pru_buffer_audio_adc = &pru_buffer_audio_dac[32 * context->audioFrames];
-#else
-	//pru_buffer_audio_adc = &pru_buffer_audio_dac[4 * context->audioFrames];
-#endif
 
 	if(capeButtonMonitoring){
 		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
@@ -618,13 +603,8 @@ void PRU::initialisePruCommon()
 	else
 		pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
 	pru_buffer_comm[PRU_BUFFER_SPI_FRAMES] = pruFrames;
-#ifdef CTAG_FACE_8CH
-//TODO :  factor out the number of channels
-	pruFrames *= 4;
-#elif defined(CTAG_BEAST_16CH)
-	pruFrames *= 8;
-#endif
-	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruFrames;
+	pruBufferMcaspFrames = pruFrames * context->audioOutChannels / 2;
+	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
 	pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
 	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
@@ -684,7 +664,7 @@ int PRU::start(char * const filename)
 		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
 		return 1;
 	}
-	#warning TODO: unmask interrupt when program stops
+#warning TODO: unmask interrupt when program stops
 #endif
 
 #ifdef BELA_USE_RTDM
@@ -753,13 +733,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		return;
 	}
 	// Polling interval is 1/4 of the period
-#ifdef CTAG_FACE_8CH
-	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
-#elif defined(CTAG_BEAST_16CH)
-	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
-#else
-	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
-#endif
+	time_ns_t sleepTime = context->audioFrames / context->audioSampleRate / 4;
 	if(highPerformanceMode) // sleep less, more CPU available for us
 		sleepTime /= 4;
 #ifdef BELA_USE_RTDM
@@ -1290,20 +1264,13 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
-			static uint32_t pruFramesPerBlock = hardware_analog_frames ? hardware_analog_frames : context->audioFrames / 2;
+			uint32_t pruFramesPerBlock = pruBufferMcaspFrames;
 			// read the PRU counter
 			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,
 			// just in case the PRU is already ahead of us
 			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
-#ifdef CTAG_FACE_8CH
-//TODO :  factor out the number of channels
-			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 4;
-#elif defined(CTAG_BEAST_16CH)
-			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 8;
-#else
 			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
-#endif
 			if(pruFrameCount > expectedFrameCount)
 			{
 				// don't print a warning if we are stopping

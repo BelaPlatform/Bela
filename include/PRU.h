@@ -199,6 +199,7 @@ private:
 
 	PruMemory* pruMemory;
 	volatile uint32_t *pru_buffer_comm;
+	uint32_t pruBufferMcaspFrames;
 
 	float *last_analog_out_frame;
 	uint32_t *last_digital_buffer;
