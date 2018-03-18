@@ -733,7 +733,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		return;
 	}
 	// Polling interval is 1/4 of the period
-	time_ns_t sleepTime = context->audioFrames / context->audioSampleRate / 4;
+	time_ns_t sleepTime = 1000000000 * (float)context->audioFrames / (context->audioSampleRate * 4);
 	if(highPerformanceMode) // sleep less, more CPU available for us
 		sleepTime /= 4;
 #ifdef BELA_USE_RTDM
