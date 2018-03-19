@@ -143,14 +143,14 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 		case CtagFace:
 			//nobreak
 		case CtagFaceBelaCape:
-			cfg->audioInChannels = 8;
+			cfg->audioInChannels = 4;
 			cfg->audioOutChannels = 8;
 			cfg->audioSampleRate = 48000;
 			break;
 		case CtagBeast:
 			//nobreak
 		case CtagBeastBelaCape:
-			cfg->audioInChannels = 16;
+			cfg->audioInChannels = 8;
 			cfg->audioOutChannels = 16;
 			cfg->audioSampleRate = 48000;
 			break;

@@ -604,6 +604,7 @@ void PRU::initialisePruCommon()
 		pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
 	pru_buffer_comm[PRU_BUFFER_SPI_FRAMES] = pruFrames;
 	pruBufferMcaspFrames = pruFrames * context->audioOutChannels / 2;
+     // TODO: it seems that PRU_BUFFER_MCASP_FRAMES is not very meaningful(cf pru_rtaudio_irq.p)
 	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
 	pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
 	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;

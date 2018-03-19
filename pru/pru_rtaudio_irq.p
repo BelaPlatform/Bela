@@ -5,6 +5,18 @@
 //#define CTAG_FACE_8CH
 #define CTAG_BEAST_16CH
 
+#ifdef CTAG_FACE_8CH
+#define CTAG_x
+#endif
+#ifdef CTAG_BEAST_16CH
+#define CTAG_x
+#endif
+
+#ifdef CTAG_x
+#define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+#define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS
+#endif
+
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
 #define CLOCK_BASE   0x44E00000
@@ -369,6 +381,8 @@
 // r27, r28 used in macros
 #define reg_mcasp_addr      r29     // Base address for McASP
 #define reg_pru1_mux_pins   r30     // Register mapped directly to P8 pins (PRU1 only)
+
+#define REG_MCASP_BUF0_INIT 0
 
 //0  P8_07 36 0x890/090 66 gpio2[2]
 //1  P8_08 37 0x894/094 67 gpio2[3]
@@ -1164,7 +1178,7 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
     LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
     LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
-    MOV reg_mcasp_buf0, 0            // McASP DAC buffer 0 start pointer
+    MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT            // McASP DAC buffer 0 start pointer
     LSL reg_mcasp_buf1, reg_frame_mcasp_total, r2  // McASP DAC buffer 1 start pointer = 2[ch]*2[bytes]*(N/4)[samples/spi]*bufsize
     CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
     SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
@@ -1238,6 +1252,7 @@ MCASP_ADC_WAIT_BEFORE_LOOP:
 #endif
 */
 
+
 WRITE_ONE_BUFFER:
 
      // Write a single buffer of DAC samples and read a buffer of ADC samples
@@ -1248,11 +1263,30 @@ WRITE_ONE_BUFFER:
      LSL reg_adc_current, reg_adc_current, 2   // N * 2 * 2 * bufsize
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
      MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
-#ifdef CTAG_FACE_8CH
-// TODO: compute reg_mcasp_adc_current appropriately, considering you have now 8 channels
-#endif
-     LSL reg_mcasp_adc_current, reg_frame_mcasp_total, r2 // McASP ADC: starts (N/2)*2*2*bufsize beyond DAC
+     //  the CTAGs only use half as many input channels as there are outputs, so divide by 2 (LSR by 1) when computing offsets
+     // if I/O buffers are the same size, then  McASP ADC: starts (N/2)*2bytes*bufsize beyond DAC
+     // otherwise:
+     // McASP ADC: starts
+     // 2bytes*nDacChannels*nDacFrames*2dacBuffers
+     // beyond DAC0 buffer
+     // or McASP ADC: starts
+     // 2bytes*nDacChannels*nDacFrames*1dacBuffer +
+     //    + 2bytes*nAdcChannels+nAdcFrames*1adcBuffer
+     // beyond DAC1 buffer
+     // TODO: it seems that reg_frame_mcasp_total is not very meaningful(cf PRU.cpp)
+     LSL reg_mcasp_adc_current, reg_frame_mcasp_total, r2
+#ifdef MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS
+QBNE MCASP_IS_ON_BUF1, reg_mcasp_buf0, REG_MCASP_BUF0_INIT
      LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
+     QBA MCASP_IS_ON_BUF_DONE
+MCASP_IS_ON_BUF1:
+     // r2 = reg_mcasp_adc_current * 1.5
+     LSR r2, reg_mcasp_adc_current, 1
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, r2
+MCASP_IS_ON_BUF_DONE:
+#else /* MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS */
+     LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
+#endif /* MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS */
      ADC reg_mcasp_adc_current, reg_mcasp_adc_current, reg_mcasp_dac_current
      MOV reg_frame_current, 0
      QBBS DIGITAL_BASE_CHECK_SET, reg_flags, FLAG_BIT_BUFFER1  //check which buffer we are using for DIGITAL
@@ -1452,8 +1486,14 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      LSL r16, r15, 16
      OR r3, r3, r16
 
+#ifdef CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+// this one is untested, attempts to only store 4 results instead of 8
+     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 8 // store result
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 8 // increment memory pointer
+#else /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
+#endif /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
 #endif
 #ifdef CTAG_BEAST_16CH
 	 // Check if there is at least one full frame in FIFO.
@@ -1462,8 +1502,9 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
 	 QBGT SKIP_AUDIO_RX_FRAME, r27, 2
 
 	 // TODO: Optimize by only using single operation to read data from McASP FIFO.
-	 // Channels are swaped for master and slave codec to match correct channel order.
+	 // Channels are swapped for master and slave codec to match correct channel order.
 	 MCASP_READ_FROM_DATAPORT r8, 32
+
      AND r0, r12, r17
      LSL r16, r13, 16
      OR r0, r0, r16
@@ -1492,8 +1533,12 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      AND r3, r14, r17
      LSL r16, r15, 16
      OR r3, r3, r16
+#ifdef CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+     QBA DONE_STORING_RESULT_BEAST_2
+#endif /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
+DONE_STORING_RESULT_BEAST_2:
 
 SKIP_AUDIO_RX_FRAME:
 #endif
@@ -1677,7 +1722,6 @@ MCSPI_INTR_RECEIVED: // SINTERRUPTN
 MCSPI_INTR_TX0_EMPTY:
 	 MOV r27, (1 << SPI_INTR_BIT_TX0_EMPTY)
 	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
-	 //HALT
 
 	 //TODO: Handle tx0 empty interrupt here
 
@@ -1686,7 +1730,6 @@ MCSPI_INTR_TX0_EMPTY:
 MCSPI_INTR_RX1_FULL:
 	 MOV r27, (1 << SPI_INTR_BIT_RX1_FULL)
 	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
-	 //HALT
 
 	 //TODO: Handle rx1 full interrupt here
 
