@@ -53,6 +53,7 @@ public:
 	int setHPVolume(int halfDbSteps);
 	int writeHPVolumeRegisters();
 	int disable();
+	int reset(){ return 0; } // Not needed for audio codec on Bela cape
 
 	int readI2C();
 

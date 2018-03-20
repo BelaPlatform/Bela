@@ -38,7 +38,6 @@ Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1 ){
 
     usleep(10000);
 
-
     // Wake up audio codec(s)
     if(gpio_set_value(RESET_PIN, HIGH)) {
         fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
@@ -173,7 +172,7 @@ int Spi_Codec::initCodec(){
 	} // _isBeast
 
 	usleep(10000);
-	
+
 	return 0;
 }
 
@@ -225,17 +224,19 @@ bool Spi_Codec::slaveIsDetected(){
 }
 
 int Spi_Codec::reset(){
-	if(gpio_set_value(RESET_PIN, HIGH)) {
+	if(gpio_set_value(RESET_PIN, LOW)) {
         fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
         return -1;
     }
 
     usleep(10000);
 
-    if(gpio_set_value(RESET_PIN, LOW)) {
+	if(gpio_set_value(RESET_PIN, HIGH)) {
         fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
         return -1;
     }
+
+    usleep(10000);
 
     return 0;
 }

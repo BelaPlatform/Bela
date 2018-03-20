@@ -435,7 +435,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
 	// Use PRU for audio
-	gPRU = new PRU(&gContext);
+	gPRU = new PRU(&gContext, gAudioCodec);
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(gPRU->prepareGPIO(settings->enableLED)) {

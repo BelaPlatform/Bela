@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
+#include "../include/AudioCodec.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const
@@ -150,7 +151,7 @@ private:
 
 public:
 	// Constructor
-	PRU(InternalBelaContext *input_context);
+	PRU(InternalBelaContext *input_context, AudioCodec *audio_codec);
 
 	// Destructor
 	~PRU();
@@ -208,6 +209,8 @@ private:
 	float audio_expander_filter_coeff;
 
 	Gpio belaCapeButton; // Monitoring the bela cape button
+
+	AudioCodec *codec; // Required to hard reset audio codec from loop
 };
 
 

@@ -130,6 +130,7 @@
 #define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
 #define COMM_BUFFER_SPI_FRAMES 		60    		// How many frames per buffer for analog i/o
+#define COMM_XRUN_OCCURED			64 			// Signales the ARM CPU to reset audio codecs
 
 // General constants for local PRU peripherals (used for interrupt configuration)
 #define PRU_ICSS_INTC_LOCAL     0x00020000
@@ -1356,6 +1357,8 @@ MCASP_TX_ERROR_HANDLE_START:
      JMP MCASP_TX_ERROR_HANDLE_END
 
 MCASP_TX_UNDERRUN_OCCURRED:
+     MOV r4, 1
+     SBBO r4, reg_comm_addr, COMM_XRUN_OCCURED, 4
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x1 // Clear underrun bit (0)
      ADD r0, r0, 1
      JMP START

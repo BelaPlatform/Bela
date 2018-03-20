@@ -189,6 +189,7 @@ private:
 #define PRU_MUX_CONFIG         13
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
+#define PRU_XRUN_OCCURRED	   16
 
 short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_0,
@@ -239,7 +240,7 @@ extern "C" {
 	void float_to_int16_analog(int numSamples, float *inBuffer, uint16_t *outBuffer);
 }
 // Constructor: specify a PRU number (0 or 1)
-PRU::PRU(InternalBelaContext *input_context)
+PRU::PRU(InternalBelaContext *input_context, AudioCodec *audio_codec)
 : context(input_context),
   pru_number(1),
   initialised(false),
@@ -249,7 +250,7 @@ PRU::PRU(InternalBelaContext *input_context)
   gpio_test_pin_enabled(false),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0)
+  audio_expander_filter_coeff(0), codec(audio_codec)
 {
 }
 
@@ -610,6 +611,7 @@ void PRU::initialisePruCommon()
 	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
+	pru_buffer_comm[PRU_XRUN_OCCURRED] = 0;
 
 
 	/* Set up multiplexer info */
@@ -767,6 +769,13 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	while(!gShouldStop) {
+
+		if (pru_buffer_comm[PRU_XRUN_OCCURRED] != 0){
+			codec->reset();
+			codec->initCodec();
+			codec->startAudio(0);
+			pru_buffer_comm[PRU_XRUN_OCCURRED] = 0;
+		}
 
 #ifdef BELA_USE_POLL
 		// Which buffer the PRU was last processing
