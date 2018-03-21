@@ -1304,6 +1304,7 @@ WRITE_LOOP:
      MOV r1, 0 //TODO: Check if really required
 
 /* ########## EVENT LOOP BEGIN ########## */
+MOV r28, 0
 EVENT_LOOP:
 	 // Check if one tx and rx frame of McASP have been processed.
 	 // If yes, increment frame counter.
@@ -1313,6 +1314,17 @@ EVENT_LOOP:
 	 OR r27, r27, (1 << FLAG_BIT_MCASP_RX_PROCESSED)
 	 AND r27, r27, reg_flags
 	 QBEQ NEXT_FRAME, r27, 0x60
+
+     // Check if an error has occurred every 10000 iterations
+     MOV r27, 10000
+     ADD r28, r28, 1
+     QBNE MCASP_CHECK_TX_ERROR_END, r28, r27
+     MCASP_REG_READ_EXT MCASP_XSTAT, r27
+     QBBC MCASP_CHECK_TX_ERROR_END, r27, MCASP_XSTAT_ERROR_BIT
+     MOV r4, 1
+     SBBO r4, reg_comm_addr, COMM_XRUN_OCCURED, 4
+     JMP START
+MCASP_CHECK_TX_ERROR_END:
 
      QBBC EVENT_LOOP, r31, PRU_INTR_BIT_CH0
 /* ########## EVENT LOOP END ########## */
