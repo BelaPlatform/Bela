@@ -189,7 +189,14 @@ private:
 #define PRU_MUX_CONFIG         13
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
-#define PRU_XRUN_OCCURRED	   16
+#define PRU_MCASP_ERROR_OCCURRED	   16
+
+// McASP error codes
+#define MCASP_XSTAT_XUNDRN_BIT          0 // Bit to test if there was an underrun
+#define MCASP_XSTAT_XSYNCERR_BIT        1 // Bit to test if there was an unexpected transmit frame sync
+#define MCASP_XSTAT_XCKFAIL_BIT         2 // Bit to test if there was a transmit clock failure
+#define MCASP_XSTAT_XDMAERR_BIT         7 // Bit to test if there was a transmit DMA error
+#define MCASP_XSTAT_ERROR_BIT			8 // Bit to test if there was a transmit error
 
 short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_0,
@@ -611,7 +618,7 @@ void PRU::initialisePruCommon()
 	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
-	pru_buffer_comm[PRU_XRUN_OCCURRED] = 0;
+	pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] = 0;
 
 
 	/* Set up multiplexer info */
@@ -770,11 +777,42 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	while(!gShouldStop) {
 
-		if (pru_buffer_comm[PRU_XRUN_OCCURRED] != 0){
-			codec->reset();
-			codec->initCodec();
-			codec->startAudio(0);
-			pru_buffer_comm[PRU_XRUN_OCCURRED] = 0;
+		if (pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] != 0){
+			switch(pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED]){
+				case MCASP_XSTAT_XUNDRN_BIT:
+					fprintf(stderr, "McASP transmitter underrun occurred\n");
+                    codec->reset();
+                    codec->initCodec();
+                    codec->startAudio(0);
+					break;
+				case MCASP_XSTAT_XSYNCERR_BIT:
+                    fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
+                    codec->reset();
+                    codec->initCodec();
+                    codec->startAudio(0);
+					break;
+                // Sometimes a transmit clock error arises after boot. If the PRU loop 
+                // continues, the clock error is automatically solved. Hence, no additional 
+                // error handling is required on ARM side.  
+				case MCASP_XSTAT_XCKFAIL_BIT: 
+                    fprintf(stderr, "McASP transmit clock failure occurred\n");
+					break;
+                // Same for DMA error. No action needed on ARM side.
+				case MCASP_XSTAT_XDMAERR_BIT:
+                    fprintf(stderr, "McASP transmit DMA error occurred\n");
+				    break;
+				case MCASP_XSTAT_ERROR_BIT:
+                    fprintf(stderr, "MCASP transmit error occurred\n");
+                    codec->reset();
+                    codec->initCodec();
+                    codec->startAudio(0);
+				    break;
+				default:
+                    fprintf(stderr, "MCASP unknown error (%d) occurred\n", 
+                        pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED]);
+				    break;
+			}
+			pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] = 0;
 		}
 
 #ifdef BELA_USE_POLL
