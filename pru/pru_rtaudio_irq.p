@@ -276,6 +276,7 @@
 #define MCASP_XSTAT_XSYNCERR_BIT        1        // Bit to test if there was an unexpected transmit frame sync
 #define MCASP_XSTAT_XCKFAIL_BIT         2        // Bit to test if there was a transmit clock failure
 #define MCASP_XSTAT_XDMAERR_BIT         7        // Bit to test if there was a transmit DMA error
+#define MCASP_XSTAT_ERROR_BIT			8		 // Bit to test if there was a transmit error
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
     
@@ -1353,6 +1354,7 @@ MCASP_TX_ERROR_HANDLE_START:
      QBBS MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED, r4, MCASP_XSTAT_XSYNCERR_BIT
      QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT
      QBBS MCASP_TX_DMA_ERROR_OCCURRED, r4, MCASP_XSTAT_XDMAERR_BIT
+     QBBS MCASP_TX_ERROR_OCCURRED, r4, MCASP_XSTAT_ERROR_BIT
 
      JMP MCASP_TX_ERROR_HANDLE_END
 
@@ -1376,6 +1378,12 @@ MCASP_TX_CLOCK_FAILURE_OCCURRED:
 MCASP_TX_DMA_ERROR_OCCURRED:
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x80 // Clear DMA error bit (7)
      ADD r3, r3, 1
+     JMP MCASP_TX_ERROR_HANDLE_START
+
+MCASP_TX_ERROR_OCCURRED:
+	 MOV r4, 1
+     SBBO r4, reg_comm_addr, COMM_XRUN_OCCURED, 4
+     JMP START
 
 MCASP_TX_ERROR_HANDLE_END:
      // Offload test data to scratchpad 2 and reload register contents from scratchpad 1
