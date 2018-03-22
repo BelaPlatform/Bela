@@ -276,7 +276,7 @@
 #define MCASP_XSTAT_XSYNCERR_BIT        1        // Bit to test if there was an unexpected transmit frame sync
 #define MCASP_XSTAT_XCKFAIL_BIT         2        // Bit to test if there was a transmit clock failure
 #define MCASP_XSTAT_XDMAERR_BIT         7        // Bit to test if there was a transmit DMA error
-#define MCASP_XSTAT_ERROR_BIT			8		 // Bit to test if there was a transmit error
+#define MCASP_XSTAT_ERROR_BIT           8        // Bit to test if there was a transmit error
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
     
@@ -409,6 +409,12 @@
 //#define GPIO_CLEARDATAOUT 0x190 //SETDATAOUT is CLEARDATAOUT+4
 #define GPIO_OE 0x134 
 #define GPIO_DATAIN 0x138
+
+.macro SEND_ERROR_TO_ARM
+.mparam bit
+MOV r27, 1 << bit
+SBBO r27, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+.endm
 
 .macro READ_GPIO_BITS
 .mparam gpio_data, gpio_num_bit, digital_bit, digital
@@ -1304,7 +1310,8 @@ WRITE_LOOP:
      MOV r1, 0 //TODO: Check if really required
 
 /* ########## EVENT LOOP BEGIN ########## */
-MOV r28, 10000
+#define EVENT_LOOP_TIMEOUT_COUNT 10000
+MOV r28, EVENT_LOOP_TIMEOUT_COUNT
 EVENT_LOOP:
 	 // Check if one tx and rx frame of McASP have been processed.
 	 // If yes, increment frame counter.
@@ -1315,7 +1322,8 @@ EVENT_LOOP:
 	 AND r27, r27, reg_flags
 	 QBEQ NEXT_FRAME, r27, 0x60
 
-     // Check if an error has occurred every 10000 iterations
+     // If we go through EVENT_LOOP_TIMEOUT_COUNT iterations without receiving
+     // an interrupt, check if an error has occurred
      SUB r28, r28, 1
      QBNE MCASP_CHECK_TX_ERROR_END, r28, 0
      MCASP_REG_READ_EXT MCASP_XSTAT, r27
@@ -1336,7 +1344,6 @@ HANDLE_INTERRUPT:
 
      JMP EVENT_LOOP
 /* ########## INTERRUPT HANDLER END ########## */
-
 
 /* ########## McASP TX ISR BEGIN ########## */
 MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
@@ -1368,39 +1375,30 @@ MCASP_TX_ERROR_HANDLE_START:
      JMP MCASP_TX_ERROR_HANDLE_END
 
 MCASP_TX_UNDERRUN_OCCURRED:
-     MOV r4, MCASP_XSTAT_XUNDRN_BIT
-     SBBO r4, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+     SEND_ERROR_TO_ARM MCASP_XSTAT_XUNDRN_BIT
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XUNDRN_BIT // Clear underrun bit (0)
-     ADD r0, r0, 1
      JMP START
 
 MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED:
-     MOV r4, MCASP_XSTAT_XSYNCERR_BIT
-     SBBO r4, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+     SEND_ERROR_TO_ARM MCASP_XSTAT_XSYNCERR_BIT
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XSYNCERR_BIT // Clear frame sync error bit (1)
-     ADD r1, r1, 1
      JMP START
 
 // A McASP transmit clock error is automatically solved by resetting the bit and jumping back
 // to the begin of the error handling routine. Hence no additional error handling is required.
 // The error is not related to the ARM CPU. Thus the ARM CPU is not informed about the error.
 MCASP_TX_CLOCK_FAILURE_OCCURRED:
-     //MOV r4, MCASP_XSTAT_XCKFAIL_BIT 
-     //SBBO r4, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+     //SEND_ERROR_TO_ARM MCASP_XSTAT_XCKFAIL_BIT
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XCKFAIL_BIT // Clear clock failure bit (2)
-     ADD r2, r2, 1
      JMP MCASP_TX_ERROR_HANDLE_START 
 
 MCASP_TX_DMA_ERROR_OCCURRED:
-     MOV r4, MCASP_XSTAT_XDMAERR_BIT
-     SBBO r4, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+     SEND_ERROR_TO_ARM MCASP_XSTAT_XDMAERR_BIT
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XDMAERR_BIT // Clear DMA error bit (7)
-     ADD r3, r3, 1
      JMP START
 
 MCASP_TX_ERROR_OCCURRED:
-	 MOV r4, MCASP_XSTAT_ERROR_BIT
-     SBBO r4, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+     SEND_ERROR_TO_ARM MCASP_XSTAT_ERROR_BIT
      JMP START
 
 MCASP_TX_ERROR_HANDLE_END:

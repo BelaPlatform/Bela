@@ -184,6 +184,7 @@ public:
 
 private:
 	void initialisePruCommon();
+	int testPruError();
 	InternalBelaContext *context;	// Overall settings
 
 	int pru_number;		// Which PRU we use

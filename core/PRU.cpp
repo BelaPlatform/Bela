@@ -729,6 +729,63 @@ int PRU::start(char * const filename)
 	return 0;
 }
 
+int PRU::testPruError()
+{
+	if (unsigned int errorCode = pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED])
+	{
+		rt_fprintf(stderr, "audio frame %llu, errorCode: %d, ", context->audioFramesElapsed, errorCode);
+		int unsigned errorBit = 0;
+		// find the left-most set bit (it should be only one, really)
+		for(errorBit = 0; errorCode >>= 1; ++errorBit)
+			;
+		rt_fprintf(stderr, "errorBit: %d\n", errorBit);
+
+		int ret;
+		switch(errorBit){
+			case MCASP_XSTAT_XUNDRN_BIT:
+				rt_fprintf(stderr, "McASP transmitter underrun occurred\n");
+				codec->reset();
+				codec->initCodec();
+				codec->startAudio(0);
+				ret = 1;
+			break;
+			case MCASP_XSTAT_XSYNCERR_BIT:
+				rt_fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
+				codec->reset();
+				codec->initCodec();
+				codec->startAudio(0);
+				ret = 1;
+			break;
+			// Sometimes a transmit clock error arises after boot. If the PRU loop
+			// continues, the clock error is automatically solved. Hence, no additional
+			// error handling is required on ARM side.
+			case MCASP_XSTAT_XCKFAIL_BIT:
+				rt_fprintf(stderr, "McASP transmit clock failure occurred\n");
+				ret = 0;
+			break;
+			// Same for DMA error. No action needed on ARM side.
+			case MCASP_XSTAT_XDMAERR_BIT:
+				rt_fprintf(stderr, "McASP transmit DMA error occurred\n");
+				ret = 0;
+			break;
+			case MCASP_XSTAT_ERROR_BIT:
+				rt_fprintf(stderr, "MCASP transmit error occurred\n");
+				codec->reset();
+				codec->initCodec();
+				codec->startAudio(0);
+				ret = 1;
+			break;
+			default:
+				rt_fprintf(stderr, "Unknown MCASP PRU error: %d\n", errorCode);
+				ret = 1;
+		}
+		pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] = 0;
+		return ret;
+	} else {
+		return 0;
+	}
+}
+
 // Main loop to read and write data from/to PRU
 void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode)
 {
@@ -777,50 +834,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	while(!gShouldStop) {
 
-		if (pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] != 0){
-			switch(pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED]){
-				case MCASP_XSTAT_XUNDRN_BIT:
-					fprintf(stderr, "McASP transmitter underrun occurred\n");
-                    codec->reset();
-                    codec->initCodec();
-                    codec->startAudio(0);
-					break;
-				case MCASP_XSTAT_XSYNCERR_BIT:
-                    fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
-                    codec->reset();
-                    codec->initCodec();
-                    codec->startAudio(0);
-					break;
-                // Sometimes a transmit clock error arises after boot. If the PRU loop 
-                // continues, the clock error is automatically solved. Hence, no additional 
-                // error handling is required on ARM side.  
-				case MCASP_XSTAT_XCKFAIL_BIT: 
-                    fprintf(stderr, "McASP transmit clock failure occurred\n");
-					break;
-                // Same for DMA error. No action needed on ARM side.
-				case MCASP_XSTAT_XDMAERR_BIT:
-                    fprintf(stderr, "McASP transmit DMA error occurred\n");
-				    break;
-				case MCASP_XSTAT_ERROR_BIT:
-                    fprintf(stderr, "MCASP transmit error occurred\n");
-                    codec->reset();
-                    codec->initCodec();
-                    codec->startAudio(0);
-				    break;
-				default:
-                    fprintf(stderr, "MCASP unknown error (%d) occurred\n", 
-                        pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED]);
-				    break;
-			}
-			pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] = 0;
-		}
-
 #ifdef BELA_USE_POLL
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
 		// Poll
 		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
 			task_sleep_ns(sleepTime);
+			if(testPruError())
+			{
+				break;
+			}
 		}
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
@@ -830,6 +853,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
 		int ret = __wrap_read(rtdm_fd, NULL, 0);
+		testPruError();
 		if(ret < 0)
 		{
 			static int interruptTimeoutCount = 0;
