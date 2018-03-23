@@ -27,8 +27,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 #define ANALOG_LOW	(2048.0 / 65536.0)
 #define ANALOG_HIGH (50000.0 / 65536.0)
 
-const int gDACPinOrder[] = {0, 1, 2, 3, 4, 5, 6, 7};
-
 enum {
 	kStateTestingAudioLeft = 0,
 	kStateTestingAudioRight,
@@ -78,22 +76,23 @@ void render(BelaContext *context, void *userData)
 		
 		// Peak detection on the audio inputs, with offset to catch
 		// DC errors
-		for(int ch = 0; ch < 2; ch++) {
-			if(context->audioIn[2*n + ch] > gPositivePeakLevels[ch])
-				gPositivePeakLevels[ch] = context->audioIn[2*n + ch];
+		for(int ch = 0; ch < context->audioInChannels; ch++) {
+			float value = audioRead(context, n, ch);
+			if(value > gPositivePeakLevels[ch])
+				gPositivePeakLevels[ch] = value;
 			gPositivePeakLevels[ch] += 0.1f;
 			gPositivePeakLevels[ch] *= gPeakLevelDecayRate;
 			gPositivePeakLevels[ch] -= 0.1f;
-			if(context->audioIn[2*n + ch] < gNegativePeakLevels[ch])
-				gNegativePeakLevels[ch] = context->audioIn[2*n + ch];
+			if(value < gNegativePeakLevels[ch])
+				gNegativePeakLevels[ch] = value;
 			gNegativePeakLevels[ch] -= 0.1f;
 			gNegativePeakLevels[ch] *= gPeakLevelDecayRate;
 			gNegativePeakLevels[ch] += 0.1f;
 		}
 		
 		if(gAudioTestState == kStateTestingAudioLeft) {
-			context->audioOut[2*n] = 0.2f * sinf(phase);
-			context->audioOut[2*n + 1] = 0;		
+			audioWrite(context, n, 0, 0.2f * sinf(phase));
+			audioWrite(context, n, 1, 0);
 			
 			frequency = 3000.0;
 			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
@@ -141,8 +140,8 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 		else if(gAudioTestState == kStateTestingAudioRight) {
-			context->audioOut[2*n] = 0;
-			context->audioOut[2*n + 1] = 0.2f * sinf(phase);
+			audioWrite(context, n, 0, 0);
+			audioWrite(context, n, 1, 0.2f * sinf(phase));
 			
 			frequency = 3000.0;
 			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
@@ -190,8 +189,8 @@ void render(BelaContext *context, void *userData)
 		else {
 			// Audio input testing finished. Play tones depending on status of
 			// analog testing
-			context->audioOut[2*n] = gEnvelopeValueL * sinf(phase);
-			context->audioOut[2*n + 1] = gEnvelopeValueR * sinf(phase);
+			audioWrite(context, n, 0, gEnvelopeValueL * sinf(phase));
+			audioWrite(context, n, 1, gEnvelopeValueR * sinf(phase));
 
 			// If one second has gone by with no error, play one sound, else
 			// play another
@@ -224,36 +223,41 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
 		// Change outputs every 512 samples
 		if(sampleCounter < 512) {
-			for(int k = 0; k < 8; k++) {
+			for(int k = 0; k < context->analogOutChannels; k++) {
+				float outValue;
 				if(k == invertChannel)
-					context->analogOut[n*8 + gDACPinOrder[k]] = ANALOG_HIGH;
+					outValue = ANALOG_HIGH;
 				else
-					context->analogOut[n*8 + gDACPinOrder[k]] = 0;
+					outValue = 0;
+				analogWriteOnce(context, n, k, outValue);
 			}
 		}
 		else {
-			for(int k = 0; k < 8; k++) {
+			for(int k = 0; k < context->analogOutChannels; k++) {
+				float outValue;
 				if(k == invertChannel)
-					context->analogOut[n*8 + gDACPinOrder[k]] = 0;
+					outValue = 0;
 				else
-					context->analogOut[n*8 + gDACPinOrder[k]] = ANALOG_HIGH;
+					outValue = ANALOG_HIGH;
+				analogWriteOnce(context, n, k, outValue);
 			}
 		}
 
 		// Read after 256 samples: input should be low
 		if(sampleCounter == 256) {
-			for(int k = 0; k < 8; k++) {
+			for(int k = 0; k < context->analogInChannels; k++) {
+				float inValue = analogRead(context, n, k);
 				if(k == invertChannel) {
-					if(context->analogIn[n*8 + k] < ANALOG_HIGH) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f (inverted)\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+					if(inValue < ANALOG_HIGH) {
+						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f (inverted)\n", k, k, inValue);
 						gLastErrorFrame = context->audioFramesElapsed + n;
 					} else {
 						++gAnalogTestSuccessCounter;
 					}
 				}
 				else {
-					if(context->analogIn[n*8 + k] > ANALOG_LOW) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output LOW --> input %f\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+					if(inValue > ANALOG_LOW) {
+						rt_printf("Analog FAIL [output %d, input %d] -- output LOW --> input %f\n", k, k, inValue);
 						gLastErrorFrame = context->audioFramesElapsed + n;
 					} else {
 						++gAnalogTestSuccessCounter;
@@ -262,18 +266,19 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 		else if(sampleCounter == 768) {
-			for(int k = 0; k < 8; k++) {
+			for(int k = 0; k < context->analogInChannels; k++) {
+				float inValue = analogRead(context, n, k);
 				if(k == invertChannel) {
-					if(context->analogIn[n*8 + k] > ANALOG_LOW) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output LOW input %f (inverted)\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+					if(inValue > ANALOG_LOW) {
+						rt_printf("Analog FAIL [output %d, input %d] -- output LOW input %f (inverted)\n", k, k, inValue);
 						gLastErrorFrame = context->audioFramesElapsed + n;
 					} else {
 						++gAnalogTestSuccessCounter;
 					}
 				}
 				else {
-					if(context->analogIn[n*8 + k] < ANALOG_HIGH) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f\n", gDACPinOrder[k], k, context->analogIn[n*8 + k]);
+					if(inValue < ANALOG_HIGH) {
+						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f\n", k, k, inValue);
 						gLastErrorFrame = context->audioFramesElapsed + n;
 					} else {
 						++gAnalogTestSuccessCounter;
