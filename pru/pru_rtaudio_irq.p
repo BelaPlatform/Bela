@@ -129,8 +129,14 @@
 #define COMM_PRU_NUMBER       		48          // Which PRU this code is running on
 #define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
-#define COMM_BUFFER_SPI_FRAMES 		60    		// How many frames per buffer for analog i/o
-#define COMM_MCASP_TX_ERROR_OCCURED			64 			// Signales the ARM CPU to reset audio codecs
+#define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
+#define COMM_ERROR_OCCURED      	64          // Signals the ARM CPU that an error happened
+
+#define ARM_ERROR_TIMEOUT 1
+#define ARM_ERROR_XUNDRUN 2
+#define ARM_ERROR_XSYNCERR 3
+#define ARM_ERROR_XCKFAIL 4
+#define ARM_ERROR_XDMAERR 5
 
 // General constants for local PRU peripherals (used for interrupt configuration)
 #define PRU_ICSS_INTC_LOCAL     0x00020000
@@ -411,9 +417,9 @@
 #define GPIO_DATAIN 0x138
 
 .macro SEND_ERROR_TO_ARM
-.mparam bit
-MOV r27, 1 << bit
-SBBO r27, reg_comm_addr, COMM_MCASP_TX_ERROR_OCCURED, 4
+.mparam error
+MOV r27, error
+SBBO r27, reg_comm_addr, COMM_ERROR_OCCURED, 4
 .endm
 
 .macro READ_GPIO_BITS
@@ -1310,9 +1316,10 @@ WRITE_LOOP:
      MOV r1, 0 //TODO: Check if really required
 
 /* ########## EVENT LOOP BEGIN ########## */
-#define EVENT_LOOP_TIMEOUT_COUNT 10000
-MOV r28, EVENT_LOOP_TIMEOUT_COUNT
+#define EVENT_LOOP_TIMEOUT_COUNT 10000000
 EVENT_LOOP:
+MOV r28, EVENT_LOOP_TIMEOUT_COUNT
+INNER_EVENT_LOOP:
 	 // Check if one tx and rx frame of McASP have been processed.
 	 // If yes, increment frame counter.
 	 // TODO: Not sure if really needed. Maybe remove to improve performance.
@@ -1322,16 +1329,15 @@ EVENT_LOOP:
 	 AND r27, r27, reg_flags
 	 QBEQ NEXT_FRAME, r27, 0x60
 
-     // If we go through EVENT_LOOP_TIMEOUT_COUNT iterations without receiving
-     // an interrupt, check if an error has occurred
      SUB r28, r28, 1
      QBNE MCASP_CHECK_TX_ERROR_END, r28, 0
-     MCASP_REG_READ_EXT MCASP_XSTAT, r27
-     QBBC MCASP_CHECK_TX_ERROR_END, r27, MCASP_XSTAT_ERROR_BIT
-     JMP MCASP_TX_ERROR_HANDLE_START
+     // If we go through EVENT_LOOP_TIMEOUT_COUNT iterations without receiving
+     // an interrupt, an error must have occurred
+     SEND_ERROR_TO_ARM ARM_ERROR_TIMEOUT
+     JMP START // TODO: should HALT and wait for ARM to restart
 MCASP_CHECK_TX_ERROR_END:
 
-     QBBC EVENT_LOOP, r31, PRU_INTR_BIT_CH0
+     QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH0
 /* ########## EVENT LOOP END ########## */
      
 
@@ -1351,60 +1357,40 @@ MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x40 // clear XSTAFRM status bit
 
-     // Count error interrupts for test purposes
-     // - r0 used for transmit underrun counter
-     // - r1 used for unexpected transmit frame sync
-     // - r2 used for transmit clock failure
-     // - r3 used for transmit DMA error
-     // - r4 used for McASP XSTAT reg content
-
-     // Offload r0-r4 to scratchpad 1 and load data from scratchpad 2
-     XOUT SCRATCHPAD_ID_BANK1, r0, 20
-     XIN SCRATCHPAD_ID_BANK2, r0, 20
-
-MCASP_TX_ERROR_HANDLE_START:
      // Load McASP XSTAT register content and check if error occurred
      MCASP_REG_READ_EXT MCASP_XSTAT, r4
 
      QBBS MCASP_TX_UNDERRUN_OCCURRED, r4, MCASP_XSTAT_XUNDRN_BIT
      QBBS MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED, r4, MCASP_XSTAT_XSYNCERR_BIT
-     QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT
      QBBS MCASP_TX_DMA_ERROR_OCCURRED, r4, MCASP_XSTAT_XDMAERR_BIT
-     QBBS MCASP_TX_ERROR_OCCURRED, r4, MCASP_XSTAT_ERROR_BIT
+     //QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT // this is always set so we ignore it for now
 
      JMP MCASP_TX_ERROR_HANDLE_END
 
 MCASP_TX_UNDERRUN_OCCURRED:
-     SEND_ERROR_TO_ARM MCASP_XSTAT_XUNDRN_BIT
+     SEND_ERROR_TO_ARM ARM_ERROR_XUNDRUN
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XUNDRN_BIT // Clear underrun bit (0)
-     JMP START
+     JMP START // TODO: should HALT and wait for ARM to restart
 
 MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED:
-     SEND_ERROR_TO_ARM MCASP_XSTAT_XSYNCERR_BIT
+     SEND_ERROR_TO_ARM ARM_ERROR_XSYNCERR
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XSYNCERR_BIT // Clear frame sync error bit (1)
-     JMP START
+     JMP START // TODO: should HALT and wait for ARM to restart
 
-// A McASP transmit clock error is automatically solved by resetting the bit and jumping back
-// to the begin of the error handling routine. Hence no additional error handling is required.
-// The error is not related to the ARM CPU. Thus the ARM CPU is not informed about the error.
 MCASP_TX_CLOCK_FAILURE_OCCURRED:
-     //SEND_ERROR_TO_ARM MCASP_XSTAT_XCKFAIL_BIT
+// A McASP transmit clock error is automatically solved by resetting the bit and jumping back
+// to the begin of the error handling routine. Hence no additional error handling should be required.
+// in practice, we would still leave it to ARM to decide what to do
+     SEND_ERROR_TO_ARM ARM_ERROR_XCKFAIL
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XCKFAIL_BIT // Clear clock failure bit (2)
-     JMP MCASP_TX_ERROR_HANDLE_START 
+     JMP MCASP_TX_ERROR_HANDLE_END
 
 MCASP_TX_DMA_ERROR_OCCURRED:
-     SEND_ERROR_TO_ARM MCASP_XSTAT_XDMAERR_BIT
+     SEND_ERROR_TO_ARM ARM_ERROR_XDMAERR
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XDMAERR_BIT // Clear DMA error bit (7)
-     JMP START
-
-MCASP_TX_ERROR_OCCURRED:
-     SEND_ERROR_TO_ARM MCASP_XSTAT_ERROR_BIT
-     JMP START
+     JMP START // TODO: should HALT and wait for ARM to restart
 
 MCASP_TX_ERROR_HANDLE_END:
-     // Offload test data to scratchpad 2 and reload register contents from scratchpad 1
-     XOUT SCRATCHPAD_ID_BANK2, r0, 20
-     XIN SCRATCHPAD_ID_BANK1, r0, 20
 
      // Check if we are in first frame period. If true, transmit full frame to FIFO.
      // Otherwise toggle flag and jump back to event loop

@@ -189,14 +189,14 @@ private:
 #define PRU_MUX_CONFIG         13
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
-#define PRU_MCASP_ERROR_OCCURRED	   16
+#define PRU_ERROR_OCCURRED 16
 
-// McASP error codes
-#define MCASP_XSTAT_XUNDRN_BIT          0 // Bit to test if there was an underrun
-#define MCASP_XSTAT_XSYNCERR_BIT        1 // Bit to test if there was an unexpected transmit frame sync
-#define MCASP_XSTAT_XCKFAIL_BIT         2 // Bit to test if there was a transmit clock failure
-#define MCASP_XSTAT_XDMAERR_BIT         7 // Bit to test if there was a transmit DMA error
-#define MCASP_XSTAT_ERROR_BIT			8 // Bit to test if there was a transmit error
+// error codes sent from the PRU
+#define ARM_ERROR_TIMEOUT 1
+#define ARM_ERROR_XUNDRUN 2
+#define ARM_ERROR_XSYNCERR 3
+#define ARM_ERROR_XCKFAIL 4
+#define ARM_ERROR_XDMAERR 5
 
 short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_0,
@@ -618,7 +618,7 @@ void PRU::initialisePruCommon()
 	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
-	pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] = 0;
+	pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
 
 
 	/* Set up multiplexer info */
@@ -731,55 +731,44 @@ int PRU::start(char * const filename)
 
 int PRU::testPruError()
 {
-	if (unsigned int errorCode = pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED])
+	if (unsigned int errorCode = pru_buffer_comm[PRU_ERROR_OCCURRED])
 	{
-		rt_fprintf(stderr, "audio frame %llu, errorCode: %d, ", context->audioFramesElapsed, errorCode);
-		int unsigned errorBit = 0;
-		// find the left-most set bit (it should be only one, really)
-		for(errorBit = 0; errorCode >>= 1; ++errorBit)
-			;
-		rt_fprintf(stderr, "errorBit: %d\n", errorBit);
-
+		rt_fprintf(stderr, "audio frame %llu, errorCode: %d\n", context->audioFramesElapsed, errorCode);
 		int ret;
-		switch(errorBit){
-			case MCASP_XSTAT_XUNDRN_BIT:
+		switch(errorCode){
+			case ARM_ERROR_XUNDRUN:
 				rt_fprintf(stderr, "McASP transmitter underrun occurred\n");
-				codec->reset();
-				codec->initCodec();
-				codec->startAudio(0);
 				ret = 1;
 			break;
-			case MCASP_XSTAT_XSYNCERR_BIT:
+			case ARM_ERROR_XSYNCERR:
 				rt_fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
-				codec->reset();
-				codec->initCodec();
-				codec->startAudio(0);
 				ret = 1;
 			break;
 			// Sometimes a transmit clock error arises after boot. If the PRU loop
 			// continues, the clock error is automatically solved. Hence, no additional
 			// error handling is required on ARM side.
-			case MCASP_XSTAT_XCKFAIL_BIT:
+			case ARM_ERROR_XCKFAIL:
 				rt_fprintf(stderr, "McASP transmit clock failure occurred\n");
-				ret = 0;
+				ret = 1;
 			break;
 			// Same for DMA error. No action needed on ARM side.
-			case MCASP_XSTAT_XDMAERR_BIT:
+			case ARM_ERROR_XDMAERR:
 				rt_fprintf(stderr, "McASP transmit DMA error occurred\n");
-				ret = 0;
+				ret = 1;
 			break;
-			case MCASP_XSTAT_ERROR_BIT:
-				rt_fprintf(stderr, "MCASP transmit error occurred\n");
-				codec->reset();
-				codec->initCodec();
-				codec->startAudio(0);
+			case ARM_ERROR_TIMEOUT:
+				rt_fprintf(stderr, "PRU event loop timed out\n");
 				ret = 1;
 			break;
 			default:
-				rt_fprintf(stderr, "Unknown MCASP PRU error: %d\n", errorCode);
+				rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
 				ret = 1;
 		}
-		pru_buffer_comm[PRU_MCASP_ERROR_OCCURRED] = 0;
+		codec->reset();
+		codec->initCodec();
+		codec->startAudio(0);
+		pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
+                // TODO: should restart PRU and codec from scratch
 		return ret;
 	} else {
 		return 0;
