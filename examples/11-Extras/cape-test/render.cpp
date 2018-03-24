@@ -90,9 +90,25 @@ void render(BelaContext *context, void *userData)
 			gNegativePeakLevels[ch] += 0.1f;
 		}
 		
+		int enabledChannel;
+		int disabledChannel;
+		const char* enabledChannelLabel;
+		const char* disabledChannelLabel;
 		if(gAudioTestState == kStateTestingAudioLeft) {
-			audioWrite(context, n, 0, 0.2f * sinf(phase));
-			audioWrite(context, n, 1, 0);
+			enabledChannel = 0;
+			disabledChannel = 1;
+			enabledChannelLabel = "Left";
+			disabledChannelLabel = "Right";
+		} else if (gAudioTestState == kStateTestingAudioRight) {
+			enabledChannel = 1;
+			disabledChannel = 0;
+			enabledChannelLabel = "Right";
+			disabledChannelLabel = "Left";
+		}
+		if(gAudioTestState == kStateTestingAudioLeft || gAudioTestState  == kStateTestingAudioRight)
+		{
+			audioWrite(context, n, enabledChannel, 0.2f * sinf(phase));
+			audioWrite(context, n, disabledChannel, 0);
 			
 			frequency = 3000.0;
 			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
@@ -101,19 +117,27 @@ void render(BelaContext *context, void *userData)
 			
 			gAudioTestStateSampleCount++;
 			if(gAudioTestStateSampleCount >= gAudioTestStateSampleThreshold) {
-				// Check if we have the expected input: signal on the left but not
-				// on the right. Also check that there is not too much DC offset on the
-				// inactive signal
-				if((gPositivePeakLevels[0] - gNegativePeakLevels[0]) >= gPeakLevelHighThreshold 
-					&& (gPositivePeakLevels[1] -  gNegativePeakLevels[1]) <= gPeakLevelLowThreshold &&
-					fabsf(gPositivePeakLevels[1]) < gDCOffsetThreshold &&
-					fabsf(gNegativePeakLevels[1]) < gDCOffsetThreshold) {
+				// Check if we have the expected input: signal on the enabledChannel but not
+				// on the disabledChannel. Also check that there is not too much DC offset on the
+				// inactive channel
+				if((gPositivePeakLevels[enabledChannel] - gNegativePeakLevels[enabledChannel]) >= gPeakLevelHighThreshold 
+					&& (gPositivePeakLevels[disabledChannel] -  gNegativePeakLevels[disabledChannel]) <= gPeakLevelLowThreshold &&
+					fabsf(gPositivePeakLevels[disabledChannel]) < gDCOffsetThreshold &&
+					fabsf(gNegativePeakLevels[disabledChannel]) < gDCOffsetThreshold) {
 					// Successful test: increment counter
 					gAudioTestSuccessCounter++;
 					if(gAudioTestSuccessCounter >= gAudioTestSuccessCounterThreshold) {
-						rt_printf("Audio Left test succesful\n");
-						rt_printf("Testing audio Right\n");
-						gAudioTestState = kStateTestingAudioRight;
+						rt_printf("Audio %s test successful\n", enabledChannelLabel);
+						if(gAudioTestState == kStateTestingAudioLeft)
+						{
+							gAudioTestState = kStateTestingAudioRight;
+							rt_printf("Testing audio Right\n");
+						} else if(gAudioTestState == kStateTestingAudioRight)
+						{
+							gAudioTestState = kStateTestingAudioDone;
+							rt_printf("Testing analog\n");
+						}
+
 						gAudioTestStateSampleCount = 0;
 						gAudioTestSuccessCounter = 0;
 					}
@@ -122,69 +146,22 @@ void render(BelaContext *context, void *userData)
 				else {
 					if(!((context->audioFramesElapsed + n) % 22050)) {
 						// Debugging print messages
-						if((gPositivePeakLevels[0] - gNegativePeakLevels[0]) < gPeakLevelHighThreshold)
-							rt_printf("Left Audio In FAIL: insufficient signal: %f\n", 
-										gPositivePeakLevels[0] - gNegativePeakLevels[0]);
-						else if(gPositivePeakLevels[1] -  gNegativePeakLevels[1] > gPeakLevelLowThreshold)
-							rt_printf("Right Audio In FAIL: signal present when it should not be: %f\n",
-										gPositivePeakLevels[1] -  gNegativePeakLevels[1]);
-						else if(fabsf(gPositivePeakLevels[1]) >= gDCOffsetThreshold ||
-								fabsf(gNegativePeakLevels[1]) >= gDCOffsetThreshold)
-							rt_printf("Right Audio In FAIL: DC offset: (%f, %f)\n",
-										gPositivePeakLevels[1], gNegativePeakLevels[1]);						
+						if((gPositivePeakLevels[enabledChannel] - gNegativePeakLevels[enabledChannel]) < gPeakLevelHighThreshold)
+							rt_printf("%s Audio In FAIL: insufficient signal: %f\n", enabledChannelLabel,
+										gPositivePeakLevels[enabledChannel] - gNegativePeakLevels[enabledChannel]);
+						else if(gPositivePeakLevels[disabledChannel] -  gNegativePeakLevels[disabledChannel] > gPeakLevelLowThreshold)
+							rt_printf("%s Audio In FAIL: signal present when it should not be: %f\n", disabledChannelLabel,
+										gPositivePeakLevels[disabledChannel] -  gNegativePeakLevels[disabledChannel]);
+						else if(fabsf(gPositivePeakLevels[disabledChannel]) >= gDCOffsetThreshold ||
+								fabsf(gNegativePeakLevels[disabledChannel]) >= gDCOffsetThreshold)
+							rt_printf("%s Audio In FAIL: DC offset: (%f, %f)\n", disabledChannelLabel,
+										gPositivePeakLevels[disabledChannel], gNegativePeakLevels[disabledChannel]);
 					}
 					gAudioTestSuccessCounter--;
 					if(gAudioTestSuccessCounter <= 0)
 						gAudioTestSuccessCounter = 0;
 				}
 			}
-		}
-		else if(gAudioTestState == kStateTestingAudioRight) {
-			audioWrite(context, n, 0, 0);
-			audioWrite(context, n, 1, 0.2f * sinf(phase));
-			
-			frequency = 3000.0;
-			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
-			if(phase >= M_PI)
-				phase -= 2.0f * (float)M_PI;
-			
-			gAudioTestStateSampleCount++;
-			if(gAudioTestStateSampleCount >= gAudioTestStateSampleThreshold) {
-				// Check if we have the expected input: signal on the left but not
-				// on the right
-				if((gPositivePeakLevels[1] - gNegativePeakLevels[1]) >= gPeakLevelHighThreshold 
-					&& (gPositivePeakLevels[0] -  gNegativePeakLevels[0]) <= gPeakLevelLowThreshold &&
-					fabsf(gPositivePeakLevels[0]) < gDCOffsetThreshold &&
-					fabsf(gNegativePeakLevels[0]) < gDCOffsetThreshold) {
-					// Successful test: increment counter
-					gAudioTestSuccessCounter++;
-					if(gAudioTestSuccessCounter >= gAudioTestSuccessCounterThreshold) {
-						gAudioTestSuccessCounter = 0;							
-						gAudioTestStateSampleCount = 0;
-						rt_printf("Audio Right test succesful\n");
-						rt_printf("Testing analog\n");
-						gAudioTestState = kStateTestingAudioDone;
-					}
-				}
-				else {
-					if(!((context->audioFramesElapsed + n) % 22050)) {
-						// Debugging print messages
-						if((gPositivePeakLevels[1] - gNegativePeakLevels[1]) < gPeakLevelHighThreshold)
-							rt_printf("Right Audio In FAIL: insufficient signal: %f\n", 
-										gPositivePeakLevels[1] - gNegativePeakLevels[1]);
-						else if(gPositivePeakLevels[0] -  gNegativePeakLevels[0] > gPeakLevelLowThreshold)
-							rt_printf("Left Audio In FAIL: signal present when it should not be: %f\n",
-										gPositivePeakLevels[0] -  gNegativePeakLevels[0]);
-						else if(fabsf(gPositivePeakLevels[0]) >= gDCOffsetThreshold ||
-								fabsf(gNegativePeakLevels[0]) >= gDCOffsetThreshold)
-							rt_printf("Left Audio In FAIL: DC offset: (%f, %f)\n",
-										gPositivePeakLevels[0], gNegativePeakLevels[0]);						
-					}
-					gAudioTestSuccessCounter--;
-					if(gAudioTestSuccessCounter <= 0)
-						gAudioTestSuccessCounter = 0;
-				}
-			}			
 		}
 		else {
 			// Audio input testing finished. Play tones depending on status of
