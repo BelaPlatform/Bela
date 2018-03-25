@@ -883,7 +883,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			
 				
 				// Value from the PRU is ahead by 1 + (frame size % 8); correct that when unrolling here.
-				int multiplexerChannelLastFrame = (pruMuxReference - 1 - (context->analogFrames % 8) + context->multiplexerChannels) 
+				int multiplexerChannelLastFrame = (pruMuxReference - 1 - (hardware_analog_frames % 8) + context->multiplexerChannels)
 													% context->multiplexerChannels;
 				
 				// Add 1, wrapping around, to get the starting channel		
@@ -894,10 +894,12 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 					unsigned int muxChannelCount = 0;
 					int multiplexerChannel = multiplexerChannelLastFrame;
 
-					for(int n = context->analogFrames - 1; n >= 0; n--) {
+					for(int n = hardware_analog_frames - 1; n >= 0; n--) {
 						for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+							 // rather than supporting all possible combinations of (non-)interleavead/(non-)uniform,
+							 // we go back to the raw samples and convert them again.
 							context->multiplexerAnalogIn[multiplexerChannel * context->analogInChannels + ch] =
-								context->analogIn[n * context->analogInChannels + ch];
+								analogInRaw[n * context->analogInChannels + ch] / 65536.f;
 						}
 
 						multiplexerChannel--;

@@ -1334,10 +1334,11 @@ var belaSocket = io('/IDE');
 // scope websocket
 var ws;
 
-ws = new WebSocket("ws://192.168.7.2:5432/scope_control");
+var wsAddress = "ws://" + location.host + ":5432/scope_control";
+ws = new WebSocket(wsAddress);
 var ws_onerror = function ws_onerror(e) {
 	setTimeout(function () {
-		ws = new WebSocket("ws://192.168.7.2:5432/scope_control");
+		ws = new WebSocket(wsAddress);
 		ws.onerror = ws_onerror;
 		ws.onopen = ws_onopen;
 		ws.onmessage = ws_onmessage;
