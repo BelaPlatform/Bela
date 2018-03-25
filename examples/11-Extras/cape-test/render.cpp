@@ -23,14 +23,19 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
+#include <Gpio.h>
 
-#define ANALOG_LOW	(2048.0 / 65536.0)
-#define ANALOG_HIGH (50000.0 / 65536.0)
+float ANALOG_OUT_LOW;
+float ANALOG_OUT_HIGH;
+float ANALOG_IN_LOW;
+float ANALOG_IN_HIGH;
 
 enum {
 	kStateTestingAudioLeft = 0,
 	kStateTestingAudioRight,
 	kStateTestingAudioDone,
+	kStateTestingAnalog,
+	kStateTestingAnalogDone,
 	kStateTestingNone
 };
 
@@ -53,14 +58,40 @@ int gAudioTestSuccessCounter = 0;
 const int gAudioTestSuccessCounterThreshold = 64;
 const int gAudioTestStateSampleThreshold = 16384;
 
+Gpio* led1;
+Gpio* led2;
+
 bool setup(BelaContext *context, void *userData)
 {
 	printf("To prepare for this test you should physically connect each audio and analog output back to its respective input\n");
+	if(context->analogOutChannels == 0)
+	{
+		printf("On Bela Mini, feed back the line out L to audio in L and analogs 0, 2, 4, 6, and a feed the line out R to audio in L and analogs 1, 3, 5 ,7\n");
+		// Bela Mini: it has no analog outs, so we feed the
+		// analog inputs from the line out (DC-coupled).
+		ANALOG_OUT_LOW = -1; // 0.19V
+		ANALOG_OUT_HIGH = 1; // 2.6V
+		ANALOG_IN_LOW = 0.15;
+		ANALOG_IN_HIGH = 0.5;
+		// also init the LEDs as outputs
+		led1 = new Gpio;
+		led1->open(87, OUTPUT);
+		led2 = new Gpio;
+		led2->open(89, OUTPUT);
+	} else {
+		ANALOG_OUT_LOW = 0;
+		ANALOG_OUT_HIGH = 50000.0 / 65536.0;
+		ANALOG_IN_LOW = 2048.0 / 65536.0;
+		ANALOG_IN_HIGH = 50000.0 / 65536.0;
+	}
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
+	
+	// float* aoc = (float*)&context->analogOutChannels;
+	// *aoc = 0; // simulate Bela Mini. Should also change the condition in setup() accordingly
 	static float phase = 0.0;
 	static int sampleCounter = 0;
 	static int invertChannel = 0;
@@ -69,6 +100,12 @@ void render(BelaContext *context, void *userData)
 	if(gAudioTestState == kStateTestingNone){
 		gAudioTestState = kStateTestingAudioLeft;
 		rt_printf("Testing audio left\n");
+	}
+
+	if(gAudioTestState == kStateTestingAudioDone)
+	{
+		gAudioTestState = kStateTestingAnalog;
+		rt_printf("Testing analog\n");
 	}
 
 	// Play a sine wave on the audio output
@@ -135,7 +172,6 @@ void render(BelaContext *context, void *userData)
 						} else if(gAudioTestState == kStateTestingAudioRight)
 						{
 							gAudioTestState = kStateTestingAudioDone;
-							rt_printf("Testing analog\n");
 						}
 
 						gAudioTestStateSampleCount = 0;
@@ -163,7 +199,11 @@ void render(BelaContext *context, void *userData)
 				}
 			}
 		}
-		else {
+		if(
+			gAudioTestState == kStateTestingAnalogDone || // Bela Mini: the audio outs are used also for testing analogs, so we only play the tone at the end of all tests
+			(gAudioTestState >= kStateTestingAudioDone && context->analogOutChannels) // Bela: we play as soon as testing audio ends, while live-testing the analogs.
+		)
+		{
 			// Audio input testing finished. Play tones depending on status of
 			// analog testing
 			audioWrite(context, n, 0, gEnvelopeValueL * sinf(phase));
@@ -185,6 +225,14 @@ void render(BelaContext *context, void *userData)
 					gEnvelopeSampleCount = 0;
 				}
 				frequency = 880.0;
+				if(led1)
+				{
+					led1->write(gEnvelopeValueL > 0.2);
+				}
+				if(led2)
+				{
+					led2->write(gEnvelopeValueR > 0.2);
+				}
 			} else {
 				gEnvelopeValueL = gEnvelopeValueR = 0.5;
 				gEnvelopeLastChannel = 0;
@@ -197,92 +245,86 @@ void render(BelaContext *context, void *userData)
 		}
 	}
 
-	for(unsigned int n = 0; n < context->analogFrames; n++) {
-		// Change outputs every 512 samples
-		if(sampleCounter < 512) {
-			for(int k = 0; k < context->analogOutChannels; k++) {
+	unsigned int outChannels = context->analogOutChannels ? context->analogOutChannels : context->audioOutChannels;
+	unsigned int outFrames = context->analogOutChannels ? context->analogFrames : context->audioFrames;
+	if(gAudioTestState == kStateTestingAnalog)
+	{
+		for(unsigned int n = 0; n < outFrames; n++) {
+			// Change outputs every 512 samples
+			for(int k = 0; k < outChannels; k++) {
 				float outValue;
-				if(k == invertChannel)
-					outValue = ANALOG_HIGH;
+				if((k % outChannels) == (invertChannel % outChannels))
+					outValue = sampleCounter < 512 ? ANALOG_OUT_HIGH : ANALOG_OUT_LOW;
 				else
-					outValue = 0;
-				analogWriteOnce(context, n, k, outValue);
-			}
-		}
-		else {
-			for(int k = 0; k < context->analogOutChannels; k++) {
-				float outValue;
-				if(k == invertChannel)
-					outValue = 0;
+					outValue = sampleCounter < 512 ? ANALOG_OUT_LOW : ANALOG_OUT_HIGH;
+				if(context->analogOutChannels == 0)
+					audioWrite(context, n, k%2, outValue); // Bela Mini, using audio outs instead
 				else
-					outValue = ANALOG_HIGH;
-				analogWriteOnce(context, n, k, outValue);
+					analogWriteOnce(context, n, k, outValue); // Bela
 			}
 		}
 
-		// Read after 256 samples: input should be low
-		if(sampleCounter == 256) {
-			for(int k = 0; k < context->analogInChannels; k++) {
-				float inValue = analogRead(context, n, k);
-				if(k == invertChannel) {
-					if(inValue < ANALOG_HIGH) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f (inverted)\n", k, k, inValue);
+		for(unsigned int n = 0; n < context->analogFrames; n++) {
+			// Read after 256 samples: input should be low (high for inverted)
+			// Read after 768 samples: input should be high (low for inverted)
+			if(sampleCounter == 256 || sampleCounter == 768) {
+				for(int k = 0; k < context->analogInChannels; k++) {
+					float inValue = analogRead(context, n, k);
+					bool inverted = ((k % outChannels) == (invertChannel % outChannels));
+					if(
+						(
+							inverted &&
+							(
+								(sampleCounter == 256 && inValue < ANALOG_IN_HIGH) ||
+								(sampleCounter == 768 && inValue > ANALOG_IN_LOW)
+							)
+						) || (
+							!inverted &&
+							(
+								(sampleCounter == 256 && inValue > ANALOG_IN_LOW) ||
+								(sampleCounter == 768 && inValue < ANALOG_IN_HIGH)
+							)
+						)
+					)
+					{
+						rt_printf("Analog FAIL [output %d, input %d] -- output %s input %f %s\n", 
+							k % outChannels, 
+							k,
+							(sampleCounter == 256 && inverted) || (sampleCounter == 768 && !inverted) ? "HIGH" : "LOW",
+							inValue,
+							inverted ? "(inverted channel)" : "");
 						gLastErrorFrame = context->audioFramesElapsed + n;
-					} else {
-						++gAnalogTestSuccessCounter;
-					}
-				}
-				else {
-					if(inValue > ANALOG_LOW) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output LOW --> input %f\n", k, k, inValue);
-						gLastErrorFrame = context->audioFramesElapsed + n;
-					} else {
-						++gAnalogTestSuccessCounter;
-					}
-				}
-			}
-		}
-		else if(sampleCounter == 768) {
-			for(int k = 0; k < context->analogInChannels; k++) {
-				float inValue = analogRead(context, n, k);
-				if(k == invertChannel) {
-					if(inValue > ANALOG_LOW) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output LOW input %f (inverted)\n", k, k, inValue);
-						gLastErrorFrame = context->audioFramesElapsed + n;
-					} else {
-						++gAnalogTestSuccessCounter;
-					}
-				}
-				else {
-					if(inValue < ANALOG_HIGH) {
-						rt_printf("Analog FAIL [output %d, input %d] -- output HIGH input %f\n", k, k, inValue);
-						gLastErrorFrame = context->audioFramesElapsed + n;
+						gAnalogTestSuccessCounter = 0;
 					} else {
 						++gAnalogTestSuccessCounter;
 					}
 				}
 			}
-		}
 
-		if(++sampleCounter >= 1024) {
-			sampleCounter = 0;
-			invertChannel++;
-			if(invertChannel >= 8)
-				invertChannel = 0;
-		}
-		if(gAnalogTestSuccessCounter >= 500) {
-			static bool notified = false;
-			if(!notified)
-				rt_printf("Analog test successful\n");
-			notified = true;
+			if(++sampleCounter >= 1024) {
+				sampleCounter = 0;
+				invertChannel++;
+				if(invertChannel >= 8)
+					invertChannel = 0;
+			}
+			if(gAnalogTestSuccessCounter >= 500) {
+				static bool notified = false;
+				if(!notified)
+				{
+					rt_printf("Analog test successful\n");
+					gAudioTestState = kStateTestingAnalogDone;
+
+				}
+				notified = true;
+			}
 		}
 	}
-
 }
 
 void cleanup(BelaContext *context, void *userData)
 {
-
+	delete led1;
+	delete led2;
 }
 
 /**
