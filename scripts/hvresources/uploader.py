@@ -403,29 +403,28 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                     )
                     r.raise_for_status()
 
-                    # write the reply to a temporary file
-                    c_zip_path = os.path.join(temp_dir, "archive.{0}.zip".format(g))
-                    with open(c_zip_path, "wb") as f:
-                        f.write(r.content)
-
-                    # unzip the files to where they belong
+                    # prepare the target directory for the files
                     if b:
                         target_dir = os.path.join(os.path.abspath(os.path.expanduser(output_dirs[0])), g)
                     else:
                         target_dir = os.path.abspath(os.path.expanduser(output_dirs[i]))
                     if not os.path.exists(target_dir):
                         os.makedirs(target_dir) # ensure that the output directory exists
-                    if archive_only:
-                        dest_zip_path = os.path.join(target_dir, os.path.basename(c_zip_path))
-                        os.rename(c_zip_path, dest_zip_path)
-                    else:
+
+                    # write the reply to file to the final destination if archive_only, else temporary
+                    c_zip_path = os.path.join(target_dir if archive_only else temp_dir, "archive.{0}.zip".format(g))
+                    with open(c_zip_path, "wb") as f:
+                        f.write(r.content)
+
+                    if not archive_only:
+                        # unzip the files to where they belong
                         __unzip(c_zip_path, target_dir)
 
-                    if g == "c-src" and y and not archive_only:
-                        keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
-                        for f in os.listdir(target_dir):
-                            if not f.endswith(keep_files):
-                                os.remove(os.path.join(target_dir, f))
+                        if g == "c-src" and y:
+                            keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
+                            for f in os.listdir(target_dir):
+                                if not f.endswith(keep_files):
+                                    os.remove(os.path.join(target_dir, f))
 
                     print "  * {0}: {1}".format(g, target_dir)
                 else:

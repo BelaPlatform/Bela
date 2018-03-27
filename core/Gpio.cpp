@@ -24,7 +24,7 @@ int Gpio::open(unsigned int pin, unsigned int direction, bool unexport){
 	pin = pin - bank * 32;
 	pinMask = 1 << pin;
 	uint32_t gpioBase = GPIO_ADDRESSES[bank];
-	gpio = (uint32_t *)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, gpioBase);
+	gpio = (uint32_t *)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, gpioBase); // NOWRAP
 	if(gpio == MAP_FAILED){
 		fprintf(stderr, "Unable to map GPIO pin %u\n", pin);
 		return -2;

@@ -1,0 +1,33 @@
+#!/bin/bash
+BELA_ROOT=/root/Bela
+XENO_CONFIG=/usr/xenomai/bin/xeno-config
+BELA_CXXFLAGS="-march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math"
+while [ -n "$1" ]
+do
+	case $1 in
+		--prefix)
+			echo $BELA_ROOT
+		;;
+		--cflags)
+			echo $BELA_CXXFLAGS
+		;;
+		--cxxflags)
+			echo $BELA_CXXFLAGS
+		;;
+		--ldflags)
+			echo "`$XENO_CONFIG --skin=posix --ldflags --no-auto-init`"
+		;;
+		--defines)
+			echo "-DXENOMAI_SKIN_posix"
+		;;
+		--includes)
+			echo /root/Bela/include
+		;;
+		--libraries)
+			echo -L/usr/xenomai/lib -L/root/Bela/lib -lbela -lcobalt -lmodechk -lpthread -lrt
+		;;
+
+	esac
+	shift
+done
+

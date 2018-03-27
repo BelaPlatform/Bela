@@ -14,6 +14,7 @@
 
 #include "../include/I2c_Codec.h"
 
+#define TLV320_DSP_MODE
 I2c_Codec::I2c_Codec()
 : running(false), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
 {}
@@ -24,7 +25,7 @@ int I2c_Codec::initCodec()
 	// Write the reset register of the codec
 	if(writeRegister(0x01, 0x80)) // Software reset register
 	{
-		cout << "Failed to reset codec\n";
+		fprintf(stderr, "Failed to reset codec\n");
 		return 1;
 	}
 
@@ -71,9 +72,17 @@ int I2c_Codec::startAudio(int dual_rate)
 	}
 	if(writeRegister(0x08, 0xC0))	// Audio serial control register A: BLCK, WCLK outputs
 		return 1;
-	if(writeRegister(0x09, 0x40))	// Audio serial control register B: DSP mode, word len 16 bits
+#ifdef TLV320_DSP_MODE // to use with old PRU code
+	if(writeRegister(0x09, 0x40))   // Audio serial control register B: DSP mode, word len 16 bits
+#else
+	if(writeRegister(0x09, 0x00))   // Audio serial control register B: I2S mode, word len 16 bits
+#endif
 		return 1;
-	if(writeRegister(0x0A, 0x00))	// Audio serial control register C: 0 bit offset
+#ifdef TLV320_DSP_MODE // to use with old PRU code
+	if(writeRegister(0x0A, 0x00))   // Audio serial control register C: 0 bit offset
+#else
+	if(writeRegister(0x0A, 0x01))   // Audio serial control register C: 1 bit offset
+#endif
 		return 1;
 	if(writeRegister(0x0D, 0x00))	// Headset / button press register A: disabled
 		return 1;
@@ -99,6 +108,9 @@ int I2c_Codec::startAudio(int dual_rate)
 	//Set-up hardware high-pass filter for DC removal
 	if(configureDCRemovalIIR())
 		return 1;
+	if(writeRegister(25, 0b10000000))	// Enable mic bias 2.5V
+		return 1;
+
 	
 	// wait for the codec to stabilize before unmuting the HP amp.
 	// this gets rid of the loud pop.
@@ -227,7 +239,7 @@ int I2c_Codec::setPllJ(short unsigned int j){
 			return 1;
 	}
 	if(writeRegister(0x04, j<<2)){	// PLL register B: j<<2
-		printf("I2C error while writing PLL j: %d", j);
+		fprintf(stderr, "I2C error while writing PLL j: %d", j);
 		return 1;
 	}
 	pllJ=j;
@@ -239,11 +251,11 @@ int I2c_Codec::setPllD(unsigned int d){
 	if(d  >9999)
 		return 1;
 	if(writeRegister(0x05, (d>>6)&255)){ // PLL register C: part 1 : 8 most significant bytes of a 14bit integer
-		printf("I2C error while writing PLL d part 1 : %d", d);
+		fprintf(stderr, "I2C error while writing PLL d part 1 : %d", d);
 		return 1;
 	}
 	if(writeRegister(0x06, (d<<2)&255)){	// PLL register D: D=5264, part 2
-		printf("I2C error while writing PLL d part 2 : %d", d);
+		fprintf(stderr, "I2C error while writing PLL d part 2 : %d", d);
 		return 1;
 	}
 	pllD=d;
@@ -264,7 +276,7 @@ int I2c_Codec::setPllP(short unsigned int p){
 	else
 		bits = bits | p; // other values are written with their binary representation.
 	if(writeRegister(0x03, bits)){	// PLL register B: j<<2
-		printf("I2C error while writing PLL p: %d", p);
+		fprintf(stderr, "I2C error while writing PLL p: %d", p);
 		return 1;
 	}
 	pllP = p;
@@ -281,7 +293,7 @@ int I2c_Codec::setPllR(unsigned int r){
 	else
 		bits |= r; // other values are written with their binary representation.
 	if(writeRegister(0x0B, bits)){	// PLL register B: j<<2
-			printf("I2C error while writing PLL r: %d", r);
+			fprintf(stderr, "I2C error while writing PLL r: %d", r);
 			return 1;
 		}
 	pllR = r;
@@ -491,6 +503,26 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 		cout << "Failed to write register " << reg << " on codec\n";
 		return 1;
 	}
+
+	return 0;
+}
+
+// Put codec to Hi-z (required for CTAG face)
+int I2c_Codec::disable(){
+	if (writeRegister(0x0, 0)) // Select page 0
+		return 1;
+	if(writeRegister(0x01, 0x80)) // Reset codec to defaults
+		return 1;
+	if (writeRegister(0x08, 0xE0)) // Put codec in master mode (required for hi-z mode)
+		return 1;
+	if(writeRegister(0x03, 0x11)) // PLL register A: disable
+		return 1;
+	if (writeRegister(0x24, 0x44)) // Power down left and right ADC
+		return 1;
+	if (writeRegister(0x25, 0x00)) // DAC power/driver register: power off
+		return 1;
+	if (writeRegister(0x5E, 0xC0)) // Power fully down left and right DAC
+		return 1;
 
 	return 0;
 }

@@ -20,10 +20,17 @@
 .DEFAULT_GOAL := Bela
 
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib libbela.so 
+NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
+
+BELA_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+UPDATES_DIR?=/root/Bela/updates
+UPDATE_SOURCE_DIR?=/tmp/belaUpdate
+UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board
+UPDATE_BELA_PATCH?=/tmp/belaPatch
+UPDATE_BELA_MV_BACKUP?=$(BELA_DIR)/../_BelaUpdateBackup
 
 # Type `$ make help` to get a description of the functionalities of this Makefile.
 help: ## Show this help
@@ -56,6 +63,20 @@ else
 endif
 
 
+
+COMMAND_LINE_OPTIONS?=$(CL)
+ifeq ($(RUN_WITH_PRU_BIN),true)
+# Only use this one for development. You may have to run it without this option at least once, to generate 
+# include/pru_rtaudio_bin.h
+ifndef PROJECT
+$(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
+endif # ifndef PROJECT
+COMMAND_LINE_OPTIONS := --pru-file $(BELA_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
+run: pru_rtaudio.bin
+else
+build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
+endif #ifeq($(RUN_WITH_PRU_BIN),true)
+
 ifdef PROJECT
 
 #check if project dir exists
@@ -63,8 +84,11 @@ CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR))
 ifeq ($(CHECK_PROJECT_DIR_EXIST),)
 $(error $(PROJECT_DIR) does not exist)
 endif
+# set default values
 SHOULD_BUILD=true
 PROJECT_TYPE=invalid
+RUN_PREREQUISITES=
+
 RUN_FILE?=$(PROJECT_DIR)/run.sh
 SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
 LIBPD_FILE=$(PROJECT_DIR)/_main.pd
@@ -76,9 +100,24 @@ SHOULD_BUILD=false
 HAS_RUN_FILE=true
 PROJECT_TYPE=custom
 endif
+
+# if heavy-unzip-archive, then we should have a HEAVY_ARCHIVE=...
+ifeq (heavy-unzip-archive,$(filter heavy-unzip-archive,$(MAKECMDGOALS)))
+# which hopefully points to a valid  Heavy zip archive.
+ifeq (,$(HEAVY_ARCHIVE))
+$(error Missing HEAVY_ARCHIVE=... for target heavy-unzip-archive)
+else
+# If that is the case, then we can consider this project a cpp project
+# (assuming there are some other targets AFTER heavy-unzip-archive,
+# otherwise it will fail miserably)
+PROJECT_TYPE=cpp
+endif
+endif # heavy-unzip-archive
+
 ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
 PROJECT_TYPE=sc
 SHOULD_BUILD=false
+RUN_PREREQUISITES+=lib/libbela.so
 else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
 PROJECT_TYPE=libpd
@@ -92,44 +131,124 @@ endif
 ifeq ($(AT),)
 $(info Automatically detected PROJECT_TYPE: $(PROJECT_TYPE) )
 endif
-
-
 ifeq ($(PROJECT_TYPE),invalid)
 ifeq ($(HAS_RUN_FILE),false)
 $(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(RUN_FILE)) file )
 endif
 endif
 
-ifeq ($(SHOULD_BUILD),true)
-#create build directories
-$(shell mkdir -p $(PROJECT_DIR)/build build/core )
-endif
-
 endif # ifdef PROJECT
 
+BUILD_DIRS=build/core build/pru
+ifneq ($(PROJECT_DIR),)
+ifeq ($(SHOULD_BUILD),true)
+BUILD_DIRS+=$(PROJECT_DIR)/build
+endif
+endif
+#create build directories, should probably be conditional to PROJECT or lib
+$(shell mkdir -p  $(BUILD_DIRS))
+
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
-COMMAND_LINE_OPTIONS?=$(CL)
 RUN_FROM?=$(PROJECT_DIR)
 ifeq ($(HAS_RUN_FILE),true)
 RUN_COMMAND?=bash $(RUN_FILE)
 else
 ifeq ($(PROJECT_TYPE),sc)
-RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
+SCLANG_FIFO=/tmp/sclangfifo
+RUN_COMMAND?=bash -c 'rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
 else
 RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
 endif
 endif
-RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
-BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
-BELA_AUDIO_THREAD_NAME?=bela-audio 
-SCREEN_NAME?=Bela
-BELA_IDE_STARTUP_SCRIPT?=/root/Bela_node.sh
-BELA_IDE_HOME?=/root/Bela/IDE
-# A bug in this version of screen forces us to use two screen names which beginning substrings do not match (Bela, Bela-IDE would cause problems)
-BELA_IDE_SCREEN_NAME?=IDE-Bela
-BELA_IDE_RUN_COMMAND?=cd $(BELA_IDE_HOME) && export USER=root && export HOME=/root && export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && screen -S $(BELA_IDE_SCREEN_NAME) -d -m bash -c "while true; do /usr/local/bin/node index.js; sleep 0.5; done"
-BELA_IDE_STOP_COMMAND?=screen -X -S $(BELA_IDE_SCREEN_NAME) quit > /dev/null 
 
+RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
+BELA_AUDIO_THREAD_NAME?=bela-audio 
+BELA_IDE_HOME?=/root/Bela/IDE
+XENO_CONFIG=/usr/xenomai/bin/xeno-config
+XENOMAI_SKIN=posix
+
+# Find out what system we are running on and set system-specific variables
+# We cache these in $(SYSTEM_SPECIFIC_MAKEFILE) after every boot
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+-include $(SYSTEM_SPECIFIC_MAKEFILE)
+ifeq ($(DEBIAN_VERSION),)
+# If they are not there, let's go find out ...
+DEBIAN_VERSION=$(shell grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/g")
+# Lazily, let's assume if we are not on 2.6 we are on 3. I sincerely hope we will survive till Xenomai 4 to see this fail
+XENOMAI_VERSION=$(shell $(XENO_CONFIG) --version | grep -o "2\.6" || echo "3")
+
+ifeq ($(XENOMAI_VERSION),2.6)
+XENOMAI_MAJOR=2
+endif
+ifeq ($(XENOMAI_VERSION),3)
+XENOMAI_MAJOR=3
+endif
+
+# Xenomai flags
+DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
+DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
+# Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
+SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
+ifeq ($(XENOMAI_VERSION),2.6)
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
+else
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
+endif
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+# remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
+
+#... and cache them to the file
+$(shell printf "DEBIAN_VERSION=$(DEBIAN_VERSION)\nXENOMAI_VERSION=$(XENOMAI_VERSION)\nDEFAULT_XENOMAI_CFLAGS=$(DEFAULT_XENOMAI_CFLAGS)\nDEFAULT_XENOMAI_LDFLAGS=$(DEFAULT_XENOMAI_LDFLAGS)\nXENOMAI_MAJOR=$(XENOMAI_MAJOR)\n" > $(SYSTEM_SPECIFIC_MAKEFILE) )
+endif  # ifeq ($(DEBIAN_VERSION),)
+
+ifeq ($(AT),)
+  $(info Running on __$(DEBIAN_VERSION)__ with Xenomai __$(XENOMAI_VERSION)__)
+endif
+
+ifeq ($(XENOMAI_VERSION),2.6)
+XENOMAI_STAT_PATH=/proc/xenomai/stat
+LIBPD_LIBS=-lpd -lpthread_rt
+endif
+ifeq ($(XENOMAI_VERSION),3)
+XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
+LIBPD_LIBS=-lpd -lpthread
+endif
+
+# This is used to run Bela projects from the terminal in the background
+# On wheezy, it is also used for running Bela at startup
+SCREEN_NAME?=Bela
+
+# These are parsed by the IDE to understand if a program is active at startup
+BELA_STARTUP_ENV?=/opt/Bela/startup_env
+BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV)
+BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
+
+ifeq ($(DEBIAN_VERSION), stretch)
+BELA_ENABLE_STARTUP_COMMAND=systemctl enable bela_startup && $(BELA_POST_ENABLE_STARTUP_COMMAND) 
+BELA_DISABLE_STARTUP_COMMAND=$(BELA_PRE_DISABLE_STARTUP_COMMAND); systemctl disable bela_startup
+BELA_IDE_START_COMMAND=systemctl restart bela_ide
+BELA_IDE_STOP_COMMAND=systemctl stop bela_ide
+BELA_IDE_ENABLE_STARTUP_COMMAND=systemctl enable bela_ide
+BELA_IDE_DISABLE_STARTUP_COMMAND=systemctl disable bela_ide
+BELA_IDE_CONNECT_COMMAND=journalctl -fu bela_ide
+endif
+ifeq ($(DEBIAN_VERSION), wheezy)
+BELA_IDE_SCREEN_NAME?=IDE-Bela
+BELA_IDE_STARTUP_SCRIPT?=/root/Bela_node.sh
+BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
+BELA_ENABLE_STARTUP_COMMAND=printf "\#!/bin/sh\n\#\n\# This file is autogenerated by Bela. Do not edit!\n\necho Running Bela...\nexport PATH=\"$$PATH:/usr/local/bin\"\n cd $(RUN_FROM) && screen -S $(SCREEN_NAME) -d -m bash -c \"while sleep 0.6 ; do echo Running Bela...; $(RUN_COMMAND);  done\"\n" > $(BELA_STARTUP_SCRIPT) && chmod +x $(BELA_STARTUP_SCRIPT) && $(BELA_POST_ENABLE_STARTUP_COMMAND)
+
+BELA_DISABLE_STARTUP_COMMAND=$(BELA_PRE_DISABLE_STARTUP_COMMAND); printf "\#!/bin/sh\n\#\n\n\# This file is autogenerated by Bela. Do not edit!\n\n\# Run on startup disabled -- nothing to do here\n" > $(BELA_STARTUP_SCRIPT)
+BELA_IDE_START_COMMAND?=cd $(BELA_IDE_HOME) && export USER=root && export HOME=/root && export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && screen -S $(BELA_IDE_SCREEN_NAME) -d -m bash -c "while true; do /usr/local/bin/node index.js; sleep 0.5; done"
+BELA_IDE_STOP_COMMAND?=screen -X -S $(BELA_IDE_SCREEN_NAME) quit > /dev/null || true
+BELA_IDE_ENABLE_STARTUP_COMMAND?=printf '\#!/bin/sh\n\#\n\# This file is autogenerated by Bela. Do not edit!\n\necho Running the Bela IDE...\n$(BELA_IDE_START_COMMAND)\n' > $(BELA_IDE_STARTUP_SCRIPT)
+BELA_IDE_DISABLE_STARTUP_COMMAND?=printf "#!/bin/sh\n#\n\n# This file is autogenerated by Bela. Do not edit!\n\n# The Bela IDE is disabled on startup.\n" > $(BELA_IDE_STARTUP_SCRIPT)
+BELA_IDE_CONNECT_COMMAND=screen -r -S $(BELA_IDE_SCREEN_NAME)
+endif
 SC_CL?=-u 57110 -z 16 -J 8 -K 8 -G 16 -i 2 -o 2
 
 ifneq (,$(filter $(QUIET_TARGETS),$(MAKECMDGOALS)))
@@ -139,20 +258,23 @@ QUIET?=false
 
 RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
-LIBS = -lrt -lnative -lxenomai -lsndfile -lasound 
 
-# refresh library cache and check if libpd is there
-#TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
-LIBPD_PATH = /usr/lib/libpd.so
-TEST_LIBPD := $(shell [ -e $(LIBPD_PATH) ] && echo yes)
-ifneq ($(strip $(TEST_LIBPD)), )
-# if libpd is there, link it in
-  LIBS += -lpd -lpthread_rt
+ifeq ($(PROJECT_TYPE),libpd)
+LIBS += $(LIBPD_LIBS)
 endif
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10 -I/usr/xenomai/include -I/usr/arm-linux-gnueabihf/include/xenomai/include 
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG
-DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
+
+INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ -I./build/pru/
+ifeq ($(XENOMAI_VERSION),2.6)
+  BELA_USE_DEFINE=BELA_USE_POLL
+endif
+ifeq ($(XENOMAI_VERSION),3)
+  BELA_USE_DEFINE=BELA_USE_RTDM
+endif
+
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE)
+DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
+LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -Llib/ -lasound -lsndfile -lseasocks
 
 ifndef COMPILER
 # check whether clang is installed
@@ -170,19 +292,21 @@ ifndef COMPILER
       COMPILER := clang
     else
       COMPILER := gcc
-	endif
+    endif
   endif
 endif
 
 ifeq ($(COMPILER), clang)
+  CLANG_PATH?=/usr/bin/clang
   CC=$(CLANG_PATH)
   CXX=$(CLANG_PATH)++
-  DEFAULT_CPPFLAGS += -no-integrated-as
-  DEFAULT_CFLAGS += -no-integrated-as
+  DEFAULT_CPPFLAGS += -DNDEBUG # Maybe we should add back in -no-integrated-as?
+  DEFAULT_CFLAGS += -DNDEBUG
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
+    LDFLAGS+=-fno-pie -no-pie
   endif
 endif
 
@@ -211,7 +335,7 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
@@ -231,6 +355,10 @@ DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
 DEFAULT_PD_OBJS := ./build/core/default_libpd_render.o
 ALL_DEPS += ./build/core/default_libpd_render.d
 
+# include all dependencies - necessary to force recompilation when a header is changed
+# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
+-include $(ALL_DEPS)
+
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
 
@@ -241,13 +369,9 @@ all: Bela
 
 # debug = buildBela debug
 debug: ## Same as Bela but with debug flags and no optimizations
-debug: DEFAULT_CPPFLAGS=-g -std=c++11
-debug: DEFAULT_CFLAGS=-g -std=c11
+debug: DEFAULT_CPPFLAGS=-g -std=c++11 $(DEFAULT_XENOMAI_CFLAGS) -D$(BELA_USE_DEFINE) -mfpu=neon -O0
+debug: DEFAULT_CFLAG=-g -std=c11 $(DEFAULT_XENOMAI_CFLAGS) -D$(BELA_USE_DEFINE) -std=gnu11 -mfpu=neon -O0
 debug: all
-
-# include all dependencies - necessary to force recompilation when a header is changed
-# (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
--include $(ALL_DEPS)
 
 # syntax = check syntax
 syntax: ## Only checks syntax
@@ -258,7 +382,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC -Wno-unused-function
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -266,7 +390,7 @@ build/core/%.o: ./core/%.c
 build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC -Wno-unused-function
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -275,6 +399,19 @@ build/core/%.o: ./core/%.S
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
 	$(AT) as  -o "$@" "$<"
+	$(AT) echo ' ...done'
+	$(AT) echo ' '
+
+%.bin: pru/%.p
+	$(AT) echo 'Building $<...'
+	$(AT) pasm -V2 -b "$<" > /dev/null
+	$(AT) echo ' ...done'
+	$(AT) echo ' '
+
+build/pru/%_bin.h: pru/%.p
+	$(AT) echo 'Building $<...'
+	$(AT) pasm -V2 -L -c "$<" > /dev/null
+	$(AT) mv "$(@:build/pru/%=%)" build/pru/
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -327,17 +464,17 @@ else
 # line below. Surely there's a better way to do this?
 $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
-	    $(shell bash -c '[ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
+	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
 ifeq ($(PROJECT_TYPE),libpd)
 #If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
-endif
+	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -L/usr/xenomai/lib -L/usr/arm-linux-gnueabihf/lib -L/usr/arm-linux-gnueabihf/lib/xenomai -L/usr/lib/arm-linux-gnueabihf -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
-endif
-# Other Targets:
+endif # ifeq ($(SHOULD_BUILD),false)
+
 projectclean: ## Remove the PROJECT's build objects & binary
 	-$(RM) $(PROJECT_DIR)/build/* $(OUTPUT_FILE)
 	-@echo ' '	
@@ -347,6 +484,7 @@ clean: projectclean
 
 coreclean: ## Remove the core's build objects
 	-$(RM) build/core/*
+	-$(RM) include/pru_rtaudio_bin.h
 
 prompt:
 	$(AT) printf "Warning: you are about to DELETE the projects/ folder and its content. This operation cannot be undone. Continue? (y/N) "
@@ -359,14 +497,17 @@ distcleannoprompt: ## Same as distclean, but does not prompt for confirmation. U
 	-$(RM) build/source/* $(CORE_OBJS) $(CORE_CPP_DEPS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_MAIN_CPP_DEPS) $(OUTPUT_FILE)
 	-@echo ' '
 
-runfg: run
-run: ## Run PROJECT in the foreground
-run: stop Bela
+runonly: ## Run PROJECT in the foreground
+runonly: $(RUN_PREREQUISITES)
 	$(AT) echo "Running $(RUN_COMMAND)"
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
 
+runfg: run
+run: ## Run PROJECT in the foreground after stopping previously running one
+run: stop Bela runonly
+
 runide: ## Run PROJECT for IDE (foreground, no buffering)
-runide: stop Bela
+runide: stop Bela $(RUN_PREREQUISITES)
 	$(AT) sync& cd $(RUN_FROM) && $(RUN_IDE_COMMAND)
 runscreen: ## Run PROJECT in the background (detached screen)
 runscreen: stop $(OUTPUT_FILE)
@@ -377,26 +518,25 @@ runscreenfg: stop $(OUTPUT_FILE)
 	$(AT) echo "Running $(RUN_COMMAND) in a screen"
 	$(AT) cd $(RUN_FROM) && screen -S $(SCREEN_NAME) -m $(RUN_COMMAND)
 
-STARTUP_COMMAND=printf "\#!/bin/sh\n\#\n\# This file is autogenerated by Bela. Do not edit!\n\necho Running Bela...\nexport PATH=\"$$PATH:/usr/local/bin\"\n cd $(RUN_FROM) && screen -S $(SCREEN_NAME) -d -m %s $(RUN_COMMAND) %s\n"
 nostartup: ## No Bela project runs at startup 
 nostartup:
 	$(AT) echo "Disabling Bela at startup..."
-	$(AT) printf "#!/bin/sh\n#\n\n# This file is autogenerated by Bela. Do not edit!\n\n# Run on startup disabled -- nothing to do here\n" > $(BELA_STARTUP_SCRIPT)
+	$(AT) $(BELA_DISABLE_STARTUP_COMMAND)
 
 startuploop: ## Makes PROJECT run at startup and restarts it if it crashes
 startuploop: Bela
 	$(AT) echo "Enabling Bela at startup in a loop..."
-	$(AT) $(STARTUP_COMMAND) 'bash -c "while sleep 0.6 ; do echo Running Bela...;' '; done"' > $(BELA_STARTUP_SCRIPT)
+	$(AT) $(BELA_ENABLE_STARTUP_COMMAND)
 
-startup: ## Makes PROJECT run at startup
-startup: Bela
-	$(AT) echo "Enabling Bela at startup..."
-	$(AT) $(STARTUP_COMMAND) > $(BELA_STARTUP_SCRIPT)
-	$(AT) chmod +x $(BELA_STARTUP_SCRIPT)
+startup: ## Same as startuploop
+startup: startuploop # compatibility only
 
 stop: ## Stops any Bela program that is currently running
 stop:
-	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) /proc/xenomai/stat | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
+ifeq ($(DEBIAN_VERSION),stretch)
+	$(AT) systemctl stop bela_startup || true
+endif
+	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) $(XENOMAI_STAT_PATH) | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
 ifeq ($(PROJECT_TYPE),sc)
 #if we are about to start a sc project, these killall should be synchronous, otherwise they may kill they newly-spawn sclang process
@@ -407,33 +547,38 @@ else
 	$(AT) killall scsynth 2>/dev/null& killall sclang 2>/dev/null& true
 endif
 
+ifeq ($(DEBIAN_VERSION),stretch)
+connect_startup: ## Connects to Bela program running at startup
+	$(AT) journalctl -fu bela_startup
+endif
+
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
 	$(AT) screen -r -S $(SCREEN_NAME)
 	
 idestart: ## Starts the on-board IDE
+ifeq ($(DEBIAN_VERSION),wheezy)
+# on stretch, idestart does not require idestop.
 idestart: idestop
+endif
 	$(AT) printf "Starting IDE..."
-	$(AT) $(BELA_IDE_RUN_COMMAND)
+	$(AT) $(BELA_IDE_START_COMMAND)
 	$(AT) printf "done\n"
 
-idestop: ## Stops the on-board IDE
+idestop: ## Stops the on-board IDE
 	$(AT) printf "Stopping currently running IDE..."
-	$(AT) screen -X -S $(BELA_IDE_SCREEN_NAME) quit > /dev/null; exit 0;
+	$(AT) $(BELA_IDE_STOP_COMMAND)
 	$(AT) printf "done\n"
-
-BELA_IDE_STARTUP_COMMAND=printf '\#!/bin/sh\n\#\n\# This file is autogenerated by Bela. Do not edit!\n\necho Running the Bela IDE...\n$(BELA_IDE_RUN_COMMAND)\n' > $(BELA_IDE_STARTUP_SCRIPT)
 
 idestartup: ## Enables the IDE at startup
 	$(AT) echo "Enabling the IDE at startup"
-	$(AT) $(BELA_IDE_STARTUP_COMMAND)
-	$(AT) chmod +x $(BELA_IDE_STARTUP_SCRIPT)
+	$(AT) $(BELA_IDE_ENABLE_STARTUP_COMMAND)
 
 idenostartup: ## Disables the IDE at startup
 	$(AT) echo "Disabling the IDE at startup"
-	$(AT) printf "#!/bin/sh\n#\n\n# This file is autogenerated by Bela. Do not edit!\n\n# The Bela IDE is disabled on startup.\n" > $(BELA_IDE_STARTUP_SCRIPT)
+	$(AT) $(BELA_IDE_DISABLE_STARTUP_COMMAND)
 
-ideconnect: ## Brings in the foreground the IDE that currently is running in a screen (if any), can detach with ctrl-a ctrl-d.
-	$(AT) screen -r -S $(BELA_IDE_SCREEN_NAME)
+ideconnect: ## Brings up the IDE's log
+	$(AT) $(BELA_IDE_CONNECT_COMMAND)
 
 SCSYNTH_SCREEN_NAME=scsynth
 SCSYNTH_RUN_COMMAND=screen -S $(SCSYNTH_SCREEN_NAME) -d -m scsynth $(SC_CL)
@@ -459,13 +604,6 @@ scsynthstartup: ## Enables scsynth at startup
 scsynthnostartup: ## Disables scsynth at startup
 scsynthnostartup: nostartup
 	$(AT) echo "Disabling scsynth at startup...done"
-
-BELA_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-UPDATES_DIR?=/root/Bela/updates
-UPDATE_SOURCE_DIR?=/tmp/belaUpdate
-UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board 
-UPDATE_BELA_PATCH?=/tmp/belaPatch
-UPDATE_BELA_MV_BACKUP?=/tmp/belaMvBak
 
 updateclean: ## Cleans the $(UPDATES_DIR) folder
 	$(AT) [ -n $(UPDATE_DIR) ] && rm -rf $(UPDATE_DIR) && mkdir -p $(UPDATE_DIR)
@@ -498,7 +636,7 @@ updateunsafe: ## Installs the update from $(UPDATES_DIR) in a more brick-friend
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(BELA_DIR) ./update_board -y --no-frills
 	$(AT) screen -S update-Bela -d -m bash -c "echo Restart the IDE $(LOG) &&\
-	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update succesful $(LOG);" $(LOG)
+	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update successful $(LOG);" $(LOG)
 update: ## Installs the update from $(UPDATES_DIR)
 update: stop
 	$(AT) # Truncate the log file
@@ -527,7 +665,7 @@ update: stop
 	        echo Hope we are still alive here $(LOG) &&\
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
-	        echo Update succesful $(LOG); \
+	        echo Update successful $(LOG); \
 	        ' $(LOG)
 
 LIB_EXTRA_SO = libbelaextra.so
@@ -535,7 +673,7 @@ LIB_EXTRA_A = libbelaextra.a
 LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
 lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
 	$(AT) echo Building lib/$(LIB_EXTRA_SO)
-	$(AT) gcc -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
+	$(AT) $(CXX) -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
 
 lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) echo Building lib/$(LIB_EXTRA_A)
@@ -546,21 +684,21 @@ LIB_A = libbela.a
 LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a build/core/Gpio.o
 lib/$(LIB_SO): $(LIB_OBJS)
 	$(AT) echo Building lib/$(LIB_SO)
-	$(AT) gcc -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
+	$(AT) $(CXX) -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
+	$(AT) ldconfig
 
 lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) echo Building lib/$(LIB_A)
 	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
 
-lib: lib/libbelaextra.so lib/libbelaextra.a lib/libbela.so lib/libbela.a
-	
+lib: lib/libbela.so lib/libbela.a lib/libbelaextra.so lib/libbelaextra.a
 
 HEAVY_TMP_DIR=/tmp/heavy-bela/
 HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
 HEAVY_SRC_FILES=$(HEAVY_TMP_DIR)/*.cpp $(HEAVY_TMP_DIR)/*.c $(HEAVY_TMP_DIR)/*.hpp $(HEAVY_TMP_DIR)/*.h
 HEAVY_OBJ_TARGET_DIR=$(PROJECT_DIR)/build
 HEAVY_OBJ_FILES=$(HEAVY_TMP_DIR)/*.o
-heavy-unzip-archive:
+heavy-unzip-archive: stop
 	$(AT) [ -z "$(HEAVY_ARCHIVE)" ] && { echo "You should specify the path to the Heavy archive with HEAVY_ARCHIVE=" >&2; false; } || true
 	$(AT) [ -f "$(HEAVY_ARCHIVE)" ] || { echo "File $(HEAVY_ARCHIVE) not found" >&2; false; }
 	$(AT) rm -rf $(HEAVY_TMP_DIR)

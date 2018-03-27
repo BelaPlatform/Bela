@@ -368,7 +368,7 @@ void parseArguments(arg_data args, BelaInitSettings *settings)
 int main(int argc, char *argv[])
 {
 	BelaInitSettings settings;	// Standard audio settings
-	RT_TASK rtSensorThread;
+	AuxiliaryTask rtSensorThread;
 	const char rtSensorThreadName[] = "dbox-sensor";
 	int oscBankHopSize;
 
@@ -421,12 +421,10 @@ int main(int argc, char *argv[])
 		if(gVerbose==1)
 			cout << "main() : creating control thread" << endl;
 
-		if(rt_task_create(&rtSensorThread, rtSensorThreadName, 0, BELA_AUDIO_PRIORITY - 5, T_JOINABLE | T_FPU)) {
+		rtSensorThread = Bela_createAuxiliaryTask(&sensorLoop, BELA_AUDIO_PRIORITY - 5, rtSensorThreadName, NULL);
+		if(rtSensorThread  == 0)
+		{
 			  cout << "Error:unable to create Xenomai control thread" << endl;
-			  return -1;
-		}
-		if(rt_task_start(&rtSensorThread, &sensorLoop, 0)) {
-			  cout << "Error:unable to start Xenomai control thread" << endl;
 			  return -1;
 		}
 	}
@@ -471,9 +469,6 @@ int main(int argc, char *argv[])
 	}
 
 	Bela_stopAudio();
-
-	if(!useAudioTest)
-		rt_task_join(&rtSensorThread);
 
 	Bela_cleanupAudio();
 

@@ -27,7 +27,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 float gPhase;
 float gInverseSampleRate;
-int gAudioFramesPerAnalogFrame;
+int gAudioFramesPerAnalogFrame = 0;
 
 // Set the analog channels to read from
 int gSensorInputFrequency = 0;
@@ -50,7 +50,8 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	// Useful calculations
-	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+	if(context->analogFrames)
+		gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;
 	gPhase = 0.0;
 
@@ -62,12 +63,12 @@ void render(BelaContext *context, void *userData)
 	float frequency = 440.0;
 	float amplitude = 0.8;
 
-	// There are twice as many audio frames as matrix frames since audio sample rate
-	// is twice as high
-
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		if(!(n % gAudioFramesPerAnalogFrame)) {
-			// On even audio samples: read analog inputs and update frequency and amplitude
+		if(gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {
+			// read analog inputs and update frequency and amplitude
+			// Depending on the sampling rate of the analog inputs, this will
+			// happen every audio frame (if it is 44100)
+			// or every two audio frames (if it is 22050)
 			frequency = map(analogRead(context, n/gAudioFramesPerAnalogFrame, gSensorInputFrequency), 0, 1, 100, 1000);
 			amplitude = analogRead(context, n/gAudioFramesPerAnalogFrame, gSensorInputAmplitude);
 		}
@@ -79,9 +80,9 @@ void render(BelaContext *context, void *userData)
 		}
 
 		// Update and wrap phase of sine tone
-		gPhase += 2.0 * M_PI * frequency * gInverseSampleRate;
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
+		gPhase += 2.0f * (float)M_PI * frequency * gInverseSampleRate;
+		if(gPhase > M_PI)
+			gPhase -= 2.0f * (float)M_PI;
 	}
 }
 
@@ -115,7 +116,7 @@ second audio sample, since the analog sampling rate is half that of the audio.
 
 ````
 if(!(n % gAudioFramesPerAnalogFrame)) {
-    // Even audio samples: update frequency and amplitude from the matrix
+    // Even audio samples: update frequency and amplitude from the analog inputs
     frequency = map(analogRead(context, n/gAudioFramesPerAnalogFrame, gSensorInputFrequency), 0, 1, 100, 1000);
     amplitude = analogRead(context, n/gAudioFramesPerAnalogFrame, gSensorInputAmplitude);
 }

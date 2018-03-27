@@ -2,18 +2,13 @@
 #ifndef __Scope_H_INCLUDED__
 #define __Scope_H_INCLUDED__ 
 
-#include <OSCServer.h>
-#include <OSCClient.h>
 #include <ne10/NE10.h>
-#include <stdarg.h>
-#include <native/mutex.h>
-#include <native/cond.h>
+#include <vector>
+#include <string>
+#include <AuxTaskNonRT.h>
+#include <AuxTaskRT.h>
 
-#define OSC_RECEIVE_PORT 8675
-#define OSC_SEND_PORT 8676
-#define SCOPE_UDP_PORT 8677
-
-#define FRAMES_STORED 8
+#define FRAMES_STORED 4
 
 #define TRIGGER_LOG_COUNT 16
 
@@ -21,13 +16,13 @@
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
  *
  * To use the scope, ensure the Bela IDE is running, and navigate to 
- * http://192.168.7.2/scope
+ * http://bela.local/scope
  */
 class Scope{
     public:
         Scope();
 		~Scope();
-        
+		
         /**
          * \brief Initialise the scope, setting the number of channels and the sample rate
          *
@@ -54,8 +49,8 @@ class Scope{
          */
         void log(float chn1, ...);
 
-	/**
-	 * \brief Logs a frame of data to the scope.
+		/**
+		 * \brief Logs a frame of data to the scope.
          *
          * Accepts a pointer to an array of floats representing each channel's value in
          * ascending order.
@@ -84,6 +79,16 @@ class Scope{
         float getSliderValue(int slider);
         
         /** 
+         * \brief Check if the value of a slider has changed
+         *
+         * Check if the value of a slider has changed since the last time the value of that
+         * slider was read using getSliderValue() 
+         * 
+         * @param slider the index of the slider to read
+         */
+        bool sliderChanged(int slider);
+        
+        /** 
          * \brief Initialise a slider's value and parameters
          *
          * This method can be used to set a slider's value and parameters, including
@@ -98,26 +103,33 @@ class Scope{
          * @param name (optional) the name of the slider
          */
         void setSlider(int slider, float min, float max, float step, float value, std::string name = "Slider");
-        
+		
+		/** 
+         * \brief Initialise a slider's value and parameters
+         *
+         * This method can be used to set a slider's value and parameters, including
+         * its minimum, maximum, step increment and name. This method is not safe to be
+         * called on the audio thread and must be called in setup() only, and not render().
+         * 
+         * @param slider the index of the slider to set
+         * @param min the minimum value of the slider
+         * @param max the maximum value of the slider
+         * @param step the step increment of the slider
+         * @param value the initial value of the slider
+         * @param name (optional) the name of the slider
+         */
+		void setTrigger(int mode, int channel, int dir, float level);
+		
     private:
-        OSCServer oscServer;
-        OSCClient oscClient;
-        UdpClient socket;
-        
+
 		void dealloc();
-        void parseMessage(oscpkt::Message);
-        void start(bool setup = false);
+        void start();
         void stop();
         void triggerTimeDomain();
         void triggerFFT();
-        void triggerNormal();
-        void triggerAuto();
-        void scheduleSendBufferTask();
-        void sendBuffer();
-        void customTrigger();
         bool triggered();
         bool prelog();
-        void postlog(int);
+        void postlog();
         void setPlotMode();
         void doFFT();
         void setXParams();
@@ -125,10 +137,10 @@ class Scope{
 		bool isUsingOutBuffer;
 		bool isUsingBuffer;
 		bool isResizing;
+		
         // settings
         int numChannels;
         float sampleRate;
-        int connected;
         int pixelWidth;
         int frameWidth;
         int plotMode;
@@ -142,7 +154,6 @@ class Scope{
         int downSampling;
         float holdOff;
         
-        bool sendBufferFlag;
         int logCount;
         
         int channelWidth;
@@ -161,7 +172,11 @@ class Scope{
         
         // sliders
         int numSliders;
-        std::vector<float> sliders;
+        struct ScopeSlider{
+        	float value;
+        	bool changed = false;
+        };
+        std::vector<ScopeSlider> sliders;
         
         // trigger status
         bool triggerPrimed;
@@ -186,19 +201,22 @@ class Scope{
         int FFTYAxis;
         
         ne10_fft_cpx_float32_t* inFFT;
-    	ne10_fft_cpx_float32_t* outFFT;
+        ne10_fft_cpx_float32_t* outFFT;
         ne10_fft_cfg_float32_t cfg;
         
-        // aux tasks
-        AuxiliaryTask scopeTriggerTask;
-        static void triggerTask(void*);
-        
-        AuxiliaryTask scopeSendBufferTask;
-        static void sendBufferTask(void*);
-        
-        AuxiliaryTask scopePlotModeTask;
-        static void plotModeTask(void*);
+        AuxTaskNonRT sendBufferTask;
+        AuxTaskRT scopeTriggerTask;
+        static void triggerTask(void* ptr);
+		
+		void setSetting(std::wstring setting, float value);
+        friend struct ScopeControlHandler;
         
 };
+
+void scope_ws_setup(Scope* _scope);
+void scope_ws_send(void* buf, int size);
+void scope_ws_set_slider(int slider, float min, float max, float step, float value, std::string name);
+void scope_ws_set_setting(std::wstring setting, float value);
+void scope_ws_cleanup();
 
 #endif

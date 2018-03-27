@@ -27,6 +27,9 @@
 
 #ifndef BELA_H_
 #define BELA_H_
+#define BELA_MAJOR_VERSION 1
+#define BELA_MINOR_VERSION 0
+#define BELA_BUGFIX_VERSION 0
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +39,15 @@ extern "C"
 #include <stdint.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <rtdk.h>
+#include <stdio.h>
+// these functions are currently provided by xenomai.
+// We put these declarations here so we do not have to include
+// Xenomai specific files
+int rt_printf(const char *format, ...);
+int rt_fprintf(FILE *stream, const char *format, ...);
+int rt_vprintf(const char *format, va_list ap);
+int rt_vfprintf(FILE *stream, const char *format, va_list ap);
+
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 
@@ -358,6 +369,11 @@ typedef struct {
 	int enableLED;
 	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
 	int enableCapeButtonMonitoring;
+	/// Whether to use high-performance mode: gives more CPU to
+	/// the Bela task. The Linux part of the board and the IDE may
+	/// freeze while the program is running. Use the button on the
+	/// Bela cape to forcefully stop the running program 
+	int highPerformanceMode;
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user
@@ -499,6 +515,20 @@ void cleanup(BelaContext *context, void *userData);
  */
 void Bela_defaultSettings(BelaInitSettings *settings);
 
+#pragma weak Bela_userSettings
+/**
+ * \brief Initialise the data structure containing settings for Bela.
+ *
+ * This function fwill be called by Bela_defaultSettings() after the settings have been
+ * initialied. It has weak linking so the user is free - but not forced to - define it.
+ * It can be used to override some of the default settings if the user code does not have 
+ * access to the call to Bela_defaultSettings() (e.g.: because it is handled by the backend
+ * code).
+ *
+ * \param settings Structure holding initialisation data for Bela.
+ */
+void Bela_userSettings(BelaInitSettings *settings);
+
 /**
  * \brief Get long options from command line argument list, including Bela standard options
  *
@@ -531,6 +561,11 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions,
  * information for your own custom options.
  */
 void Bela_usage();
+
+/** 
+ * \brief Get the version of Bela you are running.
+ */
+void Bela_getVersion(int* major, int* minor, int* bugfix);
 
 /**
  * \brief Set level of verbose (debugging) printing.
@@ -746,10 +781,9 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, co
  * will not run immediately, but only once any active higher priority tasks have finished.
  *
  * \param task Task to schedule for running.
+ * \return 0 if the task was successfully scheduled, a positive error number otherwise. The most frequent error will be EBUSY, if the task was still running as a consequence of a previous call.
  */
-void Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
-
-void Bela_autoScheduleAuxiliaryTasks();
+int Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
 
 /**
  * \brief Initialize an auxiliary task so that it can be scheduled.

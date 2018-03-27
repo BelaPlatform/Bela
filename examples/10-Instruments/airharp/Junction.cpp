@@ -63,7 +63,7 @@ float Junction::getExcitationDisplacement()	{
 	float in = _buffer_l[(_readPtr+_delay_l+WG_BUFFER_SIZE)%WG_BUFFER_SIZE] + _excitation;
 
 	// integrate total force
-	float out = 0.00001 * in + 0.99999 * _lastPlectrumDisplacement;
+	float out = 0.00001f * in + 0.99999f * _lastPlectrumDisplacement;
 
 	// store variable for next iteration
 	_lastPlectrumDisplacement = out;
@@ -89,7 +89,7 @@ void Junction::setPeriod(float period)	{
 
 void Junction::setFrequency(float frequency)	{
 
-	_periodInMilliseconds = 1000.0/frequency;
-	_periodInSamples = (int)(_periodInMilliseconds * 44.1);
+	_periodInMilliseconds = 1000.f/frequency;
+	_periodInSamples = (int)(_periodInMilliseconds * 44.1f);
 
 }

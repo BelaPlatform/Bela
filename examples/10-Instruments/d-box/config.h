@@ -25,9 +25,6 @@
 // Xenomai-specific includes
 #include <sys/mman.h>
 
-#include <native/task.h>
-#include <native/timer.h>
-#include <rtdk.h>
 #endif
 
 #ifdef DBOX_USE_XENOMAI

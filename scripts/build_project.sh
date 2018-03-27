@@ -41,6 +41,7 @@ FORCE=0
 GET=0
 OPEN=0
 FIRST_RUN=1
+EXPERT=0
 while [ -n "$1" ]
 do
 	case $1 in

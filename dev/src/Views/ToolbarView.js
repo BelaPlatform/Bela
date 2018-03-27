@@ -3,6 +3,8 @@ var View = require('./View');
 // ohhhhh i am a comment
 
 var modeswitches = 0;
+var NORMAL_MSW = 1;
+var nameIndex, CPUIndex, rootName, IRQName;
 
 class ToolbarView extends View {
 	
@@ -90,6 +92,9 @@ class ToolbarView extends View {
 			$('#run').removeClass('building-button').addClass('running-button');
 		} else {
 			$('#run').removeClass('running-button');
+			$('#bela-cpu').html('CPU: --').css('color', 'black');
+			$('#msw-cpu').html('MSW: --').css('color', 'black');
+			modeswitches = 0;
 		}
 	}
 	__building(status){
@@ -114,17 +119,31 @@ class ToolbarView extends View {
 			$('#status').css('background', 'url("images/icons/status_ok.png")').prop('title', 'syntax check clear');
 		}
 	}
-	
-	_CPU(data){
 
-		var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
+	_xenomaiVersion(ver){
+		console.log('xenomai version:', ver);
+		if (ver.includes('2.6')){
+			nameIndex = 7;
+			CPUIndex = 6;
+			rootName = 'ROOT';
+			IRQName = 'IRQ67:';
+		} else {
+			nameIndex = 8;
+			CPUIndex = 7;
+			rootName = '[ROOT]';
+			IRQName = '[IRQ16:';
+		}
+	}
+
+	_CPU(data){
+	//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 		var bela = 0, rootCPU = 1;
-		
+
 		if (data.bela != 0 && data.bela !== undefined){
 		
 			// extract the data from the output
 			var lines = data.bela.split('\n');
-			var taskData = [], output = [];
+			var taskData = [];
 			for (var j=0; j<lines.length; j++){
 				taskData.push([]);
 				lines[j] = lines[j].split(' ');
@@ -134,23 +153,25 @@ class ToolbarView extends View {
 					}
 				}
 			}
-				
+			
+			var output = [];
 			for (var j=0; j<taskData.length; j++){
 				if (taskData[j].length){
 					var proc = {
-						'name'	: taskData[j][7],
-						'cpu'	: taskData[j][6],
+						'name'	: taskData[j][nameIndex],
+						'cpu'	: taskData[j][CPUIndex],
 						'msw'	: taskData[j][2],
 						'csw'	: taskData[j][3]
 					};
-					if (proc.name === 'ROOT') rootCPU = proc.cpu*0.01;
+					if (proc.name === rootName) rootCPU = proc.cpu*0.01;
+					if (proc.name === 'bela-audio') this.mode_switches(proc.msw-NORMAL_MSW);
 					// ignore uninteresting data
-					if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:'){
+					if (proc && proc.name && proc.name !== rootName && proc.name !== 'NAME' && proc.name !== IRQName){
 						output.push(proc);
 					}
 				}
 			}
-	
+
 			for (var j=0; j<output.length; j++){
 				if (output[j].cpu){
 					bela += parseFloat(output[j].cpu);
@@ -162,33 +183,33 @@ class ToolbarView extends View {
 
 		}
 
-		$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-		$('#bela-cpu').html('Bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
+	//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
+		$('#bela-cpu').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
 		
-		if (bela && (ide*rootCPU + bela) > 80){
-			$('#ide-cpu, #bela-cpu').css('color', 'red');
+	//	if (bela && (ide*rootCPU + bela) > 80){
+		if (bela && bela > 80) {
+			$('#bela-cpu').css('color', 'red');
 		} else {
-			$('#ide-cpu, #bela-cpu').css('color', 'black');
+			$('#bela-cpu').css('color', 'black');
 		}
 		
-		if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');
-		modeswitches = 0;
-	}
-	
-	__msw(value){
-		$('#msw-cpu').html('MSW: '+value);
-		if (value > modeswitches) this.emit('mode-switch-warning', value);
-		if (value > 0) $('#msw-cpu').css('color', 'red');
-		modeswitches = value;
 	}
 	
 	_cpuMonitoring(value){
 		if (parseInt(value))
-			$('#ide-cpu, #bela-cpu').css('visibility', 'visible');
+			$('#bela-cpu').css('visibility', 'visible');
 		else
-			$('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
+			$('#bela-cpu').css('visibility', 'hidden');
 	}
 	
+	mode_switches(value){
+		$('#msw-cpu').html('MSW: '+value);
+		if (value > modeswitches){
+			this.emit('mode-switch-warning', value);
+			$('#msw-cpu').css('color', 'red');
+		}
+		modeswitches = value;
+	}
 }
 
 module.exports = ToolbarView;

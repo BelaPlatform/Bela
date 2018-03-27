@@ -51,6 +51,7 @@ public:
 	int writeADCVolumeRegisters(bool mute);
 	int setHPVolume(int halfDbSteps);
 	int writeHPVolumeRegisters();
+	int disable();
 
 	int readI2C();
 

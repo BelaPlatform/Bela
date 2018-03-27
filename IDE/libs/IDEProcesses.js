@@ -12,6 +12,19 @@ var belaPath = '/root/Bela/';
 var makePath = belaPath;
 var projectPath = belaPath+'projects/';
 
+var xenomaiStatPath = '/proc/xenomai/sched/stat';
+// check which xenomai version we are on
+exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
+	if (err){
+		console.log('error reading xenomai version');
+		return;
+	}	
+	if (stdout.includes('2.6'))
+		xenomaiStatPath = '/proc/xenomai/stat';
+	else
+		xenomaiStatPath = '/proc/xenomai/sched/stat';
+});
+
 class SyntaxCheckProcess extends MakeProcess{
 	
 	constructor(){
@@ -158,13 +171,6 @@ class belaProcess extends MakeProcess{
 				
 				super.start(project, args, CLArgs.make);
 				
-				var msd = spawn('stdbuf', ['-i0', '-e0', '-o0', belaPath+'IDE/bin/mode_switches_detector']);
-				msd.stdout.setEncoding('utf8');
-				msd.stderr.setEncoding('utf8');
-				msd.stdout.on('data', data => this.emit('mode-switch', data.trim()) );
-				msd.stderr.on('data', data => console.log('msd stderr:', data.trim()) );
-				msd.on('close', code => console.log('msd exited with code', code) );
-
 			});
 		
 		return this;
@@ -172,7 +178,7 @@ class belaProcess extends MakeProcess{
 	
 	CPU(){
 		if (!this.active || !this.pid) return Promise.resolve(0);
-		return fs.readFileAsync('/proc/xenomai/stat', 'utf8');
+		return fs.readFileAsync(xenomaiStatPath, 'utf8');
 	}
 	
 	CPULinux(){
