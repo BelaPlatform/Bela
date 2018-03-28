@@ -1,10 +1,11 @@
 
 var settings = {}, channelConfig = [];
 
-var ws = new WebSocket("ws://192.168.7.2:5432/scope_data");
+var wsAddress = "ws://" + location.host + ":5432/scope_data";
+var ws = new WebSocket(wsAddress);
 var ws_onerror = function(e){
 	setTimeout(() => {
-		ws = new WebSocket("ws://192.168.7.2:5432/scope_data");
+		ws = new WebSocket(wsAddress);
 		ws.onerror = ws_onerror;
 		ws.onopen = ws_onopen;
 		ws.onmessage = ws_onmessage;
