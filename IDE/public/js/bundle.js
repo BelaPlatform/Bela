@@ -380,7 +380,7 @@ module.exports = CircularBuffer;
 },{}],3:[function(require,module,exports){
 'use strict';
 
-// IDE controller
+//// IDE controller
 module.exports = {};
 
 var Model = require('./Models/Model');
@@ -421,7 +421,7 @@ settingsView.on('run-on-boot', function (project) {
 	return socket.emit('run-on-boot', project);
 });
 settingsView.on('halt', function () {
-	socket.emit('sh-command', 'halt');
+	socket.emit('shutdown');
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', function (text) {
@@ -628,7 +628,9 @@ socket.on('init', function (data) {
 
 	$('#runOnBoot').val(data[3]);
 
-	models.status.setData(data[4]);
+	models.settings.setKey('xenomaiVersion', data[4]);
+
+	models.status.setData(data[5]);
 
 	//models.project.print();
 	//models.settings.print();
@@ -695,9 +697,7 @@ socket.on('IDE-settings-data', function (settings) {
 socket.on('cpu-usage', function (data) {
 	return models.status.setKey('CPU', data);
 });
-socket.on('mode-switch', function (data) {
-	return models.status.setKey('msw', data);
-});
+//socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
 socket.on('disconnect', function () {
 	consoleView.disconnect();
@@ -2119,6 +2119,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var sanitise = require('../utils').sanitise;
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -2601,12 +2602,7 @@ var FileView = function (_View) {
 
 module.exports = FileView;
 
-// replace all non alpha-numeric chars other than '-' and '.' with '_'
-function sanitise(name) {
-	return name.replace(/[^a-zA-Z0-9\.\-\/~]/g, '_');
-}
-
-},{"../popup":18,"./View":14}],9:[function(require,module,exports){
+},{"../popup":18,"../utils":19,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2818,6 +2814,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var sanitise = require('../utils').sanitise;
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -3149,12 +3146,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-// replace all non alpha-numeric chars other than '-' and '.' with '_'
-function sanitise(name) {
-	return name.replace(/[^a-zA-Z0-9\.\-]/g, '_');
-}
-
-},{"../popup":18,"./View":14}],11:[function(require,module,exports){
+},{"../popup":18,"../utils":19,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3344,7 +3336,7 @@ var SettingsView = function (_View) {
 
 			// build the popup content
 			popup.title('About Bela');
-			popup.subtitle('You are using Bela Version 0.2, October 2016. Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+			popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 			var form = [];
 			form.push('<button type="submit" class="button popup-continue">Close</button>');
 
@@ -3710,6 +3702,8 @@ var View = require('./View');
 // ohhhhh i am a comment
 
 var modeswitches = 0;
+var NORMAL_MSW = 1;
+var nameIndex, CPUIndex, rootName, IRQName;
 
 var ToolbarView = function (_View) {
 	_inherits(ToolbarView, _View);
@@ -3801,6 +3795,9 @@ var ToolbarView = function (_View) {
 				$('#run').removeClass('building-button').addClass('running-button');
 			} else {
 				$('#run').removeClass('running-button');
+				$('#bela-cpu').html('CPU: --').css('color', 'black');
+				$('#msw-cpu').html('MSW: --').css('color', 'black');
+				modeswitches = 0;
 			}
 		}
 	}, {
@@ -3832,10 +3829,25 @@ var ToolbarView = function (_View) {
 			}
 		}
 	}, {
+		key: '_xenomaiVersion',
+		value: function _xenomaiVersion(ver) {
+			console.log('xenomai version:', ver);
+			if (ver.includes('2.6')) {
+				nameIndex = 7;
+				CPUIndex = 6;
+				rootName = 'ROOT';
+				IRQName = 'IRQ67:';
+			} else {
+				nameIndex = 8;
+				CPUIndex = 7;
+				rootName = '[ROOT]';
+				IRQName = '[IRQ16:';
+			}
+		}
+	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
-
-			var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
+			//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 			var bela = 0,
 			    rootCPU = 1;
 
@@ -3843,8 +3855,7 @@ var ToolbarView = function (_View) {
 
 				// extract the data from the output
 				var lines = data.bela.split('\n');
-				var taskData = [],
-				    output = [];
+				var taskData = [];
 				for (var j = 0; j < lines.length; j++) {
 					taskData.push([]);
 					lines[j] = lines[j].split(' ');
@@ -3855,17 +3866,19 @@ var ToolbarView = function (_View) {
 					}
 				}
 
+				var output = [];
 				for (var j = 0; j < taskData.length; j++) {
 					if (taskData[j].length) {
 						var proc = {
-							'name': taskData[j][7],
-							'cpu': taskData[j][6],
+							'name': taskData[j][nameIndex],
+							'cpu': taskData[j][CPUIndex],
 							'msw': taskData[j][2],
 							'csw': taskData[j][3]
 						};
-						if (proc.name === 'ROOT') rootCPU = proc.cpu * 0.01;
+						if (proc.name === rootName) rootCPU = proc.cpu * 0.01;
+						if (proc.name === 'bela-audio') this.mode_switches(proc.msw - NORMAL_MSW);
 						// ignore uninteresting data
-						if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:') {
+						if (proc && proc.name && proc.name !== rootName && proc.name !== 'NAME' && proc.name !== IRQName) {
 							output.push(proc);
 						}
 					}
@@ -3877,33 +3890,33 @@ var ToolbarView = function (_View) {
 					}
 				}
 
-				bela += data.belaLinux * rootCPU;
+				if (data.belaLinux) bela += data.belaLinux * rootCPU;
 			}
 
-			$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
-			$('#bela-cpu').html('Bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+			//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
+			$('#bela-cpu').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
-			if (bela && ide * rootCPU + bela > 80) {
-				$('#ide-cpu, #bela-cpu').css('color', 'red');
+			//	if (bela && (ide*rootCPU + bela) > 80){
+			if (bela && bela > 80) {
+				$('#bela-cpu').css('color', 'red');
 			} else {
-				$('#ide-cpu, #bela-cpu').css('color', 'black');
+				$('#bela-cpu').css('color', 'black');
 			}
-
-			if (!bela) $('#msw-cpu').html('MSW: --').css('color', 'black');
-			modeswitches = 0;
-		}
-	}, {
-		key: '__msw',
-		value: function __msw(value) {
-			$('#msw-cpu').html('MSW: ' + value);
-			if (value > modeswitches) this.emit('mode-switch-warning', value);
-			if (value > 0) $('#msw-cpu').css('color', 'red');
-			modeswitches = value;
 		}
 	}, {
 		key: '_cpuMonitoring',
 		value: function _cpuMonitoring(value) {
-			if (parseInt(value)) $('#ide-cpu, #bela-cpu').css('visibility', 'visible');else $('#ide-cpu, #bela-cpu').css('visibility', 'hidden');
+			if (parseInt(value)) $('#bela-cpu').css('visibility', 'visible');else $('#bela-cpu').css('visibility', 'hidden');
+		}
+	}, {
+		key: 'mode_switches',
+		value: function mode_switches(value) {
+			$('#msw-cpu').html('MSW: ' + value);
+			if (value > modeswitches) {
+				this.emit('mode-switch-warning', value);
+				$('#msw-cpu').css('color', 'red');
+			}
+			modeswitches = value;
 		}
 	}]);
 
@@ -4911,6 +4924,16 @@ function example(cb, arg, delay, cancelCb) {
 
 	popup.find('.popup-continue').trigger('focus');
 }
+
+},{}],19:[function(require,module,exports){
+'use strict';
+
+// replace most non alpha-numeric chars with '_'
+function sanitise(name) {
+	return name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
+}
+
+module.exports.sanitise = sanitise;
 
 },{}]},{},[16])
 

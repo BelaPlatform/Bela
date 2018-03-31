@@ -51,6 +51,7 @@ public:
 	int writeADCVolumeRegisters(bool mute);
 	int setHPVolume(int halfDbSteps);
 	int writeHPVolumeRegisters();
+	int disable();
 
 	int readI2C();
 
@@ -58,6 +59,7 @@ public:
 	~I2c_Codec();
 
 private:
+	int configureDCRemovalIIR(); //called by startAudio()
 	bool running;
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;

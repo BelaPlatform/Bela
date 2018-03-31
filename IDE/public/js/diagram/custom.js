@@ -2,7 +2,7 @@ $(document).ready(function() {
     var mainImage = $('#image')[0];
     var paper = new Raphael(mainImage, 300, 482);
 
-    var imageURL = 'belaDiagram/images/bela_pins_jun2016.jpg';
+    var imageURL = 'belaDiagram/images/bela_pins_jun2016_rotated.jpg';
     
     // write the image to the Raphael canvas
     paper.image(imageURL, 0, 0, 300, 482);
@@ -13,7 +13,19 @@ $(document).ready(function() {
             for (var k in data[i].things){
                 var elem = data[i].things[k];
                 var classname = elem.elemclass + " " + "tooltip";
-                var rect = paper.rect(elem.x, elem.y, elem.width, elem.height);
+                var rotate = true;
+                var x = elem.x;
+                var y = elem.y;
+                var width = elem.width;
+                var height = elem.height;
+                if(rotate)
+                {	// rotate the figure by 180 degrees:
+                    var totWidth = 300;
+                    var totHeight = 481;
+                    x = totWidth - x - width;
+                    y = totHeight - y - height;
+                }
+                var rect = paper.rect(x, y, width, height);
                 rect.node.setAttribute("class", classname);
                 rect.node.id = elem.id;
                 $(rect.node).tooltipster({

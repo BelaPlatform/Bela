@@ -27,6 +27,9 @@
 
 #ifndef BELA_H_
 #define BELA_H_
+#define BELA_MAJOR_VERSION 1
+#define BELA_MINOR_VERSION 0
+#define BELA_BUGFIX_VERSION 0
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +39,15 @@ extern "C"
 #include <stdint.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <rtdk.h>
+#include <stdio.h>
+// these functions are currently provided by xenomai.
+// We put these declarations here so we do not have to include
+// Xenomai specific files
+int rt_printf(const char *format, ...);
+int rt_fprintf(FILE *stream, const char *format, ...);
+int rt_vprintf(const char *format, va_list ap);
+int rt_vfprintf(FILE *stream, const char *format, va_list ap);
+
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 
@@ -102,94 +113,6 @@ extern "C"
 #define BELA_FLAG_DETECT_UNDERRUNS	(1 << 2)	// Set if the user will be displayed a message when an underrun occurs
 
 struct option;
-
-/**
- * \ingroup control
- * \brief Structure containing initialisation parameters for the real-time
- * audio control system.
- *
- * This structure is initialised using Bela_defaultSettings(). Its contents
- * are used up through the point of calling
- * Bela_initAudio() at which point it is no longer needed.
- */
-typedef struct {
-	// These items might be adjusted by the user:
-
-	/// \brief Number of (analog) frames per period.
-	///
-	/// Number of audio frames depends on relative sample rates of the two. By default,
-	/// audio is twice the sample rate, so has twice the period size.
-	int periodSize;
-	/// Whether to use the analog input and output
-	int useAnalog;
-	/// Whether to use the 16 programmable GPIOs
-	int useDigital;
-	/// How many audio input channels
-	int numAudioInChannels;
-	/// How many audio out channels
-	int numAudioOutChannels;
-	/// How many analog input channels
-	int numAnalogInChannels;
-	/// How many analog output channels
-	int numAnalogOutChannels;
-	/// How many channels for the GPIOs
-	int numDigitalChannels;
-
-	/// Whether to begin with the speakers muted
-	int beginMuted;
-	/// Level for the audio DAC output
-	float dacLevel;
-	/// Level for the audio ADC input
-	float adcLevel;
-	/// Gains for the PGA, left and right channels
-	float pgaGain[2];
-	/// Level for the headphone output
-	float headphoneLevel;
-	/// How many channels to use on the multiplexer capelet, if enabled
-	int numMuxChannels;
-	/// Which audio expander settings to use on the input
-	unsigned int audioExpanderInputs;
-	/// Which audio expander settings to use on the input
-	unsigned int audioExpanderOutputs;
-
-	/// Which PRU (0 or 1) the code should run on
-	int pruNumber; 
-	/// The external .bin file to load. If empty will use PRU code from pru_rtaudio_bin.h
-	char pruFilename[MAX_PRU_FILENAME_LENGTH];
-	/// Whether to detect and log underruns
-	int detectUnderruns;
-	/// Whether to use verbose logging
-	int verbose;
-	/// Whether to use the blinking LED to indicate Bela is running
-	int enableLED;
-	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
-	int enableCapeButtonMonitoring;
-
-	// These items are application-dependent but should probably be
-	// determined by the programmer rather than the user
-
-	/// Whether audio/analog data should be interleaved
-	/// <b>TODO: deinterleaved buffers are not implemented yet.</b>
-	int interleave;
-	/// \brief Whether analog outputs should persist to future frames.
-	///
-	/// n.b. digital pins always persist, audio never does
-	int analogOutputsPersist;
-
-	// These items are hardware-dependent and should only be changed
-	// to run on different hardware
-
-	/// Where the codec can be found on the I2C bus
-	int codecI2CAddress;
-	/// Pin where amplifier mute can be found
-	int ampMutePin;
-	/// Port where the UDP server will listen
-	int receivePort;
-	/// Port where the UDP client will transmit
-	int transmitPort;
-	char serverName[MAX_SERVERNAME_LENGTH];
-} BelaInitSettings;
-
 
 /**
  * \ingroup render
@@ -385,6 +308,110 @@ typedef struct {
 	const uint32_t flags;
 } BelaContext;
 
+/**
+ * \ingroup control
+ * \brief Structure containing initialisation parameters for the real-time
+ * audio control system.
+ *
+ * This structure is initialised using Bela_defaultSettings(). Its contents
+ * are used up through the point of calling
+ * Bela_initAudio() at which point it is no longer needed.
+ */
+typedef struct {
+	// These items might be adjusted by the user:
+
+	/// \brief Number of (analog) frames per period.
+	///
+	/// Number of audio frames depends on relative sample rates of the two. By default,
+	/// audio is twice the sample rate, so has twice the period size.
+	int periodSize;
+	/// Whether to use the analog input and output
+	int useAnalog;
+	/// Whether to use the 16 programmable GPIOs
+	int useDigital;
+	/// How many audio input channels
+	int numAudioInChannels;
+	/// How many audio out channels
+	int numAudioOutChannels;
+	/// How many analog input channels
+	int numAnalogInChannels;
+	/// How many analog output channels
+	int numAnalogOutChannels;
+	/// How many channels for the GPIOs
+	int numDigitalChannels;
+
+	/// Whether to begin with the speakers muted
+	int beginMuted;
+	/// Level for the audio DAC output
+	float dacLevel;
+	/// Level for the audio ADC input
+	float adcLevel;
+	/// Gains for the PGA, left and right channels
+	float pgaGain[2];
+	/// Level for the headphone output
+	float headphoneLevel;
+	/// How many channels to use on the multiplexer capelet, if enabled
+	int numMuxChannels;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderInputs;
+	/// Which audio expander settings to use on the input
+	unsigned int audioExpanderOutputs;
+
+	/// Which PRU (0 or 1) the code should run on
+	int pruNumber;
+	/// The external .bin file to load. If empty will use PRU code from pru_rtaudio_bin.h
+	char pruFilename[MAX_PRU_FILENAME_LENGTH];
+	/// Whether to detect and log underruns
+	int detectUnderruns;
+	/// Whether to use verbose logging
+	int verbose;
+	/// Whether to use the blinking LED to indicate Bela is running
+	int enableLED;
+	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
+	int enableCapeButtonMonitoring;
+	/// Whether to use high-performance mode: gives more CPU to
+	/// the Bela task. The Linux part of the board and the IDE may
+	/// freeze while the program is running. Use the button on the
+	/// Bela cape to forcefully stop the running program 
+	int highPerformanceMode;
+
+	// These items are application-dependent but should probably be
+	// determined by the programmer rather than the user
+
+	/// Whether audio/analog data should be interleaved
+	int interleave;
+	/// \brief Whether analog outputs should persist to future frames.
+	///
+	/// n.b. digital pins always persist, audio never does
+	int analogOutputsPersist;
+	/// \brief Whether the analog channels should be resampled to
+	/// audio sampling rate.
+	int uniformSampleRate;
+	//// \brief The requested stack size for the audio thread. Defaults
+	// to 128KiB
+	unsigned int audioThreadStackSize;
+	//// \brief The requested stack size for each AuxilaryTask. Defaults
+	// to 128KiB
+	unsigned int auxiliaryTaskStackSize;
+
+	// Pointers to the user-defined functions
+	bool (*setup)(BelaContext*, void*);
+	void (*render)(BelaContext*, void*);
+	void (*cleanup)(BelaContext*, void*);
+	// These items are hardware-dependent and should only be changed
+	// to run on different hardware
+
+	/// Where the codec can be found on the I2C bus
+	int codecI2CAddress;
+	/// Pin where amplifier mute can be found
+	int ampMutePin;
+	/// Port where the UDP server will listen
+	int receivePort;
+	/// Port where the UDP client will transmit
+	int transmitPort;
+	char serverName[MAX_SERVERNAME_LENGTH];
+} BelaInitSettings;
+
 /** \ingroup auxtask
  *
  * Auxiliary task variable. Auxiliary tasks are created using createAuxiliaryTask() and
@@ -488,6 +515,20 @@ void cleanup(BelaContext *context, void *userData);
  */
 void Bela_defaultSettings(BelaInitSettings *settings);
 
+#pragma weak Bela_userSettings
+/**
+ * \brief Initialise the data structure containing settings for Bela.
+ *
+ * This function fwill be called by Bela_defaultSettings() after the settings have been
+ * initialied. It has weak linking so the user is free - but not forced to - define it.
+ * It can be used to override some of the default settings if the user code does not have 
+ * access to the call to Bela_defaultSettings() (e.g.: because it is handled by the backend
+ * code).
+ *
+ * \param settings Structure holding initialisation data for Bela.
+ */
+void Bela_userSettings(BelaInitSettings *settings);
+
 /**
  * \brief Get long options from command line argument list, including Bela standard options
  *
@@ -520,6 +561,11 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions,
  * information for your own custom options.
  */
 void Bela_usage();
+
+/** 
+ * \brief Get the version of Bela you are running.
+ */
+void Bela_getVersion(int* major, int* minor, int* bugfix);
 
 /**
  * \brief Set level of verbose (debugging) printing.
@@ -558,6 +604,16 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData);
  * \return 0 on success, or nonzero if an error occurred.
  */
 int Bela_startAudio();
+
+/**
+ * \brief Begin processing audio and sensor data in the same thread as the caller.
+ *
+ * This function will start the Bela audio/sensor system. After this function is called, the
+ * system will make periodic calls to render() until Bela_stopAudio() is called.
+ *
+ * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_runInSameThread();
 
 /**
  * \brief Stop processing audio and sensor data.
@@ -725,10 +781,9 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, co
  * will not run immediately, but only once any active higher priority tasks have finished.
  *
  * \param task Task to schedule for running.
+ * \return 0 if the task was successfully scheduled, a positive error number otherwise. The most frequent error will be EBUSY, if the task was still running as a consequence of a previous call.
  */
-void Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
-
-void Bela_autoScheduleAuxiliaryTasks();
+int Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
 
 /**
  * \brief Initialize an auxiliary task so that it can be scheduled.
@@ -749,6 +804,10 @@ void Bela_autoScheduleAuxiliaryTasks();
  */
 
 int Bela_startAuxiliaryTask(AuxiliaryTask task);
+int Bela_startAllAuxiliaryTasks();
+void Bela_stopAllAuxiliaryTasks();
+void Bela_deleteAllAuxiliaryTasks();
+
 /** @} */
 #include <Utilities.h>
 

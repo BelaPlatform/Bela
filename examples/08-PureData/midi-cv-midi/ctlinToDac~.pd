@@ -1,0 +1,12 @@
+#N canvas 660 187 607 311 10;
+#X obj 42 88 lop~;
+#X obj 42 63 / 127;
+#X obj 42 35 ctlin \$1;
+#X obj 42 115 dac~ \$2;
+#X text 216 23 \$1 first creation argument is ctlin number;
+#X text 216 43 \$2 second creation argument is dac~ number;
+#X obj 88 62 r outputSmooth;
+#X connect 0 0 3 0;
+#X connect 1 0 0 0;
+#X connect 2 0 1 0;
+#X connect 6 0 0 1;

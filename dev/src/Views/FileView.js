@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var sanitise = require('../utils').sanitise;
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -353,7 +354,3 @@ class FileView extends View {
 
 module.exports = FileView;
 
-// replace all non alpha-numeric chars other than '-' and '.' with '_'
-function sanitise(name){
-	return name.replace(/[^a-zA-Z0-9\.\-\/~]/g, '_');
-}

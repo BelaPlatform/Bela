@@ -1,7 +1,7 @@
 'use strict';
 var View = require('./View');
 
-var xTime, sampleRate, upSampling, downSampling
+var xTime, sampleRate, upSampling=1, downSampling=1;
 
 class ControlView extends View{
 
@@ -25,13 +25,33 @@ class ControlView extends View{
 		this.$elements.not($element).filterByData('key', key).val(value);
 	}
 	buttonClicked($element, e){
-		this.emit('settings-event', $element.data().key);
+		if ($element.data().key === 'upSampling'){
+			if (downSampling > 1){
+				downSampling -= 1;
+				this.emit('settings-event', 'downSampling', downSampling);
+			} else {
+				upSampling += 1;
+				this.emit('settings-event', 'upSampling', upSampling);
+			}
+			// this._upSampling();
+		} else if ($element.data().key === 'downSampling'){
+			if (upSampling > 1){
+				upSampling -= 1;
+				this.emit('settings-event', 'upSampling', upSampling);
+			} else {
+				downSampling += 1;
+				this.emit('settings-event', 'downSampling', downSampling);
+			}
+			// this._downSampling();
+		} else {
+			this.emit('settings-event', $element.data().key);
+		}
 	}
 	
 	// settings model events
 	modelChanged(data, changedKeys){
 		for (let key of changedKeys){
-			if (key === 'upSampling' || key === 'downSampling' || key === 'xTimeBase'){
+			if (this['_'+key]){
 				this['_'+key](data[key], data);
 			} else {
 				if (key === 'plotMode') this.plotMode(data[key], data);
@@ -72,7 +92,7 @@ class ControlView extends View{
 		} else if (data.plotMode == 1){
 			$('.xUnit-display').html((data.sampleRate/20 * data.upSampling/data.downSampling));
 		}
-		$('.zoom-display').html((100*data.upSampling/data.downSampling).toPrecision(4)+'%');
+		$('.zoom-display').html((100*upSampling/downSampling).toPrecision(4)+'%');
 	}
 	_downSampling(value, data){
 		downSampling = value;
@@ -81,7 +101,7 @@ class ControlView extends View{
 		} else if (data.plotMode == 1){
 			$('.xUnit-display').html((data.sampleRate/20 * data.upSampling/data.downSampling));
 		}
-		$('.zoom-display').html((100*data.upSampling/data.downSampling).toPrecision(4)+'%');
+		$('.zoom-display').html((100*upSampling/downSampling).toPrecision(4)+'%');
 	}
 	_xTimeBase(value, data){
 		xTime = data.xTimeBase;
@@ -100,6 +120,21 @@ class ControlView extends View{
 		}
 	}
 	
+	_triggerMode(value){
+		this.$elements.filterByData('key', 'triggerMode').val(value);
+	}
+	
+	_triggerChannel(value){
+		this.$elements.filterByData('key', 'triggerChannel').val(value);
+	}
+
+	_triggerDir(value){
+		this.$elements.filterByData('key', 'triggerDir').val(value);
+	}
+
+	_triggerLevel(value){
+		this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
+	}
 }
 
 module.exports = ControlView;

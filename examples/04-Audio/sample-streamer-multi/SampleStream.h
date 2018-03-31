@@ -66,7 +66,7 @@ private:
     
     int gBusy;
     
-    SNDFILE *sndfile ;
+    SNDFILE *sndfile = NULL;
 	SF_INFO sfinfo ;
     
 };

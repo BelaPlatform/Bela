@@ -7,17 +7,85 @@ var worker = new Worker("js/scope-worker.js");
 var Model = require('./Model');
 var settings = new Model();
 
+// Pixi.js renderer and stage
+var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, {transparent: true});
+renderer.view.style.position = "absolute";
+renderer.view.style.display = "block";
+renderer.autoResize = true;
+$('.scopeWrapper').append(renderer.view);
+var stage = new PIXI.Container();
+
 // views
 var controlView = new (require('./ControlView'))('scopeControls', [settings]);
-var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings]);
+var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
 var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // main bela socket
 var belaSocket = io('/IDE');
 
-// scope socket
-var socket = io('/BelaScope');
+// scope websocket
+var ws;
+
+var wsAddress = "ws://" + location.host + ":5432/scope_control"
+ws = new WebSocket(wsAddress);
+var ws_onerror = function(e){
+	setTimeout(() => {
+		ws = new WebSocket(wsAddress);
+		ws.onerror = ws_onerror;
+		ws.onopen = ws_onopen;
+		ws.onmessage = ws_onmessage;
+	}, 500);
+};
+ws.onerror = ws_onerror;
+
+var ws_onopen = function(){
+	ws.binaryType = 'arraybuffer';
+	console.log('scope control websocket open');
+	ws.onclose = ws_onerror;
+	ws.onerror = undefined;
+};
+ws.onopen = ws_onopen;
+
+var ws_onmessage = function(msg){
+	// console.log('recieved scope control message:', msg.data);
+	var data;
+	try{
+		data = JSON.parse(msg.data);
+	}
+	catch(e){
+		console.log('could not parse scope control data:', e);
+		return;
+	}
+	if (data.event == 'connection'){
+		delete data.event;
+		data.frameWidth = window.innerWidth;
+		data.frameHeight = window.innerHeight;	
+		settings.setData(data);
+
+		if (settings.getKey('triggerChannel') >= data.numChannels)
+			settings.setKey('triggerChannel', 0);
+
+		var obj = settings._getData();
+		obj.event = "connection-reply";
+		var out;
+		try{
+			out = JSON.stringify(obj);
+		}
+		catch(e){
+			console.log('could not stringify settings:', e);
+			return;
+		}
+		if (ws.readyState === 1) ws.send(out);
+	} else if (data.event == 'set-slider'){
+		sliderView.emit('set-slider', data);
+	} else if (data.event == 'set-setting'){
+		if (settings.getKey(data.setting) !== undefined) {
+			settings.setKey(data.setting, data.value);
+		}
+	}
+};
+ws.onmessage = ws_onmessage;
 
 var paused = false, oneShot = false;
 
@@ -42,9 +110,19 @@ controlView.on('settings-event', (key, value) => {
 		}
 		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
 	}
-	socket.emit('settings-event', key, value);
-	// console.log(key, value);
-	if (value !== undefined) settings.setKey(key, value);
+	if (value === undefined) return;
+	var obj = {};
+	obj[key] = value;
+	var out;
+	try{
+		out = JSON.stringify(obj);
+	}
+	catch(e){
+		console.log('error creating settings JSON', e);
+		return;
+	}
+	if (ws.readyState === 1) ws.send(out);
+	settings.setKey(key, value);
 });
 
 channelView.on('channelConfig', (channelConfig) => {
@@ -54,31 +132,17 @@ channelView.on('channelConfig', (channelConfig) => {
 	});
 });
 
-sliderView.on('slider-value', (slider, value) => socket.emit('slider-value', slider, value) );
-
-// socket events
-socket.on('settings', (newSettings) => {
-	
-	let obj = {};
-	for (let key in newSettings){
-		obj[key] = newSettings[key].value;
+sliderView.on('slider-value', (slider, value) => {
+	var obj = {event: "slider", slider, value};
+	var out;
+	try{
+		out = JSON.stringify(obj);
 	}
-	
-	obj.frameWidth = window.innerWidth;
-	obj.frameHeight = window.innerHeight;
-	
-	// console.log(newSettings, obj);
-	settings.setData(obj);
-	
-	controlView.setControls(obj);
-});
-socket.on('scope-slider', args => sliderView.emit('set-slider', args) );
-socket.on('dropped-count', count => {
-	$('#droppedFrames').html(count);
-	if (count > 10)
-		$('#droppedFrames').css('color', 'red');
-	else
-		$('#droppedFrames').css('color', 'black');
+	catch(e){
+		console.log('could not stringify slider json:', e);
+		return;
+	}
+	if (ws.readyState === 1) ws.send(out)
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -88,7 +152,15 @@ settings.on('set', (data, changedKeys) => {
 	if (changedKeys.indexOf('frameWidth') !== -1){
 		var xTimeBase = Math.max(Math.floor(1000*(data.frameWidth/8)/data.sampleRate), 1);
 		settings.setKey('xTimeBase', xTimeBase);
-		socket.emit('settings-event', 'frameWidth', data.frameWidth)
+		var out;
+		try{
+			out = JSON.stringify({frameWidth: data.frameWidth});
+		}
+		catch(e){
+			console.log('unable to stringify framewidth', e);
+			return;
+		}
+		if (ws.readyState === 1) ws.send(out);
 	} else {
 		worker.postMessage({
 			event		: 'settings',
@@ -103,7 +175,7 @@ $(window).on('resize', () => {
 	settings.setKey('frameHeight', window.innerHeight);
 });
 
-$('#scope').on('mousemove', e => {
+$(window).on('mousemove', e => {
 	if (settings.getKey('plotMode') === undefined) return;
 	var plotMode = settings.getKey('plotMode');
 	var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
@@ -119,7 +191,11 @@ $('#scope').on('mousemove', e => {
 		}
 		if (x > 1500) x = (x/1000) + 'khz';
 		else x += 'hz';
-		y = (1 - e.clientY/window.innerHeight).toPrecision(3);
+		if (parseInt(settings.getKey('FFTYAxis')) === 0){
+			y = (1 - e.clientY/window.innerHeight).toPrecision(3);
+		} else {
+			y = ((-70*e.clientY/window.innerHeight).toPrecision(3)) + 'db';
+		}
 	}
 	$('#scopeMouseX').html('x: '+x);
 	$('#scopeMouseY').html('y: '+y);
@@ -129,7 +205,7 @@ $('#scope').on('mousemove', e => {
 function CPU(data){
 	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 	var bela = 0, rootCPU = 1;
-	
+
 	if (data.bela != 0 && data.bela !== undefined){
 	
 		// extract the data from the output
@@ -148,14 +224,14 @@ function CPU(data){
 		for (var j=0; j<taskData.length; j++){
 			if (taskData[j].length){
 				var proc = {
-					'name'	: taskData[j][7],
-					'cpu'	: taskData[j][6],
+					'name'	: taskData[j][8],
+					'cpu'	: taskData[j][7],
 					'msw'	: taskData[j][2],
 					'csw'	: taskData[j][3]
 				};
-				if (proc.name === 'ROOT') rootCPU = proc.cpu*0.01;
+				if (proc.name === '[ROOT]') rootCPU = proc.cpu*0.01;
 				// ignore uninteresting data
-				if (proc && proc.name && proc.name !== 'ROOT' && proc.name !== 'NAME' && proc.name !== 'IRQ29:'){
+				if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:'){
 					output.push(proc);
 				}
 			}
@@ -170,32 +246,28 @@ function CPU(data){
 		bela += data.belaLinux * rootCPU;	
 
 	}
-	
-	$('#ide-cpu').html('ide: '+(ide*rootCPU).toFixed(1)+'%');
-	$('#bela-cpu').html('bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
+
+	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
+	$('#bela-cpu').html('Bela: '+( bela ? bela.toFixed(1)+'%' : '--'));
 	
 	if (bela && (ide*rootCPU + bela) > 80){
 		$('#ide-cpu, #bela-cpu').css('color', 'red');
 	} else {
 		$('#ide-cpu, #bela-cpu').css('color', 'black');
 	}
-	
 }
 
 // plotting
 {
-	
-	let canvas = document.getElementById('scope');
-	let ctx = canvas.getContext('2d');
-	ctx.lineWidth = 2;
+	let ctx = new PIXI.Graphics;
+	stage.addChild(ctx);
 	
 	let width, height, numChannels, channelConfig = [], xOff = 0, triggerChannel = 0, triggerLevel = 0, xOffset = 0, upSampling = 1;;
 	settings.on('change', (data, changedKeys) => {
 		if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1){
-			canvas.width = window.innerWidth;
-			width = canvas.width;
-			canvas.height = window.innerHeight;
-			height = canvas.height;
+			width = window.innerWidth;
+			height = window.innerHeight;
+			renderer.resize(width, height);
 		}
 		if (changedKeys.indexOf('numChannels') !== -1){
 			numChannels = data.numChannels;
@@ -225,11 +297,11 @@ function CPU(data){
 		
 		// interpolate the trigger sample to get the sub-pixel x-offset
 		if (settings.getKey('plotMode') == 0){
-			if (upSampling == 1){
+	//		if (upSampling == 1){
 				let one = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset-1] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 				let two = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
 				xOff = (one/(one+two)-1.5);
-			} else {
+	/*		} else {
 				for (var i=0; i<=(upSampling*2); i++){
 					let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
 					let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
@@ -239,42 +311,29 @@ function CPU(data){
 					}
 				}
 			}
-			//console.log(xOff);
+			console.log(xOff);
+	*/		if (isNaN(xOff)) xOff = 0;
 		}
 	};
 	
 	function plotLoop(){
 		requestAnimationFrame(plotLoop);
-		
 		if (plot){
-		
 			plot = false;
-			ctx.clearRect(0, 0, width, height);
-			//console.log('plotting');
-			
+			ctx.clear();
 			for (var i=0; i<numChannels; i++){
-
-				ctx.strokeStyle = channelConfig[i].color;
-	
-				ctx.beginPath();
-				ctx.moveTo(0, frame[i * length] + xOff*(frame[i * length + 1] - frame[i * length]));
-				
-				for (var j=1; (j-xOff)<(length); j++){
-					ctx.lineTo(j-xOff, frame[j+i*length]);
+				ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
+				let iLength = i*length;
+				ctx.moveTo(0, frame[iLength] + xOff*(frame[iLength + 1] - frame[iLength]));
+				for (var j=1; (j-xOff)<length; j++){
+					ctx.lineTo(j-xOff, frame[j+iLength]);
 				}
-				//ctx.lineTo(length, frame[length*(i+1)-1]);
-				//if (!i) console.log(length, j-xOff-1);
-
-				ctx.stroke();
-		
 			}
-			
+			renderer.render(stage);
 			triggerStatus();
-		
 		} /*else {
 			console.log('not plotting');
 		}*/
-		
 	}
 	plotLoop();
 	
@@ -287,16 +346,7 @@ function CPU(data){
 	let inactiveOverlay = $('#inactive-overlay');
 	function triggerStatus(){
 	
-		scopeStatus.removeClass('scope-status-waiting');
 		inactiveOverlay.removeClass('inactive-overlay-visible');
-			
-		// hack to restart the fading animation if it is in progress
-		if (scopeStatus.hasClass('scope-status-triggered')){
-			scopeStatus.removeClass('scope-status-triggered');
-			void scopeStatus[0].offsetWidth;
-		}
-		
-		scopeStatus.addClass('scope-status-triggered').html('triggered');
 		
 		if (oneShot){
 			oneShot = false;
@@ -304,6 +354,7 @@ function CPU(data){
 			$('#pauseButton').html('resume');
 			scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
 		} else {
+			scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
 			if (triggerTimeout) clearTimeout(triggerTimeout);
 			triggerTimeout = setTimeout(() => {
 				if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
@@ -326,7 +377,7 @@ function CPU(data){
 		let scale = downSampling/upSampling;
 		let FFTAxis = settings.getKey('FFTXAxis');
 		
-		console.log(FFTAxis)
+		// console.log(FFTAxis)
 				
 		let out = "data:text/csv;charset=utf-8,";
 		
@@ -358,7 +409,26 @@ function CPU(data){
 	
 }
 
-
+settings.setData({
+	numChannels	: 2,
+	sampleRate	: 44100,
+	numSliders	: 0,
+	frameWidth	: 1280,
+	plotMode	: 0,
+	triggerMode	: 0,
+	triggerChannel	: 0,
+	triggerDir	: 0,
+	triggerLevel	: 0,
+	xOffset		: 0,
+	upSampling	: 1,
+	downSampling	: 1,
+	FFTLength	: 1024,
+	FFTXAxis	: 0,
+	FFTYAxis	: 0,
+	holdOff		: 0,
+	numSliders	: 0,
+	interpolation	: 0
+});
 
 
 

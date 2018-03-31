@@ -1,4 +1,24 @@
-# Copyright 2015-2017 Enzien Audio, Ltd. All Rights Reserved.
+#!/usr/bin/env python
+
+# Copyright (c) 2015-2017 Enzien Audio, Ltd. (info@enzienaudio.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import argparse
 import base64
@@ -6,7 +26,6 @@ import datetime
 import getpass
 import json
 import os
-import requests
 import shutil
 import stat
 import sys
@@ -14,6 +33,8 @@ import tempfile
 import time
 import urlparse
 import zipfile
+
+import requests
 
 class Colours:
     purple = "\033[95m"
@@ -41,6 +62,7 @@ class ErrorCodes(object):
     CODE_CONNECTION_TIMEOUT = 8 # HTTPS connection has timed out
     CODE_CONNECTION_400_500 = 9 # a 400 or 500 error has occured
     CODE_INVALID_TOKEN = 10 # the user token could not be parsed
+    CODE_NEW_PATCH_FAIL = 11 # a new patch could not be made
     CODE_EXCEPTION = 125 # a generic execption has occurred
 
 class UploaderException(Exception):
@@ -59,6 +81,7 @@ __HV_UPLOADER_SERVICE_TOKEN = \
 
 __SUPPORTED_GENERATOR_SET = {
     "c-src",
+    "bela-linux-armv7a",
     "web-local", "web-js",
     "fabric-src", "fabric-macos-x64", "fabric-win-x86", "fabric-win-x64", "fabric-linux-x64", "fabric-android-armv7a",
     "unity-src", "unity-macos-x64", "unity-win-x86", "unity-win-x64", "unity-linux-x64", "unity-android-armv7a",
@@ -94,7 +117,7 @@ def __get_file_url_stub_for_generator(json_api, g):
 
 
 
-def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False, service_token=None):
+def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, b=False, y=False, release=None, release_override=False, domain=None, verbose=False, token=None, clear_token=False, service_token=None, force_new_patch=False, archive_only=False):
     """ Upload a directory to the Heavy Cloud Service.
 
         Parameters
@@ -140,6 +163,15 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
 
         clear_token : bool, optional
             Clears and ignores any existing stored tokens. Requests a new one from the command line.
+
+        service_token : str, optional
+            Pass an optional service token to be used instead of the default heavy_uploader.
+
+        force_new_patch : bool, optional
+            Indicate that a new patch should be created with the given name, if it does not yet exist.
+
+        archive_only : bool, optional
+            Only retrieve the archive from the server and place it in the destination folder without unzipping it.
     """
     # https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
@@ -165,7 +197,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
 
             if token is None:
                 print "Please provide a user token from enzienaudio.com. " \
-                "Create or copy one from https://enzienaudio.com/h/<username>/settings."
+                "Create or copy one from https://enzienaudio.com/getmytokens/."
                 token = getpass.getpass("Enter user token: ")
 
                 # write token to file
@@ -192,7 +224,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                 # if an owner is not supplied, default to the user name in the token
                 owner = payload["name"]
         except Exception as e:
-            print "The user token is invalid. Generate a new one at https://enzienaudio.com/h/<username>/settings."
+            print "The user token is invalid. Generate a new one at https://enzienaudio.com/h/<username>/settings/."
             exit_code = ErrorCodes.CODE_INVALID_TOKEN
             raise e
 
@@ -214,11 +246,14 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         else:
             service_token = __HV_UPLOADER_SERVICE_TOKEN
 
+        # create the session to pool all requests
+        s = requests.Session()
+
         # parse the optional release argument
         if release:
             if not release_override:
                 # check the validity of the current release
-                releases_json = requests.get(urlparse.urljoin(domain, "/a/releases")).json()
+                releases_json = s.get(urlparse.urljoin(domain, "/a/releases/")).json()
                 if release in releases_json:
                     today = datetime.datetime.now()
                     valid_until = datetime.datetime.strptime(releases_json[release]["validUntil"], "%Y-%m-%d")
@@ -265,15 +300,62 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         # the outputs to generate
         generators = list({s.lower() for s in set(generators or [])} & __SUPPORTED_GENERATOR_SET)
 
+        # check if the patch exists already. Ask to create it if it doesn't exist
+        r = s.get(
+            urlparse.urljoin(domain, "/a/patches/{0}/{1}/".format(owner, name)),
+            headers={
+                "Accept": "application/json",
+                "Authorization": "Bearer " + token,
+                "X-Heavy-Service-Token": service_token
+            })
+        r.raise_for_status()
+        reply_json = r.json()
+        if "errors" in reply_json:
+            if reply_json["errors"][0]["status"] == "404":
+                # the patch does not exist
+                if force_new_patch:
+                    create_new_patch = True
+                else:
+                    create_new_patch = raw_input("A patch called \"{0}\" does not exist for owner \"{1}\". Create it? (y/n):".format(name, owner))
+                    create_new_patch = (create_new_patch == "y")
+                if create_new_patch:
+                    r = s.post(
+                        urlparse.urljoin(domain, "/a/patches/"),
+                        data={"owner_name":owner, "name":name, "public":"true"},
+                        headers={
+                            "Accept": "application/json",
+                            "Authorization": "Bearer " + token,
+                            "X-Heavy-Service-Token": service_token
+                        })
+                    r.raise_for_status()
+                    reply_json = r.json()
+                    if "errors" in reply_json:
+                        raise UploaderException(
+                            ErrorCodes.CODE_NEW_PATCH_FAIL,
+                            reply_json["errors"][0]["detail"])
+                    else:
+                        pass # no errors? everything is cool! Proceed.
+                else:
+                    UploaderException(
+                        ErrorCodes.CODE_NEW_PATCH_FAIL,
+                        "A patch called \"{0}\" does not exist for owner \"{1}\"".format(owner, name))
+            else:
+                raise UploaderException(
+                    ErrorCodes.CODE_NEW_PATCH_FAIL,
+                    reply_json["errors"][0]["detail"])
+        else:
+            pass # the patch exists, move on
+
         # upload the job, get the response back
-        r = requests.post(
-            urlparse.urljoin(domain, "/a/patches/{0}/{1}/jobs".format(owner, name)),
+        r = s.post(
+            urlparse.urljoin(domain, "/a/patches/{0}/{1}/jobs/".format(owner, name)),
             data=post_data,
             headers={
                 "Accept": "application/json",
                 "Authorization": "Bearer " + token,
                 "X-Heavy-Service-Token": service_token
             },
+            timeout=None, # some builds can take a very long time
             files={"file": (os.path.basename(zip_path), open(zip_path, "rb"), "application/zip")})
         r.raise_for_status()
 
@@ -311,35 +393,38 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                     ])
                 )
                 if file_url and (len(output_dirs) > i or b):
-                    r = requests.get(
+                    r = s.get(
                         file_url,
                         headers={
-                            #"Authorization": "Bearer " + token,
+                            "Authorization": "Bearer " + token,
                             "X-Heavy-Service-Token": service_token
                         },
                         timeout=None # some builds can take a very long time
                     )
                     r.raise_for_status()
 
-                    # write the reply to a temporary file
-                    c_zip_path = os.path.join(temp_dir, "archive.{0}.zip".format(g))
-                    with open(c_zip_path, "wb") as f:
-                        f.write(r.content)
-
-                    # unzip the files to where they belong
+                    # prepare the target directory for the files
                     if b:
                         target_dir = os.path.join(os.path.abspath(os.path.expanduser(output_dirs[0])), g)
                     else:
                         target_dir = os.path.abspath(os.path.expanduser(output_dirs[i]))
                     if not os.path.exists(target_dir):
                         os.makedirs(target_dir) # ensure that the output directory exists
-                    __unzip(c_zip_path, target_dir)
 
-                    if g == "c-src" and y:
-                        keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
-                        for f in os.listdir(target_dir):
-                            if not f.endswith(keep_files):
-                                os.remove(os.path.join(target_dir, f));
+                    # write the reply to file to the final destination if archive_only, else temporary
+                    c_zip_path = os.path.join(target_dir if archive_only else temp_dir, "archive.{0}.zip".format(g))
+                    with open(c_zip_path, "wb") as f:
+                        f.write(r.content)
+
+                    if not archive_only:
+                        # unzip the files to where they belong
+                        __unzip(c_zip_path, target_dir)
+
+                        if g == "c-src" and y:
+                            keep_files = ("_{0}.h".format(name), "_{0}.hpp".format(name), "_{0}.cpp".format(name))
+                            for f in os.listdir(target_dir):
+                                if not f.endswith(keep_files):
+                                    os.remove(os.path.join(target_dir, f))
 
                     print "  * {0}: {1}".format(g, target_dir)
                 else:
@@ -360,7 +445,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         print "{0}Error:{1} Connection to server timed out. The server might be overloaded. Try again later?\n{2}".format(Colours.red, Colours.end, e)
         exit_code = ErrorCodes.CODE_CONNECTION_TIMEOUT
     except requests.HTTPError as e:
-        if e.response.status_code == requests.codes.unauthorized:
+        if e.response.status_code == requests.status_codes.codes.unauthorized:
             print "{0}Error:{1} Unknown username or password.".format(Colours.red, Colours.end)
         else:
             print "{0}Error:{1} An HTTP error has occurred with URL {2}\n{3}".format(Colours.red, Colours.end, e.request.path_url, e)
@@ -369,7 +454,7 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
         # a generic catch for any other exception
         exit_code = exit_code if exit_code != ErrorCodes.CODE_OK else ErrorCodes.CODE_EXCEPTION
         print "{0}Error:{1} ({2}) {3}".format(Colours.red, Colours.end, e.__class__, e)
-        print "Getting a weird error? Get the latest uploader at https://enzienaudio.com/static/uploader.py, or check for issues at https://github.com/enzienaudio/heavy/issues."
+        print "Getting a weird error? Get the latest version with 'pip install hv-uploader -U', or check for issues at https://github.com/enzienaudio/heavy/issues."
     finally:
         if temp_dir:
             shutil.rmtree(temp_dir) # delete the temporary directory no matter what
@@ -394,7 +479,6 @@ def main():
     parser.add_argument(
         "-g", "--gen",
         nargs="+",
-        default=["c"],
         help="List of generator outputs. Currently supported generators are '" + "', '".join(sorted(__SUPPORTED_GENERATOR_SET)) + "'.")
     parser.add_argument(
         "-b",
@@ -418,10 +502,6 @@ def main():
         help="Send a request for a specific release to the server without checking for validity first.",
         action="count")
     parser.add_argument(
-        "-d", "--domain",
-        default="https://enzienaudio.com",
-        help="Domain. Default is https://enzienaudio.com.")
-    parser.add_argument(
         "-v", "--verbose",
         help="Show debugging information.",
         action="count")
@@ -435,6 +515,18 @@ def main():
     parser.add_argument(
         "--service_token",
         help="Use a custom service token.")
+    parser.add_argument(
+        "-d", "--domain",
+        default="https://enzienaudio.com",
+        help="Domain. Default is https://enzienaudio.com.")
+    parser.add_argument(
+        "--force_new_patch",
+        help="Create a new patch if the given name doesn't already exist.",
+        action="count")
+    parser.add_argument(
+        "--archive_only",
+        help="Only retrieve the archive from the server, do not unzip it.",
+        action="count")
     args = parser.parse_args()
 
     exit_code, reponse_obj = upload(
@@ -451,7 +543,9 @@ def main():
         verbose=args.verbose,
         token=args.token,
         clear_token=args.clear_token,
-        service_token=args.service_token)
+        service_token=args.service_token,
+        force_new_patch=args.force_new_patch,
+        archive_only = args.archive_only)
 
     # exit and return the exit code
     sys.exit(exit_code)

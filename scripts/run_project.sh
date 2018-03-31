@@ -58,7 +58,7 @@ do
 done
 
 
-check_board_alive
+check_board_alive_and_set_date
 [ -z "$BBB_PROJECT_NAME" ] && {
 	echo "ERROR: you need to specify a project name. Here is a list of projects available on your board:"
 	list_available_projects

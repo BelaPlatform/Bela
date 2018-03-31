@@ -38,7 +38,7 @@ float Plectrum::update(float position, float stringPosition)	{
 
 	float springOut = distance * _spring;
 
-	float dampOut = (distance - _lastDistance) * 44100;
+	float dampOut = (distance - _lastDistance) * 44100.f;
 
 	float out = springOut+dampOut;
 

@@ -1,0 +1,25 @@
+#! /bin/sh
+# /etc/init.d/bela-ctag
+#
+
+# Some things that run always
+# ...nothing to do here
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    /root/Bela/resources/bin/devmem2 0x44E00034 w 0x30002 >> /dev/null # Enable functional and interface clock of McASP
+    /root/Bela/resources/bin/devmem2 0x482000CC w 0x30000 >> /dev/null # Disable McASP interrupt in INTC
+    echo "Adding overlay for CTAG face"
+    echo BELA-CTAG > /sys/devices/platform/bone_capemgr/slots
+    ;;
+  stop)
+    cd /root/Bela && make stop
+    ;;
+  *)
+    echo "Usage: /etc/init.d/bela-ctag {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
