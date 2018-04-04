@@ -22,7 +22,8 @@ class AuxTaskNonRT{
 		void create(const char* _name, void(*_callback)(const char* str));
 		void create(const char* _name, void(*_callback)(void* buf, int size));
 		void create(const char* _name, void(*_callback)(void* ptr), void* _pointer);
-		
+		void create(const char* _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer);
+
 		void schedule(void* ptr, size_t size);
 		void schedule(const char* str);
 		void schedule();
@@ -51,11 +52,13 @@ class AuxTaskNonRT{
 		void (*str_callback)(const char* buffer);
 		void (*buf_callback)(void* buf, int size);
 		void (*ptr_callback)(void* ptr);
+		void (*ptr_buf_callback)(void* ptr, void* buf, int size);
 		
 		void empty_loop();
 		void str_loop();
 		void buf_loop();
 		void ptr_loop();
+		void ptr_buf_loop();
 		
 		static void loop(void* ptr);
 };

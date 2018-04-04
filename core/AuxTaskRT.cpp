@@ -33,6 +33,14 @@ void AuxTaskRT::create(const char* _name, void (*_callback)(void* ptr), void* _p
 	mode = 3;
 	__create();
 }
+void AuxTaskRT::create(const char* _name, void (*_callback)(void* ptr, void* buf, int size), void* _pointer, int _priority){
+	name = _name;
+	priority = _priority;
+	pointer = _pointer;
+	ptr_buf_callback = _callback;
+	mode = 4;
+	__create();
+}
 
 void AuxTaskRT::__create(){
 	
@@ -215,6 +223,31 @@ void AuxTaskRT::ptr_loop(){
 	free(buffer);
 #endif
 }
+void AuxTaskRT::ptr_buf_loop(){
+#ifdef XENOMAI_SKIN_native
+	while(!gShouldStop){
+		void* buf;
+		ssize_t size = rt_queue_receive(&queue, &buf, TM_INFINITE);
+		ptr_buf_callback(pointer, (void*)buf, size);
+		rt_queue_free(&queue, buf);
+	}
+#endif
+#ifdef XENOMAI_SKIN_posix
+	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
+	while(!gShouldStop)
+	{
+		unsigned int prio;
+		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		if(ret < 0)
+		{
+			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name, errno, strerror(errno));
+			return;
+		}
+		ptr_buf_callback(pointer, (void*)buffer, ret);
+	}
+	free(buffer);
+#endif
+}
 
 void AuxTaskRT::loop(void* ptr){
 	AuxTaskRT *instance = (AuxTaskRT*)ptr;
@@ -229,5 +262,7 @@ void AuxTaskRT::loop(void* ptr){
 		instance->buf_loop();
 	} else if (instance->mode == 3){
 		instance->ptr_loop();
+	} else if (instance->mode == 4){
+		instance->ptr_buf_loop();
 	}
 }

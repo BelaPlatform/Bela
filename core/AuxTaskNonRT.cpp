@@ -31,6 +31,13 @@ void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* ptr), void* 
 	mode = 3;
 	__create();
 }
+void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer){
+	name = _name;
+	ptr_buf_callback = _callback;
+	pointer = _pointer;
+	mode = 4;
+	__create();
+}
 
 void AuxTaskNonRT::__create(){
 	// create the xenomai task
@@ -159,6 +166,14 @@ void AuxTaskNonRT::ptr_loop(){
 	}
 	free(buf);
 }
+void AuxTaskNonRT::ptr_buf_loop(){
+	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
+	while(!gShouldStop){
+		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
+		ptr_buf_callback(pointer, buf, size);
+	}
+	free(buf);
+}
 
 void AuxTaskNonRT::loop(void* ptr){
 	AuxTaskNonRT *instance = (AuxTaskNonRT*)ptr;
@@ -171,5 +186,7 @@ void AuxTaskNonRT::loop(void* ptr){
 		instance->buf_loop();
 	} else if (instance->mode == 3){
 		instance->ptr_loop();
+	} else if (instance->mode == 4){
+		instance->ptr_buf_loop();
 	}
 }
