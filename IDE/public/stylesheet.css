@@ -1070,6 +1070,7 @@ span.file-list-size{
 }
 #make-params{
 	width: 200px;
+	font-family: inconsolata;
 }
 
 /* Project explorer */
