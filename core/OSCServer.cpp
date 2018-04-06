@@ -1,69 +1,44 @@
 /***** OSCServer.cpp *****/
 #include <OSCServer.h>
+#include <Bela.h>
 
-// constructor
-OSCServer::OSCServer(){}
-
-// static method for checking messages
-// called by messageCheckTask with pointer to OSCServer instance as argument
-void OSCServer::checkMessages(void* ptr){
-    OSCServer *instance = (OSCServer*)ptr;
-    while(!gShouldStop){
-        instance->messageCheck();
-        usleep(1000);
-    }
+void OSCServer::recieve_task_func(void* ptr){
+	OSCServer* instance = (OSCServer*)ptr;
+	while(!gShouldStop){
+		instance->waitForMessage(OSCSERVER_POLL_MS);
+	}
 }
 
-void OSCServer::setup(int _port){
+void OSCServer::setup(int _port, void (*_callback)(oscpkt::Message* msg)){
     port = _port;
-    if(!socket.init(port))
-        rt_printf("socket not initialised\n");
-    createAuxTasks();
+    callback = _callback;
+    
+    if(!socket.init(port)){
+        fprintf(stderr, "OSCServer: Unable to initialise UDP socket: %d %s\n", errno, strerror(errno));
+        return;
+    }
+	
+    recieve_task.create(std::string("OSCServerTask_") + std::to_string(_port), OSCServer::recieve_task_func, this);
+    recieve_task.schedule();
 }
 
-void OSCServer::createAuxTasks(){
-    char name [30];
-    sprintf (name, "OSCReceiveTask %i", port);
-    OSCReceiveTask = Bela_createAuxiliaryTask(OSCServer::checkMessages, BELA_AUDIO_PRIORITY-5, name, this);
-    Bela_scheduleAuxiliaryTask(OSCReceiveTask);
-}
-
-void OSCServer::messageCheck(){
-    if (socket.waitUntilReady(true, UDP_RECEIVE_TIMEOUT_MS)){
-        int msgLength = socket.read(&inBuffer, UDP_RECEIVE_MAX_LENGTH, false);
-        pr.init(inBuffer, msgLength);
-        oscpkt::Message *inmsg;
-        while (pr.isOk() && (inmsg = pr.popMessage()) != 0) {
-            inQueue.push(*inmsg);
+int OSCServer::waitForMessage(int timeout){
+	int ret = socket.waitUntilReady(true, timeout);
+	if (ret == -1){
+		fprintf(stderr, "OSCServer: Error polling UDP socket: %d %s\n", errno, strerror(errno));
+		return -1;
+	} else if(ret == 1){
+		int msgLength = socket.read(&inBuffer, OSCSERVER_BUFFERSIZE, false);
+		if (msgLength < 0){
+			fprintf(stderr, "OSCServer: Error reading UDP socket: %d %s\n", errno, strerror(errno));
+			return -1;
         }
-    }
-}
-
-bool OSCServer::messageWaiting(){
-    return !inQueue.empty();
-}
-
-oscpkt::Message OSCServer::popMessage(){
-    if (!inQueue.empty()){
-        poppedMessage = inQueue.front();
-        inQueue.pop();
-    } else {
-        poppedMessage.init("/error");
-    }
-    return poppedMessage;
-}
-
-void OSCServer::receiveMessageNow(int timeout){
-    if (socket.waitUntilReady(true, timeout)){
-        int msgLength = socket.read(&inBuffer, UDP_RECEIVE_MAX_LENGTH, false);
         pr.init(inBuffer, msgLength);
-        oscpkt::Message *inmsg;
-        while (pr.isOk() && (inmsg = pr.popMessage()) != 0) {
-            inQueue.push(*inmsg);
+        if (!pr.isOk()){
+        	fprintf(stderr, "OSCServer: oscpkt error parsing recieved message: %i", pr.getErr());
+        	return -1;
         }
-    }
+		callback(pr.popMessage());
+	}
+	return ret;
 }
-
-
-
-
