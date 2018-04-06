@@ -1,78 +1,85 @@
 /***** OSCClient.cpp *****/
 #include <OSCClient.h>
-#include <Bela.h>
 
-OSCClient::OSCClient(){}
-
-void OSCClient::send_task_func(void* ptr, void* buf, int size){
-	OSCClient* instance = (OSCClient*)ptr;
-	instance->socket.send(buf, size);
+OSCClient::OSCClient(){
+	fprintf(stderr, "Warning! OSCClient is depecrated, use OSCSender instead\n");
 }
 
-void OSCClient::stream_task_func(void* ptr, void* buf, int size){
-	OSCClient* instance = (OSCClient*)ptr;
-	instance->newMessage(instance->streamAddress)
-			.add(buf, size)
-			.sendNow();
+void OSCClient::sendQueue(void* ptr){
+    OSCClient *instance = (OSCClient*)ptr;
+    while(!gShouldStop){
+        instance->queueSend();
+        usleep(1000);
+    }
 }
 
-void OSCClient::setup(int _port, std::string _ip_address){
-	ip_address = _ip_address;
+void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
+    address = _address;
     port = _port;
     
-    socket.setServer(ip_address.c_str());
+    socket.setServer(address);
 	socket.setPort(port);
 	
-	send_task.create(std::string("OSCClientTask_") + std::to_string(_port), OSCClient::send_task_func, this);
+	if (scheduleTask)
+    	createAuxTasks();
 }
 
-void OSCClient::streamTo(std::string address, int streaming_buffer_size){
-	streamAddress = address;
-	streamBufferSize = streaming_buffer_size;
-	streamBuffer.reserve(streamBufferSize);
-	stream_task.create(std::string("OSCStreamTask_") + std::to_string(port), OSCClient::stream_task_func, this);
+void OSCClient::createAuxTasks(){
+    char name [30];
+    sprintf (name, "OSCSendTask %i", port);
+    OSCSendTask = Bela_createAuxiliaryTask(sendQueue, BELA_AUDIO_PRIORITY-5, name, this);
+    Bela_scheduleAuxiliaryTask(OSCSendTask);
 }
 
-void OSCClient::stream(float in){
-	streamBuffer.push_back(in);
-	if (streamBuffer.size() >= streamBufferSize){
-		stream_task.schedule(&streamBuffer[0], streamBuffer.size()*sizeof(float));
-		streamBuffer.clear();
-	}
+void OSCClient::queueMessage(oscpkt::Message msg){
+    outQueue.push(msg);
 }
 
-OSCClient &OSCClient::newMessage(std::string address){
-	msg.init(address);
-	return *this;
+void OSCClient::queueSend(){
+    if (!outQueue.empty()){
+        pw.init().startBundle();
+        while(!outQueue.empty()){
+            pw.addMessage(outQueue.front());
+            outQueue.pop();
+        }
+        pw.endBundle();
+        outBuffer = pw.packetData();
+        socket.send(outBuffer, pw.packetSize());
+    }
 }
 
-OSCClient &OSCClient::add(int payload){
-	msg.pushInt32(payload);
-	return *this;
-}
-OSCClient &OSCClient::add(float payload){
-	msg.pushFloat(payload);
-	return *this;
-}
-OSCClient &OSCClient::add(std::string payload){
-	msg.pushStr(payload);
-	return *this;
-}
-OSCClient &OSCClient::add(bool payload){
-	msg.pushBool(payload);
-	return *this;
-}
-OSCClient &OSCClient::add(void *ptr, size_t num_bytes){
-	msg.pushBlob(ptr, num_bytes);
-	return *this;
+void OSCClient::sendMessageNow(oscpkt::Message msg){
+    pw.init().addMessage(msg);
+    outBuffer = pw.packetData();
+    socket.send(outBuffer, pw.packetSize());
 }
 
-void OSCClient::send(){
-	pw.init().addMessage(msg);
-	send_task.schedule(pw.packetData(), pw.packetSize());
+// OSCMessageFactory
+OSCMessageFactory& OSCMessageFactory::to(std::string addr){
+    msg.init(addr);
+    return *this;
 }
 
-void OSCClient::sendNow(){
-	pw.init().addMessage(msg);
-    socket.send(pw.packetData(), pw.packetSize());
+OSCMessageFactory& OSCMessageFactory::add(std::string in){
+    msg.pushStr(in);
+    return *this;
+}
+OSCMessageFactory& OSCMessageFactory::add(int in){
+    msg.pushInt32(in);
+    return *this;
+}
+OSCMessageFactory& OSCMessageFactory::add(float in){
+    msg.pushFloat(in);
+    return *this;
+}
+OSCMessageFactory& OSCMessageFactory::add(bool in){
+    msg.pushBool(in);
+    return *this;
+}
+OSCMessageFactory& OSCMessageFactory::add(void *ptr, int size){
+    msg.pushBlob(ptr, size);
+    return *this;
+}
+oscpkt::Message OSCMessageFactory::end(){
+    return msg;
 }
