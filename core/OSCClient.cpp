@@ -20,24 +20,30 @@ void OSCClient::setup(int _port, const char* _ip_address){
 	task.create("OSCClientTask", OSCClient::task_func, this);
 }
 
-void OSCClient::newMessage(const char* address){
+OSCClient &OSCClient::newMessage(const char* address){
 	msg.init(address);
+	return *this;
 }
 
-void OSCClient::add(int payload){
+OSCClient &OSCClient::add(int payload){
 	msg.pushInt32(payload);
+	return *this;
 }
-void OSCClient::add(float payload){
+OSCClient &OSCClient::add(float payload){
 	msg.pushFloat(payload);
+	return *this;
 }
-void OSCClient::add(const char* payload){
+OSCClient &OSCClient::add(const char* payload){
 	msg.pushStr(payload);
+	return *this;
 }
-void OSCClient::add(bool payload){
+OSCClient &OSCClient::add(bool payload){
 	msg.pushBool(payload);
+	return *this;
 }
-void OSCClient::add(void *ptr, size_t num_bytes){
+OSCClient &OSCClient::add(void *ptr, size_t num_bytes){
 	msg.pushBlob(ptr, num_bytes);
+	return *this;
 }
 
 void OSCClient::send(){

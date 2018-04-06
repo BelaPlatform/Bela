@@ -14,12 +14,12 @@ class OSCClient{
 		
 		void setup(int port, const char* ip_address="127.0.0.1");
 		
-		void newMessage(const char* address);
-		void add(int payload);
-		void add(float payload);
-		void add(const char* payload);
-		void add(bool payload);
-		void add(void *ptr, size_t num_bytes);
+		OSCClient &newMessage(const char* address);
+		OSCClient &add(int payload);
+		OSCClient &add(float payload);
+		OSCClient &add(const char* payload);
+		OSCClient &add(bool payload);
+		OSCClient &add(void *ptr, size_t num_bytes);
 		void sendNow();
 		void send();
 		
