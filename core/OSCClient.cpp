@@ -4,22 +4,44 @@
 
 OSCClient::OSCClient(){}
 
-void OSCClient::task_func(void* ptr, void* buf, int size){
+void OSCClient::send_task_func(void* ptr, void* buf, int size){
 	OSCClient* instance = (OSCClient*)ptr;
 	instance->socket.send(buf, size);
 }
 
-void OSCClient::setup(int _port, const char* _ip_address){
+void OSCClient::stream_task_func(void* ptr, void* buf, int size){
+	OSCClient* instance = (OSCClient*)ptr;
+	instance->newMessage(instance->streamAddress)
+			.add(buf, size)
+			.sendNow();
+}
+
+void OSCClient::setup(int _port, std::string _ip_address){
 	ip_address = _ip_address;
     port = _port;
     
-    socket.setServer(ip_address);
+    socket.setServer(ip_address.c_str());
 	socket.setPort(port);
 	
-	task.create(std::string("OSCClientTask_") + std::to_string(_port), OSCClient::task_func, this);
+	send_task.create(std::string("OSCClientTask_") + std::to_string(_port), OSCClient::send_task_func, this);
 }
 
-OSCClient &OSCClient::newMessage(const char* address){
+void OSCClient::streamTo(std::string address, int streaming_buffer_size){
+	streamAddress = address;
+	streamBufferSize = streaming_buffer_size;
+	streamBuffer.reserve(streamBufferSize);
+	stream_task.create(std::string("OSCStreamTask_") + std::to_string(port), OSCClient::stream_task_func, this);
+}
+
+void OSCClient::stream(float in){
+	streamBuffer.push_back(in);
+	if (streamBuffer.size() >= streamBufferSize){
+		stream_task.schedule(&streamBuffer[0], streamBuffer.size()*sizeof(float));
+		streamBuffer.clear();
+	}
+}
+
+OSCClient &OSCClient::newMessage(std::string address){
 	msg.init(address);
 	return *this;
 }
@@ -32,7 +54,7 @@ OSCClient &OSCClient::add(float payload){
 	msg.pushFloat(payload);
 	return *this;
 }
-OSCClient &OSCClient::add(const char* payload){
+OSCClient &OSCClient::add(std::string payload){
 	msg.pushStr(payload);
 	return *this;
 }
@@ -47,7 +69,7 @@ OSCClient &OSCClient::add(void *ptr, size_t num_bytes){
 
 void OSCClient::send(){
 	pw.init().addMessage(msg);
-	task.schedule(pw.packetData(), pw.packetSize());
+	send_task.schedule(pw.packetData(), pw.packetSize());
 }
 
 void OSCClient::sendNow(){
