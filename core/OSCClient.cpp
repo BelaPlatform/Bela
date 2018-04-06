@@ -1,83 +1,47 @@
 /***** OSCClient.cpp *****/
 #include <OSCClient.h>
+#include <Bela.h>
 
 OSCClient::OSCClient(){}
 
-void OSCClient::sendQueue(void* ptr){
-    OSCClient *instance = (OSCClient*)ptr;
-    while(!gShouldStop){
-        instance->queueSend();
-        usleep(1000);
-    }
+void OSCClient::task_func(void* ptr, void* buf, int size){
+	OSCClient* instance = (OSCClient*)ptr;
+	instance->socket.send(buf, size);
 }
 
-void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
-    address = _address;
+void OSCClient::setup(int _port, const char* _ip_address){
+	ip_address = _ip_address;
     port = _port;
     
-    socket.setServer(address);
+    socket.setServer(ip_address);
 	socket.setPort(port);
 	
-	if (scheduleTask)
-    	createAuxTasks();
+	// TODO work out how to add port number to task name to allow multiple instances of OSCClient
+	task.create("OSCClientTask", OSCClient::task_func, this);
 }
 
-void OSCClient::createAuxTasks(){
-    char name [30];
-    sprintf (name, "OSCSendTask %i", port);
-    OSCSendTask = Bela_createAuxiliaryTask(sendQueue, BELA_AUDIO_PRIORITY-5, name, this);
-    Bela_scheduleAuxiliaryTask(OSCSendTask);
+void OSCClient::newMessage(const char* address){
+	msg.init(address);
 }
 
-void OSCClient::queueMessage(oscpkt::Message msg){
-    outQueue.push(msg);
+void OSCClient::add(int payload){
+	msg.pushInt32(payload);
+}
+void OSCClient::add(float payload){
+	msg.pushFloat(payload);
+}
+void OSCClient::add(const char* payload){
+	msg.pushStr(payload);
 }
 
-void OSCClient::queueSend(){
-    if (!outQueue.empty()){
-        pw.init().startBundle();
-        while(!outQueue.empty()){
-            pw.addMessage(outQueue.front());
-            outQueue.pop();
-        }
-        pw.endBundle();
-        outBuffer = pw.packetData();
-        socket.send(outBuffer, pw.packetSize());
-    }
+void OSCClient::send(){
+	pw.init().addMessage(msg);
+	outBuffer = pw.packetData();
+	task.schedule(outBuffer, pw.packetSize());
 }
 
-void OSCClient::sendMessageNow(oscpkt::Message msg){
-    pw.init().addMessage(msg);
+void OSCClient::sendNow(){
+	pw.init().addMessage(msg);
     outBuffer = pw.packetData();
     socket.send(outBuffer, pw.packetSize());
-}
-
-// OSCMessageFactory
-OSCMessageFactory& OSCMessageFactory::to(std::string addr){
-    msg.init(addr);
-    return *this;
-}
-
-OSCMessageFactory& OSCMessageFactory::add(std::string in){
-    msg.pushStr(in);
-    return *this;
-}
-OSCMessageFactory& OSCMessageFactory::add(int in){
-    msg.pushInt32(in);
-    return *this;
-}
-OSCMessageFactory& OSCMessageFactory::add(float in){
-    msg.pushFloat(in);
-    return *this;
-}
-OSCMessageFactory& OSCMessageFactory::add(bool in){
-    msg.pushBool(in);
-    return *this;
-}
-OSCMessageFactory& OSCMessageFactory::add(void *ptr, int size){
-    msg.pushBlob(ptr, size);
-    return *this;
-}
-oscpkt::Message OSCMessageFactory::end(){
-    return msg;
 }
