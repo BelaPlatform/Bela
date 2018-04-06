@@ -48,7 +48,7 @@ class AuxTaskNonRT{
 		void* pointer;
 		
 		void __create();
-		void openPipe();
+		int openPipe();
 		
 		void (*empty_callback)();
 		void (*str_callback)(const char* buffer);

@@ -40,20 +40,20 @@ void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* ptr, void* b
 }
 
 void AuxTaskNonRT::__create(){
+	
 	// create the xenomai task
 	int priority = 0;
 	int stackSize = 65536 * 4;
 #ifdef XENOMAI_SKIN_native //posix skin does evertything in one go below
 	if (int ret = rt_task_create(&task, name.c_str(), stackSize, priority, T_JOINABLE))
-
 	{
 		fprintf(stderr, "Unable to create AuxTaskNonRT %s: %i\n", name.c_str(), ret);
 		return;
 	}
 #endif
+
 	// create an rt_pipe
 	std::string p_name = "p_" + name;
-	// sprintf (p_name, "p_%s", name.c_str());
 #ifdef XENOMAI_SKIN_native
 	rt_pipe_delete(&pipe);
 	int ret = rt_pipe_create(&pipe, p_name.c_str(), P_MINOR_AUTO, 0);
@@ -69,6 +69,13 @@ void AuxTaskNonRT::__create(){
 		fprintf(stderr, "Unable to create AuxTaskNonRT %s pipe %s: (%i) %s\n", name.c_str(), p_name.c_str(), ret, strerror(ret));
 		return;
 	}
+	
+	// open the pipe
+	if (openPipe() < 0){
+		fprintf(stderr, "Aborting AuxTaskNonRT %s\n", name.c_str());
+		return;
+	}
+	
 	// start the xenomai task
 #ifdef XENOMAI_SKIN_native
 	if (int ret = rt_task_start(&task, AuxTaskNonRT::loop, this))
@@ -119,8 +126,7 @@ void AuxTaskNonRT::cleanup(){
 #endif
 }
 
-void AuxTaskNonRT::openPipe(){
-	// char rtp_name [50];
+int AuxTaskNonRT::openPipe(){
 #if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
 	std::string outPipeNameTemplateString = "/proc/xenomai/registry/rtipc/xddp/p_";
 #else
@@ -130,8 +136,9 @@ void AuxTaskNonRT::openPipe(){
 	pipe_fd = open(rtp_name.c_str(), O_RDWR);
 	if (pipe_fd < 0){
 		fprintf(stderr, "AuxTaskNonRT %s: could not open pipe %s: (%i) %s\n", name.c_str(), rtp_name.c_str(),  errno, strerror(errno));
-		return;
+		return -1;
 	}
+	return 0;
 }
 
 void AuxTaskNonRT::empty_loop(){
@@ -177,7 +184,6 @@ void AuxTaskNonRT::ptr_buf_loop(){
 
 void AuxTaskNonRT::loop(void* ptr){
 	AuxTaskNonRT *instance = (AuxTaskNonRT*)ptr;
-	instance->openPipe();
 	if (instance->mode == 0){
 		instance->empty_loop();
 	} else if (instance->mode == 1){
