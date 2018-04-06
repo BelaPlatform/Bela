@@ -70,12 +70,6 @@ void AuxTaskNonRT::__create(){
 		return;
 	}
 	
-	// open the pipe
-	if (openPipe() < 0){
-		fprintf(stderr, "Aborting AuxTaskNonRT %s\n", name.c_str());
-		return;
-	}
-	
 	// start the xenomai task
 #ifdef XENOMAI_SKIN_native
 	if (int ret = rt_task_start(&task, AuxTaskNonRT::loop, this))
@@ -184,6 +178,10 @@ void AuxTaskNonRT::ptr_buf_loop(){
 
 void AuxTaskNonRT::loop(void* ptr){
 	AuxTaskNonRT *instance = (AuxTaskNonRT*)ptr;
+	if (instance->openPipe() < 0){
+		fprintf(stderr, "Aborting AuxTaskNonRT %s\n", instance->name.c_str());
+		return;
+	}
 	if (instance->mode == 0){
 		instance->empty_loop();
 	} else if (instance->mode == 1){
