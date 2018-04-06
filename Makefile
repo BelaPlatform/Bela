@@ -257,11 +257,6 @@ endif
 QUIET?=false
 
 RM := rm -rf
-STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
-
-ifeq ($(PROJECT_TYPE),libpd)
-LIBS += $(LIBPD_LIBS)
-endif
 
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ -I./build/pru/
 ifeq ($(XENOMAI_VERSION),2.6)
@@ -274,7 +269,14 @@ endif
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE)
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -Llib/ -lasound -lsndfile -lseasocks
+BELA_LDFLAGS = -Llib/
+BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
+BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 -lmathneon # additional libraries needed by extra code (libbelaextra.so)
+BELA_EXAMPLE_LIBS = -lsndfile # libraries commonly used by examples
+BELA_LDLIBS = $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS) $(BELA_EXAMPLE_LIBS)
+ifeq ($(PROJECT_TYPE),libpd)
+BELA_LDLIBS += $(LIBPD_LIBS)
+endif
 
 ifndef COMPILER
 # check whether clang is installed
@@ -462,7 +464,7 @@ else
 # function, and conditionally call one of two recursive make targets depending on whether
 # we want to link in the default main file or not. The kludge is the mess of a shell script
 # line below. Surely there's a better way to do this?
-$(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
+$(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
 ifeq ($(PROJECT_TYPE),libpd)
@@ -471,7 +473,7 @@ ifeq ($(PROJECT_TYPE),libpd)
 	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
 endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LDLIBS) $(BELA_LDLIBS)
 	$(AT) echo ' ...done'
 endif # ifeq ($(SHOULD_BUILD),false)
 
@@ -673,7 +675,7 @@ LIB_EXTRA_A = libbelaextra.a
 LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
 lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
 	$(AT) echo Building lib/$(LIB_EXTRA_SO)
-	$(AT) $(CXX) -shared -Wl,-soname,$(LIB_EXTRA_SO) $(LDLIBS) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDFLAGS)
+	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_EXTRA_SO) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDLIBS) $(BELA_EXTRA_LDLIBS)
 
 lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) echo Building lib/$(LIB_EXTRA_A)
@@ -681,17 +683,17 @@ lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 
 LIB_SO =libbela.so
 LIB_A = libbela.a
-LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o lib/libprussdrv.a build/core/Gpio.o
+LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o build/core/Gpio.o
 lib/$(LIB_SO): $(LIB_OBJS)
 	$(AT) echo Building lib/$(LIB_SO)
-	$(AT) $(CXX) -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDFLAGS)
-	$(AT) ldconfig
+	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDLIBS) $(BELA_CORE_LDLIBS)
 
 lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) echo Building lib/$(LIB_A)
 	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
 
 lib: lib/libbela.so lib/libbela.a lib/libbelaextra.so lib/libbelaextra.a
+	$(AT) ldconfig
 
 HEAVY_TMP_DIR=/tmp/heavy-bela/
 HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
