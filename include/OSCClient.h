@@ -18,6 +18,8 @@ class OSCClient{
 		void add(int payload);
 		void add(float payload);
 		void add(const char* payload);
+		void add(bool payload);
+		void add(void *ptr, size_t num_bytes);
 		void sendNow();
 		void send();
 		

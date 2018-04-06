@@ -76,6 +76,13 @@ function parseMessage(msg){
 		console.log('address:', msg.address);
 		for (let arg of msg.args){
 			console.log(arg);
+			if (arg.type === 'blob'){
+				floats = [];
+				for (let i=0; i<arg.value.length; i+=4){
+					floats.push(arg.value.readFloatLE(i).toPrecision(5));
+				}
+				console.log(floats);
+			}
 		}
 	}
 }

@@ -33,6 +33,12 @@ void OSCClient::add(float payload){
 void OSCClient::add(const char* payload){
 	msg.pushStr(payload);
 }
+void OSCClient::add(bool payload){
+	msg.pushBool(payload);
+}
+void OSCClient::add(void *ptr, size_t num_bytes){
+	msg.pushBlob(ptr, num_bytes);
+}
 
 void OSCClient::send(){
 	pw.init().addMessage(msg);
