@@ -6,32 +6,32 @@
 #include <stdlib.h>
 #include <errno.h>
 
-void AuxTaskNonRT::create(const char* _name, void(*_callback)()){
+void AuxTaskNonRT::create(std::string _name, void(*_callback)()){
 	name = _name;
 	empty_callback = _callback;
 	mode = 0;
 	__create();
 }
-void AuxTaskNonRT::create(const char* _name, void(*_callback)(const char* str)){
+void AuxTaskNonRT::create(std::string _name, void(*_callback)(const char* str)){
 	name = _name;
 	str_callback = _callback;
 	mode = 1;
 	__create();
 }
-void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* buf, int size)){
+void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* buf, int size)){
 	name = _name;
 	buf_callback = _callback;
 	mode = 2;
 	__create();
 }
-void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* ptr), void* _pointer){
+void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* ptr), void* _pointer){
 	name = _name;
 	ptr_callback = _callback;
 	pointer = _pointer;
 	mode = 3;
 	__create();
 }
-void AuxTaskNonRT::create(const char* _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer){
+void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer){
 	name = _name;
 	ptr_buf_callback = _callback;
 	pointer = _pointer;
@@ -44,29 +44,29 @@ void AuxTaskNonRT::__create(){
 	int priority = 0;
 	int stackSize = 65536 * 4;
 #ifdef XENOMAI_SKIN_native //posix skin does evertything in one go below
-	if (int ret = rt_task_create(&task, name, stackSize, priority, T_JOINABLE))
+	if (int ret = rt_task_create(&task, name.c_str(), stackSize, priority, T_JOINABLE))
 
 	{
-		fprintf(stderr, "Unable to create AuxTaskNonRT %s: %i\n", name, ret);
+		fprintf(stderr, "Unable to create AuxTaskNonRT %s: %i\n", name.c_str(), ret);
 		return;
 	}
 #endif
 	// create an rt_pipe
-	char p_name [30];
-	sprintf (p_name, "p_%s", name);
+	std::string p_name = "p_" + name;
+	// sprintf (p_name, "p_%s", name.c_str());
 #ifdef XENOMAI_SKIN_native
 	rt_pipe_delete(&pipe);
-	int ret = rt_pipe_create(&pipe, p_name, P_MINOR_AUTO, 0);
+	int ret = rt_pipe_create(&pipe, p_name.c_str(), P_MINOR_AUTO, 0);
 	if(ret < 0)
 #endif
 #ifdef XENOMAI_SKIN_posix
 	int pipeSize = 65536 * 10;
-	int ret = createXenomaiPipe(p_name, pipeSize);
+	int ret = createXenomaiPipe(p_name.c_str(), pipeSize);
 	pipeSocket = ret;
 	if(ret <= 0)
 #endif
 	{
-		fprintf(stderr, "Unable to create AuxTaskNonRT %s pipe %s: (%i) %s\n", name, p_name, ret, strerror(ret));
+		fprintf(stderr, "Unable to create AuxTaskNonRT %s pipe %s: (%i) %s\n", name.c_str(), p_name.c_str(), ret, strerror(ret));
 		return;
 	}
 	// start the xenomai task
@@ -74,10 +74,10 @@ void AuxTaskNonRT::__create(){
 	if (int ret = rt_task_start(&task, AuxTaskNonRT::loop, this))
 #endif
 #ifdef XENOMAI_SKIN_posix
-	if(int ret = create_and_start_thread(&thread, name, priority, stackSize, (pthread_callback_t*)AuxTaskNonRT::loop, this))
+	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, (pthread_callback_t*)AuxTaskNonRT::loop, this))
 #endif
 	{
-		fprintf(stderr, "Unable to start AuxTaskNonRT %s: %i, %s\n", name, ret, strerror(ret));
+		fprintf(stderr, "Unable to start AuxTaskNonRT %s: %i, %s\n", name.c_str(), ret, strerror(ret));
 		return;
 	}
 }
@@ -91,7 +91,7 @@ void AuxTaskNonRT::schedule(void* ptr, size_t size){
 #endif
 	if(ret < 0)
 	{
-		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name, errno, strerror(errno), size);
+		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name.c_str(), errno, strerror(errno), size);
 	}
 }
 void AuxTaskNonRT::schedule(const char* str){
@@ -120,16 +120,16 @@ void AuxTaskNonRT::cleanup(){
 }
 
 void AuxTaskNonRT::openPipe(){
-	char rtp_name [50];
+	// char rtp_name [50];
 #if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
-	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/p_%s";
+	std::string outPipeNameTemplateString = "/proc/xenomai/registry/rtipc/xddp/p_";
 #else
-	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/p_%s";
+	std::string outPipeNameTemplateString = "/proc/xenomai/registry/native/pipes/p_";
 #endif
-	sprintf (rtp_name, outPipeNameTemplateString, name);
-	pipe_fd = open(rtp_name, O_RDWR);
+	std::string rtp_name = outPipeNameTemplateString + name;
+	pipe_fd = open(rtp_name.c_str(), O_RDWR);
 	if (pipe_fd < 0){
-		fprintf(stderr, "AuxTaskNonRT %s: could not open pipe %s: (%i) %s\n", name, rtp_name,  errno, strerror(errno));
+		fprintf(stderr, "AuxTaskNonRT %s: could not open pipe %s: (%i) %s\n", name.c_str(), rtp_name.c_str(),  errno, strerror(errno));
 		return;
 	}
 }

@@ -3,6 +3,7 @@
 #define __Aux_Task_RT_H_INCLUDED__ 
 
 #include <Bela.h>
+#include <string>
 
 #ifdef XENOMAI_SKIN_native
 #include <rtdk.h>
@@ -23,11 +24,11 @@ class AuxTaskRT{
 	public:
 		AuxTaskRT(){}
 		
-		void create(const char* _name, void(*_callback)(), int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(const char* _name, void(*_callback)(const char* str), int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(const char* _name, void(*_callback)(void* buf, int size), int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(const char* _name, void(*_callback)(void* ptr), void* _pointer, int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(const char* _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer, int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, void(*_callback)(), int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, void(*_callback)(const char* str), int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, void(*_callback)(void* buf, int size), int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, void(*_callback)(void* ptr), void* _pointer, int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer, int _priority = BELA_AUDIO_PRIORITY-5);
 		
 		void schedule(void* buf, size_t size);
 		void schedule(const char* str);
@@ -43,10 +44,10 @@ class AuxTaskRT{
 #ifdef XENOMAI_SKIN_posix
 		pthread_t thread;
 		mqd_t queueDesc;
-		char queueName [100];
+		std::string queueName;
 #endif
 		
-		const char* name;
+		std::string name;
 		int priority;
 		int mode;
 		void* pointer;

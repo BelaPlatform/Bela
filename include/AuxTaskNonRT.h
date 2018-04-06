@@ -12,17 +12,19 @@
 #include <pthread.h>
 #endif
 
+#include <string>
+
 #define AUX_MAX_BUFFER_SIZE 500000
 
 class AuxTaskNonRT{
 	public:
 		AuxTaskNonRT(){}
 		
-		void create(const char* _name, void(*_callback)());
-		void create(const char* _name, void(*_callback)(const char* str));
-		void create(const char* _name, void(*_callback)(void* buf, int size));
-		void create(const char* _name, void(*_callback)(void* ptr), void* _pointer);
-		void create(const char* _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer);
+		void create(std::string _name, void(*_callback)());
+		void create(std::string _name, void(*_callback)(const char* str));
+		void create(std::string _name, void(*_callback)(void* buf, int size));
+		void create(std::string _name, void(*_callback)(void* ptr), void* _pointer);
+		void create(std::string _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer);
 
 		void schedule(void* ptr, size_t size);
 		void schedule(const char* str);
@@ -40,7 +42,7 @@ class AuxTaskNonRT{
 		int pipeSocket;
 #endif
 		
-		const char* name;
+		std::string name;
 		int pipe_fd;
 		int mode;
 		void* pointer;
