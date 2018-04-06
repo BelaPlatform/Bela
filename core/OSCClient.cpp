@@ -16,8 +16,7 @@ void OSCClient::setup(int _port, const char* _ip_address){
     socket.setServer(ip_address);
 	socket.setPort(port);
 	
-	// TODO work out how to add port number to task name to allow multiple instances of OSCClient
-	task.create("OSCClientTask", OSCClient::task_func, this);
+	task.create(std::string("OSCClientTask_") + std::to_string(_port), OSCClient::task_func, this);
 }
 
 OSCClient &OSCClient::newMessage(const char* address){
