@@ -31,8 +31,7 @@ class OSCClient{
         
         oscpkt::Message msg;
         oscpkt::PacketWriter pw;
-        char* outBuffer;
-        
+
         AuxTaskNonRT task;
         static void task_func(void* ptr, void* buf, int size);
 };

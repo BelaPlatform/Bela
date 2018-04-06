@@ -48,12 +48,10 @@ OSCClient &OSCClient::add(void *ptr, size_t num_bytes){
 
 void OSCClient::send(){
 	pw.init().addMessage(msg);
-	outBuffer = pw.packetData();
-	task.schedule(outBuffer, pw.packetSize());
+	task.schedule(pw.packetData(), pw.packetSize());
 }
 
 void OSCClient::sendNow(){
 	pw.init().addMessage(msg);
-    outBuffer = pw.packetData();
-    socket.send(outBuffer, pw.packetSize());
+    socket.send(pw.packetData(), pw.packetSize());
 }
