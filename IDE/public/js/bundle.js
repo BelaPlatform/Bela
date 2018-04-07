@@ -1480,7 +1480,7 @@ var View = require('./View');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 
-var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
+var classes = ['Scope', 'OSCReceiver', 'OSCSender', 'Midi', 'MidiParser', 'WriteFile'];
 
 var DocumentationView = function (_View) {
 	_inherits(DocumentationView, _View);

@@ -4,11 +4,8 @@ var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_
 
 var classes = [
 	'Scope',
-	'OSCServer',
-	'OSCClient',
-	'OSCMessageFactory',
-	'UdpServer',
-	'UdpClient',
+	'OSCReceiver',
+	'OSCSender',
 	'Midi',
 	'MidiParser',
 	'WriteFile'
