@@ -4,6 +4,11 @@
 #include <Bela.h>
 #include <stdlib.h>
 
+AuxTaskRT::AuxTaskRT(){}
+AuxTaskRT::~AuxTaskRT(){
+	cleanup();
+}
+
 void AuxTaskRT::create(std::string _name, void (*_callback)(), int _priority){
 	name = _name;
 	priority = _priority;
@@ -116,7 +121,13 @@ void AuxTaskRT::cleanup(){
 	rt_queue_delete(&queue);
 #endif
 #ifdef XENOMAI_SKIN_posix
-	//pthread_cancel(thread);
+	// unblock and join thread
+	schedule();
+	int ret = __wrap_pthread_join(thread, NULL);
+	if (ret < 0){
+		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
+	}
+	
 	__wrap_mq_close(queueDesc);
 	__wrap_mq_unlink(queueName.c_str());
 #endif
@@ -264,4 +275,5 @@ void AuxTaskRT::loop(void* ptr){
 	} else if (instance->mode == 4){
 		instance->ptr_buf_loop();
 	}
+	// printf("AuxTaskRT %s exiting\n", instance->name.c_str());
 }

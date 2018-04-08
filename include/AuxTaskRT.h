@@ -22,7 +22,8 @@
 
 class AuxTaskRT{
 	public:
-		AuxTaskRT(){}
+		AuxTaskRT();
+		~AuxTaskRT();
 		
 		void create(std::string _name, void(*_callback)(), int _priority = BELA_AUDIO_PRIORITY-5);
 		void create(std::string _name, void(*_callback)(const char* str), int _priority = BELA_AUDIO_PRIORITY-5);
@@ -34,9 +35,9 @@ class AuxTaskRT{
 		void schedule(const char* str);
 		void schedule();
 		
+	private:
 		void cleanup();
 		
-	private:
 #ifdef XENOMAI_SKIN_native
 		RT_TASK task;
 		RT_QUEUE queue;

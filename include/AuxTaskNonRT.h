@@ -18,7 +18,8 @@
 
 class AuxTaskNonRT{
 	public:
-		AuxTaskNonRT(){}
+		AuxTaskNonRT();
+		~AuxTaskNonRT();
 		
 		void create(std::string _name, void(*_callback)());
 		void create(std::string _name, void(*_callback)(const char* str));
@@ -30,9 +31,9 @@ class AuxTaskNonRT{
 		void schedule(const char* str);
 		void schedule();
 		
+	private:
 		void cleanup();
 		
-	private:
 #ifdef XENOMAI_SKIN_native
 		RT_TASK task;
 		RT_PIPE pipe;

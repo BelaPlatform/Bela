@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <errno.h>
 
+AuxTaskNonRT::AuxTaskNonRT(){}
+AuxTaskNonRT::~AuxTaskNonRT(){
+	cleanup();
+}
+
 void AuxTaskNonRT::create(std::string _name, void(*_callback)()){
 	name = _name;
 	empty_callback = _callback;
@@ -110,13 +115,12 @@ void AuxTaskNonRT::cleanup(){
 	rt_pipe_delete(&pipe);
 #endif
 #ifdef XENOMAI_SKIN_posix
-	// TODO: someone needs to be done to terminate the tasks appropriately
-	// Currently they are probably just hanging on the pipes
-	// However the three lines below cause a segfault after the first time they are run
-	// char ptr[1];
-	// int ret = __wrap_sendto(pipeSocket, ptr, 1, 0, NULL, 0); // unblock the pipe
-	// pthread_cancel(thread);
-	// also we should join them!
+	// unblock and join thread
+	schedule();
+	int ret = __wrap_pthread_join(thread, NULL);
+	if (ret < 0){
+		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
+	}
 #endif
 }
 
@@ -139,6 +143,8 @@ void AuxTaskNonRT::empty_loop(){
 	void* buf = malloc(1);
 	while(!gShouldStop){
 		read(pipe_fd, buf, 1);
+		if (gShouldStop)
+			break;
 		empty_callback();
 	}
 	free(buf);
@@ -147,6 +153,8 @@ void AuxTaskNonRT::str_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
 	while(!gShouldStop){
 		read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
+		if (gShouldStop)
+			break;
 		str_callback((const char*)buf);
 	}
 	free(buf);
@@ -155,6 +163,8 @@ void AuxTaskNonRT::buf_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
 	while(!gShouldStop){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
+		if (gShouldStop)
+			break;
 		buf_callback(buf, size);
 	}
 	free(buf);
@@ -163,6 +173,8 @@ void AuxTaskNonRT::ptr_loop(){
 	void* buf = malloc(1);
 	while(!gShouldStop){
 		read(pipe_fd, buf, 1);
+		if (gShouldStop)
+			break;
 		ptr_callback(pointer);
 	}
 	free(buf);
@@ -171,6 +183,8 @@ void AuxTaskNonRT::ptr_buf_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
 	while(!gShouldStop){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
+		if (gShouldStop)
+			break;
 		ptr_buf_callback(pointer, buf, size);
 	}
 	free(buf);
@@ -193,4 +207,5 @@ void AuxTaskNonRT::loop(void* ptr){
 	} else if (instance->mode == 4){
 		instance->ptr_buf_loop();
 	}
+	// printf("AuxTaskNonRT %s exiting\n", instance->name.c_str());
 }
