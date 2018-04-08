@@ -1009,7 +1009,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			const float analogInMax = 65535.f/65536.f;
 			for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; ++n)
 			{
-				context->analogIn[n] = analogInMax - context->analogIn[n]
+				context->analogIn[n] = analogInMax - context->analogIn[n];
 				// if analogInMax is different from 65535/65536, we should
 				// clip it to avoid reading out of range values:
 				// if(context->analogIn[n] > 1)
