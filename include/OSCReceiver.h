@@ -2,9 +2,15 @@
 #ifndef __OSCReceiver_H_INCLUDED__
 #define __OSCReceiver_H_INCLUDED__ 
 
-#include <UdpServer.h>
-#include <oscpkt.hh>
-#include <AuxTaskNonRT.h>
+#include <memory>
+
+// forward declarations to speed up compilation
+class AuxTaskNonRT;
+class UdpServer;
+namespace oscpkt{
+	class Message;
+	class PacketReader;
+}
 
 #define OSCRECEIVER_POLL_MS 5
 #define OSCRECEIVER_BUFFERSIZE 65536
@@ -22,9 +28,9 @@
  */
 class OSCReceiver{
     public:
-        OSCReceiver(){}
+        OSCReceiver();
         OSCReceiver(int port, void (*onreceive)(oscpkt::Message* msg));
-        ~OSCReceiver(){}
+        ~OSCReceiver();
 	
         /**
 		 * \brief Initiliases OSCReceiver
@@ -51,12 +57,12 @@ class OSCReceiver{
         
     private:
         int port;
-        UdpServer socket;
+        std::unique_ptr<UdpServer> socket;
 
-        AuxTaskNonRT recieve_task;
+        std::unique_ptr<AuxTaskNonRT> recieve_task;
         static void recieve_task_func(void* ptr);
 		
-        oscpkt::PacketReader pr;
+        std::unique_ptr<oscpkt::PacketReader> pr;
         char* inBuffer[OSCRECEIVER_BUFFERSIZE];
         
         void (*callback)(oscpkt::Message* msg);
