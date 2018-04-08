@@ -207,6 +207,5 @@ void scope_ws_set_setting(std::wstring setting, float value){
 }
 
 void scope_ws_cleanup(){
-	ws_server_task.cleanup();
+	server->terminate();
 }
-
