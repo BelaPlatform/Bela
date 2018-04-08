@@ -23,6 +23,8 @@
 class OSCReceiver{
     public:
         OSCReceiver(){}
+        OSCReceiver(int port, void (*onreceive)(oscpkt::Message* msg));
+        ~OSCReceiver(){}
 	
         /**
 		 * \brief Initiliases OSCReceiver
@@ -30,7 +32,7 @@ class OSCReceiver{
 		 * Must be called once during setup()
 		 *
 		 * @param port the port number used to receive OSC messages
-		 * @param onreceive the callback function which received OSC messages are passed to
+		 * @param onreceive the callback function which recevied OSC messages are passed to
 		 *
 		 */
         void setup(int port, void (*onreceive)(oscpkt::Message* msg));

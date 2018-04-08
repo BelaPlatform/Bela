@@ -2,6 +2,10 @@
 #include <OSCReceiver.h>
 #include <Bela.h>
 
+OSCReceiver::OSCReceiver(int port, void (*onreceive)(oscpkt::Message* msg)){
+	setup(port, onreceive);
+}
+
 void OSCReceiver::recieve_task_func(void* ptr){
 	OSCReceiver* instance = (OSCReceiver*)ptr;
 	while(!gShouldStop){
