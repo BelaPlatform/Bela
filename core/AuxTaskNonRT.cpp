@@ -8,7 +8,12 @@
 
 AuxTaskNonRT::AuxTaskNonRT(){}
 AuxTaskNonRT::~AuxTaskNonRT(){
+	lShouldStop = true;
 	cleanup();
+}
+
+bool AuxTaskNonRT::shouldStop(){
+	return (gShouldStop || lShouldStop);
 }
 
 void AuxTaskNonRT::create(std::string _name, void(*_callback)()){
@@ -109,7 +114,6 @@ void AuxTaskNonRT::schedule(){
 }
 
 void AuxTaskNonRT::cleanup(){
-	close(pipe_fd);
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&task);
 	rt_pipe_delete(&pipe);
@@ -121,6 +125,7 @@ void AuxTaskNonRT::cleanup(){
 	if (ret < 0){
 		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
 	}
+	close(pipe_fd);
 #endif
 }
 
@@ -141,9 +146,9 @@ int AuxTaskNonRT::openPipe(){
 
 void AuxTaskNonRT::empty_loop(){
 	void* buf = malloc(1);
-	while(!gShouldStop){
+	while(!shouldStop()){
 		read(pipe_fd, buf, 1);
-		if (gShouldStop)
+		if (shouldStop())
 			break;
 		empty_callback();
 	}
@@ -151,9 +156,9 @@ void AuxTaskNonRT::empty_loop(){
 }
 void AuxTaskNonRT::str_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
-	while(!gShouldStop){
+	while(!shouldStop()){
 		read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
-		if (gShouldStop)
+		if (shouldStop())
 			break;
 		str_callback((const char*)buf);
 	}
@@ -161,9 +166,9 @@ void AuxTaskNonRT::str_loop(){
 }
 void AuxTaskNonRT::buf_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
-	while(!gShouldStop){
+	while(!shouldStop()){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
-		if (gShouldStop)
+		if (shouldStop())
 			break;
 		buf_callback(buf, size);
 	}
@@ -171,9 +176,9 @@ void AuxTaskNonRT::buf_loop(){
 }
 void AuxTaskNonRT::ptr_loop(){
 	void* buf = malloc(1);
-	while(!gShouldStop){
+	while(!shouldStop()){
 		read(pipe_fd, buf, 1);
-		if (gShouldStop)
+		if (shouldStop())
 			break;
 		ptr_callback(pointer);
 	}
@@ -181,9 +186,9 @@ void AuxTaskNonRT::ptr_loop(){
 }
 void AuxTaskNonRT::ptr_buf_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
-	while(!gShouldStop){
+	while(!shouldStop()){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
-		if (gShouldStop)
+		if (shouldStop())
 			break;
 		ptr_buf_callback(pointer, buf, size);
 	}
