@@ -3,18 +3,26 @@
 #include <Bela.h>
 #include <AuxTaskNonRT.h>
 #include <UdpServer.h>
-#include <oscpkt.hh>
 
 OSCReceiver::OSCReceiver(){}
 OSCReceiver::OSCReceiver(int port, void (*onreceive)(oscpkt::Message* msg)){
 	setup(port, onreceive);
 }
-OSCReceiver::~OSCReceiver(){}
+OSCReceiver::~OSCReceiver(){
+	lShouldStop = true;
+	// allow in-progress read to complete before destructing
+	while(waitingForMessage){
+		usleep(OSCRECEIVER_POLL_US/2);
+	}
+}
 
 void OSCReceiver::recieve_task_func(void* ptr){
 	OSCReceiver* instance = (OSCReceiver*)ptr;
-	while(!gShouldStop){
-		instance->waitForMessage(OSCRECEIVER_POLL_MS);
+	while(!gShouldStop && !instance->lShouldStop){
+		instance->waitingForMessage = true;
+		instance->waitForMessage(0);
+		instance->waitingForMessage = false;
+		usleep(OSCRECEIVER_POLL_US);
 	}
 }
 

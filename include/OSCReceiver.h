@@ -3,16 +3,13 @@
 #define __OSCReceiver_H_INCLUDED__ 
 
 #include <memory>
+#include <oscpkt.hh>	// neccesary for definition of oscpkt::Message in callback
 
 // forward declarations to speed up compilation
 class AuxTaskNonRT;
 class UdpServer;
-namespace oscpkt{
-	class Message;
-	class PacketReader;
-}
 
-#define OSCRECEIVER_POLL_MS 5
+#define OSCRECEIVER_POLL_US 5000
 #define OSCRECEIVER_BUFFERSIZE 65536
 
 /**
@@ -42,20 +39,13 @@ class OSCReceiver{
 		 *
 		 */
         void setup(int port, void (*onreceive)(oscpkt::Message* msg));
-
-        /**
-		 * \brief Blocks execution until an OSC message is received
-		 *
-		 * This optional method can be used to block execution until an OSC message is 
-		 * received. It should only be used in setup() or from an auxiliary thread, if
-		 * used from render() it will cause mode switches. 
-		 *
-		 * @param timeout the time in milliseconds to block for if no messages are received. Null will block indefinitely.
-		 * 
-		 */
-        int waitForMessage(int timeout_ms);
         
     private:
+    	bool lShouldStop = false;
+    	
+    	bool waitingForMessage = false;
+    	int waitForMessage(int timeout_ms);
+    	
         int port;
         std::unique_ptr<UdpServer> socket;
 
