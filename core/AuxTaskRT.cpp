@@ -6,7 +6,12 @@
 
 AuxTaskRT::AuxTaskRT(){}
 AuxTaskRT::~AuxTaskRT(){
+	lShouldStop = true;
 	cleanup();
+}
+
+bool AuxTaskRT::shouldStop(){
+	return (gShouldStop || lShouldStop);
 }
 
 void AuxTaskRT::create(std::string _name, void (*_callback)(), int _priority){
@@ -102,7 +107,7 @@ void AuxTaskRT::schedule(void* buf, size_t size){
 #ifdef XENOMAI_SKIN_posix
 	if(__wrap_mq_send(queueDesc, (char*)buf, size, 0))
 	{
-		if(!gShouldStop) fprintf(stderr, "Unable to send message to queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
+		if(!shouldStop()) fprintf(stderr, "Unable to send message to queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 		return;
 	}
 #endif
@@ -135,125 +140,135 @@ void AuxTaskRT::cleanup(){
 
 void AuxTaskRT::empty_loop(){
 #ifdef XENOMAI_SKIN_native
-	while(!gShouldStop){
+	while(!shouldStop()){
 		void* buf;
 		rt_queue_receive(&queue, &buf, TM_INFINITE);
-		empty_callback();
+		if (!shouldStop())
+			empty_callback();
 		rt_queue_free(&queue, buf);
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
 	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!gShouldStop)
+	while(!shouldStop())
 	{
 		unsigned int prio;
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
+			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 			return;
 		}
-		empty_callback();
+		if(!shouldStop()){
+			empty_callback();
+		}
 	}
 	free(buffer);
 #endif
 }
 void AuxTaskRT::str_loop(){
 #ifdef XENOMAI_SKIN_native
-	while(!gShouldStop){
+	while(!shouldStop()){
 		void* buf;
 		rt_queue_receive(&queue, &buf, TM_INFINITE);
-		str_callback((const char*)buf);
+		if(!shouldStop())
+			str_callback((const char*)buf);
 		rt_queue_free(&queue, buf);
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
 	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!gShouldStop)
+	while(!shouldStop())
 	{
 		unsigned int prio;
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
+			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 			return;
 		}
-		str_callback((const char*)buffer);
+		if(!shouldStop())
+			str_callback((const char*)buffer);
 	}
 	free(buffer);
 #endif
 }
 void AuxTaskRT::buf_loop(){
 #ifdef XENOMAI_SKIN_native
-	while(!gShouldStop){
+	while(!shouldStop()){
 		void* buf;
 		ssize_t size = rt_queue_receive(&queue, &buf, TM_INFINITE);
-		buf_callback((void*)buf, size);
+		if(!shouldStop())
+			buf_callback((void*)buf, size);
 		rt_queue_free(&queue, buf);
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
 	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!gShouldStop)
+	while(!shouldStop())
 	{
 		unsigned int prio;
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
+			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 			return;
 		}
-		buf_callback((void*)buffer, ret);
+		if(!shouldStop())
+			buf_callback((void*)buffer, ret);
 	}
 	free(buffer);
 #endif
 }
 void AuxTaskRT::ptr_loop(){
 #ifdef XENOMAI_SKIN_native
-	while(!gShouldStop){
+	while(!shouldStop()){
 		void* buf;
 		rt_queue_receive(&queue, &buf, TM_INFINITE);
-		ptr_callback(pointer);
+		if(!shouldStop())
+			ptr_callback(pointer);
 		rt_queue_free(&queue, buf);
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
 	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!gShouldStop)
+	while(!shouldStop())
 	{
 		unsigned int prio;
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
+			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 			return;
 		}
-		ptr_callback(pointer);
+		if(!shouldStop())
+			ptr_callback(pointer);
 	}
 	free(buffer);
 #endif
 }
 void AuxTaskRT::ptr_buf_loop(){
 #ifdef XENOMAI_SKIN_native
-	while(!gShouldStop){
+	while(!shouldStop()){
 		void* buf;
 		ssize_t size = rt_queue_receive(&queue, &buf, TM_INFINITE);
-		ptr_buf_callback(pointer, (void*)buf, size);
+		if(!shouldStop())
+			ptr_buf_callback(pointer, (void*)buf, size);
 		rt_queue_free(&queue, buf);
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
 	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!gShouldStop)
-	{
+	while(!shouldStop()){
 		unsigned int prio;
 		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
 		if(ret < 0)
 		{
-			if(!gShouldStop) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
+			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 			return;
 		}
-		ptr_buf_callback(pointer, (void*)buffer, ret);
+		if(!shouldStop())
+			ptr_buf_callback(pointer, (void*)buffer, ret);
 	}
 	free(buffer);
 #endif

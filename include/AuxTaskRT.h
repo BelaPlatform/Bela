@@ -36,6 +36,8 @@ class AuxTaskRT{
 		void schedule();
 		
 	private:
+		bool lShouldStop = false;
+		bool shouldStop();
 		void cleanup();
 		
 #ifdef XENOMAI_SKIN_native
