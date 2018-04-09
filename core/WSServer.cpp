@@ -1,6 +1,6 @@
 /***** WSServer.cpp *****/
 #include <WSServer.h>
-#include <seasocks/PrintfLogger.h>
+#include <seasocks/IgnoringLogger.h>
 #include <seasocks/Server.h>
 #include <seasocks/WebSocket.h>
 #include <AuxTaskNonRT.h>
@@ -12,11 +12,10 @@ WSServer::~WSServer(){
 }
 
 struct WSServerDataHandler : seasocks::WebSocket::Handler {
-	std::set<seasocks::WebSocket*> connections;
 	WSServer* instance;
 	void onConnect(seasocks::WebSocket *socket) override {
 		printf("connection!\n");
-		connections.insert(socket);
+		instance->connections.insert(socket);
 	}
 	void onData(seasocks::WebSocket *socket, const char *data) override {
 		instance->callback((void*)data, std::strlen(data));
@@ -25,7 +24,7 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 		instance->callback((void*)data, size);
 	}
 	void onDisconnect(seasocks::WebSocket *socket) override {
-		connections.erase(socket);
+		instance->connections.erase(socket);
 	}
 };
 
@@ -33,7 +32,7 @@ void WSServer::ws_server_task_func(void* ptr){
 	printf("ws_server_task_func\n");
 	WSServer* instance = (WSServer*)ptr;
 	
-	auto logger = std::make_shared<seasocks::PrintfLogger>();
+	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	instance->server = std::make_shared<seasocks::Server>(logger);
 	
 	instance->handler = std::make_shared<WSServerDataHandler>();
@@ -44,6 +43,18 @@ void WSServer::ws_server_task_func(void* ptr){
 	printf("server terminated\n");
 }
 
+void WSServer::ws_client_task_func(void* ptr, void* buf, int size){
+	// printf("ws_client_task_func\n");
+	WSServer* instance = (WSServer*)ptr;
+	instance->server->execute([instance, buf, size]{
+		// printf("HELLO\n");
+		for (auto c : instance->connections){
+			c->send((uint8_t*) buf, size);
+		}
+	});
+	// printf("ws_client_task_func done\n");
+}
+
 void WSServer::setup(int _port, std::string _address, void(*_callback)(void* buf, int size)){
 	port = _port;
 	address = _address;
@@ -52,6 +63,16 @@ void WSServer::setup(int _port, std::string _address, void(*_callback)(void* buf
 	ws_server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	ws_server_task->create(std::string("WSServer_")+std::to_string(_port), WSServer::ws_server_task_func, this);
 	ws_server_task->schedule();
+	
+	ws_client_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
+	ws_client_task->create(std::string("WSClient_")+std::to_string(_port), WSServer::ws_client_task_func, this);
+}
+
+void WSServer::send(std::string str){
+	ws_client_task->schedule(str.c_str());
+}
+void WSServer::send(void* buf, int num_bytes){
+	ws_client_task->schedule(buf, num_bytes);
 }
 
 void WSServer::cleanup(){
