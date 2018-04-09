@@ -2,9 +2,15 @@
 #ifndef __OSCSender_H_INCLUDED__
 #define __OSCSender_H_INCLUDED__ 
 
-#include <UdpClient.h>
-#include <oscpkt.hh>
-#include <AuxTaskNonRT.h>
+#include <memory>
+#include <vector>
+
+class UdpClient;
+class AuxTaskNonRT;
+namespace oscpkt{
+	class Message;
+	class PacketWriter;
+}
 
 #define OSCSENDER_DEFAULT_STREAMING_BUFFERSIZE 1024
 
@@ -20,6 +26,8 @@
 class OSCSender{
 	public:
 		OSCSender();
+		OSCSender(int port, std::string ip_address=std::string("127.0.0.1"));
+		~OSCSender();
 		
         /**
 		 * \brief Initialises OSCSender
@@ -129,22 +137,22 @@ class OSCSender{
 		// void stream(float* buf, int num_floats);
 
 	private:
-		std::string ip_address;
+			std::string ip_address;
         	int port;
         
-        	UdpClient socket;
+        	std::unique_ptr<UdpClient> socket;
         
-        	oscpkt::Message msg;
-        	oscpkt::PacketWriter pw;
+        	std::unique_ptr<oscpkt::Message> msg;
+        	std::unique_ptr<oscpkt::PacketWriter> pw;
 
-        	AuxTaskNonRT send_task;
+        	std::unique_ptr<AuxTaskNonRT> send_task;
         	static void send_task_func(void* ptr, void* buf, int size);
         
         	std::string streamAddress;
         	std::vector<float> streamBuffer;
         	int streamBufferSize;
         
-        	AuxTaskNonRT stream_task;
+        	std::unique_ptr<AuxTaskNonRT> stream_task;
         	static void stream_task_func(void* ptr, void* buf, int size);
 };
 
