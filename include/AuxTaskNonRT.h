@@ -65,7 +65,7 @@ class AuxTaskNonRT{
 		void ptr_loop();
 		void ptr_buf_loop();
 		
-		static void loop(void* ptr);
+		static void thread_func(void* ptr);
 };
 
 #endif

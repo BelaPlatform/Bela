@@ -88,10 +88,10 @@ void AuxTaskRT::__create(){
 	
 	// start the xenomai task
 #ifdef XENOMAI_SKIN_native
-	if (int ret = rt_task_start(&task, AuxTaskRT::loop, this))
+	if (int ret = rt_task_start(&task, AuxTaskRT::thread_func, this))
 #endif
 #ifdef XENOMAI_SKIN_posix
-	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, (pthread_callback_t*)AuxTaskRT::loop, this))
+	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, (pthread_callback_t*)AuxTaskRT::thread_func, this))
 #endif
 	{
 		fprintf(stderr, "Unable to start AuxTaskRT %s: %i\n", name.c_str(), ret);
@@ -276,7 +276,7 @@ void AuxTaskRT::ptr_buf_loop(){
 #endif
 }
 
-void AuxTaskRT::loop(void* ptr){
+void AuxTaskRT::thread_func(void* ptr){
 	AuxTaskRT *instance = (AuxTaskRT*)ptr;
 #ifdef XENOMAI_SKIN_native
 	rt_print_auto_init(1);
