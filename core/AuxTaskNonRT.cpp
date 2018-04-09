@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+extern int volatile gRTAudioVerbose;
+
 AuxTaskNonRT::AuxTaskNonRT(){}
 AuxTaskNonRT::~AuxTaskNonRT(){
 	lShouldStop = true;
@@ -201,6 +203,8 @@ void AuxTaskNonRT::loop(void* ptr){
 		fprintf(stderr, "Aborting AuxTaskNonRT %s\n", instance->name.c_str());
 		return;
 	}
+	if (gRTAudioVerbose)
+		printf("AuxTaskNonRT %s starting\n", instance->name.c_str());
 	if (instance->mode == 0){
 		instance->empty_loop();
 	} else if (instance->mode == 1){
@@ -212,5 +216,6 @@ void AuxTaskNonRT::loop(void* ptr){
 	} else if (instance->mode == 4){
 		instance->ptr_buf_loop();
 	}
-	// printf("AuxTaskNonRT %s exiting\n", instance->name.c_str());
+	if (gRTAudioVerbose)
+		printf("AuxTaskNonRT %s exiting\n", instance->name.c_str());
 }

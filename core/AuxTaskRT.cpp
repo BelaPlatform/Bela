@@ -4,6 +4,8 @@
 #include <Bela.h>
 #include <stdlib.h>
 
+extern int volatile gRTAudioVerbose;
+
 AuxTaskRT::AuxTaskRT(){}
 AuxTaskRT::~AuxTaskRT(){
 	lShouldStop = true;
@@ -279,6 +281,8 @@ void AuxTaskRT::loop(void* ptr){
 #ifdef XENOMAI_SKIN_native
 	rt_print_auto_init(1);
 #endif
+	if (gRTAudioVerbose)
+		printf("AuxTaskRT %s starting\n", instance->name.c_str());
 	if (instance->mode == 0){
 		instance->empty_loop();
 	} else if (instance->mode == 1){
@@ -290,5 +294,6 @@ void AuxTaskRT::loop(void* ptr){
 	} else if (instance->mode == 4){
 		instance->ptr_buf_loop();
 	}
-	// printf("AuxTaskRT %s exiting\n", instance->name.c_str());
+	if (gRTAudioVerbose)
+		printf("AuxTaskRT %s exiting\n", instance->name.c_str());
 }
