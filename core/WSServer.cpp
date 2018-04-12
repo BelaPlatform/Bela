@@ -7,8 +7,8 @@
 #include <cstring>
 
 WSServer::WSServer(){}
-WSServer::WSServer(int _port, std::string _address, void(*_callback)(void* buf, int size)){
-	setup(_port, _address, _callback);
+WSServer::WSServer(int port, std::string address, void(*on_recieve)(std::string address, void* buf, int size), void(*on_connect)(std::string address), void(*on_disconnect)(std::string address)){
+	setup(port, address, on_recieve, on_connect, on_disconnect);
 }
 WSServer::~WSServer(){
 	cleanup();
@@ -17,19 +17,25 @@ WSServer::~WSServer(){
 struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	std::shared_ptr<seasocks::Server> server;
 	std::set<seasocks::WebSocket*> connections;
-	void(*callback)(void* buf, int size);
+	std::string address;
+	void(*on_recieve)(std::string address, void* buf, int size);
+	void(*on_connect)(std::string address);
+	void(*on_disconnect)(std::string address);
 	void onConnect(seasocks::WebSocket *socket) override {
-		printf("connection!\n");
 		connections.insert(socket);
+		if(on_connect)
+			on_connect(address);
 	}
 	void onData(seasocks::WebSocket *socket, const char *data) override {
-		callback((void*)data, std::strlen(data));
+		on_recieve(address, (void*)data, std::strlen(data));
 	}
 	void onData(seasocks::WebSocket *socket, const uint8_t* data, size_t size) override {
-		callback((void*)data, size);
+		on_recieve(address, (void*)data, size);
 	}
 	void onDisconnect(seasocks::WebSocket *socket) override {
 		connections.erase(socket);
+		if (on_disconnect)
+			on_disconnect(address);
 	}
 };
 
@@ -47,24 +53,27 @@ void WSServer::client_task_func(void* ptr, void* buf, int size){
 	});
 }
 
-void WSServer::setup(int _port, std::string _address, void(*_callback)(void* buf, int size)){
+void WSServer::setup(int _port, std::string _address, void(*on_recieve)(std::string address, void* buf, int size), void(*on_connect)(std::string address), void(*on_disconnect)(std::string address)){
 	port = _port;
 	address = _address;
 	
 	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	server = std::make_shared<seasocks::Server>(logger);
 	
-	addAddress(_address, _callback);
+	addAddress(_address, on_recieve, on_connect, on_disconnect);
 	
 	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	server_task->create(std::string("WSServer_")+std::to_string(_port), WSServer::server_task_func, this);
 	server_task->schedule();
 }
 
-void WSServer::addAddress(std::string _address, void(*_callback)(void* buf, int size)){
+void WSServer::addAddress(std::string _address, void(*on_recieve)(std::string address, void* buf, int size), void(*on_connect)(std::string address), void(*on_disconnect)(std::string address)){
 	auto handler = std::make_shared<WSServerDataHandler>();
 	handler->server = server;
-	handler->callback = _callback;
+	handler->address = _address;
+	handler->on_recieve = on_recieve;
+	handler->on_connect = on_connect;
+	handler->on_disconnect = on_disconnect;
 	server->addWebSocketHandler((std::string("/")+_address).c_str(), handler);
 	
 	address_book[_address] = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());

@@ -21,19 +21,17 @@ class WSServer{
 	friend struct WSServerStreamHandler;
 	public:
 		WSServer();
-		WSServer(int _port, std::string _address, void(*_callback)(void* buf, int size));
+		WSServer(int _port, std::string _address, void(*on_receive)(std::string address, void* buf, int size), void(*on_connect)(std::string address) = nullptr, void(*on_disconnect)(std::string address) = nullptr);
 		~WSServer();
 		
-		void setup(int port, std::string address, void(*on_receive)(void* buf, int size));
+		void setup(int port, std::string address, void(*on_receive)(std::string address, void* buf, int size), void(*on_connect)(std::string address) = nullptr, void(*on_disconnect)(std::string address) = nullptr);
 		
-		void addAddress(std::string address, void(*on_receive)(void* buf, int size));
+		void addAddress(std::string address, void(*on_receive)(std::string address, void* buf, int size), void(*on_connect)(std::string address) = nullptr, void(*on_disconnect)(std::string address) = nullptr);
 		
 		void send(std::string str);
 		void send(std::string address, std::string str);
 		void send(void* buf, int num_bytes);
 		void send(std::string address, void* buf, int num_bytes);
-		
-		void stream(float data);
 		
 	private:
 		void cleanup();
