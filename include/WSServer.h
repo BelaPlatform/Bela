@@ -21,6 +21,7 @@ class WSServer{
 	friend struct WSServerStreamHandler;
 	public:
 		WSServer();
+		WSServer(int _port, std::string _address, void(*_callback)(void* buf, int size));
 		~WSServer();
 		
 		void setup(int port, std::string address, void(*on_receive)(void* buf, int size));

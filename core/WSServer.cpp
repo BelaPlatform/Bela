@@ -7,6 +7,9 @@
 #include <cstring>
 
 WSServer::WSServer(){}
+WSServer::WSServer(int _port, std::string _address, void(*_callback)(void* buf, int size)){
+	setup(_port, _address, _callback);
+}
 WSServer::~WSServer(){
 	cleanup();
 }
