@@ -15,8 +15,7 @@
 
 #include "../include/PRU.h"
 #include "../include/PruBinary.h"
-#include "../include/prussdrv.h"
-#include "../include/pruss_intc_mapping.h"
+#include <prussdrv.h>
 #include "../include/digital_gpio_mapping.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"

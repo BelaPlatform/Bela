@@ -266,7 +266,7 @@ ifeq ($(XENOMAI_VERSION),3)
   BELA_USE_DEFINE=BELA_USE_RTDM
 endif
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE)
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
