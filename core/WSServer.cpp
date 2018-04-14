@@ -7,8 +7,8 @@
 #include <cstring>
 
 WSServer::WSServer(){}
-WSServer::WSServer(int port, std::string address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect){
-	setup(port, address, on_receive, on_connect, on_disconnect);
+WSServer::WSServer(int port, std::string address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
+	setup(port, address, on_receive, on_connect, on_disconnect, binary);
 }
 WSServer::~WSServer(){
 	cleanup();
@@ -21,6 +21,7 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	std::function<void(std::string, void*, int)> on_receive;
 	std::function<void(std::string)> on_connect;
 	std::function<void(std::string)> on_disconnect;
+	bool binary;
 	void onConnect(seasocks::WebSocket *socket) override {
 		connections.insert(socket);
 		if(on_connect)
@@ -46,34 +47,43 @@ void WSServer::server_task_func(void* ptr){
 
 void WSServer::client_task_func(void* ptr, void* buf, int size){
 	WSServerDataHandler* instance = (WSServerDataHandler*)ptr;
-	instance->server->execute([instance, buf, size]{
-		for (auto c : instance->connections){
-			c->send((uint8_t*) buf, size);
-		}
-	});
+	if (instance->binary){
+		instance->server->execute([instance, buf, size]{
+			for (auto c : instance->connections){
+				c->send((uint8_t*) buf, size);
+			}
+		});
+	} else {
+		instance->server->execute([instance, buf, size]{
+			for (auto c : instance->connections){
+				c->send((const char*) buf);
+			}
+		});
+	}
 }
 
-void WSServer::setup(int _port, std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect){
+void WSServer::setup(int _port, std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
 	port = _port;
 	address = _address;
 	
 	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	server = std::make_shared<seasocks::Server>(logger);
 	
-	addAddress(_address, on_receive, on_connect, on_disconnect);
+	addAddress(_address, on_receive, on_connect, on_disconnect, binary);
 	
 	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	server_task->create(std::string("WSServer_")+std::to_string(_port), WSServer::server_task_func, this);
 	server_task->schedule();
 }
 
-void WSServer::addAddress(std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect){
+void WSServer::addAddress(std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
 	auto handler = std::make_shared<WSServerDataHandler>();
 	handler->server = server;
 	handler->address = _address;
 	handler->on_receive = on_receive;
 	handler->on_connect = on_connect;
 	handler->on_disconnect = on_disconnect;
+	handler->binary = binary;
 	server->addWebSocketHandler((std::string("/")+_address).c_str(), handler);
 	
 	address_book[_address] = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
