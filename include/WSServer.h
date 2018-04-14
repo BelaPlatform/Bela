@@ -21,12 +21,12 @@ class WSServer{
 	friend struct WSServerStreamHandler;
 	public:
 		WSServer();
-		WSServer(int _port, std::string _address, void(*on_receive)(std::string address, void* buf, int size), void(*on_connect)(std::string address) = nullptr, void(*on_disconnect)(std::string address) = nullptr);
+		WSServer(int _port, std::string _address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr);
 		~WSServer();
 		
-		void setup(int port, std::string address, void(*on_receive)(std::string address, void* buf, int size), void(*on_connect)(std::string address) = nullptr, void(*on_disconnect)(std::string address) = nullptr);
+		void setup(int port, std::string address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr);
 		
-		void addAddress(std::string address, void(*on_receive)(std::string address, void* buf, int size), void(*on_connect)(std::string address) = nullptr, void(*on_disconnect)(std::string address) = nullptr);
+		void addAddress(std::string address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr);
 		
 		void send(std::string str);
 		void send(std::string address, std::string str);
