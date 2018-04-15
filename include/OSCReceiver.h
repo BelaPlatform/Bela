@@ -26,7 +26,7 @@ class UdpServer;
 class OSCReceiver{
     public:
         OSCReceiver();
-        OSCReceiver(int port, void (*onreceive)(oscpkt::Message* msg));
+        OSCReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive);
         ~OSCReceiver();
 	
         /**
@@ -38,7 +38,7 @@ class OSCReceiver{
 		 * @param onreceive the callback function which recevied OSC messages are passed to
 		 *
 		 */
-        void setup(int port, void (*onreceive)(oscpkt::Message* msg));
+        void setup(int port, std::function<void(oscpkt::Message* msg)> on_receive);
         
     private:
     	bool lShouldStop = false;
@@ -46,7 +46,6 @@ class OSCReceiver{
     	bool waitingForMessage = false;
     	int waitForMessage(int timeout_ms);
     	
-        int port;
         std::unique_ptr<UdpServer> socket;
 
         std::unique_ptr<AuxTaskNonRT> recieve_task;
@@ -55,7 +54,7 @@ class OSCReceiver{
         std::unique_ptr<oscpkt::PacketReader> pr;
         char* inBuffer[OSCRECEIVER_BUFFERSIZE];
         
-        void (*callback)(oscpkt::Message* msg);
+        std::function<void(oscpkt::Message* msg)> on_receive;
 };
 
 

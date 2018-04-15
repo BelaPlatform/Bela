@@ -5,8 +5,8 @@
 #include <UdpServer.h>
 
 OSCReceiver::OSCReceiver(){}
-OSCReceiver::OSCReceiver(int port, void (*onreceive)(oscpkt::Message* msg)){
-	setup(port, onreceive);
+OSCReceiver::OSCReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive){
+	setup(port, on_receive);
 }
 OSCReceiver::~OSCReceiver(){
 	lShouldStop = true;
@@ -26,10 +26,9 @@ void OSCReceiver::recieve_task_func(void* ptr){
 	}
 }
 
-void OSCReceiver::setup(int _port, void (*_callback)(oscpkt::Message* msg)){
-    port = _port;
-    callback = _callback;
+void OSCReceiver::setup(int port, std::function<void(oscpkt::Message* msg)> _on_receive){
     
+    on_receive = _on_receive;
     pr = std::unique_ptr<oscpkt::PacketReader>(new oscpkt::PacketReader());
     
     socket = std::unique_ptr<UdpServer>(new UdpServer());
@@ -39,7 +38,7 @@ void OSCReceiver::setup(int _port, void (*_callback)(oscpkt::Message* msg)){
     }
 	
 	recieve_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	recieve_task->create(std::string("OSCReceiverTask_") + std::to_string(_port), OSCReceiver::recieve_task_func, this);
+	recieve_task->create(std::string("OSCReceiverTask_") + std::to_string(port), OSCReceiver::recieve_task_func, this);
     recieve_task->schedule();
 }
 
@@ -59,7 +58,7 @@ int OSCReceiver::waitForMessage(int timeout){
         	fprintf(stderr, "OSCReceiver: oscpkt error parsing recieved message: %i", pr->getErr());
         	return -1;
         }
-		callback(pr->popMessage());
+		on_receive(pr->popMessage());
 	}
 	return ret;
 }
