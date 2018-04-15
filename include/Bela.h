@@ -31,11 +31,6 @@
 #define BELA_MINOR_VERSION 0
 #define BELA_BUGFIX_VERSION 0
 
-/**
- * Inverts I/O signals as appropriate for the BelaModular.
- */
-#define BELA_MODULAR
-
 #ifdef __cplusplus
 extern "C"
 {

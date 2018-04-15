@@ -36,6 +36,10 @@
 #include <sys/mman.h>
 #include <string.h>
 
+/**
+ * Inverts I/O signals as appropriate for the BelaModular.
+ */
+#define BELA_MODULAR
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
 
