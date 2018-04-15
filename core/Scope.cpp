@@ -1,6 +1,8 @@
 #include <Scope.h>
 #include <ne10/NE10.h>
 #include <math.h>
+#include <WSServer.h>
+#include <JSON.h>
 
 Scope::Scope(): isUsingOutBuffer(false), 
                 isUsingBuffer(false), 
@@ -17,9 +19,6 @@ Scope::Scope(): isUsingOutBuffer(false),
 
 Scope::~Scope(){
 	dealloc();
-	sendBufferTask.cleanup();
-	scopeTriggerTask.cleanup();
-	scope_ws_cleanup();
 }
 
 void Scope::dealloc(){
@@ -40,19 +39,29 @@ void Scope::triggerTask(void* ptr){
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders){
    
-    numChannels = _numChannels;
-    sampleRate = _sampleRate;
-    numSliders = _numSliders;
+    setSetting(L"numChannels", _numChannels);
+    setSetting(L"sampleRate", _sampleRate);
+    setSetting(L"numSliders", _numSliders);
 	
 	// set up the websocket server
-	scope_ws_setup(this);
+	ws_server = std::unique_ptr<WSServer>(new WSServer());
+	ws_server->setup(5432, "scope_data", nullptr, nullptr, nullptr, true);
+	ws_server->addAddress("scope_control", 
+		[this](std::string address, void* buf, int size){
+			scope_control_data((const char*) buf);
+		},
+		[this](std::string address){
+			scope_control_connected();
+		},
+		[this](std::string address){
+			stop();
+		});
 
 	// setup the auxiliary tasks
 	scopeTriggerTask.create("scope-trigger-task", Scope::triggerTask, (void*)this);
-	sendBufferTask.create("scope-send-buffer", scope_ws_send);
-	
+
 	// setup the sliders
-	sliders.reserve(numSliders);
+	sliders.resize(_numSliders);
     
 }
 
@@ -279,8 +288,9 @@ void Scope::triggerTimeDomain(){
 					isUsingBuffer = false;
 					
 					// the whole frame has been saved in outBuffer, so send it
-					sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
+					// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
 					// rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
+					ws_server->send(outBuffer.data(), outBuffer.size()*sizeof(float));
 					
 					isUsingOutBuffer = false;
                 }
@@ -432,8 +442,9 @@ void Scope::doFFT(){
     
 	isUsingBuffer = false;
 	
-	sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
+	// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
     // rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
+    ws_server->send(outBuffer.data(), outBuffer.size()*sizeof(float));
 
     isUsingOutBuffer = false;
 }
@@ -447,9 +458,14 @@ float Scope::getSliderValue(int slider){
     return sliders[slider].value;
 }
 
-void Scope::setSlider(int slider, float min, float max, float step, float value, std::string name){
-    sliders[slider].value = value;
-    scope_ws_set_slider(slider, min, max, step, value, name);
+void Scope::setSlider(int index, float min, float max, float step, float value, std::string name){
+    sliders.at(index).value = value;
+    sliders.at(index).min = min;
+    sliders.at(index).max = max;
+    sliders.at(index).step = step;
+    sliders.at(index).name = name;
+    sliders.at(index).w_name = std::wstring(name.begin(), name.end());
+    // scope_ws_set_slider(slider, min, max, step, value, name);
 }
 
 void Scope::setXParams(){
@@ -462,17 +478,17 @@ void Scope::setXParams(){
 }
 
 void Scope::setTrigger(int mode, int channel, int dir, float level){
-	triggerMode = mode;
-	triggerChannel = channel;
-	triggerDir = dir;
-	triggerLevel = level;
-	scope_ws_set_setting(L"triggerMode", mode);
-	scope_ws_set_setting(L"triggerChannel", channel);
-	scope_ws_set_setting(L"triggerDir", dir);
-	scope_ws_set_setting(L"triggerLevel", level);
+	setSetting(L"triggerMode", mode);
+	setSetting(L"triggerChannel", channel);
+	setSetting(L"triggerDir", dir);
+	setSetting(L"triggerLevel", level);
 }
 
 void Scope::setSetting(std::wstring setting, float value){
+	
+	// std::string str = std::string(setting.begin(), setting.end());
+	// printf("setting %s to %f\n", str.c_str(), value);
+	
 	if (setting.compare(L"frameWidth") == 0){
 		stop();
         pixelWidth = (int)value;
@@ -516,5 +532,102 @@ void Scope::setSetting(std::wstring setting, float value){
         FFTXAxis = (int)value;
 	} else if (setting.compare(L"FFTYAxis") == 0){
         FFTYAxis = (int)value;
+	} else if (setting.compare(L"numChannels") == 0){
+		numChannels = (int)value;
+	} else if (setting.compare(L"sampleRate") == 0){
+		sampleRate = value;
 	}
+	
+	settings[setting] = value;
+}
+
+// called when scope_control websocket is connected
+// communication is started here with cpp sending a 
+// "connection" JSON with settings known by cpp
+// (i.e numChannels, sampleRate, numSliders)
+// JS replies with "connection-reply" which is parsed
+// by scope_control_data()
+void Scope::scope_control_connected(){
+	
+	// printf("connection!\n");
+	
+	// send connection JSON
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"connection");
+	for (auto setting : settings){
+		root[setting.first] = new JSONValue(setting.second);
+	}
+	JSONValue *value = new JSONValue(root);
+	std::wstring wide = value->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	// printf("sending JSON: \n%s\n", str.c_str());
+	ws_server->send("scope_control", str);
+	
+	// for (auto slider : sliders){
+	// 	sendSlider(&slider);
+	// }
+}
+
+// on_data callback for scope_control websocket
+// runs on the (linux priority) seasocks thread
+void Scope::scope_control_data(const char* data){
+	
+	// printf("recieved: %s\n", data);
+	
+	// parse the data into a JSONValue
+	JSONValue *value = JSON::Parse(data);
+	if (value == NULL || !value->IsObject()){
+		printf("could not parse JSON:\n%s\n", data);
+		return;
+	}
+	
+	// look for the "event" key
+	JSONObject root = value->AsObject();
+	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+		std::wstring event = root[L"event"]->AsString();
+		// std::wcout << "event: " << event << "\n";
+		if (event.compare(L"connection-reply") == 0){
+			// parse all settings and start scope
+			parse_settings(value);
+			start();
+		} else if (event.compare(L"slider") == 0){
+			// int slider = -1;
+			// float value = 0.0f;
+			// if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
+			// 	slider = (int)root[L"slider"]->AsNumber();
+			// if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
+			// 	value = (float)root[L"value"]->AsNumber();
+				
+			// sliders.at(slider).value = value;
+			// sliders.at(slider).changed = true;
+		}
+		return;
+	}
+	parse_settings(value);
+}
+
+void Scope::parse_settings(JSONValue* value){
+	// printf("parsing settings\n");
+	std::vector<std::wstring> keys = value->ObjectKeys();
+	for (auto key : keys){
+		JSONValue *key_value = value->Child(key.c_str());
+		if (key_value->IsNumber())
+			setSetting(key, (float)key_value->AsNumber());
+	}
+}
+
+void Scope::sendSlider(ScopeSlider* slider){
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"set-slider");
+	root[L"slider"] = new JSONValue(slider->index);
+	root[L"value"] = new JSONValue(slider->value);
+	root[L"min"] = new JSONValue(slider->min);
+	root[L"max"] = new JSONValue(slider->max);
+	root[L"step"] = new JSONValue(slider->step);
+	root[L"name"] = new JSONValue(slider->w_name);
+	JSONValue *json = new JSONValue(root);
+	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
+	std::wstring wide = json->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	ws_server->send("scope_control", str);
 }
