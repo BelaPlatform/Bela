@@ -68,10 +68,10 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	static float lfoPhase=0;
+	static float lfoPhase = 0;
 	float amplitude = lfoAmplitude * 4700; // range of variation around D. D has to be between [0 9999]
-	lfoPhase+=lfoRate*2*M_PI*context->audioFrames/context->audioSampleRate;
-	D=amplitude+amplitude*sinf(lfoPhase);
+	lfoPhase+=lfoRate * 2.f * (float)M_PI * context->audioFrames/context->audioSampleRate;
+	D=amplitude+amplitude * sinf(lfoPhase);
 	Bela_scheduleAuxiliaryTask(updatePll);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {

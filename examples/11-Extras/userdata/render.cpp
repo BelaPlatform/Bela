@@ -51,12 +51,6 @@ void render(BelaContext *context, void *userData)
 			gPhase -= 2.0 * M_PI;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
-			// Two equivalent ways to write this code
-
-			// The long way, using the buffers directly:
-			// context->audioOut[n * context->audioOutChannels + channel] = out;
-
-			// Or using the macros:
 			audioWrite(context, n, channel, out);
 		}
 	}

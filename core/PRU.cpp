@@ -14,19 +14,17 @@
  */
 
 #include "../include/PRU.h"
-#include "../include/prussdrv.h"
-#include "../include/pruss_intc_mapping.h"
+#include "../include/PruBinary.h"
+#include <prussdrv.h>
 #include "../include/digital_gpio_mapping.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
-#include "../include/pru_rtaudio_bin.h"
 #include "../include/Gpio.h"
 #include "../include/Utilities.h"
 
 #include <iostream>
 #include <stdlib.h>
 #include <cstdio>
-#include <cerrno>
 #include <cmath>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -41,7 +39,6 @@
 
 #if (defined(CTAGE_FACE_8CH) || defined(CTAG_FACE_16CH))
 	#define PRU_USES_MCASP_IRQ
-	#error TODO: load different PRU code
 #endif
 
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
@@ -285,32 +282,32 @@ int PRU::prepareGPIO(int include_led)
 		// Prepare DAC CS/ pin: output, high to begin
 		if(gpio_export(kPruGPIODACSyncPin)) {
 			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export DAC sync pin\n";
+				fprintf(stderr, "Warning: couldn't export DAC sync pin\n");
 		}
 		if(gpio_set_dir(kPruGPIODACSyncPin, OUTPUT_PIN)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on DAC sync pin\n";
+				fprintf(stderr, "Couldn't set direction on DAC sync pin\n");
 			return -1;
 		}
 		if(gpio_set_value(kPruGPIODACSyncPin, HIGH)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set value on DAC sync pin\n";
+				fprintf(stderr, "Couldn't set value on DAC sync pin\n");
 			return -1;
 		}
 
 		// Prepare ADC CS/ pin: output, high to begin
 		if(gpio_export(kPruGPIOADCSyncPin)) {
 			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export ADC sync pin\n";
+				fprintf(stderr, "Warning: couldn't export ADC sync pin\n");
 		}
 		if(gpio_set_dir(kPruGPIOADCSyncPin, OUTPUT_PIN)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on ADC sync pin\n";
+				fprintf(stderr, "Couldn't set direction on ADC sync pin\n");
 			return -1;
 		}
 		if(gpio_set_value(kPruGPIOADCSyncPin, HIGH)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set value on ADC sync pin\n";
+				fprintf(stderr, "Couldn't set value on ADC sync pin\n");
 			return -1;
 		}
 
@@ -321,11 +318,11 @@ int PRU::prepareGPIO(int include_led)
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
 			if(gpio_export(digitalPins[i])) {
 				if(gRTAudioVerbose)
-					cerr << "Warning: couldn't export digital GPIO pin " << digitalPins[i] << "\n"; // this is left as a warning because if the pin has been exported by somebody else, can still be used
+					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , digitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
 			}
 			if(gpio_set_dir(digitalPins[i], INPUT_PIN)) {
 				if(gRTAudioVerbose)
-					cerr << "Error: Couldn't set direction on digital GPIO pin " << digitalPins[i] << "\n";
+					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , digitalPins[i]);
 				return -1;
 			}
 		}
@@ -711,11 +708,19 @@ int PRU::start(char * const filename)
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
 
+#ifdef PRU_USES_MCASP_IRQ
+	const unsigned int* pruCode = IrqPruCode::getBinary();
+	const unsigned int pruCodeSize = IrqPruCode::getBinarySize();
+#else /* PRU_USES_MCASP_IRQ */
+	const unsigned int* pruCode = NonIrqPruCode::getBinary();
+	const unsigned int pruCodeSize = NonIrqPruCode::getBinarySize();
+#endif /* PRU_USES_MCASP_IRQ */
+
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
 		if(gRTAudioVerbose)
 			printf("Using embedded PRU code\n");
-		if(prussdrv_exec_code(pru_number, PRUcode, sizeof(PRUcode))) {
+		if(prussdrv_exec_code(pru_number, pruCode, pruCodeSize)) {
 			fprintf(stderr, "Failed to execute PRU code\n");
 			return 1;
 		}
@@ -841,13 +846,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
 		// TODO: implement non-interlaved
 #else
-
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-		//TODO: @henrix: what is this about?
-		int audioInChannels = context->audioInChannels > 8 ? 8 : context->audioInChannels;
-#else 
 		int audioInChannels = context->audioInChannels;
-#endif /* defined CTAG */
 		if(interleaved)
 		{
 			for(unsigned int n = 0; n < audioInChannels * context->audioFrames; n++) {

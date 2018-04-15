@@ -46,12 +46,12 @@ void calculate_coeff(float cutFreq);
 
 bool initialise_aux_tasks();
 
-// Task for handling the update of the frequencies using the matrix
+// Task for handling the update of the frequencies using the analog inputs
 AuxiliaryTask gChangeCoeffTask;
 
 void check_coeff(void*);
 
-// Task for handling the update of the frequencies using the matrix
+// Task for handling the update of the frequencies using the analog inputs
 AuxiliaryTask gInputTask;
 
 void read_input(void*);
@@ -104,8 +104,9 @@ void render(BelaContext *context, void *userData)
 		gLastY[1] = gLastY[0];
 		gLastY[0] = out;
 
-		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
-			context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
+		for(unsigned int channel = 0; channel < context->audioOutChannels; ++channel)
+			// ...and copy it to all the output channels
+			audioWrite(context, n, channel, out);
 
 	}
 
