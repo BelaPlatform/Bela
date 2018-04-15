@@ -5,6 +5,9 @@
 #include <oscpkt.hh>
 #include <AuxTaskNonRT.h>
 
+#define OSCSENDER_MAX_ARGS 1024
+#define OSCSENDER_MAX_BYTES 65536
+
 OSCSender::OSCSender(){}
 OSCSender::OSCSender(int port, std::string ip_address){
 	setup(port, ip_address);
@@ -16,43 +19,18 @@ void OSCSender::send_task_func(void* ptr, void* buf, int size){
 	instance->socket->send(buf, size);
 }
 
-void OSCSender::stream_task_func(void* ptr, void* buf, int size){
-	OSCSender* instance = (OSCSender*)ptr;
-	instance->newMessage(instance->streamAddress)
-			.add(buf, size)
-			.sendNow();
-}
+void OSCSender::setup(int port, std::string ip_address){
 
-void OSCSender::setup(int _port, std::string _ip_address){
-	ip_address = _ip_address;
-    port = _port;
-    
-    msg = std::unique_ptr<oscpkt::Message>(new oscpkt::Message());
     pw = std::unique_ptr<oscpkt::PacketWriter>(new oscpkt::PacketWriter());
+    msg = std::unique_ptr<oscpkt::Message>(new oscpkt::Message());
+    msg->reserve(OSCSENDER_MAX_ARGS, OSCSENDER_MAX_BYTES);
     
     socket = std::unique_ptr<UdpClient>(new UdpClient());
     socket->setServer(ip_address.c_str());
 	socket->setPort(port);
 	
 	send_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	send_task->create(std::string("OSCSenderTask_") + std::to_string(_port), OSCSender::send_task_func, this);
-}
-
-void OSCSender::streamTo(std::string address, int streaming_buffer_size){
-	streamAddress = address;
-	streamBufferSize = streaming_buffer_size;
-	streamBuffer.reserve(streamBufferSize);
-	
-	stream_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	stream_task->create(std::string("OSCStreamTask_") + std::to_string(port), OSCSender::stream_task_func, this);
-}
-
-void OSCSender::stream(float in){
-	streamBuffer.push_back(in);
-	if (streamBuffer.size() >= streamBufferSize){
-		stream_task->schedule(&streamBuffer[0], streamBuffer.size()*sizeof(float));
-		streamBuffer.clear();
-	}
+	send_task->create(std::string("OSCSenderTask_") + std::to_string(port), OSCSender::send_task_func, this);
 }
 
 OSCSender &OSCSender::newMessage(std::string address){
@@ -84,9 +62,4 @@ OSCSender &OSCSender::add(void *ptr, size_t num_bytes){
 void OSCSender::send(){
 	pw->init().addMessage(*msg);
 	send_task->schedule(pw->packetData(), pw->packetSize());
-}
-
-void OSCSender::sendNow(){
-	pw->init().addMessage(*msg);
-    socket->send(pw->packetData(), pw->packetSize());
 }

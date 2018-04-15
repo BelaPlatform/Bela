@@ -12,8 +12,6 @@ namespace oscpkt{
 	class PacketWriter;
 }
 
-#define OSCSENDER_DEFAULT_STREAMING_BUFFERSIZE 1024
-
 /**
  * \brief OSCSender provides functions for sending OSC messages from Bela.
  *
@@ -105,41 +103,8 @@ class OSCSender{
 		 *
 		 */
 		void send();
-		/**
-		 * \brief Blocks execution until message is sent
-		 *
-		 * As an alternative to send(), sendNow() blocks until the message is sent
-		 * and should only be used from setup() or a seperate thread.
-		 *
-		 */
-		void sendNow();
-		
-		/**
-		 * \brief Sets the address and buffer size when streaming
-		 *
-		 * Must be called once during setup() to prepare OSCSender for streaming
-		 *
-		 * @param address the OSC address which data will be steamed to
-		 * @param streaming_buffer_size the buffer size used when streaming data. Defaults to 1024
-		 *
-		 */
-		void streamTo(std::string address, int streaming_buffer_size = OSCSENDER_DEFAULT_STREAMING_BUFFERSIZE);
-		/**
-		 * \brief Streams data to the address set in streamTo()
-		 *
-		 * Data passed to this function is added to an internal buffer which is
-		 * sent as a binary blob when the buffer is full
-		 *
-		 * @param in data to be streamed
-		 *
-		 */
-		void stream(float in);
-		// void stream(float* buf, int num_floats);
 
 	private:
-			std::string ip_address;
-        	int port;
-        
         	std::unique_ptr<UdpClient> socket;
         
         	std::unique_ptr<oscpkt::Message> msg;
@@ -147,13 +112,6 @@ class OSCSender{
 
         	std::unique_ptr<AuxTaskNonRT> send_task;
         	static void send_task_func(void* ptr, void* buf, int size);
-        
-        	std::string streamAddress;
-        	std::vector<float> streamBuffer;
-        	int streamBufferSize;
-        
-        	std::unique_ptr<AuxTaskNonRT> stream_task;
-        	static void stream_task_func(void* ptr, void* buf, int size);
 };
 
 #endif
