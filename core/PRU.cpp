@@ -1276,6 +1276,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 		if(digital_enabled) { // keep track of past digital values
 			for(unsigned int n = 0; n < context->digitalFrames; n++){
+#ifdef BELA_MODULAR
+				// inver output channels (trig out on the module are inverted)
+				// Also invert input channels. This way, in case
+				// there is an underrun and ARM partially
+				// overwrites the PRU memory, we read (old)
+				// meaningful values back (see https://github.com/BelaPlatform/Bela/issues/406)
+				context->digital[n] =
+					(~context->digital[n] & 0xffff0000) | // invert high word (input/output values)
+					(context->digital[n] & 0xffff); // leave low word as is (1 means input)
+#endif /* BELA_MODULAR */
 				last_digital_buffer[n] = context->digital[n];
 			}
 		}
