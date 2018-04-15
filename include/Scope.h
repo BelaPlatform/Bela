@@ -7,8 +7,6 @@
 #include <map>
 #include <string>
 #include <memory>
-#include <AuxTaskNonRT.h>
-#include <AuxTaskRT.h>
 
 #define FRAMES_STORED 4
 
@@ -18,6 +16,7 @@
 class WSServer;
 class JSONValue;
 // typedef std::map<std::wstring, JSONValue*> JSONObject;
+class AuxTaskRT;
 
 /** 
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
@@ -218,7 +217,7 @@ class Scope{
         ne10_fft_cpx_float32_t* outFFT;
         ne10_fft_cfg_float32_t cfg;
         
-        AuxTaskRT scopeTriggerTask;
+        std::unique_ptr<AuxTaskRT> scopeTriggerTask;
         static void triggerTask(void* ptr);
 		
 		void setSetting(std::wstring setting, float value);
