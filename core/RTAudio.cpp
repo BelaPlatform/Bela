@@ -179,21 +179,21 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	gHighPerformanceMode = settings->highPerformanceMode;
 	if(gRTAudioVerbose && gHighPerformanceMode) {
-		fprintf(stdout, "Starting in high-performance mode\n");
+		printf("Starting in high-performance mode\n");
 	}
 
 	// Initialise context data structure
 	memset(&gContext, 0, sizeof(BelaContext));
 
 	if(gRTAudioVerbose) {
-		fprintf(stdout, "Starting with period size %d ;", settings->periodSize);
+		printf("Starting with period size %d ;", settings->periodSize);
 		if(settings->useAnalog)
-			fprintf(stdout, "analog enabled\n");
+			printf("analog enabled\n");
 		else
-			fprintf(stdout, "analog disabled\n");
-		fprintf(stdout,"DAC level %f dB; ADC level %f dB; headphone level %f dB\n", settings->dacLevel, settings->adcLevel, settings->headphoneLevel);
+			printf("analog disabled\n");
+		printf("DAC level %f dB; ADC level %f dB; headphone level %f dB\n", settings->dacLevel, settings->adcLevel, settings->headphoneLevel);
 		if(settings->beginMuted)
-			fprintf(stdout, "Beginning with speaker muted\n");
+			printf("Beginning with speaker muted\n");
 	}
 
 	// Prepare GPIO pins for amplifier mute and status LED
@@ -515,7 +515,7 @@ void Bela_stopAudio()
 	gShouldStop = true;
 
 	if(gRTAudioVerbose)
-		fprintf(stdout, "Stopping audio...\n");
+		printf("Stopping audio...\n");
 
 	// Now wait for threads to respond and actually stop...
 #ifdef XENOMAI_SKIN_native

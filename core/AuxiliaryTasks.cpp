@@ -183,7 +183,7 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 		return 0;
 #ifdef XENOMAI_SKIN_native
 	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
-		fprintf(stderr,"Error: unable to start Xenomai task %s: %s\n", taskStruct->name, strerror(-ret));  
+		fprintf(stderr,"Error: unable to start Xenomai task %s: %s\n", taskStruct->name, strerror(-ret));
 		return -1;
 	}
 #endif
