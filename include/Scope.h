@@ -218,7 +218,7 @@ class Scope{
         ne10_fft_cfg_float32_t cfg;
         
         std::unique_ptr<AuxTaskRT> scopeTriggerTask;
-        static void triggerTask(void* ptr);
+        void triggerTask();
 		
 		void setSetting(std::wstring setting, float value);
 
