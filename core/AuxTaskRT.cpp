@@ -16,41 +16,25 @@ bool AuxTaskRT::shouldStop(){
 	return (gShouldStop || lShouldStop);
 }
 
-void AuxTaskRT::create(std::string _name, void (*_callback)(), int _priority){
+void AuxTaskRT::create(std::string _name, std::function<void()> callback, int _priority){
 	name = _name;
 	priority = _priority;
-	empty_callback = _callback;
+	empty_callback = callback;
 	mode = 0;
 	__create();
 }
-void AuxTaskRT::create(std::string _name, void (*_callback)(const char* str), int _priority){
+void AuxTaskRT::create(std::string _name, std::function<void(const char* str)> callback, int _priority){
 	name = _name;
 	priority = _priority;
-	str_callback = _callback;
+	str_callback = callback;
 	mode = 1;
 	__create();
 }
-void AuxTaskRT::create(std::string _name, void (*_callback)(void* buf, int size), int _priority){
+void AuxTaskRT::create(std::string _name, std::function<void(void* buf, int size)> callback, int _priority){
 	name = _name;
 	priority = _priority;
-	buf_callback = _callback;
+	buf_callback = callback;
 	mode = 2;
-	__create();
-}
-void AuxTaskRT::create(std::string _name, void (*_callback)(void* ptr), void* _pointer, int _priority){
-	name = _name;
-	priority = _priority;
-	pointer = _pointer;
-	ptr_callback = _callback;
-	mode = 3;
-	__create();
-}
-void AuxTaskRT::create(std::string _name, void (*_callback)(void* ptr, void* buf, int size), void* _pointer, int _priority){
-	name = _name;
-	priority = _priority;
-	pointer = _pointer;
-	ptr_buf_callback = _callback;
-	mode = 4;
 	__create();
 }
 
@@ -222,59 +206,6 @@ void AuxTaskRT::buf_loop(){
 	free(buffer);
 #endif
 }
-void AuxTaskRT::ptr_loop(){
-#ifdef XENOMAI_SKIN_native
-	while(!shouldStop()){
-		void* buf;
-		rt_queue_receive(&queue, &buf, TM_INFINITE);
-		if(!shouldStop())
-			ptr_callback(pointer);
-		rt_queue_free(&queue, buf);
-	}
-#endif
-#ifdef XENOMAI_SKIN_posix
-	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!shouldStop())
-	{
-		unsigned int prio;
-		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
-		if(ret < 0)
-		{
-			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
-			return;
-		}
-		if(!shouldStop())
-			ptr_callback(pointer);
-	}
-	free(buffer);
-#endif
-}
-void AuxTaskRT::ptr_buf_loop(){
-#ifdef XENOMAI_SKIN_native
-	while(!shouldStop()){
-		void* buf;
-		ssize_t size = rt_queue_receive(&queue, &buf, TM_INFINITE);
-		if(!shouldStop())
-			ptr_buf_callback(pointer, (void*)buf, size);
-		rt_queue_free(&queue, buf);
-	}
-#endif
-#ifdef XENOMAI_SKIN_posix
-	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
-	while(!shouldStop()){
-		unsigned int prio;
-		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
-		if(ret < 0)
-		{
-			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
-			return;
-		}
-		if(!shouldStop())
-			ptr_buf_callback(pointer, (void*)buffer, ret);
-	}
-	free(buffer);
-#endif
-}
 
 void AuxTaskRT::thread_func(void* ptr){
 	AuxTaskRT *instance = (AuxTaskRT*)ptr;
@@ -289,10 +220,6 @@ void AuxTaskRT::thread_func(void* ptr){
 		instance->str_loop();
 	} else if (instance->mode == 2){
 		instance->buf_loop();
-	} else if (instance->mode == 3){
-		instance->ptr_loop();
-	} else if (instance->mode == 4){
-		instance->ptr_buf_loop();
 	}
 	if (gRTAudioVerbose)
 		printf("AuxTaskRT %s exiting\n", instance->name.c_str());

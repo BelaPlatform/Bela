@@ -18,36 +18,22 @@ bool AuxTaskNonRT::shouldStop(){
 	return (gShouldStop || lShouldStop);
 }
 
-void AuxTaskNonRT::create(std::string _name, void(*_callback)()){
+void AuxTaskNonRT::create(std::string _name, std::function<void()> callback){
 	name = _name;
-	empty_callback = _callback;
+	empty_callback = callback;
 	mode = 0;
 	__create();
 }
-void AuxTaskNonRT::create(std::string _name, void(*_callback)(const char* str)){
+void AuxTaskNonRT::create(std::string _name, std::function<void(const char* str)> callback){
 	name = _name;
-	str_callback = _callback;
+	str_callback = callback;
 	mode = 1;
 	__create();
 }
-void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* buf, int size)){
+void AuxTaskNonRT::create(std::string _name, std::function<void(void* buf, int size)> callback){
 	name = _name;
-	buf_callback = _callback;
+	buf_callback = callback;
 	mode = 2;
-	__create();
-}
-void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* ptr), void* _pointer){
-	name = _name;
-	ptr_callback = _callback;
-	pointer = _pointer;
-	mode = 3;
-	__create();
-}
-void AuxTaskNonRT::create(std::string _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer){
-	name = _name;
-	ptr_buf_callback = _callback;
-	pointer = _pointer;
-	mode = 4;
 	__create();
 }
 
@@ -176,26 +162,6 @@ void AuxTaskNonRT::buf_loop(){
 	}
 	free(buf);
 }
-void AuxTaskNonRT::ptr_loop(){
-	void* buf = malloc(1);
-	while(!shouldStop()){
-		read(pipe_fd, buf, 1);
-		if (shouldStop())
-			break;
-		ptr_callback(pointer);
-	}
-	free(buf);
-}
-void AuxTaskNonRT::ptr_buf_loop(){
-	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
-	while(!shouldStop()){
-		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
-		if (shouldStop())
-			break;
-		ptr_buf_callback(pointer, buf, size);
-	}
-	free(buf);
-}
 
 void AuxTaskNonRT::thread_func(void* ptr){
 	AuxTaskNonRT *instance = (AuxTaskNonRT*)ptr;
@@ -211,10 +177,6 @@ void AuxTaskNonRT::thread_func(void* ptr){
 		instance->str_loop();
 	} else if (instance->mode == 2){
 		instance->buf_loop();
-	} else if (instance->mode == 3){
-		instance->ptr_loop();
-	} else if (instance->mode == 4){
-		instance->ptr_buf_loop();
 	}
 	if (gRTAudioVerbose)
 		printf("AuxTaskNonRT %s exiting\n", instance->name.c_str());

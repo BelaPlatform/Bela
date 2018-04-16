@@ -4,6 +4,7 @@
 
 #include <Bela.h>
 #include <string>
+#include <functional>
 
 #ifdef XENOMAI_SKIN_native
 #include <rtdk.h>
@@ -25,11 +26,9 @@ class AuxTaskRT{
 		AuxTaskRT();
 		~AuxTaskRT();
 		
-		void create(std::string _name, void(*_callback)(), int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(std::string _name, void(*_callback)(const char* str), int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(std::string _name, void(*_callback)(void* buf, int size), int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(std::string _name, void(*_callback)(void* ptr), void* _pointer, int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(std::string _name, void(*_callback)(void* ptr, void* buf, int size), void* _pointer, int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, std::function<void()> callback, int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, std::function<void(const char* str)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, std::function<void(void* buf, int size)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
 		
 		void schedule(void* buf, size_t size);
 		void schedule(const char* str);
@@ -53,21 +52,16 @@ class AuxTaskRT{
 		std::string name;
 		int priority;
 		int mode;
-		void* pointer;
-		
+
 		void __create();
 
-		void (*empty_callback)();
-		void (*str_callback)(const char* buffer);
-		void (*buf_callback)(void* buf, int size);
-		void (*ptr_callback)(void* ptr);
-		void (*ptr_buf_callback)(void* ptr, void* buf, int size);
+		std::function<void()> empty_callback;
+		std::function<void(const char* buffer)> str_callback;
+		std::function<void(void* buf, int size)> buf_callback;
 		
 		void empty_loop();
 		void str_loop();
 		void buf_loop();
-		void ptr_loop();
-		void ptr_buf_loop();
 		
 		static void thread_func(void* ptr);
 };
