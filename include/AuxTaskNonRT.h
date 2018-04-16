@@ -19,8 +19,11 @@
 
 class AuxTaskNonRT{
 	public:
-		AuxTaskNonRT();
-		~AuxTaskNonRT();
+		AuxTaskNonRT(){}
+		AuxTaskNonRT(std::string _name, std::function<void()> callback){ create(_name, callback); }
+		AuxTaskNonRT(std::string _name, std::function<void(std::string str)> callback){ create(_name, callback); }
+		AuxTaskNonRT(std::string _name, std::function<void(void* buf, int size)> callback){ create(_name, callback); }
+		~AuxTaskNonRT(){ cleanup(); }
 		
 		void create(std::string _name, std::function<void()> callback);
 		void create(std::string _name, std::function<void(std::string str)> callback);

@@ -6,12 +6,6 @@
 
 extern int volatile gRTAudioVerbose;
 
-AuxTaskRT::AuxTaskRT(){}
-AuxTaskRT::~AuxTaskRT(){
-	lShouldStop = true;
-	cleanup();
-}
-
 bool AuxTaskRT::shouldStop(){
 	return (gShouldStop || lShouldStop);
 }
@@ -107,6 +101,7 @@ void AuxTaskRT::schedule(){
 }
 
 void AuxTaskRT::cleanup(){
+	lShouldStop = true;
 #ifdef XENOMAI_SKIN_native
 	rt_task_delete(&task);
 	rt_queue_delete(&queue);

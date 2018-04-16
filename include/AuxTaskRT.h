@@ -23,8 +23,11 @@
 
 class AuxTaskRT{
 	public:
-		AuxTaskRT();
-		~AuxTaskRT();
+		AuxTaskRT(){}
+		AuxTaskRT(std::string _name, std::function<void()> callback){ create(_name, callback); }
+		AuxTaskRT(std::string _name, std::function<void(std::string str)> callback){ create(_name, callback); }
+		AuxTaskRT(std::string _name, std::function<void(void* buf, int size)> callback){ create(_name, callback); }
+		~AuxTaskRT(){ cleanup(); }
 		
 		void create(std::string _name, std::function<void()> callback, int _priority = BELA_AUDIO_PRIORITY-5);
 		void create(std::string _name, std::function<void(std::string str)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
