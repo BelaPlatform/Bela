@@ -24,7 +24,7 @@ void AuxTaskNonRT::create(std::string _name, std::function<void()> callback){
 	mode = 0;
 	__create();
 }
-void AuxTaskNonRT::create(std::string _name, std::function<void(const char* str)> callback){
+void AuxTaskNonRT::create(std::string _name, std::function<void(std::string str)> callback){
 	name = _name;
 	str_callback = callback;
 	mode = 1;
@@ -93,8 +93,8 @@ void AuxTaskNonRT::schedule(void* ptr, size_t size){
 		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name.c_str(), errno, strerror(errno), size);
 	}
 }
-void AuxTaskNonRT::schedule(const char* str){
-	schedule((void*)str, strlen(str));
+void AuxTaskNonRT::schedule(std::string str){
+	schedule((void*)str.c_str(), strlen(str.c_str()));
 }
 void AuxTaskNonRT::schedule(){
 	char t = 0;
@@ -148,7 +148,7 @@ void AuxTaskNonRT::str_loop(){
 		read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
 		if (shouldStop())
 			break;
-		str_callback((const char*)buf);
+		str_callback(std::string((const char*)buf));
 	}
 	free(buf);
 }

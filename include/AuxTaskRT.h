@@ -27,11 +27,11 @@ class AuxTaskRT{
 		~AuxTaskRT();
 		
 		void create(std::string _name, std::function<void()> callback, int _priority = BELA_AUDIO_PRIORITY-5);
-		void create(std::string _name, std::function<void(const char* str)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
+		void create(std::string _name, std::function<void(std::string str)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
 		void create(std::string _name, std::function<void(void* buf, int size)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
 		
 		void schedule(void* buf, size_t size);
-		void schedule(const char* str);
+		void schedule(std::string str);
 		void schedule();
 		
 	private:
@@ -56,7 +56,7 @@ class AuxTaskRT{
 		void __create();
 
 		std::function<void()> empty_callback;
-		std::function<void(const char* buffer)> str_callback;
+		std::function<void(std::string str)> str_callback;
 		std::function<void(void* buf, int size)> buf_callback;
 		
 		void empty_loop();

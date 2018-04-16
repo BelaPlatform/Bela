@@ -23,11 +23,11 @@ class AuxTaskNonRT{
 		~AuxTaskNonRT();
 		
 		void create(std::string _name, std::function<void()> callback);
-		void create(std::string _name, std::function<void(const char* str)> callback);
+		void create(std::string _name, std::function<void(std::string str)> callback);
 		void create(std::string _name, std::function<void(void* buf, int size)> callback);
 		
 		void schedule(void* ptr, size_t size);
-		void schedule(const char* str);
+		void schedule(std::string str);
 		void schedule();
 		
 	private:
@@ -52,7 +52,7 @@ class AuxTaskNonRT{
 		int openPipe();
 		
 		std::function<void()> empty_callback;
-		std::function<void(const char* buffer)> str_callback;
+		std::function<void(std::string str)> str_callback;
 		std::function<void(void* buf, int size)> buf_callback;
 		
 		void empty_loop();

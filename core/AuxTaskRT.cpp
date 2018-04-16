@@ -23,7 +23,7 @@ void AuxTaskRT::create(std::string _name, std::function<void()> callback, int _p
 	mode = 0;
 	__create();
 }
-void AuxTaskRT::create(std::string _name, std::function<void(const char* str)> callback, int _priority){
+void AuxTaskRT::create(std::string _name, std::function<void(std::string str)> callback, int _priority){
 	name = _name;
 	priority = _priority;
 	str_callback = callback;
@@ -98,8 +98,8 @@ void AuxTaskRT::schedule(void* buf, size_t size){
 	}
 #endif
 }
-void AuxTaskRT::schedule(const char* str){
-	schedule((void*)str, strlen(str));
+void AuxTaskRT::schedule(std::string str){
+	schedule((void*)str.c_str(), strlen(str.c_str()));
 }
 void AuxTaskRT::schedule(){
 	char t = 0;
@@ -158,7 +158,7 @@ void AuxTaskRT::str_loop(){
 		void* buf;
 		rt_queue_receive(&queue, &buf, TM_INFINITE);
 		if(!shouldStop())
-			str_callback((const char*)buf);
+			str_callback((std::string)buf);
 		rt_queue_free(&queue, buf);
 	}
 #endif
@@ -174,7 +174,7 @@ void AuxTaskRT::str_loop(){
 			return;
 		}
 		if(!shouldStop())
-			str_callback((const char*)buffer);
+			str_callback((std::string)buffer);
 	}
 	free(buffer);
 #endif
