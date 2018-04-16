@@ -40,22 +40,16 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	}
 };
 
-void WSServer::server_task_func(void* ptr){
-	WSServer* instance = (WSServer*)ptr;
-	instance->server->serve("/dev/null", instance->port);
-}
-
-void WSServer::client_task_func(void* ptr, void* buf, int size){
-	WSServerDataHandler* instance = (WSServerDataHandler*)ptr;
-	if (instance->binary){
-		instance->server->execute([instance, buf, size]{
-			for (auto c : instance->connections){
+void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, void* buf, int size){
+	if (handler->binary){
+		handler->server->execute([handler, buf, size]{
+			for (auto c : handler->connections){
 				c->send((uint8_t*) buf, size);
 			}
 		});
 	} else {
-		instance->server->execute([instance, buf, size]{
-			for (auto c : instance->connections){
+		handler->server->execute([handler, buf, size]{
+			for (auto c : handler->connections){
 				c->send((const char*) buf);
 			}
 		});
@@ -72,7 +66,7 @@ void WSServer::setup(int _port, std::string _address, std::function<void(std::st
 	addAddress(_address, on_receive, on_connect, on_disconnect, binary);
 	
 	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	server_task->create(std::string("WSServer_")+std::to_string(_port), WSServer::server_task_func, this);
+	server_task->create(std::string("WSServer_")+std::to_string(_port), [this](){ server->serve("/dev/null", port); });
 	server_task->schedule();
 }
 
@@ -87,7 +81,7 @@ void WSServer::addAddress(std::string _address, std::function<void(std::string, 
 	server->addWebSocketHandler((std::string("/")+_address).c_str(), handler);
 	
 	address_book[_address] = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	address_book[_address]->create(std::string("WSClient_")+_address, WSServer::client_task_func, (void*)handler.get());
+	address_book[_address]->create(std::string("WSClient_")+_address, [this, handler](void* buf, int size){ client_task_func(handler, buf, size); });
 }
 
 void WSServer::send(std::string str){
