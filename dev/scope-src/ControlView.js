@@ -50,13 +50,15 @@ class ControlView extends View{
 	
 	// settings model events
 	modelChanged(data, changedKeys){
+		this.setControls(data);
 		for (let key of changedKeys){
 			if (this['_'+key]){
 				this['_'+key](data[key], data);
-			} else {
-				if (key === 'plotMode') this.plotMode(data[key], data);
-				//this.$elements.filterByData('key', key).val(data[key]);
+				return;
+			} else if (key === 'plotMode'){ 
+				this.plotMode(data[key], data);
 			}
+			//this.$elements.filterByData('key', key).val(data[key]);
 		}
 	}
 	
@@ -120,7 +122,7 @@ class ControlView extends View{
 		}
 	}
 	
-	_triggerMode(value){
+	/*_triggerMode(value){
 		this.$elements.filterByData('key', 'triggerMode').val(value);
 	}
 	
@@ -133,8 +135,16 @@ class ControlView extends View{
 	}
 
 	_triggerLevel(value){
-		this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
+		this.$elements.filterByData('key', 'triggerLevel').val(value);
 	}
+
+	_interpolation(value){
+		this.$elements.filterByData('key', 'interpolation').val(value);
+	}
+
+	_xOffset(value){
+		this.$elements.filterByData('key', 'triggerLevel').val(value);
+	}*/
 }
 
 module.exports = ControlView;

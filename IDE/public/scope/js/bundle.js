@@ -843,6 +843,7 @@ var ControlView = function (_View) {
 	}, {
 		key: 'modelChanged',
 		value: function modelChanged(data, changedKeys) {
+			this.setControls(data);
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -853,10 +854,11 @@ var ControlView = function (_View) {
 
 					if (this['_' + key]) {
 						this['_' + key](data[key], data);
-					} else {
-						if (key === 'plotMode') this.plotMode(data[key], data);
-						//this.$elements.filterByData('key', key).val(data[key]);
+						return;
+					} else if (key === 'plotMode') {
+						this.plotMode(data[key], data);
 					}
+					//this.$elements.filterByData('key', key).val(data[key]);
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -941,26 +943,27 @@ var ControlView = function (_View) {
 				if (i === data.triggerChannel) opt.prop('selected', 'selected');
 			}
 		}
-	}, {
-		key: '_triggerMode',
-		value: function _triggerMode(value) {
-			this.$elements.filterByData('key', 'triggerMode').val(value);
-		}
-	}, {
-		key: '_triggerChannel',
-		value: function _triggerChannel(value) {
-			this.$elements.filterByData('key', 'triggerChannel').val(value);
-		}
-	}, {
-		key: '_triggerDir',
-		value: function _triggerDir(value) {
-			this.$elements.filterByData('key', 'triggerDir').val(value);
-		}
-	}, {
-		key: '_triggerLevel',
-		value: function _triggerLevel(value) {
-			this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
-		}
+
+		/*_triggerMode(value){
+  	this.$elements.filterByData('key', 'triggerMode').val(value);
+  }
+  
+  _triggerChannel(value){
+  	this.$elements.filterByData('key', 'triggerChannel').val(value);
+  }
+  	_triggerDir(value){
+  	this.$elements.filterByData('key', 'triggerDir').val(value);
+  }
+  	_triggerLevel(value){
+  	this.$elements.filterByData('key', 'triggerLevel').val(value);
+  }
+  	_interpolation(value){
+  	this.$elements.filterByData('key', 'interpolation').val(value);
+  }
+  	_xOffset(value){
+  	this.$elements.filterByData('key', 'triggerLevel').val(value);
+  }*/
+
 	}]);
 
 	return ControlView;
