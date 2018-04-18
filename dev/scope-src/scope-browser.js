@@ -297,22 +297,28 @@ function CPU(data){
 		
 		// interpolate the trigger sample to get the sub-pixel x-offset
 		if (settings.getKey('plotMode') == 0){
-	//		if (upSampling == 1){
-				let one = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset-1] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
-				let two = Math.abs(frame[Math.floor(triggerChannel*length+length/2)+xOffset] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1));
-				xOff = (one/(one+two)-1.5);
-	/*		} else {
-				for (var i=0; i<=(upSampling*2); i++){
-					let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-					let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-					if ((one > triggerLevel && two < triggerLevel) || (one < triggerLevel && two > triggerLevel)){
-						xOff = i*(Math.abs(one)/(Math.abs(one)+Math.abs(two))-1);
-						break;
-					}
+			let triggerIndex = Math.floor(triggerChannel * length + length/2) + upSampling + xOffset;
+			let zeroHeight = (height/2) * (1 - triggerLevel - channelConfig[triggerChannel].yOffset);
+			let frame1 = frame[triggerIndex] - zeroHeight;
+			let frame1_p = (frame1 >= 0);
+			let dist, frame2, lastFrame2 = frame1, found = false;
+			// iterate backwards from the triggerIndex to find the threshold-cross
+			for (dist = 1; dist<(length/2); dist++){
+				frame2 = frame[triggerIndex - dist] - zeroHeight;
+				if ((frame1_p && frame2 < 0) || (!frame1_p && frame2 > 0)){
+					found = true;
+					break;
 				}
+				lastFrame2 = frame2;
 			}
-			console.log(xOff);
-	*/		if (isNaN(xOff)) xOff = 0;
+			if (!found){
+				xOff = 0;
+			} else {
+				// dist is now the number of whole pixels of offset
+				// sub_p is the sub_pixel offset
+				let sub_p = Math.abs(lastFrame2) / (Math.abs(lastFrame2) + Math.abs(frame2));
+				xOff = -(dist - upSampling + sub_p);
+			}
 		}
 	};
 	
