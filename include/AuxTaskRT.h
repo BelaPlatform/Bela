@@ -34,7 +34,7 @@ class AuxTaskRT{
 		void create(std::string _name, std::function<void(void* buf, int size)> callback, int _priority = BELA_AUDIO_PRIORITY-5);
 		
 		void schedule(void* buf, size_t size);
-		void schedule(std::string str);
+		void schedule(const char* str);
 		void schedule();
 		
 	private:

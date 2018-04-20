@@ -30,7 +30,7 @@ class AuxTaskNonRT{
 		void create(std::string _name, std::function<void(void* buf, int size)> callback);
 		
 		void schedule(void* ptr, size_t size);
-		void schedule(std::string str);
+		void schedule(const char* str);
 		void schedule();
 		
 	private:

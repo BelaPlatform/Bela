@@ -87,8 +87,8 @@ void AuxTaskNonRT::schedule(void* ptr, size_t size){
 		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name.c_str(), errno, strerror(errno), size);
 	}
 }
-void AuxTaskNonRT::schedule(std::string str){
-	schedule((void*)str.c_str(), strlen(str.c_str()));
+void AuxTaskNonRT::schedule(const char* str){
+	schedule((void*)str, strlen(str));
 }
 void AuxTaskNonRT::schedule(){
 	char t = 0;

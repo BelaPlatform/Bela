@@ -92,8 +92,8 @@ void AuxTaskRT::schedule(void* buf, size_t size){
 	}
 #endif
 }
-void AuxTaskRT::schedule(std::string str){
-	schedule((void*)str.c_str(), strlen(str.c_str()));
+void AuxTaskRT::schedule(const char* str){
+	schedule((void*)str, strlen(str));
 }
 void AuxTaskRT::schedule(){
 	char t = 0;
