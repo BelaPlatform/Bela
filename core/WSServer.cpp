@@ -48,9 +48,10 @@ void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, vo
 			}
 		});
 	} else {
-		handler->server->execute([handler, buf, size]{
+		std::string str = (const char*)buf;
+		handler->server->execute([handler, str, size]{
 			for (auto c : handler->connections){
-				c->send((const char*) buf);
+				c->send(str.c_str());
 			}
 		});
 	}
