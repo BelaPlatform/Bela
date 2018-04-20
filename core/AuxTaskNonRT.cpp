@@ -139,21 +139,25 @@ void AuxTaskNonRT::empty_loop(){
 }
 void AuxTaskNonRT::str_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
+	memset(buf, 0, AUX_MAX_BUFFER_SIZE);
 	while(!shouldStop()){
-		read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
+		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
 		if (shouldStop())
 			break;
 		str_callback(std::string((const char*)buf));
+		memset(buf, 0, size);
 	}
 	free(buf);
 }
 void AuxTaskNonRT::buf_loop(){
 	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
+	memset(buf, 0, AUX_MAX_BUFFER_SIZE);
 	while(!shouldStop()){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
 		if (shouldStop())
 			break;
 		buf_callback(buf, size);
+		memset(buf, 0, size);
 	}
 	free(buf);
 }
