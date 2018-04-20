@@ -26,10 +26,10 @@ class WSServer{
 		
 		void addAddress(std::string address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr, bool binary = false);
 		
-		void send(std::string str);
-		void send(std::string address, std::string str);
+		void send(const char* str);
+		void send(const char* address, const char* str);
 		void send(void* buf, int num_bytes);
-		void send(std::string address, void* buf, int num_bytes);
+		void send(const char* address, void* buf, int num_bytes);
 		
 	private:
 		void cleanup();

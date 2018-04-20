@@ -84,16 +84,16 @@ void WSServer::addAddress(std::string _address, std::function<void(std::string, 
 	address_book[_address]->create(std::string("WSClient_")+_address, [this, handler](void* buf, int size){ client_task_func(handler, buf, size); });
 }
 
-void WSServer::send(std::string str){
-	address_book[address]->schedule(str.c_str());
+void WSServer::send(const char* str){
+	address_book[address]->schedule(str);
 }
-void WSServer::send(std::string _address, std::string str){
-	address_book[_address]->schedule(str.c_str());
+void WSServer::send(const char* _address, const char* str){
+	address_book[_address]->schedule(str);
 }
 void WSServer::send(void* buf, int num_bytes){
 	address_book[address]->schedule(buf, num_bytes);
 }
-void WSServer::send(std::string _address, void* buf, int num_bytes){
+void WSServer::send(const char* _address, void* buf, int num_bytes){
 	address_book[_address]->schedule(buf, num_bytes);
 }
 
