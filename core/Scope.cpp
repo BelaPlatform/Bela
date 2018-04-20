@@ -562,7 +562,7 @@ void Scope::scope_control_connected(){
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
-	ws_server->send("scope_control", str);
+	ws_server->send("scope_control", str.c_str());
 	
 	// for (auto slider : sliders){
 	// 	sendSlider(&slider);
@@ -630,5 +630,5 @@ void Scope::sendSlider(ScopeSlider* slider){
 	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
 	std::wstring wide = json->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
-	ws_server->send("scope_control", str);
+	ws_server->send("scope_control", str.c_str());
 }
