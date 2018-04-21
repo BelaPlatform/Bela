@@ -140,6 +140,30 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#read_directory', function () {
+            var file_list = ['test_file1', 'test_file2', 'test_file3'];
+            before(function () {
+                var mock_dir = {};
+                mock_dir[file_list[0]] = 'test';
+                mock_dir[file_list[1]] = 'test';
+                mock_dir[file_list[2]] = 'test';
+                mock({ 'test_dir': mock_dir });
+            });
+            it('should return an array of the names of the files in a directory', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.read_directory('test_dir')];
+                            case 1:
+                                output = _a.sent();
+                                output.should.deep.equal(file_list);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

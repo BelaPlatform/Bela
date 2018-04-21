@@ -18,6 +18,9 @@ export class FileManager {
 	async delete_file(file_path: string): Promise<void>{
 		return fs.remove(file_path);
 	}
+	async read_directory(dir_path: string): Promise<string[]>{
+		return fs.readdirAsync(dir_path);
+	}
 
 	// sophisticated file and directory manipulation
 	

@@ -64,6 +64,21 @@ describe('FileManager', function(){
 					});
 			});
 		});
+
+		describe('#read_directory', function(){
+			let file_list: string[] = ['test_file1', 'test_file2', 'test_file3'];
+			before(function(){
+				let mock_dir: any = {};
+				mock_dir[file_list[0]] = 'test';
+				mock_dir[file_list[1]] = 'test';
+				mock_dir[file_list[2]] = 'test';
+				mock({ 'test_dir': mock_dir });
+			});
+			it('should return an array of the names of the files in a directory', async function(){
+				let output: string[] = await fm.read_directory('test_dir');
+				output.should.deep.equal(file_list);
+			});
+		});
 			
 		afterEach(function(){
 			mock.restore();
