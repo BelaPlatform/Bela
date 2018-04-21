@@ -12,5 +12,10 @@
     "gulp": "^3.9.1",
     "gulp-typescript": "^4.0.2",
     "typescript": "^2.8.3"
+  },
+  "dependencies": {
+    "@types/es6-shim": "^0.31.36",
+    "@types/fs-extra-promise": "^1.0.4",
+    "fs-extra-promise": "^1.0.1"
   }
 }
