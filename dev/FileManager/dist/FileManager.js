@@ -40,23 +40,32 @@ var FileManager = /** @class */ (function () {
     function FileManager() {
         console.log('hi');
     }
+    // primitive file and directory manipulation
     FileManager.prototype.write_file = function (file_path, data) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, fs.outputFile(file_path, data)];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
+                return [2 /*return*/, fs.outputFile(file_path, data)];
             });
         });
     };
     FileManager.prototype.read_file = function (file_path) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, fs.readFileAsync(file_path, 'utf8')];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
+                return [2 /*return*/, fs.readFileAsync(file_path, 'utf8')];
+            });
+        });
+    };
+    FileManager.prototype.rename_file = function (src, dest) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, fs.moveAsync(src, dest, { overwrite: true })];
+            });
+        });
+    };
+    FileManager.prototype.delete_file = function (file_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, fs.remove(file_path)];
             });
         });
     };

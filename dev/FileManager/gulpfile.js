@@ -1,6 +1,7 @@
 var gulp = require("gulp");
 var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json");
+var testProject = ts.createProject("testconfig.json");
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 
@@ -13,10 +14,20 @@ gulp.task("default", () => {
 	gulp.watch(['dist/*.js'], ['killnode', 'upload', 'restartnode']);
 });
 
+gulp.task('test', () => {
+	gulp.watch(['test/*.ts'], ['test-typescript']);
+	gulp.watch(['test/*.js'], ['upload-test', 'do-test']);
+});
+
 gulp.task("typescript", function () {
     return tsProject.src()
         .pipe(tsProject())
         .js.pipe(gulp.dest("dist"));
+});
+gulp.task("test-typescript", function () {
+    return testProject.src()
+        .pipe(testProject())
+        .js.pipe(gulp.dest('test'));
 });
 
 gulp.task('killnode', (callback) => {
@@ -26,13 +37,19 @@ gulp.task('killnode', (callback) => {
 	});
 });
 
-gulp.task('upload', ['killnode'], (cb) => rSync(cb, false) );
+gulp.task('upload', ['killnode'], (cb) => rSync(cb, true, 'dist/', 'src/') );
+gulp.task('upload-test', [], (cb) => rSync(cb, false, 'test/', 'src/') );
 gulp.task('restartnode', ['upload'], startNode);
+gulp.task('do-test', ['upload-test'], doTest);
 
-function rSync(callback, reload){
+function rSync(callback, del, src, dest){
 
-	var ssh = spawn('rsync', ['-av', '--delete', 'dist/', user+'@'+host+':'+remotePath]);
-	
+	var ssh;
+	if (del)
+		ssh = spawn('rsync', ['-av', '--delete', src, user+'@'+host+':'+remotePath+'/'+dest]);
+	else
+		ssh = spawn('rsync', ['-av', src, user+'@'+host+':'+remotePath+'/'+dest]);
+
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){
 		process.stdout.write('rsync: ' + data);
@@ -50,7 +67,23 @@ function rSync(callback, reload){
 	
 };
 function startNode(callback){
-	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+';', 'node', remotePath+'/main.js']);
+	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+';', 'node', remotePath+'/src/main.js']);
+	
+	ssh.stdout.setEncoding('utf8');
+	ssh.stdout.on('data', function(data){
+		process.stdout.write(data);
+		if (data.indexOf('listening on port') !== -1) livereload.reload();
+	});
+	
+	ssh.stderr.setEncoding('utf8');
+	ssh.stderr.on('data', function(data){
+		process.stdout.write('error: '+data);
+	});
+
+	callback();
+}
+function doTest(callback){
+	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+'/src;', 'npm', 'test']);
 	
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){

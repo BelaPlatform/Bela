@@ -42,19 +42,26 @@ function read_write() {
         var data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fm.write_file('/root/hello', 'OHAILOL')];
+                case 0: return [4 /*yield*/, fm.write_file('/root/hello', 'tehehe')];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, fm.read_file('/root/hello')];
+                    return [4 /*yield*/, fm.rename_file('/root/hello', '/root/umlol')];
                 case 2:
+                    _a.sent();
+                    return [4 /*yield*/, fm.read_file('/root/umlol')];
+                case 3:
                     data = _a.sent();
+                    return [4 /*yield*/, fm.delete_file('/root/umlol')];
+                case 4:
+                    _a.sent();
                     console.log(data);
                     return [2 /*return*/];
             }
         });
     });
 }
-read_write();
+read_write()
+    .catch(function (e) { return console.log('error', e); });
 /*
 fm.write_file("/root/hello", "HAI")
     .then( () => fm.read_file('/root/hello') )
