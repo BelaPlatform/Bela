@@ -15,8 +15,9 @@ gulp.task("default", () => {
 });
 
 gulp.task('test', () => {
+	gulp.watch(['src/*.ts'], ['typescript']);
 	gulp.watch(['test/*.ts'], ['test-typescript']);
-	gulp.watch(['test/*.js'], ['upload-test', 'do-test']);
+	gulp.watch(['dist/*.js'], ['killnode', 'upload', 'do-test']);
 });
 
 gulp.task("typescript", function () {
@@ -27,7 +28,7 @@ gulp.task("typescript", function () {
 gulp.task("test-typescript", function () {
     return testProject.src()
         .pipe(testProject())
-        .js.pipe(gulp.dest('test'));
+        .js.pipe(gulp.dest('dist'));
 });
 
 gulp.task('killnode', (callback) => {
@@ -38,9 +39,9 @@ gulp.task('killnode', (callback) => {
 });
 
 gulp.task('upload', ['killnode'], (cb) => rSync(cb, true, 'dist/', 'src/') );
-gulp.task('upload-test', [], (cb) => rSync(cb, false, 'test/', 'src/') );
+gulp.task('upload-test', [], (cb) => rSync(cb, false, 'dist/', 'src/') );
 gulp.task('restartnode', ['upload'], startNode);
-gulp.task('do-test', ['upload-test'], doTest);
+gulp.task('do-test', ['upload'], doTest);
 
 function rSync(callback, del, src, dest){
 
