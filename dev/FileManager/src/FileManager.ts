@@ -18,4 +18,21 @@ export class FileManager {
 	async delete_file(file_path: string): Promise<void>{
 		return fs.remove(file_path);
 	}
+
+	// sophisticated file and directory manipulation
+	
+	// save_file follows vim's strategy to save a file in a crash-proof way
+	// it first writes the file to .<file_name>~
+	// then it deletes the existing file at <file_name>
+	// then it renames .<file_name>~ to <file_name>
+	// if a path is given, a lockfile is also created and destroyed
+	async save_file(file_name: string, file_content: string, lockfile: string|undefined = undefined){
+		if (lockfile)
+			await this.write_file(lockfile, file_name);
+		await this.write_file('.'+file_name+'~', file_content);
+		await this.delete_file(file_name);
+		await this.rename_file('.'+file_name+'~', file_name);
+		if (lockfile)
+			await this.delete_file(lockfile)
+	}
 }

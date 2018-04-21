@@ -69,6 +69,42 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    // sophisticated file and directory manipulation
+    // save_file follows vim's strategy to save a file in a crash-proof way
+    // it first writes the file to .<file_name>~
+    // then it deletes the existing file at <file_name>
+    // then it renames .<file_name>~ to <file_name>
+    // if a path is given, a lockfile is also created and destroyed
+    FileManager.prototype.save_file = function (file_name, file_content, lockfile) {
+        if (lockfile === void 0) { lockfile = undefined; }
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!lockfile) return [3 /*break*/, 2];
+                        return [4 /*yield*/, this.write_file(lockfile, file_name)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [4 /*yield*/, this.write_file('.' + file_name + '~', file_content)];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, this.delete_file(file_name)];
+                    case 4:
+                        _a.sent();
+                        return [4 /*yield*/, this.rename_file('.' + file_name + '~', file_name)];
+                    case 5:
+                        _a.sent();
+                        if (!lockfile) return [3 /*break*/, 7];
+                        return [4 /*yield*/, this.delete_file(lockfile)];
+                    case 6:
+                        _a.sent();
+                        _a.label = 7;
+                    case 7: return [2 /*return*/];
+                }
+            });
+        });
+    };
     return FileManager;
 }());
 exports.FileManager = FileManager;

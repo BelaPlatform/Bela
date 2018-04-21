@@ -44,6 +44,10 @@ describe('FileManager', function(){
 				await fm.rename_file('test_file', 'other_file');
 				let data: string = await fm.read_file('other_file');
 				data.should.equal(content);
+				let data2: string = await fm.read_file('test_file')
+					.catch( e => {
+						e.code.should.equal('ENOENT');
+					});
 			});
 		});
 
@@ -66,4 +70,31 @@ describe('FileManager', function(){
 		});
 	});
 
+	describe('Sophisticated file and directory manipulation', function(){
+
+		describe('#save_file', function(){
+			var content: string = 'this is a test';
+			var file_name: string = 'test_file';
+			var lockfile: string = '.lockfile';
+			beforeEach(function(){
+				mock({});
+			});
+			it('should save a file following vim\'s strategy to avoid data loss', async function(){
+				await fm.save_file(file_name, content, lockfile);
+				let data: string = await fm.read_file(file_name);
+				data.should.equal(content);
+			});
+			it('should also work without using a lockfile', async function(){
+				await fm.save_file(file_name, content);
+				let data: string = await fm.read_file(file_name);
+				data.should.equal(content);
+			});
+			afterEach(function(){
+				mock.restore();
+			});
+		});
+		afterEach(function(){
+			mock.restore();
+		});
+	});
 });

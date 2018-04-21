@@ -93,7 +93,7 @@ describe('FileManager', function () {
             });
             it('should rename a file', function () {
                 return __awaiter(this, void 0, void 0, function () {
-                    var data;
+                    var data, data2;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0: return [4 /*yield*/, fm.rename_file('test_file', 'other_file')];
@@ -103,6 +103,12 @@ describe('FileManager', function () {
                             case 2:
                                 data = _a.sent();
                                 data.should.equal(content);
+                                return [4 /*yield*/, fm.read_file('test_file')
+                                        .catch(function (e) {
+                                        e.code.should.equal('ENOENT');
+                                    })];
+                            case 3:
+                                data2 = _a.sent();
                                 return [2 /*return*/];
                         }
                     });
@@ -132,6 +138,56 @@ describe('FileManager', function () {
                         }
                     });
                 });
+            });
+        });
+        afterEach(function () {
+            mock.restore();
+        });
+    });
+    describe('Sophisticated file and directory manipulation', function () {
+        describe('#save_file', function () {
+            var content = 'this is a test';
+            var file_name = 'test_file';
+            var lockfile = '.lockfile';
+            beforeEach(function () {
+                mock({});
+            });
+            it('should save a file following vim\'s strategy to avoid data loss', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.save_file(file_name, content, lockfile)];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, fm.read_file(file_name)];
+                            case 2:
+                                data = _a.sent();
+                                data.should.equal(content);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should also work without using a lockfile', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.save_file(file_name, content)];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, fm.read_file(file_name)];
+                            case 2:
+                                data = _a.sent();
+                                data.should.equal(content);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            afterEach(function () {
+                mock.restore();
             });
         });
         afterEach(function () {
