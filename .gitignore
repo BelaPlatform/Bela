@@ -1,5 +1,6 @@
 **/.DS_Store
 /dev/node_modules
+/dev/FileManager/node_modules
 /IDE/settings.json
 /projects/
 /tmp/
