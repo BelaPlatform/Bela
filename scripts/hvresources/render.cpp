@@ -1,15 +1,25 @@
 /*
- * render.cpp
- *
- *  Template render.cpp file for on-board heavy compiling
- *
- *  N.B. this is currently *not* compatible with foleyDesigner source files!
- *
- *  Created on: November 5, 2015
- *
- *  Christian Heinrichs
- *
- */
+ ____  _____ _        _    
+| __ )| ____| |      / \   
+|  _ \|  _| | |     / _ \  
+| |_) | |___| |___ / ___ \ 
+|____/|_____|_____/_/   \_\
+
+The platform for ultra-low latency audio and sensor processing
+
+http://bela.io
+
+A project of the Augmented Instruments Laboratory within the
+Centre for Digital Music at Queen Mary University of London.
+http://www.eecs.qmul.ac.uk/~andrewm
+
+(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
+	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
+	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+
+The Bela software is distributed under the GNU Lesser General Public License
+(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+*/
 
 #include <Bela.h>
 #include <Midi.h>
@@ -27,7 +37,7 @@ unsigned int hvMidiHashes[7];
 unsigned int gScopeChannelsInUse;
 float* gScopeOut;
 // Bela Scope
-static Scope scope;
+static Scope* scope = NULL;
 static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
@@ -36,10 +46,10 @@ static bool pdMultiplexerActive = false;
  *	HEAVY CONTEXT & BUFFERS
  */
 
-Hv_bela *gHeavyContext;
+HeavyContextInterface *gHeavyContext;
 float *gHvInputBuffers = NULL, *gHvOutputBuffers = NULL;
 unsigned int gHvInputChannels = 0, gHvOutputChannels = 0;
-struct HvTable* multiplexerTable = NULL;
+uint32_t multiplexerTableHash;
 
 float gInverseSampleRate;
 
@@ -50,8 +60,9 @@ float gInverseSampleRate;
 // TODO: rename this
 #define LIBPD_DIGITAL_OFFSET 11 // digitals are preceded by 2 audio and 8 analogs (even if using a different number of analogs)
 
-void printHook(double timestampSecs, const char *printLabel, const char *msgString, void *userData) {
-  rt_printf("Message from Heavy patch: [@ %.3f] %s: %s\n", timestampSecs, printLabel, msgString);
+void printHook(HeavyContextInterface *context, const char *printLabel, const char *msgString, const HvMessage *msg) {
+	const double timestampSecs = ((double) hv_msg_getTimestamp(msg)) / hv_getSampleRate(context);
+	rt_printf("Message from Heavy patch: [@ %.3f] %s: %s\n", timestampSecs, printLabel, msgString);
 }
 
 
@@ -71,28 +82,28 @@ char hvDigitalInHashes[16][21]={
 	{"bela_digitalIn26"}
 };
 
+// For a message to be received here, you need to use the following syntax in Pd:
+// [send receiverName @hv_param]
 static void sendHook(
-	double timestamp, // in milliseconds
-	const char *receiverName,
-	const HvMessage *const m,
-	void *userData) {
+		HeavyContextInterface *context,
+		const char *receiverName,
+		hv_uint32_t sendHash,
+		const HvMessage *m) {
 
-	// Bela digital
-	
 	// Bela digital run-time messages
 
 	// TODO: this first block is almost an exact copy of libpd's code, should we add this to the class?
 	// let's make this as optimized as possible for built-in digital Out parsing
 	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between 11 and 26
-	static int prefixLength = 15; // strlen("bela_digitalOut")
+	static const int prefixLength = 15; // strlen("bela_digitalOut")
 	if(strncmp(receiverName, "bela_digitalOut", prefixLength)==0){
 		if(receiverName[prefixLength] != 0){ //the two ifs are used instead of if(strlen(source) >= prefixLength+2)
 			if(receiverName[prefixLength + 1] != 0){
 				// quickly convert the suffix to integer, assuming they are numbers, avoiding to call atoi
-				int receiver = ((receiverName[prefixLength] - 48) * 10);
-				receiver += (receiverName[prefixLength+1] - 48);
+				int receiver = ((receiverName[prefixLength] - '0') * 10);
+				receiver += (receiverName[prefixLength+1] - '0');
 				unsigned int channel = receiver - LIBPD_DIGITAL_OFFSET; // go back to the actual Bela digital channel number
-				bool value = hv_msg_getFloat(m, 0);
+				bool value = (hv_msg_getFloat(m, 0) != 0.0f);
 				if(channel < 16){ //16 is the hardcoded value for the number of digital channels
 					dcm.setValue(channel, value);
 				}
@@ -102,133 +113,103 @@ static void sendHook(
 	}
 
 	// Bela digital initialization messages
-	if(strcmp(receiverName, "bela_setDigital") == 0){
-		// Third argument (optional) can be ~ or sig for signal-rate, message-rate otherwise.
-		// [in 14 ~(
-		// |
-		// [s bela_setDigital]
-		// is signal("sig" or "~") or message("message", default) rate
-		bool isMessageRate = true; // defaults to message rate
-		bool direction = 0; // initialize it just to avoid the compiler's warning
-		bool disable = false;
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs < 2 || numArgs > 3 || !hv_msg_isSymbol(m, 0) || !hv_msg_isFloat(m, 1))
-			return;
-		if(numArgs == 3 && !hv_msg_isSymbol(m,2))
-			return;
-		char * symbol = hv_msg_getSymbol(m, 0);
+	switch (sendHash) {
+		case 0x70418732: { // bela_setDigital
+			// Third argument (optional) can be ~ or sig for signal-rate, message-rate otherwise.
+			// [in 14 ~(
+			// |
+			// [s bela_setDigital]
+			// is signal("sig" or "~") or message("message", default) rate
+			bool isMessageRate = true; // defaults to message rate
+			bool direction = 0; // initialize it just to avoid the compiler's warning
+			bool disable = false;
+      if (!(hv_msg_isSymbol(m, 0) && hv_msg_isFloat(m, 1))) return;
+			const char *symbol = hv_msg_getSymbol(m, 0);
 
-		if(strcmp(symbol, "in") == 0){
-			direction = INPUT;
-		} else if(strcmp(symbol, "out") == 0){
-			direction = OUTPUT;
-		} else if(strcmp(symbol, "disable") == 0){
-			disable = true;
-		} else {
-			return;
-		}
-		int channel = hv_msg_getFloat(m, 1) - LIBPD_DIGITAL_OFFSET;
-		if(disable == true){
-			dcm.unmanage(channel);
-			return;
-		}
-		if(numArgs >= 3){
-			char* s = hv_msg_getSymbol(m, 2);
-			if(strcmp(s, "~") == 0  || strncmp(s, "sig", 3) == 0){
-				isMessageRate = false;
+			if(strcmp(symbol, "in") == 0){
+				direction = INPUT;
+			} else if(strcmp(symbol, "out") == 0){
+				direction = OUTPUT;
+			} else if(strcmp(symbol, "disable") == 0){
+				disable = true;
+			} else {
+				return;
 			}
+			int channel = hv_msg_getFloat(m, 1) - LIBPD_DIGITAL_OFFSET;
+			if(disable == true){
+				dcm.unmanage(channel);
+				return;
+			}
+			if(hv_msg_isSymbol(m, 2)){
+				const char *s = hv_msg_getSymbol(m, 2);
+				if(strcmp(s, "~") == 0  || strncmp(s, "sig", 3) == 0){
+					isMessageRate = false;
+				}
+			}
+			dcm.manage(channel, direction, isMessageRate);
+			break;
 		}
-		dcm.manage(channel, direction, isMessageRate);
-		return;
-	}
-
-	if(strcmp(receiverName, "bela_noteout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 3){
-			return;
+		case 0xEC6DA2AF: { // bela_noteout
+			if (!hv_msg_hasFormat(m, "fff")) return;
+			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
+			midi_byte_t velocity = (midi_byte_t) hv_msg_getFloat(m, 1);
+			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 2);
+			rt_printf("noteon: %d %d %d\n", channel, pitch, velocity);
+			midi.writeNoteOn(channel, pitch, velocity);
+			break;
 		}
-		midi_byte_t pitch = hv_msg_getFloat(m, 0);
-		midi_byte_t velocity = hv_msg_getFloat(m, 1);
-		midi_byte_t channel = hv_msg_getFloat(m, 2);
-		rt_printf("noteon: %d %d %d\n", channel, pitch, velocity);
-		midi.writeNoteOn(channel, pitch, velocity);
-		return;
-	}
-
-	if(strcmp(receiverName, "bela_ctlout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 3){
-			return;
+		case 0xD44F9083: { // bela_ctlout
+			if (!hv_msg_hasFormat(m, "fff")) return;
+			midi_byte_t value = (midi_byte_t) hv_msg_getFloat(m, 0);
+			midi_byte_t controller = (midi_byte_t) hv_msg_getFloat(m, 1);
+			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 2);
+			rt_printf("controlchange: %d %d %d\n", channel, controller, value);
+			midi.writeControlChange(channel, controller, value);
+			break;
 		}
-		midi_byte_t value = hv_msg_getFloat(m, 0);
-		midi_byte_t controller = hv_msg_getFloat(m, 1);
-		midi_byte_t channel = hv_msg_getFloat(m, 2);
-		rt_printf("controlchange: %d %d %d\n", channel, controller, value);
-		midi.writeControlChange(channel, controller, value);
-		return;
-	}
-	
-	if(strcmp(receiverName, "bela_pgmout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 2){
-			return;
+		case 0x6A647C44: { // bela_pgmout
+			if (!hv_msg_hasFormat(m, "ff")) return;
+			midi_byte_t program = (midi_byte_t) hv_msg_getFloat(m, 0);
+			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 1);
+			rt_printf("programchange: %d %d\n", channel, program);
+			midi.writeProgramChange(channel, program);
+			break;
 		}
-		midi_byte_t program = hv_msg_getFloat(m, 0);
-		midi_byte_t channel = hv_msg_getFloat(m, 1);
-		rt_printf("programchange: %d %d\n", channel, program);
-		midi.writeProgramChange(channel, program);
-		return;
-	}
-
-	if(strcmp(receiverName, "bela_bendout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 2){
-			return;
+		case 0x545CDF50: { // bela_bendout
+			if (!hv_msg_hasFormat(m, "ff")) return;
+			unsigned int value = ((midi_byte_t) hv_msg_getFloat(m, 0)) + 8192;
+			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 1);
+			rt_printf("pitchbend: %d %d\n", channel, value);
+			midi.writePitchBend(channel, value);
+			break;
 		}
-		unsigned int value = hv_msg_getFloat(m, 0) + 8192;
-		midi_byte_t channel = hv_msg_getFloat(m, 1);
-		rt_printf("pitchbend: %d %d\n", channel, value);
-		midi.writePitchBend(channel, value);
-		return;
-	}
-
-	if(strcmp(receiverName, "bela_touchout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 2){
-			return;
+		case 0xDE18F543: { // bela_touchout
+			if (!hv_msg_hasFormat(m, "ff")) return;
+			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 0);
+			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 1);
+			rt_printf("channelPressure: %d %d\n", channel, pressure);
+			midi.writeChannelPressure(channel, pressure);
+			break;
 		}
-		midi_byte_t pressure = hv_msg_getFloat(m, 0);
-		midi_byte_t channel = hv_msg_getFloat(m, 1);
-		rt_printf("channelPressure: %d %d\n", channel, pressure);
-		midi.writeChannelPressure(channel, pressure);
-		return;
-	}
-
-	if(strcmp(receiverName, "bela_polytouchout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 3){
-			return;
+		case 0xAE8E3B2D: { // bela_polytouchout
+			if (!hv_msg_hasFormat(m, "fff")) return;
+			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
+			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 1);
+			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 2);
+			rt_printf("polytouch: %d %d %d\n", channel, pitch, pressure);
+			midi.writePolyphonicKeyPressure(channel, pitch, pressure);
+			break;
 		}
-		midi_byte_t pitch = hv_msg_getFloat(m, 0);
-		midi_byte_t pressure = hv_msg_getFloat(m, 1);
-		midi_byte_t channel = hv_msg_getFloat(m, 2);
-		rt_printf("polytouch: %d %d %d\n", channel, pitch, pressure);
-		midi.writePolyphonicKeyPressure(channel, pitch, pressure);
-		return;
-	}
-	
-	if(strcmp(receiverName, "bela_midiout") == 0){
-		int numArgs = hv_msg_getNumElements(m);
-		if(numArgs != 2){
-			return;
+		case 0x51CD8FE2: { // bela_midiout
+			if (!hv_msg_hasFormat(m, "ff")) return;
+			midi_byte_t byte = (midi_byte_t) hv_msg_getFloat(m, 0);
+			int port = (int) hv_msg_getFloat(m, 1);
+			rt_printf("port: %d, byte: %d\n", port, byte);
+			midi.writeOutput(byte);
+			break;
 		}
-		midi_byte_t byte = hv_msg_getFloat(m, 0);
-		int port = hv_msg_getFloat(m, 1);
-		rt_printf("port: %d, byte: %d\n", port, byte);
-		midi.writeOutput(byte);
-		return;
+		default: break;
 	}
-
 }
 
 
@@ -252,7 +233,7 @@ bool setup(BelaContext *context, void *userData)	{
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context->analogOutChannels){
 		// It should actually work, but let's test it before releasing it!
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return false;
 	}
 	/* HEAVY */
@@ -272,7 +253,7 @@ bool setup(BelaContext *context, void *userData)	{
 	hvMidiHashes[kmmChannelPressure] = hv_stringToHash("__hv_touchin");
 	hvMidiHashes[kmmPitchBend] = hv_stringToHash("__hv_bendin");
 
-	gHeavyContext = hv_bela_new(context->audioSampleRate);
+	gHeavyContext = hv_bela_new_with_options(context->audioSampleRate, 10, 2, 0);
 
 	gHvInputChannels = hv_getNumInputChannels(gHeavyContext);
 	gHvOutputChannels = hv_getNumOutputChannels(gHeavyContext);
@@ -285,7 +266,7 @@ bool setup(BelaContext *context, void *userData)	{
 			gHvOutputChannels - gFirstDigitalChannel - gScopeChannelsInUse: 0;
 
 	printf("Starting Heavy context with %d input channels and %d output channels\n",
-			  gHvInputChannels, gHvOutputChannels);
+			gHvInputChannels, gHvOutputChannels);
 	printf("Channels in use:\n");
 	printf("Digital in : %u, Digital out: %u\n", gDigitalSigInChannelsInUse, gDigitalSigOutChannelsInUse);
 	printf("Scope out: %u\n", gScopeChannelsInUse);
@@ -309,8 +290,12 @@ bool setup(BelaContext *context, void *userData)	{
 	midi.enableParser(true);
 
 	if(gScopeChannelsInUse > 0){
-		// block below copy/pasted from libpd, except
-		scope.setup(gScopeChannelsInUse, context->audioSampleRate);
+#if __clang_major__ == 3 && __clang_minor__ == 8
+		fprintf(stderr, "Scope currently not supported when compiling heavy with clang3.8, see #265 https://github.com/BelaPlatform/Bela/issues/265. You should specify `COMPILER gcc;` in your Makefile options\n");
+		exit(1);
+#endif
+		scope = new Scope();
+		scope->setup(gScopeChannelsInUse, context->audioSampleRate);
 		gScopeOut = new float[gScopeChannelsInUse];
 	}
 	// Bela digital
@@ -321,11 +306,13 @@ bool setup(BelaContext *context, void *userData)	{
 		}
 	}
 	// unlike libpd, no need here to bind the bela_digitalOut.. receivers
-	multiplexerTable = hv_getTableForName(gHeavyContext, multiplexerArray);
-	if(context->multiplexerChannels > 0 && multiplexerTable != NULL){
+	// but make sure you do something like [send receiverName @hv_param]
+	// when you want to send a message from Heavy to the wrapper.
+	multiplexerTableHash = hv_stringToHash(multiplexerArray);
+	if(context->multiplexerChannels > 0){
 		pdMultiplexerActive = true;
 		multiplexerArraySize = context->multiplexerChannels * context->analogInChannels;
-		hv_table_resize(multiplexerTable, multiplexerArraySize);
+		hv_table_setLength(gHeavyContext, multiplexerTableHash, multiplexerArraySize);
 		hv_sendFloatToReceiver(gHeavyContext, hv_stringToHash("bela_multiplexerChannels"), context->multiplexerChannels);
 	}
 
@@ -347,7 +334,7 @@ void render(BelaContext *context, void *userData)
 				int velocity = message.getDataByte(1);
 				int channel = message.getChannel();
 				// rt_printf("message: noteNumber: %f, velocity: %f, channel: %f\n", noteNumber, velocity, channel);
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
 						(float)noteNumber, (float)velocity, (float)channel+1);
 				break;
 			}
@@ -360,7 +347,7 @@ void render(BelaContext *context, void *userData)
 				// int velocity = message.getDataByte(1); // would be ignored by Pd
 				int channel = message.getChannel();
 				// note we are sending the below to hvHashes[kmmNoteOn] !!
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
 						(float)noteNumber, (float)0, (float)channel+1);
 				break;
 			}
@@ -368,14 +355,14 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				int controller = message.getDataByte(0);
 				int value = message.getDataByte(1);
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmControlChange], 0, "fff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmControlChange], 0, "fff",
 						(float)value, (float)controller, (float)channel+1);
 				break;
 			}
 			case kmmProgramChange: {
 				int channel = message.getChannel();
 				int program = message.getDataByte(0);
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmProgramChange], 0, "ff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmProgramChange], 0, "ff",
 						(float)program, (float)channel+1);
 				break;
 			}
@@ -384,7 +371,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				int pitch = message.getDataByte(0);
 				int value = message.getDataByte(1);
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmPolyphonicKeyPressure], 0, "fff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmPolyphonicKeyPressure], 0, "fff",
 						(float)channel+1, (float)pitch, (float)value);
 				break;
 			}
@@ -392,7 +379,7 @@ void render(BelaContext *context, void *userData)
 			{
 				int channel = message.getChannel();
 				int value = message.getDataByte(0);
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmChannelPressure], 0, "ff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmChannelPressure], 0, "ff",
 						(float)value, (float)channel+1);
 				break;
 			}
@@ -400,7 +387,7 @@ void render(BelaContext *context, void *userData)
 			{
 				int channel = message.getChannel();
 				int value = ((message.getDataByte(1) << 7) | message.getDataByte(0));
-				hv_vscheduleMessageForReceiver(gHeavyContext, hvMidiHashes[kmmPitchBend], 0, "ff",
+				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmPitchBend], 0, "ff",
 						(float)value, (float)channel+1);
 				break;
 			}
@@ -438,7 +425,7 @@ void render(BelaContext *context, void *userData)
 		static int lastMuxerUpdate = 0;
 		if(++lastMuxerUpdate == multiplexerArraySize){
 			lastMuxerUpdate = 0;
-			memcpy(hv_table_getBuffer(multiplexerTable), (float *const)context->multiplexerAnalogIn, multiplexerArraySize * sizeof(float));
+			memcpy(hv_table_getBuffer(gHeavyContext, multiplexerTableHash), (float *const)context->multiplexerAnalogIn, multiplexerArraySize * sizeof(float));
 		}
 	}
 
@@ -471,9 +458,17 @@ void render(BelaContext *context, void *userData)
 
 
 	// replacement for bang~ object
-	//hv_vscheduleMessageForReceiver(gHeavyContext, "bela_bang", 0.0f, "b");
+	//hv_sendMessageToReceiverV(gHeavyContext, "bela_bang", 0.0f, "b");
 
-	hv_bela_process_inline(gHeavyContext, gHvInputBuffers, gHvOutputBuffers, context->audioFrames);
+	hv_processInline(gHeavyContext, gHvInputBuffers, gHvOutputBuffers, context->audioFrames);
+	/*
+	for(int n = 0; n < context->audioFrames*gHvOutputChannels; ++n)
+	{
+		printf("%.3f, ", gHvOutputBuffers[n]);
+		if(n % context->audioFrames == context->audioFrames - 1)
+			printf("\n");
+	}
+	*/
 
 	// Bela digital out
 	// Bela digital out at signal-rate
@@ -512,7 +507,7 @@ void render(BelaContext *context, void *userData)
 			for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
 				gScopeOut[k] = *p1;
 			}
-			scope.log(gScopeOut);
+			scope->log(gScopeOut);
 		}
 	}
 
@@ -527,7 +522,7 @@ void render(BelaContext *context, void *userData)
 				} else {
 					if(ch >= context->audioOutChannels)	{
 						int m = n/2;
-						context->analogOut[m * context->analogFrames + (ch-context->audioOutChannels)] = constrain(gHvOutputBuffers[ch*context->audioFrames + n],0.0,1.0);
+						context->analogOut[m * context->analogOutChannels + (ch-context->audioOutChannels)] = gHvOutputBuffers[ch*context->audioFrames + n];
 					} else {
 						context->audioOut[n * context->audioOutChannels + ch] = gHvOutputBuffers[ch * context->audioFrames + n];
 					}
@@ -541,11 +536,9 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
-
-	hv_bela_free(gHeavyContext);
-	if(gHvInputBuffers != NULL)
-		free(gHvInputBuffers);
-	if(gHvOutputBuffers != NULL)
-		free(gHvOutputBuffers);
+	hv_delete(gHeavyContext);
+	free(gHvInputBuffers);
+	free(gHvOutputBuffers);
 	delete[] gScopeOut;
+	delete scope;
 }

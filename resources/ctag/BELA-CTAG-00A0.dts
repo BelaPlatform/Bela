@@ -1,0 +1,76 @@
+/*
+ * Copyright (C) 2017 Henrik Langer henni19790@googlemail.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
+
+	/* identification */
+	part-number = "BELA-CTAG";
+	version = "00A0", "A0";
+
+	/* state the resources this cape uses */
+	exclusive-use =
+		/* the pin header uses */
+		"P8.32",	/* spi_sclk */
+		"P8.33",	/* spi_mosi */
+		"P8.14",	/* spi_miso */
+		"P8.17",	/* spi_cs0 */
+		"P8.31",	/* spi_cs1 */
+		/* the hardware ip uses */
+		"spi_gpio";
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+			bb_spi_gpio_pins: pinmux_bb_spi_gpio_pins {
+				pinctrl-single,pins = <
+					0x0DC 0x37 /* spi_sclk, 	MODE7 | INPUT_PULLUP | SPI_SCLK P8_32 */
+					0x028 0x37 /* spi_miso, 	MODE7 | INPUT_PULLUP | SPI_MISO P8_14 */
+					0x0D4 0x17 /* spi_mosi, 	MODE7 | OUTPUT_PULLUP | SPI_MOSI P8_33 */
+					0x02C 0x17 /* spi_cs0, 		MODE7 | OUTPUT_PULLUP | SPI_CS0 P8_17 */
+					0x0D8 0x17 /* spi_cs1,		MODE7 | OUTPUT_PULLUP | SPI_CS1 P8_31 */
+				>;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&spi_gpio>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			status = "okay";
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&bb_spi_gpio_pins>;
+
+			channel@0 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				compatible = "spidev";
+
+				reg = <0>;
+				spi-max-frequency = <100000>;
+			};
+
+			channel@1 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				compatible = "spidev";
+
+				reg = <1>;
+				spi-max-frequency = <100000>;
+			};
+		};
+	};
+};

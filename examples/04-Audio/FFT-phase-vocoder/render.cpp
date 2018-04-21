@@ -61,7 +61,7 @@ AuxiliaryTask gFFTTask;
 int gFFTInputBufferPointer = 0;
 int gFFTOutputBufferPointer = 0;
 
-void process_fft_background();
+void process_fft_background(void*);
 
 
 int gEffect = 0; // change this here or with midi CC
@@ -113,10 +113,6 @@ void midiCallback(MidiChannelMessage message, void* arg){
 	}
 }
 
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
 bool setup(BelaContext* context, void* userData)
 {
     // Check that we have the same number of inputs and outputs.
@@ -154,7 +150,7 @@ bool setup(BelaContext* context, void* userData)
 
 	// Calculate a Hann window
 	for(int n = 0; n < gFFTSize; n++) {
-		gWindowBuffer[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(gFFTSize - 1)));
+		gWindowBuffer[n] = 0.5f * (1.0f - cosf(2.0f * M_PI * n / (float)(gFFTSize - 1)));
 	}
 
 	// Initialise auxiliary tasks
@@ -200,7 +196,7 @@ void process_fft(float *inBuffer, int inWritePointer, float *outBuffer, int outW
 	  case kWhisper :
 	    for(int n = 0; n < gFFTSize; n++) {
 	      float amplitude = sqrtf(frequencyDomain[n].r * frequencyDomain[n].r + frequencyDomain[n].i * frequencyDomain[n].i);
-	      float phase = rand()/(float)RAND_MAX * 2 * M_PI;
+	      float phase = rand()/(float)RAND_MAX * 2.f* M_PI;
 	      frequencyDomain[n].r = cosf(phase) * amplitude;
 	      frequencyDomain[n].i = sinf(phase) * amplitude;
 	    }
@@ -225,14 +221,10 @@ void process_fft(float *inBuffer, int inWritePointer, float *outBuffer, int outW
 }
 
 // Function to process the FFT in a thread at lower priority
-void process_fft_background() {
+void process_fft_background(void*) {
 	process_fft(gInputBuffer, gFFTInputBufferPointer, gOutputBuffer, gFFTOutputBufferPointer);
 }
 
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
 void render(BelaContext* context, void* userData)
 {
 	float* audioOut = context->audioOut;
@@ -285,9 +277,6 @@ void render(BelaContext* context, void* userData)
 	}
 	gHopSize = gPeriod;
 }
-
-// cleanup_render() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in initialise_render().
 
 void cleanup(BelaContext* context, void* userData)
 {

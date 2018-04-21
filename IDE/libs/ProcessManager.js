@@ -45,8 +45,8 @@ class ProcessManager extends EventEmitter {
 	
 		this.emptyAllQueues();
 		
-		writingFile = true;
 		if (data.currentProject && data.newFile && data.fileData){
+			writingFile = true;
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
 
@@ -66,6 +66,10 @@ class ProcessManager extends EventEmitter {
 						if (data.callback) data.callback();
 					}
 					
+				})
+				.catch( () => {
+					console.log('error uploading');
+					writingFile = false;
 				});
 		} else {
 			if (toobusy())
@@ -258,7 +262,7 @@ class ProcessManager extends EventEmitter {
 			//console.log(status);
 			this.emit('broadcast-status', status);
 		});
-		belaProcess.on('mode-switch', num => this.emit('mode-switch', num) );
+	//	belaProcess.on('mode-switch', num => this.emit('mode-switch', num) );
 		
 	}
 	
@@ -283,11 +287,11 @@ class ProcessManager extends EventEmitter {
 	*checkCPU(){
 		var output = {};
 		//console.log(this);
-		if (this.checkingSyntax()) output.syntaxCheckProcess = yield syntaxCheckProcess.CPU();
-		if (this.building()) output.buildProcess = yield buildProcess.CPU();
+		// if (this.checkingSyntax()) output.syntaxCheckProcess = yield syntaxCheckProcess.CPU();
+		// if (this.building()) output.buildProcess = yield buildProcess.CPU();
 		if (this.running()) output.bela = yield belaProcess.CPU();
 		if (this.running()) output.belaLinux = (yield belaProcess.CPULinux()).cpu;
-		output.node = (yield pusage.statAsync(process.pid)).cpu;
+		// output.node = (yield pusage.statAsync(process.pid)).cpu;
 		return output;
 	}
 	

@@ -1,4 +1,4 @@
-// IDE controller
+//// IDE controller
 module.exports = {};
 
 var Model = require('./Models/Model');
@@ -35,7 +35,7 @@ settingsView.on('IDE-settings', (data) => {
 });
 settingsView.on('run-on-boot', project => socket.emit('run-on-boot', project) );
 settingsView.on('halt', () => {
-	socket.emit('sh-command', 'halt');
+	socket.emit('shutdown');
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', text => consoleView.emit('warn', text) );
@@ -199,7 +199,7 @@ var socket = io('/IDE');
 socket.on('report-error', (error) => consoleView.emit('warn', error.message || error) );
 
 socket.on('init', (data) => {
-	
+
 	consoleView.connect();
 	
 	var timestamp = performance.now()
@@ -211,7 +211,9 @@ socket.on('init', (data) => {
 	
 	$('#runOnBoot').val(data[3]);
 	
-	models.status.setData(data[4]);
+	models.settings.setKey('xenomaiVersion', data[4]);
+
+	models.status.setData(data[5]);
 	
 	//models.project.print();
 	//models.settings.print();
@@ -274,7 +276,7 @@ socket.on('project-settings-data', (project, settings) => {
 socket.on('IDE-settings-data', (settings) => models.settings.setData(settings) );
 
 socket.on('cpu-usage', data => models.status.setKey('CPU', data) );
-socket.on('mode-switch', data => models.status.setKey('msw', data) );
+//socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
 socket.on('disconnect', () => {
 	consoleView.disconnect();

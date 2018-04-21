@@ -30,7 +30,7 @@ SampleData gSampleData;	// User defined structure to get complex data from main
 int gReadPtr;			// Position of last read sample from file
 
 bool initialise_trigger();
-void trigger_samples();
+void trigger_samples(void*);
 AuxiliaryTask gTriggerSamplesTask;
 
 bool setup(BelaContext *context, void *userData)
@@ -70,7 +70,8 @@ void render(BelaContext *context, void *userData)
 			gReadPtr = -1;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
-			context->audioOut[n * context->audioOutChannels + channel] = out;	// ...and put it in both left and right channel
+			// ...and copy it to all the output channels
+			audioWrite(context, n, channel, out);
 	}
 }
 
@@ -94,7 +95,7 @@ bool initialise_trigger()
 // it has minimal effect on the audio performance but it will take longer to
 // complete if the system is under heavy audio load.
 
-void trigger_samples()
+void trigger_samples(void*)
 {
 	// This is not a real-time task because
 	// select() and scanf() are system calls, not handled by Xenomai.

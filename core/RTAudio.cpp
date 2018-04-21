@@ -10,6 +10,10 @@
  *  Queen Mary University of London
  */
 
+//TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
+
+//#define CTAG_FACE_8CH
+//#define CTAG_BEAST_16CH
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,16 +24,33 @@
 #include <assert.h>
 #include <vector>
 
-// Xenomai-specific includes
 #include <sys/mman.h>
-#include <native/task.h>
-#include <native/timer.h>
-#include <native/intr.h>
-#include <rtdk.h>
 
 #include "../include/Bela.h"
+
+// Xenomai-specific includes
+#if XENOMAI_MAJOR == 3
+#include <xenomai/init.h>
+#endif
+
+#if defined(XENOMAI_SKIN_native)
+#include <native/task.h>
+#include <native/timer.h>
+#include <rtdk.h>
+#endif
+
+#if defined(XENOMAI_SKIN_posix)
+#if XENOMAI_MAJOR == 2
+#include <rtdk.h> // for rt_print_auto_init()
+#endif
+#include <pthread.h>
+#endif
+
+#include "../include/xenomai_wraps.h"
+
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
+#include "../include/Spi_Codec.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/math_neon.h"
 
@@ -38,55 +59,44 @@
 
 using namespace std;
 
-// Data structure to keep track of auxiliary tasks we
-// can schedule
-typedef struct {
-	RT_TASK task;
-	void (*argfunction)(void*);
-	void (*function)(void);
-	char *name;
-	int priority;
-	bool started;
-	bool hasArgs;
-	void* args;
-	bool autoSchedule;
-} InternalAuxiliaryTask;
-
 // Real-time tasks and objects
+#ifdef XENOMAI_SKIN_native
 RT_TASK gRTAudioThread;
-const char gRTAudioThreadName[] = "bela-audio";
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-RT_INTR gRTAudioInterrupt;
-const char gRTAudioInterruptName[] = "bela-pru-irq";
 #endif
+#ifdef XENOMAI_SKIN_posix
+pthread_t gRTAudioThread;
+#endif
+#if XENOMAI_MAJOR == 3
+int gXenomaiInited = 0;
+#endif
+static const char gRTAudioThreadName[] = "bela-audio";
 
 PRU *gPRU = 0;
-I2c_Codec *gAudioCodec = 0;
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+	Spi_Codec *gAudioCodec = 0;
+	I2c_Codec *gNotUsedCodec = 0;
+#else
+	I2c_Codec *gAudioCodec = 0;
+#endif
 
-vector<InternalAuxiliaryTask*> &getAuxTasks(){
-	static vector<InternalAuxiliaryTask*> auxTasks;
-	return auxTasks;
-}
-
-// Flag which tells the audio task to stop
-int gShouldStop = false;
+int volatile gShouldStop = false; // Flag which tells the audio task to stop
+int gRTAudioVerbose = 0; // Verbosity level for debugging
 
 // general settings
-char gPRUFilename[MAX_PRU_FILENAME_LENGTH];		// Path to PRU binary file (internal code if empty)_
-int gRTAudioVerbose = 0;   						// Verbosity level for debugging
-int gAmplifierMutePin = -1;
-int gAmplifierShouldBeginMuted = 0;
-
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-bool gProcessAnalog;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
+static char gPRUFilename[MAX_PRU_FILENAME_LENGTH]; // Path to PRU binary file (internal code if empty)_
+static int gAmplifierMutePin = -1;
+static int gAmplifierShouldBeginMuted = 0;
+static bool gHighPerformanceMode = 0;
+static unsigned int gAudioThreadStackSize;
+unsigned int gAuxiliaryTaskStackSize;
 
 // Context which holds all the audio/sensor data passed to the render routines
 InternalBelaContext gContext;
 
 // User data passed in from main()
 void *gUserData;
+void (*gBelaRender)(BelaContext*, void*);
+void (*gBelaCleanup)(BelaContext*, void*);
 
 // initAudio() prepares the infrastructure for running PRU-based real-time
 // audio, but does not actually start the calculations.
@@ -104,52 +114,86 @@ void *gUserData;
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
+	// Before we go ahead, let's check if Bela is alreadt running:
+	// check if another real-time thread of the same name is already running.
+	char command[200];
+#if (XENOMAI_MAJOR == 2)
+	char pathToXenomaiStat[] = "/proc/xenomai/stat";
+#endif
+#if (XENOMAI_MAJOR == 3)
+	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
+#endif
+	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
+	int ret = system(command);
+	if(ret == 0)
+	{
+		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
+		return -1;
+	}
+#if (XENOMAI_MAJOR == 3)
+	// initialize Xenomai with manual bootstrapping
+	if(!gXenomaiInited)
+	{
+		int argc = 0;
+		char *const *argv;
+		xenomai_init(&argc, &argv);
+		gXenomaiInited = 1;
+	}
+#endif
+#if defined(XENOMAI_SKIN_native) || XENOMAI_MAJOR == 2
+	rt_print_auto_init(1);
+#endif
+
+	// reset this, in case it has been set before
+	gShouldStop = 0;
+	gAudioThreadStackSize = settings->audioThreadStackSize;
+	gAuxiliaryTaskStackSize = settings->auxiliaryTaskStackSize;
+
 	// First check if there's a Bela program already running on the board.
 	// We can't have more than one instance at a time, but we can tell via
 	// the Xenomai task info. We expect the rt_task_bind call to fail so if it
 	// doesn't then it means something else is running.
-	RT_TASK otherBelaTask;
-	int returnVal = rt_task_bind(&otherBelaTask, gRTAudioThreadName, TM_NONBLOCK);
-	if(returnVal == 0) {
-		cout << "Error: Bela is already running in another process. Cannot start.\n";
-		rt_task_unbind(&otherBelaTask);
+	if(!settings->render)
+	{
+		fprintf(stderr, "Error: no audio callback defined. Make sure you set settings->render to point to your audio callback\n");
 		return -1;
 	}
-	else if(returnVal != -EWOULDBLOCK && returnVal != -ETIMEDOUT) {
-		cout << "Error " << returnVal << " occurred determining if another Bela task is running.\n";
-		return -1;
-	}
+	gBelaRender = settings->render;
+	gBelaCleanup = settings->cleanup;
 	
 	// Sanity checks
 	if(settings->pruNumber < 0 || settings->pruNumber > 1) {
-		cout << "Invalid PRU number " << settings->pruNumber << endl;
+		fprintf(stderr, "Invalid PRU number %d \n", settings->pruNumber);
 		return -1;
 	}
 	if(settings->pruNumber != 1 && settings->numMuxChannels != 0) {
-		cout << "Incompatible settings: multiplexer can only be run using PRU 1\n";
+		fprintf(stderr,  "Incompatible settings: multiplexer can only be run using PRU 1\n");
 		return -1;
 	}
 	
 	enable_runfast();
-	rt_print_auto_init(1);
 
 	Bela_setVerboseLevel(settings->verbose);
 	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
 	gUserData = userData;
 
+	gHighPerformanceMode = settings->highPerformanceMode;
+	if(gRTAudioVerbose && gHighPerformanceMode) {
+		printf("Starting in high-performance mode\n");
+	}
+
 	// Initialise context data structure
 	memset(&gContext, 0, sizeof(BelaContext));
 
 	if(gRTAudioVerbose) {
-		cout << "Starting with period size " << settings->periodSize << "; ";
+		printf("Starting with period size %d ;", settings->periodSize);
 		if(settings->useAnalog)
-			cout << "analog enabled\n";
+			printf("analog enabled\n");
 		else
-			cout << "analog disabled\n";
-		cout << "DAC level " << settings->dacLevel << "dB; ADC level " << settings->adcLevel;
-		cout << "dB; headphone level " << settings->headphoneLevel << "dB\n";
+			printf("analog disabled\n");
+		printf("DAC level %f dB; ADC level %f dB; headphone level %f dB\n", settings->dacLevel, settings->adcLevel, settings->headphoneLevel);
 		if(settings->beginMuted)
-			cout << "Beginning with speaker muted\n";
+			printf("Beginning with speaker muted\n");
 	}
 
 	// Prepare GPIO pins for amplifier mute and status LED
@@ -159,22 +203,22 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 		if(gpio_export(settings->ampMutePin)) {
 			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export amplifier mute pin " << settings-> ampMutePin << "\n";
+				fprintf(stderr, "Warning: couldn't export amplifier mute pin %d\n", settings->ampMutePin);
 		}
 		if(gpio_set_dir(settings->ampMutePin, OUTPUT_PIN)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on amplifier mute pin\n";
+				fprintf(stderr, "Couldn't set direction on amplifier mute pin\n");
 			return -1;
 		}
 		if(gpio_set_value(settings->ampMutePin, LOW)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set value on amplifier mute pin\n";
+				fprintf(stderr, "Couldn't set value on amplifier mute pin\n");
 			return -1;
 		}
 	}
 
 	if(settings->numAnalogInChannels != settings->numAnalogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return 1;
 	}
 	unsigned int numAnalogChannels = settings->numAnalogInChannels;
@@ -182,24 +226,28 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(numAnalogChannels != 2
 		&& numAnalogChannels != 4
 		&& numAnalogChannels != 8) {
-			cout << "Invalid number of analog channels: " << numAnalogChannels << ". Valid values are 2, 4, 8.\n";
+			fprintf(stderr,"Invalid number of analog channels: %u. Valid values are 2, 4, 8.\n", numAnalogChannels);
 			return -1;
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	gContext.audioSampleRate = 44100.0;
+	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+		gContext.audioSampleRate = 48000.0;
+	#else
+		gContext.audioSampleRate = 44100.0;
+	#endif
 
 	// TODO: settings a different number of channels for inputs and outputs is not yet supported
-	gContext.audioInChannels = 2;
-	gContext.audioOutChannels = 2;
-
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	// TODO: see PRU bug mentioned above. We catch here if useAnalog was set to false, store it in gProcessAnalog
-	// and use this value to decide whether we should process the analogs in PRU::loop, but then we
-	// set it to true so that the PRU is init'd and the code runs AS IF the analogs were in use.
-	gProcessAnalog = settings->useAnalog;
-	settings->useAnalog = true;
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
+	#ifdef CTAG_FACE_8CH
+		gContext.audioInChannels = 8;
+		gContext.audioOutChannels = 8;
+	#elif defined(CTAG_BEAST_16CH)
+		gContext.audioInChannels = 16;
+		gContext.audioOutChannels = 16;
+	#else
+		gContext.audioInChannels = 2;
+		gContext.audioOutChannels = 2;
+	#endif
 
 	if(settings->useAnalog) {
 		gContext.audioFrames = settings->periodSize;
@@ -225,7 +273,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	if(gContext.analogInChannels != gContext.analogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return -1;
 	}
 	unsigned int analogChannels = gContext.analogInChannels;
@@ -233,7 +281,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if( analogChannels != 0 && ((analogChannels <= 4 && gContext.analogFrames < 2) ||
 			(analogChannels <= 2 && gContext.analogFrames < 4)) )
 	{
-		cout << "Error: " << analogChannels << " channels and period size of " << gContext.analogFrames << " not supported.\n";
+		fprintf(stderr,"Error: %u channels and period size of %d not supported.\n", analogChannels, gContext.analogFrames);
 		return 1;
 	}
 
@@ -252,21 +300,29 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// Set flags based on init settings
 	if(settings->interleave){
 		gContext.flags |= BELA_FLAG_INTERLEAVED;
-	} else {
-		//TODO: deinterleaved buffers
-		fprintf(stderr, "de-interleaved buffers not yet supported\n");
-		exit(1);
 	}
+
 	if(settings->analogOutputsPersist)
 		gContext.flags |= BELA_FLAG_ANALOG_OUTPUTS_PERSIST;
 
+	if(settings->detectUnderruns)
+		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
+
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
-	gAudioCodec = new I2c_Codec();
+	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+		gNotUsedCodec = new I2c_Codec();
+		gNotUsedCodec->disable(); // Put not used codec in high impedance state
+		gAudioCodec = new Spi_Codec();
+	#else
+		gAudioCodec = new I2c_Codec();
+	#endif
+ 	
+	
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(gPRU->prepareGPIO(settings->enableLED)) {
-		cout << "Error: unable to prepare GPIO for PRU audio\n";
+		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
 		return 1;
 	}
 	
@@ -276,21 +332,26 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	if(gPRU->initialise(settings->pruNumber, gContext.analogFrames, analogChannels,
+	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
 		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
-		cout << "Error: unable to initialise PRU\n";
+		fprintf(stderr, "Error: unable to initialise PRU\n");
 		return 1;
 	}
 
-	// Prepare the audio codec, which clocks the whole system
-	if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
-		cout << "Unable to open codec I2C\n";
-		return 1;
-	}
-	if(gAudioCodec->initCodec()) {
-		cout << "Error: unable to initialise audio codec\n";
-		return 1;
-	}
+	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+		gAudioCodec->initCodec();
+		//gAudioCodec->dumpRegisters();
+	#else
+		// Prepare the audio codec, which clocks the whole system
+		if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
+			fprintf(stderr, "Unable to open codec I2C\n");
+			return 1;
+		}
+		if(gAudioCodec->initCodec()) {
+			fprintf(stderr, "Error: unable to initialise audio codec\n");
+			return 1;
+		}
+	#endif
 
 	// Set default volume levels
 	Bela_setDACLevel(settings->dacLevel);
@@ -298,35 +359,18 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// TODO: add more argument checks
 	for(int n = 0; n < 2; n++){
 		if(settings->pgaGain[n] > 59.5){
-			std::cerr << "PGA gain out of range [0,59.5]\n";
+			fprintf(stderr, "PGA gain out of range [0,59.5] for channel %d: %fdB\n", n, settings->pgaGain[n]);
 			exit(1);
 		}
 		Bela_setPgaGain(settings->pgaGain[n], n);
 	}
 	Bela_setHeadphoneLevel(settings->headphoneLevel);
 
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	unsigned int stashAnalogFrames = gContext.analogFrames;
-	unsigned int stashAnalogInChannels = gContext.analogInChannels;
-	unsigned int stashAnalogOutChannels = gContext.analogOutChannels;
-	if(gProcessAnalog == false){
-		gContext.analogFrames = 0;
-		gContext.analogInChannels = 0;
-		gContext.analogOutChannels = 0;
-	}
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 	// Call the user-defined initialisation function
-	if(!setup((BelaContext *)&gContext, userData)) {
-		cout << "Couldn't initialise audio rendering\n";
+	if(settings->setup && !(*settings->setup)((BelaContext *)&gContext, userData)) {
+		fprintf(stderr, "Couldn't initialise audio rendering\n");
 		return 1;
 	}
-#ifdef PRU_SIGXCPU_BUG_WORKAROUND
-	if(gProcessAnalog == false){
-		gContext.analogFrames = stashAnalogFrames;
-		gContext.analogInChannels = stashAnalogInChannels;
-		gContext.analogOutChannels = stashAnalogOutChannels;
-	}
-#endif /* PRU_SIGXCPU_BUG_WORKAROUND */
 	return 0;
 }
 
@@ -341,12 +385,7 @@ void audioLoop(void *)
 		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	gPRU->loop(&gRTAudioInterrupt, gUserData);
-#else
-	gPRU->loop(0, gUserData);
-#endif
+	gPRU->loop(gUserData, gBelaRender, gHighPerformanceMode);
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
@@ -357,158 +396,7 @@ void audioLoop(void *)
 		rt_printf("audio thread ended\n");
 }
 
-// Create a calculation loop which can run independently of the audio, at a different
-// (equal or lower) priority. Audio priority is defined in BELA_AUDIO_PRIORITY;
-// priority should be generally be less than this.
-// Returns an (opaque) pointer to the created task on success; 0 on failure
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args, bool autoSchedule)
-{
-	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
-
-	// Attempt to create the task
-	if(int ret = rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create auxiliary task " << name << " : " << strerror(-ret) << endl;
-		  free(newTask);
-		  return 0;
-	}
-
-	// Populate the rest of the data structure and store it in the vector
-	newTask->argfunction = functionToCall;
-	newTask->name = strdup(name);
-	newTask->priority = priority;
-	newTask->started = false;
-	newTask->args = args;
-	newTask->hasArgs = true;
-    newTask->autoSchedule = autoSchedule;
-    
-	getAuxTasks().push_back(newTask);
-
-	return (AuxiliaryTask)newTask;
-}
-
-AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void), int priority, const char *name, bool autoSchedule)
-{
-        InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
-        
-        // Attempt to create the task
-        if(rt_task_create(&(newTask->task), name, 0, priority, T_JOINABLE | T_FPU)) {
-                  cout << "Error: unable to create auxiliary task " << name << endl;
-                  free(newTask);
-                  return 0;
-        }
-        
-        // Populate the rest of the data structure and store it in the vector
-        newTask->function = functionToCall;
-        newTask->name = strdup(name);
-        newTask->priority = priority;
-        newTask->started = false;
-        newTask->hasArgs = false;
-        newTask->autoSchedule = autoSchedule;
-        
-        getAuxTasks().push_back(newTask);
-        
-        return (AuxiliaryTask)newTask;
-}
-
-// Schedule a previously created (and started) auxiliary task. It will run when the priority rules next
-// allow it to be scheduled.
-void Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
-{
-	InternalAuxiliaryTask *taskToSchedule = (InternalAuxiliaryTask *)task;
-	if(taskToSchedule->started == false){ // Note: this is not the safest method to check if a task
-		Bela_startAuxiliaryTask(task); // is started (or ready to be resumed), but it probably is the fastest.
-                                           // A safer approach would use rt_task_inquire()
-	}
-	rt_task_resume(&taskToSchedule->task);
-}
-void Bela_autoScheduleAuxiliaryTasks(){
-    vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-	    if ((InternalAuxiliaryTask *)(*it)->autoSchedule){
-    		Bela_scheduleAuxiliaryTask(*it);
-	    }
-	}
-}
-
-// Calculation loop that can be used for other tasks running at a lower
-// priority than the audio thread. Simple wrapper for Xenomai calls.
-// Treat the argument as containing the task structure
-//
-// The purpose of this loop is to keep the task alive between schedulings,
-// so to avoid the overhead of creating and starting the task every time:
-// this way we only requie a "rt_task_resume" to start doing some work
-void auxiliaryTaskLoop(void *taskStruct)
-{
-    InternalAuxiliaryTask *task = ((InternalAuxiliaryTask *)taskStruct);
-    
-	// Get function to call from the argument
-	void (*auxiliary_argfunction)(void* args) = task->argfunction;
-    void (*auxiliary_function)(void) = task->function;
-    
-    // get the task's name
-	const char *name = task->name;
-
-	// Wait for a notification
-	rt_task_suspend(NULL);
-
-	while(!gShouldStop) {
-		// Then run the calculations
-		if (task->hasArgs)
-    	    auxiliary_argfunction(task->args);
-        else
-            auxiliary_function();
-
-		// we only suspend if the program is still running
-		// otherwise, if we are during cleanup, the task would hang indefinitely
-		// if rt_task_suspend is called after rt_task_join (below) has
-		// already been called
-		if(!gShouldStop){
-		// Wait for a notification from Bela_scheduleAuxiliaryTask
-			rt_task_suspend(NULL);
-		} else {
-			break;
-		}
-	}
-
-	if(gRTAudioVerbose == 1)
-		rt_printf("auxiliary task %s ended\n", name);
-}
-
-
-int Bela_startAuxiliaryTask(AuxiliaryTask task){
-	InternalAuxiliaryTask *taskStruct;
-	taskStruct = (InternalAuxiliaryTask *)task;
-	if(taskStruct->started == true)
-		return 0;
-	if(int ret = rt_task_start(&(taskStruct->task), &auxiliaryTaskLoop, taskStruct)) {
-		cerr << "Error: unable to start Xenomai task " << taskStruct->name << ": " <<  strerror(-ret) << endl;
-		return -1;
-	}
-	taskStruct->started = true;
-	return 0;
-}
-
-// startAudio() should be called only after initAudio() successfully completes.
-// It launches the real-time Xenomai task which runs the audio loop. Returns 0
-// on success.
-
-int Bela_startAudio()
-{
-	// Create audio thread with high Xenomai priority
-	if(int ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, 0, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU)) {
-		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
-		  return -1;
-	}
-
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	// Create an interrupt which the audio thread receives from the PRU
-	int result = 0;
-	if((result = rt_intr_create(&gRTAudioInterrupt, gRTAudioInterruptName, PRU_RTAUDIO_IRQ, I_NOAUTOENA)) != 0) {
-		cout << "Error: unable to create Xenomai interrupt for PRU (error " << result << ")" << endl;
-		return -1;
-	}
-#endif
-
+static int startAudioInline(){
 	// make sure we have everything
 	assert(gAudioCodec != 0 && gPRU != 0);
 
@@ -520,7 +408,7 @@ int Bela_startAudio()
 
 	// initialize and run the PRU
 	if(gPRU->start(gPRUFilename)) {
-		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename);
+		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);
 		return -1;
 	}
 
@@ -534,21 +422,88 @@ int Bela_startAudio()
 
 	// ready to go
 	gShouldStop = 0;
+	return 0;
+}
 
-	// Start all RT threads
-	if(int ret = rt_task_start(&gRTAudioThread, &audioLoop, 0)) {
-		  cout << "Error: unable to start Xenomai audio thread: " << strerror(-ret) << endl;
+int Bela_runInSameThread()
+{
+#ifdef XENOMAI_SKIN_native
+	RT_TASK thisTask;
+	int ret = 0;
+
+	// do the initialization
+	ret = startAudioInline();
+	if(ret < 0)
+		return ret;
+
+	// turn the current thread into a Xenomai task: we become the audio thread
+	ret = rt_task_shadow(&thisTask, gRTAudioThreadName, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU);
+	if(ret == -EBUSY){
+	// task already is a Xenomai task:
+	// let's only re-adjust the priority
+		ret = rt_task_set_priority(&thisTask, BELA_AUDIO_PRIORITY);
+	}
+
+	if(ret < 0)
+	{
+		fprintf(stderr, "Error: unable to shadow Xenomai audio thread: %s \n", strerror(-ret));
+		return ret;	
+	}
+
+	ret = Bela_startAllAuxiliaryTasks();
+	if(ret < 0)
+		return ret;
+
+	// this starts the infinite loop that can only be broken out of
+	// by setting gShouldStop = 1
+	audioLoop(NULL);
+
+	// Once you get out of it, stop properly (in case you didn't already):
+	Bela_stopAudio();
+	return ret;
+#endif
+#ifdef XENOMAI_SKIN_posix
+	fprintf(stderr, "Turning the current thread into the audio thread is not supported with the POSIX skin.\n");
+	exit(1);
+#endif
+}
+
+int Bela_startAudio()
+{
+	// Create audio thread with high Xenomai priority
+	unsigned int stackSize = gAudioThreadStackSize;
+	int ret;
+#ifdef XENOMAI_SKIN_native
+	if(ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, stackSize, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU))
+	{
+		  fprintf(stderr,"Error: unable to create Xenomai audio thread: %s \n" ,strerror(-ret));
 		  return -1;
 	}
+#endif
 
-	// The user may have created other tasks. Start those also.
-	vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-		int ret = Bela_startAuxiliaryTask(*it);
-		if(ret != 0)
-			return -2;
+	ret = startAudioInline();
+	if(ret < 0)
+		return ret;
+
+	// Start all RT threads
+#ifdef XENOMAI_SKIN_native
+	if(ret = rt_task_start(&gRTAudioThread, &audioLoop, 0))
+	{
+		fprintf(stderr,"Error: unable to start Xenomai audio thread: %s \n" ,strerror(-ret));
+      		return -1;
 	}
-	return 0;
+#endif
+#ifdef XENOMAI_SKIN_posix
+	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, BELA_AUDIO_PRIORITY, stackSize, (pthread_callback_t*)audioLoop, NULL);
+	if(ret)
+	{
+		fprintf(stderr, "Error: unable to start Xenomai audio thread: %d %s\n", ret, strerror(-ret));
+		return -1;
+	}
+#endif
+
+	ret = Bela_startAllAuxiliaryTasks();
+	return ret;
 }
 
 // Stop the PRU-based audio from running and wait
@@ -560,50 +515,41 @@ void Bela_stopAudio()
 	gShouldStop = true;
 
 	if(gRTAudioVerbose)
-		cout << "Stopping audio...\n";
+		printf("Stopping audio...\n");
 
 	// Now wait for threads to respond and actually stop...
+#ifdef XENOMAI_SKIN_native
 	rt_task_join(&gRTAudioThread);
-
-	// Stop all the auxiliary threads too
-	vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-		InternalAuxiliaryTask *taskStruct = *it;
-
-		// Wake up each thread and join it
-		rt_task_resume(&(taskStruct->task));
-		rt_task_join(&(taskStruct->task));
+#endif
+#ifdef XENOMAI_SKIN_posix
+	void* threadReturnValue;
+	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
+	if(ret)
+	{
+		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));
 	}
+#endif
+
+	Bela_stopAllAuxiliaryTasks();
 }
 
 // Free any resources associated with PRU real-time audio
 void Bela_cleanupAudio()
 {
-	cleanup((BelaContext *)&gContext, gUserData);
+	if(gBelaCleanup)
+		(*gBelaCleanup)((BelaContext *)&gContext, gUserData);
 
 	disable_runfast();
 	// Shut down the prussdrv system
 	gPRU->exitPRUSS();
 
 	// Clean up the auxiliary tasks
-	vector<InternalAuxiliaryTask*>::iterator it;
-	for(it = getAuxTasks().begin(); it != getAuxTasks().end(); it++) {
-		InternalAuxiliaryTask *taskStruct = *it;
+	void Bela_deleteAllAuxiliaryTasks();
 
-		// Delete the task
-		rt_task_delete(&taskStruct->task);
-
-		// Free the name string and the struct itself
-		free(taskStruct->name);
-		free(taskStruct);
-	}
-	getAuxTasks().clear();
-
-	// Delete the audio task and its interrupt
-#ifdef BELA_USE_XENOMAI_INTERRUPTS
-	rt_intr_delete(&gRTAudioInterrupt);
-#endif
+	// Delete the audio task
+#ifdef XENOMAI_SKIN_native
 	rt_task_delete(&gRTAudioThread);
+#endif
 
 	if(gPRU != 0)
 		delete gPRU;
@@ -622,23 +568,38 @@ int Bela_setDACLevel(float decibels)
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setDACVolume((int)floorf(decibels * 2.0 + 0.5));
+
+	return 0;
 }
 
 // Set the level of the ADC
 // 0dB is the maximum, -12dB is the minimum; 1.5dB steps
 int Bela_setADCLevel(float decibels)
 {
+
+// AD1938 audio codec has no ADC volume controls
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+#else
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setADCVolume((int)floorf(decibels * 2.0 + 0.5));
+#endif
+
+	return 0;
 }
 
 // Set the level of the Programmable Gain Amplifier
 // 59.5dB is maximum, 0dB is minimum; 0.5dB steps
 int Bela_setPgaGain(float decibels, int channel){
+//Nothing to be done for CTAG audio cards
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+#else
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setPga(decibels, channel);
+#endif
+
+	return 0;
 }
 
 // Set the level of the onboard headphone amplifier; affects headphone
@@ -646,9 +607,14 @@ int Bela_setPgaGain(float decibels, int channel){
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setHeadphoneLevel(float decibels)
 {
+//Nothing to be done for CTAG audio cards
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+#else
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setHPVolume((int)floorf(decibels * 2.0 + 0.5));
+#endif
+	return 0;
 }
 
 // Mute or unmute the onboard speaker amplifiers
@@ -656,6 +622,10 @@ int Bela_setHeadphoneLevel(float decibels)
 // Returns 0 on success
 int Bela_muteSpeakers(int mute)
 {
+//Nothing to be done for CTAG audio cards
+#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
+	return 0;
+#else
 	int pinValue = mute ? LOW : HIGH;
 
 	// Check that we have an enabled pin for controlling the mute
@@ -663,6 +633,14 @@ int Bela_muteSpeakers(int mute)
 		return -1;
 
 	return gpio_set_value(gAmplifierMutePin, pinValue);
+#endif
+}
+
+void Bela_getVersion(int* major, int* minor, int* bugfix)
+{
+	*major = BELA_MAJOR_VERSION;
+	*minor = BELA_MINOR_VERSION;
+	*bugfix = BELA_BUGFIX_VERSION;
 }
 
 // Set the verbosity level

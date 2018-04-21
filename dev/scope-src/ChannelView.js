@@ -4,11 +4,12 @@ var View = require('./View');
 function ChannelConfig(){
 	this.yAmplitude = 1;
 	this.yOffset = 0;
-	this.color = '#ff0000';
+	this.color = '0xff0000';
+	this.lineWeight = 1.5;
 }
 
 var channelConfig = [new ChannelConfig()];
-var colours = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#00ffff', '#ff00ff'];
+var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xffff00', '0x00ffff', '0xff00ff'];
 
 var tdGainVal = 1, tdOffsetVal = 0, tdGainMin = 0, tdGainMax = 10, tdOffsetMin = -5, tdOffsetMax = 5;
 var FFTNGainVal = 1, FFTNOffsetVal = -0.005, FFTNGainMin = 0, FFTNGainMax = 10, FFTNOffsetMin = -1, FFTNOffsetMax = 1;
@@ -24,7 +25,7 @@ class ChannelView extends View{
 	inputChanged($element, e){
 		var key = $element.data().key;
 		var channel = $element.data().channel;
-		var value = (key === 'color') ? $element.val() : parseFloat($element.val());
+		var value = (key === 'color') ? $element.val().replace('#', '0x') : parseFloat($element.val());
 		if (!(key === 'color') && isNaN(value)) return;
 		if (key === 'yAmplitude' && value == 0) value = 0.001; // prevent amplitude hitting zero
 		this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
@@ -39,7 +40,7 @@ class ChannelView extends View{
 			item.yAmplitude = value;
 		}
 		this.emit('channelConfig', channelConfig);
-		console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
+		// console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
 	}
 	setChannelOffsets(value, min, max){
 		this.$elements.filterByData('key', 'yOffset').not('input[type=number]').prop('min', min).prop('max', max);
@@ -76,7 +77,7 @@ class ChannelView extends View{
 				el.find('input').each(function(){
 					$(this).data('channel', channelConfig.length-1)
 				});
-				el.find('input[type=color]').val(colours[(channelConfig.length-1)%colours.length]);
+				el.find('input[type=color]').val(colours[(channelConfig.length-1)%colours.length].replace('0x', '#'));
 			}
 		}
 		this.emit('channelConfig', channelConfig);

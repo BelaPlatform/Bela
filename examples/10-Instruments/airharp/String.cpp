@@ -11,7 +11,6 @@
 #include "Waveguide.h"
 
 #include "../include/Utilities.h"
-#include <rtdk.h>
 #include <cmath>
 #include <stdio.h>
 #include <cstdlib>
@@ -71,7 +70,7 @@ float String::getGlobalPosition()	{
 
 void String::setMidinote(float midinote)	{
 
-	float frequency = 440.0f*(float)powf(2,(midinote-57)/12.0f);
+	float frequency = 440.0f * (float)powf(2, (midinote-57)/12.0f);
 
 	junction.setFrequency(frequency);
 	wg_l.setFrequency(frequency);

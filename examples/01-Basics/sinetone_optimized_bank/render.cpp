@@ -67,8 +67,8 @@ void render(BelaContext *context, void *userData)
 			// Calculate the LFO amplitude
 			float LFO = sinf_neon(gPhasesLFO[k]);
 			gPhasesLFO[k] += gFrequenciesLFO[k] * gPhaseIncrement;
-			if(gPhasesLFO[k] >	M_PI)
-				gPhasesLFO[k] -= 2.0 * M_PI;
+			if(gPhasesLFO[k] > M_PI)
+				gPhasesLFO[k] -= 2.0f * (float)M_PI;
 			
 			// Calculate oscillator sinewaves and output them amplitude modulated
 			// by LFO sinewave squared.
@@ -78,7 +78,7 @@ void render(BelaContext *context, void *userData)
 			out[k&1] += sinf_neon(gPhases[k]) * gScale * (LFO*LFO);
 			gPhases[k] += gFrequencies[k] * gPhaseIncrement;
 			if(gPhases[k] > M_PI)
-				gPhases[k] -= 2.0 * M_PI;
+				gPhases[k] -= 2.0f * (float)M_PI;
 			
 		}
 		audioWrite(context, n, 0, out[0]);
@@ -93,7 +93,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example sinetone_optimised_bank/render.cpp
+\example sinetone_optimized_bank/render.cpp
 
 Using optimized neon functions
 ---------------------------

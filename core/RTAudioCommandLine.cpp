@@ -19,6 +19,9 @@
 #define OPT_PRU_NUMBER 1003
 #define OPT_DISABLE_LED 1004
 #define OPT_DISABLE_CAPE_BUTTON 1005
+#define OPT_DETECT_UNDERRUNS 1006
+#define OPT_UNIFORM_SAMPLE_RATE 1007
+#define OPT_HIGH_PERFORMANCE_MODE 1008
 
 
 enum {
@@ -50,8 +53,11 @@ struct option gDefaultLongOptions[] =
 	{"audio-expander-outputs", 1, NULL, 'Z'},
 	{"pru-file", 1, NULL, OPT_PRU_FILE},
 	{"pru-number", 1, NULL, OPT_PRU_NUMBER},
+	{"detect-underruns", 1, NULL, OPT_DETECT_UNDERRUNS},
 	{"disable-led", 0, NULL, OPT_DISABLE_LED},
 	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
+	{"high-performance-mode", 0, NULL, OPT_HIGH_PERFORMANCE_MODE},
+	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
 	{NULL, 0, NULL, 0}
 };
 
@@ -84,20 +90,36 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->verbose = 0;
 	settings->pruNumber = 1;
 	settings->pruFilename[0] = '\0';
+	settings->detectUnderruns = 1;
 	settings->enableLED = 1;
 	settings->enableCapeButtonMonitoring = 1;
+	settings->highPerformanceMode = 0;
 
-	// These two deliberately have no command-line flags by default.
-	// A given program might prefer one mode or another, but it's unlikely
-	// the user would want to switch at runtime
+	// These deliberately have no command-line flags by default,
+	// as it is unlikely the user would want to switch them
+	// at runtime
 	settings->interleave = 1;
 	settings->analogOutputsPersist = 1;
+	settings->uniformSampleRate = 0;
+	settings->audioThreadStackSize = 1 << 20;
+	settings->auxiliaryTaskStackSize = 1 << 20;
+
+	// initialize the user-defined functions.
+	// render is the only one that needs to be defined by the user in order
+	// for the audio to start.
+	settings->setup = NULL;
+	settings->render = NULL;
+	settings->cleanup = NULL;
 
 	settings->codecI2CAddress = CODEC_I2C_ADDRESS;
 	settings->receivePort = 9998;
 	settings->transmitPort = 9999;
 	strcpy(settings->serverName, "127.0.0.1");
 	settings->ampMutePin = kAmplifierMutePin;
+	if(Bela_userSettings != NULL)
+	{
+		Bela_userSettings(settings);
+	}
 }
 
 // This function drops in place of getopt() in the main() function
@@ -270,11 +292,21 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		case OPT_PRU_NUMBER:
 			settings->pruNumber = atoi(optarg);
 			break;
+		case OPT_DETECT_UNDERRUNS:
+			settings->detectUnderruns = atoi(optarg);
+			break;
 		case OPT_DISABLE_LED:
 			settings->enableLED = 0;
 			break;
-		case  OPT_DISABLE_CAPE_BUTTON:
+		case OPT_DISABLE_CAPE_BUTTON:
 			settings->enableCapeButtonMonitoring = 0;
+			break;
+		case OPT_HIGH_PERFORMANCE_MODE:
+			settings->highPerformanceMode = 1;
+			break;
+		case OPT_UNIFORM_SAMPLE_RATE:
+			settings->uniformSampleRate = 1;
+			printf("Uniform sample rate\n");
 			break;
 		case '?':
 		default:
@@ -306,8 +338,11 @@ void Bela_usage()
 	std::cerr << "   --audio-expander-outputs [-Z] vals: Set the analog outputs to use with audio expander (comma-separated list)\n";
 	std::cerr << "   --pru-file val:                     Set an optional external file to use for the PRU binary code\n";
 	std::cerr << "   --pru-number val:                   Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
+	std::cerr << "   --detect-underruns val:             Set whether to warn the user in case of underruns (options: 0 or 1, default: 1)\n";
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
 	std::cerr << "   --disable-cape-button-monitoring    Disable the monitoring of the Bela cape button (which otherwise stops the running program)\n";
+	std::cerr << "   --high-performance-mode             Gives more CPU to the Bela process. The system may become unresponsive and you will have to use the button on the Bela cape when you want to stop it.\n";
+	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
 

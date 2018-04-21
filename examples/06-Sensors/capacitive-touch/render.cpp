@@ -24,7 +24,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
-#include <rtdk.h>
 #include "I2C_MPR121.h"
 
 // How many pins there are
@@ -59,16 +58,7 @@ AuxiliaryTask i2cTask;		// Auxiliary task to read I2C
 int readCount = 0;			// How long until we read again...
 int readIntervalSamples = 0; // How many samples between reads
 
-void readMPR121();
-
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
+void readMPR121(void*);
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -87,14 +77,9 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numAnalogFrames
-// will be 0.
-
 void render(BelaContext *context, void *userData)
 {
-	for(int n = 0; n < context->audioFrames; n++) {
+	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		// Keep this code: it schedules the touch sensor readings
 		if(++readCount >= readIntervalSamples) {
 			readCount = 0;
@@ -105,7 +90,7 @@ void render(BelaContext *context, void *userData)
 		
 		// This code can be replaced with your favourite audio code
 		for(int i = 0; i < NUM_TOUCH_PINS; i++) {
-			float amplitude = sensorValue[i] / 400.0;
+			float amplitude = sensorValue[i] / 400.f;
 			
 			// Prevent clipping
 			if(amplitude > 0.5)
@@ -113,26 +98,20 @@ void render(BelaContext *context, void *userData)
 			
 			sample += amplitude * sinf(gPhases[i]);
 			gPhases[i] += gNormFrequencies[i];
-			if(gPhases[i] > 2.0 * M_PI)
-				gPhases[i] -= 2.0 * M_PI;
+			if(gPhases[i] > M_PI)
+				gPhases[i] -= 2.0f * (float)M_PI;
 		}
 		
-		for(int ch = 0; ch < context->audioInChannels; ch++)
+		for(unsigned int ch = 0; ch < context->audioInChannels; ch++)
 			context->audioOut[context->audioInChannels * n + ch] = sample;
 	}
 }
 
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
-
 void cleanup(BelaContext *context, void *userData)
-{
-	// Nothing to do here
-}
-
+{ }
 
 // Auxiliary task to read the I2C board
-void readMPR121()
+void readMPR121(void*)
 {
 	for(int i = 0; i < NUM_TOUCH_PINS; i++) {
 		sensorValue[i] = -(mpr121.filteredData(i) - mpr121.baselineData(i));

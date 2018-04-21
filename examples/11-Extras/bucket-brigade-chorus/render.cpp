@@ -26,9 +26,11 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <cmath>
 #include <I2c_Codec.h>
 
-float feedback=0.1;
-float lfoRate = 1;
+float feedback=0.3;
+float lfoRate = 3;
 float lfoAmplitude = 1;
+float dry = 0.5;
+float wet = 0.5;
 #define delayLength 2048
 
 extern I2c_Codec *gAudioCodec;
@@ -38,14 +40,14 @@ int writePointer=0;
 int readPointer=writePointer+1;
 AuxiliaryTask updatePll;
 
-void updatePllFunction(){
+void updatePllFunction(void*){
 	static int count = 0;
 	while(!gShouldStop){
 		gAudioCodec->setPllD(D);
 		count++;
 		if((count&4095)==0)
 			printf("sampling rate: %f\n",gAudioCodec->getAudioSamplingRate());
-		usleep(1);
+		usleep(10);
 	}
 }
 
@@ -61,21 +63,21 @@ bool setup(BelaContext *context, void *userData)
 	for(int n=0; n<delayLength; n++){
 		delay[n]=0;
 	}
-	Bela_scheduleAuxiliaryTask(updatePll);
 	return true; 
 }
 
 void render(BelaContext *context, void *userData)
 {
-	static float lfoPhase=0;
+	static float lfoPhase = 0;
 	float amplitude = lfoAmplitude * 4700; // range of variation around D. D has to be between [0 9999]
-	lfoPhase+=lfoRate*2*M_PI*context->audioFrames/context->audioSampleRate;
-	D=amplitude+amplitude*sinf(lfoPhase);
+	lfoPhase+=lfoRate * 2.f * (float)M_PI * context->audioFrames/context->audioSampleRate;
+	D=amplitude+amplitude * sinf(lfoPhase);
+	Bela_scheduleAuxiliaryTask(updatePll);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		float input = audioRead(context, n, 0) + audioRead(context, n, 1);
 	    delay[writePointer++] = input + delay[readPointer]*feedback;
-	    float output = (input + 0.9*delay[readPointer++] ) * 0.5;
+	    float output = (dry * input + wet * delay[readPointer++] ) * 0.5;
 		audioWrite(context, n, 0, output);
 		audioWrite(context, n, 1, output);
 		if(writePointer>=delayLength)

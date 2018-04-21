@@ -11,7 +11,6 @@ var spawn = require('child_process').spawn;
 var ProjectManager = require('./ProjectManager');
 var ProcessManager = require('./ProcessManager');
 var server = require('./fileServer');
-var scope = require('./scope-node');
 var GitManager = require('./GitManager');
 var TerminalManager = require('./TerminalManager');
 
@@ -19,7 +18,7 @@ var TerminalManager = require('./TerminalManager');
 var allSockets;
 var belaPath = '/root/Bela/';
 var updatePath = belaPath+'updates/';
-var startupScript = '/root/Bela_startup.sh';
+var startupEnv = '/opt/Bela/startup_env';
 
 // settings
 var cpuMonitoring = false;
@@ -49,9 +48,6 @@ function IDE(){
 			
 	}, 1000);
 	
-	// scope
-	scope.init(io);
-	
 	// shell
 	TerminalManager.init();
 	
@@ -72,7 +68,8 @@ function socketConnected(socket){
 		ProjectManager.listProjects(), 
 		new Promise.coroutine(ProjectManager.listExamples)(), 
 		SettingsManager.getSettings(),
-		runOnBootProject()
+		runOnBootProject(),
+		getXenomaiVersion()
 	]).then( result => {
 		result.push(ProcessManager.getStatus());
 		socket.emit('init', result)
@@ -269,7 +266,7 @@ function socketEvents(socket){
 							args += key+CLArgs[key]+' ';
 						}
 					}
-					runOnBoot(socket, ['startup', 'PROJECT='+project, 'CL='+args])
+					runOnBoot(socket, ['startuploop', 'PROJECT='+project, 'CL='+args])
 				});
 		}
 		
@@ -316,11 +313,16 @@ function socketEvents(socket){
 			
 	});
 
+	// shutdown
+	socket.on('shutdown', () => {
+		exec('shutdown -h now', (err, stdout, stderr) => console.log('shutting down', err, stdout, stderr) );
+	});
+
 }
 
 ProcessManager.on('status', (status, project) => allSockets.emit('status', project, status) );
 ProcessManager.on('broadcast-status', (status) => allSockets.emit('status', status) );
-ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
+//ProcessManager.on('mode-switch', num => allSockets.emit('mode-switch', num) );
 
 TerminalManager.on('shell-event', (evt, data) => allSockets.emit('shell-event', evt, data) );
 
@@ -398,24 +400,65 @@ var SettingsManager = {
 
 };
 
+function getXenomaiVersion(){
+	return new Promise(function(resolve, reject){
+		exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
+			if (err){
+				console.log('error reading xenomai version');
+				reject(err);
+			}
+			resolve(stdout);
+		});
+	});
+}
+
 function runOnBootProject(){
-	// parse Bela_startup.sh
-	return fs.readFileAsync(startupScript, 'utf-8')
+	return fs.readFileAsync(startupEnv, 'utf-8')
 		.then( file => {
-			var project;
+			var project = 'none';
 			var lines = file.split('\n');
-			if (lines[5] === '# Run on startup disabled -- nothing to do here'){
-				project = 'none';
-			} else {
-				project = lines[6].trim().split(' ')[1].split('/').pop();
+			for (let line of lines){
+				line = line.split('=');
+				if (line[0] === 'ACTIVE' && line[1] === '0'){
+					console.log('no project set to run on boot');
+					continue;
+				} else if (line[0] === 'PROJECT'){
+					console.log('project', line[1], 'set to run on boot');
+					project = line[1];
+					listenToRunOnBoot();
+					continue;
+				}
 			}
 			return project;
 		})
 		.catch( e => console.log('run-on-boot error', e) );
 }
 
+function listenToRunOnBoot(){
+	getXenomaiVersion()
+		.then( ver => {
+			if (!ver.includes('2.6')){
+				var proc = spawn('journalctl', ['-fu', 'bela_startup']);
+				proc.stdout.setEncoding('utf8');
+				proc.stdout.on('data', data => {
+					if (data) allSockets.emit('run-on-boot-log', data);
+				} );
+				proc.stderr.setEncoding('utf8');
+				proc.stderr.on('data', data => {
+					if (data) allSockets.emit('run-on-boot-log', data);
+				} );
+				proc.stdout.on('close', () => {
+					allSockets.emit('run-on-boot-log', 'Project running at boot has stopped');
+				});
+			}
+		});
+}
+
 function runOnBoot(socket, args){
-	var proc = spawn('make', args, {cwd: belaPath});
+	args.push("-C");
+	args.push(belaPath);
+	console.log("On boot:", args);
+	var proc = spawn('make', args);
 		proc.stdout.setEncoding('utf-8');
 		proc.stderr.setEncoding('utf-8');
 		proc.stdout.on('data', data => socket.emit('run-on-boot-log', data) );
@@ -435,28 +478,21 @@ function uploadUpdate(data){
 			
 			return new Promise( (resolve, reject) => {
 				
-				let stdout = [], stderr = [];
-				
-				var proc = spawn('make', ['checkupdate'], {cwd: belaPath});
+				var proc = spawn('make', ['-C', belaPath, 'checkupdate']);
 				
 				proc.stdout.setEncoding('utf8');
 				proc.stderr.setEncoding('utf8');
 				
 				proc.stdout.on('data', (data) => {
 					console.log('stdout', data);
-					stdout.push(data);
 					allSockets.emit('std-log', data);
 				});
 				proc.stderr.on('data', (data) => {
 					console.log('stderr', data);
-					stderr.push(data);
 					allSockets.emit('std-warn', data);
 				});
 				
-				proc.on('close', () => {
-					if (stderr.length) reject(stderr);
-					else resolve(stdout);
-				});
+				proc.on('close', resolve );
 				
 			});
 		})
@@ -466,30 +502,24 @@ function uploadUpdate(data){
 			
 			return new Promise( (resolve, reject) => {
 				
-				let stdout = [], stderr = [];
-				
-				var proc = spawn('make', ['update'], {cwd: belaPath});
+				var proc = spawn('make', ['-C', belaPath, 'update']);
 				
 				proc.stdout.setEncoding('utf8');
 				proc.stderr.setEncoding('utf8');
 				
 				proc.stdout.on('data', (data) => {
 					console.log('stdout', data);
-					stdout.push(data);
 					allSockets.emit('std-log', data);
 				});
 				proc.stderr.on('data', (data) => {
 					console.log('stderr', data);
-					stderr.push(data);
 					allSockets.emit('std-warn', data);
 				});
 				
 				proc.on('close', () => {
-					if (stderr.length) reject(stderr);
-					else {
-						allSockets.emit('std-log', 'Update completed! Please refresh the page if this does not happen automatically.');
-						allSockets.emit('force-reload');
-					}
+					allSockets.emit('std-log', 'Update completed! Please refresh the page if this does not happen automatically.');
+					allSockets.emit('force-reload');
+					resolve();
 				});
 				
 			});
@@ -505,8 +535,8 @@ process.on('uncaughtException', (err) => {
 	throw err;
 });
 // catch SIGTERM which occasionally gets thrown when cancelling the syntax check. Dunno why, it's kind of a problem.
-process.on('SIGTERM', () => {
-  console.log('!!!!!!!!!!!!!!!!! Got SIGTERM !!!!!!!!!!!!!!!!!!!', process.pid);
+// process.on('SIGTERM', () => {
+//  console.log('!!!!!!!!!!!!!!!!! Got SIGTERM !!!!!!!!!!!!!!!!!!!', process.pid);
   //allSockets.emit('report-error', 'recieved SIGTERM'); 
-});
+// });
 

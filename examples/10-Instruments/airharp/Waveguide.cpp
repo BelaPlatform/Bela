@@ -6,7 +6,6 @@
 
 #include "Waveguide.h"
 #include "../include/Utilities.h"
-#include <rtdk.h>
 #include <cmath>
 #include <stdio.h>
 #include <cstdlib>
@@ -92,8 +91,8 @@ float Waveguide::update(float in)	{
 void Waveguide::setFrequency(float frequency)	{
 
 	// NB: currently no interpolation, so may not be ideal for dynamically changing waveguide frequency
-	_periodInMilliseconds = 1000.0/frequency;
-	_periodInSamples = (int)(_periodInMilliseconds * 44.1);
+	_periodInMilliseconds = 1000.f/frequency;
+	_periodInSamples = (int)(_periodInMilliseconds * 44.1f);
 
 }
 
@@ -104,7 +103,7 @@ void Waveguide::updateFilterCoeffs(float frequency)	{
 
 	a1_lp = 0;
 	a2_lp = 0;
-	b0_lp = 1.0 - DAMPING;
+	b0_lp = 1.0f - DAMPING;
 	b1_lp = DAMPING;
 	b2_lp = 0;
 

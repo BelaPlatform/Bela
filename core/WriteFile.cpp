@@ -6,6 +6,8 @@
  */
 
 #include "WriteFile.h"
+#include <glob.h>		// alternative to dirent.h to handle files in dirs
+#include <stdlib.h>
 //initialise static members
 bool WriteFile::staticConstructed=false;
 AuxiliaryTask WriteFile::writeAllFilesTask=NULL;
@@ -20,23 +22,81 @@ void WriteFile::staticConstructor(){
 	staticConstructed=true;
 	threadIsExiting=false;
 	threadRunning=false;
-	writeAllFilesTask = Bela_createAuxiliaryTask(WriteFile::run, 60, "writeAllFilesTask");
+	writeAllFilesTask = Bela_createAuxiliaryTask(WriteFile::run, 60, "writeAllFilesTask", NULL);
 }
 
 WriteFile::WriteFile(){
-	buffer = NULL;
 	format = NULL;
 	header = NULL;
 	footer = NULL;
 	stringBuffer = NULL;
+	_filename = NULL;
 };
 
-void WriteFile::init(const char* filename){ //if you do not call this before using the object, results are undefined
-	file = fopen(filename, "w");
+char* WriteFile::generateUniqueFilename(const char* original)
+{
+	int originalLen = strlen(original);
+
+	// search for a dot in the file (from the end)
+	int dot = originalLen;
+	for(int n = dot; n >= 0; --n)
+	{
+		if(original[n] == '.')
+			dot = n;
+	}
+	char temp[originalLen + 2];
+	int count = dot;
+	snprintf(temp, count + 1, "%s", original);
+	// add a * before the dot
+	count += sprintf(temp + count, "*") - 1;
+	count += sprintf(temp + count + 1, "%s", original + dot);
+
+	// check how many log files are already there, and choose name according to this
+	glob_t globbuf;
+	glob(temp, 0, NULL, &globbuf);
+
+	int logNum;
+	int logMax = -1;
+	// cycle through all and find the existing one with the highest index
+	for(unsigned int i=0; i<globbuf.gl_pathc; i++)
+	{
+		logNum = atoi(globbuf.gl_pathv[i] + dot);
+		if(logNum > logMax)
+			logMax = logNum;
+	}
+	globfree(&globbuf);
+	if(logMax == -1)
+	{
+		// use the same filename
+		char* out = (char*)malloc(sizeof(char) * (originalLen +1));
+		strcpy(out, original);
+		return out;
+	} else {
+		// generate a new filename
+		logNum = logMax + 1;	// new index
+		count = snprintf(NULL, 0, "%d", logNum);
+		char* out = (char*)malloc(sizeof(char) * (count + originalLen + 1));
+		count = dot;
+		snprintf(out, count + 1, "%s", original);
+		count += sprintf(out + count, "%d", logNum) - 1;
+		count += sprintf(out + count + 1, "%s", original + dot);
+		printf("File %s exists, writing to %s instead\n", original, out);
+		return out;
+	}
+}
+
+void WriteFile::init(const char* filename, bool overwrite){
+	if(!overwrite)
+	{
+		_filename = generateUniqueFilename(filename);
+	} else {
+		_filename = (char*)malloc(sizeof(char) * (strlen(filename) + 1));
+		file = fopen(filename, "w");
+	}
+	file = fopen(_filename, "w");
 	variableOpen = false;
 	lineLength = 0;
 	setEcho(false);
-	bufferLength = 0;
 	textReadPointer = 0;
 	binaryReadPointer = 0;
 	writePointer = 0;
@@ -54,7 +114,7 @@ void WriteFile::init(const char* filename){ //if you do not call this before usi
 void WriteFile::setFileType(WriteFileType newFileType){
 	fileType = newFileType;
 	if(fileType == kBinary)
-		setLineLength(1);
+		setBufferSize(1e7);
 }
 void WriteFile::setEcho(bool newEcho){
 	echo=newEcho;
@@ -66,6 +126,12 @@ void WriteFile::setEchoInterval(int newEchoPeriod){
 	else
 		echo = false;
 }
+
+void WriteFile::setBufferSize(unsigned int newSize)
+{
+	buffer.resize(newSize);
+}
+
 void WriteFile::print(const char* string){
 	if(echo == true){
 		echoedLines++;
@@ -87,8 +153,8 @@ void WriteFile::writeLine(){
 								formatTokens[n], buffer[textReadPointer]);
 			stringBufferPointer += numOfCharsWritten;
 			textReadPointer++;
-			if(textReadPointer >= bufferLength){
-				textReadPointer -= bufferLength;
+			if(textReadPointer >= buffer.size()){
+				textReadPointer -= buffer.size();
 			}
 		}
 		print(stringBuffer);
@@ -96,26 +162,22 @@ void WriteFile::writeLine(){
 }
 
 void WriteFile::setLineLength(int newLineLength){
-	lineLength=newLineLength;
-	free(buffer);
-	bufferLength = lineLength * (int)1e5; // circular buffer
-	buffer = (float*)malloc(sizeof(float) * bufferLength);
-	if(buffer == NULL){
-		fprintf(stderr, "Unable to allocate memory for the WriteFile buffer\n");
-	}
+	lineLength = newLineLength;
+	if(buffer.size() == 0)
+		setBufferSize(lineLength * 1e5);
 }
 
 void WriteFile::log(float value){
-	if(fileType != kBinary && (format == NULL || buffer == NULL))
+	if(fileType != kBinary && (format == NULL || buffer.size() == 0))
 		return;
 	buffer[writePointer] = value;
 	writePointer++;
-	if(writePointer == bufferLength){
+	if(writePointer == buffer.size()){
 		writePointer = 0;
 	}
 	if((fileType == kText && writePointer == textReadPointer - 1) ||
 			(fileType == kBinary && writePointer == binaryReadPointer - 1)){
-		rt_fprintf(stderr, "%d %d WriteFile: pointers crossed, you should probably slow down your writing to disk\n", writePointer, binaryReadPointer);
+		rt_fprintf(stderr, "WriteFile: %s pointers crossed, you should probably slow down your writing to disk\n", _filename);
 	}
 	if(threadRunning == false){
 		startThread();
@@ -129,11 +191,16 @@ void WriteFile::log(const float* array, int length){
 }
 
 WriteFile::~WriteFile() {
+	// this will disable all instances when
+	// you destroy the first one, but at least it's safe
+	stopThread();
+	while(threadRunning)
+		usleep(100000);
 	free(format);
-	free(buffer);
 	free(header);
 	free(footer);
 	free(stringBuffer);
+	free(_filename);
 }
 
 void WriteFile::setFormat(const char* newFormat){
@@ -189,13 +256,13 @@ bool WriteFile::isThreadRunning(){
 }
 
 float WriteFile::getBufferStatus(){
-	return 1-getOffset()/(float)bufferLength;
+	return 1-getOffset()/(float)buffer.size();
 }
 
 int WriteFile::getOffsetFromPointer(int aReadPointer){
 	int offset = writePointer - aReadPointer;
 		if( offset < 0)
-			offset += bufferLength;
+			offset += buffer.size();
 		return offset;
 }
 int WriteFile::getOffset(){
@@ -216,12 +283,12 @@ void WriteFile::writeOutput(bool flush){
 		int numBinaryElementsToWriteAtOnce = 4096;
 		bool wasWritten = false;
 		while(getOffsetFromPointer(binaryReadPointer) > numBinaryElementsToWriteAtOnce){
-			int elementsToEndOfBuffer = bufferLength - binaryReadPointer;
+			int elementsToEndOfBuffer = buffer.size() - binaryReadPointer;
 			int numberElementsToWrite = numBinaryElementsToWriteAtOnce < elementsToEndOfBuffer ?
 					numBinaryElementsToWriteAtOnce : elementsToEndOfBuffer;
 			numberElementsToWrite = fwrite(&(buffer[binaryReadPointer]), sizeof(float), numberElementsToWrite, file);
 			binaryReadPointer += numberElementsToWrite;
-			if(binaryReadPointer >= bufferLength){
+			if(binaryReadPointer >= buffer.size()){
 				binaryReadPointer = 0;
 			}
 			wasWritten = true;
@@ -229,7 +296,7 @@ void WriteFile::writeOutput(bool flush){
 		if(flush == true){ // flush all the buffer to the file
 			while(getOffsetFromPointer(binaryReadPointer) != 0){
 				binaryReadPointer += fwrite(&(buffer[binaryReadPointer]), sizeof(float), 1, file);
-				if(binaryReadPointer >= bufferLength){
+				if(binaryReadPointer >= buffer.size()){
 					binaryReadPointer = 0;
 				}
 				wasWritten = true;
@@ -287,7 +354,7 @@ void WriteFile::sanitizeString(char* string){
 	}
 }
 
-void WriteFile::run(){
+void WriteFile::run(void* arg){
 	threadRunning = true;
 	writeAllHeaders();
 	while(threadShouldExit()==false){

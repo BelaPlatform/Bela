@@ -11,7 +11,9 @@
 #include <Bela.h>
 #include <vector>
 #include <alsa/asoundlib.h>
+#ifdef XENOMAI_SKIN_native
 #include <native/pipe.h>
+#endif
 
 typedef unsigned char midi_byte_t;
 
@@ -23,10 +25,11 @@ typedef enum midiMessageType{
 	kmmProgramChange,
 	kmmChannelPressure,
 	kmmPitchBend,
+	kmmSystem,
 	kmmNone,
 	kmmAny,
 } MidiMessageType;
-#define midiMessageStatusBytesLength 7+2 //2 being kmmNone and kmmAny
+#define midiMessageStatusBytesLength 8+2 //2 being kmmNone and kmmAny
 
 extern midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength];
 extern unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength];
@@ -35,6 +38,9 @@ class MidiChannelMessage{
 public:
 	MidiChannelMessage();
 	MidiChannelMessage(MidiMessageType type);
+	midi_byte_t getStatusByte(){
+		return _statusByte;
+	}
 	virtual ~MidiChannelMessage();
 	MidiMessageType getType();
 	int getChannel();
@@ -57,6 +63,8 @@ public:
 			return "channel aftertouch";
 		case kmmPitchBend:
 			return "pitch bend";
+		case kmmSystem:
+			return "system";
 		case kmmAny:
 			return "any";
 		case kmmNone:
@@ -345,6 +353,10 @@ public:
 	MidiParser* getMidiParser();
 	virtual ~Midi();
 
+	bool isInputEnabled();
+
+	bool isOutputEnabled();
+
 	/**
 	 * Opens all the existing MIDI ports, in the same order returned by the filesystem or Alsa.
 	 * Ports open with this method should be closed with destroyPorts()
@@ -374,7 +386,12 @@ private:
 	char* inId;
 	char* outId;
 	char* outPipeName;
+#ifdef XENOMAI_SKIN_native
 	RT_PIPE outPipe;
+#endif
+#ifdef XENOMAI_SKIN_posix
+	int sock;
+#endif
 };
 
 

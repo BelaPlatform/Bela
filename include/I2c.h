@@ -15,8 +15,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+// heuristic to guess what version of i2c-dev.h we have:
+// the one installed with `apt-get install libi2c-dev`
+// would conflict with linux/i2c.h, while the stock
+// one requires linus/i2c.h
+#ifndef I2C_SMBUS_BLOCK_MAX
+// If this is not defined, we have the "stock" i2c-dev.h
+// so we include linux/i2c.h
+#include <linux/i2c.h>
+typedef unsigned char i2c_char_t;
+#else
+typedef char i2c_char_t;
+#endif
 #include <sys/ioctl.h>
 #include <stropts.h>
 

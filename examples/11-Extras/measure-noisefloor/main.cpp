@@ -62,6 +62,9 @@ int main(int argc, char *argv[])
 
 	// Set default settings
 	Bela_defaultSettings(&settings);
+	settings.setup = setup;
+	settings.render = render;
+	settings.cleanup = cleanup;
 
 	// By default use a longer period size because latency is not an issue
 	settings.periodSize = 32;

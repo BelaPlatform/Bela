@@ -32,24 +32,16 @@ float *gReadBuffers[10], *gWriteBuffers[10];
 float *gBuffers0[10], *gBuffers1[10];
 
 int gWriteBufferPointers[10], gReadBufferPointers[10];
+bool gIsStdoutTty;
 
 // Task to analyse and print results which would otherwise be too slow for render()
 AuxiliaryTask gAnalysisTask;
 
-void analyseResults();
-
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
+void analyseResults(void*);
 
 bool setup(BelaContext *context, void *userData)
 {	
-
+	gIsStdoutTty = isatty(1); // Check if stdout is a terminal
 	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context-> analogOutChannels){
@@ -74,11 +66,6 @@ bool setup(BelaContext *context, void *userData)
 
 	return true;
 }
-
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
 
 void render(BelaContext *context, void *userData)
 {
@@ -137,9 +124,10 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
-void analyseResults()
+void analyseResults(void*)
 {
-	rt_printf("\e[1;1H\e[2J");	// Command to clear the screen
+	if(gIsStdoutTty)
+		rt_printf("\e[1;1H\e[2J");	// Command to clear the screen
 
 	// Print the analysis results. channels 0-1 are audio, channels 2-9 are analog
 	for(int ch = 0; ch < 10; ch++) {
@@ -173,9 +161,6 @@ void analyseResults()
 					gReadBufferPointers[ch]);
 	}
 }
-
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
 
 void cleanup(BelaContext *context, void *userData)
 {

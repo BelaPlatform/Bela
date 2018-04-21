@@ -54,7 +54,7 @@ float *gDAmplitudes;	// Buffer holding the derivatives of amplitude
 
 void calculate_coeff(float sampleRate, float cutFreq);
 bool initialise_oscillators(float fundamental_frequency);
-void print_results();
+void print_results(void*);
 
 extern "C" {
 	// Function prototype for ARM assembly implementation of oscillator bank
@@ -154,14 +154,14 @@ void render(BelaContext *context, void *userData)
 			
 			// Use output to control oscillator amplitude (with some headroom)
 			// Square it to de-emphasise low but nonzero values
-			gAmplitudes[filterIndex] = output * output / 4.0;
+			gAmplitudes[filterIndex] = output * output / 4.f;
 		}
 	}
 
 	// Render oscillator bank:
 
 	// Initialise buffer to 0
-	memset(context->audioOut, 0, 2 * context->audioFrames * sizeof(float));
+	memset(context->audioOut, 0, context->audioOutChannels * context->audioFrames * sizeof(float));
 
 	// Render audio frames
 	oscillator_bank_neon(context->audioFrames, context->audioOut,
@@ -173,7 +173,7 @@ void render(BelaContext *context, void *userData)
 	gPrintCount += context->analogFrames;
 	gAudioFramesElapsed = context->audioFramesElapsed;
 
-	if(gPrintCount >= (unsigned int)(context->analogSampleRate * 0.1)) {
+	if(gPrintCount >= (unsigned int)(context->analogSampleRate * 0.1f)) {
 		gPrintCount = 0;
 		Bela_scheduleAuxiliaryTask(gPrintTask);
 	}
@@ -261,7 +261,7 @@ bool initialise_oscillators(float fundamental_frequency)
 
 // Print the current state of each of the filters
 // Do this in a separate thread to avoid loading down the audio thread
-void print_results()
+void print_results(void*)
 {
 	if(gIsStdoutTty)
 		rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)

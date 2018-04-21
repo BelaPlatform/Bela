@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <glob.h>
-
+#include "../include/xenomai_wraps.h"
 
 #define kMidiInput 0
 #define kMidiOutput 1
@@ -29,10 +29,11 @@ midi_byte_t midiMessageStatusBytes[midiMessageStatusBytesLength]=
 	0xC0, /* program change */
 	0xD0, /* channel key pressure */
 	0xE0, /* pitch bend change */
+	0xF0, /* system message */
 	0
 };
 
-unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength]={2, 2, 2, 2, 1, 1, 2, 0};
+unsigned int midiMessageNumDataBytes[midiMessageStatusBytesLength]={2, 2, 2, 2, 1, 1, 2, 0, 0};
 
 int MidiParser::parse(midi_byte_t* input, unsigned int length){
 	unsigned int consumedBytes = 0;
@@ -41,7 +42,8 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 		if(waitingForStatus == true){
 			int statusByte = input[n];
 			MidiMessageType newType = kmmNone;
-			if (statusByte >= 0x80 && statusByte < 0xF0){//it actually is a status byte
+			if ((statusByte >= 0x80 && statusByte < 0xF0) || (statusByte >= 0xF8)){
+			//it actually is a channel status byte OR a system real time message
 				for(int n = 0; n < midiMessageStatusBytesLength; n++){ //find the statusByte in the array
 					if(midiMessageStatusBytes[n] == (statusByte&0xf0)){
 						newType = (MidiMessageType)n;
@@ -58,7 +60,8 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				waitingForStatus = false;
 				receivingSysex = true;
 				rt_printf("Receiving sysex\n");
-			} else { // either something went wrong or it's a system message
+				continue;
+			} else { // other system common
 				continue;
 			}
 		} else if (receivingSysex){
@@ -69,20 +72,21 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				waitingForStatus = true;
 				rt_printf("\nCompleted receiving sysex\n");
 			}
+			continue;
 		} else {
 			messages[writePointer].setDataByte(elapsedDataBytes, input[n]);
 			elapsedDataBytes++;
-			if(elapsedDataBytes == messages[writePointer].getNumDataBytes()){
-				// done with the current message
-				// call the callback if available
-				if(isCallbackEnabled() == true){
-					messageReadyCallback(getNextChannelMessage(), callbackArg);
-				}
-				waitingForStatus = true;
-				writePointer++;
-				if(writePointer == messages.size()){
-					writePointer = 0;
-				}
+		}
+		if(elapsedDataBytes == messages[writePointer].getNumDataBytes()){
+			// done with the current message
+			// call the callback if available
+			if(isCallbackEnabled() == true){
+				messageReadyCallback(getNextChannelMessage(), callbackArg);
+			}
+			waitingForStatus = true;
+			writePointer++;
+			if(writePointer == messages.size()){
+				writePointer = 0;
 			}
 		}
 	}
@@ -95,6 +99,9 @@ Midi::Midi() :
 alsaIn(NULL), alsaOut(NULL),
 inputParser(NULL), parserEnabled(false), inputEnabled(false), outputEnabled(false),
 inId(NULL), outId(NULL), outPipeName(NULL)
+#ifdef XENOMAI_SKIN_posix
+	, sock(0)
+#endif
 {
 	sprintf(defaultPort, "%s", "hw:1,0,0"); // a bug in gcc<4.10 prevents initialization with defaultPort("hw:1,0,0") in the initialization list
 	inputParser = 0;
@@ -111,7 +118,12 @@ Midi::~Midi() {
 	free(outPipeName);
 	// dummy write so that `poll` stops polling ! 
 	//rt_pipe_write(&outPipe, NULL, 0, P_NORMAL); // does not work :(
+#ifdef XENOMAI_SKIN_native
 	rt_pipe_delete(&outPipe);
+#endif
+#ifdef XENOMAI_SKIN_posix
+	close(sock);
+#endif
 	if(alsaOut){
 		snd_rawmidi_drain(alsaOut);
 		snd_rawmidi_close(alsaOut);
@@ -189,7 +201,7 @@ void Midi::writeOutputLoop(void* obj){
 	//printf("Opening outPipe %s\n", that->outPipeName);
 	int pipe_fd = open(that->outPipeName, O_RDWR);
 	if (pipe_fd < 0){
-		fprintf(stderr, "could not open out pipe: %s\n", strerror(-pipe_fd));
+		fprintf(stderr, "could not open out pipe %s: %s\n", that->outPipeName, strerror(-pipe_fd));
 		return;
 	}
 	void* data = &that->outputBytes.front();
@@ -216,7 +228,10 @@ void Midi::writeOutputLoop(void* obj){
 				// write the received message to the output
 				ret = snd_rawmidi_write(that->alsaOut, data, ret);
 				// make sure it is written
-				snd_rawmidi_drain(that->alsaOut);
+				// NOTE:using _drain actually increases the latency
+				// under heavy load, so we leave it out and
+				// leave it to the driver to figure out.
+				//snd_rawmidi_drain(that->alsaOut);
 			}
 		}
 	}
@@ -233,13 +248,8 @@ int Midi::readFrom(const char* port){
 
 	int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);
 	if (err) {
-		if(err == -2)
-			printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
-		else
-			fprintf(stderr, "Error while snd_rawmidi_open %s: %s\n", port, strerror(-err));
-		return -1;
+		return err;
 	}
-	printf("Reading from ALSA MIDI device %s\n", port);
 	midiInputTask = Bela_createAuxiliaryTask(Midi::readInputLoop, 50, inId, (void*)this);
 	Bela_scheduleAuxiliaryTask(midiInputTask);
 	inputEnabled = true;
@@ -254,31 +264,37 @@ int Midi::writeTo(const char* port){
 	outId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(outId, size + 1, "bela-midiOut_%s", port);
 
- 	size = snprintf(outPipeName, 0, "/proc/xenomai/registry/native/pipes/%s", port);
+#if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
+	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/%s";
+#else
+	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/%s";
+#endif
+	size = snprintf(outPipeName, 0, outPipeNameTemplateString, outId);
 	outPipeName = (char*)malloc((size + 1)*sizeof(char));
-	snprintf(outPipeName, size + 1, "/proc/xenomai/registry/native/pipes/%s", port);
-	//printf("Created pipe: %s\n", outPipeName);	
+	snprintf(outPipeName, size + 1, outPipeNameTemplateString, outId);
 	int ret;
+#ifdef XENOMAI_SKIN_native
 	ret = rt_pipe_delete(&outPipe);
 	ret = rt_pipe_create(&outPipe, port, P_MINOR_AUTO, 4096);
 	if(ret < 0){
+#endif
+#ifdef XENOMAI_SKIN_posix
+	ret = createXenomaiPipe(outId, 0);
+	sock = ret;
+	if(ret <= 0){
+#endif
 		fprintf(stderr, "Error while creating pipe %s: %s\n", outId, strerror(-ret));
 		return -1;
 	}
 	int err = snd_rawmidi_open(NULL, &alsaOut, port,0);
 	if (err) {
-		if(err == -2)
-			rt_printf("MIDI device %s is not ready: %s\n", port, strerror(-err));
-		else
-			rt_fprintf(stderr, "Error during snd_rawmidi_open on %s: %s\n", port, strerror(-err));
-		return -1;
+		return err;
 	}
 	midiOutputTask = Bela_createAuxiliaryTask(writeOutputLoop, 45, outId, (void*)this);
 	if(midiOutputTask == 0){
 		return -1;
 	}
 	Bela_scheduleAuxiliaryTask(midiOutputTask);
-	printf("Writing to ALSA MIDI device %s\n", port);
 	outputEnabled = true;
 	return 1;
 }
@@ -394,15 +410,7 @@ MidiParser* Midi::getParser(){
 }
 
 int Midi::writeOutput(midi_byte_t byte){
-	if(!outputEnabled){
-		return 0;
-	}
-	int ret = rt_pipe_write(&outPipe, &byte, 1, P_NORMAL);
-	if(ret < 0){
-		rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
-		return ret;
-	}
-	return 1;
+	return writeOutput(&byte, sizeof(byte));
 }
 
 int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
@@ -411,11 +419,17 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 	}
 	do {
 		// we make sure the message length does not exceed outputBytes.size(), 
-		// which would result in incomplete messages being retrieved at the other end of the 
-		// pipe.
+		// which would result in incomplete messages being retrieved at
+		// the other end of the pipe.
 		ssize_t size = length < outputBytes.size() ? length : outputBytes.size();
+#ifdef XENOMAI_SKIN_native
 		int ret = rt_pipe_write(&outPipe, bytes, size, P_NORMAL);
 		if(ret < 0){
+#endif
+#ifdef XENOMAI_SKIN_posix
+		int ret = __wrap_sendto(sock, bytes, size, 0, NULL, 0);
+		if (ret != size){
+#endif
 			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
 			return -1;
 		} else {
@@ -423,6 +437,16 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 		}
 	} while (length > 0);
 	return 1;
+}
+
+bool Midi::isInputEnabled()
+{
+	return inputEnabled;
+}
+
+bool Midi::isOutputEnabled()
+{
+	return outputEnabled;
 }
 
 midi_byte_t Midi::makeStatusByte(midi_byte_t statusCode, midi_byte_t channel){
