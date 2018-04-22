@@ -76,6 +76,13 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    FileManager.prototype.stat_file = function (file_name) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, fs.lstatAsync(file_name)];
+            });
+        });
+    };
     // sophisticated file and directory manipulation
     // save_file follows vim's strategy to save a file in a crash-proof way
     // it first writes the file to .<file_name>~
@@ -112,6 +119,58 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    // recursively read the contents of a directory, returning an array of File_Descriptors
+    FileManager.prototype.deep_read_directory = function (dir_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            var contents, output, _i, contents_1, name_1, stat, desc, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, this.read_directory(dir_path)];
+                    case 1:
+                        contents = _b.sent();
+                        output = [];
+                        _i = 0, contents_1 = contents;
+                        _b.label = 2;
+                    case 2:
+                        if (!(_i < contents_1.length)) return [3 /*break*/, 8];
+                        name_1 = contents_1[_i];
+                        return [4 /*yield*/, this.stat_file(dir_path + '/' + name_1)];
+                    case 3:
+                        stat = _b.sent();
+                        desc = new File_Descriptor(name_1);
+                        if (!stat.isDirectory()) return [3 /*break*/, 5];
+                        _a = desc;
+                        return [4 /*yield*/, this.deep_read_directory(dir_path + '/' + name_1)];
+                    case 4:
+                        _a.children = _b.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
+                        desc.size = stat.size;
+                        _b.label = 6;
+                    case 6:
+                        output.push(desc);
+                        _b.label = 7;
+                    case 7:
+                        _i++;
+                        return [3 /*break*/, 2];
+                    case 8: return [2 /*return*/, output];
+                }
+            });
+        });
+    };
     return FileManager;
 }());
 exports.FileManager = FileManager;
+var File_Descriptor = /** @class */ (function () {
+    function File_Descriptor(name, size, children) {
+        if (size === void 0) { size = undefined; }
+        if (children === void 0) { children = undefined; }
+        this.size = undefined;
+        this.children = undefined;
+        this.name = name;
+        this.size = size;
+        this.children = children;
+    }
+    return File_Descriptor;
+}());
+exports.File_Descriptor = File_Descriptor;

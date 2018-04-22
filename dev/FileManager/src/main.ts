@@ -1,13 +1,10 @@
-import { FileManager } from "./FileManager";
+import { FileManager, File_Descriptor } from "./FileManager";
 
 let fm: FileManager = new FileManager();
 
 async function read_write(){
-	await fm.write_file('/root/hello', 'tehehe');
-	await fm.rename_file('/root/hello', '/root/umlol');
-	let data: string = await fm.read_file('/root/umlol');
-	await fm.delete_file('/root/umlol');
-	console.log(data);
+	let data: File_Descriptor[] = await fm.deep_read_directory('/root/FileManager');
+	console.dir(data, {depth: null});
 }
 
 read_write()

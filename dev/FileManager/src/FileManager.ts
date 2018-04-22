@@ -21,6 +21,9 @@ export class FileManager {
 	async read_directory(dir_path: string): Promise<string[]>{
 		return fs.readdirAsync(dir_path);
 	}
+	async stat_file(file_name: string): Promise<any>{
+		return fs.lstatAsync(file_name);
+	}
 
 	// sophisticated file and directory manipulation
 	
@@ -38,4 +41,31 @@ export class FileManager {
 		if (lockfile)
 			await this.delete_file(lockfile)
 	}
+
+	// recursively read the contents of a directory, returning an array of File_Descriptors
+	async deep_read_directory(dir_path: string): Promise<File_Descriptor[]>{
+		let contents: string[] = await this.read_directory(dir_path);
+		let output: File_Descriptor[] = [];
+		for (let name of contents){
+			let stat = await this.stat_file(dir_path+'/'+name);
+			let desc: File_Descriptor = new File_Descriptor(name);
+			if (stat.isDirectory())
+				desc.children = await this.deep_read_directory(dir_path+'/'+name);
+			else
+				desc.size = stat.size;
+			output.push(desc);
+		}
+		return output;
+	}
+}
+
+export class File_Descriptor {
+	constructor(name: string, size: number|undefined = undefined, children: File_Descriptor[]|undefined = undefined){
+		this.name = name;
+		this.size = size;
+		this.children = children;
+	}
+	private name: string;
+	size: number | undefined = undefined;
+	children: File_Descriptor[] | undefined = undefined;
 }

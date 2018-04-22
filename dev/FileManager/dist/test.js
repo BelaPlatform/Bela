@@ -164,6 +164,27 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#stat_file', function () {
+            before(function () {
+                mock({ 'test_file': 'test' });
+            });
+            it('should return an object with a size field and isDirectory method', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var stat;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.stat_file('test_file')];
+                            case 1:
+                                stat = _a.sent();
+                                stat.size.should.be.a('Number');
+                                stat.isDirectory.should.be.a('Function');
+                                stat.isDirectory().should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });
@@ -212,6 +233,43 @@ describe('FileManager', function () {
             });
             afterEach(function () {
                 mock.restore();
+            });
+        });
+        describe('#deep_read_directory', function () {
+            var root_content = [
+                new FileManager_1.File_Descriptor('dir1', undefined, [
+                    new FileManager_1.File_Descriptor('dir2', undefined, [
+                        new FileManager_1.File_Descriptor('file3', 6, undefined)
+                    ]),
+                    new FileManager_1.File_Descriptor('file2', 5, undefined)
+                ]),
+                new FileManager_1.File_Descriptor('file', 4, undefined)
+            ];
+            before(function () {
+                mock({
+                    'root': {
+                        'file': 'test',
+                        'dir1': {
+                            'file2': 'test2',
+                            'dir2': { 'file3': 'test33' }
+                        }
+                    }
+                });
+            });
+            it('should recursively read the contents of a directory, returning an array of file descriptors', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.deep_read_directory('root')];
+                            case 1:
+                                output = _a.sent();
+                                //	console.dir(output, { depth: null });
+                                output.should.deep.equal(root_content);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
             });
         });
         afterEach(function () {

@@ -1,6 +1,6 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
-import { FileManager } from "../src/FileManager";
+import { FileManager, File_Descriptor } from "../src/FileManager";
 
 should();
 
@@ -79,6 +79,18 @@ describe('FileManager', function(){
 				output.should.deep.equal(file_list);
 			});
 		});
+
+		describe('#stat_file', function(){
+			before(function(){
+				mock({ 'test_file': 'test' });
+			})
+			it('should return an object with a size field and isDirectory method', async function(){
+				let stat = await fm.stat_file('test_file');
+				stat.size.should.be.a('Number');
+				stat.isDirectory.should.be.a('Function');
+				stat.isDirectory().should.equal(false);
+			});
+		});
 			
 		afterEach(function(){
 			mock.restore();
@@ -108,6 +120,35 @@ describe('FileManager', function(){
 				mock.restore();
 			});
 		});
+		
+		describe('#deep_read_directory', function(){
+			var root_content = [
+				new File_Descriptor('dir1', undefined, [
+					new File_Descriptor('dir2', undefined, [
+						new File_Descriptor('file3', 6, undefined)
+					]),
+					new File_Descriptor('file2', 5, undefined)
+				]),
+				new File_Descriptor('file', 4, undefined)
+			];
+			before(function(){
+				mock({ 
+					'root': {
+						'file': 'test',
+						'dir1': {
+							'file2': 'test2',
+							'dir2': { 'file3': 'test33' }
+						}
+					}
+				});
+			});
+			it('should recursively read the contents of a directory, returning an array of file descriptors', async function(){
+				let output: File_Descriptor[] = await fm.deep_read_directory('root');
+			//	console.dir(output, { depth: null });
+				output.should.deep.equal(root_content);
+			});
+		});
+
 		afterEach(function(){
 			mock.restore();
 		});
