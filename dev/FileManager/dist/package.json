@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "mocha"
+    "test": "find ./ -name '*.spec.js' | xargs mocha -R spec"
   },
   "author": "",
   "license": "ISC",
