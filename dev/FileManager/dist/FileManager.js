@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs-extra-promise");
+var isBinary = require("isbinaryfile");
 var FileManager = /** @class */ (function () {
     function FileManager() {
         console.log('hi');
@@ -155,6 +156,21 @@ var FileManager = /** @class */ (function () {
                         return [3 /*break*/, 2];
                     case 8: return [2 /*return*/, output];
                 }
+            });
+        });
+    };
+    // checks if a file is binary - only reads a few thousand bytes at most
+    // returns a boolean when awaited
+    FileManager.prototype.is_binary = function (file_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Promise(function (resolve, reject) {
+                        isBinary(file_path, function (err, result) {
+                            if (err)
+                                reject(err);
+                            resolve(result);
+                        });
+                    })];
             });
         });
     };

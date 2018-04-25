@@ -1,6 +1,7 @@
 {
     "files": [
-        "test/FileManager.spec.ts"
+        "test/FileManager.spec.ts",
+        "test/ProjectManager.spec.ts"
     ],
     "compilerOptions": {
         "noImplicitAny": true,

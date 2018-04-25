@@ -1,6 +1,9 @@
 {
     "files": [
         "src/main.ts",
+        "src/paths.ts",
+        "src/declarations.d.ts",
+        "src/ProjectManager.ts",
         "src/FileManager.ts"
     ],
     "compilerOptions": {

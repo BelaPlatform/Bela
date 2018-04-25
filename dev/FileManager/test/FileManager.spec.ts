@@ -92,6 +92,19 @@ describe('FileManager', function(){
 			});
 		});
 			
+		describe('#is_binary', function(){
+			beforeEach(function(){
+				mock({ 'test_text': 'test', 'test_bin': new Buffer(100) });
+			})
+			it('should return true for a binary file', async function(){
+				let result = await fm.is_binary('test_bin');
+				result.should.equal(true);
+			});
+			it('should return false for a non-binary file', async function(){
+				let result = await fm.is_binary('test_text');
+				result.should.equal(false);
+			});
+		});
 		afterEach(function(){
 			mock.restore();
 		});

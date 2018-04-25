@@ -1,10 +1,15 @@
 import { FileManager, File_Descriptor } from "./FileManager";
+import { ProjectManager } from "./ProjectManager";
 
 let fm: FileManager = new FileManager();
+let pm: ProjectManager = new ProjectManager();
 
 async function read_write(){
-	let data: File_Descriptor[] = await fm.deep_read_directory('/root/FileManager');
-	console.dir(data, {depth: null});
+	// let data = await pm.openFile({currentProject: 'basic', newFile: 'render.cpp'});
+	// console.dir(data, {depth: null});
+	let result = await fm.is_binary('/root/Bela/projects/basic/basic');
+	console.log('ohi');
+	console.log(result, typeof result);
 }
 
 read_write()

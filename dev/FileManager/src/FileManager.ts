@@ -1,4 +1,5 @@
 import * as fs from 'fs-extra-promise';
+import * as isBinary from 'isbinaryfile';
 
 export class FileManager {
 	constructor(){
@@ -57,6 +58,18 @@ export class FileManager {
 		}
 		return output;
 	}
+	
+	// checks if a file is binary - only reads a few thousand bytes at most
+	// returns a boolean when awaited
+	async is_binary(file_path: string){
+		return new Promise(function(resolve, reject){
+			isBinary(file_path, (err: any, result: any) => {
+				if (err) reject(err);
+				resolve(result);
+			});
+		});
+	}
+
 }
 
 export class File_Descriptor {

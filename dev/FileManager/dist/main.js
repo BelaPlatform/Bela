@@ -36,16 +36,19 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var FileManager_1 = require("./FileManager");
+var ProjectManager_1 = require("./ProjectManager");
 var fm = new FileManager_1.FileManager();
+var pm = new ProjectManager_1.ProjectManager();
 function read_write() {
     return __awaiter(this, void 0, void 0, function () {
-        var data;
+        var result;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fm.deep_read_directory('/root/FileManager')];
+                case 0: return [4 /*yield*/, fm.is_binary('/root/Bela/projects/basic/basic')];
                 case 1:
-                    data = _a.sent();
-                    console.dir(data, { depth: null });
+                    result = _a.sent();
+                    console.log('ohi');
+                    console.log(result, typeof result);
                     return [2 /*return*/];
             }
         });

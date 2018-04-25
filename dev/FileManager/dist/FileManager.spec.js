@@ -185,6 +185,39 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#is_binary', function () {
+            beforeEach(function () {
+                mock({ 'test_text': 'test', 'test_bin': new Buffer(100) });
+            });
+            it('should return true for a binary file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var result;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.is_binary('test_bin')];
+                            case 1:
+                                result = _a.sent();
+                                result.should.equal(true);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should return false for a non-binary file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var result;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.is_binary('test_text')];
+                            case 1:
+                                result = _a.sent();
+                                result.should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

@@ -9,10 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/mock-fs": "^3.6.30",
     "chai": "^4.1.2",
+    "file-type": "^7.6.0",
     "fs-extra-promise": "^1.0.1",
+    "isbinaryfile": "^3.0.2",
     "mocha": "^5.1.1",
-    "mock-fs": "^4.4.2"
+    "mock-fs": "^4.4.2",
+    "read-chunk": "^2.1.0"
   }
 }
