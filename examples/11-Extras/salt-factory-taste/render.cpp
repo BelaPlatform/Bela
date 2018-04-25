@@ -35,7 +35,7 @@ int gButtonStatus[gNumButtons] = {0, 0, 0, 0};
 
 int gLedsOn = false;
 
-int gBlockSize = 512;
+int gBlockSize = 16;//512;
 
 float gInverseAnalogSampleRate;
 
@@ -145,6 +145,8 @@ void render(BelaContext *context, void *userData)
 		return;
 		
 	static bool flashLeds = true;
+
+	gCurrentTest = kCvLoRangeTest; // DELETE
 
 	
 	// FIRST TEST
@@ -409,8 +411,6 @@ void render(BelaContext *context, void *userData)
 	// THIRD TEST
 	else if (gCurrentTest == kPotRangeTest) 
 	{
-		gCurrentTest = kCvLoRangeTest; // DELETE
-		
 		static bool potsWorking[gNumCVs] = {0};
 		static int numOfWorkingPots = 0;
 		static int currentPot = -1;
@@ -522,27 +522,32 @@ void render(BelaContext *context, void *userData)
 		static int currentCv = 0;
 		static int rampDirection = 1;
 		static bool potCheck = true;
-		static float cvOutVal = 0.0;
+		
 		float readVal;
+		static bool brokenCvs[gNumCVs] = {0};
+		static int numOfWorkingCvs = 0;
+		float cvOutRange[2] = {0.55, 0.95};
+		static float cvOutVal = cvOutRange[0];
+		float tolerance =  0.15;
+		
 		
 		for(unsigned int n = 0; n < context->analogFrames; n++) 
 		{
 			static unsigned int blockCount = count;
 			
+			
 
 			// Flash test number
 			//if(flashLeds)
+			
 			if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->analogSampleRate, count, 1))
 			{
 				encodeNumberLed(context, n, pwmPin, ledPins, 4, currentCv+1, 0);
 				//flashNumberLed(context, n, pwmPin, ledPins, 4, currentCv+1, -1, 0.25 * context->analogSampleRate, count, 0);
 			}
+			
 				
 			if(currentCv < gNumCVs)
-			{
-				
-			}
-			else
 			{
 				// Wait for potentiometer to be set at minimum
 				if(potCheck)
@@ -559,38 +564,59 @@ void render(BelaContext *context, void *userData)
 					}
 				}
 				else
-				{
-					analogWriteOnce(context, n, cvPins[currentCv], cvOutVal);
+				{	
 					
-					// Read after half a block-size samples
-					if(count - blockCount == gBlockSize/2)
-					{
+						analogWriteOnce(context, n, cvPins[currentCv], cvOutVal);
+					
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
 						
-						// Read value
-						readVal = analogRead(context, n, cvPins[currentCv]);
-		
-						// Check that the read value and the ouput value are within range
-						if(fabs(readVal - cvOutVal) > 0.01)
-						{
-							// In and out are within range
-						} 
-						else
-						{
-							// In and out are out of range
+							// Read value
+							readVal = analogRead(context, n, cvPins[currentCv]);
+							//rt_printf("readVal %f, cvOutVal %f\n", readVal+0.5, cvOutVal);
+							
+							// Check that the read value and the ouput value are within range
+							if(fabs(readVal+0.5 - cvOutVal) <= tolerance)
+							{
+								// In and out are within range
+								//rt_printf("within\n");
+							} 
+							else
+							{
+								// In and out are out of range
+								//rt_printf("out\n");
+								brokenCvs[currentCv] = 1;
+								//break;
+							}
+							
+							// Increment CV output values
+							cvOutVal += (rampDirection) * gBlockSize * gInverseAnalogSampleRate;
+							if(cvOutVal >= cvOutRange[1])
+							{	
+								rampDirection *= -1; // change ramp direction
+							} 
+							else if (cvOutVal <= cvOutRange[0])
+							{
+								rt_printf("%d\n", currentCv);
+								if(!brokenCvs[currentCv])
+									++numOfWorkingCvs;
+								cvOutVal = cvOutRange[0];
+								rampDirection *= -1; // change ramp direction
+								++currentCv; // go to next cv input
+								potCheck = true;
+							}
 						}
-						
-						// Increment CV output values
-						cvOutVal += (rampDirection) * gInverseAnalogSampleRate;
-						if(cvOutVal >= 0.5)
-						{	
-							rampDirection *= -1; // change ramp direction
-						} 
-						else if (cvOutVal <= 0)
-						{
-							rampDirection *= -1; // change ramp direction
-							++currentCv; // go to next cv input
-						}
-					}
+
+				}
+			}
+			else
+			{
+				//rt_printf("numOfWorkingCvs %d\n",numOfWorkingCvs);	
+				for(unsigned int c = 0; c < gNumCVs; c++)
+				{
+					if(brokenCvs[c])
+						rt_printf("CV %d is broken\n", c);
 				}
 			}
 			
