@@ -105,6 +105,18 @@ describe('FileManager', function(){
 				result.should.equal(false);
 			});
 		});
+
+		describe('#make_symlink', function(){
+			var content = 'test_content';
+			beforeEach(function(){
+				mock({ 'test_src': content });
+			})
+			it('should create a symlink', async function(){
+				await fm.make_symlink('test_src', 'test_dir/test_dest');
+				let data: string = await fm.read_file('test_dir/test_dest');
+				data.should.equal(content);
+			});
+		});
 		afterEach(function(){
 			mock.restore();
 		});

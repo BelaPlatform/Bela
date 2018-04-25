@@ -5,11 +5,11 @@ let fm: FileManager = new FileManager();
 let pm: ProjectManager = new ProjectManager();
 
 async function read_write(){
-	// let data = await pm.openFile({currentProject: 'basic', newFile: 'render.cpp'});
-	// console.dir(data, {depth: null});
-	let result = await fm.is_binary('/root/Bela/projects/basic/basic');
-	console.log('ohi');
-	console.log(result, typeof result);
+	let data = await pm.openFile({currentProject: 'basic', newFile: 'cape02.jpg'});
+	console.dir(data, {depth: null});
+//	let result = await fm.is_binary('/root/Bela/projects/basic/basic');
+//	console.log('ohi');
+//	console.log(result, typeof result);
 }
 
 read_write()

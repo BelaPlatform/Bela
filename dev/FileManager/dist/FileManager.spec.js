@@ -218,6 +218,29 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#make_symlink', function () {
+            var content = 'test_content';
+            beforeEach(function () {
+                mock({ 'test_src': content });
+            });
+            it('should create a symlink', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.make_symlink('test_src', 'test_dir/test_dest')];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, fm.read_file('test_dir/test_dest')];
+                            case 2:
+                                data = _a.sent();
+                                data.should.equal(content);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

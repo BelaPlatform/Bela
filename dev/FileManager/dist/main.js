@@ -41,14 +41,13 @@ var fm = new FileManager_1.FileManager();
 var pm = new ProjectManager_1.ProjectManager();
 function read_write() {
     return __awaiter(this, void 0, void 0, function () {
-        var result;
+        var data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fm.is_binary('/root/Bela/projects/basic/basic')];
+                case 0: return [4 /*yield*/, pm.openFile({ currentProject: 'basic', newFile: 'cape02.jpg' })];
                 case 1:
-                    result = _a.sent();
-                    console.log('ohi');
-                    console.log(result, typeof result);
+                    data = _a.sent();
+                    console.dir(data, { depth: null });
                     return [2 /*return*/];
             }
         });

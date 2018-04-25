@@ -25,6 +25,15 @@ export class FileManager {
 	async stat_file(file_name: string): Promise<any>{
 		return fs.lstatAsync(file_name);
 	}
+	async make_symlink(src_path: string, dest_path: string): Promise<any>{
+		return new Promise(function(resolve, reject){
+			fs.ensureSymlink(src_path, dest_path, function(err){
+				if (err) reject(err);
+				resolve();
+			});
+		});
+	}
+
 
 	// sophisticated file and directory manipulation
 	
