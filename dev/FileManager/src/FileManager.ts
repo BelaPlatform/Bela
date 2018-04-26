@@ -2,9 +2,7 @@ import * as fs from 'fs-extra-promise';
 import * as isBinary from 'isbinaryfile';
 
 export class FileManager {
-	constructor(){
-		console.log('hi');
-	}
+	constructor(){}
 
 	// primitive file and directory manipulation
 	async write_file(file_path: string, data: string): Promise<void>{

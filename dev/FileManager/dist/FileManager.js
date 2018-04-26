@@ -39,7 +39,6 @@ var fs = require("fs-extra-promise");
 var isBinary = require("isbinaryfile");
 var FileManager = /** @class */ (function () {
     function FileManager() {
-        console.log('hi');
     }
     // primitive file and directory manipulation
     FileManager.prototype.write_file = function (file_path, data) {

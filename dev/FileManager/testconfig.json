@@ -1,6 +1,7 @@
 {
     "files": [
         "test/FileManager.spec.ts",
+        "src/declarations.d.ts",
         "test/ProjectManager.spec.ts"
     ],
     "compilerOptions": {

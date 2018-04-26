@@ -16,7 +16,7 @@ gulp.task("default", () => {
 
 gulp.task('test', () => {
 	gulp.watch(['src/*.ts'], ['typescript']);
-	gulp.watch(['test/*.ts'], ['test-typescript']);
+	gulp.watch(['test/*'], ['test-typescript']);
 	gulp.watch(['dist/*.js'], ['killnode', 'upload', 'do-test']);
 });
 
