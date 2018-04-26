@@ -766,14 +766,14 @@ GPIO_DONE:
     LBBO start_reg, r28, 0, num_bytes
 .endm
     
-// Set a bit and wait for it to come up
-.macro MCASP_REG_SET_BIT_AND_POLL
-.mparam reg, bit
-     LBBO &r28, reg_mcasp_addr, reg, 4
+// Set a MCASP_GBLCTL bit and wait for it to be acknowledged
+.macro MCASP_GBLCTL_SET_BIT_AND_POLL
+.mparam bit
+     LBBO &r28, reg_mcasp_addr, MCASP_GBLCTL, 4
      SET r28, r28, bit
-     SBBO &r28, reg_mcasp_addr, reg, 4
+     SBBO &r28, reg_mcasp_addr, MCASP_GBLCTL, 4
 POLL:
-     LBBO &r28, reg_mcasp_addr, reg, 4
+     LBBO &r28, reg_mcasp_addr, MCASP_GBLCTL, 4
      QBBC POLL, r28, bit
 .endm
 
@@ -1082,8 +1082,8 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_XSTAT, 0xFF       // Clear transmit errors
     MCASP_REG_WRITE MCASP_RSTAT, 0xFF       // Clear receive errors
 
-    MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, 1  // Set RHCLKRST
-    MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, 9  // Set XHCLKRST
+    MCASP_GBLCTL_SET_BIT_AND_POLL 1  // Set RHCLKRST
+    MCASP_GBLCTL_SET_BIT_AND_POLL 9  // Set XHCLKRST
 
 // The above write sequence will have temporarily changed the AHCLKX frequency
 // The PLL needs time to settle or the sample rate will be unstable and possibly
@@ -1103,12 +1103,12 @@ MCASP_INIT_WAIT:
      MOV r3, GPIO1 + GPIO_CLEARDATAOUT
      SBBO &r2, r3, 0, 4
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, 0  // Set RCLKRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, 8  // Set XCLKRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, 2  // Set RSRCLR
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, 10 // Set XSRCLR
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, 3  // Set RSMRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, 11 // Set XSMRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 0  // Set RCLKRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 8  // Set XCLKRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 2  // Set RSRCLR
+MCASP_GBLCTL_SET_BIT_AND_POLL 10 // Set XSRCLR
+MCASP_GBLCTL_SET_BIT_AND_POLL 3  // Set RSMRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 11 // Set XSMRST
 
 // Seems to be not required (was used to avoid transmit clock failure)
 //MCASP_REG_WRITE MCASP_XSTAT, 0xFF
@@ -1149,8 +1149,8 @@ MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 #endif
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, 4  // Set RFRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, 12 // Set XFRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 4  // Set RFRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 12 // Set XFRST
 
 // Initialisation
     LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count (0.5x-2x for McASP)
