@@ -687,8 +687,7 @@ GPIO_DONE:
   MOV r0, PRU_ICSS_INTC_LOCAL
   MOV r27, value
   MOV r28, reg
-  ADD r28, r0, r28
-  SBBO &r27, r28, 0, 4
+  SBBO &r27, r0, r28, 4
 .endm
 
 // Read PRU interrupt controller register beyond 0xFF boundary.
@@ -697,8 +696,7 @@ GPIO_DONE:
 .mparam reg, value
   MOV r0, PRU_ICSS_INTC_LOCAL
   MOV r28, reg
-  ADD r28, r0, r28
-  LBBO value, r28, 0, 4
+  LBBO value, r0, r28, 4
 .endm
 
 // Write PRU config register beyond 0xFF boundary.
@@ -708,8 +706,7 @@ GPIO_DONE:
   MOV r0, PRU_ICSS_CFG_LOCAL
   MOV r27, value
   MOV r28, reg
-  ADD r28, r0, r28
-  SBBO &r27, r28, 0, 4
+  SBBO &r27, r0, r28, 4
 .endm
 
 // Read PRU config register beyond 0xFF boundary.
@@ -718,8 +715,7 @@ GPIO_DONE:
 .mparam reg, value
   MOV r0, PRU_ICSS_CFG_LOCAL
   MOV r28, reg
-  ADD r28, r0, r28
-  LBBO value, r28, 0, 4
+  LBBO value, r0, r28, 4
 .endm
 
 // Write a McASP register
@@ -734,8 +730,7 @@ GPIO_DONE:
 .mparam reg, value
      MOV r27, value
      MOV r28, reg
-     ADD r28, reg_mcasp_addr, r28
-     SBBO &r27, r28, 0, 4
+     SBBO &r27, reg_mcasp_addr, r28, 4
 .endm
 
 // Write to data port beyond 0xFF boundary
@@ -755,8 +750,7 @@ GPIO_DONE:
 .macro MCASP_REG_READ_EXT
 .mparam reg, value
      MOV r28, reg
-     ADD r28, reg_mcasp_addr, r28
-     LBBO value, r28, 0, 4
+     LBBO value, reg_mcasp_addr, r28, 4
 .endm
 
 // Read from data port beyond 0xFF boundary
@@ -1783,14 +1777,12 @@ ALL_FRAMES_PROCESSED:
      QBEQ LED_BLINK_OFF, r2, 0
      LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_SETDATAOUT
-     ADD r3, r3, r1          // Address for GPIO set register
-     SBBO &r2, r3, 0, 4       // Set GPIO pin
+     SBBO &r2, r3, r1, 4       // Set GPIO pin
      QBA LED_BLINK_DONE
 LED_BLINK_OFF:
      LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_CLEARDATAOUT
-     ADD r3, r3, r1          // Address for GPIO clear register
-     SBBO &r2, r3, 0, 4       // Clear GPIO pin
+     SBBO &r2, r3, r1, 4       // Clear GPIO pin
 LED_BLINK_DONE: 
      // Check if we should finish: flag is zero as long as it should run
      LBBO &r2, reg_comm_addr, COMM_SHOULD_STOP, 4
@@ -1818,8 +1810,7 @@ SPI_CLEANUP_DONE:
      QBEQ CLEANUP_DONE, r3, 0        
      LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_CLEARDATAOUT
-     ADD r3, r3, r1          // Address for GPIO clear register
-     SBBO &r2, r3, 0, 4       // Clear GPIO pin
+     SBBO &r2, r3, r1, 4       // Clear GPIO pin
 
 CLEANUP_DONE:
      XIN SCRATCHPAD_ID_BANK2, r0, 20 // Load test data from scratchpad 2 for evaluation

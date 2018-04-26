@@ -552,8 +552,7 @@ GPIO_DONE:
 .mparam reg, value
      MOV r27, value
      MOV r28, reg
-     ADD r28, reg_mcasp_addr, r28
-     SBBO &r27, r28, 0, 4
+     SBBO &r27, reg_mcasp_addr, r28, 4
 .endm
 
 // Read a McASP register
@@ -566,8 +565,7 @@ GPIO_DONE:
 .macro MCASP_REG_READ_EXT
 .mparam reg, value
      MOV r28, reg
-     ADD r28, reg_mcasp_addr, r28
-     LBBO value, r28, 0, 4
+     LBBO value, reg_mcasp_addr, r28, 4
 .endm
 	
 // Set a MCASP_GBLCTL bit and wait for it to be acknowledged
@@ -1137,14 +1135,12 @@ MUX_CHANNEL_SAVE_DONE:
      QBEQ LED_BLINK_OFF, r2, 0
      LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_SETDATAOUT
-     ADD r3, r3, r1          // Address for GPIO set register
-     SBBO &r2, r3, 0, 4       // Set GPIO pin
+     SBBO &r2, r3, r1, 4       // Set GPIO pin
      QBA LED_BLINK_DONE
 LED_BLINK_OFF:
      LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_CLEARDATAOUT
-     ADD r3, r3, r1          // Address for GPIO clear register
-     SBBO &r2, r3, 0, 4       // Clear GPIO pin
+     SBBO &r2, r3, r1, 4       // Clear GPIO pin
 LED_BLINK_DONE:	
      // Check if we should finish: flag is zero as long as it should run
      LBBO &r2, reg_comm_addr, COMM_SHOULD_STOP, 4
@@ -1172,8 +1168,7 @@ SPI_CLEANUP_DONE:
      QBEQ CLEANUP_DONE, r3, 0		 
      LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_CLEARDATAOUT
-     ADD r3, r3, r1          // Address for GPIO clear register
-     SBBO &r2, r3, 0, 4       // Clear GPIO pin
+     SBBO &r2, r3, r1, 4       // Clear GPIO pin
 
 CLEANUP_DONE:
      // Signal the ARM that we have finished 
