@@ -97,6 +97,13 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    FileManager.prototype.empty_directory = function (dir_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, fs.emptyDir(dir_path)];
+            });
+        });
+    };
     // sophisticated file and directory manipulation
     // save_file follows vim's strategy to save a file in a crash-proof way
     // it first writes the file to .<file_name>~

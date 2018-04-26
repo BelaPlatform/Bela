@@ -117,6 +117,22 @@ describe('FileManager', function(){
 				data.should.equal(content);
 			});
 		});
+
+		describe('#empty_directory', function(){
+			before(function(){
+				mock({ 'test_dir': {
+					'test_dir2': { 'test_deep': 'content' },
+					'test_file1': 'content',
+					'test_file2': 'more_content'
+					}
+				});
+			})
+			it('should delete all files and directories in a direcory', async function(){
+				await fm.empty_directory('test_dir');
+				let file_list: string[] = await fm.read_directory('test_dir');
+				file_list.should.deep.equal([]);
+			});
+		});
 		afterEach(function(){
 			mock.restore();
 		});

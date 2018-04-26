@@ -33,6 +33,9 @@ export class FileManager {
 			});
 		});
 	}
+	async empty_directory(dir_path: string): Promise<void>{
+		return fs.emptyDir(dir_path);
+	}
 
 
 	// sophisticated file and directory manipulation

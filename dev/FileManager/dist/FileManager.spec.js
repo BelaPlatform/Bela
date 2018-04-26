@@ -241,6 +241,33 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#empty_directory', function () {
+            before(function () {
+                mock({ 'test_dir': {
+                        'test_dir2': { 'test_deep': 'content' },
+                        'test_file1': 'content',
+                        'test_file2': 'more_content'
+                    }
+                });
+            });
+            it('should delete all files and directories in a direcory', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var file_list;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.empty_directory('test_dir')];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, fm.read_directory('test_dir')];
+                            case 2:
+                                file_list = _a.sent();
+                                file_list.should.deep.equal([]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });
