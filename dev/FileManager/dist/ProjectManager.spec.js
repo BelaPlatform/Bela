@@ -51,7 +51,7 @@ describe('ProjectManager', function () {
             var fileData = 'test_render_content';
             var image;
             var wav;
-            before(function () {
+            beforeEach(function () {
                 return __awaiter(this, void 0, void 0, function () {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
@@ -165,7 +165,33 @@ describe('ProjectManager', function () {
                 });
             });
         });
-        after(function () {
+        describe('#listProjects', function () {
+            before(function () {
+                mock({
+                    '/root/Bela/projects': {
+                        'test_project1': { 'test_file1': 'content' },
+                        'test_project2': { 'test_file2': 'content' }
+                    }
+                });
+            });
+            it('should return an array of strings containing the names of the projects in the projects folder', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = {};
+                                return [4 /*yield*/, pm.listProjects(data)];
+                            case 1:
+                                data = _a.sent();
+                                data.projectList.should.deep.equal(['test_project1', 'test_project2']);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
+        afterEach(function () {
             mock.restore();
         });
     });

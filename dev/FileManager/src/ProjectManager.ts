@@ -64,4 +64,9 @@ export class ProjectManager {
 		return data;
 	}
 
+	async listProjects(data: any){
+		data.projectList = await fm.read_directory(paths.projects);
+		return data;
+	}
+
 }

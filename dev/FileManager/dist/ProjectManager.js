@@ -120,6 +120,21 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.listProjects = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = data;
+                        return [4 /*yield*/, fm.read_directory(paths_1.paths.projects)];
+                    case 1:
+                        _a.projectList = _b.sent();
+                        return [2 /*return*/, data];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;
