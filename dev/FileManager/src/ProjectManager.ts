@@ -68,5 +68,9 @@ export class ProjectManager {
 		data.projectList = await fm.read_directory(paths.projects);
 		return data;
 	}
+	async listExamples(data: any){
+		data.exampleList = await fm.deep_read_directory(paths.examples);
+		return data;
+	}
 
 }

@@ -1,6 +1,6 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
-import { FileManager } from "../src/FileManager";
+import { FileManager, File_Descriptor } from "../src/FileManager";
 import { ProjectManager } from "../src/ProjectManager";
 import {paths} from '../src/paths';
 
@@ -20,7 +20,7 @@ describe('ProjectManager', function(){
 			var fileData = 'test_render_content';
 			var image: Buffer;
 			var wav: Buffer;
-			before(async function(){
+			beforeEach(async function(){
 				image = await fm.read_file_raw('/root/FileManager/src/test_image.png');
 				wav = await fm.read_file_raw('/root/FileManager/src/test_wav.wav');
 				mock({
@@ -74,9 +74,73 @@ describe('ProjectManager', function(){
 				output.fileName.should.equal('test_wav.wav');
 				output.fileType.should.equal('audio/x-wav');
 			});
-		})
+		});
 
-		after(function(){
+		describe('#listProjects', function(){
+			before(function(){
+				mock({
+					'/root/Bela/projects': {
+						'test_project1': { 'test_file1': 'content' },
+						'test_project2': { 'test_file2': 'content' }
+					}
+				});
+			})
+			it('should return an array of strings containing the names of the projects in the projects folder', async function(){
+				let data: any = {};
+				data = await pm.listProjects(data);
+				data.projectList.should.deep.equal(['test_project1', 'test_project2']);
+			});
+		});
+
+		describe('#listExamples', function(){
+			var output = [ new File_Descriptor(
+				'test_category1', 
+				undefined, 
+				[new File_Descriptor(
+					'test_example1',
+					undefined,
+					[new File_Descriptor(
+						'test_file1',
+						7,
+						undefined
+					)]
+				)]
+			), new File_Descriptor(
+				'test_category2',
+				undefined,
+				[new File_Descriptor(
+					'test_example2',
+					undefined,
+					[new File_Descriptor(
+						'test_file2',
+						7,
+						undefined
+					)]
+				)]
+			)];
+			before(function(){
+				mock({
+					'/root/Bela/examples': {
+						'test_category1': { 
+							'test_example1': {
+								'test_file1': 'content'
+							}
+						},
+						'test_category2': { 
+							'test_example2': {
+								'test_file2': 'content'
+							}
+						}
+					}
+				});
+			})
+			it('should return an array of File_Descriptors describing the contents of the examples folder', async function(){
+				let data: any = {};
+				data = await pm.listExamples(data);
+				data.exampleList.should.deep.equal(output);
+			});
+		});
+		afterEach(function(){
 			mock.restore();
 		})
 	})

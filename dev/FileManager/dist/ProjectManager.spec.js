@@ -191,6 +191,41 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#listExamples', function () {
+            var output = [new FileManager_1.File_Descriptor('test_category1', undefined, [new FileManager_1.File_Descriptor('test_example1', undefined, [new FileManager_1.File_Descriptor('test_file1', 7, undefined)])]), new FileManager_1.File_Descriptor('test_category2', undefined, [new FileManager_1.File_Descriptor('test_example2', undefined, [new FileManager_1.File_Descriptor('test_file2', 7, undefined)])])];
+            before(function () {
+                mock({
+                    '/root/Bela/examples': {
+                        'test_category1': {
+                            'test_example1': {
+                                'test_file1': 'content'
+                            }
+                        },
+                        'test_category2': {
+                            'test_example2': {
+                                'test_file2': 'content'
+                            }
+                        }
+                    }
+                });
+            });
+            it('should return an array of File_Descriptors describing the contents of the examples folder', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = {};
+                                return [4 /*yield*/, pm.listExamples(data)];
+                            case 1:
+                                data = _a.sent();
+                                data.exampleList.should.deep.equal(output);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });
