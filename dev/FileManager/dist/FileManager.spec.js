@@ -63,6 +63,27 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#read_file_raw', function () {
+            var content = Buffer.alloc(10, 'a');
+            ;
+            before(function () {
+                mock({ 'test_file': content });
+            });
+            it('should read a file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, fm.read_file_raw('test_file')];
+                            case 1:
+                                data = _a.sent();
+                                data.should.deep.equal(content);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         describe('#write_file', function () {
             var content = 'this is still a test';
             before(function () {

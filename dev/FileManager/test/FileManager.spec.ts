@@ -23,6 +23,17 @@ describe('FileManager', function(){
 			});
 		});
 
+		describe('#read_file_raw', function() {
+			var content: Buffer = Buffer.alloc(10, 'a');;
+			before(function(){
+				mock({ 'test_file': content });
+			});
+			it('should read a file', async function(){
+				let data: Buffer = await fm.read_file_raw('test_file');
+				data.should.deep.equal(content);
+			});
+		});
+
 		describe('#write_file', function(){
 			var content: string = 'this is still a test';
 			before(function(){

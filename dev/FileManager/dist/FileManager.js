@@ -56,6 +56,13 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    FileManager.prototype.read_file_raw = function (file_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, fs.readFileAsync(file_path)];
+            });
+        });
+    };
     FileManager.prototype.rename_file = function (src, dest) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {

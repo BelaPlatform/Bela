@@ -13,6 +13,9 @@ export class FileManager {
 	async read_file(file_path: string): Promise<string>{
 		return fs.readFileAsync(file_path, 'utf8');
 	}
+	async read_file_raw(file_path: string): Promise<Buffer>{
+		return fs.readFileAsync(file_path);
+	}
 	async rename_file(src: string, dest: string): Promise<void>{
 		return fs.moveAsync(src, dest, {overwrite: true});
 	}
