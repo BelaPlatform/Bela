@@ -1,9 +1,8 @@
-import { FileManager, File_Descriptor } from "./FileManager";
+import { fm, File_Descriptor } from "./FileManager";
+import { p_settings } from './SettingsManager';
 import {paths} from './paths';
 import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
-
-var fm: FileManager = new FileManager();
 
 let max_file_size = 50000000;	// bytes (50Mb)
 
@@ -71,6 +70,16 @@ export class ProjectManager {
 	async listExamples(data: any){
 		data.exampleList = await fm.deep_read_directory(paths.examples);
 		return data;
+	}
+
+	async openProject(data: any) {
+		data.fileList = await fm.deep_read_directory(paths.projects+data.currentProject);
+		let settings: any = await p_settings.read(data.currentProject);
+		data.newFile = settings.fileName;
+		data.CLArgs = settings.CLArgs;
+		// TODO: data.exampleName
+		// TODO: data.gitData
+		await this.openFile(data);
 	}
 
 }

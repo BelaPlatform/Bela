@@ -1,12 +1,11 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
-import { FileManager, File_Descriptor } from "../src/FileManager";
+import { fm, File_Descriptor } from "../src/FileManager";
 import { ProjectManager } from "../src/ProjectManager";
 import {paths} from '../src/paths';
 
 should();
 
-var fm = new FileManager();
 var pm = new ProjectManager();
 
 describe('ProjectManager', function(){
@@ -27,7 +26,7 @@ describe('ProjectManager', function(){
 					'/root/Bela/projects/test' : {
 						'render.cpp': fileData,
 						'bin_large': new Buffer(50000001),
-						'bin_small': new Buffer(100),
+						'bin_small': new Buffer(10000),
 						'test_image.png': image,
 						'test_wav.wav': wav
 					}
@@ -73,6 +72,9 @@ describe('ProjectManager', function(){
 				output.readOnly.should.equal(true);
 				output.fileName.should.equal('test_wav.wav');
 				output.fileType.should.equal('audio/x-wav');
+			});
+			afterEach(function(){
+				mock.restore();
 			});
 		});
 
@@ -140,6 +142,28 @@ describe('ProjectManager', function(){
 				data.exampleList.should.deep.equal(output);
 			});
 		});
+
+		describe('#openProject', function(){
+			var test_content = 'ohai';
+			var CLArgs = {'key': 'field'};
+			before(function(){
+				mock({
+					'/root/Bela/projects/test_project': {
+						'settings.json': JSON.stringify({'fileName': 'fender.cpp', CLArgs }),
+						'fender.cpp': test_content
+					}
+				});
+			});
+			it('should open a project', async function(){
+				let out: any = {currentProject: 'test_project'};
+				await pm.openProject(out);
+				out.fileName.should.equal('fender.cpp');
+				out.CLArgs.should.deep.equal(CLArgs);
+				out.fileData.should.equal(test_content);
+				out.fileList.should.deep.equal([new File_Descriptor('fender.cpp', 4, undefined), new File_Descriptor('settings.json', 50, undefined)]);
+			});
+		});
+
 		afterEach(function(){
 			mock.restore();
 		})

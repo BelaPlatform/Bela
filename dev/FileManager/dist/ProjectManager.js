@@ -36,10 +36,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var FileManager_1 = require("./FileManager");
+var SettingsManager_1 = require("./SettingsManager");
 var paths_1 = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
-var fm = new FileManager_1.FileManager();
 var max_file_size = 50000000; // bytes (50Mb)
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is 
@@ -59,7 +59,7 @@ var ProjectManager = /** @class */ (function () {
                 switch (_b.label) {
                     case 0:
                         file_path = paths_1.paths.projects + data.currentProject + '/' + data.newFile;
-                        return [4 /*yield*/, fm.stat_file(file_path)];
+                        return [4 /*yield*/, FileManager_1.fm.stat_file(file_path)];
                     case 1:
                         file_stat = _b.sent();
                         if (file_stat.size > max_file_size) {
@@ -78,10 +78,10 @@ var ProjectManager = /** @class */ (function () {
                     case 3:
                         file_type = _b.sent();
                         if (!(file_type && (file_type.mime.includes('image') || file_type.mime.includes('audio')))) return [3 /*break*/, 6];
-                        return [4 /*yield*/, fm.empty_directory(paths_1.paths.media)];
+                        return [4 /*yield*/, FileManager_1.fm.empty_directory(paths_1.paths.media)];
                     case 4:
                         _b.sent();
-                        return [4 /*yield*/, fm.make_symlink(file_path, paths_1.paths.media + data.newFile)];
+                        return [4 /*yield*/, FileManager_1.fm.make_symlink(file_path, paths_1.paths.media + data.newFile)];
                     case 5:
                         _b.sent();
                         data.fileData = '';
@@ -90,7 +90,7 @@ var ProjectManager = /** @class */ (function () {
                         data.newFile = undefined;
                         data.fileType = file_type.mime;
                         return [2 /*return*/, data];
-                    case 6: return [4 /*yield*/, fm.is_binary(file_path)];
+                    case 6: return [4 /*yield*/, FileManager_1.fm.is_binary(file_path)];
                     case 7:
                         is_binary = _b.sent();
                         if (is_binary) {
@@ -103,7 +103,7 @@ var ProjectManager = /** @class */ (function () {
                             return [2 /*return*/, data];
                         }
                         _a = data;
-                        return [4 /*yield*/, fm.read_file(file_path)];
+                        return [4 /*yield*/, FileManager_1.fm.read_file(file_path)];
                     case 8:
                         _a.fileData = _b.sent();
                         if (data.newFile.split && data.newFile.includes('.')) {
@@ -127,7 +127,7 @@ var ProjectManager = /** @class */ (function () {
                 switch (_b.label) {
                     case 0:
                         _a = data;
-                        return [4 /*yield*/, fm.read_directory(paths_1.paths.projects)];
+                        return [4 /*yield*/, FileManager_1.fm.read_directory(paths_1.paths.projects)];
                     case 1:
                         _a.projectList = _b.sent();
                         return [2 /*return*/, data];
@@ -142,10 +142,37 @@ var ProjectManager = /** @class */ (function () {
                 switch (_b.label) {
                     case 0:
                         _a = data;
-                        return [4 /*yield*/, fm.deep_read_directory(paths_1.paths.examples)];
+                        return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.examples)];
                     case 1:
                         _a.exampleList = _b.sent();
                         return [2 /*return*/, data];
+                }
+            });
+        });
+    };
+    ProjectManager.prototype.openProject = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, settings;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = data;
+                        return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.projects + data.currentProject)];
+                    case 1:
+                        _a.fileList = _b.sent();
+                        return [4 /*yield*/, SettingsManager_1.p_settings.read(data.currentProject)];
+                    case 2:
+                        settings = _b.sent();
+                        data.newFile = settings.fileName;
+                        data.CLArgs = settings.CLArgs;
+                        // TODO: data.exampleName
+                        // TODO: data.gitData
+                        return [4 /*yield*/, this.openFile(data)];
+                    case 3:
+                        // TODO: data.exampleName
+                        // TODO: data.gitData
+                        _b.sent();
+                        return [2 /*return*/];
                 }
             });
         });

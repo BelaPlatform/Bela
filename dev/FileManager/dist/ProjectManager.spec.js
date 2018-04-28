@@ -40,7 +40,6 @@ var mock = require("mock-fs");
 var FileManager_1 = require("../src/FileManager");
 var ProjectManager_1 = require("../src/ProjectManager");
 chai_1.should();
-var fm = new FileManager_1.FileManager();
 var pm = new ProjectManager_1.ProjectManager();
 describe('ProjectManager', function () {
     describe('simple project management functions', function () {
@@ -55,22 +54,22 @@ describe('ProjectManager', function () {
                 return __awaiter(this, void 0, void 0, function () {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.read_file_raw('/root/FileManager/src/test_image.png')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.read_file_raw('/root/FileManager/src/test_image.png')];
                             case 1:
                                 image = _a.sent();
-                                return [4 /*yield*/, fm.read_file_raw('/root/FileManager/src/test_wav.wav')];
+                                return [4 /*yield*/, FileManager_1.fm.read_file_raw('/root/FileManager/src/test_wav.wav')];
                             case 2:
                                 wav = _a.sent();
                                 mock({
                                     '/root/Bela/projects/test': {
                                         'render.cpp': fileData,
                                         'bin_large': new Buffer(50000001),
-                                        'bin_small': new Buffer(100),
+                                        'bin_small': new Buffer(10000),
                                         'test_image.png': image,
                                         'test_wav.wav': wav
                                     }
                                 });
-                                return [4 /*yield*/, fm.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink')];
+                                return [4 /*yield*/, FileManager_1.fm.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink')];
                             case 3:
                                 _a.sent();
                                 return [2 /*return*/];
@@ -140,7 +139,7 @@ describe('ProjectManager', function () {
                             case 0: return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: 'test_image.png' })];
                             case 1:
                                 output = _a.sent();
-                                return [4 /*yield*/, fm.read_directory('/root/Bela/IDE/public/media')];
+                                return [4 /*yield*/, FileManager_1.fm.read_directory('/root/Bela/IDE/public/media')];
                             case 2:
                                 file_list = _a.sent();
                                 file_list.should.deep.equal(['test_image.png']);
@@ -151,7 +150,7 @@ describe('ProjectManager', function () {
                                 return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: 'test_wav.wav' })];
                             case 3:
                                 output = _a.sent();
-                                return [4 /*yield*/, fm.read_directory('/root/Bela/IDE/public/media')];
+                                return [4 /*yield*/, FileManager_1.fm.read_directory('/root/Bela/IDE/public/media')];
                             case 4:
                                 file_list = _a.sent();
                                 file_list.should.deep.equal(['test_wav.wav']);
@@ -163,6 +162,9 @@ describe('ProjectManager', function () {
                         }
                     });
                 });
+            });
+            afterEach(function () {
+                mock.restore();
             });
         });
         describe('#listProjects', function () {
@@ -220,6 +222,37 @@ describe('ProjectManager', function () {
                             case 1:
                                 data = _a.sent();
                                 data.exampleList.should.deep.equal(output);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
+        describe('#openProject', function () {
+            var test_content = 'ohai';
+            var CLArgs = { 'key': 'field' };
+            before(function () {
+                mock({
+                    '/root/Bela/projects/test_project': {
+                        'settings.json': JSON.stringify({ 'fileName': 'fender.cpp', CLArgs: CLArgs }),
+                        'fender.cpp': test_content
+                    }
+                });
+            });
+            it('should open a project', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var out;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                out = { currentProject: 'test_project' };
+                                return [4 /*yield*/, pm.openProject(out)];
+                            case 1:
+                                _a.sent();
+                                out.fileName.should.equal('fender.cpp');
+                                out.CLArgs.should.deep.equal(CLArgs);
+                                out.fileData.should.equal(test_content);
+                                out.fileList.should.deep.equal([new FileManager_1.File_Descriptor('fender.cpp', 4, undefined), new FileManager_1.File_Descriptor('settings.json', 50, undefined)]);
                                 return [2 /*return*/];
                         }
                     });
