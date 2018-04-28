@@ -10,8 +10,10 @@ import { Lock } from "./Lock";
 
 class FileManager {
 	private lock: Lock;
+	private save_lock: Lock;
 	constructor(){
 		this.lock = new Lock();
+		this.save_lock = new Lock();
 	}
 
 	private error_handler(e: Error){
@@ -105,14 +107,23 @@ class FileManager {
 	// then it deletes the existing file at <file_name>
 	// then it renames .<file_name>~ to <file_name>
 	// if a path is given, a lockfile is also created and destroyed
+	// save_file has its own mutex, so it cannot run concurrently with itself
 	async save_file(file_name: string, file_content: string, lockfile: string|undefined = undefined){
-		if (lockfile)
-			await this.write_file(lockfile, file_name);
-		await this.write_file('.'+file_name+'~', file_content);
-		await this.delete_file(file_name);
-		await this.rename_file('.'+file_name+'~', file_name);
-		if (lockfile)
-			await this.delete_file(lockfile)
+		await this.save_lock.acquire();
+		try{
+			if (lockfile)
+				await this.write_file(lockfile, file_name);
+			await this.write_file('.'+file_name+'~', file_content);
+			await this.delete_file(file_name);
+			await this.rename_file('.'+file_name+'~', file_name);
+			if (lockfile)
+				await this.delete_file(lockfile)
+		}
+		catch(e){
+			this.save_lock.release();
+			throw e;
+		}
+		this.save_lock.release();
 	}
 
 	// recursively read the contents of a directory, returning an array of File_Descriptors

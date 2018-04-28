@@ -46,6 +46,7 @@ var Lock_1 = require("./Lock");
 var FileManager = /** @class */ (function () {
     function FileManager() {
         this.lock = new Lock_1.Lock();
+        this.save_lock = new Lock_1.Lock();
     }
     FileManager.prototype.error_handler = function (e) {
         this.lock.release();
@@ -239,32 +240,46 @@ var FileManager = /** @class */ (function () {
     // then it deletes the existing file at <file_name>
     // then it renames .<file_name>~ to <file_name>
     // if a path is given, a lockfile is also created and destroyed
+    // save_file has its own mutex, so it cannot run concurrently with itself
     FileManager.prototype.save_file = function (file_name, file_content, lockfile) {
         if (lockfile === void 0) { lockfile = undefined; }
         return __awaiter(this, void 0, void 0, function () {
+            var e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        if (!lockfile) return [3 /*break*/, 2];
-                        return [4 /*yield*/, this.write_file(lockfile, file_name)];
+                    case 0: return [4 /*yield*/, this.save_lock.acquire()];
                     case 1:
                         _a.sent();
                         _a.label = 2;
-                    case 2: return [4 /*yield*/, this.write_file('.' + file_name + '~', file_content)];
+                    case 2:
+                        _a.trys.push([2, 10, , 11]);
+                        if (!lockfile) return [3 /*break*/, 4];
+                        return [4 /*yield*/, this.write_file(lockfile, file_name)];
                     case 3:
                         _a.sent();
-                        return [4 /*yield*/, this.delete_file(file_name)];
-                    case 4:
-                        _a.sent();
-                        return [4 /*yield*/, this.rename_file('.' + file_name + '~', file_name)];
+                        _a.label = 4;
+                    case 4: return [4 /*yield*/, this.write_file('.' + file_name + '~', file_content)];
                     case 5:
                         _a.sent();
-                        if (!lockfile) return [3 /*break*/, 7];
-                        return [4 /*yield*/, this.delete_file(lockfile)];
+                        return [4 /*yield*/, this.delete_file(file_name)];
                     case 6:
                         _a.sent();
-                        _a.label = 7;
-                    case 7: return [2 /*return*/];
+                        return [4 /*yield*/, this.rename_file('.' + file_name + '~', file_name)];
+                    case 7:
+                        _a.sent();
+                        if (!lockfile) return [3 /*break*/, 9];
+                        return [4 /*yield*/, this.delete_file(lockfile)];
+                    case 8:
+                        _a.sent();
+                        _a.label = 9;
+                    case 9: return [3 /*break*/, 11];
+                    case 10:
+                        e_1 = _a.sent();
+                        this.save_lock.release();
+                        throw e_1;
+                    case 11:
+                        this.save_lock.release();
+                        return [2 /*return*/];
                 }
             });
         });
