@@ -330,6 +330,26 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    FileManager.prototype.read_json = function (file_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            var output;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.read_file(file_path)];
+                    case 1:
+                        output = _a.sent();
+                        return [2 /*return*/, JSON.parse(output)];
+                }
+            });
+        });
+    };
+    FileManager.prototype.write_json = function (file_path, data) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.write_file(file_path, JSON.stringify(data))];
+            });
+        });
+    };
     return FileManager;
 }());
 var File_Descriptor = /** @class */ (function () {

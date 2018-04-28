@@ -139,6 +139,30 @@ describe('FileManager', function(){
 				file_list.should.deep.equal([]);
 			});
 		});
+
+		describe('#read_json', function(){
+			var test_obj = {'test_key': 'test_field'};
+			before(function(){
+				mock({'test_json': JSON.stringify(test_obj)});
+			});
+			it('should read and parse a JSON file', async function(){
+				let output = await fm.read_json('test_json');
+				output.should.deep.equal(test_obj);
+			});
+		});
+
+		describe('#write_json', function(){
+			var test_obj = {'test_key': 'test_field'};
+			before(function(){
+				mock({});
+			})
+			it('should stringify an object and write it to a json file', async function(){
+				await fm.write_json('test_json', test_obj);
+				let output: any = await fm.read_json('test_json');
+				output.should.deep.equal(test_obj);
+			});
+		});
+		
 		afterEach(function(){
 			mock.restore();
 		});

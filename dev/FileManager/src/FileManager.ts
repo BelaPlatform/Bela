@@ -144,6 +144,14 @@ class FileManager {
 		});
 	}
 
+	async read_json(file_path: string): Promise<any> {
+		let output: string = await this.read_file(file_path);
+		return JSON.parse(output);
+	}
+	async write_json(file_path: string, data: any): Promise<void> {
+		return this.write_file(file_path, JSON.stringify(data));
+	}
+
 }
 
 export class File_Descriptor {

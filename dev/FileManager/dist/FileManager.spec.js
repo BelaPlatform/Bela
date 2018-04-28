@@ -286,6 +286,49 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#read_json', function () {
+            var test_obj = { 'test_key': 'test_field' };
+            before(function () {
+                mock({ 'test_json': JSON.stringify(test_obj) });
+            });
+            it('should read and parse a JSON file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.read_json('test_json')];
+                            case 1:
+                                output = _a.sent();
+                                output.should.deep.equal(test_obj);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
+        describe('#write_json', function () {
+            var test_obj = { 'test_key': 'test_field' };
+            before(function () {
+                mock({});
+            });
+            it('should stringify an object and write it to a json file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.write_json('test_json', test_obj)];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, FileManager_1.fm.read_json('test_json')];
+                            case 2:
+                                output = _a.sent();
+                                output.should.deep.equal(test_obj);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });
