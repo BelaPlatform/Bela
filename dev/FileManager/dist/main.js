@@ -37,24 +37,77 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var FileManager_1 = require("./FileManager");
 var ProjectManager_1 = require("./ProjectManager");
+var Lock_1 = require("./Lock");
 var fm = new FileManager_1.FileManager();
 var pm = new ProjectManager_1.ProjectManager();
-function read_write() {
+var lock = new Lock_1.Lock();
+//	let data = await pm.openFile({currentProject: 'basic', newFile: 'cape02.jpg'});
+//	console.dir(data, {depth: null});
+//	let result = await fm.is_binary('/root/Bela/projects/basic/basic');
+//	console.log('ohi');
+//	console.log(result, typeof result);
+function func1() {
     return __awaiter(this, void 0, void 0, function () {
-        var data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, pm.openFile({ currentProject: 'basic', newFile: 'cape02.jpg' })];
+                case 0:
+                    console.log('starting func1');
+                    return [4 /*yield*/, lock.acquire()];
                 case 1:
-                    data = _a.sent();
-                    console.dir(data, { depth: null });
+                    _a.sent();
+                    console.log('func1 locked');
+                    setTimeout(function () {
+                        lock.release();
+                        console.log('func1 released');
+                    }, 1000);
                     return [2 /*return*/];
             }
         });
     });
 }
-read_write()
-    .catch(function (e) { return console.log('error', e); });
+function func2() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.log('starting func2');
+                    return [4 /*yield*/, lock.acquire()];
+                case 1:
+                    _a.sent();
+                    console.log('func2 locked');
+                    setTimeout(function () {
+                        lock.release();
+                        console.log('func2 released');
+                    }, 1000);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function func3() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.log('starting func3');
+                    return [4 /*yield*/, lock.acquire()];
+                case 1:
+                    _a.sent();
+                    console.log('func3 locked');
+                    setTimeout(function () {
+                        lock.release();
+                        console.log('func3 released');
+                    }, 1000);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+func1();
+setTimeout(func2, 100);
+setTimeout(func3, 200);
+//read_write()
+//	.catch( e => console.log('error', e) );
 /*
 fm.write_file("/root/hello", "HAI")
     .then( () => fm.read_file('/root/hello') )

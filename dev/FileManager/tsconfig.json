@@ -3,6 +3,7 @@
         "src/main.ts",
         "src/paths.ts",
         "src/declarations.d.ts",
+        "src/Lock.ts",
         "src/ProjectManager.ts",
         "src/FileManager.ts"
     ],
