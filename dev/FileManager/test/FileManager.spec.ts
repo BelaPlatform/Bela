@@ -1,11 +1,8 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
-import { FileManager, File_Descriptor } from "../src/FileManager";
+import { fm, File_Descriptor } from "../src/FileManager";
 
 should();
-
-
-var fm: FileManager = new FileManager();
 
 describe('FileManager', function(){
 
@@ -53,12 +50,10 @@ describe('FileManager', function(){
 			});
 			it('should rename a file', async function(){
 				await fm.rename_file('test_file', 'other_file');
-				let data: string = await fm.read_file('other_file');
+				let data: string= await fm.read_file('other_file');
 				data.should.equal(content);
-				let data2: string = await fm.read_file('test_file')
-					.catch( e => {
-						e.code.should.equal('ENOENT');
-					});
+				await fm.read_file('test_file')
+					.catch( e => e.code.should.equal('ENOENT') );
 			});
 		});
 
@@ -70,9 +65,7 @@ describe('FileManager', function(){
 			it('should delete a file', async function(){
 				await fm.delete_file('test_file');
 				let data: string = await fm.read_file('test_file')
-					.catch( e => {
-						e.code.should.equal('ENOENT');
-					});
+					.catch( e => e.code.should.equal('ENOENT') );
 			});
 		});
 
@@ -109,10 +102,12 @@ describe('FileManager', function(){
 			})
 			it('should return true for a binary file', async function(){
 				let result = await fm.is_binary('test_bin');
+				(typeof result).should.equal('boolean');
 				result.should.equal(true);
 			});
 			it('should return false for a non-binary file', async function(){
 				let result = await fm.is_binary('test_text');
+				(typeof result).should.equal('boolean');
 				result.should.equal(false);
 			});
 		});

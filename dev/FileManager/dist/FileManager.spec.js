@@ -39,7 +39,6 @@ var chai_1 = require("chai");
 var mock = require("mock-fs");
 var FileManager_1 = require("../src/FileManager");
 chai_1.should();
-var fm = new FileManager_1.FileManager();
 describe('FileManager', function () {
     describe('primitive file and directory manipulation', function () {
         describe('#read_file', function () {
@@ -53,7 +52,7 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.read_file('test_file')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.read_file('test_file')];
                             case 1:
                                 data = _a.sent();
                                 data.should.equal(content);
@@ -74,7 +73,7 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.read_file_raw('test_file')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.read_file_raw('test_file')];
                             case 1:
                                 data = _a.sent();
                                 data.should.deep.equal(content);
@@ -94,10 +93,10 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.write_file('test_file', content)];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.write_file('test_file', content)];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_file('test_file')];
+                                return [4 /*yield*/, FileManager_1.fm.read_file('test_file')];
                             case 2:
                                 data = _a.sent();
                                 data.should.equal(content);
@@ -114,22 +113,20 @@ describe('FileManager', function () {
             });
             it('should rename a file', function () {
                 return __awaiter(this, void 0, void 0, function () {
-                    var data, data2;
+                    var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.rename_file('test_file', 'other_file')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.rename_file('test_file', 'other_file')];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_file('other_file')];
+                                return [4 /*yield*/, FileManager_1.fm.read_file('other_file')];
                             case 2:
                                 data = _a.sent();
                                 data.should.equal(content);
-                                return [4 /*yield*/, fm.read_file('test_file')
-                                        .catch(function (e) {
-                                        e.code.should.equal('ENOENT');
-                                    })];
+                                return [4 /*yield*/, FileManager_1.fm.read_file('test_file')
+                                        .catch(function (e) { return e.code.should.equal('ENOENT'); })];
                             case 3:
-                                data2 = _a.sent();
+                                _a.sent();
                                 return [2 /*return*/];
                         }
                     });
@@ -146,13 +143,11 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.delete_file('test_file')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.delete_file('test_file')];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_file('test_file')
-                                        .catch(function (e) {
-                                        e.code.should.equal('ENOENT');
-                                    })];
+                                return [4 /*yield*/, FileManager_1.fm.read_file('test_file')
+                                        .catch(function (e) { return e.code.should.equal('ENOENT'); })];
                             case 2:
                                 data = _a.sent();
                                 return [2 /*return*/];
@@ -175,7 +170,7 @@ describe('FileManager', function () {
                     var output;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.read_directory('test_dir')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.read_directory('test_dir')];
                             case 1:
                                 output = _a.sent();
                                 output.should.deep.equal(file_list);
@@ -194,7 +189,7 @@ describe('FileManager', function () {
                     var stat;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.stat_file('test_file')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.stat_file('test_file')];
                             case 1:
                                 stat = _a.sent();
                                 stat.size.should.be.a('Number');
@@ -215,9 +210,10 @@ describe('FileManager', function () {
                     var result;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.is_binary('test_bin')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.is_binary('test_bin')];
                             case 1:
                                 result = _a.sent();
+                                (typeof result).should.equal('boolean');
                                 result.should.equal(true);
                                 return [2 /*return*/];
                         }
@@ -229,9 +225,10 @@ describe('FileManager', function () {
                     var result;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.is_binary('test_text')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.is_binary('test_text')];
                             case 1:
                                 result = _a.sent();
+                                (typeof result).should.equal('boolean');
                                 result.should.equal(false);
                                 return [2 /*return*/];
                         }
@@ -249,10 +246,10 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.make_symlink('test_src', 'test_dir/test_dest')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.make_symlink('test_src', 'test_dir/test_dest')];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_file('test_dir/test_dest')];
+                                return [4 /*yield*/, FileManager_1.fm.read_file('test_dir/test_dest')];
                             case 2:
                                 data = _a.sent();
                                 data.should.equal(content);
@@ -276,10 +273,10 @@ describe('FileManager', function () {
                     var file_list;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.empty_directory('test_dir')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.empty_directory('test_dir')];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_directory('test_dir')];
+                                return [4 /*yield*/, FileManager_1.fm.read_directory('test_dir')];
                             case 2:
                                 file_list = _a.sent();
                                 file_list.should.deep.equal([]);
@@ -306,10 +303,10 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.save_file(file_name, content, lockfile)];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.save_file(file_name, content, lockfile)];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_file(file_name)];
+                                return [4 /*yield*/, FileManager_1.fm.read_file(file_name)];
                             case 2:
                                 data = _a.sent();
                                 data.should.equal(content);
@@ -323,10 +320,10 @@ describe('FileManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.save_file(file_name, content)];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.save_file(file_name, content)];
                             case 1:
                                 _a.sent();
-                                return [4 /*yield*/, fm.read_file(file_name)];
+                                return [4 /*yield*/, FileManager_1.fm.read_file(file_name)];
                             case 2:
                                 data = _a.sent();
                                 data.should.equal(content);
@@ -365,7 +362,7 @@ describe('FileManager', function () {
                     var output;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, fm.deep_read_directory('root')];
+                            case 0: return [4 /*yield*/, FileManager_1.fm.deep_read_directory('root')];
                             case 1:
                                 output = _a.sent();
                                 //	console.dir(output, { depth: null });

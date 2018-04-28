@@ -37,76 +37,199 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs-extra-promise");
 var isBinary = require("isbinaryfile");
+var Lock_1 = require("./Lock");
+// FileManager is only available as a single instance accross the app, exported as fm
+// it has a private Lock which is always acquired before manipulating the filesystem
+// thus concurent access is prohibited
+// only the primitive file and directory manipulation methods should touch the lock
+// OR the filesystem, in the whole app
 var FileManager = /** @class */ (function () {
     function FileManager() {
+        this.lock = new Lock_1.Lock();
     }
+    FileManager.prototype.error_handler = function (e) {
+        this.lock.release();
+        throw e;
+    };
     // primitive file and directory manipulation
     FileManager.prototype.write_file = function (file_path, data) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.outputFile(file_path, data)];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.outputFileAsync(file_path, data)
+                                .catch(function (e) { return _this.error_handler(e); })];
+                    case 2:
+                        _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/];
+                }
             });
         });
     };
     FileManager.prototype.read_file = function (file_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            var out;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.readFileAsync(file_path, 'utf8')];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.readFileAsync(file_path, 'utf8')
+                                .catch(function (e) {
+                                _this.error_handler(e);
+                                return '';
+                            })];
+                    case 2:
+                        out = _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/, out];
+                }
             });
         });
     };
     FileManager.prototype.read_file_raw = function (file_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            var out;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.readFileAsync(file_path)];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.readFileAsync(file_path)
+                                .catch(function (e) {
+                                _this.error_handler(e);
+                                return Buffer.alloc(0);
+                            })];
+                    case 2:
+                        out = _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/, out];
+                }
             });
         });
     };
     FileManager.prototype.rename_file = function (src, dest) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.moveAsync(src, dest, { overwrite: true })];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.moveAsync(src, dest, { overwrite: true })
+                                .catch(function (e) { return _this.error_handler(e); })];
+                    case 2:
+                        _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/];
+                }
             });
         });
     };
     FileManager.prototype.delete_file = function (file_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.remove(file_path)];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.removeAsync(file_path)
+                                .catch(function (e) { return _this.error_handler(e); })];
+                    case 2:
+                        _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/];
+                }
             });
         });
     };
     FileManager.prototype.read_directory = function (dir_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            var out;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.readdirAsync(dir_path)];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.readdirAsync(dir_path)
+                                .catch(function (e) {
+                                _this.error_handler(e);
+                                return [''];
+                            })];
+                    case 2:
+                        out = _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/, out];
+                }
             });
         });
     };
     FileManager.prototype.stat_file = function (file_name) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            var out;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.lstatAsync(file_name)];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.lstatAsync(file_name)
+                                .catch(function (e) { return _this.error_handler(e); })];
+                    case 2:
+                        out = _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/, out];
+                }
             });
         });
     };
+    // for some reason fs does not have ensureSymLinkAsync or emptyDirAsync
+    // so promisify them manually
     FileManager.prototype.make_symlink = function (src_path, dest_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, new Promise(function (resolve, reject) {
-                        fs.ensureSymlink(src_path, dest_path, function (err) {
-                            if (err)
-                                reject(err);
-                            resolve();
-                        });
-                    })];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/, new Promise(function (resolve, reject) {
+                                fs.ensureSymlink(src_path, dest_path, function (err) {
+                                    _this.lock.release();
+                                    if (err)
+                                        reject(err);
+                                    resolve();
+                                });
+                            })];
+                }
             });
         });
     };
     FileManager.prototype.empty_directory = function (dir_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, fs.emptyDir(dir_path)];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/, new Promise(function (resolve, reject) {
+                                fs.emptyDir(dir_path, function (err) {
+                                    _this.lock.release();
+                                    if (err)
+                                        reject(err);
+                                    resolve();
+                                });
+                            })];
+                }
             });
         });
     };
@@ -189,20 +312,26 @@ var FileManager = /** @class */ (function () {
     // returns a boolean when awaited
     FileManager.prototype.is_binary = function (file_path) {
         return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, new Promise(function (resolve, reject) {
-                        isBinary(file_path, function (err, result) {
-                            if (err)
-                                reject(err);
-                            resolve(result);
-                        });
-                    })];
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/, new Promise(function (resolve, reject) {
+                                isBinary(file_path, function (err, result) {
+                                    _this.lock.release();
+                                    if (err)
+                                        reject(err);
+                                    resolve(result);
+                                });
+                            })];
+                }
             });
         });
     };
     return FileManager;
 }());
-exports.FileManager = FileManager;
 var File_Descriptor = /** @class */ (function () {
     function File_Descriptor(name, size, children) {
         if (size === void 0) { size = undefined; }
@@ -216,3 +345,5 @@ var File_Descriptor = /** @class */ (function () {
     return File_Descriptor;
 }());
 exports.File_Descriptor = File_Descriptor;
+var fm = new FileManager();
+exports.fm = fm;

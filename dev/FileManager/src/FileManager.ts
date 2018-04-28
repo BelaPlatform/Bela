@@ -1,43 +1,102 @@
 import * as fs from 'fs-extra-promise';
 import * as isBinary from 'isbinaryfile';
+import { Lock } from "./Lock";
 
-export class FileManager {
-	constructor(){}
+// FileManager is only available as a single instance accross the app, exported as fm
+// it has a private Lock which is always acquired before manipulating the filesystem
+// thus concurent access is prohibited
+// only the primitive file and directory manipulation methods should touch the lock
+// OR the filesystem, in the whole app
+
+class FileManager {
+	private lock: Lock;
+	constructor(){
+		this.lock = new Lock();
+	}
+
+	private error_handler(e: Error){
+		this.lock.release();
+		throw e;
+	}
 
 	// primitive file and directory manipulation
 	async write_file(file_path: string, data: string): Promise<void>{
-		return fs.outputFile(file_path, data);
+		await this.lock.acquire();
+		await fs.outputFileAsync(file_path, data)
+			.catch( e => this.error_handler(e) );
+		this.lock.release();
 	}
-	async read_file(file_path: string): Promise<string>{
-		return fs.readFileAsync(file_path, 'utf8');
+	async read_file(file_path: string): Promise<string> {
+		await this.lock.acquire();
+		let out: string = await fs.readFileAsync(file_path, 'utf8')
+			.catch( e => {
+				this.error_handler(e);
+				return '';
+			});
+		this.lock.release();
+		return out;
 	}
 	async read_file_raw(file_path: string): Promise<Buffer>{
-		return fs.readFileAsync(file_path);
+		await this.lock.acquire();
+		let out: Buffer = await fs.readFileAsync(file_path)
+			.catch( e => {
+				this.error_handler(e);
+				return Buffer.alloc(0); 
+			});
+		this.lock.release();
+		return out;
 	}
 	async rename_file(src: string, dest: string): Promise<void>{
-		return fs.moveAsync(src, dest, {overwrite: true});
+		await this.lock.acquire();
+		await fs.moveAsync(src, dest, {overwrite: true})
+			.catch( e => this.error_handler(e) );
+		this.lock.release();
 	}
 	async delete_file(file_path: string): Promise<void>{
-		return fs.remove(file_path);
+		await this.lock.acquire();
+		await fs.removeAsync(file_path)
+			.catch( e => this.error_handler(e) );
+		this.lock.release();
 	}
 	async read_directory(dir_path: string): Promise<string[]>{
-		return fs.readdirAsync(dir_path);
+		await this.lock.acquire();
+		let out: string[] = await fs.readdirAsync(dir_path)
+			.catch( e => {
+				this.error_handler(e);
+				return ['']; 
+			});
+		this.lock.release();
+		return out;
 	}
 	async stat_file(file_name: string): Promise<any>{
-		return fs.lstatAsync(file_name);
+		await this.lock.acquire();
+		let out: any = await fs.lstatAsync(file_name)
+			.catch( e => this.error_handler(e) );
+		this.lock.release();
+		return out;
 	}
+	// for some reason fs does not have ensureSymLinkAsync or emptyDirAsync
+	// so promisify them manually
 	async make_symlink(src_path: string, dest_path: string): Promise<any>{
-		return new Promise(function(resolve, reject){
-			fs.ensureSymlink(src_path, dest_path, function(err){
+		await this.lock.acquire();
+		return new Promise( (resolve, reject) => {
+			fs.ensureSymlink(src_path, dest_path, err => {
+				this.lock.release();
 				if (err) reject(err);
 				resolve();
 			});
 		});
 	}
-	async empty_directory(dir_path: string): Promise<void>{
-		return fs.emptyDir(dir_path);
+	async empty_directory(dir_path: string): Promise<any>{
+		await this.lock.acquire();
+		return new Promise( (resolve, reject) => {
+			fs.emptyDir(dir_path, err => {
+				this.lock.release();
+				if (err) reject(err);
+				resolve();
+			});
+		});
 	}
-
 
 	// sophisticated file and directory manipulation
 	
@@ -58,7 +117,7 @@ export class FileManager {
 
 	// recursively read the contents of a directory, returning an array of File_Descriptors
 	async deep_read_directory(dir_path: string): Promise<File_Descriptor[]>{
-		let contents: string[] = await this.read_directory(dir_path);
+		let contents: any = await this.read_directory(dir_path);
 		let output: File_Descriptor[] = [];
 		for (let name of contents){
 			let stat = await this.stat_file(dir_path+'/'+name);
@@ -75,8 +134,10 @@ export class FileManager {
 	// checks if a file is binary - only reads a few thousand bytes at most
 	// returns a boolean when awaited
 	async is_binary(file_path: string){
-		return new Promise(function(resolve, reject){
+		await this.lock.acquire();
+		return new Promise( (resolve, reject) => {
 			isBinary(file_path, (err: any, result: any) => {
+				this.lock.release();
 				if (err) reject(err);
 				resolve(result);
 			});
@@ -95,3 +156,6 @@ export class File_Descriptor {
 	size: number | undefined = undefined;
 	children: File_Descriptor[] | undefined = undefined;
 }
+
+let fm = new FileManager();
+export {fm};

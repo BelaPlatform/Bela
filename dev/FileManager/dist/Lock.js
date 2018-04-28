@@ -12,12 +12,14 @@ var Lock = /** @class */ (function () {
             // if the lock is free, lock it immediately
             if (!_this.locked) {
                 _this.locked = true;
+                // console.log('lock acquired');
                 return resolve();
             }
             // otherwise sleep the thread and register a callback for when the lock is released
             var reacquire = function () {
                 if (!_this.locked) {
                     _this.locked = true;
+                    // console.log('lock acquired');
                     _this.ee.removeListener('release', reacquire);
                     return resolve();
                 }
@@ -29,6 +31,7 @@ var Lock = /** @class */ (function () {
         var _this = this;
         // unlock and call any queued callbacks
         this.locked = false;
+        // console.log('lock released');
         setImmediate(function () { return _this.ee.emit('release'); });
     };
     return Lock;
