@@ -27,7 +27,7 @@ export class ProjectManager {
 			data.fileName = data.newFile;
 			data.newFile = undefined;
 			data.fileType = 0;
-			return data;
+			return;
 		}
 		let chunk: Buffer = await readChunk(file_path, 0, 4100);
 		let file_type = await fileType(chunk);
@@ -39,7 +39,7 @@ export class ProjectManager {
 			data.fileName = data.newFile;
 			data.newFile = undefined;
 			data.fileType = file_type.mime;
-			return data;
+			return;
 		}
 		let is_binary = await fm.is_binary(file_path);
 		if (is_binary){
@@ -49,7 +49,7 @@ export class ProjectManager {
 			data.newFile = undefined;
 			data.readOnly = true;
 			data.fileType = 0;
-			return data;
+			return;
 		}
 		data.fileData = await fm.read_file(file_path);
 		if (data.newFile.split && data.newFile.includes('.')){
@@ -60,16 +60,15 @@ export class ProjectManager {
 		data.fileName = data.newFile;
 		data.newFile = undefined;
 		data.readOnly = false;
-		return data;
+		return;
 	}
 
-	async listProjects(data: any){
-		data.projectList = await fm.read_directory(paths.projects);
-		return data;
+	// these two methods are exceptions and don't take the data object
+	async listProjects(): Promise<string[]>{
+		return fm.read_directory(paths.projects);
 	}
-	async listExamples(data: any){
-		data.exampleList = await fm.deep_read_directory(paths.examples);
-		return data;
+	async listExamples(): Promise<File_Descriptor[]>{
+		return fm.deep_read_directory(paths.examples);
 	}
 
 	async openProject(data: any) {

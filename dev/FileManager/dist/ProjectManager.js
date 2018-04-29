@@ -69,7 +69,7 @@ var ProjectManager = /** @class */ (function () {
                             data.fileName = data.newFile;
                             data.newFile = undefined;
                             data.fileType = 0;
-                            return [2 /*return*/, data];
+                            return [2 /*return*/];
                         }
                         return [4 /*yield*/, readChunk(file_path, 0, 4100)];
                     case 2:
@@ -89,7 +89,7 @@ var ProjectManager = /** @class */ (function () {
                         data.fileName = data.newFile;
                         data.newFile = undefined;
                         data.fileType = file_type.mime;
-                        return [2 /*return*/, data];
+                        return [2 /*return*/];
                     case 6: return [4 /*yield*/, FileManager_1.fm.is_binary(file_path)];
                     case 7:
                         is_binary = _b.sent();
@@ -100,7 +100,7 @@ var ProjectManager = /** @class */ (function () {
                             data.newFile = undefined;
                             data.readOnly = true;
                             data.fileType = 0;
-                            return [2 /*return*/, data];
+                            return [2 /*return*/];
                         }
                         _a = data;
                         return [4 /*yield*/, FileManager_1.fm.read_file(file_path)];
@@ -115,38 +115,23 @@ var ProjectManager = /** @class */ (function () {
                         data.fileName = data.newFile;
                         data.newFile = undefined;
                         data.readOnly = false;
-                        return [2 /*return*/, data];
+                        return [2 /*return*/];
                 }
             });
         });
     };
-    ProjectManager.prototype.listProjects = function (data) {
+    // these two methods are exceptions and don't take the data object
+    ProjectManager.prototype.listProjects = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = data;
-                        return [4 /*yield*/, FileManager_1.fm.read_directory(paths_1.paths.projects)];
-                    case 1:
-                        _a.projectList = _b.sent();
-                        return [2 /*return*/, data];
-                }
+            return __generator(this, function (_a) {
+                return [2 /*return*/, FileManager_1.fm.read_directory(paths_1.paths.projects)];
             });
         });
     };
-    ProjectManager.prototype.listExamples = function (data) {
+    ProjectManager.prototype.listExamples = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        _a = data;
-                        return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.examples)];
-                    case 1:
-                        _a.exampleList = _b.sent();
-                        return [2 /*return*/, data];
-                }
+            return __generator(this, function (_a) {
+                return [2 /*return*/, FileManager_1.fm.deep_read_directory(paths_1.paths.examples)];
             });
         });
     };

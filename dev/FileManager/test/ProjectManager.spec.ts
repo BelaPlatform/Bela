@@ -34,7 +34,8 @@ describe('ProjectManager', function(){
 				await fm.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink');
 			});
 			it('should open a file from a project', async function(){
-				let output = await pm.openFile({currentProject, newFile});
+				let output: any = {currentProject, newFile};
+				await pm.openFile(output);
 				output.fileName.should.equal(newFile);
 				output.fileData.should.equal(fileData);
 				(typeof output.newFile).should.equal('undefined');
@@ -42,7 +43,8 @@ describe('ProjectManager', function(){
 				output.readOnly.should.equal(false);
 			});
 			it('should reject files larger than 50 Mb', async function(){
-				let output = await pm.openFile({currentProject, newFile: 'bin_large'});
+				let output: any = {currentProject, newFile: 'bin_large'};
+				await pm.openFile(output);
 				output.error.should.be.a('string');
 				output.fileData.should.be.a('string');
 				output.fileName.should.equal('bin_large');
@@ -50,7 +52,8 @@ describe('ProjectManager', function(){
 				output.fileType.should.equal(0);
 			});
 			it('should reject binary files', async function(){
-				let output = await pm.openFile({currentProject, newFile: 'bin_small'});
+				let output: any = {currentProject, newFile: 'bin_small'};
+				await pm.openFile(output);
 				output.error.should.be.a('string');
 				output.fileData.should.be.a('string');
 				output.fileName.should.equal('bin_small');
@@ -58,20 +61,22 @@ describe('ProjectManager', function(){
 				output.fileType.should.equal(0);
 			});
 			it('should empty the media directory and symlink the file if it is an audio or image file', async function(){
-				let output = await pm.openFile({currentProject, newFile: 'test_image.png'});
+				let output: any = {currentProject, newFile: 'test_image.png'};
+				await pm.openFile(output);
 				let file_list = await fm.read_directory('/root/Bela/IDE/public/media');
 				file_list.should.deep.equal(['test_image.png']);
 				output.fileData.should.equal('');
 				output.readOnly.should.equal(true);
 				output.fileName.should.equal('test_image.png');
 				output.fileType.should.equal('image/png');
-				output = await pm.openFile({currentProject, newFile: 'test_wav.wav'});
+				let output2: any = {currentProject, newFile: 'test_wav.wav'};
+				await pm.openFile(output2);
 				file_list = await fm.read_directory('/root/Bela/IDE/public/media');
 				file_list.should.deep.equal(['test_wav.wav']);
-				output.fileData.should.equal('');
-				output.readOnly.should.equal(true);
-				output.fileName.should.equal('test_wav.wav');
-				output.fileType.should.equal('audio/x-wav');
+				output2.fileData.should.equal('');
+				output2.readOnly.should.equal(true);
+				output2.fileName.should.equal('test_wav.wav');
+				output2.fileType.should.equal('audio/x-wav');
 			});
 			afterEach(function(){
 				mock.restore();
@@ -88,9 +93,8 @@ describe('ProjectManager', function(){
 				});
 			})
 			it('should return an array of strings containing the names of the projects in the projects folder', async function(){
-				let data: any = {};
-				data = await pm.listProjects(data);
-				data.projectList.should.deep.equal(['test_project1', 'test_project2']);
+				let data = await pm.listProjects();
+				data.should.deep.equal(['test_project1', 'test_project2']);
 			});
 		});
 
@@ -137,9 +141,8 @@ describe('ProjectManager', function(){
 				});
 			})
 			it('should return an array of File_Descriptors describing the contents of the examples folder', async function(){
-				let data: any = {};
-				data = await pm.listExamples(data);
-				data.exampleList.should.deep.equal(output);
+				let data = await pm.listExamples();
+				data.should.deep.equal(output);
 			});
 		});
 

@@ -82,9 +82,11 @@ describe('ProjectManager', function () {
                     var output;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: newFile })];
+                            case 0:
+                                output = { currentProject: currentProject, newFile: newFile };
+                                return [4 /*yield*/, pm.openFile(output)];
                             case 1:
-                                output = _a.sent();
+                                _a.sent();
                                 output.fileName.should.equal(newFile);
                                 output.fileData.should.equal(fileData);
                                 (typeof output.newFile).should.equal('undefined');
@@ -100,9 +102,11 @@ describe('ProjectManager', function () {
                     var output;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: 'bin_large' })];
+                            case 0:
+                                output = { currentProject: currentProject, newFile: 'bin_large' };
+                                return [4 /*yield*/, pm.openFile(output)];
                             case 1:
-                                output = _a.sent();
+                                _a.sent();
                                 output.error.should.be.a('string');
                                 output.fileData.should.be.a('string');
                                 output.fileName.should.equal('bin_large');
@@ -118,9 +122,11 @@ describe('ProjectManager', function () {
                     var output;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: 'bin_small' })];
+                            case 0:
+                                output = { currentProject: currentProject, newFile: 'bin_small' };
+                                return [4 /*yield*/, pm.openFile(output)];
                             case 1:
-                                output = _a.sent();
+                                _a.sent();
                                 output.error.should.be.a('string');
                                 output.fileData.should.be.a('string');
                                 output.fileName.should.equal('bin_small');
@@ -133,12 +139,14 @@ describe('ProjectManager', function () {
             });
             it('should empty the media directory and symlink the file if it is an audio or image file', function () {
                 return __awaiter(this, void 0, void 0, function () {
-                    var output, file_list;
+                    var output, file_list, output2;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0: return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: 'test_image.png' })];
+                            case 0:
+                                output = { currentProject: currentProject, newFile: 'test_image.png' };
+                                return [4 /*yield*/, pm.openFile(output)];
                             case 1:
-                                output = _a.sent();
+                                _a.sent();
                                 return [4 /*yield*/, FileManager_1.fm.read_directory('/root/Bela/IDE/public/media')];
                             case 2:
                                 file_list = _a.sent();
@@ -147,17 +155,18 @@ describe('ProjectManager', function () {
                                 output.readOnly.should.equal(true);
                                 output.fileName.should.equal('test_image.png');
                                 output.fileType.should.equal('image/png');
-                                return [4 /*yield*/, pm.openFile({ currentProject: currentProject, newFile: 'test_wav.wav' })];
+                                output2 = { currentProject: currentProject, newFile: 'test_wav.wav' };
+                                return [4 /*yield*/, pm.openFile(output2)];
                             case 3:
-                                output = _a.sent();
+                                _a.sent();
                                 return [4 /*yield*/, FileManager_1.fm.read_directory('/root/Bela/IDE/public/media')];
                             case 4:
                                 file_list = _a.sent();
                                 file_list.should.deep.equal(['test_wav.wav']);
-                                output.fileData.should.equal('');
-                                output.readOnly.should.equal(true);
-                                output.fileName.should.equal('test_wav.wav');
-                                output.fileType.should.equal('audio/x-wav');
+                                output2.fileData.should.equal('');
+                                output2.readOnly.should.equal(true);
+                                output2.fileName.should.equal('test_wav.wav');
+                                output2.fileType.should.equal('audio/x-wav');
                                 return [2 /*return*/];
                         }
                     });
@@ -181,12 +190,10 @@ describe('ProjectManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0:
-                                data = {};
-                                return [4 /*yield*/, pm.listProjects(data)];
+                            case 0: return [4 /*yield*/, pm.listProjects()];
                             case 1:
                                 data = _a.sent();
-                                data.projectList.should.deep.equal(['test_project1', 'test_project2']);
+                                data.should.deep.equal(['test_project1', 'test_project2']);
                                 return [2 /*return*/];
                         }
                     });
@@ -216,12 +223,10 @@ describe('ProjectManager', function () {
                     var data;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
-                            case 0:
-                                data = {};
-                                return [4 /*yield*/, pm.listExamples(data)];
+                            case 0: return [4 /*yield*/, pm.listExamples()];
                             case 1:
                                 data = _a.sent();
-                                data.exampleList.should.deep.equal(output);
+                                data.should.deep.equal(output);
                                 return [2 /*return*/];
                         }
                     });
