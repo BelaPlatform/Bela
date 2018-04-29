@@ -749,6 +749,35 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#deleteFile', function () {
+            before(function () {
+                mock({
+                    '/root/Bela/projects/test_project': {
+                        'render.cpp': 'test_content',
+                        'test_project': Buffer.alloc(100)
+                    }
+                });
+            });
+            it('should delete a file along with the binary and build files', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project', fileName: 'render.cpp' };
+                                return [4 /*yield*/, pm.deleteFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.fileName.should.equal('');
+                                data.readOnly.should.equal(true);
+                                data.fileData.should.equal('File deleted - open another file to continue');
+                                data.fileList.should.deep.equal([]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

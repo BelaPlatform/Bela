@@ -185,6 +185,15 @@ export class ProjectManager {
 		await this.openFile(data);
 	}
 
+	async deleteFile(data: any){
+		await fm.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
+		await this.cleanFile(data.currentProject, data.fileName);
+		data.fileList = await fm.deep_read_directory(paths.projects+data.currentProject);
+		data.fileData = 'File deleted - open another file to continue';
+		data.fileName = '';
+		data.readOnly = true;
+	}
+
 
 
 }

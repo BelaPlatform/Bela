@@ -436,6 +436,26 @@ describe('ProjectManager', function(){
 			});
 		});
 
+		describe('#deleteFile', function(){
+			before(function(){
+				mock({
+					'/root/Bela/projects/test_project': {
+						'render.cpp': 'test_content',
+						'test_project': Buffer.alloc(100)
+					}
+				});
+			});
+			it('should delete a file along with the binary and build files', async function(){
+				let data: any = {currentProject: 'test_project', fileName: 'render.cpp'};
+				await pm.deleteFile(data);
+				data.fileName.should.equal('');
+				data.readOnly.should.equal(true);
+				data.fileData.should.equal('File deleted - open another file to continue');
+				data.fileList.should.deep.equal([]);
+			});
+		});
+
+
 
 
 

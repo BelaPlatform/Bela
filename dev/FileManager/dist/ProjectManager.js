@@ -418,6 +418,29 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.deleteFile = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, FileManager_1.fm.delete_file(paths_1.paths.projects + data.currentProject + '/' + data.fileName)];
+                    case 1:
+                        _b.sent();
+                        return [4 /*yield*/, this.cleanFile(data.currentProject, data.fileName)];
+                    case 2:
+                        _b.sent();
+                        _a = data;
+                        return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.projects + data.currentProject)];
+                    case 3:
+                        _a.fileList = _b.sent();
+                        data.fileData = 'File deleted - open another file to continue';
+                        data.fileName = '';
+                        data.readOnly = true;
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;
