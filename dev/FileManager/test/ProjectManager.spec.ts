@@ -403,6 +403,42 @@ describe('ProjectManager', function(){
 			});
 		});
 
+		describe('#renameFile', function(){
+			beforeEach(function(){
+				mock({
+					'/root/Bela/projects/test_project': {
+						'test_file.cpp': 'test_content',
+						'old_file.cpp': 'old_content',
+						'test_project': Buffer.alloc(100)
+					}
+				});
+			});
+			it('should rename a source file, and remove the binary', async function(){
+				let data: any = {currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'new_file.cpp'};
+				await pm.renameFile(data);
+				data.fileName.should.equal('new_file.cpp');
+				data.fileData.should.equal('test_content');
+				data.fileList.should.deep.equal([
+					new File_Descriptor('new_file.cpp', 12, undefined),
+					new File_Descriptor('old_file.cpp', 11, undefined)
+				]);
+			});
+			it('should fail gracefully if the destination file exists', async function(){
+				let data: any = {currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'old_file.cpp'};
+				await pm.renameFile(data);
+				data.error.should.equal('failed, file old_file.cpp already exists!');
+				let fileList = await fm.deep_read_directory(paths.projects+'test_project');
+				fileList.should.deep.equal([
+					new File_Descriptor('old_file.cpp', 11, undefined),
+					new File_Descriptor('test_file.cpp', 12, undefined),
+					new File_Descriptor('test_project', 100, undefined)
+				]);
+			});
+		});
+
+
+
+
 
 		afterEach(function(){
 			mock.restore();

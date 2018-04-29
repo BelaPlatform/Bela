@@ -172,5 +172,19 @@ export class ProjectManager {
 		}
 	}
 
+	async renameFile(data: any){
+		let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+		let file_exists = (await fm.file_exists(file_path) || await fm.directory_exists(file_path));
+		if (file_exists){
+			data.error = 'failed, file '+data.newFile+' already exists!';
+			return;
+		}
+		await fm.rename_file(paths.projects+data.currentProject+'/'+data.fileName, file_path);
+		await this.cleanFile(data.currentProject, data.fileName);
+		data.fileList = await fm.deep_read_directory(paths.projects+data.currentProject);
+		await this.openFile(data);
+	}
+
+
 
 }

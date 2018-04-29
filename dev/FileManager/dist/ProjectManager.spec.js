@@ -39,6 +39,7 @@ var chai_1 = require("chai");
 var mock = require("mock-fs");
 var FileManager_1 = require("../src/FileManager");
 var ProjectManager_1 = require("../src/ProjectManager");
+var paths_1 = require("../src/paths");
 chai_1.should();
 var pm = new ProjectManager_1.ProjectManager();
 describe('ProjectManager', function () {
@@ -685,6 +686,62 @@ describe('ProjectManager', function () {
                                         new FileManager_1.File_Descriptor('test.o', 5, undefined)
                                     ]),
                                     new FileManager_1.File_Descriptor('test_project', 4100, undefined)
+                                ]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
+        describe('#renameFile', function () {
+            beforeEach(function () {
+                mock({
+                    '/root/Bela/projects/test_project': {
+                        'test_file.cpp': 'test_content',
+                        'old_file.cpp': 'old_content',
+                        'test_project': Buffer.alloc(100)
+                    }
+                });
+            });
+            it('should rename a source file, and remove the binary', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'new_file.cpp' };
+                                return [4 /*yield*/, pm.renameFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.fileName.should.equal('new_file.cpp');
+                                data.fileData.should.equal('test_content');
+                                data.fileList.should.deep.equal([
+                                    new FileManager_1.File_Descriptor('new_file.cpp', 12, undefined),
+                                    new FileManager_1.File_Descriptor('old_file.cpp', 11, undefined)
+                                ]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should fail gracefully if the destination file exists', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, fileList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'old_file.cpp' };
+                                return [4 /*yield*/, pm.renameFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.error.should.equal('failed, file old_file.cpp already exists!');
+                                return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.projects + 'test_project')];
+                            case 2:
+                                fileList = _a.sent();
+                                fileList.should.deep.equal([
+                                    new FileManager_1.File_Descriptor('old_file.cpp', 11, undefined),
+                                    new FileManager_1.File_Descriptor('test_file.cpp', 12, undefined),
+                                    new FileManager_1.File_Descriptor('test_project', 100, undefined)
                                 ]);
                                 return [2 /*return*/];
                         }
