@@ -81,4 +81,13 @@ export class ProjectManager {
 		await this.openFile(data);
 	}
 
+	async openExample(data: any){
+		await fm.empty_directory(paths.exampleTempProject);
+		await fm.copy_directory(paths.examples+data.currentProject, paths.exampleTempProject);
+		data.exampleName = data.currentProject.split('/').pop();
+		data.currentProject = 'exampleTempProject';
+		await this.openProject(data);
+	}
+
+
 }

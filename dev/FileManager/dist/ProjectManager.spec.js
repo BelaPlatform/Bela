@@ -264,6 +264,40 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#openExample', function () {
+            before(function () {
+                mock({
+                    '/root/Bela/examples/01-basics/test_example': {
+                        'render.cpp': 'test_content'
+                    }
+                });
+            });
+            it('should copy the chosen example to projects/exampleTempProject and open it', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: '01-basics/test_example' };
+                                return [4 /*yield*/, pm.openExample(data)];
+                            case 1:
+                                _a.sent();
+                                data.currentProject.should.equal('exampleTempProject');
+                                data.exampleName.should.equal('test_example');
+                                data.fileList.should.deep.equal([new FileManager_1.File_Descriptor('render.cpp', 12, undefined)]);
+                                data.fileName.should.equal('render.cpp');
+                                data.CLArgs.should.be.a('object');
+                                data2 = { currentProject: 'exampleTempProject' };
+                                return [4 /*yield*/, pm.openProject(data2)];
+                            case 2:
+                                _a.sent();
+                                data.fileData.should.equal(data2.fileData);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

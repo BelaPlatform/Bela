@@ -18,6 +18,11 @@ var paths = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(paths, "exampleTempProject", {
+        get: function () { return this._exampleTempProject; },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(paths, "media", {
         get: function () { return this._media; },
         enumerable: true,
@@ -26,6 +31,7 @@ var paths = /** @class */ (function () {
     paths._Bela = '/root/Bela/';
     paths._projects = paths._Bela + 'projects/';
     paths._examples = paths._Bela + 'examples/';
+    paths._exampleTempProject = paths._projects + 'exampleTempProject/';
     paths._media = paths._Bela + 'IDE/public/media/';
     return paths;
 }());

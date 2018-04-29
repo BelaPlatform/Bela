@@ -162,6 +162,26 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.openExample = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, FileManager_1.fm.empty_directory(paths_1.paths.exampleTempProject)];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, FileManager_1.fm.copy_directory(paths_1.paths.examples + data.currentProject, paths_1.paths.exampleTempProject)];
+                    case 2:
+                        _a.sent();
+                        data.exampleName = data.currentProject.split('/').pop();
+                        data.currentProject = 'exampleTempProject';
+                        return [4 /*yield*/, this.openProject(data)];
+                    case 3:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;
