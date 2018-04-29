@@ -491,6 +491,55 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#newFile', function () {
+            beforeEach(function () {
+                mock({
+                    '/root/Bela/projects/test_project': { 'old_file': 'old_content' }
+                });
+            });
+            it('should create a new file in the current project, and open it', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project', 'newFile': 'test_file' };
+                                return [4 /*yield*/, pm.newFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.fileName.should.equal('test_file');
+                                (typeof data.newFile).should.equal('undefined');
+                                data.fileData.should.equal('/***** test_file *****/\n');
+                                data.fileList.should.deep.equal([new FileManager_1.File_Descriptor('old_file', 11, undefined), new FileManager_1.File_Descriptor('test_file', 24, undefined)]);
+                                data.focus.should.deep.equal({ line: 2, column: 1 });
+                                data.readOnly.should.equal(false);
+                                data2 = { currentProject: 'test_project', 'newFile': 'test_file' };
+                                return [4 /*yield*/, pm.openFile(data2)];
+                            case 2:
+                                _a.sent();
+                                data.fileData.should.equal(data2.fileData);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should fail gracefully if the file already exists', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project', 'newFile': 'old_file' };
+                                return [4 /*yield*/, pm.newFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.error.should.equal('failed, file old_file already exists!');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

@@ -288,6 +288,33 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.newFile = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var file_path, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        file_path = paths_1.paths.projects + data.currentProject + '/' + data.newFile;
+                        return [4 /*yield*/, FileManager_1.fm.file_exists(file_path)];
+                    case 1:
+                        if (_b.sent()) {
+                            data.error = 'failed, file ' + data.newFile + ' already exists!';
+                            return [2 /*return*/];
+                        }
+                        FileManager_1.fm.write_file(file_path, '/***** ' + data.newFile + ' *****/\n');
+                        _a = data;
+                        return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.projects + data.currentProject)];
+                    case 2:
+                        _a.fileList = _b.sent();
+                        data.focus = { 'line': 2, 'column': 1 };
+                        return [4 /*yield*/, this.openFile(data)];
+                    case 3:
+                        _b.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;

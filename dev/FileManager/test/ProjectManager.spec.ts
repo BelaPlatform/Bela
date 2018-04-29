@@ -299,6 +299,32 @@ describe('ProjectManager', function(){
 			});
 		});
 
+		describe('#newFile', function(){
+			beforeEach(function(){
+				mock({
+					'/root/Bela/projects/test_project': {'old_file': 'old_content'}
+				});
+			});
+			it('should create a new file in the current project, and open it', async function(){
+				let data: any = {currentProject: 'test_project', 'newFile': 'test_file'};
+				await pm.newFile(data);
+				data.fileName.should.equal('test_file');
+				(typeof data.newFile).should.equal('undefined');
+				data.fileData.should.equal('/***** test_file *****/\n');
+				data.fileList.should.deep.equal([new File_Descriptor('old_file', 11, undefined), new File_Descriptor('test_file', 24, undefined)]);
+				data.focus.should.deep.equal({line: 2, column: 1});
+				data.readOnly.should.equal(false);
+				let data2: any = {currentProject: 'test_project', 'newFile': 'test_file'};
+				await pm.openFile(data2);
+				data.fileData.should.equal(data2.fileData);
+			});
+			it('should fail gracefully if the file already exists', async function(){
+				let data: any = {currentProject: 'test_project', 'newFile': 'old_file'};
+				await pm.newFile(data);
+				data.error.should.equal('failed, file old_file already exists!');
+			});
+		});
+
 
 		afterEach(function(){
 			mock.restore();

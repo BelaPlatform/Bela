@@ -133,6 +133,18 @@ export class ProjectManager {
 		await fm.delete_file(paths.projects+data.currentProject+'/'+data.currentProject);
 	}
 
+	async newFile(data: any){
+		let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+		if (await fm.file_exists(file_path)){
+			data.error = 'failed, file '+data.newFile+' already exists!';
+			return;
+		}
+		fm.write_file(file_path, '/***** '+data.newFile+' *****/\n');
+		data.fileList = await fm.deep_read_directory(paths.projects+data.currentProject);
+		data.focus = {'line': 2, 'column': 1};
+		await this.openFile(data);
+	}
+
 
 
 }
