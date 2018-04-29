@@ -425,6 +425,55 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#file_exists', function () {
+            beforeEach(function () {
+                mock({
+                    'test_dir': { 'test_file': 'test_content' }
+                });
+            });
+            it('should return true if the file exists', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var out;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.file_exists('test_dir/test_file')];
+                            case 1:
+                                out = _a.sent();
+                                out.should.equal(true);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should return false if the file does not exist', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var out;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.file_exists('wrong_file')];
+                            case 1:
+                                out = _a.sent();
+                                out.should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should return false if called on a directory', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var out;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.file_exists('test_dir')];
+                            case 1:
+                                out = _a.sent();
+                                out.should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

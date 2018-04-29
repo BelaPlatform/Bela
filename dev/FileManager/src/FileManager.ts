@@ -174,6 +174,11 @@ class FileManager {
 			.catch( e => {} );
 		return (stat && stat.isDirectory && stat.isDirectory()) ? true : false;
 	}
+	async file_exists(file_path: string): Promise<boolean>{
+		let stat: any = await this.stat_file(file_path)
+			.catch( e => {} );
+		return (stat && stat.isFile && stat.isFile()) ? true : false;
+	}
 }
 
 export class File_Descriptor {
