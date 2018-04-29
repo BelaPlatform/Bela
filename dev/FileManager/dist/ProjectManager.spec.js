@@ -298,6 +298,55 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#newProject', function () {
+            before(function () {
+                mock({
+                    '/root/Bela/IDE/templates/C': { 'render.cpp': 'test_content' }
+                });
+            });
+            it('should create a new C project', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { newProject: 'test_project', projectType: 'C' };
+                                return [4 /*yield*/, pm.newProject(data)];
+                            case 1:
+                                _a.sent();
+                                (typeof data.newProject).should.equal('undefined');
+                                data.currentProject.should.equal('test_project');
+                                data.projectList.should.deep.equal(['test_project']);
+                                data.fileList.should.deep.equal([new FileManager_1.File_Descriptor('render.cpp', 12, undefined)]);
+                                data.fileName.should.equal('render.cpp');
+                                data.CLArgs.should.be.a('object');
+                                data.fileData.should.equal('test_content');
+                                data.readOnly.should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should fail gracefully if the project already exists', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { newProject: 'test_project', projectType: 'C' };
+                                return [4 /*yield*/, pm.newProject(data)];
+                            case 1:
+                                _a.sent();
+                                data.error.should.equal('failed, project test_project already exists!');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            after(function () {
+                mock.restore();
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

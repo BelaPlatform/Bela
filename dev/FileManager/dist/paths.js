@@ -28,11 +28,17 @@ var paths = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(paths, "templates", {
+        get: function () { return this._templates; },
+        enumerable: true,
+        configurable: true
+    });
     paths._Bela = '/root/Bela/';
     paths._projects = paths._Bela + 'projects/';
     paths._examples = paths._Bela + 'examples/';
     paths._exampleTempProject = paths._projects + 'exampleTempProject/';
     paths._media = paths._Bela + 'IDE/public/media/';
+    paths._templates = paths._Bela + 'IDE/templates/';
     return paths;
 }());
 exports.paths = paths;

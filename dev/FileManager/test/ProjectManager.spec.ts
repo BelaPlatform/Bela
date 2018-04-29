@@ -189,6 +189,34 @@ describe('ProjectManager', function(){
 			});
 		});
 
+		describe('#newProject', function(){
+			before(function(){
+				mock({
+					'/root/Bela/IDE/templates/C': {'render.cpp': 'test_content'}
+				});
+			});
+			it('should create a new C project', async function(){
+				let data: any = {newProject: 'test_project', projectType: 'C'};
+				await pm.newProject(data);
+				(typeof data.newProject).should.equal('undefined');
+				data.currentProject.should.equal('test_project');
+				data.projectList.should.deep.equal(['test_project']);
+				data.fileList.should.deep.equal([new File_Descriptor('render.cpp', 12, undefined)]);
+				data.fileName.should.equal('render.cpp');
+				data.CLArgs.should.be.a('object');
+				data.fileData.should.equal('test_content');
+				data.readOnly.should.equal(false);
+			});
+			it('should fail gracefully if the project already exists', async function(){
+				let data: any = {newProject: 'test_project', projectType: 'C'};
+				await pm.newProject(data);
+				data.error.should.equal('failed, project test_project already exists!');
+			});
+			after(function(){
+				mock.restore();
+			});
+		});
+
 		afterEach(function(){
 			mock.restore();
 		})

@@ -182,6 +182,34 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.newProject = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, FileManager_1.fm.directory_exists(paths_1.paths.projects + data.newProject)];
+                    case 1:
+                        if (_b.sent()) {
+                            data.error = 'failed, project ' + data.newProject + ' already exists!';
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, FileManager_1.fm.copy_directory(paths_1.paths.templates + data.projectType, paths_1.paths.projects + data.newProject)];
+                    case 2:
+                        _b.sent();
+                        _a = data;
+                        return [4 /*yield*/, this.listProjects()];
+                    case 3:
+                        _a.projectList = _b.sent();
+                        data.currentProject = data.newProject;
+                        data.newProject = undefined;
+                        return [4 /*yield*/, this.openProject(data)];
+                    case 4:
+                        _b.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;
