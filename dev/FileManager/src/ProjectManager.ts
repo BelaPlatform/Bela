@@ -145,6 +145,19 @@ export class ProjectManager {
 		await this.openFile(data);
 	}
 
+	async uploadFile(data: any){
+		let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+		let file_exists = (await fm.file_exists(file_path) || await fm.directory_exists(file_path));
+		if (file_exists && !data.force){
+			data.error = 'failed, file '+data.newFile+' already exists!';
+			data.fileData = undefined;
+			return;
+		}
+		await fm.save_file(file_path, data.fileData);
+		data.fileList = await fm.deep_read_directory(paths.projects+data.currentProject);
+		await this.openFile(data);
+	}
+
 
 
 }

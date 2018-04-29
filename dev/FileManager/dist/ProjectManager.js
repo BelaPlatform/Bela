@@ -315,6 +315,43 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.uploadFile = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var file_path, file_exists, _a, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        file_path = paths_1.paths.projects + data.currentProject + '/' + data.newFile;
+                        return [4 /*yield*/, FileManager_1.fm.file_exists(file_path)];
+                    case 1:
+                        _a = (_c.sent());
+                        if (_a) return [3 /*break*/, 3];
+                        return [4 /*yield*/, FileManager_1.fm.directory_exists(file_path)];
+                    case 2:
+                        _a = (_c.sent());
+                        _c.label = 3;
+                    case 3:
+                        file_exists = (_a);
+                        if (file_exists && !data.force) {
+                            data.error = 'failed, file ' + data.newFile + ' already exists!';
+                            data.fileData = undefined;
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, FileManager_1.fm.save_file(file_path, data.fileData)];
+                    case 4:
+                        _c.sent();
+                        _b = data;
+                        return [4 /*yield*/, FileManager_1.fm.deep_read_directory(paths_1.paths.projects + data.currentProject)];
+                    case 5:
+                        _b.fileList = _c.sent();
+                        return [4 /*yield*/, this.openFile(data)];
+                    case 6:
+                        _c.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;

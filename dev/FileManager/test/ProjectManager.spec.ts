@@ -325,6 +325,57 @@ describe('ProjectManager', function(){
 			});
 		});
 
+		describe('#uploadFile', function(){
+			beforeEach(function(){
+				mock({
+					'/root/Bela/projects/test_project': {'old_file': 'old_content'}
+				});
+			});
+			it('should upload and open a new text file', async function(){
+				let fileData = 'test_content';
+				let data: any = {currentProject: 'test_project', newFile: 'test_file', fileData, force: false};
+				await pm.uploadFile(data);
+				data.fileName.should.equal('test_file');
+				(typeof data.newFile).should.equal('undefined');
+				data.fileData.should.equal('test_content');
+				let data2: any = {currentProject: 'test_project', newFile: 'test_file'};
+				await pm.openFile(data2);
+				data.fileData.should.equal(data2.fileData);
+			});
+			it('should upload and open a new binary file', async function(){
+				let fileData = Buffer.alloc(4100);
+				let data: any = {currentProject: 'test_project', newFile: 'test_file', fileData, force: false};
+				await pm.uploadFile(data);
+				data.fileName.should.equal('test_file');
+				(typeof data.newFile).should.equal('undefined');
+				data.error.should.be.a('string');
+				let readFile = await fm.read_file_raw('/root/Bela/projects/test_project/test_file');
+				readFile.should.deep.equal(fileData);
+			});
+			it('should fail to overwrite a file without the force flag set', async function(){
+				let fileData = 'test_content';
+				let data: any = {currentProject: 'test_project', newFile: 'old_file', fileData, force: false};
+				await pm.uploadFile(data);
+				data.error.should.equal('failed, file old_file already exists!');
+				(typeof data.fileData).should.equal('undefined');
+				let data2: any = {currentProject: 'test_project', newFile: 'old_file'};
+				await pm.openFile(data2);
+				data2.fileData.should.equal('old_content');
+			});
+			it('should overwrite a file with the force flag set', async function(){
+				let fileData = 'test_content';
+				let data: any = {currentProject: 'test_project', newFile: 'old_file', fileData, force: true};
+				await pm.uploadFile(data);
+				data.fileName.should.equal('old_file');
+				(typeof data.newFile).should.equal('undefined');
+				data.fileData.should.equal('test_content');
+				let data2: any = {currentProject: 'test_project', newFile: 'old_file'};
+				await pm.openFile(data2);
+				data2.fileData.should.equal('test_content');
+			});
+		});
+
+
 
 		afterEach(function(){
 			mock.restore();

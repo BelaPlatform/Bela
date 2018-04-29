@@ -540,6 +540,107 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#uploadFile', function () {
+            beforeEach(function () {
+                mock({
+                    '/root/Bela/projects/test_project': { 'old_file': 'old_content' }
+                });
+            });
+            it('should upload and open a new text file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var fileData, data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                fileData = 'test_content';
+                                data = { currentProject: 'test_project', newFile: 'test_file', fileData: fileData, force: false };
+                                return [4 /*yield*/, pm.uploadFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.fileName.should.equal('test_file');
+                                (typeof data.newFile).should.equal('undefined');
+                                data.fileData.should.equal('test_content');
+                                data2 = { currentProject: 'test_project', newFile: 'test_file' };
+                                return [4 /*yield*/, pm.openFile(data2)];
+                            case 2:
+                                _a.sent();
+                                data.fileData.should.equal(data2.fileData);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should upload and open a new binary file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var fileData, data, readFile;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                fileData = Buffer.alloc(4100);
+                                data = { currentProject: 'test_project', newFile: 'test_file', fileData: fileData, force: false };
+                                return [4 /*yield*/, pm.uploadFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.fileName.should.equal('test_file');
+                                (typeof data.newFile).should.equal('undefined');
+                                data.error.should.be.a('string');
+                                return [4 /*yield*/, FileManager_1.fm.read_file_raw('/root/Bela/projects/test_project/test_file')];
+                            case 2:
+                                readFile = _a.sent();
+                                readFile.should.deep.equal(fileData);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should fail to overwrite a file without the force flag set', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var fileData, data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                fileData = 'test_content';
+                                data = { currentProject: 'test_project', newFile: 'old_file', fileData: fileData, force: false };
+                                return [4 /*yield*/, pm.uploadFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.error.should.equal('failed, file old_file already exists!');
+                                (typeof data.fileData).should.equal('undefined');
+                                data2 = { currentProject: 'test_project', newFile: 'old_file' };
+                                return [4 /*yield*/, pm.openFile(data2)];
+                            case 2:
+                                _a.sent();
+                                data2.fileData.should.equal('old_content');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should overwrite a file with the force flag set', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var fileData, data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                fileData = 'test_content';
+                                data = { currentProject: 'test_project', newFile: 'old_file', fileData: fileData, force: true };
+                                return [4 /*yield*/, pm.uploadFile(data)];
+                            case 1:
+                                _a.sent();
+                                data.fileName.should.equal('old_file');
+                                (typeof data.newFile).should.equal('undefined');
+                                data.fileData.should.equal('test_content');
+                                data2 = { currentProject: 'test_project', newFile: 'old_file' };
+                                return [4 /*yield*/, pm.openFile(data2)];
+                            case 2:
+                                _a.sent();
+                                data2.fileData.should.equal('test_content');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });
