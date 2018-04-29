@@ -457,6 +457,40 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#cleanProject', function () {
+            before(function () {
+                mock({
+                    '/root/Bela/projects/test_project': {
+                        'build': { 'test.o': 'test', 'test.d': 'test' },
+                        'test_project': Buffer.alloc(4100),
+                        'render.cpp': 'test_content'
+                    }
+                });
+            });
+            it('should clear the contents of the project\'s build directory, and delete the binary', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project' };
+                                return [4 /*yield*/, pm.cleanProject(data)];
+                            case 1:
+                                _a.sent();
+                                data = { currentProject: 'test_project' };
+                                return [4 /*yield*/, pm.openProject(data)];
+                            case 2:
+                                _a.sent();
+                                data.fileList.should.deep.equal([
+                                    new FileManager_1.File_Descriptor('build', undefined, []),
+                                    new FileManager_1.File_Descriptor('render.cpp', 12, undefined)
+                                ]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

@@ -128,6 +128,11 @@ export class ProjectManager {
 		data.fileData = 'please create a new project to continue';
 	}
 
+	async cleanProject(data: any){
+		await fm.empty_directory(paths.projects+data.currentProject+'/build');
+		await fm.delete_file(paths.projects+data.currentProject+'/'+data.currentProject);
+	}
+
 
 
 }
