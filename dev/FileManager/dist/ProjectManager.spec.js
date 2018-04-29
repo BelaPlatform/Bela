@@ -408,6 +408,55 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#deleteProject', function () {
+            beforeEach(function () {
+                mock({
+                    '/root/Bela/projects/test_project1': { 'render.cpp': 'test_content1' },
+                    '/root/Bela/projects/test_project2': { 'render.cpp': 'test_content2' }
+                });
+            });
+            it('should delete a project and open any remaining project', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project1' };
+                                return [4 /*yield*/, pm.deleteProject(data)];
+                            case 1:
+                                _a.sent();
+                                data.currentProject.should.equal('test_project2');
+                                data.projectList.should.deep.equal(['test_project2']);
+                                data.fileName.should.equal('render.cpp');
+                                data.fileData.should.equal('test_content2');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should fail gracefully if there are no remaining projects to open', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_project1' };
+                                return [4 /*yield*/, pm.deleteProject(data)];
+                            case 1:
+                                _a.sent();
+                                data = { currentProject: 'test_project2' };
+                                return [4 /*yield*/, pm.deleteProject(data)];
+                            case 2:
+                                _a.sent();
+                                data.currentProject.should.equal('');
+                                data.readOnly.should.equal(true);
+                                data.fileData.should.equal('please create a new project to continue');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

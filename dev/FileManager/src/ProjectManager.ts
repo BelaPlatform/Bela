@@ -113,4 +113,21 @@ export class ProjectManager {
 		await this.openProject(data);
 	}
 
+	async deleteProject(data: any){
+		await fm.delete_file(paths.projects+data.currentProject);
+		data.projectList = await this.listProjects();
+		for (let project of data.projectList){
+			if (project && project !== 'undefined' && project !== 'exampleTempProject'){
+				data.currentProject = project;
+				await this.openProject(data);
+				return;
+			}
+		}
+		data.currentProject = '';
+		data.readOnly = true;
+		data.fileData = 'please create a new project to continue';
+	}
+
+
+
 }

@@ -238,6 +238,41 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.deleteProject = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, _i, _b, project;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0: return [4 /*yield*/, FileManager_1.fm.delete_file(paths_1.paths.projects + data.currentProject)];
+                    case 1:
+                        _c.sent();
+                        _a = data;
+                        return [4 /*yield*/, this.listProjects()];
+                    case 2:
+                        _a.projectList = _c.sent();
+                        _i = 0, _b = data.projectList;
+                        _c.label = 3;
+                    case 3:
+                        if (!(_i < _b.length)) return [3 /*break*/, 6];
+                        project = _b[_i];
+                        if (!(project && project !== 'undefined' && project !== 'exampleTempProject')) return [3 /*break*/, 5];
+                        data.currentProject = project;
+                        return [4 /*yield*/, this.openProject(data)];
+                    case 4:
+                        _c.sent();
+                        return [2 /*return*/];
+                    case 5:
+                        _i++;
+                        return [3 /*break*/, 3];
+                    case 6:
+                        data.currentProject = '';
+                        data.readOnly = true;
+                        data.fileData = 'please create a new project to continue';
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;

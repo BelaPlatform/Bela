@@ -60,11 +60,19 @@ describe('FileManager', function(){
 		describe('#delete_file', function(){
 			var content: string = 'this is a test';
 			before(function(){
-				mock({ 'test_file' : mock.file({content}) });
+				mock({ 
+					'test_file' : mock.file({content}),
+					'test_dir': {'test_file': 'test_content'}
+				});
 			});
 			it('should delete a file', async function(){
 				await fm.delete_file('test_file');
 				let data: string = await fm.read_file('test_file')
+					.catch( e => e.code.should.equal('ENOENT') );
+			});
+			it('should delete a directory', async function(){
+				await fm.delete_file('test_dir');
+				let data: string[] = await fm.read_directory('test_dir')
 					.catch( e => e.code.should.equal('ENOENT') );
 			});
 		});

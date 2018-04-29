@@ -136,7 +136,10 @@ describe('FileManager', function () {
         describe('#delete_file', function () {
             var content = 'this is a test';
             before(function () {
-                mock({ 'test_file': mock.file({ content: content }) });
+                mock({
+                    'test_file': mock.file({ content: content }),
+                    'test_dir': { 'test_file': 'test_content' }
+                });
             });
             it('should delete a file', function () {
                 return __awaiter(this, void 0, void 0, function () {
@@ -147,6 +150,23 @@ describe('FileManager', function () {
                             case 1:
                                 _a.sent();
                                 return [4 /*yield*/, FileManager_1.fm.read_file('test_file')
+                                        .catch(function (e) { return e.code.should.equal('ENOENT'); })];
+                            case 2:
+                                data = _a.sent();
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should delete a directory', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.delete_file('test_dir')];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, FileManager_1.fm.read_directory('test_dir')
                                         .catch(function (e) { return e.code.should.equal('ENOENT'); })];
                             case 2:
                                 data = _a.sent();
