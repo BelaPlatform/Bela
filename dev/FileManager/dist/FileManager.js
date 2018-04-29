@@ -192,6 +192,24 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    FileManager.prototype.copy_directory = function (src_path, dest_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.lock.acquire()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, fs.copyAsync(src_path, dest_path)
+                                .catch(function (e) { return _this.error_handler(e); })];
+                    case 2:
+                        _a.sent();
+                        this.lock.release();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     // for some reason fs does not have ensureSymLinkAsync or emptyDirAsync
     // so promisify them manually
     FileManager.prototype.make_symlink = function (src_path, dest_path) {

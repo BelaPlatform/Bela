@@ -201,6 +201,33 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('copy_directory', function () {
+            before(function () {
+                mock({ 'test_dir': { 'test_file1': 'content1', 'test_subdir': { 'test_file2': 'content2' } } });
+            });
+            it('should recursively copy the contents of one directory to another, creating the destination if neccesary', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var contents;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.copy_directory('test_dir', 'dest_dir')];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, FileManager_1.fm.deep_read_directory('dest_dir')];
+                            case 2:
+                                contents = _a.sent();
+                                contents.should.deep.equal([
+                                    new FileManager_1.File_Descriptor('test_file1', 8, undefined),
+                                    new FileManager_1.File_Descriptor('test_subdir', undefined, [
+                                        new FileManager_1.File_Descriptor('test_file2', 8, undefined)
+                                    ])
+                                ]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         describe('#is_binary', function () {
             beforeEach(function () {
                 mock({ 'test_text': 'test', 'test_bin': new Buffer(100) });

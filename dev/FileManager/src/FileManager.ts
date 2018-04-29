@@ -77,6 +77,12 @@ class FileManager {
 		this.lock.release();
 		return out;
 	}
+	async copy_directory(src_path: string, dest_path: string){
+		await this.lock.acquire();
+		await fs.copyAsync(src_path, dest_path)
+			.catch( e => this.error_handler(e) );
+		this.lock.release();
+	}
 	// for some reason fs does not have ensureSymLinkAsync or emptyDirAsync
 	// so promisify them manually
 	async make_symlink(src_path: string, dest_path: string): Promise<any>{

@@ -95,7 +95,23 @@ describe('FileManager', function(){
 				stat.isDirectory().should.equal(false);
 			});
 		});
-			
+
+		describe('copy_directory', function(){
+			before(function(){
+				mock({ 'test_dir': { 'test_file1': 'content1', 'test_subdir': {'test_file2': 'content2'} } });
+			});
+			it('should recursively copy the contents of one directory to another, creating the destination if neccesary', async function(){
+				await fm.copy_directory('test_dir', 'dest_dir');
+				let contents: File_Descriptor[] = await fm.deep_read_directory('dest_dir');
+				contents.should.deep.equal([
+						new File_Descriptor('test_file1', 8, undefined),
+						new File_Descriptor('test_subdir', undefined, [
+							new File_Descriptor('test_file2', 8, undefined)
+						])
+				]);
+			});
+		});
+
 		describe('#is_binary', function(){
 			beforeEach(function(){
 				mock({ 'test_text': 'test', 'test_bin': new Buffer(100) });
