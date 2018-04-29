@@ -375,6 +375,33 @@ describe('ProjectManager', function(){
 			});
 		});
 
+		describe('#cleanFile', function(){
+			beforeEach(function(){
+				mock({
+					'/root/Bela/projects/test_project': {
+						'build': {'test.d': 'testd', 'test.o': 'testo', 'another.d': 'anotherd'},
+						'test_project': Buffer.alloc(4100)
+					}
+				});
+			});
+			it('should delete the related build files and binary if passed a source file', async function(){
+				await pm.cleanFile('test_project', 'test.cpp');
+				let files: File_Descriptor[] = await fm.deep_read_directory('/root/Bela/projects/test_project');
+				files.should.deep.equal([new File_Descriptor('build', undefined, [new File_Descriptor('another.d', 8, undefined)])]);
+			});
+			it('should do nothing if passed a non-source file', async function(){
+				await pm.cleanFile('test_project', 'another.bak.txt');
+				let files: File_Descriptor[] = await fm.deep_read_directory('/root/Bela/projects/test_project');
+				files.should.deep.equal([
+					new File_Descriptor('build', undefined, [
+						new File_Descriptor('another.d', 8, undefined),
+						new File_Descriptor('test.d', 5, undefined),
+						new File_Descriptor('test.o', 5, undefined)
+					]),
+					new File_Descriptor('test_project', 4100, undefined)
+				]);
+			});
+		});
 
 
 		afterEach(function(){

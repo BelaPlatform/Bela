@@ -641,6 +641,57 @@ describe('ProjectManager', function () {
                 });
             });
         });
+        describe('#cleanFile', function () {
+            beforeEach(function () {
+                mock({
+                    '/root/Bela/projects/test_project': {
+                        'build': { 'test.d': 'testd', 'test.o': 'testo', 'another.d': 'anotherd' },
+                        'test_project': Buffer.alloc(4100)
+                    }
+                });
+            });
+            it('should delete the related build files and binary if passed a source file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var files;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, pm.cleanFile('test_project', 'test.cpp')];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, FileManager_1.fm.deep_read_directory('/root/Bela/projects/test_project')];
+                            case 2:
+                                files = _a.sent();
+                                files.should.deep.equal([new FileManager_1.File_Descriptor('build', undefined, [new FileManager_1.File_Descriptor('another.d', 8, undefined)])]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should do nothing if passed a non-source file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var files;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, pm.cleanFile('test_project', 'another.bak.txt')];
+                            case 1:
+                                _a.sent();
+                                return [4 /*yield*/, FileManager_1.fm.deep_read_directory('/root/Bela/projects/test_project')];
+                            case 2:
+                                files = _a.sent();
+                                files.should.deep.equal([
+                                    new FileManager_1.File_Descriptor('build', undefined, [
+                                        new FileManager_1.File_Descriptor('another.d', 8, undefined),
+                                        new FileManager_1.File_Descriptor('test.d', 5, undefined),
+                                        new FileManager_1.File_Descriptor('test.o', 5, undefined)
+                                    ]),
+                                    new FileManager_1.File_Descriptor('test_project', 4100, undefined)
+                                ]);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

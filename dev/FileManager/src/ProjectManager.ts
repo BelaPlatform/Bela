@@ -158,6 +158,19 @@ export class ProjectManager {
 		await this.openFile(data);
 	}
 
+	async cleanFile(project: string, file: string){
+		if (file.split && file.includes('.')){
+			let split_file = file.split('.');
+			let ext = split_file.pop();
+			let file_root = split_file.join('.');
+			if (ext === 'cpp' || ext === 'c' || ext === 'S'){
+				let file_path = paths.projects+project+'/build/'+file_root;
+				await fm.delete_file(file_path+'.d');
+				await fm.delete_file(file_path+'.o');
+				await fm.delete_file(paths.projects+project+'/'+project);
+			}
+		}
+	}
 
 
 }

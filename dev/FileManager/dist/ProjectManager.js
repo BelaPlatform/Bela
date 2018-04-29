@@ -352,6 +352,33 @@ var ProjectManager = /** @class */ (function () {
             });
         });
     };
+    ProjectManager.prototype.cleanFile = function (project, file) {
+        return __awaiter(this, void 0, void 0, function () {
+            var split_file, ext, file_root, file_path;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(file.split && file.includes('.'))) return [3 /*break*/, 4];
+                        split_file = file.split('.');
+                        ext = split_file.pop();
+                        file_root = split_file.join('.');
+                        if (!(ext === 'cpp' || ext === 'c' || ext === 'S')) return [3 /*break*/, 4];
+                        file_path = paths_1.paths.projects + project + '/build/' + file_root;
+                        return [4 /*yield*/, FileManager_1.fm.delete_file(file_path + '.d')];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, FileManager_1.fm.delete_file(file_path + '.o')];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, FileManager_1.fm.delete_file(paths_1.paths.projects + project + '/' + project)];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
     return ProjectManager;
 }());
 exports.ProjectManager = ProjectManager;
