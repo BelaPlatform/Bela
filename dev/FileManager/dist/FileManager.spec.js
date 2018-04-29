@@ -356,6 +356,55 @@ describe('FileManager', function () {
                 });
             });
         });
+        describe('#directory_exists', function () {
+            beforeEach(function () {
+                mock({
+                    'test_dir': { 'test_subdir': { 'test_file': 'test_content' } }
+                });
+            });
+            it('should return false if a directory does not exist', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.directory_exists('wrong_dir/wrong_subdir')];
+                            case 1:
+                                output = _a.sent();
+                                output.should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should return false if called on a file', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.directory_exists('test_dir/test_subdir/test_file')];
+                            case 1:
+                                output = _a.sent();
+                                output.should.equal(false);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should return true if a directory exists', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var output;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, FileManager_1.fm.directory_exists('test_dir/test_subdir')];
+                            case 1:
+                                output = _a.sent();
+                                output.should.equal(true);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+        });
         afterEach(function () {
             mock.restore();
         });

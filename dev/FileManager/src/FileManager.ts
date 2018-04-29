@@ -77,7 +77,7 @@ class FileManager {
 		this.lock.release();
 		return out;
 	}
-	async copy_directory(src_path: string, dest_path: string){
+	async copy_directory(src_path: string, dest_path: string): Promise<void>{
 		await this.lock.acquire();
 		await fs.copyAsync(src_path, dest_path)
 			.catch( e => this.error_handler(e) );
@@ -169,6 +169,11 @@ class FileManager {
 		return this.write_file(file_path, JSON.stringify(data));
 	}
 
+	async directory_exists(dir_path: string): Promise<boolean>{
+		let stat: any = await this.stat_file(dir_path)
+			.catch( e => {} );
+		return (stat && stat.isDirectory && stat.isDirectory()) ? true : false;
+	}
 }
 
 export class File_Descriptor {

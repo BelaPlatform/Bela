@@ -179,6 +179,26 @@ describe('FileManager', function(){
 			});
 		});
 		
+		describe('#directory_exists', function(){
+			beforeEach(function(){
+				mock({
+					'test_dir': { 'test_subdir': { 'test_file': 'test_content' } }
+				});
+			});
+			it('should return false if a directory does not exist', async function(){
+				let output: boolean = await fm.directory_exists('wrong_dir/wrong_subdir');
+				output.should.equal(false);
+			});
+			it('should return false if called on a file', async function(){
+				let output: boolean = await fm.directory_exists('test_dir/test_subdir/test_file');
+				output.should.equal(false);
+			});
+			it('should return true if a directory exists', async function(){
+				let output: boolean = await fm.directory_exists('test_dir/test_subdir');
+				output.should.equal(true);
+			});
+		});
+
 		afterEach(function(){
 			mock.restore();
 		});

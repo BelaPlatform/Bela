@@ -383,6 +383,20 @@ var FileManager = /** @class */ (function () {
             });
         });
     };
+    FileManager.prototype.directory_exists = function (dir_path) {
+        return __awaiter(this, void 0, void 0, function () {
+            var stat;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.stat_file(dir_path)
+                            .catch(function (e) { })];
+                    case 1:
+                        stat = _a.sent();
+                        return [2 /*return*/, (stat && stat.isDirectory && stat.isDirectory()) ? true : false];
+                }
+            });
+        });
+    };
     return FileManager;
 }());
 var File_Descriptor = /** @class */ (function () {
