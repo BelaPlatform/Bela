@@ -101,5 +101,16 @@ export class ProjectManager {
 		await this.openProject(data);
 	}
 
+	async saveAs(data: any){
+		if (await fm.directory_exists(paths.projects+data.newProject)){
+			data.error = 'failed, project '+data.newProject+' already exists!';
+			return;
+		}
+		await fm.copy_directory(paths.projects+data.currentProject, paths.projects+data.newProject);
+		data.projectList = await this.listProjects();
+		data.currentProject = data.newProject;
+		data.newProject = undefined;
+		await this.openProject(data);
+	}
 
 }

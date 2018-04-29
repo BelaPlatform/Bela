@@ -306,7 +306,7 @@ describe('ProjectManager', function () {
             });
             it('should create a new C project', function () {
                 return __awaiter(this, void 0, void 0, function () {
-                    var data;
+                    var data, data2;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
@@ -322,6 +322,11 @@ describe('ProjectManager', function () {
                                 data.CLArgs.should.be.a('object');
                                 data.fileData.should.equal('test_content');
                                 data.readOnly.should.equal(false);
+                                data2 = { currentProject: 'test_project' };
+                                return [4 /*yield*/, pm.openProject(data2)];
+                            case 2:
+                                _a.sent();
+                                data.fileData.should.equal(data2.fileData);
                                 return [2 /*return*/];
                         }
                     });
@@ -345,6 +350,62 @@ describe('ProjectManager', function () {
             });
             after(function () {
                 mock.restore();
+            });
+        });
+        describe('#saveAs', function () {
+            beforeEach(function () {
+                mock({
+                    '/root/Bela/projects/test_src': { 'render.cpp': 'test_content' },
+                    '/root/Bela/projects/wrong_dir': { 'render.cpp': 'wrong_content' }
+                });
+            });
+            it('should duplicate a project and open the copy', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_src', newProject: 'test_dest' };
+                                return [4 /*yield*/, pm.saveAs(data)];
+                            case 1:
+                                _a.sent();
+                                (typeof data.newProject).should.equal('undefined');
+                                data.currentProject.should.equal('test_dest');
+                                data.projectList.should.deep.equal(['test_dest', 'test_src', 'wrong_dir']);
+                                data.fileList.should.deep.equal([new FileManager_1.File_Descriptor('render.cpp', 12, undefined)]);
+                                data.fileName.should.equal('render.cpp');
+                                data.fileData.should.equal('test_content');
+                                data2 = { currentProject: 'test_dest' };
+                                return [4 /*yield*/, pm.openProject(data2)];
+                            case 2:
+                                _a.sent();
+                                data.fileData.should.equal(data2.fileData);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            it('should fail gracefully when the destination project exists', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, data2;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                data = { currentProject: 'test_src', newProject: 'wrong_dir' };
+                                return [4 /*yield*/, pm.saveAs(data)];
+                            case 1:
+                                _a.sent();
+                                data.error.should.equal('failed, project wrong_dir already exists!');
+                                data2 = { currentProject: 'wrong_dir' };
+                                return [4 /*yield*/, pm.openProject(data2)];
+                            case 2:
+                                _a.sent();
+                                data2.fileName.should.equal('render.cpp');
+                                data2.fileData.should.equal('wrong_content');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
             });
         });
         afterEach(function () {

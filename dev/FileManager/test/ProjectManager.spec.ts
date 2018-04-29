@@ -206,6 +206,9 @@ describe('ProjectManager', function(){
 				data.CLArgs.should.be.a('object');
 				data.fileData.should.equal('test_content');
 				data.readOnly.should.equal(false);
+				let data2: any = {currentProject: 'test_project'};
+				await pm.openProject(data2);
+				data.fileData.should.equal(data2.fileData);
 			});
 			it('should fail gracefully if the project already exists', async function(){
 				let data: any = {newProject: 'test_project', projectType: 'C'};
@@ -214,6 +217,37 @@ describe('ProjectManager', function(){
 			});
 			after(function(){
 				mock.restore();
+			});
+		});
+
+		describe('#saveAs', function(){
+			beforeEach(function(){
+				mock({
+					'/root/Bela/projects/test_src': {'render.cpp': 'test_content'},
+					'/root/Bela/projects/wrong_dir': {'render.cpp': 'wrong_content'}
+				});
+			});
+			it('should duplicate a project and open the copy', async function(){
+				let data: any = {currentProject: 'test_src', newProject: 'test_dest'};
+				await pm.saveAs(data);
+				(typeof data.newProject).should.equal('undefined');
+				data.currentProject.should.equal('test_dest');
+				data.projectList.should.deep.equal(['test_dest', 'test_src', 'wrong_dir']);
+				data.fileList.should.deep.equal([new File_Descriptor('render.cpp', 12, undefined)]);
+				data.fileName.should.equal('render.cpp');
+				data.fileData.should.equal('test_content');
+				let data2: any = {currentProject: 'test_dest'};
+				await pm.openProject(data2);
+				data.fileData.should.equal(data2.fileData);
+			});
+			it('should fail gracefully when the destination project exists', async function(){
+				let data: any = {currentProject: 'test_src', newProject: 'wrong_dir'};
+				await pm.saveAs(data);
+				data.error.should.equal('failed, project wrong_dir already exists!');
+				let data2: any = {currentProject: 'wrong_dir'};
+				await pm.openProject(data2);
+				data2.fileName.should.equal('render.cpp');
+				data2.fileData.should.equal('wrong_content');
 			});
 		});
 
