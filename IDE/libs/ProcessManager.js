@@ -45,8 +45,8 @@ class ProcessManager extends EventEmitter {
 	
 		this.emptyAllQueues();
 		
-		writingFile = true;
 		if (data.currentProject && data.newFile && data.fileData){
+			writingFile = true;
 			fs.outputFileAsync(projectPath+data.currentProject+'/'+data.newFile, data.fileData)
 				.then( () => {
 
@@ -66,6 +66,10 @@ class ProcessManager extends EventEmitter {
 						if (data.callback) data.callback();
 					}
 					
+				})
+				.catch( () => {
+					console.log('error uploading');
+					writingFile = false;
 				});
 		} else {
 			if (toobusy())

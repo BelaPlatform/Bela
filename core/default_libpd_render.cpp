@@ -342,9 +342,6 @@ bool setup(BelaContext *context, void *userData)
 		}
 	}
 
-	for(unsigned int n = 0; n < gMidiPortNames.size(); ++n)
-	{
-	}
 	unsigned int n = 0;
 	while(n < gMidiPortNames.size())
 	{
@@ -444,6 +441,7 @@ bool setup(BelaContext *context, void *userData)
 	Bela_scheduleAuxiliaryTask(fdTask);
 #endif /* PD_THREADED_IO */
 
+	dcm.setVerbose(false);
 	return true;
 }
 

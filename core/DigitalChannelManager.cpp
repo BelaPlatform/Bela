@@ -7,7 +7,9 @@
 
 #include <DigitalChannelManager.h>
 
-DigitalChannelManager::DigitalChannelManager() {
+DigitalChannelManager::DigitalChannelManager() :
+	verbose(true)
+{
 	// TODO Auto-generated constructor stub
 
 }
@@ -16,3 +18,7 @@ DigitalChannelManager::~DigitalChannelManager() {
 	// TODO Auto-generated destructor stub
 }
 
+void DigitalChannelManager::setVerbose(bool isVerbose)
+{
+	verbose = isVerbose;
+}

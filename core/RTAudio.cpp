@@ -127,7 +127,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	int ret = system(command);
 	if(ret == 0)
 	{
-		cerr << "Error: Bela is already running in another process. Cannot start.\n";
+		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
 		return -1;
 	}
 #if (XENOMAI_MAJOR == 3)
@@ -155,7 +155,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// doesn't then it means something else is running.
 	if(!settings->render)
 	{
-		cout << "Error: no audio callback defined. Make sure you set settings->render to point to your audio callback\n";
+		fprintf(stderr, "Error: no audio callback defined. Make sure you set settings->render to point to your audio callback\n");
 		return -1;
 	}
 	gBelaRender = settings->render;
@@ -163,11 +163,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	
 	// Sanity checks
 	if(settings->pruNumber < 0 || settings->pruNumber > 1) {
-		cout << "Invalid PRU number " << settings->pruNumber << endl;
+		fprintf(stderr, "Invalid PRU number %d \n", settings->pruNumber);
 		return -1;
 	}
 	if(settings->pruNumber != 1 && settings->numMuxChannels != 0) {
-		cout << "Incompatible settings: multiplexer can only be run using PRU 1\n";
+		fprintf(stderr,  "Incompatible settings: multiplexer can only be run using PRU 1\n");
 		return -1;
 	}
 	
@@ -179,22 +179,21 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	gHighPerformanceMode = settings->highPerformanceMode;
 	if(gRTAudioVerbose && gHighPerformanceMode) {
-		cout << "Starting in high-performance mode\n";
+		printf("Starting in high-performance mode\n");
 	}
 
 	// Initialise context data structure
 	memset(&gContext, 0, sizeof(BelaContext));
 
 	if(gRTAudioVerbose) {
-		cout << "Starting with period size " << settings->periodSize << "; ";
+		printf("Starting with period size %d ;", settings->periodSize);
 		if(settings->useAnalog)
-			cout << "analog enabled\n";
+			printf("analog enabled\n");
 		else
-			cout << "analog disabled\n";
-		cout << "DAC level " << settings->dacLevel << "dB; ADC level " << settings->adcLevel;
-		cout << "dB; headphone level " << settings->headphoneLevel << "dB\n";
+			printf("analog disabled\n");
+		printf("DAC level %f dB; ADC level %f dB; headphone level %f dB\n", settings->dacLevel, settings->adcLevel, settings->headphoneLevel);
 		if(settings->beginMuted)
-			cout << "Beginning with speaker muted\n";
+			printf("Beginning with speaker muted\n");
 	}
 
 	// Prepare GPIO pins for amplifier mute and status LED
@@ -204,22 +203,22 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 		if(gpio_export(settings->ampMutePin)) {
 			if(gRTAudioVerbose)
-				cout << "Warning: couldn't export amplifier mute pin " << settings-> ampMutePin << "\n";
+				fprintf(stderr, "Warning: couldn't export amplifier mute pin %d\n", settings->ampMutePin);
 		}
 		if(gpio_set_dir(settings->ampMutePin, OUTPUT_PIN)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set direction on amplifier mute pin\n";
+				fprintf(stderr, "Couldn't set direction on amplifier mute pin\n");
 			return -1;
 		}
 		if(gpio_set_value(settings->ampMutePin, LOW)) {
 			if(gRTAudioVerbose)
-				cout << "Couldn't set value on amplifier mute pin\n";
+				fprintf(stderr, "Couldn't set value on amplifier mute pin\n");
 			return -1;
 		}
 	}
 
 	if(settings->numAnalogInChannels != settings->numAnalogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return 1;
 	}
 	unsigned int numAnalogChannels = settings->numAnalogInChannels;
@@ -227,7 +226,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(numAnalogChannels != 2
 		&& numAnalogChannels != 4
 		&& numAnalogChannels != 8) {
-			cout << "Invalid number of analog channels: " << numAnalogChannels << ". Valid values are 2, 4, 8.\n";
+			fprintf(stderr,"Invalid number of analog channels: %u. Valid values are 2, 4, 8.\n", numAnalogChannels);
 			return -1;
 	}
 
@@ -274,7 +273,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	if(gContext.analogInChannels != gContext.analogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
 		return -1;
 	}
 	unsigned int analogChannels = gContext.analogInChannels;
@@ -282,7 +281,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if( analogChannels != 0 && ((analogChannels <= 4 && gContext.analogFrames < 2) ||
 			(analogChannels <= 2 && gContext.analogFrames < 4)) )
 	{
-		cout << "Error: " << analogChannels << " channels and period size of " << gContext.analogFrames << " not supported.\n";
+		fprintf(stderr,"Error: %u channels and period size of %d not supported.\n", analogChannels, gContext.analogFrames);
 		return 1;
 	}
 
@@ -323,7 +322,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(gPRU->prepareGPIO(settings->enableLED)) {
-		cout << "Error: unable to prepare GPIO for PRU audio\n";
+		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
 		return 1;
 	}
 	
@@ -335,7 +334,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
 		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
-		cout << "Error: unable to initialise PRU\n";
+		fprintf(stderr, "Error: unable to initialise PRU\n");
 		return 1;
 	}
 
@@ -345,11 +344,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	#else
 		// Prepare the audio codec, which clocks the whole system
 		if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
-			cout << "Unable to open codec I2C\n";
+			fprintf(stderr, "Unable to open codec I2C\n");
 			return 1;
 		}
 		if(gAudioCodec->initCodec()) {
-			cout << "Error: unable to initialise audio codec\n";
+			fprintf(stderr, "Error: unable to initialise audio codec\n");
 			return 1;
 		}
 	#endif
@@ -360,7 +359,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// TODO: add more argument checks
 	for(int n = 0; n < 2; n++){
 		if(settings->pgaGain[n] > 59.5){
-			std::cerr << "PGA gain out of range [0,59.5]\n";
+			fprintf(stderr, "PGA gain out of range [0,59.5] for channel %d: %fdB\n", n, settings->pgaGain[n]);
 			exit(1);
 		}
 		Bela_setPgaGain(settings->pgaGain[n], n);
@@ -369,7 +368,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Call the user-defined initialisation function
 	if(settings->setup && !(*settings->setup)((BelaContext *)&gContext, userData)) {
-		cout << "Couldn't initialise audio rendering\n";
+		fprintf(stderr, "Couldn't initialise audio rendering\n");
 		return 1;
 	}
 	return 0;
@@ -447,7 +446,7 @@ int Bela_runInSameThread()
 
 	if(ret < 0)
 	{
-		cout << "Error: unable to shadow Xenomai audio thread: " << strerror(-ret) << endl;
+		fprintf(stderr, "Error: unable to shadow Xenomai audio thread: %s \n", strerror(-ret));
 		return ret;	
 	}
 
@@ -477,7 +476,7 @@ int Bela_startAudio()
 #ifdef XENOMAI_SKIN_native
 	if(ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, stackSize, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU))
 	{
-		  cout << "Error: unable to create Xenomai audio thread: " << strerror(-ret) << endl;
+		  fprintf(stderr,"Error: unable to create Xenomai audio thread: %s \n" ,strerror(-ret));
 		  return -1;
 	}
 #endif
@@ -490,8 +489,8 @@ int Bela_startAudio()
 #ifdef XENOMAI_SKIN_native
 	if(ret = rt_task_start(&gRTAudioThread, &audioLoop, 0))
 	{
-		  cout << "Error: unable to start Xenomai audio thread: " << strerror(-ret) << endl;
-		  return -1;
+		fprintf(stderr,"Error: unable to start Xenomai audio thread: %s \n" ,strerror(-ret));
+      		return -1;
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
@@ -516,7 +515,7 @@ void Bela_stopAudio()
 	gShouldStop = true;
 
 	if(gRTAudioVerbose)
-		cout << "Stopping audio...\n";
+		printf("Stopping audio...\n");
 
 	// Now wait for threads to respond and actually stop...
 #ifdef XENOMAI_SKIN_native
