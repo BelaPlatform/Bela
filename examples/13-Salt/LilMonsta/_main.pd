@@ -1,4 +1,4 @@
-#N canvas 52 29 1263 712 10;
+#N canvas 18 29 1263 712 10;
 #X obj 1058 144 bela_enableLeds;
 #X obj 1088 24 loadbang;
 #X obj 1059 68 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
@@ -595,7 +595,7 @@
 #X connect 63 0 36 0;
 #X restore 366 429 pd voice3;
 #X obj 484 571 *~ -1;
-#N canvas 587 176 967 682 voice4 1;
+#N canvas 313 92 967 682 voice4 0;
 #X obj 306 765 *~ 600;
 #X obj 302 840 +~;
 #X obj 310 970 *~;
@@ -777,10 +777,8 @@
 #X text 464 42 . ____ ._____ _ .......___ .;
 #X text 464 52 .| __ )| ____| |....../ _ |.;
 #X text 464 72 .| |_) | |___| |___ / ___ |.;
-#X text 464 82 .|____/|_____|_____/_/..._|.io;
 #X text 464 92 ............................;
 #X text 464 62 .| __ || __|.| |...../ _| |.;
-#X text 33 42 Lil' monsta;
 #X text 36 111 Each drum voice is loaded with an independent wavetable
 that;
 #X text 35 99 It's super fun and super handy.;
@@ -840,6 +838,10 @@ new;
 #X text 718 359 20 - Voice 4 FM;
 #X text 37 87 trigger transformer with a quad trigger-synced LFO out.
 ;
+#X text 438 269 Audio out 1-2: drums out (mono sum);
+#X text 33 42 Lil' monsta - by Cherif Hashizume - www.cherifhashizume.org
+;
+#X text 464 82 .|____/|_____|_____/_/..._|.io;
 #X connect 1 0 2 0;
 #X connect 1 0 67 0;
 #X connect 2 0 63 0;
