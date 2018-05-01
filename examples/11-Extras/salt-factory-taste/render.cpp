@@ -16,7 +16,7 @@ enum
 	kEndTest,
 	kNumTest
 };
-int gCurrentTest = kAudioDCTestHi;
+int gCurrentTest = 0;
 
 const int nPins = 4;
 
