@@ -1,6 +1,7 @@
 #include <Bela.h>
 #include <math.h>
-
+#include <Scope.h>
+Scope gScope;
 enum
 {
 	kButtonsTest,
@@ -8,8 +9,14 @@ enum
 	kPotRangeTest,
 	kCvLoRangeTest,
 	kCvHiRangeTest,
-	kEndTest
+	kAudioTest,
+	kRewireTest,
+	kAudioDCTestHi,
+	kAudioDCTestLo,
+	kEndTest,
+	kNumTest
 };
+int gCurrentTest = kAudioDCTestHi;
 
 const int nPins = 4;
 
@@ -18,14 +25,14 @@ const int triggInPins[nPins] = {15, 14, 1, 3};
 const int sw1Pin = 6;
 const int ledPins[nPins] = {2, 4, 8, 9};
 const int pwmPin = 7;
-const int audioPins[nPins/2] = {0, 1};
+const int audioPins[2] = {0, 1};
 const int gNumButtons = nPins;
 const int gNumCVs = nPins*2;
 
 const int buttonPins[gNumButtons] = {sw1Pin, triggInPins[1], triggInPins[2], triggInPins[3]};
 const int cvPins[gNumCVs] = {0, 1, 2, 3, 4, 5, 6, 7};
 
-int gCurrentTest = 0;
+int gTestStatus[kNumTest] = {0};
 
 int gPeriod; 
 unsigned int count = 0;
@@ -35,12 +42,23 @@ int gButtonStatus[gNumButtons] = {0, 0, 0, 0};
 
 int gLedsOn = false;
 
-int gBlockSize = 16;//512;
+int gBlockSize = 512;//512;
 
-float gInverseAnalogSampleRate;
+float gInverseAudioSampleRate;
 
 static float gCvRange[2][gNumCVs];
 
+float gCVtolerance =  0.15;
+float gAudioToCVtolerance =  0.2;
+
+int gNumAudioChannels = 2;
+
+float cvToAnalog(float cvVoltage)
+{
+	const float analogMin = 1/11.0;
+	const float analogMax = 1;
+	return analogMin + (analogMax-analogMin) * cvVoltage;
+}
 void setLed(BelaContext *context, int n, const int pwmPin, int channel, int state) {
 	switch(state) {
 		case 0:
@@ -70,11 +88,13 @@ bool flashNumberLed(BelaContext *context, int n, const int pwmPin, const int * l
 	static int flashBlock = count;
 	static int flashCount = 0;
 	static int prevNum = number;
-	if(prevNum != number || reset)
-	{
+	static bool internalReset = reset;
+	if(prevNum != number || (reset && internalReset != reset))
+	{	
 		flashBlock = count;
 		flashCount = 0;
 		prevNum = number;
+		internalReset = reset;
 	}
 	
 	if(flashCount < nFlash || nFlash == 0) {
@@ -99,11 +119,54 @@ bool flashNumberLed(BelaContext *context, int n, const int pwmPin, const int * l
 	return false;
 }
 
+bool cvRamp(float * cvValue, float range[2], float step, int blockSize, bool reset = false) {
+
+			static int rampDirection = 1;
+			static bool internalReset = reset;
+			if(reset != internalReset)
+			{
+				rampDirection = 1;
+				internalReset = reset;
+			}
+			
+			*cvValue += (rampDirection) * blockSize * step;
+			
+			if(*cvValue >= range[1])
+			{	
+				rampDirection = -1; // change ramp direction
+			} 
+			else if (*cvValue <= range[0])
+			{
+				*cvValue = range[0];
+				rampDirection = 1; // change ramp direction
+				return false;
+			}
+
+	return true;
+}
+
+void Bela_userSettings(BelaInitSettings *settings)
+{
+        settings->uniformSampleRate = 1;
+        settings->analogOutputsPersist = 0;
+        settings->pgaGain[0] = 0;
+        settings->pgaGain[1] = 0;
+}
+
 bool setup(BelaContext *context, void *userData)
 {
+	
+	// Check that analog and audio sample rate are equal
+	if(context->analogSampleRate != context->audioSampleRate)
+		return false;
+		
+		
+	gScope.setup(8, context->audioSampleRate);
+	
 	// Set direction of PWM pin
 	pinMode(context, 0, pwmPin, OUTPUT);
-	
+
+		
 	// Set direction of trigger pins
 	for(unsigned int t = 0; t < nPins; ++t)
 	{
@@ -115,7 +178,7 @@ bool setup(BelaContext *context, void *userData)
 	// Set switching period
 	gPeriod = 0.25 * context->digitalSampleRate; // duration (in samples) of a "brightness period", affects resolution of dimming. Larger values will cause flickering.
 	// Check if analog channels are enabled
-	if(context->analogFrames == 0 || context->analogFrames > context->audioFrames) 
+	if(context->audioFrames == 0 || context->audioFrames > context->audioFrames) 
 	{
 		rt_printf("Error: analog channels must be enable to use the CV in and outs on Salt\n");
 		return false;
@@ -134,21 +197,39 @@ bool setup(BelaContext *context, void *userData)
 		gCvRange[1][c] = -1000;
 	}
 	
-	gInverseAnalogSampleRate = 1.0 / context->analogSampleRate;
+	gInverseAudioSampleRate = 1.0 / context->audioSampleRate;
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
+
+	if(0)
+	{
+		// some debugging stubs, useful when you are desperate
+		for(int n = 0; n < context->audioFrames; ++n)
+		{
+			for(int ch = 0; ch < context->analogOutChannels; ++ch)
+			{
+				audioWrite(context, n, ch, 1);
+			}
+			gScope.log(audioRead(context, n, 0), audioRead(context, n, 1));
+		}
+		for(int ch = 0; ch < context->analogOutChannels; ++ch)
+		{
+			analogWrite(context, 0, ch, cvToAnalog(0));
+		}
+		for(int n = 0; n < context->analogFrames; ++n)
+		{
+			//gScope.log(&(context->analogIn[context->analogInChannels * n]));
+		}
+		return;
+	}
 	// Skip 1st buffer
 	if(context->audioFramesElapsed == 0)
 		return;
 		
 	static bool flashLeds = true;
-
-	gCurrentTest = kCvLoRangeTest; // DELETE
-
-	
 	// FIRST TEST
 	if (gCurrentTest == kButtonsTest)
 	{
@@ -256,7 +337,7 @@ void render(BelaContext *context, void *userData)
 									if(triggerStatus != gButtonStatus[b]) 
 									{
 										// If 128 samples have been elapsed
-										if(count - gButtonCount[b] < 128) 
+										if(count - gButtonCount[b] < 128/2) 
 										{
 											buttonsFailing[b] = 1;
 											buttonTestFailed = true;
@@ -311,13 +392,14 @@ void render(BelaContext *context, void *userData)
 							{
 								rt_printf("It seems that the buttons are fully functional.\n");
 								rt_printf("Test %d passed!\n", gCurrentTest);
-
+								gTestStatus[gCurrentTest] = 1;
 								++gCurrentTest;
 								flashLeds = true;
 							} 
 							else 
 							{
-								rt_printf("ERROR: Buttons are not working. Test failed.\n");
+								rt_printf("ERROR: Buttons are not working.\n");
+								rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
 								gCurrentTest = kEndTest;
 							}
 						break;
@@ -331,7 +413,7 @@ void render(BelaContext *context, void *userData)
 			++count;
 		}
 	}
-	// SECOND 
+	// SECOND TEST
 	else if (gCurrentTest == kTrigIoTest)
 	{	
 		static bool digitalsFailing[nPins] = {0};
@@ -384,6 +466,7 @@ void render(BelaContext *context, void *userData)
 				{
 					rt_printf("It seems that the trigger I/O is fully functional.\n");
 					rt_printf("Test %d passed!\n", gCurrentTest);
+					gTestStatus[gCurrentTest] = 1;
 					++gCurrentTest;
 					flashLeds = true;
 					break;
@@ -396,6 +479,7 @@ void render(BelaContext *context, void *userData)
 						if(digitalsFailing[t])	
 							rt_printf("ERROR: There is a problem with digital I/O %d.\n", t);
 					}
+					rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
 					gCurrentTest = kEndTest;
 					break;
 				}
@@ -417,15 +501,15 @@ void render(BelaContext *context, void *userData)
 		static float previousRead[gNumCVs];
 		static bool firstReading = true;
 
-		
-		for(unsigned int n = 0; n < context->analogFrames; n++) 
+
+		for(unsigned int n = 0; n < context->audioFrames; n++) 
 		{
 			static unsigned int blockCount = count;
 			static int testInitTime = count;
 			
 			// Flash test number
 			if(flashLeds)
-				flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, -1, 0.15 * context->analogSampleRate, count, 1);
+				flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, -1, 0.15 * context->audioSampleRate, count, 1);
 				
 			// Show active potentiometer (starting from 1)
 			if(currentPot != -1)
@@ -436,7 +520,7 @@ void render(BelaContext *context, void *userData)
 				if(potsWorking[currentPot])
 				{
 					encodeNumberLed(context, n, pwmPin, ledPins, 4, currentPot+1, 0);
-					flashNumberLed(context, n, pwmPin, ledPins, 4, currentPot+1, -1, 0.25 * context->analogSampleRate, count, 0);
+					flashNumberLed(context, n, pwmPin, ledPins, 4, currentPot+1, -1, 0.25 * context->audioSampleRate, count, 0);
 				} 
 				else
 				{
@@ -447,7 +531,9 @@ void render(BelaContext *context, void *userData)
 			// Write 0.5 to the CV outs
 			for(unsigned int c = 0; c < gNumCVs; ++c) 
 			{
-				analogWriteOnce(context, n, cvPins[c], 0.5);
+				analogWriteOnce(context, n, cvPins[c], cvToAnalog(0.5));
+				gScope.log(context->analogIn);
+
 			}
 			
 			// Read after half a block-size samples
@@ -499,15 +585,17 @@ void render(BelaContext *context, void *userData)
 			if(count - testInitTime >= 5 * 60 * context->digitalSampleRate) 
 			{
 				rt_printf("ERROR: A lot of time has elapsed and the test hasn't passed yet. One or more of the potentiometers may not be working\n");
+				rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
 			}
 			
 			// Test finishes when all pots are working
 			if(numOfWorkingPots == gNumCVs)
 			{
-				rt_printf("All potentiometers work! %d\n", count);
-				//++gCurrentTest;
+				rt_printf("All potentiometers work!\n");
+				rt_printf("Test %d passed!\n", gCurrentTest);
+				gTestStatus[gCurrentTest] = 1;
+				++gCurrentTest;
 				flashLeds = true;
-				gCurrentTest = kCvLoRangeTest;
 				break;
 			}
 			
@@ -517,10 +605,10 @@ void render(BelaContext *context, void *userData)
 			++count;
 		}
 	}
+	// FOURTH TEST
 	else if (gCurrentTest == kCvLoRangeTest) 
 	{
 		static int currentCv = 0;
-		static int rampDirection = 1;
 		static bool potCheck = true;
 		
 		float readVal;
@@ -528,45 +616,48 @@ void render(BelaContext *context, void *userData)
 		static int numOfWorkingCvs = 0;
 		float cvOutRange[2] = {0.55, 0.95};
 		static float cvOutVal = cvOutRange[0];
-		float tolerance =  0.15;
-		
-		
-		for(unsigned int n = 0; n < context->analogFrames; n++) 
+		float inOutOffset = 0.5;
+		static bool flashError = false;
+		static bool runTest = false;
+
+		for(unsigned int n = 0; n < context->audioFrames; n++) 
 		{
 			static unsigned int blockCount = count;
 			
-			
-
 			// Flash test number
-			//if(flashLeds)
-			
-			if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->analogSampleRate, count, 1))
+			if(!flashError)
 			{
-				encodeNumberLed(context, n, pwmPin, ledPins, 4, currentCv+1, 0);
-				//flashNumberLed(context, n, pwmPin, ledPins, 4, currentCv+1, -1, 0.25 * context->analogSampleRate, count, 0);
-			}
-			
-				
-			if(currentCv < gNumCVs)
-			{
-				// Wait for potentiometer to be set at minimum
-				if(potCheck)
+				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->audioSampleRate, count, 1))
 				{
-					// Write 0.5 to the CV out being tested
-					analogWriteOnce(context, n, cvPins[currentCv], 0.5);
-					
-					// Read after half a block-size samples
-					if(count - blockCount == gBlockSize/2)
+					runTest = true;
+					encodeNumberLed(context, n, pwmPin, ledPins, 4, currentCv+1, 0);
+				} 	
+			}
+				
+			// Iterate over CVs
+			if(runTest)
+			{
+				if(currentCv < gNumCVs)
+				{
+					// Wait for potentiometer to be set at minimum
+					if(potCheck)
 					{
-						readVal = analogRead(context, n, cvPins[currentCv]);
-						if(readVal <= 0.05)
-							potCheck = false;
+						// Write 0.5 to the CV out being tested
+						analogWriteOnce(context, n, cvPins[currentCv], cvToAnalog(0.5));
+						
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							readVal = analogRead(context, n, cvPins[currentCv]);
+							// Finish checking the potentiometer when it is in the CCW position
+							if(readVal <= 0.05)
+								potCheck = false;
+						}
 					}
-				}
-				else
-				{	
-					
-						analogWriteOnce(context, n, cvPins[currentCv], cvOutVal);
+					else
+					{	
+						// Write value to CV output
+						analogWriteOnce(context, n, cvPins[currentCv], cvToAnalog(cvOutVal));
 					
 						// Read after half a block-size samples
 						if(count - blockCount == gBlockSize/2)
@@ -574,54 +665,60 @@ void render(BelaContext *context, void *userData)
 						
 							// Read value
 							readVal = analogRead(context, n, cvPins[currentCv]);
-							//rt_printf("readVal %f, cvOutVal %f\n", readVal+0.5, cvOutVal);
-							
+	
 							// Check that the read value and the ouput value are within range
-							if(fabs(readVal+0.5 - cvOutVal) <= tolerance)
+							if(!(fabs(readVal+inOutOffset - cvOutVal) <= gCVtolerance))
 							{
-								// In and out are within range
-								//rt_printf("within\n");
-							} 
-							else
-							{
-								// In and out are out of range
-								//rt_printf("out\n");
-								brokenCvs[currentCv] = 1;
-								//break;
+								brokenCvs[currentCv] = 1; // In and out are out of range
+								rt_printf("currentCv: %d, fabs(readVal+inOutOffset - cvOutVal): %f, readVal: %f, inOutOffset: %f, cvOutVal: %f, gCVtolerance: %f\n",
+									currentCv, fabs(readVal+inOutOffset - cvOutVal), readVal, inOutOffset, cvOutVal, gCVtolerance);
 							}
 							
-							// Increment CV output values
-							cvOutVal += (rampDirection) * gBlockSize * gInverseAnalogSampleRate;
-							if(cvOutVal >= cvOutRange[1])
-							{	
-								rampDirection *= -1; // change ramp direction
-							} 
-							else if (cvOutVal <= cvOutRange[0])
+							// Create CV ramp and go to next potentiometer when the ramp has finished
+							if(!cvRamp(&cvOutVal, cvOutRange, gInverseAudioSampleRate, gBlockSize))
 							{
-								rt_printf("%d\n", currentCv);
 								if(!brokenCvs[currentCv])
 									++numOfWorkingCvs;
-								cvOutVal = cvOutRange[0];
-								rampDirection *= -1; // change ramp direction
 								++currentCv; // go to next cv input
 								potCheck = true;
 							}
 						}
-
+					}
 				}
-			}
-			else
-			{
-				//rt_printf("numOfWorkingCvs %d\n",numOfWorkingCvs);	
-				for(unsigned int c = 0; c < gNumCVs; c++)
+				else
 				{
-					if(brokenCvs[c])
-						rt_printf("CV %d is broken\n", c);
+					if(numOfWorkingCvs == gNumCVs)
+					{
+						rt_printf("All CV I/O work when potentiometes are set to minimum!\n");
+						rt_printf("Test %d passed!\n", gCurrentTest);
+						gTestStatus[gCurrentTest] = 1;
+						++gCurrentTest;
+						break;
+					}
+					else
+					{
+						static int cvBrokenIndex = 0;
+						if(cvBrokenIndex < gNumCVs)
+						{
+							if(brokenCvs[cvBrokenIndex])
+							{
+								flashError = true;
+								if(!flashNumberLed(context, n, pwmPin, ledPins, 4, cvBrokenIndex+1, 10, 0.25 * context->audioSampleRate, count, 0, true))
+								{
+									rt_printf("ERROR: CV %d is broken\n", cvBrokenIndex);
+									rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
+									gCurrentTest = kEndTest;
+									break;
+								}
+							}
+							else
+							{
+								++cvBrokenIndex;
+							}	
+						}
+					}
 				}
 			}
-			
-			
-			
 			
 			// Reset reading-block counter
 			if(count - blockCount >= gBlockSize) 
@@ -629,26 +726,601 @@ void render(BelaContext *context, void *userData)
 			++count;			
 		}
 	}
+	// FIFTH TEST
 	else if (gCurrentTest == kCvHiRangeTest) 
 	{
-		for(unsigned int n = 0; n < context->digitalFrames; n++) 
+		static int currentCv = 0;
+		static bool potCheck = true;
+		
+		float readVal;
+		static bool brokenCvs[gNumCVs] = {0};
+		static int numOfWorkingCvs = 0;
+		float cvOutRange[2] = {0.05, 0.45};
+		static float cvOutVal = cvOutRange[0];
+		float inOutOffset = -0.5;
+		static bool flashError = false;
+		static bool runTest = false;
+
+		for(unsigned int n = 0; n < context->audioFrames; n++) 
 		{
+			static unsigned int blockCount = count;
+
 			// Flash test number
-			if(flashLeds)
-				flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, -1, 0.15 * context->digitalSampleRate, count, 1);
-				
+			if(!flashError)
+			{
+				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->audioSampleRate, count, 1))
+				{
+					runTest = true;
+					encodeNumberLed(context, n, pwmPin, ledPins, 4, currentCv+1, 0);
+				} 	
+			}
+			
+			// Iterate over CVs
+			if(runTest)
+			{
+				if(currentCv < gNumCVs)
+				{
+					// Wait for potentiometer to be set at maximum
+					
+					if(potCheck)
+					{
+						// Write 0.5 to the CV out being tested
+						analogWriteOnce(context, n, cvPins[currentCv], cvToAnalog(0.5));
+						
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							readVal = analogRead(context, n, cvPins[currentCv]);
+							// Finish checking the potentiometer when it is in the CW position
+							if(readVal >= 0.95)
+								potCheck = false;
+						}
+					}
+					else
+					{	
+						// Write value to CV output
+						analogWriteOnce(context, n, cvPins[currentCv], cvToAnalog(cvOutVal));
+	
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							readVal = analogRead(context, n, cvPins[currentCv]);
+	
+							// Check that the read value and the ouput value are within range
+							if(!(fabs(readVal+inOutOffset - cvOutVal) <= gCVtolerance))
+							{
+								brokenCvs[currentCv] = 1; // In and out are out of range
+							}
+							// Create CV ramp and go to next potentiometer when the ramp has finished
+							if(!cvRamp(&cvOutVal, cvOutRange, gInverseAudioSampleRate, gBlockSize))
+							{
+								if(!brokenCvs[currentCv])
+								{
+									rt_printf("CV %d works!\n", currentCv+1);
+									++numOfWorkingCvs;
+								}
+								++currentCv; // go to next cv input
+								potCheck = true;
+							}
+						}
+					}
+					
+				}
+				else
+				{
+					if(numOfWorkingCvs == gNumCVs)
+					{
+						rt_printf("All CV I/O work when potentiometes are set to maximum!\n");
+						rt_printf("Test %d passed!\n", gCurrentTest);
+						gTestStatus[gCurrentTest] = 1;
+						++gCurrentTest;
+						break;
+					}
+					else
+					{
+						static int cvBrokenIndex = 0;
+						if(cvBrokenIndex < gNumCVs)
+						{
+							if(brokenCvs[cvBrokenIndex])
+							{
+								flashError = true;
+								if(!flashNumberLed(context, n, pwmPin, ledPins, 4, cvBrokenIndex+1, 10, 0.25 * context->audioSampleRate, count, 0, true))
+								{
+									rt_printf("ERROR: CV %d is broken\n", cvBrokenIndex);
+									rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
+									gCurrentTest = kEndTest;
+									break;
+								}
+							}
+							else
+							{
+								++cvBrokenIndex;
+							}	
+						}
+					}
+				}	
+			}
+			
+			// Reset reading-block counter
+			if(count - blockCount >= gBlockSize) 
+				blockCount = count;
+			++count;			
+		}
+	}
+	// SIXTH TEST
+	else if (gCurrentTest == kAudioTest)
+	{
+		
+		static unsigned int currentChannel = 0; // 0 - Left, 1 - right
+		const char* channelLabels[2] = {"LEFT", "RIGHT"};
+		
+		static int workingAudioChannels[2] = {0};
+		static unsigned int numOfWokingAudioChannels = 0;
+		
+		static float peakLevels[2][2] = {{1, -1}, {1, -1}}; // Negative (0) and Positive (1) levels, initialize
+		float peakLevelDecayRate = 0.999;
+		const float peakLevelThreshold[2] = {0.02, 0.15}; // High and low
+		const float DCOffsetThreshold = 0.1;
+		
+		float sineFrequency = 3000.0;
+		static float phase = 0.0;
+		
+		static int audioTestSuccessCounter = 0;
+		const int audioTestSuccessCounterThreshold = 64;
+		const int audioTestSampleThreshold = 16384;
+		static bool flashError = false;
+		static bool runTest = false;
+		
+
+		for(unsigned int n = 0; n < context->audioFrames; n++) 
+		{
+		
+			// Flash test number
+			
+			if(!flashError)
+			{
+				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->audioSampleRate, count, 1))
+				{
+					runTest = true;
+					encodeNumberLed(context, n, pwmPin, ledPins, 4, currentChannel+1, 0);
+				} 	
+			}
+			
+			// Peak detection on the audio inputs, with offset to catch
+			// DC errors
+			for(int ch = 0; ch < context->audioInChannels; ch++) 
+			{
+				float value = audioRead(context, n, ch);
+				// Positive peak levels
+				if(value > peakLevels[1][ch])
+					peakLevels[1][ch] = value;
+				peakLevels[1][ch] += 0.1f;
+				peakLevels[1][ch] *= peakLevelDecayRate;
+				peakLevels[1][ch] -= 0.1f;
+				// Negative peak levels
+				if(value < peakLevels[0][ch])
+					peakLevels[0][ch] = value;
+				peakLevels[0][ch] -= 0.1f;
+				peakLevels[0][ch] *= peakLevelDecayRate;
+				peakLevels[0][ch] += 0.1f;
+			}
+			
+			//Write sine on current channel and 0 on unused channel
+			audioWrite(context, n, currentChannel, 0.2f * sinf(phase));
+			audioWrite(context, n, 1-currentChannel, 0);
+			
+			// Update phase
+			phase += 2.0f * (float)M_PI * sineFrequency / context->audioSampleRate;
+			if(phase >= M_PI)
+				phase -= 2.0f * (float)M_PI;
+			
+			if(runTest)
+			{
+				if(currentChannel < context->audioInChannels)
+				{
+					static int testInitTime = count;
+					
+					if((count - testInitTime) <= 2 * context->audioSampleRate)
+					{
+						if((count - testInitTime) >= audioTestSampleThreshold)
+						{
+							// Check if we have the expected input: signal on the enabledChannel but not
+							// on the disabledChannel. Also check that there is not too much DC offset on the
+							// inactive channel
+							float peakDifference[2];
+								peakDifference[currentChannel] = peakLevels[1][currentChannel] - peakLevels[0][currentChannel];
+								peakDifference[1-currentChannel] = peakLevels[1][1-currentChannel] - peakLevels[0][1-currentChannel];
+							if(
+								peakDifference[currentChannel] >= peakLevelThreshold[1]
+								&& peakDifference[1-currentChannel] <= peakLevelThreshold[0]
+								&& fabsf(peakLevels[1][1-currentChannel]) < DCOffsetThreshold
+								&& fabsf(peakLevels[0][1-currentChannel]) < DCOffsetThreshold
+							)
+							{
+								// Successfull test
+								++audioTestSuccessCounter;
+								if(audioTestSuccessCounter >= audioTestSuccessCounterThreshold)
+								{
+									rt_printf("Audio %s test successful!\n", channelLabels[currentChannel]);
+									workingAudioChannels[currentChannel] = 1;
+									++numOfWokingAudioChannels;
+									
+									++currentChannel;
+									audioTestSuccessCounter = 0;
+									testInitTime = count;
+								}
+							}
+							else
+							{
+								// Printing debug messages
+								if(!((context->audioFramesElapsed + n) % 22050)) 
+								{
+									if(peakDifference[currentChannel] < peakLevelThreshold[1])
+										rt_printf("%s Audio In FAIL: insufficient signal: %f\n", channelLabels[currentChannel],
+													peakDifference[currentChannel]);
+									else if(peakDifference[1-currentChannel] > peakLevelThreshold[0])
+										rt_printf("%s Audio In FAIL: signal present when it should not be: %f\n", channelLabels[1-currentChannel],
+													peakDifference[1-currentChannel]);
+									else if(fabsf(peakLevels[1][1-currentChannel]) >= DCOffsetThreshold ||
+											fabsf(peakLevels[0][1-currentChannel]) >= DCOffsetThreshold)
+										rt_printf("%s Audio In FAIL: DC offset: (%f, %f)\n", channelLabels[1-currentChannel],
+													peakLevels[1][1-currentChannel], peakLevels[0][1-currentChannel]);
+								}
+								audioTestSuccessCounter--;
+								if(audioTestSuccessCounter <= 0)
+									audioTestSuccessCounter = 0;
+							}
+						}
+					}
+					else
+					{
+						++currentChannel;
+						audioTestSuccessCounter = 0;
+						count = 0;
+					}
+				}
+				else
+				{
+					if(numOfWokingAudioChannels == context->audioInChannels)
+					{
+						// All audio channels are working
+						rt_printf("All audio channels are working!\n");
+						rt_printf("Test %d passed!\n", gCurrentTest);
+						gTestStatus[gCurrentTest] = 1;
+						++gCurrentTest;
+						break;
+					}
+					else
+					{
+						static int audioBrokenIndex = 0;
+						if(audioBrokenIndex < context->audioInChannels)
+						{	
+							if(!workingAudioChannels[audioBrokenIndex])
+							{
+								flashError = true;
+								if(!flashNumberLed(context, n, pwmPin, ledPins, 4, audioBrokenIndex+1, 10, 0.25 * context->audioSampleRate, count, 0, true))
+								{
+									rt_printf("ERROR: %s Audio Channel is broken\n", channelLabels[audioBrokenIndex]);
+									rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
+									gCurrentTest = kEndTest;
+									break;
+								}
+								
+							}
+							else
+							{
+								++audioBrokenIndex;
+							}	
+						}
+					}
+				}
+			}
 			++count;
+		}
+	}
+	// SEVENTH TEST
+	else if (gCurrentTest == kRewireTest)
+	{
+		static int previousTriggerStatus = 0;
+		
+		for(unsigned int n = 0; n < context->analogFrames; n++) 
+		{
+			static unsigned int blockCount = count;
+			
+			if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->audioSampleRate, count, 1))
+			{
+				encodeNumberLed(context, n, pwmPin, ledPins, 4, 15, 1);
+			
+				int triggerStatus = digitalRead(context, 0, buttonPins[0]);
+				if(triggerStatus != previousTriggerStatus)
+				{
+					if(previousTriggerStatus == 1)
+					{
+						rt_printf("Button 0 has been pressed!\n");
+						gTestStatus[gCurrentTest] = 1;
+						++gCurrentTest;
+						break;
+					}
+					previousTriggerStatus = triggerStatus;
+				}
+			} 
+			// Reset reading-block counter
+			if(count - blockCount >= gBlockSize) 
+				blockCount = count;
+			++count;		
+		}
+	}
+	// EIGHT TEST
+	else if (gCurrentTest == kAudioDCTestHi)
+	{
+		static int currentChannel = 0;
+		static bool potCheck = true;
+		
+		float readVal;
+		static bool brokenAudioChannels[2] =  {0};
+		static int numOfWokingAudioChannels = 0;
+		float audioOutRange[2] = {-1.0, 0.0};
+		static float audioOutVal = audioOutRange[0];
+
+		static bool flashError = false;
+		static bool runTest = false;
+		
+		for(unsigned int n = 0; n < context->analogFrames; n++) 
+		{
+			static unsigned int blockCount = count;
+
+			// Flash test number
+			if(!flashError)
+			{
+				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->audioSampleRate, count, 1))
+				{
+					runTest = true;
+					encodeNumberLed(context, n, pwmPin, ledPins, 4, currentChannel+1, 0);
+				} 	
+			}
+			
+			if(runTest)
+			{
+				if(currentChannel < context->audioInChannels)
+				{
+					// Wait for potentiometer to be set at minimum
+					if(potCheck)
+					{
+						// Write 0.5 to the CV out being tested
+						audioWrite(context, n, currentChannel, 0.0);
+						
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							readVal = analogRead(context, n, cvPins[currentChannel]);
+							rt_printf("%f\n", readVal);
+							
+							// Finish checking the potentiometer when it is in the CCW position
+							if(readVal >= 0.95)
+								potCheck = false;
+						}
+					}
+					else
+					{
+						// Write value to audio output
+						audioWrite(context, n, currentChannel, audioOutVal);
+
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							// Read value
+							readVal = analogRead(context, n, cvPins[currentChannel]);
+
+							// Check that the read value and the ouput value are within range
+							if(!(fabs((readVal-1)*2 - audioOutVal) <= gAudioToCVtolerance))
+							{
+								rt_printf("audio out %d, fabs((readVal-1)*2 - audioOutVal): %f, gAudioToCVtolerance: %f, readVal: %f, audioOutVal: %f\n",
+										currentChannel, fabs((readVal-1)*2 - audioOutVal) , gAudioToCVtolerance, readVal, audioOutVal);
+								brokenAudioChannels[currentChannel] = 1; // In and out are out of range
+							}
+							
+
+							// Create CV ramp and go to next potentiometer when the ramp has finished
+							if(!cvRamp(&audioOutVal, audioOutRange, gInverseAudioSampleRate, gBlockSize))
+							{
+								if(!brokenAudioChannels[currentChannel])
+									++numOfWokingAudioChannels;
+								++currentChannel; // go to next channel
+								potCheck = true;
+							}
+
+						}
+					}
+				}
+				else
+				{
+					if(numOfWokingAudioChannels == context->audioInChannels)
+					{
+						rt_printf("Audio to CV works when potentiometes are set to maximum!\n");
+						rt_printf("Test %d passed!\n", gCurrentTest);
+						gTestStatus[gCurrentTest] = 1;
+						++gCurrentTest;
+						break;
+					}
+					else
+					{
+						static int audioBrokenIndex = 0;
+						if(audioBrokenIndex < context->audioInChannels)
+						{
+							if(brokenAudioChannels[audioBrokenIndex])
+							{
+								flashError = true;
+								if(!flashNumberLed(context, n, pwmPin, ledPins, 4, audioBrokenIndex+1, 10, 0.25 * context->audioSampleRate, count, 0, true))
+								{
+									rt_printf("ERROR: Audio Channel %d to CV link is broken\n", audioBrokenIndex);
+									rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
+									gCurrentTest = kEndTest;
+									break;
+								}
+							}
+							else
+							{
+								++audioBrokenIndex;
+							}	
+						}
+					}
+				}
+			}
+			
+			// Reset reading-block counter
+			if(count - blockCount >= gBlockSize) 
+				blockCount = count;
+			++count;	
+		}
+	}
+	// NINTH TEST
+	else if (gCurrentTest == kAudioDCTestLo)
+	{
+		static int currentChannel = 0;
+		static bool potCheck = true;
+		
+		float readVal;
+		static bool brokenAudioChannels[2] =  {0};
+		static int numOfWokingAudioChannels = 0;
+		float audioOutRange[2] = {0.0, 1.0};
+		static float audioOutVal = audioOutRange[0];
+
+		static bool flashError = false;
+		static bool runTest = false;
+		
+		for(unsigned int n = 0; n < context->analogFrames; n++) 
+		{
+			static unsigned int blockCount = count;
+
+			// Flash test number
+			if(!flashError)
+			{
+				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, gCurrentTest, 10, 0.15 * context->audioSampleRate, count, 1))
+				{
+					runTest = true;
+					encodeNumberLed(context, n, pwmPin, ledPins, 4, currentChannel+1, 0);
+				} 	
+			}
+			
+			if(runTest)
+			{
+				if(currentChannel < context->audioInChannels)
+				{
+					// Wait for potentiometer to be set at minimum
+					if(potCheck)
+					{
+						// Write 0.5 to the CV out being tested
+						audioWrite(context, n, currentChannel, 0.0);
+						
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							readVal = analogRead(context, n, cvPins[currentChannel]);
+							// Finish checking the potentiometer when it is in the CCW position
+							if(readVal <= 0.05)
+								potCheck = false;
+						}
+					}
+					else
+					{
+						// Write value to audio output
+						audioWrite(context, n, currentChannel, audioOutVal);
+
+						// Read after half a block-size samples
+						if(count - blockCount == gBlockSize/2)
+						{
+							// Read value
+							readVal = analogRead(context, n, cvPins[currentChannel]);
+
+							// Check that the read value and the ouput value are within range
+							if(!(fabs(readVal*2 - audioOutVal) <= gAudioToCVtolerance))
+							{
+								brokenAudioChannels[currentChannel] = 1; // In and out are out of range
+								rt_printf("audio out %d, fabs(readVal*2 - audioOutVal): %f, gAudioToCVtolerance: %f, readVal: %f, audioOutVal: %f\n",
+										currentChannel, fabs(readVal*2 - audioOutVal), gAudioToCVtolerance, readVal, audioOutVal);
+							}
+							
+							
+							// Create CV ramp and go to next potentiometer when the ramp has finished
+							if(!cvRamp(&audioOutVal, audioOutRange, gInverseAudioSampleRate, gBlockSize))
+							{
+								if(!brokenAudioChannels[currentChannel])
+									++numOfWokingAudioChannels;
+								++currentChannel; // go to next channel
+								potCheck = true;
+							}
+							
+						}
+					}
+				}
+				else
+				{
+					if(numOfWokingAudioChannels == context->audioInChannels)
+					{
+						rt_printf("Audio to CV works when potentiometes are set to minimum!\n");
+						rt_printf("Test %d passed!\n", gCurrentTest);
+						gTestStatus[gCurrentTest] = 1;
+						++gCurrentTest;
+						break;
+					}
+					else
+					{
+						static int audioBrokenIndex = 0;
+						if(audioBrokenIndex < context->audioInChannels)
+						{
+							if(brokenAudioChannels[audioBrokenIndex])
+							{
+								flashError = true;
+								if(!flashNumberLed(context, n, pwmPin, ledPins, 4, audioBrokenIndex+1, 10, 0.25 * context->audioSampleRate, count, 0, true))
+								{
+									rt_printf("ERROR: Audio Channel %d to CV link is broken\n", audioBrokenIndex);
+									rt_printf("ERROR: Test %d failed.\n", gCurrentTest);
+									gCurrentTest = kEndTest;
+									break;
+								}
+							}
+							else
+							{
+								++audioBrokenIndex;
+							}	
+						}
+					}
+				}
+			}
+			
+			// Reset reading-block counter
+			if(count - blockCount >= gBlockSize) 
+				blockCount = count;
+			++count;	
 		}
 	}
 	else if (gCurrentTest == kEndTest) // TEST END
 	{
 		for(unsigned int n = 0; n < context->digitalFrames; n++) 
 		{
-			//encodeNumberLed(context, n, pwmPin, ledPins, 4, 5);
-			//flashNumberLed(context, n, pwmPin, ledPins, 4, 5, 6, 0.5 * context->digitalSampleRate, count);
-						
-
-			++count;
+			static int passedTestIndex = 0;
+			if(passedTestIndex < kNumTest-1)
+			{	
+				if(!gTestStatus[passedTestIndex])
+				{
+					if(!flashNumberLed(context, n, pwmPin, ledPins, 4, passedTestIndex+1, 20, 0.25 * context->audioSampleRate, count, 0))
+					{
+						exit(1);
+					}
+				}
+				else
+				{
+					++passedTestIndex;
+				}	
+			} 
+			else
+			{
+				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, 15, 20, 0.25 * context->audioSampleRate, count, 1))
+				{
+					exit(0);
+				}
+			}
+			++count; 
 		}
 	}
 
