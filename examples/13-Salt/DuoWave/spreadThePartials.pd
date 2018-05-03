@@ -37,6 +37,12 @@
 #X obj 87 43 snapshot~;
 #X obj 291 270 pack f f f f f f f f;
 #X obj 293 304 outlet;
+#X text 255 38 a harmonic series \, for an input of 2 gives 1 \, 4
+\, 9 \, 16 \, 25 \, 36 \, 49 \, 64 \, 81;
+#X text 255 18 For an input of 0 gives 1 1 1 1 1 1 1 1 1 (unison);
+#X text 255 28 For an input of 1 gives 1 2 3 4 5 6 7 8 9 (harmonic
+series);
+#X text 255 60 Any in-between value is going to be inharmonic;
 #X connect 0 0 36 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
