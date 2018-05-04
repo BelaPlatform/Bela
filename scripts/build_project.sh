@@ -200,6 +200,8 @@ uploadBuildRun(){
 	fi
 	if [ "$GET" -eq 1 ]
 	then
+		echo "Stopping currently running program"
+		ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME stop"
 		echo "Asking the IDE to rebuild currently active project"
 		curl "$BBB_HOSTNAME/rebuild-project?project=$BBB_PROJECT_NAME"
 	else
