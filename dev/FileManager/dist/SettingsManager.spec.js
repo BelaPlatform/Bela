@@ -40,7 +40,7 @@ var mock = require("mock-fs");
 var SettingsManager_1 = require("../src/SettingsManager");
 chai_1.should();
 describe('SettingsManager', function () {
-    describe('manage project settings', function () {
+    describe('manage project settings json file', function () {
         describe('#read', function () {
             var test_obj = { 'test_key': 'test_field' };
             beforeEach(function () {
@@ -100,6 +100,31 @@ describe('SettingsManager', function () {
                             case 2:
                                 out = _a.sent();
                                 test_obj.should.deep.equal(out);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            after(function () {
+                mock({});
+            });
+        });
+    });
+    describe('manage project settings', function () {
+        describe('#setCLArg', function () {
+            before(function () {
+                mock({ '/root/Bela/projects/test_project/settings.json': JSON.stringify({ CLArgs: { 'old_key': 'old_value' } }) });
+            });
+            it('should set a single command line argument', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var settings;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, SettingsManager_1.p_settings.setCLArg('test_project', 'key', 'value')];
+                            case 1:
+                                settings = _a.sent();
+                                settings.CLArgs['old_key'].should.equal('old_value');
+                                settings.CLArgs['key'].should.equal('value');
                                 return [2 /*return*/];
                         }
                     });

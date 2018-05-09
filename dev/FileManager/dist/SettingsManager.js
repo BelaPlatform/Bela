@@ -37,8 +37,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var paths_1 = require("./paths");
 var FileManager_1 = require("./FileManager");
+var Lock_1 = require("./Lock");
 var ProjectSettings = /** @class */ (function () {
     function ProjectSettings() {
+        this.lock = new Lock_1.Lock();
     }
     ProjectSettings.prototype.read = function (project) {
         return __awaiter(this, void 0, void 0, function () {
@@ -48,8 +50,8 @@ var ProjectSettings = /** @class */ (function () {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, FileManager_1.fm.read_json(paths_1.paths.projects + project + '/settings.json')
                             .catch(function (e) {
-                            console.log('error reading project ' + project + ' settings.json', (e.message ? e.message : null));
-                            console.log('recreating default settings.json');
+                            // console.log('error reading project '+project+' settings.json', (e.message ? e.message : null));
+                            // console.log('recreating default settings.json');
                             return _this.write(project, default_project_settings());
                         })];
                     case 1:
@@ -67,6 +69,33 @@ var ProjectSettings = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         return [2 /*return*/, data];
+                }
+            });
+        });
+    };
+    ProjectSettings.prototype.setCLArg = function (project, key, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            var settings, e_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        this.lock.acquire();
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, this.read(project)];
+                    case 2:
+                        settings = _a.sent();
+                        settings.CLArgs[key] = value;
+                        this.write(project, settings);
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _a.sent();
+                        this.lock.release();
+                        throw e_1;
+                    case 4:
+                        this.lock.release();
+                        return [2 /*return*/, settings];
                 }
             });
         });

@@ -1,13 +1,17 @@
 import {paths} from './paths';
 import { fm } from "./FileManager";
+import { Lock } from "./Lock";
 
 class ProjectSettings {
-	constructor(){}
+	constructor(){
+		this.lock = new Lock();
+	}
+	private lock: Lock;
 	async read(project: string): Promise<any> {
 		let output: any = await fm.read_json(paths.projects+project+'/settings.json')
 			.catch( e => {
-				console.log('error reading project '+project+' settings.json', (e.message ? e.message : null));
-				console.log('recreating default settings.json');
+				// console.log('error reading project '+project+' settings.json', (e.message ? e.message : null));
+				// console.log('recreating default settings.json');
 				return this.write(project, default_project_settings());
 			});
 		return output;
@@ -15,6 +19,21 @@ class ProjectSettings {
 	async write(project: string, data: any): Promise<any> {
 		await fm.write_json(paths.projects+project+'/settings.json', data);
 		return data;
+	}
+
+	async setCLArg(project: string, key: string, value: string): Promise<any> {
+		this.lock.acquire();
+		try{
+			var settings = await this.read(project);
+			settings.CLArgs[key] = value;
+			this.write(project, settings);
+		}
+		catch(e){
+			this.lock.release();
+			throw e;
+		}
+		this.lock.release();
+		return settings;
 	}
 
 }
