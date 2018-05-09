@@ -131,7 +131,30 @@ describe('SettingsManager', function () {
                 });
             });
             after(function () {
-                mock({});
+                mock.restore();
+            });
+        });
+        describe('#restoreDefaultCLArgs', function () {
+            before(function () {
+                mock({ '/root/Bela/projects/test_project/settings.json': JSON.stringify({ fileName: 'test_file', CLArgs: { '-p': '2' } }) });
+            });
+            it('should restore a projects command-line arguments to the defauts without modifying the fileName field in the settings', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var settings;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, SettingsManager_1.p_settings.restoreDefaultCLArgs('test_project')];
+                            case 1:
+                                settings = _a.sent();
+                                settings.fileName.should.equal('test_file');
+                                settings.CLArgs['-p'].should.equal('16');
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
+            after(function () {
+                mock.restore();
             });
         });
     });

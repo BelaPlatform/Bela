@@ -37,7 +37,7 @@ describe('SettingsManager', function(){
 				test_obj.should.deep.equal(out);
 			});
 			after(function(){
-				mock({});
+				mock.restore();
 			});
 		});
 	});
@@ -52,8 +52,21 @@ describe('SettingsManager', function(){
 				settings.CLArgs['key'].should.equal('value');
 			});
 			after(function(){
-				mock({});
+				mock.restore();
 			});
+		});
+		describe('#restoreDefaultCLArgs', function(){
+			before(function(){
+				mock({ '/root/Bela/projects/test_project/settings.json': JSON.stringify({ fileName: 'test_file', CLArgs: {'-p': '2'} }) });
+			});
+			it('should restore a projects command-line arguments to the defauts without modifying the fileName field in the settings', async function(){
+				let settings = await p_settings.restoreDefaultCLArgs('test_project');
+				settings.fileName.should.equal('test_file');
+				settings.CLArgs['-p'].should.equal('16');
+			});
+			after(function(){
+				mock.restore();
+			})
 		});
 	});
 });

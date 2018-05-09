@@ -35,6 +35,21 @@ class ProjectSettings {
 		this.lock.release();
 		return settings;
 	}
+	async restoreDefaultCLArgs(project: string): Promise<any> {
+		this.lock.acquire();
+		try{
+			var settings = await this.read(project);
+			settings.CLArgs = default_project_settings().CLArgs;
+			this.write(project, settings);
+		}
+		catch(e){
+			this.lock.release();
+			throw e;
+		}
+		this.lock.release();
+		return settings;
+	}
+
 
 }
 

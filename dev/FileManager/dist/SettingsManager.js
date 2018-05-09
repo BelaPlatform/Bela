@@ -100,6 +100,33 @@ var ProjectSettings = /** @class */ (function () {
             });
         });
     };
+    ProjectSettings.prototype.restoreDefaultCLArgs = function (project) {
+        return __awaiter(this, void 0, void 0, function () {
+            var settings, e_2;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        this.lock.acquire();
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, this.read(project)];
+                    case 2:
+                        settings = _a.sent();
+                        settings.CLArgs = default_project_settings().CLArgs;
+                        this.write(project, settings);
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_2 = _a.sent();
+                        this.lock.release();
+                        throw e_2;
+                    case 4:
+                        this.lock.release();
+                        return [2 /*return*/, settings];
+                }
+            });
+        });
+    };
     return ProjectSettings;
 }());
 function default_project_settings() {
