@@ -1,6 +1,7 @@
 let gulp = require('gulp');
 let ts = require('gulp-typescript');
 let sourcemaps = require('gulp-sourcemaps');
+let replace = require('gulp-replace');
 let livereload = require('gulp-livereload');
 let exec = require('child_process').exec;
 let spawn = require('child_process').spawn;
@@ -10,9 +11,12 @@ let user = 'root';
 let remote_path = '/root/Bela/IDE/';
 
 gulp.task('watch', () => {
+
 	livereload.listen();
+	
 	gulp.watch(['src/*.ts'], gulp.series('compile'));
 	gulp.watch(['dist/*.js'], gulp.series('idestop', 'upload_dist', 'idestart'));
+	
 	let ssh = spawn('ssh', [user+'@'+host, 'journalctl -fu bela_ide']);
 	ssh.stdout.setEncoding('utf8');
 	ssh.stderr.setEncoding('utf8');
@@ -25,6 +29,12 @@ gulp.task('watch', () => {
 	});
 });
 
+gulp.task('watch_test', () => {
+	gulp.watch(['src/*.ts'], gulp.series('compile'));
+	gulp.watch(['test/*.spec.ts'], gulp.series('compile_test'));
+	gulp.watch(['dist/*.js'], gulp.series('test_stop', 'upload_dist', 'test_start'));
+});
+
 gulp.task('compile', () => {
 	return gulp.src('src/*.ts')
 		.pipe(sourcemaps.init())
@@ -32,6 +42,17 @@ gulp.task('compile', () => {
 			"noImplicitAny": true,
 			"target": "es5"
 		}))
+		.pipe(sourcemaps.write())
+		.pipe(gulp.dest('dist'));
+});
+gulp.task('compile_test', () => {
+	return gulp.src('test/*.spec.ts')
+		.pipe(sourcemaps.init())
+		.pipe(ts({
+			"noImplicitAny": true,
+			"target": "es5"
+		}))
+		.pipe(replace('require("../src', 'require("../dist'))
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest('dist'));
 });
@@ -49,8 +70,32 @@ gulp.task('idestop', callback => {
 	});
 });
 
-gulp.task('upload_dist', callback => {
-	let rsync = spawn('rsync', ['-av', 'dist/', user+'@'+host+':'+remote_path+'dist/']);
+gulp.task('test_start', callback => {
+	let test = spawn('ssh', [user+'@'+host, 'npm test --prefix', remote_path]);
+	test.stdout.setEncoding('utf8');
+	test.stdout.on('data', function(data){
+		process.stdout.write(data);
+	});
+	
+	test.stderr.setEncoding('utf8');
+	test.stderr.on('data', function(data){
+		process.stdout.write('error: '+data);
+	});
+	
+	callback();
+});
+gulp.task('test_stop', callback => {
+	exec('ssh '+user+'@'+host+' "pkill -9 node"', (err) => {
+		if (err) console.log('unable to stop test');
+		callback(); // finished task
+	});
+});
+
+gulp.task('upload_dist', callback => rsync(callback, 'dist/') );
+gulp.task('upload_modules', callback => rsync(callback, 'node_modules/') );
+
+function rsync(callback, dir){
+	let rsync = spawn('rsync', ['-av', dir, user+'@'+host+':'+remote_path+dir]);
 
 	rsync.stdout.setEncoding('utf8');
 	rsync.stdout.on('data', function(data){
@@ -64,8 +109,8 @@ gulp.task('upload_dist', callback => {
 	
 	rsync.on('exit', function(){
 		callback();
-//		if (reload) livereload.reload();
 	});
-});
+}
 
+gulp.task('test', gulp.series('compile', 'compile_test', 'upload_dist', 'test_start', 'watch_test'));
 gulp.task('default', gulp.series('compile', 'idestop', 'upload_dist', 'idestart', 'watch'));

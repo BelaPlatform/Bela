@@ -7,20 +7,27 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "find ./dist -name '*.spec.js' | xargs mocha -R spec"
   },
   "author": "Liam Donovan",
   "license": "ISC",
   "devDependencies": {
+    "@types/chai": "^4.1.3",
     "@types/es6-shim": "^0.31.37",
     "@types/file-type": "^5.2.1",
     "@types/fs-extra-promise": "^1.0.5",
+    "@types/mocha": "^5.2.0",
+    "@types/mock-fs": "^3.6.30",
     "@types/node": "^8.5.5",
     "@types/read-chunk": "^2.1.0",
+    "chai": "^4.1.2",
     "gulp": "^4.0.0",
     "gulp-livereload": "^3.8.1",
+    "gulp-replace": "^0.6.1",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.2",
+    "mocha": "^5.1.1",
+    "mock-fs": "^4.5.0",
     "typescript": "^2.8.3"
   },
   "dependencies": {
