@@ -1,26 +1,39 @@
 {
-  "name": "bela_ide",
-  "version": "0.1.0",
-  "description": "IDE for Bela",
+  "name": "ide",
+  "version": "1.0.0",
+  "description": "",
   "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Liam Donovan",
   "license": "ISC",
-  "dependencies": {
-    "archiver": "^1.0.0",
-    "bluebird": "^3.3.5",
-    "express": "^4.13.4",
-    "file-type": "^3.8.0",
-    "fs-extra": "^0.28.0",
-    "isbinaryfile": "^3.0.0",
-    "osc-min": "^1.1.1",
-    "pgrep": "0.0.6",
-    "pidusage": "^1.0.1",
-    "socket.io": "^1.4.5",
-    "toobusy-js": "^0.5.1",
-    "tree-kill": "^1.0.0"
+  "devDependencies": {
+    "@types/es6-shim": "^0.31.37",
+    "@types/file-type": "^5.2.1",
+    "@types/fs-extra-promise": "^1.0.5",
+    "@types/node": "^8.5.5",
+    "@types/read-chunk": "^2.1.0",
+    "gulp": "^4.0.0",
+    "gulp-livereload": "^3.8.1",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-typescript": "^4.0.2",
+    "typescript": "^2.8.3"
   },
-  "devDependencies": {}
+  "dependencies": {
+    "archiver": "^2.1.1",
+    "express": "^4.16.3",
+    "file-type": "^7.7.1",
+    "fs-extra-promise": "^1.0.1",
+    "isbinaryfile": "^3.0.2",
+    "pgrep": "0.0.6",
+    "pidusage": "^2.0.6",
+    "read-chunk": "^2.1.0",
+    "socket.io": "^2.1.0",
+    "toobusy-js": "^0.5.1",
+    "tree-kill": "^1.2.0"
+  }
 }

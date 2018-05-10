@@ -9,6 +9,11 @@ module.exports = function (pid, signal, callback) {
     var pidsToProcess = {};
     tree[pid] = [];
     pidsToProcess[pid] = 1;
+    
+    if (typeof signal === 'function' && callback === undefined) {
+      callback = signal;
+      signal = undefined;
+    }
 
     switch (process.platform) {
     case 'win32':

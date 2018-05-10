@@ -59,3 +59,21 @@ License
 =======
 
 MIT
+
+Changelog
+=========
+
+## [1.2.0] - 2017-19-09
+### Added
+- TypeScript definitions
+### Changed
+- `kill(pid, callback)` works. Before you had to use `kill(pid, signal, callback)`
+
+## [1.1.0] - 2016-05-13
+### Added
+- A `tree-kill` CLI
+
+## [1.0.0] - 2015-09-17
+### Added
+- optional callback
+- Darwin support

@@ -1,1 +1,1 @@
-var IDE = require('./libs/IDE-node');
+var IDE = require('./dist/IDE-node');
