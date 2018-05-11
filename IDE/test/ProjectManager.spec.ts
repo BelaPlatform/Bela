@@ -141,7 +141,16 @@ describe('ProjectManager', function(){
 			})
 			it('should return an array of util.File_Descriptors describing the contents of the examples folder', async function(){
 				let data = await project_manager.listExamples();
-				data.should.deep.equal(output);
+				data.should.deep.equal([
+					{
+						name: 'test_category1',
+						children: ['test_example1']
+					},
+					{
+						name: 'test_category2',
+						children: ['test_example2']
+					}
+				]);
 			});
 		});
 
