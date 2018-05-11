@@ -1,1 +1,2 @@
-var IDE = require('./dist/IDE-node');
+var IDE = require('./dist/main');
+IDE.init();

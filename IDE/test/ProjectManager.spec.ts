@@ -1,12 +1,11 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
-import { fm, File_Descriptor } from "../src/FileManager";
-import { ProjectManager } from "../src/ProjectManager";
+import * as file_manager from "../src/FileManager";
+import * as project_manager from "../src/ProjectManager";
+import * as util from '../src/utils';
 import {paths} from '../src/paths';
 
 should();
-
-var pm = new ProjectManager();
 
 describe('ProjectManager', function(){
 
@@ -20,8 +19,8 @@ describe('ProjectManager', function(){
 			var image: Buffer;
 			var wav: Buffer;
 			beforeEach(async function(){
-				image = await fm.read_file_raw('/root/FileManager/src/test_image.png');
-				wav = await fm.read_file_raw('/root/FileManager/src/test_wav.wav');
+				image = await file_manager.read_file_raw('/root/FileManager/src/test_image.png');
+				wav = await file_manager.read_file_raw('/root/FileManager/src/test_wav.wav');
 				mock({
 					'/root/Bela/projects/test' : {
 						'render.cpp': fileData,
@@ -31,11 +30,11 @@ describe('ProjectManager', function(){
 						'test_wav.wav': wav
 					}
 				});
-				await fm.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink');
+				await file_manager.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink');
 			});
 			it('should open a file from a project', async function(){
 				let output: any = {currentProject, newFile};
-				await pm.openFile(output);
+				await project_manager.openFile(output);
 				output.fileName.should.equal(newFile);
 				output.fileData.should.equal(fileData);
 				(typeof output.newFile).should.equal('undefined');
@@ -44,7 +43,7 @@ describe('ProjectManager', function(){
 			});
 			it('should reject files larger than 50 Mb', async function(){
 				let output: any = {currentProject, newFile: 'bin_large'};
-				await pm.openFile(output);
+				await project_manager.openFile(output);
 				output.error.should.be.a('string');
 				output.fileData.should.be.a('string');
 				output.fileName.should.equal('bin_large');
@@ -53,7 +52,7 @@ describe('ProjectManager', function(){
 			});
 			it('should reject binary files', async function(){
 				let output: any = {currentProject, newFile: 'bin_small'};
-				await pm.openFile(output);
+				await project_manager.openFile(output);
 				output.error.should.be.a('string');
 				output.fileData.should.be.a('string');
 				output.fileName.should.equal('bin_small');
@@ -62,16 +61,16 @@ describe('ProjectManager', function(){
 			});
 			it('should empty the media directory and symlink the file if it is an audio or image file', async function(){
 				let output: any = {currentProject, newFile: 'test_image.png'};
-				await pm.openFile(output);
-				let file_list = await fm.read_directory('/root/Bela/IDE/public/media');
+				await project_manager.openFile(output);
+				let file_list = await file_manager.read_directory('/root/Bela/IDE/public/media');
 				file_list.should.deep.equal(['test_image.png']);
 				output.fileData.should.equal('');
 				output.readOnly.should.equal(true);
 				output.fileName.should.equal('test_image.png');
 				output.fileType.should.equal('image/png');
 				let output2: any = {currentProject, newFile: 'test_wav.wav'};
-				await pm.openFile(output2);
-				file_list = await fm.read_directory('/root/Bela/IDE/public/media');
+				await project_manager.openFile(output2);
+				file_list = await file_manager.read_directory('/root/Bela/IDE/public/media');
 				file_list.should.deep.equal(['test_wav.wav']);
 				output2.fileData.should.equal('');
 				output2.readOnly.should.equal(true);
@@ -93,31 +92,31 @@ describe('ProjectManager', function(){
 				});
 			})
 			it('should return an array of strings containing the names of the projects in the projects folder', async function(){
-				let data = await pm.listProjects();
+				let data = await project_manager.listProjects();
 				data.should.deep.equal(['test_project1', 'test_project2']);
 			});
 		});
 
 		describe('#listExamples', function(){
-			var output = [ new File_Descriptor(
+			var output = [ new util.File_Descriptor(
 				'test_category1', 
 				undefined, 
-				[new File_Descriptor(
+				[new util.File_Descriptor(
 					'test_example1',
 					undefined,
-					[new File_Descriptor(
+					[new util.File_Descriptor(
 						'test_file1',
 						7,
 						undefined
 					)]
 				)]
-			), new File_Descriptor(
+			), new util.File_Descriptor(
 				'test_category2',
 				undefined,
-				[new File_Descriptor(
+				[new util.File_Descriptor(
 					'test_example2',
 					undefined,
-					[new File_Descriptor(
+					[new util.File_Descriptor(
 						'test_file2',
 						7,
 						undefined
@@ -140,8 +139,8 @@ describe('ProjectManager', function(){
 					}
 				});
 			})
-			it('should return an array of File_Descriptors describing the contents of the examples folder', async function(){
-				let data = await pm.listExamples();
+			it('should return an array of util.File_Descriptors describing the contents of the examples folder', async function(){
+				let data = await project_manager.listExamples();
 				data.should.deep.equal(output);
 			});
 		});
@@ -159,11 +158,11 @@ describe('ProjectManager', function(){
 			});
 			it('should open a project', async function(){
 				let out: any = {currentProject: 'test_project'};
-				await pm.openProject(out);
+				await project_manager.openProject(out);
 				out.fileName.should.equal('fender.cpp');
 				out.CLArgs.should.deep.equal(CLArgs);
 				out.fileData.should.equal(test_content);
-				out.fileList.should.deep.equal([new File_Descriptor('fender.cpp', 4, undefined), new File_Descriptor('settings.json', 50, undefined)]);
+				out.fileList.should.deep.equal([new util.File_Descriptor('fender.cpp', 4, undefined), new util.File_Descriptor('settings.json', 50, undefined)]);
 			});
 		});
 
@@ -177,14 +176,14 @@ describe('ProjectManager', function(){
 			});
 			it('should copy the chosen example to projects/exampleTempProject and open it', async function(){
 				let data: any = {currentProject: '01-basics/test_example'};
-				await pm.openExample(data);
+				await project_manager.openExample(data);
 				data.currentProject.should.equal('exampleTempProject');
 				data.exampleName.should.equal('test_example');
-				data.fileList.should.deep.equal([new File_Descriptor('render.cpp', 12, undefined)]);
+				data.fileList.should.deep.equal([new util.File_Descriptor('render.cpp', 12, undefined)]);
 				data.fileName.should.equal('render.cpp');
 				data.CLArgs.should.be.a('object');
 				let data2: any = {currentProject: 'exampleTempProject'};
-				await pm.openProject(data2);
+				await project_manager.openProject(data2);
 				data.fileData.should.equal(data2.fileData);
 			});
 		});
@@ -197,22 +196,22 @@ describe('ProjectManager', function(){
 			});
 			it('should create a new C project', async function(){
 				let data: any = {newProject: 'test_project', projectType: 'C'};
-				await pm.newProject(data);
+				await project_manager.newProject(data);
 				(typeof data.newProject).should.equal('undefined');
 				data.currentProject.should.equal('test_project');
 				data.projectList.should.deep.equal(['test_project']);
-				data.fileList.should.deep.equal([new File_Descriptor('render.cpp', 12, undefined)]);
+				data.fileList.should.deep.equal([new util.File_Descriptor('render.cpp', 12, undefined)]);
 				data.fileName.should.equal('render.cpp');
 				data.CLArgs.should.be.a('object');
 				data.fileData.should.equal('test_content');
 				data.readOnly.should.equal(false);
 				let data2: any = {currentProject: 'test_project'};
-				await pm.openProject(data2);
+				await project_manager.openProject(data2);
 				data.fileData.should.equal(data2.fileData);
 			});
 			it('should fail gracefully if the project already exists', async function(){
 				let data: any = {newProject: 'test_project', projectType: 'C'};
-				await pm.newProject(data);
+				await project_manager.newProject(data);
 				data.error.should.equal('failed, project test_project already exists!');
 			});
 			after(function(){
@@ -229,23 +228,23 @@ describe('ProjectManager', function(){
 			});
 			it('should duplicate a project and open the copy', async function(){
 				let data: any = {currentProject: 'test_src', newProject: 'test_dest'};
-				await pm.saveAs(data);
+				await project_manager.saveAs(data);
 				(typeof data.newProject).should.equal('undefined');
 				data.currentProject.should.equal('test_dest');
 				data.projectList.should.deep.equal(['test_dest', 'test_src', 'wrong_dir']);
-				data.fileList.should.deep.equal([new File_Descriptor('render.cpp', 12, undefined)]);
+				data.fileList.should.deep.equal([new util.File_Descriptor('render.cpp', 12, undefined)]);
 				data.fileName.should.equal('render.cpp');
 				data.fileData.should.equal('test_content');
 				let data2: any = {currentProject: 'test_dest'};
-				await pm.openProject(data2);
+				await project_manager.openProject(data2);
 				data.fileData.should.equal(data2.fileData);
 			});
 			it('should fail gracefully when the destination project exists', async function(){
 				let data: any = {currentProject: 'test_src', newProject: 'wrong_dir'};
-				await pm.saveAs(data);
+				await project_manager.saveAs(data);
 				data.error.should.equal('failed, project wrong_dir already exists!');
 				let data2: any = {currentProject: 'wrong_dir'};
-				await pm.openProject(data2);
+				await project_manager.openProject(data2);
 				data2.fileName.should.equal('render.cpp');
 				data2.fileData.should.equal('wrong_content');
 			});
@@ -260,7 +259,7 @@ describe('ProjectManager', function(){
 			});
 			it('should delete a project and open any remaining project', async function(){
 				let data: any = {currentProject: 'test_project1'};
-				await pm.deleteProject(data);
+				await project_manager.deleteProject(data);
 				data.currentProject.should.equal('test_project2');
 				data.projectList.should.deep.equal(['test_project2']);
 				data.fileName.should.equal('render.cpp');
@@ -268,9 +267,9 @@ describe('ProjectManager', function(){
 			});
 			it('should fail gracefully if there are no remaining projects to open', async function(){
 				let data: any = {currentProject: 'test_project1'};
-				await pm.deleteProject(data);
+				await project_manager.deleteProject(data);
 				data = {currentProject: 'test_project2'};
-				await pm.deleteProject(data);
+				await project_manager.deleteProject(data);
 				data.currentProject.should.equal('');
 				data.readOnly.should.equal(true);
 				data.fileData.should.equal('please create a new project to continue');
@@ -289,12 +288,12 @@ describe('ProjectManager', function(){
 			});
 			it('should clear the contents of the project\'s build directory, and delete the binary', async function(){
 				let data: any = {currentProject: 'test_project'};
-				await pm.cleanProject(data);
+				await project_manager.cleanProject(data);
 				data = {currentProject: 'test_project'};
-				await pm.openProject(data);
+				await project_manager.openProject(data);
 				data.fileList.should.deep.equal([
-					new File_Descriptor('build', undefined, []),
-					new File_Descriptor('render.cpp', 12, undefined)
+					new util.File_Descriptor('build', undefined, []),
+					new util.File_Descriptor('render.cpp', 12, undefined)
 				]);
 			});
 		});
@@ -307,20 +306,20 @@ describe('ProjectManager', function(){
 			});
 			it('should create a new file in the current project, and open it', async function(){
 				let data: any = {currentProject: 'test_project', 'newFile': 'test_file'};
-				await pm.newFile(data);
+				await project_manager.newFile(data);
 				data.fileName.should.equal('test_file');
 				(typeof data.newFile).should.equal('undefined');
 				data.fileData.should.equal('/***** test_file *****/\n');
-				data.fileList.should.deep.equal([new File_Descriptor('old_file', 11, undefined), new File_Descriptor('test_file', 24, undefined)]);
+				data.fileList.should.deep.equal([new util.File_Descriptor('old_file', 11, undefined), new util.File_Descriptor('test_file', 24, undefined)]);
 				data.focus.should.deep.equal({line: 2, column: 1});
 				data.readOnly.should.equal(false);
 				let data2: any = {currentProject: 'test_project', 'newFile': 'test_file'};
-				await pm.openFile(data2);
+				await project_manager.openFile(data2);
 				data.fileData.should.equal(data2.fileData);
 			});
 			it('should fail gracefully if the file already exists', async function(){
 				let data: any = {currentProject: 'test_project', 'newFile': 'old_file'};
-				await pm.newFile(data);
+				await project_manager.newFile(data);
 				data.error.should.equal('failed, file old_file already exists!');
 			});
 		});
@@ -334,43 +333,43 @@ describe('ProjectManager', function(){
 			it('should upload and open a new text file', async function(){
 				let fileData = 'test_content';
 				let data: any = {currentProject: 'test_project', newFile: 'test_file', fileData, force: false};
-				await pm.uploadFile(data);
+				await project_manager.uploadFile(data);
 				data.fileName.should.equal('test_file');
 				(typeof data.newFile).should.equal('undefined');
 				data.fileData.should.equal('test_content');
 				let data2: any = {currentProject: 'test_project', newFile: 'test_file'};
-				await pm.openFile(data2);
+				await project_manager.openFile(data2);
 				data.fileData.should.equal(data2.fileData);
 			});
 			it('should upload and open a new binary file', async function(){
 				let fileData = Buffer.alloc(4100);
 				let data: any = {currentProject: 'test_project', newFile: 'test_file', fileData, force: false};
-				await pm.uploadFile(data);
+				await project_manager.uploadFile(data);
 				data.fileName.should.equal('test_file');
 				(typeof data.newFile).should.equal('undefined');
 				data.error.should.be.a('string');
-				let readFile = await fm.read_file_raw('/root/Bela/projects/test_project/test_file');
+				let readFile = await file_manager.read_file_raw('/root/Bela/projects/test_project/test_file');
 				readFile.should.deep.equal(fileData);
 			});
 			it('should fail to overwrite a file without the force flag set', async function(){
 				let fileData = 'test_content';
 				let data: any = {currentProject: 'test_project', newFile: 'old_file', fileData, force: false};
-				await pm.uploadFile(data);
+				await project_manager.uploadFile(data);
 				data.error.should.equal('failed, file old_file already exists!');
 				(typeof data.fileData).should.equal('undefined');
 				let data2: any = {currentProject: 'test_project', newFile: 'old_file'};
-				await pm.openFile(data2);
+				await project_manager.openFile(data2);
 				data2.fileData.should.equal('old_content');
 			});
 			it('should overwrite a file with the force flag set', async function(){
 				let fileData = 'test_content';
 				let data: any = {currentProject: 'test_project', newFile: 'old_file', fileData, force: true};
-				await pm.uploadFile(data);
+				await project_manager.uploadFile(data);
 				data.fileName.should.equal('old_file');
 				(typeof data.newFile).should.equal('undefined');
 				data.fileData.should.equal('test_content');
 				let data2: any = {currentProject: 'test_project', newFile: 'old_file'};
-				await pm.openFile(data2);
+				await project_manager.openFile(data2);
 				data2.fileData.should.equal('test_content');
 			});
 		});
@@ -385,20 +384,20 @@ describe('ProjectManager', function(){
 				});
 			});
 			it('should delete the related build files and binary if passed a source file', async function(){
-				await pm.cleanFile('test_project', 'test.cpp');
-				let files: File_Descriptor[] = await fm.deep_read_directory('/root/Bela/projects/test_project');
-				files.should.deep.equal([new File_Descriptor('build', undefined, [new File_Descriptor('another.d', 8, undefined)])]);
+				await project_manager.cleanFile('test_project', 'test.cpp');
+				let files: util.File_Descriptor[] = await file_manager.deep_read_directory('/root/Bela/projects/test_project');
+				files.should.deep.equal([new util.File_Descriptor('build', undefined, [new util.File_Descriptor('another.d', 8, undefined)])]);
 			});
 			it('should do nothing if passed a non-source file', async function(){
-				await pm.cleanFile('test_project', 'another.bak.txt');
-				let files: File_Descriptor[] = await fm.deep_read_directory('/root/Bela/projects/test_project');
+				await project_manager.cleanFile('test_project', 'another.bak.txt');
+				let files: util.File_Descriptor[] = await file_manager.deep_read_directory('/root/Bela/projects/test_project');
 				files.should.deep.equal([
-					new File_Descriptor('build', undefined, [
-						new File_Descriptor('another.d', 8, undefined),
-						new File_Descriptor('test.d', 5, undefined),
-						new File_Descriptor('test.o', 5, undefined)
+					new util.File_Descriptor('build', undefined, [
+						new util.File_Descriptor('another.d', 8, undefined),
+						new util.File_Descriptor('test.d', 5, undefined),
+						new util.File_Descriptor('test.o', 5, undefined)
 					]),
-					new File_Descriptor('test_project', 4100, undefined)
+					new util.File_Descriptor('test_project', 4100, undefined)
 				]);
 			});
 		});
@@ -415,23 +414,23 @@ describe('ProjectManager', function(){
 			});
 			it('should rename a source file, and remove the binary', async function(){
 				let data: any = {currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'new_file.cpp'};
-				await pm.renameFile(data);
+				await project_manager.renameFile(data);
 				data.fileName.should.equal('new_file.cpp');
 				data.fileData.should.equal('test_content');
 				data.fileList.should.deep.equal([
-					new File_Descriptor('new_file.cpp', 12, undefined),
-					new File_Descriptor('old_file.cpp', 11, undefined)
+					new util.File_Descriptor('new_file.cpp', 12, undefined),
+					new util.File_Descriptor('old_file.cpp', 11, undefined)
 				]);
 			});
 			it('should fail gracefully if the destination file exists', async function(){
 				let data: any = {currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'old_file.cpp'};
-				await pm.renameFile(data);
+				await project_manager.renameFile(data);
 				data.error.should.equal('failed, file old_file.cpp already exists!');
-				let fileList = await fm.deep_read_directory(paths.projects+'test_project');
+				let fileList = await file_manager.deep_read_directory(paths.projects+'test_project');
 				fileList.should.deep.equal([
-					new File_Descriptor('old_file.cpp', 11, undefined),
-					new File_Descriptor('test_file.cpp', 12, undefined),
-					new File_Descriptor('test_project', 100, undefined)
+					new util.File_Descriptor('old_file.cpp', 11, undefined),
+					new util.File_Descriptor('test_file.cpp', 12, undefined),
+					new util.File_Descriptor('test_project', 100, undefined)
 				]);
 			});
 		});
@@ -447,7 +446,7 @@ describe('ProjectManager', function(){
 			});
 			it('should delete a file along with the binary and build files', async function(){
 				let data: any = {currentProject: 'test_project', fileName: 'render.cpp'};
-				await pm.deleteFile(data);
+				await project_manager.deleteFile(data);
 				data.fileName.should.equal('');
 				data.readOnly.should.equal(true);
 				data.fileData.should.equal('File deleted - open another file to continue');

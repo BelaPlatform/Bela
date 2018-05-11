@@ -1,6 +1,7 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
-import { fm, File_Descriptor } from "../src/FileManager";
+import * as file_manager from "../src/FileManager";
+import * as util from '../src/utils';
 
 should();
 
@@ -15,7 +16,7 @@ describe('FileManager', function(){
 				mock({ test_file });
 			});
 			it('should read a file', async function(){
-				let data: string = await fm.read_file('test_file');
+				let data: string = await file_manager.read_file('test_file');
 				data.should.equal(content);
 			});
 		});
@@ -26,7 +27,7 @@ describe('FileManager', function(){
 				mock({ 'test_file': content });
 			});
 			it('should read a file', async function(){
-				let data: Buffer = await fm.read_file_raw('test_file');
+				let data: Buffer = await file_manager.read_file_raw('test_file');
 				data.should.deep.equal(content);
 			});
 		});
@@ -37,8 +38,8 @@ describe('FileManager', function(){
 				mock({});
 			});
 			it('should write a file', async function(){
-				await fm.write_file('test_file', content);
-				let data: string = await fm.read_file('test_file');
+				await file_manager.write_file('test_file', content);
+				let data: string = await file_manager.read_file('test_file');
 				data.should.equal(content);
 			});
 		});
@@ -49,10 +50,10 @@ describe('FileManager', function(){
 				mock({ 'test_file' : mock.file({content}) });
 			});
 			it('should rename a file', async function(){
-				await fm.rename_file('test_file', 'other_file');
-				let data: string= await fm.read_file('other_file');
+				await file_manager.rename_file('test_file', 'other_file');
+				let data: string= await file_manager.read_file('other_file');
 				data.should.equal(content);
-				await fm.read_file('test_file')
+				await file_manager.read_file('test_file')
 					.catch( e => e.code.should.equal('ENOENT') );
 			});
 		});
@@ -66,13 +67,13 @@ describe('FileManager', function(){
 				});
 			});
 			it('should delete a file', async function(){
-				await fm.delete_file('test_file');
-				let data: string = await fm.read_file('test_file')
+				await file_manager.delete_file('test_file');
+				let data: string = await file_manager.read_file('test_file')
 					.catch( e => e.code.should.equal('ENOENT') );
 			});
 			it('should delete a directory', async function(){
-				await fm.delete_file('test_dir');
-				let data: string[] = await fm.read_directory('test_dir')
+				await file_manager.delete_file('test_dir');
+				let data: string[] = await file_manager.read_directory('test_dir')
 					.catch( e => e.code.should.equal('ENOENT') );
 			});
 		});
@@ -87,7 +88,7 @@ describe('FileManager', function(){
 				mock({ 'test_dir': mock_dir });
 			});
 			it('should return an array of the names of the files in a directory', async function(){
-				let output: string[] = await fm.read_directory('test_dir');
+				let output: string[] = await file_manager.read_directory('test_dir');
 				output.should.deep.equal(file_list);
 			});
 		});
@@ -97,7 +98,7 @@ describe('FileManager', function(){
 				mock({ 'test_file': 'test' });
 			})
 			it('should return an object with a size field and isDirectory method', async function(){
-				let stat = await fm.stat_file('test_file');
+				let stat = await file_manager.stat_file('test_file');
 				stat.size.should.be.a('Number');
 				stat.isDirectory.should.be.a('Function');
 				stat.isDirectory().should.equal(false);
@@ -109,12 +110,12 @@ describe('FileManager', function(){
 				mock({ 'test_dir': { 'test_file1': 'content1', 'test_subdir': {'test_file2': 'content2'} } });
 			});
 			it('should recursively copy the contents of one directory to another, creating the destination if neccesary', async function(){
-				await fm.copy_directory('test_dir', 'dest_dir');
-				let contents: File_Descriptor[] = await fm.deep_read_directory('dest_dir');
+				await file_manager.copy_directory('test_dir', 'dest_dir');
+				let contents: util.File_Descriptor[] = await file_manager.deep_read_directory('dest_dir');
 				contents.should.deep.equal([
-						new File_Descriptor('test_file1', 8, undefined),
-						new File_Descriptor('test_subdir', undefined, [
-							new File_Descriptor('test_file2', 8, undefined)
+						new util.File_Descriptor('test_file1', 8, undefined),
+						new util.File_Descriptor('test_subdir', undefined, [
+							new util.File_Descriptor('test_file2', 8, undefined)
 						])
 				]);
 			});
@@ -125,12 +126,12 @@ describe('FileManager', function(){
 				mock({ 'test_text': 'test', 'test_bin': new Buffer(100) });
 			})
 			it('should return true for a binary file', async function(){
-				let result = await fm.is_binary('test_bin');
+				let result = await file_manager.is_binary('test_bin');
 				(typeof result).should.equal('boolean');
 				result.should.equal(true);
 			});
 			it('should return false for a non-binary file', async function(){
-				let result = await fm.is_binary('test_text');
+				let result = await file_manager.is_binary('test_text');
 				(typeof result).should.equal('boolean');
 				result.should.equal(false);
 			});
@@ -142,8 +143,8 @@ describe('FileManager', function(){
 				mock({ 'test_src': content });
 			})
 			it('should create a symlink', async function(){
-				await fm.make_symlink('test_src', 'test_dir/test_dest');
-				let data: string = await fm.read_file('test_dir/test_dest');
+				await file_manager.make_symlink('test_src', 'test_dir/test_dest');
+				let data: string = await file_manager.read_file('test_dir/test_dest');
 				data.should.equal(content);
 			});
 		});
@@ -158,8 +159,8 @@ describe('FileManager', function(){
 				});
 			})
 			it('should delete all files and directories in a direcory', async function(){
-				await fm.empty_directory('test_dir');
-				let file_list: string[] = await fm.read_directory('test_dir');
+				await file_manager.empty_directory('test_dir');
+				let file_list: string[] = await file_manager.read_directory('test_dir');
 				file_list.should.deep.equal([]);
 			});
 		});
@@ -170,7 +171,7 @@ describe('FileManager', function(){
 				mock({'test_json': JSON.stringify(test_obj)});
 			});
 			it('should read and parse a JSON file', async function(){
-				let output = await fm.read_json('test_json');
+				let output = await file_manager.read_json('test_json');
 				output.should.deep.equal(test_obj);
 			});
 		});
@@ -181,8 +182,8 @@ describe('FileManager', function(){
 				mock({});
 			})
 			it('should stringify an object and write it to a json file', async function(){
-				await fm.write_json('test_json', test_obj);
-				let output: any = await fm.read_json('test_json');
+				await file_manager.write_json('test_json', test_obj);
+				let output: any = await file_manager.read_json('test_json');
 				output.should.deep.equal(test_obj);
 			});
 		});
@@ -194,15 +195,15 @@ describe('FileManager', function(){
 				});
 			});
 			it('should return false if a directory does not exist', async function(){
-				let output: boolean = await fm.directory_exists('wrong_dir/wrong_subdir');
+				let output: boolean = await file_manager.directory_exists('wrong_dir/wrong_subdir');
 				output.should.equal(false);
 			});
 			it('should return false if called on a file', async function(){
-				let output: boolean = await fm.directory_exists('test_dir/test_subdir/test_file');
+				let output: boolean = await file_manager.directory_exists('test_dir/test_subdir/test_file');
 				output.should.equal(false);
 			});
 			it('should return true if a directory exists', async function(){
-				let output: boolean = await fm.directory_exists('test_dir/test_subdir');
+				let output: boolean = await file_manager.directory_exists('test_dir/test_subdir');
 				output.should.equal(true);
 			});
 		});
@@ -214,15 +215,15 @@ describe('FileManager', function(){
 				});
 			});
 			it('should return true if the file exists', async function(){
-				let out: boolean = await fm.file_exists('test_dir/test_file');
+				let out: boolean = await file_manager.file_exists('test_dir/test_file');
 				out.should.equal(true);
 			});
 			it('should return false if the file does not exist', async function(){
-				let out: boolean = await fm.file_exists('wrong_file');
+				let out: boolean = await file_manager.file_exists('wrong_file');
 				out.should.equal(false);
 			});
 			it('should return false if called on a directory', async function(){
-				let out: boolean = await fm.file_exists('test_dir');
+				let out: boolean = await file_manager.file_exists('test_dir');
 				out.should.equal(false);
 			});
 		});
@@ -242,13 +243,13 @@ describe('FileManager', function(){
 				mock({});
 			});
 			it('should save a file following vim\'s strategy to avoid data loss', async function(){
-				await fm.save_file(file_name, content, lockfile);
-				let data: string = await fm.read_file(file_name);
+				await file_manager.save_file(file_name, content, lockfile);
+				let data: string = await file_manager.read_file(file_name);
 				data.should.equal(content);
 			});
 			it('should also work without using a lockfile', async function(){
-				await fm.save_file(file_name, content);
-				let data: string = await fm.read_file(file_name);
+				await file_manager.save_file(file_name, content);
+				let data: string = await file_manager.read_file(file_name);
 				data.should.equal(content);
 			});
 			afterEach(function(){
@@ -258,13 +259,13 @@ describe('FileManager', function(){
 		
 		describe('#deep_read_directory', function(){
 			var root_content = [
-				new File_Descriptor('dir1', undefined, [
-					new File_Descriptor('dir2', undefined, [
-						new File_Descriptor('file3', 6, undefined)
+				new util.File_Descriptor('dir1', undefined, [
+					new util.File_Descriptor('dir2', undefined, [
+						new util.File_Descriptor('file3', 6, undefined)
 					]),
-					new File_Descriptor('file2', 5, undefined)
+					new util.File_Descriptor('file2', 5, undefined)
 				]),
-				new File_Descriptor('file', 4, undefined)
+				new util.File_Descriptor('file', 4, undefined)
 			];
 			before(function(){
 				mock({ 
@@ -278,7 +279,7 @@ describe('FileManager', function(){
 				});
 			});
 			it('should recursively read the contents of a directory, returning an array of file descriptors', async function(){
-				let output: File_Descriptor[] = await fm.deep_read_directory('root');
+				let output: util.File_Descriptor[] = await file_manager.deep_read_directory('root');
 			//	console.dir(output, { depth: null });
 				output.should.deep.equal(root_content);
 			});

@@ -27,6 +27,7 @@ gulp.task('watch', () => {
 	ssh.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
 	});
+	
 });
 
 gulp.task('watch_test', () => {
