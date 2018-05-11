@@ -1,5 +1,5 @@
 import * as file_manager from './FileManager';
-import { paths } from './paths';
+import * as paths from './paths';
 import { Lock } from './Lock';
 
 var lock: Lock = new Lock();

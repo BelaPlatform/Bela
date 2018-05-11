@@ -3,7 +3,6 @@ import * as mock from 'mock-fs';
 import * as file_manager from "../src/FileManager";
 import * as project_manager from "../src/ProjectManager";
 import * as util from '../src/utils';
-import {paths} from '../src/paths';
 
 should();
 
@@ -435,7 +434,7 @@ describe('ProjectManager', function(){
 				let data: any = {currentProject: 'test_project', fileName: 'test_file.cpp', newFile: 'old_file.cpp'};
 				await project_manager.renameFile(data);
 				data.error.should.equal('failed, file old_file.cpp already exists!');
-				let fileList = await file_manager.deep_read_directory(paths.projects+'test_project');
+				let fileList = await file_manager.deep_read_directory('/root/Bela/projects/test_project');
 				fileList.should.deep.equal([
 					new util.File_Descriptor('old_file.cpp', 11, undefined),
 					new util.File_Descriptor('test_file.cpp', 12, undefined),

@@ -1,4 +1,4 @@
-import {paths} from './paths';
+import * as paths from './paths';
 import * as file_manager from "./FileManager";
 import { Lock } from "./Lock";
 

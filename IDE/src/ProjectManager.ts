@@ -1,7 +1,7 @@
 import * as file_manager from "./FileManager";
 import * as project_settings from './ProjectSettings';
 import * as util from './utils';
-import {paths} from './paths';
+import * as paths from './paths';
 import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
 
@@ -66,8 +66,18 @@ export async function openFile(data: any){
 export async function listProjects(): Promise<string[]>{
 	return file_manager.read_directory(paths.projects);
 }
-export async function listExamples(): Promise<util.File_Descriptor[]>{
-	return file_manager.deep_read_directory(paths.examples);
+export async function listExamples(): Promise<any>{
+	let examples = [];
+	let categories = await file_manager.read_directory(paths.examples);
+	for (let category of categories){
+		if (await file_manager.directory_exists(paths.examples+'/'+category)){
+			examples.push({
+				name: category,
+				children: await file_manager.read_directory(paths.examples+'/'+category)
+			});
+		}
+	}
+	return examples;
 }
 export async function openProject(data: any) {
 	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
