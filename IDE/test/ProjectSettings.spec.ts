@@ -72,5 +72,22 @@ describe('ProjectSettingsManager', function(){
 				mock.restore();
 			})
 		});
+		describe('#getArgs', function(){
+			before(async function(){
+				let settings = project_settings.default_project_settings();
+				settings.CLArgs.make = 'AT;LDFLAGS=um';
+				mock({
+					'/root/Bela/projects/test/settings.json': JSON.stringify(settings)
+				});
+			});
+			it('should correctly return the CLArgs and make parameter strings', async function(){
+				let out: {CL:string, make:string} = await project_settings.getArgs('test');
+				out.CL.should.equal('-p16 -C8 -B16 -H-6 -N1 -G1 -M0 -D0 -A0 --pga-gain-left=10 --pga-gain-right=10  -X0 ');
+				out.make.should.equal('AT LDFLAGS=um ');
+			});
+			after(function(){
+				mock.restore();
+			})
+		});
 	});
 });

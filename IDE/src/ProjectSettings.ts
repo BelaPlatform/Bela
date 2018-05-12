@@ -45,8 +45,33 @@ export async function restoreDefaultCLArgs(data: any): Promise<any> {
 	lock.release();
 	return settings;
 }
+export async function getArgs(project: any): Promise<{CL: string, make: string}> {
+	let CLArgs = (await read(project)).CLArgs;
+	let CL: string = '';
+	for (let key in CLArgs) {
+		if (key[0] === '-' && key[1] === '-'){
+			CL += key+'='+CLArgs[key]+' ';
+		} else if (key === 'user'){
+			CL += CLArgs[key]+' ';
+		} else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== ''){
+			CL += key+CLArgs[key]+' ';
+		}
+	}
+	let make: string = ''; 
+	if (CLArgs.make && CLArgs.make.split){
+		let makeArgs = CLArgs.make.split(';');
+		for (let arg of makeArgs){
+			arg = arg.trim();
+			if(arg.length > 0){
+				make += arg+' ';
+			}
+		}
+	}
+	return {CL, make};
+}
 
-function default_project_settings(){
+
+export function default_project_settings(){
 	let CLArgs = {
 		"-p": "16",		// audio buffer size
 		"-C": "8",		// no. analog channels
