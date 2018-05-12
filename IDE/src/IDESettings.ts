@@ -18,6 +18,20 @@ export async function write(data: any): Promise<any> {
 	return data;
 }
 
+export async function set_setting(key: string, value: string){
+	lock.acquire();
+	try{
+		let settings = await read();
+		settings[key] = value;
+		await write(settings);
+	}
+	catch(e){
+		lock.release();
+		throw e;
+	}
+	lock.release();
+}
+
 function default_IDE_settings(){
 	return {
 		'project'		: 'basic',
