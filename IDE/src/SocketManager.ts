@@ -16,6 +16,7 @@ export function init(server: http.Server){
 
 function connection(socket: SocketIO.Socket){
 	init_message(socket);
+	socket.on('set-time', IDE.set_time);
 }
 
 async function init_message(socket: SocketIO.Socket){

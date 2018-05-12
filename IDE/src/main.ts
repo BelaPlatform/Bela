@@ -29,3 +29,13 @@ export function get_xenomai_version(): Promise<string>{
 		});
 	});
 }
+
+export function set_time(time: string){
+	child_process.exec('date -s "'+time+'"', (err, stdout, stderr) => {
+		if (err || stderr){
+			console.log('error setting time', err, stderr);
+		} else {
+			console.log('time set to:', stdout);
+		}
+	});
+}
