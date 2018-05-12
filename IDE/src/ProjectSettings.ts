@@ -17,12 +17,12 @@ export async function write(project: string, data: any): Promise<any> {
 	await file_manager.write_json(paths.projects+project+'/settings.json', data);
 	return data;
 }
-export async function setCLArg(project: string, key: string, value: string): Promise<any> {
+export async function setCLArg(data: any): Promise<any> {
 	lock.acquire();
 	try{
-		var settings = await read(project);
-		settings.CLArgs[key] = value;
-		write(project, settings);
+		var settings = await read(data.currentProject);
+		settings.CLArgs[data.key] = data.value;
+		write(data.currentProject, settings);
 	}
 	catch(e){
 		lock.release();
@@ -31,12 +31,12 @@ export async function setCLArg(project: string, key: string, value: string): Pro
 	lock.release();
 	return settings;
 }
-export async function restoreDefaultCLArgs(project: string): Promise<any> {
+export async function restoreDefaultCLArgs(data: any): Promise<any> {
 	lock.acquire();
 	try{
-		var settings = await read(project);
+		var settings = await read(data.currentProject);
 		settings.CLArgs = default_project_settings().CLArgs;
-		write(project, settings);
+		write(data.currentProject, settings);
 	}
 	catch(e){
 		lock.release();

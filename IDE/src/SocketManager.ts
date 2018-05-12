@@ -2,6 +2,7 @@ import * as io from 'socket.io';
 import * as http from 'http';
 import * as IDE from './main';
 import * as project_manager from './ProjectManager';
+import * as project_settings from './ProjectSettings';
 import * as ide_settings from './IDESettings';
 import * as boot_project from './RunOnBoot';
 import * as util from './utils';
@@ -20,11 +21,11 @@ export function init(server: http.Server){
 function connection(socket: SocketIO.Socket){
 	socket.on('set-time', IDE.set_time);
 	socket.on('project-event', (data: any) => project_event(socket, data) );
+	socket.on('project-settings', (data: any) => project_settings_event(socket, data) );
 	init_message(socket);
 }
 
 async function init_message(socket: SocketIO.Socket){
-	console.log('constructing');
 	let message: util.Init_Message = {
 		projects : await project_manager.listProjects(),
 		examples : await project_manager.listExamples(),
@@ -33,8 +34,6 @@ async function init_message(socket: SocketIO.Socket){
 		xenomai_version : await IDE.get_xenomai_version()
 //	status : await process_manager.status()
 	};
-	console.log('done');
-//	console.dir(message, {depth:null});
 	socket.emit('init', message);
 }
 
@@ -73,3 +72,26 @@ async function project_event(socket: SocketIO.Socket, data: any){
 			socket.broadcast.emit('project-list', data.currentProject, data.projectList);
 	}
 }
+
+async function project_settings_event(socket: SocketIO.Socket, data: any){
+	console.log('project_settings')
+	console.dir(data);
+	if (!data.currentProject || !data.func || !(project_settings as any)[data.func]) {
+		console.log('bad project-settings', data);
+		return;
+	}
+	let settings = await (project_settings as any)[data.func](data)
+		.catch( (e: Error) => {
+			console.log('project-settings error');
+			console.log(e);
+			socket.emit('report-error', e.toString());
+		});
+	console.log('project_settings')
+	console.dir(settings);
+	if (data.func === 'setCLArg'){
+		socket.broadcast.emit('project-settings-data', data.currentProject, settings);
+	} else {
+		ide_sockets.emit('project-settings-data', data.currentProject, settings);
+	}
+}
+

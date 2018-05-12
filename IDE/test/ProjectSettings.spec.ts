@@ -47,7 +47,11 @@ describe('ProjectSettingsManager', function(){
 				mock({ '/root/Bela/projects/test_project/settings.json': JSON.stringify({ CLArgs: {'old_key': 'old_value'} }) });
 			});
 			it('should set a single command line argument', async function(){
-				let settings = await project_settings.setCLArg('test_project', 'key', 'value');
+				let settings = await project_settings.setCLArg({
+					currentProject: 'test_project', 
+					key: 'key', 
+					value: 'value'
+				});
 				settings.CLArgs['old_key'].should.equal('old_value');
 				settings.CLArgs['key'].should.equal('value');
 			});
@@ -60,7 +64,7 @@ describe('ProjectSettingsManager', function(){
 				mock({ '/root/Bela/projects/test_project/settings.json': JSON.stringify({ fileName: 'test_file', CLArgs: {'-p': '2'} }) });
 			});
 			it('should restore a projects command-line arguments to the defauts without modifying the fileName field in the settings', async function(){
-				let settings = await project_settings.restoreDefaultCLArgs('test_project');
+				let settings = await project_settings.restoreDefaultCLArgs({currentProject: 'test_project'});
 				settings.fileName.should.equal('test_file');
 				settings.CLArgs['-p'].should.equal('16');
 			});
