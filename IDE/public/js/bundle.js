@@ -699,7 +699,8 @@ socket.on('cpu-usage', function (data) {
 });
 //socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
-socket.on('disconnect', function () {
+socket.on('disconnect', function (reason) {
+	console.log('disconnect reason:', reason);
 	consoleView.disconnect();
 	toolbarView.emit('disconnected');
 	models.project.setKey('readOnly', true);

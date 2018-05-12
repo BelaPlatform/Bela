@@ -39,3 +39,12 @@ export function set_time(time: string){
 		}
 	});
 }
+
+/*process.on('uncaughtException', err => {
+	console.log('uncaught exception');
+	throw err;
+});
+process.on('SIGTERM', () => {
+	console.log('SIGTERM');
+	throw new Error('SIGTERM');
+});*/

@@ -278,7 +278,8 @@ socket.on('IDE-settings-data', (settings) => models.settings.setData(settings) )
 socket.on('cpu-usage', data => models.status.setKey('CPU', data) );
 //socket.on('mode-switch', data => models.status.setKey('msw', data) );
 
-socket.on('disconnect', () => {
+socket.on('disconnect', (reason) => {
+	console.log('disconnect reason:', reason);
 	consoleView.disconnect();
 	toolbarView.emit('disconnected');
 	models.project.setKey('readOnly', true);
