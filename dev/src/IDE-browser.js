@@ -203,17 +203,17 @@ socket.on('init', (data) => {
 	consoleView.connect();
 	
 	var timestamp = performance.now()
-	socket.emit('project-event', {func: 'openProject', currentProject: data[2].project, timestamp})	
+	socket.emit('project-event', {func: 'openProject', currentProject: data.settings.project, timestamp})	
 	consoleView.emit('openNotification', {func: 'init', timestamp});
 	
-	models.project.setData({projectList: data[0], exampleList: data[1], currentProject: data[2].project});
-	models.settings.setData(data[2]);
+	models.project.setData({projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project});
+	models.settings.setData(data.settings);
 	
-	$('#runOnBoot').val(data[3]);
+	$('#runOnBoot').val(data.boot_project);
 	
-	models.settings.setKey('xenomaiVersion', data[4]);
+	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
-	models.status.setData(data[5]);
+	// TODO! models.status.setData(data[5]);
 	
 	//models.project.print();
 	//models.settings.print();
@@ -223,7 +223,7 @@ socket.on('init', (data) => {
 	documentationView.emit('init');
 	
 	// hack to stop changes to read-only example being overwritten when opening a new tab
-	if (data[2].project === 'exampleTempProject') models.project.once('set', () => projectView.emit('example-changed') );
+	if (data.settings.project === 'exampleTempProject') models.project.once('set', () => projectView.emit('example-changed') );
 
 	// socket.io timeout	
 	socket.io.engine.pingTimeout = 6000;

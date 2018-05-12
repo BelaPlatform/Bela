@@ -9,3 +9,11 @@ export class File_Descriptor {
 	size: number | undefined = undefined;
 	children: File_Descriptor[] | undefined = undefined;
 }
+
+export interface Init_Message{
+	projects: string[];
+	examples: File_Descriptor[];
+	settings: any;
+	boot_project: string;
+	xenomai_version: string;
+}
