@@ -143,9 +143,9 @@ class FileView extends View {
 		for (let item of files){
 
 			// exclude hidden files
-			if (!viewHiddenFiles && (item.name[0] === '.' || (item.dir && item.name === 'build') || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name === data.currentProject)) continue;
 					
-			if (item.dir){
+			if (isDir(item)){
 			
 				directories.push(item);
 				
@@ -232,7 +232,7 @@ class FileView extends View {
 	subDirs(dir){
 		var ul = $('<ul></ul>').html(dir.name+':');
 		for (let child of dir.children){
-			if (!child.dir){
+			if (!isDir(child)){
 				if (child.size < 1000000){
 					child.size = (child.size/1000).toFixed(1)+'kb';
 				} else if (child.size >= 1000000 && child.size < 1000000000){
@@ -350,6 +350,10 @@ class FileView extends View {
 		}
 	}
 	
+}
+
+function isDir(item){
+	return ((typeof item.size) === 'undefined' && (typeof item.children) !== 'undefined');
 }
 
 module.exports = FileView;

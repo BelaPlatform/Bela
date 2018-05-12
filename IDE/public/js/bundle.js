@@ -2291,9 +2291,9 @@ var FileView = function (_View) {
 
 
 					// exclude hidden files
-					if (!viewHiddenFiles && (item.name[0] === '.' || item.dir && item.name === 'build' || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name === data.currentProject)) continue;
 
-					if (item.dir) {
+					if (isDir(item)) {
 
 						directories.push(item);
 					} else {
@@ -2438,7 +2438,7 @@ var FileView = function (_View) {
 				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
 					var child = _step3.value;
 
-					if (!child.dir) {
+					if (!isDir(child)) {
 						if (child.size < 1000000) {
 							child.size = (child.size / 1000).toFixed(1) + 'kb';
 						} else if (child.size >= 1000000 && child.size < 1000000000) {
@@ -2600,6 +2600,10 @@ var FileView = function (_View) {
 
 	return FileView;
 }(View);
+
+function isDir(item) {
+	return typeof item.size === 'undefined' && typeof item.children !== 'undefined';
+}
 
 module.exports = FileView;
 
