@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as http from 'http';
+import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
 
 // setup webserver to serve files from ~/Bela/IDE/public
@@ -15,4 +16,16 @@ export function init(){
 
 	// initialise websocket
 	socket_manager.init(server);
+}
+
+export function get_xenomai_version(): Promise<string>{
+	return new Promise(function(resolve, reject){
+		child_process.exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
+			if (err){
+				console.log('error reading xenomai version');
+				reject(err);
+			}
+			resolve(stdout);
+		});
+	});
 }
