@@ -20,7 +20,7 @@
 .DEFAULT_GOAL := Bela
 
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib
+NO_PROJECT_TARGETS=help coreclean distclean startup startuploop getstartupproject stopstartup stoprunning stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
@@ -224,7 +224,7 @@ SCREEN_NAME?=Bela
 
 # These are parsed by the IDE to understand if a program is active at startup
 BELA_STARTUP_ENV?=/opt/Bela/startup_env
-BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT=$(PROJECT)\nARGS=$(COMMAND_LINE_OPTIONS)" > $(BELA_STARTUP_ENV)
+BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT=\"$(PROJECT)\"\nARGS=\"$(COMMAND_LINE_OPTIONS)\"\n" > $(BELA_STARTUP_ENV)
 BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
 
 ifeq ($(DEBIAN_VERSION), stretch)
@@ -533,11 +533,15 @@ startuploop: Bela
 startup: ## Same as startuploop
 startup: startuploop # compatibility only
 
-stop: ## Stops any Bela program that is currently running
-stop:
+getstartupproject: ## Returns the name of the project set to run at startup (if any).
+	@. ${BELA_STARTUP_ENV} && [ $$ACTIVE -eq 1 ] && echo PROJECT=$$PROJECT
+
+stopstartup: ## stop the system service that ran Bela at startup
 ifeq ($(DEBIAN_VERSION),stretch)
 	$(AT) systemctl stop bela_startup || true
 endif
+
+stoprunning: ## Stops a Bela program that is currently running
 	$(AT) PID=`grep $(BELA_AUDIO_THREAD_NAME) $(XENOMAI_STAT_PATH) | cut -d " " -f 5 | sed s/\s//g`; if [ -z $$PID ]; then [ $(QUIET) = true ] || echo "No process to kill"; else [  $(QUIET) = true  ] || echo "Killing old Bela process $$PID"; kill -2 $$PID; sleep 0.2; kill -9 $$PID 2> /dev/null; fi; screen -X -S $(SCREEN_NAME) quit > /dev/null; exit 0;
 # take care of stale sclang / scsynth processes
 ifeq ($(PROJECT_TYPE),sc)
@@ -548,6 +552,9 @@ else
 # audio thread has been killed above
 	$(AT) killall scsynth 2>/dev/null& killall sclang 2>/dev/null& true
 endif
+
+stop: ## Stops any system service and Bela program that is currently running
+stop: stopstartup stoprunning
 
 ifeq ($(DEBIAN_VERSION),stretch)
 connect_startup: ## Connects to Bela program running at startup
@@ -717,4 +724,4 @@ heavy-unzip-archive: stop
 # If there is no render.cpp, copy the default Heavy one
 	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
 
-.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib
+.PHONY: all clean distclean help projectclean nostartup startup startuploop getstartupproject debug run runfg runscreen runscreenfg stopstartup stoprunning stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib

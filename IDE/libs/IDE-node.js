@@ -251,8 +251,10 @@ function socketEvents(socket){
 
 	// run-on-boot
 	socket.on('run-on-boot', project => {
-		if (project === 'none'){
+		if (project === '*none*'){
 			runOnBoot(socket, ['nostartup']);
+		} else if(project == '*loop*'){
+			runOnBoot(socket, ['startuploop', 'PROJECT=']);
 		} else {
 			co(ProjectManager, 'getCLArgs', project)
 				.then( (CLArgs) => {
@@ -418,7 +420,7 @@ function getXenomaiVersion(){
 function runOnBootProject(){
 	return fs.readFileAsync(startupEnv, 'utf-8')
 		.then( file => {
-			var project = 'none';
+			var project = '*none*';
 			var lines = file.split('\n');
 			for (let line of lines){
 				line = line.split('=');
@@ -426,8 +428,20 @@ function runOnBootProject(){
 					console.log('no project set to run on boot');
 					continue;
 				} else if (line[0] === 'PROJECT'){
-					console.log('project', line[1], 'set to run on boot');
-					project = line[1];
+					var name = line[1];
+					name = name.trim();
+					// strip enclosing quotes
+					if((name.startsWith('"') && name.endsWith('"')) || (name.startsWith("'") && name.endsWith("'"))) {
+						name = name.substr(1, name.length - 2);
+					}
+					name.trim();
+					if (name === ''){
+						console.log('all projects loop_* set to run on boot');
+						project = '*loop*';
+					} else {
+						project = name;
+						console.log('project', project, 'set to run on boot');
+					}
 					listenToRunOnBoot();
 					continue;
 				}
