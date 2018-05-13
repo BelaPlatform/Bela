@@ -425,11 +425,18 @@ function runOnBootProject(){
 					console.log('no project set to run on boot');
 					continue;
 				} else if (line[0] === 'PROJECT'){
-					if (line[1] === ''){
+					var name = line[1];
+					name = name.trim();
+					// strip enclosing quotes
+					if((name.startsWith('"') && name.endsWith('"')) || (name.startsWith("'") && name.endsWith("'"))) {
+						name = name.substr(1, name.length - 2);
+					}
+					name.trim();
+					if (name === ''){
 						console.log('all projects loop_* set to run on boot');
 						project = '*loop*';
 					} else {
-						project = line[1];
+						project = name;
 						console.log('project', project, 'set to run on boot');
 					}
 					listenToRunOnBoot();
