@@ -22,7 +22,7 @@ copy_if_does_not_exist(){
 	_SRC=$1
 	_DEST=$2
 	_FORCE=$3
-	if [ $_FORCE -eq 0 ]
+	if [ "$_FORCE" -eq 0 ]
 	then
 		if [ $RSYNC_AVAILABLE -eq 1 ]
 		then 

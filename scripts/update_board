@@ -184,6 +184,12 @@ then
 fi
 error_handler $?
 
+# Copy some custom files to the rootfs
+if [ -d "resources/"$DEBIAN_VERSION"/rootfs/" ]
+then
+	scp -r resources/$DEBIAN_VERSION/rootfs/* $BBB_ADDRESS:/
+fi
+
 # Create remaining directories needed for building
 printf "Creating directory structure on BeagleBone..."
 ssh $BBB_ADDRESS "mkdir -p $BBB_BELA_HOME/build/core $BBB_BELA_HOME/projects"
