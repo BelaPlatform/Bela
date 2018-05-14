@@ -73,6 +73,11 @@
 #X text 371 301 Tape speed;
 #X obj 527 240 +~;
 #X text 58 239 Audio out 1-2: mono audio output;
+#X text 3 309 Credits:;
+#X text 3 319 Pd patching: Robert Thomas;
+#X text 3 329 Additional Pd patching: Franky Redente;
+#X text 3 339 Featuring components from the following libraries:;
+#X text 3 349 RjLib \, Heavylib;
 #X connect 0 0 55 0;
 #X connect 1 0 51 0;
 #X connect 2 0 0 0;
