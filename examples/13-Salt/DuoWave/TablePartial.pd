@@ -29,6 +29,10 @@
 #X obj 1276 559 s P8Vol-2;
 #X obj 1343 559 s P9Vol-2;
 #X floatatom 134 442 5 0 0 0 - - -, f 5;
+#X obj 495 135 s bela_setMidi;
+#X msg 495 107 hw 0 0 0;
+#X obj 495 80 loadbang;
+#X text 476 57 Enable MIDI over USB from the host;
 #X connect 0 0 2 0;
 #X connect 0 0 4 0;
 #X connect 1 0 3 0;
@@ -75,3 +79,5 @@
 #X connect 9 8 28 0;
 #X connect 10 0 9 0;
 #X connect 29 0 11 0;
+#X connect 31 0 30 0;
+#X connect 32 0 31 0;
