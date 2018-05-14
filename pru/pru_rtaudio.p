@@ -820,18 +820,10 @@ SPI_INIT_DONE:
 // cause an underrun. Give it ~1ms before going on.
 // 10ns per loop iteration = 10^-8s --> 10^5 iterations needed
 
-     MOV r2, 1 << 28
-     MOV r3, GPIO1 + GPIO_SETDATAOUT
-     SBBO r2, r3, 0, 4
-
 MOV r2, 100000
 MCASP_INIT_WAIT:	
      SUB r2, r2, 1
      QBNE MCASP_INIT_WAIT, r2, 0
-
-     MOV r2, 1 << 28
-     MOV r3, GPIO1 + GPIO_CLEARDATAOUT
-     SBBO r2, r3, 0, 4
 
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 0)	// Set RCLKRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 8)	// Set XCLKRST
