@@ -38,6 +38,11 @@
  * Inverts I/O signals as appropriate for the BelaModular.
  */
 #define BELA_MODULAR
+#ifdef BELA_MODULAR
+enum {
+	SALT_SWITCH_1_GPIO = 60, // P9_12
+};
+#endif /* BELA_MODULAR */
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
 
@@ -314,6 +319,10 @@ int PRU::prepareGPIO(int include_led)
 
 	if(context->digitalFrames != 0){
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
+#ifdef BELA_MODULAR
+			if(digitalPins[i] == SALT_SWITCH_1_GPIO)
+				continue; // leave alone this pin as it is used by bela_button.service
+#endif /* BELA_MODULAR */
 			if(gpio_export(digitalPins[i])) {
 				if(gRTAudioVerbose)
 					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , digitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
@@ -349,6 +358,10 @@ void PRU::cleanupGPIO()
 	}
 	if(digital_enabled){
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
+#ifdef BELA_MODULAR
+			if(digitalPins[i] == SALT_SWITCH_1_GPIO)
+				continue; // leave alone this pin as it is used by bela_button.service
+#endif /* BELA_MODULAR */
 			gpio_unexport(digitalPins[i]);
 		}
 	}
