@@ -94,17 +94,24 @@ function build_error(stderr: string): boolean {
 
 // this function is called when the stop button is clicked
 // it calls the stop() method of any running process
+// if there is no running process, 'make stop' is called
 export function stop(){
-//	console.log('make -C '+paths.Bela+' stop');
-//	child_process.exec('make -C '+paths.Bela+' stop');	
+	let stopped: boolean = false;
 	if (run_process.get_status()){
 		run_process.stop();
+		stopped = true;
 	}
 	if (build_process.get_status()){
 		build_process.stop();
+		stopped = true;
 	}
 	if (syntax_process.get_status()){
 		syntax_process.stop();
+		stopped = true;
+	}
+	if (!stopped){
+		console.log('make -C '+paths.Bela+' stop');
+		child_process.exec('make -C '+paths.Bela+' stop');	
 	}
 }
 
