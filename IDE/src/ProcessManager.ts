@@ -68,11 +68,29 @@ export function run(data: any){
 function build_run(project: string){
 	build_process.start(project);
 	build_process.queue( (stderr: string, killed: boolean) => {
-		if (stderr.length === 0 && !killed){
+		if (!killed && !build_error(stderr)){
 			run_process.start(project); 
 		}
 	});
 }
+
+// this function parses the stderr output of the build process 
+// returning true if build errors (not warnings) are found
+function build_error(stderr: string): boolean {
+	let lines: string[] = stderr.split('\n');
+	for (let line of lines){
+		let split_line: string[] = line.split(':');
+		if (line.length > 4){
+			if (line[3] === ' error' || line[3] === ' fatal error'){
+				return true;
+			} else if (line[3] === ' warning'){
+				//console.log('warning');
+			}
+		}
+	}
+	return false;
+}
+
 
 // this function is called when the stop button is clicked
 // it calls the stop() method of any running process
