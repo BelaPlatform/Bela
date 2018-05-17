@@ -67,6 +67,8 @@ export async function getArgs(project: any): Promise<{CL: string, make: string}>
 			}
 		}
 	}
+	CL = CL.trim();
+	make = make.trim();
 	return {CL, make};
 }
 
