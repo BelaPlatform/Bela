@@ -6,3 +6,4 @@ export var media: string 		= Bela+'IDE/public/media/';
 export var templates: string 		= Bela+'IDE/templates/';
 export var ide_settings: string 	= Bela+'IDE/settings.json';
 export var startup_env: string		= '/opt/Bela/startup_env';
+export var lockfile: string		= Bela+'IDE/.lockfile';

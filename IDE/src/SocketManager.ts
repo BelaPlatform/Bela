@@ -2,10 +2,15 @@ import * as io from 'socket.io';
 import * as http from 'http';
 import * as IDE from './main';
 import * as project_manager from './ProjectManager';
+import * as process_manager from './ProcessManager';
 import * as project_settings from './ProjectSettings';
 import * as ide_settings from './IDESettings';
 import * as boot_project from './RunOnBoot';
 import * as util from './utils';
+
+//remove this
+import * as Make from './MakeProcess';
+let make = new Make.MakeProcess('syntax');
 
 // all connected sockets
 let ide_sockets: SocketIO.Namespace;
@@ -18,10 +23,16 @@ export function init(server: http.Server){
 	ide_sockets.on('connection', connection);
 }
 
+export function broadcast(event: string, message: any){
+	// console.log('broadcasting', event, message);
+	ide_sockets.emit(event, message);
+}
+
 function connection(socket: SocketIO.Socket){
 	socket.on('set-time', IDE.set_time);
 	socket.on('project-event', (data: any) => project_event(socket, data) );
 	socket.on('project-settings', (data: any) => project_settings_event(socket, data) );
+	socket.on('process-event', (data: any) => process_event(socket, data) );
 	init_message(socket);
 }
 
@@ -57,7 +68,7 @@ async function project_event(socket: SocketIO.Socket, data: any){
 			data.error = e.toString();
 			socket.emit('project-data', data);
 		});
-//	console.log('done');
+	console.log('done');
 //	console.dir(data);
 	// after a succesful operation, send the data back
 	socket.emit('project-data', data);
@@ -74,8 +85,8 @@ async function project_event(socket: SocketIO.Socket, data: any){
 }
 
 async function project_settings_event(socket: SocketIO.Socket, data: any){
-	console.log('project_settings')
-	console.dir(data);
+//	console.log('project_settings')
+//	console.dir(data);
 	if (!data.currentProject || !data.func || !(project_settings as any)[data.func]) {
 		console.log('bad project-settings', data);
 		return;
@@ -86,8 +97,8 @@ async function project_settings_event(socket: SocketIO.Socket, data: any){
 			console.log(e);
 			socket.emit('report-error', e.toString());
 		});
-	console.log('project_settings')
-	console.dir(settings);
+//	console.log('project_settings')
+//	console.dir(settings);
 	if (data.func === 'setCLArg'){
 		socket.broadcast.emit('project-settings-data', data.currentProject, settings);
 	} else {
@@ -95,3 +106,10 @@ async function project_settings_event(socket: SocketIO.Socket, data: any){
 	}
 }
 
+async function process_event(socket: SocketIO.Socket, data: any){
+	if (!data || !data.currentProject || !data.event || !(process_manager as any)[data.event]){
+		console.log('bad process-event', data);
+		return;
+	}
+	await (process_manager as any)[data.event](data);
+}
