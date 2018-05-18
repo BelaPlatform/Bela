@@ -113,7 +113,7 @@ void render(BelaContext *context, void *userData)
             
             // State machine: turn each signal on and off
             if(gChannelState[ch] == kStateSignalOn) {
-                analogWrite(context, n, ch, signal);
+                analogWriteOnce(context, n, ch, signal);
                 
                 // Check for inputs that are outside of range
                 // (this is good here)
@@ -182,7 +182,7 @@ void render(BelaContext *context, void *userData)
                 }
             }
             else if(gChannelState[ch] == kStateTurningOn) {
-                analogWrite(context, n, ch, signal);
+                analogWriteOnce(context, n, ch, signal);
                 
                 if(gSamplesInState[ch] >= kSamplesInTransitionState) {
                    gSamplesInState[ch] = 0;

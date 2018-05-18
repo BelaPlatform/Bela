@@ -94,16 +94,16 @@ void render(BelaContext *context, void *userData)
 			switch(context->analogInChannels){
 			case 8:
 				analog0In = analogRead(context, n/2, 0) > 0.5;
-				analogWrite(context, n/2, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, n/2, analogOut, writePattern[outPointer]);
 				break;
 			case 4:
 				analog0In = analogRead(context, n, 0) > 0.5;
-				analogWrite(context, n, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, n, analogOut, writePattern[outPointer]);
 				break;
 			case 2:
 				analog0In = analogRead(context, n * 2 + 1, 0) > 0.5;
-				analogWrite(context, 2 * n, analogOut, writePattern[outPointer]);
-				analogWrite(context, 2 * n + 1, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, 2 * n, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, 2 * n + 1, analogOut, writePattern[outPointer]);
 				break;
 			}
 			gAnalogOutLoopDelay--;

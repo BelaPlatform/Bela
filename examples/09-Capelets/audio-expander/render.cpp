@@ -75,7 +75,7 @@ void render(BelaContext *context, void *userData)
 			gPhase[idx] += 2.f * (float)M_PI * gFreq[idx] / context->analogSampleRate;
 			if(gPhase[idx] > (float)M_PI)
 				gPhase[idx] -= 2.f * (float)M_PI;
-			analogWrite(context, n, ch, out);
+			analogWriteOnce(context, n, ch, out);
 		}
 	}
 

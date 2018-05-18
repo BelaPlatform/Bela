@@ -47,7 +47,7 @@ void render(BelaContext *context, void *userData)
 	// Same with analog channels
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
 		for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
-			analogWrite(context, n, ch, analogRead(context, n, ch));
+			analogWriteOnce(context, n, ch, analogRead(context, n, ch));
 		}
 	}
 }
@@ -93,15 +93,15 @@ For example `audioWrite(context, n, ch, value_to_output)`.
 Reading and writing from the analog buffers
 -------------------------------------------
 
-The same is true for `analogRead()` and `analogWrite()`.
+The same is true for `analogRead()`, `analogWrite()` and `analogWriteOnce()`.
 
 Note that for the analog channels we write to and read from the buffers in a separate set 
 of nested for loops. This is because the they are sampled at half audio rate by default. 
 The first of these for loops cycles through `analogFrames`, the second through
 `analogInChannels`.
 
-By setting `audioWriteFrame(context, n, ch, audioReadFrame(context, n, ch))` and
-`analogWrite(context, n, ch, analogReadFrame(context, n, ch))` we have a simple 
+By setting `audioWrite(context, n, ch, audioRead(context, n, ch))` and
+`analogWrite(context, n, ch, analogRead(context, n, ch))` we have a simple 
 passthrough of audio input to output and analog input to output.
 
 
