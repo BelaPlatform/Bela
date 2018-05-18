@@ -25,9 +25,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 
 const int numPins = 4;
-int pins[numPins] = {P8_07, P8_08, P8_09, P8_10};
+int pins[numPins] = {0, 1, 2, 3}; // Digital pins 0 to 3
 bool useHardwarePwm = false; // if you want to use hardware PWM, check out the help text at the bottom
-int softPwmPin = P8_11;
+int softPwmPin = 4; // Digital pin 4
 int period = 176; // duration (in samples) of a "brightness period", affects resolution of dimming. Larger values will cause flickering.
 bool useSequencer = true; // if disabled, control the brightness of each LED from the respective analog input
 
@@ -207,7 +207,7 @@ the overall brightness.
 When `useSequencer = false`, then each of the analogIns affects the brightness of the 
 corresponding LED.
 
-To use a hardware PWM, e.g.: on P9_14 :
+To use a hardware PWM, e.g.: on P9_14 (digital pin 7 on the Bela cape):
 \code
 cp MY-PWM-01-00A0.dtbo /lib/firmware
 echo MY-PWM-01 > $SLOTS

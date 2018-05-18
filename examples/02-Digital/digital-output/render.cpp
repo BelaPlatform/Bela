@@ -77,8 +77,6 @@ In `render()` the output of the digital pins is set by `digitalWrite()`. For exa
 either `HIGH` or `LOW`. When set `HIGH` the pin will give 3.3V, when set to 
 `LOW` 0V.
 
-Note that there are two ways of specifying the digital pin: using the GPIO label (e.g. `P8_07`), or using the digital IO index (e.g. 0). However, the GPIO label may change from one cape to another (the provided example is the label for the Bela cape).
-
 To keep track of elapsed time we have a sample counter count. When the count reaches 
 a certain limit it switches state to either `HIGH` or `LOW` depending on its current 
 value. In this case the limit is `context->digitalSampleRate*interval` which 

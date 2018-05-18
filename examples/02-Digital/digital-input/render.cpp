@@ -77,9 +77,6 @@ value read at digital pin 1 (input). When the button is not pressed, digital pin
 digital pin 0 is set to `LOW` as well, so that the LED conducts and emits light. When 
 the button is pressed, Digital pin 1 goes `HIGH` and digital pin 0 is set to `HIGH`, turning off the LED.
 
-Note that there are two ways of specifying the digital pin: using the GPIO label (e.g. `P8_07`), 
-or using the digital IO index (e.g. 0). However, the GPIO label may change from one cape to another (the provided example is the label for the Bela cape).
-
 As an exercise try and change the code so that the LED only turns off when 
 the button is pressed.
 */

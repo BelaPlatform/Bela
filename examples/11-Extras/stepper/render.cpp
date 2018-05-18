@@ -29,11 +29,11 @@ const int kStepLengthFast = 500;
 
 int gStepLengthSamples = kStepLengthSlow;
 
-const int gPinA1 = P8_27;
-const int gPinA2 = P8_28;
-const int gPinB1 = P8_29;
-const int gPinB2 = P8_30;
-const int gPinServo = P9_16;
+const int gPinA1 = 12;
+const int gPinA2 = 13;
+const int gPinB1 = 14;
+const int gPinB2 = 15;
+const int gPinServo = 10;
 
 int gStepCounter = 0;
 int gPhase = 0;
