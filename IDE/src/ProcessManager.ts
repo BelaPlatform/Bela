@@ -3,6 +3,7 @@ import * as file_manager from './FileManager';
 import * as socket_manager from './SocketManager';
 import * as processes from './IDEProcesses';
 import * as paths from './paths';
+import * as util from './utils';
 import { Lock } from './Lock';
 
 const lock: Lock = new Lock();
@@ -111,7 +112,7 @@ export function stop(){
 	}
 }
 
-function get_status(){
+function get_status(): util.Process_Status {
 	return {
 		checkingSyntax	: processes.syntax.get_status(),
 		building	: processes.build.get_status(),
@@ -124,14 +125,14 @@ function get_status(){
 // each process emits start and finish events, which are handled here
 processes.syntax.on('start', (project: string) => socket_manager.broadcast('status', get_status()) );
 processes.syntax.on('finish', (stderr: string) => {
-	let status = get_status();
+	let status: util.Process_Status = get_status();
 	status.syntaxError = stderr;
 	socket_manager.broadcast('status', status);
 });
 
 processes.build.on('start', (project: string) => socket_manager.broadcast('status', get_status()) );
 processes.build.on('finish', (stderr: string) => {
-	let status = get_status();
+	let status: util.Process_Status = get_status();
 	status.syntaxError = stderr;
 	socket_manager.broadcast('status', status);
 });

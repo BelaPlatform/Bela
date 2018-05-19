@@ -17,3 +17,15 @@ export interface Init_Message{
 	boot_project: string;
 	xenomai_version: string;
 }
+
+export interface Process_Status{
+	checkingSyntax	: boolean;
+	building	: boolean;
+	buildProject	: string;
+	running		: boolean;
+	runProject	: string;
+	syntaxError?	: string;
+	buildLog?	: string;
+	belaLog?	: string;
+	belaLogErr?	: string;
+}
