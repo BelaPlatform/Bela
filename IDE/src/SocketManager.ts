@@ -25,7 +25,7 @@ export function init(server: http.Server){
 
 export function broadcast(event: string, message: any){
 	// console.log('broadcasting', event, message);
-	ide_sockets.emit(event, message);
+	if (ide_sockets) ide_sockets.emit(event, message);
 }
 
 function connection(socket: SocketIO.Socket){
