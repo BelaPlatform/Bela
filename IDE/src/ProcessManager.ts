@@ -76,10 +76,10 @@ function build_error(stderr: string): boolean {
 	let lines: string[] = stderr.split('\n');
 	for (let line of lines){
 		let split_line: string[] = line.split(':');
-		if (line.length > 4){
-			if (line[3] === ' error' || line[3] === ' fatal error'){
+		if (split_line.length >= 4){
+			if (split_line[3] === ' error' || split_line[3] === ' fatal error'){
 				return true;
-			} else if (line[3] === ' warning'){
+			} else if (split_line[3] === ' warning'){
 				//console.log('warning');
 			}
 		}
