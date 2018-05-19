@@ -91,6 +91,96 @@ describe('ProcessManager', function(){
 				sinon.restore();
 			});
 		});
+		describe('#run', function(){
+			let stubs: any;
+			beforeEach(function(){
+				stubs = {};
+				stubs.build_start = sinon.stub(processes.build, 'start');
+				stubs.build_stop = sinon.stub(processes.build, 'stop');
+				stubs.build_queue = sinon.stub(processes.build, 'queue');
+				stubs.run_start = sinon.stub(processes.run, 'start');
+				stubs.run_stop = sinon.stub(processes.run, 'stop');
+				stubs.run_queue = sinon.stub(processes.run, 'queue');
+				stubs.syntax_stop = sinon.stub(processes.syntax, 'stop');
+				stubs.syntax_queue = sinon.stub(processes.syntax, 'queue');
+			});
+			it('should build a project and if successful run the project', function(){
+				process_manager.run({currentProject: 'test_project'});
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback = stubs.build_queue.getCall(0).args[0];
+				callback('', false);
+				stubs.run_start.callCount.should.equal(1);
+				stubs.run_start.getCall(0).args[0].should.equal('test_project');
+			});
+			it('should run the project even if there are build warnings', function(){
+				process_manager.run({currentProject: 'test_project'});
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback = stubs.build_queue.getCall(0).args[0];
+				callback(' : : : warning', false);
+				stubs.run_start.callCount.should.equal(1);
+				stubs.run_start.getCall(0).args[0].should.equal('test_project');
+			});
+			it('should not run the project if there are build errors', function(){
+				process_manager.run({currentProject: 'test_project'});
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback = stubs.build_queue.getCall(0).args[0];
+				callback(' : : : error', false);
+				stubs.run_start.callCount.should.equal(0);
+			});
+			it('should not run the project if the build process is killed by a call to stop()', function(){
+				process_manager.run({currentProject: 'test_project'});
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback = stubs.build_queue.getCall(0).args[0];
+				callback('', true);
+				stubs.run_start.callCount.should.equal(0);
+			});
+			it('should stop a running run process and queue a build then a run process', function(){
+				sinon.stub(processes.run, 'get_status').returns(true);
+				process_manager.run({currentProject: 'test_project'});
+				stubs.run_stop.callCount.should.equal(1);
+				stubs.run_queue.callCount.should.equal(1);
+				let callback1 = stubs.run_queue.getCall(0).args[0];
+				callback1();
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback2 = stubs.build_queue.getCall(0).args[0];
+				callback2('', false);
+				stubs.run_start.callCount.should.equal(1);
+			});
+			it('should stop a running build process and queue a build then a run process', function(){
+				sinon.stub(processes.build, 'get_status').returns(true);
+				process_manager.run({currentProject: 'test_project'});
+				stubs.build_stop.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback1 = stubs.build_queue.getCall(0).args[0];
+				callback1();
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(2);
+				let callback2 = stubs.build_queue.getCall(1).args[0];
+				callback2('', false);
+				stubs.run_start.callCount.should.equal(1);
+			});
+			it('should stop a running syntax process and queue a build then a run process', function(){
+				sinon.stub(processes.syntax, 'get_status').returns(true);
+				process_manager.run({currentProject: 'test_project'});
+				stubs.syntax_stop.callCount.should.equal(1);
+				stubs.syntax_queue.callCount.should.equal(1);
+				let callback1 = stubs.syntax_queue.getCall(0).args[0];
+				callback1();
+				stubs.build_start.callCount.should.equal(1);
+				stubs.build_queue.callCount.should.equal(1);
+				let callback2 = stubs.build_queue.getCall(0).args[0];
+				callback2('', false);
+				stubs.run_start.callCount.should.equal(1);
+			});
+			afterEach(function(){
+				sinon.restore();
+			});
+		});
 	});
 });
 
