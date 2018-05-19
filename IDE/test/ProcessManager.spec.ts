@@ -2,7 +2,7 @@ import { should } from 'chai';
 import * as mock from 'mock-fs';
 import * as process_manager from '../src/ProcessManager';
 import * as file_manager from '../src/FileManager';
-import * as child_process from 'child_process';
+import * as processes from '../src/IDEProcesses';
 var sinon = require('sinon');
 
 should();
@@ -10,14 +10,14 @@ should();
 describe('ProcessManager', function(){
 	describe('process management', function(){
 		describe('#upload', function(){
+			let stub: any;
 			beforeEach(function(){
 				mock({
 					'/root/Bela/projects/test_project': {
-						'settings.json': JSON.stringify({CLArgs: {"cl_test":"_cl", "make": "make_test"}}),
 						'test_file': 'old_content'
 					}
 				});
-				sinon.spy(child_process, 'spawn');
+				stub = sinon.stub(processes.syntax, 'start');
 			});
 			it('should save the file', async function(){
 				await process_manager.upload({
@@ -27,7 +27,7 @@ describe('ProcessManager', function(){
 				});
 				let file_data: string = await file_manager.read_file('/root/Bela/projects/test_project/test_file');
 				file_data.should.equal('new_content');
-				(child_process.spawn as any).callCount.should.equal(0);
+				stub.callCount.should.equal(0);
 			});
 			it('should check the syntax', async function(){
 				await process_manager.upload({
@@ -38,26 +38,57 @@ describe('ProcessManager', function(){
 				});
 				let file_data: string = await file_manager.read_file('/root/Bela/projects/test_project/test_file');
 				file_data.should.equal('new_content');
-				(child_process.spawn as any).callCount.should.equal(1);
-				(child_process.spawn as any).getCall(0).args.should.deep.equal([
-					'make',
-					[
-						'--no-print-directory',
-						'-C',
-						'/root/Bela/',
-						'syntax',
-						'PROJECT=test_project',
-						'CL="cl_test_cl"',
-						'make_test'
-					],
-					{
-						'detached': true
-					}
-				]);
+				stub.callCount.should.equal(1);
 			});
 			afterEach(function(){
 				mock.restore();
-				(child_process.spawn as any).restore();
+				sinon.restore();
+			});
+		});
+		describe('#checkSyntax', function(){
+			let run_stop_stub: any;
+			beforeEach(function(){
+				run_stop_stub = sinon.stub(processes.run, 'stop');
+			});
+			it('should start a syntax check', function(){
+				let stub = sinon.stub(processes.syntax, 'start');
+				process_manager.checkSyntax({currentProject: 'test_project'});
+				stub.callCount.should.equal(1);
+				stub.getCall(0).args.should.deep.equal(['test_project']);
+				run_stop_stub.callCount.should.equal(0);
+			});
+			it('should stop an in-progress syntax check, and queue a new one to be started', function(){
+				sinon.stub(processes.syntax, 'get_status').returns(true);
+				let stop_stub = sinon.stub(processes.syntax, 'stop');
+				let start_stub = sinon.stub(processes.syntax, 'start');
+				let queue_stub = sinon.stub(processes.syntax, 'queue');
+				process_manager.checkSyntax({currentProject: 'test_project'});
+				stop_stub.callCount.should.equal(1);
+				queue_stub.callCount.should.equal(1);
+				start_stub.callCount.should.equal(0);
+				let callback = queue_stub.getCall(0).args[0];
+				callback();
+				start_stub.callCount.should.equal(1);
+				start_stub.getCall(0).args[0].should.equal('test_project');
+				run_stop_stub.callCount.should.equal(0);
+			});
+			it('should stop an in-progress build process, and queue a new syntax check to be started', function(){
+				sinon.stub(processes.build, 'get_status').returns(true);
+				let stop_stub = sinon.stub(processes.build, 'stop');
+				let start_stub = sinon.stub(processes.syntax, 'start');
+				let queue_stub = sinon.stub(processes.build, 'queue');
+				process_manager.checkSyntax({currentProject: 'test_project'});
+				stop_stub.callCount.should.equal(1);
+				queue_stub.callCount.should.equal(1);
+				start_stub.callCount.should.equal(0);
+				let callback = queue_stub.getCall(0).args[0];
+				callback();
+				start_stub.callCount.should.equal(1);
+				start_stub.getCall(0).args[0].should.equal('test_project');
+				run_stop_stub.callCount.should.equal(0);
+			});
+			afterEach(function(){
+				sinon.restore();
 			});
 		});
 	});
