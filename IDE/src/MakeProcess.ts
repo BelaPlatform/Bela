@@ -2,6 +2,8 @@ import * as child_process from 'child_process';
 import * as Event_Emitter from 'events';
 import * as paths from './paths';
 import * as project_settings from './ProjectSettings';
+import * as pidtree from 'pidtree';
+import * as pidusage from 'pidusage';
 import { Lock } from './Lock';
 
 export class MakeProcess extends Event_Emitter{
@@ -84,5 +86,16 @@ export class MakeProcess extends Event_Emitter{
 			this.callback_queued = false;
 			this.queue_callback(this.stderr, this.killed);
 		}
+	}
+
+	async CPU(): Promise<any>{
+		if (!this.get_status() || !this.proc.pid) return '0';
+		let pids = await pidtree(this.proc.pid, {root: true});
+		let out = await pidusage(pids);
+		let cpu = 0;
+		for (let pid of pids){
+			cpu += out[pid].cpu;
+		}
+		return cpu;
 	}
 }

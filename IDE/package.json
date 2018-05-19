@@ -41,6 +41,7 @@
     "fs-extra-promise": "^1.0.1",
     "isbinaryfile": "^3.0.2",
     "pgrep": "0.0.6",
+    "pidtree": "^0.3.0",
     "pidusage": "^2.0.6",
     "read-chunk": "^2.1.0",
     "socket.io": "^2.1.0",
