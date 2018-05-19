@@ -19,7 +19,7 @@ export async function write(data: any): Promise<any> {
 }
 
 export async function set_setting(key: string, value: string){
-	lock.acquire();
+	await lock.acquire();
 	try{
 		let settings = await read();
 		settings[key] = value;
