@@ -5,6 +5,7 @@ import * as processes from './IDEProcesses';
 import * as paths from './paths';
 import * as util from './utils';
 import { Lock } from './Lock';
+import * as cpu_monitor from './CPUMonitor';
 
 const lock: Lock = new Lock();
 
@@ -138,7 +139,18 @@ processes.build.on('finish', (stderr: string) => {
 });
 processes.build.on('stdout', (data) => socket_manager.broadcast('status', {buildLog: data}) );
 
-processes.run.on('start', (project: string) => socket_manager.broadcast('status', get_status()) );
-processes.run.on('finish', (project: string) => socket_manager.broadcast('status', get_status()) );
+processes.run.on('start', (pid: number, project: string) => {
+	socket_manager.broadcast('status', get_status());
+	cpu_monitor.start(pid, project, async cpu => {
+		socket_manager.broadcast('cpu-usage', {
+			bela: await file_manager.read_file(paths.xenomai_stat).catch(),
+			belaLinux: cpu
+		});
+	});
+});
+processes.run.on('finish', (project: string) => {
+	socket_manager.broadcast('status', get_status());
+	cpu_monitor.stop();
+});
 processes.run.on('stdout', (data) => socket_manager.broadcast('status', {belaLog: data}) );
 processes.run.on('stderr', (data) => socket_manager.broadcast('status', {belaLogErr: data}) );

@@ -2,8 +2,6 @@ import * as child_process from 'child_process';
 import * as Event_Emitter from 'events';
 import * as paths from './paths';
 import * as project_settings from './ProjectSettings';
-import * as pidtree from 'pidtree';
-import * as pidusage from 'pidusage';
 import { Lock } from './Lock';
 
 export class MakeProcess extends Event_Emitter{
@@ -39,7 +37,7 @@ export class MakeProcess extends Event_Emitter{
 			args.push(project_args.make);
 		console.log('make', args.join(' '));
 		this.proc = child_process.spawn('make', args, {detached: true});
-		this.emit('start', project);
+		this.emit('start', this.proc.pid, project);
 		this.proc.stdout.setEncoding('utf-8');
 		this.proc.stderr.setEncoding('utf-8');
 		this.proc.stdout.on('data', (data: string) => {
@@ -88,7 +86,10 @@ export class MakeProcess extends Event_Emitter{
 		}
 	}
 
-	async CPU(): Promise<any>{
+	// this function returns the linux-domain cpu usage of all child processes
+	// it works for all three make processes but is very expensive
+	// CPUMonitor only works for the run process, but is more efficient
+	/*async CPU(): Promise<any>{
 		if (!this.get_status() || !this.proc.pid) return '0';
 		let pids = await pidtree(this.proc.pid, {root: true});
 		let out = await pidusage(pids);
@@ -97,5 +98,5 @@ export class MakeProcess extends Event_Emitter{
 			cpu += out[pid].cpu;
 		}
 		return cpu;
-	}
+	}*/
 }

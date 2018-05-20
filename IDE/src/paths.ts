@@ -7,3 +7,5 @@ export var templates: string 		= Bela+'IDE/templates/';
 export var ide_settings: string 	= Bela+'IDE/settings.json';
 export var startup_env: string		= '/opt/Bela/startup_env';
 export var lockfile: string		= Bela+'IDE/.lockfile';
+export var xenomai_stat: string		= '/proc/xenomai/sched/stat';
+export function set_xenomai_stat(new_path: string){ xenomai_stat = new_path; };

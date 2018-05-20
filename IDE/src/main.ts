@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as http from 'http';
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
+import * as paths from './paths';
 
 // setup webserver to serve files from ~/Bela/IDE/public
 const app: express.Application = express();
@@ -24,6 +25,11 @@ export function get_xenomai_version(): Promise<string>{
 			if (err){
 				console.log('error reading xenomai version');
 				reject(err);
+			}
+			if (stdout.includes('2.6')){
+				paths.set_xenomai_stat('/proc/xenomai/stat');
+			} else if (stdout.includes('3.0')){
+				paths.set_xenomai_stat('/proc/xenomai/sched/stat');
 			}
 			resolve(stdout);
 		});
