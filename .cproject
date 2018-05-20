@@ -39,7 +39,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.other.other.1516989263" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -fpermissive" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1516989263" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -fpermissive -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.warnings.allwarn.1392851614" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.dialect.std.904910934" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.268916821" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -66,7 +66,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
-								<option id="gnu.c.compiler.option.misc.other.835792865" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result " valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.other.835792865" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
 								<option id="gnu.c.compiler.option.warnings.allwarn.1145989346" name="All warnings (-Wall)" superClass="gnu.c.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1724673791" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
@@ -196,7 +196,7 @@
 							<builder buildPath="${workspace_loc:/BBB_audio+input/Release}" enabledIncrementalBuild="true" id="cdt.managedbuild.target.gnu.builder.exe.release.511190290" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.exe.release"/>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.archiver.base.810674388" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool command="arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.163790048" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
-								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.2031085570" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.2031085570" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.701035863" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.823255770" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
@@ -207,7 +207,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.dialect.std.776548502" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.other.other.398422461" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -U_FORTIFY_SOURCE -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.398422461" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -U_FORTIFY_SOURCE -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1177042410" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
 									<listOptionValue builtIn="false" value="_REENTRANT"/>
@@ -220,7 +220,7 @@
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.601059736" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool command="arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.1302828968" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
-								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1118673208" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.more" valueType="enumerated"/>
+								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1118673208" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.release.option.debugging.level.1329456558" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1269113471" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
@@ -234,7 +234,7 @@
 								<option id="gnu.c.compiler.option.preprocessor.undef.symbol.980935416" name="Undefined symbols (-U)" superClass="gnu.c.compiler.option.preprocessor.undef.symbol" useByScannerDiscovery="false" valueType="undefDefinedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE"/>
 								</option>
-								<option id="gnu.c.compiler.option.misc.other.1568308112" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.other.1568308112" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1832350548" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
 									<listOptionValue builtIn="false" value="_REENTRANT"/>
