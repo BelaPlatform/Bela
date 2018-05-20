@@ -4,6 +4,7 @@ import * as process_manager from '../src/ProcessManager';
 import * as file_manager from '../src/FileManager';
 import * as processes from '../src/IDEProcesses';
 import * as socket_manager from '../src/SocketManager';
+import * as cpu_monitor from '../src/CPUMonitor';
 import * as child_process from 'child_process';
 var sinon = require('sinon');
 
@@ -307,8 +308,10 @@ describe('ProcessManager', function(){
 			beforeEach(function(){
 				broadcast_stub = sinon.stub(socket_manager, 'broadcast');
 			});
-			it('should broadcast a status event and object when it starts', function(){
+			it('should broadcast a status event and object when it starts, and start the cpu monitor', function(){
+				let monitoring_stub = sinon.stub(cpu_monitor, 'start');
 				processes.run.emit('start');
+				monitoring_stub.callCount.should.equal(1);
 				broadcast_stub.callCount.should.equal(1);
 				broadcast_stub.getCall(0).args.should.deep.equal([
 					'status',
@@ -322,7 +325,9 @@ describe('ProcessManager', function(){
 				]);
 			});
 			it('should broadcast a status event and object when it finished', function(){
+				let monitoring_stub = sinon.stub(cpu_monitor, 'stop');
 				processes.run.emit('finish');
+				monitoring_stub.callCount.should.equal(1);
 				broadcast_stub.callCount.should.equal(1);
 				broadcast_stub.getCall(0).args.should.deep.equal([
 					'status',
