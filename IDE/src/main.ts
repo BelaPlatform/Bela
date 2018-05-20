@@ -3,20 +3,33 @@ import * as http from 'http';
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
 import * as paths from './paths';
-
-// setup webserver to serve files from ~/Bela/IDE/public
-const app: express.Application = express();
-const server: http.Server = new http.Server(app);
-app.use(express.static('public'));
+import * as routes from './RouteManager';
 
 export function init(){
 	console.log('starting IDE');
+
+	// setup webserver 
+	const app: express.Application = express();
+	const server: http.Server = new http.Server(app);
+	setup_routes(app);
 
 	// start serving the IDE on port 80
 	server.listen(80, () => console.log('listening on port', 80) );
 
 	// initialise websocket
 	socket_manager.init(server);
+}
+
+function setup_routes(app: express.Application){
+	// static paths
+	app.use(express.static(paths.webserver_root)); // all files in this directory are served to bela.local/
+	app.use('/documentation', express.static(paths.Bela+'Documentation/html'));
+
+	// ajax routes
+	// file and project downloads
+	app.get('/download', routes.download);
+	// doxygen xml
+	app.get('/documentation_xml', routes.doxygen);
 }
 
 export function get_xenomai_version(): Promise<string>{

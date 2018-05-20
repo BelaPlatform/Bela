@@ -1,4 +1,5 @@
 export var Bela: string 		= '/root/Bela/';
+export var webserver_root: string	= Bela+'IDE/public/';
 export var projects: string 		= Bela+'projects/';
 export var examples: string 		= Bela+'examples/';
 export var exampleTempProject: string 	= projects+'exampleTempProject/';
