@@ -33,6 +33,7 @@ function connection(socket: SocketIO.Socket){
 	socket.on('project-event', (data: any) => project_event(socket, data) );
 	socket.on('project-settings', (data: any) => project_settings_event(socket, data) );
 	socket.on('process-event', (data: any) => process_event(socket, data) );
+	socket.on('IDE-settings', (data: any) => ide_settings_event(socket, data) );
 	init_message(socket);
 }
 
@@ -68,13 +69,12 @@ async function project_event(socket: SocketIO.Socket, data: any){
 			data.error = e.toString();
 			socket.emit('project-data', data);
 		});
-	console.log('done');
 //	console.dir(data);
 	// after a succesful operation, send the data back
 	socket.emit('project-data', data);
 	if (data.currentProject){
 		// save the current project in the IDE settings
-		ide_settings.set_setting('project', data.currentProject);
+		ide_settings.setIDESetting({key: 'project', value: data.currentProject});
 		// if a fileList was created, send it to other tabs
 		if (data.fileList)
 			socket.broadcast.emit('file-list', data.currentProject, data.fileList);
@@ -112,4 +112,14 @@ async function process_event(socket: SocketIO.Socket, data: any){
 		return;
 	}
 	await (process_manager as any)[data.event](data);
+}
+
+async function ide_settings_event(socket: SocketIO.Socket, data: any){
+	if (!data || !data.func || !(ide_settings as any)[data.func]){
+		console.log('bad ide_settings event', data);
+		return;
+	}
+	let result = await (ide_settings as any)[data.func](data)
+		.catch( (e: Error) => console.log('ide_settings error', e) );
+	broadcast('IDE-settings-data', result);
 }

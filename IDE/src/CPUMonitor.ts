@@ -1,5 +1,6 @@
 import * as child_process from 'child_process';
 import * as pidtree from 'pidtree';
+import * as ide_settings from './IDESettings';
 
 // this module monitors the linux-domain CPU usage of a running bela process
 // once it has found the correct pid it calls the callback passed to start()
@@ -27,7 +28,9 @@ export function stop(){
 // this function keeps trying every second to find the correct pid
 // once it has, it uses ps to get the cpu usage, and calls the callback
 async function interval_func(){
-	let cpu = '0';
+	if (!(await ide_settings.get_setting('cpuMonitoring')))
+		return;
+	let cpu: any = '0';
 	if (!found_pid){
 		// use pidtree to find all the child pids of the make process
 		await pidtree(root_pid, {root: true})
