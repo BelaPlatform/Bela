@@ -144,9 +144,6 @@ class PRU
 private:
 	static const unsigned int kPruGPIODACSyncPin;
 	static const unsigned int kPruGPIOADCSyncPin;
-	static const unsigned int kPruGPIOTestPin;
-	static const unsigned int kPruGPIOTestPin2;
-	static const unsigned int kPruGPIOTestPin3;
 
 public:
 	// Constructor
@@ -195,7 +192,6 @@ private:
 	int hardware_analog_frames; // The actual number of frames for the analog channels, as far as the PRU is concerned
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
-	bool gpio_test_pin_enabled; // Whether the test pin was also enabled
 
 	PruMemory* pruMemory;
 	volatile uint32_t *pru_buffer_comm;
