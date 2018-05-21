@@ -1,8 +1,6 @@
-'use strict';
 // node modules
 var EventEmitter = require('events').EventEmitter;
-var Promise = require('bluebird');
-var fs = Promise.promisifyAll(require('fs-extra'));
+var fs = require('fs-extra-promise');
 var spawn = require('child_process').spawn;
 var path = require('path');
 

@@ -4,6 +4,7 @@ import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
 import * as paths from './paths';
 import * as routes from './RouteManager';
+var TerminalManager = require('./TerminalManager');
 
 export function init(){
 	console.log('starting IDE');
@@ -18,6 +19,8 @@ export function init(){
 
 	// initialise websocket
 	socket_manager.init(server);
+
+	TerminalManager.init();
 }
 
 function setup_routes(app: express.Application){

@@ -8,10 +8,8 @@ import * as project_settings from './ProjectSettings';
 import * as ide_settings from './IDESettings';
 import * as boot_project from './RunOnBoot';
 import * as util from './utils';
-
-//remove this
-import * as Make from './MakeProcess';
-let make = new Make.MakeProcess('syntax');
+var TerminalManager = require('./TerminalManager');
+TerminalManager.on('shell-event', (evt: any, data: any) => ide_sockets.emit('shell-event', evt, data) );
 
 // all connected sockets
 let ide_sockets: SocketIO.Namespace;
@@ -36,7 +34,10 @@ function connection(socket: SocketIO.Socket){
 	socket.on('process-event', (data: any) => process_event(socket, data) );
 	socket.on('IDE-settings', (data: any) => ide_settings_event(socket, data) );
 	socket.on('git-event', (data: any) => git_event(socket, data) );
+	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
+	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
 	init_message(socket);
+	TerminalManager.pwd();
 }
 
 async function init_message(socket: SocketIO.Socket){
