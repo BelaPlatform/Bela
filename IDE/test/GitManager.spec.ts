@@ -1,6 +1,8 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
+import * as child_process from 'child_process';
 import * as git_manager from '../src/GitManager';
+var sinon = require('sinon');
 
 should();
 
@@ -26,6 +28,60 @@ describe('GitManager', function(){
 			});
 			afterEach(function(){
 				mock.restore();
+			});
+		});
+		describe('#execute', function(){
+			it('should execute a git command from the correct project directory', async function(){
+				mock({
+					'/root/Bela/projects/test_project/.git': {'test':'test'}
+				});
+				let exec_stub = sinon.stub(child_process, 'exec').callsArgWith(2, null, 'stdout', 'stderr');
+				let data: any = {
+					command: 'test_command',
+					currentProject: 'test_project'
+				};
+				await git_manager.execute(data);
+				exec_stub.callCount.should.equal(1);
+				exec_stub.getCall(0).args[0].should.equal('git test_command');
+				exec_stub.getCall(0).args[1].should.deep.equal({cwd: '/root/Bela/projects/test_project/'});
+				data.stdout.should.equal('stdout');
+				data.stderr.should.equal('stderr');
+			});
+			afterEach(function(){
+				mock.restore();
+				sinon.restore();
+			});
+		});
+		describe('#info', function(){
+			let exec_stub: any;
+			beforeEach(function(){
+				exec_stub = sinon.stub(child_process, 'exec').callsArgWith(2, null, 'stdout', 'stderr');
+			});
+			it('should return repoExists = false if a repo does not exist', async function(){
+				mock({});
+				let data: any = {currentProject: 'test_project'};
+				await git_manager.info(data);
+				data.repoExists.should.equal(false);
+				exec_stub.callCount.should.equal(0);
+			});
+			it('should list the repos commits, its current commit and its branches', async function(){
+				mock({
+					'/root/Bela/projects/test_project/.git': {'test':'content'}
+				});
+				let data: any = {currentProject: 'test_project'};
+				await git_manager.info(data);
+				data.repoExists.should.equal(true);
+				data.commits.should.equal('stdout');
+				data.currentCommit.should.equal('stdout');
+				data.branches.should.equal('stdout');
+				exec_stub.callCount.should.equal(3);
+				exec_stub.getCall(0).args[0].should.equal("git log --all --pretty=oneline --format='%s, %ar %H' --graph");
+				exec_stub.getCall(1).args[0].should.equal("git log -1 --format='%H'");
+				exec_stub.getCall(2).args[0].should.equal("git branch");
+			});
+			afterEach(function(){
+				mock.restore();
+				sinon.restore();
 			});
 		});
 	});
