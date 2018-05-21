@@ -81,6 +81,15 @@ app.get('/documentation_xml', function(req, res){
 	
 });
 
+// link for workshop rebuild-project request
+app.get('/rebuild-project', function(req, res){
+
+	console.log('request received, project ', req.query.project);
+	emitter.emit('rebuild-project', req.query.project);
+	res.status(200).send();
+	
+});
+
 module.exports = {
 	http: http,
 	start: listen,

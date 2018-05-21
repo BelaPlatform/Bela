@@ -1,0 +1,13 @@
+#N canvas 0 22 450 300 10;
+#X obj 162 93 inlet;
+#X obj 190 172 noise~;
+#X obj 161 149 line~;
+#X obj 161 193 *~;
+#X obj 161 221 outlet~;
+#X text 265 87 snare 101;
+#X msg 162 121 1 \, 0 70;
+#X connect 0 0 6 0;
+#X connect 1 0 3 1;
+#X connect 2 0 3 0;
+#X connect 3 0 4 0;
+#X connect 6 0 2 0;

@@ -1,0 +1,15 @@
+[Unit]
+Description=Run Bela at boot
+DefaultDependencies=no
+After=network-pre.target
+Conflicts=shutdown.target
+Before=shutdown.target
+
+[Service]
+EnvironmentFile=/opt/Bela/startup_env
+ExecStart=/usr/bin/stdbuf -oL -eL /opt/Bela/bela_startup.sh
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=default.target

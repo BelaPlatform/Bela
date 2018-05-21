@@ -1,0 +1,6 @@
+#!/bin/bash -x
+SCRIPTDIR=$(dirname "$0")
+[ -z "$SCRIPTDIR" ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
+
+${SCRIPTDIR}build_and_monitor_subfolders.sh ${SCRIPTDIR}../examples/13-workshop
+

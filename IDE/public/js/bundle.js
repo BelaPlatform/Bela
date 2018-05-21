@@ -441,6 +441,7 @@ projectView.on('message', function (event, data) {
 		data.currentProject = models.project.getKey('currentProject');
 	}
 	data.timestamp = performance.now();
+	// 	console.log('here', event, data);
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
@@ -751,8 +752,27 @@ socket.on('mtime', setModifiedTimeInterval);
 socket.on('mtime-compare', function (data) {
 	if (compareFiles && data.currentProject === models.project.getKey('currentProject') && data.fileName === models.project.getKey('fileName')) {
 		// console.log(data, data.fileData, editorView.getData());
-		if (data.fileData !== editorView.getData()) fileChangedPopup(data.fileName);
+		if (data.fileData !== editorView.getData()) {
+			var data = {
+				func: 'openProject',
+				currentProject: models.project.getKey('currentProject'),
+				timestamp: performance.now()
+			};
+			socket.emit('project-event', data);
+			consoleView.emit('openNotification', data);
+		}
 	}
+});
+
+socket.on('rebuild-project', function (project) {
+	if (project) {
+		projectView.emit('message', 'project-event', { currentProject: project, func: 'openProject' });
+		// 		console.log('opening project', project);
+	}
+
+	setTimeout(function () {
+		toolbarView.emit('process-event', 'run');
+	}, 1000);
 });
 
 var checkModifiedTimeInterval;
@@ -3446,11 +3466,11 @@ var SettingsView = function (_View) {
 			var $projects = $('#runOnBoot');
 			$projects.empty();
 
-			// add an empty option to menu and select it
-			$('<option></option>').html('--select--').appendTo($projects);
+			// add a 'none' special option
+			$('<option></option>').attr('value', '*none*').html('•none•').appendTo($projects);
 
-			// add a 'none' option
-			$('<option></option>').attr('value', 'none').html('none').appendTo($projects);
+			// add a 'loop_*' special option
+			$('<option></option>').attr('value', '*loop*').html('•loop_*•').appendTo($projects);
 
 			// fill project menu with projects
 			for (var i = 0; i < projects.length; i++) {

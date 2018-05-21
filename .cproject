@@ -3,9 +3,12 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="cdt.managedbuild.config.gnu.exe.debug.528876549">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.exe.debug.528876549" moduleId="org.eclipse.cdt.core.settings" name="Debug">
+				<macros>
+					<stringMacro name="SYSROOT" type="VALUE_TEXT" value="/usr/local/linaro/BelaSysroot"/>
+				</macros>
 				<externalSettings/>
 				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -14,11 +17,11 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.528876549" name="Debug" parent="cdt.managedbuild.config.gnu.exe.debug" postannouncebuildStep="Stopping process on BBB and copying new binary" postbuildStep="ssh root@192.168.7.2 &quot;make -C ~/Bela stop; sleep 0.5;&quot;; scp ${BuildArtifactFilePrefix}${BuildArtifactFileName} root@192.168.7.2:  &amp;&amp; echo 'done copying' | wall || echo 'error' | wall">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.528876549" name="Debug" parent="cdt.managedbuild.config.gnu.exe.debug" postannouncebuildStep="" postbuildStep="">
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.debug.528876549." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.681872250" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.295375065" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
-							<builder arguments="-j6" buildPath="${workspace_loc:/BBB_audio+input/Debug}" command="make" id="cdt.managedbuild.target.gnu.builder.exe.debug.26322421" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.exe.debug">
+							<builder buildPath="${workspace_loc:/BBB_audio+input/Debug}" id="cdt.managedbuild.target.gnu.builder.exe.debug.26322421" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.exe.debug">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug"/>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Release"/>
@@ -26,60 +29,84 @@
 							</builder>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.archiver.base.1542380883" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.2030825480" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
-								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.2006448218" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1267706246" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.include.paths.2031219124" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/ne10"/>
+								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.2006448218" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1267706246" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.include.paths.2031219124" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/ne10/"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.other.other.1516989263" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -D_GNU_SOURCE -D_REENTRANT -D__XENO__ -fpermissive" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.warnings.allwarn.1392851614" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" value="true" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.dialect.std.904910934" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.other.other.1516989263" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -fpermissive -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.warnings.allwarn.1392851614" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="gnu.cpp.compiler.option.dialect.std.904910934" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.268916821" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
+									<listOptionValue builtIn="false" value="_REENTRANT"/>
+									<listOptionValue builtIn="false" value="__COBALT__"/>
+									<listOptionValue builtIn="false" value="__COBALT_WRAP__"/>
+									<listOptionValue builtIn="false" value="XENOMAI_SKIN_posix"/>
+									<listOptionValue builtIn="false" value="XENOMAI_MAJOR=3"/>
+									<listOptionValue builtIn="false" value="BELA_USE_RTDM"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.optimization.flags.1651953159" name="Other optimization flags" superClass="gnu.cpp.compiler.option.optimization.flags" useByScannerDiscovery="false" value="&#10;" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.pthread.2125379288" name="Support for pthread (-pthread)" superClass="gnu.cpp.compiler.option.pthread" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1166892316" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool command="arm-linux-gnueabihf-gcc" id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.917207395" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
-								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.326761664" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" value="gnu.c.optimization.level.none" valueType="enumerated"/>
-								<option id="gnu.c.compiler.exe.debug.option.debugging.level.471732683" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.include.paths.358825414" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/ne10"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
+								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.326761664" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.none" valueType="enumerated"/>
+								<option id="gnu.c.compiler.exe.debug.option.debugging.level.471732683" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.paths.358825414" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/ne10/"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
-								<option id="gnu.c.compiler.option.misc.other.835792865" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result  -D_GNU_SOURCE -D_REENTRANT -D__XENO__ -std=gnu99" valueType="string"/>
-								<option id="gnu.c.compiler.option.warnings.allwarn.1145989346" name="All warnings (-Wall)" superClass="gnu.c.compiler.option.warnings.allwarn" value="true" valueType="boolean"/>
+								<option id="gnu.c.compiler.option.misc.other.835792865" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.c.compiler.option.warnings.allwarn.1145989346" name="All warnings (-Wall)" superClass="gnu.c.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1724673791" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
+									<listOptionValue builtIn="false" value="_REENTRANT"/>
+									<listOptionValue builtIn="false" value="__COBALT__ "/>
+									<listOptionValue builtIn="false" value="__COBALT_WRAP__"/>
+									<listOptionValue builtIn="false" value="XENOMAI_SKIN_posix"/>
+									<listOptionValue builtIn="false" value="XENOMAI_MAJOR=3"/>
+									<listOptionValue builtIn="false" value="BELA_USE_RTDM"/>
+								</option>
+								<option id="gnu.c.compiler.option.optimization.flags.1931666462" name="Other optimization flags" superClass="gnu.c.compiler.option.optimization.flags" useByScannerDiscovery="false" value="&#10;" valueType="string"/>
+								<option id="gnu.c.compiler.option.dialect.std.147996711" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.pthread.654861105" name="Support for pthread (-pthread)" superClass="gnu.c.compiler.option.pthread" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.308014221" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.214461086" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
 							<tool command="arm-linux-gnueabihf-g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1669966018" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
-								<option id="gnu.cpp.link.option.paths.462980690" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/lib"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/lib/xenomai"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/xenomai/lib"/>
+								<option id="gnu.cpp.link.option.paths.462980690" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/lib/arm-linux-gnueabihf"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/lib"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/lib"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/lib/arm-linux-gnueabihf/&quot;"/>
 								</option>
-								<option id="gnu.cpp.link.option.libs.139390951" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+								<option id="gnu.cpp.link.option.libs.139390951" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
+									<listOptionValue builtIn="false" value="cobalt"/>
+									<listOptionValue builtIn="false" value="modechk"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="rt"/>
-									<listOptionValue builtIn="false" value="pd"/>
-									<listOptionValue builtIn="false" value="native"/>
-									<listOptionValue builtIn="false" value="xenomai"/>
+									<listOptionValue builtIn="false" value="prussdrv"/>
+									<listOptionValue builtIn="false" value="stdc++"/>
+									<listOptionValue builtIn="false" value="asound"/>
+									<listOptionValue builtIn="false" value="seasocks"/>
+									<listOptionValue builtIn="false" value="NE10"/>
+									<listOptionValue builtIn="false" value="mathneon"/>
 									<listOptionValue builtIn="false" value="sndfile"/>
 								</option>
-								<option id="gnu.cpp.link.option.flags.2096887116" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread -rdynamic -Wl,-unresolved-symbols=ignore-in-shared-libs" valueType="string"/>
-								<option id="gnu.cpp.link.option.userobjs.537608578" name="Other objects" superClass="gnu.cpp.link.option.userobjs" valueType="userObjs">
+								<option id="gnu.cpp.link.option.flags.2096887116" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-pthread -rdynamic -Wl,-unresolved-symbols=ignore-in-shared-libs &#10;" valueType="string"/>
+								<option id="gnu.cpp.link.option.userobjs.537608578" name="Other objects" superClass="gnu.cpp.link.option.userobjs" useByScannerDiscovery="false" valueType="userObjs">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libprussdrv.a}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libNE10.a}&quot;"/>
 								</option>
@@ -89,7 +116,7 @@
 								</inputType>
 							</tool>
 							<tool command="arm-linux-gnueabihf-as" id="cdt.managedbuild.tool.gnu.assembler.exe.debug.37270610" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
-								<option id="gnu.both.asm.option.include.paths.1403814918" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.1403814918" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/include"/>
 									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/ne10"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
@@ -135,7 +162,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="default_libpd_render.cpp|audio_routines_old.S" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples/01-Basics/minimal"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples/01-Basics/sinetone"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples/basic"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="include"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="projects/basic_button"/>
@@ -146,11 +173,14 @@
 		</cconfiguration>
 		<cconfiguration id="cdt.managedbuild.config.gnu.exe.release.1521194538">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.exe.release.1521194538" moduleId="org.eclipse.cdt.core.settings" name="Release">
+				<macros>
+					<stringMacro name="SYSROOT" type="VALUE_TEXT" value="/usr/local/linaro/BelaSysroot"/>
+				</macros>
 				<externalSettings>
 					<externalSetting/>
 				</externalSettings>
 				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -159,66 +189,86 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.release.1521194538" name="Release" parent="cdt.managedbuild.config.gnu.exe.release" postannouncebuildStep="Stopping process on BBB and copying new binary" postbuildStep="ssh root@192.168.7.2 &quot;make -C ~/Bela stop; sleep 0.5;&quot;; scp ${BuildArtifactFilePrefix}${BuildArtifactFileName} root@192.168.7.2:EclipseBela  &amp;&amp; echo 'done copying' | wall || echo 'error' | wall">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.release.1521194538" name="Release" parent="cdt.managedbuild.config.gnu.exe.release" postannouncebuildStep="" postbuildStep="">
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.release.1521194538." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.release.1612059942" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.release">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.release.908983575" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.release"/>
-							<builder buildPath="${workspace_loc:/BBB_audio+input/Release}" enabledIncrementalBuild="true" id="cdt.managedbuild.target.gnu.builder.exe.release.511190290" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="6" superClass="cdt.managedbuild.target.gnu.builder.exe.release"/>
+							<builder buildPath="${workspace_loc:/BBB_audio+input/Release}" enabledIncrementalBuild="true" id="cdt.managedbuild.target.gnu.builder.exe.release.511190290" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.exe.release"/>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.archiver.base.810674388" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
-							<tool command="/usr/local/bin/arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.163790048" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
-								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.2031085570" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.701035863" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.include.paths.823255770" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/ne10/"/>
-									<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/ne10"/>
+							<tool command="arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.163790048" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
+								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.2031085570" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.701035863" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.include.paths.823255770" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.dialect.std.776548502" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.other.other.398422461" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -U_FORTIFY_SOURCE -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.dialect.std.776548502" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.other.other.398422461" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -U_FORTIFY_SOURCE -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1177042410" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
+									<listOptionValue builtIn="false" value="_REENTRANT"/>
+									<listOptionValue builtIn="false" value="__COBALT__"/>
+									<listOptionValue builtIn="false" value="__COBALT_WRAP__"/>
+									<listOptionValue builtIn="false" value="XENOMAI_SKIN_posix"/>
+									<listOptionValue builtIn="false" value="XENOMAI_MAJOR=3"/>
+									<listOptionValue builtIn="false" value="BELA_USE_RTDM"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.601059736" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
-							<tool command="/usr/local/bin/arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.1302828968" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
-								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1118673208" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" value="gnu.c.optimization.level.more" valueType="enumerated"/>
-								<option id="gnu.c.compiler.exe.release.option.debugging.level.1329456558" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.include.paths.1269113471" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/include"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/ne10"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/ne10/"/>
+							<tool command="arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.1302828968" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
+								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1118673208" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.most" valueType="enumerated"/>
+								<option id="gnu.c.compiler.exe.release.option.debugging.level.1329456558" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.paths.1269113471" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 								</option>
-								<option id="gnu.c.compiler.option.include.files.40806287" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files"/>
-								<option id="gnu.c.compiler.option.preprocessor.undef.symbol.980935416" name="Undefined symbols (-U)" superClass="gnu.c.compiler.option.preprocessor.undef.symbol" valueType="undefDefinedSymbols">
+								<option id="gnu.c.compiler.option.include.files.40806287" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" useByScannerDiscovery="false"/>
+								<option id="gnu.c.compiler.option.preprocessor.undef.symbol.980935416" name="Undefined symbols (-U)" superClass="gnu.c.compiler.option.preprocessor.undef.symbol" useByScannerDiscovery="false" valueType="undefDefinedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE"/>
 								</option>
-								<option id="gnu.c.compiler.option.misc.other.1568308112" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.other.1568308112" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1832350548" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_GNU_SOURCE"/>
+									<listOptionValue builtIn="false" value="_REENTRANT"/>
+									<listOptionValue builtIn="false" value="__COBALT__ "/>
+									<listOptionValue builtIn="false" value="__COBALT_WRAP__"/>
+									<listOptionValue builtIn="false" value="XENOMAI_SKIN_posix"/>
+									<listOptionValue builtIn="false" value="XENOMAI_MAJOR=3"/>
+									<listOptionValue builtIn="false" value="BELA_USE_RTDM"/>
+								</option>
+								<option id="gnu.c.compiler.option.dialect.std.1436330676" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.574072828" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.c.linker.exe.release.281634187" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release"/>
-							<tool command="/usr/local/bin/arm-linux-gnueabihf-g++" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.929570421" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
+							<tool command="arm-linux-gnueabihf-g++" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.929570421" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
 								<option id="gnu.cpp.link.option.paths.277042583" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/lib"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/lib/xenomai"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/xenomai/lib"/>
-									<listOptionValue builtIn="false" value="/usr/lib/arm-linux-gnueabihf"/>
-									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/lib"/>
-									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/lib"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/lib/arm-linux-gnueabihf/&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.1930118082" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="cobalt"/>
+									<listOptionValue builtIn="false" value="modechk"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="rt"/>
+									<listOptionValue builtIn="false" value="prussdrv"/>
+									<listOptionValue builtIn="false" value="stdc++"/>
+									<listOptionValue builtIn="false" value="asound"/>
+									<listOptionValue builtIn="false" value="seasocks"/>
+									<listOptionValue builtIn="false" value="NE10"/>
+									<listOptionValue builtIn="false" value="mathneon"/>
 									<listOptionValue builtIn="false" value="sndfile"/>
-									<listOptionValue builtIn="false" value="pd"/>
-									<listOptionValue builtIn="false" value="native"/>
-									<listOptionValue builtIn="false" value="xenomai"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.1308374111" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread -Wpointer-arith -Wl,-unresolved-symbols=ignore-in-shared-libs" valueType="string"/>
 								<option id="gnu.cpp.link.option.userobjs.1473502069" name="Other objects" superClass="gnu.cpp.link.option.userobjs" valueType="userObjs">
@@ -230,7 +280,7 @@
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
 								</inputType>
 							</tool>
-							<tool command="/usr/local/bin/arm-linux-gnueabihf-as" id="cdt.managedbuild.tool.gnu.assembler.exe.release.2052985276" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release">
+							<tool command="arm-linux-gnueabihf-as" id="cdt.managedbuild.tool.gnu.assembler.exe.release.2052985276" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release">
 								<option id="gnu.both.asm.option.include.paths.1499955275" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
@@ -265,7 +315,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="default_libpd_render.cpp|audio_routines_old.S" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples/01-Basics/minimal"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples/01-Basics/sinetone"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples/basic"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="include"/>
 					</sourceEntries>
