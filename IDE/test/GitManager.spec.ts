@@ -2,6 +2,7 @@ import { should } from 'chai';
 import * as mock from 'mock-fs';
 import * as child_process from 'child_process';
 import * as git_manager from '../src/GitManager';
+import * as file_manager from '../src/FileManager';
 var sinon = require('sinon');
 
 should();
@@ -78,6 +79,40 @@ describe('GitManager', function(){
 				exec_stub.getCall(0).args[0].should.equal("git log --all --pretty=oneline --format='%s, %ar %H' --graph");
 				exec_stub.getCall(1).args[0].should.equal("git log -1 --format='%H'");
 				exec_stub.getCall(2).args[0].should.equal("git branch");
+			});
+			afterEach(function(){
+				mock.restore();
+				sinon.restore();
+			});
+		});
+		describe('#init', function(){
+			let exec_stub: any;
+			beforeEach(function(){
+				exec_stub = sinon.stub(child_process, 'exec').callsArgWith(2, null, 'stdout', 'stderr');
+			});
+			it('should throw an error if the repo already exists', async function(){
+				mock({
+					'/root/Bela/projects/test_project/.git': {'test':'content'}
+				});
+				let data: any = {currentProject: 'test_project'};
+				await git_manager.init(data).catch(function(e: Error){
+					(e.toString()).should.equal('Error: repo already exists');
+				});
+			});
+			it('should init the repo, create a .gitignore file, add everything to the repo and commit', async function(){
+				mock({
+					'/root/Bela/projects/test_project': {'test':'content'}
+				});
+				let data: any = {currentProject: 'test_project'};
+				await git_manager.init(data);
+				data.stdout.should.equal('stdout\nstdout\nstdout');
+				data.stderr.should.equal('stderr\nstderr\nstderr');
+				let gitignore = await file_manager.read_file('/root/Bela/projects/test_project/.gitignore');
+				gitignore.should.equal('.DS_Store\nsettings.json\nbuild/*\ntest_project');
+				exec_stub.callCount.should.equal(3);
+				exec_stub.getCall(0).args[0].should.equal('git init');
+				exec_stub.getCall(1).args[0].should.equal('git add -A');
+				exec_stub.getCall(2).args[0].should.equal('git commit -am "first commit"');
 			});
 			afterEach(function(){
 				mock.restore();

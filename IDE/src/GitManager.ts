@@ -55,3 +55,16 @@ export async function info(data: any){
 	data.currentCommit = currentCommit.stdout;
 	data.branches = branches.stdout;
 }
+
+export async function init(data: any){
+	if (await repo_exists(data.currentProject))
+		throw new Error('repo already exists');
+	await file_manager.write_file(paths.projects+data.currentProject+'/.gitignore', '.DS_Store\nsettings.json\nbuild/*\n'+data.currentProject);
+	data.command = 'init';
+	await execute(data);
+	data.command = 'add -A';
+	await execute(data);
+	data.command = 'commit -am "first commit"';
+	await execute(data);
+
+}
