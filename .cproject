@@ -9,6 +9,7 @@
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -20,7 +21,7 @@
 				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.debug.528876549" name="Debug" parent="cdt.managedbuild.config.gnu.exe.debug" postannouncebuildStep="" postbuildStep="">
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.debug.528876549." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.681872250" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
-							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.295375065" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
+							<targetPlatform binaryParser="org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.exe.debug.295375065" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
 							<builder buildPath="${workspace_loc:/BBB_audio+input/Debug}" id="cdt.managedbuild.target.gnu.builder.exe.debug.26322421" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.exe.debug">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug"/>
@@ -28,7 +29,7 @@
 								</outputEntries>
 							</builder>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.archiver.base.1542380883" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
-							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.2030825480" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
+							<tool command="arm-linux-gnueabihf-g++&#10;" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.2030825480" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.2006448218" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1267706246" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.2031219124" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
@@ -38,6 +39,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1516989263" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -fpermissive -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.warnings.allwarn.1392851614" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -65,6 +67,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<option id="gnu.c.compiler.option.misc.other.835792865" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
 								<option id="gnu.c.compiler.option.warnings.allwarn.1145989346" name="All warnings (-Wall)" superClass="gnu.c.compiler.option.warnings.allwarn" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -123,6 +126,7 @@
 									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
 									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/ne10/"/>
 									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/"/>
+									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1788972942" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -181,6 +185,7 @@
 				</externalSettings>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -192,7 +197,7 @@
 				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.exe.release.1521194538" name="Release" parent="cdt.managedbuild.config.gnu.exe.release" postannouncebuildStep="" postbuildStep="">
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.release.1521194538." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.release.1612059942" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.release">
-							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.release.908983575" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.release"/>
+							<targetPlatform binaryParser="org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.exe.release.908983575" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.release"/>
 							<builder buildPath="${workspace_loc:/BBB_audio+input/Release}" enabledIncrementalBuild="true" id="cdt.managedbuild.target.gnu.builder.exe.release.511190290" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.exe.release"/>
 							<tool command="arm-linux-gnueabihf-g++&#10;" id="cdt.managedbuild.tool.gnu.archiver.base.810674388" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool command="arm-linux-gnueabihf-gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.163790048" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
@@ -205,6 +210,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.dialect.std.776548502" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.other.other.398422461" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -U_FORTIFY_SOURCE -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
@@ -229,6 +235,7 @@
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.files.40806287" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" useByScannerDiscovery="false"/>
 								<option id="gnu.c.compiler.option.preprocessor.undef.symbol.980935416" name="Undefined symbols (-U)" superClass="gnu.c.compiler.option.preprocessor.undef.symbol" useByScannerDiscovery="false" valueType="undefDefinedSymbols">
@@ -282,10 +289,13 @@
 							</tool>
 							<tool command="arm-linux-gnueabihf-as" id="cdt.managedbuild.tool.gnu.assembler.exe.release.2052985276" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release">
 								<option id="gnu.both.asm.option.include.paths.1499955275" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/xenomai/include"/>
+									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/ne10"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/arm-linux-gnueabihf/include/"/>
 									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/ne10/"/>
 									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-linux-gnueabihf/include/"/>
+									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1212659593" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -332,7 +342,9 @@
 			<resource resourceType="PROJECT" workspacePath="/Bela"/>
 		</configuration>
 		<configuration configurationName="Debug">
+			<resource resourceType="FOLDER" workspacePath="/Bela/Debug"/>
 			<resource resourceType="PROJECT" workspacePath="/BBB_SimpleInstrument"/>
+			<resource resourceType="FOLDER" workspacePath="/Bela/Release"/>
 		</configuration>
 		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/BBB_SimpleInstrument"/>
