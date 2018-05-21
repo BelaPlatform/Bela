@@ -1,89 +1,51 @@
-'use strict';
-var Promise = require('bluebird');
-var fs = Promise.promisifyAll(require('fs-extra'));
-var exec = require('child_process').exec;
-
-var belaPath = '/root/Bela/';
-
-module.exports = {
-	
-	repoExists(project){
-		return fs.statAsync(belaPath+'projects/'+project+'/.git')
-			.then( stat => true )
-			.catch( err => false );
-	},
-	
-	*init(gitData){
-		if (yield this.repoExists(gitData.currentProject)) throw new Error('repo already exists');
-		
-		// init the repo
-		gitData.command = 'init';
-		gitData = yield this.execute(gitData);
-		
-		// create the .gitignore file, ignoring .DS_Store, settings.json, the build/ folder and the binary
-		yield fs.outputFileAsync(belaPath+'projects/'+gitData.currentProject+'/.gitignore', '.DS_Store\nsettings.json\nbuild/*\n'+gitData.currentProject, 'utf-8');
-		
-		// add all files to the repo
-		gitData.command = 'add -A';
-		gitData = yield this.execute(gitData);
-		
-		// first commit
-		gitData.command = 'commit -am "first commit"';
-		gitData = yield this.execute(gitData);
-		
-		return gitData;
-		
-	},
-	
-	*info(data){
-			
-		data.repoExists = yield this.repoExists(data.currentProject);
-		
-		if (data.repoExists){
-		
-			var commits = yield this.execute({currentProject: data.currentProject, command: "log --all --pretty=oneline --format='%s, %ar %H' --graph"});
-			data.commits = commits.stdout;
-			
-			var currentCommit = yield this.execute({currentProject: data.currentProject, command: "log -1 --format='%H'"});
-			data.currentCommit = currentCommit.stdout
-			
-			var branches = yield this.execute({currentProject: data.currentProject, command: "branch"});
-			data.branches = branches.stdout;
-			
-		}
-		
-		return data;
-	},
-	
-	*command(data){
-		data = yield this.execute(data);
-		return data;
-	},
-	
-	execute(data){
-		return new Promise( (resolve, reject) => {			
-			exec('git '+data.command, {cwd: belaPath+'projects/'+data.currentProject+'/'}, (err, stdout, stderr) => {
-			//console.log(data.command, stdout, stderr);
-				if (err) reject(err);
-				
-				if (data.stdout) 
-					data.stdout += stdout ? ('\n' + stdout) : '';
-				else 
-					data.stdout = stdout;
-					
-				if (data.stderr) 
-					data.stderr += stderr ? ('\n' + stderr) : '';
-				else 
-					data.stderr = stderr;
-					
-				resolve(data);
-			});
-		});
-	}
-	
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
-
-// coroutine factory and binder
-function _co(obj, func, args){
-	return Promise.coroutine(obj[func]).bind(obj)(args);
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var file_manager = require("./FileManager");
+var paths = require("./paths");
+var Lock_1 = require("./Lock");
+var lock = new Lock_1.Lock();
+function repo_exists(project) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            return [2 /*return*/, file_manager.directory_exists(paths.projects + project + '/.git')];
+        });
+    });
 }
+exports.repo_exists = repo_exists;
+
+//# sourceMappingURL=data:application/json;charset=utf8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkdpdE1hbmFnZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLDRDQUE4QztBQUU5QywrQkFBaUM7QUFDakMsK0JBQTRCO0FBRTVCLElBQU0sSUFBSSxHQUFTLElBQUksV0FBSSxFQUFFLENBQUM7QUFFOUIscUJBQWtDLE9BQWU7OztZQUNoRCxzQkFBTyxZQUFZLENBQUMsZ0JBQWdCLENBQUMsS0FBSyxDQUFDLFFBQVEsR0FBQyxPQUFPLEdBQUMsT0FBTyxDQUFDLEVBQUM7OztDQUNyRTtBQUZELGtDQUVDIiwiZmlsZSI6IkdpdE1hbmFnZXIuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyBmaWxlX21hbmFnZXIgZnJvbSAnLi9GaWxlTWFuYWdlcic7XG5pbXBvcnQgKiBhcyBjaGlsZF9wcm9jZXNzIGZyb20gJ2NoaWxkX3Byb2Nlc3MnO1xuaW1wb3J0ICogYXMgcGF0aHMgZnJvbSAnLi9wYXRocyc7XG5pbXBvcnQge0xvY2t9IGZyb20gJy4vTG9jayc7XG5cbmNvbnN0IGxvY2s6IExvY2sgPSBuZXcgTG9jaygpO1xuXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gcmVwb19leGlzdHMocHJvamVjdDogc3RyaW5nKTogUHJvbWlzZTxib29sZWFuPntcblx0cmV0dXJuIGZpbGVfbWFuYWdlci5kaXJlY3RvcnlfZXhpc3RzKHBhdGhzLnByb2plY3RzK3Byb2plY3QrJy8uZ2l0Jyk7XG59XG4iXX0=
