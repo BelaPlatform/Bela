@@ -13,6 +13,8 @@ TerminalManager.on('shell-event', (evt: any, data: any) => ide_sockets.emit('she
 
 // all connected sockets
 let ide_sockets: SocketIO.Namespace;
+let num_connections: number = 0;
+let interval: NodeJS.Timer;
 
 export function init(server: http.Server){
 	ide_sockets = io(server, {
@@ -36,8 +38,25 @@ function connection(socket: SocketIO.Socket){
 	socket.on('git-event', (data: any) => git_event(socket, data) );
 	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
 	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
+	socket.on('disconnect', disconnect);
 	init_message(socket);
 	TerminalManager.pwd();
+	num_connections += 1;
+	if (num_connections === 1){
+		interval = setInterval(interval_func, 2000);
+	}
+}
+
+function disconnect(){
+	num_connections = num_connections - 1;
+	if (num_connections <= 0 && interval){
+		clearInterval(interval);
+	}
+}
+
+async function interval_func(){
+	let projects: string[] = await project_manager.listProjects();
+	ide_sockets.emit('project-list', undefined, projects);
 }
 
 async function init_message(socket: SocketIO.Socket){
