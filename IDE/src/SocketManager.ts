@@ -3,6 +3,7 @@ import * as http from 'http';
 import * as IDE from './main';
 import * as project_manager from './ProjectManager';
 import * as process_manager from './ProcessManager';
+import * as git_manager from './GitManager';
 import * as project_settings from './ProjectSettings';
 import * as ide_settings from './IDESettings';
 import * as boot_project from './RunOnBoot';
@@ -34,6 +35,7 @@ function connection(socket: SocketIO.Socket){
 	socket.on('project-settings', (data: any) => project_settings_event(socket, data) );
 	socket.on('process-event', (data: any) => process_event(socket, data) );
 	socket.on('IDE-settings', (data: any) => ide_settings_event(socket, data) );
+	socket.on('git-event', (data: any) => git_event(socket, data) );
 	init_message(socket);
 }
 
@@ -122,4 +124,36 @@ async function ide_settings_event(socket: SocketIO.Socket, data: any){
 	let result = await (ide_settings as any)[data.func](data)
 		.catch( (e: Error) => console.log('ide_settings error', e) );
 	broadcast('IDE-settings-data', result);
+}
+
+async function git_event(socket: SocketIO.Socket, data: any){
+	if (!data.currentProject || !data.func || !(git_manager as any)[data.func]) {
+		console.log('bad git-event', data);
+		return;
+	}
+	try{
+		await (git_manager as any)[data.func](data);
+		let data2: any = {
+			currentProject: data.currentProject,
+			timestamp:	data.timestamp,
+			gitData:	data
+		};
+		await project_manager.openProject(data2);
+		socket.emit('project-data', data2);
+		if (data2.currentProject){
+			if (data2.projectList){
+				socket.broadcast.emit('project-list', data2.currentProject, data2.projectList);
+			}
+			if (data2.fileList){
+				socket.broadcast.emit('file-list', data2.currentProject, data2.fileList);
+			}
+			ide_settings.setIDESetting({key: 'project', value: data2.currentProject});
+		}
+	}
+	catch(e){
+		console.log('git-event error', e);
+		data.error = e.toString();
+		socket.emit('project-data', {gitData: data, timestamp: data.timestamp});
+		socket.emit('report-error', e.toString());
+	}
 }

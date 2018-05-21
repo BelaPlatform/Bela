@@ -1,4 +1,5 @@
-import * as file_manager from "./FileManager";
+import * as file_manager from './FileManager';
+import * as git_manager from './GitManager';
 import * as project_settings from './ProjectSettings';
 import * as util from './utils';
 import * as paths from './paths';
@@ -85,15 +86,18 @@ export async function openProject(data: any) {
 	data.newFile = settings.fileName;
 	data.CLArgs = settings.CLArgs;
 	// TODO: data.exampleName
-	// TODO: data.gitData
-	await this.openFile(data);
+	if (!data.gitData)
+		data.gitData = {};
+	data.gitData.currentProject = data.currentProject;
+	await git_manager.info(data.gitData);
+	await openFile(data);
 }
 export async function openExample(data: any){
 	await file_manager.empty_directory(paths.exampleTempProject);
 	await file_manager.copy_directory(paths.examples+data.currentProject, paths.exampleTempProject);
 	data.exampleName = data.currentProject.split('/').pop();
 	data.currentProject = 'exampleTempProject';
-	await this.openProject(data);
+	await openProject(data);
 }
 export async function newProject(data: any){
 	if (await file_manager.directory_exists(paths.projects+data.newProject)){
@@ -101,10 +105,10 @@ export async function newProject(data: any){
 		return;
 	}
 	await file_manager.copy_directory(paths.templates+data.projectType, paths.projects+data.newProject);
-	data.projectList = await this.listProjects();
+	data.projectList = await listProjects();
 	data.currentProject = data.newProject;
 	data.newProject = undefined;
-	await this.openProject(data);
+	await openProject(data);
 }
 
 export async function saveAs(data: any){
@@ -113,18 +117,18 @@ export async function saveAs(data: any){
 		return;
 	}
 	await file_manager.copy_directory(paths.projects+data.currentProject, paths.projects+data.newProject);
-	data.projectList = await this.listProjects();
+	data.projectList = await listProjects();
 	data.currentProject = data.newProject;
 	data.newProject = undefined;
-	await this.openProject(data);
+	await openProject(data);
 }
 export async function deleteProject(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject);
-	data.projectList = await this.listProjects();
+	data.projectList = await listProjects();
 	for (let project of data.projectList){
 		if (project && project !== 'undefined' && project !== 'exampleTempProject'){
 			data.currentProject = project;
-			await this.openProject(data);
+			await openProject(data);
 			return;
 		}
 	}
@@ -145,7 +149,7 @@ export async function newFile(data: any){
 	file_manager.write_file(file_path, '/***** '+data.newFile+' *****/\n');
 	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
 	data.focus = {'line': 2, 'column': 1};
-	await this.openFile(data);
+	await openFile(data);
 }
 export async function uploadFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
@@ -157,7 +161,7 @@ export async function uploadFile(data: any){
 	}
 	await file_manager.save_file(file_path, data.fileData);
 	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
-	await this.openFile(data);
+	await openFile(data);
 }
 export async function cleanFile(project: string, file: string){
 	if (file.split && file.includes('.')){
@@ -180,13 +184,13 @@ export async function renameFile(data: any){
 		return;
 	}
 	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.fileName, file_path);
-	await this.cleanFile(data.currentProject, data.fileName);
+	await cleanFile(data.currentProject, data.fileName);
 	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
-	await this.openFile(data);
+	await openFile(data);
 }
 export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
-	await this.cleanFile(data.currentProject, data.fileName);
+	await cleanFile(data.currentProject, data.fileName);
 	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
 	data.fileData = 'File deleted - open another file to continue';
 	data.fileName = '';

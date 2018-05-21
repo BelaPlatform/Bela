@@ -31,6 +31,7 @@ export async function execute(data: any): Promise<any> {
 		});
 	});
 }
+export var command = execute;
 
 export async function info(data: any){
 	data.repoExists = await repo_exists(data.currentProject);
