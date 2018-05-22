@@ -143,7 +143,7 @@ processes.run.on('start', (pid: number, project: string) => {
 	socket_manager.broadcast('status', get_status());
 	cpu_monitor.start(pid, project, async cpu => {
 		socket_manager.broadcast('cpu-usage', {
-			bela: await file_manager.read_file(paths.xenomai_stat).catch(),
+			bela: await file_manager.read_file(paths.xenomai_stat).catch(e => console.log('error reading xenomai stats', e)),
 			belaLinux: cpu
 		});
 	});
