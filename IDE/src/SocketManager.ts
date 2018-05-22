@@ -36,9 +36,11 @@ function connection(socket: SocketIO.Socket){
 	socket.on('process-event', (data: any) => process_event(socket, data) );
 	socket.on('IDE-settings', (data: any) => ide_settings_event(socket, data) );
 	socket.on('git-event', (data: any) => git_event(socket, data) );
-	socket.on('list-files', (project: any) => list_files(socket, project) );
+	socket.on('list-files', (project: string) => list_files(socket, project) );
+	socket.on('run-on-boot', (project: string) => boot_project.set_boot_project(socket, project) );
 	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
 	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
+	socket.on('shutdown', IDE.shutdown);
 	socket.on('disconnect', disconnect);
 	init_message(socket);
 	TerminalManager.pwd();

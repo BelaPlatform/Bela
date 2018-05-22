@@ -62,6 +62,10 @@ export function set_time(time: string){
 	});
 }
 
+export function shutdown(){
+	child_process.exec('shutdown -h now', (err, stdout, stderr) => console.log('shutting down', err, stdout, stderr) );
+}
+
 /*process.on('uncaughtException', err => {
 	console.log('uncaught exception');
 	throw err;

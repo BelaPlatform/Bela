@@ -1,6 +1,8 @@
 import * as boot_project from '../src/RunOnBoot';
 import * as mock from 'mock-fs';
+import * as child_process from 'child_process';
 import {should} from 'chai';
+var sinon = require('sinon');
 
 should();
 
@@ -32,6 +34,31 @@ describe('Manage the project running on boot', function(){
 		});
 		afterEach(function(){
 			mock.restore();
+		});
+	});
+	describe('#set_boot_project', function(){
+		let exec_stub: any;
+		beforeEach(function(){
+			exec_stub = sinon.stub(child_process, 'exec');
+			mock({
+				'/root/Bela/projects/test_project': {
+					'settings.json': JSON.stringify({CLArgs: {'CL': 'Arg', 'make': 'make_arg'}})
+				}
+			});
+		});
+		it('should correctly disable running a project on boot', async function(){
+			await boot_project.set_boot_project(undefined, 'none');
+			exec_stub.callCount.should.equal(1);
+			exec_stub.getCall(0).args[0].should.equal('make --no-print-directory -C /root/Bela/ nostartup')
+		});
+		it('should set the project to run on boot, including CLArgs', async function(){
+			await boot_project.set_boot_project(undefined, 'test_project');
+			exec_stub.callCount.should.equal(1);
+			exec_stub.getCall(0).args[0].should.equal('make --no-print-directory -C /root/Bela/ startuploop PROJECT=test_project CL="CLArg" make_arg');
+		});
+		afterEach(function(){
+			mock.restore();
+			sinon.restore();
 		});
 	});
 });
