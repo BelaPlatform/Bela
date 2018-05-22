@@ -34,37 +34,40 @@ async function timeout_func(){
 	if (!(await ide_settings.get_setting('cpuMonitoring')))
 		return;
 	let cpu: any = '0';
-	if (!found_pid){
-		// use pidtree to find all the child pids of the make process
-		console.log('pidtree');
-		await pidtree(root_pid, {root: true})
-			.then(async (pids: any) => {
-				console.log(pids);
-				// look through the pids to see if any of them belong to a process with the right name
-				for (let pid of pids){
-					let test_name = (await name_from_pid(pid) as string).trim();
-					console.log(pid, test_name, name);
-					if (test_name === name){
-						main_pid = pid;
-						found_pid = true;
-					}
-				}
-			})
-			.catch( (e: Error) => {
-				console.log('error finding pid');
-				found_pid = false;
-			});
-	} else {
-		cpu = await getCPU()
-			.catch( (e: any) => {
-				console.log('ps error'); 
-				found_pid = false;
-			});
+	try{
+		if (!found_pid){
+			await find_pid();
+		} else {
+			cpu = await getCPU();
+		}
 	}
-	if(stopped)
-		return;
-	callback(cpu);
-	setTimeout(timeout_func);
+	catch(e){
+		console.log('Failed to get CPU usage'); 
+		found_pid = false;
+	}
+	finally{
+		if(!stopped){
+			callback(cpu);
+			console.log('setting timeout');
+			timeout = setTimeout(timeout_func, 1000);
+		}
+	}
+}
+
+async function find_pid(){
+	// use pidtree to find all the child pids of the root process
+	console.log('pidtree');
+	let pids = await pidtree(root_pid, {root: true});
+	console.log(pids);
+	// look through the pids to see if any of them belong to a process with the right name
+	for (let pid of pids){
+		let test_name = (await name_from_pid(pid) as string).trim();
+		console.log(pid, test_name, name);
+		if (test_name === name){
+			main_pid = pid;
+			found_pid = true;
+		}
+	}
 }
 
 // returns the name of the process corresponding to the pid passed in to it
