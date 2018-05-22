@@ -36,6 +36,7 @@ function connection(socket: SocketIO.Socket){
 	socket.on('process-event', (data: any) => process_event(socket, data) );
 	socket.on('IDE-settings', (data: any) => ide_settings_event(socket, data) );
 	socket.on('git-event', (data: any) => git_event(socket, data) );
+	socket.on('list-files', (project: any) => list_files(socket, project) );
 	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
 	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
 	socket.on('disconnect', disconnect);
@@ -176,4 +177,10 @@ async function git_event(socket: SocketIO.Socket, data: any){
 		socket.emit('project-data', {gitData: data, timestamp: data.timestamp});
 		socket.emit('report-error', e.toString());
 	}
+}
+
+async function list_files(socket: SocketIO.Socket, project: string){
+	let files: util.File_Descriptor[] = await project_manager.listFiles(project)
+		.catch((e: Error) => console.log('error refreshing file list', e.toString()) );
+	socket.emit('file-list', project, files);
 }

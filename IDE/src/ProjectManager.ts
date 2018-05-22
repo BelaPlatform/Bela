@@ -81,7 +81,7 @@ export async function listExamples(): Promise<any>{
 	return examples;
 }
 export async function openProject(data: any) {
-	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
+	data.fileList = await listFiles(data.currentProject);
 	let settings: any = await project_settings.read(data.currentProject);
 	data.newFile = settings.fileName;
 	data.CLArgs = settings.CLArgs;
@@ -147,7 +147,7 @@ export async function newFile(data: any){
 		return;
 	}
 	file_manager.write_file(file_path, '/***** '+data.newFile+' *****/\n');
-	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
+	data.fileList = await listFiles(data.currentProject);
 	data.focus = {'line': 2, 'column': 1};
 	await openFile(data);
 }
@@ -160,7 +160,7 @@ export async function uploadFile(data: any){
 		return;
 	}
 	await file_manager.save_file(file_path, data.fileData);
-	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
+	data.fileList = await listFiles(data.currentProject);
 	await openFile(data);
 }
 export async function cleanFile(project: string, file: string){
@@ -185,14 +185,18 @@ export async function renameFile(data: any){
 	}
 	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.fileName, file_path);
 	await cleanFile(data.currentProject, data.fileName);
-	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
+	data.fileList = await listFiles(data.currentProject);
 	await openFile(data);
 }
 export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
 	await cleanFile(data.currentProject, data.fileName);
-	data.fileList = await file_manager.deep_read_directory(paths.projects+data.currentProject);
+	data.fileList = await listFiles(data.currentProject);
 	data.fileData = 'File deleted - open another file to continue';
 	data.fileName = '';
 	data.readOnly = true;
+}
+
+export async function listFiles(project: string): Promise<util.File_Descriptor[]>{
+	return await file_manager.deep_read_directory(paths.projects+project);
 }
