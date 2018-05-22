@@ -1,6 +1,8 @@
 import * as file_manager from './FileManager';
 import * as project_settings from './ProjectSettings';
 import * as child_process from 'child_process';
+import * as IDE from './main';
+import * as socket_manager from './SocketManager';
 import * as paths from './paths';
 
 export async function get_boot_project(): Promise<string> {
@@ -51,6 +53,13 @@ function run_on_boot(socket: SocketIO.Socket, args: string[]){
 	});
 }
 
-function listen_on_boot(){
-
+async function listen_on_boot(){
+	let version: string = await IDE.get_xenomai_version();
+	if (!version.includes('2.6')){
+		let proc = child_process.spawn('journalctl', ['-fu', 'bela_startup']);
+		proc.stdout.setEncoding('utf8');
+		proc.stdout.on('data', data => socket_manager.broadcast('run-on-boot-log', data));
+		proc.stderr.setEncoding('utf8');
+		proc.stderr.on('data', data => socket_manager.broadcast('run-on-boot-log', data));
+	}
 }
