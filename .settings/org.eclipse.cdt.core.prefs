@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.config.gnu.exe.debug.528876549/PATH/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.exe.debug.528876549/PATH/operation=replace
+environment/project/cdt.managedbuild.config.gnu.exe.debug.528876549/PATH/value=/usr/local/linaro/arm-bela-linux-gnueabihf/bin\:${PATH}
+environment/project/cdt.managedbuild.config.gnu.exe.debug.528876549/append=true
+environment/project/cdt.managedbuild.config.gnu.exe.debug.528876549/appendContributed=true
+environment/project/cdt.managedbuild.config.gnu.exe.release.1521194538/PATH/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.exe.release.1521194538/PATH/operation=replace
+environment/project/cdt.managedbuild.config.gnu.exe.release.1521194538/PATH/value=/usr/local/linaro/arm-bela-linux-gnueabihf/bin\:${PATH}
+environment/project/cdt.managedbuild.config.gnu.exe.release.1521194538/append=true
+environment/project/cdt.managedbuild.config.gnu.exe.release.1521194538/appendContributed=true

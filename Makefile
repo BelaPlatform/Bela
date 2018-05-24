@@ -146,7 +146,7 @@ BUILD_DIRS+=$(PROJECT_DIR)/build
 endif
 endif
 #create build directories, should probably be conditional to PROJECT or lib
-$(shell mkdir -p  $(BUILD_DIRS))
+$(shell mkdir -p  $(BUILD_DIRS) lib)
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 RUN_FROM?=$(PROJECT_DIR)
