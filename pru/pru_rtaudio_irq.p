@@ -435,7 +435,7 @@ DIGITAL:
 //load current status of GPIO_OE in r2
     MOV r2, GPIO1 | GPIO_OE 
     //it takes 190ns to go through the next instruction
-    LBBO r2, r2, 0, 4
+    LBBO &r2, r2, 0, 4
 //GPIO1-start
 //process oe and datain and prepare dataout for GPIO1
 //r7 will contain GPIO1_CLEARDATAOUT
@@ -454,7 +454,7 @@ DIGITAL:
     SET_GPIO_BITS r2, r8, r7, 19, 10, r27
 //set the output enable register for gpio1.
     MOV r3, GPIO1 | GPIO_OE  //use r3 as a temp register
-    SBBO r2, r3, 0, 4 //takes two cycles (10ns)
+    SBBO &r2, r3, 0, 4 //takes two cycles (10ns)
 //GPIO1-end
 // r2 is now unused
 
@@ -463,7 +463,7 @@ DIGITAL:
 //load current status of GPIO_OE in r3
     MOV r3, GPIO2 | GPIO_OE  
 //it takes 200ns to go through the next instructions
-    LBBO r3, r3, 0, 4
+    LBBO &r3, r3, 0, 4
 //process oe and datain and prepare dataout for GPIO2
 //r4 will contain GPIO2_CLEARDATAOUT
 //r5 will contain GPIO2_SETDATAOUT
@@ -483,7 +483,7 @@ DIGITAL:
     SET_GPIO_BITS r3, r5, r4, 25, 15, r27
 //set the output enable register for gpio2.
     MOV r2, GPIO2 | GPIO_OE  //use r2 as a temp registerp
-    SBBO r3, r2, 0, 4 //takes two cycles (10ns)
+    SBBO &r3, r2, 0, 4 //takes two cycles (10ns)
 //GPIO2-end
 //r3 is now unused
 
@@ -495,8 +495,8 @@ DIGITAL:
     MOV r3, GPIO2 | GPIO_DATAIN  
     //takes 375 nns to go through the next two instructions
 //read the datain
-    LBBO r2, r2, 0, 4
-    LBBO r3, r3, 0, 4
+    LBBO &r2, r2, 0, 4
+    LBBO &r3, r3, 0, 4
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
 //GPIO1
@@ -527,9 +527,9 @@ DIGITAL:
     MOV r3, GPIO2 | GPIO_CLEARDATAOUT //use r3 as a temp register
 //write 8 bytes for each GPIO
 //takes 30ns in total to go through the following two instructions
-    SBBO r7, r2, 0, 8 //store r7 and r8 in GPIO1_CLEARDATAOUT and GPIO1_SETDATAOUT 
+    SBBO &r7, r2, 0, 8 //store r7 and r8 in GPIO1_CLEARDATAOUT and GPIO1_SETDATAOUT
                       //takes 145ns to be effective when going low, 185ns when going high
-    SBBO r4, r3, 0, 8 //store r4 and r5 in GPIO2_CLEARDATAOUT and GPIO2_SETDATAOUT 
+    SBBO &r4, r3, 0, 8 //store r4 and r5 in GPIO2_CLEARDATAOUT and GPIO2_SETDATAOUT
                      //takes 95ns to be effective when going low, 130ns when going high
 //reversing the order of the two lines above will swap the performances between the GPIO modules
 //i.e.: the first line will always take 145ns/185ns and the second one will always take 95ns/130ns, 
@@ -547,14 +547,14 @@ QBA DALOOP
 .macro DAC_CS_ASSERT
      MOV r27, DAC_CS_PIN
      MOV r28, DAC_GPIO + GPIO_CLEARDATAOUT
-     SBBO r27, r28, 0, 4
+     SBBO &r27, r28, 0, 4
 .endm
 
 // Bring CS line high at end of DAC transaction
 .macro DAC_CS_UNASSERT
      MOV r27, DAC_CS_PIN
      MOV r28, DAC_GPIO + GPIO_SETDATAOUT
-     SBBO r27, r28, 0, 4
+     SBBO &r27, r28, 0, 4
 .endm
 
 // Write to DAC TX register
@@ -566,13 +566,13 @@ QBA DALOOP
 // Wait for SPI to finish (uses RXS indicator)
 .macro DAC_WAIT_FOR_FINISH
  LOOP:
-     LBBO r27, reg_spi_addr, SPI_CH0STAT, 4
+     LBBO &r27, reg_spi_addr, SPI_CH0STAT, 4
      QBBC LOOP, r27, 0
 .endm
 
 // Read the RX word to clear
 .macro DAC_DISCARD_RX
-     LBBO r27, reg_spi_addr, SPI_CH0RX, 4
+     LBBO &r27, reg_spi_addr, SPI_CH0RX, 4
 .endm
 
 // Complete DAC write with chip select
@@ -610,14 +610,14 @@ DAC_CHANNEL_REORDER_DONE:
 .macro ADC_CS_ASSERT
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
-     SBBO r27, r28, 0, 4
+     SBBO &r27, r28, 0, 4
 .endm
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_SETDATAOUT
-     SBBO r27, r28, 0, 4
+     SBBO &r27, r28, 0, 4
 .endm
 
 // Write to ADC TX register
@@ -629,7 +629,7 @@ DAC_CHANNEL_REORDER_DONE:
 // Wait for SPI to finish (uses RXS indicator)
 .macro ADC_WAIT_FOR_FINISH
  LOOP:
-     LBBO r27, reg_spi_addr, SPI_CH1STAT, 4
+     LBBO &r27, reg_spi_addr, SPI_CH1STAT, 4
      QBBC LOOP, r27, 0
 .endm
 
@@ -669,9 +669,9 @@ DO_GPIO:
 //- one taking place during DAC_WRITE which sets the GPIO_OE
 //- and the other during ADC_WRITE which actually reads DATAIN and writes CLEAR/SET DATAOUT
                             //r27 is actually r27, so do not use r27 from here to ...
-     LBBO r27, reg_digital_current, 0, 4 
+     LBBO &r27, reg_digital_current, 0, 4
      JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
-     SBBO r27, reg_digital_current, 0,   4 
+     SBBO &r27, reg_digital_current, 0,   4
                             //..here you can start using r27 again
      ADD reg_digital_current, reg_digital_current, 4 //increment pointer
 GPIO_DONE:
@@ -687,8 +687,7 @@ GPIO_DONE:
   MOV r0, PRU_ICSS_INTC_LOCAL
   MOV r27, value
   MOV r28, reg
-  ADD r28, r0, r28
-  SBBO r27, r28, 0, 4
+  SBBO &r27, r0, r28, 4
 .endm
 
 // Read PRU interrupt controller register beyond 0xFF boundary.
@@ -697,8 +696,7 @@ GPIO_DONE:
 .mparam reg, value
   MOV r0, PRU_ICSS_INTC_LOCAL
   MOV r28, reg
-  ADD r28, r0, r28
-  LBBO value, r28, 0, 4
+  LBBO value, r0, r28, 4
 .endm
 
 // Write PRU config register beyond 0xFF boundary.
@@ -708,8 +706,7 @@ GPIO_DONE:
   MOV r0, PRU_ICSS_CFG_LOCAL
   MOV r27, value
   MOV r28, reg
-  ADD r28, r0, r28
-  SBBO r27, r28, 0, 4
+  SBBO &r27, r0, r28, 4
 .endm
 
 // Read PRU config register beyond 0xFF boundary.
@@ -718,15 +715,14 @@ GPIO_DONE:
 .mparam reg, value
   MOV r0, PRU_ICSS_CFG_LOCAL
   MOV r28, reg
-  ADD r28, r0, r28
-  LBBO value, r28, 0, 4
+  LBBO value, r0, r28, 4
 .endm
 
 // Write a McASP register
 .macro MCASP_REG_WRITE
 .mparam reg, value
      MOV r27, value
-     SBBO r27, reg_mcasp_addr, reg, 4
+     SBBO &r27, reg_mcasp_addr, reg, 4
 .endm
 
 // Write a McASP register beyond the 0xFF boundary
@@ -734,8 +730,7 @@ GPIO_DONE:
 .mparam reg, value
      MOV r27, value
      MOV r28, reg
-     ADD r28, reg_mcasp_addr, r28
-     SBBO r27, r28, 0, 4
+     SBBO &r27, reg_mcasp_addr, r28, 4
 .endm
 
 // Write to data port beyond 0xFF boundary
@@ -755,8 +750,7 @@ GPIO_DONE:
 .macro MCASP_REG_READ_EXT
 .mparam reg, value
      MOV r28, reg
-     ADD r28, reg_mcasp_addr, r28
-     LBBO value, r28, 0, 4
+     LBBO value, reg_mcasp_addr, r28, 4
 .endm
 
 // Read from data port beyond 0xFF boundary
@@ -766,17 +760,15 @@ GPIO_DONE:
     LBBO start_reg, r28, 0, num_bytes
 .endm
     
-// Set a bit and wait for it to come up
-.macro MCASP_REG_SET_BIT_AND_POLL
-.mparam reg, mask
-     MOV r27, mask
-     LBBO r28, reg_mcasp_addr, reg, 4
-     OR r28, r28, r27
-     SBBO r28, reg_mcasp_addr, reg, 4
+// Set a MCASP_GBLCTL bit and wait for it to be acknowledged
+.macro MCASP_GBLCTL_SET_BIT_AND_POLL
+.mparam bit
+     LBBO &r28, reg_mcasp_addr, MCASP_GBLCTL, 4
+     SET r28, r28, bit
+     SBBO &r28, reg_mcasp_addr, MCASP_GBLCTL, 4
 POLL:
-     LBBO r28, reg_mcasp_addr, reg, 4
-     AND r28, r28, r27
-     QBEQ POLL, r28, 0
+     LBBO &r28, reg_mcasp_addr, MCASP_GBLCTL, 4
+     QBBC POLL, r28, bit
 .endm
 
 // Multiplexer Capelet: Increment channel on muxes 0-3
@@ -875,7 +867,7 @@ PRU_INTC_INIT_DONE:
      // Find out which PRU we are running on
      // This affects the following offsets
      MOV  r0, 0x24000      // PRU1 control register offset
-     LBBO r2, reg_comm_addr, COMM_PRU_NUMBER, 4
+     LBBO &r2, reg_comm_addr, COMM_PRU_NUMBER, 4
      QBEQ PRU_NUMBER_CHECK_DONE, r2, 1
      MOV  r0, 0x22000      // PRU0 control register offset
 PRU_NUMBER_CHECK_DONE:  
@@ -884,21 +876,21 @@ PRU_NUMBER_CHECK_DONE:
      // Thus C24 points to start of PRU0 RAM
      OR  r3, r0, 0x20      // CTBIR0
      MOV r2, 0
-     SBBO r2, r3, 0, 4
+     SBBO &r2, r3, 0, 4
 
      // Set up c28 pointer offset for shared PRU RAM
      OR r3, r0, 0x28       // CTPPR0
      MOV r2, 0x00000120    // To get address 0x00012000
-     SBBO r2, r3, 0, 4
+     SBBO &r2, r3, 0, 4
     
      // Set ARM such that PRU can write to registers
-     LBCO r0, C4, 4, 4
+     LBCO &r0, C4, 4, 4
      CLR r0, r0, 4
-     SBCO r0, C4, 4, 4
+     SBCO &r0, C4, 4, 4
 
      // Clear McSPI irq status bits
      MOV r2, 0x7F
-     SBBO r2, reg_spi_addr, SPI_IRQSTATUS, 4
+     SBBO &r2, reg_spi_addr, SPI_IRQSTATUS, 4
 
      // Clear flags
      MOV reg_flags, 0
@@ -906,7 +898,7 @@ PRU_NUMBER_CHECK_DONE:
      LDI reg_num_channels, 8
 
      // Find out whether we should use DIGITAL
-     LBBO r2, reg_comm_addr, COMM_USE_DIGITAL, 4
+     LBBO &r2, reg_comm_addr, COMM_USE_DIGITAL, 4
      QBEQ DIGITAL_INIT_DONE, r2, 0 // if we use digital
      SET reg_flags, reg_flags, FLAG_BIT_USE_DIGITAL 
 /* This block of code is not really needed, as the memory is initialized by ARM before the PRU is started.
@@ -917,7 +909,7 @@ DIGITAL_INIT: //set the digital buffer to 0x0000ffff (all inputs), to prevent un
      MOV r3, MEM_DIGITAL_BASE //start of the digital buffer
      MOV r4, MEM_DIGITAL_BASE+2*MEM_DIGITAL_BUFFER1_OFFSET //end of the digital buffer
 DIGITAL_INIT_BUFFER_LOOP:
-     SBBO r2, r3, 0, 4 
+     SBBO &r2, r3, 0, 4
      ADD r3, r3, 4 //increment pointer
      QBGT DIGITAL_INIT_BUFFER_LOOP, r3, r4 //loop until we reach the end of the buffer
 */
@@ -925,9 +917,9 @@ DIGITAL_INIT_DONE:
      // Check if we should use an external multiplexer capelet
      // The valid values are 0 (off), 1 (2 ch), 2 (4 ch), 3 (8 ch)
      // This can only happen on PRU1 because of how the pins are mapped
-     LBBO r2, reg_comm_addr, COMM_PRU_NUMBER, 4
+     LBBO &r2, reg_comm_addr, COMM_PRU_NUMBER, 4
      QBNE MUX_INIT_DONE, r2, 1
-     LBBO r2, reg_comm_addr, COMM_MUX_CONFIG, 4
+     LBBO &r2, reg_comm_addr, COMM_MUX_CONFIG, 4
      AND r2, r2, 0x03
      QBEQ MUX_INIT_DONE, r2, 0
      // If we get here, we are using the mux. Prepare flags and initial state.
@@ -939,7 +931,7 @@ DIGITAL_INIT_DONE:
 MUX_INIT_DONE:
     
      // Find out whether we should use SPI ADC and DAC
-     LBBO r2, reg_comm_addr, COMM_USE_SPI, 4
+     LBBO &r2, reg_comm_addr, COMM_USE_SPI, 4
      QBEQ SPI_FLAG_CHECK_DONE, r2, 0
      SET reg_flags, reg_flags, FLAG_BIT_USE_SPI
 SPI_FLAG_CHECK_DONE:
@@ -962,47 +954,47 @@ SPI_NUM_CHANNELS_DONE:
      // Init SPI clock
      MOV r2, 0x02
      MOV r3, CLOCK_BASE + CLOCK_SPI0
-     SBBO r2, r3, 0, 4
+     SBBO &r2, r3, 0, 4
 
      // Reset SPI and wait for finish
      MOV r2, 0x02
-     SBBO r2, reg_spi_addr, SPI_SYSCONFIG, 4
+     SBBO &r2, reg_spi_addr, SPI_SYSCONFIG, 4
 
 SPI_WAIT_RESET:
-     LBBO r2, reg_spi_addr, SPI_SYSSTATUS, 4
+     LBBO &r2, reg_spi_addr, SPI_SYSSTATUS, 4
      QBBC SPI_WAIT_RESET, r2, 0
     
      // Turn off SPI channels
      MOV r2, 0
-     SBBO r2, reg_spi_addr, SPI_CH0CTRL, 4
-     SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
+     SBBO &r2, reg_spi_addr, SPI_CH0CTRL, 4
+     SBBO &r2, reg_spi_addr, SPI_CH1CTRL, 4
   
      // Set to master; chip select lines enabled (CS0 used for DAC); 
      // Multiple word access via OCP bus (TODO: evaluate performance)
      MOV r2, 0x80
-     SBBO r2, reg_spi_addr, SPI_MODULCTRL, 4
+     SBBO &r2, reg_spi_addr, SPI_MODULCTRL, 4
   
      // Configure CH0 for DAC
      MOV r2, (3 << 27) | (DAC_DPE << 16) | (DAC_TRM << 12) | ((DAC_WL - 1) << 7) | (DAC_CLK_DIV << 2) | DAC_CLK_MODE | (1 << 6)
-     SBBO r2, reg_spi_addr, SPI_CH0CONF, 4
+     SBBO &r2, reg_spi_addr, SPI_CH0CONF, 4
 
      // Configure CH1 for ADC
      MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
-     SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
+     SBBO &r2, reg_spi_addr, SPI_CH1CONF, 4
 
      // Enable interrupts TX0_EMPTY__ENABLE for DACs and RX1_FULL__ENABLE for ADCs
      MOV r2, 0x41
-     SBBO r2, reg_spi_addr, SPI_IRQENABLE, 4
+     SBBO &r2, reg_spi_addr, SPI_IRQENABLE, 4
 
      // Set buffer level threshold for interrupts (14 words (7ch) for tx and rx)
      // TODO: Configure dynamically for variable number of channels
      MOV r2, 0xE0E
-     SBBO r2, reg_spi_addr, SPI_XFERLEVEL, 4
+     SBBO &r2, reg_spi_addr, SPI_XFERLEVEL, 4
    
      // Turn on SPI channels
      MOV r2, 0x01
-     SBBO r2, reg_spi_addr, SPI_CH0CTRL, 4
-     SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4   
+     SBBO &r2, reg_spi_addr, SPI_CH0CTRL, 4
+     SBBO &r2, reg_spi_addr, SPI_CH1CTRL, 4
 
      // DAC power-on reset sequence
      MOV r2, (0x07 << AD5668_COMMAND_OFFSET)
@@ -1028,7 +1020,7 @@ SPI_INIT_DONE:
     // enable MCASP interface clock in PRCM
     MOV r2, 0x30002
     MOV r3, CLOCK_BASE + CLOCK_MCASP0
-    SBBO r2, r3, 0, 4
+    SBBO &r2, r3, 0, 4
 
     // Prepare McASP0 for audio
     MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
@@ -1084,8 +1076,8 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_XSTAT, 0xFF       // Clear transmit errors
     MCASP_REG_WRITE MCASP_RSTAT, 0xFF       // Clear receive errors
 
-    MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 1)  // Set RHCLKRST
-    MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 9)  // Set XHCLKRST
+    MCASP_GBLCTL_SET_BIT_AND_POLL 1  // Set RHCLKRST
+    MCASP_GBLCTL_SET_BIT_AND_POLL 9  // Set XHCLKRST
 
 // The above write sequence will have temporarily changed the AHCLKX frequency
 // The PLL needs time to settle or the sample rate will be unstable and possibly
@@ -1094,7 +1086,7 @@ SPI_INIT_DONE:
 
      MOV r2, 1 << 28
      MOV r3, GPIO1 + GPIO_SETDATAOUT
-     SBBO r2, r3, 0, 4
+     SBBO &r2, r3, 0, 4
 
 MOV r2, 100000
 MCASP_INIT_WAIT:    
@@ -1103,14 +1095,14 @@ MCASP_INIT_WAIT:
 
      MOV r2, 1 << 28
      MOV r3, GPIO1 + GPIO_CLEARDATAOUT
-     SBBO r2, r3, 0, 4
+     SBBO &r2, r3, 0, 4
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 0)  // Set RCLKRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 8)  // Set XCLKRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 2)  // Set RSRCLR
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 10) // Set XSRCLR
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 3)  // Set RSMRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 11) // Set XSMRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 0  // Set RCLKRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 8  // Set XCLKRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 2  // Set RSRCLR
+MCASP_GBLCTL_SET_BIT_AND_POLL 10 // Set XSRCLR
+MCASP_GBLCTL_SET_BIT_AND_POLL 3  // Set RSMRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 11 // Set XSMRST
 
 // Seems to be not required (was used to avoid transmit clock failure)
 //MCASP_REG_WRITE MCASP_XSTAT, 0xFF
@@ -1151,8 +1143,8 @@ MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 #endif
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)  // Set RFRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 4  // Set RFRST
+MCASP_GBLCTL_SET_BIT_AND_POLL 12 // Set XFRST
 
 // Initialisation
     LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count (0.5x-2x for McASP)
@@ -1170,7 +1162,7 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
     SET reg_flags, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
     MOV r2, 0
-    SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
+    SBBO &r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
 /* This block of code is not really needed, as the memory is initialized by ARM before the PRU is started.
 Will leave it here for future reference
 //Initialise all SPI and audio buffers (DAC0, DAC1, ADC0, ADC1) to zero.
@@ -1187,7 +1179,7 @@ Will leave it here for future reference
     MOV r2, 0// value to store
     MOV r3, 0 // offset counter
 SPI_INIT_BUFFER_LOOP:
-    SBCO r2, C_ADC_DAC_MEM, r3, 4
+    SBCO &r2, C_ADC_DAC_MEM, r3, 4
     ADD r3, r3, 4
     QBGT SPI_INIT_BUFFER_LOOP, r3, r4
 SPI_INIT_BUFFER_DONE:
@@ -1200,7 +1192,7 @@ SPI_INIT_BUFFER_DONE:
     MOV r2, 0 // value to store
     MOV r3, 0 // offset counter
     MCASP_INIT_BUFFER_LOOP:
-    SBCO r2, C_MCASP_MEM, r3, 4
+    SBCO &r2, C_MCASP_MEM, r3, 4
     ADD r3, r3, 4
     QBGT MCASP_INIT_BUFFER_LOOP, r3, r4
 */
@@ -1214,7 +1206,7 @@ SPI_INIT_BUFFER_DONE:
 MOV reg_dac_current, 7
 #endif
 MCASP_DAC_WAIT_BEFORE_LOOP: 
-     LBBO r2, reg_mcasp_addr, MCASP_XSTAT, 4
+     LBBO &r2, reg_mcasp_addr, MCASP_XSTAT, 4
      QBBC MCASP_DAC_WAIT_BEFORE_LOOP, r2, MCASP_XSTAT_XDATA_BIT
 
      MCASP_WRITE_TO_DATAPORT 0x00
@@ -1224,7 +1216,7 @@ MCASP_DAC_WAIT_BEFORE_LOOP:
 // rather than keep it and invert the phase)
 
 MCASP_ADC_WAIT_BEFORE_LOOP:
-     LBBO r2, reg_mcasp_addr, MCASP_RSTAT, 4
+     LBBO &r2, reg_mcasp_addr, MCASP_RSTAT, 4
      QBBC MCASP_ADC_WAIT_BEFORE_LOOP, r2, MCASP_RSTAT_RDATA_BIT
 
      MCASP_READ_FROM_DATAPORT r2
@@ -1352,15 +1344,15 @@ MCASP_TX_ERROR_HANDLE_END:
 
      // Load audio frame from memory and increment pointer to next frame
 #ifdef CTAG_FACE_8CH
-     LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 16
+     LBCO &r0, C_MCASP_MEM, reg_mcasp_dac_current, 16
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 16
 #endif
 #ifdef CTAG_BEAST_16CH
-	 LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 32
+	 LBCO &r0, C_MCASP_MEM, reg_mcasp_dac_current, 32
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 32
 #endif
 #ifdef BELA_TLV_CODEC
-     LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
+     LBCO &r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4
 #endif
 
@@ -1449,7 +1441,7 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      LSL r16, r15, 16
      OR r3, r3, r16
 
-     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
+     SBCO &r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
 #endif
 #ifdef CTAG_BEAST_16CH
@@ -1473,7 +1465,7 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      AND r3, r10, r17
      LSL r16, r11, 16
      OR r3, r3, r16
-     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
+     SBCO &r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
 
      MCASP_READ_FROM_DATAPORT r8, 32
@@ -1489,7 +1481,7 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      AND r3, r14, r17
      LSL r16, r15, 16
      OR r3, r3, r16
-     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
+     SBCO &r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
 
 SKIP_AUDIO_RX_FRAME:
@@ -1501,7 +1493,7 @@ SKIP_AUDIO_RX_FRAME:
      LSL r16, r9, 16
      OR r0, r0, r16
 
-     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
+     SBCO &r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4 // increment memory pointer
 #endif
 
@@ -1521,7 +1513,7 @@ MCASP_RX_ISR_END:
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
      // Analog ADC data is saved in r0-r1 and analog DAC data is saved in r2-r3 (four samples each)
-     LBCO r2, C_ADC_DAC_MEM, reg_dac_current, 8
+     LBCO &r2, C_ADC_DAC_MEM, reg_dac_current, 8
      ADD reg_dac_current, reg_dac_current, 8
 
      // DAC: transmit low word (first in little endian)
@@ -1621,7 +1613,7 @@ ANALOG_CHANNEL_7_END:
      OR r1, r1, r16
 
      // Store 4 ADC samples in memory
-     SBCO r0, C_ADC_DAC_MEM, reg_adc_current, 8
+     SBCO &r0, C_ADC_DAC_MEM, reg_adc_current, 8
      ADD reg_adc_current, reg_adc_current, 8
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
@@ -1637,9 +1629,9 @@ PROCESS_SPI_END:
      QBBC PROCESS_DIGITAL_END, reg_flags, FLAG_BIT_USE_DIGITAL
 
      //r27 is actually r27, so do not use r27 from here to ...
-     LBBO r27, reg_digital_current, 0, 4 
+     LBBO &r27, reg_digital_current, 0, 4
      JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
-     SBBO r27, reg_digital_current, 0,   4 
+     SBBO &r27, reg_digital_current, 0,   4
      //..here you can start using r27 again
 
      ADD reg_digital_current, reg_digital_current, 4 //increment pointer
@@ -1660,20 +1652,20 @@ MCSPI_INTR_RECEIVED: // SINTERRUPTN
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCSPI_INTR)
 
      // Check which kind of interrupt was received
-     LBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+     LBBO &r27, reg_spi_addr, SPI_IRQSTATUS, 4
      QBBS MCSPI_INTR_TX0_EMPTY, r27, SPI_INTR_BIT_TX0_EMPTY
      QBBS MCSPI_INTR_RX1_FULL, r27, SPI_INTR_BIT_RX1_FULL
 
      // Clear all interrupt status bits
      //TODO: Check if it is safer to only delete specific interrupts
      MOV r27, 0x7F
-     SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+     SBBO &r27, reg_spi_addr, SPI_IRQSTATUS, 4
 
      JMP EVENT_LOOP
 
 MCSPI_INTR_TX0_EMPTY:
 	 MOV r27, (1 << SPI_INTR_BIT_TX0_EMPTY)
-	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+	 SBBO &r27, reg_spi_addr, SPI_IRQSTATUS, 4
 	 //HALT
 
 	 //TODO: Handle tx0 empty interrupt here
@@ -1682,7 +1674,7 @@ MCSPI_INTR_TX0_EMPTY:
 
 MCSPI_INTR_RX1_FULL:
 	 MOV r27, (1 << SPI_INTR_BIT_RX1_FULL)
-	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
+	 SBBO &r27, reg_spi_addr, SPI_IRQSTATUS, 4
 	 //HALT
 
 	 //TODO: Handle rx1 full interrupt here
@@ -1769,33 +1761,31 @@ ALL_FRAMES_PROCESSED:
     
      // Notify ARM of buffer swap
      AND r2, reg_flags, (1 << FLAG_BIT_BUFFER1)    // Mask out every but low bit
-     SBBO r2, reg_comm_addr, COMM_CURRENT_BUFFER, 4
+     SBBO &r2, reg_comm_addr, COMM_CURRENT_BUFFER, 4
      MOV R31.b0, PRU1_ARM_INTERRUPT + 16           // Interrupt to host loop
     
      // Increment the frame count in the comm buffer (for status monitoring)
-     LBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4
+     LBBO &r2, reg_comm_addr, COMM_FRAME_COUNT, 4
      ADD r2, r2, reg_frame_mcasp_total
-     SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4
+     SBBO &r2, reg_comm_addr, COMM_FRAME_COUNT, 4
 
      // If LED blink enabled, toggle every 4096 frames
-     LBBO r3, reg_comm_addr, COMM_LED_ADDRESS, 4
+     LBBO &r3, reg_comm_addr, COMM_LED_ADDRESS, 4
      QBEQ LED_BLINK_DONE, r3, 0 
      MOV r1, 0x1000
      AND r2, r2, r1          // Test (frame count & 4096)
      QBEQ LED_BLINK_OFF, r2, 0
-     LBBO r2, reg_comm_addr, COMM_LED_PIN_MASK, 4   
+     LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_SETDATAOUT
-     ADD r3, r3, r1          // Address for GPIO set register
-     SBBO r2, r3, 0, 4       // Set GPIO pin
+     SBBO &r2, r3, r1, 4       // Set GPIO pin
      QBA LED_BLINK_DONE
 LED_BLINK_OFF:
-     LBBO r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
+     LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_CLEARDATAOUT
-     ADD r3, r3, r1          // Address for GPIO clear register
-     SBBO r2, r3, 0, 4       // Clear GPIO pin  
+     SBBO &r2, r3, r1, 4       // Clear GPIO pin
 LED_BLINK_DONE: 
      // Check if we should finish: flag is zero as long as it should run
-     LBBO r2, reg_comm_addr, COMM_SHOULD_STOP, 4
+     LBBO &r2, reg_comm_addr, COMM_SHOULD_STOP, 4
      QBEQ WRITE_ONE_BUFFER, r2, 0
 
 CLEANUP:
@@ -1805,23 +1795,22 @@ CLEANUP:
      QBBC SPI_CLEANUP_DONE, reg_flags, FLAG_BIT_USE_SPI
     
      MOV r3, SPI_BASE + SPI_CH0CONF
-     LBBO r2, r3, 0, 4
+     LBBO &r2, r3, 0, 4
      CLR r2, r2, 13
      CLR r2, r2, 27
-     SBBO r2, r3, 0, 4
+     SBBO &r2, r3, 0, 4
 
      MOV r3, SPI_BASE + SPI_CH0CTRL
-     LBBO r2, r3, 0, 4
+     LBBO &r2, r3, 0, 4
      CLR r2, r2, 1
-     SBBO r2, r3, 0, 4      
+     SBBO &r2, r3, 0, 4
 SPI_CLEANUP_DONE:
      // Turn the LED off, if enabled
-     LBBO r3, reg_comm_addr, COMM_LED_ADDRESS, 4
+     LBBO &r3, reg_comm_addr, COMM_LED_ADDRESS, 4
      QBEQ CLEANUP_DONE, r3, 0        
-     LBBO r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
+     LBBO &r2, reg_comm_addr, COMM_LED_PIN_MASK, 4
      MOV r1, GPIO_CLEARDATAOUT
-     ADD r3, r3, r1          // Address for GPIO clear register
-     SBBO r2, r3, 0, 4       // Clear GPIO pin  
+     SBBO &r2, r3, r1, 4       // Clear GPIO pin
 
 CLEANUP_DONE:
      XIN SCRATCHPAD_ID_BANK2, r0, 20 // Load test data from scratchpad 2 for evaluation
