@@ -1,6 +1,16 @@
 #include <Bela.h>
 #include <math.h>
 #include <Scope.h>
+
+#define PRINTONCE(...) {\
+	static bool printed = false;\
+	if(!printed)\
+	{\
+		printed = true;\
+		rt_printf(__VA_ARGS__);\
+	}\
+}
+
 Scope gScope;
 enum
 {
@@ -322,7 +332,9 @@ void render(BelaContext *context, void *userData)
 								testInitTime = count;
 							}
 						break;
-						case 1: 
+						case 1:
+							PRINTONCE("kTrigIoTest: Press one button at a time\n");
+
 							// Stop flashing LEDs
 							flashLeds = false;
 							
@@ -416,6 +428,7 @@ void render(BelaContext *context, void *userData)
 	// SECOND TEST
 	else if (gCurrentTest == kTrigIoTest)
 	{	
+		PRINTONCE("kTrigIoTest: Testing trig loopback...\n");
 		static bool digitalsFailing[nPins] = {0};
 		static unsigned int numOfBrokenDigitals = 0;
 		
@@ -495,6 +508,7 @@ void render(BelaContext *context, void *userData)
 	// THIRD TEST
 	else if (gCurrentTest == kPotRangeTest) 
 	{
+		PRINTONCE("kPotRangeTest: swipe each pot so that it covers the whole range\n");
 		static bool potsWorking[gNumCVs] = {0};
 		static int numOfWorkingPots = 0;
 		static int currentPot = -1;
@@ -551,7 +565,7 @@ void render(BelaContext *context, void *userData)
 					else
 					{
 						float readVal = analogRead(context, n, cvPins[c]);
-						
+
 						if(fabs(readVal - previousRead[c]) > 0.01)
 						{
 							// If pot changes, update previous value 
@@ -608,9 +622,9 @@ void render(BelaContext *context, void *userData)
 	// FOURTH TEST
 	else if (gCurrentTest == kCvLoRangeTest) 
 	{
+		PRINTONCE("Set all the pots to minimum\n");
 		static int currentCv = 0;
 		static bool potCheck = true;
-		
 		float readVal;
 		static bool brokenCvs[gNumCVs] = {0};
 		static int numOfWorkingCvs = 0;
@@ -656,6 +670,7 @@ void render(BelaContext *context, void *userData)
 					}
 					else
 					{	
+						PRINTONCE("Testing CV loopback");
 						// Write value to CV output
 						analogWriteOnce(context, n, cvPins[currentCv], cvToAnalog(cvOutVal));
 					
@@ -729,9 +744,10 @@ void render(BelaContext *context, void *userData)
 	// FIFTH TEST
 	else if (gCurrentTest == kCvHiRangeTest) 
 	{
+		PRINTONCE("Set all the pots to maximum\n");
 		static int currentCv = 0;
 		static bool potCheck = true;
-		
+
 		float readVal;
 		static bool brokenCvs[gNumCVs] = {0};
 		static int numOfWorkingCvs = 0;
@@ -780,16 +796,16 @@ void render(BelaContext *context, void *userData)
 					{	
 						// Write value to CV output
 						analogWriteOnce(context, n, cvPins[currentCv], cvToAnalog(cvOutVal));
-	
 						// Read after half a block-size samples
 						if(count - blockCount == gBlockSize/2)
 						{
 							readVal = analogRead(context, n, cvPins[currentCv]);
-	
 							// Check that the read value and the ouput value are within range
 							if(!(fabs(readVal+inOutOffset - cvOutVal) <= gCVtolerance))
 							{
 								brokenCvs[currentCv] = 1; // In and out are out of range
+								rt_printf("currentCv: %d, fabs(readVal+inOutOffset - cvOutVal): %f, readVal: %f, inOutOffset: %f, cvOutVal: %f, gCVtolerance: %f\n",
+									currentCv, fabs(readVal+inOutOffset - cvOutVal), readVal, inOutOffset, cvOutVal, gCVtolerance);
 							}
 							// Create CV ramp and go to next potentiometer when the ramp has finished
 							if(!cvRamp(&cvOutVal, cvOutRange, gInverseAudioSampleRate, gBlockSize))
@@ -808,6 +824,8 @@ void render(BelaContext *context, void *userData)
 				}
 				else
 				{
+					PRINTONCE("Testing CV loopback\n");
+
 					if(numOfWorkingCvs == gNumCVs)
 					{
 						rt_printf("All CV I/O work when potentiometes are set to maximum!\n");
@@ -850,7 +868,7 @@ void render(BelaContext *context, void *userData)
 	// SIXTH TEST
 	else if (gCurrentTest == kAudioTest)
 	{
-		
+		PRINTONCE("kAudioTest: Testing audio loopback\n");
 		static unsigned int currentChannel = 0; // 0 - Left, 1 - right
 		const char* channelLabels[2] = {"LEFT", "RIGHT"};
 		
@@ -1021,6 +1039,7 @@ void render(BelaContext *context, void *userData)
 	// SEVENTH TEST
 	else if (gCurrentTest == kRewireTest)
 	{
+		PRINTONCE("kRewireTest: now connect audio output L-R to CV in 1-2, respectively, and press switch 1 when done\n");
 		static int previousTriggerStatus = 0;
 		
 		for(unsigned int n = 0; n < context->analogFrames; n++) 
@@ -1053,6 +1072,7 @@ void render(BelaContext *context, void *userData)
 	// EIGHT TEST
 	else if (gCurrentTest == kAudioDCTestHi)
 	{
+		PRINTONCE("kAudioDCTestHi: testing audio out loopback to CV in. Make sure CV1 and CV2 are at max\n");
 		static int currentChannel = 0;
 		static bool potCheck = true;
 		
@@ -1093,7 +1113,6 @@ void render(BelaContext *context, void *userData)
 						if(count - blockCount == gBlockSize/2)
 						{
 							readVal = analogRead(context, n, cvPins[currentChannel]);
-							rt_printf("%f\n", readVal);
 							
 							// Finish checking the potentiometer when it is in the CCW position
 							if(readVal >= 0.95)
@@ -1102,6 +1121,7 @@ void render(BelaContext *context, void *userData)
 					}
 					else
 					{
+						PRINTONCE("Testing audio to CV loopback\n");
 						// Write value to audio output
 						audioWrite(context, n, currentChannel, audioOutVal);
 
@@ -1176,7 +1196,9 @@ void render(BelaContext *context, void *userData)
 	// NINTH TEST
 	else if (gCurrentTest == kAudioDCTestLo)
 	{
+		PRINTONCE("kAudioDCTestHi: testing audio out loopback to CV in. Make sure CV1 and CV2 are at min\n");
 		static int currentChannel = 0;
+
 		static bool potCheck = true;
 		
 		float readVal;
@@ -1223,6 +1245,7 @@ void render(BelaContext *context, void *userData)
 					}
 					else
 					{
+						PRINTONCE("Testing audio to CV loopback\n");
 						// Write value to audio output
 						audioWrite(context, n, currentChannel, audioOutVal);
 
@@ -1305,6 +1328,7 @@ void render(BelaContext *context, void *userData)
 				{
 					if(!flashNumberLed(context, n, pwmPin, ledPins, 4, passedTestIndex+1, 20, 0.25 * context->audioSampleRate, count, 0))
 					{
+						rt_fprintf(stderr, "Some tests failed\n");
 						exit(1);
 					}
 				}
@@ -1317,6 +1341,7 @@ void render(BelaContext *context, void *userData)
 			{
 				if(!flashNumberLed(context, n, pwmPin, ledPins, 4, 15, 20, 0.25 * context->audioSampleRate, count, 1))
 				{
+					rt_printf("All tests passed\n");
 					exit(0);
 				}
 			}
