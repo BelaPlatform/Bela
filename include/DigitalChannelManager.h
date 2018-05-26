@@ -226,10 +226,12 @@ public:
 			modeInput = setBit(modeInput, channel);
 			modeOutput = clearBit(modeOutput, channel);
 		}
-		rt_printf("Bela digital: channel %d is set as %s at %s rate\n", channel,
+		if(verbose)
+			rt_printf("Bela digital: channel %d is set as %s at %s rate\n", channel,
 				isInput(channel) ? "input" : "output", isSignalRate(channel) ? "signal" : "message");
 	}
 
+	void setVerbose(bool isVerbose);
 	virtual ~DigitalChannelManager();
 private:
 	bool callbackEnabled;
@@ -241,6 +243,7 @@ private:
 	uint16_t modeInput;
 	uint16_t messageRate;
 	uint16_t signalRate;
+	bool verbose;
 };
 
 #endif /* DIGITALCHANNELMANAGER_H_ */
