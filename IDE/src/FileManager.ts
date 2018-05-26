@@ -10,7 +10,6 @@ import { Lock } from "./Lock";
 // OR the filesystem, in the whole app
 
 var lock: Lock = new Lock();
-var save_lock: Lock = new Lock();
 
 function error_handler(e: Error){
 	lock.release();
@@ -102,30 +101,8 @@ export async function empty_directory(dir_path: string): Promise<any>{
 	});
 }
 // sophisticated file and directory manipulation
+export {save_file as save_file} from './SaveFile';
 
-// save_file follows vim's strategy to save a file in a crash-proof way
-// it first writes the file to .<file_name>~
-// then it deletes the existing file at <file_name>
-// then it renames .<file_name>~ to <file_name>
-// if a path is given, a lockfile is also created and destroyed
-// save_file has its own mutex, so it cannot run concurrently with itself
-export async function save_file(file_name: string, file_content: string, lockfile: string|undefined = undefined){
-	await save_lock.acquire();
-	try{
-		if (lockfile)
-			await write_file(lockfile, file_name);
-		await write_file('.'+file_name+'~', file_content);
-		await delete_file(file_name);
-		await rename_file('.'+file_name+'~', file_name);
-		if (lockfile)
-			await delete_file(lockfile)
-	}
-	catch(e){
-		save_lock.release();
-		throw e;
-	}
-	save_lock.release();
-}
 // recursively read the contents of a directory, returning an array of File_Descriptors
 export async function deep_read_directory(dir_path: string): Promise<util.File_Descriptor[]>{
 	let contents: any = await read_directory(dir_path);

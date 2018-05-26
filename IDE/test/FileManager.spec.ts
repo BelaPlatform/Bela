@@ -2,6 +2,7 @@ import { should } from 'chai';
 import * as mock from 'mock-fs';
 import * as file_manager from "../src/FileManager";
 import * as util from '../src/utils';
+var sinon = require('sinon');
 
 should();
 
@@ -235,28 +236,6 @@ describe('FileManager', function(){
 
 	describe('Sophisticated file and directory manipulation', function(){
 
-		describe('#save_file', function(){
-			var content: string = 'this is a test';
-			var file_name: string = 'test_file';
-			var lockfile: string = '.lockfile';
-			beforeEach(function(){
-				mock({});
-			});
-			it('should save a file following vim\'s strategy to avoid data loss', async function(){
-				await file_manager.save_file(file_name, content, lockfile);
-				let data: string = await file_manager.read_file(file_name);
-				data.should.equal(content);
-			});
-			it('should also work without using a lockfile', async function(){
-				await file_manager.save_file(file_name, content);
-				let data: string = await file_manager.read_file(file_name);
-				data.should.equal(content);
-			});
-			afterEach(function(){
-				mock.restore();
-			});
-		});
-		
 		describe('#deep_read_directory', function(){
 			var root_content = [
 				new util.File_Descriptor('dir1', undefined, [
