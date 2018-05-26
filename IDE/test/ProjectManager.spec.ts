@@ -15,21 +15,14 @@ describe('ProjectManager', function(){
 			var ext = 'cpp';
 			var newFile = 'render.'+ext;
 			var fileData = 'test_render_content';
-			var image: Buffer;
-			var wav: Buffer;
 			beforeEach(async function(){
-			//	image = await file_manager.read_file_raw('/root/FileManager/src/test_image.png');
-			//	wav = await file_manager.read_file_raw('/root/FileManager/src/test_wav.wav');
 				mock({
 					'/root/Bela/projects/test' : {
 						'render.cpp': fileData,
 						'bin_large': new Buffer(50000001),
-						'bin_small': new Buffer(10000),
-			//			'test_image.png': image,
-			//			'test_wav.wav': wav
+						'bin_small': new Buffer(10000)
 					}
 				});
-			//	await file_manager.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink');
 			});
 			it('should open a file from a project', async function(){
 				let output: any = {currentProject, newFile};
@@ -68,7 +61,7 @@ describe('ProjectManager', function(){
 				output.readOnly.should.equal(true);
 				output.fileType.should.equal(0);
 			});
-			it('should empty the media directory and symlink the file if it is an audio or image file', async function(){
+		/*	it('should empty the media directory and symlink the file if it is an audio or image file', async function(){
 				let output: any = {currentProject, newFile: 'test_image.png'};
 				await project_manager.openFile(output);
 				let file_list = await file_manager.read_directory('/root/Bela/IDE/public/media');
@@ -85,7 +78,7 @@ describe('ProjectManager', function(){
 				output2.readOnly.should.equal(true);
 				output2.fileName.should.equal('test_wav.wav');
 				output2.fileType.should.equal('audio/x-wav');
-			});
+			}); */
 			afterEach(function(){
 				mock.restore();
 			});
