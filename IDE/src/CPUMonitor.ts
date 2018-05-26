@@ -8,11 +8,12 @@ import * as ide_settings from './IDESettings';
 
 let name: string;
 let timeout: NodeJS.Timer;
-let found_pid: boolean = false;
+let found_pid: boolean;
 let root_pid: number;
 let main_pid: number;
 let callback: (cpu: any) => void;
-let stopped: boolean = false;
+let stopped: boolean;
+let find_pid_count: number;
 
 export function start(pid: number, project: string, cb: (cpu: any)=>void){
 	root_pid = pid;
@@ -20,6 +21,8 @@ export function start(pid: number, project: string, cb: (cpu: any)=>void){
 	name = project.substring(0, 15);
 	callback = cb;
 	stopped = false;
+	found_pid = false;
+	find_pid_count = 0;
 	timeout = setTimeout( () => timeout_func(), 1000);
 }
 
@@ -36,7 +39,9 @@ async function timeout_func(){
 	let cpu: any = '0';
 	try{
 		if (!found_pid){
-			await find_pid();
+			if (find_pid_count++ < 3){
+				await find_pid();
+			}
 		} else {
 			cpu = await getCPU();
 		}
