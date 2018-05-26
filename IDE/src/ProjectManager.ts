@@ -19,10 +19,21 @@ let max_file_size = 50000000;	// bytes (50Mb)
 // if the file is an image or audio file, it is symlinked from the media folder
 export async function openFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
-	let file_stat = await file_manager.stat_file(file_path);
+	try{
+		var file_stat = await file_manager.stat_file(file_path);
+	}
+	catch(e){
+		data.error = 'error opening file '+data.newFile+': '+e.toString();
+		data.fileData = 'Error opening file. Please open a different file to continue';
+		data.fileName = data.newFile;
+		data.newFile = undefined;
+		data.readOnly = true;
+		data.fileType = 0;
+		return;
+	}
 	if (file_stat.size > max_file_size){
 		data.error = 'file is too large: '+(file_stat.size/1000000)+'Mb';
-		data.fileData = "The IDE can't open non-source files larger than "+(max_file_size/1000000)+"Mb";
+		data.fileData = "The IDE can't open files larger than "+(max_file_size/1000000)+"Mb";
 		data.readOnly = true;
 		data.fileName = data.newFile;
 		data.newFile = undefined;
@@ -51,7 +62,18 @@ export async function openFile(data: any){
 		data.fileType = 0;
 		return;
 	}
-	data.fileData = await file_manager.read_file(file_path);
+	try{
+		data.fileData = await file_manager.read_file(file_path);
+	}
+	catch(e){
+		data.error = 'error opening file '+data.newFile+': '+e.toString();
+		data.fileData = 'Error opening file. Please open a different file to continue';
+		data.fileName = data.newFile;
+		data.newFile = undefined;
+		data.readOnly = true;
+		data.fileType = 0;
+		return;
+	}
 	if (data.newFile.split && data.newFile.includes('.')){
 		data.fileType = data.newFile.split('.').pop();
 	} else {

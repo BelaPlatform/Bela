@@ -18,18 +18,18 @@ describe('ProjectManager', function(){
 			var image: Buffer;
 			var wav: Buffer;
 			beforeEach(async function(){
-				image = await file_manager.read_file_raw('/root/FileManager/src/test_image.png');
-				wav = await file_manager.read_file_raw('/root/FileManager/src/test_wav.wav');
+			//	image = await file_manager.read_file_raw('/root/FileManager/src/test_image.png');
+			//	wav = await file_manager.read_file_raw('/root/FileManager/src/test_wav.wav');
 				mock({
 					'/root/Bela/projects/test' : {
 						'render.cpp': fileData,
 						'bin_large': new Buffer(50000001),
 						'bin_small': new Buffer(10000),
-						'test_image.png': image,
-						'test_wav.wav': wav
+			//			'test_image.png': image,
+			//			'test_wav.wav': wav
 					}
 				});
-				await file_manager.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink');
+			//	await file_manager.make_symlink('/root/Bela/projects/test/test_image.png', '/root/Bela/IDE/public/media/old_symlink');
 			});
 			it('should open a file from a project', async function(){
 				let output: any = {currentProject, newFile};
@@ -39,6 +39,16 @@ describe('ProjectManager', function(){
 				(typeof output.newFile).should.equal('undefined');
 				output.fileType.should.equal(ext);
 				output.readOnly.should.equal(false);
+			});
+			it('should fail gracefully if the file doesn\'t exist', async function(){
+				let output: any = {currentProject, newFile: 'notafile.file'};
+				await project_manager.openFile(output);
+				output.fileName.should.equal('notafile.file');
+				output.fileData.should.equal('Error opening file. Please open a different file to continue');
+				(typeof output.newFile).should.equal('undefined');
+				output.fileType.should.equal(0);
+				output.readOnly.should.equal(true);
+				output.error.should.be.a('string');
 			});
 			it('should reject files larger than 50 Mb', async function(){
 				let output: any = {currentProject, newFile: 'bin_large'};
