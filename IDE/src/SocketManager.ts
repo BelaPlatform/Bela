@@ -4,6 +4,7 @@ import * as IDE from './main';
 import * as project_manager from './ProjectManager';
 import * as process_manager from './ProcessManager';
 import * as git_manager from './GitManager';
+import * as update_manager from './UpdateManager';
 import * as project_settings from './ProjectSettings';
 import * as ide_settings from './IDESettings';
 import * as boot_project from './RunOnBoot';
@@ -40,6 +41,7 @@ function connection(socket: SocketIO.Socket){
 	socket.on('run-on-boot', (project: string) => boot_project.set_boot_project(socket, project) );
 	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
 	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
+	socket.on('upload-update', (data: any) => update_manager.upload(data) );
 	socket.on('shutdown', IDE.shutdown);
 	socket.on('disconnect', disconnect);
 	init_message(socket);
