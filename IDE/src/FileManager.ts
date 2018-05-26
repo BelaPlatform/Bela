@@ -9,74 +9,88 @@ import { Lock } from "./Lock";
 // only the primitive file and directory manipulation methods should touch the lock
 // OR the filesystem, in the whole app
 
-var lock: Lock = new Lock();
-
-function error_handler(e: Error){
-	lock.release();
-	throw e;
-}
+const lock: Lock = new Lock();
 
 // primitive file and directory manipulation
 export async function write_file(file_path: string, data: string): Promise<void>{
 	await lock.acquire();
-	await fs.outputFileAsync(file_path, data)
-		.catch( e => error_handler(e) );
-	lock.release();
+	try{
+		await fs.outputFileAsync(file_path, data);
+	}
+	finally{
+		lock.release();
+	}
 }
 export async function read_file(file_path: string): Promise<string> {
 	await lock.acquire();
-	let out: string = await fs.readFileAsync(file_path, 'utf8')
-		.catch( e => {
-			error_handler(e);
-			return '';
-		});
-	lock.release();
+	let out: string;
+	try{
+		out = await fs.readFileAsync(file_path, 'utf8');
+	}
+	finally{
+		lock.release();
+	}
 	return out;
 }
 export async function read_file_raw(file_path: string): Promise<Buffer>{
 	await lock.acquire();
-	let out: Buffer = await fs.readFileAsync(file_path)
-		.catch( e => {
-			error_handler(e);
-			return Buffer.alloc(0); 
-		});
-	lock.release();
+	let out: Buffer;
+	try{
+		out = await fs.readFileAsync(file_path);
+	}
+	finally{
+		lock.release();
+	}
 	return out;
 }
 export async function rename_file(src: string, dest: string): Promise<void>{
 	await lock.acquire();
-	await fs.moveAsync(src, dest, {overwrite: true})
-		.catch( e => error_handler(e) );
-	lock.release();
+	try{
+		await fs.moveAsync(src, dest, {overwrite: true});
+	}
+	finally{
+		lock.release();
+	}
 }
 export async function delete_file(file_path: string): Promise<void>{
 	await lock.acquire();
-	await fs.removeAsync(file_path)
-		.catch( e => error_handler(e) );
-	lock.release();
+	try{
+		await fs.removeAsync(file_path);
+	}
+	finally{
+		lock.release();
+	}
 }
 export async function read_directory(dir_path: string): Promise<string[]>{
 	await lock.acquire();
-	let out: string[] = await fs.readdirAsync(dir_path)
-		.catch( e => {
-			error_handler(e);
-			return ['']; 
-		});
-	lock.release();
+	let out: string[]; 
+	try{
+		out = await fs.readdirAsync(dir_path);
+	}
+	finally{
+		lock.release();
+	}
 	return out;
 }
 export async function stat_file(file_name: string): Promise<any>{
 	await lock.acquire();
-	let out: any = await fs.lstatAsync(file_name)
-		.catch( e => error_handler(e) );
-	lock.release();
+	let out: any; 
+	try{
+		out = await fs.lstatAsync(file_name);
+	}
+	finally{
+		lock.release();
+	}
 	return out;
 }
 export async function copy_directory(src_path: string, dest_path: string): Promise<void>{
 	await lock.acquire();
-	await fs.copyAsync(src_path, dest_path)
-		.catch( e => error_handler(e) );
-	lock.release();
+	try{
+		await fs.copyAsync(src_path, dest_path);
+	}
+	finally{
+		lock.release();
+	}
 }
 // for some reason fs does not have ensureSymLinkAsync or emptyDirAsync
 // so promisify them manually
@@ -93,7 +107,7 @@ export async function make_symlink(src_path: string, dest_path: string): Promise
 export async function empty_directory(dir_path: string): Promise<any>{
 	await lock.acquire();
 	return new Promise( (resolve, reject) => {
-	fs.emptyDir(dir_path, err => {
+		fs.emptyDir(dir_path, err => {
 			lock.release();
 			if (err) reject(err);
 			resolve();

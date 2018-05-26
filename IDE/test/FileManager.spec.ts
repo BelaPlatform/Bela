@@ -2,7 +2,6 @@ import { should } from 'chai';
 import * as mock from 'mock-fs';
 import * as file_manager from "../src/FileManager";
 import * as util from '../src/utils';
-var sinon = require('sinon');
 
 should();
 
@@ -11,14 +10,22 @@ describe('FileManager', function(){
 	describe('primitive file and directory manipulation', function() {
 	
 		describe('#read_file', function() {
-			var content: string = 'this is a test';
-			before(function(){
-				var test_file: mock.File = mock.file({content});
-				mock({ test_file });
+			beforeEach(function(){
+				mock({ test_file: 'test_content' });
 			});
 			it('should read a file', async function(){
 				let data: string = await file_manager.read_file('test_file');
-				data.should.equal(content);
+				data.should.equal('test_content');
+			});
+			it('should throw ENOENT if the file doesnt exist', async function(){
+				let data: string = await file_manager.read_file('different_file')
+					.catch( (e: NodeJS.ErrnoException) => {
+						e.code.should.equal('ENOENT');
+						console.log(e.code);
+					});
+			});
+			afterEach(function(){
+				mock.restore();
 			});
 		});
 
