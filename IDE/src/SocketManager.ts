@@ -108,6 +108,9 @@ async function project_event(socket: SocketIO.Socket, data: any){
 		// if a projectList was created, send it to other tabs
 		if (data.projectList)
 			socket.broadcast.emit('project-list', data.currentProject, data.projectList);
+		// if a file was opened save this in the project settings
+		if (data.fileName)
+			project_settings.set_fileName(data.currentProject, data.fileName);
 	}
 }
 

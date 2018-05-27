@@ -31,6 +31,17 @@ export async function setCLArg(data: any): Promise<any> {
 	lock.release();
 	return settings;
 }
+export async function set_fileName(project: string, fileName: string){
+	lock.acquire();
+	try{
+		let settings = await read(project);
+		settings.fileName = fileName;
+		write(project, settings);
+	}
+	finally{
+		lock.release();
+	}
+}
 export async function restoreDefaultCLArgs(data: any): Promise<any> {
 	lock.acquire();
 	try{

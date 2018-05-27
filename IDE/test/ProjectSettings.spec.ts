@@ -1,6 +1,7 @@
 import { should } from 'chai';
 import * as mock from 'mock-fs';
 import * as project_settings from '../src/ProjectSettings';
+import * as file_manager from '../src/FileManager';
 
 should();
 
@@ -54,6 +55,17 @@ describe('ProjectSettingsManager', function(){
 				});
 				settings.CLArgs['old_key'].should.equal('old_value');
 				settings.CLArgs['key'].should.equal('value');
+			});
+			after(function(){
+				mock.restore();
+			});
+		});
+		describe('#set_fileName', function(){
+			it('should set the filename field of the project settings', async function(){
+				mock({});
+				await project_settings.set_fileName('test_project', 'test_file');
+				let settings = await file_manager.read_json('/root/Bela/projects/test_project/settings.json');
+				settings.fileName.should.equal('test_file');
 			});
 			after(function(){
 				mock.restore();
