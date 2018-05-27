@@ -12,7 +12,8 @@ var TerminalManager = require('./TerminalManager');
 export async function init(){
 	console.log('starting IDE');
 
-	await check_lockfile();
+	await check_lockfile()
+		.catch( (e: Error) => console.log('error checking lockfile', e) );
 
 	// setup webserver 
 	const app: express.Application = express();
@@ -46,6 +47,7 @@ export async function check_lockfile(){
 	}
 	let backup_filename: string = filename+'.bak';
 	await file_manager.copy_file(tmp_backup_file, project_path+backup_filename);
+	console.log('backup file copied to', project_path+backup_filename);
 	backup_file_stats.exists = true;
 	backup_file_stats.filename = filename;
 	backup_file_stats.backup_filename = backup_filename;
