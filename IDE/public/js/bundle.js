@@ -1334,7 +1334,7 @@ var ConsoleView = function (_View) {
 					for (var _iterator = log[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 						var line = _step.value;
 
-						_console.log(line.split(' ').join('&nbsp;'), 'make');
+						_console.warn(line.split(' ').join('&nbsp;'), 'make');
 					}
 				} catch (err) {
 					_didIteratorError = true;
@@ -1380,7 +1380,8 @@ var ConsoleView = function (_View) {
 	}, {
 		key: '__belaLogErr',
 		value: function __belaLogErr(log, data) {
-			_console.warn(log);
+			if (!log.includes('make: *** wait')) // block unneccesary errors when killing process
+				_console.warn(log);
 			//_console.warn(log.split(' ').join('&nbsp;'));
 		}
 	}, {

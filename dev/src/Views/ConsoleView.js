@@ -153,7 +153,7 @@ class ConsoleView extends View{
 	__verboseSyntaxError(log, data){
 		if (parseInt(this.settings.getKey('verboseErrors'))){
 			for (let line of log){
-				_console.log(line.split(' ').join('&nbsp;'), 'make');
+				_console.warn(line.split(' ').join('&nbsp;'), 'make');
 			}
 		}
 	}
@@ -175,7 +175,8 @@ class ConsoleView extends View{
 		_console.log(log, 'bela');
 	}
 	__belaLogErr(log, data){
-		_console.warn(log);
+		if (!log.includes('make: *** wait')) // block unneccesary errors when killing process
+			_console.warn(log);
 		//_console.warn(log.split(' ').join('&nbsp;'));
 	}
 	__belaResult(data){
