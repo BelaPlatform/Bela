@@ -92,6 +92,9 @@ export async function copy_directory(src_path: string, dest_path: string): Promi
 		lock.release();
 	}
 }
+export async function copy_file(src_path: string, dest_path: string): Promise<void>{
+	return copy_directory(src_path, dest_path);
+}
 // for some reason fs does not have ensureSymLinkAsync or emptyDirAsync
 // so promisify them manually
 export async function make_symlink(src_path: string, dest_path: string): Promise<any>{

@@ -2,12 +2,17 @@ import * as express from 'express';
 import * as http from 'http';
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
+import * as file_manager from './FileManager';
 import * as paths from './paths';
+import * as util from './utils';
 import * as routes from './RouteManager';
+import * as path from 'path';
 var TerminalManager = require('./TerminalManager');
 
-export function init(){
+export async function init(){
 	console.log('starting IDE');
+
+	await check_lockfile();
 
 	// setup webserver 
 	const app: express.Application = express();
@@ -22,6 +27,35 @@ export function init(){
 
 	TerminalManager.init();
 }
+
+let backup_file_stats: util.Backup_File_Stats = {};
+export async function check_lockfile(){
+	let lockfile_exists =  await file_manager.file_exists(paths.lockfile);
+	if (!lockfile_exists){
+		backup_file_stats.exists = false;
+		return;
+	}
+	let file_path: string = await file_manager.read_file(paths.lockfile);
+	let filename: string = path.basename(file_path);
+	let project_path: string = path.dirname(file_path)+'/';
+	let tmp_backup_file: string = project_path+'.'+filename+'~';
+	let backup_file_exists: boolean = await file_manager.file_exists(tmp_backup_file);
+	if (!backup_file_exists){
+		backup_file_stats.exists = false;
+		return;
+	}
+	let backup_filename: string = filename+'.bak';
+	await file_manager.copy_file(tmp_backup_file, project_path+backup_filename);
+	backup_file_stats.exists = true;
+	backup_file_stats.filename = filename;
+	backup_file_stats.backup_filename = backup_filename;
+	backup_file_stats.project = path.basename(project_path);
+	await file_manager.delete_file(paths.lockfile);
+}
+export function get_backup_file_stats(): util.Backup_File_Stats {
+	return backup_file_stats;
+}
+
 
 function setup_routes(app: express.Application){
 	// static paths

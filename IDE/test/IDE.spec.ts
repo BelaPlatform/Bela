@@ -1,4 +1,7 @@
 import * as IDE from '../src/main';
+import * as mock from 'mock-fs';
+import * as util from '../src/utils';
+import * as file_manager from '../src/FileManager';
 import { should } from 'chai';
 import * as child_process from 'child_process';
 var sinon = require('sinon');
@@ -21,6 +24,40 @@ describe('Top-level IDE functions', function(){
 		});
 		after(function(){
 			sinon.restore();
+		});
+	});
+	describe('#check_lockfile', function(){
+		it('should set stats.exists to false if the lockfile does not exist', async function(){
+			mock({});
+			await IDE.check_lockfile();
+			let stats: util.Backup_File_Stats = IDE.get_backup_file_stats();
+			stats.exists.should.equal(false);
+		});
+		it('should set stats.exists to false if the backup file does not exist', async function(){
+			mock({
+				'/root/Bela/IDE/.lockfile': '/root/Bela/projects/test_project/test_file',
+			});
+			await IDE.check_lockfile();
+			let stats: util.Backup_File_Stats = IDE.get_backup_file_stats();
+			stats.exists.should.equal(false);
+		});
+		it('should copy the tmp backup file to the proper backup file, and populate the stats object correctly', async function(){
+			mock({
+				'/root/Bela/IDE/.lockfile': '/root/Bela/projects/test_project/test_file',
+				'/root/Bela/projects/test_project/.test_file~': 'test_content'
+			});
+			await IDE.check_lockfile();
+			let stats: util.Backup_File_Stats = IDE.get_backup_file_stats();
+			stats.exists.should.equal(true);
+			stats.filename.should.equal('test_file');
+			stats.backup_filename.should.equal('test_file.bak');
+			stats.project.should.equal('test_project');
+			let backup_content: string = await file_manager.read_file('/root/Bela/projects/'+stats.project+'/'+stats.backup_filename);
+			backup_content.should.equal('test_content');
+			(await file_manager.file_exists('/root/Bela/IDE/.lockfile')).should.equal(false);
+		});
+		afterEach(function(){
+			mock.restore();
 		});
 	});
 });

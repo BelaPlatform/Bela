@@ -29,3 +29,10 @@ export interface Process_Status{
 	belaLog?	: string;
 	belaLogErr?	: string;
 }
+
+export interface Backup_File_Stats{
+	exists?:		boolean;
+	filename?:		string;
+	backup_filename?:	string;
+	project?:		string;
+}
