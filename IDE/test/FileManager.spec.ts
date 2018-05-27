@@ -21,7 +21,6 @@ describe('FileManager', function(){
 				let data: string = await file_manager.read_file('different_file')
 					.catch( (e: NodeJS.ErrnoException) => {
 						e.code.should.equal('ENOENT');
-						console.log(e.code);
 					});
 			});
 			afterEach(function(){
