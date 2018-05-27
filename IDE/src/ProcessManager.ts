@@ -132,10 +132,12 @@ processes.syntax.on('finish', (stderr: string) => {
 });
 
 processes.build.on('start', (project: string) => socket_manager.broadcast('status', get_status()) );
-processes.build.on('finish', (stderr: string) => {
+processes.build.on('finish', (stderr: string, killed: boolean) => {
 	let status: util.Process_Status = get_status();
 	status.syntaxError = stderr;
 	socket_manager.broadcast('status', status);
+	if (!killed)
+		socket_manager.broadcast('std-warn', stderr);
 });
 processes.build.on('stdout', (data) => socket_manager.broadcast('status', {buildLog: data}) );
 
