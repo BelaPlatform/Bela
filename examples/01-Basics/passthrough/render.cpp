@@ -22,31 +22,40 @@ The Bela software is distributed under the GNU Lesser General Public License
 */
 
 #include <Bela.h>
+#include <algorithm>
+
+int gAudioChannelNum; // number of audio channels to iterate over
+int gAnalogChannelNum; // number of analog channels to iterate over
 
 bool setup(BelaContext *context, void *userData)
 {
-	// For this example we need the same amount of audio and analog input and output channels
+
+	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
+		printf("Different number of outputs and inputs available. Working with what we have.\n");
 	}
+
+	// If the amout of audio and analog input and output channels is not the same
+	// we will use the minimum between input and output
+	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
+	gAnalogChannelNum = std:min(context->analogInChannels, context->analogOutChannels);
+
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-
 	// Simplest possible case: pass inputs through to outputs
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		for(unsigned int ch = 0; ch < context->audioInChannels; ch++){
+		for(unsigned int ch = 0; ch < gAudioChannelNum; ch++){
 			audioWrite(context, n, ch, audioRead(context, n, ch));
 		}
 	}
 
 	// Same with analog channels
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
-		for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
+		for(unsigned int ch = 0; ch < gAnalogChannelNum; ch++) {
 			analogWriteOnce(context, n, ch, analogRead(context, n, ch));
 		}
 	}

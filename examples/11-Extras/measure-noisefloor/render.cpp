@@ -42,11 +42,11 @@ void analyseResults(void*);
 bool setup(BelaContext *context, void *userData)
 {	
 	gIsStdoutTty = isatty(1); // Check if stdout is a terminal
+
 	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
+		printf("Different number of outputs and inputs available. Working with what we have.\n");
 	}
 
 	// Clear the filter data structures

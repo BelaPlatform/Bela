@@ -57,24 +57,17 @@ int gAudioFramesPerAnalogFrame = 0;
 bool setup(BelaContext *context, void *userData)
 {
 
-	// Check that we have the same number of inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		fprintf(stderr, "Error: for this project, you need the same number of input and output channels.\n");
-		return false;
-	}
-
 	if(context->analogSampleRate > context->audioSampleRate)
 	{
 		fprintf(stderr, "Error: for this project the sampling rate of the analog inputs has to be <= the audio sample rate\n");
 		return false;
 	}
 
-    for(int ch=0;ch<NUM_CHANNELS;ch++) {
-        gSampleData[ch].sampleLen = getNumFrames(gFilename);
-    	gSampleData[ch].samples = new float[gSampleData[ch].sampleLen];
-        getSamples(gFilename,gSampleData[ch].samples,ch,0,gSampleData[ch].sampleLen);
-    }
+	for(int ch=0;ch<NUM_CHANNELS;ch++) {
+        	gSampleData[ch].sampleLen = getNumFrames(gFilename);
+    		gSampleData[ch].samples = new float[gSampleData[ch].sampleLen];
+        	getSamples(gFilename,gSampleData[ch].samples,ch,0,gSampleData[ch].sampleLen);
+	}
 
 	gReadPtr = -1;
 	

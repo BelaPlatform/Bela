@@ -115,10 +115,9 @@ void midiCallback(MidiChannelMessage message, void* arg){
 
 bool setup(BelaContext* context, void* userData)
 {
-    // Check that we have the same number of inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
+    // Check that we have the same number of audio inputs and outputs.
+	if(context->audioInChannels != context->audioOutChannels){
+		printf("Error: for this project, you need the same number of input and output audio channels.\n");
 		return false;
 	}
     
