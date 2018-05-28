@@ -43,15 +43,11 @@
 #define C_ADC_DAC_MEM C24     // PRU0 mem
 #ifdef DBOX_CAPE
 #define DAC_GPIO      GPIO0
-#ifdef BELA_MINI
-#define DAC_CS_PIN    (1<<6) // GPIO0:5 = P9 pin 17
-#else
 #define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
-#endif
-#else
+#else /* DBOX_CAPE */
 #define DAC_GPIO      GPIO1
 #define DAC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-#endif
+#endif /* DBOX_CAPE */
 #define DAC_TRM       0       // SPI transmit and receive
 #define DAC_WL        32      // Word length
 #define DAC_CLK_MODE  1       // SPI mode
@@ -66,15 +62,16 @@
 #ifdef DBOX_CAPE
 #ifdef BELA_MINI
 #define ADC_GPIO      GPIO0
+// this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
 #define ADC_CS_PIN    (1<<5) // GPIO1:5 = P1 pin 6
-#else
+#else /* BELA_MINI */
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-#endif
-#else
+#endif /* BELA_MINI */
+#else /* DBOX_CAPE */
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<17) // GPIO1:17 = P9 pin 23
-#endif
+#endif /* DBOX_CAPE */
 
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL        16      // Word length
@@ -492,10 +489,14 @@ QBA DALOOP
 // Complete DAC write with chip select
 .macro DAC_WRITE
 .mparam reg
+#ifndef BELA_MINI
      DAC_CS_ASSERT
+#endif /* BELA_MINI */
      DAC_TX reg
      DAC_WAIT_FOR_FINISH
+#ifdef BELA_MINI
      DAC_CS_UNASSERT
+#endif /* BELA_MINI */
      DAC_DISCARD_RX
 .endm
 
@@ -958,9 +959,14 @@ WRITE_ONE_BUFFER:
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
      LMBD r2, reg_num_channels, 1		// 1, 2 or 3 for 2, 4 or 8 channels
+#ifdef BELA_MINI
+     // there are 0 dac values, so ADC starts at the same point as DAC
+     MOV reg_adc_current, reg_dac_current
+#else /* BELA_MINI */
      LSL reg_adc_current, reg_frame_total, r2
      LSL reg_adc_current, reg_adc_current, 2   // N * 2 * 2 * bufsize
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
+#endif /* BELA_MINI */
     MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
      LSL reg_mcasp_adc_current, reg_frame_total, r2 // McASP ADC: starts (N/2)*2*2*bufsize beyond DAC
      LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
@@ -1054,6 +1060,7 @@ MCASP_WAIT_RSTAT_HIGH:
 MCASP_ADC_DONE:	
      QBBC SPI_SKIP_WRITE, reg_flags, FLAG_BIT_USE_SPI
 
+#ifndef BELA_MINI
      // DAC: transmit low word (first in little endian)
      MOV r2, 0xFFFF
      AND r7, reg_dac_data, r2
@@ -1064,6 +1071,7 @@ MCASP_ADC_DONE:
      LSL r8, r8, AD5668_ADDRESS_OFFSET
      OR r7, r7, r8
      DAC_WRITE r7
+#endif /* BELA_MINI */
 
      // Read ADC channels: result is always 2 commands behind
      // Start by reading channel 2 (result is channel 0) and go
@@ -1084,6 +1092,7 @@ MCASP_ADC_DONE:
      // Increment channel index
      ADD r1, r1, 1
 
+#ifndef BELA_MINI
      // DAC: transmit high word (second in little endian)
      LSR r7, reg_dac_data, 16
      LSL r7, r7, AD5668_DATA_OFFSET
@@ -1092,6 +1101,8 @@ MCASP_ADC_DONE:
      DAC_CHANNEL_REORDER r8, r1
      LSL r8, r8, AD5668_ADDRESS_OFFSET
      OR r7, r7, r8
+#endif /* BELA_MINI */
+     // this DAC_WRITE should also be "#ifdef BELA_MINI"'ed out, but if we do that, the ADC reads weird values. No idea why. Anyhow, we ifdef'ed out the CS_ in DAC_WRITE
      DAC_WRITE r7
 
      // Read ADC channels: result is always 2 commands behind

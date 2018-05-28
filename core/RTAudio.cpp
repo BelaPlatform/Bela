@@ -13,13 +13,17 @@
 //TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
 
 //#define CTAG_FACE_8CH
-#define CTAG_BEAST_16CH
+//#define CTAG_BEAST_16CH
+#if (defined(CTAG_BEAST_8CH) || defined(CTAG_BEAST_16CH))
+#define CTAG
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <math.h>
+#include <algorithm>
 #include <iostream>
 #include <assert.h>
 #include <vector>
@@ -85,20 +89,22 @@ static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
 
+#ifdef CTAG
 const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
 const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
+#endif /* CTAG */
 
+extern "C" int is_belamini();
 BelaHw Bela_detectHw()
 {
-	gI2cCodec;
-	gSpiCodec;
 #ifdef CTAG_FACE_8CH
 	return CtagFace;
 #elif defined(CTAG_BEAST_16CH)
 	return CtagBeast;
 #endif
+	if(is_belamini())
+		return BelaMiniCape;
 	return BelaCape;
-
 }
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
@@ -346,7 +352,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			return -1;
 	}
 
+#ifdef CTAG
+	// TODO: make the failure less verbose
 	gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, ctag_spidev_gpio_cs1);
+#endif /* CTAG */
 	gI2cCodec = new I2c_Codec(2, settings->codecI2CAddress); // TODO: this may fail (e.g.: Bela cape not present, or broken codec)
 								//, where would we find out? in Bela_detectHw(), I guess
 
@@ -356,24 +365,27 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(Bela_getHwConfig(belaHw, &cfg))
 	{
 		fprintf(stderr, "Unrecognized Bela hardware: is a cape connected?\n");
+		return 1;
 	}
 	gContext.audioSampleRate = cfg.audioSampleRate;
 	gContext.audioInChannels = cfg.audioInChannels;
 	gContext.audioOutChannels = cfg.audioOutChannels;
+	gContext.audioFrames = settings->periodSize;
 	gAudioCodec = cfg.activeCodec;
 	if(cfg.disabledCodec)
 	{
+#ifdef CTAG
+	// TODO: make the failure less verbose
 		cfg.disabledCodec->disable(); // Put unused codec in high impedance state
+#endif /* CTAG */
 	}
 
-	if(settings->useAnalog) {
-		gContext.audioFrames = settings->periodSize;
+	if(settings->useAnalog && (cfg.analogInChannels || cfg.analogOutChannels)) {
 
 		// TODO: a different number of channels for inputs and outputs is not yet supported
 		gContext.analogFrames = gContext.audioFrames * 4 / settings->numAnalogInChannels;
-		//TODO: validate num of analog channels depending on how many we have available
-		gContext.analogInChannels = settings->numAnalogInChannels;
-		gContext.analogOutChannels = settings->numAnalogOutChannels;
+		gContext.analogOutChannels = std::min((int)cfg.analogOutChannels, settings->numAnalogOutChannels);
+		gContext.analogInChannels = std::min((int)cfg.analogInChannels, settings->numAnalogInChannels);
 		unsigned int numAnalogChannelsForSampleRate = settings->numAnalogInChannels;
 		gContext.analogSampleRate = gContext.audioSampleRate * 4.0 / (float)numAnalogChannelsForSampleRate;
 		
@@ -381,8 +393,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 										((settings->audioExpanderOutputs & 0xFFFF) << 16);
 	}
 	else {
-		gContext.audioFrames = settings->periodSize;
-
 		gContext.analogFrames = 0;
 		gContext.analogInChannels = 0;
 		gContext.analogOutChannels = 0;
@@ -390,8 +400,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.audioExpanderEnabled = 0;
 	}
 
-	if(gContext.analogInChannels != gContext.analogOutChannels){
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+	if(gContext.analogOutChannels && (gContext.analogInChannels != gContext.analogOutChannels)){
+		fprintf(stderr, "TODO: a different number of channels for analog inputs and outputs is not yet supported (unless outputs are 0)\n");
 		return -1;
 	}
 	unsigned int analogChannels = gContext.analogInChannels;
@@ -399,7 +409,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if( analogChannels != 0 && ((analogChannels <= 4 && gContext.analogFrames < 2) ||
 			(analogChannels <= 2 && gContext.analogFrames < 4)) )
 	{
-		fprintf(stderr,"Error: %u channels and period size of %d not supported.\n", analogChannels, gContext.analogFrames);
+		fprintf(stderr,"Error: %u analog channels and period size of %d not supported.\n", analogChannels, gContext.analogFrames);
 		return 1;
 	}
 
@@ -436,11 +446,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	
 	// Get the PRU memory buffers ready to go
-	if(gContext.analogInChannels != gContext.analogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-		return 1;
-	}
-
 	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
 		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
 		fprintf(stderr, "Error: unable to initialise PRU\n");

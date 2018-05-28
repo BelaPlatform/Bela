@@ -134,6 +134,7 @@ public:
 			printf("digital: %p %p\n", pruDigitalStart[0], pruDigitalStart[1]);
 			printf("audio: %p %p %p %p\n", pruAudioOutStart[0], pruAudioOutStart[1], pruAudioInStart[0], pruAudioInStart[1]);
 			printf("analog: %p %p %p %p\n", pruAnalogOutStart[0], pruAnalogOutStart[1], pruAnalogInStart[0], pruAnalogInStart[1]);
+			printf("analog offset: %p %p %p %p\n", pruAnalogOutStart[0] - pruSharedRam, pruAnalogOutStart[1] - pruSharedRam, pruAnalogInStart[0] - pruSharedRam, pruAnalogInStart[1] - pruSharedRam);
 		}
 	}
 	void copyFromPru(int buffer)
@@ -356,10 +357,6 @@ void PRU::cleanupGPIO()
 // Initialise and open the PRU
 int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
 {
-	if(context->analogInChannels != context->analogOutChannels){
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-		return 1;
-	}
 	hardware_analog_frames = context->analogFrames;
 
 	if(!gpio_enabled) {
@@ -731,10 +728,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	uint16_t* analogOutRaw = pruMemory->getAnalogOutPtr();
 	int16_t* audioInRaw = pruMemory->getAudioInPtr();
 	int16_t* audioOutRaw = pruMemory->getAudioOutPtr();
-	if(context->analogInChannels != context->analogOutChannels){
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-		return;
-	}
 	// Polling interval is 1/4 of the period
 #ifdef CTAG_FACE_8CH
 	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
