@@ -9,7 +9,7 @@
 
 //#define CTAG_BEAST_16CH
 
-#define RESET_PIN 81 // GPIO2(17) P8.34
+const int RESET_PIN = 81; // GPIO2(17) P8.34
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -17,8 +17,6 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <cstring>
-
-#define ARRAY_SIZE(array) sizeof(array)/sizeof(array[0])
 
 const char SPIDEV_GPIO_CS0[] = "/dev/spidev32766.0";
 const char SPIDEV_GPIO_CS1[] = "/dev/spidev32766.1";
