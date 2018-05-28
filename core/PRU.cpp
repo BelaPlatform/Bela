@@ -211,12 +211,14 @@ short int digitalPins[NUM_DIGITALS] = {
 
 #define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
 
-#define GPIO1_ADDRESS 		0x4804C000
-
-#define USERLED3_GPIO_BASE  GPIO1_ADDRESS // GPIO1(24) is user LED 3
+#define USERLED3_GPIO_BASE  GPIO_ADDRESSES[1] // GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
+const unsigned int belaMiniLedBlue = 87;
+const unsigned int belaMiniLedBlueGpioBase = GPIO_ADDRESSES[2]; // GPIO2(23) is BelaMini LED blue
+const unsigned int belaMiniLedBlueGpioPinMask = 1 << 23;
+const unsigned int belaMiniLedRed = 89;
 
-#define BELA_CAPE_BUTTON_PIN 115
+const unsigned int BELA_CAPE_BUTTON_PIN = 115;
 
 const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
 const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
@@ -318,9 +320,18 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		// Turn off system function for LED3 so it can be reused by PRU
-		led_set_trigger(3, "none");
-		led_enabled = true;
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			//using on-board LED
+			gpio_export(belaMiniLedBlue);
+			gpio_set_dir(belaMiniLedBlue, OUTPUT_PIN);
+			led_enabled = true;
+		} else {
+			// Using BeagleBone's USR3 LED
+			// Turn off system function for LED3 so it can be reused by PRU
+			led_set_trigger(3, "none");
+			led_enabled = true;
+		}
 	}
 
 	gpio_enabled = true;
@@ -343,18 +354,30 @@ void PRU::cleanupGPIO()
 		}
 	}
 	if(led_enabled) {
-		// Set LED back to default eMMC status
-		// TODO: make it go back to its actual value before this program,
-		// rather than the system default
-		led_set_trigger(3, "mmc1");
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			//using on-board LED
+			gpio_unexport(belaMiniLedBlue);
+		} else {
+			// Set LED back to default eMMC status
+			// TODO: make it go back to its actual value before this program,
+			// rather than the system default
+			led_set_trigger(3, "mmc1");
+		}
 	}
 	gpio_enabled = false;
 }
 
 // Initialise and open the PRU
-int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
+int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring, bool enableLed)
 {
 	belaHw = newBelaHw;
+	// Initialise the GPIO pins, including possibly the digital pins in the render routines
+	if(prepareGPIO(enableLed)) {
+		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
+		return 1;
+	}
+
 	hardware_analog_frames = context->analogFrames;
 
 	if(!gpio_enabled) {
@@ -625,8 +648,14 @@ void PRU::initialisePruCommon()
 	}
 	
 	if(led_enabled) {
-		pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
-		pru_buffer_comm[PRU_LED_PIN_MASK] = USERLED3_PIN_MASK;
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
+			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
+		} else {
+			pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
+			pru_buffer_comm[PRU_LED_PIN_MASK] = USERLED3_PIN_MASK;
+		}
 	}
 	else {
 		pru_buffer_comm[PRU_LED_ADDRESS] = 0;

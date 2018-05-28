@@ -160,8 +160,8 @@ public:
 
 	// Initialise and open the PRU
 	int initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate,
-				   int mux_channels = 0,
-				   bool capeButtonMonitoring = true);
+				   int mux_channels,
+				   bool capeButtonMonitoring, bool enableLed);
 
 	// Run the code image in pru_rtaudio_bin.h
 	int start(char * const filename);

@@ -417,15 +417,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
 
-	// Initialise the GPIO pins, including possibly the digital pins in the render routines
-	if(gPRU->prepareGPIO(settings->enableLED)) {
-		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
-		return 1;
-	}
-	
 	// Get the PRU memory buffers ready to go
 	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
-		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
+                                settings->numMuxChannels, settings->enableCapeButtonMonitoring, settings->enableLED)) {
 		fprintf(stderr, "Error: unable to initialise PRU\n");
 		return 1;
 	}
