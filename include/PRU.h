@@ -205,6 +205,7 @@ private:
 	BelaHw belaHw;
 
 	Gpio belaCapeButton; // Monitoring the bela cape button
+	Gpio underrunLed; // Flashing an LED upon underrun
 };
 
 

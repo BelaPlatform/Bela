@@ -217,6 +217,7 @@ const unsigned int belaMiniLedBlue = 87;
 const unsigned int belaMiniLedBlueGpioBase = GPIO_ADDRESSES[2]; // GPIO2(23) is BelaMini LED blue
 const unsigned int belaMiniLedBlueGpioPinMask = 1 << 23;
 const unsigned int belaMiniLedRed = 89;
+const unsigned int underrunLedDuration = 20000;
 
 const unsigned int BELA_CAPE_BUTTON_PIN = 115;
 
@@ -406,6 +407,10 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 
 	if(capeButtonMonitoring){
 		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
+	}
+	if(belaHw == BelaHw_BelaMiniCape && enableLed){
+		underrunLed.open(belaMiniLedRed, OUTPUT);
+		underrunLed.clear();
 	}
 
 	// after setting all PRU settings, we adjust
@@ -820,6 +825,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	}
 
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
+	int underrunLedCount = -1;
 	while(!gShouldStop) {
 
 #ifdef BELA_USE_POLL
@@ -1337,9 +1343,23 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			{
 				// don't print a warning if we are stopping
 				if(!gShouldStop)
+				{
 					rt_fprintf(stderr, "Underrun detected: %u blocks dropped\n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
+					if(underrunLed.enabled())
+						underrunLed.set();
+					underrunLedCount = underrunLedDuration;
+				}
 			}
 			lastPruFrameCount = pruFrameCount;
+			if(underrunLedCount > 0)
+			{
+				underrunLedCount -= context->audioFrames;
+				if(underrunLedCount < 0)
+				{
+					if(underrunLed.enabled())
+						underrunLed.clear();
+				}
+			}
 		}
 
 		// Increment total number of samples that have elapsed.
@@ -1353,6 +1373,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	// Tell PRU to stop
 	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
+	if(underrunLed.enabled())
+		underrunLed.clear();
 
 	// Wait for the PRU to finish
 	task_sleep_ns(100000000);
