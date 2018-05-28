@@ -57,6 +57,7 @@
 #include "../include/Spi_Codec.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/math_neon.h"
+#include "../include/BelaHw.h"
 
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
@@ -74,17 +75,6 @@ typedef struct _BelaHwConfig
 	AudioCodec* disabledCodec;
 } BelaHwConfig;
 
-typedef enum
-{
-	BelaCape,
-	BelaMiniCape,
-	CtagFace,
-	CtagBeast,
-	BelaModular,
-	CtagFaceBelaCape,
-	CtagBeastBelaCape,
-} BelaHw;
-
 static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
@@ -98,13 +88,13 @@ extern "C" int is_belamini();
 BelaHw Bela_detectHw()
 {
 #ifdef CTAG_FACE_8CH
-	return CtagFace;
+	return BelaHw_CtagFace;
 #elif defined(CTAG_BEAST_16CH)
-	return CtagBeast;
+	return BelaHw_CtagBeast;
 #endif
 	if(is_belamini())
-		return BelaMiniCape;
-	return BelaCape;
+		return BelaHw_BelaMiniCape;
+	return BelaHw_BelaCape;
 }
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
@@ -112,50 +102,51 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 	// set audio codec
 	switch(hw)
 	{
-		case BelaCape:
+		case BelaHw_BelaCape:
 			//nobreak
-		case BelaMiniCape:
+		case BelaHw_BelaMiniCape:
 			//nobreak
-		case BelaModular:
+		case BelaHw_BelaModular:
 			//nobreak
 			cfg->activeCodec = gI2cCodec;
 			cfg->disabledCodec = gSpiCodec;
 			break;
-		case CtagFace:
+		case BelaHw_CtagFace:
 			//nobreak
-		case CtagFaceBelaCape:
+		case BelaHw_CtagFaceBelaCape:
 			//nobreak
-		case CtagBeast:
+		case BelaHw_CtagBeast:
 			//nobreak
-		case CtagBeastBelaCape:
+		case BelaHw_CtagBeastBelaCape:
 			cfg->activeCodec = gSpiCodec;
 			cfg->disabledCodec = gI2cCodec;
 			break;
+		case BelaHw_NoHw:
 		default:
 		return -1; // unrecognized hw
 	}
 	// set audio I/O
 	switch(hw)
 	{
-		case BelaCape:
+		case BelaHw_BelaCape:
 			//nobreak
-		case BelaMiniCape:
+		case BelaHw_BelaMiniCape:
 			//nobreak
-		case BelaModular:
+		case BelaHw_BelaModular:
 			cfg->audioInChannels = 2;
 			cfg->audioOutChannels = 2;
 			cfg->audioSampleRate = 44100;
 			break;
-		case CtagFace:
+		case BelaHw_CtagFace:
 			//nobreak
-		case CtagFaceBelaCape:
+		case BelaHw_CtagFaceBelaCape:
 			cfg->audioInChannels = 8;
 			cfg->audioOutChannels = 8;
 			cfg->audioSampleRate = 48000;
 			break;
-		case CtagBeast:
+		case BelaHw_CtagBeast:
 			//nobreak
-		case CtagBeastBelaCape:
+		case BelaHw_CtagBeastBelaCape:
 			cfg->audioInChannels = 16;
 			cfg->audioOutChannels = 16;
 			cfg->audioSampleRate = 48000;
@@ -164,22 +155,22 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 	// set analogs:
 	switch(hw)
 	{
-		case BelaCape:
+		case BelaHw_BelaCape:
 			//nobreak
-		case BelaModular:
+		case BelaHw_BelaModular:
 			//nobreak
-		case CtagFaceBelaCape:
+		case BelaHw_CtagFaceBelaCape:
 			//nobreak
-		case CtagBeastBelaCape:
+		case BelaHw_CtagBeastBelaCape:
 			cfg->analogInChannels = 8;
 			cfg->analogOutChannels = 8;
 			break;
-		case BelaMiniCape:
+		case BelaHw_BelaMiniCape:
 			cfg->analogInChannels = 8;
 			break;
-		case CtagFace:
+		case BelaHw_CtagFace:
 			//nobreak
-		case CtagBeast:
+		case BelaHw_CtagBeast:
 			//nobreak
 		default:
 			break;
@@ -446,7 +437,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	
 	// Get the PRU memory buffers ready to go
-	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
+	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
 		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
 		fprintf(stderr, "Error: unable to initialise PRU\n");
 		return 1;

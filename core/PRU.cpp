@@ -37,10 +37,6 @@
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
 
-#if (defined(CTAGE_FACE_8CH) || defined(CTAG_FACE_16CH))
-	#define PRU_USES_MCASP_IRQ
-#endif
-
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
 #error Define one of BELA_USE_POLL, BELA_USE_RTDM
 #endif
@@ -134,7 +130,7 @@ public:
 			printf("digital: %p %p\n", pruDigitalStart[0], pruDigitalStart[1]);
 			printf("audio: %p %p %p %p\n", pruAudioOutStart[0], pruAudioOutStart[1], pruAudioInStart[0], pruAudioInStart[1]);
 			printf("analog: %p %p %p %p\n", pruAnalogOutStart[0], pruAnalogOutStart[1], pruAnalogInStart[0], pruAnalogInStart[1]);
-			printf("analog offset: %p %p %p %p\n", pruAnalogOutStart[0] - pruSharedRam, pruAnalogOutStart[1] - pruSharedRam, pruAnalogInStart[0] - pruSharedRam, pruAnalogInStart[1] - pruSharedRam);
+			printf("analog offset: %#x %#x %#x %#x\n", pruAnalogOutStart[0] - pruSharedRam, pruAnalogOutStart[1] - pruSharedRam, pruAnalogInStart[0] - pruSharedRam, pruAnalogInStart[1] - pruSharedRam);
 		}
 	}
 	void copyFromPru(int buffer)
@@ -245,7 +241,7 @@ PRU::PRU(InternalBelaContext *input_context)
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0)
+  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
 {
 }
 
@@ -356,8 +352,9 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
+int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
 {
+	belaHw = newBelaHw;
 	hardware_analog_frames = context->analogFrames;
 
 	if(!gpio_enabled) {
@@ -541,7 +538,6 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	return 0;
 }
 
-#ifdef PRU_USES_MCASP_IRQ
 static int devMemWrite(off_t target, uint32_t* value)
 {
 	const unsigned long MAP_SIZE = 4096UL;
@@ -586,7 +582,6 @@ static int maskMcAspInterrupt()
 	} else
 		return 0;
 }
-#endif /* PRU_USES_MCASP_IRQ */
 
 void PRU::initialisePruCommon()
 {
@@ -658,16 +653,6 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
-#ifdef PRU_USES_MCASP_IRQ
-	/* The PRU will enable the McASP interrupts. Here we mask
-	 * them out from ARM so that they do not hang the CPU. */
-	if(maskMcAspInterrupt() < 0)
-	{
-		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
-		return 1;
-	}
-	#warning TODO: unmask interrupt when program stops
-#endif
 
 #ifdef BELA_USE_RTDM
 	// Open RTDM driver
@@ -688,17 +673,54 @@ int PRU::start(char * const filename)
 		return 1;
 	}
 #endif
+	switch(belaHw)
+	{
+		case BelaHw_BelaCape:
+			//nobreak
+		case BelaHw_BelaMiniCape:
+			//nobreak
+		case BelaHw_BelaModular:
+			pruUsesMcaspIrq = false;
+			break;
+		case BelaHw_CtagFace:
+			//nobreak
+		case BelaHw_CtagBeast:
+			//nobreak
+		case BelaHw_CtagFaceBelaCape:
+			//nobreak
+		case BelaHw_CtagBeastBelaCape:
+			pruUsesMcaspIrq = true;
+			break;
+		case BelaHw_NoHw:
+		default:
+			fprintf(stderr, "Error: unrecognized hardware\n");
+			return 1;
+	}
 
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
 
-#ifdef PRU_USES_MCASP_IRQ
-	const unsigned int* pruCode = IrqPruCode::getBinary();
-	const unsigned int pruCodeSize = IrqPruCode::getBinarySize();
-#else /* PRU_USES_MCASP_IRQ */
-	const unsigned int* pruCode = NonIrqPruCode::getBinary();
-	const unsigned int pruCodeSize = NonIrqPruCode::getBinarySize();
-#endif /* PRU_USES_MCASP_IRQ */
+	unsigned int* pruCode;
+	unsigned int pruCodeSize;
+	switch((int)pruUsesMcaspIrq) // (int) is here to avoid stupid compiler warning
+	{
+		case false:
+			pruCode = (unsigned int*)NonIrqPruCode::getBinary();
+			pruCodeSize = NonIrqPruCode::getBinarySize();
+			break;
+		case true:
+			pruCode = (unsigned int*)IrqPruCode::getBinary();
+			pruCodeSize = IrqPruCode::getBinarySize();
+			/* The PRU will enable the McASP interrupts. Here we mask
+			 * them out from ARM so that they do not hang the CPU. */
+			if(maskMcAspInterrupt() < 0)
+			{
+				fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
+				return 1;
+			}
+			// TODO: unmask interrupt when program stops
+			break;
+	}
 
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code

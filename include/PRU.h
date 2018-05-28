@@ -9,8 +9,9 @@
 #define PRU_H_
 
 #include <stdint.h>
-#include "../include/Bela.h"
-#include "../include/Gpio.h"
+#include "Bela.h"
+#include "Gpio.h"
+#include "BelaHw.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const
@@ -159,7 +160,7 @@ public:
 	void cleanupGPIO();
 
 	// Initialise and open the PRU
-	int initialise(int pru_num, bool uniformSampleRate,
+	int initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate,
 				   int mux_channels = 0,
 				   bool capeButtonMonitoring = true);
 
@@ -201,6 +202,8 @@ private:
 	float *audio_expander_input_history;
 	float *audio_expander_output_history;
 	float audio_expander_filter_coeff;
+	bool pruUsesMcaspIrq;
+	BelaHw belaHw;
 
 	Gpio belaCapeButton; // Monitoring the bela cape button
 };
