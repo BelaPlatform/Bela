@@ -26,20 +26,23 @@ nchnls = 2
 instr 1
 
 	; LFO 
-	kFreqLfo expseg 2, 5, 200, 2, 0.5 
-	aA1 lfo 0.8, kFreqLfo, 3
+	kFreqLfo expseg 2, 5, 50, 2, 0.5
+	aAmpMod lfo 0.8, kFreqLfo, 3
 
 	; Sending LFO to Analog Out Pin 0
-	chnset aA1, "analogOut0"
+	chnset aAmpMod, "analogOut0"
 	
 	; Sound output
-	aOut = poscil(0.5*aA1, 400)
+	aOut = poscil(0.5*aAmpMod, 400)
 	outs aOut, aOut
 
 endin
 
+
 </CsInstruments>
 <CsScore>
-i1 0 7
+{ 100 TIMES
+  i1 [7*$TIMES.] 7
+}
 </CsScore>
 </CsoundSynthesizer>
