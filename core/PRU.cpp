@@ -192,6 +192,7 @@ private:
 #define PRU_MUX_CONFIG         13
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
+#define PRU_BELA_MINI          16
 
 short int digitalPins[NUM_DIGITALS] = {
 		GPIO_NO_BIT_0,
@@ -589,6 +590,7 @@ static int maskMcAspInterrupt()
 
 void PRU::initialisePruCommon()
 {
+	pru_buffer_comm[PRU_BELA_MINI] = 1;
     /* Set up flags */
 	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
 	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;

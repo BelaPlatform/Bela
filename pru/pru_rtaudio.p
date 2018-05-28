@@ -38,8 +38,6 @@
 #define PRU_SYSTEM_EVENT_RTDM 20
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
-#define BELA_MINI
-
 #define C_ADC_DAC_MEM C24     // PRU0 mem
 #ifdef DBOX_CAPE
 #define DAC_GPIO      GPIO0
@@ -60,14 +58,11 @@
 #define AD5668_REF_OFFSET     0
 
 #ifdef DBOX_CAPE
-#ifdef BELA_MINI
-#define ADC_GPIO      GPIO0
-// this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
-#define ADC_CS_PIN    (1<<5) // GPIO1:5 = P1 pin 6
-#else /* BELA_MINI */
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-#endif /* BELA_MINI */
+// for BELA_MINI, this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
+#define ADC_GPIO_BELA_MINI      GPIO0
+#define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO1:5 = P1 pin 6
 #else /* DBOX_CAPE */
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<17) // GPIO1:17 = P9 pin 23
@@ -99,6 +94,8 @@
 #define COMM_PRU_NUMBER       48          // Which PRU this code is running on
 #define COMM_MUX_CONFIG       52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  56          // Which mux channel the last buffer ended on
+#define COMM_BUFFER_SPI_FRAMES 60         // Unused (used in pru_rtaudio_irq.p)
+#define COMM_BELA_MINI        64          // Whether we are on Bela Mini
 	
 // General constants for McASP peripherals (used for audio codec)
 #define MCASP0_BASE 0x48038000
@@ -201,6 +198,7 @@
 #define FLAG_BIT_USE_SPI	1
 #define FLAG_BIT_MCASP_HWORD	2		// Whether we are on the high word for McASP transmission
 #define FLAG_BIT_USE_DIGITAL	3
+#define FLAG_BIT_BELA_MINI      4
 	
 #define FLAG_BIT_MUX_CONFIG0	 8		// Mux capelet configuration:
 #define FLAG_BIT_MUX_CONFIG1	 9		// 00 = off, 01 = 2 ch., 10 = 4 ch., 11 = 8 ch.
@@ -260,6 +258,16 @@
 #define GPIO_OE 0x134 
 #define GPIO_DATAIN 0x138
 
+.macro BELA_MINI_AND_JMP_TO
+.mparam DEST
+    QBBS DEST, reg_flags, FLAG_BIT_BELA_MINI
+.endm
+
+.macro BELA_MINI_OR_JMP_TO
+.mparam DEST
+    QBBC DEST, reg_flags, FLAG_BIT_BELA_MINI
+.endm
+
 .macro READ_GPIO_BITS
 .mparam gpio_data, gpio_num_bit, digital_bit, digital
     QBBC DONE, digital, digital_bit //if the pin is set as an output, nothing to do here
@@ -291,7 +299,9 @@ SETINPUT: //if it is an input, set the relevant bit
 DONE:
 .endm
 
-QBA START // when first starting, go to START, skipping this section.
+// when first starting, we should go to START, skipping this section.
+// however, the section is fairly long, so we have to use an intermediate step
+QBA START_INTERMEDIATE
 
 DIGITAL:
 //IMPORTANT: do NOT use r28 in this macro, as it contains the return address for JAL
@@ -314,7 +324,7 @@ DIGITAL:
 //map GPIO to gpio1 pins,
 //r2 is gpio1_oe, r8 is gpio1_setdataout, r7 is gpio1_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r2,r7,r8
-#ifdef BELA_MINI
+QBBC BELA_SET_GPIO_BITS_0, reg_flags, FLAG_BIT_BELA_MINI
     SET_GPIO_BITS r2, r8, r7, 18, 0, r27
     SET_GPIO_BITS r2, r8, r7, 27, 1, r27
     SET_GPIO_BITS r2, r8, r7, 26, 2, r27
@@ -328,7 +338,8 @@ DIGITAL:
     SET_GPIO_BITS r2, r8, r7, 8, 11, r27
     SET_GPIO_BITS r2, r8, r7, 10, 14, r27
     SET_GPIO_BITS r2, r8, r7, 11, 15, r27
-#else /* BELA_MINI */
+QBA SET_GPIO_BITS_0_DONE
+BELA_SET_GPIO_BITS_0:
     SET_GPIO_BITS r2, r8, r7, 13, 4, r27
     SET_GPIO_BITS r2, r8, r7, 12, 5, r27
     SET_GPIO_BITS r2, r8, r7, 28, 6, r27
@@ -336,7 +347,7 @@ DIGITAL:
     SET_GPIO_BITS r2, r8, r7, 15, 8, r27
     SET_GPIO_BITS r2, r8, r7, 14, 9, r27
     SET_GPIO_BITS r2, r8, r7, 19, 10, r27
-#endif /* BELA_MINI */
+SET_GPIO_BITS_0_DONE:
 //set the output enable register for gpio1.
     MOV r3, GPIO1 | GPIO_OE  //use r3 as a temp register
     SBBO r2, r3, 0, 4 //takes two cycles (10ns)
@@ -357,11 +368,12 @@ DIGITAL:
 //map GPIO to gpio2 pins
 //r3 is gpio2_oe, r5 is gpio2_setdataout, r4 is gpio2_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r3,r4,r5
-#ifdef BELA_MINI
+QBBC BELA_SET_GPIO_BITS_1, reg_flags, FLAG_BIT_BELA_MINI
     SET_GPIO_BITS r3, r5, r4, 0, 7, r27
     SET_GPIO_BITS r3, r5, r4, 22, 12, r27
     SET_GPIO_BITS r3, r5, r4, 24, 13, r27
-#else /* BELA_MINI */
+    QBA SET_GPIO_BITS_1_DONE
+BELA_SET_GPIO_BITS_1:
     SET_GPIO_BITS r3, r5, r4, 2, 0, r27
     SET_GPIO_BITS r3, r5, r4, 3, 1, r27
     SET_GPIO_BITS r3, r5, r4, 5, 2, r27
@@ -371,12 +383,17 @@ DIGITAL:
     SET_GPIO_BITS r3, r5, r4, 24, 13, r27
     SET_GPIO_BITS r3, r5, r4, 23, 14, r27
     SET_GPIO_BITS r3, r5, r4, 25, 15, r27
-#endif /* BELA_MINI */
+SET_GPIO_BITS_1_DONE:
 //set the output enable register for gpio2.
     MOV r2, GPIO2 | GPIO_OE  //use r2 as a temp registerp
     SBBO r3, r2, 0, 4 //takes two cycles (10ns)
 //GPIO2-end
 //r3 is now unused
+
+QBA START_INTERMEDIATE_DONE
+START_INTERMEDIATE: // intermediate step to jump to START
+    QBA START
+START_INTERMEDIATE_DONE:
 
 //load current inputs in r2, r3
 //r2 will contain GPIO1_DATAIN
@@ -390,7 +407,7 @@ DIGITAL:
     LBBO r3, r3, 0, 4
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
-#ifdef BELA_MINI
+QBBC BELA_READ_GPIO_BITS, reg_flags, FLAG_BIT_BELA_MINI
 //GPIO1
     READ_GPIO_BITS r2, 18, 0, r27
     READ_GPIO_BITS r2, 27, 1, r27
@@ -409,7 +426,8 @@ DIGITAL:
     READ_GPIO_BITS r3, 0, 7, r27
     READ_GPIO_BITS r3, 22, 12, r27
     READ_GPIO_BITS r3, 24, 13, r27
-#else /* BELA_MINI */
+    QBA READ_GPIO_BITS_DONE
+BELA_READ_GPIO_BITS:
     READ_GPIO_BITS r2, 13, 4, r27
     READ_GPIO_BITS r2, 12, 5, r27
     READ_GPIO_BITS r2, 28, 6, r27
@@ -427,7 +445,7 @@ DIGITAL:
     READ_GPIO_BITS r3, 24, 13, r27
     READ_GPIO_BITS r3, 23, 14, r27
     READ_GPIO_BITS r3, 25, 15, r27
-#endif /* BELA_MINI */
+READ_GPIO_BITS_DONE:
 //r2, r3 are now unused
 
 //now all the setdataout and cleardataout are ready to be written to the GPIO register.
@@ -489,14 +507,14 @@ QBA DALOOP
 // Complete DAC write with chip select
 .macro DAC_WRITE
 .mparam reg
-#ifndef BELA_MINI
+QBBS SKIP_CS_ASSERT, reg_flags, FLAG_BIT_BELA_MINI
      DAC_CS_ASSERT
-#endif /* BELA_MINI */
+SKIP_CS_ASSERT:
      DAC_TX reg
      DAC_WAIT_FOR_FINISH
-#ifdef BELA_MINI
+QBBS SKIP_CS_UNASSERT, reg_flags, FLAG_BIT_BELA_MINI
      DAC_CS_UNASSERT
-#endif /* BELA_MINI */
+SKIP_CS_UNASSERT:
      DAC_DISCARD_RX
 .endm
 
@@ -520,18 +538,31 @@ DAC_CHANNEL_REORDER_HIGH:
      ADD out, out, 1
 DAC_CHANNEL_REORDER_DONE:	
 .endm
-	
+
+
 // Bring CS line low to write to ADC
 .macro ADC_CS_ASSERT
+     BELA_MINI_OR_JMP_TO BELA
+     MOV r27, ADC_CS_PIN_BELA_MINI
+     MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
+     QBA DONE
+BELA:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
+DONE:
      SBBO r27, r28, 0, 4
 .endm
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
+     BELA_MINI_OR_JMP_TO BELA
+     MOV r27, ADC_CS_PIN_BELA_MINI
+     MOV r28, ADC_GPIO_BELA_MINI + GPIO_SETDATAOUT
+     QBA DONE
+BELA:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_SETDATAOUT
+DONE:
      SBBO r27, r28, 0, 4
 .endm
 
@@ -715,6 +746,12 @@ PRU_NUMBER_CHECK_DONE:
      MOV reg_flags, 0
      // Default number of channels in case SPI disabled
      LDI reg_num_channels, 8
+
+     // Find out whether we are on BELA_MINI
+     LBBO r2, reg_comm_addr, COMM_BELA_MINI, 4
+     QBEQ BELA_MINI_CHECK_DONE, r2, 0
+     SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
+BELA_MINI_CHECK_DONE:
 
      // Find out whether we should use DIGITAL
      LBBO r2, reg_comm_addr, COMM_USE_DIGITAL, 4
@@ -959,14 +996,15 @@ WRITE_ONE_BUFFER:
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
      LMBD r2, reg_num_channels, 1		// 1, 2 or 3 for 2, 4 or 8 channels
-#ifdef BELA_MINI
+QBBC BELA_CHANNELS, reg_flags, FLAG_BIT_BELA_MINI
      // there are 0 dac values, so ADC starts at the same point as DAC
      MOV reg_adc_current, reg_dac_current
-#else /* BELA_MINI */
+     QBA CHANNELS_DONE
+BELA_CHANNELS:
      LSL reg_adc_current, reg_frame_total, r2
      LSL reg_adc_current, reg_adc_current, 2   // N * 2 * 2 * bufsize
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
-#endif /* BELA_MINI */
+CHANNELS_DONE:
     MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
      LSL reg_mcasp_adc_current, reg_frame_total, r2 // McASP ADC: starts (N/2)*2*2*bufsize beyond DAC
      LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
@@ -1060,7 +1098,7 @@ MCASP_WAIT_RSTAT_HIGH:
 MCASP_ADC_DONE:	
      QBBC SPI_SKIP_WRITE, reg_flags, FLAG_BIT_USE_SPI
 
-#ifndef BELA_MINI
+QBBS SPI_SKIP_DAC_WRITE_0, reg_flags, FLAG_BIT_BELA_MINI
      // DAC: transmit low word (first in little endian)
      MOV r2, 0xFFFF
      AND r7, reg_dac_data, r2
@@ -1071,7 +1109,7 @@ MCASP_ADC_DONE:
      LSL r8, r8, AD5668_ADDRESS_OFFSET
      OR r7, r7, r8
      DAC_WRITE r7
-#endif /* BELA_MINI */
+SPI_SKIP_DAC_WRITE_0:
 
      // Read ADC channels: result is always 2 commands behind
      // Start by reading channel 2 (result is channel 0) and go
@@ -1092,7 +1130,7 @@ MCASP_ADC_DONE:
      // Increment channel index
      ADD r1, r1, 1
 
-#ifndef BELA_MINI
+QBBS SPI_SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_BELA_MINI
      // DAC: transmit high word (second in little endian)
      LSR r7, reg_dac_data, 16
      LSL r7, r7, AD5668_DATA_OFFSET
@@ -1101,8 +1139,8 @@ MCASP_ADC_DONE:
      DAC_CHANNEL_REORDER r8, r1
      LSL r8, r8, AD5668_ADDRESS_OFFSET
      OR r7, r7, r8
-#endif /* BELA_MINI */
-     // this DAC_WRITE should also be "#ifdef BELA_MINI"'ed out, but if we do that, the ADC reads weird values. No idea why. Anyhow, we ifdef'ed out the CS_ in DAC_WRITE
+SPI_SKIP_DAC_WRITE_1:
+     // this DAC_WRITE should also be conditional to BELA_MINI, but if we do that, the ADC reads weird values. No idea why. Anyhow, we disabled the CS_ in DAC_WRITE
      DAC_WRITE r7
 
      // Read ADC channels: result is always 2 commands behind
