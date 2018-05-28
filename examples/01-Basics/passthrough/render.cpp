@@ -39,7 +39,7 @@ bool setup(BelaContext *context, void *userData)
 	// If the amout of audio and analog input and output channels is not the same
 	// we will use the minimum between input and output
 	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
-	gAnalogChannelNum = std:min(context->analogInChannels, context->analogOutChannels);
+	gAnalogChannelNum = std::min(context->analogInChannels, context->analogOutChannels);
 
 	return true;
 }
