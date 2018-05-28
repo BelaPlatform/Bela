@@ -391,7 +391,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	uniform_sample_rate = uniformSampleRate;
 	if(uniform_sample_rate)
 	{
-		if(context->analogInChannels != context->analogOutChannels)
+		if(context->analogOutChannels && (context->analogInChannels != context->analogOutChannels))
 		{
 			fprintf(stderr, "Different numbers of inputs and outputs is not supported yet\n");
 			return 1;
