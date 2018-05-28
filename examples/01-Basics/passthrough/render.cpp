@@ -105,7 +105,7 @@ Reading and writing from the analog buffers
 The same is true for `analogRead()` and `analogWriteOnce()`.
 
 Note that for the analog channels we write to and read from the buffers in a separate set 
-of nested for loops. This is because the they are sampled at half audio rate by default. 
+of nested for loops. This is because they are sampled at half audio rate by default.
 The first of these for loops cycles through `analogFrames`, the second through
 `analogInChannels`.
 

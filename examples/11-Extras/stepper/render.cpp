@@ -29,7 +29,7 @@ const int kStepLengthFast = 500;
 
 int gStepLengthSamples = kStepLengthSlow;
 
-// Check the pin diagram in the IDE to understand the following pin declarations
+// Check the pin diagram in the IDE to check where the pins are on your board
 const int gPinA1 = 12;
 const int gPinA2 = 13;
 const int gPinB1 = 14;

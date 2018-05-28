@@ -103,7 +103,7 @@ sine tone that acts as an LFO. The analog output pins can provide a voltage of
 The output on each pin is set with `analogWriteOnce()` within the for loop that 
 cycles through the analog output channels. This needs to be provided with 
 arguments as follows `analogWriteOnce(context, n, channel, out)`. Channel is 
-where the you give the address of the analog output pin (in this case we cycle 
+where you give the address of the analog output pin (in this case we cycle
 through each pin address in the for loop), out is the variable that holds the 
 desired output (in this case set by the sine wave) and `n` is the frame number 
 (given by the other for loop).

@@ -207,7 +207,7 @@ the overall brightness.
 When `useSequencer = false`, then each of the analogIns affects the brightness of the 
 corresponding LED.
 
-To use a hardware PWM, e.g.: on P9_14 (check the pin diagram in the IDE):
+To use a hardware PWM, e.g.: on P9_14:
 \code
 cp MY-PWM-01-00A0.dtbo /lib/firmware
 echo MY-PWM-01 > $SLOTS

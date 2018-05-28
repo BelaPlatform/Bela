@@ -108,7 +108,7 @@ The PulseIn class is used here to monitor a digital pin for an HIGH
 pulse and once the pulse termiantes, it returnes the duration ( in samples ) of the pulse.
 
 The module requires a 5V power supply and its digital inputs and outputs are low at 0V and
-HIGH at 5V.
+HIGH at 5V. Check the pin diagram in the IDE to see where to find the pins you need.
 It is important that the 5V ECHO output from the module *is not* connected 
 straight to Bela's digital inputs, as that would most likely kill the BeagleBone Black
 (digital I/Os are 3.3V tolerant). You will need to use a passive resistor divider from the 
