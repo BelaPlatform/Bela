@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include "Bela.h"
 #include "Gpio.h"
-#include "BelaHw.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const

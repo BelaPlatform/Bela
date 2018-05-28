@@ -57,7 +57,6 @@
 #include "../include/Spi_Codec.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/math_neon.h"
-#include "../include/BelaHw.h"
 
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
@@ -84,18 +83,6 @@ const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
 const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
 #endif /* CTAG */
 
-extern "C" int is_belamini();
-BelaHw Bela_detectHw()
-{
-#ifdef CTAG_FACE_8CH
-	return BelaHw_CtagFace;
-#elif defined(CTAG_BEAST_16CH)
-	return BelaHw_CtagBeast;
-#endif
-	if(is_belamini())
-		return BelaHw_BelaMiniCape;
-	return BelaHw_BelaCape;
-}
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
 	memset((void*)cfg, 0, sizeof(BelaHwConfig));

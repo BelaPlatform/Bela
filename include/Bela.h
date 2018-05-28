@@ -28,8 +28,11 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 0
+#define BELA_MINOR_VERSION 1
 #define BELA_BUGFIX_VERSION 0
+
+// Version history:
+// 1.1.0 adds BelaHw, Bela_detectHw()
 
 #ifdef __cplusplus
 extern "C"
@@ -47,6 +50,18 @@ int rt_printf(const char *format, ...);
 int rt_fprintf(FILE *stream, const char *format, ...);
 int rt_vprintf(const char *format, va_list ap);
 int rt_vfprintf(FILE *stream, const char *format, va_list ap);
+
+typedef enum
+{
+	BelaHw_NoHw = -1,
+	BelaHw_BelaCape,
+	BelaHw_BelaMiniCape,
+	BelaHw_CtagFace,
+	BelaHw_CtagBeast,
+	BelaHw_BelaModular,
+	BelaHw_CtagFaceBelaCape,
+	BelaHw_CtagBeastBelaCape,
+} BelaHw;
 
 #include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
@@ -575,6 +590,11 @@ void Bela_getVersion(int* major, int* minor, int* bugfix);
  */
 void Bela_setVerboseLevel(int level);
 
+
+/**
+ * \brief Detect what hardware we are running on.
+ */
+BelaHw Bela_detectHw(void);
 
 // *** Audio control functions ***
 
