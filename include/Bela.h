@@ -31,8 +31,10 @@
 #define BELA_MINOR_VERSION 1
 #define BELA_BUGFIX_VERSION 0
 
-// Version history:
-// 1.1.0 adds BelaHw, Bela_detectHw()
+// Version history / changelog:
+// 1.1.0
+// - adds BelaHw, Bela_detectHw()
+// - removes digital_gpio_mapping.h
 
 #ifdef __cplusplus
 extern "C"
@@ -63,7 +65,6 @@ typedef enum
 	BelaHw_CtagBeastBelaCape,
 } BelaHw;
 
-#include "digital_gpio_mapping.h"
 #include <GPIOcontrol.h>
 
 // Useful constants

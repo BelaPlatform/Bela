@@ -190,24 +190,7 @@ private:
 #define PRU_BUFFER_SPI_FRAMES  15
 #define PRU_BELA_MINI          16
 
-short int digitalPins[NUM_DIGITALS] = {
-		GPIO_NO_BIT_0,
-		GPIO_NO_BIT_1,
-		GPIO_NO_BIT_2,
-		GPIO_NO_BIT_3,
-		GPIO_NO_BIT_4,
-		GPIO_NO_BIT_5,
-		GPIO_NO_BIT_6,
-		GPIO_NO_BIT_7,
-		GPIO_NO_BIT_8,
-		GPIO_NO_BIT_9,
-		GPIO_NO_BIT_10,
-		GPIO_NO_BIT_11,
-		GPIO_NO_BIT_12,
-		GPIO_NO_BIT_13,
-		GPIO_NO_BIT_14,
-		GPIO_NO_BIT_15,
-};
+static unsigned int* gDigitalPins = NULL;
 
 #define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
 
@@ -306,14 +289,20 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			gDigitalPins = digitalPinsPocketBeagle;
+		} else {
+			gDigitalPins = digitalPinsBeagleBone;
+		}
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
-			if(gpio_export(digitalPins[i])) {
+			if(gpio_export(gDigitalPins[i])) {
 				if(gRTAudioVerbose)
-					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , digitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
+					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , gDigitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
 			}
-			if(gpio_set_dir(digitalPins[i], INPUT_PIN)) {
+			if(gpio_set_dir(gDigitalPins[i], INPUT_PIN)) {
 				if(gRTAudioVerbose)
-					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , digitalPins[i]);
+					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , gDigitalPins[i]);
 				return -1;
 			}
 		}
@@ -351,7 +340,7 @@ void PRU::cleanupGPIO()
 	}
 	if(digital_enabled){
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
-			gpio_unexport(digitalPins[i]);
+			gpio_unexport(gDigitalPins[i]);
 		}
 	}
 	if(led_enabled) {
