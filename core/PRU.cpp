@@ -602,7 +602,7 @@ static int maskMcAspInterrupt()
 
 void PRU::initialisePruCommon()
 {
-	pru_buffer_comm[PRU_BELA_MINI] = 1;
+	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMiniCape);
     /* Set up flags */
 	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
 	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
