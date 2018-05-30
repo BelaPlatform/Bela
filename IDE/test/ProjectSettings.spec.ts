@@ -60,6 +60,24 @@ describe('ProjectSettingsManager', function(){
 				mock.restore();
 			});
 		});
+		describe('#setCLArgs', function(){
+			it('should mutliple command-line arguments from an array', async function(){
+				mock({ '/root/Bela/projects/test_project/settings.json': JSON.stringify({ CLArgs: {'old_key': 'old_value'} }) });
+				let settings = await project_settings.setCLArgs({
+					currentProject: 'test_project',
+					args: [
+						{ key: 'key1', value: 'value1' },
+						{ key: 'key2', value: 'value2' }
+					]
+				});
+				settings.CLArgs['old_key'].should.equal('old_value');
+				settings.CLArgs['key1'].should.equal('value1');
+				settings.CLArgs['key2'].should.equal('value2');
+			});
+			after(function(){
+				mock.restore();
+			});
+		});
 		describe('#set_fileName', function(){
 			it('should set the filename field of the project settings', async function(){
 				mock({});
