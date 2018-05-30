@@ -8,7 +8,7 @@ import * as paths from './paths';
 export async function get_boot_project(): Promise<string> {
 	let startup_env: string|undefined = await file_manager.read_file(paths.startup_env)
 		.catch(e => console.log('error: no startup_env found') );
-	if ((typeof startup_env) === 'undefined') return 'none';
+	if ((typeof startup_env) === 'undefined') return '*none*';
 	let lines = startup_env.split('\n');
 	for (let line of lines){
 		let split_line: string[] = line.split('=');
