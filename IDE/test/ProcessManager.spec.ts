@@ -275,8 +275,8 @@ describe('ProcessManager', function(){
 				]);
 			});
 			it('should broadcast a status event and object including syntaxError when it finished', function(){
-				processes.build.emit('finish', 'test_stderr');
-				broadcast_stub.callCount.should.equal(1);
+				processes.build.emit('finish', 'test_stderr', false);
+				broadcast_stub.callCount.should.equal(2);
 				broadcast_stub.getCall(0).args.should.deep.equal([
 					'status',
 					{
