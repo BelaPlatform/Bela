@@ -20,7 +20,7 @@
 .DEFAULT_GOAL := Bela
 
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean stopstartup stoprunning stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib lib/libbela.so lib/libbelaextra.so lib/libbela.a lib/libbelaextra.a
+NO_PROJECT_TARGETS=help coreclean distclean stopstartup stoprunning stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib lib/libbela.so lib/libbelaextra.so lib/libbela.a lib/libbelaextra.a csoundstart
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
@@ -92,6 +92,7 @@ RUN_PREREQUISITES=
 RUN_FILE?=$(PROJECT_DIR)/run.sh
 SUPERCOLLIDER_FILE=$(PROJECT_DIR)/_main.scd
 LIBPD_FILE=$(PROJECT_DIR)/_main.pd
+CSOUND_FILE=$(PROJECT_DIR)/_main.csd
 HAS_RUN_FILE=false
 
 FILE_LIST:= $(wildcard $(PROJECT_DIR)/*)
@@ -122,8 +123,14 @@ else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
 PROJECT_TYPE=libpd
 else
+ifeq ($(filter $(CSOUND_FILE),$(FILE_LIST)),$(CSOUND_FILE))
+PROJECT_TYPE=cs
+SHOULD_BUILD=false
+RUN_PREREQUISITES+=lib
+else
 ifneq ($(filter %.c %.cpp %.cc,$(FILE_LIST)),)
 PROJECT_TYPE=cpp
+endif
 endif
 endif
 endif
@@ -157,7 +164,11 @@ ifeq ($(PROJECT_TYPE),sc)
 SCLANG_FIFO=/tmp/sclangfifo
 RUN_COMMAND?=bash -c 'rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
 else
+ifeq ($(PROJECT_TYPE),cs)
+RUN_COMMAND?=bash -c 'belacsound --csd=$(CSOUND_FILE)'
+else
 RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+endif
 endif
 endif
 
@@ -586,6 +597,9 @@ idenostartup: ## Disables the IDE at startup
 ideconnect: ## Brings up the IDE's log
 	$(AT) $(BELA_IDE_CONNECT_COMMAND)
 
+csoundstart: # Start csound
+	$(AT) screen -r -S $(RUN_COMMAND)
+
 SCSYNTH_SCREEN_NAME=scsynth
 SCSYNTH_RUN_COMMAND=screen -S $(SCSYNTH_SCREEN_NAME) -d -m scsynth $(SC_CL)
 SCSYNTH_STOP_COMMAND?=screen -X -S $(SCSYNTH_SCREEN_NAME) quit > /dev/null 
@@ -722,4 +736,4 @@ heavy-unzip-archive: stop
 # If there is no render.cpp, copy the default Heavy one
 	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
 
-.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stopstartup stoprunning stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib
+.PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stopstartup stoprunning stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe csoundstart scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib c
