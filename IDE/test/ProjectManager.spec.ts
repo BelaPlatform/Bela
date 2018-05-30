@@ -197,6 +197,15 @@ describe('ProjectManager', function(){
 				await project_manager.openProject(data2);
 				data.fileData.should.equal(data2.fileData);
 			});
+			it('should open an example without a render.cpp and with a _main* without error', async function(){
+				await file_manager.delete_file('/root/Bela/examples/01-basics/test_example/render.cpp');
+				await file_manager.write_file('/root/Bela/examples/01-basics/test_example/_main.anything', 'other_content');
+				let data: any = {currentProject: '01-basics/test_example'};
+				await project_manager.openExample(data);
+				(typeof data.error).should.equal('undefined');
+				data.fileName.should.equal('_main.anything');
+				data.fileData.should.equal('other_content');
+			});
 		});
 
 		describe('#newProject', function(){

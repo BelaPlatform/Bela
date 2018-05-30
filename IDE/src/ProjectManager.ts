@@ -23,6 +23,17 @@ export async function openFile(data: any){
 		var file_stat = await file_manager.stat_file(file_path);
 	}
 	catch(e){
+		// if we are trying to open an example and we can't find the file, we are (probably)
+		// trying to open a pd or supercollider project, so open _main* if it exists instead
+		if (typeof data.exampleName !== 'undefined'){
+			for(let file of data.fileList){
+				if (file.name.includes('_main')){
+					data.newFile = file.name;
+					await openFile(data);
+					return;
+				}
+			}
+		}
 		data.error = 'error opening file '+data.newFile+': '+e.toString();
 		data.fileData = 'Error opening file. Please open a different file to continue';
 		data.fileName = data.newFile;
