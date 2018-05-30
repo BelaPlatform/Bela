@@ -213,6 +213,10 @@ socket.on('init', (data) => {
 	
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
+	console.log('running on', data.board_string);
+	models.settings.setKey('boardString', data.board_string);
+	tabView.emit('boardString', data.board_string);
+
 	// TODO! models.status.setData(data[5]);
 	
 	//models.project.print();

@@ -94,7 +94,8 @@ class TabView extends View {
 		this.on('toggle', () => {
 			if (_tabsOpen) this.closeTabs();
 			else this.openTabs();
-		})
+		});
+		this.on('boardString', this._boardString);
 		
 	}
 	
@@ -132,6 +133,10 @@ class TabView extends View {
 	getOpenTab(){
 		if (!_tabsOpen) return false;
 		return $('[type=radio]:checked ~ label').prop('for');
+	}
+
+	_boardString(data){
+		console.log('board string:', data);
 	}
 	
 }

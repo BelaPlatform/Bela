@@ -630,6 +630,10 @@ socket.on('init', function (data) {
 
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
+	console.log('running on', data.board_string);
+	models.settings.setKey('boardString', data.board_string);
+	tabView.emit('boardString', data.board_string);
+
 	// TODO! models.status.setData(data[5]);
 
 	//models.project.print();
@@ -3522,6 +3526,15 @@ var SettingsView = function (_View) {
 				}
 			});
 		}
+	}, {
+		key: '_boardString',
+		value: function _boardString(data) {
+			console.log('settings board string', data);
+			if (data.trim() === 'BelaMini') {
+				$('.capelet-settings').css('display', 'none');
+				$('#mute-speaker').parent().parent().css('display', 'none');
+			}
+		}
 	}]);
 
 	return SettingsView;
@@ -3643,6 +3656,7 @@ var TabView = function (_View) {
 		_this.on('toggle', function () {
 			if (_tabsOpen) _this.closeTabs();else _this.openTabs();
 		});
+		_this.on('boardString', _this._boardString);
 
 		return _this;
 	}
@@ -3684,6 +3698,11 @@ var TabView = function (_View) {
 		value: function getOpenTab() {
 			if (!_tabsOpen) return false;
 			return $('[type=radio]:checked ~ label').prop('for');
+		}
+	}, {
+		key: '_boardString',
+		value: function _boardString(data) {
+			console.log('board string:', data);
 		}
 	}]);
 
