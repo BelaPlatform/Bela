@@ -323,9 +323,10 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	free(str);
-	if(context->analogInChannels != context->analogOutChannels ||
-			context->audioInChannels != context->audioOutChannels){
-		fprintf(stderr, "This project requires the number of inputs and the number of outputs to be the same\n");
+	if(context->analogInChannels > 8 || context->analogOutChannels > 8)
+	{
+		fprintf(stderr, "This project can run with a maximum of 8 analog channels\n");
+		// change LIBPD_DIGITAL_OFFSET if you want more
 		return false;
 	}
 	// analog setup

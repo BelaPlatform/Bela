@@ -9,6 +9,9 @@
 #ifndef SPI_CODEC_H_
 #define SPI_CODEC_H_
 
+#include "AudioCodec.h"
+#include <cstdlib>
+
 #define REG_PLL_CLK_CONTROL_0 	0
 #define REG_PLL_CLK_CONTROL_1 	1
 #define REG_DAC_CONTROL_0 		2
@@ -27,9 +30,7 @@
 #define REG_ADC_CONTROL_1 		15
 #define REG_ADC_CONTROL_2 		16
 
-#include <cstdlib>
-
-class Spi_Codec {
+class Spi_Codec : public AudioCodec {
 
 public:
 	enum CODEC_TYPE {
@@ -37,7 +38,7 @@ public:
 		SLAVE_CODEC
 	};
 
-	Spi_Codec();
+	Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1);
 	~Spi_Codec();
 
 	int writeRegister(unsigned char reg, unsigned char value, CODEC_TYPE codec = MASTER_CODEC);
@@ -49,14 +50,19 @@ public:
 	int setDACVolume(int halfDbSteps);
 	int dumpRegisters();
 	int reset(); // Hard reset of codec(s)
-	bool masterIsDetectable(); // CTAG face2|4
-	bool slaveIsDetectable();  // CTAG Beast
+	bool masterIsDetected(); // CTAG face2|4
+	bool slaveIsDetected();  // CTAG Beast
+	int setADCVolume(int halfDbSteps) {return 0;};
+	int setHPVolume(int halfDbSteps) {return 0;};
+	int setPga(float newGain, unsigned short int channel) {return 0;};
+	int disable() {return 0;};
 
 private:
 	int _fd_master, _fd_slave;
 	int _dacVolumethreeEighthsDbs;
 	int _writeDACVolumeRegisters(bool mute);
 	int _spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t bytes, CODEC_TYPE codec = MASTER_CODEC);
+	bool _isBeast = false;
 };
 
 #endif /* SPI_CODEC_H_ */

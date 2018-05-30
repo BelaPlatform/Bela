@@ -16,10 +16,11 @@
 #ifndef I2CCODEC_H_
 #define I2CCODEC_H_
 
+#include "AudioCodec.h"
 #include "I2c.h"
 
 
-class I2c_Codec : public I2c
+class I2c_Codec : public I2c, public AudioCodec
 {
 	short unsigned int pllJ;
 	short unsigned int pllD;
@@ -55,7 +56,7 @@ public:
 
 	int readI2C();
 
-	I2c_Codec();
+	I2c_Codec(int i2cBus, int I2cAddress);
 	~I2c_Codec();
 
 private:

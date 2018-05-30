@@ -37,10 +37,6 @@
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
 
-#if (defined(CTAGE_FACE_8CH) || defined(CTAG_FACE_16CH))
-	#define PRU_USES_MCASP_IRQ
-#endif
-
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
 #error Define one of BELA_USE_POLL, BELA_USE_RTDM
 #endif
@@ -134,6 +130,7 @@ public:
 			printf("digital: %p %p\n", pruDigitalStart[0], pruDigitalStart[1]);
 			printf("audio: %p %p %p %p\n", pruAudioOutStart[0], pruAudioOutStart[1], pruAudioInStart[0], pruAudioInStart[1]);
 			printf("analog: %p %p %p %p\n", pruAnalogOutStart[0], pruAnalogOutStart[1], pruAnalogInStart[0], pruAnalogInStart[1]);
+			printf("analog offset: %#x %#x %#x %#x\n", pruAnalogOutStart[0] - pruSharedRam, pruAnalogOutStart[1] - pruSharedRam, pruAnalogInStart[0] - pruSharedRam, pruAnalogInStart[1] - pruSharedRam);
 		}
 	}
 	void copyFromPru(int buffer)
@@ -191,34 +188,21 @@ private:
 #define PRU_MUX_CONFIG         13
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
+#define PRU_BELA_MINI          16
 
-short int digitalPins[NUM_DIGITALS] = {
-		GPIO_NO_BIT_0,
-		GPIO_NO_BIT_1,
-		GPIO_NO_BIT_2,
-		GPIO_NO_BIT_3,
-		GPIO_NO_BIT_4,
-		GPIO_NO_BIT_5,
-		GPIO_NO_BIT_6,
-		GPIO_NO_BIT_7,
-		GPIO_NO_BIT_8,
-		GPIO_NO_BIT_9,
-		GPIO_NO_BIT_10,
-		GPIO_NO_BIT_11,
-		GPIO_NO_BIT_12,
-		GPIO_NO_BIT_13,
-		GPIO_NO_BIT_14,
-		GPIO_NO_BIT_15,
-};
+static unsigned int* gDigitalPins = NULL;
 
 #define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
 
-#define GPIO1_ADDRESS 		0x4804C000
-
-#define USERLED3_GPIO_BASE  GPIO1_ADDRESS // GPIO1(24) is user LED 3
+#define USERLED3_GPIO_BASE  GPIO_ADDRESSES[1] // GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
+const unsigned int belaMiniLedBlue = 87;
+const unsigned int belaMiniLedBlueGpioBase = GPIO_ADDRESSES[2]; // GPIO2(23) is BelaMini LED blue
+const unsigned int belaMiniLedBlueGpioPinMask = 1 << 23;
+const unsigned int belaMiniLedRed = 89;
+const unsigned int underrunLedDuration = 20000;
 
-#define BELA_CAPE_BUTTON_PIN 115
+const unsigned int BELA_CAPE_BUTTON_PIN = 115;
 
 const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
 const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
@@ -243,7 +227,7 @@ PRU::PRU(InternalBelaContext *input_context)
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0)
+  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
 {
 }
 
@@ -305,14 +289,20 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			gDigitalPins = digitalPinsPocketBeagle;
+		} else {
+			gDigitalPins = digitalPinsBeagleBone;
+		}
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
-			if(gpio_export(digitalPins[i])) {
+			if(gpio_export(gDigitalPins[i])) {
 				if(gRTAudioVerbose)
-					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , digitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
+					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , gDigitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
 			}
-			if(gpio_set_dir(digitalPins[i], INPUT_PIN)) {
+			if(gpio_set_dir(gDigitalPins[i], INPUT_PIN)) {
 				if(gRTAudioVerbose)
-					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , digitalPins[i]);
+					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , gDigitalPins[i]);
 				return -1;
 			}
 		}
@@ -320,9 +310,18 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		// Turn off system function for LED3 so it can be reused by PRU
-		led_set_trigger(3, "none");
-		led_enabled = true;
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			//using on-board LED
+			gpio_export(belaMiniLedBlue);
+			gpio_set_dir(belaMiniLedBlue, OUTPUT_PIN);
+			led_enabled = true;
+		} else {
+			// Using BeagleBone's USR3 LED
+			// Turn off system function for LED3 so it can be reused by PRU
+			led_set_trigger(3, "none");
+			led_enabled = true;
+		}
 	}
 
 	gpio_enabled = true;
@@ -341,25 +340,34 @@ void PRU::cleanupGPIO()
 	}
 	if(digital_enabled){
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
-			gpio_unexport(digitalPins[i]);
+			gpio_unexport(gDigitalPins[i]);
 		}
 	}
 	if(led_enabled) {
-		// Set LED back to default eMMC status
-		// TODO: make it go back to its actual value before this program,
-		// rather than the system default
-		led_set_trigger(3, "mmc1");
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			//using on-board LED
+			gpio_unexport(belaMiniLedBlue);
+		} else {
+			// Set LED back to default eMMC status
+			// TODO: make it go back to its actual value before this program,
+			// rather than the system default
+			led_set_trigger(3, "mmc1");
+		}
 	}
 	gpio_enabled = false;
 }
 
 // Initialise and open the PRU
-int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring)
+int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring, bool enableLed)
 {
-	if(context->analogInChannels != context->analogOutChannels){
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+	belaHw = newBelaHw;
+	// Initialise the GPIO pins, including possibly the digital pins in the render routines
+	if(prepareGPIO(enableLed)) {
+		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
 		return 1;
 	}
+
 	hardware_analog_frames = context->analogFrames;
 
 	if(!gpio_enabled) {
@@ -389,6 +397,10 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	if(capeButtonMonitoring){
 		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
 	}
+	if(belaHw == BelaHw_BelaMiniCape && enableLed){
+		underrunLed.open(belaMiniLedRed, OUTPUT);
+		underrunLed.clear();
+	}
 
 	// after setting all PRU settings, we adjust
 	// the "software" sampling rate with appropriate
@@ -396,7 +408,7 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	uniform_sample_rate = uniformSampleRate;
 	if(uniform_sample_rate)
 	{
-		if(context->analogInChannels != context->analogOutChannels)
+		if(context->analogOutChannels && (context->analogInChannels != context->analogOutChannels))
 		{
 			fprintf(stderr, "Different numbers of inputs and outputs is not supported yet\n");
 			return 1;
@@ -543,7 +555,6 @@ int PRU::initialise(int pru_num, bool uniformSampleRate, int mux_channels, bool 
 	return 0;
 }
 
-#ifdef PRU_USES_MCASP_IRQ
 static int devMemWrite(off_t target, uint32_t* value)
 {
 	const unsigned long MAP_SIZE = 4096UL;
@@ -588,10 +599,10 @@ static int maskMcAspInterrupt()
 	} else
 		return 0;
 }
-#endif /* PRU_USES_MCASP_IRQ */
 
 void PRU::initialisePruCommon()
 {
+	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMiniCape);
     /* Set up flags */
 	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
 	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
@@ -631,8 +642,14 @@ void PRU::initialisePruCommon()
 	}
 	
 	if(led_enabled) {
-		pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
-		pru_buffer_comm[PRU_LED_PIN_MASK] = USERLED3_PIN_MASK;
+		if(belaHw == BelaHw_BelaMiniCape)
+		{
+			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
+			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
+		} else {
+			pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
+			pru_buffer_comm[PRU_LED_PIN_MASK] = USERLED3_PIN_MASK;
+		}
 	}
 	else {
 		pru_buffer_comm[PRU_LED_ADDRESS] = 0;
@@ -659,16 +676,6 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
-#ifdef PRU_USES_MCASP_IRQ
-	/* The PRU will enable the McASP interrupts. Here we mask
-	 * them out from ARM so that they do not hang the CPU. */
-	if(maskMcAspInterrupt() < 0)
-	{
-		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
-		return 1;
-	}
-	#warning TODO: unmask interrupt when program stops
-#endif
 
 #ifdef BELA_USE_RTDM
 	// Open RTDM driver
@@ -689,17 +696,54 @@ int PRU::start(char * const filename)
 		return 1;
 	}
 #endif
+	switch(belaHw)
+	{
+		case BelaHw_BelaCape:
+			//nobreak
+		case BelaHw_BelaMiniCape:
+			//nobreak
+		case BelaHw_BelaModular:
+			pruUsesMcaspIrq = false;
+			break;
+		case BelaHw_CtagFace:
+			//nobreak
+		case BelaHw_CtagBeast:
+			//nobreak
+		case BelaHw_CtagFaceBelaCape:
+			//nobreak
+		case BelaHw_CtagBeastBelaCape:
+			pruUsesMcaspIrq = true;
+			break;
+		case BelaHw_NoHw:
+		default:
+			fprintf(stderr, "Error: unrecognized hardware\n");
+			return 1;
+	}
 
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
 
-#ifdef PRU_USES_MCASP_IRQ
-	const unsigned int* pruCode = IrqPruCode::getBinary();
-	const unsigned int pruCodeSize = IrqPruCode::getBinarySize();
-#else /* PRU_USES_MCASP_IRQ */
-	const unsigned int* pruCode = NonIrqPruCode::getBinary();
-	const unsigned int pruCodeSize = NonIrqPruCode::getBinarySize();
-#endif /* PRU_USES_MCASP_IRQ */
+	unsigned int* pruCode;
+	unsigned int pruCodeSize;
+	switch((int)pruUsesMcaspIrq) // (int) is here to avoid stupid compiler warning
+	{
+		case false:
+			pruCode = (unsigned int*)NonIrqPruCode::getBinary();
+			pruCodeSize = NonIrqPruCode::getBinarySize();
+			break;
+		case true:
+			pruCode = (unsigned int*)IrqPruCode::getBinary();
+			pruCodeSize = IrqPruCode::getBinarySize();
+			/* The PRU will enable the McASP interrupts. Here we mask
+			 * them out from ARM so that they do not hang the CPU. */
+			if(maskMcAspInterrupt() < 0)
+			{
+				fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
+				return 1;
+			}
+			// TODO: unmask interrupt when program stops
+			break;
+	}
 
 	/* Load and execute binary on PRU */
 	if(filename[0] == '\0') { //if the string is empty, load the embedded code
@@ -731,10 +775,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	uint16_t* analogOutRaw = pruMemory->getAnalogOutPtr();
 	int16_t* audioInRaw = pruMemory->getAudioInPtr();
 	int16_t* audioOutRaw = pruMemory->getAudioOutPtr();
-	if(context->analogInChannels != context->analogOutChannels){
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-		return;
-	}
 	// Polling interval is 1/4 of the period
 #ifdef CTAG_FACE_8CH
 	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
@@ -774,6 +814,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	}
 
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
+	int underrunLedCount = -1;
 	while(!gShouldStop) {
 
 #ifdef BELA_USE_POLL
@@ -1291,9 +1332,23 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			{
 				// don't print a warning if we are stopping
 				if(!gShouldStop)
+				{
 					rt_fprintf(stderr, "Underrun detected: %u blocks dropped\n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
+					if(underrunLed.enabled())
+						underrunLed.set();
+					underrunLedCount = underrunLedDuration;
+				}
 			}
 			lastPruFrameCount = pruFrameCount;
+			if(underrunLedCount > 0)
+			{
+				underrunLedCount -= context->audioFrames;
+				if(underrunLedCount < 0)
+				{
+					if(underrunLed.enabled())
+						underrunLed.clear();
+				}
+			}
 		}
 
 		// Increment total number of samples that have elapsed.
@@ -1307,6 +1362,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	// Tell PRU to stop
 	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
+	if(underrunLed.enabled())
+		underrunLed.clear();
 
 	// Wait for the PRU to finish
 	task_sleep_ns(100000000);

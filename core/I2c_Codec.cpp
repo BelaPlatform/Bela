@@ -15,9 +15,11 @@
 #include "../include/I2c_Codec.h"
 
 #define TLV320_DSP_MODE
-I2c_Codec::I2c_Codec()
+I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress)
 : running(false), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
-{}
+{
+	initI2C_RW(i2cBus, i2cAddress, -1);
+}
 
 // This method initialises the audio codec to its default state
 int I2c_Codec::initCodec()
@@ -25,7 +27,7 @@ int I2c_Codec::initCodec()
 	// Write the reset register of the codec
 	if(writeRegister(0x01, 0x80)) // Software reset register
 	{
-		fprintf(stderr, "Failed to reset codec\n");
+		fprintf(stderr, "Failed to reset I2C codec\n");
 		return 1;
 	}
 
@@ -500,7 +502,7 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 
 	if(write(i2C_file, buf, 2) != 2)
 	{
-		fprintf(stderr,"Failed to write register %u on codec\n", reg);
+		fprintf(stderr, "Failed to write register %d on I2c codec\n", reg);
 		return 1;
 	}
 
