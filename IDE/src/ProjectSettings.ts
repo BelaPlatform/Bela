@@ -61,7 +61,12 @@ export async function getArgs(project: any): Promise<{CL: string, make: string}>
 	let CL: string = '';
 	for (let key in CLArgs) {
 		if (key[0] === '-' && key[1] === '-'){
-			CL += key+'='+CLArgs[key]+' ';
+			if (key === '--disable-led'){
+				if (CLArgs[key] === 1)
+					CL += key+' ';
+			} else {
+				CL += key+'='+CLArgs[key]+' ';
+			}
 		} else if (key === 'user'){
 			CL += CLArgs[key]+' ';
 		} else if (key !== 'make' && key !== 'audioExpander' && CLArgs[key] !== ''){
@@ -102,7 +107,8 @@ export function default_project_settings(){
 		"-X": "0",		// multiplexer capelet
 		"audioExpander": "0",	// audio expander capelet
 		"-Y": "",		// audio expander inputs
-		"-Z": ""		// audio expander outputs
+		"-Z": "",		// audio expander outputs
+		"--disable-led": "0"
 	};
 	return {
 		"fileName"		: "render.cpp",

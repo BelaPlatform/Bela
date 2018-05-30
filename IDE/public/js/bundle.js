@@ -3529,10 +3529,11 @@ var SettingsView = function (_View) {
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
-			console.log('settings board string', data);
 			if (data.trim() === 'BelaMini') {
 				$('.capelet-settings').css('display', 'none');
 				$('#mute-speaker').parent().parent().css('display', 'none');
+			} else {
+				$('#disable-led').parent().parent().css('display', 'none');
 			}
 		}
 	}]);
