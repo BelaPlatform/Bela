@@ -30,16 +30,21 @@ export async function set_boot_project(socket: SocketIO.Socket, project:  string
 			'nostartup'
 		]);
 	} else {
-		let args: {CL: string, make: string} = await project_settings.getArgs(project);
-		run_on_boot(socket, [
+		let project_args: {CL: string, make: string[]} = await project_settings.getArgs(project);
+		let args: string[] = [
 			'--no-print-directory',
 			'-C',
 			paths.Bela,
 			'startuploop',
 			'PROJECT='+project,
-			'CL="'+args.CL+'"',
-			args.make
-		]);
+			'CL="'+project_args.CL+'"'
+		];
+		if (project_args.make){
+			for (let arg of project_args.make){
+				args.push(arg);
+			}
+		}
+		run_on_boot(socket, args);
 	}
 }
 

@@ -70,7 +70,7 @@ export async function restoreDefaultCLArgs(data: any): Promise<any> {
 	lock.release();
 	return settings;
 }
-export async function getArgs(project: any): Promise<{CL: string, make: string}> {
+export async function getArgs(project: any): Promise<{CL: string, make: string[]}> {
 	let CLArgs = (await read(project)).CLArgs;
 	let CL: string = '';
 	for (let key in CLArgs) {
@@ -87,18 +87,11 @@ export async function getArgs(project: any): Promise<{CL: string, make: string}>
 			CL += key+CLArgs[key]+' ';
 		}
 	}
-	let make: string = ''; 
+	let make: string[] = []; 
 	if (CLArgs.make && CLArgs.make.split){
-		let makeArgs = CLArgs.make.split(';');
-		for (let arg of makeArgs){
-			arg = arg.trim();
-			if(arg.length > 0){
-				make += arg+' ';
-			}
-		}
+		make = CLArgs.make.split(';');
 	}
 	CL = CL.trim();
-	make = make.trim();
 	return {CL, make};
 }
 

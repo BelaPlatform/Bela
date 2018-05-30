@@ -24,7 +24,7 @@ export class MakeProcess extends Event_Emitter{
 		this.project = project;
 		this.stderr = '';
 		this.killed = false;
-		let project_args: {CL:string, make:string} = await project_settings.getArgs(project);
+		let project_args: {CL:string, make:string[]} = await project_settings.getArgs(project);
 		let args: string[] = [
 			'--no-print-directory',
 			'-C',
@@ -33,8 +33,11 @@ export class MakeProcess extends Event_Emitter{
 			'PROJECT='+project,
 			'CL="'+project_args.CL+'"'
 		];
-		if (project_args.make !== '')
-			args.push(project_args.make);
+		if (project_args.make){
+			for (let arg of project_args.make){
+				args.push(arg);
+			}
+		}
 		console.log('make', args.join(' '));
 		this.proc = child_process.spawn('make', args, {detached: true});
 		this.emit('start', this.proc.pid, project);
