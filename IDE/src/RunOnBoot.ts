@@ -13,21 +13,35 @@ export async function get_boot_project(): Promise<string> {
 	for (let line of lines){
 		let split_line: string[] = line.split('=');
 		if (split_line[0] === 'ACTIVE' && split_line[1] === '0'){
-			return 'none';
+			return '*none*';
 		} else if (split_line[0] === 'PROJECT'){
+			let project: string;
+			if (split_line[1] === ''){
+				project = '*loop*';
+			} else {
+				project = split_line[1];
+			}
 			listen_on_boot();
-			return split_line[1];
+			return project;
 		}
 	}
 }
 
 export async function set_boot_project(socket: SocketIO.Socket, project:  string){
-	if (project === 'none'){
+	if (project === '*none*'){
 		run_on_boot(socket, [
 			'--no-print-directory',
 			'-C',
 			paths.Bela,
 			'nostartup'
+		]);
+	} else if(project === '*loop*'){
+		run_on_boot(socket, [
+			'--no-print-directory',
+			'-C',
+			paths.Bela,
+			'startuploop',
+			'PROJECT='
 		]);
 	} else {
 		let project_args: {CL: string, make: string[]} = await project_settings.getArgs(project);

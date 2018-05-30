@@ -264,11 +264,11 @@ class SettingsView extends View {
 		var $projects = $('#runOnBoot');
 		$projects.empty();
 		
-		// add an empty option to menu and select it
-		$('<option></option>').html('--select--').appendTo($projects);
+		// add a none option
+		$('<option></option>').attr('value', '*none*').html('•none•').appendTo($projects);
 		
-		// add a 'none' option
-		$('<option></option>').attr('value', 'none').html('none').appendTo($projects);
+		// add a loop_* option
+		$('<option></option>').attr('value', '*loop*').html('•loop_*•').appendTo($projects);
 
 		// fill project menu with projects
 		for (let i=0; i<projects.length; i++){
