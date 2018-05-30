@@ -6,6 +6,7 @@ import * as paths from './paths';
 export async function upload(data: any){
 	try{
 		socket_manager.broadcast('std-log', 'Upload completed, saving update file...');
+		await file_manager.empty_directory(paths.update);
 		await file_manager.write_file(paths.update+data.name, data.file);
 		socket_manager.broadcast('std-log', 'unzipping and validating update...');
 		await check_update();
