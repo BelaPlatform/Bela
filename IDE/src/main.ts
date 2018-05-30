@@ -102,6 +102,17 @@ export function shutdown(){
 	child_process.exec('shutdown -h now', (err, stdout, stderr) => console.log('shutting down', err, stdout, stderr) );
 }
 
+export async function board_detect(): Promise<any>{
+	return new Promise( (resolve, reject) => {
+		child_process.exec('board_detect', (err, stdout, stderr) => {
+			if (err) reject(err);
+			if (stderr) reject(stderr);
+			console.log('running on', stdout);
+			resolve(stdout);
+		});
+	});
+}
+
 process.on('warning', e => console.warn(e.stack));
 /*process.on('uncaughtException', err => {
 	console.log('uncaught exception');

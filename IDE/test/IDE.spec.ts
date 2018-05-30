@@ -60,4 +60,10 @@ describe('Top-level IDE functions', function(){
 			mock.restore();
 		});
 	});
+	describe('#board_detect', function(){
+		it('should return a string corresponding to the board we are running on', async function(){
+			let output: string = await IDE.board_detect();
+			output.should.satisfy( (str: string) => str.trim() === 'Bela' || str.trim() === 'BelaMini' );
+		});
+	});
 });

@@ -11,11 +11,12 @@ export class File_Descriptor {
 }
 
 export interface Init_Message{
-	projects: string[];
-	examples: File_Descriptor[];
-	settings: any;
-	boot_project: string;
-	xenomai_version: string;
+	projects	: string[];
+	examples	: File_Descriptor[];
+	settings	: any;
+	boot_project	: string;
+	board_string	: string;
+	xenomai_version	: string;
 }
 
 export interface Process_Status{

@@ -66,10 +66,11 @@ async function interval_func(){
 
 async function init_message(socket: SocketIO.Socket){
 	let message: util.Init_Message = {
-		projects : await project_manager.listProjects(),
-		examples : await project_manager.listExamples(),
-		settings : await ide_settings.read(),
-		boot_project : await boot_project.get_boot_project(),
+		projects 	: await project_manager.listProjects(),
+		examples 	: await project_manager.listExamples(),
+		settings 	: await ide_settings.read(),
+		boot_project 	: await boot_project.get_boot_project(),
+		board_string	: await IDE.board_detect(),
 		xenomai_version : await IDE.get_xenomai_version()
 //	status : await process_manager.status()
 	};
