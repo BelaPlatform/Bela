@@ -14,12 +14,16 @@
 
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
+#if (defined(CTAG_BEAST_8CH) || defined(CTAG_BEAST_16CH))
+#define CTAG
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <math.h>
+#include <algorithm>
 #include <iostream>
 #include <assert.h>
 #include <vector>
@@ -59,6 +63,108 @@
 
 using namespace std;
 
+typedef struct _BelaHwConfig
+{
+	float audioSampleRate;
+	unsigned int audioInChannels;
+	unsigned int audioOutChannels;
+	unsigned int analogInChannels;
+	unsigned int analogOutChannels;
+	AudioCodec* activeCodec;
+	AudioCodec* disabledCodec;
+} BelaHwConfig;
+
+static I2c_Codec* gI2cCodec = NULL;
+static Spi_Codec* gSpiCodec = NULL;
+AudioCodec* gAudioCodec = NULL;
+
+#ifdef CTAG
+const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
+const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
+#endif /* CTAG */
+
+int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
+{
+	memset((void*)cfg, 0, sizeof(BelaHwConfig));
+	// set audio codec
+	switch(hw)
+	{
+		case BelaHw_BelaCape:
+			//nobreak
+		case BelaHw_BelaMiniCape:
+			//nobreak
+		case BelaHw_BelaModular:
+			//nobreak
+			cfg->activeCodec = gI2cCodec;
+			cfg->disabledCodec = gSpiCodec;
+			break;
+		case BelaHw_CtagFace:
+			//nobreak
+		case BelaHw_CtagFaceBelaCape:
+			//nobreak
+		case BelaHw_CtagBeast:
+			//nobreak
+		case BelaHw_CtagBeastBelaCape:
+			cfg->activeCodec = gSpiCodec;
+			cfg->disabledCodec = gI2cCodec;
+			break;
+		case BelaHw_NoHw:
+		default:
+		return -1; // unrecognized hw
+	}
+	// set audio I/O
+	switch(hw)
+	{
+		case BelaHw_BelaCape:
+			//nobreak
+		case BelaHw_BelaMiniCape:
+			//nobreak
+		case BelaHw_BelaModular:
+			cfg->audioInChannels = 2;
+			cfg->audioOutChannels = 2;
+			cfg->audioSampleRate = 44100;
+			break;
+		case BelaHw_CtagFace:
+			//nobreak
+		case BelaHw_CtagFaceBelaCape:
+			cfg->audioInChannels = 8;
+			cfg->audioOutChannels = 8;
+			cfg->audioSampleRate = 48000;
+			break;
+		case BelaHw_CtagBeast:
+			//nobreak
+		case BelaHw_CtagBeastBelaCape:
+			cfg->audioInChannels = 16;
+			cfg->audioOutChannels = 16;
+			cfg->audioSampleRate = 48000;
+			break;
+	}
+	// set analogs:
+	switch(hw)
+	{
+		case BelaHw_BelaCape:
+			//nobreak
+		case BelaHw_BelaModular:
+			//nobreak
+		case BelaHw_CtagFaceBelaCape:
+			//nobreak
+		case BelaHw_CtagBeastBelaCape:
+			cfg->analogInChannels = 8;
+			cfg->analogOutChannels = 8;
+			break;
+		case BelaHw_BelaMiniCape:
+			cfg->analogInChannels = 8;
+			break;
+		case BelaHw_CtagFace:
+			//nobreak
+		case BelaHw_CtagBeast:
+			//nobreak
+		default:
+			break;
+	}
+	return 0;
+}
+
 // Real-time tasks and objects
 #ifdef XENOMAI_SKIN_native
 RT_TASK gRTAudioThread;
@@ -71,13 +177,7 @@ int gXenomaiInited = 0;
 #endif
 static const char gRTAudioThreadName[] = "bela-audio";
 
-PRU *gPRU = 0;
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-	Spi_Codec *gAudioCodec = 0;
-	I2c_Codec *gNotUsedCodec = 0;
-#else
-	I2c_Codec *gAudioCodec = 0;
-#endif
+PRU* gPRU = NULL;
 
 int volatile gShouldStop = false; // Flag which tells the audio task to stop
 int gRTAudioVerbose = 0; // Verbosity level for debugging
@@ -183,7 +283,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise context data structure
-	memset(&gContext, 0, sizeof(BelaContext));
+	memset(&gContext, 0, sizeof(InternalBelaContext));
 
 	if(gRTAudioVerbose) {
 		printf("Starting with period size %d ;", settings->periodSize);
@@ -230,32 +330,40 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			return -1;
 	}
 
+#ifdef CTAG
+	// TODO: make the failure less verbose
+	gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, ctag_spidev_gpio_cs1);
+#endif /* CTAG */
+	gI2cCodec = new I2c_Codec(2, settings->codecI2CAddress); // TODO: this may fail (e.g.: Bela cape not present, or broken codec)
+								//, where would we find out? in Bela_detectHw(), I guess
+
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-		gContext.audioSampleRate = 48000.0;
-	#else
-		gContext.audioSampleRate = 44100.0;
-	#endif
+	BelaHw belaHw = Bela_detectHw();
+	BelaHwConfig cfg;
+	if(Bela_getHwConfig(belaHw, &cfg))
+	{
+		fprintf(stderr, "Unrecognized Bela hardware: is a cape connected?\n");
+		return 1;
+	}
+	gContext.audioSampleRate = cfg.audioSampleRate;
+	gContext.audioInChannels = cfg.audioInChannels;
+	gContext.audioOutChannels = cfg.audioOutChannels;
+	gContext.audioFrames = settings->periodSize;
+	gAudioCodec = cfg.activeCodec;
+	if(cfg.disabledCodec)
+	{
+#ifdef CTAG
+	// TODO: make the failure less verbose
+		cfg.disabledCodec->disable(); // Put unused codec in high impedance state
+#endif /* CTAG */
+	}
 
-	// TODO: settings a different number of channels for inputs and outputs is not yet supported
-	#ifdef CTAG_FACE_8CH
-		gContext.audioInChannels = 8;
-		gContext.audioOutChannels = 8;
-	#elif defined(CTAG_BEAST_16CH)
-		gContext.audioInChannels = 16;
-		gContext.audioOutChannels = 16;
-	#else
-		gContext.audioInChannels = 2;
-		gContext.audioOutChannels = 2;
-	#endif
-
-	if(settings->useAnalog) {
-		gContext.audioFrames = settings->periodSize;
+	if(settings->useAnalog && (cfg.analogInChannels || cfg.analogOutChannels)) {
 
 		// TODO: a different number of channels for inputs and outputs is not yet supported
 		gContext.analogFrames = gContext.audioFrames * 4 / settings->numAnalogInChannels;
-		gContext.analogInChannels = settings->numAnalogInChannels;
-		gContext.analogOutChannels = settings->numAnalogOutChannels;
+		gContext.analogOutChannels = std::min((int)cfg.analogOutChannels, settings->numAnalogOutChannels);
+		gContext.analogInChannels = std::min((int)cfg.analogInChannels, settings->numAnalogInChannels);
 		unsigned int numAnalogChannelsForSampleRate = settings->numAnalogInChannels;
 		gContext.analogSampleRate = gContext.audioSampleRate * 4.0 / (float)numAnalogChannelsForSampleRate;
 		
@@ -263,8 +371,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 										((settings->audioExpanderOutputs & 0xFFFF) << 16);
 	}
 	else {
-		gContext.audioFrames = settings->periodSize;
-
 		gContext.analogFrames = 0;
 		gContext.analogInChannels = 0;
 		gContext.analogOutChannels = 0;
@@ -272,8 +378,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.audioExpanderEnabled = 0;
 	}
 
-	if(gContext.analogInChannels != gContext.analogOutChannels){
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
+	if(gContext.analogOutChannels && (gContext.analogInChannels != gContext.analogOutChannels)){
+		fprintf(stderr, "TODO: a different number of channels for analog inputs and outputs is not yet supported (unless outputs are 0)\n");
 		return -1;
 	}
 	unsigned int analogChannels = gContext.analogInChannels;
@@ -281,7 +387,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if( analogChannels != 0 && ((analogChannels <= 4 && gContext.analogFrames < 2) ||
 			(analogChannels <= 2 && gContext.analogFrames < 4)) )
 	{
-		fprintf(stderr,"Error: %u channels and period size of %d not supported.\n", analogChannels, gContext.analogFrames);
+		fprintf(stderr,"Error: %u analog channels and period size of %d not supported.\n", analogChannels, gContext.analogFrames);
 		return 1;
 	}
 
@@ -310,48 +416,18 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Use PRU for audio
 	gPRU = new PRU(&gContext);
-	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-		gNotUsedCodec = new I2c_Codec();
-		gNotUsedCodec->disable(); // Put not used codec in high impedance state
-		gAudioCodec = new Spi_Codec();
-	#else
-		gAudioCodec = new I2c_Codec();
-	#endif
- 	
-	
 
-	// Initialise the GPIO pins, including possibly the digital pins in the render routines
-	if(gPRU->prepareGPIO(settings->enableLED)) {
-		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
-		return 1;
-	}
-	
 	// Get the PRU memory buffers ready to go
-	if(gContext.analogInChannels != gContext.analogOutChannels){
-		printf("Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-		return 1;
-	}
-
-	if(gPRU->initialise(settings->pruNumber, settings->uniformSampleRate,
-		 				settings->numMuxChannels, settings->enableCapeButtonMonitoring)) {
+	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
+                                settings->numMuxChannels, settings->enableCapeButtonMonitoring, settings->enableLED)) {
 		fprintf(stderr, "Error: unable to initialise PRU\n");
 		return 1;
 	}
 
-	#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-		gAudioCodec->initCodec();
-		//gAudioCodec->dumpRegisters();
-	#else
-		// Prepare the audio codec, which clocks the whole system
-		if(gAudioCodec->initI2C_RW(2, settings->codecI2CAddress, -1)) {
-			fprintf(stderr, "Unable to open codec I2C\n");
-			return 1;
-		}
-		if(gAudioCodec->initCodec()) {
-			fprintf(stderr, "Error: unable to initialise audio codec\n");
-			return 1;
-		}
-	#endif
+	if(gAudioCodec->initCodec()) {
+		cerr << "Error: unable to initialise audio codec\n";
+		return 1;
+	}
 
 	// Set default volume levels
 	Bela_setDACLevel(settings->dacLevel);
@@ -577,29 +653,18 @@ int Bela_setDACLevel(float decibels)
 int Bela_setADCLevel(float decibels)
 {
 
-// AD1938 audio codec has no ADC volume controls
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-#else
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setADCVolume((int)floorf(decibels * 2.0 + 0.5));
-#endif
-
-	return 0;
 }
 
 // Set the level of the Programmable Gain Amplifier
 // 59.5dB is maximum, 0dB is minimum; 0.5dB steps
 int Bela_setPgaGain(float decibels, int channel){
-//Nothing to be done for CTAG audio cards
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-#else
+
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setPga(decibels, channel);
-#endif
-
-	return 0;
 }
 
 // Set the level of the onboard headphone amplifier; affects headphone
@@ -607,14 +672,10 @@ int Bela_setPgaGain(float decibels, int channel){
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setHeadphoneLevel(float decibels)
 {
-//Nothing to be done for CTAG audio cards
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-#else
+
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setHPVolume((int)floorf(decibels * 2.0 + 0.5));
-#endif
-	return 0;
 }
 
 // Mute or unmute the onboard speaker amplifiers
@@ -622,10 +683,7 @@ int Bela_setHeadphoneLevel(float decibels)
 // Returns 0 on success
 int Bela_muteSpeakers(int mute)
 {
-//Nothing to be done for CTAG audio cards
-#if defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH)
-	return 0;
-#else
+	//TODO: Nothing to be done for CTAG audio cards
 	int pinValue = mute ? LOW : HIGH;
 
 	// Check that we have an enabled pin for controlling the mute
@@ -633,7 +691,6 @@ int Bela_muteSpeakers(int mute)
 		return -1;
 
 	return gpio_set_value(gAmplifierMutePin, pinValue);
-#endif
 }
 
 void Bela_getVersion(int* major, int* minor, int* bugfix)

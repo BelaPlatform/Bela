@@ -22,32 +22,41 @@ The Bela software is distributed under the GNU Lesser General Public License
 */
 
 #include <Bela.h>
+#include <algorithm>
+
+int gAudioChannelNum; // number of audio channels to iterate over
+int gAnalogChannelNum; // number of analog channels to iterate over
 
 bool setup(BelaContext *context, void *userData)
 {
-	// For this example we need the same amount of audio and analog input and output channels
+
+	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
+		printf("Different number of outputs and inputs available. Working with what we have.\n");
 	}
+
+	// If the amout of audio and analog input and output channels is not the same
+	// we will use the minimum between input and output
+	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
+	gAnalogChannelNum = std::min(context->analogInChannels, context->analogOutChannels);
+
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-
 	// Simplest possible case: pass inputs through to outputs
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		for(unsigned int ch = 0; ch < context->audioInChannels; ch++){
+		for(unsigned int ch = 0; ch < gAudioChannelNum; ch++){
 			audioWrite(context, n, ch, audioRead(context, n, ch));
 		}
 	}
 
 	// Same with analog channels
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
-		for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
-			analogWrite(context, n, ch, analogRead(context, n, ch));
+		for(unsigned int ch = 0; ch < gAnalogChannelNum; ch++) {
+			analogWriteOnce(context, n, ch, analogRead(context, n, ch));
 		}
 	}
 }
@@ -93,15 +102,15 @@ For example `audioWrite(context, n, ch, value_to_output)`.
 Reading and writing from the analog buffers
 -------------------------------------------
 
-The same is true for `analogRead()` and `analogWrite()`.
+The same is true for `analogRead()` and `analogWriteOnce()`.
 
 Note that for the analog channels we write to and read from the buffers in a separate set 
-of nested for loops. This is because the they are sampled at half audio rate by default. 
+of nested for loops. This is because they are sampled at half audio rate by default.
 The first of these for loops cycles through `analogFrames`, the second through
 `analogInChannels`.
 
-By setting `audioWriteFrame(context, n, ch, audioReadFrame(context, n, ch))` and
-`analogWrite(context, n, ch, analogReadFrame(context, n, ch))` we have a simple 
+By setting `audioWrite(context, n, ch, audioRead(context, n, ch))` and
+`analogWriteOnce(context, n, ch, analogRead(context, n, ch))` we have a simple 
 passthrough of audio input to output and analog input to output.
 
 

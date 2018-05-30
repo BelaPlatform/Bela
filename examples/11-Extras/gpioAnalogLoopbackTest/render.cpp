@@ -15,11 +15,10 @@ int gAnalogOutLoopDelay;
 int gDigitalOutLoopDelay;
 bool setup(BelaContext *context, void *userData)
 {
-	// For this test we need the same amount of audio and analog input and output channels
+	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
+		printf("Different number of outputs and inputs available. Working with what we have.\n");
 	}
 
 	rt_printf("For this test you need the following connections:\n"
@@ -94,16 +93,16 @@ void render(BelaContext *context, void *userData)
 			switch(context->analogInChannels){
 			case 8:
 				analog0In = analogRead(context, n/2, 0) > 0.5;
-				analogWrite(context, n/2, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, n/2, analogOut, writePattern[outPointer]);
 				break;
 			case 4:
 				analog0In = analogRead(context, n, 0) > 0.5;
-				analogWrite(context, n, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, n, analogOut, writePattern[outPointer]);
 				break;
 			case 2:
 				analog0In = analogRead(context, n * 2 + 1, 0) > 0.5;
-				analogWrite(context, 2 * n, analogOut, writePattern[outPointer]);
-				analogWrite(context, 2 * n + 1, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, 2 * n, analogOut, writePattern[outPointer]);
+				analogWriteOnce(context, 2 * n + 1, analogOut, writePattern[outPointer]);
 				break;
 			}
 			gAnalogOutLoopDelay--;
@@ -187,7 +186,7 @@ void render(BelaContext *context, void *userData)
 }
 
 
-void cleanup(BelaContext *context, void *userData)
+void cleanup(BelaContext *context, void *userData
 {
 	if(anaErrorCount == 0 && digErrorCount == 0){
 		rt_printf("Test was succesful with %d analog channels and a buffer size of %d\n", context->analogInChannels, context->audioFrames);

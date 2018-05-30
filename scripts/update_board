@@ -162,7 +162,7 @@ fi
 error_handler $?
 
 # a bunch of files to be processed manually to special locations
-ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME/resources/tools/bela-cape-btn install"
+ssh $BBB_ADDRESS "for DIR in $BBB_BELA_HOME/resources/tools/*; do make -C \"\$DIR\" install; done"
 error_handler $?
 
 # remove stale version of libpd on old images

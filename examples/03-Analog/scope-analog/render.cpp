@@ -52,14 +52,12 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Error: for this project the sampling rate of the analog inputs has to be <= the audio sample rate\n");
 		return false;
 	}
-
-	// Check that we have the same number of inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
+	if(context->analogInChannels < 2)
+	{
+		fprintf(stderr, "Error: for this project you need at least two analog inputs\n");
 		return false;
 	}
-	
+
 	if(context->analogFrames)
 		gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;

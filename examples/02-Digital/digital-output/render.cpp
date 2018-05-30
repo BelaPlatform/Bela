@@ -24,9 +24,11 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 
+int gOutputPin = 0; // digital pin 0 - check the pin diagram in the IDE
+
 bool setup(BelaContext *context, void *userData)
 {
-    pinMode(context, 0, P8_07, OUTPUT);
+    pinMode(context, 0, gOutputPin, OUTPUT); // Set gOutputPin as output
 	return true;
 }
 
@@ -39,11 +41,11 @@ void render(BelaContext *context, void *userData)
     if(count==context->digitalSampleRate*interval){ //if enough samples have elapsed
       count=0; //reset the counter
       if(status==GPIO_LOW) { //toggle the status
-          digitalWrite(context, n, P8_07, status); //write the status to the LED
+          digitalWrite(context, n, gOutputPin, status); //write the status to the LED (gOutputPin)
           status=GPIO_HIGH;
       }
       else {
-          digitalWrite(context, n, P8_07, status); //write the status to the LED
+          digitalWrite(context, n, gOutputPin, status); //write the status to the LED (gOutputPin)
           status=GPIO_LOW;
       }
     }
@@ -65,19 +67,17 @@ Blinking an LED
 
 This sketch shows the simplest case of digital out. 
 
-- Connect an LED in series with a 470ohm resistor between P8_07 and ground. 
+- Connect an LED in series with a 470ohm resistor between digital pin gOutputPin and ground. 
 
 The led is blinked on and off by setting the digital pin `HIGH` and `LOW` every interval seconds which is set in 
 `render()`.
 
 In `setup()` the pin mode must be set to output mode via `pinMode()`. For example: 
-`pinMode(context, 0, P8_07, OUTPUT)`. 
+`pinMode(context, 0, gOutputPin, OUTPUT)`. 
 In `render()` the output of the digital pins is set by `digitalWrite()`. For example: 
-`digitalWrite(context, n, P8_07, status)` where `status` can be equal to 
+`digitalWrite(context, n, gOutputPin, status)` where `status` can be equal to 
 either `HIGH` or `LOW`. When set `HIGH` the pin will give 3.3V, when set to 
 `LOW` 0V.
-
-Note that there are two ways of specifying the digital pin: using the GPIO label (e.g. `P8_07`), or using the digital IO index (e.g. 0)
 
 To keep track of elapsed time we have a sample counter count. When the count reaches 
 a certain limit it switches state to either `HIGH` or `LOW` depending on its current 

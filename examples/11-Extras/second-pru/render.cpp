@@ -186,9 +186,9 @@ for your use!
 This example shows a simple GPIO sketch running on the second PRU, with communication
 back to the main CPU. Because the 16 GPIOs used for the Bela digital pins are already
 in use by the first PRU, we need to choose a different pin for this example. In this case,
-P9 pin 11 (GPIO 30) is used as an output to drive an LED.
+GPIO 30 is used as an output to drive an LED.
 
-To run this example, attach a resistor and LED in series between P9_11 and ground. You
+To run this example, attach a resistor and LED in series between GPIO 30 and ground. You
 should see the LED blink progressively faster, and when it becomes fast enough that it
 cannot be seen blinking anymore, it resets to its original speed.
 

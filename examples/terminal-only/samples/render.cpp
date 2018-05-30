@@ -35,14 +35,6 @@ AuxiliaryTask gTriggerSamplesTask;
 
 bool setup(BelaContext *context, void *userData)
 {
-
-	// Check that we have the same number of inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
-	}
-
 	// Retrieve a parameter passed in from the initAudio() call
 	gSampleData = *(SampleData *)userData;
 

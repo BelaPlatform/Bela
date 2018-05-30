@@ -33,10 +33,10 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 // Organised by display segments:
 // e d . X c g b X X X f a
-const int kPins[NUM_PINS] = {P8_07, P8_08, P8_09, P8_10, P8_11, P8_12,
-							 P8_15, P8_16, P8_27, P8_28, P8_29, P8_30};
 
-// Indices into the above array: pins 12, 9, 8, 6
+const int kPins[NUM_PINS] = {0, 1, 2, 3, 4, 5, 8, 9, 12, 13, 14, 15};
+
+// Indices into the above array
 const int kDigits[4] = {9, 8, 7, 3};
 
 int gCurrentlyDisplayingDigit = 0;

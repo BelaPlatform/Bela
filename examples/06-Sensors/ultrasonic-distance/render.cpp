@@ -31,8 +31,8 @@ Scope scope;
 int gTriggerInterval = 2646; // how often to send out a trigger. 2646 samples are 60ms 
 int gMinPulseLength = 7; //to avoid spurious readings
 float gRescale = 58; // taken from the datasheet
-unsigned int gTriggerAnalogOutChannel = 0; //channel to be connected to the module's TRIGGER pin
-unsigned int gEchoDigitalInPin = P8_08; //channel to be connected to the modules's ECHO pin
+unsigned int gTriggerAnalogOutChannel = 0; //channel to be connected to the module's TRIGGER pin - check the pin diagram in the IDE
+unsigned int gEchoDigitalInPin = 1; //channel to be connected to the modules's ECHO pin (digital pin 1) - check the pin diagram in the IDE
 int gTriggerCount = 0;
 int gPrintfCount = 0;
 
@@ -72,8 +72,8 @@ void render(BelaContext *context, void *userData)
             }
             ++count;
         }
-        // Logging to the scope the pulse inputs and the distance
-        scope.log(digitalRead(context, n, P8_08), distance/100);
+        // Logging to the scope the pulse inputs (gEchoDigitalInPin) and the distance
+        scope.log(digitalRead(context, n, gEchoDigitalInPin), distance/100);
     }
 }
 
@@ -107,13 +107,13 @@ in on the ECHO pin.
 The PulseIn class is used here to monitor a digital pin for an HIGH 
 pulse and once the pulse termiantes, it returnes the duration ( in samples ) of the pulse.
 
-The module requires a 5V power supply(can be taken from Bela's P9_07) and its 
-digital inputs and outputs are low at 0V and HIGH at 5V.
+The module requires a 5V power supply and its digital inputs and outputs are low at 0V and
+HIGH at 5V. Check the pin diagram in the IDE to see where to find the pins you need.
 It is important that the 5V ECHO output from the module *is not* connected 
 straight to Bela's digital inputs, as that would most likely kill the BeagleBone Black
 (digital I/Os are 3.3V tolerant). You will need to use a passive resistor divider from the 
 HC-SR04's ECHO output to scale down the voltage before connecting it to the digital input 
-on P8_08.
+on gEchoDigitalInPin.
 
 Bela's digital outputs are 3.3V and this does not guarantee that they would work when 
 connected to the module's TRIGGER input, so we use here one of the analog outputs (which
