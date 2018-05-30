@@ -26,11 +26,11 @@ describe('Manage the project running on boot', function(){
 		});
 		it('should return none if noo project is set', async function(){
 			let project: string = await boot_project.get_boot_project();
-			project.should.equal('none');
+			project.should.equal('*none*');
 		});
 		it('should return none if no startup_env is present', async function(){
 			let project: string = await boot_project.get_boot_project();
-			project.should.equal('none');
+			project.should.equal('*none*');
 		});
 		afterEach(function(){
 			mock.restore();
@@ -47,7 +47,7 @@ describe('Manage the project running on boot', function(){
 			});
 		});
 		it('should correctly disable running a project on boot', async function(){
-			await boot_project.set_boot_project(undefined, 'none');
+			await boot_project.set_boot_project(undefined, '*none*');
 			exec_stub.callCount.should.equal(1);
 			exec_stub.getCall(0).args[0].should.equal('make --no-print-directory -C /root/Bela/ nostartup')
 		});
