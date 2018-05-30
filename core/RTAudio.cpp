@@ -138,6 +138,9 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 			cfg->audioOutChannels = 16;
 			cfg->audioSampleRate = 48000;
 			break;
+		case BelaHw_NoHw:
+		default:
+			return -1; // unrecognized hw
 	}
 	// set analogs:
 	switch(hw)
@@ -158,6 +161,8 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagBeast:
+			//nobreak
+		case BelaHw_NoHw:
 			//nobreak
 		default:
 			break;
