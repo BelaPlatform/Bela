@@ -136,7 +136,9 @@ class TabView extends View {
 	}
 
 	_boardString(data){
-		console.log('board string:', data);
+		if (data.trim() === 'BelaMini'){
+			$('#pin_diagram_object').prop('data', 'diagram_mini.html');
+		}
 	}
 	
 }

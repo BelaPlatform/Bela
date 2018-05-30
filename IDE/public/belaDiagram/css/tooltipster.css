@@ -1,6 +1,6 @@
 /* This is the default Tooltipster theme (feel free to modify or duplicate and create multiple themes!): */
 .tooltipster-default {
-    border-radius: 2px; 
+    border-radius: 2px;
     border: 1px solid #0000ff;
     /*border-bottom: 5px solid #fff;*/
     background: #fff;
@@ -66,7 +66,7 @@
 }
 .tooltipster-arrow span, .tooltipster-arrow-border {
     display: block;
-    width: 0; 
+    width: 0;
     height: 0;
     position: absolute;
 }
@@ -114,7 +114,7 @@
 }
 .tooltipster-arrow-left span, .tooltipster-arrow-left .tooltipster-arrow-border {
     border-top: 8px solid transparent !important;
-    border-bottom: 8px solid transparent !important; 
+    border-bottom: 8px solid transparent !important;
     border-left: 8px solid;
     top: 50%;
     margin-top: -7px;
@@ -122,13 +122,13 @@
 }
 .tooltipster-arrow-left .tooltipster-arrow-border {
     border-top: 9px solid transparent !important;
-    border-bottom: 9px solid transparent !important; 
+    border-bottom: 9px solid transparent !important;
     border-left: 9px solid;
     margin-top: -8px;
 }
 .tooltipster-arrow-right span, .tooltipster-arrow-right .tooltipster-arrow-border {
     border-top: 8px solid transparent !important;
-    border-bottom: 8px solid transparent !important; 
+    border-bottom: 8px solid transparent !important;
     border-right: 8px solid;
     top: 50%;
     margin-top: -7px;
@@ -136,7 +136,7 @@
 }
 .tooltipster-arrow-right .tooltipster-arrow-border {
     border-top: 9px solid transparent !important;
-    border-bottom: 9px solid transparent !important; 
+    border-bottom: 9px solid transparent !important;
     border-right: 9px solid;
     margin-top: -8px;
 }
@@ -176,10 +176,10 @@
     -ms-transform: scale(1,1);
     transform: scale(1,1);
     -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1);
-    -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -moz-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -ms-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -o-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
+    -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -moz-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -ms-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -o-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
     transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
 }
 
@@ -204,10 +204,10 @@
     -ms-transform: rotateZ(0deg);
     transform: rotateZ(0deg);
     -webkit-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 1);
-    -webkit-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4); 
-    -moz-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4); 
-    -ms-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4); 
-    -o-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4); 
+    -webkit-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4);
+    -moz-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4);
+    -ms-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4);
+    -o-transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4);
     transition-timing-function: cubic-bezier(0.230, 0.635, 0.495, 2.4);
 }
 
@@ -219,11 +219,11 @@
     -ms-transition-property: top;
     transition-property: top;
     -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1);
-    -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -moz-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -ms-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -o-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
+    -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -moz-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -ms-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -o-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
 }
 .tooltipster-fall-show {
 }
@@ -245,10 +245,10 @@
     -ms-transition-property: left;
     transition-property: left;
     -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1);
-    -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -moz-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -ms-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
-    -o-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15); 
+    -webkit-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -moz-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -ms-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
+    -o-transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
     transition-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1.15);
 }
 .tooltipster-slide.tooltipster-slide-show {

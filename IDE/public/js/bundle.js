@@ -3703,7 +3703,9 @@ var TabView = function (_View) {
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
-			console.log('board string:', data);
+			if (data.trim() === 'BelaMini') {
+				$('#pin_diagram_object').prop('data', 'diagram_mini.html');
+			}
 		}
 	}]);
 
