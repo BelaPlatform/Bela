@@ -6,6 +6,8 @@ export class Lock {
 	constructor(){
 		this.locked = false;
 		this.ee = new EventEmitter();
+		// without this we sometimes get a warning when more than 10 threads hold the lock
+		this.ee.setMaxListeners(100);
 	}
 	acquire(): Promise<void> {
 		return new Promise( resolve => {
