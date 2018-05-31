@@ -43,7 +43,7 @@ settingsView.on('upload-update', data => socket.emit('upload-update', data) );
 settingsView.on('error', text => consoleView.emit('warn', text) );
 
 // project view
-var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);
+var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project, models.settings]);
 projectView.on('message', (event, data) => {
 	if (!data.currentProject && models.project.getKey('currentProject')){
 		data.currentProject = models.project.getKey('currentProject');

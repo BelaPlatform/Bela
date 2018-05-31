@@ -159,6 +159,9 @@ class ProjectView extends View {
 
 		for (let item of examplesDir){
 			let ul = $('<ul></ul>').html(item.name+':');
+			if (item.name === '14-Csound'){
+				ul.addClass('csound-examples');
+			}
 			for (let child of item.children){
 				if (child && child.length && child[0] === '.') continue;
 				$('<li></li>').addClass('sourceFile').html(child).appendTo(ul)
@@ -213,6 +216,12 @@ class ProjectView extends View {
 	
 	__currentProject(){
 		this.exampleChanged = false;
+	}
+
+	_boardString(data){
+		if (data.trim() === 'BelaMini'){
+			$('.csound-examples').css('display', 'none');
+		}
 	}
 	
 	subDirs(dir){
