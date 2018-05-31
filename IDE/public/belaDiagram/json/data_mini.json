@@ -131,7 +131,7 @@
       "y": "412",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_07 - Digital 0 - (Pd: digital 11)",
+      "text": "Pin P2_01 - Digital 0 - (Pd: digital 11)",
       "tip": "tooltip"
     },
     {
@@ -140,7 +140,7 @@
       "y": "412",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_08 - Digital 1 - (Pd: digital 12)",
+      "text": "Pin P2_02 - Digital 1 - (Pd: digital 12)",
       "tip": "tooltip"
     },
     {
@@ -149,7 +149,7 @@
       "y": "392",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_09 - Digital 2 - (Pd: digital 13)",
+      "text": "Pin P2_04 - Digital 2 - (Pd: digital 13)",
       "tip": "tooltip"
     },
     {
@@ -158,7 +158,7 @@
       "y": "370",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_10 - Digital 3 - (Pd: digital 14)",
+      "text": "Pin P2_06 - Digital 3 - (Pd: digital 14)",
       "tip": "tooltip"
     },
     {
@@ -167,7 +167,7 @@
       "y": "348",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_11 - Digital 4 - (Pd: digital 15)",
+      "text": "Pin P2_08 - Digital 4 - (Pd: digital 15)",
       "tip": "tooltip"
     },
     {
@@ -176,7 +176,7 @@
       "y": "326",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_12 - Digital 5 - (Pd: digital 16)",
+      "text": "Pin P2_10 - Digital 5 - (Pd: digital 16)",
       "tip": "tooltip"
     },
     {
@@ -185,7 +185,7 @@
       "y": "238",
       "width": "13",
       "height": "13",
-      "text": "Pin P9_12 - Digital 6 - (Pd: digital 17)",
+      "text": "Pin P2_18 - Digital 6 - (Pd: digital 17)",
       "tip": "tooltip"
     },
     {
@@ -194,7 +194,7 @@
       "y": "216",
       "width": "13",
       "height": "13",
-      "text": "Pin P9_14 - Digital 7 - (Pd: digital 18)",
+      "text": "Pin P2_20 - Digital 7 - (Pd: digital 18)",
       "tip": "tooltip"
     },
     {
@@ -203,7 +203,7 @@
       "y": "194",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_15 - Digital 8 - (Pd: digital 19)",
+      "text": "Pin P2_22 - Digital 8 - (Pd: digital 19)",
       "tip": "tooltip"
     },
     {
@@ -212,7 +212,7 @@
       "y": "172",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_16 - Digital 9 - (Pd: digital 20)",
+      "text": "Pin P2_24 - Digital 9 - (Pd: digital 20)",
       "tip": "tooltip"
     },
     {
@@ -221,7 +221,7 @@
       "y": "148",
       "width": "13",
       "height": "13",
-      "text": "Pin P9_16 - Digital 10 - (Pd: digital 21)",
+      "text": "Pin P2_25 - Digital 10 - (Pd: digital 21)",
       "tip": "tooltip"
     },
     {
@@ -230,7 +230,7 @@
       "y": "126",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_18 - Digital 11 - (Pd: digital 22)",
+      "text": "Pin P2_27 - Digital 11 - (Pd: digital 22)",
       "tip": "tooltip"
     },
     {
@@ -239,7 +239,7 @@
       "y": "40",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_27 - Digital 12 - (Pd: digital 23)",
+      "text": "Pin P2_35 - Digital 12 - (Pd: digital 23)",
       "tip": "tooltip"
     },
     {
@@ -248,7 +248,7 @@
       "y": "40",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_28  - Digital 13 - (Pd: digital 24)",
+      "text": "Pin P1_35  - Digital 13 - (Pd: digital 24)",
       "tip": "tooltip"
     },
     {
@@ -257,7 +257,7 @@
       "y": "84",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_29  - Digital 14 - (Pd: digital 25)",
+      "text": "Pin P1_32  - Digital 14 - (Pd: digital 25)",
       "tip": "tooltip"
     },
     {
@@ -266,7 +266,7 @@
       "y": "106",
       "width": "13",
       "height": "13",
-      "text": "Pin P8_30  - Digital 15 - (Pd: digital 26)",
+      "text": "Pin P1_30  - Digital 15 - (Pd: digital 26)",
       "tip": "tooltip"
     },
     {
@@ -401,7 +401,16 @@
       "y": "-3",
       "width": "78",
       "height": "08",
-      "text": "SD card slot",
+      "text": "SD card slot (bottom board)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "107",
+      "y": "360",
+      "width": "100",
+      "height": "100",
+      "text": "USB host port",
       "tip": "tooltip"
     },
     {
@@ -410,7 +419,7 @@
       "y": "470",
       "width": "60",
       "height": "08",
-      "text": "Micro USB power jack",
+      "text": "Micro USB power jack (bottom board)",
       "tip": "tooltip"
     }
   ]
