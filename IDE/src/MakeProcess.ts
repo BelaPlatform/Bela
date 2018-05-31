@@ -40,7 +40,7 @@ export class MakeProcess extends Event_Emitter{
 					args.push(arg);
 			}
 		}
-		console.log('make', args.join(' '));
+		console.log("make '" + args.join("' '") + "'");
 		this.proc = child_process.spawn('make', args, {detached: true});
 		this.emit('start', this.proc.pid, project);
 		this.proc.stdout.setEncoding('utf-8');
