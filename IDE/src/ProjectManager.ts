@@ -23,9 +23,9 @@ export async function openFile(data: any){
 		var file_stat = await file_manager.stat_file(file_path);
 	}
 	catch(e){
-		// if we are trying to open an example and we can't find the file, we are (probably)
+		// if we are trying to open an example or template and we can't find the file, we are (probably)
 		// trying to open a pd or supercollider project, so open _main* if it exists instead
-		if (typeof data.exampleName !== 'undefined'){
+		if (typeof data.exampleName !== 'undefined' || data.func === 'newProject'){
 			for(let file of data.fileList){
 				if (file.name.includes('_main')){
 					data.newFile = file.name;
