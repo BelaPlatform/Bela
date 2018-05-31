@@ -72,7 +72,11 @@ function run_on_boot(socket: SocketIO.Socket, args: string[]){
 	proc.stderr.on('data', data => socket_manager.broadcast('run-on-boot-log', data));
 	proc.on('close', (code: number) => {
 		if (!code){
-			socket.emit('run-on-boot-log', 'project set to run on boot succesfully');
+			if (args[3] === 'nostartup'){
+				socket.emit('run-on-boot-log', 'no project set to run on boot succesfully');
+			} else {
+				socket.emit('run-on-boot-log', 'project set to run on boot succesfully');
+			}
 		} else {
 			socket.emit('std-warn', 'error setting project to run on boot!');
 		}
