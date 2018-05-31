@@ -537,7 +537,9 @@ nostartup:
 	$(AT) $(BELA_DISABLE_STARTUP_COMMAND)
 
 startuploop: ## Makes PROJECT run at startup and restarts it if it crashes
+ifneq ($(PROJECT),)
 startuploop: Bela
+endif
 	$(AT) echo "Enabling Bela at startup in a loop..."
 	$(AT) $(BELA_ENABLE_STARTUP_COMMAND)
 
