@@ -149,6 +149,7 @@ export async function saveAs(data: any){
 		data.error = 'failed, project '+data.newProject+' already exists!';
 		return;
 	}
+	await cleanProject(data);
 	await file_manager.copy_directory(paths.projects+data.currentProject, paths.projects+data.newProject);
 	data.projectList = await listProjects();
 	data.currentProject = data.newProject;
