@@ -55,7 +55,7 @@ export async function set_boot_project(socket: SocketIO.Socket, project:  string
 		];
 		if (project_args.make){
 			for (let arg of project_args.make){
-				args.push(arg);
+				args.push(arg.trim());
 			}
 		}
 		run_on_boot(socket, args);
