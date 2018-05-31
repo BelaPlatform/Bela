@@ -2825,6 +2825,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var board_string;
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -2898,9 +2899,11 @@ var ProjectView = function (_View) {
 			form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
 			form.push('<label for="popup-SC">SuperCollider</label>');
 			form.push('</br>');
-			form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-			form.push('<label for="popup-CS">Csound</label>');
-			form.push('</br>');
+			if (board_string !== 'BelaMini') {
+				form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
+				form.push('<label for="popup-CS">Csound</label>');
+				form.push('</br>');
+			}
 			form.push('<input type="text" placeholder="Enter your project name">');
 			form.push('</br>');
 			form.push('<button type="submit" class="button popup-save">Create</button>');
@@ -3127,6 +3130,7 @@ var ProjectView = function (_View) {
 			if (data.trim() === 'BelaMini') {
 				$('.csound-examples').css('display', 'none');
 			}
+			board_string = data.trim();
 		}
 	}, {
 		key: 'subDirs',
