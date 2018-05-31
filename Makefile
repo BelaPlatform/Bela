@@ -165,7 +165,7 @@ SCLANG_FIFO=/tmp/sclangfifo
 RUN_COMMAND?=bash -c 'rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
 else
 ifeq ($(PROJECT_TYPE),cs)
-RUN_COMMAND?=bash -c 'belacsound --csd=$(CSOUND_FILE)'
+RUN_COMMAND?=bash -c 'belacsound --csd=$(CSOUND_FILE) 2>&1'
 else
 RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
 endif
@@ -537,7 +537,9 @@ nostartup:
 	$(AT) $(BELA_DISABLE_STARTUP_COMMAND)
 
 startuploop: ## Makes PROJECT run at startup and restarts it if it crashes
+ifneq ($(PROJECT),)
 startuploop: Bela
+endif
 	$(AT) echo "Enabling Bela at startup in a loop..."
 	$(AT) $(BELA_ENABLE_STARTUP_COMMAND)
 
