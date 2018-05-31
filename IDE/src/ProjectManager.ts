@@ -118,7 +118,7 @@ export async function openProject(data: any) {
 	let settings: any = await project_settings.read(data.currentProject);
 	data.newFile = settings.fileName;
 	data.CLArgs = settings.CLArgs;
-	// TODO: data.exampleName
+	if (data.currentProject !== 'exampleTempProject') data.exampleName = '';
 	if (!data.gitData)
 		data.gitData = {};
 	data.gitData.currentProject = data.currentProject;
