@@ -31,7 +31,7 @@ export class MakeProcess extends Event_Emitter{
 			paths.Bela,
 			this.make_target,
 			'PROJECT='+project,
-			'CL="'+project_args.CL+'"'
+			'CL='+project_args.CL
 		];
 		if (project_args.make){
 			for (let arg of project_args.make){
