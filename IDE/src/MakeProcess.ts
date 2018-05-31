@@ -35,7 +35,8 @@ export class MakeProcess extends Event_Emitter{
 		];
 		if (project_args.make){
 			for (let arg of project_args.make){
-				args.push(arg);
+				if (arg.length > 0)
+					args.push(arg);
 			}
 		}
 		console.log('make', args.join(' '));
