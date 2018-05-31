@@ -435,7 +435,7 @@ settingsView.on('error', function (text) {
 });
 
 // project view
-var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);
+var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project, models.settings]);
 projectView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -3016,6 +3016,9 @@ var ProjectView = function (_View) {
 					var item = _step.value;
 
 					var ul = $('<ul></ul>').html(item.name + ':');
+					if (item.name === '14-Csound') {
+						ul.addClass('csound-examples');
+					}
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
 					var _iteratorError2 = undefined;
@@ -3117,6 +3120,13 @@ var ProjectView = function (_View) {
 		key: '__currentProject',
 		value: function __currentProject() {
 			this.exampleChanged = false;
+		}
+	}, {
+		key: '_boardString',
+		value: function _boardString(data) {
+			if (data.trim() === 'BelaMini') {
+				$('.csound-examples').css('display', 'none');
+			}
 		}
 	}, {
 		key: 'subDirs',
