@@ -51,25 +51,43 @@ export async function set_boot_project(socket: SocketIO.Socket, project:  string
 			paths.Bela,
 			'startuploop',
 			'PROJECT='+project,
-			'CL="'+project_args.CL+'"'
+			'CL='+project_args.CL
 		];
 		if (project_args.make){
 			for (let arg of project_args.make){
-				args.push(arg);
+				args.push(arg.trim());
 			}
 		}
 		run_on_boot(socket, args);
 	}
 }
 
+// this function should really use MakeProcess
 function run_on_boot(socket: SocketIO.Socket, args: string[]){
-	console.log('make '+args.join(' '));
-	child_process.exec('make '+args.join(' '), (err, stdout, stderr) => {
+	console.log("make '" + args.join("' '") + "'");
+	let proc = child_process.spawn('make', args);
+	proc.stdout.setEncoding('utf8');
+	proc.stdout.on('data', data => socket_manager.broadcast('run-on-boot-log', data));
+	proc.stderr.setEncoding('utf8');
+	proc.stderr.on('data', data => socket_manager.broadcast('run-on-boot-log', data));
+	proc.on('close', (code: number) => {
+		if (!code){
+			if (args[3] === 'nostartup'){
+				socket.emit('run-on-boot-log', 'no project set to run on boot succesfully');
+			} else {
+				socket.emit('run-on-boot-log', 'project set to run on boot succesfully');
+			}
+		} else {
+			socket.emit('std-warn', 'error setting project to run on boot!');
+		}
+	});
+/*	child_process.exec('make '+args.join(' '), (err, stdout, stderr) => {
 		if (err) console.log('error setting boot project', err);
 		if (stdout) socket.emit('run-on-boot-log', stdout);
 		if (stderr) socket.emit('run-on-boot-log', stderr);
 		socket.emit('run-on-boot-log', 'done');
 	});
+*/
 }
 
 async function listen_on_boot(){

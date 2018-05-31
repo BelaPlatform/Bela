@@ -130,7 +130,7 @@ describe('ProcessManager', function(){
 				stubs.build_start.callCount.should.equal(1);
 				stubs.build_queue.callCount.should.equal(1);
 				let callback = stubs.build_queue.getCall(0).args[0];
-				callback(' : : : error', false);
+				callback(' : : : error', false, 2);
 				stubs.run_start.callCount.should.equal(0);
 			});
 			it('should not run the project if the build process is killed by a call to stop()', function(){

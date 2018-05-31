@@ -515,7 +515,7 @@ function parseErrors(data){
 					//console.log('rejected error string: '+str);
 					if (str[2] && str[2].indexOf('linker') !== -1){
 						console.log('linker error');
-						consoleView.emit('warn', 'linker error detected, set verbose build output in settings for details');
+						// consoleView.emit('warn', 'linker error detected, set verbose build output in settings for details');
 					}
 				}
 			}
