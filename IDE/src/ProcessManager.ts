@@ -65,8 +65,8 @@ export function run(data: any){
 // if neither of these are true the project is immediately run
 function build_run(project: string){
 	processes.build.start(project);
-	processes.build.queue( (stderr: string, killed: boolean) => {
-		if (!killed && !build_error(stderr)){
+	processes.build.queue( (stderr: string, killed: boolean, code: number) => {
+		if (!killed && !code){
 			processes.run.start(project); 
 		}
 	});

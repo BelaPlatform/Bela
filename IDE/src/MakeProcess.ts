@@ -12,7 +12,8 @@ export class MakeProcess extends Event_Emitter{
 	private active: boolean = false;
 	private killed: boolean = false;
 	private callback_queued: boolean = false;
-	private queue_callback: (stderr: string, killed: boolean) => void;
+	private queue_callback: (stderr: string, killed: boolean, code: number) => void;
+	private return_code: number;
 
 	constructor(make_target: string){
 		super();
@@ -52,9 +53,10 @@ export class MakeProcess extends Event_Emitter{
 			this.emit('stderr', data);
 		});
 		// this.proc.on('exit', () => this.emit('exit') );
-		this.proc.on('close', () => {
+		this.proc.on('close', (code: number, signal: string) => {
 			this.active = false;
-			this.emit('finish', this.stderr, this.killed);
+			this.return_code = code;
+			this.emit('finish', this.stderr, this.killed, code);
 			this.dequeue();
 		});
 	}
@@ -76,7 +78,7 @@ export class MakeProcess extends Event_Emitter{
 		return this.active;
 	}
 
-	queue(queue_callback: (stderr: string, killed: boolean) => void ){
+	queue(queue_callback: (stderr: string, killed: boolean, code: number) => void ){
 		// console.log('queueing', this.make_target);
 		this.queue_callback = queue_callback;
 		this.callback_queued = true;
@@ -86,7 +88,7 @@ export class MakeProcess extends Event_Emitter{
 		if (this.callback_queued){
 			// console.log('dequeueing', this.make_target);
 			this.callback_queued = false;
-			this.queue_callback(this.stderr, this.killed);
+			this.queue_callback(this.stderr, this.killed, this.return_code);
 		}
 	}
 

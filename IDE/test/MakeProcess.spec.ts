@@ -36,7 +36,7 @@ describe('MakeProcess', function(){
 						'/root/Bela/',
 						'test_target',
 						'PROJECT=test_project',
-						'CL="cl_test_cl"',
+						'CL=cl_test_cl',
 						'make_test'
 					],
 					{
