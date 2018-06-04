@@ -32,7 +32,7 @@ static const uint32_t GPIO_ADDRESSES[4] = {
 class Gpio{
 public:
 	Gpio():
-	oldPin(-1),
+	pin(-1),
 	fd(-1)
 	{};
 
@@ -99,7 +99,7 @@ public:
 	}
 private:
 	bool shouldUnexport;
-	int oldPin;
+	int pin;
 	int fd;	
 	uint32_t pinMask;
 	volatile uint32_t* gpio;
