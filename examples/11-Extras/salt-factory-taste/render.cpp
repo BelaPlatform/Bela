@@ -28,27 +28,33 @@ enum
 };
 int gCurrentTest = 0;
 
-const int nPins = 4;
+const int nPinsMax = 4;
+const int gNumButtonsMax = nPinsMax;
+const int gNumCVsMax = nPinsMax * 2;
 
-const int triggOutPins[nPins] = {0, 5, 12, 13};
-const int triggInPins[nPins] = {15, 14, 1, 3};
+
+// set the below to half their values to only test Salt
+const int nPins = nPinsMax;
+const int gNumButtons = gNumButtonsMax;
+const int gNumCVs = gNumCVsMax;
+
+const int triggOutPins[nPinsMax] = {0, 5, 12, 13};
+const int triggInPins[nPinsMax] = {15, 14, 1, 3};
 const int sw1Pin = 6;
-const int ledPins[nPins] = {2, 4, 8, 9};
+const int ledPins[nPinsMax] = {2, 4, 8, 9};
 const int pwmPin = 7;
 const int audioPins[2] = {0, 1};
-const int gNumButtons = nPins;
-const int gNumCVs = nPins*2;
 
-const int buttonPins[gNumButtons] = {sw1Pin, triggInPins[1], triggInPins[2], triggInPins[3]};
-const int cvPins[gNumCVs] = {0, 1, 2, 3, 4, 5, 6, 7};
+const int buttonPins[gNumButtonsMax] = {sw1Pin, triggInPins[1], triggInPins[2], triggInPins[3]};
+const int cvPins[gNumCVsMax] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 int gTestStatus[kNumTest] = {0};
 
 int gPeriod; 
 unsigned int count = 0;
 
-int gLedState[nPins] = {0, 0, 0, 0};
-int gButtonStatus[gNumButtons] = {0, 0, 0, 0};
+int gLedState[nPinsMax] = {0, 0, 0, 0};
+int gButtonStatus[gNumButtonsMax] = {0, 0, 0, 0};
 
 int gLedsOn = false;
 
@@ -56,7 +62,7 @@ int gBlockSize = 512;//512;
 
 float gInverseAudioSampleRate;
 
-static float gCvRange[2][gNumCVs];
+static float gCvRange[2][gNumCVsMax];
 
 float gCVtolerance =  0.15;
 float gAudioToCVtolerance =  0.2;
