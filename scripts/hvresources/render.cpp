@@ -41,6 +41,7 @@ static Scope* scope = NULL;
 static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
+bool gDigitalEnabled = 0;
 
 /*
  *	HEAVY CONTEXT & BUFFERS
@@ -115,38 +116,40 @@ static void sendHook(
 	// Bela digital initialization messages
 	switch (sendHash) {
 		case 0x70418732: { // bela_setDigital
-			// Third argument (optional) can be ~ or sig for signal-rate, message-rate otherwise.
-			// [in 14 ~(
-			// |
-			// [s bela_setDigital]
-			// is signal("sig" or "~") or message("message", default) rate
-			bool isMessageRate = true; // defaults to message rate
-			bool direction = 0; // initialize it just to avoid the compiler's warning
-			bool disable = false;
-      if (!(hv_msg_isSymbol(m, 0) && hv_msg_isFloat(m, 1))) return;
-			const char *symbol = hv_msg_getSymbol(m, 0);
-
-			if(strcmp(symbol, "in") == 0){
-				direction = INPUT;
-			} else if(strcmp(symbol, "out") == 0){
-				direction = OUTPUT;
-			} else if(strcmp(symbol, "disable") == 0){
-				disable = true;
-			} else {
-				return;
-			}
-			int channel = hv_msg_getFloat(m, 1) - LIBPD_DIGITAL_OFFSET;
-			if(disable == true){
-				dcm.unmanage(channel);
-				return;
-			}
-			if(hv_msg_isSymbol(m, 2)){
-				const char *s = hv_msg_getSymbol(m, 2);
-				if(strcmp(s, "~") == 0  || strncmp(s, "sig", 3) == 0){
-					isMessageRate = false;
+			if(gDigitalEnabled)
+			{
+				// Third argument (optional) can be ~ or sig for signal-rate, message-rate otherwise.
+				// [in 14 ~(
+				// |
+				// [s bela_setDigital]
+				// is signal("sig" or "~") or message("message", default) rate
+				bool isMessageRate = true; // defaults to message rate
+				bool direction = 0; // initialize it just to avoid the compiler's warning
+				bool disable = false;
+				if (!(hv_msg_isSymbol(m, 0) && hv_msg_isFloat(m, 1))) return;
+				const char *symbol = hv_msg_getSymbol(m, 0);
+				if(strcmp(symbol, "in") == 0){
+					direction = INPUT;
+				} else if(strcmp(symbol, "out") == 0){
+					direction = OUTPUT;
+				} else if(strcmp(symbol, "disable") == 0){
+					disable = true;
+				} else {
+					return;
 				}
+				int channel = hv_msg_getFloat(m, 1) - LIBPD_DIGITAL_OFFSET;
+				if(disable == true){
+					dcm.unmanage(channel);
+					return;
+				}
+				if(hv_msg_isSymbol(m, 2)){
+					const char *s = hv_msg_getSymbol(m, 2);
+					if(strcmp(s, "~") == 0  || strncmp(s, "sig", 3) == 0){
+						isMessageRate = false;
+					}
+				}
+				dcm.manage(channel, direction, isMessageRate);
 			}
-			dcm.manage(channel, direction, isMessageRate);
 			break;
 		}
 		case 0xEC6DA2AF: { // bela_noteout
@@ -230,6 +233,11 @@ static unsigned int gDigitalSigInChannelsInUse;
 static unsigned int gDigitalSigOutChannelsInUse;
 
 bool setup(BelaContext *context, void *userData)	{
+
+	// Check if digitals are enabled
+	if(context->digitalFrames > 0 && context->digitalChannels > 0)
+		gDigitalEnabled = 1;
+
 	if(context->audioInChannels != context->audioOutChannels ||
 			context->analogInChannels != context->analogOutChannels){
 		// It should actually work, but let's test it before releasing it!
@@ -260,10 +268,18 @@ bool setup(BelaContext *context, void *userData)	{
 
 	gScopeChannelsInUse = gHvOutputChannels > gFirstScopeChannel ?
 			gHvOutputChannels - gFirstScopeChannel : 0;
-	gDigitalSigInChannelsInUse = gHvInputChannels > gFirstDigitalChannel ?
+	if(gDigitalEnabled)
+	{
+		gDigitalSigInChannelsInUse = gHvInputChannels > gFirstDigitalChannel ?
 			gHvInputChannels - gFirstDigitalChannel : 0;
-	gDigitalSigOutChannelsInUse = gHvOutputChannels > gFirstDigitalChannel ?
+		gDigitalSigOutChannelsInUse = gHvOutputChannels > gFirstDigitalChannel ?
 			gHvOutputChannels - gFirstDigitalChannel - gScopeChannelsInUse: 0;
+	}
+	else
+	{
+		gDigitalSigInChannelsInUse = 0;
+		gDigitalSigOutChannelsInUse = 0;
+	}
 
 	printf("Starting Heavy context with %d input channels and %d output channels\n",
 			gHvInputChannels, gHvOutputChannels);
@@ -299,10 +315,13 @@ bool setup(BelaContext *context, void *userData)	{
 		gScopeOut = new float[gScopeChannelsInUse];
 	}
 	// Bela digital
-	dcm.setCallback(sendDigitalMessage);
-	if(context->digitalChannels > 0){
-		for(unsigned int ch = 0; ch < context->digitalChannels; ++ch){
-			dcm.setCallbackArgument(ch, hvDigitalInHashes[ch]);
+	if(gDigitalEnabled)
+	{
+		dcm.setCallback(sendDigitalMessage);
+		if(context->digitalChannels > 0){
+			for(unsigned int ch = 0; ch < context->digitalChannels; ++ch){
+				dcm.setCallbackArgument(ch, hvDigitalInHashes[ch]);
+			}
 		}
 	}
 	// unlike libpd, no need here to bind the bela_digitalOut.. receivers
@@ -431,35 +450,38 @@ void render(BelaContext *context, void *userData)
 
 
 	// Bela digital in
-	// note: in multiple places below we assume that the number of digital frames is same as number of audio
-	// Bela digital in at message-rate
-	dcm.processInput(context->digital, context->digitalFrames);
-
-	// Bela digital in at signal-rate
-	if(gDigitalSigInChannelsInUse > 0)
+	if(gDigitalEnabled)
 	{
-		unsigned int j, k;
-		float *p0, *p1;
-		const unsigned int gLibpdBlockSize = context->audioFrames;
-		const unsigned int  audioFrameBase = 0;
-		float* gInBuf = gHvInputBuffers;
-		// block below copy/pasted from libpd, except
-		// 16 has been replaced with gDigitalSigInChannelsInUse
-		for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
-			unsigned int digitalFrame = audioFrameBase + j;
-			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstDigitalChannel;
-					k < gDigitalSigInChannelsInUse; ++k, p1 += gLibpdBlockSize) {
-				if(dcm.isSignalRate(k) && dcm.isInput(k)){ // only process input channels that are handled at signal rate
-					*p1 = digitalRead(context, digitalFrame, k);
+		// note: in multiple places below we assume that the number of digital frames is same as number of audio
+		// Bela digital in at message-rate
+		dcm.processInput(context->digital, context->digitalFrames);
+	
+		// Bela digital in at signal-rate
+		if(gDigitalSigInChannelsInUse > 0)
+		{
+			unsigned int j, k;
+			float *p0, *p1;
+			const unsigned int gLibpdBlockSize = context->audioFrames;
+			const unsigned int  audioFrameBase = 0;
+			float* gInBuf = gHvInputBuffers;
+			// block below copy/pasted from libpd, except
+			// 16 has been replaced with gDigitalSigInChannelsInUse
+			for (j = 0, p0 = gInBuf; j < gLibpdBlockSize; j++, p0++) {
+				unsigned int digitalFrame = audioFrameBase + j;
+				for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstDigitalChannel;
+						k < gDigitalSigInChannelsInUse; ++k, p1 += gLibpdBlockSize) {
+					if(dcm.isSignalRate(k) && dcm.isInput(k)){ // only process input channels that are handled at signal rate
+						*p1 = digitalRead(context, digitalFrame, k);
+					}
 				}
 			}
 		}
 	}
 
-
 	// replacement for bang~ object
 	//hv_sendMessageToReceiverV(gHeavyContext, "bela_bang", 0.0f, "b");
-
+	
+	// heavy audio callback
 	hv_processInline(gHeavyContext, gHvInputBuffers, gHvOutputBuffers, context->audioFrames);
 	/*
 	for(int n = 0; n < context->audioFrames*gHvOutputChannels; ++n)
@@ -471,29 +493,32 @@ void render(BelaContext *context, void *userData)
 	*/
 
 	// Bela digital out
-	// Bela digital out at signal-rate
-	if(gDigitalSigOutChannelsInUse > 0)
+	if(gDigitalEnabled)
 	{
-			unsigned int j, k;
-			float *p0, *p1;
-			const unsigned int gLibpdBlockSize = context->audioFrames;
-			const unsigned int  audioFrameBase = 0;
-			float* gOutBuf = gHvOutputBuffers;
-			// block below copy/pasted from libpd, except
-			// context->digitalChannels has been replaced with gDigitalSigOutChannelsInUse
-			for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
-				unsigned int digitalFrame = (audioFrameBase + j);
-				for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstDigitalChannel;
-						k < gDigitalSigOutChannelsInUse; k++, p1 += gLibpdBlockSize) {
-					if(dcm.isSignalRate(k) && dcm.isOutput(k)){ // only process output channels that are handled at signal rate
-						digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
+		// Bela digital out at signal-rate
+		if(gDigitalSigOutChannelsInUse > 0)
+		{
+				unsigned int j, k;
+				float *p0, *p1;
+				const unsigned int gLibpdBlockSize = context->audioFrames;
+				const unsigned int  audioFrameBase = 0;
+				float* gOutBuf = gHvOutputBuffers;
+				// block below copy/pasted from libpd, except
+				// context->digitalChannels has been replaced with gDigitalSigOutChannelsInUse
+				for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
+					unsigned int digitalFrame = (audioFrameBase + j);
+					for (k = 0, p1 = p0  + gLibpdBlockSize * gFirstDigitalChannel;
+							k < gDigitalSigOutChannelsInUse; k++, p1 += gLibpdBlockSize) {
+						if(dcm.isSignalRate(k) && dcm.isOutput(k)){ // only process output channels that are handled at signal rate
+							digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
+						}
 					}
 				}
-			}
+		}
+		// Bela digital out at message-rate
+		dcm.processOutput(context->digital, context->digitalFrames);
 	}
-	// Bela digital out at message-rate
-	dcm.processOutput(context->digital, context->digitalFrames);
-
+	
 	// Bela scope
 	if(gScopeChannelsInUse > 0)
 	{
