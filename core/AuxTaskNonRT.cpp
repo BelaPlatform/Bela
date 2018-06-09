@@ -128,7 +128,7 @@ void AuxTaskNonRT::openPipe(){
 }
 
 void AuxTaskNonRT::empty_loop(){
-	void* buf = malloc(1);;
+	void* buf = malloc(1);
 	while(!gShouldStop){
 		read(pipe_fd, buf, 1);
 		empty_callback();

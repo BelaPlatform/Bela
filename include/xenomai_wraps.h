@@ -75,7 +75,7 @@ typedef long long int time_ns_t;
 typedef void *(pthread_callback_t)(void *);
 #endif
 
-static inline int task_sleep_ns(long long int timens)
+inline int task_sleep_ns(long long int timens)
 {
 #ifdef XENOMAI_SKIN_native
 	return rt_task_sleep((RTIME) timens);
@@ -97,7 +97,7 @@ static inline int task_sleep_ns(long long int timens)
 //}
 
 // got this from xenomai-3/testsuite/latency/latency.c
-static void setup_sched_parameters(pthread_attr_t *attr, int prio)
+inline void setup_sched_parameters(pthread_attr_t *attr, int prio)
 {
 	struct sched_param p;
 	int ret;
@@ -115,7 +115,7 @@ static void setup_sched_parameters(pthread_attr_t *attr, int prio)
 		error(1, ret, "pthread_attr_setschedparam()");
 }
 
-static int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
+inline int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
 {
 	if(pthread_attr_setdetachstate(attr, PTHREAD_CREATE_JOINABLE))
 	{
@@ -134,7 +134,7 @@ static int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, in
 	setup_sched_parameters(attr, prio);
 	return 0;
 }
-static int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
+inline int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
 	if(__wrap_pthread_attr_init(&attr))
@@ -170,7 +170,7 @@ static int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	return 0;
 }
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
-static int createXenomaiPipe(const char* portName, int poolsz)
+inline int createXenomaiPipe(const char* portName, int poolsz)
 {
 	/*
 	 * Get a datagram socket to bind to the RT endpoint. Each
