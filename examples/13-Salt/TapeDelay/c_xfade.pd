@@ -1,0 +1,16 @@
+#N canvas 0 22 540 302 10;
+#X obj 72 70 inlet~;
+#X obj 74 209 outlet~;
+#X obj 150 67 inlet~;
+#X obj 146 125 -~;
+#X obj 146 149 *~;
+#X obj 200 127 line~;
+#X obj 199 82 inlet;
+#X text 305 80 reimplementation of c_xfade;
+#X connect 0 0 1 0;
+#X connect 0 0 3 1;
+#X connect 2 0 3 0;
+#X connect 3 0 4 0;
+#X connect 4 0 1 0;
+#X connect 5 0 4 1;
+#X connect 6 0 5 0;
