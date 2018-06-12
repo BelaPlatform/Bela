@@ -760,6 +760,19 @@ socket.on('mtime-compare', function (data) {
 	}
 });
 
+socket.on('rebuild-project', function (project) {
+	console.log(project, models.project.getKey('currentProject'));
+	if (project && project !== models.project.getKey('currentProject')) {
+		projectView.emit('message', 'project-event', {
+			func: 'openProject',
+			currentProject: project
+		});
+	}
+	setTimeout(function () {
+		toolbarView.emit('process-event', 'run');
+	}, 1000);
+});
+
 var checkModifiedTimeInterval;
 var compareFiles = false;
 function setModifiedTimeInterval(mtime) {
