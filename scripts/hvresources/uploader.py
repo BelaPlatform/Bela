@@ -193,12 +193,13 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                     os.remove(token_path)
                 else:
                     with open(token_path, "r") as f:
-                        token = f.read()
+                        token = f.read().strip()
 
             if token is None:
                 print "Please provide a user token from enzienaudio.com. " \
                 "Create or copy one from https://enzienaudio.com/getmytokens/."
                 token = getpass.getpass("Enter user token: ")
+                token = token.strip()
 
                 # write token to file
                 if not os.path.exists(os.path.dirname(token_path)):
@@ -224,7 +225,8 @@ def upload(input_dir, output_dirs=None, name=None, owner=None, generators=None, 
                 # if an owner is not supplied, default to the user name in the token
                 owner = payload["name"]
         except Exception as e:
-            print "The user token is invalid. Generate a new one at https://enzienaudio.com/h/<username>/settings/."
+            print "The user token is invalid. Generate a new one at https://enzienaudio.com/getmytokens/."
+            os.remove(token_path)
             exit_code = ErrorCodes.CODE_INVALID_TOKEN
             raise e
 
