@@ -69,6 +69,8 @@ function setup_routes(app: express.Application){
 	app.get('/download', routes.download);
 	// doxygen xml
 	app.get('/documentation_xml', routes.doxygen);
+	// hack for workship script
+	app.get('/rebuild-project', routes.rebuild_project);
 }
 
 export function get_xenomai_version(): Promise<string>{
