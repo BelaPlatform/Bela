@@ -54,7 +54,7 @@ signal_handler ()
 trap signal_handler 2 
 
 error_handler () {
- [ $1 -eq 0 ] && printf "done\n" || { [ -z "$2" ] && printf "\nAn error occurred. Is the board connected?\n" || printf "$2"; exit 1; }
+ [ $1 -eq 0 ] && printf "done\n" || { [ -z "$2" ] && printf "\nAn error occurred.\n" || printf "$2"; exit 1; }
 }
 
 FULL=1
@@ -162,7 +162,7 @@ fi
 error_handler $?
 
 # a bunch of files to be processed manually to special locations
-ssh $BBB_ADDRESS "for DIR in $BBB_BELA_HOME/resources/tools/*; do make -C \"\$DIR\" install; done"
+ssh $BBB_ADDRESS "for DIR in $BBB_BELA_HOME/resources/tools/*; do make -C \"\$DIR\" install || exit 1;  done"
 error_handler $?
 
 # remove stale version of libpd on old images
@@ -171,7 +171,7 @@ error_handler $?
 
 DEBIAN_VERSION=`get_board_debian_version`
 # Install system-specific packages
-ssh $BBB_ADDRESS "dpkg -i $BBB_BELA_HOME/resources/$DEBIAN_VERSION/deb/*.deb && ldconfig"
+ssh $BBB_ADDRESS "dpkg -i $BBB_BELA_HOME/resources/$DEBIAN_VERSION/deb/*.deb && ldconfig || exit 1"
 error_handler $?
 
 if [ "$DEBIAN_VERSION" = wheezy ]
