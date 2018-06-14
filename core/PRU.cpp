@@ -302,7 +302,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			gDigitalPins = digitalPinsPocketBeagle;
 		} else {
@@ -327,7 +327,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
@@ -365,7 +365,7 @@ void PRU::cleanupGPIO()
 		}
 	}
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
@@ -418,7 +418,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	if(capeButtonMonitoring){
 		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
 	}
-	if(belaHw == BelaHw_BelaMiniCape && enableLed){
+	if(belaHw == BelaHw_BelaMini && enableLed){
 		underrunLed.open(belaMiniLedRed, OUTPUT);
 		underrunLed.clear();
 	}
@@ -623,7 +623,7 @@ static int maskMcAspInterrupt()
 
 void PRU::initialisePruCommon()
 {
-	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMiniCape);
+	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMini);
     /* Set up flags */
 	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
 	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
@@ -663,7 +663,7 @@ void PRU::initialisePruCommon()
 	}
 	
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
 			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
@@ -719,20 +719,20 @@ int PRU::start(char * const filename)
 #endif
 	switch(belaHw)
 	{
-		case BelaHw_BelaCape:
+		case BelaHw_Bela:
 			//nobreak
-		case BelaHw_BelaMiniCape:
+		case BelaHw_BelaMini:
 			//nobreak
-		case BelaHw_BelaModular:
+		case BelaHw_Salt:
 			pruUsesMcaspIrq = false;
 			break;
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagBeast:
 			//nobreak
-		case BelaHw_CtagFaceBelaCape:
+		case BelaHw_CtagFaceBela:
 			//nobreak
-		case BelaHw_CtagBeastBelaCape:
+		case BelaHw_CtagBeastBela:
 			pruUsesMcaspIrq = true;
 			break;
 		case BelaHw_NoHw:
