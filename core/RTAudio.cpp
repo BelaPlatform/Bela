@@ -89,22 +89,22 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 	// set audio codec
 	switch(hw)
 	{
-		case BelaHw_BelaCape:
+		case BelaHw_Bela:
 			//nobreak
-		case BelaHw_BelaMiniCape:
+		case BelaHw_BelaMini:
 			//nobreak
-		case BelaHw_BelaModular:
+		case BelaHw_Salt:
 			//nobreak
 			cfg->activeCodec = gI2cCodec;
 			cfg->disabledCodec = gSpiCodec;
 			break;
 		case BelaHw_CtagFace:
 			//nobreak
-		case BelaHw_CtagFaceBelaCape:
+		case BelaHw_CtagFaceBela:
 			//nobreak
 		case BelaHw_CtagBeast:
 			//nobreak
-		case BelaHw_CtagBeastBelaCape:
+		case BelaHw_CtagBeastBela:
 			cfg->activeCodec = gSpiCodec;
 			cfg->disabledCodec = gI2cCodec;
 			break;
@@ -115,25 +115,25 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 	// set audio I/O
 	switch(hw)
 	{
-		case BelaHw_BelaCape:
+		case BelaHw_Bela:
 			//nobreak
-		case BelaHw_BelaMiniCape:
+		case BelaHw_BelaMini:
 			//nobreak
-		case BelaHw_BelaModular:
+		case BelaHw_Salt:
 			cfg->audioInChannels = 2;
 			cfg->audioOutChannels = 2;
 			cfg->audioSampleRate = 44100;
 			break;
 		case BelaHw_CtagFace:
 			//nobreak
-		case BelaHw_CtagFaceBelaCape:
+		case BelaHw_CtagFaceBela:
 			cfg->audioInChannels = 8;
 			cfg->audioOutChannels = 8;
 			cfg->audioSampleRate = 48000;
 			break;
 		case BelaHw_CtagBeast:
 			//nobreak
-		case BelaHw_CtagBeastBelaCape:
+		case BelaHw_CtagBeastBela:
 			cfg->audioInChannels = 16;
 			cfg->audioOutChannels = 16;
 			cfg->audioSampleRate = 48000;
@@ -145,17 +145,17 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 	// set analogs:
 	switch(hw)
 	{
-		case BelaHw_BelaCape:
+		case BelaHw_Bela:
 			//nobreak
-		case BelaHw_BelaModular:
+		case BelaHw_Salt:
 			//nobreak
-		case BelaHw_CtagFaceBelaCape:
+		case BelaHw_CtagFaceBela:
 			//nobreak
-		case BelaHw_CtagBeastBelaCape:
+		case BelaHw_CtagBeastBela:
 			cfg->analogInChannels = 8;
 			cfg->analogOutChannels = 8;
 			break;
-		case BelaHw_BelaMiniCape:
+		case BelaHw_BelaMini:
 			cfg->analogInChannels = 8;
 			break;
 		case BelaHw_CtagFace:

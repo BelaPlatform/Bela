@@ -201,6 +201,7 @@ const unsigned int belaMiniLedBlueGpioBase = GPIO_ADDRESSES[2]; // GPIO2(23) is 
 const unsigned int belaMiniLedBlueGpioPinMask = 1 << 23;
 const unsigned int belaMiniLedRed = 89;
 const unsigned int underrunLedDuration = 20000;
+const unsigned int saltSwitch1Gpio = 60; // P9_12
 
 const unsigned int BELA_CAPE_BUTTON_PIN = 115;
 
@@ -289,13 +290,17 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			gDigitalPins = digitalPinsPocketBeagle;
 		} else {
 			gDigitalPins = digitalPinsBeagleBone;
 		}
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
+			if(belaHw == BelaHw_Salt) {
+				if(gDigitalPins[i] == saltSwitch1Gpio)
+					continue; // leave alone this pin as it is used by bela_button.service
+			}
 			if(gpio_export(gDigitalPins[i])) {
 				if(gRTAudioVerbose)
 					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , gDigitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
@@ -310,7 +315,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
@@ -340,11 +345,15 @@ void PRU::cleanupGPIO()
 	}
 	if(digital_enabled){
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
+			if(belaHw == BelaHw_Salt) {
+				if(gDigitalPins[i] == saltSwitch1Gpio)
+					continue; // leave alone this pin as it is used by bela_button.service
+			}
 			gpio_unexport(gDigitalPins[i]);
 		}
 	}
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
@@ -397,7 +406,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	if(capeButtonMonitoring){
 		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
 	}
-	if(belaHw == BelaHw_BelaMiniCape && enableLed){
+	if(belaHw == BelaHw_BelaMini && enableLed){
 		underrunLed.open(belaMiniLedRed, OUTPUT);
 		underrunLed.clear();
 	}
@@ -432,6 +441,11 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 
 	// Allocate audio buffers
 #ifdef USE_NEON_FORMAT_CONVERSION
+	if(belaHw == BelaHw_Salt)
+	{
+		fprintf(stderr, "USE_NEON_FORMAT_CONVERSION is incompatible with Salt\n");
+		return 1;
+	}
 	if(uniform_sample_rate && context->analogFrames != hardaware_analog_frames)
 	{
 		fprintf(stderr, "Error: using uniform_sample_rate is not allowed with USE_NEON_FORMAT_CONVERSION\n");
@@ -602,7 +616,7 @@ static int maskMcAspInterrupt()
 
 void PRU::initialisePruCommon()
 {
-	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMiniCape);
+	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMini);
     /* Set up flags */
 	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
 	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
@@ -642,7 +656,7 @@ void PRU::initialisePruCommon()
 	}
 	
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMiniCape)
+		if(belaHw == BelaHw_BelaMini)
 		{
 			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
 			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
@@ -698,20 +712,20 @@ int PRU::start(char * const filename)
 #endif
 	switch(belaHw)
 	{
-		case BelaHw_BelaCape:
+		case BelaHw_Bela:
 			//nobreak
-		case BelaHw_BelaMiniCape:
+		case BelaHw_BelaMini:
 			//nobreak
-		case BelaHw_BelaModular:
+		case BelaHw_Salt:
 			pruUsesMcaspIrq = false;
 			break;
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagBeast:
 			//nobreak
-		case BelaHw_CtagFaceBelaCape:
+		case BelaHw_CtagFaceBela:
 			//nobreak
-		case BelaHw_CtagBeastBelaCape:
+		case BelaHw_CtagBeastBela:
 			pruUsesMcaspIrq = true;
 			break;
 		case BelaHw_NoHw:
@@ -1025,6 +1039,17 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 					}
 				}
 			}
+			if(belaHw == BelaHw_Salt) {
+				const float analogInMax = 65535.f/65536.f;
+				for(unsigned int n = 0; n < context->analogInChannels * context->analogFrames; ++n)
+				{
+					context->analogIn[n] = analogInMax - context->analogIn[n];
+					// if analogInMax is different from 65535/65536, we should
+					// clip it to avoid reading out of range values:
+					// if(context->analogIn[n] > 1)
+						// context->analogIn[n] = 1;
+				}
+			}
 #endif /* USE_NEON_FORMAT_CONVERSION */
 			
 			if((context->audioExpanderEnabled & 0x0000FFFF) != 0) {
@@ -1096,14 +1121,18 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			// - pins previously set as outputs will keep the output value they had in the last frame of the previous buffer,
 			// - pins previously set as inputs will carry the newly read input value
 
-			for(unsigned int n = 0; n < context->digitalFrames; n++){
+			uint32_t inputXorMask; // which digital input values need to be inverted
+			if(belaHw == BelaHw_Salt)
+				inputXorMask = 0xffff0000; // on Salt, inputs are inverted. When ^ with the input values, this will invert the values.
+			else
+				inputXorMask = 0; // everywhere else, inputs are not inverted. When ^ with the input values, this will leave them untouched.
+			for(unsigned int n = 0; n < context->digitalFrames; ++n){
 				uint16_t inputs = last_digital_buffer[n] & 0xffff; // half-word, has 1 for inputs and 0 for outputs
 
 				uint16_t outputs = ~inputs; // half-word has 1 for outputs and 0 for inputs;
 				context->digital[n] = (last_digital_buffer[context->digitalFrames - 1] & (outputs << 16)) | // keep output values set in the last frame of the previous buffer
-									   (context->digital[n] & (inputs << 16))   | // inputs from current context->digital[n];
+									   ( inputXorMask ^ (context->digital[n] & (inputs << 16)) )   | // inputs from current context->digital[n];
 									   (last_digital_buffer[n] & (inputs));     // keep pin configuration from previous context->digital[n]
-//                    context->digital[n]=digitalBufferTemp[n]; //ignores inputs
 			}
 		}
 
@@ -1113,6 +1142,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// ***********************
 
 		if(analog_enabled) {
+			if(belaHw == BelaHw_Salt) {
+				for(unsigned int n = 0; n < context->analogOutChannels * context->analogFrames; n++)
+				{
+					// also rescale it to avoid
+					// headroom problem on the analog outputs with a sagging
+					// 5V USB supply
+					const float analogOutMax = 0.93;
+					context->analogOut[n] = (1.f - context->analogOut[n]) * analogOutMax;
+				}
+			}
 			if(context->flags & BELA_FLAG_ANALOG_OUTPUTS_PERSIST) {
 				// Remember the content of the last_analog_out_frame
 				if(interleaved)
@@ -1271,6 +1310,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 		if(digital_enabled) { // keep track of past digital values
 			for(unsigned int n = 0; n < context->digitalFrames; n++){
+				if(belaHw == BelaHw_Salt) {
+					// invert output channels (trig out on the module are inverted)
+					// Also invert input channels. This way, in case
+					// there is an underrun and ARM partially
+					// overwrites the PRU memory, we read (old)
+					// meaningful values back (see https://github.com/BelaPlatform/Bela/issues/406)
+					context->digital[n] =
+						(~context->digital[n] & 0xffff0000) | // invert high word (input/output values)
+						(context->digital[n] & 0xffff); // leave low word as is (1 means input)
+				}
 				last_digital_buffer[n] = context->digital[n];
 			}
 		}

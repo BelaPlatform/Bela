@@ -1,0 +1,75 @@
+#N canvas 27 4 938 577 10;
+#X obj 40 208 ctlout 14;
+#X obj 40 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 130 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 131 208 ctlout 15;
+#X obj 210 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 210 208 ctlout 16;
+#X obj 290 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 380 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 460 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 290 208 ctlout 17;
+#X obj 381 209 ctlout 18;
+#X obj 460 208 ctlout 19;
+#X obj 540 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 630 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 710 55 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 540 208 ctlout 20;
+#X obj 631 209 ctlout 21;
+#X obj 710 208 ctlout 22;
+#X obj 40 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 130 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 210 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 290 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 380 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 460 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 540 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 630 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 710 325 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 40 478 ctlout 2;
+#X obj 131 478 ctlout 3;
+#X obj 210 478 ctlout 4;
+#X obj 290 478 ctlout 5;
+#X obj 381 479 ctlout 6;
+#X obj 460 478 ctlout 8;
+#X obj 540 478 ctlout 9;
+#X obj 631 479 ctlout 12;
+#X obj 710 478 ctlout 13;
+#X text 106 26 Control partial contents of table 1;
+#X text 106 296 Control partial contents of table 2;
+#X connect 1 0 0 0;
+#X connect 2 0 3 0;
+#X connect 4 0 5 0;
+#X connect 6 0 9 0;
+#X connect 7 0 10 0;
+#X connect 8 0 11 0;
+#X connect 12 0 15 0;
+#X connect 13 0 16 0;
+#X connect 14 0 17 0;
+#X connect 18 0 27 0;
+#X connect 19 0 28 0;
+#X connect 20 0 29 0;
+#X connect 21 0 30 0;
+#X connect 22 0 31 0;
+#X connect 23 0 32 0;
+#X connect 24 0 33 0;
+#X connect 25 0 34 0;
+#X connect 26 0 35 0;
