@@ -28,10 +28,12 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 1
+#define BELA_MINOR_VERSION 2
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.2.0
+// - renames and re-ordered BelaHw enum
 // 1.1.0
 // - adds BelaHw, Bela_detectHw()
 // - removes digital_gpio_mapping.h
@@ -56,13 +58,13 @@ int rt_vfprintf(FILE *stream, const char *format, va_list ap);
 typedef enum
 {
 	BelaHw_NoHw = -1,
-	BelaHw_BelaCape,
-	BelaHw_BelaMiniCape,
+	BelaHw_Bela,
+	BelaHw_BelaMini,
+	BelaHw_Salt,
 	BelaHw_CtagFace,
 	BelaHw_CtagBeast,
-	BelaHw_BelaModular,
-	BelaHw_CtagFaceBelaCape,
-	BelaHw_CtagBeastBelaCape,
+	BelaHw_CtagFaceBela,
+	BelaHw_CtagBeastBela,
 } BelaHw;
 
 #include <GPIOcontrol.h>

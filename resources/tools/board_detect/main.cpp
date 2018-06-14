@@ -4,13 +4,13 @@ int main(){
 	BelaHw hw = Bela_detectHw();
 	switch(hw)
 	{
-		case BelaHw_BelaCape:
+		case BelaHw_Bela:
 			printf("Bela\n");
 			break;
-		case BelaHw_BelaMiniCape:
+		case BelaHw_BelaMini:
 			printf("BelaMini\n");
 			break;
-		case BelaHw_BelaModular:
+		case BelaHw_Salt:
 			printf("Salt\n");
 			break;
 		case BelaHw_CtagFace:
@@ -19,10 +19,10 @@ int main(){
 		case BelaHw_CtagBeast:
 			printf("CtagBeast\n");
 			break;
-		case BelaHw_CtagFaceBelaCape:
+		case BelaHw_CtagFaceBela:
 			printf("CtagFaceBela\n");
 			break;
-		case BelaHw_CtagBeastBelaCape:
+		case BelaHw_CtagBeastBela:
 			printf("CtagBeastNela\n");
 			break;
 		case BelaHw_NoHw:
