@@ -18,7 +18,6 @@ grep -v "\s*BOARD=" $BELA_CONFIG > $TMP_BELA_CONFIG || true
 echo "BOARD=Salt"  >> $TMP_BELA_CONFIG
 mv $TMP_BELA_CONFIG $BELA_CONFIG
 
-echo $1
 if [ "$1" = "--examples" ]
 then
 	for e in `cd examples/$EXAMPLE_FOLDER/ && ls`
