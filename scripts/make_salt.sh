@@ -9,7 +9,7 @@ EXAMPLE_FOLDER=13-Salt
 BELA_CONFIG=~/.bela/belaconfig
 TMP_BELA_CONFIG=/tmp/belaconfig
 
-uname -a 2>/dev/null | grep -q bela || {
+uname -a 2>/dev/null | grep -q armv7l || {
 	echo "Error: this script must be run on the Bela board" >&2
 	exit 1;
 }
