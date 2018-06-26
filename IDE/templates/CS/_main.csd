@@ -26,11 +26,11 @@ nchnls = 2
 ;------------------------------------------------------
 	
 	instr 2
-		kSwitchPin = 0 
-		kLED_Pin = 1
+		iSwitchPin = 0
+		iLED_Pin = 1
 		
-		kSwitch digiInBela kSwitchPin
-		digiOutBela kLED_Pin, kSwitch
+		kSwitch digiInBela iSwitchPin
+		digiOutBela kSwitch, iLED_Pin
 	endin
 
 </CsInstruments>
