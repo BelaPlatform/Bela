@@ -175,7 +175,7 @@ class EditorView extends View {
 				}
 				
 				// load an empty string into the editor
-				// data = '';
+				data = '';
 				
 				// start comparison with file on disk
 				this.emit('compare-files', true);
