@@ -238,12 +238,6 @@ bool setup(BelaContext *context, void *userData)	{
 	if(context->digitalFrames > 0 && context->digitalChannels > 0)
 		gDigitalEnabled = 1;
 
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context->analogOutChannels){
-		// It should actually work, but let's test it before releasing it!
-		fprintf(stderr, "Error: TODO: a different number of channels for inputs and outputs is not yet supported\n");
-		return false;
-	}
 	/* HEAVY */
 	hvMidiHashes[kmmNoteOn] = hv_stringToHash("__hv_notein");
 //	hvMidiHashes[kmmNoteOff] = hv_stringToHash("noteoff"); // this is handled differently, see the render function
