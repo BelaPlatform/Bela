@@ -404,6 +404,7 @@ void render(BelaContext *context, void *userData)
 						(float)value, (float)channel+1);
 				break;
 			}
+			case kmmSystem:
 			case kmmNone:
 			case kmmAny:
 				break;
