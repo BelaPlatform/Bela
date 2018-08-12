@@ -65,21 +65,20 @@ Blinking an LED
 
 This sketch shows the simplest case of digital out. 
 
-- Connect an LED in series with a 470ohm resistor between digital pin gOutputPin and ground. 
+- Connect an LED in series with a 470ohm resistor between digital pin `gOutputPin` and ground. 
 
-The led is blinked on and off by setting the digital pin `HIGH` and `LOW` every interval seconds which is set in 
-`render()`.
+The led is blinked on and off by setting the digital pin `1` and `0` every `gInterval seconds.
 
 In `setup()` the pin mode must be set to output mode via `pinMode()`. For example: 
-`pinMode(context, 0, gOutputPin, OUTPUT)`. 
+`pinMode(context, 0, gOutputPin, OUTPUT)`.
 In `render()` the output of the digital pins is set by `digitalWrite()`. For example: 
 `digitalWrite(context, n, gOutputPin, status)` where `status` can be equal to 
-either `HIGH` or `LOW`. When set `HIGH` the pin will give 3.3V, when set to 
-`LOW` 0V.
+either `1` or `0`. When set `1` the pin will give 3.3V, when set to 
+`0` 0V.
 
 To keep track of elapsed time we have a sample counter count. When the count reaches 
-a certain limit it switches state to either `HIGH` or `LOW` depending on its current 
-value. In this case the limit is `context->digitalSampleRate*interval` which 
-allows us to write the desired interval in seconds, stored in `interval`.
+a certain limit it switches state to either `1` or `0` depending on its current 
+value. In this case the limit is `context->digitalSampleRate * gInterval` which 
+is the desired interval expressed in samples.
 */
 
