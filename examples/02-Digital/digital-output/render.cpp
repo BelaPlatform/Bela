@@ -25,6 +25,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 
 int gOutputPin = 0; // digital pin 0 - check the pin diagram in the IDE
+float gInterval = 0.5; // how often to toggle the LED (in seconds)
+int gCount = 0; //counts elapsed samples
+bool gStatus = false;
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -34,23 +37,18 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-  static int count=0; //counts elapsed samples
-  float interval=0.5; //how often to toggle the LED (in seconds)
-  static int status=GPIO_LOW;
-	for(unsigned int n=0; n<context->digitalFrames; n++){
-    if(count==context->digitalSampleRate*interval){ //if enough samples have elapsed
-      count=0; //reset the counter
-      if(status==GPIO_LOW) { //toggle the status
-          digitalWrite(context, n, gOutputPin, status); //write the status to the LED (gOutputPin)
-          status=GPIO_HIGH;
-      }
-      else {
-          digitalWrite(context, n, gOutputPin, status); //write the status to the LED (gOutputPin)
-          status=GPIO_LOW;
-      }
-    }
-    count++;
-  }
+	for(unsigned int n = 0; n < context->digitalFrames; ++n){
+		if(gCount == (int)(context->digitalSampleRate * gInterval)){ //if enough samples have elapsed
+			gCount = 0; //reset the counter
+			//toggle the status
+			if(gStatus == 0)
+				gStatus = 1;
+			else
+				gStatus = 0;
+			digitalWrite(context, n, gOutputPin, gStatus); //write the status to the LED (gOutputPin)
+		}
+		gCount++;
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)
