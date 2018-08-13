@@ -1392,7 +1392,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			if(underrunLedCount > 0)
 			{
 				underrunLedCount -= context->audioFrames;
-				if(underrunLedCount < 0)
+				if(underrunLedCount <= 0)
 				{
 					if(underrunLed.enabled())
 						underrunLed.clear();
