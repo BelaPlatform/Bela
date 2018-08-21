@@ -269,7 +269,7 @@ QUIET?=false
 
 RM := rm -rf
 
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ -I./build/pru/
+INCLUDES := -I$(PROJECT_DIR) -I./include -I./build/pru/
 ifeq ($(XENOMAI_VERSION),2.6)
   BELA_USE_DEFINE=BELA_USE_POLL
 endif
