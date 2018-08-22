@@ -23,7 +23,7 @@ int main(){
 			printf("CtagFaceBela\n");
 			break;
 		case BelaHw_CtagBeastBela:
-			printf("CtagBeastNela\n");
+			printf("CtagBeastBela\n");
 			break;
 		case BelaHw_NoHw:
 		default:
