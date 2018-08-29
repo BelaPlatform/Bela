@@ -16,6 +16,7 @@
 #include "FIRfilter.h"
 #include <assert.h>
 #include <cmath>
+#include <algorithm>
 #include <vector>
 
 #ifdef XENOMAI_SKIN_native
@@ -62,6 +63,10 @@ extern PRU *gPRU;
 extern StatusLED gStatusLED;
 extern bool gIsLoading;
 extern bool gAudioIn;
+
+int gAudioChannelNum; // number of audio channels to iterate over
+int gAnalogChannelNum; // number of analog channels to iterate over
+
 
 float *gOscillatorBuffer1, *gOscillatorBuffer2;
 float *gOscillatorBufferRead, *gOscillatorBufferWrite;
@@ -171,28 +176,34 @@ bool setup(BelaContext *context, void *userData) {
 		return false;
 	}
 
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
+	// If the amout of  analog input and output channels is not the same
+	// we will use the minimum between input and output
+	gAnalogChannelNum = std::min(context->analogInChannels, context->analogOutChannels);
+
+	// Check that we have the same number of inputs and outputs.
+	if(context->analogInChannels != context-> analogOutChannels){
+			printf("Different number of analog outputs and inputs available. Using %d channels.\n", gAnalogChannelNum);
 	}
+
+	// The number of analog channels has to be set to 2 for this example 
+	gAudioChannelNum = 2;
 
 	// Allocate two buffers for rendering oscillator bank samples
 	// One will be used for writing in the background while the other is used for reading
 	// on the audio thread. 8-byte alignment needed for the NEON code.
-	if(posix_memalign((void **)&gOscillatorBuffer1, 8, oscBankHopSize * context->audioOutChannels * sizeof(float))) {
+	if(posix_memalign((void **)&gOscillatorBuffer1, 8, oscBankHopSize * gAudioChannelNum * sizeof(float))) {
 		printf("Error allocating render buffers\n");
 		return false;
 	}
-	if(posix_memalign((void **)&gOscillatorBuffer2, 8, oscBankHopSize * context->audioOutChannels * sizeof(float))) {
+	if(posix_memalign((void **)&gOscillatorBuffer2, 8, oscBankHopSize * gAudioChannelNum * sizeof(float))) {
 		printf("Error allocating render buffers\n");
 		return false;
 	}
 	gOscillatorBufferWrite	= gOscillatorBuffer1;
 	gOscillatorBufferRead	= gOscillatorBuffer2;
 
-	memset(gOscillatorBuffer1, 0, oscBankHopSize * context->audioOutChannels * sizeof(float));
-	memset(gOscillatorBuffer2, 0, oscBankHopSize * context->audioOutChannels * sizeof(float));
+	memset(gOscillatorBuffer1, 0, oscBankHopSize * gAudioChannelNum * sizeof(float));
+	memset(gOscillatorBuffer2, 0, oscBankHopSize * gAudioChannelNum * sizeof(float));
 
 	// Initialise the dynamic wavetable used by the oscillator bank
 	// It should match the size of the static one already allocated in the DboxOscillatorBank object
@@ -263,7 +274,7 @@ void render(BelaContext *context, void *userData)
 
 	if(gOscBanks[gCurrentOscBank]->state==bank_playing)
 	{
-		assert(context->audioOutChannels == 2);
+		assert(gAudioChannelNum == 2);
 
 #ifdef OLD_OSCBANK
 		memset(audioOut, 0, numAudioFrames *  * sizeof(float));

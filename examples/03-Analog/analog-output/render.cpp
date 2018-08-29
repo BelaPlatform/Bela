@@ -42,13 +42,6 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	// Check that we have the same number of inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		printf("Error: for this project, you need the same number of input and output channels.\n");
-		return false;
-	}
-
 	gInverseSampleRate = 1.0 / context->analogSampleRate;
 	gPhase = 0.0;
 
@@ -69,7 +62,7 @@ void render(BelaContext *context, void *userData)
 			relativePhase += (float)M_PI * 0.25f;
 		}
 
-        // Update and wrap phase of sine tone
+		// Update and wrap phase of sine tone
 		gPhase += 2.0f * (float)M_PI * gFrequency * gInverseSampleRate;
 		if(gPhase > M_PI)
 			gPhase -= 2.0f * (float)M_PI;

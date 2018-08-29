@@ -23,7 +23,10 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
+#include <algorithm>
 
+
+int gAudioChannelNum; // number of audio channels to iterate over
 float gFrequency = 4.0;
 float gPhase;
 float gInverseSampleRate;
@@ -32,10 +35,13 @@ int gAudioFramesPerAnalogFrame = 0;
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Check that we have the same number of audio inputs and outputs.
+	// If the amout of audio input and output channels is not the same
+	// we will use the minimum between input and output
+	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
+	
+	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels){
-		fprintf(stderr, "Error: for this project, you need the same number of input and output audio channels.\n");
-		return false;
+		printf("Different number of audio outputs and inputs available. Using %d channels.\n", gAudioChannelNum);
 	}
 
 	if(context->analogSampleRate > context->audioSampleRate)
@@ -71,7 +77,7 @@ void render(BelaContext *context, void *userData)
 		if(gPhase > M_PI)
 			gPhase -= 2.0f * (float)M_PI;
 
-		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
+		for(unsigned int channel = 0; channel < gAudioChannelNum; channel++) {
 			// Read the audio input and half the amplitude
 			float input = audioRead(context, n, channel) * 0.5f;
 			// Write to audio output the audio input multiplied by the sinewave

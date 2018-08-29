@@ -53,11 +53,6 @@ void updatePllFunction(void*){
 
 bool setup(BelaContext *context, void *userData)
 {
-    	// Check that we have the same number of audio inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels){
-		printf("Error: for this project, you need the same number of input and output audio channels.\n");
-		return false;
-	}
 	updatePll=Bela_createAuxiliaryTask(&updatePllFunction, 91, "update PLL");
 	for(int n=0; n<delayLength; n++){
 		delay[n]=0;
@@ -74,11 +69,15 @@ void render(BelaContext *context, void *userData)
 	Bela_scheduleAuxiliaryTask(updatePll);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		float input = audioRead(context, n, 0) + audioRead(context, n, 1);
-	    delay[writePointer++] = input + delay[readPointer]*feedback;
-	    float output = (dry * input + wet * delay[readPointer++] ) * 0.5;
-		audioWrite(context, n, 0, output);
-		audioWrite(context, n, 1, output);
+		float input = 0.0;
+		for(unsigned int ch = 0; ch < context->audioInChannels; ch++) {
+			input += audioRead(context, n, ch);
+		}
+		input = input/(float)context->audioInChannels;
+		delay[writePointer++] = input + delay[readPointer]*feedback;
+		float output = dry * input + wet * delay[readPointer++];
+		for(unsigned int ch = 0; ch < context->audioOutChannels; ch++)
+			audioWrite(context, n, ch, output);
 		if(writePointer>=delayLength)
 			writePointer-=delayLength;
 		if(readPointer>=delayLength)

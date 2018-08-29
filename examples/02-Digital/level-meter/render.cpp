@@ -24,8 +24,12 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
+#include <algorithm>
+
 
 #define NUMBER_OF_SEGMENTS	10
+
+int gAudioChannelNum; // number of audio channels to iterate over
 
 // Two levels of audio: one follows current value, the other holds
 // peaks for longer
@@ -58,18 +62,16 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	// For this example we need the same amount of audio input and output channels
-	if(context->audioInChannels != context->audioOutChannels){
-		printf("Error: for this project, you need the same number of audio input and output channels.\n");
-		return false;
-	}
-	
+	// If the amout of audio and analog input and output channels is not the same
+	// we will use the minimum between input and output
+	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
+
 	// Initialise threshold levels in -3dB steps. One extra for efficiency in render()
 	// Level = 10^(dB/20)
 	for(int i = 0; i < NUMBER_OF_SEGMENTS + 1; i++) {
 		gThresholds[i] = powf(10.0f, (-1.0 * (NUMBER_OF_SEGMENTS - i)) * .05);
 	}
-	
+
 	for(int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
 		gSamplesToLight[i] = 0;
 		pinMode(context, 0, i, OUTPUT);
@@ -81,14 +83,17 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
+			
 		// Get average of audio input channels
 		float sample = 0;
 		for(unsigned int ch = 0; ch < context->audioInChannels; ch++) {
-			context->audioOut[n * context->audioOutChannels + ch] = 
-				context->audioIn[n * context->audioInChannels + ch];
-			sample += context->audioIn[n * context->audioInChannels + ch];
+			sample += audioRead(context, n, ch);
 		}
-		
+
+		// Audio loopback
+		for(unsigned int ch = 0; ch < gAudioChannelNum; ch++)
+			audioWrite(context, n, ch, audioRead(context, n, ch));
+
 		// Do DC-blocking on the sum
 		float out = gB0 * sample + gB1 * gLastX[0] + gB2 * gLastX[1]
 						- gA1 * gLastY[0] - gA2 * gLastY[1];
@@ -97,8 +102,8 @@ void render(BelaContext *context, void *userData)
 		gLastX[0] = sample;
 		gLastY[1] = gLastY[0];
 		gLastY[0] = out;
-		
-		out = fabsf(out / (float)context->audioOutChannels);
+
+		out = fabsf(out / (float)gAudioChannelNum);
 		
 		// Do peak detection: fast-responding local level
 		if(out > gAudioLocalLevel)

@@ -24,6 +24,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
+#include <algorithm>
+
+int gAnalogChannelNum; // number of analog channels to iterate over
 
 int gBufferSize = 8192;
 
@@ -43,12 +46,15 @@ bool setup(BelaContext *context, void *userData)
 {	
 	gIsStdoutTty = isatty(1); // Check if stdout is a terminal
 
+	
+	// If the amout of audio and analog input and output channels is not the same
+	// we will use the minimum between input and output
+	gAnalogChannelNum = std::min(context->analogInChannels, context->analogOutChannels);
+	
 	// Check that we have the same number of inputs and outputs.
-	if(context->audioInChannels != context->audioOutChannels ||
-			context->analogInChannels != context-> analogOutChannels){
-		printf("Different number of outputs and inputs available. Working with what we have.\n");
-	}
-
+	if(context->analogInChannels != context-> analogOutChannels)
+		printf("Different number of analog outputs and inputs available. Using %d analog channels.\n", gAnalogChannelNum);
+	
 	// Clear the filter data structures
 	for(int i = 0; i < 10; i++) {
 		gReadBufferPointers[i] = gWriteBufferPointers[i] = 0;
@@ -73,10 +79,10 @@ void render(BelaContext *context, void *userData)
 	
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		// Store audio inputs in buffer
-		for(unsigned int ch = 0; ch < context->audioOutChannels; ch++) {
+		for(unsigned int ch = 0; ch < context->audioInChannels; ch++) {
 			if(gWriteBufferPointers[ch] < gBufferSize) {
 				gWriteBuffers[ch][gWriteBufferPointers[ch]] = 
-					context->audioIn[n * context->audioOutChannels + ch];
+					context->audioIn[n * context->audioInChannels + ch];
 				gWriteBufferPointers[ch]++;
 				if(gWriteBufferPointers[ch] >= gBufferSize)
 					bufferIsFull = true;
@@ -87,10 +93,10 @@ void render(BelaContext *context, void *userData)
 	if(context->analogOutChannels != 0) {
 		for(unsigned int n = 0; n < context->analogFrames; n++) {
 			// Store analog inputs in buffer, starting at channel 2
-			for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
+			for(unsigned int ch = 0; ch < gAnalogChannelNum; ch++) {
 				if(gWriteBufferPointers[ch + 2] < gBufferSize) {
 					gWriteBuffers[ch + 2][gWriteBufferPointers[ch + 2]] = 
-						context->analogIn[n * context->analogOutChannels + ch];
+						context->analogIn[n * context->analogInChannels + ch];
 					gWriteBufferPointers[ch + 2]++;
 					if(gWriteBufferPointers[ch + 2] >= gBufferSize)
 						bufferIsFull = true;

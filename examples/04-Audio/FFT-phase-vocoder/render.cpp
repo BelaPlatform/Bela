@@ -29,6 +29,8 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #define BUFFER_SIZE 16384
 
+int gAudioChannelNum; // number of audio channels to iterate over
+
 // TODO: your buffer and counter go here!
 float gInputBuffer[BUFFER_SIZE];
 int gInputBufferPointer = 0;
@@ -115,14 +117,18 @@ void midiCallback(MidiChannelMessage message, void* arg){
 
 bool setup(BelaContext* context, void* userData)
 {
-    // Check that we have the same number of audio inputs and outputs.
+	// If the amout of audio input and output channels is not the same
+	// we will use the minimum between input and output
+	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
+	
+	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels){
-		printf("Error: for this project, you need the same number of input and output audio channels.\n");
-		return false;
+		printf("Different number of audio outputs and inputs available. Using %d channels.\n", gAudioChannelNum);
 	}
-    
+	
 	midi.readFrom(0);
 	midi.setParserCallback(midiCallback);
+	
 	// Retrieve a parameter passed in from the initAudio() call
 	gSampleData = *(SampleData *)userData;
 
@@ -138,7 +144,7 @@ bool setup(BelaContext* context, void* userData)
 	memset(gOutputBuffer, 0, BUFFER_SIZE * sizeof(float));
 
 	// Allocate buffer to mirror and modify the input
-	gInputAudio = (float *)malloc(context->audioFrames * context->audioOutChannels * sizeof(float));
+	gInputAudio = (float *)malloc(context->audioFrames * gAudioChannelNum * sizeof(float));
 	if(gInputAudio == 0)
 		return false;
 
@@ -184,26 +190,26 @@ void process_fft(float *inBuffer, int inWritePointer, float *outBuffer, int outW
 	ne10_fft_c2c_1d_float32_neon (frequencyDomain, timeDomainIn, cfg, 0);
 
 	switch (gEffect){
-	  case kRobot :
-	  // Robotise the output
-	    for(int n = 0; n < gFFTSize; n++) {
-	      float amplitude = sqrtf(frequencyDomain[n].r * frequencyDomain[n].r + frequencyDomain[n].i * frequencyDomain[n].i);
-	      frequencyDomain[n].r = amplitude;
-	      frequencyDomain[n].i = 0;
-	    }
-	    break;
-	  case kWhisper :
-	    for(int n = 0; n < gFFTSize; n++) {
-	      float amplitude = sqrtf(frequencyDomain[n].r * frequencyDomain[n].r + frequencyDomain[n].i * frequencyDomain[n].i);
-	      float phase = rand()/(float)RAND_MAX * 2.f* M_PI;
-	      frequencyDomain[n].r = cosf(phase) * amplitude;
-	      frequencyDomain[n].i = sinf(phase) * amplitude;
-	    }
-	    break;
-	  case kBypass:
-	    //bypass
-	    break;
-	  }
+		case kRobot :
+			// Robotise the output
+			for(int n = 0; n < gFFTSize; n++) {
+				float amplitude = sqrtf(frequencyDomain[n].r * frequencyDomain[n].r + frequencyDomain[n].i * frequencyDomain[n].i);
+				frequencyDomain[n].r = amplitude;
+				frequencyDomain[n].i = 0;
+			}
+			break;
+		case kWhisper :
+			for(int n = 0; n < gFFTSize; n++) {
+				float amplitude = sqrtf(frequencyDomain[n].r * frequencyDomain[n].r + frequencyDomain[n].i * frequencyDomain[n].i);
+				float phase = rand()/(float)RAND_MAX * 2.f* M_PI;
+				frequencyDomain[n].r = cosf(phase) * amplitude;
+				frequencyDomain[n].i = sinf(phase) * amplitude;
+			}
+			break;
+		case kBypass:
+			//bypass
+		break;
+	}
 
 	// Run the inverse FFT
 	ne10_fft_c2c_1d_float32_neon (timeDomainOut, frequencyDomain, cfg, 1);
@@ -228,7 +234,6 @@ void render(BelaContext* context, void* userData)
 {
 	float* audioOut = context->audioOut;
 	int numAudioFrames = context->audioFrames;
-	int numAudioChannels = context->audioOutChannels;
 	// ------ this code internal to the demo; leave as is ----------------
 
 	// Prep the "input" to be the sound file played in a loop
@@ -244,11 +249,11 @@ void render(BelaContext* context, void* userData)
 	// -------------------------------------------------------------------
 
 	for(int n = 0; n < numAudioFrames; n++) {
-		gInputBuffer[gInputBufferPointer] = ((gInputAudio[n*numAudioChannels] + gInputAudio[n*numAudioChannels+1]) * 0.5);
+		gInputBuffer[gInputBufferPointer] = ((gInputAudio[n*gAudioChannelNum] + gInputAudio[n*gAudioChannelNum+1]) * 0.5);
 
 		// Copy output buffer to output
-		for(int channel = 0; channel < numAudioChannels; channel++){
-			audioOut[n * numAudioChannels + channel] = gOutputBuffer[gOutputBufferReadPointer] * gGain * gDryWet + (1 - gDryWet) * gInputAudio[n * numAudioChannels + channel];
+		for(int channel = 0; channel < gAudioChannelNum; channel++){
+			audioWrite(context, n, channel, gOutputBuffer[gOutputBufferReadPointer] * gGain * gDryWet + (1 - gDryWet) * audioRead(context, n, channel));
 		}
 
 		// Clear the output sample in the buffer so it is ready for the next overlap-add
