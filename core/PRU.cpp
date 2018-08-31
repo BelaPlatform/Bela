@@ -34,11 +34,6 @@
 #include <sys/mman.h>
 #include <string.h>
 
-//#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
-// CTAG TODO: make this dependent on the pru code in use
-//#define PRU_USES_MCASP_IRQ
-
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
 #error Define one of BELA_USE_POLL, BELA_USE_RTDM
 #endif
@@ -687,17 +682,6 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
-#ifdef PRU_USES_MCASP_IRQ
-	/* The PRU will enable the McASP interrupts. Here we mask
-	 * them out from ARM so that they do not hang the CPU. */
-	if(maskMcAspInterrupt() < 0)
-	{
-		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
-		return 1;
-	}
-#warning TODO: unmask interrupt when program stops
-#endif
-
 #ifdef BELA_USE_RTDM
 	// Open RTDM driver
 	// NOTE: if this is moved later on, (e.g.: at the beginning of loop())

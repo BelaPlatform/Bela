@@ -130,7 +130,8 @@
 #define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
 #define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
-#define COMM_ERROR_OCCURED      	64          // Signals the ARM CPU that an error happened
+#define COMM_BELA_MINI        64                    // Whether we are on Bela Mini
+#define COMM_ERROR_OCCURED      	68          // Signals the ARM CPU that an error happened
 
 #define ARM_ERROR_TIMEOUT 1
 #define ARM_ERROR_XUNDRUN 2

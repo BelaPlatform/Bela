@@ -14,7 +14,7 @@
 
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
-#if (defined(CTAG_BEAST_8CH) || defined(CTAG_BEAST_16CH))
+#if (defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH))
 #define CTAG
 #endif
 
@@ -131,14 +131,14 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagFaceBela:
-			cfg->audioInChannels = 8;
+			cfg->audioInChannels = 4;
 			cfg->audioOutChannels = 8;
 			cfg->audioSampleRate = 48000;
 			break;
 		case BelaHw_CtagBeast:
 			//nobreak
 		case BelaHw_CtagBeastBela:
-			cfg->audioInChannels = 16;
+			cfg->audioInChannels = 8;
 			cfg->audioOutChannels = 16;
 			cfg->audioSampleRate = 48000;
 			break;

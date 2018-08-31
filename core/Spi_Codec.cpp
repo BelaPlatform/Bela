@@ -16,34 +16,37 @@ const int RESET_PIN = 81; // GPIO2(17) P8.34
 #include <linux/spi/spidev.h>
 #include <cstring>
 
-Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1 ){
+Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1)
+{
 
 	// Open SPI devices
 	if ((_fd_master = open(spidev_gpio_cs0, O_RDWR)) < 0)
 		fprintf(stderr, "Failed to open spidev device for master codec.\n");
-	if (spidev_gpio_cs1 && (_fd_slave = open(spidev_gpio_cs1, O_RDWR)) < 0)
+	if (!spidev_gpio_cs1)
+	       _fd_slave = -1;
+	else if((_fd_slave = open(spidev_gpio_cs1, O_RDWR)) < 0)
 		fprintf(stderr, "Failed to open spidev device for slave codec.\n");
 
-    // Prepare reset pin and reset audio codec(s)
-    gpio_unexport(RESET_PIN);
-    if(gpio_export(RESET_PIN)) {
-        fprintf(stderr, "Warning: couldn't reset pin for audio codecs\n");
-    }
-    if(gpio_set_dir(RESET_PIN, OUTPUT_PIN)) {
-        fprintf(stderr, "Couldn't set direction on audio codec reset pin\n");
-    }
-    if(gpio_set_value(RESET_PIN, LOW)) {
-        fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
-    }
+	// Prepare reset pin and reset audio codec(s)
+	gpio_unexport(RESET_PIN);
+	if(gpio_export(RESET_PIN)) {
+		fprintf(stderr, "Warning: couldn't reset pin for audio codecs\n");
+	}
+	if(gpio_set_dir(RESET_PIN, OUTPUT_PIN)) {
+		fprintf(stderr, "Couldn't set direction on audio codec reset pin\n");
+	}
+	if(gpio_set_value(RESET_PIN, LOW)) {
+		fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
+	}
 
-    usleep(10000);
+	usleep(10000);
 
-    // Wake up audio codec(s)
-    if(gpio_set_value(RESET_PIN, HIGH)) {
-        fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
-    }
+	// Wake up audio codec(s)
+	if(gpio_set_value(RESET_PIN, HIGH)) {
+		fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
+	}
 
-    usleep(10000);
+	usleep(10000);
 	// now we can detect if there is a slave codec
 	_isBeast = slaveIsDetected();
 }
@@ -314,6 +317,8 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 
 	int fd;
 	codec == MASTER_CODEC ? fd = _fd_master : fd = _fd_slave;
+	if(fd < 0)
+		return 1;
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 0){
