@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include "Bela.h"
 #include "Gpio.h"
+#include "AudioCodec.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const
@@ -147,7 +148,7 @@ private:
 
 public:
 	// Constructor
-	PRU(InternalBelaContext *input_context);
+	PRU(InternalBelaContext *input_context, AudioCodec *audio_codec);
 
 	// Destructor
 	~PRU();
@@ -180,6 +181,7 @@ public:
 
 private:
 	void initialisePruCommon();
+	int testPruError();
 	InternalBelaContext *context;	// Overall settings
 
 	int pru_number;		// Which PRU we use
@@ -195,6 +197,7 @@ private:
 
 	PruMemory* pruMemory;
 	volatile uint32_t *pru_buffer_comm;
+	uint32_t pruBufferMcaspFrames;
 
 	float *last_analog_out_frame;
 	uint32_t *last_digital_buffer;
@@ -206,6 +209,7 @@ private:
 
 	Gpio belaCapeButton; // Monitoring the bela cape button
 	Gpio underrunLed; // Flashing an LED upon underrun
+	AudioCodec *codec; // Required to hard reset audio codec from loop
 };
 
 

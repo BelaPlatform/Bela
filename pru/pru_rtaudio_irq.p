@@ -5,6 +5,18 @@
 //#define CTAG_FACE_8CH
 #define CTAG_BEAST_16CH
 
+#ifdef CTAG_FACE_8CH
+#define CTAG_x
+#endif
+#ifdef CTAG_BEAST_16CH
+#define CTAG_x
+#endif
+
+#ifdef CTAG_x
+#define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+#define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS
+#endif
+
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
 #define CLOCK_BASE   0x44E00000
@@ -59,8 +71,11 @@
 #define GPIO_CLEARDATAOUT 0x190
 #define GPIO_SETDATAOUT 0x194
 
-#define PRU0_ARM_INTERRUPT 19   // Interrupt signalling we're done
-#define PRU1_ARM_INTERRUPT 20   // Interrupt signalling a block is ready
+// See am335x TRM 4.4.1.2.2 Event Interface Mapping (R31): PRU System Events:
+// "The output channels [of R31] 0-15 are connected to the PRU-ICSS INTC system events 16-31, respectively. This allows the PRU to assert one of the system events 16-31 by writing to its own R31 register."
+// We will be writing to output channel 4, which is system event 20 of the PRU-ICSS INTC
+#define PRU_SYSTEM_EVENT_RTDM 20
+#define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
 #ifdef DBOX_CAPE
@@ -114,7 +129,14 @@
 #define COMM_PRU_NUMBER       		48          // Which PRU this code is running on
 #define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
-#define COMM_BUFFER_SPI_FRAMES 		60    		// How many frames per buffer for analog i/o
+#define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
+#define COMM_ERROR_OCCURED      	64          // Signals the ARM CPU that an error happened
+
+#define ARM_ERROR_TIMEOUT 1
+#define ARM_ERROR_XUNDRUN 2
+#define ARM_ERROR_XSYNCERR 3
+#define ARM_ERROR_XCKFAIL 4
+#define ARM_ERROR_XDMAERR 5
 
 // General constants for local PRU peripherals (used for interrupt configuration)
 #define PRU_ICSS_INTC_LOCAL     0x00020000
@@ -260,6 +282,7 @@
 #define MCASP_XSTAT_XSYNCERR_BIT        1        // Bit to test if there was an unexpected transmit frame sync
 #define MCASP_XSTAT_XCKFAIL_BIT         2        // Bit to test if there was a transmit clock failure
 #define MCASP_XSTAT_XDMAERR_BIT         7        // Bit to test if there was a transmit DMA error
+#define MCASP_XSTAT_ERROR_BIT           8        // Bit to test if there was a transmit error
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
     
@@ -367,6 +390,8 @@
 #define reg_mcasp_addr      r29     // Base address for McASP
 #define reg_pru1_mux_pins   r30     // Register mapped directly to P8 pins (PRU1 only)
 
+#define REG_MCASP_BUF0_INIT 0
+
 //0  P8_07 36 0x890/090 66 gpio2[2]
 //1  P8_08 37 0x894/094 67 gpio2[3]
 //2  P8_09 39 0x89c/09c 69 gpio2[5]
@@ -390,6 +415,12 @@
 //#define GPIO_CLEARDATAOUT 0x190 //SETDATAOUT is CLEARDATAOUT+4
 #define GPIO_OE 0x134 
 #define GPIO_DATAIN 0x138
+
+.macro SEND_ERROR_TO_ARM
+.mparam error
+MOV r27, error
+SBBO r27, reg_comm_addr, COMM_ERROR_OCCURED, 4
+.endm
 
 .macro READ_GPIO_BITS
 .mparam gpio_data, gpio_num_bit, digital_bit, digital
@@ -1153,7 +1184,7 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
     LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
     LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
-    MOV reg_mcasp_buf0, 0            // McASP DAC buffer 0 start pointer
+    MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT            // McASP DAC buffer 0 start pointer
     LSL reg_mcasp_buf1, reg_frame_mcasp_total, r2  // McASP DAC buffer 1 start pointer = 2[ch]*2[bytes]*(N/4)[samples/spi]*bufsize
     CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
     SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
@@ -1227,6 +1258,7 @@ MCASP_ADC_WAIT_BEFORE_LOOP:
 #endif
 */
 
+
 WRITE_ONE_BUFFER:
 
      // Write a single buffer of DAC samples and read a buffer of ADC samples
@@ -1237,11 +1269,30 @@ WRITE_ONE_BUFFER:
      LSL reg_adc_current, reg_adc_current, 2   // N * 2 * 2 * bufsize
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
      MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
-#ifdef CTAG_FACE_8CH
-// TODO: compute reg_mcasp_adc_current appropriately, considering you have now 8 channels
-#endif
-     LSL reg_mcasp_adc_current, reg_frame_mcasp_total, r2 // McASP ADC: starts (N/2)*2*2*bufsize beyond DAC
+     //  the CTAGs only use half as many input channels as there are outputs, so divide by 2 (LSR by 1) when computing offsets
+     // if I/O buffers are the same size, then  McASP ADC: starts (N/2)*2bytes*bufsize beyond DAC
+     // otherwise:
+     // McASP ADC: starts
+     // 2bytes*nDacChannels*nDacFrames*2dacBuffers
+     // beyond DAC0 buffer
+     // or McASP ADC: starts
+     // 2bytes*nDacChannels*nDacFrames*1dacBuffer +
+     //    + 2bytes*nAdcChannels+nAdcFrames*1adcBuffer
+     // beyond DAC1 buffer
+     // TODO: it seems that reg_frame_mcasp_total is not very meaningful(cf PRU.cpp)
+     LSL reg_mcasp_adc_current, reg_frame_mcasp_total, r2
+#ifdef MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS
+QBNE MCASP_IS_ON_BUF1, reg_mcasp_buf0, REG_MCASP_BUF0_INIT
      LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
+     QBA MCASP_IS_ON_BUF_DONE
+MCASP_IS_ON_BUF1:
+     // r2 = reg_mcasp_adc_current * 1.5
+     LSR r2, reg_mcasp_adc_current, 1
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, r2
+MCASP_IS_ON_BUF_DONE:
+#else /* MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS */
+     LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
+#endif /* MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS */
      ADC reg_mcasp_adc_current, reg_mcasp_adc_current, reg_mcasp_dac_current
      MOV reg_frame_current, 0
      QBBS DIGITAL_BASE_CHECK_SET, reg_flags, FLAG_BIT_BUFFER1  //check which buffer we are using for DIGITAL
@@ -1257,7 +1308,10 @@ WRITE_LOOP:
      MOV r1, 0 //TODO: Check if really required
 
 /* ########## EVENT LOOP BEGIN ########## */
+#define EVENT_LOOP_TIMEOUT_COUNT 10000000
 EVENT_LOOP:
+MOV r28, EVENT_LOOP_TIMEOUT_COUNT
+INNER_EVENT_LOOP:
 	 // Check if one tx and rx frame of McASP have been processed.
 	 // If yes, increment frame counter.
 	 // TODO: Not sure if really needed. Maybe remove to improve performance.
@@ -1267,7 +1321,15 @@ EVENT_LOOP:
 	 AND r27, r27, reg_flags
 	 QBEQ NEXT_FRAME, r27, 0x60
 
-     QBBC EVENT_LOOP, r31, PRU_INTR_BIT_CH0
+     SUB r28, r28, 1
+     QBNE MCASP_CHECK_TX_ERROR_END, r28, 0
+     // If we go through EVENT_LOOP_TIMEOUT_COUNT iterations without receiving
+     // an interrupt, an error must have occurred
+     SEND_ERROR_TO_ARM ARM_ERROR_TIMEOUT
+     JMP START // TODO: should HALT and wait for ARM to restart
+MCASP_CHECK_TX_ERROR_END:
+
+     QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH0
 /* ########## EVENT LOOP END ########## */
      
 
@@ -1281,58 +1343,46 @@ HANDLE_INTERRUPT:
      JMP EVENT_LOOP
 /* ########## INTERRUPT HANDLER END ########## */
 
-
 /* ########## McASP TX ISR BEGIN ########## */
 MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
      // Clear system event and status bit
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SICR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x40 // clear XSTAFRM status bit
 
-     // Count error interrupts for test purposes
-     // - r0 used for transmit underrun counter
-     // - r1 used for unexpected transmit frame sync
-     // - r2 used for transmit clock failure
-     // - r3 used for transmit DMA error
-     // - r4 used for McASP XSTAT reg content
-
-     // Offload r0-r4 to scratchpad 1 and load data from scratchpad 2
-     XOUT SCRATCHPAD_ID_BANK1, r0, 20
-     XIN SCRATCHPAD_ID_BANK2, r0, 20
-
-MCASP_TX_ERROR_HANDLE_START:
      // Load McASP XSTAT register content and check if error occurred
      MCASP_REG_READ_EXT MCASP_XSTAT, r4
 
      QBBS MCASP_TX_UNDERRUN_OCCURRED, r4, MCASP_XSTAT_XUNDRN_BIT
      QBBS MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED, r4, MCASP_XSTAT_XSYNCERR_BIT
-     QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT
      QBBS MCASP_TX_DMA_ERROR_OCCURRED, r4, MCASP_XSTAT_XDMAERR_BIT
+     //QBBS MCASP_TX_CLOCK_FAILURE_OCCURRED, r4, MCASP_XSTAT_XCKFAIL_BIT // this is always set so we ignore it for now
 
      JMP MCASP_TX_ERROR_HANDLE_END
 
 MCASP_TX_UNDERRUN_OCCURRED:
-     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x1 // Clear underrun bit (0)
-     ADD r0, r0, 1
-     JMP START
+     SEND_ERROR_TO_ARM ARM_ERROR_XUNDRUN
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XUNDRN_BIT // Clear underrun bit (0)
+     JMP START // TODO: should HALT and wait for ARM to restart
 
 MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED:
-     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x2 // Clear frame sync error bit (1)
-     ADD r1, r1, 1
-     JMP MCASP_TX_ERROR_HANDLE_START
+     SEND_ERROR_TO_ARM ARM_ERROR_XSYNCERR
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XSYNCERR_BIT // Clear frame sync error bit (1)
+     JMP START // TODO: should HALT and wait for ARM to restart
 
 MCASP_TX_CLOCK_FAILURE_OCCURRED:
-     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x4 // Clear clock failure bit (2)
-     ADD r2, r2, 1
-     JMP MCASP_TX_ERROR_HANDLE_START
+// A McASP transmit clock error is automatically solved by resetting the bit and jumping back
+// to the begin of the error handling routine. Hence no additional error handling should be required.
+// in practice, we would still leave it to ARM to decide what to do
+     SEND_ERROR_TO_ARM ARM_ERROR_XCKFAIL
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XCKFAIL_BIT // Clear clock failure bit (2)
+     JMP MCASP_TX_ERROR_HANDLE_END
 
 MCASP_TX_DMA_ERROR_OCCURRED:
-     MCASP_REG_WRITE_EXT MCASP_XSTAT, 0x80 // Clear DMA error bit (7)
-     ADD r3, r3, 1
+     SEND_ERROR_TO_ARM ARM_ERROR_XDMAERR
+     MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XDMAERR_BIT // Clear DMA error bit (7)
+     JMP START // TODO: should HALT and wait for ARM to restart
 
 MCASP_TX_ERROR_HANDLE_END:
-     // Offload test data to scratchpad 2 and reload register contents from scratchpad 1
-     XOUT SCRATCHPAD_ID_BANK2, r0, 20
-     XIN SCRATCHPAD_ID_BANK1, r0, 20
 
      // Check if we are in first frame period. If true, transmit full frame to FIFO.
      // Otherwise toggle flag and jump back to event loop
@@ -1441,18 +1491,25 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      LSL r16, r15, 16
      OR r3, r3, r16
 
+#ifdef CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+// this one is untested, attempts to only store 4 results instead of 8
+     SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 8 // store result
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 8 // increment memory pointer
+#else /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
+#endif /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
 #endif
 #ifdef CTAG_BEAST_16CH
 	 // Check if there is at least one full frame in FIFO.
 	 // This is only required for CTAG Beast
 	 MCASP_REG_READ_EXT MCASP_RFIFOSTS, r27
-	 QBEQ SKIP_AUDIO_RX_FRAME, r27, 0
+	 QBGT SKIP_AUDIO_RX_FRAME, r27, 2
 
 	 // TODO: Optimize by only using single operation to read data from McASP FIFO.
-	 // Channels are swaped for master and slave codec to match correct channel order.
+	 // Channels are swapped for master and slave codec to match correct channel order.
 	 MCASP_READ_FROM_DATAPORT r8, 32
+
      AND r0, r12, r17
      LSL r16, r13, 16
      OR r0, r0, r16
@@ -1481,8 +1538,12 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      AND r3, r14, r17
      LSL r16, r15, 16
      OR r3, r3, r16
+#ifdef CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+     QBA DONE_STORING_RESULT_BEAST_2
+#endif /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
+DONE_STORING_RESULT_BEAST_2:
 
 SKIP_AUDIO_RX_FRAME:
 #endif
@@ -1666,7 +1727,6 @@ MCSPI_INTR_RECEIVED: // SINTERRUPTN
 MCSPI_INTR_TX0_EMPTY:
 	 MOV r27, (1 << SPI_INTR_BIT_TX0_EMPTY)
 	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
-	 //HALT
 
 	 //TODO: Handle tx0 empty interrupt here
 
@@ -1675,7 +1735,6 @@ MCSPI_INTR_TX0_EMPTY:
 MCSPI_INTR_RX1_FULL:
 	 MOV r27, (1 << SPI_INTR_BIT_RX1_FULL)
 	 SBBO r27, reg_spi_addr, SPI_IRQSTATUS, 4
-	 //HALT
 
 	 //TODO: Handle rx1 full interrupt here
 
@@ -1762,7 +1821,7 @@ ALL_FRAMES_PROCESSED:
      // Notify ARM of buffer swap
      AND r2, reg_flags, (1 << FLAG_BIT_BUFFER1)    // Mask out every but low bit
      SBBO r2, reg_comm_addr, COMM_CURRENT_BUFFER, 4
-     MOV R31.b0, PRU1_ARM_INTERRUPT + 16           // Interrupt to host loop
+     MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE // Interrupt to ARM
     
      // Increment the frame count in the comm buffer (for status monitoring)
      LBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4
@@ -1818,5 +1877,5 @@ SPI_CLEANUP_DONE:
 CLEANUP_DONE:
      XIN SCRATCHPAD_ID_BANK2, r0, 20 // Load test data from scratchpad 2 for evaluation
      // Signal the ARM that we have finished 
-     MOV R31.b0, PRU0_ARM_INTERRUPT + 16
+     MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
      HALT

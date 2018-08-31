@@ -13,5 +13,6 @@ public:
 	virtual int setADCVolume(int halfDbSteps) = 0;
 	virtual int setHPVolume(int halfDbSteps) = 0;
 	virtual int disable() = 0;
+	virtual int reset() = 0;
 };
 #endif /* AUDIOCODEC_H_ */

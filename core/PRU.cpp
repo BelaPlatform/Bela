@@ -36,6 +36,8 @@
 
 //#define CTAG_FACE_8CH
 //#define CTAG_BEAST_16CH
+// CTAG TODO: make this dependent on the pru code in use
+//#define PRU_USES_MCASP_IRQ
 
 #if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
 #error Define one of BELA_USE_POLL, BELA_USE_RTDM
@@ -189,10 +191,16 @@ private:
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
 #define PRU_BELA_MINI          16
+#define PRU_ERROR_OCCURRED     17
+
+// error codes sent from the PRU
+#define ARM_ERROR_TIMEOUT 1
+#define ARM_ERROR_XUNDRUN 2
+#define ARM_ERROR_XSYNCERR 3
+#define ARM_ERROR_XCKFAIL 4
+#define ARM_ERROR_XDMAERR 5
 
 static unsigned int* gDigitalPins = NULL;
-
-#define PRU_SAMPLE_INTERVAL_NS 11338	// 88200Hz per SPI sample = 11.338us
 
 #define USERLED3_GPIO_BASE  GPIO_ADDRESSES[1] // GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
@@ -219,7 +227,7 @@ extern "C" {
 #endif /* USE_NEON_FORMAT_CONVERSION */
 
 // Constructor: specify a PRU number (0 or 1)
-PRU::PRU(InternalBelaContext *input_context)
+PRU::PRU(InternalBelaContext *input_context, AudioCodec *audio_codec)
 : context(input_context),
   pru_number(1),
   initialised(false),
@@ -228,7 +236,8 @@ PRU::PRU(InternalBelaContext *input_context)
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
+  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw),
+  codec(audio_codec)
 {
 }
 
@@ -393,15 +402,6 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 		return 1;
 	}
 	pruMemory = new PruMemory(pru_number, context);
-
-#ifdef CTAG_FACE_8CH
-//TODO :  check that this ifdef block is not needed
-	//pru_buffer_audio_adc = &pru_buffer_audio_dac[16 * context->audioFrames];
-#elif defined(CTAG_BEAST_16CH)
-	//pru_buffer_audio_adc = &pru_buffer_audio_dac[32 * context->audioFrames];
-#else
-	//pru_buffer_audio_adc = &pru_buffer_audio_dac[4 * context->audioFrames];
-#endif
 
 	if(capeButtonMonitoring){
 		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
@@ -626,17 +626,14 @@ void PRU::initialisePruCommon()
 	else
 		pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
 	pru_buffer_comm[PRU_BUFFER_SPI_FRAMES] = pruFrames;
-#ifdef CTAG_FACE_8CH
-//TODO :  factor out the number of channels
-	pruFrames *= 4;
-#elif defined(CTAG_BEAST_16CH)
-	pruFrames *= 8;
-#endif
-	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruFrames;
+	pruBufferMcaspFrames = pruFrames * context->audioOutChannels / 2;
+     // TODO: it seems that PRU_BUFFER_MCASP_FRAMES is not very meaningful(cf pru_rtaudio_irq.p)
+	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
 	pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
 	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
+	pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
 
 
 	/* Set up multiplexer info */
@@ -690,6 +687,16 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
+#ifdef PRU_USES_MCASP_IRQ
+	/* The PRU will enable the McASP interrupts. Here we mask
+	 * them out from ARM so that they do not hang the CPU. */
+	if(maskMcAspInterrupt() < 0)
+	{
+		fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
+		return 1;
+	}
+#warning TODO: unmask interrupt when program stops
+#endif
 
 #ifdef BELA_USE_RTDM
 	// Open RTDM driver
@@ -780,6 +787,52 @@ int PRU::start(char * const filename)
 	return 0;
 }
 
+int PRU::testPruError()
+{
+	if (unsigned int errorCode = pru_buffer_comm[PRU_ERROR_OCCURRED])
+	{
+		rt_fprintf(stderr, "audio frame %llu, errorCode: %d\n", context->audioFramesElapsed, errorCode);
+		int ret;
+		switch(errorCode){
+			case ARM_ERROR_XUNDRUN:
+				rt_fprintf(stderr, "McASP transmitter underrun occurred\n");
+				ret = 1;
+			break;
+			case ARM_ERROR_XSYNCERR:
+				rt_fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
+				ret = 1;
+			break;
+			// Sometimes a transmit clock error arises after boot. If the PRU loop
+			// continues, the clock error is automatically solved. Hence, no additional
+			// error handling is required on ARM side.
+			case ARM_ERROR_XCKFAIL:
+				rt_fprintf(stderr, "McASP transmit clock failure occurred\n");
+				ret = 1;
+			break;
+			// Same for DMA error. No action needed on ARM side.
+			case ARM_ERROR_XDMAERR:
+				rt_fprintf(stderr, "McASP transmit DMA error occurred\n");
+				ret = 1;
+			break;
+			case ARM_ERROR_TIMEOUT:
+				rt_fprintf(stderr, "PRU event loop timed out\n");
+				ret = 1;
+			break;
+			default:
+				rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
+				ret = 1;
+		}
+		codec->reset();
+		codec->initCodec();
+		codec->startAudio(0);
+		pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
+                // TODO: should restart PRU and codec from scratch
+		return ret;
+	} else {
+		return 0;
+	}
+}
+
 // Main loop to read and write data from/to PRU
 void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode)
 {
@@ -790,13 +843,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	int16_t* audioInRaw = pruMemory->getAudioInPtr();
 	int16_t* audioOutRaw = pruMemory->getAudioOutPtr();
 	// Polling interval is 1/4 of the period
-#ifdef CTAG_FACE_8CH
-	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
-#elif defined(CTAG_BEAST_16CH)
-	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (2) * context->audioFrames / 4;
-#else
-	time_ns_t sleepTime = PRU_SAMPLE_INTERVAL_NS * (context->audioInChannels) * context->audioFrames / 4;
-#endif
+	time_ns_t sleepTime = 1000000000 * (float)context->audioFrames / (context->audioSampleRate * 4);
 	if(highPerformanceMode) // sleep less, more CPU available for us
 		sleepTime /= 4;
 #ifdef BELA_USE_RTDM
@@ -837,6 +884,10 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// Poll
 		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
 			task_sleep_ns(sleepTime);
+			if(testPruError())
+			{
+				break;
+			}
 		}
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
@@ -846,6 +897,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
 		int ret = __wrap_read(rtdm_fd, NULL, 0);
+		testPruError();
 		if(ret < 0)
 		{
 			static int interruptTimeoutCount = 0;
@@ -1363,20 +1415,13 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(context->flags & BELA_FLAG_DETECT_UNDERRUNS) {
 			// If analog is disabled, then PRU assumes 8 analog channels, and therefore
 			// half as many analog frames as audio frames
-			static uint32_t pruFramesPerBlock = hardware_analog_frames ? hardware_analog_frames : context->audioFrames / 2;
+			uint32_t pruFramesPerBlock = pruBufferMcaspFrames;
 			// read the PRU counter
 			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,
 			// just in case the PRU is already ahead of us
 			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
-#ifdef CTAG_FACE_8CH
-//TODO :  factor out the number of channels
-			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 4;
-#elif defined(CTAG_BEAST_16CH)
-			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock * 8;
-#else
 			uint32_t expectedFrameCount = lastPruFrameCount + pruFramesPerBlock;
-#endif
 			if(pruFrameCount > expectedFrameCount)
 			{
 				// don't print a warning if we are stopping

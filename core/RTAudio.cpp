@@ -78,11 +78,15 @@ static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
 
-#ifdef CTAG
 const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
+#ifdef CTAG_FACE_8CH
+// if we want 4in/8out, but we actually have both a master and a slave cards
+// installed, we then need to force the Spi driver NOT to detect the slave card,
+// so we give it a NULL cs1
+const char* ctag_spidev_gpio_cs1 = NULL;
+#else
 const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
-#endif /* CTAG */
-
+#endif
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
 	memset((void*)cfg, 0, sizeof(BelaHwConfig));
@@ -420,7 +424,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
 	// Use PRU for audio
-	gPRU = new PRU(&gContext);
+	gPRU = new PRU(&gContext, gAudioCodec);
 
 	// Get the PRU memory buffers ready to go
 	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
