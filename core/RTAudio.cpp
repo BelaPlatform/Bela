@@ -12,12 +12,6 @@
 
 //TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
 
-//#define CTAG_FACE_8CH
-//#define CTAG_BEAST_16CH
-#if (defined(CTAG_FACE_8CH) || defined(CTAG_BEAST_16CH))
-#define CTAG
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,14 +73,8 @@ static Spi_Codec* gSpiCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
 
 const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
-#ifdef CTAG_FACE_8CH
-// if we want 4in/8out, but we actually have both a master and a slave cards
-// installed, we then need to force the Spi driver NOT to detect the slave card,
-// so we give it a NULL cs1
-const char* ctag_spidev_gpio_cs1 = NULL;
-#else
 const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
-#endif
+
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
 	memset((void*)cfg, 0, sizeof(BelaHwConfig));
@@ -339,15 +327,15 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			return -1;
 	}
 
-#ifdef CTAG
-	// TODO: make the failure less verbose
-	gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, ctag_spidev_gpio_cs1);
-#endif /* CTAG */
-	gI2cCodec = new I2c_Codec(2, settings->codecI2CAddress); // TODO: this may fail (e.g.: Bela cape not present, or broken codec)
-								//, where would we find out? in Bela_detectHw(), I guess
-
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
 	BelaHw belaHw = Bela_detectHw();
+        // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
+        if(belaHw == BelaHw_CtagFace || belaHw == BelaHw_CtagFaceBela)
+                gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, NULL);
+        else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
+                gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, ctag_spidev_gpio_cs1);
+        if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
+                gI2cCodec = new I2c_Codec(2, settings->codecI2CAddress);
 	BelaHwConfig cfg;
 	if(Bela_getHwConfig(belaHw, &cfg))
 	{
@@ -361,10 +349,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gAudioCodec = cfg.activeCodec;
 	if(cfg.disabledCodec)
 	{
-#ifdef CTAG
-	// TODO: make the failure less verbose
 		cfg.disabledCodec->disable(); // Put unused codec in high impedance state
-#endif /* CTAG */
 	}
 
 	if(settings->useAnalog && (cfg.analogInChannels || cfg.analogOutChannels)) {
