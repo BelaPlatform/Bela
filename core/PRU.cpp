@@ -21,6 +21,7 @@
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 #include "../include/Utilities.h"
+#include "../include/PruBoardFlags.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -185,7 +186,7 @@ private:
 #define PRU_MUX_CONFIG         13
 #define PRU_MUX_END_CHANNEL    14
 #define PRU_BUFFER_SPI_FRAMES  15
-#define PRU_BELA_MINI          16
+#define PRU_BOARD_FLAGS        16
 #define PRU_ERROR_OCCURRED     17
 
 // error codes sent from the PRU
@@ -611,7 +612,21 @@ static int maskMcAspInterrupt()
 
 void PRU::initialisePruCommon()
 {
-	pru_buffer_comm[PRU_BELA_MINI] = (belaHw == BelaHw_BelaMini);
+	uint32_t board_flags = 0;
+	switch(belaHw) {
+	case BelaHw_BelaMini:
+		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
+		break;
+	case BelaHw_CtagFace:
+	case BelaHw_CtagFaceBela:
+		board_flags |= 1 << BOARD_FLAGS_CTAG_FACE;
+		break;
+	case BelaHw_CtagBeast:
+	case BelaHw_CtagBeastBela:
+		board_flags |= 1 << BOARD_FLAGS_CTAG_BEAST;
+		break;
+	}
+	pru_buffer_comm[PRU_BOARD_FLAGS] = board_flags;
     /* Set up flags */
 	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
 	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;

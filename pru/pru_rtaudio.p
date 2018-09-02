@@ -1,6 +1,8 @@
 .origin 0
 .entrypoint START
 
+#include "../include/PruBoardFlags.h"
+
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
 #define CLOCK_BASE  0x44E00000
@@ -95,7 +97,8 @@
 #define COMM_MUX_CONFIG       52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  56          // Which mux channel the last buffer ended on
 #define COMM_BUFFER_SPI_FRAMES 60         // Unused (used in pru_rtaudio_irq.p)
-#define COMM_BELA_MINI        64          // Whether we are on Bela Mini
+#define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruBoardFlags.h)
+#define PRU_ERROR_OCCURRED     68         // Unused here
 	
 // General constants for McASP peripherals (used for audio codec)
 #define MCASP0_BASE 0x48038000
@@ -198,11 +201,13 @@
 #define FLAG_BIT_USE_SPI	1
 #define FLAG_BIT_MCASP_HWORD	2		// Whether we are on the high word for McASP transmission
 #define FLAG_BIT_USE_DIGITAL	3
-#define FLAG_BIT_BELA_MINI      4
 	
 #define FLAG_BIT_MUX_CONFIG0	 8		// Mux capelet configuration:
 #define FLAG_BIT_MUX_CONFIG1	 9		// 00 = off, 01 = 2 ch., 10 = 4 ch., 11 = 8 ch.
 #define FLAG_MASK_MUX_CONFIG	 0x0300
+#define FLAG_BIT_BELA_MINI      10
+#define FLAG_BIT_CTAG_FACE      11
+#define FLAG_BIT_CTAG_BEAST     12
 		
 // Registers used throughout
 
@@ -747,9 +752,9 @@ PRU_NUMBER_CHECK_DONE:
      // Default number of channels in case SPI disabled
      LDI reg_num_channels, 8
 
+     LBBO r2, reg_comm_addr, COMM_BOARD_FLAGS, 4
      // Find out whether we are on BELA_MINI
-     LBBO r2, reg_comm_addr, COMM_BELA_MINI, 4
-     QBEQ BELA_MINI_CHECK_DONE, r2, 0
+     QBBC BELA_MINI_CHECK_DONE, r2, BOARD_FLAGS_BELA_MINI
      SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
 BELA_MINI_CHECK_DONE:
 

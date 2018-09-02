@@ -1,9 +1,11 @@
 .origin 0
 .entrypoint START
 
+#include "../include/PruBoardFlags.h"
+
 //#define BELA_TLV_CODEC
 //#define CTAG_FACE_8CH
-#define CTAG_BEAST_16CH
+//#define CTAG_BEAST_16CH
 
 #ifdef CTAG_FACE_8CH
 #define CTAG_x
@@ -12,8 +14,8 @@
 #define CTAG_x
 #endif
 
-#ifdef CTAG_x
 #define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
+#ifdef CTAG_x
 #define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS
 #endif
 
@@ -130,7 +132,7 @@
 #define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
 #define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
-#define COMM_BELA_MINI        64                    // Whether we are on Bela Mini
+#define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruBoardFlags.h)
 #define COMM_ERROR_OCCURED      	68          // Signals the ARM CPU that an error happened
 
 #define ARM_ERROR_TIMEOUT 1
@@ -335,9 +337,9 @@
 #define MCASP_XTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
 #endif
 
-#ifdef BELA_TLV_CODEC
 #define MCASP_DATA_FORMAT_TX 0x18074    // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
 #define MCASP_DATA_FORMAT_RX 0x28074    // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits
+#ifdef BELA_TLV_CODEC
 #define MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)         
 #define MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge) 
 #define MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
@@ -352,7 +354,7 @@
 #define FLAG_BIT_BUFFER1    0
 #define FLAG_BIT_USE_SPI    1
 #define FLAG_BIT_USE_DIGITAL    2
-#define FLAG_BIT_MCASP_TX_FIRST_FRAME    3 // Weather we are in first frame of second (0 = first frame)
+#define FLAG_BIT_MCASP_TX_FIRST_FRAME    3 // Wether we are in first frame of second (0 = first frame)
 #define FLAG_BIT_MCASP_RX_FIRST_FRAME    4
 #define FLAG_BIT_MCASP_TX_PROCESSED		5
 #define FLAG_BIT_MCASP_RX_PROCESSED		6
@@ -361,6 +363,10 @@
 #define FLAG_BIT_MUX_CONFIG0     8      // Mux capelet configuration:
 #define FLAG_BIT_MUX_CONFIG1     9      // 00 = off, 01 = 2 ch., 10 = 4 ch., 11 = 8 ch.
 #define FLAG_MASK_MUX_CONFIG     0x0300
+#define FLAG_BIT_BELA_MINI      10
+#define FLAG_BIT_CTAG           11
+#define FLAG_BIT_CTAG_FACE      12
+#define FLAG_BIT_CTAG_BEAST     13
         
 // Registers used throughout
 
@@ -421,6 +427,26 @@
 .mparam error
 MOV r27, error
 SBBO r27, reg_comm_addr, COMM_ERROR_OCCURED, 4
+.endm
+
+.macro BELA_MINI_OR_JMP_TO
+.mparam DEST
+    QBBC DEST, reg_flags, FLAG_BIT_BELA_MINI
+.endm
+
+.macro CTAG_OR_JMP_TO
+.mparam DEST
+    QBBC DEST, reg_flags, FLAG_BIT_CTAG
+.endm
+
+.macro CTAG_FACE_OR_JMP_TO
+.mparam DEST
+    QBBC DEST, reg_flags, FLAG_BIT_CTAG_FACE
+.endm
+
+.macro CTAG_BEAST_OR_JMP_TO
+.mparam DEST
+    QBBC DEST, reg_flags, FLAG_BIT_CTAG_BEAST
 .endm
 
 .macro READ_GPIO_BITS
@@ -937,6 +963,22 @@ PRU_NUMBER_CHECK_DONE:
      // Default number of channels in case SPI disabled
      LDI reg_num_channels, 8
 
+     LBBO r2, reg_comm_addr, COMM_BOARD_FLAGS, 4
+     // Find out whether we are on BELA_MINI
+     QBBC BELA_MINI_CHECK_DONE, r2, BOARD_FLAGS_BELA_MINI
+     SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
+BELA_MINI_CHECK_DONE:
+     // Find out whether we are on CTAG_FACE
+     QBBC CTAG_FACE_CHECK_DONE, r2, BOARD_FLAGS_CTAG_FACE
+     SET reg_flags, reg_flags, FLAG_BIT_CTAG_FACE
+     SET reg_flags, reg_flags, FLAG_BIT_CTAG
+CTAG_FACE_CHECK_DONE:
+     // Find out whether we are on CTAG_BEAST
+     QBBC CTAG_BEAST_CHECK_DONE, r2, BOARD_FLAGS_CTAG_BEAST
+     SET reg_flags, reg_flags, FLAG_BIT_CTAG_BEAST
+     SET reg_flags, reg_flags, FLAG_BIT_CTAG
+CTAG_BEAST_CHECK_DONE:
+
      // Find out whether we should use DIGITAL
      LBBO r2, reg_comm_addr, COMM_USE_DIGITAL, 4
      QBEQ DIGITAL_INIT_DONE, r2, 0 // if we use digital
@@ -1081,30 +1123,61 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_DLBCTL, 0x00
     MCASP_REG_WRITE MCASP_DITCTL, 0x00
     MCASP_REG_WRITE MCASP_RMASK, MCASP_DATA_MASK    // 16 bit data receive
+
+#ifndef CTAG_FACE_8CH
+#define CTAG_FACE_8CH
+#endif
+#ifndef CTAG_BEAST_16CH
+#define CTAG_BEAST_16CH
+#endif
+#ifndef BELA_TLV_CODEC
+#define BELA_TLV_CODEC
+#endif
+
+// runtime
 #ifdef CTAG_FACE_8CH
+    CTAG_FACE_OR_JMP_TO DATA_FORMAT_RX_NOT_CTAG_FACE
     MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT   // Set data format
+    QBA DATA_FORMAT_RX_DONE
+DATA_FORMAT_RX_NOT_CTAG_FACE:
 #endif
 #ifdef CTAG_BEAST_16CH
+    CTAG_BEAST_OR_JMP_TO DATA_FORMAT_RX_NOT_CTAG_BEAST
 	MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT   // Set data format
+    QBA DATA_FORMAT_RX_DONE
+DATA_FORMAT_RX_NOT_CTAG_BEAST:
 #endif
 #ifdef BELA_TLV_CODEC
     MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT_RX   // Set data format
 #endif
+DATA_FORMAT_RX_DONE:
+
     MCASP_REG_WRITE MCASP_AFSRCTL, MCASP_AFSRCTL_VALUE  // Set receive frameclock
     MCASP_REG_WRITE MCASP_ACLKRCTL, MCASP_ACLKRCTL_VALUE // Set receive bitclock        
     MCASP_REG_WRITE MCASP_AHCLKRCTL, 0x8001     // Internal clock, not inv, /2; irrelevant?
     MCASP_REG_WRITE MCASP_RTDM, MCASP_RTDM_VALUE
     MCASP_REG_WRITE MCASP_RINTCTL, 0x80     // Enable receive start of frame interrupt
     MCASP_REG_WRITE MCASP_XMASK, MCASP_DATA_MASK    // 16 bit data transmit
+
+// runtime
 #ifdef CTAG_FACE_8CH
+    // TODO: interleave these with the xxx_DATA_FORMAT_RX
+    CTAG_FACE_OR_JMP_TO DATA_FORMAT_TX_NOT_CTAG_FACE
     MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT   // Set data format
+    QBA DATA_FORMAT_TX_DONE
+DATA_FORMAT_TX_NOT_CTAG_FACE:
 #endif
 #ifdef CTAG_BEAST_16CH
-	MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT   // Set data format
+    CTAG_BEAST_OR_JMP_TO DATA_FORMAT_TX_NOT_CTAG_BEAST
+    MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT   // Set data format
+    QBA DATA_FORMAT_TX_DONE
+DATA_FORMAT_TX_NOT_CTAG_BEAST:
 #endif
 #ifdef BELA_TLV_CODEC
     MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT_TX   // Set data format
 #endif
+DATA_FORMAT_TX_DONE:
+
     MCASP_REG_WRITE MCASP_AFSXCTL, MCASP_AFSXCTL_VALUE // Set transmit frameclock
     MCASP_REG_WRITE MCASP_ACLKXCTL, MCASP_ACLKXCTL_VALUE // Set transmit bitclock
     MCASP_REG_WRITE MCASP_AHCLKXCTL, 0x8001     // External clock from AHCLKX
@@ -1142,7 +1215,9 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 11) // Set XSMRST
 
 // Write a full frame to transmit FIFOs to prevent underflow and keep slots synced
 // Can be probably ignored if first underrun gets ignored for better performance => TODO: test
+//runtime
 #ifdef CTAG_FACE_8CH
+CTAG_FACE_OR_JMP_TO WRITE_FRAME_NOT_CTAG_FACE
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
@@ -1151,8 +1226,12 @@ MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
+QBA WRITE_FRAME_DONE
+
+WRITE_FRAME_NOT_CTAG_FACE:
 #endif
 #ifdef CTAG_BEAST_16CH
+CTAG_BEAST_OR_JMP_TO WRITE_FRAME_NOT_CTAG_BEAST
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
@@ -1169,11 +1248,14 @@ MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
+QBA WRITE_FRAME_DONE
+WRITE_FRAME_NOT_CTAG_BEAST:
 #endif
 #ifdef BELA_TLV_CODEC
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 MCASP_WRITE_TO_DATAPORT 0x00, 4
 #endif
+WRITE_FRAME_DONE:
 
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)  // Set RFRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
@@ -1232,7 +1314,8 @@ SPI_INIT_BUFFER_DONE:
 /*
 // Here we are out of sync by one TDM slot since the 0 word transmitted above will have occupied
 // the first output slot. Send one more word before jumping into the loop.
-#ifdef CTAG_FACE_8CH
+#ifdef CTAG_FACE_8CH // commented
+#error NOT IMPLEMENTED
 // the 8 channel version is out of sync by 7 TDM slots.
 // Using reg_dac_current as a temp register
 MOV reg_dac_current, 7
@@ -1253,7 +1336,8 @@ MCASP_ADC_WAIT_BEFORE_LOOP:
 
      MCASP_READ_FROM_DATAPORT r2
 
-#ifdef CTAG_FACE_8CH
+#ifdef CTAG_FACE_8CH // commented
+#error NOT IMPLEMENTED
      SUB reg_dac_current, reg_dac_current, 1
      QBNE MCASP_DAC_WAIT_BEFORE_LOOP, reg_dac_current, 0
 #endif
@@ -1394,18 +1478,28 @@ MCASP_TX_ERROR_HANDLE_END:
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
      // Load audio frame from memory and increment pointer to next frame
+// runtime
 #ifdef CTAG_FACE_8CH
+CTAG_FACE_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_CTAG_FACE
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 16
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 16
+     QBA LOAD_AUDIO_FRAME_DONE
+LOAD_AUDIO_FRAME_NOT_CTAG_FACE:
 #endif
+//runtime
 #ifdef CTAG_BEAST_16CH
+CTAG_BEAST_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_CTAG_BEAST
 	 LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 32
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 32
+     QBA LOAD_AUDIO_FRAME_DONE
 #endif
+LOAD_AUDIO_FRAME_NOT_CTAG_BEAST:
+// runtime
 #ifdef BELA_TLV_CODEC
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4
 #endif
+LOAD_AUDIO_FRAME_DONE:
 
      //TODO: Change data structure in RAM to 32 bit samples 
      //     => no masking and shifting required
@@ -1414,7 +1508,9 @@ MCASP_TX_ERROR_HANDLE_END:
      AND r8, r17, r0
      LSR r9, r0, 16
 
+// runtime
 #ifdef CTAG_FACE_8CH
+CTAG_FACE_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_FACE
      AND r10, r17, r1
      LSR r11, r1, 16
      AND r12, r17, r2
@@ -1422,8 +1518,11 @@ MCASP_TX_ERROR_HANDLE_END:
      AND r14, r17, r3
      LSR r15, r3, 16
      MCASP_WRITE_TO_DATAPORT r8, 32
+     QBA WRITE_AUDIO_FRAME_DONE
+WRITE_AUDIO_FRAME_NOT_CTAG_FACE:
 #endif
 #ifdef CTAG_BEAST_16CH
+CTAG_BEAST_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_BEAST
 	 // Note: Could be optimized by only using single operation to write data to McASP FIFO,
 	 // but 24 registers need to be free for use
 	 AND r10, r17, r1
@@ -1443,10 +1542,13 @@ MCASP_TX_ERROR_HANDLE_END:
      AND r14, r17, r7
      LSR r15, r7, 16
      MCASP_WRITE_TO_DATAPORT r8, 32
+     QBA WRITE_AUDIO_FRAME_DONE
+WRITE_AUDIO_FRAME_NOT_CTAG_BEAST:
 #endif
 #ifdef BELA_TLV_CODEC
      MCASP_WRITE_TO_DATAPORT r8, 8
 #endif
+WRITE_AUDIO_FRAME_DONE:
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
@@ -1477,7 +1579,9 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      //     => support for 24 bit audio
      // TODO: Avoid masking and shifting by simply moving sample to word (e.g. MOV r0.w0 value)
      MOV r17, 0xFFFF
+// runtime
 #ifdef CTAG_FACE_8CH
+     CTAG_FACE_OR_JMP_TO FRAME_READ_NOT_CTAG_FACE
      MCASP_READ_FROM_DATAPORT r8, 32
      AND r0, r8, r17
      LSL r16, r9, 16
@@ -1500,8 +1604,11 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 16 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 16 // increment memory pointer
 #endif /* CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS */
+     QBA FRAME_READ_DONE
+FRAME_READ_NOT_CTAG_FACE:
 #endif
 #ifdef CTAG_BEAST_16CH
+     CTAG_BEAST_OR_JMP_TO FRAME_READ_NOT_CTAG_BEAST
 	 // Check if there is at least one full frame in FIFO.
 	 // This is only required for CTAG Beast
 	 MCASP_REG_READ_EXT MCASP_RFIFOSTS, r27
@@ -1547,6 +1654,8 @@ MCASP_RX_INTR_RECEIVED: // mcasp_r_intr_pend
 DONE_STORING_RESULT_BEAST_2:
 
 SKIP_AUDIO_RX_FRAME:
+     QBA FRAME_READ_DONE
+FRAME_READ_NOT_CTAG_BEAST:
 #endif
 
 #ifdef BELA_TLV_CODEC
@@ -1558,6 +1667,7 @@ SKIP_AUDIO_RX_FRAME:
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4 // increment memory pointer
 #endif
+FRAME_READ_DONE:
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
      SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
@@ -1748,7 +1858,9 @@ NEXT_FRAME:
 	 CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
      CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
 
+// runtime
 #ifdef CTAG_FACE_8CH
+CTAG_FACE_OR_JMP_TO SET_REG_FRAMES_NOT_CTAG_FACE
      // Set reg frames total based on number of analog channels
      // 8 analog ch => LSR 1
      // 4 analog ch => LSR 2
@@ -1766,9 +1878,12 @@ CTAG_FACE_8CH_ANALOG_4: // Four channels
 CTAG_FACE_8CH_ANALOG_2: // Two channels
 	 LSR r14, reg_frame_mcasp_total, 3
 CTAG_FACE_8CH_ANALOG_CFG_END:
+     QBA SET_REG_FRAMES_DONE
+SET_REG_FRAMES_NOT_CTAG_FACE:
 #endif
 
 #ifdef CTAG_BEAST_16CH
+CTAG_BEAST_OR_JMP_TO SET_REG_FRAMES_NOT_CTAG_BEAST
      // Set reg frames total based on number of analog channels
      // 8 analog ch => LSR 2
      // 4 analog ch => LSR 3
@@ -1786,6 +1901,8 @@ CTAG_BEAST_16CH_ANALOG_4: // Four channels
 CTAG_BEAST_16CH_ANALOG_2: // Two channels
 	 LSR r14, reg_frame_mcasp_total, 4
 CTAG_BEAST_16CH_ANALOG_CFG_END:
+     QBA SET_REG_FRAMES_DONE
+SET_REG_FRAMES_NOT_CTAG_BEAST:
 #endif
 
 #ifdef BELA_TLV_CODEC
@@ -1804,6 +1921,7 @@ BELA_TLV_ANALOG_2: // Two channels
 	 LSR r14, reg_frame_mcasp_total, 1
 BELA_TLV_ANALOG_CFG_END:
 #endif
+SET_REG_FRAMES_DONE:
 
      ADD reg_frame_current, reg_frame_current, 1
      QBNE EVENT_LOOP, reg_frame_current, r14
