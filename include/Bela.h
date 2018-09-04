@@ -28,10 +28,13 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 2
+#define BELA_MINOR_VERSION 3
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.3.0
+// - removed define for I2C codec address
+// - removed user option in settings for I2C address
 // 1.2.0
 // - renames and re-ordered BelaHw enum
 // 1.1.0
@@ -72,8 +75,6 @@ typedef enum
 // Useful constants
 
 /** \cond PRIVATE */
-#define CODEC_I2C_ADDRESS  0x18		// Address of TLV320AIC3104 codec
-
 #define MAX_PRU_FILENAME_LENGTH 256
 #define MAX_SERVERNAME_LENGTH 256
 /** \endcond */
@@ -419,8 +420,6 @@ typedef struct {
 	// These items are hardware-dependent and should only be changed
 	// to run on different hardware
 
-	/// Where the codec can be found on the I2C bus
-	int codecI2CAddress;
 	/// Pin where amplifier mute can be found
 	int ampMutePin;
 	/// Port where the UDP server will listen

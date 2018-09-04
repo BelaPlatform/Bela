@@ -25,6 +25,7 @@
 #include <sys/mman.h>
 
 #include "../include/Bela.h"
+#include "../include/bela_hw_settings.h"
 
 // Xenomai-specific includes
 #if XENOMAI_MAJOR == 3
@@ -71,9 +72,6 @@ typedef struct _BelaHwConfig
 static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
-
-const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
-const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
 
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
@@ -331,11 +329,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	BelaHw belaHw = Bela_detectHw();
         // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
         if(belaHw == BelaHw_CtagFace || belaHw == BelaHw_CtagFaceBela)
-                gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, NULL);
+                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
         else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
-                gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, ctag_spidev_gpio_cs1);
+                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
         if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
-                gI2cCodec = new I2c_Codec(2, settings->codecI2CAddress);
+                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress);
 	BelaHwConfig cfg;
 	if(Bela_getHwConfig(belaHw, &cfg))
 	{

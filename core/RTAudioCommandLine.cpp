@@ -111,7 +111,6 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->render = NULL;
 	settings->cleanup = NULL;
 
-	settings->codecI2CAddress = CODEC_I2C_ADDRESS;
 	settings->receivePort = 9998;
 	settings->transmitPort = 9999;
 	strcpy(settings->serverName, "127.0.0.1");

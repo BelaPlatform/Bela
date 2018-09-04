@@ -1,5 +1,4 @@
 #include <Bela.h>
-
 int main(){
 	BelaHw hw = Bela_detectHw();
 	switch(hw)
