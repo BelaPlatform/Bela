@@ -1458,18 +1458,31 @@ MCASP_TX_ERROR_HANDLE_END:
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
-     // Load audio frame from memory and increment pointer to next frame
+     // Prepare some zero-ed out registers to copy to memory after reading the DAC data:
+     LDI r8, 0
+     LDI r9, 0
+     LDI r10, 0
+     LDI r11, 0
+     LDI r12, 0
+     LDI r13, 0
+     LDI r14, 0
+     LDI r15, 0
+
+     // Load audio frame from memory, store zeros in their place, and increment pointer to next frame
 CTAG_FACE_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_CTAG_FACE
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 16
+     SBCO r8, C_MCASP_MEM, reg_mcasp_dac_current, 16
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 16
      QBA LOAD_AUDIO_FRAME_DONE
 LOAD_AUDIO_FRAME_NOT_CTAG_FACE:
 CTAG_BEAST_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_CTAG_BEAST
-	 LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 32
+     LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 32
+     SBCO r8, C_MCASP_MEM, reg_mcasp_dac_current, 32
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 32
      QBA LOAD_AUDIO_FRAME_DONE
 LOAD_AUDIO_FRAME_NOT_CTAG_BEAST:
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
+     SBCO r8, C_MCASP_MEM, reg_mcasp_dac_current, 4
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4
 LOAD_AUDIO_FRAME_DONE:
 
@@ -1639,12 +1652,16 @@ MCASP_RX_ISR_END:
      QBBC PROCESS_SPI_END, reg_flags, FLAG_BIT_USE_SPI
 
      // Temporarily save register states in scratchpad to have enough space for SPI data
-     // r0 - r3 are used for ADC data. r4 - r17 are used as temp registers
+     // r0 - r3 are used for ADC/DAC data. r4 - r17 are used as temp registers
      // ATTENTION: Registers which store memory addresses should never be temporarily overwritten
      XOUT SCRATCHPAD_ID_BANK0, r0, 72 // swap r0-r17 with scratch pad bank 0
 
      // Analog ADC data is saved in r0-r1 and analog DAC data is saved in r2-r3 (four samples each)
      LBCO r2, C_ADC_DAC_MEM, reg_dac_current, 8
+     // store zeros in their place
+     LDI r0, 0
+     LDI r1, 0
+     SBCO r4, C_ADC_DAC_MEM, reg_dac_current, 8
      ADD reg_dac_current, reg_dac_current, 8
 
      // DAC: transmit low word (first in little endian)
