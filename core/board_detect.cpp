@@ -178,15 +178,19 @@ BelaHw parse_config_file(std::string path,  std::string searchStr)
 	return BelaHw_NoHw;
 }
 
-void write_config_file(std::string path, BelaHw hardware)
+int write_config_file(std::string path, BelaHw hardware)
 {
 	ofstream outputFile;
-	outputFile.open (path.c_str());
+	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
+	outputFile.open(path.c_str());
 	if(outputFile.is_open())
 	{
 		outputFile << "HARDWARE=" << getBelaHwName(hardware);
 		outputFile.close();
+		return 0;
 	}
+	fprintf(stderr, "File %s could not be opened\n.", path.c_str());
+	return -1;
 }
 
 BelaHw Bela_detectHw()
@@ -227,8 +231,11 @@ BelaHw Bela_detectHw()
 	return hw;
 }
 
-BelaHw bela_detectUserHw()
+BelaHw Bela_detectUserHw()
 {
+	//TODO: Function not implemented yet.
+	//This should check for command line options first and
+	//check in /root/.bela/belaconfig. 
 	return BelaHw_NoHw;
 }
 
