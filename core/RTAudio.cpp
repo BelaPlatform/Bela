@@ -355,12 +355,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->useAnalog && (cfg.analogInChannels || cfg.analogOutChannels)) {
 
 		// TODO: a different number of channels for inputs and outputs is not yet supported
-		gContext.analogFrames = gContext.audioFrames * 4 / settings->numAnalogInChannels;
 		gContext.analogOutChannels = std::min((int)cfg.analogOutChannels, settings->numAnalogOutChannels);
 		gContext.analogInChannels = std::min((int)cfg.analogInChannels, settings->numAnalogInChannels);
-		unsigned int numAnalogChannelsForSampleRate = settings->numAnalogInChannels;
+		unsigned int numAnalogChannelsForSampleRate = gContext.analogInChannels;
 		gContext.analogSampleRate = gContext.audioSampleRate * 4.0 / (float)numAnalogChannelsForSampleRate;
-		
+		gContext.analogFrames = gContext.audioFrames / (int)(gContext.audioSampleRate / gContext.analogSampleRate + 0.5f);
 		gContext.audioExpanderEnabled = (settings->audioExpanderInputs & 0xFFFF) |
 										((settings->audioExpanderOutputs & 0xFFFF) << 16);
 	}
