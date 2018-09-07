@@ -228,7 +228,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 
 void Bela_floatHook(const char *source, float value){
 	// let's make this as optimized as possible for built-in digital Out parsing
-	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between 11 and 26
+	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between LIBPD_DIGITAL_OFFSET and (LIBPD_DIGITAL_OFFSET+15)
 	static int prefixLength = 15; // strlen("bela_digitalOut")
 	if(strncmp(source, "bela_digitalOut", prefixLength)==0){
 		if(source[prefixLength] != 0){ //the two ifs are used instead of if(strlen(source) >= prefixLength+2)
@@ -236,7 +236,7 @@ void Bela_floatHook(const char *source, float value){
 				// quickly convert the suffix to integer, assuming they are numbers, avoiding to call atoi
 				int receiver = ((source[prefixLength] - 48) * 10);
 				receiver += (source[prefixLength+1] - 48);
-				unsigned int channel = receiver - 11; // go back to the actual Bela digital channel number
+				unsigned int channel = receiver - LIBPD_DIGITAL_OFFSET; // go back to the actual Bela digital channel number
 				if(channel < 16){ //16 is the hardcoded value for the number of digital channels
 					dcm.setValue(channel, value);
 				}
