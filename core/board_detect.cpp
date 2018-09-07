@@ -8,6 +8,7 @@
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/bela_hw_settings.h"
+#include "../include/board_detect.h"
 
 
 
@@ -36,7 +37,7 @@ static int is_belamini(){
 	return 0;
 }
 
-std::vector<std::string> split(const std::string& s, char delimiter)
+static std::vector<std::string> split(const std::string& s, char delimiter)
 {
 	std::vector<std::string> tokens;
 	std::string token;
@@ -48,7 +49,7 @@ std::vector<std::string> split(const std::string& s, char delimiter)
 	return tokens;
 }
 
-std::string trim(std::string const& str)
+static std::string trim(std::string const& str)
 {
     if(str.empty())
         return str;
@@ -151,7 +152,7 @@ std::string getBelaHwName(BelaHw hardware)
 	return hwName;
 }
 
-BelaHw parse_config_file(std::string path,  std::string searchStr)
+static BelaHw parse_config_file(std::string path,  std::string searchStr)
 {
 	std::ifstream inputFile;
 	std::string line;
@@ -178,7 +179,7 @@ BelaHw parse_config_file(std::string path,  std::string searchStr)
 	return BelaHw_NoHw;
 }
 
-int write_config_file(std::string path, BelaHw hardware)
+static int write_config_file(std::string path, BelaHw hardware)
 {
 	ofstream outputFile;
 	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
@@ -236,6 +237,34 @@ BelaHw Bela_detectUserHw()
 	//TODO: Function not implemented yet.
 	//This should check for command line options first and
 	//check in /root/.bela/belaconfig. 
+	std::string configPath = "/root/.bela/belaconfig";
+	BelaHw hw = parse_config_file(configPath, "BOARD");
+	if(hw != BelaHw_NoHw)
+		return hw;
 	return BelaHw_NoHw;
 }
 
+bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
+{
+	if(userHw == BelaHw_Bela &&
+			(detectedHw == BelaHw_Bela || detectedHw == BelaHw_CtagFaceBela || detectedHw == BelaHw_CtagBeastBela))
+	{
+		return true;
+	}
+	else if(userHw == BelaHw_CtagFace &&
+			(detectedHw == BelaHw_CtagBeast || detectedHw == BelaHw_CtagFaceBela|| detectedHw == BelaHw_CtagBeastBela))
+	{
+		return true;
+	}
+	else if(userHw == BelaHw_CtagBeast &&
+			detectedHw == BelaHw_CtagBeastBela)
+	{
+		return true;
+	}
+	else if(userHw == BelaHw_Salt &&
+			detectedHw == BelaHw_Bela)
+	{
+		return true;
+	}
+	return false;
+}

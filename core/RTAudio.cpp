@@ -26,6 +26,7 @@
 
 #include "../include/Bela.h"
 #include "../include/bela_hw_settings.h"
+#include "../include/board_detect.h"
 
 // Xenomai-specific includes
 #if XENOMAI_MAJOR == 3
@@ -327,6 +328,23 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
 	BelaHw belaHw = Bela_detectHw();
+	if(gRTAudioVerbose==1)	
+		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
+	// Check for user-selected hardware
+	BelaHw userHw = getBelaHw(settings->board);
+	if(gRTAudioVerbose==1)	
+		printf("User input: %s\n", settings->board);
+	if(userHw == BelaHw_NoHw)
+	{
+		userHw = Bela_detectUserHw();
+		if(gRTAudioVerbose==1)
+			printf("Hardward specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
+	}
+	if(userHw != BelaHw_NoHw && userHw != belaHw && Bela_checkHwCompatibility(userHw, belaHw))
+		belaHw = userHw;
+	if(gRTAudioVerbose==1)
+		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
+
         // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
         if(belaHw == BelaHw_CtagFace || belaHw == BelaHw_CtagFaceBela)
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);

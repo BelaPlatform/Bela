@@ -77,6 +77,7 @@ typedef enum
 /** \cond PRIVATE */
 #define MAX_PRU_FILENAME_LENGTH 256
 #define MAX_SERVERNAME_LENGTH 256
+#define MAX_BOARDNAME_LENGTH 256
 /** \endcond */
 
 /**
@@ -393,6 +394,8 @@ typedef struct {
 	/// freeze while the program is running. Use the button on the
 	/// Bela cape to forcefully stop the running program 
 	int highPerformanceMode;
+	/// User selected board to work with (as opposed to detected hardware).
+	char board[MAX_BOARDNAME_LENGTH];
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user

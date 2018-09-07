@@ -22,6 +22,7 @@
 #define OPT_DETECT_UNDERRUNS 1006
 #define OPT_UNIFORM_SAMPLE_RATE 1007
 #define OPT_HIGH_PERFORMANCE_MODE 1008
+#define OPT_BOARD 1009
 
 
 enum {
@@ -58,6 +59,7 @@ struct option gDefaultLongOptions[] =
 	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
 	{"high-performance-mode", 0, NULL, OPT_HIGH_PERFORMANCE_MODE},
 	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
+	{"board", 1, NULL, OPT_BOARD},
 	{NULL, 0, NULL, 0}
 };
 
@@ -94,6 +96,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->enableLED = 1;
 	settings->enableCapeButtonMonitoring = 1;
 	settings->highPerformanceMode = 0;
+	settings->board[0] = '\0';
 
 	// These deliberately have no command-line flags by default,
 	// as it is unlikely the user would want to switch them
@@ -307,6 +310,12 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			settings->uniformSampleRate = 1;
 			printf("Uniform sample rate\n");
 			break;
+		case OPT_BOARD:
+			if(strlen(optarg) < MAX_BOARDNAME_LENGTH)
+				strcpy(settings->board, optarg);
+			else
+				std::cerr << "Warning: filename for the board name is too long (>" << MAX_BOARDNAME_LENGTH << " characters).\n";
+			break;
 		case '?':
 		default:
 			return c;
@@ -342,6 +351,7 @@ void Bela_usage()
 	std::cerr << "   --disable-cape-button-monitoring    Disable the monitoring of the Bela cape button (which otherwise stops the running program)\n";
 	std::cerr << "   --high-performance-mode             Gives more CPU to the Bela process. The system may become unresponsive and you will have to use the button on the Bela cape when you want to stop it.\n";
 	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
+	std::cerr << "   --board val:                        Select a different board to work with\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
 
