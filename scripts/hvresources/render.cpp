@@ -28,12 +28,10 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Heavy_bela.h>
 #include <string.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
+#include <sstream>
 #include <DigitalChannelManager.h>
 
-// Bela Midi
-static Midi midi;
-unsigned int hvMidiHashes[7];
 unsigned int gScopeChannelsInUse;
 float* gScopeOut;
 // Bela Scope
@@ -42,6 +40,81 @@ static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 bool gDigitalEnabled = 0;
+
+// Bela Midi
+unsigned int hvMidiHashes[7]; // heavy-specific
+static std::vector<Midi*> midi;
+std::vector<std::string> gMidiPortNames;
+
+void dumpMidi()
+{
+	if(midi.size() == 0)
+	{
+		printf("No MIDI device enabled\n");
+		return;
+	}
+	printf("The following MIDI devices are enabled:\n");
+	printf("%4s%20s %3s %3s %s\n",
+			"Num",
+			"Name",
+			"In",
+			"Out",
+			"Pd channels"
+	      );
+	for(unsigned int n = 0; n < midi.size(); ++n)
+	{
+		printf("[%2d]%20s %3s %3s (%d-%d)\n",
+			n,
+			gMidiPortNames[n].c_str(),
+			midi[n]->isInputEnabled() ? "x" : "_",
+			midi[n]->isOutputEnabled() ? "x" : "_",
+			n * 16 + 1,
+			n * 16 + 16
+		);
+	}
+}
+
+Midi* openMidiDevice(std::string name, bool verboseSuccess = false, bool verboseError = false)
+{
+	Midi* newMidi;
+	newMidi = new Midi();
+	newMidi->readFrom(name.c_str());
+	newMidi->writeTo(name.c_str());
+	newMidi->enableParser(true);
+	if(newMidi->isOutputEnabled())
+	{
+		if(verboseSuccess)
+			printf("Opened MIDI device %s as output\n", name.c_str());
+	}
+	if(newMidi->isInputEnabled())
+	{
+		if(verboseSuccess)
+			printf("Opened MIDI device %s as input\n", name.c_str());
+	}
+	if(!newMidi->isInputEnabled() && !newMidi->isOutputEnabled())
+	{
+		if(verboseError)
+			fprintf(stderr, "Failed to open  MIDI device %s\n", name.c_str());
+		return nullptr;
+	} else {
+		return newMidi;
+	}
+}
+
+static unsigned int getPortChannel(int* channel){
+	unsigned int port = 0;
+	while(*channel > 16){
+		*channel -= 16;
+		port += 1;
+	}
+	if(port >= midi.size()){
+		// if the port number exceeds the number of ports available, send out
+		// of the first port
+		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
+		port = 0;
+	}
+	return port;
+}
 
 /*
  *	HEAVY CONTEXT & BUFFERS
@@ -115,6 +188,29 @@ static void sendHook(
 
 	// Bela digital initialization messages
 	switch (sendHash) {
+		case 0xfb212be8: { // bela_setMidi
+			if (!hv_msg_hasFormat(m, "sfff")) {
+				fprintf(stderr, "Wrong format for Bela_setMidi, expected:[hw 1 0 0(");
+				return;
+			}
+			const char* symbol = hv_msg_getSymbol(m, 0);
+			int num[3] = {0, 0, 0};
+			for(int n = 0; n < 3; ++n)
+			{
+				num[n] = hv_msg_getFloat(m, n + 1);
+			}
+			std::ostringstream deviceName;
+			deviceName << symbol << ":" << num[0] << "," << num[1] << "," << num[2];
+			printf("Adding Midi device: %s\n", deviceName.str().c_str());
+			Midi* newMidi = openMidiDevice(deviceName.str(), true, true);
+			if(newMidi)
+			{
+				midi.push_back(newMidi);
+				gMidiPortNames.push_back(deviceName.str());
+			}
+			dumpMidi();
+			break;
+		}
 		case 0x70418732: { // bela_setDigital
 			if(gDigitalEnabled)
 			{
@@ -156,51 +252,57 @@ static void sendHook(
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t velocity = (midi_byte_t) hv_msg_getFloat(m, 1);
-			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 2);
-			rt_printf("noteon: %d %d %d\n", channel, pitch, velocity);
-			midi.writeNoteOn(channel, pitch, velocity);
+			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
+			int port = getPortChannel(&channel);
+			rt_printf("noteon[%d]: %d %d %d\n", port, channel, pitch, velocity);
+			midi[port]->writeNoteOn(channel, pitch, velocity);
 			break;
 		}
 		case 0xD44F9083: { // bela_ctlout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t value = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t controller = (midi_byte_t) hv_msg_getFloat(m, 1);
-			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 2);
-			rt_printf("controlchange: %d %d %d\n", channel, controller, value);
-			midi.writeControlChange(channel, controller, value);
+			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
+			int port = getPortChannel(&channel);
+			rt_printf("controlchange[%d]: %d %d %d\n", port, channel, controller, value);
+			midi[port]->writeControlChange(channel, controller, value);
 			break;
 		}
 		case 0x6A647C44: { // bela_pgmout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t program = (midi_byte_t) hv_msg_getFloat(m, 0);
-			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 1);
-			rt_printf("programchange: %d %d\n", channel, program);
-			midi.writeProgramChange(channel, program);
+			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
+			int port = getPortChannel(&channel);
+			rt_printf("programchange[%d]: %d %d\n", port, channel, program);
+			midi[port]->writeProgramChange(channel, program);
 			break;
 		}
 		case 0x545CDF50: { // bela_bendout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			unsigned int value = ((midi_byte_t) hv_msg_getFloat(m, 0)) + 8192;
-			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 1);
-			rt_printf("pitchbend: %d %d\n", channel, value);
-			midi.writePitchBend(channel, value);
+			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
+			int port = getPortChannel(&channel);
+			rt_printf("pitchbend[%d]: %d %d\n", port, channel, value);
+			midi[port]->writePitchBend(channel, value);
 			break;
 		}
 		case 0xDE18F543: { // bela_touchout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 0);
-			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 1);
-			rt_printf("channelPressure: %d %d\n", channel, pressure);
-			midi.writeChannelPressure(channel, pressure);
+			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
+			int port = getPortChannel(&channel);
+			rt_printf("channelPressure[%d]: %d %d\n", port, channel, pressure);
+			midi[port]->writeChannelPressure(channel, pressure);
 			break;
 		}
 		case 0xAE8E3B2D: { // bela_polytouchout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 1);
-			midi_byte_t channel = (midi_byte_t) hv_msg_getFloat(m, 2);
-			rt_printf("polytouch: %d %d %d\n", channel, pitch, pressure);
-			midi.writePolyphonicKeyPressure(channel, pitch, pressure);
+			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
+			int port = getPortChannel(&channel);
+			rt_printf("polytouch[%d]: %d %d %d\n", port, channel, pitch, pressure);
+			midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 			break;
 		}
 		case 0x51CD8FE2: { // bela_midiout
@@ -208,7 +310,7 @@ static void sendHook(
 			midi_byte_t byte = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int port = (int) hv_msg_getFloat(m, 1);
 			rt_printf("port: %d, byte: %d\n", port, byte);
-			midi.writeOutput(byte);
+			midi[port]->writeOutput(byte);
 			break;
 		}
 		default: break;
@@ -295,9 +397,23 @@ bool setup(BelaContext *context, void *userData)	{
 	// Set heavy send hook
 	hv_setSendHook(gHeavyContext, sendHook);
 
-	midi.readFrom("hw:1,0,0");
-	midi.writeTo("hw:1,0,0");
-	midi.enableParser(true);
+	// add here other devices you need
+	gMidiPortNames.push_back("hw:1,0,0");
+	//gMidiPortNames.push_back("hw:0,0,0");
+	//gMidiPortNames.push_back("hw:1,0,1");
+	unsigned int n = 0;
+	while(n < gMidiPortNames.size())
+	{
+		Midi* newMidi = openMidiDevice(gMidiPortNames[n], true, true);
+		if(newMidi)
+		{
+			midi.push_back(newMidi);
+			++n;
+		} else {
+			gMidiPortNames.erase(gMidiPortNames.begin() + n);
+		}
+	}
+	dumpMidi();
 
 	if(gScopeChannelsInUse > 0){
 #if __clang_major__ == 3 && __clang_minor__ == 8
@@ -335,11 +451,11 @@ bool setup(BelaContext *context, void *userData)	{
 
 void render(BelaContext *context, void *userData)
 {
-	{
-		int num;
-		while((num = midi.getParser()->numAvailableMessages()) > 0){
+	int num;
+	for(unsigned int port = 0; port < midi.size(); ++port){
+		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
-			message = midi.getParser()->getNextChannelMessage();
+			message = midi[port]->getParser()->getNextChannelMessage();
 			switch(message.getType()){
 			case kmmNoteOn: {
 				//message.prettyPrint();
