@@ -118,6 +118,35 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 	return 0;
 #endif
 #ifdef XENOMAI_SKIN_posix
+	if(!taskToSchedule->started)
+	{
+		// the task has not yet had a chance to run.
+		// let's enforce it now. This will block the current thread
+		// until the other starts.
+		struct sched_param param;
+		int policy;
+		int ret = __wrap_pthread_getschedparam(taskToSchedule->task,
+				&policy, &param);
+		if(!ret)
+		{
+			// set the priority to maximum
+			int originalPriority = param.sched_priority;
+			param.sched_priority = __wrap_sched_get_priority_max(SCHED_FIFO);
+			__wrap_pthread_setschedparam(taskToSchedule->task,
+					SCHED_FIFO, &param);
+			// just in case we have the same priority, let the
+			// other go first
+			__wrap_pthread_yield();
+			if(!taskToSchedule->started)
+				fprintf(stderr, "Didn't work\n");
+			// by the time we are here, the other thread has run, set the
+			// started flag, and is now waiting for the cond
+			// So, restore its schedparams
+			param.sched_priority = originalPriority;
+			__wrap_pthread_setschedparam(taskToSchedule->task,
+					policy, &param);
+		}
+	}
 	if(int ret = __wrap_pthread_mutex_trylock(&taskToSchedule->mutex))
 	{
 		// If we cannot get the lock, then the task is probably still running.
@@ -137,6 +166,7 @@ static void suspendCurrentTask(InternalAuxiliaryTask* task)
 #endif
 #ifdef XENOMAI_SKIN_posix
 	__wrap_pthread_mutex_lock(&task->mutex);
+	task->started = true;
 	__wrap_pthread_cond_wait(&task->cond, &task->mutex);
 	__wrap_pthread_mutex_unlock(&task->mutex);
 #endif
@@ -191,7 +221,6 @@ int Bela_startAuxiliaryTask(AuxiliaryTask task){
 	// The task has already been started upon creation.
 	// It is currently waiting on a condition variable.
 #endif
-	taskStruct->started = true;
 	return 0;
 }
 
