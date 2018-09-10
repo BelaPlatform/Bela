@@ -1,4 +1,5 @@
-CC=g++
+CXX=g++
+tCXXFLAGS=-std=c++11
 BUILD=build
 $(shell mkdir -p build)
 OBJS = $(BUILD)/GPIOcontrol.o $(BUILD)/Spi_Codec.o $(BUILD)/I2c_Codec.o $(BUILD)/board_detect.o $(BUILD)/main.o
@@ -15,7 +16,7 @@ install: board_detect
 	cp board_detect /usr/local/bin/
 
 $(BUILD)/main.o: main.cpp
-	$(CC) "$<" -c $(CPPFLAGS) $(CFLAGS) -o "$@" 
+	$(CXX) "$<" -c $(CPPFLAGS) $(CXXFLAGS) -o "$@"
 
 $(BUILD)/%.o: ../../../core/%.cpp
-	$(CC) "$<" -c $(CPPFLAGS) $(CFLAGS) -o "$@" 
+	$(CXX) "$<" -c $(CPPFLAGS) $(CXXFLAGS) -o "$@"
