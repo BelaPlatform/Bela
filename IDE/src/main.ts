@@ -106,7 +106,6 @@ export async function board_detect(): Promise<any>{
 	return new Promise( (resolve, reject) => {
 		child_process.exec('board_detect', (err, stdout, stderr) => {
 			if (err) reject(err);
-			if (stderr) reject(stderr);
 			console.log('running on', stdout);
 			resolve(stdout);
 		});
