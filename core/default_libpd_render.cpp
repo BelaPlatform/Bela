@@ -262,14 +262,14 @@ void Bela_floatHook(const char *source, float value){
 
 std::vector<std::string> receiverInputNames;
 std::vector<std::string> receiverOutputNames;
-void generateDigitalNames(unsigned int numDigitals)
+void generateDigitalNames(unsigned int numDigitals, unsigned int digitalOffset)
 {
 	std::string inBaseString = "bela_digitalIn";
 	std::string outBaseString = "bela_digitalOut";
 	for(unsigned int i = 0; i<numDigitals; i++)
 	{
-		receiverInputNames.push_back(inBaseString + std::to_string(i));
-		receiverOutputNames.push_back(outBaseString + std::to_string(i));
+		receiverInputNames.push_back(inBaseString + std::to_string(i+digitalOffset));
+		receiverOutputNames.push_back(outBaseString + std::to_string(i+digitalOffset));
 	}
 }
 
@@ -360,7 +360,7 @@ bool setup(BelaContext *context, void *userData)
 	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
 	
 	// Create receiverNames for digital channels
-	generateDigitalNames(gDigitalChannelsInUse);	
+	generateDigitalNames(gDigitalChannelsInUse, gLibpdDigitalChannelOffset);	
 	
 	printf("Analog channels in use: %d\n", gAnalogChannelsInUse);
 	printf("First analog input channel: %d\n", gFirstAnalogInChannel);
