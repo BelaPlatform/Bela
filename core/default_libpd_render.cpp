@@ -347,6 +347,9 @@ bool setup(BelaContext *context, void *userData)
 	// analog setup
 	gAnalogChannelsInUse = context->analogInChannels;
 	gDigitalChannelsInUse = context->digitalChannels;
+	printf("Audio channels in use: %d\n", context->audioOutChannels);
+	printf("Analog channels in use: %d\n", gAnalogChannelsInUse);
+	printf("Digital channels in use: %d\n", gDigitalChannelsInUse);
 
 	// Channel distribution
 	gFirstAnalogInChannel = std::max(context->audioInChannels, context->audioOutChannels);
@@ -368,12 +371,10 @@ bool setup(BelaContext *context, void *userData)
 		dcm.setCallback(sendDigitalMessage);
 		if(gDigitalChannelsInUse > 0){
 			for(unsigned int ch = 0; ch < gDigitalChannelsInUse; ++ch){
-				dcm.setCallbackArgument(ch, &gReceiverInputNames[ch][0]);
+				dcm.setCallbackArgument(ch, const_cast<char*>(gReceiverInputNames[ch].c_str()));
 			}
 		}
 	}
-
-	printDigitalNames(gReceiverInputNames, gReceiverOutputNames);
 
 	unsigned int n = 0;
 	while(n < gMidiPortNames.size())
