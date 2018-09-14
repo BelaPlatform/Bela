@@ -16,11 +16,9 @@ extern "C" {
 #include <Scope.h>
 #include <string>
 #include <sstream>
-
 #include <algorithm>
 
 enum { minFirstDigitalChannel = 10 };
-
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
 static unsigned int gScopeChannelsInUse = 4;
@@ -177,7 +175,6 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
-
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
 	if(strcmp(source, "bela_setMidi") == 0){
 		int num[3] = {0, 0, 0};
@@ -260,20 +257,22 @@ void Bela_floatHook(const char *source, float value){
 	}
 }
 
-std::vector<std::string> receiverInputNames;
-std::vector<std::string> receiverOutputNames;
-void generateDigitalNames(unsigned int numDigitals, unsigned int digitalOffset)
+
+
+std::vector<std::string> gReceiverInputNames;
+std::vector<std::string> gReceiverOutputNames;
+void generateDigitalNames(unsigned int numDigitals, unsigned int libpdOffset, std::vector<std::string>& receiverInputNames, std::vector<std::string>& receiverOutputNames)
 {
 	std::string inBaseString = "bela_digitalIn";
 	std::string outBaseString = "bela_digitalOut";
 	for(unsigned int i = 0; i<numDigitals; i++)
 	{
-		receiverInputNames.push_back(inBaseString + std::to_string(i+digitalOffset));
-		receiverOutputNames.push_back(outBaseString + std::to_string(i+digitalOffset));
+		receiverInputNames.push_back(inBaseString + std::to_string(i+libpdOffset));
+		receiverOutputNames.push_back(outBaseString + std::to_string(i+libpdOffset));
 	}
 }
 
-void printDigitalNames()
+void printDigitalNames(std::vector<std::string>& receiverInputNames, std::vector<std::string>& receiverOutputNames)
 {
 	printf("DIGITAL INPUTS\n");
 	for(unsigned int i=0; i<gDigitalChannelsInUse; i++)
@@ -282,6 +281,7 @@ void printDigitalNames()
 	for(unsigned int i=0; i<gDigitalChannelsInUse; i++)
 		printf("%s\n", receiverOutputNames[i].c_str());
 }
+
 static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
@@ -347,7 +347,7 @@ bool setup(BelaContext *context, void *userData)
 	// analog setup
 	gAnalogChannelsInUse = context->analogInChannels;
 	gDigitalChannelsInUse = context->digitalChannels;
-	
+
 	// Channel distribution
 	gFirstAnalogInChannel = std::max(context->audioInChannels, context->audioOutChannels);
 	gFirstAnalogOutChannel = gFirstAnalogInChannel;
@@ -360,27 +360,20 @@ bool setup(BelaContext *context, void *userData)
 	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
 	
 	// Create receiverNames for digital channels
-	generateDigitalNames(gDigitalChannelsInUse, gLibpdDigitalChannelOffset);	
+	generateDigitalNames(gDigitalChannelsInUse, gLibpdDigitalChannelOffset, gReceiverInputNames, gReceiverOutputNames);
 	
-	printf("Analog channels in use: %d\n", gAnalogChannelsInUse);
-	printf("First analog input channel: %d\n", gFirstAnalogInChannel);
-	printf("First analog output channel: %d\n", gFirstAnalogOutChannel);
-	printf("Digital channels in use: %d\n", gDigitalChannelsInUse);
-	printf("First digital channel: %d\n", gFirstDigitalChannel);
-	printf("First digital channel (libpd): %d\n", gLibpdDigitalChannelOffset);
-	
-	printDigitalNames();
-
 	// digital setup
 	if(gDigitalEnabled)
 	{
 		dcm.setCallback(sendDigitalMessage);
 		if(gDigitalChannelsInUse > 0){
 			for(unsigned int ch = 0; ch < gDigitalChannelsInUse; ++ch){
-				dcm.setCallbackArgument(ch, &receiverInputNames[ch][0]);
+				dcm.setCallbackArgument(ch, &gReceiverInputNames[ch][0]);
 			}
 		}
 	}
+
+	printDigitalNames(gReceiverInputNames, gReceiverOutputNames);
 
 	unsigned int n = 0;
 	while(n < gMidiPortNames.size())
@@ -433,7 +426,9 @@ bool setup(BelaContext *context, void *userData)
 
 	// Bind your receivers here
 	for(unsigned int i = 0; i < gDigitalChannelsInUse; i++)
-		libpd_bind(receiverOutputNames[i].c_str());
+		libpd_bind(gReceiverOutputNames[i].c_str());
+	libpd_bind("bela_setDigital");
+	libpd_bind("bela_setMidi");
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
