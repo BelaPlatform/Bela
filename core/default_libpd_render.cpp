@@ -171,7 +171,7 @@ void Bela_printHook(const char *received){
 static DigitalChannelManager dcm;
 
 void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
-	libpd_float((char*)receiverName, (float)state);
+	libpd_float((const char*)receiverName, (float)state);
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
@@ -371,7 +371,7 @@ bool setup(BelaContext *context, void *userData)
 		dcm.setCallback(sendDigitalMessage);
 		if(gDigitalChannelsInUse > 0){
 			for(unsigned int ch = 0; ch < gDigitalChannelsInUse; ++ch){
-				dcm.setCallbackArgument(ch, const_cast<char*>(gReceiverInputNames[ch].c_str()));
+				dcm.setCallbackArgument(ch, (void*) gReceiverInputNames[ch].c_str());
 			}
 		}
 	}
@@ -628,7 +628,7 @@ void render(BelaContext *context, void *userData)
 					k < context->digitalChannels; k++, p1 += gLibpdBlockSize)
 				{
 					if(dcm.isSignalRate(k) && dcm.isOutput(k)){ // only process output channels that are handled at signal rate
-					digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
+						digitalWriteOnce(context, digitalFrame, k, *p1 > 0.5);
 					}
 				}
 			}
