@@ -646,7 +646,7 @@ void render(BelaContext *context, void *userData)
 		}
 
 		// audio output
-		for(int n = 0; n < context->audioInChannels; ++n)
+		for(int n = 0; n < context->audioOutChannels; ++n)
 		{
 			memcpy(
 				context->audioOut + tick * gLibpdBlockSize + n * context->audioFrames, 
