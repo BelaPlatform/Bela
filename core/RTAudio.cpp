@@ -25,6 +25,8 @@
 #include <sys/mman.h>
 
 #include "../include/Bela.h"
+#include "../include/bela_hw_settings.h"
+#include "../include/board_detect.h"
 
 // Xenomai-specific includes
 #if XENOMAI_MAJOR == 3
@@ -71,9 +73,6 @@ typedef struct _BelaHwConfig
 static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
-
-const char ctag_spidev_gpio_cs0[] = "/dev/spidev32766.0";
-const char ctag_spidev_gpio_cs1[] = "/dev/spidev32766.1";
 
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
@@ -329,13 +328,30 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
 	BelaHw belaHw = Bela_detectHw();
+	if(gRTAudioVerbose==1)	
+		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
+	// Check for user-selected hardware
+	BelaHw userHw = getBelaHw(settings->board);
+	if(gRTAudioVerbose==1)	
+		printf("User input: %s\n", settings->board);
+	if(userHw == BelaHw_NoHw)
+	{
+		userHw = Bela_detectUserHw();
+		if(gRTAudioVerbose==1)
+			printf("Hardward specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
+	}
+	if(userHw != BelaHw_NoHw && userHw != belaHw && Bela_checkHwCompatibility(userHw, belaHw))
+		belaHw = userHw;
+	if(gRTAudioVerbose==1)
+		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
+
         // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
         if(belaHw == BelaHw_CtagFace || belaHw == BelaHw_CtagFaceBela)
-                gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, NULL);
+                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
         else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
-                gSpiCodec = new Spi_Codec(ctag_spidev_gpio_cs0, ctag_spidev_gpio_cs1);
+                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
         if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
-                gI2cCodec = new I2c_Codec(2, settings->codecI2CAddress);
+                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress);
 	BelaHwConfig cfg;
 	if(Bela_getHwConfig(belaHw, &cfg))
 	{
