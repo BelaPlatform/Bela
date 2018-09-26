@@ -136,7 +136,7 @@ class TabView extends View {
 	}
 
 	_boardString(data){
-		if (data.trim() === 'BelaMini'){
+		if (data && data.trim && data.trim() === 'BelaMini'){
 			$('#pin_diagram_object').prop('data', 'diagram_mini.html');
 		}
 	}

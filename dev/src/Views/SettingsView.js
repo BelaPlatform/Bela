@@ -319,7 +319,7 @@ class SettingsView extends View {
 	}
 
 	_boardString(data){
-		if (data.trim() === 'BelaMini'){
+		if (data && data.trim && data.trim() === 'BelaMini'){
 			$('.capelet-settings').css('display', 'none');
 			$('#mute-speaker').parent().parent().css('display', 'none');
 		} else {

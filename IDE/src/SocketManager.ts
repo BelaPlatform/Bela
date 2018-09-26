@@ -70,7 +70,7 @@ async function init_message(socket: SocketIO.Socket){
 		examples 	: await project_manager.listExamples(),
 		settings 	: await ide_settings.read(),
 		boot_project 	: await boot_project.get_boot_project(),
-		board_string	: await IDE.board_detect(),
+		board_string	: await IDE.board_detect().catch(e => console.log('error in board detect', e)),
 		xenomai_version : await IDE.get_xenomai_version()
 //	status : await process_manager.status()
 	};
