@@ -139,6 +139,14 @@ class TabView extends View {
 		if (data.trim() === 'BelaMini'){
 			$('#pin_diagram_object').prop('data', 'diagram_mini.html');
 		}
+		else if (data.trim() === 'CtagFace')
+		{
+			$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
+		}
+		else if (data.trim() === 'CtagBeast')
+		{
+			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
+		}
 	}
 	
 }
