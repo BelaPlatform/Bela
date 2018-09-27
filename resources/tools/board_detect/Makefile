@@ -7,7 +7,7 @@ OBJS = $(BUILD)/GPIOcontrol.o $(BUILD)/Spi_Codec.o $(BUILD)/I2c_Codec.o $(BUILD)
 CPPFLAGS=-I../../../include
 
 board_detect: $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) $(LOADLIBES) -o "$@"
+	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) -o "$@"
 
 clean:
 	rm -rf $(OBJS) board_detect
