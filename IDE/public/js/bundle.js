@@ -3548,11 +3548,43 @@ var SettingsView = function (_View) {
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
-			if (data.trim() === 'BelaMini') {
+			var boardString;
+			if (data && data.trim) boardString = data.trim();else return;
+
+			if (boardString === 'BelaMini') {
 				$('.capelet-settings').css('display', 'none');
 				$('#mute-speaker').parent().parent().css('display', 'none');
 			} else {
 				$('#disable-led').parent().parent().css('display', 'none');
+			}
+
+			if (boardString === ('CtagFace' || 'CtagBeast')) {
+				$('.capelet-settings').css('display', 'none');
+				$('#mute-speaker').parent().parent().css('display', 'none');
+				$('#analog-channels').parent().parent().css('display', 'none');
+				$('#analog-samplerate').parent().parent().css('display', 'none');
+				$('#hp-level').parent().parent().css('display', 'none');
+				$('#use-analog').parent().parent().css('display', 'none');
+				$('#dac-level').parent().parent().css('display', 'none');
+				$('#pga-left').parent().parent().css('display', 'none');
+				$('#pga-right').parent().parent().css('display', 'none');
+			} else if (boardString === ('CtagFaceBela' || 'CtagBeastBela')) {
+				$('.capelet-settings').css('display', 'none');
+				$('#mute-speaker').parent().parent().css('display', 'none');
+				$('#hp-level').parent().parent().css('display', 'none');
+				$('#use-analog').parent().parent().css('display', 'none');
+				$('#pga-left').parent().parent().css('display', 'none');
+				$('#pga-right').parent().parent().css('display', 'none');
+				var sRates = $('#analog-samplerate').children("option");
+				for (var i = 0; i < sRates.length; i++) {
+					var rate = sRates[i].innerHTML;
+					if (rate == '88200') {
+						sRates[i].remove();
+						$("#analog-channels option[value='2']").remove();
+					} else if (rate == "44100") {
+						sRates[i].innerHTML = "44800";
+					}
+				}
 			}
 		}
 	}]);
