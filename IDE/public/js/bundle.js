@@ -435,7 +435,7 @@ settingsView.on('error', function (text) {
 });
 
 // project view
-var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);
+var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project, models.settings]);
 projectView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -648,7 +648,7 @@ socket.on('init', function (data) {
 		return projectView.emit('example-changed');
 	});
 
-	// socket.io timeout	
+	// socket.io timeout
 	socket.io.engine.pingTimeout = 6000;
 	socket.io.engine.pingInterval = 3000;
 });
@@ -3096,18 +3096,14 @@ var ProjectView = function (_View) {
 		value: function _boardString(data) {
 			var boardString;
 			if (data && data.trim) boardString = data.trim();else return;
-
+			boardString = "CtagFace";
 			$.getJSON("../example_except.json", function (data) {
-				var obj = JSON.parse(data);
-				console.log("boardString ", boardString);
-				console.log("forcing boardString to BelaMini for testing...");
-				boardString = 'BelaMini';
-				if (boardString in obj) {
-					console.log("boardString in obj");
-					for (var example in obj[boardString]) {
-						var exampleId = "#" + example.section + "/" + example.name;
-						console.log(exampleId);
-						$(exampleId).css('display', 'none');
+				if (boardString in data) {
+					for (var example in data[boardString]) {
+						var exampleId = data[boardString][example].section + "/" + data[boardString][example].name;
+						try {
+							document.getElementById(exampleId).style.display = 'none';
+						} catch (err) {}
 					}
 				}
 			});

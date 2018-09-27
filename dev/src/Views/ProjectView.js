@@ -178,6 +178,7 @@ class ProjectView extends View {
 							return;
 						}
 
+
 						this.emit('message', 'project-event', {
 							func: 'openExample',
 							currentProject: item.name+'/'+child
@@ -197,23 +198,19 @@ class ProjectView extends View {
 			boardString = data.trim();
 		else
 			return
-
+		boardString = "CtagFace";
 		$.getJSON( "../example_except.json", function( data ) {
-		  var obj = JSON.parse(data);
-			console.log("boardString ", boardString);
-			console.log("forcing boardString to BelaMini for testing...")
-			boardString = 'BelaMini';
-			if (boardString in obj)
+			if (boardString in data)
 			{
-				console.log("boardString in obj");
-				for (var example in obj[boardString]) {
-				  var exampleId = "#"+example.section+"/"+example.name;
-					console.log(exampleId);
-					$(exampleId).css('display', 'none');
+				for(var example in data[boardString]) {
+				  var exampleId = data[boardString][example].section+"/"+data[boardString][example].name;
+					try{
+						 document.getElementById(exampleId).style.display = 'none';
+					}
+					catch(err){}
 				}
-			}
-
-		});
+			}	
+		})
 	}
 	_currentProject(project){
 
