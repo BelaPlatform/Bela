@@ -3096,7 +3096,7 @@ var ProjectView = function (_View) {
 		value: function _boardString(data) {
 			var boardString;
 			if (data && data.trim) boardString = data.trim();else return;
-			boardString = "CtagFace";
+
 			$.getJSON("../example_except.json", function (data) {
 				if (boardString in data) {
 					for (var example in data[boardString]) {

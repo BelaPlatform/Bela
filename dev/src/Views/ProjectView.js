@@ -198,7 +198,7 @@ class ProjectView extends View {
 			boardString = data.trim();
 		else
 			return
-		boardString = "CtagFace";
+
 		$.getJSON( "../example_except.json", function( data ) {
 			if (boardString in data)
 			{
@@ -209,7 +209,7 @@ class ProjectView extends View {
 					}
 					catch(err){}
 				}
-			}	
+			}
 		})
 	}
 	_currentProject(project){
