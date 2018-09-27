@@ -565,51 +565,6 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	return 0;
 }
 
-static int devMemWrite(off_t target, uint32_t* value)
-{
-	const unsigned long MAP_SIZE = 4096UL;
-	const unsigned long MAP_MASK = (MAP_SIZE - 1);
-	int fd;
-	void *map_base, *virt_addr;
-	uint32_t writeval = *value;
-
-	if((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) // NOWRAP
-	{
-		fprintf(stderr, "Unable to open /dev/mem: %d %s\n", fd, strerror(-fd));
-		return -1;
-	}
-	map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK); // NOWRAP
-	if(map_base == (void *) -1)
-	{
-		fprintf(stderr, "Unable to mmap %ld\n", target);
-		return -1;
-	}
-
-	virt_addr = ((char*)map_base) + (target & MAP_MASK);
-	// writes 4-byte word (unsigned long)
-	*((unsigned long *) virt_addr) = writeval;
-	uint32_t read_result = *((unsigned long *) virt_addr);
-	*value = read_result;
-	if(munmap(map_base, MAP_SIZE) == -1)
-	{
-		fprintf(stderr, "Error while unmapping memory\n");
-	}
-	close(fd);
-	return 0;
-}
-
-static int maskMcAspInterrupt()
-{
-	off_t address = 0x482000cc;
-	uint32_t value = 0x30000;
-	int ret = devMemWrite(address, &value);
-	if(ret < 0)
-	{
-		return -1;
-	} else
-		return 0;
-}
-
 void PRU::initialisePruCommon()
 {
 	uint32_t board_flags = 0;
@@ -754,14 +709,10 @@ int PRU::start(char * const filename)
 		case true:
 			pruCode = (unsigned int*)IrqPruCode::getBinary();
 			pruCodeSize = IrqPruCode::getBinarySize();
-			/* The PRU will enable the McASP interrupts. Here we mask
-			 * them out from ARM so that they do not hang the CPU. */
-			if(maskMcAspInterrupt() < 0)
-			{
-				fprintf(stderr, "Error: failed to disable the McASP interrupt\n");
-				return 1;
-			}
-			// TODO: unmask interrupt when program stops
+			// NOTE: we assume that something else has masked the McASP interrupts
+			// from ARM, or rather that no one else unmasked them.
+			// For instance, make sure the McASP driver does not get to get hold of them
+			// by NOT setting `interrupt-names = "rx", "tx";` in the overlay
 			break;
 	}
 
