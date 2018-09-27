@@ -3014,6 +3014,7 @@ var ProjectView = function (_View) {
 					var item = _step.value;
 
 					var ul = $('<ul></ul>').html(item.name + ':');
+
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
 					var _iteratorError2 = undefined;
@@ -3023,7 +3024,7 @@ var ProjectView = function (_View) {
 							var child = _step2.value;
 
 							if (child && child.length && child[0] === '.') return 'continue';
-							$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).on('click', function (e) {
+							$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).attr('id', item.name + '/' + child).on('click', function (e) {
 
 								if (_this6.exampleChanged) {
 									_this6.exampleChanged = false;
@@ -3089,6 +3090,27 @@ var ProjectView = function (_View) {
 					}
 				}
 			}
+		}
+	}, {
+		key: '_boardString',
+		value: function _boardString(data) {
+			var boardString;
+			if (data && data.trim) boardString = data.trim();else return;
+
+			$.getJSON("../example_except.json", function (data) {
+				var obj = JSON.parse(data);
+				console.log("boardString ", boardString);
+				console.log("forcing boardString to BelaMini for testing...");
+				boardString = 'BelaMini';
+				if (boardString in obj) {
+					console.log("boardString in obj");
+					for (var example in obj[boardString]) {
+						var exampleId = "#" + example.section + "/" + example.name;
+						console.log(exampleId);
+						$(exampleId).css('display', 'none');
+					}
+				}
+			});
 		}
 	}, {
 		key: '_currentProject',
