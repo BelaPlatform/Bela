@@ -1,0 +1,552 @@
+[{
+  "things": [{
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "326",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_08 - Digital 1 - (Pd: digital 12)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "20",
+      "y": "326",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_07 - Digital 0 - (Pd: digital 11)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "312",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_10 - Digital 3 - (Pd: digital 14)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "20",
+      "y": "312",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_09 - Digital 2 - (Pd: digital 13)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "298",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_12 - Digital 5 - (Pd: digital 16)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "20",
+      "y": "298",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_11 - Digital 4 - (Pd: digital 15)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "272",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_16 - Digital 9 - (Pd: digital 20)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "20",
+      "y": "272",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_15 - Digital 8 - (Pd: digital 19)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "258",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_18 - Digital 11 - (Pd: digital 22)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "190",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_28 - Digital 13 - (Pd: digital 24)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "20",
+      "y": "190",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_27 - Digital 12 - (Pd: digital 23)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "6",
+      "y": "176",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_30 - Digital 15 - (Pd: digital 26)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "20",
+      "y": "176",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_29 - Digital 14 - (Pd: digital 25)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "269",
+      "y": "367",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_02 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "282",
+      "y": "367",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_01 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "282",
+      "y": "354",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_03 - 3.3V supply",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "6",
+      "y": "367",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_02 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "20",
+      "y": "367",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_01 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "269",
+      "y": "300",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_12 - Digital 6 - (Pd: digital 17)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "269",
+      "y": "286",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_14 - Digital 7 - (Pd: digital 18)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "269",
+      "y": "272",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_16 - Digital 10 - (Pd: digital 21)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "203",
+      "y": "-162",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 6-7",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "162",
+      "y": "-162",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 4-5",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "119",
+      "y": "-162",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 2-3",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "77",
+      "y": "-161",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 0-1",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "29",
+      "y": "-163",
+      "width": "39",
+      "height": "35",
+      "text": "Audio IN 0-1",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "29",
+      "y": "-200",
+      "width": "39",
+      "height": "35",
+      "text": "Audio IN 2-3",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "250",
+      "y": "22",
+      "width": "20",
+      "height": "28",
+      "text": "Ctag shutdown button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "232",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "207",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 7 - (Pd:[dac~ 8])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "219",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 6 - (Pd:[dac~ 7])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "191",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "178",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 4 - (Pd:[dac~ 5])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "165",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 5 - (Pd:[dac~ 6])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "149",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "136",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 2 - (Pd:[dac~ 3])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "123",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 3 - (Pd:[dac~ 4])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "106",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "93",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 0 - (Pd:[dac~ 1])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "80",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 1 - (Pd:[dac~ 2])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "57",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "44",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "IN 0 - (Pd:[adc~ 1])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "31",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "IN 1 - (Pd:[adc~ 2])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "57",
+      "y": "-186",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "44",
+      "y": "-186",
+      "width": "9",
+      "height": "9",
+      "text": "IN 2 - (Pd:[adc~ 3])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "31",
+      "y": "-186",
+      "width": "9",
+      "height": "9",
+      "text": "IN 3 - (Pd:[adc~ 4])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "46",
+      "y": "427",
+      "width": "09",
+      "height": "15",
+      "text": "LED",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "55",
+      "y": "427",
+      "width": "09",
+      "height": "15",
+      "text": "LED - provides system heartbeat blink",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "65",
+      "y": "427",
+      "width": "09",
+      "height": "15",
+      "text": "LED",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "75",
+      "y": "427",
+      "width": "09",
+      "height": "15",
+      "text": "LED - Blinks when Bela program is running",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "22",
+      "y": "401",
+      "width": "15",
+      "height": "23",
+      "text": "BeagleBone reset button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "70",
+      "y": "401",
+      "width": "15",
+      "height": "23",
+      "text": "Power button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "48",
+      "y": "450",
+      "width": "35",
+      "height": "08",
+      "text": "Mini USB power jack",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "62",
+      "y": "-3",
+      "width": "68",
+      "height": "08",
+      "text": "SD card slot",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "jumper",
+      "x": "44",
+      "y": "208",
+      "width": "10",
+      "height": "23",
+      "text": "jumper",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "jumper",
+      "x": "244",
+      "y": "216",
+      "width": "10",
+      "height": "23",
+      "text": "jumper",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "jumper",
+      "x": "244",
+      "y": "243",
+      "width": "10",
+      "height": "23",
+      "text": "jumper",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "jumper",
+      "x": "220",
+      "y": "220",
+      "width": "10",
+      "height": "23",
+      "text": "jumper",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "jumper",
+      "x": "206",
+      "y": "220",
+      "width": "10",
+      "height": "23",
+      "text": "jumper",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "usbpwrJ",
+      "x": "244",
+      "y": "324",
+      "width": "10",
+      "height": "23",
+      "text": "Jumper these pins for USB power",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "extpwrJ",
+      "x": "244",
+      "y": "334",
+      "width": "10",
+      "height": "23",
+      "text": "Jumper these pins for EXTERNAL power",
+      "tip": "tooltip"
+    }
+  ]
+}]

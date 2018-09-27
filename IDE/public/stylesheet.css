@@ -1,10 +1,10 @@
-/* http://meyerweb.com/eric/tools/css/reset/ 
+/* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
 */
 
 
-/* 
+/*
 LINK TO MONOCHROME COLOR SCHEME: http://www.colourco.de/monochrome/5/%23f4faf1
 LINK TO MONOCHROME/LT GREY COLOR SCHEME: http://www.colourco.de/monochrome-light/5/%23f4faf1
 GOOGLE GREY GUIDELINES: https://material.google.com/style/color.html#color-color-palette
@@ -19,8 +19,8 @@ b, u, i, center,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
 menu, nav, output, ruby, section, summary,
 time, mark, audio, video {
 	margin: 0;
@@ -31,7 +31,7 @@ time, mark, audio, video {
 	vertical-align: baseline;
 }
 /* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, 
+article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
 	display: block;
 }
@@ -164,7 +164,7 @@ p {
 .beaglert-console-log-in{
 	text-indent: -1.65em;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 }
 .beaglert-console-shell::before{
 	content: '#';
@@ -217,7 +217,7 @@ p {
 }
 .beaglert-console-log{
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 }
 .beaglert-console-warning::before{
 	content: '!';
@@ -228,7 +228,7 @@ p {
 .beaglert-console-warning{
 	text-indent: -1.65em;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 	background-color: rgba(255, 255, 0, 0.2);
 }
 .beaglert-console-error::before{
@@ -240,7 +240,7 @@ p {
 .beaglert-console-error{
 	text-indent: -1.65em;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 	background-color: rgba(255, 0, 0, 0.2);
 }
 
@@ -253,7 +253,7 @@ p {
 .beaglert-console-iwarning{
 	text-indent: -1.65em;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 	background-color: rgba(255, 255, 0, 0.2);
 }
 .beaglert-console-ierror::before{
@@ -265,7 +265,7 @@ p {
 .beaglert-console-ierror{
 	text-indent: -1.65em;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 	background-color: rgba(255, 0, 0, 0.2);
 }
 .beaglert-console-notify::before{
@@ -277,7 +277,7 @@ p {
 .beaglert-console-notify{
 	text-indent: -1.65em;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-	padding: 4px 30px;	
+	padding: 4px 30px;
 	background-color: rgba(0, 255, 0, 0.2);
 	-webkit-transition: background-color 1s ease-out, -webkit-transform 0.2s ease-out;
 	transition: background-color 1s ease-out, -webkit-transform 0.2s ease-out;
@@ -468,7 +468,7 @@ p {
 #run {
 	background: url("images/icons/run_greyFF.png");
 	margin-right: 3px;
-	
+
 }
 #run:hover {
 	background: url("images/icons/run_greenFF.png");
@@ -485,7 +485,7 @@ p {
 
 #stop {
 	background: url("images/icons/stop_inactive07.png");
-	
+
 }
 #stop:hover {
 	background: url("images/icons/stop_active07.png");
@@ -501,10 +501,10 @@ p {
 	background: url("images/icons/tab_greenFill.png");
 }
 #download {
-	background: url("images/icons/dl_grey.png");	
+	background: url("images/icons/dl_grey.png");
 }
 #download:hover {
-	background: url("images/icons/dl_greenFill.png");	
+	background: url("images/icons/dl_greenFill.png");
 }
 #console {
 	background: url("images/icons/console_greyF.png");
@@ -513,7 +513,7 @@ p {
 	background: url("images/icons/console_greenF.png");
 }
 #scope {
-	background: url("images/icons/scope_greyFFF.png");	
+	background: url("images/icons/scope_greyFFF.png");
 }
 #scope:hover {
 	background: url("images/icons/scope_greenFFF.png");
@@ -606,10 +606,10 @@ hr.sep {
 }
 
 /* breakpoints */
-.ace_gutter-cell.ace_breakpoint{ 
-    border-radius: 20px 0px 0px 20px; 
-    box-shadow: 0px 0px 1px 1px red inset; 
-} 
+.ace_gutter-cell.ace_breakpoint{
+    border-radius: 20px 0px 0px 20px;
+    box-shadow: 0px 0px 1px 1px red inset;
+}
 .breakpointMarker {
   position:absolute;
   background:rgba(100,200,100,0.5);
@@ -618,7 +618,7 @@ hr.sep {
 #listContainer{
   margin-top:15px;
 }
- 
+
 #expList ul, li {
     list-style: none;
     margin:0;
@@ -639,7 +639,7 @@ hr.sep {
     padding-left: 20px;
     background-repeat: no-repeat;
 }
- 
+
 /* Collapsed state for list element */
 #expList .collapsed {
     background-image: url(../images/collapsed.png);
@@ -726,8 +726,8 @@ right: calc(100% - 62px);
 
 
 #tabs {
-    margin: 0; 
-	position: relative;   
+    margin: 0;
+	position: relative;
 	width: 100%;
 	height: 100%;
 	top: 0;
@@ -735,7 +735,7 @@ right: calc(100% - 62px);
     }
     /* == Style for each pullout tab == */
     .tab label {
-      background: #bdbdbd; 
+      background: #bdbdbd;
       padding: 12px 0;
       margin: 0 auto;
       width: 65px;
@@ -753,7 +753,7 @@ right: calc(100% - 62px);
     	}
 
     .tab [type=radio] {
-      display: none;   
+      display: none;
     }
     .tab label:hover {
     	background: #c4e4b4;
@@ -808,17 +808,17 @@ right: calc(100% - 62px);
 
 
     /* ======== IMAGES IN EACH TAB FROM SPRITE ======== */
-    
+
     #open-tabs {
     	width: 30px;
     	display: block;
     	margin: 0 auto;
     	cursor: pointer;
-    	  
+
     }
     #tab-0 {
 		background: url("images/icons/arrow2_25.png") center center no-repeat #e8e8e8;
-    	margin-bottom: -3px; 
+    	margin-bottom: -3px;
     	height: 25px;
     	-webkit-transition: 0.2s;
     	transition: 0.2s;
@@ -827,8 +827,8 @@ right: calc(100% - 62px);
 			background: url("images/icons/x25.png") center center no-repeat;
 			-webkit-transition: 0.5s;
 			transition: 0.5s;
-			}    
-    
+			}
+
     #settings {
     	width: 30px;
     	background: url("images/icons/gear-white25.png") no-repeat;
@@ -840,7 +840,7 @@ right: calc(100% - 62px);
     	background: url("images/icons/gear_active.png") no-repeat;
     	cursor: default;
     }
-    
+
     #file-explorer {
     	width: 30px;
     	background: url("images/icons/folder-white25.png") no-repeat;
@@ -851,7 +851,7 @@ right: calc(100% - 62px);
    		background: url("images/icons/folder.png") no-repeat;
    		cursor: default;
     }
-    
+
     #debugger {
     	width: 30px;
     	background: url("images/icons/bug_inactive.png") no-repeat;
@@ -873,7 +873,7 @@ right: calc(100% - 62px);
     	background: url("images/icons/bulb_active.png") no-repeat;
     	cursor: default;
     }
-    
+
     #gpio-ref {
     	width: 28px;
     	background: url("images/icons/gpio_inactive.png") no-repeat;
@@ -887,8 +887,9 @@ right: calc(100% - 62px);
 
     /* Object refers to the HTML object that imports the pin diagram. */
     object {
+			display: block;
     	width: 400px;
-    	height: 600px;
+			min-height: 800px;
     	overflow: auto;
     }
 
@@ -954,7 +955,7 @@ right: calc(100% - 62px);
 .resourceFile, .sourceFile{
 	margin-left: 1em;
 }
-.sourceFile:before, .resourceFile:before{ 
+.sourceFile:before, .resourceFile:before{
     content: "–";
     display: block;
     height: 0;
@@ -980,7 +981,7 @@ span.file-list-size{
 		line-height: 16px;
 		padding-bottom: 4px;
 	}
-.sourceFile:hover { 
+.sourceFile:hover {
     background-color: #e1f2d9;
 }
 .selectedFile, .selectedExample{
@@ -1013,7 +1014,7 @@ span.file-list-size{
 	.tabTable td + td {
 		text-align: left;
 	}
-	
+
 #audioExpanderTable {
 	width: 50%;
 	margin: 10px auto;
@@ -1131,7 +1132,7 @@ button {
 	display: inline-block;
 	vertical-align: middle;
 	border-radius: 5px;
-	
+
 }
 	button:hover {
 		cursor: pointer;

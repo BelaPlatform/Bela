@@ -3706,6 +3706,10 @@ var TabView = function (_View) {
 		value: function _boardString(data) {
 			if (data && data.trim && data.trim() === 'BelaMini') {
 				$('#pin_diagram_object').prop('data', 'diagram_mini.html');
+			} else if (data.trim() === 'CtagFace') {
+				$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
+			} else if (data.trim() === 'CtagBeast') {
+				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
 			}
 		}
 	}]);
