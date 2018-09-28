@@ -5,16 +5,8 @@
 			"name": "analog-output"
 		},
 		{
-			"section": "05-Communication",
-			"name": "MIDI"
-		},
-		{
 			"section": "10-Instruments",
 			"name": "d-box"
-		},
-		{
-			"section": "11-Extras",
-			"name": "measure-noisefloor"
 		},
 		{
 			"section": "11-Extras",
@@ -25,7 +17,7 @@
 			"name": "salt-factory-test"
 		}
 	],
-	"CtagFace": [
+	"Ctag": [
 		{
 			"section": "07-DataLogging",
 			"name": "logging-sensors"
@@ -51,14 +43,6 @@
 			"name": "scope-analog"
 		},
 		{
-			"section": "05-Communication",
-			"name": "MIDI"
-		},
-		{
-			"section": "02-Digital",
-			"name": "bicolor-LEDs"
-		},
-		{
 			"section": "04-Audio",
 			"name": "tremolo"
 		},
@@ -73,10 +57,6 @@
 		{
 			"section": "12-SuperCollider",
 			"name": "4-analog-out"
-		},
-		{
-			"section": "12-SuperCollider",
-			"name": "7-remote-control"
 		},
 		{
 			"section": "12-SuperCollider",
@@ -121,152 +101,6 @@
 		{
 			"section": "14-Csound",
 			"name": "COSMO_FX"
-		},
-		{
-			"section": "terminal-only",
-			"name": "filter-IIR"
-		},
-		{
-			"section": "terminal-only",
-			"name": "filter-FIR"
-		},
-		{
-			"section": "08-PureData",
-			"name": "sample-scrub"
-		},
-		{
-			"section": "08-PureData",
-			"name": "karplusStrong"
-		},
-		{
-			"section": "08-PureData",
-			"name": "midi-cv-midi"
-		},
-		{
-			"section": "08-PureData",
-			"name": "basicAnalogIn"
-		},
-		{
-			"section": "08-PureData",
-			"name": "envelopeTrigger"
-		},
-		{
-			"section": "08-PureData",
-			"name": "rubberDuckie"
-		},
-		{
-			"section": "08-PureData",
-			"name": "basicAnalogOut"
-		},
-		{
-			"section": "08-PureData",
-			"name": "simple-fm"
-		}
-	],
-	"CtagBeast": [
-		{
-			"section": "07-DataLogging",
-			"name": "logging-sensors"
-		},
-		{
-			"section": "09-Capelets",
-			"name": "multiplexer_display"
-		},
-		{
-			"section": "09-Capelets",
-			"name": "audio-expander"
-		},
-		{
-			"section": "03-Analog",
-			"name": "analog-input"
-		},
-		{
-			"section": "03-Analog",
-			"name": "analog-output"
-		},
-		{
-			"section": "03-Analog",
-			"name": "scope-analog"
-		},
-		{
-			"section": "05-Communication",
-			"name": "MIDI"
-		},
-		{
-			"section": "02-Digital",
-			"name": "bicolor-LEDs"
-		},
-		{
-			"section": "04-Audio",
-			"name": "tremolo"
-		},
-		{
-			"section": "12-SuperCollider",
-			"name": "3-analog-in"
-		},
-		{
-			"section": "12-SuperCollider",
-			"name": "4-analog-out"
-		},
-		{
-			"section": "12-SuperCollider",
-			"name": "4-analog-out"
-		},
-		{
-			"section": "12-SuperCollider",
-			"name": "7-remote-control"
-		},
-		{
-			"section": "12-SuperCollider",
-			"name": "6-pattern-control"
-		},
-		{
-			"section": "11-Extras",
-			"name": "cape-test"
-		},
-		{
-			"section": "11-Extras",
-			"name": "tank-wars"
-		},
-		{
-			"section": "11-Extras",
-			"name": "salt-factory-taste"
-		},
-		{
-			"section": "11-Extras",
-			"name": "measure-noisefloor"
-		},
-		{
-			"section": "11-Extras",
-			"name": "gpioAnalogLoopbackTest"
-		},
-		{
-			"section": "11-Extras",
-			"name": "oscillator-bank"
-		},
-		{
-			"section": "06-Sensors",
-			"name": "ultrasonic-distance"
-		},
-		{
-			"section": "06-Sensors",
-			"name": "LDR"
-		},
-		{
-			"section": "10-Instruments",
-			"name": "d-box"
-		},
-		{
-			"section": "14-Csound",
-			"name": "COSMO_FX"
-		},
-		{
-			"section": "terminal-only",
-			"name": "filter-IIR"
-		},
-		{
-			"section": "terminal-only",
-			"name": "filter-FIR"
 		},
 		{
 			"section": "08-PureData",
