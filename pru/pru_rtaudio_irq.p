@@ -445,6 +445,7 @@
 .mparam error
 MOV r27, error
 SBBO r27, reg_comm_addr, COMM_ERROR_OCCURED, 4
+MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
 .endm
 
 .macro BELA_MINI_OR_JMP_TO
@@ -928,9 +929,10 @@ START:
      MOV r4, 0
      XOUT SCRATCHPAD_ID_BANK2, r0, 20
 
-     // Configure PRU to receive external events
+     // Configure PRU to receive external events: disable all MII_RT events
      PRU_ICSS_CFG_REG_WRITE_EXT CFG_REG_MII_RT, 0x0
 
+#ifdef AAA
      // Set polarity of system events
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SIPR0, 0xFFFFFFFF
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SIPR1, 0xFFFFFFFF
@@ -962,6 +964,7 @@ START:
 
      // Globally enable all interrupts
      PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_GER, 0x1
+#endif
 PRU_INTC_INIT_DONE:
 
      // Load useful registers for addressing SPI
@@ -1429,7 +1432,7 @@ INNER_EVENT_LOOP:
      JMP START // TODO: should HALT and wait for ARM to restart
 MCASP_CHECK_TX_ERROR_END:
 
-     QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH0
+     QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH1
 /* ########## EVENT LOOP END ########## */
      
 

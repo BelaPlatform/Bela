@@ -40,8 +40,26 @@
 #endif
 
 #ifdef BELA_USE_RTDM
+#if __has_include("/opt/rtdm_pruss_irq/rtdm_pruss_irq.h")
+#include </opt/rtdm_pruss_irq/rtdm_pruss_irq.h>
+#else /* has_include */
+#define RTDM_PRUSS_IRQ_VERSION 0
+#endif /* has_include */
+#endif /* BELA_USE_RTDM */
+
+#ifdef BELA_USE_RTDM
+#define PRU_SYSTEM_EVENT_RTDM 20 // should match the one in pru/pru_rtaudio.p
+#define PRU_SYSTEM_EVENT_MCASP 20 // should match the one in pru/pru_rtaudio.p
+static unsigned int pru_system_event_rtdm = PRU_SYSTEM_EVENT_RTDM;
 static char rtdm_driver[] = "/dev/rtdm/rtdm_pruss_irq_0";
-static int rtdm_fd;
+static int rtdm_fd_pru_to_arm = 0;
+#if RTDM_PRUSS_IRQ_VERSION >= 1
+#define PRU_SYS_EV_MCASP_RX_INTR    54 // mcasp_r_intr_pend
+#define PRU_SYS_EV_MCASP_TX_INTR    55 // mcasp_x_intr_pend
+static const uint8_t pru_system_events_mcasp[] = {PRU_SYS_EV_MCASP_RX_INTR, PRU_SYS_EV_MCASP_TX_INTR};
+enum {mcasp_to_pru_channel = 1};
+static int rtdm_fd_mcasp_to_pru = 0;
+#endif /* RTDM_PRUSS_IRQ_VERSION >= 1 */
 #endif
 
 // Xenomai-specific includes
@@ -652,25 +670,6 @@ void PRU::initialisePruCommon()
 // Run the code image in the specified file
 int PRU::start(char * const filename)
 {
-#ifdef BELA_USE_RTDM
-	// Open RTDM driver
-	// NOTE: if this is moved later on, (e.g.: at the beginning of loop())
-	// it will often hang the system (especially for small blocksizes).
-	// Not sure why this would happen, perhaps a race condition between the PRU
-	// and the rtdm_driver?
-	if ((rtdm_fd = __wrap_open(rtdm_driver, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\n", errno, strerror(errno));
-		if(errno == EBUSY) // Device or resource busy
-		{
-			fprintf(stderr, "Another program is already running?\n");
-		}
-		if(errno == ENOENT) // No such file or directory
-		{
-			fprintf(stderr, "Maybe try\n  modprobe rtdm_pruss_irq\n?\n");
-		}
-		return 1;
-	}
-#endif
 	switch(belaHw)
 	{
 		case BelaHw_Bela:
@@ -695,6 +694,68 @@ int PRU::start(char * const filename)
 			return 1;
 	}
 
+#if RTDM_PRUSS_IRQ_VERSION < 1
+        if(pruUsesMcaspIrq)
+        {
+                fprintf(stderr, "Error: the installed rtdm_pruss_irq driver cannot be used in conjunction with McASP interrupts. Update the driver\n");
+                return -1;
+        }
+
+#endif /* RTDM_PRUSS_IRQ_VERSION */
+#ifdef BELA_USE_RTDM
+        // Open RTDM driver
+        // NOTE: if this is moved later on, (e.g.: at the beginning of loop())
+        // it will often hang the system (especially for small blocksizes).
+        // Not sure why this would happen, perhaps a race condition between the PRU
+        // and the rtdm_driver?
+        if ((rtdm_fd_pru_to_arm = __wrap_open(rtdm_driver, O_RDWR)) < 0) {
+                fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\n", errno, strerror(errno));
+                if(errno == EBUSY) // Device or resource busy
+                {
+                        fprintf(stderr, "Another program is already running?\n");
+                }
+                if(errno == ENOENT) // No such file or directory
+                {
+                        fprintf(stderr, "Maybe try\n  modprobe rtdm_pruss_irq\n?\n");
+                }
+                return 1;
+        }
+#if RTDM_PRUSS_IRQ_VERSION >= 1
+        // From version 1 onwards, we need to specify the PRU system event we want to receive interrupts from (see rtdm_pruss_irq.h)
+        // For rtdm_fd_pru_to_arm we use the default mapping
+        int ret = __wrap_ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_REGISTER, pru_system_event_rtdm);
+        if(ret)
+        {
+                fprintf(stderr, "ioctl failed: %d %s\n", -ret, strerror(-ret));
+                return 1;
+        }
+        if(pruUsesMcaspIrq)
+	{
+                if ((rtdm_fd_mcasp_to_pru = __wrap_open(rtdm_driver, O_RDWR)) < 0) {
+                        fprintf(stderr, "Unable to open rtdm driver to register McASP interrupts: (%d) %s.\n", errno, strerror(errno));
+                        return 1;
+                }
+                // For rtdm_fd_mcasp_to_pru we use an arbitrary mapping to set up
+                // the McASP to PRU interrupt.
+                // We use PRU-INTC channel 0, which will trigger the PRUs R31.t30
+                // This will not propagate to ARM (in
+                // fact we have to mask it from ARM elsewhere), so no Linux/rtdm
+                // IRQ is set up by the driver and we will not be able/need to
+                // call `read()` on  `rtdm_fd_mcasp_to_pru`.
+                struct rtdm_pruss_irq_registration rtdm_struct;
+                rtdm_struct.pru_system_events = pru_system_events_mcasp;
+                rtdm_struct.pru_system_events_count = sizeof(pru_system_events_mcasp);
+                rtdm_struct.pru_intc_channel = mcasp_to_pru_channel;
+                rtdm_struct.pru_intc_host = mcasp_to_pru_channel;
+                int ret = __wrap_ioctl(rtdm_fd_mcasp_to_pru, RTDM_PRUSS_IRQ_REGISTER_FULL, &rtdm_struct);
+                if(ret)
+                {
+                        fprintf(stderr, "ioctl failed: %d %s\n", -ret, strerror(-ret));
+                        return 1;
+                }
+	}
+#endif /* RTDM_PRUSS_IRQ_VERSION >= 1 */
+#endif /* BELA_USE_RTDM */
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon();
 
@@ -846,7 +907,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// make sure we always sleep a tiny bit to prevent hanging the board
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
-		int ret = __wrap_read(rtdm_fd, NULL, 0);
+		int ret = __wrap_read(rtdm_fd_pru_to_arm, NULL, 0);
 		testPruError();
 		if(ret < 0)
 		{
@@ -1401,8 +1462,13 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	}
 
 #if defined(BELA_USE_RTDM)
-        __wrap_close(rtdm_fd);
-#endif
+        if(rtdm_fd_pru_to_arm)
+                __wrap_close(rtdm_fd_pru_to_arm);
+#if RTDM_PRUSS_IRQ_VERSION >= 1
+        if(rtdm_fd_pru_to_arm)
+                __wrap_close(rtdm_fd_mcasp_to_pru);
+#endif /* RTDM_PRUSS_IRQ_VERSION */
+#endif /* BELA_USE_RTDM */
 
 	// Tell PRU to stop
 	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
@@ -1452,7 +1518,7 @@ void PRU::waitForFinish()
 #endif
 #ifdef BELA_USE_RTDM
 	int value;
-	read(rtdm_fd, &value, sizeof(value));
+	__wrap_read(rtdm_fd_pru_to_arm, &value, sizeof(value));
 #endif
 	return;
 }
