@@ -4,16 +4,16 @@ var View = require('./View');
 var _tabsOpen = false;
 
 class TabView extends View {
-	
+
 	constructor(){
-	
+
 		super('tab');
 
-		// open/close tabs 
+		// open/close tabs
 		$('#flexit').on('click', () => {
 			if (_tabsOpen){
 				this.closeTabs();
-			} else {				
+			} else {
 				this.openTabs();
 			}
 		});
@@ -27,7 +27,7 @@ class TabView extends View {
 				e.stopPropagation();
 			}
 		});
-		
+
 		// golden layout
 		var layout = new GoldenLayout({
 			settings:{
@@ -77,11 +77,11 @@ class TabView extends View {
 		layout.registerComponent( 'Console', function( container, componentState ){
 			container.getElement().append($('#beaglert-console'));
 		});
-		
+
 		layout.init();
 		layout.on('initialised', () => this.emit('change') );
 		layout.on('stateChanged', () => this.emit('change') );
-		
+
 		$(window).on('resize', () => {
 			if (_tabsOpen){
 				this.openTabs();
@@ -89,16 +89,16 @@ class TabView extends View {
 				this.closeTabs();
 			}
 		});
-		
+
 		this.on('open-tab', (id) => $('#'+id).siblings('label').trigger('click') );
 		this.on('toggle', () => {
 			if (_tabsOpen) this.closeTabs();
 			else this.openTabs();
 		});
 		this.on('boardString', this._boardString);
-		
+
 	}
-	
+
 	openTabs(){
 		$('#editor').css('right', '500px');
 		$('#top-line').css('margin-right', '500px');
@@ -106,7 +106,7 @@ class TabView extends View {
 		_tabsOpen = true;
 		this.emit('change');
 		$('#tab-0').addClass('open');
-		
+
 		// fix pd patch
 		$('#pd-svg-parent').css({
 			'max-width'	: $('#editor').width()+'px',
@@ -121,15 +121,15 @@ class TabView extends View {
 		_tabsOpen = false;
 		this.emit('change');
 		$('#tab-0').removeClass('open');
-		
+
 		// fix pd patch
 		$('#pd-svg-parent').css({
 			'max-width'	: $('#editor').width()+'px',
 			'max-height': $('#editor').height()+'px'
 		});
-		
+
 	}
-	
+
 	getOpenTab(){
 		if (!_tabsOpen) return false;
 		return $('[type=radio]:checked ~ label').prop('for');
@@ -147,8 +147,12 @@ class TabView extends View {
 		{
 			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
 		}
+		else if (data.trim() === 'CtagFaceBela')
+		{
+			$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
+		}
 	}
-	
+
 }
 
 module.exports = new TabView();
