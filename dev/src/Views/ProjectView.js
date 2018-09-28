@@ -3,17 +3,17 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 
 class ProjectView extends View {
-	
+
 	constructor(className, models){
 		super(className, models);
-		
+
 		//this.exampleChanged = false;
 		this.on('example-changed', () => this.exampleChanged = true );
 	}
 
 	// UI events
 	selectChanged($element, e){
-	
+
 		if (this.exampleChanged){
 			this.exampleChanged = false;
 			popup.exampleChanged( () => {
@@ -27,7 +27,7 @@ class ProjectView extends View {
 		}
 
 		this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()})
-		
+
 	}
 	buttonClicked($element, e){
 		var func = $element.data().func;
@@ -35,7 +35,7 @@ class ProjectView extends View {
 			this[func](func);
 		}
 	}
-	
+
 	newProject(func){
 
 		if (this.exampleChanged){
@@ -43,11 +43,11 @@ class ProjectView extends View {
 			popup.exampleChanged(this.newProject.bind(this), func, 500, () => this.exampleChanged = true );
 			return;
 		}
-				
+
 		// build the popup content
 		popup.title('Creating a new project');
 		popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
-		
+
 		var form = [];
 		form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
 		form.push('<label for="popup-C">C++</label>')
@@ -65,42 +65,42 @@ class ProjectView extends View {
 		form.push('</br>');
 		form.push('<button type="submit" class="button popup-save">Create</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('message', 'project-event', {
-				func, 
+				func,
 				newProject	: sanitise(popup.find('input[type=text]').val()),
 				projectType	: popup.find('input[type=radio]:checked').data('type')
 			});
 			popup.hide();
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
 		popup.show();
 
 	}
 	saveAs(func){
-	
+
 		// build the popup content
 		popup.title('Saving project');
 		popup.subtitle('Enter the name of your project');
-		
+
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the new project name">');
 		form.push('</br >');
 		form.push('<button type="submit" class="button popup-save">Save</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('message', 'project-event', {func, newProject: sanitise(popup.find('input[type=text]').val())});
 			popup.hide();
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
 		popup.show();
 
 	}
@@ -109,34 +109,34 @@ class ProjectView extends View {
 		// build the popup content
 		popup.title('Deleting project');
 		popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
-		
+
 		var form = [];
 		form.push('<button type="submit" class="button popup-delete">Delete</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('message', 'project-event', {func});
 			popup.hide();
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
 		popup.show();
-		
+
 		popup.find('.popup-delete').trigger('focus');
-		
+
 	}
 	cleanProject(func){
 		this.emit('message', 'project-event', {func});
 	}
-	
+
 	// model events
 	_projectList(projects, data){
 
 		var $projects = $('#projects');
 		$projects.empty();
-		
+
 		// add an empty option to menu and select it
 		var opt = $('<option></option>').attr({'value': '', 'selected': 'selected'}).html('--Projects--').appendTo($projects);
 
@@ -146,9 +146,9 @@ class ProjectView extends View {
 				var opt = $('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
 			}
 		}
-		
+
 		if (data && data.currentProject) this._currentProject(data.currentProject);
-		
+
 	}
 	_exampleList(examplesDir){
 
@@ -158,10 +158,11 @@ class ProjectView extends View {
 		if (!examplesDir.length) return;
 
 		for (let item of examplesDir){
-			let ul = $('<ul></ul>').html(item.name+':');
+			let ul = $('<ul></ul>').html(item.name+':')
+
 			for (let child of item.children){
 				if (child && child.length && child[0] === '.') continue;
-				$('<li></li>').addClass('sourceFile').html(child).appendTo(ul)
+				$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).attr('id', item.name+'/'+child)
 					.on('click', (e) => {
 
 						if (this.exampleChanged){
@@ -176,25 +177,46 @@ class ProjectView extends View {
 							}, undefined, 0, () => this.exampleChanged = true );
 							return;
 						}
-							
+
+
 						this.emit('message', 'project-event', {
 							func: 'openExample',
 							currentProject: item.name+'/'+child
 						});
 						$('.selectedExample').removeClass('selectedExample');
 						$(e.target).addClass('selectedExample');
-						
+
 					});
 			}
 			ul.appendTo($examples);
 		}
-		
+
+	}
+	_boardString(data){
+		var boardString;
+		if(data && data.trim)
+			boardString = data.trim();
+		else
+			return
+
+		$.getJSON( "../example_except.json", function( data ) {
+			if (boardString in data)
+			{
+				for(var example in data[boardString]) {
+				  var exampleId = data[boardString][example].section+"/"+data[boardString][example].name;
+					try{
+						 document.getElementById(exampleId).style.display = 'none';
+					}
+					catch(err){}
+				}
+			}
+		})
 	}
 	_currentProject(project){
-	
+
 		// unselect currently selected project
 		$('#projects').find('option').filter(':selected').attr('selected', '');
-		
+
 		if (project === 'exampleTempProject'){
 			// select no project
 			$('#projects').val($('#projects > option:first').val());
@@ -205,16 +227,16 @@ class ProjectView extends View {
 			// unselect currently selected example
 			$('.selectedExample').removeClass('selectedExample');
 		}
-		
+
 		// set download link
 		$('#downloadLink').attr('href', '/download?project='+project);
-		
+
 	}
-	
+
 	__currentProject(){
 		this.exampleChanged = false;
 	}
-	
+
 	subDirs(dir){
 		var ul = $('<ul></ul>').html(dir.name+':');
 		for (let child of dir.children){
@@ -227,8 +249,7 @@ class ProjectView extends View {
 		}
 		return ul;
 	}
-	
+
 }
 
 module.exports = ProjectView;
-

@@ -4,7 +4,7 @@ var popup = require('../popup');
 var inputChangedTimeout;
 
 class SettingsView extends View {
-	
+
 	constructor(className, models, settings){
 		super(className, models, settings);
 		//this.$elements.filter('input').on('change', (e) => this.selectChanged($(e.currentTarget), e));
@@ -14,12 +14,12 @@ class SettingsView extends View {
 				function() { return $(this).data(prop)==val; }
 			);
 		}
-		
+
 		$('#runOnBoot').on('change', () => {
 			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
 				this.emit('run-on-boot', $('#runOnBoot').val());
 		});
-				
+
 		$('.audioExpanderCheck').on('change', e => {
 			var inputs = '', outputs = '';
 			$('.audioExpanderCheck').each(function(){
@@ -37,9 +37,9 @@ class SettingsView extends View {
 
 			this.emit('project-settings', {func: 'setCLArgs', args: [{key: '-Y', value: inputs}, {key: '-Z', value: outputs}] });
 		});
-		
+
 	}
-	
+
 	selectChanged($element, e){
 		var data = $element.data();
 		var func = data.func;
@@ -73,108 +73,108 @@ class SettingsView extends View {
 			}
 		}
 	}
-	
+
 	setCLArg(func, key, value){
 		this.emit('project-settings', {func, key, value});
 	}
 	restoreDefaultCLArgs(func){
-		
+
 		// build the popup content
 		popup.title('Restoring default project settings');
 		popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
-		
+
 		var form = [];
 		form.push('<button type="submit" class="button popup-continue">Continue</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('project-settings', {func});
 			popup.hide();
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
 		popup.show();
-		
+
 		popup.find('.popup-continue').trigger('focus');
 
 	}
-	
+
 	setIDESetting(func, key, value){
 		this.emit('IDE-settings', {func, key, value: value});
 	}
 	restoreDefaultIDESettings(func){
-		
+
 		// build the popup content
 		popup.title('Restoring default IDE settings');
 		popup.subtitle('Are you sure you wish to continue? Your current IDE settings will be lost!');
-		
+
 		var form = [];
 		form.push('<button type="submit" class="button popup-continue">Continue</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('IDE-settings', {func});
 			popup.hide();
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
 		popup.show();
-		
+
 		popup.find('.popup-continue').trigger('focus');
-		
+
 	}
-	
+
 	shutdownBBB(){
-	
+
 		// build the popup content
 		popup.title('Shutting down Bela');
 		popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
-		
+
 		var form = [];
 		form.push('<button type="submit" class="button popup-continue">Continue</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('halt');
 			popup.hide();
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
 		popup.show();
-		
+
 		popup.find('.popup-continue').trigger('focus');
-	
+
 	}
 	aboutPopup(){
-		
+
 		// build the popup content
 		popup.title('About Bela');
 		popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 		var form = [];
 		form.push('<button type="submit" class="button popup-continue">Close</button>');
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			popup.hide();
 		});
-				
+
 		popup.show();
-		
+
 		popup.find('.popup-continue').trigger('focus');
-		
+
 	}
 	updateBela(){
-	
+
 		// build the popup content
 		popup.title('Updating Bela');
 		popup.subtitle('Please select the update zip archive');
-		
+
 		var form = [];
 		form.push('<input id="popup-update-file" type="file">');
 		form.push('</br>');
@@ -186,50 +186,50 @@ class SettingsView extends View {
 			method	: 'get',
 			enctype	: 'multipart/form-data'
 		});*/
-		
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
-		
+
 			//console.log('submitted', e);
-			
+
 			e.preventDefault();
-			
+
 			var file = popup.find('input[type=file]').prop('files')[0];
-			
+
 			//console.log('input', popup.find('input[type=file]'));
 			//console.log('file', file);
-			
+
 			if (file){
-			
+
 				this.emit('warning', 'Beginning the update - this may take several minutes');
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 				this.emit('warning', 'Do not use the IDE during the update process!');
-				
+
 				popup.hide('keep overlay');
-				
+
 				var reader = new FileReader();
 				reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
 				reader.readAsArrayBuffer(file);
-				
+
 			} else {
-			
+
 				this.emit('warning', 'not a valid update zip archive');
 				popup.hide();
-				
+
 			}
-			
+
 		});
-		
+
 		popup.find('.popup-cancel').on('click', popup.hide );
-				
+
 		popup.show();
-		
+
 	}
-	
+
 	// model events
 	__CLArgs(data){
 
 		for (let key in data) {
-		
+
 			if (key === '-Y' || key === '-Z'){
 				this.setAudioExpander(key, data[key]);
 				continue;
@@ -239,7 +239,7 @@ class SettingsView extends View {
 				else
 					$('#audioExpanderTable').css('display', 'none');
 			}
-		
+
 			let el = this.$elements.filterByData('key', key);
 
 			// set the input value
@@ -249,8 +249,8 @@ class SettingsView extends View {
 				//console.log(el.val(), data[key]);
 				el.val(data[key]);
 			}
-			
-			
+
+
 		}
 
 	}
@@ -263,10 +263,10 @@ class SettingsView extends View {
 
 		var $projects = $('#runOnBoot');
 		$projects.empty();
-		
+
 		// add a none option
 		$('<option></option>').attr('value', '*none*').html('•none•').appendTo($projects);
-		
+
 		// add a loop_* option
 		$('<option></option>').attr('value', '*loop*').html('•loop_*•').appendTo($projects);
 
@@ -276,11 +276,11 @@ class SettingsView extends View {
 				$('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
 			}
 		}
-		
+
 	}
-	
+
 	useAudioExpander(func, key, val){
-		
+
 		if (val == 1) {
 			$('#audioExpanderTable').css('display', 'table');
 			this.setCLArg('setCLArg', key, val);
@@ -289,21 +289,21 @@ class SettingsView extends View {
 			// clear channel picker
 			$('.audioExpanderCheck').prop('checked', false);
 			this.emit('project-settings', {func: 'setCLArgs', args: [
-				{key: '-Y', value: ''}, 
+				{key: '-Y', value: ''},
 				{key: '-Z', value: ''},
 				{key, value: val}
 			] });
 		}
 	}
-	
+
 	setAudioExpander(key, val){
-		
+
 		if (!val.length) return;
-		
+
 		var channels = val.split(',');
 
 		if (!channels.length) return;
-		
+
 		$('.audioExpanderCheck').each( function(){
 			let $this = $(this);
 			if (($this.data('func') === 'input' && key === '-Y') || ($this.data('func') === 'output' && key === '-Z')){
@@ -311,20 +311,55 @@ class SettingsView extends View {
 				for (let channel of channels){
 					if (channel == $this.data('channel'))
 						checked = true;
-				}	
-				$this.prop('checked', checked);	
+				}
+				$this.prop('checked', checked);
 			}
 		});
-		
+
 	}
 
 	_boardString(data){
-		if (data && data.trim && data.trim() === 'BelaMini'){
+		var boardString;
+		if(data && data.trim)
+			boardString = data.trim();
+		else
+			return
+
+		if (boardString === 'BelaMini') {
 			$('.capelet-settings').css('display', 'none');
 			$('#mute-speaker').parent().parent().css('display', 'none');
 		} else {
 			$('#disable-led').parent().parent().css('display', 'none');
-		}	
+		}
+
+		if(boardString === ('CtagFace' || 'CtagBeast')) {
+			$('.capelet-settings').css('display', 'none');
+			$('#mute-speaker').parent().parent().css('display', 'none');
+			$('#analog-channels').parent().parent().css('display', 'none');
+			$('#analog-samplerate').parent().parent().css('display', 'none');
+			$('#hp-level').parent().parent().css('display', 'none');
+			$('#use-analog').parent().parent().css('display', 'none');
+			$('#dac-level').parent().parent().css('display', 'none');
+			$('#pga-left').parent().parent().css('display', 'none');
+			$('#pga-right').parent().parent().css('display', 'none');
+		} else if(boardString === ('CtagFaceBela' || 'CtagBeastBela')) {
+			$('.capelet-settings').css('display', 'none');
+			$('#mute-speaker').parent().parent().css('display', 'none');
+			$('#hp-level').parent().parent().css('display', 'none');
+			$('#use-analog').parent().parent().css('display', 'none');
+			$('#pga-left').parent().parent().css('display', 'none');
+			$('#pga-right').parent().parent().css('display', 'none');
+			var sRates = $('#analog-samplerate').children("option");
+			for (var i = 0; i < sRates.length; i++) {
+				var rate = sRates[i].innerHTML;
+				if(rate == '88200') {
+					sRates[i].remove();
+					$("#analog-channels option[value='2']").remove();
+				} else if (rate == "44100") {
+					sRates[i].innerHTML = "44800";
+				}
+			}
+		}
 	}
 }
 

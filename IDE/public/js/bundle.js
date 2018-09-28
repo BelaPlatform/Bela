@@ -435,7 +435,7 @@ settingsView.on('error', function (text) {
 });
 
 // project view
-var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);
+var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project, models.settings]);
 projectView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -648,7 +648,7 @@ socket.on('init', function (data) {
 		return projectView.emit('example-changed');
 	});
 
-	// socket.io timeout	
+	// socket.io timeout
 	socket.io.engine.pingTimeout = 6000;
 	socket.io.engine.pingInterval = 3000;
 });
@@ -3014,6 +3014,7 @@ var ProjectView = function (_View) {
 					var item = _step.value;
 
 					var ul = $('<ul></ul>').html(item.name + ':');
+
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
 					var _iteratorError2 = undefined;
@@ -3023,7 +3024,7 @@ var ProjectView = function (_View) {
 							var child = _step2.value;
 
 							if (child && child.length && child[0] === '.') return 'continue';
-							$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).on('click', function (e) {
+							$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).attr('id', item.name + '/' + child).on('click', function (e) {
 
 								if (_this6.exampleChanged) {
 									_this6.exampleChanged = false;
@@ -3089,6 +3090,23 @@ var ProjectView = function (_View) {
 					}
 				}
 			}
+		}
+	}, {
+		key: '_boardString',
+		value: function _boardString(data) {
+			var boardString;
+			if (data && data.trim) boardString = data.trim();else return;
+
+			$.getJSON("../example_except.json", function (data) {
+				if (boardString in data) {
+					for (var example in data[boardString]) {
+						var exampleId = data[boardString][example].section + "/" + data[boardString][example].name;
+						try {
+							document.getElementById(exampleId).style.display = 'none';
+						} catch (err) {}
+					}
+				}
+			});
 		}
 	}, {
 		key: '_currentProject',
@@ -3530,11 +3548,43 @@ var SettingsView = function (_View) {
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
-			if (data && data.trim && data.trim() === 'BelaMini') {
+			var boardString;
+			if (data && data.trim) boardString = data.trim();else return;
+
+			if (boardString === 'BelaMini') {
 				$('.capelet-settings').css('display', 'none');
 				$('#mute-speaker').parent().parent().css('display', 'none');
 			} else {
 				$('#disable-led').parent().parent().css('display', 'none');
+			}
+
+			if (boardString === ('CtagFace' || 'CtagBeast')) {
+				$('.capelet-settings').css('display', 'none');
+				$('#mute-speaker').parent().parent().css('display', 'none');
+				$('#analog-channels').parent().parent().css('display', 'none');
+				$('#analog-samplerate').parent().parent().css('display', 'none');
+				$('#hp-level').parent().parent().css('display', 'none');
+				$('#use-analog').parent().parent().css('display', 'none');
+				$('#dac-level').parent().parent().css('display', 'none');
+				$('#pga-left').parent().parent().css('display', 'none');
+				$('#pga-right').parent().parent().css('display', 'none');
+			} else if (boardString === ('CtagFaceBela' || 'CtagBeastBela')) {
+				$('.capelet-settings').css('display', 'none');
+				$('#mute-speaker').parent().parent().css('display', 'none');
+				$('#hp-level').parent().parent().css('display', 'none');
+				$('#use-analog').parent().parent().css('display', 'none');
+				$('#pga-left').parent().parent().css('display', 'none');
+				$('#pga-right').parent().parent().css('display', 'none');
+				var sRates = $('#analog-samplerate').children("option");
+				for (var i = 0; i < sRates.length; i++) {
+					var rate = sRates[i].innerHTML;
+					if (rate == '88200') {
+						sRates[i].remove();
+						$("#analog-channels option[value='2']").remove();
+					} else if (rate == "44100") {
+						sRates[i].innerHTML = "44800";
+					}
+				}
 			}
 		}
 	}]);

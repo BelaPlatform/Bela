@@ -14,7 +14,7 @@ models.git = new Model();
 
 // hack to prevent first status update causing wrong notifications
 models.status.setData({running: false, building: false});
- 
+
 // set up views
 // tab view
 var tabView = require('./Views/TabView');
@@ -43,7 +43,7 @@ settingsView.on('upload-update', data => socket.emit('upload-update', data) );
 settingsView.on('error', text => consoleView.emit('warn', text) );
 
 // project view
-var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project]);
+var projectView = new (require('./Views/ProjectView'))('projectManager', [models.project, models.settings]);
 projectView.on('message', (event, data) => {
 	if (!data.currentProject && models.project.getKey('currentProject')){
 		data.currentProject = models.project.getKey('currentProject');
@@ -144,8 +144,8 @@ consoleView.on('focus', (focus) =>  models.project.setKey('focus', focus) );
 consoleView.on('open-file', (fileName, focus) => {
 	var data = {
 		func: 'openFile',
-		fileName, 
-		focus, 
+		fileName,
+		focus,
 		currentProject: models.project.getKey('currentProject')
 	};
 	socket.emit('project-event', data);
@@ -167,7 +167,7 @@ documentationView.on('open-example', (example) => {
 		}, undefined, 0, () => projectView.exampleChanged = true );
 		return;
 	}
-		
+
 	projectView.emit('message', 'project-event', {
 		func: 'openExample',
 		currentProject: example
@@ -201,16 +201,16 @@ socket.on('report-error', (error) => consoleView.emit('warn', error.message || e
 socket.on('init', (data) => {
 
 	consoleView.connect();
-	
+
 	var timestamp = performance.now()
-	socket.emit('project-event', {func: 'openProject', currentProject: data.settings.project, timestamp})	
+	socket.emit('project-event', {func: 'openProject', currentProject: data.settings.project, timestamp})
 	consoleView.emit('openNotification', {func: 'init', timestamp});
-	
+
 	models.project.setData({projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project});
 	models.settings.setData(data.settings);
-	
+
 	$('#runOnBoot').val(data.boot_project);
-	
+
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
 	console.log('running on', data.board_string);
@@ -218,21 +218,21 @@ socket.on('init', (data) => {
 	tabView.emit('boardString', data.board_string);
 
 	// TODO! models.status.setData(data[5]);
-	
+
 	//models.project.print();
 	//models.settings.print();
-	
+
 	socket.emit('set-time', new Date().toString());
-	
+
 	documentationView.emit('init');
-	
+
 	// hack to stop changes to read-only example being overwritten when opening a new tab
 	if (data.settings.project === 'exampleTempProject') models.project.once('set', () => projectView.emit('example-changed') );
 
-	// socket.io timeout	
+	// socket.io timeout
 	socket.io.engine.pingTimeout = 6000;
 	socket.io.engine.pingInterval = 3000;
-	
+
 });
 
 // project events
@@ -345,21 +345,21 @@ function setModifiedTimeInterval(mtime){
 // current file changed
 var fileChangedPopupVisible = false;
 function fileChangedPopup(fileName){
-	
+
 	if (fileChangedPopupVisible) return;
-	
+
 	popup.title('File Changed on Disk');
 	popup.subtitle('Would you like to reload '+fileName+'?');
-	
+
 	var form = [];
 	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
 	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
-	
+
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
 		fileChangedPopupVisible = false;
 		e.preventDefault();
 		var data = {
-			func			: 'openProject', 
+			func			: 'openProject',
 			currentProject	: models.project.getKey('currentProject'),
 			timestamp		: performance.now()
 		};
@@ -367,13 +367,13 @@ function fileChangedPopup(fileName){
 		consoleView.emit('openNotification', data);
 		popup.hide();
 	});
-	
+
 	popup.find('.popup-cancel').on('click', () => {
 		popup.hide();
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
 	});
-	
+
 	popup.show();
 	fileChangedPopupVisible = true;
 }
@@ -393,16 +393,16 @@ models.project.on('change', (data, changedKeys) => {
 
 	// set the browser tab title
 	$('title').html((data.fileName ? data.fileName+', ' : '')+projectName);
-	
+
 	// set the top-line stuff
 	$('#top-open-project').html(projectName ? 'Project: '+projectName : '');
 	$('#top-open-file').html(data.fileName ? 'File: '+data.fileName : '');
-	
+
 	if (data.exampleName){
 		$('#top-example-docs').css('visibility', 'visible');
 		$('#top-example-docs-link').prop('href', 'documentation/'+data.exampleName+'_2render_8cpp-example.html');
 	} else {
-		$('#top-example-docs').css('visibility', 'hidden');	
+		$('#top-example-docs').css('visibility', 'hidden');
 	}
 
 });
@@ -421,13 +421,13 @@ models.status.on('change', (data, changedKeys) => {
 // history
 {
 	let lastState = {}, poppingState = true;
-	
+
 	// file / project changed
 	models.project.on('change', (data, changedKeys) => {
 		if (changedKeys.indexOf('currentProject') !== -1 || changedKeys.indexOf('fileName') !== -1){
 			var state = {file: data.fileName, project: data.currentProject};
 			if (state.project !== lastState.project || state.file !== lastState.file){
-				
+
 				if (!poppingState){
 					//console.log('push', state);
 					history.pushState(state, null, null);
@@ -460,17 +460,17 @@ models.status.on('change', (data, changedKeys) => {
 function parseErrors(data){
 //console.log('parsing', data, data.split('\n'));
 	data = data.split('\n');
-	
+
 	var errors = [];
 	for (let i=0; i<data.length; i++){
 
 		// ignore errors which begin with 'make'
 		if (data[i].length > 1 && data[i].slice(0,4) !== 'make'){
-	
+
 			var msg = data[i].split('\n');
-		
+
 			for (let j=0; j<msg.length; j++){
-		
+
 				var str = msg[j].split(':');
 				// console.log(str);
 				// str[0] -> file name + path
@@ -478,7 +478,7 @@ function parseErrors(data){
 				// str[2] -> column number
 				// str[3] -> type of error
 				// str[4+] > error message
-			
+
 				if (str[3] === ' error'){
 					errors.push({
 						file: str[0].split('/').pop(),
@@ -505,7 +505,7 @@ function parseErrors(data){
 					});
 				} else if (str[0] == 'pasm'){
 					errors.push({
-						file: str[1].split(' ')[1].split('(')[0], 
+						file: str[1].split(' ')[1].split('(')[0],
 						row: parseInt(str[1].split(' ')[1].split('(')[1].split(')')[0])-1,
 						column: '',
 						text: '[pasm] '+str[2].substring(1),
@@ -530,7 +530,7 @@ function parseErrors(data){
 			type: 'error'
 		});
 	}
-	
+
 	var currentFileErrors = [], otherFileErrors = [];
 	for (let err of errors){
 		if (!err.file || err.file === models.project.getKey('fileName')){
@@ -542,11 +542,11 @@ function parseErrors(data){
 			otherFileErrors.push(err);
 		}
 	}
-	
+
 	models.error.setKey('allErrors', errors);
 	models.error.setKey('currentFileErrors', currentFileErrors);
 	models.error.setKey('otherFileErrors', otherFileErrors);
-	
+
 	models.error.setKey('verboseSyntaxError', data);
 
 }
