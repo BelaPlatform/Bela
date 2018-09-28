@@ -356,7 +356,7 @@ class SettingsView extends View {
 					sRates[i].remove();
 					$("#analog-channels option[value='2']").remove();
 				} else if (rate == "44100") {
-					sRates[i].innerHTML = "44800";
+					sRates[i].innerHTML = "48000";
 				}
 			}
 		}
