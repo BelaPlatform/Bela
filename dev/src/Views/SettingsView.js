@@ -340,7 +340,7 @@ class SettingsView extends View {
 			},
 			CtagOnly: {
 				sections: ['capelet-settings'],
-				subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'dac-level']
+				subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'adc-level']
 			}
 		}
 

@@ -3570,7 +3570,7 @@ var SettingsView = function (_View) {
 				},
 				CtagOnly: {
 					sections: ['capelet-settings'],
-					subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'dac-level']
+					subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'adc-level']
 				}
 			};
 
@@ -3578,6 +3578,7 @@ var SettingsView = function (_View) {
 				sections: null,
 				subsections: null
 			};
+
 			if (boardString === 'BelaMini') {
 				exceptions['sections'] = settingExceptions['BelaMini']['sections'];
 				exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
