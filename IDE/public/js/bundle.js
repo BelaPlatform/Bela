@@ -3097,10 +3097,14 @@ var ProjectView = function (_View) {
 			var boardString;
 			if (data && data.trim) boardString = data.trim();else return;
 
+			var exceptString = boardString;
+			if (exceptString === "CtagFace" || "CtagBeast") exceptString = 'Ctag';
+
 			$.getJSON("../example_except.json", function (data) {
-				if (boardString in data) {
-					for (var example in data[boardString]) {
-						var exampleId = data[boardString][example].section + "/" + data[boardString][example].name;
+
+				if (exceptString in data) {
+					for (var example in data[exceptString]) {
+						var exampleId = data[exceptString][example].section + "/" + data[exceptString][example].name;
 						try {
 							document.getElementById(exampleId).style.display = 'none';
 						} catch (err) {}
