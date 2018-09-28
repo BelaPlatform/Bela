@@ -21,7 +21,7 @@
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 #include "../include/Utilities.h"
-#include "../include/PruBoardFlags.h"
+#include "../include/PruArmCommon.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -48,12 +48,10 @@
 #endif /* BELA_USE_RTDM */
 
 #ifdef BELA_USE_RTDM
-#define PRU_SYSTEM_EVENT_RTDM 20 // should match the one in pru/pru_rtaudio.p
-#define PRU_SYSTEM_EVENT_MCASP 20 // should match the one in pru/pru_rtaudio.p
-static unsigned int pru_system_event_rtdm = PRU_SYSTEM_EVENT_RTDM;
 static char rtdm_driver[] = "/dev/rtdm/rtdm_pruss_irq_0";
 static int rtdm_fd_pru_to_arm = 0;
 #if RTDM_PRUSS_IRQ_VERSION >= 1
+static const unsigned int pru_system_event_rtdm = PRU_SYSTEM_EVENT_RTDM;
 #define PRU_SYS_EV_MCASP_RX_INTR    54 // mcasp_r_intr_pend
 #define PRU_SYS_EV_MCASP_TX_INTR    55 // mcasp_x_intr_pend
 static const uint8_t pru_system_events_mcasp[] = {PRU_SYS_EV_MCASP_RX_INTR, PRU_SYS_EV_MCASP_TX_INTR};

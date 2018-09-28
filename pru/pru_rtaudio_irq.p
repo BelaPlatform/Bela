@@ -1,7 +1,7 @@
 .origin 0
 .entrypoint START
 
-#include "../include/PruBoardFlags.h"
+#include "../include/PruArmCommon.h"
 
 // The jump from  QBEQ WRITE_ONE_BUFFER, r1, 0 is too long when all the devices
 // are enabled. The code in there can probably be simplified and/or
@@ -78,8 +78,8 @@
 
 // See am335x TRM 4.4.1.2.2 Event Interface Mapping (R31): PRU System Events:
 // "The output channels [of R31] 0-15 are connected to the PRU-ICSS INTC system events 16-31, respectively. This allows the PRU to assert one of the system events 16-31 by writing to its own R31 register."
+// PRU_SYSTEM_EVENT_RTDM is 20
 // We will be writing to output channel 4, which is system event 20 of the PRU-ICSS INTC
-#define PRU_SYSTEM_EVENT_RTDM 20
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
@@ -149,9 +149,7 @@
 #define PRU_ICSS_CFG_LOCAL      0x00026000
 
 // General constant for PRU system events
-#define PRU_SYS_EV_MCSPI_INTR       44 // SINTERRUPTN
-#define PRU_SYS_EV_MCASP_RX_INTR    54 // mcasp_r_intr_pend
-#define PRU_SYS_EV_MCASP_TX_INTR    55 // mcasp_x_intr_pend
+// #define PRU_SYS_EV_MCSPI_INTR       44 // SINTERRUPTN
 
 // PRU INTC system events (address relative to INTC_REG_SECR1)
 #define PRU_SECR1_SYS_EV_MCSPI_INTR       12 // system event 44 (SINTERRUPTN)
