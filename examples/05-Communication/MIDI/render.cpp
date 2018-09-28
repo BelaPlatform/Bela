@@ -32,6 +32,7 @@ float gPhaseIncrement = 0;
 bool gIsNoteOn = 0;
 int gVelocity = 0;
 float gSamplingPeriod = 0;
+int gSampleCount = 44100; // how often to send out a control change
 
 /*
  * This callback is called every time a new input Midi message is available
@@ -45,9 +46,9 @@ void midiMessageCallback(MidiChannelMessage message, void* arg){
 	}
 	message.prettyPrint();
 	if(message.getType() == kmmNoteOn){
-		gFreq = powf(2, (message.getDataByte(0)-69)/12.0f) * 440;
+		gFreq = powf(2, (message.getDataByte(0) - 69) / 12.f) * 440.f;
 		gVelocity = message.getDataByte(1);
-		gPhaseIncrement = 2 * M_PI * gFreq * gSamplingPeriod;
+		gPhaseIncrement = 2.f * (float)M_PI * gFreq * gSamplingPeriod;
 		gIsNoteOn = gVelocity > 0;
 		rt_printf("v0:%f, ph: %6.5f, gVelocity: %d\n", gFreq, gPhaseIncrement, gVelocity);
 	}
@@ -63,18 +64,7 @@ bool setup(BelaContext *context, void *userData)
 	midi.writeTo(gMidiPort0);
 	midi.enableParser(true);
 	midi.setParserCallback(midiMessageCallback, (void*) gMidiPort0);
-	if(context->analogFrames == 0) {
-		rt_printf("Error: this example needs the analog I/O to be enabled\n");
-		return false;
-	}
-
-	if(context->audioOutChannels < 2 ||
-		context->analogOutChannels < 2){
-		printf("Error: for this project, you need at least 2 analog and audio output channels.\n");
-		return false;
-	}
-
-	gSamplingPeriod = 1/context->audioSampleRate;
+	gSamplingPeriod = 1 / context->audioSampleRate;
 	return true;
 }
 
@@ -155,32 +145,32 @@ void render(BelaContext *context, void *userData)
 	 * See midiMessageCallback above.
 	*/
 
-	// the following block toggles the LED on an Owl pedal
 	// using MIDI control changes
-	for(unsigned int n = 0; n < context->analogFrames; n++){
-		static int count = 0;
-		static bool state = 0;
-		analogWriteOnce(context, n, 1, state);
-		if(count % 20000 == 0){
-			state = !state;
-			midi_byte_t bytes[3] = {176, 30, (midi_byte_t)(state*127)}; // send a control change output
-			midi.writeOutput(bytes, 3);
-		}
-		++count;
-	}
 	for(unsigned int n = 0; n < context->audioFrames; n++){
+		float value;
 		if(gIsNoteOn == 1){
 			static float phase = 0;
 			phase += gPhaseIncrement;
 			if(phase > M_PI)
 				phase -= 2.f * (float)M_PI;
-			float value = sinf(phase) * gVelocity/128.0f;
-			audioWrite(context, n, 0, value);
-			audioWrite(context, n, 1, value);
+			value = sinf(phase) * gVelocity/128.0f;
 		} else {
-			audioWrite(context, n, 0, 0);
-			audioWrite(context, n, 1, 0);
+			value = 0;
 		}
+		for(unsigned int ch = 0; ch < context->audioOutChannels; ++ch)
+			audioWrite(context, n, ch, value);
+		// the following block sends a control change output every gSampleCount samples
+		static int count = 0;
+		if(count % gSampleCount == 0){
+			static bool state = 0;
+			state = !state;
+			midi_byte_t statusByte = 0xB0; // control change on channel 0
+			midi_byte_t controller = 30; // controller number 30
+			midi_byte_t value = state * 127; // value : 0 or 127
+			midi_byte_t bytes[3] = {statusByte, controller, value};
+			midi.writeOutput(bytes, 3); // send a control change message
+		}
+		++count;
 	}
 }
 
@@ -195,6 +185,18 @@ void cleanup(BelaContext *context, void *userData)
 Connecting MIDI devices to Bela!
 -------------------------------
 
-This example needs documentation.
+Connect a USB MIDI device to Bela and try out our MIDI API.
+This example by default opens the MIDI port `"hw:1,0,0"`, which normally
+corresponds to the first USB device that is plugged in. You can run `amidi -l`
+on the terminal to check which devices are available and edit this file
+accordingly.
+The device `"hw:0,0,0"` is (on Bela images v0.3 and above) a virtual MIDI
+device to the host computer over the USB port.
+
+Every time a MIDI message comes in, the `midiMessageCallback()` function is
+called. In this example, we detect NoteOn messages and we use them to generate
+a sinewave with given frequency and amplitude.
+We can also write MIDI messages, by sending a sequence of bytes with
+`writeOutput()`.
 
 */

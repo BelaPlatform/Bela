@@ -78,15 +78,29 @@ void render(BelaContext *context, void *userData)
 		// read the analog input at block rate to determine each LED brightness
 		for(unsigned int n = 0; n < numPins; ++n)
 		{
-			brightness[n][0] = analogRead(context, 0, n * 2) / 0.84f;
-			brightness[n][1] = analogRead(context, 0, n * 2 + 1) / 0.84f;
+			if(context->analogInChannels >= n * 2 + 1)
+			{
+				brightness[n][0] = analogRead(context, 0, n * 2) / 0.84f;
+				brightness[n][1] = analogRead(context, 0, n * 2 + 1) / 0.84f;
+			} else {
+				brightness[n][0] = 1;
+				brightness[n][1] = 1;
+			}
 		}
 	} else {
 		// use the step sequencer
 		static int step = 0;
 		static int stepCounter = 0;
-		float stepLength = analogRead(context, 0, 0) * context->digitalSampleRate;
-		float masterBrightness = analogRead(context, 0, 1) / 0.84f;
+		float stepLength;
+		float masterBrightness;
+		if(context->analogInChannels >= 1)
+		{
+			stepLength = analogRead(context, 0, 0) * context->digitalSampleRate;
+			masterBrightness = analogRead(context, 0, 1) / 0.84f;
+		} else {
+			stepLength = 0.5f * context->digitalSampleRate;
+			masterBrightness = 1;
+		}
 		if(stepCounter >= stepLength)
 		{
 			// select the next step

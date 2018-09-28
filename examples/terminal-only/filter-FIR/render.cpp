@@ -42,7 +42,7 @@ ne10_float32_t *gFIRfilterState;
 
 void initialise_filter(BelaContext *context);
 
-// Task for handling the update of the frequencies using the analog inputs
+// Task for handling input from the keyboard
 AuxiliaryTask gTriggerSamplesTask;
 
 bool initialise_trigger();

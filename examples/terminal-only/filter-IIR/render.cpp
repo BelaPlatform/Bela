@@ -46,7 +46,7 @@ void calculate_coeff(float cutFreq);
 
 bool initialise_aux_tasks();
 
-// Task for handling the update of the frequencies using the analog inputs
+// Task for handling input from the keyboard
 AuxiliaryTask gChangeCoeffTask;
 
 void check_coeff(void*);
