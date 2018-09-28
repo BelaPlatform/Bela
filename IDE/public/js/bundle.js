@@ -3555,30 +3555,38 @@ var SettingsView = function (_View) {
 			var boardString;
 			if (data && data.trim) boardString = data.trim();else return;
 
-			if (boardString === 'BelaMini') {
-				$('.capelet-settings').css('display', 'none');
-				$('#mute-speaker').parent().parent().css('display', 'none');
-			} else {
-				$('#disable-led').parent().parent().css('display', 'none');
-			}
+			var settingExceptions = {
+				Bela: {
+					sections: [],
+					subsections: ['disable-led']
+				},
+				BelaMini: {
+					sections: ['capelet-settings'],
+					subsections: ['mute-speaker']
+				},
+				Ctag: {
+					sections: ['capelet-settings'],
+					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right']
+				},
+				CtagOnly: {
+					sections: ['capelet-settings'],
+					subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'dac-level']
+				}
+			};
 
-			if (boardString === ('CtagFace' || 'CtagBeast')) {
-				$('.capelet-settings').css('display', 'none');
-				$('#mute-speaker').parent().parent().css('display', 'none');
-				$('#analog-channels').parent().parent().css('display', 'none');
-				$('#analog-samplerate').parent().parent().css('display', 'none');
-				$('#hp-level').parent().parent().css('display', 'none');
-				$('#use-analog').parent().parent().css('display', 'none');
-				$('#dac-level').parent().parent().css('display', 'none');
-				$('#pga-left').parent().parent().css('display', 'none');
-				$('#pga-right').parent().parent().css('display', 'none');
+			var exceptions = {
+				sections: null,
+				subsections: null
+			};
+			if (boardString === 'BelaMini') {
+				exceptions['sections'] = settingExceptions['BelaMini']['sections'];
+				exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
+			} else if (boardString === ('CtagFace' || 'CtagBeast')) {
+				exceptions['sections'] = settingExceptions['Ctag']['sections'];
+				exceptions['subsections'] = settingExceptions['Ctag']['subsections'].concat(settingExceptions['CtagOnly']['subsections']);
 			} else if (boardString === ('CtagFaceBela' || 'CtagBeastBela')) {
-				$('.capelet-settings').css('display', 'none');
-				$('#mute-speaker').parent().parent().css('display', 'none');
-				$('#hp-level').parent().parent().css('display', 'none');
-				$('#use-analog').parent().parent().css('display', 'none');
-				$('#pga-left').parent().parent().css('display', 'none');
-				$('#pga-right').parent().parent().css('display', 'none');
+				exceptions['sections'] = settingExceptions['Ctag']['sections'];
+				exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
 				var sRates = $('#analog-samplerate').children("option");
 				for (var i = 0; i < sRates.length; i++) {
 					var rate = sRates[i].innerHTML;
@@ -3589,6 +3597,15 @@ var SettingsView = function (_View) {
 						sRates[i].innerHTML = "48000";
 					}
 				}
+			} else {
+				exceptions['sections'] = settingExceptions['Bela']['sections'];
+				exceptions['subsections'] = settingExceptions['Bela']['subsections'];
+			}
+			for (var e in exceptions['subsections']) {
+				$('#' + exceptions['subsections'][e]).parent().parent().css('display', 'none');
+			}
+			for (var e in exceptions['sections']) {
+				$('.' + exceptions['sections'][e]).css('display', 'none');
 			}
 		}
 	}]);
