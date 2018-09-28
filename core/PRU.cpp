@@ -724,9 +724,9 @@ int PRU::start(char * const filename)
         // From version 1 onwards, we need to specify the PRU system event we want to receive interrupts from (see rtdm_pruss_irq.h)
         // For rtdm_fd_pru_to_arm we use the default mapping
         int ret = __wrap_ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_REGISTER, pru_system_event_rtdm);
-        if(ret)
+        if(ret == -1)
         {
-                fprintf(stderr, "ioctl failed: %d %s\n", -ret, strerror(-ret));
+                fprintf(stderr, "ioctl failed: %d %s\n", errno, strerror(errno));
                 return 1;
         }
         if(pruUsesMcaspIrq)
@@ -748,9 +748,9 @@ int PRU::start(char * const filename)
                 rtdm_struct.pru_intc_channel = mcasp_to_pru_channel;
                 rtdm_struct.pru_intc_host = mcasp_to_pru_channel;
                 int ret = __wrap_ioctl(rtdm_fd_mcasp_to_pru, RTDM_PRUSS_IRQ_REGISTER_FULL, &rtdm_struct);
-                if(ret)
+                if(ret == -1)
                 {
-                        fprintf(stderr, "ioctl failed: %d %s\n", -ret, strerror(-ret));
+                        fprintf(stderr, "ioctl failed: %d %s\n", errno, strerror(errno));
                         return 1;
                 }
 	}

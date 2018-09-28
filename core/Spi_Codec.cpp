@@ -321,8 +321,8 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 		return 1;
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
-	if (ret < 0){
-		fprintf(stderr, "Error during SPI transmission with CTAG Audio Card: %d\n", ret);
+	if (ret == -1){
+		fprintf(stderr, "Error during SPI transmission with CTAG Audio Card: (%d) %s\n", errno, strerror(errno));
 		return 1;
 	}
 
