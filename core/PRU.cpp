@@ -598,6 +598,11 @@ void PRU::initialisePruCommon()
 	case BelaHw_CtagBeastBela:
 		board_flags |= 1 << BOARD_FLAGS_CTAG_BEAST;
 		break;
+	case BelaHw_Bela:
+	case BelaHw_Salt:
+	case BelaHw_NoHw:
+	default:
+		break;
 	}
 	pru_buffer_comm[PRU_BOARD_FLAGS] = board_flags;
     /* Set up flags */
@@ -802,35 +807,37 @@ int PRU::testPruError()
 {
 	if (unsigned int errorCode = pru_buffer_comm[PRU_ERROR_OCCURRED])
 	{
-		rt_fprintf(stderr, "audio frame %llu, errorCode: %d\n", context->audioFramesElapsed, errorCode);
+		// only print warnings if we have been running for a while, or forced to do so
+		bool verbose = (context->audioFramesElapsed > 5000) || gRTAudioVerbose;
+		verbose && rt_fprintf(stderr, "audio frame %llu, errorCode: %d\n", context->audioFramesElapsed, errorCode);
 		int ret;
 		switch(errorCode){
 			case ARM_ERROR_XUNDRUN:
-				rt_fprintf(stderr, "McASP transmitter underrun occurred\n");
+				verbose && rt_fprintf(stderr, "McASP transmitter underrun occurred\n");
 				ret = 1;
 			break;
 			case ARM_ERROR_XSYNCERR:
-				rt_fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
+				verbose && rt_fprintf(stderr, "McASP unexpected transmit frame sync occurred\n");
 				ret = 1;
 			break;
 			// Sometimes a transmit clock error arises after boot. If the PRU loop
 			// continues, the clock error is automatically solved. Hence, no additional
 			// error handling is required on ARM side.
 			case ARM_ERROR_XCKFAIL:
-				rt_fprintf(stderr, "McASP transmit clock failure occurred\n");
+				verbose && rt_fprintf(stderr, "McASP transmit clock failure occurred\n");
 				ret = 1;
 			break;
 			// Same for DMA error. No action needed on ARM side.
 			case ARM_ERROR_XDMAERR:
-				rt_fprintf(stderr, "McASP transmit DMA error occurred\n");
+				verbose && rt_fprintf(stderr, "McASP transmit DMA error occurred\n");
 				ret = 1;
 			break;
 			case ARM_ERROR_TIMEOUT:
-				rt_fprintf(stderr, "PRU event loop timed out\n");
+				verbose && rt_fprintf(stderr, "PRU event loop timed out\n");
 				ret = 1;
 			break;
 			default:
-				rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
+				verbose && rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
 				ret = 1;
 		}
 		codec->reset();

@@ -351,7 +351,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
         else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
         if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
-                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress);
+                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
 	BelaHwConfig cfg;
 	if(Bela_getHwConfig(belaHw, &cfg))
 	{

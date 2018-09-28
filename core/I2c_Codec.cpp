@@ -15,9 +15,10 @@
 #include "../include/I2c_Codec.h"
 
 #define TLV320_DSP_MODE
-I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress)
-: running(false), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
+I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
+: dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0), running(false)
 {
+	setVerbose(isVerbose);
 	initI2C_RW(i2cBus, i2cAddress, -1);
 }
 
@@ -27,7 +28,7 @@ int I2c_Codec::initCodec()
 	// Write the reset register of the codec
 	if(writeRegister(0x01, 0x80)) // Software reset register
 	{
-		fprintf(stderr, "Failed to reset I2C codec\n");
+		verbose && fprintf(stderr, "Failed to reset I2C codec\n");
 		return 1;
 	}
 
@@ -502,7 +503,7 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 
 	if(write(i2C_file, buf, 2) != 2)
 	{
-		fprintf(stderr, "Failed to write register %d on I2c codec\n", reg);
+		verbose && fprintf(stderr, "Failed to write register %d on I2c codec\n", reg);
 		return 1;
 	}
 
@@ -536,6 +537,10 @@ int I2c_Codec::readI2C()
 	return 0;
 }
 
+void I2c_Codec::setVerbose(bool isVerbose)
+{
+	verbose = isVerbose;
+}
 
 I2c_Codec::~I2c_Codec()
 {
