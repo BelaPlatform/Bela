@@ -1,4 +1,5 @@
 **/.DS_Store
+**/._*
 /dev/node_modules
 /IDE/settings.json
 /projects/
