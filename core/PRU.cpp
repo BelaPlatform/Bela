@@ -40,8 +40,8 @@
 #endif
 
 #ifdef BELA_USE_RTDM
-#if __has_include("/opt/rtdm_pruss_irq/rtdm_pruss_irq.h")
-#include </opt/rtdm_pruss_irq/rtdm_pruss_irq.h>
+#if __has_include(<linux/rtdm_pruss_irq.h>)
+#include <linux/rtdm_pruss_irq.h>
 #else /* has_include */
 #define RTDM_PRUSS_IRQ_VERSION 0
 #endif /* has_include */
