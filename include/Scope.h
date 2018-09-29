@@ -143,7 +143,7 @@ class Scope{
         float sampleRate;
         int pixelWidth;
         int frameWidth;
-        int plotMode;
+        int plotMode = 0;
         int triggerMode;
         int triggerChannel;
         int triggerDir;
