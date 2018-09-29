@@ -3638,7 +3638,7 @@ var TabView = function (_View) {
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs 
+		// open/close tabs
 		var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
 
 		$('#flexit').on('click', function () {
@@ -3782,6 +3782,10 @@ var TabView = function (_View) {
 				$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
 			} else if (data.trim() === 'CtagBeast') {
 				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
+			} else if (data.trim() === 'CtagFaceBela') {
+				$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
+			} else if (data.trim() === 'CtagBeastBela') {
+				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
 			}
 		}
 	}]);

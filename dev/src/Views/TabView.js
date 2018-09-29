@@ -151,6 +151,10 @@ class TabView extends View {
 		{
 			$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
 		}
+		else if (data.trim() === 'CtagBeastBela')
+		{
+			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
+		}
 	}
 
 }
