@@ -199,18 +199,23 @@ class ProjectView extends View {
 		else
 			return
 
-		$.getJSON( "../example_except.json", function( data ) {
-			if (boardString in data)
-			{
-				for(var example in data[boardString]) {
-				  var exampleId = data[boardString][example].section+"/"+data[boardString][example].name;
-					try{
-						 document.getElementById(exampleId).style.display = 'none';
+			var exceptString = boardString;
+			if(exceptString === "CtagFace" || "CtagBeast")
+				exceptString = 'Ctag'
+
+			$.getJSON( "../example_except.json", function( data ) {
+
+				if (exceptString in data)
+				{
+					for(var example in data[exceptString]) {
+					  var exampleId = data[exceptString][example].section+"/"+data[exceptString][example].name;
+						try{
+							 document.getElementById(exampleId).style.display = 'none';
+						}
+						catch(err){}
 					}
-					catch(err){}
 				}
-			}
-		})
+			})
 	}
 	_currentProject(project){
 

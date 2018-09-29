@@ -144,6 +144,15 @@
       "tip": "tooltip"
     },
     {
+      "elemclass": "util",
+      "x": "269",
+      "y": "354",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_04 - 3.3V supply",
+      "tip": "tooltip"
+    },
+    {
       "elemclass": "gnd",
       "x": "6",
       "y": "367",

@@ -80,6 +80,10 @@
   fill: transparent;
   stroke: rgb(255, 255, 0);
 }
+.disabled {
+  fill: rgba(0, 0, 0, 0.6);
+  stroke: none;
+}
 /*
 
 

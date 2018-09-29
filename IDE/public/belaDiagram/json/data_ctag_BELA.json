@@ -1,0 +1,750 @@
+[{
+  "things": [{
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "323",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_08 - Digital 1 - (Pd: digital 18)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "17",
+      "y": "323",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_07 - Digital 0 - (Pd: digital 17)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "309",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_10 - Digital 3 - (Pd: digital 20)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "17",
+      "y": "309",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_09 - Digital 2 - (Pd: digital 19)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "295",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_12 - Digital 5 - (Pd: digital 22)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "17",
+      "y": "295",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_11 - Digital 4 - (Pd: digital 21)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "267",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_16 - Digital 9 - (Pd: digital 26)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "17",
+      "y": "267",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_15 - Digital 8 - (Pd: digital 25)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "253",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_18 - Digital 11 - (Pd: digital 28)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "184",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_28 - Digital 13 - (Pd: digital 30)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "17",
+      "y": "184",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_27 - Digital 12 - (Pd: digital 29)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "3",
+      "y": "168",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_30 - Digital 15 - (Pd: digital 32)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "17",
+      "y": "168",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_29 - Digital 14 - (Pd: digital 31)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "273",
+      "y": "359",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_02 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "286",
+      "y": "359",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_01 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "286",
+      "y": "346",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_03 - 3.3V supply",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "273",
+      "y": "346",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_04 - 3.3V supply",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "3",
+      "y": "363",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_02 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "17",
+      "y": "363",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P8_01 - GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "273",
+      "y": "291",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_12 - Digital 6 - (Pd: digital 23)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "273",
+      "y": "278",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_14 - Digital 7 - (Pd: digital 24)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "dPin",
+      "x": "273",
+      "y": "264",
+      "width": "10",
+      "height": "10",
+      "text": "Pin P9_16 - Digital 10 - (Pd: digital 27)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "236",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 0 - (Pd: [dac~ 9])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "250",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 1 - (Pd: [dac~ 10])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "264",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 2 - (Pd: [dac~ 11])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "278",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 3 - (Pd: [dac~ 12])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "292",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 4 - (Pd: [dac~ 13])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "306",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 5 - (Pd: [dac~ 14])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "320",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 6 - (Pd: [dac~ 15])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aPin",
+      "x": "49",
+      "y": "334",
+      "width": "10",
+      "height": "10",
+      "text": "Analog OUT, Pin 7 - (Pd: [dac~ 16])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "caution",
+      "x": "49",
+      "y": "348",
+      "width": "10",
+      "height": "10",
+      "text": "5V - NEVER use 5V with P8 or P9!",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "49",
+      "y": "362",
+      "width": "10",
+      "height": "10",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "46",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "75",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 7 - (Pd: [adc~ 16])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "89",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 6 - (Pd: [adc~ 15])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "103",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 5 - (Pd: [adc~ 14])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "117",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 4 - (Pd: [adc~ 13])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "131",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 3 - (Pd: [adc~ 12])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "145",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 2 - (Pd: [adc~ 11])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "159",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 1 - (Pd: [adc~ 10])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "aInPin",
+      "x": "173",
+      "y": "142",
+      "width": "10",
+      "height": "10",
+      "text": "Analog IN - Pin 0 - (Pd: [adc~ 9])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "245",
+      "y": "18",
+      "width": "20",
+      "height": "30",
+      "text": "Bela shutdown button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "40",
+      "y": "432",
+      "width": "09",
+      "height": "15",
+      "text": "LED",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "50",
+      "y": "432",
+      "width": "09",
+      "height": "15",
+      "text": "LED - provides system heartbeat blink",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "60",
+      "y": "432",
+      "width": "09",
+      "height": "15",
+      "text": "LED",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "led",
+      "x": "70",
+      "y": "432",
+      "width": "09",
+      "height": "15",
+      "text": "LED - Blinks when Bela program is running",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "15",
+      "y": "402",
+      "width": "17",
+      "height": "30",
+      "text": "BeagleBone reset button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "64",
+      "y": "402",
+      "width": "17",
+      "height": "30",
+      "text": "Power button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "44",
+      "y": "455",
+      "width": "35",
+      "height": "08",
+      "text": "Mini USB power jack",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "60",
+      "y": "-2",
+      "width": "68",
+      "height": "08",
+      "text": "SD card slot",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "203",
+      "y": "-162",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 6-7",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "162",
+      "y": "-162",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 4-5",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "119",
+      "y": "-162",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 2-3",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "77",
+      "y": "-161",
+      "width": "39",
+      "height": "35",
+      "text": "Audio OUT 0-1",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "29",
+      "y": "-163",
+      "width": "39",
+      "height": "35",
+      "text": "Audio IN 0-1",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "audio",
+      "x": "29",
+      "y": "-200",
+      "width": "39",
+      "height": "35",
+      "text": "Audio IN 2-3",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "232",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "207",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 7 - (Pd:[dac~ 8])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "219",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 6 - (Pd:[dac~ 7])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "191",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "178",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 4 - (Pd:[dac~ 5])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "165",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 5 - (Pd:[dac~ 6])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "149",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "136",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 2 - (Pd:[dac~ 3])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "123",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 3 - (Pd:[dac~ 4])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "106",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "93",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 0 - (Pd:[dac~ 1])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "80",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "OUT 1 - (Pd:[dac~ 2])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "57",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "44",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "IN 0 - (Pd:[adc~ 1])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "31",
+      "y": "-149",
+      "width": "9",
+      "height": "9",
+      "text": "IN 1 - (Pd:[adc~ 2])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "57",
+      "y": "-186",
+      "width": "9",
+      "height": "9",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "44",
+      "y": "-186",
+      "width": "9",
+      "height": "9",
+      "text": "IN 2 - (Pd:[adc~ 3])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "31",
+      "y": "-186",
+      "width": "9",
+      "height": "9",
+      "text": "IN 3 - (Pd:[adc~ 4])",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "disabled",
+      "x": "57",
+      "y": "7",
+      "width": "31",
+      "height": "40",
+      "text": "Speaker out [R] (disabled)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "disabled",
+      "x": "97",
+      "y": "7",
+      "width": "31",
+      "height": "40",
+      "text": "Speaker out [L] (disabled)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "disabled",
+      "x": "145",
+      "y": "5",
+      "width": "45",
+      "height": "46",
+      "text": "Audio OUT (disabled)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "disabled",
+      "x": "197",
+      "y": "5",
+      "width": "45",
+      "height": "46",
+      "text": "Audio IN (disabled)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "util",
+      "x": "217",
+      "y": "205",
+      "width": "38",
+      "height": "60",
+      "text": "I2C",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "234",
+      "y": "252",
+      "width": "10",
+      "height": "10",
+      "text": "I2C Power - 3.3V",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "234",
+      "y": "238",
+      "width": "10",
+      "height": "10",
+      "text": "SCL (clock)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "pins",
+      "x": "234",
+      "y": "224",
+      "width": "10",
+      "height": "10",
+      "text": "SDA (data)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "234",
+      "y": "210",
+      "width": "10",
+      "height": "10",
+      "text": "I2C GND",
+      "tip": "tooltip"
+    }
+  ]
+}]
