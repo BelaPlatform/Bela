@@ -134,9 +134,9 @@ class Scope{
         void doFFT();
         void setXParams();
         
-		bool isUsingOutBuffer;
-		bool isUsingBuffer;
-		bool isResizing;
+	bool volatile isUsingOutBuffer;
+	bool volatile isUsingBuffer;
+	bool volatile isResizing;
 		
         // settings
         int numChannels;
