@@ -31,8 +31,23 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <string>
 #include <sstream>
 #include <DigitalChannelManager.h>
+#include <algorithm>
 
+enum { minFirstDigitalChannel = 10 };
+
+static unsigned int gAudioChannelsInUse;
+static unsigned int gAnalogChannelsInUse;
+static unsigned int gDigitalChannelsInUse;
 unsigned int gScopeChannelsInUse;
+static unsigned int gChannelsInUse;
+static unsigned int gFirstAnalogChannel;
+static unsigned int gFirstDigitalChannel;
+static unsigned int gDigitalChannelOffset;
+static unsigned int gFirstScopeChannel;
+
+static unsigned int gDigitalSigInChannelsInUse;
+static unsigned int gDigitalSigOutChannelsInUse;
+
 float* gScopeOut;
 // Bela Scope
 static Scope* scope = NULL;
@@ -131,8 +146,6 @@ float gInverseSampleRate;
  *	HEAVY FUNCTIONS
  */
 
-// TODO: rename this
-#define LIBPD_DIGITAL_OFFSET 11 // digitals are preceded by 2 audio and 8 analogs (even if using a different number of analogs)
 
 void printHook(HeavyContextInterface *context, const char *printLabel, const char *msgString, const HvMessage *msg) {
 	const double timestampSecs = ((double) hv_msg_getTimestamp(msg)) / hv_getSampleRate(context);
@@ -148,13 +161,16 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
-// TODO: turn them into hv hashes and adjust sendDigitalMessage accordingly
-char hvDigitalInHashes[16][21]={
-	{"bela_digitalIn11"},{"bela_digitalIn12"},{"bela_digitalIn13"},{"bela_digitalIn14"},{"bela_digitalIn15"},
-	{"bela_digitalIn16"},{"bela_digitalIn17"},{"bela_digitalIn18"},{"bela_digitalIn19"},{"bela_digitalIn20"},
-	{"bela_digitalIn21"},{"bela_digitalIn22"},{"bela_digitalIn23"},{"bela_digitalIn24"},{"bela_digitalIn25"},
-	{"bela_digitalIn26"}
-};
+
+std::vector<std::string> gHvDigitalInHashes;
+void generateDigitalNames(unsigned int numDigitals, unsigned int digitalOffset, std::vector<std::string>& receiverInputNames)
+{
+	std::string inBaseString = "bela_digitalIn";
+	for(unsigned int i = 0; i<numDigitals; i++)
+	{
+		receiverInputNames.push_back(inBaseString + std::to_string(i+digitalOffset));
+	}
+}
 
 // For a message to be received here, you need to use the following syntax in Pd:
 // [send receiverName @hv_param]
@@ -176,9 +192,9 @@ static void sendHook(
 				// quickly convert the suffix to integer, assuming they are numbers, avoiding to call atoi
 				int receiver = ((receiverName[prefixLength] - '0') * 10);
 				receiver += (receiverName[prefixLength+1] - '0');
-				unsigned int channel = receiver - LIBPD_DIGITAL_OFFSET; // go back to the actual Bela digital channel number
+				unsigned int channel = receiver - gDigitalChannelOffset; // go back to the actual Bela digital channel number
 				bool value = (hv_msg_getFloat(m, 0) != 0.0f);
-				if(channel < 16){ //16 is the hardcoded value for the number of digital channels
+				if(channel < gDigitalChannelsInUse){ //gDigitalChannelsInUse is the number of digital channels
 					dcm.setValue(channel, value);
 				}
 			}
@@ -233,7 +249,7 @@ static void sendHook(
 				} else {
 					return;
 				}
-				int channel = hv_msg_getFloat(m, 1) - LIBPD_DIGITAL_OFFSET;
+				int channel = hv_msg_getFloat(m, 1) - gDigitalChannelOffset;
 				if(disable == true){
 					dcm.unmanage(channel);
 					return;
@@ -322,23 +338,29 @@ static void sendHook(
  * SETUP, RENDER LOOP & CLEANUP
  */
 
-// leaving this here, trying to come up with a coherent interface with libpd.
-// commenting them out so the compiler does not warn
-// 2 audio + (up to)8 analog + (up to) 16 digital + 4 scope outputs
-//static const unsigned int gChannelsInUse = 30;
-//static unsigned int gAnalogChannelsInUse = 8; // hard-coded for the moment, TODO: get it at run-time from hv_context
-//static const unsigned int gFirstAudioChannel = 0;
-//static const unsigned int gFirstAnalogChannel = 2;
-static const unsigned int gFirstDigitalChannel = 10;
-static const unsigned int gFirstScopeChannel = 26;
-static unsigned int gDigitalSigInChannelsInUse;
-static unsigned int gDigitalSigOutChannelsInUse;
 
 bool setup(BelaContext *context, void *userData)	{
 
 	// Check if digitals are enabled
 	if(context->digitalFrames > 0 && context->digitalChannels > 0)
 		gDigitalEnabled = 1;
+
+	gAudioChannelsInUse = std::max(context->audioInChannels, context->audioOutChannels);
+	gAnalogChannelsInUse = std::max(context->analogInChannels, context->analogOutChannels);
+	gDigitalChannelsInUse = context->digitalChannels;
+
+	// Channel distribution
+	gFirstAnalogChannel = std::max(context->audioInChannels, context->audioOutChannels);
+	gFirstDigitalChannel = gFirstAnalogChannel + std::max(context->analogInChannels, context->analogOutChannels);
+	if(gFirstDigitalChannel < minFirstDigitalChannel)
+		gFirstDigitalChannel = minFirstDigitalChannel; //for backwards compatibility
+	gDigitalChannelOffset = gFirstDigitalChannel + 1;
+	gFirstScopeChannel = gFirstDigitalChannel + gDigitalChannelsInUse;
+
+	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
+	
+	// Create hashes for digital channels
+	generateDigitalNames(gDigitalChannelsInUse, gDigitalChannelOffset, gHvDigitalInHashes);
 
 	/* HEAVY */
 	hvMidiHashes[kmmNoteOn] = hv_stringToHash("__hv_notein");
@@ -428,9 +450,9 @@ bool setup(BelaContext *context, void *userData)	{
 	if(gDigitalEnabled)
 	{
 		dcm.setCallback(sendDigitalMessage);
-		if(context->digitalChannels > 0){
-			for(unsigned int ch = 0; ch < context->digitalChannels; ++ch){
-				dcm.setCallbackArgument(ch, hvDigitalInHashes[ch]);
+		if(gDigitalChannelsInUse> 0){
+			for(unsigned int ch = 0; ch < gDigitalChannelsInUse; ++ch){
+				dcm.setCallbackArgument(ch, (void *) gHvDigitalInHashes[ch].c_str());
 			}
 		}
 	}
@@ -532,19 +554,27 @@ void render(BelaContext *context, void *userData)
 	if(gHvInputBuffers != NULL) {
 		for(unsigned int n = 0; n < context->audioFrames; n++) {
 			for(unsigned int ch = 0; ch < gHvInputChannels; ch++) {
-				if(ch >= context->audioInChannels+context->analogInChannels) {
+				if(ch >= gAudioChannelsInUse + gAnalogChannelsInUse) {
 					// THESE ARE PARAMETER INPUT 'CHANNELS' USED FOR ROUTING
 					// 'sensor' outputs from routing channels of dac~ are passed through here
+					// these could be also digital channels (handled by the dcm)
+					// or parameter channels used for routing (currently unhandled)
 					break;
 				} else {
 					// If more than 2 ADC inputs are used in the pd patch, route the analog inputs
 					// i.e. ADC3->analogIn0 etc. (first two are always audio inputs)
-					if(ch >= context->audioInChannels)	{
-						int m = n/2;
-						float mIn = context->analogIn[m*context->analogInChannels + (ch-context->audioInChannels)];
-						gHvInputBuffers[ch * context->audioFrames + n] = mIn;
+					if(ch >= gAudioChannelsInUse)
+					{
+						unsigned int analogCh = ch - gAudioChannelsInUse;
+						if(analogCh < context->analogInChannels)
+						{
+							int m = n/2;
+							float mIn = analogRead(context, m, analogCh);
+							gHvInputBuffers[ch * context->audioFrames + n] = mIn;
+						}
 					} else {
-						gHvInputBuffers[ch * context->audioFrames + n] = context->audioIn[n * context->audioInChannels + ch];
+						if(ch < context->audioInChannels)
+							gHvInputBuffers[ch * context->audioFrames + n] = audioRead(context, n, ch);
 					}
 				}
 			}
@@ -650,17 +680,19 @@ void render(BelaContext *context, void *userData)
 	// Interleave the output data
 	if(gHvOutputBuffers != NULL) {
 		for(unsigned int n = 0; n < context->audioFrames; n++) {
-
 			for(unsigned int ch = 0; ch < gHvOutputChannels; ch++) {
-				if(ch >= context->audioOutChannels+context->analogOutChannels) {
+				if(ch >= gAudioChannelsInUse + gAnalogChannelsInUse) {
 					// THESE ARE SENSOR OUTPUT 'CHANNELS' USED FOR ROUTING
 					// they are the content of the 'sensor output' dac~ channels
 				} else {
-					if(ch >= context->audioOutChannels)	{
+					if(ch >= gAudioChannelsInUse)	{
 						int m = n/2;
-						context->analogOut[m * context->analogOutChannels + (ch-context->audioOutChannels)] = gHvOutputBuffers[ch*context->audioFrames + n];
+						unsigned int analogCh = ch - gAudioChannelsInUse;
+						if(analogCh < context->analogOutChannels)
+							analogWriteOnce(context, m, analogCh, gHvOutputBuffers[ch*context->audioFrames + n]);
 					} else {
-						context->audioOut[n * context->audioOutChannels + ch] = gHvOutputBuffers[ch * context->audioFrames + n];
+						if(ch < context->audioOutChannels)
+							audioWrite(context, n, ch, gHvOutputBuffers[ch * context->audioFrames + n]);
 					}
 				}
 			}
