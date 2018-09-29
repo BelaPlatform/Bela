@@ -5,7 +5,7 @@
       "y": "323",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_08 - Digital 1 - (Pd: digital 18)",
+      "text": "Pin P8_08 - Digital 1 - (Pd: digital 26)",
       "tip": "tooltip"
     },
     {
@@ -14,7 +14,7 @@
       "y": "323",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_07 - Digital 0 - (Pd: digital 17)",
+      "text": "Pin P8_07 - Digital 0 - (Pd: digital 25)",
       "tip": "tooltip"
     },
     {
@@ -23,7 +23,7 @@
       "y": "309",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_10 - Digital 3 - (Pd: digital 20)",
+      "text": "Pin P8_10 - Digital 3 - (Pd: digital 28)",
       "tip": "tooltip"
     },
     {
@@ -32,7 +32,7 @@
       "y": "309",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_09 - Digital 2 - (Pd: digital 19)",
+      "text": "Pin P8_09 - Digital 2 - (Pd: digital 27)",
       "tip": "tooltip"
     },
     {
@@ -41,7 +41,7 @@
       "y": "295",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_12 - Digital 5 - (Pd: digital 22)",
+      "text": "Pin P8_12 - Digital 5 - (Pd: digital 30)",
       "tip": "tooltip"
     },
     {
@@ -50,7 +50,7 @@
       "y": "295",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_11 - Digital 4 - (Pd: digital 21)",
+      "text": "Pin P8_11 - Digital 4 - (Pd: digital 29)",
       "tip": "tooltip"
     },
     {
@@ -59,7 +59,7 @@
       "y": "267",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_16 - Digital 9 - (Pd: digital 26)",
+      "text": "Pin P8_16 - Digital 9 - (Pd: digital 34)",
       "tip": "tooltip"
     },
     {
@@ -68,7 +68,7 @@
       "y": "267",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_15 - Digital 8 - (Pd: digital 25)",
+      "text": "Pin P8_15 - Digital 8 - (Pd: digital 33)",
       "tip": "tooltip"
     },
     {
@@ -77,7 +77,7 @@
       "y": "253",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_18 - Digital 11 - (Pd: digital 28)",
+      "text": "Pin P8_18 - Digital 11 - (Pd: digital 36)",
       "tip": "tooltip"
     },
     {
@@ -86,7 +86,7 @@
       "y": "184",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_28 - Digital 13 - (Pd: digital 30)",
+      "text": "Pin P8_28 - Digital 13 - (Pd: digital 38)",
       "tip": "tooltip"
     },
     {
@@ -95,7 +95,7 @@
       "y": "184",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_27 - Digital 12 - (Pd: digital 29)",
+      "text": "Pin P8_27 - Digital 12 - (Pd: digital 37)",
       "tip": "tooltip"
     },
     {
@@ -104,7 +104,7 @@
       "y": "168",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_30 - Digital 15 - (Pd: digital 32)",
+      "text": "Pin P8_30 - Digital 15 - (Pd: digital 40)",
       "tip": "tooltip"
     },
     {
@@ -113,7 +113,7 @@
       "y": "168",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_29 - Digital 14 - (Pd: digital 31)",
+      "text": "Pin P8_29 - Digital 14 - (Pd: digital 39)",
       "tip": "tooltip"
     },
     {
@@ -176,7 +176,7 @@
       "y": "291",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_12 - Digital 6 - (Pd: digital 23)",
+      "text": "Pin P9_12 - Digital 6 - (Pd: digital 31)",
       "tip": "tooltip"
     },
     {
@@ -185,7 +185,7 @@
       "y": "278",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_14 - Digital 7 - (Pd: digital 24)",
+      "text": "Pin P9_14 - Digital 7 - (Pd: digital 32)",
       "tip": "tooltip"
     },
     {
@@ -194,7 +194,7 @@
       "y": "264",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_16 - Digital 10 - (Pd: digital 27)",
+      "text": "Pin P9_16 - Digital 10 - (Pd: digital 35)",
       "tip": "tooltip"
     },
     {
