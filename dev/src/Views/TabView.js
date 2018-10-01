@@ -136,22 +136,28 @@ class TabView extends View {
 	}
 
 	_boardString(data){
-		if (data && data.trim && data.trim() === 'BelaMini'){
+		var boardString;
+		if(data && data.trim)
+			boardString = data.trim();
+		else
+			return
+
+		if (boardString === 'BelaMini'){
 			$('#pin_diagram_object').prop('data', 'diagram_mini.html');
 		}
-		else if (data.trim() === 'CtagFace')
+		else if (boardString === 'CtagFace')
 		{
 			$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
 		}
-		else if (data.trim() === 'CtagBeast')
+		else if (boardString === 'CtagBeast')
 		{
 			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
 		}
-		else if (data.trim() === 'CtagFaceBela')
+		else if (boardString === 'CtagFaceBela')
 		{
 			$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
 		}
-		else if (data.trim() === 'CtagBeastBela')
+		else if (boardString === 'CtagBeastBela')
 		{
 			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
 		}

@@ -324,7 +324,7 @@ class SettingsView extends View {
 			boardString = data.trim();
 		else
 			return
-
+			
 		var settingExceptions = {
 			Bela: {
 				sections: [],
@@ -352,10 +352,10 @@ class SettingsView extends View {
 		if (boardString === 'BelaMini') {
 			exceptions['sections'] = settingExceptions['BelaMini']['sections'];
 			exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
-		} else if(boardString === ('CtagFace' || 'CtagBeast')) {
+		} else if(boardString === 'CtagFace' || boardString === 'CtagBeast') {
 			exceptions['sections'] = settingExceptions['Ctag']['sections'];
 			exceptions['subsections'] = settingExceptions['Ctag']['subsections'].concat(settingExceptions['CtagOnly']['subsections']);
-		} else if(boardString === ('CtagFaceBela' || 'CtagBeastBela')) {
+		} else if(boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
 			exceptions['sections'] = settingExceptions['Ctag']['sections'];
 			exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
 			var sRates = $('#analog-samplerate').children("option");

@@ -3582,10 +3582,10 @@ var SettingsView = function (_View) {
 			if (boardString === 'BelaMini') {
 				exceptions['sections'] = settingExceptions['BelaMini']['sections'];
 				exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
-			} else if (boardString === ('CtagFace' || 'CtagBeast')) {
+			} else if (boardString === 'CtagFace' || boardString === 'CtagBeast') {
 				exceptions['sections'] = settingExceptions['Ctag']['sections'];
 				exceptions['subsections'] = settingExceptions['Ctag']['subsections'].concat(settingExceptions['CtagOnly']['subsections']);
-			} else if (boardString === ('CtagFaceBela' || 'CtagBeastBela')) {
+			} else if (boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
 				exceptions['sections'] = settingExceptions['Ctag']['sections'];
 				exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
 				var sRates = $('#analog-samplerate').children("option");
@@ -3776,15 +3776,18 @@ var TabView = function (_View) {
 	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
-			if (data && data.trim && data.trim() === 'BelaMini') {
+			var boardString;
+			if (data && data.trim) boardString = data.trim();else return;
+
+			if (boardString === 'BelaMini') {
 				$('#pin_diagram_object').prop('data', 'diagram_mini.html');
-			} else if (data.trim() === 'CtagFace') {
+			} else if (boardString === 'CtagFace') {
 				$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
-			} else if (data.trim() === 'CtagBeast') {
+			} else if (boardString === 'CtagBeast') {
 				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
-			} else if (data.trim() === 'CtagFaceBela') {
+			} else if (boardString === 'CtagFaceBela') {
 				$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
-			} else if (data.trim() === 'CtagBeastBela') {
+			} else if (boardString === 'CtagBeastBela') {
 				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
 			}
 		}
