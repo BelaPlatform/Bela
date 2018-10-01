@@ -3098,7 +3098,7 @@ var ProjectView = function (_View) {
 			if (data && data.trim) boardString = data.trim();else return;
 
 			var exceptString = boardString;
-			if (exceptString === "CtagFace" || "CtagBeast") exceptString = 'Ctag';
+			if (exceptString === "CtagFace" || exceptString === "CtagBeast") exceptString = 'Ctag';
 
 			$.getJSON("../example_except.json", function (data) {
 

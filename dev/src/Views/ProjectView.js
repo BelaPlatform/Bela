@@ -200,7 +200,7 @@ class ProjectView extends View {
 			return
 
 			var exceptString = boardString;
-			if(exceptString === "CtagFace" || "CtagBeast")
+			if(exceptString === "CtagFace" || exceptString === "CtagBeast")
 				exceptString = 'Ctag'
 
 			$.getJSON( "../example_except.json", function( data ) {
