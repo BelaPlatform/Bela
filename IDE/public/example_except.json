@@ -56,10 +56,6 @@
 		},
 		{
 			"section": "12-SuperCollider",
-			"name": "4-analog-out"
-		},
-		{
-			"section": "12-SuperCollider",
 			"name": "6-pattern-control"
 		},
 		{
@@ -99,10 +95,6 @@
 			"name": "d-box"
 		},
 		{
-			"section": "14-Csound",
-			"name": "COSMO_FX"
-		},
-		{
 			"section": "08-PureData",
 			"name": "sample-scrub"
 		},
@@ -133,6 +125,50 @@
 		{
 			"section": "08-PureData",
 			"name": "simple-fm"
+		},
+		{
+			"section": "14-Csound",
+			"name": "0-HelloWorld"
+		},
+		{
+			"section": "14-Csound",
+			"name": "1-AnalogIn"
+		},
+		{
+			"section": "14-Csound",
+			"name": "2-AnalogOut"
+		},
+		{
+			"section": "14-Csound",
+			"name": "3-DigitalInOut"
+		},
+		{
+			"section": "14-Csound",
+			"name": "4-MIDI_In"
+		},
+		{
+			"section": "14-Csound",
+			"name": "C++-libcsound-Control"
+		},
+		{
+			"section": "14-Csound",
+			"name": "C++-libcsound-Loopback"
+		},
+		{
+			"section": "14-Csound",
+			"name": "C++-libcsound-Sine"
+		},
+		{
+			"section": "14-Csound",
+			"name": "C++-libcsound-Trigger"
+		},
+		{
+			"section": "14-Csound",
+			"name": "C++-libcsound-gain"
+		},
+		{
+			"section": "14-Csound",
+			"name": "COSMO_FX"
 		}
 	]
 }
