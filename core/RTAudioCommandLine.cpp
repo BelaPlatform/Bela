@@ -65,6 +65,17 @@ struct option gDefaultLongOptions[] =
 
 const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:X:Y:Z:";
 
+
+BelaInitSettings* Bela_InitSettings_alloc()
+{
+	return (BelaInitSettings*) malloc(sizeof(BelaInitSettings));
+}
+
+void Bela_InitSettings_free(BelaInitSettings* settings)
+{
+	free(settings);
+}
+
 // This function sets the default settings for the BelaInitSettings structure
 void Bela_defaultSettings(BelaInitSettings *settings)
 {

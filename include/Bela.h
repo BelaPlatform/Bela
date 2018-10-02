@@ -524,6 +524,26 @@ void cleanup(BelaContext *context, void *userData);
 
 // *** Command-line settings ***
 
+
+/**
+ * \brief Allocate the data structure containing settings for Bela.
+ *
+ * This function should be used to allocate the structure that holds initialisation
+ * data for Bela in order to preserve binary compatibility across versions of
+ * the library.
+ */
+BelaInitSettings* Bela_InitSettings_alloc();
+
+/**
+ * \brief De-allocate the data structure containing settings for Bela.
+ *
+ * This function should be used to de-allocate the structure that holds initialisation
+ * data for Bela.
+ * 
+ * \param settings Pointer to structure to be de-allocated.
+ */
+void Bela_InitSettings_free(BelaInitSettings* settings);
+
 /**
  * \brief Initialise the data structure containing settings for Bela.
  *
