@@ -3565,7 +3565,7 @@ var SettingsView = function (_View) {
 					subsections: ['mute-speaker']
 				},
 				Ctag: {
-					sections: ['capelet-settings'],
+					sections: [],
 					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right']
 				},
 				CtagOnly: {

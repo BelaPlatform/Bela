@@ -324,7 +324,7 @@ class SettingsView extends View {
 			boardString = data.trim();
 		else
 			return
-			
+
 		var settingExceptions = {
 			Bela: {
 				sections: [],
@@ -335,7 +335,7 @@ class SettingsView extends View {
 				subsections: ['mute-speaker']
 			},
 			Ctag: {
-				sections: ['capelet-settings'],
+				sections: [],
 				subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right']
 			},
 			CtagOnly: {
