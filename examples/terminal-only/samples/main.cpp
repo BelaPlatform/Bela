@@ -107,7 +107,7 @@ void usage(const char * processName)
 
 int main(int argc, char *argv[])
 {
-	BelaInitSettings settings;	// Standard audio settings
+	BelaInitSettings* settings = Bela_InitSettings_alloc();	// Standard audio settings
 	string fileName;			// Name of the sample to load
 
 	SampleData sampleData;		// User define structure to pass data retrieved from file to render function
@@ -123,27 +123,34 @@ int main(int argc, char *argv[])
 	};
 
 	// Set default settings
-	Bela_defaultSettings(&settings);
-	settings.setup = setup;
-	settings.render = render;
-	settings.cleanup = cleanup;
+	Bela_defaultSettings(settings);
+	settings->setup = setup;
+	settings->render = render;
+	settings->cleanup = cleanup;
 
 	// Parse command-line arguments
 	while (1) {
-		int c;
-		if ((c = Bela_getopt_long(argc, argv, "hf:", customOptions, &settings)) < 0)
-				break;
+		int c = Bela_getopt_long(argc, argv, "hf:", customOptions, settings);
+		if (c < 0)
+			break;
+		int ret = -1;
 		switch (c) {
-		case 'h':
+			case 'h':
 				usage(basename(argv[0]));
-				exit(0);
-		case 'f':
+				ret = 0;
+				break;
+			case 'f':
 				fileName = string((char *)optarg);
 				break;
-		case '?':
-		default:
+			default:
 				usage(basename(argv[0]));
-				exit(1);
+				ret = 1;
+				break;
+		}
+		if(ret >= 0)
+		{
+			Bela_InitSettings_free(settings);
+			return ret;
 		}
 	}
 
@@ -158,23 +165,25 @@ int main(int argc, char *argv[])
 	if(initFile(fileName, &sampleData) != 0)
 	{
 		cout << "Error: unable to load samples " << endl;
-		return -1;
+		return 1;
 	}
 
-	if(settings.verbose)
+	if(settings->verbose)
 		cout << "File contains " << sampleData.sampleLen << " samples" << endl;
 
 
 	// Initialise the PRU audio device
-	if(Bela_initAudio(&settings, &sampleData) != 0) {
+	if(Bela_initAudio(settings, &sampleData) != 0) {
+		Bela_InitSettings_free(settings);	
 		cout << "Error: unable to initialise audio" << endl;
-		return -1;
+		return 1;
 	}
+	Bela_InitSettings_free(settings);
 
 	// Start the audio device running
 	if(Bela_startAudio()) {
 		cout << "Error: unable to start real-time audio" << endl;
-		return -1;
+		return 1;
 	}
 
 	// Set up interrupt handler to catch Control-C and SIGTERM
