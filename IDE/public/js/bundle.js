@@ -3617,15 +3617,6 @@ var SettingsView = function (_View) {
 				exceptions['sections'] = settingExceptions['CtagBela']['sections'];
 				exceptions['subsections'] = settingExceptions['CtagBela']['subsections'];
 				exceptions['options'] = settingExceptions['CtagBela']['options'];
-
-				var sRates = $('#analog-samplerate').children("option");
-				for (var i = 0; i < sRates.length; i++) {
-					var rate = sRates[i].innerHTML;
-					if (rate == "44100") {
-						sRates[i].innerHTML = "48000";
-						break;
-					}
-				}
 			} else {
 				exceptions['sections'] = settingExceptions['Bela']['sections'];
 				exceptions['subsections'] = settingExceptions['Bela']['subsections'];
@@ -3637,6 +3628,19 @@ var SettingsView = function (_View) {
 			} else if (boardString === 'CtagBeast' || boardString === 'CtagBeastBela') {
 				exceptions['options'] = exceptions['options'].concat(settingExceptions['Beast']['options']);
 			}
+
+			if (boardString.includes('Ctag')) {
+				var sRates = $('#analog-samplerate').children("option");
+				for (var i = 0; i < sRates.length; i++) {
+					var rate = sRates[i].innerHTML;
+					if (rate == "44100") {
+						sRates[i].innerHTML = "48000";
+					} else if (rate == "22050") {
+						sRates[i].innerHTML = "24000";
+					}
+				}
+			}
+
 			for (var e in exceptions['options']) {
 				var opts = $('#' + exceptions['options'][e].selector).children("option");
 				var exceptOpts = exceptions['options'][e].optVal;
