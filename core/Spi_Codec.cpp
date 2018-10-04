@@ -16,34 +16,35 @@ const int RESET_PIN = 81; // GPIO2(17) P8.34
 #include <linux/spi/spidev.h>
 #include <cstring>
 
-Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1)
+Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, bool isVerbose /* = false */)
 {
 
+	_verbose = isVerbose;
 	// Open SPI devices
 	if ((_fd_master = open(spidev_gpio_cs0, O_RDWR)) < 0)
-		fprintf(stderr, "Failed to open spidev device for master codec.\n");
+		_verbose && fprintf(stderr, "Failed to open spidev device for master codec.\n");
 	if (!spidev_gpio_cs1)
 	       _fd_slave = -1;
 	else if((_fd_slave = open(spidev_gpio_cs1, O_RDWR)) < 0)
-		fprintf(stderr, "Failed to open spidev device for slave codec.\n");
+		_verbose && fprintf(stderr, "Failed to open spidev device for slave codec.\n");
 
 	// Prepare reset pin and reset audio codec(s)
 	gpio_unexport(RESET_PIN);
 	if(gpio_export(RESET_PIN)) {
-		fprintf(stderr, "Warning: couldn't reset pin for audio codecs\n");
+		_verbose && fprintf(stderr, "Warning: couldn't reset pin for audio codecs\n");
 	}
 	if(gpio_set_dir(RESET_PIN, OUTPUT_PIN)) {
-		fprintf(stderr, "Couldn't set direction on audio codec reset pin\n");
+		_verbose && fprintf(stderr, "Couldn't set direction on audio codec reset pin\n");
 	}
 	if(gpio_set_value(RESET_PIN, LOW)) {
-		fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
+		_verbose && fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
 	}
 
 	usleep(10000);
 
 	// Wake up audio codec(s)
 	if(gpio_set_value(RESET_PIN, HIGH)) {
-		fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
+		_verbose && fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
 	}
 
 	usleep(10000);
@@ -227,14 +228,14 @@ bool Spi_Codec::slaveIsDetected(){
 
 int Spi_Codec::reset(){
 	if(gpio_set_value(RESET_PIN, LOW)) {
-		fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
+		_verbose && fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
 		return -1;
 	}
 
 	usleep(10000);
 
 	if(gpio_set_value(RESET_PIN, HIGH)) {
-		fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
+		_verbose && fprintf(stderr, "Couldn't set value on audio codec reset pin\n");
 		return -1;
 	}
 

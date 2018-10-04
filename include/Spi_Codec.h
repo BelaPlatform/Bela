@@ -38,7 +38,7 @@ public:
 		SLAVE_CODEC
 	};
 
-	Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1);
+	Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, bool isVerbose = false);
 	~Spi_Codec();
 
 	int writeRegister(unsigned char reg, unsigned char value, CODEC_TYPE codec = MASTER_CODEC);
@@ -63,6 +63,7 @@ private:
 	int _writeDACVolumeRegisters(bool mute);
 	int _spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t bytes, CODEC_TYPE codec = MASTER_CODEC);
 	bool _isBeast = false;
+	bool _verbose;
 };
 
 #endif /* SPI_CODEC_H_ */
