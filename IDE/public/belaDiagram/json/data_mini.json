@@ -122,7 +122,7 @@
       "y": "174",
       "width": "13",
       "height": "13",
-      "text": "5V - NEVER use 5V with digital pins - P8 & P9!",
+      "text": "5V - NEVER use 5V with digital pins - P1 & P2!",
       "tip": "tooltip"
     },
     {
