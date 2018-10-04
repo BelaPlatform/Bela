@@ -84,6 +84,11 @@
   fill: rgba(0, 0, 0, 0.6);
   stroke: none;
 }
+.powerIn {
+  fill: rgba(255, 14, 154, 0.7);
+  stroke: #0effeb;
+}
+
 /*
 
 

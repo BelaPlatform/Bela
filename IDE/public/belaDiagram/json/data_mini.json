@@ -421,6 +421,24 @@
       "height": "08",
       "text": "Micro USB power jack (bottom board)",
       "tip": "tooltip"
+    },
+    {
+      "elemclass": "powerIn",
+      "x": "15",
+      "y": "281",
+      "width": "13",
+      "height": "13",
+      "text": "LiPo +Vin",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "gnd",
+      "x": "38",
+      "y": "260",
+      "width": "13",
+      "height": "13",
+      "text": "LiPo GND",
+      "tip": "tooltip"
     }
   ]
 }]
