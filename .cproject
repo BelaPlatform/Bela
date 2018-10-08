@@ -33,12 +33,12 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.2006448218" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1267706246" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.2031219124" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1516989263" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -fpermissive -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
@@ -61,12 +61,12 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.326761664" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.471732683" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.358825414" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Bela/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/local/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/root/Bela/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${SYSROOT}/usr/xenomai/include/cobalt/&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/local/linaro/arm-bela-linux-gnueabihf/lib/gcc/arm-bela-linux-gnueabihf/6.3.1/include/"/>
 								</option>
 								<option id="gnu.c.compiler.option.misc.other.835792865" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -Wunused-result -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon --fast-math -ftree-vectorize -ftree-vectorizer-verbose=10" valueType="string"/>
