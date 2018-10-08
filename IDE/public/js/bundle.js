@@ -3558,19 +3558,45 @@ var SettingsView = function (_View) {
 			var settingExceptions = {
 				Bela: {
 					sections: [],
-					subsections: ['disable-led']
+					subsections: ['disable-led'],
+					options: []
 				},
 				BelaMini: {
 					sections: ['capelet-settings'],
-					subsections: ['mute-speaker']
+					subsections: ['mute-speaker'],
+					options: []
 				},
 				Ctag: {
 					sections: ['capelet-settings'],
-					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right']
+					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right', 'analog-channels', 'analog-samplerate', 'use-analog', 'adc-level'],
+					options: []
 				},
-				CtagOnly: {
-					sections: ['capelet-settings'],
-					subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'adc-level']
+				CtagBela: {
+					sections: [''],
+					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right'],
+					options: [{
+						selector: 'analog-samplerate',
+						optVal: [88200]
+					}, {
+						selector: 'analog-channels',
+						optVal: [2]
+					}]
+				},
+				Face: {
+					sections: [],
+					subsections: [],
+					options: [{
+						selector: 'buffer-size',
+						optVal: [128]
+					}]
+				},
+				Beast: {
+					sections: [],
+					subsections: [],
+					options: [{
+						selector: 'buffer-size',
+						optVal: [64, 128]
+					}]
 				}
 			};
 
@@ -3582,31 +3608,55 @@ var SettingsView = function (_View) {
 			if (boardString === 'BelaMini') {
 				exceptions['sections'] = settingExceptions['BelaMini']['sections'];
 				exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
+				exceptions['options'] = settingExceptions['BelaMini']['options'];
 			} else if (boardString === 'CtagFace' || boardString === 'CtagBeast') {
 				exceptions['sections'] = settingExceptions['Ctag']['sections'];
-				exceptions['subsections'] = settingExceptions['Ctag']['subsections'].concat(settingExceptions['CtagOnly']['subsections']);
-			} else if (boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
-				exceptions['sections'] = settingExceptions['Ctag']['sections'];
 				exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
-				var sRates = $('#analog-samplerate').children("option");
-				for (var i = 0; i < sRates.length; i++) {
-					var rate = sRates[i].innerHTML;
-					if (rate == '88200') {
-						sRates[i].remove();
-						$("#analog-channels option[value='2']").remove();
-					} else if (rate == "44100") {
-						sRates[i].innerHTML = "48000";
-					}
-				}
+				exceptions['options'] = settingExceptions['Ctag']['options'];
+			} else if (boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
+				exceptions['sections'] = settingExceptions['CtagBela']['sections'];
+				exceptions['subsections'] = settingExceptions['CtagBela']['subsections'];
+				exceptions['options'] = settingExceptions['CtagBela']['options'];
 			} else {
 				exceptions['sections'] = settingExceptions['Bela']['sections'];
 				exceptions['subsections'] = settingExceptions['Bela']['subsections'];
+				exceptions['options'] = settingExceptions['Bela']['options'];
 			}
-			for (var e in exceptions['subsections']) {
-				$('#' + exceptions['subsections'][e]).parent().parent().css('display', 'none');
+
+			if (boardString === 'CtagFace' || boardString === 'CtagFaceBela') {
+				exceptions['options'] = exceptions['options'].concat(settingExceptions['Face']['options']);
+			} else if (boardString === 'CtagBeast' || boardString === 'CtagBeastBela') {
+				exceptions['options'] = exceptions['options'].concat(settingExceptions['Beast']['options']);
 			}
-			for (var e in exceptions['sections']) {
-				$('.' + exceptions['sections'][e]).css('display', 'none');
+
+			if (boardString.includes('Ctag')) {
+				var sRates = $('#analog-samplerate').children("option");
+				for (var i = 0; i < sRates.length; i++) {
+					var rate = sRates[i].innerHTML;
+					if (rate == "44100") {
+						sRates[i].innerHTML = "48000";
+					} else if (rate == "22050") {
+						sRates[i].innerHTML = "24000";
+					}
+				}
+			}
+
+			for (var e in exceptions['options']) {
+				var opts = $('#' + exceptions['options'][e].selector).children("option");
+				var exceptOpts = exceptions['options'][e].optVal;
+				for (var _i = 0; _i < opts.length; _i++) {
+					var html = opts[_i].innerHTML;
+					if (exceptOpts.includes(parseInt(html))) {
+						opts[_i].remove();
+					}
+				}
+			}
+
+			for (var subsect in exceptions['subsections']) {
+				$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+			}
+			for (var sect in exceptions['sections']) {
+				$('.' + exceptions['sections'][sect]).css('display', 'none');
 			}
 		}
 	}]);

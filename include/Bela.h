@@ -28,10 +28,13 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 3
+#define BELA_MINOR_VERSION 4
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.4.0
+// - added allocator/de-allocator for BelaInitSettings
+// - added char board field to BelaInitSettings
 // 1.3.0
 // - removed define for I2C codec address
 // - removed user option in settings for I2C address
@@ -394,8 +397,6 @@ typedef struct {
 	/// freeze while the program is running. Use the button on the
 	/// Bela cape to forcefully stop the running program 
 	int highPerformanceMode;
-	/// User selected board to work with (as opposed to detected hardware).
-	char board[MAX_BOARDNAME_LENGTH];
 
 	// These items are application-dependent but should probably be
 	// determined by the programmer rather than the user
@@ -430,6 +431,10 @@ typedef struct {
 	/// Port where the UDP client will transmit
 	int transmitPort;
 	char serverName[MAX_SERVERNAME_LENGTH];
+
+	/// User selected board to work with (as opposed to detected hardware).
+	char board[MAX_BOARDNAME_LENGTH];
+
 } BelaInitSettings;
 
 /** \ingroup auxtask
