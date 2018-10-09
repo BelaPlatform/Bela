@@ -288,9 +288,8 @@ static bool pdMultiplexerActive = false;
 
 #ifdef PD_THREADED_IO
 void fdLoop(void* arg){
-	t_pdinstance* pd_that = (t_pdinstance*)arg;
 	while(!gShouldStop){
-		sys_doio(pd_that);
+		sys_doio();
 		usleep(3000);
 	}
 }
@@ -457,7 +456,7 @@ bool setup(BelaContext *context, void *userData)
 #ifdef PD_THREADED_IO
 	sys_dontmanageio(1);
 	AuxiliaryTask fdTask;
-	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", (void*)pd_this);
+	fdTask = Bela_createAuxiliaryTask(fdLoop, 50, "libpd-fdTask", NULL);
 	Bela_scheduleAuxiliaryTask(fdTask);
 #endif /* PD_THREADED_IO */
 
