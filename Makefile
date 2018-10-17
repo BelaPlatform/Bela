@@ -341,6 +341,56 @@ ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
 PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
+# Bela libraries: checks which of libraries/* should be compiled in
+PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.c=%.i) $(CPP_OBJS:%.c=%.ii)
+PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
+
+prebuild: $(PROJECT_LIBRARIES_MAKEFILE)
+
+$(PROJECT_LIBRARIES_MAKEFILE):
+	#stub rule to create $(PROJECT_LIBRARIES_MAKEFILE)
+	./detectlibraries $(PROJECT)
+
+$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
+
+# the .o will be built as part of the regular build process, and with
+# -save-temps this will have the side effect of generating the .i and .ii files
+# as well
+$(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/build/%.o
+$(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/build/%.o
+
+$(shell rm -f $(PROJECT_LIBRARIES_MAKEFILE)
+-include $(PROJECT_LIBRARIES_MAKEFILE) # My current understanding is that if this does not exist, but there are rules to 
+# make it, it will be re-made if needed.
+# TODO: check out rules for makefiles to be rebuilt:
+# https://www.gnu.org/software/make/manual/html_node/Include.html
+# https://www.gnu.org/software/make/manual/html_node/Remaking-Makefiles.html#Remaking-Makefiles
+# one problem we may incur is is that if the Makefile.inc exists
+#this file will contain, e.g.:
+#-include libraries/library1/Makefile.link
+#-include libraries/library2/Makefile.link
+#-include libraries/library3/Makefile.link
+#-include libraries/library4/Makefile.link
+# each of which will in turn contain:
+#
+#LIBRARY=..find out the library name
+#LIBRARIES_LDFLAGS += -l123
+#THIS_CPPFILES := $(wildcard libraries/$(LIBRARY)/*.cpp)
+#LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
+#and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
+#either via a default Makefile.libraries, or using the library's custom one (if available)
+libraries/%.o:
+	LIBRARYNAME=`echo $@ | sed s:libraries/\(.*\)/build/.*\.o:\1:`\
+	MAKEFILE=libraries/$$LIBRARYNAME/Makefile
+	if [ -f $$MAKEFILE ]; then {} else {
+		MAKEFILE=Makefile.libraries\
+	}\
+	fi\
+	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE $@
+
+LIBRARIES_OBJS: $(LIBRARIES)
+	for LIBRARYNAME in `checklibraries PROJECT=$(PROJECT_NAME)`; do [ -f libraries/$$LIBRARYNAME/Makefile ] && $(MAKE) -C libraries/$$LIBRARYNAME || $(MAKE) -C libraries/$$LIBRARYNAME -f Makefile.libraries; done
+
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
 CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
@@ -432,7 +482,7 @@ build/pru/%_bin.h: pru/%.p
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -save-temps=obj
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -440,7 +490,7 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -save-temps=obj
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -475,7 +525,7 @@ else
 # function, and conditionally call one of two recursive make targets depending on whether
 # we want to link in the default main file or not. The kludge is the mess of a shell script
 # line below. Surely there's a better way to do this?
-$(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
+$(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS) $(LIBRARIES_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
 ifeq ($(PROJECT_TYPE),libpd)
@@ -484,7 +534,7 @@ ifeq ($(PROJECT_TYPE),libpd)
 	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
 endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LDLIBS) $(BELA_LDLIBS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
 	$(AT) echo ' ...done'
 endif # ifeq ($(SHOULD_BUILD),false)
 
