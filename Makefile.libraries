@@ -1,13 +1,18 @@
 # This should be called from the Bela folder, with 
 # make -f Makefile.libraries LIBRARY=libraryname
 # set defaults
-CC :=clang
+CC := clang
 CXX := clang++
 CXXFLAGS := -std=c++11 -O3 -mfpu=cortex-a8
 CPPFLAGS := -I/root/Bela/include
 CFLAGS := $(CXXFLAGS)
 include libraries/$(LIBRARY)/build/Makefile.compile
+LIBRARY_DIR := libraries/$(LIBRARY)
+LIBRARY_BUILD_DIR := $(LIBRARY_DIR)/build
 
-build/%.o: ./%.c
+$(warning $(LIBRARY_BUILD_DIR) $(LIBRARY_DIR) )
 
-build/%.o: ./%.cpp
+$(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
+	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
+$(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
+	$(CXX) -c $< -o $@ $(CPPFLAGS) $(CXXFLAGS)

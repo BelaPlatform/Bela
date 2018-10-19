@@ -19,6 +19,9 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
+# an empty recipe to avoid implicit rules for .d files
+%.d:
+	
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean startup startuploop stopstartup stoprunning stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib lib/libbela.so lib/libbelaextra.so lib/libbela.a lib/libbelaextra.a csoundstart
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -269,7 +272,7 @@ QUIET?=false
 
 RM := rm -rf
 
-INCLUDES := -I$(PROJECT_DIR) -I./include -I./build/pru/
+INCLUDES := -I$(PROJECT_DIR) -I./include -I./build/pru/ -I./libraries/
 ifeq ($(XENOMAI_VERSION),2.6)
   BELA_USE_DEFINE=BELA_USE_POLL
 endif
@@ -342,25 +345,23 @@ ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Bela libraries: checks which of libraries/* should be compiled in
-PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.c=%.i) $(CPP_OBJS:%.c=%.ii)
+PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.o=%.i) $(CPP_OBJS:%.o=%.ii)
 PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 
 prebuild: $(PROJECT_LIBRARIES_MAKEFILE)
 
-$(PROJECT_LIBRARIES_MAKEFILE):
-	#stub rule to create $(PROJECT_LIBRARIES_MAKEFILE)
-	./detectlibraries $(PROJECT)
-
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
+	$(AT)./resources/tools/detectlibraries.sh $(PROJECT)
 
 # the .o will be built as part of the regular build process, and with
 # -save-temps this will have the side effect of generating the .i and .ii files
 # as well
-$(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/build/%.o
-$(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/build/%.o
+$(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/%.c
+	$(AT)cpp $< -o $@ $(DEFAULT_CFLAGS) $(INCLUDES)
+$(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/%.cpp # TODO: should more flags be down here and above?
+	$(AT)cpp $< -o $@ $(DEFAULT_CPPFLAGS) $(INCLUDES) $(CPPFLAGS)
 
-$(shell rm -f $(PROJECT_LIBRARIES_MAKEFILE)
--include $(PROJECT_LIBRARIES_MAKEFILE) # My current understanding is that if this does not exist, but there are rules to 
+include $(PROJECT_LIBRARIES_MAKEFILE) # My current understanding is that if this does not exist, but there are rules to 
 # make it, it will be re-made if needed.
 # TODO: check out rules for makefiles to be rebuilt:
 # https://www.gnu.org/software/make/manual/html_node/Include.html
@@ -380,16 +381,15 @@ $(shell rm -f $(PROJECT_LIBRARIES_MAKEFILE)
 #and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
 #either via a default Makefile.libraries, or using the library's custom one (if available)
 libraries/%.o:
-	LIBRARYNAME=`echo $@ | sed s:libraries/\(.*\)/build/.*\.o:\1:`\
-	MAKEFILE=libraries/$$LIBRARYNAME/Makefile
-	if [ -f $$MAKEFILE ]; then {} else {
-		MAKEFILE=Makefile.libraries\
-	}\
-	fi\
+	$(AT) LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
+	echo Building library $$LIBRARYNAME; \
+	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
+	if [ -f $$MAKEFILE ];\
+	then { true; }; else { \
+		MAKEFILE=Makefile.libraries; \
+	}; \
+	fi; \
 	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE $@
-
-LIBRARIES_OBJS: $(LIBRARIES)
-	for LIBRARYNAME in `checklibraries PROJECT=$(PROJECT_NAME)`; do [ -f libraries/$$LIBRARYNAME/Makefile ] && $(MAKE) -C libraries/$$LIBRARYNAME || $(MAKE) -C libraries/$$LIBRARYNAME -f Makefile.libraries; done
 
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
@@ -482,7 +482,7 @@ build/pru/%_bin.h: pru/%.p
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -save-temps=obj
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -490,7 +490,7 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -save-temps=obj
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -534,7 +534,7 @@ ifeq ($(PROJECT_TYPE),libpd)
 	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
 endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LIBRARIES_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
 	$(AT) echo ' ...done'
 endif # ifeq ($(SHOULD_BUILD),false)
 
