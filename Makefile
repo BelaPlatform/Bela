@@ -162,7 +162,7 @@ RUN_COMMAND?=bash $(RUN_FILE)
 else
 ifeq ($(PROJECT_TYPE),sc)
 SCLANG_FIFO=/tmp/sclangfifo
-RUN_COMMAND?=bash -c 'rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
+RUN_COMMAND?=bash -c 'touch /tmp/sclang.yaml; rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang -l /tmp/sclang.yaml $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
 else
 ifeq ($(PROJECT_TYPE),cs)
 RUN_COMMAND?=bash -c 'belacsound --csd=$(CSOUND_FILE) 2>&1'
