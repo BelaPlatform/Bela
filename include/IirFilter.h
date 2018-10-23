@@ -56,15 +56,17 @@ public:
 
 class IirFilter{
 private:
-	struct IirFilterStage** stages;
-	int numberOfStages;
+	struct IirFilterStage** stages = 0;
+	int numberOfStages = 0;
 	void dealloc();
 public:
 	IirFilter();
 	IirFilter(int newNumberOfStages);
 	IirFilter(int newNumberOfStages, double *newCoefficients);
 	void setCoefficients(double* newCoefficients);
+	void setCoefficients(double* newCoefficients, unsigned int stage);
 	void setStates(double* newStates);
+	void setStates(double* newStates, unsigned int stage);
 	void setNumberOfStages(int newNumberOfStages);
 //	double process(double in);
 //	inline void process(double* inout, int length);
