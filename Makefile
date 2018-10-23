@@ -172,7 +172,7 @@ endif
 endif
 endif
 
-RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
+RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -oL -eL $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
 BELA_IDE_HOME?=/root/Bela/IDE
 XENO_CONFIG=/usr/xenomai/bin/xeno-config
