@@ -56,7 +56,7 @@ public:
 
 class IirFilter{
 private:
-	struct IirFilterStage** stages = 0;
+	IirFilterStage** stages = 0;
 	int numberOfStages = 0;
 	void dealloc();
 public:
