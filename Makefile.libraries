@@ -5,15 +5,17 @@ CC := clang
 CXX := clang++
 
 #TODO: these variables should actually be conditional and/or shared with the Base Makefile
+# although they are not really needed if this Makefile is called from the main Makefile
 BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
 BELA_DIR := /root/Bela
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -std=c++11
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math
 CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-CPPFLAGS := -I$(BELA_DIR)/include  -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
-CFLAGS := $(CXXFLAGS)
+override CPPFLAGS := -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
+# the above default variables may be modified by the Makefile included here:
 include libraries/$(LIBRARY)/build/Makefile.compile
+
 LIBRARY_DIR := libraries/$(LIBRARY)
 LIBRARY_BUILD_DIR := $(LIBRARY_DIR)/build
 
