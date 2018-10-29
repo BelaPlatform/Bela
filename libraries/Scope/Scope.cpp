@@ -1,4 +1,4 @@
-#include <Scope.h>
+#include "Scope.h"
 
 Scope::Scope(): isUsingOutBuffer(false), 
                 isUsingBuffer(false), 
@@ -7,17 +7,24 @@ Scope::Scope(): isUsingOutBuffer(false),
                 downSampling(1), 
                 triggerPrimed(false), 
                 started(false), 
-				windowFFT(NULL),
-				inFFT(NULL),
-				outFFT(NULL),
-				cfg(NULL)
-				{}
+		windowFFT(NULL),
+		inFFT(NULL),
+		outFFT(NULL),
+		cfg(NULL)
+		{}
 
-Scope::~Scope(){
+Scope::Scope(unsigned int numChannels, float sampleRate, int numSliders /* = 0 */){
+	setup(numChannels, sampleRate, numSliders);
+}
+
+void Scope::cleanup(){
 	dealloc();
 	sendBufferTask.cleanup();
 	scopeTriggerTask.cleanup();
 	scope_ws_cleanup();
+}
+Scope::~Scope(){
+	cleanup();
 }
 
 void Scope::dealloc(){

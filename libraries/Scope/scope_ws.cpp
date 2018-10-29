@@ -3,8 +3,8 @@
 #include <seasocks/Server.h>
 #include <seasocks/WebSocket.h>
 #include <memory>
-#include <Scope.h>
-#include <JSON.h>
+#include "Scope.h"
+#include "JSON.h"
 
 #define SCOPE_WS_PORT 5432
 

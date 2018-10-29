@@ -53,7 +53,10 @@ public:
 
 	bool ready() { return isReady; }
 
-	I2c_TouchKey();
+	int setup();
+	void cleanup();
+
+	I2c_TouchKey(int sensorType);
 	~I2c_TouchKey();
 
 };

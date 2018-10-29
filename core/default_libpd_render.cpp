@@ -13,7 +13,7 @@ extern "C" {
 };
 #include <UdpServer.h>
 #include <Midi.h>
-#include <Scope.h>
+#include <Scope/Scope.h>
 #include <string>
 #include <sstream>
 #include <algorithm>

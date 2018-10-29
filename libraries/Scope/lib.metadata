@@ -1,0 +1,14 @@
+name=Scope
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Adan Benito<adan@bela.io>, Giulio Moro<giuliomoro@yahoo.it>
+description=Bela Scope
+url=
+board=*
+dependencies=
+LDFLAGS=-lseasocks
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

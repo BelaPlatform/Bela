@@ -21,8 +21,8 @@
 class Scope{
     public:
         Scope();
-		~Scope();
-		
+	Scope(unsigned int numChannels, float sampleRate, int numSliders = 0);
+	~Scope();
         /**
          * \brief Initialise the scope, setting the number of channels and the sample rate
          *
@@ -40,6 +40,7 @@ class Scope{
          */
         void setup(unsigned int numChannels, float sampleRate, int numSliders = 0);
 
+	void cleanup();
         /** 
          * \brief Logs a frame of data to the scope.
          *
@@ -49,8 +50,8 @@ class Scope{
          */
         void log(float chn1, ...);
 
-		/**
-		 * \brief Logs a frame of data to the scope.
+        /**
+         * \brief Logs a frame of data to the scope.
          *
          * Accepts a pointer to an array of floats representing each channel's value in
          * ascending order.
