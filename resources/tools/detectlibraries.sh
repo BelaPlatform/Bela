@@ -79,7 +79,7 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			# Get included libraries on project from pre-processor's output 
-			grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" projects/$PROJECT/build | sed 's:.*"./libraries/\(.*\)/.*:\1:' | uniq > tmp/libraries	
+			grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" projects/$PROJECT/build | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
 			MKFILEPATH="projects/$PROJECT/build"
 			break
 			;;
@@ -92,7 +92,7 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			# Get included libraries from file
-			grep -R "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | uniq > tmp/libraries	
+			grep -R "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
 			MKFILEPATH=`dirname "$FILE"`
 			;;
 		--outpath)
@@ -129,8 +129,8 @@ cat tmp/libraries | while read L; do
 	extract_dependencies $L
 done
 
-# make sure we only include a library once
-uniq $TMPMKFILE tmp/tmpmkfile
+# make sure we only include each library once
+cat $TMPMKFILE | sort -u  > tmp/tmpmkfile
 mv tmp/tmpmkfile $TMPMKFILE
 
 cmp -s $TMPMKFILE $MKFILE && COMP=0 || COMP=1
