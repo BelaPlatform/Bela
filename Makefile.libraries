@@ -21,6 +21,19 @@ LIBRARY_BUILD_DIR := $(LIBRARY_DIR)/build
 
 $(warning $(LIBRARY_BUILD_DIR) $(LIBRARY_DIR) )
 
+LIBRARY_FILES := $(wildcard $(LIBRARY_DIR)/*.c $(LIBRARY_DIR)/*.cpp)
+LIBRARY_CPPS := $(wildcard $(LIBRARY_DIR)/*.cpp)
+LIBRARY_OBJS :=$(LIBRARY_CPPS:$(LIBRARY_DIR)/%.cpp=$(LIBRARY_DIR)/build/%.o)
+LIBRARY_CS := $(wildcard $(LIBRARY_DIR)/*.c)
+LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_CS:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
+#LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_FILES:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
+#$(warning FILES: $(LIBRARY_FILES))
+$(warning OBJS: $(LIBRARY_OBJS))
+
+all: $(LIBRARY_OBJS)
+clean:
+	rm -rf $(LIBRARY_OBJS)
+
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
 	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
