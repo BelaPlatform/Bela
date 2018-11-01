@@ -361,7 +361,15 @@ $(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/%.c
 $(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/%.cpp # TODO: should more flags be down here and above?
 	$(AT)cpp $< -o $@ $(DEFAULT_CPPFLAGS) $(INCLUDES) $(CPPFLAGS)
 
-include $(PROJECT_LIBRARIES_MAKEFILE) # My current understanding is that if this does not exist, but there are rules to 
+#TODO: this is a workaround to avoid the include when not needed. This should be re-thought through properly.
+ifeq (,$(filter $(NO_PROJECT_TARGETS),$(MAKECMDGOALS)))
+  ifeq ($(SHOULD_BUILD),true)
+    ifeq (,$(filter clean projectclean,$(MAKECMDGOALS)))
+      include $(PROJECT_LIBRARIES_MAKEFILE)
+    endif # clean
+  endif # SHOULD_BUILD
+endif # filter
+# My current understanding is that if this does not exist, but there are rules to
 # make it, it will be re-made if needed.
 # TODO: check out rules for makefiles to be rebuilt:
 # https://www.gnu.org/software/make/manual/html_node/Include.html
