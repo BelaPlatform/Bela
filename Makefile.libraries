@@ -14,12 +14,11 @@ CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 override CPPFLAGS := -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
 # the above default variables may be modified by the Makefile included here:
-include libraries/$(LIBRARY)/build/Makefile.compile
+MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile
+include $(MKFILE_COMPILE)
 
 LIBRARY_DIR := libraries/$(LIBRARY)
 LIBRARY_BUILD_DIR := $(LIBRARY_DIR)/build
-
-$(warning $(LIBRARY_BUILD_DIR) $(LIBRARY_DIR) )
 
 LIBRARY_FILES := $(wildcard $(LIBRARY_DIR)/*.c $(LIBRARY_DIR)/*.cpp)
 LIBRARY_CPPS := $(wildcard $(LIBRARY_DIR)/*.cpp)
@@ -38,3 +37,5 @@ $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
 	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
 	$(CXX) -c $< -o $@ $(CPPFLAGS) $(CXXFLAGS)
+$(MKFILE_COMPILE):
+	resources/tools/detectlibraries.sh --library $(LIBRARY)
