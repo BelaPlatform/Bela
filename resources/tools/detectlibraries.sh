@@ -7,6 +7,7 @@ getfield() {
 extract_dependencies() {
 	LIBRARY=$1
 	MDFILE="libraries/$LIBRARY/lib.metadata";
+	echo "$LIBRARY" >> "$LIBLIST"
 	if [ -f $MDFILE ] ; then
 
 		create_linkmakefile $LIBRARY $MDFILE
@@ -16,7 +17,11 @@ extract_dependencies() {
 		DEPENDENCIES=$(getfield dependencies $MDFILE) ;
 		DEPENDENCIES=$(echo $DEPENDENCIES | sed 's/,/\n/g') ;
 		for D in $DEPENDENCIES ; do
-			extract_dependencies $D ;
+			if ! grep -Fxq "$D" "$LIBLIST" ; then
+				extract_dependencies $D ;
+			else
+				echo Library $D has already been checked for dependencies
+			fi
 		done
 	fi
 }
@@ -50,16 +55,60 @@ create_compilemakefile() {
 	echo_field CPPFLAGS
 }
 
+## Script starts here
 
-PROJECT=$1
-
-# Get included libraries on project from pre-processor's output 
-grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" projects/$PROJECT/build | sed 's:.*"./libraries/\(.*\)/.*:\1:' | uniq > tmp/libraries	
-
+mkdir -p tmp/
+# Create & empty temporary files
+LIBLIST="tmp/liblist"
+>"$LIBLIST"
+>"tmp/libraries"
 >"tmp/Makefile.inc"
 TMPMKFILE="tmp/Makefile.inc"
-MKFILE="projects/$PROJECT/build/Makefile.inc"
-#> "projects/$PROJECT/build/Makefile.inc"
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-p|--project)
+			shift
+			PROJECT=$1
+			if [ -z "$PROJECT" ] ; then
+				echo "Please, specify a project name."
+				exit
+			fi
+			shift
+			# Get included libraries on project from pre-processor's output 
+			grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" projects/$PROJECT/build | sed 's:.*"./libraries/\(.*\)/.*:\1:' | uniq > tmp/libraries	
+			MKFILEPATH="projects/$PROJECT/build"
+			break
+			;;
+		-f|--file)
+			shift
+			FILE=$1
+			if [ -z "$FILE" ]; then
+				echo "Please, specify a file name."
+				exit
+			fi
+			shift
+			# Get included libraries from file
+			grep -R "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | uniq > tmp/libraries	
+			MKFILEPATH=`dirname "$FILE"`
+			;;
+		--outpath)
+			shift
+			MFILEPATH=$1
+			if [ -z "$MFILEPATH" ]; then
+				echo "Please, specify a file name."
+				exit
+			fi
+			shift
+			;;
+		-*)
+			echo Unknown option $1 >&2
+			exit 1
+			;;
+	esac
+done
+
+MKFILE="$MKFILEPATH/Makefile.inc"
 
 cat tmp/libraries | while read L; do
 	extract_dependencies $L
