@@ -2,7 +2,7 @@
 #ifndef __OSCServer_H_INCLUDED__
 #define __OSCServer_H_INCLUDED__ 
 
-#include <UdpServer.h>
+#include <UdpServer/UdpServer.h>
 #include <oscpkt.hh>
 #include <Bela.h>
 #include <queue>

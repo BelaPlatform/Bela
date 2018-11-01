@@ -1,5 +1,5 @@
 /***** OSCServer.cpp *****/
-#include <OSCServer.h>
+#include "OSCServer.h"
 
 // constructor
 OSCServer::OSCServer(){}
@@ -16,7 +16,7 @@ void OSCServer::checkMessages(void* ptr){
 
 void OSCServer::setup(int _port){
     port = _port;
-    if(!socket.init(port))
+    if(!socket.setup(port))
         rt_printf("socket not initialised\n");
     createAuxTasks();
 }

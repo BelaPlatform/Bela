@@ -23,7 +23,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include <Midi.h>
+#include <Midi/Midi.h>
 #include <stdlib.h>
 #include <cmath>
 

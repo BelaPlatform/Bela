@@ -11,8 +11,8 @@
 extern "C" {
 #include <libpd/s_stuff.h>
 };
-#include <UdpServer.h>
-#include <Midi.h>
+#include <UdpServer/UdpServer.h>
+#include <Midi/Midi.h>
 #include <Scope/Scope.h>
 #include <string>
 #include <sstream>

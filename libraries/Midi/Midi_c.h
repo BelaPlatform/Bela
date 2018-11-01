@@ -2,7 +2,7 @@
 #define BELA_MIDI_H_
 
 #ifdef __cplusplus
-#include <Midi.h>
+#include "Midi.h"
 extern "C" {
 #else
 typedef void* Midi;

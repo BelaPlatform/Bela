@@ -5,7 +5,7 @@
 *      Author: giulio
 */
 
-#include "../include/PulseIn.h"
+#include "PulseIn.h"
 
 void PulseIn::init(BelaContext* context, unsigned int digitalInput, int direction){
 	_digitalInput = digitalInput;

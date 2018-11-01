@@ -1,0 +1,15 @@
+name=Midi
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Adan Benito<adan@bela.io>, Giulio Moro<giuliomoro@yahoo.it>
+description=Xenomai-friendly implementation of a Midi calss built on top of ALSA's raw API. The MIDI I/O itself is not boosted by Xenomai. The Xenomai-friendly bit is the fact that the I/O thread communicates to the "audio" thread through a Xenomai pipe.
+url=
+board=*
+dependencies=
+LDFLAGS=-lasound
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
+
