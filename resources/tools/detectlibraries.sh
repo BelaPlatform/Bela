@@ -6,6 +6,7 @@ getfield() {
 
 extract_dependencies() {
 	LIBRARY=$1
+	echo Extracting dependencies of library $LIBRARY
 	MDFILE="libraries/$LIBRARY/lib.metadata";
 	echo "$LIBRARY" >> "$LIBLIST"
 	if [ -f $MDFILE ] ; then
@@ -40,7 +41,9 @@ create_linkmakefile() {
 }
 
 echo_field() {
-	FIELD=$(getfield $1 $MDFILE); [ -z "$FIELD" ] || echo "$1 := $FIELD" >> $MFILECOMP
+	SEARCHFIELD=$1
+	FIELDNAME=$2; [ ! -z "$FIELDNAME" ] || FIELDNAME=$SEARCHFIELD
+	FIELD=$(getfield $SEARCHFIELD $MDFILE); [ -z "$FIELD" ] || echo "$FIELDNAME := $FIELD" >> $MFILECOMP
 }
 create_compilemakefile() {
 	LIBRARY=$1
@@ -101,7 +104,19 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			;;
-		-*)
+		-l|--library)
+			shift
+			LIB=$1
+			if [ -z "$LIB" ] ; then
+				echo "Please, specify a library name."
+				exit
+			fi
+			shift
+			echo $LIB
+			extract_dependencies $LIB
+			exit
+			;;
+		*)
 			echo Unknown option $1 >&2
 			exit 1
 			;;
