@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
 getfield() {
-	grep -i "$1=" $2 | sed "s/$1=\(.*\)/\1/"
+	if [ -f $MDFILE ] ; then
+		grep -i "$1=" $2 | sed "s/$1=\(.*\)/\1/"
+	fi
 }
 
 extract_dependencies() {
@@ -9,22 +11,20 @@ extract_dependencies() {
 	echo Extracting dependencies of library $LIBRARY
 	MDFILE="libraries/$LIBRARY/lib.metadata";
 	echo "$LIBRARY" >> "$LIBLIST"
-	if [ -f $MDFILE ] ; then
 
-		create_linkmakefile $LIBRARY $MDFILE
-		create_compilemakefile $LIBRARY $MDFILE
-		echo "-include libraries/$LIBRARY/build/Makefile.link" >> $TMPMKFILE 
+	create_linkmakefile $LIBRARY $MDFILE
+	create_compilemakefile $LIBRARY $MDFILE
+	echo "-include libraries/$LIBRARY/build/Makefile.link" >> $TMPMKFILE
 
-		DEPENDENCIES=$(getfield dependencies $MDFILE) ;
-		DEPENDENCIES=$(echo $DEPENDENCIES | sed 's/,/\n/g') ;
-		for D in $DEPENDENCIES ; do
-			if ! grep -Fxq "$D" "$LIBLIST" ; then
-				extract_dependencies $D ;
-			else
-				echo Library $D has already been checked for dependencies
-			fi
-		done
-	fi
+	DEPENDENCIES=$(getfield dependencies $MDFILE) ;
+	DEPENDENCIES=$(echo $DEPENDENCIES | sed 's/,/\n/g') ;
+	for D in $DEPENDENCIES ; do
+		if ! grep -Fxq "$D" "$LIBLIST" ; then
+			extract_dependencies $D ;
+		else
+			echo Library $D has already been checked for dependencies
+		fi
+	done
 }
 
 create_linkmakefile() {
