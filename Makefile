@@ -351,7 +351,7 @@ PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 prebuild: $(PROJECT_LIBRARIES_MAKEFILE)
 
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
-	$(AT)./resources/tools/detectlibraries.sh $(PROJECT)
+	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
 
 # the .o will be built as part of the regular build process, and with
 # -save-temps this will have the side effect of generating the .i and .ii files
