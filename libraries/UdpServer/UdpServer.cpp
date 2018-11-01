@@ -6,22 +6,24 @@
  */
 #include "UdpServer.h"
 
-UdpServer::UdpServer(int aPort){
-	init(aPort);
-};
-UdpServer::UdpServer(){
-	init(0);
-}
-UdpServer::~UdpServer(){
+void UdpServer::cleanup(){
 	close();
+}
+UdpServer::UdpServer(int aPort){
+	setup(aPort);
 };
-bool UdpServer::init(int aPort){
+UdpServer::UdpServer(){}
+UdpServer::~UdpServer(){
+	cleanup();
+};
+bool UdpServer::setup(int aPort){
 	enabled=true;
 	stZeroTimeOut.tv_sec = 0; //set timeout to 0
 	stZeroTimeOut.tv_usec = 0;
 	inSocket=socket(AF_INET, SOCK_DGRAM, 0);
 	if (inSocket < 0){
 		enabled=false;
+		return false; 
 	}
 	length = sizeof(server);
 	server.sin_family=AF_INET;
@@ -29,7 +31,7 @@ bool UdpServer::init(int aPort){
 	enabled=bindToPort(aPort);
 	wasteBufferSize=2048;
 	wasteBuffer=malloc(wasteBufferSize);
-  memset(&stTimeOut,0,sizeof(struct timeval));
+	memset(&stTimeOut,0,sizeof(struct timeval));
 	return enabled;
 }
 

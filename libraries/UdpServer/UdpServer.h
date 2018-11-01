@@ -38,7 +38,8 @@ class UdpServer{
 		UdpServer();
 		UdpServer(int aPort);
 		~UdpServer();
-		bool init(int aPort);
+		bool setup(int aPort);
+		void cleanup();
 		bool bindToPort(int aPort);
 		int getBoundPort() const;
 		/*

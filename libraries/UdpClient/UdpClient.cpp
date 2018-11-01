@@ -4,31 +4,30 @@
  *  Created on: 19 May 2015
  *      Author: giulio moro
  */
-#include <UdpClient.h>
+#include "UdpClient.h"
 
-	UdpClient::UdpClient(){
-		outSocket=socket(AF_INET, SOCK_DGRAM, 0);
-		setSocketBroadcast(1);
-		isSetPort=false;
-		isSetServer=false;
-		enabled=false;
-	}
+	UdpClient::UdpClient(){}
 	UdpClient::UdpClient(int aPort, const char* aServerName){
+		setup(aPort, aServerName);
+	}
+	bool UdpClient::setup(int aPort, const char* aServerName){
 		outSocket=socket(AF_INET, SOCK_DGRAM, 0);
 		if(outSocket<0){
 			enabled=false;
-			return;
+			return false;
 		}
 		setSocketBroadcast(1);
 		setPort(aPort);
 		setServer(aServerName);
-		isSetPort=true;
-		isSetServer=true;
 		enabled=true;
 		memset(&stTimeOut, 0, sizeof(struct timeval));
+		return true;
+	}
+	void UdpClient::cleanup(){
+		close(outSocket);
 	}
 	UdpClient::~UdpClient(){
-	   close(outSocket);
+		cleanup(); 
 	}
 	void UdpClient::setPort(int aPort){
 		port=aPort;

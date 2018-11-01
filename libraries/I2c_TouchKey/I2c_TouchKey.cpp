@@ -11,8 +11,7 @@
 
 #undef DEBUG_I2C_TOUCHKEY
 
-int I2c_Touchkey::setup(int sensorType) {
-}
+bool I2c_TouchKey::setup(int sensorType) {
 	isReady = false;
 	sensorType = kSensorTypeTouchKey;
 	touchCount = 0;
@@ -20,10 +19,12 @@ int I2c_Touchkey::setup(int sensorType) {
 	sliderPosition[0] = sliderPosition[1] = sliderPosition[2] = -1;
 	sliderPositionH = -1;
 
-	int ret = initTouchkey(sensorType);
+	int ret = initTouchKey(sensorType);
 
-	return ret;
+	return !ret;
 }
+
+I2c_TouchKey::I2c_TouchKey(){}
 
 I2c_TouchKey::I2c_TouchKey(int sensorType)
 {

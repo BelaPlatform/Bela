@@ -21,17 +21,19 @@
 class UdpClient{
 	private:
 		int port;
-		int enabled;
 		int outSocket;
-    struct timeval stTimeOut;
-    	fd_set stWriteFDS;
-		bool isSetPort;
-		bool isSetServer;
+		struct timeval stTimeOut;
+		fd_set stWriteFDS;
+		bool enabled = false;
+		bool isSetPort = false;
+		bool isSetServer = false;
 		struct sockaddr_in destinationServer;
 	public:
 		UdpClient();
 		UdpClient(int aPort, const char* aServerName);
 		~UdpClient();
+		bool setup(int aPort, const char* aServerName);
+		void cleanup();
 		/**
 		 * Sets the port.
 		 *
