@@ -3,6 +3,7 @@
 # set defaults
 CC ?= clang
 CXX ?= clang++
+.DEFAULT_GOAL := all
 
 #TODO: these variables should actually be conditional and/or shared with the Base Makefile
 # although they are not really needed if this Makefile is called from the main Makefile
@@ -12,7 +13,14 @@ BELA_DIR := /root/Bela
 DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math
 CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-override CPPFLAGS := -I$(BELA_DIR)/libraries -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
+
+#all this Xenomai stuff is just for Midi.h at the moment and requires you to have run the Bela Makefile before
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+include $(SYSTEM_SPECIFIC_MAKEFILE)
+$(SYSTEM_SPECIFIC_MAKEFILE):
+	make lib
+override CPPFLAGS := $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR)/libraries -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
+#
 # the above default variables may be modified by the Makefile included here:
 MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile
 include $(MKFILE_COMPILE)
