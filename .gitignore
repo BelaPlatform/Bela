@@ -7,7 +7,7 @@
 *.sw?
 *.orig
 /Release/
-/build/
+**/build/
 /Debug/
 /Documentation/
 *.js.map
