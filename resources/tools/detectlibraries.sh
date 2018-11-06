@@ -43,19 +43,21 @@ create_linkmakefile() {
 echo_field() {
 	SEARCHFIELD=$1
 	FIELDNAME=$2; [ ! -z "$FIELDNAME" ] || FIELDNAME=$SEARCHFIELD
-	FIELD=$(getfield $SEARCHFIELD $MDFILE); [ -z "$FIELD" ] || echo "$FIELDNAME := $FIELD" >> $MFILECOMP
+	FIELD=`getfield $SEARCHFIELD $MDFILE`; [ -z "$FIELD" ] || echo "$FIELDNAME := $FIELD" >> $MFILECOMP
 }
 create_compilemakefile() {
 	LIBRARY=$1
 	MDFILE=$2
 	mkdir -p "libraries/$LIBRARY/build/"
 	MFILECOMP="libraries/$LIBRARY/build/Makefile.compile"
+	echo $MFILECOMP
 	> $MFILECOMP
-	echo_field CC
-	echo_field CXX
-	echo_field CFLAGS
-	echo_field CXXFLAGS
-	echo_field CPPFLAGS
+	echo_field CC LIBRARY_CC
+	echo_field CXX LIBRARY_CXX	
+	echo_field CFLAGS LIBRARY_CFLAGS
+	echo_field CXXFLAGS LIBRARY_CXXFLAGS
+	echo_field CPPFLAGS LIBRARY_CPPFLAGS
+
 }
 
 ## Script starts here

@@ -1,8 +1,8 @@
 # This should be called from the Bela folder, with 
 # make -f Makefile.libraries LIBRARY=libraryname
 # set defaults
-CC ?= clang
-CXX ?= clang++
+LIBRARY_CC ?= clang
+LIBRARY_CXX ?= clang++
 .DEFAULT_GOAL := all
 
 #TODO: these variables should actually be conditional and/or shared with the Base Makefile
@@ -11,15 +11,15 @@ BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
 BELA_DIR := /root/Bela
 DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math
-CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
-CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
+LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
+LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
 #all this Xenomai stuff is just for Midi.h at the moment and requires you to have run the Bela Makefile before
 SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
 include $(SYSTEM_SPECIFIC_MAKEFILE)
 $(SYSTEM_SPECIFIC_MAKEFILE):
 	make lib
-override CPPFLAGS := $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR)/libraries -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
+LIBRARY_CPPFLAGS := $(DEFAULT_XENOMAI_LIBRARY_CFLAGS) -I$(BELA_DIR)/libraries -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
 #
 # the above default variables may be modified by the Makefile included here:
 MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile
@@ -42,8 +42,8 @@ clean:
 	rm -rf $(LIBRARY_OBJS)
 
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
-	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
+	$(LIBRARY_CC) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CFLAGS)
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
-	$(CXX) -c $< -o $@ $(CPPFLAGS) $(CXXFLAGS)
+	$(LIBRARY_CXX) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CXXFLAGS)
 $(MKFILE_COMPILE):
 	resources/tools/detectlibraries.sh --library $(LIBRARY)
