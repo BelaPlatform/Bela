@@ -3,23 +3,33 @@
 
 OSCClient::OSCClient(){}
 
+OSCClient::OSCClient(int port, const char* address, bool scheduleTask){
+	setup(port, address, scheduleTask);
+}
+
+OSCClient::~OSCClient(){
+	cleanup();
+}
+
+void cleanup(){}
+
+void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
+	address = _address;
+   	port = _port;
+    
+   	socket.setServer(address);
+	socket.setPort(port);
+	
+	if (scheduleTask)
+    		createAuxTasks();
+}
+
 void OSCClient::sendQueue(void* ptr){
     OSCClient *instance = (OSCClient*)ptr;
     while(!gShouldStop){
         instance->queueSend();
         usleep(1000);
     }
-}
-
-void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
-    address = _address;
-    port = _port;
-    
-    socket.setServer(address);
-	socket.setPort(port);
-	
-	if (scheduleTask)
-    	createAuxTasks();
 }
 
 void OSCClient::createAuxTasks(){

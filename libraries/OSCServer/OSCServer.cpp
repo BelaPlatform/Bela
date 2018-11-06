@@ -4,6 +4,23 @@
 // constructor
 OSCServer::OSCServer(){}
 
+OSCServer::OSCServer(int port){
+	setup(port);
+}
+
+OSCServer::~OSCServer(){
+	cleanup();
+}
+
+void OSCServer::cleanup(){}
+
+void OSCServer::setup(int _port){
+    port = _port;
+    if(!socket.setup(port))
+        rt_printf("socket not initialised\n");
+    createAuxTasks();
+}
+
 // static method for checking messages
 // called by messageCheckTask with pointer to OSCServer instance as argument
 void OSCServer::checkMessages(void* ptr){
@@ -12,13 +29,6 @@ void OSCServer::checkMessages(void* ptr){
         instance->messageCheck();
         usleep(1000);
     }
-}
-
-void OSCServer::setup(int _port){
-    port = _port;
-    if(!socket.setup(port))
-        rt_printf("socket not initialised\n");
-    createAuxTasks();
 }
 
 void OSCServer::createAuxTasks(){

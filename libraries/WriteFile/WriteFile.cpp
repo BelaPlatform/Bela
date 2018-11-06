@@ -8,7 +8,7 @@
 #include "WriteFile.h"
 #include <glob.h>		// alternative to dirent.h to handle files in dirs
 #include <stdlib.h>
-//initialise static members
+//setupialise static members
 bool WriteFile::staticConstructed=false;
 AuxiliaryTask WriteFile::writeAllFilesTask=NULL;
 std::vector<WriteFile *> WriteFile::objAddrs(0);
@@ -32,6 +32,16 @@ WriteFile::WriteFile(){
 	stringBuffer = NULL;
 	_filename = NULL;
 };
+
+writeFile::WriteFile(const char* filename, bool overwrite){
+	setup(filename, overwrite);
+}
+
+WriteFile::~WriteFile(){
+	cleanup();	
+}
+
+void WriteFile::cleanup(){}
 
 char* WriteFile::generateUniqueFilename(const char* original)
 {
@@ -85,7 +95,7 @@ char* WriteFile::generateUniqueFilename(const char* original)
 	}
 }
 
-void WriteFile::init(const char* filename, bool overwrite){
+void WriteFile::setup(const char* filename, bool overwrite){
 	if(!overwrite)
 	{
 		_filename = generateUniqueFilename(filename);

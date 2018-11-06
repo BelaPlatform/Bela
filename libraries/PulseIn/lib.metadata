@@ -1,0 +1,14 @@
+name=PulseIn
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Adan Benito<adanl.benito@gmail.com>, Giulio Moro<giuliomoro@yahoo.it>
+description=.
+url=
+board=*
+dependencies=
+LDFLAGS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

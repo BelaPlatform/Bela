@@ -7,7 +7,7 @@
 
 #include "PulseIn.h"
 
-void PulseIn::init(BelaContext* context, unsigned int digitalInput, int direction){
+void PulseIn::setup(BelaContext* context, unsigned int digitalInput, int direction){
 	_digitalInput = digitalInput;
 	_pulseIsOn = false;
 	_pulseOnState = direction == 1 ? 1 : 0;
@@ -17,7 +17,7 @@ void PulseIn::init(BelaContext* context, unsigned int digitalInput, int directio
 }
 
 void PulseIn::check(BelaContext* context){
-	if(_digitalInput == -1){ //must be init'ed before calling check();
+	if(_digitalInput == -1){ //must be setup'ed before calling check();
 		throw(1);
 	}
 	for(unsigned int n = 0; n < context->digitalFrames; n++){
@@ -41,5 +41,7 @@ void PulseIn::check(BelaContext* context){
 
 PulseIn::~PulseIn() {
 // TODO Auto-generated destructor stub
+	cleanup();
 }
+void PulseIn::cleanup(){};
 

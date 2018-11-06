@@ -27,6 +27,10 @@
 class OSCServer{
     public:
         OSCServer();
+	OSCServer(int port);
+	~OSCServer();
+	
+	void cleanup();
 
         /**
 		 * \brief Sets the port used to receive OSC messages
@@ -61,6 +65,7 @@ class OSCServer{
 		 * \return oscpkt::Message an oscpkt Message object representing an OSC message
 		 * 
 		 */
+
         oscpkt::Message popMessage();
 
         /**

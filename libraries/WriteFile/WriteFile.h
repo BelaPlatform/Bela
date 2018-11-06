@@ -64,7 +64,7 @@ public:
 	WriteFile();
 	/**
 	 * Set the type of file to write, can be either kText or kBinary.
-	 * Binary files can be imported e.g. in Matlab:
+	 * Binary files cAn be imported e.g. in Matlab:
 	 *   fid=fopen('out','r');
 	 *   A = fread(fid, 'float');
 	 * */
@@ -126,7 +126,7 @@ public:
 	 * If `overwrite` is false, existing files will not be overwritten
 	 * and the filename will be automatically incremented.
 	 */
-	void init(const char* filename, bool overwrite = false);
+	void setup(const char* filename, bool overwrite = false);
 
 	/**
 	 * Gets the distance between the write and read pointers of
@@ -141,6 +141,7 @@ public:
 	 * and 1 being buffer empty (writing to disk is fast enough).
 	 */
 	float getBufferStatus();
+	void cleanup();
 	~WriteFile();
 	static int getNumInstances();
 	static void writeAllHeaders();

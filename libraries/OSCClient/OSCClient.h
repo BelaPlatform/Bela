@@ -80,7 +80,9 @@ class OSCMessageFactory{
 class OSCClient{
     public:
         OSCClient();
-        
+        OSCClient(int port, const char* address="127.0.0.1", bool scheduleTask = true);
+	~OSCClient();
+
         /**
 		 * \brief Sets the port and optionally the IP address used to send OSC messages
 		 *
@@ -97,6 +99,9 @@ class OSCClient{
 		 * @param scheduleTask send queued messages (defaults to true)
 		 *
 		 */
+
+	void cleanup();
+
         void setup(int port, const char* address="127.0.0.1", bool scheduleTask = true);
         
         /**

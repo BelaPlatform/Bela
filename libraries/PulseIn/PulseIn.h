@@ -24,7 +24,7 @@ public:
 	};
 
 	/**
-	 * Initializes the PulseIn object. Also takes care of initializing the digital pin as input.
+	 * Initializes the PulseIn object. Also takes care of setupializing the digital pin as input.
 	 *
 	 * @param context the BelaContext
 	 * @param digitalInput the digital input where to activate a pulse detector
@@ -33,21 +33,21 @@ public:
 	 *  or -1 to detect negative pulses, e.g.: ( 1 1 1 1 0 0 1 1 1 1)
 	 */
 	PulseIn(BelaContext* context, unsigned int digitalInput, int direction=1){
-		init(context, digitalInput, direction);
+		setup(context, digitalInput, direction);
 	};
 
 	/**
-	 * Initializes the PulseIn object. Also takes care of initializing the digital pin as input.
+	 * Initializes the PulseIn object. Also takes care of setupializing the digital pin as input.
 	 *
 	 * If the object has been created with the default constructor, the user will
-	 * need to call init() before calling check() or hasPulsed().
+	 * need to call setup() before calling check() or hasPulsed().
 	 * @param context the BelaContext
 	 * @param digitalInput the digital input where to activate a pulse detector
 	 * @param direction the direction of the pulse,
 	 *  can be 1 to detect positive pulses, e.g.:( 0 0 0 0 1 1 0 0 0 0 0)
 	 *  or -1 to detect negative pulses, e.g.: ( 1 1 1 1 0 0 1 1 1 1)
 	 */
-	void init(BelaContext* context, unsigned int digitalInput, int direction=1);
+	void setup(BelaContext* context, unsigned int digitalInput, int direction=1);
 
 	/**
 	 * Detects pulses.
