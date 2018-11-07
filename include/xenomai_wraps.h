@@ -83,7 +83,7 @@ inline int task_sleep_ns(long long int timens)
 #ifdef XENOMAI_SKIN_posix
 	struct timespec req;
 	req.tv_sec = timens/1000000000;
-	req.tv_nsec = timens - req.tv_sec;
+	req.tv_nsec = timens - req.tv_sec * 1000000000;
 	return __wrap_nanosleep(&req, NULL);
 #endif
 }
