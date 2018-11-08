@@ -74,6 +74,7 @@ public:
 		}
 		return _array[frame];
 	}
+	void cleanup();
 	virtual ~PulseIn();
 };
 

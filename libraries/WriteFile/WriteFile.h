@@ -62,6 +62,8 @@ private:
 	void writeOutput(bool flush);
 public:
 	WriteFile();
+	WriteFile(const char* filename, bool overwrite);
+
 	/**
 	 * Set the type of file to write, can be either kText or kBinary.
 	 * Binary files cAn be imported e.g. in Matlab:

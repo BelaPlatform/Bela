@@ -46,7 +46,7 @@ void WriteFile_log(WriteFile* file, float value)
 }
 void WriteFile_init(WriteFile* file, const char* filename, int overwrite)
 {
-	file->init(filename, overwrite);
+	file->setup(filename, overwrite);
 }
 int WriteFile_getOffset(WriteFile* file)
 {

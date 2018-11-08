@@ -103,6 +103,9 @@ inId(NULL), outId(NULL), outPipeName(NULL)
 	, sock(0)
 #endif
 {
+	setup();
+}
+void Midi::setup() {
 	sprintf(defaultPort, "%s", "hw:1,0,0"); // a bug in gcc<4.10 prevents initialization with defaultPort("hw:1,0,0") in the initialization list
 	inputParser = 0;
 	size_t inputBytesInitialSize = 1000;
@@ -111,8 +114,7 @@ inId(NULL), outId(NULL), outPipeName(NULL)
 	inputBytesWritePointer = 0;
 	inputBytesReadPointer = inputBytes.size() - 1;
 }
-
-Midi::~Midi() {
+void Midi::cleanup() {
 	free(inId);
 	free(outId);
 	free(outPipeName);
@@ -132,6 +134,10 @@ Midi::~Midi() {
 		snd_rawmidi_drain(alsaIn);
 		snd_rawmidi_close(alsaIn);
 	}
+}
+
+Midi::~Midi() {
+	cleanup();
 }
 
 void Midi::enableParser(bool enable){

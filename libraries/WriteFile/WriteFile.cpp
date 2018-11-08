@@ -33,7 +33,7 @@ WriteFile::WriteFile(){
 	_filename = NULL;
 };
 
-writeFile::WriteFile(const char* filename, bool overwrite){
+WriteFile::WriteFile(const char* filename, bool overwrite){
 	setup(filename, overwrite);
 }
 
@@ -41,7 +41,18 @@ WriteFile::~WriteFile(){
 	cleanup();	
 }
 
-void WriteFile::cleanup(){}
+void WriteFile::cleanup(){
+	// this will disable all instances when
+	// you destroy the first one, but at least it's safe
+	stopThread();
+	while(threadRunning)
+		usleep(100000);
+	free(format);
+	free(header);
+	free(footer);
+	free(stringBuffer);
+	free(_filename);
+}
 
 char* WriteFile::generateUniqueFilename(const char* original)
 {
@@ -198,19 +209,6 @@ void WriteFile::log(const float* array, int length){
 	for(int n = 0; n < length; n++){
 		log(array[n]);
 	}
-}
-
-WriteFile::~WriteFile() {
-	// this will disable all instances when
-	// you destroy the first one, but at least it's safe
-	stopThread();
-	while(threadRunning)
-		usleep(100000);
-	free(format);
-	free(header);
-	free(footer);
-	free(stringBuffer);
-	free(_filename);
 }
 
 void WriteFile::setFormat(const char* newFormat){

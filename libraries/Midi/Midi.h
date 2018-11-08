@@ -264,7 +264,8 @@ public:
 class Midi {
 public:
 	Midi();
-
+	void setup();
+	void cleanup();
 	/**
 	 * Enable the input MidiParser.
 	 *
