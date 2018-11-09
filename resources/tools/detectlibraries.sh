@@ -32,26 +32,32 @@ create_linkmakefile() {
 	MDFILE=$2
 	mkdir -p "libraries/$LIBRARY/build/"
 	MKFILELINK="libraries/$LIBRARY/build/Makefile.link"
-	> $MKFILELINK
-	echo "LIBRARY=$LIBRARY" >> $MKFILELINK
+	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT" > $MKFILELINK
+	echo "LIBRARY := $LIBRARY" >> $MKFILELINK
 	echo "THIS_CPPFILES := \$(wildcard libraries/\$(LIBRARY)/*.cpp)" >> $MKFILELINK 
-	echo "LIBRARIES_OBJS := \$(LIBRARIES_OBJS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.o)))" >> $MKFILELINK 
-	echo "ALL_DEPS := \$(ALL_DEPS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.d)))" >> $MKFILELINK 
+	echo "THIS_CFILES := \$(wildcard libraries/\$(LIBRARY)/*.c)" >> $MKFILELINK
+	echo "LIBRARIES_OBJS := \$(LIBRARIES_OBJS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.o) \$(THIS_CFILES:.c=.o)))" >> $MKFILELINK
+	echo "ALL_DEPS := \$(ALL_DEPS) \$(addprefix libraries/\$(LIBRARY)/build/,\$(notdir \$(THIS_CPPFILES:.cpp=.d)))" >> $MKFILELINK
+	DIR=libraries/$LIBRARY
+	for SOURCE in `ls $DIR/*.cpp $DIR/*.c $DIR/*.cc 2>/dev/null`; do
+		FILENAME=`basename $SOURCE`
+		OBJ=$DIR/build/${FILENAME%.*}.o
+		echo "$OBJ: $SOURCE" >> $MKFILELINK
+	done
 	echo "LIBRARIES_LDFLAGS += $(getfield LDFLAGS $MDFILE)" >> $MKFILELINK
 }
 
 echo_field() {
 	SEARCHFIELD=$1
 	FIELDNAME=$2; [ ! -z "$FIELDNAME" ] || FIELDNAME=$SEARCHFIELD
-	FIELD=`getfield $SEARCHFIELD $MDFILE`; [ -z "$FIELD" ] || echo "$FIELDNAME := $FIELD" >> $MFILECOMP
+	FIELD=`getfield $SEARCHFIELD $MDFILE`; [ -z "$FIELD" ] || echo "$FIELDNAME := $FIELD" >> $MKFILECOMP
 }
 create_compilemakefile() {
 	LIBRARY=$1
 	MDFILE=$2
 	mkdir -p "libraries/$LIBRARY/build/"
-	MFILECOMP="libraries/$LIBRARY/build/Makefile.compile"
-	echo $MFILECOMP
-	> $MFILECOMP
+	MKFILECOMP="libraries/$LIBRARY/build/Makefile.compile"
+	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT" > $MKFILECOMP
 	echo_field CC LIBRARY_CC
 	echo_field CXX LIBRARY_CXX	
 	echo_field CFLAGS LIBRARY_CFLAGS
@@ -99,8 +105,8 @@ while [ $# -gt 0 ]; do
 			;;
 		--outpath)
 			shift
-			MFILEPATH=$1
-			if [ -z "$MFILEPATH" ]; then
+			MKFILEPATH=$1
+			if [ -z "$MKFILEPATH" ]; then
 				echo "Please, specify a file name."
 				exit
 			fi
