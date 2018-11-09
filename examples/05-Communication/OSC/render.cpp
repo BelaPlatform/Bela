@@ -98,7 +98,11 @@ Open Sound Control
 This example shows an implementation of OSC (Open Sound Control) which was 
 developed at UC Berkeley Center for New Music and Audio Technology (CNMAT).
 
-It is designed to be run alongside resources/osc/osc.js
+It is designed to be run alongside resources/osc/osc.js.
+For the example to work, run in a terminal on the board
+```
+node /root/Bela/resources/osc/osc.js
+```
 
 The OSC server port on which to receive is set in `setup()` 
 via `oscServer.setup()`. Likewise the OSC client port on which to 
