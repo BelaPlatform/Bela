@@ -7,12 +7,6 @@ OSCClient::OSCClient(int port, const char* address, bool scheduleTask){
 	setup(port, address, scheduleTask);
 }
 
-OSCClient::~OSCClient(){
-	cleanup();
-}
-
-void OSCClient::cleanup(){}
-
 void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
 	address = _address;
    	port = _port;
@@ -90,4 +84,10 @@ OSCMessageFactory& OSCMessageFactory::add(void *ptr, int size){
 }
 oscpkt::Message OSCMessageFactory::end(){
     return msg;
+}
+
+void OSCClient::cleanup(){}
+
+OSCClient::~OSCClient(){
+	cleanup();
 }
