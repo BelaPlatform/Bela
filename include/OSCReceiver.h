@@ -49,7 +49,7 @@ class OSCReceiver{
         std::unique_ptr<UdpServer> socket;
 
         std::unique_ptr<AuxTaskNonRT> recieve_task;
-        static void recieve_task_func(void* ptr);
+        void recieve_task_func();
 		
         std::unique_ptr<oscpkt::PacketReader> pr;
         char* inBuffer[OSCRECEIVER_BUFFERSIZE];
