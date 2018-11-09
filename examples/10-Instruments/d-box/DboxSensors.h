@@ -19,7 +19,7 @@
 #include <sys/stat.h>	// mkdir()
 #include <algorithm>	// reverse() [string...]
 
-#include "I2c_TouchKey.h"
+#include <I2c_TouchKey/I2c_TouchKey.h>
 #include "AnalogInput.h"
 #include <GPIOcontrol.h>	// TODO wrap this into a class
 

@@ -40,7 +40,7 @@ bool setup(BelaContext *context, void *userData)
 {
     // Set the mode of digital pins
     pinMode(context, 0, gEchoDigitalInPin, INPUT); // receiving from ECHO PIN
-    pulseIn.init(context, gEchoDigitalInPin, HIGH); //detect HIGH pulses on this pin
+    pulseIn.setup(context, gEchoDigitalInPin, HIGH); //detect HIGH pulses on this pin
     scope.setup(2, 44100);
     if(context->analogInChannels != 8){
         fprintf(stderr, "This project has to be run with 8 analog channels\n");

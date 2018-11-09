@@ -25,7 +25,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 #include <ne10/NE10.h>					// NEON FFT library
 #include "SampleData.h"
-#include <Midi.h>
+#include <Midi/Midi.h>
 
 #define BUFFER_SIZE 16384
 

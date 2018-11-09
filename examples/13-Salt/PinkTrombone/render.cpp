@@ -1375,7 +1375,7 @@ function redraw(highResTimestamp)
 
 })(this);
 */
-#include <Midi.h>
+#include <Midi/Midi.h>
 #include <signal.h>
 std::vector<const char*> gMidiPortNames;
 static std::vector<Midi*> midi;

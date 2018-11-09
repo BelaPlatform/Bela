@@ -23,7 +23,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h> 
-#include <WriteFile.h>
+#include <WriteFile/WriteFile.h>
 
 WriteFile file1;
 WriteFile file2;
@@ -42,7 +42,7 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	file1.init("out.bin"); //set the file name to write to
+	file1.setup("out.bin"); //set the file name to write to
 	file1.setEchoInterval(10000); // only print to the console every 10000 calls to log
 	file1.setFileType(kBinary);
 	// set the format that you want to use for your output.
@@ -50,7 +50,7 @@ bool setup(BelaContext *context, void *userData)
 	// When in binary mode, this is used only for echoing to console
 	file1.setFormat("binary: %.4f %.4f\n");
 
-	file2.init("out.m"); //set the file name to write to
+	file2.setup("out.m"); //set the file name to write to
 	file2.setHeader("myvar=[\n"); //set one or more lines to be printed at the beginning of the file
 	file2.setFooter("];\n"); //set one or more lines to be printed at the end of the file
 	file2.setFormat("%.4f %.4f\n"); // set the format that you want to use for your output. Please use %f only (with modifiers)
