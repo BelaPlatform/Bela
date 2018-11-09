@@ -2,7 +2,7 @@
 #ifndef __Scope_H_INCLUDED__
 #define __Scope_H_INCLUDED__ 
 
-#include <ne10/NE10.h>
+#include <ne10/NE10_types.h>
 #include <vector>
 #include <string>
 #include <AuxTaskNonRT.h>

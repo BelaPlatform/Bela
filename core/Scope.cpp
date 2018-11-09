@@ -1,4 +1,6 @@
 #include <Scope.h>
+#include <ne10/NE10.h>
+#include <math.h>
 
 Scope::Scope(): isUsingOutBuffer(false), 
                 isUsingBuffer(false), 
