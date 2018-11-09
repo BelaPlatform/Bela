@@ -11,7 +11,7 @@ OSCClient::~OSCClient(){
 	cleanup();
 }
 
-void cleanup(){}
+void OSCClient::cleanup(){}
 
 void OSCClient::setup(int _port, const char* _address, bool scheduleTask){
 	address = _address;
