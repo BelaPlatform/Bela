@@ -1,4 +1,4 @@
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1564,169 +1564,180 @@ function CPU(data) {
 
 // plotting
 {
-	var plotLoop = function plotLoop() {
-		requestAnimationFrame(plotLoop);
-		if (plot) {
-			plot = false;
-			ctx.clear();
-			for (var i = 0; i < numChannels; i++) {
-				ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
-				var iLength = i * length;
-				ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));
-				for (var j = 1; j - xOff < length; j++) {
-					ctx.lineTo(j - xOff, frame[j + iLength]);
+	(function () {
+		var plotLoop = function plotLoop() {
+			requestAnimationFrame(plotLoop);
+			if (plot) {
+				plot = false;
+				ctx.clear();
+				for (var i = 0; i < numChannels; i++) {
+					ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
+					var iLength = i * length;
+					ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));
+					for (var j = 1; j - xOff < length; j++) {
+						ctx.lineTo(j - xOff, frame[j + iLength]);
+					}
 				}
+				renderer.render(stage);
+				triggerStatus();
+			} /*else {
+     console.log('not plotting');
+     }*/
+		};
+
+		var triggerStatus = function triggerStatus() {
+
+			inactiveOverlay.removeClass('inactive-overlay-visible');
+
+			if (oneShot) {
+				oneShot = false;
+				paused = true;
+				$('#pauseButton').html('resume');
+				scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
+			} else {
+				scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
+				if (triggerTimeout) clearTimeout(triggerTimeout);
+				triggerTimeout = setTimeout(function () {
+					if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
+				}, 1000);
+
+				if (inactiveTimeout) clearTimeout(inactiveTimeout);
+				inactiveTimeout = setTimeout(function () {
+					if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
+				}, 5000);
 			}
-			renderer.render(stage);
-			triggerStatus();
-		} /*else {
-    console.log('not plotting');
-    }*/
-	};
+		};
 
-	var triggerStatus = function triggerStatus() {
+		var ctx = new PIXI.Graphics();
+		stage.addChild(ctx);
 
-		inactiveOverlay.removeClass('inactive-overlay-visible');
+		var width = void 0,
+		    height = void 0,
+		    numChannels = void 0,
+		    channelConfig = [],
+		    xOff = 0,
+		    triggerChannel = 0,
+		    triggerLevel = 0,
+		    xOffset = 0,
+		    upSampling = 1;;
+		settings.on('change', function (data, changedKeys) {
+			if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
+				width = window.innerWidth;
+				height = window.innerHeight;
+				renderer.resize(width, height);
+			}
+			if (changedKeys.indexOf('numChannels') !== -1) {
+				numChannels = data.numChannels;
+			}
+			if (changedKeys.indexOf('triggerChannel') !== -1) {
+				triggerChannel = data.triggerChannel;
+			}
+			if (changedKeys.indexOf('triggerLevel') !== -1) {
+				triggerLevel = data.triggerLevel;
+			}
+			if (changedKeys.indexOf('xOffset') !== -1) {
+				xOffset = data.xOffset;
+			}
+			if (changedKeys.indexOf('upSampling') !== -1) {
+				upSampling = data.upSampling;
+			}
+		});
+		channelView.on('channelConfig', function (config) {
+			return channelConfig = config;
+		});
 
-		if (oneShot) {
-			oneShot = false;
-			paused = true;
-			$('#pauseButton').html('resume');
-			scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
-		} else {
-			scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
-			if (triggerTimeout) clearTimeout(triggerTimeout);
-			triggerTimeout = setTimeout(function () {
-				if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
-			}, 1000);
+		var frame = void 0,
+		    length = void 0,
+		    plot = false;
 
-			if (inactiveTimeout) clearTimeout(inactiveTimeout);
-			inactiveTimeout = setTimeout(function () {
-				if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
-			}, 5000);
-		}
-	};
+		worker.onmessage = function (e) {
+			frame = e.data;
+			length = Math.floor(frame.length / numChannels);
+			// if scope is paused, don't set the plot flag
+			plot = !paused;
 
-	var ctx = new PIXI.Graphics();
-	stage.addChild(ctx);
-
-	var width = void 0,
-	    height = void 0,
-	    numChannels = void 0,
-	    channelConfig = [],
-	    xOff = 0,
-	    triggerChannel = 0,
-	    triggerLevel = 0,
-	    xOffset = 0,
-	    upSampling = 1;;
-	settings.on('change', function (data, changedKeys) {
-		if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
-			width = window.innerWidth;
-			height = window.innerHeight;
-			renderer.resize(width, height);
-		}
-		if (changedKeys.indexOf('numChannels') !== -1) {
-			numChannels = data.numChannels;
-		}
-		if (changedKeys.indexOf('triggerChannel') !== -1) {
-			triggerChannel = data.triggerChannel;
-		}
-		if (changedKeys.indexOf('triggerLevel') !== -1) {
-			triggerLevel = data.triggerLevel;
-		}
-		if (changedKeys.indexOf('xOffset') !== -1) {
-			xOffset = data.xOffset;
-		}
-		if (changedKeys.indexOf('upSampling') !== -1) {
-			upSampling = data.upSampling;
-		}
-	});
-	channelView.on('channelConfig', function (config) {
-		return channelConfig = config;
-	});
-
-	var frame = void 0,
-	    length = void 0,
-	    plot = false;
-
-	worker.onmessage = function (e) {
-		frame = e.data;
-		length = Math.floor(frame.length / numChannels);
-		// if scope is paused, don't set the plot flag
-		plot = !paused;
-
-		// interpolate the trigger sample to get the sub-pixel x-offset
-		if (settings.getKey('plotMode') == 0) {
-			//		if (upSampling == 1){
-			var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-			var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-			xOff = one / (one + two) - 1.5;
-			/*		} else {
-   			for (var i=0; i<=(upSampling*2); i++){
-   				let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-   				let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-   				if ((one > triggerLevel && two < triggerLevel) || (one < triggerLevel && two > triggerLevel)){
-   					xOff = i*(Math.abs(one)/(Math.abs(one)+Math.abs(two))-1);
-   					break;
-   				}
-   			}
-   		}
-   		console.log(xOff);
-   */if (isNaN(xOff)) xOff = 0;
-		}
-	};
-
-	plotLoop();
-
-	// update the status indicator when triggered
-	var triggerTimeout = void 0;
-	var inactiveTimeout = setTimeout(function () {
-		if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
-	}, 5000);
-	var scopeStatus = $('#scopeStatus');
-	var inactiveOverlay = $('#inactive-overlay');
-
-
-	var saveCanvasData = document.getElementById('saveCanvasData');
-	saveCanvasData.addEventListener('click', function () {
-
-		var downSampling = settings.getKey('downSampling');
-		var upSampling = settings.getKey('upSampling');
-		var sampleRate = settings.getKey('sampleRate');
-		var plotMode = settings.getKey('plotMode');
-		var scale = downSampling / upSampling;
-		var FFTAxis = settings.getKey('FFTXAxis');
-
-		// console.log(FFTAxis)
-
-		var out = "data:text/csv;charset=utf-8,";
-
-		for (var i = 0; i < length; i++) {
-
-			if (plotMode === 0) {
-				// time domain
-				out += scale * i / sampleRate;
-			} else if (plotMode === 1) {
-				// FFT
-
-				if (parseInt(settings.getKey('FFTXAxis')) === 0) {
-					// linear x-axis
-					out += sampleRate * i / (2 * length * scale);
-					// x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
+			// interpolate the trigger sample to get the sub-pixel x-offset
+			if (settings.getKey('plotMode') == 0) {
+				var triggerIndex = Math.floor(triggerChannel * length + length / 2) + upSampling + xOffset;
+				var zeroHeight = height / 2 * (1 - triggerLevel - channelConfig[triggerChannel].yOffset);
+				var frame1 = frame[triggerIndex] - zeroHeight;
+				var frame1_p = frame1 >= 0;
+				var dist = void 0,
+				    frame2 = void 0,
+				    lastFrame2 = frame1,
+				    found = false;
+				// iterate backwards from the triggerIndex to find the threshold-cross
+				for (dist = 1; dist < length / 2; dist++) {
+					frame2 = frame[triggerIndex - dist] - zeroHeight;
+					if (frame1_p && frame2 < 0 || !frame1_p && frame2 > 0) {
+						found = true;
+						break;
+					}
+					lastFrame2 = frame2;
+				}
+				if (!found) {
+					xOff = 0;
 				} else {
-					out += Math.pow(Math.E, -Math.log(1 / length) * i / length) * sampleRate / (2 * length) + upSampling / downSampling;
-					// x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+					// dist is now the number of whole pixels of offset
+					// sub_p is the sub_pixel offset
+					var sub_p = Math.abs(lastFrame2) / (Math.abs(lastFrame2) + Math.abs(frame2));
+					xOff = -(dist - upSampling + sub_p);
 				}
 			}
+		};
 
-			for (var j = 0; j < numChannels; j++) {
-				out += ',' + ((1 - frame[j * length + i] / (height / 2)) * channelConfig[j].yAmplitude - channelConfig[j].yOffset);
+		plotLoop();
+
+		// update the status indicator when triggered
+		var triggerTimeout = void 0;
+		var inactiveTimeout = setTimeout(function () {
+			if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
+		}, 5000);
+		var scopeStatus = $('#scopeStatus');
+		var inactiveOverlay = $('#inactive-overlay');
+
+
+		var saveCanvasData = document.getElementById('saveCanvasData');
+		saveCanvasData.addEventListener('click', function () {
+
+			var downSampling = settings.getKey('downSampling');
+			var upSampling = settings.getKey('upSampling');
+			var sampleRate = settings.getKey('sampleRate');
+			var plotMode = settings.getKey('plotMode');
+			var scale = downSampling / upSampling;
+			var FFTAxis = settings.getKey('FFTXAxis');
+
+			// console.log(FFTAxis)
+
+			var out = "data:text/csv;charset=utf-8,";
+
+			for (var i = 0; i < length; i++) {
+
+				if (plotMode === 0) {
+					// time domain
+					out += scale * i / sampleRate;
+				} else if (plotMode === 1) {
+					// FFT
+
+					if (parseInt(settings.getKey('FFTXAxis')) === 0) {
+						// linear x-axis
+						out += sampleRate * i / (2 * length * scale);
+						// x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
+					} else {
+						out += Math.pow(Math.E, -Math.log(1 / length) * i / length) * sampleRate / (2 * length) + upSampling / downSampling;
+						// x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+					}
+				}
+
+				for (var j = 0; j < numChannels; j++) {
+					out += ',' + ((1 - frame[j * length + i] / (height / 2)) * channelConfig[j].yAmplitude - channelConfig[j].yOffset);
+				}
+				out += '\n';
 			}
-			out += '\n';
-		}
 
-		this.href = encodeURI(out);
-	});
+			this.href = encodeURI(out);
+		});
+	})();
 }
 
 settings.setData((_settings$setData = {
@@ -1749,5 +1760,6 @@ settings.setData((_settings$setData = {
 }, _defineProperty(_settings$setData, 'numSliders', 0), _defineProperty(_settings$setData, 'interpolation', 0), _settings$setData));
 
 },{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5,"./SliderView":6}]},{},[8])
+
 
 //# sourceMappingURL=bundle.js.map
