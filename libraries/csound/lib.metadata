@@ -1,0 +1,4 @@
+name=csound
+description=A convenience wrapper for libcsound
+LDFLAGS=-lcsound
+
