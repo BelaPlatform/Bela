@@ -114,8 +114,16 @@ void AuxTaskRT::cleanup(){
 		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
 	}
 	
-	__wrap_mq_close(queueDesc);
-	__wrap_mq_unlink(queueName.c_str());
+	ret = __wrap_mq_close(queueDesc);
+	if(ret)
+	{
+		fprintf(stderr, "Error closing queueDesc: %d %s\n", errno, strerror(errno));
+	}
+	ret = __wrap_mq_unlink(queueName.c_str());
+	if(ret)
+	{
+		fprintf(stderr, "Error unlinking queue: %d %s\n", errno, strerror(errno));
+	}
 #endif
 }
 
