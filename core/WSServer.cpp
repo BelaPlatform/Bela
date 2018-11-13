@@ -42,12 +42,16 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 
 void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, void* buf, int size){
 	if (handler->binary){
-		handler->server->execute([handler, buf, size]{
+		// make a copy of the data before we send it out
+		auto data = std::make_shared<std::vector<void*> >(size);
+		memcpy(data->data(), buf, size);
+		handler->server->execute([handler, data, size]{
 			for (auto c : handler->connections){
-				c->send((uint8_t*) buf, size);
+				c->send((uint8_t*) data->data(), size);
 			}
 		});
 	} else {
+		// make a copy of the data before we send it out
 		std::string str = (const char*)buf;
 		handler->server->execute([handler, str, size]{
 			for (auto c : handler->connections){
