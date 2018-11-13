@@ -286,10 +286,13 @@ DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
 BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) # additional libraries needed by extra code (libbelaextra.so)
-BELA_EXAMPLE_LIBS = -lmathneon -lNE10 # libraries commonly used by examples
+BELA_EXAMPLE_LIBS = -lmathneon -lNE10# libraries commonly used by examples
 BELA_LDLIBS = $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS) $(BELA_EXAMPLE_LIBS)
 ifeq ($(PROJECT_TYPE),libpd)
 BELA_LDLIBS += $(LIBPD_LIBS)
+# TODO: replace the below with proper parsing of default_libpd_render.ii
+include libraries/Midi/build/Makefile.link
+include libraries/Scope/build/Makefile.link
 endif
 
 ifndef COMPILER
@@ -533,6 +536,7 @@ else
 # function, and conditionally call one of two recursive make targets depending on whether
 # we want to link in the default main file or not. The kludge is the mess of a shell script
 # line below. Surely there's a better way to do this?
+LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
 $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS) $(LIBRARIES_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
