@@ -29,7 +29,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <getopt.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sndfile.h>				// to load audio files
+#include <sndfile/sndfile.h>				// to load audio files
 #include "SampleData.h"
 #include <Bela.h>
 
@@ -43,7 +43,7 @@ int initFile(string file, SampleData *smp)//float *& smp)
 {
 	SNDFILE *sndfile;
 	SF_INFO sfinfo;
-    sfinfo.format = 0;
+	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
 		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
 		return 1;

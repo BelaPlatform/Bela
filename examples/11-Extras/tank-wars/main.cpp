@@ -10,7 +10,7 @@
 #include <libgen.h>
 #include <signal.h>
 #include <getopt.h>
-#include <sndfile.h>
+#include <sndfile/sndfile.h>
 #include <Bela.h>
 
 extern int gScreenFramesPerSecond;

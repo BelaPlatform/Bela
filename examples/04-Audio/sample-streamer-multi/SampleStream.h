@@ -9,7 +9,7 @@
 #include <string>
 #include <Bela.h>
 
-#include <sndfile.h>	// to load audio files
+#include <sndfile/sndfile.h>	// to load audio files
 #include <iostream>
 #include <cstdlib>
 

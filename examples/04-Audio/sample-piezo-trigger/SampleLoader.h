@@ -1,7 +1,7 @@
 /***** SampleLoader.h *****/
 
 #include <Bela.h>
-#include <sndfile.h>				// to load audio files
+#include <sndfile/sndfile.h>				// to load audio files
 #include <string>
 #include <iostream>
 #include <cstdlib>
