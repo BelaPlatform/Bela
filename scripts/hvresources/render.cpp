@@ -150,7 +150,7 @@ float gInverseSampleRate;
 
 void printHook(HeavyContextInterface *context, const char *printLabel, const char *msgString, const HvMessage *msg) {
 	const double timestampSecs = ((double) hv_msg_getTimestamp(msg)) / hv_getSampleRate(context);
-	rt_printf("Message from Heavy patch: [@ %.3f] %s: %s\n", timestampSecs, printLabel, msgString);
+	rt_printf("print: [@ %.3f] %s: %s\n", timestampSecs, printLabel, msgString);
 }
 
 
@@ -271,7 +271,7 @@ static void sendHook(
 			midi_byte_t velocity = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
-			rt_printf("noteon[%d]: %d %d %d\n", port, channel, pitch, velocity);
+			//rt_printf("noteout[%d]: %d %d %d\n", port, channel, pitch, velocity);
 			midi[port]->writeNoteOn(channel, pitch, velocity);
 			break;
 		}
@@ -281,7 +281,7 @@ static void sendHook(
 			midi_byte_t controller = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
-			rt_printf("controlchange[%d]: %d %d %d\n", port, channel, controller, value);
+			//rt_printf("controlout[%d]: %d %d %d\n", port, channel, controller, value);
 			midi[port]->writeControlChange(channel, controller, value);
 			break;
 		}
@@ -289,7 +289,7 @@ static void sendHook(
 			midi_byte_t program = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
-			rt_printf("programchange[%d]: %d %d\n", port, channel, program);
+			//rt_printf("pgmout[%d]: %d %d\n", port, channel, program);
 			midi[port]->writeProgramChange(channel, program);
 			break;
 		}
@@ -298,7 +298,7 @@ static void sendHook(
 			unsigned int value = ((midi_byte_t) hv_msg_getFloat(m, 0)) + 8192;
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
-			rt_printf("pitchbend[%d]: %d %d\n", port, channel, value);
+			//rt_printf("bendout[%d]: %d %d\n", port, channel, value);
 			midi[port]->writePitchBend(channel, value);
 			break;
 		}
@@ -307,7 +307,7 @@ static void sendHook(
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
-			rt_printf("channelPressure[%d]: %d %d\n", port, channel, pressure);
+			//rt_printf("touchout[%d]: %d %d\n", port, channel, pressure);
 			midi[port]->writeChannelPressure(channel, pressure);
 			break;
 		}
@@ -317,7 +317,7 @@ static void sendHook(
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
-			rt_printf("polytouch[%d]: %d %d %d\n", port, channel, pitch, pressure);
+			//rt_printf("polytouchout [%d]: %d %d %d\n", port, channel, pitch, pressure);
 			midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 			break;
 		}
@@ -325,7 +325,7 @@ static void sendHook(
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t byte = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int port = (int) hv_msg_getFloat(m, 1);
-			rt_printf("port: %d, byte: %d\n", port, byte);
+			//rt_printf("midiout port: %d, byte: %d\n", port, byte);
 			midi[port]->writeOutput(byte);
 			break;
 		}
