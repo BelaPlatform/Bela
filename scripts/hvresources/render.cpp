@@ -32,6 +32,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <sstream>
 #include <DigitalChannelManager.h>
 #include <algorithm>
+#include <array>
 
 enum { minFirstDigitalChannel = 10 };
 
@@ -202,7 +203,7 @@ static void sendHook(
 		return;
 	}
 
-	// Bela digital initialization messages
+	// More MIDI and digital messages. To obtain the hashes below, use hv_stringToHash("yourString")
 	switch (sendHash) {
 		case 0xfb212be8: { // bela_setMidi
 			if (!hv_msg_hasFormat(m, "sfff")) {
@@ -264,7 +265,7 @@ static void sendHook(
 			}
 			break;
 		}
-		case 0xEC6DA2AF: { // bela_noteout
+		case 0xd1d4ac2: { // __hv_noteout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t velocity = (midi_byte_t) hv_msg_getFloat(m, 1);
@@ -274,7 +275,7 @@ static void sendHook(
 			midi[port]->writeNoteOn(channel, pitch, velocity);
 			break;
 		}
-		case 0xD44F9083: { // bela_ctlout
+		case 0xe5e2a040: { // __hv_ctlout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t value = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t controller = (midi_byte_t) hv_msg_getFloat(m, 1);
@@ -284,8 +285,7 @@ static void sendHook(
 			midi[port]->writeControlChange(channel, controller, value);
 			break;
 		}
-		case 0x6A647C44: { // bela_pgmout
-			if (!hv_msg_hasFormat(m, "ff")) return;
+		case 0x8753e39e: { // __hv_pgmout
 			midi_byte_t program = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
@@ -293,7 +293,7 @@ static void sendHook(
 			midi[port]->writeProgramChange(channel, program);
 			break;
 		}
-		case 0x545CDF50: { // bela_bendout
+		case 0xe8458013: { // __hv_bendout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			unsigned int value = ((midi_byte_t) hv_msg_getFloat(m, 0)) + 8192;
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
@@ -302,7 +302,7 @@ static void sendHook(
 			midi[port]->writePitchBend(channel, value);
 			break;
 		}
-		case 0xDE18F543: { // bela_touchout
+		case 0x476d4387: { // __hv_touchout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
@@ -311,7 +311,7 @@ static void sendHook(
 			midi[port]->writeChannelPressure(channel, pressure);
 			break;
 		}
-		case 0xAE8E3B2D: { // bela_polytouchout
+		case 0xd5aca9d1: { // __hv_polytouchout, not currently supported by Heavy. You have to [send __hv_polytouchout]
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 1);
@@ -321,7 +321,7 @@ static void sendHook(
 			midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 			break;
 		}
-		case 0x51CD8FE2: { // bela_midiout
+		case 0x6511de55: { // __hv_midiout, not currently supported by Heavy. You have to [send __hv_midiout]
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t byte = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int port = (int) hv_msg_getFloat(m, 1);
@@ -329,7 +329,9 @@ static void sendHook(
 			midi[port]->writeOutput(byte);
 			break;
 		}
-		default: break;
+		default: {
+			break;
+		}
 	}
 }
 
@@ -363,6 +365,21 @@ bool setup(BelaContext *context, void *userData)	{
 	generateDigitalNames(gDigitalChannelsInUse, gDigitalChannelOffset, gHvDigitalInHashes);
 
 	/* HEAVY */
+	std::array<std::string, 8> outs = {{
+		"__hv_noteout",
+		"__hv_ctlout",
+		"__hv_pgmout",
+		"__hv_touchout",
+		"__hv_polytouchout",
+		"__hv_bendout",
+		"__hv_midiout",
+	}};
+	for(auto &st : outs)
+	{
+		// uncomment this if you want to display the hashes for midi
+		// outs. Then hardcode them in the switch() in sendHook()
+		printf("%s: %#x\n", st.c_str(), hv_stringToHash(st.c_str()));
+	}
 	hvMidiHashes[kmmNoteOn] = hv_stringToHash("__hv_notein");
 //	hvMidiHashes[kmmNoteOff] = hv_stringToHash("noteoff"); // this is handled differently, see the render function
 	hvMidiHashes[kmmControlChange] = hv_stringToHash("__hv_ctlin");
