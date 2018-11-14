@@ -494,6 +494,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
+			unsigned int channelOffset = port * 16 + 1; // remove + 1 if you want your first channel to be 0 (libpd-style)
 			message = midi[port]->getParser()->getNextChannelMessage();
 			switch(message.getType()){
 			case kmmNoteOn: {
@@ -503,7 +504,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				// rt_printf("message: noteNumber: %f, velocity: %f, channel: %f\n", noteNumber, velocity, channel);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
-						(float)noteNumber, (float)velocity, (float)channel+1);
+						(float)noteNumber, (float)velocity, (float)channel + channelOffset);
 				break;
 			}
 			case kmmNoteOff: {
@@ -516,7 +517,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				// note we are sending the below to hvHashes[kmmNoteOn] !!
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
-						(float)noteNumber, (float)0, (float)channel+1);
+						(float)noteNumber, (float)0, (float)channel + channelOffset);
 				break;
 			}
 			case kmmControlChange: {
@@ -524,14 +525,14 @@ void render(BelaContext *context, void *userData)
 				int controller = message.getDataByte(0);
 				int value = message.getDataByte(1);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmControlChange], 0, "fff",
-						(float)value, (float)controller, (float)channel+1);
+						(float)value, (float)controller, (float)channel + channelOffset);
 				break;
 			}
 			case kmmProgramChange: {
 				int channel = message.getChannel();
 				int program = message.getDataByte(0);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmProgramChange], 0, "ff",
-						(float)program, (float)channel+1);
+						(float)program, (float)channel + channelOffset);
 				break;
 			}
 			case kmmPolyphonicKeyPressure: {
@@ -540,7 +541,7 @@ void render(BelaContext *context, void *userData)
 				int pitch = message.getDataByte(0);
 				int value = message.getDataByte(1);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmPolyphonicKeyPressure], 0, "fff",
-						(float)channel+1, (float)pitch, (float)value);
+						(float)channel + channelOffset, (float)pitch, (float)value);
 				break;
 			}
 			case kmmChannelPressure:
@@ -548,7 +549,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				int value = message.getDataByte(0);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmChannelPressure], 0, "ff",
-						(float)value, (float)channel+1);
+						(float)value, (float)channel + channelOffset);
 				break;
 			}
 			case kmmPitchBend:
@@ -556,7 +557,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				int value = ((message.getDataByte(1) << 7) | message.getDataByte(0));
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmPitchBend], 0, "ff",
-						(float)value, (float)channel+1);
+						(float)value, (float)channel + channelOffset);
 				break;
 			}
 			case kmmSystem:
