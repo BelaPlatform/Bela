@@ -63,7 +63,10 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 
 	// setup the sliders
 	sliders.resize(_numSliders);
-    
+	for(unsigned int n = 0; n < sliders.size(); ++n)
+	{
+		sliders[n].index = n;
+	}
 }
 
 void Scope::start(){
@@ -466,7 +469,6 @@ void Scope::setSlider(int index, float min, float max, float step, float value, 
     sliders.at(index).step = step;
     sliders.at(index).name = name;
     sliders.at(index).w_name = std::wstring(name.begin(), name.end());
-    // scope_ws_set_slider(slider, min, max, step, value, name);
 }
 
 void Scope::setXParams(){
@@ -564,9 +566,9 @@ void Scope::scope_control_connected(){
 	// printf("sending JSON: \n%s\n", str.c_str());
 	ws_server->send("scope_control", str.c_str());
 	
-	// for (auto slider : sliders){
-	// 	sendSlider(&slider);
-	// }
+	for (auto slider : sliders){
+		sendSlider(&slider);
+	}
 }
 
 // on_data callback for scope_control websocket
@@ -592,15 +594,15 @@ void Scope::scope_control_data(const char* data){
 			parse_settings(value);
 			start();
 		} else if (event.compare(L"slider") == 0){
-			// int slider = -1;
-			// float value = 0.0f;
-			// if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
-			// 	slider = (int)root[L"slider"]->AsNumber();
-			// if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
-			// 	value = (float)root[L"value"]->AsNumber();
+			int slider = -1;
+			float value = 0.0f;
+			if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
+				slider = (int)root[L"slider"]->AsNumber();
+			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
+				value = (float)root[L"value"]->AsNumber();
 				
-			// sliders.at(slider).value = value;
-			// sliders.at(slider).changed = true;
+			sliders.at(slider).value = value;
+			sliders.at(slider).changed = true;
 		}
 		return;
 	}
