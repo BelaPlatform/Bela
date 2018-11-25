@@ -166,7 +166,7 @@ ssh $BBB_ADDRESS "for DIR in $BBB_BELA_HOME/resources/tools/*; do make -C \"\$DI
 error_handler $?
 
 # remove stale version of libraries on old images
-ssh $BBB_ADDRESS rm -rf /usr/lib/libpd.so $BBB_BELA_HOME/lib/libpd.so $BBB_BELA_HOME/lib/libprussdrv.a $BBB_BELA_HOME/libNE10.a $BBB_BELA_HOME/lib/libmathneon.a
+ssh $BBB_ADDRESS rm -rf /usr/lib/libpd.so $BBB_BELA_HOME/lib/libpd.so $BBB_BELA_HOME/lib/libprussdrv.a $BBB_BELA_HOME/lib/libNE10.a $BBB_BELA_HOME/lib/libmathneon.a
 error_handler $?
 
 DEBIAN_VERSION=`get_board_debian_version`
