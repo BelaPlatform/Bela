@@ -61,14 +61,11 @@ void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, vo
 	}
 }
 
-void WSServer::setup(int _port, std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
+void WSServer::setup(int _port){
 	port = _port;
-	address = _address;
 	
 	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	server = std::make_shared<seasocks::Server>(logger);
-	
-	addAddress(_address, on_receive, on_connect, on_disconnect, binary);
 	
 	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	server_task->create(std::string("WSServer_")+std::to_string(_port), [this](){ server->serve("/dev/null", port); });
