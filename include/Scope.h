@@ -2,15 +2,21 @@
 #ifndef __Scope_H_INCLUDED__
 #define __Scope_H_INCLUDED__ 
 
-#include <ne10/NE10.h>
+#include <ne10/NE10_types.h>
 #include <vector>
+#include <map>
 #include <string>
-#include <AuxTaskNonRT.h>
-#include <AuxTaskRT.h>
+#include <memory>
 
 #define FRAMES_STORED 4
 
 #define TRIGGER_LOG_COUNT 16
+
+// forward declarations
+class WSServer;
+class JSONValue;
+// typedef std::map<std::wstring, JSONValue*> JSONObject;
+class AuxTaskRT;
 
 /** 
  * \brief An oscilloscope which allows data to be visualised in a browser in real time.
@@ -133,6 +139,9 @@ class Scope{
         void setPlotMode();
         void doFFT();
         void setXParams();
+        void scope_control_connected();
+        void scope_control_data(const char* data);
+        void parse_settings(JSONValue* value);
         
 	bool volatile isUsingOutBuffer;
 	bool volatile isUsingBuffer;
@@ -171,22 +180,26 @@ class Scope{
         int customTriggerPointer;
         
         // sliders
-        int numSliders;
         struct ScopeSlider{
-        	float value;
-        	bool changed = false;
+		float value = 0;
+		bool changed = false;
+		int index;
+		float min = 0;
+		float max = 1;
+		float step = 0.01;
+		std::string name;
+		std::wstring w_name;
         };
         std::vector<ScopeSlider> sliders;
+        void sendSlider(ScopeSlider* slider);
         
         // trigger status
         bool triggerPrimed;
         bool triggerCollecting;
         bool triggerWaiting;
-        bool triggering;
         int triggerCount;
         int autoTriggerCount;
         bool started;
-        bool settingUp;
         bool customTriggered;
         
         // FFT
@@ -204,19 +217,14 @@ class Scope{
         ne10_fft_cpx_float32_t* outFFT;
         ne10_fft_cfg_float32_t cfg;
         
-        AuxTaskNonRT sendBufferTask;
-        AuxTaskRT scopeTriggerTask;
-        static void triggerTask(void* ptr);
+        std::unique_ptr<AuxTaskRT> scopeTriggerTask;
+        void triggerTask();
 		
 		void setSetting(std::wstring setting, float value);
-        friend struct ScopeControlHandler;
-        
-};
 
-void scope_ws_setup(Scope* _scope);
-void scope_ws_send(void* buf, int size);
-void scope_ws_set_slider(int slider, float min, float max, float step, float value, std::string name);
-void scope_ws_set_setting(std::wstring setting, float value);
-void scope_ws_cleanup();
+        std::unique_ptr<WSServer> ws_server;
+        
+		std::map<std::wstring, float> settings;
+};
 
 #endif

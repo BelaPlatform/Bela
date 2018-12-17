@@ -298,65 +298,65 @@ void parseArguments(arg_data args, BelaInitSettings *settings)
 
 	while (1)
 	{
-		int c;
-		if ((c = Bela_getopt_long(args.argc, args.argv, "hf:ki:sq:r:t:l:u:o:n:g:", long_option, settings)) < 0)
-				break;
+		int c = Bela_getopt_long(args.argc, args.argv, "hf:ki:sq:r:t:l:u:o:n:g:", long_option, settings);
+		if (c < 0)
+			break;
 		switch (c)
 		{
-		case 'h':
+			case 'h':
 				morehelp++;
 				break;
-		case 'f':
+			case 'f':
 				free(gPartialFilename);
 				gPartialFilename = strdup(optarg);
 				break;
-		case 'k':
+			case 'k':
 				forceKeyboard = true;
 				break;
-		case 'i':
+			case 'i':
 				gAudioIn = (atoi(optarg)==0) ? false : true;
 				break;
-		case 's':
+			case 's':
 				forceSensors = true;
 				break;
-		case kOptionAudioTest:
+			case kOptionAudioTest:
 				useAudioTest = true;
 				break;
-		case 't':
+			case 't':
 				sensorType = atoi(optarg);
 				break;
-		case 'q':
+			case 'q':
 				touchSensor0Address = atoi(optarg);
 				break;
-		case 'r':
+			case 'r':
 				touchSensor1Address = atoi(optarg);
 				break;
-		case 'l':
+			case 'l':
 				tmp = atoi(optarg);
 				if(tmp==0)
 					forceLog = false;
 				else if(tmp>0)
 					forceLog = true;
 				break;
-		case 'u':
+			case 'u':
 				tmp = atoi(optarg);
 				if(tmp==0)
 					useSD = false;
 				else if(tmp>0)
 					useSD = true;
 				break;
-		case 'o':
+			case 'o':
 				oscBnkOversampling = atoi(optarg);
 				break;
-		case 'n':
+			case 'n':
 				gId = *optarg;
 				cout << "-set box number to: " << gId << endl;
 				break;
-		case 'g':
+			case 'g':
 				gGroup = *optarg;
 				cout << "-set group to: " << gId << endl;
 				break;
-		default:
+			default:
 				break;
 		}
 	}
@@ -367,7 +367,7 @@ void parseArguments(arg_data args, BelaInitSettings *settings)
 
 int main(int argc, char *argv[])
 {
-	BelaInitSettings settings;	// Standard audio settings
+	BelaInitSettings* settings = Bela_InitSettings_alloc();	// Standard audio settings
 	AuxiliaryTask rtSensorThread;
 	const char rtSensorThreadName[] = "dbox-sensor";
 	int oscBankHopSize;
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 	// Parse command-line arguments
 	args.argc = argc;
 	args.argv = argv;
-	parseArguments(args, &settings);
+	parseArguments(args, settings);
 
 	Bela_setVerboseLevel(gVerbose);
 	if(gVerbose == 1 && useAudioTest)
@@ -383,14 +383,17 @@ int main(int argc, char *argv[])
 
 	// Load sound files from directory
 	if(initSoundFiles() != 0)
-		return -1;
+		return 1;
 
 	oscBankHopSize = gOscBanks[gCurrentOscBank]->getHopSize()/gOscBanks[gCurrentOscBank]->getMinSpeed();
 
 	// Initialise the audio device
-	if(Bela_initAudio(&settings, &oscBankHopSize) != 0)
-		return -1;
-
+	if(Bela_initAudio(settings, &oscBankHopSize) != 0) {
+		Bela_InitSettings_free(settings);
+		return 1;
+	}
+	Bela_InitSettings_free(settings);
+	
 	// Initialise the status LED
 	if(!gStatusLED.init(kStatusLEDPin)) {
 		if(gVerbose)
@@ -403,7 +406,7 @@ int main(int argc, char *argv[])
 
 	if(!useAudioTest) {
 		if(initSensorLoop(touchSensor0Address, touchSensor1Address, sensorType) != 0)
-			return -1;
+			return 1;
 	}
 
 	if(gVerbose == 1)
@@ -411,7 +414,7 @@ int main(int argc, char *argv[])
 
 	if(Bela_startAudio()) {
 		cout << "Error: unable to start real-time audio" << endl;
-		return -1;
+		return 1;
 	}
 
 	// LED on...
@@ -425,7 +428,7 @@ int main(int argc, char *argv[])
 		if(rtSensorThread  == 0)
 		{
 			  cout << "Error:unable to create Xenomai control thread" << endl;
-			  return -1;
+			  return 1;
 		}
 	}
 
@@ -435,7 +438,7 @@ int main(int argc, char *argv[])
 
 		if ( pthread_create(&keyboardThread, NULL, keyboardLoop, NULL) ) {
 		  cout << "Error:unable to create keyboard thread" << endl;
-		  return -1;
+		  return 1;
 		}
 	}
 
@@ -445,12 +448,12 @@ int main(int argc, char *argv[])
 
 		if(initLogLoop()!=0) {
 			cout << "Error:unable to create log thread" << endl;
-			return -1;
+			return 1;
 		}
 
 		if ( pthread_create(&logThread, NULL, logLoop, NULL) ) {
 		  cout << "Error:unable to create keyboard thread" << endl;
-		  return -1;
+		  return 1;
 		}
 	}
 

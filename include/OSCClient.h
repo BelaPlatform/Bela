@@ -8,7 +8,7 @@
 #include <queue>
 
 /**
- * \brief OSCMessageFactory provides functions for building OSC messages within Bela.
+ * \brief OSCMessageFactory is deprecated, please use OSCSender instead
  *
  * This class is safe to use on the audio thread.
  *
@@ -70,7 +70,7 @@ class OSCMessageFactory{
 };
 
 /**
- * \brief OSCClient provides functions for sending OSC messages from Bela.
+ * \brief OSCClient is deprecated, please use OSCSender instead
  *
  * Care must be taken to use the correct methods while running on the audio thread to
  * prevent Xenomai mode switches and audio glitches.

@@ -1,7 +1,9 @@
 /***** OSCClient.cpp *****/
 #include <OSCClient.h>
 
-OSCClient::OSCClient(){}
+OSCClient::OSCClient(){
+	fprintf(stderr, "Warning! OSCClient is depecrated, use OSCSender instead\n");
+}
 
 void OSCClient::sendQueue(void* ptr){
     OSCClient *instance = (OSCClient*)ptr;

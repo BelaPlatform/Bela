@@ -2,7 +2,9 @@
 #include <OSCServer.h>
 
 // constructor
-OSCServer::OSCServer(){}
+OSCServer::OSCServer(){
+	fprintf(stderr, "Warning! OSCServer is deprecated, use OSCReceiver instead\n");
+}
 
 // static method for checking messages
 // called by messageCheckTask with pointer to OSCServer instance as argument

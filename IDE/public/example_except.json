@@ -128,10 +128,6 @@
 		},
 		{
 			"section": "14-Csound",
-			"name": "0-HelloWorld"
-		},
-		{
-			"section": "14-Csound",
 			"name": "1-AnalogIn"
 		},
 		{
@@ -140,27 +136,7 @@
 		},
 		{
 			"section": "14-Csound",
-			"name": "3-DigitalInOut"
-		},
-		{
-			"section": "14-Csound",
-			"name": "4-MIDI_In"
-		},
-		{
-			"section": "14-Csound",
 			"name": "C++-libcsound-Control"
-		},
-		{
-			"section": "14-Csound",
-			"name": "C++-libcsound-Loopback"
-		},
-		{
-			"section": "14-Csound",
-			"name": "C++-libcsound-Sine"
-		},
-		{
-			"section": "14-Csound",
-			"name": "C++-libcsound-Trigger"
 		},
 		{
 			"section": "14-Csound",

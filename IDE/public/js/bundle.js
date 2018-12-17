@@ -1,4 +1,4 @@
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -847,40 +847,42 @@ models.status.on('change', function (data, changedKeys) {
 
 // history
 {
-	var lastState = {},
-	    poppingState = true;
+	(function () {
+		var lastState = {},
+		    poppingState = true;
 
-	// file / project changed
-	models.project.on('change', function (data, changedKeys) {
-		if (changedKeys.indexOf('currentProject') !== -1 || changedKeys.indexOf('fileName') !== -1) {
-			var state = { file: data.fileName, project: data.currentProject };
-			if (state.project !== lastState.project || state.file !== lastState.file) {
+		// file / project changed
+		models.project.on('change', function (data, changedKeys) {
+			if (changedKeys.indexOf('currentProject') !== -1 || changedKeys.indexOf('fileName') !== -1) {
+				var state = { file: data.fileName, project: data.currentProject };
+				if (state.project !== lastState.project || state.file !== lastState.file) {
 
-				if (!poppingState) {
-					//console.log('push', state);
-					history.pushState(state, null, null);
+					if (!poppingState) {
+						//console.log('push', state);
+						history.pushState(state, null, null);
+					}
+					poppingState = false;
+					lastState = state;
 				}
-				poppingState = false;
-				lastState = state;
 			}
-		}
-	});
+		});
 
-	// load previously open file / project when browser's back button is clicked
-	window.addEventListener('popstate', function (e) {
-		if (e.state) {
-			console.log('opening project ' + e.state.project + ' file ' + e.state.file);
-			var data = {
-				currentProject: e.state.project,
-				newFile: e.state.file,
-				func: 'openProject',
-				timestamp: performance.now()
-			};
-			consoleView.emit('openNotification', data);
-			socket.emit('project-event', data);
-			poppingState = true;
-		}
-	});
+		// load previously open file / project when browser's back button is clicked
+		window.addEventListener('popstate', function (e) {
+			if (e.state) {
+				console.log('opening project ' + e.state.project + ' file ' + e.state.file);
+				var data = {
+					currentProject: e.state.project,
+					newFile: e.state.file,
+					func: 'openProject',
+					timestamp: performance.now()
+				};
+				consoleView.emit('openNotification', data);
+				socket.emit('project-event', data);
+				poppingState = true;
+			}
+		});
+	})();
 }
 
 // local functions
@@ -1480,7 +1482,7 @@ var View = require('./View');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 
-var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
+var classes = ['Scope', 'OSCReceiver', 'OSCSender', 'Midi', 'MidiParser', 'WriteFile'];
 
 var DocumentationView = function (_View) {
 	_inherits(DocumentationView, _View);
@@ -3558,19 +3560,45 @@ var SettingsView = function (_View) {
 			var settingExceptions = {
 				Bela: {
 					sections: [],
-					subsections: ['disable-led']
+					subsections: ['disable-led'],
+					options: []
 				},
 				BelaMini: {
 					sections: ['capelet-settings'],
-					subsections: ['mute-speaker']
+					subsections: ['mute-speaker'],
+					options: []
 				},
 				Ctag: {
 					sections: ['capelet-settings'],
-					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right']
+					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right', 'analog-channels', 'analog-samplerate', 'use-analog', 'adc-level'],
+					options: []
 				},
-				CtagOnly: {
-					sections: ['capelet-settings'],
-					subsections: ['analog-channels', 'analog-samplerate', 'use-analog', 'adc-level']
+				CtagBela: {
+					sections: [],
+					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right'],
+					options: [{
+						selector: 'analog-samplerate',
+						optVal: [88200]
+					}, {
+						selector: 'analog-channels',
+						optVal: [2]
+					}]
+				},
+				Face: {
+					sections: [],
+					subsections: [],
+					options: [{
+						selector: 'buffer-size',
+						optVal: [128]
+					}]
+				},
+				Beast: {
+					sections: [],
+					subsections: [],
+					options: [{
+						selector: 'buffer-size',
+						optVal: [64, 128]
+					}]
 				}
 			};
 
@@ -3582,31 +3610,55 @@ var SettingsView = function (_View) {
 			if (boardString === 'BelaMini') {
 				exceptions['sections'] = settingExceptions['BelaMini']['sections'];
 				exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
+				exceptions['options'] = settingExceptions['BelaMini']['options'];
 			} else if (boardString === 'CtagFace' || boardString === 'CtagBeast') {
 				exceptions['sections'] = settingExceptions['Ctag']['sections'];
-				exceptions['subsections'] = settingExceptions['Ctag']['subsections'].concat(settingExceptions['CtagOnly']['subsections']);
-			} else if (boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
-				exceptions['sections'] = settingExceptions['Ctag']['sections'];
 				exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
-				var sRates = $('#analog-samplerate').children("option");
-				for (var i = 0; i < sRates.length; i++) {
-					var rate = sRates[i].innerHTML;
-					if (rate == '88200') {
-						sRates[i].remove();
-						$("#analog-channels option[value='2']").remove();
-					} else if (rate == "44100") {
-						sRates[i].innerHTML = "48000";
-					}
-				}
+				exceptions['options'] = settingExceptions['Ctag']['options'];
+			} else if (boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
+				exceptions['sections'] = settingExceptions['CtagBela']['sections'];
+				exceptions['subsections'] = settingExceptions['CtagBela']['subsections'];
+				exceptions['options'] = settingExceptions['CtagBela']['options'];
 			} else {
 				exceptions['sections'] = settingExceptions['Bela']['sections'];
 				exceptions['subsections'] = settingExceptions['Bela']['subsections'];
+				exceptions['options'] = settingExceptions['Bela']['options'];
 			}
-			for (var e in exceptions['subsections']) {
-				$('#' + exceptions['subsections'][e]).parent().parent().css('display', 'none');
+
+			if (boardString === 'CtagFace' || boardString === 'CtagFaceBela') {
+				exceptions['options'] = exceptions['options'].concat(settingExceptions['Face']['options']);
+			} else if (boardString === 'CtagBeast' || boardString === 'CtagBeastBela') {
+				exceptions['options'] = exceptions['options'].concat(settingExceptions['Beast']['options']);
 			}
-			for (var e in exceptions['sections']) {
-				$('.' + exceptions['sections'][e]).css('display', 'none');
+
+			if (boardString.includes('Ctag')) {
+				var sRates = $('#analog-samplerate').children("option");
+				for (var i = 0; i < sRates.length; i++) {
+					var rate = sRates[i].innerHTML;
+					if (rate == "44100") {
+						sRates[i].innerHTML = "48000";
+					} else if (rate == "22050") {
+						sRates[i].innerHTML = "24000";
+					}
+				}
+			}
+
+			for (var e in exceptions['options']) {
+				var opts = $('#' + exceptions['options'][e].selector).children("option");
+				var exceptOpts = exceptions['options'][e].optVal;
+				for (var _i = 0; _i < opts.length; _i++) {
+					var html = opts[_i].innerHTML;
+					if (exceptOpts.includes(parseInt(html))) {
+						opts[_i].remove();
+					}
+				}
+			}
+
+			for (var subsect in exceptions['subsections']) {
+				$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+			}
+			for (var sect in exceptions['sections']) {
+				$('.' + exceptions['sections'][sect]).css('display', 'none');
 			}
 		}
 	}]);
@@ -5048,5 +5100,6 @@ function sanitise(name) {
 module.exports.sanitise = sanitise;
 
 },{}]},{},[16])
+
 
 //# sourceMappingURL=bundle.js.map

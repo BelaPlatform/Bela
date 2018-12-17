@@ -162,7 +162,7 @@ RUN_COMMAND?=bash $(RUN_FILE)
 else
 ifeq ($(PROJECT_TYPE),sc)
 SCLANG_FIFO=/tmp/sclangfifo
-RUN_COMMAND?=bash -c 'rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
+RUN_COMMAND?=bash -c 'touch /tmp/sclang.yaml; rm -rf $(SCLANG_FIFO) && mkfifo $(SCLANG_FIFO) && sclang -l /tmp/sclang.yaml $(SUPERCOLLIDER_FILE) <> $(SCLANG_FIFO)'
 else
 ifeq ($(PROJECT_TYPE),cs)
 RUN_COMMAND?=bash -c 'belacsound --csd=$(CSOUND_FILE) 2>&1'
@@ -172,7 +172,7 @@ endif
 endif
 endif
 
-RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
+RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -oL -eL $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
 BELA_IDE_HOME?=/root/Bela/IDE
 XENO_CONFIG=/usr/xenomai/bin/xeno-config

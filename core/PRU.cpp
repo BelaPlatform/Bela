@@ -473,7 +473,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	}
 #else
 	context->audioIn = (float *)malloc(context->audioInChannels * context->audioFrames * sizeof(float));
-	context->audioOut = (float *)malloc(context->audioOutChannels * context->audioFrames * sizeof(float));
+	context->audioOut = (float *)calloc(1, context->audioOutChannels * context->audioFrames * sizeof(float));
 	if(context->audioIn == 0 || context->audioOut == 0) {
 		fprintf(stderr, "Error: couldn't allocate audio buffers\n");
 		return 1;
@@ -501,8 +501,8 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 		}		
 #else
 		context->analogIn = (float *)malloc(context->analogInChannels * context->analogFrames * sizeof(float));
-		context->analogOut = (float *)malloc(context->analogOutChannels * context->analogFrames * sizeof(float));
-		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
+		context->analogOut = (float *)calloc(1, context->analogOutChannels * context->analogFrames * sizeof(float));
+		last_analog_out_frame = (float *)calloc(1, context->analogOutChannels * sizeof(float));
 
 		if(context->analogIn == 0 || context->analogOut == 0 || last_analog_out_frame == 0) {
 			fprintf(stderr, "Error: couldn't allocate analog buffers\n");
