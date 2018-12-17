@@ -45,7 +45,8 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 	
 	// set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
-	ws_server->setup(5432, "scope_data", nullptr, nullptr, nullptr, true);
+	ws_server->setup(5432);
+	ws_server->addAddrss("scope_data". nullptr, nullptr, nullptr, true);
 	ws_server->addAddress("scope_control", 
 		[this](std::string address, void* buf, int size){
 			scope_control_data((const char*) buf);
