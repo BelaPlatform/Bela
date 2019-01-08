@@ -3,15 +3,21 @@
 #include <JSON.h>
 #include <memory> // for shared pointers
 
+Gui::Gui()
+{
+}
+Gui::Gui(unsigned int port)
+{
+	setup(port);
+}
 
-int Gui::setup() 
+int Gui::setup(unsigned int port)
 {
 	// Set up the websocket server
-	ws_server = std::unique_ptr>WSServer>(new WSServer());
-	ws_server->setup(port);
-	ws_server->addAddress("gui",
+	ws_server = std::unique_ptr<WSServer>(new WSServer());
+	ws_server->setup(port, "gui",
 		// onData()
-		[this](std::string address, void* buf)
+		[this](std::string address, void* buf, int size)
 		{
 			ws_onData((const char*) buf);
 		},
@@ -25,6 +31,26 @@ int Gui::setup()
 		{
 		}
 	);
+	/*
+	ws_server->setup(port);
+	ws_server->addAddress("gui",
+		// onData()
+		[this](std::string address, void* buf, int size)
+		{
+			ws_onData((const char*) buf);
+		},
+		// onConnect()
+		[this](std::string address)
+		{
+			ws_connect();
+		},
+		// onDisconnect()
+		[this](std::string address)
+		{
+		}
+	);
+	*/
+	return 0;
 }	
 
 /*
@@ -50,7 +76,8 @@ void Gui::ws_connect()
  *  on_data callback for scope_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onData(const char* data){
+void Gui::ws_onData(const char* data)
+{
 	
 	// parse the data into a JSONValue
 	JSONValue *value = JSON::Parse(data);
@@ -64,7 +91,13 @@ void Gui::ws_onData(const char* data){
 	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
 		std::wstring event = root[L"event"]->AsString();
 		if (event.compare(L"connection-reply") == 0){
-
+			wsIsConnected = true;
+			if(sliders.size() != 0)
+			{
+				for (auto slider : sliders){
+					sendSlider(&slider);
+				}
+			}
 		} else if (event.compare(L"slider") == 0){
 			int slider = -1;
 			float value = 0.0f;
@@ -114,4 +147,26 @@ void Gui::sendSlider(GuiSlider* slider){
 	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
 	std::wstring wide = json->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
-	ws_server->send("scope_control", str.c_str());
+	ws_server->send("gui", str.c_str());
+}
+
+void Gui::addSlider(std::string name, float min, float max, float step, float value)
+{
+	GuiSlider newSlider;
+	newSlider.index = sliders.size() + 1;
+	sliders.push_back(newSlider);
+	setSlider(newSlider.index, min, max, step, value, name);
+
+	if(isConnected())
+	{
+		sendSlider(&newSlider);
+	}
+}
+
+Gui::~Gui()
+{
+	cleanup();
+}
+void Gui::cleanup()
+{
+}
