@@ -19,18 +19,14 @@ class WSServer{
 	friend struct WSServerDataHandler;
 	public:
 		WSServer();
-		WSServer(int _port, std::string _address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr, bool binary = false);
-		//WSServer(int _port);
+		WSServer(int _port);
 		~WSServer();
 		
-		void setup(int port, std::string address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr, bool binary = false);
-		//void setup(int port);
+		void setup(int port);
 
 		void addAddress(std::string address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr, bool binary = false);
 		
-		void send(const char* str);
 		void send(const char* address, const char* str);
-		void send(void* buf, int num_bytes);
 		void send(const char* address, void* buf, int num_bytes);
 		
 	private:

@@ -7,14 +7,9 @@
 #include <cstring>
 
 WSServer::WSServer(){}
-WSServer::WSServer(int port, std::string address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
-	setup(port, address, on_receive, on_connect, on_disconnect, binary);
-}
-/*
 WSServer::WSServer(int port){
 	setup(port);
 }
-*/
 WSServer::~WSServer(){
 	cleanup();
 }
@@ -66,15 +61,11 @@ void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, vo
 	}
 }
 
-void WSServer::setup(int _port, std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
-//void WSServer::setup(int _port) {
+void WSServer::setup(int _port) {
 	port = _port;
-	address = _address;
 	
 	auto logger = std::make_shared<seasocks::IgnoringLogger>();
 	server = std::make_shared<seasocks::Server>(logger);
-	
-	addAddress(_address, on_receive, on_connect, on_disconnect, binary);
 
 	server_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	server_task->create(std::string("WSServer_")+std::to_string(_port), [this](){ server->serve("/dev/null", port); });
@@ -95,14 +86,8 @@ void WSServer::addAddress(std::string _address, std::function<void(std::string, 
 	address_book[_address]->create(std::string("WSClient_")+_address, [this, handler](void* buf, int size){ client_task_func(handler, buf, size); });
 }
 
-void WSServer::send(const char* str){
-	address_book[address]->schedule(str);
-}
 void WSServer::send(const char* _address, const char* str){
 	address_book[_address]->schedule(str);
-}
-void WSServer::send(void* buf, int num_bytes){
-	address_book[address]->schedule(buf, num_bytes);
 }
 void WSServer::send(const char* _address, void* buf, int num_bytes){
 	address_book[_address]->schedule(buf, num_bytes);
