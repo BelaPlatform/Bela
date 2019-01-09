@@ -32,12 +32,15 @@ class Gui
 		void ws_onData(const char* data);
 		
 		void sendSlider(GuiSlider* slider);
+		
+		unsigned int _port;
+		std::string _address;
 	public:
 		Gui();
-		Gui(unsigned int port);
+		Gui(unsigned int port, std::string address);
 		~Gui();
 
-		int setup(unsigned int port);
+		int setup(unsigned int port, std::string address);
 		void cleanup();
 		
 		bool isConnected()

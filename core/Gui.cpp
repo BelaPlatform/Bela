@@ -6,17 +6,20 @@
 Gui::Gui()
 {
 }
-Gui::Gui(unsigned int port)
+Gui::Gui(unsigned int port, std::string address)
 {
-	setup(port);
+	setup(port, address);
 }
 
-int Gui::setup(unsigned int port)
+int Gui::setup(unsigned int port, std::string address)
 {
+	_port = port;
+	_address = address;
+
 	// Set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
 	ws_server->setup(port);
-	ws_server->addAddress("gui",
+	ws_server->addAddress(_address,
 		// onData()
 		[this](std::string address, void* buf, int size)
 		{
@@ -52,7 +55,7 @@ void Gui::ws_connect()
 	JSONValue *value = new JSONValue(root);
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
-	ws_server->send("gui", str.c_str());
+	ws_server->send(_address.c_str(), str.c_str());
 }
 /*
  *  on_data callback for scope_control websocket
@@ -130,7 +133,7 @@ void Gui::sendSlider(GuiSlider* slider){
 	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
 	std::wstring wide = json->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
-	ws_server->send("gui", str.c_str());
+	ws_server->send(_address.c_str(), str.c_str());
 }
 
 void Gui::addSlider(std::string name, float min, float max, float step, float value)
