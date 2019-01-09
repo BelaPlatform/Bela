@@ -15,23 +15,6 @@ int Gui::setup(unsigned int port)
 {
 	// Set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
-	ws_server->setup(port, "gui",
-		// onData()
-		[this](std::string address, void* buf, int size)
-		{
-			ws_onData((const char*) buf);
-		},
-		// onConnect()
-		[this](std::string address)
-		{
-			ws_connect();
-		},
-		// onDisconnect()
-		[this](std::string address)
-		{
-		}
-	);
-	/*
 	ws_server->setup(port);
 	ws_server->addAddress("gui",
 		// onData()
@@ -49,7 +32,6 @@ int Gui::setup(unsigned int port)
 		{
 		}
 	);
-	*/
 	return 0;
 }	
 
@@ -91,6 +73,7 @@ void Gui::ws_onData(const char* data)
 	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
 		std::wstring event = root[L"event"]->AsString();
 		if (event.compare(L"connection-reply") == 0){
+			printf("Connection replied\n");
 			wsIsConnected = true;
 			if(sliders.size() != 0)
 			{
@@ -153,7 +136,8 @@ void Gui::sendSlider(GuiSlider* slider){
 void Gui::addSlider(std::string name, float min, float max, float step, float value)
 {
 	GuiSlider newSlider;
-	newSlider.index = sliders.size() + 1;
+	printf("Sliders size: %d\n", sliders.size());
+	newSlider.index = sliders.size();
 	sliders.push_back(newSlider);
 	setSlider(newSlider.index, min, max, step, value, name);
 

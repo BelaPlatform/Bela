@@ -46,7 +46,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 	// set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
 	ws_server->setup(5432);
-	ws_server->addAddrss("scope_data". nullptr, nullptr, nullptr, true);
+	ws_server->addAddress("scope_data", nullptr, nullptr, nullptr, true);
 	ws_server->addAddress("scope_control", 
 		[this](std::string address, void* buf, int size){
 			scope_control_data((const char*) buf);
@@ -73,7 +73,7 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 void Scope::start(){
 
 	// reset the pointers
-    writePointer = 0;
+writePointer = 0;
     readPointer = 0;
 
     logCount = 0;
@@ -295,7 +295,7 @@ void Scope::triggerTimeDomain(){
 					// the whole frame has been saved in outBuffer, so send it
 					// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
 					// rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
-					ws_server->send(outBuffer.data(), outBuffer.size()*sizeof(float));
+					ws_server->send("scope_data", outBuffer.data(), outBuffer.size()*sizeof(float));
 					
 					isUsingOutBuffer = false;
                 }
@@ -449,7 +449,7 @@ void Scope::doFFT(){
 	
 	// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
     // rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
-    ws_server->send(outBuffer.data(), outBuffer.size()*sizeof(float));
+    ws_server->send("scope_data", outBuffer.data(), outBuffer.size()*sizeof(float));
 
     isUsingOutBuffer = false;
 }
