@@ -6,8 +6,8 @@
 
 # Find location of this script so we can locate the rest of the files
 SCRIPTDIR=$(dirname "$0")
-[ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
-. $SCRIPTDIR.bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
+[ -z "$SCRIPTDIR" ] && SCRIPTDIR="./" || SCRIPTDIR="$SCRIPTDIR"/ 
+. "$SCRIPTDIR".bela_common || { echo "You must be in Bela/scripts to run these scripts" | exit 1; }  
 
 [ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../IDE
 [ -z "$FORCE_REPLACE" ] && FORCE_REPLACE=0
@@ -102,18 +102,18 @@ done
 
 check_board_alive_and_set_date
 # Check if destination folder exists
-ssh $BBB_ADDRESS [ -d $BBB_BELA_HOME ] && DESTINATION_EMPTY=0 || DESTINATION_EMPTY=1
+ssh "$BBB_ADDRESS" [ -d "$BBB_BELA_HOME" ] && DESTINATION_EMPTY=0 || DESTINATION_EMPTY=1
 
-if [ $DESTINATION_EMPTY -eq 0 ];
+if [ "$DESTINATION_EMPTY" -eq 0 ];
 then
   echo "Updating the Bela core code in $BBB_ADDRESS:$BBB_BELA_HOME"
-  if [ $RESET_BOARD -eq 1 ];
+  if [ "$RESET_BOARD" -eq 1 ];
   then
     printf "DANGER: you are about to perform a HARD RESET, which will DELETE all the  existing files from the folder $BBB_BELA_HOME on the BeagleBone Black.\nAre you sure you want to continue? (y/N) "
   else
     printf "All the changes to the CORE files in the remote folder $BBB_BELA_HOME will be LOST. The content of these files/folders will be lost:\n  $FILES_TO_COPY \nYour projects stored in $BBB_BELA_HOME/projects should be safe (and surely you have already backed them up somewhere safe, haven't you?).\nAre you sure you want to continue? (y/N) "
   fi;
-  if [ $ALWAYS_YES -eq 1 ];
+  if [ "$ALWAYS_YES" -eq 1 ];
   then
     printf "y\n"
   else 
@@ -122,21 +122,22 @@ then
   fi
 else
   echo "Installing Bela core code in $BBB_ADDRESS:$BBB_BELA_HOME"
+  ssh "$BBB_ADDRESS" mkdir -p "$BBB_BELA_HOME"
 fi
 
 echo "Updating Bela core files to remote folder $BBB_BELA_HOME"
 # Stop Bela if running and remove all files
-if [ $FULL -eq 1 ]
+if [ "$FULL" -eq 1 ]
 then
   printf "Stopping Bela..." 
-  ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME idestop stop &>/dev/null; screen -X -S Bela quit &>/dev/null; screen -X -S IDE-Bela quit &>/dev/null; true";
+  ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" idestop stop &>/dev/null; screen -X -S Bela quit &>/dev/null; screen -X -S IDE-Bela quit &>/dev/null; true";
   error_handler $?
 fi
 
-if [ $RESET_BOARD -eq 1 ];
+if [ "$RESET_BOARD" -eq 1 ];
 then
   printf "Removing old files..."
-  ssh $BBB_ADDRESS "rm -rf $BBB_BELA_HOME";
+  ssh "$BBB_ADDRESS" "rm -rf \"$BBB_BELA_HOME\"";
   error_handler $?
 fi
 
@@ -145,95 +146,95 @@ check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
 
 # cd to the home of the project to make the following lines less verbose
 RUN_FOLDER=`pwd`
-cd $SCRIPTDIR/../
+cd "$SCRIPTDIR"/../
 
 printf "Updating files..."
 # Copy relevant files to BeagleBone Black
-if [ $RSYNC_AVAILABLE -eq 1 ];
+if [ "$RSYNC_AVAILABLE" -eq 1 ];
 then
   [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
-  rsync -ac --no-t --delete-after --stats $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval $FILTER &&\
+  rsync -ac --no-t --delete-after --stats $FILES_TO_COPY "$BBB_ADDRESS":"$BBB_BELA_HOME" 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval "$FILTER" &&\
   printf "..."
 else
   # if rsync is not available, then clean the folders before copying the files
-  ssh $BBB_ADDRESS "rm -rf $FILES_TO_COPY; mkdir -p $BBB_BELA_HOME" &&\
-  scp -r -q $FILES_TO_COPY $BBB_ADDRESS:$BBB_BELA_HOME
+  ssh "$BBB_ADDRESS" "rm -rf \"$FILES_TO_COPY\"; mkdir -p \"$BBB_BELA_HOME\"" &&\
+  scp -r -q "$FILES_TO_COPY" "$BBB_ADDRESS":"$BBB_BELA_HOME"
 fi
 error_handler $?
 
 # a bunch of files to be processed manually to special locations
-ssh $BBB_ADDRESS "for DIR in $BBB_BELA_HOME/resources/tools/*; do make -C \"\$DIR\" install || exit 1;  done"
+ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do make -C \"\$DIR\" install || exit 1;  done"
 error_handler $?
 
 # remove stale version of libraries on old images
-ssh $BBB_ADDRESS rm -rf /usr/lib/libpd.so $BBB_BELA_HOME/lib/libpd.so $BBB_BELA_HOME/lib/libprussdrv.a $BBB_BELA_HOME/lib/libNE10.a $BBB_BELA_HOME/lib/libmathneon.a
+ssh "$BBB_ADDRESS" rm -rf /usr/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libprussdrv.a \"$BBB_BELA_HOME\"/lib/libNE10.a \"$BBB_BELA_HOME\"/lib/libmathneon.a
 error_handler $?
 
 DEBIAN_VERSION=`get_board_debian_version`
 # Install system-specific packages
-ssh $BBB_ADDRESS "dpkg -i $BBB_BELA_HOME/resources/$DEBIAN_VERSION/deb/*.deb && ldconfig || exit 1"
+ssh "$BBB_ADDRESS" "dpkg -i \"$BBB_BELA_HOME\"/resources/\"$DEBIAN_VERSION\"/deb/*.deb && ldconfig || exit 1"
 error_handler $?
 
 if [ "$DEBIAN_VERSION" = wheezy ]
 then
 	# post-installation trigger for libseasocks
-	ssh $BBB_ADDRESS "ln -f -s /usr/local/lib/libseasocks.so.1 /usr/local/lib/libseasocks.so && ldconfig /usr/local/lib" &&\
+	ssh "$BBB_ADDRESS" "ln -f -s /usr/local/lib/libseasocks.so.1 /usr/local/lib/libseasocks.so && ldconfig /usr/local/lib" &&\
 	# the below files could be user-customized, so copy them if they do not exist or forced to do so
-	copy_if_does_not_exist resources/wheezy/sh/shutdown_switch.sh "" $FORCE_REPLACE &&\
-	copy_if_does_not_exist resources/wheezy/sh/Bela_capeButtonHold.sh "" $FORCE_REPLACE
+	copy_if_does_not_exist resources/wheezy/sh/shutdown_switch.sh "" "$FORCE_REPLACE" &&\
+	copy_if_does_not_exist resources/wheezy/sh/Bela_capeButtonHold.sh "" "$FORCE_REPLACE"
 fi
 error_handler $?
 
 # Copy some custom files to the rootfs
 if [ -d "resources/"$DEBIAN_VERSION"/rootfs/" ]
 then
-	scp -r resources/$DEBIAN_VERSION/rootfs/* $BBB_ADDRESS:/
+	scp -r resources/"$DEBIAN_VERSION"/rootfs/* "$BBB_ADDRESS":/
 fi
 
 # Create remaining directories needed for building
 printf "Creating directory structure on BeagleBone..."
-ssh $BBB_ADDRESS "mkdir -p $BBB_BELA_HOME/build/core $BBB_BELA_HOME/projects"
+ssh "$BBB_ADDRESS" "mkdir -p \"$BBB_BELA_HOME\"/build/core \"$BBB_BELA_HOME\"/projects"
 error_handler $?
 
-if [ $DOXYGEN -eq 1 ] 
+if [ "$DOXYGEN" -eq 1 ] 
 then 
   printf "Generating on-board documentation..."
-  ssh $BBB_ADDRESS "cd $BBB_BELA_HOME; rm -rf Documentation/; doxygen &> /dev/null"
+  ssh "$BBB_ADDRESS" "cd \"$BBB_BELA_HOME\"; rm -rf Documentation/; doxygen &> /dev/null"
   error_handler $? "\nError while generating Doxygen documentation\n"
 fi
 
 if [ $FULL -eq 1 ]
 then
   printf "Cleaning build environment..."
-  ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory coreclean &>/dev/null"
+  ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" --no-print-directory coreclean &>/dev/null"
   error_handler $? "\nError cleaning core\n"
 fi
 
 #-------------
 #Installing IDE
 
-if [ $UPDATE_IDE -eq 1 ]
+if [ "$UPDATE_IDE" -eq 1 ]
 then
-	[ $ALWAYS_YES -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
+	[ "$ALWAYS_YES" -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
 	ls ./scripts/update_IDE >/dev/null 2>/dev/null
 	if [ $? -eq 0 ]
 	then
 	  export BBB_ADDRESS BBB_BELA_HOME
-	  ./scripts/update_IDE $ALWAYS_YES_FLAG --no-frills
-      [ $FULL -eq 1 ] && ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart" 
+	  ./scripts/update_IDE "$ALWAYS_YES_FLAG" --no-frills
+      [ "$FULL" -eq 1 ] && ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" --no-print-directory idestart" 
 	else
 	  # run the IDE 
 	   printf "\nThe Bela core files were updated on the board, but a valid IDE folder was not found in $IDE_FOLDER/, so the IDE was not updated
 	You can get a copy of the most up-to-date IDE files from https://github.com/LBDonovan/bela-ide\n"
 	  [ $FULL -eq 1 ] && printf "If there was an older version of the IDE on the board, it is being restarted.\n\n" &&\
-	    ssh $BBB_ADDRESS "make -C $BBB_BELA_HOME --no-print-directory idestart &> /dev/null" 
+	    ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" --no-print-directory idestart &> /dev/null" 
 	fi
 else
 	echo "Not updating the IDE"
 fi
-[ $FULL -eq 1 ] && ssh $BBB_ADDRESS make -C $BBB_BELA_HOME --no-print-directory idestartup nostartup && printf "The board will now run the IDE at startup, but startup of the Bela program has been disabled.\nTo enable it, use the set_startup.sh script.\nTo control the ide use the ide.sh script\n"
+[ "$FULL" -eq 1 ] && ssh "$BBB_ADDRESS" make -C \"$BBB_BELA_HOME\" --no-print-directory idestartup nostartup && printf "The board will now run the IDE at startup, but startup of the Bela program has been disabled.\nTo enable it, use the set_startup.sh script.\nTo control the ide use the ide.sh script\n"
 
-[ $ALWAYS_YES -eq 1 ] && printf "\nCore setup complete.\n\n" || {
+[ "$ALWAYS_YES" -eq 1 ] && printf "\nCore setup complete.\n\n" || {
   printf '\nSetup complete, press any key to continue . . .\n\n'
   read -n 1
 }
