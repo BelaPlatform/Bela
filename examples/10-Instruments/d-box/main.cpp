@@ -117,7 +117,7 @@ int readFiles()
 			if(!strncmp(ent->d_name, ".", 1))
 				continue;
 
-			//dbox_printf("%s\n", ent->d_name);
+			//printf("%s\n", ent->d_name);
 
 			// take only .dbx and .txt files
 			string name = string(ent->d_name);
@@ -133,14 +133,14 @@ int readFiles()
 			if(dboxFile)
 			{
 				fileCnt++;
-				//dbox_printf("%s\n", ent->d_name);
+				//printf("%s\n", ent->d_name);
 				files.push_back( std::string( ent->d_name ) );
 			}
 		}
 		closedir (dir);
 	} else {
 		/* could not open directory */
-		printf("Could not open directory %s\n", gDirName);
+		fprintf(stderr, "Could not open directory %s\n", gDirName);
 		return 1;
 	}
 
@@ -149,7 +149,7 @@ int readFiles()
 
 	if(fileCnt==0)
 	{
-		printf("No .dbx or .txt files in %s!\n", gDirName);
+		fprintf(stderr, "No .dbx or .txt files in %s!\n", gDirName);
 		return 1;
 	}
 
@@ -165,7 +165,7 @@ void loadAudioFiles(bool loadFirstFile)
 		strcpy(fullFileName, gDirName);
 		strcat(fullFileName, "/");
 		strncat(fullFileName, files[0].c_str(), 255 - strlen(gDirName));
-		dbox_printf("Loading first file %s...\n", fullFileName);
+		printf("Loading first file %s...\n", fullFileName);
 		DboxOscillatorBank *bank = new DboxOscillatorBank(fullFileName);
 		if(bank->initBank(oscBnkOversampling)) {
 			bank->setLoopHops(100, bank->getLastHop());
@@ -178,7 +178,7 @@ void loadAudioFiles(bool loadFirstFile)
 			strcpy(fullFileName, gDirName);
 			strcat(fullFileName, "/");
 			strncat(fullFileName, files[i].c_str(), 255 - strlen(gDirName));
-			dbox_printf("Loading file %s...\n", fullFileName);
+			printf("Loading file %s...\n", fullFileName);
 			DboxOscillatorBank *bank = new DboxOscillatorBank(fullFileName);
 			if(bank->initBank(oscBnkOversampling)) {
 				bank->setLoopHops(100, bank->getLastHop());
@@ -430,6 +430,8 @@ int main(int argc, char *argv[])
 			  cout << "Error:unable to create Xenomai control thread" << endl;
 			  return 1;
 		}
+
+		Bela_scheduleAuxiliaryTask(rtSensorThread);
 	}
 
 	if(forceKeyboard) {

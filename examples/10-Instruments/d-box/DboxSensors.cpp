@@ -13,7 +13,7 @@ using namespace std;
 
 
 
-int DboxSensors::initSensors(int tk0_bus, int tk0_address, int tk1_bus, int tk1_address, int tk_file, int fsr_pin, int fsrmax, int sensorTypeToUse, int gpio_0, int gpio_1)
+int DboxSensors::initSensors(int tk0_bus, int tk0_address, int tk1_bus, int tk1_address, int tk_file, int sensorTypeToUse, int gpio_0, int gpio_1)
 {
 	sensorType = sensorTypeToUse;
 	// init first touch key on i2c bus
@@ -31,13 +31,6 @@ int DboxSensors::initSensors(int tk0_bus, int tk0_address, int tk1_bus, int tk1_
 		if(TK1.initTouchKey(sensorType)>0)
 			return 2;
 	}
-
-	// init fsr on analog input pin
-	fsr_pinNum	= fsr_pin;
-	fsr_max	  	= fsrmax;
-
-	if(FSR.initAnalogInputs()>0)
-		return 3;
 
 	gpio[0] = gpio_0;
 	if(gpio[0]!=-1)
@@ -94,7 +87,6 @@ int DboxSensors::readSensors()
 		}
 		tk0_touchPosY 	 = TK0.getSliderPositionH();
 		tk1_touchPosY 	 = TK1.getSliderPositionH();
-		fsr_read		 = (double)FSR.read(fsr_pinNum);
 	}
 
 	if(gpio[0]!=-1)
@@ -144,7 +136,6 @@ void DboxSensors::resetSensorsData()
 		tk1_touchPosY	 = -1;
 		tk1_touchSize[i] = 0;
 
-		fsr_read		 = 0;
 	}
 
 	return;
