@@ -9,32 +9,27 @@
 <script src="/gui/js/bela-gui-control-handler.js"></script>
 
 <script>
-    let defaultSketch = "p5-standard-gui";
-    let sketchName = location.hash;
-    sketchName = sketchName.substring(1);
-    if(sketchName.length == 0) {
-        // Load default sketch
-        sketchName = defaultSketch;
+
+    let p5sketchSource;
+    let sketch;
+
+    let projectName = location.hash;
+
+    projectName = projectName.substring(1);
+    if(projectName.length == 0) {
+        Bela_control.target.addEventListener('new-connection', function(event) {
+            projectName = event.detail.projectName;
+            p5sketchSource = "/projects/"+projectName+"/sketch.js"
+	    if(projectName != "exampleTempProject")
+		    window.location.hash = '#'+projectName;
+            sketch = loadSketch(p5sketchSource);
+        });
+    } else {
+        p5sketchSource = "/projects/"+projectName+"/sketch.js"
+        sketch = loadSketch(p5sketchSource);
     }
-    let p5sketchSource = "/gui/p5-sketches/"+sketchName+".js"
-    let scriptElement;
 
-    let loadSketch = loadScript(p5sketchSource);
-    loadSketch.then((resolved) => {
-        scriptElement = resolved;
-        console.log(p5sketchSource+ " loaded");
 
-        let obj = {
-			event: "gui-ready"
-		};
-		obj = JSON.stringify(obj);
-		if (Bela_control.ws.readyState === 1)
-			Bela_control.ws.send(obj);
 
-    }).catch((rejected) => {
-        console.log(p5sketchSource + " couldn't be loaded.")
-        console.log("Loading %s instead", p5sketchSource);
-        p5sketchSource = "/gui/p5-sketches/"+defaultSketch+".js"
-        scriptElement = loadScript(p5sketchSource);
-    })
+
 </script>

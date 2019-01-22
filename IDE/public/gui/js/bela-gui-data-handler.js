@@ -55,9 +55,8 @@ Bela_data.onData = function(data) {
             }
             this.buffers[this.newBuffer['id']] = this.newBuffer['data'];
             this.bufferReady = true;
-            // this.target.dispatchEvent(this.events[0]);
-            this.target.dispatchEvent( new CustomEvent('buffer-ready', { detail: this.newBuffer['id'] }) );
 
+            this.target.dispatchEvent( new CustomEvent('buffer-ready', { detail: this.newBuffer['id'] }) );
     }
 
 }.bind(Bela_data);

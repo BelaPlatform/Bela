@@ -40,3 +40,18 @@ function loadScript(src) {
     });
     return promise;
 }
+
+function removeElementById(elementId) {
+    // Removes an element from the document
+    var element = document.getElementById(elementId);
+    if(element != null)
+        element.parentNode.removeChild(element);
+}
+
+function removeElementByClassName(className) {
+    // Removes an element from the document
+    var elements = document.getElementsByClassName(className);
+    for (let elem of elements) {
+        elem.parentNode.removeChild(elem);
+    }
+}
