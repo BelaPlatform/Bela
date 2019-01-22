@@ -10,6 +10,7 @@
 #include <libgen.h>
 #include <signal.h>
 #include <getopt.h>
+#include <string.h>
 #include "../include/Bela.h"
 
 using namespace std;
@@ -45,6 +46,11 @@ int main(int argc, char *argv[])
 	settings->setup = setup;
 	settings->render = render;
 	settings->cleanup = cleanup;
+	if(argc > 1 && argv[0])
+	{
+		char* lastComponent = strrchr(argv[0], '/');
+		strcpy(settings->projectName, lastComponent+1);
+	}
 
 	while (1) {
 		int c = Bela_getopt_long(argc, argv, "h", customOptions, settings);

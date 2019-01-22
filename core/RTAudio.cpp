@@ -362,6 +362,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gContext.audioInChannels = cfg.audioInChannels;
 	gContext.audioOutChannels = cfg.audioOutChannels;
 	gContext.audioFrames = settings->periodSize;
+	strcpy (gContext.projectName, settings->projectName);
 	gAudioCodec = cfg.activeCodec;
 	if(cfg.disabledCodec)
 	{

@@ -137,6 +137,10 @@ typedef struct {
 	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
 	/// persist for future frames. If not set, writes affect one frame only.
 	uint32_t flags;
+	
+	/// Name of running project. 
+	char projectName[MAX_PROJECTNAME_LENGTH];
+
 } InternalBelaContext;
 
 class PruMemory;

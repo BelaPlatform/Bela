@@ -81,6 +81,7 @@ typedef enum
 #define MAX_PRU_FILENAME_LENGTH 256
 #define MAX_SERVERNAME_LENGTH 256
 #define MAX_BOARDNAME_LENGTH 256
+#define MAX_PROJECTNAME_LENGTH 256
 /** \endcond */
 
 /**
@@ -329,6 +330,10 @@ typedef struct {
 	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
 	/// persist for future frames. If not set, writes affect one frame only.
 	const uint32_t flags;
+	
+	/// Name of running project. 
+	char projectName[MAX_PROJECTNAME_LENGTH];
+
 } BelaContext;
 
 /**
@@ -434,6 +439,9 @@ typedef struct {
 
 	/// User selected board to work with (as opposed to detected hardware).
 	char board[MAX_BOARDNAME_LENGTH];
+
+	/// Name of running project. 
+	char projectName[MAX_PROJECTNAME_LENGTH];
 
 } BelaInitSettings;
 
