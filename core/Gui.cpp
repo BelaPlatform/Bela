@@ -38,8 +38,39 @@ int Gui::setup(unsigned int port, std::string address)
 		}
 	);
 	return 0;
-}	
+}
 
+int Gui::setup(unsigned int port, std::string address, std::string projectName)
+{
+	_port = port;
+	_addressData = address+"_data";
+	_addressControl = address+"_control";
+	_projectName = std::wstring(projectName.begin(), projectName.end());
+
+	// Set up the websocket server
+	ws_server = std::unique_ptr<WSServer>(new WSServer());
+	ws_server->setup(port);
+	ws_server->addAddress(_addressData, nullptr, nullptr, nullptr, true);
+
+	ws_server->addAddress(_addressControl,
+		// onData()
+		[this](std::string address, void* buf, int size)
+		{
+			ws_onData((const char*) buf);
+		},
+		// onConnect()
+		[this](std::string address)
+		{
+			ws_connect();
+		},
+		// onDisconnect()
+		[this](std::string address)
+		{
+			ws_disconnect();
+		}
+	);
+	return 0;
+}
 /*
  * Called when websocket is connected.
  * Communication is started here with the server sending a 'connection' JSON object
@@ -51,6 +82,8 @@ void Gui::ws_connect()
 	// send connection JSON 
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"connection");
+	if(!_projectName.empty())
+		root[L"projectName"] = new JSONValue(_projectName);
 
 	// Parse whatever needs to be parsed on connection
 
@@ -90,7 +123,6 @@ void Gui::ws_onData(const char* data)
 		std::wstring event = root[L"event"]->AsString();
 		printf("%ls\n", event.c_str());
 		if (event.compare(L"connection-reply") == 0){
-			printf("Connection replied\n");
 			wsIsConnected = true;
 			if(sliders.size() != 0)
 			{

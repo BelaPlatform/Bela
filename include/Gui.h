@@ -56,6 +56,7 @@ class Gui
 		unsigned int _port;
 		std::string _addressControl;
 		std::string _addressData;
+		std::wstring _projectName;
 
 	public:
 		Gui();
@@ -63,6 +64,7 @@ class Gui
 		~Gui();
 
 		int setup(unsigned int port, std::string address);
+		int setup(unsigned int port, std::string address, std::string projectName);
 		void cleanup();
 		
 		bool isConnected()
