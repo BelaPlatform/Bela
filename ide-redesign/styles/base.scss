@@ -1,0 +1,128 @@
+$blue: #0000ff;
+$upper-bg: #eeeeee;
+
+$white: #ffffff;
+
+// Base Material palette teal:
+$teal-base: #009587;
+
+// Main Bela color:
+$teal-main: #00bea4; //rgb(0,190,164)
+
+// Increasingly brighter - for rollovers:
+$teal-01: #1ce8b5; //rgb(28,232,81)
+$teal-02: #63ffd9;
+$teal-03: #a6ffea;
+
+$grey-light: #f1f1f1;
+$grey-mid: #bdbdbd;
+
+$grey-tabs: #c9c9c9;
+
+$grey-editorbg: #eeeeee;
+
+$grey-toolbar: #bcbcbc;
+
+$amber-accent: #f26d21;
+
+@import 'reset';
+@import 'fonts';
+
+body {
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
+img {
+	padding-left: 40px;
+}
+
+/* Whole window container */
+.container {
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	background: $upper-bg;
+	overflow: hidden;
+}
+
+*:focus {
+	outline: none;
+}
+
+/* Container for upper elements - editor and tabs */
+
+.upper {
+	height: 75%;
+	z-index: 96;
+	position: relative;
+}
+
+/* Editor window */
+.editor {
+	position: absolute;
+	top: 0;
+	left: 0;
+	float: left;
+	background: #fff;
+	height: 100%;
+	width: 100%;
+	overflow: auto;
+	z-index: 97;
+}
+
+/* CONTAINER FOR LOWER ELEMENTS */
+
+
+.activeBar {
+	cursor: ns-resize;
+	background-color: #0000ff;
+}
+.inactiveBar {
+	background-color: #0000ff;
+}
+.dragging {
+	background-color: #000;
+}
+
+/* console */
+.console {
+	background: white;
+	width: 100%;
+	display: block;
+	height: 100%;
+}
+
+hr {
+	border: 0;
+  margin-bottom: -22px;
+  opacity: 0.1;
+}
+
+.spacer {
+  display: block;
+  padding-top: 10px;
+}
+
+@import 'accordion-menu';
+@import 'buttons';
+@import 'console';
+@import 'dropdown';
+@import 'dropdown-mini';
+@import 'example-list';
+@import 'file-list';
+@import 'git';
+@import 'icons';
+@import 'lower';
+@import 'number-selector';
+@import 'pins';
+@import 'scrollbar';
+@import 'tabs';
+@import 'tab-content';
+@import 'tab-menu';
+@import 'text-input';
+@import 'upper';

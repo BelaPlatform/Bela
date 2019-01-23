@@ -386,6 +386,8 @@ module.exports = {};
 var Model = require('./Models/Model');
 var popup = require('./popup');
 
+var devMode = true;
+
 // set up models
 var models = {};
 models.project = new Model();
@@ -588,7 +590,7 @@ documentationView.on('add-link', function (link, type) {
 });
 
 // git view
-var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);
+var gitView = new (require('./Views/GitView'))('git-manager', [models.git]);
 gitView.on('git-event', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
 	data.timestamp = performance.now();
@@ -825,23 +827,39 @@ models.project.on('change', function (data, changedKeys) {
 
 	var projectName = data.exampleName ? data.exampleName + ' (example)' : data.currentProject;
 
-	// set the browser tab title
-	$('title').html((data.fileName ? data.fileName + ', ' : '') + projectName);
+	if (devMode) {
+		// set the browser tab title
+		$('[data-title]').html((data.fileName ? data.fileName + ', ' : '') + projectName);
+		// set the top-line stuff
+		$('[data-current-project]').html(projectName ? projectName : '');
+		$('[data-current-file]').html(data.fileName ? data.fileName : '');
 
-	// set the top-line stuff
-	$('#top-open-project').html(projectName ? 'Project: ' + projectName : '');
-	$('#top-open-file').html(data.fileName ? 'File: ' + data.fileName : '');
+		// status changes reflected here
+		models.status.on('change', function (data, changedKeys) {
+			if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
+				if (data.running) $('[data-current-status]').html('Running: ' + data.runProject);else if (data.building) $('[data-current-status]').html('Building: ' + data.buildProject);else $('[data-current-status]').html('');
+			}
+		});
+	} else {
+		// set the browser tab title
+		$('title').html((data.fileName ? data.fileName + ', ' : '') + projectName);
+		// set the top-line stuff
+		$('#top-open-project').html(projectName ? 'Project: ' + projectName : '');
+		$('#top-open-file').html(data.fileName ? 'File: ' + data.fileName : '');
+
+		// status changes reflected here
+		models.status.on('change', function (data, changedKeys) {
+			if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
+				if (data.running) $('#top-bela-status').html('Running: ' + data.runProject);else if (data.building) $('#top-bela-status').html('Building: ' + data.buildProject);else $('#top-bela-status').html('');
+			}
+		});
+	}
 
 	if (data.exampleName) {
 		$('#top-example-docs').css('visibility', 'visible');
 		$('#top-example-docs-link').prop('href', 'documentation/' + data.exampleName + '_2render_8cpp-example.html');
 	} else {
 		$('#top-example-docs').css('visibility', 'hidden');
-	}
-});
-models.status.on('change', function (data, changedKeys) {
-	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
-		if (data.running) $('#top-bela-status').html('Running: ' + data.runProject);else if (data.building) $('#top-bela-status').html('Building: ' + data.buildProject);else $('#top-bela-status').html('');
 	}
 });
 
@@ -1172,8 +1190,10 @@ var ConsoleView = function (_View) {
 			_console.warn(warning, id);
 		});
 
-		_this.form = document.getElementById('beaglert-consoleForm');
-		_this.input = document.getElementById('beaglert-consoleInput');
+		// this.form = document.getElementById('beaglert-consoleForm');
+		// this.input = document.getElementById('beaglert-consoleInput');
+		_this.form = $('[data-console-form]').get(0); // due to the new js attaching method we have to tell vanilla js which jquery object we're selecting - rather than use the first object in the array we're going to use the jquery get(0) method
+		_this.input = $('[data-console-input]').get(0);
 
 		// console command line input events
 		_this.history = [];
@@ -1191,23 +1211,23 @@ var ConsoleView = function (_View) {
 			_this.input.value = '';
 		});
 
-		$('#beaglert-consoleInput-pre').on('click', function () {
+		$('[data-console-input-pre]').on('click', function () {
 			return $(_this.input).trigger('focus');
 		});
 
-		$('#beaglert-consoleInput-pre, #beaglert-consoleInput').on('mouseover', function () {
-			$('#beaglert-consoleInput-pre').css('opacity', 1);
+		$('[data-console-input], [data-console-input-pre]').on('mouseover', function () {
+			$('[data-console-input-pre]').css('opacity', 1);
 		}).on('mouseout', function () {
-			if (!_this.inputFocused) $('#beaglert-consoleInput-pre').css('opacity', 0.2);
+			if (!_this.inputFocused) $('[data-console-input-pre]').css('opacity', 0.2);
 		});
 
 		_this.input.addEventListener('focus', function () {
 			_this.inputFocused = true;
-			$('#beaglert-consoleInput-pre').css('opacity', 1); //.html(shellCWD);
+			$('[data-console-input-pre]').css('opacity', 1); //.html(shellCWD);
 		});
 		_this.input.addEventListener('blur', function () {
 			_this.inputFocused = false;
-			$('#beaglert-consoleInput-pre').css('opacity', 0.2); //.html('>');
+			$('[data-console-input-pre]').css('opacity', 0.2); //.html('>');
 		});
 		window.addEventListener('keydown', function (e) {
 			if (_this.inputFocused) {
@@ -1245,10 +1265,12 @@ var ConsoleView = function (_View) {
 			}
 		});
 
-		$('#beaglert-console').on('click', function () {
+		// $('#beaglert-console').on('click', () => $(this.input).trigger('focus') );
+		// $('#beaglert-consoleWrapper').on('click', (e) => e.stopPropagation() );
+		$('[data-console]').on('click', function () {
 			return $(_this.input).trigger('focus');
 		});
-		$('#beaglert-consoleWrapper').on('click', function (e) {
+		$('[data-console-content-wrapper]').on('click', function (e) {
 			return e.stopPropagation();
 		});
 
@@ -1261,10 +1283,12 @@ var ConsoleView = function (_View) {
 		_this.on('shell-cwd', function (cwd) {
 			//console.log('cwd', cwd);
 			shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
-			$('#beaglert-consoleInput-pre').html(shellCWD);
+			// $('#beaglert-consoleInput-pre').html(shellCWD);
+			$('[data-console-input-pre]').html(shellCWD);
 		});
+		// this.on('shell-tabcomplete', data => $('#beaglert-consoleInput').val(data) );
 		_this.on('shell-tabcomplete', function (data) {
-			return $('#beaglert-consoleInput').val(data);
+			return $('[data-console-input]').val(data);
 		});
 		return _this;
 	}
@@ -1303,7 +1327,7 @@ var ConsoleView = function (_View) {
 	}, {
 		key: 'connect',
 		value: function connect() {
-			$('#console-disconnect').remove();
+			$('[data-console-disconnet]').remove();
 			_console.unblock();
 		}
 	}, {
@@ -1863,7 +1887,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			// console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate');
 			_this.parser.parse(function () {
 				_this.getCurrentWord();
 			});
@@ -2052,7 +2076,7 @@ var EditorView = function (_View) {
 			/*var word = this.editor.session.getTextRange(this.editor.session.getAWordRange(pos.row, pos.column)).trim();
    var index = activeWords.indexOf(word);
    var id;
-   if (index !== -1) id = activeWordIDs[index]; 
+   if (index !== -1) id = activeWordIDs[index];
    //console.log(word, index);
    this.emit('goto-docs', index, word, id);*/
 
@@ -2064,7 +2088,7 @@ var EditorView = function (_View) {
 				return;
 			}
 
-			//console.log('clicked', token); 
+			//console.log('clicked', token);
 
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion = true;
@@ -2274,7 +2298,7 @@ var FileView = function (_View) {
 
 			this.listOfFiles = files;
 
-			var $files = $('#fileList');
+			var $files = $('[data-file-list]');
 			$files.empty();
 
 			if (!files.length) return;
@@ -2349,60 +2373,76 @@ var FileView = function (_View) {
 			});
 
 			//console.log(headers, sources, resources, directories);
-
 			if (headers.length) {
-				$('<li></li>').html('Headers:').appendTo($files);
-			}
-			for (var i = 0; i < headers.length; i++) {
-				$('<li></li>').addClass('sourceFile').html(headers[i].name + '<span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo($files).on('click', function (e) {
-					return _this5.openFile(e);
-				});
+				var header = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
+				var headerList = $('<ul></ul>').addClass('sub-file-list');
+				for (var i = 0; i < headers.length; i++) {
+					$('<li></li>').addClass('sourceFile').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				headerList.appendTo(header);
+				header.appendTo($files);
 			}
 
 			if (sources.length) {
-				$('<li></li>').html('Sources:').appendTo($files);
-			}
-			for (var _i = 0; _i < sources.length; _i++) {
-				$('<li></li>').addClass('sourceFile').html(sources[_i].name + '<span class="file-list-size">' + sources[_i].size + '</span>').data('file', sources[_i].name).appendTo($files).on('click', function (e) {
-					return _this5.openFile(e);
-				});
+				var source = $("<li></li>");
+				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
+				var sourceList = $('<ul></ul>').addClass('sub-file-list');
+				for (var _i = 0; _i < sources.length; _i++) {
+					$('<li></li>').addClass('sourceFile').html(sources[_i].name + ' <span class="file-list-size">' + sources[_i].size + '</span>').data('file', sources[_i].name).appendTo(sourceList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				sourceList.appendTo(source);
+				source.appendTo($files);
 			}
 
 			if (resources.length) {
-				$('<li></li>').html('Resources:').appendTo($files);
-			}
-			for (var _i2 = 0; _i2 < resources.length; _i2++) {
-				$('<li></li>').addClass('sourceFile').html(resources[_i2].name + '<span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo($files).on('click', function (e) {
-					return _this5.openFile(e);
-				});
+				var resource = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
+				var resourceList = $('<ul></ul>').addClass('sub-file-list');
+				for (var _i2 = 0; _i2 < resources.length; _i2++) {
+					$('<li></li>').addClass('sourceFile').html(resources[_i2].name + ' <span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo(resourceList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				resourceList.appendTo(directory);
+				resource.appendTo($files);
 			}
 
 			if (directories.length) {
-				$('<li></li>').html('Directories:').appendTo($files);
-			}
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+				var directory = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Directories:').appendTo($files);
+				var directoryList = $('<ul></ul>').addClass('sub-file-list');
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
 
-			try {
-				for (var _iterator2 = directories[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var dir = _step2.value;
-
-					$files.append(this.subDirs(dir));
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
 				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
+					for (var _iterator2 = directories[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var dir = _step2.value;
+
+						directoryList.append(this.subDirs(dir));
 					}
+				} catch (err) {
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
 				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
+					try {
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
+						}
+					} finally {
+						if (_didIteratorError2) {
+							throw _iteratorError2;
+						}
 					}
 				}
+
+				directoryList.append(directory);
+				directory.appendTo($files);
 			}
 
 			if (data && data.fileName) this._fileName(data.fileName);
@@ -2424,7 +2464,7 @@ var FileView = function (_View) {
 
 			if (data && data.currentProject) {
 				// set download link
-				$('#downloadFileLink').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
+				$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
 			}
 		}
 	}, {
@@ -2632,8 +2672,8 @@ var GitView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, (GitView.__proto__ || Object.getPrototypeOf(GitView)).call(this, className, models, settings));
 
-		_this.$form = $('#gitForm');
-		_this.$input = $('#gitInput');
+		_this.$form = $('[data-git-form]');
+		_this.$input = $('[data-git-input]');
 
 		// git input events
 		_this.$form.on('submit', function (e) {
@@ -2745,11 +2785,11 @@ var GitView = function (_View) {
 		key: '_repoExists',
 		value: function _repoExists(exists) {
 			if (exists) {
-				$('#repo').css('display', 'block');
-				$('#noRepo').css('display', 'none');
+				$('[data-git-repo]').css('display', 'block');
+				$('[data-git-no-repo]').css('display', 'none');
 			} else {
-				$('#repo').css('display', 'none');
-				$('#noRepo').css('display', 'block');
+				$('[data-git-repo]').css('display', 'none');
+				$('[data-git-no-repo]').css('display', 'block');
 			}
 		}
 	}, {
@@ -3000,7 +3040,8 @@ var ProjectView = function (_View) {
 		value: function _exampleList(examplesDir) {
 			var _this6 = this;
 
-			var $examples = $('#examples');
+			// var $examples = $('#examples');
+			var $examples = $('[data-examples]');
 			$examples.empty();
 
 			if (!examplesDir.length) return;
@@ -3013,7 +3054,11 @@ var ProjectView = function (_View) {
 				var _loop = function _loop() {
 					var item = _step.value;
 
-					var ul = $('<ul></ul>').html(item.name + ':');
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+					var parentUl = $('<ul></ul>');
+					var parentLi = $('<li></li>');
+					var childUl = $('<ul></ul>').addClass('example-list');
+					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
 
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
@@ -3024,7 +3069,8 @@ var ProjectView = function (_View) {
 							var child = _step2.value;
 
 							if (child && child.length && child[0] === '.') return 'continue';
-							$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).attr('id', item.name + '/' + child).on('click', function (e) {
+							var childLi = $('<li></li>');
+							childLi.html(child).attr('data-example-link', item.name + '/' + child).on('click', function (e) {
 
 								if (_this6.exampleChanged) {
 									_this6.exampleChanged = false;
@@ -3048,6 +3094,7 @@ var ProjectView = function (_View) {
 								$('.selectedExample').removeClass('selectedExample');
 								$(e.target).addClass('selectedExample');
 							});
+							childLi.appendTo(childUl);
 						};
 
 						for (var _iterator2 = item.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
@@ -3055,6 +3102,8 @@ var ProjectView = function (_View) {
 
 							if (_ret2 === 'continue') continue;
 						}
+						// per section
+						// item.name -> parentDiv $examples
 					} catch (err) {
 						_didIteratorError2 = true;
 						_iteratorError2 = err;
@@ -3070,12 +3119,19 @@ var ProjectView = function (_View) {
 						}
 					}
 
-					ul.appendTo($examples);
+					parentButton.appendTo(parentLi);
+					// per item in section
+					// childLi -> childUl -> parentDiv -> $examples
+					childUl.appendTo(childDiv);
+					childDiv.appendTo(parentLi);
+					parentLi.appendTo(parentUl);
+					parentLi.appendTo($examples);
 				};
 
 				for (var _iterator = examplesDir[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					_loop();
 				}
+				// we need to reload the accordion script as this panel is emitted after pageload
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -3090,6 +3146,12 @@ var ProjectView = function (_View) {
 					}
 				}
 			}
+
+			$('[data-script-load]').each(function () {
+				var script = $(this);
+				$(this).remove();
+				script.appendTo($('head'));
+			});
 		}
 	}, {
 		key: '_boardString',
@@ -3679,36 +3741,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
-// private variables
-var _tabsOpen = false;
-
 var TabView = function (_View) {
 	_inherits(TabView, _View);
 
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs
+		// golden layout
 		var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
 
-		$('#flexit').on('click', function () {
-			if (_tabsOpen) {
-				_this.closeTabs();
-			} else {
-				_this.openTabs();
-			}
-		});
-
-		$('.tab > label').on('click', function (e) {
-			if (!_tabsOpen) {
-				if ($(e.currentTarget).prop('id') === 'tab-0' && $('[type=radio]:checked ~ label').prop('id') === 'tab-0') $('#file-explorer').parent().trigger('click');
-
-				_this.openTabs();
-				e.stopPropagation();
-			}
-		});
-
-		// golden layout
 		var layout = new GoldenLayout({
 			settings: {
 				hasHeaders: false,
@@ -3752,10 +3793,10 @@ var TabView = function (_View) {
 			}]
 		});
 		layout.registerComponent('Editor', function (container, componentState) {
-			container.getElement().append($('#innerContent'));
+			container.getElement().append($('[data-layout-editor]'));
 		});
 		layout.registerComponent('Console', function (container, componentState) {
-			container.getElement().append($('#beaglert-console'));
+			container.getElement().append($('[data-layout-console]'));
 		});
 
 		layout.init();
@@ -3766,64 +3807,43 @@ var TabView = function (_View) {
 			return _this.emit('change');
 		});
 
-		$(window).on('resize', function () {
-			if (_tabsOpen) {
-				_this.openTabs();
-			} else {
-				_this.closeTabs();
-			}
-		});
-
-		_this.on('open-tab', function (id) {
-			return $('#' + id).siblings('label').trigger('click');
-		});
-		_this.on('toggle', function () {
-			if (_tabsOpen) _this.closeTabs();else _this.openTabs();
-		});
 		_this.on('boardString', _this._boardString);
 
 		return _this;
 	}
 
+	// openTabs(){
+	// 	$('#editor').css('right', '500px');
+	// 	$('#top-line').css('margin-right', '500px');
+	// 	$('#right').css('left', window.innerWidth - 500 + 'px');
+	// 	_tabsOpen = true;
+	// 	this.emit('change');
+	// 	$('#tab-0').addClass('open');
+	//
+	// 	// fix pd patch
+	// 	$('#pd-svg-parent').css({
+	// 		'max-width'	: $('#editor').width()+'px',
+	// 		'max-height': $('#editor').height()+'px'
+	// 	});
+	// }
+	//
+	// closeTabs(){
+	// 	$('#editor').css('right', '60px');
+	// 	$('#top-line').css('margin-right', '60px');
+	// 	$('#right').css('left', window.innerWidth - 60 + 'px');
+	// 	_tabsOpen = false;
+	// 	this.emit('change');
+	// 	$('#tab-0').removeClass('open');
+	//
+	// 	// fix pd patch
+	// 	$('#pd-svg-parent').css({
+	// 		'max-width'	: $('#editor').width()+'px',
+	// 		'max-height': $('#editor').height()+'px'
+	// 	});
+	//
+	// }
+
 	_createClass(TabView, [{
-		key: 'openTabs',
-		value: function openTabs() {
-			$('#editor').css('right', '500px');
-			$('#top-line').css('margin-right', '500px');
-			$('#right').css('left', window.innerWidth - 500 + 'px');
-			_tabsOpen = true;
-			this.emit('change');
-			$('#tab-0').addClass('open');
-
-			// fix pd patch
-			$('#pd-svg-parent').css({
-				'max-width': $('#editor').width() + 'px',
-				'max-height': $('#editor').height() + 'px'
-			});
-		}
-	}, {
-		key: 'closeTabs',
-		value: function closeTabs() {
-			$('#editor').css('right', '60px');
-			$('#top-line').css('margin-right', '60px');
-			$('#right').css('left', window.innerWidth - 60 + 'px');
-			_tabsOpen = false;
-			this.emit('change');
-			$('#tab-0').removeClass('open');
-
-			// fix pd patch
-			$('#pd-svg-parent').css({
-				'max-width': $('#editor').width() + 'px',
-				'max-height': $('#editor').height() + 'px'
-			});
-		}
-	}, {
-		key: 'getOpenTab',
-		value: function getOpenTab() {
-			if (!_tabsOpen) return false;
-			return $('[type=radio]:checked ~ label').prop('for');
-		}
-	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
 			var boardString;
@@ -4248,10 +4268,12 @@ var Console = function (_EventEmitter) {
 	function Console() {
 		_classCallCheck(this, Console);
 
+		// this.$element = $('#beaglert-consoleWrapper');
+		// this.parent = document.getElementById('beaglert-console');
 		var _this = _possibleConstructorReturn(this, (Console.__proto__ || Object.getPrototypeOf(Console)).call(this));
 
-		_this.$element = $('#beaglert-consoleWrapper');
-		_this.parent = document.getElementById('beaglert-console');
+		_this.$element = $('[data-console-contents-wrapper]');
+		_this.parent = $('[data-console]');
 		return _this;
 	}
 
@@ -4327,7 +4349,7 @@ var Console = function (_EventEmitter) {
 			var msgs = text.split('\n');
 			for (var i = 0; i < msgs.length; i++) {
 				if (msgs[i] !== '') {
-					this.print(msgs[i], 'warning', id); /*, function(){ 
+					this.print(msgs[i], 'warning', id); /*, function(){
                                          var $el = $(this);
                                          $el.addClass('beaglert-console-collapsed');
                                          $el.on('transitionend', () => {
@@ -4485,10 +4507,10 @@ var Console = function (_EventEmitter) {
 		value: function clear(number, force) {
 			if (consoleDelete && !force) return;
 			if (number) {
-				$("#beaglert-consoleWrapper > div:lt(" + parseInt(number) + ")").remove();
+				$("[data-console-contents-wrapper] > div:lt(" + parseInt(number) + ")").remove();
 				numElements -= parseInt(number);
 			} else {
-				$('#beaglert-consoleWrapper > div').remove();
+				$('[data-console-contents-wrapper] > div').remove();
 				numElements = 0;
 			}
 		}

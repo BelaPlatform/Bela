@@ -1,0 +1,16 @@
+div.file-status {
+  margin-left: 60px;
+  span.project, span.file {
+    display: inline-block;
+    padding-top:10px;
+    font-family: space_regular;
+    font-size: 16px;
+    color: $teal-main;
+    span.current {
+      font-family: poppins_regular;
+      color: rgba(0, 0, 0, 0.7);
+      padding-right: 20px;
+      font-size: 14px;
+    }	
+  }
+}

@@ -1,0 +1,47 @@
+.input-number-decrement,
+.input-number-increment {
+  border: 1px solid #ccc;
+  height: 25px;
+  user-select: none;
+}
+.input-number input[type="text"] {
+  height: 25px;
+  width: 50px;
+  padding: 0;
+  vertical-align: top;
+  text-align: center;
+  outline: none;
+  font-family: poppins_regular;
+  border-radius: 0;
+  &:disabled {
+    border-radius: 0;
+    width: 50px;
+  }
+}
+
+.input-number-decrement,
+.input-number-increment {
+  display: inline-block;
+  width: 25px;
+  max-height: 23px;
+  line-height: 25px;
+  background: $grey-light;
+  color: rgba(0, 0, 0, 0.8);
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+
+  &:active {
+    background: $teal-02;
+  }
+}
+
+.input-number-decrement {
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+}
+
+.input-number-increment {
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+}

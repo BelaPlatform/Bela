@@ -4,6 +4,8 @@ module.exports = {};
 var Model = require('./Models/Model');
 var popup = require('./popup');
 
+var devMode = true;
+
 // set up models
 var models = {};
 models.project = new Model();
@@ -179,7 +181,7 @@ documentationView.on('add-link', (link, type) => {
 });
 
 // git view
-var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);
+var gitView = new (require('./Views/GitView'))('git-manager', [models.git]);
 gitView.on('git-event', data => {
 	data.currentProject = models.project.getKey('currentProject');
 	data.timestamp = performance.now();
@@ -391,12 +393,45 @@ models.project.on('change', (data, changedKeys) => {
 
 	var projectName = data.exampleName ? data.exampleName+' (example)' : data.currentProject;
 
-	// set the browser tab title
-	$('title').html((data.fileName ? data.fileName+', ' : '')+projectName);
 
-	// set the top-line stuff
-	$('#top-open-project').html(projectName ? 'Project: '+projectName : '');
-	$('#top-open-file').html(data.fileName ? 'File: '+data.fileName : '');
+
+  if (devMode) {
+    // set the browser tab title
+    $('[data-title]').html((data.fileName ? data.fileName+', ' : '') + projectName);
+    // set the top-line stuff
+    $('[data-current-project]').html(projectName ? projectName : '');
+  	$('[data-current-file]').html(data.fileName ?  data.fileName : '');
+
+    // status changes reflected here
+    models.status.on('change', (data, changedKeys) => {
+    	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
+    		if (data.running)
+    			$('[data-current-status]').html('Running: '+data.runProject);
+    		else if (data.building)
+    			$('[data-current-status]').html('Building: '+data.buildProject);
+    		else
+    			$('[data-current-status]').html('');
+    	}
+    });
+  } else {
+    // set the browser tab title
+    $('title').html((data.fileName ? data.fileName+', ' : '') + projectName);
+    // set the top-line stuff
+    $('#top-open-project').html(projectName ? 'Project: '+ projectName : '');
+    $('#top-open-file').html(data.fileName ? 'File: '+ data.fileName : '');
+
+    // status changes reflected here
+    models.status.on('change', (data, changedKeys) => {
+    	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
+    		if (data.running)
+    			$('#top-bela-status').html('Running: '+data.runProject);
+    		else if (data.building)
+    			$('#top-bela-status').html('Building: '+data.buildProject);
+    		else
+    			$('#top-bela-status').html('');
+    	}
+    });
+  }
 
 	if (data.exampleName){
 		$('#top-example-docs').css('visibility', 'visible');
@@ -406,17 +441,6 @@ models.project.on('change', (data, changedKeys) => {
 	}
 
 });
-models.status.on('change', (data, changedKeys) => {
-	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-		if (data.running)
-			$('#top-bela-status').html('Running: '+data.runProject);
-		else if (data.building)
-			$('#top-bela-status').html('Building: '+data.buildProject);
-		else
-			$('#top-bela-status').html('');
-	}
-});
-
 
 // history
 {

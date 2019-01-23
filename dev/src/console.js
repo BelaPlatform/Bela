@@ -11,28 +11,30 @@ class Console extends EventEmitter {
 
 	constructor(){
 		super();
-		this.$element = $('#beaglert-consoleWrapper');
-		this.parent = document.getElementById('beaglert-console');
+    // this.$element = $('#beaglert-consoleWrapper');
+		// this.parent = document.getElementById('beaglert-console');
+    this.$element = $('[data-console-contents-wrapper]');
+		this.parent = $('[data-console]');
 	}
-	
+
 	block(){
 		enabled = false;
 	}
 	unblock(){
 		enabled = true;
 	}
-	
+
 	print(text, className, id, onClick){
 		if (!enabled) return;
-		
+
 		// this is a faster way maybe?
 		//var str = '<div '+(id ? 'id="'+id+'" ' : '') +'class="beaglert-console-'+className+'"><span>'+text+'</span></div>';
 		//this.$element.append(str);
-		
+
 		var el = $('<div></div>').addClass('beaglert-console-'+className).appendTo(this.$element);
 		if (id) el.prop('id', id);
 		$('<span></span>').html(text).appendTo(el);
-		
+
 		if (numElements++ > maxElements) this.clear(numElements/4);
 		if (onClick) el.on('click', onClick);
 		return el;
@@ -40,9 +42,9 @@ class Console extends EventEmitter {
 
 	// log an unhighlighted message to the console
 	log(text, css){
-	
+
 		if (suspended) return;
-		
+
 		if (!consoleDelete && numElements > maxElements){
 			//console.log('cleared & rejected', numElements, text.split('\n').length);
 			this.clear(numElements - maxElements/2);
@@ -67,14 +69,14 @@ class Console extends EventEmitter {
 	}
 	// log a warning message to the console
 	warn(text, id){
-	
+
 		//this.checkScroll();
 		scrollEnabled = true;
 
 		var msgs = text.split('\n');
 		for (let i=0;  i<msgs.length; i++){
 			if (msgs[i] !== ''){
-				this.print(msgs[i], 'warning', id);/*, function(){ 
+				this.print(msgs[i], 'warning', id);/*, function(){
 					var $el = $(this);
 					$el.addClass('beaglert-console-collapsed');
 					$el.on('transitionend', () => {
@@ -89,22 +91,22 @@ class Console extends EventEmitter {
 		}
 		this.scroll();
 	}
-	
+
 	newErrors(errors){
-	
+
 		//this.checkScroll();
 		scrollEnabled = true;
-		
+
 		$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
-		
+
 		for (let err of errors){
-		
+
 			// create the element and add it to the error object
 			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
-			
+
 			// create the link and add it to the element
 			var span = $('<span></span>').html(err.text.split('\n').join(' ')+', line: '+(err.row+1)).appendTo(div);
-			
+
 			// add a button to copy the contents to the clipboard
 			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
 			var clipboard = new Clipboard(copyButton[0], {
@@ -112,37 +114,37 @@ class Console extends EventEmitter {
 					return $(trigger).siblings('span')[0];
 				}
 			});
-			
+
 			div.appendTo(this.$element);
-			
+
 			if (err.currentFile){
 				span.on('click', () => this.emit('focus', {line: err.row+1, column: err.column-1}) );
 			} else {
 				span.on('click', () => this.emit('open-file', err.file, {line: err.row+1, column: err.column-1}) );
 			}
-			
+
 		}
 		this.scroll();
 	}
-	
+
 	// log a positive notification to the console
 	// if persist is not true, the notification will be removed quickly
 	// otherwise it will just fade
 	notify(notice, id){
-	
+
 		if (!enabled) return;
-		
+
 		//this.checkScroll();
 		scrollEnabled = true;
-		
+
 		$('#'+id).remove();
 		var el = this.print(notice, 'notify', id);
-		
+
 		this.scroll();
-		
+
 		return el;
 	}
-	
+
 	fulfill(message, id, persist){
 		if (!enabled) return;
 		var el = document.getElementById(id);
@@ -161,7 +163,7 @@ class Console extends EventEmitter {
 			});
 		}
 	}
-	
+
 	reject(message, id, persist){
 		var el = document.getElementById(id);
 		//if (!el) el = this.notify(message, id);
@@ -172,19 +174,19 @@ class Console extends EventEmitter {
 		setTimeout( () => $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded'), 500);
 		$el.on('click', () => $el.addClass('beaglert-console-collapsed').on('transitionend', () => $el.remove() ));
 	}
-	
+
 	// clear the console
 	clear(number, force){
 		if (consoleDelete && !force) return;
 		if (number){
-			$("#beaglert-consoleWrapper > div:lt("+parseInt(number)+")").remove();
+			$("[data-console-contents-wrapper] > div:lt("+parseInt(number)+")").remove();
 			numElements -= parseInt(number);
 		} else {
-			$('#beaglert-consoleWrapper > div').remove();
+			$('[data-console-contents-wrapper] > div').remove();
 			numElements = 0;
 		}
 	}
-	
+
 	checkScroll(){
 		if (this.parent.scrollHeight-this.parent.scrollTop === this.parent.clientHeight){
 			scrollEnabled = true;
@@ -192,7 +194,7 @@ class Console extends EventEmitter {
 			scrollEnabled = false;
 		}
 	}
-	
+
 	// force the console to scroll to the bottom
 	scroll(){
 		if (scrollEnabled){
@@ -200,7 +202,7 @@ class Console extends EventEmitter {
 			setTimeout((() => this.parent.scrollTop = this.parent.scrollHeight), 0);
 		}
 	}
-	
+
 	setConsoleDelete(to){
 		consoleDelete = to;
 	}

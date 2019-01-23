@@ -152,17 +152,23 @@ class ProjectView extends View {
 	}
 	_exampleList(examplesDir){
 
-		var $examples = $('#examples');
+    // var $examples = $('#examples');
+		var $examples = $('[data-examples]');
 		$examples.empty();
 
 		if (!examplesDir.length) return;
 
 		for (let item of examplesDir){
-			let ul = $('<ul></ul>').html(item.name+':')
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name+':');
+			let parentUl = $('<ul></ul>');
+      let parentLi = $('<li></li>');
+      let childUl = $('<ul></ul>').addClass('example-list');
+      let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
 
 			for (let child of item.children){
 				if (child && child.length && child[0] === '.') continue;
-				$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).attr('id', item.name+'/'+child)
+        let childLi = $('<li></li>');
+				childLi.html(child).attr('data-example-link', item.name + '/' + child)
 					.on('click', (e) => {
 
 						if (this.exampleChanged){
@@ -170,7 +176,7 @@ class ProjectView extends View {
 							popup.exampleChanged( () => {
 								this.emit('message', 'project-event', {
 									func: 'openExample',
-									currentProject: item.name+'/'+child
+									currentProject: item.name + '/' + child
 								});
 								$('.selectedExample').removeClass('selectedExample');
 								$(e.target).addClass('selectedExample');
@@ -178,19 +184,31 @@ class ProjectView extends View {
 							return;
 						}
 
-
 						this.emit('message', 'project-event', {
 							func: 'openExample',
-							currentProject: item.name+'/'+child
+							currentProject: item.name + '/' + child
 						});
 						$('.selectedExample').removeClass('selectedExample');
 						$(e.target).addClass('selectedExample');
-
 					});
+          childLi.appendTo(childUl);
 			}
-			ul.appendTo($examples);
+      // per section
+      // item.name -> parentDiv $examples
+      parentButton.appendTo(parentLi);
+      // per item in section
+      // childLi -> childUl -> parentDiv -> $examples
+      childUl.appendTo(childDiv);
+      childDiv.appendTo(parentLi);
+      parentLi.appendTo(parentUl);
+      parentLi.appendTo($examples);
 		}
-
+    // we need to reload the accordion script as this panel is emitted after pageload
+    $('[data-script-load]').each(function(){
+      var script = $(this);
+      $(this).remove();
+      script.appendTo($('head'));
+    });
 	}
 	_boardString(data){
 		var boardString;
@@ -254,7 +272,6 @@ class ProjectView extends View {
 		}
 		return ul;
 	}
-
 }
 
 module.exports = ProjectView;

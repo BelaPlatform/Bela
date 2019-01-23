@@ -1,0 +1,43 @@
+button {
+	border-top: rgba(0, 190, 164, 0.4);
+	border-left: rgba(0, 190, 164, 0.4);
+	border-right: rgba(0, 190, 164, 0.4);
+	border-bottom: 2px solid rgba(0, 190, 164, 1.0);
+	background-color: rgba(0, 190, 164, 0.4);
+	padding: 6px 12px;
+	font-family: poppins_light;
+	border-radius: 2px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: rgba(0, 190, 164, 0.7	);
+		color: rgba(255,255,255,0.9);
+		transition: 0.1s ease-in-out;
+		
+	}
+	&.create-project {
+		font-size: 14px;
+		margin-top: -1px;
+		padding-right: 20px;
+        &:hover {
+        	color: $white;
+        }
+		&:before {
+			content: '+'; /* Unicode character for "plus" sign (+) */
+			font-family: space_bold;
+			font-size: 36px;
+			line-height: 20px;
+			vertical-align: middle;
+	        color: rgba(0, 0, 0, 0.4);
+	        margin-right: 5px;
+		}
+	}
+	&:disabled {
+		background-color: rgba(0, 0, 0, 0.1); // Background
+		color: rgba(0, 0, 0,0.9); // Text colour
+		border-top: rgba(0, 0, 0, 0.1);
+		border-left: rgba(0, 0, 0, 0.1);
+		border-right: rgba(0, 0, 0, 0.1);
+		border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+	}
+}

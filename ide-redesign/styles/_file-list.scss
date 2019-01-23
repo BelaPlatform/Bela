@@ -1,0 +1,48 @@
+ul {
+	font-family: inconsolata;
+}
+
+.file-list {
+  width: calc(100% - 10px);
+  li {
+    font-family: poppins_regular;
+    & > p {
+      border-bottom: 1px solid $grey-mid;
+      margin: 0;
+      padding: 3px 0 3px 10px;
+      width: calc(100% - 10px);
+    }
+    &:first-child > p {
+      margin: -5px 0 0 0;
+    }
+    .file-list-size {
+      font-style: italic;
+    }
+  }
+}
+
+.sub-file-list > li {
+  color: rgba(0, 0, 0, 0.8);
+	font-size: 14px;
+	padding: 4px 12px;
+	&:hover {
+		background: rgba(255, 255, 0, 0.2);
+	}
+	&:before {
+    content: '-'; /* Unicode character for "minus" sign (-) */
+    font-family: poppins_light;
+		margin-right: 5px;
+		size: 12px;
+	}
+}
+
+.example-list > li {
+	padding: 4px 10px;
+	&:before {
+    content: '+';
+		margin-right: 10px;
+	}
+	&:hover {
+		background: rgba(255, 255, 0, 0.2);
+	}
+}

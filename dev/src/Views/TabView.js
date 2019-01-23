@@ -1,32 +1,10 @@
 var View = require('./View');
 
-// private variables
-var _tabsOpen = false;
-
 class TabView extends View {
 
 	constructor(){
 
 		super('tab');
-
-		// open/close tabs
-		$('#flexit').on('click', () => {
-			if (_tabsOpen){
-				this.closeTabs();
-			} else {
-				this.openTabs();
-			}
-		});
-
-		$('.tab > label').on('click', (e) => {
-			if (!_tabsOpen){
-				if ($(e.currentTarget).prop('id') === 'tab-0' && $('[type=radio]:checked ~ label').prop('id') === 'tab-0')
-					$('#file-explorer').parent().trigger('click');
-
-				this.openTabs();
-				e.stopPropagation();
-			}
-		});
 
 		// golden layout
 		var layout = new GoldenLayout({
@@ -72,68 +50,50 @@ class TabView extends View {
 			}]
 		});
 		layout.registerComponent( 'Editor', function( container, componentState ){
-			container.getElement().append($('#innerContent'));
+			container.getElement().append($('[data-layout-editor]'));
 		});
 		layout.registerComponent( 'Console', function( container, componentState ){
-			container.getElement().append($('#beaglert-console'));
+			container.getElement().append($('[data-layout-console]'));
 		});
 
 		layout.init();
 		layout.on('initialised', () => this.emit('change') );
 		layout.on('stateChanged', () => this.emit('change') );
 
-		$(window).on('resize', () => {
-			if (_tabsOpen){
-				this.openTabs();
-			} else {
-				this.closeTabs();
-			}
-		});
-
-		this.on('open-tab', (id) => $('#'+id).siblings('label').trigger('click') );
-		this.on('toggle', () => {
-			if (_tabsOpen) this.closeTabs();
-			else this.openTabs();
-		});
 		this.on('boardString', this._boardString);
 
 	}
 
-	openTabs(){
-		$('#editor').css('right', '500px');
-		$('#top-line').css('margin-right', '500px');
-		$('#right').css('left', window.innerWidth - 500 + 'px');
-		_tabsOpen = true;
-		this.emit('change');
-		$('#tab-0').addClass('open');
-
-		// fix pd patch
-		$('#pd-svg-parent').css({
-			'max-width'	: $('#editor').width()+'px',
-			'max-height': $('#editor').height()+'px'
-		});
-	}
-
-	closeTabs(){
-		$('#editor').css('right', '60px');
-		$('#top-line').css('margin-right', '60px');
-		$('#right').css('left', window.innerWidth - 60 + 'px');
-		_tabsOpen = false;
-		this.emit('change');
-		$('#tab-0').removeClass('open');
-
-		// fix pd patch
-		$('#pd-svg-parent').css({
-			'max-width'	: $('#editor').width()+'px',
-			'max-height': $('#editor').height()+'px'
-		});
-
-	}
-
-	getOpenTab(){
-		if (!_tabsOpen) return false;
-		return $('[type=radio]:checked ~ label').prop('for');
-	}
+	// openTabs(){
+	// 	$('#editor').css('right', '500px');
+	// 	$('#top-line').css('margin-right', '500px');
+	// 	$('#right').css('left', window.innerWidth - 500 + 'px');
+	// 	_tabsOpen = true;
+	// 	this.emit('change');
+	// 	$('#tab-0').addClass('open');
+  //
+	// 	// fix pd patch
+	// 	$('#pd-svg-parent').css({
+	// 		'max-width'	: $('#editor').width()+'px',
+	// 		'max-height': $('#editor').height()+'px'
+	// 	});
+	// }
+  //
+	// closeTabs(){
+	// 	$('#editor').css('right', '60px');
+	// 	$('#top-line').css('margin-right', '60px');
+	// 	$('#right').css('left', window.innerWidth - 60 + 'px');
+	// 	_tabsOpen = false;
+	// 	this.emit('change');
+	// 	$('#tab-0').removeClass('open');
+  //
+	// 	// fix pd patch
+	// 	$('#pd-svg-parent').css({
+	// 		'max-width'	: $('#editor').width()+'px',
+	// 		'max-height': $('#editor').height()+'px'
+	// 	});
+  //
+	// }
 
 	_boardString(data){
 		var boardString;

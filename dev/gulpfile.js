@@ -1,6 +1,8 @@
 var gulp = require('gulp');
 var sftp = require('gulp-sftp');
 var cache = require('gulp-cached');
+var concat = require('gulp-concat');
+var autoprefixer = require('gulp-autoprefixer');
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 var livereload = require('gulp-livereload');
@@ -22,29 +24,40 @@ gulp.task('commit', ['browserify', 'scope-browserify']);
 
 gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
+gulp.task('styles', function() {
+  return gulp.src('../ide-redesign/styles/*.scss')
+    .pipe(sass({
+      'sourcemap=none': true
+    }))
+    .pipe(concat('style.css'))
+    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1'))
+    .pipe(gulp.dest('../IDE/public/css/'));
+});
+
 gulp.task('watch', ['upload'], function(){
 
 	livereload.listen();
-	
+
 	// when the node.js source files change, kill node, upload the files and restart node
 	gulp.watch(['../IDE/index.js', '../IDE/libs/**'], ['killnode', 'upload', 'restartnode']);
-	
+
 	// when the browser js changes, browserify it
 	gulp.watch(['./src/**'], ['browserify']);
-	
+
 	// when the scope browser js changes, browserify it
 	gulp.watch(['./scope-src/**'], ['scope-browserify']);
 
 	// when the sass changes, compile it and stick it in IDE/public
 	gulp.watch(['./sass/**'], ['sass']);
-	
+  gulp.watch('../ide-redesign/styles/*.scss', ['styles']);
+
 	// when the browser sources change, upload them without killing node
-	gulp.watch(['../IDE/public/**', 
-		'!../IDE/public/js/bundle.js.map', 
-		'!../IDE/public/scope/js/bundle.js.map', 
+	gulp.watch(['../IDE/public/**',
+		'!../IDE/public/js/bundle.js.map',
+		'!../IDE/public/scope/js/bundle.js.map',
 		'!../IDE/public/js/ace/**'
 	], ['upload-no-kill']);
-	
+
 });
 
 gulp.task('upload', ['killnode'], (cb) => rSync(cb, false) );
@@ -69,21 +82,21 @@ gulp.task('rebuild-nodemodules', ['upload-nodemodules'], (callback) => {
 	console.log('rebuilding node modules');
 
 	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+';', 'npm', 'rebuild']);
-	
+
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){
 		process.stdout.write(data);
 	});
-	
+
 	ssh.stderr.setEncoding('utf8');
 	ssh.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
 	});
-	
+
 	ssh.on('exit', function(){
 		callback();
 	});
-	
+
 });
 
 gulp.task('killnode', (callback) => {
@@ -135,13 +148,13 @@ gulp.task('sass', () => {
 
 function startNode(callback){
 	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+';', 'node', '/root/Bela/IDE/index.js']);
-	
+
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){
 		process.stdout.write(data);
 		if (data.indexOf('listening on port') !== -1) livereload.reload();
 	});
-	
+
 	ssh.stderr.setEncoding('utf8');
 	ssh.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
@@ -153,20 +166,20 @@ function startNode(callback){
 function rSync(callback, reload){
 
 	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '../IDE/', user+'@'+host+':'+remotePath]);
-	
+
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){
 		process.stdout.write(data);
 	});
-	
+
 	ssh.stderr.setEncoding('utf8');
 	ssh.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
 	});
-	
+
 	ssh.on('exit', function(){
 		callback();
 		if (reload) livereload.reload();
 	});
-	
+
 };
