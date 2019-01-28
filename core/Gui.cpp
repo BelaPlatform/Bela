@@ -139,7 +139,6 @@ void Gui::sendSlider(GuiSlider* slider){
 void Gui::addSlider(std::string name, float min, float max, float step, float value)
 {
 	GuiSlider newSlider;
-	printf("Sliders size: %d\n", sliders.size());
 	newSlider.index = sliders.size();
 	sliders.push_back(newSlider);
 	setSlider(newSlider.index, min, max, step, value, name);
