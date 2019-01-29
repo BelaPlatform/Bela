@@ -84,8 +84,8 @@ void dumpMidi()
 			gMidiPortNames[n].c_str(),
 			midi[n]->isInputEnabled() ? "x" : "_",
 			midi[n]->isOutputEnabled() ? "x" : "_",
-			n * 16 + 1,
-			n * 16 + 16
+			n * 16,
+			n * 16 + 15
 		);
 	}
 }
