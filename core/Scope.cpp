@@ -139,7 +139,8 @@ void Scope::log(const float* values){
 	postlog();
 
 }
-void Scope::log(float chn1, ...){
+
+void Scope::log(double chn1, ...){
 	
 	if (!prelog()) return;
     

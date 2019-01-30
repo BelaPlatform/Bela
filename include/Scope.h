@@ -47,7 +47,7 @@ class Scope{
          * number of channels of the object.
          * Omitted values will be set to 0.
          */
-        void log(float chn1, ...);
+        void log(double chn1, ...);
 
 		/**
 		 * \brief Logs a frame of data to the scope.
