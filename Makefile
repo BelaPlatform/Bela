@@ -282,9 +282,9 @@ DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
-BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 -lmathneon # additional libraries needed by extra code (libbelaextra.so)
+BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so)
 BELA_EXAMPLE_LIBS = -lsndfile # libraries commonly used by examples
-BELA_LDLIBS = $(BELA_EXAMPLE_LIBS) -lbela -lbelaextra $(DEFAULT_XENOMAI_LDFLAGS)
+BELA_LDLIBS = $(BELA_EXAMPLE_LIBS) -lbela -lbelaextra $(DEFAULT_XENOMAI_LDFLAGS) -lmathneon
 ifeq ($(PROJECT_TYPE),libpd)
 BELA_LDLIBS += $(LIBPD_LIBS)
 endif
