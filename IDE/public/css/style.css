@@ -194,15 +194,19 @@ button.accordion {
   /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */ }
 
 button {
-  border-top: rgba(0, 190, 164, 0.4);
+  border-bottom: 2px solid #00bea4;
   border-left: rgba(0, 190, 164, 0.4);
   border-right: rgba(0, 190, 164, 0.4);
-  border-bottom: 2px solid #00bea4;
+  border-top: rgba(0, 190, 164, 0.4);
   background-color: rgba(0, 190, 164, 0.4);
-  padding: 6px 12px;
-  font-family: poppins_light;
   border-radius: 2px;
-  cursor: pointer; }
+  cursor: pointer;
+  font-family: poppins_light;
+  padding: 6px 12px; }
+  button.active {
+    color: rgba(0, 0, 0, 0.4); }
+    button.active:hover {
+      color: rgba(0, 0, 0, 0.4); }
   button:hover {
     background-color: rgba(0, 190, 164, 0.7);
     color: rgba(255, 255, 255, 0.9);
@@ -215,21 +219,21 @@ button {
     button.create-project:hover {
       color: #ffffff; }
     button.create-project:before {
+      color: rgba(0, 0, 0, 0.4);
       content: '+';
       /* Unicode character for "plus" sign (+) */
       font-family: space_bold;
       font-size: 36px;
       line-height: 20px;
-      vertical-align: middle;
-      color: rgba(0, 0, 0, 0.4);
-      margin-right: 5px; }
+      margin-right: 5px;
+      vertical-align: middle; }
   button:disabled {
     background-color: rgba(0, 0, 0, 0.1);
-    color: rgba(0, 0, 0, 0.9);
-    border-top: rgba(0, 0, 0, 0.1);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
     border-left: rgba(0, 0, 0, 0.1);
     border-right: rgba(0, 0, 0, 0.1);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.2); }
+    border-top: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.9); }
 
 #beaglert-console {
   background-color: white;
@@ -1069,15 +1073,19 @@ input[type="text"] {
     background: #f1f1f1; }
 
 .toolbar {
-  background: #bcbcbc;
+  background: #c9c9c9;
+  bottom: 0;
   -webkit-box-shadow: 5px 5px #eee;
           box-shadow: 5px 5px #eee;
   display: block;
   font-family: inconsolata, monospace;
   font-size: 12px;
   height: 42px;
+  left: 0;
   padding-left: 40px;
-  width: 100%; }
+  position: absolute;
+  right: 0;
+  z-index: 100; }
   .toolbar > div {
     display: inline;
     float: left;

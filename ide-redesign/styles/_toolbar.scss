@@ -1,12 +1,16 @@
 .toolbar {
   background: $grey-toolbar;
+  bottom: 0;
   box-shadow: 5px 5px #eee;
   display: block;
   font-family: inconsolata, monospace;
   font-size: 12px;
   height: 42px;
+  left: 0;
   padding-left: 40px;
-  width: 100%;
+  position: absolute;
+  right: 0;
+  z-index: 100;
   > div {
     display: inline;
     float: left;

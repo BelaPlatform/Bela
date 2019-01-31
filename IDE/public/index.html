@@ -22,6 +22,32 @@
         <span class="status"><span class="status" data-current-status></span></span>
 			</div>
 
+      <div class="toolbar" id="toolbar" data-toolbar>
+        <div class="logo">
+          <img src="images/logo.png">
+        </div>
+
+        <div class="start-stop">
+          <span class="control-button-runstop start run" data="Run project" id="run" data-toolbar-run data-func="run"></span>
+          <span class="control-button-runstop start stop" data="Stop project" data-toolbar-stop id="stop" data-fun="stop"></span>
+        </div>
+        <div id="control-text-1" class="tool-text st-st" data-toolbar-controltext1></div>
+
+        <div class="toolbar-functions">
+					<!-- <span class="tab-button" data="New tab"></span> -->
+					<span class="scope-button" data="Launch scope"></span>
+					<!-- <span class="drag-button" data="Resize console"></span> -->
+					<!-- <span class="console-button" data="Clear console"></span> -->
+          <span id="control-text-2" class="tool-text st-st control-text" data-toolbar-controltext2></span>
+				</div>
+				<div class="tool-text other"></div>
+        <span id="control-text-3" class="control-text tool-text" data-toolbar-controltext3></span>
+				<!-- <div class="system-status-text bela">Bela: --%</div> -->
+				<div class="system-status-text cpu" data-toolbar-bela-cpu>CPU: --%</div>
+				<div class="system-status-text msw" data-toolbar-cpu-msw>MSW: --</div>
+				<div class="syntax-status" data-toolbar-status></div>
+			</div>
+
       <!-- media divs -->
 
       <div id="img-display-parent">
@@ -567,45 +593,17 @@
       </div>
     </div>
 
-    <div class="lower" data-lower>
-
-      <div class="toolbar" id="toolbar" data-toolbar>
-        <div class="logo">
-          <img src="images/logo.png">
+    <div id="beaglert-console" data-console>
+      <div id="beaglert-consoleWrapper" data-console-contents-wrapper></div>
+      <form id="beaglert-consoleForm" data-console-form>
+        <div id="beaglert-console-inputLeft">
+          <div id="beaglert-consoleInput-pre" data-console-input-pre></div>
         </div>
-
-        <div class="start-stop">
-          <span class="control-button-runstop start run" data="Run project" id="run" data-toolbar-run data-func="run"></span>
-          <span class="control-button-runstop start stop" data="Stop project" data-toolbar-stop id="stop" data-fun="stop"></span>
+        <div id="beaglert-console-inputRight">
+          <input id="beaglert-consoleInput" type="text" autocomplete="off" data-console-input/>
         </div>
-        <div id="control-text-1" class="tool-text st-st" data-toolbar-controltext1></div>
-
-        <div class="toolbar-functions">
-					<span class="tab-button" data="New tab"></span>
-					<span class="scope-button" data="Launch scope"></span>
-					<span class="drag-button" data="Resize console"></span>
-					<span class="console-button" data="Clear console"></span>
-          <span id="control-text-2" class="tool-text control-text" data-toolbar-controltext2></span>
-				</div>
-				<div class="tool-text other"></div>
-        <span id="control-text-3" class="control-text tool-text" data-toolbar-controltext3></span>
-				<!-- <div class="system-status-text bela">Bela: --%</div> -->
-				<div class="system-status-text cpu" data-toolbar-bela-cpu>CPU: --%</div>
-				<div class="system-status-text msw" data-toolbar-cpu-msw>MSW: --</div>
-				<div class="syntax-status" data-toolbar-status></div>
-			</div>
-      <div id="beaglert-console" data-console>
-        <div id="beaglert-consoleWrapper" data-console-contents-wrapper></div>
-        <form id="beaglert-consoleForm" data-console-form>
-          <div id="beaglert-console-inputLeft">
-            <div id="beaglert-consoleInput-pre" data-console-input-pre></div>
-          </div>
-          <div id="beaglert-console-inputRight">
-            <input id="beaglert-consoleInput" type="text" autocomplete="off" data-console-input/>
-          </div>
-          <input type="submit" style="visibility: hidden; display: none;" />
-        </form>
-      </div>
+        <input type="submit" style="visibility: hidden; display: none;" />
+      </form>
     </div>
 
 		<div id="overlay" data-overlay>

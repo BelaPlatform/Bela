@@ -3779,31 +3779,17 @@ var TabView = function (_View) {
 					type: 'component',
 					componentName: 'Editor'
 				}, {
-					type: 'column',
-					height: 40,
-					componentName: 'Lower',
-					content: [{
-						type: 'component',
-						componentName: 'Tools',
-						height: 25
-					}, {
-						type: 'component',
-						componentName: 'Console'
-					}]
+					type: 'component',
+					componentName: 'Console',
+					height: 25
 				}]
 			}]
 		});
 		layout.registerComponent('Editor', function (container, componentState) {
 			container.getElement().append($('[data-upper]'));
 		});
-		layout.registerComponent('Tools', function (container, componentState) {
-			container.getElement().append($('[data-toolbar]'));
-		});
 		layout.registerComponent('Console', function (container, componentState) {
 			container.getElement().append($('[data-console]'));
-		});
-		layout.registerComponent('Lower', function (container, componentState) {
-			container.getElement().append($('[data-lower]'));
 		});
 
 		layout.init();
