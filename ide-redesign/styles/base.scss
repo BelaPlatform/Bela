@@ -29,10 +29,8 @@ $amber-accent: #f26d21;
 @import 'fonts';
 
 body {
-	padding: 0;
 	margin: 0;
-	width: 100%;
-	height: 100%;
+  padding: 0;
 	position: relative;
 }
 
@@ -40,47 +38,53 @@ img {
 	padding-left: 40px;
 }
 
-/* Whole window container */
-.container {
-	padding: 0;
-	margin: 0;
-	width: 100%;
-	height: 100%;
-	background: $upper-bg;
-	overflow: hidden;
-}
-
 *:focus {
 	outline: none;
 }
 
+// we have to override the golden layout property to allow the logo to show
+// .lm_root {
+//   .lm_item {
+//     .lm_item:nth-of-type(odd) {
+//       .lm_content {
+//         overflow: visible!important;
+//       }
+//     }
+//   }
+// }
+
 /* Container for upper elements - editor and tabs */
 
 .upper {
-	height: 75%;
-	z-index: 96;
+	height: 100%;
 	position: relative;
+  z-index: 96;
 }
 
 /* Editor window */
 .editor {
+  background: #fff;
+  float: left;
+  height: 100%;
+  left: 0;
+  overflow: auto;
 	position: absolute;
 	top: 0;
-	left: 0;
-	float: left;
-	background: #fff;
-	height: 100%;
-	width: 100%;
-	overflow: auto;
+  width: 100%;
 	z-index: 97;
+}
+
+#pd-svg-parent {
+  background: #fff;
+  font-family: monospace;
+  overflow: auto;
 }
 
 /* CONTAINER FOR LOWER ELEMENTS */
 
-
 .activeBar {
+  background-color: #0000ff;
 	cursor: ns-resize;
-	background-color: #0000ff;
 }
 .inactiveBar {
 	background-color: #0000ff;
@@ -92,9 +96,7 @@ img {
 /* console */
 .console {
 	background: white;
-	width: 100%;
 	display: block;
-	height: 100%;
 }
 
 hr {
@@ -120,9 +122,11 @@ hr {
 @import 'lower';
 @import 'number-selector';
 @import 'pins';
+@import 'popup';
 @import 'scrollbar';
 @import 'tabs';
 @import 'tab-content';
 @import 'tab-menu';
 @import 'text-input';
+@import 'toolbar';
 @import 'upper';

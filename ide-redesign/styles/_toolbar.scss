@@ -1,0 +1,117 @@
+.toolbar {
+  background: $grey-toolbar;
+  box-shadow: 5px 5px #eee;
+  display: block;
+  font-family: inconsolata, monospace;
+  font-size: 12px;
+  height: 42px;
+  padding-left: 40px;
+  width: 100%;
+  > div {
+    display: inline;
+    float: left;
+    height: 40px;
+    span {
+      display: inline-block;
+      height: 35px;
+      margin-top: 3px;
+      transition: 0.1s ease-in-out;
+      width: 35px;
+      &.run {
+        background-image: url("../images/icons/run_active.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/run_inactive.svg");
+        }
+      }
+      &.stop {
+        background-image: url("../images/icons/stop_active.svg");
+        background-repeat: no-repeat;
+        margin-left: 5px;
+        &:hover {
+          background-image: url("../images/icons/stop_inactive.svg");
+        }
+      }
+      &.console-button {
+        background-image: url("../images/icons/console_inactive.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/console_active.svg");
+        }
+      }
+      &.tab-button {
+        background-image: url("../images/icons/tabs_inactive.svg");
+        background-repeat: no-repeat;
+        padding: 0;
+        &:hover {
+          background-image: url("../images/icons/tabs_active.svg");
+        }
+      }
+      &.drag-button {
+        background-image: url("../images/icons/drag_inactive.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/drag_active.svg");
+        }
+      }
+      &.scope-button {
+        background-image: url("../images/icons/scope_inactive.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/scope_active.svg");
+        }
+      }
+    }
+  }
+  .tool-text {
+    margin-top: 3px;
+    padding-left: 10px;
+    transition: 0.4s ease-in-out;
+  }
+  .other {
+    min-width: 175px;
+  }
+  .st-st {
+    min-width: 125px;
+  }
+  .start-stop {
+    padding-left: 10px;
+    width: 81px;
+  }
+  .toolbar-functions {
+    min-width: 150px;
+    padding: 2px 0;
+  }
+  .system-status-text {
+    margin-top: 14px;
+    padding: 0 20px;
+    width: 60px;
+  }
+  .syntax-status {
+    background-image: url('../images/icons/syntax_pending.svg');
+    background-repeat: no-repeat;
+    margin-top: 3px;
+    min-width: 100px;
+    padding: 0 20px;
+    &.pending {
+      background-image: url('../images/icons/syntax_pending.svg');
+      background-repeat: no-repeat;
+    }
+    &.ok {
+      background-image: url('../images/icons/syntax_ok.svg');
+      background-repeat: no-repeat;
+    }
+    &.stop {
+      background-image: url('../images/icons/syntax_stop.svg');
+      background-repeat: no-repeat;
+    }
+  }
+  .logo {
+    float: right;
+    min-width: 200px;
+    padding-right: 2.3em;
+    img {
+      margin-top: -14px;
+    }
+  }
+}

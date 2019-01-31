@@ -22,15 +22,15 @@ body {
 #image {
     width: 600px;
     text-align: center;
-    margin: 0 auto 40px;
-    padding-bottom: 40px;
+    margin: 0;
+    padding: 0;
 }
 
 hr {
-    border: 0; 
-    height: 1px; 
-    background: #333; 
-    background-image: linear-gradient(to right, #ccc, #333, #ccc); 
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
     width: 80%;
 }
 
@@ -44,7 +44,7 @@ h1 {
 p {
     font-family: Helvetica, sans-serif;
     font-size: 12px;
-    font-weight: lighter;   
+    font-weight: lighter;
     margin: 0 0 0 20px;
 }
 
@@ -68,7 +68,7 @@ p {
     stroke: none;
 }
 .comms {
-    fill: rgba(0, 0, 255, 0.5); 
+    fill: rgba(0, 0, 255, 0.5);
     stroke: none;
 }
 .audio {
@@ -94,7 +94,7 @@ p {
     fill: rgba(255, 255, 0, 0.3);
     stroke: none;
 }
-header .hi { 
+header .hi {
     background-color: rgba(255, 255, 0, 0.3);
     line-height: 25px;
     }

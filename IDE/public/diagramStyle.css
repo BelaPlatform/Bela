@@ -7,15 +7,14 @@
 }
 
 #container {
-    align: left;
     overflow: visible;
 }
 
 #image {
     width: 350px;
     text-align: left;
-    margin: 10px auto 40px;
-    padding-left: 30px;
+    margin: 0;
+    padding-left: 0;
     overflow: visible;
 }
 

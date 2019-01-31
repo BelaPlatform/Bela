@@ -34,26 +34,39 @@ class TabView extends View {
 				minimise: 'minimise',
 				popout: 'open in new window'
 			},
-			content: [{
-				type: 'column',
-				content: [{
-					type:'row',
-					content: [{
-						type:'component',
-						componentName: 'Editor',
-					}]
-				}, {
-					type:'component',
-					componentName: 'Console',
-					height: 25
-				}]
-			}]
+      content: [{
+        type: 'column',
+        content: [
+        	{
+            type:'component',
+            componentName: 'Editor'
+        	},
+          {
+            type: 'column',
+            height: 40,
+            componentName: 'Lower',
+            content: [{
+              type:'component',
+              componentName: 'Tools',
+              height: 25
+           },{
+              type:'component',
+              componentName: 'Console'
+           }]
+         }]
+      }]
 		});
 		layout.registerComponent( 'Editor', function( container, componentState ){
-			container.getElement().append($('[data-layout-editor]'));
+			container.getElement().append($('[data-upper]'));
 		});
-		layout.registerComponent( 'Console', function( container, componentState ){
-			container.getElement().append($('[data-layout-console]'));
+    layout.registerComponent('Tools', function( container, componentState ){
+      container.getElement().append($('[data-toolbar]'));
+    });
+    layout.registerComponent('Console', function( container, componentState ){
+      container.getElement().append($('[data-console]'));
+    });
+    layout.registerComponent('Lower', function( container, componentState ){
+			container.getElement().append($('[data-lower]'));
 		});
 
 		layout.init();
@@ -63,37 +76,6 @@ class TabView extends View {
 		this.on('boardString', this._boardString);
 
 	}
-
-	// openTabs(){
-	// 	$('#editor').css('right', '500px');
-	// 	$('#top-line').css('margin-right', '500px');
-	// 	$('#right').css('left', window.innerWidth - 500 + 'px');
-	// 	_tabsOpen = true;
-	// 	this.emit('change');
-	// 	$('#tab-0').addClass('open');
-  //
-	// 	// fix pd patch
-	// 	$('#pd-svg-parent').css({
-	// 		'max-width'	: $('#editor').width()+'px',
-	// 		'max-height': $('#editor').height()+'px'
-	// 	});
-	// }
-  //
-	// closeTabs(){
-	// 	$('#editor').css('right', '60px');
-	// 	$('#top-line').css('margin-right', '60px');
-	// 	$('#right').css('left', window.innerWidth - 60 + 'px');
-	// 	_tabsOpen = false;
-	// 	this.emit('change');
-	// 	$('#tab-0').removeClass('open');
-  //
-	// 	// fix pd patch
-	// 	$('#pd-svg-parent').css({
-	// 		'max-width'	: $('#editor').width()+'px',
-	// 		'max-height': $('#editor').height()+'px'
-	// 	});
-  //
-	// }
 
 	_boardString(data){
 		var boardString;

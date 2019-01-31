@@ -1,145 +1,31 @@
 .lower {
+  color: rgba(0, 0, 0, 0.8);
 	display: block;
-	vertical-align: bottom;
-	height: 200px;
-	z-index: 100;
+  font-family: inconsolata;
+  font-size: 12px;
+  // padding-top: 50px;
 	position: relative;
-	font-family: inconsolata;
-	color: rgba(0, 0, 0, 0.8);
-	font-size: 12px;
-
-	/* toolbar */
-	.toolbar {
-		height: 42px;
-		background: $grey-toolbar;
-		width: 100%;
-		display: block;
-		padding-left: 40px;
-		box-shadow: 5px 5px #eee;
-		-webkit-box-shadow: 5px 5px #eee;
-		> div {
-			height: 40px;
-			display: inline;
-			float: left;
-			span {
-				width: 35px;
-				height: 35px;
-				display: inline-block;	
-				margin-top: 3px;
-				transition: 0.1s ease-in-out;
-				&.run {
-					background-image: url("../images/icons/run_active.svg");
-					background-repeat: no-repeat;
-					&:hover {
-						background-image: url("../images/icons/run_inactive.svg");
-					}
-				}
-				&.stop {
-					margin-left: 5px;
-					background-image: url("../images/icons/stop_active.svg");
-					background-repeat: no-repeat;
-					&:hover {
-						background-image: url("../images/icons/stop_inactive.svg");
-					}
-				}
-				&.console-button {
-					background-image: url("../images/icons/console_inactive.svg");
-					background-repeat: no-repeat;
-					&:hover {
-						background-image: url("../images/icons/console_active.svg");
-					}
-				}
-				&.tab-button {
-					padding: 0;
-					background-image: url("../images/icons/tabs_inactive.svg");
-					background-repeat: no-repeat;
-					&:hover {
-						background-image: url("../images/icons/tabs_active.svg");
-					}
-				}
-				&.drag-button {
-					
-					background-image: url("../images/icons/drag_inactive.svg");
-					background-repeat: no-repeat;
-					&:hover {
-						background-image: url("../images/icons/drag_active.svg");
-					}
-				}
-				&.scope-button {
-					
-					background-image: url("../images/icons/scope_inactive.svg");
-					background-repeat: no-repeat;
-					&:hover {
-						background-image: url("../images/icons/scope_active.svg");
-					}
-				}
-			}
-			&.syntax-status {
-				background-image: url("../images/icons/syntax_ok.svg");
-				background-repeat: no-repeat;
-			}	
-			
-		}
-		.tool-text {
-			margin-top: 14px;
-			padding-left: 10px;
-			transition: 0.4s ease-in-out;
-		}
-		.other {
-			min-width: 175px;
-		}
-		.st-st {
-			min-width: 125px;
-		}
-		.start-stop {
-			width: 76px;
-			padding-left: 10px;
-
-		}
-		.toolbar-functions {
-			min-width: 150px;
-			padding: 2px 0;
-			// border: 1px solid green;
-		}
-		.system-status-text {
-			width: 60px;
-			padding: 0 20px;
-			margin-top: 14px;
-		}
-		.syntax-status {
-			min-width: 100px;
-			padding: 0 20px;
-			margin-top: 3px;
-			
-		}
-		.logo {
-			min-width: 200px;
-			float: right;
-			padding-right: 2.3em;
-			img {
-				margin-top: -14px;
-			}
-
-		}
-	}
+  // top: -50px;
+  vertical-align: bottom;
+  z-index: 100;
 }
 
-.dragButton {
-	position: absolute;
-	top: 0;
-	left: 5px;
-	background-color: black;
-	min-width: 100px;
-	min-height: 20px;
-	display: inline;
-}
-	.dragactive {
-		background: red;
-		z-index:101;
-		cursor: ns-resize;
-	} 
-
+// .dragButton {
+// 	position: absolute;
+// 	top: 0;
+// 	left: 5px;
+// 	background-color: black;
+// 	min-width: 100px;
+// 	min-height: 20px;
+// 	display: inline;
+// }
+// 	.dragactive {
+// 		background: red;
+// 		z-index:101;
+// 		cursor: ns-resize;
+// 	}
+//
 // // Class for when the lower portion is being dragged up and down.
-// // The .lower_dragging class is added to .lower, and the .lower_dragging * selector hooks all 
-// // elements inside .lower when this class is added.	
+// // The .lower_dragging class is added to .lower, and the .lower_dragging * selector hooks all
+// // elements inside .lower when this class is added.
 // .lower_dragging, .lower_dragging *{ }

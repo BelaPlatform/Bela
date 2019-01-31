@@ -93,34 +93,30 @@ select.dropdown-num {
   background-color: #f9f9f9;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-
   /* Links inside the dropdown */
-  select {
-
-  }
-  select {
-    appearance: none;
+  ul, select {
+    // appearance: none;
     width: 200px;
     padding-left: 28px;
     padding-top: 0;
     font-size: 11px;
     border: none;
     height: 22px;
-    display: inline;
+    display: table;
     padding-bottom: 2px;
-  }
-  a, option {
-    color: black;
-    cursor: pointer;
-    display: block;
-    font-family: poppins_regular;
-    font-size: 10px;
-    opacity: 1;
-    padding: 8px 16px;
-    text-decoration: none;
-    &:hover {
-      background-color: $grey-light;
-      color: rgba(0, 0, 0, 0.9);
+    > li, span, a, option {
+      color: black;
+      cursor: pointer;
+      display: block;
+      font-family: poppins_regular;
+      font-size: 10px;
+      opacity: 1;
+      padding: 8px 16px;
+      text-decoration: none;
+      &:hover {
+        background-color: $grey-light;
+        color: rgba(0, 0, 0, 0.9);
+      }
     }
   }
   &.show {

@@ -1517,11 +1517,11 @@ var DocumentationView = function (_View) {
 		_this.on('init', _this.init);
 
 		_this.on('open', function (id) {
-			_this.closeAll();
-			$('#' + id).prop('checked', 'checked');
-			$('#' + id).parent().parent().siblings('input').prop('checked', 'checked');
-			var offset = $('#' + id).siblings('label').position().top + $('#docTab').scrollTop();
-			if (offset) $('#docTab').scrollTop(offset);
+			// this.closeAll();
+			// $('#'+id).prop('checked', 'checked');
+			// $('#'+id).parent().parent().siblings('input').prop('checked', 'checked');
+			// var offset = $('#'+id).siblings('label').position().top + $('#docTab').scrollTop();
+			// if (offset) $('#docTab').scrollTop(offset);
 		});
 		return _this;
 	}
@@ -1634,7 +1634,7 @@ var DocumentationView = function (_View) {
 	}, {
 		key: 'closeAll',
 		value: function closeAll() {
-			$('#docsParent').find('input:checked').prop('checked', '');
+			// $('#docsParent').find('input:checked').prop('checked', '');
 		}
 	}]);
 
@@ -1649,16 +1649,16 @@ function createlifrommemberdef($xml, id, emitter, type) {
 	emitter.emit('add-link', { name: name, id: id }, type);
 
 	var li = $('<li></li>');
-	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
+	// li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
+	// li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
 
 	var content = $('<div></div>');
 
 	// title
-	content.append($('<h2></h2>').html($xml.find('definition').html() + $xml.find('argsstring').html()));
+	content.append($('<h2></h2>').html($xml.find('definition').html() + $xml.find('argsstring').html() + "<hr />"));
 
 	// subtitle
-	content.append($('<h3></h3>').html($xml.find('briefdescription > para').html() || ''));
+	content.append($('<p></p>').html($xml.find('briefdescription > para').html() || ''));
 
 	// main text
 	$xml.find('detaileddescription > para').each(function () {
@@ -1689,8 +1689,8 @@ function createlifromxml($xml, id, filename, emitter, type) {
 	emitter.emit('add-link', { name: name, id: id }, type);
 
 	var li = $('<li></li>');
-	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
+	// li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
+	// li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
 
 	var content = $('<div></div>');
 
@@ -2870,7 +2870,6 @@ var ProjectView = function (_View) {
 	function ProjectView(className, models) {
 		_classCallCheck(this, ProjectView);
 
-		//this.exampleChanged = false;
 		var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
 
 		_this.on('example-changed', function () {
@@ -2892,8 +2891,6 @@ var ProjectView = function (_View) {
 				popup.exampleChanged(function () {
 					_this2.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
 				}, undefined, 0, function () {
-					$element.find('option').filter(':selected').attr('selected', '');
-					$element.val($('#projects > option:first').val());
 					_this2.exampleChanged = true;
 				});
 				return;
@@ -3020,16 +3017,13 @@ var ProjectView = function (_View) {
 		key: '_projectList',
 		value: function _projectList(projects, data) {
 
-			var $projects = $('#projects');
-			$projects.empty();
+			var $projects = $('[data-projects-select]');
 
-			// add an empty option to menu and select it
-			var opt = $('<option></option>').attr({ 'value': '', 'selected': 'selected' }).html('--Projects--').appendTo($projects);
-
+			// var option = $('<ul></ul>').addClass('dropdown-content').attr('data-dropdown', 'project');
 			// fill project menu with projects
 			for (var i = 0; i < projects.length; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					var opt = $('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
+					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects);
 				}
 			}
 
@@ -3513,7 +3507,9 @@ var SettingsView = function (_View) {
 					this.setAudioExpander(key, data[key]);
 					continue;
 				} else if (key === 'audioExpander') {
-					if (data[key] == 1) $('#audioExpanderTable').css('display', 'table');else $('#audioExpanderTable').css('display', 'none');
+					if (data[key] == 1) $('#audioExpanderTable').css('display', 'table');
+					// else
+					// 	$('#audioExpanderTable').css('display', 'none');
 				}
 
 				var el = this.$elements.filterByData('key', key);
@@ -3559,10 +3555,10 @@ var SettingsView = function (_View) {
 		value: function useAudioExpander(func, key, val) {
 
 			if (val == 1) {
-				$('#audioExpanderTable').css('display', 'table');
+				// $('#audioExpanderTable').css('display', 'table');
 				this.setCLArg('setCLArg', key, val);
 			} else {
-				$('#audioExpanderTable').css('display', 'none');
+				// $('#audioExpanderTable').css('display', 'none');
 				// clear channel picker
 				$('.audioExpanderCheck').prop('checked', false);
 				this.emit('project-settings', { func: 'setCLArgs', args: [{ key: '-Y', value: '' }, { key: '-Z', value: '' }, { key: key, value: val }] });
@@ -3780,23 +3776,34 @@ var TabView = function (_View) {
 			content: [{
 				type: 'column',
 				content: [{
-					type: 'row',
+					type: 'component',
+					componentName: 'Editor'
+				}, {
+					type: 'column',
+					height: 40,
+					componentName: 'Lower',
 					content: [{
 						type: 'component',
-						componentName: 'Editor'
+						componentName: 'Tools',
+						height: 25
+					}, {
+						type: 'component',
+						componentName: 'Console'
 					}]
-				}, {
-					type: 'component',
-					componentName: 'Console',
-					height: 25
 				}]
 			}]
 		});
 		layout.registerComponent('Editor', function (container, componentState) {
-			container.getElement().append($('[data-layout-editor]'));
+			container.getElement().append($('[data-upper]'));
+		});
+		layout.registerComponent('Tools', function (container, componentState) {
+			container.getElement().append($('[data-toolbar]'));
 		});
 		layout.registerComponent('Console', function (container, componentState) {
-			container.getElement().append($('[data-layout-console]'));
+			container.getElement().append($('[data-console]'));
+		});
+		layout.registerComponent('Lower', function (container, componentState) {
+			container.getElement().append($('[data-lower]'));
 		});
 
 		layout.init();
@@ -3811,37 +3818,6 @@ var TabView = function (_View) {
 
 		return _this;
 	}
-
-	// openTabs(){
-	// 	$('#editor').css('right', '500px');
-	// 	$('#top-line').css('margin-right', '500px');
-	// 	$('#right').css('left', window.innerWidth - 500 + 'px');
-	// 	_tabsOpen = true;
-	// 	this.emit('change');
-	// 	$('#tab-0').addClass('open');
-	//
-	// 	// fix pd patch
-	// 	$('#pd-svg-parent').css({
-	// 		'max-width'	: $('#editor').width()+'px',
-	// 		'max-height': $('#editor').height()+'px'
-	// 	});
-	// }
-	//
-	// closeTabs(){
-	// 	$('#editor').css('right', '60px');
-	// 	$('#top-line').css('margin-right', '60px');
-	// 	$('#right').css('left', window.innerWidth - 60 + 'px');
-	// 	_tabsOpen = false;
-	// 	this.emit('change');
-	// 	$('#tab-0').removeClass('open');
-	//
-	// 	// fix pd patch
-	// 	$('#pd-svg-parent').css({
-	// 		'max-width'	: $('#editor').width()+'px',
-	// 		'max-height': $('#editor').height()+'px'
-	// 	});
-	//
-	// }
 
 	_createClass(TabView, [{
 		key: '_boardString',
@@ -3900,43 +3876,62 @@ var ToolbarView = function (_View) {
 		});
 
 		_this.on('disconnected', function () {
-			$('#run').removeClass('running-button').removeClass('building-button');
+			// $('#run').removeClass('running-button').removeClass('building-button');
+			$('[data-toolbar-run]').removeClass('running-button').removeClass('building-button');
 		});
 
-		$('#run').mouseover(function () {
-			$('#control-text-1').html('<p>Run</p>');
+		// $('#run')
+		$('[data-toolbar-run]').mouseover(function () {
+			// $('#control-text-1').html('<p>Run</p>');
+			$('[data-toolbar-controltext1]').html('<p>Run</p>');
 		}).mouseout(function () {
-			$('#control-text-1').html('');
+			// $('#control-text-1').html('');
+			$('[data-toolbar-controltext1]').html('');
 		});
 
-		$('#stop').mouseover(function () {
-			$('#control-text-1').html('<p>Stop</p>');
+		// $('#stop')
+		$('[data-toolbar-stop]').mouseover(function () {
+			// $('#control-text-1').html('<p>Stop</p>');
+			$('[data-toolbar-controltext1]').html('<p>Stop</p>');
 		}).mouseout(function () {
-			$('#control-text-1').html('');
+			// $('#control-text-1').html('');
+			$('[data-toolbar-controltext1]').html('');
 		});
 
-		$('#new-tab').mouseover(function () {
-			$('#control-text-2').html('<p>New Tab</p>');
+		// $('#new-tab')
+		$('[data-toolbar-newtab]').mouseover(function () {
+			// $('#control-text-2').html('<p>New Tab</p>');
+			$('[data-toolbar-controltext2]').html('<p>New Tab</p>');
 		}).mouseout(function () {
-			$('#control-text-2').html('');
+			// $('#control-text-2').html('');
+			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('#download').mouseover(function () {
-			$('#control-text-2').html('<p>Download</p>');
+		// $('#download')
+		$('[data-toolbar-download]').mouseover(function () {
+			// $('#control-text-2').html('<p>Download</p>');
+			$('[data-toolbar-controltext2]').html('<p>Download</p>');
 		}).mouseout(function () {
-			$('#control-text-2').html('');
+			// $('#control-text-2').html('');
+			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('#console').mouseover(function () {
-			$('#control-text-3').html('<p>Clear console</p>');
+		// $('#console')
+		$('[data-toolbar-console]').mouseover(function () {
+			// $('#control-text-3').html('<p>Clear console</p>');
+			$('[data-toolbar-controltext3]').html('<p>Clear console</p>');
 		}).mouseout(function () {
-			$('#control-text-3').html('');
+			// $('#control-text-3').html('');
+			$('[data-toolbar-controltext3]').html('');
 		});
 
-		$('#scope').mouseover(function () {
-			$('#control-text-3').html('<p>Open scope</p>');
+		// $('#scope')
+		$('[data-toolbar-scope]').mouseover(function () {
+			// $('#control-text-3').html('<p>Open scope</p>');
+			$('[data-toolbar-controltext3]').html('<p>Open scope</p>');
 		}).mouseout(function () {
-			$('#control-text-3').html('');
+			// $('#control-text-3').html('');
+			$('[data-toolbar-controltext3]').html('');
 		});
 		return _this;
 	}
@@ -3950,6 +3945,7 @@ var ToolbarView = function (_View) {
 			var func = $element.data().func;
 			if (func && this[func]) {
 				this[func](func);
+				console.log($element);
 			}
 		}
 	}, {
@@ -3974,11 +3970,15 @@ var ToolbarView = function (_View) {
 		key: '__running',
 		value: function __running(status) {
 			if (status) {
-				$('#run').removeClass('building-button').addClass('running-button');
+				// $('#run').removeClass('building-button').addClass('running-button');
+				$('[data-toolbar-run]').removeClass('building-button').addClass('running-button');
 			} else {
-				$('#run').removeClass('running-button');
-				$('#bela-cpu').html('CPU: --').css('color', 'black');
-				$('#msw-cpu').html('MSW: --').css('color', 'black');
+				// $('#run').removeClass('running-button');
+				$('[data-toolbar-run]').removeClass('running-button');
+				// $('#bela-cpu').html('CPU: --').css('color', 'black');
+				$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
+				// $('#msw-cpu').html('MSW: --').css('color', 'black');
+				$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 				modeswitches = 0;
 			}
 		}
@@ -3986,16 +3986,19 @@ var ToolbarView = function (_View) {
 		key: '__building',
 		value: function __building(status) {
 			if (status) {
-				$('#run').removeClass('running-button').addClass('building-button');
+				// $('#run').removeClass('running-button').addClass('building-button');
+				$('[data-toolbar-run]').removeClass('running-button').addClass('building-button');
 			} else {
-				$('#run').removeClass('building-button');
+				// $('#run').removeClass('building-button');
+				$('[data-toolbar-run]').removeClass('building-button');
 			}
 		}
 	}, {
 		key: '__checkingSyntax',
 		value: function __checkingSyntax(status) {
 			if (status) {
-				$('#status').css('background', 'url("images/icons/status_wait.png")').prop('title', 'checking syntax...');
+				// $('#status').css('background', 'url("images/icons/status_wait.png")').prop('title', 'checking syntax...');
+				$('[data-toolbar-status]').addClass('pending').removeClass('ok').removeClass('stop').prop('title', 'checking syntax&hellip;');
 			} else {
 				//this.syntaxTimeout = setTimeout(() => $('#status').css('background', 'url("images/toolbar.png") -140px 35px'), 10);
 			}
@@ -4003,11 +4006,13 @@ var ToolbarView = function (_View) {
 	}, {
 		key: '__allErrors',
 		value: function __allErrors(errors) {
-			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
+			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout);
 			if (errors.length) {
-				$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
+				// $('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
+				$('[data-toolbar-status]').removeClass('pending').removeClass('ok').addClass('stop').prop('title', 'syntax errors found');
 			} else {
-				$('#status').css('background', 'url("images/icons/status_ok.png")').prop('title', 'syntax check clear');
+				// $('#status').css('background', 'url("images/icons/status_ok.png")').prop('title', 'syntax check clear');
+				$('[data-toolbar-status]').removeClass('pending').addClass('ok').removeClass('stop').prop('title', 'syntax check clear');
 			}
 		}
 	}, {
@@ -4076,27 +4081,36 @@ var ToolbarView = function (_View) {
 			}
 
 			//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-			$('#bela-cpu').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+			// $('#bela-cpu').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
+			$('[data-toolbar-bela-cpu]').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
 			//	if (bela && (ide*rootCPU + bela) > 80){
 			if (bela && bela > 80) {
-				$('#bela-cpu').css('color', 'red');
+				// $('#bela-cpu').css('color', 'red');
+				$('[data-toolbar-bela-cpu]').css('color', 'red');
 			} else {
-				$('#bela-cpu').css('color', 'black');
+				// $('#bela-cpu').css('color', 'black');
+				$('[data-toolbar-bela-cpu]').css('color', 'black');
 			}
 		}
 	}, {
 		key: '_cpuMonitoring',
 		value: function _cpuMonitoring(value) {
-			if (parseInt(value)) $('#bela-cpu').css('visibility', 'visible');else $('#bela-cpu').css('visibility', 'hidden');
+			if (parseInt(value))
+				// $('#bela-cpu').css('visibility', 'visible');
+				$('[data-toolbar-bela-cpu]').css('visibility', 'visible');else
+				// $('#bela-cpu').css('visibility', 'hidden');
+				$('[data-toolbar-bela-cpu]').css('visibility', 'hidden');
 		}
 	}, {
 		key: 'mode_switches',
 		value: function mode_switches(value) {
-			$('#msw-cpu').html('MSW: ' + value);
+			// $('#msw-cpu').html('MSW: '+value);
+			$('[data-toolbar-msw-cpu]').html('MSW: ' + value);
 			if (value > modeswitches) {
 				this.emit('mode-switch-warning', value);
-				$('#msw-cpu').css('color', 'red');
+				// $('#msw-cpu').css('color', 'red');
+				$('[data-toolbar-msw-cpu]').css('color', 'red');
 			}
 			modeswitches = value;
 		}
@@ -5030,9 +5044,9 @@ module.exports = parser;
 },{"./CircularBuffer":2}],18:[function(require,module,exports){
 'use strict';
 
-var _overlay = $('#overlay');
-var parent = $('#popup');
-var content = $('#popup-content');
+var _overlay = $('[data-overlay]');
+var parent = $('[data-popup]');
+var content = $('[data-popup-content]');
 var titleEl = parent.find('h1');
 var subEl = parent.find('p');
 var _formEl = parent.find('form');

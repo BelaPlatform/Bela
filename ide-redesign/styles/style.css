@@ -699,7 +699,7 @@ select.dropdown-num {
   border-radius: 10px;
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5); }
 
-.lower {
+/* .lower {
   display: block;
   vertical-align: bottom;
   height: 200px;
@@ -708,7 +708,7 @@ select.dropdown-num {
   font-family: inconsolata;
   color: rgba(0, 0, 0, 0.8);
   font-size: 12px;
-  /* toolbar */ }
+   }
   .lower .toolbar {
     height: 42px;
     background: #bcbcbc;
@@ -789,7 +789,7 @@ select.dropdown-num {
       float: right;
       padding-right: 2.3em; }
       .lower .toolbar .logo img {
-        margin-top: -14px; }
+        margin-top: -14px; } */
 
 .dragButton {
   position: absolute;

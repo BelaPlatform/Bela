@@ -7,116 +7,145 @@ var NORMAL_MSW = 1;
 var nameIndex, CPUIndex, rootName, IRQName;
 
 class ToolbarView extends View {
-	
+
 	constructor(className, models){
 		super(className, models);
 
 		this.$elements.on('click', (e) => this.buttonClicked($(e.currentTarget), e));
-		
+
 		this.on('disconnected', () => {
-			$('#run').removeClass('running-button').removeClass('building-button');
+			// $('#run').removeClass('running-button').removeClass('building-button');
+      $('[data-toolbar-run]').removeClass('running-button').removeClass('building-button');
 		});
-		
-		$('#run')
+
+		// $('#run')
+    $('[data-toolbar-run]')
 			.mouseover(function() {
-				$('#control-text-1').html('<p>Run</p>');
+        // $('#control-text-1').html('<p>Run</p>');
+				$('[data-toolbar-controltext1]').html('<p>Run</p>');
 			})
 			.mouseout(function() {
-				$('#control-text-1').html('');
-			});
-		
-		$('#stop')
-			.mouseover(function() {
-				$('#control-text-1').html('<p>Stop</p>');
-			})
-			.mouseout(function() {
-				$('#control-text-1').html('');
+        // $('#control-text-1').html('');
+				$('[data-toolbar-controltext1]').html('');
 			});
 
-		$('#new-tab')
+    // $('#stop')
+		$('[data-toolbar-stop]')
 			.mouseover(function() {
-				$('#control-text-2').html('<p>New Tab</p>');
+        // $('#control-text-1').html('<p>Stop</p>');
+				$('[data-toolbar-controltext1]').html('<p>Stop</p>');
 			})
 			.mouseout(function() {
-				$('#control-text-2').html('');
-			});
-		
-		$('#download')
-			.mouseover(function() {
-				$('#control-text-2').html('<p>Download</p>');
-			})
-			.mouseout(function() {
-				$('#control-text-2').html('');
+        // $('#control-text-1').html('');
+				$('[data-toolbar-controltext1]').html('');
 			});
 
-		$('#console')
+    // $('#new-tab')
+		$('[data-toolbar-newtab]')
 			.mouseover(function() {
-				$('#control-text-3').html('<p>Clear console</p>');
+        // $('#control-text-2').html('<p>New Tab</p>');
+				$('[data-toolbar-controltext2]').html('<p>New Tab</p>');
 			})
 			.mouseout(function() {
-				$('#control-text-3').html('');
+        // $('#control-text-2').html('');
+				$('[data-toolbar-controltext2]').html('');
 			});
-		
-		$('#scope')
+
+    // $('#download')
+		$('[data-toolbar-download]')
 			.mouseover(function() {
-				$('#control-text-3').html('<p>Open scope</p>');
+        // $('#control-text-2').html('<p>Download</p>');
+				$('[data-toolbar-controltext2]').html('<p>Download</p>');
 			})
 			.mouseout(function() {
-				$('#control-text-3').html('');
+        // $('#control-text-2').html('');
+				$('[data-toolbar-controltext2]').html('');
+			});
+
+    // $('#console')
+		$('[data-toolbar-console]')
+			.mouseover(function() {
+        // $('#control-text-3').html('<p>Clear console</p>');
+				$('[data-toolbar-controltext3]').html('<p>Clear console</p>');
+			})
+			.mouseout(function() {
+        // $('#control-text-3').html('');
+				$('[data-toolbar-controltext3]').html('');
+			});
+
+    // $('#scope')
+		$('[data-toolbar-scope]')
+			.mouseover(function() {
+        // $('#control-text-3').html('<p>Open scope</p>');
+				$('[data-toolbar-controltext3]').html('<p>Open scope</p>');
+			})
+			.mouseout(function() {
+        // $('#control-text-3').html('');
+				$('[data-toolbar-controltext3]').html('');
 			});
 	}
-	
+
 	// UI events
 	buttonClicked($element, e){
 		var func = $element.data().func;
 		if (func && this[func]){
 			this[func](func);
+      console.log($element);
 		}
 	}
-	
+
 	run(func){
 		this.emit('process-event', func);
 	}
-	
+
 	stop(func){
 		this.emit('process-event', func);
 	}
-	
+
 	clearConsole(){
 		this.emit('clear-console');
 	}
-	
+
 	// model events
 	__running(status){
 		if (status){
-			$('#run').removeClass('building-button').addClass('running-button');
+      // $('#run').removeClass('building-button').addClass('running-button');
+			$('[data-toolbar-run]').removeClass('building-button').addClass('running-button');
 		} else {
-			$('#run').removeClass('running-button');
-			$('#bela-cpu').html('CPU: --').css('color', 'black');
-			$('#msw-cpu').html('MSW: --').css('color', 'black');
+      // $('#run').removeClass('running-button');
+			$('[data-toolbar-run]').removeClass('running-button');
+      // $('#bela-cpu').html('CPU: --').css('color', 'black');
+			$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
+      // $('#msw-cpu').html('MSW: --').css('color', 'black');
+			$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 			modeswitches = 0;
 		}
 	}
 	__building(status){
 		if (status){
-			$('#run').removeClass('running-button').addClass('building-button');
+      // $('#run').removeClass('running-button').addClass('building-button');
+			$('[data-toolbar-run]').removeClass('running-button').addClass('building-button');
 		} else {
-			$('#run').removeClass('building-button');
+      // $('#run').removeClass('building-button');
+			$('[data-toolbar-run]').removeClass('building-button');
 		}
 	}
 	__checkingSyntax(status){
 		if (status){
-			$('#status').css('background', 'url("images/icons/status_wait.png")').prop('title', 'checking syntax...');
+      // $('#status').css('background', 'url("images/icons/status_wait.png")').prop('title', 'checking syntax...');
+			$('[data-toolbar-status]').addClass('pending').removeClass('ok').removeClass('stop').prop('title', 'checking syntax&hellip;');
 		} else {
 			//this.syntaxTimeout = setTimeout(() => $('#status').css('background', 'url("images/toolbar.png") -140px 35px'), 10);
 		}
 	}
 	__allErrors(errors){
-		//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
+		//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout);
 		if (errors.length){
-			$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found'); 
+      // $('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
+			$('[data-toolbar-status]').removeClass('pending').removeClass('ok').addClass('stop').prop('title', 'syntax errors found');
 		} else {
-			$('#status').css('background', 'url("images/icons/status_ok.png")').prop('title', 'syntax check clear');
+      // $('#status').css('background', 'url("images/icons/status_ok.png")').prop('title', 'syntax check clear');
+			$('[data-toolbar-status]').removeClass('pending').addClass('ok').removeClass('stop').prop('title', 'syntax check clear');
 		}
 	}
 
@@ -140,7 +169,7 @@ class ToolbarView extends View {
 		var bela = 0, rootCPU = 1;
 
 		if (data.bela != 0 && data.bela !== undefined){
-		
+
 			// extract the data from the output
 			var lines = data.bela.split('\n');
 			var taskData = [];
@@ -153,7 +182,7 @@ class ToolbarView extends View {
 					}
 				}
 			}
-			
+
 			var output = [];
 			for (var j=0; j<taskData.length; j++){
 				if (taskData[j].length){
@@ -184,29 +213,36 @@ class ToolbarView extends View {
 		}
 
 	//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-		$('#bela-cpu').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
-		
+    // $('#bela-cpu').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
+		$('[data-toolbar-bela-cpu]').html('CPU: '+( bela ? bela.toFixed(1)+'%' : '--'));
+
 	//	if (bela && (ide*rootCPU + bela) > 80){
 		if (bela && bela > 80) {
-			$('#bela-cpu').css('color', 'red');
+      // $('#bela-cpu').css('color', 'red');
+			$('[data-toolbar-bela-cpu]').css('color', 'red');
 		} else {
-			$('#bela-cpu').css('color', 'black');
+      // $('#bela-cpu').css('color', 'black');
+			$('[data-toolbar-bela-cpu]').css('color', 'black');
 		}
-		
+
 	}
-	
+
 	_cpuMonitoring(value){
 		if (parseInt(value))
-			$('#bela-cpu').css('visibility', 'visible');
+      // $('#bela-cpu').css('visibility', 'visible');
+			$('[data-toolbar-bela-cpu]').css('visibility', 'visible');
 		else
-			$('#bela-cpu').css('visibility', 'hidden');
+      // $('#bela-cpu').css('visibility', 'hidden');
+			$('[data-toolbar-bela-cpu]').css('visibility', 'hidden');
 	}
-	
+
 	mode_switches(value){
-		$('#msw-cpu').html('MSW: '+value);
+    // $('#msw-cpu').html('MSW: '+value);
+		$('[data-toolbar-msw-cpu]').html('MSW: '+value);
 		if (value > modeswitches){
 			this.emit('mode-switch-warning', value);
-			$('#msw-cpu').css('color', 'red');
+      // $('#msw-cpu').css('color', 'red');
+			$('[data-toolbar-msw-cpu]').css('color', 'red');
 		}
 		modeswitches = value;
 	}

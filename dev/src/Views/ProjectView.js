@@ -7,20 +7,16 @@ class ProjectView extends View {
 	constructor(className, models){
 		super(className, models);
 
-		//this.exampleChanged = false;
 		this.on('example-changed', () => this.exampleChanged = true );
 	}
 
 	// UI events
 	selectChanged($element, e){
-
 		if (this.exampleChanged){
 			this.exampleChanged = false;
 			popup.exampleChanged( () => {
 				this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()});
 			}, undefined, 0, () => {
-				$element.find('option').filter(':selected').attr('selected', '');
-				$element.val($('#projects > option:first').val());
 				this.exampleChanged = true;
 			});
 			return;
@@ -134,22 +130,20 @@ class ProjectView extends View {
 	// model events
 	_projectList(projects, data){
 
-		var $projects = $('#projects');
-		$projects.empty();
+		var $projects = $('[data-projects-select]');
 
-		// add an empty option to menu and select it
-		var opt = $('<option></option>').attr({'value': '', 'selected': 'selected'}).html('--Projects--').appendTo($projects);
-
+    // var option = $('<ul></ul>').addClass('dropdown-content').attr('data-dropdown', 'project');
 		// fill project menu with projects
 		for (let i=0; i<projects.length; i++){
 			if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
-				var opt = $('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
+				$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects);
 			}
 		}
 
 		if (data && data.currentProject) this._currentProject(data.currentProject);
 
 	}
+
 	_exampleList(examplesDir){
 
     // var $examples = $('#examples');

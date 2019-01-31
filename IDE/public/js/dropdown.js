@@ -11,7 +11,7 @@ var dropdowns = function(){
   });
   // Close the dropdown menu if the user clicks outside of it
   window.onclick = function(event) {
-    if (!event.target.matches('[data-dropdown-for]')) {
+    if (!event.target.matches('[data-dropdown-for]') && !event.target.matches('[data-dropdown] *')) {
       $('[data-dropdown]').removeClass('show')
     }
   }

@@ -1,0 +1,58 @@
+#popup {
+  background: white;
+  border: 2px solid #666;
+  border-radius: 10px;
+	display: none;
+  font-size: 14px;
+	left: calc((100% / 2) - 200px);
+  margin-bottom: 10px;
+  min-height: 100px;
+	padding: 0 20px 30px;
+  position: absolute;
+  top: calc((100% / 2) - 150px);
+  width: 400px;
+  &.active {
+    display: inline;
+    z-index: 9999;
+  }
+  h1 {
+    color: #82C889;
+    font-family: sofia;
+    font-size: 25px;
+    line-height: 30px;
+    margin: 20px 0;
+  }
+  & p, & form {
+    color: #999;
+    font-family: sofia;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  input {
+    font-size: 16px;
+    padding: 10px;
+    &[type=text] {
+      margin: 10px 0 20px;
+      width: 250px;
+    }
+    &[type=checkbox], &[type=radio] {
+      margin: 2px 10px;
+      position: relative;
+      top: 5px;
+      width: initial;
+    }
+    &[type=file]{
+      background: initial;
+      border: initial;
+      width: initial;
+    }
+    &::-webkit-input-placeholder {
+      color: #bdbdbd;
+      font-style: italic;
+    }
+  }
+  button {
+    float: right;
+    margin: 10px 5px 0;
+  }
+}

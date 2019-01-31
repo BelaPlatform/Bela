@@ -15,25 +15,25 @@ var classes = [
 ];
 
 class DocumentationView extends View {
-	
+
 	constructor(className, models){
 		super(className, models);
-		
+
 		this.on('init', this.init);
-		
+
 		this.on('open', (id) => {
-			this.closeAll();
-			$('#'+id).prop('checked', 'checked');
-			$('#'+id).parent().parent().siblings('input').prop('checked', 'checked');
-			var offset = $('#'+id).siblings('label').position().top + $('#docTab').scrollTop();
-			if (offset) $('#docTab').scrollTop(offset);
+			// this.closeAll();
+			// $('#'+id).prop('checked', 'checked');
+			// $('#'+id).parent().parent().siblings('input').prop('checked', 'checked');
+			// var offset = $('#'+id).siblings('label').position().top + $('#docTab').scrollTop();
+			// if (offset) $('#docTab').scrollTop(offset);
 		})
 	}
-	
+
 	init(){
-	
+
 		var self = this;
-		
+
 		// The API
 		$.ajax({
 			type: "GET",
@@ -49,7 +49,7 @@ class DocumentationView extends View {
 				}
 			}
 		});
-		
+
 		// The Audio Context
 		$.ajax({
 			type: "GET",
@@ -67,7 +67,7 @@ class DocumentationView extends View {
 				});
 			}
 		});
-		
+
 		// Utilities
 		$.ajax({
 			type: "GET",
@@ -85,18 +85,18 @@ class DocumentationView extends View {
 				});
 			}
 		});
-		
+
 		// all classes
 		for (let item of classes){
 			xmlClassDocs(item, this);
 		}
-		
+
 	}
-	
+
 	closeAll(){
-		$('#docsParent').find('input:checked').prop('checked', '');
+		// $('#docsParent').find('input:checked').prop('checked', '');
 	}
-	
+
 }
 
 module.exports = DocumentationView;
@@ -105,19 +105,19 @@ function createlifrommemberdef($xml, id, emitter, type){
 
 	var name = $xml.find('name').html();
 	emitter.emit('add-link', {name, id}, type);
-	
+
 	var li = $('<li></li>');
-	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
-	
+	// li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
+	// li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
+
 	var content = $('<div></div>');
-	
+
 	// title
-	content.append($('<h2></h2>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
-	
+	content.append($('<h2></h2>').html( $xml.find('definition').html() + $xml.find('argsstring').html() + "<hr />" ));
+
 	// subtitle
-	content.append($('<h3></h3>').html( $xml.find('briefdescription > para').html() || '' ));
-	
+	content.append($('<p></p>').html( $xml.find('briefdescription > para').html() || '' ));
+
 	// main text
 	$xml.find('detaileddescription > para').each(function(){
 		if ($(this).find('parameterlist').length){
@@ -145,19 +145,19 @@ function createlifromxml($xml, id, filename, emitter, type){
 
 	var name = $xml.find('compoundname').html();
 	emitter.emit('add-link', {name, id}, type);
-	
+
 	var li = $('<li></li>');
-	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
-	
+	// li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
+	// li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
+
 	var content = $('<div></div>');
-	
+
 	// title
 	//content.append($('<h2></h2>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
-	
+
 	// subtitle
 	content.append($('<h3></h3>').html( $xml.find('compounddef > briefdescription > para').html() || '' ));
-	
+
 	// main text
 	$xml.find('compounddef > detaileddescription > para').each(function(){
 		if ($(this).find('parameterlist').length){
@@ -176,7 +176,7 @@ function createlifromxml($xml, id, filename, emitter, type){
 			content.append($('<p></p>').html( $(this).html() || '' ));
 		}
 	});
-	
+
 	content.append('</br><a href="documentation/'+filename+'.html" target="_blank">Full Documentation</a>');
 
 	li.append(content);
@@ -192,11 +192,11 @@ function xmlClassDocs(classname, emitter){
 		dataType: "html",
 		success: function(xml){
 			//console.log(xml);
-			
+
 			var counter = 0;
 			createlifromxml($(xml), classname+counter, filename, emitter, 'typedef').appendTo(parent);
 			emitter.emit('add-link', {name: classname, id: classname+counter}, 'header');
-			
+
 			counter += 1;
 			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains('+classname+')))').each(function(){
 				//console.log($(this));
@@ -204,7 +204,7 @@ function xmlClassDocs(classname, emitter){
 				li.appendTo(parent);
 				counter += 1;
 			});
-			
+
 			// when tab is opened
 			parent.siblings('input').on('change', function(){
 				console.log(classname);

@@ -236,8 +236,8 @@ class SettingsView extends View {
 			} else if (key === 'audioExpander'){
 				if (data[key] == 1)
 					$('#audioExpanderTable').css('display', 'table');
-				else
-					$('#audioExpanderTable').css('display', 'none');
+				// else
+				// 	$('#audioExpanderTable').css('display', 'none');
 			}
 
 			let el = this.$elements.filterByData('key', key);
@@ -282,10 +282,10 @@ class SettingsView extends View {
 	useAudioExpander(func, key, val){
 
 		if (val == 1) {
-			$('#audioExpanderTable').css('display', 'table');
+			// $('#audioExpanderTable').css('display', 'table');
 			this.setCLArg('setCLArg', key, val);
 		} else {
-			$('#audioExpanderTable').css('display', 'none');
+			// $('#audioExpanderTable').css('display', 'none');
 			// clear channel picker
 			$('.audioExpanderCheck').prop('checked', false);
 			this.emit('project-settings', {func: 'setCLArgs', args: [

@@ -14,548 +14,17 @@
 
 	<body>
 
-    <div class="container">
-      <div class="upper">
+    <div class="upper" data-upper>
 
-        <div class="file-status">
-  				<span class="project">Current project: <span class="current" data-current-project>None</span></span>
-  				<span class="file">Current file: <span class="current" data-current-file>None</span></span>
-          <span class="status"><span class="status" data-current-status></span></span>
-  			</div>
+      <div class="file-status">
+				<span class="project">Current project: <span class="current" data-current-project>None</span></span>
+				<span class="file">Current file: <span class="current" data-current-file>None</span></span>
+        <span class="status"><span class="status" data-current-status></span></span>
+			</div>
 
-        <!-- media divs -->
+      <!-- media divs -->
 
-        <div id="img-display-parent">
-  				<img id="img-display"/>
-  			</div>
-  			<div id="pd-svg-parent">
-  				<div id="pd-svg"></div>
-  			</div>
-  			<div id="audio-parent">
-  				<audio id="audio" controls></audio>
-  			</div>
-
-
-        <pre id="editor" class="editor" data-layout-upper></pre>
-
-        <!-- tabs -->
-
-        <div class="tabs" data-tabs>
-          <div id="tab-menu" data-tab-menu>
-            <ul class="tab-switches">
-              <li id="open-tab" data-tab-open>
-                <span><a href="#" class="tab-button">+</a></span>
-              </li>
-  						<li class="explorer" data-tab-for="explorer">
-                <a href="#" rel="expl" class="tab-button"></a>
-              </li>
-  						<li class="examples" data-tab-for="examples">
-                <a href="#" rel="examp" class="tab-button"></a>
-              </li>
-  						<li class="settings" data-tab-for="settings">
-                <a href="#" rel="set" class="tab-button"></a>
-              </li>
-  						<li class="pins" data-tab-for="pins">
-                <a href="#" rel="pins" class="tab-button"></a>
-              </li>
-  						<li class="refs" data-tab-for="refs">
-                <a href="#" rel="refs" class="tab-button"></a>
-              </li>
-            </ul>
-          </div>
-
-          <!--  tab content  -->
-          <div id="tab-content-area">
-            <section id="tab-content" data-tab-content>
-              <div class="tab-info" data-tab="explorer">
-                <span class="title-container">
-                  <h1>Project Explorer<hr /></h1>
-                </span>
-                <span class="dropdown">
-  							  <button class="dropbtn" data-dropdown-for="project">Select a project&hellip;</button>
-  							  <div id="project-dropdown" class="dropdown-content" data-dropdown="project">
-                    <select id="projects" class="projectManager" data-func="openProject">
-                      <option selected>Choose a project from your board</option>
-                    </select>
-  							  </div>
-  							</span>
-
-                <button id="new" class="create-project" data-func="newProject">Create new</button>
-
-                <button class="accordion" data-accordion-for="project-controls">Manage current project</button>
-  							<div class="panel" data-accordion="project-controls">
-                  <button id="saveas" data-func="saveAs">Save project as&hellip;</button>
-                  <button id="cleanProject" data-func="cleanProject">Clean project</button>
-                  <button id="deleteProject" data-func="deleteProject">Delete project</button>
-                </div>
-
-                <button class="accordion" data-accordion-for="manage-files">Manage project files</button>
-                <div class="panel" data-accordion="manage-files">
-                  <button class="button fileManager" data-func="newFile">New file</button>
-                  <button class="button fileManager" data-func="uploadFile" id="uploadFile">Upload</button>
-                  <a data-download-file href="/download" download><!--
-                  --><button id="downloadFile" class="button fileManager">Download</button><!--
-               --></a>
-                  <button class="button fileManager" data-func="renameFile">Rename</button>
-                  <button  class="button fileManager" data-func="deleteFile">Delete</button>
-                  <span class="spacer"></span>
-                  <input type="file" id="uploadFileInput" multiple></input>
-                </div>
-
-                <button class="accordion" data-accordion-for="project-files">Project files</button>
-                <div class="panel" data-accordion="project-files">
-                  <ul class="file-list" data-file-list>
-                  </ul>
-                </div>
-
-                <button class="accordion" data-accordion-for="git">Git</button>
-                <div class="panel" data-accordion="git">
-
-                  <div class="git-no-repo" data-git-no-repo>
-                    <button class="git-manager" data-func="init">Initialise Repo</button>
-                  </div>
-
-                  <div class="git-repo" data-git-repo>
-                    <table class="gitTable">
-
-                      <tr>
-                        <td>
-                          <button class="git-manager" data-func="command" data-command="status">Git status</button>
-                          <button class="git-manager" data-func="command" data-command="log --pretty=oneline">Git log</button>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <select id="branches" class="git-manager" data-func="checkout"></select>
-                          <button class="git-manager" data-func="branch">Create new branch</button>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <button class="git-manager" data-func="command" data-command="add -A">Stage all changes</button>
-                          <button class="git-manager" data-func="commit" >Commit</button>
-                          <button class="git-manager" data-func="command" data-command="checkout -- .">Discard changes</button>
-                        </td>
-                        <!--<button class="git-manager" data-func="command" data-command="revert HEAD">revert previous commit</button>-->
-                      </tr>
-                      <tr>
-                        <td><select id="commits" class="git-manager" data-func="checkout"></select></td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <form data-git-form class="git-manager">
-                            <p>Git command: <input data-git-input type="text"></p>
-                          </form>
-                        </td>
-                      </tr>
-
-                    </table>
-                  </div>
-                </div>
-              </div>
-              <div class="tab-info" data-tab="examples">
-                <ul class="projectManager" data-examples data-func="openExample"></ul>
-              </div>
-              <div class="tab-info" data-tab="settings">
-								<!-- TAB 1: PROJECT SETTINGS -->
-                <span class="title-container">
-                  <h1>Settings<hr /></h1>
-                </span>
-
-                <button class="settingsManager settings-button" data-func="restoreDefaultCLArgs">Restore defaults</button>
-
-                <button class="accordion" data-accordion-for="project-settings">Project Settings</button>
-
-                <div class="panel" data-accordion="project-settings">
-                  <table class="tabTable">
-                    <tr>
-                      <td>Block size (audio frames):</td>
-                      <td>
-                        <select id="buffer-size" class="settingsManager small" data-func="setCLArg" data-key="-p">
-                          <option value="2">2</option>
-                          <option value="4">4</option>
-                          <option value="8">8</option>
-                          <option value="16">16</option>
-                          <option value="32">32</option>
-                          <option value="64">64</option>
-                          <option value="128">128</option>
-                        </select>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Analog Channels:</td>
-                      <td>
-                        <select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
-                          <option value="2">2</option>
-                          <option value="4">4</option>
-                          <option value="8">8</option>
-                        </select>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Analog Sample Rate (Hz):</td>
-                      <td>
-                        <select id="analog-samplerate" class="settingsManager small" data-func="setCLArg" data-key="-C">
-                          <option value="2">88200</option>
-                          <option value="4">44100</option>
-                          <option value="8">22050</option>
-                        </select>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Digital Channels:</td>
-                      <td>
-                        <select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
-                          <option value="2">2</option>
-                          <option value="4">4</option>
-                          <option value="8">8</option>
-                          <option value="16">16</option>
-                        </select>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Headphone level (dB):</td>
-                      <td>
-                        <input id="hp-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-H"></input>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Use Analog:</td>
-                      <td>
-                        <input type="checkbox" id="use-analog" class="settingsManager" data-func="setCLArg" data-key="-N" value="1">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Use Digital:</td>
-                      <td>
-                        <input type="checkbox" id="use-digital" class="settingsManager" data-func="setCLArg" data-key="-G" value="1"><span></span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Mute Speaker:</td>
-                      <td>
-                        <input type="checkbox" id="mute-speaker" class="settingsManager" data-func="setCLArg" data-key="-M" value="1">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>DAC level (dB):</td>
-                      <td>
-                        <input id="dac-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-D"></input>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>ADC level (dB):</td>
-                      <td>
-                        <input id="adc-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-A"></input>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>PGA Gain left (dB):</td>
-                      <td>
-                        <input id="pga-left" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-left"></input>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>PGA Gain right (dB):</td>
-                      <td>
-                        <input id="pga-right" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-right"></input>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Disable LED:</td>
-                      <td>
-                        <input type="checkbox" id="disable-led" class="settingsManager" data-func="setCLArg" data-key="--disable-led" value="0">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>User Command Line Arguments:</td>
-                      <td>
-                        <input id="user-clargs" class="settingsManager" data-func="setCLArg" type="text" data-key="user"></input>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Make Parameters:</td>
-                      <td>
-                        <input id="make-params" class="settingsManager" data-func="setCLArg" type="text" data-key="make"></input>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-
-                <button class="accordion" data-accordion-for="capelet">Capelet Settings</button>
-                <div class="panel" data-accordion="capelet">
-                  <table class="tabTable capelet-settings">
-                    <tr>
-                      <td>Multiplexer Capelet:</td>
-                      <td>
-                        <select id="multiplexer-capelet" class="settingsManager small" data-func="setCLArg" data-key="-X">
-                          <option value="0">Not Used</option>
-                          <option value="2">16 Channels</option>
-                          <option value="4">32 Channels</option>
-                          <option value="8">64 Channels</option>
-                        </select>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Audio Expander Capelet:</td>
-                      <td>
-                        <select id="audio-expander-capelet" class="settingsManager small" data-func="useAudioExpander" data-key="audioExpander">
-                          <option value="0">Not Used</option>
-                          <option value="1">Active</option>
-                        </select>
-                      </td>
-                    </tr>
-                  </table>
-
-                  <table id="audioExpanderTable">
-                    <tr>
-                      <th>Channel</th>
-                      <th>Input</th>
-                      <th>Output</th>
-                    </tr>
-                    <tr>
-                      <td>0</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>1</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>2</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>3</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>4</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>5</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>6</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>7</td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="input" value="0" >
-                      </td>
-                      <td>
-                        <input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="output" value="0" >
-                      </td>
-                    </tr>
-                  </table>
-
-    								<!-- <h1 class="tabTitle">IDE Settings</h1>
-    								<button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">restore defaults</button></br>
-
-    								<table class="tabTable">
-
-    									<tr>
-    										<td>Autocomplete:</td>
-    										<td><input type="checkbox" id="liveAutocompletion" class="settingsManager" data-func="setIDESetting" data-key="liveAutocompletion" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>Syntax Checking:</td>
-    										<td><input type="checkbox" id="liveSyntaxChecking" class="settingsManager" data-func="setIDESetting" data-key="liveSyntaxChecking" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>Verbose build errors:</td>
-    										<td><input type="checkbox" id="verboseErrors" class="settingsManager" data-func="setIDESetting" data-key="verboseErrors" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>CPU monitoring:</td>
-    										<td><input type="checkbox" id="cpuMonitoring" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoring" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>Xenomai stats:</td>
-    										<td><input type="checkbox" id="cpuMonitoringVerbose" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoringVerbose" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>Never delete console logs:</td>
-    										<td><input type="checkbox" id="consoleDelete" class="settingsManager" data-func="setIDESetting" data-key="consoleDelete" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>View hidden files:</td>
-    										<td><input type="checkbox" id="viewHiddenFiles" class="settingsManager" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" ></td>
-    									</tr>
-
-    									<tr>
-    										<td>Run project on boot:</td>
-    										<td><select id="runOnBoot"></select></td>
-    									</tr>
-
-    								</table>
-
-    								<h2>Other system functions</h2>
-    								<table class="tabTable">
-    									<tr>
-    										<td>Shut down Beaglebone:</td>
-    										<td><button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button></td>
-    									</tr>
-    									<tr>
-    										<td>Download entire projects directory:</td>
-    										<td><a href="download?all=all" download><button class="settingsManager">Download All</button></a></td>
-    									</tr>
-    									<tr>
-    										<td>Upload an update patch:</td>
-    										<td><button class="settingsManager" data-func="updateBela">Update Bela</button></td>
-    									</tr>
-    									<tr>
-    										<td>Credits and info:</td>
-    										<td><button class="settingsManager" data-func="aboutPopup">About Bela</button></td>
-    									</tr>
-    								</table> -->
-                </div>
-              </div>
-              <div class="tab-info" data-tab="pins">
-                pins
-              </div>
-              <div class="tab-info" data-tab="refs">
-                <span class="title-container">
-                  <h1>Documentation<hr /></h1>
-                </span>
-  							<a href="documentation" target="_blank">
-                  <button class="doc-button">Full documentation</button>
-                </a>
-  							<ul id="docsParent" class="sections">
-  								<li>
-  									<input type="checkbox" class="docs" id="tit0">
-  									<label for="tit0" class="docSectionHeader">The Bela Context</label>
-  									<ul id="contextDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit1">
-  									<label for="tit1" class="docSectionHeader">The API</label>
-  									<ul id="APIDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit2">
-  									<label for="tit2" class="docSectionHeader">Utilities</label>
-  									<ul id="utilityDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit3">
-  									<label for="tit3" class="docSectionHeader">The Scope</label>
-  									<ul id="ScopeDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit4">
-  									<label for="tit4" class="docSectionHeader">OSC Server</label>
-  									<ul id="OSCServerDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit5">
-  									<label for="tit5" class="docSectionHeader">OSC Client</label>
-  									<ul id="OSCClientDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit6">
-  									<label for="tit6" class="docSectionHeader">OSC Message Factory</label>
-  									<ul id="OSCMessageFactoryDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit7">
-  									<label for="tit7" class="docSectionHeader">UDP Server</label>
-  									<ul id="UdpServerDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit8">
-  									<label for="tit8" class="docSectionHeader">UDP Client</label>
-  									<ul id="UdpClientDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit9">
-  									<label for="tit9" class="docSectionHeader">Midi</label>
-  									<ul id="MidiDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit10">
-  									<label for="tit10" class="docSectionHeader">Midi Parser</label>
-  									<ul id="MidiParserDocs" class="subsections">
-  									</ul>
-  								</li>
-  								<li>
-  									<input type="checkbox" class="docs" id="tit11">
-  									<label for="tit11" class="docSectionHeader">WriteFile data logging</label>
-  									<ul id="WriteFileDocs" class="subsections">
-  									</ul>
-  								</li>
-  							</ul>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-      <div class="lower" data-layout-console></div>
-    </div>
-
-		<div id="innerContent">
-
-      <pre class="editor" id="editor"></pre> <!-- I would normally use a data attribute to select this but the library demands an ID  -->
-
-			<!-- media divs -->
-			<div id="img-display-parent">
+      <div id="img-display-parent">
 				<img id="img-display"/>
 			</div>
 			<div id="pd-svg-parent">
@@ -565,210 +34,590 @@
 				<audio id="audio" controls></audio>
 			</div>
 
-      <div id="tabs">
-        <div id="tab-menu">
-					<ul class="tab-switches">
-						<li id="open-tab"><span><a href="#" class="tab-button">+</a></span></li>
-						<li class="explorer"><a href="#expl" rel="expl" class="tab-button"></a></li>
-						<li class="examples"><a href="#examp" rel="examp" class="tab-button"></a></li>
-						<li class="settings"><a href="#set" rel="set" class="tab-button"></a></li>
-						<li class="pins"><a href="#pins" rel="pins" class="tab-button"></a></li>
-						<li class="refs"><a href="#refs" rel="refs" class="tab-button"></a></li>
-					</ul>
-				</div><!-- end tab menu -->
-      </div>
+      <pre id="editor" class="editor"></pre>
 
-			<!-- Here the right tabbed content starts: -->
-			<div id="right">
-				<div id="tab-parent">
-					<div class="tab" id="flexit">
-						<input type="radio" id="exp" name="tab-group-1" checked>
-						<label for="tab-0" id="tab-0"><span id="open-tabs" title="Open Tabs" /></label>
-						<div class="tabContent">
-						</div>
-					</div>
+      <!-- tabs -->
 
-					<div class="tab"><!-- Begin File Explorer, Tab 2 -->
-						<input type="radio" id="tab-2" name="tab-group-1">
-						<label for="tab-2"><span id="file-explorer" title="File Explorer" /></label>
-						<div class="tabContent projectManager-parent fileManager-parent">
-							<!-- <div class="settingsManager-parent"> -->
-              <!--  fucking tab -->
-								<h1 class="tabTitle">Project Explorer</h1>
-										<h2>Open existing project:</h2>
-											<select id="projects" class="projectManager" data-func="openProject">
-												<option selected>Choose a project from your board</option>
+      <div class="tabs" data-tabs>
+        <div id="tab-menu" data-tab-menu>
+          <ul class="tab-switches">
+            <li id="open-tab" data-tab-open>
+              <span><a href="#" class="tab-button">+</a></span>
+            </li>
+						<li class="explorer" data-tab-for="explorer">
+              <a href="#" rel="expl" class="tab-button"></a>
+            </li>
+						<li class="examples" data-tab-for="examples">
+              <a href="#" rel="examp" class="tab-button"></a>
+            </li>
+						<li class="settings" data-tab-for="settings">
+              <a href="#" rel="set" class="tab-button"></a>
+            </li>
+						<li class="pins" data-tab-for="pins">
+              <a href="#" rel="pins" class="tab-button"></a>
+            </li>
+						<li class="refs" data-tab-for="refs">
+              <a href="#" rel="refs" class="tab-button"></a>
+            </li>
+          </ul>
+        </div>
 
-											</select>
-									<hr class="sep" />
+        <!--  tab content  -->
+        <div id="tab-content-area">
+          <section id="tab-content" data-tab-content>
+            <div class="tab-info" data-tab="explorer">
+              <span class="title-container">
+                <h1>Project Explorer<hr /></h1>
+              </span>
+              <span class="dropdown" data-projects>
+							  <button class="dropbtn" data-dropdown-for="project">Select a project&hellip;</button>
+                <div class="dropdown-content" data-dropdown="project">
+                  <select class="projectManager" id="projects" data-projects-select data-func="openProject">
+  									<option selected>Choose a project from your board</option>
+							    </select>
+                </div>
+							</span>
 
-										<h2>Manage projects:</h2>
-										<button class="button projectManager" id="new" data-func="newProject">New project</button>
-										<button class="button projectManager" id="saveas" data-func="saveAs">Save project as ...</button>
-										<button class="button projectManager" id="deleteProject" data-func="deleteProject">Delete project</button>
-										<button class="button projectManager" id="cleanProject" data-func="cleanProject">Clean project</button>
+              <button id="new" class="create-project projectManager" data-func="newProject">Create new</button>
 
-									<hr class="sep" />
-										<h2>Manage project files:</h2>
-										<button class="button fileManager" data-func="newFile">New file</button>
-										<button class="button fileManager" data-func="uploadFile" id="uploadFile">Upload file</button>
-										<a id="downloadFileLink" href="/download" download><button id="downloadFile"  class="button fileManager">Download file</button></a>
-										<button class="button fileManager" data-func="renameFile">Rename file</button>
-										<button  class="button fileManager" data-func="deleteFile">Delete file</button>
-										<input type="file" id="uploadFileInput" multiple></input>
+              <button class="accordion" data-accordion-for="project-controls">Manage current project</button>
+							<div class="panel" data-accordion="project-controls">
+                <button id="saveas" class="projectManager" data-func="saveAs">Save project as&hellip;</button>
+                <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
+                <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
+              </div>
 
+              <button class="accordion" data-accordion-for="manage-files">Manage project files</button>
+              <div class="panel" data-accordion="manage-files">
+                <button class="button fileManager" data-func="newFile">New file</button>
+                <button class="button fileManager" data-func="uploadFile" id="uploadFile">Upload</button>
+                <a data-download-file href="/download" download>
+                  <button id="downloadFile" class="button fileManager">Download</button>
+                </a>
+                <button class="button fileManager" data-func="renameFile">Rename</button>
+                <button  class="button fileManager" data-func="deleteFile">Delete</button>
+                <span class="spacer"></span>
+                <input type="file" id="uploadFileInput" multiple></input>
+              </div>
 
-									<hr class="sep" />
-										<h2>Current project files:</h2>
-										<ul id="fileList">
-										</ul>
+              <button class="accordion" data-accordion-for="project-files">Project files</button>
+              <div class="panel" data-accordion="project-files">
+                <ul class="file-list" data-file-list>
+                </ul>
+              </div>
 
+              <button class="accordion" data-accordion-for="git">Git</button>
+              <div class="panel" data-accordion="git">
 
+                <div class="git-no-repo" data-git-no-repo>
+                  <button class="git-manager" data-func="init">Initialise Repo</button>
+                </div>
 
-							<!-- </div> -->
+                <div class="git-repo" data-git-repo>
+                  <table class="gitTable">
 
-<!-- 							<div class="fileManager-parent"> -->
-<!-- 									<div class="proj-expl">
-										<h2 id="fileListTitle">Manage Files:</h2>
+                    <tr>
+                      <td>
+                        <button class="git-manager" data-func="command" data-command="status">Git status</button>
+                        <button class="git-manager" data-func="command" data-command="log --pretty=oneline">Git log</button>
+                      </td>
+                    </tr>
 
-									</div> -->
+                    <tr>
+                      <td>
+                        <select id="branches" class="git-manager" data-func="checkout"></select>
+                        <button class="git-manager" data-func="branch">Create new branch</button>
+                      </td>
+                    </tr>
 
-							<hr class="sep" />
-							<div class="gitManager-parent">
-							<h2>Git:</h2>
-							<div id="noRepo">
-								<button class="gitManager" data-func="init">Initialise Repo</button>
-							</div>
-							<div id="repo" style="display:none">
-								<table class="gitTable">
+                    <tr>
+                      <td>
+                        <button class="git-manager" data-func="command" data-command="add -A">Stage all changes</button>
+                        <button class="git-manager" data-func="commit" >Commit</button>
+                        <button class="git-manager" data-func="command" data-command="checkout -- .">Discard changes</button>
+                      </td>
+                      <!--<button class="git-manager" data-func="command" data-command="revert HEAD">revert previous commit</button>-->
+                    </tr>
+                    <tr>
+                      <td><select id="commits" class="git-manager" data-func="checkout"></select></td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <form data-git-form class="git-manager">
+                          <p>Git command: <input data-git-input type="text"></p>
+                        </form>
+                      </td>
+                    </tr>
+
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="tab-info" data-tab="examples">
+              <ul class="projectManager" data-examples data-func="openExample"></ul>
+            </div>
+            <div class="tab-info" data-tab="settings">
+							<!-- TAB 1: PROJECT SETTINGS -->
+              <span class="title-container">
+                <h1>Settings<hr /></h1>
+              </span>
+
+              <button class="settingsManager settings-button" data-func="restoreDefaultCLArgs">Restore defaults</button>
+
+              <button class="accordion" data-accordion-for="project-settings">Project Settings</button>
+
+              <div class="panel" data-accordion="project-settings">
+                <table class="tabTable">
+                  <tr>
+                    <td>Block size (audio frames):</td>
+                    <td>
+                      <select id="buffer-size" class="settingsManager small" data-func="setCLArg" data-key="-p">
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                        <option value="16">16</option>
+                        <option value="32">32</option>
+                        <option value="64">64</option>
+                        <option value="128">128</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Analog Channels:</td>
+                    <td>
+                      <select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Analog Sample Rate (Hz):</td>
+                    <td>
+                      <select id="analog-samplerate" class="settingsManager small" data-func="setCLArg" data-key="-C">
+                        <option value="2">88200</option>
+                        <option value="4">44100</option>
+                        <option value="8">22050</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Digital Channels:</td>
+                    <td>
+                      <select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                        <option value="16">16</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Headphone level (dB):</td>
+                    <td>
+                      <input id="hp-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-H"></input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Use Analog:</td>
+                    <td>
+                      <input type="checkbox" id="use-analog" class="settingsManager" data-func="setCLArg" data-key="-N" value="1">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Use Digital:</td>
+                    <td>
+                      <input type="checkbox" id="use-digital" class="settingsManager" data-func="setCLArg" data-key="-G" value="1"><span></span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Mute Speaker:</td>
+                    <td>
+                      <input type="checkbox" id="mute-speaker" class="settingsManager" data-func="setCLArg" data-key="-M" value="1">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>DAC level (dB):</td>
+                    <td>
+                      <input id="dac-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-D"></input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>ADC level (dB):</td>
+                    <td>
+                      <input id="adc-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-A"></input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>PGA Gain left (dB):</td>
+                    <td>
+                      <input id="pga-left" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-left"></input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>PGA Gain right (dB):</td>
+                    <td>
+                      <input id="pga-right" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-right"></input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Disable LED:</td>
+                    <td>
+                      <input type="checkbox" id="disable-led" class="settingsManager" data-func="setCLArg" data-key="--disable-led" value="0">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>User Command Line Arguments:</td>
+                    <td>
+                      <input id="user-clargs" class="settingsManager" data-func="setCLArg" type="text" data-key="user"></input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Make Parameters:</td>
+                    <td>
+                      <input id="make-params" class="settingsManager" data-func="setCLArg" type="text" data-key="make"></input>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <button class="accordion" data-accordion-for="capelet">Capelet Settings</button>
+              <div class="panel" data-accordion="capelet">
+                <table class="tabTable capelet-settings">
+                  <tr>
+                    <td>Multiplexer Capelet:</td>
+                    <td>
+                      <select id="multiplexer-capelet" class="settingsManager small" data-func="setCLArg" data-key="-X">
+                        <option value="0">Not Used</option>
+                        <option value="2">16 Channels</option>
+                        <option value="4">32 Channels</option>
+                        <option value="8">64 Channels</option>
+                      </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Audio Expander Capelet:</td>
+                    <td>
+                      <select id="audio-expander-capelet" class="settingsManager small" data-func="useAudioExpander" data-key="audioExpander">
+                        <option value="0">Not Used</option>
+                        <option value="1">Active</option>
+                      </select>
+                    </td>
+                  </tr>
+                </table>
+
+                <table id="audioExpanderTable">
+                  <tr>
+                    <th>Channel</th>
+                    <th>Input</th>
+                    <th>Output</th>
+                  </tr>
+                  <tr>
+                    <td>0</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>1</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>5</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>6</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>7</td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="input" value="0" >
+                    </td>
+                    <td>
+                      <input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <button class="accordion" data-accordion-for="ide-settings">IDE Settings</button>
+              <div class="panel" data-accordion="ide-settings">
+								<button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">restore defaults</button>
+
+								<table class="tabTable">
+
 									<tr>
-										<td><button class="gitManager" data-func="command" data-command="status">Git status</button><button class="gitManager" data-func="command" data-command="log --pretty=oneline">Git log</button></td>
+										<td>Autocomplete:</td>
+										<td><input type="checkbox" id="liveAutocompletion" class="settingsManager" data-func="setIDESetting" data-key="liveAutocompletion" value="1" ></td>
 									</tr>
 
 									<tr>
-										<td><select id="branches" class="gitManager" data-func="checkout"></select><button class="gitManager" data-func="branch">Create new branch</button></td>
+										<td>Syntax Checking:</td>
+										<td><input type="checkbox" id="liveSyntaxChecking" class="settingsManager" data-func="setIDESetting" data-key="liveSyntaxChecking" value="1" ></td>
 									</tr>
 
 									<tr>
-										<td><button class="gitManager" data-func="command" data-command="add -A">Stage all changes</button><button class="gitManager" data-func="commit" >Commit</button><button class="gitManager" data-func="command" data-command="checkout -- .">Discard changes</button></td>
-								<!--<button class="gitManager" data-func="command" data-command="revert HEAD">revert previous commit</button>-->
-									</tr>
-									<tr>
-										<td><select id="commits" class="gitManager" data-func="checkout"></select></td>
+										<td>Verbose build errors:</td>
+										<td><input type="checkbox" id="verboseErrors" class="settingsManager" data-func="setIDESetting" data-key="verboseErrors" value="1" ></td>
 									</tr>
 
 									<tr>
-										<td><form id="gitForm" class="gitManager">
+										<td>CPU monitoring:</td>
+										<td><input type="checkbox" id="cpuMonitoring" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoring" value="1" ></td>
+									</tr>
 
-										<p>Git command: <input id="gitInput" type="text"></p>
-											</form>
-										</td>
+									<tr>
+										<td>Xenomai stats:</td>
+										<td><input type="checkbox" id="cpuMonitoringVerbose" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoringVerbose" value="1" ></td>
+									</tr>
+
+									<tr>
+										<td>Never delete console logs:</td>
+										<td><input type="checkbox" id="consoleDelete" class="settingsManager" data-func="setIDESetting" data-key="consoleDelete" value="1" ></td>
+									</tr>
+
+									<tr>
+										<td>View hidden files:</td>
+										<td><input type="checkbox" id="viewHiddenFiles" class="settingsManager" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" ></td>
+									</tr>
+
+									<tr>
+										<td>Run project on boot:</td>
+										<td><select id="runOnBoot"></select></td>
+									</tr>
+
+								</table>
+              </div>
+
+							<button class="accordion" data-accordion-for="other-settings">Other system functions</button>
+              <div class="panel" data-accordion="other-settings">
+								<table class="tabTable">
+									<tr>
+										<td>Shut down Beaglebone:</td>
+										<td>
+                      <button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button>
+                    </td>
+									</tr>
+									<tr>
+										<td>Download entire projects directory:</td>
+										<td>
+                      <a href="download?all=all" download><button class="settingsManager">Download All</button></a>
+                    </td>
+									</tr>
+									<tr>
+										<td>Upload an update patch:</td>
+										<td>
+                      <button class="settingsManager" data-func="updateBela">Update Bela</button>
+                    </td>
+									</tr>
+									<tr>
+										<td>Credits and info:</td>
+										<td>
+                      <button class="settingsManager" data-func="aboutPopup">About Bela</button>
+                    </td>
 									</tr>
 								</table>
-								</div>
-							</div>
-							</br></br></br>
-						</div>
-					</div><!-- end File Explorer tab -->
+              </div>
 
-					<div class="tab"><!-- Start Examples, Tab 6 -->
-					<input type="radio" id="tab-6" name="tab-group-1">
-						<label for="tab-6"><span id="example-tab" title="Code Examples" /></label>
-					<div class="tabContent">
-							<h1>Code Examples</h1>
-							<h2>Open Example Project:</h2>
-							<ul class="projectManager" id="examples" data-func="openExample"></ul>
-						</div>
-					</div><!-- End Examples -->
+            </div>
 
-					<div class="tab"><!-- Begin Project Settings, Tab 1 -->
+            <div class="tab-info" data-tab="pins">
+              <div class="title-container">
+                <h1>Pin Diagram<hr /></h1>
+              </div>
+              <div id="pin_container">
+                <object data="diagram.html" id="pin_diagram_object">
+                  Your browser doesn’t support the object tag.
+                </object>
+              </div>
+            </div>
+            <div class="tab-info" data-tab="refs">
+              <span class="title-container">
+                <h1>Documentation<hr /></h1>
+              </span>
+							<a href="documentation" target="_blank">
+                <button class="doc-button">Full documentation</button>
+              </a>
+							<ul id="docsParent" class="sections">
+								<li>
+									<input type="checkbox" class="docs" id="tit0">
+									<label for="tit0" class="docSectionHeader">The Bela Context</label>
+									<ul id="contextDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit1">
+									<label for="tit1" class="docSectionHeader">The API</label>
+									<ul id="APIDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit2">
+									<label for="tit2" class="docSectionHeader">Utilities</label>
+									<ul id="utilityDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit3">
+									<label for="tit3" class="docSectionHeader">The Scope</label>
+									<ul id="ScopeDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit4">
+									<label for="tit4" class="docSectionHeader">OSC Server</label>
+									<ul id="OSCServerDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit5">
+									<label for="tit5" class="docSectionHeader">OSC Client</label>
+									<ul id="OSCClientDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit6">
+									<label for="tit6" class="docSectionHeader">OSC Message Factory</label>
+									<ul id="OSCMessageFactoryDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit7">
+									<label for="tit7" class="docSectionHeader">UDP Server</label>
+									<ul id="UdpServerDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit8">
+									<label for="tit8" class="docSectionHeader">UDP Client</label>
+									<ul id="UdpClientDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit9">
+									<label for="tit9" class="docSectionHeader">Midi</label>
+									<ul id="MidiDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit10">
+									<label for="tit10" class="docSectionHeader">Midi Parser</label>
+									<ul id="MidiParserDocs" class="subsections">
+									</ul>
+								</li>
+								<li>
+									<input type="checkbox" class="docs" id="tit11">
+									<label for="tit11" class="docSectionHeader">WriteFile data logging</label>
+									<ul id="WriteFileDocs" class="subsections">
+									</ul>
+								</li>
+							</ul>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
 
-					</div><!-- end Project Settings tab -->
+    <div class="lower" data-lower>
 
-					<div class="tab"><!-- Start GPIO, Tab 4 -->
-						<input type="radio" id="tab-4" name="tab-group-1">
-						<label for="tab-4"><span id="gpio-ref" title="Pin Diagram" /></label>
-						<div class="tabContent">
-							<h1>Pin Diagram</h1>
-							<object data="diagram.html" id="pin_diagram_object">
-								Your browser doesn’t support the object tag.
-							</object>
-						</div>
-					</div><!-- End GPIO -->
+      <div class="toolbar" id="toolbar" data-toolbar>
+        <div class="logo">
+          <img src="images/logo.png">
+        </div>
 
-					<div class="tab"><!-- Start Doc, Tab 5 -->
-						<input type="radio" id="tab-5" name="tab-group-1">
-						<label for="tab-5"><span id="api-ref" title="API Reference" /></label>
-						<div id="docTab" class="tabContent">
+        <div class="start-stop">
+          <span class="control-button-runstop start run" data="Run project" id="run" data-toolbar-run data-func="run"></span>
+          <span class="control-button-runstop start stop" data="Stop project" data-toolbar-stop id="stop" data-fun="stop"></span>
+        </div>
+        <div id="control-text-1" class="tool-text st-st" data-toolbar-controltext1></div>
 
-						</div><!-- Xenomai -->
-					</div><!-- end Doc tab -->
+        <div class="toolbar-functions">
+					<span class="tab-button" data="New tab"></span>
+					<span class="scope-button" data="Launch scope"></span>
+					<span class="drag-button" data="Resize console"></span>
+					<span class="console-button" data="Clear console"></span>
+          <span id="control-text-2" class="tool-text control-text" data-toolbar-controltext2></span>
+				</div>
+				<div class="tool-text other"></div>
+        <span id="control-text-3" class="control-text tool-text" data-toolbar-controltext3></span>
+				<!-- <div class="system-status-text bela">Bela: --%</div> -->
+				<div class="system-status-text cpu" data-toolbar-bela-cpu>CPU: --%</div>
+				<div class="system-status-text msw" data-toolbar-cpu-msw>MSW: --</div>
+				<div class="syntax-status" data-toolbar-status></div>
+			</div>
+      <div id="beaglert-console" data-console>
+        <div id="beaglert-consoleWrapper" data-console-contents-wrapper></div>
+        <form id="beaglert-consoleForm" data-console-form>
+          <div id="beaglert-console-inputLeft">
+            <div id="beaglert-consoleInput-pre" data-console-input-pre></div>
+          </div>
+          <div id="beaglert-console-inputRight">
+            <input id="beaglert-consoleInput" type="text" autocomplete="off" data-console-input/>
+          </div>
+          <input type="submit" style="visibility: hidden; display: none;" />
+        </form>
+      </div>
+    </div>
 
-				</div><!-- end tabs -->
-			</div> <!-- end right -->
-
-			<!-- TOOLBAR -->
-			<div id="toolbar">
-				<div class="toolbar-wrapper toolBar-parent">
-					<div class="toolbar-control">
-						<div class="control-button-runstop toolBar" id="run" data-func="run"></div>
-						<div class="control-button-runstop toolBar" id="stop" data-func="stop"></div>
-						<span id="control-text-1" class="control-text"></span>
-					</div>
-					<div class="toolbar-control">
-						<a target="_blank" href=""><div class="control-button" id="new-tab"></div></a>
-						<a id="downloadLink"><div class="control-button" id="download"></div></a>
-						<span id="control-text-2" class="control-text"></span>
-					</div>
-					<div class="toolbar-control">
-						<a target="_blank" href="scope"><div class="control-button" id="scope"></div></a>
-						<div class="control-button toolBar" id="console" data-func="clearConsole"></div>
-						<span id="control-text-3" class="control-text"></span>
-					</div>
-					<!-- This is the field for system status text -->
-					<div class="toolbar-control control-text">
-						<span class="status-text" style="display:none" >Field 1</span>
-						<span id="bela-cpu" class="status-text"></span>
-						<span id="msw-cpu" class="status-text" title="audio-thread modeswitches"></span>
-					</div>
-
-					<!-- This is the image that signifies the status of syntax checking -->
-					<div id="status">
-					</div>
-
-					<!-- This is the Bela logo -->
-					<div id="logo">
-						<img src="images/logo_bar14.png">
-					</div><!-- end logo -->
-
-				</div><!-- end toolbar wrapper -->
-			</div> <!-- end toolbar -->
-
-		</div> <!-- end innerContent -->
-
-		<div id="overlay">
+		<div id="overlay" data-overlay>
 		</div>
 
-		<div id="popup">
-			<div id="popup-content">
+		<div id="popup" data-popup>
+			<div id="popup-content" data-popup-content>
 				<h1></h1>
 				<p></p>
 				<form></form>
 			</div>
 		</div>
-
-    <div id="beaglert-console" data-console>
-      <div id="beaglert-consoleWrapper" data-console-contents-wrapper></div>
-      <form id="beaglert-consoleForm" data-console-form>
-        <div id="beaglert-console-inputLeft">
-          <div id="beaglert-consoleInput-pre" data-console-input-pre></div>
-        </div>
-        <div id="beaglert-console-inputRight">
-          <input id="beaglert-consoleInput" type="text" autocomplete="off" data-console-input/>
-        </div>
-        <input type="submit" style="visibility: hidden; display: none;" />
-      </form>
-    </div>
 
 		<script src="js/ace/ace.js"></script>
 		<script src="js/ace/ext-language_tools.js"></script>
