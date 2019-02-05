@@ -25,6 +25,7 @@ class View extends EventEmitter{
 		this.$elements.filter('input').on('input', (e) => this.inputChanged($(e.currentTarget), e));
 		this.$elements.filter('input[type=checkbox]').on('change', (e) => this.inputChanged($(e.currentTarget), e));
 		this.$elements.filter('button').on('click', (e) => this.buttonClicked($(e.currentTarget), e));
+    // this.$elements.filter('span').on('click', (e) => this.buttonClicked($(e.currentTarget), e));
 
 	}
 

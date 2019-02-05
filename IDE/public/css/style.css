@@ -1072,6 +1072,26 @@ input[type="text"] {
   input[type="text"]:disabled {
     background: #f1f1f1; }
 
+@-webkit-keyframes running-button {
+  from {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg); }
+  to {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg); } }
+
+@keyframes running-button {
+  from {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg); }
+  to {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg); } }
+
+.running-button {
+  -webkit-animation: running-button 2s linear infinite;
+          animation: running-button 2s linear infinite; }
+
 .toolbar {
   background: #c9c9c9;
   bottom: 0;
@@ -1142,7 +1162,6 @@ input[type="text"] {
     padding-left: 10px;
     width: 81px; }
   .toolbar .toolbar-functions {
-    min-width: 150px;
     padding: 2px 0; }
   .toolbar .system-status-text {
     margin-top: 14px;

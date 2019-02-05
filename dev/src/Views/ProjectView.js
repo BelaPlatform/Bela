@@ -232,21 +232,21 @@ class ProjectView extends View {
 	_currentProject(project){
 
 		// unselect currently selected project
-		$('#projects').find('option').filter(':selected').attr('selected', '');
+		$('[data-projects-select]').find('option').filter(':selected').attr('selected', '');
 
 		if (project === 'exampleTempProject'){
 			// select no project
-			$('#projects').val($('#projects > option:first').val());
+			$('[data-projects-select]').val($('[data-projects-select] > option:first').val());
 		} else {
 			// select new project
 			//$('#projects option[value="'+project+'"]').attr('selected', 'selected');
-			$('#projects').val($('#projects > option[value="'+project+'"]').val());
+			$('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
 			// unselect currently selected example
-			$('.selectedExample').removeClass('selectedExample');
+			// $('.selectedExample').removeClass('selectedExample');
 		}
 
 		// set download link
-		$('#downloadLink').attr('href', '/download?project='+project);
+		$('[data-download-file]').attr('href', '/download?project=' + project);
 
 	}
 
