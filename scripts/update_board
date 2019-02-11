@@ -176,7 +176,7 @@ ssh "$BBB_ADDRESS" "
 	cd \"$BBB_BELA_HOME\"/resources/\"$DEBIAN_VERSION\"/deb/ &&\
 	ls *.deb &>/dev/null &&\
 	{
-		dpkg - i *.deb && ldconfig || exit 1
+		dpkg -i *.deb && ldconfig || exit 1
 	}; exit 0
 	"
 error_handler $?
