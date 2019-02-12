@@ -170,3 +170,39 @@ Slider.prototype.getPosition = function() {
 Slider.prototype.getDimensions = function() {
         return [this.element.width, this.element.height];
 }
+
+var downloadObjectAsJson = function(exportObj, exportName, space, format){
+  var format = format || ".json";
+  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, space||null));
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href",     dataStr);
+  downloadAnchorNode.setAttribute("download", exportName + format);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+var getGuiStatus = function(download = true) {
+        let statusObj = {};
+        let date = new Date();
+        for(s in sliders)
+        {
+                statusObj[sliders[s].id] =
+                {
+                        name: sliders[s].name,
+                        value: sliders[s].element.value()
+                }
+        }
+        if(download) {
+                downloadObjectAsJson(statusObj, 'P5Gui_'+date.getTime());
+        }
+        return JSON.stringify(statusObj);
+}
+
+var setGuiStatus = function(jsonObj) {
+        let statusObj = JSON.parse(jsonObj);
+        for(s in statusObj)
+        {
+                let matchS = sliders.find(e => e.id == s);
+                matchS.element.value(statusObj[s].value);
+        }
+}
