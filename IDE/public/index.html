@@ -192,115 +192,142 @@
               <button class="accordion" data-accordion-for="project-settings">Project Settings</button>
 
               <div class="panel" data-accordion="project-settings">
-                <table class="tabTable">
+                <table class="tabTable choice">
                   <tr>
-                    <td>Block size (audio frames):</td>
-                    <td>
-                      <select id="buffer-size" class="settingsManager small" data-func="setCLArg" data-key="-p">
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="8">8</option>
-                        <option value="16">16</option>
-                        <option value="32">32</option>
-                        <option value="64">64</option>
-                        <option value="128">128</option>
-                      </select>
+                    <td class="left-choice">Block size (audio frames):</td>
+                    <td class="right-choice">
+                      <span class="mini-dropdown">
+                        <select id="buffer-size" class="settingsManager small" data-func="setCLArg" data-key="-p">
+                          <option value="2">2</option>
+                          <option value="4">4</option>
+                          <option value="8">8</option>
+                          <option value="16">16</option>
+                          <option value="32">32</option>
+                          <option value="64">64</option>
+                          <option value="128">128</option>
+                        </select>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>Analog Channels:</td>
-                    <td>
-                      <select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="8">8</option>
-                      </select>
+                    <td class="left-choice">Analog Channels:</td>
+                    <td class="right-choice">
+                      <span class="mini-dropdown">
+                        <select id="analog-channels" class="settingsManager small" data-func="setCLArg" data-key="-C">
+                          <option value="2">2</option>
+                          <option value="4">4</option>
+                          <option value="8">8</option>
+                        </select>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>Analog Sample Rate (Hz):</td>
-                    <td>
-                      <select id="analog-samplerate" class="settingsManager small" data-func="setCLArg" data-key="-C">
-                        <option value="2">88200</option>
-                        <option value="4">44100</option>
-                        <option value="8">22050</option>
-                      </select>
+                    <td class="left-choice">Analog Sample Rate (Hz):</td>
+                    <td class="right-choice">
+                      <span class="mini-dropdown">
+                        <select id="analog-samplerate" class="settingsManager small" data-func="setCLArg" data-key="-C">
+                          <option value="2">88200</option>
+                          <option value="4">44100</option>
+                          <option value="8">22050</option>
+                        </select>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>Digital Channels:</td>
-                    <td>
-                      <select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
-                        <option value="2">2</option>
-                        <option value="4">4</option>
-                        <option value="8">8</option>
-                        <option value="16">16</option>
-                      </select>
+                    <td class="left-choice">Digital Channels:</td>
+                    <td class="right-choice">
+                      <span class="mini-dropdown">
+                        <select id="digital-channels" class="settingsManager small" data-func="setCLArg" data-key="-B">
+                          <option value="2">2</option>
+                          <option value="4">4</option>
+                          <option value="8">8</option>
+                          <option value="16">16</option>
+                        </select>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>Headphone level (dB):</td>
-                    <td>
-                      <input id="hp-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-H"></input>
+                    <td class="left-choice">Headphone level (dB):</td>
+                    <td class="right-choice">
+                      <span class="number-picker" data-number-picker>
+                        <button class="settingsManager input-number-decrement"  data-func="setCLArg" data-key="-H" data-number-picker-decrement value="">-</button>
+                        <input id="hp-level" class="settingsManager input-number number-picker" data-func="setCLArg" type="text" max="0" min="-63" step="1" data-key="-H" data-number-picker-input></input>
+                        <button class="settingsManager input-number-increment"  data-func="setCLArg" data-key="-H" data-number-picker-increment value="">+</button>
                     </td>
                   </tr>
                   <tr>
-                    <td>Use Analog:</td>
-                    <td>
-                      <input type="checkbox" id="use-analog" class="settingsManager" data-func="setCLArg" data-key="-N" value="1">
+                    <td class="left-choice">Use Analog:</td>
+                    <td class="right-choice">
+                      <input type="checkbox" id="use-analog" class="settingsManager checkbox-slider" data-func="setCLArg" data-key="-N" value="1">
                     </td>
                   </tr>
                   <tr>
-                    <td>Use Digital:</td>
-                    <td>
-                      <input type="checkbox" id="use-digital" class="settingsManager" data-func="setCLArg" data-key="-G" value="1"><span></span>
+                    <td class="left-choice">Use Digital:</td>
+                    <td class="right-choice">
+                      <input type="checkbox" id="use-digital" class="settingsManager checkbox-slider" data-func="setCLArg" data-key="-G" value="1"><span></span>
                     </td>
                   </tr>
                   <tr>
-                    <td>Mute Speaker:</td>
-                    <td>
-                      <input type="checkbox" id="mute-speaker" class="settingsManager" data-func="setCLArg" data-key="-M" value="1">
+                    <td class="left-choice">Mute Speaker:</td>
+                    <td class="right-choice">
+                      <input type="checkbox" id="mute-speaker" class="settingsManager checkbox-slider" data-func="setCLArg" data-key="-M" value="1">
                     </td>
                   </tr>
                   <tr>
-                    <td>DAC level (dB):</td>
-                    <td>
-                      <input id="dac-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-D"></input>
+                    <td class="left-choice">DAC level (dB):</td>
+                    <td class="right-choice">
+                      <span class="number-picker" data-number-picker>
+                        <button class="settingsManager input-number-decrement"  data-func="setCLArg" data-key="-D" data-number-picker-decrement value="">-</button>
+                        <input id="dac-level" class="settingsManager input-number number-picker" data-func="setCLArg" type="text" max="0" min="-63" step="1" data-key="-D" data-number-picker-input></input>
+                        <button class="settingsManager input-number-increment"  data-func="setCLArg" data-key="-D" data-number-picker-increment value="">+</button>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>ADC level (dB):</td>
-                    <td>
-                      <input id="adc-level" class="settingsManager" data-func="setCLArg" type="number" max="0" min="-63" step="1" data-key="-A"></input>
+                    <td class="left-choice">ADC level (dB):</td>
+                    <td class="right-choice">
+                      <span class="number-picker" data-number-picker>
+                        <button class="settingsManager input-number-decrement" data-func="setCLArg" data-key="-A" data-number-picker-decrement>-</button>
+                        <input id="adc-level" class="settingsManager input-number number-picker" data-func="setCLArg" type="text" max="0" min="-63" step="1" data-key="-A" data-number-picker-input></input>
+                        <button class="settingsManager input-number-increment" data-func="setCLArg" data-key="-A" data-number-picker-increment>+</button>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>PGA Gain left (dB):</td>
-                    <td>
-                      <input id="pga-left" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-left"></input>
+                    <td class="left-choice">PGA Gain left (dB):</td>
+                    <td class="right-choice">
+                      <span class="number-picker" data-number-picker>
+                        <button class="settingsManager input-number-decrement" data-func="setCLArg" data-key="--pga-gain-left" data-number-picker-decrement>-</button>
+                        <input id="pga-left" class="settingsManager input-number number-picker" data-func="setCLArg" type="text" min="0" max="63" step="1" data-key="--pga-gain-left" data-number-picker-input></input>
+                        <button class="settingsManager input-number-increment" data-func="setCLArg" data-key="--pga-gain-left" data-number-picker-increment>+</button>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>PGA Gain right (dB):</td>
-                    <td>
-                      <input id="pga-right" class="settingsManager" data-func="setCLArg" type="number" min="0" max="63" step="1" data-key="--pga-gain-right"></input>
+                    <td class="left-choice">PGA Gain right (dB):</td>
+                    <td class="right-choice">
+                      <span class="number-picker" data-number-picker>
+                        <button class="settingsManager input-number-decrement" data-func="setCLArg" data-key="--pga-gain-right" data-number-picker-decrement>-</button>
+                        <input id="pga-right" class="settingsManager input-number number-picker" data-func="setCLArg" type="text" min="0" max="63" step="1" data-key="--pga-gain-right" data-number-picker-input></input>
+                        <button class="settingsManager input-number-increment" data-func="setCLArg" data-key="--pga-gain-right" data-number-picker-increment>+</button>
+                      </span>
                     </td>
                   </tr>
                   <tr>
-                    <td>Disable LED:</td>
-                    <td>
-                      <input type="checkbox" id="disable-led" class="settingsManager" data-func="setCLArg" data-key="--disable-led" value="0">
+                    <td class="left-choice">Disable LED:</td>
+                    <td class="right-choice">
+                      <input type="checkbox" id="disable-led" class="settingsManager checkbox-slider" data-func="setCLArg" data-key="--disable-led" value="0">
                     </td>
                   </tr>
                   <tr>
-                    <td>User Command Line Arguments:</td>
-                    <td>
+                    <td class="left-choice">User Command Line Arguments:</td>
+                    <td class="right-choice">
                       <input id="user-clargs" class="settingsManager" data-func="setCLArg" type="text" data-key="user"></input>
                     </td>
                   </tr>
                   <tr>
-                    <td>Make Parameters:</td>
-                    <td>
+                    <td class="left-choice">Make Parameters:</td>
+                    <td class="right-choice">
                       <input id="make-params" class="settingsManager" data-func="setCLArg" type="text" data-key="make"></input>
                     </td>
                   </tr>
@@ -309,10 +336,10 @@
 
               <button class="accordion" data-accordion-for="capelet">Capelet Settings</button>
               <div class="panel" data-accordion="capelet">
-                <table class="tabTable capelet-settings">
+                <table class="tabTable capelet-settings choice">
                   <tr>
-                    <td>Multiplexer Capelet:</td>
-                    <td>
+                    <td class="left-choice">Multiplexer Capelet:</td>
+                    <td class="right-choice">
                       <select id="multiplexer-capelet" class="settingsManager small" data-func="setCLArg" data-key="-X">
                         <option value="0">Not Used</option>
                         <option value="2">16 Channels</option>
@@ -322,8 +349,8 @@
                     </td>
                   </tr>
                   <tr>
-                    <td>Audio Expander Capelet:</td>
-                    <td>
+                    <td class="left-choice">Audio Expander Capelet:</td>
+                    <td class="right-choice">
                       <select id="audio-expander-capelet" class="settingsManager small" data-func="useAudioExpander" data-key="audioExpander">
                         <option value="0">Not Used</option>
                         <option value="1">Active</option>
@@ -332,82 +359,82 @@
                   </tr>
                 </table>
 
-                <table id="audioExpanderTable">
+                <table id="audioExpanderTable" class="choice">
                   <tr>
-                    <th>Channel</th>
-                    <th>Input</th>
-                    <th>Output</th>
+                    <th class="left-choice">Channel</th>
+                    <th class="right-choice half">Input</th>
+                    <th class="right-choice half">Output</th>
                   </tr>
                   <tr>
-                    <td>0</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="input" value="0" >
+                    <td class="left-choice">0</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="0" data-func="input" value="0" >
                     </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="0" data-func="output" value="0" >
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>1</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="input" value="0" >
-                    </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="1" data-func="output" value="0" >
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="0" data-func="output" value="0" >
                     </td>
                   </tr>
                   <tr>
-                    <td>2</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="input" value="0" >
+                    <td class="left-choice">1</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="1" data-func="input" value="0" >
                     </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="2" data-func="output" value="0" >
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>3</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="input" value="0" >
-                    </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="3" data-func="output" value="0" >
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="1" data-func="output" value="0" >
                     </td>
                   </tr>
                   <tr>
-                    <td>4</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="input" value="0" >
+                    <td class="left-choice">2</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="2" data-func="input" value="0" >
                     </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="4" data-func="output" value="0" >
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>5</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="input" value="0" >
-                    </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="5" data-func="output" value="0" >
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="2" data-func="output" value="0" >
                     </td>
                   </tr>
                   <tr>
-                    <td>6</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="input" value="0" >
+                    <td class="left-choice">3</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="3" data-func="input" value="0" >
                     </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="6" data-func="output" value="0" >
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="3" data-func="output" value="0" >
                     </td>
                   </tr>
                   <tr>
-                    <td>7</td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="input" value="0" >
+                    <td class="left-choice">4</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="4" data-func="input" value="0" >
                     </td>
-                    <td>
-                      <input type="checkbox" class="audioExpanderCheck" data-channel="7" data-func="output" value="0" >
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="4" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="left-choice">5</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="5" data-func="input" value="0" >
+                    </td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="5" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="left-choice">6</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="6" data-func="input" value="0" >
+                    </td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="6" data-func="output" value="0" >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="left-choice">7</td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="7" data-func="input" value="0" >
+                    </td>
+                    <td class="right-choice half">
+                      <input type="checkbox" class="audioExpanderCheck checkbox-slider" data-channel="7" data-func="output" value="0" >
                     </td>
                   </tr>
                 </table>
@@ -417,46 +444,64 @@
               <div class="panel" data-accordion="ide-settings">
 								<button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">restore defaults</button>
 
-								<table class="tabTable">
+								<table class="tabTable choice">
 
 									<tr>
-										<td>Autocomplete:</td>
-										<td><input type="checkbox" id="liveAutocompletion" class="settingsManager" data-func="setIDESetting" data-key="liveAutocompletion" value="1" ></td>
+										<td class="left-choice">Autocomplete:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="liveAutocompletion" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="liveAutocompletion" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>Syntax Checking:</td>
-										<td><input type="checkbox" id="liveSyntaxChecking" class="settingsManager" data-func="setIDESetting" data-key="liveSyntaxChecking" value="1" ></td>
+										<td class="left-choice">Syntax Checking:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="liveSyntaxChecking" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="liveSyntaxChecking" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>Verbose build errors:</td>
-										<td><input type="checkbox" id="verboseErrors" class="settingsManager" data-func="setIDESetting" data-key="verboseErrors" value="1" ></td>
+										<td class="left-choice">Verbose build errors:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="verboseErrors" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="verboseErrors" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>CPU monitoring:</td>
-										<td><input type="checkbox" id="cpuMonitoring" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoring" value="1" ></td>
+										<td class="left-choice">CPU monitoring:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="cpuMonitoring" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="cpuMonitoring" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>Xenomai stats:</td>
-										<td><input type="checkbox" id="cpuMonitoringVerbose" class="settingsManager" data-func="setIDESetting" data-key="cpuMonitoringVerbose" value="1" ></td>
+										<td class="left-choice">Xenomai stats:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="cpuMonitoringVerbose" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="cpuMonitoringVerbose" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>Never delete console logs:</td>
-										<td><input type="checkbox" id="consoleDelete" class="settingsManager" data-func="setIDESetting" data-key="consoleDelete" value="1" ></td>
+										<td class="left-choice">Never delete console logs:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="consoleDelete" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="consoleDelete" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>View hidden files:</td>
-										<td><input type="checkbox" id="viewHiddenFiles" class="settingsManager" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" ></td>
+										<td class="left-choice">View hidden files:</td>
+										<td class="right-choice">
+                      <input type="checkbox" id="viewHiddenFiles" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" >
+                    </td>
 									</tr>
 
 									<tr>
-										<td>Run project on boot:</td>
-										<td><select id="runOnBoot"></select></td>
+										<td class="left-choice">Run project on boot:</td>
+										<td class="right-choice">
+                      <span class="mini-dropdown">
+                        <select id="runOnBoot" class="small" data-run-on-boot></select>
+                      </span>
+                    </td>
 									</tr>
 
 								</table>
@@ -464,28 +509,28 @@
 
 							<button class="accordion" data-accordion-for="other-settings">Other system functions</button>
               <div class="panel" data-accordion="other-settings">
-								<table class="tabTable">
+								<table class="tabTable choice">
 									<tr>
-										<td>Shut down Beaglebone:</td>
-										<td>
+										<td class="left-choice">Shut down Beaglebone:</td>
+										<td class="right-choice">
                       <button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button>
                     </td>
 									</tr>
 									<tr>
-										<td>Download entire projects directory:</td>
-										<td>
+										<td class="left-choice">Download entire projects directory:</td>
+										<td class="right-choice">
                       <a href="download?all=all" download><button class="settingsManager">Download All</button></a>
                     </td>
 									</tr>
 									<tr>
-										<td>Upload an update patch:</td>
-										<td>
+										<td class="left-choice">Upload an update patch:</td>
+										<td class="right-choice">
                       <button class="settingsManager" data-func="updateBela">Update Bela</button>
                     </td>
 									</tr>
 									<tr>
-										<td>Credits and info:</td>
-										<td>
+										<td class="left-choice">Credits and info:</td>
+										<td class="right-choice">
                       <button class="settingsManager" data-func="aboutPopup">About Bela</button>
                     </td>
 									</tr>

@@ -1,5 +1,6 @@
 // INPUTS
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
 	height: 25px;
 	border: 1px solid $grey-mid;
 	background: $white;

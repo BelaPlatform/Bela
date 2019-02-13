@@ -69,6 +69,7 @@ class ProjectView extends View {
 				newProject	: sanitise(popup.find('input[type=text]').val()),
 				projectType	: popup.find('input[type=radio]:checked').data('type')
 			});
+      $('[data-projects-select]').html('');
 			popup.hide();
 		});
 
@@ -112,6 +113,7 @@ class ProjectView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
+      $('[data-projects-select]').html('');
 			this.emit('message', 'project-event', {func});
 			popup.hide();
 		});

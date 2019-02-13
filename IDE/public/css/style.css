@@ -661,15 +661,6 @@ img.explorer {
   vertical-align: bottom;
   z-index: 100; }
 
-.input-number-decrement,
-.input-number-increment {
-  border: 1px solid #ccc;
-  height: 25px;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-      -ms-user-select: none;
-          user-select: none; }
-
 .input-number input[type="text"] {
   height: 25px;
   width: 50px;
@@ -685,15 +676,21 @@ img.explorer {
 
 .input-number-decrement,
 .input-number-increment {
-  display: inline-block;
-  width: 25px;
-  max-height: 23px;
-  line-height: 25px;
   background: #f1f1f1;
+  border: 1px solid #ccc;
   color: rgba(0, 0, 0, 0.8);
-  text-align: center;
+  cursor: pointer;
+  display: inline-block;
+  height: 25px;
   font-weight: bold;
-  cursor: pointer; }
+  line-height: 25px;
+  padding: 0;
+  text-align: center;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  width: 25px; }
   .input-number-decrement:active,
   .input-number-increment:active {
     background: #63ffd9; }
@@ -871,6 +868,12 @@ section#tab-content {
   font-family: poppins_light;
   font-size: 12px;
   color: rgba(0, 0, 0, 0.6); }
+  .choice tr {
+    display: block;
+    padding-bottom: 10px; }
+
+table.choice {
+  width: 100%; }
 
 .left-choice {
   display: inline-block;
@@ -885,6 +888,22 @@ section#tab-content {
   text-align: left;
   margin-top: -2px;
   position: relative; }
+  .right-choice.half {
+    padding-left: 0;
+    text-align: center;
+    width: 22.5%; }
+
+th.right-choice.half {
+  margin-top: 0; }
+
+input[type="text"].number-picker,
+input[type="number"].number-picker {
+  -webkit-appearance: textfield;
+     -moz-appearance: textfield;
+          appearance: textfield;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  margin: 0 -3px 0 -4px; }
 
 input[type="checkbox"].checkbox-slider,
 .checkbox-slider input[type="checkbox"] {
@@ -1061,15 +1080,18 @@ input[type="checkbox"].checkbox-slider,
 .tab-content-area {
   display: none; }
 
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
   height: 25px;
   border: 1px solid #bdbdbd;
   background: #ffffff; }
-  input[type="text"].number-picker {
+  input[type="text"].number-picker,
+  input[type="number"].number-picker {
     border-radius: 0;
     width: 5em;
     text-align: center; }
-  input[type="text"]:disabled {
+  input[type="text"]:disabled,
+  input[type="number"]:disabled {
     background: #f1f1f1; }
 
 @-webkit-keyframes running-button {

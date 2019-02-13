@@ -15,9 +15,9 @@ class SettingsView extends View {
 			);
 		}
 
-		$('#runOnBoot').on('change', () => {
-			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
-				this.emit('run-on-boot', $('#runOnBoot').val());
+		$('[data-run-on-boot]').on('change', () => {
+			if ($('[data-run-on-boot]').val() && $('[data-run-on-boot]').val() !== '--select--')
+				this.emit('run-on-boot', $('[data-run-on-boot]').val());
 		});
 
 		$('.audioExpanderCheck').on('change', e => {
@@ -52,9 +52,17 @@ class SettingsView extends View {
 		}
 	}
 	buttonClicked($element, e){
-		var func = $element.data().func;
+    var data = $element.data();
+		var func = data.func;
+    var key = data.key;
+    var val = $element.val();
+    console.log(func, key, val);
 		if (func && this[func]){
-			this[func](func);
+      if (val) {
+        this[func](func, key, $element.val());
+      } else {
+        this[func](func);
+      }
 		}
 	}
 	inputChanged($element, e){

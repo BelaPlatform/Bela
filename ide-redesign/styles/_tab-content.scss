@@ -3,6 +3,14 @@
 	font-family: poppins_light;
 	font-size: 12px;
 	color: rgba(0, 0, 0, 0.6);
+  tr {
+    display: block;
+    padding-bottom: 10px;
+  }
+}
+
+table.choice {
+  width: 100%;
 }
 
 .left-choice {
@@ -19,6 +27,25 @@
 	text-align: left;
 	margin-top: -2px;
 	position: relative;
+  &.half {
+    padding-left: 0;
+    text-align: center;
+    width: 22.5%;
+  }
+}
+th {
+  &.right-choice {
+    &.half {
+      margin-top: 0;
+    }
+  }
+}
+
+input[type="text"].number-picker,
+input[type="number"].number-picker {
+  appearance: textfield;
+  box-sizing: border-box;
+  margin: 0 -3px 0 -4px;
 }
 
 input[type="checkbox"].checkbox-slider,

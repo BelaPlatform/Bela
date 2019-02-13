@@ -2948,6 +2948,7 @@ var ProjectView = function (_View) {
 					newProject: sanitise(popup.find('input[type=text]').val()),
 					projectType: popup.find('input[type=radio]:checked').data('type')
 				});
+				$('[data-projects-select]').html('');
 				popup.hide();
 			});
 
@@ -2995,6 +2996,7 @@ var ProjectView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
+				$('[data-projects-select]').html('');
 				_this5.emit('message', 'project-event', { func: func });
 				popup.hide();
 			});
@@ -3269,8 +3271,8 @@ var SettingsView = function (_View) {
 			});
 		};
 
-		$('#runOnBoot').on('change', function () {
-			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--') _this.emit('run-on-boot', $('#runOnBoot').val());
+		$('[data-run-on-boot]').on('change', function () {
+			if ($('[data-run-on-boot]').val() && $('[data-run-on-boot]').val() !== '--select--') _this.emit('run-on-boot', $('[data-run-on-boot]').val());
 		});
 
 		$('.audioExpanderCheck').on('change', function (e) {
@@ -3311,9 +3313,17 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'buttonClicked',
 		value: function buttonClicked($element, e) {
-			var func = $element.data().func;
+			var data = $element.data();
+			var func = data.func;
+			var key = data.key;
+			var val = $element.val();
+			console.log(func, key, val);
 			if (func && this[func]) {
-				this[func](func);
+				if (val) {
+					this[func](func, key, $element.val());
+				} else {
+					this[func](func);
+				}
 			}
 		}
 	}, {
@@ -4116,7 +4126,6 @@ var View = function (_EventEmitter) {
 		_this.$elements.filter('button').on('click', function (e) {
 			return _this.buttonClicked($(e.currentTarget), e);
 		});
-		// this.$elements.filter('span').on('click', (e) => this.buttonClicked($(e.currentTarget), e));
 
 		return _this;
 	}
