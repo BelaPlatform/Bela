@@ -25,6 +25,10 @@ extern "C" {
 // At link time, Xenomai will provide implementations for these
 int __wrap_nanosleep(const struct timespec *req, struct timespec *rem);
 int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+int __wrap_pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param);
+int __wrap_pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param);
+int __wrap_pthread_yield(void);
+
 int __wrap_pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);
 int __wrap_pthread_mutex_destroy(pthread_mutex_t *mutex);
 int __wrap_pthread_mutex_lock(pthread_mutex_t *mutex);
@@ -54,10 +58,12 @@ int __wrap_mq_unlink(const char *name);
 #if XENOMAI_MAJOR == 2
 #define __wrap_pthread_join(a,b) pthread_join(a,b) // NOWRAP
 #define __wrap_pthread_attr_init(a) pthread_attr_init(a) // NOWRAP
+#define __wrap_sched_get_priority_max(a) sched_get_priority_max(a) // NOWRAP
 #endif
 #if XENOMAI_MAJOR == 3
 int __wrap_pthread_join(pthread_t thread, void **retval);
 int __wrap_pthread_attr_init(pthread_attr_t *attr);
+int __wrap_sched_get_priority_max(int policy);
 #endif
 #endif /* XENOMAI_SKIN_posix */
 
