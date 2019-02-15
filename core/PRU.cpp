@@ -370,7 +370,12 @@ void PRU::cleanupGPIO()
 				if(gDigitalPins[i] == saltSwitch1Gpio)
 					continue; // leave alone this pin as it is used by bela_button.service
 			}
-			gpio_unexport(gDigitalPins[i]);
+			if(gpio_unexport(gDigitalPins[i]))
+			{
+				// if unexport fails, we at least turn off the outputs
+				gpio_set_dir(gDigitalPins[i], OUTPUT_PIN);
+				gpio_set_value(gDigitalPins[i], 0);
+			}
 		}
 	}
 	if(led_enabled) {
