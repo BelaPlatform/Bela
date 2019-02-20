@@ -208,13 +208,13 @@ class FileView extends View {
       for (let i=0; i<resources.length; i++){
         $('<li></li>').addClass('sourceFile').html(resources[i].name + ' <span class="file-list-size">' + resources[i].size + '</span>').data('file', resources[i].name).appendTo(resourceList).on('click', (e) => this.openFile(e));
       }
-      resourceList.appendTo(directory);
+      resourceList.appendTo(resource);
       resource.appendTo($files);
 		}
 
 		if (directories.length){
       var directory = $('<li></li>')
-			$('<p></p>').addClass('file-heading').html('Directories:').appendTo($files);
+			$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
       var directoryList = $('<ul></ul>').addClass('sub-file-list');
       for (let dir of directories){
         directoryList.append(this.subDirs(dir));
