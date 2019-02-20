@@ -31,7 +31,7 @@ $tab-width: 450px;
 }
 
 #tab-content-area {
-  height: 100%;
+  height: calc(100% - 76px);
   background-color: #fff;
   overflow: auto;
 }

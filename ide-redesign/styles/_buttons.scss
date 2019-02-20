@@ -1,4 +1,14 @@
-button {
+a.button {
+  color: black;
+  font-size: 11px;
+  text-decoration: none;
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+button,
+.button {
   border-bottom: 2px solid rgba(0, 190, 164, 1.0);
   border-left: rgba(0, 190, 164, 0.4);
   border-right: rgba(0, 190, 164, 0.4);

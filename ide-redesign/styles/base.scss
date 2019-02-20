@@ -42,17 +42,6 @@ img {
 	outline: none;
 }
 
-// we have to override the golden layout property to allow the logo to show
-// .lm_root {
-//   .lm_item {
-//     .lm_item:nth-of-type(odd) {
-//       .lm_content {
-//         overflow: visible!important;
-//       }
-//     }
-//   }
-// }
-
 /* Container for upper elements - editor and tabs */
 
 .upper {
@@ -65,7 +54,7 @@ img {
 .editor {
   background: #fff;
   float: left;
-  height: 100%;
+  height: calc(100% - 92px);
   left: 0;
   overflow: auto;
 	position: absolute;

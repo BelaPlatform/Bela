@@ -39,7 +39,7 @@ ul {
 .example-list > li {
 	padding: 4px 10px;
 	&:before {
-    content: '+';
+    content: '>';
 		margin-right: 10px;
 	}
 	&:hover {

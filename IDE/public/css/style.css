@@ -86,7 +86,7 @@ img {
 .editor {
   background: #fff;
   float: left;
-  height: 100%;
+  height: calc(100% - 92px);
   left: 0;
   overflow: auto;
   position: absolute;
@@ -190,10 +190,18 @@ button.accordion {
 
 .panel.show {
   opacity: 1;
-  max-height: 500px;
+  max-height: 100000px;
   /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */ }
 
-button {
+a.button {
+  color: black;
+  font-size: 11px;
+  text-decoration: none; }
+  a.button:hover {
+    color: rgba(255, 255, 255, 0.9); }
+
+button,
+.button {
   border-bottom: 2px solid #00bea4;
   border-left: rgba(0, 190, 164, 0.4);
   border-right: rgba(0, 190, 164, 0.4);
@@ -203,22 +211,28 @@ button {
   cursor: pointer;
   font-family: poppins_light;
   padding: 6px 12px; }
-  button.active {
+  button.active,
+  .button.active {
     color: rgba(0, 0, 0, 0.4); }
-    button.active:hover {
+    button.active:hover,
+    .button.active:hover {
       color: rgba(0, 0, 0, 0.4); }
-  button:hover {
+  button:hover,
+  .button:hover {
     background-color: rgba(0, 190, 164, 0.7);
     color: rgba(255, 255, 255, 0.9);
     -webkit-transition: 0.1s ease-in-out;
     transition: 0.1s ease-in-out; }
-  button.create-project {
+  button.create-project,
+  .button.create-project {
     font-size: 14px;
     margin-top: -1px;
     padding-right: 20px; }
-    button.create-project:hover {
+    button.create-project:hover,
+    .button.create-project:hover {
       color: #ffffff; }
-    button.create-project:before {
+    button.create-project:before,
+    .button.create-project:before {
       color: rgba(0, 0, 0, 0.4);
       content: '+';
       /* Unicode character for "plus" sign (+) */
@@ -227,7 +241,8 @@ button {
       line-height: 20px;
       margin-right: 5px;
       vertical-align: middle; }
-  button:disabled {
+  button:disabled,
+  .button:disabled {
     background-color: rgba(0, 0, 0, 0.1);
     border-bottom: 2px solid rgba(0, 0, 0, 0.2);
     border-left: rgba(0, 0, 0, 0.1);
@@ -623,7 +638,7 @@ ul {
 .example-list > li {
   padding: 4px 10px; }
   .example-list > li:before {
-    content: '+';
+    content: '>';
     margin-right: 10px; }
   .example-list > li:hover {
     background: rgba(255, 255, 0, 0.2); }
@@ -837,7 +852,7 @@ img.explorer {
   float: left; }
 
 #tab-content-area {
-  height: 100%;
+  height: calc(100% - 76px);
   background-color: #fff;
   overflow: auto; }
 
