@@ -6,58 +6,134 @@ let sliderSpacing = {
 }
 var sliders = [];
 
-var ws;
+var ws_control;
+var ws_data;
 
-var wsAddress = "ws://" + location.host + ":5432/gui";
+var ws_controlAddress = "ws://" + location.host + ":5555/gui_control";
+var ws_dataAddress = "ws://" + location.host + ":5555/gui_data";
 
-var ws_onerror = function(e) {
+var ws_control_onerror = function(e) {
         setTimeout(() => {
-                ws = new WebSocket(wsAddress);
-                ws.onerror = ws_onerror;
+                ws_control = new WebSocket(ws_controlAddress);
+                ws_control.onerror = ws_control_onerror;
         }, 500)
 }
 
-var ws_onopen = function() {
-        console.log("Socket opened\n");
-        ws.binaryType = 'arraybuffer';
-        ws.onclose = ws_onerror;
-        ws.onerror = undefined;
+var ws_data_onerror = function(e) {
+        setTimeout(() => {
+                ws_data= new WebSocket(ws_dataAddress);
+                ws_data.onerror = ws_data_onerror;
+        }, 500)
 }
 
-var ws_onmessage = function(msg) {
-        var data;
+var ws_control_onopen = function() {
+        console.log("Socket opened\n");
+        ws_control.binaryType = 'arraybuffer';
+        ws_control.onclose = ws_control_onerror;
+        ws_control.onerror = undefined;
+}
+
+var ws_data_onopen = function() {
+        console.log("Socket opened\n");
+        ws_data.binaryType = 'arraybuffer';
+        ws_data.onclose = ws_data_onerror;
+        ws_data.onerror = undefined;
+}
+
+var ws_control_onmessage = function(msg) {
+        let data;
+
         try {
                 data = JSON.parse(msg.data);
         } catch (e) {
                 console.log('Couldn\'t parse data', e)
         }
-        console.log(data);
-        if (data.event == 'connection') {
-                let obj = {
-                        event: "connection-reply"
-                };
-                obj = JSON.stringify(obj);
-                if (ws.readyState === 1)
-                        ws.send(obj);
-        } else if (data.event == 'set-slider') {
-                console.log("Set slider");
-                if (sliders.find(e => e.id == data.slider) != undefined) {} else {
-                        sliders.push(new Slider(data.slider, data.name, data.min, data.max, data.value, data.step));
-                }
-                sortSliders();
-                distributeSliders();
-                assignSliderLabels();
+	if (data.event == 'connection') {
+		let obj = {
+			event: "connection-reply"
+		};
+		obj = JSON.stringify(obj);
+		if (ws_control.readyState === 1)
+			ws_control.send(obj);
+	} else if (data.event == 'set-slider') {
+		console.log("Set slider");
+		if (sliders.find(e => e.id == data.slider) != undefined) {} else {
+			sliders.push(new Slider(data.slider, data.name, data.min, data.max, data.value, data.step));
+		}
+		sortSliders();
+		distributeSliders();
+		assignSliderLabels();
+	} else if (data.event == 'data-buffer'){
+                console.log(data);
         }
+}
+let buffers = new Array();
+const states = ['id', 'type', 'data'];
+let currentState = states[0];
+let bufferReady = false;
+let newBuffer = {};
+var ws_data_onmessage = function(msg) {
+	let data;
+        if(currentState == states[0]) { // buffer id
+                bufferReady = false;
+                newBuffer = {};
+                if(msg.data.byteLength == 1) {
+                        let msgId = new Uint8Array(msg.data);
+                        newBuffer['id'] = parseInt(String.fromCharCode(msgId));
+                        currentState = states[1];
+                }
+        } else if (currentState == states[1]) { // type
+                if(msg.data.byteLength == 1) {
+                        let msgType = new Uint8Array(msg.data);
+                        newBuffer['type'] = String.fromCharCode(msgType);
+                        currentState = states[2];
+                } else {
+                        currentState = states[0];
+                }
+        } else if (currentState == states[2]) { // data
+                currentState = states[0];
+                switch(newBuffer['type']) {
+                        case 'c':
+                                let charInt = new Uint8Array(msg.data);
+                                charInt = Array.from(charInt);
+                                let charArr = charInt.map((e) => {
+                                        return String.fromCharCode(e);
+                                });
+                                newBuffer['data'] = charArr;
+                                break;
+                        case 'i':
+                                newBuffer['data'] = new Int32Array(msg.data);
+                                break;
+                        case 'f':
+                                newBuffer['data'] = new Float32Array(msg.data);
+                                break;
+                        case 'd':
+                                newBuffer['data'] = new Float64Array(msg.data);
+                                break;
+                        default:
+                                console.log("Unknown buffer type");
+
+                }
+                buffers[newBuffer['id']] = newBuffer['data'];
+                bufferReady = true;
+        }
+
+	data = msg.data;
 }
 
 function setup() {
 
         noCanvas();
 
-        ws = new WebSocket(wsAddress);
-        ws.onerror = ws_onerror;
-        ws.onopen = ws_onopen;
-        ws.onmessage = ws_onmessage;
+        ws_control = new WebSocket(ws_controlAddress);
+        ws_control.onerror = ws_control_onerror;
+        ws_control.onopen = ws_control_onopen;
+        ws_control.onmessage = ws_control_onmessage;
+
+        ws_data = new WebSocket(ws_dataAddress);
+        ws_data.onerror = ws_data_onerror;
+        ws_data.onopen = ws_data_onopen;
+        ws_data.onmessage = ws_data_onmessage;
 }
 
 function draw() {
@@ -132,7 +208,7 @@ function Slider(id, name, min, max, value, step) {
                         console.log('could not stringify slider json:', e);
                         return;
                 }
-                if (ws.readyState === 1) ws.send(out)
+                if (ws_control.readyState === 1) ws_control.send(out)
         });
 }
 
@@ -205,4 +281,15 @@ var setGuiStatus = function(jsonObj) {
                 let matchS = sliders.find(e => e.id == s);
                 matchS.element.value(statusObj[s].value);
         }
+}
+
+
+function isJson(str) {
+	let data;
+    	try {
+		data = JSON.parse(str);
+		return data;
+	} catch (e) {
+		return false;
+	}
 }
