@@ -67,7 +67,8 @@ var ws_control_onmessage = function(msg) {
                 console.log(data);
         }
 }
-let buffers = new Array();
+var buffers = new Array();
+
 const states = ['id', 'type', 'data'];
 let currentState = states[0];
 let bufferReady = false;
@@ -102,13 +103,16 @@ var ws_data_onmessage = function(msg) {
                                 newBuffer['data'] = charArr;
                                 break;
                         case 'i':
-                                newBuffer['data'] = new Int32Array(msg.data);
+                                let intArr = new Int32Array(msg.data);
+                                newBuffer['data'] = Array.from(intArr);
                                 break;
                         case 'f':
-                                newBuffer['data'] = new Float32Array(msg.data);
+                                let floatArr = new Float32Array(msg.data);
+                                newBuffer['data'] = Array.from(floatArr);
                                 break;
                         case 'd':
-                                newBuffer['data'] = new Float64Array(msg.data);
+                                let doubleArr = new Float64Array(msg.data);
+                                newBuffer['data'] = Array.from(doubleArr);
                                 break;
                         default:
                                 console.log("Unknown buffer type");
@@ -116,6 +120,7 @@ var ws_data_onmessage = function(msg) {
                 }
                 buffers[newBuffer['id']] = newBuffer['data'];
                 bufferReady = true;
+                redraw();
         }
 
 	data = msg.data;
@@ -123,7 +128,8 @@ var ws_data_onmessage = function(msg) {
 
 function setup() {
 
-        noCanvas();
+        //noCanvas();
+        createCanvas(250, 250);
 
         ws_control = new WebSocket(ws_controlAddress);
         ws_control.onerror = ws_control_onerror;
@@ -138,6 +144,10 @@ function setup() {
 
 function draw() {
   // put drawing code here
+  background(255);
+  textSize(32);
+  text(buffers[0][0].toString(), 10, 30);
+
 }
 
 function sortSliders() {
