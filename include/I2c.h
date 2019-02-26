@@ -33,9 +33,6 @@ typedef char i2c_char_t;
 
 #define MAX_BUF_NAME 64
 
-using namespace std;
-
-
 class I2c
 {
 
@@ -66,14 +63,14 @@ inline int I2c::initI2C_RW(int bus, int address, int fileHnd)
 
 	if ((i2C_file = open(namebuf, O_RDWR)) < 0)
 	{
-			cout << "Failed to open " << namebuf << " I2C Bus" << endl;
-			return(1);
+		fprintf(stderr, "Failed to open %s I2C Bus\n", namebuf);
+		return(1);
 	}
 
 	// target device as slave
 	if (ioctl(i2C_file, I2C_SLAVE, i2C_address) < 0){
-			cout << "I2C_SLAVE address " << i2C_address << " failed..." << endl;
-			return(2);
+		fprintf(stderr, "I2C_SLAVE address %#x failed...", i2C_address);
+		return(2);
 	}
 
 	return 0;
@@ -85,7 +82,7 @@ inline int I2c::closeI2C()
 {
 	if(close(i2C_file)>0)
 	{
-		cout << "Failed to close  file "<< i2C_file << endl;
+		fprintf(stderr, "Failed to close  file %d\n", i2C_file);
 		return 1;
 	}
 	return 0;
