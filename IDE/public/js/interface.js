@@ -1,7 +1,15 @@
+var dropdownLoaded = false;
+var menuOpened = false;
+
 // define the tabs object
 function openTabs() {
   $('[data-tabs]').toggleClass('tabs-open');
   $('[data-tab-open] span').toggleClass('rot');
+  if (!dropdownLoaded) {
+    var $script = $("<script></script>").attr('src', '/js/dropdown.js');
+    $script.appendTo($('head'));
+    dropdownLoaded = true;
+  }
 }
 
 function matchTabForAndTab(tabFor) {
@@ -34,21 +42,30 @@ $('[data-tab-open]').click(function(event) {
     // Then show the project explorer.
     matchTabFor("explorer");
   }
+  if (menuOpened) {
+    menuOpened = false;
+  } else {
+    menuOpened = true;
+  }
   openTabs();
 });
 
 // Making the tab labels active/inactive:
 $('[data-tab-for]').click(function(event) {
   event.preventDefault();
-  //  First remove class "active" from currently active tab
+  var tabFor = $(this).data('tab-for');
+  if (!$(this).hasClass('active')) {
+    matchTabFor(tabFor);
+  }
   $('[data-tab-for]').removeClass('active');
   $(this).addClass('active');
-  var tabFor = $(this).data('tab-for');
-  matchTabFor(tabFor);
   if ($('[data-tabs]').hasClass('tabs-open')) {
     return false;
   }
-  //  At the end, we add return false so that the click on the link is not executed
+  if (!menuOpened) {
+    menuOpened = true;
+    openTabs();
+  }
 });
 
 // increment / decrement the text inputs styled to look like the number inputs

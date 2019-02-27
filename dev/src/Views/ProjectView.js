@@ -199,12 +199,6 @@ class ProjectView extends View {
       parentLi.appendTo(parentUl);
       parentLi.appendTo($examples);
 		}
-    // we need to reload the accordion script as this panel is emitted after pageload
-    $('[data-script-load]').each(function(){
-      var script = $(this);
-      $(this).remove();
-      script.appendTo($('head'));
-    });
 	}
 	_boardString(data){
 		var boardString;

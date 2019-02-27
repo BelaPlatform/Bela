@@ -3103,7 +3103,6 @@ var ProjectView = function (_View) {
 				for (var _iterator = examplesDir[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					_loop();
 				}
-				// we need to reload the accordion script as this panel is emitted after pageload
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -3118,12 +3117,6 @@ var ProjectView = function (_View) {
 					}
 				}
 			}
-
-			$('[data-script-load]').each(function () {
-				var script = $(this);
-				$(this).remove();
-				script.appendTo($('head'));
-			});
 		}
 	}, {
 		key: '_boardString',
