@@ -168,7 +168,7 @@ case_run_mode() {
 	case $RUN_MODE in
 		# Sorry for repeating the options, but "ssh / ssh -t" makes things complicated
 		foreground)
-			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run"
+			ssh -t $BBB_ADDRESS "$MAKE_COMMAND run" || exit 1
 		;;
 		screen)
 			ssh $BBB_ADDRESS "$MAKE_COMMAND runscreen"

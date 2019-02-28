@@ -631,6 +631,11 @@ DO_GPIO:
                             //r27 is actually r27, so do not use r27 from here to ...
      LBBO r27, reg_digital_current, 0, 4 
      JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
+     // in the low word, set the bits corresponding to output values to 0
+     // this way, if the ARM program crashes, the PRU will write 0s to the outputs
+     LSL r28, r27, 16
+     // high word now contains bitmask with 0s where outputs are
+     AND r27.w2, r28.w2, r27.w2 // mask them out
      SBBO r27, reg_digital_current, 0,   4 
                             //..here you can start using r27 again
      ADD reg_digital_current, reg_digital_current, 4 //increment pointer

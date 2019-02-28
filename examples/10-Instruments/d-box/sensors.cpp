@@ -63,13 +63,11 @@ int initSensorLoop(int sensorAddress0, int sensorAddress1, int sensorType)
 	int tk1_bus			= 1;
 	int tk1_address		= sensorAddress1;
 	int tk_file			= 0;
-	int fsr_max			= 1799;
-	int fsr_pinNum		= 4;
 
 	if(gVerbose==1)
 		cout << "---------------->Init Control Thread" << endl;
 
-	if(Sensors.initSensors(tk0_bus, tk0_address, tk1_bus, tk1_address, tk_file, fsr_pinNum, fsr_max, sensorType)>0)
+	if(Sensors.initSensors(tk0_bus, tk0_address, tk1_bus, tk1_address, tk_file, sensorType)>0)
 	{
 		gShouldStop = 1;
 		cout << "control cannot start" << endl;
@@ -302,7 +300,6 @@ void sensorLoop(void *)
 				// note on
 				//if(s0PrevTouchNum == 0)
 				//	gOscBanks[gCurrentOscBank]->play();
-				// fsr = Sensors.getFSRVAlue();
 				fsr = gLastFSRValue;
 				//dbox_printf("fsr: %d\n", fsr);
 				if(!gOscBanks[gCurrentOscBank]->note)

@@ -654,15 +654,25 @@ void render_medium_prio(void*)
 		SRTIME ns		= rt_timer_tsc2ns(ticks);
 		SRTIME delta 	= ns-prevChangeNs;
 #endif
+		long long int deltaMinThreshold = 100000000;
 #ifdef XENOMAI_SKIN_posix
+		long long int ns = 0;
+		long long int delta;
 		struct timespec tp;
-		clock_gettime(CLOCK_HOST_REALTIME, &tp);
-		long long int ns  = tp.tv_sec * 1000000000 + tp.tv_nsec;
-		long long int delta = ns - prevChangeNs;
+		int ret = __wrap_clock_gettime(CLOCK_REALTIME, &tp);
+		if(ret){
+			// if something goes wrong reading the clock, let's not
+			// make that stop us
+			delta = deltaMinThreshold + 1;
+		} else {
+			//rt_printf("tp.tv_sec: %d, tp.tv_nsec: %d\n", tp.tv_sec, tp.tv_nsec);
+			ns = tp.tv_sec * 1000000000ULL + tp.tv_nsec;
+			delta = ns - prevChangeNs;
+		}
 #endif
 
 		// switch to next bank cannot be too frequent, to avoid segfault! [for example segfault happens when removing both VDD and GND from breadboard]
-		if(gNextOscBank != gCurrentOscBank && delta>100000000) {
+		if(gNextOscBank != gCurrentOscBank && delta > deltaMinThreshold) {
 
 			/*printf("ticks %llu\n", (unsigned long long)ticks);
 			printf("ns %llu\n", (unsigned long long)ns);

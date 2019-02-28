@@ -18,7 +18,7 @@ A project of the Augmented Instruments Laboratory within the
 Centre for Digital Music at Queen Mary University of London.
 http://instrumentslab.org
 
-(c) 2016-2018 Augmented Instruments Laboratory: Andrew McPherson,
+(c) 2016-2019 Augmented Instruments Laboratory: Andrew McPherson,
 	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
 	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
 

@@ -171,7 +171,7 @@ uploadBuildRun(){
 	if [ $RUN_PROJECT -eq 0 ]
 	then
 		echo "Building project..."
-		ssh $BBB_ADDRESS "$MAKE_COMMAND"
+		ssh $BBB_ADDRESS "$MAKE_COMMAND" || exit 1
 	else
         echo "Building and running project..."
 	    case_run_mode
