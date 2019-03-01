@@ -58,6 +58,7 @@ var ws_control_onmessage = function(msg) {
 	} else if (data.event == 'set-slider') {
 		console.log("Set slider");
 		if (sliders.find(e => e.id == data.slider) != undefined) {} else {
+			console.log(data);
 			sliders.push(new Slider(data.slider, data.name, data.min, data.max, data.value, data.step));
 		}
 		sortSliders();
@@ -185,10 +186,9 @@ function distributeSliders() {
 function Slider(id, name, min, max, value, step) {
         this.id = id;
         this.name = name || 'Slider ' + id;
-        this.min = min || 0;
-        this.max = max || 1;
-        this.value = value || 0.5;
-        this.step = step || 0;
+        this.max = max === undefined ? 1 : max;
+        this.value = value === undefined ? 0 : value;
+        this.step = step === undefined ? 0.1 : step;
         this.element;
 
         this.create();
