@@ -211,7 +211,7 @@ socket.on('init', (data) => {
 	models.project.setData({projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project});
 	models.settings.setData(data.settings);
 
-	$('#runOnBoot').val(data.boot_project);
+  $('data-run-on-boot').val(data.boot_project);
 
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
@@ -405,12 +405,6 @@ models.project.on('change', (data, changedKeys) => {
     // status changes reflected here
     models.status.on('change', (data, changedKeys) => {
     	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-    		// if (data.running)
-    		// 	$('[data-current-status]').html('Running: '+data.runProject);
-    		// else if (data.building)
-    		// 	$('[data-current-status]').html('Building: '+data.buildProject);
-    		// else
-    		// 	$('[data-current-status]').html('');
         if (data.running) {
     			$('[data-current-status-title]').html('Running: ');
           $('[data-current-status]').html(data.runProject);
@@ -427,18 +421,22 @@ models.project.on('change', (data, changedKeys) => {
     // set the browser tab title
     $('title').html((data.fileName ? data.fileName+', ' : '') + projectName);
     // set the top-line stuff
-    $('#top-open-project').html(projectName ? 'Project: '+ projectName : '');
-    $('#top-open-file').html(data.fileName ? 'File: '+ data.fileName : '');
+    $('[data-current-project]').html(projectName ? projectName : '');
+    $('[data-current-file]').html(data.fileName ?  data.fileName : '');
 
     // status changes reflected here
     models.status.on('change', (data, changedKeys) => {
     	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-    		if (data.running)
-    			$('#top-bela-status').html('Running: '+data.runProject);
-    		else if (data.building)
-    			$('#top-bela-status').html('Building: '+data.buildProject);
-    		else
-    			$('#top-bela-status').html('');
+        if (data.running) {
+    			$('[data-current-status-title]').html('Running: ');
+          $('[data-current-status]').html(data.runProject);
+    		} else if (data.building) {
+          $('[data-current-status-title]').html('Building: ');
+    			$('[data-current-status]').html(data.buildProject);
+    		} else {
+    			$('[data-current-status]').html('');
+          $('[data-current-status-title]').html('');
+        }
     	}
     });
   }
