@@ -1226,16 +1226,19 @@ input[type="number"] {
     .toolbar .logo img {
       margin-top: -14px; }
 
-div.file-status {
-  margin-left: 60px; }
-  div.file-status span.project, div.file-status span.file {
+.file-status {
+  margin-left: 60px;
+  white-space: nowrap; }
+  .file-status .project,
+  .file-status .file,
+  .file-status .status {
     display: inline-block;
     padding-top: 10px;
     font-family: space_regular;
     font-size: 16px;
     color: #00bea4; }
-    div.file-status span.project span.current, div.file-status span.file span.current {
-      font-family: poppins_regular;
-      color: rgba(0, 0, 0, 0.7);
-      padding-right: 20px;
-      font-size: 14px; }
+  .file-status .current {
+    font-family: poppins_regular;
+    color: rgba(0, 0, 0, 0.7);
+    padding-right: 20px;
+    font-size: 14px; }

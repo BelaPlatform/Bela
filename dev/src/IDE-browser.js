@@ -405,12 +405,22 @@ models.project.on('change', (data, changedKeys) => {
     // status changes reflected here
     models.status.on('change', (data, changedKeys) => {
     	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-    		if (data.running)
-    			$('[data-current-status]').html('Running: '+data.runProject);
-    		else if (data.building)
-    			$('[data-current-status]').html('Building: '+data.buildProject);
-    		else
+    		// if (data.running)
+    		// 	$('[data-current-status]').html('Running: '+data.runProject);
+    		// else if (data.building)
+    		// 	$('[data-current-status]').html('Building: '+data.buildProject);
+    		// else
+    		// 	$('[data-current-status]').html('');
+        if (data.running) {
+    			$('[data-current-status-title]').html('Running: ');
+          $('[data-current-status]').html(data.runProject);
+    		} else if (data.building) {
+          $('[data-current-status-title]').html('Building: ');
+    			$('[data-current-status]').html(data.buildProject);
+    		} else {
     			$('[data-current-status]').html('');
+          $('[data-current-status-title]').html('');
+        }
     	}
     });
   } else {
