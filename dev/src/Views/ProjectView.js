@@ -148,7 +148,6 @@ class ProjectView extends View {
 
 	_exampleList(examplesDir){
 
-    // var $examples = $('#examples');
 		var $examples = $('[data-examples]');
 		$examples.empty();
 
@@ -235,10 +234,7 @@ class ProjectView extends View {
 			$('[data-projects-select]').val($('[data-projects-select] > option:first').val());
 		} else {
 			// select new project
-			//$('#projects option[value="'+project+'"]').attr('selected', 'selected');
 			$('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
-			// unselect currently selected example
-			// $('.selectedExample').removeClass('selectedExample');
 		}
 
 		// set download link

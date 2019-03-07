@@ -3037,7 +3037,6 @@ var ProjectView = function (_View) {
 		value: function _exampleList(examplesDir) {
 			var _this6 = this;
 
-			// var $examples = $('#examples');
 			var $examples = $('[data-examples]');
 			$examples.empty();
 
@@ -3176,10 +3175,7 @@ var ProjectView = function (_View) {
 				$('[data-projects-select]').val($('[data-projects-select] > option:first').val());
 			} else {
 				// select new project
-				//$('#projects option[value="'+project+'"]').attr('selected', 'selected');
 				$('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
-				// unselect currently selected example
-				// $('.selectedExample').removeClass('selectedExample');
 			}
 
 			// set download link
