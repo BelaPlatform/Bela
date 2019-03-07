@@ -95,8 +95,6 @@ class ConsoleView extends View{
 			}
 		});
 
-		// $('#beaglert-console').on('click', () => $(this.input).trigger('focus') );
-    // $('#beaglert-consoleWrapper').on('click', (e) => e.stopPropagation() );
     $('[data-console]').on('click', () => $(this.input).trigger('focus') );
     $('[data-console-content-wrapper]').on('click', (e) => e.stopPropagation() );
 
@@ -105,10 +103,8 @@ class ConsoleView extends View{
 		this.on('shell-cwd', cwd => {
 			//console.log('cwd', cwd);
 			shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
-      // $('#beaglert-consoleInput-pre').html(shellCWD);
 			$('[data-console-input-pre]').html(shellCWD);
 		});
-    // this.on('shell-tabcomplete', data => $('#beaglert-consoleInput').val(data) );
 		this.on('shell-tabcomplete', data => $('[data-console-input]').val(data) );
 	}
 
