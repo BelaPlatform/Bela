@@ -2800,7 +2800,8 @@ var GitView = function (_View) {
 			var branches = git.branches.split('\n');
 
 			// fill commits menu
-			var $commits = $('#commits');
+			// var $commits = $('#commits');
+			var $commits = $('[data-git-commits]');
 			$commits.empty();
 
 			var commit, hash, opt;
@@ -2819,7 +2820,8 @@ var GitView = function (_View) {
 			}
 
 			// fill branches menu
-			var $branches = $('#branches');
+			// var $branches = $('#branches');
+			var $branches = $('[data-git-branches]');
 			$branches.empty();
 
 			for (var i = 0; i < branches.length; i++) {
