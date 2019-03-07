@@ -21,8 +21,8 @@ class FileView extends View {
 		this.listOfFiles = [];
 
 		// hack to upload file
-		$('#uploadFileInput').on('change', (e) => {
-			for (var i=0; i<e.target.files.length; i++){
+    $('[data-upload-file-input]').on('change', (e) => {
+  			for (var i=0; i < e.target.files.length; i++){
 				this.doFileUpload(e.target.files[i]);
 			}
 		});
@@ -73,7 +73,7 @@ class FileView extends View {
 
 	}
 	uploadFile(func){
-		$('#uploadFileInput').trigger('click');
+		$('[data-upload-file-input]').trigger('click');
 	}
 	renameFile(func){
 
@@ -231,9 +231,9 @@ class FileView extends View {
 		$('.selectedFile').removeClass('selectedFile');
 
 		var foundFile = false
-		$('#fileList li').each(function(){
+		$('[data-file-list]').find('li').each(function(){
 			if ($(this).data('file') === file){
-				$(this).addClass('selectedFile');
+				$(this).addClass('selected');
 				foundFile = true;
 			}
 		});

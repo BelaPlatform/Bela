@@ -25,7 +25,8 @@ ul {
   color: rgba(0, 0, 0, 0.8);
 	font-size: 14px;
 	padding: 4px 12px;
-	&:hover {
+	&:hover,
+  &.selected {
 		background: rgba(255, 255, 0, 0.2);
 	}
 	&:before {

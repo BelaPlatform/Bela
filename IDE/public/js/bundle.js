@@ -2170,7 +2170,7 @@ var FileView = function (_View) {
 		_this.listOfFiles = [];
 
 		// hack to upload file
-		$('#uploadFileInput').on('change', function (e) {
+		$('[data-upload-file-input]').on('change', function (e) {
 			for (var i = 0; i < e.target.files.length; i++) {
 				_this.doFileUpload(e.target.files[i]);
 			}
@@ -2230,7 +2230,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			$('#uploadFileInput').trigger('click');
+			$('[data-upload-file-input]').trigger('click');
 		}
 	}, {
 		key: 'renameFile',
@@ -2454,9 +2454,9 @@ var FileView = function (_View) {
 			$('.selectedFile').removeClass('selectedFile');
 
 			var foundFile = false;
-			$('#fileList li').each(function () {
+			$('[data-file-list]').find('li').each(function () {
 				if ($(this).data('file') === file) {
-					$(this).addClass('selectedFile');
+					$(this).addClass('selected');
 					foundFile = true;
 				}
 			});
