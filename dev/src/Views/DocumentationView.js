@@ -36,8 +36,8 @@ class DocumentationView extends View {
 				//console.log(xml);
 				var counter = 0;
 				for (let item of apiFuncs){
-					var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains('+item+'))'), 'APIDocs'+counter, self, 'api');
-					li.appendTo($('#APIDocs'));
+					var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs'+counter, self, 'api');
+					li.appendTo($('[data-docs-api]'));
 					counter += 1;
 				}
 			}
@@ -51,10 +51,10 @@ class DocumentationView extends View {
 			success: function(xml){
 				//console.log(xml);
 				var counter = 0;
-				createlifromxml($(xml), 'contextDocs'+counter, 'structBelaContext', self, 'contextType').appendTo($('[data-docs-context]'));
+				createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext', self, 'contextType').appendTo($('[data-docs-context]'));
 				counter += 1;
 				$(xml).find('memberdef').each(function(){
-					var li = createlifrommemberdef($(this), 'contextDocs'+counter, self, 'context');
+					var li = createlifrommemberdef($(this), 'contextDocs' + counter, self, 'context');
 					li.appendTo($('[data-docs-context]'));
 					counter += 1;
 				});
@@ -72,7 +72,7 @@ class DocumentationView extends View {
 				createlifromxml($(xml), 'utilityDocs'+counter, 'Utilities_8h', self, 'header').appendTo($('[data-docs-utility]'));
 				counter += 1;
 				$(xml).find('memberdef').each(function(){
-					var li = createlifrommemberdef($(this), 'utilityDocs'+counter, self, 'utility');
+					var li = createlifrommemberdef($(this), 'utilityDocs' + counter, self, 'utility');
 					li.appendTo($('[data-docs-utility]'));
 					counter += 1;
 				});
@@ -112,7 +112,7 @@ function createlifrommemberdef($xml, id, emitter, type){
 			var ul = $('<ul></ul>');
 			$(this).find('parameteritem').each(function(){
 				var li = $('<li></li>');
-				li.append($('<h4></h4>').html( $(this).find('parametername').html()+': ' ));
+				li.append($('<h4></h4>').html( $(this).find('parametername').html() + ': ' ));
 				$(this).find('parameterdescription>para').each(function(){
 					li.append($('<p></p>').html( $(this).html() || '' ));
 				});
@@ -147,7 +147,7 @@ function createlifromxml($xml, id, filename, emitter, type){
 			var ul = $('<ul></ul>');
 			$(this).find('parameteritem').each(function(){
 				var li = $('<li></li>');
-				li.append($('<h4></h4>').html( $(this).find('parametername').html()+': ' ));
+				li.append($('<h4></h4>').html( $(this).find('parametername').html() + ': ' ));
 				$(this).find('parameterdescription>para').each(function(){
 					li.append($('<p></p>').html( $(this).html() || '' ));
 				});
@@ -167,10 +167,10 @@ function createlifromxml($xml, id, filename, emitter, type){
 
 function xmlClassDocs(classname, emitter){
 	var filename = 'class' + classname;
-	var parent = $('#'+classname+'Docs');
+	var parent = $('[data-docs="' + classname + 'Docs"]');
 	$.ajax({
 		type: "GET",
-		url: "documentation_xml?file="+filename,
+		url: "documentation_xml?file=" + filename,
 		dataType: "html",
 		success: function(xml){
 			//console.log(xml);
@@ -180,31 +180,40 @@ function xmlClassDocs(classname, emitter){
 			emitter.emit('add-link', {name: classname, id: classname+counter}, 'header');
 
 			counter += 1;
-			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains('+classname+')))').each(function(){
+			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname  + ')))').each(function(){
 				//console.log($(this));
-				var li = createlifrommemberdef($(this), classname+counter, emitter, classname);
+				var li = createlifrommemberdef($(this), classname + counter, emitter, classname);
 				li.appendTo(parent);
 				counter += 1;
 			});
 
 			$.ajax({
 				type: "GET",
-				url: "documentation_xml?file="+classname+"_8h",
+				url: "documentation_xml?file=" + classname + "_8h",
 				dataType: "html",
 				success: function(xml){
-					//console.log(xml);
 					var includes = $(xml).find('includedby');
+          var doInclude = false;
 					if (includes.length){
-						var content = $('#'+classname+'0').siblings('div');
-						content.append($('<p></p>').html('Examples featuring this class:'));
+						var content = $('<div></div>').addClass('subsections');
+            content.append($('<h3></h3>').html('Examples featuring this class:'));
+            var exampleList = $('<ul></ul>').addClass('example-list');
 						includes.each(function(){
+              var exampleListItem = $('<li></li>');
 							var include = $(this).html();
-							if (include && include.split && include.split('/')[0] === 'examples'){
-								var link = $('<a></a>').html(include.split('/')[2]);
+              exampleListItem.attr('data-location', include);
+							if (include && include.split && include.split('/')[0] === 'examples') {
+                doInclude = true;
+                var link = $('<a></a>').html(include.split('/')[2]).text(include);
 								link.on('click', () => emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/')));
-								content.append(link).append('</br>');
+                exampleListItem.append(link);
+                exampleListItem.appendTo(exampleList);
 							}
 						});
+            if (doInclude) {
+              exampleList.appendTo(content);
+              content.appendTo($('[data-docs="' + classname + 'Docs"]').parent());
+            }
 					}
 				}
 			});

@@ -1,77 +1,72 @@
 button.accordion {
-    border: none;
-    border-bottom: 2px solid #fff;
-    background-color: $grey-light;
-    color: rgba(0, 0, 0, 0.6);
-    cursor: pointer;
+  background-color: $grey-light;
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  font-family: poppins_regular;
+  font-size: 16px;
+  margin-top: 10px;
+  outline: none;
+  padding: 8px 14px;
+  text-align: left;
+  transition: 0.3s ease-in-out;
+  width: calc(100% - 12px);
+  &:hover {
+    background: #ddd;
+    border-bottom: 2px solid $teal-main;
+  }
+  &.active {
+    background-color: #fff;
+    border-bottom: 2px solid $teal-main;
     padding: 8px 14px;
-    width: calc(100% - 12px);
-    text-align: left;
-    outline: none;
-    margin-top: 10px;
-    font-family: poppins_regular;
-    font-size: 16px;
-    transition: 0.3s ease-in-out;
+    &:after {
+      content: "\2796"; /* Unicode character for "minus" sign (-) */
+    }
+  }
+  &:after {
+    color:  rgba(0, 0, 0, 0.6);
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    float: right;
+    font-size: 14px;
+    margin-left: 5px;
+  }
+  &.sub {
+    background-color: #ddd;
+    margin-left: 20px;
+    margin-top: 0;
+    width: calc(100% - 20px);
     &:hover {
-        background: #ddd;
-        border-bottom: 2px solid $teal-main;
+      background: #ddd;
+      border-bottom: 2px solid white;
     }
     &.active {
-        background-color: #fff;
-        border-bottom: 2px solid $teal-main;
-        padding: 8px 14px;
-        &:after {
-            content: "\2796"; /* Unicode character for "minus" sign (-) */
-        }
+      background: $grey-light;
+      border-bottom: none;
+      padding: 8px 14px;
+      &:after {
+        content: "\2796"; /* Unicode character for "minus" sign (-) */
+      }
     }
     &:after {
-        content: '\02795'; /* Unicode character for "plus" sign (+) */
-        font-size: 14px;
-        color:  rgba(0, 0, 0, 0.6);
-        float: right;
-        margin-left: 5px;
+      color:  rgba(0, 0, 0, 0.6);
+      content: '\02795'; /* Unicode character for "plus" sign (+) */
+      float: right;
+      font-size: 14px;
+      margin-left: 5px;
     }
-
-    &.sub {
-        width: calc(100% - 20px);
-        background-color: #ddd;
-        margin-top: 0;
-        margin-left: 20px;
-    &:hover {
-        background: #ddd;
-        border-bottom: 2px solid white;
-    }
-    &.active {
-        border-bottom: none;
-        background: $grey-light;
-        // background-color: #fff;
-        // border-bottom: 2px solid $teal-main;
-        padding: 8px 14px;
-        &:after {
-            content: "\2796"; /* Unicode character for "minus" sign (-) */
-        }
-    }
-    &:after {
-        content: '\02795'; /* Unicode character for "plus" sign (+) */
-        font-size: 14px;
-        color:  rgba(0, 0, 0, 0.6);
-        float: right;
-        margin-left: 5px;
-    }
-    }
-
+  }
 }
 
-
 .panel {
-    max-height: 0;
-    overflow: hidden;
-    transition-delay: 0.4s;
-    transition: 0.2s ease-in-out;
-    opacity: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease-in-out;
+  transition-delay: 0.4s;
 }
 
 .panel.show {
-    opacity: 1;
-    max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+  max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+  opacity: 1;
 }

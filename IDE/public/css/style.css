@@ -125,20 +125,20 @@ hr {
   padding-top: 10px; }
 
 button.accordion {
+  background-color: #f1f1f1;
   border: none;
   border-bottom: 2px solid #fff;
-  background-color: #f1f1f1;
   color: rgba(0, 0, 0, 0.6);
   cursor: pointer;
-  padding: 8px 14px;
-  width: calc(100% - 12px);
-  text-align: left;
-  outline: none;
-  margin-top: 10px;
   font-family: poppins_regular;
   font-size: 16px;
+  margin-top: 10px;
+  outline: none;
+  padding: 8px 14px;
+  text-align: left;
   -webkit-transition: 0.3s ease-in-out;
-  transition: 0.3s ease-in-out; }
+  transition: 0.3s ease-in-out;
+  width: calc(100% - 12px); }
   button.accordion:hover {
     background: #ddd;
     border-bottom: 2px solid #00bea4; }
@@ -150,48 +150,48 @@ button.accordion {
       content: "\2796";
       /* Unicode character for "minus" sign (-) */ }
   button.accordion:after {
+    color: rgba(0, 0, 0, 0.6);
     content: '\02795';
     /* Unicode character for "plus" sign (+) */
-    font-size: 14px;
-    color: rgba(0, 0, 0, 0.6);
     float: right;
+    font-size: 14px;
     margin-left: 5px; }
   button.accordion.sub {
-    width: calc(100% - 20px);
     background-color: #ddd;
+    margin-left: 20px;
     margin-top: 0;
-    margin-left: 20px; }
+    width: calc(100% - 20px); }
     button.accordion.sub:hover {
       background: #ddd;
       border-bottom: 2px solid white; }
     button.accordion.sub.active {
-      border-bottom: none;
       background: #f1f1f1;
+      border-bottom: none;
       padding: 8px 14px; }
       button.accordion.sub.active:after {
         content: "\2796";
         /* Unicode character for "minus" sign (-) */ }
     button.accordion.sub:after {
+      color: rgba(0, 0, 0, 0.6);
       content: '\02795';
       /* Unicode character for "plus" sign (+) */
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.6);
       float: right;
+      font-size: 14px;
       margin-left: 5px; }
 
 .panel {
   max-height: 0;
+  opacity: 0;
   overflow: hidden;
-  -webkit-transition-delay: 0.4s;
-          transition-delay: 0.4s;
   -webkit-transition: 0.2s ease-in-out;
   transition: 0.2s ease-in-out;
-  opacity: 0; }
+  -webkit-transition-delay: 0.4s;
+          transition-delay: 0.4s; }
 
 .panel.show {
-  opacity: 1;
   max-height: 100000px;
-  /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */ }
+  /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+  opacity: 1; }
 
 a.button {
   color: black;
@@ -629,7 +629,7 @@ ul {
   .sub-file-list > li:hover {
     background: rgba(255, 255, 0, 0.2); }
   .sub-file-list > li:before {
-    content: '-';
+    content: '>';
     /* Unicode character for "minus" sign (-) */
     font-family: poppins_light;
     margin-right: 5px;
@@ -892,17 +892,17 @@ table.choice {
 
 .left-choice {
   display: inline-block;
-  width: 50%;
+  float: left;
   text-align: right;
-  float: left; }
+  width: 50%; }
 
 .right-choice {
   display: inline-block;
-  padding-left: 10px;
-  width: 43%;
-  text-align: left;
   margin-top: -2px;
-  position: relative; }
+  padding-left: 10px;
+  position: relative;
+  text-align: left;
+  width: 43%; }
   .right-choice.half {
     padding-left: 0;
     text-align: center;
@@ -922,50 +922,50 @@ input[type="number"].number-picker {
 
 input[type="checkbox"].checkbox-slider,
 .checkbox-slider input[type="checkbox"] {
-  position: relative;
-  left: 10000px;
   height: 18px;
+  left: 10000px;
+  position: relative;
   width: 18px; }
   input[type="checkbox"].checkbox-slider::before, input[type="checkbox"].checkbox-slider::after,
   .checkbox-slider input[type="checkbox"]::before,
   .checkbox-slider input[type="checkbox"]::after {
-    position: absolute;
     content: '';
-    display: block;
     cursor: pointer;
-    left: -10000px; }
+    display: block;
+    left: -10000px;
+    position: absolute; }
   input[type="checkbox"].checkbox-slider::before,
   .checkbox-slider input[type="checkbox"]::before {
-    border-radius: 18px;
-    width: 32px;
-    height: 18px;
     background: #ccc;
+    border-radius: 18px;
+    height: 18px;
     -webkit-transition: background-color 200ms;
-    transition: background-color 200ms; }
+    transition: background-color 200ms;
+    width: 32px; }
   input[type="checkbox"].checkbox-slider:checked::before,
   .checkbox-slider input[type="checkbox"]:checked::before {
     background-color: #1ce8b5; }
   input[type="checkbox"].checkbox-slider::after,
   .checkbox-slider input[type="checkbox"]::after {
-    width: 14px;
-    height: 14px;
     background: #fff;
+    border-radius: 50%;
+    height: 14px;
     top: 50%;
     -webkit-transform: translateY(-50%) translateX(13%);
             transform: translateY(-50%) translateX(13%);
-    border-radius: 50%;
     -webkit-transition: -webkit-box-shadow 100ms ease-in-out, -webkit-transform 100ms ease-in-out;
     transition: -webkit-box-shadow 100ms ease-in-out, -webkit-transform 100ms ease-in-out;
     transition: box-shadow 100ms ease-in-out, transform 100ms ease-in-out;
-    transition: box-shadow 100ms ease-in-out, transform 100ms ease-in-out, -webkit-box-shadow 100ms ease-in-out, -webkit-transform 100ms ease-in-out; }
+    transition: box-shadow 100ms ease-in-out, transform 100ms ease-in-out, -webkit-box-shadow 100ms ease-in-out, -webkit-transform 100ms ease-in-out;
+    width: 14px; }
   input[type="checkbox"].checkbox-slider:checked::after,
   .checkbox-slider input[type="checkbox"]:checked::after {
-    width: 15px;
-    height: 15px;
     -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    height: 15px;
     -webkit-transform: translateY(-50%) translateX(99%);
-            transform: translateY(-50%) translateX(99%); }
+            transform: translateY(-50%) translateX(99%);
+    width: 15px; }
 
 .panel.show {
   padding-top: 10px; }
@@ -979,6 +979,12 @@ input[type="checkbox"].checkbox-slider,
     .mux.inactive .dropbtn-small:before {
       border: 5px solid transparent;
       border-top: 5px solid #bdbdbd; }
+
+.subsections h3 {
+  font-family: poppins_regular; }
+
+.subsections .example-list li a {
+  cursor: pointer; }
 
 /*
  * Make each label stack on top of one another.

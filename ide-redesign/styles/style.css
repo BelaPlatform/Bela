@@ -327,7 +327,7 @@ ul {
     margin-right: 5px;
     size: 12px;
     font-family: poppins_light;
-    content: '-';
+    content: '>';
     /* Unicode character for "minus" sign (-) */ }
 
 .example-list > li {

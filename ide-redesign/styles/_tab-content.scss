@@ -15,18 +15,18 @@ table.choice {
 
 .left-choice {
 	display: inline-block;
-	width: 50%;
+  float: left;
 	text-align: right;
-	float: left;
+  width: 50%;
 }
 
 .right-choice {
 	display: inline-block;
-	padding-left: 10px;
-	width: 43%;
-	text-align: left;
 	margin-top: -2px;
+  padding-left: 10px;
 	position: relative;
+  text-align: left;
+  width: 43%;
   &.half {
     padding-left: 0;
     text-align: center;
@@ -50,65 +50,78 @@ input[type="number"].number-picker {
 
 input[type="checkbox"].checkbox-slider,
 .checkbox-slider input[type="checkbox"] {
-    position: relative;
-    left: 10000px;
+  height: 18px;
+  left: 10000px;
+  position: relative;
+  width: 18px;
+
+  &::before, &::after {
+    content: '';
+    cursor: pointer;
+    display: block;
+    left: -10000px;
+    position: absolute;
+  }
+
+  &::before {
+    background: #ccc;
+    border-radius: 18px;
     height: 18px;
-    width: 18px;
-
-    &::before, &::after {
-      position: absolute;
-      content: '';
-      display: block;
-      cursor: pointer;
-      left: -10000px;
-    }
-
-    &::before {
-      border-radius: 18px;
-      width: 32px;
-      height: 18px;
-      background: #ccc;
-      transition: background-color 200ms;
-    }
-
-    &:checked::before {
-      background-color: $teal-01;
-    }
-
-    &::after {
-      width: 14px;
-      height: 14px;
-      background: #fff;
-      top: 50%;
-      transform: translateY(-50%) translateX(13%);
-      border-radius: 50%;
-      transition: box-shadow 100ms ease-in-out, transform 100ms ease-in-out;
-    }
-
-    &:checked::after {
-      width: 15px;
-      height: 15px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-      transform: translateY(-50%) translateX(99%);
-    }
+    transition: background-color 200ms;
+    width: 32px;
   }
 
-  .panel.show {
-  	padding-top: 10px;
+  &:checked::before {
+    background-color: $teal-01;
   }
 
-  .mux {
-  	padding-top: 5px;
-  	&.inactive {
-  		.dropbtn-small {
-	  		background-color: $grey-light;
-	    	color: $teal-main;
-	    	border: 1px solid $grey-mid;
-	    	&:before {
-	    		border: 5px solid transparent;
-  				border-top: 5px solid $grey-mid;
-	    	}
-	    }
-
-  	}
+  &::after {
+    background: #fff;
+    border-radius: 50%;
+    height: 14px;
+    top: 50%;
+    transform: translateY(-50%) translateX(13%);
+    transition: box-shadow 100ms ease-in-out, transform 100ms ease-in-out;
+    width: 14px;
   }
+
+  &:checked::after {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    height: 15px;
+    transform: translateY(-50%) translateX(99%);
+    width: 15px;
+  }
+}
+
+.panel.show {
+	padding-top: 10px;
+}
+
+.mux {
+	padding-top: 5px;
+	&.inactive {
+		.dropbtn-small {
+  		background-color: $grey-light;
+    	color: $teal-main;
+    	border: 1px solid $grey-mid;
+    	&:before {
+    		border: 5px solid transparent;
+				border-top: 5px solid $grey-mid;
+    	}
+    }
+	}
+
+}
+
+.subsections {
+  h3 {
+    font-family: poppins_regular;
+  }
+  .example-list {
+    li {
+      a {
+        cursor: pointer;
+      }
+    }
+  }
+}

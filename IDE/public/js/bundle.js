@@ -1283,8 +1283,6 @@ var ConsoleView = function (_View) {
 			}
 		});
 
-		// $('#beaglert-console').on('click', () => $(this.input).trigger('focus') );
-		// $('#beaglert-consoleWrapper').on('click', (e) => e.stopPropagation() );
 		$('[data-console]').on('click', function () {
 			return $(_this.input).trigger('focus');
 		});
@@ -1301,10 +1299,8 @@ var ConsoleView = function (_View) {
 		_this.on('shell-cwd', function (cwd) {
 			//console.log('cwd', cwd);
 			shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
-			// $('#beaglert-consoleInput-pre').html(shellCWD);
 			$('[data-console-input-pre]').html(shellCWD);
 		});
-		// this.on('shell-tabcomplete', data => $('#beaglert-consoleInput').val(data) );
 		_this.on('shell-tabcomplete', function (data) {
 			return $('[data-console-input]').val(data);
 		});
@@ -1560,7 +1556,7 @@ var DocumentationView = function (_View) {
 							var item = _step.value;
 
 							var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter, self, 'api');
-							li.appendTo($('#APIDocs'));
+							li.appendTo($('[data-docs-api]'));
 							counter += 1;
 						}
 					} catch (err) {
@@ -1726,7 +1722,7 @@ function createlifromxml($xml, id, filename, emitter, type) {
 
 function xmlClassDocs(classname, emitter) {
 	var filename = 'class' + classname;
-	var parent = $('#' + classname + 'Docs');
+	var parent = $('[data-docs="' + classname + 'Docs"]');
 	$.ajax({
 		type: "GET",
 		url: "documentation_xml?file=" + filename,
@@ -1751,21 +1747,30 @@ function xmlClassDocs(classname, emitter) {
 				url: "documentation_xml?file=" + classname + "_8h",
 				dataType: "html",
 				success: function success(xml) {
-					//console.log(xml);
 					var includes = $(xml).find('includedby');
+					var doInclude = false;
 					if (includes.length) {
-						var content = $('#' + classname + '0').siblings('div');
-						content.append($('<p></p>').html('Examples featuring this class:'));
+						var content = $('<div></div>').addClass('subsections');
+						content.append($('<h3></h3>').html('Examples featuring this class:'));
+						var exampleList = $('<ul></ul>').addClass('example-list');
 						includes.each(function () {
+							var exampleListItem = $('<li></li>');
 							var include = $(this).html();
+							exampleListItem.attr('data-location', include);
 							if (include && include.split && include.split('/')[0] === 'examples') {
-								var link = $('<a></a>').html(include.split('/')[2]);
+								doInclude = true;
+								var link = $('<a></a>').html(include.split('/')[2]).text(include);
 								link.on('click', function () {
 									return emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/'));
 								});
-								content.append(link).append('</br>');
+								exampleListItem.append(link);
+								exampleListItem.appendTo(exampleList);
 							}
 						});
+						if (doInclude) {
+							exampleList.appendTo(content);
+							content.appendTo($('[data-docs="' + classname + 'Docs"]').parent());
+						}
 					}
 				}
 			});
