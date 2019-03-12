@@ -3809,15 +3809,15 @@ var TabView = function (_View) {
 			if (data && data.trim) boardString = data.trim();else return;
 
 			if (boardString === 'BelaMini') {
-				$('#pin_diagram_object').prop('data', 'diagram_mini.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_mini.html');
 			} else if (boardString === 'CtagFace') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_FACE.html');
 			} else if (boardString === 'CtagBeast') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST.html');
 			} else if (boardString === 'CtagFaceBela') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BELA.html');
 			} else if (boardString === 'CtagBeastBela') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST_BELA.html');
 			}
 		}
 	}]);
