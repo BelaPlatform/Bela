@@ -225,7 +225,7 @@
                     <td class="left-choice">Analog Sample Rate (Hz):</td>
                     <td class="right-choice">
                       <span class="mini-dropdown">
-                        <select id="analog-samplerate" class="settingsManager small" data-func="setCLArg" data-key="-C">
+                        <select id="analog-samplerate" class="settingsManager small" data-analog-samplerate data-func="setCLArg" data-key="-C">
                           <option value="2">88200</option>
                           <option value="4">44100</option>
                           <option value="8">22050</option>
@@ -359,7 +359,7 @@
                   </tr>
                 </table>
 
-                <table id="audioExpanderTable" class="choice">
+                <table id="audioExpanderTable" data-audio-expander-table class="choice">
                   <tr>
                     <th class="left-choice">Channel</th>
                     <th class="right-choice half">Input</th>

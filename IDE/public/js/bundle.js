@@ -3507,9 +3507,7 @@ var SettingsView = function (_View) {
 					this.setAudioExpander(key, data[key]);
 					continue;
 				} else if (key === 'audioExpander') {
-					if (data[key] == 1) $('#audioExpanderTable').css('display', 'table');
-					// else
-					// 	$('#audioExpanderTable').css('display', 'none');
+					if (data[key] == 1) $('[data-audio-expander-table]').css('display', 'table');
 				}
 
 				var el = this.$elements.filterByData('key', key);
@@ -3534,7 +3532,7 @@ var SettingsView = function (_View) {
 		key: '_projectList',
 		value: function _projectList(projects, data) {
 
-			var $projects = $('#runOnBoot');
+			var $projects = $('[data-run-on-boot]');
 			$projects.empty();
 
 			// add a none option
@@ -3555,10 +3553,8 @@ var SettingsView = function (_View) {
 		value: function useAudioExpander(func, key, val) {
 
 			if (val == 1) {
-				// $('#audioExpanderTable').css('display', 'table');
 				this.setCLArg('setCLArg', key, val);
 			} else {
-				// $('#audioExpanderTable').css('display', 'none');
 				// clear channel picker
 				$('.audioExpanderCheck').prop('checked', false);
 				this.emit('project-settings', { func: 'setCLArgs', args: [{ key: '-Y', value: '' }, { key: '-Z', value: '' }, { key: key, value: val }] });
@@ -3688,7 +3684,7 @@ var SettingsView = function (_View) {
 			}
 
 			if (boardString.includes('Ctag')) {
-				var sRates = $('#analog-samplerate').children("option");
+				var sRates = $('[data-analog-samplerate]').children("option");
 				for (var i = 0; i < sRates.length; i++) {
 					var rate = sRates[i].innerHTML;
 					if (rate == "44100") {
@@ -3700,6 +3696,7 @@ var SettingsView = function (_View) {
 			}
 
 			for (var e in exceptions['options']) {
+				console.log("exception", e);
 				var opts = $('#' + exceptions['options'][e].selector).children("option");
 				var exceptOpts = exceptions['options'][e].optVal;
 				for (var _i = 0; _i < opts.length; _i++) {
