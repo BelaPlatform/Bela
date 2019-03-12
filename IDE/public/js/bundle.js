@@ -1861,10 +1861,6 @@ var EditorView = function (_View) {
   	});
   });*/
 
-		$('#audioControl').find('button').on('click', function () {
-			return audioSource.start(0);
-		});
-
 		_this.on('resize', function () {
 			return _this.editor.resize();
 		});
@@ -1915,20 +1911,20 @@ var EditorView = function (_View) {
 		value: function __fileData(data, opts) {
 
 			// hide the pd patch and image displays if present, and the editor
-			$('#pd-svg-parent, #img-display-parent, #editor, #audio-parent').css('display', 'none');
+			$('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
 
 			if (!opts.fileType) opts.fileType = '0';
 
 			if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
-				$('#img-display-parent, #img-display').css({
-					'max-width': $('#editor').width() + 'px',
-					'max-height': $('#editor').height() + 'px'
+				$('[data-img-display-parent], [data-img-display]').css({
+					'max-width': $('[data-editor]').width() + 'px',
+					'max-height': $('[data-editor]').height() + 'px'
 				});
-				$('#img-display-parent').css('display', 'block');
+				$('[data-img-display-parent]').css('display', 'block');
 
-				$('#img-display').prop('src', 'media/' + opts.fileName);
+				$('[data-img-display]').prop('src', 'media/' + opts.fileName);
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
@@ -1936,13 +1932,13 @@ var EditorView = function (_View) {
 
 				//console.log('opening audio file');
 
-				$('#audio-parent').css({
+				$('[data-audio-parent]').css({
 					'display': 'block',
-					'max-width': $('#editor').width() + 'px',
-					'max-height': $('#editor').height() + 'px'
+					'max-width': $('[data-editor]').width() + 'px',
+					'max-height': $('[data-editor]').height() + 'px'
 				});
 
-				$('#audio').prop('src', 'media/' + opts.fileName);
+				$('[data-audio]').prop('src', 'media/' + opts.fileName);
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
@@ -1961,15 +1957,15 @@ var EditorView = function (_View) {
 					// render pd patch
 					try {
 
-						$('#pd-svg').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
-							'max-width': $('#editor').width() + 'px',
-							'max-height': $('#editor').height() + 'px'
+						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
+							'max-width': $('[data-editor]').width() + 'px',
+							'max-height': $('[data-editor]').height() + 'px'
 						});
 
-						$('#pd-svg-parent').css({
+						$('[data-pd-svg-parent]').css({
 							'display': 'block',
-							'max-width': $('#editor').width() + 'px',
-							'max-height': $('#editor').height() + 'px'
+							'max-width': $('[data-editor]').width() + 'px',
+							'max-height': $('[data-editor]').height() + 'px'
 						});
 
 						this.emit('close-notification', { timestamp: timestamp });
@@ -1989,7 +1985,7 @@ var EditorView = function (_View) {
 				} else {
 
 					// show the editor
-					$('#editor').css('display', 'block');
+					$('[data-editor]').css('display', 'block');
 
 					// stop comparison with file on disk
 					this.emit('compare-files', false);
