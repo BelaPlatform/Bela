@@ -67,7 +67,7 @@ class FileView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -93,7 +93,7 @@ class FileView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -114,11 +114,11 @@ class FileView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-delete').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 	openFile(e){

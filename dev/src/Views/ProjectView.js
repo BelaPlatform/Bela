@@ -45,22 +45,26 @@ class ProjectView extends View {
 		popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
 
 		var form = [];
-		form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
-		form.push('<label for="popup-C">C++</label>')
-		form.push('</br>');
-		form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
-		form.push('<label for="popup-PD">Pure Data</label>')
-		form.push('</br>');
+		form.push('<label for="popup-C" class="radio-container">C++')
+		form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>')
+		form.push('<span class="radio-button"></span>')
+		form.push('</label>');
+		form.push('<label for="popup-PD" class="radio-container">Pure Data')
+		form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">')
+		form.push('<span class="radio-button"></span>')
+		form.push('</label>');
+		form.push('<label for="popup-SC" class="radio-container">SuperCollider')
 		form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
-		form.push('<label for="popup-SC">SuperCollider</label>')
-		form.push('</br>');
+		form.push('<span class="radio-button"></span>')
+		form.push('</label>');
+		form.push('<label for="popup-CS" class="radio-container">Csound');
 		form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-		form.push('<label for="popup-CS">Csound</label>')
-		form.push('</br>');
+		form.push('<span class="radio-button"></span>')
+		form.push('</label>');
 		form.push('<input type="text" placeholder="Enter your project name">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup-save">Create</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Create</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -73,7 +77,7 @@ class ProjectView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -87,8 +91,8 @@ class ProjectView extends View {
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the new project name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-save">Save</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Save</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -96,7 +100,7 @@ class ProjectView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -108,8 +112,8 @@ class ProjectView extends View {
 		popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-delete">Delete</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Delete</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -118,11 +122,11 @@ class ProjectView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-delete').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 	cleanProject(func){
