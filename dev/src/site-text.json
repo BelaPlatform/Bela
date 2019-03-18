@@ -1,0 +1,63 @@
+{
+	"popups": {
+		"create_new": {
+			"title": "Create new project",
+			"text": "Choose the development language for this project, and give it a name.",
+			"button": "Create project"
+		},
+		"save_as": {
+			"title": "Save project as ...",
+			"text": "Enter the name of this project.",
+			"button": "Save project"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "Warning: This can't be undone.",
+			"button": "Delete project"
+		},
+		"add_new_file": {
+			"title": "Add new file",
+			"text": "Enter the new file name with extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Add this file"
+		},
+		"rename_file": {
+			"title": "Rename this file",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Rename"
+		},
+		"delete_file": {
+			"title": "Do you really want to delete this file?",
+			"text": "This action cannot be undone!"
+		},
+		"restore_default_project_settings": {
+			"title": "Restore default project settings?",
+			"text": "Your current project settings will be lost. This can't be undone!",
+			"button": "Restore defaults"
+		},
+		"restore_default_IDE_settings": {
+			"title": "Restore default IDE settings?",
+			"text": "Your current IDE settings will be lost. This can't be undone!",
+			"button": "Restore defaults"
+		},
+		"shutdown": {
+			"title": "Shut down Bela?",
+			"text": "Bela will shutdown gracefully.",
+			"button": "Shut down Bela"
+		},
+		"update": {
+			"title": "Upload a Bela update",
+			"text": "Select your update file (ZIP archive)"
+		},
+		"about": {
+			"title": "About Bela",
+			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by Augmented Instruments Ltd in London, UK. For more information: <a href='https://bela.io' target='new'>bela.io</a>"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": "Would you like to reload?",
+			"button": "Reload"
+		}
+
+	}	
+
+}
