@@ -15,6 +15,7 @@ $teal-02: #63ffd9;
 $teal-03: #a6ffea;
 
 $grey-light: #f1f1f1;
+$grey-light-mid: rgba(0,0,0,0.2);
 $grey-mid: #bdbdbd;
 
 $grey-tabs: #c9c9c9;
@@ -24,6 +25,8 @@ $grey-editorbg: #eeeeee;
 $grey-toolbar: #c9c9c9;
 
 $amber-accent: #f26d21;
+
+$grey-dark: rgba(0,0,0,0.8);
 
 @import 'reset';
 @import 'fonts';

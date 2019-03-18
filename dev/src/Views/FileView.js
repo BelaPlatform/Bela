@@ -58,8 +58,8 @@ class FileView extends View {
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-create">Create</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Create</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -67,7 +67,7 @@ class FileView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -84,8 +84,8 @@ class FileView extends View {
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the new file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-rename">Rename</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Rename</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -93,7 +93,7 @@ class FileView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -105,8 +105,8 @@ class FileView extends View {
 		popup.subtitle('Are you sure you wish to delete this file? This cannot be undone!');
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-delete">Delete</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Delete</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -114,11 +114,11 @@ class FileView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-delete').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 	openFile(e){
@@ -293,8 +293,8 @@ class FileView extends View {
 			form.push('<input id="popup-remember-upload" type="checkbox">');
 			form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>')
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button confirm">Overwrite</button>');
+			form.push('<button type="button" class="button cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', e => {
 				e.preventDefault();
@@ -310,7 +310,7 @@ class FileView extends View {
 				}
 			});
 
-			popup.find('.popup-cancel').on('click', () => {
+			popup.find('.cancel').on('click', () => {
 				if (popup.find('input[type=checkbox]').is(':checked')){
 					askForOverwrite = false;
 					overwriteAction = 'reject';
@@ -323,7 +323,7 @@ class FileView extends View {
 
 			popup.show();
 
-			popup.find('.popup-cancel').focus();
+			popup.find('.cancel').focus();
 
 		} else if (fileExists && !askForOverwrite){
 
