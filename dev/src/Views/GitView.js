@@ -46,8 +46,8 @@ class GitView extends View{
 		var form = [];
 		form.push('<input type="text" placeholder="Enter your commit message">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-commit">Commit</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Commit</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -55,7 +55,7 @@ class GitView extends View{
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -69,8 +69,8 @@ class GitView extends View{
 		var form = [];
 		form.push('<input type="text" placeholder="Enter your new branch name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-create">Create</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Create</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -78,7 +78,7 @@ class GitView extends View{
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -91,8 +91,8 @@ class GitView extends View{
 		popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">Continue</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -100,11 +100,11 @@ class GitView extends View{
 			popup.hide();
 		});
 
-		popup.find('.popup-create').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 

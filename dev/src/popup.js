@@ -48,7 +48,7 @@ function example(cb, arg, delay, cancelCb){
 	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 
 	var form = [];
-	form.push('<button type="submit" class="button popup continue">Continue</button>');
+	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -59,13 +59,13 @@ function example(cb, arg, delay, cancelCb){
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', () => {
+	popup.find('.cancel').on('click', () => {
 		popup.hide();
 		if (cancelCb) cancelCb();
 	});
 
 	popup.show();
 
-	popup.find('.popup-continue').trigger('focus');
+	popup.find('.confirm').trigger('focus');
 
 }
