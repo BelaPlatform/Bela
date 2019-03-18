@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var inputChangedTimeout;
 
@@ -88,12 +89,14 @@ class SettingsView extends View {
 	restoreDefaultCLArgs(func){
 
 		// build the popup content
-		popup.title('Restoring default project settings');
-		popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
+		popup.title(json.popups.restore_default_project_settings.title);
+		popup.subtitle(json.popups.restore_default_project_settings.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button confirm">');
+		form.push(json.popups.restore_default_project_settings.button);
+		form.push('</button>');
+		form.push('<button type="button" class="button cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -101,11 +104,11 @@ class SettingsView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 
