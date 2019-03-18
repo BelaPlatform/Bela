@@ -25,18 +25,14 @@
     margin-bottom: 10px;
   }
   input {
-    font-size: 16px;
-    padding: 10px;
+    font-size: 1em;
+    padding: .5em;
+    line-height: 1em;
     &[type=text] {
-      margin: 1em;
+      margin-top: 1em;
       width: 15em;
     }
-    &[type=checkbox], &[type=radio] {
-      margin: 2px 10px;
-      position: relative;
-      top: 5px;
-      width: initial;
-    }
+
     &[type=file]{
       background: initial;
       border: initial;
@@ -47,25 +43,65 @@
       font-style: italic;
     }
   }
+  /* Styles for custom radio buttons */
+  .radio-container {
+    display: block;
+    position: relative;
+    padding-left: 2em;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  .radio-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .radio-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1em;
+    width: 1em;
+    background-color: $grey-mid;
+    opacity: 0.5;
+    border-radius: 50%;
+    margin-top: .25em;
+  }
+  .radio-container:hover input ~ .radio-button {
+    opacity: 1;
+  }
+  .radio-container input:checked ~ .radio-button {
+    background-color: $teal-01;
+    opacity: 1;
+  }
+
+  /* Styles for custom UI buttons for popups */
   button {
     float: right;
     margin-top: .5em;
     font-size: 1em; 
-    padding: .5em .75em;
+    padding: .5em 2em;
     margin-left: .75em;
     &.confirm { 
-      background: $teal-main;
-      opacity: 0.7;
-      color: $white;
-      border-bottom: 4px solid $teal-base;
+      border: 1px solid $teal-01;
+      background: $teal-01;
+      color: $grey-dark;
       &:hover {
-        background: $teal-01;
-        color: $grey-dark;
-        border-bottom: 1px solid $teal-base;
+        border: 1px solid $teal-02;
+        background: $teal-02;
+
       }
     }
     &.cancel {
-      background: $grey-light;
+      background: $white;
+      border: 1px solid $grey-mid;
+      &:hover {
+        background: $grey-light-mid;
+        color: $grey-dark;
+      }
     } 
   }
 }
