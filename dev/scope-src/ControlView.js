@@ -69,26 +69,28 @@ class ControlView extends View{
 	plotMode(val, data){
 		this.emit('plotMode', val, data);
 		if (val == 0){
+			if ($('#control-underlay').hasClass('')) $('#control-underlay').addClass('hidden');
 			if ($('#triggerControls').hasClass('hidden')) $('#triggerControls').removeClass('hidden');
 			if (!$('#FFTControls').hasClass('hidden')) $('#FFTControls').addClass('hidden');
-			$('.xAxisUnits').html('ms');
-			$('.xUnit-display').html((xTime * downSampling/upSampling).toPrecision(2));
-			$('#zoomUp').html('in');
-			$('#zoomDown').html('out');
+			$('.xAxisUnits').html('<p>ms</p>');
+			$('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');
+			$('#zoomUp').html('Zoom in');
+			$('#zoomDown').html('Zoom out');
 		} else if (val == 1){
+			if ($('#control-underlay').hasClass('hidden')) $('#control-underlay').removeClass('hidden');
 			if (!$('#triggerControls').hasClass('hidden')) $('#triggerControls').addClass('hidden');
 			if ($('#FFTControls').hasClass('hidden')) $('#FFTControls').removeClass('hidden');
 			$('.xAxisUnits').html('Hz');
 			$('.xUnit-display').html((sampleRate/20 * upSampling/downSampling));
-			$('#zoomUp').html('out');
-			$('#zoomDown').html('in');
+			$('#zoomUp').html('Zoom out');
+			$('#zoomDown').html('Zoom in');
 		}
 	}
 	
 	_upSampling(value, data){
 		upSampling = value;
 		if (data.plotMode == 0){
-			$('.xUnit-display').html((data.xTimeBase * data.downSampling/data.upSampling).toPrecision(2));
+			$('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');
 		} else if (data.plotMode == 1){
 			$('.xUnit-display').html((data.sampleRate/20 * data.upSampling/data.downSampling));
 		}
@@ -97,17 +99,16 @@ class ControlView extends View{
 	_downSampling(value, data){
 		downSampling = value;
 		if (data.plotMode == 0){
-			$('.xUnit-display').html((data.xTimeBase * data.downSampling/data.upSampling).toPrecision(2));
+			$('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');
 		} else if (data.plotMode == 1){
-			$('.xUnit-display').html((data.sampleRate/20 * data.upSampling/data.downSampling));
+			$('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');
 		}
-		$('.zoom-display').html((100*upSampling/downSampling).toPrecision(4)+'%');
 	}
 	_xTimeBase(value, data){
 		xTime = data.xTimeBase;
 		sampleRate = data.sampleRate;
 		if (data.plotMode == 0){
-			$('.xUnit-display').html((data.xTimeBase * data.downSampling/data.upSampling).toPrecision(2));
+			$('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');;
 		}
 	}
 	
