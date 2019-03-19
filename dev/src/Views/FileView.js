@@ -1,6 +1,7 @@
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var json = require('../site-text.json');
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -19,6 +20,11 @@ class FileView extends View {
 		super(className, models);
 
 		this.listOfFiles = [];
+
+		var data = {
+			fileName: "",
+			project: ""
+		};
 
 		// hack to upload file
     $('[data-upload-file-input]').on('change', (e) => {
@@ -50,15 +56,14 @@ class FileView extends View {
 	}
 
 	newFile(func){
-
 		// build the popup content
-		popup.title('Creating a new file');
-		popup.subtitle('Enter the name of the new file. Only files with extensions .cpp, .c or .S will be compiled.');
+		popup.title(json.popups.create_new_file.title);
+		popup.subtitle(json.popups.create_new_file.text);
 
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">Create</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.create_new_file.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -76,15 +81,15 @@ class FileView extends View {
 		$('[data-upload-file-input]').trigger('click');
 	}
 	renameFile(func){
-
+		
 		// build the popup content
-		popup.title('Renaming this file');
-		popup.subtitle('Enter the new name of the file. Only files with extensions .cpp, .c or .S will be compiled.');
+		popup.title(json.popups.rename_file.title);
+		popup.subtitle(json.popups.rename_file.text);
 
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the new file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">Rename</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.rename_file.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -98,14 +103,15 @@ class FileView extends View {
 		popup.show();
 
 	}
+
 	deleteFile(func){
 
 		// build the popup content
-		popup.title('Deleting file');
-		popup.subtitle('Are you sure you wish to delete this file? This cannot be undone!');
+		popup.title(json.popups.delete_file.title);
+		popup.subtitle(json.popups.delete_file.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup confirm">Delete</button>');
+		form.push('<button type="submit" class="button popup delete">'+json.popups.delete_file.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -118,7 +124,7 @@ class FileView extends View {
 
 		popup.show();
 
-		popup.find('.confirm').trigger('focus');
+		popup.find('.delete').trigger('focus');
 
 	}
 	openFile(e){
@@ -263,7 +269,6 @@ class FileView extends View {
 	}
 
 	doFileUpload(file){
-
 		//console.log('doFileUpload', file.name);
 
 		if (uploadingFile){
@@ -286,14 +291,14 @@ class FileView extends View {
 			uploadingFile = true;
 
 			// build the popup content
-			popup.title('Overwriting file');
-			popup.subtitle('The file '+file.name+' already exists in this project. Would you like to overwrite it?');
+			popup.title(json.popups.overwrite.title);
+			popup.subtitle(file.name+json.popups.overwrite.text);
 
 			var form = [];
 			form.push('<input id="popup-remember-upload" type="checkbox">');
-			form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>')
+			form.push('<label for="popup-remember-upload">'+json.popups.overwrite.tick+'</label>')
 			form.push('</br >');
-			form.push('<button type="submit" class="button confirm">Overwrite</button>');
+			form.push('<button type="submit" class="button confirm">'+json.popups.overwrite.button+'</button>');
 			form.push('<button type="button" class="button cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', e => {

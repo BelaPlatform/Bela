@@ -2,12 +2,12 @@
 	"popups": {
 		"create_new": {
 			"title": "Create new project",
-			"text": "Choose the development language for this project, and give it a name.",
+			"text": "Choose the development language for this project, and give it a name:",
 			"button": "Create project"
 		},
 		"save_as": {
 			"title": "Save project as ...",
-			"text": "Enter the name of this project.",
+			"text": "",
 			"button": "Save project"
 		},
 		"delete_project": {
@@ -15,49 +15,62 @@
 			"text": "Warning: This can't be undone.",
 			"button": "Delete project"
 		},
-		"add_new_file": {
-			"title": "Add new file",
-			"text": "Enter the new file name with extension (only files with .cpp, .c or .S extensions will be compiled).",
-			"button": "Add this file"
+		"create_new_file": {
+			"title": "Create new file",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Create file"
 		},
 		"rename_file": {
-			"title": "Rename this file",
+			"title": "Rename this file?",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
-			"button": "Rename"
+			"button": "Rename file"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "This can't be undone.",
+			"button": "Delete project"
 		},
 		"delete_file": {
-			"title": "Do you really want to delete this file?",
-			"text": "This action cannot be undone!"
+			"title": "Delete this file?",
+			"text": "This can't be undone.",
+			"button": "Delete file"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
-			"text": "Your current project settings will be lost. This can't be undone!",
+			"text": "Your current project settings will be restored to defaults. This can't be undone.",
 			"button": "Restore defaults"
 		},
 		"restore_default_IDE_settings": {
 			"title": "Restore default IDE settings?",
-			"text": "Your current IDE settings will be lost. This can't be undone!",
+			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
 			"button": "Restore defaults"
 		},
 		"shutdown": {
 			"title": "Shut down Bela?",
-			"text": "Bela will shutdown gracefully.",
-			"button": "Shut down Bela"
+			"text": "Bela will disconnect from the IDE and shutdown gracefully.",
+			"button": "Yes, shut down Bela"
 		},
 		"update": {
-			"title": "Upload a Bela update",
-			"text": "Select your update file (ZIP archive)"
+			"title": "Update Bela",
+			"text": "Select your Bela update (will be a ZIP file).",
+			"button": "Update now"
 		},
 		"about": {
 			"title": "About Bela",
-			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by Augmented Instruments Ltd in London, UK. For more information: <a href='https://bela.io' target='new'>bela.io</a>"
+			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
+			"button": "Close"
 		},
 		"file_changed": {
 			"title": "File changed on disk",
 			"text": "Would you like to reload?",
 			"button": "Reload"
+		},
+		"overwrite": {
+			"title": "Overwrite file?",
+			"text": " already exists in this project. Overwrite?",
+			"button": "Overwite",
+			"tick": "Don't ask me again this session"
 		}
 
 	}	
-
 }
