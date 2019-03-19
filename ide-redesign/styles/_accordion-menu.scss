@@ -31,30 +31,37 @@ button.accordion {
     font-size: 14px;
     margin-left: 5px;
   }
-  &.sub {
-    background-color: #ddd;
-    margin-left: 20px;
-    margin-top: 0;
-    width: calc(100% - 20px);
+}
+
+button.accordion-sub {
+  padding-left: .8em;
+  color: $grey-dark;
+  font-size: 1em;
+  background: transparent;
+  padding: .5em 0 .5em .8em;
+  border-bottom: 1px dashed $grey-dark;
+  width: 100%;
+  text-align: left;
+  &:hover {
+    background: $yellow-accent-fade;
+    color: $grey-dark;
+  }
+  .active {
     &:hover {
-      background: #ddd;
-      border-bottom: 2px solid white;
+      color: $grey-dark;
     }
-    &.active {
-      background: $grey-light;
-      border-bottom: none;
-      padding: 8px 14px;
-      &:after {
-        content: "\2796"; /* Unicode character for "minus" sign (-) */
-      }
-    }
-    &:after {
-      color:  rgba(0, 0, 0, 0.6);
-      content: '\02795'; /* Unicode character for "plus" sign (+) */
-      float: right;
-      font-size: 14px;
-      margin-left: 5px;
-    }
+  }
+}
+
+.docs-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease-in-out;
+  transition-delay: 0.4s;
+  &.show {
+    max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+    opacity: 1;
   }
 }
 
