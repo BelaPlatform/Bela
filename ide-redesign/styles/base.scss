@@ -28,6 +28,8 @@ $amber-accent: #f26d21;
 
 $grey-dark: rgba(0,0,0,0.8);
 
+$trans-reg: 0.1s;
+
 @import 'reset';
 @import 'fonts';
 
@@ -104,6 +106,7 @@ hr {
 
 @import 'accordion-menu';
 @import 'buttons';
+@import 'slider';
 @import 'console';
 @import 'dropdown';
 @import 'dropdown-mini';
