@@ -15,7 +15,7 @@ $teal-02: #63ffd9;
 $teal-03: #a6ffea;
 
 $grey-light: #f1f1f1;
-$grey-light-mid: rgba(0,0,0,0.2);
+$grey-light-mid: #e5e5e5;
 $grey-mid: #bdbdbd;
 
 $grey-tabs: #c9c9c9;
@@ -49,6 +49,10 @@ img {
 }
 
 /* Container for upper elements - editor and tabs */
+
+.hidden {
+  display: none;
+}
 
 .upper {
 	height: 100%;
