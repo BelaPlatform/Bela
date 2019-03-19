@@ -94,7 +94,8 @@ input[type="checkbox"].checkbox-slider,
 }
 
 .panel.show {
-	padding-top: 10px;
+	padding-top: .8em;
+  margin-left: .25em;
 }
 
 .mux {
@@ -124,4 +125,23 @@ input[type="checkbox"].checkbox-slider,
       }
     }
   }
+}
+.open-project {
+  margin-top: 10px;
+  >.project {
+    font-family: poppins_regular;
+    font-size: .85em;
+    color: $grey-dark;
+
+  }
+}
+
+p.project-text {
+  font-family: space_regular;
+  font-size: .9em;
+  margin: 0 0 .5em .5em;
+}
+
+.button-container {
+  margin-bottom: .5em;
 }
