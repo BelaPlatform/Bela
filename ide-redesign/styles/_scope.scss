@@ -1,0 +1,58 @@
+#control-panel {
+	background-color: rgba(255,255,255,0.8);
+	border: 1px solid $grey-light;
+	left: 50px;
+	padding: 2em;
+	position: absolute;
+	top: 50px;
+	z-index: 9999;
+
+	&.hidden {
+		display: none;
+	}
+	.control-section {
+		display: inline-block;
+		width: 300px;
+		vertical-align: top;
+		h1 {
+			font-family: space_bold;
+			color: $grey-dark;
+
+			font-size: 1.7em;
+			margin-block-start: 0;
+			margin-block-end: .5em;
+		}
+		.block-section {
+			p {
+				display: inline;
+				font-family: poppins_regular;
+				padding: .5em 0;
+				font-size: .85em;
+			}
+			.scope-label {
+				display: inline-block;
+				width: 30%;
+			}
+			.scope-input {
+				display: inline-block;
+				width: auto;
+			}
+		}
+	}	
+}
+
+.number-box[type=number] {
+	border: 0;
+	line-height: .5em;
+	font-family: inconsolata;
+	font-size: 1em;
+	text-align: left;
+	width: 3em;
+	&::-webkit-inner-spin-button {
+		appearance: none;
+	}
+}
+
+input.scopeControls.range-slider {
+	padding-left: .5em;
+}
