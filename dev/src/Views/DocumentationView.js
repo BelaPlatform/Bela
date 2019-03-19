@@ -93,14 +93,17 @@ module.exports = DocumentationView;
 function createlifrommemberdef($xml, id, emitter, type){
 
 	var name = $xml.find('name').html();
+	console.log(name);
 	emitter.emit('add-link', {name, id}, type);
 
 	var li = $('<li></li>');
 
-	var content = $('<div></div>');
-
 	// title
-	content.append($('<h3></h3>').html( $xml.find('definition').html() + $xml.find('argsstring').html() + "<hr />" ));
+	li.append($('<button class="accordion-sub" data-accordion-for="' + name + '"></button>').html($xml.find('name').html() ));
+	// li.append($('<h3 class="memberdef-title"></h3>').html( $xml.find('definition').html() + $xml.find('argsstring').html() + "<hr />" ));
+
+	var content = $('<div class="docs-content" data-accordion="' + name + '"></div>');
+    content.append($('<h3 class="memberdef-title"></h3>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
 
 	// subtitle
 	content.append($('<p></p>').html( $xml.find('briefdescription > para').html() || '' ));
@@ -108,11 +111,11 @@ function createlifrommemberdef($xml, id, emitter, type){
 	// main text
 	$xml.find('detaileddescription > para').each(function(){
 		if ($(this).find('parameterlist').length){
-			content.append('<h3>Parameters:</h3>');
+			content.append('<h4>Parameters:</h4>');
 			var ul = $('<ul></ul>');
 			$(this).find('parameteritem').each(function(){
 				var li = $('<li></li>');
-				li.append($('<h4></h4>').html( $(this).find('parametername').html() + ': ' ));
+				li.append($('<h5></h5>').html( $(this).find('parametername').html() + ': ' ));
 				$(this).find('parameterdescription>para').each(function(){
 					li.append($('<p></p>').html( $(this).html() || '' ));
 				});
@@ -135,10 +138,10 @@ function createlifromxml($xml, id, filename, emitter, type){
 
 	var li = $('<li></li>');
 
-	var content = $('<div></div>');
+	var content = $('<div class="intro-content"></div>');
 
 	// subtitle
-	content.append($('<h3></h3>').html( $xml.find('compounddef > briefdescription > para').html() || '' ));
+	li.append($('<h3 class="intro-header"></h3>').html( $xml.find('compounddef > briefdescription > para').html() || '' ));
 
 	// main text
 	$xml.find('compounddef > detaileddescription > para').each(function(){
@@ -196,7 +199,7 @@ function xmlClassDocs(classname, emitter){
           var doInclude = false;
 					if (includes.length){
 						var content = $('<div></div>').addClass('subsections');
-            content.append($('<h3></h3>').html('Examples featuring this class:'));
+            content.append($('<p class="examples-header"></p>').html('Examples using this class:'));
             var exampleList = $('<ul></ul>').addClass('example-list');
 						includes.each(function(){
               var exampleListItem = $('<li></li>');
