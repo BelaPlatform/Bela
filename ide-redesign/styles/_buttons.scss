@@ -9,15 +9,13 @@ a.button {
 
 button,
 .button {
-  border-bottom: 2px solid rgba(0, 190, 164, 1.0);
-  border-left: rgba(0, 190, 164, 0.4);
-  border-right: rgba(0, 190, 164, 0.4);
-	border-top: rgba(0, 190, 164, 0.4);
-	background-color: rgba(0, 190, 164, 0.4);
-  border-radius: 2px;
+  border: 1px solid $teal-main;
+	background-color: $white;
+  border-radius: 3px;
+  font-size: .8em;
   cursor: pointer;
   font-family: poppins_light;
-	padding: 6px 12px;
+	padding: .5em .7em;
   &.active {
     color: rgba(0, 0, 0, 0.4);
     &:hover {
@@ -25,19 +23,19 @@ button,
     }
   }
 	&:hover {
-		background-color: rgba(0, 190, 164, 0.7	);
+		background-color: $teal-main;
 		color: rgba(255,255,255,0.9);
 		transition: 0.1s ease-in-out;
 	}
 	&.create-project {
-		font-size: 14px;
-		margin-top: -1px;
+		font-size: .9em;
+    margin-top: 2px;
 		padding-right: 20px;
     &:hover {
     	color: $white;
     }
 		&:before {
-      color: rgba(0, 0, 0, 0.4);
+      color: $grey-dark;
 			content: '+'; /* Unicode character for "plus" sign (+) */
 			font-family: space_bold;
 			font-size: 36px;
@@ -48,10 +46,7 @@ button,
 	}
 	&:disabled {
 		background-color: rgba(0, 0, 0, 0.1); // Background
-    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
-    border-left: rgba(0, 0, 0, 0.1);
-    border-right: rgba(0, 0, 0, 0.1);
-    border-top: rgba(0, 0, 0, 0.1);
-		color: rgba(0, 0, 0,0.9); // Text colour
+    border:  1px solid $grey-light-mid;
+		color: $grey-dark; // Text colour
 	}
 }
