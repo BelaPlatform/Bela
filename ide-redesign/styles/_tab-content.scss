@@ -1,8 +1,8 @@
 .choice {
-	padding-bottom: 10px;
-	font-family: poppins_light;
-	font-size: 12px;
 	color: rgba(0, 0, 0, 0.6);
+  font-family: poppins_light;
+  font-size: 12px;
+  padding-bottom: 10px;
   tr {
     display: block;
     padding-bottom: 10px;
@@ -129,9 +129,9 @@ input[type="checkbox"].checkbox-slider,
 .open-project {
   margin-top: 10px;
   >.project {
+    color: $grey-dark;
     font-family: poppins_regular;
     font-size: .85em;
-    color: $grey-dark;
 
   }
 }
