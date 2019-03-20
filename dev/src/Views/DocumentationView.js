@@ -99,10 +99,13 @@ function createlifrommemberdef($xml, id, emitter, type){
   button.addClass('accordion-sub').attr('data-accordion-for', name).html($xml.find('name').html());
   button.appendTo(li);
 
-  var content = $('<div class="docs-content" data-accordion="' + name + '"></div>');
-  content.append($('<h3 class="memberdef-title"></h3>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
+  var content = $('<div></div>').addClass('docs-content').data('accordion', name);
+  var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
+
+  title.appendTo(content);
 
   // subtitle
+
   content.append($('<p></p>').html( $xml.find('briefdescription > para').html() || '' ));
 
   // main text
