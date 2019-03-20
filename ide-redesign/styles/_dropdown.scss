@@ -1,12 +1,10 @@
 /* Dropdown Button */
 button.dropbtn {
-    // opacity: 1;
     position: relative;
     width: 200px;
     background-color: #fff;
     font-family: poppins_regular;
     color: $teal-main;
-    //padding: 6px 16px;
     font-size: 14px;
     text-align: left;
     border: none;
@@ -28,7 +26,6 @@ button.dropbtn {
 
         &:before {
             border-top: 8px solid #fff;
-            // border-top: 8px solid #fff;
         }
     }
     &.small {
@@ -48,7 +45,6 @@ button.dropbtn {
 
             &:before {
                 border-top: 8px solid #fff;
-                // border-top: 8px solid #fff;
             }
         }
     }
@@ -58,7 +54,6 @@ button.dropbtn {
     opacity: 1;
     position: relative;
     display: inline-block;
-    // border: 2px solid $teal-main;
     border-radius: 2px;
     &.inactive {
         background: $grey-light;
@@ -74,9 +69,6 @@ select.dropdown-num {
     padding-left: 10px;
     background: transparent;
     font-family: poppins_light;
-    // appearance: none;
-    // -webkit-appearance: none;
-    // -moz-appearance: none;
     &.inactive {
         border: $grey-mid;
         background: $grey-light;
@@ -95,7 +87,6 @@ select.dropdown-num {
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   /* Links inside the dropdown */
   ul, select {
-    // appearance: none;
     width: 200px;
     padding-left: 28px;
     padding-top: 0;
