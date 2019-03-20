@@ -11,11 +11,11 @@
 }
 
 #image {
-    width: 350px;
-    text-align: left;
     margin: 0;
-    padding-left: 0;
     overflow: visible;
+    padding-left: 0;
+    text-align: left;
+    width: 350px;
 }
 
 .diagram_text {
@@ -28,85 +28,96 @@
     fill: rgba(0, 255, 0, 0.5);
     stroke: none;
 }
+
 .new {
     fill: rgb(255, 0, 0);
 }
+
 .gnd {
     fill: rgba(255, 0, 0, 0.4);
     stroke: rgb(255, 0, 0);
 }
+
 .aPin {
     fill: rgba(255, 255, 0, 0.5);
     stroke: none;
 }
+
 .aInPin {
     fill: rgba(255, 165, 0, 0.6);
     stroke: none;
 }
+
 .comms {
     fill: rgba(0, 0, 255, 0.5);
     stroke: none;
 }
+
 .audio {
     fill: rgba(155, 48, 255, 0.5);
     stroke: none;
 }
+
 .pins{
     fill: transparent;
     stroke: #000;
 }
+
 .util {
     fill: rgba(255, 14, 154, 0.5);
     stroke: none;
 }
+
 .led {
     fill: rgba(0, 255, 0, 0.6);
     stroke: none;
 }
+
 .caution {
     fill: rgba(255, 14, 154, 0.7);
     stroke: rgb(255, 0, 0);
 }
+
 .jumper {
-  fill: rgba(0, 255, 255, 0.2);
-  stroke: rgb(0, 255, 255);
+    fill: rgba(0, 255, 255, 0.2);
+    stroke: rgb(0, 255, 255);
 }
+
 .usbpwrJ {
-  fill: rgba(255, 150, 0, 0.5);
-  stroke: rgb(255, 150, 0);
+    fill: rgba(255, 150, 0, 0.5);
+    stroke: rgb(255, 150, 0);
 }
+
 .extpwrJ {
-  fill: transparent;
-  stroke: rgb(255, 255, 0);
+    fill: transparent;
+    stroke: rgb(255, 255, 0);
 }
+
 .disabled {
-  fill: rgba(0, 0, 0, 0.6);
-  stroke: none;
+    fill: rgba(0, 0, 0, 0.6);
+    stroke: none;
 }
+
 .powerIn {
-  fill: rgba(255, 14, 154, 0.7);
-  stroke: #0effeb;
+    fill: rgba(255, 14, 154, 0.7);
+    stroke: #0effeb;
 }
-
-.tooltip {
-
-}
-
-
 
 .tooltipster-content {
     padding: 0!important;
-    }
+}
+
 .tipText {
+    background: #fff;
+    color: #000;
+    max-width: 350px;
+    padding: 5px 10px;
     position: relative;
     z-index: 100;
-    background: #fff;
-    padding: 5px 10px;
-    max-width: 350px;
-    color: #000;
 }
+
 .diagram-text {   
-  font-family: sofia;
-  font-size: .9em;
-  margin-top: -10px;
+    font-size: .9em;
+    font-family: sofia;
+    margin-top: -10px;
 }
