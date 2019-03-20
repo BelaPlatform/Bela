@@ -2,7 +2,7 @@
   background-color: rgba(255,255,255,0.8);
   border: 1px solid $grey-light;
   left: 50px;
-  padding: 2em;
+  padding: 2em 0 2em 2em;
   position: absolute;
   top: 50px;
   z-index: 9999;
@@ -11,31 +11,49 @@
     display: none;
   }
   .control-section {
-    display: inline-block;
-    width: 300px;
+    width: 400px;
     vertical-align: top;
     h1 {
       font-family: space_bold;
       color: $grey-dark;
+      font-size: 1.2em;
+      margin-block-start: 1em;
+      margin-block-end: .75em;
 
-      font-size: 1.7em;
-      margin-block-start: 0;
-      margin-block-end: .5em;
     }
     .block-section {
+      margin-left: 1.5em;
       p {
         display: inline;
         font-family: poppins_regular;
         padding: .5em 0;
         font-size: .85em;
       }
+      div span p {
+        font-family: inconsolata;
+        font-size: 1em;
+      }
       .scope-label {
         display: inline-block;
-        width: 30%;
+        text-align: right;
+        width: 100px;
+        margin: 5px 0;
       }
       .scope-input {
         display: inline-block;
-        width: auto;
+        padding-left: 60px;
+        position: absolute;
+        width: 200px;
+        margin: 5px 0;
+        >.mini-dropdown {
+          width: 100px;
+          &:before {
+            left: 140px;
+          }
+        }
+      }
+      &.slider-line {
+        margin-top: .5em;
       }
     }
   } 
@@ -46,8 +64,8 @@
   line-height: .5em;
   font-family: inconsolata;
   font-size: 1em;
-  text-align: left;
-  width: 3em;
+  text-align: right;
+  width: 2.5em;
   &::-webkit-inner-spin-button {
     appearance: none;
   }
@@ -55,4 +73,35 @@
 
 input.scopeControls.range-slider {
   padding-left: .5em;
+  width: 100%;
+}
+
+.slider {
+  border: 1px solid blue;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  display: inline-block;
+  &.label {
+    text-align: right;
+    width: 100px;
+  }
+  &.value {
+    text-align: left;
+    &.ms {
+      width: 40px;
+      text-align: right;
+      padding-right: 5px;
+    }
+  }
+  &.range {
+    width: 200px;
+  }
+}
+#scope-drop {
+  width: 110px;
+}
+
+.one-shot {
+  padding-left: 160px;
 }
