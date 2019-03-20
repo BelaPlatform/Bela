@@ -1,8 +1,8 @@
 button.accordion {
-  background-color: $grey-light-mid;
+  background-color: $grey-light;
   border: none;
   border-bottom: 2px solid #fff;
-  color: $grey-dark;
+  color: rgba(0, 0, 0, 0.6);
   cursor: pointer;
   font-family: poppins_regular;
   font-size: 16px;
@@ -10,59 +10,57 @@ button.accordion {
   outline: none;
   padding: 8px 14px;
   text-align: left;
-  transition: 0.1s ease-in-out;
+  transition: 0.3s ease-in-out;
   width: calc(100% - 12px);
   &:hover {
-    background: $grey-light;
+    background: #ddd;
     border-bottom: 2px solid $teal-main;
-    color: $grey-dark;
-    opacity: 1;
   }
   &.active {
-    background-color: $grey-light;
+    background-color: #fff;
     border-bottom: 2px solid $teal-main;
-    color: $grey-dark;
     padding: 8px 14px;
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
     }
-    &:hover {
-      color: $grey-dark;
-      opacity: 1;
-    }
   }
   &:after {
-    color:  $grey-dark;
+    color: rgba(0, 0, 0, 0.6);
     content: '\02795'; /* Unicode character for "plus" sign (+) */
     float: right;
     font-size: 14px;
     margin-left: 5px;
   }
-  &.sub {
-    background-color: $grey-light;
-    margin-left: 20px;
-    margin-top: 0;
-    width: calc(100% - 20px);
+}
+
+button.accordion-sub {
+  background: transparent;
+  border-bottom: 1px dashed $grey-dark;
+  color: $grey-dark;
+  font-size: 1em;
+  padding: .5em 0 .5em .8em;
+  text-align: left;
+  width: 100%;
+  &:hover {
+    background: $yellow-accent-fade;
+    color: $grey-dark;
+  }
+  .active {
     &:hover {
-      background: #ddd;
-      border-bottom: 2px solid white;
-    }
-    &.active {
-      background: $grey-light-mid;
-      border-bottom: none;
       color: $grey-dark;
-      padding: 8px 14px;
-      &:after {
-        content: "\2796"; /* Unicode character for "minus" sign (-) */
-      }
     }
-    &:after {
-      color: $grey-dark;
-      content: '\02795'; /* Unicode character for "plus" sign (+) */
-      float: right;
-      font-size: 14px;
-      margin-left: 5px;
-    }
+  }
+}
+
+.docs-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease-in-out;
+  transition-delay: 0.4s;
+  &.show {
+    max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+    opacity: 1;
   }
 }
 

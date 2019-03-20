@@ -113,34 +113,3 @@ input[type="checkbox"].checkbox-slider,
     }
   }
 }
-
-.subsections {
-  h3 {
-    font-family: poppins_regular;
-  }
-  .example-list {
-    li {
-      a {
-        cursor: pointer;
-      }
-    }
-  }
-}
-.open-project {
-  margin-top: 10px;
-  >.project {
-    color: $grey-dark;
-    font-family: poppins_regular;
-    font-size: .85em;
-  }
-}
-
-p.project-text {
-  font-family: space_regular;
-  font-size: .9em;
-  margin: 0 0 .5em .5em;
-}
-
-.button-container {
-  margin-bottom: .5em;
-}

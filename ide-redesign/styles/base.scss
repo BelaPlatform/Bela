@@ -31,6 +31,10 @@ $amber-accent: #f26d21;
 
 $grey-dark: rgba(0,0,0,0.8);
 
+$yellow-accent: #fff07c;
+
+$yellow-accent-fade: #FFFFC9;
+
 @import 'reset';
 @import 'fonts';
 
@@ -129,3 +133,4 @@ hr {
 @import 'text-input';
 @import 'toolbar';
 @import 'upper';
+@import 'docs';
