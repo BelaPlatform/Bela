@@ -94,6 +94,13 @@ input[type="checkbox"].checkbox-slider,
   }
 }
 
+
+.project {
+  font-family: poppins_regular;
+  margin-top: .5em;
+  margin-bottom: 0;
+}
+
 .panel.show {
   margin-left: .25em;
   padding-top: .8em;
@@ -112,4 +119,14 @@ input[type="checkbox"].checkbox-slider,
       }
     }
   }
+}
+
+.button-container {
+  button {
+    margin-bottom: .5em;
+  }
+}
+
+.diagram-text {
+  font-size: .8em;
 }
