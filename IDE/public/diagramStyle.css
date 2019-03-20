@@ -88,56 +88,6 @@
   stroke: #0effeb;
 }
 
-/*
-
-
-#leftside .hi {
-    fill: rgba(255, 255, 0, 0.3);
-    stroke: none;
-}
-header .hi {
-    background-color: rgba(255, 255, 0, 0.3);
-    line-height: 25px;
-    }
-#rightside .hi {
-    background-color: rgb(255, 255, 0);
-}
-
-#leftside .expl {
-    fill: rgba(0, 255, 0, 0.3);
-    stroke: none;
-}
-header .expl {
-    background-color: rgba(0, 255, 0, 0.3);
-    line-height: 25px;
-}
-#rightside .expl {
-    background-color: rgba(0, 255, 0, 0.5);
-}
-
-
-
-
-#leftside .clar {
-    fill: rgba(255, 0, 0, 0.3);
-    stroke: none;
-}
-li.clar{
-    background-color: rgba(255, 0, 0, 0.3);
-    line-height: 25px;
-}
-#rightside .clar {
-    background-color: rgba(255, 0, 0, 0.4);
-}
-
-
-
-li.cust {
-    background-color: #fff;
-    border: 1px solid red;
-    line-height: 23px;
-}*/
-
 .tooltip {
 
 }
@@ -152,6 +102,11 @@ li.cust {
     z-index: 100;
     background: #fff;
     padding: 5px 10px;
-    max-width: 500px;
-    color: #666;
+    max-width: 350px;
+    color: #000;
+}
+.diagram-text {   
+  font-family: sofia;
+  font-size: .9em;
+  margin-top: -10px;
 }

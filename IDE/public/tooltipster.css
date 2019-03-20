@@ -1,8 +1,7 @@
 /* This is the default Tooltipster theme (feel free to modify or duplicate and create multiple themes!): */
 .tooltipster-default {
     border-radius: 2px; 
-    border: 2px solid #89c86a;
-    /*border-bottom: 5px solid #fff;*/
+    border: 2px solid #00bea4; 
     background: #fff;
     color: #fff;
 }
@@ -10,6 +9,7 @@
 /* Use this next selector to style things like font-size and line-height: */
 .tooltipster-default .tooltipster-content {
     font-family: sofia;
+    color: #000;
     font-size: 14px;
     line-height: 16px;
     padding: 8px 10px;
@@ -26,6 +26,7 @@
 .tooltipster-icon {
     cursor: help;
     margin-left: 4px;
+    color: #000;
 }
 
 
