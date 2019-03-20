@@ -99,13 +99,12 @@ function createlifrommemberdef($xml, id, emitter, type){
   button.addClass('accordion-sub').attr('data-accordion-for', name).html($xml.find('name').html());
   button.appendTo(li);
 
-  var content = $('<div></div>').addClass('docs-content').data('accordion', name);
+  var content = $('<div></div>').addClass('docs-content').attr('data-accordion', name);
   var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
 
   title.appendTo(content);
 
   // subtitle
-
   content.append($('<p></p>').html( $xml.find('briefdescription > para').html() || '' ));
 
   // main text
@@ -135,13 +134,12 @@ function createlifromxml($xml, id, filename, emitter, type){
 
   var name = $xml.find('compoundname').html();
   emitter.emit('add-link', {name, id}, type);
-
   var li = $('<li></li>');
 
-  var content = $('<div class="intro-content"></div>');
+  var content = $('<div></div>').addClass('intro-content');
 
   // subtitle
-  li.append($('<h3 class="intro-header"></h3>').html( $xml.find('compounddef > briefdescription > para').html() || '' ));
+  li.append($('<h3></h3>').addClass('intro-header').html( $xml.find('compounddef > briefdescription > para').html() || '' ));
 
   // main text
   $xml.find('compounddef > detaileddescription > para').each(function(){
