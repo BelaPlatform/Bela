@@ -104,7 +104,7 @@
               <button id="new" class="create-project projectManager" data-func="newProject">New Project</button>
 
               <div class="open-project">
-                <span class="project">Current project: <span class="current" data-current-project>None</span></span>
+                <p class="project">Current project: <span data-current-project>None</span></p>
               </div>
 
 
@@ -123,14 +123,14 @@
                   <button id="saveas" class="projectManager" data-func="saveAs">Save project as&hellip;</button>
                 </div>
                 <div class="button-container">
-                  <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean</button>
+                  <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
                   <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
                 </div>
                   
               </div>
 
 
-              <button class="accordion" data-accordion-for="manage-files">Current file actions</button>
+              <button class="accordion" data-accordion-for="manage-files">File actions</button>
               <div class="panel" data-accordion="manage-files">
                 <div class="button-container">
                   <button class="button fileManager" data-func="renameFile">Rename</button>
@@ -201,8 +201,6 @@
               <span class="title-container">
                 <h1>Settings<hr /></h1>
               </span>
-
-              <button class="settingsManager settings-button" data-func="restoreDefaultCLArgs">Restore defaults</button>
 
               <button class="accordion" data-accordion-for="project-settings">Project Settings</button>
 
@@ -347,6 +345,7 @@
                     </td>
                   </tr>
                 </table>
+                <button class="settingsManager settings-button" data-func="restoreDefaultCLArgs">Restore default project settings</button>
               </div>
 
               <button class="accordion" data-accordion-for="capelet">Capelet Settings</button>
@@ -457,7 +456,6 @@
 
               <button class="accordion" data-accordion-for="ide-settings">IDE Settings</button>
               <div class="panel" data-accordion="ide-settings">
-								<button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">restore defaults</button>
 
 								<table class="tabTable choice">
 
@@ -520,36 +518,18 @@
 									</tr>
 
 								</table>
+                <button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">Restore default IDE settings</button>
               </div>
 
 							<button class="accordion" data-accordion-for="other-settings">Other system functions</button>
               <div class="panel" data-accordion="other-settings">
-								<table class="tabTable choice">
-									<tr>
-										<td class="left-choice">Shut down Beaglebone:</td>
-										<td class="right-choice">
-                      <button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button>
-                    </td>
-									</tr>
-									<tr>
-										<td class="left-choice">Download entire projects directory:</td>
-										<td class="right-choice">
-                      <a href="download?all=all" download><button class="settingsManager">Download All</button></a>
-                    </td>
-									</tr>
-									<tr>
-										<td class="left-choice">Upload an update patch:</td>
-										<td class="right-choice">
-                      <button class="settingsManager" data-func="updateBela">Update Bela</button>
-                    </td>
-									</tr>
-									<tr>
-										<td class="left-choice">Credits and info:</td>
-										<td class="right-choice">
-                      <button class="settingsManager" data-func="aboutPopup">About Bela</button>
-                    </td>
-									</tr>
-								</table>
+                <button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button>
+                <br />
+                <a href="download?all=all" download><button class="settingsManager">Download All Projects</button></a>
+                <br />
+                <button class="settingsManager" data-func="updateBela">Update Bela</button>
+                <br />
+                <button class="settingsManager" data-func="aboutPopup">About Bela</button>
               </div>
 
             </div>
@@ -569,7 +549,7 @@
                 <h1>Documentation<hr /></h1>
               </span>
 							<a href="documentation" target="_blank">
-                <button class="doc-button">Full documentation</button>
+                <button class="doc-button">Launch full documentation</button>
               </a>
 							<div id="docsParent" class="sections">
 

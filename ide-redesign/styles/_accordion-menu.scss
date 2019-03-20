@@ -10,16 +10,20 @@ button.accordion {
   outline: none;
   padding: 8px 14px;
   text-align: left;
-  transition: 0.3s ease-in-out;
+  transition: 0.25s ease-in-out;
   width: calc(100% - 12px);
   &:hover {
-    background: #ddd;
+    background: $grey-mid;
     border-bottom: 2px solid $teal-main;
   }
   &.active {
-    background-color: #fff;
+    background-color: $white;
     border-bottom: 2px solid $teal-main;
+    color: $grey-dark;
     padding: 8px 14px;
+    &:hover {
+      color: $grey-dark;
+    }
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
     }
@@ -35,6 +39,9 @@ button.accordion {
 
 button.accordion-sub {
   background: transparent;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
   border-bottom: 1px dashed $grey-dark;
   color: $grey-dark;
   font-size: 1em;
@@ -45,7 +52,8 @@ button.accordion-sub {
     background: $yellow-accent-fade;
     color: $grey-dark;
   }
-  .active {
+  &.active {
+    color: $grey-dark;
     &:hover {
       color: $grey-dark;
     }
