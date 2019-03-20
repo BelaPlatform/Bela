@@ -63,7 +63,7 @@ class FileView extends View {
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.create_new_file.button+'</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -89,7 +89,7 @@ class FileView extends View {
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the new file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.rename_file.button+'</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -111,7 +111,7 @@ class FileView extends View {
 		popup.subtitle(json.popups.delete_file.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup delete">'+json.popups.delete_file.button+'</button>');
+		form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -160,9 +160,9 @@ class FileView extends View {
 				let ext = item.name.split('.').pop();
 
 				if (item.size < 1000000){
-					item.size = (item.size/1000).toFixed(1)+'kb';
+					item.size = (item.size/1000).toFixed(1) + 'kb';
 				} else if (item.size >= 1000000 && item.size < 1000000000){
-					item.size = (item.size/1000000).toFixed(1)+'mb';
+					item.size = (item.size/1000000).toFixed(1) + 'mb';
 				}
 
 				if (sourceIndeces.indexOf(ext) !== -1){
@@ -246,20 +246,20 @@ class FileView extends View {
 
 		if (data && data.currentProject){
 			// set download link
-			$('[data-download-file]').attr('href', '/download?project='+data.currentProject+'&file='+file);
+			$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
 		}
 	}
 
 	subDirs(dir){
-		var ul = $('<ul></ul>').html(dir.name+':');
+		var ul = $('<ul></ul>').html(dir.name + ':');
 		for (let child of dir.children){
 			if (!isDir(child)){
 				if (child.size < 1000000){
-					child.size = (child.size/1000).toFixed(1)+'kb';
+					child.size = (child.size/1000).toFixed(1) + 'kb';
 				} else if (child.size >= 1000000 && child.size < 1000000000){
-					child.size = (child.size/1000000).toFixed(1)+'mb';
+					child.size = (child.size/1000000).toFixed(1) + 'mb';
 				}
-				$('<li></li>').addClass('sourceFile').html(child.name+'<span class="file-list-size">'+child.size+'</span>').data('file', (dir.dirPath || dir.name)+'/'+child.name).appendTo(ul).on('click', (e) => this.openFile(e));
+				$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
 			} else {
 				child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
 				ul.append(this.subDirs(child));
@@ -292,13 +292,13 @@ class FileView extends View {
 
 			// build the popup content
 			popup.title(json.popups.overwrite.title);
-			popup.subtitle(file.name+json.popups.overwrite.text);
+			popup.subtitle(file.name + json.popups.overwrite.text);
 
 			var form = [];
 			form.push('<input id="popup-remember-upload" type="checkbox">');
-			form.push('<label for="popup-remember-upload">'+json.popups.overwrite.tick+'</label>')
+			form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>')
 			form.push('</br >');
-			form.push('<button type="submit" class="button confirm">'+json.popups.overwrite.button+'</button>');
+			form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
 			form.push('<button type="button" class="button cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', e => {
