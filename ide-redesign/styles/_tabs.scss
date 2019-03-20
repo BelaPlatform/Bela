@@ -3,14 +3,13 @@ $tab-width: 450px;
 /* Tabbed content */
 .tabs {
 	background-color: white;
-	// border: 1px solid $blue;
 	height: calc(100% + 35px);
-	width: $tab-width;
-	position: absolute;
-	top: 0;
-  transition: .5s ease-in-out;
-  z-index: 99;
   left: calc(100% - 50px);
+  position: absolute;
+  top: 0;
+  transition: .5s ease-in-out;
+  width: $tab-width;
+  z-index: 99;
 }
 
 .tabs-closed {
@@ -24,15 +23,15 @@ $tab-width: 450px;
 }
 
 #tab-menu {
-  width: 50px;
-  height: 100%;
   background-color: $grey-tabs;
   float: left;
+  height: 100%;
+  width: 50px;
 }
 
 #tab-content-area {
-  height: calc(100% - 76px);
   background-color: #fff;
+  height: calc(100% - 76px);
   overflow: auto;
 }
 
@@ -49,16 +48,13 @@ section#tab-content {
     }
     h1 {
       border-bottom: 10px solid $teal-01;
-      display: inline-block;
-      font-size: 24px;
-      font-family: space_bold;
       color: rgba(0, 0, 0, 0.8);
+      display: inline-block;
+      font-family: space_bold;
+      font-size: 24px;
       opacity: 0.8;
     }
   }
-  /*p {
-    font-size: 12px;
-  }*/
 }
 
 .disabled {
