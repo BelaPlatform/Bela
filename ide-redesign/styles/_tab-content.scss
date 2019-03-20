@@ -1,5 +1,5 @@
 .choice {
-	color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.6);
   font-family: poppins_light;
   font-size: 12px;
   padding-bottom: 10px;
@@ -33,6 +33,7 @@ table.choice {
     width: 22.5%;
   }
 }
+
 th {
   &.right-choice {
     &.half {
@@ -99,19 +100,18 @@ input[type="checkbox"].checkbox-slider,
 }
 
 .mux {
-	padding-top: 5px;
-	&.inactive {
-		.dropbtn-small {
-  		background-color: $grey-light;
-    	color: $teal-main;
-    	border: 1px solid $grey-mid;
-    	&:before {
-    		border: 5px solid transparent;
-				border-top: 5px solid $grey-mid;
-    	}
+  padding-top: 5px;
+  &.inactive {
+    .dropbtn-small {
+      background-color: $grey-light;
+      color: $teal-main;
+      border: 1px solid $grey-mid;
+      &:before {
+        border: 5px solid transparent;
+        border-top: 5px solid $grey-mid;
+      }
     }
-	}
-
+  }
 }
 
 .subsections {
@@ -132,7 +132,6 @@ input[type="checkbox"].checkbox-slider,
     color: $grey-dark;
     font-family: poppins_regular;
     font-size: .85em;
-
   }
 }
 
