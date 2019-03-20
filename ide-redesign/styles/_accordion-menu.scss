@@ -25,7 +25,7 @@ button.accordion {
     }
   }
   &:after {
-    color:  rgba(0, 0, 0, 0.6);
+    color: rgba(0, 0, 0, 0.6);
     content: '\02795'; /* Unicode character for "plus" sign (+) */
     float: right;
     font-size: 14px;
@@ -34,14 +34,13 @@ button.accordion {
 }
 
 button.accordion-sub {
-  padding-left: .8em;
+  background: transparent;
+  border-bottom: 1px dashed $grey-dark;
   color: $grey-dark;
   font-size: 1em;
-  background: transparent;
   padding: .5em 0 .5em .8em;
-  border-bottom: 1px dashed $grey-dark;
-  width: 100%;
   text-align: left;
+  width: 100%;
   &:hover {
     background: $yellow-accent-fade;
     color: $grey-dark;
