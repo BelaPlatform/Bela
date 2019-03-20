@@ -1,6 +1,7 @@
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var json = require('../site-text.json');
 
 class ProjectView extends View {
 
@@ -41,8 +42,8 @@ class ProjectView extends View {
 		}
 
 		// build the popup content
-		popup.title('Creating a new project');
-		popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
+		popup.title(json.popups.create_new.title);
+		popup.subtitle(json.popups.create_new.text);
 
 		var form = [];
 		form.push('<label for="popup-C" class="radio-container">C++')
@@ -63,7 +64,7 @@ class ProjectView extends View {
 		form.push('</label>');
 		form.push('<input type="text" placeholder="Enter your project name">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">Create</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.create_new.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -85,13 +86,13 @@ class ProjectView extends View {
 	saveAs(func){
 
 		// build the popup content
-		popup.title('Saving project');
-		popup.subtitle('Enter the name of your project');
+		popup.title(json.popups.save_as.title);
+		popup.subtitle(json.popups.save_as.text);
 
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the new project name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">Save</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.save_as.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -108,11 +109,11 @@ class ProjectView extends View {
 	deleteProject(func){
 
 		// build the popup content
-		popup.title('Deleting project');
-		popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
+		popup.title(json.popups.delete_project.title);
+		popup.subtitle(json.popups.delete_project.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup confirm">Delete</button>');
+		form.push('<button type="submit" class="button popup delete">'+json.popups.delete_project.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -126,7 +127,7 @@ class ProjectView extends View {
 
 		popup.show();
 
-		popup.find('.confirm').trigger('focus');
+		popup.find('.delete').trigger('focus');
 
 	}
 	cleanProject(func){

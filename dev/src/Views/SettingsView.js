@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var inputChangedTimeout;
 
@@ -88,12 +89,12 @@ class SettingsView extends View {
 	restoreDefaultCLArgs(func){
 
 		// build the popup content
-		popup.title('Restoring default project settings');
-		popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
+		popup.title(json.popups.restore_default_project_settings.title);
+		popup.subtitle(json.popups.restore_default_project_settings.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button confirm">'+json.popups.restore_default_project_settings.button+'</button>');
+		form.push('<button type="button" class="button cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -101,11 +102,11 @@ class SettingsView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 
@@ -115,11 +116,11 @@ class SettingsView extends View {
 	restoreDefaultIDESettings(func){
 
 		// build the popup content
-		popup.title('Restoring default IDE settings');
-		popup.subtitle('Are you sure you wish to continue? Your current IDE settings will be lost!');
+		popup.title(json.popups.restore_default_ide_settings.title);
+		popup.subtitle(json.popups.restore_default_ide_settings.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup confirm">Continue</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.restore_default_ide_settings.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -139,11 +140,11 @@ class SettingsView extends View {
 	shutdownBBB(){
 
 		// build the popup content
-		popup.title('Shutting down Bela');
-		popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
+		popup.title(json.popups.shutdown.title);
+		popup.subtitle(json.popups.shutdown.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup confirm">Continue</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.shutdown.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -162,10 +163,10 @@ class SettingsView extends View {
 	aboutPopup(){
 
 		// build the popup content
-		popup.title('About Bela');
-		popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+		popup.title(json.popups.about.title);
+		popup.subtitle(json.popups.about.text);
 		var form = [];
-		form.push('<button type="submit" class="button popup cancel">Close</button>');
+		form.push('<button type="submit" class="button popup cancel">'+json.popups.about.button+'</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -180,13 +181,13 @@ class SettingsView extends View {
 	updateBela(){
 
 		// build the popup content
-		popup.title('Updating Bela');
-		popup.subtitle('Please select the update zip archive');
+		popup.title(json.popups.update.title);
+		popup.subtitle(json.popups.update.text);
 
 		var form = [];
 		form.push('<input id="popup-update-file" type="file">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">Upload</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.update.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		/*popup.form.prop({

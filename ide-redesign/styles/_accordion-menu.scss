@@ -1,8 +1,8 @@
 button.accordion {
-  background-color: $grey-light;
+  background-color: $grey-light-mid;
   border: none;
   border-bottom: 2px solid #fff;
-  color: rgba(0, 0, 0, 0.6);
+  color: $grey-dark;
   cursor: pointer;
   font-family: poppins_regular;
   font-size: 16px;
@@ -10,29 +10,36 @@ button.accordion {
   outline: none;
   padding: 8px 14px;
   text-align: left;
-  transition: 0.3s ease-in-out;
+  transition: 0.1s ease-in-out;
   width: calc(100% - 12px);
   &:hover {
-    background: #ddd;
+    background: $grey-light;
     border-bottom: 2px solid $teal-main;
+    color: $grey-dark;
+    opacity: 1;
   }
   &.active {
-    background-color: #fff;
+    background-color: $grey-light;
     border-bottom: 2px solid $teal-main;
+    color: $grey-dark;
     padding: 8px 14px;
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
     }
+    &:hover {
+      color: $grey-dark;
+      opacity: 1;
+    }
   }
   &:after {
-    color:  rgba(0, 0, 0, 0.6);
+    color:  $grey-dark;
     content: '\02795'; /* Unicode character for "plus" sign (+) */
     float: right;
     font-size: 14px;
     margin-left: 5px;
   }
   &.sub {
-    background-color: #ddd;
+    background-color: $grey-light;
     margin-left: 20px;
     margin-top: 0;
     width: calc(100% - 20px);
@@ -41,15 +48,16 @@ button.accordion {
       border-bottom: 2px solid white;
     }
     &.active {
-      background: $grey-light;
+      background: $grey-light-mid;
       border-bottom: none;
+      color: $grey-dark;
       padding: 8px 14px;
       &:after {
         content: "\2796"; /* Unicode character for "minus" sign (-) */
       }
     }
     &:after {
-      color:  rgba(0, 0, 0, 0.6);
+      color: $grey-dark;
       content: '\02795'; /* Unicode character for "plus" sign (+) */
       float: right;
       font-size: 14px;

@@ -102,6 +102,15 @@
         background: $grey-light-mid;
         color: $grey-dark;
       }
+    }
+    &.delete {
+      border: 1px solid $accent-red-fade;
+      background-color: $accent-red-fade;
+      color: $grey-dark;
+      &:hover {
+        background-color: $accent-red;
+        border: 1px solid $accent-red;
+      }
     } 
   }
 }
