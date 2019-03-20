@@ -14,15 +14,15 @@ button.accordion {
   width: calc(100% - 12px);
   &:hover {
     background: $grey-light;
+    border-bottom: 2px solid $teal-main;
     color: $grey-dark;
     opacity: 1;
-    border-bottom: 2px solid $teal-main;
   }
   &.active {
     background-color: $grey-light;
     border-bottom: 2px solid $teal-main;
-    padding: 8px 14px;
     color: $grey-dark;
+    padding: 8px 14px;
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
     }
@@ -49,15 +49,15 @@ button.accordion {
     }
     &.active {
       background: $grey-light-mid;
-      color: $grey-dark;
       border-bottom: none;
+      color: $grey-dark;
       padding: 8px 14px;
       &:after {
         content: "\2796"; /* Unicode character for "minus" sign (-) */
       }
     }
     &:after {
-      color:  $grey-dark;
+      color: $grey-dark;
       content: '\02795'; /* Unicode character for "plus" sign (+) */
       float: right;
       font-size: 14px;
