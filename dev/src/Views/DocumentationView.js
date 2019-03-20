@@ -95,7 +95,9 @@ function createlifrommemberdef($xml, id, emitter, type){
   var li = $('<li></li>');
 
   // title
-  li.append($('<button class="accordion-sub" data-accordion-for="' + name + '"></button>').html($xml.find('name').html() ));
+  var button = $('<button></button>');
+  button.addClass('accordion-sub').attr('data-accordion-for', name).html($xml.find('name').html());
+  button.appendTo(li);
 
   var content = $('<div class="docs-content" data-accordion="' + name + '"></div>');
   content.append($('<h3 class="memberdef-title"></h3>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
