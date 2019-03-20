@@ -414,6 +414,7 @@ settingsView.on('project-settings', function (data) {
 	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
+
 settingsView.on('IDE-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
 	//console.log('IDE-settings', data);
@@ -460,6 +461,7 @@ fileView.on('message', function (event, data) {
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
+
 fileView.on('force-rebuild', function () {
 	socket.emit('process-event', {
 		event: 'rebuild',
@@ -1517,265 +1519,264 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
+var i = 0;
 
 var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
 
 var DocumentationView = function (_View) {
-	_inherits(DocumentationView, _View);
+  _inherits(DocumentationView, _View);
 
-	function DocumentationView(className, models) {
-		_classCallCheck(this, DocumentationView);
+  function DocumentationView(className, models) {
+    _classCallCheck(this, DocumentationView);
 
-		var _this = _possibleConstructorReturn(this, (DocumentationView.__proto__ || Object.getPrototypeOf(DocumentationView)).call(this, className, models));
+    var _this = _possibleConstructorReturn(this, (DocumentationView.__proto__ || Object.getPrototypeOf(DocumentationView)).call(this, className, models));
 
-		_this.on('init', _this.init);
+    _this.on('init', _this.init);
 
-		return _this;
-	}
+    return _this;
+  }
 
-	_createClass(DocumentationView, [{
-		key: 'init',
-		value: function init() {
+  _createClass(DocumentationView, [{
+    key: 'init',
+    value: function init() {
 
-			var self = this;
+      var self = this;
 
-			// The API
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=Bela_8h",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var counter = 0;
-					var _iteratorNormalCompletion = true;
-					var _didIteratorError = false;
-					var _iteratorError = undefined;
+      // The API
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=Bela_8h",
+        dataType: "html",
+        success: function success(xml) {
+          var counter = 0;
+          var _iteratorNormalCompletion = true;
+          var _didIteratorError = false;
+          var _iteratorError = undefined;
 
-					try {
-						for (var _iterator = apiFuncs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-							var item = _step.value;
+          try {
+            for (var _iterator = apiFuncs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+              var item = _step.value;
 
-							var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter, self, 'api');
-							li.appendTo($('[data-docs-api]'));
-							counter += 1;
-						}
-					} catch (err) {
-						_didIteratorError = true;
-						_iteratorError = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion && _iterator.return) {
-								_iterator.return();
-							}
-						} finally {
-							if (_didIteratorError) {
-								throw _iteratorError;
-							}
-						}
-					}
-				}
-			});
+              var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter, self, 'api');
+              li.appendTo($('[data-docs-api]'));
+              counter += 1;
+            }
+          } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+              }
+            } finally {
+              if (_didIteratorError) {
+                throw _iteratorError;
+              }
+            }
+          }
+        }
+      });
 
-			// The Audio Context
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=structBelaContext",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var counter = 0;
-					createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext', self, 'contextType').appendTo($('[data-docs-context]'));
-					counter += 1;
-					$(xml).find('memberdef').each(function () {
-						var li = createlifrommemberdef($(this), 'contextDocs' + counter, self, 'context');
-						li.appendTo($('[data-docs-context]'));
-						counter += 1;
-					});
-				}
-			});
+      // The Audio Context
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=structBelaContext",
+        dataType: "html",
+        success: function success(xml) {
+          var counter = 0;
+          createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext', self, 'contextType').appendTo($('[data-docs-context]'));
+          counter += 1;
+          $(xml).find('memberdef').each(function () {
+            var li = createlifrommemberdef($(this), 'contextDocs' + counter, self, 'context');
+            li.appendTo($('[data-docs-context]'));
+            counter += 1;
+          });
+        }
+      });
 
-			// Utilities
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=Utilities_8h",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var counter = 0;
-					createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h', self, 'header').appendTo($('[data-docs-utility]'));
-					counter += 1;
-					$(xml).find('memberdef').each(function () {
-						var li = createlifrommemberdef($(this), 'utilityDocs' + counter, self, 'utility');
-						li.appendTo($('[data-docs-utility]'));
-						counter += 1;
-					});
-				}
-			});
+      // Utilities
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=Utilities_8h",
+        dataType: "html",
+        success: function success(xml) {
+          var counter = 0;
+          createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h', self, 'header').appendTo($('[data-docs-utility]'));
+          counter += 1;
+          $(xml).find('memberdef').each(function () {
+            var li = createlifrommemberdef($(this), 'utilityDocs' + counter, self, 'utility');
+            li.appendTo($('[data-docs-utility]'));
+            counter += 1;
+          });
+        }
+      });
 
-			// all classes
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+      // all classes
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
 
-			try {
-				for (var _iterator2 = classes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var item = _step2.value;
+      try {
+        for (var _iterator2 = classes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var item = _step2.value;
 
-					xmlClassDocs(item, this);
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
-			}
-		}
-	}]);
+          xmlClassDocs(item, this);
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+    }
+  }]);
 
-	return DocumentationView;
+  return DocumentationView;
 }(View);
 
 module.exports = DocumentationView;
 
 function createlifrommemberdef($xml, id, emitter, type) {
+  i += 1;
+  var name = $xml.find('name').html();
+  emitter.emit('add-link', { name: name, id: id }, type);
 
-	var name = $xml.find('name').html();
-	emitter.emit('add-link', { name: name, id: id }, type);
+  var li = $('<li></li>');
 
-	var li = $('<li></li>');
+  // title
+  var button = $('<button></button>');
+  var elementName = name + "-" + i;
+  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html());
+  button.appendTo(li);
 
-	var content = $('<div></div>');
+  var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
+  var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
 
-	// title
-	content.append($('<h3></h3>').html($xml.find('definition').html() + $xml.find('argsstring').html() + "<hr />"));
+  title.appendTo(content);
 
-	// subtitle
-	content.append($('<p></p>').html($xml.find('briefdescription > para').html() || ''));
+  // subtitle
+  content.append($('<p></p>').html($xml.find('briefdescription > para').html() || ''));
 
-	// main text
-	$xml.find('detaileddescription > para').each(function () {
-		if ($(this).find('parameterlist').length) {
-			content.append('<h3>Parameters:</h3>');
-			var ul = $('<ul></ul>');
-			$(this).find('parameteritem').each(function () {
-				var li = $('<li></li>');
-				li.append($('<h4></h4>').html($(this).find('parametername').html() + ': '));
-				$(this).find('parameterdescription>para').each(function () {
-					li.append($('<p></p>').html($(this).html() || ''));
-				});
-				ul.append(li);
-			});
-			content.append(ul);
-		} else {
-			content.append($('<p></p>').html($(this).html() || ''));
-		}
-	});
+  // main text
+  $xml.find('detaileddescription > para').each(function () {
+    if ($(this).find('parameterlist').length) {
+      content.append('<h4>Parameters:</h4>');
+      var ul = $('<ul></ul>');
+      $(this).find('parameteritem').each(function () {
+        var li = $('<li></li>');
+        li.append($('<h5></h5>').html($(this).find('parametername').html() + ': '));
+        $(this).find('parameterdescription>para').each(function () {
+          li.append($('<p></p>').html($(this).html() || ''));
+        });
+        ul.append(li);
+      });
+      content.append(ul);
+    } else {
+      content.append($('<p></p>').html($(this).html() || ''));
+    }
+  });
 
-	li.append(content);
-	return li;
+  li.append(content);
+  return li;
 }
 
 function createlifromxml($xml, id, filename, emitter, type) {
+  var name = $xml.find('compoundname').html();
+  emitter.emit('add-link', { name: name, id: id }, type);
+  var li = $('<li></li>');
 
-	var name = $xml.find('compoundname').html();
-	emitter.emit('add-link', { name: name, id: id }, type);
+  var content = $('<div></div>').addClass('intro-content');
 
-	var li = $('<li></li>');
+  // subtitle
+  li.append($('<h3></h3>').addClass('intro-header').attr('data-accordion-for', name).html($xml.find('compounddef > briefdescription > para').html() || ''));
 
-	var content = $('<div></div>');
+  // main text
+  $xml.find('compounddef > detaileddescription > para').each(function () {
+    if ($(this).find('parameterlist').length) {
+      content.append('<h3>Parameters:</h3>');
+      var ul = $('<ul></ul>');
+      $(this).find('parameteritem').each(function () {
+        var li = $('<li></li>');
+        li.append($('<h4></h4>').html($(this).find('parametername').html() + ': '));
+        $(this).find('parameterdescription>para').each(function () {
+          li.append($('<p></p>').html($(this).html() || ''));
+        });
+        ul.append(li);
+      });
+      content.append(ul);
+    } else {
+      content.append($('<p></p>').html($(this).html() || ''));
+    }
+  });
 
-	// subtitle
-	content.append($('<h3></h3>').html($xml.find('compounddef > briefdescription > para').html() || ''));
+  content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">Full Documentation</a>');
 
-	// main text
-	$xml.find('compounddef > detaileddescription > para').each(function () {
-		if ($(this).find('parameterlist').length) {
-			content.append('<h3>Parameters:</h3>');
-			var ul = $('<ul></ul>');
-			$(this).find('parameteritem').each(function () {
-				var li = $('<li></li>');
-				li.append($('<h4></h4>').html($(this).find('parametername').html() + ': '));
-				$(this).find('parameterdescription>para').each(function () {
-					li.append($('<p></p>').html($(this).html() || ''));
-				});
-				ul.append(li);
-			});
-			content.append(ul);
-		} else {
-			content.append($('<p></p>').html($(this).html() || ''));
-		}
-	});
-
-	content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">Full Documentation</a>');
-
-	li.append(content);
-	return li;
+  li.append(content);
+  return li;
 }
 
 function xmlClassDocs(classname, emitter) {
-	var filename = 'class' + classname;
-	var parent = $('[data-docs="' + classname + 'Docs"]');
-	$.ajax({
-		type: "GET",
-		url: "documentation_xml?file=" + filename,
-		dataType: "html",
-		success: function success(xml) {
-			//console.log(xml);
+  var filename = 'class' + classname;
+  var parent = $('[data-docs="' + classname + 'Docs"]');
+  $.ajax({
+    type: "GET",
+    url: "documentation_xml?file=" + filename,
+    dataType: "html",
+    success: function success(xml) {
+      var counter = 0;
+      createlifromxml($(xml), classname + counter, filename, emitter, 'typedef').appendTo(parent);
+      emitter.emit('add-link', { name: classname, id: classname + counter }, 'header');
 
-			var counter = 0;
-			createlifromxml($(xml), classname + counter, filename, emitter, 'typedef').appendTo(parent);
-			emitter.emit('add-link', { name: classname, id: classname + counter }, 'header');
+      counter += 1;
+      $(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname + ')))').each(function () {
+        var li = createlifrommemberdef($(this), classname + counter, emitter, classname);
+        li.appendTo(parent);
+        counter += 1;
+      });
 
-			counter += 1;
-			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname + ')))').each(function () {
-				//console.log($(this));
-				var li = createlifrommemberdef($(this), classname + counter, emitter, classname);
-				li.appendTo(parent);
-				counter += 1;
-			});
-
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=" + classname + "_8h",
-				dataType: "html",
-				success: function success(xml) {
-					var includes = $(xml).find('includedby');
-					var doInclude = false;
-					if (includes.length) {
-						var content = $('<div></div>').addClass('subsections');
-						content.append($('<h3></h3>').html('Examples featuring this class:'));
-						var exampleList = $('<ul></ul>').addClass('example-list');
-						includes.each(function () {
-							var exampleListItem = $('<li></li>');
-							var include = $(this).html();
-							exampleListItem.attr('data-location', include);
-							if (include && include.split && include.split('/')[0] === 'examples') {
-								doInclude = true;
-								var link = $('<a></a>').html(include.split('/')[2]).text(include);
-								link.on('click', function () {
-									return emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/'));
-								});
-								exampleListItem.append(link);
-								exampleListItem.appendTo(exampleList);
-							}
-						});
-						if (doInclude) {
-							exampleList.appendTo(content);
-							content.appendTo($('[data-docs="' + classname + 'Docs"]').parent());
-						}
-					}
-				}
-			});
-		}
-	});
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=" + classname + "_8h",
+        dataType: "html",
+        success: function success(xml) {
+          var includes = $(xml).find('includedby');
+          var doInclude = false;
+          if (includes.length) {
+            var content = $('<div></div>').addClass('subsections');
+            content.append($('<p class="examples-header"></p>').html('Examples using this class:'));
+            var exampleList = $('<ul></ul>').addClass('example-list');
+            includes.each(function () {
+              var exampleListItem = $('<li></li>');
+              var include = $(this).html();
+              exampleListItem.attr('data-location', include);
+              if (include && include.split && include.split('/')[0] === 'examples') {
+                doInclude = true;
+                var link = $('<a></a>').html(include.split('/')[2]).text(include);
+                link.on('click', function () {
+                  return emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/'));
+                });
+                exampleListItem.append(link);
+                exampleListItem.appendTo(exampleList);
+              }
+            });
+            if (doInclude) {
+              exampleList.appendTo(content);
+              content.appendTo($('[data-docs="' + classname + 'Docs"]').parent());
+            }
+          }
+        }
+      });
+    }
+  });
 }
 
 },{"./View":14}],7:[function(require,module,exports){
@@ -2143,6 +2144,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var json = require('../site-text.json');
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -2164,6 +2166,11 @@ var FileView = function (_View) {
 		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
 
 		_this.listOfFiles = [];
+
+		var data = {
+			fileName: "",
+			project: ""
+		};
 
 		// hack to upload file
 		$('[data-upload-file-input]').on('change', function (e) {
@@ -2204,14 +2211,14 @@ var FileView = function (_View) {
 			var _this2 = this;
 
 			// build the popup content
-			popup.title('Creating a new file');
-			popup.subtitle('Enter the name of the new file. Only files with extensions .cpp, .c or .S will be compiled.');
+			popup.title(json.popups.create_new_file.title);
+			popup.subtitle(json.popups.create_new_file.text);
 
 			var form = [];
 			form.push('<input type="text" placeholder="Enter the file name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-create">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2219,7 +2226,7 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2234,14 +2241,14 @@ var FileView = function (_View) {
 			var _this3 = this;
 
 			// build the popup content
-			popup.title('Renaming this file');
-			popup.subtitle('Enter the new name of the file. Only files with extensions .cpp, .c or .S will be compiled.');
+			popup.title(json.popups.rename_file.title);
+			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
 			form.push('<input type="text" placeholder="Enter the new file name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-rename">Rename</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2249,7 +2256,7 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2259,12 +2266,12 @@ var FileView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Deleting file');
-			popup.subtitle('Are you sure you wish to delete this file? This cannot be undone!');
+			popup.title(json.popups.delete_file.title);
+			popup.subtitle(json.popups.delete_file.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-delete">Delete</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2272,11 +2279,11 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-delete').trigger('focus');
+			popup.find('.delete').trigger('focus');
 		}
 	}, {
 		key: 'openFile',
@@ -2555,15 +2562,15 @@ var FileView = function (_View) {
 				uploadingFile = true;
 
 				// build the popup content
-				popup.title('Overwriting file');
-				popup.subtitle('The file ' + file.name + ' already exists in this project. Would you like to overwrite it?');
+				popup.title(json.popups.overwrite.title);
+				popup.subtitle(file.name + json.popups.overwrite.text);
 
 				var form = [];
 				form.push('<input id="popup-remember-upload" type="checkbox">');
-				form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>');
+				form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>');
 				form.push('</br >');
-				form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
-				form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+				form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
+				form.push('<button type="button" class="button cancel">Cancel</button>');
 
 				popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
@@ -2579,7 +2586,7 @@ var FileView = function (_View) {
 					}
 				});
 
-				popup.find('.popup-cancel').on('click', function () {
+				popup.find('.cancel').on('click', function () {
 					if (popup.find('input[type=checkbox]').is(':checked')) {
 						askForOverwrite = false;
 						overwriteAction = 'reject';
@@ -2592,7 +2599,7 @@ var FileView = function (_View) {
 
 				popup.show();
 
-				popup.find('.popup-cancel').focus();
+				popup.find('.cancel').focus();
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
@@ -2645,7 +2652,7 @@ function isDir(item) {
 
 module.exports = FileView;
 
-},{"../popup":18,"../utils":19,"./View":14}],9:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2713,8 +2720,8 @@ var GitView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter your commit message">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-commit">Commit</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Commit</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2722,7 +2729,7 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2738,8 +2745,8 @@ var GitView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter your new branch name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-create">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Create</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2747,7 +2754,7 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2761,8 +2768,8 @@ var GitView = function (_View) {
 			popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Continue</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2770,11 +2777,11 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-create').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: '_repoExists',
@@ -2860,6 +2867,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var json = require('../site-text.json');
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -2917,26 +2925,30 @@ var ProjectView = function (_View) {
 			}
 
 			// build the popup content
-			popup.title('Creating a new project');
-			popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
+			popup.title(json.popups.create_new.title);
+			popup.subtitle(json.popups.create_new.text);
 
 			var form = [];
+			form.push('<label for="popup-C" class="radio-container">C++');
 			form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
-			form.push('<label for="popup-C">C++</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-PD" class="radio-container">Pure Data');
 			form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
-			form.push('<label for="popup-PD">Pure Data</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-SC" class="radio-container">SuperCollider');
 			form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
-			form.push('<label for="popup-SC">SuperCollider</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-CS" class="radio-container">Csound');
 			form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-			form.push('<label for="popup-CS">Csound</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
 			form.push('<input type="text" placeholder="Enter your project name">');
 			form.push('</br>');
-			form.push('<button type="submit" class="button popup-save">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2949,7 +2961,7 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2959,14 +2971,14 @@ var ProjectView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Saving project');
-			popup.subtitle('Enter the name of your project');
+			popup.title(json.popups.save_as.title);
+			popup.subtitle(json.popups.save_as.text);
 
 			var form = [];
 			form.push('<input type="text" placeholder="Enter the new project name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-save">Save</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2974,7 +2986,7 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2984,12 +2996,12 @@ var ProjectView = function (_View) {
 			var _this5 = this;
 
 			// build the popup content
-			popup.title('Deleting project');
-			popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
+			popup.title(json.popups.delete_project.title);
+			popup.subtitle(json.popups.delete_project.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-delete">Delete</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2998,11 +3010,11 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-delete').trigger('focus');
+			popup.find('.delete').trigger('focus');
 		}
 	}, {
 		key: 'cleanProject',
@@ -3223,7 +3235,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../popup":18,"../utils":19,"./View":14}],11:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3236,6 +3248,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var inputChangedTimeout;
 
@@ -3341,12 +3354,12 @@ var SettingsView = function (_View) {
 			var _this2 = this;
 
 			// build the popup content
-			popup.title('Restoring default project settings');
-			popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
+			popup.title(json.popups.restore_default_project_settings.title);
+			popup.subtitle(json.popups.restore_default_project_settings.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button confirm">' + json.popups.restore_default_project_settings.button + '</button>');
+			form.push('<button type="button" class="button cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3354,11 +3367,11 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'setIDESetting',
@@ -3371,12 +3384,12 @@ var SettingsView = function (_View) {
 			var _this3 = this;
 
 			// build the popup content
-			popup.title('Restoring default IDE settings');
-			popup.subtitle('Are you sure you wish to continue? Your current IDE settings will be lost!');
+			popup.title(json.popups.restore_default_ide_settings.title);
+			popup.subtitle(json.popups.restore_default_ide_settings.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.restore_default_ide_settings.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3384,11 +3397,11 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'shutdownBBB',
@@ -3396,12 +3409,12 @@ var SettingsView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Shutting down Bela');
-			popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
+			popup.title(json.popups.shutdown.title);
+			popup.subtitle(json.popups.shutdown.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3409,21 +3422,21 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'aboutPopup',
 		value: function aboutPopup() {
 
 			// build the popup content
-			popup.title('About Bela');
-			popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+			popup.title(json.popups.about.title);
+			popup.subtitle(json.popups.about.text);
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Close</button>');
+			form.push('<button type="submit" class="button popup cancel">' + json.popups.about.button + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3432,7 +3445,7 @@ var SettingsView = function (_View) {
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.cancel').trigger('focus');
 		}
 	}, {
 		key: 'updateBela',
@@ -3440,14 +3453,14 @@ var SettingsView = function (_View) {
 			var _this5 = this;
 
 			// build the popup content
-			popup.title('Updating Bela');
-			popup.subtitle('Please select the update zip archive');
+			popup.title(json.popups.update.title);
+			popup.subtitle(json.popups.update.text);
 
 			var form = [];
 			form.push('<input id="popup-update-file" type="file">');
 			form.push('</br>');
-			form.push('<button type="submit" class="button popup-upload">Upload</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			/*popup.form.prop({
    	action	: 'updates',
@@ -3486,7 +3499,7 @@ var SettingsView = function (_View) {
 				}
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -3717,7 +3730,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"./View":14}],12:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5040,8 +5053,8 @@ function example(cb, arg, delay, cancelCb) {
 	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 
 	var form = [];
-	form.push('<button type="submit" class="button popup-continue">Continue</button>');
-	form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+	form.push('<button type="submit" class="button popup confirm">Continue</button>');
+	form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
@@ -5051,17 +5064,94 @@ function example(cb, arg, delay, cancelCb) {
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', function () {
+	popup.find('.cancel').on('click', function () {
 		popup.hide();
 		if (cancelCb) cancelCb();
 	});
 
 	popup.show();
 
-	popup.find('.popup-continue').trigger('focus');
+	popup.find('.confirm').trigger('focus');
 }
 
 },{}],19:[function(require,module,exports){
+module.exports={
+	"popups": {
+		"create_new": {
+			"title": "Create new project",
+			"text": "Choose the development language for this project, and give it a name:",
+			"button": "Create project"
+		},
+		"save_as": {
+			"title": "Save project as ...",
+			"text": "",
+			"button": "Save project"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "Warning: This can't be undone.",
+			"button": "Delete project"
+		},
+		"create_new_file": {
+			"title": "Create new file",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Create file"
+		},
+		"rename_file": {
+			"title": "Rename this file?",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Rename file"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "This can't be undone.",
+			"button": "Delete project"
+		},
+		"delete_file": {
+			"title": "Delete this file?",
+			"text": "This can't be undone.",
+			"button": "Delete file"
+		},
+		"restore_default_project_settings": {
+			"title": "Restore default project settings?",
+			"text": "Your current project settings will be restored to defaults. This can't be undone.",
+			"button": "Restore defaults"
+		},
+		"restore_default_IDE_settings": {
+			"title": "Restore default IDE settings?",
+			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
+			"button": "Restore defaults"
+		},
+		"shutdown": {
+			"title": "Shut down Bela?",
+			"text": "Bela will disconnect from the IDE and shutdown gracefully.",
+			"button": "Yes, shut down Bela"
+		},
+		"update": {
+			"title": "Update Bela",
+			"text": "Select your Bela update (will be a ZIP file).",
+			"button": "Update now"
+		},
+		"about": {
+			"title": "About Bela",
+			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
+			"button": "Close"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": "Would you like to reload?",
+			"button": "Reload"
+		},
+		"overwrite": {
+			"title": "Overwrite file?",
+			"text": " already exists in this project. Overwrite?",
+			"button": "Overwite",
+			"tick": "Don't ask me again this session"
+		}
+	}	
+}
+
+},{}],20:[function(require,module,exports){
 'use strict';
 
 // replace most non alpha-numeric chars with '_'

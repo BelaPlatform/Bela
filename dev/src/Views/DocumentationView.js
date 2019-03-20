@@ -1,6 +1,7 @@
 var View = require('./View');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
+var i = 0;
 
 var classes = [
   'Scope',
@@ -88,7 +89,7 @@ class DocumentationView extends View {
 module.exports = DocumentationView;
 
 function createlifrommemberdef($xml, id, emitter, type){
-
+  i += 1;
   var name = $xml.find('name').html();
   emitter.emit('add-link', {name, id}, type);
 
@@ -96,10 +97,11 @@ function createlifrommemberdef($xml, id, emitter, type){
 
   // title
   var button = $('<button></button>');
-  button.addClass('accordion-sub').attr('data-accordion-for', name).html($xml.find('name').html());
+  var elementName = name + "-" + i;
+  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html());
   button.appendTo(li);
 
-  var content = $('<div></div>').addClass('docs-content').attr('data-accordion', name);
+  var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
   var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
 
   title.appendTo(content);
@@ -131,7 +133,6 @@ function createlifrommemberdef($xml, id, emitter, type){
 }
 
 function createlifromxml($xml, id, filename, emitter, type){
-
   var name = $xml.find('compoundname').html();
   emitter.emit('add-link', {name, id}, type);
   var li = $('<li></li>');
@@ -139,7 +140,7 @@ function createlifromxml($xml, id, filename, emitter, type){
   var content = $('<div></div>').addClass('intro-content');
 
   // subtitle
-  li.append($('<h3></h3>').addClass('intro-header').html( $xml.find('compounddef > briefdescription > para').html() || '' ));
+  li.append($('<h3></h3>').addClass('intro-header').attr('data-accordion-for', name).html( $xml.find('compounddef > briefdescription > para').html() || '' ));
 
   // main text
   $xml.find('compounddef > detaileddescription > para').each(function(){
