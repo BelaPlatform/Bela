@@ -37,31 +37,6 @@ class GitView extends View{
 		});
 	}
 
-	// init() {
-	// 	popup.title('Initialise Git repository');
-	// 	popup.subtitle('To start a new repo for this project, enter a username and email address.');
-	// 	var form = [];
-	// 	form.push('<div>');
-	// 	form.push('<input type="text" name="username" placeholder="Git username">');
-	// 	form.push('</div>');
-	// 	form.push('<div>');
-	// 	form.push('<input type="text" name="email" placeholder="Email address">');
-	// 	form.push('</div>');
-	// 	form.push('<button type="submit" class="button popup confirm">Init repo</button>');
-	// 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-	// 	popup.form.append(form.join('')).off('submit').on('submit', e => {
-	// 		e.preventDefault();
-	// 		this.emit('git-event', {func: 'command', command: 'config --global user.name "'+popup.find('input[name=username]').val()+'"'});
-	// 		this.emit('git-event', {func: 'command', command: 'config --global user.email "'+popup.find('input[name=email]').val()+'"'});
-	// 		popup.hide();
-	// 	});
-
-	// 	popup.find('.cancel').on('click', popup.hide );
-
-	// 	popup.show();
-	// }
-
 	commit(){
 
 		// build the popup content
