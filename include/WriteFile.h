@@ -56,6 +56,7 @@ private:
 	static bool threadShouldExit();
 	static bool threadIsExiting;
 	static bool threadRunning;
+	static bool threadScheduled;
 	static bool staticConstructed;
 	static void staticConstructor();
 	static std::vector<WriteFile *> objAddrs;
