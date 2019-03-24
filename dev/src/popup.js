@@ -3,6 +3,7 @@ var parent	= $('[data-popup]');
 var content	= $('[data-popup-content]');
 var titleEl	= parent.find('h1');
 var subEl	= parent.find('p');
+var codeEl = parent.find('code');
 var formEl	= parent.find('form');
 
 var popup = {
@@ -18,6 +19,7 @@ var popup = {
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
+    codeEl.empty();
 		formEl.empty();
 	},
 
@@ -29,6 +31,7 @@ var popup = {
 
 	title: text => titleEl.text(text),
 	subtitle: text => subEl.text(text),
+  code: html => codeEl.html(html),
 	formEl: html => formEl.html(html),
 
 	append: child => content.append(child),
