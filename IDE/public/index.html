@@ -83,6 +83,9 @@
 						<li class="refs" data-tab-for="refs">
               <a href="#" rel="refs" class="tab-button"></a>
             </li>
+            <li class="libraries" data-tab-for="libraries">
+              <a href="#" rel="libs" class="tab-button"></a>
+            </li>
           </ul>
         </div>
 
@@ -126,7 +129,7 @@
                   <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
                   <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
                 </div>
-                  
+
               </div>
 
 
@@ -140,7 +143,7 @@
                 <input type="file" id="uploadFileInput" class="hidden" data-upload-file-input multiple></input>
               </div>
 
-              
+
 
               <button class="accordion" data-accordion-for="git">Git manager</button>
               <div class="panel" data-accordion="git">
@@ -625,6 +628,13 @@
   									</ul>
                   </div>
 							</div>
+            </div>
+
+            <div class="tab-info" data-tab="libraries">
+              <span class="title-container">
+                <h1>Libraries<hr /></h1>
+              </span>
+              <ul class="libraries-list-parent" data-libraries-list data-func="resources"></ul>
             </div>
           </section>
         </div>
