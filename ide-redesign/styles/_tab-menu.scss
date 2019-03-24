@@ -99,6 +99,21 @@
       background-repeat: no-repeat;
     }
   }
+  &.libraries {
+    background-image: url('../images/icons/library_white.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    &:hover {
+      background-image: url('../images/icons/library_green.svg');
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    &.active {
+      background-image: url('../images/icons/library_green.svg');
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  }
   &.active {
     background: $white;
     border-bottom: none;

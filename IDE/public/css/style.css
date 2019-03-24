@@ -1171,6 +1171,18 @@ input[type="checkbox"].checkbox-slider,
       background-image: url("../images/icons/refs_green.svg");
       background-position: center;
       background-repeat: no-repeat; }
+  #tab-menu li.libraries {
+    background-image: url("../images/icons/library_white.svg");
+    background-position: center;
+    background-repeat: no-repeat; }
+    #tab-menu li.libraries:hover {
+      background-image: url("../images/icons/library_green.svg");
+      background-position: center;
+      background-repeat: no-repeat; }
+    #tab-menu li.libraries.active {
+      background-image: url("../images/icons/library_green.svg");
+      background-position: center;
+      background-repeat: no-repeat; }
   #tab-menu li.active {
     background: #ffffff;
     border-bottom: none;
