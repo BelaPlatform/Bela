@@ -159,7 +159,7 @@ class ProjectView extends View {
 		if (!examplesDir.length) return;
 
 		for (let item of examplesDir){
-      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name+':');
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('example-list');
@@ -204,6 +204,56 @@ class ProjectView extends View {
       parentLi.appendTo($examples);
 		}
 	}
+
+  _librariesList(librariesDir){
+
+		var $libraries = $('[data-libraries-list]');
+		$libraries.empty(librariesDir);
+		if (!librariesDir.length) return;
+
+		for (let item of librariesDir){
+      console.log(item);
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+			let parentUl = $('<ul></ul>');
+      let parentLi = $('<li></li>');
+      let childUl = $('<ul></ul>').addClass('libraries-list');
+      let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+			for (let child of item.children){
+				if (child && child.length && child[0] === '.') continue;
+        let childLi = $('<li></li>');
+				childLi.html(child).attr('data-library-link', item.name + '/' + child)
+					.on('click', (e) => {
+            popup.title('Add Library');
+            popup.subtitle('To add this library to your project add the following lines:');
+            var string = '';
+            for (let child of item.children) {
+              var testExt = child.split('.');
+              if (testExt[testExt.length - 1] === 'h') {
+                string = string + '#include &lt;/libraries/' + item.name + '/' + child + '&gt;<br>';
+              }
+            }
+            popup.code(string);
+            var form = [];
+            form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+            popup.form.append(form.join(''));
+            popup.find('.popup-cancel').on('click', popup.hide );
+        		popup.show();
+					});
+          childLi.appendTo(childUl);
+			}
+      // per section
+      // item.name -> parentDiv $examples
+      parentButton.appendTo(parentLi);
+      // per item in section
+      // childLi -> childUl -> parentDiv -> $examples
+      childUl.appendTo(childDiv);
+      childDiv.appendTo(parentLi);
+      parentLi.appendTo(parentUl);
+      parentLi.appendTo($libraries);
+		}
+
+	}
+
 	_boardString(data){
 		var boardString;
 		if(data && data.trim)

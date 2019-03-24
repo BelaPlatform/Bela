@@ -627,8 +627,9 @@ socket.on('init', function (data) {
 	socket.emit('project-event', { func: 'openProject', currentProject: data.settings.project, timestamp: timestamp });
 	consoleView.emit('openNotification', { func: 'init', timestamp: timestamp });
 
-	models.project.setData({ projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project });
+	models.project.setData({ projectList: data.projects, exampleList: data.examples, libraryList: data.libraries, currentProject: data.settings.project });
 	models.settings.setData(data.settings);
+	console.log(data);
 
 	$('data-run-on-boot').val(data.boot_project);
 
@@ -3151,6 +3152,123 @@ var ProjectView = function (_View) {
 			}
 		}
 	}, {
+		key: '_librariesList',
+		value: function _librariesList(librariesDir) {
+
+			var $libraries = $('[data-libraries-list]');
+			$libraries.empty(librariesDir);
+			if (!librariesDir.length) return;
+
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
+
+			try {
+				var _loop3 = function _loop3() {
+					var item = _step3.value;
+
+					console.log(item);
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+					var parentUl = $('<ul></ul>');
+					var parentLi = $('<li></li>');
+					var childUl = $('<ul></ul>').addClass('libraries-list');
+					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+					var _iteratorNormalCompletion4 = true;
+					var _didIteratorError4 = false;
+					var _iteratorError4 = undefined;
+
+					try {
+						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+							var _child = _step4.value;
+
+							if (_child && _child.length && _child[0] === '.') continue;
+							var childLi = $('<li></li>');
+							childLi.html(_child).attr('data-library-link', item.name + '/' + _child).on('click', function (e) {
+								popup.title('Add Library');
+								popup.subtitle('To add this library to your project add the following lines:');
+								var string = '';
+								var _iteratorNormalCompletion5 = true;
+								var _didIteratorError5 = false;
+								var _iteratorError5 = undefined;
+
+								try {
+									for (var _iterator5 = item.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+										var _child2 = _step5.value;
+
+										var testExt = _child2.split('.');
+										if (testExt[testExt.length - 1] === 'h') {
+											string = string + '#include &lt;/libraries/' + item.name + '/' + _child2 + '&gt;<br>';
+										}
+									}
+								} catch (err) {
+									_didIteratorError5 = true;
+									_iteratorError5 = err;
+								} finally {
+									try {
+										if (!_iteratorNormalCompletion5 && _iterator5.return) {
+											_iterator5.return();
+										}
+									} finally {
+										if (_didIteratorError5) {
+											throw _iteratorError5;
+										}
+									}
+								}
+
+								popup.code(string);
+								var form = [];
+								form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+								popup.form.append(form.join(''));
+								popup.find('.popup-cancel').on('click', popup.hide);
+								popup.show();
+							});
+							childLi.appendTo(childUl);
+						}
+						// per section
+						// item.name -> parentDiv $examples
+					} catch (err) {
+						_didIteratorError4 = true;
+						_iteratorError4 = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion4 && _iterator4.return) {
+								_iterator4.return();
+							}
+						} finally {
+							if (_didIteratorError4) {
+								throw _iteratorError4;
+							}
+						}
+					}
+
+					parentButton.appendTo(parentLi);
+					// per item in section
+					// childLi -> childUl -> parentDiv -> $examples
+					childUl.appendTo(childDiv);
+					childDiv.appendTo(parentLi);
+					parentLi.appendTo(parentUl);
+					parentLi.appendTo($libraries);
+				};
+
+				for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					_loop3();
+				}
+			} catch (err) {
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
+					}
+				} finally {
+					if (_didIteratorError3) {
+						throw _iteratorError3;
+					}
+				}
+			}
+		}
+	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
 			var boardString;
@@ -3198,30 +3316,30 @@ var ProjectView = function (_View) {
 		key: 'subDirs',
 		value: function subDirs(dir) {
 			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion6 = true;
+			var _didIteratorError6 = false;
+			var _iteratorError6 = undefined;
 
 			try {
-				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var _child = _step3.value;
+				for (var _iterator6 = dir.children[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+					var _child3 = _step6.value;
 
-					if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
-						_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
-						ul.append(this.subDirs(_child));
+					if (!_child3.dir) $('<li></li>').addClass('sourceFile').html(_child3.name).data('file', (dir.dirPath || dir.name) + '/' + _child3.name).appendTo(ul);else {
+						_child3.dirPath = (dir.dirPath || dir.name) + '/' + _child3.name;
+						ul.append(this.subDirs(_child3));
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError6 = true;
+				_iteratorError6 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion6 && _iterator6.return) {
+						_iterator6.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError6) {
+						throw _iteratorError6;
 					}
 				}
 			}
@@ -5000,6 +5118,7 @@ var parent = $('[data-popup]');
 var content = $('[data-popup-content]');
 var titleEl = parent.find('h1');
 var subEl = parent.find('p');
+var codeEl = parent.find('code');
 var _formEl = parent.find('form');
 
 var popup = {
@@ -5013,6 +5132,7 @@ var popup = {
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
+		codeEl.empty();
 		_formEl.empty();
 	},
 	overlay: function overlay() {
@@ -5029,6 +5149,9 @@ var popup = {
 	},
 	subtitle: function subtitle(text) {
 		return subEl.text(text);
+	},
+	code: function code(html) {
+		return codeEl.html(html);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);

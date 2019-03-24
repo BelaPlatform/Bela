@@ -210,8 +210,9 @@ socket.on('init', (data) => {
 	socket.emit('project-event', {func: 'openProject', currentProject: data.settings.project, timestamp})
 	consoleView.emit('openNotification', {func: 'init', timestamp});
 
-	models.project.setData({projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project});
+	models.project.setData({projectList: data.projects, exampleList: data.examples, libraryList: data.libraries,  currentProject: data.settings.project});
 	models.settings.setData(data.settings);
+  console.log(data);
 
   $('data-run-on-boot').val(data.boot_project);
 
