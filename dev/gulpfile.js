@@ -54,6 +54,7 @@ gulp.task('watch', ['upload'], function(){
 	// when the browser sources change, upload them without killing node
 	gulp.watch(['../IDE/public/**',
     '../IDE/dist/**',
+    '../IDE/src/**',
     '!../IDE/public/js/bundle.js.map',
 		'!../IDE/public/scope/js/bundle.js.map',
 		'!../IDE/public/js/ace/**'
