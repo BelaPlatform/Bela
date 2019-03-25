@@ -77,6 +77,7 @@ function upload(data) {
     });
 }
 exports.upload = upload;
+
 // this function starts a syntax check
 // if a syntax check or build process is in progress they are stopped
 // a running program is not stopped
@@ -94,6 +95,7 @@ function checkSyntax(data) {
     }
 }
 exports.checkSyntax = checkSyntax;
+
 // this function is called when the run button is clicked
 // if a program is already building or running it is stopped and restarted
 // any syntax check in progress is stopped
@@ -115,6 +117,7 @@ function run(data) {
     }
 }
 exports.run = run;
+
 // this function starts a build process and when it ends it checks
 // if it was stopped by a call to stop() or if there were build errors
 // if neither of these are true the project is immediately run
@@ -126,7 +129,7 @@ function build_run(project) {
         }
     });
 }
-// this function parses the stderr output of the build process 
+// this function parses the stderr output of the build process
 // returning true if build errors (not warnings) are found
 function build_error(stderr) {
     var lines = stderr.split('\n');
@@ -167,6 +170,7 @@ function stop() {
     }
 }
 exports.stop = stop;
+
 function get_status() {
     return {
         checkingSyntax: processes.syntax.get_status(),
