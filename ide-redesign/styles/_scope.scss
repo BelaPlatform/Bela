@@ -31,8 +31,8 @@
     padding: .5em 1.5em .5em 3em;
     width: 375px;
     &.channels {
-      display: inline-block;
       border: 0;
+      display: inline-block;
       padding: .5em 3em .5em 1.5em;
       vertical-align: top;
     }
@@ -40,11 +40,11 @@
   .control-section {
     vertical-align: top;
     h1 {
-      font-family: space_bold;
       color: $grey-dark;
+      font-family: space_bold;
       font-size: 1.2em;
-      margin-block-start: 1em;
       margin-block-end: .75em;
+      margin-block-start: 1em;
 
     }
     .block-section {
@@ -59,16 +59,16 @@
       }
       .scope-label {
         display: inline-block;
-        text-align: right;
-        width: 75px;
         margin: 5px 0;
+        width: 75px;
+        text-align: right;
       }
       .scope-input {
         display: inline-block;
+        margin: 2px 0;
         padding-left: 60px;
         position: absolute;
         width: 200px;
-        margin: 2px 0;
         >.mini-dropdown {
           width: 100px;
           &:before {
@@ -89,9 +89,9 @@
 
 .number-box[type=number] {
   border: 0;
-  line-height: .5em;
   font-family: inconsolata;
   font-size: 1em;
+  line-height: .5em;
   text-align: right;
   width: 2.5em;
   &::-webkit-inner-spin-button {
@@ -110,10 +110,10 @@ input.channelView.range-slider {
 }
 
 .slider {
-  padding: 0;
-  margin: 0;
-  vertical-align: middle;
   display: inline-block;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
   &.label {
     text-align: right;
     width: 100px;
@@ -121,9 +121,9 @@ input.channelView.range-slider {
   &.value {
     text-align: left;
     &.ms {
-      width: 40px;
-      text-align: right;
       padding-right: 5px;
+      text-align: right;
+      width: 40px;
     }
     &.colour {
       margin-left: 55px;
