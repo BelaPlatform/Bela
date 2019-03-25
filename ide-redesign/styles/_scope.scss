@@ -1,3 +1,17 @@
+.buttonWrapper {
+  .top {
+    display: inline-block;
+    .label {
+      p {
+        display: inline;
+        }
+    }
+    .value {
+      display: inline-block;
+    }
+  }
+}
+
 #control-panel {
   background-color: rgba(255,255,255,0.8);
   border: 1px solid $grey-light;
@@ -85,7 +99,7 @@
   }
 }
 
-input.scopeControls.range-slider {
+input.scope-controls.range-slider {
   padding-left: .5em;
   width: 100%;
 }
