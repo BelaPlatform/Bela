@@ -26,6 +26,7 @@ class ProjectView extends View {
 		this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()})
 
 	}
+
 	buttonClicked($element, e){
 		var func = $element.data().func;
 		if (func && this[func]){
@@ -64,7 +65,7 @@ class ProjectView extends View {
 		form.push('</label>');
 		form.push('<input type="text" placeholder="Enter your project name">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.create_new.button+'</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -106,6 +107,7 @@ class ProjectView extends View {
 		popup.show();
 
 	}
+
 	deleteProject(func){
 
 		// build the popup content
@@ -113,7 +115,7 @@ class ProjectView extends View {
 		popup.subtitle(json.popups.delete_project.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup delete">'+json.popups.delete_project.button+'</button>');
+		form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -205,40 +207,104 @@ class ProjectView extends View {
 		}
 	}
 
-  _librariesList(librariesDir){
+  _libraryList(librariesDir){
 
 		var $libraries = $('[data-libraries-list]');
 		$libraries.empty(librariesDir);
 		if (!librariesDir.length) return;
 
 		for (let item of librariesDir){
-      console.log(item);
-      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+      let name = item.name;
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('libraries-list');
-      let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+      let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
 			for (let child of item.children){
+        // console.log(child);
 				if (child && child.length && child[0] === '.') continue;
         let childLi = $('<li></li>');
-				childLi.html(child).attr('data-library-link', item.name + '/' + child)
-					.on('click', (e) => {
-            popup.title('Add Library');
-            popup.subtitle('To add this library to your project add the following lines:');
-            var string = '';
-            for (let child of item.children) {
-              var testExt = child.split('.');
-              if (testExt[testExt.length - 1] === 'h') {
-                string = string + '#include &lt;/libraries/' + item.name + '/' + child + '&gt;<br>';
+        let testExt = child.split('.');
+        let childExt = testExt[testExt.length - 1];
+        // The MetaData file
+        if (childExt === 'metadata') {
+          let childPath = '/libraries/' + item.name + "/" + child;
+          let libData = $('<dl></dl>');
+          let libDataBool = false;
+          $.ajax({
+            type: "GET",
+            url: "/libraries/" + name + "/" + child,
+            dataType: "html",
+            success: function(text){
+              var object = {};
+              var transformText = text.split('\n');
+              for (let line of transformText) {
+                if (line.length > 0) {
+                  var splitKeyVal = line.split("=");
+                  var key = splitKeyVal[0];
+                  object[key] = splitKeyVal[1];
+                }
               }
+              if (object.name) {
+                libDataBool = true;
+                var libNameDT = $('<dt></dt>').text("Name:");
+                libNameDT.appendTo(libData);
+                var libNameDD = $('<dd></dd>').text(object.name);
+                libNameDD.appendTo(libData);
+              }
+              if (object.version) {
+                libDataBool = true;
+                var libVersionDT = $('<dt></dt>').text("Version:");
+                libVersionDT.appendTo(libData);
+                var libVersionDD = $('<dd></dd>').text(object.version);
+                libVersionDD.appendTo(libData);
+              }
+              if (object.author) {
+                libDataBool = true;
+                var libAuthorDT = $('<dt></dt>').text("Author:");
+                libAuthorDT.appendTo(libData);
+                var libAuthorDD = $('<dd></dd>').text(object.author);
+                libAuthorDD.appendTo(libData);
+              }
+              if (object.maintainer) {
+                libDataBool = true;
+                var libMaintainerDT = $('<dt></dt>').text("Maintainer:");
+                libMaintainerDT.appendTo(libData);
+                var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
+                libMaintainerDD.appendTo(libData);
+              }
+              if (object.description) {
+                libDataBool = true;
+                var libDescriptionDT = $('<dt></dt>').text("Description:");
+                libDescriptionDT.appendTo(libData);
+                var libDescriptionDD = $('<dd></dd>').text(object.description);
+                libDescriptionDD.appendTo(libData);
+              }
+              if (libDataBool) {
+                childUl.prepend(libData);
+              }
+
             }
-            popup.code(string);
-            var form = [];
-            form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-            popup.form.append(form.join(''));
-            popup.find('.popup-cancel').on('click', popup.hide );
-        		popup.show();
-					});
+          });
+        }
+				childLi.html(child).attr('data-library-link', item.name + '/' + child);
+				// 	.on('click', (e) => {
+        //     popup.title('Add Library');
+        //     popup.subtitle('To add this library to your project add the following lines:');
+        //     var string = '';
+        //     for (let child of item.children) {
+        //       var testExt = child.split('.');
+        //       if (testExt[testExt.length - 1] === 'h') {
+        //         string = string + '#include &lt;/libraries/' + item.name + '/' + child + '&gt;<br>';
+        //       }
+        //     }
+        //     popup.code(string);
+        //     var form = [];
+        //     form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+        //     popup.form.append(form.join(''));
+        //     popup.find('.popup-cancel').on('click', popup.hide );
+        // 		popup.show();
+				// 	});
           childLi.appendTo(childUl);
 			}
       // per section

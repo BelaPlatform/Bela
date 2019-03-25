@@ -212,7 +212,6 @@ socket.on('init', (data) => {
 
 	models.project.setData({projectList: data.projects, exampleList: data.examples, libraryList: data.libraries,  currentProject: data.settings.project});
 	models.settings.setData(data.settings);
-  console.log(data);
 
   $('data-run-on-boot').val(data.boot_project);
 

@@ -629,7 +629,6 @@ socket.on('init', function (data) {
 
 	models.project.setData({ projectList: data.projects, exampleList: data.examples, libraryList: data.libraries, currentProject: data.settings.project });
 	models.settings.setData(data.settings);
-	console.log(data);
 
 	$('data-run-on-boot').val(data.boot_project);
 
@@ -3152,8 +3151,8 @@ var ProjectView = function (_View) {
 			}
 		}
 	}, {
-		key: '_librariesList',
-		value: function _librariesList(librariesDir) {
+		key: '_libraryList',
+		value: function _libraryList(librariesDir) {
 
 			var $libraries = $('[data-libraries-list]');
 			$libraries.empty(librariesDir);
@@ -3167,12 +3166,12 @@ var ProjectView = function (_View) {
 				var _loop3 = function _loop3() {
 					var item = _step3.value;
 
-					console.log(item);
-					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+					var name = item.name;
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
 					var parentUl = $('<ul></ul>');
 					var parentLi = $('<li></li>');
 					var childUl = $('<ul></ul>').addClass('libraries-list');
-					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
@@ -3181,47 +3180,113 @@ var ProjectView = function (_View) {
 						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
 							var _child = _step4.value;
 
+							// console.log(child);
 							if (_child && _child.length && _child[0] === '.') continue;
 							var childLi = $('<li></li>');
-							childLi.html(_child).attr('data-library-link', item.name + '/' + _child).on('click', function (e) {
-								popup.title('Add Library');
-								popup.subtitle('To add this library to your project add the following lines:');
-								var string = '';
-								var _iteratorNormalCompletion5 = true;
-								var _didIteratorError5 = false;
-								var _iteratorError5 = undefined;
+							var testExt = _child.split('.');
+							var childExt = testExt[testExt.length - 1];
+							// The MetaData file
+							if (childExt === 'metadata') {
+								(function () {
+									var childPath = '/libraries/' + item.name + "/" + _child;
+									var libData = $('<dl></dl>');
+									var libDataBool = false;
+									$.ajax({
+										type: "GET",
+										url: "/libraries/" + name + "/" + _child,
+										dataType: "html",
+										success: function success(text) {
+											var object = {};
+											var transformText = text.split('\n');
+											var _iteratorNormalCompletion5 = true;
+											var _didIteratorError5 = false;
+											var _iteratorError5 = undefined;
 
-								try {
-									for (var _iterator5 = item.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-										var _child2 = _step5.value;
+											try {
+												for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+													var line = _step5.value;
 
-										var testExt = _child2.split('.');
-										if (testExt[testExt.length - 1] === 'h') {
-											string = string + '#include &lt;/libraries/' + item.name + '/' + _child2 + '&gt;<br>';
-										}
-									}
-								} catch (err) {
-									_didIteratorError5 = true;
-									_iteratorError5 = err;
-								} finally {
-									try {
-										if (!_iteratorNormalCompletion5 && _iterator5.return) {
-											_iterator5.return();
-										}
-									} finally {
-										if (_didIteratorError5) {
-											throw _iteratorError5;
-										}
-									}
-								}
+													if (line.length > 0) {
+														var splitKeyVal = line.split("=");
+														var key = splitKeyVal[0];
+														object[key] = splitKeyVal[1];
+													}
+												}
+											} catch (err) {
+												_didIteratorError5 = true;
+												_iteratorError5 = err;
+											} finally {
+												try {
+													if (!_iteratorNormalCompletion5 && _iterator5.return) {
+														_iterator5.return();
+													}
+												} finally {
+													if (_didIteratorError5) {
+														throw _iteratorError5;
+													}
+												}
+											}
 
-								popup.code(string);
-								var form = [];
-								form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-								popup.form.append(form.join(''));
-								popup.find('.popup-cancel').on('click', popup.hide);
-								popup.show();
-							});
+											if (object.name) {
+												libDataBool = true;
+												var libNameDT = $('<dt></dt>').text("Name:");
+												libNameDT.appendTo(libData);
+												var libNameDD = $('<dd></dd>').text(object.name);
+												libNameDD.appendTo(libData);
+											}
+											if (object.version) {
+												libDataBool = true;
+												var libVersionDT = $('<dt></dt>').text("Version:");
+												libVersionDT.appendTo(libData);
+												var libVersionDD = $('<dd></dd>').text(object.version);
+												libVersionDD.appendTo(libData);
+											}
+											if (object.author) {
+												libDataBool = true;
+												var libAuthorDT = $('<dt></dt>').text("Author:");
+												libAuthorDT.appendTo(libData);
+												var libAuthorDD = $('<dd></dd>').text(object.author);
+												libAuthorDD.appendTo(libData);
+											}
+											if (object.maintainer) {
+												libDataBool = true;
+												var libMaintainerDT = $('<dt></dt>').text("Maintainer:");
+												libMaintainerDT.appendTo(libData);
+												var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
+												libMaintainerDD.appendTo(libData);
+											}
+											if (object.description) {
+												libDataBool = true;
+												var libDescriptionDT = $('<dt></dt>').text("Description:");
+												libDescriptionDT.appendTo(libData);
+												var libDescriptionDD = $('<dd></dd>').text(object.description);
+												libDescriptionDD.appendTo(libData);
+											}
+											if (libDataBool) {
+												childUl.prepend(libData);
+											}
+										}
+									});
+								})();
+							}
+							childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
+							// 	.on('click', (e) => {
+							//     popup.title('Add Library');
+							//     popup.subtitle('To add this library to your project add the following lines:');
+							//     var string = '';
+							//     for (let child of item.children) {
+							//       var testExt = child.split('.');
+							//       if (testExt[testExt.length - 1] === 'h') {
+							//         string = string + '#include &lt;/libraries/' + item.name + '/' + child + '&gt;<br>';
+							//       }
+							//     }
+							//     popup.code(string);
+							//     var form = [];
+							//     form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+							//     popup.form.append(form.join(''));
+							//     popup.find('.popup-cancel').on('click', popup.hide );
+							// 		popup.show();
+							// 	});
 							childLi.appendTo(childUl);
 						}
 						// per section
@@ -3322,11 +3387,11 @@ var ProjectView = function (_View) {
 
 			try {
 				for (var _iterator6 = dir.children[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-					var _child3 = _step6.value;
+					var _child2 = _step6.value;
 
-					if (!_child3.dir) $('<li></li>').addClass('sourceFile').html(_child3.name).data('file', (dir.dirPath || dir.name) + '/' + _child3.name).appendTo(ul);else {
-						_child3.dirPath = (dir.dirPath || dir.name) + '/' + _child3.name;
-						ul.append(this.subDirs(_child3));
+					if (!_child2.dir) $('<li></li>').addClass('sourceFile').html(_child2.name).data('file', (dir.dirPath || dir.name) + '/' + _child2.name).appendTo(ul);else {
+						_child2.dirPath = (dir.dirPath || dir.name) + '/' + _child2.name;
+						ul.append(this.subDirs(_child2));
 					}
 				}
 			} catch (err) {
