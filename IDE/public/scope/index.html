@@ -163,7 +163,7 @@
 
             <h1>Misc</h1>
             <div class="block-section">
-              <button id="pauseButton" class="scope-controls" data-key="scopePause">Pause plotting</button>
+              <button class="scope-controls pause-button" data-key="scopePause" data-func="pauseButton">Pause plotting</button>
               <a href="" download="scope" id="saveCanvas"><button>Export scope image</button></a>
               <a href="" download="scopeData.csv" id="saveCanvasData"><button>Export CSV data</button></a>
             </div> 
@@ -227,60 +227,62 @@
 
         <div class="control-panel-column channels">
           <div class="control-section channel">
-            <h1>Channel 1</h1>
+            <div class="channel-view-0">
+              <h1>Channel 1</h1>
 
-            <div class="block-section">
-              <div class="scope-label">
-                <p>Attenuation:</p>
+              <div class="block-section">
+                <div class="scope-label">
+                  <p>Attenuation:</p>
+                </div>
+
+                <div class="slider value">
+                  <input class="channelView number-box" data-key="yAmplitude" data-channel="0" type="number" value="1" step="0.01" />
+                </div>
+
+                <div class="slider range">
+                  <input class="channelView range-slider" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01" />
+                </div>
               </div>
 
-              <div class="slider value">
-                <input class="channelView number-box" data-key="yAmplitude" data-channel="0" type="number" value="1" step="0.01" />
+              <div class="block-section">
+                <div class="scope-label">
+                  <p>Offset:</p>
+                </div>
+
+                <div class="slider value">
+                  <input class="channelView number-box" data-key="yOffset" data-channel="0" type="number" value="0" step="0.01" />
+                </div>
+
+                <div class="slider range">
+                  <input class="channelView range-slider" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01" />
+                </div>
               </div>
 
-              <div class="slider range">
-                <input class="channelView range-slider" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01" />
+              <div class="block-section">
+                <div class="scope-label">
+                  <p>Weight:</p>
+                </div>
+
+                <div class="slider value">
+                  <input class="channelView number-box" data-key="lineWeight" data-channel="0" type="number" value="1.5" min="1" max="10" step="0.1" />
+                </div>
+
+                <div class="slider range">
+                  <input class="channelView range-slider" data-key="lineWeight" data-channel="0" type="range" value="1.5" min="1" max="10" step="0.1" />
+                </div>
               </div>
+
+              <div class="block-section">
+                <div class="scope-label">
+                  <p>Colour:</p>
+                </div>
+
+                <div class="slider value colour">
+                  <input class="channelView number-box" data-key="color" data-channel="0" type="color" value="#ff0000" />
+                </div>
+              </div>          
             </div>
-
-            <div class="block-section">
-              <div class="scope-label">
-                <p>Offset:</p>
-              </div>
-
-              <div class="slider value">
-                <input class="channelView number-box" data-key="yOffset" data-channel="0" type="number" value="0" step="0.01" />
-              </div>
-
-              <div class="slider range">
-                <input class="channelView range-slider" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01" />
-              </div>
-            </div>
-
-            <div class="block-section">
-              <div class="scope-label">
-                <p>Weight:</p>
-              </div>
-
-              <div class="slider value">
-                <input class="channelView number-box" data-key="lineWeight" data-channel="0" type="number" value="1.5" min="1" max="10" step="0.1" />
-              </div>
-
-              <div class="slider range">
-                <input class="channelView range-slider" data-key="lineWeight" data-channel="0" type="range" value="1.5" min="1" max="10" step="0.1" />
-              </div>
-            </div>
-
-            <div class="block-section">
-              <div class="scope-label">
-                <p>Colour:</p>
-              </div>
-
-              <div class="slider value colour">
-                <input class="channelView number-box" data-key="color" data-channel="0" type="color" value="#ff0000" />
-              </div>
-            </div>          
-          </div>
+          </div><!-- end channel view 0 -->
         </div> <!-- end control RIHT panel column --> 
       </div> <!-- end contol panel -->
           
