@@ -10,8 +10,20 @@
   &.hidden {
     display: none;
   }
+  .control-panel-column {
+    border-right: 1px dashed $grey-mid;
+    display: inline-block;
+    float: left;
+    padding: .5em 1.5em .5em 3em;
+    width: 375px;
+    &.channels {
+      display: inline-block;
+      border: 0;
+      padding: .5em 3em .5em 1.5em;
+      vertical-align: top;
+    }
+  }
   .control-section {
-    width: 400px;
     vertical-align: top;
     h1 {
       font-family: space_bold;
@@ -22,11 +34,9 @@
 
     }
     .block-section {
-      margin-left: 1.5em;
       p {
         display: inline;
         font-family: poppins_regular;
-        padding: .5em 0;
         font-size: .85em;
       }
       div span p {
@@ -36,7 +46,7 @@
       .scope-label {
         display: inline-block;
         text-align: right;
-        width: 100px;
+        width: 75px;
         margin: 5px 0;
       }
       .scope-input {
@@ -44,13 +54,17 @@
         padding-left: 60px;
         position: absolute;
         width: 200px;
-        margin: 5px 0;
+        margin: 2px 0;
         >.mini-dropdown {
           width: 100px;
           &:before {
             left: 140px;
           }
         }
+      }
+      .after-dropdown {
+        display: inline;
+        margin-left: 165px;
       }
       &.slider-line {
         margin-top: .5em;
@@ -76,6 +90,11 @@ input.scopeControls.range-slider {
   width: 100%;
 }
 
+input.channelView.range-slider {
+  padding-left: .5em;
+  width: 100%;
+}
+
 .slider {
   padding: 0;
   margin: 0;
@@ -92,6 +111,9 @@ input.scopeControls.range-slider {
       text-align: right;
       padding-right: 5px;
     }
+    &.colour {
+      margin-left: 55px;
+    }
   }
   &.range {
     width: 200px;
@@ -102,5 +124,5 @@ input.scopeControls.range-slider {
 }
 
 .one-shot {
-  padding-left: 160px;
+  padding-left: 135px;
 }
