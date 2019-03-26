@@ -2418,32 +2418,10 @@ var FileView = function (_View) {
 				var directory = $('<li></li>');
 				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
 				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
-
-				try {
-					for (var _iterator2 = directories[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var dir = _step2.value;
-
-						directoryList.append(this.subDirs(dir));
-					}
-				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
-						}
-					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
-						}
-					}
+				for (var _i3 = 0; _i3 < directories.length; _i3++) {
+					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
 				}
-
-				directoryList.append(directory);
+				directoryList.appendTo(directory);
 				directory.appendTo($files);
 			}
 
@@ -2475,13 +2453,13 @@ var FileView = function (_View) {
 			var _this6 = this;
 
 			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
 
 			try {
-				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var child = _step3.value;
+				for (var _iterator2 = dir.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var child = _step2.value;
 
 					if (!isDir(child)) {
 						if (child.size < 1000000) {
@@ -2498,16 +2476,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError2) {
+						throw _iteratorError2;
 					}
 				}
 			}
@@ -2528,27 +2506,27 @@ var FileView = function (_View) {
 			}
 
 			var fileExists = false;
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
 
 			try {
-				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var item = _step4.value;
+				for (var _iterator3 = this.listOfFiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var item = _step3.value;
 
 					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
 					}
 				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -3172,6 +3150,7 @@ var ProjectView = function (_View) {
 					var parentLi = $('<li></li>');
 					var childUl = $('<ul></ul>').addClass('libraries-list');
 					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
+					var childTitle = $('<p></p>').addClass('file-heading').text('Files');
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
@@ -3189,8 +3168,10 @@ var ProjectView = function (_View) {
 							if (childExt === 'metadata') {
 								(function () {
 									var childPath = '/libraries/' + item.name + "/" + _child;
-									var libData = $('<dl></dl>');
+									var libDataDiv = $('<div></div>');
 									var libDataBool = false;
+									var libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
+									var libData = $('<dl></dl>');
 									$.ajax({
 										type: "GET",
 										url: "/libraries/" + name + "/" + _child,
@@ -3263,31 +3244,17 @@ var ProjectView = function (_View) {
 												libDescriptionDD.appendTo(libData);
 											}
 											if (libDataBool) {
-												childUl.prepend(libData);
+												libTitle.appendTo(libDataDiv);
+												libData.appendTo(libDataDiv);
+												libDataDiv.appendTo(childDiv);
 											}
 										}
 									});
 								})();
+							} else {
+								childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
+								childLi.appendTo(childUl);
 							}
-							childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
-							// 	.on('click', (e) => {
-							//     popup.title('Add Library');
-							//     popup.subtitle('To add this library to your project add the following lines:');
-							//     var string = '';
-							//     for (let child of item.children) {
-							//       var testExt = child.split('.');
-							//       if (testExt[testExt.length - 1] === 'h') {
-							//         string = string + '#include &lt;/libraries/' + item.name + '/' + child + '&gt;<br>';
-							//       }
-							//     }
-							//     popup.code(string);
-							//     var form = [];
-							//     form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-							//     popup.form.append(form.join(''));
-							//     popup.find('.popup-cancel').on('click', popup.hide );
-							// 		popup.show();
-							// 	});
-							childLi.appendTo(childUl);
 						}
 						// per section
 						// item.name -> parentDiv $examples
@@ -3309,6 +3276,7 @@ var ProjectView = function (_View) {
 					parentButton.appendTo(parentLi);
 					// per item in section
 					// childLi -> childUl -> parentDiv -> $examples
+					childTitle.appendTo(childDiv);
 					childUl.appendTo(childDiv);
 					childDiv.appendTo(parentLi);
 					parentLi.appendTo(parentUl);

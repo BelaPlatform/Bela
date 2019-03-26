@@ -685,6 +685,8 @@ ul {
     font-family: poppins_light;
     margin-right: 5px;
     size: 12px; }
+  .sub-file-list > li.sourceFile {
+    cursor: pointer; }
 
 .example-list > li {
   padding: 4px 10px; }
@@ -717,6 +719,36 @@ img.explorer {
   height: 30px; }
   img.explorer:hover {
     background: url("images/icons/explorer_green.svg"); }
+
+ul.libraries-list-parent {
+  list-style: none;
+  margin: 0;
+  padding: 0; }
+  ul.libraries-list-parent .libraries-list li {
+    color: rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+    font-family: poppins_regular;
+    font-size: 14px;
+    padding: 4px 12px; }
+    ul.libraries-list-parent .libraries-list li:hover, ul.libraries-list-parent .libraries-list li.selected {
+      background: rgba(255, 255, 0, 0.2); }
+    ul.libraries-list-parent .libraries-list li:before {
+      content: '>';
+      /* Unicode character for "minus" sign (-) */
+      font-family: poppins_light;
+      margin-right: 5px;
+      size: 12px; }
+  ul.libraries-list-parent .file-heading {
+    border-bottom: 1px solid #bdbdbd;
+    font-family: poppins_regular;
+    margin: 0;
+    padding: 3px 0 3px 10px;
+    width: calc(100% - 10px); }
+
+ul dl {
+  padding: 3px 0px 3px 10px; }
+  ul dl dt, ul dl dd {
+    font-size: 14px; }
 
 .lower {
   color: rgba(0, 0, 0, 0.8);

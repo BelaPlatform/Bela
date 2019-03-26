@@ -220,6 +220,7 @@ class ProjectView extends View {
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('libraries-list');
       let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
+      let childTitle = $('<p></p>').addClass('file-heading').text('Files');
 			for (let child of item.children){
         // console.log(child);
 				if (child && child.length && child[0] === '.') continue;
@@ -229,8 +230,10 @@ class ProjectView extends View {
         // The MetaData file
         if (childExt === 'metadata') {
           let childPath = '/libraries/' + item.name + "/" + child;
-          let libData = $('<dl></dl>');
+          let libDataDiv = $('<div></div>');
           let libDataBool = false;
+          let libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
+          let libData = $('<dl></dl>');
           $.ajax({
             type: "GET",
             url: "/libraries/" + name + "/" + child,
@@ -281,37 +284,23 @@ class ProjectView extends View {
                 libDescriptionDD.appendTo(libData);
               }
               if (libDataBool) {
-                childUl.prepend(libData);
+                libTitle.appendTo(libDataDiv);
+                libData.appendTo(libDataDiv);
+                libDataDiv.appendTo(childDiv);
               }
-
             }
           });
-        }
-				childLi.html(child).attr('data-library-link', item.name + '/' + child);
-				// 	.on('click', (e) => {
-        //     popup.title('Add Library');
-        //     popup.subtitle('To add this library to your project add the following lines:');
-        //     var string = '';
-        //     for (let child of item.children) {
-        //       var testExt = child.split('.');
-        //       if (testExt[testExt.length - 1] === 'h') {
-        //         string = string + '#include &lt;/libraries/' + item.name + '/' + child + '&gt;<br>';
-        //       }
-        //     }
-        //     popup.code(string);
-        //     var form = [];
-        //     form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-        //     popup.form.append(form.join(''));
-        //     popup.find('.popup-cancel').on('click', popup.hide );
-        // 		popup.show();
-				// 	});
+        } else {
+          childLi.html(child).attr('data-library-link', item.name + '/' + child);
           childLi.appendTo(childUl);
+        }
 			}
       // per section
       // item.name -> parentDiv $examples
       parentButton.appendTo(parentLi);
       // per item in section
       // childLi -> childUl -> parentDiv -> $examples
+      childTitle.appendTo(childDiv);
       childUl.appendTo(childDiv);
       childDiv.appendTo(parentLi);
       parentLi.appendTo(parentUl);
