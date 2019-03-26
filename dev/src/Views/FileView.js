@@ -81,7 +81,7 @@ class FileView extends View {
 		$('[data-upload-file-input]').trigger('click');
 	}
 	renameFile(func){
-		
+
 		// build the popup content
 		popup.title(json.popups.rename_file.title);
 		popup.subtitle(json.popups.rename_file.text);
@@ -185,47 +185,47 @@ class FileView extends View {
 		directories.sort( (a, b) => a.name - b.name );
 
 		//console.log(headers, sources, resources, directories);
-		if (headers.length){
+		if (headers.length) {
       var header = $('<li></li>');
       $('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
       var headerList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i<headers.length; i++){
+      for (let i=0; i < headers.length; i++) {
         $('<li></li>').addClass('sourceFile').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', (e) => this.openFile(e));
       }
       headerList.appendTo(header);
       header.appendTo($files);
 		}
 
-		if (sources.length){
+		if (sources.length) {
       var source = $("<li></li>");
 			$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
       var sourceList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i<sources.length; i++){
+      for (let i=0; i < sources.length; i++) {
         $('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', (e) => this.openFile(e));
       }
       sourceList.appendTo(source);
       source.appendTo($files);
 		}
 
-		if (resources.length){
+		if (resources.length) {
       var resource = $('<li></li>');
 			$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
       var resourceList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i<resources.length; i++){
+      for (let i=0; i < resources.length; i++) {
         $('<li></li>').addClass('sourceFile').html(resources[i].name + ' <span class="file-list-size">' + resources[i].size + '</span>').data('file', resources[i].name).appendTo(resourceList).on('click', (e) => this.openFile(e));
       }
       resourceList.appendTo(resource);
       resource.appendTo($files);
 		}
 
-		if (directories.length){
-      var directory = $('<li></li>')
+		if (directories.length) {
+      var directory = $('<li></li>');
 			$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
       var directoryList = $('<ul></ul>').addClass('sub-file-list');
-      for (let dir of directories){
-        directoryList.append(this.subDirs(dir));
+      for (let i=0; i < directories.length; i++) {
+        $('<li></li>').addClass('sourceFile').html(directories[i].name).appendTo(directoryList);
       }
-      directoryList.append(directory);
+      directoryList.appendTo(directory);
       directory.appendTo($files);
 		}
 
