@@ -78,9 +78,8 @@ host;
 #X text 39 130 Whenever connecting Bela to external equipment \, you
 should;
 #X text 39 150 https://blog.bela.io/2016/11/15/analog-synth/;
-#X text 39 190 module: https://bela.io/modular/;
-#X text 39 180 jacks \, pots \, leds and buttons \, check out the Bela
-Eurorack;
+#X text 39 190 Eurorack module: https://bela.io/salt;
+#X text 39 180 jacks \, pots \, leds and buttons \, check out Salt \, the Bela;
 #X obj 802 120 loadbang;
 #X msg 802 146 hw 0 0 0;
 #X obj 802 173 send bela_setMidi;
