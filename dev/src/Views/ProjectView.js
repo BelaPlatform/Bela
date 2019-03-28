@@ -234,6 +234,9 @@ class ProjectView extends View {
           let libDataBool = false;
           let libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
           let libData = $('<dl></dl>');
+          let includeArr = [];
+          let includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
+          let includeText = $('<pre></pre>');
           $.ajax({
             type: "GET",
             url: "/libraries/" + name + "/" + child,
@@ -243,45 +246,62 @@ class ProjectView extends View {
               var transformText = text.split('\n');
               for (let line of transformText) {
                 if (line.length > 0) {
-                  var splitKeyVal = line.split("=");
+                  var splitKeyVal = line.split('=');
                   var key = splitKeyVal[0];
-                  object[key] = splitKeyVal[1];
+                  if (key == 'include') {
+                    includeArr.push(splitKeyVal[1]);
+                  } else {
+                    object[key] = splitKeyVal[1];
+                  }
                 }
               }
               if (object.name) {
                 libDataBool = true;
-                var libNameDT = $('<dt></dt>').text("Name:");
+                var libNameDT = $('<dt></dt>').text('Name:');
                 libNameDT.appendTo(libData);
                 var libNameDD = $('<dd></dd>').text(object.name);
                 libNameDD.appendTo(libData);
               }
               if (object.version) {
                 libDataBool = true;
-                var libVersionDT = $('<dt></dt>').text("Version:");
+                var libVersionDT = $('<dt></dt>').text('Version:');
                 libVersionDT.appendTo(libData);
                 var libVersionDD = $('<dd></dd>').text(object.version);
                 libVersionDD.appendTo(libData);
               }
               if (object.author) {
                 libDataBool = true;
-                var libAuthorDT = $('<dt></dt>').text("Author:");
+                var libAuthorDT = $('<dt></dt>').text('Author:');
                 libAuthorDT.appendTo(libData);
                 var libAuthorDD = $('<dd></dd>').text(object.author);
                 libAuthorDD.appendTo(libData);
               }
               if (object.maintainer) {
                 libDataBool = true;
-                var libMaintainerDT = $('<dt></dt>').text("Maintainer:");
+                var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
                 libMaintainerDT.appendTo(libData);
                 var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
                 libMaintainerDD.appendTo(libData);
               }
               if (object.description) {
                 libDataBool = true;
-                var libDescriptionDT = $('<dt></dt>').text("Description:");
+                var libDescriptionDT = $('<dt></dt>').text('Description:');
                 libDescriptionDT.appendTo(libData);
                 var libDescriptionDD = $('<dd></dd>').text(object.description);
                 libDescriptionDD.appendTo(libData);
+              }
+              if (includeArr.length > 0) {
+                libDataBool = true;
+                includeTitle.appendTo(libDataDiv);
+                for (let include of includeArr) {
+                  let includeText = $('<pre></pre>');
+                  includeText.text('#include <' + include + '>');
+                  includeText.appendTo(libDataDiv);
+                }
+              } else {
+                includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>')
+                includeTitle.appendTo(libDataDiv);
+                includeText.appendTo(libDataDiv);
               }
               if (libDataBool) {
                 libTitle.appendTo(libDataDiv);

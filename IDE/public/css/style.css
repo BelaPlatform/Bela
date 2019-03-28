@@ -745,6 +745,9 @@ ul.libraries-list-parent {
     padding: 3px 0 3px 10px;
     width: calc(100% - 10px); }
 
+ul pre {
+  white-space: inherit; }
+
 ul dl {
   padding: 3px 0px 3px 10px; }
   ul dl dt, ul dl dd {

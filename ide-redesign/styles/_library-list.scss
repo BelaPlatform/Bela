@@ -30,6 +30,9 @@ ul {
       width: calc(100% - 10px);
     }
   }
+  pre {
+    white-space: inherit;
+  }
   dl {
     padding: 3px 0px 3px 10px;
     dt, dd {
