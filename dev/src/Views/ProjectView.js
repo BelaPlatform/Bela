@@ -229,7 +229,6 @@ class ProjectView extends View {
         // includes.focus();
         includes.select();
         document.execCommand("copy");
-        console.log(includes[0]);
       });
 			for (let child of item.children){
         // console.log(child);

@@ -3181,7 +3181,6 @@ var ProjectView = function (_View) {
 						// includes.focus();
 						includes.select();
 						document.execCommand("copy");
-						console.log(includes[0]);
 					});
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
