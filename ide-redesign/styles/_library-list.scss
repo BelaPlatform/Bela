@@ -30,6 +30,22 @@ ul {
       width: calc(100% - 10px);
     }
   }
+  .copy {
+    cursor: pointer;
+    user-select: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  .hide-include {
+    border: none;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    position: absolute;
+    resize: none;
+    width: 0;
+  }
   pre {
     white-space: inherit;
   }

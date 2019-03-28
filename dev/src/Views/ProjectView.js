@@ -221,6 +221,16 @@ class ProjectView extends View {
       let childUl = $('<ul></ul>').addClass('libraries-list');
       let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
       let childTitle = $('<p></p>').addClass('file-heading').text('Files');
+      let libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
+      let includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
+      let includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
+      let includeCP = $('<p><p>').addClass('copy').text('Copy to clipboard').on('click', function(){
+        let includes = $(this).parent().find('[data-form]');
+        // includes.focus();
+        includes.select();
+        document.execCommand("copy");
+        console.log(includes[0]);
+      });
 			for (let child of item.children){
         // console.log(child);
 				if (child && child.length && child[0] === '.') continue;
@@ -229,19 +239,19 @@ class ProjectView extends View {
         let childExt = testExt[testExt.length - 1];
         // The MetaData file
         if (childExt === 'metadata') {
+          let i = 0;
           let childPath = '/libraries/' + item.name + "/" + child;
           let libDataDiv = $('<div></div>');
-          let libDataBool = false;
-          let libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
           let libData = $('<dl></dl>');
           let includeArr = [];
-          let includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
+          let includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
           let includeText = $('<pre></pre>');
           $.ajax({
             type: "GET",
             url: "/libraries/" + name + "/" + child,
             dataType: "html",
             success: function(text){
+              i += 1;
               var object = {};
               var transformText = text.split('\n');
               for (let line of transformText) {
@@ -256,58 +266,56 @@ class ProjectView extends View {
                 }
               }
               if (object.name) {
-                libDataBool = true;
                 var libNameDT = $('<dt></dt>').text('Name:');
                 libNameDT.appendTo(libData);
                 var libNameDD = $('<dd></dd>').text(object.name);
                 libNameDD.appendTo(libData);
               }
               if (object.version) {
-                libDataBool = true;
                 var libVersionDT = $('<dt></dt>').text('Version:');
                 libVersionDT.appendTo(libData);
                 var libVersionDD = $('<dd></dd>').text(object.version);
                 libVersionDD.appendTo(libData);
               }
               if (object.author) {
-                libDataBool = true;
                 var libAuthorDT = $('<dt></dt>').text('Author:');
                 libAuthorDT.appendTo(libData);
                 var libAuthorDD = $('<dd></dd>').text(object.author);
                 libAuthorDD.appendTo(libData);
               }
               if (object.maintainer) {
-                libDataBool = true;
                 var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
                 libMaintainerDT.appendTo(libData);
                 var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
                 libMaintainerDD.appendTo(libData);
               }
               if (object.description) {
-                libDataBool = true;
                 var libDescriptionDT = $('<dt></dt>').text('Description:');
                 libDescriptionDT.appendTo(libData);
                 var libDescriptionDD = $('<dd></dd>').text(object.description);
                 libDescriptionDD.appendTo(libData);
               }
+              includeInstructions.appendTo(libDataDiv);
+              includeCP.appendTo(libDataDiv);
+              includeForm.appendTo(libDataDiv);
               if (includeArr.length > 0) {
-                libDataBool = true;
                 includeTitle.appendTo(libDataDiv);
                 for (let include of includeArr) {
                   let includeText = $('<pre></pre>');
-                  includeText.text('#include <' + include + '>');
+                  includeText.text('#include <' + include + '>').attr('data-include','');
+                  includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include','');
                   includeText.appendTo(libDataDiv);
                 }
               } else {
-                includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>')
-                includeTitle.appendTo(libDataDiv);
+                includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
+                includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
                 includeText.appendTo(libDataDiv);
               }
-              if (libDataBool) {
-                libTitle.appendTo(libDataDiv);
-                libData.appendTo(libDataDiv);
-                libDataDiv.appendTo(childDiv);
-              }
+              includeArr = [];
+              libTitle.appendTo(libDataDiv);
+              libData.appendTo(libDataDiv);
+              libDataDiv.appendTo(childDiv);
+              libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
             }
           });
         } else {
