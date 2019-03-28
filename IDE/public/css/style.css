@@ -1304,13 +1304,18 @@ input[type="number"] {
     padding-left: 10px;
     -webkit-transition: 0.4s ease-in-out;
     transition: 0.4s ease-in-out; }
+    .toolbar .tool-text#control-text-3 {
+      float: right; }
   .toolbar .other {
     min-width: 175px; }
   .toolbar .st-st {
-    min-width: 125px; }
+    min-width: 100px; }
   .toolbar .start-stop {
     padding-left: 10px;
-    width: 130px; }
+    width: 85px; }
+  .toolbar .shutdown-parent {
+    float: right;
+    width: 45px; }
   .toolbar .toolbar-functions {
     padding: 2px 0; }
   .toolbar .system-status-text {

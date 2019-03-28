@@ -3864,12 +3864,6 @@ var ToolbarView = function (_View) {
 			$('[data-toolbar-controltext1]').html('');
 		});
 
-		$('[data-toolbar-shutdown]').mouseover(function () {
-			$('[data-toolbar-controltext1]').html('<p>Shutdown</p>');
-		}).mouseout(function () {
-			$('[data-toolbar-controltext1]').html('');
-		});
-
 		$('[data-toolbar-newtab]').mouseover(function () {
 			$('[data-toolbar-controltext2]').html('<p>New Tab</p>');
 		}).mouseout(function () {
@@ -3883,6 +3877,7 @@ var ToolbarView = function (_View) {
 		});
 
 		$('[data-toolbar-console]').mouseover(function () {
+			console.log('ping');
 			$('[data-toolbar-controltext2]').html('<p>Clear console</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
@@ -3893,8 +3888,15 @@ var ToolbarView = function (_View) {
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
+
 		$('[data-toolbar-scope]').on('click', function () {
 			window.open('scope');
+		});
+
+		$('[data-toolbar-shutdown]').mouseover(function () {
+			$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
+		}).mouseout(function () {
+			$('[data-toolbar-controltext3]').html('');
 		});
 		return _this;
 	}

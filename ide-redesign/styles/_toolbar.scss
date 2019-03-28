@@ -93,16 +93,23 @@
     margin-top: 3px;
     padding-left: 10px;
     transition: 0.4s ease-in-out;
+    &#control-text-3 {
+      float: right;
+    }
   }
   .other {
     min-width: 175px;
   }
   .st-st {
-    min-width: 125px;
+    min-width: 100px;
   }
   .start-stop {
     padding-left: 10px;
-    width: 130px;
+    width: 85px;
+  }
+  .shutdown-parent {
+    float: right;
+    width: 45px;
   }
   .toolbar-functions {
     // min-width: 150px;
