@@ -52,6 +52,7 @@ class SettingsView extends View {
 			this.$elements.filterByData('key', key).not($element).val($element.val());
 		}
 	}
+
 	buttonClicked($element, e){
     var data = $element.data();
 		var func = data.func;
@@ -66,6 +67,7 @@ class SettingsView extends View {
       }
 		}
 	}
+
 	inputChanged($element, e){
 		var data = $element.data();
 		var func = data.func;
@@ -86,8 +88,8 @@ class SettingsView extends View {
 	setCLArg(func, key, value){
 		this.emit('project-settings', {func, key, value});
 	}
-	restoreDefaultCLArgs(func){
 
+	restoreDefaultCLArgs(func){
 		// build the popup content
 		popup.title(json.popups.restore_default_project_settings.title);
 		popup.subtitle(json.popups.restore_default_project_settings.text);
@@ -113,8 +115,8 @@ class SettingsView extends View {
 	setIDESetting(func, key, value){
 		this.emit('IDE-settings', {func, key, value: value});
 	}
-	restoreDefaultIDESettings(func){
 
+	restoreDefaultIDESettings(func){
 		// build the popup content
 		popup.title(json.popups.restore_default_ide_settings.title);
 		popup.subtitle(json.popups.restore_default_ide_settings.text);
@@ -138,13 +140,12 @@ class SettingsView extends View {
 	}
 
 	shutdownBBB(){
-
 		// build the popup content
 		popup.title(json.popups.shutdown.title);
 		popup.subtitle(json.popups.shutdown.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.shutdown.button+'</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -158,15 +159,14 @@ class SettingsView extends View {
 		popup.show();
 
 		popup.find('.confirm').trigger('focus');
-
 	}
-	aboutPopup(){
 
+	aboutPopup(){
 		// build the popup content
 		popup.title(json.popups.about.title);
 		popup.subtitle(json.popups.about.text);
 		var form = [];
-		form.push('<button type="submit" class="button popup cancel">'+json.popups.about.button+'</button>');
+		form.push('<button type="submit" class="button popup cancel">' + json.popups.about.button + '</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -176,10 +176,9 @@ class SettingsView extends View {
 		popup.show();
 
 		popup.find('.cancel').trigger('focus');
-
 	}
-	updateBela(){
 
+	updateBela(){
 		// build the popup content
 		popup.title(json.popups.update.title);
 		popup.subtitle(json.popups.update.text);
@@ -187,7 +186,7 @@ class SettingsView extends View {
 		var form = [];
 		form.push('<input id="popup-update-file" type="file">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.update.button+'</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		/*popup.form.prop({
@@ -207,7 +206,7 @@ class SettingsView extends View {
 			//console.log('input', popup.find('input[type=file]'));
 			//console.log('file', file);
 
-			if (file){
+			if (file) {
 
 				this.emit('warning', 'Beginning the update - this may take several minutes');
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
@@ -257,15 +256,16 @@ class SettingsView extends View {
 				el.val(data[key]);
 			}
 
-
 		}
 
 	}
+
 	_IDESettings(data){
 		for (let key in data){
 			this.$elements.filterByData('key', key).val(data[key]).prop('checked', data[key]);
 		}
 	}
+
 	_projectList(projects, data){
 
 		var $projects = $('[data-run-on-boot]');
@@ -287,7 +287,6 @@ class SettingsView extends View {
 	}
 
 	useAudioExpander(func, key, val){
-
 		if (val == 1) {
 			this.setCLArg('setCLArg', key, val);
 		} else {
@@ -302,7 +301,6 @@ class SettingsView extends View {
 	}
 
 	setAudioExpander(key, val){
-
 		if (!val.length) return;
 
 		var channels = val.split(',');
@@ -405,8 +403,7 @@ class SettingsView extends View {
 			exceptions['options'] = exceptions['options'].concat(settingExceptions['Beast']['options'])
 		}
 
-		if(boardString.includes('Ctag'))
-		{
+		if (boardString.includes('Ctag')) {
 			var sRates = $('[data-analog-samplerate]').children("option");
 			for (let i = 0; i < sRates.length; i++) {
 				var rate = sRates[i].innerHTML;
@@ -431,12 +428,11 @@ class SettingsView extends View {
 		}
 
 		for(var subsect in exceptions['subsections']) {
-			$('#'+exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+			$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
 		}
 		for(var sect in exceptions['sections']) {
-			$('.'+exceptions['sections'][sect]).css('display', 'none');
+			$('.' + exceptions['sections'][sect]).css('display', 'none');
 		}
 	}
 }
-
 module.exports = SettingsView;

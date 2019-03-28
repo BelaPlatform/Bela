@@ -29,6 +29,7 @@
     float: left;
     height: 40px;
     span {
+      cursor: pointer;
       display: inline-block;
       height: 35px;
       margin-top: 3px;
@@ -78,6 +79,13 @@
           background-image: url("../images/icons/scope_active.svg");
         }
       }
+      &.shutdown {
+        background-image: url("../images/icons/shutdown_active.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/shutdown_inactive.svg");
+        }
+      }
     }
   }
   .tool-text {
@@ -125,10 +133,10 @@
   }
   .logo {
     float: right;
-    min-width: 200px;
-    padding-right: 2.3em;
+    min-width: 120px;
     img {
       margin-top: -14px;
+      padding: 0;
     }
   }
 }

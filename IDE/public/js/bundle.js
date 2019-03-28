@@ -536,6 +536,10 @@ toolbarView.on('process-event', function (event) {
 	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
 	socket.emit('process-event', data);
 });
+toolbarView.on('halt', function () {
+	socket.emit('shutdown');
+	consoleView.emit('warn', 'Shutting down...');
+});
 toolbarView.on('clear-console', function () {
 	return consoleView.emit('clear', true);
 });
@@ -3409,7 +3413,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'aboutPopup',
 		value: function aboutPopup() {
-
 			// build the popup content
 			popup.title(json.popups.about.title);
 			popup.subtitle(json.popups.about.text);
@@ -3538,7 +3541,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'useAudioExpander',
 		value: function useAudioExpander(func, key, val) {
-
 			if (val == 1) {
 				this.setCLArg('setCLArg', key, val);
 			} else {
@@ -3550,7 +3552,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'setAudioExpander',
 		value: function setAudioExpander(key, val) {
-
 			if (!val.length) return;
 
 			var channels = val.split(',');
@@ -3826,6 +3827,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
+var json = require('../site-text.json');
 
 // ohhhhh i am a comment
 
@@ -3973,6 +3976,31 @@ var ToolbarView = function (_View) {
 			}
 		}
 	}, {
+		key: 'shutdownBBB',
+		value: function shutdownBBB() {
+			var _this2 = this;
+
+			// build the popup content
+			popup.title(json.popups.shutdown.title);
+			popup.subtitle(json.popups.shutdown.text);
+
+			var form = [];
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				_this2.emit('halt');
+				popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
+
+			popup.find('.confirm').trigger('focus');
+		}
+	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
 			var bela = 0,
@@ -4050,7 +4078,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"./View":14}],14:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
