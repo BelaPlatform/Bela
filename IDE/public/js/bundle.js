@@ -3864,6 +3864,12 @@ var ToolbarView = function (_View) {
 			$('[data-toolbar-controltext1]').html('');
 		});
 
+		$('[data-toolbar-shutdown]').mouseover(function () {
+			$('[data-toolbar-controltext1]').html('<p>Shutdown</p>');
+		}).mouseout(function () {
+			$('[data-toolbar-controltext1]').html('');
+		});
+
 		$('[data-toolbar-newtab]').mouseover(function () {
 			$('[data-toolbar-controltext2]').html('<p>New Tab</p>');
 		}).mouseout(function () {

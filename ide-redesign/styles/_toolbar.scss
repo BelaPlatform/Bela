@@ -82,6 +82,7 @@
       &.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
+        margin-left: 5px;
         &:hover {
           background-image: url("../images/icons/shutdown_inactive.svg");
         }
@@ -101,7 +102,7 @@
   }
   .start-stop {
     padding-left: 10px;
-    width: 81px;
+    width: 130px;
   }
   .toolbar-functions {
     // min-width: 150px;
@@ -136,7 +137,7 @@
     min-width: 120px;
     img {
       margin-top: -14px;
-      padding: 0;
+      padding-right: 2.3em;
     }
   }
 }

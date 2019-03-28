@@ -1295,7 +1295,8 @@ input[type="number"] {
           background-image: url("../images/icons/scope_active.svg"); }
       .toolbar > div span.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
-        background-repeat: no-repeat; }
+        background-repeat: no-repeat;
+        margin-left: 5px; }
         .toolbar > div span.shutdown:hover {
           background-image: url("../images/icons/shutdown_inactive.svg"); }
   .toolbar .tool-text {
@@ -1309,7 +1310,7 @@ input[type="number"] {
     min-width: 125px; }
   .toolbar .start-stop {
     padding-left: 10px;
-    width: 81px; }
+    width: 130px; }
   .toolbar .toolbar-functions {
     padding: 2px 0; }
   .toolbar .system-status-text {
@@ -1336,7 +1337,7 @@ input[type="number"] {
     min-width: 120px; }
     .toolbar .logo img {
       margin-top: -14px;
-      padding: 0; }
+      padding-right: 2.3em; }
 
 .file-status {
   margin-left: 60px;
