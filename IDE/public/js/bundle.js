@@ -2418,10 +2418,32 @@ var FileView = function (_View) {
 				var directory = $('<li></li>');
 				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
 				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i3 = 0; _i3 < directories.length; _i3++) {
-					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
+
+				try {
+					for (var _iterator2 = directories[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var dir = _step2.value;
+
+						directoryList.append(this.subDirs(dir));
+					}
+				} catch (err) {
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
+						}
+					} finally {
+						if (_didIteratorError2) {
+							throw _iteratorError2;
+						}
+					}
 				}
-				directoryList.appendTo(directory);
+
+				directoryList.append(directory);
 				directory.appendTo($files);
 			}
 
@@ -2453,13 +2475,13 @@ var FileView = function (_View) {
 			var _this6 = this;
 
 			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
 
 			try {
-				for (var _iterator2 = dir.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var child = _step2.value;
+				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var child = _step3.value;
 
 					if (!isDir(child)) {
 						if (child.size < 1000000) {
@@ -2476,16 +2498,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
 					}
 				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -2506,27 +2528,27 @@ var FileView = function (_View) {
 			}
 
 			var fileExists = false;
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
 
 			try {
-				for (var _iterator3 = this.listOfFiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var item = _step3.value;
+				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var item = _step4.value;
 
 					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError4) {
+						throw _iteratorError4;
 					}
 				}
 			}
