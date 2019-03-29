@@ -4,7 +4,9 @@
 	display: none;
 	left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
+  max-height: 60vh;
   min-height: 100px;
+  overflow-y: auto;
 	padding: 4em;
   position: absolute;
   top: calc((100% / 2) - 300px);
@@ -82,10 +84,10 @@
   button {
     float: right;
     margin-top: .5em;
-    font-size: 1em; 
+    font-size: 1em;
     padding: .5em 2em;
     margin-left: .75em;
-    &.confirm { 
+    &.confirm {
       border: 1px solid $teal-01;
       background: $teal-01;
       color: $grey-dark;
@@ -111,8 +113,6 @@
         background-color: $accent-red;
         border: 1px solid $accent-red;
       }
-    } 
+    }
   }
 }
-
-

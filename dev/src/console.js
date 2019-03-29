@@ -1,4 +1,5 @@
 'use strict';
+var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
@@ -99,13 +100,19 @@ class Console extends EventEmitter {
 
 		$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 
+    // build the popup content
+    popup.title("Error");
+    popup.subtitle();
+
+    var form = [];
+
 		for (let err of errors){
 
 			// create the element and add it to the error object
-			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
+			var div = $('<div></div>').addClass('beaglert-console-i' + err.type)
 
 			// create the link and add it to the element
-			var span = $('<span></span>').html(err.text.split('\n').join(' ')+', line: '+(err.row+1)).appendTo(div);
+			var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 			// add a button to copy the contents to the clipboard
 			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
@@ -114,16 +121,19 @@ class Console extends EventEmitter {
 					return $(trigger).siblings('span')[0];
 				}
 			});
+      var popUpErr = $('<p></p>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1));
+      form.push(popUpErr.get(0).outerHTML);
 
 			div.appendTo(this.$element);
 
-			if (err.currentFile){
-				span.on('click', () => this.emit('focus', {line: err.row+1, column: err.column-1}) );
-			} else {
-				span.on('click', () => this.emit('open-file', err.file, {line: err.row+1, column: err.column-1}) );
-			}
-
 		}
+    // console.log(form);
+    form.push('<button type="button" class="button popup cancel">Cancel</button>');
+    popup.form.append(form.join(''))
+    popup.find('.cancel').on('click', popup.hide );
+
+    popup.show();
+
 		this.scroll();
 	}
 
@@ -207,7 +217,6 @@ class Console extends EventEmitter {
 		consoleDelete = to;
 	}
 };
-
 module.exports = new Console();
 
 // gracefully remove a console element after an event ((this) must be bound to the element)

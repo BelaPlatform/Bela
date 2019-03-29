@@ -837,7 +837,9 @@ img.explorer {
   display: none;
   left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
+  max-height: 60vh;
   min-height: 100px;
+  overflow-y: auto;
   padding: 4em;
   position: absolute;
   top: calc((100% / 2) - 300px);

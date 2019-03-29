@@ -1174,7 +1174,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
 var _console = require('../console');
+var json = require('../site-text.json');
 
 var shellCWD = '~';
 
@@ -1201,7 +1203,6 @@ var ConsoleView = function (_View) {
 		_this.on('openNotification', _this.openNotification);
 		_this.on('closeNotification', _this.closeNotification);
 		_this.on('openProcessNotification', _this.openProcessNotification);
-
 		_this.on('log', function (text, css) {
 			return _console.log(text, css);
 		});
@@ -1505,7 +1506,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4199,6 +4200,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
@@ -4316,60 +4318,46 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'newErrors',
 		value: function newErrors(errors) {
-			var _this2 = this;
 
 			//this.checkScroll();
 			scrollEnabled = true;
 
 			$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 
+			// build the popup content
+			popup.title("Error");
+			popup.subtitle();
+
+			var form = [];
+
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
 
 			try {
-				var _loop = function _loop() {
+				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var err = _step.value;
 
 
 					// create the element and add it to the error object
-					div = $('<div></div>').addClass('beaglert-console-i' + err.type);
+					var div = $('<div></div>').addClass('beaglert-console-i' + err.type);
 
 					// create the link and add it to the element
-
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+					var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 					// add a button to copy the contents to the clipboard
-
-					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
-					clipboard = new Clipboard(copyButton[0], {
+					var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+					var clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
 						}
 					});
+					var popUpErr = $('<p></p>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1));
+					form.push(popUpErr.get(0).outerHTML);
 
-
-					div.appendTo(_this2.$element);
-
-					if (err.currentFile) {
-						span.on('click', function () {
-							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
-						});
-					} else {
-						span.on('click', function () {
-							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
-						});
-					}
-				};
-
-				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var div;
-					var span;
-					var copyButton;
-					var clipboard;
-
-					_loop();
+					div.appendTo(this.$element);
 				}
+				// console.log(form);
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -4384,6 +4372,12 @@ var Console = function (_EventEmitter) {
 					}
 				}
 			}
+
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+			popup.form.append(form.join(''));
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
 
 			this.scroll();
 		}
@@ -4478,12 +4472,12 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'scroll',
 		value: function scroll() {
-			var _this3 = this;
+			var _this2 = this;
 
 			if (scrollEnabled) {
 				scrollEnabled = false;
 				setTimeout(function () {
-					return _this3.parent.scrollTop = _this3.parent.scrollHeight;
+					return _this2.parent.scrollTop = _this2.parent.scrollHeight;
 				}, 0);
 			}
 		}
@@ -4498,7 +4492,6 @@ var Console = function (_EventEmitter) {
 }(EventEmitter);
 
 ;
-
 module.exports = new Console();
 
 // gracefully remove a console element after an event ((this) must be bound to the element)
@@ -4512,7 +4505,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"events":1}],16:[function(require,module,exports){
+},{"./popup":18,"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
