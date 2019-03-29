@@ -102,18 +102,23 @@ class EditorView extends View {
 	__fileData(data, opts){
 
 		// hide the pd patch and image displays if present, and the editor
-		$('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
+		// $('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
 
 		if (!opts.fileType) opts.fileType = '0';
 
 		if (opts.fileType.indexOf('image') !== -1){
 
 			// opening image file
-			$('[data-img-display-parent], [data-img-display]').css({
+      $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+      .removeClass('active');
+
+      $('[data-img-display-parent], [data-img-display]').css({
 				'max-width'	: $('[data-editor]').width() + 'px',
 				'max-height': $('[data-editor]').height() + 'px'
 			});
-			$('[data-img-display-parent]').css('display', 'block');
+
+			$('[data-img-display-parent]')
+      .addClass('active');
 
 			$('[data-img-display]').prop('src', 'media/'+opts.fileName);
 
@@ -123,11 +128,15 @@ class EditorView extends View {
 		} else if (opts.fileType.indexOf('audio') !== -1){
 
 			//console.log('opening audio file');
+      $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+      .removeClass('active');
 
-			$('[data-audio-parent]').css({
-				'display'	: 'block',
-				'max-width'	: $('[data-editor]').width() + 'px',
-				'max-height': $('[data-editor]').height() + 'px'
+      $('[data-audio-parent]')
+      .addClass('active')
+      .css({
+        'position': 'absolute',
+				'left'	: ($('[data-editor]').width() / 2) - ($('[data-audio]').width() / 2)  + 'px',
+				'top': ($('[data-editor]').height() / 2) - ($('[data-audio]').height() / 2) + 'px'
 			});
 
 			$('[data-audio]').prop('src', 'media/' + opts.fileName);
@@ -148,15 +157,19 @@ class EditorView extends View {
 				});
 
 				// render pd patch
-				try{
-
-					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false})).css({
+				try {
+					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
+          .css({
 						'max-width'	: $('[data-editor]').width() + 'px',
 						'max-height': $('[data-editor]').height() + 'px'
 					});
 
-					$('[data-pd-svg-parent]').css({
-						'display'	: 'block',
+          $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+          .removeClass('active');
+
+          $('[data-pd-svg-parent]')
+          .addClass('active')
+          .css({
 						'max-width'	: $('[data-editor]').width() + 'px',
 						'max-height': $('[data-editor]').height() + 'px'
 					});
@@ -181,7 +194,11 @@ class EditorView extends View {
 			} else {
 
 				// show the editor
-				$('[data-editor]').css('display', 'block');
+        $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+        .removeClass('active');
+
+        $('[data-editor]')
+        .addClass('active');
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
