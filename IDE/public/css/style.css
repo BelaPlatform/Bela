@@ -97,10 +97,25 @@ img {
   width: 100%;
   z-index: 97; }
 
+#editor {
+  display: none; }
+  #editor.active {
+    display: block; }
+
+#audio-parent,
+#img-display-parent {
+  display: none; }
+  #audio-parent.active,
+  #img-display-parent.active {
+    display: block; }
+
 #pd-svg-parent {
   background: #fff;
+  display: none;
   font-family: monospace;
   overflow: auto; }
+  #pd-svg-parent.active {
+    display: block; }
 
 /* CONTAINER FOR LOWER ELEMENTS */
 .activeBar {
