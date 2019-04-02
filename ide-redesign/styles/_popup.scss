@@ -82,10 +82,10 @@
   button {
     float: right;
     margin-top: .5em;
-    font-size: 1em; 
+    font-size: 1em;
     padding: .5em 2em;
     margin-left: .75em;
-    &.confirm { 
+    &.confirm {
       border: 1px solid $teal-01;
       background: $teal-01;
       color: $grey-dark;
@@ -111,8 +111,18 @@
         background-color: $accent-red;
         border: 1px solid $accent-red;
       }
-    } 
+    }
   }
 }
 
-
+#overlay {
+  &.active {
+    background: rgba(0, 0, 0, 0.3);
+    height: 100vh;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    z-index: 9998;
+  }
+}
