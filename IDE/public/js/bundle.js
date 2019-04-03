@@ -4225,6 +4225,7 @@ var Console = function (_EventEmitter) {
 
 		_this.$element = $('[data-console-contents-wrapper]');
 		_this.parent = $('[data-console]');
+		_this.popUpComponents = "";
 		return _this;
 	}
 
@@ -4324,12 +4325,6 @@ var Console = function (_EventEmitter) {
 
 			$('.beaglert-console-ierror, .beaglert-console-iwarning').remove();
 
-			// build the popup content
-			popup.title("Error");
-			popup.subtitle();
-
-			var form = [];
-
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -4347,17 +4342,15 @@ var Console = function (_EventEmitter) {
 
 					// add a button to copy the contents to the clipboard
 					var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+
 					var clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
 						}
 					});
-					var popUpErr = $('<p></p>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1));
-					form.push(popUpErr.get(0).outerHTML);
 
 					div.appendTo(this.$element);
 				}
-				// console.log(form);
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -4372,12 +4365,6 @@ var Console = function (_EventEmitter) {
 					}
 				}
 			}
-
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
-			popup.form.append(form.join(''));
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
 
 			this.scroll();
 		}
@@ -4397,7 +4384,7 @@ var Console = function (_EventEmitter) {
 
 			$('#' + id).remove();
 			var el = this.print(notice, 'notify', id);
-
+			this.popUpComponents = notice;
 			this.scroll();
 
 			return el;
@@ -4433,6 +4420,16 @@ var Console = function (_EventEmitter) {
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
+			var form = [];
+			popup.title('Error');
+			popup.subtitle(this.popUpComponents);
+			popup.body(message);
+			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			popup.form.append(form.join(''));
+			popup.find('.popup-cancel').on('click', function () {
+				popup.hide();
+			});
+			popup.show();
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);
@@ -4976,7 +4973,8 @@ var _overlay = $('[data-overlay]');
 var parent = $('[data-popup]');
 var content = $('[data-popup-content]');
 var titleEl = parent.find('h1');
-var subEl = parent.find('p');
+var subEl = parent.find('h3');
+var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
 var popup = {
@@ -4990,6 +4988,7 @@ var popup = {
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
+		bodyEl.empty();
 		_formEl.empty();
 	},
 	overlay: function overlay() {
@@ -5006,6 +5005,9 @@ var popup = {
 	},
 	subtitle: function subtitle(text) {
 		return subEl.text(text);
+	},
+	body: function body(text) {
+		return bodyEl.text(text);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);
@@ -5027,8 +5029,8 @@ function example(cb, arg, delay, cancelCb) {
 
 	// build the popup content
 	popup.title('Save your changes?');
-	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-
+	popup.subtitle('Warning: Any unsaved changes will be lost');
+	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
