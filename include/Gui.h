@@ -25,7 +25,18 @@ class Gui
 			std::wstring w_name;
 		};
 
+		struct GuiSelect
+		{
+			int index;
+			bool changed = false;
+			int value = -1;
+			std::vector<std::string> options;
+			std::string name;
+			std::wstring w_name;
+		};
+
 		std::vector<GuiSlider> sliders;
+		std::vector<GuiSelect> selects;
 		
 		std::unique_ptr<WSServer> ws_server;
 
@@ -35,10 +46,15 @@ class Gui
 		void ws_onData(const char* data);
 		
 		void sendSlider(GuiSlider* slider);
+		void sendSliderValue(int index);
+
+		void sendSelect(GuiSelect* select);
+		void sendSelectValue(int index);
 		
 		unsigned int _port;
 		std::string _addressControl;
 		std::string _addressData;
+
 	public:
 		Gui();
 		Gui(unsigned int port, std::string address);
@@ -52,15 +68,39 @@ class Gui
 			return wsIsConnected;
 		};
 		
-		bool sliderChanged(int slider);
-		float getSliderValue(int slider);
-		void setSliderValue(int slider);
+		// SLIDERS	
+		bool sliderChanged(int index)
+		{
+			return sliders[index].changed;
+		};
+		float getSliderValue(int index);
+		void setSliderValue(int index, float value);
 		int getNumSliders()
 		{
 			return sliders.size();
 		};
 		void addSlider(std::string name, float min, float max, float step, float value);
 		void setSlider(int index, float min, float max, float step, float value, std::string name);
+
+		// SELECTS
+		bool selectChanged(int index)
+		{
+			return selects[index].changed;
+		};
+		int getSelectedIndex(int index)
+		{
+			return selects[index].value;
+		};
+		std::string getSelectValue(int index);
+		void setSelectValue(int index, unsigned int valueIndex);
+		int getNumSelects()
+		{
+			return selects.size();
+		};
+		void addSelect(std::string name, const std::vector<std::string>& options, unsigned int selectedIndex = 0);
+		void setSelect(int index, const std::vector<std::string>& options, unsigned int selectedIndex, std::string name);
+
+		// BUFFERS
 		template<typename T, typename A>
 		void sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
 

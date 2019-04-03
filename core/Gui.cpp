@@ -99,15 +99,16 @@ void Gui::ws_onData(const char* data)
 	}
 }
 
-bool Gui::sliderChanged(int slider)
+float Gui::getSliderValue(int index)
 {
-	return sliders[slider].changed;
+	sliders[index].changed = false;
+	return sliders[index].value;
 }
 
-float Gui::getSliderValue(int slider)
+std::string Gui::getSelectValue(int index)
 {
-	sliders[slider].changed = false;
-	return sliders[slider].value;
+	selects[index].changed = false;
+	return selects[index].options[selects[index].value];
 }
 
 void Gui::setSlider(int index, float min, float max, float step, float value, std::string name)
@@ -118,6 +119,17 @@ void Gui::setSlider(int index, float min, float max, float step, float value, st
 	sliders.at(index).step = step;
 	sliders.at(index).name = name;
 	sliders.at(index).w_name = std::wstring(name.begin(), name.end());
+}
+
+void Gui::setSelect(int index, const std::vector<std::string>& options, unsigned int selectedIndex, std::string name)
+{
+	selects.at(index).options = options;
+	if(!selects.at(index).options.empty())
+	{
+		selects.at(index).value = selectedIndex % (selects.at(index).options.size());
+	}
+	selects.at(index).name = name;
+	selects.at(index).w_name = std::wstring(name.begin(), name.end());
 }
 
 void Gui::sendSlider(GuiSlider* slider)
@@ -136,18 +148,60 @@ void Gui::sendSlider(GuiSlider* slider)
 	std::string str( wide.begin(), wide.end() );
 	ws_server->send(_addressControl.c_str(), str.c_str());
 }
+void Gui::sendSelect(GuiSelect* select)
+{
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"set-select");
+	root[L"select"] = new JSONValue(select->index);
+	root[L"value"] = new JSONValue(select->value);
+	root[L"options"] = new JSONValue(select->options.data());
+	root[L"name"] = new JSONValue(select->w_name);
+	JSONValue *json = new JSONValue(root);
+	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
+	std::wstring wide = json->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	ws_server->send(_addressControl.c_str(), str.c_str());
+}
 
-void Gui::sendSliderValue(int slider)
+
+void Gui::setSliderValue(int index, float value)
+{
+	sliders.at(index).value = value;
+	sendSliderValue(index);
+}
+
+void Gui::setSelectValue(int index, unsigned int valueIndex)
+{
+	if(valueIndex < selects.at(index).options.size())
+	{
+		selects.at(index).value = valueIndex;
+		sendSelectValue(index);
+	}
+}
+
+void Gui::sendSliderValue(int index)
 {
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"set-slider");
-	root[L"slider"] = new JSONValue(sliders[slider].index);
-	root[L"value"] = new JSONValue(sliders[slider].value);
+	root[L"slider"] = new JSONValue(sliders[index].index);
+	root[L"value"] = new JSONValue(sliders[index].value);
 	JSONValue *json = new JSONValue(root);
 	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
 	std::wstring wide = json->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	
+}
+void Gui::sendSelectValue(int index)
+{
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"set-select");
+	root[L"select"] = new JSONValue(selects[index].index);
+	root[L"value"] = new JSONValue(selects[index].value);
+	JSONValue *json = new JSONValue(root);
+	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
+	std::wstring wide = json->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	ws_server->send(_addressControl.c_str(), str.c_str());
 }
 
 void Gui::addSlider(std::string name, float min, float max, float step, float value)
@@ -160,6 +214,19 @@ void Gui::addSlider(std::string name, float min, float max, float step, float va
 	if(isConnected())
 	{
 		sendSlider(&newSlider);
+	}
+}
+
+void Gui::addSelect(std::string name, const std::vector<std::string>& options, unsigned int selectedIndex)
+{
+	GuiSelect newSelect;
+	newSelect.index = selects.size();
+	selects.push_back(newSelect);
+	setSelect(newSelect.index, options, selectedIndex, name);
+	
+	if(isConnected())
+	{
+		sendSelect(&newSelect);
 	}
 }
 
