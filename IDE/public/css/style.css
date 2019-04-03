@@ -931,6 +931,15 @@ img.explorer {
         background-color: #ff5e5b;
         border: 1px solid #ff5e5b; }
 
+#overlay.active {
+  background: rgba(0, 0, 0, 0.3);
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  z-index: 9998; }
+
 ::-webkit-scrollbar {
   width: 12px; }
 
