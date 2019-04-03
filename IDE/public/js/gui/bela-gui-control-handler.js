@@ -19,12 +19,13 @@ Bela_control.onData = function(data, parsedData) {
 		console.log("Set slider");
 		if (Bela_control.sliders.find(e => e.id == parsedData.slider) != undefined) {} else {
 			Bela_control.sliders.push(new Bela_control.Slider(parsedData.slider, parsedData.name, parsedData.min, parsedData.max, parsedData.value, parsedData.step));
+            console.log(parsedData.min);
 		}
 	}
 }
 
 
-Bela_control.Slider = Slider;
+Bela_control.Slider = GuiSlider;
 
 Bela_control.Slider.prototype.bind = function() {
     this.onChange(() => {

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>nexus gui</title>
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+
+    <script src="js/NexusUI.min.js"></script>
+
+    <script src="js/bela-ws.js"></script>
+
+    <script src="js/gui/gui-slider.js"></script>
+
+    <script src="js/gui/bela-gui-data-handler.js"></script>
+    <script src="js/gui/bela-gui-control-handler.js"></script>
+
+</head>
+
+<body>
+    <div id="nexus-rack">
+        <div>
+            <label class='controlLabel' for="Attack">Attack</label>
+            <div nexus-ui="slider" id="Attack"></div>
+            <div nexus-ui="number" id="Attack-disp"></div>
+        </div>
+        <div>
+            <label class='controlLabel' for="Decay">Decay</label>
+            <div nexus-ui="slider" id="Decay"></div>
+            <div nexus-ui="number" id="Decay-disp"></div>
+        </div>
+        <div>
+            <label class='controlLabel' for="Sustain">Sustain</label>
+            <div nexus-ui="slider" id="Sustain"></div>
+            <div nexus-ui="number" id="Sustain-disp"></div>
+        </div>
+        <div>
+            <label class='controlLabel' for="Release">Release</label>
+            <div nexus-ui="slider" id="Release"></div>
+            <div nexus-ui="number" id="Release-disp"></div>
+        </div>
+        <div>
+            <label class='controlLabel' for="Gain">Gain</label>
+            <div nexus-ui="slider" id="Gain"></div>
+            <div nexus-ui="number" id="Gain-disp"></div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script type="text/javascript">
+    var rack = new Nexus.Rack("#nexus-rack")
+
+    let findNexusElementByType = function(rack, type) {
+        let sliders = [];
+        for(e in rack) {
+            if(rack[e].hasOwnProperty('type') &&rack[e].type === type)
+                sliders.push(rack[e]);
+        }
+        return sliders;
+    }
+
+    rack._sliders = findNexusElementByType(rack, 'Slider');
+    rack._numbers = findNexusElementByType(rack, 'Number');
+
+    rack.hide();
+    Bela_control.ws.addEventListener("open", () => {
+        rack.show();
+    }, false);
+
+    Bela_control.Slider.prototype.assign = function(elem, num) {
+        if(elem != 'undefined') {
+            this.element = elem;
+            this.element.max = this.max;
+            this.element.min = this.min;
+            this.element.step = this.step;
+            this.element.value = this.value;
+
+            if(num != 'undefined')
+                num.link(this.element);
+        }
+        return this.element;
+    };
+    Bela_control.Slider.prototype.onInput = function(callback) {
+        this.element.on('change', callback);
+    };
+    Bela_control.Slider.prototype.getVal = function() {
+        return this.element.value;
+    };
+
+    Bela_control.ws.addEventListener("message", () => {
+        console.log(Bela_control.sliders.length);
+        for(s in Bela_control.sliders) {
+            let Bela_slider = Bela_control.sliders[s];
+            if(Bela_slider.element == null) {
+                let matchS = rack._sliders.find((e) => (e.id === Bela_slider.name));
+                let matchNum = rack._numbers.find((e) => (e.id === Bela_slider.name+"-disp"));
+                Bela_slider.assign(matchS, matchNum);
+                Bela_slider.bind();
+            }
+        }
+    }, false);
+</script>

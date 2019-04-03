@@ -13,8 +13,6 @@ var guiSketch_template = function( sketch ) {
               sketch.text(Bela_data.buffers[0][0].toString(), 10, 30);
         } catch(e) {}
     }
-
-
 };
 
 var guiSketch = new p5(guiSketch_template);

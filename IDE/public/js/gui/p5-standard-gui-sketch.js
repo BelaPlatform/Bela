@@ -71,10 +71,7 @@ var stdGuiSketch_template = function( sketch ) {
 
         // Assign labels
         for(s in Bela_control.sliders)
-        {
-            let slider = Bela_control.sliders[s];
-            slider.assignLabel();
-        }
+            Bela_control.sliders[s].assignLabel();
     };
 
     sketch.draw = function() {
