@@ -120,7 +120,8 @@ void Gui::setSlider(int index, float min, float max, float step, float value, st
 	sliders.at(index).w_name = std::wstring(name.begin(), name.end());
 }
 
-void Gui::sendSlider(GuiSlider* slider){
+void Gui::sendSlider(GuiSlider* slider)
+{
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"set-slider");
 	root[L"slider"] = new JSONValue(slider->index);
@@ -134,6 +135,19 @@ void Gui::sendSlider(GuiSlider* slider){
 	std::wstring wide = json->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	ws_server->send(_addressControl.c_str(), str.c_str());
+}
+
+void Gui::sendSliderValue(int slider)
+{
+	JSONObject root;
+	root[L"event"] = new JSONValue(L"set-slider");
+	root[L"slider"] = new JSONValue(sliders[slider].index);
+	root[L"value"] = new JSONValue(sliders[slider].value);
+	JSONValue *json = new JSONValue(root);
+	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
+	std::wstring wide = json->Stringify().c_str();
+	std::string str( wide.begin(), wide.end() );
+	
 }
 
 void Gui::addSlider(std::string name, float min, float max, float step, float value)

@@ -17,7 +17,10 @@ Bela_control.onData = function(data, parsedData) {
 			Bela_control.ws.send(obj);
 	} else if (parsedData.event == 'set-slider') {
 		console.log("Set slider");
-		if (Bela_control.sliders.find(e => e.id == parsedData.slider) != undefined) {} else {
+        let slider;
+		if ((slider = Bela_control.sliders.find(e => e.id == parsedData.slider)) != undefined) {
+            slider.setVal(parsedData.value);
+        } else {
 			Bela_control.sliders.push(new Bela_control.Slider(parsedData.slider, parsedData.name, parsedData.min, parsedData.max, parsedData.value, parsedData.step));
             console.log(parsedData.min);
 		}

@@ -54,6 +54,7 @@ class Gui
 		
 		bool sliderChanged(int slider);
 		float getSliderValue(int slider);
+		void setSliderValue(int slider);
 		int getNumSliders()
 		{
 			return sliders.size();

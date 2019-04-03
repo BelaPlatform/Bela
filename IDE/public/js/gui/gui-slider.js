@@ -25,7 +25,7 @@ GuiSlider.prototype.regenerate = function() {
 
 GuiSlider.prototype.bind = function() {
     console.log("Use this function to define the actions to take when an event is triggered on Slider %d", this.id);
-    console.log("Here you should set the callback methdos for input and/or change events.");
+    console.log("Here you should set the callback methods for input and/or change events.");
     console.log("\n");
 }
 
@@ -55,9 +55,20 @@ GuiSlider.prototype.onInput = function(callback) {
         }
 }
 
-GuiSlider.prototype.getVal = function() {
+GuiSlider.prototype.getVal = function(val) {
         if(this.element != null) {
             console.log("No event listener for the onInput() function for slider %d has been defined.", this.id);
+            console.log("You should define one according to your GUI framework.");
+            console.log("\n");
+        } else {
+            console.log("There is no element assigned to this slider (id = %d)", this.id);
+            console.log("\n");
+        }
+}
+
+GuiSlider.prototype.setVal = function(val) {
+        if(this.element != null) {
+            console.log("This method should be used to set the value of the slider.");
             console.log("You should define one according to your GUI framework.");
             console.log("\n");
         } else {

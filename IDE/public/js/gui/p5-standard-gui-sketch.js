@@ -31,6 +31,9 @@ var stdGuiSketch_template = function( sketch ) {
         Bela_control.Slider.prototype.getVal = function() {
             return this.element.value();
         }
+        Bela_control.Slider.prototype.setVal = function(val) {
+            return this.element.value(val);
+        }
         Bela_control.Slider.prototype.setStyle = function(styleObj) {
                 for (let key in styleObj)
                 if (styleObj.hasOwnProperty(key))

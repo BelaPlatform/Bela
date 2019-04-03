@@ -95,6 +95,9 @@
     Bela_control.Slider.prototype.getVal = function() {
         return this.element.value;
     };
+    Bela_control.Slider.prototype.setVal = function(val) {
+        return this.element.value = val;
+    }
 
     Bela_control.ws.addEventListener("message", () => {
         console.log(Bela_control.sliders.length);
