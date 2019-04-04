@@ -2,7 +2,8 @@ var overlay	= $('[data-overlay]');
 var parent	= $('[data-popup]');
 var content	= $('[data-popup-content]');
 var titleEl	= parent.find('h1');
-var subEl	= parent.find('p');
+var subEl	= parent.find('h3');
+var bodyEl = parent.find('p');
 var formEl	= parent.find('form');
 
 var popup = {
@@ -18,6 +19,7 @@ var popup = {
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
+    bodyEl.empty();
 		formEl.empty();
 	},
 
@@ -29,6 +31,7 @@ var popup = {
 
 	title: text => titleEl.text(text),
 	subtitle: text => subEl.text(text),
+  body: text => bodyEl.text(text),
 	formEl: html => formEl.html(html),
 
 	append: child => content.append(child),
@@ -45,8 +48,8 @@ function example(cb, arg, delay, cancelCb){
 
 	// build the popup content
 	popup.title('Save your changes?');
-	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-
+	popup.subtitle('Warning: Any unsaved changes will be lost');
+  popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');

@@ -1,4 +1,5 @@
 'use strict';
+var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
 var json = require('./site-text.json');
 //var $ = require('jquery-browserify');
@@ -16,6 +17,7 @@ class Console extends EventEmitter {
 		// this.parent = document.getElementById('beaglert-console');
     this.$element = $('[data-console-contents-wrapper]');
 		this.parent = $('[data-console]');
+    this.popUpComponents = "";
 	}
 
 	block(){
@@ -103,26 +105,21 @@ class Console extends EventEmitter {
 		for (let err of errors){
 
 			// create the element and add it to the error object
-			var div = $('<div></div>').addClass('beaglert-console-i'+err.type)
+			var div = $('<div></div>').addClass('beaglert-console-i' + err.type)
 
 			// create the link and add it to the element
-			var span = $('<span></span>').html(err.text.split('\n').join(' ')+', line: '+(err.row+1)).appendTo(div);
+			var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 			// add a button to copy the contents to the clipboard
 			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
-			var clipboard = new Clipboard(copyButton[0], {
+
+    	var clipboard = new Clipboard(copyButton[0], {
 				target: function(trigger) {
 					return $(trigger).siblings('span')[0];
 				}
 			});
 
-			div.appendTo(this.$element);
-
-			if (err.currentFile){
-				span.on('click', () => this.emit('focus', {line: err.row+1, column: err.column-1}) );
-			} else {
-				span.on('click', () => this.emit('open-file', err.file, {line: err.row+1, column: err.column-1}) );
-			}
+    	div.appendTo(this.$element);
 
 		}
 		this.scroll();
@@ -140,7 +137,7 @@ class Console extends EventEmitter {
 
 		$('#'+id).remove();
 		var el = this.print(notice, 'notify', id);
-
+    this.popUpComponents = notice;
 		this.scroll();
 
 		return el;
@@ -152,7 +149,7 @@ class Console extends EventEmitter {
 		//if (!el) el = this.notify(message, id);
 		var $el = $(el);
 		$el.appendTo(this.$element);//.removeAttr('id');
-		$el.html($el.html()+message);
+		$el.html($el.html() + message);
 		setTimeout( () => $el.addClass('beaglert-console-faded'), 500);
 		if (!persist){
 			$el.on('transitionend', () => {
@@ -170,8 +167,18 @@ class Console extends EventEmitter {
 		//if (!el) el = this.notify(message, id);
 		var $el = $(el);
 		$el.appendTo(this.$element);//.removeAttr('id');
-		$el.html($el.html()+message);
+		$el.html($el.html() + message);
 		$el.addClass('beaglert-console-rejectnotification');
+    var form = [];
+    popup.title('Error');
+    popup.subtitle(this.popUpComponents);
+    popup.body(message);
+    form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+    popup.form.append(form.join(''));
+    popup.find('.popup-cancel').on('click', () => {
+  		popup.hide();
+    });
+    popup.show();
 		setTimeout( () => $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded'), 500);
 		$el.on('click', () => $el.addClass('beaglert-console-collapsed').on('transitionend', () => $el.remove() ));
 	}
@@ -208,7 +215,6 @@ class Console extends EventEmitter {
 		consoleDelete = to;
 	}
 };
-
 module.exports = new Console();
 
 // gracefully remove a console element after an event ((this) must be bound to the element)
