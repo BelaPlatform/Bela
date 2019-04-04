@@ -99,5 +99,11 @@
 		"browser": "The browser will temporarily disconnect, and may become unresponsive",
 		"ide": "Do not use the IDE during this process",
 		"zip": "This is not a valid zip archive."
+	},
+	"toolbar": {
+		"run": "Build & run",
+		"stop": "Stop",
+		"clear": "Clear console",
+		"scope": "Launch scope"
 	}	
 }
