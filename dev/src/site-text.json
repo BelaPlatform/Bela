@@ -8,6 +8,7 @@
 		"save_as": {
 			"title": "Save project as ...",
 			"text": "",
+			"input": "Enter your new project name",
 			"button": "Save project"
 		},
 		"delete_project": {
@@ -89,5 +90,8 @@
 			"text": "This will discard all changes since your last commit. This can't be undone.",
 			"button": "Discard changes"
 		}
-	}	
+	},
+	"editor_view": {
+			"preview": "This is a preview - these objects are not editable in the browser."
+		}	
 }
