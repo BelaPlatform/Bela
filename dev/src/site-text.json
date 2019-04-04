@@ -105,5 +105,8 @@
 		"stop": "Stop",
 		"clear": "Clear console",
 		"scope": "Launch scope"
+	},
+	"console": {
+		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages."
 	}	
 }
