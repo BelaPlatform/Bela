@@ -93,5 +93,11 @@
 	},
 	"editor_view": {
 			"preview": "This is a preview - these objects are not editable in the browser."
-		}	
+	},
+	"settings_view": {
+		"update": "Beginning update - this may take several minutes",
+		"browser": "The browser will temporarily disconnect, and may become unresponsive",
+		"ide": "Do not use the IDE during this process",
+		"zip": "This is not a valid zip archive."
+	}	
 }

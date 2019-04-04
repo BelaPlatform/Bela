@@ -187,7 +187,7 @@ class SettingsView extends View {
 		var form = [];
 		form.push('<input id="popup-update-file" type="file">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.update.button+'</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		/*popup.form.prop({
@@ -209,7 +209,7 @@ class SettingsView extends View {
 
 			if (file){
 
-				this.emit('warning', 'Beginning the update - this may take several minutes');
+				this.emit('warning', json.settings_view.update);
 				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
 				this.emit('warning', 'Do not use the IDE during the update process!');
 
