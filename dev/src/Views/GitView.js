@@ -88,11 +88,11 @@ class GitView extends View{
 	discardChanges(){
 
 		// build the popup content
-		popup.title('Discarding changes');
-		popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
+		popup.title(json.popups.discard.title);
+		popup.subtitle(json.popups.discard.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup confirm">Continue</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.discard.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
