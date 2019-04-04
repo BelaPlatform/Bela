@@ -18,6 +18,7 @@
 		"create_new_file": {
 			"title": "Create new file",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"input": "Your new file name",
 			"button": "Create file"
 		},
 		"rename_file": {
