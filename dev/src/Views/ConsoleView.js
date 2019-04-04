@@ -144,7 +144,7 @@ class ConsoleView extends View{
 
 	disconnect(){
 		console.log('disconnected');
-		_console.warn('You have been disconnected from the Bela IDE and any more changes you make will not be saved. Please check your USB connection and reboot your BeagleBone', 'console-disconnect');
+		_console.warn( json.console.disconnect, 'console-disconnect');
 		_console.block();
 	}
 
@@ -194,7 +194,7 @@ class ConsoleView extends View{
 	_building(status, data){
 		var timestamp = performance.now();
 		if (status){
-			_console.notify('Building project...', timestamp, true);
+			_console.notify('Building project ...', timestamp, true);
 			_console.fulfill('', timestamp, true);
 		} else {
 			_console.notify('Build finished', timestamp, true);
@@ -205,7 +205,7 @@ class ConsoleView extends View{
 	_running(status, data){
 		var timestamp = performance.now();
 		if (status){
-			_console.notify('Running project...', timestamp, true);
+			_console.notify('Running project ...', timestamp, true);
 			_console.fulfill('', timestamp, true);
 		} else {
 			_console.notify('Bela stopped', timestamp, true);

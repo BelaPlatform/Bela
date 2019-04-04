@@ -114,6 +114,8 @@ img {
   display: none;
   font-family: monospace;
   overflow: auto; }
+  #pd-svg-parent #pd-svg {
+    background: #f1f1f1; }
   #pd-svg-parent.active {
     display: block; }
 
@@ -1284,6 +1286,7 @@ input[type="number"] {
     float: left;
     height: 40px; }
     .toolbar > div span {
+      cursor: pointer;
       display: inline-block;
       height: 35px;
       margin-top: 3px;
@@ -1322,18 +1325,29 @@ input[type="number"] {
         background-repeat: no-repeat; }
         .toolbar > div span.scope-button:hover {
           background-image: url("../images/icons/scope_active.svg"); }
+      .toolbar > div span.shutdown {
+        background-image: url("../images/icons/shutdown_inactive.svg");
+        background-repeat: no-repeat;
+        margin-left: 5px; }
+        .toolbar > div span.shutdown:hover {
+          background-image: url("../images/icons/shutdown_hover.svg"); }
   .toolbar .tool-text {
     margin-top: 3px;
     padding-left: 10px;
     -webkit-transition: 0.4s ease-in-out;
     transition: 0.4s ease-in-out; }
+    .toolbar .tool-text#control-text-3 {
+      float: right; }
   .toolbar .other {
     min-width: 175px; }
   .toolbar .st-st {
-    min-width: 125px; }
+    min-width: 100px; }
   .toolbar .start-stop {
     padding-left: 10px;
-    width: 81px; }
+    width: 85px; }
+  .toolbar .shutdown-parent {
+    float: right;
+    width: 45px; }
   .toolbar .toolbar-functions {
     padding: 2px 0; }
   .toolbar .system-status-text {
@@ -1357,10 +1371,10 @@ input[type="number"] {
       background-repeat: no-repeat; }
   .toolbar .logo {
     float: right;
-    min-width: 200px;
-    padding-right: 2.3em; }
+    min-width: 120px; }
     .toolbar .logo img {
-      margin-top: -14px; }
+      margin-top: -14px;
+      padding-right: 2.3em; }
 
 .file-status {
   margin-left: 60px;
