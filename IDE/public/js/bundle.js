@@ -2210,8 +2210,8 @@ var FileView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter the file name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-create">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Create</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2219,7 +2219,7 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2240,8 +2240,8 @@ var FileView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter the new file name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-rename">Rename</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Rename</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2249,7 +2249,7 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2263,8 +2263,8 @@ var FileView = function (_View) {
 			popup.subtitle('Are you sure you wish to delete this file? This cannot be undone!');
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-delete">Delete</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Delete</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2272,11 +2272,11 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-delete').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'openFile',
@@ -2562,8 +2562,8 @@ var FileView = function (_View) {
 				form.push('<input id="popup-remember-upload" type="checkbox">');
 				form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>');
 				form.push('</br >');
-				form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
-				form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+				form.push('<button type="submit" class="button confirm">Overwrite</button>');
+				form.push('<button type="button" class="button cancel">Cancel</button>');
 
 				popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
@@ -2579,7 +2579,7 @@ var FileView = function (_View) {
 					}
 				});
 
-				popup.find('.popup-cancel').on('click', function () {
+				popup.find('.cancel').on('click', function () {
 					if (popup.find('input[type=checkbox]').is(':checked')) {
 						askForOverwrite = false;
 						overwriteAction = 'reject';
@@ -2592,7 +2592,7 @@ var FileView = function (_View) {
 
 				popup.show();
 
-				popup.find('.popup-cancel').focus();
+				popup.find('.cancel').focus();
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
@@ -2713,8 +2713,8 @@ var GitView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter your commit message">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-commit">Commit</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Commit</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2722,7 +2722,7 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2738,8 +2738,8 @@ var GitView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter your new branch name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-create">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Create</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2747,7 +2747,7 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2761,8 +2761,8 @@ var GitView = function (_View) {
 			popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Continue</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2770,11 +2770,11 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-create').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: '_repoExists',
@@ -2921,22 +2921,26 @@ var ProjectView = function (_View) {
 			popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
 
 			var form = [];
+			form.push('<label for="popup-C" class="radio-container">C++');
 			form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
-			form.push('<label for="popup-C">C++</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-PD" class="radio-container">Pure Data');
 			form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
-			form.push('<label for="popup-PD">Pure Data</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-SC" class="radio-container">SuperCollider');
 			form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
-			form.push('<label for="popup-SC">SuperCollider</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-CS" class="radio-container">Csound');
 			form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-			form.push('<label for="popup-CS">Csound</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
 			form.push('<input type="text" placeholder="Enter your project name">');
 			form.push('</br>');
-			form.push('<button type="submit" class="button popup-save">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Create</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2949,7 +2953,7 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2965,8 +2969,8 @@ var ProjectView = function (_View) {
 			var form = [];
 			form.push('<input type="text" placeholder="Enter the new project name">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-save">Save</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Save</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2974,7 +2978,7 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2988,8 +2992,8 @@ var ProjectView = function (_View) {
 			popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-delete">Delete</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Delete</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2998,11 +3002,11 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-delete').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'cleanProject',
@@ -3375,8 +3379,8 @@ var SettingsView = function (_View) {
 			popup.subtitle('Are you sure you wish to continue? Your current IDE settings will be lost!');
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Continue</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3384,11 +3388,11 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'shutdownBBB',
@@ -3400,8 +3404,8 @@ var SettingsView = function (_View) {
 			popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Continue</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3409,11 +3413,11 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'aboutPopup',
@@ -3423,7 +3427,7 @@ var SettingsView = function (_View) {
 			popup.title('About Bela');
 			popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Close</button>');
+			form.push('<button type="submit" class="button popup cancel">Close</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3432,7 +3436,7 @@ var SettingsView = function (_View) {
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.cancel').trigger('focus');
 		}
 	}, {
 		key: 'updateBela',
@@ -3446,8 +3450,8 @@ var SettingsView = function (_View) {
 			var form = [];
 			form.push('<input id="popup-update-file" type="file">');
 			form.push('</br>');
-			form.push('<button type="submit" class="button popup-upload">Upload</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">Upload</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			/*popup.form.prop({
    	action	: 'updates',
@@ -3486,7 +3490,7 @@ var SettingsView = function (_View) {
 				}
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -5040,8 +5044,8 @@ function example(cb, arg, delay, cancelCb) {
 	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 
 	var form = [];
-	form.push('<button type="submit" class="button popup-continue">Continue</button>');
-	form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+	form.push('<button type="submit" class="button popup confirm">Continue</button>');
+	form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
@@ -5051,14 +5055,14 @@ function example(cb, arg, delay, cancelCb) {
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', function () {
+	popup.find('.cancel').on('click', function () {
 		popup.hide();
 		if (cancelCb) cancelCb();
 	});
 
 	popup.show();
 
-	popup.find('.popup-continue').trigger('focus');
+	popup.find('.confirm').trigger('focus');
 }
 
 },{}],19:[function(require,module,exports){

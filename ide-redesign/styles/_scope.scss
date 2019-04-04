@@ -1,4 +1,19 @@
+.scopeWrapper {
+  position: relative;
+  canvas {
+    left: 0;
+    position: absolute;
+    top: 0;
+  }
+}
+
 .buttonWrapper {
+  left: 0;
+  padding: 10px 20px;
+  position: absolute;
+  top: 0;
+  width: calc(100vw - 40px);
+  z-index: 100;
   .top {
     display: inline-block;
     .label {
@@ -20,7 +35,9 @@
   position: absolute;
   top: 50px;
   z-index: 9999;
-
+  & * {
+    user-select: none;
+  }
   &.hidden {
     display: none;
   }
@@ -39,7 +56,7 @@
   }
   .control-section {
     vertical-align: top;
-    h1 {
+    h3 {
       color: $grey-dark;
       font-family: space_bold;
       font-size: 1.2em;
@@ -84,7 +101,7 @@
         margin-top: .5em;
       }
     }
-  } 
+  }
 }
 
 .number-box[type=number] {
