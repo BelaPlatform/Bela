@@ -3,6 +3,7 @@ module.exports = {};
 
 var Model = require('./Models/Model');
 var popup = require('./popup');
+var json = require('./site-text.json')
 
 var devMode = true;
 
@@ -136,11 +137,11 @@ toolbarView.on('process-event', (event) => {
 		currentProject	: models.project.getKey('currentProject')
 	};
 	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
+	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
 	socket.emit('process-event', data);
 });
 toolbarView.on('clear-console', () => consoleView.emit('clear', true) );
-toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num+' mode switch'+(num!=1?'es':'')+' detected on the audio thread!') );
+toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num + (num!=1?json.ide_browser.mode_switches:json.ide_browser.mode_switch) ) );
 
 // console view
 var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings], models.settings);
@@ -352,12 +353,12 @@ function fileChangedPopup(fileName){
 
 	if (fileChangedPopupVisible) return;
 
-	popup.title('File Changed on Disk');
-	popup.subtitle('Would you like to reload '+fileName+'?');
+	popup.title(json.popups.file_changed.title);
+	popup.subtitle(fileName + json.popups.file_changed.text);
 
 	var form = [];
-	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
-	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
+	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
+	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
 		fileChangedPopupVisible = false;
@@ -372,7 +373,7 @@ function fileChangedPopup(fileName){
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', () => {
+	popup.find('.cancel').on('click', () => {
 		popup.hide();
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());

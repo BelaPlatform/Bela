@@ -1,6 +1,6 @@
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
-var json = require('../site.text.json');
+var json = require('../site-text.json');
 
 const uploadDelay = 50;
 
