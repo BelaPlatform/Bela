@@ -19,7 +19,7 @@ var stdGuiSketch_template = function( sketch ) {
 
         // Expand Bela_control Slider Class
         Bela_control.Slider.prototype.create = function() {
-            this.element = createSlider(this.min, this.max, this.value, this.step);
+            this.element =sketch.createSlider(this.min, this.max, this.value, this.step);
             return this.element;
         }
         Bela_control.Slider.prototype.onChange = function(callback) {

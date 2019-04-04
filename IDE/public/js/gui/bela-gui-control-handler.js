@@ -22,9 +22,15 @@ Bela_control.onData = function(data, parsedData) {
             slider.setVal(parsedData.value);
         } else {
 			Bela_control.sliders.push(new Bela_control.Slider(parsedData.slider, parsedData.name, parsedData.min, parsedData.max, parsedData.value, parsedData.step));
-            console.log(parsedData.min);
 		}
-	}
+	} else if (parsedData.event == 'set-select'){
+        console.log("HEY!")
+        console.log(parsedData.select);
+        console.log(parsedData.name);
+        console.log(parsedData.value);
+        console.log(data);
+
+    }
 }
 
 
