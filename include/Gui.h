@@ -30,9 +30,9 @@ class Gui
 			int index;
 			bool changed = false;
 			int value = -1;
-			std::vector<std::string> options;
 			std::string name;
 			std::wstring w_name;
+			std::vector<std::string> options;
 		};
 
 		std::vector<GuiSlider> sliders;

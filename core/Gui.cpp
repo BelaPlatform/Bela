@@ -84,16 +84,35 @@ void Gui::ws_onData(const char* data)
 					sendSlider(&slider);
 				}
 			}
+			if(selects.size() != 0)
+			{
+				for (auto select : selects){
+					sendSelect(&select);
+				}
+			}			
 		} else if (event.compare(L"slider") == 0){
 			int slider = -1;
 			float value = 0.0f;
 			if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
 				slider = (int)root[L"slider"]->AsNumber();
 			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
+			{
 				value = (float)root[L"value"]->AsNumber();
+				sliders.at(slider).value = value;
+				sliders.at(slider).changed = true;
+			}
+		} else if (event.compare(L"select") == 0){
+			int select = -1;
+			int value = -1;
+			if (root.find(L"select") != root.end() && root[L"select"]->IsNumber())
+				select = (int)root[L"select"]->AsNumber();
+			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
+			{
+				value = (int)root[L"value"]->AsNumber();
+				selects.at(select).value = value;
+				selects.at(select).changed = true;
+			}
 				
-			sliders.at(slider).value = value;
-			sliders.at(slider).changed = true;
 		}
 		return;
 	}
@@ -148,21 +167,24 @@ void Gui::sendSlider(GuiSlider* slider)
 	std::string str( wide.begin(), wide.end() );
 	ws_server->send(_addressControl.c_str(), str.c_str());
 }
+
 void Gui::sendSelect(GuiSelect* select)
 {
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"set-select");
 	root[L"select"] = new JSONValue(select->index);
 	root[L"value"] = new JSONValue(select->value);
-	root[L"options"] = new JSONValue(select->options.data());
 	root[L"name"] = new JSONValue(select->w_name);
+	JSONArray optArray;
+	for(std::string opt : select->options)
+		optArray.push_back(new JSONValue(std::wstring(opt.begin(), opt.end())));
+	root[L"options"] = new JSONValue(optArray);
 	JSONValue *json = new JSONValue(root);
 	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
 	std::wstring wide = json->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	ws_server->send(_addressControl.c_str(), str.c_str());
 }
-
 
 void Gui::setSliderValue(int index, float value)
 {
@@ -218,12 +240,18 @@ void Gui::addSlider(std::string name, float min, float max, float step, float va
 }
 
 void Gui::addSelect(std::string name, const std::vector<std::string>& options, unsigned int selectedIndex)
-{
+{	
+	printf("Select name: %s\n", name.c_str()); 
+	printf("Options %d: \n", options.size());
+	for(std::string opt : options)
+	{
+		printf("\t %s\n", opt.c_str());
+	}
+	
 	GuiSelect newSelect;
 	newSelect.index = selects.size();
 	selects.push_back(newSelect);
 	setSelect(newSelect.index, options, selectedIndex, name);
-	
 	if(isConnected())
 	{
 		sendSelect(&newSelect);
