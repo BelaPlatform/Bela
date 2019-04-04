@@ -599,16 +599,15 @@ select.dropdown-num {
   -webkit-box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
           box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   /* Links inside the dropdown */ }
-  .dropdown-content ul, .dropdown-content select {
-    width: 200px;
-    padding-left: 28px;
-    padding-top: 0;
-    font-size: 11px;
+  .dropdown-content select {
     border: none;
-    height: 22px;
     display: table;
-    padding-bottom: 2px; }
-    .dropdown-content ul > li, .dropdown-content ul span, .dropdown-content ul a, .dropdown-content ul option, .dropdown-content select > li, .dropdown-content select span, .dropdown-content select a, .dropdown-content select option {
+    font-size: 11px;
+    margin-bottom: -22px;
+    padding-bottom: 2px;
+    padding-top: 0;
+    width: 200px; }
+    .dropdown-content select option {
       color: black;
       cursor: pointer;
       display: block;
@@ -617,7 +616,31 @@ select.dropdown-num {
       opacity: 1;
       padding: 8px 16px;
       text-decoration: none; }
-      .dropdown-content ul > li:hover, .dropdown-content ul span:hover, .dropdown-content ul a:hover, .dropdown-content ul option:hover, .dropdown-content select > li:hover, .dropdown-content select span:hover, .dropdown-content select a:hover, .dropdown-content select option:hover {
+      .dropdown-content select option:hover {
+        background-color: #f1f1f1;
+        color: rgba(0, 0, 0, 0.9); }
+      .dropdown-content select option:active, .dropdown-content select option:focus {
+        background-color: #bdbdbd;
+        color: rgba(0, 0, 0, 0.9); }
+  .dropdown-content ul {
+    width: 200px;
+    padding-left: 28px;
+    padding-top: 0;
+    font-size: 11px;
+    border: none;
+    height: 22px;
+    display: table;
+    padding-bottom: 2px; }
+    .dropdown-content ul > li, .dropdown-content ul span, .dropdown-content ul a {
+      color: black;
+      cursor: pointer;
+      display: block;
+      font-family: poppins_regular;
+      font-size: 10px;
+      opacity: 1;
+      padding: 8px 16px;
+      text-decoration: none; }
+      .dropdown-content ul > li:hover, .dropdown-content ul span:hover, .dropdown-content ul a:hover {
         background-color: #f1f1f1;
         color: rgba(0, 0, 0, 0.9); }
   .dropdown-content.show {
