@@ -1,4 +1,5 @@
 var View = require('./View');
+var json = require('../site-text.json');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 var i = 0;
@@ -160,7 +161,7 @@ function createlifromxml($xml, id, filename, emitter, type){
     }
   });
 
-  content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">Full Documentation</a>');
+  content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">' + json.docs_view.button + '</a>');
 
   li.append(content);
   return li;
@@ -194,7 +195,7 @@ function xmlClassDocs(classname, emitter){
           var doInclude = false;
           if (includes.length){
             var content = $('<div></div>').addClass('subsections');
-            content.append($('<p class="examples-header"></p>').html('Examples using this class:'));
+            content.append($('<p class="examples-header"></p>').html( json.docs_view.examples ));
             var exampleList = $('<ul></ul>').addClass('example-list');
             includes.each(function(){
               var exampleListItem = $('<li></li>');

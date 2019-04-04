@@ -77,10 +77,32 @@ img {
 	z-index: 97;
 }
 
+#editor {
+  display: none;
+  &.active {
+    display: block;
+  }
+}
+
+#audio-parent,
+#img-display-parent {
+  display: none;
+  &.active {
+    display: block;
+  }
+}
+
 #pd-svg-parent {
   background: #fff;
+  display: none;
   font-family: monospace;
   overflow: auto;
+  #pd-svg {
+    background: $grey-light;
+  }
+  &.active {
+    display: block;
+  }
 }
 
 /* CONTAINER FOR LOWER ELEMENTS */

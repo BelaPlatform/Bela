@@ -536,6 +536,10 @@ toolbarView.on('process-event', function (event) {
 	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
 	socket.emit('process-event', data);
 });
+toolbarView.on('halt', function () {
+	socket.emit('shutdown');
+	consoleView.emit('warn', 'Shutting down...');
+});
 toolbarView.on('clear-console', function () {
 	return consoleView.emit('clear', true);
 });
@@ -1174,7 +1178,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
 var _console = require('../console');
+var json = require('../site-text.json');
 
 var shellCWD = '~';
 
@@ -1201,7 +1207,6 @@ var ConsoleView = function (_View) {
 		_this.on('openNotification', _this.openNotification);
 		_this.on('closeNotification', _this.closeNotification);
 		_this.on('openProcessNotification', _this.openProcessNotification);
-
 		_this.on('log', function (text, css) {
 			return _console.log(text, css);
 		});
@@ -1505,7 +1510,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1912,18 +1917,21 @@ var EditorView = function (_View) {
 		value: function __fileData(data, opts) {
 
 			// hide the pd patch and image displays if present, and the editor
-			$('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
+			// $('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
 
 			if (!opts.fileType) opts.fileType = '0';
 
 			if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
+				$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+
 				$('[data-img-display-parent], [data-img-display]').css({
 					'max-width': $('[data-editor]').width() + 'px',
 					'max-height': $('[data-editor]').height() + 'px'
 				});
-				$('[data-img-display-parent]').css('display', 'block');
+
+				$('[data-img-display-parent]').addClass('active');
 
 				$('[data-img-display]').prop('src', 'media/' + opts.fileName);
 
@@ -1932,11 +1940,12 @@ var EditorView = function (_View) {
 			} else if (opts.fileType.indexOf('audio') !== -1) {
 
 				//console.log('opening audio file');
+				$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 
-				$('[data-audio-parent]').css({
-					'display': 'block',
-					'max-width': $('[data-editor]').width() + 'px',
-					'max-height': $('[data-editor]').height() + 'px'
+				$('[data-audio-parent]').addClass('active').css({
+					'position': 'absolute',
+					'left': $('[data-editor]').width() / 2 - $('[data-audio]').width() / 2 + 'px',
+					'top': $('[data-editor]').height() / 2 - $('[data-audio]').height() / 2 + 'px'
 				});
 
 				$('[data-audio]').prop('src', 'media/' + opts.fileName);
@@ -1957,14 +1966,14 @@ var EditorView = function (_View) {
 
 					// render pd patch
 					try {
-
 						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
 							'max-width': $('[data-editor]').width() + 'px',
 							'max-height': $('[data-editor]').height() + 'px'
 						});
 
-						$('[data-pd-svg-parent]').css({
-							'display': 'block',
+						$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+
+						$('[data-pd-svg-parent]').addClass('active').css({
 							'max-width': $('[data-editor]').width() + 'px',
 							'max-height': $('[data-editor]').height() + 'px'
 						});
@@ -1986,7 +1995,9 @@ var EditorView = function (_View) {
 				} else {
 
 					// show the editor
-					$('[data-editor]').css('display', 'block');
+					$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+
+					$('[data-editor]').addClass('active');
 
 					// stop comparison with file on disk
 					this.emit('compare-files', false);
@@ -2418,32 +2429,10 @@ var FileView = function (_View) {
 				var directory = $('<li></li>');
 				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
 				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
-
-				try {
-					for (var _iterator2 = directories[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var dir = _step2.value;
-
-						directoryList.append(this.subDirs(dir));
-					}
-				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
-						}
-					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
-						}
-					}
+				for (var _i3 = 0; _i3 < directories.length; _i3++) {
+					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
 				}
-
-				directoryList.append(directory);
+				directoryList.appendTo(directory);
 				directory.appendTo($files);
 			}
 
@@ -2475,13 +2464,13 @@ var FileView = function (_View) {
 			var _this6 = this;
 
 			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
 
 			try {
-				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var child = _step3.value;
+				for (var _iterator2 = dir.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var child = _step2.value;
 
 					if (!isDir(child)) {
 						if (child.size < 1000000) {
@@ -2498,16 +2487,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError2) {
+						throw _iteratorError2;
 					}
 				}
 			}
@@ -2528,27 +2517,27 @@ var FileView = function (_View) {
 			}
 
 			var fileExists = false;
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
 
 			try {
-				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var item = _step4.value;
+				for (var _iterator3 = this.listOfFiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var item = _step3.value;
 
 					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
 					}
 				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -3030,11 +3019,17 @@ var ProjectView = function (_View) {
 
 			var $projects = $('[data-projects-select]');
 
-			// var option = $('<ul></ul>').addClass('dropdown-content').attr('data-dropdown', 'project');
 			// fill project menu with projects
-			for (var i = 0; i < projects.length; i++) {
+			if (projects.length > 0) {
+				var projLen = projects.length;
+			}
+			$projects.attr('size', projLen - 1);
+			for (var i = 0; i < projLen; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects);
+					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
+						$(this).blur();
+						$(this).parent().parent().removeClass('show');
+					});
 				}
 			}
 
@@ -3652,7 +3647,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'aboutPopup',
 		value: function aboutPopup() {
-
 			// build the popup content
 			popup.title(json.popups.about.title);
 			popup.subtitle(json.popups.about.text);
@@ -3781,7 +3775,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'useAudioExpander',
 		value: function useAudioExpander(func, key, val) {
-
 			if (val == 1) {
 				this.setCLArg('setCLArg', key, val);
 			} else {
@@ -3793,7 +3786,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'setAudioExpander',
 		value: function setAudioExpander(key, val) {
-
 			if (!val.length) return;
 
 			var channels = val.split(',');
@@ -4069,6 +4061,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
+var json = require('../site-text.json');
 
 // ohhhhh i am a comment
 
@@ -4117,6 +4111,7 @@ var ToolbarView = function (_View) {
 		});
 
 		$('[data-toolbar-console]').mouseover(function () {
+			console.log('ping');
 			$('[data-toolbar-controltext2]').html('<p>Clear console</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
@@ -4127,8 +4122,15 @@ var ToolbarView = function (_View) {
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
+
 		$('[data-toolbar-scope]').on('click', function () {
 			window.open('scope');
+		});
+
+		$('[data-toolbar-shutdown]').mouseover(function () {
+			$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
+		}).mouseout(function () {
+			$('[data-toolbar-controltext3]').html('');
 		});
 		return _this;
 	}
@@ -4216,6 +4218,31 @@ var ToolbarView = function (_View) {
 			}
 		}
 	}, {
+		key: 'shutdownBBB',
+		value: function shutdownBBB() {
+			var _this2 = this;
+
+			// build the popup content
+			popup.title(json.popups.shutdown.title);
+			popup.subtitle(json.popups.shutdown.text);
+
+			var form = [];
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				_this2.emit('halt');
+				popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
+
+			popup.find('.confirm').trigger('focus');
+		}
+	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
 			var bela = 0,
@@ -4293,7 +4320,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"./View":14}],14:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4436,6 +4463,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
@@ -4460,6 +4488,7 @@ var Console = function (_EventEmitter) {
 
 		_this.$element = $('[data-console-contents-wrapper]');
 		_this.parent = $('[data-console]');
+		_this.popUpComponents = "";
 		return _this;
 	}
 
@@ -4553,7 +4582,6 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'newErrors',
 		value: function newErrors(errors) {
-			var _this2 = this;
 
 			//this.checkScroll();
 			scrollEnabled = true;
@@ -4565,47 +4593,26 @@ var Console = function (_EventEmitter) {
 			var _iteratorError = undefined;
 
 			try {
-				var _loop = function _loop() {
+				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var err = _step.value;
 
 
 					// create the element and add it to the error object
-					div = $('<div></div>').addClass('beaglert-console-i' + err.type);
+					var div = $('<div></div>').addClass('beaglert-console-i' + err.type);
 
 					// create the link and add it to the element
-
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+					var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 					// add a button to copy the contents to the clipboard
+					var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
 
-					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
-					clipboard = new Clipboard(copyButton[0], {
+					var clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
 						}
 					});
 
-
-					div.appendTo(_this2.$element);
-
-					if (err.currentFile) {
-						span.on('click', function () {
-							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
-						});
-					} else {
-						span.on('click', function () {
-							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
-						});
-					}
-				};
-
-				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var div;
-					var span;
-					var copyButton;
-					var clipboard;
-
-					_loop();
+					div.appendTo(this.$element);
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -4640,7 +4647,7 @@ var Console = function (_EventEmitter) {
 
 			$('#' + id).remove();
 			var el = this.print(notice, 'notify', id);
-
+			this.popUpComponents = notice;
 			this.scroll();
 
 			return el;
@@ -4676,6 +4683,16 @@ var Console = function (_EventEmitter) {
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
+			var form = [];
+			popup.title('Error');
+			popup.subtitle(this.popUpComponents);
+			popup.body(message);
+			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			popup.form.append(form.join(''));
+			popup.find('.popup-cancel').on('click', function () {
+				popup.hide();
+			});
+			popup.show();
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);
@@ -4715,12 +4732,12 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'scroll',
 		value: function scroll() {
-			var _this3 = this;
+			var _this2 = this;
 
 			if (scrollEnabled) {
 				scrollEnabled = false;
 				setTimeout(function () {
-					return _this3.parent.scrollTop = _this3.parent.scrollHeight;
+					return _this2.parent.scrollTop = _this2.parent.scrollHeight;
 				}, 0);
 			}
 		}
@@ -4735,7 +4752,6 @@ var Console = function (_EventEmitter) {
 }(EventEmitter);
 
 ;
-
 module.exports = new Console();
 
 // gracefully remove a console element after an event ((this) must be bound to the element)
@@ -4749,7 +4765,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"events":1}],16:[function(require,module,exports){
+},{"./popup":18,"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -5222,6 +5238,7 @@ var content = $('[data-popup-content]');
 var titleEl = parent.find('h1');
 var subEl = parent.find('p');
 var codeEl = parent.find('code');
+var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
 var popup = {
@@ -5236,6 +5253,7 @@ var popup = {
 		titleEl.empty();
 		subEl.empty();
 		codeEl.empty();
+		bodyEl.empty();
 		_formEl.empty();
 	},
 	overlay: function overlay() {
@@ -5255,6 +5273,8 @@ var popup = {
 	},
 	code: function code(html) {
 		return codeEl.html(html);
+	body: function body(text) {
+		return bodyEl.text(text);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);
@@ -5276,8 +5296,9 @@ function example(cb, arg, delay, cancelCb) {
 
 	// build the popup content
 	popup.title('Save your changes?');
-	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-
+	popup.subtitle('Warning: Any unsaved changes will be lost');
+	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
+  popup.code('<h1>Hello World!</h1>');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
