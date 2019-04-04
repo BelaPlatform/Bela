@@ -70,6 +70,18 @@
 			"text": " already exists in this project. Overwrite?",
 			"button": "Overwite",
 			"tick": "Don't ask me again this session"
+		},
+		"commit": {
+			"title": "Commit your changes",
+			"text": "Enter a commit message:",
+			"input": "Your commit message",
+			"button": "Commit"
+		},
+		"branch": {
+			"title": "Create a new branch",
+			"text": "Specify this branch's name:",
+			"input": "Your new ranch name",
+			"button": "Create branch"
 		}
 	}	
 }
