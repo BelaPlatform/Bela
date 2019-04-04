@@ -1,0 +1,40 @@
+/**** Documentation content styles ****/
+.subsections {
+  .intro-content {
+    margin-bottom: .5em;
+  }
+  .docs-content {
+    display: hidden;
+    &.show {
+      display: visible;
+    }
+  }
+  .intro-header {
+    font-family: poppins_regular;
+    font-size: 1.2em;
+    line-height: 1em;
+    margin-block-start: 0;
+    margin-block-end: .5em;
+  }
+  .memberdef-title {
+    font-family: inconsolata;
+    font-weight: bold;
+    font-size: 1em;
+    line-height: 1.2em;
+    margin-block-start: .5em;
+    margin-block-end: .5em;
+  }
+  li div p {
+    padding: .5em 0 .75em;
+    margin: 0;
+  }
+  div ul li h4 {
+    margin: 0;
+  }
+  .examples-header {
+    color: $teal-base;
+    font-family: space_bold;
+    font-size: 1.1em;
+    margin: .5em;
+  }
+}   
