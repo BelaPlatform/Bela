@@ -1,6 +1,6 @@
 'use strict';
 var EventEmitter = require('events').EventEmitter;
-var json = require('site-text.json');
+var json = require('./site-text.json');
 //var $ = require('jquery-browserify');
 
 var enabled = true, scrollEnabled = true, suspended = false;
