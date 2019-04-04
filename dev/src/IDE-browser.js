@@ -140,6 +140,10 @@ toolbarView.on('process-event', (event) => {
 	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
 	socket.emit('process-event', data);
 });
+toolbarView.on('halt', () => {
+	socket.emit('shutdown');
+	consoleView.emit('warn', 'Shutting down...');
+});
 toolbarView.on('clear-console', () => consoleView.emit('clear', true) );
 toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num + (num!=1?json.ide_browser.mode_switches:json.ide_browser.mode_switch) ) );
 

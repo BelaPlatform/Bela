@@ -23,9 +23,16 @@
 			</div>
 
       <div class="toolbar" id="toolbar" data-toolbar>
+
+        <div class="shutdown-parent">
+          <span class="control-button-shutdown shutdown toolBar" data-toolbar-shutdown id="shutdown" data-func="shutdownBBB"></span>
+        </div>
+
         <div class="logo">
           <img src="images/logo.png">
         </div>
+
+        <!-- <div id="control-text-3" class="tool-text st-st" data-toolbar-controltext3></div> -->
 
         <div class="start-stop">
           <span class="control-button-runstop start run toolBar" data="Run project" id="run" data-toolbar-run data-func="run"></span>
@@ -35,7 +42,7 @@
 
         <div class="toolbar-functions">
 					<span class="scope-button toolBar" data-toolbar-scope data="Launch scope"></span>
-					<span class="console-button toolBar" data="Clear console" data-func="clearConsole"></span>
+					<span class="console-button toolBar" data-toolbar-console data="Clear console" data-func="clearConsole"></span>
 				</div>
         <div id="control-text-2" class="tool-text st-st" data-toolbar-controltext2></div>
 				<!-- <div class="tool-text other"></div> -->
@@ -126,7 +133,7 @@
                   <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
                   <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
                 </div>
-                  
+
               </div>
 
 
@@ -140,7 +147,7 @@
                 <input type="file" id="uploadFileInput" class="hidden" data-upload-file-input multiple></input>
               </div>
 
-              
+
 
               <button class="accordion" data-accordion-for="git">Git manager</button>
               <div class="panel" data-accordion="git">

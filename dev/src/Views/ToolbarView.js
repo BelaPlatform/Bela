@@ -1,4 +1,5 @@
 var View = require('./View');
+var popup = require('../popup');
 var json = require('../site-text.json');
 
 // ohhhhh i am a comment
@@ -65,10 +66,19 @@ class ToolbarView extends View {
 			.mouseout(function() {
 				$('[data-toolbar-controltext2]').html('');
 			});
+
     $('[data-toolbar-scope]')
       .on('click', function(){
         window.open('scope');
       });
+
+    $('[data-toolbar-shutdown]')
+			.mouseover(function() {
+				$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
+			})
+			.mouseout(function() {
+				$('[data-toolbar-controltext3]').html('');
+			});
 	}
 
 	// UI events
@@ -135,6 +145,29 @@ class ToolbarView extends View {
 			rootName = '[ROOT]';
 			IRQName = '[IRQ16:';
 		}
+	}
+
+  shutdownBBB(){
+		// build the popup content
+		popup.title(json.popups.shutdown.title);
+		popup.subtitle(json.popups.shutdown.text);
+
+		var form = [];
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+		popup.form.append(form.join('')).off('submit').on('submit', e => {
+			e.preventDefault();
+			this.emit('halt');
+			popup.hide();
+		});
+
+		popup.find('.cancel').on('click', popup.hide );
+
+		popup.show();
+
+		popup.find('.confirm').trigger('focus');
+
 	}
 
 	_CPU(data){
