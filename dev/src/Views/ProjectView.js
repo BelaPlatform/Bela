@@ -139,11 +139,17 @@ class ProjectView extends View {
 
 		var $projects = $('[data-projects-select]');
 
-    // var option = $('<ul></ul>').addClass('dropdown-content').attr('data-dropdown', 'project');
 		// fill project menu with projects
-		for (let i=0; i<projects.length; i++){
+    if (projects.length > 0) {
+      var projLen = projects.length;
+    }
+    $projects.attr('size', (projLen - 1));
+		for (let i=0; i < projLen; i++){
 			if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
-				$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects);
+				$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function() {
+          $(this).blur();
+          $(this).parent().parent().removeClass('show');
+        });
 			}
 		}
 
