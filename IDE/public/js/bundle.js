@@ -3940,9 +3940,9 @@ var ToolbarView = function (_View) {
 		key: '__running',
 		value: function __running(status) {
 			if (status) {
-				$('[data-toolbar-run]').removeClass('building-button').addClass('running-button');
+				$('[data-toolbar-run]').removeClass('building-button').removeClass('building').addClass('running-button').addClass('running');
 			} else {
-				$('[data-toolbar-run]').removeClass('running-button');
+				$('[data-toolbar-run]').removeClass('running').removeClass('running-button');
 				$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
 				$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 				modeswitches = 0;
@@ -3952,9 +3952,9 @@ var ToolbarView = function (_View) {
 		key: '__building',
 		value: function __building(status) {
 			if (status) {
-				$('[data-toolbar-run]').removeClass('running-button').addClass('building-button');
+				$('[data-toolbar-run]').removeClass('running-button').removeClass('running').addClass('building-button').addClass('building');
 			} else {
-				$('[data-toolbar-run]').removeClass('building-button');
+				$('[data-toolbar-run]').removeClass('building-button').removeClass('building');
 			}
 		}
 	}, {
