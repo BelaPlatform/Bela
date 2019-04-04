@@ -1,6 +1,7 @@
 'use strict';
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 class GitView extends View{
 
@@ -40,13 +41,13 @@ class GitView extends View{
 	commit(){
 
 		// build the popup content
-		popup.title('Committing to the project repository');
-		popup.subtitle('Enter a commit message');
+		popup.title(json.popups.commit.title);
+		popup.subtitle(json.popups.commit.text);
 
 		var form = [];
-		form.push('<input type="text" placeholder="Enter your commit message">');
+		form.push('<input type="text" placeholder="' + json.popups.commit.input + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">Commit</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.commit.button +'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
@@ -63,13 +64,13 @@ class GitView extends View{
 	branch(){
 
 		// build the popup content
-		popup.title('Creating a new branch');
-		popup.subtitle('Enter a name for the branch');
+		popup.title(json.popups.branch.title);
+		popup.subtitle(json.popups.branch.text);
 
 		var form = [];
-		form.push('<input type="text" placeholder="Enter your new branch name">');
+		form.push('<input type="text" placeholder="' + json.popups.branch.input + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">Create</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.branch.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
