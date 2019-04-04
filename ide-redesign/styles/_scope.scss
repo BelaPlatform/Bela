@@ -9,6 +9,8 @@
 
 .buttonWrapper {
   left: 0;
+  font-family: poppins_regular;
+  font-size: .85em;
   padding: 10px 20px;
   position: absolute;
   top: 0;
@@ -150,8 +152,13 @@ input.channelView.range-slider {
     width: 200px;
   }
 }
+
 #scope-drop {
   width: 110px;
+}
+
+.hidden {
+  display: none;
 }
 
 .one-shot {

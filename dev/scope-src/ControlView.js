@@ -9,7 +9,7 @@ class ControlView extends View{
     super(className, models);
     $('#controlsButton').click(() => this.$parents.toggleClass('hidden') );
   }
-  
+
   // UI events
   selectChanged($element, e){
     var key = $element.data().key;
@@ -47,7 +47,7 @@ class ControlView extends View{
       this.emit('settings-event', $element.data().key);
     }
   }
-  
+
   // settings model events
   modelChanged(data, changedKeys){
     for (let key of changedKeys){
@@ -55,17 +55,16 @@ class ControlView extends View{
         this['_'+key](data[key], data);
       } else {
         if (key === 'plotMode') this.plotMode(data[key], data);
-        //this.$elements.filterByData('key', key).val(data[key]);
       }
     }
   }
-  
+
   setControls(data){
     for (let key in data){
       this.$elements.filterByData('key', key).val(data[key]);
     }
   }
-  
+
   plotMode(val, data){
     this.emit('plotMode', val, data);
     if (val == 0){
@@ -86,7 +85,7 @@ class ControlView extends View{
       $('#zoomDown').html('Zoom in');
     }
   }
-  
+
   _upSampling(value, data){
     upSampling = value;
     if (data.plotMode == 0){
@@ -111,20 +110,20 @@ class ControlView extends View{
       $('.xUnit-display').html('<p>'+ (xTime * downSampling/upSampling).toPrecision(2) +'</p>');;
     }
   }
-  
+
   __numChannels(val, data){
     var el = this.$elements.filterByData('key', 'triggerChannel');
     el.empty();
     for (let i=0; i<val; i++){
       let opt = $('<option></option>').html(i+1).val(i).appendTo(el);
-      if (i === data.triggerChannel) opt.prop('selected', 'selected'); 
+      if (i === data.triggerChannel) opt.prop('selected', 'selected');
     }
   }
-  
+
   _triggerMode(value){
     this.$elements.filterByData('key', 'triggerMode').val(value);
   }
-  
+
   _triggerChannel(value){
     this.$elements.filterByData('key', 'triggerChannel').val(value);
   }

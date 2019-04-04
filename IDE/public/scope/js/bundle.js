@@ -855,7 +855,6 @@ var ControlView = function (_View) {
             this['_' + key](data[key], data);
           } else {
             if (key === 'plotMode') this.plotMode(data[key], data);
-            //this.$elements.filterByData('key', key).val(data[key]);
           }
         }
       } catch (err) {
