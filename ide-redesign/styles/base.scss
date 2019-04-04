@@ -15,10 +15,13 @@ $teal-02: #63ffd9;
 $teal-03: #a6ffea;
 
 $grey-light: #f1f1f1;
-$grey-light-mid: rgba(0,0,0,0.2);
+$grey-light-mid: #e5e5e5;
 $grey-mid: #bdbdbd;
 
 $grey-tabs: #c9c9c9;
+
+$accent-red: rgb(255, 94, 91);
+$accent-red-fade: #FF918E;
 
 $grey-editorbg: #eeeeee;
 
@@ -29,6 +32,9 @@ $amber-accent: #f26d21;
 $grey-dark: rgba(0,0,0,0.8);
 
 $trans-reg: 0.1s;
+
+$yellow-accent: #fff07c;
+$yellow-accent-fade: #FFFFC9;
 
 @import 'reset';
 @import 'fonts';
@@ -49,6 +55,10 @@ img {
 
 /* Container for upper elements - editor and tabs */
 
+.hidden {
+  display: none;
+}
+
 .upper {
 	height: 100%;
 	position: relative;
@@ -68,10 +78,29 @@ img {
 	z-index: 97;
 }
 
+#editor {
+  display: none;
+  &.active {
+    display: block;
+  }
+}
+
+#audio-parent,
+#img-display-parent {
+  display: none;
+  &.active {
+    display: block;
+  }
+}
+
 #pd-svg-parent {
   background: #fff;
+  display: none;
   font-family: monospace;
   overflow: auto;
+  &.active {
+    display: block;
+  }
 }
 
 /* CONTAINER FOR LOWER ELEMENTS */
@@ -108,6 +137,7 @@ hr {
 @import 'buttons';
 @import 'slider';
 @import 'console';
+@import 'docs';
 @import 'dropdown';
 @import 'dropdown-mini';
 @import 'example-list';

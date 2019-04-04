@@ -26,23 +26,23 @@ button.dropbtn {
     &:before {
       border-top: 8px solid #fff;
     }
-  }
-  &.small {
-    width: 4em;
-    &:before {
-      border: 8px solid transparent;
-      border-top: 8px solid $teal-main;
-      content:" ";
-      position: absolute;
-      right: 12px;
-      top: 5px;
-    }
-    &:hover, &:focus {
-      background-color: rgba(0, 190, 164, 0.8);
-      border-color: rgba(0, 190, 164, 0.8);
-      color: white;
+    &.small {
+      width: 4em;
       &:before {
-        border-top: 8px solid #fff;
+        border: 8px solid transparent;
+        border-top: 8px solid $teal-main;
+        content:" ";
+        position:absolute;
+        right: 12px;
+        top: 5px;
+      }
+      &:hover, &:focus {
+        background-color: rgba(0, 190, 164, 0.8);
+        border-color: rgba(0, 190, 164, 0.8);
+        color: white;
+        &:before {
+          border-top: 8px solid #fff;
+        }
       }
     }
   }
@@ -67,8 +67,8 @@ select.dropdown-num {
   padding-left: 10px;
   width: 56px;
   &.inactive {
-    border: $grey-mid;
     background: $grey-light;
+    border: $grey-mid;
   }
 }
 

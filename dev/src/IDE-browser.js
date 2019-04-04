@@ -30,6 +30,7 @@ settingsView.on('project-settings', (data) => {
 	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
+
 settingsView.on('IDE-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
 	//console.log('IDE-settings', data);
@@ -68,6 +69,7 @@ fileView.on('message', (event, data) => {
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
+
 fileView.on('force-rebuild', () => {
 	socket.emit('process-event', {
 		event			: 'rebuild',
