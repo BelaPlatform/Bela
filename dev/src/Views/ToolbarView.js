@@ -21,7 +21,7 @@ class ToolbarView extends View {
 
     $('[data-toolbar-run]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext1]').html('<p>Run</p>');
+				$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.run + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext1]').html('');
@@ -29,7 +29,7 @@ class ToolbarView extends View {
 
 		$('[data-toolbar-stop]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext1]').html('<p>Stop</p>');
+				$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.stop + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext1]').html('');
@@ -53,8 +53,7 @@ class ToolbarView extends View {
 
 		$('[data-toolbar-console]')
 			.mouseover(function() {
-        console.log('ping');
-				$('[data-toolbar-controltext2]').html('<p>Clear console</p>');
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.clear + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext2]').html('');
@@ -62,7 +61,7 @@ class ToolbarView extends View {
 
 		$('[data-toolbar-scope]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext2]').html('<p>Open scope</p>');
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.scope + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext2]').html('');

@@ -90,7 +90,7 @@ class ProjectView extends View {
 		popup.subtitle(json.popups.save_as.text);
 
 		var form = [];
-		form.push('<input type="text" placeholder="Enter the new project name">');
+		form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
 		form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">'+json.popups.save_as.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');

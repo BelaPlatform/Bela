@@ -1,5 +1,6 @@
 'use strict';
 var EventEmitter = require('events').EventEmitter;
+var json = require('./site-text.json');
 //var $ = require('jquery-browserify');
 
 var enabled = true, scrollEnabled = true, suspended = false;
@@ -50,7 +51,7 @@ class Console extends EventEmitter {
 			this.clear(numElements - maxElements/2);
 			suspended = true;
 			setTimeout( () => suspended = false, 1000);
-			this.warn('Too many messages have been printed to the console too quickly. Reduce your printing frequency');
+			this.warn(json.console.messages);
 		} else {
 			this.checkScroll();
 			var msgs = text.split('\n');
