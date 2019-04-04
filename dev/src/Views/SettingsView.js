@@ -210,8 +210,8 @@ class SettingsView extends View {
 			if (file){
 
 				this.emit('warning', json.settings_view.update);
-				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
-				this.emit('warning', 'Do not use the IDE during the update process!');
+				this.emit('warning', json.settings_view.browser);
+				this.emit('warning', json.settings_view.ide);
 
 				popup.hide('keep overlay');
 
@@ -221,7 +221,7 @@ class SettingsView extends View {
 
 			} else {
 
-				this.emit('warning', 'not a valid update zip archive');
+				this.emit('warning', json.settings_view.zip);
 				popup.hide();
 
 			}
