@@ -1294,11 +1294,11 @@ input[type="number"] {
         .toolbar > div span.scope-button:hover {
           background-image: url("../images/icons/scope_active.svg"); }
       .toolbar > div span.shutdown {
-        background-image: url("../images/icons/shutdown_active.svg");
+        background-image: url("../images/icons/shutdown_inactive.svg");
         background-repeat: no-repeat;
         margin-left: 5px; }
         .toolbar > div span.shutdown:hover {
-          background-image: url("../images/icons/shutdown_inactive.svg"); }
+          background-image: url("../images/icons/shutdown_hover.svg"); }
   .toolbar .tool-text {
     margin-top: 3px;
     padding-left: 10px;
