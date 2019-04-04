@@ -80,7 +80,7 @@
         }
       }
       &.shutdown {
-        background-image: url("../images/icons/shutdown_inactive.svg");
+        background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
         margin-left: 5px;
         &:hover {
@@ -110,6 +110,7 @@
   .shutdown-parent {
     float: right;
     width: 45px;
+    padding-right: 50px;
   }
   .toolbar-functions {
     // min-width: 150px;
