@@ -51,32 +51,25 @@
         }
       }
       &.console-button {
-        background-image: url("../images/icons/console_inactive.svg");
+        background-image: url("../images/icons/console_inactive1.svg");
         background-repeat: no-repeat;
         &:hover {
-          background-image: url("../images/icons/console_active.svg");
+          background-image: url("../images/icons/console_active1.svg");
         }
       }
-      &.tab-button {
-        background-image: url("../images/icons/tabs_inactive.svg");
+      &.gui-button {
+        background-image: url("../images/icons/gui_inactive4.svg");
         background-repeat: no-repeat;
         padding: 0;
         &:hover {
-          background-image: url("../images/icons/tabs_active.svg");
-        }
-      }
-      &.drag-button {
-        background-image: url("../images/icons/drag_inactive.svg");
-        background-repeat: no-repeat;
-        &:hover {
-          background-image: url("../images/icons/drag_active.svg");
+          background-image: url("../images/icons/gui_active4.svg");
         }
       }
       &.scope-button {
-        background-image: url("../images/icons/scope_inactive.svg");
+        background-image: url("../images/icons/scope_inactive3.svg");
         background-repeat: no-repeat;
         &:hover {
-          background-image: url("../images/icons/scope_active.svg");
+          background-image: url("../images/icons/scope_active3.svg");
         }
       }
       &.shutdown {
