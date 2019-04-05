@@ -74,18 +74,10 @@ class ToolbarView extends View {
 
     $('[data-toolbar-gui]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.scope + '</p>');
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.gui + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext2]').html('');
-			});
-
-    $('[data-toolbar-shutdown]')
-			.mouseover(function() {
-				$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
-			})
-			.mouseout(function() {
-				$('[data-toolbar-controltext3]').html('');
 			});
 	}
 
