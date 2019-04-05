@@ -110,7 +110,8 @@
 		"run": "Build & run",
 		"stop": "Stop",
 		"clear": "Clear console",
-		"scope": "Launch scope"
+		"scope": "Launch scope",
+		"gui": "Launch GUI"
 	},
 	"console": {
 		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages.",
