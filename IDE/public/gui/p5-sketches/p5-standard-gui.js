@@ -13,7 +13,6 @@ var stdGuiSketch_template = function( sketch ) {
     };
 
     sketch.setup = function() {
-        console.log("Bela_control.ws.readyState", Bela_control.ws.readyState);
         // Create Canvas
         sketch.createCanvas(canvas_dimensions[0], canvas_dimensions[1]);
 
@@ -36,6 +35,7 @@ var stdGuiSketch_template = function( sketch ) {
             return this.element.value(val);
         }
         Bela_control.Slider.prototype.setStyle = function(styleObj) {
+                console.log(this.element);
                 for (let key in styleObj)
                 if (styleObj.hasOwnProperty(key))
                         this.element.style(key, styleObj[key]);
@@ -54,6 +54,7 @@ var stdGuiSketch_template = function( sketch ) {
         Bela_control.Slider.prototype.getPosition = function() {
                 return [this.element.x, this.element.y];
         }
+
         /**
          For each new slider:
             - Set style
@@ -63,13 +64,33 @@ var stdGuiSketch_template = function( sketch ) {
             - Assign label
          **/
          Bela_control.target.addEventListener('new-slider', function(event) {
+             console.log("HIIIII");
+             console.log("New slider");
+             debugger;
              let slider = Bela_control.sliders[event.detail.id];
-             slider.setStyle(sliderStyle);
              slider.bind();
+             slider.setStyle(sliderStyle);
              sortSliders();
              distributeSliders();
              slider.assignLabel();
          });
+
+         if(Bela_control.sliders.length != 0) {
+             console.log("Bela_control.sliders.length", Bela_control.sliders.length);
+             for(s in Bela_control.sliders) {
+                 let slider = Bela_control.sliders[s];
+                 // if(slider.element === null) {
+                     let sliderElement = slider.create();
+                     console.log(sliderElement);
+                     slider.bind();
+                     slider.setStyle(sliderStyle);
+                     sortSliders();
+                     distributeSliders();
+                     slider.assignLabel();
+                 // }
+             }
+         }
+
     };
 
     sketch.draw = function() {
@@ -83,6 +104,8 @@ var stdGuiSketch_template = function( sketch ) {
     function distributeSliders() {
             for (s in Bela_control.sliders) {
                     if (s > 0) {
+                        if(Bela_control.sliders[s-1].element != null)
+                        {
                             prevPos = Bela_control.sliders[s - 1].getPosition();
                             x = prevPos[0];
                             y = prevPos[1] + sliderSpacing.ySpacing;
@@ -90,11 +113,13 @@ var stdGuiSketch_template = function( sketch ) {
                                     y = sliderSpacing.baseY;
                                     x = x + sliderSpacing.xSpacing;
                             }
+                        }
                     } else {
                             x = sliderSpacing.baseX;
                             y = sliderSpacing.baseY;
                     }
-                    Bela_control.sliders[s].setPosition(x, y);
+                    if(Bela_control.sliders[s].element != null)
+                        Bela_control.sliders[s].setPosition(x, y);
             }
     }
 
@@ -102,6 +127,7 @@ var stdGuiSketch_template = function( sketch ) {
 
 var stdGuiSketch;
 stdGuiSketch = new p5(stdGuiSketch_template);
+
 
 
 var getGuiStatus = function(download = true) {
@@ -129,3 +155,5 @@ var setGuiStatus = function(jsonObj) {
                 matchS.element.value(statusObj[s].value);
         }
 }
+
+console.log("p5-standard-gui has been loaded");

@@ -9,7 +9,6 @@ class BelaWebSocket {
         this.url = "ws://" + this.ip + ":"+this.port+"/"+this.address;
 
         this.connect(this.url);
-        console.log("Constructor done!");
     }
 
     connect(url) {
@@ -47,7 +46,7 @@ class BelaWebSocket {
     }.bind(this)
 
     onMessage = function(msg) {
-        console.log("New message received on %s\n", this.ws.url);
+        // console.log("New message received on %s\n", this.ws.url);
         let data = msg.data;
         let parsedData = isJson(data);
 

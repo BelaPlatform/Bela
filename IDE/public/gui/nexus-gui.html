@@ -19,90 +19,92 @@
 </head>
 
 <body>
-    <div id="nexus-rack">
-        <div>
-            <label class='controlLabel' for="Attack">Attack</label>
-            <div nexus-ui="slider" id="Attack"></div>
-            <div nexus-ui="number" id="Attack-disp"></div>
-        </div>
-        <div>
-            <label class='controlLabel' for="Decay">Decay</label>
-            <div nexus-ui="slider" id="Decay"></div>
-            <div nexus-ui="number" id="Decay-disp"></div>
-        </div>
-        <div>
-            <label class='controlLabel' for="Sustain">Sustain</label>
-            <div nexus-ui="slider" id="Sustain"></div>
-            <div nexus-ui="number" id="Sustain-disp"></div>
-        </div>
-        <div>
-            <label class='controlLabel' for="Release">Release</label>
-            <div nexus-ui="slider" id="Release"></div>
-            <div nexus-ui="number" id="Release-disp"></div>
-        </div>
-        <div>
-            <label class='controlLabel' for="Gain">Gain</label>
-            <div nexus-ui="slider" id="Gain"></div>
-            <div nexus-ui="number" id="Gain-disp"></div>
-        </div>
-        <div>
-            <label class='controlLabel' for="Select0">Select 0</label>
-            <div nexus-ui="select" id="Select0"></div>
-        </div>
-    </div>
 </body>
 
 </html>
 <script type="text/javascript">
-    var rack = new Nexus.Rack("#nexus-rack")
+    let defaultRack = "nexus-test";
+    let rackName = location.hash;
+    rackName = rackName.substring(1);
+    let rackAddress = "/gui/nexus-racks/" + rackName + ".html"
 
-    var findNexusElementByType = function(rack, type) {
-        let sliders = [];
-        for(e in rack) {
-            if(rack[e].hasOwnProperty('type') &&rack[e].type === type)
-                sliders.push(rack[e]);
-        }
-        return sliders;
-    }
+    function loadNexusRackResources() {
+        let loadRack = loadHtmlSection("body", rackAddress);
+        var rack;
+        loadRack.then((resolved) => {
+            console.log("RESOLVED!!");
+            rack = new Nexus.Rack("#nexus-rack")
 
-    rack._sliders = findNexusElementByType(rack, 'Slider');
-    rack._numbers = findNexusElementByType(rack, 'Number');
+            var findNexusElementByType = function(rack, type) {
+                let sliders = [];
+                for (e in rack) {
+                    if (rack[e].hasOwnProperty('type') && rack[e].type === type)
+                        sliders.push(rack[e]);
+                }
+                return sliders;
+            }
 
-    rack.hide();
-    Bela_control.ws.addEventListener("open", () => {
-        rack.show();
-    }, false);
+            rack._sliders = findNexusElementByType(rack, 'Slider');
+            rack._numbers = findNexusElementByType(rack, 'Number');
 
-    Bela_control.Slider.prototype.assign = function(elem, num) {
-        if(elem != 'undefined') {
-            this.element = elem;
-            this.element.max = this.max;
-            this.element.min = this.min;
-            this.element.step = this.step;
-            this.element.value = this.value;
+            rack.hide();
+            Bela_control.ws.addEventListener("open", () => {
+                rack.show();
+            }, false);
 
-            if(num != 'undefined')
-                num.link(this.element);
-        }
-        return this.element;
+            Bela_control.Slider.prototype.assign = function(elem, num) {
+                if (elem != null) {
+                    this.element = elem;
+                    this.element.max = this.max;
+                    this.element.min = this.min;
+                    this.element.step = this.step;
+                    this.element.value = this.value;
+
+                    if (num != null)
+                        num.link(this.element);
+                }
+                return this.element;
+            };
+            Bela_control.Slider.prototype.onInput = function(callback) {
+                if (this.element != null)
+                    this.element.on('change', callback);
+            };
+            Bela_control.Slider.prototype.getVal = function() {
+                if (this.element != null)
+                    return this.element.value;
+            };
+            Bela_control.Slider.prototype.setVal = function(val) {
+                if (this.element != null)
+                    return this.element.value = val;
+            }
+
+            Bela_control.target.addEventListener('new-slider', function(event) {
+                console.log("NEW SLIDER");
+                let Bela_slider = Bela_control.sliders[event.detail.id];
+                if (Bela_slider.element == null) {
+                    let matchS = rack._sliders.find((e) => (e.id === Bela_slider.name));
+                    let matchNum = rack._numbers.find((e) => (e.id === Bela_slider.name + "-disp"));
+                    Bela_slider.assign(matchS, matchNum);
+                    Bela_slider.bind();
+                }
+            });
+
+            if(Bela_control.sliders.length != 0) {
+                for(s in Bela_control.sliders) {
+                    let Bela_slider = Bela_control.sliders[s];
+                    let matchS = rack._sliders.find((e) => (e.id === Bela_slider.name));
+                    let matchNum = rack._numbers.find((e) => (e.id === Bela_slider.name + "-disp"));
+                    Bela_slider.assign(matchS, matchNum);
+                    Bela_slider.bind();
+                }
+            }
+            if (Bela_control.ws.readyState === 1)
+                rack.show();
+        }).catch((rejected) => {
+            console.log("REJECTED!!")
+            rackAddress = "/gui/nexus-racks/" + defaultRack + ".html"
+            loadNexusRackResources()
+        });
     };
-    Bela_control.Slider.prototype.onInput = function(callback) {
-        this.element.on('change', callback);
-    };
-    Bela_control.Slider.prototype.getVal = function() {
-        return this.element.value;
-    };
-    Bela_control.Slider.prototype.setVal = function(val) {
-        return this.element.value = val;
-    }
-
-    Bela_control.target.addEventListener('new-slider', function(event) {
-        let Bela_slider = Bela_control.sliders[event.detail.id];
-        if(Bela_slider.element == null) {
-            let matchS = rack._sliders.find((e) => (e.id === Bela_slider.name));
-            let matchNum = rack._numbers.find((e) => (e.id === Bela_slider.name+"-disp"));
-            Bela_slider.assign(matchS, matchNum);
-            Bela_slider.bind();
-        }
-    });
+    loadNexusRackResources()
 </script>

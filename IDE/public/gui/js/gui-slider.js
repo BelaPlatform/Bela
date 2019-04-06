@@ -5,7 +5,7 @@ function GuiSlider(id, name, min, max, value, step) {
         this.max = max === undefined ? 1 : max;
         this.value = value === undefined ? 0 : value;
         this.step = step === undefined ? 0.1 : step;
-        this.element;
+        this.element = null;
 
         this.create();
 }
@@ -30,6 +30,7 @@ GuiSlider.prototype.bind = function() {
 }
 
 GuiSlider.prototype.setElement = function(element) {
+    console.log("Setting slider %id element", this.id);
     this.element = element;
 }
 

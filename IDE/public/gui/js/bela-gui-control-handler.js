@@ -31,10 +31,6 @@ Bela_control.onData = function(data, parsedData) {
         this.events[0].detail.id = parsedData.slider;
         this.target.dispatchEvent(this.events[0]);
 	} else if (parsedData.event == 'set-select'){
-        // console.log(parsedData.select);
-        // console.log(parsedData.name);
-        // console.log(parsedData.value);
-        // console.log(data);
         this.target.dispatchEvent(this.events[1]);
     }
 }.bind(Bela_control)

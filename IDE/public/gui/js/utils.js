@@ -9,11 +9,12 @@ var downloadObjectAsJson = function(exportObj, exportName, space, format){
 }
 
 function loadHtmlSection(section, location) {
-  new Promise (function (resolve, reject) {
+    console.log("LOCATION ", location);
+  let promise = new Promise (function (resolve, reject) {
     $(section).hide();
     $(section).load(location, function(responseTxt, statusTxt, xhr){
       if(statusTxt == "success") {
-        resolve(statusTxt);
+        resolve($(section));
         $(section).slideDown(500);
         $(section).scrollTop(0)
       } else if (statusTxt == "error") {
@@ -22,4 +23,20 @@ function loadHtmlSection(section, location) {
       }
     });
   });
+  return promise;
+}
+
+function loadScript(src) {
+    let promise = new Promise (function (resolve, reject) {
+        let scriptElement = document.createElement('script');
+        scriptElement.setAttribute('src', src);
+        document.head.appendChild(scriptElement);
+        scriptElement.onerror = (error) => {
+            reject(null);
+        }
+        scriptElement.onload = () => {
+            resolve(scriptElement);
+        }
+    });
+    return promise;
 }

@@ -22,3 +22,5 @@ var guiSketch = new p5(guiSketch_template);
 Bela_data.target.addEventListener('buffer-ready', function(event) {
     guiSketch.redraw();
 });
+
+console.log("p5-basic has been loaded");
