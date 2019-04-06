@@ -26,6 +26,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <ne10/NE10.h>					// NEON FFT library
 #include "SampleData.h"
 #include <Midi/Midi.h>
+#include <cmath>
 
 #define BUFFER_SIZE 16384
 
@@ -217,7 +218,7 @@ void process_fft(float *inBuffer, int inWritePointer, float *outBuffer, int outW
 	pointer = outWritePointer;
 	for(int n = 0; n < gFFTSize; n++) {
 		outBuffer[pointer] += (timeDomainOut[n].r) * gFFTScaleFactor;
-		if(isnan(outBuffer[pointer]))
+		if(std::isnan(outBuffer[pointer]))
 			rt_printf("outBuffer OLA\n");
 		pointer++;
 		if(pointer >= BUFFER_SIZE)
