@@ -35,7 +35,7 @@ LIBRARY_CS := $(wildcard $(LIBRARY_DIR)/*.c)
 LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_CS:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
 #LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_FILES:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
 #$(warning FILES: $(LIBRARY_FILES))
-$(warning OBJS: $(LIBRARY_OBJS))
+#$(warning OBJS: $(LIBRARY_OBJS))
 
 all: $(LIBRARY_OBJS)
 clean:
