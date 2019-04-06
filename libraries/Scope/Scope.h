@@ -7,6 +7,7 @@
 #include <string>
 #include <AuxTaskNonRT.h>
 #include <AuxTaskRT.h>
+#include <cmath>
 
 #define FRAMES_STORED 4
 
