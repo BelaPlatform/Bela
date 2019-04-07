@@ -64,9 +64,6 @@ var stdGuiSketch_template = function( sketch ) {
             - Assign label
          **/
          Bela_control.target.addEventListener('new-slider', function(event) {
-             console.log("HIIIII");
-             console.log("New slider");
-             debugger;
              let slider = Bela_control.sliders[event.detail.id];
              slider.bind();
              slider.setStyle(sliderStyle);
@@ -76,18 +73,15 @@ var stdGuiSketch_template = function( sketch ) {
          });
 
          if(Bela_control.sliders.length != 0) {
-             console.log("Bela_control.sliders.length", Bela_control.sliders.length);
              for(s in Bela_control.sliders) {
                  let slider = Bela_control.sliders[s];
-                 // if(slider.element === null) {
-                     let sliderElement = slider.create();
-                     console.log(sliderElement);
-                     slider.bind();
-                     slider.setStyle(sliderStyle);
-                     sortSliders();
-                     distributeSliders();
-                     slider.assignLabel();
-                 // }
+                 let sliderElement = slider.create();
+                 console.log(sliderElement);
+                 slider.bind();
+                 slider.setStyle(sliderStyle);
+                 sortSliders();
+                 distributeSliders();
+                 slider.assignLabel();
              }
          }
 

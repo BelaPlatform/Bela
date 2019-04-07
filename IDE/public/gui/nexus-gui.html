@@ -12,6 +12,8 @@
     <script src="js/bela-ws.js"></script>
 
     <script src="/gui/js/gui-slider.js"></script>
+    <script src="/gui/js/gui-select.js"></script>
+
 
     <script src="/gui/js/bela-gui-data-handler.js"></script>
     <script src="/gui/js/bela-gui-control-handler.js"></script>
@@ -32,7 +34,6 @@
         let loadRack = loadHtmlSection("body", rackAddress);
         var rack;
         loadRack.then((resolved) => {
-            console.log("RESOLVED!!");
             rack = new Nexus.Rack("#nexus-rack")
 
             var findNexusElementByType = function(rack, type) {
@@ -46,12 +47,15 @@
 
             rack._sliders = findNexusElementByType(rack, 'Slider');
             rack._numbers = findNexusElementByType(rack, 'Number');
+            rack._selectors = findNexusElementByType(rack, 'Select');
+
 
             rack.hide();
             Bela_control.ws.addEventListener("open", () => {
                 rack.show();
             }, false);
 
+            // SLIDER
             Bela_control.Slider.prototype.assign = function(elem, num) {
                 if (elem != null) {
                     this.element = elem;
@@ -76,10 +80,8 @@
             Bela_control.Slider.prototype.setVal = function(val) {
                 if (this.element != null)
                     return this.element.value = val;
-            }
-
+            };
             Bela_control.target.addEventListener('new-slider', function(event) {
-                console.log("NEW SLIDER");
                 let Bela_slider = Bela_control.sliders[event.detail.id];
                 if (Bela_slider.element == null) {
                     let matchS = rack._sliders.find((e) => (e.id === Bela_slider.name));
@@ -88,7 +90,6 @@
                     Bela_slider.bind();
                 }
             });
-
             if(Bela_control.sliders.length != 0) {
                 for(s in Bela_control.sliders) {
                     let Bela_slider = Bela_control.sliders[s];
@@ -97,12 +98,57 @@
                     Bela_slider.assign(matchS, matchNum);
                     Bela_slider.bind();
                 }
-            }
+            };
+
+            // SELECT
+            Bela_control.Select.prototype.assign = function(elem) {
+                if (elem != null) {
+                    this.element = elem;
+                    this.element.defineOptions(this.options);
+                    this.element.selectedIndex = this.value;
+
+                }
+                return this.element;
+            };
+            Bela_control.Select.prototype.onChange = function(callback) {
+                if (this.element != null)
+                    this.element.on('change', callback);
+            };
+            Bela_control.Select.prototype.getVal = function() {
+                if (this.element != null)
+                    return this.element.selectedIndex;
+            };
+            Bela_control.Select.prototype.setVal = function(val) {
+                if (this.element != null)
+                    return this.element.selectedIndex = val;
+            };
+            Bela_control.Select.prototype.getSelection = function() {
+                if (this.element != null)
+                    return this.element.value ;
+            };
+            Bela_control.target.addEventListener('new-select', function(event) {
+                let Bela_select = Bela_control.selectors[event.detail.id];
+                if (Bela_select.element == null) {
+                    let matchS = rack._selectors.find((e) => (e.id === Bela_select.name));
+                    Bela_select.assign(matchS);
+                    Bela_select.bind();
+                }
+            });
+            if(Bela_control.selectors.length != 0) {
+                for(s in Bela_control.selectors) {
+                    let Bela_select = Bela_control.selectors[s];
+                    let matchS = rack._selectors.find((e) => (e.id === Bela_select.name));
+                    Bela_select.assign(matchS);
+                    Bela_select.bind();
+                }
+            };
+
+
             if (Bela_control.ws.readyState === 1)
                 rack.show();
         }).catch((rejected) => {
-            console.log("REJECTED!!")
-            rackAddress = "/gui/nexus-racks/" + defaultRack + ".html"
+            console.log("Rack %s couldn't be loaded, loading default rack", rackName);
+            rackAddress = "/gui/nexus-racks/" + defaultRack + ".html";
             loadNexusRackResources()
         });
     };

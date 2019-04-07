@@ -1,5 +1,7 @@
 Bela_control = new BelaWebSocket(5555, "gui_control");
 Bela_control.sliders = [];
+Bela_control.selectors = [];
+
 Bela_control.target = new EventTarget();
 Bela_control.events = [
     new CustomEvent('new-slider', {
@@ -7,7 +9,11 @@ Bela_control.events = [
             id: null
         }
     }),
-    new CustomEvent('new-select'),
+    new CustomEvent('new-select', {
+        detail: {
+            id: null
+        }
+    }),
 ];
 
 Bela_control.onData = function(data, parsedData) {
@@ -31,7 +37,16 @@ Bela_control.onData = function(data, parsedData) {
         this.events[0].detail.id = parsedData.slider;
         this.target.dispatchEvent(this.events[0]);
 	} else if (parsedData.event == 'set-select'){
+        console.log("Set select");
+        let select;
+        if ((select = Bela_control.selectors.find(e => e.id == parsedData.select)) != undefined) {
+            select.setVal(parsedData.value);
+        } else {
+            Bela_control.selectors.push(new Bela_control.Select(parsedData.select, parsedData.name, parsedData.options, parsedData.value));
+        }
+        this.events[1].detail.id = parsedData.select;
         this.target.dispatchEvent(this.events[1]);
+
     }
 }.bind(Bela_control)
 
@@ -58,5 +73,27 @@ Bela_control.Slider.prototype.bind = function() {
                     return;
             }
             if (Bela_control.ws.readyState === 1) Bela_control.ws.send(out);
+    });
+}
+
+Bela_control.Select = GuiSelect;
+
+Bela_control.Select.prototype.bind =    function() {
+    this.onChange(() => {
+        console.log("Select(" + this.id + ")" + " aka. '" + this.name + "' -> " + this.getSelection());
+        this.value = this.getVal();
+        var obj = {
+                event: "select",
+                select: this.id,
+                value: this.value
+        };
+        var out;
+        try {
+                    out = JSON.stringify(obj);
+        } catch (e) {
+                console.log('Could not stringify select json:', e);
+                return;
+        }
+        if (Bela_control.ws.readyState === 1) Bela_control.ws.send(out);
     });
 }
