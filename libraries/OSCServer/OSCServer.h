@@ -11,7 +11,7 @@
 #define UDP_RECEIVE_MAX_LENGTH 16384
 
 /**
- * \brief OSCServer provides functions for receiving OSC messages in Bela.
+ * \brief OSCServer is deprecated, please use OSCReceiver instead
  *
  * When an OSC message is received, the message is decoded by the OSCServer off the audio
  * thread and placed in an internal queue. This queue can be polled from the audio thread

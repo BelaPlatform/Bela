@@ -23,64 +23,60 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include <libraries/OSCServer/OSCServer.h>
-#include <libraries/OSCClient/OSCClient.h>
+//#include <libraries/OSCServer/OSCServer.h>
+//#include <libraries/OSCClient/OSCClient.h>
+#include <libraries/OSCSender/OSCSender.h>
+#include <libraries/OSCReceiver/OSCReceiver.h>
 
-OSCServer oscServer;
-OSCClient oscClient;
-
-// this example is designed to be run alongside resources/osc/osc.js
-
-// parse messages received by OSC Server
-// msg is Message class of oscpkt: http://gruntthepeon.free.fr/oscpkt/
-int parseMessage(oscpkt::Message msg){
-    
-    rt_printf("received message to: %s\n", msg.addressPattern().c_str());
-    
-    int intArg;
-    float floatArg;
-    if (msg.match("/osc-test").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs()){
-        rt_printf("received int %i and float %f\n", intArg, floatArg);
-    }
-    return intArg;
-}
-
+OSCReceiver oscReceiver;
+OSCSender oscSender;
 int localPort = 7562;
 int remotePort = 7563;
 const char* remoteIp = "127.0.0.1";
 
+// parse messages received by OSC Server
+// msg is Message class of oscpkt: http://gruntthepeon.free.fr/oscpkt/
+bool handshakeReceived;
+void on_receive(oscpkt::Message* msg)
+{
+	if(msg->match("/osc-setup-reply"))
+		handshakeReceived = true;
+	else if(msg->match("/osc-test")){
+		int intArg;
+		float floatArg;
+		int count = msg->match("/osc-test").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs();
+		printf("received a message with int %i and float %f\n", intArg, floatArg);
+		oscSender.newMessage("/osc-acknowledge").add(count).add(4.2f).add(std::string("OSC message received")).send();
+	}
+}
+
 bool setup(BelaContext *context, void *userData)
 {
-    oscServer.setup(localPort);
-    oscClient.setup(remotePort, remoteIp);
-    
-    // the following code sends an OSC message to address /osc-setup
-    // then waits 1 second for a reply on /osc-setup-reply
-    bool handshakeReceived = false;
-    oscClient.sendMessageNow(oscClient.newMessage.to("/osc-setup").end());
-    oscServer.receiveMessageNow(1000);
-    while (oscServer.messageWaiting()){
-        if (oscServer.popMessage().match("/osc-setup-reply")){
-            handshakeReceived = true;
-        }
-    }
-    
-    if (handshakeReceived){
-        rt_printf("handshake received!\n");
-    } else {
-        rt_printf("timeout!\n");
-    }
-    
+	oscReceiver.setup(localPort, on_receive);
+	oscSender.setup(remotePort, remoteIp);
+
+	// the following code sends an OSC message to address /osc-setup
+	// then waits 1 second for a reply on /osc-setup-reply
+	oscSender.newMessage("/osc-setup").send();
+	int count = 0;
+	int timeoutCount = 10;
+	printf("Waiting for handshake ....\n");
+	while(!handshakeReceived && ++count != timeoutCount)
+	{
+		usleep(100000);
+	}
+	if (handshakeReceived) {
+		printf("handshake received!\n");
+	} else {
+		printf("timeout! : did you start the node server? `node /root/Bela/resources/osc/osc.js\n");
+		return false;
+	}
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-    // receive OSC messages, parse them, and send back an acknowledgment
-    while (oscServer.messageWaiting()){
-        int count = parseMessage(oscServer.popMessage());
-        oscClient.queueMessage(oscClient.newMessage.to("/osc-acknowledge").add(count).add(4.2f).add(std::string("OSC message received")).end());
-    }
+
 }
 
 void cleanup(BelaContext *context, void *userData)
@@ -98,11 +94,15 @@ Open Sound Control
 This example shows an implementation of OSC (Open Sound Control) which was 
 developed at UC Berkeley Center for New Music and Audio Technology (CNMAT).
 
-It is designed to be run alongside resources/osc/osc.js
+It is designed to be run alongside resources/osc/osc.js.
+For the example to work, run in a terminal on the board
+```
+node /root/Bela/resources/osc/osc.js
+```
 
-The OSC server port on which to receive is set in `setup()` 
-via `oscServer.setup()`. Likewise the OSC client port on which to 
-send is set in `oscClient.setup()`.
+The OSC receiver port on which to receive is set in `setup()`
+via `oscReceiver.setup()`. Likewise the OSC client port on which to
+send is set in `oscSender.setup()`.
 
 In `setup()` an OSC message to address `/osc-setup`, it then waits 
 1 second for a reply on `/osc-setup-reply`.

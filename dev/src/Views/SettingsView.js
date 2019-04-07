@@ -342,7 +342,7 @@ class SettingsView extends View {
 				options: []
 			},
 			CtagBela: {
-				sections: [''],
+				sections: [],
 				subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right'],
 				options: [{
 						selector: 'analog-samplerate',

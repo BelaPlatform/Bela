@@ -7,7 +7,7 @@ OBJS = $(BUILD)/GPIOcontrol.o $(BUILD)/Spi_Codec.o $(BUILD)/I2c_Codec.o $(BUILD)
 CPPFLAGS=-I../../../include
 
 board_detect: $(OBJS)
-	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) -o "$@"
+	$(CXX) $(LDFLAGS) $(OBJS) $(LOADLIBES) -o "$@" -std=c++11
 
 clean:
 	rm -rf $(OBJS) board_detect
@@ -16,7 +16,7 @@ install: board_detect
 	cp board_detect /usr/local/bin/
 
 $(BUILD)/main.o: main.cpp
-	$(CXX) "$<" -c $(CPPFLAGS) $(CXXFLAGS) -o "$@"
+	$(CXX) "$<" -c $(CPPFLAGS) $(CXXFLAGS) -o "$@" -std=c++11
 
 $(BUILD)/%.o: ../../../core/%.cpp
-	$(CXX) "$<" -c $(CPPFLAGS) $(CXXFLAGS) -o "$@"
+	$(CXX) "$<" -c $(CPPFLAGS) $(CXXFLAGS) -o "$@" -std=c++11

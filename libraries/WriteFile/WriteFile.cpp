@@ -13,6 +13,7 @@ bool WriteFile::staticConstructed=false;
 AuxiliaryTask WriteFile::writeAllFilesTask=NULL;
 std::vector<WriteFile *> WriteFile::objAddrs(0);
 bool WriteFile::threadRunning;
+bool WriteFile::threadScheduled;
 bool WriteFile::threadIsExiting;
 int WriteFile::sleepTimeMs;
 
@@ -22,6 +23,7 @@ void WriteFile::staticConstructor(){
 	staticConstructed=true;
 	threadIsExiting=false;
 	threadRunning=false;
+	threadScheduled = false;
 	writeAllFilesTask = Bela_createAuxiliaryTask(WriteFile::run, 60, "writeAllFilesTask", NULL);
 }
 
@@ -200,7 +202,7 @@ void WriteFile::log(float value){
 			(fileType == kBinary && writePointer == binaryReadPointer - 1)){
 		rt_fprintf(stderr, "WriteFile: %s pointers crossed, you should probably slow down your writing to disk\n", _filename);
 	}
-	if(threadRunning == false){
+	if(threadScheduled == false){
 		startThread();
 	}
 }
@@ -248,6 +250,7 @@ int WriteFile::getNumInstances(){
 }
 
 void WriteFile::startThread(){
+	threadScheduled = true;
 	Bela_scheduleAuxiliaryTask(writeAllFilesTask);
 }
 
@@ -364,6 +367,7 @@ void WriteFile::sanitizeString(char* string){
 
 void WriteFile::run(void* arg){
 	threadRunning = true;
+	printf("Running\n");
 	writeAllHeaders();
 	while(threadShouldExit()==false){
 		writeAllOutputs(false);

@@ -37,13 +37,12 @@
 class DboxSensors
 {
 public:
-	int initSensors(int tk0_bus, int tk0_address, int tk1_bus, int tk1_address, int tk_file, int fsr_pin, int fsrmax, int sensorTypeToUse, int gpio0=-1, int gpio1=-1);
+	int initSensors(int tk0_bus, int tk0_address, int tk1_bus, int tk1_address, int tk_file, int sensorTypeToUse, int gpio0=-1, int gpio1=-1);
 	int readSensors();
 	int getTKTouchCount(int index);
 	float *getTKXPositions(int index);
 	float getTKYPosition(int index);
 	float *getTKTouchSize(int index);
-	double getFSRVAlue();
 	int getDigitalIn(int index);
 
 	DboxSensors();
@@ -63,11 +62,6 @@ private:
 	float tk1_touchPosX[5];
 	float tk1_touchPosY;
 	float tk1_touchSize[5];
-
-	AnalogInput FSR;
-	int fsr_pinNum;
-	double fsr_read;
-	int fsr_max;
 
 	unsigned int digitalIn[2];
 	int fdDi[2];
@@ -111,11 +105,6 @@ inline float *DboxSensors::getTKTouchSize(int index)
 		return tk0_touchSize;
 	else
 		return tk1_touchSize;
-}
-
-inline double DboxSensors::getFSRVAlue()
-{
-	return fsr_read;
 }
 
 inline int DboxSensors::getDigitalIn(int index)

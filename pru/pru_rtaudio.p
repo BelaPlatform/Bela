@@ -523,6 +523,15 @@ SKIP_CS_UNASSERT:
      DAC_DISCARD_RX
 .endm
 
+.macro DAC_WRITE_ALL_ZEROS
+.mparam tempreg
+//command 0x3: write and update DAC channel n
+//address 0xf: write to all channels
+//data: 0
+     MOV tempreg, ((0x3 << AD5668_COMMAND_OFFSET) | (0xf << AD5668_ADDRESS_OFFSET) )
+     DAC_WRITE tempreg
+.endm
+
 // Transform channel order on DAC
 // (in) 01234567 --> (out) 64201357
 // This is to make the pin order on the Bela cape
@@ -622,6 +631,11 @@ DO_GPIO:
                             //r27 is actually r27, so do not use r27 from here to ...
      LBBO r27, reg_digital_current, 0, 4 
      JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
+     // in the low word, set the bits corresponding to output values to 0
+     // this way, if the ARM program crashes, the PRU will write 0s to the outputs
+     LSL r28, r27, 16
+     // high word now contains bitmask with 0s where outputs are
+     AND r27.w2, r28.w2, r27.w2 // mask them out
      SBBO r27, reg_digital_current, 0,   4 
                             //..here you can start using r27 again
      ADD reg_digital_current, reg_digital_current, 4 //increment pointer
@@ -1258,6 +1272,9 @@ CLEANUP:
      // Turn off SPI if enabled
      QBBC SPI_CLEANUP_DONE, reg_flags, FLAG_BIT_USE_SPI
 	
+     // write zeros to all analog outputs, to avoid stuck values
+     DAC_WRITE_ALL_ZEROS r2
+
      MOV r3, SPI_BASE + SPI_CH0CONF
      LBBO r2, r3, 0, 4
      CLR r2, r2, 13

@@ -32,6 +32,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <sstream>
 #include <DigitalChannelManager.h>
 #include <algorithm>
+#include <array>
 
 enum { minFirstDigitalChannel = 10 };
 
@@ -83,8 +84,8 @@ void dumpMidi()
 			gMidiPortNames[n].c_str(),
 			midi[n]->isInputEnabled() ? "x" : "_",
 			midi[n]->isOutputEnabled() ? "x" : "_",
-			n * 16 + 1,
-			n * 16 + 16
+			n * 16,
+			n * 16 + 15
 		);
 	}
 }
@@ -149,7 +150,7 @@ float gInverseSampleRate;
 
 void printHook(HeavyContextInterface *context, const char *printLabel, const char *msgString, const HvMessage *msg) {
 	const double timestampSecs = ((double) hv_msg_getTimestamp(msg)) / hv_getSampleRate(context);
-	rt_printf("Message from Heavy patch: [@ %.3f] %s: %s\n", timestampSecs, printLabel, msgString);
+	rt_printf("print: [@ %.3f] %s: %s\n", timestampSecs, printLabel, msgString);
 }
 
 
@@ -202,7 +203,7 @@ static void sendHook(
 		return;
 	}
 
-	// Bela digital initialization messages
+	// More MIDI and digital messages. To obtain the hashes below, use hv_stringToHash("yourString")
 	switch (sendHash) {
 		case 0xfb212be8: { // bela_setMidi
 			if (!hv_msg_hasFormat(m, "sfff")) {
@@ -264,72 +265,73 @@ static void sendHook(
 			}
 			break;
 		}
-		case 0xEC6DA2AF: { // bela_noteout
+		case 0xd1d4ac2: { // __hv_noteout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t velocity = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
-			rt_printf("noteon[%d]: %d %d %d\n", port, channel, pitch, velocity);
+			//rt_printf("noteout[%d]: %d %d %d\n", port, channel, pitch, velocity);
 			midi[port]->writeNoteOn(channel, pitch, velocity);
 			break;
 		}
-		case 0xD44F9083: { // bela_ctlout
+		case 0xe5e2a040: { // __hv_ctlout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t value = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t controller = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
-			rt_printf("controlchange[%d]: %d %d %d\n", port, channel, controller, value);
+			//rt_printf("controlout[%d]: %d %d %d\n", port, channel, controller, value);
 			midi[port]->writeControlChange(channel, controller, value);
 			break;
 		}
-		case 0x6A647C44: { // bela_pgmout
-			if (!hv_msg_hasFormat(m, "ff")) return;
+		case 0x8753e39e: { // __hv_pgmout
 			midi_byte_t program = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
-			rt_printf("programchange[%d]: %d %d\n", port, channel, program);
+			//rt_printf("pgmout[%d]: %d %d\n", port, channel, program);
 			midi[port]->writeProgramChange(channel, program);
 			break;
 		}
-		case 0x545CDF50: { // bela_bendout
+		case 0xe8458013: { // __hv_bendout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			unsigned int value = ((midi_byte_t) hv_msg_getFloat(m, 0)) + 8192;
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
-			rt_printf("pitchbend[%d]: %d %d\n", port, channel, value);
+			//rt_printf("bendout[%d]: %d %d\n", port, channel, value);
 			midi[port]->writePitchBend(channel, value);
 			break;
 		}
-		case 0xDE18F543: { // bela_touchout
+		case 0x476d4387: { // __hv_touchout
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
-			rt_printf("channelPressure[%d]: %d %d\n", port, channel, pressure);
+			//rt_printf("touchout[%d]: %d %d\n", port, channel, pressure);
 			midi[port]->writeChannelPressure(channel, pressure);
 			break;
 		}
-		case 0xAE8E3B2D: { // bela_polytouchout
+		case 0xd5aca9d1: { // __hv_polytouchout, not currently supported by Heavy. You have to [send __hv_polytouchout]
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
 			midi_byte_t pressure = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
-			rt_printf("polytouch[%d]: %d %d %d\n", port, channel, pitch, pressure);
+			//rt_printf("polytouchout [%d]: %d %d %d\n", port, channel, pitch, pressure);
 			midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 			break;
 		}
-		case 0x51CD8FE2: { // bela_midiout
+		case 0x6511de55: { // __hv_midiout, not currently supported by Heavy. You have to [send __hv_midiout]
 			if (!hv_msg_hasFormat(m, "ff")) return;
 			midi_byte_t byte = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int port = (int) hv_msg_getFloat(m, 1);
-			rt_printf("port: %d, byte: %d\n", port, byte);
+			//rt_printf("midiout port: %d, byte: %d\n", port, byte);
 			midi[port]->writeOutput(byte);
 			break;
 		}
-		default: break;
+		default: {
+			break;
+		}
 	}
 }
 
@@ -363,6 +365,21 @@ bool setup(BelaContext *context, void *userData)	{
 	generateDigitalNames(gDigitalChannelsInUse, gDigitalChannelOffset, gHvDigitalInHashes);
 
 	/* HEAVY */
+	std::array<std::string, 8> outs = {{
+		"__hv_noteout",
+		"__hv_ctlout",
+		"__hv_pgmout",
+		"__hv_touchout",
+		"__hv_polytouchout",
+		"__hv_bendout",
+		"__hv_midiout",
+	}};
+	for(auto &st : outs)
+	{
+		// uncomment this if you want to display the hashes for midi
+		// outs. Then hardcode them in the switch() in sendHook()
+		printf("%s: %#x\n", st.c_str(), hv_stringToHash(st.c_str()));
+	}
 	hvMidiHashes[kmmNoteOn] = hv_stringToHash("__hv_notein");
 //	hvMidiHashes[kmmNoteOff] = hv_stringToHash("noteoff"); // this is handled differently, see the render function
 	hvMidiHashes[kmmControlChange] = hv_stringToHash("__hv_ctlin");
@@ -477,6 +494,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
+			unsigned int channelOffset = port * 16 + 1; // remove + 1 if you want your first channel to be 0 (libpd-style)
 			message = midi[port]->getParser()->getNextChannelMessage();
 			switch(message.getType()){
 			case kmmNoteOn: {
@@ -486,7 +504,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				// rt_printf("message: noteNumber: %f, velocity: %f, channel: %f\n", noteNumber, velocity, channel);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
-						(float)noteNumber, (float)velocity, (float)channel+1);
+						(float)noteNumber, (float)velocity, (float)channel + channelOffset);
 				break;
 			}
 			case kmmNoteOff: {
@@ -499,7 +517,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				// note we are sending the below to hvHashes[kmmNoteOn] !!
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmNoteOn], 0, "fff",
-						(float)noteNumber, (float)0, (float)channel+1);
+						(float)noteNumber, (float)0, (float)channel + channelOffset);
 				break;
 			}
 			case kmmControlChange: {
@@ -507,14 +525,14 @@ void render(BelaContext *context, void *userData)
 				int controller = message.getDataByte(0);
 				int value = message.getDataByte(1);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmControlChange], 0, "fff",
-						(float)value, (float)controller, (float)channel+1);
+						(float)value, (float)controller, (float)channel + channelOffset);
 				break;
 			}
 			case kmmProgramChange: {
 				int channel = message.getChannel();
 				int program = message.getDataByte(0);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmProgramChange], 0, "ff",
-						(float)program, (float)channel+1);
+						(float)program, (float)channel + channelOffset);
 				break;
 			}
 			case kmmPolyphonicKeyPressure: {
@@ -523,7 +541,7 @@ void render(BelaContext *context, void *userData)
 				int pitch = message.getDataByte(0);
 				int value = message.getDataByte(1);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmPolyphonicKeyPressure], 0, "fff",
-						(float)channel+1, (float)pitch, (float)value);
+						(float)channel + channelOffset, (float)pitch, (float)value);
 				break;
 			}
 			case kmmChannelPressure:
@@ -531,7 +549,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				int value = message.getDataByte(0);
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmChannelPressure], 0, "ff",
-						(float)value, (float)channel+1);
+						(float)value, (float)channel + channelOffset);
 				break;
 			}
 			case kmmPitchBend:
@@ -539,7 +557,7 @@ void render(BelaContext *context, void *userData)
 				int channel = message.getChannel();
 				int value = ((message.getDataByte(1) << 7) | message.getDataByte(0));
 				hv_sendMessageToReceiverV(gHeavyContext, hvMidiHashes[kmmPitchBend], 0, "ff",
-						(float)value, (float)channel+1);
+						(float)value, (float)channel + channelOffset);
 				break;
 			}
 			case kmmSystem:

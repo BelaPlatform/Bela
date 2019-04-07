@@ -11,11 +11,10 @@
 // At least one needs to be selected. Maximum 2 can be selected without having
 // the "jump too long" error mentioned above
 
-// enables run-time selection of the Bela TLV32 codec.
-#define ENABLE_CTAG_FACE
-// enables run-time selection of the Bela TLV32 codec.
-#define ENABLE_CTAG_BEAST
-// #define ENABLE_BELA_TLV32 // enables run-time selection of the Bela TLV32 codec.
+#define ENABLE_CTAG_FACE // enables run-time selection of the CTAG Face codec.
+#define ENABLE_CTAG_BEAST // enables run-time selection of the CTAG Beast codecs
+//#define ENABLE_BELA_TLV32 // enables run-time selection of the Bela TLV32 codec
+//#define ENABLE_MUXER // enables run-time selection of the Multiplexer capelet
 // there are some issues with this code and this codec.
 // See https://github.com/BelaPlatform/Bela/issues/480
 
@@ -679,6 +678,15 @@ QBA DALOOP
      DAC_WAIT_FOR_FINISH
      DAC_CS_UNASSERT
      DAC_DISCARD_RX
+.endm
+
+.macro DAC_WRITE_ALL_ZEROS
+.mparam tempreg
+//command 0x3: write and update DAC channel n
+//address 0xf: write to all channels
+//data: 0
+     MOV tempreg, ((0x3 << AD5668_COMMAND_OFFSET) | (0xf << AD5668_ADDRESS_OFFSET) )
+     DAC_WRITE tempreg
 .endm
 
 // Transform channel order on DAC
@@ -1422,6 +1430,10 @@ INNER_EVENT_LOOP:
 	 AND r27, r27, reg_flags
 	 QBEQ NEXT_FRAME, r27, 0x60
 
+     // Check if ARM says should finish: flag is zero as long as it should run
+     LBBO r27, reg_comm_addr, COMM_SHOULD_STOP, 4
+     QBNE CLEANUP, r27, 0
+
      SUB r28, r28, 1
      QBNE MCASP_CHECK_TX_ERROR_END, r28, 0
      // If we go through EVENT_LOOP_TIMEOUT_COUNT iterations without receiving
@@ -1832,6 +1844,18 @@ ANALOG_CHANNEL_7_END:
      SBCO r0, C_ADC_DAC_MEM, reg_adc_current, 8
      ADD reg_adc_current, reg_adc_current, 8
 
+#ifdef ENABLE_MUXER
+     // If enabled, update the multiplexer settings
+     // Change mux settings for ch0-3 after reading ch. 3
+     QBBC MUX_0_3_DONE, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+     MUX_INCREMENT_0_TO_3
+MUX_0_3_DONE:
+     // Change mux settings for ch4-7 after reading ch. 7
+     QBBS MUX_4_7_DONE, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+     MUX_INCREMENT_4_TO_7
+MUX_4_7_DONE:
+#endif /* ENABLE_MUXER */
+
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
 
      // Toggle flag to check on which SPI channels (i.e. ch0-ch3 or ch4-ch7) we are, 
@@ -1979,6 +2003,18 @@ ALL_FRAMES_PROCESSED:
      MOV reg_mcasp_buf1, r2
      XOR reg_flags, reg_flags, (1 << FLAG_BIT_BUFFER1) //flip the buffer flag
     
+#ifdef ENABLE_MUXER
+     // If multiplexer capelet is enabled, save which channel we got to
+     // Muxes 0-3 change at a different time than muxes 4-7 but the first
+     // of these is sufficient to capture where we are
+     MOV r2, FLAG_MASK_MUX_CONFIG
+     AND r2, reg_flags, r2
+     QBEQ MUX_CHANNEL_SAVE_DONE, r2, 0
+     AND r2, reg_pru1_mux_pins, 0x07
+     SBBO r2, reg_comm_addr, COMM_MUX_END_CHANNEL, 4
+MUX_CHANNEL_SAVE_DONE:
+#endif /* ENABLE_MUXER */
+
      // Notify ARM of buffer swap
      AND r2, reg_flags, (1 << FLAG_BIT_BUFFER1)    // Mask out every but low bit
      SBBO r2, reg_comm_addr, COMM_CURRENT_BUFFER, 4
@@ -2015,6 +2051,9 @@ CLEANUP:
 
      // Turn off SPI if enabled
      QBBC SPI_CLEANUP_DONE, reg_flags, FLAG_BIT_USE_SPI
+
+     // write zeros to all analog outputs, to avoid stuck values
+     DAC_WRITE_ALL_ZEROS r2
     
      MOV r3, SPI_BASE + SPI_CH0CONF
      LBBO r2, r3, 0, 4

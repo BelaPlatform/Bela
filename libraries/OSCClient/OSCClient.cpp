@@ -1,7 +1,9 @@
 /***** OSCClient.cpp *****/
 #include "OSCClient.h"
 
-OSCClient::OSCClient(){}
+OSCClient::OSCClient(){
+	fprintf(stderr, "Warning! OSCClient is depecrated, use OSCSender instead\n");
+}
 
 OSCClient::OSCClient(int port, const char* address, bool scheduleTask){
 	setup(port, address, scheduleTask);

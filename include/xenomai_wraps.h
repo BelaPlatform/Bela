@@ -25,6 +25,10 @@ extern "C" {
 // At link time, Xenomai will provide implementations for these
 int __wrap_nanosleep(const struct timespec *req, struct timespec *rem);
 int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+int __wrap_pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param);
+int __wrap_pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param);
+int __wrap_pthread_yield(void);
+
 int __wrap_pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);
 int __wrap_pthread_mutex_destroy(pthread_mutex_t *mutex);
 int __wrap_pthread_mutex_lock(pthread_mutex_t *mutex);
@@ -54,10 +58,12 @@ int __wrap_mq_unlink(const char *name);
 #if XENOMAI_MAJOR == 2
 #define __wrap_pthread_join(a,b) pthread_join(a,b) // NOWRAP
 #define __wrap_pthread_attr_init(a) pthread_attr_init(a) // NOWRAP
+#define __wrap_sched_get_priority_max(a) sched_get_priority_max(a) // NOWRAP
 #endif
 #if XENOMAI_MAJOR == 3
 int __wrap_pthread_join(pthread_t thread, void **retval);
 int __wrap_pthread_attr_init(pthread_attr_t *attr);
+int __wrap_sched_get_priority_max(int policy);
 #endif
 #endif /* XENOMAI_SKIN_posix */
 
@@ -83,7 +89,7 @@ inline int task_sleep_ns(long long int timens)
 #ifdef XENOMAI_SKIN_posix
 	struct timespec req;
 	req.tv_sec = timens/1000000000;
-	req.tv_nsec = timens - req.tv_sec;
+	req.tv_nsec = timens - req.tv_sec * 1000000000;
 	return __wrap_nanosleep(&req, NULL);
 #endif
 }
@@ -179,7 +185,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	 */
 	int s = __wrap_socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
 	if (s < 0) {
-		fprintf(stderr, "Failed call to socket\n");
+		fprintf(stderr, "Failed call to socket: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -191,6 +197,12 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	strcpy(plabel.label, portName);
 	int ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_LABEL,
 			 &plabel, sizeof(plabel));
+	if(ret)
+	{
+		fprintf(stderr, "Failed call to __wrap_setsockopt SOL_XDDP XDDP_LABEL: %d %s\n", errno, strerror(errno));
+		return -1;
+	}
+
 	/*
 	 * Set a local pool for the RT endpoint. Memory needed to
 	 * convey datagrams will be pulled from this pool, instead of
@@ -200,9 +212,9 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 		poolsz = 16384; /* bytes */
 	ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
 			 &poolsz, sizeof(poolsz));
-	if (ret)
+	if(ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_setsockopt\n");
+		fprintf(stderr, "Failed call to __wrap_setsockopt SOL_XDDP XDDP_POOLSZ: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -217,7 +229,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	ret = __wrap_bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
 	if (ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_bind\n");
+		fprintf(stderr, "Failed call to __wrap_bind: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 	return s;

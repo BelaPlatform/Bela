@@ -35,8 +35,8 @@
 #include <sys/mman.h>
 #include <string.h>
 
-#if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM))
-#error Define one of BELA_USE_POLL, BELA_USE_RTDM
+#if !(defined(BELA_USE_POLL) || defined(BELA_USE_RTDM) || defined(BELA_USE_BUSYWAIT))
+#error Define one of BELA_USE_POLL, BELA_USE_RTDM, BELA_USE_BUSYWAIT
 #endif
 
 #ifdef BELA_USE_RTDM
@@ -370,7 +370,12 @@ void PRU::cleanupGPIO()
 				if(gDigitalPins[i] == saltSwitch1Gpio)
 					continue; // leave alone this pin as it is used by bela_button.service
 			}
-			gpio_unexport(gDigitalPins[i]);
+			if(gpio_unexport(gDigitalPins[i]))
+			{
+				// if unexport fails, we at least turn off the outputs
+				gpio_set_dir(gDigitalPins[i], OUTPUT_PIN);
+				gpio_set_value(gDigitalPins[i], 0);
+			}
 		}
 	}
 	if(led_enabled) {
@@ -473,7 +478,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	}
 #else
 	context->audioIn = (float *)malloc(context->audioInChannels * context->audioFrames * sizeof(float));
-	context->audioOut = (float *)malloc(context->audioOutChannels * context->audioFrames * sizeof(float));
+	context->audioOut = (float *)calloc(1, context->audioOutChannels * context->audioFrames * sizeof(float));
 	if(context->audioIn == 0 || context->audioOut == 0) {
 		fprintf(stderr, "Error: couldn't allocate audio buffers\n");
 		return 1;
@@ -501,8 +506,8 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 		}		
 #else
 		context->analogIn = (float *)malloc(context->analogInChannels * context->analogFrames * sizeof(float));
-		context->analogOut = (float *)malloc(context->analogOutChannels * context->analogFrames * sizeof(float));
-		last_analog_out_frame = (float *)malloc(context->analogOutChannels * sizeof(float));
+		context->analogOut = (float *)calloc(1, context->analogOutChannels * context->analogFrames * sizeof(float));
+		last_analog_out_frame = (float *)calloc(1, context->analogOutChannels * sizeof(float));
 
 		if(context->analogIn == 0 || context->analogOut == 0 || last_analog_out_frame == 0) {
 			fprintf(stderr, "Error: couldn't allocate analog buffers\n");
@@ -894,12 +899,14 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	int underrunLedCount = -1;
 	while(!gShouldStop) {
 
-#ifdef BELA_USE_POLL
+#if defined BELA_USE_POLL || defined BELA_USE_BUSYWAIT
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
 		// Poll
 		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
+#ifdef BELA_USE_POLL
 			task_sleep_ns(sleepTime);
+#endif /* BELA_USE_POLL */
 			if(testPruError())
 			{
 				break;
@@ -907,7 +914,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		}
 
 		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
-#endif
+#endif /* BELA_USE_POLL || BELA_USE_BUSYWAIT */
 #ifdef BELA_USE_RTDM
 		// make sure we always sleep a tiny bit to prevent hanging the board
 		if(!highPerformanceMode) // unless the user requested us not to.
@@ -1518,7 +1525,7 @@ void PRU::waitForFinish()
 {
 	if(!running)
 		return;
-#ifdef BELA_USE_POLL
+#if defined BELA_USE_POLL || defined BELA_USE_BUSYWAIT
 	// nothing to wait for
 #endif
 #ifdef BELA_USE_RTDM

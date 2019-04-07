@@ -86,30 +86,30 @@ std::vector<std::string> gMidiPortNames;
 
 void dumpMidi()
 {
-if(midi.size() == 0)
-{
-	printf("No MIDI device enabled\n");
-	return;
-}
-printf("The following MIDI devices are enabled:\n");
-printf("%4s%20s %3s %3s %s\n",
-		"Num",
-		"Name",
-		"In",
-		"Out",
-		"Pd channels"
-      );
-for(unsigned int n = 0; n < midi.size(); ++n)
-{
-	printf("[%2d]%20s %3s %3s (%d-%d)\n", 
-		n,
-		gMidiPortNames[n].c_str(),
-		midi[n]->isInputEnabled() ? "x" : "_",
-		midi[n]->isOutputEnabled() ? "x" : "_",
-		n * 16 + 1,
-		n * 16 + 16
-	);
-}
+	if(midi.size() == 0)
+	{
+		printf("No MIDI device enabled\n");
+		return;
+	}
+	printf("The following MIDI devices are enabled:\n");
+	printf("%4s%20s %3s %3s %s\n",
+			"Num",
+			"Name",
+			"In",
+			"Out",
+			"Pd channels"
+	      );
+	for(unsigned int n = 0; n < midi.size(); ++n)
+	{
+		printf("[%2d]%20s %3s %3s (%d-%d)\n", 
+			n,
+			gMidiPortNames[n].c_str(),
+			midi[n]->isInputEnabled() ? "x" : "_",
+			midi[n]->isOutputEnabled() ? "x" : "_",
+			n * 16,
+			n * 16 + 15
+		);
+	}
 }
 
 Midi* openMidiDevice(std::string name, bool verboseSuccess = false, bool verboseError = false)

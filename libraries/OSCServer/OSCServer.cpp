@@ -2,7 +2,9 @@
 #include "OSCServer.h"
 
 // constructor
-OSCServer::OSCServer(){}
+OSCServer::OSCServer(){
+	fprintf(stderr, "Warning! OSCServer is deprecated, use OSCReceiver instead\n");
+}
 
 OSCServer::OSCServer(int port){
 	setup(port);
