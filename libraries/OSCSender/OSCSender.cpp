@@ -1,7 +1,7 @@
 /***** OSCSender.cpp *****/
 #include "OSCSender.h"
 #include <Bela.h>
-#include <UdpClient.h>
+#include <UdpClient/UdpClient.h>
 #include <oscpkt.hh>
 #include <AuxTaskNonRT.h>
 

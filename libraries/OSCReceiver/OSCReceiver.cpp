@@ -32,7 +32,7 @@ void OSCReceiver::setup(int port, std::function<void(oscpkt::Message* msg)> _on_
     pr = std::unique_ptr<oscpkt::PacketReader>(new oscpkt::PacketReader());
     
     socket = std::unique_ptr<UdpServer>(new UdpServer());
-    if(!socket->init(port)){
+    if(!socket->setup(port)){
         fprintf(stderr, "OSCReceiver: Unable to initialise UDP socket: %d %s\n", errno, strerror(errno));
         return;
     }
