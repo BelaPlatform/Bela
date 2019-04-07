@@ -58,7 +58,7 @@ GuiSlider.prototype.onInput = function(callback) {
 
 GuiSlider.prototype.getVal = function(val) {
         if(this.element != null) {
-            console.log("No event listener for the onInput() function for slider %d has been defined.", this.id);
+            console.log("No getVal() method for slider %d has been defined.", this.id);
             console.log("You should define one according to your GUI framework.");
             console.log("\n");
         } else {
