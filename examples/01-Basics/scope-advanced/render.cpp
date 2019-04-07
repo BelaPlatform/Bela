@@ -1,5 +1,5 @@
 #include <Bela.h>
-#include <Scope/Scope.h>
+#include <libraries/Scope/Scope.h>
 #include <math_neon.h>
 
 #define NUM_OSC 12

@@ -27,7 +27,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <signal.h>
 #include <string>
 #include <getopt.h>
-#include <sndfile/sndfile.h>				// to load audio files
+#include <libraries/sndfile/sndfile.h>				// to load audio files
 
 #include <Bela.h>
 #include "SampleData.h"

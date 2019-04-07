@@ -5,7 +5,7 @@
 // (c) V Lazzarini, 2018
 
 #include <Bela.h>
-#include <csound/csound.h>
+#include <libraries/csound/csound.h>
 #include <string>
 #include <vector>
 

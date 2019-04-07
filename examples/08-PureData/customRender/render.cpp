@@ -39,9 +39,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 extern "C" {
 #include <libpd/s_stuff.h>
 };
-#include <UdpServer/UdpServer.h>
-#include <Midi/Midi.h>
-#include <Scope/Scope.h>
+#include <libraries/UdpServer/UdpServer.h>
+#include <libraries/Midi/Midi.h>
+#include <libraries/Scope/Scope.h>
 #include <string>
 #include <sstream>
 #include <algorithm>

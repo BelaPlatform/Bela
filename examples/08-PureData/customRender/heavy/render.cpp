@@ -22,8 +22,8 @@ The Bela software is distributed under the GNU Lesser General Public License
 */
 
 #include <Bela.h>
-#include <Midi/Midi.h>
-#include <Scope/Scope.h>
+#include <libraries/Midi/Midi.h>
+#include <libraries/Scope/Scope.h>
 #include <cmath>
 #include <Heavy_bela.h>
 #include <string.h>

@@ -23,7 +23,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h> 
-#include <WriteFile/WriteFile.h>
+#include <libraries/WriteFile/WriteFile.h>
 
 WriteFile file1;
 WriteFile file2;

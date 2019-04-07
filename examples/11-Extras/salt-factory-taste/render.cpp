@@ -1,6 +1,6 @@
 #include <Bela.h>
 #include <math.h>
-#include <Scope/Scope.h>
+#include <libraries/Scope/Scope.h>
 
 #define PRINTONCE(...) {\
 	static bool printed = false;\

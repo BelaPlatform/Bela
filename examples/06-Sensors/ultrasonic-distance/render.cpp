@@ -23,8 +23,8 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <stdlib.h>
-#include <Scope/Scope.h>
-#include <PulseIn/PulseIn.h>
+#include <libraries/Scope/Scope.h>
+#include <libraries/PulseIn/PulseIn.h>
 
 PulseIn pulseIn;
 Scope scope;
