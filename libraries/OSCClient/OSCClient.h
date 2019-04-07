@@ -2,7 +2,7 @@
 #ifndef __OSCClient_H_INCLUDED__
 #define __OSCClient_H_INCLUDED__ 
 
-#include <libraries/UdpClient/UdpClient.h>
+#include <UdpClient/UdpClient.h>
 #include <Bela.h>
 #include <oscpkt.hh>
 #include <queue>
