@@ -1,5 +1,5 @@
-#include <Scope.h>
-#include <ne10/NE10.h>
+#include "Scope.h"
+#include <libraries/ne10/NE10.h>
 #include <math.h>
 #include <WSServer.h>
 #include <JSON.h>
