@@ -20,7 +20,6 @@
 #include <algorithm>	// reverse() [string...]
 
 #include <libraries/I2c_TouchKey/I2c_TouchKey.h>
-#include "AnalogInput.h"
 #include <GPIOcontrol.h>	// TODO wrap this into a class
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
