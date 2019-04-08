@@ -72,12 +72,12 @@ class ToolbarView extends View {
         window.open('scope');
       });
 
-    $('[data-toolbar-shutdown]')
+    $('[data-toolbar-gui]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.gui + '</p>');
 			})
 			.mouseout(function() {
-				$('[data-toolbar-controltext3]').html('');
+				$('[data-toolbar-controltext2]').html('');
 			});
 	}
 
