@@ -91,7 +91,7 @@ class ProjectView extends View {
 		popup.subtitle(json.popups.save_as.text);
 
 		var form = [];
-		form.push('<input type="text" placeholder="Enter the new project name">');
+		form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
 		form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">'+json.popups.save_as.button+'</button>');
 		form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -141,11 +141,17 @@ class ProjectView extends View {
 
 		var $projects = $('[data-projects-select]');
 
-    // var option = $('<ul></ul>').addClass('dropdown-content').attr('data-dropdown', 'project');
 		// fill project menu with projects
-		for (let i=0; i<projects.length; i++){
+    if (projects.length > 0) {
+      var projLen = projects.length;
+    }
+    $projects.attr('size', (projLen - 1));
+		for (let i=0; i < projLen; i++){
 			if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
-				$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects);
+				$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function() {
+          $(this).blur();
+          $(this).parent().parent().removeClass('show');
+        });
 			}
 		}
 

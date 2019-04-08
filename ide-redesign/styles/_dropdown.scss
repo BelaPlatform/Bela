@@ -86,7 +86,34 @@ select.dropdown-num {
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   /* Links inside the dropdown */
-  ul, select {
+  select {
+    border: none;
+    display: table;
+    font-size: 11px;
+    margin-bottom: -22px;
+    padding-bottom: 2px;
+    padding-top: 0;
+    width: 200px;
+    option {
+      color: black;
+      cursor: pointer;
+      display: block;
+      font-family: poppins_regular;
+      font-size: 10px;
+      opacity: 1;
+      padding: 8px 16px;
+      text-decoration: none;
+      &:hover {
+        background-color: $grey-light;
+        color: rgba(0, 0, 0, 0.9);
+      }
+      &:active, &:focus {
+        background-color: $grey-mid;
+        color: rgba(0, 0, 0, 0.9);
+      }
+    }
+  }
+  ul {
     width: 200px;
     padding-left: 28px;
     padding-top: 0;
@@ -95,7 +122,7 @@ select.dropdown-num {
     height: 22px;
     display: table;
     padding-bottom: 2px;
-    > li, span, a, option {
+    > li, span, a {
       color: black;
       cursor: pointer;
       display: block;

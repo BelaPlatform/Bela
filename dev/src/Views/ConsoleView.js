@@ -1,6 +1,8 @@
 'use strict';
 var View = require('./View');
+var popup = require('../popup');
 var _console = require('../console');
+var json = require('../site-text.json');
 
 var shellCWD = '~';
 
@@ -18,9 +20,8 @@ class ConsoleView extends View{
 		this.on('openNotification', this.openNotification);
 		this.on('closeNotification', this.closeNotification);
 		this.on('openProcessNotification', this.openProcessNotification);
-
 		this.on('log', (text, css) => _console.log(text, css));
-		this.on('warn', function(warning, id){
+		this.on('warn', function(warning, id) {
 			console.log(warning);
 			_console.warn(warning, id);
 		});
@@ -121,6 +122,7 @@ class ConsoleView extends View{
 		}
 		_console.notify(output+'...', data.timestamp);
 	}
+
 	closeNotification(data){
 		if (data.error){
 			_console.reject(' '+data.error, data.timestamp);
@@ -139,9 +141,10 @@ class ConsoleView extends View{
 		$('[data-console-disconnet]').remove();
 		_console.unblock();
 	}
+
 	disconnect(){
 		console.log('disconnected');
-		_console.warn('You have been disconnected from the Bela IDE and any more changes you make will not be saved. Please check your USB connection and reboot your BeagleBone', 'console-disconnect');
+		_console.warn( json.console.disconnect, 'console-disconnect');
 		_console.block();
 	}
 
@@ -181,6 +184,7 @@ class ConsoleView extends View{
 			_console.warn(log);
 		//_console.warn(log.split(' ').join('&nbsp;'));
 	}
+
 	__belaResult(data){
 		//if (data.stderr && data.stderr.split) _console.warn(data.stderr.split(' ').join('&nbsp;'));
 		//if (data.signal) _console.warn(data.signal);
@@ -190,17 +194,18 @@ class ConsoleView extends View{
 	_building(status, data){
 		var timestamp = performance.now();
 		if (status){
-			_console.notify('Building project...', timestamp, true);
+			_console.notify('Building project ...', timestamp, true);
 			_console.fulfill('', timestamp, true);
 		} else {
 			_console.notify('Build finished', timestamp, true);
 			_console.fulfill('', timestamp, true);
 		}
 	}
+
 	_running(status, data){
 		var timestamp = performance.now();
 		if (status){
-			_console.notify('Running project...', timestamp, true);
+			_console.notify('Running project ...', timestamp, true);
 			_console.fulfill('', timestamp, true);
 		} else {
 			_console.notify('Bela stopped', timestamp, true);
