@@ -26,7 +26,6 @@ gulp.task('watch', () => {
 
 	gulp.watch(['src/*.ts'], gulp.series('compile'));
 	gulp.watch(['dist/*.js'], gulp.series('idestop', 'upload_dist', 'idestart'));
-  gulp.watch('../ide-redesign/styles/*.scss', ['styles']);
 
 	let ssh = spawn('ssh', [user+'@'+host, 'journalctl -fu bela_ide']);
 	ssh.stdout.setEncoding('utf8');
@@ -49,12 +48,12 @@ gulp.task('watch_test', () => {
 
 gulp.task('compile', () => {
 	return gulp.src('src/*.ts')
-		.pipe(sourcemaps.init())
+		//.pipe(sourcemaps.init())
 		.pipe(ts({
 			"noImplicitAny": true,
 			"target": "es5"
 		}))
-		.pipe(sourcemaps.write())
+		//.pipe(sourcemaps.write())
 		.pipe(gulp.dest('dist'));
 });
 gulp.task('compile_test', () => {
