@@ -368,7 +368,7 @@ $(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/%.cpp # TODO: should more flags be do
 ifeq (,$(filter $(NO_PROJECT_TARGETS),$(MAKECMDGOALS)))
   ifeq ($(SHOULD_BUILD),true)
     ifeq (,$(filter clean projectclean,$(MAKECMDGOALS)))
-      include $(PROJECT_LIBRARIES_MAKEFILE)
+      -include $(PROJECT_LIBRARIES_MAKEFILE)
     endif # clean
   endif # SHOULD_BUILD
 endif # filter
