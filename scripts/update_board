@@ -163,7 +163,7 @@ fi
 error_handler $?
 
 # a bunch of files to be processed manually to special locations
-ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do make -C \"\$DIR\" install || exit 1;  done"
+ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do [ -d \"\$DIR\" ] && { make -C \"\$DIR\" install || exit 1; }; done"
 error_handler $?
 
 # remove stale version of libraries on old images
