@@ -11,7 +11,7 @@ SCRIPTDIR=$(dirname "$0")
 
 [ -z "$IDE_FOLDER" ] && IDE_FOLDER=$SCRIPTDIR/../IDE
 [ -z "$FORCE_REPLACE" ] && FORCE_REPLACE=0
-FILES_TO_COPY="core include Makefile examples Doxyfile scripts resources pru"
+FILES_TO_COPY="core include Makefile examples Doxyfile scripts resources pru libraries"
 
 # The following variables are manually copied from the Makefile.
 # It is a bit nasty, but here we need to handle the case that the board may be 
