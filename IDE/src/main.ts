@@ -70,7 +70,7 @@ function setup_routes(app: express.Application){
 	// doxygen xml
 	app.get('/documentation_xml', routes.doxygen);
   // libs
-  app.get('/libraries', routes.libraries_list);
+  app.use('/libraries', express.static(paths.libraries));
 }
 
 export function get_xenomai_version(): Promise<string>{

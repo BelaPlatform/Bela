@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -65,7 +65,6 @@ function read() {
     });
 }
 exports.read = read;
-
 function write(data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -82,7 +81,6 @@ function write(data) {
     });
 }
 exports.write = write;
-
 function setIDESetting(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, e_1;
@@ -114,7 +112,6 @@ function setIDESetting(data) {
     });
 }
 exports.setIDESetting = setIDESetting;
-
 function get_setting(key) {
     return __awaiter(this, void 0, void 0, function () {
         var settings;
@@ -129,7 +126,6 @@ function get_setting(key) {
     });
 }
 exports.get_setting = get_setting;
-
 function restoreDefaultIDESettings(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, newSettings, e_2;
@@ -162,7 +158,6 @@ function restoreDefaultIDESettings(data) {
     });
 }
 exports.restoreDefaultIDESettings = restoreDefaultIDESettings;
-
 function default_IDE_settings() {
     return {
         'project': 'basic',
