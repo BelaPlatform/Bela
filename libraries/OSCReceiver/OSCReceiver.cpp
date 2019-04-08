@@ -2,7 +2,7 @@
 #include "OSCReceiver.h"
 #include <Bela.h>
 #include <AuxTaskNonRT.h>
-#include <UdpServer/UdpServer.h>
+#include <libraries/UdpServer/UdpServer.h>
 
 OSCReceiver::OSCReceiver(){}
 OSCReceiver::OSCReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive){
