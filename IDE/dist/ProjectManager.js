@@ -1,4 +1,5 @@
 "use strict";
+
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -7,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -34,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+
 Object.defineProperty(exports, "__esModule", { value: true });
 var file_manager = require("./FileManager");
 var git_manager = require("./GitManager");
@@ -43,13 +46,14 @@ var readChunk = require("read-chunk");
 var fileType = require("file-type");
 var max_file_size = 50000000; // bytes (50Mb)
 // all ProjectManager methods are async functions called when websocket messages
-// with the field event: 'project-event' is received. The function called is 
+// with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
 // as the data variable, and is modified and returned by the method, and sent
 // back over the websocket
 // openFile takes a message with currentProject and newFile fields
 // it opens the file from the project, if it is not too big or binary
 // if the file is an image or audio file, it is symlinked from the media folder
+
 function openFile(data) {
     return __awaiter(this, void 0, void 0, function () {
         var file_path, file_stat, e_1, _i, _a, file, chunk, file_type, is_binary, _b, e_2;
@@ -163,6 +167,7 @@ function openFile(data) {
     });
 }
 exports.openFile = openFile;
+
 // these two methods are exceptions and don't take the data object
 function listProjects() {
     return __awaiter(this, void 0, void 0, function () {
@@ -172,6 +177,7 @@ function listProjects() {
     });
 }
 exports.listProjects = listProjects;
+
 function listExamples() {
     return __awaiter(this, void 0, void 0, function () {
         var examples, categories, _i, categories_1, category, _a, _b, _c;
@@ -202,12 +208,52 @@ function listExamples() {
                 case 5:
                     _i++;
                     return [3 /*break*/, 2];
-                case 6: return [2 /*return*/, examples];
+                case 6:
+                    return [2 /*return*/, examples];
             }
         });
     });
 }
 exports.listExamples = listExamples;
+
+function listLibraries() {
+  return __awaiter(this, void 0, void 0, function () {
+      var libraries, categories, _i, categories_1, category, _a, _b, _c;
+      return __generator(this, function (_d) {
+          switch (_d.label) {
+              case 0:
+                  libraries = [];
+                  return [4 /*yield*/, file_manager.read_directory(paths.libraries)];
+              case 1:
+                  categories = _d.sent();
+                  _i = 0, categories_1 = categories;
+                  _d.label = 2;
+              case 2:
+                  if (!(_i < categories_1.length)) return [3 /*break*/, 6];
+                  category = categories_1[_i];
+                  return [4 /*yield*/, file_manager.directory_exists(paths.libraries + '/' + category)];
+              case 3:
+                  if (!_d.sent()) return [3 /*break*/, 5];
+                  _b = (_a = libraries).push;
+                  _c = {
+                      name: category
+                  };
+                  return [4 /*yield*/, file_manager.read_directory(paths.libraries + '/' + category)];
+              case 4:
+                  _b.apply(_a, [(_c.children = _d.sent(),
+                          _c)]);
+                  _d.label = 5;
+              case 5:
+                  _i++;
+                  return [3 /*break*/, 2];
+              case 6:
+                  return [2 /*return*/, libraries];
+          }
+      });
+  });
+}
+exports.listLibraries = listLibraries;
+
 function openProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a, settings;
@@ -240,6 +286,7 @@ function openProject(data) {
     });
 }
 exports.openProject = openProject;
+
 function openExample(data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -261,6 +308,7 @@ function openExample(data) {
     });
 }
 exports.openExample = openExample;
+
 function newProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a;
@@ -290,6 +338,7 @@ function newProject(data) {
     });
 }
 exports.newProject = newProject;
+
 function saveAs(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a;
@@ -322,6 +371,7 @@ function saveAs(data) {
     });
 }
 exports.saveAs = saveAs;
+
 function deleteProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a, _i, _b, project;
@@ -358,6 +408,7 @@ function deleteProject(data) {
     });
 }
 exports.deleteProject = deleteProject;
+
 function cleanProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -374,6 +425,7 @@ function cleanProject(data) {
     });
 }
 exports.cleanProject = cleanProject;
+
 function newFile(data) {
     return __awaiter(this, void 0, void 0, function () {
         var file_path, _a;
@@ -402,6 +454,7 @@ function newFile(data) {
     });
 }
 exports.newFile = newFile;
+
 function uploadFile(data) {
     return __awaiter(this, void 0, void 0, function () {
         var file_path, file_exists, _a, _b;
@@ -440,6 +493,7 @@ function uploadFile(data) {
     });
 }
 exports.uploadFile = uploadFile;
+
 function cleanFile(project, file) {
     return __awaiter(this, void 0, void 0, function () {
         var split_file, ext, file_root, file_path;
@@ -468,6 +522,7 @@ function cleanFile(project, file) {
     });
 }
 exports.cleanFile = cleanFile;
+
 function renameFile(data) {
     return __awaiter(this, void 0, void 0, function () {
         var file_path, file_exists, _a, _b;
@@ -508,6 +563,7 @@ function renameFile(data) {
     });
 }
 exports.renameFile = renameFile;
+
 function deleteFile(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a;
@@ -532,6 +588,7 @@ function deleteFile(data) {
     });
 }
 exports.deleteFile = deleteFile;
+
 function listFiles(project) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {

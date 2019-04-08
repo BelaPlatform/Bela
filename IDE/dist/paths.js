@@ -4,6 +4,7 @@ exports.Bela = '/root/Bela/';
 exports.webserver_root = exports.Bela + 'IDE/public/';
 exports.projects = exports.Bela + 'projects/';
 exports.examples = exports.Bela + 'examples/';
+exports.libraries = exports.Bela + 'libraries/';
 exports.exampleTempProject = exports.projects + 'exampleTempProject/';
 exports.media = exports.Bela + 'IDE/public/media/';
 exports.templates = exports.Bela + 'IDE/templates/';

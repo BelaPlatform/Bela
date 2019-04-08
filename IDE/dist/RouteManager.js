@@ -5,6 +5,7 @@ var paths = require("./paths");
 var socket_manager = require("./SocketManager");
 var archiver = require("archiver");
 var mime = require("mime");
+
 function download(req, res) {
     if (req.query.all) {
         download_all(res);
@@ -17,14 +18,17 @@ function download(req, res) {
     }
 }
 exports.download = download;
+
 // zip the entire projects directory and send back
 function download_all(res) {
     send_zip(paths.projects, 'projects', res);
 }
+
 // zip a single project directory and send back
 function download_project(req, res) {
     send_zip(paths.projects + req.query.project, req.query.project, res);
 }
+
 function send_zip(path, name, res) {
     res.setHeader('Content-disposition', 'attachment; filename=' + name + '.zip');
     res.setHeader('Content-type', 'application/zip');
@@ -37,6 +41,7 @@ function send_zip(path, name, res) {
     archive.directory(path, name, { name: name + '.zip' });
     archive.finalize();
 }
+
 function download_file(req, res) {
     var file = paths.projects + req.query.project + '/' + req.query.file;
     res.setHeader('Content-disposition', 'attachment; filename=' + req.query.file);
@@ -44,6 +49,7 @@ function download_file(req, res) {
     // this should really go through the file_manager lock - TODO
     fs.createReadStream(file).pipe(res);
 }
+
 function doxygen(req, res) {
     res.set('Content-Type', 'text/xml');
     // this should really go through the file_manager lock - TODO

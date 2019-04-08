@@ -35,6 +35,9 @@ ul {
 		margin-right: 5px;
 		size: 12px;
 	}
+  &.sourceFile {
+    cursor: pointer;
+  }
 }
 
 .example-list > li {

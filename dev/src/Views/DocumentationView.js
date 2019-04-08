@@ -86,7 +86,6 @@ class DocumentationView extends View {
   }
 
 }
-
 module.exports = DocumentationView;
 
 function createlifrommemberdef($xml, id, emitter, type){

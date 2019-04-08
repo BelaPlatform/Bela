@@ -1,0 +1,58 @@
+ul {
+  &.libraries-list-parent {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    .libraries-list {
+      li {
+        color: rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+        font-family: poppins_regular;
+      	font-size: 14px;
+      	padding: 4px 12px;
+        &:hover,
+        &.selected {
+      		background: rgba(255, 255, 0, 0.2);
+      	}
+      	&:before {
+          content: '>'; /* Unicode character for "minus" sign (-) */
+          font-family: poppins_light;
+      		margin-right: 5px;
+      		size: 12px;
+      	}
+      }
+    }
+    .file-heading {
+      border-bottom: 1px solid $grey-mid;
+      font-family: poppins_regular;
+      margin: 0;
+      padding: 3px 0 3px 10px;
+      width: calc(100% - 10px);
+    }
+  }
+  .copy {
+    cursor: pointer;
+    user-select: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  .hide-include {
+    border: none;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    position: absolute;
+    resize: none;
+    width: 0;
+  }
+  pre {
+    white-space: inherit;
+  }
+  dl {
+    padding: 3px 0px 3px 10px;
+    dt, dd {
+      font-size: 14px;
+    }
+  }
+}
