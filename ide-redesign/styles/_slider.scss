@@ -1,0 +1,53 @@
+// This is the component used in the Scope to adjust values
+
+input[type="range"].range-slider {
+  appearance: none;
+  background: transparent;
+  margin: 0 auto;
+  padding: 3px 0;
+  width: 80%;
+  transition: .25s, ease-in-out;
+
+  &::-webkit-slider-runnable-track {
+    background: rgba(0,0,0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 20px;
+    padding: 2px 2px 2px 2px;
+  }
+  &::-webkit-slider-thumb {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba($white, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    height: 16px;
+    margin-top: 0px;
+    transition: .25s, ease-in-out;
+    width: 16px;
+  }
+  &:hover::-webkit-slider-runnable-track, &:active::-webkit-slider-runnable-track {
+    background: $teal-01;
+    transition: background, 100ms, ease-in-out;
+    &::-webkit-slider-thumb {
+      margin-top: 0;
+    }
+  }
+  &:hover::-webkit-slider-thumb, &:active::-webkit-slider-thumb {
+    background-color: $white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    
+  }
+
+  &:disabled {
+    &::-webkit-slider-runnable-track {
+      background: rgba(0,0,0, 0.2);
+    }
+    &::-webkit-slider-thumb {
+      background: rgba($white, 0.2);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+  }
+      
+}
