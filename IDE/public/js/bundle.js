@@ -536,6 +536,10 @@ toolbarView.on('process-event', function (event) {
 	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
 	socket.emit('process-event', data);
 });
+toolbarView.on('halt', function () {
+	socket.emit('shutdown');
+	consoleView.emit('warn', 'Shutting down...');
+});
 toolbarView.on('clear-console', function () {
 	return consoleView.emit('clear', true);
 });
@@ -1174,7 +1178,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
 var _console = require('../console');
+var json = require('../site-text.json');
 
 var shellCWD = '~';
 
@@ -1201,7 +1207,6 @@ var ConsoleView = function (_View) {
 		_this.on('openNotification', _this.openNotification);
 		_this.on('closeNotification', _this.closeNotification);
 		_this.on('openProcessNotification', _this.openProcessNotification);
-
 		_this.on('log', function (text, css) {
 			return _console.log(text, css);
 		});
@@ -1505,7 +1510,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3014,11 +3019,17 @@ var ProjectView = function (_View) {
 
 			var $projects = $('[data-projects-select]');
 
-			// var option = $('<ul></ul>').addClass('dropdown-content').attr('data-dropdown', 'project');
 			// fill project menu with projects
-			for (var i = 0; i < projects.length; i++) {
+			if (projects.length > 0) {
+				var projLen = projects.length;
+			}
+			$projects.attr('size', projLen - 1);
+			for (var i = 0; i < projLen; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects);
+					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
+						$(this).blur();
+						$(this).parent().parent().removeClass('show');
+					});
 				}
 			}
 
@@ -3415,7 +3426,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'aboutPopup',
 		value: function aboutPopup() {
-
 			// build the popup content
 			popup.title(json.popups.about.title);
 			popup.subtitle(json.popups.about.text);
@@ -3544,7 +3554,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'useAudioExpander',
 		value: function useAudioExpander(func, key, val) {
-
 			if (val == 1) {
 				this.setCLArg('setCLArg', key, val);
 			} else {
@@ -3556,7 +3565,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'setAudioExpander',
 		value: function setAudioExpander(key, val) {
-
 			if (!val.length) return;
 
 			var channels = val.split(',');
@@ -3832,6 +3840,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
+var json = require('../site-text.json');
 
 // ohhhhh i am a comment
 
@@ -3880,6 +3890,7 @@ var ToolbarView = function (_View) {
 		});
 
 		$('[data-toolbar-console]').mouseover(function () {
+			console.log('ping');
 			$('[data-toolbar-controltext2]').html('<p>Clear console</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
@@ -3890,8 +3901,15 @@ var ToolbarView = function (_View) {
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
+
 		$('[data-toolbar-scope]').on('click', function () {
 			window.open('scope');
+		});
+
+		$('[data-toolbar-shutdown]').mouseover(function () {
+			$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
+		}).mouseout(function () {
+			$('[data-toolbar-controltext3]').html('');
 		});
 		return _this;
 	}
@@ -3929,9 +3947,9 @@ var ToolbarView = function (_View) {
 		key: '__running',
 		value: function __running(status) {
 			if (status) {
-				$('[data-toolbar-run]').removeClass('building-button').addClass('running-button');
+				$('[data-toolbar-run]').removeClass('building-button').removeClass('building').addClass('running-button').addClass('running');
 			} else {
-				$('[data-toolbar-run]').removeClass('running-button');
+				$('[data-toolbar-run]').removeClass('running').removeClass('running-button');
 				$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
 				$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 				modeswitches = 0;
@@ -3941,9 +3959,9 @@ var ToolbarView = function (_View) {
 		key: '__building',
 		value: function __building(status) {
 			if (status) {
-				$('[data-toolbar-run]').removeClass('running-button').addClass('building-button');
+				$('[data-toolbar-run]').removeClass('running-button').removeClass('running').addClass('building-button').addClass('building');
 			} else {
-				$('[data-toolbar-run]').removeClass('building-button');
+				$('[data-toolbar-run]').removeClass('building-button').removeClass('building');
 			}
 		}
 	}, {
@@ -3977,6 +3995,31 @@ var ToolbarView = function (_View) {
 				rootName = '[ROOT]';
 				IRQName = '[IRQ16:';
 			}
+		}
+	}, {
+		key: 'shutdownBBB',
+		value: function shutdownBBB() {
+			var _this2 = this;
+
+			// build the popup content
+			popup.title(json.popups.shutdown.title);
+			popup.subtitle(json.popups.shutdown.text);
+
+			var form = [];
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				_this2.emit('halt');
+				popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
+
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: '_CPU',
@@ -4056,7 +4099,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"./View":14}],14:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4199,6 +4242,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
 //var $ = require('jquery-browserify');
 
@@ -4223,6 +4267,7 @@ var Console = function (_EventEmitter) {
 
 		_this.$element = $('[data-console-contents-wrapper]');
 		_this.parent = $('[data-console]');
+		_this.popUpComponents = "";
 		return _this;
 	}
 
@@ -4316,7 +4361,6 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'newErrors',
 		value: function newErrors(errors) {
-			var _this2 = this;
 
 			//this.checkScroll();
 			scrollEnabled = true;
@@ -4328,47 +4372,26 @@ var Console = function (_EventEmitter) {
 			var _iteratorError = undefined;
 
 			try {
-				var _loop = function _loop() {
+				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var err = _step.value;
 
 
 					// create the element and add it to the error object
-					div = $('<div></div>').addClass('beaglert-console-i' + err.type);
+					var div = $('<div></div>').addClass('beaglert-console-i' + err.type);
 
 					// create the link and add it to the element
-
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+					var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 					// add a button to copy the contents to the clipboard
+					var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
 
-					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
-					clipboard = new Clipboard(copyButton[0], {
+					var clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
 						}
 					});
 
-
-					div.appendTo(_this2.$element);
-
-					if (err.currentFile) {
-						span.on('click', function () {
-							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
-						});
-					} else {
-						span.on('click', function () {
-							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
-						});
-					}
-				};
-
-				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var div;
-					var span;
-					var copyButton;
-					var clipboard;
-
-					_loop();
+					div.appendTo(this.$element);
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -4403,7 +4426,7 @@ var Console = function (_EventEmitter) {
 
 			$('#' + id).remove();
 			var el = this.print(notice, 'notify', id);
-
+			this.popUpComponents = notice;
 			this.scroll();
 
 			return el;
@@ -4439,6 +4462,16 @@ var Console = function (_EventEmitter) {
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
+			var form = [];
+			popup.title('Error');
+			popup.subtitle(this.popUpComponents);
+			popup.body(message);
+			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			popup.form.append(form.join(''));
+			popup.find('.popup-cancel').on('click', function () {
+				popup.hide();
+			});
+			popup.show();
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);
@@ -4478,12 +4511,12 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'scroll',
 		value: function scroll() {
-			var _this3 = this;
+			var _this2 = this;
 
 			if (scrollEnabled) {
 				scrollEnabled = false;
 				setTimeout(function () {
-					return _this3.parent.scrollTop = _this3.parent.scrollHeight;
+					return _this2.parent.scrollTop = _this2.parent.scrollHeight;
 				}, 0);
 			}
 		}
@@ -4498,7 +4531,6 @@ var Console = function (_EventEmitter) {
 }(EventEmitter);
 
 ;
-
 module.exports = new Console();
 
 // gracefully remove a console element after an event ((this) must be bound to the element)
@@ -4512,7 +4544,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"events":1}],16:[function(require,module,exports){
+},{"./popup":18,"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -4983,7 +5015,8 @@ var _overlay = $('[data-overlay]');
 var parent = $('[data-popup]');
 var content = $('[data-popup-content]');
 var titleEl = parent.find('h1');
-var subEl = parent.find('p');
+var subEl = parent.find('h3');
+var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
 var popup = {
@@ -4997,6 +5030,7 @@ var popup = {
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
+		bodyEl.empty();
 		_formEl.empty();
 	},
 	overlay: function overlay() {
@@ -5013,6 +5047,9 @@ var popup = {
 	},
 	subtitle: function subtitle(text) {
 		return subEl.text(text);
+	},
+	body: function body(text) {
+		return bodyEl.text(text);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);
@@ -5034,8 +5071,8 @@ function example(cb, arg, delay, cancelCb) {
 
 	// build the popup content
 	popup.title('Save your changes?');
-	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-
+	popup.subtitle('Warning: Any unsaved changes will be lost');
+	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');

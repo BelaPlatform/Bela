@@ -25,76 +25,76 @@
       }
     }
     &.explorer {
-      background-image: url('../images/icons/explorer_white.svg');
+      background-image: url('../images/icons/folder_inactive.svg');
       background-position: center;
       background-repeat: no-repeat;
       &:hover {
-        background-image: url('../images/icons/explorer_green.svg');
+        background-image: url('../images/icons/folder_active.svg');
         background-position: center;
         background-repeat: no-repeat;
       }
       &.active{
-        background-image: url('../images/icons/explorer_green.svg');
+        background-image: url('../images/icons/folder_active.svg');
         background-position: center;
         background-repeat: no-repeat;
       }
     }
     &.examples {
-      background-image: url('../images/icons/examples_white.svg');
+      background-image: url('../images/icons/examples_inactive.svg');
       background-position: center;
       background-repeat: no-repeat;
         &:hover {
-          background-image: url('../images/icons/examples_green.svg');
+          background-image: url('../images/icons/examples_active.svg');
           background-position: center;
           background-repeat: no-repeat;
         }
         &.active {
-          background-image: url('../images/icons/examples_green.svg');
+          background-image: url('../images/icons/examples_active.svg');
           background-position: center;
           background-repeat: no-repeat;
         }
       }
       &.settings {
-        background-image: url('../images/icons/settings_white.svg');
+        background-image: url('../images/icons/settings_inactive.svg');
         background-repeat: no-repeat;
         background-position: center;
       &:hover {
-        background-image: url('../images/icons/settings_green.svg');
+        background-image: url('../images/icons/settings_active.svg');
         background-position: center;
         background-repeat: no-repeat;
       }
       &.active {
-        background-image: url('../images/icons/settings_green.svg');
+        background-image: url('../images/icons/settings_active.svg');
         background-position: center;
         background-repeat: no-repeat;
       }
     }
     &.pins {
-      background-image: url('../images/icons/pins_white.svg');
+      background-image: url('../images/icons/pins_inactive.svg');
       background-position: center;
       background-repeat: no-repeat;
     &:hover {
-      background-image: url('../images/icons/pins_green.svg');
+      background-image: url('../images/icons/pins_active.svg');
       background-position: center;
       background-repeat: no-repeat;
     }
     &.active {
-      background-image: url('../images/icons/pins_green.svg');
+      background-image: url('../images/icons/pins_active.svg');
       background-position: center;
       background-repeat: no-repeat;
     }
   }
   &.refs {
-    background-image: url('../images/icons/refs_white.svg');
+    background-image: url('../images/icons/refs_inactive.svg');
     background-position: center;
     background-repeat: no-repeat;
     &:hover {
-      background-image: url('../images/icons/refs_green.svg');
+      background-image: url('../images/icons/refs_active.svg');
       background-position: center;
       background-repeat: no-repeat;
     }
     &.active {
-      background-image: url('../images/icons/refs_green.svg');
+      background-image: url('../images/icons/refs_active.svg');
       background-position: center;
       background-repeat: no-repeat;
     }

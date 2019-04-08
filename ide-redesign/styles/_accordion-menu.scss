@@ -17,7 +17,7 @@ button.accordion {
     border-bottom: 2px solid $teal-main;
   }
   &.active {
-    background-color: $white;
+    background-color: $grey-light;
     border-bottom: 2px solid $teal-main;
     color: $grey-dark;
     padding: 8px 14px;
@@ -64,8 +64,7 @@ button.accordion-sub {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  transition: 0.2s ease-in-out;
-  transition-delay: 0.4s;
+  transition: 0.2s ease;
   &.show {
     max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
     opacity: 1;
@@ -77,7 +76,6 @@ button.accordion-sub {
   opacity: 0;
   overflow: hidden;
   transition: 0.2s ease-in-out;
-  transition-delay: 0.4s;
 }
 
 .panel.show {

@@ -11,6 +11,11 @@
   animation: running-button 2s linear infinite;
 }
 
+.building-button {
+  animation: running-button 3s linear infinite;
+}
+
+
 .toolbar {
   background: $grey-toolbar;
   bottom: 0;
@@ -29,6 +34,7 @@
     float: left;
     height: 40px;
     span {
+      cursor: pointer;
       display: inline-block;
       height: 35px;
       margin-top: 3px;
@@ -40,6 +46,12 @@
         &:hover {
           background-image: url("../images/icons/run_inactive.svg");
         }
+        &.building {
+          background-image: url("../images/icons/run_building.svg");
+        }
+        &.running {
+          background-image: url("../images/icons/run_running.svg");
+        }
       }
       &.stop {
         background-image: url("../images/icons/stop_active.svg");
@@ -50,32 +62,33 @@
         }
       }
       &.console-button {
-        background-image: url("../images/icons/console_inactive.svg");
+        background-image: url("../images/icons/console_inactive1.svg");
         background-repeat: no-repeat;
         &:hover {
-          background-image: url("../images/icons/console_active.svg");
+          background-image: url("../images/icons/console_active1.svg");
         }
       }
-      &.tab-button {
-        background-image: url("../images/icons/tabs_inactive.svg");
+      &.gui-button {
+        background-image: url("../images/icons/gui_inactive4.svg");
         background-repeat: no-repeat;
         padding: 0;
         &:hover {
-          background-image: url("../images/icons/tabs_active.svg");
-        }
-      }
-      &.drag-button {
-        background-image: url("../images/icons/drag_inactive.svg");
-        background-repeat: no-repeat;
-        &:hover {
-          background-image: url("../images/icons/drag_active.svg");
+          background-image: url("../images/icons/gui_active4.svg");
         }
       }
       &.scope-button {
-        background-image: url("../images/icons/scope_inactive.svg");
+        background-image: url("../images/icons/scope_inactive3.svg");
         background-repeat: no-repeat;
         &:hover {
-          background-image: url("../images/icons/scope_active.svg");
+          background-image: url("../images/icons/scope_active3.svg");
+        }
+      }
+      &.shutdown {
+        background-image: url("../images/icons/shutdown_active.svg");
+        background-repeat: no-repeat;
+        margin-left: 5px;
+        &:hover {
+          background-image: url("../images/icons/shutdown_hover.svg");
         }
       }
     }
@@ -84,16 +97,24 @@
     margin-top: 3px;
     padding-left: 10px;
     transition: 0.4s ease-in-out;
+    &#control-text-3 {
+      float: right;
+    }
   }
   .other {
     min-width: 175px;
   }
   .st-st {
-    min-width: 125px;
+    min-width: 100px;
   }
   .start-stop {
     padding-left: 10px;
-    width: 81px;
+    width: 85px;
+  }
+  .shutdown-parent {
+    float: right;
+    width: 45px;
+    padding-right: 50px;
   }
   .toolbar-functions {
     // min-width: 150px;
@@ -125,10 +146,10 @@
   }
   .logo {
     float: right;
-    min-width: 200px;
-    padding-right: 2.3em;
+    min-width: 120px;
     img {
       margin-top: -14px;
+      padding-right: 2.3em;
     }
   }
 }

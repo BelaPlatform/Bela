@@ -1,4 +1,6 @@
 var View = require('./View');
+var popup = require('../popup');
+var json = require('../site-text.json');
 
 // ohhhhh i am a comment
 
@@ -19,7 +21,7 @@ class ToolbarView extends View {
 
     $('[data-toolbar-run]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext1]').html('<p>Run</p>');
+				$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.run + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext1]').html('');
@@ -27,7 +29,7 @@ class ToolbarView extends View {
 
 		$('[data-toolbar-stop]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext1]').html('<p>Stop</p>');
+				$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.stop + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext1]').html('');
@@ -51,7 +53,7 @@ class ToolbarView extends View {
 
 		$('[data-toolbar-console]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext2]').html('<p>Clear console</p>');
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.clear + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext2]').html('');
@@ -59,15 +61,24 @@ class ToolbarView extends View {
 
 		$('[data-toolbar-scope]')
 			.mouseover(function() {
-				$('[data-toolbar-controltext2]').html('<p>Open scope</p>');
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.scope + '</p>');
 			})
 			.mouseout(function() {
 				$('[data-toolbar-controltext2]').html('');
 			});
+
     $('[data-toolbar-scope]')
       .on('click', function(){
         window.open('scope');
       });
+
+    $('[data-toolbar-gui]')
+			.mouseover(function() {
+				$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.gui + '</p>');
+			})
+			.mouseout(function() {
+				$('[data-toolbar-controltext2]').html('');
+			});
 	}
 
 	// UI events
@@ -93,26 +104,41 @@ class ToolbarView extends View {
 	// model events
 	__running(status){
 		if (status){
-			$('[data-toolbar-run]').removeClass('building-button').addClass('running-button');
+			$('[data-toolbar-run]')
+        .removeClass('building-button')
+        .removeClass('building')
+        .addClass('running-button')
+        .addClass('running');
 		} else {
-			$('[data-toolbar-run]').removeClass('running-button');
+			$('[data-toolbar-run]')
+        .removeClass('running')
+        .removeClass('running-button');
 			$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
   		$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 			modeswitches = 0;
 		}
 	}
+
 	__building(status){
 		if (status){
-  		$('[data-toolbar-run]').removeClass('running-button').addClass('building-button');
+  		$('[data-toolbar-run]')
+        .removeClass('running-button')
+        .removeClass('running')
+        .addClass('building-button')
+        .addClass('building');
 		} else {
-  		$('[data-toolbar-run]').removeClass('building-button');
+  		$('[data-toolbar-run]')
+        .removeClass('building-button')
+        .removeClass('building');
 		}
 	}
+
 	__checkingSyntax(status){
 		if (status){
   		$('[data-toolbar-status]').addClass('pending').removeClass('ok').removeClass('stop').prop('title', 'checking syntax&hellip;');
 		}
 	}
+
 	__allErrors(errors){
 		if (errors.length){
 			$('[data-toolbar-status]').removeClass('pending').removeClass('ok').addClass('stop').prop('title', 'syntax errors found');
@@ -134,6 +160,29 @@ class ToolbarView extends View {
 			rootName = '[ROOT]';
 			IRQName = '[IRQ16:';
 		}
+	}
+
+  shutdownBBB(){
+		// build the popup content
+		popup.title(json.popups.shutdown.title);
+		popup.subtitle(json.popups.shutdown.text);
+
+		var form = [];
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+		popup.form.append(form.join('')).off('submit').on('submit', e => {
+			e.preventDefault();
+			this.emit('halt');
+			popup.hide();
+		});
+
+		popup.find('.cancel').on('click', popup.hide );
+
+		popup.show();
+
+		popup.find('.confirm').trigger('focus');
+
 	}
 
 	_CPU(data){

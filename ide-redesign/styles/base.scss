@@ -98,6 +98,9 @@ img {
   display: none;
   font-family: monospace;
   overflow: auto;
+  #pd-svg {
+    background: $grey-light;
+  }
   &.active {
     display: block;
   }

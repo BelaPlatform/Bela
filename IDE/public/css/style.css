@@ -114,6 +114,8 @@ img {
   display: none;
   font-family: monospace;
   overflow: auto; }
+  #pd-svg-parent #pd-svg {
+    background: #f1f1f1; }
   #pd-svg-parent.active {
     display: block; }
 
@@ -161,7 +163,7 @@ button.accordion {
     background: #bdbdbd;
     border-bottom: 2px solid #00bea4; }
   button.accordion.active {
-    background-color: #ffffff;
+    background-color: #f1f1f1;
     border-bottom: 2px solid #00bea4;
     color: rgba(0, 0, 0, 0.8);
     padding: 8px 14px; }
@@ -201,10 +203,8 @@ button.accordion-sub {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  -webkit-transition: 0.2s ease-in-out;
-  transition: 0.2s ease-in-out;
-  -webkit-transition-delay: 0.4s;
-          transition-delay: 0.4s; }
+  -webkit-transition: 0.2s ease;
+  transition: 0.2s ease; }
   .docs-content.show {
     max-height: 100000px;
     /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
@@ -215,9 +215,7 @@ button.accordion-sub {
   opacity: 0;
   overflow: hidden;
   -webkit-transition: 0.2s ease-in-out;
-  transition: 0.2s ease-in-out;
-  -webkit-transition-delay: 0.4s;
-          transition-delay: 0.4s; }
+  transition: 0.2s ease-in-out; }
 
 .panel.show {
   max-height: 100000px;
@@ -574,13 +572,6 @@ input[type="range"].range-slider {
 /* Dropdown Button */
 button.dropbtn {
   background-color: #fff;
-<<<<<<< HEAD
-=======
-  font-family: poppins_regular;
-  color: #00bea4;
-  font-size: 14px;
-  text-align: left;
->>>>>>> a8605d369efeb968d0bc0c094fe77819f5530daf
   border: none;
   color: #00bea4;
   cursor: pointer;
@@ -650,7 +641,30 @@ select.dropdown-num {
   position: absolute;
   width: 100%;
   /* Links inside the dropdown */ }
-  .dropdown-content ul, .dropdown-content select {
+  .dropdown-content select {
+    border: none;
+    display: table;
+    font-size: 11px;
+    margin-bottom: -22px;
+    padding-bottom: 2px;
+    padding-top: 0;
+    width: 200px; }
+    .dropdown-content select option {
+      color: black;
+      cursor: pointer;
+      display: block;
+      font-family: poppins_regular;
+      font-size: 10px;
+      opacity: 1;
+      padding: 8px 16px;
+      text-decoration: none; }
+      .dropdown-content select option:hover {
+        background-color: #f1f1f1;
+        color: rgba(0, 0, 0, 0.9); }
+      .dropdown-content select option:active, .dropdown-content select option:focus {
+        background-color: #bdbdbd;
+        color: rgba(0, 0, 0, 0.9); }
+  .dropdown-content ul {
     border: none;
     display: table;
     font-size: 11px;
@@ -658,7 +672,7 @@ select.dropdown-num {
     padding-bottom: 2px;
     padding-left: 28px;
     padding-top: 0;
-    width: 200px; }
+    width: 200px;
     .dropdown-content ul > li, .dropdown-content ul span, .dropdown-content ul a, .dropdown-content ul option, .dropdown-content select > li, .dropdown-content select span, .dropdown-content select a, .dropdown-content select option {
       color: black;
       cursor: pointer;
@@ -668,7 +682,7 @@ select.dropdown-num {
       opacity: 1;
       padding: 8px 16px;
       text-decoration: none; }
-      .dropdown-content ul > li:hover, .dropdown-content ul span:hover, .dropdown-content ul a:hover, .dropdown-content ul option:hover, .dropdown-content select > li:hover, .dropdown-content select span:hover, .dropdown-content select a:hover, .dropdown-content select option:hover {
+      .dropdown-content ul > li:hover, .dropdown-content ul span:hover, .dropdown-content ul a:hover {
         background-color: #f1f1f1;
         color: rgba(0, 0, 0, 0.9); }
   .dropdown-content.show {
@@ -893,7 +907,9 @@ img.explorer {
   display: none;
   left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
+  max-height: 60vh;
   min-height: 100px;
+  overflow-y: auto;
   padding: 4em;
   position: absolute;
   top: calc((100% / 2) - 300px);
@@ -904,9 +920,13 @@ img.explorer {
     display: inline;
     z-index: 9999; }
   #popup h1 {
+    color: #00bea4;
     font-size: 2em;
-    font-family: space_bold;
-    color: #00bea4; }
+    font-family: space_bold; }
+  #popup h3 {
+    color: rgba(0, 0, 0, 0.8);
+    font-size: 1em;
+    font-family: space_bold; }
   #popup p, #popup form {
     color: #999;
     font-family: poppins_light;
@@ -914,8 +934,8 @@ img.explorer {
     margin-bottom: 10px; }
   #popup input {
     font-size: 1em;
-    padding: .5em;
-    line-height: 1em; }
+    line-height: 1em;
+    padding: .5em; }
     #popup input[type=text] {
       margin-top: 1em;
       width: 15em; }
@@ -927,28 +947,28 @@ img.explorer {
       color: #bdbdbd;
       font-style: italic; }
   #popup .radio-container {
-    display: block;
-    position: relative;
-    padding-left: 2em;
     cursor: pointer;
+    display: block;
+    padding-left: 2em;
+    position: relative;
     -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none; }
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none; }
   #popup .radio-container input {
-    position: absolute;
+    cursor: pointer;
     opacity: 0;
-    cursor: pointer; }
+    position: absolute; }
   #popup .radio-button {
+    background-color: #bdbdbd;
+    border-radius: 50%;
+    height: 1em;
+    left: 0;
+    margin-top: .25em;
+    opacity: 0.5;
     position: absolute;
     top: 0;
-    left: 0;
-    height: 1em;
-    width: 1em;
-    background-color: #bdbdbd;
-    opacity: 0.5;
-    border-radius: 50%;
-    margin-top: .25em; }
+    width: 1em; }
   #popup .radio-container:hover input ~ .radio-button {
     opacity: 1; }
   #popup .radio-container input:checked ~ .radio-button {
@@ -956,17 +976,17 @@ img.explorer {
     opacity: 1; }
   #popup button {
     float: right;
-    margin-top: .5em;
     font-size: 1em;
-    padding: .5em 2em;
-    margin-left: .75em; }
+    margin-left: .75em;
+    margin-top: .5em;
+    padding: .5em 2em; }
     #popup button.confirm {
-      border: 1px solid #1ce8b5;
       background: #1ce8b5;
+      border: 1px solid #1ce8b5;
       color: rgba(0, 0, 0, 0.8); }
       #popup button.confirm:hover {
-        border: 1px solid #63ffd9;
-        background: #63ffd9; }
+        background: #63ffd9;
+        border: 1px solid #63ffd9; }
     #popup button.cancel {
       background: #ffffff;
       border: 1px solid #bdbdbd; }
@@ -974,8 +994,8 @@ img.explorer {
         background: #e5e5e5;
         color: rgba(0, 0, 0, 0.8); }
     #popup button.delete {
-      border: 1px solid #FF918E;
       background-color: #FF918E;
+      border: 1px solid #FF918E;
       color: rgba(0, 0, 0, 0.8); }
       #popup button.delete:hover {
         background-color: #ff5e5b;
@@ -1315,6 +1335,10 @@ input[type="number"] {
   -webkit-animation: running-button 2s linear infinite;
           animation: running-button 2s linear infinite; }
 
+.building-button {
+  -webkit-animation: running-button 3s linear infinite;
+          animation: running-button 3s linear infinite; }
+
 .toolbar {
   background: #c9c9c9;
   bottom: 0;
@@ -1334,6 +1358,7 @@ input[type="number"] {
     float: left;
     height: 40px; }
     .toolbar > div span {
+      cursor: pointer;
       display: inline-block;
       height: 35px;
       margin-top: 3px;
@@ -1345,6 +1370,10 @@ input[type="number"] {
         background-repeat: no-repeat; }
         .toolbar > div span.run:hover {
           background-image: url("../images/icons/run_inactive.svg"); }
+        .toolbar > div span.run.building {
+          background-image: url("../images/icons/run_building.svg"); }
+        .toolbar > div span.run.running {
+          background-image: url("../images/icons/run_running.svg"); }
       .toolbar > div span.stop {
         background-image: url("../images/icons/stop_active.svg");
         background-repeat: no-repeat;
@@ -1372,18 +1401,30 @@ input[type="number"] {
         background-repeat: no-repeat; }
         .toolbar > div span.scope-button:hover {
           background-image: url("../images/icons/scope_active.svg"); }
+      .toolbar > div span.shutdown {
+        background-image: url("../images/icons/shutdown_active.svg");
+        background-repeat: no-repeat;
+        margin-left: 5px; }
+        .toolbar > div span.shutdown:hover {
+          background-image: url("../images/icons/shutdown_hover.svg"); }
   .toolbar .tool-text {
     margin-top: 3px;
     padding-left: 10px;
     -webkit-transition: 0.4s ease-in-out;
     transition: 0.4s ease-in-out; }
+    .toolbar .tool-text#control-text-3 {
+      float: right; }
   .toolbar .other {
     min-width: 175px; }
   .toolbar .st-st {
-    min-width: 125px; }
+    min-width: 100px; }
   .toolbar .start-stop {
     padding-left: 10px;
-    width: 81px; }
+    width: 85px; }
+  .toolbar .shutdown-parent {
+    float: right;
+    width: 45px;
+    padding-right: 50px; }
   .toolbar .toolbar-functions {
     padding: 2px 0; }
   .toolbar .system-status-text {
@@ -1407,10 +1448,10 @@ input[type="number"] {
       background-repeat: no-repeat; }
   .toolbar .logo {
     float: right;
-    min-width: 200px;
-    padding-right: 2.3em; }
+    min-width: 120px; }
     .toolbar .logo img {
-      margin-top: -14px; }
+      margin-top: -14px;
+      padding-right: 2.3em; }
 
 .file-status {
   margin-left: 60px;

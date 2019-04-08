@@ -1,5 +1,6 @@
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
+var json = require('../site-text.json');
 
 const uploadDelay = 50;
 
@@ -153,7 +154,7 @@ class EditorView extends View {
 				this.emit('open-notification', {
 					func: 'editor',
 					timestamp,
-					text: 'This is a preview only. GUI objects will not be updated and you cannot edit the patch (yet).'
+					text: json.editor_view.preview
 				});
 
 				// render pd patch

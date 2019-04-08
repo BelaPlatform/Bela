@@ -23,9 +23,16 @@
 			</div>
 
       <div class="toolbar" id="toolbar" data-toolbar>
+
+        <div class="shutdown-parent">
+          <span class="control-button-shutdown shutdown toolBar" data-toolbar-shutdown id="shutdown" data-func="shutdownBBB"></span>
+        </div>
+
         <div class="logo">
           <img src="images/logo.png">
         </div>
+
+        <!-- <div id="control-text-3" class="tool-text st-st" data-toolbar-controltext3></div> -->
 
         <div class="start-stop">
           <span class="control-button-runstop start run toolBar" data="Run project" id="run" data-toolbar-run data-func="run"></span>
@@ -35,7 +42,8 @@
 
         <div class="toolbar-functions">
 					<span class="scope-button toolBar" data-toolbar-scope data="Launch scope"></span>
-					<span class="console-button toolBar" data="Clear console" data-func="clearConsole"></span>
+          <span class="gui-button toolBar" data-toolbar-gui data="Launch GUI"></span>
+					<span class="console-button toolBar" data-toolbar-console data="Clear console" data-func="clearConsole"></span>
 				</div>
         <div id="control-text-2" class="tool-text st-st" data-toolbar-controltext2></div>
 				<!-- <div class="tool-text other"></div> -->
@@ -96,9 +104,8 @@
               <span class="dropdown" data-projects>
 							  <button class="dropbtn" data-dropdown-for="project">Your projects</button>
                 <div class="dropdown-content" data-dropdown="project">
-                  <select class="projectManager" id="projects" data-projects-select data-func="openProject">
-  									<option selected>Choose a project from your board</option>
-							    </select>
+                  <select class="projectManager" id="projects" data-projects-select data-func="openProject" multiple>
+  						    </select>
                 </div>
 							</span>
               <button id="new" class="create-project projectManager" data-func="newProject">New Project</button>
@@ -126,7 +133,7 @@
                   <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
                   <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
                 </div>
-                  
+
               </div>
 
 
@@ -140,7 +147,7 @@
                 <input type="file" id="uploadFileInput" class="hidden" data-upload-file-input multiple></input>
               </div>
 
-              
+
 
               <button class="accordion" data-accordion-for="git">Git manager</button>
               <div class="panel" data-accordion="git">
@@ -650,6 +657,7 @@
 		<div id="popup" data-popup>
 			<div id="popup-content" data-popup-content>
 				<h1></h1>
+        <h3></h3>
 				<p></p>
 				<form></form>
 			</div>
