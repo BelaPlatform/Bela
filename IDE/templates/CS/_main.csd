@@ -14,8 +14,8 @@ nchnls = 2
 	instr 1
 		aL, aR ins
 		
-		kGain init 0.5
-		kGain chnget "analogeIn0"
+		aGain chnget "analogIn0"
+		kGain = k(aGain)
 		
 		outs aL * kGain,aR * kGain
 	endin
