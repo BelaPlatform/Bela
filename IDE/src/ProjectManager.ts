@@ -9,7 +9,7 @@ import * as fileType from 'file-type';
 let max_file_size = 50000000;	// bytes (50Mb)
 
 // all ProjectManager methods are async functions called when websocket messages
-// with the field event: 'project-event' is received. The function called is 
+// with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
 // as the data variable, and is modified and returned by the method, and sent
 // back over the websocket
@@ -100,6 +100,21 @@ export async function openFile(data: any){
 export async function listProjects(): Promise<string[]>{
 	return file_manager.read_directory(paths.projects);
 }
+
+export async function listLibraries(): Promise<any>{
+	let libraries = [];
+	let categories = await file_manager.read_directory(paths.libraries);
+	for (let category of categories){
+		if (await file_manager.directory_exists(paths.libraries+'/'+category)){
+			libraries.push({
+				name: category,
+				children: await file_manager.read_directory(paths.libraries+'/'+category)
+			});
+		}
+	}
+	return libraries;
+}
+
 export async function listExamples(): Promise<any>{
 	let examples = [];
 	let categories = await file_manager.read_directory(paths.examples);
@@ -113,6 +128,7 @@ export async function listExamples(): Promise<any>{
 	}
 	return examples;
 }
+
 export async function openProject(data: any) {
 	data.fileList = await listFiles(data.currentProject);
 	let settings: any = await project_settings.read(data.currentProject);
@@ -209,7 +225,7 @@ export async function cleanFile(project: string, file: string){
 			await file_manager.delete_file(paths.projects+project+'/'+project);
 		}
 	}
-}	
+}
 export async function renameFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
