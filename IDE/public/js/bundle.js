@@ -385,6 +385,7 @@ module.exports = {};
 
 var Model = require('./Models/Model');
 var popup = require('./popup');
+var json = require('./site-text.json');
 
 var devMode = true;
 
@@ -533,7 +534,7 @@ toolbarView.on('process-event', function (event) {
 		currentProject: models.project.getKey('currentProject')
 	};
 	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
+	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
 	socket.emit('process-event', data);
 });
 toolbarView.on('halt', function () {
@@ -544,7 +545,7 @@ toolbarView.on('clear-console', function () {
 	return consoleView.emit('clear', true);
 });
 toolbarView.on('mode-switch-warning', function (num) {
-	return consoleView.emit('warn', num + ' mode switch' + (num != 1 ? 'es' : '') + ' detected on the audio thread!');
+	return consoleView.emit('warn', num + (num != 1 ? json.ide_browser.mode_switches : json.ide_browser.mode_switch));
 });
 
 // console view
@@ -790,12 +791,12 @@ function fileChangedPopup(fileName) {
 
 	if (fileChangedPopupVisible) return;
 
-	popup.title('File Changed on Disk');
-	popup.subtitle('Would you like to reload ' + fileName + '?');
+	popup.title(json.popups.file_changed.title);
+	popup.subtitle(fileName + json.popups.file_changed.text);
 
 	var form = [];
-	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
-	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
+	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
+	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		fileChangedPopupVisible = false;
@@ -810,7 +811,7 @@ function fileChangedPopup(fileName) {
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', function () {
+	popup.find('.cancel').on('click', function () {
 		popup.hide();
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
@@ -1058,7 +1059,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1355,7 +1356,7 @@ var ConsoleView = function (_View) {
 		key: 'disconnect',
 		value: function disconnect() {
 			console.log('disconnected');
-			_console.warn('You have been disconnected from the Bela IDE and any more changes you make will not be saved. Please check your USB connection and reboot your BeagleBone', 'console-disconnect');
+			_console.warn(json.console.disconnect, 'console-disconnect');
 			_console.block();
 		}
 
@@ -1443,7 +1444,7 @@ var ConsoleView = function (_View) {
 		value: function _building(status, data) {
 			var timestamp = performance.now();
 			if (status) {
-				_console.notify('Building project...', timestamp, true);
+				_console.notify('Building project ...', timestamp, true);
 				_console.fulfill('', timestamp, true);
 			} else {
 				_console.notify('Build finished', timestamp, true);
@@ -1455,7 +1456,7 @@ var ConsoleView = function (_View) {
 		value: function _running(status, data) {
 			var timestamp = performance.now();
 			if (status) {
-				_console.notify('Running project...', timestamp, true);
+				_console.notify('Running project ...', timestamp, true);
 				_console.fulfill('', timestamp, true);
 			} else {
 				_console.notify('Bela stopped', timestamp, true);
@@ -1522,6 +1523,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var json = require('../site-text.json');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 var i = 0;
@@ -1723,7 +1725,7 @@ function createlifromxml($xml, id, filename, emitter, type) {
     }
   });
 
-  content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">Full Documentation</a>');
+  content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">' + json.docs_view.button + '</a>');
 
   li.append(content);
   return li;
@@ -1757,7 +1759,7 @@ function xmlClassDocs(classname, emitter) {
           var doInclude = false;
           if (includes.length) {
             var content = $('<div></div>').addClass('subsections');
-            content.append($('<p class="examples-header"></p>').html('Examples using this class:'));
+            content.append($('<p class="examples-header"></p>').html(json.docs_view.examples));
             var exampleList = $('<ul></ul>').addClass('example-list');
             includes.each(function () {
               var exampleListItem = $('<li></li>');
@@ -1784,7 +1786,7 @@ function xmlClassDocs(classname, emitter) {
   });
 }
 
-},{"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1797,6 +1799,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
+var json = require('../site-text.json');
 
 var uploadDelay = 50;
 
@@ -1961,7 +1964,7 @@ var EditorView = function (_View) {
 					this.emit('open-notification', {
 						func: 'editor',
 						timestamp: timestamp,
-						text: 'This is a preview only. GUI objects will not be updated and you cannot edit the patch (yet).'
+						text: json.editor_view.preview
 					});
 
 					// render pd patch
@@ -2141,7 +2144,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":17,"./View":14}],8:[function(require,module,exports){
+},{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2226,7 +2229,7 @@ var FileView = function (_View) {
 			popup.subtitle(json.popups.create_new_file.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter the file name">');
+			form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -2256,7 +2259,7 @@ var FileView = function (_View) {
 			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter the new file name">');
+			form.push('<input type="text" placeholder="' + json.popups.create_new_file + input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -2654,6 +2657,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var GitView = function (_View) {
 	_inherits(GitView, _View);
@@ -2703,13 +2707,13 @@ var GitView = function (_View) {
 			var _this2 = this;
 
 			// build the popup content
-			popup.title('Committing to the project repository');
-			popup.subtitle('Enter a commit message');
+			popup.title(json.popups.commit.title);
+			popup.subtitle(json.popups.commit.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter your commit message">');
+			form.push('<input type="text" placeholder="' + json.popups.commit.input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">Commit</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.commit.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
@@ -2728,13 +2732,13 @@ var GitView = function (_View) {
 			var _this3 = this;
 
 			// build the popup content
-			popup.title('Creating a new branch');
-			popup.subtitle('Enter a name for the branch');
+			popup.title(json.popups.branch.title);
+			popup.subtitle(json.popups.branch.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter your new branch name">');
+			form.push('<input type="text" placeholder="' + json.popups.branch.input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">Create</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.branch.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
@@ -2753,11 +2757,11 @@ var GitView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Discarding changes');
-			popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
+			popup.title(json.popups.discard.title);
+			popup.subtitle(json.popups.discard.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup confirm">Continue</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.discard.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
@@ -2842,7 +2846,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":18,"./View":14}],10:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2964,7 +2968,7 @@ var ProjectView = function (_View) {
 			popup.subtitle(json.popups.save_as.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter the new project name">');
+			form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -3696,9 +3700,9 @@ var SettingsView = function (_View) {
 
 				if (file) {
 
-					_this5.emit('warning', 'Beginning the update - this may take several minutes');
-					_this5.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
-					_this5.emit('warning', 'Do not use the IDE during the update process!');
+					_this5.emit('warning', json.settings_view.update);
+					_this5.emit('warning', json.settings_view.browser);
+					_this5.emit('warning', json.settings_view.ide);
 
 					popup.hide('keep overlay');
 
@@ -3709,7 +3713,7 @@ var SettingsView = function (_View) {
 					reader.readAsArrayBuffer(file);
 				} else {
 
-					_this5.emit('warning', 'not a valid update zip archive');
+					_this5.emit('warning', json.settings_view.zip);
 					popup.hide();
 				}
 			});
@@ -4087,13 +4091,13 @@ var ToolbarView = function (_View) {
 		});
 
 		$('[data-toolbar-run]').mouseover(function () {
-			$('[data-toolbar-controltext1]').html('<p>Run</p>');
+			$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.run + '</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext1]').html('');
 		});
 
 		$('[data-toolbar-stop]').mouseover(function () {
-			$('[data-toolbar-controltext1]').html('<p>Stop</p>');
+			$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.stop + '</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext1]').html('');
 		});
@@ -4111,14 +4115,13 @@ var ToolbarView = function (_View) {
 		});
 
 		$('[data-toolbar-console]').mouseover(function () {
-			console.log('ping');
-			$('[data-toolbar-controltext2]').html('<p>Clear console</p>');
+			$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.clear + '</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
 
 		$('[data-toolbar-scope]').mouseover(function () {
-			$('[data-toolbar-controltext2]').html('<p>Open scope</p>');
+			$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.scope + '</p>');
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
@@ -4127,10 +4130,10 @@ var ToolbarView = function (_View) {
 			window.open('scope');
 		});
 
-		$('[data-toolbar-shutdown]').mouseover(function () {
-			$('[data-toolbar-controltext3]').html('<p>Shutdown BBB</p>');
+		$('[data-toolbar-gui]').mouseover(function () {
+			$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.gui + '</p>');
 		}).mouseout(function () {
-			$('[data-toolbar-controltext3]').html('');
+			$('[data-toolbar-controltext2]').html('');
 		});
 		return _this;
 	}
@@ -4465,6 +4468,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
+var json = require('./site-text.json');
 //var $ = require('jquery-browserify');
 
 var enabled = true,
@@ -4535,7 +4539,7 @@ var Console = function (_EventEmitter) {
 				setTimeout(function () {
 					return suspended = false;
 				}, 1000);
-				this.warn('Too many messages have been printed to the console too quickly. Reduce your printing frequency');
+				this.warn(json.console.messages);
 			} else {
 				this.checkScroll();
 				var msgs = text.split('\n');
@@ -4765,7 +4769,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"./popup":18,"events":1}],16:[function(require,module,exports){
+},{"./popup":18,"./site-text.json":19,"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -5273,6 +5277,7 @@ var popup = {
 	},
 	code: function code(html) {
 		return codeEl.html(html);
+	},
 	body: function body(text) {
 		return bodyEl.text(text);
 	},
@@ -5298,7 +5303,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.title('Save your changes?');
 	popup.subtitle('Warning: Any unsaved changes will be lost');
 	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-  popup.code('<h1>Hello World!</h1>');
+	popup.code('<h1>Hello World!</h1>');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -5332,6 +5337,7 @@ module.exports={
 		"save_as": {
 			"title": "Save project as ...",
 			"text": "",
+			"input": "Enter your new project name",
 			"button": "Save project"
 		},
 		"delete_project": {
@@ -5342,6 +5348,7 @@ module.exports={
 		"create_new_file": {
 			"title": "Create new file",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"input": "Your new file name",
 			"button": "Create file"
 		},
 		"rename_file": {
@@ -5394,8 +5401,62 @@ module.exports={
 			"text": " already exists in this project. Overwrite?",
 			"button": "Overwite",
 			"tick": "Don't ask me again this session"
+		},
+		"commit": {
+			"title": "Commit your changes",
+			"text": "Enter a commit message:",
+			"input": "Your commit message",
+			"button": "Commit"
+		},
+		"branch": {
+			"title": "Create a new branch",
+			"text": "Specify this branch's name:",
+			"input": "Your new ranch name",
+			"button": "Create branch"
+		},
+		"discard": {
+			"title": "Discard changes?",
+			"text": "This will discard all changes since your last commit. This can't be undone.",
+			"button": "Discard changes"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": " has changed. Would you like to reload it?",
+			"button": "Discard changes and reload",
+			"cancel": "Don't reload, keep this version"
 		}
-	}	
+	},
+	"editor_view": {
+			"preview": "This is a preview - these objects are not editable in the browser."
+	},
+	"settings_view": {
+		"update": "Beginning update - this may take several minutes",
+		"browser": "The browser will temporarily disconnect, and may become unresponsive",
+		"ide": "Do not use the IDE during this process",
+		"zip": "This is not a valid zip archive."
+	},
+	"toolbar": {
+		"run": "Build & run",
+		"stop": "Stop",
+		"clear": "Clear console",
+		"scope": "Launch scope",
+		"gui": "Launch GUI"
+	},
+	"console": {
+		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages.",
+		"disconnect": "Bela has disconnected. Any changes you make will not be saved. Check your USB connection and reboot Bela."
+	},
+	"ide_browser": {
+		"stop": "Stopping Bela ...",
+		"mode_switch": " mode switch detected on the audio thread.",
+		"mode_switches": " mode switches detected on the audio thread.",
+		"file_changed": "This file was edited in another window and has changed. Reopen the file to make edits.",
+		"zip_error": "There was a problem updating Bela. Make sure you have selected the correct zip file and try again."
+	},
+	"docs_view": {
+		"examples": "Examples that use this class:",
+		"button": "Launch documentation"
+	}
 }
 
 },{}],20:[function(require,module,exports){

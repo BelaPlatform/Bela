@@ -595,21 +595,21 @@ button.dropbtn {
     color: white; }
     button.dropbtn:hover:before, button.dropbtn:focus:before {
       border-top: 8px solid #fff; }
-  button.dropbtn.small {
-    width: 4em; }
-    button.dropbtn.small:before {
-      border: 8px solid transparent;
-      border-top: 8px solid #00bea4;
-      content: " ";
-      position: absolute;
-      right: 12px;
-      top: 5px; }
-    button.dropbtn.small:hover, button.dropbtn.small:focus {
-      background-color: rgba(0, 190, 164, 0.8);
-      border-color: rgba(0, 190, 164, 0.8);
-      color: white; }
-      button.dropbtn.small:hover:before, button.dropbtn.small:focus:before {
-        border-top: 8px solid #fff; }
+    button.dropbtn:hover.small, button.dropbtn:focus.small {
+      width: 4em; }
+      button.dropbtn:hover.small:before, button.dropbtn:focus.small:before {
+        border: 8px solid transparent;
+        border-top: 8px solid #00bea4;
+        content: " ";
+        position: absolute;
+        right: 12px;
+        top: 5px; }
+      button.dropbtn:hover.small:hover, button.dropbtn:hover.small:focus, button.dropbtn:focus.small:hover, button.dropbtn:focus.small:focus {
+        background-color: rgba(0, 190, 164, 0.8);
+        border-color: rgba(0, 190, 164, 0.8);
+        color: white; }
+        button.dropbtn:hover.small:hover:before, button.dropbtn:hover.small:focus:before, button.dropbtn:focus.small:hover:before, button.dropbtn:focus.small:focus:before {
+          border-top: 8px solid #fff; }
 
 .dropdown {
   border-radius: 2px;
@@ -628,8 +628,8 @@ select.dropdown-num {
   padding-left: 10px;
   width: 56px; }
   select.dropdown-num.inactive {
-    border: #bdbdbd;
-    background: #f1f1f1; }
+    background: #f1f1f1;
+    border: #bdbdbd; }
 
 /* Dropdown content (hidden by default) */
 .dropdown-content {
@@ -672,8 +672,8 @@ select.dropdown-num {
     padding-bottom: 2px;
     padding-left: 28px;
     padding-top: 0;
-    width: 200px;
-    .dropdown-content ul > li, .dropdown-content ul span, .dropdown-content ul a, .dropdown-content ul option, .dropdown-content select > li, .dropdown-content select span, .dropdown-content select a, .dropdown-content select option {
+    width: 200px; }
+    .dropdown-content ul > li, .dropdown-content ul span, .dropdown-content ul a {
       color: black;
       cursor: pointer;
       display: block;
@@ -887,7 +887,7 @@ ul dl {
   display: inline-block;
   height: 25px;
   font-weight: bold;
-  line-height: 25px;
+  line-height: 27px;
   padding: 0;
   text-align: center;
   -webkit-user-select: none;
@@ -1032,7 +1032,8 @@ ul dl {
     font-size: 1em;
     margin-left: .75em;
     margin-top: .5em;
-    padding: .5em 2em; }
+    padding: .5em 2em;
+    margin-left: .75em; }
     #popup button.confirm {
       background: #1ce8b5;
       border: 1px solid #1ce8b5;
@@ -1265,63 +1266,63 @@ input[type="checkbox"].checkbox-slider,
       -webkit-transition: 0.2s ease-in-out;
       transition: 0.2s ease-in-out; }
   #tab-menu li.explorer {
-    background-image: url("../images/icons/explorer_white.svg");
+    background-image: url("../images/icons/folder_inactive.svg");
     background-position: center;
     background-repeat: no-repeat; }
     #tab-menu li.explorer:hover {
-      background-image: url("../images/icons/explorer_green.svg");
+      background-image: url("../images/icons/folder_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
     #tab-menu li.explorer.active {
-      background-image: url("../images/icons/explorer_green.svg");
+      background-image: url("../images/icons/folder_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
   #tab-menu li.examples {
-    background-image: url("../images/icons/examples_white.svg");
+    background-image: url("../images/icons/examples_inactive.svg");
     background-position: center;
     background-repeat: no-repeat; }
     #tab-menu li.examples:hover {
-      background-image: url("../images/icons/examples_green.svg");
+      background-image: url("../images/icons/examples_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
     #tab-menu li.examples.active {
-      background-image: url("../images/icons/examples_green.svg");
+      background-image: url("../images/icons/examples_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
   #tab-menu li.settings {
-    background-image: url("../images/icons/settings_white.svg");
+    background-image: url("../images/icons/settings_inactive.svg");
     background-repeat: no-repeat;
     background-position: center; }
     #tab-menu li.settings:hover {
-      background-image: url("../images/icons/settings_green.svg");
+      background-image: url("../images/icons/settings_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
     #tab-menu li.settings.active {
-      background-image: url("../images/icons/settings_green.svg");
+      background-image: url("../images/icons/settings_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
   #tab-menu li.pins {
-    background-image: url("../images/icons/pins_white.svg");
+    background-image: url("../images/icons/pins_inactive.svg");
     background-position: center;
     background-repeat: no-repeat; }
     #tab-menu li.pins:hover {
-      background-image: url("../images/icons/pins_green.svg");
+      background-image: url("../images/icons/pins_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
     #tab-menu li.pins.active {
-      background-image: url("../images/icons/pins_green.svg");
+      background-image: url("../images/icons/pins_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
   #tab-menu li.refs {
-    background-image: url("../images/icons/refs_white.svg");
+    background-image: url("../images/icons/refs_inactive.svg");
     background-position: center;
     background-repeat: no-repeat; }
     #tab-menu li.refs:hover {
-      background-image: url("../images/icons/refs_green.svg");
+      background-image: url("../images/icons/refs_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
     #tab-menu li.refs.active {
-      background-image: url("../images/icons/refs_green.svg");
+      background-image: url("../images/icons/refs_active.svg");
       background-position: center;
       background-repeat: no-repeat; }
   #tab-menu li.libraries {
@@ -1446,26 +1447,21 @@ input[type="number"] {
         .toolbar > div span.stop:hover {
           background-image: url("../images/icons/stop_inactive.svg"); }
       .toolbar > div span.console-button {
-        background-image: url("../images/icons/console_inactive.svg");
+        background-image: url("../images/icons/console_inactive1.svg");
         background-repeat: no-repeat; }
         .toolbar > div span.console-button:hover {
-          background-image: url("../images/icons/console_active.svg"); }
-      .toolbar > div span.tab-button {
-        background-image: url("../images/icons/tabs_inactive.svg");
+          background-image: url("../images/icons/console_active1.svg"); }
+      .toolbar > div span.gui-button {
+        background-image: url("../images/icons/gui_inactive4.svg");
         background-repeat: no-repeat;
         padding: 0; }
-        .toolbar > div span.tab-button:hover {
-          background-image: url("../images/icons/tabs_active.svg"); }
-      .toolbar > div span.drag-button {
-        background-image: url("../images/icons/drag_inactive.svg");
-        background-repeat: no-repeat; }
-        .toolbar > div span.drag-button:hover {
-          background-image: url("../images/icons/drag_active.svg"); }
+        .toolbar > div span.gui-button:hover {
+          background-image: url("../images/icons/gui_active4.svg"); }
       .toolbar > div span.scope-button {
-        background-image: url("../images/icons/scope_inactive.svg");
+        background-image: url("../images/icons/scope_inactive3.svg");
         background-repeat: no-repeat; }
         .toolbar > div span.scope-button:hover {
-          background-image: url("../images/icons/scope_active.svg"); }
+          background-image: url("../images/icons/scope_active3.svg"); }
       .toolbar > div span.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
