@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -385,6 +385,9 @@ module.exports = {};
 
 var Model = require('./Models/Model');
 var popup = require('./popup');
+var json = require('./site-text.json');
+
+var devMode = true;
 
 // set up models
 var models = {};
@@ -412,6 +415,7 @@ settingsView.on('project-settings', function (data) {
 	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
+
 settingsView.on('IDE-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
 	//console.log('IDE-settings', data);
@@ -458,6 +462,7 @@ fileView.on('message', function (event, data) {
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
+
 fileView.on('force-rebuild', function () {
 	socket.emit('process-event', {
 		event: 'rebuild',
@@ -529,14 +534,18 @@ toolbarView.on('process-event', function (event) {
 		currentProject: models.project.getKey('currentProject')
 	};
 	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
+	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
 	socket.emit('process-event', data);
+});
+toolbarView.on('halt', function () {
+	socket.emit('shutdown');
+	consoleView.emit('warn', 'Shutting down...');
 });
 toolbarView.on('clear-console', function () {
 	return consoleView.emit('clear', true);
 });
 toolbarView.on('mode-switch-warning', function (num) {
-	return consoleView.emit('warn', num + ' mode switch' + (num != 1 ? 'es' : '') + ' detected on the audio thread!');
+	return consoleView.emit('warn', num + (num != 1 ? json.ide_browser.mode_switches : json.ide_browser.mode_switch));
 });
 
 // console view
@@ -588,7 +597,7 @@ documentationView.on('add-link', function (link, type) {
 });
 
 // git view
-var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);
+var gitView = new (require('./Views/GitView'))('git-manager', [models.git]);
 gitView.on('git-event', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
 	data.timestamp = performance.now();
@@ -623,10 +632,10 @@ socket.on('init', function (data) {
 	socket.emit('project-event', { func: 'openProject', currentProject: data.settings.project, timestamp: timestamp });
 	consoleView.emit('openNotification', { func: 'init', timestamp: timestamp });
 
-	models.project.setData({ projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project });
+	models.project.setData({ projectList: data.projects, exampleList: data.examples, libraryList: data.libraries, currentProject: data.settings.project });
 	models.settings.setData(data.settings);
 
-	$('#runOnBoot').val(data.boot_project);
+	$('data-run-on-boot').val(data.boot_project);
 
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
@@ -782,12 +791,12 @@ function fileChangedPopup(fileName) {
 
 	if (fileChangedPopupVisible) return;
 
-	popup.title('File Changed on Disk');
-	popup.subtitle('Would you like to reload ' + fileName + '?');
+	popup.title(json.popups.file_changed.title);
+	popup.subtitle(fileName + json.popups.file_changed.text);
 
 	var form = [];
-	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
-	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
+	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
+	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		fileChangedPopupVisible = false;
@@ -802,7 +811,7 @@ function fileChangedPopup(fileName) {
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', function () {
+	popup.find('.cancel').on('click', function () {
 		popup.hide();
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
@@ -825,12 +834,51 @@ models.project.on('change', function (data, changedKeys) {
 
 	var projectName = data.exampleName ? data.exampleName + ' (example)' : data.currentProject;
 
-	// set the browser tab title
-	$('title').html((data.fileName ? data.fileName + ', ' : '') + projectName);
+	if (devMode) {
+		// set the browser tab title
+		$('[data-title]').html((data.fileName ? data.fileName + ', ' : '') + projectName);
+		// set the top-line stuff
+		$('[data-current-project]').html(projectName ? projectName : '');
+		$('[data-current-file]').html(data.fileName ? data.fileName : '');
 
-	// set the top-line stuff
-	$('#top-open-project').html(projectName ? 'Project: ' + projectName : '');
-	$('#top-open-file').html(data.fileName ? 'File: ' + data.fileName : '');
+		// status changes reflected here
+		models.status.on('change', function (data, changedKeys) {
+			if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
+				if (data.running) {
+					$('[data-current-status-title]').html('Running: ');
+					$('[data-current-status]').html(data.runProject);
+				} else if (data.building) {
+					$('[data-current-status-title]').html('Building: ');
+					$('[data-current-status]').html(data.buildProject);
+				} else {
+					$('[data-current-status]').html('');
+					$('[data-current-status-title]').html('');
+				}
+			}
+		});
+	} else {
+		// set the browser tab title
+		$('title').html((data.fileName ? data.fileName + ', ' : '') + projectName);
+		// set the top-line stuff
+		$('[data-current-project]').html(projectName ? projectName : '');
+		$('[data-current-file]').html(data.fileName ? data.fileName : '');
+
+		// status changes reflected here
+		models.status.on('change', function (data, changedKeys) {
+			if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
+				if (data.running) {
+					$('[data-current-status-title]').html('Running: ');
+					$('[data-current-status]').html(data.runProject);
+				} else if (data.building) {
+					$('[data-current-status-title]').html('Building: ');
+					$('[data-current-status]').html(data.buildProject);
+				} else {
+					$('[data-current-status]').html('');
+					$('[data-current-status-title]').html('');
+				}
+			}
+		});
+	}
 
 	if (data.exampleName) {
 		$('#top-example-docs').css('visibility', 'visible');
@@ -839,50 +887,43 @@ models.project.on('change', function (data, changedKeys) {
 		$('#top-example-docs').css('visibility', 'hidden');
 	}
 });
-models.status.on('change', function (data, changedKeys) {
-	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1) {
-		if (data.running) $('#top-bela-status').html('Running: ' + data.runProject);else if (data.building) $('#top-bela-status').html('Building: ' + data.buildProject);else $('#top-bela-status').html('');
-	}
-});
 
 // history
 {
-	(function () {
-		var lastState = {},
-		    poppingState = true;
+	var lastState = {},
+	    poppingState = true;
 
-		// file / project changed
-		models.project.on('change', function (data, changedKeys) {
-			if (changedKeys.indexOf('currentProject') !== -1 || changedKeys.indexOf('fileName') !== -1) {
-				var state = { file: data.fileName, project: data.currentProject };
-				if (state.project !== lastState.project || state.file !== lastState.file) {
+	// file / project changed
+	models.project.on('change', function (data, changedKeys) {
+		if (changedKeys.indexOf('currentProject') !== -1 || changedKeys.indexOf('fileName') !== -1) {
+			var state = { file: data.fileName, project: data.currentProject };
+			if (state.project !== lastState.project || state.file !== lastState.file) {
 
-					if (!poppingState) {
-						//console.log('push', state);
-						history.pushState(state, null, null);
-					}
-					poppingState = false;
-					lastState = state;
+				if (!poppingState) {
+					//console.log('push', state);
+					history.pushState(state, null, null);
 				}
+				poppingState = false;
+				lastState = state;
 			}
-		});
+		}
+	});
 
-		// load previously open file / project when browser's back button is clicked
-		window.addEventListener('popstate', function (e) {
-			if (e.state) {
-				console.log('opening project ' + e.state.project + ' file ' + e.state.file);
-				var data = {
-					currentProject: e.state.project,
-					newFile: e.state.file,
-					func: 'openProject',
-					timestamp: performance.now()
-				};
-				consoleView.emit('openNotification', data);
-				socket.emit('project-event', data);
-				poppingState = true;
-			}
-		});
-	})();
+	// load previously open file / project when browser's back button is clicked
+	window.addEventListener('popstate', function (e) {
+		if (e.state) {
+			console.log('opening project ' + e.state.project + ' file ' + e.state.file);
+			var data = {
+				currentProject: e.state.project,
+				newFile: e.state.file,
+				func: 'openProject',
+				timestamp: performance.now()
+			};
+			consoleView.emit('openNotification', data);
+			socket.emit('project-event', data);
+			poppingState = true;
+		}
+	});
 }
 
 // local functions
@@ -1018,7 +1059,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1138,7 +1179,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
 var _console = require('../console');
+var json = require('../site-text.json');
 
 var shellCWD = '~';
 
@@ -1165,7 +1208,6 @@ var ConsoleView = function (_View) {
 		_this.on('openNotification', _this.openNotification);
 		_this.on('closeNotification', _this.closeNotification);
 		_this.on('openProcessNotification', _this.openProcessNotification);
-
 		_this.on('log', function (text, css) {
 			return _console.log(text, css);
 		});
@@ -1174,8 +1216,10 @@ var ConsoleView = function (_View) {
 			_console.warn(warning, id);
 		});
 
-		_this.form = document.getElementById('beaglert-consoleForm');
-		_this.input = document.getElementById('beaglert-consoleInput');
+		// this.form = document.getElementById('beaglert-consoleForm');
+		// this.input = document.getElementById('beaglert-consoleInput');
+		_this.form = $('[data-console-form]').get(0); // due to the new js attaching method we have to tell vanilla js which jquery object we're selecting - rather than use the first object in the array we're going to use the jquery get(0) method
+		_this.input = $('[data-console-input]').get(0);
 
 		// console command line input events
 		_this.history = [];
@@ -1193,23 +1237,23 @@ var ConsoleView = function (_View) {
 			_this.input.value = '';
 		});
 
-		$('#beaglert-consoleInput-pre').on('click', function () {
+		$('[data-console-input-pre]').on('click', function () {
 			return $(_this.input).trigger('focus');
 		});
 
-		$('#beaglert-consoleInput-pre, #beaglert-consoleInput').on('mouseover', function () {
-			$('#beaglert-consoleInput-pre').css('opacity', 1);
+		$('[data-console-input], [data-console-input-pre]').on('mouseover', function () {
+			$('[data-console-input-pre]').css('opacity', 1);
 		}).on('mouseout', function () {
-			if (!_this.inputFocused) $('#beaglert-consoleInput-pre').css('opacity', 0.2);
+			if (!_this.inputFocused) $('[data-console-input-pre]').css('opacity', 0.2);
 		});
 
 		_this.input.addEventListener('focus', function () {
 			_this.inputFocused = true;
-			$('#beaglert-consoleInput-pre').css('opacity', 1); //.html(shellCWD);
+			$('[data-console-input-pre]').css('opacity', 1); //.html(shellCWD);
 		});
 		_this.input.addEventListener('blur', function () {
 			_this.inputFocused = false;
-			$('#beaglert-consoleInput-pre').css('opacity', 0.2); //.html('>');
+			$('[data-console-input-pre]').css('opacity', 0.2); //.html('>');
 		});
 		window.addEventListener('keydown', function (e) {
 			if (_this.inputFocused) {
@@ -1247,10 +1291,10 @@ var ConsoleView = function (_View) {
 			}
 		});
 
-		$('#beaglert-console').on('click', function () {
+		$('[data-console]').on('click', function () {
 			return $(_this.input).trigger('focus');
 		});
-		$('#beaglert-consoleWrapper').on('click', function (e) {
+		$('[data-console-content-wrapper]').on('click', function (e) {
 			return e.stopPropagation();
 		});
 
@@ -1263,10 +1307,10 @@ var ConsoleView = function (_View) {
 		_this.on('shell-cwd', function (cwd) {
 			//console.log('cwd', cwd);
 			shellCWD = 'root@bela ' + cwd.replace('/root', '~') + '#';
-			$('#beaglert-consoleInput-pre').html(shellCWD);
+			$('[data-console-input-pre]').html(shellCWD);
 		});
 		_this.on('shell-tabcomplete', function (data) {
-			return $('#beaglert-consoleInput').val(data);
+			return $('[data-console-input]').val(data);
 		});
 		return _this;
 	}
@@ -1305,14 +1349,14 @@ var ConsoleView = function (_View) {
 	}, {
 		key: 'connect',
 		value: function connect() {
-			$('#console-disconnect').remove();
+			$('[data-console-disconnet]').remove();
 			_console.unblock();
 		}
 	}, {
 		key: 'disconnect',
 		value: function disconnect() {
 			console.log('disconnected');
-			_console.warn('You have been disconnected from the Bela IDE and any more changes you make will not be saved. Please check your USB connection and reboot your BeagleBone', 'console-disconnect');
+			_console.warn(json.console.disconnect, 'console-disconnect');
 			_console.block();
 		}
 
@@ -1400,7 +1444,7 @@ var ConsoleView = function (_View) {
 		value: function _building(status, data) {
 			var timestamp = performance.now();
 			if (status) {
-				_console.notify('Building project...', timestamp, true);
+				_console.notify('Building project ...', timestamp, true);
 				_console.fulfill('', timestamp, true);
 			} else {
 				_console.notify('Build finished', timestamp, true);
@@ -1412,7 +1456,7 @@ var ConsoleView = function (_View) {
 		value: function _running(status, data) {
 			var timestamp = performance.now();
 			if (status) {
-				_console.notify('Running project...', timestamp, true);
+				_console.notify('Running project ...', timestamp, true);
 				_console.fulfill('', timestamp, true);
 			} else {
 				_console.notify('Bela stopped', timestamp, true);
@@ -1467,7 +1511,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1479,285 +1523,270 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var json = require('../site-text.json');
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
+var i = 0;
 
-var classes = ['Scope', 'OSCReceiver', 'OSCSender', 'Midi', 'MidiParser', 'WriteFile'];
+var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
 
 var DocumentationView = function (_View) {
-	_inherits(DocumentationView, _View);
+  _inherits(DocumentationView, _View);
 
-	function DocumentationView(className, models) {
-		_classCallCheck(this, DocumentationView);
+  function DocumentationView(className, models) {
+    _classCallCheck(this, DocumentationView);
 
-		var _this = _possibleConstructorReturn(this, (DocumentationView.__proto__ || Object.getPrototypeOf(DocumentationView)).call(this, className, models));
+    var _this = _possibleConstructorReturn(this, (DocumentationView.__proto__ || Object.getPrototypeOf(DocumentationView)).call(this, className, models));
 
-		_this.on('init', _this.init);
+    _this.on('init', _this.init);
 
-		_this.on('open', function (id) {
-			_this.closeAll();
-			$('#' + id).prop('checked', 'checked');
-			$('#' + id).parent().parent().siblings('input').prop('checked', 'checked');
-			var offset = $('#' + id).siblings('label').position().top + $('#docTab').scrollTop();
-			if (offset) $('#docTab').scrollTop(offset);
-		});
-		return _this;
-	}
+    return _this;
+  }
 
-	_createClass(DocumentationView, [{
-		key: 'init',
-		value: function init() {
+  _createClass(DocumentationView, [{
+    key: 'init',
+    value: function init() {
 
-			var self = this;
+      var self = this;
 
-			// The API
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=Bela_8h",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var counter = 0;
-					var _iteratorNormalCompletion = true;
-					var _didIteratorError = false;
-					var _iteratorError = undefined;
+      // The API
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=Bela_8h",
+        dataType: "html",
+        success: function success(xml) {
+          var counter = 0;
+          var _iteratorNormalCompletion = true;
+          var _didIteratorError = false;
+          var _iteratorError = undefined;
 
-					try {
-						for (var _iterator = apiFuncs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-							var item = _step.value;
+          try {
+            for (var _iterator = apiFuncs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+              var item = _step.value;
 
-							var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter, self, 'api');
-							li.appendTo($('#APIDocs'));
-							counter += 1;
-						}
-					} catch (err) {
-						_didIteratorError = true;
-						_iteratorError = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion && _iterator.return) {
-								_iterator.return();
-							}
-						} finally {
-							if (_didIteratorError) {
-								throw _iteratorError;
-							}
-						}
-					}
-				}
-			});
+              var li = createlifrommemberdef($(xml).find('memberdef:has(name:contains(' + item + '))'), 'APIDocs' + counter, self, 'api');
+              li.appendTo($('[data-docs-api]'));
+              counter += 1;
+            }
+          } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+              }
+            } finally {
+              if (_didIteratorError) {
+                throw _iteratorError;
+              }
+            }
+          }
+        }
+      });
 
-			// The Audio Context
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=structBelaContext",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var counter = 0;
-					createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext', self, 'contextType').appendTo($('#contextDocs'));
-					counter += 1;
-					$(xml).find('memberdef').each(function () {
-						var li = createlifrommemberdef($(this), 'contextDocs' + counter, self, 'context');
-						li.appendTo($('#contextDocs'));
-						counter += 1;
-					});
-				}
-			});
+      // The Audio Context
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=structBelaContext",
+        dataType: "html",
+        success: function success(xml) {
+          var counter = 0;
+          createlifromxml($(xml), 'contextDocs' + counter, 'structBelaContext', self, 'contextType').appendTo($('[data-docs-context]'));
+          counter += 1;
+          $(xml).find('memberdef').each(function () {
+            var li = createlifrommemberdef($(this), 'contextDocs' + counter, self, 'context');
+            li.appendTo($('[data-docs-context]'));
+            counter += 1;
+          });
+        }
+      });
 
-			// Utilities
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=Utilities_8h",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var counter = 0;
-					createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h', self, 'header').appendTo($('#utilityDocs'));
-					counter += 1;
-					$(xml).find('memberdef').each(function () {
-						var li = createlifrommemberdef($(this), 'utilityDocs' + counter, self, 'utility');
-						li.appendTo($('#utilityDocs'));
-						counter += 1;
-					});
-				}
-			});
+      // Utilities
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=Utilities_8h",
+        dataType: "html",
+        success: function success(xml) {
+          var counter = 0;
+          createlifromxml($(xml), 'utilityDocs' + counter, 'Utilities_8h', self, 'header').appendTo($('[data-docs-utility]'));
+          counter += 1;
+          $(xml).find('memberdef').each(function () {
+            var li = createlifrommemberdef($(this), 'utilityDocs' + counter, self, 'utility');
+            li.appendTo($('[data-docs-utility]'));
+            counter += 1;
+          });
+        }
+      });
 
-			// all classes
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+      // all classes
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
 
-			try {
-				for (var _iterator2 = classes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var item = _step2.value;
+      try {
+        for (var _iterator2 = classes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var item = _step2.value;
 
-					xmlClassDocs(item, this);
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
-			}
-		}
-	}, {
-		key: 'closeAll',
-		value: function closeAll() {
-			$('#docsParent').find('input:checked').prop('checked', '');
-		}
-	}]);
+          xmlClassDocs(item, this);
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+    }
+  }]);
 
-	return DocumentationView;
+  return DocumentationView;
 }(View);
 
 module.exports = DocumentationView;
 
 function createlifrommemberdef($xml, id, emitter, type) {
+  i += 1;
+  var name = $xml.find('name').html();
+  emitter.emit('add-link', { name: name, id: id }, type);
 
-	var name = $xml.find('name').html();
-	emitter.emit('add-link', { name: name, id: id }, type);
+  var li = $('<li></li>');
 
-	var li = $('<li></li>');
-	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
+  // title
+  var button = $('<button></button>');
+  var elementName = name + "-" + i;
+  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html());
+  button.appendTo(li);
 
-	var content = $('<div></div>');
+  var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
+  var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
 
-	// title
-	content.append($('<h2></h2>').html($xml.find('definition').html() + $xml.find('argsstring').html()));
+  title.appendTo(content);
 
-	// subtitle
-	content.append($('<h3></h3>').html($xml.find('briefdescription > para').html() || ''));
+  // subtitle
+  content.append($('<p></p>').html($xml.find('briefdescription > para').html() || ''));
 
-	// main text
-	$xml.find('detaileddescription > para').each(function () {
-		if ($(this).find('parameterlist').length) {
-			content.append('</br><h3>Parameters:</h3>');
-			var ul = $('<ul></ul>');
-			$(this).find('parameteritem').each(function () {
-				var li = $('<li></li>');
-				li.append($('<strong></strong>').html($(this).find('parametername').html() + ': '));
-				$(this).find('parameterdescription>para').each(function () {
-					li.append($('<span></span>').html($(this).html() || ''));
-				});
-				ul.append(li);
-			});
-			content.append(ul);
-		} else {
-			content.append($('<p></p>').html($(this).html() || ''));
-		}
-	});
+  // main text
+  $xml.find('detaileddescription > para').each(function () {
+    if ($(this).find('parameterlist').length) {
+      content.append('<h4>Parameters:</h4>');
+      var ul = $('<ul></ul>');
+      $(this).find('parameteritem').each(function () {
+        var li = $('<li></li>');
+        li.append($('<h5></h5>').html($(this).find('parametername').html() + ': '));
+        $(this).find('parameterdescription>para').each(function () {
+          li.append($('<p></p>').html($(this).html() || ''));
+        });
+        ul.append(li);
+      });
+      content.append(ul);
+    } else {
+      content.append($('<p></p>').html($(this).html() || ''));
+    }
+  });
 
-	li.append(content);
-	return li;
+  li.append(content);
+  return li;
 }
 
 function createlifromxml($xml, id, filename, emitter, type) {
+  var name = $xml.find('compoundname').html();
+  emitter.emit('add-link', { name: name, id: id }, type);
+  var li = $('<li></li>');
 
-	var name = $xml.find('compoundname').html();
-	emitter.emit('add-link', { name: name, id: id }, type);
+  var content = $('<div></div>').addClass('intro-content');
 
-	var li = $('<li></li>');
-	li.append($('<input></input>').prop('type', 'checkbox').addClass('docs').prop('id', id));
-	li.append($('<label></label>').prop('for', id).addClass('docSectionHeader').addClass('sub').html(name));
+  // subtitle
+  li.append($('<h3></h3>').addClass('intro-header').attr('data-accordion-for', name).html($xml.find('compounddef > briefdescription > para').html() || ''));
 
-	var content = $('<div></div>');
+  // main text
+  $xml.find('compounddef > detaileddescription > para').each(function () {
+    if ($(this).find('parameterlist').length) {
+      content.append('<h3>Parameters:</h3>');
+      var ul = $('<ul></ul>');
+      $(this).find('parameteritem').each(function () {
+        var li = $('<li></li>');
+        li.append($('<h4></h4>').html($(this).find('parametername').html() + ': '));
+        $(this).find('parameterdescription>para').each(function () {
+          li.append($('<p></p>').html($(this).html() || ''));
+        });
+        ul.append(li);
+      });
+      content.append(ul);
+    } else {
+      content.append($('<p></p>').html($(this).html() || ''));
+    }
+  });
 
-	// title
-	//content.append($('<h2></h2>').html( $xml.find('definition').html() + $xml.find('argsstring').html() ));
+  content.append('<a href="documentation/' + filename + '.html" target="_blank" class="button">' + json.docs_view.button + '</a>');
 
-	// subtitle
-	content.append($('<h3></h3>').html($xml.find('compounddef > briefdescription > para').html() || ''));
-
-	// main text
-	$xml.find('compounddef > detaileddescription > para').each(function () {
-		if ($(this).find('parameterlist').length) {
-			content.append('</br><h3>Parameters:</h3>');
-			var ul = $('<ul></ul>');
-			$(this).find('parameteritem').each(function () {
-				var li = $('<li></li>');
-				li.append($('<strong></strong>').html($(this).find('parametername').html() + ': '));
-				$(this).find('parameterdescription>para').each(function () {
-					li.append($('<span></span>').html($(this).html() || ''));
-				});
-				ul.append(li);
-			});
-			content.append(ul);
-		} else {
-			content.append($('<p></p>').html($(this).html() || ''));
-		}
-	});
-
-	content.append('</br><a href="documentation/' + filename + '.html" target="_blank">Full Documentation</a>');
-
-	li.append(content);
-	return li;
+  li.append(content);
+  return li;
 }
 
 function xmlClassDocs(classname, emitter) {
-	var filename = 'class' + classname;
-	var parent = $('#' + classname + 'Docs');
-	$.ajax({
-		type: "GET",
-		url: "documentation_xml?file=" + filename,
-		dataType: "html",
-		success: function success(xml) {
-			//console.log(xml);
+  var filename = 'class' + classname;
+  var parent = $('[data-docs="' + classname + 'Docs"]');
+  $.ajax({
+    type: "GET",
+    url: "documentation_xml?file=" + filename,
+    dataType: "html",
+    success: function success(xml) {
+      var counter = 0;
+      createlifromxml($(xml), classname + counter, filename, emitter, 'typedef').appendTo(parent);
+      emitter.emit('add-link', { name: classname, id: classname + counter }, 'header');
 
-			var counter = 0;
-			createlifromxml($(xml), classname + counter, filename, emitter, 'typedef').appendTo(parent);
-			emitter.emit('add-link', { name: classname, id: classname + counter }, 'header');
+      counter += 1;
+      $(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname + ')))').each(function () {
+        var li = createlifrommemberdef($(this), classname + counter, emitter, classname);
+        li.appendTo(parent);
+        counter += 1;
+      });
 
-			counter += 1;
-			$(xml).find('[kind="public-func"]>memberdef:not(:has(name:contains(' + classname + ')))').each(function () {
-				//console.log($(this));
-				var li = createlifrommemberdef($(this), classname + counter, emitter, classname);
-				li.appendTo(parent);
-				counter += 1;
-			});
-
-			// when tab is opened
-			parent.siblings('input').on('change', function () {
-				console.log(classname);
-			});
-
-			$.ajax({
-				type: "GET",
-				url: "documentation_xml?file=" + classname + "_8h",
-				dataType: "html",
-				success: function success(xml) {
-					//console.log(xml);
-					var includes = $(xml).find('includedby');
-					if (includes.length) {
-						var content = $('#' + classname + '0').siblings('div');
-						content.append($('<p></p>').html('Examples featuring this class:'));
-						includes.each(function () {
-							var include = $(this).html();
-							if (include && include.split && include.split('/')[0] === 'examples') {
-								var link = $('<a></a>').html(include.split('/')[2]);
-								link.on('click', function () {
-									return emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/'));
-								});
-								content.append(link).append('</br>');
-							}
-						});
-					}
-				}
-			});
-		}
-	});
+      $.ajax({
+        type: "GET",
+        url: "documentation_xml?file=" + classname + "_8h",
+        dataType: "html",
+        success: function success(xml) {
+          var includes = $(xml).find('includedby');
+          var doInclude = false;
+          if (includes.length) {
+            var content = $('<div></div>').addClass('subsections');
+            content.append($('<p class="examples-header"></p>').html(json.docs_view.examples));
+            var exampleList = $('<ul></ul>').addClass('example-list');
+            includes.each(function () {
+              var exampleListItem = $('<li></li>');
+              var include = $(this).html();
+              exampleListItem.attr('data-location', include);
+              if (include && include.split && include.split('/')[0] === 'examples') {
+                doInclude = true;
+                var link = $('<a></a>').html(include.split('/')[2]).text(include);
+                link.on('click', function () {
+                  return emitter.emit('open-example', [include.split('/')[1], include.split('/')[2]].join('/'));
+                });
+                exampleListItem.append(link);
+                exampleListItem.appendTo(exampleList);
+              }
+            });
+            if (doInclude) {
+              exampleList.appendTo(content);
+              content.appendTo($('[data-docs="' + classname + 'Docs"]').parent());
+            }
+          }
+        }
+      });
+    }
+  });
 }
 
-},{"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1770,6 +1799,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
+var json = require('../site-text.json');
 
 var uploadDelay = 50;
 
@@ -1840,10 +1870,6 @@ var EditorView = function (_View) {
   	});
   });*/
 
-		$('#audioControl').find('button').on('click', function () {
-			return audioSource.start(0);
-		});
-
 		_this.on('resize', function () {
 			return _this.editor.resize();
 		});
@@ -1865,7 +1891,7 @@ var EditorView = function (_View) {
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
-			// console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate');
 			_this.parser.parse(function () {
 				_this.getCurrentWord();
 			});
@@ -1894,34 +1920,38 @@ var EditorView = function (_View) {
 		value: function __fileData(data, opts) {
 
 			// hide the pd patch and image displays if present, and the editor
-			$('#pd-svg-parent, #img-display-parent, #editor, #audio-parent').css('display', 'none');
+			// $('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
 
 			if (!opts.fileType) opts.fileType = '0';
 
 			if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
-				$('#img-display-parent, #img-display').css({
-					'max-width': $('#editor').width() + 'px',
-					'max-height': $('#editor').height() + 'px'
-				});
-				$('#img-display-parent').css('display', 'block');
+				$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 
-				$('#img-display').prop('src', 'media/' + opts.fileName);
+				$('[data-img-display-parent], [data-img-display]').css({
+					'max-width': $('[data-editor]').width() + 'px',
+					'max-height': $('[data-editor]').height() + 'px'
+				});
+
+				$('[data-img-display-parent]').addClass('active');
+
+				$('[data-img-display]').prop('src', 'media/' + opts.fileName);
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
 			} else if (opts.fileType.indexOf('audio') !== -1) {
 
 				//console.log('opening audio file');
+				$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 
-				$('#audio-parent').css({
-					'display': 'block',
-					'max-width': $('#editor').width() + 'px',
-					'max-height': $('#editor').height() + 'px'
+				$('[data-audio-parent]').addClass('active').css({
+					'position': 'absolute',
+					'left': $('[data-editor]').width() / 2 - $('[data-audio]').width() / 2 + 'px',
+					'top': $('[data-editor]').height() / 2 - $('[data-audio]').height() / 2 + 'px'
 				});
 
-				$('#audio').prop('src', 'media/' + opts.fileName);
+				$('[data-audio]').prop('src', 'media/' + opts.fileName);
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
@@ -1934,21 +1964,21 @@ var EditorView = function (_View) {
 					this.emit('open-notification', {
 						func: 'editor',
 						timestamp: timestamp,
-						text: 'This is a preview only. GUI objects will not be updated and you cannot edit the patch (yet).'
+						text: json.editor_view.preview
 					});
 
 					// render pd patch
 					try {
-
-						$('#pd-svg').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
-							'max-width': $('#editor').width() + 'px',
-							'max-height': $('#editor').height() + 'px'
+						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
+							'max-width': $('[data-editor]').width() + 'px',
+							'max-height': $('[data-editor]').height() + 'px'
 						});
 
-						$('#pd-svg-parent').css({
-							'display': 'block',
-							'max-width': $('#editor').width() + 'px',
-							'max-height': $('#editor').height() + 'px'
+						$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+
+						$('[data-pd-svg-parent]').addClass('active').css({
+							'max-width': $('[data-editor]').width() + 'px',
+							'max-height': $('[data-editor]').height() + 'px'
 						});
 
 						this.emit('close-notification', { timestamp: timestamp });
@@ -1968,7 +1998,9 @@ var EditorView = function (_View) {
 				} else {
 
 					// show the editor
-					$('#editor').css('display', 'block');
+					$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+
+					$('[data-editor]').addClass('active');
 
 					// stop comparison with file on disk
 					this.emit('compare-files', false);
@@ -2054,7 +2086,7 @@ var EditorView = function (_View) {
 			/*var word = this.editor.session.getTextRange(this.editor.session.getAWordRange(pos.row, pos.column)).trim();
    var index = activeWords.indexOf(word);
    var id;
-   if (index !== -1) id = activeWordIDs[index]; 
+   if (index !== -1) id = activeWordIDs[index];
    //console.log(word, index);
    this.emit('goto-docs', index, word, id);*/
 
@@ -2066,7 +2098,7 @@ var EditorView = function (_View) {
 				return;
 			}
 
-			//console.log('clicked', token); 
+			//console.log('clicked', token);
 
 			var markers = this.parser.getMarkers();
 			var _iteratorNormalCompletion = true;
@@ -2112,7 +2144,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":17,"./View":14}],8:[function(require,module,exports){
+},{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2126,6 +2158,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var json = require('../site-text.json');
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -2148,8 +2181,13 @@ var FileView = function (_View) {
 
 		_this.listOfFiles = [];
 
+		var data = {
+			fileName: "",
+			project: ""
+		};
+
 		// hack to upload file
-		$('#uploadFileInput').on('change', function (e) {
+		$('[data-upload-file-input]').on('change', function (e) {
 			for (var i = 0; i < e.target.files.length; i++) {
 				_this.doFileUpload(e.target.files[i]);
 			}
@@ -2187,14 +2225,14 @@ var FileView = function (_View) {
 			var _this2 = this;
 
 			// build the popup content
-			popup.title('Creating a new file');
-			popup.subtitle('Enter the name of the new file. Only files with extensions .cpp, .c or .S will be compiled.');
+			popup.title(json.popups.create_new_file.title);
+			popup.subtitle(json.popups.create_new_file.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter the file name">');
+			form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-create">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2202,14 +2240,14 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
 	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			$('#uploadFileInput').trigger('click');
+			$('[data-upload-file-input]').trigger('click');
 		}
 	}, {
 		key: 'renameFile',
@@ -2217,14 +2255,14 @@ var FileView = function (_View) {
 			var _this3 = this;
 
 			// build the popup content
-			popup.title('Renaming this file');
-			popup.subtitle('Enter the new name of the file. Only files with extensions .cpp, .c or .S will be compiled.');
+			popup.title(json.popups.rename_file.title);
+			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter the new file name">');
+			form.push('<input type="text" placeholder="' + json.popups.create_new_file + input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-rename">Rename</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2232,7 +2270,7 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2242,12 +2280,12 @@ var FileView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Deleting file');
-			popup.subtitle('Are you sure you wish to delete this file? This cannot be undone!');
+			popup.title(json.popups.delete_file.title);
+			popup.subtitle(json.popups.delete_file.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-delete">Delete</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2255,11 +2293,11 @@ var FileView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-delete').trigger('focus');
+			popup.find('.delete').trigger('focus');
 		}
 	}, {
 		key: 'openFile',
@@ -2276,7 +2314,7 @@ var FileView = function (_View) {
 
 			this.listOfFiles = files;
 
-			var $files = $('#fileList');
+			var $files = $('[data-file-list]');
 			$files.empty();
 
 			if (!files.length) return;
@@ -2351,60 +2389,54 @@ var FileView = function (_View) {
 			});
 
 			//console.log(headers, sources, resources, directories);
-
 			if (headers.length) {
-				$('<li></li>').html('Headers:').appendTo($files);
-			}
-			for (var i = 0; i < headers.length; i++) {
-				$('<li></li>').addClass('sourceFile').html(headers[i].name + '<span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo($files).on('click', function (e) {
-					return _this5.openFile(e);
-				});
+				var header = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
+				var headerList = $('<ul></ul>').addClass('sub-file-list');
+				for (var i = 0; i < headers.length; i++) {
+					$('<li></li>').addClass('sourceFile').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				headerList.appendTo(header);
+				header.appendTo($files);
 			}
 
 			if (sources.length) {
-				$('<li></li>').html('Sources:').appendTo($files);
-			}
-			for (var _i = 0; _i < sources.length; _i++) {
-				$('<li></li>').addClass('sourceFile').html(sources[_i].name + '<span class="file-list-size">' + sources[_i].size + '</span>').data('file', sources[_i].name).appendTo($files).on('click', function (e) {
-					return _this5.openFile(e);
-				});
+				var source = $("<li></li>");
+				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
+				var sourceList = $('<ul></ul>').addClass('sub-file-list');
+				for (var _i = 0; _i < sources.length; _i++) {
+					$('<li></li>').addClass('sourceFile').html(sources[_i].name + ' <span class="file-list-size">' + sources[_i].size + '</span>').data('file', sources[_i].name).appendTo(sourceList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				sourceList.appendTo(source);
+				source.appendTo($files);
 			}
 
 			if (resources.length) {
-				$('<li></li>').html('Resources:').appendTo($files);
-			}
-			for (var _i2 = 0; _i2 < resources.length; _i2++) {
-				$('<li></li>').addClass('sourceFile').html(resources[_i2].name + '<span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo($files).on('click', function (e) {
-					return _this5.openFile(e);
-				});
+				var resource = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
+				var resourceList = $('<ul></ul>').addClass('sub-file-list');
+				for (var _i2 = 0; _i2 < resources.length; _i2++) {
+					$('<li></li>').addClass('sourceFile').html(resources[_i2].name + ' <span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo(resourceList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				resourceList.appendTo(resource);
+				resource.appendTo($files);
 			}
 
 			if (directories.length) {
-				$('<li></li>').html('Directories:').appendTo($files);
-			}
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
-
-			try {
-				for (var _iterator2 = directories[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var dir = _step2.value;
-
-					$files.append(this.subDirs(dir));
+				var directory = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
+				var directoryList = $('<ul></ul>').addClass('sub-file-list');
+				for (var _i3 = 0; _i3 < directories.length; _i3++) {
+					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
 				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
+				directoryList.appendTo(directory);
+				directory.appendTo($files);
 			}
 
 			if (data && data.fileName) this._fileName(data.fileName);
@@ -2417,16 +2449,16 @@ var FileView = function (_View) {
 			$('.selectedFile').removeClass('selectedFile');
 
 			var foundFile = false;
-			$('#fileList li').each(function () {
+			$('[data-file-list]').find('li').each(function () {
 				if ($(this).data('file') === file) {
-					$(this).addClass('selectedFile');
+					$(this).addClass('selected');
 					foundFile = true;
 				}
 			});
 
 			if (data && data.currentProject) {
 				// set download link
-				$('#downloadFileLink').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
+				$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
 			}
 		}
 	}, {
@@ -2435,13 +2467,13 @@ var FileView = function (_View) {
 			var _this6 = this;
 
 			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
 
 			try {
-				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var child = _step3.value;
+				for (var _iterator2 = dir.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var child = _step2.value;
 
 					if (!isDir(child)) {
 						if (child.size < 1000000) {
@@ -2458,16 +2490,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError2) {
+						throw _iteratorError2;
 					}
 				}
 			}
@@ -2488,27 +2520,27 @@ var FileView = function (_View) {
 			}
 
 			var fileExists = false;
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
 
 			try {
-				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var item = _step4.value;
+				for (var _iterator3 = this.listOfFiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var item = _step3.value;
 
 					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
 					}
 				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -2522,15 +2554,15 @@ var FileView = function (_View) {
 				uploadingFile = true;
 
 				// build the popup content
-				popup.title('Overwriting file');
-				popup.subtitle('The file ' + file.name + ' already exists in this project. Would you like to overwrite it?');
+				popup.title(json.popups.overwrite.title);
+				popup.subtitle(file.name + json.popups.overwrite.text);
 
 				var form = [];
 				form.push('<input id="popup-remember-upload" type="checkbox">');
-				form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>');
+				form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>');
 				form.push('</br >');
-				form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
-				form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+				form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
+				form.push('<button type="button" class="button cancel">Cancel</button>');
 
 				popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
@@ -2546,7 +2578,7 @@ var FileView = function (_View) {
 					}
 				});
 
-				popup.find('.popup-cancel').on('click', function () {
+				popup.find('.cancel').on('click', function () {
 					if (popup.find('input[type=checkbox]').is(':checked')) {
 						askForOverwrite = false;
 						overwriteAction = 'reject';
@@ -2559,7 +2591,7 @@ var FileView = function (_View) {
 
 				popup.show();
 
-				popup.find('.popup-cancel').focus();
+				popup.find('.cancel').focus();
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
@@ -2612,7 +2644,7 @@ function isDir(item) {
 
 module.exports = FileView;
 
-},{"../popup":18,"../utils":19,"./View":14}],9:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2625,6 +2657,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var GitView = function (_View) {
 	_inherits(GitView, _View);
@@ -2634,8 +2667,8 @@ var GitView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, (GitView.__proto__ || Object.getPrototypeOf(GitView)).call(this, className, models, settings));
 
-		_this.$form = $('#gitForm');
-		_this.$input = $('#gitInput');
+		_this.$form = $('[data-git-form]');
+		_this.$input = $('[data-git-input]');
 
 		// git input events
 		_this.$form.on('submit', function (e) {
@@ -2674,14 +2707,14 @@ var GitView = function (_View) {
 			var _this2 = this;
 
 			// build the popup content
-			popup.title('Committing to the project repository');
-			popup.subtitle('Enter a commit message');
+			popup.title(json.popups.commit.title);
+			popup.subtitle(json.popups.commit.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter your commit message">');
+			form.push('<input type="text" placeholder="' + json.popups.commit.input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-commit">Commit</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.commit.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2689,7 +2722,7 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2699,14 +2732,14 @@ var GitView = function (_View) {
 			var _this3 = this;
 
 			// build the popup content
-			popup.title('Creating a new branch');
-			popup.subtitle('Enter a name for the branch');
+			popup.title(json.popups.branch.title);
+			popup.subtitle(json.popups.branch.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter your new branch name">');
+			form.push('<input type="text" placeholder="' + json.popups.branch.input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-create">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.branch.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2714,7 +2747,7 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2724,12 +2757,12 @@ var GitView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Discarding changes');
-			popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
+			popup.title(json.popups.discard.title);
+			popup.subtitle(json.popups.discard.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.discard.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2737,21 +2770,21 @@ var GitView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-create').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: '_repoExists',
 		value: function _repoExists(exists) {
 			if (exists) {
-				$('#repo').css('display', 'block');
-				$('#noRepo').css('display', 'none');
+				$('[data-git-repo]').css('display', 'block');
+				$('[data-git-no-repo]').css('display', 'none');
 			} else {
-				$('#repo').css('display', 'none');
-				$('#noRepo').css('display', 'block');
+				$('[data-git-repo]').css('display', 'none');
+				$('[data-git-no-repo]').css('display', 'block');
 			}
 		}
 	}, {
@@ -2763,7 +2796,8 @@ var GitView = function (_View) {
 			var branches = git.branches.split('\n');
 
 			// fill commits menu
-			var $commits = $('#commits');
+			// var $commits = $('#commits');
+			var $commits = $('[data-git-commits]');
 			$commits.empty();
 
 			var commit, hash, opt;
@@ -2782,7 +2816,8 @@ var GitView = function (_View) {
 			}
 
 			// fill branches menu
-			var $branches = $('#branches');
+			// var $branches = $('#branches');
+			var $branches = $('[data-git-branches]');
 			$branches.empty();
 
 			for (var i = 0; i < branches.length; i++) {
@@ -2811,7 +2846,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":18,"./View":14}],10:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2825,6 +2860,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var json = require('../site-text.json');
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -2832,7 +2868,6 @@ var ProjectView = function (_View) {
 	function ProjectView(className, models) {
 		_classCallCheck(this, ProjectView);
 
-		//this.exampleChanged = false;
 		var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
 
 		_this.on('example-changed', function () {
@@ -2854,8 +2889,6 @@ var ProjectView = function (_View) {
 				popup.exampleChanged(function () {
 					_this2.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
 				}, undefined, 0, function () {
-					$element.find('option').filter(':selected').attr('selected', '');
-					$element.val($('#projects > option:first').val());
 					_this2.exampleChanged = true;
 				});
 				return;
@@ -2885,26 +2918,30 @@ var ProjectView = function (_View) {
 			}
 
 			// build the popup content
-			popup.title('Creating a new project');
-			popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
+			popup.title(json.popups.create_new.title);
+			popup.subtitle(json.popups.create_new.text);
 
 			var form = [];
+			form.push('<label for="popup-C" class="radio-container">C++');
 			form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
-			form.push('<label for="popup-C">C++</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-PD" class="radio-container">Pure Data');
 			form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
-			form.push('<label for="popup-PD">Pure Data</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-SC" class="radio-container">SuperCollider');
 			form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
-			form.push('<label for="popup-SC">SuperCollider</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
+			form.push('<label for="popup-CS" class="radio-container">Csound');
 			form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-			form.push('<label for="popup-CS">Csound</label>');
-			form.push('</br>');
+			form.push('<span class="radio-button"></span>');
+			form.push('</label>');
 			form.push('<input type="text" placeholder="Enter your project name">');
 			form.push('</br>');
-			form.push('<button type="submit" class="button popup-save">Create</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2913,10 +2950,11 @@ var ProjectView = function (_View) {
 					newProject: sanitise(popup.find('input[type=text]').val()),
 					projectType: popup.find('input[type=radio]:checked').data('type')
 				});
+				$('[data-projects-select]').html('');
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2926,14 +2964,14 @@ var ProjectView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Saving project');
-			popup.subtitle('Enter the name of your project');
+			popup.title(json.popups.save_as.title);
+			popup.subtitle(json.popups.save_as.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="Enter the new project name">');
+			form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-save">Save</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2941,7 +2979,7 @@ var ProjectView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -2951,24 +2989,25 @@ var ProjectView = function (_View) {
 			var _this5 = this;
 
 			// build the popup content
-			popup.title('Deleting project');
-			popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
+			popup.title(json.popups.delete_project.title);
+			popup.subtitle(json.popups.delete_project.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-delete">Delete</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
+				$('[data-projects-select]').html('');
 				_this5.emit('message', 'project-event', { func: func });
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-delete').trigger('focus');
+			popup.find('.delete').trigger('focus');
 		}
 	}, {
 		key: 'cleanProject',
@@ -2982,16 +3021,19 @@ var ProjectView = function (_View) {
 		key: '_projectList',
 		value: function _projectList(projects, data) {
 
-			var $projects = $('#projects');
-			$projects.empty();
-
-			// add an empty option to menu and select it
-			var opt = $('<option></option>').attr({ 'value': '', 'selected': 'selected' }).html('--Projects--').appendTo($projects);
+			var $projects = $('[data-projects-select]');
 
 			// fill project menu with projects
-			for (var i = 0; i < projects.length; i++) {
+			if (projects.length > 0) {
+				var projLen = projects.length;
+			}
+			$projects.attr('size', projLen - 1);
+			for (var i = 0; i < projLen; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					var opt = $('<option></option>').attr('value', projects[i]).html(projects[i]).appendTo($projects);
+					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
+						$(this).blur();
+						$(this).parent().parent().removeClass('show');
+					});
 				}
 			}
 
@@ -3002,7 +3044,7 @@ var ProjectView = function (_View) {
 		value: function _exampleList(examplesDir) {
 			var _this6 = this;
 
-			var $examples = $('#examples');
+			var $examples = $('[data-examples]');
 			$examples.empty();
 
 			if (!examplesDir.length) return;
@@ -3015,7 +3057,11 @@ var ProjectView = function (_View) {
 				var _loop = function _loop() {
 					var item = _step.value;
 
-					var ul = $('<ul></ul>').html(item.name + ':');
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+					var parentUl = $('<ul></ul>');
+					var parentLi = $('<li></li>');
+					var childUl = $('<ul></ul>').addClass('example-list');
+					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
 
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
@@ -3026,7 +3072,8 @@ var ProjectView = function (_View) {
 							var child = _step2.value;
 
 							if (child && child.length && child[0] === '.') return 'continue';
-							$('<li></li>').addClass('sourceFile').html(child).appendTo(ul).attr('id', item.name + '/' + child).on('click', function (e) {
+							var childLi = $('<li></li>');
+							childLi.html(child).attr('data-example-link', item.name + '/' + child).on('click', function (e) {
 
 								if (_this6.exampleChanged) {
 									_this6.exampleChanged = false;
@@ -3050,6 +3097,7 @@ var ProjectView = function (_View) {
 								$('.selectedExample').removeClass('selectedExample');
 								$(e.target).addClass('selectedExample');
 							});
+							childLi.appendTo(childUl);
 						};
 
 						for (var _iterator2 = item.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
@@ -3057,6 +3105,8 @@ var ProjectView = function (_View) {
 
 							if (_ret2 === 'continue') continue;
 						}
+						// per section
+						// item.name -> parentDiv $examples
 					} catch (err) {
 						_didIteratorError2 = true;
 						_iteratorError2 = err;
@@ -3072,7 +3122,13 @@ var ProjectView = function (_View) {
 						}
 					}
 
-					ul.appendTo($examples);
+					parentButton.appendTo(parentLi);
+					// per item in section
+					// childLi -> childUl -> parentDiv -> $examples
+					childUl.appendTo(childDiv);
+					childDiv.appendTo(parentLi);
+					parentLi.appendTo(parentUl);
+					parentLi.appendTo($examples);
 				};
 
 				for (var _iterator = examplesDir[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
@@ -3089,6 +3145,227 @@ var ProjectView = function (_View) {
 				} finally {
 					if (_didIteratorError) {
 						throw _iteratorError;
+					}
+				}
+			}
+		}
+	}, {
+		key: '_libraryList',
+		value: function _libraryList(librariesDir) {
+
+			var $libraries = $('[data-libraries-list]');
+			$libraries.empty(librariesDir);
+			if (!librariesDir.length) return;
+
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
+
+			try {
+				var _loop3 = function _loop3() {
+					var item = _step3.value;
+
+					var name = item.name;
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
+					var parentUl = $('<ul></ul>');
+					var parentLi = $('<li></li>');
+					var childUl = $('<ul></ul>').addClass('libraries-list');
+					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
+					var childTitle = $('<p></p>').addClass('file-heading').text('Files');
+					var libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
+					var includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
+					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
+					var includeCP = $('<p><p>').addClass('copy').text('Copy to clipboard').on('click', function () {
+						var includes = $(this).parent().find('[data-form]');
+						// includes.focus();
+						includes.select();
+						document.execCommand("copy");
+					});
+					var _iteratorNormalCompletion4 = true;
+					var _didIteratorError4 = false;
+					var _iteratorError4 = undefined;
+
+					try {
+						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+							var _child = _step4.value;
+
+							// console.log(child);
+							if (_child && _child.length && _child[0] === '.') continue;
+							var childLi = $('<li></li>');
+							var testExt = _child.split('.');
+							var childExt = testExt[testExt.length - 1];
+							// The MetaData file
+							if (childExt === 'metadata') {
+								(function () {
+									var i = 0;
+									var childPath = '/libraries/' + item.name + "/" + _child;
+									var libDataDiv = $('<div></div>');
+									var libData = $('<dl></dl>');
+									var includeArr = [];
+									var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
+									var includeText = $('<pre></pre>');
+									$.ajax({
+										type: "GET",
+										url: "/libraries/" + name + "/" + _child,
+										dataType: "html",
+										success: function success(text) {
+											i += 1;
+											var object = {};
+											var transformText = text.split('\n');
+											var _iteratorNormalCompletion5 = true;
+											var _didIteratorError5 = false;
+											var _iteratorError5 = undefined;
+
+											try {
+												for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+													var line = _step5.value;
+
+													if (line.length > 0) {
+														var splitKeyVal = line.split('=');
+														var key = splitKeyVal[0];
+														if (key == 'include') {
+															includeArr.push(splitKeyVal[1]);
+														} else {
+															object[key] = splitKeyVal[1];
+														}
+													}
+												}
+											} catch (err) {
+												_didIteratorError5 = true;
+												_iteratorError5 = err;
+											} finally {
+												try {
+													if (!_iteratorNormalCompletion5 && _iterator5.return) {
+														_iterator5.return();
+													}
+												} finally {
+													if (_didIteratorError5) {
+														throw _iteratorError5;
+													}
+												}
+											}
+
+											if (object.name) {
+												var libNameDT = $('<dt></dt>').text('Name:');
+												libNameDT.appendTo(libData);
+												var libNameDD = $('<dd></dd>').text(object.name);
+												libNameDD.appendTo(libData);
+											}
+											if (object.version) {
+												var libVersionDT = $('<dt></dt>').text('Version:');
+												libVersionDT.appendTo(libData);
+												var libVersionDD = $('<dd></dd>').text(object.version);
+												libVersionDD.appendTo(libData);
+											}
+											if (object.author) {
+												var libAuthorDT = $('<dt></dt>').text('Author:');
+												libAuthorDT.appendTo(libData);
+												var libAuthorDD = $('<dd></dd>').text(object.author);
+												libAuthorDD.appendTo(libData);
+											}
+											if (object.maintainer) {
+												var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
+												libMaintainerDT.appendTo(libData);
+												var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
+												libMaintainerDD.appendTo(libData);
+											}
+											if (object.description) {
+												var libDescriptionDT = $('<dt></dt>').text('Description:');
+												libDescriptionDT.appendTo(libData);
+												var libDescriptionDD = $('<dd></dd>').text(object.description);
+												libDescriptionDD.appendTo(libData);
+											}
+											includeInstructions.appendTo(libDataDiv);
+											includeCP.appendTo(libDataDiv);
+											includeForm.appendTo(libDataDiv);
+											if (includeArr.length > 0) {
+												includeTitle.appendTo(libDataDiv);
+												var _iteratorNormalCompletion6 = true;
+												var _didIteratorError6 = false;
+												var _iteratorError6 = undefined;
+
+												try {
+													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+														var include = _step6.value;
+
+														var _includeText = $('<pre></pre>');
+														_includeText.text('#include <' + include + '>').attr('data-include', '');
+														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
+														_includeText.appendTo(libDataDiv);
+													}
+												} catch (err) {
+													_didIteratorError6 = true;
+													_iteratorError6 = err;
+												} finally {
+													try {
+														if (!_iteratorNormalCompletion6 && _iterator6.return) {
+															_iterator6.return();
+														}
+													} finally {
+														if (_didIteratorError6) {
+															throw _iteratorError6;
+														}
+													}
+												}
+											} else {
+												includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
+												includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
+												includeText.appendTo(libDataDiv);
+											}
+											includeArr = [];
+											libTitle.appendTo(libDataDiv);
+											libData.appendTo(libDataDiv);
+											libDataDiv.appendTo(childDiv);
+											libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+										}
+									});
+								})();
+							} else {
+								childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
+								childLi.appendTo(childUl);
+							}
+						}
+						// per section
+						// item.name -> parentDiv $examples
+					} catch (err) {
+						_didIteratorError4 = true;
+						_iteratorError4 = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion4 && _iterator4.return) {
+								_iterator4.return();
+							}
+						} finally {
+							if (_didIteratorError4) {
+								throw _iteratorError4;
+							}
+						}
+					}
+
+					parentButton.appendTo(parentLi);
+					// per item in section
+					// childLi -> childUl -> parentDiv -> $examples
+					childTitle.appendTo(childDiv);
+					childUl.appendTo(childDiv);
+					childDiv.appendTo(parentLi);
+					parentLi.appendTo(parentUl);
+					parentLi.appendTo($libraries);
+				};
+
+				for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					_loop3();
+				}
+			} catch (err) {
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
+					}
+				} finally {
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -3119,21 +3396,18 @@ var ProjectView = function (_View) {
 		value: function _currentProject(project) {
 
 			// unselect currently selected project
-			$('#projects').find('option').filter(':selected').attr('selected', '');
+			$('[data-projects-select]').find('option').filter(':selected').attr('selected', '');
 
 			if (project === 'exampleTempProject') {
 				// select no project
-				$('#projects').val($('#projects > option:first').val());
+				$('[data-projects-select]').val($('[data-projects-select] > option:first').val());
 			} else {
 				// select new project
-				//$('#projects option[value="'+project+'"]').attr('selected', 'selected');
-				$('#projects').val($('#projects > option[value="' + project + '"]').val());
-				// unselect currently selected example
-				$('.selectedExample').removeClass('selectedExample');
+				$('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
 			}
 
 			// set download link
-			$('#downloadLink').attr('href', '/download?project=' + project);
+			$('[data-download-file]').attr('href', '/download?project=' + project);
 		}
 	}, {
 		key: '__currentProject',
@@ -3144,30 +3418,30 @@ var ProjectView = function (_View) {
 		key: 'subDirs',
 		value: function subDirs(dir) {
 			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion7 = true;
+			var _didIteratorError7 = false;
+			var _iteratorError7 = undefined;
 
 			try {
-				for (var _iterator3 = dir.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var _child = _step3.value;
+				for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+					var _child2 = _step7.value;
 
-					if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
-						_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
-						ul.append(this.subDirs(_child));
+					if (!_child2.dir) $('<li></li>').addClass('sourceFile').html(_child2.name).data('file', (dir.dirPath || dir.name) + '/' + _child2.name).appendTo(ul);else {
+						_child2.dirPath = (dir.dirPath || dir.name) + '/' + _child2.name;
+						ul.append(this.subDirs(_child2));
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError7 = true;
+				_iteratorError7 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion7 && _iterator7.return) {
+						_iterator7.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError7) {
+						throw _iteratorError7;
 					}
 				}
 			}
@@ -3181,7 +3455,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../popup":18,"../utils":19,"./View":14}],11:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3194,6 +3468,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var inputChangedTimeout;
 
@@ -3215,8 +3490,8 @@ var SettingsView = function (_View) {
 			});
 		};
 
-		$('#runOnBoot').on('change', function () {
-			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--') _this.emit('run-on-boot', $('#runOnBoot').val());
+		$('[data-run-on-boot]').on('change', function () {
+			if ($('[data-run-on-boot]').val() && $('[data-run-on-boot]').val() !== '--select--') _this.emit('run-on-boot', $('[data-run-on-boot]').val());
 		});
 
 		$('.audioExpanderCheck').on('change', function (e) {
@@ -3257,9 +3532,17 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'buttonClicked',
 		value: function buttonClicked($element, e) {
-			var func = $element.data().func;
+			var data = $element.data();
+			var func = data.func;
+			var key = data.key;
+			var val = $element.val();
+			console.log(func, key, val);
 			if (func && this[func]) {
-				this[func](func);
+				if (val) {
+					this[func](func, key, $element.val());
+				} else {
+					this[func](func);
+				}
 			}
 		}
 	}, {
@@ -3291,12 +3574,12 @@ var SettingsView = function (_View) {
 			var _this2 = this;
 
 			// build the popup content
-			popup.title('Restoring default project settings');
-			popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
+			popup.title(json.popups.restore_default_project_settings.title);
+			popup.subtitle(json.popups.restore_default_project_settings.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button confirm">' + json.popups.restore_default_project_settings.button + '</button>');
+			form.push('<button type="button" class="button cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3304,11 +3587,11 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'setIDESetting',
@@ -3321,12 +3604,12 @@ var SettingsView = function (_View) {
 			var _this3 = this;
 
 			// build the popup content
-			popup.title('Restoring default IDE settings');
-			popup.subtitle('Are you sure you wish to continue? Your current IDE settings will be lost!');
+			popup.title(json.popups.restore_default_ide_settings.title);
+			popup.subtitle(json.popups.restore_default_ide_settings.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.restore_default_ide_settings.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3334,11 +3617,11 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'shutdownBBB',
@@ -3346,12 +3629,12 @@ var SettingsView = function (_View) {
 			var _this4 = this;
 
 			// build the popup content
-			popup.title('Shutting down Bela');
-			popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
+			popup.title(json.popups.shutdown.title);
+			popup.subtitle(json.popups.shutdown.text);
 
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Continue</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3359,21 +3642,20 @@ var SettingsView = function (_View) {
 				popup.hide();
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'aboutPopup',
 		value: function aboutPopup() {
-
 			// build the popup content
-			popup.title('About Bela');
-			popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+			popup.title(json.popups.about.title);
+			popup.subtitle(json.popups.about.text);
 			var form = [];
-			form.push('<button type="submit" class="button popup-continue">Close</button>');
+			form.push('<button type="submit" class="button popup cancel">' + json.popups.about.button + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -3382,7 +3664,7 @@ var SettingsView = function (_View) {
 
 			popup.show();
 
-			popup.find('.popup-continue').trigger('focus');
+			popup.find('.cancel').trigger('focus');
 		}
 	}, {
 		key: 'updateBela',
@@ -3390,14 +3672,14 @@ var SettingsView = function (_View) {
 			var _this5 = this;
 
 			// build the popup content
-			popup.title('Updating Bela');
-			popup.subtitle('Please select the update zip archive');
+			popup.title(json.popups.update.title);
+			popup.subtitle(json.popups.update.text);
 
 			var form = [];
 			form.push('<input id="popup-update-file" type="file">');
 			form.push('</br>');
-			form.push('<button type="submit" class="button popup-upload">Upload</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 			/*popup.form.prop({
    	action	: 'updates',
@@ -3418,9 +3700,9 @@ var SettingsView = function (_View) {
 
 				if (file) {
 
-					_this5.emit('warning', 'Beginning the update - this may take several minutes');
-					_this5.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
-					_this5.emit('warning', 'Do not use the IDE during the update process!');
+					_this5.emit('warning', json.settings_view.update);
+					_this5.emit('warning', json.settings_view.browser);
+					_this5.emit('warning', json.settings_view.ide);
 
 					popup.hide('keep overlay');
 
@@ -3431,12 +3713,12 @@ var SettingsView = function (_View) {
 					reader.readAsArrayBuffer(file);
 				} else {
 
-					_this5.emit('warning', 'not a valid update zip archive');
+					_this5.emit('warning', json.settings_view.zip);
 					popup.hide();
 				}
 			});
 
-			popup.find('.popup-cancel').on('click', popup.hide);
+			popup.find('.cancel').on('click', popup.hide);
 
 			popup.show();
 		}
@@ -3453,7 +3735,7 @@ var SettingsView = function (_View) {
 					this.setAudioExpander(key, data[key]);
 					continue;
 				} else if (key === 'audioExpander') {
-					if (data[key] == 1) $('#audioExpanderTable').css('display', 'table');else $('#audioExpanderTable').css('display', 'none');
+					if (data[key] == 1) $('[data-audio-expander-table]').css('display', 'table');
 				}
 
 				var el = this.$elements.filterByData('key', key);
@@ -3478,7 +3760,7 @@ var SettingsView = function (_View) {
 		key: '_projectList',
 		value: function _projectList(projects, data) {
 
-			var $projects = $('#runOnBoot');
+			var $projects = $('[data-run-on-boot]');
 			$projects.empty();
 
 			// add a none option
@@ -3497,12 +3779,9 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'useAudioExpander',
 		value: function useAudioExpander(func, key, val) {
-
 			if (val == 1) {
-				$('#audioExpanderTable').css('display', 'table');
 				this.setCLArg('setCLArg', key, val);
 			} else {
-				$('#audioExpanderTable').css('display', 'none');
 				// clear channel picker
 				$('.audioExpanderCheck').prop('checked', false);
 				this.emit('project-settings', { func: 'setCLArgs', args: [{ key: '-Y', value: '' }, { key: '-Z', value: '' }, { key: key, value: val }] });
@@ -3511,7 +3790,6 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'setAudioExpander',
 		value: function setAudioExpander(key, val) {
-
 			if (!val.length) return;
 
 			var channels = val.split(',');
@@ -3632,7 +3910,7 @@ var SettingsView = function (_View) {
 			}
 
 			if (boardString.includes('Ctag')) {
-				var sRates = $('#analog-samplerate').children("option");
+				var sRates = $('[data-analog-samplerate]').children("option");
 				for (var i = 0; i < sRates.length; i++) {
 					var rate = sRates[i].innerHTML;
 					if (rate == "44100") {
@@ -3644,6 +3922,7 @@ var SettingsView = function (_View) {
 			}
 
 			for (var e in exceptions['options']) {
+				console.log("exception", e);
 				var opts = $('#' + exceptions['options'][e].selector).children("option");
 				var exceptOpts = exceptions['options'][e].optVal;
 				for (var _i = 0; _i < opts.length; _i++) {
@@ -3668,7 +3947,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"./View":14}],12:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3681,36 +3960,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
-// private variables
-var _tabsOpen = false;
-
 var TabView = function (_View) {
 	_inherits(TabView, _View);
 
 	function TabView() {
 		_classCallCheck(this, TabView);
 
-		// open/close tabs
+		// golden layout
 		var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
 
-		$('#flexit').on('click', function () {
-			if (_tabsOpen) {
-				_this.closeTabs();
-			} else {
-				_this.openTabs();
-			}
-		});
-
-		$('.tab > label').on('click', function (e) {
-			if (!_tabsOpen) {
-				if ($(e.currentTarget).prop('id') === 'tab-0' && $('[type=radio]:checked ~ label').prop('id') === 'tab-0') $('#file-explorer').parent().trigger('click');
-
-				_this.openTabs();
-				e.stopPropagation();
-			}
-		});
-
-		// golden layout
 		var layout = new GoldenLayout({
 			settings: {
 				hasHeaders: false,
@@ -3741,11 +3999,8 @@ var TabView = function (_View) {
 			content: [{
 				type: 'column',
 				content: [{
-					type: 'row',
-					content: [{
-						type: 'component',
-						componentName: 'Editor'
-					}]
+					type: 'component',
+					componentName: 'Editor'
 				}, {
 					type: 'component',
 					componentName: 'Console',
@@ -3754,10 +4009,10 @@ var TabView = function (_View) {
 			}]
 		});
 		layout.registerComponent('Editor', function (container, componentState) {
-			container.getElement().append($('#innerContent'));
+			container.getElement().append($('[data-upper]'));
 		});
 		layout.registerComponent('Console', function (container, componentState) {
-			container.getElement().append($('#beaglert-console'));
+			container.getElement().append($('[data-console]'));
 		});
 
 		layout.init();
@@ -3768,79 +4023,27 @@ var TabView = function (_View) {
 			return _this.emit('change');
 		});
 
-		$(window).on('resize', function () {
-			if (_tabsOpen) {
-				_this.openTabs();
-			} else {
-				_this.closeTabs();
-			}
-		});
-
-		_this.on('open-tab', function (id) {
-			return $('#' + id).siblings('label').trigger('click');
-		});
-		_this.on('toggle', function () {
-			if (_tabsOpen) _this.closeTabs();else _this.openTabs();
-		});
 		_this.on('boardString', _this._boardString);
 
 		return _this;
 	}
 
 	_createClass(TabView, [{
-		key: 'openTabs',
-		value: function openTabs() {
-			$('#editor').css('right', '500px');
-			$('#top-line').css('margin-right', '500px');
-			$('#right').css('left', window.innerWidth - 500 + 'px');
-			_tabsOpen = true;
-			this.emit('change');
-			$('#tab-0').addClass('open');
-
-			// fix pd patch
-			$('#pd-svg-parent').css({
-				'max-width': $('#editor').width() + 'px',
-				'max-height': $('#editor').height() + 'px'
-			});
-		}
-	}, {
-		key: 'closeTabs',
-		value: function closeTabs() {
-			$('#editor').css('right', '60px');
-			$('#top-line').css('margin-right', '60px');
-			$('#right').css('left', window.innerWidth - 60 + 'px');
-			_tabsOpen = false;
-			this.emit('change');
-			$('#tab-0').removeClass('open');
-
-			// fix pd patch
-			$('#pd-svg-parent').css({
-				'max-width': $('#editor').width() + 'px',
-				'max-height': $('#editor').height() + 'px'
-			});
-		}
-	}, {
-		key: 'getOpenTab',
-		value: function getOpenTab() {
-			if (!_tabsOpen) return false;
-			return $('[type=radio]:checked ~ label').prop('for');
-		}
-	}, {
 		key: '_boardString',
 		value: function _boardString(data) {
 			var boardString;
 			if (data && data.trim) boardString = data.trim();else return;
 
 			if (boardString === 'BelaMini') {
-				$('#pin_diagram_object').prop('data', 'diagram_mini.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_mini.html');
 			} else if (boardString === 'CtagFace') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_FACE.html');
 			} else if (boardString === 'CtagBeast') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST.html');
 			} else if (boardString === 'CtagFaceBela') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BELA.html');
 			} else if (boardString === 'CtagBeastBela') {
-				$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
+				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST_BELA.html');
 			}
 		}
 	}]);
@@ -3862,6 +4065,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var popup = require('../popup');
+var json = require('../site-text.json');
 
 // ohhhhh i am a comment
 
@@ -3882,43 +4087,53 @@ var ToolbarView = function (_View) {
 		});
 
 		_this.on('disconnected', function () {
-			$('#run').removeClass('running-button').removeClass('building-button');
+			$('[data-toolbar-run]').removeClass('running-button').removeClass('building-button');
 		});
 
-		$('#run').mouseover(function () {
-			$('#control-text-1').html('<p>Run</p>');
+		$('[data-toolbar-run]').mouseover(function () {
+			$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.run + '</p>');
 		}).mouseout(function () {
-			$('#control-text-1').html('');
+			$('[data-toolbar-controltext1]').html('');
 		});
 
-		$('#stop').mouseover(function () {
-			$('#control-text-1').html('<p>Stop</p>');
+		$('[data-toolbar-stop]').mouseover(function () {
+			$('[data-toolbar-controltext1]').html('<p>' + json.toolbar.stop + '</p>');
 		}).mouseout(function () {
-			$('#control-text-1').html('');
+			$('[data-toolbar-controltext1]').html('');
 		});
 
-		$('#new-tab').mouseover(function () {
-			$('#control-text-2').html('<p>New Tab</p>');
+		$('[data-toolbar-newtab]').mouseover(function () {
+			$('[data-toolbar-controltext2]').html('<p>New Tab</p>');
 		}).mouseout(function () {
-			$('#control-text-2').html('');
+			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('#download').mouseover(function () {
-			$('#control-text-2').html('<p>Download</p>');
+		$('[data-toolbar-download]').mouseover(function () {
+			$('[data-toolbar-controltext2]').html('<p>Download</p>');
 		}).mouseout(function () {
-			$('#control-text-2').html('');
+			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('#console').mouseover(function () {
-			$('#control-text-3').html('<p>Clear console</p>');
+		$('[data-toolbar-console]').mouseover(function () {
+			$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.clear + '</p>');
 		}).mouseout(function () {
-			$('#control-text-3').html('');
+			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('#scope').mouseover(function () {
-			$('#control-text-3').html('<p>Open scope</p>');
+		$('[data-toolbar-scope]').mouseover(function () {
+			$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.scope + '</p>');
 		}).mouseout(function () {
-			$('#control-text-3').html('');
+			$('[data-toolbar-controltext2]').html('');
+		});
+
+		$('[data-toolbar-scope]').on('click', function () {
+			window.open('scope');
+		});
+
+		$('[data-toolbar-gui]').mouseover(function () {
+			$('[data-toolbar-controltext2]').html('<p>' + json.toolbar.gui + '</p>');
+		}).mouseout(function () {
+			$('[data-toolbar-controltext2]').html('');
 		});
 		return _this;
 	}
@@ -3956,11 +4171,11 @@ var ToolbarView = function (_View) {
 		key: '__running',
 		value: function __running(status) {
 			if (status) {
-				$('#run').removeClass('building-button').addClass('running-button');
+				$('[data-toolbar-run]').removeClass('building-button').removeClass('building').addClass('running-button').addClass('running');
 			} else {
-				$('#run').removeClass('running-button');
-				$('#bela-cpu').html('CPU: --').css('color', 'black');
-				$('#msw-cpu').html('MSW: --').css('color', 'black');
+				$('[data-toolbar-run]').removeClass('running').removeClass('running-button');
+				$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
+				$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 				modeswitches = 0;
 			}
 		}
@@ -3968,28 +4183,25 @@ var ToolbarView = function (_View) {
 		key: '__building',
 		value: function __building(status) {
 			if (status) {
-				$('#run').removeClass('running-button').addClass('building-button');
+				$('[data-toolbar-run]').removeClass('running-button').removeClass('running').addClass('building-button').addClass('building');
 			} else {
-				$('#run').removeClass('building-button');
+				$('[data-toolbar-run]').removeClass('building-button').removeClass('building');
 			}
 		}
 	}, {
 		key: '__checkingSyntax',
 		value: function __checkingSyntax(status) {
 			if (status) {
-				$('#status').css('background', 'url("images/icons/status_wait.png")').prop('title', 'checking syntax...');
-			} else {
-				//this.syntaxTimeout = setTimeout(() => $('#status').css('background', 'url("images/toolbar.png") -140px 35px'), 10);
+				$('[data-toolbar-status]').addClass('pending').removeClass('ok').removeClass('stop').prop('title', 'checking syntax&hellip;');
 			}
 		}
 	}, {
 		key: '__allErrors',
 		value: function __allErrors(errors) {
-			//if (this.syntaxTimeout) clearTimeout(this.syntaxTimeout); 
 			if (errors.length) {
-				$('#status').css('background', 'url("images/icons/status_stop.png")').prop('title', 'syntax errors found');
+				$('[data-toolbar-status]').removeClass('pending').removeClass('ok').addClass('stop').prop('title', 'syntax errors found');
 			} else {
-				$('#status').css('background', 'url("images/icons/status_ok.png")').prop('title', 'syntax check clear');
+				$('[data-toolbar-status]').removeClass('pending').addClass('ok').removeClass('stop').prop('title', 'syntax check clear');
 			}
 		}
 	}, {
@@ -4009,9 +4221,33 @@ var ToolbarView = function (_View) {
 			}
 		}
 	}, {
+		key: 'shutdownBBB',
+		value: function shutdownBBB() {
+			var _this2 = this;
+
+			// build the popup content
+			popup.title(json.popups.shutdown.title);
+			popup.subtitle(json.popups.shutdown.text);
+
+			var form = [];
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				_this2.emit('halt');
+				popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
+
+			popup.find('.confirm').trigger('focus');
+		}
+	}, {
 		key: '_CPU',
 		value: function _CPU(data) {
-			//	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
 			var bela = 0,
 			    rootCPU = 1;
 
@@ -4057,28 +4293,26 @@ var ToolbarView = function (_View) {
 				if (data.belaLinux) bela += data.belaLinux * rootCPU;
 			}
 
-			//	$('#ide-cpu').html('IDE: '+(ide*rootCPU).toFixed(1)+'%');
-			$('#bela-cpu').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+			$('[data-toolbar-bela-cpu]').html('CPU: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
-			//	if (bela && (ide*rootCPU + bela) > 80){
 			if (bela && bela > 80) {
-				$('#bela-cpu').css('color', 'red');
+				$('[data-toolbar-bela-cpu]').css('color', 'red');
 			} else {
-				$('#bela-cpu').css('color', 'black');
+				$('[data-toolbar-bela-cpu]').css('color', 'black');
 			}
 		}
 	}, {
 		key: '_cpuMonitoring',
 		value: function _cpuMonitoring(value) {
-			if (parseInt(value)) $('#bela-cpu').css('visibility', 'visible');else $('#bela-cpu').css('visibility', 'hidden');
+			if (parseInt(value)) $('[data-toolbar-bela-cpu]').css('visibility', 'visible');else $('[data-toolbar-bela-cpu]').css('visibility', 'hidden');
 		}
 	}, {
 		key: 'mode_switches',
 		value: function mode_switches(value) {
-			$('#msw-cpu').html('MSW: ' + value);
+			$('[data-toolbar-msw-cpu]').html('MSW: ' + value);
 			if (value > modeswitches) {
 				this.emit('mode-switch-warning', value);
-				$('#msw-cpu').css('color', 'red');
+				$('[data-toolbar-msw-cpu]').css('color', 'red');
 			}
 			modeswitches = value;
 		}
@@ -4089,7 +4323,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"./View":14}],14:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4232,7 +4466,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var popup = require('./popup');
 var EventEmitter = require('events').EventEmitter;
+var json = require('./site-text.json');
 //var $ = require('jquery-browserify');
 
 var enabled = true,
@@ -4250,10 +4486,13 @@ var Console = function (_EventEmitter) {
 	function Console() {
 		_classCallCheck(this, Console);
 
+		// this.$element = $('#beaglert-consoleWrapper');
+		// this.parent = document.getElementById('beaglert-console');
 		var _this = _possibleConstructorReturn(this, (Console.__proto__ || Object.getPrototypeOf(Console)).call(this));
 
-		_this.$element = $('#beaglert-consoleWrapper');
-		_this.parent = document.getElementById('beaglert-console');
+		_this.$element = $('[data-console-contents-wrapper]');
+		_this.parent = $('[data-console]');
+		_this.popUpComponents = "";
 		return _this;
 	}
 
@@ -4300,7 +4539,7 @@ var Console = function (_EventEmitter) {
 				setTimeout(function () {
 					return suspended = false;
 				}, 1000);
-				this.warn('Too many messages have been printed to the console too quickly. Reduce your printing frequency');
+				this.warn(json.console.messages);
 			} else {
 				this.checkScroll();
 				var msgs = text.split('\n');
@@ -4329,7 +4568,7 @@ var Console = function (_EventEmitter) {
 			var msgs = text.split('\n');
 			for (var i = 0; i < msgs.length; i++) {
 				if (msgs[i] !== '') {
-					this.print(msgs[i], 'warning', id); /*, function(){ 
+					this.print(msgs[i], 'warning', id); /*, function(){
                                          var $el = $(this);
                                          $el.addClass('beaglert-console-collapsed');
                                          $el.on('transitionend', () => {
@@ -4347,7 +4586,6 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'newErrors',
 		value: function newErrors(errors) {
-			var _this2 = this;
 
 			//this.checkScroll();
 			scrollEnabled = true;
@@ -4359,47 +4597,26 @@ var Console = function (_EventEmitter) {
 			var _iteratorError = undefined;
 
 			try {
-				var _loop = function _loop() {
+				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var err = _step.value;
 
 
 					// create the element and add it to the error object
-					div = $('<div></div>').addClass('beaglert-console-i' + err.type);
+					var div = $('<div></div>').addClass('beaglert-console-i' + err.type);
 
 					// create the link and add it to the element
-
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+					var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 					// add a button to copy the contents to the clipboard
+					var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
 
-					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
-					clipboard = new Clipboard(copyButton[0], {
+					var clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
 						}
 					});
 
-
-					div.appendTo(_this2.$element);
-
-					if (err.currentFile) {
-						span.on('click', function () {
-							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
-						});
-					} else {
-						span.on('click', function () {
-							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
-						});
-					}
-				};
-
-				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var div;
-					var span;
-					var copyButton;
-					var clipboard;
-
-					_loop();
+					div.appendTo(this.$element);
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -4434,7 +4651,7 @@ var Console = function (_EventEmitter) {
 
 			$('#' + id).remove();
 			var el = this.print(notice, 'notify', id);
-
+			this.popUpComponents = notice;
 			this.scroll();
 
 			return el;
@@ -4470,6 +4687,16 @@ var Console = function (_EventEmitter) {
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
+			var form = [];
+			popup.title('Error');
+			popup.subtitle(this.popUpComponents);
+			popup.body(message);
+			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			popup.form.append(form.join(''));
+			popup.find('.popup-cancel').on('click', function () {
+				popup.hide();
+			});
+			popup.show();
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);
@@ -4487,10 +4714,10 @@ var Console = function (_EventEmitter) {
 		value: function clear(number, force) {
 			if (consoleDelete && !force) return;
 			if (number) {
-				$("#beaglert-consoleWrapper > div:lt(" + parseInt(number) + ")").remove();
+				$("[data-console-contents-wrapper] > div:lt(" + parseInt(number) + ")").remove();
 				numElements -= parseInt(number);
 			} else {
-				$('#beaglert-consoleWrapper > div').remove();
+				$('[data-console-contents-wrapper] > div').remove();
 				numElements = 0;
 			}
 		}
@@ -4509,12 +4736,12 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'scroll',
 		value: function scroll() {
-			var _this3 = this;
+			var _this2 = this;
 
 			if (scrollEnabled) {
 				scrollEnabled = false;
 				setTimeout(function () {
-					return _this3.parent.scrollTop = _this3.parent.scrollHeight;
+					return _this2.parent.scrollTop = _this2.parent.scrollHeight;
 				}, 0);
 			}
 		}
@@ -4529,7 +4756,6 @@ var Console = function (_EventEmitter) {
 }(EventEmitter);
 
 ;
-
 module.exports = new Console();
 
 // gracefully remove a console element after an event ((this) must be bound to the element)
@@ -4543,7 +4769,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"events":1}],16:[function(require,module,exports){
+},{"./popup":18,"./site-text.json":19,"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -5010,11 +5236,13 @@ module.exports = parser;
 },{"./CircularBuffer":2}],18:[function(require,module,exports){
 'use strict';
 
-var _overlay = $('#overlay');
-var parent = $('#popup');
-var content = $('#popup-content');
+var _overlay = $('[data-overlay]');
+var parent = $('[data-popup]');
+var content = $('[data-popup-content]');
 var titleEl = parent.find('h1');
 var subEl = parent.find('p');
+var codeEl = parent.find('code');
+var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
 var popup = {
@@ -5028,6 +5256,8 @@ var popup = {
 		parent.removeClass('active');
 		titleEl.empty();
 		subEl.empty();
+		codeEl.empty();
+		bodyEl.empty();
 		_formEl.empty();
 	},
 	overlay: function overlay() {
@@ -5044,6 +5274,12 @@ var popup = {
 	},
 	subtitle: function subtitle(text) {
 		return subEl.text(text);
+	},
+	code: function code(html) {
+		return codeEl.html(html);
+	},
+	body: function body(text) {
+		return bodyEl.text(text);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);
@@ -5065,11 +5301,12 @@ function example(cb, arg, delay, cancelCb) {
 
 	// build the popup content
 	popup.title('Save your changes?');
-	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-
+	popup.subtitle('Warning: Any unsaved changes will be lost');
+	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
+	popup.code('<h1>Hello World!</h1>');
 	var form = [];
-	form.push('<button type="submit" class="button popup-continue">Continue</button>');
-	form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+	form.push('<button type="submit" class="button popup confirm">Continue</button>');
+	form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
@@ -5079,17 +5316,150 @@ function example(cb, arg, delay, cancelCb) {
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', function () {
+	popup.find('.cancel').on('click', function () {
 		popup.hide();
 		if (cancelCb) cancelCb();
 	});
 
 	popup.show();
 
-	popup.find('.popup-continue').trigger('focus');
+	popup.find('.confirm').trigger('focus');
 }
 
 },{}],19:[function(require,module,exports){
+module.exports={
+	"popups": {
+		"create_new": {
+			"title": "Create new project",
+			"text": "Choose the development language for this project, and give it a name:",
+			"button": "Create project"
+		},
+		"save_as": {
+			"title": "Save project as ...",
+			"text": "",
+			"input": "Enter your new project name",
+			"button": "Save project"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "Warning: This can't be undone.",
+			"button": "Delete project"
+		},
+		"create_new_file": {
+			"title": "Create new file",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"input": "Your new file name",
+			"button": "Create file"
+		},
+		"rename_file": {
+			"title": "Rename this file?",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Rename file"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "This can't be undone.",
+			"button": "Delete project"
+		},
+		"delete_file": {
+			"title": "Delete this file?",
+			"text": "This can't be undone.",
+			"button": "Delete file"
+		},
+		"restore_default_project_settings": {
+			"title": "Restore default project settings?",
+			"text": "Your current project settings will be restored to defaults. This can't be undone.",
+			"button": "Restore defaults"
+		},
+		"restore_default_IDE_settings": {
+			"title": "Restore default IDE settings?",
+			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
+			"button": "Restore defaults"
+		},
+		"shutdown": {
+			"title": "Shut down Bela?",
+			"text": "Bela will disconnect from the IDE and shutdown gracefully.",
+			"button": "Yes, shut down Bela"
+		},
+		"update": {
+			"title": "Update Bela",
+			"text": "Select your Bela update (will be a ZIP file).",
+			"button": "Update now"
+		},
+		"about": {
+			"title": "About Bela",
+			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
+			"button": "Close"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": "Would you like to reload?",
+			"button": "Reload"
+		},
+		"overwrite": {
+			"title": "Overwrite file?",
+			"text": " already exists in this project. Overwrite?",
+			"button": "Overwite",
+			"tick": "Don't ask me again this session"
+		},
+		"commit": {
+			"title": "Commit your changes",
+			"text": "Enter a commit message:",
+			"input": "Your commit message",
+			"button": "Commit"
+		},
+		"branch": {
+			"title": "Create a new branch",
+			"text": "Specify this branch's name:",
+			"input": "Your new ranch name",
+			"button": "Create branch"
+		},
+		"discard": {
+			"title": "Discard changes?",
+			"text": "This will discard all changes since your last commit. This can't be undone.",
+			"button": "Discard changes"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": " has changed. Would you like to reload it?",
+			"button": "Discard changes and reload",
+			"cancel": "Don't reload, keep this version"
+		}
+	},
+	"editor_view": {
+			"preview": "This is a preview - these objects are not editable in the browser."
+	},
+	"settings_view": {
+		"update": "Beginning update - this may take several minutes",
+		"browser": "The browser will temporarily disconnect, and may become unresponsive",
+		"ide": "Do not use the IDE during this process",
+		"zip": "This is not a valid zip archive."
+	},
+	"toolbar": {
+		"run": "Build & run",
+		"stop": "Stop",
+		"clear": "Clear console",
+		"scope": "Launch scope",
+		"gui": "Launch GUI"
+	},
+	"console": {
+		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages.",
+		"disconnect": "Bela has disconnected. Any changes you make will not be saved. Check your USB connection and reboot Bela."
+	},
+	"ide_browser": {
+		"stop": "Stopping Bela ...",
+		"mode_switch": " mode switch detected on the audio thread.",
+		"mode_switches": " mode switches detected on the audio thread.",
+		"file_changed": "This file was edited in another window and has changed. Reopen the file to make edits.",
+		"zip_error": "There was a problem updating Bela. Make sure you have selected the correct zip file and try again."
+	},
+	"docs_view": {
+		"examples": "Examples that use this class:",
+		"button": "Launch documentation"
+	}
+}
+
+},{}],20:[function(require,module,exports){
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
@@ -5100,6 +5470,5 @@ function sanitise(name) {
 module.exports.sanitise = sanitise;
 
 },{}]},{},[16])
-
 
 //# sourceMappingURL=bundle.js.map

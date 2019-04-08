@@ -1,0 +1,19 @@
+.file-status {
+  margin-left: 60px;
+  white-space: nowrap;
+  .project,
+  .file,
+  .status {
+    display: inline-block;
+    padding-top:10px;
+    font-family: space_regular;
+    font-size: 16px;
+    color: $teal-main;
+  }
+  .current {
+    font-family: poppins_regular;
+    color: rgba(0, 0, 0, 0.7);
+    padding-right: 20px;
+    font-size: 14px;
+  }
+}

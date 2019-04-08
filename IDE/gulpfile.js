@@ -10,13 +10,24 @@ let host = '192.168.7.2';
 let user = 'root';
 let remote_path = '/root/Bela/IDE/';
 
+gulp.task('styles', function() {
+  return gulp.src('../ide-redesign/styles/*.scss')
+    .pipe(sass({
+      'sourcemap=none': true
+    }))
+    .pipe(concat('style.css'))
+    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1'))
+    .pipe(gulp.dest('styles/'));
+});
+
 gulp.task('watch', () => {
 
 	livereload.listen();
-	
+
 	gulp.watch(['src/*.ts'], gulp.series('compile'));
 	gulp.watch(['dist/*.js'], gulp.series('idestop', 'upload_dist', 'idestart'));
-	
+  gulp.watch('../ide-redesign/styles/*.scss', ['styles']);
+
 	let ssh = spawn('ssh', [user+'@'+host, 'journalctl -fu bela_ide']);
 	ssh.stdout.setEncoding('utf8');
 	ssh.stderr.setEncoding('utf8');
@@ -27,7 +38,7 @@ gulp.task('watch', () => {
 	ssh.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
 	});
-	
+
 });
 
 gulp.task('watch_test', () => {
@@ -77,12 +88,12 @@ gulp.task('test_start', callback => {
 	test.stdout.on('data', function(data){
 		process.stdout.write(data);
 	});
-	
+
 	test.stderr.setEncoding('utf8');
 	test.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
 	});
-	
+
 	callback();
 });
 gulp.task('test_stop', callback => {
@@ -102,12 +113,12 @@ function rsync(callback, dir){
 	rsync.stdout.on('data', function(data){
 		process.stdout.write('rsync: ' + data);
 	});
-	
+
 	rsync.stderr.setEncoding('utf8');
 	rsync.stderr.on('data', function(data){
 		process.stdout.write('error: '+data);
 	});
-	
+
 	rsync.on('exit', function(){
 		callback();
 	});

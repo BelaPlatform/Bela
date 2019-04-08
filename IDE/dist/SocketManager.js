@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -34,6 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+
 Object.defineProperty(exports, "__esModule", { value: true });
 var io = require("socket.io");
 var IDE = require("./main");
@@ -50,6 +52,7 @@ TerminalManager.on('shell-event', function (evt, data) { return ide_sockets.emit
 var ide_sockets;
 var num_connections = 0;
 var interval;
+
 function init(server) {
     ide_sockets = io(server, {
         pingInterval: 3000,
@@ -58,12 +61,14 @@ function init(server) {
     ide_sockets.on('connection', connection);
 }
 exports.init = init;
+
 function broadcast(event, message) {
     // console.log('broadcasting', event, message);
     if (ide_sockets)
         ide_sockets.emit(event, message);
 }
 exports.broadcast = broadcast;
+
 function connection(socket) {
     socket.on('set-time', IDE.set_time);
     socket.on('project-event', function (data) { return project_event(socket, data); });
@@ -85,12 +90,14 @@ function connection(socket) {
         interval = setInterval(interval_func, 2000);
     }
 }
+
 function disconnect() {
     num_connections = num_connections - 1;
     if (num_connections <= 0 && interval) {
         clearInterval(interval);
     }
 }
+
 function interval_func() {
     return __awaiter(this, void 0, void 0, function () {
         var projects;
@@ -105,6 +112,7 @@ function interval_func() {
         });
     });
 }
+
 function init_message(socket) {
     return __awaiter(this, void 0, void 0, function () {
         var message, _a;
@@ -115,22 +123,25 @@ function init_message(socket) {
                     return [4 /*yield*/, project_manager.listProjects()];
                 case 1:
                     _a.projects = _b.sent();
-                    return [4 /*yield*/, project_manager.listExamples()];
+                    return [4 /*yield*/, project_manager.listLibraries()];
                 case 2:
+                    _a.libraries = _b.sent();
+                    return [4 /*yield*/, project_manager.listExamples()];
+                case 3:
                     _a.examples = _b.sent();
                     return [4 /*yield*/, ide_settings.read()];
-                case 3:
+                case 4:
                     _a.settings = _b.sent();
                     return [4 /*yield*/, boot_project.get_boot_project()];
-                case 4:
+                case 5:
                     _a.boot_project = _b.sent();
                     return [4 /*yield*/, IDE.board_detect().catch(function (e) { return console.log('error in board detect', e); })];
-                case 5:
+                case 6:
                     _a.board_string = _b.sent();
                     return [4 /*yield*/, IDE.get_xenomai_version()
                         //	status : await process_manager.status()
                     ];
-                case 6:
+                case 7:
                     message = (_a.xenomai_version = _b.sent(),
                         _a);
                     socket.emit('init', message);
@@ -139,6 +150,7 @@ function init_message(socket) {
         });
     });
 }
+
 // Process all websocket events which need to be handled by the ProjectManager
 function project_event(socket, data) {
     return __awaiter(this, void 0, void 0, function () {

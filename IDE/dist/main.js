@@ -69,6 +69,7 @@ function init() {
     });
 }
 exports.init = init;
+
 var backup_file_stats = {};
 function check_lockfile() {
     return __awaiter(this, void 0, void 0, function () {
@@ -113,10 +114,12 @@ function check_lockfile() {
     });
 }
 exports.check_lockfile = check_lockfile;
+
 function get_backup_file_stats() {
     return backup_file_stats;
 }
 exports.get_backup_file_stats = get_backup_file_stats;
+
 function setup_routes(app) {
     // static paths
     app.use(express.static(paths.webserver_root)); // all files in this directory are served to bela.local/
@@ -126,6 +129,8 @@ function setup_routes(app) {
     app.get('/download', routes.download);
     // doxygen xml
     app.get('/documentation_xml', routes.doxygen);
+    // libs
+    app.use('/libraries', express.static(paths.libraries));
 }
 function get_xenomai_version() {
     return new Promise(function (resolve, reject) {
@@ -145,6 +150,7 @@ function get_xenomai_version() {
     });
 }
 exports.get_xenomai_version = get_xenomai_version;
+
 function set_time(time) {
     child_process.exec('date -s "' + time + '"', function (err, stdout, stderr) {
         if (err || stderr) {
@@ -156,10 +162,12 @@ function set_time(time) {
     });
 }
 exports.set_time = set_time;
+
 function shutdown() {
     child_process.exec('shutdown -h now', function (err, stdout, stderr) { return console.log('shutting down', err, stdout, stderr); });
 }
 exports.shutdown = shutdown;
+
 function board_detect() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -175,6 +183,7 @@ function board_detect() {
     });
 }
 exports.board_detect = board_detect;
+
 process.on('warning', function (e) { return console.warn(e.stack); });
 /*process.on('uncaughtException', err => {
     console.log('uncaught exception');

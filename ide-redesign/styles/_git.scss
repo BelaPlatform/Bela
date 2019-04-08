@@ -1,0 +1,22 @@
+#git-controls {
+	padding-top: 10px;
+	div {
+		padding: 10px 0;
+		button:not(:first-child) {
+			margin-left: 10px;
+		}
+		.mini-dropdown {
+			display: inline;
+		}
+		p {
+      display: inline;
+			font-family: poppins_light;
+			font-size: 10px;
+			margin-left: 10px
+		}
+	}
+}
+
+.git-repo {
+  display: none;
+}

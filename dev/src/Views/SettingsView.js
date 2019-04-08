@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 var inputChangedTimeout;
 
@@ -15,9 +16,9 @@ class SettingsView extends View {
 			);
 		}
 
-		$('#runOnBoot').on('change', () => {
-			if ($('#runOnBoot').val() && $('#runOnBoot').val() !== '--select--')
-				this.emit('run-on-boot', $('#runOnBoot').val());
+		$('[data-run-on-boot]').on('change', () => {
+			if ($('[data-run-on-boot]').val() && $('[data-run-on-boot]').val() !== '--select--')
+				this.emit('run-on-boot', $('[data-run-on-boot]').val());
 		});
 
 		$('.audioExpanderCheck').on('change', e => {
@@ -51,12 +52,22 @@ class SettingsView extends View {
 			this.$elements.filterByData('key', key).not($element).val($element.val());
 		}
 	}
+
 	buttonClicked($element, e){
-		var func = $element.data().func;
+    var data = $element.data();
+		var func = data.func;
+    var key = data.key;
+    var val = $element.val();
+    console.log(func, key, val);
 		if (func && this[func]){
-			this[func](func);
+      if (val) {
+        this[func](func, key, $element.val());
+      } else {
+        this[func](func);
+      }
 		}
 	}
+
 	inputChanged($element, e){
 		var data = $element.data();
 		var func = data.func;
@@ -77,15 +88,15 @@ class SettingsView extends View {
 	setCLArg(func, key, value){
 		this.emit('project-settings', {func, key, value});
 	}
-	restoreDefaultCLArgs(func){
 
+	restoreDefaultCLArgs(func){
 		// build the popup content
-		popup.title('Restoring default project settings');
-		popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
+		popup.title(json.popups.restore_default_project_settings.title);
+		popup.subtitle(json.popups.restore_default_project_settings.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button confirm">'+json.popups.restore_default_project_settings.button+'</button>');
+		form.push('<button type="button" class="button cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -93,26 +104,26 @@ class SettingsView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 
 	setIDESetting(func, key, value){
 		this.emit('IDE-settings', {func, key, value: value});
 	}
-	restoreDefaultIDESettings(func){
 
+	restoreDefaultIDESettings(func){
 		// build the popup content
-		popup.title('Restoring default IDE settings');
-		popup.subtitle('Are you sure you wish to continue? Your current IDE settings will be lost!');
+		popup.title(json.popups.restore_default_ide_settings.title);
+		popup.subtitle(json.popups.restore_default_ide_settings.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">'+json.popups.restore_default_ide_settings.button+'</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -120,23 +131,22 @@ class SettingsView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.confirm').trigger('focus');
 
 	}
 
 	shutdownBBB(){
-
 		// build the popup content
-		popup.title('Shutting down Bela');
-		popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
+		popup.title(json.popups.shutdown.title);
+		popup.subtitle(json.popups.shutdown.text);
 
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.shutdown.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -144,20 +154,19 @@ class SettingsView extends View {
 			popup.hide();
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
-
+		popup.find('.confirm').trigger('focus');
 	}
-	aboutPopup(){
 
+	aboutPopup(){
 		// build the popup content
-		popup.title('About Bela');
-		popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+		popup.title(json.popups.about.title);
+		popup.subtitle(json.popups.about.text);
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Close</button>');
+		form.push('<button type="submit" class="button popup cancel">' + json.popups.about.button + '</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -166,20 +175,19 @@ class SettingsView extends View {
 
 		popup.show();
 
-		popup.find('.popup-continue').trigger('focus');
-
+		popup.find('.cancel').trigger('focus');
 	}
-	updateBela(){
 
+	updateBela(){
 		// build the popup content
-		popup.title('Updating Bela');
-		popup.subtitle('Please select the update zip archive');
+		popup.title(json.popups.update.title);
+		popup.subtitle(json.popups.update.text);
 
 		var form = [];
 		form.push('<input id="popup-update-file" type="file">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup-upload">Upload</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
 		/*popup.form.prop({
 			action	: 'updates',
@@ -198,11 +206,11 @@ class SettingsView extends View {
 			//console.log('input', popup.find('input[type=file]'));
 			//console.log('file', file);
 
-			if (file){
+			if (file) {
 
-				this.emit('warning', 'Beginning the update - this may take several minutes');
-				this.emit('warning', 'The browser may become unresponsive and will temporarily disconnect');
-				this.emit('warning', 'Do not use the IDE during the update process!');
+				this.emit('warning', json.settings_view.update);
+				this.emit('warning', json.settings_view.browser);
+				this.emit('warning', json.settings_view.ide);
 
 				popup.hide('keep overlay');
 
@@ -212,14 +220,14 @@ class SettingsView extends View {
 
 			} else {
 
-				this.emit('warning', 'not a valid update zip archive');
+				this.emit('warning', json.settings_view.zip);
 				popup.hide();
 
 			}
 
 		});
 
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.cancel').on('click', popup.hide );
 
 		popup.show();
 
@@ -235,9 +243,7 @@ class SettingsView extends View {
 				continue;
 			} else if (key === 'audioExpander'){
 				if (data[key] == 1)
-					$('#audioExpanderTable').css('display', 'table');
-				else
-					$('#audioExpanderTable').css('display', 'none');
+					$('[data-audio-expander-table]').css('display', 'table');
 			}
 
 			let el = this.$elements.filterByData('key', key);
@@ -250,18 +256,19 @@ class SettingsView extends View {
 				el.val(data[key]);
 			}
 
-
 		}
 
 	}
+
 	_IDESettings(data){
 		for (let key in data){
 			this.$elements.filterByData('key', key).val(data[key]).prop('checked', data[key]);
 		}
 	}
+
 	_projectList(projects, data){
 
-		var $projects = $('#runOnBoot');
+		var $projects = $('[data-run-on-boot]');
 		$projects.empty();
 
 		// add a none option
@@ -280,12 +287,9 @@ class SettingsView extends View {
 	}
 
 	useAudioExpander(func, key, val){
-
 		if (val == 1) {
-			$('#audioExpanderTable').css('display', 'table');
 			this.setCLArg('setCLArg', key, val);
 		} else {
-			$('#audioExpanderTable').css('display', 'none');
 			// clear channel picker
 			$('.audioExpanderCheck').prop('checked', false);
 			this.emit('project-settings', {func: 'setCLArgs', args: [
@@ -297,7 +301,6 @@ class SettingsView extends View {
 	}
 
 	setAudioExpander(key, val){
-
 		if (!val.length) return;
 
 		var channels = val.split(',');
@@ -400,9 +403,8 @@ class SettingsView extends View {
 			exceptions['options'] = exceptions['options'].concat(settingExceptions['Beast']['options'])
 		}
 
-		if(boardString.includes('Ctag'))
-		{
-			var sRates = $('#analog-samplerate').children("option");
+		if (boardString.includes('Ctag')) {
+			var sRates = $('[data-analog-samplerate]').children("option");
 			for (let i = 0; i < sRates.length; i++) {
 				var rate = sRates[i].innerHTML;
 				if (rate == "44100") {
@@ -414,6 +416,7 @@ class SettingsView extends View {
 		}
 
 		for(var e in exceptions['options']) {
+      console.log("exception", e);
 			var opts = $('#'+exceptions['options'][e].selector).children("option");
 			var exceptOpts = exceptions['options'][e].optVal;
 			for(let i = 0; i < opts.length; i++) {
@@ -425,12 +428,11 @@ class SettingsView extends View {
 		}
 
 		for(var subsect in exceptions['subsections']) {
-			$('#'+exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+			$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
 		}
 		for(var sect in exceptions['sections']) {
-			$('.'+exceptions['sections'][sect]).css('display', 'none');
+			$('.' + exceptions['sections'][sect]).css('display', 'none');
 		}
 	}
 }
-
 module.exports = SettingsView;

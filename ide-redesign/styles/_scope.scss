@@ -1,0 +1,166 @@
+.scopeWrapper {
+  position: relative;
+  canvas {
+    left: 0;
+    position: absolute;
+    top: 0;
+  }
+}
+
+.buttonWrapper {
+  left: 0;
+  font-family: poppins_regular;
+  font-size: .85em;
+  padding: 10px 20px;
+  position: absolute;
+  top: 0;
+  width: calc(100vw - 40px);
+  z-index: 100;
+  .top {
+    display: inline-block;
+    .label {
+      p {
+        display: inline;
+        }
+    }
+    .value {
+      display: inline-block;
+    }
+  }
+}
+
+#control-panel {
+  background-color: rgba(255,255,255,0.8);
+  border: 1px solid $grey-light;
+  left: 50px;
+  padding: 2em 0 2em 2em;
+  position: absolute;
+  top: 50px;
+  z-index: 9999;
+  & * {
+    user-select: none;
+  }
+  &.hidden {
+    display: none;
+  }
+  .control-panel-column {
+    border-right: 1px dashed $grey-mid;
+    display: inline-block;
+    float: left;
+    padding: .5em 1.5em .5em 3em;
+    width: 375px;
+    &.channels {
+      border: 0;
+      display: inline-block;
+      padding: .5em 3em .5em 1.5em;
+      vertical-align: top;
+    }
+  }
+  .control-section {
+    vertical-align: top;
+    h3 {
+      color: $grey-dark;
+      font-family: space_bold;
+      font-size: 1.2em;
+      margin-block-end: .75em;
+      margin-block-start: 1em;
+
+    }
+    .block-section {
+      p {
+        display: inline;
+        font-family: poppins_regular;
+        font-size: .85em;
+      }
+      div span p {
+        font-family: inconsolata;
+        font-size: 1em;
+      }
+      .scope-label {
+        display: inline-block;
+        margin: 5px 0;
+        width: 75px;
+        text-align: right;
+      }
+      .scope-input {
+        display: inline-block;
+        margin: 2px 0;
+        padding-left: 60px;
+        position: absolute;
+        width: 200px;
+        >.mini-dropdown {
+          width: 100px;
+          &:before {
+            left: 140px;
+          }
+        }
+      }
+      .after-dropdown {
+        display: inline;
+        margin-left: 165px;
+      }
+      &.slider-line {
+        margin-top: .5em;
+      }
+    }
+  }
+}
+
+.number-box[type=number] {
+  border: 0;
+  font-family: inconsolata;
+  font-size: 1em;
+  line-height: .5em;
+  text-align: right;
+  width: 2.5em;
+  &::-webkit-inner-spin-button {
+    appearance: none;
+  }
+}
+
+input.scope-controls.range-slider {
+  padding-left: .5em;
+  width: 100%;
+}
+
+input.channelView.range-slider {
+  padding-left: .5em;
+  width: 100%;
+}
+
+.slider {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  &.label {
+    text-align: right;
+    width: 100px;
+  }
+  &.value {
+    text-align: left;
+    &.ms {
+      padding-right: 5px;
+      text-align: right;
+      width: 40px;
+    }
+    &.colour {
+      margin-left: 55px;
+    }
+  }
+  &.range {
+    width: 200px;
+  }
+}
+
+#scope-drop {
+  width: 110px;
+}
+
+.hidden {
+  display: none;
+}
+
+.one-shot {
+  padding-left: 135px;
+}

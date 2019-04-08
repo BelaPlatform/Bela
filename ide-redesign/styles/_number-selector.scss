@@ -1,0 +1,43 @@
+.input-number input[type="text"] {
+  height: 25px;
+  width: 50px;
+  padding: 0;
+  vertical-align: top;
+  text-align: center;
+  outline: none;
+  font-family: poppins_regular;
+  border-radius: 0;
+  &:disabled {
+    border-radius: 0;
+    width: 50px;
+  }
+}
+
+.input-number-decrement,
+.input-number-increment {
+  background: $grey-light;
+  border: 1px solid #ccc;
+  color: rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  display: inline-block;
+  height: 25px;
+  font-weight: bold;
+  line-height: 27px;
+  padding: 0;
+  text-align: center;
+  user-select: none;
+  width: 25px;
+  &:active {
+    background: $teal-02;
+  }
+}
+
+.input-number-decrement {
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+}
+
+.input-number-increment {
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+}

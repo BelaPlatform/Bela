@@ -1,0 +1,15 @@
+// INPUTS
+input[type="text"],
+input[type="number"] {
+	height: 25px;
+	border: 1px solid $grey-mid;
+	background: $white;
+	&.number-picker {
+		border-radius: 0;
+		width: 5em;
+		text-align: center;
+	}
+	&:disabled {
+		background: $grey-light;
+	}
+}

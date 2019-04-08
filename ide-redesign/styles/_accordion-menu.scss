@@ -1,0 +1,84 @@
+button.accordion {
+  background-color: $grey-light;
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  font-family: poppins_regular;
+  font-size: 16px;
+  margin-top: 10px;
+  outline: none;
+  padding: 8px 14px;
+  text-align: left;
+  transition: 0.25s ease-in-out;
+  width: calc(100% - 12px);
+  &:hover {
+    background: $grey-mid;
+    border-bottom: 2px solid $teal-main;
+  }
+  &.active {
+    background-color: $grey-light;
+    border-bottom: 2px solid $teal-main;
+    color: $grey-dark;
+    padding: 8px 14px;
+    &:hover {
+      color: $grey-dark;
+    }
+    &:after {
+      content: "\2796"; /* Unicode character for "minus" sign (-) */
+    }
+  }
+  &:after {
+    color: rgba(0, 0, 0, 0.6);
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    float: right;
+    font-size: 14px;
+    margin-left: 5px;
+  }
+}
+
+button.accordion-sub {
+  background: transparent;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px dashed $grey-dark;
+  color: $grey-dark;
+  font-size: 1em;
+  padding: .5em 0 .5em .8em;
+  text-align: left;
+  width: 100%;
+  &:hover {
+    background: $yellow-accent-fade;
+    color: $grey-dark;
+  }
+  &.active {
+    color: $grey-dark;
+    &:hover {
+      color: $grey-dark;
+    }
+  }
+}
+
+.docs-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease;
+  &.show {
+    max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+    opacity: 1;
+  }
+}
+
+.panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease-in-out;
+}
+
+.panel.show {
+  max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+  opacity: 1;
+}

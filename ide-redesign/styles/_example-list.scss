@@ -1,0 +1,12 @@
+ul {
+  &.projectManager {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    .example-list {
+      li {
+        cursor: pointer;
+      }
+    }
+  }
+}

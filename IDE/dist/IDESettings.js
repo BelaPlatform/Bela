@@ -65,6 +65,7 @@ function read() {
     });
 }
 exports.read = read;
+
 function write(data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -81,6 +82,7 @@ function write(data) {
     });
 }
 exports.write = write;
+
 function setIDESetting(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, e_1;
@@ -112,6 +114,7 @@ function setIDESetting(data) {
     });
 }
 exports.setIDESetting = setIDESetting;
+
 function get_setting(key) {
     return __awaiter(this, void 0, void 0, function () {
         var settings;
@@ -126,6 +129,7 @@ function get_setting(key) {
     });
 }
 exports.get_setting = get_setting;
+
 function restoreDefaultIDESettings(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, newSettings, e_2;
@@ -158,6 +162,7 @@ function restoreDefaultIDESettings(data) {
     });
 }
 exports.restoreDefaultIDESettings = restoreDefaultIDESettings;
+
 function default_IDE_settings() {
     return {
         'project': 'basic',

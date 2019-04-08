@@ -58,6 +58,7 @@ function read(project) {
     });
 }
 exports.read = read;
+
 function write(project, data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -71,6 +72,7 @@ function write(project, data) {
     });
 }
 exports.write = write;
+
 function setCLArg(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, e_1;
@@ -99,6 +101,7 @@ function setCLArg(data) {
     });
 }
 exports.setCLArg = setCLArg;
+
 function setCLArgs(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, _i, _a, item;
@@ -127,6 +130,7 @@ function setCLArgs(data) {
     });
 }
 exports.setCLArgs = setCLArgs;
+
 function set_fileName(project, fileName) {
     return __awaiter(this, void 0, void 0, function () {
         var settings;
@@ -152,6 +156,7 @@ function set_fileName(project, fileName) {
     });
 }
 exports.set_fileName = set_fileName;
+
 function restoreDefaultCLArgs(data) {
     return __awaiter(this, void 0, void 0, function () {
         var settings, e_2;
@@ -180,6 +185,7 @@ function restoreDefaultCLArgs(data) {
     });
 }
 exports.restoreDefaultCLArgs = restoreDefaultCLArgs;
+
 function getArgs(project) {
     return __awaiter(this, void 0, void 0, function () {
         var CLArgs, CL, key, make;
@@ -217,6 +223,7 @@ function getArgs(project) {
     });
 }
 exports.getArgs = getArgs;
+
 function default_project_settings() {
     var CLArgs = {
         "-p": "16",

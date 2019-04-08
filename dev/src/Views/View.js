@@ -9,7 +9,7 @@ class View extends EventEmitter{
 		this.settings = settings;
 		this.$elements = $('.'+CSSClassName);
 		this.$parents = $('.'+CSSClassName+'-parent');
-		
+
 		if (models){
 			for (var i=0; i<models.length; i++){
 				models[i].on('change', (data, changedKeys) => {
@@ -20,14 +20,14 @@ class View extends EventEmitter{
 				});
 			}
 		}
-		
+
 		this.$elements.filter('select').on('change', (e) => this.selectChanged($(e.currentTarget), e));
 		this.$elements.filter('input').on('input', (e) => this.inputChanged($(e.currentTarget), e));
 		this.$elements.filter('input[type=checkbox]').on('change', (e) => this.inputChanged($(e.currentTarget), e));
 		this.$elements.filter('button').on('click', (e) => this.buttonClicked($(e.currentTarget), e));
-		
+
 	}
-	
+
 	modelChanged(data, changedKeys){
 		for (let value of changedKeys){
 			if (this['_'+value]){
@@ -42,14 +42,14 @@ class View extends EventEmitter{
 			}
 		}
 	}
-	
+
 	selectChanged(element, e){}
 	buttonClicked(element, e){}
-	
+
 	printElements(){
 		console.log('elements:', this.$elements, 'parents:', this.$parents);
 	}
-		
+
 }
 
 module.exports = View;

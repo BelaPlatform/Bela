@@ -1,0 +1,132 @@
+.choice {
+  color: rgba(0, 0, 0, 0.6);
+  font-family: poppins_light;
+  font-size: 12px;
+  padding-bottom: 10px;
+  tr {
+    display: block;
+    padding-bottom: 10px;
+  }
+}
+
+table.choice {
+  width: 100%;
+}
+
+.left-choice {
+	display: inline-block;
+  float: left;
+	text-align: right;
+  width: 50%;
+}
+
+.right-choice {
+	display: inline-block;
+	margin-top: -2px;
+  padding-left: 10px;
+	position: relative;
+  text-align: left;
+  width: 43%;
+  &.half {
+    padding-left: 0;
+    text-align: center;
+    width: 22.5%;
+  }
+}
+
+th {
+  &.right-choice {
+    &.half {
+      margin-top: 0;
+    }
+  }
+}
+
+input[type="text"].number-picker,
+input[type="number"].number-picker {
+  appearance: textfield;
+  box-sizing: border-box;
+  margin: 0 -3px 0 -4px;
+}
+
+input[type="checkbox"].checkbox-slider,
+.checkbox-slider input[type="checkbox"] {
+  height: 18px;
+  left: 10000px;
+  position: relative;
+  width: 18px;
+
+  &::before, &::after {
+    content: '';
+    cursor: pointer;
+    display: block;
+    left: -10000px;
+    position: absolute;
+  }
+
+  &::before {
+    background: #ccc;
+    border-radius: 18px;
+    height: 18px;
+    transition: background-color 200ms;
+    width: 32px;
+  }
+
+  &:checked::before {
+    background-color: $teal-01;
+  }
+
+  &::after {
+    background: #fff;
+    border-radius: 50%;
+    height: 14px;
+    top: 50%;
+    transform: translateY(-50%) translateX(13%);
+    transition: box-shadow 100ms ease-in-out, transform 100ms ease-in-out;
+    width: 14px;
+  }
+
+  &:checked::after {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    height: 15px;
+    transform: translateY(-50%) translateX(99%);
+    width: 15px;
+  }
+}
+
+
+.project {
+  font-family: poppins_regular;
+  margin-top: .5em;
+  margin-bottom: 0;
+}
+
+.panel.show {
+  margin-left: .25em;
+  padding-top: .8em;
+}
+
+.mux {
+  padding-top: 5px;
+  &.inactive {
+    .dropbtn-small {
+      background-color: $grey-light;
+      color: $teal-main;
+      border: 1px solid $grey-mid;
+      &:before {
+        border: 5px solid transparent;
+        border-top: 5px solid $grey-mid;
+      }
+    }
+  }
+}
+
+.button-container {
+  button {
+    margin-bottom: .5em;
+  }
+}
+
+.diagram-text {
+  font-size: .8em;
+}
