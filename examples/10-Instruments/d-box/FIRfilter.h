@@ -9,7 +9,7 @@
 #define FIRFILTER_H_
 
 #define ENABLE_NE10_FIR_FLOAT_NEON	// Define needed for Ne10 library
-#include <ne10/NE10.h>
+#include <libraries/ne10/NE10.h>
 
 //#define FILTER_TAP_NUM 21
 //ne10_float32_t filterTaps[FILTER_TAP_NUM] = {

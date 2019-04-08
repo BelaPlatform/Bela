@@ -26,7 +26,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <cmath>
-#include <ne10/NE10.h>					// neon library
+#include <libraries/ne10/NE10.h> // neon library
 #include "SampleData.h"
 #include "FIRfilter.h"
 
