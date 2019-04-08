@@ -132,6 +132,7 @@ while [ $# -gt 0 ]; do
 done
 
 MKFILE="$MKFILEPATH/Makefile.inc"
+mkdir -p "$MKFILEPATH"
 
 cat tmp/libraries | while read L; do
 	extract_dependencies $L
