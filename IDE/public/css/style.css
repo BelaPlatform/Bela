@@ -163,7 +163,7 @@ button.accordion {
     background: #bdbdbd;
     border-bottom: 2px solid #00bea4; }
   button.accordion.active {
-    background-color: #ffffff;
+    background-color: #f1f1f1;
     border-bottom: 2px solid #00bea4;
     color: rgba(0, 0, 0, 0.8);
     padding: 8px 14px; }
@@ -203,10 +203,8 @@ button.accordion-sub {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  -webkit-transition: 0.2s ease-in-out;
-  transition: 0.2s ease-in-out;
-  -webkit-transition-delay: 0.4s;
-          transition-delay: 0.4s; }
+  -webkit-transition: 0.2s ease;
+  transition: 0.2s ease; }
   .docs-content.show {
     max-height: 100000px;
     /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
@@ -217,9 +215,7 @@ button.accordion-sub {
   opacity: 0;
   overflow: hidden;
   -webkit-transition: 0.2s ease-in-out;
-  transition: 0.2s ease-in-out;
-  -webkit-transition-delay: 0.4s;
-          transition-delay: 0.4s; }
+  transition: 0.2s ease-in-out; }
 
 .panel.show {
   max-height: 100000px;
@@ -1290,6 +1286,10 @@ input[type="number"] {
   -webkit-animation: running-button 2s linear infinite;
           animation: running-button 2s linear infinite; }
 
+.building-button {
+  -webkit-animation: running-button 3s linear infinite;
+          animation: running-button 3s linear infinite; }
+
 .toolbar {
   background: #c9c9c9;
   bottom: 0;
@@ -1321,6 +1321,10 @@ input[type="number"] {
         background-repeat: no-repeat; }
         .toolbar > div span.run:hover {
           background-image: url("../images/icons/run_inactive.svg"); }
+        .toolbar > div span.run.building {
+          background-image: url("../images/icons/run_building.svg"); }
+        .toolbar > div span.run.running {
+          background-image: url("../images/icons/run_running.svg"); }
       .toolbar > div span.stop {
         background-image: url("../images/icons/stop_active.svg");
         background-repeat: no-repeat;
@@ -1349,7 +1353,7 @@ input[type="number"] {
         .toolbar > div span.scope-button:hover {
           background-image: url("../images/icons/scope_active.svg"); }
       .toolbar > div span.shutdown {
-        background-image: url("../images/icons/shutdown_inactive.svg");
+        background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
         margin-left: 5px; }
         .toolbar > div span.shutdown:hover {
@@ -1370,7 +1374,8 @@ input[type="number"] {
     width: 85px; }
   .toolbar .shutdown-parent {
     float: right;
-    width: 45px; }
+    width: 45px;
+    padding-right: 50px; }
   .toolbar .toolbar-functions {
     padding: 2px 0; }
   .toolbar .system-status-text {

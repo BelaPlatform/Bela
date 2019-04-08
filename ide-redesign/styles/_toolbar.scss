@@ -11,6 +11,11 @@
   animation: running-button 2s linear infinite;
 }
 
+.building-button {
+  animation: running-button 3s linear infinite;
+}
+
+
 .toolbar {
   background: $grey-toolbar;
   bottom: 0;
@@ -40,6 +45,12 @@
         background-repeat: no-repeat;
         &:hover {
           background-image: url("../images/icons/run_inactive.svg");
+        }
+        &.building {
+          background-image: url("../images/icons/run_building.svg");
+        }
+        &.running {
+          background-image: url("../images/icons/run_running.svg");
         }
       }
       &.stop {

@@ -104,26 +104,41 @@ class ToolbarView extends View {
 	// model events
 	__running(status){
 		if (status){
-			$('[data-toolbar-run]').removeClass('building-button').addClass('running-button');
+			$('[data-toolbar-run]')
+        .removeClass('building-button')
+        .removeClass('building')
+        .addClass('running-button')
+        .addClass('running');
 		} else {
-			$('[data-toolbar-run]').removeClass('running-button');
+			$('[data-toolbar-run]')
+        .removeClass('running')
+        .removeClass('running-button');
 			$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
   		$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
 			modeswitches = 0;
 		}
 	}
+
 	__building(status){
 		if (status){
-  		$('[data-toolbar-run]').removeClass('running-button').addClass('building-button');
+  		$('[data-toolbar-run]')
+        .removeClass('running-button')
+        .removeClass('running')
+        .addClass('building-button')
+        .addClass('building');
 		} else {
-  		$('[data-toolbar-run]').removeClass('building-button');
+  		$('[data-toolbar-run]')
+        .removeClass('building-button')
+        .removeClass('building');
 		}
 	}
+
 	__checkingSyntax(status){
 		if (status){
   		$('[data-toolbar-status]').addClass('pending').removeClass('ok').removeClass('stop').prop('title', 'checking syntax&hellip;');
 		}
 	}
+
 	__allErrors(errors){
 		if (errors.length){
 			$('[data-toolbar-status]').removeClass('pending').removeClass('ok').addClass('stop').prop('title', 'syntax errors found');
