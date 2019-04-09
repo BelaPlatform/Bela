@@ -4491,12 +4491,10 @@ var Console = function (_EventEmitter) {
 	function Console() {
 		_classCallCheck(this, Console);
 
-		// this.$element = $('#beaglert-consoleWrapper');
-		// this.parent = document.getElementById('beaglert-console');
 		var _this = _possibleConstructorReturn(this, (Console.__proto__ || Object.getPrototypeOf(Console)).call(this));
 
 		_this.$element = $('[data-console-contents-wrapper]');
-		_this.parent = $('[data-console]');
+		_this.parent = $('[data-console]')[0];
 		_this.popUpComponents = "";
 		return _this;
 	}
