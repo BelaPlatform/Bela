@@ -128,6 +128,8 @@ function setup_routes(app) {
     app.get('/documentation_xml', routes.doxygen);
     // libs
     app.use('/libraries', express.static(paths.libraries));
+    // gui
+    app.use('/gui', express.static(paths.gui));
 }
 function get_xenomai_version() {
     return new Promise(function (resolve, reject) {

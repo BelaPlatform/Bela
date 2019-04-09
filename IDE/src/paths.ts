@@ -3,6 +3,7 @@ export var webserver_root: string	= Bela+'IDE/public/';
 export var projects: string 		= Bela+'projects/';
 export var examples: string 		= Bela+'examples/';
 export var libraries: string 		= Bela+'libraries/';
+export var gui: string 		= webserver_root+'gui/';
 export var exampleTempProject: string 	= projects+'exampleTempProject/';
 export var media: string 		= Bela+'IDE/public/media/';
 export var templates: string 		= Bela+'IDE/templates/';

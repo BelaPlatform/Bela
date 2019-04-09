@@ -4135,6 +4135,11 @@ var ToolbarView = function (_View) {
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
+
+		$('[data-toolbar-gui]').on('click', function () {
+			// window.open('gui');
+			window.open('gui.html#p5-basic');
+		});
 		return _this;
 	}
 
@@ -4486,10 +4491,12 @@ var Console = function (_EventEmitter) {
 	function Console() {
 		_classCallCheck(this, Console);
 
+		// this.$element = $('#beaglert-consoleWrapper');
+		// this.parent = document.getElementById('beaglert-console');
 		var _this = _possibleConstructorReturn(this, (Console.__proto__ || Object.getPrototypeOf(Console)).call(this));
 
 		_this.$element = $('[data-console-contents-wrapper]');
-		_this.parent = $('[data-console]')[0];
+		_this.parent = $('[data-console]');
 		_this.popUpComponents = "";
 		return _this;
 	}
