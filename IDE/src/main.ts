@@ -15,7 +15,7 @@ export async function init(){
 	await check_lockfile()
 		.catch( (e: Error) => console.log('error checking lockfile', e) );
 
-	// setup webserver 
+	// setup webserver
 	const app: express.Application = express();
 	const server: http.Server = new http.Server(app);
 	setup_routes(app);
@@ -69,6 +69,8 @@ function setup_routes(app: express.Application){
 	app.get('/download', routes.download);
 	// doxygen xml
 	app.get('/documentation_xml', routes.doxygen);
+  // gui
+  app.use('/gui', express.static(paths.gui));
 }
 
 export function get_xenomai_version(): Promise<string>{

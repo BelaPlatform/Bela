@@ -3914,6 +3914,11 @@ var ToolbarView = function (_View) {
 		}).mouseout(function () {
 			$('[data-toolbar-controltext2]').html('');
 		});
+
+		$('[data-toolbar-gui]').on('click', function () {
+			// window.open('gui');
+			window.open('gui.html#p5-basic');
+		});
 		return _this;
 	}
 
