@@ -71,10 +71,14 @@ class BelaWebSocket {
 
 function isJson(str) {
 	let data;
-    	try {
-		data = JSON.parse(str);
-		return data;
-	} catch (e) {
-		return false;
+	if(str[0] === "{")
+	{
+		try {
+			data = JSON.parse(str);
+			return data;
+		} catch (e) {
+			return false;
+		}
 	}
+	return false;
 }
