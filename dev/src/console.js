@@ -13,10 +13,8 @@ class Console extends EventEmitter {
 
 	constructor(){
 		super();
-    // this.$element = $('#beaglert-consoleWrapper');
-		// this.parent = document.getElementById('beaglert-console');
     this.$element = $('[data-console-contents-wrapper]');
-		this.parent = $('[data-console]');
+    this.parent = $('[data-console]')[0];
     this.popUpComponents = "";
 	}
 
