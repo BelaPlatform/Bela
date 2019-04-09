@@ -2259,7 +2259,7 @@ var FileView = function (_View) {
 			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
-			form.push('<input type="text" placeholder="' + json.popups.create_new_file + input + '">');
+			form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -5353,6 +5353,7 @@ module.exports={
 		},
 		"rename_file": {
 			"title": "Rename this file?",
+			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"button": "Rename file"
 		},
