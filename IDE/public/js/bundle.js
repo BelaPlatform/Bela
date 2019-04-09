@@ -5126,7 +5126,7 @@ module.exports={
 		},
 		"rename_file": {
 			"title": "Rename this file?",
-      "input": "The new file name",
+			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"button": "Rename file"
 		},
