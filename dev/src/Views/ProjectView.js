@@ -381,7 +381,7 @@ class ProjectView extends View {
 		}
 
 		// set download link
-		$('[data-download-file]').attr('href', '/download?project=' + project);
+    $('[data-project-download]').attr('href', '/download?project=' + project);
 
 	}
 
