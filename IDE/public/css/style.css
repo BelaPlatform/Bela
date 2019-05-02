@@ -98,7 +98,9 @@ img {
   z-index: 97; }
 
 #editor {
-  display: none; }
+  display: none;
+  margin: 0;
+  height: calc(100% - 70px); }
   #editor.active {
     display: block; }
 
@@ -114,7 +116,7 @@ img {
   display: none;
   font-family: monospace;
   overflow: auto; }
-  #pd-svg-parent #pd-svg svg {
+  #pd-svg-parent #pd-svg {
     background: #f1f1f1; }
   #pd-svg-parent.active {
     display: block; }
@@ -1520,16 +1522,18 @@ input[type="number"] {
   .file-status .project,
   .file-status .file,
   .file-status .status {
+    color: #00bea4;
     display: inline-block;
-    padding-top: 10px;
     font-family: space_regular;
-    font-size: 16px;
-    color: #00bea4; }
+    font-size: 12px;
+    margin-top: 0;
+    padding-bottom: 5px;
+    padding-top: 5px; }
   .file-status .current {
     font-family: poppins_regular;
     color: rgba(0, 0, 0, 0.7);
     padding-right: 20px;
-    font-size: 14px; }
+    font-size: 12px; }
 
 .scopeWrapper {
   position: relative; }
