@@ -41,8 +41,14 @@ section#tab-content {
     display: none;
   }
   .title-container {
-    display: block;
+    background-color: $white;
+    position: sticky;
+    position: -webkit-sticky; /* Required for Safari */
+    height: 75px;
     margin: 0;
+    top: 0;
+    z-index: 100;
+    width: 100%;
     hr {
       background: transparent;
     }
