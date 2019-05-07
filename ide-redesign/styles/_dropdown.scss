@@ -1,13 +1,13 @@
 /* Dropdown Button */
 button.dropbtn {
   background-color: #fff;
-  border: none;
+  border: 1px solid $teal-main;
   color: $teal-main;
   cursor: pointer;
   display: inline;
   font-family: poppins_regular;
   font-size: 14px;
-  padding: 6px 16px;
+  padding: 7px 16px;
   position: relative;
   text-align: left;
   width: 200px;
