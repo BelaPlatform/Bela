@@ -1806,6 +1806,8 @@ var uploadDelay = 50;
 var uploadBlocked = false;
 var currentFile;
 var imageUrl;
+var tmpData = {};
+var tmpOpts = {};
 var activeWords = [];
 var activeWordIDs = [];
 
@@ -1871,7 +1873,27 @@ var EditorView = function (_View) {
   });*/
 
 		_this.on('resize', function () {
-			return _this.editor.resize();
+			_this.editor.resize();
+			var data = tmpData;
+			var opts = tmpOpts;
+			if (opts && opts.fileType == "pd") {
+				var timestamp = performance.now();
+				// render pd patch
+				try {
+					var width = $('[data-editor]').width();
+					var height = $('[data-editor]').height() + 8;
+					$('[data-pd-svg], [data-pd-svg-parent]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
+						'max-width': width + 'px',
+						'max-height': height + 'px'
+					});
+				} catch (e) {
+					_this.emit('close-notification', {
+						timestamp: timestamp,
+						text: json.editorView.pd.error
+					});
+					throw e;
+				}
+			}
 		});
 
 		_this.on('add-link', function (link, type) {
@@ -1918,9 +1940,9 @@ var EditorView = function (_View) {
 	}, {
 		key: '__fileData',
 		value: function __fileData(data, opts) {
-
+			tmpData = data;
+			tmpOpts = opts;
 			// hide the pd patch and image displays if present, and the editor
-			// $('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
 
 			if (!opts.fileType) opts.fileType = '0';
 
@@ -1969,16 +1991,18 @@ var EditorView = function (_View) {
 
 					// render pd patch
 					try {
+						var width = $('[data-editor]').width();
+						var height = $('[data-editor]').height() + 8;
 						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
-							'max-width': $('[data-editor]').width() + 'px',
-							'max-height': $('[data-editor]').height() + 'px'
+							'max-width': width + 'px',
+							'max-height': height + 'px'
 						});
 
 						$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 
 						$('[data-pd-svg-parent]').addClass('active').css({
-							'max-width': $('[data-editor]').width() + 'px',
-							'max-height': $('[data-editor]').height() + 'px'
+							'max-width': width + 'px',
+							'max-height': height + 'px'
 						});
 
 						this.emit('close-notification', { timestamp: timestamp });
@@ -5431,7 +5455,10 @@ module.exports={
 		}
 	},
 	"editor_view": {
-			"preview": "This is a preview - these objects are not editable in the browser."
+			"preview": "This is a preview - these objects are not editable in the browser.",
+      "pd": {
+        "error": "Rendering pd patch failed!"
+      }
 	},
 	"settings_view": {
 		"update": "Beginning update - this may take several minutes",

@@ -99,7 +99,10 @@
 		}
 	},
 	"editor_view": {
-			"preview": "This is a preview - these objects are not editable in the browser."
+			"preview": "This is a preview - these objects are not editable in the browser.",
+      "pd": {
+        "error": "Rendering pd patch failed!"
+      }
 	},
 	"settings_view": {
 		"update": "Beginning update - this may take several minutes",
