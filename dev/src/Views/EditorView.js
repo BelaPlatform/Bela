@@ -72,27 +72,7 @@ class EditorView extends View {
       this.editor.resize();
       var data = tmpData;
       var opts = tmpOpts;
-      if (opts && opts.fileType == "pd") {
-        let timestamp = performance.now();
-        // render pd patch
-				try {
-          let width = $('[data-editor]').width();
-          let height = $('[data-editor]').height() + 8;
-					$('[data-pd-svg], [data-pd-svg-parent]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
-          .css({
-						'max-width'	: width + 'px',
-						'max-height': height + 'px'
-					});
-
-				}
-				catch(e){
-					this.emit('close-notification', {
-						timestamp,
-            text: json.editorView.pd.error
-					});
-					throw e;
-				}
-      }
+      this.__fileData(data, opts);
     });
 
 		this.on('add-link', (link, type) => {

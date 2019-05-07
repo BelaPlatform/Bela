@@ -1876,24 +1876,7 @@ var EditorView = function (_View) {
 			_this.editor.resize();
 			var data = tmpData;
 			var opts = tmpOpts;
-			if (opts && opts.fileType == "pd") {
-				var timestamp = performance.now();
-				// render pd patch
-				try {
-					var width = $('[data-editor]').width();
-					var height = $('[data-editor]').height() + 8;
-					$('[data-pd-svg], [data-pd-svg-parent]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
-						'max-width': width + 'px',
-						'max-height': height + 'px'
-					});
-				} catch (e) {
-					_this.emit('close-notification', {
-						timestamp: timestamp,
-						text: json.editorView.pd.error
-					});
-					throw e;
-				}
-			}
+			_this.__fileData(data, opts);
 		});
 
 		_this.on('add-link', function (link, type) {
