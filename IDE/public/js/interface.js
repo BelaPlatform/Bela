@@ -4,6 +4,7 @@ var menuOpened = false;
 // define the tabs object
 function openTabs() {
   $('[data-tabs]').toggleClass('tabs-open');
+  $('#editor .ace_search').toggleClass('active');
   $('[data-tab-open] span').toggleClass('rot');
   if (!dropdownLoaded) {
     var $script = $("<script></script>").attr('src', '/js/dropdown.js');

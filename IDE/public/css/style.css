@@ -101,6 +101,12 @@ img {
   display: none; }
   #editor.active {
     display: block; }
+  #editor .ace_search.right {
+    right: 60px;
+    -webkit-transition: 0.3s ease-in-out;
+    transition: 0.3s ease-in-out; }
+  #editor .ace_search.active {
+    right: 140px; }
 
 #audio-parent,
 #img-display-parent {
@@ -114,7 +120,7 @@ img {
   display: none;
   font-family: monospace;
   overflow: auto; }
-  #pd-svg-parent #pd-svg svg {
+  #pd-svg-parent #pd-svg {
     background: #f1f1f1; }
   #pd-svg-parent.active {
     display: block; }
