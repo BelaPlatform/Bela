@@ -80,6 +80,8 @@ img {
 
 #editor {
   display: none;
+  margin: 0;
+  height: calc(100% - 70px);
   &.active {
     display: block;
   }
