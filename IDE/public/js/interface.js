@@ -4,7 +4,6 @@ var menuOpened = false;
 // define the tabs object
 function openTabs() {
   $('[data-tabs]').toggleClass('tabs-open');
-  $('#editor .ace_search').toggleClass('active');
   $('[data-tab-open] span').toggleClass('rot');
   if (!dropdownLoaded) {
     var $script = $("<script></script>").attr('src', '/js/dropdown.js');
@@ -48,6 +47,7 @@ $('[data-tab-open]').click(function(event) {
   } else {
     menuOpened = true;
   }
+  // check to see if the find and replace dialogue is open
   openTabs();
 });
 
