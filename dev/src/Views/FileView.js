@@ -169,10 +169,8 @@ class FileView extends View {
 					sources.push(item);
 				} else if (headerIndeces.indexOf(ext) !== -1){
 					headers.push(item);
-				} else if (ext == "pd") {
-					if (item.name == "_main.pd") {
+				} else if (ext == "pd" && item.name == "_main.pd") {
 						sources.push(item);
-					}
 				} else if (item){
 					resources.push(item);
 				}
