@@ -85,6 +85,16 @@ img {
   &.active {
     display: block;
   }
+  .ace_search {
+    &.right {
+      right: 60px;
+      // right: 448px;
+      transition: 0.5s ease-in-out;
+    }
+    &.active {
+      right: 448px;
+    }
+  }
 }
 
 #audio-parent,

@@ -44,9 +44,12 @@ $('[data-tab-open]').click(function(event) {
   }
   if (menuOpened) {
     menuOpened = false;
+    $('.ace_search').removeClass('active');
   } else {
     menuOpened = true;
+    $('.ace_search').addClass('active');
   }
+  // check to see if the find and replace dialogue is open
   openTabs();
 });
 
