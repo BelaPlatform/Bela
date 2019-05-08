@@ -5,7 +5,7 @@
       "y": "326",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_08 - Digital 1 - (Pd: digital 12)",
+      "text": "Digital 1 (Pd: 12)",
       "tip": "tooltip"
     },
     {
@@ -14,7 +14,7 @@
       "y": "326",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_07 - Digital 0 - (Pd: digital 11)",
+      "text": "Digital 0 (Pd: 11)",
       "tip": "tooltip"
     },
     {
@@ -23,7 +23,7 @@
       "y": "312",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_10 - Digital 3 - (Pd: digital 14)",
+      "text": "Digital 3 (Pd: 14)",
       "tip": "tooltip"
     },
     {
@@ -32,7 +32,7 @@
       "y": "312",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_09 - Digital 2 - (Pd: digital 13)",
+      "text": "Digital 2 (Pd: 13)",
       "tip": "tooltip"
     },
     {
@@ -41,7 +41,7 @@
       "y": "298",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_12 - Digital 5 - (Pd: digital 16)",
+      "text": "Digital 5 (Pd: 16)",
       "tip": "tooltip"
     },
     {
@@ -50,7 +50,7 @@
       "y": "298",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_11 - Digital 4 - (Pd: digital 15)",
+      "text": "Digital 4 (Pd: 15)",
       "tip": "tooltip"
     },
     {
@@ -59,7 +59,7 @@
       "y": "272",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_16 - Digital 9 - (Pd: digital 20)",
+      "text": "Digital 9 (Pd: 20)",
       "tip": "tooltip"
     },
     {
@@ -68,7 +68,7 @@
       "y": "272",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_15 - Digital 8 - (Pd: digital 19)",
+      "text": "Digital 8 (Pd: 19)",
       "tip": "tooltip"
     },
     {
@@ -77,7 +77,7 @@
       "y": "258",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_18 - Digital 11 - (Pd: digital 22)",
+      "text": "Digital 11 (Pd: 22)",
       "tip": "tooltip"
     },
     {
@@ -86,7 +86,7 @@
       "y": "190",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_28 - Digital 13 - (Pd: digital 24)",
+      "text": "Digital 13 (Pd: 24)",
       "tip": "tooltip"
     },
     {
@@ -95,7 +95,7 @@
       "y": "190",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_27 - Digital 12 - (Pd: digital 23)",
+      "text": "Digital 12 (Pd: 23)",
       "tip": "tooltip"
     },
     {
@@ -104,7 +104,7 @@
       "y": "176",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_30 - Digital 15 - (Pd: digital 26)",
+      "text": "Digital 15 (Pd: 26)",
       "tip": "tooltip"
     },
     {
@@ -113,7 +113,7 @@
       "y": "176",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_29 - Digital 14 - (Pd: digital 25)",
+      "text": "Digital 14 (Pd: 25)",
       "tip": "tooltip"
     },
     {
@@ -122,7 +122,7 @@
       "y": "367",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_02 - GND",
+      "text": "GND",
       "tip": "tooltip"
     },
     {
@@ -131,7 +131,7 @@
       "y": "367",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_01 - GND",
+      "text": "GND",
       "tip": "tooltip"
     },
     {
@@ -140,7 +140,7 @@
       "y": "354",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_03 - 3.3V supply",
+      "text": "3.3V supply",
       "tip": "tooltip"
     },
     {
@@ -149,7 +149,7 @@
       "y": "354",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_04 - 3.3V supply",
+      "text": "3.3V supply",
       "tip": "tooltip"
     },
     {
@@ -158,7 +158,7 @@
       "y": "367",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_02 - GND",
+      "text": "GND",
       "tip": "tooltip"
     },
     {
@@ -167,7 +167,7 @@
       "y": "367",
       "width": "10",
       "height": "10",
-      "text": "Pin P8_01 - GND",
+      "text": "GND",
       "tip": "tooltip"
     },
     {
@@ -176,7 +176,7 @@
       "y": "300",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_12 - Digital 6 - (Pd: digital 17)",
+      "text": "Digital 6 (Pd: 17)",
       "tip": "tooltip"
     },
     {
@@ -185,7 +185,7 @@
       "y": "286",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_14 - Digital 7 - (Pd: digital 18)",
+      "text": "Digital 7 (Pd: 18)",
       "tip": "tooltip"
     },
     {
@@ -194,7 +194,7 @@
       "y": "272",
       "width": "10",
       "height": "10",
-      "text": "Pin P9_16 - Digital 10 - (Pd: digital 21)",
+      "text": "Digital 10 (Pd: 21)",
       "tip": "tooltip"
     },
     {
@@ -275,7 +275,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 7 - (Pd:[dac~ 8])",
+      "text": "OUT 7 (Pd:[dac~ 8])",
       "tip": "tooltip"
     },
     {
@@ -284,7 +284,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 6 - (Pd:[dac~ 7])",
+      "text": "OUT 6 (Pd:[dac~ 7])",
       "tip": "tooltip"
     },
     {
@@ -302,7 +302,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 4 - (Pd:[dac~ 5])",
+      "text": "OUT 4 (Pd:[dac~ 5])",
       "tip": "tooltip"
     },
     {
@@ -311,7 +311,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 5 - (Pd:[dac~ 6])",
+      "text": "OUT 5 (Pd:[dac~ 6])",
       "tip": "tooltip"
     },
     {
@@ -329,7 +329,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 2 - (Pd:[dac~ 3])",
+      "text": "OUT 2 (Pd:[dac~ 3])",
       "tip": "tooltip"
     },
     {
@@ -338,7 +338,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 3 - (Pd:[dac~ 4])",
+      "text": "OUT 3 (Pd:[dac~ 4])",
       "tip": "tooltip"
     },
     {
@@ -356,7 +356,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 0 - (Pd:[dac~ 1])",
+      "text": "OUT 0 (Pd:[dac~ 1])",
       "tip": "tooltip"
     },
     {
@@ -365,7 +365,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "OUT 1 - (Pd:[dac~ 2])",
+      "text": "OUT 1 (Pd:[dac~ 2])",
       "tip": "tooltip"
     },
     {
@@ -383,7 +383,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "IN 0 - (Pd:[adc~ 1])",
+      "text": "IN 0 (Pd:[adc~ 1])",
       "tip": "tooltip"
     },
     {
@@ -392,7 +392,7 @@
       "y": "-149",
       "width": "9",
       "height": "9",
-      "text": "IN 1 - (Pd:[adc~ 2])",
+      "text": "IN 1 (Pd:[adc~ 2])",
       "tip": "tooltip"
     },
     {
@@ -410,7 +410,7 @@
       "y": "-186",
       "width": "9",
       "height": "9",
-      "text": "IN 2 - (Pd:[adc~ 3])",
+      "text": "IN 2 (Pd:[adc~ 3])",
       "tip": "tooltip"
     },
     {
@@ -419,7 +419,7 @@
       "y": "-186",
       "width": "9",
       "height": "9",
-      "text": "IN 3 - (Pd:[adc~ 4])",
+      "text": "IN 3 (Pd:[adc~ 4])",
       "tip": "tooltip"
     },
     {
@@ -437,7 +437,7 @@
       "y": "427",
       "width": "09",
       "height": "15",
-      "text": "LED - provides system heartbeat blink",
+      "text": "System LED",
       "tip": "tooltip"
     },
     {
@@ -455,7 +455,7 @@
       "y": "427",
       "width": "09",
       "height": "15",
-      "text": "LED - Blinks when Bela program is running",
+      "text": "LED (Blinks when program is running)",
       "tip": "tooltip"
     },
     {
@@ -464,7 +464,7 @@
       "y": "401",
       "width": "15",
       "height": "23",
-      "text": "BeagleBone reset button",
+      "text": "Reset button",
       "tip": "tooltip"
     },
     {
@@ -500,7 +500,7 @@
       "y": "208",
       "width": "10",
       "height": "23",
-      "text": "jumper",
+      "text": "Jumper",
       "tip": "tooltip"
     },
     {
@@ -509,7 +509,7 @@
       "y": "216",
       "width": "10",
       "height": "23",
-      "text": "jumper",
+      "text": "Jumper",
       "tip": "tooltip"
     },
     {
@@ -518,7 +518,7 @@
       "y": "243",
       "width": "10",
       "height": "23",
-      "text": "jumper",
+      "text": "Jumper",
       "tip": "tooltip"
     },
     {
@@ -527,7 +527,7 @@
       "y": "220",
       "width": "10",
       "height": "23",
-      "text": "jumper",
+      "text": "Jumper",
       "tip": "tooltip"
     },
     {
@@ -536,7 +536,7 @@
       "y": "220",
       "width": "10",
       "height": "23",
-      "text": "jumper",
+      "text": "Jumper",
       "tip": "tooltip"
     },
     {

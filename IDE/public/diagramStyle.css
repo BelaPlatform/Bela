@@ -1,7 +1,7 @@
 @font-face {
-    font-family: 'sofia';
-    src: url('fonts/sofia-webfont-copy.woff2') format('woff2'),
-         url('fonts/sofia-webfont-copy.woff') format('woff');
+    font-family: 'inconsolata';
+    src: url('fonts/inconsolata-webfont.woff2') format('woff2'),
+         url('fonts/inconsolata-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
@@ -18,8 +18,8 @@
     width: 350px;
 }
 
-.diagram_text {
-    font-family: sofia;
+.diagram-text {
+    font-family: 'inconsolata';
     font-size: 12px;
     line-height: 22px;
 }
@@ -110,6 +110,7 @@
 .tipText {
     background: #fff;
     color: #000;
+    font-family: "inconsolata";
     max-width: 350px;
     padding: 5px 10px;
     position: relative;
@@ -118,6 +119,6 @@
 
 .diagram-text {   
     font-size: .9em;
-    font-family: sofia;
+    font-family: poppins;
     margin-top: -10px;
 }
