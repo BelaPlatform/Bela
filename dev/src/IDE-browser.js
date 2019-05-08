@@ -597,8 +597,3 @@ keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'r
 keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
 keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });
-keypress.simple_combo("meta f", function(){
-  if ($('[data-tabs]').hasClass('tabs-open')) {
-    $('.ace_search').addClass('active');
-  }
-});

@@ -152,7 +152,13 @@ var keyUtil = require("../lib/keys");
 
 dom.importCssString(searchboxCss, "ace_searchbox");
 
-var html = '<div class="ace_search right">\
+var activeClass = "";
+
+if ($('[data-tabs]').hasClass('tabs-open')) {
+  activeClass = " active";
+}
+
+var html = '<div class="ace_search right' + activeClass + '">\
     <button type="button" action="hide" class="ace_searchbtn_close"></button>\
     <div class="ace_search_form">\
         <input class="ace_search_field" placeholder="Search for" spellcheck="false"></input>\
@@ -198,12 +204,12 @@ var SearchBox = function(editor, range, showReplaceForm) {
         this.searchInput = this.searchBox.querySelector(".ace_search_field");
         this.replaceInput = this.replaceBox.querySelector(".ace_search_field");
     };
-    
+
     this.$init = function() {
         var sb = this.element;
-        
+
         this.$initElements(sb);
-        
+
         var _this = this;
         event.addListener(sb, "mousedown", function(e) {
             setTimeout(function(){
@@ -344,7 +350,7 @@ var SearchBox = function(editor, range, showReplaceForm) {
         this.find(true, true);
     };
     this.findAll = function(){
-        var range = this.editor.findAll(this.searchInput.value, {            
+        var range = this.editor.findAll(this.searchInput.value, {
             regExp: this.regExpOption.checked,
             caseSensitive: this.caseSensitiveOption.checked,
             wholeWord: this.wholeWordOption.checked
@@ -358,7 +364,7 @@ var SearchBox = function(editor, range, showReplaceForm) {
     this.replace = function() {
         if (!this.editor.getReadOnly())
             this.editor.replace(this.replaceInput.value);
-    };    
+    };
     this.replaceAndFindNext = function() {
         if (!this.editor.getReadOnly()) {
             this.editor.replace(this.replaceInput.value);
@@ -406,4 +412,3 @@ exports.Search = function(editor, isReplace) {
                 (function() {
                     window.require(["ace/ext/searchbox"], function() {});
                 })();
-            

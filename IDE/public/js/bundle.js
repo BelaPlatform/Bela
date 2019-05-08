@@ -1058,11 +1058,6 @@ keypress.simple_combo("meta k", function () {
 keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
-keypress.simple_combo("meta f", function () {
-	if ($('[data-tabs]').hasClass('tabs-open')) {
-		$('.ace_search').addClass('active');
-	}
-});
 
 },{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
 'use strict';
