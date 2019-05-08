@@ -1876,7 +1876,9 @@ var EditorView = function (_View) {
 			_this.editor.resize();
 			var data = tmpData;
 			var opts = tmpOpts;
-			_this.__fileData(data, opts);
+			if (opts.fileType && opts.fileType == "pd") {
+				_this.__fileData(data, opts);
+			}
 		});
 
 		_this.on('add-link', function (link, type) {
