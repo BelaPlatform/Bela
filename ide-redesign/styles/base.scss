@@ -96,12 +96,15 @@ img {
 }
 
 #pd-svg-parent {
-  background: #fff;
+  background: #f1f1f1;
   display: none;
   font-family: monospace;
   overflow: auto;
   #pd-svg {
-    background: $grey-light;
+    background: #f1f1f1;
+    svg {
+      background: #f1f1f1;
+    }
   }
   &.active {
     display: block;
