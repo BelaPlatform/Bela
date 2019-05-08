@@ -77,7 +77,7 @@ class ControlView extends View{
       $('#zoomDown').html('Zoom out');
     } else if (val == 1){
       if ($('#control-underlay').hasClass('hidden')) $('#control-underlay').removeClass('hidden');
-      if (!$('#triggerControls').hasClass('hidden')) $('#triggerControls').addClass('hidden');
+      if (!$('#trigger-controls').hasClass('hidden')) $('#triggerControls').addClass('hidden');
       if ($('#FFTControls').hasClass('hidden')) $('#FFTControls').removeClass('hidden');
       $('.xAxisUnits').html('Hz');
       $('.xUnit-display').html((sampleRate/20 * upSampling/downSampling));

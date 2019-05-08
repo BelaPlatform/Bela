@@ -8,7 +8,7 @@
   <body>
 
     <div class="buttonWrapper">
-      <button id="controlsButton">Launch controls</button>
+      <button id="controlsButton">Toggle controls</button>
       <div class="top">
         <div class="label">
           <p>Plot mode:</p>
@@ -56,10 +56,10 @@
               <p>Offset:</p>
             </div>
             <div class="slider value">
-              <input class="scope-controls number-box" data-key="xOffset" type="number" value="0" /> px
+              <input class="scope-controls number-box" data-key="xOffset" type="number" value="0" /><span class="label"> px</span>
             </div>
             <div class="slider range">
-              <input class="scope-controls range-slider" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1" />
+              <input class="scope-controls scope-range-slider" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1" />
             </div>
           </div>
           <div class="block-section slider-line">
@@ -67,17 +67,17 @@
               <p>Hold off:</p>
             </div>
             <div class="slider value">
-              <input class="scope-controls number-box" data-key="holdOff" type="number" value="0" step="1" min="0" /> ms
+              <input class="scope-controls number-box" data-key="holdOff" type="number" value="0" step="1" min="0" /><span class="label"> ms</span>
             </div>
             <div class="slider range">
-              <input  class="scope-controls range-slider" data-key="holdOff" type="range" min="0" max="1000" value="0" step="1" />
+              <input  class="scope-controls scope-range-slider" data-key="holdOff" type="range" min="0" max="1000" value="0" step="1" />
             </div>
           </div>
 
         </div> <!-- end axis section -->
 
 
-        <div class="control-section trigger-controls">
+        <div class="control-section trigger-controls" id="triggerControls">
 
           <h3>Trigger</h3>
           <div class="block-section">
@@ -146,7 +146,7 @@
             </div>
 
             <div class="slider range">
-              <input class="scope-controls range-slider" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01" />
+              <input class="scope-controls scope-range-slider" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01" />
             </div>
           </div>
 
@@ -155,16 +155,6 @@
             <button id="oneshotButton" class="scope-controls" data-key="scopeOneShot">Trigger one-shot</button>
           </div>
         </div> <!-- end trigger section -->
-
-        <div class="control-section misc-controls">
-
-          <h3>Misc</h3>
-          <div class="block-section">
-            <button class="scope-controls pause-button" data-key="scopePause" data-func="pauseButton">Pause plotting</button>
-            <a href="" download="scope" id="saveCanvas"><button>Export scope image</button></a>
-            <a href="" download="scopeData.csv" id="saveCanvasData"><button>Export CSV data</button></a>
-          </div>
-        </div> <!-- end misc -->
 
         <div class="control-section" id="FFTControls">
           <h3>FFT</h3>
@@ -220,6 +210,17 @@
 
         </div> <!-- end FFT -->
 
+
+        <div class="control-section misc-controls">
+
+          <h3>Misc</h3>
+          <div class="block-section">
+            <button class="scope-controls pause-button" data-key="scopePause" data-func="pauseButton">Pause plotting</button>
+            <a href="" download="scope" id="saveCanvas"><button class="scope-controls">Export scope image</button></a>
+            <a href="" download="scopeData.csv" id="saveCanvasData"><button class="scope-controls export">Export CSV data</button></a>
+          </div>
+        </div> <!-- end misc -->
+
       </div> <!-- end LEFT control panel column -->
 
       <div class="control-panel-column channels">
@@ -229,7 +230,7 @@
 
             <div class="block-section">
               <div class="scope-label">
-                <p>Attenuation:</p>
+                <p>Scale:</p>
               </div>
 
               <div class="slider value">
@@ -237,7 +238,7 @@
               </div>
 
               <div class="slider range">
-                <input class="channelView range-slider" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01" />
+                <input class="channelView scope-range-slider" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01" />
               </div>
             </div>
 
@@ -251,7 +252,7 @@
               </div>
 
               <div class="slider range">
-                <input class="channelView range-slider" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01" />
+                <input class="channelView scope-range-slider" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01" />
               </div>
             </div>
 
@@ -265,7 +266,7 @@
               </div>
 
               <div class="slider range">
-                <input class="channelView range-slider" data-key="lineWeight" data-channel="0" type="range" value="1.5" min="1" max="10" step="0.1" />
+                <input class="channelView scope-range-slider" data-key="lineWeight" data-channel="0" type="range" value="1.5" min="1" max="10" step="0.1" />
               </div>
             </div>
 
