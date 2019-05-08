@@ -29,13 +29,20 @@
   }
 }
 
+button.scope-controls {
+  padding: .3em .7em;
+  &.export {
+    margin-top: .3em;
+  }
+}
+
 #control-panel {
-  background-color: rgba(255,255,255,0.8);
+  background-color: rgba(255,255, 255,0.9);
   border: 1px solid $grey-light;
   left: 50px;
   padding: 2em 0 2em 2em;
   position: absolute;
-  top: 50px;
+  top: 55px;
   z-index: 9999;
   & * {
     user-select: none;
@@ -78,7 +85,7 @@
       }
       .scope-label {
         display: inline-block;
-        margin: 5px 0;
+        margin: 3px 0;
         width: 75px;
         text-align: right;
       }
@@ -90,9 +97,6 @@
         width: 200px;
         >.mini-dropdown {
           width: 100px;
-          &:before {
-            left: 140px;
-          }
         }
       }
       .after-dropdown {
@@ -100,7 +104,7 @@
         margin-left: 165px;
       }
       &.slider-line {
-        margin-top: .5em;
+        
       }
     }
   }
@@ -163,4 +167,62 @@ input.channelView.range-slider {
 
 .one-shot {
   padding-left: 135px;
+}
+
+.label {
+  font-family: inconsolata;
+  size: 0.85em;
+}
+
+// This is the component used in the Scope to adjust values
+
+input[type="range"].scope-range-slider {
+  appearance: none;
+  background: transparent;
+  margin: 1 auto 0 auto;
+  width: 100%;
+  transition: .25s, ease-in-out;
+
+  &::-webkit-slider-runnable-track {
+    background: rgba(0,0,0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 15px;
+    padding: 2px 2px 2px 2px;
+  }
+  &::-webkit-slider-thumb {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba($white, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    height: 12px;
+    margin-top: -1px;
+    transition: .25s, ease-in-out;
+    width: 12px;
+  }
+  &:hover::-webkit-slider-runnable-track, &:active::-webkit-slider-runnable-track {
+    background: $teal-01;
+    transition: background, 100ms, ease-in-out;
+    &::-webkit-slider-thumb {
+      margin-top: 0;
+    }
+  }
+  &:hover::-webkit-slider-thumb, &:active::-webkit-slider-thumb {
+    background-color: $white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    
+  }
+
+  &:disabled {
+    &::-webkit-slider-runnable-track {
+      background: rgba(0,0,0, 0.2);
+    }
+    &::-webkit-slider-thumb {
+      background: rgba($white, 0.2);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+  }
+      
 }
