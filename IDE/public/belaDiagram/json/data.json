@@ -5,7 +5,7 @@
       "y": "322",
       "width": "10",
       "height": "10",
-      "text": "Digital 1 (P8_08) Pd digital 12",
+      "text": "Digital 1 (Pd: 12)",
       "tip": "tooltip"
     },
     {
@@ -14,7 +14,7 @@
       "y": "322",
       "width": "10",
       "height": "10",
-      "text": "Digital 0 (P8_07) Pd digital 11",
+      "text": "Digital 0 (Pd: 11)",
       "tip": "tooltip"
     },
     {
@@ -23,7 +23,7 @@
       "y": "308",
       "width": "10",
       "height": "10",
-      "text": "Digital 3 (P8_10) Pd digital 14",
+      "text": "Digital 3 (Pd: 14)",
       "tip": "tooltip"
     },
     {
@@ -32,7 +32,7 @@
       "y": "308",
       "width": "10",
       "height": "10",
-      "text": "Digital 2 (P8_09) Pd digital 13",
+      "text": "Digital 2 (Pd: 13)",
       "tip": "tooltip"
     },
     {
@@ -41,7 +41,7 @@
       "y": "294",
       "width": "10",
       "height": "10",
-      "text": "Digital 5 (P8_12) Pd digital 16",
+      "text": "Digital 5 (Pd: 16)",
       "tip": "tooltip"
     },
     {
@@ -50,7 +50,7 @@
       "y": "294",
       "width": "10",
       "height": "10",
-      "text": "Digital 4 (P8_11) Pd digital 15",
+      "text": "Digital 4 (Pd: 15)",
       "tip": "tooltip"
     },
     {
@@ -59,7 +59,7 @@
       "y": "266",
       "width": "10",
       "height": "10",
-      "text": "Digital 9 (P8_16) Pd digital 20",
+      "text": "Digital 9 (Pd: 20)",
       "tip": "tooltip"
     },
     {
@@ -68,7 +68,7 @@
       "y": "266",
       "width": "10",
       "height": "10",
-      "text": "Digital 8 (P8_15) Pd digital 19",
+      "text": "Digital 8 (Pd: 19)",
       "tip": "tooltip"
     },
     {
@@ -77,7 +77,7 @@
       "y": "252",
       "width": "10",
       "height": "10",
-      "text": "Digital 11 (P8_18) Pd digital 22",
+      "text": "Digital 11 (Pd: 22)",
       "tip": "tooltip"
     },
     {
@@ -86,7 +86,7 @@
       "y": "183",
       "width": "10",
       "height": "10",
-      "text": "Digital 13 (P8_28) Pd digital 24",
+      "text": "Digital 13 (Pd: 24)",
       "tip": "tooltip"
     },
     {
@@ -95,7 +95,7 @@
       "y": "183",
       "width": "10",
       "height": "10",
-      "text": "Digital 12 (P8_27) Pd digital 23",
+      "text": "Digital 12 (Pd: 23)",
       "tip": "tooltip"
     },
     {
@@ -104,7 +104,7 @@
       "y": "167",
       "width": "10",
       "height": "10",
-      "text": "Digital 15 (P8_30) Pd digital 26",
+      "text": "Digital 15 (Pd: 26)",
       "tip": "tooltip"
     },
     {
@@ -113,7 +113,7 @@
       "y": "167",
       "width": "10",
       "height": "10",
-      "text": "Digital 14 (P8_29) Pd digital 25",
+      "text": "Digital 14 (Pd: 25)",
       "tip": "tooltip"
     },
     {
@@ -140,7 +140,7 @@
       "y": "345",
       "width": "10",
       "height": "10",
-      "text": "3.3V supply",
+      "text": "3.3V",
       "tip": "tooltip"
     },
     {
@@ -149,7 +149,7 @@
       "y": "345",
       "width": "10",
       "height": "10",
-      "text": "3.3V supply",
+      "text": "3.3V",
       "tip": "tooltip"
     },
     {
@@ -176,7 +176,7 @@
       "y": "290",
       "width": "10",
       "height": "10",
-      "text": "Digital 6 (P9_12) Pd digital 17",
+      "text": "Digital 6 (Pd: 17)",
       "tip": "tooltip"
     },
     {
@@ -185,7 +185,7 @@
       "y": "277",
       "width": "10",
       "height": "10",
-      "text": "Digital 7 (P9_14) Pd digital 18",
+      "text": "Digital 7 (Pd: 18)",
       "tip": "tooltip"
     },
     {
@@ -194,7 +194,7 @@
       "y": "263",
       "width": "10",
       "height": "10",
-      "text": "Digital 10 (P9_16) Pd digital 21",
+      "text": "Digital 10 (Pd: 21)",
       "tip": "tooltip"
     },
     {
@@ -203,7 +203,7 @@
       "y": "235",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 0; Pd [dac~ 3]",
+      "text": "Analog OUT 0 (Pd: [dac~ 3])",
       "tip": "tooltip"
     },
     {
@@ -212,7 +212,7 @@
       "y": "249",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 1; Pd [dac~ 4]",
+      "text": "Analog OUT 1 (Pd: [dac~ 4])",
       "tip": "tooltip"
     },
     {
@@ -221,7 +221,7 @@
       "y": "263",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 2; Pd [dac~ 5]",
+      "text": "Analog OUT 2 (Pd: [dac~ 5])",
       "tip": "tooltip"
     },
     {
@@ -230,7 +230,7 @@
       "y": "277",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 3; Pd [dac~ 6]",
+      "text": "Analog OUT 3 (Pd: [dac~ 6])",
       "tip": "tooltip"
     },
     {
@@ -239,7 +239,7 @@
       "y": "291",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 4; Pd [dac~ 7]",
+      "text": "Analog OUT 4 (Pd: [dac~ 7])",
       "tip": "tooltip"
     },
     {
@@ -248,7 +248,7 @@
       "y": "305",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 5; Pd [dac~ 8]",
+      "text": "Analog OUT 5 (Pd: [dac~ 8])",
       "tip": "tooltip"
     },
     {
@@ -257,7 +257,7 @@
       "y": "319",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 6; Pd [dac~ 9]",
+      "text": "Analog OUT 6 (Pd: [dac~ 9])",
       "tip": "tooltip"
     },
     {
@@ -266,7 +266,7 @@
       "y": "333",
       "width": "10",
       "height": "10",
-      "text": "Analog OUT 7; Pd [dac~ 10]",
+      "text": "Analog OUT 7 (Pd: [dac~ 10])",
       "tip": "tooltip"
     },
     {
@@ -275,7 +275,7 @@
       "y": "347",
       "width": "10",
       "height": "10",
-      "text": "5V (Do not use with digital pins)",
+      "text": "5V (NEVER use with digital pins!)",
       "tip": "tooltip"
     },
     {
@@ -302,7 +302,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 7; Pd [adc~ 10]",
+      "text": "Analog IN 7 (Pd: [adc~ 10])",
       "tip": "tooltip"
     },
     {
@@ -311,7 +311,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 6; Pd [adc~ 9]",
+      "text": "Analog IN 6 (Pd: [adc~ 9])",
       "tip": "tooltip"
     },
     {
@@ -320,7 +320,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 5; Pd [adc~ 8]",
+      "text": "Analog IN 5 (Pd: [adc~ 8])",
       "tip": "tooltip"
     },
     {
@@ -329,7 +329,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 4; Pd [adc~ 7]",
+      "text": "Analog IN 4 (Pd: [adc~ 7])",
       "tip": "tooltip"
     },
     {
@@ -338,7 +338,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 3; Pd [adc~ 6]",
+      "text": "Analog IN 3 (Pd: [adc~ 6])",
       "tip": "tooltip"
     },
     {
@@ -347,7 +347,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 2; Pd [adc~ 5]",
+      "text": "Analog IN 2 (Pd: [adc~ 5])",
       "tip": "tooltip"
     },
     {
@@ -356,7 +356,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 1; Pd [adc~ 4]",
+      "text": "Analog IN 1 (Pd: [adc~ 4])",
       "tip": "tooltip"
     },
     {
@@ -365,7 +365,7 @@
       "y": "142",
       "width": "10",
       "height": "10",
-      "text": "Analog IN 0; Pd [adc~ 3]",
+      "text": "Analog IN 0 (Pd: [adc~ 3])",
       "tip": "tooltip"
     },
     {
@@ -419,7 +419,7 @@
       "y": "18",
       "width": "10",
       "height": "10",
-      "text": "Audio out RIGHT; Pd [dac~ 2]",
+      "text": "Audio out RIGHT (Pd: [dac~ 2])",
       "tip": "tooltip"
     },
     {
@@ -428,7 +428,7 @@
       "y": "18",
       "width": "10",
       "height": "10",
-      "text": "Audio out LEFT; Pd [dac~ 1]",
+      "text": "Audio out LEFT (Pd: [dac~ 1])",
       "tip": "tooltip"
     },
     {
@@ -446,7 +446,7 @@
       "y": "18",
       "width": "10",
       "height": "10",
-      "text": "Audio in RIGHT; Pd [adc~ 2]",
+      "text": "Audio in RIGHT (Pd: [adc~ 2])",
       "tip": "tooltip"
     },
     {
@@ -455,7 +455,7 @@
       "y": "18",
       "width": "10",
       "height": "10",
-      "text": "Audio in LEFT; Pd [adc~ 1]",
+      "text": "Audio in LEFT (Pd: [adc~ 1])",
       "tip": "tooltip"
     },
     {
@@ -482,7 +482,7 @@
       "y": "430",
       "width": "09",
       "height": "15",
-      "text": "LED - Heartbeat",
+      "text": "Status LED",
       "tip": "tooltip"
     },
     {
@@ -500,7 +500,7 @@
       "y": "430",
       "width": "09",
       "height": "15",
-      "text": "LED - Blinks when Bela is running",
+      "text": "LED (blinks when running)",
       "tip": "tooltip"
     },
     {
@@ -509,7 +509,7 @@
       "y": "400",
       "width": "17",
       "height": "30",
-      "text": "Bela reset button",
+      "text": "Reset button",
       "tip": "tooltip"
     },
     {

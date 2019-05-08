@@ -23,7 +23,7 @@
       "y": "21",
       "width": "13",
       "height": "13",
-      "text": "Audio Out LEFT; Pd: [dac~ 1]",
+      "text": "Audio Out LEFT (Pd: [dac~ 1])",
       "tip": "tooltip"
     },
     {
@@ -32,7 +32,7 @@
       "y": "21",
       "width": "13",
       "height": "13",
-      "text": "Audio Out RIGHT; Pd: [dac~ 2]",
+      "text": "Audio Out RIGHT (Pd: [dac~ 2])",
       "tip": "tooltip"
     },
     {
@@ -59,7 +59,7 @@
       "y": "21",
       "width": "13",
       "height": "13",
-      "text": "Audio In LEFT; Pd: [adc~ 1]",
+      "text": "Audio In LEFT (Pd: [adc~ 1])",
       "tip": "tooltip"
     },
     {
@@ -68,7 +68,7 @@
       "y": "21",
       "width": "13",
       "height": "13",
-      "text": "Audio In RIGHT; Pd: [adc~ 2]",
+      "text": "Audio In RIGHT (Pd: [adc~ 2])",
       "tip": "tooltip"
     },
     {
@@ -86,7 +86,7 @@
       "y": "426",
       "width": "35",
       "height": "28",
-      "text": "Bela button (stops the running program)",
+      "text": "Button (stops current program)",
       "tip": "tooltip"
     },
     {
@@ -122,7 +122,7 @@
       "y": "174",
       "width": "13",
       "height": "13",
-      "text": "5V - NEVER use with digital pins!",
+      "text": "5V (NEVER use with digital pins!)",
       "tip": "tooltip"
     },
     {
@@ -284,7 +284,7 @@
       "y": "172",
       "width": "13",
       "height": "13",
-      "text": "3.3V supply",
+      "text": "3.3V",
       "tip": "tooltip"
     },
     {
@@ -293,7 +293,7 @@
       "y": "411",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 0; Pd: [adc~ 3]",
+      "text": "Analog IN 0 (Pd: [adc~ 3])",
       "tip": "tooltip"
     },
     {
@@ -302,7 +302,7 @@
       "y": "390",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 1; Pd: [adc~ 4]",
+      "text": "Analog IN 1 (Pd: [adc~ 4])",
       "tip": "tooltip"
     },
     {
@@ -311,7 +311,7 @@
       "y": "369",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 2; Pd: [adc~ 5]",
+      "text": "Analog IN 2 (Pd: [adc~ 5])",
       "tip": "tooltip"
     },
     {
@@ -320,7 +320,7 @@
       "y": "348",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 3; Pd: [adc~ 6]",
+      "text": "Analog IN 3 (Pd: [adc~ 6])",
       "tip": "tooltip"
     },
     {
@@ -329,7 +329,7 @@
       "y": "327",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 4; Pd: [adc~ 7]",
+      "text": "Analog IN 4 (Pd: [adc~ 7])",
       "tip": "tooltip"
     },
     {
@@ -338,7 +338,7 @@
       "y": "306",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 5; Pd: [adc~ 8]",
+      "text": "Analog IN 5 (Pd: [adc~ 8])",
       "tip": "tooltip"
     },
     {
@@ -347,7 +347,7 @@
       "y": "285",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 6; Pd: [adc~ 9]",
+      "text": "Analog IN 6 (Pd: [adc~ 9])",
       "tip": "tooltip"
     },
     {
@@ -356,7 +356,7 @@
       "y": "264",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 7; Pd: [adc~ 10]",
+      "text": "Analog IN 7 (Pd: [adc~ 10])",
       "tip": "tooltip"
     },
     {
@@ -401,7 +401,7 @@
       "y": "-3",
       "width": "78",
       "height": "08",
-      "text": "SD card slot",
+      "text": "SD card",
       "tip": "tooltip"
     },
     {
@@ -419,7 +419,7 @@
       "y": "470",
       "width": "60",
       "height": "08",
-      "text": "Micro USB power jack",
+      "text": "Micro USB",
       "tip": "tooltip"
     },
     {
