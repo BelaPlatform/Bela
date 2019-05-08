@@ -169,6 +169,8 @@ class FileView extends View {
 					sources.push(item);
 				} else if (headerIndeces.indexOf(ext) !== -1){
 					headers.push(item);
+				} else if (ext == "pd" && item.name == "_main.pd") {
+						sources.push(item);
 				} else if (item){
 					resources.push(item);
 				}
@@ -179,12 +181,27 @@ class FileView extends View {
 
 		//console.log(headers, sources, resources, directories);
 
+		var pd = '_main.pd';
+		var render = 'render.cpp';
 		headers.sort( (a, b) => a.name - b.name );
 		sources.sort( (a, b) => a.name - b.name );
+		sources.sort( (a, b) => a.name == pd ? -1 : b.name == pd ? 1 : 0 );
+		sources.sort( (a, b) => a.name == render ? -1 : b.name == render ? 1 : 0 );
 		resources.sort( (a, b) => a.name - b.name );
 		directories.sort( (a, b) => a.name - b.name );
 
-		//console.log(headers, sources, resources, directories);
+		if (sources.length) {
+      var source = $("<li></li>");
+			$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
+      var sourceList = $('<ul></ul>').addClass('sub-file-list');
+
+      for (let i=0; i < sources.length; i++) {
+        $('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', (e) => this.openFile(e));
+      }
+      sourceList.appendTo(source);
+      source.appendTo($files);
+		}
+
 		if (headers.length) {
       var header = $('<li></li>');
       $('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
@@ -196,16 +213,6 @@ class FileView extends View {
       header.appendTo($files);
 		}
 
-		if (sources.length) {
-      var source = $("<li></li>");
-			$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-      var sourceList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < sources.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', (e) => this.openFile(e));
-      }
-      sourceList.appendTo(source);
-      source.appendTo($files);
-		}
 
 		if (resources.length) {
       var resource = $('<li></li>');

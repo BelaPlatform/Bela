@@ -2362,6 +2362,8 @@ var FileView = function (_View) {
 							sources.push(item);
 						} else if (headerIndeces.indexOf(ext) !== -1) {
 							headers.push(item);
+						} else if (ext == "pd" && item.name == "_main.pd") {
+							sources.push(item);
 						} else if (item) {
 							resources.push(item);
 						}
@@ -2384,11 +2386,19 @@ var FileView = function (_View) {
 				}
 			}
 
+			var pd = '_main.pd';
+			var render = 'render.cpp';
 			headers.sort(function (a, b) {
 				return a.name - b.name;
 			});
 			sources.sort(function (a, b) {
 				return a.name - b.name;
+			});
+			sources.sort(function (a, b) {
+				return a.name == pd ? -1 : b.name == pd ? 1 : 0;
+			});
+			sources.sort(function (a, b) {
+				return a.name == render ? -1 : b.name == render ? 1 : 0;
 			});
 			resources.sort(function (a, b) {
 				return a.name - b.name;
@@ -2397,31 +2407,31 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			//console.log(headers, sources, resources, directories);
-			if (headers.length) {
-				var header = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-				var headerList = $('<ul></ul>').addClass('sub-file-list');
-				for (var i = 0; i < headers.length; i++) {
-					$('<li></li>').addClass('sourceFile').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				headerList.appendTo(header);
-				header.appendTo($files);
-			}
-
 			if (sources.length) {
 				var source = $("<li></li>");
 				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
 				var sourceList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i = 0; _i < sources.length; _i++) {
-					$('<li></li>').addClass('sourceFile').html(sources[_i].name + ' <span class="file-list-size">' + sources[_i].size + '</span>').data('file', sources[_i].name).appendTo(sourceList).on('click', function (e) {
+
+				for (var i = 0; i < sources.length; i++) {
+					$('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', function (e) {
 						return _this5.openFile(e);
 					});
 				}
 				sourceList.appendTo(source);
 				source.appendTo($files);
+			}
+
+			if (headers.length) {
+				var header = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
+				var headerList = $('<ul></ul>').addClass('sub-file-list');
+				for (var _i = 0; _i < headers.length; _i++) {
+					$('<li></li>').addClass('sourceFile').html(headers[_i].name + ' <span class="file-list-size">' + headers[_i].size + '</span>').data('file', headers[_i].name).appendTo(headerList).on('click', function (e) {
+						return _this5.openFile(e);
+					});
+				}
+				headerList.appendTo(header);
+				header.appendTo($files);
 			}
 
 			if (resources.length) {
