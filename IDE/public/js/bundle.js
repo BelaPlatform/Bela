@@ -1349,7 +1349,7 @@ var ConsoleView = function (_View) {
 	}, {
 		key: 'connect',
 		value: function connect() {
-			$('[data-console-disconnet]').remove();
+			$('[data-console-disconnect]').remove();
 			_console.unblock();
 		}
 	}, {
@@ -4598,6 +4598,7 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'newErrors',
 		value: function newErrors(errors) {
+			var _this2 = this;
 
 			//this.checkScroll();
 			scrollEnabled = true;
@@ -4609,26 +4610,47 @@ var Console = function (_EventEmitter) {
 			var _iteratorError = undefined;
 
 			try {
-				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				var _loop = function _loop() {
 					var err = _step.value;
 
 
 					// create the element and add it to the error object
-					var div = $('<div></div>').addClass('beaglert-console-i' + err.type);
+					div = $('<div></div>').addClass('beaglert-console-i' + err.type);
 
 					// create the link and add it to the element
-					var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+
+					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 					// add a button to copy the contents to the clipboard
-					var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
 
-					var clipboard = new Clipboard(copyButton[0], {
+					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+					clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
 						}
 					});
 
-					div.appendTo(this.$element);
+
+					div.appendTo(_this2.$element);
+
+					if (err.currentFile) {
+						span.on('click', function () {
+							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
+						});
+					} else {
+						span.on('click', function () {
+							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
+						});
+					}
+				};
+
+				for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var div;
+					var span;
+					var copyButton;
+					var clipboard;
+
+					_loop();
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -4748,12 +4770,12 @@ var Console = function (_EventEmitter) {
 	}, {
 		key: 'scroll',
 		value: function scroll() {
-			var _this2 = this;
+			var _this3 = this;
 
 			if (scrollEnabled) {
 				scrollEnabled = false;
 				setTimeout(function () {
-					return _this2.parent.scrollTop = _this2.parent.scrollHeight;
+					return _this3.parent.scrollTop = _this3.parent.scrollHeight;
 				}, 0);
 			}
 		}

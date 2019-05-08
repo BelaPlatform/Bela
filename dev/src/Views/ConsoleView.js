@@ -138,7 +138,7 @@ class ConsoleView extends View{
 	}
 
 	connect(){
-		$('[data-console-disconnet]').remove();
+		$('[data-console-disconnect]').remove();
 		_console.unblock();
 	}
 
