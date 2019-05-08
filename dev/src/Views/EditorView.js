@@ -7,6 +7,8 @@ const uploadDelay = 50;
 var uploadBlocked = false;
 var currentFile;
 var imageUrl;
+var tmpData = {};
+var tmpOpts = {};
 var activeWords = [];
 var activeWordIDs = [];
 
@@ -66,7 +68,12 @@ class EditorView extends View {
 			});
 		});*/
 
-		this.on('resize', () => this.editor.resize() );
+		this.on('resize', () => {
+      this.editor.resize();
+      var data = tmpData;
+      var opts = tmpOpts;
+      this.__fileData(data, opts);
+    });
 
 		this.on('add-link', (link, type) => {
 
@@ -101,9 +108,9 @@ class EditorView extends View {
 	// model events
 	// new file saved
 	__fileData(data, opts){
-
+    tmpData = data;
+    tmpOpts = opts;
 		// hide the pd patch and image displays if present, and the editor
-		// $('[data-svg-parent], [data-img-display-parent], [data-editor], [data-audio-parent]').css('display', 'none');
 
 		if (!opts.fileType) opts.fileType = '0';
 
@@ -159,10 +166,12 @@ class EditorView extends View {
 
 				// render pd patch
 				try {
+          let width = $('[data-editor]').width();
+          let height = $('[data-editor]').height() + 8;
 					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
           .css({
-						'max-width'	: $('[data-editor]').width() + 'px',
-						'max-height': $('[data-editor]').height() + 'px'
+						'max-width'	: width + 'px',
+						'max-height': height + 'px'
 					});
 
           $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
@@ -171,8 +180,8 @@ class EditorView extends View {
           $('[data-pd-svg-parent]')
           .addClass('active')
           .css({
-						'max-width'	: $('[data-editor]').width() + 'px',
-						'max-height': $('[data-editor]').height() + 'px'
+						'max-width'	: width + 'px',
+						'max-height': height + 'px'
 					});
 
 					this.emit('close-notification', {timestamp});
