@@ -72,7 +72,9 @@ class EditorView extends View {
       this.editor.resize();
       var data = tmpData;
       var opts = tmpOpts;
-      this.__fileData(data, opts);
+      if (opts.fileType && opts.fileType == "pd") {
+        this.__fileData(data, opts);
+      }
     });
 
 		this.on('add-link', (link, type) => {
