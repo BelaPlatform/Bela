@@ -221,7 +221,7 @@ class ProjectView extends View {
 
 		for (let item of librariesDir){
       let name = item.name;
-      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('libraries-list');
