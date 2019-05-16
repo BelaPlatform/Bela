@@ -3,11 +3,40 @@ ul {
     list-style: none;
     margin: 0;
     padding: 0;
+    // Library description:
     .library-desc {
       > p {
+        font-family: poppins-light;
+        font-size: 14px;
         margin-block-start: 0;
-        font-family: poppins;
+        margin-block-end: .5em;
         }
+    }
+    .include-text {
+      & pre {
+          background: $grey-light;
+          font-family: inconsolata;
+          font-size: .9em;
+          padding: .5em;
+          corner-radius: 3px;
+          }
+    }
+    .include-lines {
+      
+      background: $grey-light;
+      margin-top: .5em;
+      padding: .1em .5em;
+    }
+    .include-copy {
+      font-size: .5em;
+      align: right;
+    }
+    // Styles for the library info (title, authors):
+    .lib-info-content {
+      margin: 1em 0 1em;
+      > p {
+        margin: 0;
+      }
     }
     .libraries-list {
       li {
@@ -32,7 +61,7 @@ ul {
       border-bottom: 1px solid $grey-mid;
       font-family: poppins_regular;
       margin: 0;
-      padding: 3px 0 3px 10px;
+      padding: 3px 0 3px;
       width: calc(100% - 10px);
     }
   }
