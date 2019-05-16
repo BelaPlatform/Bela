@@ -222,6 +222,7 @@ class ProjectView extends View {
 		for (let item of librariesDir){
       let name = item.name;
       let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+      let libDesc = $('<div></div>').addClass('library-desc');
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('libraries-list');
@@ -294,11 +295,11 @@ class ProjectView extends View {
                 var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
                 libMaintainerDD.appendTo(libData);
               }
-              if (object.description) {
-                var libDescriptionDT = $('<dt></dt>').text('Description:');
-                libDescriptionDT.appendTo(libData);
-                var libDescriptionDD = $('<dd></dd>').text(object.description);
-                libDescriptionDD.appendTo(libData);
+              if (object.description != '' && object.description != '.') {
+                let libDescText = $('<p></p>').text(object.description);
+                // var libText = object.description;
+                // console.log("Desc = " + libText);
+                libDescText.appendTo(libDesc);
               }
               includeInstructions.appendTo(libDataDiv);
               includeCP.appendTo(libDataDiv);
@@ -331,6 +332,7 @@ class ProjectView extends View {
       // per section
       // item.name -> parentDiv $examples
       parentButton.appendTo(parentLi);
+      libDesc.appendTo(childDiv); // Add library description, if present
       // per item in section
       // childLi -> childUl -> parentDiv -> $examples
       childTitle.appendTo(childDiv);
@@ -338,6 +340,7 @@ class ProjectView extends View {
       childDiv.appendTo(parentLi);
       parentLi.appendTo(parentUl);
       parentLi.appendTo($libraries);
+
 		}
 
 	}

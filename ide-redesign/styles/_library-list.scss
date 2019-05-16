@@ -3,6 +3,12 @@ ul {
     list-style: none;
     margin: 0;
     padding: 0;
+    .library-desc {
+      > p {
+        margin-block-start: 0;
+        font-family: poppins;
+        }
+    }
     .libraries-list {
       li {
         color: rgba(0, 0, 0, 0.8);
