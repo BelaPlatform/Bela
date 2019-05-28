@@ -1815,12 +1815,14 @@ var activeWordIDs = [];
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
 
-	function EditorView(className, models) {
+	function EditorView(className, models, data) {
 		_classCallCheck(this, EditorView);
 
 		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
 
 		_this.highlights = {};
+		var data = tmpData;
+		var opts = tmpOpts;
 
 		_this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -1829,11 +1831,6 @@ var EditorView = function (_View) {
 		_this.parser.init(_this.editor, langTools);
 		_this.parser.enable(true);
 
-		// set syntax mode
-		_this.on('syntax-highlighted', function () {
-			return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
-		});
-		_this.editor.session.setMode('ace/mode/c_cpp');
 		_this.editor.$blockScrolling = Infinity;
 
 		// set theme
@@ -1853,10 +1850,29 @@ var EditorView = function (_View) {
 		// this function is called when the user modifies the editor
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);
+			var data = tmpData;
+			var opts = tmpOpts;
 			if (!uploadBlocked) {
 				_this.editorChanged();
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
+			}
+			// set syntax mode - defaults to cpp
+			if (opts.fileType && opts.fileType == "csd") {
+				_this.on('syntax-highlighted', function () {
+					return _this.editor.session.setMode({ path: "ace/mode/csound_document", v: Date.now() });
+				});
+				_this.editor.session.setMode('ace/mode/csound_document');
+			} else if (opts.fileType && opts.fileType == "js") {
+				_this.on('syntax-highlighted', function () {
+					return _this.editor.session.setMode({ path: "ace/mode/javascript", v: Date.now() });
+				});
+				_this.editor.session.setMode('ace/mode/javascript');
+			} else {
+				_this.on('syntax-highlighted', function () {
+					return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
+				});
+				_this.editor.session.setMode('ace/mode/c_cpp');
 			}
 		});
 
@@ -4443,6 +4459,7 @@ var View = function (_EventEmitter) {
 				for (var _iterator2 = changedKeys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 					var value = _step2.value;
 
+					console.log(value);
 					if (this['__' + value]) {
 						this['__' + value](data[value], data, changedKeys);
 					}
