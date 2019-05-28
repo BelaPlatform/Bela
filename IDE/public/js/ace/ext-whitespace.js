@@ -1,4 +1,4 @@
-define("ace/ext/whitespace",["require","exports","module","ace/lib/lang"], function(require, exports, module) {
+ace.define("ace/ext/whitespace",["require","exports","module","ace/lib/lang"], function(require, exports, module) {
 "use strict";
 
 var lang = require("../lib/lang");
@@ -13,18 +13,20 @@ exports.$detectIndentation = function(lines, fallback) {
         if (!/^\s*[^*+\-\s]/.test(line))
             continue;
 
-        if (line[0] == "\t")
+        if (line[0] == "\t") {
             tabIndents++;
-
-        var spaces = line.match(/^ */)[0].length;
-        if (spaces && line[spaces] != "\t") {
-            var diff = spaces - prevSpaces;
-            if (diff > 0 && !(prevSpaces%diff) && !(spaces%diff))
-                changes[diff] = (changes[diff] || 0) + 1;
-
-            stats[spaces] = (stats[spaces] || 0) + 1;
+            prevSpaces = -Number.MAX_VALUE;
+        } else {
+            var spaces = line.match(/^ */)[0].length;
+            if (spaces && line[spaces] != "\t") {
+                var diff = spaces - prevSpaces;
+                if (diff > 0 && !(prevSpaces%diff) && !(spaces%diff))
+                    changes[diff] = (changes[diff] || 0) + 1;
+    
+                stats[spaces] = (stats[spaces] || 0) + 1;
+            }
+            prevSpaces = spaces;
         }
-        prevSpaces = spaces;
         while (i < max && line[line.length - 1] == "\\")
             line = lines[i++];
     }
@@ -36,7 +38,7 @@ exports.$detectIndentation = function(lines, fallback) {
         return score;
     }
 
-    var changesTotal = changes.reduce(function(a,b){return a+b}, 0);
+    var changesTotal = changes.reduce(function(a,b){return a+b;}, 0);
 
     var first = {score: 0, length: 0};
     var spaceIndents = 0;
@@ -46,7 +48,7 @@ exports.$detectIndentation = function(lines, fallback) {
             spaceIndents = score;
             score = stats[1] ? 0.9 : 0.8;
             if (!stats.length)
-                score = 0
+                score = 0;
         } else
             score /= spaceIndents;
 
@@ -60,9 +62,11 @@ exports.$detectIndentation = function(lines, fallback) {
     if (first.score && first.score > 1.4)
         var tabLength = first.length;
 
-    if (tabIndents > spaceIndents + 1)
+    if (tabIndents > spaceIndents + 1) {
+        if (tabLength == 1 || spaceIndents < tabIndents / 4 || first.score < 1.8)
+            tabLength = undefined;
         return {ch: "\t", length: tabLength};
-
+    }
     if (spaceIndents > tabIndents + 1)
         return {ch: " ", length: tabLength};
 };
@@ -78,16 +82,37 @@ exports.detectIndentation = function(session) {
         session.setTabSize(indent.length);
     return indent;
 };
-
-exports.trimTrailingSpace = function(session, trimEmpty) {
+exports.trimTrailingSpace = function(session, options) {
     var doc = session.getDocument();
     var lines = doc.getAllLines();
     
-    var min = trimEmpty ? -1 : 0;
+    var min = options && options.trimEmpty ? -1 : 0;
+    var cursors = [], ci = -1;
+    if (options && options.keepCursorPosition) {
+        if (session.selection.rangeCount) {
+            session.selection.rangeList.ranges.forEach(function(x, i, ranges) {
+               var next = ranges[i + 1];
+               if (next && next.cursor.row == x.cursor.row)
+                  return;
+              cursors.push(x.cursor);
+            });
+        } else {
+            cursors.push(session.selection.getCursor());
+        }
+        ci = 0;
+    }
+    var cursorRow = cursors[ci] && cursors[ci].row;
 
     for (var i = 0, l=lines.length; i < l; i++) {
         var line = lines[i];
         var index = line.search(/\s+$/);
+
+        if (i == cursorRow) {
+            if (index < cursors[ci].column && index > min)
+               index = cursors[ci].column;
+            ci++;
+            cursorRow = cursors[ci] ? cursors[ci].row : -1;
+        }
 
         if (index > min)
             doc.removeInLine(i, index, line.length);
@@ -151,22 +176,26 @@ exports.$parseArg = function(arg) {
 
 exports.commands = [{
     name: "detectIndentation",
+    description: "Detect indentation from content",
     exec: function(editor) {
         exports.detectIndentation(editor.session);
     }
 }, {
     name: "trimTrailingSpace",
-    exec: function(editor) {
-        exports.trimTrailingSpace(editor.session);
+    description: "Trim trailing whitespace",
+    exec: function(editor, args) {
+        exports.trimTrailingSpace(editor.session, args);
     }
 }, {
     name: "convertIndentation",
+    description: "Convert indentation to ...",
     exec: function(editor, arg) {
         var indent = exports.$parseArg(arg);
         exports.convertIndentation(editor.session, indent.ch, indent.length);
     }
 }, {
     name: "setIndentation",
+    description: "Set indentation",
     exec: function(editor, arg) {
         var indent = exports.$parseArg(arg);
         indent.length && editor.session.setTabSize(indent.length);
@@ -174,8 +203,11 @@ exports.commands = [{
     }
 }];
 
-});
-                (function() {
-                    window.require(["ace/ext/whitespace"], function() {});
+});                (function() {
+                    ace.require(["ace/ext/whitespace"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
                 })();
             

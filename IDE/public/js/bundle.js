@@ -1800,6 +1800,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
 var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 var uploadDelay = 50;
 
@@ -4831,7 +4832,8 @@ var Anchor = ace.require('ace/anchor').Anchor;
 var buf = new (require('./CircularBuffer'))(5);
 for (var i = 0; i < buf.capacity(); i++) {
 	buf.enq({});
-}var editor;
+}var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
+var editor;
 
 var parsingDeclaration = false;
 var parsingBody = false;

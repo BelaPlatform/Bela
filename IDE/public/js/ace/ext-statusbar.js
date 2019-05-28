@@ -1,4 +1,4 @@
-define("ace/ext/statusbar",["require","exports","module","ace/lib/dom","ace/lib/lang"], function(require, exports, module) {
+ace.define("ace/ext/statusbar",["require","exports","module","ace/lib/dom","ace/lib/lang"], function(require, exports, module) {
 "use strict";
 var dom = require("ace/lib/dom");
 var lang = require("ace/lib/lang");
@@ -10,14 +10,12 @@ var StatusBar = function(editor, parentNode) {
     parentNode.appendChild(this.element);
 
     var statusUpdate = lang.delayedCall(function(){
-        this.updateStatus(editor)
-    }.bind(this));
-    editor.on("changeStatus", function() {
-        statusUpdate.schedule(100);
-    });
-    editor.on("changeSelection", function() {
-        statusUpdate.schedule(100);
-    });
+        this.updateStatus(editor);
+    }.bind(this)).schedule.bind(null, 100);
+    
+    editor.on("changeStatus", statusUpdate);
+    editor.on("changeSelection", statusUpdate);
+    editor.on("keyboardActivity", statusUpdate);
 };
 
 (function(){
@@ -30,13 +28,17 @@ var StatusBar = function(editor, parentNode) {
         add(editor.keyBinding.getStatusText(editor));
         if (editor.commands.recording)
             add("REC");
-
-        var c = editor.selection.lead;
-        add(c.row + ":" + c.column, " ");
-        if (!editor.selection.isEmpty()) {
+        
+        var sel = editor.selection;
+        var c = sel.lead;
+        
+        if (!sel.isEmpty()) {
             var r = editor.getSelectionRange();
-            add("(" + (r.end.row - r.start.row) + ":"  +(r.end.column - r.start.column) + ")");
+            add("(" + (r.end.row - r.start.row) + ":"  +(r.end.column - r.start.column) + ")", " ");
         }
+        add(c.row + ":" + c.column, " ");        
+        if (sel.rangeCount)
+            add("[" + sel.rangeCount + "]", " ");
         status.pop();
         this.element.textContent = status.join("");
     };
@@ -44,8 +46,11 @@ var StatusBar = function(editor, parentNode) {
 
 exports.StatusBar = StatusBar;
 
-});
-                (function() {
-                    window.require(["ace/ext/statusbar"], function() {});
+});                (function() {
+                    ace.require(["ace/ext/statusbar"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
                 })();
             

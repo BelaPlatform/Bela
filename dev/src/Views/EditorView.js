@@ -1,6 +1,7 @@
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
 var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 const uploadDelay = 50;
 
