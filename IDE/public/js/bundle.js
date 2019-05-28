@@ -4459,7 +4459,7 @@ var View = function (_EventEmitter) {
 				for (var _iterator2 = changedKeys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 					var value = _step2.value;
 
-					console.log(value);
+					// console.log(value);
 					if (this['__' + value]) {
 						this['__' + value](data[value], data, changedKeys);
 					}

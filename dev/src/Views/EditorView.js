@@ -15,10 +15,12 @@ var activeWordIDs = [];
 
 class EditorView extends View {
 
-	constructor(className, models){
+	constructor(className, models, data){
 		super(className, models);
 
 		this.highlights = {};
+    var data = tmpData;
+    var opts = tmpOpts;
 
 		this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -27,9 +29,6 @@ class EditorView extends View {
 		this.parser.init(this.editor, langTools);
 		this.parser.enable(true);
 
-		// set syntax mode
-		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
-		this.editor.session.setMode('ace/mode/c_cpp');
 		this.editor.$blockScrolling = Infinity;
 
 		// set theme
@@ -49,11 +48,24 @@ class EditorView extends View {
 		// this function is called when the user modifies the editor
 		this.editor.session.on('change', (e) => {
 			//console.log('upload', !uploadBlocked);
+      var data = tmpData;
+      var opts = tmpOpts;
 			if (!uploadBlocked){
 				this.editorChanged();
 				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
+      // set syntax mode - defaults to cpp
+      if (opts.fileType && opts.fileType == "csd") {
+    		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/csound_document", v: Date.now() }));
+    		this.editor.session.setMode('ace/mode/csound_document');
+      } else if (opts.fileType && opts.fileType == "js") {
+        this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/javascript", v: Date.now() }));
+    		this.editor.session.setMode('ace/mode/javascript');
+      } else {
+        this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
+    		this.editor.session.setMode('ace/mode/c_cpp');
+      }
 		});
 
 		// fired when the cursor changes position
