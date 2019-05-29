@@ -37,7 +37,6 @@ class View extends EventEmitter{
 	}
 	modelSet(data, changedKeys){
 		for (let value of changedKeys){
-      // console.log(value);
 			if (this['__'+value]){
 				this['__'+value](data[value], data, changedKeys);
 			}

@@ -55,16 +55,21 @@ class EditorView extends View {
 				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
-      // set syntax mode - defaults to cpp
-      if (opts.fileType && opts.fileType == "csd") {
-    		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/csound_document", v: Date.now() }));
-    		this.editor.session.setMode('ace/mode/csound_document');
+      // set syntax mode - defaults to text
+      this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() }));
+      if (opts.fileType && opts.fileType == "cpp") {
+        this.editor.session.setMode('ace/mode/c_cpp');
       } else if (opts.fileType && opts.fileType == "js") {
-        this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/javascript", v: Date.now() }));
     		this.editor.session.setMode('ace/mode/javascript');
+      } else if (opts.fileType && opts.fileType == "csd") {
+        this.editor.session.setMode('ace/mode/csound_document');
+      // the following is only there for the sake of completeness - there
+      // is no SuperCollider syntax highlighting for the Ace editor
+      // } else if (opts.fileType && opts.fileType == "scd") {
+      //   this.editor.session.setMode('ace/mode/text');
       } else {
-        this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
-    		this.editor.session.setMode('ace/mode/c_cpp');
+        // if we don't know what the file extension is just default to plain text
+        this.editor.session.setMode('ace/mode/text');
       }
 		});
 

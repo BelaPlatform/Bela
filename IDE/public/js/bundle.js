@@ -142,7 +142,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     this._events[type].length);
       if (typeof console.trace === 'function') {
         // not supported in IE 10
-        console.trace();
+        // console.trace();
       }
     }
   }
@@ -1857,22 +1857,23 @@ var EditorView = function (_View) {
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
-			// set syntax mode - defaults to cpp
-			if (opts.fileType && opts.fileType == "csd") {
-				_this.on('syntax-highlighted', function () {
-					return _this.editor.session.setMode({ path: "ace/mode/csound_document", v: Date.now() });
-				});
-				_this.editor.session.setMode('ace/mode/csound_document');
-			} else if (opts.fileType && opts.fileType == "js") {
-				_this.on('syntax-highlighted', function () {
-					return _this.editor.session.setMode({ path: "ace/mode/javascript", v: Date.now() });
-				});
-				_this.editor.session.setMode('ace/mode/javascript');
-			} else {
-				_this.on('syntax-highlighted', function () {
-					return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
-				});
+			// set syntax mode - defaults to text
+			_this.on('syntax-highlighted', function () {
+				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
+			});
+			if (opts.fileType && opts.fileType == "cpp") {
 				_this.editor.session.setMode('ace/mode/c_cpp');
+			} else if (opts.fileType && opts.fileType == "js") {
+				_this.editor.session.setMode('ace/mode/javascript');
+			} else if (opts.fileType && opts.fileType == "csd") {
+				_this.editor.session.setMode('ace/mode/csound_document');
+				// the following is only there for the sake of completeness - there
+				// is no SuperCollider syntax highlighting for the Ace editor
+				// } else if (opts.fileType && opts.fileType == "scd") {
+				//   this.editor.session.setMode('ace/mode/text');
+			} else {
+				// if we don't know what the file extension is just default to plain text
+				_this.editor.session.setMode('ace/mode/text');
 			}
 		});
 
@@ -4459,7 +4460,6 @@ var View = function (_EventEmitter) {
 				for (var _iterator2 = changedKeys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 					var value = _step2.value;
 
-					// console.log(value);
 					if (this['__' + value]) {
 						this['__' + value](data[value], data, changedKeys);
 					}
