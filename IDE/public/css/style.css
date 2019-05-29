@@ -99,8 +99,9 @@ img {
 
 #editor {
   display: none;
+  height: calc(100% - 70px);
   margin: 0;
-  height: calc(100% - 70px); }
+  top: 28px; }
   #editor.active {
     display: block; }
   #editor .ace_search.right {
