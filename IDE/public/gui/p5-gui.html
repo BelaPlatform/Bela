@@ -22,6 +22,15 @@
     let loadSketch = loadScript(p5sketchSource);
     loadSketch.then((resolved) => {
         scriptElement = resolved;
+        console.log(p5sketchSource+ " loaded");
+
+        let obj = {
+			event: "gui-ready"
+		};
+		obj = JSON.stringify(obj);
+		if (Bela_control.ws.readyState === 1)
+			Bela_control.ws.send(obj);
+
     }).catch((rejected) => {
         console.log(p5sketchSource + " couldn't be loaded.")
         console.log("Loading %s instead", p5sketchSource);

@@ -41,8 +41,10 @@ class Gui
 		std::unique_ptr<WSServer> ws_server;
 
 		bool wsIsConnected = false;
+		bool guiIsReady = false;
 
 		void ws_connect();
+		void ws_disconnect();
 		void ws_onData(const char* data);
 		
 		void sendSlider(GuiSlider* slider);
@@ -68,6 +70,11 @@ class Gui
 			return wsIsConnected;
 		};
 		
+		bool isReady()
+		{
+			return guiIsReady;
+		};
+
 		// SLIDERS	
 		bool sliderChanged(int index)
 		{
