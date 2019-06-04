@@ -1898,6 +1898,7 @@ var EditorView = function (_View) {
 
 		_this.on('resize', function () {
 			_this.editor.resize();
+			console.log('resized');
 			var data = tmpData;
 			var opts = tmpOpts;
 			if (opts.fileType && opts.fileType == "pd") {
@@ -4065,8 +4066,29 @@ var TabView = function (_View) {
 		layout.on('stateChanged', function () {
 			return _this.emit('change');
 		});
-
+		// this.on('linkClicked', () => console.log('link click'));
+		_this.$elements.on('click', function (e) {
+			return _this.linkClicked($(e.currentTarget), e);
+		});
 		_this.on('boardString', _this._boardString);
+		_this.editor = ace.edit('editor');
+		var editor = _this.editor;
+		$('[data-tab-open]').on('click', function () {
+			if ($('[data-tabs]').hasClass('tabs-open')) {
+				var width = $('[data-editor]').width() - 420;
+				$('[data-editor]').animate({
+					'width': width + 'px'
+				}, 750, function () {
+					editor.resize();
+				});
+			} else {
+				$('[data-editor]').animate({
+					'width': '100vw'
+				}, 500, function () {
+					editor.resize();
+				});
+			}
+		});
 
 		return _this;
 	}

@@ -94,6 +94,7 @@ class EditorView extends View {
 
 		this.on('resize', () => {
       this.editor.resize();
+      console.log('resized');
       var data = tmpData;
       var opts = tmpOpts;
       if (opts.fileType && opts.fileType == "pd") {
