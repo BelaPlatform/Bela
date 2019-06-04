@@ -142,7 +142,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     this._events[type].length);
       if (typeof console.trace === 'function') {
         // not supported in IE 10
-        // console.trace();
+        console.trace();
       }
     }
   }
@@ -1880,6 +1880,12 @@ var EditorView = function (_View) {
 		// fired when the cursor changes position
 		_this.editor.session.selection.on('changeCursor', function () {
 			_this.getCurrentWord();
+		});
+
+		_this.editor.on('findSearchBox', function () {
+			if ($('[data-tabs]').hasClass('tabs-open')) {
+				$('.ace_search').addClass('active');
+			}
 		});
 
 		/*this.editor.session.on('changeBackMarker', (e) => {
