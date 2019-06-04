@@ -42,11 +42,6 @@ $('[data-tab-open]').click(function(event) {
     // Then show the project explorer.
     matchTabFor("explorer");
   }
-  if ($('.ace_search').hasClass('active')) {
-    $('.ace_search').removeClass('active');
-  } else {
-    $('.ace_search').addClass('active');
-  }
   // check to see if the find and replace dialogue is open
   openTabs();
 });

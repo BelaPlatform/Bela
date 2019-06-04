@@ -1,0 +1,53 @@
+#editor {
+  background: #fff;
+  display: none;
+  float: left;
+  height: calc(100% - 70px);
+  left: 0;
+  margin: 0;
+  overflow: auto;
+  position: absolute;
+  top: 28px;
+  width: 100vw;
+  z-index: 97;
+  &.active {
+    display: block;
+  }
+  .ace_search {
+    &.right {
+      right: 60px;
+      // right: 448px;
+      transition: 0.5s ease-in-out;
+    }
+    &.active {
+      right: 448px;
+    }
+  }
+  &.tabs-open {
+    width: calc(100vw - 390px);
+  }
+}
+
+#audio-parent,
+#img-display-parent {
+  display: none;
+  &.active {
+    display: block;
+  }
+}
+
+#pd-svg-parent {
+  background: #f1f1f1;
+  display: none;
+  font-family: monospace;
+  overflow: auto;
+  #pd-svg {
+    background: #f1f1f1;
+    svg {
+      background: #f1f1f1;
+    }
+  }
+  &.active {
+    display: block;
+  }
+}

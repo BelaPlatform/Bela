@@ -1882,12 +1882,6 @@ var EditorView = function (_View) {
 			_this.getCurrentWord();
 		});
 
-		_this.editor.on('findSearchBox', function () {
-			if ($('[data-tabs]').hasClass('tabs-open')) {
-				$('.ace_search').addClass('active');
-			}
-		});
-
 		/*this.editor.session.on('changeBackMarker', (e) => {
   	console.log($('.bela-ace-highlight'));
   	$('.bela-ace-highlight').on('click', (e) => {
@@ -1898,7 +1892,6 @@ var EditorView = function (_View) {
 
 		_this.on('resize', function () {
 			_this.editor.resize();
-			console.log('resized');
 			var data = tmpData;
 			var opts = tmpOpts;
 			if (opts.fileType && opts.fileType == "pd") {
@@ -4075,18 +4068,15 @@ var TabView = function (_View) {
 		var editor = _this.editor;
 		$('[data-tab-open]').on('click', function () {
 			if ($('[data-tabs]').hasClass('tabs-open')) {
-				var width = $('[data-editor]').width() - 420;
-				$('[data-editor]').animate({
-					'width': width + 'px'
-				}, 750, function () {
+				setTimeout(function () {
+					$('[data-editor]').addClass('tabs-open');
 					editor.resize();
-				});
+				}, 750);
 			} else {
-				$('[data-editor]').animate({
-					'width': '100vw'
-				}, 500, function () {
+				$('[data-editor]').removeClass('tabs-open');
+				setTimeout(function () {
 					editor.resize();
-				});
+				}, 500);
 			}
 		});
 

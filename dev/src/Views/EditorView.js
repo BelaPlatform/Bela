@@ -78,12 +78,6 @@ class EditorView extends View {
 			this.getCurrentWord();
 		});
 
-    this.editor.on('findSearchBox', function() {
-      if ($('[data-tabs]').hasClass('tabs-open')) {
-        $('.ace_search').addClass('active');
-      }
-    });
-
 		/*this.editor.session.on('changeBackMarker', (e) => {
 			console.log($('.bela-ace-highlight'));
 			$('.bela-ace-highlight').on('click', (e) => {
@@ -94,7 +88,6 @@ class EditorView extends View {
 
 		this.on('resize', () => {
       this.editor.resize();
-      console.log('resized');
       var data = tmpData;
       var opts = tmpOpts;
       if (opts.fileType && opts.fileType == "pd") {

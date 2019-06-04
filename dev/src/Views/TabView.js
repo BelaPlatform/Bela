@@ -65,18 +65,19 @@ class TabView extends View {
     var editor = this.editor;
     $('[data-tab-open]').on('click', function() {
       if ($('[data-tabs]').hasClass('tabs-open')) {
-        var width = ($('[data-editor]').width() - 420);
-        $('[data-editor]').animate({
-          'width': width + 'px'
-        }, 750, function(){
-          editor.resize();
-        });
+        setTimeout(
+          function() {
+            $('[data-editor]').addClass('tabs-open');
+            editor.resize();
+          },
+        750);
       } else {
-        $('[data-editor]').animate({
-          'width': '100vw'
-        }, 500, function(){
-          editor.resize();
-        });
+        $('[data-editor]').removeClass('tabs-open');
+        setTimeout(
+          function() {
+            editor.resize();
+          },
+        500);
       }
     });
 
