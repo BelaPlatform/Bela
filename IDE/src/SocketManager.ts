@@ -20,7 +20,7 @@ let interval: NodeJS.Timer;
 export function init(server: http.Server){
 	ide_sockets = io(server, {
 		pingInterval: 3000,
-		pingTimeout: 6500
+		pingTimeout: 100000
 	}).of('/IDE');
 	ide_sockets.on('connection', connection);
 }
