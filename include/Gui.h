@@ -13,31 +13,7 @@ class AuxTaskRT;
 class Gui
 {
 	private:
-		struct GuiSlider
-		{
-			int index;
-			float value = 0.0;
-			bool changed = false;
-			float min = 0.0;
-			float max = 1;
-			float step = 0.001;
-			std::string name;
-			std::wstring w_name;
-		};
 
-		struct GuiSelect
-		{
-			int index;
-			bool changed = false;
-			int value = -1;
-			std::string name;
-			std::wstring w_name;
-			std::vector<std::string> options;
-		};
-
-		std::vector<GuiSlider> sliders;
-		std::vector<GuiSelect> selects;
-		
 		std::unique_ptr<WSServer> ws_server;
 
 		bool wsIsConnected = false;
@@ -46,12 +22,6 @@ class Gui
 		void ws_connect();
 		void ws_disconnect();
 		void ws_onData(const char* data);
-		
-		void sendSlider(GuiSlider* slider);
-		void sendSliderValue(int index);
-
-		void sendSelect(GuiSelect* select);
-		void sendSelectValue(int index);
 		
 		unsigned int _port;
 		std::string _addressControl;
@@ -77,37 +47,6 @@ class Gui
 			return guiIsReady;
 		};
 
-		// SLIDERS	
-		bool sliderChanged(int index)
-		{
-			return sliders[index].changed;
-		};
-		float getSliderValue(int index);
-		void setSliderValue(int index, float value);
-		int getNumSliders()
-		{
-			return sliders.size();
-		};
-		void addSlider(std::string name, float min, float max, float step, float value);
-		void setSlider(int index, float min, float max, float step, float value, std::string name);
-
-		// SELECTS
-		bool selectChanged(int index)
-		{
-			return selects[index].changed;
-		};
-		int getSelectedIndex(int index)
-		{
-			return selects[index].value;
-		};
-		std::string getSelectValue(int index);
-		void setSelectValue(int index, unsigned int valueIndex);
-		int getNumSelects()
-		{
-			return selects.size();
-		};
-		void addSelect(std::string name, const std::vector<std::string>& options, unsigned int selectedIndex = 0);
-		void setSelect(int index, const std::vector<std::string>& options, unsigned int selectedIndex, std::string name);
 
 		// BUFFERS
 		template<typename T, typename A>
