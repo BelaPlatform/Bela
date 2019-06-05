@@ -1,5 +1,8 @@
 var View = require('./View');
 
+var menuOpened = false;
+var tabs = {};
+
 class TabView extends View {
 
 	constructor(){
@@ -59,9 +62,73 @@ class TabView extends View {
 		layout.on('initialised', () => this.emit('change') );
 		layout.on('stateChanged', () => this.emit('change') );
 
+    this.on('toggle', this.toggle);
 		this.on('boardString', this._boardString);
 
+    $('[data-tab-open]').on('click', () => this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for')) );
+    $('[data-tab-for]').on('click', () => this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor) );
 	}
+
+  toggle(event, origin, target) {
+
+    tabs = {event, origin, target};
+
+    if (tabs.event == undefined) {
+      return;
+    }
+    tabs.active = $('[data-tab-for].active').data('tabFor');
+    if (tabs.target == undefined && tabs.active == null) {
+      tabs.target = 'explorer';
+    }
+
+    function openTabs() {
+      if (tabs.origin == 'tab-control') {
+        if (menuOpened == false) {
+          $('[data-tabs]').addClass('tabs-open');
+          $('[data-tab-open] span').addClass('rot');
+          menuOpened = true;
+        } else {
+          $('[data-tabs]').removeClass('tabs-open');
+          $('[data-tab-open] span').removeClass('rot');
+          menuOpened = false;
+        }
+      }
+      if (tabs.origin == 'tab-link' && menuOpened == false) {
+        $('[data-tabs]').addClass('tabs-open');
+        $('[data-tab-open] span').addClass('rot');
+        menuOpened = true;
+      }
+      matchTabFor();
+    }
+
+    function matchTabFor() {
+      $('[data-tab-for]').each(function(){
+        var tabFor = $(this).data('tab-for');
+        if (tabs.origin == 'tab-link') {
+          $(this).removeClass('active');
+        }
+        if (tabFor === tabs.target) {
+          $(this).addClass('active');
+          matchTabForAndTab();
+        } else {
+        }
+      });
+    }
+
+    function matchTabForAndTab() {
+      $('[data-tab]').each(function(){
+        if (tabs.active != tabs.target) {
+          var tab = $(this).data('tab');
+          $(this).hide();
+          if (tab === tabs.target) {
+            $(this).fadeIn();
+          }
+        }
+      });
+    }
+
+    openTabs();
+  }
 
 	_boardString(data){
 		var boardString;

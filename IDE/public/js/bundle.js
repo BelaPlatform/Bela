@@ -411,8 +411,6 @@ tabView.on('change', function () {
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
-	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 
@@ -1050,7 +1048,7 @@ keypress.simple_combo("meta s", function () {
 	toolbarView.emit('process-event', 'run');
 });
 keypress.simple_combo("meta o", function () {
-	tabView.emit('toggle');
+	tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear');
@@ -1908,6 +1906,11 @@ var EditorView = function (_View) {
 	}
 
 	_createClass(EditorView, [{
+		key: 'openSearchBox',
+		value: function openSearchBox() {
+			console.log('ping');
+		}
+	}, {
 		key: 'editorChanged',
 		value: function editorChanged() {
 			var _this2 = this;
@@ -3304,13 +3307,19 @@ var ProjectView = function (_View) {
 												var _iteratorError6 = undefined;
 
 												try {
-													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+													var _loop4 = function _loop4() {
 														var include = _step6.value;
 
-														var _includeText = $('<pre></pre>');
-														_includeText.text('#include <' + include + '>').attr('data-include', '');
+														var includeText = $('<pre></pre>');
+														includeText.text('#include <' + include + '>').attr('data-include', '').on('click', function () {
+															console.log(childPath + "/" + include);
+														});
 														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														_includeText.appendTo(libDataDiv);
+														includeText.appendTo(libDataDiv);
+													};
+
+													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+														_loop4();
 													}
 												} catch (err) {
 													_didIteratorError6 = true;
@@ -3979,95 +3988,166 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
+var menuOpened = false;
+var tabs = {};
+
 var TabView = function (_View) {
-	_inherits(TabView, _View);
+  _inherits(TabView, _View);
 
-	function TabView() {
-		_classCallCheck(this, TabView);
+  function TabView() {
+    _classCallCheck(this, TabView);
 
-		// golden layout
-		var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
+    // golden layout
+    var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
 
-		var layout = new GoldenLayout({
-			settings: {
-				hasHeaders: false,
-				constrainDragToContainer: true,
-				reorderEnabled: false,
-				selectionEnabled: false,
-				popoutWholeStack: false,
-				blockedPopoutsThrowError: true,
-				closePopoutsOnUnload: true,
-				showPopoutIcon: false,
-				showMaximiseIcon: false,
-				showCloseIcon: false
-			},
-			dimensions: {
-				borderWidth: 5,
-				minItemHeight: 10,
-				minItemWidth: 10,
-				headerHeight: 20,
-				dragProxyWidth: 300,
-				dragProxyHeight: 200
-			},
-			labels: {
-				close: 'close',
-				maximise: 'maximise',
-				minimise: 'minimise',
-				popout: 'open in new window'
-			},
-			content: [{
-				type: 'column',
-				content: [{
-					type: 'component',
-					componentName: 'Editor'
-				}, {
-					type: 'component',
-					componentName: 'Console',
-					height: 25
-				}]
-			}]
-		});
-		layout.registerComponent('Editor', function (container, componentState) {
-			container.getElement().append($('[data-upper]'));
-		});
-		layout.registerComponent('Console', function (container, componentState) {
-			container.getElement().append($('[data-console]'));
-		});
+    var layout = new GoldenLayout({
+      settings: {
+        hasHeaders: false,
+        constrainDragToContainer: true,
+        reorderEnabled: false,
+        selectionEnabled: false,
+        popoutWholeStack: false,
+        blockedPopoutsThrowError: true,
+        closePopoutsOnUnload: true,
+        showPopoutIcon: false,
+        showMaximiseIcon: false,
+        showCloseIcon: false
+      },
+      dimensions: {
+        borderWidth: 5,
+        minItemHeight: 10,
+        minItemWidth: 10,
+        headerHeight: 20,
+        dragProxyWidth: 300,
+        dragProxyHeight: 200
+      },
+      labels: {
+        close: 'close',
+        maximise: 'maximise',
+        minimise: 'minimise',
+        popout: 'open in new window'
+      },
+      content: [{
+        type: 'column',
+        content: [{
+          type: 'component',
+          componentName: 'Editor'
+        }, {
+          type: 'component',
+          componentName: 'Console',
+          height: 25
+        }]
+      }]
+    });
+    layout.registerComponent('Editor', function (container, componentState) {
+      container.getElement().append($('[data-upper]'));
+    });
+    layout.registerComponent('Console', function (container, componentState) {
+      container.getElement().append($('[data-console]'));
+    });
 
-		layout.init();
-		layout.on('initialised', function () {
-			return _this.emit('change');
-		});
-		layout.on('stateChanged', function () {
-			return _this.emit('change');
-		});
+    layout.init();
+    layout.on('initialised', function () {
+      return _this.emit('change');
+    });
+    layout.on('stateChanged', function () {
+      return _this.emit('change');
+    });
 
-		_this.on('boardString', _this._boardString);
+    _this.on('toggle', _this.toggle);
+    _this.on('boardString', _this._boardString);
 
-		return _this;
-	}
+    $('[data-tab-open]').on('click', function () {
+      return _this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for'));
+    });
+    $('[data-tab-for]').on('click', function () {
+      return _this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor);
+    });
+    return _this;
+  }
 
-	_createClass(TabView, [{
-		key: '_boardString',
-		value: function _boardString(data) {
-			var boardString;
-			if (data && data.trim) boardString = data.trim();else return;
+  _createClass(TabView, [{
+    key: 'toggle',
+    value: function toggle(event, origin, target) {
 
-			if (boardString === 'BelaMini') {
-				$('[data-pin-diagram]').prop('data', 'diagram_mini.html');
-			} else if (boardString === 'CtagFace') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_FACE.html');
-			} else if (boardString === 'CtagBeast') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST.html');
-			} else if (boardString === 'CtagFaceBela') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BELA.html');
-			} else if (boardString === 'CtagBeastBela') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST_BELA.html');
-			}
-		}
-	}]);
+      tabs = { event: event, origin: origin, target: target };
 
-	return TabView;
+      if (tabs.event == undefined) {
+        return;
+      }
+      tabs.active = $('[data-tab-for].active').data('tabFor');
+      if (tabs.target == undefined && tabs.active == null) {
+        tabs.target = 'explorer';
+      }
+
+      function openTabs() {
+        if (tabs.origin == 'tab-control') {
+          if (menuOpened == false) {
+            $('[data-tabs]').addClass('tabs-open');
+            $('[data-tab-open] span').addClass('rot');
+            menuOpened = true;
+          } else {
+            $('[data-tabs]').removeClass('tabs-open');
+            $('[data-tab-open] span').removeClass('rot');
+            menuOpened = false;
+          }
+        }
+        if (tabs.origin == 'tab-link' && menuOpened == false) {
+          $('[data-tabs]').addClass('tabs-open');
+          $('[data-tab-open] span').addClass('rot');
+          menuOpened = true;
+        }
+        matchTabFor();
+      }
+
+      function matchTabFor() {
+        $('[data-tab-for]').each(function () {
+          var tabFor = $(this).data('tab-for');
+          if (tabs.origin == 'tab-link') {
+            $(this).removeClass('active');
+          }
+          if (tabFor === tabs.target) {
+            $(this).addClass('active');
+            matchTabForAndTab();
+          } else {}
+        });
+      }
+
+      function matchTabForAndTab() {
+        $('[data-tab]').each(function () {
+          if (tabs.active != tabs.target) {
+            var tab = $(this).data('tab');
+            $(this).hide();
+            if (tab === tabs.target) {
+              $(this).fadeIn();
+            }
+          }
+        });
+      }
+
+      openTabs();
+    }
+  }, {
+    key: '_boardString',
+    value: function _boardString(data) {
+      var boardString;
+      if (data && data.trim) boardString = data.trim();else return;
+
+      if (boardString === 'BelaMini') {
+        $('[data-pin-diagram]').prop('data', 'diagram_mini.html');
+      } else if (boardString === 'CtagFace') {
+        $('[data-pin-diagram]').prop('data', 'diagram_ctag_FACE.html');
+      } else if (boardString === 'CtagBeast') {
+        $('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST.html');
+      } else if (boardString === 'CtagFaceBela') {
+        $('[data-pin-diagram]').prop('data', 'diagram_ctag_BELA.html');
+      } else if (boardString === 'CtagBeastBela') {
+        $('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST_BELA.html');
+      }
+    }
+  }]);
+
+  return TabView;
 }(View);
 
 module.exports = new TabView();

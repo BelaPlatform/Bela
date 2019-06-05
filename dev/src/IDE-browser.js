@@ -27,8 +27,6 @@ tabView.on('change', () => editorView.emit('resize') );
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
-	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 
@@ -594,6 +592,6 @@ function parseErrors(data){
 var keypress = new window.keypress.Listener();
 
 keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
-keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
+keypress.simple_combo("meta o", function(){ tabView.emit('toggle', 'click', 'tab-control') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
 keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });
