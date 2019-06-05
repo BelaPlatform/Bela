@@ -3205,144 +3205,173 @@ var ProjectView = function (_View) {
 					var _iteratorError4 = undefined;
 
 					try {
-						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-							var _child = _step4.value;
+						var _loop4 = function _loop4() {
+							var child = _step4.value;
 
 							// console.log(child);
-							if (_child && _child.length && _child[0] === '.') continue;
+							if (child && child.length && child[0] === '.') return 'continue';
 							var childLi = $('<li></li>');
-							var testExt = _child.split('.');
+							var testExt = child.split('.');
 							var childExt = testExt[testExt.length - 1];
 							// The MetaData file
 							if (childExt === 'metadata') {
-								(function () {
-									var i = 0;
-									var childPath = '/libraries/' + item.name + "/" + _child;
-									var libDataDiv = $('<div></div>');
-									var libData = $('<dl></dl>');
-									var includeArr = [];
-									var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
-									var includeText = $('<pre></pre>');
-									$.ajax({
-										type: "GET",
-										url: "/libraries/" + name + "/" + _child,
-										dataType: "html",
-										success: function success(text) {
-											i += 1;
-											var object = {};
-											var transformText = text.split('\n');
-											var _iteratorNormalCompletion5 = true;
-											var _didIteratorError5 = false;
-											var _iteratorError5 = undefined;
+								var i = 0;
+								var childPath = '/libraries/' + item.name + "/" + child;
+								var libDataDiv = $('<div></div>');
+								var libData = $('<dl></dl>');
+								var includeArr = [];
+								var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
+								var includeText = $('<pre></pre>');
+								$.ajax({
+									type: "GET",
+									url: "/libraries/" + name + "/" + child,
+									dataType: "html",
+									success: function success(text) {
+										i += 1;
+										var object = {};
+										var transformText = text.split('\n');
+										var _iteratorNormalCompletion5 = true;
+										var _didIteratorError5 = false;
+										var _iteratorError5 = undefined;
+
+										try {
+											for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+												var line = _step5.value;
+
+												if (line.length > 0) {
+													var splitKeyVal = line.split('=');
+													var key = splitKeyVal[0];
+													if (key == 'include') {
+														includeArr.push(splitKeyVal[1]);
+													} else {
+														object[key] = splitKeyVal[1];
+													}
+												}
+											}
+										} catch (err) {
+											_didIteratorError5 = true;
+											_iteratorError5 = err;
+										} finally {
+											try {
+												if (!_iteratorNormalCompletion5 && _iterator5.return) {
+													_iterator5.return();
+												}
+											} finally {
+												if (_didIteratorError5) {
+													throw _iteratorError5;
+												}
+											}
+										}
+
+										if (object.name) {
+											var libNameDT = $('<dt></dt>').text('Name:');
+											libNameDT.appendTo(libData);
+											var libNameDD = $('<dd></dd>').text(object.name);
+											libNameDD.appendTo(libData);
+										}
+										if (object.version) {
+											var libVersionDT = $('<dt></dt>').text('Version:');
+											libVersionDT.appendTo(libData);
+											var libVersionDD = $('<dd></dd>').text(object.version);
+											libVersionDD.appendTo(libData);
+										}
+										if (object.author) {
+											var libAuthorDT = $('<dt></dt>').text('Author:');
+											libAuthorDT.appendTo(libData);
+											var libAuthorDD = $('<dd></dd>').text(object.author);
+											libAuthorDD.appendTo(libData);
+										}
+										if (object.maintainer) {
+											var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
+											libMaintainerDT.appendTo(libData);
+											var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
+											libMaintainerDD.appendTo(libData);
+										}
+										if (object.description) {
+											var libDescriptionDT = $('<dt></dt>').text('Description:');
+											libDescriptionDT.appendTo(libData);
+											var libDescriptionDD = $('<dd></dd>').text(object.description);
+											libDescriptionDD.appendTo(libData);
+										}
+										includeInstructions.appendTo(libDataDiv);
+										includeCP.appendTo(libDataDiv);
+										includeForm.appendTo(libDataDiv);
+										if (includeArr.length > 0) {
+											includeTitle.appendTo(libDataDiv);
+											var _iteratorNormalCompletion6 = true;
+											var _didIteratorError6 = false;
+											var _iteratorError6 = undefined;
 
 											try {
-												for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-													var line = _step5.value;
+												for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+													var include = _step6.value;
 
-													if (line.length > 0) {
-														var splitKeyVal = line.split('=');
-														var key = splitKeyVal[0];
-														if (key == 'include') {
-															includeArr.push(splitKeyVal[1]);
-														} else {
-															object[key] = splitKeyVal[1];
-														}
-													}
+													var _includeText = $('<pre></pre>');
+													_includeText.text('#include <' + include + '>').attr('data-include', '');
+													includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
+													_includeText.appendTo(libDataDiv);
 												}
 											} catch (err) {
-												_didIteratorError5 = true;
-												_iteratorError5 = err;
+												_didIteratorError6 = true;
+												_iteratorError6 = err;
 											} finally {
 												try {
-													if (!_iteratorNormalCompletion5 && _iterator5.return) {
-														_iterator5.return();
+													if (!_iteratorNormalCompletion6 && _iterator6.return) {
+														_iterator6.return();
 													}
 												} finally {
-													if (_didIteratorError5) {
-														throw _iteratorError5;
+													if (_didIteratorError6) {
+														throw _iteratorError6;
 													}
 												}
 											}
+										} else {
+											includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
+											includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
+											includeText.appendTo(libDataDiv);
+										}
+										includeArr = [];
+										libTitle.appendTo(libDataDiv);
+										libData.appendTo(libDataDiv);
+										libDataDiv.appendTo(childDiv);
+										libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+									}
+								});
+							} else {
+								childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function () {
+									var fileLocation = '/libraries/' + item.name + '/' + child;
+									// build the popup content
+									popup.title(child);
 
-											if (object.name) {
-												var libNameDT = $('<dt></dt>').text('Name:');
-												libNameDT.appendTo(libData);
-												var libNameDD = $('<dd></dd>').text(object.name);
-												libNameDD.appendTo(libData);
+									var form = [];
+									$.ajax({
+										type: "GET",
+										url: "/libraries/" + item.name + "/" + child,
+										dataType: "html",
+										success: function success(text) {
+											var codeBlock = $('<pre></pre>');
+											var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+											for (var i = 0; i < transformText.length; i++) {
+												codeBlock.append(transformText[i] + '\n');
 											}
-											if (object.version) {
-												var libVersionDT = $('<dt></dt>').text('Version:');
-												libVersionDT.appendTo(libData);
-												var libVersionDD = $('<dd></dd>').text(object.version);
-												libVersionDD.appendTo(libData);
-											}
-											if (object.author) {
-												var libAuthorDT = $('<dt></dt>').text('Author:');
-												libAuthorDT.appendTo(libData);
-												var libAuthorDD = $('<dd></dd>').text(object.author);
-												libAuthorDD.appendTo(libData);
-											}
-											if (object.maintainer) {
-												var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
-												libMaintainerDT.appendTo(libData);
-												var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
-												libMaintainerDD.appendTo(libData);
-											}
-											if (object.description) {
-												var libDescriptionDT = $('<dt></dt>').text('Description:');
-												libDescriptionDT.appendTo(libData);
-												var libDescriptionDD = $('<dd></dd>').text(object.description);
-												libDescriptionDD.appendTo(libData);
-											}
-											includeInstructions.appendTo(libDataDiv);
-											includeCP.appendTo(libDataDiv);
-											includeForm.appendTo(libDataDiv);
-											if (includeArr.length > 0) {
-												includeTitle.appendTo(libDataDiv);
-												var _iteratorNormalCompletion6 = true;
-												var _didIteratorError6 = false;
-												var _iteratorError6 = undefined;
-
-												try {
-													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-														var include = _step6.value;
-
-														var _includeText = $('<pre></pre>');
-														_includeText.text('#include <' + include + '>').attr('data-include', '');
-														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														_includeText.appendTo(libDataDiv);
-													}
-												} catch (err) {
-													_didIteratorError6 = true;
-													_iteratorError6 = err;
-												} finally {
-													try {
-														if (!_iteratorNormalCompletion6 && _iterator6.return) {
-															_iterator6.return();
-														}
-													} finally {
-														if (_didIteratorError6) {
-															throw _iteratorError6;
-														}
-													}
-												}
-											} else {
-												includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeText.appendTo(libDataDiv);
-											}
-											includeArr = [];
-											libTitle.appendTo(libDataDiv);
-											libData.appendTo(libDataDiv);
-											libDataDiv.appendTo(childDiv);
-											libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+											// console.log(codeBlock);
+											popup.code(codeBlock);
 										}
 									});
-								})();
-							} else {
-								childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
+
+									form.push('<button type="button" class="button popup cancel">Cancel</button>');
+									popup.form.append(form.join(''));
+									popup.find('.cancel').on('click', popup.hide);
+									popup.show();
+								});
 								childLi.appendTo(childUl);
 							}
+						};
+
+						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+							var _ret4 = _loop4();
+
+							if (_ret4 === 'continue') continue;
 						}
 						// per section
 						// item.name -> parentDiv $examples
@@ -3443,11 +3472,11 @@ var ProjectView = function (_View) {
 
 			try {
 				for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-					var _child2 = _step7.value;
+					var _child = _step7.value;
 
-					if (!_child2.dir) $('<li></li>').addClass('sourceFile').html(_child2.name).data('file', (dir.dirPath || dir.name) + '/' + _child2.name).appendTo(ul);else {
-						_child2.dirPath = (dir.dirPath || dir.name) + '/' + _child2.name;
-						ul.append(this.subDirs(_child2));
+					if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
+						_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
+						ul.append(this.subDirs(_child));
 					}
 				}
 			} catch (err) {
