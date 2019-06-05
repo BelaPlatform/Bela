@@ -1906,11 +1906,6 @@ var EditorView = function (_View) {
 	}
 
 	_createClass(EditorView, [{
-		key: 'openSearchBox',
-		value: function openSearchBox() {
-			console.log('ping');
-		}
-	}, {
 		key: 'editorChanged',
 		value: function editorChanged() {
 			var _this2 = this;
@@ -3307,19 +3302,13 @@ var ProjectView = function (_View) {
 												var _iteratorError6 = undefined;
 
 												try {
-													var _loop4 = function _loop4() {
+													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
 														var include = _step6.value;
 
-														var includeText = $('<pre></pre>');
-														includeText.text('#include <' + include + '>').attr('data-include', '').on('click', function () {
-															console.log(childPath + "/" + include);
-														});
+														var _includeText = $('<pre></pre>');
+														_includeText.text('#include <' + include + '>').attr('data-include', '');
 														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														includeText.appendTo(libDataDiv);
-													};
-
-													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-														_loop4();
+														_includeText.appendTo(libDataDiv);
 													}
 												} catch (err) {
 													_didIteratorError6 = true;
@@ -4090,6 +4079,10 @@ var TabView = function (_View) {
             $('[data-tabs]').removeClass('tabs-open');
             $('[data-tab-open] span').removeClass('rot');
             menuOpened = false;
+            // reset x offset position but only after the tabbed menu has closed.
+            setTimeout(function () {
+              $('[data-tab-content]').offset({ top: 0 });
+            }, 500);
           }
         }
         if (tabs.origin == 'tab-link' && menuOpened == false) {
@@ -4119,6 +4112,8 @@ var TabView = function (_View) {
             var tab = $(this).data('tab');
             $(this).hide();
             if (tab === tabs.target) {
+              // reset the x offset position of the tab content if it's changing
+              $('[data-tab-content]').offset({ top: 0 });
               $(this).fadeIn();
             }
           }

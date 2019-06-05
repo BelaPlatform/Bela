@@ -91,6 +91,10 @@ class TabView extends View {
           $('[data-tabs]').removeClass('tabs-open');
           $('[data-tab-open] span').removeClass('rot');
           menuOpened = false;
+          // reset x offset position but only after the tabbed menu has closed.
+          setTimeout( function(){
+            $('[data-tab-content]').offset({top: 0});
+          }, 500);
         }
       }
       if (tabs.origin == 'tab-link' && menuOpened == false) {
@@ -121,6 +125,8 @@ class TabView extends View {
           var tab = $(this).data('tab');
           $(this).hide();
           if (tab === tabs.target) {
+            // reset the x offset position of the tab content if it's changing
+            $('[data-tab-content]').offset({top: 0});
             $(this).fadeIn();
           }
         }
