@@ -83,7 +83,7 @@ class ToolbarView extends View {
     $('[data-toolbar-gui]')
       .on('click', function(){
         // window.open('gui');
-        window.open('gui.html#p5-basic');
+        window.open('gui');
       });
 	}
 
