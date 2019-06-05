@@ -99,7 +99,13 @@ class EditorView extends View {
 			});
 		});
 
+    this.on('search', this.search);
+
 	}
+
+  search(){
+    this.editor.execCommand('find');
+  }
 
 	editorChanged(){
 		this.emit('editor-changed');

@@ -307,7 +307,9 @@ class ProjectView extends View {
                 includeTitle.appendTo(libDataDiv);
                 for (let include of includeArr) {
                   let includeText = $('<pre></pre>');
-                  includeText.text('#include <' + include + '>').attr('data-include','');
+                  includeText.text('#include <' + include + '>').attr('data-include','').on('click', function(){
+                    console.log(childPath + "/" + include);
+                  });
                   includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include','');
                   includeText.appendTo(libDataDiv);
                 }

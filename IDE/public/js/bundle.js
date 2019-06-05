@@ -1052,6 +1052,9 @@ keypress.simple_combo("meta s", function () {
 keypress.simple_combo("meta o", function () {
 	tabView.emit('toggle');
 });
+keypress.simple_combo("meta f", function () {
+	editorView.emit('search');
+});
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear');
 });
@@ -1904,10 +1907,17 @@ var EditorView = function (_View) {
 			});
 		});
 
+		_this.on('search', _this.search);
+
 		return _this;
 	}
 
 	_createClass(EditorView, [{
+		key: 'search',
+		value: function search() {
+			this.editor.execCommand('find');
+		}
+	}, {
 		key: 'editorChanged',
 		value: function editorChanged() {
 			var _this2 = this;
@@ -3304,13 +3314,19 @@ var ProjectView = function (_View) {
 												var _iteratorError6 = undefined;
 
 												try {
-													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+													var _loop4 = function _loop4() {
 														var include = _step6.value;
 
-														var _includeText = $('<pre></pre>');
-														_includeText.text('#include <' + include + '>').attr('data-include', '');
+														var includeText = $('<pre></pre>');
+														includeText.text('#include <' + include + '>').attr('data-include', '').on('click', function () {
+															console.log(childPath + "/" + include);
+														});
 														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														_includeText.appendTo(libDataDiv);
+														includeText.appendTo(libDataDiv);
+													};
+
+													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+														_loop4();
 													}
 												} catch (err) {
 													_didIteratorError6 = true;
