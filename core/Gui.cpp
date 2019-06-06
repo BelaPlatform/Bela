@@ -42,33 +42,8 @@ int Gui::setup(unsigned int port, std::string address)
 
 int Gui::setup(unsigned int port, std::string address, std::string projectName)
 {
-	_port = port;
-	_addressData = address+"_data";
-	_addressControl = address+"_control";
 	_projectName = std::wstring(projectName.begin(), projectName.end());
-
-	// Set up the websocket server
-	ws_server = std::unique_ptr<WSServer>(new WSServer());
-	ws_server->setup(port);
-	ws_server->addAddress(_addressData, nullptr, nullptr, nullptr, true);
-
-	ws_server->addAddress(_addressControl,
-		// onData()
-		[this](std::string address, void* buf, int size)
-		{
-			ws_onData((const char*) buf);
-		},
-		// onConnect()
-		[this](std::string address)
-		{
-			ws_connect();
-		},
-		// onDisconnect()
-		[this](std::string address)
-		{
-			ws_disconnect();
-		}
-	);
+	setup(port, address);
 	return 0;
 }
 /*
