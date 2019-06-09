@@ -3065,26 +3065,22 @@ var ProjectView = function (_View) {
 			var _this6 = this;
 
 			var $examples = $('[data-examples]');
-			var newListOrder = [];
 			var oldListOrder = examplesDir;
+			var newListOrder = [];
 
 			$examples.empty();
 
 			if (!examplesDir.length) return;
-			for (var j = 0; j < example_order.length; j++) {
-				for (var i = 0; i < oldListOrder.length; i++) {
-					if (oldListOrder[i].name == example_order[j]) {
-						newListOrder.push(oldListOrder[i]);
-						oldListOrder[i].moved = true;
+
+			oldListOrder.forEach(function (item) {
+				example_order.forEach(function (new_item) {
+					if (new_item == item.name) {
+						newListOrder.push(item);
+						oldListOrder.splice(oldListOrder.indexOf(item), 1);
 					}
-				}
-			}
-			for (var i = 0; i < oldListOrder.length; i++) {
-				if (oldListOrder[i].moved != true) {
-					newListOrder.push(oldListOrder[i]);
-				}
-			}
-			oldListOrder = [];
+				});
+			});
+			var orderedList = newListOrder.concat(oldListOrder);
 
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
@@ -3168,7 +3164,7 @@ var ProjectView = function (_View) {
 					parentLi.appendTo($examples);
 				};
 
-				for (var _iterator = newListOrder[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					_loop();
 				}
 			} catch (err) {
@@ -4834,6 +4830,7 @@ module.exports = new Console();
 },{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
 module.exports=[
   "13-Salt",
+  "08-PureData",
   "04-Audio"
 ]
 

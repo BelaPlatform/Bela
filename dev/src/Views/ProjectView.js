@@ -163,28 +163,24 @@ class ProjectView extends View {
 	_exampleList(examplesDir){
 
 		var $examples = $('[data-examples]');
-    var newListOrder = [];
     var oldListOrder = examplesDir;
+    var newListOrder = [];
 
 		$examples.empty();
 
 		if (!examplesDir.length) return;
-    for (var j = 0; j < example_order.length; j++) {
-      for (var i = 0; i < oldListOrder.length; i++) {
-        if (oldListOrder[i].name == example_order[j]) {
-          newListOrder.push(oldListOrder[i]);
-          oldListOrder[i].moved = true;
-        }
-      }
-    }
-    for (var i = 0; i < oldListOrder.length; i++) {
-      if (oldListOrder[i].moved != true) {
-        newListOrder.push(oldListOrder[i]);
-      }
-    }
-    oldListOrder = [];
 
-		for (let item of newListOrder){
+    oldListOrder.forEach(item => {
+      example_order.forEach(new_item => {
+        if (new_item == item.name) {
+          newListOrder.push(item);
+          oldListOrder.splice(oldListOrder.indexOf(item), 1);
+        }
+      });
+    });
+    var orderedList = newListOrder.concat(oldListOrder);
+
+		for (let item of orderedList){
       let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
