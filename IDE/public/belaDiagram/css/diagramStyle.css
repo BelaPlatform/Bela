@@ -1,9 +1,17 @@
 @font-face {
     font-family: 'inconsolata';
-    src: url('fonts/inconsolata-webfont.woff2') format('woff2'),
-         url('fonts/inconsolata-webfont.woff') format('woff');
+    src: url('/fonts/inconsolata-webfont.woff2') format('woff2'),
+         url('/fonts/inconsolata-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
+}
+
+@font-face {
+  font-family: 'poppins_regular';
+  src: url("/fonts/poppins-regular-webfont.woff2") format("woff2"),
+       url("/fonts/poppins-regular-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
 }
 
 #container {
@@ -19,9 +27,10 @@
 }
 
 .diagram-text {
-    font-family: 'inconsolata';
-    font-size: 12px;
-    line-height: 22px;
+  font-family: 'poppins_regular';
+  font-size: .9em;
+  line-height: 22px;
+  margin-top: -10px;
 }
 
 .dPin {
@@ -115,10 +124,4 @@
     padding: 5px 10px;
     position: relative;
     z-index: 100;
-}
-
-.diagram-text {   
-    font-size: .9em;
-    font-family: poppins;
-    margin-top: -10px;
 }

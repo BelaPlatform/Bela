@@ -930,10 +930,11 @@ ul dl {
     padding: 0;
     text-align: left;
     width: auto; }
-  #pin_container .diagram_text {
-    font-family: poppins_light;
-    font-size: inherit;
-    line-height: 12px; }
+  #pin_container .diagram-text {
+    font-family: 'poppins_regular';
+    font-size: .9em;
+    line-height: 22px;
+    margin-top: 0; }
   #pin_container .dPin {
     fill: rgba(0, 255, 0, 0.5);
     stroke: none; }
