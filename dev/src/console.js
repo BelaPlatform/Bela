@@ -109,7 +109,12 @@ class Console extends EventEmitter {
 			var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
 
 			// add a button to copy the contents to the clipboard
-			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div).on('click', function(){
+        div.addClass('copied');
+        setTimeout(function(){
+          div.removeClass('copied');
+        }, 250);
+      });
 
     	var clipboard = new Clipboard(copyButton[0], {
 				target: function(trigger) {
