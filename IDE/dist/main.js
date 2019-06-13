@@ -123,6 +123,7 @@ function setup_routes(app) {
     app.use('/documentation', express.static(paths.Bela + 'Documentation/html'));
     app.use('/projects', express.static(paths.Bela + 'projects'));
     // ajax routes
+    app.get('/upload', routes.upload);
     // file and project downloads
     app.get('/download', routes.download);
     // doxygen xml

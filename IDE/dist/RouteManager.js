@@ -37,6 +37,17 @@ function send_zip(path, name, res) {
     archive.directory(path, name, { name: name + '.zip' });
     archive.finalize();
 }
+function upload_file(req, res) {
+    var file = req.query.file;
+    fs.createWriteStream(paths.upload + file);
+}
+function upload(req, res) {
+    if (req.query.all) {
+        console.log(res);
+        upload_file(res);
+    }
+}
+exports.upload = upload;
 function download_file(req, res) {
     var file = paths.projects + req.query.project + '/' + req.query.file;
     res.setHeader('Content-disposition', 'attachment; filename=' + req.query.file);

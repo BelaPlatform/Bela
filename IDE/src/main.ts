@@ -58,7 +58,6 @@ export function get_backup_file_stats(): util.Backup_File_Stats {
 	return backup_file_stats;
 }
 
-
 function setup_routes(app: express.Application){
 	// static paths
 	app.use(express.static(paths.webserver_root)); // all files in this directory are served to bela.local/
@@ -66,6 +65,7 @@ function setup_routes(app: express.Application){
 	app.use('/projects', express.static(paths.Bela+'projects'));
 
 	// ajax routes
+  app.get('/upload', routes.upload);
 	// file and project downloads
 	app.get('/download', routes.download);
 	// doxygen xml

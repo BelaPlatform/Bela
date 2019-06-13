@@ -354,7 +354,6 @@ class FileView extends View {
 		} else {
 
 			this.actuallyDoFileUpload(file, !askForOverwrite);
-
 			if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 
 		}
@@ -362,13 +361,45 @@ class FileView extends View {
 
 	actuallyDoFileUpload(file, force){
 		var reader = new FileReader();
-		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
+    let chunkList = [];
+		// reader.onload = (ev) => this.emit('message', 'project-event',
+    // {
+    //   func: 'uploadFile',
+    //   newFile: sanitise(file.name),
+    //   fileData: ev.target.result,
+    //   force
+    // // }, console.log(ev.target.result, ev.target.result.byteLength));
+    // });
+    reader.onload = (ev) => {
+      this.splitFile(new Uint8Array(ev.target.result), file);
+    }
 		reader.readAsArrayBuffer(file);
 		if (forceRebuild && !fileQueue.length){
 			forceRebuild = false;
 			this.emit('force-rebuild');
 		}
 	}
+
+  splitFile(dataArray, file){
+    var formData, blob;
+    for (var i = 0; i < dataArray.length; i += 1e6){
+      formData = new FormData();
+      formData.append("fileUpload", blob, file.name + ".part" + (i / 1e6));
+      $.ajax({
+        url: '/upload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(msg){
+            alert("Win: " + msg);
+        },
+        error: function(bla, msg){
+            alert("Fail: " + msg);
+        }
+      });
+    }
+  }
 
 	_viewHiddenFiles(val){
 		viewHiddenFiles = val;

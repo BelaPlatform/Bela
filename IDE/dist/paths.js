@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Bela = '/root/Bela/';
 exports.webserver_root = exports.Bela + 'IDE/public/';
 exports.projects = exports.Bela + 'projects/';
+exports.upload = exports.Bela + 'upload/';
 exports.examples = exports.Bela + 'examples/';
 exports.libraries = exports.Bela + 'libraries/';
 exports.gui = exports.webserver_root + 'gui/';
@@ -13,7 +14,7 @@ exports.ide_settings = exports.Bela + 'IDE/settings.json';
 exports.startup_env = '/opt/Bela/startup_env';
 exports.lockfile = exports.Bela + 'IDE/.lockfile';
 exports.xenomai_stat = '/proc/xenomai/sched/stat';
-exports.update = exports.Bela + 'updates/';
+exports.updates = exports.Bela + 'updates/';
 function set_xenomai_stat(new_path) { exports.xenomai_stat = new_path; }
 exports.set_xenomai_stat = set_xenomai_stat;
 ;

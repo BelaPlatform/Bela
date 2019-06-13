@@ -2660,7 +2660,6 @@ var FileView = function (_View) {
 			} else {
 
 				this.actuallyDoFileUpload(file, !askForOverwrite);
-
 				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			}
 		}
@@ -2670,13 +2669,44 @@ var FileView = function (_View) {
 			var _this8 = this;
 
 			var reader = new FileReader();
+			var chunkList = [];
+			// reader.onload = (ev) => this.emit('message', 'project-event',
+			// {
+			//   func: 'uploadFile',
+			//   newFile: sanitise(file.name),
+			//   fileData: ev.target.result,
+			//   force
+			// // }, console.log(ev.target.result, ev.target.result.byteLength));
+			// });
 			reader.onload = function (ev) {
-				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+				_this8.splitFile(new Uint8Array(ev.target.result), file);
 			};
 			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {
 				forceRebuild = false;
 				this.emit('force-rebuild');
+			}
+		}
+	}, {
+		key: 'splitFile',
+		value: function splitFile(dataArray, file) {
+			var formData, blob;
+			for (var i = 0; i < dataArray.length; i += 1e6) {
+				formData = new FormData();
+				formData.append("fileUpload", blob, file.name + ".part" + i / 1e6);
+				$.ajax({
+					url: '/upload',
+					type: 'POST',
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function success(msg) {
+						alert("Win: " + msg);
+					},
+					error: function error(bla, msg) {
+						alert("Fail: " + msg);
+					}
+				});
 			}
 		}
 	}, {

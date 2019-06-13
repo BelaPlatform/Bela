@@ -145,6 +145,7 @@ export async function openProject(data: any) {
 	await git_manager.info(data.gitData);
 	await openFile(data);
 }
+
 export async function openExample(data: any){
 	await file_manager.empty_directory(paths.exampleTempProject);
 	await file_manager.copy_directory(paths.examples+data.currentProject, paths.exampleTempProject);
@@ -152,6 +153,7 @@ export async function openExample(data: any){
 	data.currentProject = 'exampleTempProject';
 	await openProject(data);
 }
+
 export async function newProject(data: any){
 	if (await file_manager.directory_exists(paths.projects+data.newProject)){
 		data.error = 'failed, project '+data.newProject+' already exists!';
@@ -176,6 +178,7 @@ export async function saveAs(data: any){
 	data.newProject = undefined;
 	await openProject(data);
 }
+
 export async function deleteProject(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject);
 	data.projectList = await listProjects();
@@ -190,10 +193,12 @@ export async function deleteProject(data: any){
 	data.readOnly = true;
 	data.fileData = 'please create a new project to continue';
 }
+
 export async function cleanProject(data: any){
 	await file_manager.empty_directory(paths.projects+data.currentProject+'/build');
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.currentProject);
 }
+
 export async function newFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	if (await file_manager.file_exists(file_path)){
@@ -205,6 +210,7 @@ export async function newFile(data: any){
 	data.focus = {'line': 2, 'column': 1};
 	await openFile(data);
 }
+
 export async function uploadFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
@@ -217,6 +223,7 @@ export async function uploadFile(data: any){
 	data.fileList = await listFiles(data.currentProject);
 	await openFile(data);
 }
+
 export async function cleanFile(project: string, file: string){
 	if (file.split && file.includes('.')){
 		let split_file = file.split('.');
@@ -230,6 +237,7 @@ export async function cleanFile(project: string, file: string){
 		}
 	}
 }
+
 export async function renameFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
@@ -245,6 +253,7 @@ export async function renameFile(data: any){
   }
   data.fileList = await listFiles(data.currentProject);
 }
+
 export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
 	await cleanFile(data.currentProject, data.fileName);
