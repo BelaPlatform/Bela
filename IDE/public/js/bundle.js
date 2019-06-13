@@ -4634,9 +4634,10 @@ var Console = function (_EventEmitter) {
 					// add a button to copy the contents to the clipboard
 
 					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div).on('click', function () {
-						div.addClass('copied');
+						var that = $(this);
+						that.parent().addClass('copied');
 						setTimeout(function () {
-							div.removeClass('copied');
+							that.parent().removeClass('copied');
 						}, 250);
 					});
 					clipboard = new Clipboard(copyButton[0], {
