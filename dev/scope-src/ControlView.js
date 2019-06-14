@@ -1,13 +1,35 @@
 'use strict';
 var View = require('./View');
 
-var xTime, sampleRate, upSampling=1, downSampling=1;
+var controls, xTime, sampleRate, upSampling=1, downSampling=1;
 
 class ControlView extends View{
 
   constructor(className, models){
     super(className, models);
-    $('#controlsButton').click(() => this.$parents.toggleClass('hidden') );
+    $('#controlsButton, .overlay').on('click', () => this.toggleControls());
+    $('body').on('keydown', (e) => this.keyHandler(e));
+  }
+
+  toggleControls(){
+    if (controls) {
+      controls = false;
+      $('#control-panel').addClass('hidden');
+      $('.overlay').removeClass('active');
+    } else {
+      controls = true;
+      $('#control-panel').removeClass('hidden');
+      $('.overlay').addClass('active');
+    }
+  }
+
+  keyHandler(e){
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      controls = false;
+      $('#control-panel').addClass('hidden');
+      $('.overlay').removeClass('active');
+    }
   }
 
   // UI events
