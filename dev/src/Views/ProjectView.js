@@ -2,6 +2,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
+var example_order = require('../example_order.json');
 
 class ProjectView extends View {
 
@@ -162,11 +163,24 @@ class ProjectView extends View {
 	_exampleList(examplesDir){
 
 		var $examples = $('[data-examples]');
+    var oldListOrder = examplesDir;
+    var newListOrder = [];
+
 		$examples.empty();
 
 		if (!examplesDir.length) return;
 
-		for (let item of examplesDir){
+    oldListOrder.forEach(item => {
+      example_order.forEach(new_item => {
+        if (new_item == item.name) {
+          newListOrder.push(item);
+          oldListOrder.splice(oldListOrder.indexOf(item), 1);
+        }
+      });
+    });
+    var orderedList = newListOrder.concat(oldListOrder);
+
+		for (let item of orderedList){
       let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');

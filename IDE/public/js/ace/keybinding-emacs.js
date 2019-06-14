@@ -1,4 +1,4 @@
-define("ace/occur",["require","exports","module","ace/lib/oop","ace/range","ace/search","ace/edit_session","ace/search_highlight","ace/lib/dom"], function(require, exports, module) {
+ace.define("ace/occur",["require","exports","module","ace/lib/oop","ace/range","ace/search","ace/edit_session","ace/search_highlight","ace/lib/dom"], function(require, exports, module) {
 "use strict";
 
 var oop = require("./lib/oop");
@@ -18,7 +18,7 @@ oop.inherits(Occur, Search);
         var translatedPos = this.originalToOccurPosition(editor.session, pos);
         editor.moveCursorToPosition(translatedPos);
         return true;
-    }
+    };
     this.exit = function(editor, options) {
         var pos = options.translatePosition && editor.getCursorPosition();
         var translatedPos = pos && this.occurToOriginalPosition(editor.session, pos);
@@ -26,14 +26,14 @@ oop.inherits(Occur, Search);
         if (translatedPos)
             editor.moveCursorToPosition(translatedPos);
         return true;
-    }
+    };
 
     this.highlight = function(sess, regexp) {
         var hl = sess.$occurHighlight = sess.$occurHighlight || sess.addDynamicMarker(
                 new SearchHighlight(null, "ace_occur-highlight", "text"));
         hl.setRegexp(regexp);
         sess._emit("changeBackMarker"); // force highlight layer redraw
-    }
+    };
 
     this.displayOccurContent = function(editor, options) {
         this.$originalSession = editor.session;
@@ -47,12 +47,12 @@ oop.inherits(Occur, Search);
         occurSession.$useEmacsStyleLineStart = this.$useEmacsStyleLineStart;
         this.highlight(occurSession, options.re);
         occurSession._emit('changeBackMarker');
-    }
+    };
 
     this.displayOriginalContent = function(editor) {
         editor.setSession(this.$originalSession);
         this.$originalSession.$useEmacsStyleLineStart = this.$useEmacsStyleLineStart;
-    }
+    };
     this.originalToOccurPosition = function(session, pos) {
         var lines = session.$occurMatchingLines;
         var nullPos = {row: 0, column: 0};
@@ -62,13 +62,13 @@ oop.inherits(Occur, Search);
                 return {row: i, column: pos.column};
         }
         return nullPos;
-    }
+    };
     this.occurToOriginalPosition = function(session, pos) {
         var lines = session.$occurMatchingLines;
         if (!lines || !lines[pos.row])
             return pos;
         return {row: lines[pos.row].row, column: pos.column};
-    }
+    };
 
     this.matchingLines = function(session, options) {
         options = oop.mixin({}, options);
@@ -82,7 +82,7 @@ oop.inherits(Occur, Search);
                 lines :
                 lines.concat({row: row, content: session.getLine(row)});
         }, []);
-    }
+    };
 
 }).call(Occur.prototype);
 
@@ -92,8 +92,6 @@ dom.importCssString(".ace_occur-highlight {\n\
     background-color: rgba(87, 255, 8, 0.25);\n\
     position: absolute;\n\
     z-index: 4;\n\
-    -moz-box-sizing: border-box;\n\
-    -webkit-box-sizing: border-box;\n\
     box-sizing: border-box;\n\
     box-shadow: 0 0 4px rgb(91, 255, 50);\n\
 }\n\
@@ -106,7 +104,7 @@ exports.Occur = Occur;
 
 });
 
-define("ace/commands/occur_commands",["require","exports","module","ace/config","ace/occur","ace/keyboard/hash_handler","ace/lib/oop"], function(require, exports, module) {
+ace.define("ace/commands/occur_commands",["require","exports","module","ace/config","ace/occur","ace/keyboard/hash_handler","ace/lib/oop"], function(require, exports, module) {
 
 var config = require("../config"),
     Occur = require("../occur").Occur;
@@ -151,20 +149,20 @@ function OccurKeyboardHandler() {}
 
 oop.inherits(OccurKeyboardHandler, HashHandler);
 
-;(function() {
+(function() {
 
     this.isOccurHandler = true;
 
     this.attach = function(editor) {
         HashHandler.call(this, occurCommands, editor.commands.platform);
         this.$editor = editor;
-    }
+    };
 
     var handleKeyboard$super = this.handleKeyboard;
     this.handleKeyboard = function(data, hashId, key, keyCode) {
         var cmd = handleKeyboard$super.call(this, data, hashId, key, keyCode);
         return (cmd && cmd.command) ? cmd : undefined;
-    }
+    };
 
 }).call(OccurKeyboardHandler.prototype);
 
@@ -172,20 +170,20 @@ OccurKeyboardHandler.installIn = function(editor) {
     var handler = new this();
     editor.keyBinding.addKeyboardHandler(handler);
     editor.commands.addCommands(occurCommands);
-}
+};
 
 OccurKeyboardHandler.uninstallFrom = function(editor) {
     editor.commands.removeCommands(occurCommands);
     var handler = editor.getKeyboardHandler();
     if (handler.isOccurHandler)
         editor.keyBinding.removeKeyboardHandler(handler);
-}
+};
 
 exports.occurStartCommand = occurStartCommand;
 
 });
 
-define("ace/commands/incremental_search_commands",["require","exports","module","ace/config","ace/lib/oop","ace/keyboard/hash_handler","ace/commands/occur_commands"], function(require, exports, module) {
+ace.define("ace/commands/incremental_search_commands",["require","exports","module","ace/config","ace/lib/oop","ace/keyboard/hash_handler","ace/commands/occur_commands"], function(require, exports, module) {
 
 var config = require("../config");
 var oop = require("../lib/oop");
@@ -328,7 +326,8 @@ oop.inherits(IncrementalSearchKeyboardHandler, HashHandler);
         var iSearch = this.$iSearch;
         HashHandler.call(this, exports.iSearchCommands, editor.commands.platform);
         this.$commandExecHandler = editor.commands.addEventListener('exec', function(e) {
-            if (!e.command.isIncrementalSearchCommand) return undefined;
+            if (!e.command.isIncrementalSearchCommand)
+                return iSearch.deactivate();
             e.stopPropagation();
             e.preventDefault();
             var scrollTop = editor.session.getScrollTop();
@@ -355,7 +354,7 @@ oop.inherits(IncrementalSearchKeyboardHandler, HashHandler);
             var extendCmd = this.commands.extendSearchTerm;
             if (extendCmd) { return {command: extendCmd, args: key}; }
         }
-        return {command: "null", passEvent: hashId == 0 || hashId == 4};
+        return false;
     };
 
 }).call(IncrementalSearchKeyboardHandler.prototype);
@@ -365,7 +364,7 @@ exports.IncrementalSearchKeyboardHandler = IncrementalSearchKeyboardHandler;
 
 });
 
-define("ace/incremental_search",["require","exports","module","ace/lib/oop","ace/range","ace/search","ace/search_highlight","ace/commands/incremental_search_commands","ace/lib/dom","ace/commands/command_manager","ace/editor","ace/config"], function(require, exports, module) {
+ace.define("ace/incremental_search",["require","exports","module","ace/lib/oop","ace/range","ace/search","ace/search_highlight","ace/commands/incremental_search_commands","ace/lib/dom","ace/commands/command_manager","ace/editor","ace/config"], function(require, exports, module) {
 "use strict";
 
 var oop = require("./lib/oop");
@@ -392,7 +391,7 @@ function regExpToObject(re) {
     return {
         expression: string.slice(start+1, flagStart),
         flags: string.slice(flagStart+1)
-    }
+    };
 }
 
 function stringToRegExp(string, flags) {
@@ -405,7 +404,7 @@ function objectToRegExp(obj) {
     return stringToRegExp(obj.expression, obj.flags);
 }
 
-;(function() {
+(function() {
 
     this.activate = function(ed, backwards) {
         this.$editor = ed;
@@ -564,8 +563,6 @@ dom.importCssString && dom.importCssString("\
 .ace_marker-layer .ace_isearch-result {\
   position: absolute;\
   z-index: 6;\
-  -moz-box-sizing: border-box;\
-  -webkit-box-sizing: border-box;\
   box-sizing: border-box;\
 }\
 div.ace_isearch-result {\
@@ -603,26 +600,13 @@ require("./config").defineOptions(Editor.prototype, "editor", {
 
 });
 
-define("ace/keyboard/emacs",["require","exports","module","ace/lib/dom","ace/incremental_search","ace/commands/incremental_search_commands","ace/keyboard/hash_handler","ace/lib/keys"], function(require, exports, module) {
+ace.define("ace/keyboard/emacs",["require","exports","module","ace/lib/dom","ace/incremental_search","ace/commands/incremental_search_commands","ace/keyboard/hash_handler","ace/lib/keys"], function(require, exports, module) {
 "use strict";
 
 var dom = require("../lib/dom");
 require("../incremental_search");
 var iSearchCommandModule = require("../commands/incremental_search_commands");
 
-
-var screenToTextBlockCoordinates = function(x, y) {
-    var canvasPos = this.scroller.getBoundingClientRect();
-
-    var col = Math.floor(
-        (x + this.scrollLeft - canvasPos.left - this.$padding) / this.characterWidth
-    );
-    var row = Math.floor(
-        (y + this.scrollTop - canvasPos.top) / this.lineHeight
-    );
-
-    return this.session.screenToDocumentPosition(row, col);
-};
 
 var HashHandler = require("./hash_handler").HashHandler;
 exports.handler = new HashHandler();
@@ -640,8 +624,6 @@ exports.handler.attach = function(editor) {
         dom.importCssString('\
             .emacs-mode .ace_cursor{\
                 border: 1px rgba(50,250,50,0.8) solid!important;\
-                -moz-box-sizing: border-box!important;\
-                -webkit-box-sizing: border-box!important;\
                 box-sizing: border-box!important;\
                 background-color: rgba(0,250,0,0.9);\
                 opacity: 0.5;\
@@ -711,11 +693,11 @@ exports.handler.attach = function(editor) {
                     replacement : undefined);
         }
         return lastMark;
-    }
+    };
 
     editor.on("click", $resetMarkMode);
     editor.on("changeSession", $kbSessionChange);
-    editor.renderer.screenToTextCoordinates = screenToTextBlockCoordinates;
+    editor.renderer.$blockCursor = true;
     editor.setStyle("emacs-mode");
     editor.commands.addCommands(commands);
     exports.handler.platform = editor.commands.platform;
@@ -725,7 +707,7 @@ exports.handler.attach = function(editor) {
 };
 
 exports.handler.detach = function(editor) {
-    delete editor.renderer.screenToTextCoordinates;
+    editor.renderer.$blockCursor = false;
     editor.session.$selectLongWords = $formerLongWords;
     editor.session.$useEmacsStyleLineStart = $formerLineStart;
     editor.removeEventListener("click", $resetMarkMode);
@@ -808,7 +790,7 @@ exports.handler.getStatusText = function(editor, data) {
   if (data.count)
     str += data.count;
   if (data.keyChain)
-    str += " " + data.keyChain
+    str += " " + data.keyChain;
   return str;
 };
 
@@ -870,7 +852,7 @@ exports.handler.handleKeyboard = function(data, hashId, key, keyCode) {
         data.lastCommand = null;
 
     if (!command.readOnly && editor.emacsMark())
-        editor.setEmacsMark(null)
+        editor.setEmacsMark(null);
         
     if (data.count) {
         var count = data.count;
@@ -1063,17 +1045,27 @@ exports.handler.addCommands({
     },
     killLine: function(editor) {
         editor.pushEmacsMark(null);
-        var pos = editor.getCursorPosition();
-        if (pos.column === 0 &&
-            editor.session.doc.getLine(pos.row).length === 0) {
-            editor.selection.selectLine();
-        } else {
-            editor.clearSelection();
-            editor.selection.selectLineEnd();
-        }
+        editor.clearSelection();
         var range = editor.getSelectionRange();
+        var line = editor.session.getLine(range.start.row);
+        range.end.column = line.length;
+        line = line.substr(range.start.column);
+        
+        var foldLine = editor.session.getFoldLine(range.start.row);
+        if (foldLine && range.end.row != foldLine.end.row) {
+            range.end.row = foldLine.end.row;
+            line = "x";
+        }
+        if (/^\s*$/.test(line)) {
+            range.end.row++;
+            line = editor.session.getLine(range.end.row);
+            range.end.column = /^\s*$/.test(line) ? line.length : 0;
+        }
         var text = editor.session.getTextRange(range);
-        exports.killRing.add(text);
+        if (editor.prevOp.command == this)
+            exports.killRing.append(text);
+        else
+            exports.killRing.add(text);
 
         editor.session.remove(range);
         editor.clearSelection();
@@ -1094,6 +1086,7 @@ exports.handler.addCommands({
         exec: function(editor) {
             exports.killRing.add(editor.getCopyText());
             editor.commands.byName.cut.exec(editor);
+            editor.setEmacsMark(null);
         },
         readOnly: true,
         multiSelectAction: "forEach"
@@ -1116,6 +1109,7 @@ exports.handler.addCommands({
                 editor.$handlesEmacsOnCopy = false;
                 if (editor.inMultiSelectMode) editor.forEachSelection({exec: deselect});
                 else deselect();
+                editor.setEmacsMark(null);
                 editor.session.$emacsMarkRing = marks.concat(deselectedMarks.reverse());
             }, 0);
         },
@@ -1145,6 +1139,12 @@ exports.killRing = {
         if (this.$data.length > 30)
             this.$data.shift();
     },
+    append: function(str) {
+        var idx = this.$data.length - 1;
+        var text = this.$data[idx] || "";
+        if (str) text += str;
+        if (text) this.$data[idx] = text;
+    },
     get: function(n) {
         n = n || 1;
         return this.$data.slice(this.$data.length-n, this.$data.length).reverse().join('\n');
@@ -1160,4 +1160,11 @@ exports.killRing = {
     }
 };
 
-});
+});                (function() {
+                    ace.require(["ace/keyboard/emacs"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            
