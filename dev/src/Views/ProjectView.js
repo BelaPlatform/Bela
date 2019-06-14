@@ -257,20 +257,19 @@ class ProjectView extends View {
 
       // INCLUDES:
       let includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
-      let includeContent = $('<div></div>'); // Div that contains include instructions.
+      let includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
       let includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
-      let includeCopy = $('<button></button>').text('Copy to clipboard').addClass('include-copy');
+      let includeCopy = $('<button></button>').addClass('include-copy');
       // let includeLine = $('<p></p>').addClass('include-text');
 
       // FILES:
       let filesTitle = $('<p></p>').addClass('file-heading').text('Files');
       let filesList = $('<ul></ul>').addClass('libraries-list');
 
-      let libInfoTitle = $('<p></p>').addClass('file-heading').text('Library Information');
       let libInfoContent = $('<div></div>').addClass('lib-info-content');
 
       let includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
-      let includeCP = $('<p><p>').addClass('copy').text('Copy to clipboard').on('click', function(){
+      let includeCP = $('<p></p>').addClass('copy').text('Copy to clipboard').on('click', function(){
         let includes = $(this).parent().find('[data-form]');
         // includes.focus();
         includes.select();
@@ -319,7 +318,7 @@ class ProjectView extends View {
                 }
                 includeLines.appendTo(includeContent);
               } else {
-                let includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','include-text');
+                let includeText = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','include-text');
                 includeText.appendTo(includeLines);
                 includeLines.appendTo(includeContent);
                 includeCopy.appendTo(includeContent);
@@ -327,36 +326,36 @@ class ProjectView extends View {
 
 
 
-              // Get text for library description
-              if (object.description != '' && object.description != '.') {
-                let libDescText = $('<p></p>').text(object.description);
-                libDesc.append(libDescText);
-              }
-              // Construct the libInfo elements:
-              // Library name
-              if (object.name) {
-                var infoName = $('<p></p>').text("Library name: ");
-                infoName.append(object.name);
-                infoName.appendTo(libInfoContent);
-              }
-              // Library version
-              if (object.version) {
-                var infoVer = $('<p></p>').text('Version: ');
-                infoVer.append(object.version);
-                infoVer.appendTo(libInfoContent);
-              }
-              // Authors
-              if (object.author) {
-                var infoAuth = $('<p></p>').text('Author: ');
-                infoAuth.append(object.author);
-                infoAuth.appendTo(libInfoContent);
-              }
-              // Maintainers
-              if (object.maintainer) {
-                var infoMaintainer = $('<p></p>').text('Maintainer: ');
-                infoMaintainer.append(object.maintainer);
-                infoMaintainer.appendTo(libInfoContent);
-              }
+              // // Get text for library description
+              // if (object.description != '' && object.description != '.') {
+              //   let libDescText = $('<p></p>').text(object.description);
+              //   libDesc.append(libDescText);
+              // }
+              // // Construct the libInfo elements:
+              // // Library name
+              // if (object.name) {
+              //   var infoName = $('<p></p>').text("Library name: ");
+              //   infoName.append(object.name);
+              //   infoName.appendTo(libInfoContent);
+              // }
+              // // Library version
+              // if (object.version) {
+              //   var infoVer = $('<p></p>').text('Version: ');
+              //   infoVer.append(object.version);
+              //   infoVer.appendTo(libInfoContent);
+              // }
+              // // Authors
+              // if (object.author) {
+              //   var infoAuth = $('<p></p>').text('Author: ');
+              //   infoAuth.append(object.author);
+              //   infoAuth.appendTo(libInfoContent);
+              // }
+              // // Maintainers
+              // if (object.maintainer) {
+              //   var infoMaintainer = $('<p></p>').text('Maintainer: ');
+              //   infoMaintainer.append(object.maintainer);
+              //   infoMaintainer.appendTo(libInfoContent);
+              // }
 
               // includeInstructions.appendTo(libDataDiv);
               // includeCP.appendTo(libDataDiv);
@@ -409,13 +408,12 @@ class ProjectView extends View {
       // per item in section
       // childLi -> childUl -> parentDiv -> $examples
       includeTitle.appendTo(libraryPanel);
-      // includeLine.appendTo(includeContent);
+
       includeContent.appendTo(libraryPanel);
 
       filesTitle.appendTo(libraryPanel);  // Include the Files: section title
       filesList.appendTo(libraryPanel);   // List the files
 
-      libInfoTitle.appendTo(libraryPanel);
       libInfoContent.appendTo(libraryPanel);
 
       libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
