@@ -2490,6 +2490,8 @@ var FileView = function (_View) {
 				if ($(this).data('file') === file) {
 					$(this).addClass('selected');
 					foundFile = true;
+				} else {
+					$(this).removeClass('selected');
 				}
 			});
 
