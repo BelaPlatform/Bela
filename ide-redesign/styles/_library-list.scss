@@ -12,24 +12,47 @@ ul {
         margin-block-end: .5em;
         }
     }
-    .include-text {
-      & pre {
-          background: $grey-light;
-          font-family: inconsolata;
-          font-size: .9em;
-          padding: .5em;
-          corner-radius: 3px;
-          }
-    }
-    .include-lines {
-      
-      background: $grey-light;
-      margin-top: .5em;
-      padding: .1em .5em;
+    pre {
+      background: $grey-extra-light;
+      corner-radius: 3px;
+      font-family: inconsolata;
+      font-size: .9em;
+      margin: .5em;
+      padding: .1em 0;
+      white-space: nowrap;
     }
     .include-copy {
-      font-size: .5em;
-      align: right;
+      position: absoute;
+      top: 0;
+      right: 0;
+    }
+    .include-container {
+      position: relative;
+    }
+    .include-lines {
+      background: $grey-extra-light;
+      border: 1px solid #c9c9c9;
+      border-radius: .25em;
+      margin: .5em 0 1em;
+      overflow-x: hidden;
+      width: 96%;
+    }
+    .include-copy {
+      background-color: #c9c9c9;
+      background-image: url(../images/icons/copy_inactive.svg);
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: 100% 60%;
+      border: 1px solid #c9c9c9;
+      border-radius: 0 .25em .25em 0;
+      height: 34px;
+      position: absolute;
+      right: 10px;
+      top: 0;
+      width: 40px;
+      &:hover {
+        background-color: $teal-01;
+      }
     }
     // Styles for the library info (title, authors):
     .lib-info-content {
