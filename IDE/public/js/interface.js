@@ -1,5 +1,4 @@
 var dropdownLoaded = false;
-var menuOpened = false;
 
 // define the tabs object
 function openTabs() {
@@ -42,13 +41,6 @@ $('[data-tab-open]').click(function(event) {
     // Then show the project explorer.
     matchTabFor("explorer");
   }
-  if (menuOpened) {
-    menuOpened = false;
-    $('.ace_search').removeClass('active');
-  } else {
-    menuOpened = true;
-    $('.ace_search').addClass('active');
-  }
   // check to see if the find and replace dialogue is open
   openTabs();
 });
@@ -65,10 +57,7 @@ $('[data-tab-for]').click(function(event) {
   if ($('[data-tabs]').hasClass('tabs-open')) {
     return false;
   }
-  if (!menuOpened) {
-    menuOpened = true;
-    openTabs();
-  }
+  openTabs();
 });
 
 // increment / decrement the text inputs styled to look like the number inputs

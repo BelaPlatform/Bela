@@ -1800,6 +1800,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
 var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 var uploadDelay = 50;
 
@@ -1814,12 +1815,14 @@ var activeWordIDs = [];
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
 
-	function EditorView(className, models) {
+	function EditorView(className, models, data) {
 		_classCallCheck(this, EditorView);
 
 		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
 
 		_this.highlights = {};
+		var data = tmpData;
+		var opts = tmpOpts;
 
 		_this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -1828,11 +1831,6 @@ var EditorView = function (_View) {
 		_this.parser.init(_this.editor, langTools);
 		_this.parser.enable(true);
 
-		// set syntax mode
-		_this.on('syntax-highlighted', function () {
-			return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
-		});
-		_this.editor.session.setMode('ace/mode/c_cpp');
 		_this.editor.$blockScrolling = Infinity;
 
 		// set theme
@@ -1852,10 +1850,30 @@ var EditorView = function (_View) {
 		// this function is called when the user modifies the editor
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);
+			var data = tmpData;
+			var opts = tmpOpts;
 			if (!uploadBlocked) {
 				_this.editorChanged();
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
+			}
+			// set syntax mode - defaults to text
+			_this.on('syntax-highlighted', function () {
+				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
+			});
+			if (opts.fileType && opts.fileType == "cpp") {
+				_this.editor.session.setMode('ace/mode/c_cpp');
+			} else if (opts.fileType && opts.fileType == "js") {
+				_this.editor.session.setMode('ace/mode/javascript');
+			} else if (opts.fileType && opts.fileType == "csd") {
+				_this.editor.session.setMode('ace/mode/csound_document');
+				// the following is only there for the sake of completeness - there
+				// is no SuperCollider syntax highlighting for the Ace editor
+				// } else if (opts.fileType && opts.fileType == "scd") {
+				//   this.editor.session.setMode('ace/mode/text');
+			} else {
+				// if we don't know what the file extension is just default to plain text
+				_this.editor.session.setMode('ace/mode/text');
 			}
 		});
 
@@ -4055,8 +4073,26 @@ var TabView = function (_View) {
 		layout.on('stateChanged', function () {
 			return _this.emit('change');
 		});
-
+		// this.on('linkClicked', () => console.log('link click'));
+		_this.$elements.on('click', function (e) {
+			return _this.linkClicked($(e.currentTarget), e);
+		});
 		_this.on('boardString', _this._boardString);
+		_this.editor = ace.edit('editor');
+		var editor = _this.editor;
+		$('[data-tab-open]').on('click', function () {
+			if ($('[data-tabs]').hasClass('tabs-open')) {
+				setTimeout(function () {
+					$('[data-editor]').addClass('tabs-open');
+					editor.resize();
+				}, 750);
+			} else {
+				$('[data-editor]').removeClass('tabs-open');
+				setTimeout(function () {
+					editor.resize();
+				}, 500);
+			}
+		});
 
 		return _this;
 	}
@@ -4852,7 +4888,8 @@ var Anchor = ace.require('ace/anchor').Anchor;
 var buf = new (require('./CircularBuffer'))(5);
 for (var i = 0; i < buf.capacity(); i++) {
 	buf.enq({});
-}var editor;
+}var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
+var editor;
 
 var parsingDeclaration = false;
 var parsingBody = false;

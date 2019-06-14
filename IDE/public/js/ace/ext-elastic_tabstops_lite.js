@@ -1,4 +1,4 @@
-define("ace/ext/elastic_tabstops_lite",["require","exports","module","ace/editor","ace/config"], function(require, exports, module) {
+ace.define("ace/ext/elastic_tabstops_lite",["require","exports","module","ace/editor","ace/config"], function(require, exports, module) {
 "use strict";
 
 var ElasticTabstopsLite = function(editor) {
@@ -14,13 +14,12 @@ var ElasticTabstopsLite = function(editor) {
     this.onExec = function() {
         recordChanges = true;
     };
-    this.onChange = function(e) {
-        var range = e.data.range
+    this.onChange = function(delta) {
         if (recordChanges) {
-            if (changedRows.indexOf(range.start.row) == -1)
-                changedRows.push(range.start.row);
-            if (range.end.row != range.start.row)
-                changedRows.push(range.end.row);
+            if (changedRows.indexOf(delta.start.row) == -1)
+                changedRows.push(delta.start.row);
+            if (delta.end.row != delta.start.row)
+                changedRows.push(delta.end.row);
         }
     };
 };
@@ -268,8 +267,11 @@ require("../config").defineOptions(Editor.prototype, "editor", {
     }
 });
 
-});
-                (function() {
-                    window.require(["ace/ext/elastic_tabstops_lite"], function() {});
+});                (function() {
+                    ace.require(["ace/ext/elastic_tabstops_lite"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
                 })();
             
