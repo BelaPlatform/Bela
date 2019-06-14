@@ -58,11 +58,8 @@ function openFile(data) {
                 case 0:
                     if (typeof data.newFile == 'undefined') {
                         data.newFile = data.fileName;
-                        file_path = paths.projects + data.currentProject + '/' + data.newFile;
                     }
-                    else {
-                        file_path = paths.projects + data.currentProject + '/' + data.newFile;
-                    }
+                    file_path = paths.projects + data.currentProject + '/' + data.newFile;
                     _c.label = 1;
                 case 1:
                     _c.trys.push([1, 3, , 8]);
