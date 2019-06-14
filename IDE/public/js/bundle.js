@@ -1059,7 +1059,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":19,"./site-text.json":20}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1511,7 +1511,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":19,"../site-text.json":20,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1786,7 +1786,7 @@ function xmlClassDocs(classname, emitter) {
   });
 }
 
-},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":20,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2153,7 +2153,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
+},{"../parser":18,"../site-text.json":20,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2663,7 +2663,7 @@ function isDir(item) {
 
 module.exports = FileView;
 
-},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],9:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2865,7 +2865,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],10:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2880,6 +2880,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
+var example_order = require('../example_order.json');
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -3064,9 +3065,22 @@ var ProjectView = function (_View) {
 			var _this6 = this;
 
 			var $examples = $('[data-examples]');
+			var oldListOrder = examplesDir;
+			var newListOrder = [];
+
 			$examples.empty();
 
 			if (!examplesDir.length) return;
+
+			oldListOrder.forEach(function (item) {
+				example_order.forEach(function (new_item) {
+					if (new_item == item.name) {
+						newListOrder.push(item);
+						oldListOrder.splice(oldListOrder.indexOf(item), 1);
+					}
+				});
+			});
+			var orderedList = newListOrder.concat(oldListOrder);
 
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
@@ -3150,7 +3164,7 @@ var ProjectView = function (_View) {
 					parentLi.appendTo($examples);
 				};
 
-				for (var _iterator = examplesDir[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					_loop();
 				}
 			} catch (err) {
@@ -3474,7 +3488,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
+},{"../example_order.json":16,"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3966,7 +3980,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4347,7 +4361,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4813,7 +4827,14 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"./popup":18,"./site-text.json":19,"events":1}],16:[function(require,module,exports){
+},{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
+module.exports=[
+  "13-Salt",
+  "08-PureData",
+  "04-Audio"
+]
+
+},{}],17:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -4823,7 +4844,7 @@ $(function () {
 	IDE = require('./IDE-browser');
 });
 
-},{"./IDE-browser":3}],17:[function(require,module,exports){
+},{"./IDE-browser":3}],18:[function(require,module,exports){
 'use strict';
 
 var Range = ace.require('ace/range').Range;
@@ -5277,7 +5298,7 @@ function searchHighlightsFor(sub, val) {
 
 module.exports = parser;
 
-},{"./CircularBuffer":2}],18:[function(require,module,exports){
+},{"./CircularBuffer":2}],19:[function(require,module,exports){
 'use strict';
 
 var _overlay = $('[data-overlay]');
@@ -5370,7 +5391,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.find('.confirm').trigger('focus');
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports={
 	"popups": {
 		"create_new": {
@@ -5507,7 +5528,7 @@ module.exports={
 	}
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
@@ -5517,6 +5538,6 @@ function sanitise(name) {
 
 module.exports.sanitise = sanitise;
 
-},{}]},{},[16])
+},{}]},{},[17])
 
 //# sourceMappingURL=bundle.js.map
