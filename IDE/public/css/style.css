@@ -972,7 +972,8 @@ ul dl {
   margin-bottom: 10px;
   max-height: 60vh;
   min-height: 100px;
-  overflow-y: auto;
+  max-height: 500px;
+  overflow: hidden;
   padding: 4em;
   position: absolute;
   top: calc((100% / 2) - 300px);
@@ -982,6 +983,9 @@ ul dl {
   #popup.active {
     display: inline;
     z-index: 9999; }
+  #popup #popup-content pre {
+    max-height: 300px;
+    overflow: auto; }
   #popup h1 {
     color: #00bea4;
     font-size: 2em;
