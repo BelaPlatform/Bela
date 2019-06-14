@@ -3184,17 +3184,52 @@ var ProjectView = function (_View) {
 				var _loop3 = function _loop3() {
 					var item = _step3.value;
 
+					/*
+     Button header text    +
+     Library description here.
+      [Later button to launch KB]
+      Use this library:
+     ------------------------------
+     // This div is includeContent
+     #include <example>                                // This line is includeLine
+     (small) Copy and paste in the header of render.cpp// This line is includeInstructions
+     // End includeContent
+      Files:
+     ------------------------------
+     > one
+     > two
+      Library info:
+     ------------------------------
+     Name: XXX
+     Version: XXX
+     Author: XXX (mailto link)
+     Maintainer: xxx 
+     */
+
 					var name = item.name;
-					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
-					var parentUl = $('<ul></ul>');
-					var parentLi = $('<li></li>');
-					var childUl = $('<ul></ul>').addClass('libraries-list');
-					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
-					var childTitle = $('<p></p>').addClass('file-heading').text('Files');
-					var libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
-					var includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+					var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+					var libraryItem = $('<li></li>'); // Individual library dropdown
+
+					var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
+
+					var libDesc = $('<div></div>').addClass('library-desc'); // Div to contain lib descriotion
+
+					// INCLUDES:
+					var includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
+					var includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
+					var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
+					var includeCopy = $('<button></button>').addClass('include-copy');
+					// let includeLine = $('<p></p>').addClass('include-text');
+
+					// FILES:
+					var filesTitle = $('<p></p>').addClass('file-heading').text('Files');
+					var filesList = $('<ul></ul>').addClass('libraries-list');
+
+					var libInfoContent = $('<div></div>').addClass('lib-info-content');
+
 					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
-					var includeCP = $('<p><p>').addClass('copy').text('Copy to clipboard').on('click', function () {
+					var includeCP = $('<p></p>').addClass('copy').text('Copy to clipboard').on('click', function () {
 						var includes = $(this).parent().find('[data-form]');
 						// includes.focus();
 						includes.select();
@@ -3218,8 +3253,8 @@ var ProjectView = function (_View) {
 								(function () {
 									var i = 0;
 									var childPath = '/libraries/' + item.name + "/" + _child;
-									var libDataDiv = $('<div></div>');
-									var libData = $('<dl></dl>');
+									// let libDataDiv = $('<div></div>');
+									// let libData = $('<dl></dl>');
 									var includeArr = [];
 									var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
 									var includeText = $('<pre></pre>');
@@ -3249,6 +3284,7 @@ var ProjectView = function (_View) {
 														}
 													}
 												}
+												// Get the #include line and add to includeContent
 											} catch (err) {
 												_didIteratorError5 = true;
 												_iteratorError5 = err;
@@ -3264,41 +3300,7 @@ var ProjectView = function (_View) {
 												}
 											}
 
-											if (object.name) {
-												var libNameDT = $('<dt></dt>').text('Name:');
-												libNameDT.appendTo(libData);
-												var libNameDD = $('<dd></dd>').text(object.name);
-												libNameDD.appendTo(libData);
-											}
-											if (object.version) {
-												var libVersionDT = $('<dt></dt>').text('Version:');
-												libVersionDT.appendTo(libData);
-												var libVersionDD = $('<dd></dd>').text(object.version);
-												libVersionDD.appendTo(libData);
-											}
-											if (object.author) {
-												var libAuthorDT = $('<dt></dt>').text('Author:');
-												libAuthorDT.appendTo(libData);
-												var libAuthorDD = $('<dd></dd>').text(object.author);
-												libAuthorDD.appendTo(libData);
-											}
-											if (object.maintainer) {
-												var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
-												libMaintainerDT.appendTo(libData);
-												var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
-												libMaintainerDD.appendTo(libData);
-											}
-											if (object.description) {
-												var libDescriptionDT = $('<dt></dt>').text('Description:');
-												libDescriptionDT.appendTo(libData);
-												var libDescriptionDD = $('<dd></dd>').text(object.description);
-												libDescriptionDD.appendTo(libData);
-											}
-											includeInstructions.appendTo(libDataDiv);
-											includeCP.appendTo(libDataDiv);
-											includeForm.appendTo(libDataDiv);
 											if (includeArr.length > 0) {
-												includeTitle.appendTo(libDataDiv);
 												var _iteratorNormalCompletion6 = true;
 												var _didIteratorError6 = false;
 												var _iteratorError6 = undefined;
@@ -3307,10 +3309,9 @@ var ProjectView = function (_View) {
 													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
 														var include = _step6.value;
 
-														var _includeText = $('<pre></pre>');
-														_includeText.text('#include <' + include + '>').attr('data-include', '');
-														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														_includeText.appendTo(libDataDiv);
+														var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
+														//   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
+														_includeText.appendTo(includeLines);
 													}
 												} catch (err) {
 													_didIteratorError6 = true;
@@ -3326,22 +3327,89 @@ var ProjectView = function (_View) {
 														}
 													}
 												}
+
+												includeLines.appendTo(includeContent);
 											} else {
-												includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeText.appendTo(libDataDiv);
+												var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
+												_includeText2.appendTo(includeLines);
+												includeLines.appendTo(includeContent);
+												includeCopy.appendTo(includeContent);
 											}
+
+											// // Get text for library description
+											// if (object.description != '' && object.description != '.') {
+											//   let libDescText = $('<p></p>').text(object.description);
+											//   libDesc.append(libDescText);
+											// }
+											// // Construct the libInfo elements:
+											// // Library name
+											// if (object.name) {
+											//   var infoName = $('<p></p>').text("Library name: ");
+											//   infoName.append(object.name);
+											//   infoName.appendTo(libInfoContent);
+											// }
+											// // Library version
+											// if (object.version) {
+											//   var infoVer = $('<p></p>').text('Version: ');
+											//   infoVer.append(object.version);
+											//   infoVer.appendTo(libInfoContent);
+											// }
+											// // Authors
+											// if (object.author) {
+											//   var infoAuth = $('<p></p>').text('Author: ');
+											//   infoAuth.append(object.author);
+											//   infoAuth.appendTo(libInfoContent);
+											// }
+											// // Maintainers
+											// if (object.maintainer) {
+											//   var infoMaintainer = $('<p></p>').text('Maintainer: ');
+											//   infoMaintainer.append(object.maintainer);
+											//   infoMaintainer.appendTo(libInfoContent);
+											// }
+
+											// includeInstructions.appendTo(libDataDiv);
+											// includeCP.appendTo(libDataDiv);
+											// includeForm.appendTo(includeContent);
+											// if (includeArr.length > 0) {
+											//   includeTitle.appendTo(libDataDiv);
+											//   for (let include of includeArr) {
+											//     let includeText = $('<pre></pre>');
+											//     includeText.text('#include <' + include + '>').attr('data-include','');
+											//     includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include','');
+											//     // includeText.appendTo(libDataDiv);
+											//     // includeForm.appendTo(includeLine);
+											//     includeText.appendTo(libDataDiv);
+											//   }
+											// includeInstructions.appendTo(libDataDiv);
+											// includeCP.appendTo(libDataDiv);
+											// includeForm.appendTo(includeContent);
+											// if (includeArr.length > 0) {
+											//   // includeTitle.appendTo(libDataDiv);
+											//   for (let include of includeArr) {
+											//     let includeText = $('<pre></pre>');
+											//     includeText.text('#include <' + include + '>').attr('data-include','');
+											//     includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include','');
+											//     // includeText.appendTo(libDataDiv);
+											//     // includeForm.appendTo(includeLine);
+											//     // includeText.appendTo(libDataDiv);
+											//     includeCP.appendTo(includeContent);
+											//   }
+											// } else {
+											//   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
+											//   includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
+											//   includeText.appendTo(includeLine);
+											// }
 											includeArr = [];
-											libTitle.appendTo(libDataDiv);
-											libData.appendTo(libDataDiv);
-											libDataDiv.appendTo(childDiv);
+											// libTitle.appendTo(libDataDiv);
+											// libData.appendTo(libDataDiv);
+											libDataDiv.appendTo(libraryPanel);
 											libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
 										}
 									});
 								})();
 							} else {
 								childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
-								childLi.appendTo(childUl);
+								childLi.appendTo(filesList);
 							}
 						}
 						// per section
@@ -3361,14 +3429,22 @@ var ProjectView = function (_View) {
 						}
 					}
 
-					parentButton.appendTo(parentLi);
+					parentButton.appendTo(libraryItem);
+					libDesc.appendTo(libraryPanel); // Add library description, if present
 					// per item in section
 					// childLi -> childUl -> parentDiv -> $examples
-					childTitle.appendTo(childDiv);
-					childUl.appendTo(childDiv);
-					childDiv.appendTo(parentLi);
-					parentLi.appendTo(parentUl);
-					parentLi.appendTo($libraries);
+					includeTitle.appendTo(libraryPanel);
+
+					includeContent.appendTo(libraryPanel);
+
+					filesTitle.appendTo(libraryPanel); // Include the Files: section title
+					filesList.appendTo(libraryPanel); // List the files
+
+					libInfoContent.appendTo(libraryPanel);
+
+					libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
+					libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
+					libraryItem.appendTo($libraries);
 				};
 
 				for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
