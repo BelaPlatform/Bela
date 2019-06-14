@@ -125,3 +125,10 @@
   position: relative;
   z-index: 100;
 }
+
+.tooltipster-base.tooltipster-bottom .tooltipster-arrow .tooltipster-arrow-background {
+  border-bottom-color: #fff;
+}
+.tooltipster-base.tooltipster-top .tooltipster-arrow .tooltipster-arrow-background {
+  border-top-color: #fff;
+}
