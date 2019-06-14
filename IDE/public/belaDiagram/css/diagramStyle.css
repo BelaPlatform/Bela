@@ -126,9 +126,23 @@
   z-index: 100;
 }
 
-.tooltipster-base.tooltipster-bottom .tooltipster-arrow .tooltipster-arrow-background {
-  border-bottom-color: #fff;
+.tooltipster-box {
+  border-width: 2px!important;
+  border-color: #00bea4!important;
 }
-.tooltipster-base.tooltipster-top .tooltipster-arrow .tooltipster-arrow-background {
-  border-top-color: #fff;
+
+.tooltipster-bottom .tooltipster-arrow-border {
+  border-bottom-color: #00bea4!important;
+}
+
+.tooltipster-bottom .tooltipster-arrow-background {
+  border-bottom-color: white!important;
+}
+
+.tooltipster-top .tooltipster-arrow-border {
+  border-top-color: #00bea4!important;
+}
+
+.tooltipster-top .tooltipster-arrow-background {
+  border-top-color: white!important;
 }
