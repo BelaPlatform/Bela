@@ -1,4 +1,4 @@
-define("ace/theme/textmate",["require","exports","module","ace/lib/dom"], function(require, exports, module) {
+ace.define("ace/theme/textmate",["require","exports","module","ace/lib/dom"], function(require, exports, module) {
 "use strict";
 
 exports.isDark = false;
@@ -98,7 +98,6 @@ background: rgb(181, 213, 255);\
 }\
 .ace-tm.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px white;\
-border-radius: 2px;\
 }\
 .ace-tm .ace_marker-layer .ace_step {\
 background: rgb(252, 255, 0);\
@@ -124,84 +123,13 @@ border: 1px solid rgb(200, 200, 250);\
 background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==\") right repeat-y;\
 }\
 ";
+exports.$id = "ace/theme/textmate";
 
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
 
-define("ace/ace",["require","exports","module","ace/lib/fixoldbrowsers","ace/lib/dom","ace/lib/event","ace/editor","ace/edit_session","ace/undomanager","ace/virtual_renderer","ace/worker/worker_client","ace/keyboard/hash_handler","ace/placeholder","ace/multi_select","ace/mode/folding/fold_mode","ace/theme/textmate","ace/ext/error_marker","ace/config"], function(require, exports, module) {
-"use strict";
-
-require("./lib/fixoldbrowsers");
-
-var dom = require("./lib/dom");
-var event = require("./lib/event");
-
-var Editor = require("./editor").Editor;
-var EditSession = require("./edit_session").EditSession;
-var UndoManager = require("./undomanager").UndoManager;
-var Renderer = require("./virtual_renderer").VirtualRenderer;
-require("./worker/worker_client");
-require("./keyboard/hash_handler");
-require("./placeholder");
-require("./multi_select");
-require("./mode/folding/fold_mode");
-require("./theme/textmate");
-require("./ext/error_marker");
-
-exports.config = require("./config");
-exports.require = require;
-exports.edit = function(el) {
-    if (typeof(el) == "string") {
-        var _id = el;
-        el = document.getElementById(_id);
-        if (!el)
-            throw new Error("ace.edit can't find div #" + _id);
-    }
-
-    if (el && el.env && el.env.editor instanceof Editor)
-        return el.env.editor;
-
-    var value = "";
-    if (el && /input|textarea/i.test(el.tagName)) {
-        var oldNode = el;
-        value = oldNode.value;
-        el = dom.createElement("pre");
-        oldNode.parentNode.replaceChild(el, oldNode);
-    } else {
-        value = dom.getInnerText(el);
-        el.innerHTML = '';
-    }
-
-    var doc = exports.createEditSession(value);
-
-    var editor = new Editor(new Renderer(el));
-    editor.setSession(doc);
-
-    var env = {
-        document: doc,
-        editor: editor,
-        onResize: editor.resize.bind(editor, null)
-    };
-    if (oldNode) env.textarea = oldNode;
-    event.addListener(window, "resize", env.onResize);
-    editor.on("destroy", function() {
-        event.removeListener(window, "resize", env.onResize);
-        env.editor.container.env = null; // prevent memory leak on old ie
-    });
-    editor.container.env = editor.env = env;
-    return editor;
-};
-exports.createEditSession = function(text, mode) {
-    var doc = new EditSession(text, mode);
-    doc.setUndoManager(new UndoManager());
-    return doc;
-}
-exports.EditSession = EditSession;
-exports.UndoManager = UndoManager;
-});
-
-define("ace/ext/textarea",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/net","ace/ace","ace/theme/textmate"], function(require, exports, module) {
+ace.define("ace/ext/textarea",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/net","ace/ace","ace/theme/textmate"], function(require, exports, module) {
 "use strict";
 
 var event = require("../lib/event");
@@ -276,6 +204,7 @@ function setupContainer(element, getValue) {
 }
 
 exports.transformTextarea = function(element, options) {
+    var isFocused = element.autofocus || document.activeElement == element;
     var session;
     var container = setupContainer(element, function() {
         return session.getValue();
@@ -298,12 +227,9 @@ exports.transformTextarea = function(element, options) {
         position: "absolute",
         right: "0px",
         bottom: "0px",
-        background: "red",
         cursor: "nw-resize",
-        borderStyle: "solid",
-        borderWidth: "9px 8px 10px 9px",
-        width: "2px",
-        borderColor: "lightblue gray gray lightblue",
+        border: "solid 9px",
+        borderColor: "lightblue gray gray #ceade6",
         zIndex: 101
     });
 
@@ -336,9 +262,10 @@ exports.transformTextarea = function(element, options) {
     session = editor.getSession();
 
     session.setValue(element.value || element.innerHTML);
-    editor.focus();
+    if (isFocused)
+        editor.focus();
     container.appendChild(settingOpener);
-    setupApi(editor, editorDiv, settingDiv, ace, options, load);
+    setupApi(editor, editorDiv, settingDiv, ace, options);
     setupSettingPanel(settingDiv, settingOpener, editor);
 
     var state = "";
@@ -355,6 +282,7 @@ exports.transformTextarea = function(element, options) {
     });
 
     event.addListener(settingOpener, "mousedown", function(e) {
+        e.preventDefault();
         if (state == "toggle") {
             editor.setDisplaySettings();
             return;
@@ -379,10 +307,9 @@ function load(url, module, callback) {
     });
 }
 
-function setupApi(editor, editorDiv, settingDiv, ace, options, loader) {
+function setupApi(editor, editorDiv, settingDiv, ace, options) {
     var session = editor.getSession();
     var renderer = editor.renderer;
-    loader = loader || load;
 
     function toBool(value) {
         return value === "true" || value == true;
@@ -408,10 +335,10 @@ function setupApi(editor, editorDiv, settingDiv, ace, options, loader) {
     editor.setOption = function(key, value) {
         switch (key) {
             case "mode":
-                editor.$setOption("mode", "ace/mode/" + value)
+                editor.$setOption("mode", "ace/mode/" + value);
             break;
             case "theme":
-                editor.$setOption("theme", "ace/theme/" + value)
+                editor.$setOption("theme", "ace/theme/" + value);
             break;
             case "keybindings":
                 switch (value) {
@@ -426,7 +353,7 @@ function setupApi(editor, editorDiv, settingDiv, ace, options, loader) {
                 }
             break;
 
-            case "softWrap":
+            case "wrap":
             case "fontSize":
                 editor.$setOption(key, value);
             break;
@@ -439,15 +366,15 @@ function setupApi(editor, editorDiv, settingDiv, ace, options, loader) {
     editor.getOption = function(key) {
         switch (key) {
             case "mode":
-                return editor.$getOption("mode").substr("ace/mode/".length)
+                return editor.$getOption("mode").substr("ace/mode/".length);
             break;
 
             case "theme":
-                return editor.$getOption("theme").substr("ace/theme/".length)
+                return editor.$getOption("theme").substr("ace/theme/".length);
             break;
 
             case "keybindings":
-                var value = editor.getKeyboardHandler()
+                var value = editor.getKeyboardHandler();
                 switch (value && value.$id) {
                     case "ace/keyboard/vim":
                         return "vim";
@@ -514,6 +441,7 @@ function setupSettingPanel(settingDiv, settingOpener, editor) {
             cobalt:           "Cobalt",
             crimson_editor:   "Crimson Editor",
             dawn:             "Dawn",
+            gob:              "Green on Black",
             eclipse:          "Eclipse",
             idle_fingers:     "Idle Fingers",
             kr_theme:         "Kr Theme",
@@ -625,8 +553,11 @@ exports.defaultOptions = {
     showInvisibles:     "false"
 };
 
-});
-                (function() {
-                    window.require(["ace/ext/textarea"], function() {});
+});                (function() {
+                    ace.require(["ace/ext/textarea"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
                 })();
             

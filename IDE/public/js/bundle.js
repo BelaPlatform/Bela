@@ -1059,7 +1059,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":19,"./site-text.json":20}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1511,7 +1511,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":19,"../site-text.json":20,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1786,7 +1786,7 @@ function xmlClassDocs(classname, emitter) {
   });
 }
 
-},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":20,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1800,6 +1800,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
 var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 var uploadDelay = 50;
 
@@ -1814,12 +1815,14 @@ var activeWordIDs = [];
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
 
-	function EditorView(className, models) {
+	function EditorView(className, models, data) {
 		_classCallCheck(this, EditorView);
 
 		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
 
 		_this.highlights = {};
+		var data = tmpData;
+		var opts = tmpOpts;
 
 		_this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -1828,11 +1831,6 @@ var EditorView = function (_View) {
 		_this.parser.init(_this.editor, langTools);
 		_this.parser.enable(true);
 
-		// set syntax mode
-		_this.on('syntax-highlighted', function () {
-			return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
-		});
-		_this.editor.session.setMode('ace/mode/c_cpp');
 		_this.editor.$blockScrolling = Infinity;
 
 		// set theme
@@ -1852,10 +1850,30 @@ var EditorView = function (_View) {
 		// this function is called when the user modifies the editor
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);
+			var data = tmpData;
+			var opts = tmpOpts;
 			if (!uploadBlocked) {
 				_this.editorChanged();
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
+			}
+			// set syntax mode - defaults to text
+			_this.on('syntax-highlighted', function () {
+				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
+			});
+			if (opts.fileType && opts.fileType == "cpp") {
+				_this.editor.session.setMode('ace/mode/c_cpp');
+			} else if (opts.fileType && opts.fileType == "js") {
+				_this.editor.session.setMode('ace/mode/javascript');
+			} else if (opts.fileType && opts.fileType == "csd") {
+				_this.editor.session.setMode('ace/mode/csound_document');
+				// the following is only there for the sake of completeness - there
+				// is no SuperCollider syntax highlighting for the Ace editor
+				// } else if (opts.fileType && opts.fileType == "scd") {
+				//   this.editor.session.setMode('ace/mode/text');
+			} else {
+				// if we don't know what the file extension is just default to plain text
+				_this.editor.session.setMode('ace/mode/text');
 			}
 		});
 
@@ -2153,7 +2171,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
+},{"../parser":18,"../site-text.json":20,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2663,7 +2681,7 @@ function isDir(item) {
 
 module.exports = FileView;
 
-},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],9:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2865,7 +2883,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],10:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2880,6 +2898,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
+var example_order = require('../example_order.json');
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -3064,9 +3083,22 @@ var ProjectView = function (_View) {
 			var _this6 = this;
 
 			var $examples = $('[data-examples]');
+			var oldListOrder = examplesDir;
+			var newListOrder = [];
+
 			$examples.empty();
 
 			if (!examplesDir.length) return;
+
+			oldListOrder.forEach(function (item) {
+				example_order.forEach(function (new_item) {
+					if (new_item == item.name) {
+						newListOrder.push(item);
+						oldListOrder.splice(oldListOrder.indexOf(item), 1);
+					}
+				});
+			});
+			var orderedList = newListOrder.concat(oldListOrder);
 
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
@@ -3150,7 +3182,7 @@ var ProjectView = function (_View) {
 					parentLi.appendTo($examples);
 				};
 
-				for (var _iterator = examplesDir[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					_loop();
 				}
 			} catch (err) {
@@ -3184,165 +3216,195 @@ var ProjectView = function (_View) {
 				var _loop3 = function _loop3() {
 					var item = _step3.value;
 
+					/*
+     Button header text    +
+     Library description here.
+      [Later button to launch KB]
+      Use this library:
+     ------------------------------
+     // This div is includeContent
+     #include <example>                                // This line is includeLine
+     (small) Copy and paste in the header of render.cpp// This line is includeInstructions
+     // End includeContent
+      Files:
+     ------------------------------
+     > one
+     > two
+      Library info:
+     ------------------------------
+     Name: XXX
+     Version: XXX
+     Author: XXX (mailto link)
+     Maintainer: xxx
+     */
+
 					var name = item.name;
-					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
-					var parentUl = $('<ul></ul>');
-					var parentLi = $('<li></li>');
-					var childUl = $('<ul></ul>').addClass('libraries-list');
-					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
-					var childTitle = $('<p></p>').addClass('file-heading').text('Files');
-					var libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
-					var includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
-					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
-					var includeCP = $('<p><p>').addClass('copy').text('Copy to clipboard').on('click', function () {
-						var includes = $(this).parent().find('[data-form]');
-						// includes.focus();
-						includes.select();
-						document.execCommand("copy");
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+					var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+					var libraryItem = $('<li></li>'); // Individual library dropdown
+
+					var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
+
+					var libDesc = $('<div></div>').addClass('library-desc'); // Div to contain lib descriotion
+
+					// INCLUDES:
+					var includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
+					var includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
+					var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
+					var includeCopy = $('<button></button>').addClass('include-copy');
+					clipboard = new Clipboard(includeCopy[0], {
+						target: function target(trigger) {
+							return $(trigger).parent().find($('[data-include="include-text"]'))[0];
+						}
 					});
+
+					// FILES:
+
+					var filesTitle = $('<p></p>').addClass('file-heading').text('Files');
+					var filesList = $('<ul></ul>').addClass('libraries-list');
+
+					var libInfoContent = $('<div></div>').addClass('lib-info-content');
+
+					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
 
 					try {
-						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-							var _child = _step4.value;
+						var _loop4 = function _loop4() {
+							var child = _step4.value;
 
 							// console.log(child);
-							if (_child && _child.length && _child[0] === '.') continue;
+							if (child && child.length && child[0] === '.') return 'continue';
 							var childLi = $('<li></li>');
-							var testExt = _child.split('.');
+							var testExt = child.split('.');
 							var childExt = testExt[testExt.length - 1];
 							// The MetaData file
 							if (childExt === 'metadata') {
-								(function () {
-									var i = 0;
-									var childPath = '/libraries/' + item.name + "/" + _child;
-									var libDataDiv = $('<div></div>');
-									var libData = $('<dl></dl>');
-									var includeArr = [];
-									var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
-									var includeText = $('<pre></pre>');
-									$.ajax({
-										type: "GET",
-										url: "/libraries/" + name + "/" + _child,
-										dataType: "html",
-										success: function success(text) {
-											i += 1;
-											var object = {};
-											var transformText = text.split('\n');
-											var _iteratorNormalCompletion5 = true;
-											var _didIteratorError5 = false;
-											var _iteratorError5 = undefined;
+								var i = 0;
+								var childPath = '/libraries/' + item.name + "/" + child;
+								var libDataDiv = $('<div></div>');
+								var includeArr = [];
+								var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
+								var includeText = $('<pre></pre>');
+								$.ajax({
+									type: "GET",
+									url: "/libraries/" + name + "/" + child,
+									dataType: "html",
+									success: function success(text) {
+										i += 1;
+										var object = {};
+										var transformText = text.split('\n');
+										var _iteratorNormalCompletion5 = true;
+										var _didIteratorError5 = false;
+										var _iteratorError5 = undefined;
+
+										try {
+											for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+												var line = _step5.value;
+
+												if (line.length > 0) {
+													var splitKeyVal = line.split('=');
+													var key = splitKeyVal[0];
+													if (key == 'include') {
+														includeArr.push(splitKeyVal[1]);
+													} else {
+														object[key] = splitKeyVal[1];
+													}
+												}
+											}
+											// Get the #include line and add to includeContent
+										} catch (err) {
+											_didIteratorError5 = true;
+											_iteratorError5 = err;
+										} finally {
+											try {
+												if (!_iteratorNormalCompletion5 && _iterator5.return) {
+													_iterator5.return();
+												}
+											} finally {
+												if (_didIteratorError5) {
+													throw _iteratorError5;
+												}
+											}
+										}
+
+										if (includeArr.length > 0) {
+											var _iteratorNormalCompletion6 = true;
+											var _didIteratorError6 = false;
+											var _iteratorError6 = undefined;
 
 											try {
-												for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-													var line = _step5.value;
+												for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+													var include = _step6.value;
 
-													if (line.length > 0) {
-														var splitKeyVal = line.split('=');
-														var key = splitKeyVal[0];
-														if (key == 'include') {
-															includeArr.push(splitKeyVal[1]);
-														} else {
-															object[key] = splitKeyVal[1];
-														}
-													}
+													var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
+													//   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
+													_includeText.appendTo(includeLines);
 												}
 											} catch (err) {
-												_didIteratorError5 = true;
-												_iteratorError5 = err;
+												_didIteratorError6 = true;
+												_iteratorError6 = err;
 											} finally {
 												try {
-													if (!_iteratorNormalCompletion5 && _iterator5.return) {
-														_iterator5.return();
+													if (!_iteratorNormalCompletion6 && _iterator6.return) {
+														_iterator6.return();
 													}
 												} finally {
-													if (_didIteratorError5) {
-														throw _iteratorError5;
+													if (_didIteratorError6) {
+														throw _iteratorError6;
 													}
 												}
 											}
 
-											if (object.name) {
-												var libNameDT = $('<dt></dt>').text('Name:');
-												libNameDT.appendTo(libData);
-												var libNameDD = $('<dd></dd>').text(object.name);
-												libNameDD.appendTo(libData);
-											}
-											if (object.version) {
-												var libVersionDT = $('<dt></dt>').text('Version:');
-												libVersionDT.appendTo(libData);
-												var libVersionDD = $('<dd></dd>').text(object.version);
-												libVersionDD.appendTo(libData);
-											}
-											if (object.author) {
-												var libAuthorDT = $('<dt></dt>').text('Author:');
-												libAuthorDT.appendTo(libData);
-												var libAuthorDD = $('<dd></dd>').text(object.author);
-												libAuthorDD.appendTo(libData);
-											}
-											if (object.maintainer) {
-												var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
-												libMaintainerDT.appendTo(libData);
-												var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
-												libMaintainerDD.appendTo(libData);
-											}
-											if (object.description) {
-												var libDescriptionDT = $('<dt></dt>').text('Description:');
-												libDescriptionDT.appendTo(libData);
-												var libDescriptionDD = $('<dd></dd>').text(object.description);
-												libDescriptionDD.appendTo(libData);
-											}
-											includeInstructions.appendTo(libDataDiv);
-											includeCP.appendTo(libDataDiv);
-											includeForm.appendTo(libDataDiv);
-											if (includeArr.length > 0) {
-												includeTitle.appendTo(libDataDiv);
-												var _iteratorNormalCompletion6 = true;
-												var _didIteratorError6 = false;
-												var _iteratorError6 = undefined;
+											includeLines.appendTo(includeContent);
+										} else {
+											var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
+											_includeText2.appendTo(includeLines);
+											includeLines.appendTo(includeContent);
+											includeCopy.appendTo(includeContent);
+										}
 
-												try {
-													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-														var include = _step6.value;
+										includeArr = [];
+										libDataDiv.appendTo(libraryPanel);
+										libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+									}
+								});
+							} else {
+								childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function () {
+									var fileLocation = '/libraries/' + item.name + '/' + child;
+									// build the popup content
+									popup.title(child);
 
-														var _includeText = $('<pre></pre>');
-														_includeText.text('#include <' + include + '>').attr('data-include', '');
-														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														_includeText.appendTo(libDataDiv);
-													}
-												} catch (err) {
-													_didIteratorError6 = true;
-													_iteratorError6 = err;
-												} finally {
-													try {
-														if (!_iteratorNormalCompletion6 && _iterator6.return) {
-															_iterator6.return();
-														}
-													} finally {
-														if (_didIteratorError6) {
-															throw _iteratorError6;
-														}
-													}
-												}
-											} else {
-												includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeText.appendTo(libDataDiv);
+									var form = [];
+									$.ajax({
+										type: "GET",
+										url: "/libraries/" + item.name + "/" + child,
+										dataType: "html",
+										success: function success(text) {
+											var codeBlock = $('<pre></pre>');
+											var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+											for (var i = 0; i < transformText.length; i++) {
+												codeBlock.append(transformText[i] + '\n');
 											}
-											includeArr = [];
-											libTitle.appendTo(libDataDiv);
-											libData.appendTo(libDataDiv);
-											libDataDiv.appendTo(childDiv);
-											libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+											// console.log(codeBlock);
+											popup.code(codeBlock);
 										}
 									});
-								})();
-							} else {
-								childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
-								childLi.appendTo(childUl);
+
+									form.push('<button type="button" class="button popup cancel">Close</button>');
+									popup.form.append(form.join(''));
+									popup.find('.cancel').on('click', popup.hide);
+									popup.show();
+								});
+								childLi.appendTo(filesList);
 							}
+						};
+
+						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+							var _ret4 = _loop4();
+
+							if (_ret4 === 'continue') continue;
 						}
 						// per section
 						// item.name -> parentDiv $examples
@@ -3361,17 +3423,27 @@ var ProjectView = function (_View) {
 						}
 					}
 
-					parentButton.appendTo(parentLi);
+					parentButton.appendTo(libraryItem);
+					libDesc.appendTo(libraryPanel); // Add library description, if present
 					// per item in section
 					// childLi -> childUl -> parentDiv -> $examples
-					childTitle.appendTo(childDiv);
-					childUl.appendTo(childDiv);
-					childDiv.appendTo(parentLi);
-					parentLi.appendTo(parentUl);
-					parentLi.appendTo($libraries);
+					includeTitle.appendTo(libraryPanel);
+
+					includeContent.appendTo(libraryPanel);
+
+					filesTitle.appendTo(libraryPanel); // Include the Files: section title
+					filesList.appendTo(libraryPanel); // List the files
+
+					libInfoContent.appendTo(libraryPanel);
+
+					libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
+					libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
+					libraryItem.appendTo($libraries);
 				};
 
 				for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var clipboard;
+
 					_loop3();
 				}
 			} catch (err) {
@@ -3443,11 +3515,11 @@ var ProjectView = function (_View) {
 
 			try {
 				for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-					var _child2 = _step7.value;
+					var _child = _step7.value;
 
-					if (!_child2.dir) $('<li></li>').addClass('sourceFile').html(_child2.name).data('file', (dir.dirPath || dir.name) + '/' + _child2.name).appendTo(ul);else {
-						_child2.dirPath = (dir.dirPath || dir.name) + '/' + _child2.name;
-						ul.append(this.subDirs(_child2));
+					if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
+						_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
+						ul.append(this.subDirs(_child));
 					}
 				}
 			} catch (err) {
@@ -3474,7 +3546,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
+},{"../example_order.json":16,"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3966,7 +4038,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4041,8 +4113,26 @@ var TabView = function (_View) {
 		layout.on('stateChanged', function () {
 			return _this.emit('change');
 		});
-
+		// this.on('linkClicked', () => console.log('link click'));
+		_this.$elements.on('click', function (e) {
+			return _this.linkClicked($(e.currentTarget), e);
+		});
 		_this.on('boardString', _this._boardString);
+		_this.editor = ace.edit('editor');
+		var editor = _this.editor;
+		$('[data-tab-open]').on('click', function () {
+			if ($('[data-tabs]').hasClass('tabs-open')) {
+				setTimeout(function () {
+					$('[data-editor]').addClass('tabs-open');
+					editor.resize();
+				}, 750);
+			} else {
+				$('[data-editor]').removeClass('tabs-open');
+				setTimeout(function () {
+					editor.resize();
+				}, 500);
+			}
+		});
 
 		return _this;
 	}
@@ -4339,7 +4429,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4805,7 +4895,14 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"./popup":18,"./site-text.json":19,"events":1}],16:[function(require,module,exports){
+},{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
+module.exports=[
+  "13-Salt",
+  "08-PureData",
+  "04-Audio"
+]
+
+},{}],17:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -4815,7 +4912,7 @@ $(function () {
 	IDE = require('./IDE-browser');
 });
 
-},{"./IDE-browser":3}],17:[function(require,module,exports){
+},{"./IDE-browser":3}],18:[function(require,module,exports){
 'use strict';
 
 var Range = ace.require('ace/range').Range;
@@ -4823,7 +4920,8 @@ var Anchor = ace.require('ace/anchor').Anchor;
 var buf = new (require('./CircularBuffer'))(5);
 for (var i = 0; i < buf.capacity(); i++) {
 	buf.enq({});
-}var editor;
+}var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
+var editor;
 
 var parsingDeclaration = false;
 var parsingBody = false;
@@ -5269,7 +5367,7 @@ function searchHighlightsFor(sub, val) {
 
 module.exports = parser;
 
-},{"./CircularBuffer":2}],18:[function(require,module,exports){
+},{"./CircularBuffer":2}],19:[function(require,module,exports){
 'use strict';
 
 var _overlay = $('[data-overlay]');
@@ -5362,7 +5460,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.find('.confirm').trigger('focus');
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports={
 	"popups": {
 		"create_new": {
@@ -5499,7 +5597,7 @@ module.exports={
 	}
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
@@ -5509,6 +5607,6 @@ function sanitise(name) {
 
 module.exports.sanitise = sanitise;
 
-},{}]},{},[16])
+},{}]},{},[17])
 
 //# sourceMappingURL=bundle.js.map

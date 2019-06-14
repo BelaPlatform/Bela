@@ -58,8 +58,28 @@ class TabView extends View {
 		layout.init();
 		layout.on('initialised', () => this.emit('change') );
 		layout.on('stateChanged', () => this.emit('change') );
-
+    // this.on('linkClicked', () => console.log('link click'));
+    this.$elements.on('click', (e) => this.linkClicked($(e.currentTarget), e));
 		this.on('boardString', this._boardString);
+    this.editor = ace.edit('editor');
+    var editor = this.editor;
+    $('[data-tab-open]').on('click', function() {
+      if ($('[data-tabs]').hasClass('tabs-open')) {
+        setTimeout(
+          function() {
+            $('[data-editor]').addClass('tabs-open');
+            editor.resize();
+          },
+        750);
+      } else {
+        $('[data-editor]').removeClass('tabs-open');
+        setTimeout(
+          function() {
+            editor.resize();
+          },
+        500);
+      }
+    });
 
 	}
 
