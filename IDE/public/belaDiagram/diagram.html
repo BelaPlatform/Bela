@@ -10,9 +10,15 @@
     <script type="text/javascript" src="/js/diagram/jquery.tooltipster.min.js"></script>
     <!-- Raphael: for drawing -->
     <script type="text/javascript" src="/js/diagram/raphael-min.js"></script>
-    <!-- my custom bits of JS -->
-    <script type="text/javascript" src="/js/diagram/custom.js"></script>
     <!-- activate tooltip -->
+    <script>
+      const board = window.location.search.replace('?','');
+      let newscript = document.createElement("script");
+      newscript.type = 'text/javascript';
+      newscript.src = '/js/diagram/custom.js';
+      const headEl = document.getElementsByTagName("head")[0];
+      headEl.append(newscript);
+    </script>
 
 
 <title></title>

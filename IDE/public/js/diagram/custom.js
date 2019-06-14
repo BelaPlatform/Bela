@@ -1,12 +1,39 @@
 $(document).ready(function() {
   var mainImage = $('#image')[0];
-  var paper = new Raphael(mainImage, 300, 482);
-  var imageURL = '/belaDiagram/images/bela_pins_jun2016_rotated.jpg';
+  const board = window.location.search.replace('?','');
 
-  // write the image to the Raphael canvas
-  paper.image(imageURL, 0, 0, 300, 482);
+  if (board == 'BelaMini') {
+    var paper = new Raphael(mainImage, 300, 482);
+    var imageURL = '/belaDiagram/images/mini_pin_diagram.png';
+    var url = '/belaDiagram/json/data_mini.json';
+    paper.image(imageURL, 0, 0, 300, 482);
+  } else if (board == 'ctag_FACE') {
+    var paper = new Raphael(mainImage, 300, 686);
+    var imageURL = '/belaDiagram/images/ctag_FACE.jpg';
+    var url = '/belaDiagram/json/data_ctag_FACE.json';
+    paper.image(imageURL, 0, 0, 300, 686);
+  } else if (board == 'ctag_BELA') {
+    var paper = new Raphael(mainImage, 300, 686);
+    var imageURL = '/belaDiagram/images/ctag_BELA.jpg';
+    var url = '/belaDiagram/json/data_ctag_BELA.json';
+    paper.image(imageURL, 0, 0, 300, 686);
+  } else if (board == 'ctag_BEAST') {
+    var paper = new Raphael(mainImage, 300, 767);
+    var imageURL = '/belaDiagram/images/ctag_BEAST.jpg';
+    var url = '/belaDiagram/json/data_ctag_BEAST_slave.json';
+    paper.image(imageURL, 0, 0, 300, 767);
+  } else if (board == 'ctag_BEAST_BELA') {
+    var paper = new Raphael(mainImage, 300, 767);
+    var imageURL = '/belaDiagram/images/ctag_BEAST_BELA.jpg';
+    var url = '/belaDiagram/json/data_ctag_BEAST_BELA.json';
+    paper.image(imageURL, 0, 0, 300, 767);
+  } else {
+    var paper = new Raphael(mainImage, 300, 482);
+    var imageURL = '/belaDiagram/images/bela_pins_jun2016_rotated.jpg';
+    var url = '/belaDiagram/json/data.json';
+    paper.image(imageURL, 0, 0, 300, 482);
+  }
 
-  var url = '/belaDiagram/json/data.json';
   $.getJSON(url, function(data){
     for (var i in data){
       for (var k in data[i].things){

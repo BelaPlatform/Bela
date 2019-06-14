@@ -71,25 +71,8 @@ class TabView extends View {
 		else
 			return
 
-		if (boardString === 'BelaMini'){
-			$('[data-pin-diagram]').prop('data', rootDir + 'diagram_mini.html');
-		}
-		else if (boardString === 'CtagFace')
-		{
-			$('[data-pin-diagram]').prop('data', rootDir + 'diagram_ctag_FACE.html');
-		}
-		else if (boardString === 'CtagBeast')
-		{
-			$('[data-pin-diagram]').prop('data', rootDir + 'diagram_ctag_BEAST.html');
-		}
-		else if (boardString === 'CtagFaceBela')
-		{
-			$('[data-pin-diagram]').prop('data', rootDir + 'diagram_ctag_BELA.html');
-		}
-		else if (boardString === 'CtagBeastBela')
-		{
-			$('[data-pin-diagram]').prop('data', rootDir + 'diagram_ctag_BEAST_BELA.html');
-		}
+    $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
+    console.log(boardString);
 	}
 
 }
