@@ -243,7 +243,7 @@ class ProjectView extends View {
       Name: XXX
       Version: XXX
       Author: XXX (mailto link)
-      Maintainer: xxx 
+      Maintainer: xxx
       */
 
       let name = item.name;
@@ -260,7 +260,11 @@ class ProjectView extends View {
       let includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
       let includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
       let includeCopy = $('<button></button>').addClass('include-copy');
-      // let includeLine = $('<p></p>').addClass('include-text');
+      var clipboard = new Clipboard(includeCopy[0], {
+				target: function(trigger) {
+					return $(trigger).parent().find($('[data-include="include-text"]'))[0];
+				}
+			});
 
       // FILES:
       let filesTitle = $('<p></p>').addClass('file-heading').text('Files');
@@ -269,12 +273,6 @@ class ProjectView extends View {
       let libInfoContent = $('<div></div>').addClass('lib-info-content');
 
       let includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
-      let includeCP = $('<p></p>').addClass('copy').text('Copy to clipboard').on('click', function(){
-        let includes = $(this).parent().find('[data-form]');
-        // includes.focus();
-        includes.select();
-        document.execCommand("copy");
-      });
 			for (let child of item.children){
         // console.log(child);
 				if (child && child.length && child[0] === '.') continue;
@@ -285,8 +283,7 @@ class ProjectView extends View {
         if (childExt === 'metadata') {
           let i = 0;
           let childPath = '/libraries/' + item.name + "/" + child;
-          // let libDataDiv = $('<div></div>');
-          // let libData = $('<dl></dl>');
+          let libDataDiv = $('<div></div>');
           let includeArr = [];
           let includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
           let includeText = $('<pre></pre>');
@@ -324,80 +321,38 @@ class ProjectView extends View {
                 includeCopy.appendTo(includeContent);
               }
 
-
-
-              // // Get text for library description
-              // if (object.description != '' && object.description != '.') {
-              //   let libDescText = $('<p></p>').text(object.description);
-              //   libDesc.append(libDescText);
-              // }
-              // // Construct the libInfo elements:
-              // // Library name
-              // if (object.name) {
-              //   var infoName = $('<p></p>').text("Library name: ");
-              //   infoName.append(object.name);
-              //   infoName.appendTo(libInfoContent);
-              // }
-              // // Library version
-              // if (object.version) {
-              //   var infoVer = $('<p></p>').text('Version: ');
-              //   infoVer.append(object.version);
-              //   infoVer.appendTo(libInfoContent);
-              // }
-              // // Authors
-              // if (object.author) {
-              //   var infoAuth = $('<p></p>').text('Author: ');
-              //   infoAuth.append(object.author);
-              //   infoAuth.appendTo(libInfoContent);
-              // }
-              // // Maintainers
-              // if (object.maintainer) {
-              //   var infoMaintainer = $('<p></p>').text('Maintainer: ');
-              //   infoMaintainer.append(object.maintainer);
-              //   infoMaintainer.appendTo(libInfoContent);
-              // }
-
-              // includeInstructions.appendTo(libDataDiv);
-              // includeCP.appendTo(libDataDiv);
-              // includeForm.appendTo(includeContent);
-              // if (includeArr.length > 0) {
-              //   includeTitle.appendTo(libDataDiv);
-              //   for (let include of includeArr) {
-              //     let includeText = $('<pre></pre>');
-              //     includeText.text('#include <' + include + '>').attr('data-include','');
-              //     includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include','');
-              //     // includeText.appendTo(libDataDiv);
-              //     // includeForm.appendTo(includeLine);
-              //     includeText.appendTo(libDataDiv);
-              //   }
-              // includeInstructions.appendTo(libDataDiv);
-              // includeCP.appendTo(libDataDiv);
-              // includeForm.appendTo(includeContent);
-              // if (includeArr.length > 0) {
-              //   // includeTitle.appendTo(libDataDiv);
-              //   for (let include of includeArr) {
-              //     let includeText = $('<pre></pre>');
-              //     includeText.text('#include <' + include + '>').attr('data-include','');
-              //     includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include','');
-              //     // includeText.appendTo(libDataDiv);
-              //     // includeForm.appendTo(includeLine);
-              //     // includeText.appendTo(libDataDiv);
-              //     includeCP.appendTo(includeContent);
-              //   }
-              // } else {
-              //   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
-              //   includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
-              //   includeText.appendTo(includeLine);
-              // }
               includeArr = [];
-              // libTitle.appendTo(libDataDiv);
-              // libData.appendTo(libDataDiv);
               libDataDiv.appendTo(libraryPanel);
               libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
             }
           });
         } else {
-          childLi.html(child).attr('data-library-link', item.name + '/' + child);
+          childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function() {
+            let fileLocation = ('/libraries/' + item.name + '/' + child);
+             // build the popup content
+         		popup.title(child);
+
+         		var form = [];
+             $.ajax({
+               type: "GET",
+               url: "/libraries/" + item.name + "/" + child,
+               dataType: "html",
+               success: function(text){
+                 var codeBlock = $('<pre></pre>');
+                 var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+                 for (var i = 0; i < transformText.length; i++) {
+                   codeBlock.append(transformText[i] + '\n');
+                 }
+                 // console.log(codeBlock);
+                 popup.code(codeBlock);
+               }
+             });
+
+         		form.push('<button type="button" class="button popup cancel">Close</button>');
+             popup.form.append(form.join(''));
+         		popup.find('.cancel').on('click', popup.hide );
+         		popup.show();
+          });
           childLi.appendTo(filesList);
         }
 			}
@@ -449,6 +404,7 @@ class ProjectView extends View {
 				}
 			})
 	}
+
 	_currentProject(project){
 
 		// unselect currently selected project
