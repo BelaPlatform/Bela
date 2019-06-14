@@ -813,10 +813,7 @@ var ControlView = function (_View) {
     key: 'keyHandler',
     value: function keyHandler(e) {
       if (e.key === 'Escape') {
-        e.preventDefault();
-        controls = false;
-        $('#control-panel').addClass('hidden');
-        $('.overlay').removeClass('active');
+        this.toggleControls();
       }
     }
 
