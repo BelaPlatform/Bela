@@ -18,7 +18,13 @@ let max_file_size = 50000000;	// bytes (50Mb)
 // it opens the file from the project, if it is not too big or binary
 // if the file is an image or audio file, it is symlinked from the media folder
 export async function openFile(data: any){
-	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+  let file_path;
+  if (typeof data.newFile == 'undefined') {
+    data.newFile = data.fileName;
+    file_path = paths.projects+data.currentProject+'/'+data.newFile;
+  } else {
+    file_path = paths.projects+data.currentProject+'/'+data.newFile;
+  }
 	try{
 		var file_stat = await file_manager.stat_file(file_path);
 	}
