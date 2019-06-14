@@ -345,7 +345,7 @@ class ProjectView extends View {
               }
             });
 
-        		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+        		form.push('<button type="button" class="button popup cancel">Close</button>');
             popup.form.append(form.join(''));
         		popup.find('.cancel').on('click', popup.hide );
         		popup.show();
