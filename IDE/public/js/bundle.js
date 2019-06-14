@@ -4081,7 +4081,8 @@ var TabView = function (_View) {
             menuOpened = false;
             // reset x offset position but only after the tabbed menu has closed.
             setTimeout(function () {
-              $('[data-tab-content]').offset({ top: 0 });
+              // $('[data-tab-content]').offset().top;
+              $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
             }, 500);
           }
         }
@@ -4113,7 +4114,8 @@ var TabView = function (_View) {
             $(this).hide();
             if (tab === tabs.target) {
               // reset the x offset position of the tab content if it's changing
-              $('[data-tab-content]').offset({ top: 0 });
+              // $('[data-tab-content]').offset().top;
+              $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
               $(this).fadeIn();
             }
           }
