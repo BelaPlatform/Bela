@@ -338,7 +338,32 @@ class ProjectView extends View {
             }
           });
         } else {
-          childLi.html(child).attr('data-library-link', item.name + '/' + child);
+          childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function(){
+            let fileLocation = ('/libraries/' + item.name + '/' + child);
+            // build the popup content
+        		popup.title(child);
+
+        		var form = [];
+            $.ajax({
+              type: "GET",
+              url: "/libraries/" + item.name + "/" + child,
+              dataType: "html",
+              success: function(text){
+                var codeBlock = $('<pre></pre>');
+                var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+                for (var i = 0; i < transformText.length; i++) {
+                  codeBlock.append(transformText[i] + '\n');
+                }
+                // console.log(codeBlock);
+                popup.code(codeBlock);
+              }
+            });
+
+        		form.push('<button type="button" class="button popup cancel">Close</button>');
+            popup.form.append(form.join(''));
+        		popup.find('.cancel').on('click', popup.hide );
+        		popup.show();
+          });
           childLi.appendTo(childUl);
         }
 			}
