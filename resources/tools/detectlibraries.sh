@@ -140,9 +140,4 @@ done
 
 # make sure we only include each library once
 cat $TMPMKFILE | sort -u  > tmp/tmpmkfile
-mv tmp/tmpmkfile $TMPMKFILE
-
-cmp -s $TMPMKFILE $MKFILE && COMP=0 || COMP=1
-if [ $COMP -eq 1 ] ; then
-	cat $TMPMKFILE > $MKFILE
-fi
+mv tmp/tmpmkfile $MKFILE
