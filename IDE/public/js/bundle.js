@@ -4537,7 +4537,7 @@ var Console = function (_EventEmitter) {
 
 			var el = $('<div></div>').addClass('beaglert-console-' + className).appendTo(this.$element);
 			if (id) el.prop('id', id);
-			$('<span></span>').html(text).appendTo(el);
+			$('<span></span>').html(text + "\n").appendTo(el);
 
 			if (numElements++ > maxElements) this.clear(numElements / 4);
 			if (onClick) el.on('click', onClick);
