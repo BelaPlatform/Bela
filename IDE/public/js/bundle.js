@@ -1291,9 +1291,7 @@ var ConsoleView = function (_View) {
 			}
 		});
 
-		$('[data-console]').on('click', function () {
-			return $(_this.input).trigger('focus');
-		});
+		// $('[data-console]').on('click', () => $(this.input).trigger('focus') );
 		$('[data-console-content-wrapper]').on('click', function (e) {
 			return e.stopPropagation();
 		});
