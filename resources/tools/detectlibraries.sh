@@ -1,9 +1,7 @@
 #!/bin/bash -e
 
 getfield() {
-	if [ -f $MDFILE ] ; then
-		grep -i "$1=" $2 | sed "s/$1=\(.*\)/\1/"
-	fi
+	awk -v pat="$1" -F"=" ' $0 ~ pat { print $2 } ' $2
 }
 
 extract_dependencies() {
