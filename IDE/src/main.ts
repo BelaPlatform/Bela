@@ -69,7 +69,9 @@ function setup_routes(app: express.Application){
 	app.get('/download', routes.download);
 	// doxygen xml
 	app.get('/documentation_xml', routes.doxygen);
-	// libs
+	// examples
+	app.use('/examples', express.static(paths.examples));
+  // libs
 	app.use('/libraries', express.static(paths.libraries));
 	// gui
 	app.use('/gui', express.static(paths.gui));
