@@ -42,6 +42,7 @@ create_linkmakefile() {
 		OBJ=$DIR/build/${FILENAME%.*}.o
 		echo "$OBJ: $SOURCE" >> $MKFILELINK
 	done
+	echo "LIBRARIES_LDLIBS += $(getfield LDLIBS $MDFILE)" >> $MKFILELINK
 	echo "LIBRARIES_LDFLAGS += $(getfield LDFLAGS $MDFILE)" >> $MKFILELINK
 }
 
