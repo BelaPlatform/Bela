@@ -83,6 +83,7 @@ class FileView extends View {
 		$('[data-upload-file-input]').trigger('click');
 	}
 	renameFile(e){
+		// Get the name of the file to be renamed:
 		var name = $(e.target).attr('data_name');
 		// build the popup content
 		popup.title('Rename ' + name + '?');
@@ -106,10 +107,12 @@ class FileView extends View {
 
 	}
 
-	deleteFile(func){
+	deleteFile(e){
+		// Get the name of the file to be deleted:
+		var name = $(e.target).attr('data_name');
 
 		// build the popup content
-		popup.title(json.popups.delete_file.title);
+		popup.title('Delete ' + name + '?');
 		popup.subtitle(json.popups.delete_file.text);
 
 		var form = [];
@@ -201,9 +204,9 @@ class FileView extends View {
         var sourceLi = $('<li></li>').addClass('source-file').appendTo(sourceList);
         var sourceData = $('<div></div>').addClass('source-data-container').appendTo(sourceLi);
         var sourceText = $('<div></div>').addClass('source-text').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceData).on('click', (e) => this.othispenFile(e));
-        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.renameFile(e));
-        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data-name', sources[i].name).appendTo(sourceData);
-        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-name', sources[i].name).appendTo(sourceData);
+        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.renameFile(e));
+        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', sources[i].name).appendTo(sourceData);
+        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.deleteFile(e));;
       }
       sourceList.appendTo(source);
       source.appendTo($files);
