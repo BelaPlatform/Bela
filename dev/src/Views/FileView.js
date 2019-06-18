@@ -195,55 +195,31 @@ class FileView extends View {
 		resources.sort( (a, b) => a.name - b.name );
 		directories.sort( (a, b) => a.name - b.name );
 
-		if (sources.length) {
-      var source = $("<li></li>");
-			$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-      var sourceList = $('<ul></ul>').addClass('sub-file-list');
+		var file_list_elements = [ sources, headers, resources, directories ];
+		var file_list_elements_names = [ 'Sources', 'Headers', 'Resources', 'Directories' ];
 
-      for (let i=0; i < sources.length; i++) {
-        var sourceLi = $('<li></li>').addClass('source-file').appendTo(sourceList);
-        var sourceData = $('<div></div>').addClass('source-data-container').appendTo(sourceLi);
-        var sourceText = $('<div></div>').addClass('source-text').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceData).on('click', (e) => this.othispenFile(e));
-        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.renameFile(e));
-        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.downloadFile(e));
-        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.deleteFile(e));;
-      }
-      sourceList.appendTo(source);
-      source.appendTo($files);
-		}
+		// Build file structure by listing the contents of each section (if they exist)
 
-		if (headers.length) {
-      var header = $('<li></li>');
-      $('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-      var headerList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < headers.length; i++) {
-        $('<li></li>').addClass('source-file').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', (e) => this.openFile(e));
-      }
-      headerList.appendTo(header);
-      header.appendTo($files);
-		}
+		for (let i = 0; i < file_list_elements.length; i++) {
+			
+			if (file_list_elements[i].length) {
 
-
-		if (resources.length) {
-      var resource = $('<li></li>');
-			$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
-      var resourceList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < resources.length; i++) {
-        $('<li></li>').addClass('source-file').html(resources[i].name + ' <span class="file-list-size">' + resources[i].size + '</span>').data('file', resources[i].name).appendTo(resourceList).on('click', (e) => this.openFile(e));
-      }
-      resourceList.appendTo(resource);
-      resource.appendTo($files);
-		}
-
-		if (directories.length) {
-      var directory = $('<li></li>');
-			$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
-      var directoryList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < directories.length; i++) {
-        $('<li></li>').addClass('source-file').html(directories[i].name).appendTo(directoryList);
-      }
-      directoryList.appendTo(directory);
-      directory.appendTo($files);
+				var section = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+				var fileList = $('<ul></ul>').addClass('sub-file-list');
+				
+				for (let j = 0; j < file_list_elements[i].length; j++) {
+	        var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
+	        var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+	        var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
+	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
+	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.downloadFile(e));
+	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
+	      }
+	      
+	      fileList.appendTo(section);
+	      section.appendTo($files);
+			}
 		}
 
 		if (data && data.fileName) this._fileName(data.fileName);
