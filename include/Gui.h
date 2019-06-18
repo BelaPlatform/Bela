@@ -36,6 +36,10 @@ class Gui
 		unsigned int getBufferCapacity( unsigned int bufferId ){ return _buffers[bufferId].getCapacity(); };
 
 
+		// User defined functions
+		std::function<void(const char*)> customOnControlData;
+		std::function<void(const char*)> customOnData;
+
 	public:
 		Gui();
 		Gui(unsigned int port, std::string address);
@@ -69,11 +73,16 @@ class Gui
 
 		int getNumBytes( unsigned int bufferId );
 
+
+		void setControlDataCallback(std::function<void(const char*)> callback){ customOnControlData = callback; };
+		void setBinaryDataCallback(std::function<void(const char*)> callback){ customOnData = callback; };
+
 		template<typename T, typename A>
 		void sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
 
 		template<typename T>
 		void sendBuffer(unsigned int bufferId, T buffer);
+
 };
 
 template<typename T, typename A>

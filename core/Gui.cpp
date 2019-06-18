@@ -90,6 +90,8 @@ void Gui::ws_disconnect()
  */
 void Gui::ws_onControlData(const char* data)
 {
+	if(customOnControlData)
+		customOnControlData(data);
 	
 	// parse the data into a JSONValue
 	JSONValue *value = JSON::Parse(data);
@@ -112,15 +114,18 @@ void Gui::ws_onControlData(const char* data)
 	return;
 }
 
-void Gui::ws_onData(const char* packet)
+void Gui::ws_onData(const char* data)
 {
-	int bufferId = (int) *packet;
-	++packet;
-	char bufferType = *packet;
-	++packet;
-	int bufferLength = ((int)packet[1] << 8) | packet[0];
+	if(customOnData)
+		customOnData(data);
+
+	int bufferId = (int) *data;
+	++data;
+	char bufferType = *data;
+	++data;
+	int bufferLength = ((int)data[1] << 8) | data[0];
 	int numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
-	packet += 2;
+	data += 2;
 
 	if(bufferId < _buffers.size())
 	{
@@ -136,8 +141,8 @@ void Gui::ws_onData(const char* packet)
 				numBytes = getBufferCapacity(bufferId);
 			}
 			// Copy data to buffers
-			//std::memcpy(getBufferById(bufferId)->data(), packet, numBytes);
-			getBufferById(bufferId)->assign(packet, packet + numBytes);
+			//std::memcpy(getBufferById(bufferId)->data(), data, numBytes);
+			getBufferById(bufferId)->assign(data, data + numBytes);
 		}
 	}
 	else
