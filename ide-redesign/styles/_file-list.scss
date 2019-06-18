@@ -32,27 +32,42 @@ ul {
       height: 20px;
       position: absolute;
       top: 0;
-      width: 20px;
+      width: 15px;
       &.file-{
         &rename {
-          background-color: purple;
-          right: 0;
+          background-image: url(../images/icons/rename_inactive.svg);
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: 100% 80%;
+          background-color: transparent;
+          right: 18px;
           &:hover {
-            background-color: black;
+            background-image: url(../images/icons/rename_active.svg);
+            background-color: none;
           }
         }
         &download {
-          background-color: orange;
-          right: 22px;
+          background-image: url(../images/icons/download_inactive.svg);
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: 100% 80%;
+          background-color: transparent;
+          right: 36px;
           &:hover {
-            background-color: black;
+            background-image: url(../images/icons/download_active.svg);
+            background-color: none;
           }
         }
         &delete {
-          background-color: magenta;
-          right: 44px;
+          background-image: url(../images/icons/trash_inactive.svg);
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: 100% 80%;
+          background-color: transparent;
+          right: 0;
           &:hover {
-            background-color: black;
+            background-image: url(../images/icons/trash_active.svg);
+            background-color: none;
           }
         }
       }
