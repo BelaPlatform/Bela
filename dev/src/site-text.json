@@ -30,12 +30,12 @@
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "There is no undo.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
 			"title": "Delete this file?",
-			"text": "There is no undo.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},
 		"restore_default_project_settings": {
