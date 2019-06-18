@@ -34,40 +34,28 @@ ul {
       top: 0;
       width: 15px;
       &.file-{
+        background-size: 100% 80%;
         &rename {
-          background-image: url(../images/icons/rename_inactive.svg);
-          background-position: center;
-          background-repeat: no-repeat;
-          background-size: 100% 80%;
-          background-color: transparent;
-          right: 18px;
+          background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
+          right: 36px;
           &:hover {
-            background-image: url(../images/icons/rename_active.svg);
-            background-color: none;
+            background: transparent url(../images/icons/rename_active.svg) no-repeat center;
           }
         }
         &download {
-          background-image: url(../images/icons/download_inactive.svg);
-          background-position: center;
-          background-repeat: no-repeat;
-          background-size: 100% 80%;
-          background-color: transparent;
-          right: 36px;
+          background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
+          right: 18px;
           &:hover {
-            background-image: url(../images/icons/download_active.svg);
-            background-color: none;
+            background: transparent url(../images/icons/download_active.svg) no-repeat center;
           }
         }
         &delete {
-          background-image: url(../images/icons/trash_inactive.svg);
-          background-position: center;
-          background-repeat: no-repeat;
-          background-size: 100% 80%;
-          background-color: transparent;
+          background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
+          background-size: 100% 78%;
           right: 0;
           &:hover {
-            background-image: url(../images/icons/trash_active.svg);
-            background-color: none;
+            background: transparent url(../images/icons/trash_active.svg) no-repeat center;
+            background-size: 100% 78%;
           }
         }
       }
