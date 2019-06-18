@@ -205,7 +205,7 @@ class FileView extends View {
         var sourceData = $('<div></div>').addClass('source-data-container').appendTo(sourceLi);
         var sourceText = $('<div></div>').addClass('source-text').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceData).on('click', (e) => this.othispenFile(e));
         var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.renameFile(e));
-        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', sources[i].name).appendTo(sourceData);
+        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.downloadFile(e));
         var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', sources[i].name).appendTo(sourceData).on('click', (e) => this.deleteFile(e));;
       }
       sourceList.appendTo(source);
@@ -248,6 +248,16 @@ class FileView extends View {
 
 		if (data && data.fileName) this._fileName(data.fileName);
 	}
+
+	downloadFile(e) {
+		console.log($(e.target));
+		var filename = $(e.target).attr('data_name');
+		var project = $(e.target).data.currentProject;
+		var href = $(e.target).attr('href-stem') + filename;
+    e.preventDefault();  //stop the browser from following the link
+    window.location.href = href;
+	}
+
 	_fileName(file, data){
 
 		// select the opened file in the file manager tab
@@ -265,7 +275,7 @@ class FileView extends View {
 
 		if (data && data.currentProject){
 			// set download link
-			$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
+			$('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
 		}
 	}
 
