@@ -36,6 +36,7 @@ ul {
       &.file-{
         background-size: 100% 80%;
         &rename {
+          width: 17px;
           background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
           right: 36px;
           &:hover {
@@ -44,18 +45,20 @@ ul {
         }
         &download {
           background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
+          height: 18px;
           right: 18px;
+          top: 2px;
           &:hover {
             background: transparent url(../images/icons/download_active.svg) no-repeat center;
           }
         }
         &delete {
           background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
-          background-size: 100% 78%;
+          height: 16px;
           right: 0;
+          top: 2px;
           &:hover {
             background: transparent url(../images/icons/trash_active.svg) no-repeat center;
-            background-size: 100% 78%;
           }
         }
       }
