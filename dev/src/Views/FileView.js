@@ -199,9 +199,9 @@ class FileView extends View {
         var sourceLi = $('<li></li>').addClass('source-file').appendTo(sourceList);
         var sourceData = $('<div></div>').addClass('source-data-container').appendTo(sourceLi);
         var sourceText = $('<div></div>').addClass('source-text').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceData).on('click', (e) => this.openFile(e));
-        var renameButton = $('<button></button>').addClass('file-rename').appendTo(sourceData);
-        var downloadButton = $('<button></button>').addClass('file-download').appendTo(sourceData);
-        var deleteButton = $('<button></button>').addClass('file-delete').appendTo(sourceData);
+        var renameButton = $('<button></button>').addClass('file-rename').attr('title', 'Rename').appendTo(sourceData);
+        var downloadButton = $('<button></button>').addClass('file-download').attr('title', 'Download').appendTo(sourceData);
+        var deleteButton = $('<button></button>').addClass('file-delete').attr('title', 'Delete').appendTo(sourceData);
       }
       sourceList.appendTo(source);
       source.appendTo($files);
