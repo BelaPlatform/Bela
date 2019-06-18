@@ -55,3 +55,42 @@ function removeElementByClassName(className) {
         elem.parentNode.removeChild(elem);
     }
 }
+
+function isInteger(n) {
+    return Number(n) === n && n % 1 === 0;
+}
+
+function isFloat(n) {
+    return Number(n) === n && n % 1 !== 0;
+}
+
+function getType(variable, recursive = false) {
+    let type = typeof variable;
+    if(type === 'number') {
+        if(isFloat(variable)) {
+            type = 'float';
+        } else if (isInteger(variable)) {
+            type = 'int';
+        }
+    } else if (type === 'object') {
+        if(variable instanceof Array) {
+            type = 'array';
+            if(recursive) {
+                let arr =  [];
+                variable.forEach(function (val, index) {
+                    arr.push(getType(val, true));
+                });
+                type = arr;
+            }
+        } else {
+            if(recursive) {
+                let obj = JSON.parse(JSON.stringify(variable));
+                for(let e in obj) {
+                    obj[e] = getType(obj[e], true);
+                }
+                type = obj;
+            }
+        }
+    }
+    return type;
+}
