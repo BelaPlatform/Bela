@@ -21,6 +21,45 @@ ul {
   }
 }
 
+.source-file {
+  .source-data-container {
+    position: relative;
+    > .source-text {
+      display: inline;
+    }
+    > button {
+      border: 0;
+      height: 20px;
+      position: absolute;
+      top: 0;
+      width: 20px;
+      &.file-{
+        &rename {
+          background-color: purple;
+          right: 0;
+          &:hover {
+            background-color: black;
+          }
+        }
+        &download {
+          background-color: orange;
+          right: 22px;
+          &:hover {
+            background-color: black;
+          }
+        }
+        &delete {
+          background-color: magenta;
+          right: 44px;
+          &:hover {
+            background-color: black;
+          }
+        }
+      }
+    }
+  }
+}
+
 .sub-file-list > li {
   color: rgba(0, 0, 0, 0.8);
 	font-size: 14px;
@@ -29,14 +68,18 @@ ul {
   &.selected {
 		background: rgba(255, 255, 0, 0.2);
 	}
-	&:before {
-    content: '>'; /* Unicode character for "minus" sign (-) */
-    font-family: poppins_light;
-		margin-right: 5px;
-		size: 12px;
-	}
-  &.sourceFile {
+  &.source-file {
     cursor: pointer;
+  }
+  >.source-data-container {
+    >.source-text {
+    	&:before {
+        content: '>'; /* Unicode character for "minus" sign (-) */
+        font-family: poppins_light;
+    		margin-right: 5px;
+    		size: 12px;
+    	}
+    }
   }
 }
 

@@ -196,8 +196,12 @@ class FileView extends View {
       var sourceList = $('<ul></ul>').addClass('sub-file-list');
 
       for (let i=0; i < sources.length; i++) {
-        var sourceLi = $('<li></li>').addClass('sourceFile').appendTo(sourceList);
-        var sourceData = $('<div></div>').addClass('source-data').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceLi).on('click', (e) => this.openFile(e));
+        var sourceLi = $('<li></li>').addClass('source-file').appendTo(sourceList);
+        var sourceData = $('<div></div>').addClass('source-data-container').appendTo(sourceLi);
+        var sourceText = $('<div></div>').addClass('source-text').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceData).on('click', (e) => this.openFile(e));
+        var renameButton = $('<button></button>').addClass('file-rename').appendTo(sourceData);
+        var downloadButton = $('<button></button>').addClass('file-download').appendTo(sourceData);
+        var deleteButton = $('<button></button>').addClass('file-delete').appendTo(sourceData);
       }
       sourceList.appendTo(source);
       source.appendTo($files);
@@ -208,7 +212,7 @@ class FileView extends View {
       $('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
       var headerList = $('<ul></ul>').addClass('sub-file-list');
       for (let i=0; i < headers.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', (e) => this.openFile(e));
+        $('<li></li>').addClass('source-file').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', (e) => this.openFile(e));
       }
       headerList.appendTo(header);
       header.appendTo($files);
@@ -220,7 +224,7 @@ class FileView extends View {
 			$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
       var resourceList = $('<ul></ul>').addClass('sub-file-list');
       for (let i=0; i < resources.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(resources[i].name + ' <span class="file-list-size">' + resources[i].size + '</span>').data('file', resources[i].name).appendTo(resourceList).on('click', (e) => this.openFile(e));
+        $('<li></li>').addClass('source-file').html(resources[i].name + ' <span class="file-list-size">' + resources[i].size + '</span>').data('file', resources[i].name).appendTo(resourceList).on('click', (e) => this.openFile(e));
       }
       resourceList.appendTo(resource);
       resource.appendTo($files);
@@ -231,7 +235,7 @@ class FileView extends View {
 			$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
       var directoryList = $('<ul></ul>').addClass('sub-file-list');
       for (let i=0; i < directories.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(directories[i].name).appendTo(directoryList);
+        $('<li></li>').addClass('source-file').html(directories[i].name).appendTo(directoryList);
       }
       directoryList.appendTo(directory);
       directory.appendTo($files);
@@ -269,7 +273,7 @@ class FileView extends View {
 				} else if (child.size >= 1000000 && child.size < 1000000000){
 					child.size = (child.size/1000000).toFixed(1) + 'mb';
 				}
-				$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
+				$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
 			} else {
 				child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
 				ul.append(this.subDirs(child));
