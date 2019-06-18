@@ -2241,7 +2241,9 @@ var FileView = function (_View) {
 	_createClass(FileView, [{
 		key: 'buttonClicked',
 		value: function buttonClicked($element, e) {
+			console.log($element.data_name);
 			var func = $element.data().func;
+			console.log(e);
 			if (func && this[func]) {
 				this[func](func);
 			}
@@ -2278,11 +2280,13 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'renameFile',
-		value: function renameFile(func) {
+		value: function renameFile(e) {
 			var _this3 = this;
 
+			// Get the name of the file to be renamed:
+			var name = $(e.target).attr('data_name');
 			// build the popup content
-			popup.title(json.popups.rename_file.title);
+			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
@@ -2303,11 +2307,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'deleteFile',
-		value: function deleteFile(func) {
+		value: function deleteFile(e) {
 			var _this4 = this;
 
+			// Get the name of the file to be deleted:
+			var name = $(e.target).attr('data_name');
+
 			// build the popup content
-			popup.title(json.popups.delete_file.title);
+			popup.title('Delete ' + name + '?');
 			popup.subtitle(json.popups.delete_file.text);
 
 			var form = [];
@@ -2425,58 +2432,52 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			if (sources.length) {
-				var source = $("<li></li>");
-				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-				var sourceList = $('<ul></ul>').addClass('sub-file-list');
+			var file_list_elements = [sources, headers, resources, directories];
+			var file_list_elements_names = ['Sources', 'Headers', 'Resources', 'Directories'];
 
-				for (var i = 0; i < sources.length; i++) {
-					$('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				sourceList.appendTo(source);
-				source.appendTo($files);
-			}
+			// Build file structure by listing the contents of each section (if they exist)
 
-			if (headers.length) {
-				var header = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-				var headerList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i = 0; _i < headers.length; _i++) {
-					$('<li></li>').addClass('sourceFile').html(headers[_i].name + ' <span class="file-list-size">' + headers[_i].size + '</span>').data('file', headers[_i].name).appendTo(headerList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				headerList.appendTo(header);
-				header.appendTo($files);
-			}
+			for (var i = 0; i < file_list_elements.length; i++) {
 
-			if (resources.length) {
-				var resource = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
-				var resourceList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i2 = 0; _i2 < resources.length; _i2++) {
-					$('<li></li>').addClass('sourceFile').html(resources[_i2].name + ' <span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo(resourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				resourceList.appendTo(resource);
-				resource.appendTo($files);
-			}
+				if (file_list_elements[i].length) {
 
-			if (directories.length) {
-				var directory = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
-				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i3 = 0; _i3 < directories.length; _i3++) {
-					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
+					var section = $('<li></li>');
+					$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+					var fileList = $('<ul></ul>').addClass('sub-file-list');
+
+					for (var j = 0; j < file_list_elements[i].length; j++) {
+						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
+						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+						var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.openFile(e);
+						});
+						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.renameFile(e);
+						});
+						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.downloadFile(e);
+						});
+						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.deleteFile(e);
+						});
+					}
+
+					fileList.appendTo(section);
+					section.appendTo($files);
 				}
-				directoryList.appendTo(directory);
-				directory.appendTo($files);
 			}
 
 			if (data && data.fileName) this._fileName(data.fileName);
+		}
+	}, {
+		key: 'downloadFile',
+		value: function downloadFile(e) {
+			console.log($(e.target));
+			var filename = $(e.target).attr('data_name');
+			var project = $(e.target).data.currentProject;
+			var href = $(e.target).attr('href-stem') + filename;
+			e.preventDefault(); //stop the browser from following the link
+			window.location.href = href;
 		}
 	}, {
 		key: '_fileName',
@@ -2497,7 +2498,7 @@ var FileView = function (_View) {
 
 			if (data && data.currentProject) {
 				// set download link
-				$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
+				$('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
 			}
 		}
 	}, {
@@ -2520,7 +2521,7 @@ var FileView = function (_View) {
 						} else if (child.size >= 1000000 && child.size < 1000000000) {
 							child.size = (child.size / 1000000).toFixed(1) + 'mb';
 						}
-						$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
+						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
 							return _this6.openFile(e);
 						});
 					} else {
