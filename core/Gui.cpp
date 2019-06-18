@@ -90,65 +90,73 @@ void Gui::ws_disconnect()
  */
 void Gui::ws_onControlData(const char* data)
 {
-	if(customOnControlData)
-		customOnControlData(data);
-	
-	// parse the data into a JSONValue
-	JSONValue *value = JSON::Parse(data);
-	if (value == NULL || !value->IsObject()){
-		printf("could not parse JSON:\n%s\n", data);
+	if(customOnControlData && !customOnControlData(data))
+	{
 		return;
 	}
-	// look for the "event" key
-	JSONObject root = value->AsObject();
-	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
-		std::wstring event = root[L"event"]->AsString();
-		printf("%ls\n", event.c_str());
-		if (event.compare(L"connection-reply") == 0){
-			wsIsConnected = true;
-		} else if (event.compare(L"gui-ready") == 0){
-			guiIsReady = true;
+	else
+	{
+		// parse the data into a JSONValue
+		JSONValue *value = JSON::Parse(data);
+		if (value == NULL || !value->IsObject()){
+			printf("could not parse JSON:\n%s\n", data);
+			return;
 		}
+		// look for the "event" key
+		JSONObject root = value->AsObject();
+		if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+			std::wstring event = root[L"event"]->AsString();
+			printf("%ls\n", event.c_str());
+			if (event.compare(L"connection-reply") == 0){
+				wsIsConnected = true;
+			} else if (event.compare(L"gui-ready") == 0){
+				guiIsReady = true;
+			}
+		}
+		delete value;
 	}
-	delete value;
 	return;
 }
 
 void Gui::ws_onData(const char* data)
 {
-	if(customOnData)
-		customOnData(data);
-
-	int bufferId = (int) *data;
-	++data;
-	char bufferType = *data;
-	++data;
-	int bufferLength = ((int)data[1] << 8) | data[0];
-	int numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
-	data += 2;
-
-	if(bufferId < _buffers.size())
+	if(customOnData && !customOnData(data))
 	{
-		if(bufferType != getBufferType(bufferId))
-		{
-			printf("Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, getBufferType(bufferId));
-		}
-		else
-		{
-			if(numBytes > getBufferCapacity(bufferId))
-			{
-				printf("Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, getBufferCapacity(bufferId));
-				numBytes = getBufferCapacity(bufferId);
-			}
-			// Copy data to buffers
-			//std::memcpy(getBufferById(bufferId)->data(), data, numBytes);
-			getBufferById(bufferId)->assign(data, data + numBytes);
-		}
+		return;
 	}
 	else
 	{
-		printf("Received buffer ID %d is out of range.\n", bufferId);
+		int bufferId = (int) *data;
+		++data;
+		char bufferType = *data;
+		++data;
+		int bufferLength = ((int)data[1] << 8) | data[0];
+		int numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
+		data += 2;
 
+		if(bufferId < _buffers.size())
+		{
+			if(bufferType != getBufferType(bufferId))
+			{
+				printf("Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, getBufferType(bufferId));
+			}
+			else
+			{
+				if(numBytes > getBufferCapacity(bufferId))
+				{
+					printf("Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, getBufferCapacity(bufferId));
+					numBytes = getBufferCapacity(bufferId);
+				}
+				// Copy data to buffers
+				//std::memcpy(getBufferById(bufferId)->data(), data, numBytes);
+				getBufferById(bufferId)->assign(data, data + numBytes);
+			}
+		}
+		else
+		{
+			printf("Received buffer ID %d is out of range.\n", bufferId);
+
+		}
 	}
 	return;
 }

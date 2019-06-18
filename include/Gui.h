@@ -37,8 +37,8 @@ class Gui
 
 
 		// User defined functions
-		std::function<void(const char*)> customOnControlData;
-		std::function<void(const char*)> customOnData;
+		std::function<bool(const char*)> customOnControlData;
+		std::function<bool(const char*)> customOnData;
 
 	public:
 		Gui();
@@ -74,8 +74,8 @@ class Gui
 		int getNumBytes( unsigned int bufferId );
 
 
-		void setControlDataCallback(std::function<void(const char*)> callback){ customOnControlData = callback; };
-		void setBinaryDataCallback(std::function<void(const char*)> callback){ customOnData = callback; };
+		void setControlDataCallback(std::function<bool(const char*)> callback){ customOnControlData = callback; };
+		void setBinaryDataCallback(std::function<bool(const char*)> callback){ customOnData = callback; };
 
 		template<typename T, typename A>
 		void sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
