@@ -18,13 +18,18 @@ int Gui::setup(unsigned int port, std::string address)
 	// Set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
 	ws_server->setup(port);
-	ws_server->addAddress(_addressData, nullptr, nullptr, nullptr, true);
+	ws_server->addAddress(_addressData,
+		[this](std::string address, void* buf, int size)
+		{
+			ws_onData((const char*) buf);
+		},
+	 nullptr, nullptr, true);
 
 	ws_server->addAddress(_addressControl,
 		// onData()
 		[this](std::string address, void* buf, int size)
 		{
-			ws_onData((const char*) buf);
+			ws_onControlData((const char*) buf);
 		},
 		// onConnect()
 		[this](std::string address)
@@ -83,7 +88,7 @@ void Gui::ws_disconnect()
  *  on_data callback for scope_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onData(const char* data)
+void Gui::ws_onControlData(const char* data)
 {
 	
 	// parse the data into a JSONValue
@@ -105,6 +110,141 @@ void Gui::ws_onData(const char* data)
 	}
 	delete value;
 	return;
+}
+
+void Gui::ws_onData(const char* packet)
+{
+	int bufferId = (int) *packet;
+	++packet;
+	char bufferType = *packet;
+	++packet;
+	int bufferLength = ((int)packet[1] << 8) | packet[0];
+	int numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
+	packet += 2;
+
+	if(bufferId < _buffers.size())
+	{
+		if(bufferType != getBufferType(bufferId))
+		{
+			printf("Received buffer type doesn't match original buffer type (%c).\n", getBufferType(bufferId));
+		}
+
+		if(numBytes > getBufferCapacity(bufferId))
+		{
+			printf("Size of received buffer exceeds that of the original buffer. The received data will be trimmed.\n");
+			numBytes = getBufferCapacity(bufferId);
+		}
+		// Copy data to buffers
+		//std::memcpy(getBufferById(bufferId)->data(), packet, numBytes);
+		getBufferById(bufferId)->assign(packet, packet + numBytes);
+	}
+	else
+	{
+		printf("Received buffer ID %d is out of range.\n", bufferId);
+
+	}
+	return;
+}
+
+// BUFFERS
+unsigned int Gui::setBuffer(char bufferType, unsigned int size)
+{
+	unsigned int buffId = _buffers.size();
+	DataBuffer newBuffer(buffId, bufferType, size);
+	_buffers.push_back(newBuffer);
+	return buffId;
+}
+
+std::vector<char>*  Gui::getBufferById( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return _buffers[bufferId].getBuffer();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return nullptr;
+	}
+}
+
+char* Gui::getBufferAsChar( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return _buffers[bufferId].getData();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return nullptr;
+	}
+}
+
+
+int* Gui::getBufferAsInt( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return (int*) _buffers[bufferId].getData();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return nullptr;
+	}
+}
+
+float* Gui::getBufferAsFloat( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return (float*) _buffers[bufferId].getData();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return nullptr;
+	}
+}
+
+char Gui::getBufferType( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return _buffers[bufferId].getType();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return '\0';
+	}
+}
+
+int Gui::getBufferLen( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return _buffers[bufferId].getNumElements();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return -1;
+	}
+}
+
+int Gui::getNumBytes( unsigned int bufferId )
+{
+	if(bufferId < _buffers.size())
+	{
+		return _buffers[bufferId].getSize();
+	}
+	else
+	{
+		printf("Buffer ID %d is out of range.\n", bufferId);
+		return -1;
+	}
 }
 
 Gui::~Gui()
