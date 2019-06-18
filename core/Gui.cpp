@@ -126,17 +126,19 @@ void Gui::ws_onData(const char* packet)
 	{
 		if(bufferType != getBufferType(bufferId))
 		{
-			printf("Received buffer type doesn't match original buffer type (%c).\n", getBufferType(bufferId));
+			printf("Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, getBufferType(bufferId));
 		}
-
-		if(numBytes > getBufferCapacity(bufferId))
+		else
 		{
-			printf("Size of received buffer exceeds that of the original buffer. The received data will be trimmed.\n");
-			numBytes = getBufferCapacity(bufferId);
+			if(numBytes > getBufferCapacity(bufferId))
+			{
+				printf("Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, getBufferCapacity(bufferId));
+				numBytes = getBufferCapacity(bufferId);
+			}
+			// Copy data to buffers
+			//std::memcpy(getBufferById(bufferId)->data(), packet, numBytes);
+			getBufferById(bufferId)->assign(packet, packet + numBytes);
 		}
-		// Copy data to buffers
-		//std::memcpy(getBufferById(bufferId)->data(), packet, numBytes);
-		getBufferById(bufferId)->assign(packet, packet + numBytes);
 	}
 	else
 	{
