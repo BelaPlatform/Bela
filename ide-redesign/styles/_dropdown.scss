@@ -80,6 +80,7 @@ select.dropdown-num {
   min-width: 160px;
   position: absolute;
   width: 100%;
+  z-index: 99;
   /* Links inside the dropdown */
   select {
     border: none;
