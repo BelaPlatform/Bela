@@ -196,7 +196,8 @@ class FileView extends View {
       var sourceList = $('<ul></ul>').addClass('sub-file-list');
 
       for (let i=0; i < sources.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', (e) => this.openFile(e));
+        var sourceLi = $('<li></li>').addClass('sourceFile').appendTo(sourceList);
+        var sourceData = $('<div></div>').addClass('source-data').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceLi).on('click', (e) => this.openFile(e));
       }
       sourceList.appendTo(source);
       source.appendTo($files);
