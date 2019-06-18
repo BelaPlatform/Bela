@@ -9,27 +9,27 @@
 <script src="/gui/js/bela-gui-control-handler.js"></script>
 
 <script>
-
     let p5sketchSource;
     let sketch;
-
     let projectName = location.hash;
 
-    projectName = projectName.substring(1);
-    if(projectName.length == 0) {
-        Bela_control.target.addEventListener('new-connection', function(event) {
-            projectName = event.detail.projectName;
+    let queryString = new URLSearchParams(window.location.search);
+
+    if(queryString.has('project')) {
+        let projectName = queryString.get('project');
+        if(projectName.length != 0) {
             p5sketchSource = "/projects/"+projectName+"/sketch.js"
-	    if(projectName != "exampleTempProject")
-		    window.location.hash = '#'+projectName;
+            sketch = loadSketch(p5sketchSource);
+        }
+    } else {
+        Bela_control.target.addEventListener('new-connection', function(event) {
+            console.log("New connection.");
+            projectName = event.detail.projectName;
+            console.log("Project name "+projectName);
+            p5sketchSource = "/projects/"+projectName+"/sketch.js"
+        if(projectName != "exampleTempProject")
+            window.location.hash = '#'+projectName;
             sketch = loadSketch(p5sketchSource);
         });
-    } else {
-        p5sketchSource = "/projects/"+projectName+"/sketch.js"
-        sketch = loadSketch(p5sketchSource);
     }
-
-
-
-
 </script>
