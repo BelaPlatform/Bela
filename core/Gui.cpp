@@ -1,5 +1,6 @@
 #include <Gui.h>
 #include <memory> // for shared pointers
+#include <iostream>
 
 Gui::Gui()
 {
@@ -99,14 +100,13 @@ void Gui::ws_onControlData(const char* data)
 		// parse the data into a JSONValue
 		JSONValue *value = JSON::Parse(data);
 		if (value == NULL || !value->IsObject()){
-			printf("could not parse JSON:\n%s\n", data);
+			fprintf(stderr, "Could not parse JSON:\n%s\n", data);
 			return;
 		}
 		// look for the "event" key
 		JSONObject root = value->AsObject();
 		if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
 			std::wstring event = root[L"event"]->AsString();
-			printf("%ls\n", event.c_str());
 			if (event.compare(L"connection-reply") == 0){
 				wsIsConnected = true;
 			} else if (event.compare(L"gui-ready") == 0){
@@ -138,13 +138,13 @@ void Gui::ws_onData(const char* data)
 		{
 			if(bufferType != getBufferType(bufferId))
 			{
-				printf("Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, getBufferType(bufferId));
+				fprintf(stderr, "Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, getBufferType(bufferId));
 			}
 			else
 			{
 				if(numBytes > getBufferCapacity(bufferId))
 				{
-					printf("Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, getBufferCapacity(bufferId));
+					fprintf(stderr, "Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, getBufferCapacity(bufferId));
 					numBytes = getBufferCapacity(bufferId);
 				}
 				// Copy data to buffers
@@ -154,7 +154,7 @@ void Gui::ws_onData(const char* data)
 		}
 		else
 		{
-			printf("Received buffer ID %d is out of range.\n", bufferId);
+			fprintf(stderr, "Received buffer ID %d is out of range.\n", bufferId);
 		}
 	}
 	return;
@@ -177,7 +177,7 @@ std::vector<char>*  Gui::getBufferById( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return nullptr;
 	}
 }
@@ -190,7 +190,7 @@ char* Gui::getBufferAsChar( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return nullptr;
 	}
 }
@@ -204,7 +204,7 @@ int* Gui::getBufferAsInt( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return nullptr;
 	}
 }
@@ -217,7 +217,7 @@ float* Gui::getBufferAsFloat( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return nullptr;
 	}
 }
@@ -230,7 +230,7 @@ char Gui::getBufferType( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return '\0';
 	}
 }
@@ -243,7 +243,7 @@ int Gui::getBufferLen( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return -1;
 	}
 }
@@ -256,7 +256,7 @@ int Gui::getNumBytes( unsigned int bufferId )
 	}
 	else
 	{
-		printf("Buffer ID %d is out of range.\n", bufferId);
+		printf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return -1;
 	}
 }
