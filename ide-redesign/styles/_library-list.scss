@@ -3,14 +3,11 @@ ul {
     list-style: none;
     margin: 0;
     padding: 0;
-    // Library description:
-    .library-desc {
-      > p {
-        font-family: poppins-light;
-        font-size: 14px;
-        margin-block-start: 0;
-        margin-block-end: .5em;
-        }
+    .library-desc, .library-ver {
+      font-family: 'poppins-light';
+      font-size: .9em;
+      margin-block-start: 0;
+      margin-block-end: .5em;
     }
     pre {
       background: $grey-extra-light;
@@ -59,13 +56,6 @@ ul {
         background-color: $teal-01;
       }
     }
-    // Styles for the library info (title, authors):
-    .lib-info-content {
-      margin: 1em 0 1em;
-      > p {
-        margin: 0;
-      }
-    }
     .libraries-list {
       li {
         color: rgba(0, 0, 0, 0.8);
@@ -88,6 +78,7 @@ ul {
     .file-heading {
       border-bottom: 1px solid $grey-mid;
       font-family: poppins_regular;
+      font-size: .9em;
       margin: 0;
       padding: 3px 0 3px;
       width: calc(100% - 10px);
