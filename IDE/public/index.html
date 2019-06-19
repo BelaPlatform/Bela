@@ -117,6 +117,17 @@
                 <p class="project">Current project: <span data-current-project>None</span></p>
               </div>
 
+              <div class="project-actions">
+                <!-- <p>Actions:</p> --> 
+                <button class="project-button project-save projectManager" data-func="saveAs" id="saveas" title="Save project as ..."></button>
+                <button class="project-button project-new fileManager" data-func="newFile" title="Create new file"></button>
+                <button class="project-button project-upload fileManager" data-func="uploadFile" id="uploadFile" title="Upload file"></button>
+                <button class="project-button project-download fileManager" title="Download project"></button>
+                <button class="project-button project-clean projectManager" id="cleanProject" data-func="cleanProject" title="Clean project"></button>
+                <button class="project-button project-delete projectManager" id="deleteProject" data-func="deleteProject" title="Delete project"></button>
+                <p class="project-text"></p>
+              </div>
+
 
               <button class="accordion" data-accordion-for="project-files">Project contents</button>
               <div class="panel" data-accordion="project-files">
@@ -127,16 +138,14 @@
               <button class="accordion" data-accordion-for="project-controls">Project actions</button>
 
               <div class="panel" data-accordion="project-controls">
-                <div class="button-container">
+
+
                   <button class="button fileManager" data-func="newFile">Create new file</button>
                   <button class="button fileManager" data-func="uploadFile" id="uploadFile">Upload file</button>
                   <button id="saveas" class="projectManager" data-func="saveAs">Save project as&hellip;</button>
-                </div>
-                <div class="button-container">
                   <a data-project-download href="/download" download><button id="downloadProject" class="button fileManager">Download Project</button></a>
                   <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
                   <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
-                </div>
 
               </div>
 
