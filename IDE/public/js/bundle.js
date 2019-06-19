@@ -5479,7 +5479,7 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "Warning: This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"create_new_file": {
@@ -5496,22 +5496,22 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
 			"title": "Delete this file?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
-			"text": "Your current project settings will be restored to defaults. This can't be undone.",
+			"text": "Your current project settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"restore_default_IDE_settings": {
 			"title": "Restore default IDE settings?",
-			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
+			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"shutdown": {
@@ -5554,7 +5554,7 @@ module.exports={
 		},
 		"discard": {
 			"title": "Discard changes?",
-			"text": "This will discard all changes since your last commit. This can't be undone.",
+			"text": "This will discard all changes since your last commit. There is no undo.",
 			"button": "Discard changes"
 		},
 		"file_changed": {
