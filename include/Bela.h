@@ -229,11 +229,11 @@ typedef struct {
 	///
 	/// Every time render() runs context->audioIn is filled with a block of new audio 
 	/// samples. The block is made up of frames, individual slices of time consisting of 
-	/// one sample taken from each audio input channel simultaneously. 
+	/// one sample taken from each audio input channel simultaneously.
 	///
 	/// This value determines the number of audio frames in each block and can be adjusted 
 	/// in the IDE settings tab (or via the command line arguments) from 2 to 128, 
-	/// defaulting to 16. 
+	/// defaulting to 16.
 	///
 	/// This value also determines how often render() is called, and reducing it decreases 
 	/// audio latency at the cost of increased CPU consumption.
@@ -249,7 +249,7 @@ typedef struct {
 	///
 	/// Every time render() runs context->analogIn is filled with a block of new analog 
 	/// samples. The block is made up of frames, individual slices of time consisting of 
-	/// one sample taken from each analog input channel simultaneously. 
+	/// one sample taken from each analog input channel simultaneously.
 	///
 	/// This value determines the number of analog frames in each block. It cannot be
 	/// set directly as it is dependant on the number of audio frames per block 
@@ -295,26 +295,26 @@ typedef struct {
 	/// sample rates (e.g. half the number of analog frames will have elapsed if the analog sample
 	/// rate is 22050).
 	const uint64_t audioFramesElapsed;
-	
+
 	/// \brief Number of multiplexer channels for each analog input.
 	///
 	/// This will be 2, 4 or 8 if the multiplexer capelet is enabled, otherwise it will be 1.
 	/// 2, 4 and 8 correspond to 16, 32 and 64 analog inputs, respectively.
 	const uint32_t multiplexerChannels;
-	
+
 	/// \brief Multiplexer channel corresponding to the first analog frame.
 	///
 	/// This indicates the multiplexer setting corresponding to the first analog frame in the
 	/// buffer.
 	const uint32_t multiplexerStartingChannel;
-	
+
 	/// \brief Buffer which holds multiplexed analog inputs, when multiplexer capelet is enabled.
 	///
-	/// Because the analog in buffer size may be smaller than a complete cycle of the multiplexer 
+	/// Because the analog in buffer size may be smaller than a complete cycle of the multiplexer
 	/// capelet, this buffer will always be big enough to hold at least one complete cycle of all
 	/// channels. It will be null if the multiplexer capelet is not enabled.
-	const float * const multiplexerAnalogIn;	
-	
+	const float * const multiplexerAnalogIn;
+
 	/// \brief Flags for whether audio expander is enabled on given analog channels.
 	///
 	/// Bits 0-15, when set, indicate audio expander enabled on the analog inputs. Bits 16-31
@@ -330,8 +330,8 @@ typedef struct {
 	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
 	/// persist for future frames. If not set, writes affect one frame only.
 	const uint32_t flags;
-	
-	/// Name of running project. 
+
+	/// Name of running project.
 	char projectName[MAX_PROJECTNAME_LENGTH];
 
 } BelaContext;
@@ -400,7 +400,7 @@ typedef struct {
 	/// Whether to use high-performance mode: gives more CPU to
 	/// the Bela task. The Linux part of the board and the IDE may
 	/// freeze while the program is running. Use the button on the
-	/// Bela cape to forcefully stop the running program 
+	/// Bela cape to forcefully stop the running program
 	int highPerformanceMode;
 
 	// These items are application-dependent but should probably be
@@ -440,7 +440,7 @@ typedef struct {
 	/// User selected board to work with (as opposed to detected hardware).
 	char board[MAX_BOARDNAME_LENGTH];
 
-	/// Name of running project. 
+	/// Name of running project.
 	char projectName[MAX_PROJECTNAME_LENGTH];
 
 } BelaInitSettings;
@@ -552,7 +552,7 @@ BelaInitSettings* Bela_InitSettings_alloc();
  *
  * This function should be used to de-allocate the structure that holds initialisation
  * data for Bela.
- * 
+ *
  * \param settings Pointer to structure to be de-allocated.
  */
 void Bela_InitSettings_free(BelaInitSettings* settings);
@@ -615,7 +615,7 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions,
  */
 void Bela_usage();
 
-/** 
+/**
  * \brief Get the version of Bela you are running.
  */
 void Bela_getVersion(int* major, int* minor, int* bugfix);
@@ -829,7 +829,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, co
 /**
  * \brief Run an auxiliary task which has previously been created.
  *
- * This function will schedule an auxiliary task to run. 
+ * This function will schedule an auxiliary task to run.
  *
  * If the task is already running, calling this function has no effect.
  * If the task is not running (e.g.: a previous invocation has returned), the \b callback function defined

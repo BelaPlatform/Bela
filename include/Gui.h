@@ -27,7 +27,7 @@ class Gui
 		void ws_disconnect();
 		void ws_onControlData(const char* data);
 		void ws_onData(const char* data);
-		
+
 		unsigned int _port;
 		std::string _addressControl;
 		std::string _addressData;
@@ -48,9 +48,9 @@ class Gui
 		int setup(unsigned int port, std::string address);
 		int setup(unsigned int port, std::string address, std::string projectName);
 		void cleanup();
-		
+
 		bool isConnected(){ return wsIsConnected; };
-		
+
 		bool isReady(){ return guiIsReady; };
 
 

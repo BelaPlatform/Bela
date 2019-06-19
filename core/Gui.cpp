@@ -59,7 +59,7 @@ int Gui::setup(unsigned int port, std::string address, std::string projectName)
  */
 void Gui::ws_connect()
 {
-	// send connection JSON 
+	// send connection JSON
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"connection");
 	if(!_projectName.empty())
@@ -155,7 +155,6 @@ void Gui::ws_onData(const char* data)
 		else
 		{
 			printf("Received buffer ID %d is out of range.\n", bufferId);
-
 		}
 	}
 	return;

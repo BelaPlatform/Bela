@@ -1,4 +1,4 @@
-class DataBuffer 
+class DataBuffer
 {
 	private:
 		unsigned int _id;
@@ -22,9 +22,9 @@ class DataBuffer
 		{
 			setup(id, type, size);
 		}
-		~DataBuffer(){};	
+		~DataBuffer(){};
 		void cleanup();
-		
+
 		void setup(unsigned int id, char type, unsigned int size)
 		{
 			_id = id;
@@ -34,7 +34,7 @@ class DataBuffer
 		}
 
 		unsigned int getNumElements()
-	       	{ 
+	       	{
 			return (_type == 'c' ? _buffer.size() : _buffer.size() / sizeof(float));
 		}
 
@@ -44,5 +44,5 @@ class DataBuffer
 		char getType(){ return _type; };
 		std::vector<char>* getBuffer() { return &_buffer; };
 		char* getData() { return _buffer.data(); };
-		
+
 };
