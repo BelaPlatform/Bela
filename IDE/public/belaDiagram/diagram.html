@@ -1,0 +1,37 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="css/tooltipster.main.css" />
+    <link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.css" />
+    <link rel="stylesheet" type="text/css" href="css/diagramStyle.css" />
+
+    <script src="/js/jquery.js"></script>
+    <!-- tooltipster: for tooltippin -->
+    <script type="text/javascript" src="/js/diagram/jquery.tooltipster.min.js"></script>
+    <!-- Raphael: for drawing -->
+    <script type="text/javascript" src="/js/diagram/raphael-min.js"></script>
+    <!-- activate tooltip -->
+    <script>
+      const board = window.location.search.replace('?','');
+      let newscript = document.createElement("script");
+      newscript.type = 'text/javascript';
+      newscript.src = '/js/diagram/custom.js';
+      const headEl = document.getElementsByTagName("head")[0];
+      headEl.append(newscript);
+    </script>
+
+
+<title></title>
+</head>
+
+<body>
+
+  <div id="container">
+    <div id="squares">
+      <div id="image"></div><!-- end image -->
+    </div><!-- end container -->
+  </div><!-- end wrapper -->
+
+</body>
+
+</html>

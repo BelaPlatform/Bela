@@ -3,7 +3,7 @@ module.exports = {};
 
 var Model = require('./Models/Model');
 var popup = require('./popup');
-var json = require('./site-text.json')
+var json = require('./site-text.json');
 
 var devMode = true;
 

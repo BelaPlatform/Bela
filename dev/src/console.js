@@ -34,7 +34,7 @@ class Console extends EventEmitter {
 
 		var el = $('<div></div>').addClass('beaglert-console-'+className).appendTo(this.$element);
 		if (id) el.prop('id', id);
-		$('<span></span>').html(text).appendTo(el);
+		$('<span></span>').html(text+"\n").appendTo(el);
 
 		if (numElements++ > maxElements) this.clear(numElements/4);
 		if (onClick) el.on('click', onClick);
@@ -59,7 +59,7 @@ class Console extends EventEmitter {
 			for (let i=0;  i<msgs.length; i++){
 				if (msgs[i] !== '' && msgs[i] !== ' '){
 					//this.print(msgs[i], css || 'log');
-					str += '<div class="beaglert-console-'+(css || 'log')+'"><span>'+msgs[i]+'</span></div>';
+					str += '<div class="beaglert-console-'+(css || 'log')+'"><span>'+msgs[i]+'\n</span></div>';
 					numElements++;
 				}
 			}
@@ -106,10 +106,16 @@ class Console extends EventEmitter {
 			var div = $('<div></div>').addClass('beaglert-console-i' + err.type)
 
 			// create the link and add it to the element
-			var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+			var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
 
 			// add a button to copy the contents to the clipboard
-			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div).on('click', function(){
+        var that = $(this);
+        that.parent().addClass('copied');
+        setTimeout(function(){
+          that.parent().removeClass('copied');
+        }, 250);
+      });
 
     	var clipboard = new Clipboard(copyButton[0], {
 				target: function(trigger) {

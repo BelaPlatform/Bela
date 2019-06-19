@@ -1,4 +1,5 @@
 name=sndfile
 description=A convenience wrapper for libsndfile
-LDFLAGS=-lsndfile
+LDFLAGS=
+LDLIBS=-lsndfile
 

@@ -93,18 +93,6 @@ img {
   z-index: 96;
   position: relative; }
 
-/* Editor window */
-.editor {
-  position: absolute;
-  top: 40px;
-  left: 60px;
-  float: left;
-  background: #fff;
-  height: 100%;
-  width: 100%;
-  overflow: auto;
-  z-index: 97; }
-
 /* Tabbed content */
 .tabs {
   background-color: white;

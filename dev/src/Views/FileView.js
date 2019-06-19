@@ -248,6 +248,8 @@ class FileView extends View {
 			if ($(this).data('file') === file){
 				$(this).addClass('selected');
 				foundFile = true;
+			} else {
+				$(this).removeClass('selected');
 			}
 		});
 

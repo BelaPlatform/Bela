@@ -1,51 +1,78 @@
 $(document).ready(function() {
-    var mainImage = $('#image')[0];
+  var mainImage = $('#image')[0];
+  const board = window.location.search.replace('?','');
+
+  if (board == 'BelaMini') {
     var paper = new Raphael(mainImage, 300, 482);
-
-    var imageURL = 'belaDiagram/images/bela_pins_jun2016_rotated.jpg';
-    
-    // write the image to the Raphael canvas
+    var imageURL = '/belaDiagram/images/mini_pin_diagram.png';
+    var url = '/belaDiagram/json/data_mini.json';
     paper.image(imageURL, 0, 0, 300, 482);
+  } else if (board == 'ctag_FACE') {
+    var paper = new Raphael(mainImage, 300, 686);
+    var imageURL = '/belaDiagram/images/ctag_FACE.jpg';
+    var url = '/belaDiagram/json/data_ctag_FACE.json';
+    paper.image(imageURL, 0, 0, 300, 686);
+  } else if (board == 'ctag_BELA') {
+    var paper = new Raphael(mainImage, 300, 686);
+    var imageURL = '/belaDiagram/images/ctag_BELA.jpg';
+    var url = '/belaDiagram/json/data_ctag_BELA.json';
+    paper.image(imageURL, 0, 0, 300, 686);
+  } else if (board == 'ctag_BEAST') {
+    var paper = new Raphael(mainImage, 300, 767);
+    var imageURL = '/belaDiagram/images/ctag_BEAST.jpg';
+    var url = '/belaDiagram/json/data_ctag_BEAST_slave.json';
+    paper.image(imageURL, 0, 0, 300, 767);
+  } else if (board == 'ctag_BEAST_BELA') {
+    var paper = new Raphael(mainImage, 300, 767);
+    var imageURL = '/belaDiagram/images/ctag_BEAST_BELA.jpg';
+    var url = '/belaDiagram/json/data_ctag_BEAST_BELA.json';
+    paper.image(imageURL, 0, 0, 300, 767);
+  } else {
+    var paper = new Raphael(mainImage, 300, 482);
+    var imageURL = '/belaDiagram/images/bela_pins_jun2016_rotated.jpg';
+    var url = '/belaDiagram/json/data.json';
+    paper.image(imageURL, 0, 0, 300, 482);
+  }
 
-    var url = 'belaDiagram/json/data.json';
-    $.getJSON(url, function(data){
-        for (var i in data){
-            for (var k in data[i].things){
-                var elem = data[i].things[k];
-                var classname = elem.elemclass + " " + "tooltip";
-                var rotate = true;
-                var x = elem.x;
-                var y = elem.y;
-                var width = elem.width;
-                var height = elem.height;
-                if(rotate)
-                {	// rotate the figure by 180 degrees:
-                    var totWidth = 300;
-                    var totHeight = 481;
-                    x = totWidth - x - width;
-                    y = totHeight - y - height;
-                }
-                var rect = paper.rect(x, y, width, height);
-                rect.node.setAttribute("class", classname);
-                rect.node.id = elem.id;
-                $(rect.node).tooltipster({
-                    content: $('<div class="tipText">' + elem.text + '</div>'),
-                    multiple: false
-                    // putting theme here breaks things
-                });
-                
-            }
+  $.getJSON(url, function(data){
+    for (var i in data){
+      for (var k in data[i].things){
+        var elem = data[i].things[k];
+        var classname = elem.elemclass + " " + "tooltip";
+        var rotate = true;
+        var x = elem.x;
+        var y = elem.y;
+        var width = elem.width;
+        var height = elem.height;
+        if(rotate)
+        {	// rotate the figure by 180 degrees:
+          var totWidth = 300;
+          var totHeight = 481;
+          x = totWidth - x - width;
+          y = totHeight - y - height;
         }
-
-        $('rect').mouseenter(function() {
-            $(this).css("border", "2px solid red");
+        var rect = paper.rect(x, y, width, height);
+        rect.node.setAttribute("class", classname);
+        rect.node.id = k;
+        $(rect.node).tooltipster({
+          content: $('<div class="tipText">' + elem.text + '</div>'),
+          multiple: false
+          // putting theme here breaks things
         });
-        
-        $('rect').mouseleave(function() {
-            var tempID = "span#z" + $(this).attr('id');
-            $(tempID).attr("style", null);
-        });
+      }
+    }
 
+    $('rect').mouseenter(function() {
+      $(this).css("outline", "2px solid red");
     });
 
-}); // end document.ready callback  
+    $('rect').mouseleave(function() {
+      var elID = $(this).attr('id');
+      var tempID = "span#z" + elID;
+      $(tempID).attr("style", null);
+      $(this).css("outline", 'none');
+    });
+
+  });
+
+}); // end document.ready callback

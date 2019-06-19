@@ -5,8 +5,8 @@
 		<title data-title>Bela IDE</title>
     <!-- <link rel="stylesheet" type="text/css" href="stylesheet.css?v=1" /> -->
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
-		<link rel="stylesheet" type="text/css" href="goldenlayout-base.css" />
-		<link rel="stylesheet" type="text/css" href="goldenlayout-light-theme.css" />
+		<link rel="stylesheet" type="text/css" href="/css/goldenlayout-base.css" />
+		<link rel="stylesheet" type="text/css" href="/css/goldenlayout-light-theme.css" />
     <script src="js/jquery.js"></script>
     <script src="js/dropdown.js" data-script-load></script>
 	</head>
@@ -207,7 +207,7 @@
               </div>
               <ul class="projectManager" data-examples data-func="openExample"></ul>
             </div>
-            
+
             <div class="tab-info" data-tab="settings">
               <div class="title-container">
                 <h1>Settings<hr /></h1>
@@ -550,7 +550,8 @@
                 <h1>Pin Diagram<hr /></h1>
               </div>
               <div id="pin_container">
-                <object data="diagram.html" id="pin_diagram_object" data-pin-diagram>
+                <p class="diagram-text">Hover over the coloured sections for more information.</p>
+                <object data="belaDiagram/diagram.html" id="pin_diagram_object" data-pin-diagram>
                   Your browser doesn’t support the object tag.
                 </object>
               </div>
@@ -670,6 +671,7 @@
 				<h1></h1>
         <h3></h3>
 				<p></p>
+        <code></code>
 				<form></form>
 			</div>
 		</div>
@@ -683,9 +685,6 @@
 		<script src="js/polyfill.js"></script>
 		<script src="js/clipboard.min.js"></script>
 		<script src="js/bundle.js"></script>
-		<script>
-			TokenIterator = require("ace/token_iterator").TokenIterator;
-		</script>
     <script src="js/interface.js"></script>
 
 	</body>
