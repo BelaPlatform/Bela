@@ -96,7 +96,7 @@ class ConsoleView extends View{
 			}
 		});
 
-    $('[data-console]').on('click', () => $(this.input).trigger('focus') );
+    // $('[data-console]').on('click', () => $(this.input).trigger('focus') );
     $('[data-console-content-wrapper]').on('click', (e) => e.stopPropagation() );
 
 		this.on('shell-stdout', data => this.emit('log', data, 'shell') );

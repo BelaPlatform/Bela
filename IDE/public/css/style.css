@@ -420,6 +420,7 @@ input[type="range"].range-slider {
   background-color: rgba(255, 0, 0, 0.2);
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   padding: 4px 30px;
+  position: relative;
   text-indent: -1.65em; }
 
 .beaglert-console-notify::before {
@@ -493,6 +494,23 @@ input[type="range"].range-slider {
   -webkit-transition: opacity 0.3s;
   transition: opacity 0.3s;
   white-space: nowrap; }
+
+.clipboardButton {
+  cursor: pointer;
+  left: 35px;
+  position: absolute;
+  top: 4px; }
+  .clipboardButton::before {
+    content: " ";
+    background: url("../images/icons/copy.svg") 0 0 no-repeat;
+    background-size: contain;
+    left: 0;
+    padding: 6px;
+    position: absolute;
+    top: 0; }
+
+.copied {
+  background: rgba(255, 255, 0, 0.2); }
 
 /**** Documentation content styles ****/
 .subsections .intro-content {
