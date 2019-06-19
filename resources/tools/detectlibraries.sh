@@ -1,9 +1,7 @@
 #!/bin/bash -e
 
 getfield() {
-	if [ -f $MDFILE ] ; then
-		grep -i "$1=" $2 | sed "s/$1=\(.*\)/\1/"
-	fi
+	awk -v pat="$1" -F"=" ' $0 ~ pat { print $2 } ' $2
 }
 
 extract_dependencies() {
@@ -44,6 +42,7 @@ create_linkmakefile() {
 		OBJ=$DIR/build/${FILENAME%.*}.o
 		echo "$OBJ: $SOURCE" >> $MKFILELINK
 	done
+	echo "LIBRARIES_LDLIBS += $(getfield LDLIBS $MDFILE)" >> $MKFILELINK
 	echo "LIBRARIES_LDFLAGS += $(getfield LDFLAGS $MDFILE)" >> $MKFILELINK
 }
 
@@ -140,9 +139,4 @@ done
 
 # make sure we only include each library once
 cat $TMPMKFILE | sort -u  > tmp/tmpmkfile
-mv tmp/tmpmkfile $TMPMKFILE
-
-cmp -s $TMPMKFILE $MKFILE && COMP=0 || COMP=1
-if [ $COMP -eq 1 ] ; then
-	cat $TMPMKFILE > $MKFILE
-fi
+mv tmp/tmpmkfile $MKFILE

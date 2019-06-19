@@ -65,8 +65,6 @@ else
   PROJECT_DIR := $(abspath projects/$(PROJECT))
 endif
 
-
-
 COMMAND_LINE_OPTIONS?=$(CL)
 ifeq ($(RUN_WITH_PRU_BIN),true)
 # Only use this one for development. You may have to run it without this option at least once, to generate 
@@ -143,7 +141,7 @@ $(info Automatically detected PROJECT_TYPE: $(PROJECT_TYPE) )
 endif
 ifeq ($(PROJECT_TYPE),invalid)
 ifeq ($(HAS_RUN_FILE),false)
-$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(RUN_FILE)) file )
+$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(CSOUND_FILE) or $(notdir $(RUN_FILE)) file )
 endif
 endif
 
@@ -280,7 +278,7 @@ ifeq ($(XENOMAI_VERSION),3)
   BELA_USE_DEFINE=BELA_USE_RTDM
 endif
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
@@ -347,61 +345,6 @@ ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 
 PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
-# Bela libraries: checks which of libraries/* should be compiled in
-PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.o=%.i) $(CPP_OBJS:%.o=%.ii)
-PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
-
-prebuild: $(PROJECT_LIBRARIES_MAKEFILE)
-
-$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
-	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
-
-# the .o will be built as part of the regular build process, and with
-# -save-temps this will have the side effect of generating the .i and .ii files
-# as well
-$(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/%.c
-	$(AT)cpp $< -o $@ $(DEFAULT_CFLAGS) $(INCLUDES)
-$(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/%.cpp # TODO: should more flags be down here and above?
-	$(AT)cpp $< -o $@ $(DEFAULT_CPPFLAGS) $(INCLUDES) $(CPPFLAGS)
-
-#TODO: this is a workaround to avoid the include when not needed. This should be re-thought through properly.
-ifeq (,$(filter $(NO_PROJECT_TARGETS),$(MAKECMDGOALS)))
-  ifeq ($(SHOULD_BUILD),true)
-    ifeq (,$(filter clean projectclean,$(MAKECMDGOALS)))
-      -include $(PROJECT_LIBRARIES_MAKEFILE)
-    endif # clean
-  endif # SHOULD_BUILD
-endif # filter
-# My current understanding is that if this does not exist, but there are rules to
-# make it, it will be re-made if needed.
-# TODO: check out rules for makefiles to be rebuilt:
-# https://www.gnu.org/software/make/manual/html_node/Include.html
-# https://www.gnu.org/software/make/manual/html_node/Remaking-Makefiles.html#Remaking-Makefiles
-# one problem we may incur is is that if the Makefile.inc exists
-#this file will contain, e.g.:
-#-include libraries/library1/Makefile.link
-#-include libraries/library2/Makefile.link
-#-include libraries/library3/Makefile.link
-#-include libraries/library4/Makefile.link
-# each of which will in turn contain:
-#
-#LIBRARY=..find out the library name
-#LIBRARIES_LDFLAGS += -l123
-#THIS_CPPFILES := $(wildcard libraries/$(LIBRARY)/*.cpp)
-#LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
-#and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
-#either via a default Makefile.libraries, or using the library's custom one (if available)
-libraries/%.o:
-	$(AT) LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
-	echo Building library $$LIBRARYNAME; \
-	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
-	if [ -f $$MAKEFILE ];\
-	then { true; }; else { \
-		MAKEFILE=Makefile.libraries; \
-	}; \
-	fi; \
-	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE $@
-
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
 CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
@@ -455,7 +398,7 @@ syntax: $(PROJECT_OBJS)
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
-#	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
+#	$(AT) echo 'Invoking: C Compiler $(CC)'
 	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS) -fPIC -Wno-unused-function
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
@@ -536,18 +479,21 @@ else
 # function, and conditionally call one of two recursive make targets depending on whether
 # we want to link in the default main file or not. The kludge is the mess of a shell script
 # line below. Surely there's a better way to do this?
-LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
-$(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS) $(LIBRARIES_OBJS)
-	$(eval DEFAULT_MAIN_CONDITIONAL :=\
-	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
-ifeq ($(PROJECT_TYPE),libpd)
-#If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
-	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
-endif # ifeq ($(PROJECT_TYPE),libpd)
-	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LIBRARIES_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
-	$(AT) echo ' ...done'
+
+ALL_OBJS := $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
+.EXPORT_ALL_VARIABLES:
+
+PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.o=%.i) $(CPP_OBJS:%.o=%.ii)
+PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
+
+$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
+	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
+
+# first make sure the Makefile included by Makefile.linkbela is up to date ...
+# ... then call Makefile.linkbela
+$(OUTPUT_FILE): $(ALL_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
+	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $(OUTPUT_FILE)
+
 endif # ifeq ($(SHOULD_BUILD),false)
 
 projectclean: ## Remove the PROJECT's build objects & binary
