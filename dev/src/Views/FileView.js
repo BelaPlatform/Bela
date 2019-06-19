@@ -47,15 +47,13 @@ class FileView extends View {
 
 	}
 
-	// UI events
-		buttonClicked($element, e){
-			console.log($element.data_name);
-			var func = $element.data().func;
-			console.log(e);
-			if (func && this[func]){
-				this[func](func);
-			}
-		}
+	// // UI events
+	// 	buttonClicked($element, e){
+	// 		var func = $element.data().func;
+	// 		if (func && this[func]){
+	// 			this[func](func);
+	// 		}
+	// 	}
 
 	newFile(func){
 		// build the popup content
@@ -184,7 +182,6 @@ class FileView extends View {
 
 		}
 
-		//console.log(headers, sources, resources, directories);
 
 		var pd = '_main.pd';
 		var render = 'render.cpp';
@@ -216,7 +213,7 @@ class FileView extends View {
 	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.downloadFile(e));
 	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
 	      }
-	      
+
 	      fileList.appendTo(section);
 	      section.appendTo($files);
 			}
@@ -226,7 +223,6 @@ class FileView extends View {
 	}
 
 	downloadFile(e) {
-		console.log($(e.target));
 		var filename = $(e.target).attr('data_name');
 		var project = $(e.target).data.currentProject;
 		var href = $(e.target).attr('href-stem') + filename;
@@ -274,10 +270,8 @@ class FileView extends View {
 	}
 
 	doFileUpload(file){
-		//console.log('doFileUpload', file.name);
 
 		if (uploadingFile){
-			//console.log('queueing upload', file.name);
 			fileQueue.push(file);
 			return;
 		}
@@ -340,7 +334,6 @@ class FileView extends View {
 			if (overwriteAction === 'upload')
 				this.actuallyDoFileUpload(file, !askForOverwrite);
 			else {
-				//console.log('rejected', file.name);
 				this.emit('file-rejected', file.name);
 			}
 
@@ -356,7 +349,6 @@ class FileView extends View {
 	}
 
 	actuallyDoFileUpload(file, force){
-		//console.log('actuallyDoFileUpload', file.name, force);
 		var reader = new FileReader();
 		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
 		reader.readAsArrayBuffer(file);

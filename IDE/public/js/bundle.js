@@ -2235,20 +2235,15 @@ var FileView = function (_View) {
 		return _this;
 	}
 
-	// UI events
-
+	// // UI events
+	// 	buttonClicked($element, e){
+	// 		var func = $element.data().func;
+	// 		if (func && this[func]){
+	// 			this[func](func);
+	// 		}
+	// 	}
 
 	_createClass(FileView, [{
-		key: 'buttonClicked',
-		value: function buttonClicked($element, e) {
-			console.log($element.data_name);
-			var func = $element.data().func;
-			console.log(e);
-			if (func && this[func]) {
-				this[func](func);
-			}
-		}
-	}, {
 		key: 'newFile',
 		value: function newFile(func) {
 			var _this2 = this;
@@ -2394,8 +2389,6 @@ var FileView = function (_View) {
 						}
 					}
 				}
-
-				//console.log(headers, sources, resources, directories);
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -2472,7 +2465,6 @@ var FileView = function (_View) {
 	}, {
 		key: 'downloadFile',
 		value: function downloadFile(e) {
-			console.log($(e.target));
 			var filename = $(e.target).attr('data_name');
 			var project = $(e.target).data.currentProject;
 			var href = $(e.target).attr('href-stem') + filename;
@@ -2551,10 +2543,7 @@ var FileView = function (_View) {
 		value: function doFileUpload(file) {
 			var _this7 = this;
 
-			//console.log('doFileUpload', file.name);
-
 			if (uploadingFile) {
-				//console.log('queueing upload', file.name);
 				fileQueue.push(file);
 				return;
 			}
@@ -2635,7 +2624,6 @@ var FileView = function (_View) {
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					//console.log('rejected', file.name);
 					this.emit('file-rejected', file.name);
 				}
 
@@ -2652,7 +2640,6 @@ var FileView = function (_View) {
 		value: function actuallyDoFileUpload(file, force) {
 			var _this8 = this;
 
-			//console.log('actuallyDoFileUpload', file.name, force);
 			var reader = new FileReader();
 			reader.onload = function (ev) {
 				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });

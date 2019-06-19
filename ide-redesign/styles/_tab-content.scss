@@ -151,6 +151,22 @@ p.project {
     left: 160px;
     top: -12px;
   }
+  > a {
+
+    > button {
+      position: absolute;
+      top: 0;
+      border: 0;
+      height: 16px;
+     &.project-download {
+        background: transparent url(../images/icons/project_download_inactive.svg) no-repeat center;
+        left: 100px;
+        &:hover {
+          background: transparent url(../images/icons/project_download_active.svg) no-repeat center;
+        }
+      }
+    }
+  }
   > button {
     border: 0;
     position: absolute;
@@ -184,13 +200,7 @@ p.project {
         left: 75px;
         &:hover {
           background: transparent url(../images/icons/broom_active.svg) no-repeat center;
-        }
-      }
-      &download {
-        background: transparent url(../images/icons/project_download_inactive.svg) no-repeat center;
-        left: 100px;
-        &:hover {
-          background: transparent url(../images/icons/project_download_active.svg) no-repeat center;
+          height: 16px;
         }
       }
       &delete {
