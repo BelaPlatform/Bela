@@ -28,12 +28,17 @@ ul {
     }
     .include-container {
       position: relative;
+      > p {
+        font-family: inconsolata;
+        font-size: .75em;
+        margin-block-start: 0;
+      }
     }
     .include-lines {
       background: $grey-extra-light;
       border: 1px solid #c9c9c9;
       border-radius: .25em;
-      margin: .5em 0 1em;
+      margin: .5em 0 .25em;
       overflow-x: hidden;
       width: 96%;
     }
@@ -65,7 +70,7 @@ ul {
       li {
         color: rgba(0, 0, 0, 0.8);
         cursor: pointer;
-        font-family: poppins_regular;
+        font-family: inconsolata;
       	font-size: 14px;
       	padding: 4px 12px;
         &:hover,

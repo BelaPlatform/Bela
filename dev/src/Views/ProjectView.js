@@ -283,10 +283,8 @@ class ProjectView extends View {
       // FILES:
       let filesTitle = $('<p></p>').addClass('file-heading').text('Files');
       let filesList = $('<ul></ul>').addClass('libraries-list');
-
       let libInfoContent = $('<div></div>').addClass('lib-info-content');
-
-      let includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
+      let includeInstructions = $('<p></p>').text('Copy the above lines & paste at the top of render.cpp.');
 			for (let child of item.children){
         // console.log(child);
 				if (child && child.length && child[0] === '.') continue;
@@ -324,7 +322,6 @@ class ProjectView extends View {
               if (includeArr.length > 0) {
                 for (let include of includeArr) {
                   let includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include','include-text');
-                  //   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
                   includeText.appendTo(includeLines);
                 }
                 includeLines.appendTo(includeContent);
@@ -333,6 +330,7 @@ class ProjectView extends View {
                 includeText.appendTo(includeLines);
                 includeLines.appendTo(includeContent);
                 includeCopy.appendTo(includeContent);
+                includeInstructions.appendTo(includeContent);
               }
 
               includeArr = [];
@@ -367,6 +365,7 @@ class ProjectView extends View {
          		popup.find('.cancel').on('click', popup.hide );
          		popup.show();
           });
+          includeInstructions.appendTo(includeContent);
           childLi.appendTo(filesList);
         }
 			}
