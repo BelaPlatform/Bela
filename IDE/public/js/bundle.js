@@ -2348,7 +2348,6 @@ var FileView = function (_View) {
 			var sources = [];
 			var resources = [];
 			var directories = [];
-
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -2359,7 +2358,10 @@ var FileView = function (_View) {
 
 
 					// exclude hidden files
-					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+
+					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name == data.currentProject)) {
+						continue;
+					}
 
 					if (isDir(item)) {
 
@@ -3274,8 +3276,8 @@ var ProjectView = function (_View) {
 						var _loop4 = function _loop4() {
 							var child = _step4.value;
 
-							// console.log(child);
 							if (child && child.length && child[0] === '.') return 'continue';
+							if (child == 'build') return 'continue';
 							var childLi = $('<li></li>');
 							var testExt = child.split('.');
 							var childExt = testExt[testExt.length - 1];

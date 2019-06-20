@@ -288,8 +288,8 @@ class ProjectView extends View {
 
       let includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
 			for (let child of item.children){
-        // console.log(child);
 				if (child && child.length && child[0] === '.') continue;
+        if (child == 'build') continue;
         let childLi = $('<li></li>');
         let testExt = child.split('.');
         let childExt = testExt[testExt.length - 1];
