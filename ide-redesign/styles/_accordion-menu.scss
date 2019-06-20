@@ -11,7 +11,7 @@ button.accordion {
   padding: 8px 14px;
   text-align: left;
   transition: 0.25s ease-in-out;
-  width: calc(100% - 12px);
+  width: 100%;
   &:hover {
     background: $grey-mid;
     border-bottom: 2px solid $teal-main;
