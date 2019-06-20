@@ -124,7 +124,7 @@ button.accordion {
   text-align: left;
   -webkit-transition: 0.25s ease-in-out;
   transition: 0.25s ease-in-out;
-  width: calc(100% - 12px); }
+  width: 100%; }
   button.accordion:hover {
     background: #bdbdbd;
     border-bottom: 2px solid #00bea4; }
@@ -982,17 +982,10 @@ ul dl {
 
 #pin_container {
   height: calc(100vh - 200px);
-  overflow: hidden; }
+  overflow: visible; }
   #pin_container object {
     height: 100%;
     width: 100%; }
-  #pin_container #image {
-    height: auto;
-    margin: 0;
-    overflow: auto;
-    padding: 0;
-    text-align: left;
-    width: auto; }
   #pin_container .diagram-text {
     font-family: 'poppins_regular';
     font-size: .9em;
@@ -1185,7 +1178,7 @@ ul dl {
   overflow: auto; }
 
 section#tab-content {
-  padding: 0 20px 20px 20px; }
+  margin: 0 20px 20px 20px; }
   section#tab-content .tab-info {
     display: none; }
   section#tab-content .title-container {
