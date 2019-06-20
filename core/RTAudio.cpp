@@ -331,14 +331,14 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(gRTAudioVerbose==1)	
 		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
 	// Check for user-selected hardware
-	BelaHw userHw = getBelaHw(settings->board);
+	BelaHw userHw = settings->board;
 	if(gRTAudioVerbose==1)	
-		printf("User input: %s\n", settings->board);
+		printf("Hardware specified by user: %s\n", getBelaHwName(settings->board).c_str());
 	if(userHw == BelaHw_NoHw)
 	{
 		userHw = Bela_detectUserHw();
 		if(gRTAudioVerbose==1)
-			printf("Hardward specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
+			printf("Hardware specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
 	}
 	if(userHw != BelaHw_NoHw && userHw != belaHw && Bela_checkHwCompatibility(userHw, belaHw))
 		belaHw = userHw;

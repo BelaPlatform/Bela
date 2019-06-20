@@ -28,10 +28,14 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 4
+#define BELA_MINOR_VERSION 5
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.5.0
+// - in BelaInitSettings, board becomes BelaHw
+// - added to BelaInitSettings char* projectName
+// - added to BelaContext char* projectName
 // 1.4.0
 // - added allocator/de-allocator for BelaInitSettings
 // - added char board field to BelaInitSettings
@@ -80,7 +84,6 @@ typedef enum
 /** \cond PRIVATE */
 #define MAX_PRU_FILENAME_LENGTH 256
 #define MAX_SERVERNAME_LENGTH 256
-#define MAX_BOARDNAME_LENGTH 256
 #define MAX_PROJECTNAME_LENGTH 256
 /** \endcond */
 
@@ -438,7 +441,7 @@ typedef struct {
 	char serverName[MAX_SERVERNAME_LENGTH];
 
 	/// User selected board to work with (as opposed to detected hardware).
-	char board[MAX_BOARDNAME_LENGTH];
+	BelaHw board;
 
 	/// Name of running project. 
 	char* projectName;
