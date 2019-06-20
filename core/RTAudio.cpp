@@ -362,7 +362,12 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gContext.audioInChannels = cfg.audioInChannels;
 	gContext.audioOutChannels = cfg.audioOutChannels;
 	gContext.audioFrames = settings->periodSize;
-	strcpy (gContext.projectName, settings->projectName);
+	if(settings->projectName)
+	{
+		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH);
+		if(gRTAudioVerbose)
+			printf("Project name: %s\n", gContext.projectName);
+	}
 	gAudioCodec = cfg.activeCodec;
 	if(cfg.disabledCodec)
 	{

@@ -108,6 +108,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->enableCapeButtonMonitoring = 1;
 	settings->highPerformanceMode = 0;
 	settings->board[0] = '\0';
+	settings->projectName = NULL;
 
 	// These deliberately have no command-line flags by default,
 	// as it is unlikely the user would want to switch them

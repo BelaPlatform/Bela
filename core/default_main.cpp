@@ -48,8 +48,7 @@ int main(int argc, char *argv[])
 	settings->cleanup = cleanup;
 	if(argc > 1 && argv[0])
 	{
-		char* lastComponent = strrchr(argv[0], '/');
-		strcpy(settings->projectName, lastComponent+1);
+		settings->projectName = strrchr(argv[0], '/') + 1;
 	}
 
 	while (1) {

@@ -440,8 +440,8 @@ typedef struct {
 	/// User selected board to work with (as opposed to detected hardware).
 	char board[MAX_BOARDNAME_LENGTH];
 
-	/// Name of running project.
-	char projectName[MAX_PROJECTNAME_LENGTH];
+	/// Name of running project. 
+	char* projectName;
 
 } BelaInitSettings;
 
