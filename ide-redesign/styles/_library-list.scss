@@ -27,7 +27,7 @@ ul {
       position: relative;
       > p {
         font-family: inconsolata;
-        font-size: .75em;
+        font-size: .72em;
         margin-block-start: 0;
       }
     }
@@ -50,7 +50,7 @@ ul {
       height: 34px;
       position: absolute;
       right: 10px;
-      top: 0;
+      top: 7px;
       width: 40px;
       &:hover {
         background-color: $teal-01;

@@ -11,7 +11,7 @@ button.accordion {
   padding: 8px 14px;
   text-align: left;
   transition: 0.25s ease-in-out;
-  width: calc(100% - 12px);
+  width: 100%;
   &:hover {
     background: $grey-mid;
     border-bottom: 2px solid $teal-main;
@@ -42,22 +42,39 @@ button.accordion-sub {
   border-top: 0;
   border-left: 0;
   border-right: 0;
-  border-bottom: 1px dashed $grey-dark;
+  border-radius: 0;
   color: $grey-dark;
   font-size: 1em;
-  padding: .5em 0 .5em .8em;
+  font-family: 'poppins_regular';
+  padding: .5em .8em;
   text-align: left;
   width: 100%;
   &:hover {
-    background: $yellow-accent-fade;
+    background: rgba($teal-01,0.25);
     color: $grey-dark;
   }
   &.active {
+    background: rgba($teal-01,0.15);
+    border-bottom: 1px solid $teal-base;
     color: $grey-dark;
     &:hover {
       color: $grey-dark;
     }
+    &:after {
+      content: "\2796"; /* Unicode character for "minus" sign (-) */
+      font-size: .75em;
+      margin-top: 4px;
+    }
   }
+  &:after {
+    color: rgba(0, 0, 0, 0.4);
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    float: right;
+    font-size: .75em;
+    margin-left: 5px;
+    margin-top: 4px;
+  }
+
 }
 
 .docs-content {

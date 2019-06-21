@@ -3249,8 +3249,8 @@ var ProjectView = function (_View) {
 					var libDesc = $('<p></p>').addClass('library-desc'); // Div to contain lib descriotion
 					var libVer = $('<p></p>').addClass('library-ver');
 					// INCLUDES:
-					var includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
-					var includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
+					var includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use'); // Header for include instructions
+					var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use'); // Div that contains include instructions.
 					var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
 					var includeCopy = $('<button></button>').addClass('include-copy');
 					clipboard = new Clipboard(includeCopy[0], {
@@ -3261,9 +3261,9 @@ var ProjectView = function (_View) {
 
 					// FILES:
 
-					var filesTitle = $('<p></p>').addClass('file-heading').text('Files');
+					var filesTitle = $('<button></button>').addClass('accordion-sub').text('Files');
 					var filesList = $('<ul></ul>').addClass('libraries-list');
-					var includeInstructions = $('<p></p>').text('Copy the above lines & paste at the top of render.cpp.');
+					var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
