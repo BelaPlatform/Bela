@@ -773,7 +773,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
-var xTime,
+var controls,
+    xTime,
     sampleRate,
     upSampling = 1,
     downSampling = 1;
@@ -786,16 +787,39 @@ var ControlView = function (_View) {
 
     var _this = _possibleConstructorReturn(this, (ControlView.__proto__ || Object.getPrototypeOf(ControlView)).call(this, className, models));
 
-    $('#controlsButton').click(function () {
-      return _this.$parents.toggleClass('hidden');
+    $('#controlsButton, .overlay').on('click', function () {
+      return _this.toggleControls();
+    });
+    $('body').on('keydown', function (e) {
+      return _this.keyHandler(e);
     });
     return _this;
   }
 
-  // UI events
-
-
   _createClass(ControlView, [{
+    key: 'toggleControls',
+    value: function toggleControls() {
+      if (controls) {
+        controls = false;
+        $('#control-panel').addClass('hidden');
+        $('.overlay').removeClass('active');
+      } else {
+        controls = true;
+        $('#control-panel').removeClass('hidden');
+        $('.overlay').addClass('active');
+      }
+    }
+  }, {
+    key: 'keyHandler',
+    value: function keyHandler(e) {
+      if (e.key === 'Escape') {
+        this.toggleControls();
+      }
+    }
+
+    // UI events
+
+  }, {
     key: 'selectChanged',
     value: function selectChanged($element, e) {
       var key = $element.data().key;
