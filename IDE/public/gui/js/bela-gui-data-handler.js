@@ -64,7 +64,7 @@ Bela_data.onData = function(data) {
 }.bind(Bela_data);
 
 Bela_data.formatPkt = function(id, type, dataArray) {
-    let pktLen = 2;
+    let pktLen = 4*4;
     let arrayLen = dataArray.length;
     if(type === 'd' || type === 'f') {
         pktLen += 4*arrayLen;
@@ -73,19 +73,18 @@ Bela_data.formatPkt = function(id, type, dataArray) {
     } else {
         return null;
     }
-    let buffer = new ArrayBuffer(pktLen+2);
-    let header = new Uint8Array(buffer, 0, 2);
+    let buffer = new ArrayBuffer(pktLen);
+    let header = new Uint32Array(buffer, 0, 4);
         header[0] = id;
         header[1] = type.charCodeAt(0);
-    let dataLen = new Uint16Array(buffer, 2, 1);
-        dataLen[0] = arrayLen;
+        header[2] = arrayLen;
     let arrayView;
     if(type === 'd')  {
-        arrayView = new Int32Array(buffer, 4, arrayLen);
+        arrayView = new Int32Array(buffer, 16, arrayLen);
     } else if (type === 'f') {
-        arrayView = new Float32Array(buffer, 4, arrayLen);
+        arrayView = new Float32Array(buffer, 16, arrayLen);
     } else if (type === 'c') {
-        arrayView = new Uint8Array(buffer, 4, arrayLen);
+        arrayView = new Uint8Array(buffer, 16, arrayLen);
     } else {
         return null;
     }
