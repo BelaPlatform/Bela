@@ -145,11 +145,14 @@ class FileView extends View {
 		var sources = [];
 		var resources = [];
 		var directories = [];
-
 		for (let item of files){
 
 			// exclude hidden files
-			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+
+			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name == data.currentProject)) {
+				continue;
+			}
+
 
 			if (isDir(item)){
 
