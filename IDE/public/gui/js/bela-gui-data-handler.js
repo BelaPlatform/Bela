@@ -64,27 +64,35 @@ Bela_data.onData = function(data) {
 }.bind(Bela_data);
 
 Bela_data.formatPkt = function(id, type, dataArray) {
-    let pktLen = 4*4;
+    let header = {
+        numFields: 4,
+        fieldSize: Float32Array.BYTES_PER_ELEMENT
+    }
+    header['size'] = header.numFields * header.fieldSize; //Bytes
+    let pktLen = header.size;
+
     let arrayLen = dataArray.length;
     if(type === 'd' || type === 'f') {
-        pktLen += 4*arrayLen;
+        pktLen += Float32Array.BYTES_PER_ELEMENT*arrayLen;
     } else if (type === 'c') {
         pktLen += arrayLen;
     } else {
         return null;
     }
+
     let buffer = new ArrayBuffer(pktLen);
-    let header = new Uint32Array(buffer, 0, 4);
-        header[0] = id;
-        header[1] = type.charCodeAt(0);
-        header[2] = arrayLen;
+    header['content'] = new Uint32Array(buffer, 0, header.numFields);
+    header['content'] [0] = id;
+    header['content'] [1] = type.charCodeAt(0);
+    header['content'] [2] = arrayLen;
+
     let arrayView;
     if(type === 'd')  {
-        arrayView = new Int32Array(buffer, 16, arrayLen);
+        arrayView = new Int32Array(buffer, header.size, arrayLen);
     } else if (type === 'f') {
-        arrayView = new Float32Array(buffer, 16, arrayLen);
+        arrayView = new Float32Array(buffer, header.size, arrayLen);
     } else if (type === 'c') {
-        arrayView = new Uint8Array(buffer, 16, arrayLen);
+        arrayView = new Uint8Array(buffer, header.size, arrayLen);
     } else {
         return null;
     }
