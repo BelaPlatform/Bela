@@ -2284,7 +2284,8 @@ var FileView = function (_View) {
 			var _this3 = this;
 
 			// Get the name of the file to be renamed:
-			var name = $(e.target).attr('data_name');
+			var name = $(e.target).attr('data-name');
+			var func = $(e.target).attr('data');
 			// build the popup content
 			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
@@ -2300,7 +2301,7 @@ var FileView = function (_View) {
 				var newName = sanitise(popup.find('input[type=text]').val());
 				console.log('current file: ' + name);
 				console.log('new file name: ' + newName);
-				_this3.emit('message', 'project-event', { func: 'rename_file', oldName: name, newFile: newName });
+				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2453,7 +2454,7 @@ var FileView = function (_View) {
 						var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
 							return _this5.openFile(e);
 						});
-						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
 							return _this5.renameFile(e);
 						});
 						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {

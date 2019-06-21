@@ -84,7 +84,8 @@ class FileView extends View {
 	}
 	renameFile(e){
 		// Get the name of the file to be renamed:
-		var name = $(e.target).attr('data_name');
+		var name = $(e.target).attr('data-name');
+    var func = $(e.target).attr('data');
 		// build the popup content
 		popup.title('Rename ' + name + '?');
 		popup.subtitle(json.popups.rename_file.text);
@@ -100,7 +101,7 @@ class FileView extends View {
 			var newName = sanitise(popup.find('input[type=text]').val());
 			console.log('current file: ' + name);
 			console.log('new file name: ' + newName);
-			this.emit('message', 'project-event', {func: 'rename_file', oldName: name, newFile: newName});
+			this.emit('message', 'project-event', {func: 'renameFile', oldName: name, newFile: newName});
 			popup.hide();
 		});
 
@@ -215,7 +216,7 @@ class FileView extends View {
 	        var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
 	        var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 	        var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
-	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
+	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
 	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e, projName) => this.downloadFile(e, data.currentProject));
 	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
 	      }
