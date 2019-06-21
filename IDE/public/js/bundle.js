@@ -2921,8 +2921,11 @@ var ProjectView = function (_View) {
 				});
 				return;
 			}
+			console.log("sc reporting in");
+			console.log($element);
+			console.log('name: ' + $element.data('name'));
 
-			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
+			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
 		}
 	}, {
 		key: 'buttonClicked',
@@ -3058,7 +3061,7 @@ var ProjectView = function (_View) {
 			$projects.attr('size', projLen - 1);
 			for (var i = 0; i < projLen; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
+					$('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
 						$(this).blur();
 						$(this).parent().parent().removeClass('show');
 					});
@@ -4456,8 +4459,7 @@ var View = function (_EventEmitter) {
 				});
 			}
 		}
-
-		_this.$elements.filter('select').on('change', function (e) {
+		_this.$elements.on('click', 'li.proj-li', function (e) {
 			return _this.selectChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input').on('input', function (e) {
@@ -4533,6 +4535,9 @@ var View = function (_EventEmitter) {
 				}
 			}
 		}
+	}, {
+		key: 'testSelect',
+		value: function testSelect() {}
 	}, {
 		key: 'selectChanged',
 		value: function selectChanged(element, e) {}
@@ -5427,7 +5432,6 @@ function example(cb, arg, delay, cancelCb) {
 	popup.title('Save your changes?');
 	popup.subtitle('Warning: Any unsaved changes will be lost');
 	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-	popup.code('<h1>Hello World!</h1>');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -5435,6 +5439,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
+			console.log(arg);
 			cb(arg);
 		}, delay);
 		popup.hide();
