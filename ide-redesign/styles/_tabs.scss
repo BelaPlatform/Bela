@@ -36,19 +36,21 @@ $tab-width: 450px;
 }
 
 section#tab-content {
-  margin: 0 20px 20px 20px;
+  min-height: calc(100% - 76px);
+  padding: 0 20px 20px 20px;
+  position: relative;
   .tab-info {
     display: none;
   }
   .title-container {
     background-color: $white;
+    height: 75px;
     position: sticky;
     position: -webkit-sticky; /* Required for Safari */
-    height: 75px;
     margin: 0;
     top: 0;
-    z-index: 100;
     width: 100%;
+    z-index: 100;
     hr {
       background: transparent;
     }

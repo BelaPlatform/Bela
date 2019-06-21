@@ -1180,19 +1180,21 @@ ul dl {
   overflow: auto; }
 
 section#tab-content {
-  margin: 0 20px 20px 20px; }
+  min-height: calc(100% - 76px);
+  padding: 0 20px 20px 20px;
+  position: relative; }
   section#tab-content .tab-info {
     display: none; }
   section#tab-content .title-container {
     background-color: #ffffff;
+    height: 75px;
     position: sticky;
     position: -webkit-sticky;
     /* Required for Safari */
-    height: 75px;
     margin: 0;
     top: 0;
-    z-index: 100;
-    width: 100%; }
+    width: 100%;
+    z-index: 100; }
     section#tab-content .title-container hr {
       background: transparent; }
     section#tab-content .title-container h1 {
