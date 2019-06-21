@@ -22,7 +22,7 @@ int Gui::setup(unsigned int port, std::string address)
 	ws_server->addAddress(_addressData,
 		[this](std::string address, void* buf, int size)
 		{
-			ws_onData((const char*) buf);
+			ws_onData((const char*) buf, size);
 		},
 	 nullptr, nullptr, true);
 
@@ -30,7 +30,7 @@ int Gui::setup(unsigned int port, std::string address)
 		// onData()
 		[this](std::string address, void* buf, int size)
 		{
-			ws_onControlData((const char*) buf);
+			ws_onControlData((const char*) buf, size);
 		},
 		// onConnect()
 		[this](std::string address)
@@ -89,9 +89,9 @@ void Gui::ws_disconnect()
  *  on_data callback for scope_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onControlData(const char* data)
+void Gui::ws_onControlData(const char* data, int size)
 {
-	if(customOnControlData && !customOnControlData(data))
+	if(customOnControlData && !customOnControlData(data, size, userControlData))
 	{
 		return;
 	}
@@ -118,9 +118,9 @@ void Gui::ws_onControlData(const char* data)
 	return;
 }
 
-void Gui::ws_onData(const char* data)
+void Gui::ws_onData(const char* data, int size)
 {
-	if(customOnData && !customOnData(data))
+	if(customOnData && !customOnData(data, size, userBinaryData))
 	{
 		return;
 	}
@@ -256,7 +256,7 @@ int Gui::getNumBytes( unsigned int bufferId )
 	}
 	else
 	{
-		printf(stderr, "Buffer ID %d is out of range.\n", bufferId);
+		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return -1;
 	}
 }

@@ -4,7 +4,7 @@
 #include <WSServer.h>
 #include <JSON.h>
 #include <typeinfo> // for types in templates
-#include <DataBuffer.h> 
+#include <DataBuffer.h>
 
 
 // forward declarations
@@ -25,8 +25,8 @@ class Gui
 
 		void ws_connect();
 		void ws_disconnect();
-		void ws_onControlData(const char* data);
-		void ws_onData(const char* data);
+		void ws_onControlData(const char* data, int size);
+		void ws_onData(const char* data, int size);
 
 		unsigned int _port;
 		std::string _addressControl;
@@ -37,8 +37,11 @@ class Gui
 
 
 		// User defined functions
-		std::function<bool(const char*)> customOnControlData;
-		std::function<bool(const char*)> customOnData;
+		std::function<bool(const char*, int, void*)> customOnControlData;
+		std::function<bool(const char*, int, void*)> customOnData;
+
+		void* userControlData = nullptr;
+		void* userBinaryData = nullptr;
 
 	public:
 		Gui();
@@ -74,8 +77,15 @@ class Gui
 		int getNumBytes( unsigned int bufferId );
 
 
-		void setControlDataCallback(std::function<bool(const char*)> callback){ customOnControlData = callback; };
-		void setBinaryDataCallback(std::function<bool(const char*)> callback){ customOnData = callback; };
+		void setControlDataCallback(std::function<bool(const char*, int, void*)> callback, void* customControlData=nullptr){
+			customOnControlData = callback;
+			userControlData = customControlData;
+		};
+		void setBinaryDataCallback(std::function<bool(const char*, int, void*)> callback, void* customBinaryData=nullptr){
+			customOnData = callback;
+			userBinaryData = customBinaryData;
+		};
+
 
 		template<typename T, typename A>
 		void sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
