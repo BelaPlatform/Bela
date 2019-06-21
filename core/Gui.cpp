@@ -133,8 +133,6 @@ void Gui::ws_onData(const char* data, int size)
 		int bufferLength = ((int)data[1] << 8) | data[0];
 		int numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
 		data += 8;
-
-		printf("Id: %d, Type: %c, length: %d, numByes: %d\n", bufferId, bufferType, bufferLength, numBytes);
 		if(bufferId < _buffers.size())
 		{
 			if(bufferType != getBufferType(bufferId))
@@ -165,7 +163,7 @@ void Gui::ws_onData(const char* data, int size)
 unsigned int Gui::setBuffer(char bufferType, unsigned int size)
 {
 	unsigned int buffId = _buffers.size();
-	DataBuffer newBuffer(buffId, bufferType, size);
+	DataBuffer newBuffer(bufferType, size);
 	_buffers.push_back(newBuffer);
 	return buffId;
 }
