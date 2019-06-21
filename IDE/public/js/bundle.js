@@ -2297,7 +2297,10 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this3.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
+				var newName = sanitise(popup.find('input[type=text]').val());
+				console.log('current file: ' + name);
+				console.log('new file name: ' + newName);
+				_this3.emit('message', 'project-event', { func: 'rename_file', oldName: name, newFile: newName });
 				popup.hide();
 			});
 

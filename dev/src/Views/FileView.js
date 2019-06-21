@@ -97,7 +97,10 @@ class FileView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
+			var newName = sanitise(popup.find('input[type=text]').val());
+			console.log('current file: ' + name);
+			console.log('new file name: ' + newName);
+			this.emit('message', 'project-event', {func: 'rename_file', oldName: name, newFile: newName});
 			popup.hide();
 		});
 
