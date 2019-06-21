@@ -544,7 +544,7 @@ button.dropbtn {
   display: inline;
   font-family: poppins_regular;
   font-size: 14px;
-  padding: 7px 16px;
+  padding: 7px 16px 8px;
   position: relative;
   text-align: left;
   width: 200px; }
