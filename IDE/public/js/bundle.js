@@ -4120,6 +4120,21 @@ var TabView = function (_View) {
 
     _this.on('toggle', _this.toggle);
     _this.on('boardString', _this._boardString);
+    _this.editor = ace.edit('editor');
+    var editor = _this.editor;
+    $('[data-tab-open]').on('click', function () {
+      if ($('[data-tabs]').hasClass('tabs-open')) {
+        setTimeout(function () {
+          $('[data-editor]').addClass('tabs-open');
+          editor.resize();
+        }, 750);
+      } else {
+        $('[data-editor]').removeClass('tabs-open');
+        setTimeout(function () {
+          editor.resize();
+        }, 500);
+      }
+    });
 
     $('[data-tab-open]').on('click', function () {
       return _this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for'));
@@ -4203,24 +4218,15 @@ var TabView = function (_View) {
     key: '_boardString',
     value: function _boardString(data) {
       var boardString;
+      var rootDir = "belaDiagram/";
       if (data && data.trim) boardString = data.trim();else return;
 
-      if (boardString === 'BelaMini') {
-        $('[data-pin-diagram]').prop('data', 'diagram_mini.html');
-      } else if (boardString === 'CtagFace') {
-        $('[data-pin-diagram]').prop('data', 'diagram_ctag_FACE.html');
-      } else if (boardString === 'CtagBeast') {
-        $('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST.html');
-      } else if (boardString === 'CtagFaceBela') {
-        $('[data-pin-diagram]').prop('data', 'diagram_ctag_BELA.html');
-      } else if (boardString === 'CtagBeastBela') {
-        $('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST_BELA.html');
-      }
+      $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
+      // console.log(boardString);
     }
   }]);
 
   return TabView;
-
 }(View);
 
 module.exports = new TabView();
