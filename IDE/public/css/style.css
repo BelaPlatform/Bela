@@ -770,6 +770,7 @@ ul {
 .source-file .source-data-container {
   position: relative; }
   .source-file .source-data-container > .source-text {
+    font-family: inconsolata;
     display: inline; }
   .source-file .source-data-container > button {
     border: 0;
