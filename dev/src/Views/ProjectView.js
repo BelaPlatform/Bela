@@ -266,9 +266,8 @@ class ProjectView extends View {
       let libraryItem = $('<li></li>'); // Individual library dropdown
 
       let libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
-
-      let libDesc = $('<div></div>').addClass('library-desc');  // Div to contain lib descriotion
-
+      let libDesc = $('<p></p>').addClass('library-desc');  // Div to contain lib descriotion
+      let libVer = $('<p></p>').addClass('library-ver');
       // INCLUDES:
       let includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
       let includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
@@ -281,12 +280,10 @@ class ProjectView extends View {
 			});
 
       // FILES:
+
       let filesTitle = $('<p></p>').addClass('file-heading').text('Files');
       let filesList = $('<ul></ul>').addClass('libraries-list');
-
-      let libInfoContent = $('<div></div>').addClass('lib-info-content');
-
-      let includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
+      let includeInstructions = $('<p></p>').text('Copy the above lines & paste at the top of render.cpp.');
 			for (let child of item.children){
 				if (child && child.length && child[0] === '.') continue;
         if (child == 'build') continue;
@@ -321,10 +318,14 @@ class ProjectView extends View {
                 }
               }
               // Get the #include line and add to includeContent
+              // libDesc.html('Version: ').html(object.version);
+              libDesc.html(object.description);
+              if (object.version != null) {
+                libVer.append('Version: ' + object.version);
+              }
               if (includeArr.length > 0) {
                 for (let include of includeArr) {
                   let includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include','include-text');
-                  //   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
                   includeText.appendTo(includeLines);
                 }
                 includeLines.appendTo(includeContent);
@@ -333,6 +334,7 @@ class ProjectView extends View {
                 includeText.appendTo(includeLines);
                 includeLines.appendTo(includeContent);
                 includeCopy.appendTo(includeContent);
+                includeInstructions.appendTo(includeContent);
               }
 
               includeArr = [];
@@ -363,10 +365,11 @@ class ProjectView extends View {
              });
 
          		form.push('<button type="button" class="button popup cancel">Close</button>');
-             popup.form.append(form.join(''));
+            popup.form.append(form.join(''));
          		popup.find('.cancel').on('click', popup.hide );
          		popup.show();
           });
+          includeInstructions.appendTo(includeContent);
           childLi.appendTo(filesList);
         }
 			}
@@ -374,6 +377,7 @@ class ProjectView extends View {
       // item.name -> parentDiv $examples
       parentButton.appendTo(libraryItem);
       libDesc.appendTo(libraryPanel); // Add library description, if present
+      libVer.appendTo(libraryPanel);
       // per item in section
       // childLi -> childUl -> parentDiv -> $examples
       includeTitle.appendTo(libraryPanel);
@@ -382,8 +386,6 @@ class ProjectView extends View {
 
       filesTitle.appendTo(libraryPanel);  // Include the Files: section title
       filesList.appendTo(libraryPanel);   // List the files
-
-      libInfoContent.appendTo(libraryPanel);
 
       libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
       libraryItem.appendTo(libraryList);  // Append the whole item to the list of library items

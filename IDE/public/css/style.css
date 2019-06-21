@@ -835,9 +835,9 @@ ul.libraries-list-parent {
   list-style: none;
   margin: 0;
   padding: 0; }
-  ul.libraries-list-parent .library-desc > p {
-    font-family: poppins-light;
-    font-size: 14px;
+  ul.libraries-list-parent .library-desc, ul.libraries-list-parent .library-ver {
+    font-family: 'poppins-light';
+    font-size: .9em;
     -webkit-margin-before: 0;
             margin-block-start: 0;
     -webkit-margin-after: .5em;
@@ -856,11 +856,16 @@ ul.libraries-list-parent {
     right: 0; }
   ul.libraries-list-parent .include-container {
     position: relative; }
+    ul.libraries-list-parent .include-container > p {
+      font-family: inconsolata;
+      font-size: .75em;
+      -webkit-margin-before: 0;
+              margin-block-start: 0; }
   ul.libraries-list-parent .include-lines {
     background: #fafafa;
     border: 1px solid #c9c9c9;
     border-radius: .25em;
-    margin: .5em 0 1em;
+    margin: .5em 0 .25em;
     overflow-x: hidden;
     width: 96%; }
   ul.libraries-list-parent .include-copy {
@@ -878,14 +883,10 @@ ul.libraries-list-parent {
     width: 40px; }
     ul.libraries-list-parent .include-copy:hover {
       background-color: #1ce8b5; }
-  ul.libraries-list-parent .lib-info-content {
-    margin: 1em 0 1em; }
-    ul.libraries-list-parent .lib-info-content > p {
-      margin: 0; }
   ul.libraries-list-parent .libraries-list li {
     color: rgba(0, 0, 0, 0.8);
     cursor: pointer;
-    font-family: poppins_regular;
+    font-family: inconsolata;
     font-size: 14px;
     padding: 4px 12px; }
     ul.libraries-list-parent .libraries-list li:hover, ul.libraries-list-parent .libraries-list li.selected {
@@ -899,6 +900,7 @@ ul.libraries-list-parent {
   ul.libraries-list-parent .file-heading {
     border-bottom: 1px solid #bdbdbd;
     font-family: poppins_regular;
+    font-size: .9em;
     margin: 0;
     padding: 3px 0 3px;
     width: calc(100% - 10px); }

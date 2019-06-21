@@ -3246,9 +3246,8 @@ var ProjectView = function (_View) {
 					var libraryItem = $('<li></li>'); // Individual library dropdown
 
 					var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
-
-					var libDesc = $('<div></div>').addClass('library-desc'); // Div to contain lib descriotion
-
+					var libDesc = $('<p></p>').addClass('library-desc'); // Div to contain lib descriotion
+					var libVer = $('<p></p>').addClass('library-ver');
 					// INCLUDES:
 					var includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
 					var includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
@@ -3264,10 +3263,7 @@ var ProjectView = function (_View) {
 
 					var filesTitle = $('<p></p>').addClass('file-heading').text('Files');
 					var filesList = $('<ul></ul>').addClass('libraries-list');
-
-					var libInfoContent = $('<div></div>').addClass('lib-info-content');
-
-					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
+					var includeInstructions = $('<p></p>').text('Copy the above lines & paste at the top of render.cpp.');
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
@@ -3316,6 +3312,7 @@ var ProjectView = function (_View) {
 												}
 											}
 											// Get the #include line and add to includeContent
+											// libDesc.html('Version: ').html(object.version);
 										} catch (err) {
 											_didIteratorError5 = true;
 											_iteratorError5 = err;
@@ -3331,6 +3328,10 @@ var ProjectView = function (_View) {
 											}
 										}
 
+										libDesc.html(object.description);
+										if (object.version != null) {
+											libVer.append('Version: ' + object.version);
+										}
 										if (includeArr.length > 0) {
 											var _iteratorNormalCompletion6 = true;
 											var _didIteratorError6 = false;
@@ -3341,7 +3342,6 @@ var ProjectView = function (_View) {
 													var include = _step6.value;
 
 													var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
-													//   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
 													_includeText.appendTo(includeLines);
 												}
 											} catch (err) {
@@ -3365,6 +3365,7 @@ var ProjectView = function (_View) {
 											_includeText2.appendTo(includeLines);
 											includeLines.appendTo(includeContent);
 											includeCopy.appendTo(includeContent);
+											includeInstructions.appendTo(includeContent);
 										}
 
 										includeArr = [];
@@ -3399,6 +3400,7 @@ var ProjectView = function (_View) {
 									popup.find('.cancel').on('click', popup.hide);
 									popup.show();
 								});
+								includeInstructions.appendTo(includeContent);
 								childLi.appendTo(filesList);
 							}
 						};
@@ -3427,6 +3429,7 @@ var ProjectView = function (_View) {
 
 					parentButton.appendTo(libraryItem);
 					libDesc.appendTo(libraryPanel); // Add library description, if present
+					libVer.appendTo(libraryPanel);
 					// per item in section
 					// childLi -> childUl -> parentDiv -> $examples
 					includeTitle.appendTo(libraryPanel);
@@ -3435,8 +3438,6 @@ var ProjectView = function (_View) {
 
 					filesTitle.appendTo(libraryPanel); // Include the Files: section title
 					filesList.appendTo(libraryPanel); // List the files
-
-					libInfoContent.appendTo(libraryPanel);
 
 					libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
 					libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
