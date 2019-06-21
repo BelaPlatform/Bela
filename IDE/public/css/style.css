@@ -148,6 +148,7 @@ button.accordion {
 
 button.accordion-sub {
   background: transparent;
+  border-bottom: 1px solid #c9c9c9;
   border-top: 0;
   border-left: 0;
   border-right: 0;
@@ -155,16 +156,18 @@ button.accordion-sub {
   color: rgba(0, 0, 0, 0.8);
   font-size: 1em;
   font-family: 'poppins_regular';
-  padding: .5em .8em;
+  padding: .4em .8em .25em;
   text-align: left;
   width: 100%; }
   button.accordion-sub:hover {
-    background: rgba(28, 232, 181, 0.25);
+    background: rgba(201, 201, 201, 0.2);
     color: rgba(0, 0, 0, 0.8); }
   button.accordion-sub.active {
-    background: rgba(28, 232, 181, 0.15);
-    border-bottom: 1px solid #009587;
-    color: rgba(0, 0, 0, 0.8); }
+    background: transparent;
+    border-bottom: 2px solid #1ce8b5;
+    color: rgba(0, 0, 0, 0.8);
+    padding-bottom: .2em;
+    margin-top: .2em; }
     button.accordion-sub.active:hover {
       color: rgba(0, 0, 0, 0.8); }
     button.accordion-sub.active:after {
@@ -179,7 +182,7 @@ button.accordion-sub {
     float: right;
     font-size: .75em;
     margin-left: 5px;
-    margin-top: 4px; }
+    margin-top: 2px; }
 
 .docs-content {
   max-height: 0;
@@ -858,14 +861,15 @@ ul.libraries-list-parent {
       font-family: inconsolata;
       font-size: .72em;
       -webkit-margin-before: 0;
-              margin-block-start: 0; }
+              margin-block-start: 0;
+      margin-left: .25em; }
   ul.libraries-list-parent .include-lines {
     background: #fafafa;
     border: 1px solid #c9c9c9;
     border-radius: .25em;
-    margin: .5em 0 .25em;
+    margin: .5em 0 .25em .25em;
     overflow-x: hidden;
-    width: 96%; }
+    width: 100%; }
   ul.libraries-list-parent .include-copy {
     background-color: #c9c9c9;
     background-image: url(../images/icons/copy_inactive.svg);
@@ -876,11 +880,19 @@ ul.libraries-list-parent {
     border-radius: 0 .25em .25em 0;
     height: 34px;
     position: absolute;
-    right: 10px;
+    right: 0;
     top: 7px;
     width: 40px; }
     ul.libraries-list-parent .include-copy:hover {
       background-color: #1ce8b5; }
+  ul.libraries-list-parent .info-container > p {
+    font-family: poppins_light;
+    font-size: .9em;
+    -webkit-margin-before: 0;
+            margin-block-start: 0;
+    -webkit-margin-after: 0;
+            margin-block-end: 0;
+    margin: .5em 0 0 .5em; }
   ul.libraries-list-parent .libraries-list li {
     color: rgba(0, 0, 0, 0.8);
     cursor: pointer;

@@ -39,6 +39,7 @@ button.accordion {
 
 button.accordion-sub {
   background: transparent;
+  border-bottom: 1px solid $grey-toolbar;
   border-top: 0;
   border-left: 0;
   border-right: 0;
@@ -46,17 +47,19 @@ button.accordion-sub {
   color: $grey-dark;
   font-size: 1em;
   font-family: 'poppins_regular';
-  padding: .5em .8em;
+  padding: .4em .8em .25em;
   text-align: left;
   width: 100%;
   &:hover {
-    background: rgba($teal-01,0.25);
+    background: rgba($grey-toolbar,0.2);
     color: $grey-dark;
   }
   &.active {
-    background: rgba($teal-01,0.15);
-    border-bottom: 1px solid $teal-base;
+    background: transparent;
+    border-bottom: 2px solid $teal-01;
     color: $grey-dark;
+    padding-bottom: .2em;
+    margin-top: .2em;
     &:hover {
       color: $grey-dark;
     }
@@ -72,7 +75,7 @@ button.accordion-sub {
     float: right;
     font-size: .75em;
     margin-left: 5px;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
 }

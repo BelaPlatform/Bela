@@ -29,15 +29,16 @@ ul {
         font-family: inconsolata;
         font-size: .72em;
         margin-block-start: 0;
+        margin-left: .25em;
       }
     }
     .include-lines {
       background: $grey-extra-light;
       border: 1px solid #c9c9c9;
       border-radius: .25em;
-      margin: .5em 0 .25em;
+      margin: .5em 0 .25em .25em;
       overflow-x: hidden;
-      width: 96%;
+      width: 100%;
     }
     .include-copy {
       background-color: #c9c9c9;
@@ -49,11 +50,20 @@ ul {
       border-radius: 0 .25em .25em 0;
       height: 34px;
       position: absolute;
-      right: 10px;
+      right: 0;
       top: 7px;
       width: 40px;
       &:hover {
         background-color: $teal-01;
+      }
+    }
+    .info-container {
+      > p {
+        font-family: poppins_light;
+        font-size: .9em;
+        margin-block-start: 0;
+        margin-block-end: 0;
+        margin: .5em 0 0 .5em;;
       }
     }
     .libraries-list {
