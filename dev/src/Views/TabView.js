@@ -166,7 +166,7 @@ class TabView extends View {
 			return
 
     $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
-    console.log(boardString);
+    // console.log(boardString);
 	}
 
 }
