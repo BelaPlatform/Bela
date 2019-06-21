@@ -2314,7 +2314,8 @@ var FileView = function (_View) {
 			var _this4 = this;
 
 			// Get the name of the file to be deleted:
-			var name = $(e.target).attr('data_name');
+			var name = $(e.target).attr('data-name');
+			var func = $(e.target).data('func');
 
 			// build the popup content
 			popup.title('Delete ' + name + '?');
@@ -2458,7 +2459,7 @@ var FileView = function (_View) {
 						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {
 							return _this5.downloadFile(e, data.currentProject);
 						});
-						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
 							return _this5.deleteFile(e);
 						});
 					}
