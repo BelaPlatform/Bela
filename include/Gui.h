@@ -11,7 +11,6 @@
 class WSServer;
 class JSONValue;
 class AuxTaskRT;
-class DataBuffer;
 
 class Gui
 {
