@@ -2466,9 +2466,6 @@ var FileView = function (_View) {
 			}
 
 			if (data && data.fileName) this._fileName(data.fileName);
-
-			// Set download link for individual files:
-			// $('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
 		}
 	}, {
 		key: 'downloadFile',

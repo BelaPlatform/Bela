@@ -223,9 +223,6 @@ class FileView extends View {
 
 		if (data && data.fileName) this._fileName(data.fileName);
 		
-		// Set download link for individual files:
-		// $('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
-		
 	}
 
 	downloadFile(e, projName) {
