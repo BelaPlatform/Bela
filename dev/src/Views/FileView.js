@@ -14,6 +14,8 @@ var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
+var listCount = 0;
+
 class FileView extends View {
 
 	constructor(className, models){
@@ -47,13 +49,13 @@ class FileView extends View {
 
 	}
 
-	// // UI events
-	// 	buttonClicked($element, e){
-	// 		var func = $element.data().func;
-	// 		if (func && this[func]){
-	// 			this[func](func);
-	// 		}
-	// 	}
+	// UI events
+		buttonClicked($element, e){
+			var func = $element.data().func;
+			if (func && this[func]){
+				this[func](func);
+			}
+		}
 
 	newFile(func){
 		// build the popup content
@@ -210,7 +212,7 @@ class FileView extends View {
 	        var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 	        var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
 	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
-	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.downloadFile(e));
+	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e, projName) => this.downloadFile(e, data.currentProject));
 	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
 	      }
 
@@ -220,11 +222,15 @@ class FileView extends View {
 		}
 
 		if (data && data.fileName) this._fileName(data.fileName);
+		
+		// Set download link for individual files:
+		// $('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
+		
 	}
 
-	downloadFile(e) {
+	downloadFile(e, projName) {
 		var filename = $(e.target).attr('data_name');
-		var project = $(e.target).data.currentProject;
+		var project = projName;
 		var href = $(e.target).attr('href-stem') + filename;
     e.preventDefault();  //stop the browser from following the link
     window.location.href = href;
@@ -245,10 +251,7 @@ class FileView extends View {
 			}
 		});
 
-		if (data && data.currentProject){
-			// set download link
-			$('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
-		}
+
 	}
 
 	subDirs(dir){

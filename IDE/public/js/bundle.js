@@ -2198,6 +2198,8 @@ var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
+var listCount = 0;
+
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
@@ -2235,15 +2237,18 @@ var FileView = function (_View) {
 		return _this;
 	}
 
-	// // UI events
-	// 	buttonClicked($element, e){
-	// 		var func = $element.data().func;
-	// 		if (func && this[func]){
-	// 			this[func](func);
-	// 		}
-	// 	}
+	// UI events
+
 
 	_createClass(FileView, [{
+		key: 'buttonClicked',
+		value: function buttonClicked($element, e) {
+			var func = $element.data().func;
+			if (func && this[func]) {
+				this[func](func);
+			}
+		}
+	}, {
 		key: 'newFile',
 		value: function newFile(func) {
 			var _this2 = this;
@@ -2447,8 +2452,8 @@ var FileView = function (_View) {
 						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
 							return _this5.renameFile(e);
 						});
-						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('title', 'Download').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
-							return _this5.downloadFile(e);
+						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {
+							return _this5.downloadFile(e, data.currentProject);
 						});
 						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
 							return _this5.deleteFile(e);
@@ -2461,12 +2466,15 @@ var FileView = function (_View) {
 			}
 
 			if (data && data.fileName) this._fileName(data.fileName);
+
+			// Set download link for individual files:
+			// $('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
 		}
 	}, {
 		key: 'downloadFile',
-		value: function downloadFile(e) {
+		value: function downloadFile(e, projName) {
 			var filename = $(e.target).attr('data_name');
-			var project = $(e.target).data.currentProject;
+			var project = projName;
 			var href = $(e.target).attr('href-stem') + filename;
 			e.preventDefault(); //stop the browser from following the link
 			window.location.href = href;
@@ -2487,11 +2495,6 @@ var FileView = function (_View) {
 					$(this).removeClass('selected');
 				}
 			});
-
-			if (data && data.currentProject) {
-				// set download link
-				$('.file-download').attr('href-stem', '/download?project=' + data.currentProject + '&file=');
-			}
 		}
 	}, {
 		key: 'subDirs',
