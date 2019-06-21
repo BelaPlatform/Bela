@@ -147,7 +147,7 @@ void Gui::ws_onData(const char* data, int size)
 					numBytes = _buffers[bufferId].getCapacity();
 				}
 				// Copy data to buffers
-				(*getBufferById(bufferId)).getBuffer()->assign(data, data + numBytes);
+				getDataBuffer(bufferId).getBuffer()->assign(data, data + numBytes);
 			}
 		}
 		else
@@ -167,17 +167,12 @@ unsigned int Gui::setBuffer(char bufferType, unsigned int size)
 	return buffId;
 }
 
-DataBuffer* Gui::getBufferById( unsigned int bufferId )
+DataBuffer& Gui::getDataBuffer( unsigned int bufferId )
 {
-	if(bufferId < _buffers.size())
-	{
-		return &_buffers[bufferId];
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return nullptr;
-	}
+	if(bufferId >= _buffers.size())
+		throw std::runtime_error((std::string("Buffer ID ")+std::to_string((int)bufferId)+std::string(" is out of range.\n")).c_str());
+
+	return _buffers[bufferId];
 }
 
 Gui::~Gui()

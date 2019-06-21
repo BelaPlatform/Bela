@@ -58,7 +58,7 @@ class Gui
 		// Returns buffer ID
 		// Such ID is generated automatically based on the number of buffers
 		unsigned int setBuffer(char bufferType, unsigned int size);
-		DataBuffer* getBufferById(unsigned int bufferId);
+		DataBuffer& getDataBuffer(unsigned int bufferId);
 
 		void setControlDataCallback(std::function<bool(const char*, int, void*)> callback, void* customControlData=nullptr){
 			customOnControlData = callback;
