@@ -1,7 +1,7 @@
 /*
- i WriteFile.cpp
+ * WriteFile.cpp
  *
- *  Created on: 5 Oct 2015
+ * Created on: 5 Oct 2015
  *      Author: giulio
  */
 
@@ -111,7 +111,6 @@ char* WriteFile::generateUniqueFilename(const char* original)
 void WriteFile::setup(const char* filename, bool overwrite, bool append){
 	if(!overwrite)
 	{
-		printf("Do not overwrite %s\n", filename);
 		_filename = generateUniqueFilename(filename);
 		file = fopen(_filename, "w");
 	} else {
