@@ -40,6 +40,8 @@ class DataBuffer
 		unsigned int getCapacity(){ return _buffer.capacity(); };
 		char getType(){ return _type; };
 		std::vector<char>* getBuffer() { return &_buffer; };
-		char* getData() { return _buffer.data(); };
+		char* getAsChar() { return _buffer.data(); };
+		int* getAsInt() { return (int*) _buffer.data(); };
+		float* getAsFloat() { return (float*) _buffer.data(); };
 
 };

@@ -33,9 +33,6 @@ class Gui
 		std::string _addressData;
 		std::wstring _projectName;
 
-		unsigned int getBufferCapacity( unsigned int bufferId ){ return _buffers[bufferId].getCapacity(); };
-
-
 		// User defined functions
 		std::function<bool(const char*, int, void*)> customOnControlData;
 		std::function<bool(const char*, int, void*)> customOnData;
@@ -61,21 +58,7 @@ class Gui
 		// Returns buffer ID
 		// Such ID is generated automatically based on the number of buffers
 		unsigned int setBuffer(char bufferType, unsigned int size);
-
-		std::vector<char>*  getBufferById( unsigned int bufferId );
-
-		char* getBufferAsChar( unsigned int bufferId );
-
-		int* getBufferAsInt( unsigned int bufferId );
-
-		float* getBufferAsFloat( unsigned int bufferId );
-
-		char getBufferType( unsigned int bufferId );
-
-		int getBufferLen( unsigned int bufferId );
-
-		int getNumBytes( unsigned int bufferId );
-
+		DataBuffer* getBufferById(unsigned int bufferId);
 
 		void setControlDataCallback(std::function<bool(const char*, int, void*)> callback, void* customControlData=nullptr){
 			customOnControlData = callback;

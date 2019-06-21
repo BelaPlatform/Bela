@@ -135,20 +135,19 @@ void Gui::ws_onData(const char* data, int size)
 		data += 8;
 		if(bufferId < _buffers.size())
 		{
-			if(bufferType != getBufferType(bufferId))
+			if(bufferType != _buffers[bufferId].getType())
 			{
-				fprintf(stderr, "Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, getBufferType(bufferId));
+				fprintf(stderr, "Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, _buffers[bufferId].getType());
 			}
 			else
 			{
-				if(numBytes > getBufferCapacity(bufferId))
+				if(numBytes > _buffers[bufferId].getCapacity())
 				{
-					fprintf(stderr, "Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, getBufferCapacity(bufferId));
-					numBytes = getBufferCapacity(bufferId);
+					fprintf(stderr, "Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, _buffers[bufferId].getCapacity());
+					numBytes = _buffers[bufferId].getCapacity();
 				}
 				// Copy data to buffers
-				//std::memcpy(getBufferById(bufferId)->data(), data, numBytes);
-				getBufferById(bufferId)->assign(data, data + numBytes);
+				(*getBufferById(bufferId)).getBuffer()->assign(data, data + numBytes);
 			}
 		}
 		else
@@ -168,95 +167,16 @@ unsigned int Gui::setBuffer(char bufferType, unsigned int size)
 	return buffId;
 }
 
-std::vector<char>*  Gui::getBufferById( unsigned int bufferId )
+DataBuffer* Gui::getBufferById( unsigned int bufferId )
 {
 	if(bufferId < _buffers.size())
 	{
-		return _buffers[bufferId].getBuffer();
+		return &_buffers[bufferId];
 	}
 	else
 	{
 		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
 		return nullptr;
-	}
-}
-
-char* Gui::getBufferAsChar( unsigned int bufferId )
-{
-	if(bufferId < _buffers.size())
-	{
-		return _buffers[bufferId].getData();
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return nullptr;
-	}
-}
-
-
-int* Gui::getBufferAsInt( unsigned int bufferId )
-{
-	if(bufferId < _buffers.size())
-	{
-		return (int*) _buffers[bufferId].getData();
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return nullptr;
-	}
-}
-
-float* Gui::getBufferAsFloat( unsigned int bufferId )
-{
-	if(bufferId < _buffers.size())
-	{
-		return (float*) _buffers[bufferId].getData();
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return nullptr;
-	}
-}
-
-char Gui::getBufferType( unsigned int bufferId )
-{
-	if(bufferId < _buffers.size())
-	{
-		return _buffers[bufferId].getType();
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return '\0';
-	}
-}
-
-int Gui::getBufferLen( unsigned int bufferId )
-{
-	if(bufferId < _buffers.size())
-	{
-		return _buffers[bufferId].getNumElements();
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return -1;
-	}
-}
-
-int Gui::getNumBytes( unsigned int bufferId )
-{
-	if(bufferId < _buffers.size())
-	{
-		return _buffers[bufferId].getSize();
-	}
-	else
-	{
-		fprintf(stderr, "Buffer ID %d is out of range.\n", bufferId);
-		return -1;
 	}
 }
 
