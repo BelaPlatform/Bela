@@ -30,7 +30,6 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
     
     if(frameLen <= 0 || startFrame < 0 || endFrame <= 0 || endFrame > sfinfo.frames)
 	{
-	    //printf("framelen %d startframe %d endframe %d, sfinfo.frames %d\n",frameLen,startFrame,endFrame,sfinfo.frames);
 		cout << "Error: " << file << " invalid frame range requested" << endl;
 		return 1;
 	}
@@ -39,30 +38,15 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
     
     float* tempBuf = new float[frameLen*numChannelsInFile];
     
-	int subformat = sfinfo.format & SF_FORMAT_SUBMASK;
 	int readcount = sf_read_float(sndfile, tempBuf, frameLen*numChannelsInFile); //FIXME
 
 	// Pad with zeros in case we couldn't read whole file
 	for(int k = readcount; k <frameLen*numChannelsInFile; k++)
 		tempBuf[k] = 0;
-
-	if (subformat == SF_FORMAT_FLOAT || subformat == SF_FORMAT_DOUBLE) {
-		double	scale ;
-		int 	m ;
-
-		sf_command (sndfile, SFC_CALC_SIGNAL_MAX, &scale, sizeof (scale)) ;
-		if (scale < 1e-10)
-			scale = 1.0 ;
-		else
-			scale = 32700.0 / scale ;
-		cout << "File samples scale = " << scale << endl;
-
-		for (m = 0; m < frameLen; m++)
-			tempBuf[m] *= scale;
-	}
 	
 	for(int n=0;n<frameLen;n++)
 	    buf[n] = tempBuf[n*numChannelsInFile+channel];
+	delete[] tempBuf;
 
 	sf_close(sndfile);
 
@@ -71,7 +55,7 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
 
 int getNumChannels(string file) {
     
-    SNDFILE *sndfile ;
+	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
@@ -84,7 +68,7 @@ int getNumChannels(string file) {
 
 int getNumFrames(string file) {
     
-    SNDFILE *sndfile ;
+	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
