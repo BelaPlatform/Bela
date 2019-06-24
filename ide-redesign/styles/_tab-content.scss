@@ -161,6 +161,7 @@ p.project {
      &.project-download {
         background: transparent url(../images/icons/project_download_inactive.svg) no-repeat center;
         left: 100px;
+        &::before,
         &:hover {
           background: transparent url(../images/icons/project_download_active.svg) no-repeat center;
         }
@@ -177,6 +178,7 @@ p.project {
       &new {
         background: transparent url(../images/icons/file_inactive.svg) no-repeat center;
         left: 0;
+        &::before,
         &:hover {
           background: transparent url(../images/icons/file_active.svg) no-repeat center;
         }
@@ -184,6 +186,7 @@ p.project {
       &upload {
         background: transparent url(../images/icons/upload_inactive.svg) no-repeat center;
         left: 25px;
+        &::before,
         &:hover {
           background: transparent url(../images/icons/upload_active.svg) no-repeat center;
         }
@@ -191,6 +194,7 @@ p.project {
       &save {
         background: transparent url(../images/icons/save_inactive.svg) no-repeat center;
         left: 50px;
+        &::before,
         &:hover {
           background: transparent url(../images/icons/save_active.svg) no-repeat center;
         }
@@ -198,6 +202,7 @@ p.project {
       &clean {
         background: transparent url(../images/icons/broom_inactive.svg) no-repeat center;
         left: 75px;
+        &::before,
         &:hover {
           background: transparent url(../images/icons/broom_active.svg) no-repeat center;
           height: 16px;
@@ -206,9 +211,10 @@ p.project {
       &delete {
         background: transparent url(../images/icons/project_delete_inactive.svg) no-repeat center;
         left: 125px;
+        &::before,
         &:hover {
           background: transparent url(../images/icons/project_delete_active.svg) no-repeat center;
-        } 
+        }
       }
     }
   }

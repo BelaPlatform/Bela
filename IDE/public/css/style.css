@@ -1374,7 +1374,7 @@ p.project {
     .project-actions > a > button.project-download {
       background: transparent url(../images/icons/project_download_inactive.svg) no-repeat center;
       left: 100px; }
-      .project-actions > a > button.project-download:hover {
+      .project-actions > a > button.project-download::before, .project-actions > a > button.project-download:hover {
         background: transparent url(../images/icons/project_download_active.svg) no-repeat center; }
   .project-actions > button {
     border: 0;
@@ -1386,28 +1386,28 @@ p.project {
       .project-actions > button.project-new {
         background: transparent url(../images/icons/file_inactive.svg) no-repeat center;
         left: 0; }
-        .project-actions > button.project-new:hover {
+        .project-actions > button.project-new::before, .project-actions > button.project-new:hover {
           background: transparent url(../images/icons/file_active.svg) no-repeat center; }
       .project-actions > button.project-upload {
         background: transparent url(../images/icons/upload_inactive.svg) no-repeat center;
         left: 25px; }
-        .project-actions > button.project-upload:hover {
+        .project-actions > button.project-upload::before, .project-actions > button.project-upload:hover {
           background: transparent url(../images/icons/upload_active.svg) no-repeat center; }
       .project-actions > button.project-save {
         background: transparent url(../images/icons/save_inactive.svg) no-repeat center;
         left: 50px; }
-        .project-actions > button.project-save:hover {
+        .project-actions > button.project-save::before, .project-actions > button.project-save:hover {
           background: transparent url(../images/icons/save_active.svg) no-repeat center; }
       .project-actions > button.project-clean {
         background: transparent url(../images/icons/broom_inactive.svg) no-repeat center;
         left: 75px; }
-        .project-actions > button.project-clean:hover {
+        .project-actions > button.project-clean::before, .project-actions > button.project-clean:hover {
           background: transparent url(../images/icons/broom_active.svg) no-repeat center;
           height: 16px; }
       .project-actions > button.project-delete {
         background: transparent url(../images/icons/project_delete_inactive.svg) no-repeat center;
         left: 125px; }
-        .project-actions > button.project-delete:hover {
+        .project-actions > button.project-delete::before, .project-actions > button.project-delete:hover {
           background: transparent url(../images/icons/project_delete_active.svg) no-repeat center; }
 
 /*
