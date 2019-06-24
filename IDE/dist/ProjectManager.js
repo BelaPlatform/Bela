@@ -528,10 +528,10 @@ function renameFile(data) {
                         data.error = 'failed, file ' + data.newFile + ' already exists!';
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, file_manager.rename_file(paths.projects + data.currentProject + '/' + data.fileName, file_path)];
+                    return [4 /*yield*/, file_manager.rename_file(paths.projects + data.currentProject + '/' + data.oldName, file_path)];
                 case 4:
                     _c.sent();
-                    return [4 /*yield*/, cleanFile(data.currentProject, data.fileName)];
+                    return [4 /*yield*/, cleanFile(data.currentProject, data.oldName)];
                 case 5:
                     _c.sent();
                     _b = data;
