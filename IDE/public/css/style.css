@@ -640,6 +640,11 @@ select.dropdown-num {
     padding-left: 28px;
     padding-top: 0;
     width: 200px; }
+    .dropdown-content ul li {
+      -webkit-user-select: none;
+         -moz-user-select: none;
+          -ms-user-select: none;
+              user-select: none; }
     .dropdown-content ul > li, .dropdown-content ul span, .dropdown-content ul a {
       color: black;
       cursor: pointer;
