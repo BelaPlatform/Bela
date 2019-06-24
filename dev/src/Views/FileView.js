@@ -84,8 +84,8 @@ class FileView extends View {
 	}
 	renameFile(e){
 		// Get the name of the file to be renamed:
-		var name = $(e.target).attr('data-name');
-    var func = $(e.target).attr('data');
+		var name = $(e.target).data('name');
+    var func = $(e.target).data('func');
 		// build the popup content
 		popup.title('Rename ' + name + '?');
 		popup.subtitle(json.popups.rename_file.text);
@@ -99,8 +99,6 @@ class FileView extends View {
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			var newName = sanitise(popup.find('input[type=text]').val());
-			console.log('current file: ' + name);
-			console.log('new file name: ' + newName);
 			this.emit('message', 'project-event', {func: 'renameFile', oldName: name, newFile: newName});
 			popup.hide();
 		});
@@ -113,9 +111,8 @@ class FileView extends View {
 
 	deleteFile(e){
 		// Get the name of the file to be deleted:
-		var name = $(e.target).attr('data-name');
+		var name = $(e.target).data('name');
     var func = $(e.target).data('func');
-
 		// build the popup content
 		popup.title('Delete ' + name + '?');
 		popup.subtitle(json.popups.delete_file.text);
@@ -126,7 +123,7 @@ class FileView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func});
+			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name});
 			popup.hide();
 		});
 
@@ -225,7 +222,6 @@ class FileView extends View {
 	      section.appendTo($files);
 			}
 		}
-
 		if (data && data.fileName) this._fileName(data.fileName);
 
 	}

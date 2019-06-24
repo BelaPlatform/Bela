@@ -2284,8 +2284,8 @@ var FileView = function (_View) {
 			var _this3 = this;
 
 			// Get the name of the file to be renamed:
-			var name = $(e.target).attr('data-name');
-			var func = $(e.target).attr('data');
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
 			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
@@ -2299,8 +2299,6 @@ var FileView = function (_View) {
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var newName = sanitise(popup.find('input[type=text]').val());
-				console.log('current file: ' + name);
-				console.log('new file name: ' + newName);
 				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
@@ -2315,9 +2313,8 @@ var FileView = function (_View) {
 			var _this4 = this;
 
 			// Get the name of the file to be deleted:
-			var name = $(e.target).attr('data-name');
+			var name = $(e.target).data('name');
 			var func = $(e.target).data('func');
-
 			// build the popup content
 			popup.title('Delete ' + name + '?');
 			popup.subtitle(json.popups.delete_file.text);
@@ -2328,7 +2325,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: func });
+				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name });
 				popup.hide();
 			});
 
@@ -2469,7 +2466,6 @@ var FileView = function (_View) {
 					section.appendTo($files);
 				}
 			}
-
 			if (data && data.fileName) this._fileName(data.fileName);
 		}
 	}, {
