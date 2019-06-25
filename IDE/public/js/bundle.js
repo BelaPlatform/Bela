@@ -3069,7 +3069,7 @@ var ProjectView = function (_View) {
 		value: function _projectList(projects, data) {
 
 			var $projects = $('[data-projects-select]');
-			// $projects.empty();
+			$projects.empty();
 
 			// fill project menu with projects
 			if (projects.length > 0) {
