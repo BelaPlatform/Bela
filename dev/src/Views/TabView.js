@@ -66,29 +66,33 @@ class TabView extends View {
 		this.on('boardString', this._boardString);
     this.editor = ace.edit('editor');
     var editor = this.editor;
-    $('[data-tab-open]').on('click', function() {
-      if ($('[data-tabs]').hasClass('tabs-open')) {
-        setTimeout(
-          function() {
-            $('[data-editor]').addClass('tabs-open');
-            editor.resize();
-          },
-        750);
-      } else {
-        $('[data-editor]').removeClass('tabs-open');
-        setTimeout(
-          function() {
-            editor.resize();
-          },
-        500);
-      }
-    });
+    $('[data-tab-open]').on('click', this.toggleClasses());
 
     $('[data-tab-open]').on('click', () => this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for')) );
     $('[data-tab-for]').on('click', () => this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor) );
 	}
 
+  toggleClasses() {
+    var that = this;
+    if ($('[data-tabs]').hasClass('tabs-open')) {
+      setTimeout(
+        function() {
+          $('[data-editor]').addClass('tabs-open');
+          that.editor.resize();
+        },
+      750);
+    } else {
+      $('[data-editor]').removeClass('tabs-open');
+      setTimeout(
+        function() {
+          that.editor.resize();
+        },
+      500);
+    }
+  }
+
   toggle(event, origin, target) {
+    var that = this;
 
     tabs = {event, origin, target};
 
@@ -110,12 +114,11 @@ class TabView extends View {
           $('[data-tabs]').removeClass('tabs-open');
           $('[data-tab-open] span').removeClass('rot');
           menuOpened = false;
-          // reset x offset position but only after the tabbed menu has closed.
           setTimeout( function(){
-            // $('[data-tab-content]').offset().top;
             $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
           }, 500);
         }
+        that.toggleClasses();
       }
       if (tabs.origin == 'tab-link' && menuOpened == false) {
         $('[data-tabs]').addClass('tabs-open');
@@ -134,7 +137,6 @@ class TabView extends View {
         if (tabFor === tabs.target) {
           $(this).addClass('active');
           matchTabForAndTab();
-        } else {
         }
       });
     }
@@ -145,8 +147,6 @@ class TabView extends View {
           var tab = $(this).data('tab');
           $(this).hide();
           if (tab === tabs.target) {
-            // reset the x offset position of the tab content if it's changing
-            // $('[data-tab-content]').offset().top;
             $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
             $(this).fadeIn();
           }
@@ -166,7 +166,6 @@ class TabView extends View {
 			return
 
     $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
-    // console.log(boardString);
 	}
 
 }
