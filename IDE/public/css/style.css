@@ -1281,6 +1281,13 @@ table.choice {
 th.right-choice.half {
   margin-top: 0; }
 
+.tab-subheading {
+  font-family: poppins_regular;
+  font-size: 1em;
+  margin: 0 0 .75em .5em;
+  -webkit-margin-before: 0;
+          margin-block-start: 0; }
+
 input[type="text"].number-picker,
 input[type="number"].number-picker {
   -webkit-appearance: textfield;
@@ -1451,77 +1458,41 @@ p.project {
       -webkit-transition: 0.2s ease-in-out;
       transition: 0.2s ease-in-out; }
   #tab-menu li.explorer {
-    background-image: url("../images/icons/folder_inactive.svg");
-    background-position: center;
-    background-repeat: no-repeat; }
+    background: url("../images/icons/folder_inactive.svg") no-repeat center; }
     #tab-menu li.explorer:hover {
-      background-image: url("../images/icons/folder_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: url("../images/icons/folder_active.svg") no-repeat center; }
     #tab-menu li.explorer.active {
-      background-image: url("../images/icons/folder_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: #ffffff url("../images/icons/folder_active.svg") no-repeat center; }
   #tab-menu li.examples {
-    background-image: url("../images/icons/examples_inactive.svg");
-    background-position: center;
-    background-repeat: no-repeat; }
+    background: url("../images/icons/examples_inactive.svg") no-repeat center; }
     #tab-menu li.examples:hover {
-      background-image: url("../images/icons/examples_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: url("../images/icons/examples_active.svg") no-repeat center; }
     #tab-menu li.examples.active {
-      background-image: url("../images/icons/examples_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: #ffffff url("../images/icons/examples_active.svg") no-repeat center; }
   #tab-menu li.settings {
-    background-image: url("../images/icons/settings_inactive.svg");
-    background-repeat: no-repeat;
-    background-position: center; }
+    background: url("../images/icons/settings_inactive.svg") no-repeat center; }
     #tab-menu li.settings:hover {
-      background-image: url("../images/icons/settings_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: url("../images/icons/settings_active.svg") no-repeat center; }
     #tab-menu li.settings.active {
-      background-image: url("../images/icons/settings_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: #ffffff url("../images/icons/settings_active.svg") no-repeat center; }
   #tab-menu li.pins {
-    background-image: url("../images/icons/pins_inactive.svg");
-    background-position: center;
-    background-repeat: no-repeat; }
+    background: url("../images/icons/pins_inactive.svg") no-repeat center; }
     #tab-menu li.pins:hover {
-      background-image: url("../images/icons/pins_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: url("../images/icons/pins_active.svg") no-repeat center; }
     #tab-menu li.pins.active {
-      background-image: url("../images/icons/pins_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: #ffffff url("../images/icons/pins_active.svg") no-repeat center; }
   #tab-menu li.refs {
-    background-image: url("../images/icons/refs_inactive.svg");
-    background-position: center;
-    background-repeat: no-repeat; }
+    background: url("../images/icons/refs_inactive.svg") no-repeat center; }
     #tab-menu li.refs:hover {
-      background-image: url("../images/icons/refs_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: url("../images/icons/refs_active.svg") no-repeat center; }
     #tab-menu li.refs.active {
-      background-image: url("../images/icons/refs_active.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: #ffffff url("../images/icons/refs_active.svg") no-repeat center; }
   #tab-menu li.libraries {
-    background-image: url("../images/icons/library_white.svg");
-    background-position: center;
-    background-repeat: no-repeat; }
+    background: url("../images/icons/library_white.svg") no-repeat center; }
     #tab-menu li.libraries:hover {
-      background-image: url("../images/icons/library_green.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: url("../images/icons/library_green.svg") no-repeat center; }
     #tab-menu li.libraries.active {
-      background-image: url("../images/icons/library_green.svg");
-      background-position: center;
-      background-repeat: no-repeat; }
+      background: #ffffff url("../images/icons/library_green.svg") no-repeat center; }
   #tab-menu li.active {
     background: #ffffff;
     border-bottom: none;
