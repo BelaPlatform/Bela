@@ -23,8 +23,11 @@ class ProjectView extends View {
 			});
 			return;
 		}
+    console.log("sc reporting in");
+    console.log($element);
+    console.log('name: ' + $element.data('name'));
 
-		this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()})
+		this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.data('name')})
 
 	}
 
@@ -149,7 +152,7 @@ class ProjectView extends View {
     $projects.attr('size', (projLen - 1));
 		for (let i=0; i < projLen; i++){
 			if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
-				$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function() {
+				$('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
           $(this).blur();
           $(this).parent().parent().removeClass('show');
         });

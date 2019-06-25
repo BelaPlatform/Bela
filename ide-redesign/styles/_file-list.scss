@@ -21,6 +21,52 @@ ul {
   }
 }
 
+.source-file {
+  .source-data-container {
+    position: relative;
+    > .source-text {
+      font-family: inconsolata;
+      display: inline;
+    }
+    > button {
+      border: 0;
+      height: 20px;
+      position: absolute;
+      top: 0;
+      width: 15px;
+      &.file-{
+        background-size: 100% 80%;
+        &rename {
+          width: 17px;
+          background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
+          right: 36px;
+          &:hover {
+            background: transparent url(../images/icons/rename_active.svg) no-repeat center;
+          }
+        }
+        &download {
+          background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
+          height: 18px;
+          right: 18px;
+          top: 2px;
+          &:hover {
+            background: transparent url(../images/icons/download_active.svg) no-repeat center;
+          }
+        }
+        &delete {
+          background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
+          height: 16px;
+          right: 0;
+          top: 2px;
+          &:hover {
+            background: transparent url(../images/icons/trash_active.svg) no-repeat center;
+          }
+        }
+      }
+    }
+  }
+}
+
 .sub-file-list > li {
   color: rgba(0, 0, 0, 0.8);
 	font-size: 14px;
@@ -29,14 +75,18 @@ ul {
   &.selected {
 		background: rgba(255, 255, 0, 0.2);
 	}
-	&:before {
-    content: '>'; /* Unicode character for "minus" sign (-) */
-    font-family: poppins_light;
-		margin-right: 5px;
-		size: 12px;
-	}
-  &.sourceFile {
+  &.source-file {
     cursor: pointer;
+  }
+  >.source-data-container {
+    >.source-text {
+    	&:before {
+        content: '>'; /* Unicode character for "minus" sign (-) */
+        font-family: poppins_light;
+    		margin-right: 5px;
+    		size: 12px;
+    	}
+    }
   }
 }
 

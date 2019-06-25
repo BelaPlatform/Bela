@@ -20,8 +20,7 @@ class View extends EventEmitter{
 				});
 			}
 		}
-
-		this.$elements.filter('select').on('change', (e) => this.selectChanged($(e.currentTarget), e));
+		this.$elements.on('click', 'li.proj-li', (e) => this.selectChanged($(e.currentTarget), e));
 		this.$elements.filter('input').on('input', (e) => this.inputChanged($(e.currentTarget), e));
 		this.$elements.filter('input[type=checkbox]').on('change', (e) => this.inputChanged($(e.currentTarget), e));
 		this.$elements.filter('button').on('click', (e) => this.buttonClicked($(e.currentTarget), e));
@@ -42,7 +41,7 @@ class View extends EventEmitter{
 			}
 		}
 	}
-
+	testSelect(){}
 	selectChanged(element, e){}
 	buttonClicked(element, e){}
 

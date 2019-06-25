@@ -23,3 +23,16 @@ $('[data-number-picker]').each(function(){
     }
   });
 });
+
+// FILE MANAGER FUNCTION LABELS ///////////////////////////////////
+
+var projectActions = $('div.project-actions').find('.project-button');
+$(projectActions)
+  .mouseover(function() {
+    var data = $(this).attr('title');
+    $('p.project-text').text(data);
+  });
+  $(projectActions)
+  .mouseout(function() {
+    $('p.project-text').html('');
+  });

@@ -60,6 +60,7 @@ function example(cb, arg, delay, cancelCb){
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
 		e.preventDefault();
 		setTimeout(function(){
+			console.log(arg);
 			cb(arg);
 		}, delay);
 		popup.hide();

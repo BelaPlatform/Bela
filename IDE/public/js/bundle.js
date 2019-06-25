@@ -2194,6 +2194,8 @@ var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
+var listCount = 0;
+
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
@@ -2274,11 +2276,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'renameFile',
-		value: function renameFile(func) {
+		value: function renameFile(e) {
 			var _this3 = this;
 
+			// Get the name of the file to be renamed:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
-			popup.title(json.popups.rename_file.title);
+			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
@@ -2289,7 +2294,8 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this3.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
+				var newName = sanitise(popup.find('input[type=text]').val());
+				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2299,11 +2305,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'deleteFile',
-		value: function deleteFile(func) {
+		value: function deleteFile(e) {
 			var _this4 = this;
 
+			// Get the name of the file to be deleted:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
-			popup.title(json.popups.delete_file.title);
+			popup.title('Delete ' + name + '?');
 			popup.subtitle(json.popups.delete_file.text);
 
 			var form = [];
@@ -2312,7 +2321,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: func });
+				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name });
 				popup.hide();
 			});
 
@@ -2385,8 +2394,6 @@ var FileView = function (_View) {
 						}
 					}
 				}
-
-				//console.log(headers, sources, resources, directories);
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -2423,58 +2430,50 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			if (sources.length) {
-				var source = $("<li></li>");
-				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-				var sourceList = $('<ul></ul>').addClass('sub-file-list');
+			var file_list_elements = [sources, headers, resources, directories];
+			var file_list_elements_names = ['Sources', 'Headers', 'Resources', 'Directories'];
 
-				for (var i = 0; i < sources.length; i++) {
-					$('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
+			// Build file structure by listing the contents of each section (if they exist)
+
+			for (var i = 0; i < file_list_elements.length; i++) {
+
+				if (file_list_elements[i].length) {
+
+					var section = $('<li></li>');
+					$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+					var fileList = $('<ul></ul>').addClass('sub-file-list');
+
+					for (var j = 0; j < file_list_elements[i].length; j++) {
+						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
+						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+						var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.openFile(e);
+						});
+						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.renameFile(e);
+						});
+						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {
+							return _this5.downloadFile(e, data.currentProject);
+						});
+						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.deleteFile(e);
+						});
+					}
+
+					fileList.appendTo(section);
+					section.appendTo($files);
 				}
-				sourceList.appendTo(source);
-				source.appendTo($files);
 			}
-
-			if (headers.length) {
-				var header = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-				var headerList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i = 0; _i < headers.length; _i++) {
-					$('<li></li>').addClass('sourceFile').html(headers[_i].name + ' <span class="file-list-size">' + headers[_i].size + '</span>').data('file', headers[_i].name).appendTo(headerList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				headerList.appendTo(header);
-				header.appendTo($files);
-			}
-
-			if (resources.length) {
-				var resource = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
-				var resourceList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i2 = 0; _i2 < resources.length; _i2++) {
-					$('<li></li>').addClass('sourceFile').html(resources[_i2].name + ' <span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo(resourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				resourceList.appendTo(resource);
-				resource.appendTo($files);
-			}
-
-			if (directories.length) {
-				var directory = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
-				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i3 = 0; _i3 < directories.length; _i3++) {
-					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
-				}
-				directoryList.appendTo(directory);
-				directory.appendTo($files);
-			}
-
 			if (data && data.fileName) this._fileName(data.fileName);
+		}
+	}, {
+		key: 'downloadFile',
+		value: function downloadFile(e, projName) {
+			var filename = $(e.target).attr('data_name');
+			var project = projName;
+			var href = $(e.target).attr('href-stem') + filename;
+			e.preventDefault(); //stop the browser from following the link
+			window.location.href = href;
 		}
 	}, {
 		key: '_fileName',
@@ -2492,11 +2491,6 @@ var FileView = function (_View) {
 					$(this).removeClass('selected');
 				}
 			});
-
-			if (data && data.currentProject) {
-				// set download link
-				$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
-			}
 		}
 	}, {
 		key: 'subDirs',
@@ -2518,7 +2512,7 @@ var FileView = function (_View) {
 						} else if (child.size >= 1000000 && child.size < 1000000000) {
 							child.size = (child.size / 1000000).toFixed(1) + 'mb';
 						}
-						$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
+						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
 							return _this6.openFile(e);
 						});
 					} else {
@@ -2548,10 +2542,7 @@ var FileView = function (_View) {
 		value: function doFileUpload(file) {
 			var _this7 = this;
 
-			//console.log('doFileUpload', file.name);
-
 			if (uploadingFile) {
-				//console.log('queueing upload', file.name);
 				fileQueue.push(file);
 				return;
 			}
@@ -2632,7 +2623,6 @@ var FileView = function (_View) {
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					//console.log('rejected', file.name);
 					this.emit('file-rejected', file.name);
 				}
 
@@ -2649,7 +2639,6 @@ var FileView = function (_View) {
 		value: function actuallyDoFileUpload(file, force) {
 			var _this8 = this;
 
-			//console.log('actuallyDoFileUpload', file.name, force);
 			var reader = new FileReader();
 			reader.onload = function (ev) {
 				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
@@ -2931,8 +2920,11 @@ var ProjectView = function (_View) {
 				});
 				return;
 			}
+			console.log("sc reporting in");
+			console.log($element);
+			console.log('name: ' + $element.data('name'));
 
-			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
+			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
 		}
 	}, {
 		key: 'buttonClicked',
@@ -3068,7 +3060,7 @@ var ProjectView = function (_View) {
 			$projects.attr('size', projLen - 1);
 			for (var i = 0; i < projLen; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
+					$('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
 						$(this).blur();
 						$(this).parent().parent().removeClass('show');
 					});
@@ -4543,8 +4535,7 @@ var View = function (_EventEmitter) {
 				});
 			}
 		}
-
-		_this.$elements.filter('select').on('change', function (e) {
+		_this.$elements.on('click', 'li.proj-li', function (e) {
 			return _this.selectChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input').on('input', function (e) {
@@ -4620,6 +4611,9 @@ var View = function (_EventEmitter) {
 				}
 			}
 		}
+	}, {
+		key: 'testSelect',
+		value: function testSelect() {}
 	}, {
 		key: 'selectChanged',
 		value: function selectChanged(element, e) {}
@@ -5527,6 +5521,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
+			console.log(arg);
 			cb(arg);
 		}, delay);
 		popup.hide();
@@ -5558,7 +5553,7 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "Warning: This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"create_new_file": {
@@ -5575,22 +5570,22 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
 			"title": "Delete this file?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
-			"text": "Your current project settings will be restored to defaults. This can't be undone.",
+			"text": "Your current project settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"restore_default_IDE_settings": {
 			"title": "Restore default IDE settings?",
-			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
+			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"shutdown": {
@@ -5633,7 +5628,7 @@ module.exports={
 		},
 		"discard": {
 			"title": "Discard changes?",
-			"text": "This will discard all changes since your last commit. This can't be undone.",
+			"text": "This will discard all changes since your last commit. There is no undo.",
 			"button": "Discard changes"
 		},
 		"file_changed": {

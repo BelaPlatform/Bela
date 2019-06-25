@@ -107,8 +107,10 @@
               <span class="dropdown" data-projects>
 							  <button class="dropbtn" data-dropdown-for="project">Your projects</button>
                 <div class="dropdown-content" data-dropdown="project">
-                  <select class="projectManager" id="projects" data-projects-select data-func="openProject" multiple>
-  						    </select>
+                  <ul class="projectManager" id="projects" data-projects-select data-func="openProject">
+                  </ul>
+                  <!-- <select class="projectManager" id="projects" data-projects-select data-func="openProject" multiple>
+  						    </select> -->
                 </div>
 							</span>
               <button id="new" class="create-project projectManager" data-func="newProject">New Project</button>
@@ -117,42 +119,25 @@
                 <p class="project">Current project: <span data-current-project>None</span></p>
               </div>
 
+              <div class="project-actions">
+                <!-- <p>Actions:</p> --> 
+                <button class="project-button project-save projectManager" data-func="saveAs" id="saveas" title="Save project as ..."></button>
+                <button class="project-button project-new fileManager" data-func="newFile" title="Create new file"></button>
+                <button class="button project-button project-upload fileManager" data-func="uploadFile" id="uploadFile" title="Upload file"></button>
+                <a data-project-download href="/download" download><button class="project-button project-download fileManager" id="downloadProject" title="Download project"></button></a>
+                <button class="project-button project-clean projectManager" id="cleanProject" data-func="cleanProject" title="Clean project"></button>
+                <button class="project-button project-delete projectManager" id="deleteProject" data-func="deleteProject" title="Delete project"></button>
+                <input type="file" id="uploadFileInput" class="hidden" data-upload-file-input multiple></input>
+                <p class="project-text"></p>
+              </div>
+
 
               <button class="accordion" data-accordion-for="project-files">Project contents</button>
               <div class="panel show" data-accordion="project-files">
                 <ul class="file-list" data-file-list>
                 </ul>
               </div>
-
-              <button class="accordion" data-accordion-for="project-controls">Project actions</button>
-
-              <div class="panel" data-accordion="project-controls">
-                <div class="button-container">
-                  <button class="button fileManager" data-func="newFile">Create new file</button>
-                  <button class="button fileManager" data-func="uploadFile" id="uploadFile">Upload file</button>
-                  <button id="saveas" class="projectManager" data-func="saveAs">Save project as&hellip;</button>
-                </div>
-                <div class="button-container">
-                  <a data-project-download href="/download" download><button id="downloadProject" class="button fileManager">Download Project</button></a>
-                  <button id="cleanProject" class="projectManager" data-func="cleanProject">Clean project</button>
-                  <button id="deleteProject" class="projectManager" data-func="deleteProject">Delete project</button>
-                </div>
-
-              </div>
-
-
-              <button class="accordion" data-accordion-for="manage-files">File actions</button>
-              <div class="panel" data-accordion="manage-files">
-                <div class="button-container">
-                  <button class="button fileManager" data-func="renameFile">Rename</button>
-                  <button  class="button fileManager" data-func="deleteFile">Delete</button>
-                  <a data-download-file href="/download" download><button id="downloadFile" class="button fileManager">Download</button></a>
-                </div>
-                <input type="file" id="uploadFileInput" class="hidden" data-upload-file-input multiple></input>
-              </div>
-
-
-
+              
               <button class="accordion" data-accordion-for="git">Git manager</button>
               <div class="panel" data-accordion="git">
 
