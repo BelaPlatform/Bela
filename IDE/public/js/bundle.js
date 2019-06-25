@@ -2920,9 +2920,6 @@ var ProjectView = function (_View) {
 				});
 				return;
 			}
-			console.log("sc reporting in");
-			console.log($element);
-			console.log('name: ' + $element.data('name'));
 
 			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
 		}
@@ -3380,7 +3377,6 @@ var ProjectView = function (_View) {
 											for (var i = 0; i < transformText.length; i++) {
 												codeBlock.append(transformText[i] + '\n');
 											}
-											// console.log(codeBlock);
 											popup.code(codeBlock);
 										}
 									});
