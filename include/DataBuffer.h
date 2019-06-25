@@ -12,7 +12,7 @@ class DataBuffer
 			}
 			else
 			{
-				printf("Type unkown. Creatign byte (char) buffer.\n");
+				printf("Type unkown. Creating byte (char) buffer.\n");
 			}
 		}
 	public:
@@ -33,15 +33,26 @@ class DataBuffer
 
 		unsigned int getNumElements()
 	       	{
-			return (_type == 'c' ? _buffer.size() : _buffer.size() / sizeof(float));
+			if (_type == 'd')
+			{
+				return _buffer.size() / sizeof(int32_t);
+			}
+			else if (_type == 'f')
+			{
+				return _buffer.size() / sizeof(float);
+			}
+			else
+			{
+				return _buffer.size();
+			}
 		}
 
-		unsigned int getSize(){ return _buffer.size(); };
+		unsigned int getNumBytes(){ return _buffer.size(); };
 		unsigned int getCapacity(){ return _buffer.capacity(); };
 		char getType(){ return _type; };
 		std::vector<char>* getBuffer() { return &_buffer; };
 		char* getAsChar() { return _buffer.data(); };
-		int* getAsInt() { return (int*) _buffer.data(); };
+		int32_t* getAsInt() { return (int32_t*) _buffer.data(); };
 		float* getAsFloat() { return (float*) _buffer.data(); };
 
 };
