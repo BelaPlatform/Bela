@@ -270,7 +270,9 @@ QUIET?=false
 
 RM := rm -rf
 
-INCLUDES := -I$(PROJECT_DIR) -I./include -I./build/pru/ -I./
+LEGACY_INCLUDE_PATH := ./include/legacy
+
+INCLUDES := -I$(PROJECT_DIR) -I$(LEGACY_INCLUDE_PATH)  -I./include -I./build/pru/ -I./
 ifeq ($(XENOMAI_VERSION),2.6)
   BELA_USE_DEFINE=BELA_USE_POLL
 endif
