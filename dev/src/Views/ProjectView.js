@@ -230,6 +230,7 @@ class ProjectView extends View {
   _libraryList(librariesDir){
 
 		var $libraries = $('[data-libraries-list]');
+    var counter = 0;
 		$libraries.empty(librariesDir);
 		if (!librariesDir.length) return;
 
@@ -259,6 +260,7 @@ class ProjectView extends View {
       Author: XXX (mailto link)
       Maintainer: xxx
       */
+      counter++;
 
       let name = item.name;
       let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
@@ -269,10 +271,15 @@ class ProjectView extends View {
       let libDesc = $('<p></p>').addClass('library-desc');  // Div to contain lib descriotion
       let libVer = $('<p></p>').addClass('library-ver');
       // INCLUDES:
-      let includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
-      let includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
+      let includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter); // Header for include instructions
+      let includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
       let includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
       let includeCopy = $('<button></button>').addClass('include-copy');
+
+      let infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter); // Header for include instructions
+      let infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
+
+
       var clipboard = new Clipboard(includeCopy[0], {
 				target: function(trigger) {
 					return $(trigger).parent().find($('[data-include="include-text"]'))[0];
@@ -280,10 +287,11 @@ class ProjectView extends View {
 			});
 
       // FILES:
+      let filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter); // Header for include instructions
 
-      let filesTitle = $('<p></p>').addClass('file-heading').text('Files');
+      let filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
       let filesList = $('<ul></ul>').addClass('libraries-list');
-      let includeInstructions = $('<p></p>').text('Copy the above lines & paste at the top of render.cpp.');
+      let includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
 			for (let child of item.children){
 				if (child && child.length && child[0] === '.') continue;
         if (child == 'build') continue;
@@ -320,9 +328,17 @@ class ProjectView extends View {
               // Get the #include line and add to includeContent
               // libDesc.html('Version: ').html(object.version);
               libDesc.html(object.description);
+
+              // FOR LIBRARY INFO
+
+
               if (object.version != null) {
-                libVer.append('Version: ' + object.version);
-              }
+                let infoContent = $('<p></p>');
+                infoContent.append('Version: ' + object.version);
+                infoContent.appendTo(infoContainer);
+               }
+
+
               if (includeArr.length > 0) {
                 for (let include of includeArr) {
                   let includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include','include-text');
@@ -372,6 +388,10 @@ class ProjectView extends View {
           childLi.appendTo(filesList);
         }
 			}
+      // FOR LIBRARY INFO
+
+      
+
       // per section
       // item.name -> parentDiv $examples
       parentButton.appendTo(libraryItem);
@@ -380,11 +400,15 @@ class ProjectView extends View {
       // per item in section
       // childLi -> childUl -> parentDiv -> $examples
       includeTitle.appendTo(libraryPanel);
-
       includeContent.appendTo(libraryPanel);
+      // includeContainer.appendTo(libraryPanel);
 
       filesTitle.appendTo(libraryPanel);  // Include the Files: section title
-      filesList.appendTo(libraryPanel);   // List the files
+      filesList.appendTo(filesContainer);
+      filesContainer.appendTo(libraryPanel);
+
+      infoTitle.appendTo(libraryPanel);
+      infoContainer.appendTo(libraryPanel);
 
       libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
       libraryItem.appendTo(libraryList);  // Append the whole item to the list of library items
