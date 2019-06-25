@@ -72,8 +72,8 @@ class Gui
 		template<typename T, typename A>
 		void sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
 
-		template<typename T>
-		void sendBuffer(unsigned int bufferId, T buffer);
+		template <typename T, size_t N>
+		void sendBuffer(unsigned int bufferId, T (&buffer)[N]);
 
 };
 
@@ -85,4 +85,14 @@ void Gui::sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer)
 	const char* type = typeid(T).name();
 	ws_server->send(_addressData.c_str(), type);
 	ws_server->send(_addressData.c_str(), buffer.data(), (int)(buffer.size()*sizeof(T)));
+}
+
+template <typename T, size_t N>
+void Gui::sendBuffer(unsigned int bufferId, T (&buffer)[N])
+{
+	std::string bufferStr = std::to_string(bufferId);
+	ws_server->send(_addressData.c_str(), bufferStr.c_str());
+	const char* type = typeid(T).name();
+	ws_server->send(_addressData.c_str(), type);
+	ws_server->send(_addressData.c_str(), buffer, (int)(N*sizeof(T)));
 }
