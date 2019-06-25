@@ -108,19 +108,26 @@ Bela_data.formatPkt = function(id, type, dataArray) {
 };
 
 Bela_data.sendBuffer = function(id, type, data) {
+    if(id === null || typeof(id) != 'number') {
+	    return false;
+    }
     if(typeof(data) == 'string') {
         data = data + '\0';
     } else if(!Array.isArray(data)) {
         data = [data];
     }
+
     if(type == 'float' || type == 'f') {
         type = 'f';
     } else if(type == 'int' || type == 'd') {
         type = 'd';
     } else if(type == 'char' || type == 'c') {
         type = 'c';
+    } else {
+    	return false;
     }
 
     let pkt = this.formatPkt(id, type, data);
     this.ws.send(pkt);
+    return true;
 }.bind(Bela_data);
