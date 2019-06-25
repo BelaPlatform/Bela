@@ -4018,10 +4018,11 @@ var SettingsView = function (_View) {
 			}
 
 			for (var subsect in exceptions['subsections']) {
-				$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+				$('[data-settings="' + exceptions['subsections'][subsect] + '"]').css('display', 'none');
 			}
 			for (var sect in exceptions['sections']) {
-				$('.' + exceptions['sections'][sect]).css('display', 'none');
+				$('[data-accordion-for="' + exceptions['sections'][sect] + '"]').css('display', 'none');
+				$('[data-accordion="' + exceptions['sections'][sect] + '"]').css('display', 'none');
 			}
 		}
 	}]);

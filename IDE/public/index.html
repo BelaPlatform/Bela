@@ -276,7 +276,7 @@
                       <input type="checkbox" id="use-digital" class="settingsManager checkbox-slider" data-func="setCLArg" data-key="-G" value="1"><span></span>
                     </td>
                   </tr>
-                  <tr>
+                  <tr data-settings="mute-speaker">
                     <td class="left-choice">Mute Speaker:</td>
                     <td class="right-choice">
                       <input type="checkbox" id="mute-speaker" class="settingsManager checkbox-slider" data-func="setCLArg" data-key="-M" value="1">
@@ -344,8 +344,8 @@
                 <button class="settingsManager settings-button" data-func="restoreDefaultCLArgs">Restore default project settings</button>
               </div>
 
-              <button class="accordion" data-accordion-for="capelet">Capelet Settings</button>
-              <div class="panel" data-accordion="capelet">
+              <button class="accordion" data-accordion-for="capelet-settings">Capelet Settings</button>
+              <div class="panel" data-accordion="capelet-settings">
                 <table class="tabTable capelet-settings choice">
                   <tr>
                     <td class="left-choice">Multiplexer Capelet:</td>
