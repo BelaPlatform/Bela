@@ -1527,7 +1527,17 @@ var json = require('../site-text.json');
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 var i = 0;
 
-var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
+var classes = [
+  // 'Scope',
+  // 'OSCServer',
+  // 'OSCClient',
+  // 'OSCMessageFactory',
+  // 'UdpServer',
+  // 'UdpClient',
+  // 'Midi',
+  // 'MidiParser',
+  // 'WriteFile'
+];
 
 var DocumentationView = function (_View) {
   _inherits(DocumentationView, _View);
@@ -1663,6 +1673,7 @@ function createlifrommemberdef($xml, id, emitter, type) {
   var elementName = name + "-" + i;
   button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html());
   button.appendTo(li);
+  console.log(button);
 
   var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
   var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
