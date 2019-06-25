@@ -1281,6 +1281,13 @@ table.choice {
 th.right-choice.half {
   margin-top: 0; }
 
+.tab-subheading {
+  font-family: poppins_regular;
+  font-size: 1em;
+  margin: 0 0 .75em .5em;
+  -webkit-margin-before: 0;
+          margin-block-start: 0; }
+
 input[type="text"].number-picker,
 input[type="number"].number-picker {
   -webkit-appearance: textfield;

@@ -42,6 +42,13 @@ th {
   }
 }
 
+.tab-subheading {
+  font-family: poppins_regular;
+  font-size: 1em;
+  margin: 0 0 .75em .5em;
+  margin-block-start: 0;
+}
+
 input[type="text"].number-picker,
 input[type="number"].number-picker {
   appearance: textfield;
