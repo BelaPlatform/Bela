@@ -1,4 +1,5 @@
 Bela_control = new BelaWebSocket(5555, "gui_control");
+Bela_control.projectName = null;
 Bela_control.sliders = [];
 Bela_control.selectors = [];
 
@@ -14,18 +15,23 @@ Bela_control.events = [
             id: null
         }
     }),
+    new CustomEvent('new-connection', {
+        detail: {
+            projectName: null
+        }
+    })
 ];
 
 Bela_control.onData = function(data, parsedData) {
 
 	if (parsedData.event == 'connection') {
-		let obj = {
-			event: "connection-reply"
-		};
-        console.log("Connection reply")
-		obj = JSON.stringify(obj);
-		if (Bela_control.ws.readyState === 1)
-			Bela_control.ws.send(obj);
+        if(parsedData.projectName) {
+            console.log("Project name: "+parsedData.projectName);
+            Bela_control.projectName = parsedData.projectName;
+            this.events[2].detail.projectName = Bela_control.projectName;
+        }
+        this.target.dispatchEvent(this.events[2]);
+        Bela_control.sendEvent("connection-reply");
 	} else if (parsedData.event == 'set-slider') {
 		console.log("Set slider");
         let slider;
@@ -50,6 +56,14 @@ Bela_control.onData = function(data, parsedData) {
     }
 }.bind(Bela_control)
 
+Bela_control.sendEvent = function(data) {
+    let obj = {
+        event: data
+    };
+    obj = JSON.stringify(obj);
+    if (this.ws.readyState === 1)
+        this.ws.send(obj);
+}.bind(Bela_control)
 
 Bela_control.Slider = GuiSlider;
 

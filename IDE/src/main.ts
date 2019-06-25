@@ -63,6 +63,7 @@ function setup_routes(app: express.Application){
 	// static paths
 	app.use(express.static(paths.webserver_root)); // all files in this directory are served to bela.local/
 	app.use('/documentation', express.static(paths.Bela+'Documentation/html'));
+	app.use('/projects', express.static(paths.Bela+'projects'));
 
 	// ajax routes
 	// file and project downloads

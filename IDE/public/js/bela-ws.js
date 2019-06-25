@@ -18,25 +18,42 @@ class BelaWebSocket {
         this.ws.onclose = this.onClose;
         this.ws.onerror = this.onError;
         this.ws.onmessage = this.onMessage;
+
     }
 
-    onClose = function() {
+    reconnect(connectInterval) {
         setTimeout(() => {
+                console.log("Retrying connection in %d ms\n", connectInterval);
                 try {
                     this.ws = new WebSocket(this.ws.url);
-                    this.ws.addEventListener('error', (err) => console.log("Error"));
-
                 } catch (e) {
-                    console.log("Retrying connection in %d ms\n", this.connectInterval);
                 }
+                this.ws.onopen = this.onOpen;
                 this.ws.onclose = this.onClose;
                 this.ws.onerror = this.onError;
-        }, this.connectInterval)
+                this.ws.onmessage = this.onMessage;
+        }, connectInterval)
+    }
+
+    onClose = function(event) {
+        console.log("Socket closed")
+        // If socket was not closed normally
+        if(event.code != 1000)
+            this.reconnect(this.connectInterval);
     }.bind(this)
 
     onError = function(err){
-        console.log("Error");
-    }
+        console.log("Error: "+err.code);
+        console.log(err);
+
+        switch (err.code){
+    		case 'ECONNREFUSED':
+    			this.reconnect(this.connectInterval);
+    			break;
+    		default:
+    			break;
+        }
+    }.bind(this)
 
     onOpen = function() {
             console.log("Socket opened on %s\n", this.ws.url);
@@ -71,14 +88,10 @@ class BelaWebSocket {
 
 function isJson(str) {
 	let data;
-	if(str[0] === "{")
-	{
-		try {
-			data = JSON.parse(str);
-			return data;
-		} catch (e) {
-			return false;
-		}
+    	try {
+		data = JSON.parse(str);
+		return data;
+	} catch (e) {
+		return false;
 	}
-	return false;
 }

@@ -1,7 +1,7 @@
 /*
  * WriteFile.cpp
  *
- *  Created on: 5 Oct 2015
+ * Created on: 5 Oct 2015
  *      Author: giulio
  */
 
@@ -35,8 +35,8 @@ WriteFile::WriteFile(){
 	_filename = NULL;
 };
 
-WriteFile::WriteFile(const char* filename, bool overwrite){
-	setup(filename, overwrite);
+WriteFile::WriteFile(const char* filename, bool overwrite, bool append){
+	setup(filename, overwrite, append);
 }
 
 WriteFile::~WriteFile(){
@@ -108,15 +108,21 @@ char* WriteFile::generateUniqueFilename(const char* original)
 	}
 }
 
-void WriteFile::setup(const char* filename, bool overwrite){
+void WriteFile::setup(const char* filename, bool overwrite, bool append){
 	if(!overwrite)
 	{
 		_filename = generateUniqueFilename(filename);
+		file = fopen(_filename, "w");
 	} else {
+		printf("Overwrite %s\n", filename);
 		_filename = (char*)malloc(sizeof(char) * (strlen(filename) + 1));
-		file = fopen(filename, "w");
+		if(!append)
+		{
+			file = fopen(filename, "w");
+		} else {
+			file = fopen(filename, "a");
+		}
 	}
-	file = fopen(_filename, "w");
 	variableOpen = false;
 	lineLength = 0;
 	setEcho(false);

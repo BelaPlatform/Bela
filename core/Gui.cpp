@@ -1,5 +1,6 @@
 #include <Gui.h>
 #include <memory> // for shared pointers
+#include <iostream>
 
 Gui::Gui()
 {
@@ -18,12 +19,18 @@ int Gui::setup(unsigned int port, std::string address)
 	// Set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
 	ws_server->setup(port);
-	ws_server->addAddress(_addressData, nullptr, nullptr, nullptr, true);
+	ws_server->addAddress(_addressData,
+		[this](std::string address, void* buf, int size)
+		{
+			ws_onData((const char*) buf, size);
+		},
+	 nullptr, nullptr, true);
+
 	ws_server->addAddress(_addressControl,
 		// onData()
 		[this](std::string address, void* buf, int size)
 		{
-			ws_onData((const char*) buf);
+			ws_onControlData((const char*) buf, size);
 		},
 		// onConnect()
 		[this](std::string address)
@@ -33,11 +40,18 @@ int Gui::setup(unsigned int port, std::string address)
 		// onDisconnect()
 		[this](std::string address)
 		{
+			ws_disconnect();
 		}
 	);
 	return 0;
-}	
+}
 
+int Gui::setup(unsigned int port, std::string address, std::string projectName)
+{
+	_projectName = std::wstring(projectName.begin(), projectName.end());
+	setup(port, address);
+	return 0;
+}
 /*
  * Called when websocket is connected.
  * Communication is started here with the server sending a 'connection' JSON object
@@ -46,9 +60,11 @@ int Gui::setup(unsigned int port, std::string address)
  */
 void Gui::ws_connect()
 {
-	// send connection JSON 
+	// send connection JSON
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"connection");
+	if(!_projectName.empty())
+		root[L"projectName"] = new JSONValue(_projectName);
 
 	// Parse whatever needs to be parsed on connection
 
@@ -56,206 +72,107 @@ void Gui::ws_connect()
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	ws_server->send(_addressControl.c_str(), str.c_str());
+
+	delete value;
 }
+
+/*
+ * Called when websocket is disconnected.
+ *
+ */
+void Gui::ws_disconnect()
+{
+	wsIsConnected = false;
+}
+
 /*
  *  on_data callback for scope_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onData(const char* data)
+void Gui::ws_onControlData(const char* data, int size)
 {
-	
-	// parse the data into a JSONValue
-	JSONValue *value = JSON::Parse(data);
-	if (value == NULL || !value->IsObject()){
-		printf("could not parse JSON:\n%s\n", data);
+	if(customOnControlData && !customOnControlData(data, size, userControlData))
+	{
 		return;
 	}
-	
-	// look for the "event" key
-	JSONObject root = value->AsObject();
-	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
-		std::wstring event = root[L"event"]->AsString();
-		if (event.compare(L"connection-reply") == 0){
-			printf("Connection replied\n");
-			wsIsConnected = true;
-			if(sliders.size() != 0)
-			{
-				for (auto slider : sliders){
-					sendSlider(&slider);
-				}
-			}
-			if(selects.size() != 0)
-			{
-				for (auto select : selects){
-					sendSelect(&select);
-				}
-			}			
-		} else if (event.compare(L"slider") == 0){
-			int slider = -1;
-			float value = 0.0f;
-			if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
-				slider = (int)root[L"slider"]->AsNumber();
-			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
-			{
-				value = (float)root[L"value"]->AsNumber();
-				sliders.at(slider).value = value;
-				sliders.at(slider).changed = true;
-			}
-		} else if (event.compare(L"select") == 0){
-			int select = -1;
-			int value = -1;
-			if (root.find(L"select") != root.end() && root[L"select"]->IsNumber())
-				select = (int)root[L"select"]->AsNumber();
-			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
-			{
-				value = (int)root[L"value"]->AsNumber();
-				selects.at(select).value = value;
-				selects.at(select).changed = true;
-			}
-				
+	else
+	{
+		// parse the data into a JSONValue
+		JSONValue *value = JSON::Parse(data);
+		if (value == NULL || !value->IsObject()){
+			fprintf(stderr, "Could not parse JSON:\n%s\n", data);
+			return;
 		}
+		// look for the "event" key
+		JSONObject root = value->AsObject();
+		if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+			std::wstring event = root[L"event"]->AsString();
+			if (event.compare(L"connection-reply") == 0){
+				wsIsConnected = true;
+			} else if (event.compare(L"gui-ready") == 0){
+				guiIsReady = true;
+			}
+		}
+		delete value;
+	}
+	return;
+}
+
+void Gui::ws_onData(const char* data, int size)
+{
+	if(customOnData && !customOnData(data, size, userBinaryData))
+	{
 		return;
 	}
-}
-
-float Gui::getSliderValue(int index)
-{
-	sliders[index].changed = false;
-	return sliders[index].value;
-}
-
-std::string Gui::getSelectValue(int index)
-{
-	selects[index].changed = false;
-	return selects[index].options[selects[index].value];
-}
-
-void Gui::setSlider(int index, float min, float max, float step, float value, std::string name)
-{
-	sliders.at(index).value = value;
-	sliders.at(index).min = min;
-	sliders.at(index).max = max;
-	sliders.at(index).step = step;
-	sliders.at(index).name = name;
-	sliders.at(index).w_name = std::wstring(name.begin(), name.end());
-}
-
-void Gui::setSelect(int index, const std::vector<std::string>& options, unsigned int selectedIndex, std::string name)
-{
-	selects.at(index).options = options;
-	if(!selects.at(index).options.empty())
+	else
 	{
-		selects.at(index).value = selectedIndex % (selects.at(index).options.size());
+		uint32_t bufferId = *(uint32_t*) data;
+		data += sizeof(uint32_t);
+		char bufferType = *data;
+		data += sizeof(uint32_t);
+		uint32_t bufferLength = *(uint32_t*) data;
+		uint32_t numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
+		data += 2*sizeof(uint32_t);
+		if(bufferId < _buffers.size())
+		{
+			if(bufferType != _buffers[bufferId].getType())
+			{
+				fprintf(stderr, "Buffer %d: received buffer type (%c) doesn't match original buffer type (%c).\n", bufferId, bufferType, _buffers[bufferId].getType());
+			}
+			else
+			{
+				if(numBytes > _buffers[bufferId].getCapacity())
+				{
+					fprintf(stderr, "Buffer %d: size of received buffer (%d bytes) exceeds that of the original buffer (%d bytes). The received data will be trimmed.\n", bufferId, numBytes, _buffers[bufferId].getCapacity());
+					numBytes = _buffers[bufferId].getCapacity();
+				}
+				// Copy data to buffers
+				getDataBuffer(bufferId).getBuffer()->assign(data, data + numBytes);
+			}
+		}
+		else
+		{
+			fprintf(stderr, "Received buffer ID %d is out of range.\n", bufferId);
+		}
 	}
-	selects.at(index).name = name;
-	selects.at(index).w_name = std::wstring(name.begin(), name.end());
+	return;
 }
 
-void Gui::sendSlider(GuiSlider* slider)
+// BUFFERS
+unsigned int Gui::setBuffer(char bufferType, unsigned int size)
 {
-	JSONObject root;
-	root[L"event"] = new JSONValue(L"set-slider");
-	root[L"slider"] = new JSONValue(slider->index);
-	root[L"value"] = new JSONValue(slider->value);
-	root[L"min"] = new JSONValue(slider->min);
-	root[L"max"] = new JSONValue(slider->max);
-	root[L"step"] = new JSONValue(slider->step);
-	root[L"name"] = new JSONValue(slider->w_name);
-	JSONValue *json = new JSONValue(root);
-	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
-	std::wstring wide = json->Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	ws_server->send(_addressControl.c_str(), str.c_str());
+	unsigned int buffId = _buffers.size();
+	DataBuffer newBuffer(bufferType, size);
+	_buffers.emplace_back(newBuffer);
+	return buffId;
 }
 
-void Gui::sendSelect(GuiSelect* select)
+DataBuffer& Gui::getDataBuffer( unsigned int bufferId )
 {
-	JSONObject root;
-	root[L"event"] = new JSONValue(L"set-select");
-	root[L"select"] = new JSONValue(select->index);
-	root[L"value"] = new JSONValue(select->value);
-	root[L"name"] = new JSONValue(select->w_name);
-	JSONArray optArray;
-	for(std::string opt : select->options)
-		optArray.push_back(new JSONValue(std::wstring(opt.begin(), opt.end())));
-	root[L"options"] = new JSONValue(optArray);
-	JSONValue *json = new JSONValue(root);
-	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
-	std::wstring wide = json->Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	ws_server->send(_addressControl.c_str(), str.c_str());
-}
+	if(bufferId >= _buffers.size())
+		throw std::runtime_error((std::string("Buffer ID ")+std::to_string((int)bufferId)+std::string(" is out of range.\n")).c_str());
 
-void Gui::setSliderValue(int index, float value)
-{
-	sliders.at(index).value = value;
-	sendSliderValue(index);
-}
-
-void Gui::setSelectValue(int index, unsigned int valueIndex)
-{
-	if(valueIndex < selects.at(index).options.size())
-	{
-		selects.at(index).value = valueIndex;
-		sendSelectValue(index);
-	}
-}
-
-void Gui::sendSliderValue(int index)
-{
-	JSONObject root;
-	root[L"event"] = new JSONValue(L"set-slider");
-	root[L"slider"] = new JSONValue(sliders[index].index);
-	root[L"value"] = new JSONValue(sliders[index].value);
-	JSONValue *json = new JSONValue(root);
-	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
-	std::wstring wide = json->Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	
-}
-void Gui::sendSelectValue(int index)
-{
-	JSONObject root;
-	root[L"event"] = new JSONValue(L"set-select");
-	root[L"select"] = new JSONValue(selects[index].index);
-	root[L"value"] = new JSONValue(selects[index].value);
-	JSONValue *json = new JSONValue(root);
-	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
-	std::wstring wide = json->Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	ws_server->send(_addressControl.c_str(), str.c_str());
-}
-
-void Gui::addSlider(std::string name, float min, float max, float step, float value)
-{
-	GuiSlider newSlider;
-	newSlider.index = sliders.size();
-	sliders.push_back(newSlider);
-	setSlider(newSlider.index, min, max, step, value, name);
-
-	if(isConnected())
-	{
-		sendSlider(&newSlider);
-	}
-}
-
-void Gui::addSelect(std::string name, const std::vector<std::string>& options, unsigned int selectedIndex)
-{	
-	printf("Select name: %s\n", name.c_str()); 
-	printf("Options %d: \n", options.size());
-	for(std::string opt : options)
-	{
-		printf("\t %s\n", opt.c_str());
-	}
-	
-	GuiSelect newSelect;
-	newSelect.index = selects.size();
-	selects.push_back(newSelect);
-	setSelect(newSelect.index, options, selectedIndex, name);
-	if(isConnected())
-	{
-		sendSelect(&newSelect);
-	}
+	return _buffers[bufferId];
 }
 
 Gui::~Gui()

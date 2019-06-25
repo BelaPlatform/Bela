@@ -12,6 +12,7 @@
 #include <sstream>
 #include <getopt.h>
 #include "../include/Bela.h"
+#include "../include/board_detect.h"
 
 #define OPT_PRU_FILE 1000
 #define OPT_PGA_GAIN_LEFT 1001
@@ -107,7 +108,8 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->enableLED = 1;
 	settings->enableCapeButtonMonitoring = 1;
 	settings->highPerformanceMode = 0;
-	settings->board[0] = '\0';
+	settings->board = BelaHw_NoHw;
+	settings->projectName = NULL;
 
 	// These deliberately have no command-line flags by default,
 	// as it is unlikely the user would want to switch them
@@ -322,10 +324,7 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			printf("Uniform sample rate\n");
 			break;
 		case OPT_BOARD:
-			if(strlen(optarg) < MAX_BOARDNAME_LENGTH)
-				strcpy(settings->board, optarg);
-			else
-				std::cerr << "Warning: filename for the board name is too long (>" << MAX_BOARDNAME_LENGTH << " characters).\n";
+			settings->board = getBelaHw(std::string(optarg));
 			break;
 		case '?':
 		default:

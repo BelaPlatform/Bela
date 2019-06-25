@@ -4345,7 +4345,7 @@ var ToolbarView = function (_View) {
 
 		$('[data-toolbar-gui]').on('click', function () {
 			// window.open('gui');
-			window.open('gui.html#p5-basic');
+			window.open('gui');
 		});
 		return _this;
 	}

@@ -25,6 +25,29 @@ function sectionLoader(section) {
     }
 }
 
+function loadSketch(sketchSource, defaultSource) {
+
+    removeElementByClassName('p5Canvas');
+
+    let sketch = loadScript(sketchSource);
+    let scriptElement;
+    sketch.then((resolved) => {
+        scriptElement = resolved;
+        scriptElement.setAttribute('id', 'p5-sketch');
+        console.log(sketchSource+ " loaded");
+        if(Bela_control != null)
+            Bela_control.sendEvent("gui-ready");
+
+    }).catch((rejected) => {
+        console.log(sketchSource + " couldn't be loaded.")
+        if(defaultSource != null) {
+            console.log("Loading %s instead", defaultSource);
+            scriptElement = loadSketch(defaultSource);
+        }
+    })
+    return scriptElement;
+}
+
 window.onload = function() {
     sectionLoader(location.hash);
 };

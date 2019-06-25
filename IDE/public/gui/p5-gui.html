@@ -1,5 +1,5 @@
-<script src="js/p5.min.js"></script>
-<script src="js/p5.dom.min.js"></script>
+<script src="../js/p5.min.js"></script>
+<script src="../js/p5.dom.min.js"></script>
 
 <script src="/gui/js/gui-slider.js"></script>
 <script src="/gui/js/gui-select.js"></script>
@@ -9,23 +9,27 @@
 <script src="/gui/js/bela-gui-control-handler.js"></script>
 
 <script>
-    let defaultSketch = "p5-standard-gui";
-    let sketchName = location.hash;
-    sketchName = sketchName.substring(1);
-    if(sketchName.length == 0) {
-        // Load default sketch
-        sketchName = defaultSketch;
-    }
-    let p5sketchSource = "/gui/p5-sketches/"+sketchName+".js"
-    let scriptElement;
+    let p5sketchSource;
+    let sketch;
+    let projectName = location.hash;
 
-    let loadSketch = loadScript(p5sketchSource);
-    loadSketch.then((resolved) => {
-        scriptElement = resolved;
-    }).catch((rejected) => {
-        console.log(p5sketchSource + " couldn't be loaded.")
-        console.log("Loading %s instead", p5sketchSource);
-        p5sketchSource = "/gui/p5-sketches/"+defaultSketch+".js"
-        scriptElement = loadScript(p5sketchSource);
-    })
+    let queryString = new URLSearchParams(window.location.search);
+
+    if(queryString.has('project')) {
+        let projectName = queryString.get('project');
+        if(projectName.length != 0) {
+            p5sketchSource = "/projects/"+projectName+"/sketch.js"
+            sketch = loadSketch(p5sketchSource);
+        }
+    } else {
+        Bela_control.target.addEventListener('new-connection', function(event) {
+            console.log("New connection.");
+            projectName = event.detail.projectName;
+            console.log("Project name "+projectName);
+            p5sketchSource = "/projects/"+projectName+"/sketch.js"
+        if(projectName != "exampleTempProject")
+            window.location.hash = '#'+projectName;
+            sketch = loadSketch(p5sketchSource);
+        });
+    }
 </script>

@@ -63,7 +63,7 @@ private:
 	void writeOutput(bool flush);
 public:
 	WriteFile();
-	WriteFile(const char* filename, bool overwrite);
+	WriteFile(const char* filename, bool overwrite, bool append);
 
 	/**
 	 * Set the type of file to write, can be either kText or kBinary.
@@ -129,7 +129,7 @@ public:
 	 * If `overwrite` is false, existing files will not be overwritten
 	 * and the filename will be automatically incremented.
 	 */
-	void setup(const char* filename, bool overwrite = false);
+	void setup(const char* filename, bool overwrite = false, bool append = false);
 
 	/**
 	 * Gets the distance between the write and read pointers of
