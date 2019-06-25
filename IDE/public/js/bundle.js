@@ -1047,11 +1047,11 @@ var keypress = new window.keypress.Listener();
 keypress.simple_combo("meta s", function () {
 	toolbarView.emit('process-event', 'run');
 });
-keypress.simple_combo("meta o", function () {
-	tabView.emit('toggle', 'click', 'tab-control');
-});
 keypress.simple_combo("meta f", function () {
 	editorView.emit('search');
+});
+keypress.simple_combo("meta o", function () {
+	tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear');
@@ -1673,7 +1673,6 @@ function createlifrommemberdef($xml, id, emitter, type) {
   var elementName = name + "-" + i;
   button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html());
   button.appendTo(li);
-  console.log(button);
 
   var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
   var title = $('<h3></h3>').addClass('memberdef-title').html($xml.find('definition').html() + $xml.find('argsstring').html());
@@ -3348,6 +3347,8 @@ var ProjectView = function (_View) {
 										libDesc.html(object.description);
 
 										// FOR LIBRARY INFO
+
+
 										if (object.version != null) {
 											var infoContent = $('<p></p>');
 											infoContent.append('Version: ' + object.version);
@@ -3389,7 +3390,6 @@ var ProjectView = function (_View) {
 											includeCopy.appendTo(includeContent);
 											includeInstructions.appendTo(includeContent);
 										}
-
 
 										includeArr = [];
 										libDataDiv.appendTo(libraryPanel);
@@ -5014,9 +5014,6 @@ module.exports = new Console();
 
 },{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
 module.exports=[
-  "13-Salt",
-  "08-PureData",
-  "04-Audio"
 ]
 
 },{}],17:[function(require,module,exports){
