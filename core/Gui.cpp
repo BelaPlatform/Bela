@@ -126,11 +126,11 @@ void Gui::ws_onData(const char* data, int size)
 	}
 	else
 	{
-		uint32_t bufferId = (uint32_t) *data;
+		uint32_t bufferId = *(uint32_t*) data;
 		data += sizeof(uint32_t);
-		char32_t bufferType = *data;
-		data += sizeof(char32_t);
-		uint32_t bufferLength = (uint32_t) *data;
+		char bufferType = *data;
+		data += sizeof(uint32_t);
+		uint32_t bufferLength = *(uint32_t*) data;
 		uint32_t numBytes = (bufferType == 'c' ? bufferLength : bufferLength * sizeof(float));
 		data += 2*sizeof(uint32_t);
 		if(bufferId < _buffers.size())
