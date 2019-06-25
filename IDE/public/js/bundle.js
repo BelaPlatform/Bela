@@ -3135,7 +3135,6 @@ var ProjectView = function (_View) {
               if (child && child.length && child[0] === '.') return 'continue';
               var childLi = $('<li></li>');
               childLi.html(child).attr('data-example-link', item.name + '/' + child).on('click', function (e) {
-
                 if (_this6.exampleChanged) {
                   _this6.exampleChanged = false;
                   popup.exampleChanged(function () {
@@ -3266,7 +3265,6 @@ var ProjectView = function (_View) {
 
           var infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter); // Header for include instructions
           var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
-
 
           clipboard = new Clipboard(includeCopy[0], {
             target: function target(trigger) {
@@ -3435,7 +3433,6 @@ var ProjectView = function (_View) {
             }
             // FOR LIBRARY INFO
 
-
             // per section
             // item.name -> parentDiv $examples
           } catch (err) {
@@ -3504,7 +3501,6 @@ var ProjectView = function (_View) {
       if (exceptString === "CtagFace" || exceptString === "CtagBeast") exceptString = 'Ctag';
 
       $.getJSON("../example_except.json", function (data) {
-
         if (exceptString in data) {
           for (var example in data[exceptString]) {
             var exampleId = data[exceptString][example].section + "/" + data[exceptString][example].name;
