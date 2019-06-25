@@ -1050,6 +1050,9 @@ keypress.simple_combo("meta s", function () {
 keypress.simple_combo("meta o", function () {
 	tabView.emit('toggle', 'click', 'tab-control');
 });
+keypress.simple_combo("meta f", function () {
+	editorView.emit('search');
+});
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear');
 });
@@ -1918,10 +1921,17 @@ var EditorView = function (_View) {
 			});
 		});
 
+		_this.on('search', _this.search);
+
 		return _this;
 	}
 
 	_createClass(EditorView, [{
+		key: 'search',
+		value: function search() {
+			this.editor.execCommand('find');
+		}
+	}, {
 		key: 'editorChanged',
 		value: function editorChanged() {
 			var _this2 = this;
@@ -3327,8 +3337,6 @@ var ProjectView = function (_View) {
 										libDesc.html(object.description);
 
 										// FOR LIBRARY INFO
-
-
 										if (object.version != null) {
 											var infoContent = $('<p></p>');
 											infoContent.append('Version: ' + object.version);
@@ -3370,6 +3378,7 @@ var ProjectView = function (_View) {
 											includeCopy.appendTo(includeContent);
 											includeInstructions.appendTo(includeContent);
 										}
+
 
 										includeArr = [];
 										libDataDiv.appendTo(libraryPanel);
