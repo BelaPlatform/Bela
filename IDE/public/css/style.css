@@ -876,7 +876,7 @@ ul.libraries-list-parent {
   margin: 0;
   padding: 0; }
   ul.libraries-list-parent .library-desc, ul.libraries-list-parent .library-ver {
-    font-family: 'poppins-light';
+    font-family: 'poppins_light';
     font-size: .9em;
     -webkit-margin-before: 0;
             margin-block-start: 0;
