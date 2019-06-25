@@ -141,6 +141,7 @@ class ProjectView extends View {
 	_projectList(projects, data){
 
 		var $projects = $('[data-projects-select]');
+    // $projects.empty();
 
 		// fill project menu with projects
     if (projects.length > 0) {
@@ -390,7 +391,7 @@ class ProjectView extends View {
 			}
       // FOR LIBRARY INFO
 
-      
+
 
       // per section
       // item.name -> parentDiv $examples
