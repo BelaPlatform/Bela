@@ -6,170 +6,170 @@ var example_order = require('../example_order.json');
 
 class ProjectView extends View {
 
-	constructor(className, models){
-		super(className, models);
+  constructor(className, models){
+  super(className, models);
 
-		this.on('example-changed', () => this.exampleChanged = true );
-	}
+  this.on('example-changed', () => this.exampleChanged = true );
+  }
 
-	// UI events
-	selectChanged($element, e){
-		if (this.exampleChanged){
-			this.exampleChanged = false;
-			popup.exampleChanged( () => {
-				this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()});
-			}, undefined, 0, () => {
-				this.exampleChanged = true;
-			});
-			return;
-		}
+  // UI events
+  selectChanged($element, e){
+  if (this.exampleChanged){
+  this.exampleChanged = false;
+  popup.exampleChanged( () => {
+  this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()});
+  }, undefined, 0, () => {
+  this.exampleChanged = true;
+  });
+  return;
+  }
 
-		this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.data('name')})
+  this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.data('name')})
 
-	}
+  }
 
-	buttonClicked($element, e){
-		var func = $element.data().func;
-		if (func && this[func]){
-			this[func](func);
-		}
-	}
+  buttonClicked($element, e){
+  var func = $element.data().func;
+  if (func && this[func]){
+  this[func](func);
+  }
+  }
 
-	newProject(func){
+  newProject(func){
 
-		if (this.exampleChanged){
-			this.exampleChanged = false;
-			popup.exampleChanged(this.newProject.bind(this), func, 500, () => this.exampleChanged = true );
-			return;
-		}
+  if (this.exampleChanged){
+  this.exampleChanged = false;
+  popup.exampleChanged(this.newProject.bind(this), func, 500, () => this.exampleChanged = true );
+  return;
+  }
 
-		// build the popup content
-		popup.title(json.popups.create_new.title);
-		popup.subtitle(json.popups.create_new.text);
+  // build the popup content
+  popup.title(json.popups.create_new.title);
+  popup.subtitle(json.popups.create_new.text);
 
-		var form = [];
-		form.push('<label for="popup-C" class="radio-container">C++')
-		form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>')
-		form.push('<span class="radio-button"></span>')
-		form.push('</label>');
-		form.push('<label for="popup-PD" class="radio-container">Pure Data')
-		form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">')
-		form.push('<span class="radio-button"></span>')
-		form.push('</label>');
-		form.push('<label for="popup-SC" class="radio-container">SuperCollider')
-		form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
-		form.push('<span class="radio-button"></span>')
-		form.push('</label>');
-		form.push('<label for="popup-CS" class="radio-container">Csound');
-		form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-		form.push('<span class="radio-button"></span>')
-		form.push('</label>');
-		form.push('<input type="text" placeholder="Enter your project name">');
-		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+  var form = [];
+  form.push('<label for="popup-C" class="radio-container">C++')
+  form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>')
+  form.push('<span class="radio-button"></span>')
+  form.push('</label>');
+  form.push('<label for="popup-PD" class="radio-container">Pure Data')
+  form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">')
+  form.push('<span class="radio-button"></span>')
+  form.push('</label>');
+  form.push('<label for="popup-SC" class="radio-container">SuperCollider')
+  form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
+  form.push('<span class="radio-button"></span>')
+  form.push('</label>');
+  form.push('<label for="popup-CS" class="radio-container">Csound');
+  form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
+  form.push('<span class="radio-button"></span>')
+  form.push('</label>');
+  form.push('<input type="text" placeholder="Enter your project name">');
+  form.push('</br>');
+  form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
+  form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			this.emit('message', 'project-event', {
-				func,
-				newProject	: sanitise(popup.find('input[type=text]').val()),
-				projectType	: popup.find('input[type=radio]:checked').data('type')
-			});
+  popup.form.append(form.join('')).off('submit').on('submit', e => {
+  e.preventDefault();
+  this.emit('message', 'project-event', {
+  func,
+  newProject	: sanitise(popup.find('input[type=text]').val()),
+  projectType	: popup.find('input[type=radio]:checked').data('type')
+  });
       $('[data-projects-select]').html('');
-			popup.hide();
-		});
+  popup.hide();
+  });
 
-		popup.find('.cancel').on('click', popup.hide );
+  popup.find('.cancel').on('click', popup.hide );
 
-		popup.show();
+  popup.show();
 
-	}
-	saveAs(func){
+  }
+  saveAs(func){
 
-		// build the popup content
-		popup.title(json.popups.save_as.title);
-		popup.subtitle(json.popups.save_as.text);
+  // build the popup content
+  popup.title(json.popups.save_as.title);
+  popup.subtitle(json.popups.save_as.text);
 
-		var form = [];
-		form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
-		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.save_as.button+'</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+  var form = [];
+  form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
+  form.push('</br >');
+  form.push('<button type="submit" class="button popup confirm">'+json.popups.save_as.button+'</button>');
+  form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			this.emit('message', 'project-event', {func, newProject: sanitise(popup.find('input[type=text]').val())});
-			popup.hide();
-		});
+  popup.form.append(form.join('')).off('submit').on('submit', e => {
+  e.preventDefault();
+  this.emit('message', 'project-event', {func, newProject: sanitise(popup.find('input[type=text]').val())});
+  popup.hide();
+  });
 
-		popup.find('.cancel').on('click', popup.hide );
+  popup.find('.cancel').on('click', popup.hide );
 
-		popup.show();
+  popup.show();
 
-	}
+  }
 
-	deleteProject(func){
+  deleteProject(func){
 
-		// build the popup content
-		popup.title(json.popups.delete_project.title);
-		popup.subtitle(json.popups.delete_project.text);
+  // build the popup content
+  popup.title(json.popups.delete_project.title);
+  popup.subtitle(json.popups.delete_project.text);
 
-		var form = [];
-		form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+  var form = [];
+  form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
+  form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
+  popup.form.append(form.join('')).off('submit').on('submit', e => {
+  e.preventDefault();
       $('[data-projects-select]').html('');
-			this.emit('message', 'project-event', {func});
-			popup.hide();
-		});
+  this.emit('message', 'project-event', {func});
+  popup.hide();
+  });
 
-		popup.find('.cancel').on('click', popup.hide );
+  popup.find('.cancel').on('click', popup.hide );
 
-		popup.show();
+  popup.show();
 
-		popup.find('.delete').trigger('focus');
+  popup.find('.delete').trigger('focus');
 
-	}
-	cleanProject(func){
-		this.emit('message', 'project-event', {func});
-	}
+  }
+  cleanProject(func){
+  this.emit('message', 'project-event', {func});
+  }
 
-	// model events
-	_projectList(projects, data){
+  // model events
+  _projectList(projects, data){
 
-		var $projects = $('[data-projects-select]');
+  var $projects = $('[data-projects-select]');
     $projects.empty();
 
-		// fill project menu with projects
+  // fill project menu with projects
     if (projects.length > 0) {
       var projLen = projects.length;
     }
     $projects.attr('size', (projLen - 1));
-		for (let i=0; i < projLen; i++){
-			if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
-				$('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
+  for (let i=0; i < projLen; i++){
+  if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
+  $('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
           $(this).blur();
           $(this).parent().parent().removeClass('show');
         });
-			}
-		}
+  }
+  }
 
-		if (data && data.currentProject) this._currentProject(data.currentProject);
+  if (data && data.currentProject) this._currentProject(data.currentProject);
 
-	}
+  }
 
-	_exampleList(examplesDir){
+  _exampleList(examplesDir){
 
-		var $examples = $('[data-examples]');
+  var $examples = $('[data-examples]');
     var oldListOrder = examplesDir;
     var newListOrder = [];
 
-		$examples.empty();
+  $examples.empty();
 
-		if (!examplesDir.length) return;
+  if (!examplesDir.length) return;
 
     oldListOrder.forEach(item => {
       example_order.forEach(new_item => {
@@ -181,41 +181,41 @@ class ProjectView extends View {
     });
     var orderedList = newListOrder.concat(oldListOrder);
 
-		for (let item of orderedList){
+  for (let item of orderedList){
       let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
-			let parentUl = $('<ul></ul>');
+  let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('example-list');
       let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
 
-			for (let child of item.children){
-				if (child && child.length && child[0] === '.') continue;
+  for (let child of item.children){
+  if (child && child.length && child[0] === '.') continue;
         let childLi = $('<li></li>');
-				childLi.html(child).attr('data-example-link', item.name + '/' + child)
-					.on('click', (e) => {
+  childLi.html(child).attr('data-example-link', item.name + '/' + child)
+  .on('click', (e) => {
 
-						if (this.exampleChanged){
-							this.exampleChanged = false;
-							popup.exampleChanged( () => {
-								this.emit('message', 'project-event', {
-									func: 'openExample',
-									currentProject: item.name + '/' + child
-								});
-								$('.selectedExample').removeClass('selectedExample');
-								$(e.target).addClass('selectedExample');
-							}, undefined, 0, () => this.exampleChanged = true );
-							return;
-						}
+  if (this.exampleChanged){
+  this.exampleChanged = false;
+  popup.exampleChanged( () => {
+  this.emit('message', 'project-event', {
+  func: 'openExample',
+  currentProject: item.name + '/' + child
+  });
+  $('.selectedExample').removeClass('selectedExample');
+  $(e.target).addClass('selectedExample');
+  }, undefined, 0, () => this.exampleChanged = true );
+  return;
+  }
 
-						this.emit('message', 'project-event', {
-							func: 'openExample',
-							currentProject: item.name + '/' + child
-						});
-						$('.selectedExample').removeClass('selectedExample');
-						$(e.target).addClass('selectedExample');
-					});
+  this.emit('message', 'project-event', {
+  func: 'openExample',
+  currentProject: item.name + '/' + child
+  });
+  $('.selectedExample').removeClass('selectedExample');
+  $(e.target).addClass('selectedExample');
+  });
           childLi.appendTo(childUl);
-			}
+  }
       // per section
       // item.name -> parentDiv $examples
       parentButton.appendTo(parentLi);
@@ -225,17 +225,17 @@ class ProjectView extends View {
       childDiv.appendTo(parentLi);
       parentLi.appendTo(parentUl);
       parentLi.appendTo($examples);
-		}
-	}
+  }
+  }
 
   _libraryList(librariesDir){
 
-		var $libraries = $('[data-libraries-list]');
+  var $libraries = $('[data-libraries-list]');
     var counter = 0;
-		$libraries.empty(librariesDir);
-		if (!librariesDir.length) return;
+  $libraries.empty(librariesDir);
+  if (!librariesDir.length) return;
 
-		for (let item of librariesDir){
+  for (let item of librariesDir){
       /*
       Button header text    +
       Library description here.
@@ -265,7 +265,7 @@ class ProjectView extends View {
 
       let name = item.name;
       let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
-			let libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+  let libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
       let libraryItem = $('<li></li>'); // Individual library dropdown
 
       let libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
@@ -282,10 +282,10 @@ class ProjectView extends View {
 
 
       var clipboard = new Clipboard(includeCopy[0], {
-				target: function(trigger) {
-					return $(trigger).parent().find($('[data-include="include-text"]'))[0];
-				}
-			});
+  target: function(trigger) {
+  return $(trigger).parent().find($('[data-include="include-text"]'))[0];
+  }
+  });
 
       // FILES:
       let filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter); // Header for include instructions
@@ -293,8 +293,8 @@ class ProjectView extends View {
       let filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
       let filesList = $('<ul></ul>').addClass('libraries-list');
       let includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
-			for (let child of item.children){
-				if (child && child.length && child[0] === '.') continue;
+  for (let child of item.children){
+  if (child && child.length && child[0] === '.') continue;
         if (child == 'build') continue;
         let childLi = $('<li></li>');
         let testExt = child.split('.');
@@ -388,7 +388,7 @@ class ProjectView extends View {
           includeInstructions.appendTo(includeContent);
           childLi.appendTo(filesList);
         }
-			}
+  }
       // FOR LIBRARY INFO
 
 
@@ -415,70 +415,70 @@ class ProjectView extends View {
       libraryItem.appendTo(libraryList);  // Append the whole item to the list of library items
       libraryItem.appendTo($libraries);
 
-		}
+  }
 
-	}
+  }
 
-	_boardString(data){
-		var boardString;
-		if(data && data.trim)
-			boardString = data.trim();
-		else
-			return
+  _boardString(data){
+  var boardString;
+  if(data && data.trim)
+  boardString = data.trim();
+  else
+  return
 
-			var exceptString = boardString;
-			if(exceptString === "CtagFace" || exceptString === "CtagBeast")
-				exceptString = 'Ctag'
+  var exceptString = boardString;
+  if(exceptString === "CtagFace" || exceptString === "CtagBeast")
+  exceptString = 'Ctag'
 
-			$.getJSON( "../example_except.json", function( data ) {
+  $.getJSON( "../example_except.json", function( data ) {
 
-				if (exceptString in data)
-				{
-					for(var example in data[exceptString]) {
-					  var exampleId = data[exceptString][example].section+"/"+data[exceptString][example].name;
-						try{
-							 document.getElementById(exampleId).style.display = 'none';
-						}
-						catch(err){}
-					}
-				}
-			})
-	}
+  if (exceptString in data)
+  {
+  for(var example in data[exceptString]) {
+    var exampleId = data[exceptString][example].section+"/"+data[exceptString][example].name;
+  try{
+   document.getElementById(exampleId).style.display = 'none';
+  }
+  catch(err){}
+  }
+  }
+  })
+  }
 
-	_currentProject(project){
+  _currentProject(project){
 
-		// unselect currently selected project
-		$('[data-projects-select]').find('option').filter(':selected').attr('selected', '');
+  // unselect currently selected project
+  $('[data-projects-select]').find('option').filter(':selected').attr('selected', '');
 
-		if (project === 'exampleTempProject'){
-			// select no project
-			$('[data-projects-select]').val($('[data-projects-select] > option:first').val());
-		} else {
-			// select new project
-			$('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
-		}
+  if (project === 'exampleTempProject'){
+  // select no project
+  $('[data-projects-select]').val($('[data-projects-select] > option:first').val());
+  } else {
+  // select new project
+  $('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
+  }
 
-		// set download link
+  // set download link
     $('[data-project-download]').attr('href', '/download?project=' + project);
 
-	}
+  }
 
-	__currentProject(){
-		this.exampleChanged = false;
-	}
+  __currentProject(){
+  this.exampleChanged = false;
+  }
 
-	subDirs(dir){
-		var ul = $('<ul></ul>').html(dir.name+':');
-		for (let child of dir.children){
-			if (!child.dir)
-				$('<li></li>').addClass('sourceFile').html(child.name).data('file', (dir.dirPath || dir.name)+'/'+child.name).appendTo(ul);
-			else {
-				child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
-				ul.append(this.subDirs(child));
-			}
-		}
-		return ul;
-	}
+  subDirs(dir){
+  var ul = $('<ul></ul>').html(dir.name+':');
+  for (let child of dir.children){
+  if (!child.dir)
+  $('<li></li>').addClass('sourceFile').html(child.name).data('file', (dir.dirPath || dir.name)+'/'+child.name).appendTo(ul);
+  else {
+  child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
+  ul.append(this.subDirs(child));
+  }
+  }
+  return ul;
+  }
 }
 
 module.exports = ProjectView;
