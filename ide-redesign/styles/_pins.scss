@@ -1,23 +1,16 @@
 #pin_container {
   height: calc(100vh - 200px);
-  overflow: hidden;
+  overflow: visible;
   object {
     height: 100%;
     width: 100%;
   }
-  #image {
-    height: auto;
-    margin: 0;
-    overflow: auto;
-    padding: 0;
-    text-align: left;
-    width: auto;
-  }
 
-  .diagram_text {
-    font-family: poppins_light;
-    font-size: inherit;
-    line-height: 12px;
+  .diagram-text {
+    font-family: 'poppins_regular';
+    font-size: .9em;
+    line-height: 22px;
+    margin-top: 0;
   }
 
   .dPin {

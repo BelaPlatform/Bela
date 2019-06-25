@@ -59,23 +59,23 @@ $dragObject.mousedown(function() {
 	console.log("CLICK, wait for drag");
 
 }).
-			mousemove(function() {
-	areWeDragging = true;
-	if(areWeDragging && dragEventStarted) {
-		getMousePosition();
-		console.log($currentMousePos.x, $currentMousePos.y);
-		$('.lower').css('height', $currentMousePos.y)
-			
-		;
-		}
-	}).
-			mouseup(function() {
-	$(this).removeClass('dragActive');
-	areWeDragging = false;
-	dragEventStarted = false;
-	if (!areWeDragging) {
-		console.log("DRAGDONE");
-	}
+      mousemove(function() {
+  areWeDragging = true;
+  if(areWeDragging && dragEventStarted) {
+    getMousePosition();
+    console.log($currentMousePos.x, $currentMousePos.y);
+    $('.lower').css('height', $currentMousePos.y)
+      
+    ;
+    }
+  }).
+      mouseup(function() {
+  $(this).removeClass('dragActive');
+  areWeDragging = false;
+  dragEventStarted = false;
+  if (!areWeDragging) {
+    console.log("DRAGDONE");
+  }
 });
 
 // TOOLBAR FUNCTION LABELS ////////////////////////////////////////

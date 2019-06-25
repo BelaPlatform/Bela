@@ -79,7 +79,7 @@ var ws_onmessage = function(e){
 				var second = inArray[inIndex + 1 < endOfInArray ? inIndex + 1 : endOfInArray];
 				var diff = interpolation ? u*(second-first)/upSampling : 0;
 				outIndex = channel*outFrameWidth + frame*upSampling + u;
-				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) / channelConfig[channel].yAmplitude);
+				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) * channelConfig[channel].yAmplitude);
 			}
 		}
 		// the above will not always get to the end of outArray, depending on the ratio between upSampling and outFrameWidth

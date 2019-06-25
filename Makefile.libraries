@@ -4,6 +4,7 @@
 LIBRARY_CC ?= clang
 LIBRARY_CXX ?= clang++
 .DEFAULT_GOAL := all
+AT?=@
 
 #TODO: these variables should actually be conditional and/or shared with the Base Makefile
 # although they are not really needed if this Makefile is called from the main Makefile
@@ -39,11 +40,11 @@ LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_CS:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/b
 
 all: $(LIBRARY_OBJS)
 clean:
-	rm -rf $(LIBRARY_OBJS)
+	$(AT) rm -rf $(LIBRARY_OBJS)
 
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
-	$(LIBRARY_CC) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CFLAGS)
+	$(AT) $(LIBRARY_CC) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CFLAGS)
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
-	$(LIBRARY_CXX) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CXXFLAGS)
+	$(AT) $(LIBRARY_CXX) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CXXFLAGS)
 $(MKFILE_COMPILE):
-	resources/tools/detectlibraries.sh --library $(LIBRARY)
+	$(AT) resources/tools/detectlibraries.sh --library $(LIBRARY)

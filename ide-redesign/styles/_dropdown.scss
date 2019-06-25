@@ -7,7 +7,7 @@ button.dropbtn {
   display: inline;
   font-family: poppins_regular;
   font-size: 14px;
-  padding: 7px 16px;
+  padding: 7px 16px 8px;
   position: relative;
   text-align: left;
   width: 200px;
@@ -80,6 +80,7 @@ select.dropdown-num {
   min-width: 160px;
   position: absolute;
   width: 100%;
+  z-index: 99;
   /* Links inside the dropdown */
   select {
     border: none;
@@ -117,6 +118,9 @@ select.dropdown-num {
     padding-left: 28px;
     padding-top: 0;
     width: 200px;
+    li {
+      user-select: none;
+    }
     > li, span, a {
       color: black;
       cursor: pointer;

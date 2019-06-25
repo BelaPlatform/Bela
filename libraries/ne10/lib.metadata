@@ -1,4 +1,5 @@
 name=ne10
 description=A convenience wrapper for ne10 
-LDFLAGS=-lNE10
+LDFLAGS=
+LDLIBS=-lNE10
 

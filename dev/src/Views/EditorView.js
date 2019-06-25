@@ -1,6 +1,7 @@
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
 var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 const uploadDelay = 50;
 
@@ -14,10 +15,12 @@ var activeWordIDs = [];
 
 class EditorView extends View {
 
-	constructor(className, models){
+	constructor(className, models, data){
 		super(className, models);
 
 		this.highlights = {};
+    var data = tmpData;
+    var opts = tmpOpts;
 
 		this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -26,9 +29,6 @@ class EditorView extends View {
 		this.parser.init(this.editor, langTools);
 		this.parser.enable(true);
 
-		// set syntax mode
-		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
-		this.editor.session.setMode('ace/mode/c_cpp');
 		this.editor.$blockScrolling = Infinity;
 
 		// set theme
@@ -48,11 +48,29 @@ class EditorView extends View {
 		// this function is called when the user modifies the editor
 		this.editor.session.on('change', (e) => {
 			//console.log('upload', !uploadBlocked);
+      var data = tmpData;
+      var opts = tmpOpts;
 			if (!uploadBlocked){
 				this.editorChanged();
 				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
+      // set syntax mode - defaults to text
+      this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() }));
+      if (opts.fileType && opts.fileType == "cpp") {
+        this.editor.session.setMode('ace/mode/c_cpp');
+      } else if (opts.fileType && opts.fileType == "js") {
+    		this.editor.session.setMode('ace/mode/javascript');
+      } else if (opts.fileType && opts.fileType == "csd") {
+        this.editor.session.setMode('ace/mode/csound_document');
+      // the following is only there for the sake of completeness - there
+      // is no SuperCollider syntax highlighting for the Ace editor
+      // } else if (opts.fileType && opts.fileType == "scd") {
+      //   this.editor.session.setMode('ace/mode/text');
+      } else {
+        // if we don't know what the file extension is just default to plain text
+        this.editor.session.setMode('ace/mode/text');
+      }
 		});
 
 		// fired when the cursor changes position

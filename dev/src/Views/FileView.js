@@ -14,6 +14,8 @@ var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
+var listCount = 0;
+
 class FileView extends View {
 
 	constructor(className, models){
@@ -48,12 +50,12 @@ class FileView extends View {
 	}
 
 	// UI events
-	buttonClicked($element, e){
-		var func = $element.data().func;
-		if (func && this[func]){
-			this[func](func);
+		buttonClicked($element, e){
+			var func = $element.data().func;
+			if (func && this[func]){
+				this[func](func);
+			}
 		}
-	}
 
 	newFile(func){
 		// build the popup content
@@ -80,10 +82,12 @@ class FileView extends View {
 	uploadFile(func){
 		$('[data-upload-file-input]').trigger('click');
 	}
-	renameFile(func){
-
+	renameFile(e){
+		// Get the name of the file to be renamed:
+		var name = $(e.target).data('name');
+    var func = $(e.target).data('func');
 		// build the popup content
-		popup.title(json.popups.rename_file.title);
+		popup.title('Rename ' + name + '?');
 		popup.subtitle(json.popups.rename_file.text);
 
 		var form = [];
@@ -94,7 +98,8 @@ class FileView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
+			var newName = sanitise(popup.find('input[type=text]').val());
+			this.emit('message', 'project-event', {func: 'renameFile', oldName: name, newFile: newName});
 			popup.hide();
 		});
 
@@ -104,10 +109,12 @@ class FileView extends View {
 
 	}
 
-	deleteFile(func){
-
+	deleteFile(e){
+		// Get the name of the file to be deleted:
+		var name = $(e.target).data('name');
+    var func = $(e.target).data('func');
 		// build the popup content
-		popup.title(json.popups.delete_file.title);
+		popup.title('Delete ' + name + '?');
 		popup.subtitle(json.popups.delete_file.text);
 
 		var form = [];
@@ -116,7 +123,7 @@ class FileView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func});
+			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name});
 			popup.hide();
 		});
 
@@ -145,11 +152,14 @@ class FileView extends View {
 		var sources = [];
 		var resources = [];
 		var directories = [];
-
 		for (let item of files){
 
 			// exclude hidden files
-			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+
+			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name == data.currentProject)) {
+				continue;
+			}
+
 
 			if (isDir(item)){
 
@@ -179,7 +189,6 @@ class FileView extends View {
 
 		}
 
-		//console.log(headers, sources, resources, directories);
 
 		var pd = '_main.pd';
 		var render = 'render.cpp';
@@ -190,54 +199,44 @@ class FileView extends View {
 		resources.sort( (a, b) => a.name - b.name );
 		directories.sort( (a, b) => a.name - b.name );
 
-		if (sources.length) {
-      var source = $("<li></li>");
-			$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-      var sourceList = $('<ul></ul>').addClass('sub-file-list');
+		var file_list_elements = [ sources, headers, resources, directories ];
+		var file_list_elements_names = [ 'Sources', 'Headers', 'Resources', 'Directories' ];
 
-      for (let i=0; i < sources.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', (e) => this.openFile(e));
-      }
-      sourceList.appendTo(source);
-      source.appendTo($files);
+		// Build file structure by listing the contents of each section (if they exist)
+
+		for (let i = 0; i < file_list_elements.length; i++) {
+
+			if (file_list_elements[i].length) {
+
+				var section = $('<li></li>');
+				$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+				var fileList = $('<ul></ul>').addClass('sub-file-list');
+
+				for (let j = 0; j < file_list_elements[i].length; j++) {
+	        var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
+	        var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+	        var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
+	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
+	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e, projName) => this.downloadFile(e, data.currentProject));
+	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
+	      }
+
+	      fileList.appendTo(section);
+	      section.appendTo($files);
+			}
 		}
-
-		if (headers.length) {
-      var header = $('<li></li>');
-      $('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-      var headerList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < headers.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(headers[i].name + ' <span class="file-list-size">' + headers[i].size + '</span>').data('file', headers[i].name).appendTo(headerList).on('click', (e) => this.openFile(e));
-      }
-      headerList.appendTo(header);
-      header.appendTo($files);
-		}
-
-
-		if (resources.length) {
-      var resource = $('<li></li>');
-			$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
-      var resourceList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < resources.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(resources[i].name + ' <span class="file-list-size">' + resources[i].size + '</span>').data('file', resources[i].name).appendTo(resourceList).on('click', (e) => this.openFile(e));
-      }
-      resourceList.appendTo(resource);
-      resource.appendTo($files);
-		}
-
-		if (directories.length) {
-      var directory = $('<li></li>');
-			$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
-      var directoryList = $('<ul></ul>').addClass('sub-file-list');
-      for (let i=0; i < directories.length; i++) {
-        $('<li></li>').addClass('sourceFile').html(directories[i].name).appendTo(directoryList);
-      }
-      directoryList.appendTo(directory);
-      directory.appendTo($files);
-		}
-
 		if (data && data.fileName) this._fileName(data.fileName);
+
 	}
+
+	downloadFile(e, projName) {
+		var filename = $(e.target).attr('data_name');
+		var project = projName;
+		var href = $(e.target).attr('href-stem') + filename;
+    e.preventDefault();  //stop the browser from following the link
+    window.location.href = href;
+	}
+
 	_fileName(file, data){
 
 		// select the opened file in the file manager tab
@@ -248,13 +247,12 @@ class FileView extends View {
 			if ($(this).data('file') === file){
 				$(this).addClass('selected');
 				foundFile = true;
+			} else {
+				$(this).removeClass('selected');
 			}
 		});
 
-		if (data && data.currentProject){
-			// set download link
-			$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
-		}
+
 	}
 
 	subDirs(dir){
@@ -266,7 +264,7 @@ class FileView extends View {
 				} else if (child.size >= 1000000 && child.size < 1000000000){
 					child.size = (child.size/1000000).toFixed(1) + 'mb';
 				}
-				$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
+				$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
 			} else {
 				child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
 				ul.append(this.subDirs(child));
@@ -276,10 +274,8 @@ class FileView extends View {
 	}
 
 	doFileUpload(file){
-		//console.log('doFileUpload', file.name);
 
 		if (uploadingFile){
-			//console.log('queueing upload', file.name);
 			fileQueue.push(file);
 			return;
 		}
@@ -342,7 +338,6 @@ class FileView extends View {
 			if (overwriteAction === 'upload')
 				this.actuallyDoFileUpload(file, !askForOverwrite);
 			else {
-				//console.log('rejected', file.name);
 				this.emit('file-rejected', file.name);
 			}
 
@@ -358,7 +353,6 @@ class FileView extends View {
 	}
 
 	actuallyDoFileUpload(file, force){
-		//console.log('actuallyDoFileUpload', file.name, force);
 		var reader = new FileReader();
 		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
 		reader.readAsArrayBuffer(file);

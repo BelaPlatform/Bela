@@ -3,7 +3,7 @@ module.exports = {};
 
 var Model = require('./Models/Model');
 var popup = require('./popup');
-var json = require('./site-text.json')
+var json = require('./site-text.json');
 
 var devMode = true;
 
@@ -27,8 +27,6 @@ tabView.on('change', () => editorView.emit('resize') );
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
-	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 
@@ -199,7 +197,7 @@ gitView.on('console', text => consoleView.emit('log', text, 'git') );
 gitView.on('console-warn', text => consoleView.emit('warn', text) );
 
 // refresh file list
-setInterval( () => socket.emit('list-files', models.project.getKey('currentProject')), 5000);
+setInterval( () => socket.emit('list-files', models.project.getKey('currentProject')), 5000); 
 
 // setup socket
 var socket = io('/IDE');
@@ -594,7 +592,7 @@ function parseErrors(data){
 var keypress = new window.keypress.Listener();
 
 keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
-keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
 keypress.simple_combo("meta f", function(){ editorView.emit('search') });
+keypress.simple_combo("meta o", function(){ tabView.emit('toggle', 'click', 'tab-control') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
 keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });

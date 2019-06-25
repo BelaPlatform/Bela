@@ -7,6 +7,7 @@ url=
 board=*
 dependencies=
 LDFLAGS=
+LDLIBS=
 CXXFLAGS=
 CC=
 CXX=

@@ -411,8 +411,6 @@ tabView.on('change', function () {
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
-	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 
@@ -1050,7 +1048,7 @@ keypress.simple_combo("meta s", function () {
 	toolbarView.emit('process-event', 'run');
 });
 keypress.simple_combo("meta o", function () {
-	tabView.emit('toggle');
+	tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta f", function () {
 	editorView.emit('search');
@@ -1062,7 +1060,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":19,"./site-text.json":20}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1294,9 +1292,7 @@ var ConsoleView = function (_View) {
 			}
 		});
 
-		$('[data-console]').on('click', function () {
-			return $(_this.input).trigger('focus');
-		});
+		// $('[data-console]').on('click', () => $(this.input).trigger('focus') );
 		$('[data-console-content-wrapper]').on('click', function (e) {
 			return e.stopPropagation();
 		});
@@ -1514,7 +1510,7 @@ var funcKey = {
 	'fileRejected': 'Uploading file'
 };
 
-},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":19,"../site-text.json":20,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1789,7 +1785,7 @@ function xmlClassDocs(classname, emitter) {
   });
 }
 
-},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":20,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1803,6 +1799,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
 var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 var uploadDelay = 50;
 
@@ -1817,12 +1814,14 @@ var activeWordIDs = [];
 var EditorView = function (_View) {
 	_inherits(EditorView, _View);
 
-	function EditorView(className, models) {
+	function EditorView(className, models, data) {
 		_classCallCheck(this, EditorView);
 
 		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
 
 		_this.highlights = {};
+		var data = tmpData;
+		var opts = tmpOpts;
 
 		_this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
@@ -1831,11 +1830,6 @@ var EditorView = function (_View) {
 		_this.parser.init(_this.editor, langTools);
 		_this.parser.enable(true);
 
-		// set syntax mode
-		_this.on('syntax-highlighted', function () {
-			return _this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() });
-		});
-		_this.editor.session.setMode('ace/mode/c_cpp');
 		_this.editor.$blockScrolling = Infinity;
 
 		// set theme
@@ -1855,10 +1849,30 @@ var EditorView = function (_View) {
 		// this function is called when the user modifies the editor
 		_this.editor.session.on('change', function (e) {
 			//console.log('upload', !uploadBlocked);
+			var data = tmpData;
+			var opts = tmpOpts;
 			if (!uploadBlocked) {
 				_this.editorChanged();
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
+			}
+			// set syntax mode - defaults to text
+			_this.on('syntax-highlighted', function () {
+				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
+			});
+			if (opts.fileType && opts.fileType == "cpp") {
+				_this.editor.session.setMode('ace/mode/c_cpp');
+			} else if (opts.fileType && opts.fileType == "js") {
+				_this.editor.session.setMode('ace/mode/javascript');
+			} else if (opts.fileType && opts.fileType == "csd") {
+				_this.editor.session.setMode('ace/mode/csound_document');
+				// the following is only there for the sake of completeness - there
+				// is no SuperCollider syntax highlighting for the Ace editor
+				// } else if (opts.fileType && opts.fileType == "scd") {
+				//   this.editor.session.setMode('ace/mode/text');
+			} else {
+				// if we don't know what the file extension is just default to plain text
+				_this.editor.session.setMode('ace/mode/text');
 			}
 		});
 
@@ -2163,7 +2177,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
+},{"../parser":18,"../site-text.json":20,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2189,6 +2203,8 @@ var fileQueue = [];
 var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
+
+var listCount = 0;
 
 var FileView = function (_View) {
 	_inherits(FileView, _View);
@@ -2270,11 +2286,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'renameFile',
-		value: function renameFile(func) {
+		value: function renameFile(e) {
 			var _this3 = this;
 
+			// Get the name of the file to be renamed:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
-			popup.title(json.popups.rename_file.title);
+			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
@@ -2285,7 +2304,8 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this3.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
+				var newName = sanitise(popup.find('input[type=text]').val());
+				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2295,11 +2315,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'deleteFile',
-		value: function deleteFile(func) {
+		value: function deleteFile(e) {
 			var _this4 = this;
 
+			// Get the name of the file to be deleted:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
-			popup.title(json.popups.delete_file.title);
+			popup.title('Delete ' + name + '?');
 			popup.subtitle(json.popups.delete_file.text);
 
 			var form = [];
@@ -2308,7 +2331,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: func });
+				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name });
 				popup.hide();
 			});
 
@@ -2342,7 +2365,6 @@ var FileView = function (_View) {
 			var sources = [];
 			var resources = [];
 			var directories = [];
-
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -2353,7 +2375,10 @@ var FileView = function (_View) {
 
 
 					// exclude hidden files
-					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+
+					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name == data.currentProject)) {
+						continue;
+					}
 
 					if (isDir(item)) {
 
@@ -2379,8 +2404,6 @@ var FileView = function (_View) {
 						}
 					}
 				}
-
-				//console.log(headers, sources, resources, directories);
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -2417,58 +2440,50 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			if (sources.length) {
-				var source = $("<li></li>");
-				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-				var sourceList = $('<ul></ul>').addClass('sub-file-list');
+			var file_list_elements = [sources, headers, resources, directories];
+			var file_list_elements_names = ['Sources', 'Headers', 'Resources', 'Directories'];
 
-				for (var i = 0; i < sources.length; i++) {
-					$('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
+			// Build file structure by listing the contents of each section (if they exist)
+
+			for (var i = 0; i < file_list_elements.length; i++) {
+
+				if (file_list_elements[i].length) {
+
+					var section = $('<li></li>');
+					$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+					var fileList = $('<ul></ul>').addClass('sub-file-list');
+
+					for (var j = 0; j < file_list_elements[i].length; j++) {
+						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
+						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+						var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.openFile(e);
+						});
+						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.renameFile(e);
+						});
+						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {
+							return _this5.downloadFile(e, data.currentProject);
+						});
+						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.deleteFile(e);
+						});
+					}
+
+					fileList.appendTo(section);
+					section.appendTo($files);
 				}
-				sourceList.appendTo(source);
-				source.appendTo($files);
 			}
-
-			if (headers.length) {
-				var header = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-				var headerList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i = 0; _i < headers.length; _i++) {
-					$('<li></li>').addClass('sourceFile').html(headers[_i].name + ' <span class="file-list-size">' + headers[_i].size + '</span>').data('file', headers[_i].name).appendTo(headerList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				headerList.appendTo(header);
-				header.appendTo($files);
-			}
-
-			if (resources.length) {
-				var resource = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
-				var resourceList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i2 = 0; _i2 < resources.length; _i2++) {
-					$('<li></li>').addClass('sourceFile').html(resources[_i2].name + ' <span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo(resourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				resourceList.appendTo(resource);
-				resource.appendTo($files);
-			}
-
-			if (directories.length) {
-				var directory = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
-				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i3 = 0; _i3 < directories.length; _i3++) {
-					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
-				}
-				directoryList.appendTo(directory);
-				directory.appendTo($files);
-			}
-
 			if (data && data.fileName) this._fileName(data.fileName);
+		}
+	}, {
+		key: 'downloadFile',
+		value: function downloadFile(e, projName) {
+			var filename = $(e.target).attr('data_name');
+			var project = projName;
+			var href = $(e.target).attr('href-stem') + filename;
+			e.preventDefault(); //stop the browser from following the link
+			window.location.href = href;
 		}
 	}, {
 		key: '_fileName',
@@ -2482,13 +2497,10 @@ var FileView = function (_View) {
 				if ($(this).data('file') === file) {
 					$(this).addClass('selected');
 					foundFile = true;
+				} else {
+					$(this).removeClass('selected');
 				}
 			});
-
-			if (data && data.currentProject) {
-				// set download link
-				$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
-			}
 		}
 	}, {
 		key: 'subDirs',
@@ -2510,7 +2522,7 @@ var FileView = function (_View) {
 						} else if (child.size >= 1000000 && child.size < 1000000000) {
 							child.size = (child.size / 1000000).toFixed(1) + 'mb';
 						}
-						$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
+						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
 							return _this6.openFile(e);
 						});
 					} else {
@@ -2540,10 +2552,7 @@ var FileView = function (_View) {
 		value: function doFileUpload(file) {
 			var _this7 = this;
 
-			//console.log('doFileUpload', file.name);
-
 			if (uploadingFile) {
-				//console.log('queueing upload', file.name);
 				fileQueue.push(file);
 				return;
 			}
@@ -2624,7 +2633,6 @@ var FileView = function (_View) {
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					//console.log('rejected', file.name);
 					this.emit('file-rejected', file.name);
 				}
 
@@ -2641,7 +2649,6 @@ var FileView = function (_View) {
 		value: function actuallyDoFileUpload(file, force) {
 			var _this8 = this;
 
-			//console.log('actuallyDoFileUpload', file.name, force);
 			var reader = new FileReader();
 			reader.onload = function (ev) {
 				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
@@ -2673,7 +2680,7 @@ function isDir(item) {
 
 module.exports = FileView;
 
-},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],9:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2875,7 +2882,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],10:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2890,6 +2897,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
+var example_order = require('../example_order.json');
 
 var ProjectView = function (_View) {
 	_inherits(ProjectView, _View);
@@ -2923,7 +2931,7 @@ var ProjectView = function (_View) {
 				return;
 			}
 
-			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
+			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
 		}
 	}, {
 		key: 'buttonClicked',
@@ -3059,7 +3067,7 @@ var ProjectView = function (_View) {
 			$projects.attr('size', projLen - 1);
 			for (var i = 0; i < projLen; i++) {
 				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
+					$('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
 						$(this).blur();
 						$(this).parent().parent().removeClass('show');
 					});
@@ -3074,9 +3082,22 @@ var ProjectView = function (_View) {
 			var _this6 = this;
 
 			var $examples = $('[data-examples]');
+			var oldListOrder = examplesDir;
+			var newListOrder = [];
+
 			$examples.empty();
 
 			if (!examplesDir.length) return;
+
+			oldListOrder.forEach(function (item) {
+				example_order.forEach(function (new_item) {
+					if (new_item == item.name) {
+						newListOrder.push(item);
+						oldListOrder.splice(oldListOrder.indexOf(item), 1);
+					}
+				});
+			});
+			var orderedList = newListOrder.concat(oldListOrder);
 
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
@@ -3160,7 +3181,7 @@ var ProjectView = function (_View) {
 					parentLi.appendTo($examples);
 				};
 
-				for (var _iterator = examplesDir[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					_loop();
 				}
 			} catch (err) {
@@ -3183,6 +3204,7 @@ var ProjectView = function (_View) {
 		value: function _libraryList(librariesDir) {
 
 			var $libraries = $('[data-libraries-list]');
+			var counter = 0;
 			$libraries.empty(librariesDir);
 			if (!librariesDir.length) return;
 
@@ -3194,172 +3216,214 @@ var ProjectView = function (_View) {
 				var _loop3 = function _loop3() {
 					var item = _step3.value;
 
+					/*
+     Button header text    +
+     Library description here.
+      [Later button to launch KB]
+      Use this library:
+     ------------------------------
+     // This div is includeContent
+     #include <example>                                // This line is includeLine
+     (small) Copy and paste in the header of render.cpp// This line is includeInstructions
+     // End includeContent
+      Files:
+     ------------------------------
+     > one
+     > two
+      Library info:
+     ------------------------------
+     Name: XXX
+     Version: XXX
+     Author: XXX (mailto link)
+     Maintainer: xxx
+     */
+					counter++;
+
 					var name = item.name;
-					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name + ':');
-					var parentUl = $('<ul></ul>');
-					var parentLi = $('<li></li>');
-					var childUl = $('<ul></ul>').addClass('libraries-list');
-					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', name);
-					var childTitle = $('<p></p>').addClass('file-heading').text('Files');
-					var libTitle = $('<p></p>').addClass('file-heading').text('Library Information');
-					var includeTitle = $('<p></p>').addClass('file-heading').text('Include Library');
-					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
-					var includeCP = $('<p><p>').addClass('copy').text('Copy to clipboard').on('click', function () {
-						var includes = $(this).parent().find('[data-form]');
-						// includes.focus();
-						includes.select();
-						document.execCommand("copy");
+					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+					var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+					var libraryItem = $('<li></li>'); // Individual library dropdown
+
+					var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
+					var libDesc = $('<p></p>').addClass('library-desc'); // Div to contain lib descriotion
+					var libVer = $('<p></p>').addClass('library-ver');
+					// INCLUDES:
+					var includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter); // Header for include instructions
+					var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
+					var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
+					var includeCopy = $('<button></button>').addClass('include-copy');
+
+					var infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter); // Header for include instructions
+					var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
+
+
+					clipboard = new Clipboard(includeCopy[0], {
+						target: function target(trigger) {
+							return $(trigger).parent().find($('[data-include="include-text"]'))[0];
+						}
 					});
+
+					// FILES:
+
+					var filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter); // Header for include instructions
+
+					var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
+					var filesList = $('<ul></ul>').addClass('libraries-list');
+					var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
 
 					try {
-						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-							var _child = _step4.value;
+						var _loop4 = function _loop4() {
+							var child = _step4.value;
 
-							// console.log(child);
-							if (_child && _child.length && _child[0] === '.') continue;
+							if (child && child.length && child[0] === '.') return 'continue';
+							if (child == 'build') return 'continue';
 							var childLi = $('<li></li>');
-							var testExt = _child.split('.');
+							var testExt = child.split('.');
 							var childExt = testExt[testExt.length - 1];
 							// The MetaData file
 							if (childExt === 'metadata') {
-								(function () {
-									var i = 0;
-									var childPath = '/libraries/' + item.name + "/" + _child;
-									var libDataDiv = $('<div></div>');
-									var libData = $('<dl></dl>');
-									var includeArr = [];
-									var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
-									var includeText = $('<pre></pre>');
-									$.ajax({
-										type: "GET",
-										url: "/libraries/" + name + "/" + _child,
-										dataType: "html",
-										success: function success(text) {
-											i += 1;
-											var object = {};
-											var transformText = text.split('\n');
-											var _iteratorNormalCompletion5 = true;
-											var _didIteratorError5 = false;
-											var _iteratorError5 = undefined;
+								var i = 0;
+								var childPath = '/libraries/' + item.name + "/" + child;
+								var libDataDiv = $('<div></div>');
+								var includeArr = [];
+								var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
+								var includeText = $('<pre></pre>');
+								$.ajax({
+									type: "GET",
+									url: "/libraries/" + name + "/" + child,
+									dataType: "html",
+									success: function success(text) {
+										i += 1;
+										var object = {};
+										var transformText = text.split('\n');
+										var _iteratorNormalCompletion5 = true;
+										var _didIteratorError5 = false;
+										var _iteratorError5 = undefined;
+
+										try {
+											for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+												var line = _step5.value;
+
+												if (line.length > 0) {
+													var splitKeyVal = line.split('=');
+													var key = splitKeyVal[0];
+													if (key == 'include') {
+														includeArr.push(splitKeyVal[1]);
+													} else {
+														object[key] = splitKeyVal[1];
+													}
+												}
+											}
+											// Get the #include line and add to includeContent
+											// libDesc.html('Version: ').html(object.version);
+										} catch (err) {
+											_didIteratorError5 = true;
+											_iteratorError5 = err;
+										} finally {
+											try {
+												if (!_iteratorNormalCompletion5 && _iterator5.return) {
+													_iterator5.return();
+												}
+											} finally {
+												if (_didIteratorError5) {
+													throw _iteratorError5;
+												}
+											}
+										}
+
+										libDesc.html(object.description);
+
+										// FOR LIBRARY INFO
+										if (object.version != null) {
+											var infoContent = $('<p></p>');
+											infoContent.append('Version: ' + object.version);
+											infoContent.appendTo(infoContainer);
+										}
+
+										if (includeArr.length > 0) {
+											var _iteratorNormalCompletion6 = true;
+											var _didIteratorError6 = false;
+											var _iteratorError6 = undefined;
 
 											try {
-												for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-													var line = _step5.value;
+												for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+													var include = _step6.value;
 
-													if (line.length > 0) {
-														var splitKeyVal = line.split('=');
-														var key = splitKeyVal[0];
-														if (key == 'include') {
-															includeArr.push(splitKeyVal[1]);
-														} else {
-															object[key] = splitKeyVal[1];
-														}
-													}
+													var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
+													_includeText.appendTo(includeLines);
 												}
 											} catch (err) {
-												_didIteratorError5 = true;
-												_iteratorError5 = err;
+												_didIteratorError6 = true;
+												_iteratorError6 = err;
 											} finally {
 												try {
-													if (!_iteratorNormalCompletion5 && _iterator5.return) {
-														_iterator5.return();
+													if (!_iteratorNormalCompletion6 && _iterator6.return) {
+														_iterator6.return();
 													}
 												} finally {
-													if (_didIteratorError5) {
-														throw _iteratorError5;
+													if (_didIteratorError6) {
+														throw _iteratorError6;
 													}
 												}
 											}
 
-											if (object.name) {
-												var libNameDT = $('<dt></dt>').text('Name:');
-												libNameDT.appendTo(libData);
-												var libNameDD = $('<dd></dd>').text(object.name);
-												libNameDD.appendTo(libData);
-											}
-											if (object.version) {
-												var libVersionDT = $('<dt></dt>').text('Version:');
-												libVersionDT.appendTo(libData);
-												var libVersionDD = $('<dd></dd>').text(object.version);
-												libVersionDD.appendTo(libData);
-											}
-											if (object.author) {
-												var libAuthorDT = $('<dt></dt>').text('Author:');
-												libAuthorDT.appendTo(libData);
-												var libAuthorDD = $('<dd></dd>').text(object.author);
-												libAuthorDD.appendTo(libData);
-											}
-											if (object.maintainer) {
-												var libMaintainerDT = $('<dt></dt>').text('Maintainer:');
-												libMaintainerDT.appendTo(libData);
-												var libMaintainerDD = $('<dd></dd>').text(object.maintainer);
-												libMaintainerDD.appendTo(libData);
-											}
-											if (object.description) {
-												var libDescriptionDT = $('<dt></dt>').text('Description:');
-												libDescriptionDT.appendTo(libData);
-												var libDescriptionDD = $('<dd></dd>').text(object.description);
-												libDescriptionDD.appendTo(libData);
-											}
-											includeInstructions.appendTo(libDataDiv);
-											includeCP.appendTo(libDataDiv);
-											includeForm.appendTo(libDataDiv);
-											if (includeArr.length > 0) {
-												includeTitle.appendTo(libDataDiv);
-												var _iteratorNormalCompletion6 = true;
-												var _didIteratorError6 = false;
-												var _iteratorError6 = undefined;
+											includeLines.appendTo(includeContent);
+										} else {
+											var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
+											_includeText2.appendTo(includeLines);
+											includeLines.appendTo(includeContent);
+											includeCopy.appendTo(includeContent);
+											includeInstructions.appendTo(includeContent);
+										}
 
-												try {
-													var _loop4 = function _loop4() {
-														var include = _step6.value;
 
-														var includeText = $('<pre></pre>');
-														includeText.text('#include <' + include + '>').attr('data-include', '').on('click', function () {
-															console.log(childPath + "/" + include);
-														});
-														includeForm.text(includeForm.text() + "\n" + '#include <' + include + '>').attr('data-include', '');
-														includeText.appendTo(libDataDiv);
-													};
+										includeArr = [];
+										libDataDiv.appendTo(libraryPanel);
+										libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+									}
+								});
+							} else {
+								childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function () {
+									var fileLocation = '/libraries/' + item.name + '/' + child;
+									// build the popup content
+									popup.title(child);
 
-													for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-														_loop4();
-													}
-												} catch (err) {
-													_didIteratorError6 = true;
-													_iteratorError6 = err;
-												} finally {
-													try {
-														if (!_iteratorNormalCompletion6 && _iterator6.return) {
-															_iterator6.return();
-														}
-													} finally {
-														if (_didIteratorError6) {
-															throw _iteratorError6;
-														}
-													}
-												}
-											} else {
-												includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeForm.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', '');
-												includeText.appendTo(libDataDiv);
+									var form = [];
+									$.ajax({
+										type: "GET",
+										url: "/libraries/" + item.name + "/" + child,
+										dataType: "html",
+										success: function success(text) {
+											var codeBlock = $('<pre></pre>');
+											var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+											for (var i = 0; i < transformText.length; i++) {
+												codeBlock.append(transformText[i] + '\n');
 											}
-											includeArr = [];
-											libTitle.appendTo(libDataDiv);
-											libData.appendTo(libDataDiv);
-											libDataDiv.appendTo(childDiv);
-											libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+											popup.code(codeBlock);
 										}
 									});
-								})();
-							} else {
-								childLi.html(_child).attr('data-library-link', item.name + '/' + _child);
-								childLi.appendTo(childUl);
+
+									form.push('<button type="button" class="button popup cancel">Close</button>');
+									popup.form.append(form.join(''));
+									popup.find('.cancel').on('click', popup.hide);
+									popup.show();
+								});
+								includeInstructions.appendTo(includeContent);
+								childLi.appendTo(filesList);
 							}
+						};
+
+						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+							var _ret4 = _loop4();
+
+							if (_ret4 === 'continue') continue;
 						}
+						// FOR LIBRARY INFO
+
+
 						// per section
 						// item.name -> parentDiv $examples
 					} catch (err) {
@@ -3377,17 +3441,30 @@ var ProjectView = function (_View) {
 						}
 					}
 
-					parentButton.appendTo(parentLi);
+					parentButton.appendTo(libraryItem);
+					libDesc.appendTo(libraryPanel); // Add library description, if present
+					libVer.appendTo(libraryPanel);
 					// per item in section
 					// childLi -> childUl -> parentDiv -> $examples
-					childTitle.appendTo(childDiv);
-					childUl.appendTo(childDiv);
-					childDiv.appendTo(parentLi);
-					parentLi.appendTo(parentUl);
-					parentLi.appendTo($libraries);
+					includeTitle.appendTo(libraryPanel);
+					includeContent.appendTo(libraryPanel);
+					// includeContainer.appendTo(libraryPanel);
+
+					filesTitle.appendTo(libraryPanel); // Include the Files: section title
+					filesList.appendTo(filesContainer);
+					filesContainer.appendTo(libraryPanel);
+
+					infoTitle.appendTo(libraryPanel);
+					infoContainer.appendTo(libraryPanel);
+
+					libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
+					libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
+					libraryItem.appendTo($libraries);
 				};
 
 				for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var clipboard;
+
 					_loop3();
 				}
 			} catch (err) {
@@ -3459,11 +3536,11 @@ var ProjectView = function (_View) {
 
 			try {
 				for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-					var _child2 = _step7.value;
+					var _child = _step7.value;
 
-					if (!_child2.dir) $('<li></li>').addClass('sourceFile').html(_child2.name).data('file', (dir.dirPath || dir.name) + '/' + _child2.name).appendTo(ul);else {
-						_child2.dirPath = (dir.dirPath || dir.name) + '/' + _child2.name;
-						ul.append(this.subDirs(_child2));
+					if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
+						_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
+						ul.append(this.subDirs(_child));
 					}
 				}
 			} catch (err) {
@@ -3490,7 +3567,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
+},{"../example_order.json":16,"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3969,10 +4046,11 @@ var SettingsView = function (_View) {
 			}
 
 			for (var subsect in exceptions['subsections']) {
-				$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+				$('[data-settings="' + exceptions['subsections'][subsect] + '"]').css('display', 'none');
 			}
 			for (var sect in exceptions['sections']) {
-				$('.' + exceptions['sections'][sect]).css('display', 'none');
+				$('[data-accordion-for="' + exceptions['sections'][sect] + '"]').css('display', 'none');
+				$('[data-accordion="' + exceptions['sections'][sect] + '"]').css('display', 'none');
 			}
 		}
 	}]);
@@ -3982,7 +4060,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3995,95 +4073,181 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
+var menuOpened = false;
+var tabs = {};
+
 var TabView = function (_View) {
-	_inherits(TabView, _View);
+  _inherits(TabView, _View);
 
-	function TabView() {
-		_classCallCheck(this, TabView);
+  function TabView() {
+    _classCallCheck(this, TabView);
 
-		// golden layout
-		var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
+    // golden layout
+    var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
 
-		var layout = new GoldenLayout({
-			settings: {
-				hasHeaders: false,
-				constrainDragToContainer: true,
-				reorderEnabled: false,
-				selectionEnabled: false,
-				popoutWholeStack: false,
-				blockedPopoutsThrowError: true,
-				closePopoutsOnUnload: true,
-				showPopoutIcon: false,
-				showMaximiseIcon: false,
-				showCloseIcon: false
-			},
-			dimensions: {
-				borderWidth: 5,
-				minItemHeight: 10,
-				minItemWidth: 10,
-				headerHeight: 20,
-				dragProxyWidth: 300,
-				dragProxyHeight: 200
-			},
-			labels: {
-				close: 'close',
-				maximise: 'maximise',
-				minimise: 'minimise',
-				popout: 'open in new window'
-			},
-			content: [{
-				type: 'column',
-				content: [{
-					type: 'component',
-					componentName: 'Editor'
-				}, {
-					type: 'component',
-					componentName: 'Console',
-					height: 25
-				}]
-			}]
-		});
-		layout.registerComponent('Editor', function (container, componentState) {
-			container.getElement().append($('[data-upper]'));
-		});
-		layout.registerComponent('Console', function (container, componentState) {
-			container.getElement().append($('[data-console]'));
-		});
+    var layout = new GoldenLayout({
+      settings: {
+        hasHeaders: false,
+        constrainDragToContainer: true,
+        reorderEnabled: false,
+        selectionEnabled: false,
+        popoutWholeStack: false,
+        blockedPopoutsThrowError: true,
+        closePopoutsOnUnload: true,
+        showPopoutIcon: false,
+        showMaximiseIcon: false,
+        showCloseIcon: false
+      },
+      dimensions: {
+        borderWidth: 5,
+        minItemHeight: 10,
+        minItemWidth: 10,
+        headerHeight: 20,
+        dragProxyWidth: 300,
+        dragProxyHeight: 200
+      },
+      labels: {
+        close: 'close',
+        maximise: 'maximise',
+        minimise: 'minimise',
+        popout: 'open in new window'
+      },
+      content: [{
+        type: 'column',
+        content: [{
+          type: 'component',
+          componentName: 'Editor'
+        }, {
+          type: 'component',
+          componentName: 'Console',
+          height: 25
+        }]
+      }]
+    });
+    layout.registerComponent('Editor', function (container, componentState) {
+      container.getElement().append($('[data-upper]'));
+    });
+    layout.registerComponent('Console', function (container, componentState) {
+      container.getElement().append($('[data-console]'));
+    });
 
-		layout.init();
-		layout.on('initialised', function () {
-			return _this.emit('change');
-		});
-		layout.on('stateChanged', function () {
-			return _this.emit('change');
-		});
+    layout.init();
+    layout.on('initialised', function () {
+      return _this.emit('change');
+    });
+    layout.on('stateChanged', function () {
+      return _this.emit('change');
+    });
 
-		_this.on('boardString', _this._boardString);
+    _this.on('toggle', _this.toggle);
+    _this.on('boardString', _this._boardString);
+    _this.editor = ace.edit('editor');
+    var editor = _this.editor;
+    $('[data-tab-open]').on('click', function () {
+      if ($('[data-tabs]').hasClass('tabs-open')) {
+        setTimeout(function () {
+          $('[data-editor]').addClass('tabs-open');
+          editor.resize();
+        }, 750);
+      } else {
+        $('[data-editor]').removeClass('tabs-open');
+        setTimeout(function () {
+          editor.resize();
+        }, 500);
+      }
+    });
 
-		return _this;
-	}
+    $('[data-tab-open]').on('click', function () {
+      return _this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for'));
+    });
+    $('[data-tab-for]').on('click', function () {
+      return _this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor);
+    });
+    return _this;
+  }
 
-	_createClass(TabView, [{
-		key: '_boardString',
-		value: function _boardString(data) {
-			var boardString;
-			if (data && data.trim) boardString = data.trim();else return;
+  _createClass(TabView, [{
+    key: 'toggle',
+    value: function toggle(event, origin, target) {
 
-			if (boardString === 'BelaMini') {
-				$('[data-pin-diagram]').prop('data', 'diagram_mini.html');
-			} else if (boardString === 'CtagFace') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_FACE.html');
-			} else if (boardString === 'CtagBeast') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST.html');
-			} else if (boardString === 'CtagFaceBela') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BELA.html');
-			} else if (boardString === 'CtagBeastBela') {
-				$('[data-pin-diagram]').prop('data', 'diagram_ctag_BEAST_BELA.html');
-			}
-		}
-	}]);
+      tabs = { event: event, origin: origin, target: target };
 
-	return TabView;
+      if (tabs.event == undefined) {
+        return;
+      }
+      tabs.active = $('[data-tab-for].active').data('tabFor');
+      if (tabs.target == undefined && tabs.active == null) {
+        tabs.target = 'explorer';
+      }
+
+      function openTabs() {
+        if (tabs.origin == 'tab-control') {
+          if (menuOpened == false) {
+            $('[data-tabs]').addClass('tabs-open');
+            $('[data-tab-open] span').addClass('rot');
+            menuOpened = true;
+          } else {
+            $('[data-tabs]').removeClass('tabs-open');
+            $('[data-tab-open] span').removeClass('rot');
+            menuOpened = false;
+            // reset x offset position but only after the tabbed menu has closed.
+            setTimeout(function () {
+              // $('[data-tab-content]').offset().top;
+              $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
+            }, 500);
+          }
+        }
+        if (tabs.origin == 'tab-link' && menuOpened == false) {
+          $('[data-tabs]').addClass('tabs-open');
+          $('[data-tab-open] span').addClass('rot');
+          menuOpened = true;
+        }
+        matchTabFor();
+      }
+
+      function matchTabFor() {
+        $('[data-tab-for]').each(function () {
+          var tabFor = $(this).data('tab-for');
+          if (tabs.origin == 'tab-link') {
+            $(this).removeClass('active');
+          }
+          if (tabFor === tabs.target) {
+            $(this).addClass('active');
+            matchTabForAndTab();
+          } else {}
+        });
+      }
+
+      function matchTabForAndTab() {
+        $('[data-tab]').each(function () {
+          if (tabs.active != tabs.target) {
+            var tab = $(this).data('tab');
+            $(this).hide();
+            if (tab === tabs.target) {
+              // reset the x offset position of the tab content if it's changing
+              // $('[data-tab-content]').offset().top;
+              $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
+              $(this).fadeIn();
+            }
+          }
+        });
+      }
+
+      openTabs();
+    }
+  }, {
+    key: '_boardString',
+    value: function _boardString(data) {
+      var boardString;
+      var rootDir = "belaDiagram/";
+      if (data && data.trim) boardString = data.trim();else return;
+
+      $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
+      // console.log(boardString);
+    }
+  }]);
+
+  return TabView;
 }(View);
 
 module.exports = new TabView();
@@ -4363,7 +4527,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
+},{"../popup":19,"../site-text.json":20,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4400,8 +4564,7 @@ var View = function (_EventEmitter) {
 				});
 			}
 		}
-
-		_this.$elements.filter('select').on('change', function (e) {
+		_this.$elements.on('click', 'li.proj-li', function (e) {
 			return _this.selectChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input').on('input', function (e) {
@@ -4477,6 +4640,9 @@ var View = function (_EventEmitter) {
 				}
 			}
 		}
+	}, {
+		key: 'testSelect',
+		value: function testSelect() {}
 	}, {
 		key: 'selectChanged',
 		value: function selectChanged(element, e) {}
@@ -4555,7 +4721,7 @@ var Console = function (_EventEmitter) {
 
 			var el = $('<div></div>').addClass('beaglert-console-' + className).appendTo(this.$element);
 			if (id) el.prop('id', id);
-			$('<span></span>').html(text).appendTo(el);
+			$('<span></span>').html(text + "\n").appendTo(el);
 
 			if (numElements++ > maxElements) this.clear(numElements / 4);
 			if (onClick) el.on('click', onClick);
@@ -4585,7 +4751,7 @@ var Console = function (_EventEmitter) {
 				for (var i = 0; i < msgs.length; i++) {
 					if (msgs[i] !== '' && msgs[i] !== ' ') {
 						//this.print(msgs[i], css || 'log');
-						str += '<div class="beaglert-console-' + (css || 'log') + '"><span>' + msgs[i] + '</span></div>';
+						str += '<div class="beaglert-console-' + (css || 'log') + '"><span>' + msgs[i] + '\n</span></div>';
 						numElements++;
 					}
 				}
@@ -4645,11 +4811,17 @@ var Console = function (_EventEmitter) {
 
 					// create the link and add it to the element
 
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
 
 					// add a button to copy the contents to the clipboard
 
-					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div).on('click', function () {
+						var that = $(this);
+						that.parent().addClass('copied');
+						setTimeout(function () {
+							that.parent().removeClass('copied');
+						}, 250);
+					});
 					clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
@@ -4829,7 +5001,14 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"./popup":18,"./site-text.json":19,"events":1}],16:[function(require,module,exports){
+},{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
+module.exports=[
+  "13-Salt",
+  "08-PureData",
+  "04-Audio"
+]
+
+},{}],17:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -4839,7 +5018,7 @@ $(function () {
 	IDE = require('./IDE-browser');
 });
 
-},{"./IDE-browser":3}],17:[function(require,module,exports){
+},{"./IDE-browser":3}],18:[function(require,module,exports){
 'use strict';
 
 var Range = ace.require('ace/range').Range;
@@ -4847,7 +5026,8 @@ var Anchor = ace.require('ace/anchor').Anchor;
 var buf = new (require('./CircularBuffer'))(5);
 for (var i = 0; i < buf.capacity(); i++) {
 	buf.enq({});
-}var editor;
+}var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
+var editor;
 
 var parsingDeclaration = false;
 var parsingBody = false;
@@ -5293,7 +5473,7 @@ function searchHighlightsFor(sub, val) {
 
 module.exports = parser;
 
-},{"./CircularBuffer":2}],18:[function(require,module,exports){
+},{"./CircularBuffer":2}],19:[function(require,module,exports){
 'use strict';
 
 var _overlay = $('[data-overlay]');
@@ -5363,7 +5543,6 @@ function example(cb, arg, delay, cancelCb) {
 	popup.title('Save your changes?');
 	popup.subtitle('Warning: Any unsaved changes will be lost');
 	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-	popup.code('<h1>Hello World!</h1>');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -5371,6 +5550,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
+			console.log(arg);
 			cb(arg);
 		}, delay);
 		popup.hide();
@@ -5386,7 +5566,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.find('.confirm').trigger('focus');
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports={
 	"popups": {
 		"create_new": {
@@ -5402,7 +5582,7 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "Warning: This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"create_new_file": {
@@ -5419,22 +5599,22 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
 			"title": "Delete this file?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
-			"text": "Your current project settings will be restored to defaults. This can't be undone.",
+			"text": "Your current project settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"restore_default_IDE_settings": {
 			"title": "Restore default IDE settings?",
-			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
+			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"shutdown": {
@@ -5477,7 +5657,7 @@ module.exports={
 		},
 		"discard": {
 			"title": "Discard changes?",
-			"text": "This will discard all changes since your last commit. This can't be undone.",
+			"text": "This will discard all changes since your last commit. There is no undo.",
 			"button": "Discard changes"
 		},
 		"file_changed": {
@@ -5523,7 +5703,7 @@ module.exports={
 	}
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
@@ -5533,6 +5713,6 @@ function sanitise(name) {
 
 module.exports.sanitise = sanitise;
 
-},{}]},{},[16])
+},{}]},{},[17])
 
 //# sourceMappingURL=bundle.js.map
