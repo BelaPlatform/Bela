@@ -1,17 +1,9 @@
 #pin_container {
   height: calc(100vh - 200px);
-  overflow: hidden;
+  overflow: visible;
   object {
     height: 100%;
     width: 100%;
-  }
-  #image {
-    height: auto;
-    margin: 0;
-    overflow: auto;
-    padding: 0;
-    text-align: left;
-    width: auto;
   }
 
   .diagram-text {

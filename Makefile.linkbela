@@ -1,0 +1,40 @@
+# call this file from within the main Makefile, with all the variables exported, and 
+# after re-making $(PROJECT_LIBRARIES_MAKEFILE)
+
+-include $(PROJECT_LIBRARIES_MAKEFILE)
+#this file will contain, e.g.:
+#-include libraries/library1/build/Makefile.link
+#-include libraries/library2/build/Makefile.link
+#-include libraries/library3/build/Makefile.link
+#-include libraries/library4/build/Makefile.link
+# each of which will in turn contain:
+#
+#LIBRARY=libraryName
+#LIBRARIES_LDFLAGS += -l123
+#THIS_CPPFILES := $(wildcard libraries/$(LIBRARY)/*.cpp)
+#LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
+#and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
+#either via a default Makefile.libraries, or using the library's custom one (if available)
+libraries/%.o:
+	$(AT) LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
+	echo Building library $$LIBRARYNAME; \
+	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
+	if [ -f $$MAKEFILE ];\
+	then { true; }; else { \
+		MAKEFILE=Makefile.libraries; \
+	}; \
+	fi; \
+	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE $@
+
+LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
+$(OUTPUT_FILE): $(ALL_OBJS) $(LIBRARIES_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
+	$(eval DEFAULT_MAIN_CONDITIONAL :=\
+	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
+ifeq ($(PROJECT_TYPE),libpd)
+#If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
+	$(eval DEFAULT_PD_CONDITIONAL :=\
+	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+endif # ifeq ($(PROJECT_TYPE),libpd)
+	$(AT) echo 'Linking...'
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LIBRARIES_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
+	$(AT) echo ' ...done'

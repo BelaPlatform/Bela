@@ -104,7 +104,7 @@ button.scope-controls {
         margin-left: 165px;
       }
       &.slider-line {
-        
+
       }
     }
   }
@@ -212,7 +212,7 @@ input[type="range"].scope-range-slider {
   &:hover::-webkit-slider-thumb, &:active::-webkit-slider-thumb {
     background-color: $white;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-    
+
   }
 
   &:disabled {
@@ -224,5 +224,17 @@ input[type="range"].scope-range-slider {
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     }
   }
-      
+
+}
+
+.overlay {
+  &.active {
+    background: rgba(0, 0, 0, 0.2);
+    height: 100vh;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    z-index: 1;
+  }
 }

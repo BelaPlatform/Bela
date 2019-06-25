@@ -5,15 +5,15 @@ var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_
 var i = 0;
 
 var classes = [
-  'Scope',
-  'OSCServer',
-  'OSCClient',
-  'OSCMessageFactory',
-  'UdpServer',
-  'UdpClient',
-  'Midi',
-  'MidiParser',
-  'WriteFile'
+  // 'Scope',
+  // 'OSCServer',
+  // 'OSCClient',
+  // 'OSCMessageFactory',
+  // 'UdpServer',
+  // 'UdpClient',
+  // 'Midi',
+  // 'MidiParser',
+  // 'WriteFile'
 ];
 
 class DocumentationView extends View {

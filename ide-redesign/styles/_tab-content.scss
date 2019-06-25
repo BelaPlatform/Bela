@@ -42,6 +42,13 @@ th {
   }
 }
 
+.tab-subheading {
+  font-family: poppins_regular;
+  font-size: 1em;
+  margin: 0 0 .75em .5em;
+  margin-block-start: 0;
+}
+
 input[type="text"].number-picker,
 input[type="number"].number-picker {
   appearance: textfield;
@@ -94,11 +101,15 @@ input[type="checkbox"].checkbox-slider,
   }
 }
 
-
-.project {
-  font-family: poppins_regular;
+p.project {
+  background-color: rgba($teal-01,0.5);
+  font-family: 'space_regular';
   margin-top: .5em;
   margin-bottom: 0;
+  padding: .25em .25em .25em .5em;
+  > span {
+    font-family: 'space_bold';
+  }
 }
 
 .panel.show {
@@ -129,4 +140,89 @@ input[type="checkbox"].checkbox-slider,
 
 .diagram-text {
   font-size: .8em;
+}
+
+.project-actions {
+  display: block;
+  position: relative;
+  margin-top: .5em;
+  margin-left: .5em;
+  height: 20px;
+  >.project-text {
+    display: inline;
+    font-family: 'inconsolata';
+    color: $grey-dark;
+    font-size: .85em;
+    position: absolute;
+    top: 0;
+    left: 160px;
+    top: -12px;
+  }
+  > a {
+
+    > button {
+      position: absolute;
+      top: 0;
+      border: 0;
+      height: 16px;
+     &.project-download {
+        background: transparent url(../images/icons/project_download_inactive.svg) no-repeat center;
+        left: 100px;
+        &::before,
+        &:hover {
+          background: transparent url(../images/icons/project_download_active.svg) no-repeat center;
+        }
+      }
+    }
+  }
+  > button {
+    border: 0;
+    position: absolute;
+    top: 0;
+    height: 16px;
+    &.project- {
+      background-size: 100% 80%;
+      &new {
+        background: transparent url(../images/icons/file_inactive.svg) no-repeat center;
+        left: 0;
+        &::before,
+        &:hover {
+          background: transparent url(../images/icons/file_active.svg) no-repeat center;
+        }
+      }
+      &upload {
+        background: transparent url(../images/icons/upload_inactive.svg) no-repeat center;
+        left: 25px;
+        &::before,
+        &:hover {
+          background: transparent url(../images/icons/upload_active.svg) no-repeat center;
+        }
+      }
+      &save {
+        background: transparent url(../images/icons/save_inactive.svg) no-repeat center;
+        left: 50px;
+        &::before,
+        &:hover {
+          background: transparent url(../images/icons/save_active.svg) no-repeat center;
+        }
+      }
+      &clean {
+        background: transparent url(../images/icons/broom_inactive.svg) no-repeat center;
+        left: 75px;
+        &::before,
+        &:hover {
+          background: transparent url(../images/icons/broom_active.svg) no-repeat center;
+          height: 16px;
+        }
+      }
+      &delete {
+        background: transparent url(../images/icons/project_delete_inactive.svg) no-repeat center;
+        left: 125px;
+        &::before,
+        &:hover {
+          background: transparent url(../images/icons/project_delete_active.svg) no-repeat center;
+        }
+      }
+    }
+  }
 }

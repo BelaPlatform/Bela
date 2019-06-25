@@ -236,8 +236,8 @@ export async function renameFile(data: any){
 		data.error = 'failed, file '+data.newFile+' already exists!';
 		return;
 	}
-	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.fileName, file_path);
-	await cleanFile(data.currentProject, data.fileName);
+	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.oldName, file_path);
+	await cleanFile(data.currentProject, data.oldName);
 	data.fileList = await listFiles(data.currentProject);
 	await openFile(data);
 }

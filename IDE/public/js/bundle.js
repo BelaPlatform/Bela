@@ -411,8 +411,6 @@ tabView.on('change', function () {
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', function (data) {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
-	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
 
@@ -1049,8 +1047,11 @@ var keypress = new window.keypress.Listener();
 keypress.simple_combo("meta s", function () {
 	toolbarView.emit('process-event', 'run');
 });
+keypress.simple_combo("meta f", function () {
+	editorView.emit('search');
+});
 keypress.simple_combo("meta o", function () {
-	tabView.emit('toggle');
+	tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear');
@@ -1291,9 +1292,7 @@ var ConsoleView = function (_View) {
 			}
 		});
 
-		$('[data-console]').on('click', function () {
-			return $(_this.input).trigger('focus');
-		});
+		// $('[data-console]').on('click', () => $(this.input).trigger('focus') );
 		$('[data-console-content-wrapper]').on('click', function (e) {
 			return e.stopPropagation();
 		});
@@ -1528,7 +1527,17 @@ var json = require('../site-text.json');
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 var i = 0;
 
-var classes = ['Scope', 'OSCServer', 'OSCClient', 'OSCMessageFactory', 'UdpServer', 'UdpClient', 'Midi', 'MidiParser', 'WriteFile'];
+var classes = [
+  // 'Scope',
+  // 'OSCServer',
+  // 'OSCClient',
+  // 'OSCMessageFactory',
+  // 'UdpServer',
+  // 'UdpClient',
+  // 'Midi',
+  // 'MidiParser',
+  // 'WriteFile'
+];
 
 var DocumentationView = function (_View) {
   _inherits(DocumentationView, _View);
@@ -1922,10 +1931,17 @@ var EditorView = function (_View) {
 			});
 		});
 
+		_this.on('search', _this.search);
+
 		return _this;
 	}
 
 	_createClass(EditorView, [{
+		key: 'search',
+		value: function search() {
+			this.editor.execCommand('find');
+		}
+	}, {
 		key: 'editorChanged',
 		value: function editorChanged() {
 			var _this2 = this;
@@ -2198,6 +2214,8 @@ var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
+var listCount = 0;
+
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
@@ -2278,11 +2296,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'renameFile',
-		value: function renameFile(func) {
+		value: function renameFile(e) {
 			var _this3 = this;
 
+			// Get the name of the file to be renamed:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
-			popup.title(json.popups.rename_file.title);
+			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
 
 			var form = [];
@@ -2293,7 +2314,8 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this3.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
+				var newName = sanitise(popup.find('input[type=text]').val());
+				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2303,11 +2325,14 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'deleteFile',
-		value: function deleteFile(func) {
+		value: function deleteFile(e) {
 			var _this4 = this;
 
+			// Get the name of the file to be deleted:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
 			// build the popup content
-			popup.title(json.popups.delete_file.title);
+			popup.title('Delete ' + name + '?');
 			popup.subtitle(json.popups.delete_file.text);
 
 			var form = [];
@@ -2316,7 +2341,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: func });
+				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name });
 				popup.hide();
 			});
 
@@ -2350,7 +2375,6 @@ var FileView = function (_View) {
 			var sources = [];
 			var resources = [];
 			var directories = [];
-
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -2361,7 +2385,10 @@ var FileView = function (_View) {
 
 
 					// exclude hidden files
-					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name === data.currentProject)) continue;
+
+					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name == data.currentProject)) {
+						continue;
+					}
 
 					if (isDir(item)) {
 
@@ -2387,8 +2414,6 @@ var FileView = function (_View) {
 						}
 					}
 				}
-
-				//console.log(headers, sources, resources, directories);
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -2425,58 +2450,50 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			if (sources.length) {
-				var source = $("<li></li>");
-				$('<p></p>').addClass('file-heading').html('Sources:').appendTo(source);
-				var sourceList = $('<ul></ul>').addClass('sub-file-list');
+			var file_list_elements = [sources, headers, resources, directories];
+			var file_list_elements_names = ['Sources', 'Headers', 'Resources', 'Directories'];
 
-				for (var i = 0; i < sources.length; i++) {
-					$('<li></li>').addClass('sourceFile').html(sources[i].name + ' <span class="file-list-size">' + sources[i].size + '</span>').data('file', sources[i].name).appendTo(sourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
+			// Build file structure by listing the contents of each section (if they exist)
+
+			for (var i = 0; i < file_list_elements.length; i++) {
+
+				if (file_list_elements[i].length) {
+
+					var section = $('<li></li>');
+					$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+					var fileList = $('<ul></ul>').addClass('sub-file-list');
+
+					for (var j = 0; j < file_list_elements[i].length; j++) {
+						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
+						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+						var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.openFile(e);
+						});
+						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.renameFile(e);
+						});
+						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {
+							return _this5.downloadFile(e, data.currentProject);
+						});
+						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+							return _this5.deleteFile(e);
+						});
+					}
+
+					fileList.appendTo(section);
+					section.appendTo($files);
 				}
-				sourceList.appendTo(source);
-				source.appendTo($files);
 			}
-
-			if (headers.length) {
-				var header = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Headers:').appendTo(header);
-				var headerList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i = 0; _i < headers.length; _i++) {
-					$('<li></li>').addClass('sourceFile').html(headers[_i].name + ' <span class="file-list-size">' + headers[_i].size + '</span>').data('file', headers[_i].name).appendTo(headerList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				headerList.appendTo(header);
-				header.appendTo($files);
-			}
-
-			if (resources.length) {
-				var resource = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Resources:').appendTo(resource);
-				var resourceList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i2 = 0; _i2 < resources.length; _i2++) {
-					$('<li></li>').addClass('sourceFile').html(resources[_i2].name + ' <span class="file-list-size">' + resources[_i2].size + '</span>').data('file', resources[_i2].name).appendTo(resourceList).on('click', function (e) {
-						return _this5.openFile(e);
-					});
-				}
-				resourceList.appendTo(resource);
-				resource.appendTo($files);
-			}
-
-			if (directories.length) {
-				var directory = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html('Directories:').appendTo(directory);
-				var directoryList = $('<ul></ul>').addClass('sub-file-list');
-				for (var _i3 = 0; _i3 < directories.length; _i3++) {
-					$('<li></li>').addClass('sourceFile').html(directories[_i3].name).appendTo(directoryList);
-				}
-				directoryList.appendTo(directory);
-				directory.appendTo($files);
-			}
-
 			if (data && data.fileName) this._fileName(data.fileName);
+		}
+	}, {
+		key: 'downloadFile',
+		value: function downloadFile(e, projName) {
+			var filename = $(e.target).attr('data_name');
+			var project = projName;
+			var href = $(e.target).attr('href-stem') + filename;
+			e.preventDefault(); //stop the browser from following the link
+			window.location.href = href;
 		}
 	}, {
 		key: '_fileName',
@@ -2494,11 +2511,6 @@ var FileView = function (_View) {
 					$(this).removeClass('selected');
 				}
 			});
-
-			if (data && data.currentProject) {
-				// set download link
-				$('[data-download-file]').attr('href', '/download?project=' + data.currentProject + '&file=' + file);
-			}
 		}
 	}, {
 		key: 'subDirs',
@@ -2520,7 +2532,7 @@ var FileView = function (_View) {
 						} else if (child.size >= 1000000 && child.size < 1000000000) {
 							child.size = (child.size / 1000000).toFixed(1) + 'mb';
 						}
-						$('<li></li>').addClass('sourceFile').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
+						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
 							return _this6.openFile(e);
 						});
 					} else {
@@ -2550,10 +2562,7 @@ var FileView = function (_View) {
 		value: function doFileUpload(file) {
 			var _this7 = this;
 
-			//console.log('doFileUpload', file.name);
-
 			if (uploadingFile) {
-				//console.log('queueing upload', file.name);
 				fileQueue.push(file);
 				return;
 			}
@@ -2634,7 +2643,6 @@ var FileView = function (_View) {
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					//console.log('rejected', file.name);
 					this.emit('file-rejected', file.name);
 				}
 
@@ -2651,7 +2659,6 @@ var FileView = function (_View) {
 		value: function actuallyDoFileUpload(file, force) {
 			var _this8 = this;
 
-			//console.log('actuallyDoFileUpload', file.name, force);
 			var reader = new FileReader();
 			reader.onload = function (ev) {
 				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
@@ -2903,647 +2910,667 @@ var json = require('../site-text.json');
 var example_order = require('../example_order.json');
 
 var ProjectView = function (_View) {
-	_inherits(ProjectView, _View);
-
-	function ProjectView(className, models) {
-		_classCallCheck(this, ProjectView);
-
-		var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
-
-		_this.on('example-changed', function () {
-			return _this.exampleChanged = true;
-		});
-		return _this;
-	}
-
-	// UI events
-
-
-	_createClass(ProjectView, [{
-		key: 'selectChanged',
-		value: function selectChanged($element, e) {
-			var _this2 = this;
-
-			if (this.exampleChanged) {
-				this.exampleChanged = false;
-				popup.exampleChanged(function () {
-					_this2.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
-				}, undefined, 0, function () {
-					_this2.exampleChanged = true;
-				});
-				return;
-			}
-
-			this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
-		}
-	}, {
-		key: 'buttonClicked',
-		value: function buttonClicked($element, e) {
-			var func = $element.data().func;
-			if (func && this[func]) {
-				this[func](func);
-			}
-		}
-	}, {
-		key: 'newProject',
-		value: function newProject(func) {
-			var _this3 = this;
-
-			if (this.exampleChanged) {
-				this.exampleChanged = false;
-				popup.exampleChanged(this.newProject.bind(this), func, 500, function () {
-					return _this3.exampleChanged = true;
-				});
-				return;
-			}
-
-			// build the popup content
-			popup.title(json.popups.create_new.title);
-			popup.subtitle(json.popups.create_new.text);
-
-			var form = [];
-			form.push('<label for="popup-C" class="radio-container">C++');
-			form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
-			form.push('<span class="radio-button"></span>');
-			form.push('</label>');
-			form.push('<label for="popup-PD" class="radio-container">Pure Data');
-			form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
-			form.push('<span class="radio-button"></span>');
-			form.push('</label>');
-			form.push('<label for="popup-SC" class="radio-container">SuperCollider');
-			form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
-			form.push('<span class="radio-button"></span>');
-			form.push('</label>');
-			form.push('<label for="popup-CS" class="radio-container">Csound');
-			form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
-			form.push('<span class="radio-button"></span>');
-			form.push('</label>');
-			form.push('<input type="text" placeholder="Enter your project name">');
-			form.push('</br>');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				_this3.emit('message', 'project-event', {
-					func: func,
-					newProject: sanitise(popup.find('input[type=text]').val()),
-					projectType: popup.find('input[type=radio]:checked').data('type')
-				});
-				$('[data-projects-select]').html('');
-				popup.hide();
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
-		}
-	}, {
-		key: 'saveAs',
-		value: function saveAs(func) {
-			var _this4 = this;
-
-			// build the popup content
-			popup.title(json.popups.save_as.title);
-			popup.subtitle(json.popups.save_as.text);
-
-			var form = [];
-			form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: func, newProject: sanitise(popup.find('input[type=text]').val()) });
-				popup.hide();
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
-		}
-	}, {
-		key: 'deleteProject',
-		value: function deleteProject(func) {
-			var _this5 = this;
-
-			// build the popup content
-			popup.title(json.popups.delete_project.title);
-			popup.subtitle(json.popups.delete_project.text);
-
-			var form = [];
-			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				$('[data-projects-select]').html('');
-				_this5.emit('message', 'project-event', { func: func });
-				popup.hide();
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
-
-			popup.find('.delete').trigger('focus');
-		}
-	}, {
-		key: 'cleanProject',
-		value: function cleanProject(func) {
-			this.emit('message', 'project-event', { func: func });
-		}
-
-		// model events
-
-	}, {
-		key: '_projectList',
-		value: function _projectList(projects, data) {
-
-			var $projects = $('[data-projects-select]');
-
-			// fill project menu with projects
-			if (projects.length > 0) {
-				var projLen = projects.length;
-			}
-			$projects.attr('size', projLen - 1);
-			for (var i = 0; i < projLen; i++) {
-				if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-					$('<option></option>').addClass('projectManager').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).appendTo($projects).on('click', function () {
-						$(this).blur();
-						$(this).parent().parent().removeClass('show');
-					});
-				}
-			}
-
-			if (data && data.currentProject) this._currentProject(data.currentProject);
-		}
-	}, {
-		key: '_exampleList',
-		value: function _exampleList(examplesDir) {
-			var _this6 = this;
-
-			var $examples = $('[data-examples]');
-			var oldListOrder = examplesDir;
-			var newListOrder = [];
-
-			$examples.empty();
-
-			if (!examplesDir.length) return;
-
-			oldListOrder.forEach(function (item) {
-				example_order.forEach(function (new_item) {
-					if (new_item == item.name) {
-						newListOrder.push(item);
-						oldListOrder.splice(oldListOrder.indexOf(item), 1);
-					}
-				});
-			});
-			var orderedList = newListOrder.concat(oldListOrder);
-
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
-
-			try {
-				var _loop = function _loop() {
-					var item = _step.value;
-
-					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
-					var parentUl = $('<ul></ul>');
-					var parentLi = $('<li></li>');
-					var childUl = $('<ul></ul>').addClass('example-list');
-					var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
-
-					var _iteratorNormalCompletion2 = true;
-					var _didIteratorError2 = false;
-					var _iteratorError2 = undefined;
-
-					try {
-						var _loop2 = function _loop2() {
-							var child = _step2.value;
-
-							if (child && child.length && child[0] === '.') return 'continue';
-							var childLi = $('<li></li>');
-							childLi.html(child).attr('data-example-link', item.name + '/' + child).on('click', function (e) {
-
-								if (_this6.exampleChanged) {
-									_this6.exampleChanged = false;
-									popup.exampleChanged(function () {
-										_this6.emit('message', 'project-event', {
-											func: 'openExample',
-											currentProject: item.name + '/' + child
-										});
-										$('.selectedExample').removeClass('selectedExample');
-										$(e.target).addClass('selectedExample');
-									}, undefined, 0, function () {
-										return _this6.exampleChanged = true;
-									});
-									return;
-								}
-
-								_this6.emit('message', 'project-event', {
-									func: 'openExample',
-									currentProject: item.name + '/' + child
-								});
-								$('.selectedExample').removeClass('selectedExample');
-								$(e.target).addClass('selectedExample');
-							});
-							childLi.appendTo(childUl);
-						};
-
-						for (var _iterator2 = item.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-							var _ret2 = _loop2();
-
-							if (_ret2 === 'continue') continue;
-						}
-						// per section
-						// item.name -> parentDiv $examples
-					} catch (err) {
-						_didIteratorError2 = true;
-						_iteratorError2 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion2 && _iterator2.return) {
-								_iterator2.return();
-							}
-						} finally {
-							if (_didIteratorError2) {
-								throw _iteratorError2;
-							}
-						}
-					}
-
-					parentButton.appendTo(parentLi);
-					// per item in section
-					// childLi -> childUl -> parentDiv -> $examples
-					childUl.appendTo(childDiv);
-					childDiv.appendTo(parentLi);
-					parentLi.appendTo(parentUl);
-					parentLi.appendTo($examples);
-				};
-
-				for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					_loop();
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
-		}
-	}, {
-		key: '_libraryList',
-		value: function _libraryList(librariesDir) {
-
-			var $libraries = $('[data-libraries-list]');
-			$libraries.empty(librariesDir);
-			if (!librariesDir.length) return;
-
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
-
-			try {
-				var _loop3 = function _loop3() {
-					var item = _step3.value;
-
-					/*
-     Button header text    +
-     Library description here.
-      [Later button to launch KB]
-      Use this library:
-     ------------------------------
-     // This div is includeContent
-     #include <example>                                // This line is includeLine
-     (small) Copy and paste in the header of render.cpp// This line is includeInstructions
-     // End includeContent
-      Files:
-     ------------------------------
-     > one
-     > two
-      Library info:
-     ------------------------------
-     Name: XXX
-     Version: XXX
-     Author: XXX (mailto link)
-     Maintainer: xxx
-     */
-
-					var name = item.name;
-					var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
-					var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
-					var libraryItem = $('<li></li>'); // Individual library dropdown
-
-					var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
-
-					var libDesc = $('<div></div>').addClass('library-desc'); // Div to contain lib descriotion
-
-					// INCLUDES:
-					var includeTitle = $('<p></p>').addClass('file-heading').text('Use this library:'); // Header for include instructions
-					var includeContent = $('<div></div>').addClass('include-container'); // Div that contains include instructions.
-					var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
-					var includeCopy = $('<button></button>').addClass('include-copy');
-					clipboard = new Clipboard(includeCopy[0], {
-						target: function target(trigger) {
-							return $(trigger).parent().find($('[data-include="include-text"]'))[0];
-						}
-					});
-
-					// FILES:
-
-					var filesTitle = $('<p></p>').addClass('file-heading').text('Files');
-					var filesList = $('<ul></ul>').addClass('libraries-list');
-
-					var libInfoContent = $('<div></div>').addClass('lib-info-content');
-
-					var includeInstructions = $('<p></p>').text('To include this library copy and paste the following lines into the head of your project.');
-					var _iteratorNormalCompletion4 = true;
-					var _didIteratorError4 = false;
-					var _iteratorError4 = undefined;
-
-					try {
-						var _loop4 = function _loop4() {
-							var child = _step4.value;
-
-							// console.log(child);
-							if (child && child.length && child[0] === '.') return 'continue';
-							var childLi = $('<li></li>');
-							var testExt = child.split('.');
-							var childExt = testExt[testExt.length - 1];
-							// The MetaData file
-							if (childExt === 'metadata') {
-								var i = 0;
-								var childPath = '/libraries/' + item.name + "/" + child;
-								var libDataDiv = $('<div></div>');
-								var includeArr = [];
-								var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
-								var includeText = $('<pre></pre>');
-								$.ajax({
-									type: "GET",
-									url: "/libraries/" + name + "/" + child,
-									dataType: "html",
-									success: function success(text) {
-										i += 1;
-										var object = {};
-										var transformText = text.split('\n');
-										var _iteratorNormalCompletion5 = true;
-										var _didIteratorError5 = false;
-										var _iteratorError5 = undefined;
-
-										try {
-											for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-												var line = _step5.value;
-
-												if (line.length > 0) {
-													var splitKeyVal = line.split('=');
-													var key = splitKeyVal[0];
-													if (key == 'include') {
-														includeArr.push(splitKeyVal[1]);
-													} else {
-														object[key] = splitKeyVal[1];
-													}
-												}
-											}
-											// Get the #include line and add to includeContent
-										} catch (err) {
-											_didIteratorError5 = true;
-											_iteratorError5 = err;
-										} finally {
-											try {
-												if (!_iteratorNormalCompletion5 && _iterator5.return) {
-													_iterator5.return();
-												}
-											} finally {
-												if (_didIteratorError5) {
-													throw _iteratorError5;
-												}
-											}
-										}
-
-										if (includeArr.length > 0) {
-											var _iteratorNormalCompletion6 = true;
-											var _didIteratorError6 = false;
-											var _iteratorError6 = undefined;
-
-											try {
-												for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-													var include = _step6.value;
-
-													var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
-													//   includeText.text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include','');
-													_includeText.appendTo(includeLines);
-												}
-											} catch (err) {
-												_didIteratorError6 = true;
-												_iteratorError6 = err;
-											} finally {
-												try {
-													if (!_iteratorNormalCompletion6 && _iterator6.return) {
-														_iterator6.return();
-													}
-												} finally {
-													if (_didIteratorError6) {
-														throw _iteratorError6;
-													}
-												}
-											}
-
-											includeLines.appendTo(includeContent);
-										} else {
-											var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
-											_includeText2.appendTo(includeLines);
-											includeLines.appendTo(includeContent);
-											includeCopy.appendTo(includeContent);
-										}
-
-										includeArr = [];
-										libDataDiv.appendTo(libraryPanel);
-										libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
-									}
-								});
-							} else {
-								childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function () {
-									var fileLocation = '/libraries/' + item.name + '/' + child;
-									// build the popup content
-									popup.title(child);
-
-									var form = [];
-									$.ajax({
-										type: "GET",
-										url: "/libraries/" + item.name + "/" + child,
-										dataType: "html",
-										success: function success(text) {
-											var codeBlock = $('<pre></pre>');
-											var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
-											for (var i = 0; i < transformText.length; i++) {
-												codeBlock.append(transformText[i] + '\n');
-											}
-											// console.log(codeBlock);
-											popup.code(codeBlock);
-										}
-									});
-
-									form.push('<button type="button" class="button popup cancel">Close</button>');
-									popup.form.append(form.join(''));
-									popup.find('.cancel').on('click', popup.hide);
-									popup.show();
-								});
-								childLi.appendTo(filesList);
-							}
-						};
-
-						for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-							var _ret4 = _loop4();
-
-							if (_ret4 === 'continue') continue;
-						}
-						// per section
-						// item.name -> parentDiv $examples
-					} catch (err) {
-						_didIteratorError4 = true;
-						_iteratorError4 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion4 && _iterator4.return) {
-								_iterator4.return();
-							}
-						} finally {
-							if (_didIteratorError4) {
-								throw _iteratorError4;
-							}
-						}
-					}
-
-					parentButton.appendTo(libraryItem);
-					libDesc.appendTo(libraryPanel); // Add library description, if present
-					// per item in section
-					// childLi -> childUl -> parentDiv -> $examples
-					includeTitle.appendTo(libraryPanel);
-
-					includeContent.appendTo(libraryPanel);
-
-					filesTitle.appendTo(libraryPanel); // Include the Files: section title
-					filesList.appendTo(libraryPanel); // List the files
-
-					libInfoContent.appendTo(libraryPanel);
-
-					libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
-					libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
-					libraryItem.appendTo($libraries);
-				};
-
-				for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var clipboard;
-
-					_loop3();
-				}
-			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
-					}
-				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
-					}
-				}
-			}
-		}
-	}, {
-		key: '_boardString',
-		value: function _boardString(data) {
-			var boardString;
-			if (data && data.trim) boardString = data.trim();else return;
-
-			var exceptString = boardString;
-			if (exceptString === "CtagFace" || exceptString === "CtagBeast") exceptString = 'Ctag';
-
-			$.getJSON("../example_except.json", function (data) {
-
-				if (exceptString in data) {
-					for (var example in data[exceptString]) {
-						var exampleId = data[exceptString][example].section + "/" + data[exceptString][example].name;
-						try {
-							document.getElementById(exampleId).style.display = 'none';
-						} catch (err) {}
-					}
-				}
-			});
-		}
-	}, {
-		key: '_currentProject',
-		value: function _currentProject(project) {
-
-			// unselect currently selected project
-			$('[data-projects-select]').find('option').filter(':selected').attr('selected', '');
-
-			if (project === 'exampleTempProject') {
-				// select no project
-				$('[data-projects-select]').val($('[data-projects-select] > option:first').val());
-			} else {
-				// select new project
-				$('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
-			}
-
-			// set download link
-			$('[data-project-download]').attr('href', '/download?project=' + project);
-		}
-	}, {
-		key: '__currentProject',
-		value: function __currentProject() {
-			this.exampleChanged = false;
-		}
-	}, {
-		key: 'subDirs',
-		value: function subDirs(dir) {
-			var ul = $('<ul></ul>').html(dir.name + ':');
-			var _iteratorNormalCompletion7 = true;
-			var _didIteratorError7 = false;
-			var _iteratorError7 = undefined;
-
-			try {
-				for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-					var _child = _step7.value;
-
-					if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
-						_child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
-						ul.append(this.subDirs(_child));
-					}
-				}
-			} catch (err) {
-				_didIteratorError7 = true;
-				_iteratorError7 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion7 && _iterator7.return) {
-						_iterator7.return();
-					}
-				} finally {
-					if (_didIteratorError7) {
-						throw _iteratorError7;
-					}
-				}
-			}
-
-			return ul;
-		}
-	}]);
-
-	return ProjectView;
+  _inherits(ProjectView, _View);
+
+  function ProjectView(className, models) {
+    _classCallCheck(this, ProjectView);
+
+    var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
+
+    _this.on('example-changed', function () {
+      return _this.exampleChanged = true;
+    });
+    return _this;
+  }
+
+  // UI events
+
+
+  _createClass(ProjectView, [{
+    key: 'selectChanged',
+    value: function selectChanged($element, e) {
+      var _this2 = this;
+
+      if (this.exampleChanged) {
+        this.exampleChanged = false;
+        popup.exampleChanged(function () {
+          _this2.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
+        }, undefined, 0, function () {
+          _this2.exampleChanged = true;
+        });
+        return;
+      }
+
+      this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
+    }
+  }, {
+    key: 'buttonClicked',
+    value: function buttonClicked($element, e) {
+      var func = $element.data().func;
+      if (func && this[func]) {
+        this[func](func);
+      }
+    }
+  }, {
+    key: 'newProject',
+    value: function newProject(func) {
+      var _this3 = this;
+
+      if (this.exampleChanged) {
+        this.exampleChanged = false;
+        popup.exampleChanged(this.newProject.bind(this), func, 500, function () {
+          return _this3.exampleChanged = true;
+        });
+        return;
+      }
+
+      // build the popup content
+      popup.title(json.popups.create_new.title);
+      popup.subtitle(json.popups.create_new.text);
+
+      var form = [];
+      form.push('<label for="popup-C" class="radio-container">C++');
+      form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
+      form.push('<span class="radio-button"></span>');
+      form.push('</label>');
+      form.push('<label for="popup-PD" class="radio-container">Pure Data');
+      form.push('<input id="popup-PD" type="radio" name="project-type" data-type="PD">');
+      form.push('<span class="radio-button"></span>');
+      form.push('</label>');
+      form.push('<label for="popup-SC" class="radio-container">SuperCollider');
+      form.push('<input id="popup-SC" type="radio" name="project-type" data-type="SC">');
+      form.push('<span class="radio-button"></span>');
+      form.push('</label>');
+      form.push('<label for="popup-CS" class="radio-container">Csound');
+      form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
+      form.push('<span class="radio-button"></span>');
+      form.push('</label>');
+      form.push('<input type="text" placeholder="Enter your project name">');
+      form.push('</br>');
+      form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
+      form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+        e.preventDefault();
+        _this3.emit('message', 'project-event', {
+          func: func,
+          newProject: sanitise(popup.find('input[type=text]').val()),
+          projectType: popup.find('input[type=radio]:checked').data('type')
+        });
+        $('[data-projects-select]').html('');
+        popup.hide();
+      });
+
+      popup.find('.cancel').on('click', popup.hide);
+
+      popup.show();
+    }
+  }, {
+    key: 'saveAs',
+    value: function saveAs(func) {
+      var _this4 = this;
+
+      // build the popup content
+      popup.title(json.popups.save_as.title);
+      popup.subtitle(json.popups.save_as.text);
+
+      var form = [];
+      form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
+      form.push('</br >');
+      form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
+      form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+        e.preventDefault();
+        _this4.emit('message', 'project-event', { func: func, newProject: sanitise(popup.find('input[type=text]').val()) });
+        popup.hide();
+      });
+
+      popup.find('.cancel').on('click', popup.hide);
+
+      popup.show();
+    }
+  }, {
+    key: 'deleteProject',
+    value: function deleteProject(func) {
+      var _this5 = this;
+
+      // build the popup content
+      popup.title(json.popups.delete_project.title);
+      popup.subtitle(json.popups.delete_project.text);
+
+      var form = [];
+      form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
+      form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
+      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+        e.preventDefault();
+        $('[data-projects-select]').html('');
+        _this5.emit('message', 'project-event', { func: func });
+        popup.hide();
+      });
+
+      popup.find('.cancel').on('click', popup.hide);
+
+      popup.show();
+
+      popup.find('.delete').trigger('focus');
+    }
+  }, {
+    key: 'cleanProject',
+    value: function cleanProject(func) {
+      this.emit('message', 'project-event', { func: func });
+    }
+
+    // model events
+
+  }, {
+    key: '_projectList',
+    value: function _projectList(projects, data) {
+
+      var $projects = $('[data-projects-select]');
+      $projects.empty();
+
+      // fill project menu with projects
+      if (projects.length > 0) {
+        var projLen = projects.length;
+      }
+      $projects.attr('size', projLen - 1);
+      for (var i = 0; i < projLen; i++) {
+        if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
+          $('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
+            $(this).blur();
+            $(this).parent().parent().removeClass('show');
+          });
+        }
+      }
+
+      if (data && data.currentProject) this._currentProject(data.currentProject);
+    }
+  }, {
+    key: '_exampleList',
+    value: function _exampleList(examplesDir) {
+      var _this6 = this;
+
+      var $examples = $('[data-examples]');
+      var oldListOrder = examplesDir;
+      var newListOrder = [];
+
+      $examples.empty();
+
+      if (!examplesDir.length) return;
+
+      oldListOrder.forEach(function (item) {
+        example_order.forEach(function (new_item) {
+          if (new_item == item.name) {
+            newListOrder.push(item);
+            oldListOrder.splice(oldListOrder.indexOf(item), 1);
+          }
+        });
+      });
+      var orderedList = newListOrder.concat(oldListOrder);
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        var _loop = function _loop() {
+          var item = _step.value;
+
+          var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+          var parentUl = $('<ul></ul>');
+          var parentLi = $('<li></li>');
+          var childUl = $('<ul></ul>').addClass('example-list');
+          var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
+
+          try {
+            var _loop2 = function _loop2() {
+              var child = _step2.value;
+
+              if (child && child.length && child[0] === '.') return 'continue';
+              var childLi = $('<li></li>');
+              childLi.html(child).attr('data-example-link', item.name + '/' + child).on('click', function (e) {
+                if (_this6.exampleChanged) {
+                  _this6.exampleChanged = false;
+                  popup.exampleChanged(function () {
+                    _this6.emit('message', 'project-event', {
+                      func: 'openExample',
+                      currentProject: item.name + '/' + child
+                    });
+                    $('.selectedExample').removeClass('selectedExample');
+                    $(e.target).addClass('selectedExample');
+                  }, undefined, 0, function () {
+                    return _this6.exampleChanged = true;
+                  });
+                  return;
+                }
+
+                _this6.emit('message', 'project-event', {
+                  func: 'openExample',
+                  currentProject: item.name + '/' + child
+                });
+                $('.selectedExample').removeClass('selectedExample');
+                $(e.target).addClass('selectedExample');
+              });
+              childLi.appendTo(childUl);
+            };
+
+            for (var _iterator2 = item.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var _ret2 = _loop2();
+
+              if (_ret2 === 'continue') continue;
+            }
+            // per section
+            // item.name -> parentDiv $examples
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
+
+          parentButton.appendTo(parentLi);
+          // per item in section
+          // childLi -> childUl -> parentDiv -> $examples
+          childUl.appendTo(childDiv);
+          childDiv.appendTo(parentLi);
+          parentLi.appendTo(parentUl);
+          parentLi.appendTo($examples);
+        };
+
+        for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          _loop();
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
+  }, {
+    key: '_libraryList',
+    value: function _libraryList(librariesDir) {
+
+      var $libraries = $('[data-libraries-list]');
+      var counter = 0;
+      $libraries.empty(librariesDir);
+      if (!librariesDir.length) return;
+
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        var _loop3 = function _loop3() {
+          var item = _step3.value;
+
+          /*
+          Button header text    +
+          Library description here.
+           [Later button to launch KB]
+           Use this library:
+          ------------------------------
+          // This div is includeContent
+          #include <example>                                // This line is includeLine
+          (small) Copy and paste in the header of render.cpp// This line is includeInstructions
+          // End includeContent
+           Files:
+          ------------------------------
+          > one
+          > two
+           Library info:
+          ------------------------------
+          Name: XXX
+          Version: XXX
+          Author: XXX (mailto link)
+          Maintainer: xxx
+          */
+          counter++;
+
+          var name = item.name;
+          var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+          var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
+          var libraryItem = $('<li></li>'); // Individual library dropdown
+
+          var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
+          var libDesc = $('<p></p>').addClass('library-desc'); // Div to contain lib descriotion
+          var libVer = $('<p></p>').addClass('library-ver');
+          // INCLUDES:
+          var includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter); // Header for include instructions
+          var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
+          var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
+          var includeCopy = $('<button></button>').addClass('include-copy');
+
+          var infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter); // Header for include instructions
+          var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
+
+          clipboard = new Clipboard(includeCopy[0], {
+            target: function target(trigger) {
+              return $(trigger).parent().find($('[data-include="include-text"]'))[0];
+            }
+          });
+
+          // FILES:
+
+          var filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter); // Header for include instructions
+
+          var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
+          var filesList = $('<ul></ul>').addClass('libraries-list');
+          var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
+
+          try {
+            var _loop4 = function _loop4() {
+              var child = _step4.value;
+
+              if (child && child.length && child[0] === '.') return 'continue';
+              if (child == 'build') return 'continue';
+              var childLi = $('<li></li>');
+              var testExt = child.split('.');
+              var childExt = testExt[testExt.length - 1];
+              // The MetaData file
+              if (childExt === 'metadata') {
+                var i = 0;
+                var childPath = '/libraries/' + item.name + "/" + child;
+                var libDataDiv = $('<div></div>');
+                var includeArr = [];
+                var includeForm = $('<textarea></textarea>').addClass('hide-include').attr('data-form', '');
+                var includeText = $('<pre></pre>');
+                $.ajax({
+                  type: "GET",
+                  url: "/libraries/" + name + "/" + child,
+                  dataType: "html",
+                  success: function success(text) {
+                    i += 1;
+                    var object = {};
+                    var transformText = text.split('\n');
+                    var _iteratorNormalCompletion5 = true;
+                    var _didIteratorError5 = false;
+                    var _iteratorError5 = undefined;
+
+                    try {
+                      for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                        var line = _step5.value;
+
+                        if (line.length > 0) {
+                          var splitKeyVal = line.split('=');
+                          var key = splitKeyVal[0];
+                          if (key == 'include') {
+                            includeArr.push(splitKeyVal[1]);
+                          } else {
+                            object[key] = splitKeyVal[1];
+                          }
+                        }
+                      }
+                      // Get the #include line and add to includeContent
+                      // libDesc.html('Version: ').html(object.version);
+                    } catch (err) {
+                      _didIteratorError5 = true;
+                      _iteratorError5 = err;
+                    } finally {
+                      try {
+                        if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                          _iterator5.return();
+                        }
+                      } finally {
+                        if (_didIteratorError5) {
+                          throw _iteratorError5;
+                        }
+                      }
+                    }
+
+                    libDesc.html(object.description);
+
+                    // FOR LIBRARY INFO
+
+
+                    if (object.version != null) {
+                      var infoContent = $('<p></p>');
+                      infoContent.append('Version: ' + object.version);
+                      infoContent.appendTo(infoContainer);
+                    }
+
+                    if (includeArr.length > 0) {
+                      var _iteratorNormalCompletion6 = true;
+                      var _didIteratorError6 = false;
+                      var _iteratorError6 = undefined;
+
+                      try {
+                        for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                          var include = _step6.value;
+
+                          var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
+                          _includeText.appendTo(includeLines);
+                        }
+                      } catch (err) {
+                        _didIteratorError6 = true;
+                        _iteratorError6 = err;
+                      } finally {
+                        try {
+                          if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                            _iterator6.return();
+                          }
+                        } finally {
+                          if (_didIteratorError6) {
+                            throw _iteratorError6;
+                          }
+                        }
+                      }
+
+                      includeLines.appendTo(includeContent);
+                    } else {
+                      var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
+                      _includeText2.appendTo(includeLines);
+                      includeLines.appendTo(includeContent);
+                      includeCopy.appendTo(includeContent);
+                      includeInstructions.appendTo(includeContent);
+                    }
+
+                    includeArr = [];
+                    libDataDiv.appendTo(libraryPanel);
+                    libDataDiv.find('.copy').not().first().remove(); // a dirty hack to remove all duplicates of the copy and paste element whilst I work out why I get more than one
+                  }
+                });
+              } else {
+                childLi.html(child).attr('data-library-link', item.name + '/' + child).on('click', function () {
+                  var fileLocation = '/libraries/' + item.name + '/' + child;
+                  // build the popup content
+                  popup.title(child);
+
+                  var form = [];
+                  $.ajax({
+                    type: "GET",
+                    url: "/libraries/" + item.name + "/" + child,
+                    dataType: "html",
+                    success: function success(text) {
+                      var codeBlock = $('<pre></pre>');
+                      var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+                      for (var i = 0; i < transformText.length; i++) {
+                        codeBlock.append(transformText[i] + '\n');
+                      }
+                      popup.code(codeBlock);
+                    }
+                  });
+
+                  form.push('<button type="button" class="button popup cancel">Close</button>');
+                  popup.form.append(form.join(''));
+                  popup.find('.cancel').on('click', popup.hide);
+                  popup.show();
+                });
+                includeInstructions.appendTo(includeContent);
+                childLi.appendTo(filesList);
+              }
+            };
+
+            for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var _ret4 = _loop4();
+
+              if (_ret4 === 'continue') continue;
+            }
+            // FOR LIBRARY INFO
+
+            // per section
+            // item.name -> parentDiv $examples
+          } catch (err) {
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                _iterator4.return();
+              }
+            } finally {
+              if (_didIteratorError4) {
+                throw _iteratorError4;
+              }
+            }
+          }
+
+          parentButton.appendTo(libraryItem);
+          libDesc.appendTo(libraryPanel); // Add library description, if present
+          libVer.appendTo(libraryPanel);
+          // per item in section
+          // childLi -> childUl -> parentDiv -> $examples
+          includeTitle.appendTo(libraryPanel);
+          includeContent.appendTo(libraryPanel);
+          // includeContainer.appendTo(libraryPanel);
+
+          filesTitle.appendTo(libraryPanel); // Include the Files: section title
+          filesList.appendTo(filesContainer);
+          filesContainer.appendTo(libraryPanel);
+
+          infoTitle.appendTo(libraryPanel);
+          infoContainer.appendTo(libraryPanel);
+
+          libraryPanel.appendTo(libraryItem); // Append the whole panel to the library item
+          libraryItem.appendTo(libraryList); // Append the whole item to the list of library items
+          libraryItem.appendTo($libraries);
+        };
+
+        for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var clipboard;
+
+          _loop3();
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+    }
+  }, {
+    key: '_boardString',
+    value: function _boardString(data) {
+      var boardString;
+      if (data && data.trim) boardString = data.trim();else return;
+
+      var exceptString = boardString;
+      if (exceptString === "CtagFace" || exceptString === "CtagBeast") exceptString = 'Ctag';
+
+      $.getJSON("../example_except.json", function (data) {
+        if (exceptString in data) {
+          for (var example in data[exceptString]) {
+            var exampleId = data[exceptString][example].section + "/" + data[exceptString][example].name;
+            try {
+              document.getElementById(exampleId).style.display = 'none';
+            } catch (err) {}
+          }
+        }
+      });
+    }
+  }, {
+    key: '_currentProject',
+    value: function _currentProject(project) {
+
+      // unselect currently selected project
+      $('[data-projects-select]').find('option').filter(':selected').attr('selected', '');
+
+      if (project === 'exampleTempProject') {
+        // select no project
+        $('[data-projects-select]').val($('[data-projects-select] > option:first').val());
+      } else {
+        // select new project
+        $('[data-projects-select]').val($('[data-projects-select] > option[value="' + project + '"]').val());
+      }
+
+      // set download link
+      $('[data-project-download]').attr('href', '/download?project=' + project);
+    }
+  }, {
+    key: '__currentProject',
+    value: function __currentProject() {
+      this.exampleChanged = false;
+    }
+  }, {
+    key: 'subDirs',
+    value: function subDirs(dir) {
+      var ul = $('<ul></ul>').html(dir.name + ':');
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var _child = _step7.value;
+
+          if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
+            _child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
+            ul.append(this.subDirs(_child));
+          }
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7.return) {
+            _iterator7.return();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
+
+      return ul;
+    }
+  }]);
+
+  return ProjectView;
 }(View);
 
 module.exports = ProjectView;
@@ -4027,10 +4054,11 @@ var SettingsView = function (_View) {
 			}
 
 			for (var subsect in exceptions['subsections']) {
-				$('#' + exceptions['subsections'][subsect]).parent().parent().css('display', 'none');
+				$('[data-settings="' + exceptions['subsections'][subsect] + '"]').css('display', 'none');
 			}
 			for (var sect in exceptions['sections']) {
-				$('.' + exceptions['sections'][sect]).css('display', 'none');
+				$('[data-accordion-for="' + exceptions['sections'][sect] + '"]').css('display', 'none');
+				$('[data-accordion="' + exceptions['sections'][sect] + '"]').css('display', 'none');
 			}
 		}
 	}]);
@@ -4053,105 +4081,181 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
+var menuOpened = false;
+var tabs = {};
+
 var TabView = function (_View) {
-		_inherits(TabView, _View);
+  _inherits(TabView, _View);
 
-		function TabView() {
-				_classCallCheck(this, TabView);
+  function TabView() {
+    _classCallCheck(this, TabView);
 
-				// golden layout
-				var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
+    // golden layout
+    var _this = _possibleConstructorReturn(this, (TabView.__proto__ || Object.getPrototypeOf(TabView)).call(this, 'tab'));
 
-				var layout = new GoldenLayout({
-						settings: {
-								hasHeaders: false,
-								constrainDragToContainer: true,
-								reorderEnabled: false,
-								selectionEnabled: false,
-								popoutWholeStack: false,
-								blockedPopoutsThrowError: true,
-								closePopoutsOnUnload: true,
-								showPopoutIcon: false,
-								showMaximiseIcon: false,
-								showCloseIcon: false
-						},
-						dimensions: {
-								borderWidth: 5,
-								minItemHeight: 10,
-								minItemWidth: 10,
-								headerHeight: 20,
-								dragProxyWidth: 300,
-								dragProxyHeight: 200
-						},
-						labels: {
-								close: 'close',
-								maximise: 'maximise',
-								minimise: 'minimise',
-								popout: 'open in new window'
-						},
-						content: [{
-								type: 'column',
-								content: [{
-										type: 'component',
-										componentName: 'Editor'
-								}, {
-										type: 'component',
-										componentName: 'Console',
-										height: 25
-								}]
-						}]
-				});
-				layout.registerComponent('Editor', function (container, componentState) {
-						container.getElement().append($('[data-upper]'));
-				});
-				layout.registerComponent('Console', function (container, componentState) {
-						container.getElement().append($('[data-console]'));
-				});
+    var layout = new GoldenLayout({
+      settings: {
+        hasHeaders: false,
+        constrainDragToContainer: true,
+        reorderEnabled: false,
+        selectionEnabled: false,
+        popoutWholeStack: false,
+        blockedPopoutsThrowError: true,
+        closePopoutsOnUnload: true,
+        showPopoutIcon: false,
+        showMaximiseIcon: false,
+        showCloseIcon: false
+      },
+      dimensions: {
+        borderWidth: 5,
+        minItemHeight: 10,
+        minItemWidth: 10,
+        headerHeight: 20,
+        dragProxyWidth: 300,
+        dragProxyHeight: 200
+      },
+      labels: {
+        close: 'close',
+        maximise: 'maximise',
+        minimise: 'minimise',
+        popout: 'open in new window'
+      },
+      content: [{
+        type: 'column',
+        content: [{
+          type: 'component',
+          componentName: 'Editor'
+        }, {
+          type: 'component',
+          componentName: 'Console',
+          height: 25
+        }]
+      }]
+    });
+    layout.registerComponent('Editor', function (container, componentState) {
+      container.getElement().append($('[data-upper]'));
+    });
+    layout.registerComponent('Console', function (container, componentState) {
+      container.getElement().append($('[data-console]'));
+    });
 
-				layout.init();
-				layout.on('initialised', function () {
-						return _this.emit('change');
-				});
-				layout.on('stateChanged', function () {
-						return _this.emit('change');
-				});
-				// this.on('linkClicked', () => console.log('link click'));
-				_this.$elements.on('click', function (e) {
-						return _this.linkClicked($(e.currentTarget), e);
-				});
-				_this.on('boardString', _this._boardString);
-				_this.editor = ace.edit('editor');
-				var editor = _this.editor;
-				$('[data-tab-open]').on('click', function () {
-						if ($('[data-tabs]').hasClass('tabs-open')) {
-								setTimeout(function () {
-										$('[data-editor]').addClass('tabs-open');
-										editor.resize();
-								}, 750);
-						} else {
-								$('[data-editor]').removeClass('tabs-open');
-								setTimeout(function () {
-										editor.resize();
-								}, 500);
-						}
-				});
+    layout.init();
+    layout.on('initialised', function () {
+      return _this.emit('change');
+    });
+    layout.on('stateChanged', function () {
+      return _this.emit('change');
+    });
 
-				return _this;
-		}
+    _this.on('toggle', _this.toggle);
+    _this.on('boardString', _this._boardString);
+    _this.editor = ace.edit('editor');
+    var editor = _this.editor;
+    $('[data-tab-open]').on('click', function () {
+      if ($('[data-tabs]').hasClass('tabs-open')) {
+        setTimeout(function () {
+          $('[data-editor]').addClass('tabs-open');
+          editor.resize();
+        }, 750);
+      } else {
+        $('[data-editor]').removeClass('tabs-open');
+        setTimeout(function () {
+          editor.resize();
+        }, 500);
+      }
+    });
 
-		_createClass(TabView, [{
-				key: '_boardString',
-				value: function _boardString(data) {
-						var boardString;
-						var rootDir = "belaDiagram/";
-						if (data && data.trim) boardString = data.trim();else return;
+    $('[data-tab-open]').on('click', function () {
+      return _this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for'));
+    });
+    $('[data-tab-for]').on('click', function () {
+      return _this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor);
+    });
+    return _this;
+  }
 
-						$('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
-						console.log(boardString);
-				}
-		}]);
+  _createClass(TabView, [{
+    key: 'toggle',
+    value: function toggle(event, origin, target) {
 
-		return TabView;
+      tabs = { event: event, origin: origin, target: target };
+
+      if (tabs.event == undefined) {
+        return;
+      }
+      tabs.active = $('[data-tab-for].active').data('tabFor');
+      if (tabs.target == undefined && tabs.active == null) {
+        tabs.target = 'explorer';
+      }
+
+      function openTabs() {
+        if (tabs.origin == 'tab-control') {
+          if (menuOpened == false) {
+            $('[data-tabs]').addClass('tabs-open');
+            $('[data-tab-open] span').addClass('rot');
+            menuOpened = true;
+          } else {
+            $('[data-tabs]').removeClass('tabs-open');
+            $('[data-tab-open] span').removeClass('rot');
+            menuOpened = false;
+            // reset x offset position but only after the tabbed menu has closed.
+            setTimeout(function () {
+              // $('[data-tab-content]').offset().top;
+              $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
+            }, 500);
+          }
+        }
+        if (tabs.origin == 'tab-link' && menuOpened == false) {
+          $('[data-tabs]').addClass('tabs-open');
+          $('[data-tab-open] span').addClass('rot');
+          menuOpened = true;
+        }
+        matchTabFor();
+      }
+
+      function matchTabFor() {
+        $('[data-tab-for]').each(function () {
+          var tabFor = $(this).data('tab-for');
+          if (tabs.origin == 'tab-link') {
+            $(this).removeClass('active');
+          }
+          if (tabFor === tabs.target) {
+            $(this).addClass('active');
+            matchTabForAndTab();
+          } else {}
+        });
+      }
+
+      function matchTabForAndTab() {
+        $('[data-tab]').each(function () {
+          if (tabs.active != tabs.target) {
+            var tab = $(this).data('tab');
+            $(this).hide();
+            if (tab === tabs.target) {
+              // reset the x offset position of the tab content if it's changing
+              // $('[data-tab-content]').offset().top;
+              $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
+              $(this).fadeIn();
+            }
+          }
+        });
+      }
+
+      openTabs();
+    }
+  }, {
+    key: '_boardString',
+    value: function _boardString(data) {
+      var boardString;
+      var rootDir = "belaDiagram/";
+      if (data && data.trim) boardString = data.trim();else return;
+
+      $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
+      // console.log(boardString);
+    }
+  }]);
+
+  return TabView;
 }(View);
 
 module.exports = new TabView();
@@ -4468,8 +4572,7 @@ var View = function (_EventEmitter) {
 				});
 			}
 		}
-
-		_this.$elements.filter('select').on('change', function (e) {
+		_this.$elements.on('click', 'li.proj-li', function (e) {
 			return _this.selectChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input').on('input', function (e) {
@@ -4545,6 +4648,9 @@ var View = function (_EventEmitter) {
 				}
 			}
 		}
+	}, {
+		key: 'testSelect',
+		value: function testSelect() {}
 	}, {
 		key: 'selectChanged',
 		value: function selectChanged(element, e) {}
@@ -4623,7 +4729,7 @@ var Console = function (_EventEmitter) {
 
 			var el = $('<div></div>').addClass('beaglert-console-' + className).appendTo(this.$element);
 			if (id) el.prop('id', id);
-			$('<span></span>').html(text).appendTo(el);
+			$('<span></span>').html(text + "\n").appendTo(el);
 
 			if (numElements++ > maxElements) this.clear(numElements / 4);
 			if (onClick) el.on('click', onClick);
@@ -4653,7 +4759,7 @@ var Console = function (_EventEmitter) {
 				for (var i = 0; i < msgs.length; i++) {
 					if (msgs[i] !== '' && msgs[i] !== ' ') {
 						//this.print(msgs[i], css || 'log');
-						str += '<div class="beaglert-console-' + (css || 'log') + '"><span>' + msgs[i] + '</span></div>';
+						str += '<div class="beaglert-console-' + (css || 'log') + '"><span>' + msgs[i] + '\n</span></div>';
 						numElements++;
 					}
 				}
@@ -4713,11 +4819,17 @@ var Console = function (_EventEmitter) {
 
 					// create the link and add it to the element
 
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1)).appendTo(div);
+					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
 
 					// add a button to copy the contents to the clipboard
 
-					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div);
+					copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div).on('click', function () {
+						var that = $(this);
+						that.parent().addClass('copied');
+						setTimeout(function () {
+							that.parent().removeClass('copied');
+						}, 250);
+					});
 					clipboard = new Clipboard(copyButton[0], {
 						target: function target(trigger) {
 							return $(trigger).siblings('span')[0];
@@ -4899,9 +5011,6 @@ module.exports = new Console();
 
 },{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
 module.exports=[
-  "13-Salt",
-  "08-PureData",
-  "04-Audio"
 ]
 
 },{}],17:[function(require,module,exports){
@@ -5439,7 +5548,6 @@ function example(cb, arg, delay, cancelCb) {
 	popup.title('Save your changes?');
 	popup.subtitle('Warning: Any unsaved changes will be lost');
 	popup.body('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
-	popup.code('<h1>Hello World!</h1>');
 	var form = [];
 	form.push('<button type="submit" class="button popup confirm">Continue</button>');
 	form.push('<button type="button" class="button popup cancel">Cancel</button>');
@@ -5447,6 +5555,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
+			console.log(arg);
 			cb(arg);
 		}, delay);
 		popup.hide();
@@ -5478,7 +5587,7 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "Warning: This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"create_new_file": {
@@ -5495,22 +5604,22 @@ module.exports={
 		},
 		"delete_project": {
 			"title": "Delete this project?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
 			"title": "Delete this file?",
-			"text": "This can't be undone.",
+			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
-			"text": "Your current project settings will be restored to defaults. This can't be undone.",
+			"text": "Your current project settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"restore_default_IDE_settings": {
 			"title": "Restore default IDE settings?",
-			"text": "Your current IDE settings will be restored to defaults. This can't be undone.",
+			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
 		"shutdown": {
@@ -5553,7 +5662,7 @@ module.exports={
 		},
 		"discard": {
 			"title": "Discard changes?",
-			"text": "This will discard all changes since your last commit. This can't be undone.",
+			"text": "This will discard all changes since your last commit. There is no undo.",
 			"button": "Discard changes"
 		},
 		"file_changed": {
