@@ -163,7 +163,7 @@ unsigned int Gui::setBuffer(char bufferType, unsigned int size)
 {
 	unsigned int buffId = _buffers.size();
 	DataBuffer newBuffer(bufferType, size);
-	_buffers.push_back(newBuffer);
+	_buffers.emplace_back(newBuffer);
 	return buffId;
 }
 
