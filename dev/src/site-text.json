@@ -131,5 +131,21 @@
 	"docs_view": {
 		"examples": "Examples that use this class:",
 		"button": "Launch documentation"
-	}
+	},
+  "funcKeys": {
+    "openProject"	: "Opening project",
+  	"openExample"	: "Opening example",
+  	"newProject"	: "Creating project",
+  	"saveAs"		: "Saving project",
+  	"deleteProject"	: "Deleting project",
+  	"cleanProject"	: "Cleaning project",
+  	"openFile"		: "Opening file",
+  	"newFile"		: "Creating file",
+  	"uploadFile"	: "Uploading file",
+  	"renameFile"	: "Renaming file",
+  	"deleteFile"	: "Deleting file",
+  	"init"			: "Initialising",
+  	"stop"			: "Stopping",
+  	"fileRejected"	: "Uploading file"
+  }
 }

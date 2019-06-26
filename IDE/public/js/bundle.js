@@ -1494,20 +1494,20 @@ var ConsoleView = function (_View) {
 module.exports = ConsoleView;
 
 var funcKey = {
-	'openProject': 'Opening project',
-	'openExample': 'Opening example',
-	'newProject': 'Creating project',
-	'saveAs': 'Saving project',
-	'deleteProject': 'Deleting project',
-	'cleanProject': 'Cleaning project',
-	'openFile': 'Opening file',
-	'newFile': 'Creating file',
-	'uploadFile': 'Uploading file',
-	'renameFile': 'Renaming file',
-	'deleteFile': 'Deleting file',
-	'init': 'Initialising',
-	'stop': 'Stopping',
-	'fileRejected': 'Uploading file'
+	'openProject': json.funcKeys.openProject,
+	'openExample': json.funcKeys.openExample,
+	'newProject': json.funcKeys.newProject,
+	'saveAs': json.funcKeys.saveAs,
+	'deleteProject': json.funcKeys.deleteProject,
+	'cleanProject': json.funcKeys.cleanProject,
+	'openFile': json.funcKeys.openFile,
+	'newFile': json.funcKeys.newFile,
+	'uploadFile': json.funcKeys.uploadFile,
+	'renameFile': json.funcKeys.renameFile,
+	'deleteFile': json.funcKeys.deleteFile,
+	'init': json.funcKeys.init,
+	'stop': json.funcKeys.stop,
+	'fileRejected': json.funcKeys.fileRejected
 };
 
 },{"../console":15,"../popup":19,"../site-text.json":20,"./View":14}],6:[function(require,module,exports){
@@ -4151,19 +4151,7 @@ var TabView = function (_View) {
     _this.on('boardString', _this._boardString);
     _this.editor = ace.edit('editor');
     var editor = _this.editor;
-    $('[data-tab-open]').on('click', function () {
-      if ($('[data-tabs]').hasClass('tabs-open')) {
-        setTimeout(function () {
-          $('[data-editor]').addClass('tabs-open');
-          editor.resize();
-        }, 750);
-      } else {
-        $('[data-editor]').removeClass('tabs-open');
-        setTimeout(function () {
-          editor.resize();
-        }, 500);
-      }
-    });
+    $('[data-tab-open]').on('click', _this.toggleClasses());
 
     $('[data-tab-open]').on('click', function () {
       return _this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for'));
@@ -4175,8 +4163,25 @@ var TabView = function (_View) {
   }
 
   _createClass(TabView, [{
+    key: 'toggleClasses',
+    value: function toggleClasses() {
+      var that = this;
+      if ($('[data-tabs]').hasClass('tabs-open')) {
+        setTimeout(function () {
+          $('[data-editor]').addClass('tabs-open');
+          that.editor.resize();
+        }, 750);
+      } else {
+        $('[data-editor]').removeClass('tabs-open');
+        setTimeout(function () {
+          that.editor.resize();
+        }, 500);
+      }
+    }
+  }, {
     key: 'toggle',
     value: function toggle(event, origin, target) {
+      var that = this;
 
       tabs = { event: event, origin: origin, target: target };
 
@@ -4198,12 +4203,11 @@ var TabView = function (_View) {
             $('[data-tabs]').removeClass('tabs-open');
             $('[data-tab-open] span').removeClass('rot');
             menuOpened = false;
-            // reset x offset position but only after the tabbed menu has closed.
             setTimeout(function () {
-              // $('[data-tab-content]').offset().top;
               $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
             }, 500);
           }
+          that.toggleClasses();
         }
         if (tabs.origin == 'tab-link' && menuOpened == false) {
           $('[data-tabs]').addClass('tabs-open');
@@ -4222,7 +4226,7 @@ var TabView = function (_View) {
           if (tabFor === tabs.target) {
             $(this).addClass('active');
             matchTabForAndTab();
-          } else {}
+          }
         });
       }
 
@@ -4232,8 +4236,6 @@ var TabView = function (_View) {
             var tab = $(this).data('tab');
             $(this).hide();
             if (tab === tabs.target) {
-              // reset the x offset position of the tab content if it's changing
-              // $('[data-tab-content]').offset().top;
               $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
               $(this).fadeIn();
             }
@@ -4251,7 +4253,6 @@ var TabView = function (_View) {
       if (data && data.trim) boardString = data.trim();else return;
 
       $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
-      // console.log(boardString);
     }
   }]);
 
@@ -5705,7 +5706,23 @@ module.exports={
 	"docs_view": {
 		"examples": "Examples that use this class:",
 		"button": "Launch documentation"
-	}
+	},
+  "funcKeys": {
+    "openProject"	: "Opening project",
+  	"openExample"	: "Opening example",
+  	"newProject"	: "Creating project",
+  	"saveAs"		: "Saving project",
+  	"deleteProject"	: "Deleting project",
+  	"cleanProject"	: "Cleaning project",
+  	"openFile"		: "Opening file",
+  	"newFile"		: "Creating file",
+  	"uploadFile"	: "Uploading file",
+  	"renameFile"	: "Renaming file",
+  	"deleteFile"	: "Deleting file",
+  	"init"			: "Initialising",
+  	"stop"			: "Stopping",
+  	"fileRejected"	: "Uploading file"
+  }
 }
 
 },{}],21:[function(require,module,exports){
