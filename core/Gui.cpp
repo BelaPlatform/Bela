@@ -162,8 +162,7 @@ void Gui::ws_onData(const char* data, int size)
 unsigned int Gui::setBuffer(char bufferType, unsigned int size)
 {
 	unsigned int buffId = _buffers.size();
-	DataBuffer newBuffer(bufferType, size);
-	_buffers.emplace_back(newBuffer);
+	_buffers.emplace_back(bufferType, size);
 	return buffId;
 }
 
