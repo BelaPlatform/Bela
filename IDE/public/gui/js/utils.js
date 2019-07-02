@@ -9,7 +9,6 @@ var downloadObjectAsJson = function(exportObj, exportName, space, format) {
 }
 
 function loadHtmlSection(section, location) {
-    console.log("LOCATION ", location);
     let promise = new Promise(function(resolve, reject) {
         $(section).hide();
         $(section).load(location, function(responseTxt, statusTxt, xhr) {

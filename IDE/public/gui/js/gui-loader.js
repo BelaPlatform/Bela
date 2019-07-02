@@ -33,6 +33,7 @@ function loadSketch(sketchSource, defaultSource) {
     let scriptElement;
     sketch.then((resolved) => {
         scriptElement = resolved;
+        removeElementById('p5-sketch');
         scriptElement.setAttribute('id', 'p5-sketch');
         console.log(sketchSource+ " loaded");
         if(Bela_control != null)
@@ -47,7 +48,3 @@ function loadSketch(sketchSource, defaultSource) {
     })
     return scriptElement;
 }
-
-window.onload = function() {
-    sectionLoader(location.hash);
-};

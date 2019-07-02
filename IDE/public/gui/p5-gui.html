@@ -23,9 +23,7 @@
         }
     } else {
         Bela_control.target.addEventListener('new-connection', function(event) {
-            console.log("New connection.");
             projectName = event.detail.projectName;
-            console.log("Project name "+projectName);
             p5sketchSource = "/projects/"+projectName+"/sketch.js"
         if(projectName != "exampleTempProject")
             window.location.hash = '#'+projectName;
