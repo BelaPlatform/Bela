@@ -1,4 +1,4 @@
-var downloadObjectAsJson = function(exportObj, exportName, space, format) {
+function downloadObjectAsJson(exportObj, exportName, space, format) {
     var format = format || ".json";
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, space || null));
     var downloadAnchorNode = document.createElement('a');
@@ -25,11 +25,13 @@ function loadHtmlSection(section, location) {
     return promise;
 }
 
-function loadScript(src) {
+function loadScript(src, parent) {
     let promise = new Promise(function(resolve, reject) {
         let scriptElement = document.createElement('script');
         scriptElement.setAttribute('src', src);
-        document.head.appendChild(scriptElement);
+        let parentElement = document.getElementById(parent) || document.head;
+
+        parentElement.appendChild(scriptElement);
         scriptElement.onerror = (error) => {
             reject(null);
         }
@@ -92,4 +94,25 @@ function getType(variable, recursive = false) {
         }
     }
     return type;
+}
+
+function getUserProperties() {
+    let results = [];
+    let currentWindow;
+    // create an iframe and append to body to load a clean window object
+    iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    for (let prop in window) {
+            if (!(prop in iframe.contentWindow))
+                results.push(window[prop]);
+    }
+
+    document.body.removeChild(iframe);
+    return results;
+}
+
+function getInstancesOf(objArray, constructor) {
+    return objArray.filter((e) => { return (e instanceof constructor) });
 }

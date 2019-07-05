@@ -4,30 +4,8 @@
 <script src="/gui/js/gui-slider.js"></script>
 <script src="/gui/js/gui-select.js"></script>
 
-
 <script src="/gui/js/bela-gui-data-handler.js"></script>
 <script src="/gui/js/bela-gui-control-handler.js"></script>
 
-<script>
-    let p5sketchSource;
-    let sketch;
-    let projectName = location.hash;
-
-    let queryString = new URLSearchParams(window.location.search);
-
-    if(queryString.has('project')) {
-        let projectName = queryString.get('project');
-        if(projectName.length != 0) {
-            p5sketchSource = "/projects/"+projectName+"/sketch.js"
-            sketch = loadSketch(p5sketchSource);
-        }
-    } else {
-        Bela_control.target.addEventListener('new-connection', function(event) {
-            projectName = event.detail.projectName;
-            p5sketchSource = "/projects/"+projectName+"/sketch.js"
-        if(projectName != "exampleTempProject")
-            window.location.hash = '#'+projectName;
-            sketch = loadSketch(p5sketchSource);
-        });
-    }
-</script>
+<div id="gui"></div>
+<script>selectSketch();</script>

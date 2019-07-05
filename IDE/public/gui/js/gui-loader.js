@@ -24,12 +24,13 @@ function sectionLoader(section) {
             break;
     }
 }
-
 function loadSketch(sketchSource, defaultSource) {
 
-    removeElementByClassName('p5Canvas');
+    // Remove all other instances of p5 to avoid conflict
+    getInstancesOf(getUserProperties(), p5).map((i) => {i.remove()})
 
-    let sketch = loadScript(sketchSource);
+    let sketch = loadScript(sketchSource, 'gui');
+
     let scriptElement;
     sketch.then((resolved) => {
         scriptElement = resolved;
@@ -38,7 +39,6 @@ function loadSketch(sketchSource, defaultSource) {
         console.log(sketchSource+ " loaded");
         if(Bela_control != null)
             Bela_control.sendEvent("gui-ready");
-
     }).catch((rejected) => {
         console.log(sketchSource + " couldn't be loaded.")
         if(defaultSource != null) {
@@ -47,4 +47,27 @@ function loadSketch(sketchSource, defaultSource) {
         }
     })
     return scriptElement;
+}
+
+function selectSketch() {
+    let p5sketchSource;
+    let projectName = location.hash;
+
+    let queryString = new URLSearchParams(window.location.search);
+
+    if(queryString.has('project')) {
+        let projectName = queryString.get('project');
+        if(projectName.length != 0) {
+            p5sketchSource = "/projects/"+projectName+"/sketch.js"
+            loadSketch(p5sketchSource);
+        }
+    } else {
+        Bela_control.target.addEventListener('new-connection', function(event) {
+            projectName = event.detail.projectName;
+            p5sketchSource = "/projects/"+projectName+"/sketch.js"
+        if(projectName != "exampleTempProject")
+            window.location.hash = '#'+projectName;
+            loadSketch(p5sketchSource);
+        });
+    }
 }
