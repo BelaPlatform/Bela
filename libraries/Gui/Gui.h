@@ -1,6 +1,5 @@
 #include <vector>
 #include <string>
-#include <memory>
 #include <WSServer.h>
 #include <JSON.h>
 #include <typeinfo> // for types in templates
