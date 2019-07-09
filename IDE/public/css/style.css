@@ -1606,7 +1606,7 @@ input[type="number"] {
   .toolbar > div {
     display: inline;
     float: left;
-    height: 40px; }
+    height: 35px; }
     .toolbar > div span {
       cursor: pointer;
       display: inline-block;
