@@ -20,7 +20,6 @@ class Gui
 		std::unique_ptr<WSServer> ws_server;
 
 		bool wsIsConnected = false;
-		bool guiIsReady = false;
 
 		void ws_connect();
 		void ws_disconnect();
@@ -49,9 +48,6 @@ class Gui
 		void cleanup();
 
 		bool isConnected(){ return wsIsConnected; };
-
-		bool isReady(){ return guiIsReady; };
-
 
 		// BUFFERS
 		// Returns buffer ID
