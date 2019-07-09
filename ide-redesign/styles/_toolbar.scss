@@ -86,7 +86,8 @@
       &.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
-        margin-left: 5px;
+        margin: 4px 0 0 5px;
+
         &:hover {
           background-image: url("../images/icons/shutdown_hover.svg");
         }
@@ -108,7 +109,7 @@
     min-width: 100px;
   }
   .start-stop {
-    padding-left: 10px;
+    padding: 1px 0 0 10px;
     width: 85px;
   }
   .shutdown-parent {
@@ -118,7 +119,7 @@
   }
   .toolbar-functions {
     // min-width: 150px;
-    padding: 2px 0;
+    padding: 1px 0;
   }
   .system-status-text {
     margin-top: 14px;
@@ -128,9 +129,9 @@
   .syntax-status {
     background-image: url('../images/icons/syntax_pending.svg');
     background-repeat: no-repeat;
-    margin-top: 3px;
+    margin-top: 4px;
     min-width: 100px;
-    padding: 0 20px;
+    padding: 1px 20px 0;
     &.pending {
       background-image: url('../images/icons/syntax_pending.svg');
       background-repeat: no-repeat;
