@@ -1,0 +1,15 @@
+name=Gui
+version=1.0.0
+author=Adan Benito<adan@bela.io>
+maintainer=Adan Benito<adan@bela.io>
+description=Wrapper for web-socket communication for exchanging control and binary data between Bela and a browser-based Gui.
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
