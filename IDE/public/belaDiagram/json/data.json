@@ -414,6 +414,24 @@
       "tip": "tooltip"
     },
     {
+      "elemclass": "powerIn",
+      "x": "283",
+      "y": "263",
+      "width": "13",
+      "height": "13",
+      "text": "I2C SCL",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "powerIn",
+      "x": "270",
+      "y": "249",
+      "width": "13",
+      "height": "13",
+      "text": "I2C SDA",
+      "tip": "tooltip"
+    },
+    {
       "elemclass": "pins",
       "x": "150",
       "y": "18",

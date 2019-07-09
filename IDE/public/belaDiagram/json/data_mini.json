@@ -180,6 +180,24 @@
       "tip": "tooltip"
     },
     {
+      "elemclass": "powerIn",
+      "x": "37",
+      "y": "326",
+      "width": "13",
+      "height": "13",
+      "text": "I2C SCL",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "powerIn",
+      "x": "37",
+      "y": "304",
+      "width": "13",
+      "height": "13",
+      "text": "I2C SDA",
+      "tip": "tooltip"
+    },
+    {
       "elemclass": "dPin",
       "x": "16",
       "y": "238",
