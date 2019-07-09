@@ -109,8 +109,6 @@ void Gui::ws_onControlData(const char* data, int size)
 			std::wstring event = root[L"event"]->AsString();
 			if (event.compare(L"connection-reply") == 0){
 				wsIsConnected = true;
-			} else if (event.compare(L"gui-ready") == 0){
-				guiIsReady = true;
 			}
 		}
 		delete value;
