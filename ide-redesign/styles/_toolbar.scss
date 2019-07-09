@@ -8,11 +8,11 @@
 }
 
 .running-button {
-  animation: running-button 2s linear infinite;
+  animation: running-button .75s linear infinite;
 }
 
 .building-button {
-  animation: running-button 3s linear infinite;
+  animation: running-button 2s linear infinite;
 }
 
 
@@ -23,7 +23,7 @@
   display: block;
   font-family: inconsolata, monospace;
   font-size: 12px;
-  height: 42px;
+  height: 43px;
   left: 0;
   padding-left: 40px;
   position: absolute;
@@ -33,11 +33,11 @@
     display: inline;
     float: left;
     height: 35px;
+    margin-top: 3px;
     span {
       cursor: pointer;
       display: inline-block;
       height: 35px;
-      margin-top: 3px;
       transition: 0.1s ease-in-out;
       width: 35px;
       &.run {
@@ -56,7 +56,6 @@
       &.stop {
         background-image: url("../images/icons/stop_active.svg");
         background-repeat: no-repeat;
-        margin-left: 5px;
         &:hover {
           background-image: url("../images/icons/stop_inactive.svg");
         }
@@ -86,7 +85,7 @@
       &.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
-        margin: 4px 0 0 5px;
+        margin: 1px 0 0 5px;
 
         &:hover {
           background-image: url("../images/icons/shutdown_hover.svg");
