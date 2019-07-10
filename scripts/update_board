@@ -166,6 +166,10 @@ error_handler $?
 ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do [ -d \"\$DIR\" ] && { make -C \"\$DIR\" install || exit 1; }; done"
 error_handler $?
 
+# create build files for libraries that are used by Pd
+ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME && for LIB in Scope Midi; do ./resources/tools/detectlibraries.sh -l \"\$LIB\"; done"
+error_handler $?
+
 # remove stale version of libraries on old images
 ssh "$BBB_ADDRESS" rm -rf /usr/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libprussdrv.a \"$BBB_BELA_HOME\"/lib/libNE10.a \"$BBB_BELA_HOME\"/lib/libmathneon.a
 error_handler $?
