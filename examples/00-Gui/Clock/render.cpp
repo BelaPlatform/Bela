@@ -1,6 +1,22 @@
 
+/*
+GUI clock
+=========
+New GUI fuctionality for Bela!
+Is this project there is a sketch.js file which is a p5.js file that is rendered
+in a browser tab. Click the GUI button in the IDE to see the rendering of this file.
+
+This example sends a buffer of data from the c++ file to the p5.js file:
+`gui.sendBuffer(0, dateTimeComponents);`
+
+The p5.js file displays the received data (time).
+
+If you want to edit sketch.js you can do so in the browser but must write your
+p5.js code in instance mode.
+*/
+
 #include <Bela.h>
-#include <typeinfo> 
+#include <typeinfo>
 #include <libraries/Gui/Gui.h>
 #include <algorithm>
 #include <string>
@@ -10,7 +26,7 @@
 
 #include <time.h>
 
-Gui gui;	
+Gui gui;
 
 std::vector<int> dateTimeComponents;
 float gTimePeriod = 0.01;
@@ -44,18 +60,18 @@ std::vector<std::string> split(const std::string& s, char delimiter)
    return tokens;
 }
 
-bool setup(BelaContext *context, void *userData)			
+bool setup(BelaContext *context, void *userData)
 {
 	std::vector<std::string> dateComponents = split(currentDateTime()[0], '-');
-	for(unsigned int i=0; i<dateComponents.size(); i++) 
+	for(unsigned int i=0; i<dateComponents.size(); i++)
 		dateTimeComponents.push_back(atoi(dateComponents[i].c_str()));
-	
+
 	std::vector<std::string> timeComponents = split(currentDateTime()[1], ':');
-	for(unsigned int i=0; i<timeComponents.size(); i++) 
+	for(unsigned int i=0; i<timeComponents.size(); i++)
 		dateTimeComponents.push_back(atoi(timeComponents[i].c_str()));
-		
+
 	dateTimeComponents.push_back(0);// millisedcons
-	
+
 	gui.setup(5555, "gui", context->projectName);
 
 	return true;
@@ -79,9 +95,9 @@ void calcDate(unsigned int samplesElapsed, unsigned int sampleRate, std::vector<
 }
 
 void render(BelaContext *context, void *userData)
-{	
+{
 	static unsigned int count = 0;
-	
+
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		if (count >= gTimePeriod*context->audioSampleRate)
 		{
@@ -91,7 +107,7 @@ void render(BelaContext *context, void *userData)
 		}
 		count++;
 	}
-	
+
 }
 
 void cleanup(BelaContext *context, void *userData)
