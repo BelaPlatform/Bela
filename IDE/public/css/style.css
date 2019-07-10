@@ -333,6 +333,7 @@ input[type="range"].range-slider {
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
   display: inline-block;
+  position: relative;
   min-width: 100%; }
 
 .beaglert-console-log-in {

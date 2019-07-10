@@ -77,7 +77,7 @@ class Console extends EventEmitter {
 		var msgs = text.split('\n');
 		for (let i=0;  i<msgs.length; i++){
 			if (msgs[i] !== ''){
-				this.print(msgs[i], 'warning', id);/*, function(){
+				this.print(msgs[i].replace(/\</g, '&lt;').replace(/\>/g, '&gt;'), 'warning', id);/*, function(){
 					var $el = $(this);
 					$el.addClass('beaglert-console-collapsed');
 					$el.on('transitionend', () => {
@@ -106,7 +106,7 @@ class Console extends EventEmitter {
 			var div = $('<div></div>').addClass('beaglert-console-i' + err.type)
 
 			// create the link and add it to the element
-			var span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
+			var span = $('<span></span>').html(err.text.split('\n').join(' ').replace(/\</g, '&lt;').replace(/\>/g, '&gt;') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
 
 			// add a button to copy the contents to the clipboard
 			var copyButton = $('<div></div>').addClass('clipboardButton').appendTo(div).on('click', function(){
