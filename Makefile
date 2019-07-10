@@ -15,9 +15,12 @@
 ## LDFLAGS=                -- linker flags (e.g.: -L. ) 
 ## LDLIBS=                -- libs to link in (e.g.: -lm )
 ## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
+## DISTCC=              -- specify whether to use distcc (1) or not (0, default)
 ###
 ##available targets: #
 .DEFAULT_GOAL := Bela
+
+DISTCC ?= 0 # set this to 1 to use distcc by default
 
 # an empty recipe to avoid implicit rules for .d files
 %.d:
@@ -329,6 +332,11 @@ else
   endif
 endif
 
+ifeq ($(DISTCC),1)
+  CC = /usr/local/bin/distcc-clang
+  CXX = /usr/local/bin/distcc-clang++
+endif
+
 ALL_DEPS=
 ASM_SRCS := $(wildcard $(PROJECT_DIR)/*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
@@ -434,11 +442,21 @@ build/pru/%_bin.h: pru/%.p
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
+# distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
+ifeq ($(DISTCC),1)
+ifeq ($(SYNTAX_FLAG),)
+GENERATE_PREPROCESSED := 1
+endif
+endif
+
 # Rule for user-supplied C++ files
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
+ifeq ($(GENERATE_PREPROCESSED),1)
+	$(AT) $(CXX) $(INCLUDES) $(DEFAULT_CPPFLAGS) -w -E -o "$(@:%.o=%.ii)" "$<" $(CPPFLAGS)
+endif
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -447,6 +465,9 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
 	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+ifeq ($(GENERATE_PREPROCESSED),1)
+	$(AT) $(CC) $(INCLUDES) $(DEFAULT_CFLAGS) -w -E -o "$(@:%.o=%.i)" "$<" $(CFLAGS)
+endif
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
