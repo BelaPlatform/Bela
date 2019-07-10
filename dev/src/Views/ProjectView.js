@@ -2,7 +2,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
-var example_order = require('../example_order.json');
+var example_order = require('../../../examples/order.json');
 
 class ProjectView extends View {
 
@@ -162,57 +162,123 @@ class ProjectView extends View {
 
 _exampleList(examplesDir){
 
-  var $examples = $('[data-examples]');
-  var oldListOrder = examplesDir;
-  var newListOrder = [];
+		var $examples = $('[data-examples]');
+    var oldListOrder = examplesDir;
+    var newListOrder = [];
+    var orphans = [];
 
   $examples.empty();
 
   if (!examplesDir.length) return;
 
-  oldListOrder.forEach(item => {
     example_order.forEach(new_item => {
-      if (new_item == item.name) {
-        newListOrder.push(item);
-        oldListOrder.splice(oldListOrder.indexOf(item), 1);
+      oldListOrder.forEach(item => {
+        if (new_item == item.name) {
+          newListOrder.push(item);
+          item.moved = true;
+        }
+      });
+    });
+
+    oldListOrder.forEach(item => {
+      if (item.moved != true) {
+        orphans.push(item);
       }
     });
-  });
-  var orderedList = newListOrder.concat(oldListOrder);
 
-  for (let item of orderedList){
-    let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
-    let parentUl = $('<ul></ul>');
-    let parentLi = $('<li></li>');
-    let childUl = $('<ul></ul>').addClass('example-list');
-    let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+    var orderedList = newListOrder.concat(orphans);
 
-    for (let child of item.children){
-      if (child && child.length && child[0] === '.') continue;
-        let childLi = $('<li></li>');
-        childLi.html(child).attr('data-example-link', item.name + '/' + child)
-        .on('click', (e) => {
-          if (this.exampleChanged){
-            this.exampleChanged = false;
-            popup.exampleChanged( () => {
-              this.emit('message', 'project-event', {
-                func: 'openExample',
-                currentProject: item.name + '/' + child
+		for (let item of orderedList){
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+			let parentUl = $('<ul></ul>');
+      let parentLi = $('<li></li>');
+      let childUl = $('<ul></ul>').addClass('example-list');
+      let childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
+
+      var childOrder = [];
+      for (let child of item.children){
+        childOrder.push({"name": child});
+      }
+      var newChildOrder = [];
+      var oldChildOrder = [];
+      var correctedChildOrder = [];
+      var childOrphans = [];
+
+      var that = this;
+      for (let child of childOrder){
+        if (child.name == "order.json") {
+          $.ajax({
+            type: "GET",
+            url: "/examples/" + item.name + "/" + child.name,
+            dataType: "json",
+            success: function(text){
+              newChildOrder = [];
+              text.forEach(item => {
+                newChildOrder.push({"name": item});
               });
-              $('.selectedExample').removeClass('selectedExample');
-              $(e.target).addClass('selectedExample');
-            }, undefined, 0, () => this.exampleChanged = true );
-            return;
-          }
 
-          this.emit('message', 'project-event', {
-            func: 'openExample',
-            currentProject: item.name + '/' + child
+              item.children.forEach(item => {
+                if (item !== "order.json") {
+                  oldChildOrder.push({"name": item});
+                }
+              });
+
+              newChildOrder.forEach(new_item => {
+                oldChildOrder.forEach(old_item => {
+                  if (new_item.name == old_item.name) {
+                    correctedChildOrder.push(new_item);
+                    old_item.moved = true;
+                  }
+                });
+              });
+
+              oldChildOrder.forEach(old_item => {
+                if (old_item.moved != true) {
+                  childOrphans.push(old_item);
+                }
+              });
+
+              childOrder = correctedChildOrder.concat(childOrphans);
+
+              for (var i = 0; i < childOrder.length; i++) {
+                child = childOrder[i].name;
+                var link = item.name + '/' + child;
+                let childLi = $('<li></li>');
+                childLi.html(child).attr('data-example-link', link)
+                .on('click', (e) => {
+                  link = e.target.dataset.exampleLink;
+                  if (this.exampleChanged){
+                    this.exampleChanged = false;
+                    popup.exampleChanged( (link) => {
+                      that.emit('message', 'project-event', {
+                        func: 'openExample',
+                        currentProject: link
+                      });
+                      $('.selectedExample').removeClass('selectedExample');
+                      $(e.target).addClass('selectedExample');
+                    }, undefined, 0, () => this.exampleChanged = true );
+                    return;
+                  }
+
+                  that.emit('message', 'project-event', {
+                    func: 'openExample',
+                    currentProject: link
+                  });
+                  $('.selectedExample').removeClass('selectedExample');
+                  $(e.target).addClass('selectedExample');
+                });
+                childLi.appendTo(childUl);
+              }
+
+              childOrder = [];
+              newChildOrder = [];
+              oldChildOrder = [];
+              correctedChildOrder = [];
+              childOrphans = [];
+            }
           });
-          $('.selectedExample').removeClass('selectedExample');
-          $(e.target).addClass('selectedExample');
-        });
-        childLi.appendTo(childUl);
+
+        }
       }
       // per section
       // item.name -> parentDiv $examples
