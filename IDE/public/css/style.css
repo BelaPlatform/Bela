@@ -1582,12 +1582,12 @@ input[type="number"] {
             transform: rotate(360deg); } }
 
 .running-button {
-  -webkit-animation: running-button 2s linear infinite;
-          animation: running-button 2s linear infinite; }
+  -webkit-animation: running-button .75s linear infinite;
+          animation: running-button .75s linear infinite; }
 
 .building-button {
-  -webkit-animation: running-button 3s linear infinite;
-          animation: running-button 3s linear infinite; }
+  -webkit-animation: running-button 2s linear infinite;
+          animation: running-button 2s linear infinite; }
 
 .toolbar {
   background: #c9c9c9;
@@ -1597,7 +1597,7 @@ input[type="number"] {
   display: block;
   font-family: inconsolata, monospace;
   font-size: 12px;
-  height: 42px;
+  height: 43px;
   left: 0;
   padding-left: 40px;
   position: absolute;
@@ -1606,12 +1606,12 @@ input[type="number"] {
   .toolbar > div {
     display: inline;
     float: left;
-    height: 40px; }
+    height: 35px;
+    margin-top: 3px; }
     .toolbar > div span {
       cursor: pointer;
       display: inline-block;
       height: 35px;
-      margin-top: 3px;
       -webkit-transition: 0.1s ease-in-out;
       transition: 0.1s ease-in-out;
       width: 35px; }
@@ -1626,8 +1626,7 @@ input[type="number"] {
           background-image: url("../images/icons/run_running.svg"); }
       .toolbar > div span.stop {
         background-image: url("../images/icons/stop_active.svg");
-        background-repeat: no-repeat;
-        margin-left: 5px; }
+        background-repeat: no-repeat; }
         .toolbar > div span.stop:hover {
           background-image: url("../images/icons/stop_inactive.svg"); }
       .toolbar > div span.console-button {
@@ -1649,7 +1648,7 @@ input[type="number"] {
       .toolbar > div span.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
-        margin-left: 5px; }
+        margin: 1px 0 0 5px; }
         .toolbar > div span.shutdown:hover {
           background-image: url("../images/icons/shutdown_hover.svg"); }
   .toolbar .tool-text {
@@ -1664,14 +1663,14 @@ input[type="number"] {
   .toolbar .st-st {
     min-width: 100px; }
   .toolbar .start-stop {
-    padding-left: 10px;
+    padding: 1px 0 0 10px;
     width: 85px; }
   .toolbar .shutdown-parent {
     float: right;
     width: 45px;
     padding-right: 50px; }
   .toolbar .toolbar-functions {
-    padding: 2px 0; }
+    padding: 1px 0; }
   .toolbar .system-status-text {
     margin-top: 14px;
     padding: 0 20px;
@@ -1679,9 +1678,9 @@ input[type="number"] {
   .toolbar .syntax-status {
     background-image: url("../images/icons/syntax_pending.svg");
     background-repeat: no-repeat;
-    margin-top: 3px;
+    margin-top: 4px;
     min-width: 100px;
-    padding: 0 20px; }
+    padding: 1px 20px 0; }
     .toolbar .syntax-status.pending {
       background-image: url("../images/icons/syntax_pending.svg");
       background-repeat: no-repeat; }
