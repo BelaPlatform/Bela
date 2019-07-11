@@ -27,6 +27,11 @@ libraries/%.o:
 	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE $@
 
 LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
+# This is a nasty kludge: we want to be able to optionally link in a default
+# main file if the user hasn't supplied one. We check for the presence of the main()
+# function, and conditionally call one of two recursive make targets depending on whether
+# we want to link in the default main file or not. The kludge is the mess of a shell script
+# line below. Surely there's a better way to do this?
 $(OUTPUT_FILE): $(ALL_OBJS) $(LIBRARIES_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))

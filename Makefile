@@ -497,11 +497,6 @@ ifeq ($(SHOULD_BUILD),false)
 # if it is a project that does not require build, there are no dependencies to compile, nor a binary to generate
 $(OUTPUT_FILE):
 else
-# This is a nasty kludge: we want to be able to optionally link in a default
-# main file if the user hasn't supplied one. We check for the presence of the main()
-# function, and conditionally call one of two recursive make targets depending on whether
-# we want to link in the default main file or not. The kludge is the mess of a shell script
-# line below. Surely there's a better way to do this?
 
 ALL_OBJS := $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 .EXPORT_ALL_VARIABLES:
