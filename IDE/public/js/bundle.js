@@ -5810,6 +5810,7 @@ module.exports.sanitise = sanitise;
 
 },{}],21:[function(require,module,exports){
 module.exports=[
+  "GUI",
   "Basics",
   "Digital",
   "Analog",
