@@ -20,11 +20,11 @@ SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
 include $(SYSTEM_SPECIFIC_MAKEFILE)
 $(SYSTEM_SPECIFIC_MAKEFILE):
 	make lib
-LIBRARY_CPPFLAGS := $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR) -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
+LIBRARY_CPPFLAGS := $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR) -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -fPIC
 #
 # the above default variables may be modified by the Makefile included here:
 MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile
-include $(MKFILE_COMPILE)
+-include $(MKFILE_COMPILE)
 
 LIBRARY_DIR := libraries/$(LIBRARY)
 LIBRARY_BUILD_DIR := $(LIBRARY_DIR)/build
@@ -42,9 +42,14 @@ all: $(LIBRARY_OBJS)
 clean:
 	$(AT) rm -rf $(LIBRARY_OBJS)
 
+cleanall:
+	$(AT) for LIB in libraries/*; do echo Cleaning $$LIB; $(MAKE) -f Makefile.libraries --no-print-directory LIBRARY=`basename $$LIB` clean AT=$(AT); done
+
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
 	$(AT) $(LIBRARY_CC) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CFLAGS)
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
 	$(AT) $(LIBRARY_CXX) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CXXFLAGS)
+ifneq ($(LIBRARY),)
 $(MKFILE_COMPILE):
 	$(AT) resources/tools/detectlibraries.sh --library $(LIBRARY)
+endif
