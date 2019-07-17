@@ -332,6 +332,7 @@ else
   endif
 endif
 
+DISTCC := $(strip $(DISTCC))
 ifeq ($(DISTCC),1)
   CC = /usr/local/bin/distcc-clang
   CXX = /usr/local/bin/distcc-clang++
