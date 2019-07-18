@@ -117,8 +117,9 @@ class ConsoleView extends View{
 			var output = data.text;
 		} else {
 			var output = funcKey[data.func];
-			if (data.newProject || data.currentProject) output += ' '+(data.newProject || data.currentProject);
-			if (data.newFile || data.fileName) output += ' '+(data.newFile || data.fileName);
+			if (data.newProject || data.currentProject) output += ' ' + (data.newProject || data.currentProject);
+			if (data.newFile || data.fileName) output += ' ' + (data.newFile || data.fileName);
+      if (data.newFolder) output += ' ' + (data.newFolder);
 		}
 		_console.notify(output+'...', data.timestamp);
 	}

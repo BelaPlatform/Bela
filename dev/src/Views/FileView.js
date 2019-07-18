@@ -50,27 +50,30 @@ class FileView extends View {
 	}
 
 	// UI events
-		buttonClicked($element, e){
-			var func = $element.data().func;
-			if (func && this[func]){
-				this[func](func);
-			}
+	buttonClicked($element){
+		var func = $element.data().func;
+		if (func && this[func]){
+			this[func](func);
 		}
+	}
 
-	newFile(func){
-		// build the popup content
+	newFile(func, base){
 		popup.title(json.popups.create_new_file.title);
 		popup.subtitle(json.popups.create_new_file.text);
-
 		var form = [];
 		form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
 		form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
+      if (!base) {
+        this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
+      } else {
+        this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base});
+      }
+      // console.log(popup.find('input[type=text]').val());
 			popup.hide();
 		});
 
@@ -79,13 +82,41 @@ class FileView extends View {
 		popup.show();
 
 	}
+
+  newFolder(func){
+		// build the popup content
+		popup.title(json.popups.create_new_folder.title);
+		popup.subtitle(json.popups.create_new_folder.text);
+
+		var form = [];
+    form.push('<input type="hidden"></input>');
+		form.push('<input type="text" placeholder="' + json.popups.create_new_folder.input + '">');
+		form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_folder.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+		popup.form.append(form.join('')).off('submit').on('submit', e => {
+			e.preventDefault();
+			this.emit('message', 'project-event', {func, newFolder: sanitise(popup.find('input[type=text]').val())});
+			popup.hide();
+		});
+
+		popup.find('.cancel').on('click', popup.hide );
+
+		popup.show();
+
+	}
+
 	uploadFile(func){
 		$('[data-upload-file-input]').trigger('click');
 	}
+
 	renameFile(e){
 		// Get the name of the file to be renamed:
 		var name = $(e.target).data('name');
     var func = $(e.target).data('func');
+    var folder = $(e.target).data('folder');
+    console.log(name, func, folder);
 		// build the popup content
 		popup.title('Rename ' + name + '?');
 		popup.subtitle(json.popups.rename_file.text);
@@ -94,12 +125,12 @@ class FileView extends View {
 		form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '">');
 		form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			var newName = sanitise(popup.find('input[type=text]').val());
-			this.emit('message', 'project-event', {func: 'renameFile', oldName: name, newFile: newName});
+			this.emit('message', 'project-event', {func: 'renameFile', folderName: folder, oldName: name, newFile: newName});
 			popup.hide();
 		});
 
@@ -108,6 +139,33 @@ class FileView extends View {
 		popup.show();
 
 	}
+
+  renameFolder(e){
+    // Get the name of the file to be renamed:
+		var name = $(e.target).data('name');
+    var func = $(e.target).data('func');
+		// build the popup content
+		popup.title('Rename ' + name + '?');
+		popup.subtitle(json.popups.rename_folder.text);
+
+		var form = [];
+		form.push('<input type="text" placeholder="' + json.popups.rename_folder.input + '">');
+		form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_folder.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+		popup.form.append(form.join('')).off('submit').on('submit', e => {
+			e.preventDefault();
+			var newName = sanitise(popup.find('input[type=text]').val());
+			this.emit('message', 'project-event', {func: 'renameFolder', oldName: name, newFolder: newName});
+			popup.hide();
+		});
+
+		popup.find('.cancel').on('click', popup.hide );
+
+		popup.show();
+
+  }
 
 	deleteFile(e){
 		// Get the name of the file to be deleted:
@@ -119,7 +177,7 @@ class FileView extends View {
 
 		var form = [];
 		form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -134,6 +192,7 @@ class FileView extends View {
 		popup.find('.delete').trigger('focus');
 
 	}
+
 	openFile(e){
 		this.emit('message', 'project-event', {func: 'openFile', newFile: $(e.currentTarget).data('file')})
 	}
@@ -189,7 +248,6 @@ class FileView extends View {
 
 		}
 
-
 		var pd = '_main.pd';
 		var render = 'render.cpp';
 		headers.sort( (a, b) => a.name - b.name );
@@ -200,7 +258,11 @@ class FileView extends View {
 		directories.sort( (a, b) => a.name - b.name );
 
 		var file_list_elements = [ sources, headers, resources, directories ];
-		var file_list_elements_names = [ 'Sources', 'Headers', 'Resources', 'Directories' ];
+    file_list_elements[0].name = json.file_view.sources;
+    file_list_elements[1].name = json.file_view.headers;
+    file_list_elements[2].name = json.file_view.resources;
+    file_list_elements[3].name = json.file_view.directories;
+    var i18n_dir_str = json.file_view.directories;
 
 		// Build file structure by listing the contents of each section (if they exist)
 
@@ -208,19 +270,110 @@ class FileView extends View {
 
 			if (file_list_elements[i].length) {
 
-				var section = $('<li></li>');
-				$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
-				var fileList = $('<ul></ul>').addClass('sub-file-list');
+				var section = $('<div></div>')
+            .addClass('section');
+				$('<p></p>')
+            .addClass('file-heading')
+            .html(file_list_elements[i].name)
+            .appendTo(section);
+				var fileList = $('<ul></ul>')
+            .addClass('sub-file-list');
 
 				for (let j = 0; j < file_list_elements[i].length; j++) {
-	        var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
-	        var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
-	        var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
-	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
-	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e, projName) => this.downloadFile(e, data.currentProject));
-	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
+	        var listItem = $('<li></li>')
+                .addClass('source-file')
+                .appendTo(fileList);
+          var item = file_list_elements[i][j];
+	        // var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+          if (file_list_elements[i].name != i18n_dir_str) {
+            var itemText = $('<div></div>')
+                  .addClass('source-text')
+                  .html(item.name + ' <span class="file-list-size">' + item.size + '</span>')
+                  .data('file', item.name)
+                  .appendTo(listItem)
+                  .on('click', (e) => this.openFile(e));
+            var renameButton = $('<button></button>')
+                  .addClass('file-rename file-button fileManager')
+                  .attr('title', 'Rename')
+                  .attr('data-func', 'renameFile')
+                  .attr('data-name', item.name)
+                  .appendTo(listItem)
+                  .on('click', (e) => this.renameFile(e));
+  	        var downloadButton = $('<button></button>')
+                  .addClass('file-download file-button fileManager')
+                  .attr('href-stem', '/download?project=' + data.currentProject + '&file=')
+                  .attr('data_name', item.name)
+                  .appendTo(listItem)
+                  .on('click', (e, projName) => this.downloadFile(e, data.currentProject));
+            var deleteButton = $('<button></button>')
+                  .addClass('file-delete file-button fileManager')
+                  .attr('title', 'Delete')
+                  .attr('data-func', 'deleteFile')
+                  .attr('data-name', item.name)
+                  .appendTo(listItem)
+                  .on('click', (e) => this.deleteFile(e));
+          } else {
+            section.addClass('is-dir');
+            var itemText = $('<div></div>')
+                  .addClass('source-text')
+                  .text(item.name)
+                  .data('file', item.name)
+                  .appendTo(listItem);
+            var renameButton = $('<button></button>')
+                  .addClass('file-rename file-button fileManager')
+                  .attr('title', 'Rename')
+                  .attr('data-func', 'renameFolder')
+                  .attr('data-name', item.name)
+                  .appendTo(listItem)
+                  .on('click', (e) => this.renameFolder(e));
+            var newButton = $('<button></button>')
+                  .addClass('file-new file-button fileManager')
+                  .attr('title', 'New File')
+                  .attr('data-func', 'newFile')
+                  .attr('data-folder', item.name)
+                  .appendTo(listItem)
+                  .on('click', () => this.newFile('newFile', event.target.dataset.folder));
+            var deleteButton = $('<button></button>')
+                  .addClass('file-delete file-button fileManager')
+                  .attr('title', 'Delete')
+                  .attr('data-func', 'deleteFile')
+                  .attr('data-name', item.name)
+                  .appendTo(listItem)
+                  .on('click', (e) => this.deleteFile(e));
+            var subList = $('<ul></ul>');
+            for (var k = 0; k < item.children.length; k++) {
+              var child = item.children[k];
+              var subListItem = $('<li></li>')
+                    .addClass('source-text')
+                    .text(child.name)
+                    .data('file', item.name + "/" + child.name)
+                    .on('click', (e) => this.openFile(e));
+              var deleteButton = $('<button></button>')
+                    .addClass('file-delete file-button fileManager')
+                    .attr('title', 'Delete')
+                    .attr('data-func', 'deleteFile')
+                    .attr('data-name', item.name + '/' + child.name)
+                    .appendTo(subListItem)
+                    .on('click', (e) => this.deleteFile(e));
+              var renameButton = $('<button></button>')
+                    .addClass('file-rename file-button fileManager')
+                    .attr('title', 'Rename')
+                    .attr('data-func', 'renameFile')
+                    .attr('data-name', child.name)
+                    .attr('data-folder', item.name)
+                    .appendTo(subListItem)
+                    .on('click', (e) => this.renameFile(e));
+    	        var downloadButton = $('<button></button>')
+                    .addClass('file-download file-button fileManager')
+                    .attr('href-stem', '/download?project=' + data.currentProject + '&file=')
+                    .attr('data_name', item.name + '/' + child.name)
+                    .appendTo(subListItem)
+                    .on('click', (e, projName) => this.downloadFile(e, data.currentProject));
+              subListItem.appendTo(subList);
+            }
+            subList.appendTo(listItem);
+          }
 	      }
-
 	      fileList.appendTo(section);
 	      section.appendTo($files);
 			}
@@ -255,23 +408,23 @@ class FileView extends View {
 
 	}
 
-	subDirs(dir){
-		var ul = $('<ul></ul>').html(dir.name + ':');
-		for (let child of dir.children){
-			if (!isDir(child)){
-				if (child.size < 1000000){
-					child.size = (child.size/1000).toFixed(1) + 'kb';
-				} else if (child.size >= 1000000 && child.size < 1000000000){
-					child.size = (child.size/1000000).toFixed(1) + 'mb';
-				}
-				$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
-			} else {
-				child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
-				ul.append(this.subDirs(child));
-			}
-		}
-		return ul;
-	}
+	// subDirs(dir){
+	// 	var ul = $('<ul></ul>').html(dir.name + ':');
+	// 	for (let child of dir.children){
+	// 		if (!isDir(child)){
+	// 			if (child.size < 1000000){
+	// 				child.size = (child.size/1000).toFixed(1) + 'kb';
+	// 			} else if (child.size >= 1000000 && child.size < 1000000000){
+	// 				child.size = (child.size/1000000).toFixed(1) + 'mb';
+	// 			}
+	// 			$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
+	// 		} else {
+	// 			child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
+	// 			ul.append(this.subDirs(child));
+	// 		}
+	// 	}
+	// 	return ul;
+	// }
 
 	doFileUpload(file){
 
@@ -302,7 +455,7 @@ class FileView extends View {
 			form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>')
 			form.push('</br >');
 			form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
-			form.push('<button type="button" class="button cancel">Cancel</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', e => {
 				e.preventDefault();

@@ -69,6 +69,31 @@ function write_file(file_path, data) {
     });
 }
 exports.write_file = write_file;
+function write_folder(file_path) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.log(file_path);
+                    return [4 /*yield*/, lock.acquire()];
+                case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, , 4, 5]);
+                    return [4 /*yield*/, fs.mkdirSync(file_path)];
+                case 3:
+                    _a.sent();
+                    return [3 /*break*/, 5];
+                case 4:
+                    lock.release();
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.write_folder = write_folder;
 function read_file(file_path) {
     return __awaiter(this, void 0, void 0, function () {
         var out;

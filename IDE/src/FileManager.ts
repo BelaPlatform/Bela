@@ -21,6 +21,16 @@ export async function write_file(file_path: string, data: string): Promise<void>
 		lock.release();
 	}
 }
+export async function write_folder(file_path: string): Promise<void>{
+  console.log(file_path);
+	await lock.acquire();
+	try{
+		await fs.mkdirSync(file_path);
+	}
+	finally{
+		lock.release();
+	}
+}
 export async function read_file(file_path: string): Promise<string> {
 	await lock.acquire();
 	let out: string;
@@ -65,7 +75,7 @@ export async function delete_file(file_path: string): Promise<void>{
 }
 export async function read_directory(dir_path: string): Promise<string[]>{
 	await lock.acquire();
-	let out: string[]; 
+	let out: string[];
 	try{
 		out = await fs.readdirAsync(dir_path);
 	}
@@ -76,7 +86,7 @@ export async function read_directory(dir_path: string): Promise<string[]>{
 }
 export async function stat_file(file_name: string): Promise<any>{
 	await lock.acquire();
-	let out: any; 
+	let out: any;
 	try{
 		out = await fs.lstatAsync(file_name);
 	}
@@ -167,4 +177,3 @@ export async function file_exists(file_path: string): Promise<boolean>{
 		.catch( e => {} );
 	return (stat && stat.isFile && stat.isFile()) ? true : false;
 }
-
