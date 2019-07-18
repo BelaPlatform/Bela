@@ -2606,25 +2606,6 @@ var FileView = function (_View) {
 				}
 			});
 		}
-
-		// subDirs(dir){
-		// 	var ul = $('<ul></ul>').html(dir.name + ':');
-		// 	for (let child of dir.children){
-		// 		if (!isDir(child)){
-		// 			if (child.size < 1000000){
-		// 				child.size = (child.size/1000).toFixed(1) + 'kb';
-		// 			} else if (child.size >= 1000000 && child.size < 1000000000){
-		// 				child.size = (child.size/1000000).toFixed(1) + 'mb';
-		// 			}
-		// 			$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', (e) => this.openFile(e));
-		// 		} else {
-		// 			child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
-		// 			ul.append(this.subDirs(child));
-		// 		}
-		// 	}
-		// 	return ul;
-		// }
-
 	}, {
 		key: 'doFileUpload',
 		value: function doFileUpload(file) {
