@@ -543,36 +543,21 @@ function cleanFile(project, file) {
     });
 }
 exports.cleanFile = cleanFile;
-// export async function renameFile(data: any){
-// 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
-// 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
-// 	if (file_exists){
-// 		data.error = 'failed, file '+data.newFile+' already exists!';
-// 		return;
-// 	}
-// 	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.oldName, file_path);
-// 	await cleanFile(data.currentProject, data.oldName);
-// 	data.fileList = await listFiles(data.currentProject);
-// 	await openFile(data);
-// }
 function renameFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var old_file_name, file_name, folder, folder, file_path, new_file_path, file_exists, _a, _b;
+        var old_file_name, file_name, folder, file_path, file_path, new_file_path, file_exists, _a, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    console.log(data);
                     old_file_name = data.oldName;
                     file_name = data.oldName.split('/').pop();
-                    if (typeof (data.folder) != undefined) {
+                    if (data.folder) {
                         folder = data.folder + '/';
+                        file_path = paths.projects + data.currentProject + '/' + folder + file_name;
                     }
                     else {
-                        folder = '';
+                        file_path = paths.projects + data.currentProject + '/' + file_name;
                     }
-                    // let folder = data.folder;
-                    console.log(data.folderName, typeof (data.folderName));
-                    file_path = paths.projects + data.currentProject + '/' + folder + file_name;
                     new_file_path = file_path.replace(file_name, data.newFile);
                     return [4 /*yield*/, file_manager.file_exists(new_file_path)];
                 case 1:
@@ -613,7 +598,6 @@ function renameFolder(data) {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    console.log(data);
                     folder_path = paths.projects + data.currentProject + "/" + data.oldName;
                     new_folder_path = paths.projects + data.currentProject + "/" + data.newFolder;
                     return [4 /*yield*/, file_manager.directory_exists(new_folder_path)];

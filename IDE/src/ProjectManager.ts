@@ -256,33 +256,16 @@ export async function cleanFile(project: string, file: string){
 	}
 }
 
-// export async function renameFile(data: any){
-// 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
-// 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
-// 	if (file_exists){
-// 		data.error = 'failed, file '+data.newFile+' already exists!';
-// 		return;
-// 	}
-// 	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.oldName, file_path);
-// 	await cleanFile(data.currentProject, data.oldName);
-// 	data.fileList = await listFiles(data.currentProject);
-// 	await openFile(data);
-// }
-
 export async function renameFile(data: any){
-  console.log(data);
   let old_file_name = data.oldName;
   let file_name = data.oldName.split('/').pop();
-  if (typeof(data.folder) != undefined) {
+  if (data.folder) {
     let folder = data.folder + '/';
+    let file_path = paths.projects + data.currentProject + '/' + folder + file_name;
   } else {
-    let folder = '';
+    let file_path = paths.projects + data.currentProject + '/' + file_name;
   }
-  // let folder = data.folder;
-  console.log(data.folderName, typeof(data.folderName));
-	let file_path = paths.projects + data.currentProject + '/' + folder + file_name;
   let new_file_path = file_path.replace(file_name, data.newFile);
-  // console.log(file_path, paths.projects + data.currentProject + '/' + old_file_name);
 	let file_exists = (await file_manager.file_exists(new_file_path) || await file_manager.directory_exists(file_path));
 	if (file_exists){
 		data.error = 'failed, file ' + data.newFile + ' already exists!';
@@ -295,7 +278,6 @@ export async function renameFile(data: any){
 }
 
 export async function renameFolder(data: any){
-  console.log(data);
 	let folder_path = paths.projects + data.currentProject + "/" + data.oldName;
   let new_folder_path = paths.projects + data.currentProject + "/" + data.newFolder;
 	let folder_exists = await file_manager.directory_exists(new_folder_path);
