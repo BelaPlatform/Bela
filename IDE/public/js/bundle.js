@@ -2284,7 +2284,6 @@ var FileView = function (_View) {
 				} else {
 					_this2.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base });
 				}
-				// console.log(popup.find('input[type=text]').val());
 				popup.hide();
 			});
 
@@ -2332,7 +2331,6 @@ var FileView = function (_View) {
 			var name = $(e.target).data('name');
 			var func = $(e.target).data('func');
 			var folder = $(e.target).data('folder');
-			console.log(name, func, folder);
 			// build the popup content
 			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
