@@ -39,8 +39,7 @@ function send_zip(path: string, name: string, res: express.Response){
 
 function download_file(req: express.Request, res: express.Response){
 	let file = paths.projects+req.query.project+'/'+req.query.file;
-  let fileNameParts = req.query.file.split('/');
-  let fileName = req.query.file.split('/')[fileNameParts.length - 1];
+  let fileName = req.query.file.split('/').pop();
 	res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
 	res.setHeader('Content-type', mime.getType(file));
 	// this should really go through the file_manager lock - TODO
