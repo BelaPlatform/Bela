@@ -203,6 +203,7 @@ private:
 #define PRU_BUFFER_SPI_FRAMES  15
 #define PRU_BOARD_FLAGS        16
 #define PRU_ERROR_OCCURRED     17
+#define PRU_ACTIVE_TDM_SLOTS   18
 
 // error codes sent from the PRU
 #define ARM_ERROR_TIMEOUT 1
@@ -622,7 +623,7 @@ void PRU::initialisePruCommon()
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
 	pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
-
+	pru_buffer_comm[PRU_ACTIVE_TDM_SLOTS] = 2;	// Default value; TODO: make this adjustable
 
 	/* Set up multiplexer info */
 	if(context->multiplexerChannels == 2) {
