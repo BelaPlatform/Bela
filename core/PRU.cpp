@@ -309,7 +309,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
-		if(belaHw == BelaHw_BelaMini)
+		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
 		{
 			gDigitalPins = digitalPinsPocketBeagle;
 		} else {
@@ -334,7 +334,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		if(belaHw == BelaHw_BelaMini)
+		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
 		{
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
@@ -377,7 +377,7 @@ void PRU::cleanupGPIO()
 		}
 	}
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMini)
+		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
@@ -421,7 +421,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
 	}
-	if(belaHw == BelaHw_BelaMini && enableLed){
+	if((belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio) && enableLed){
 		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
 		underrunLed.clear();
 	}
@@ -589,6 +589,7 @@ void PRU::initialisePruCommon()
 	uint32_t board_flags = 0;
 	switch(belaHw) {
 	case BelaHw_BelaMini:
+	case BelaHw_BelaMiniMultiAudio:
 		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
 		break;
 	case BelaHw_CtagFace:
@@ -623,7 +624,7 @@ void PRU::initialisePruCommon()
 	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
 	pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
-	pru_buffer_comm[PRU_ACTIVE_TDM_SLOTS] = 2;	// Default value; TODO: make this adjustable
+	pru_buffer_comm[PRU_ACTIVE_TDM_SLOTS] = context->audioOutChannels;
 
 	/* Set up multiplexer info */
 	if(context->multiplexerChannels == 2) {
@@ -642,7 +643,7 @@ void PRU::initialisePruCommon()
 	}
 	
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMini)
+		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
 		{
 			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
 			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
@@ -681,6 +682,8 @@ int PRU::start(char * const filename)
 		case BelaHw_Bela:
 			//nobreak
 		case BelaHw_BelaMini:
+			//nobreak
+		case BelaHw_BelaMiniMultiAudio:
 			//nobreak
 		case BelaHw_Salt:
 			pruUsesMcaspIrq = false;

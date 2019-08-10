@@ -52,6 +52,7 @@
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
+#include "../include/I2c_MultiTLVCodec.h"
 #include "../include/GPIOcontrol.h"
 extern "C" void enable_runfast();
 extern "C" void disable_runfast();
@@ -121,6 +122,7 @@ typedef struct
 static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 int gRTAudioVerbose = 0; // Verbosity level for debugging
+static I2c_MultiTLVCodec* gI2cMultiTLVCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
 
 static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
@@ -143,6 +145,10 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 			activeCodec = gI2cCodec;
 			disabledCodec = gSpiCodec;
 			break;
+		case BelaHw_BelaMiniMultiAudio:
+			cfg->activeCodec = gI2cMultiTLVCodec;
+			cfg->disabledCodec = gSpiCodec;
+			break;			
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagFaceBela:
@@ -171,6 +177,23 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 		case BelaHw_Salt:
 			cfg->audioInChannels = 2;
 			cfg->audioOutChannels = 2;
+			cfg->audioSampleRate = 44100;
+			break;
+		case BelaHw_BelaMiniMultiAudio:		
+			if(gI2cMultiTLVCodec) {
+				if(gI2cMultiTLVCodec->numDetectedCodecs() > 0) {
+					cfg->audioInChannels = 2*gI2cMultiTLVCodec->numDetectedCodecs();
+					cfg->audioOutChannels = 2*gI2cMultiTLVCodec->numDetectedCodecs();
+				}
+				else {
+					cfg->audioInChannels = 2;
+					cfg->audioOutChannels = 2;						
+				}
+			}
+			else {
+				cfg->audioInChannels = 2;
+				cfg->audioOutChannels = 2;				
+			}
 			cfg->audioSampleRate = 44100;
 			break;
 		case BelaHw_CtagFace:
@@ -468,8 +491,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
         else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
-        if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
+        if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace && belaHw != BelaHw_BelaMiniMultiAudio)
                 gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+		if(belaHw == BelaHw_BelaMiniMultiAudio)
+			gI2cMultiTLVCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+		
 	BelaHwConfig cfg;
 	BelaHwConfigPrivate pcfg;
 	if(Bela_getHwConfigPrivate(belaHw, &cfg, &pcfg))

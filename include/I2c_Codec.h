@@ -31,11 +31,9 @@ public:
 
 	int initCodec();
 	int startAudio(int dual_rate);
-	int startAudio(int dual_rate, int is_master);
+	int startAudio(int dual_rate, int is_master, int tdm_mode, int slotSize, int startingSlot);
 	int stopAudio();
 
-	int setSlotSize(unsigned int size);
-	int setFirstTDMSlot(unsigned int slot);
 	int setPllJ(short unsigned int j);
 	int setPllD(unsigned int d);
 	int setPllP(short unsigned int p);
@@ -71,8 +69,6 @@ private:
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;
 	int hpVolumeHalfDbs;
-	int slotSize;
-	int slotOffset;
 	bool master;
 	bool running;
 	bool verbose;

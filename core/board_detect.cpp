@@ -62,9 +62,9 @@ static std::string trim(std::string const& str)
 
 // Returns true if the Tlv32 codec is detected
 // Returns false if the Tlv32 codec is not detected
-static bool detectTlv32()
+static bool detectTlv32(int bus, int address)
 {
-	I2c_Codec codec(codecI2cBus, codecI2cAddress);
+	I2c_Codec codec(bus, address);
 	// I2c_Codec codec(i2cBus, i2cAddress); // get these variable from RTAudio.cpp
 	int ret = codec.initCodec();
 	if (ret == 0)
@@ -114,6 +114,8 @@ BelaHw getBelaHw(std::string board)
 		hw = BelaHw_CtagFaceBela;
 	else if(board == "CtagBeastBela")
 		hw = BelaHw_CtagBeastBela;
+	else if(board == "BelaMiniMultiAudio")
+		hw = BelaHw_BelaMiniMultiAudio;
 	else
 		hw = BelaHw_NoHw;
 	return hw;
@@ -144,6 +146,9 @@ std::string getBelaHwName(BelaHw hardware)
 			break;
 		case BelaHw_CtagBeastBela:
 			hwName = "CtagBeastBela";
+			break;
+		case BelaHw_BelaMiniMultiAudio:
+			hwName = "BelaMiniMultiAudio";
 			break;
 		default:
 			hwName = "";
@@ -202,12 +207,21 @@ BelaHw Bela_detectHw()
 		return hw;
 	if(is_belamini())
 	{
-		hw =  BelaHw_BelaMini;
+		bool hasTlv32[4]; 
+		
+		for(int i = 0; i < 4; i++)
+			hasTlv32[i] = detectTlv32(codecI2cBus, codecI2cAddress + i);
+		
+		if(hasTlv32[1] || hasTlv32[2] || hasTlv32[3])
+			hw = BelaHw_BelaMiniMultiAudio;
+		else if(hasTlv32[0])
+			hw = BelaHw_BelaMini;
 	}
 	else
 	{
 		int ctag = detectCtag();
-		bool hasTlv32 = detectTlv32();
+		bool hasTlv32 = detectTlv32(codecI2cBus, codecI2cAddress);
+		
 		if(ctag == 1)
 		{
 			if(hasTlv32)
