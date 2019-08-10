@@ -15,11 +15,10 @@
 #include "../include/I2c_Codec.h"
 
 #define TLV320_DSP_MODE
-#define TLV320_256CLOCK_MODE
 
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
 : dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0),
-  slotSize(16), slotOffset(0), master(true), running(false)
+  master(true), running(false)
 {
 	setVerbose(isVerbose);
 	initI2C_RW(i2cBus, i2cAddress, -1);
@@ -47,10 +46,10 @@ int I2c_Codec::initCodec()
 // it runs at 44.1kHz
 int I2c_Codec::startAudio(int dual_rate)
 {
-	return startAudio(dual_rate, 1);
+	return startAudio(dual_rate, 1, 0, 16, 0);
 }
 
-int I2c_Codec::startAudio(int dual_rate, int is_master)
+int I2c_Codec::startAudio(int dual_rate, int is_master, int tdm_mode, int slotSize, int startingSlot)
 {
 	master = is_master;
 
@@ -59,7 +58,7 @@ int I2c_Codec::startAudio(int dual_rate, int is_master)
 	// Explicit Switch to config register page 0:
 	if(writeRegister(0x00, 0x00))	// Page Select Register
 		return 1;
-	
+
 	// see datasehet for TLV320AIC3104 from page 44
 	if(writeRegister(0x02, 0x00))	// Codec sample rate register: fs_ref / 1
 		return 1;
@@ -105,38 +104,38 @@ int I2c_Codec::startAudio(int dual_rate, int is_master)
 			return 1;
 	}
 
-#ifdef TLV320_256CLOCK_MODE // for multi-codec mode
-	unsigned int crb; 	// Audio serial control register B
-	if(slotSize == 16)
-		crb = 0x48;
-	else if(slotSize == 20)
-		crb = 0x58;
-	else if(slotSize == 24)
-		crb = 0x68;
-	else if(slotSize == 32)
-		crb = 0x78;
-	else
-		return 1;
+	if(tdm_mode) {
+		unsigned int crb; 	// Audio serial control register B
+		if(slotSize == 16)
+			crb = 0x48;
+		else if(slotSize == 20)
+			crb = 0x58;
+		else if(slotSize == 24)
+			crb = 0x68;
+		else if(slotSize == 32)
+			crb = 0x78;
+		else
+			return 1;
 
-	if(writeRegister(0x09, crb))   // Audio serial control register B: DSP mode, word len specified by slotSize
-		return 1;
-	if(writeRegister(0x0A, slotOffset*slotSize))   // Audio serial control register C: offset of 16 bits per slot
-		return 1;
-#else
+		if(writeRegister(0x09, crb))   // Audio serial control register B: DSP mode, word len specified by slotSize
+			return 1;
+		if(writeRegister(0x0A, startingSlot*slotSize))   // Audio serial control register C: specifying offset in bits
+			return 1;
+	}
+	else {
 #ifdef TLV320_DSP_MODE // to use with old PRU code
-	if(writeRegister(0x09, 0x40))   // Audio serial control register B: DSP mode, word len 16 bits
+		if(writeRegister(0x09, 0x40))   // Audio serial control register B: DSP mode, word len 16 bits
 #else
-	if(writeRegister(0x09, 0x00))   // Audio serial control register B: I2S mode, word len 16 bits
+		if(writeRegister(0x09, 0x00))   // Audio serial control register B: I2S mode, word len 16 bits
 #endif
-		return 1;
+			return 1;
 #ifdef TLV320_DSP_MODE // to use with old PRU code
-	if(writeRegister(0x0A, 0x00))   // Audio serial control register C: 0 bit offset
+		if(writeRegister(0x0A, 0x00))   // Audio serial control register C: 0 bit offset
 #else
-	if(writeRegister(0x0A, 0x01))   // Audio serial control register C: 1 bit offset
+		if(writeRegister(0x0A, 0x01))   // Audio serial control register C: 1 bit offset
 #endif
-		return 1;
-#endif	// TLV320_256CLOCK_MODE
-
+			return 1;
+	}
 	if(writeRegister(0x0D, 0x00))	// Headset / button press register A: disabled
 		return 1;
 	if(writeRegister(0x0E, 0x00))	// Headset / button press register B: disabled
@@ -163,7 +162,7 @@ int I2c_Codec::startAudio(int dual_rate, int is_master)
 		if(writeRegister(0x66, 0x82))	// Clock generation control register: use BCLK, PLL N = 2
 			return 1;
 	}
-	
+
 	//Set-up hardware high-pass filter for DC removal
 	if(configureDCRemovalIIR())
 		return 1;
@@ -171,10 +170,12 @@ int I2c_Codec::startAudio(int dual_rate, int is_master)
 		return 1;
 
 	// TODO: may need to separate the code below for non-master codecs so they enable amps after the master clock starts
-	
+
 	// wait for the codec to stabilize before unmuting the HP amp.
 	// this gets rid of the loud pop.
-	usleep(10000);
+	if(is_master)
+		usleep(10000);
+
 	// note : a small click persists, but it is unavoidable
 	// (i.e.: fading in the hpVolumeHalfDbs after it is turned on does not remove it).
 
@@ -283,25 +284,6 @@ int I2c_Codec::configureDCRemovalIIR(){
 
 	return 0;
 }
-
-// Set the size of the I2S/DSP/TDM slots in bits
-int I2c_Codec::setSlotSize(unsigned int size) {
-	if(size != 16 && size != 20 && size != 24 && size != 32)
-		return 1;
-
-	slotSize = size;
-	return 0;
-}
-
-// Set the slot in an 8-cycle TDM format where the first channel should be read (slot ranges from 0 to 7)
-int I2c_Codec::setFirstTDMSlot(unsigned int slot) {
-	if(slot > 7)
-		return 1;
-
-	slotOffset = slot;
-	return 0;
-}
-
 //set the numerator multiplier for the PLL
 int I2c_Codec::setPllK(float k){
 	short unsigned int j=(int)k;
