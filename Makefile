@@ -524,6 +524,7 @@ clean: projectclean
 
 coreclean: ## Remove the core's build objects
 	-$(RM) build/core/*
+	-$(RM) build/pru/*
 	-$(RM) include/pru_rtaudio_bin.h
 
 prompt:
