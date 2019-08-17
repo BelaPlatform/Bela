@@ -191,9 +191,9 @@ static inline void analogWriteOnceNI(BelaContext *context, int frame, int channe
  * \param context The I/O data structure which is passed by Bela to render().
  * \param frame Which frame (i.e. what time) to read the digital input. Valid values range
  * from 0 to (context->digitalFrames - 1).
- * \param channel Which digital pin to read. 16 pins across the P8 and P9 headers of the
- * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
- * digital_gpio_mapping.h.
+ * \param channel Which digital input to read. 16 pins across the headers are
+ * available. Check your board diagram to know where they are on the specific
+ * board you have.
  * \return Value of the digital input.
  */
 static inline int digitalRead(BelaContext *context, int frame, int channel);
@@ -209,9 +209,9 @@ static inline int digitalRead(BelaContext *context, int frame, int channel);
  * \param context The I/O data structure which is passed by Bela to render().
  * \param frame Which frame (i.e. what time) to write the digital output. Valid values range
  * from 0 to (context->digitalFrames - 1).
- * \param channel Which digital output to write. 16 pins across the P8 and P9 headers of the
- * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
- * digital_gpio_mapping.h.
+ * \param channel Which digital output to write. 16 pins across the headers are
+ * available. Check your board diagram to know where they are on the specific
+ * board you have.
  * \param value Value to write to the output.
  */
 static inline void digitalWrite(BelaContext *context, int frame, int channel, int value);
@@ -229,9 +229,9 @@ static inline void digitalWrite(BelaContext *context, int frame, int channel, in
  * \param context The I/O data structure which is passed by Bela to render().
  * \param frame Which frame (i.e. what time) to write the digital output. Valid values range
  * from 0 to (context->digitalFrames - 1).
- * \param channel Which digital output to write. 16 pins across the P8 and P9 headers of the
- * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
- * digital_gpio_mapping.h.
+ * \param channel Which digital output to write. 16 pins across the headers are
+ * available. Check your board diagram to know where they are on the specific
+ * board you have.
  * \param value Value to write to the output.
  */
 static inline void digitalWriteOnce(BelaContext *context, int frame, int channel, int value);
@@ -247,9 +247,9 @@ static inline void digitalWriteOnce(BelaContext *context, int frame, int channel
  * \param context The I/O data structure which is passed by Bela to render().
  * \param frame Which frame (i.e. what time) to set the pin direction. Valid values range
  * from 0 to (context->digitalFrames - 1).
- * \param channel Which digital output to write. 16 pins across the P8 and P9 headers of the
- * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
- * digital_gpio_mapping.h.
+ * \param channel Which digital channel to set. 16 pins across the headers are
+ * available. Check your board diagram to know where they are on the specific
+ * board you have.
  * \param mode Direction of the pin (\c INPUT or \c OUTPUT).
  */
 static inline void pinMode(BelaContext *context, int frame, int channel, int mode);
@@ -265,9 +265,9 @@ static inline void pinMode(BelaContext *context, int frame, int channel, int mod
  * \param context The I/O data structure which is passed by Bela to render().
  * \param frame Which frame (i.e. what time) to set the pin direction. Valid values range
  * from 0 to (context->digitalFrames - 1).
- * \param channel Which digital output to write. 16 pins across the P8 and P9 headers of the
- * BeagleBone Black are available. See the constants P8_xx and P9_xx defined in
- * digital_gpio_mapping.h.
+ * \param channel Which digital channel to set. 16 pins across the headers are
+ * available. Check your board diagram to know where they are on the specific
+ * board you have.
  * \param mode Direction of the pin (\c INPUT or \c OUTPUT).
  */
 static inline void pinModeOnce(BelaContext *context, int frame, int channel, int mode);
