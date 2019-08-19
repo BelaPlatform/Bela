@@ -238,8 +238,15 @@ export async function cleanFile(project: string, file: string){
 	}
 }
 
+export async function moveUploadedFile(data: any){
+  await file_manager.rename_file(paths.uploads+data.newFile, paths.projects+data.currentProject+'/'+data.newFile);
+  await cleanFile(data.currentProject, data.fileName);
+  data.fileList = await listFiles(data.currentProject);
+  await openFile(data);
+}
+
 export async function renameFile(data: any){
-	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+  let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
 	if (file_exists){
 		data.error = 'failed, file '+data.newFile+' already exists!';

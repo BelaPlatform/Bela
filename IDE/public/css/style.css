@@ -1214,6 +1214,10 @@ ul dl {
   top: 0;
   width: 100vw;
   z-index: 9998; }
+  #overlay.active.drag-upload {
+    background: rgba(0, 255, 122, 0.3); }
+    #overlay.active.drag-upload.no {
+      background: rgba(255, 0, 0, 0.3); }
 
 ::-webkit-scrollbar {
   width: 12px; }

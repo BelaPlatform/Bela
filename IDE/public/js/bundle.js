@@ -2227,11 +2227,6 @@ var FileView = function (_View) {
 
 		_this.listOfFiles = [];
 
-		var data = {
-			fileName: "",
-			project: ""
-		};
-
 		// hack to upload file
 		$('[data-upload-file-input]').on('change', function (e) {
 			for (var i = 0; i < e.target.files.length; i++) {
@@ -2239,13 +2234,35 @@ var FileView = function (_View) {
 			}
 		});
 
+		var data = {
+			fileName: "",
+			project: ""
+		};
+
 		// drag and drop file upload on editor
-		$('body').on('dragenter dragover drop', function (e) {
+		$('body').on('dragenter dragover drop dragleave dragexit', function (e) {
 			e.stopPropagation();
 			e.preventDefault();
+			if (e.type == 'dragenter') {
+				$('[data-overlay]').addClass('active').addClass('drag-upload');
+			}
 			if (e.type === 'drop') {
 				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
-					_this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+					console.log(e.originalEvent.dataTransfer.files[i].size);
+					// 20mb maximum drag and drop file size
+					if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
+						$('[data-overlay]').addClass('no');
+						setTimeout(function () {
+							$('[data-overlay]').removeClass('active').removeClass('drag-upload').removeClass('no');
+						}, 1500);
+					} else {
+						_this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+					}
+					if (i == e.originalEvent.dataTransfer.files.length - 1) {
+						setTimeout(function () {
+							$('[data-overlay]').removeClass('active').removeClass('drag-upload').removeClass('no');
+						}, 1500);
+					}
 				}
 			}
 			return false;
@@ -2278,7 +2295,7 @@ var FileView = function (_View) {
 			form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -2293,12 +2310,37 @@ var FileView = function (_View) {
 	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			$('[data-upload-file-input]').trigger('click');
+			var _this3 = this;
+
+			// build the popup content
+			popup.title(json.popups.upload_file.title);
+			popup.subtitle(json.popups.upload_file.text);
+
+			var form = [];
+			$('[data-popup] form').attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
+			form.push('<input type="file" name="data" data-form-file></input>');
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				var file = $('[data-form-file]')[0];
+				var location = '/projects/basic';
+				var formEl = $('[data-popup] form')[0];
+				var formData = new FormData(formEl);
+				_this3.doLargeFileUpload(formData, file, location);
+				// popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
 		}
 	}, {
 		key: 'renameFile',
 		value: function renameFile(e) {
-			var _this3 = this;
+			var _this4 = this;
 
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
@@ -2316,7 +2358,7 @@ var FileView = function (_View) {
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var newName = sanitise(popup.find('input[type=text]').val());
-				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
+				_this4.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2327,7 +2369,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'deleteFile',
 		value: function deleteFile(e) {
-			var _this4 = this;
+			var _this5 = this;
 
 			// Get the name of the file to be deleted:
 			var name = $(e.target).data('name');
@@ -2342,7 +2384,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
+				_this5.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 				popup.hide();
 			});
 
@@ -2363,7 +2405,7 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this5 = this;
+			var _this6 = this;
 
 			this.listOfFiles = files;
 
@@ -2474,19 +2516,19 @@ var FileView = function (_View) {
 						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
 						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						var itemText = $('<div></div>').addClass('source-text').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
-							return _this5.openFile(e);
+							return _this6.openFile(e);
 						});
 						$(itemText).prepend('<p>' + file_list_elements[i][j].name + '</p> <span class="file-list-size">' + file_list_elements[i][j].size + '</span>');
 
 						var buttons = $('<div></div>').addClass('buttons').appendTo(itemData);
 						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
-							return _this5.renameFile(e);
+							return _this6.renameFile(e);
 						});
 						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e, projName) {
-							return _this5.downloadFile(e, data.currentProject);
+							return _this6.downloadFile(e, data.currentProject);
 						});
 						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
-							return _this5.deleteFile(e);
+							return _this6.deleteFile(e);
 						});
 					}
 
@@ -2525,7 +2567,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'subDirs',
 		value: function subDirs(dir) {
-			var _this6 = this;
+			var _this7 = this;
 
 			var ul = $('<ul></ul>').html(dir.name + ':');
 			var _iteratorNormalCompletion2 = true;
@@ -2543,7 +2585,7 @@ var FileView = function (_View) {
 							child.size = (child.size / 1000000).toFixed(1) + 'mb';
 						}
 						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
-							return _this6.openFile(e);
+							return _this7.openFile(e);
 						});
 					} else {
 						child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
@@ -2570,7 +2612,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'doFileUpload',
 		value: function doFileUpload(file) {
-			var _this7 = this;
+			var _this8 = this;
 
 			if (uploadingFile) {
 				fileQueue.push(file);
@@ -2628,11 +2670,11 @@ var FileView = function (_View) {
 						askForOverwrite = false;
 						overwriteAction = 'upload';
 					}
-					_this7.actuallyDoFileUpload(file, true);
+					_this8.actuallyDoFileUpload(file, true);
 					popup.hide();
 					uploadingFile = false;
 					if (fileQueue.length) {
-						_this7.doFileUpload(fileQueue.pop());
+						_this8.doFileUpload(fileQueue.pop());
 					}
 				});
 
@@ -2644,7 +2686,7 @@ var FileView = function (_View) {
 					popup.hide();
 					uploadingFile = false;
 					forceRebuild = false;
-					if (fileQueue.length) _this7.doFileUpload(fileQueue.pop());
+					if (fileQueue.length) _this8.doFileUpload(fileQueue.pop());
 				});
 
 				popup.show();
@@ -2664,49 +2706,49 @@ var FileView = function (_View) {
 			}
 		}
 	}, {
+		key: 'doLargeFileUpload',
+		value: function doLargeFileUpload(formData, file, location, force) {
+			var fileName = file.value.split('\\').pop();
+			var that = this;
+			$.ajax({
+				type: "POST",
+				url: '/uploads',
+				enctype: 'multipart/form-data',
+				processData: false,
+				contentType: false,
+				data: formData,
+				success: function success(r) {
+					that.emit('message', 'project-event', { func: 'moveUploadedFile', newFile: sanitise(fileName) });
+					popup.hide();
+				},
+				error: function error(e) {
+					popup.hide();
+					popup.title(json.popups.upload_file_error.title);
+					popup.subtitle(e);
+
+					var form = [];
+					form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+
+					popup.find('.cancel').on('click', popup.hide);
+
+					popup.show();
+				}
+			});
+			this.emit('force-rebuild');
+		}
+	}, {
 		key: 'actuallyDoFileUpload',
 		value: function actuallyDoFileUpload(file, force) {
-			var _this8 = this;
+			var _this9 = this;
 
 			var reader = new FileReader();
-			var chunkList = [];
-			// reader.onload = (ev) => this.emit('message', 'project-event',
-			// {
-			//   func: 'uploadFile',
-			//   newFile: sanitise(file.name),
-			//   fileData: ev.target.result,
-			//   force
-			// // }, console.log(ev.target.result, ev.target.result.byteLength));
-			// });
 			reader.onload = function (ev) {
-				_this8.splitFile(new Uint8Array(ev.target.result), file);
+				return _this9.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force /*, console.log(ev.target.result)*/ });
 			};
 			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {
 				forceRebuild = false;
 				this.emit('force-rebuild');
-			}
-		}
-	}, {
-		key: 'splitFile',
-		value: function splitFile(dataArray, file) {
-			var formData, blob;
-			for (var i = 0; i < dataArray.length; i += 1e6) {
-				formData = new FormData();
-				formData.append("fileUpload", blob, file.name + ".part" + i / 1e6);
-				$.ajax({
-					url: '/upload',
-					type: 'POST',
-					data: formData,
-					processData: false,
-					contentType: false,
-					success: function success(msg) {
-						alert("Win: " + msg);
-					},
-					error: function error(bla, msg) {
-						alert("Fail: " + msg);
-					}
-				});
 			}
 		}
 	}, {
@@ -5707,6 +5749,7 @@ function example(cb, arg, delay, cancelCb) {
 },{}],19:[function(require,module,exports){
 module.exports={
 	"popups": {
+    "cancel": "Cancel",
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
@@ -5744,6 +5787,14 @@ module.exports={
 			"title": "Delete this file?",
 			"text": "Warning: There is no undo.",
 			"button": "Delete file"
+		},
+    "upload_file": {
+			"title": "Upload a file?",
+			"text": "Select a file to upload.",
+			"button": "Upload file"
+		},
+    "upload_file_error": {
+			"title": "Uploading file error"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",

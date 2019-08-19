@@ -1,5 +1,6 @@
 {
 	"popups": {
+    "cancel": "Cancel",
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
@@ -37,6 +38,14 @@
 			"title": "Delete this file?",
 			"text": "Warning: There is no undo.",
 			"button": "Delete file"
+		},
+    "upload_file": {
+			"title": "Upload a file?",
+			"text": "Select a file to upload.",
+			"button": "Upload file"
+		},
+    "upload_file_error": {
+			"title": "Uploading file error"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",

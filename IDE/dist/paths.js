@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Bela = '/root/Bela/';
 exports.webserver_root = exports.Bela + 'IDE/public/';
 exports.projects = exports.Bela + 'projects/';
-exports.upload = exports.Bela + 'upload/';
+exports.uploads = exports.Bela + 'uploads/';
 exports.examples = exports.Bela + 'examples/';
 exports.libraries = exports.Bela + 'libraries/';
 exports.gui = exports.webserver_root + 'gui/';
