@@ -5,6 +5,7 @@ var json = require('../site-text.json');
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
+var imageIndeces = ['jpg', 'jpeg', 'png'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -152,6 +153,7 @@ class FileView extends View {
 		var sources = [];
 		var resources = [];
 		var directories = [];
+		var images = [];
 		for (let item of files){
 
 			// exclude hidden files
@@ -179,8 +181,10 @@ class FileView extends View {
 					sources.push(item);
 				} else if (headerIndeces.indexOf(ext) !== -1){
 					headers.push(item);
+				} else if (imageIndeces.indexOf(ext) !== -1) {
+					images.push(item);
 				} else if (ext == "pd" && item.name == "_main.pd") {
-						sources.push(item);
+					sources.push(item);
 				} else if (item){
 					resources.push(item);
 				}
@@ -196,11 +200,12 @@ class FileView extends View {
 		sources.sort( (a, b) => a.name - b.name );
 		sources.sort( (a, b) => a.name == pd ? -1 : b.name == pd ? 1 : 0 );
 		sources.sort( (a, b) => a.name == render ? -1 : b.name == render ? 1 : 0 );
+		images.sort( (a, b) => a.name - b.name );
 		resources.sort( (a, b) => a.name - b.name );
 		directories.sort( (a, b) => a.name - b.name );
 
-		var file_list_elements = [ sources, headers, resources, directories ];
-		var file_list_elements_names = [ 'Sources', 'Headers', 'Resources', 'Directories' ];
+		var file_list_elements = [ sources, headers, images, resources, directories ];
+		var file_list_elements_names = [ 'Sources', 'Headers', 'Images', 'Resources', 'Directories' ];
 
 		// Build file structure by listing the contents of each section (if they exist)
 
