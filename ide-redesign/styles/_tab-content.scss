@@ -10,27 +10,31 @@
 }
 
 table.choice {
-  width: 100%;
-}
+  width: 350px;
+  .left-choice {
+  	display: inline-block;
+    float: left;
+  	text-align: right;
+    width: 50%;
+  }
 
-.left-choice {
-	display: inline-block;
-  float: left;
-	text-align: right;
-  width: 50%;
-}
-
-.right-choice {
-	display: inline-block;
-	margin-top: -2px;
-  padding-left: 10px;
-	position: relative;
-  text-align: left;
-  width: 43%;
-  &.half {
-    padding-left: 0;
-    text-align: center;
-    width: 22.5%;
+  .right-choice {
+  	display: inline-block;
+  	margin-top: -2px;
+    padding-left: 10px;
+  	position: relative;
+    text-align: left;
+    width: 43%;
+    &.half {
+      padding-left: 0;
+      text-align: center;
+      width: 22.5%;
+    }
+  }
+  &.boot {
+    font-family: poppins_semibold;
+    font-size: .89em;
+    padding: 0;
   }
 }
 
