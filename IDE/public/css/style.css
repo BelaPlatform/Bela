@@ -623,8 +623,6 @@ button.dropbtn {
   .dropdown.inactive {
     background: #f1f1f1;
     border: 2px solid #bdbdbd; }
-  .dropdown.boot {
-    width: 150px; }
 
 select.dropdown-num {
   background: transparent;
@@ -745,13 +743,6 @@ select.dropdown-num {
     border-top: 6px solid #bdbdbd; }
   .mini-dropdown.disabled:after {
     color: rgba(0, 0, 0, 0.4); }
-
-.run-on-boot p {
-  font-family: 'space_regular';
-  margin: 0 0 0.5em 0; }
-
-.run-on-boot .mini-dropdown {
-  width: 80%; }
 
 #editor {
   background: #fff;
