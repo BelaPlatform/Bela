@@ -623,6 +623,8 @@ button.dropbtn {
   .dropdown.inactive {
     background: #f1f1f1;
     border: 2px solid #bdbdbd; }
+  .dropdown.boot {
+    width: 150px; }
 
 select.dropdown-num {
   background: transparent;
@@ -743,6 +745,13 @@ select.dropdown-num {
     border-top: 6px solid #bdbdbd; }
   .mini-dropdown.disabled:after {
     color: rgba(0, 0, 0, 0.4); }
+
+.run-on-boot p {
+  font-family: 'space_regular';
+  margin: 0 0 0.5em 0; }
+
+.run-on-boot .mini-dropdown {
+  width: 80%; }
 
 #editor {
   background: #fff;
@@ -1287,25 +1296,27 @@ section#tab-content {
     padding-bottom: 10px; }
 
 table.choice {
-  width: 100%; }
-
-.left-choice {
-  display: inline-block;
-  float: left;
-  text-align: right;
-  width: 50%; }
-
-.right-choice {
-  display: inline-block;
-  margin-top: -2px;
-  padding-left: 10px;
-  position: relative;
-  text-align: left;
-  width: 43%; }
-  .right-choice.half {
-    padding-left: 0;
-    text-align: center;
-    width: 22.5%; }
+  width: 350px; }
+  table.choice .left-choice {
+    display: inline-block;
+    float: left;
+    text-align: right;
+    width: 50%; }
+  table.choice .right-choice {
+    display: inline-block;
+    margin-top: -2px;
+    padding-left: 10px;
+    position: relative;
+    text-align: left;
+    width: 43%; }
+    table.choice .right-choice.half {
+      padding-left: 0;
+      text-align: center;
+      width: 22.5%; }
+  table.choice.boot {
+    font-family: poppins_semibold;
+    font-size: .89em;
+    padding: 0; }
 
 th.right-choice.half {
   margin-top: 0; }
