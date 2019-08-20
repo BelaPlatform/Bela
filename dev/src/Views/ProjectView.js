@@ -115,6 +115,7 @@ class ProjectView extends View {
 
   // Get the project name text from the object at the top of the editor
   var name = $('[data-current-project]')[0].innerText;
+  console.log(name);
 
   popup.title(json.popups.delete_project.title + name + '?');
   popup.subtitle(json.popups.delete_project.text);
