@@ -198,6 +198,16 @@
                 <h1>Settings<hr /></h1>
               </div>
 
+              <table class="tabTable choice boot">
+              <tr>
+                <td class="left-choice">Run project on boot:</td>
+                <td class="right-choice">
+                  <span class="mini-dropdown">
+                    <select id="runOnBoot" class="small" data-run-on-boot></select>
+                  </span>
+                </td>
+              </tr>
+            </table>
               <button class="accordion" data-accordion-for="project-settings">Project Settings</button>
 
               <div class="panel show" data-accordion="project-settings">
@@ -505,15 +515,6 @@
 										<td class="left-choice">View hidden files:</td>
 										<td class="right-choice">
                       <input type="checkbox" id="viewHiddenFiles" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" >
-                    </td>
-									</tr>
-
-									<tr>
-										<td class="left-choice">Run project on boot:</td>
-										<td class="right-choice">
-                      <span class="mini-dropdown">
-                        <select id="runOnBoot" class="small" data-run-on-boot></select>
-                      </span>
                     </td>
 									</tr>
 
