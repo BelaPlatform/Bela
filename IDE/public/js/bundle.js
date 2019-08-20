@@ -3032,11 +3032,16 @@ var ProjectView = function (_View) {
     }
   }, {
     key: 'deleteProject',
-    value: function deleteProject(func) {
+    value: function deleteProject(e) {
       var _this5 = this;
 
       // build the popup content
-      popup.title(json.popups.delete_project.title);
+
+      // Get the project name text from the object at the top of the editor
+      var name = $('[data-current-project]')[0].innerText;
+      console.log(name);
+
+      popup.title(json.popups.delete_project.title + name + '?');
       popup.subtitle(json.popups.delete_project.text);
 
       var form = [];
@@ -5693,7 +5698,7 @@ module.exports={
 			"button": "Rename file"
 		},
 		"delete_project": {
-			"title": "Delete this project?",
+			"title": "Delete project ",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
