@@ -808,41 +808,50 @@ ul {
     .file-list li:first-child > p {
       margin: -5px 0 0 0; }
     .file-list li .file-list-size {
+      font-family: inconsolata;
       font-style: italic; }
 
 .source-file .source-data-container {
-  position: relative; }
+  display: inline-block;
+  position: relative;
+  width: 100%; }
   .source-file .source-data-container > .source-text {
-    font-family: inconsolata;
+    max-width: 255px; }
+    .source-file .source-data-container > .source-text p {
+      display: inline;
+      font-family: inconsolata;
+      margin: 0;
+      word-break: break-all; }
+  .source-file .source-data-container > .buttons {
     display: inline; }
-  .source-file .source-data-container > button {
-    border: 0;
-    height: 20px;
-    position: absolute;
-    top: 0;
-    width: 15px; }
-    .source-file .source-data-container > button.file- {
-      background-size: 100% 80%; }
-      .source-file .source-data-container > button.file-rename {
-        width: 17px;
-        background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
-        right: 36px; }
-        .source-file .source-data-container > button.file-rename:hover {
-          background: transparent url(../images/icons/rename_active.svg) no-repeat center; }
-      .source-file .source-data-container > button.file-download {
-        background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
-        height: 18px;
-        right: 18px;
-        top: 2px; }
-        .source-file .source-data-container > button.file-download:hover {
-          background: transparent url(../images/icons/download_active.svg) no-repeat center; }
-      .source-file .source-data-container > button.file-delete {
-        background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
-        height: 16px;
-        right: 0;
-        top: 2px; }
-        .source-file .source-data-container > button.file-delete:hover {
-          background: transparent url(../images/icons/trash_active.svg) no-repeat center; }
+    .source-file .source-data-container > .buttons > button {
+      border: 0;
+      height: 20px;
+      position: absolute;
+      top: 0;
+      width: 15px; }
+      .source-file .source-data-container > .buttons > button.file- {
+        background-size: 100% 80%; }
+        .source-file .source-data-container > .buttons > button.file-rename {
+          width: 17px;
+          background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
+          right: 36px; }
+          .source-file .source-data-container > .buttons > button.file-rename:hover {
+            background: transparent url(../images/icons/rename_active.svg) no-repeat center; }
+        .source-file .source-data-container > .buttons > button.file-download {
+          background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
+          height: 18px;
+          right: 18px;
+          top: 2px; }
+          .source-file .source-data-container > .buttons > button.file-download:hover {
+            background: transparent url(../images/icons/download_active.svg) no-repeat center; }
+        .source-file .source-data-container > .buttons > button.file-delete {
+          background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
+          height: 16px;
+          right: 0;
+          top: 2px; }
+          .source-file .source-data-container > .buttons > button.file-delete:hover {
+            background: transparent url(../images/icons/trash_active.svg) no-repeat center; }
 
 .sub-file-list > li {
   color: rgba(0, 0, 0, 0.8);
