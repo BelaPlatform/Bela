@@ -16,50 +16,61 @@ ul {
       margin: -5px 0 0 0;
     }
     .file-list-size {
+      font-family: inconsolata;
       font-style: italic;
     }
   }
 }
 
-.source-file {
-  .source-data-container {
+.source-file { 
+  .source-data-container { 
+    display: inline-block;
     position: relative;
+    width: 100%;
     > .source-text {
-      font-family: inconsolata;
-      display: inline;
+      max-width: 255px;
+      p {
+        display: inline;
+        font-family: inconsolata;
+        margin: 0;
+        word-break: break-all;
+      }
     }
-    > button {
-      border: 0;
-      height: 20px;
-      position: absolute;
-      top: 0;
-      width: 15px;
-      &.file-{
-        background-size: 100% 80%;
-        &rename {
-          width: 17px;
-          background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
-          right: 36px;
-          &:hover {
-            background: transparent url(../images/icons/rename_active.svg) no-repeat center;
+    > .buttons {
+      display: inline; 
+      > button {
+        border: 0;
+        height: 20px;
+        position: absolute;
+        top: 0;
+        width: 15px;
+        &.file-{
+          background-size: 100% 80%;
+          &rename {
+            width: 17px;
+            background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
+            right: 36px;
+            &:hover {
+              background: transparent url(../images/icons/rename_active.svg) no-repeat center;
+            }
           }
-        }
-        &download {
-          background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
-          height: 18px;
-          right: 18px;
-          top: 2px;
-          &:hover {
-            background: transparent url(../images/icons/download_active.svg) no-repeat center;
+          &download {
+            background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
+            height: 18px;
+            right: 18px;
+            top: 2px;
+            &:hover {
+              background: transparent url(../images/icons/download_active.svg) no-repeat center;
+            }
           }
-        }
-        &delete {
-          background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
-          height: 16px;
-          right: 0;
-          top: 2px;
-          &:hover {
-            background: transparent url(../images/icons/trash_active.svg) no-repeat center;
+          &delete {
+            background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
+            height: 16px;
+            right: 0;
+            top: 2px;
+            &:hover {
+              background: transparent url(../images/icons/trash_active.svg) no-repeat center;
+            }
           }
         }
       }
