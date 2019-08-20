@@ -29,7 +29,7 @@
 			"button": "Rename file"
 		},
 		"delete_project": {
-			"title": "Delete this project?",
+			"title": "Delete project ",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
