@@ -221,14 +221,22 @@
 						<div id="set" class="tab-info">
 							<span class="title-container"><h1>Settings<hr /></h1></span>
 
-							<span class="dropdown">
+							<span class="dropdown" data-run-on-boot>
+                <button class="dropbtn" data-dropdown-for="run-on-boot">Your projects</button>
+                <div class="dropdown-content" data-dropdown="run-on-boot">
+                  <select class="projectManager" id="runOnBoot" data-run-on-boot>
+                  </select>
+                </div>
+              </span>
+
+							<!-- <span class="dropdown">
 							  <button onclick="openDropdown('project-dropdown')" class="dropbtn">Run project on boot ...</button>
 							  <div id="project-dropdown" class="dropdown-content">
 							    <a href="#">Link 1</a>
 							    <a href="#">Link 2</a>
 							    <a href="#">Link 3</a>
 							  </div>
-							</span>
+							</span> -->
 							<button class="accordion">Context Settings</button>
 							<div class="panel">
 								<div class="choice">
