@@ -215,10 +215,13 @@ class FileView extends View {
 				for (let j = 0; j < file_list_elements[i].length; j++) {
 	        var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
 	        var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
-	        var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
-	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.renameFile(e));
-	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e, projName) => this.downloadFile(e, data.currentProject));
-	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.deleteFile(e));
+	        var itemText = $('<div></div>').addClass('source-text').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', (e) => this.openFile(e));
+	        $(itemText).prepend('<p>' + file_list_elements[i][j].name + '</p> <span class="file-list-size">' + file_list_elements[i][j].size + '</span>');
+
+	        var buttons = $('<div></div>').addClass('buttons').appendTo(itemData);
+	        var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', (e) => this.renameFile(e));
+	        var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(buttons).on('click', (e, projName) => this.downloadFile(e, data.currentProject));
+	        var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', (e) => this.deleteFile(e));
 	      }
 
 	      fileList.appendTo(section);
