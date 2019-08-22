@@ -2409,7 +2409,7 @@ var FileView = function (_View) {
 							sources.push(item);
 						} else if (headerIndeces.indexOf(ext) !== -1) {
 							headers.push(item);
-						} else if (imageIndeces.indexOf(ext) !== -1) {
+						} else if (imageIndeces.indexOf(ext.toLowerCase()) !== -1) {
 							images.push(item);
 						} else if (ext == "pd" && item.name == "_main.pd") {
 							sources.push(item);
