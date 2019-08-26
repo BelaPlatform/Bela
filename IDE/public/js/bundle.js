@@ -2342,7 +2342,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name });
+				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 				popup.hide();
 			});
 

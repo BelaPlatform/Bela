@@ -562,8 +562,10 @@ function deleteFile(data) {
                     return [4 /*yield*/, listFiles(data.currentProject)];
                 case 3:
                     _a.fileList = _b.sent();
-                    data.fileData = 'File deleted - open another file to continue';
-                    data.fileName = '';
+                    if (data.fileName == data.currentFile) {
+                        data.fileData = 'File deleted - open another file to continue';
+                        data.fileName = '';
+                    }
                     data.readOnly = true;
                     return [2 /*return*/];
             }
