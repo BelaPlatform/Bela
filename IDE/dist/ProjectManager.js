@@ -538,9 +538,6 @@ function renameFile(data) {
                     return [4 /*yield*/, listFiles(data.currentProject)];
                 case 6:
                     _b.fileList = _c.sent();
-                    return [4 /*yield*/, openFile(data)];
-                case 7:
-                    _c.sent();
                     return [2 /*return*/];
             }
         });
