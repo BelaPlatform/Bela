@@ -7,7 +7,7 @@ import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
 
 let max_file_size = 52428800;	// bytes (50Mb)
-let max_preview_size = 209715200;	// bytes (200Mb)
+let max_preview_size = 524288000;	// bytes (500Mb)
 
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is

@@ -42,7 +42,7 @@ var paths = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
 var max_file_size = 52428800; // bytes (50Mb)
-var max_preview_size = 209715200; // bytes (200Mb)
+var max_preview_size = 524288000; // bytes (500Mb)
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
@@ -95,8 +95,8 @@ function openFile(data) {
                     return [2 /*return*/];
                 case 8:
                     if (file_stat.size > max_preview_size) {
-                        data.error = 'file is too large: ' + (file_stat.size / 1000000) + 'Mb';
-                        data.fileData = "The IDE can't open files larger than " + (max_preview_size / 1000000) + "Mb";
+                        data.error = 'file is too large: ' + (file_stat.size / 1048576) + 'Mb';
+                        data.fileData = "The IDE can't open files larger than " + (max_preview_size / 1048576) + "Mb";
                         data.readOnly = true;
                         data.fileName = data.newFile;
                         data.newFile = undefined;
