@@ -94,11 +94,11 @@ controlView.on('settings-event', (key, value) => {
   if (key === 'scopePause'){
     if (paused){
       paused = false;
-      $('#pauseButton').html('pause');
+      $('.pause-button').html('Pause plotting');
       $('#scopeStatus').html('waiting');
     } else {
       paused = true;
-      $('#pauseButton').html('resume');
+      $('.pause-button').html('Resume plotting');
       $('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
     }
     return;

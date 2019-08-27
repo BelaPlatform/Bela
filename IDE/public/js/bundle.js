@@ -2205,6 +2205,7 @@ var json = require('../site-text.json');
 
 var sourceIndeces = ['cpp', 'c', 'S'];
 var headerIndeces = ['h', 'hh', 'hpp'];
+var imageIndeces = ['jpg', 'jpeg', 'png'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -2375,6 +2376,7 @@ var FileView = function (_View) {
 			var sources = [];
 			var resources = [];
 			var directories = [];
+			var images = [];
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -2407,6 +2409,8 @@ var FileView = function (_View) {
 							sources.push(item);
 						} else if (headerIndeces.indexOf(ext) !== -1) {
 							headers.push(item);
+						} else if (imageIndeces.indexOf(ext.toLowerCase()) !== -1) {
+							images.push(item);
 						} else if (ext == "pd" && item.name == "_main.pd") {
 							sources.push(item);
 						} else if (item) {
@@ -2443,6 +2447,9 @@ var FileView = function (_View) {
 			sources.sort(function (a, b) {
 				return a.name == render ? -1 : b.name == render ? 1 : 0;
 			});
+			images.sort(function (a, b) {
+				return a.name - b.name;
+			});
 			resources.sort(function (a, b) {
 				return a.name - b.name;
 			});
@@ -2450,8 +2457,8 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			var file_list_elements = [sources, headers, resources, directories];
-			var file_list_elements_names = ['Sources', 'Headers', 'Resources', 'Directories'];
+			var file_list_elements = [sources, headers, images, resources, directories];
+			var file_list_elements_names = ['Sources', 'Headers', 'Images', 'Resources', 'Directories'];
 
 			// Build file structure by listing the contents of each section (if they exist)
 
@@ -2466,16 +2473,19 @@ var FileView = function (_View) {
 					for (var j = 0; j < file_list_elements[i].length; j++) {
 						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
 						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
-						var itemText = $('<div></div>').addClass('source-text').html(file_list_elements[i][j].name + ' <span class="file-list-size">' + file_list_elements[i][j].size + '</span>').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+						var itemText = $('<div></div>').addClass('source-text').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
 							return _this5.openFile(e);
 						});
-						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+						$(itemText).prepend('<p>' + file_list_elements[i][j].name + '</p> <span class="file-list-size">' + file_list_elements[i][j].size + '</span>');
+
+						var buttons = $('<div></div>').addClass('buttons').appendTo(itemData);
+						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
 							return _this5.renameFile(e);
 						});
-						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e, projName) {
+						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e, projName) {
 							return _this5.downloadFile(e, data.currentProject);
 						});
-						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
+						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
 							return _this5.deleteFile(e);
 						});
 					}
