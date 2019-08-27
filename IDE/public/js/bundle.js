@@ -3042,11 +3042,14 @@ var ProjectView = function (_View) {
     }
   }, {
     key: 'deleteProject',
-    value: function deleteProject(func) {
+    value: function deleteProject(e) {
       var _this5 = this;
 
       // build the popup content
-      popup.title(json.popups.delete_project.title);
+      // Get the project name text from the object at the top of the editor
+      var name = $('[data-current-project]')[0].innerText;
+
+      popup.title(json.popups.delete_project.title + name + '?');
       popup.subtitle(json.popups.delete_project.text);
 
       var form = [];
@@ -3056,7 +3059,7 @@ var ProjectView = function (_View) {
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
         $('[data-projects-select]').html('');
-        _this5.emit('message', 'project-event', { func: func });
+        _this5.emit('message', 'project-event', { func: 'deleteProject' });
         popup.hide();
       });
 
@@ -5703,7 +5706,7 @@ module.exports={
 			"button": "Rename file"
 		},
 		"delete_project": {
-			"title": "Delete this project?",
+			"title": "Delete project ",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},

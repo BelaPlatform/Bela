@@ -109,10 +109,13 @@ class ProjectView extends View {
 
   }
 
-  deleteProject(func){
+  deleteProject(e){
 
     // build the popup content
-    popup.title(json.popups.delete_project.title);
+    // Get the project name text from the object at the top of the editor
+    var name = $('[data-current-project]')[0].innerText;
+
+    popup.title(json.popups.delete_project.title + name + '?');
     popup.subtitle(json.popups.delete_project.text);
 
     var form = [];
@@ -122,7 +125,7 @@ class ProjectView extends View {
     popup.form.append(form.join('')).off('submit').on('submit', e => {
       e.preventDefault();
       $('[data-projects-select]').html('');
-      this.emit('message', 'project-event', {func});
+      this.emit('message', 'project-event', {func: 'deleteProject'});
       popup.hide();
     });
 
