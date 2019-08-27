@@ -109,28 +109,31 @@ class ProjectView extends View {
 
   }
 
-  deleteProject(func){
+  deleteProject(e){
 
   // build the popup content
-  popup.title(json.popups.delete_project.title);
-  popup.subtitle(json.popups.delete_project.text);
+  // Get the project name text from the object at the top of the editor
+    var name = $('[data-current-project]')[0].innerText;
 
-  var form = [];
-  form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
-  form.push('<button type="button" class="button popup cancel">Cancel</button>');
+    popup.title(json.popups.delete_project.title + name + '?');
+    popup.subtitle(json.popups.delete_project.text);
 
-  popup.form.append(form.join('')).off('submit').on('submit', e => {
-    e.preventDefault();
-    $('[data-projects-select]').html('');
-    this.emit('message', 'project-event', {func});
-    popup.hide();
-  });
+    var form = [];
+    form.push('<button type="submit" class="button popup delete">' + json.popups.delete_project.button + '</button>');
+    form.push('<button type="button" class="button popup cancel">Cancel</button>');
 
-  popup.find('.cancel').on('click', popup.hide );
+    popup.form.append(form.join('')).off('submit').on('submit', e => {
+      e.preventDefault();
+      $('[data-projects-select]').html('');
+      this.emit('message', 'project-event', {func: 'deleteProject'});
+      popup.hide();
+    });
 
-  popup.show();
+    popup.find('.cancel').on('click', popup.hide );
 
-  popup.find('.delete').trigger('focus');
+    popup.show();
+
+    popup.find('.delete').trigger('focus');
 
   }
   cleanProject(func){
