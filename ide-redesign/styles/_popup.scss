@@ -1,10 +1,22 @@
+#popup-nointeraction {
+  display: none;
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  &.active {
+    display: block;
+    z-index: 10000;
+  }
+}
+
 #popup {
   background: white;
   border: 1px solid $grey-mid;
 	display: none;
 	left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
-  max-height: 60vh;
   min-height: 100px;
   max-height: 500px;
   overflow: hidden;

@@ -2329,6 +2329,10 @@ var FileView = function (_View) {
 				var location = '/projects/basic';
 				var formEl = $('[data-popup] form')[0];
 				var formData = new FormData(formEl);
+				var popupBlock = $('[data-popup-nointeraction]').addClass('active');
+				$('body').addClass('uploading');
+				popupBlock.addClass('active');
+				popup.find('.confirm').attr('disabled', true);
 				_this3.doLargeFileUpload(formData, file, location);
 				// popup.hide();
 			});
@@ -2709,6 +2713,7 @@ var FileView = function (_View) {
 		key: 'doLargeFileUpload',
 		value: function doLargeFileUpload(formData, file, location, force) {
 			var fileName = file.value.split('\\').pop();
+			var popupBlock = $('[data-popup-nointeraction]').addClass('active');
 			var that = this;
 			$.ajax({
 				type: "POST",
@@ -2718,7 +2723,9 @@ var FileView = function (_View) {
 				contentType: false,
 				data: formData,
 				success: function success(r) {
-					that.emit('message', 'project-event', { func: 'moveUploadedFile', newFile: sanitise(fileName) });
+					that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
+					$('body').removeClass('uploading');
+					popupBlock.removeClass('active');
 					popup.hide();
 				},
 				error: function error(e) {
@@ -2730,7 +2737,8 @@ var FileView = function (_View) {
 					form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
 
 					popup.find('.cancel').on('click', popup.hide);
-
+					$('body').removeClass('uploading');
+					popupBlock.removeClass('active');
 					popup.show();
 				}
 			});

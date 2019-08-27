@@ -1101,13 +1101,23 @@ ul dl {
     fill: rgba(0, 255, 0, 0.6);
     stroke: none; }
 
+#popup-nointeraction {
+  display: none;
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw; }
+  #popup-nointeraction.active {
+    display: block;
+    z-index: 10000; }
+
 #popup {
   background: white;
   border: 1px solid #bdbdbd;
   display: none;
   left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
-  max-height: 60vh;
   min-height: 100px;
   max-height: 500px;
   overflow: hidden;
