@@ -3046,10 +3046,8 @@ var ProjectView = function (_View) {
       var _this5 = this;
 
       // build the popup content
-
       // Get the project name text from the object at the top of the editor
       var name = $('[data-current-project]')[0].innerText;
-      console.log(name);
 
       popup.title(json.popups.delete_project.title + name + '?');
       popup.subtitle(json.popups.delete_project.text);
@@ -3061,7 +3059,7 @@ var ProjectView = function (_View) {
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
         $('[data-projects-select]').html('');
-        _this5.emit('message', 'project-event', { func: func });
+        _this5.emit('message', 'project-event', { func: 'deleteProject' });
         popup.hide();
       });
 
