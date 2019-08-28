@@ -186,7 +186,13 @@ input[type="range"].scope-range-slider {
   &::-moz-focus-outer {
     border: 0;
   }
-  &::-moz-range-track,
+  &::-moz-range-track {
+    background: rgba(0,0,0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 15px;
+    padding: 2px 2px 2px 2px;
+  }
   &::-webkit-slider-runnable-track {
     background: rgba(0,0,0, 0.2);
     border-radius: 9px;
@@ -206,7 +212,10 @@ input[type="range"].scope-range-slider {
     transition: .25s, ease-in-out;
     width: 12px;
   }
-  &:hover::-moz-range-track, &:active::-moz-range-track,
+  &:hover::-moz-range-track, &:active::-moz-range-track {
+    background: $teal-01;
+    transition: background, 100ms, ease-in-out;
+  }
   &:hover::-webkit-slider-runnable-track, &:active::-webkit-slider-runnable-track {
     background: $teal-01;
     transition: background, 100ms, ease-in-out;

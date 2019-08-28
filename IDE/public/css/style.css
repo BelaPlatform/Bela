@@ -1879,7 +1879,13 @@ input[type="range"].scope-range-slider {
   transition: .25s, ease-in-out; }
   input[type="range"].scope-range-slider::-moz-focus-outer {
     border: 0; }
-  input[type="range"].scope-range-slider::-moz-range-track, input[type="range"].scope-range-slider::-webkit-slider-runnable-track {
+  input[type="range"].scope-range-slider::-moz-range-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 15px;
+    padding: 2px 2px 2px 2px; }
+  input[type="range"].scope-range-slider::-webkit-slider-runnable-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 9px;
     cursor: pointer;
@@ -1898,11 +1904,15 @@ input[type="range"].scope-range-slider {
     -webkit-transition: .25s, ease-in-out;
     transition: .25s, ease-in-out;
     width: 12px; }
-  input[type="range"].scope-range-slider:hover::-moz-range-track, input[type="range"].scope-range-slider:active::-moz-range-track, input[type="range"].scope-range-slider:hover::-webkit-slider-runnable-track, input[type="range"].scope-range-slider:active::-webkit-slider-runnable-track {
+  input[type="range"].scope-range-slider:hover::-moz-range-track, input[type="range"].scope-range-slider:active::-moz-range-track {
     background: #1ce8b5;
     -webkit-transition: background, 100ms, ease-in-out;
     transition: background, 100ms, ease-in-out; }
-    input[type="range"].scope-range-slider:hover::-moz-range-track::-webkit-slider-thumb, input[type="range"].scope-range-slider:active::-moz-range-track::-webkit-slider-thumb, input[type="range"].scope-range-slider:hover::-webkit-slider-runnable-track::-webkit-slider-thumb, input[type="range"].scope-range-slider:active::-webkit-slider-runnable-track::-webkit-slider-thumb {
+  input[type="range"].scope-range-slider:hover::-webkit-slider-runnable-track, input[type="range"].scope-range-slider:active::-webkit-slider-runnable-track {
+    background: #1ce8b5;
+    -webkit-transition: background, 100ms, ease-in-out;
+    transition: background, 100ms, ease-in-out; }
+    input[type="range"].scope-range-slider:hover::-webkit-slider-runnable-track::-webkit-slider-thumb, input[type="range"].scope-range-slider:active::-webkit-slider-runnable-track::-webkit-slider-thumb {
       margin-top: 0; }
   input[type="range"].scope-range-slider:hover::-webkit-slider-thumb, input[type="range"].scope-range-slider:active::-webkit-slider-thumb {
     background-color: #ffffff;
