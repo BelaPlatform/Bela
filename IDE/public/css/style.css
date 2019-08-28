@@ -1821,6 +1821,7 @@ button.scope-controls {
   font-family: inconsolata;
   font-size: 1em;
   line-height: .5em;
+  -moz-appearance: textfield;
   text-align: right;
   width: 2.5em; }
   .number-box[type=number]::-webkit-inner-spin-button {
