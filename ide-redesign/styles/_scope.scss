@@ -97,6 +97,10 @@ button.scope-controls {
         width: 200px;
         >.mini-dropdown {
           width: 100px;
+          select {
+            width: 110px;
+            -moz-appearance: button;
+          }
         }
       }
       .after-dropdown {
@@ -158,9 +162,9 @@ input.channelView.range-slider {
   }
 }
 
-#scope-drop {
-  width: 110px;
-}
+// #scope-drop {
+//   width: 110px;
+// }
 
 .hidden {
   display: none;

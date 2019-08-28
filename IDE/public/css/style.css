@@ -1812,6 +1812,9 @@ button.scope-controls {
       width: 200px; }
       #control-panel .control-section .block-section .scope-input > .mini-dropdown {
         width: 100px; }
+        #control-panel .control-section .block-section .scope-input > .mini-dropdown select {
+          width: 110px;
+          -moz-appearance: button; }
     #control-panel .control-section .block-section .after-dropdown {
       display: inline;
       margin-left: 165px; }
@@ -1854,9 +1857,6 @@ input.channelView.range-slider {
       margin-left: 55px; }
   .slider.range {
     width: 200px; }
-
-#scope-drop {
-  width: 110px; }
 
 .hidden {
   display: none; }
