@@ -183,6 +183,9 @@ input[type="range"].scope-range-slider {
   margin: 1 auto 0 auto;
   width: 100%;
   transition: .25s, ease-in-out;
+  &::-moz-focus-outer {
+    border: 0;
+  }
   &::-moz-range-track,
   &::-webkit-slider-runnable-track {
     background: rgba(0,0,0, 0.2);

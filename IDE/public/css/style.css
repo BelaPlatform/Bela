@@ -1877,6 +1877,8 @@ input[type="range"].scope-range-slider {
   width: 100%;
   -webkit-transition: .25s, ease-in-out;
   transition: .25s, ease-in-out; }
+  input[type="range"].scope-range-slider::-moz-focus-outer {
+    border: 0; }
   input[type="range"].scope-range-slider::-moz-range-track, input[type="range"].scope-range-slider::-webkit-slider-runnable-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 9px;
