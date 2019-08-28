@@ -183,7 +183,7 @@ input[type="range"].scope-range-slider {
   margin: 1 auto 0 auto;
   width: 100%;
   transition: .25s, ease-in-out;
-
+  &::-moz-range-track,
   &::-webkit-slider-runnable-track {
     background: rgba(0,0,0, 0.2);
     border-radius: 9px;
@@ -203,6 +203,7 @@ input[type="range"].scope-range-slider {
     transition: .25s, ease-in-out;
     width: 12px;
   }
+  &:hover::-moz-range-track, &:active::-moz-range-track,
   &:hover::-webkit-slider-runnable-track, &:active::-webkit-slider-runnable-track {
     background: $teal-01;
     transition: background, 100ms, ease-in-out;
