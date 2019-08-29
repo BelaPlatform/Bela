@@ -245,8 +245,10 @@ export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
 	await cleanFile(data.currentProject, data.fileName);
 	data.fileList = await listFiles(data.currentProject);
-	data.fileData = 'File deleted - open another file to continue';
-	data.fileName = '';
+  if (data.fileName == data.currentFile) {
+    data.fileData = 'File deleted - open another file to continue';
+  	data.fileName = '';
+  }
 	data.readOnly = true;
 }
 

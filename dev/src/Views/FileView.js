@@ -124,7 +124,7 @@ class FileView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name});
+			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText});
 			popup.hide();
 		});
 
