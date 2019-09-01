@@ -3514,7 +3514,7 @@ var ProjectView = function (_View) {
                     dataType: "html",
                     success: function success(text) {
                       var codeBlock = $('<pre></pre>');
-                      var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+                      var transformText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;').split('\n');
                       for (var i = 0; i < transformText.length; i++) {
                         codeBlock.append(transformText[i] + '\n');
                       }
