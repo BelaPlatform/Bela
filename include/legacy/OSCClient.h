@@ -1,3 +1,2 @@
 #pragma once
-#warning You included file OSCClient.h. This is now deprecated. You should instead use #include <libraries/OSCClient/OSCClient.h>
-#include <libraries/OSCClient/OSCClient.h>
+#error You included file OSCClient.h. This is no longer available and you should instead use #include <libraries/OSCSender/OSCSender.h>. See the example Commmunication/OSC for more details
