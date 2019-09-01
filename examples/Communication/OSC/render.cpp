@@ -23,8 +23,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-//#include <libraries/OSCServer/OSCServer.h>
-//#include <libraries/OSCClient/OSCClient.h>
 #include <libraries/OSCSender/OSCSender.h>
 #include <libraries/OSCReceiver/OSCReceiver.h>
 
@@ -34,7 +32,7 @@ int localPort = 7562;
 int remotePort = 7563;
 const char* remoteIp = "127.0.0.1";
 
-// parse messages received by OSC Server
+// parse messages received by the OSC receiver
 // msg is Message class of oscpkt: http://gruntthepeon.free.fr/oscpkt/
 bool handshakeReceived;
 void on_receive(oscpkt::Message* msg)
@@ -44,9 +42,9 @@ void on_receive(oscpkt::Message* msg)
 	else if(msg->match("/osc-test")){
 		int intArg;
 		float floatArg;
-		int count = msg->match("/osc-test").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs();
+		msg->match("/osc-test").popInt32(intArg).popFloat(floatArg).isOkNoMoreArgs();
 		printf("received a message with int %i and float %f\n", intArg, floatArg);
-		oscSender.newMessage("/osc-acknowledge").add(count).add(4.2f).add(std::string("OSC message received")).send();
+		oscSender.newMessage("/osc-acknowledge").add(intArg).add(4.2f).add(std::string("OSC message received")).send();
 	}
 }
 

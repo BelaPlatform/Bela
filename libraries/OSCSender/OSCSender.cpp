@@ -26,8 +26,7 @@ void OSCSender::setup(int port, std::string ip_address){
     msg->reserve(OSCSENDER_MAX_ARGS, OSCSENDER_MAX_BYTES);
     
     socket = std::unique_ptr<UdpClient>(new UdpClient());
-    socket->setServer(ip_address.c_str());
-	socket->setPort(port);
+	socket->setup(port, ip_address.c_str());
 	
 	send_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
 	send_task->create(std::string("OSCSenderTask_") + std::to_string(port), [this](void* buf, int size){send_task_func(buf, size); });
