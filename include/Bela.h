@@ -29,9 +29,11 @@
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
 #define BELA_MINOR_VERSION 5
-#define BELA_BUGFIX_VERSION 0
+#define BELA_BUGFIX_VERSION 1
 
 // Version history / changelog:
+// 1.5.0
+// - in BelaInitSettings, renamed unused members, preserving binary compatibility
 // 1.5.0
 // - in BelaInitSettings, board becomes BelaHw
 // - added to BelaInitSettings char* projectName
@@ -83,7 +85,7 @@ typedef enum
 
 /** \cond PRIVATE */
 #define MAX_PRU_FILENAME_LENGTH 256
-#define MAX_SERVERNAME_LENGTH 256
+#define MAX_UNUSED2_LENGTH 256
 #define MAX_PROJECTNAME_LENGTH 256
 /** \endcond */
 
@@ -360,9 +362,9 @@ typedef struct {
 	int useAnalog;
 	/// Whether to use the 16 programmable GPIOs
 	int useDigital;
-	/// How many audio input channels
+	/// How many audio input channels [ignored]
 	int numAudioInChannels;
-	/// How many audio out channels
+	/// How many audio out channels [ignored]
 	int numAudioOutChannels;
 	/// How many analog input channels
 	int numAnalogInChannels;
@@ -434,11 +436,9 @@ typedef struct {
 
 	/// Pin where amplifier mute can be found
 	int ampMutePin;
-	/// Port where the UDP server will listen
-	int receivePort;
-	/// Port where the UDP client will transmit
-	int transmitPort;
-	char serverName[MAX_SERVERNAME_LENGTH];
+	int unused0;
+	int unused1;
+	char unused2[MAX_UNUSED2_LENGTH];
 
 	/// User selected board to work with (as opposed to detected hardware).
 	BelaHw board;
