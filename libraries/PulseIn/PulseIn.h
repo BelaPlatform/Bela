@@ -1,15 +1,14 @@
-/*
- * PulseIn.h
- *
- *  Created on: 4 Feb 2016
- *      Author: giulio
- */
-
-#ifndef PULSEIN_H_
-#define PULSEIN_H_
+#pragma once
 
 #include <Bela.h>
 #include <vector>
+
+/**
+ * \brief A class to measure the duration of a pulse on a digital pin.
+ *
+ * This can be used to measure distance in conjunction with an ultrasonic
+ * ranging sensor (e.g.: HC-SR04).
+ */
 class PulseIn {
 private:
 	std::vector<int> _array;
@@ -37,7 +36,7 @@ public:
 	};
 
 	/**
-	 * Initializes the PulseIn object. Also takes care of setupializing the digital pin as input.
+	 * Initializes the PulseIn object. Also takes care of initializing the digital pin as input.
 	 *
 	 * If the object has been created with the default constructor, the user will
 	 * need to call setup() before calling check() or hasPulsed().
@@ -68,7 +67,7 @@ public:
 	 * @param frame the frame at which to check if a pulse was detected.
 	 * @return the length of the pulse if a pulse ending was detected at sample n, zero otherwise.
 	 */
-	int hasPulsed(BelaContext* context, int frame){//let's leave this in PulseIn.h to allow the compiler to optimize out the call.
+	int hasPulsed(BelaContext* context, unsigned int frame){//let's leave this in PulseIn.h to allow the compiler to optimize out the call.
 		if(_lastContext != context->audioFramesElapsed){ // check for pulses in the whole context and cache the result
 			check(context);
 		}
@@ -77,5 +76,3 @@ public:
 	void cleanup();
 	virtual ~PulseIn();
 };
-
-#endif /* PULSEIN_H_ */
