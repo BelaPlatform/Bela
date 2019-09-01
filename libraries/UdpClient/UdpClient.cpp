@@ -5,12 +5,15 @@
  *      Author: giulio moro
  */
 #include "UdpClient.h"
+#include <stdexcept>
+#include <string>
 
 	UdpClient::UdpClient(){}
 	UdpClient::UdpClient(int aPort, const char* aServerName){
 		setup(aPort, aServerName);
 	}
 	bool UdpClient::setup(int aPort, const char* aServerName){
+		enabled=true;
 		outSocket=socket(AF_INET, SOCK_DGRAM, 0);
 		if(outSocket<0){
 			enabled=false;
@@ -19,7 +22,6 @@
 		setSocketBroadcast(1);
 		setPort(aPort);
 		setServer(aServerName);
-		enabled=true;
 		memset(&stTimeOut, 0, sizeof(struct timeval));
 		return true;
 	}
@@ -29,21 +31,26 @@
 	UdpClient::~UdpClient(){
 		cleanup(); 
 	}
+static void dieUninitialized(std::string str){
+	throw std::runtime_error((std::string("UdpClient: ")+str+std::string(" failed. setup() was not called, or was invalid\n")).c_str());
+}
 	void UdpClient::setPort(int aPort){
+		if(!enabled)
+		{
+			dieUninitialized("setPort()");
+		}
 		port=aPort;
 		destinationServer.sin_port = htons(port);
 		destinationServer.sin_family = AF_INET;
 		isSetPort=true;
-		if(isSetServer){
-			enabled=true;
-		}
 	};
 	void UdpClient::setServer(const char* aServerName){
+		if(!enabled)
+		{
+			dieUninitialized("setServer()");
+		}
 		inet_pton(AF_INET,aServerName,&destinationServer.sin_addr);
 		isSetServer=true;
-		if(isSetPort){
-			enabled=true;
-		}
 	};
 	int UdpClient::send(void * message, int size){
 		if(!enabled)
