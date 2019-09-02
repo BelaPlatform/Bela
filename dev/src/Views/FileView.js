@@ -128,7 +128,6 @@ class FileView extends View {
       popupBlock.addClass('active');
       popup.find('.confirm').attr('disabled', true);
       this.doLargeFileUpload(formData, file, location);
-			// popup.hide();
 		});
 
 		popup.find('.cancel').on('click', popup.hide );
