@@ -1,8 +1,10 @@
 # This should be called from the Bela folder, with 
 # make -f Makefile.libraries LIBRARY=libraryname
 # set defaults
-LIBRARY_CC ?= clang
-LIBRARY_CXX ?= clang++
+CC ?= clang
+CXX ?= clang++
+LIBRARY_CC ?= $(CC)
+LIBRARY_CXX ?= $(CXX)
 .DEFAULT_GOAL := all
 AT?=@
 
@@ -11,7 +13,7 @@ AT?=@
 BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
 BELA_DIR := /root/Bela
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
 LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
@@ -20,7 +22,7 @@ SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
 include $(SYSTEM_SPECIFIC_MAKEFILE)
 $(SYSTEM_SPECIFIC_MAKEFILE):
 	make lib
-LIBRARY_CPPFLAGS := $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR) -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -fPIC
+LIBRARY_CPPFLAGS = $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR) -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -MMD -MP -MF"$(@:%.o=%.d)"
 #
 # the above default variables may be modified by the Makefile included here:
 MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile

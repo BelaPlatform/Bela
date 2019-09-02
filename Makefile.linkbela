@@ -1,6 +1,7 @@
 # call this file from within the main Makefile, with all the variables exported, and 
 # after re-making $(PROJECT_LIBRARIES_MAKEFILE)
 
+-include libraries/*/build/*.d # dependencies for each of the libraries' object files
 -include $(PROJECT_LIBRARIES_MAKEFILE)
 #this file will contain, e.g.:
 #-include libraries/library1/build/Makefile.link
