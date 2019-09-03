@@ -2334,7 +2334,6 @@ var FileView = function (_View) {
 				popupBlock.addClass('active');
 				popup.find('.confirm').attr('disabled', true);
 				_this3.doLargeFileUpload(formData, file, location);
-				// popup.hide();
 			});
 
 			popup.find('.cancel').on('click', popup.hide);
