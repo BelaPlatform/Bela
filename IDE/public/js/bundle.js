@@ -1870,7 +1870,7 @@ var EditorView = function (_View) {
 			_this.on('syntax-highlighted', function () {
 				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
 			});
-			if (opts.fileType && opts.fileType == "cpp" || opts.fileType == "c" || opts.fileType == "h") {
+			if (opts.fileType && opts.fileType == "cpp" || opts.fileType == "c" || opts.fileType == "h" || opts.fileType == "hh" || opts.fileType == "hpp" || opts.fileType == "cc") {
 				_this.editor.session.setMode('ace/mode/c_cpp');
 			} else if (opts.fileType && opts.fileType == "js") {
 				_this.editor.session.setMode('ace/mode/javascript');
