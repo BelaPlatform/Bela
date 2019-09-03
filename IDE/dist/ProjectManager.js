@@ -513,12 +513,13 @@ function moveUploadedFile(data) {
         var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, file_manager.rename_file(paths.uploads + data.newFile, paths.projects + data.currentProject + '/' + data.newFile)];
+                case 0: return [4 /*yield*/, file_manager.rename_file(paths.uploads + data.newFile, paths.projects + data.currentProject + '/' + data.sanitisedNewFile)];
                 case 1:
                     _b.sent();
-                    return [4 /*yield*/, cleanFile(data.currentProject, data.fileName)];
+                    return [4 /*yield*/, cleanFile(data.currentProject, data.sanitisedNewFile)];
                 case 2:
                     _b.sent();
+                    data.newFile = data.sanitisedNewFile;
                     _a = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
                 case 3:

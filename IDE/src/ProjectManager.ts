@@ -239,8 +239,9 @@ export async function cleanFile(project: string, file: string){
 }
 
 export async function moveUploadedFile(data: any){
-  await file_manager.rename_file(paths.uploads+data.newFile, paths.projects+data.currentProject+'/'+data.newFile);
-  await cleanFile(data.currentProject, data.fileName);
+  await file_manager.rename_file(paths.uploads+data.newFile, paths.projects+data.currentProject+'/'+data.sanitisedNewFile);
+  await cleanFile(data.currentProject, data.sanitisedNewFile);
+  data.newFile = data.sanitisedNewFile;
   data.fileList = await listFiles(data.currentProject);
   await openFile(data);
 }
