@@ -110,6 +110,12 @@ hr {
   display: block;
   padding-top: 10px; }
 
+body.uploading {
+  cursor: progress; }
+  body.uploading button.submit {
+    opacity: 0.75 !important;
+    cursor: auto !important; }
+
 button.accordion {
   background-color: #f1f1f1;
   border: none;
