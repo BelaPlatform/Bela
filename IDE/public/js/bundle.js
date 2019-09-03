@@ -1494,20 +1494,20 @@ var ConsoleView = function (_View) {
 module.exports = ConsoleView;
 
 var funcKey = {
-	'openProject': 'Opening project',
-	'openExample': 'Opening example',
-	'newProject': 'Creating project',
-	'saveAs': 'Saving project',
-	'deleteProject': 'Deleting project',
-	'cleanProject': 'Cleaning project',
-	'openFile': 'Opening file',
-	'newFile': 'Creating file',
-	'uploadFile': 'Uploading file',
-	'renameFile': 'Renaming file',
-	'deleteFile': 'Deleting file',
-	'init': 'Initialising',
-	'stop': 'Stopping',
-	'fileRejected': 'Uploading file'
+	'openProject': json.funcKeys.openProject,
+	'openExample': json.funcKeys.openExample,
+	'newProject': json.funcKeys.newProject,
+	'saveAs': json.funcKeys.saveAs,
+	'deleteProject': json.funcKeys.deleteProject,
+	'cleanProject': json.funcKeys.cleanProject,
+	'openFile': json.funcKeys.openFile,
+	'newFile': json.funcKeys.newFile,
+	'uploadFile': json.funcKeys.uploadFile,
+	'renameFile': json.funcKeys.renameFile,
+	'deleteFile': json.funcKeys.deleteFile,
+	'init': json.funcKeys.init,
+	'stop': json.funcKeys.stop,
+	'fileRejected': json.funcKeys.fileRejected
 };
 
 },{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
@@ -5808,7 +5808,23 @@ module.exports={
 	"docs_view": {
 		"examples": "Examples that use this class:",
 		"button": "Launch documentation"
-	}
+	},
+  "funcKeys": {
+    "openProject"	: "Opening project",
+  	"openExample"	: "Opening example",
+  	"newProject"	: "Creating project",
+  	"saveAs"		: "Saving project",
+  	"deleteProject"	: "Deleting project",
+  	"cleanProject"	: "Cleaning project",
+  	"openFile"		: "Opening file",
+  	"newFile"		: "Creating file",
+  	"uploadFile"	: "Uploading file",
+  	"renameFile"	: "Renaming file",
+  	"deleteFile"	: "Deleting file",
+  	"init"			: "Initialising",
+  	"stop"			: "Stopping",
+  	"fileRejected"	: "Uploading file"
+  }
 }
 
 },{}],20:[function(require,module,exports){
