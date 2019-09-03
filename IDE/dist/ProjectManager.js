@@ -535,13 +535,17 @@ function renameFile(data) {
                     return [4 /*yield*/, cleanFile(data.currentProject, data.oldName)];
                 case 5:
                     _c.sent();
+                    if (!(data.fileName == data.oldName)) return [3 /*break*/, 7];
+                    data.fileName = data.newFile;
+                    return [4 /*yield*/, openFile(data)];
+                case 6:
+                    _c.sent();
+                    _c.label = 7;
+                case 7:
                     _b = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
-                case 6:
+                case 8:
                     _b.fileList = _c.sent();
-                    return [4 /*yield*/, openFile(data)];
-                case 7:
-                    _c.sent();
                     return [2 /*return*/];
             }
         });
