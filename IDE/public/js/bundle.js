@@ -2750,7 +2750,7 @@ var FileView = function (_View) {
 
 			var reader = new FileReader();
 			reader.onload = function (ev) {
-				return _this9.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force /*, console.log(ev.target.result)*/ });
+				return _this9.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
 			};
 			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {

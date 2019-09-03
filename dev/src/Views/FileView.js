@@ -447,8 +447,8 @@ class FileView extends View {
   }
 
 	actuallyDoFileUpload(file, force){
-    var reader = new FileReader();
-		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force}/*, console.log(ev.target.result)*/);
+		var reader = new FileReader();
+		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
 		reader.readAsArrayBuffer(file);
 		if (forceRebuild && !fileQueue.length){
 			forceRebuild = false;
