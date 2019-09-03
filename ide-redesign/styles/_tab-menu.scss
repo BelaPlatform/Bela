@@ -52,32 +52,42 @@
       }
     }
     &.pins {
-      background: url('../images/icons/pins_inactive.svg') no-repeat center;
-    &:hover {
-      background: url('../images/icons/pins_active.svg') no-repeat center;
+        background: url('../images/icons/pins_inactive.svg') no-repeat center;
+      &:hover {
+        background: url('../images/icons/pins_active.svg') no-repeat center;
+      }
+      &.active {
+        background: $white url('../images/icons/pins_active.svg') no-repeat center;
+      }
     }
-    &.active {
-      background: $white url('../images/icons/pins_active.svg') no-repeat center;
+    &.refs {
+      background: url('../images/icons/refs_inactive.svg') no-repeat center;
+      &:hover {
+        background: url('../images/icons/refs_active.svg') no-repeat center;
+      }
+      &.active {
+        background: $white url('../images/icons/refs_active.svg') no-repeat center;
+      }
     }
-  }
-  &.refs {
-    background: url('../images/icons/refs_inactive.svg') no-repeat center;
-    &:hover {
-      background: url('../images/icons/refs_active.svg') no-repeat center;
+    &.libraries {
+      background: url('../images/icons/library_white.svg') no-repeat center;
+      &:hover {
+        background: url('../images/icons/library_green.svg') no-repeat center;
+      }
+      &.active {
+        background: $white url('../images/icons/library_green.svg') no-repeat center;
+      }
     }
-    &.active {
-      background: $white url('../images/icons/refs_active.svg') no-repeat center;
+    &.feedback {
+      background: url('../images/icons/feedback_inactive.svg') no-repeat center;
+      &:hover {
+        background: url('../images/icons/feedback_active.svg') no-repeat center;
+      }
+      &.active {
+        background: $white url('../images/icons/feedback_active.svg') no-repeat center;
+        border-left: 5px solid $accent-red;
+      }
     }
-  }
-  &.libraries {
-    background: url('../images/icons/library_white.svg') no-repeat center;
-    &:hover {
-      background: url('../images/icons/library_green.svg') no-repeat center;
-    }
-    &.active {
-      background: $white url('../images/icons/library_green.svg') no-repeat center;
-    }
-  }
   &.active {
     background: $white;
     border-bottom: none;

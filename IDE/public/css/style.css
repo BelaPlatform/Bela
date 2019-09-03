@@ -1472,6 +1472,25 @@ p.project {
         .project-actions > button.project-delete::before, .project-actions > button.project-delete:hover {
           background: transparent url(../images/icons/project_delete_active.svg) no-repeat center; }
 
+.tab-info > p {
+  font-family: poppins-light;
+  font-size: .9em;
+  line-height: 1.1em; }
+
+.tab-info button.feedback {
+  background-color: rgba(0, 190, 164, 0.7);
+  border: 1px solid #00bea4; }
+  .tab-info button.feedback:hover {
+    background-color: #00bea4; }
+  .tab-info button.feedback > a {
+    text-decoration: none;
+    color: #fff; }
+  .tab-info button.feedback.bug {
+    background-color: rgba(255, 94, 91, 0.7);
+    border: 1px solid #ff5e5b; }
+    .tab-info button.feedback.bug:hover {
+      background-color: #ff5e5b; }
+
 /*
  * Make each label stack on top of one another.
  *
@@ -1533,6 +1552,13 @@ p.project {
       background: url("../images/icons/library_green.svg") no-repeat center; }
     #tab-menu li.libraries.active {
       background: #ffffff url("../images/icons/library_green.svg") no-repeat center; }
+  #tab-menu li.feedback {
+    background: url("../images/icons/feedback_inactive.svg") no-repeat center; }
+    #tab-menu li.feedback:hover {
+      background: url("../images/icons/feedback_active.svg") no-repeat center; }
+    #tab-menu li.feedback.active {
+      background: #ffffff url("../images/icons/feedback_active.svg") no-repeat center;
+      border-left: 5px solid #ff5e5b; }
   #tab-menu li.active {
     background: #ffffff;
     border-bottom: none;

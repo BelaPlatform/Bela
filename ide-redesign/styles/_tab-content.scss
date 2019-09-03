@@ -230,3 +230,29 @@ p.project {
     }
   }
 }
+
+.tab-info {
+  > p {
+        font-family: poppins-light;
+        font-size: .9em;
+        line-height: 1.1em;
+      }
+  button.feedback {
+    background-color: rgba($teal-main, 0.7);
+    border: 1px solid $teal-main;
+    &:hover {
+      background-color: rgba($teal-main, 1);
+    }
+    >a {
+      text-decoration: none;
+      color: #fff;
+    }
+    &.bug {
+      background-color: rgba($accent-red, 0.7);
+      border: 1px solid $accent-red;
+      &:hover {
+        background-color: rgba($accent-red, 1);
+      }
+    }
+  }
+}
