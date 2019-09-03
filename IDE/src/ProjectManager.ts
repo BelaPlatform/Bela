@@ -238,7 +238,11 @@ export async function renameFile(data: any){
 	}
 	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.oldName, file_path);
 	await cleanFile(data.currentProject, data.oldName);
-	data.fileList = await listFiles(data.currentProject);
+  if (data.fileName == data.oldName) {
+    data.fileName = data.newFile;
+    await openFile(data);
+  }
+  data.fileList = await listFiles(data.currentProject);
 }
 export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
