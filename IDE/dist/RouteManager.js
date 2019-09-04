@@ -39,12 +39,12 @@ function send_zip(path, name, res) {
 }
 function upload_file(req, res) {
     var file = req.query.file;
-    fs.createWriteStream(paths.upload + file);
+    fs.createWriteStream(paths.uploads + file);
 }
 function upload(req, res) {
     if (req.query.all) {
         console.log(res);
-        upload_file(res);
+        upload_file(req, res);
     }
 }
 exports.upload = upload;
