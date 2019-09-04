@@ -52,7 +52,7 @@ bool setup(BelaContext *context, void *userData)
 	gPhase = 0.0;
 	
 	// Setup GUI. By default, the Bela GUI runs on port 5555 and address 'gui'
-	myGui.setup(5555, "gui", context->projectName);
+	myGui.setup(context->projectName);
 
 	// Setup buffer of floats (holding a maximum of 2 values)
 	myGui.setBuffer('f', 2); // Index = 0

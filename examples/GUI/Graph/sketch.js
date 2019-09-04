@@ -6,16 +6,16 @@ var sketch = function(p) {
 	var voltDataPoints = [];
 
 
-	// Listen to event triggered by Bela_data when a new buffer is ready
-    Bela_data.target.addEventListener('buffer-ready', function(event) {
+	// Listen to event triggered by Bela.data when a new buffer is ready
+    Bela.data.target.addEventListener('buffer-ready', function(event) {
     	// Wait for the buffer containing the voltages before updating both timestamps and voltages
-        if(event.detail == 1 && typeof Bela_data.buffers[1] != 'undefined')
+        if(event.detail == 1 && typeof Bela.data.buffers[1] != 'undefined')
         {
         	// Assuming that timestamps and voltages buffers have the same length...
-            for (i = 0; i < Bela_data.buffers[1].length; i++) {
+            for (i = 0; i < Bela.data.buffers[1].length; i++) {
 				// Convert timestamp to seconds
-                var timeIndex = Bela_data.buffers[0][i]/1000;
-                var voltPointVal = Bela_data.buffers[1][i];
+                var timeIndex = Bela.data.buffers[0][i]/1000;
+                var voltPointVal = Bela.data.buffers[1][i];
 				// Create new voltage point
                 var newVoltPoint = new GPoint(timeIndex, voltPointVal, "("+timeIndex+" , "+voltPointVal+")");
 				voltDataPoints.push(newVoltPoint);
