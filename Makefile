@@ -16,6 +16,7 @@
 ## LDLIBS=                -- libs to link in (e.g.: -lm )
 ## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
 ## DISTCC=              -- specify whether to use distcc (1) or not (0, default)
+## RELINK=              -- specify whether to force re-linking the project file (1) or not (0, default). Set it to 1 when developing a library.
 ###
 ##available targets: #
 .DEFAULT_GOAL := Bela
@@ -386,6 +387,7 @@ ALL_DEPS += ./build/core/default_libpd_render.d
 # include all dependencies - necessary to force recompilation when a header is changed
 # (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
 -include $(ALL_DEPS)
+-include libraries/*/build/*.d # dependencies for each of the libraries' object files
 
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
@@ -508,6 +510,9 @@ PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
 	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
 
+ifeq ($(RELINK),1)
+  $(shell rm -rf $(OUTPUT_FILE))
+endif
 # first make sure the Makefile included by Makefile.linkbela is up to date ...
 # ... then call Makefile.linkbela
 $(OUTPUT_FILE): $(ALL_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
