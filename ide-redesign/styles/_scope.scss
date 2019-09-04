@@ -97,6 +97,10 @@ button.scope-controls {
         width: 200px;
         >.mini-dropdown {
           width: 100px;
+          select {
+            width: 110px;
+            -moz-appearance: button;
+          }
         }
       }
       .after-dropdown {
@@ -115,6 +119,7 @@ button.scope-controls {
   font-family: inconsolata;
   font-size: 1em;
   line-height: .5em;
+  -moz-appearance: textfield;
   text-align: right;
   width: 2.5em;
   &::-webkit-inner-spin-button {
@@ -157,9 +162,9 @@ input.channelView.range-slider {
   }
 }
 
-#scope-drop {
-  width: 110px;
-}
+// #scope-drop {
+//   width: 110px;
+// }
 
 .hidden {
   display: none;
@@ -182,7 +187,16 @@ input[type="range"].scope-range-slider {
   margin: 1 auto 0 auto;
   width: 100%;
   transition: .25s, ease-in-out;
-
+  &::-moz-focus-outer {
+    border: 0;
+  }
+  &::-moz-range-track {
+    background: rgba(0,0,0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 15px;
+    padding: 2px 2px 2px 2px;
+  }
   &::-webkit-slider-runnable-track {
     background: rgba(0,0,0, 0.2);
     border-radius: 9px;
@@ -201,6 +215,10 @@ input[type="range"].scope-range-slider {
     margin-top: -1px;
     transition: .25s, ease-in-out;
     width: 12px;
+  }
+  &:hover::-moz-range-track, &:active::-moz-range-track {
+    background: $teal-01;
+    transition: background, 100ms, ease-in-out;
   }
   &:hover::-webkit-slider-runnable-track, &:active::-webkit-slider-runnable-track {
     background: $teal-01;

@@ -1,6 +1,7 @@
 # call this file from within the main Makefile, with all the variables exported, and 
 # after re-making $(PROJECT_LIBRARIES_MAKEFILE)
 
+-include libraries/*/build/*.d # dependencies for each of the libraries' object files
 -include $(PROJECT_LIBRARIES_MAKEFILE)
 #this file will contain, e.g.:
 #-include libraries/library1/build/Makefile.link
@@ -15,19 +16,26 @@
 #LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
 #and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
 #either via a default Makefile.libraries, or using the library's custom one (if available)
+.SUFFIXES: #disable default rules, which would make it try to rebuild libraries/*/build/*.d when no such files exists
+.EXPORT_ALL_VARIABLES:
 libraries/%.o:
 	$(AT) LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
 	echo Building library $$LIBRARYNAME; \
 	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
 	if [ -f $$MAKEFILE ];\
 	then { true; }; else { \
-		MAKEFILE=Makefile.libraries; \
+		MAKEFILE=Makefile.libraries CC=$(CC) CXX=$(CXX); \
 	}; \
 	fi; \
-	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE $@
+	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE CC=$(CC) CXX=$(CXX) $@
 
 LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
-$(OUTPUT_FILE): $(ALL_OBJS) $(LIBRARIES_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
+# This is a nasty kludge: we want to be able to optionally link in a default
+# main file if the user hasn't supplied one. We check for the presence of the main()
+# function, and conditionally call one of two recursive make targets depending on whether
+# we want to link in the default main file or not. The kludge is the mess of a shell script
+# line below. Surely there's a better way to do this?
+$(OUTPUT_FILE): $(ALL_OBJS) $(LIBRARIES_OBJS)
 	$(eval DEFAULT_MAIN_CONDITIONAL :=\
 	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
 ifeq ($(PROJECT_TYPE),libpd)

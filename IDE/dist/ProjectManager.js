@@ -41,7 +41,8 @@ var project_settings = require("./ProjectSettings");
 var paths = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
-var max_file_size = 50000000; // bytes (50Mb)
+var max_file_size = 52428800; // bytes (50Mb)
+var max_preview_size = 524288000; // bytes (500Mb)
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
@@ -93,9 +94,9 @@ function openFile(data) {
                     data.fileType = 0;
                     return [2 /*return*/];
                 case 8:
-                    if (file_stat.size > max_file_size) {
-                        data.error = 'file is too large: ' + (file_stat.size / 1000000) + 'Mb';
-                        data.fileData = "The IDE can't open files larger than " + (max_file_size / 1000000) + "Mb";
+                    if (file_stat.size > max_preview_size) {
+                        data.error = 'file is too large: ' + (file_stat.size / 1048576) + 'Mb';
+                        data.fileData = "The IDE can't open files larger than " + (max_preview_size / 1048576) + "Mb";
                         data.readOnly = true;
                         data.fileName = data.newFile;
                         data.newFile = undefined;
@@ -579,13 +580,17 @@ function renameFile(data) {
                     return [4 /*yield*/, cleanFile(data.currentProject, data.oldName)];
                 case 5:
                     _c.sent();
+                    if (!(data.fileName == data.oldName)) return [3 /*break*/, 7];
+                    data.fileName = data.newFile;
+                    return [4 /*yield*/, openFile(data)];
+                case 6:
+                    _c.sent();
+                    _c.label = 7;
+                case 7:
                     _b = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
-                case 6:
+                case 8:
                     _b.fileList = _c.sent();
-                    return [4 /*yield*/, openFile(data)];
-                case 7:
-                    _c.sent();
                     return [2 /*return*/];
             }
         });
@@ -645,8 +650,10 @@ function deleteFile(data) {
                     return [4 /*yield*/, listFiles(data.currentProject)];
                 case 3:
                     _a.fileList = _b.sent();
-                    data.fileData = 'File deleted - open another file to continue';
-                    data.fileName = '';
+                    if (data.fileName == data.currentFile) {
+                        data.fileData = 'File deleted - open another file to continue';
+                        data.fileName = '';
+                    }
                     data.readOnly = true;
                     return [2 /*return*/];
             }

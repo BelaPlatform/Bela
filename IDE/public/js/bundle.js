@@ -1059,7 +1059,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":19,"./site-text.json":20}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1494,23 +1494,23 @@ var ConsoleView = function (_View) {
 module.exports = ConsoleView;
 
 var funcKey = {
-	'openProject': 'Opening project',
-	'openExample': 'Opening example',
-	'newProject': 'Creating project',
-	'saveAs': 'Saving project',
-	'deleteProject': 'Deleting project',
-	'cleanProject': 'Cleaning project',
-	'openFile': 'Opening file',
-	'newFile': 'Creating file',
-	'uploadFile': 'Uploading file',
-	'renameFile': 'Renaming file',
-	'deleteFile': 'Deleting file',
-	'init': 'Initialising',
-	'stop': 'Stopping',
-	'fileRejected': 'Uploading file'
+	'openProject': json.funcKeys.openProject,
+	'openExample': json.funcKeys.openExample,
+	'newProject': json.funcKeys.newProject,
+	'saveAs': json.funcKeys.saveAs,
+	'deleteProject': json.funcKeys.deleteProject,
+	'cleanProject': json.funcKeys.cleanProject,
+	'openFile': json.funcKeys.openFile,
+	'newFile': json.funcKeys.newFile,
+	'uploadFile': json.funcKeys.uploadFile,
+	'renameFile': json.funcKeys.renameFile,
+	'deleteFile': json.funcKeys.deleteFile,
+	'init': json.funcKeys.init,
+	'stop': json.funcKeys.stop,
+	'fileRejected': json.funcKeys.fileRejected
 };
 
-},{"../console":15,"../popup":19,"../site-text.json":20,"./View":14}],6:[function(require,module,exports){
+},{"../console":15,"../popup":18,"../site-text.json":19,"./View":14}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1795,7 +1795,7 @@ function xmlClassDocs(classname, emitter) {
   });
 }
 
-},{"../site-text.json":20,"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1870,7 +1870,7 @@ var EditorView = function (_View) {
 			_this.on('syntax-highlighted', function () {
 				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
 			});
-			if (opts.fileType && opts.fileType == "cpp") {
+			if (opts.fileType && opts.fileType == "cpp" || opts.fileType == "c" || opts.fileType == "h" || opts.fileType == "hh" || opts.fileType == "hpp" || opts.fileType == "cc") {
 				_this.editor.session.setMode('ace/mode/c_cpp');
 			} else if (opts.fileType && opts.fileType == "js") {
 				_this.editor.session.setMode('ace/mode/javascript');
@@ -2187,7 +2187,7 @@ var EditorView = function (_View) {
 
 module.exports = EditorView;
 
-},{"../parser":18,"../site-text.json":20,"./View":14}],8:[function(require,module,exports){
+},{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2206,6 +2206,7 @@ var json = require('../site-text.json');
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
+
 var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
@@ -2399,7 +2400,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this6.emit('message', 'project-event', { func: 'deleteFile', fileName: name });
+				_this6.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 				popup.hide();
 			});
 
@@ -2434,6 +2435,7 @@ var FileView = function (_View) {
 			var images = [];
 			var resources = [];
 			var directories = [];
+			var images = [];
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -2466,7 +2468,7 @@ var FileView = function (_View) {
 							sources.push(_item);
 						} else if (headerIndeces.indexOf(ext) !== -1) {
 							headers.push(_item);
-						} else if (imageIndeces.indexOf(ext) !== -1) {
+						} else if (imageIndeces.indexOf(ext.toLowerCase()) !== -1) {
 							images.push(_item);
 						} else if (ext == "pd" && _item.name == "_main.pd") {
 							sources.push(_item);
@@ -2746,7 +2748,7 @@ function isDir(item) {
 
 module.exports = FileView;
 
-},{"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],9:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2948,7 +2950,7 @@ var GitView = function (_View) {
 
 module.exports = GitView;
 
-},{"../popup":19,"../site-text.json":20,"./View":14}],10:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2963,7 +2965,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
-var example_order = require('../example_order.json');
+var example_order = require('../../../examples/order.json');
 
 var ProjectView = function (_View) {
   _inherits(ProjectView, _View);
@@ -3088,11 +3090,14 @@ var ProjectView = function (_View) {
     }
   }, {
     key: 'deleteProject',
-    value: function deleteProject(func) {
+    value: function deleteProject(e) {
       var _this5 = this;
 
       // build the popup content
-      popup.title(json.popups.delete_project.title);
+      // Get the project name text from the object at the top of the editor
+      var name = $('[data-current-project]')[0].innerText;
+
+      popup.title(json.popups.delete_project.title + name + '?');
       popup.subtitle(json.popups.delete_project.text);
 
       var form = [];
@@ -3102,7 +3107,7 @@ var ProjectView = function (_View) {
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
         $('[data-projects-select]').html('');
-        _this5.emit('message', 'project-event', { func: func });
+        _this5.emit('message', 'project-event', { func: 'deleteProject' });
         popup.hide();
       });
 
@@ -3151,20 +3156,28 @@ var ProjectView = function (_View) {
       var $examples = $('[data-examples]');
       var oldListOrder = examplesDir;
       var newListOrder = [];
+      var orphans = [];
 
       $examples.empty();
 
       if (!examplesDir.length) return;
 
-      oldListOrder.forEach(function (item) {
-        example_order.forEach(function (new_item) {
+      example_order.forEach(function (new_item) {
+        oldListOrder.forEach(function (item) {
           if (new_item == item.name) {
             newListOrder.push(item);
-            oldListOrder.splice(oldListOrder.indexOf(item), 1);
+            item.moved = true;
           }
         });
       });
-      var orderedList = newListOrder.concat(oldListOrder);
+
+      oldListOrder.forEach(function (item) {
+        if (item.moved != true) {
+          orphans.push(item);
+        }
+      });
+
+      var orderedList = newListOrder.concat(orphans);
 
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
@@ -3180,49 +3193,17 @@ var ProjectView = function (_View) {
           var childUl = $('<ul></ul>').addClass('example-list');
           var childDiv = $('<div></div>').addClass('panel').attr('data-accordion', item.name);
 
+          childOrder = [];
           var _iteratorNormalCompletion2 = true;
           var _didIteratorError2 = false;
           var _iteratorError2 = undefined;
 
           try {
-            var _loop2 = function _loop2() {
+            for (var _iterator2 = item.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
               var child = _step2.value;
 
-              if (child && child.length && child[0] === '.') return 'continue';
-              var childLi = $('<li></li>');
-              childLi.html(child).attr('data-example-link', item.name + '/' + child).on('click', function (e) {
-                if (_this6.exampleChanged) {
-                  _this6.exampleChanged = false;
-                  popup.exampleChanged(function () {
-                    _this6.emit('message', 'project-event', {
-                      func: 'openExample',
-                      currentProject: item.name + '/' + child
-                    });
-                    $('.selectedExample').removeClass('selectedExample');
-                    $(e.target).addClass('selectedExample');
-                  }, undefined, 0, function () {
-                    return _this6.exampleChanged = true;
-                  });
-                  return;
-                }
-
-                _this6.emit('message', 'project-event', {
-                  func: 'openExample',
-                  currentProject: item.name + '/' + child
-                });
-                $('.selectedExample').removeClass('selectedExample');
-                $(e.target).addClass('selectedExample');
-              });
-              childLi.appendTo(childUl);
-            };
-
-            for (var _iterator2 = item.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var _ret2 = _loop2();
-
-              if (_ret2 === 'continue') continue;
+              childOrder.push({ "name": child });
             }
-            // per section
-            // item.name -> parentDiv $examples
           } catch (err) {
             _didIteratorError2 = true;
             _iteratorError2 = err;
@@ -3238,6 +3219,116 @@ var ProjectView = function (_View) {
             }
           }
 
+          newChildOrder = [];
+          oldChildOrder = [];
+          correctedChildOrder = [];
+          childOrphans = [];
+          that = _this6;
+          var _iteratorNormalCompletion3 = true;
+          var _didIteratorError3 = false;
+          var _iteratorError3 = undefined;
+
+          try {
+            var _loop2 = function _loop2() {
+              var child = _step3.value;
+
+              if (child.name == "order.json") {
+                $.ajax({
+                  type: "GET",
+                  url: "/examples/" + item.name + "/" + child.name,
+                  dataType: "json",
+                  success: function success(text) {
+                    var _this7 = this;
+
+                    newChildOrder = [];
+                    text.forEach(function (item) {
+                      newChildOrder.push({ "name": item });
+                    });
+
+                    item.children.forEach(function (item) {
+                      if (item !== "order.json") {
+                        oldChildOrder.push({ "name": item });
+                      }
+                    });
+
+                    newChildOrder.forEach(function (new_item) {
+                      oldChildOrder.forEach(function (old_item) {
+                        if (new_item.name == old_item.name) {
+                          correctedChildOrder.push(new_item);
+                          old_item.moved = true;
+                        }
+                      });
+                    });
+
+                    oldChildOrder.forEach(function (old_item) {
+                      if (old_item.moved != true) {
+                        childOrphans.push(old_item);
+                      }
+                    });
+
+                    childOrder = correctedChildOrder.concat(childOrphans);
+
+                    for (var i = 0; i < childOrder.length; i++) {
+                      child = childOrder[i].name;
+                      var link = item.name + '/' + child;
+                      var childLi = $('<li></li>');
+                      childLi.html(child).attr('data-example-link', link).on('click', function (e) {
+                        link = e.target.dataset.exampleLink;
+                        if (_this7.exampleChanged) {
+                          _this7.exampleChanged = false;
+                          popup.exampleChanged(function (link) {
+                            that.emit('message', 'project-event', {
+                              func: 'openExample',
+                              currentProject: link
+                            });
+                            $('.selectedExample').removeClass('selectedExample');
+                            $(e.target).addClass('selectedExample');
+                          }, undefined, 0, function () {
+                            return _this7.exampleChanged = true;
+                          });
+                          return;
+                        }
+
+                        that.emit('message', 'project-event', {
+                          func: 'openExample',
+                          currentProject: link
+                        });
+                        $('.selectedExample').removeClass('selectedExample');
+                        $(e.target).addClass('selectedExample');
+                      });
+                      childLi.appendTo(childUl);
+                    }
+
+                    childOrder = [];
+                    newChildOrder = [];
+                    oldChildOrder = [];
+                    correctedChildOrder = [];
+                    childOrphans = [];
+                  }
+                });
+              }
+            };
+
+            for (var _iterator3 = childOrder[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+              _loop2();
+            }
+            // per section
+            // item.name -> parentDiv $examples
+          } catch (err) {
+            _didIteratorError3 = true;
+            _iteratorError3 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                _iterator3.return();
+              }
+            } finally {
+              if (_didIteratorError3) {
+                throw _iteratorError3;
+              }
+            }
+          }
+
           parentButton.appendTo(parentLi);
           // per item in section
           // childLi -> childUl -> parentDiv -> $examples
@@ -3248,6 +3339,13 @@ var ProjectView = function (_View) {
         };
 
         for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var childOrder;
+          var newChildOrder;
+          var oldChildOrder;
+          var correctedChildOrder;
+          var childOrphans;
+          var that;
+
           _loop();
         }
       } catch (err) {
@@ -3274,13 +3372,13 @@ var ProjectView = function (_View) {
       $libraries.empty(librariesDir);
       if (!librariesDir.length) return;
 
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
 
       try {
         var _loop3 = function _loop3() {
-          var item = _step3.value;
+          var item = _step4.value;
 
           /*
           Button header text    +
@@ -3335,13 +3433,13 @@ var ProjectView = function (_View) {
           var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
           var filesList = $('<ul></ul>').addClass('libraries-list');
           var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
-          var _iteratorNormalCompletion4 = true;
-          var _didIteratorError4 = false;
-          var _iteratorError4 = undefined;
+          var _iteratorNormalCompletion5 = true;
+          var _didIteratorError5 = false;
+          var _iteratorError5 = undefined;
 
           try {
             var _loop4 = function _loop4() {
-              var child = _step4.value;
+              var child = _step5.value;
 
               if (child && child.length && child[0] === '.') return 'continue';
               if (child == 'build') return 'continue';
@@ -3364,13 +3462,13 @@ var ProjectView = function (_View) {
                     i += 1;
                     var object = {};
                     var transformText = text.split('\n');
-                    var _iteratorNormalCompletion5 = true;
-                    var _didIteratorError5 = false;
-                    var _iteratorError5 = undefined;
+                    var _iteratorNormalCompletion6 = true;
+                    var _didIteratorError6 = false;
+                    var _iteratorError6 = undefined;
 
                     try {
-                      for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                        var line = _step5.value;
+                      for (var _iterator6 = transformText[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                        var line = _step6.value;
 
                         if (line.length > 0) {
                           var splitKeyVal = line.split('=');
@@ -3385,16 +3483,16 @@ var ProjectView = function (_View) {
                       // Get the #include line and add to includeContent
                       // libDesc.html('Version: ').html(object.version);
                     } catch (err) {
-                      _didIteratorError5 = true;
-                      _iteratorError5 = err;
+                      _didIteratorError6 = true;
+                      _iteratorError6 = err;
                     } finally {
                       try {
-                        if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                          _iterator5.return();
+                        if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                          _iterator6.return();
                         }
                       } finally {
-                        if (_didIteratorError5) {
-                          throw _iteratorError5;
+                        if (_didIteratorError6) {
+                          throw _iteratorError6;
                         }
                       }
                     }
@@ -3411,28 +3509,28 @@ var ProjectView = function (_View) {
                     }
 
                     if (includeArr.length > 0) {
-                      var _iteratorNormalCompletion6 = true;
-                      var _didIteratorError6 = false;
-                      var _iteratorError6 = undefined;
+                      var _iteratorNormalCompletion7 = true;
+                      var _didIteratorError7 = false;
+                      var _iteratorError7 = undefined;
 
                       try {
-                        for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                          var include = _step6.value;
+                        for (var _iterator7 = includeArr[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                          var include = _step7.value;
 
                           var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
                           _includeText.appendTo(includeLines);
                         }
                       } catch (err) {
-                        _didIteratorError6 = true;
-                        _iteratorError6 = err;
+                        _didIteratorError7 = true;
+                        _iteratorError7 = err;
                       } finally {
                         try {
-                          if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                            _iterator6.return();
+                          if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                            _iterator7.return();
                           }
                         } finally {
-                          if (_didIteratorError6) {
-                            throw _iteratorError6;
+                          if (_didIteratorError7) {
+                            throw _iteratorError7;
                           }
                         }
                       }
@@ -3464,7 +3562,7 @@ var ProjectView = function (_View) {
                     dataType: "html",
                     success: function success(text) {
                       var codeBlock = $('<pre></pre>');
-                      var transformText = text.replace('<', '&lt;').replace('>', '&gt;').split('\n');
+                      var transformText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;').split('\n');
                       for (var i = 0; i < transformText.length; i++) {
                         codeBlock.append(transformText[i] + '\n');
                       }
@@ -3482,7 +3580,7 @@ var ProjectView = function (_View) {
               }
             };
 
-            for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+            for (var _iterator5 = item.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
               var _ret4 = _loop4();
 
               if (_ret4 === 'continue') continue;
@@ -3492,16 +3590,16 @@ var ProjectView = function (_View) {
             // per section
             // item.name -> parentDiv $examples
           } catch (err) {
-            _didIteratorError4 = true;
-            _iteratorError4 = err;
+            _didIteratorError5 = true;
+            _iteratorError5 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                _iterator4.return();
+              if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                _iterator5.return();
               }
             } finally {
-              if (_didIteratorError4) {
-                throw _iteratorError4;
+              if (_didIteratorError5) {
+                throw _iteratorError5;
               }
             }
           }
@@ -3527,22 +3625,22 @@ var ProjectView = function (_View) {
           libraryItem.appendTo($libraries);
         };
 
-        for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        for (var _iterator4 = librariesDir[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
           var clipboard;
 
           _loop3();
         }
       } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
           }
         } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
+          if (_didIteratorError4) {
+            throw _iteratorError4;
           }
         }
       }
@@ -3594,13 +3692,13 @@ var ProjectView = function (_View) {
     key: 'subDirs',
     value: function subDirs(dir) {
       var ul = $('<ul></ul>').html(dir.name + ':');
-      var _iteratorNormalCompletion7 = true;
-      var _didIteratorError7 = false;
-      var _iteratorError7 = undefined;
+      var _iteratorNormalCompletion8 = true;
+      var _didIteratorError8 = false;
+      var _iteratorError8 = undefined;
 
       try {
-        for (var _iterator7 = dir.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-          var _child = _step7.value;
+        for (var _iterator8 = dir.children[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+          var _child = _step8.value;
 
           if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
             _child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
@@ -3608,16 +3706,16 @@ var ProjectView = function (_View) {
           }
         }
       } catch (err) {
-        _didIteratorError7 = true;
-        _iteratorError7 = err;
+        _didIteratorError8 = true;
+        _iteratorError8 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion7 && _iterator7.return) {
-            _iterator7.return();
+          if (!_iteratorNormalCompletion8 && _iterator8.return) {
+            _iterator8.return();
           }
         } finally {
-          if (_didIteratorError7) {
-            throw _iteratorError7;
+          if (_didIteratorError8) {
+            throw _iteratorError8;
           }
         }
       }
@@ -3631,7 +3729,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../example_order.json":16,"../popup":19,"../site-text.json":20,"../utils":21,"./View":14}],11:[function(require,module,exports){
+},{"../../../examples/order.json":21,"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4124,7 +4222,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":19,"../site-text.json":20,"./View":14}],12:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4592,7 +4690,7 @@ var ToolbarView = function (_View) {
 
 module.exports = ToolbarView;
 
-},{"../popup":19,"../site-text.json":20,"./View":14}],14:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"./View":14}],14:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4837,17 +4935,17 @@ var Console = function (_EventEmitter) {
 			var msgs = text.split('\n');
 			for (var i = 0; i < msgs.length; i++) {
 				if (msgs[i] !== '') {
-					this.print(msgs[i], 'warning', id); /*, function(){
-                                         var $el = $(this);
-                                         $el.addClass('beaglert-console-collapsed');
-                                         $el.on('transitionend', () => {
-                                         if ($el.hasClass('beaglert-console-collapsed')){
-                                         $el.remove();
-                                         } else {
-                                         $el.addClass('beaglert-console-collapsed');
-                                         }
-                                         });
-                                         });*/
+					this.print(msgs[i].replace(/\</g, '&lt;').replace(/\>/g, '&gt;'), 'warning', id); /*, function(){
+                                                                                       var $el = $(this);
+                                                                                       $el.addClass('beaglert-console-collapsed');
+                                                                                       $el.on('transitionend', () => {
+                                                                                       if ($el.hasClass('beaglert-console-collapsed')){
+                                                                                       $el.remove();
+                                                                                       } else {
+                                                                                       $el.addClass('beaglert-console-collapsed');
+                                                                                       }
+                                                                                       });
+                                                                                       });*/
 				}
 			}
 			this.scroll();
@@ -4876,7 +4974,7 @@ var Console = function (_EventEmitter) {
 
 					// create the link and add it to the element
 
-					span = $('<span></span>').html(err.text.split('\n').join(' ') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
+					span = $('<span></span>').html(err.text.split('\n').join(' ').replace(/\</g, '&lt;').replace(/\>/g, '&gt;') + ', line: ' + (err.row + 1) + '\n').appendTo(div);
 
 					// add a button to copy the contents to the clipboard
 
@@ -5066,11 +5164,7 @@ module.exports = new Console();
 	}, 500);
 }*/
 
-},{"./popup":19,"./site-text.json":20,"events":1}],16:[function(require,module,exports){
-module.exports=[
-]
-
-},{}],17:[function(require,module,exports){
+},{"./popup":18,"./site-text.json":19,"events":1}],16:[function(require,module,exports){
 'use strict';
 
 //var $ = require('jquery-browserify');
@@ -5080,7 +5174,7 @@ $(function () {
 	IDE = require('./IDE-browser');
 });
 
-},{"./IDE-browser":3}],18:[function(require,module,exports){
+},{"./IDE-browser":3}],17:[function(require,module,exports){
 'use strict';
 
 var Range = ace.require('ace/range').Range;
@@ -5535,7 +5629,7 @@ function searchHighlightsFor(sub, val) {
 
 module.exports = parser;
 
-},{"./CircularBuffer":2}],19:[function(require,module,exports){
+},{"./CircularBuffer":2}],18:[function(require,module,exports){
 'use strict';
 
 var _overlay = $('[data-overlay]');
@@ -5628,7 +5722,7 @@ function example(cb, arg, delay, cancelCb) {
 	popup.find('.confirm').trigger('focus');
 }
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports={
 	"popups": {
     "generic": {
@@ -5675,7 +5769,7 @@ module.exports={
 			"button": "Rename folder"
 		},
 		"delete_project": {
-			"title": "Delete this project?",
+			"title": "Delete project ",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
@@ -5784,10 +5878,26 @@ module.exports={
 	"docs_view": {
 		"examples": "Examples that use this class:",
 		"button": "Launch documentation"
-	}
+	},
+  "funcKeys": {
+    "openProject"	: "Opening project",
+  	"openExample"	: "Opening example",
+  	"newProject"	: "Creating project",
+  	"saveAs"		: "Saving project",
+  	"deleteProject"	: "Deleting project",
+  	"cleanProject"	: "Cleaning project",
+  	"openFile"		: "Opening file",
+  	"newFile"		: "Creating file",
+  	"uploadFile"	: "Uploading file",
+  	"renameFile"	: "Renaming file",
+  	"deleteFile"	: "Deleting file",
+  	"init"			: "Initialising",
+  	"stop"			: "Stopping",
+  	"fileRejected"	: "Uploading file"
+  }
 }
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
@@ -5797,6 +5907,22 @@ function sanitise(name) {
 
 module.exports.sanitise = sanitise;
 
-},{}]},{},[17])
+},{}],21:[function(require,module,exports){
+module.exports=[
+  "GUI",
+  "Basics",
+  "Digital",
+  "Analog",
+  "Audio",
+  "Communication",
+  "Sensors",
+  "DataLogging",
+  "PureData",
+  "Capelets",
+  "Instruments",
+  "terminal-only"
+]
+
+},{}]},{},[16])
 
 //# sourceMappingURL=bundle.js.map

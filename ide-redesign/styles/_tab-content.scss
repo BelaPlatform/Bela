@@ -10,27 +10,31 @@
 }
 
 table.choice {
-  width: 100%;
-}
+  width: 350px;
+  .left-choice {
+  	display: inline-block;
+    float: left;
+  	text-align: right;
+    width: 50%;
+  }
 
-.left-choice {
-	display: inline-block;
-  float: left;
-	text-align: right;
-  width: 50%;
-}
-
-.right-choice {
-	display: inline-block;
-	margin-top: -2px;
-  padding-left: 10px;
-	position: relative;
-  text-align: left;
-  width: 43%;
-  &.half {
-    padding-left: 0;
-    text-align: center;
-    width: 22.5%;
+  .right-choice {
+  	display: inline-block;
+  	margin-top: -2px;
+    padding-left: 10px;
+  	position: relative;
+    text-align: left;
+    width: 43%;
+    &.half {
+      padding-left: 0;
+      text-align: center;
+      width: 22.5%;
+    }
+  }
+  &.boot {
+    font-family: poppins_semibold;
+    font-size: .89em;
+    padding: 0;
   }
 }
 
@@ -236,6 +240,32 @@ p.project {
         &:hover {
           background-image: url(../images/icons/project_delete_active.svg);
         }
+      }
+    }
+  }
+}
+
+.tab-info {
+  > p {
+        font-family: poppins-light;
+        font-size: .9em;
+        line-height: 1.1em;
+      }
+  button.feedback {
+    background-color: rgba($teal-main, 0.7);
+    border: 1px solid $teal-main;
+    &:hover {
+      background-color: rgba($teal-main, 1);
+    }
+    >a {
+      text-decoration: none;
+      color: #fff;
+    }
+    &.bug {
+      background-color: rgba($accent-red, 0.7);
+      border: 1px solid $accent-red;
+      &:hover {
+        background-color: rgba($accent-red, 1);
       }
     }
   }

@@ -24,6 +24,7 @@
 #beaglert-consoleWrapper > div {
   box-sizing: border-box;
 	display: inline-block;
+  position: relative;
   min-width: 100%;
 }
 .beaglert-console-log-in {

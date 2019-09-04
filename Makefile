@@ -15,9 +15,13 @@
 ## LDFLAGS=                -- linker flags (e.g.: -L. ) 
 ## LDLIBS=                -- libs to link in (e.g.: -lm )
 ## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
+## DISTCC=              -- specify whether to use distcc (1) or not (0, default)
+## RELINK=              -- specify whether to force re-linking the project file (1) or not (0, default). Set it to 1 when developing a library.
 ###
 ##available targets: #
 .DEFAULT_GOAL := Bela
+
+DISTCC ?= 0 # set this to 1 to use distcc by default
 
 # an empty recipe to avoid implicit rules for .d files
 %.d:
@@ -285,7 +289,7 @@ DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
-BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lseasocks # additional libraries needed by extra code (libbelaextra.so)
+BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 -lmathneon # additional libraries needed by extra code (libbelaextra.so)
 BELA_EXAMPLE_LIBS = -lmathneon # libraries commonly used by examples
 BELA_LDLIBS = $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS) $(BELA_EXAMPLE_LIBS)
 ifeq ($(PROJECT_TYPE),libpd)
@@ -327,6 +331,12 @@ else
     CXX=g++
     LDFLAGS+=-fno-pie -no-pie
   endif
+endif
+
+DISTCC := $(strip $(DISTCC))
+ifeq ($(DISTCC),1)
+  CC = /usr/local/bin/distcc-clang
+  CXX = /usr/local/bin/distcc-clang++
 endif
 
 ALL_DEPS=
@@ -377,6 +387,7 @@ ALL_DEPS += ./build/core/default_libpd_render.d
 # include all dependencies - necessary to force recompilation when a header is changed
 # (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
 -include $(ALL_DEPS)
+-include libraries/*/build/*.d # dependencies for each of the libraries' object files
 
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
@@ -434,11 +445,21 @@ build/pru/%_bin.h: pru/%.p
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
+# distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
+ifeq ($(DISTCC),1)
+ifeq ($(SYNTAX_FLAG),)
+GENERATE_PREPROCESSED := 1
+endif
+endif
+
 # Rule for user-supplied C++ files
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
+ifeq ($(GENERATE_PREPROCESSED),1)
+	$(AT) $(CXX) $(INCLUDES) $(DEFAULT_CPPFLAGS) -w -E -o "$(@:%.o=%.ii)" "$<" $(CPPFLAGS)
+endif
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -447,6 +468,9 @@ $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
 	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+ifeq ($(GENERATE_PREPROCESSED),1)
+	$(AT) $(CC) $(INCLUDES) $(DEFAULT_CFLAGS) -w -E -o "$(@:%.o=%.i)" "$<" $(CFLAGS)
+endif
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -476,11 +500,6 @@ ifeq ($(SHOULD_BUILD),false)
 # if it is a project that does not require build, there are no dependencies to compile, nor a binary to generate
 $(OUTPUT_FILE):
 else
-# This is a nasty kludge: we want to be able to optionally link in a default
-# main file if the user hasn't supplied one. We check for the presence of the main()
-# function, and conditionally call one of two recursive make targets depending on whether
-# we want to link in the default main file or not. The kludge is the mess of a shell script
-# line below. Surely there's a better way to do this?
 
 ALL_OBJS := $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 .EXPORT_ALL_VARIABLES:
@@ -491,6 +510,9 @@ PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
 	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
 
+ifeq ($(RELINK),1)
+  $(shell rm -rf $(OUTPUT_FILE))
+endif
 # first make sure the Makefile included by Makefile.linkbela is up to date ...
 # ... then call Makefile.linkbela
 $(OUTPUT_FILE): $(ALL_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
@@ -507,6 +529,7 @@ clean: projectclean
 
 coreclean: ## Remove the core's build objects
 	-$(RM) build/core/*
+	-$(RM) build/pru/*
 	-$(RM) include/pru_rtaudio_bin.h
 
 prompt:
@@ -702,7 +725,11 @@ update: stop
 
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
-LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o
+# some library objects are required by libbelaextra.
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o
+libraries/%.o: # how to build those objects needed by libbelaextra
+	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $@
+
 lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
 	$(AT) echo Building lib/$(LIB_EXTRA_SO)
 	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_EXTRA_SO) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDLIBS) $(BELA_EXTRA_LDLIBS)

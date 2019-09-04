@@ -6,7 +6,8 @@ import * as paths from './paths';
 import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
 
-let max_file_size = 50000000;	// bytes (50Mb)
+let max_file_size = 52428800;	// bytes (50Mb)
+let max_preview_size = 524288000;	// bytes (500Mb)
 
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is
@@ -45,9 +46,9 @@ export async function openFile(data: any){
 		data.fileType = 0;
 		return;
 	}
-	if (file_stat.size > max_file_size){
-		data.error = 'file is too large: '+(file_stat.size/1000000)+'Mb';
-		data.fileData = "The IDE can't open files larger than "+(max_file_size/1000000)+"Mb";
+	if (file_stat.size > max_preview_size){
+		data.error = 'file is too large: '+(file_stat.size/1048576)+'Mb';
+		data.fileData = "The IDE can't open files larger than "+(max_preview_size/1048576)+"Mb";
 		data.readOnly = true;
 		data.fileName = data.newFile;
 		data.newFile = undefined;
@@ -273,8 +274,11 @@ export async function renameFile(data: any){
 	}
 	await file_manager.rename_file(file_path, new_file_path);
 	await cleanFile(data.currentProject, data.oldName);
-	data.fileList = await listFiles(data.currentProject);
-	await openFile(data);
+  if (data.fileName == data.oldName) {
+    data.fileName = data.newFile;
+    await openFile(data);
+  }
+  data.fileList = await listFiles(data.currentProject);
 }
 
 export async function renameFolder(data: any){
@@ -299,8 +303,10 @@ export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
 	await cleanFile(data.currentProject, data.fileName);
 	data.fileList = await listFiles(data.currentProject);
-	data.fileData = 'File deleted - open another file to continue';
-	data.fileName = '';
+  if (data.fileName == data.currentFile) {
+    data.fileData = 'File deleted - open another file to continue';
+  	data.fileName = '';
+  }
 	data.readOnly = true;
 }
 

@@ -1,3 +1,2 @@
 #pragma once
-#warning You included file OSCServer.h. This is now deprecated. You should instead use #include <libraries/OSCServer/OSCServer.h>
-#include <libraries/OSCServer/OSCServer.h>
+#error You included file OSCServer.h. This is no longer available and you should instead use #include <libraries/OSCReceiver/OSCReceiver.h>. See the example Commmunication/OSC for more details

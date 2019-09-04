@@ -57,7 +57,13 @@ class EditorView extends View {
 			}
       // set syntax mode - defaults to text
       this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() }));
-      if (opts.fileType && opts.fileType == "cpp") {
+      if (opts.fileType &&
+          opts.fileType == "cpp" ||
+          opts.fileType == "c" ||
+          opts.fileType == "h" ||
+          opts.fileType == "hh" ||
+          opts.fileType == "hpp" ||
+          opts.fileType == "cc" ) {
         this.editor.session.setMode('ace/mode/c_cpp');
       } else if (opts.fileType && opts.fileType == "js") {
     		this.editor.session.setMode('ace/mode/javascript');

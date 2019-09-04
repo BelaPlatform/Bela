@@ -16,3 +16,4 @@
 /.plugins/
 /updates/
 include/pru_rtaudio_bin.h
+IDE/public/media

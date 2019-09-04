@@ -8,11 +8,11 @@
 }
 
 .running-button {
-  animation: running-button 2s linear infinite;
+  animation: running-button .75s linear infinite;
 }
 
 .building-button {
-  animation: running-button 3s linear infinite;
+  animation: running-button 2s linear infinite;
 }
 
 
@@ -23,7 +23,7 @@
   display: block;
   font-family: inconsolata, monospace;
   font-size: 12px;
-  height: 42px;
+  height: 43px;
   left: 0;
   padding-left: 40px;
   position: absolute;
@@ -32,12 +32,12 @@
   > div {
     display: inline;
     float: left;
-    height: 40px;
+    height: 35px;
+    margin-top: 3px;
     span {
       cursor: pointer;
       display: inline-block;
       height: 35px;
-      margin-top: 3px;
       transition: 0.1s ease-in-out;
       width: 35px;
       &.run {
@@ -56,7 +56,6 @@
       &.stop {
         background-image: url("../images/icons/stop_active.svg");
         background-repeat: no-repeat;
-        margin-left: 5px;
         &:hover {
           background-image: url("../images/icons/stop_inactive.svg");
         }
@@ -86,7 +85,8 @@
       &.shutdown {
         background-image: url("../images/icons/shutdown_active.svg");
         background-repeat: no-repeat;
-        margin-left: 5px;
+        margin: 1px 0 0 5px;
+
         &:hover {
           background-image: url("../images/icons/shutdown_hover.svg");
         }
@@ -108,7 +108,7 @@
     min-width: 100px;
   }
   .start-stop {
-    padding-left: 10px;
+    padding: 1px 0 0 10px;
     width: 85px;
   }
   .shutdown-parent {
@@ -118,7 +118,7 @@
   }
   .toolbar-functions {
     // min-width: 150px;
-    padding: 2px 0;
+    padding: 1px 0;
   }
   .system-status-text {
     margin-top: 14px;
@@ -128,9 +128,9 @@
   .syntax-status {
     background-image: url('../images/icons/syntax_pending.svg');
     background-repeat: no-repeat;
-    margin-top: 3px;
+    margin-top: 4px;
     min-width: 100px;
-    padding: 0 20px;
+    padding: 1px 20px 0;
     &.pending {
       background-image: url('../images/icons/syntax_pending.svg');
       background-repeat: no-repeat;

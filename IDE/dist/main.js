@@ -127,6 +127,8 @@ function setup_routes(app) {
     app.get('/download', routes.download);
     // doxygen xml
     app.get('/documentation_xml', routes.doxygen);
+    // examples
+    app.use('/examples', express.static(paths.examples));
     // libs
     app.use('/libraries', express.static(paths.libraries));
     // gui

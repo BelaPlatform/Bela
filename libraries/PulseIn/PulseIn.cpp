@@ -1,10 +1,3 @@
-/*
-* PulseIn.cpp
-*
-*  Created on: 4 Feb 2016
-*      Author: giulio
-*/
-
 #include "PulseIn.h"
 
 void PulseIn::setup(BelaContext* context, unsigned int digitalInput, int direction){
@@ -40,7 +33,6 @@ void PulseIn::check(BelaContext* context){
 };
 
 PulseIn::~PulseIn() {
-// TODO Auto-generated destructor stub
 	cleanup();
 }
 void PulseIn::cleanup(){};

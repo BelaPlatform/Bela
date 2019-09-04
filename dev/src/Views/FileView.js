@@ -6,6 +6,7 @@ var json = require('../site-text.json');
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
+
 var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
@@ -179,7 +180,7 @@ class FileView extends View {
 
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
-			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name});
+			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText});
 			popup.hide();
 		});
 
@@ -210,6 +211,7 @@ class FileView extends View {
     var images = [];
 		var resources = [];
 		var directories = [];
+		var images = [];
 		for (let item of files){
 
 			// exclude hidden files
@@ -236,8 +238,8 @@ class FileView extends View {
 					sources.push(item);
 				} else if (headerIndeces.indexOf(ext) !== -1){
 					headers.push(item);
-        } else if (imageIndeces.indexOf(ext) !== -1){
-          images.push(item);
+				} else if (imageIndeces.indexOf(ext.toLowerCase()) !== -1) {
+					images.push(item);
 				} else if (ext == "pd" && item.name == "_main.pd") {
 					sources.push(item);
 				} else if (item){

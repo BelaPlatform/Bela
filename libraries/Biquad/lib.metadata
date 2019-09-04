@@ -1,0 +1,15 @@
+name=Biquad
+version=1.0.0
+author=Nigel Redmon
+maintainer=Adan Benito<adan@bela.io>
+description=Biquad filter class.
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

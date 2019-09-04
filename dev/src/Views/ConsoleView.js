@@ -121,7 +121,7 @@ class ConsoleView extends View{
 			if (data.newFile || data.fileName) output += ' ' + (data.newFile || data.fileName);
       if (data.newFolder) output += ' ' + (data.newFolder);
 		}
-		_console.notify(output+'...', data.timestamp);
+		_console.notify(output + '...', data.timestamp);
 	}
 
 	closeNotification(data){
@@ -241,18 +241,18 @@ class ConsoleView extends View{
 module.exports = ConsoleView;
 
 var funcKey = {
-	'openProject'	: 'Opening project',
-	'openExample'	: 'Opening example',
-	'newProject'	: 'Creating project',
-	'saveAs'		: 'Saving project',
-	'deleteProject'	: 'Deleting project',
-	'cleanProject'	: 'Cleaning project',
-	'openFile'		: 'Opening file',
-	'newFile'		: 'Creating file',
-	'uploadFile'	: 'Uploading file',
-	'renameFile'	: 'Renaming file',
-	'deleteFile'	: 'Deleting file',
-	'init'			: 'Initialising',
-	'stop'			: 'Stopping',
-	'fileRejected'	: 'Uploading file'
+	'openProject'	  : json.funcKeys.openProject,
+	'openExample'	  : json.funcKeys.openExample,
+	'newProject'  	: json.funcKeys.newProject,
+	'saveAs'    		: json.funcKeys.saveAs,
+	'deleteProject'	: json.funcKeys.deleteProject,
+	'cleanProject'	: json.funcKeys.cleanProject,
+	'openFile'		  : json.funcKeys.openFile,
+	'newFile'		    : json.funcKeys.newFile,
+	'uploadFile'	  : json.funcKeys.uploadFile,
+	'renameFile'	  : json.funcKeys.renameFile,
+	'deleteFile'	  : json.funcKeys.deleteFile,
+	'init'			    : json.funcKeys.init,
+	'stop'			    : json.funcKeys.stop,
+	'fileRejected'	: json.funcKeys.fileRejected
 };

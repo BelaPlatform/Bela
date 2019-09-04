@@ -1,0 +1,15 @@
+name=OnePole
+version=1.0.0
+author=Adan Benito<adan@bela.io>
+maintainer=Adan Benito<adan@bela.io>>
+description=Simple one pole simple class.
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

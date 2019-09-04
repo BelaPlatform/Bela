@@ -37,8 +37,6 @@ function loadSketch(sketchSource, defaultSource) {
         removeElementById('p5-sketch');
         scriptElement.setAttribute('id', 'p5-sketch');
         console.log(sketchSource+ " loaded");
-        if(Bela_control != null)
-            Bela_control.sendEvent("gui-ready");
     }).catch((rejected) => {
         console.log(sketchSource + " couldn't be loaded.")
         if(defaultSource != null) {
