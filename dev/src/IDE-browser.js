@@ -197,7 +197,7 @@ gitView.on('console', text => consoleView.emit('log', text, 'git') );
 gitView.on('console-warn', text => consoleView.emit('warn', text) );
 
 // refresh file list
-setInterval( () => socket.emit('list-files', models.project.getKey('currentProject')), 5000); 
+setInterval( () => socket.emit('list-files', models.project.getKey('currentProject')), 5000);
 
 // setup socket
 var socket = io('/IDE');
@@ -258,10 +258,8 @@ socket.on('stop-reply', (data) => {
 	consoleView.emit('closeNotification', data);
 });
 socket.on('project-list', (project, list) =>  {
-	//console.log(project, list);
 	if (project && list.indexOf(models.project.getKey('currentProject')) === -1){
 		// this project has just been deleted
-		console.log('project-list', 'openProject');
 		socket.emit('project-event', {func: 'openProject', currentProject: project});
 	}
 	models.project.setKey('projectList', list);
@@ -269,6 +267,7 @@ socket.on('project-list', (project, list) =>  {
 socket.on('file-list', (project, list) => {
 	if (project && project === models.project.getKey('currentProject')){
 		models.project.setKey('fileList', list);
+    // console.log(list);
 	}
 });
 

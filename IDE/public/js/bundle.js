@@ -676,10 +676,8 @@ socket.on('stop-reply', function (data) {
 	consoleView.emit('closeNotification', data);
 });
 socket.on('project-list', function (project, list) {
-	//console.log(project, list);
 	if (project && list.indexOf(models.project.getKey('currentProject')) === -1) {
 		// this project has just been deleted
-		console.log('project-list', 'openProject');
 		socket.emit('project-event', { func: 'openProject', currentProject: project });
 	}
 	models.project.setKey('projectList', list);
@@ -687,6 +685,7 @@ socket.on('project-list', function (project, list) {
 socket.on('file-list', function (project, list) {
 	if (project && project === models.project.getKey('currentProject')) {
 		models.project.setKey('fileList', list);
+		// console.log(list);
 	}
 });
 
@@ -1326,6 +1325,7 @@ var ConsoleView = function (_View) {
 				var output = funcKey[data.func];
 				if (data.newProject || data.currentProject) output += ' ' + (data.newProject || data.currentProject);
 				if (data.newFile || data.fileName) output += ' ' + (data.newFile || data.fileName);
+				if (data.newFolder) output += ' ' + data.newFolder;
 			}
 			_console.notify(output + '...', data.timestamp);
 		}
@@ -2203,9 +2203,9 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 
-var sourceIndeces = ['cpp', 'c', 'S'];
+var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
-var imageIndeces = ['jpg', 'jpeg', 'png'];
+var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -2259,7 +2259,7 @@ var FileView = function (_View) {
 
 	_createClass(FileView, [{
 		key: 'buttonClicked',
-		value: function buttonClicked($element, e) {
+		value: function buttonClicked($element) {
 			var func = $element.data().func;
 			if (func && this[func]) {
 				this[func](func);
@@ -2267,22 +2267,50 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'newFile',
-		value: function newFile(func) {
+		value: function newFile(func, base) {
 			var _this2 = this;
 
-			// build the popup content
 			popup.title(json.popups.create_new_file.title);
 			popup.subtitle(json.popups.create_new_file.text);
-
 			var form = [];
 			form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this2.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
+				if (!base) {
+					_this2.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
+				} else {
+					_this2.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base });
+				}
+				popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
+		}
+	}, {
+		key: 'newFolder',
+		value: function newFolder(func) {
+			var _this3 = this;
+
+			// build the popup content
+			popup.title(json.popups.create_new_folder.title);
+			popup.subtitle(json.popups.create_new_folder.text);
+
+			var form = [];
+			form.push('<input type="hidden"></input>');
+			form.push('<input type="text" placeholder="' + json.popups.create_new_folder.input + '">');
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_folder.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				_this3.emit('message', 'project-event', { func: func, newFolder: sanitise(popup.find('input[type=text]').val()) });
 				popup.hide();
 			});
 
@@ -2298,11 +2326,12 @@ var FileView = function (_View) {
 	}, {
 		key: 'renameFile',
 		value: function renameFile(e) {
-			var _this3 = this;
+			var _this4 = this;
 
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
 			var func = $(e.target).data('func');
+			var folder = $(e.target).data('folder');
 			// build the popup content
 			popup.title('Rename ' + name + '?');
 			popup.subtitle(json.popups.rename_file.text);
@@ -2311,12 +2340,41 @@ var FileView = function (_View) {
 			form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '">');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var newName = sanitise(popup.find('input[type=text]').val());
-				_this3.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
+				_this4.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });
+				popup.hide();
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
+		}
+	}, {
+		key: 'renameFolder',
+		value: function renameFolder(e) {
+			var _this5 = this;
+
+			// Get the name of the file to be renamed:
+			var name = $(e.target).data('name');
+			var func = $(e.target).data('func');
+			// build the popup content
+			popup.title('Rename ' + name + '?');
+			popup.subtitle(json.popups.rename_folder.text);
+
+			var form = [];
+			form.push('<input type="text" placeholder="' + json.popups.rename_folder.input + '">');
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_folder.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				var newName = sanitise(popup.find('input[type=text]').val());
+				_this5.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
 				popup.hide();
 			});
 
@@ -2327,7 +2385,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'deleteFile',
 		value: function deleteFile(e) {
-			var _this4 = this;
+			var _this6 = this;
 
 			// Get the name of the file to be deleted:
 			var name = $(e.target).data('name');
@@ -2338,11 +2396,11 @@ var FileView = function (_View) {
 
 			var form = [];
 			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this4.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
+				_this6.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 				popup.hide();
 			});
 
@@ -2363,7 +2421,7 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this5 = this;
+			var _this7 = this;
 
 			this.listOfFiles = files;
 
@@ -2374,6 +2432,7 @@ var FileView = function (_View) {
 
 			var headers = [];
 			var sources = [];
+			var images = [];
 			var resources = [];
 			var directories = [];
 			var images = [];
@@ -2383,38 +2442,38 @@ var FileView = function (_View) {
 
 			try {
 				for (var _iterator = files[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var item = _step.value;
+					var _item = _step.value;
 
 
 					// exclude hidden files
 
-					if (!viewHiddenFiles && (item.name[0] === '.' || isDir(item) && item.name === 'build' || item.name === 'settings.json' || item.name == data.currentProject)) {
+					if (!viewHiddenFiles && (_item.name[0] === '.' || isDir(_item) && _item.name === 'build' || _item.name === 'settings.json' || _item.name == data.currentProject)) {
 						continue;
 					}
 
-					if (isDir(item)) {
+					if (isDir(_item)) {
 
-						directories.push(item);
+						directories.push(_item);
 					} else {
 
-						var ext = item.name.split('.').pop();
+						var ext = _item.name.split('.').pop();
 
-						if (item.size < 1000000) {
-							item.size = (item.size / 1000).toFixed(1) + 'kb';
-						} else if (item.size >= 1000000 && item.size < 1000000000) {
-							item.size = (item.size / 1000000).toFixed(1) + 'mb';
+						if (_item.size < 1000000) {
+							_item.size = (_item.size / 1000).toFixed(1) + 'kb';
+						} else if (_item.size >= 1000000 && _item.size < 1000000000) {
+							_item.size = (_item.size / 1000000).toFixed(1) + 'mb';
 						}
 
 						if (sourceIndeces.indexOf(ext) !== -1) {
-							sources.push(item);
+							sources.push(_item);
 						} else if (headerIndeces.indexOf(ext) !== -1) {
-							headers.push(item);
+							headers.push(_item);
 						} else if (imageIndeces.indexOf(ext.toLowerCase()) !== -1) {
-							images.push(item);
-						} else if (ext == "pd" && item.name == "_main.pd") {
-							sources.push(item);
-						} else if (item) {
-							resources.push(item);
+							images.push(_item);
+						} else if (ext == "pd" && _item.name == "_main.pd") {
+							sources.push(_item);
+						} else if (_item) {
+							resources.push(_item);
 						}
 					}
 				}
@@ -2458,7 +2517,12 @@ var FileView = function (_View) {
 			});
 
 			var file_list_elements = [sources, headers, images, resources, directories];
-			var file_list_elements_names = ['Sources', 'Headers', 'Images', 'Resources', 'Directories'];
+			file_list_elements[0].name = json.file_view.sources;
+			file_list_elements[1].name = json.file_view.headers;
+			file_list_elements[2].name = json.file_view.images;
+			file_list_elements[3].name = json.file_view.resources;
+			file_list_elements[4].name = json.file_view.directories;
+			var i18n_dir_str = json.file_view.directories;
 
 			// Build file structure by listing the contents of each section (if they exist)
 
@@ -2466,30 +2530,59 @@ var FileView = function (_View) {
 
 				if (file_list_elements[i].length) {
 
-					var section = $('<li></li>');
-					$('<p></p>').addClass('file-heading').html(file_list_elements_names[i]).appendTo(section);
+					var section = $('<div></div>').addClass('section');
+					$('<p></p>').addClass('file-heading').html(file_list_elements[i].name).appendTo(section);
 					var fileList = $('<ul></ul>').addClass('sub-file-list');
 
 					for (var j = 0; j < file_list_elements[i].length; j++) {
 						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
-						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
-						var itemText = $('<div></div>').addClass('source-text').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
-							return _this5.openFile(e);
-						});
-						$(itemText).prepend('<p>' + file_list_elements[i][j].name + '</p> <span class="file-list-size">' + file_list_elements[i][j].size + '</span>');
-
-						var buttons = $('<div></div>').addClass('buttons').appendTo(itemData);
-						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
-							return _this5.renameFile(e);
-						});
-						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e, projName) {
-							return _this5.downloadFile(e, data.currentProject);
-						});
-						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
-							return _this5.deleteFile(e);
-						});
+						var item = file_list_elements[i][j];
+						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+						if (file_list_elements[i].name != i18n_dir_str) {
+							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + item.size + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
+								return _this7.openFile(e);
+							});
+							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
+								return _this7.renameFile(e);
+							});
+							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name).appendTo(listItem).on('click', function (e, projName) {
+								return _this7.downloadFile(e, data.currentProject);
+							});
+							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
+								return _this7.deleteFile(e);
+							});
+						} else {
+							section.addClass('is-dir');
+							var itemText = $('<div></div>').addClass('source-text').text(item.name).data('file', item.name).appendTo(listItem);
+							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFolder').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
+								return _this7.renameFolder(e);
+							});
+							var newButton = $('<button></button>').addClass('file-new file-button fileManager').attr('title', 'New File').attr('data-func', 'newFile').attr('data-folder', item.name).appendTo(listItem).on('click', function () {
+								return _this7.newFile('newFile', event.target.dataset.folder);
+							});
+							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
+								return _this7.deleteFile(e);
+							});
+							var subList = $('<ul></ul>');
+							for (var k = 0; k < item.children.length; k++) {
+								var child = item.children[k];
+								var subListItem = $('<li></li>').addClass('source-text').text(child.name).data('file', item.name + "/" + child.name).on('click', function (e) {
+									return _this7.openFile(e);
+								});
+								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e) {
+									return _this7.deleteFile(e);
+								});
+								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', child.name).attr('data-folder', item.name).appendTo(subListItem).on('click', function (e) {
+									return _this7.renameFile(e);
+								});
+								var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e, projName) {
+									return _this7.downloadFile(e, data.currentProject);
+								});
+								subListItem.appendTo(subList);
+							}
+							subList.appendTo(listItem);
+						}
 					}
-
 					fileList.appendTo(section);
 					section.appendTo($files);
 				}
@@ -2523,32 +2616,25 @@ var FileView = function (_View) {
 			});
 		}
 	}, {
-		key: 'subDirs',
-		value: function subDirs(dir) {
-			var _this6 = this;
+		key: 'doFileUpload',
+		value: function doFileUpload(file) {
+			var _this8 = this;
 
-			var ul = $('<ul></ul>').html(dir.name + ':');
+			if (uploadingFile) {
+				fileQueue.push(file);
+				return;
+			}
+
+			var fileExists = false;
 			var _iteratorNormalCompletion2 = true;
 			var _didIteratorError2 = false;
 			var _iteratorError2 = undefined;
 
 			try {
-				for (var _iterator2 = dir.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var child = _step2.value;
+				for (var _iterator2 = this.listOfFiles[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var item = _step2.value;
 
-					if (!isDir(child)) {
-						if (child.size < 1000000) {
-							child.size = (child.size / 1000).toFixed(1) + 'kb';
-						} else if (child.size >= 1000000 && child.size < 1000000000) {
-							child.size = (child.size / 1000000).toFixed(1) + 'mb';
-						}
-						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
-							return _this6.openFile(e);
-						});
-					} else {
-						child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
-						ul.append(this.subDirs(child));
-					}
+					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
 				_didIteratorError2 = true;
@@ -2561,44 +2647,6 @@ var FileView = function (_View) {
 				} finally {
 					if (_didIteratorError2) {
 						throw _iteratorError2;
-					}
-				}
-			}
-
-			return ul;
-		}
-	}, {
-		key: 'doFileUpload',
-		value: function doFileUpload(file) {
-			var _this7 = this;
-
-			if (uploadingFile) {
-				fileQueue.push(file);
-				return;
-			}
-
-			var fileExists = false;
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
-
-			try {
-				for (var _iterator3 = this.listOfFiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var item = _step3.value;
-
-					if (item.name === sanitise(file.name)) fileExists = true;
-				}
-			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
-					}
-				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
 					}
 				}
 			}
@@ -2620,7 +2668,7 @@ var FileView = function (_View) {
 				form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>');
 				form.push('</br >');
 				form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
-				form.push('<button type="button" class="button cancel">Cancel</button>');
+				form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
 				popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
@@ -2628,11 +2676,11 @@ var FileView = function (_View) {
 						askForOverwrite = false;
 						overwriteAction = 'upload';
 					}
-					_this7.actuallyDoFileUpload(file, true);
+					_this8.actuallyDoFileUpload(file, true);
 					popup.hide();
 					uploadingFile = false;
 					if (fileQueue.length) {
-						_this7.doFileUpload(fileQueue.pop());
+						_this8.doFileUpload(fileQueue.pop());
 					}
 				});
 
@@ -2644,7 +2692,7 @@ var FileView = function (_View) {
 					popup.hide();
 					uploadingFile = false;
 					forceRebuild = false;
-					if (fileQueue.length) _this7.doFileUpload(fileQueue.pop());
+					if (fileQueue.length) _this8.doFileUpload(fileQueue.pop());
 				});
 
 				popup.show();
@@ -2667,11 +2715,11 @@ var FileView = function (_View) {
 	}, {
 		key: 'actuallyDoFileUpload',
 		value: function actuallyDoFileUpload(file, force) {
-			var _this8 = this;
+			var _this9 = this;
 
 			var reader = new FileReader();
 			reader.onload = function (ev) {
-				return _this8.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+				return _this9.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
 			};
 			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {
@@ -5677,6 +5725,9 @@ function example(cb, arg, delay, cancelCb) {
 },{}],19:[function(require,module,exports){
 module.exports={
 	"popups": {
+    "generic": {
+      "cancel": "Cancel"
+    },
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
@@ -5699,11 +5750,23 @@ module.exports={
 			"input": "Your new file name",
 			"button": "Create file"
 		},
+    "create_new_folder": {
+			"title": "Create new folder",
+			"text": "Enter the new folder name.",
+			"input": "Your new folder name",
+			"button": "Create folder"
+		},
 		"rename_file": {
 			"title": "Rename this file?",
 			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"button": "Rename file"
+		},
+    "rename_folder": {
+			"title": "Rename this folder?",
+			"input": "The new folder name",
+			"text": "Enter the new folder name",
+			"button": "Rename folder"
 		},
 		"delete_project": {
 			"title": "Delete project ",
@@ -5775,6 +5838,13 @@ module.exports={
 			"cancel": "Don't reload, keep this version"
 		}
 	},
+  "file_view": {
+    "sources": "Sources",
+    "headers": "Headers",
+    "images": "Images",
+    "resources": "Resources",
+    "directories": "Directories"
+  },
 	"editor_view": {
 			"preview": "This is a preview - these objects are not editable in the browser.",
       "pd": {

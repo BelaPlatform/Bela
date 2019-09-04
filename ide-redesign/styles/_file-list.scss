@@ -1,113 +1,114 @@
-ul {
-	font-family: inconsolata;
-}
-
 .file-list {
+  font-family: poppins_regular;
   width: calc(100% - 10px);
-  li {
-    font-family: poppins_regular;
-    & > p {
-      border-bottom: 1px solid $grey-mid;
-      margin: 0;
-      padding: 3px 0 3px 10px;
-      width: calc(100% - 10px);
-    }
-    &:first-child > p {
-      margin: -5px 0 0 0;
-    }
-    .file-list-size {
-      font-family: inconsolata;
-      font-style: italic;
-    }
+  p {
+    border-bottom: 1px solid $grey-mid;
+    margin: 0;
+    padding: 3px 0 3px 10px;
+    width: calc(100% - 10px);
   }
-}
-
-.source-file { 
-  .source-data-container { 
-    display: inline-block;
-    position: relative;
-    width: 100%;
-    > .source-text {
-      max-width: 255px;
-      p {
-        display: inline;
-        font-family: inconsolata;
-        margin: 0;
-        word-break: break-all;
+  &:first-child > p {
+    margin: -5px 0 0 0;
+  }
+  .file-list-size {
+    font-style: italic;
+  }
+  .section {
+    .source-file,
+    .source-text {
+      cursor: pointer;
+      padding: 2px 0;
+      text-indent: 22px;
+    }
+    .source-file {
+      position: relative;
+      &:hover {
+        background: rgba(255, 255, 0, 0.2);
+      }
+      &::before {
+        content: ">";
+        left: -10px;
+        position: absolute;
+        top: 5px;
       }
     }
-    > .buttons {
-      display: inline; 
-      > button {
-        border: 0;
-        height: 20px;
-        position: absolute;
-        top: 0;
-        width: 15px;
-        &.file-{
-          background-size: 100% 80%;
-          &rename {
-            width: 17px;
-            background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
-            right: 36px;
-            &:hover {
-              background: transparent url(../images/icons/rename_active.svg) no-repeat center;
-            }
+    .source-text {
+      position: relative;
+    }
+    &.is-dir {
+      .source-file {
+        &:hover {
+          background-color: inherit;
+        }
+        > .source-text {
+          text-indent: 22px;
+          &::before {
+            content: "-";
           }
-          &download {
-            background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
-            height: 18px;
-            right: 18px;
-            top: 2px;
-            &:hover {
-              background: transparent url(../images/icons/download_active.svg) no-repeat center;
-            }
-          }
-          &delete {
-            background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
-            height: 16px;
-            right: 0;
-            top: 2px;
-            &:hover {
-              background: transparent url(../images/icons/trash_active.svg) no-repeat center;
-            }
-          }
+        }
+        &::before {
+          content: "";
+        }
+      }
+      .source-text {
+        position: relative;
+        text-indent: 35px;
+        &:hover {
+          background: rgba(255, 255, 0, 0.2);
+        }
+        &::before {
+          content: ">";
+          left: -12px;
+          position: absolute;
+          top: 3px;
         }
       }
     }
   }
-}
-
-.sub-file-list > li {
-  color: rgba(0, 0, 0, 0.8);
-	font-size: 14px;
-	padding: 4px 12px;
-	&:hover,
-  &.selected {
-		background: rgba(255, 255, 0, 0.2);
-	}
-  &.source-file {
-    cursor: pointer;
-  }
-  >.source-data-container {
-    >.source-text {
-    	&:before {
-        content: '>'; /* Unicode character for "minus" sign (-) */
-        font-family: poppins_light;
-    		margin-right: 5px;
-    		size: 12px;
-    	}
+  button {
+    border: 0;
+    height: 20px;
+    position: absolute;
+    top: 0;
+    width: 15px;
+    &.file-{
+      background-size: 100% 80%;
+      &rename {
+        background: transparent url(../images/icons/rename_inactive.svg) no-repeat center;
+        right: 36px;
+        width: 17px;
+        &:hover {
+          background: transparent url(../images/icons/rename_active.svg) no-repeat center;
+        }
+      }
+      &new {
+        background: transparent url(../images/icons/file_inactive.svg) no-repeat center;
+        background-size: contain;
+        height: 15px;
+        right: 18px;
+        top: 3px;
+        &:hover {
+          background-image: url(../images/icons/file_active.svg);
+        }
+      }
+      &download {
+        background: transparent url(../images/icons/download_inactive.svg) no-repeat center;
+        height: 18px;
+        right: 18px;
+        top: 2px;
+        &:hover {
+          background: transparent url(../images/icons/download_active.svg) no-repeat center;
+        }
+      }
+      &delete {
+        background: transparent url(../images/icons/trash_inactive.svg) no-repeat center;
+        height: 16px;
+        right: 0;
+        top: 2px;
+        &:hover {
+          background: transparent url(../images/icons/trash_active.svg) no-repeat center;
+        }
+      }
     }
   }
-}
-
-.example-list > li {
-	padding: 4px 10px;
-	&:before {
-    content: '>';
-		margin-right: 10px;
-	}
-	&:hover {
-		background: rgba(255, 255, 0, 0.2);
-	}
 }

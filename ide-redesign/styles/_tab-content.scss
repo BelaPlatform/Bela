@@ -159,7 +159,7 @@ p.project {
     font-size: .85em;
     position: absolute;
     top: 0;
-    left: 160px;
+    left: 185px;
     top: -12px;
   }
   > a {
@@ -171,10 +171,11 @@ p.project {
       height: 16px;
      &.project-download {
         background: transparent url(../images/icons/project_download_inactive.svg) no-repeat center;
+        background-size: contain;
         left: 100px;
         &::before,
         &:hover {
-          background: transparent url(../images/icons/project_download_active.svg) no-repeat center;
+          background-image: url(../images/icons/project_download_active.svg);
         }
       }
     }
@@ -185,46 +186,59 @@ p.project {
     top: 0;
     height: 16px;
     &.project- {
-      background-size: 100% 80%;
       &new {
         background: transparent url(../images/icons/file_inactive.svg) no-repeat center;
+        background-size: contain;
         left: 0;
         &::before,
         &:hover {
-          background: transparent url(../images/icons/file_active.svg) no-repeat center;
+          background-image: url(../images/icons/file_active.svg);
+        }
+      }
+      &new-folder {
+        background: transparent url(../images/icons/new_folder_inactive.svg) no-repeat center;
+        background-size: contain;
+        left: 25px;
+        &::before,
+        &:hover {
+          background-image: url(../images/icons/new_folder_active.svg);
         }
       }
       &upload {
         background: transparent url(../images/icons/upload_inactive.svg) no-repeat center;
-        left: 25px;
+        background-size: contain;
+        left: 50px;
         &::before,
         &:hover {
-          background: transparent url(../images/icons/upload_active.svg) no-repeat center;
+          background-image: url(../images/icons/upload_active.svg);
         }
       }
       &save {
         background: transparent url(../images/icons/save_inactive.svg) no-repeat center;
-        left: 50px;
+        background-size: contain;
+        left: 75px;
         &::before,
         &:hover {
-          background: transparent url(../images/icons/save_active.svg) no-repeat center;
+          background-image: url(../images/icons/save_active.svg);
         }
       }
       &clean {
         background: transparent url(../images/icons/broom_inactive.svg) no-repeat center;
-        left: 75px;
+        background-size: contain;
+        left: 125px;
         &::before,
         &:hover {
-          background: transparent url(../images/icons/broom_active.svg) no-repeat center;
+          background-image: url(../images/icons/broom_active.svg);
           height: 16px;
         }
       }
       &delete {
         background: transparent url(../images/icons/project_delete_inactive.svg) no-repeat center;
-        left: 125px;
+        background-size: contain;
+        left: 150px;
         &::before,
         &:hover {
-          background: transparent url(../images/icons/project_delete_active.svg) no-repeat center;
+          background-image: url(../images/icons/project_delete_active.svg);
         }
       }
     }

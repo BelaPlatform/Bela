@@ -10,3 +10,14 @@ ul {
     }
   }
 }
+
+.example-list > li {
+	padding: 4px 10px;
+	&:before {
+    content: '>';
+		margin-right: 10px;
+	}
+	&:hover {
+		background: rgba(255, 255, 0, 0.2);
+	}
+}
