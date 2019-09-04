@@ -416,7 +416,7 @@ function cleanProject(data) {
 exports.cleanProject = cleanProject;
 function newFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var file_name, folder, file_path, file_path, _a;
+        var file_name, file_path, folder, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -546,7 +546,7 @@ function cleanFile(project, file) {
 exports.cleanFile = cleanFile;
 function renameFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var old_file_name, file_name, folder, file_path, file_path, new_file_path, file_exists, _a, _b;
+        var old_file_name, file_name, file_path, folder, new_file_path, file_exists, _a, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:

@@ -201,12 +201,13 @@ export async function cleanProject(data: any){
 
 export async function newFile(data: any){
   let file_name = data.newFile.split('/').pop();
+  let file_path;
   if (data.folder) {
     let folder = data.folder;
-    let file_path = paths.projects+data.currentProject + '/' + folder + '/' + file_name;
+    file_path = paths.projects+data.currentProject + '/' + folder + '/' + file_name;
     data.newFile = folder + '/' + file_name;
   } else {
-    let file_path = paths.projects + data.currentProject + '/' + file_name;
+    file_path = paths.projects + data.currentProject + '/' + file_name;
     data.newFile = file_name;
   }
 	if (await file_manager.file_exists(file_path)){
@@ -260,11 +261,12 @@ export async function cleanFile(project: string, file: string){
 export async function renameFile(data: any){
   let old_file_name = data.oldName;
   let file_name = data.oldName.split('/').pop();
+  let file_path;
   if (data.folder) {
     let folder = data.folder + '/';
-    let file_path = paths.projects + data.currentProject + '/' + folder + file_name;
+    file_path = paths.projects + data.currentProject + '/' + folder + file_name;
   } else {
-    let file_path = paths.projects + data.currentProject + '/' + file_name;
+    file_path = paths.projects + data.currentProject + '/' + file_name;
   }
   let new_file_path = file_path.replace(file_name, data.newFile);
 	let file_exists = (await file_manager.file_exists(new_file_path) || await file_manager.directory_exists(file_path));
