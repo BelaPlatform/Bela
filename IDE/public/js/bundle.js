@@ -2203,9 +2203,9 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 
-var sourceIndeces = ['cpp', 'c', 'S'];
+var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
-
+var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
@@ -2431,6 +2431,7 @@ var FileView = function (_View) {
 
 			var headers = [];
 			var sources = [];
+			var images = [];
 			var resources = [];
 			var directories = [];
 			var _iteratorNormalCompletion = true;
@@ -2465,6 +2466,8 @@ var FileView = function (_View) {
 							sources.push(_item);
 						} else if (headerIndeces.indexOf(ext) !== -1) {
 							headers.push(_item);
+						} else if (imageIndeces.indexOf(ext) !== -1) {
+							images.push(_item);
 						} else if (ext == "pd" && _item.name == "_main.pd") {
 							sources.push(_item);
 						} else if (_item) {
@@ -2501,6 +2504,9 @@ var FileView = function (_View) {
 			sources.sort(function (a, b) {
 				return a.name == render ? -1 : b.name == render ? 1 : 0;
 			});
+			images.sort(function (a, b) {
+				return a.name - b.name;
+			});
 			resources.sort(function (a, b) {
 				return a.name - b.name;
 			});
@@ -2508,11 +2514,12 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			var file_list_elements = [sources, headers, resources, directories];
+			var file_list_elements = [sources, headers, images, resources, directories];
 			file_list_elements[0].name = json.file_view.sources;
 			file_list_elements[1].name = json.file_view.headers;
-			file_list_elements[2].name = json.file_view.resources;
-			file_list_elements[3].name = json.file_view.directories;
+			file_list_elements[2].name = json.file_view.images;
+			file_list_elements[3].name = json.file_view.resources;
+			file_list_elements[4].name = json.file_view.directories;
 			var i18n_dir_str = json.file_view.directories;
 
 			// Build file structure by listing the contents of each section (if they exist)
@@ -5740,6 +5747,7 @@ module.exports={
   "file_view": {
     "sources": "Sources",
     "headers": "Headers",
+    "images": "Images",
     "resources": "Resources",
     "directories": "Directories"
   },

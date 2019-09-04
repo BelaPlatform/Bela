@@ -116,6 +116,7 @@
   "file_view": {
     "sources": "Sources",
     "headers": "Headers",
+    "images": "Images",
     "resources": "Resources",
     "directories": "Directories"
   },

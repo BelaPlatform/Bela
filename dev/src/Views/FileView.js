@@ -3,9 +3,9 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 
-var sourceIndeces = ['cpp', 'c', 'S'];
+var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
-
+var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
@@ -207,6 +207,7 @@ class FileView extends View {
 
 		var headers = [];
 		var sources = [];
+    var images = [];
 		var resources = [];
 		var directories = [];
 		for (let item of files){
@@ -216,7 +217,6 @@ class FileView extends View {
 			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name == data.currentProject)) {
 				continue;
 			}
-
 
 			if (isDir(item)){
 
@@ -236,8 +236,10 @@ class FileView extends View {
 					sources.push(item);
 				} else if (headerIndeces.indexOf(ext) !== -1){
 					headers.push(item);
+        } else if (imageIndeces.indexOf(ext) !== -1){
+          images.push(item);
 				} else if (ext == "pd" && item.name == "_main.pd") {
-						sources.push(item);
+					sources.push(item);
 				} else if (item){
 					resources.push(item);
 				}
@@ -252,14 +254,16 @@ class FileView extends View {
 		sources.sort( (a, b) => a.name - b.name );
 		sources.sort( (a, b) => a.name == pd ? -1 : b.name == pd ? 1 : 0 );
 		sources.sort( (a, b) => a.name == render ? -1 : b.name == render ? 1 : 0 );
+    images.sort( (a, b) => a.name - b.name );
 		resources.sort( (a, b) => a.name - b.name );
 		directories.sort( (a, b) => a.name - b.name );
 
-		var file_list_elements = [ sources, headers, resources, directories ];
-    file_list_elements[0].name = json.file_view.sources;
-    file_list_elements[1].name = json.file_view.headers;
-    file_list_elements[2].name = json.file_view.resources;
-    file_list_elements[3].name = json.file_view.directories;
+		var file_list_elements = [ sources, headers, images, resources, directories ];
+        file_list_elements[0].name = json.file_view.sources;
+        file_list_elements[1].name = json.file_view.headers;
+        file_list_elements[2].name = json.file_view.images;
+        file_list_elements[3].name = json.file_view.resources;
+        file_list_elements[4].name = json.file_view.directories;
     var i18n_dir_str = json.file_view.directories;
 
 		// Build file structure by listing the contents of each section (if they exist)
