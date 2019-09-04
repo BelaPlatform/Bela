@@ -16,6 +16,7 @@
 #LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
 #and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
 #either via a default Makefile.libraries, or using the library's custom one (if available)
+.SUFFIXES: #disable default rules, which would make it try to rebuild libraries/*/build/*.d when no such files exists
 .EXPORT_ALL_VARIABLES:
 libraries/%.o:
 	$(AT) LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
