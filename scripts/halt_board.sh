@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script halts the BeagleBone Black.
+# This script halts the board.
 
 SCRIPTDIR=$(dirname "$0")
 [ -z $SCRIPTDIR ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/ 
@@ -13,5 +13,5 @@ usage(){
 	"
 }
 check_for_help $1
-echo "Shutting down the BeagleBone Black..."
+echo "Shutting down the board..."
 ssh $BBB_ADDRESS "shutdown -h now"

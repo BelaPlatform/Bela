@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script copies the core Bela files to the BeagleBone Black
+# This script copies the core Bela files to the board
 # in preparation for building projects. It will remove any existing
 # Bela directory before copying the files over
 
@@ -25,7 +25,7 @@ usage ()
     echo "Usage: $THIS_SCRIPT [--clean] [--no-frills] [-dy ] [-i user@ip] [-b /path/to/remote/Bela]"
 
     echo "
-    This script updates the core Bela files on the BeagleBone, bringing it up
+    This script updates the core Bela files on the board, bringing it up
     to date with the files in the folder on the host computer.
     The script must be run once to initialize the board before running any of
     the other scripts in this directory. It must also be run every time you
@@ -109,7 +109,7 @@ then
   echo "Updating the Bela core code in $BBB_ADDRESS:$BBB_BELA_HOME"
   if [ "$RESET_BOARD" -eq 1 ];
   then
-    printf "DANGER: you are about to perform a HARD RESET, which will DELETE all the  existing files from the folder $BBB_BELA_HOME on the BeagleBone Black.\nAre you sure you want to continue? (y/N) "
+    printf "DANGER: you are about to perform a HARD RESET, which will DELETE all the existing files from the folder $BBB_BELA_HOME on the board.\nAre you sure you want to continue? (y/N) "
   else
     printf "All the changes to the CORE files in the remote folder $BBB_BELA_HOME will be LOST. The content of these files/folders will be lost:\n  $FILES_TO_COPY \nYour projects stored in $BBB_BELA_HOME/projects should be safe (and surely you have already backed them up somewhere safe, haven't you?).\nAre you sure you want to continue? (y/N) "
   fi;
@@ -149,7 +149,7 @@ RUN_FOLDER=`pwd`
 cd "$SCRIPTDIR"/../
 
 printf "Updating files..."
-# Copy relevant files to BeagleBone Black
+# Copy relevant files to the board
 if [ "$RSYNC_AVAILABLE" -eq 1 ];
 then
   [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
@@ -205,7 +205,7 @@ then
 fi
 
 # Create remaining directories needed for building
-printf "Creating directory structure on BeagleBone..."
+printf "Creating directory structure on the board..."
 ssh "$BBB_ADDRESS" "mkdir -p \"$BBB_BELA_HOME\"/build/core \"$BBB_BELA_HOME\"/projects"
 error_handler $?
 
