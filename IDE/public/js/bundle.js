@@ -2240,7 +2240,10 @@ var FileView = function (_View) {
 		};
 
 		// drag and drop file upload on editor
-		$('body').on('dragenter dragover drop dragleave dragexit', function (e) {
+		$('[data-overlay]').on('dragleave', function (e) {
+			$('[data-overlay]').removeClass('active').removeClass('drag-upload');
+		});
+		$('body').on('dragenter dragover drop', function (e) {
 			e.stopPropagation();
 			e.preventDefault();
 			if (e.type == 'dragenter') {
