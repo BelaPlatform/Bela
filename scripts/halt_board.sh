@@ -14,4 +14,4 @@ usage(){
 }
 check_for_help $1
 echo "Shutting down the BeagleBone Black..."
-ssh $BBB_ADDRESS "halt"
+ssh $BBB_ADDRESS "shutdown -h now"
