@@ -103,6 +103,24 @@ class FileView extends View {
 
 	}
 
+  uploadError(){
+    // build the popup content
+    popup.title("Error: No file selected for upload")
+         .addClass("error");
+    popup.subtitle("No file was selected for upload");
+
+    var form = [];
+    form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+    popup.form.append(form.join('')).off('submit').on('submit', e => {
+      e.preventDefault();
+      popup.hide();
+      this.uploadFile();
+    });
+    popup.show();
+  }
+
 	uploadFile(func){
     // build the popup content
 		popup.title(json.popups.upload_file.title);
@@ -114,6 +132,7 @@ class FileView extends View {
                           .attr('method', 'POST');
     form.push('<input type="file" name="data" data-form-file></input>');
 		form.push('</br >');
+    form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
 
@@ -123,11 +142,18 @@ class FileView extends View {
       var location = '/projects/basic';
       var formEl = $('[data-popup] form')[0];
       var formData = new FormData(formEl);
-      var popupBlock = $('[data-popup-nointeraction]').addClass('active');
-      $('body').addClass('uploading');
-      popupBlock.addClass('active');
-      popup.find('.confirm').attr('disabled', true);
-      this.doLargeFileUpload(formData, file, location);
+      var popupBlock = $('[data-popup-nointeraction]');
+      if (file.value.length > 0) {
+        popupBlock.addClass('active');
+        $('body').addClass('uploading');
+        popupBlock.addClass('active');
+        popup.find('.confirm')
+             .attr('disabled', true);
+        this.doLargeFileUpload(formData, file, location);
+      } else {
+        popup.hide();
+        this.uploadError();
+      }
 		});
 
 		popup.find('.cancel').on('click', popup.hide );

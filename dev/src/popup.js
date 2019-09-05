@@ -18,8 +18,10 @@ var popup = {
 	hide(keepOverlay){
 		if (keepOverlay !== 'keep overlay') overlay.removeClass('active');
 		parent.removeClass('active');
+    titleEl.removeClass('error');
 		titleEl.empty();
 		subEl.empty();
+    subEl.removeClass('error');
     codeEl.empty();
     bodyEl.empty();
 		formEl.empty();

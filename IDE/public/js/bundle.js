@@ -2308,9 +2308,29 @@ var FileView = function (_View) {
 			popup.show();
 		}
 	}, {
+		key: 'uploadError',
+		value: function uploadError() {
+			var _this3 = this;
+
+			// build the popup content
+			popup.title("Error: No file selected for upload").addClass("error");
+			popup.subtitle("No file was selected for upload");
+
+			var form = [];
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				popup.hide();
+				_this3.uploadFile();
+			});
+			popup.show();
+		}
+	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			var _this3 = this;
+			var _this4 = this;
 
 			// build the popup content
 			popup.title(json.popups.upload_file.title);
@@ -2319,6 +2339,7 @@ var FileView = function (_View) {
 			var form = [];
 			$('[data-popup] form').attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
 			form.push('<input type="file" name="data" data-form-file></input>');
+			form.push('</br >');
 			form.push('</br >');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
@@ -2329,11 +2350,17 @@ var FileView = function (_View) {
 				var location = '/projects/basic';
 				var formEl = $('[data-popup] form')[0];
 				var formData = new FormData(formEl);
-				var popupBlock = $('[data-popup-nointeraction]').addClass('active');
-				$('body').addClass('uploading');
-				popupBlock.addClass('active');
-				popup.find('.confirm').attr('disabled', true);
-				_this3.doLargeFileUpload(formData, file, location);
+				var popupBlock = $('[data-popup-nointeraction]');
+				if (file.value.length > 0) {
+					popupBlock.addClass('active');
+					$('body').addClass('uploading');
+					popupBlock.addClass('active');
+					popup.find('.confirm').attr('disabled', true);
+					_this4.doLargeFileUpload(formData, file, location);
+				} else {
+					popup.hide();
+					_this4.uploadError();
+				}
 			});
 
 			popup.find('.cancel').on('click', popup.hide);
@@ -2343,7 +2370,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'renameFile',
 		value: function renameFile(e) {
-			var _this4 = this;
+			var _this5 = this;
 
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
@@ -2361,7 +2388,7 @@ var FileView = function (_View) {
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var newName = sanitise(popup.find('input[type=text]').val());
-				_this4.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
+				_this5.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2372,7 +2399,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'deleteFile',
 		value: function deleteFile(e) {
-			var _this5 = this;
+			var _this6 = this;
 
 			// Get the name of the file to be deleted:
 			var name = $(e.target).data('name');
@@ -2387,7 +2414,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this5.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
+				_this6.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 				popup.hide();
 			});
 
@@ -2408,7 +2435,7 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this6 = this;
+			var _this7 = this;
 
 			this.listOfFiles = files;
 
@@ -2519,19 +2546,19 @@ var FileView = function (_View) {
 						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
 						var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						var itemText = $('<div></div>').addClass('source-text').data('file', file_list_elements[i][j].name).appendTo(itemData).on('click', function (e) {
-							return _this6.openFile(e);
+							return _this7.openFile(e);
 						});
 						$(itemText).prepend('<p>' + file_list_elements[i][j].name + '</p> <span class="file-list-size">' + file_list_elements[i][j].size + '</span>');
 
 						var buttons = $('<div></div>').addClass('buttons').appendTo(itemData);
 						var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
-							return _this6.renameFile(e);
+							return _this7.renameFile(e);
 						});
 						var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e, projName) {
-							return _this6.downloadFile(e, data.currentProject);
+							return _this7.downloadFile(e, data.currentProject);
 						});
 						var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', file_list_elements[i][j].name).appendTo(buttons).on('click', function (e) {
-							return _this6.deleteFile(e);
+							return _this7.deleteFile(e);
 						});
 					}
 
@@ -2570,7 +2597,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'subDirs',
 		value: function subDirs(dir) {
-			var _this7 = this;
+			var _this8 = this;
 
 			var ul = $('<ul></ul>').html(dir.name + ':');
 			var _iteratorNormalCompletion2 = true;
@@ -2588,7 +2615,7 @@ var FileView = function (_View) {
 							child.size = (child.size / 1000000).toFixed(1) + 'mb';
 						}
 						$('<li></li>').addClass('source-file').html(child.name + '<span class="file-list-size">' + child.size + '</span>').data('file', (dir.dirPath || dir.name) + '/' + child.name).appendTo(ul).on('click', function (e) {
-							return _this7.openFile(e);
+							return _this8.openFile(e);
 						});
 					} else {
 						child.dirPath = (dir.dirPath || dir.name) + '/' + child.name;
@@ -2615,7 +2642,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'doFileUpload',
 		value: function doFileUpload(file) {
-			var _this8 = this;
+			var _this9 = this;
 
 			if (uploadingFile) {
 				fileQueue.push(file);
@@ -2673,11 +2700,11 @@ var FileView = function (_View) {
 						askForOverwrite = false;
 						overwriteAction = 'upload';
 					}
-					_this8.actuallyDoFileUpload(file, true);
+					_this9.actuallyDoFileUpload(file, true);
 					popup.hide();
 					uploadingFile = false;
 					if (fileQueue.length) {
-						_this8.doFileUpload(fileQueue.pop());
+						_this9.doFileUpload(fileQueue.pop());
 					}
 				});
 
@@ -2689,7 +2716,7 @@ var FileView = function (_View) {
 					popup.hide();
 					uploadingFile = false;
 					forceRebuild = false;
-					if (fileQueue.length) _this8.doFileUpload(fileQueue.pop());
+					if (fileQueue.length) _this9.doFileUpload(fileQueue.pop());
 				});
 
 				popup.show();
@@ -2746,11 +2773,11 @@ var FileView = function (_View) {
 	}, {
 		key: 'actuallyDoFileUpload',
 		value: function actuallyDoFileUpload(file, force) {
-			var _this9 = this;
+			var _this10 = this;
 
 			var reader = new FileReader();
 			reader.onload = function (ev) {
-				return _this9.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+				return _this10.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
 			};
 			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {
@@ -5681,8 +5708,10 @@ var popup = {
 	hide: function hide(keepOverlay) {
 		if (keepOverlay !== 'keep overlay') _overlay.removeClass('active');
 		parent.removeClass('active');
+		titleEl.removeClass('error');
 		titleEl.empty();
 		subEl.empty();
+		subEl.removeClass('error');
 		codeEl.empty();
 		bodyEl.empty();
 		_formEl.empty();

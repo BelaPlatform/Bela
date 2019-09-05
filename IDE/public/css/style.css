@@ -1143,6 +1143,8 @@ ul dl {
     color: #00bea4;
     font-size: 2em;
     font-family: space_bold; }
+    #popup h1.error {
+      color: #ff5e5b; }
   #popup h3 {
     color: rgba(0, 0, 0, 0.8);
     font-size: 1em;

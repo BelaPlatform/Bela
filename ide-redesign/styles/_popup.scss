@@ -38,6 +38,9 @@
     color: $teal-main;
     font-size: 2em;
     font-family: space_bold;
+    &.error {
+      color: $accent-red;
+    }
   }
   h3 {
     color: $grey-dark;
