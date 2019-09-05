@@ -1,8 +1,8 @@
 /*
- ____  _____ _		  _    
-| __ )| ____| |		 / \   
-|  _ \|  _| | |		/ _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _		  _
+| __ )| ____| |		 / \
+|  _ \|  _| | |		/ _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/	\_\
 
 The platform for ultra-low latency audio and sensor processing
@@ -41,12 +41,12 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	gPrintCount += context->analogFrames;
-	
+
 	if(gPrintCount >= (unsigned int)(context->analogSampleRate * 0.1)) {
 		gPrintCount = 0;
 		if(gIsStdoutTty)
 			rt_printf("\e[1;1H\e[2J");	// Command to clear the screen (on a terminal)
-		
+
 		/* Go through each multiplexer setting of each analog input and display the value */
 		for(unsigned int input = 0; input < context->analogInChannels; input++) {
 			rt_printf("Input %d: ", input);
@@ -71,12 +71,12 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example multiplexer_display/render.cpp
+\example multiplexer-display/render.cpp
 
 Display signals from the multiplexer capelet
 --------------------------------------------
 
-This sketch displays the values of up to 64 analog inputs connected by the 
+This sketch displays the values of up to 64 analog inputs connected by the
 multiplexer capelet. The capelet is a separate piece of hardware that attaches
 to the Bela cape.
 

@@ -1,8 +1,8 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 
 The platform for ultra-low latency audio and sensor processing
@@ -61,25 +61,25 @@ void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		float out[2] = {0};
-	   
+
 		for(int k = 0; k < NUM_OSCS; ++k){
-			
+
 			// Calculate the LFO amplitude
 			float LFO = sinf_neon(gPhasesLFO[k]);
 			gPhasesLFO[k] += gFrequenciesLFO[k] * gPhaseIncrement;
 			if(gPhasesLFO[k] > M_PI)
 				gPhasesLFO[k] -= 2.0f * (float)M_PI;
-			
+
 			// Calculate oscillator sinewaves and output them amplitude modulated
 			// by LFO sinewave squared.
-			// Outputs from the oscillators are summed in out[], 
+			// Outputs from the oscillators are summed in out[],
 			// with even numbered oscillators going to the left channel out[0]
 			// and odd numbered oscillators going to the right channel out[1]
 			out[k&1] += sinf_neon(gPhases[k]) * gScale * (LFO*LFO);
 			gPhases[k] += gFrequencies[k] * gPhaseIncrement;
 			if(gPhases[k] > M_PI)
 				gPhases[k] -= 2.0f * (float)M_PI;
-			
+
 		}
 		audioWrite(context, n, 0, out[0]);
 		audioWrite(context, n, 1, out[1]);
@@ -93,7 +93,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example sinetone_optimized_bank/render.cpp
+\example sinetone-optimized-bank/render.cpp
 
 Using optimized neon functions
 ---------------------------
@@ -107,4 +107,3 @@ The code is based on the sinetone/render.cpp project, with the following differe
   and we are using them for a weird additive synth
 
 */
-

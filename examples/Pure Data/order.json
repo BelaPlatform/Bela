@@ -1,0 +1,19 @@
+[
+  "getting-started",
+  "analog-in",
+  "analog-out",
+  "audio",
+  "digital",
+  "scope",
+  "sample-scrub",
+  "simple-fm",
+  "envelope-trigger",
+  "karplus-strong",
+  "rubber-duckie",
+  "hello-midi",
+  "midi-cv-midi",
+  "bela-modular",
+  "modular-synth",
+  "multiplexer-capelet",
+  "techno-world"
+]

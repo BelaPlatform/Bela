@@ -1,13 +1,14 @@
 [
-  "GUI",
-  "Basics",
+  "Fundamentals",
   "Digital",
   "Analog",
   "Audio",
   "Communication",
+  "GUI",
   "Sensors",
-  "DataLogging",
-  "PureData",
+  "Pure Data",
+  "SuperCollider",
+  "Csound",
   "Capelets",
   "Instruments",
   "terminal-only"
