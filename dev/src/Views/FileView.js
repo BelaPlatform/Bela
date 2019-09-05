@@ -37,36 +37,38 @@ class FileView extends View {
     };
 
 		// drag and drop file upload on editor
-    $('[data-overlay]').on('dragleave', (e) => {
-      $('[data-overlay]').removeClass('active')
-                         .removeClass('drag-upload');
+    var overlay = $('[data-overlay]');
+    overlay.on('dragleave', (e) => {
+      overlay.removeClass('drag-upload');
     });
 		$('body').on('dragenter dragover drop', (e) => {
 			e.stopPropagation();
 			e.preventDefault();
       if (e.type == 'dragenter') {
-        $('[data-overlay]').addClass('active')
-                           .addClass('drag-upload');
+        overlay.addClass('active')
+               .addClass('drag-upload');
       }
 			if (e.type === 'drop'){
 				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++){
-          console.log(e.originalEvent.dataTransfer.files[i].size);
+          // console.log(e.originalEvent.dataTransfer.files[i].size);
           // 20mb maximum drag and drop file size
           if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
-            $('[data-overlay]').addClass('no');
+            let that = this;
+            overlay.addClass('no');
             setTimeout(function(){
-              $('[data-overlay]').removeClass('active')
-                                 .removeClass('drag-upload')
-                                 .removeClass('no');
+              overlay.removeClass('no')
+                     .removeClass('drag-upload');
+              that.uploadSizeError();
             }, 1500);
+            return false;
           } else {
             this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
           }
           if (i == e.originalEvent.dataTransfer.files.length - 1) {
             setTimeout(function(){
-              $('[data-overlay]').removeClass('active')
-                                 .removeClass('drag-upload')
-                                 .removeClass('no');
+              overlay.removeClass('active')
+                     .removeClass('drag-upload')
+                     .removeClass('no');
             }, 1500);
           }
 				}
@@ -77,12 +79,12 @@ class FileView extends View {
 	}
 
 	// UI events
-		buttonClicked($element, e){
-			var func = $element.data().func;
-			if (func && this[func]){
-				this[func](func);
-			}
+	buttonClicked($element, e){
+		var func = $element.data().func;
+		if (func && this[func]){
+			this[func](func);
 		}
+	}
 
 	newFile(func){
 		// build the popup content
@@ -107,7 +109,25 @@ class FileView extends View {
 
 	}
 
-  uploadError(){
+  uploadSizeError(){
+    // build the popup content
+    popup.title("Error: File is too large")
+         .addClass("error");
+    popup.subtitle("The maximum size for uploading files via drag and drop interface is 20mb. Please click 'try again' to continue with the large file form.");
+
+    var form = [];
+    form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+    popup.form.append(form.join('')).off('submit').on('submit', e => {
+      e.preventDefault();
+      popup.hide();
+      this.uploadFile();
+    });
+    popup.show();
+  }
+
+  uploadFileError(){
     // build the popup content
     popup.title("Error: No file selected for upload")
          .addClass("error");
@@ -156,7 +176,7 @@ class FileView extends View {
         this.doLargeFileUpload(formData, file, location);
       } else {
         popup.hide();
-        this.uploadError();
+        this.uploadFileError();
       }
 		});
 
