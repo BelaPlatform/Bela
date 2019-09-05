@@ -1,5 +1,5 @@
 name=sndfile
-description=A convenience wrapper for libsndfile
+description=A convenience wrapper for libsndfile.<br>Examples:<br>&middot Audio/FFT-phase-vocoder<br>&middot Audio/sample-loader<br>&middot Audio/sample-piezo-trigger<br>&middot Audio/sample-streamer<br>&middot Extras/audio-capelet-test<br>&middot Extras/tank-wars<br>&middot terminal-only/filter-FIR<br>&middot terminal-only/filter-IIR<br>&middot terminal-only/samples 
 LDFLAGS=
 LDLIBS=-lsndfile
 

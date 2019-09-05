@@ -1,6 +1,6 @@
 name=ADSR
 version=1.0.0
-author=Nigel Redmon
+author=
 maintainer=Adan Benito<adan@bela.io>
 description=An ADSR envelope generator class
 url=

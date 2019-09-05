@@ -1,6 +1,6 @@
 name=Biquad
 version=1.0.0
-author=Nigel Redmon
+author=
 maintainer=Adan Benito<adan@bela.io>
 description=Biquad filter class.
 url=
