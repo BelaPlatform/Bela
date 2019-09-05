@@ -1,6 +1,11 @@
 # call this file from within the main Makefile, with all the variables exported, and 
 # after re-making $(PROJECT_LIBRARIES_MAKEFILE)
 
+#disable default rules, which would make it try to rebuild libraries/*/build/*.d when no such files exists
+.SUFFIXES:
+%.d: ;
+%.o: ;
+
 -include libraries/*/build/*.d # dependencies for each of the libraries' object files
 -include $(PROJECT_LIBRARIES_MAKEFILE)
 #this file will contain, e.g.:
@@ -16,17 +21,15 @@
 #LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
 #and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
 #either via a default Makefile.libraries, or using the library's custom one (if available)
-.SUFFIXES: #disable default rules, which would make it try to rebuild libraries/*/build/*.d when no such files exists
 .EXPORT_ALL_VARIABLES:
 libraries/%.o:
-	$(AT) LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
+	$(AT) { echo "$@" | grep -q "\*" && exit 0; } ; \
+	LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
+	{ [ -z "$$LIBRARYNAME" ] && exit 0; } ;  \
+	{ echo "$$LIBRARYNAME" | grep -q "\*" && exit 0; } ; \
 	echo Building library $$LIBRARYNAME; \
 	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
-	if [ -f $$MAKEFILE ];\
-	then { true; }; else { \
-		MAKEFILE=Makefile.libraries CC=$(CC) CXX=$(CXX); \
-	}; \
-	fi; \
+	[ ! -f $$MAKEFILE ] && MAKEFILE=Makefile.libraries; \
 	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE CC=$(CC) CXX=$(CXX) $@
 
 LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)

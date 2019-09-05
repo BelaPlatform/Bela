@@ -162,6 +162,9 @@ else
 fi
 error_handler $?
 
+# build libraries required for Pd
+ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME; for LIBRARY in Scope Midi; do make -f Makefile.libraries LIBRARY=\$LIBRARY; done"
+
 # a bunch of files to be processed manually to special locations
 ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do [ -d \"\$DIR\" ] && { make -C \"\$DIR\" install || exit 1; }; done"
 error_handler $?
@@ -170,7 +173,7 @@ error_handler $?
 ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME && for LIB in Scope Midi; do ./resources/tools/detectlibraries.sh -l \"\$LIB\"; done"
 error_handler $?
 
-# remove stale version of libraries on old images
+# remove stale version of libs from old images
 ssh "$BBB_ADDRESS" rm -rf /usr/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libprussdrv.a \"$BBB_BELA_HOME\"/lib/libNE10.a \"$BBB_BELA_HOME\"/lib/libmathneon.a
 error_handler $?
 
@@ -225,12 +228,11 @@ fi
 
 if [ "$UPDATE_IDE" -eq 1 ]
 then
-	[ "$ALWAYS_YES" -eq 0 ] && ALWAYS_YES_FLAG= || ALWAYS_YES_FLAG="-y"
 	ls ./scripts/update_IDE >/dev/null 2>/dev/null
 	if [ $? -eq 0 ]
 	then
 	  export BBB_ADDRESS BBB_BELA_HOME
-	  ./scripts/update_IDE "$ALWAYS_YES_FLAG" --no-frills
+	  ./scripts/update_IDE -y --no-frills
       [ "$FULL" -eq 1 ] && ssh "$BBB_ADDRESS" "make -C \"$BBB_BELA_HOME\" --no-print-directory idestart" 
 	else
 	  # run the IDE 
