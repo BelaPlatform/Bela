@@ -654,6 +654,9 @@ function deleteFile(data) {
                         data.fileData = 'File deleted - open another file to continue';
                         data.fileName = '';
                     }
+                    else {
+                        data.fileName = data.currentFile;
+                    }
                     data.readOnly = true;
                     return [2 /*return*/];
             }
