@@ -14,7 +14,7 @@ var guiSketch = new p5(( sketch ) => {
     
     sketch.mouseMoved = function() {
     	sketch.print(sketch.mouseX/sketch.width, sketch.mouseY/sketch.height);
-    	Bela_data.sendBuffer(0, 'float', [sketch.mouseX/sketch.width, sketch.mouseY/sketch.height]);	
+    	Bela.data.sendBuffer(0, 'float', [sketch.mouseX/sketch.width, sketch.mouseY/sketch.height]);	
     };
 }, 'gui');
 

@@ -101,7 +101,7 @@ bool setup(BelaContext *context, void *userData)
 	dateTimeComponents.push_back(0);// milliseconds
 
 	// Setup GUI. By default, the Bela GUI runs on port 5555 and address 'gui'
-	gui.setup(5555, "gui", context->projectName);
+	gui.setup(context->projectName);
 
 	return true;
 }

@@ -56,7 +56,7 @@ float gAnalogScale = 4.096; //volt
 bool setup(BelaContext *context, void *userData)
 {
 	// Setup GUI. By default, the Bela GUI runs on port 5555 and address 'gui'
-	gui.setup(5555, "gui", context->projectName);
+	gui.setup(context->projectName);
 	
 	gInverseAnalogSampleRate = 1/context->analogSampleRate;
 	return true; 

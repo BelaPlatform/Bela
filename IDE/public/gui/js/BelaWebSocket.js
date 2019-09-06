@@ -1,10 +1,10 @@
-class BelaWebSocket {
+export default class BelaWebSocket {
     constructor(port, address, ip = location.host) {
         this.port = port;
         this.address = address;
         this.ip = ip;
 
-        this.ws;
+        this.ws = null;
         this.connectInterval = 1500;
         this.url = "ws://" + this.ip + ":"+this.port+"/"+this.address;
 
@@ -14,6 +14,7 @@ class BelaWebSocket {
     connect(url) {
         this.ws = new WebSocket(url);
         var that = this;
+        this.ws.parent = that;
         this.ws.onopen = this.onOpen;
         this.ws.onclose = this.onClose;
         this.ws.onerror = this.onError;
@@ -28,62 +29,68 @@ class BelaWebSocket {
                     this.ws = new WebSocket(this.ws.url);
                 } catch (e) {
                 }
-                this.ws.onopen = this.onOpen;
-                this.ws.onclose = this.onClose;
-                this.ws.onerror = this.onError;
-                this.ws.onmessage = this.onMessage;
+                this.ws.parent = this;
+                this.ws.onopen = this.ws.parent.onOpen;
+                this.ws.onclose = this.ws.parent.onClose;
+                this.ws.onerror = this.ws.parent.onError;
+                this.ws.onmessage = this.ws.parent.onMessage;
         }, connectInterval)
     }
 
-    onClose = function(event) {
+    onClose(event) {
         console.log("Socket closed")
         // If socket was not closed normally
         if(event.code != 1000)
-            this.reconnect(this.connectInterval);
-    }.bind(this)
+        {
+            console.log("Reconnecting(1)...");
+            console.log(this.parent);
+            this.parent.reconnect(this.parent.connectInterval);
+        }
+    }
 
-    onError = function(err){
+    onError(err){
         console.log("Error: "+err.code);
         console.log(err);
 
         switch (err.code){
     		case 'ECONNREFUSED':
+                console.log("Reconnecting(2)...");
     			this.reconnect(this.connectInterval);
     			break;
     		default:
     			break;
         }
-    }.bind(this)
+    }
 
-    onOpen = function() {
-            console.log("Socket opened on %s\n", this.ws.url);
-            this.ws.binaryType = 'arraybuffer';
-            this.ws.onclose = this.onClose;
-            this.ws.onerror = this.onError;
-    }.bind(this)
+    onOpen() {
 
-    onMessage = function(msg) {
-        // console.log("New message received on %s\n", this.ws.url);
+            console.log("Socket opened on %s\n", this.url);
+            this.binaryType = 'arraybuffer';
+            this.onclose = this.parent.onClose;
+            this.onerror = this.parent.onError;
+    }
+
+    onData(data, parsedData) {
+        return false;
+    }
+
+    onMessage(msg) {
         let data = msg.data;
         let parsedData = isJson(data);
 
         if(parsedData) {
-            if(event.data == 'connection') {
+            if(parsedData.event.data == 'connection') {
                 let obj = {
                     event: "connection-reply"
                 };
                 print("Connection reply: \n" + obj);
                 obj = JSON.stringify(obj);
-                if (this.ws.readyState === 1)
-                    this.ws.send(obj);
+                if (this.readyState === 1)
+                    this.send(obj);
             }
         }
-        this.onData(data, parsedData);
-    }.bind(this)
-
-    onData = function(data, parsedData) {
-
-    }.bind(this)
+        this.parent.onData(data, parsedData);
+    }
 }
 
 function isJson(str) {
