@@ -521,7 +521,7 @@ endif
 # first make sure the Makefile included by Makefile.linkbela is up to date ...
 # ... then call Makefile.linkbela
 $(OUTPUT_FILE): $(ALL_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
-	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $(OUTPUT_FILE)
+	$(AT) $(MAKE) -f Makefile.linkbela -s --no-print-directory $(OUTPUT_FILE)
 
 endif # ifeq ($(SHOULD_BUILD),false)
 
