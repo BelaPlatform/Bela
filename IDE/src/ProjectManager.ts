@@ -308,6 +308,8 @@ export async function deleteFile(data: any){
   if (data.fileName == data.currentFile) {
     data.fileData = 'File deleted - open another file to continue';
   	data.fileName = '';
+  } else {
+    data.fileName = data.currentFile;
   }
 	data.readOnly = true;
 }
