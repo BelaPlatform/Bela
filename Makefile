@@ -507,6 +507,11 @@ ALL_OBJS := $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $
 PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.o=%.i) $(CPP_OBJS:%.o=%.ii)
 PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 
+#these rules do nothing, but keep make happy in case there is no .ii/.i file
+#(e.g.: when updating from a codebase that did not save preprocessed files)
+$(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/build/%.o ;
+$(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/build/%.o ;
+
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
 	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
 
