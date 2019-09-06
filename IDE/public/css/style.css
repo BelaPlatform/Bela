@@ -222,6 +222,7 @@ button,
   border: 1px solid #00bea4;
   background-color: #ffffff;
   border-radius: 3px;
+  color: #000;
   font-size: .8em;
   cursor: pointer;
   font-family: poppins_light;
@@ -819,6 +820,7 @@ ul.projectManager {
   .file-list .section .source-file,
   .file-list .section .source-text {
     cursor: pointer;
+    list-style: none;
     padding: 2px 0;
     text-indent: 22px; }
   .file-list .section .source-file {
