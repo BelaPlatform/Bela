@@ -1,8 +1,8 @@
 /*
- ____  _____ _		  _    
-| __ )| ____| |		 / \   
-|  _ \|  _| | |		/ _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _		  _
+| __ )| ____| |		 / \
+|  _ \|  _| | |		/ _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/	\_\
 
 The platform for ultra-low latency audio and sensor processing
@@ -128,16 +128,16 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
 		// Find out which multiplexer channel this frame belongs to
 		int muxChannel = multiplexerChannelForFrame(context, n);
-		
+
 		// Assign each input to the right filter
 		for(unsigned int ch = 0; ch < context->analogInChannels; ch++) {
 			int filterIndex = ch * context->multiplexerChannels + muxChannel;
-			
+
 			// Read sample
 			float input = analogRead(context, n, ch);
-			
+
 			// Calculate filtered output
-			float output = gCoeffB0 * input 
+			float output = gCoeffB0 * input
 							+ gCoeffB1 * gFilterLastInputs[filterIndex * 2]
 							+ gCoeffB2 * gFilterLastInputs[filterIndex * 2 + 1]
 							- gCoeffA1 * gFilterLastOutputs[filterIndex * 2]
@@ -145,13 +145,13 @@ void render(BelaContext *context, void *userData)
 
 			// Save the filter history
 			gFilterLastInputs[filterIndex*2 + 1] = gFilterLastInputs[filterIndex*2];
-			gFilterLastInputs[filterIndex*2] = input;			 
+			gFilterLastInputs[filterIndex*2] = input;
 			gFilterLastOutputs[filterIndex*2 + 1] = gFilterLastOutputs[filterIndex*2];
 			gFilterLastOutputs[filterIndex*2] = output;
-			
+
 			// Increment count (for determining sample rate)
 			gFilterSampleCounts[filterIndex]++;
-			
+
 			// Use output to control oscillator amplitude (with some headroom)
 			// Square it to de-emphasise low but nonzero values
 			gAmplitudes[filterIndex] = output * output / 4.f;
@@ -239,18 +239,18 @@ bool initialise_oscillators(float fundamental_frequency)
 	if(posix_memalign((void **)&gDAmplitudes, 16, gNumOscillators * sizeof(float))) {
 		rt_printf("Error allocating amplitude derivative buffer\n");
 		return false;
-	}	 
+	}
 
 	for(int n = 0; n < gNumOscillators; n++) {
 		// Randomise phases so they don't all line up as a high-amplitude pulse
 		gPhases[n] = (float)random() / (float)RAND_MAX;
-		
+
 		// For efficiency, frequency is expressed in change in wavetable position per sample, not Hz or radians
 		// Stretch the partials a little bit to sound more interesting and less synthetic
 		gFrequencies[n] = fundamental_frequency * powf(1.0 + n, 1.002) * (float)gWavetableLength / 44100.0;
-		
+
 		// Oscillators start silent
-		gAmplitudes[n] = 0.0; 
+		gAmplitudes[n] = 0.0;
 		gDFrequencies[n] = gDAmplitudes[n] = 0.0;
 	}
 
@@ -288,24 +288,24 @@ void print_results(void*)
 			rt_printf("%f ", sample);
 		}
 		rt_printf("\n");
-	}	 
+	}
 }
 
 /**
-\example multiplexer_spectrum/render.cpp
+\example multiplexer-spectrum/render.cpp
 
 Display and sonify filtered signals from the multiplexer capelet
 ----------------------------------------------------------------
 
-This sketch displays and sonifies the values of up to 64 analog inputs connected 
-by the multiplexer capelet, after lowpass filtering. The capelet is a separate 
+This sketch displays and sonifies the values of up to 64 analog inputs connected
+by the multiplexer capelet, after lowpass filtering. The capelet is a separate
 piece of hardware that attaches to the Bela cape.
 
 This sketch demonstrates the use of frame-by-frame querying of the multiplexer
 capelet. When enabled, each analog frame represents a different multiplexer
 setting. This sketch checks each frame and assigns it to the correct filter.
 
-As a demo, the amplitudes of each multiplexer input are used to control the 
+As a demo, the amplitudes of each multiplexer input are used to control the
 amplitudes of a bank of harmonically-tuned oscillators. You can hear the effect
 by taking a wire connected to 5V or 3.3V, holding it in one hand while running
 your finger along the (otherwise unconnected) inputs to the multiplexer capelet.
@@ -316,6 +316,6 @@ or with the -X command line option. The multiplexer capelet requires 8 analog
 inputs to work, and depending on the settings can use either 2, 4 or 8 multiplexer
 channels per analog input (for a total of 16, 32 or 64 inputs).
 
-The sample rate for each multiplexed input will be 11.025kHz (16 inputs), 
+The sample rate for each multiplexed input will be 11.025kHz (16 inputs),
 5.5kHz (32 inputs) or 2.75kHz (64 inputs).
 */

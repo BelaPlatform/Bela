@@ -1,8 +1,8 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 
 The platform for ultra-low latency audio and sensor processing
@@ -62,7 +62,7 @@ void cleanup(BelaContext *context, void *userData)
 
 
 /**
-\example sinetone_optimized/render.cpp
+\example sinetone-optimized/render.cpp
 
 Using optimized neon functions
 ---------------------------
@@ -76,4 +76,3 @@ The code is based on the sinetone/render.cpp project, with the following differe
   and we are using them for a weird additive synth
 
 */
-

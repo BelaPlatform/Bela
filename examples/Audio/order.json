@@ -1,2 +1,9 @@
 [
+  "delay",
+  "sample-loader",
+  "sample-piezo-trigger",
+  "tremolo",
+  "FFT-phase-vocoder",
+  "sample-streamer",
+  "sample-streamer-multi"
 ]
