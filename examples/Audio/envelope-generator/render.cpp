@@ -1,4 +1,5 @@
-/*
+ /**
+ * \example Audio/envelope-generator
  *
  * ADSR envelope generator
  * =======================
@@ -19,7 +20,7 @@
  * To learn more about ADSRs and how to use the ADSR library, make sure to check Nigel Redmon's fantastic blog:
  * https://www.earlevel.com/main/category/envelope-generators/
  *
- */
+ **/
 #include <Bela.h>
 #include <cmath>
 #include <libraries/ADSR/ADSR.h>

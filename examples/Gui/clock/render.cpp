@@ -1,5 +1,6 @@
-/*
- * 
+ /**
+ * \example Gui/clock
+ *
  * GUI clock
  * =========
  *
@@ -15,7 +16,7 @@
  * 
  * If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
  * 
- */
+ **/
 
 #include <Bela.h>
 #include <typeinfo>

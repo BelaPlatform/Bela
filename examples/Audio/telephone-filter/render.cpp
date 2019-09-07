@@ -1,4 +1,5 @@
-/*
+ /**
+ * \example Audio/telephone-fiter
  *
  * Telephone filter
  * ================
@@ -13,7 +14,7 @@
  * To learn more about Biquad filters and how to use the Biquad library, make sure to check Nigel Redmon's fantastic blog:
  * https://www.earlevel.com/main/category/digital-audio/filters/iir-filters/biquads/
  *
- */
+ **/
 #include <Bela.h>
 #include <libraries/Biquad/Biquad.h>
 

@@ -1,4 +1,5 @@
-/*
+/**
+ * \example Gui/basic
  * 
  * GUI basic
  * =========
@@ -16,7 +17,7 @@
  * 
  * If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
  * 
- */
+ **/
 #include <Bela.h>
 #include <libraries/Gui/Gui.h>
 
