@@ -162,7 +162,7 @@ class FileView extends View {
     var form = [];
     form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
     popup.form.append(form.join('')).off('submit').on('submit', e => {
       e.preventDefault();
       popup.hide();
@@ -614,7 +614,7 @@ class FileView extends View {
     		popup.subtitle(e);
 
     		var form = [];
-    		form.push('<button type="button" class="button popup cancel">' + json.popups.cancel + '</button>');
+    		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 
     		popup.find('.cancel').on('click', popup.hide );
         $('body').removeClass('uploading');
