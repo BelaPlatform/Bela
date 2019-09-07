@@ -2244,7 +2244,7 @@ var FileView = function (_View) {
 		// drag and drop file upload on editor
 		var overlay = $('[data-overlay]');
 		overlay.on('dragleave', function (e) {
-			overlay.removeClass('drag-upload');
+			overlay.removeClass('drag-upload').removeClass('active');
 		});
 		$('body').on('dragenter dragover drop', function (e) {
 			e.stopPropagation();

@@ -39,7 +39,8 @@ class FileView extends View {
 		// drag and drop file upload on editor
     var overlay = $('[data-overlay]');
     overlay.on('dragleave', (e) => {
-      overlay.removeClass('drag-upload');
+      overlay.removeClass('drag-upload')
+             .removeClass('active');
     });
 		$('body').on('dragenter dragover drop', (e) => {
 			e.stopPropagation();
