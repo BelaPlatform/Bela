@@ -2368,6 +2368,7 @@ var FileView = function (_View) {
 				popup.hide();
 				_this4.uploadFile();
 			});
+			popup.find('.cancel').on('click', popup.hide);
 			popup.show();
 		}
 	}, {
@@ -2388,6 +2389,7 @@ var FileView = function (_View) {
 				popup.hide();
 				_this5.uploadFile();
 			});
+			popup.find('.cancel').on('click', popup.hide);
 			popup.show();
 		}
 	}, {

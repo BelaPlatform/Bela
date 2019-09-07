@@ -150,6 +150,7 @@ class FileView extends View {
       popup.hide();
       this.uploadFile();
     });
+	popup.find('.cancel').on('click', popup.hide );
     popup.show();
   }
 
@@ -168,6 +169,7 @@ class FileView extends View {
       popup.hide();
       this.uploadFile();
     });
+	popup.find('.cancel').on('click', popup.hide );
     popup.show();
   }
 
