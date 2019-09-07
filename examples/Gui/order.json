@@ -1,6 +1,7 @@
 [
-  "Basic",
-  "Clock",
-  "MouseTrack",
-  "Graph"
+  "basic",
+  "simple",
+  "clock",
+  "mouse-track",
+  "graph"
 ]
