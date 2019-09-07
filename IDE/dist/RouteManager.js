@@ -50,7 +50,8 @@ function upload(req, res) {
 exports.upload = upload;
 function download_file(req, res) {
     var file = paths.projects + req.query.project + '/' + req.query.file;
-    res.setHeader('Content-disposition', 'attachment; filename=' + req.query.file);
+    var fileName = req.query.file.split('/').pop();
+    res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
     res.setHeader('Content-type', mime.getType(file));
     // this should really go through the file_manager lock - TODO
     fs.createReadStream(file).pipe(res);

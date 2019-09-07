@@ -42,7 +42,7 @@ class Gui
 		Gui(unsigned int port, std::string address);
 		~Gui();
 
-		int setup(unsigned int port, std::string address);
+		int setup(unsigned int port = 5555, std::string address = "gui");
 		/**
 		 * Sets the web socket communication between server and client.
 		 * Two different web socket connections will be configured, one for control data and the other one for raw binary data. 
@@ -51,7 +51,7 @@ class Gui
 		 * @param projectName Project name to be sent to via the web-socket to the client.
 		 * @returns O if web sockets have been configured.
 		 **/
-		int setup(unsigned int port, std::string address, std::string projectName);
+		int setup(std::string projectName, unsigned int port = 5555, std::string address = "gui");
 		void cleanup();
 
 		bool isConnected(){ return wsIsConnected; };

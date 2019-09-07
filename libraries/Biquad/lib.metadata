@@ -1,8 +1,8 @@
 name=Biquad
 version=1.0.0
-author=Nigel Redmon
+author=
 maintainer=Adan Benito<adan@bela.io>
-description=Biquad filter class.
+description=Biquad filter class.<br>Examples:<br>&middot Audio/telephone-filter
 url=
 board=*
 dependencies=

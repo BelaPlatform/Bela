@@ -1,6 +1,8 @@
 {
 	"popups": {
-    "cancel": "Cancel",
+    "generic": {
+      "cancel": "Cancel"
+    },
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
@@ -23,11 +25,23 @@
 			"input": "Your new file name",
 			"button": "Create file"
 		},
+    "create_new_folder": {
+			"title": "Create new folder",
+			"text": "Enter the new folder name.",
+			"input": "Your new folder name",
+			"button": "Create folder"
+		},
 		"rename_file": {
 			"title": "Rename this file?",
 			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"button": "Rename file"
+		},
+    "rename_folder": {
+			"title": "Rename this folder?",
+			"input": "The new folder name",
+			"text": "Enter the new folder name",
+			"button": "Rename folder"
 		},
 		"delete_project": {
 			"title": "Delete project ",
@@ -107,6 +121,13 @@
 			"cancel": "Don't reload, keep this version"
 		}
 	},
+  "file_view": {
+    "sources": "Sources",
+    "headers": "Headers",
+    "images": "Images",
+    "resources": "Resources",
+    "directories": "Directories"
+  },
 	"editor_view": {
 			"preview": "This is a preview - these objects are not editable in the browser.",
       "pd": {

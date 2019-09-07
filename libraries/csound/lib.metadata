@@ -1,5 +1,4 @@
 name=csound
-description=A convenience wrapper for libcsound
-LDFLAGS=
+description=A convenience wrapper for libcsound.<br>Examples:<br>&middot Csound/C++-libcsound-Control<br>&middot Csound/C++-libcsound-gain<br>&middot Csound/C++-libcsound-Loopback<br>&middot Csound/C++-libcsound-Sine<br>&middot Csound/C++-libcsound-Trigger
 LDLIBS=-lcsound
 

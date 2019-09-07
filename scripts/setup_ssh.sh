@@ -9,7 +9,7 @@ mkdir -p $HOME/.ssh # create the ssh folder if it does not exist
 printf "\nHost $BBB_HOST\nHostname $BBB_HOSTNAME\nUser $BBB_USER\nStrictHostKeyChecking=no\n\n" >> $HOME/.ssh/config 
 if [ $? -eq 0 ];
 then
-  printf "You can now login into the Beaglebone with\n\$ ssh $BBB_HOST\n"
+  printf "You can now login into the Bela board with\n\$ ssh $BBB_HOST\n"
 else
-  printf "Something went wrong. You should still be able to log into the BeagleBone with \n\$ ssh $BBB_USER@$BBB_HOSTNAME\n"
+  printf "Something went wrong. You should still be able to log into the Bela board with \n\$ ssh $BBB_USER@$BBB_HOSTNAME\n"
 fi

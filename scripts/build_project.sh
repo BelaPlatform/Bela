@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script compiles a Bela project on the BeagleBone Black and
+# This script compiles a Bela project on the board and
 # optionally runs it. Pass a directory path in the first argument. 
 # The source files in this directory are copied to the board and compiled.
 # set defaults unless variables are already set
@@ -24,7 +24,7 @@ usage()
 	usage_brief
 	echo "
 
-	This script copies a directory of source files to the BeagleBone, compiles
+	This script copies a directory of source files to the board, compiles
 	and runs it. The Bela core files should have first been copied over
 	using the \`update_board' script once.
 	
@@ -142,7 +142,7 @@ check_rsync && RSYNC_AVAILABLE=1 || RSYNC_AVAILABLE=0
 uploadBuildRun(){
 	[ $WATCH -eq 1 ] && mkdir -p "$TMP_DIR" && touch "$reference_time_file"
 	# Copy new source files to the board
-	printf "Copying new source files to BeagleBone..."
+	printf "Copying new source files to the board..."
 	if [ "$RSYNC_AVAILABLE" -eq 0 ];
 	then
 		echo "using scp..."

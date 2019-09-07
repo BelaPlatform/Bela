@@ -16,6 +16,7 @@
 ## LDLIBS=                -- libs to link in (e.g.: -lm )
 ## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
 ## DISTCC=              -- specify whether to use distcc (1) or not (0, default)
+## RELINK=              -- specify whether to force re-linking the project file (1) or not (0, default). Set it to 1 when developing a library.
 ###
 ##available targets: #
 .DEFAULT_GOAL := Bela
@@ -288,7 +289,7 @@ DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
-BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lseasocks # additional libraries needed by extra code (libbelaextra.so)
+BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 -lmathneon # additional libraries needed by extra code (libbelaextra.so)
 BELA_EXAMPLE_LIBS = -lmathneon # libraries commonly used by examples
 BELA_LDLIBS = $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS) $(BELA_EXAMPLE_LIBS)
 ifeq ($(PROJECT_TYPE),libpd)
@@ -386,6 +387,7 @@ ALL_DEPS += ./build/core/default_libpd_render.d
 # include all dependencies - necessary to force recompilation when a header is changed
 # (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
 -include $(ALL_DEPS)
+-include libraries/*/build/*.d # dependencies for each of the libraries' object files
 
 Bela: ## Builds the Bela program with all the optimizations
 Bela: $(OUTPUT_FILE)
@@ -505,13 +507,21 @@ ALL_OBJS := $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $
 PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.o=%.i) $(CPP_OBJS:%.o=%.ii)
 PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 
+#these rules do nothing, but keep make happy in case there is no .ii/.i file
+#(e.g.: when updating from a codebase that did not save preprocessed files)
+$(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/build/%.o ;
+$(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/build/%.o ;
+
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
 	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
 
+ifeq ($(RELINK),1)
+  $(shell rm -rf $(OUTPUT_FILE))
+endif
 # first make sure the Makefile included by Makefile.linkbela is up to date ...
 # ... then call Makefile.linkbela
 $(OUTPUT_FILE): $(ALL_OBJS) $(PROJECT_LIBRARIES_MAKEFILE)
-	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $(OUTPUT_FILE)
+	$(AT) $(MAKE) -f Makefile.linkbela -s --no-print-directory $(OUTPUT_FILE)
 
 endif # ifeq ($(SHOULD_BUILD),false)
 

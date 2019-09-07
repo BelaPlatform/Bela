@@ -8,9 +8,10 @@ function downloadObjectAsJson(exportObj, exportName, space, format) {
     downloadAnchorNode.remove();
 }
 
-function loadHtmlSection(section, location) {
+function loadHtmlSection(section, location, hide=true) {
     let promise = new Promise(function(resolve, reject) {
-        $(section).hide();
+        if(hide)
+            $(section).hide();
         $(section).load(location, function(responseTxt, statusTxt, xhr) {
             if (statusTxt == "success") {
                 resolve($(section));
@@ -115,4 +116,14 @@ function getUserProperties() {
 
 function getInstancesOf(objArray, constructor) {
     return objArray.filter((e) => { return (e instanceof constructor) });
+}
+
+function isJson(str) {
+	let data;
+    try {
+		data = JSON.parse(str);
+		return data;
+	} catch (e) {
+		return false;
+	}
 }

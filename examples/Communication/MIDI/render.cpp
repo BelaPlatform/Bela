@@ -1,8 +1,8 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 
 The platform for ultra-low latency audio and sensor processing
@@ -140,7 +140,7 @@ void render(BelaContext *context, void *userData)
 	 */
 
 	/*
-	 * A third alternative, the one currently active in this example, is to set a callback 
+	 * A third alternative, the one currently active in this example, is to set a callback
 	 * which gets called every time a new input message is available.
 	 * See midiMessageCallback above.
 	*/
@@ -180,7 +180,7 @@ void cleanup(BelaContext *context, void *userData)
 }
 
 /**
-\example 05-Communication/MIDI/render.cpp
+\example MIDI/render.cpp
 
 Connecting MIDI devices to Bela!
 -------------------------------
