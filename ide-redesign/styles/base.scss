@@ -96,6 +96,18 @@ hr {
   padding-top: 10px;
 }
 
+body {
+  &.uploading {
+    cursor: progress;
+    button {
+      &.submit {
+        opacity: 0.75!important;
+        cursor: auto!important;
+      }
+    }
+  }
+}
+
 ul {
 	font-family: inconsolata;
 }

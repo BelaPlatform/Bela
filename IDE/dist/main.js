@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express = require("express");
 var http = require("http");
+var multer = require("multer");
 var child_process = require("child_process");
 var socket_manager = require("./SocketManager");
 var file_manager = require("./FileManager");
@@ -123,6 +124,22 @@ function setup_routes(app) {
     app.use('/documentation', express.static(paths.Bela + 'Documentation/html'));
     app.use('/projects', express.static(paths.Bela + 'projects'));
     // ajax routes
+    var storage = multer.diskStorage({
+        destination: paths.uploads,
+        filename: function (req, file, callback) {
+            callback(null, file.originalname);
+            console.log('file is', file);
+        }
+    });
+    app.post('/uploads', function (req, res) {
+        var upload = multer({ storage: storage }).single('data');
+        upload(req, res, function (err) {
+            if (err) {
+                return res.end("Error uploading file.");
+            }
+            res.end("File is uploaded");
+        });
+    });
     // file and project downloads
     app.get('/download', routes.download);
     // doxygen xml

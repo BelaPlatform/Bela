@@ -2190,6 +2190,8 @@ module.exports = EditorView;
 },{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2227,11 +2229,6 @@ var FileView = function (_View) {
 
 		_this.listOfFiles = [];
 
-		var data = {
-			fileName: "",
-			project: ""
-		};
-
 		// hack to upload file
 		$('[data-upload-file-input]').on('change', function (e) {
 			for (var i = 0; i < e.target.files.length; i++) {
@@ -2239,13 +2236,48 @@ var FileView = function (_View) {
 			}
 		});
 
+		var data = {
+			fileName: "",
+			project: ""
+		};
+
 		// drag and drop file upload on editor
+		var overlay = $('[data-overlay]');
+		overlay.on('dragleave', function (e) {
+			overlay.removeClass('drag-upload').removeClass('active');
+		});
 		$('body').on('dragenter dragover drop', function (e) {
 			e.stopPropagation();
 			e.preventDefault();
+			if (e.type == 'dragenter') {
+				overlay.addClass('active').addClass('drag-upload');
+			}
 			if (e.type === 'drop') {
 				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
-					_this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+					// console.log(e.originalEvent.dataTransfer.files[i].size);
+					// 20mb maximum drag and drop file size
+					if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
+						var _ret = function () {
+							var that = _this;
+							overlay.addClass('no');
+							setTimeout(function () {
+								overlay.removeClass('no').removeClass('drag-upload');
+								that.uploadSizeError();
+							}, 1500);
+							return {
+								v: false
+							};
+						}();
+
+						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+					} else {
+						_this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+					}
+					if (i == e.originalEvent.dataTransfer.files.length - 1) {
+						setTimeout(function () {
+							overlay.removeClass('active').removeClass('drag-upload').removeClass('no');
+						}, 1500);
+					}
 				}
 			}
 			return false;
@@ -2319,14 +2351,91 @@ var FileView = function (_View) {
 			popup.show();
 		}
 	}, {
+		key: 'uploadSizeError',
+		value: function uploadSizeError() {
+			var _this4 = this;
+
+			// build the popup content
+			popup.title("Error: File is too large").addClass("error");
+			popup.subtitle("The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.");
+
+			var form = [];
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				popup.hide();
+				_this4.uploadFile();
+			});
+			popup.find('.cancel').on('click', popup.hide);
+			popup.show();
+		}
+	}, {
+		key: 'uploadFileError',
+		value: function uploadFileError() {
+			var _this5 = this;
+
+			// build the popup content
+			popup.title("Error: No file selected for upload").addClass("error");
+			popup.subtitle("No file was selected for upload");
+
+			var form = [];
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				popup.hide();
+				_this5.uploadFile();
+			});
+			popup.find('.cancel').on('click', popup.hide);
+			popup.show();
+		}
+	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			$('[data-upload-file-input]').trigger('click');
+			var _this6 = this;
+
+			// build the popup content
+			popup.title(json.popups.upload_file.title);
+			popup.subtitle(json.popups.upload_file.text);
+
+			var form = [];
+			$('[data-popup] form').attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
+			form.push('<input type="file" name="data" data-form-file></input>');
+			form.push('</br >');
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				e.preventDefault();
+				var file = $('[data-form-file]')[0];
+				var location = '/projects/basic';
+				var formEl = $('[data-popup] form')[0];
+				var formData = new FormData(formEl);
+				var popupBlock = $('[data-popup-nointeraction]');
+				if (file.value.length > 0) {
+					popupBlock.addClass('active');
+					$('body').addClass('uploading');
+					popupBlock.addClass('active');
+					popup.find('.confirm').attr('disabled', true);
+					_this6.doLargeFileUpload(formData, file, location);
+				} else {
+					popup.hide();
+					_this6.uploadFileError();
+				}
+			});
+
+			popup.find('.cancel').on('click', popup.hide);
+
+			popup.show();
 		}
 	}, {
 		key: 'renameFile',
 		value: function renameFile(e) {
-			var _this4 = this;
+			var _this7 = this;
 
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
@@ -2345,7 +2454,7 @@ var FileView = function (_View) {
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var newName = sanitise(popup.find('input[type=text]').val());
-				_this4.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });
+				_this7.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });
 				popup.hide();
 			});
 
@@ -2356,7 +2465,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'renameFolder',
 		value: function renameFolder(e) {
-			var _this5 = this;
+			var _this8 = this;
 
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
@@ -2374,7 +2483,7 @@ var FileView = function (_View) {
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var newName = sanitise(popup.find('input[type=text]').val());
-				_this5.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
+				_this8.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
 				popup.hide();
 			});
 
@@ -2385,7 +2494,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'deleteFile',
 		value: function deleteFile(e) {
-			var _this6 = this;
+			var _this9 = this;
 
 			// Get the name of the file to be deleted:
 			var name = $(e.target).data('name');
@@ -2400,7 +2509,7 @@ var FileView = function (_View) {
 
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
-				_this6.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
+				_this9.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 				popup.hide();
 			});
 
@@ -2421,7 +2530,7 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this7 = this;
+			var _this10 = this;
 
 			this.listOfFiles = files;
 
@@ -2540,43 +2649,43 @@ var FileView = function (_View) {
 						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						if (file_list_elements[i].name != i18n_dir_str) {
 							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + item.size + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
-								return _this7.openFile(e);
+								return _this10.openFile(e);
 							});
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this7.renameFile(e);
+								return _this10.renameFile(e);
 							});
 							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name).appendTo(listItem).on('click', function (e, projName) {
-								return _this7.downloadFile(e, data.currentProject);
+								return _this10.downloadFile(e, data.currentProject);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this7.deleteFile(e);
+								return _this10.deleteFile(e);
 							});
 						} else {
 							section.addClass('is-dir');
 							var itemText = $('<div></div>').addClass('source-text').text(item.name).data('file', item.name).appendTo(listItem);
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFolder').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this7.renameFolder(e);
+								return _this10.renameFolder(e);
 							});
 							var newButton = $('<button></button>').addClass('file-new file-button fileManager').attr('title', 'New File').attr('data-func', 'newFile').attr('data-folder', item.name).appendTo(listItem).on('click', function () {
-								return _this7.newFile('newFile', event.target.dataset.folder);
+								return _this10.newFile('newFile', event.target.dataset.folder);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this7.deleteFile(e);
+								return _this10.deleteFile(e);
 							});
 							var subList = $('<ul></ul>');
 							for (var k = 0; k < item.children.length; k++) {
 								var child = item.children[k];
 								var subListItem = $('<li></li>').addClass('source-text').text(child.name).data('file', item.name + "/" + child.name).on('click', function (e) {
-									return _this7.openFile(e);
+									return _this10.openFile(e);
 								});
 								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e) {
-									return _this7.deleteFile(e);
+									return _this10.deleteFile(e);
 								});
 								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', child.name).attr('data-folder', item.name).appendTo(subListItem).on('click', function (e) {
-									return _this7.renameFile(e);
+									return _this10.renameFile(e);
 								});
 								var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e, projName) {
-									return _this7.downloadFile(e, data.currentProject);
+									return _this10.downloadFile(e, data.currentProject);
 								});
 								subListItem.appendTo(subList);
 							}
@@ -2618,7 +2727,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'doFileUpload',
 		value: function doFileUpload(file) {
-			var _this8 = this;
+			var _this11 = this;
 
 			if (uploadingFile) {
 				fileQueue.push(file);
@@ -2676,11 +2785,11 @@ var FileView = function (_View) {
 						askForOverwrite = false;
 						overwriteAction = 'upload';
 					}
-					_this8.actuallyDoFileUpload(file, true);
+					_this11.actuallyDoFileUpload(file, true);
 					popup.hide();
 					uploadingFile = false;
 					if (fileQueue.length) {
-						_this8.doFileUpload(fileQueue.pop());
+						_this11.doFileUpload(fileQueue.pop());
 					}
 				});
 
@@ -2692,7 +2801,7 @@ var FileView = function (_View) {
 					popup.hide();
 					uploadingFile = false;
 					forceRebuild = false;
-					if (fileQueue.length) _this8.doFileUpload(fileQueue.pop());
+					if (fileQueue.length) _this11.doFileUpload(fileQueue.pop());
 				});
 
 				popup.show();
@@ -2708,18 +2817,52 @@ var FileView = function (_View) {
 			} else {
 
 				this.actuallyDoFileUpload(file, !askForOverwrite);
-
 				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			}
 		}
 	}, {
+		key: 'doLargeFileUpload',
+		value: function doLargeFileUpload(formData, file, location, force) {
+			var fileName = file.value.split('\\').pop();
+			var popupBlock = $('[data-popup-nointeraction]').addClass('active');
+			var that = this;
+			$.ajax({
+				type: "POST",
+				url: '/uploads',
+				enctype: 'multipart/form-data',
+				processData: false,
+				contentType: false,
+				data: formData,
+				success: function success(r) {
+					that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
+					$('body').removeClass('uploading');
+					popupBlock.removeClass('active');
+					popup.hide();
+				},
+				error: function error(e) {
+					popup.hide();
+					popup.title(json.popups.upload_file_error.title);
+					popup.subtitle(e);
+
+					var form = [];
+					form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+					popup.find('.cancel').on('click', popup.hide);
+					$('body').removeClass('uploading');
+					popupBlock.removeClass('active');
+					popup.show();
+				}
+			});
+			this.emit('force-rebuild');
+		}
+	}, {
 		key: 'actuallyDoFileUpload',
 		value: function actuallyDoFileUpload(file, force) {
-			var _this9 = this;
+			var _this12 = this;
 
 			var reader = new FileReader();
 			reader.onload = function (ev) {
-				return _this9.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+				return _this12.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
 			};
 			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {
@@ -5650,8 +5793,10 @@ var popup = {
 	hide: function hide(keepOverlay) {
 		if (keepOverlay !== 'keep overlay') _overlay.removeClass('active');
 		parent.removeClass('active');
+		titleEl.removeClass('error');
 		titleEl.empty();
 		subEl.empty();
+		subEl.removeClass('error');
 		codeEl.empty();
 		bodyEl.empty();
 		_formEl.empty();
@@ -5777,6 +5922,14 @@ module.exports={
 			"title": "Delete this file?",
 			"text": "Warning: There is no undo.",
 			"button": "Delete file"
+		},
+    "upload_file": {
+			"title": "Upload a file?",
+			"text": "Select a file to upload.",
+			"button": "Upload file"
+		},
+    "upload_file_error": {
+			"title": "Uploading file error"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
@@ -5909,15 +6062,16 @@ module.exports.sanitise = sanitise;
 
 },{}],21:[function(require,module,exports){
 module.exports=[
-  "GUI",
-  "Basics",
+  "Fundamentals",
   "Digital",
   "Analog",
   "Audio",
   "Communication",
+  "Gui",
   "Sensors",
-  "DataLogging",
   "PureData",
+  "SuperCollider",
+  "Csound",
   "Capelets",
   "Instruments",
   "terminal-only"

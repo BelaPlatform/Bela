@@ -24,25 +24,54 @@ class FileView extends View {
 
 		this.listOfFiles = [];
 
-		var data = {
-			fileName: "",
-			project: ""
-		};
-
 		// hack to upload file
     $('[data-upload-file-input]').on('change', (e) => {
-  			for (var i=0; i < e.target.files.length; i++){
+			for (var i=0; i < e.target.files.length; i++){
 				this.doFileUpload(e.target.files[i]);
 			}
 		});
 
+    var data = {
+      fileName: "",
+      project: ""
+    };
+
 		// drag and drop file upload on editor
+    var overlay = $('[data-overlay]');
+    overlay.on('dragleave', (e) => {
+      overlay.removeClass('drag-upload')
+             .removeClass('active');
+    });
 		$('body').on('dragenter dragover drop', (e) => {
 			e.stopPropagation();
 			e.preventDefault();
+      if (e.type == 'dragenter') {
+        overlay.addClass('active')
+               .addClass('drag-upload');
+      }
 			if (e.type === 'drop'){
-				for (var i=0; i<e.originalEvent.dataTransfer.files.length; i++){
-					this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++){
+          // console.log(e.originalEvent.dataTransfer.files[i].size);
+          // 20mb maximum drag and drop file size
+          if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
+            let that = this;
+            overlay.addClass('no');
+            setTimeout(function(){
+              overlay.removeClass('no')
+                     .removeClass('drag-upload');
+              that.uploadSizeError();
+            }, 1500);
+            return false;
+          } else {
+            this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+          }
+          if (i == e.originalEvent.dataTransfer.files.length - 1) {
+            setTimeout(function(){
+              overlay.removeClass('active')
+                     .removeClass('drag-upload')
+                     .removeClass('no');
+            }, 1500);
+          }
 				}
 			}
 			return false;
@@ -107,8 +136,83 @@ class FileView extends View {
 
 	}
 
+  uploadSizeError(){
+    // build the popup content
+    popup.title("Error: File is too large")
+         .addClass("error");
+    popup.subtitle("The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.");
+
+    var form = [];
+    form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+    popup.form.append(form.join('')).off('submit').on('submit', e => {
+      e.preventDefault();
+      popup.hide();
+      this.uploadFile();
+    });
+	popup.find('.cancel').on('click', popup.hide );
+    popup.show();
+  }
+
+  uploadFileError(){
+    // build the popup content
+    popup.title("Error: No file selected for upload")
+         .addClass("error");
+    popup.subtitle("No file was selected for upload");
+
+    var form = [];
+    form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+    popup.form.append(form.join('')).off('submit').on('submit', e => {
+      e.preventDefault();
+      popup.hide();
+      this.uploadFile();
+    });
+	popup.find('.cancel').on('click', popup.hide );
+    popup.show();
+  }
+
 	uploadFile(func){
-		$('[data-upload-file-input]').trigger('click');
+    // build the popup content
+		popup.title(json.popups.upload_file.title);
+		popup.subtitle(json.popups.upload_file.text);
+
+		var form = [];
+    $('[data-popup] form').attr('action', '/uploads')
+                          .attr('enctype','multipart/form-data')
+                          .attr('method', 'POST');
+    form.push('<input type="file" name="data" data-form-file></input>');
+		form.push('</br >');
+    form.push('</br >');
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+		popup.form.append(form.join('')).off('submit').on('submit', e => {
+			e.preventDefault();
+      var file = $('[data-form-file]')[0];
+      var location = '/projects/basic';
+      var formEl = $('[data-popup] form')[0];
+      var formData = new FormData(formEl);
+      var popupBlock = $('[data-popup-nointeraction]');
+      if (file.value.length > 0) {
+        popupBlock.addClass('active');
+        $('body').addClass('uploading');
+        popupBlock.addClass('active');
+        popup.find('.confirm')
+             .attr('disabled', true);
+        this.doLargeFileUpload(formData, file, location);
+      } else {
+        popup.hide();
+        this.uploadFileError();
+      }
+		});
+
+		popup.find('.cancel').on('click', popup.hide );
+
+		popup.show();
+
 	}
 
 	renameFile(e){
@@ -485,11 +589,44 @@ class FileView extends View {
 		} else {
 
 			this.actuallyDoFileUpload(file, !askForOverwrite);
-
 			if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 
 		}
 	}
+
+  doLargeFileUpload(formData, file, location, force){
+    var fileName = file.value.split('\\').pop();
+    var popupBlock = $('[data-popup-nointeraction]').addClass('active');
+    var that = this;
+    $.ajax({
+      type: "POST",
+      url: '/uploads',
+      enctype: 'multipart/form-data',
+      processData: false,
+      contentType: false,
+      data: formData,
+      success: function(r){
+        that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
+        $('body').removeClass('uploading');
+        popupBlock.removeClass('active');
+        popup.hide();
+      },
+      error: function(e) {
+        popup.hide();
+        popup.title(json.popups.upload_file_error.title);
+    		popup.subtitle(e);
+
+    		var form = [];
+    		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+    		popup.find('.cancel').on('click', popup.hide );
+        $('body').removeClass('uploading');
+        popupBlock.removeClass('active');
+    		popup.show();
+      }
+    });
+    this.emit('force-rebuild');
+  }
 
 	actuallyDoFileUpload(file, force){
 		var reader = new FileReader();

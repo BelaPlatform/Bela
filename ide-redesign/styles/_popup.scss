@@ -1,10 +1,22 @@
+#popup-nointeraction {
+  display: none;
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  &.active {
+    display: block;
+    z-index: 10000;
+  }
+}
+
 #popup {
   background: white;
   border: 1px solid $grey-mid;
 	display: none;
 	left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
-  max-height: 60vh;
   min-height: 100px;
   max-height: 500px;
   overflow: hidden;
@@ -26,6 +38,9 @@
     color: $teal-main;
     font-size: 2em;
     font-family: space_bold;
+    &.error {
+      color: $accent-red;
+    }
   }
   h3 {
     color: $grey-dark;
@@ -134,5 +149,11 @@
     top: 0;
     width: 100vw;
     z-index: 9998;
+    &.drag-upload {
+      background: rgba(0, 255, 122, 0.3);
+      &.no {
+        background: rgba(255, 0, 0, 0.3);
+      }
+    }
   }
 }

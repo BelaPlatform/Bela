@@ -110,6 +110,12 @@ hr {
   display: block;
   padding-top: 10px; }
 
+body.uploading {
+  cursor: progress; }
+  body.uploading button.submit {
+    opacity: 0.75 !important;
+    cursor: auto !important; }
+
 ul {
   font-family: inconsolata; }
 
@@ -1112,13 +1118,23 @@ ul dl {
     fill: rgba(0, 255, 0, 0.6);
     stroke: none; }
 
+#popup-nointeraction {
+  display: none;
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw; }
+  #popup-nointeraction.active {
+    display: block;
+    z-index: 10000; }
+
 #popup {
   background: white;
   border: 1px solid #bdbdbd;
   display: none;
   left: calc((100% / 2) - 300px);
   margin-bottom: 10px;
-  max-height: 60vh;
   min-height: 100px;
   max-height: 500px;
   overflow: hidden;
@@ -1138,6 +1154,8 @@ ul dl {
     color: #00bea4;
     font-size: 2em;
     font-family: space_bold; }
+    #popup h1.error {
+      color: #ff5e5b; }
   #popup h3 {
     color: rgba(0, 0, 0, 0.8);
     font-size: 1em;
@@ -1225,6 +1243,10 @@ ul dl {
   top: 0;
   width: 100vw;
   z-index: 9998; }
+  #overlay.active.drag-upload {
+    background: rgba(0, 255, 122, 0.3); }
+    #overlay.active.drag-upload.no {
+      background: rgba(255, 0, 0, 0.3); }
 
 ::-webkit-scrollbar {
   width: 12px; }
