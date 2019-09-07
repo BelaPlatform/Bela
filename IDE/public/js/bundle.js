@@ -2357,7 +2357,7 @@ var FileView = function (_View) {
 
 			// build the popup content
 			popup.title("Error: File is too large").addClass("error");
-			popup.subtitle("The maximum size for uploading files via drag and drop interface is 20mb. Please click 'try again' to continue with the large file form.");
+			popup.subtitle("The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.");
 
 			var form = [];
 			form.push('</br >');
