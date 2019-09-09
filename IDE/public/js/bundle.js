@@ -2218,6 +2218,7 @@ var json = require('../site-text.json');
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
+var absIndeces = ['pd'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -2551,7 +2552,7 @@ var FileView = function (_View) {
 
 			var headers = [];
 			var sources = [];
-			var images = [];
+			var abstractions = [];
 			var resources = [];
 			var directories = [];
 			var images = [];
@@ -2591,6 +2592,8 @@ var FileView = function (_View) {
 							images.push(_item);
 						} else if (ext == "pd" && _item.name == "_main.pd") {
 							sources.push(_item);
+						} else if (ext == "pd") {
+							abstractions.push(_item);
 						} else if (_item) {
 							resources.push(_item);
 						}
@@ -2625,6 +2628,9 @@ var FileView = function (_View) {
 			sources.sort(function (a, b) {
 				return a.name == render ? -1 : b.name == render ? 1 : 0;
 			});
+			abstractions.sort(function (a, b) {
+				return a.name - b.name;
+			});
 			images.sort(function (a, b) {
 				return a.name - b.name;
 			});
@@ -2635,22 +2641,25 @@ var FileView = function (_View) {
 				return a.name - b.name;
 			});
 
-			var file_list_elements = [sources, headers, images, resources, directories];
+			var file_list_elements = [sources, headers, abstractions, images, resources, directories];
 			file_list_elements[0].name = json.file_view.sources;
 			file_list_elements[1].name = json.file_view.headers;
-			file_list_elements[2].name = json.file_view.images;
-			file_list_elements[3].name = json.file_view.resources;
-			file_list_elements[4].name = json.file_view.directories;
+			file_list_elements[2].name = json.file_view.abstractions;
+			file_list_elements[3].name = json.file_view.images;
+			file_list_elements[4].name = json.file_view.resources;
+			file_list_elements[5].name = json.file_view.directories;
 			var i18n_dir_str = json.file_view.directories;
 
 			// Build file structure by listing the contents of each section (if they exist)
 
 			for (var i = 0; i < file_list_elements.length; i++) {
+				console.log(file_list_elements[i].name + ' is ' + file_list_elements[i].length);
 
 				if (file_list_elements[i].length) {
 
 					var section = $('<div></div>').addClass('section');
 					$('<p></p>').addClass('file-heading').html(file_list_elements[i].name).appendTo(section);
+					console.log('current sec: ' + file_list_elements[i].name);
 					var fileList = $('<ul></ul>').addClass('sub-file-list');
 
 					for (var j = 0; j < file_list_elements[i].length; j++) {
@@ -6012,6 +6021,7 @@ module.exports={
   "file_view": {
     "sources": "Sources",
     "headers": "Headers",
+    "abstractions": "Abstractions",
     "images": "Images",
     "resources": "Resources",
     "directories": "Directories"
