@@ -233,7 +233,6 @@ void process_fft_background(void*) {
 
 void render(BelaContext* context, void* userData)
 {
-	float* audioOut = context->audioOut;
 	int numAudioFrames = context->audioFrames;
 	// ------ this code internal to the demo; leave as is ----------------
 

@@ -43,7 +43,6 @@ const int triggInPins[nPinsMax] = {15, 14, 1, 3};
 const int sw1Pin = 6;
 const int ledPins[nPinsMax] = {2, 4, 8, 9};
 const int pwmPin = 7;
-const int audioPins[2] = {0, 1};
 
 const int buttonPins[gNumButtonsMax] = {sw1Pin, triggInPins[1], triggInPins[2], triggInPins[3]};
 const int cvPins[gNumCVsMax] = {0, 1, 2, 3, 4, 5, 6, 7};

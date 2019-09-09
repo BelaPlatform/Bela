@@ -74,8 +74,6 @@ bool setup(BelaContext *context, void *userData)
         snprintf(filename, 32, "number%d.wav", i);
         
         gAudioChannelBufferLengths[i] = getNumFrames(string(filename));
-        if(gAudioChannelBufferLengths[i] < 0)
-            return false;
         gAudioChannelBuffers[i] = (float *)malloc(gAudioChannelBufferLengths[i] * sizeof(float));
         if(getSamples(string(filename), gAudioChannelBuffers[i], 0, 0, 
                       gAudioChannelBufferLengths[i] - 1) != 0)

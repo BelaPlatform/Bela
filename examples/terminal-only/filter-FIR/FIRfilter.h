@@ -9,7 +9,7 @@
 #define FIRFILTER_H_
 
 
-#include <ne10/NE10.h>
+#include <libraries/ne10/NE10.h>
 
 #define FILTER_TAP_NUM 31
 

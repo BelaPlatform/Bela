@@ -24,7 +24,7 @@
 #include <mntent.h>		// to check if device is mounted
 #include <sys/mount.h>	// mount()
 #include <sys/time.h>	// elapsed time
-#include <ne10/NE10.h>	// neon library
+#include <libraries/ne10/NE10.h>	// neon library
 #include <algorithm>    // std::sort
 
 // thread priority

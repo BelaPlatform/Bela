@@ -169,7 +169,7 @@ void I2C_MPR121::writeRegister(uint8_t reg, uint8_t value) {
 
 	if(write(i2C_file, buf, 2) != 2)
 	{
-		cout << "Failed to write register " << (int)reg << " on MPR121\n";
+		std::cout << "Failed to write register " << (int)reg << " on MPR121\n";
 		return;
 	}
 }

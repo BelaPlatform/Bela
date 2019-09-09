@@ -50,7 +50,6 @@ int loadSoundFile(const string& path, float **buffer, int *bufferLength)
 		return 1;
 	}
 
-	int subformat = sfinfo.format & SF_FORMAT_SUBMASK;
 	int readcount = sf_read_float(sndfile, *buffer, *bufferLength);
 
 	// Pad with zeros in case we couldn't read whole file

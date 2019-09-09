@@ -50,7 +50,6 @@ const int kMaxState = 25;
 // . g f e d c b a
 //const unsigned char kBELA[4] = {0x7C, 0x79, 0x38, 0x77};
 const unsigned char kBELA[4] = {0x7C, 0x7B, 0x38, 0x5F};
-const unsigned char kPerimeter[6] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20};
 
 int gCharacterToDisplay[4] = {0, 0, 0, 0};
 	
