@@ -1,276 +1,299 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>BelaScope</title>
-		<link rel="stylesheet" type="text/css" href="stylesheet.css" />
-	</head>
-	<body>
-		
-		<div class="scopeWrapper">
-			<div class="buttonWrapper">
-				<button id="runButton" style="display:none;">run</button>
-				<button id="stopButton" style="display:none;">stop</button>
-				<button id="controlsButton">controls</button>
-				<button id="oneShot" style="display:none;">one-shot</button>
-				<span id="ide-cpu">ide:</span>
-				<span id="bela-cpu">bela:</span>
-				<span id="scopeMouseX">x:</span>
-				<span id="scopeMouseY">y:</span>
-				<span id="scopeStatus" class="scope-status-waiting">waiting</span>
-			</div>
-			<div id="inactive-overlay"></div>
-			<canvas id="scopeBG"></canvas>
-			<div id="controlPanel" class="hidden scopeControls-parent channelView-parent">
-				<div id="mainColumn" class="cpColumn">
-				
-					<div id="modeControls">
-						<h1>Plot Mode</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td>Mode:</td>
-									<td>
-										<select class="scopeControls" data-key="plotMode">
-											<option value="0" selected>Time-Domain</option>
-											<option value="1">FFT</option>
-										</select>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					
-					<div id="axisControls">
-						<h1>X-Axis</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td><span class="xAxisUnits">ms</span>/div:</td>
-									<td><span class="xUnit-display"></span><span class="xAxisUnits">ms</span></td>
-								</tr>
-								<tr>
-									<td>Zoom:</td>
-									<td>
-										<button class="scopeControls" data-key="upSampling" id="zoomUp">in</button>
-										<button class="scopeControls" data-key="downSampling" id="zoomDown">out</button>
-										<span class="zoom-display">100%</span>
-									</td>
-								</tr>
-								<tr>
-									<td>Offset (px):</td>
-									<td>
-										<input class="scopeControls" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1"></input>
-										<input class="scopeControls" data-key="xOffset" type="number" value="0"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Hold Off (ms):</td>
-									<td>
-										<input  class="scopeControls" data-key="holdOff" type="range" min="0" max="1000" value="0" step="1"></input>
-										<input class="scopeControls" data-key="holdOff" type="number" value="0" step="1" min="0"></input>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					
-					<div id="triggerControls">
-						<h1>Trigger</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td>Mode:</td>
-									<td>
-										<select  class="scopeControls" data-key="triggerMode">
-											<option value="0" selected>Auto</option>
-											<option value="1">Normal</option>
-											<option value="2">Custom</option>
-											<!--<option value="oneShot">One-Shot</option>-->
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td>Channel:</td>
-									<td>
-										<select  class="scopeControls" data-key="triggerChannel">
-											<option value="0" selected>1</option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td>Direction:</td>
-									<td>
-										<select class="scopeControls" data-key="triggerDir">
-											<option value="0" selected>Positive</option>
-											<option value="1">Negative</option>
-											<option value="2">Bi-Directional</option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td>Level:</td>
-									<td>
-										<input class="scopeControls" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01"></input>
-										<input class="scopeControls" data-key="triggerLevel" type="number" value="0" step="0.01"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Interpolation:</td>
-									<td>
-										<select class="scopeControls" data-key="interpolation">
-											<option value="0" selected>Linear</option>
-											<option value="1">None</option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td>One-Shot:</td>
-									<td><button id="oneshotButton" class="scopeControls" data-key="scopeOneShot">one-shot</button></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					
-					<div id="FFTControls" class="hidden">
-						<h1>FFT</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td>Length (samples):</td>
-									<td>
-										<select class="scopeControls" data-key="FFTLength">
-											<option value="128">128</option>
-											<option value="256">256</option>
-											<option value="512">512</option>
-											<option value="1024" selected>1024</option>
-											<option value="2048">2048</option>
-											<option value="4096">4096</option>
-											<option value="8192">8192</option>
-											<option value="16384">16384</option>
-											<option value="32768">32768</option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td>X-Axis:</td>
-									<td>
-										<select class="scopeControls" data-key="FFTXAxis">
-											<option value="0" selected>Linear</option>
-											<option value="1">Logarithmic</option>
-										</select>
-									</td>
-								</tr>
-								<tr>
-									<td>Y-Axis:</td>
-									<td>
-										<select class="scopeControls" data-key="FFTYAxis">
-											<option value="0" selected>Normalised</option>
-											<option value="1">Decibels</option>
-										</select>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					
-					<div id="miscControls">
-						<h1>Misc</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td>Pause Plotting:</td>
-									<td><button id="pauseButton" class="scopeControls" data-key="scopePause">pause</button></td>
-								</tr>
-								<tr>
-									<td>Save Image:</td>
-									<td><a href="" download="scope" id="saveCanvas"><button>Save</button></a></td>
-								</tr>
-								<tr>
-									<td>Export CSV:</td>
-									<td><a href="" download="scopeData.csv" id="saveCanvasData"><button>Export</button></a></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					
-				</div> <!-- main column -->
-				
-				<div id="channelColumn" class="cpColumn">
-					<div id="channelViewChannel0" class="channelView">
-						<h1>Channel 1</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td>Attenuation:</td>
-									<td>
-										<input class="channelView" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01">
-										<input class="channelView" data-key="yAmplitude" data-channel="0" type="number" value="1" step="0.01"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Offset:</td>
-									<td>
-										<input class="channelView" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01"></input>
-										<input class="channelView" data-key="yOffset" data-channel="0" type="number" value="0" step="0.01"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Weight:</td>
-									<td>
-										<input class="channelView" data-key="lineWeight" data-channel="0" type="range" value="1.5" min="1" max="10" step="0.1"></input>
-										<input class="channelView" data-key="lineWeight" data-channel="0" type="number" value="1.5" min="1" max="10" step="0.1"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Colour:</td>
-									<td>
-										<input class="channelView" data-key="color" data-channel="0" type="color" value="#ff0000"></input>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-				
-				<div id="sliderColumn" class="cpColumn">
-					<div id="scopeSlider0" class="sliderView">
-						<h1>Slider</h1>
-						<table>
-							<tbody>
-								<tr>
-									<td>Min:</td>
-									<td>
-										<input class="sliderView" data-key="min" data-slider="0" type="number" value="0" step="0.01"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Max:</td>
-									<td>
-										<input class="sliderView" data-key="max" data-slider="0" type="number" value="1" step="0.01"></input>
-									</td>
-								</tr>
-								<tr>
-									<td>Step:</td>
-									<td>
-										<input class="sliderView" data-key="step" data-slider="0" type="number" value="0.01" step="0.001"></input>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-						<input class="sliderView" data-key="value" data-slider="0" type="range" value="0" min="0" max="1" step="0.01"></input>
-						<input class="sliderView" data-key="value" data-slider="0" type="number" value="0" step="0.01"></input>
-					</div>
-				</div>
-				
-			</div>
-		</div>
+  <head>
+    <meta charset="utf-8">
+    <title>Bela Oscilloscope</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" />
+  </head>
+  <body>
 
-		<script src="js/jquery.js"></script>
-		<script src="../socket.io/socket.io.js"></script>
-		<script src="js/polyfill.js"></script>
-		<script src="js/pixi.js"></script>
-		<script src="js/bundle.js"></script>
-		
-	</body>
+    <div class="buttonWrapper">
+      <button id="controlsButton">Toggle controls</button>
+      <div class="top">
+        <div class="label">
+          <p>Plot mode:</p>
+        </div>
+        <div class="value">
+          <span class="mode-selector">
+            <span class="mini-dropdown">
+              <select class="scope-controls" data-key="plotMode">
+                <option value="0" selected>Time-Domain</option>
+                <option value="1">FFT</option>
+              </select>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <span id="ide-cpu">ide:</span>
+      <span id="bela-cpu">Bela CPU:</span>
+      <span id="scopeMouseX">Mouse X position:</span>
+      <span id="scopeMouseY">Mouse Y position:</span>
+      <span id="scopeStatus" class="scope-status-waiting">waiting</span>
+    </div>
+
+    <div id="control-panel" class="hidden scope-controls-parent channelView-parent">
+      <div class="control-panel-column">
+        <div class="control-section axis-controls" id="TimeDomain">
+
+          <h3>X-Axis</h3>
+          <div class="block-section">
+            <div class="scope-label">
+              <span class="xAxisUnits"><p>ms</p></span><p>/div:</p>
+            </div>
+            <div class="slider value ms">
+              <span class="xUnit-display"></span>
+            </div>
+            <div class="slider range">
+              <button class="scope-controls" data-key="upSampling" id="zoomUp">Zoom in</button>
+              <button class="scope-controls" data-key="downSampling" id="zoomDown">Zoom out</button>
+            </div>
+          </div>
+          <div class="block-section slider-line">
+            <div class="scope-label">
+              <p>Offset:</p>
+            </div>
+            <div class="slider value">
+              <input class="scope-controls number-box" data-key="xOffset" type="number" value="0" /><span class="label"> px</span>
+            </div>
+            <div class="slider range">
+              <input class="scope-controls scope-range-slider" data-key="xOffset" type="range" min="-1280" max="1280" value="0" step="1" />
+            </div>
+          </div>
+          <div class="block-section slider-line">
+            <div class="scope-label">
+              <p>Hold off:</p>
+            </div>
+            <div class="slider value">
+              <input class="scope-controls number-box" data-key="holdOff" type="number" value="0" step="1" min="0" /><span class="label"> ms</span>
+            </div>
+            <div class="slider range">
+              <input  class="scope-controls scope-range-slider" data-key="holdOff" type="range" min="0" max="1000" value="0" step="1" />
+            </div>
+          </div>
+
+        </div> <!-- end axis section -->
+
+
+        <div class="control-section trigger-controls" id="triggerControls">
+
+          <h3>Trigger</h3>
+          <div class="block-section">
+            <div class="scope-label">
+              <p>Mode:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select class="scope-controls" data-key="triggerMode">
+                  <option value="0" selected>Auto</option>
+                  <option value="1">Normal</option>
+                  <option value="2">Custom</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <div class="block-section">
+            <div class="scope-label">
+              <p>Channel:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select  class="scope-controls" data-key="triggerChannel">
+                  <option value="0" selected>1</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <div class="block-section">
+            <div class="scope-label">
+              <p>Direction:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select class="scope-controls" data-key="triggerDir">
+                  <option value="0" selected>Positive</option>
+                  <option value="1">Negative</option>
+                  <option value="2">Bi-Directional</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <div class="block-section">
+            <div class="scope-label">
+              <p>Interpolation:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select class="scope-controls" data-key="interpolation">
+                  <option value="0" selected>Linear</option>
+                  <option value="1">None</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <div class="block-section slider-line">
+            <div class="scope-label">
+              <p>Level:</p>
+            </div>
+            <div class="slider value">
+              <input class="scope-controls number-box" data-key="triggerLevel" type="number" value="0" step="0.01" />
+            </div>
+
+            <div class="slider range">
+              <input class="scope-controls scope-range-slider" data-key="triggerLevel" type="range" min="-1" max="1" value="0" step="0.01" />
+            </div>
+          </div>
+
+
+          <div class="block-section one-shot">
+            <button id="oneshotButton" class="scope-controls" data-key="scopeOneShot">Trigger one-shot</button>
+          </div>
+        </div> <!-- end trigger section -->
+
+        <div class="control-section" id="FFTControls">
+          <h3>FFT</h3>
+          <div class="block-section">
+            <div class="scope-label">
+              <p>Length:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select class="scope-controls" data-key="FFTLength">
+                  <option value="128">128</option>
+                  <option value="256">256</option>
+                  <option value="512">512</option>
+                  <option value="1024" selected>1024</option>
+                  <option value="2048">2048</option>
+                  <option value="4096">4096</option>
+                  <option value="8192">8192</option>
+                  <option value="16384">16384</option>
+                  <option value="32768">32768</option>
+                </select>
+              </span>
+            </div>
+
+          </div>
+
+          <div class="block-section">
+            <div class="scope-label">
+              <p>X-Axis:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select class="scope-controls" data-key="FFTXAxis">
+                  <option value="0" selected>Linear</option>
+                  <option value="1">Logarithmic</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <div class="block-section">
+            <div class="scope-label">
+              <p>Y-Axis:</p>
+            </div>
+            <div class="scope-input">
+              <span class="mini-dropdown">
+                <select class="scope-controls" data-key="FFTYAxis">
+                  <option value="0" selected>Normalised</option>
+                  <option value="1">Decibels</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+        </div> <!-- end FFT -->
+
+
+        <div class="control-section misc-controls">
+
+          <h3>Misc</h3>
+          <div class="block-section">
+            <button class="scope-controls pause-button" data-key="scopePause" data-func="pauseButton">Pause plotting</button>
+            <a href="" download="scope" id="saveCanvas"><button class="scope-controls">Export scope image</button></a>
+            <a href="" download="scopeData.csv" id="saveCanvasData"><button class="scope-controls export">Export CSV data</button></a>
+          </div>
+        </div> <!-- end misc -->
+
+      </div> <!-- end LEFT control panel column -->
+
+      <div class="control-panel-column channels">
+        <div class="control-section channel">
+          <div class="channel-view-0">
+            <h3>Channel 1</h3>
+
+            <div class="block-section">
+              <div class="scope-label">
+                <p>Scale:</p>
+              </div>
+
+              <div class="slider value">
+                <input class="channelView number-box" data-key="yAmplitude" data-channel="0" type="number" value="1" step="0.01" />
+              </div>
+
+              <div class="slider range">
+                <input class="channelView scope-range-slider" data-key="yAmplitude" data-channel="0" type="range" min="0" max="100" value="1" step="0.01" />
+              </div>
+            </div>
+
+            <div class="block-section">
+              <div class="scope-label">
+                <p>Offset:</p>
+              </div>
+
+              <div class="slider value">
+                <input class="channelView number-box" data-key="yOffset" data-channel="0" type="number" value="0" step="0.01" />
+              </div>
+
+              <div class="slider range">
+                <input class="channelView scope-range-slider" data-key="yOffset" data-channel="0" type="range" min="-1" max="1" value="0" step="0.01" />
+              </div>
+            </div>
+
+            <div class="block-section">
+              <div class="scope-label">
+                <p>Weight:</p>
+              </div>
+
+              <div class="slider value">
+                <input class="channelView number-box" data-key="lineWeight" data-channel="0" type="number" value="1.5" min="1" max="10" step="0.1" />
+              </div>
+
+              <div class="slider range">
+                <input class="channelView scope-range-slider" data-key="lineWeight" data-channel="0" type="range" value="1.5" min="1" max="10" step="0.1" />
+              </div>
+            </div>
+
+            <div class="block-section">
+              <div class="scope-label">
+                <p>Colour:</p>
+              </div>
+
+              <div class="slider value colour">
+                <input class="channelView number-box" data-key="color" data-channel="0" type="color" value="#ff0000" />
+              </div>
+            </div>
+
+          </div>
+        </div><!-- end channel view 0 -->
+      </div> <!-- end control RIHT panel column -->
+    </div> <!-- end contol panel -->
+
+    <div class="overlay"></div>
+
+    <div class="scopeWrapper">
+      <canvas id="scopeBG"></canvas>
+    </div><!-- end scope wrapper -->
+
+    <script src="js/jquery.js"></script>
+    <script src="../socket.io/socket.io.js"></script>
+    <script src="js/polyfill.js"></script>
+    <script src="js/pixi.js"></script>
+    <script src="js/bundle.js"></script>
+
+  </body>
 </html>

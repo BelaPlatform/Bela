@@ -1,62 +1,89 @@
 var View = require('./View');
 var Range = ace.require('ace/range').Range;
+var json = require('../site-text.json');
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 
 const uploadDelay = 50;
 
 var uploadBlocked = false;
 var currentFile;
 var imageUrl;
+var tmpData = {};
+var tmpOpts = {};
 var activeWords = [];
 var activeWordIDs = [];
 
 class EditorView extends View {
-	
-	constructor(className, models){
+
+	constructor(className, models, data){
 		super(className, models);
-		
+
 		this.highlights = {};
-				
+    var data = tmpData;
+    var opts = tmpOpts;
+
 		this.editor = ace.edit('editor');
 		var langTools = ace.require("ace/ext/language_tools");
-		
+
 		this.parser = require('../parser');
 		this.parser.init(this.editor, langTools);
 		this.parser.enable(true);
-		
-		// set syntax mode
-		this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/c_cpp", v: Date.now() }));
-		this.editor.session.setMode('ace/mode/c_cpp');
+
 		this.editor.$blockScrolling = Infinity;
-		
+
 		// set theme
 		this.editor.setTheme("ace/theme/chrome");
 		this.editor.setShowPrintMargin(false);
-		
+
 		// autocomplete settings
 		this.editor.setOptions({
 			enableBasicAutocompletion: true,
 			enableLiveAutocompletion: false,
 			enableSnippets: true
 		});
-		
+
 		// use hard tabs, not spaces
 		this.editor.session.setOption('useSoftTabs', false);
-		
+
 		// this function is called when the user modifies the editor
 		this.editor.session.on('change', (e) => {
 			//console.log('upload', !uploadBlocked);
+      var data = tmpData;
+      var opts = tmpOpts;
 			if (!uploadBlocked){
 				this.editorChanged();
 				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
+      // set syntax mode - defaults to text
+      this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() }));
+      if (opts.fileType &&
+          opts.fileType == "cpp" ||
+          opts.fileType == "c" ||
+          opts.fileType == "h" ||
+          opts.fileType == "hh" ||
+          opts.fileType == "hpp" ||
+          opts.fileType == "cc" ) {
+        this.editor.session.setMode('ace/mode/c_cpp');
+      } else if (opts.fileType && opts.fileType == "js") {
+    		this.editor.session.setMode('ace/mode/javascript');
+      } else if (opts.fileType && opts.fileType == "csd") {
+        this.editor.session.setMode('ace/mode/csound_document');
+      // the following is only there for the sake of completeness - there
+      // is no SuperCollider syntax highlighting for the Ace editor
+      // } else if (opts.fileType && opts.fileType == "scd") {
+      //   this.editor.session.setMode('ace/mode/text');
+      } else {
+        // if we don't know what the file extension is just default to plain text
+        this.editor.session.setMode('ace/mode/text');
+      }
 		});
-		
+
 		// fired when the cursor changes position
 		this.editor.session.selection.on('changeCursor', () => {
 			this.getCurrentWord();
 		});
-		
+
 		/*this.editor.session.on('changeBackMarker', (e) => {
 			console.log($('.bela-ace-highlight'));
 			$('.bela-ace-highlight').on('click', (e) => {
@@ -65,17 +92,22 @@ class EditorView extends View {
 			});
 		});*/
 
-		$('#audioControl').find('button').on('click', () => audioSource.start(0) );
-		
-		this.on('resize', () => this.editor.resize() );
-		
+		this.on('resize', () => {
+      this.editor.resize();
+      var data = tmpData;
+      var opts = tmpOpts;
+      if (opts.fileType && opts.fileType == "pd") {
+        this.__fileData(data, opts);
+      }
+    });
+
 		this.on('add-link', (link, type) => {
 
 			if (!this.highlights[type] || !this.highlights[type].length)
 				this.highlights[type] = [];
-				
+
 			this.highlights[type].push(link);
-			
+
 			/*if (activeWords.indexOf(name) == -1){
 				activeWords.push(name);
 				activeWordIDs.push(id);
@@ -83,88 +115,109 @@ class EditorView extends View {
 			if (this.linkTimeout) clearTimeout(this.linkTimeout);
 			this.linkTimeout = setTimeout(() => this.parser.highlights(this.highlights) )//this.emit('highlight-syntax', activeWords), 100);
 		});
-				
+
 		this.editor.session.on('tokenizerUpdate', (e) => {
-			// console.log('tokenizerUpdate'); 
+			// console.log('tokenizerUpdate');
 			this.parser.parse( () => {
 				this.getCurrentWord();
 			});
 		});
-				
+
+    this.on('search', this.search);
+
 	}
-	
+
+  search(){
+    this.editor.execCommand('find');
+  }
+
 	editorChanged(){
 		this.emit('editor-changed');
 		clearTimeout(this.uploadTimeout);
 		this.uploadTimeout = setTimeout( () => this.emit('upload', this.editor.getValue()), uploadDelay );
 	}
-	
+
 	// model events
 	// new file saved
 	__fileData(data, opts){
-
+    tmpData = data;
+    tmpOpts = opts;
 		// hide the pd patch and image displays if present, and the editor
-		$('#pd-svg-parent, #img-display-parent, #editor, #audio-parent').css('display', 'none');
-		
+
 		if (!opts.fileType) opts.fileType = '0';
-		
+
 		if (opts.fileType.indexOf('image') !== -1){
-		
+
 			// opening image file
-			$('#img-display-parent, #img-display').css({
-				'max-width'	: $('#editor').width()+'px',
-				'max-height': $('#editor').height()+'px'
+      $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+      .removeClass('active');
+
+      $('[data-img-display-parent], [data-img-display]').css({
+				'max-width'	: $('[data-editor]').width() + 'px',
+				'max-height': $('[data-editor]').height() + 'px'
 			});
-			$('#img-display-parent').css('display', 'block');
-			
-			$('#img-display').prop('src', 'media/'+opts.fileName);
-			
+
+			$('[data-img-display-parent]')
+      .addClass('active');
+
+			$('[data-img-display]').prop('src', 'media/'+opts.fileName);
+
 			// stop comparison with file on disk
 			this.emit('compare-files', false);
-			
+
 		} else if (opts.fileType.indexOf('audio') !== -1){
-			
+
 			//console.log('opening audio file');
-			
-			$('#audio-parent').css({
-				'display'	: 'block',
-				'max-width'	: $('#editor').width()+'px',
-				'max-height': $('#editor').height()+'px'
+      $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+      .removeClass('active');
+
+      $('[data-audio-parent]')
+      .addClass('active')
+      .css({
+        'position': 'absolute',
+				'left'	: ($('[data-editor]').width() / 2) - ($('[data-audio]').width() / 2)  + 'px',
+				'top': ($('[data-editor]').height() / 2) - ($('[data-audio]').height() / 2) + 'px'
 			});
-						
-			$('#audio').prop('src', 'media/'+opts.fileName); 
-			
+
+			$('[data-audio]').prop('src', 'media/' + opts.fileName);
+
 			// stop comparison with file on disk
 			this.emit('compare-files', false);
-			
+
 		} else {
-		
+
 			if (opts.fileType === 'pd'){
-			
+
 				// we're opening a pd patch
 				let timestamp = performance.now();
 				this.emit('open-notification', {
 					func: 'editor',
 					timestamp,
-					text: 'This is a preview only. GUI objects will not be updated and you cannot edit the patch (yet).'
+					text: json.editor_view.preview
 				});
-		
+
 				// render pd patch
-				try{
-					
-					$('#pd-svg').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false})).css({
-						'max-width'	: $('#editor').width()+'px',
-						'max-height': $('#editor').height()+'px'
+				try {
+          let width = $('[data-editor]').width();
+          let height = $('[data-editor]').height() + 8;
+					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
+          .css({
+						'max-width'	: width + 'px',
+						'max-height': height + 'px'
 					});
-					
-					$('#pd-svg-parent').css({
-						'display'	: 'block',
-						'max-width'	: $('#editor').width()+'px',
-						'max-height': $('#editor').height()+'px'
+
+          $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+          .removeClass('active');
+
+          $('[data-pd-svg-parent]')
+          .addClass('active')
+          .css({
+						'max-width'	: width + 'px',
+						'max-height': height + 'px'
 					});
-					
+
 					this.emit('close-notification', {timestamp});
-					
+
 				}
 				catch(e){
 					this.emit('close-notification', {
@@ -173,32 +226,36 @@ class EditorView extends View {
 					});
 					throw e;
 				}
-				
+
 				// load an empty string into the editor
 				data = '';
-				
+
 				// start comparison with file on disk
 				this.emit('compare-files', true);
-			
+
 			} else {
-			
+
 				// show the editor
-				$('#editor').css('display', 'block');
-				
+        $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
+        .removeClass('active');
+
+        $('[data-editor]')
+        .addClass('active');
+
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
-				
+
 			}
 
 			// block upload
 			uploadBlocked = true;
-	
+
 			// put the file into the editor
 			this.editor.session.setValue(data, -1);
-			
+
 			// parse the data
 			this.parser.parse();
-	
+
 			// unblock upload
 			uploadBlocked = false;
 
@@ -207,16 +264,16 @@ class EditorView extends View {
 
 			// focus the editor
 			this.__focus(opts.focus);
-		
+
 		}
-		
+
 	}
 	// editor focus has changed
 	__focus(data){
 
 		if (data && data.line !== undefined && data.column !== undefined)
 			this.editor.gotoLine(data.line, data.column);
-			
+
 		this.editor.focus();
 	}
 	// syntax errors in current file have changed
@@ -225,13 +282,13 @@ class EditorView extends View {
 		// clear any error annotations on the ace editor
 		this.editor.session.clearAnnotations();
 
-		if (errors.length >= 1){		
+		if (errors.length >= 1){
 			// errors exist!
 			// annotate the errors in this file
 			this.editor.session.setAnnotations(errors);
-						
+
 		}
-	}	
+	}
 	// autocomplete settings have changed
 	_liveAutocompletion(status){
 	//console.log(status, (parseInt(status) === 1));
@@ -251,17 +308,17 @@ class EditorView extends View {
 	_fileName(name, data){
 		currentFile = name;
 	}
-	
+
 	getCurrentWord(){
 		var pos = this.editor.getCursorPosition();
 		//var range = this.editor.session.getAWordRange(pos.row, pos.column);
 		/*var word = this.editor.session.getTextRange(this.editor.session.getAWordRange(pos.row, pos.column)).trim();
 		var index = activeWords.indexOf(word);
 		var id;
-		if (index !== -1) id = activeWordIDs[index]; 
+		if (index !== -1) id = activeWordIDs[index];
 		//console.log(word, index);
 		this.emit('goto-docs', index, word, id);*/
-		
+
 		var iterator = new TokenIterator(this.editor.getSession(), pos.row, pos.column);
 		var token = iterator.getCurrentToken();
 		if (!token || !token.range){
@@ -269,9 +326,9 @@ class EditorView extends View {
 			this.emit('clear-docs');
 			return;
 		}
-		
-		//console.log('clicked', token); 
-				
+
+		//console.log('clicked', token);
+
 		var markers = this.parser.getMarkers();
 		for (let marker of markers){
 			if (token.range.isEqual(marker.range) && marker.type && marker.type.name && marker.type.id){
@@ -280,10 +337,10 @@ class EditorView extends View {
 				return;
 			}
 		}
-		
+
 		this.emit('clear-docs');
 	}
-	
+
 	getData(){
 		return this.editor.getValue();
 	}

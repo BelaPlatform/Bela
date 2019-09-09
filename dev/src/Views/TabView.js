@@ -1,32 +1,13 @@
 var View = require('./View');
 
-// private variables
-var _tabsOpen = false;
+var menuOpened = false;
+var tabs = {};
 
 class TabView extends View {
 
 	constructor(){
 
 		super('tab');
-
-		// open/close tabs
-		$('#flexit').on('click', () => {
-			if (_tabsOpen){
-				this.closeTabs();
-			} else {
-				this.openTabs();
-			}
-		});
-
-		$('.tab > label').on('click', (e) => {
-			if (!_tabsOpen){
-				if ($(e.currentTarget).prop('id') === 'tab-0' && $('[type=radio]:checked ~ label').prop('id') === 'tab-0')
-					$('#file-explorer').parent().trigger('click');
-
-				this.openTabs();
-				e.stopPropagation();
-			}
-		});
 
 		// golden layout
 		var layout = new GoldenLayout({
@@ -56,111 +37,135 @@ class TabView extends View {
 				minimise: 'minimise',
 				popout: 'open in new window'
 			},
-			content: [{
-				type: 'column',
-				content: [{
-					type:'row',
-					content: [{
-						type:'component',
-						componentName: 'Editor',
-					}]
-				}, {
-					type:'component',
-					componentName: 'Console',
-					height: 25
-				}]
-			}]
+      content: [{
+        type: 'column',
+        content: [
+        	{
+            type:'component',
+            componentName: 'Editor'
+        	},
+          {
+            type:'component',
+            componentName: 'Console',
+            height: 25
+         }]
+      }]
 		});
 		layout.registerComponent( 'Editor', function( container, componentState ){
-			container.getElement().append($('#innerContent'));
+			container.getElement().append($('[data-upper]'));
 		});
-		layout.registerComponent( 'Console', function( container, componentState ){
-			container.getElement().append($('#beaglert-console'));
-		});
+    layout.registerComponent('Console', function( container, componentState ){
+      container.getElement().append($('[data-console]'));
+    });
 
 		layout.init();
 		layout.on('initialised', () => this.emit('change') );
 		layout.on('stateChanged', () => this.emit('change') );
 
-		$(window).on('resize', () => {
-			if (_tabsOpen){
-				this.openTabs();
-			} else {
-				this.closeTabs();
-			}
-		});
-
-		this.on('open-tab', (id) => $('#'+id).siblings('label').trigger('click') );
-		this.on('toggle', () => {
-			if (_tabsOpen) this.closeTabs();
-			else this.openTabs();
-		});
+    this.on('toggle', this.toggle);
 		this.on('boardString', this._boardString);
+    this.editor = ace.edit('editor');
+    var editor = this.editor;
+    $('[data-tab-open]').on('click', this.toggleClasses());
 
+    $('[data-tab-open]').on('click', () => this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for')) );
+    $('[data-tab-for]').on('click', () => this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor) );
 	}
 
-	openTabs(){
-		$('#editor').css('right', '500px');
-		$('#top-line').css('margin-right', '500px');
-		$('#right').css('left', window.innerWidth - 500 + 'px');
-		_tabsOpen = true;
-		this.emit('change');
-		$('#tab-0').addClass('open');
+  toggleClasses() {
+    var that = this;
+    if ($('[data-tabs]').hasClass('tabs-open')) {
+      setTimeout(
+        function() {
+          $('[data-editor]').addClass('tabs-open');
+          that.editor.resize();
+        },
+      750);
+    } else {
+      $('[data-editor]').removeClass('tabs-open');
+      setTimeout(
+        function() {
+          that.editor.resize();
+        },
+      500);
+    }
+  }
 
-		// fix pd patch
-		$('#pd-svg-parent').css({
-			'max-width'	: $('#editor').width()+'px',
-			'max-height': $('#editor').height()+'px'
-		});
-	}
+  toggle(event, origin, target) {
+    var that = this;
 
-	closeTabs(){
-		$('#editor').css('right', '60px');
-		$('#top-line').css('margin-right', '60px');
-		$('#right').css('left', window.innerWidth - 60 + 'px');
-		_tabsOpen = false;
-		this.emit('change');
-		$('#tab-0').removeClass('open');
+    tabs = {event, origin, target};
 
-		// fix pd patch
-		$('#pd-svg-parent').css({
-			'max-width'	: $('#editor').width()+'px',
-			'max-height': $('#editor').height()+'px'
-		});
+    if (tabs.event == undefined) {
+      return;
+    }
+    tabs.active = $('[data-tab-for].active').data('tabFor');
+    if (tabs.target == undefined && tabs.active == null) {
+      tabs.target = 'explorer';
+    }
 
-	}
+    function openTabs() {
+      if (tabs.origin == 'tab-control') {
+        if (menuOpened == false) {
+          $('[data-tabs]').addClass('tabs-open');
+          $('[data-tab-open] span').addClass('rot');
+          menuOpened = true;
+        } else {
+          $('[data-tabs]').removeClass('tabs-open');
+          $('[data-tab-open] span').removeClass('rot');
+          menuOpened = false;
+          setTimeout( function(){
+            $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
+          }, 500);
+        }
+        that.toggleClasses();
+      }
+      if (tabs.origin == 'tab-link' && menuOpened == false) {
+        $('[data-tabs]').addClass('tabs-open');
+        $('[data-tab-open] span').addClass('rot');
+        menuOpened = true;
+      }
+      matchTabFor();
+    }
 
-	getOpenTab(){
-		if (!_tabsOpen) return false;
-		return $('[type=radio]:checked ~ label').prop('for');
-	}
+    function matchTabFor() {
+      $('[data-tab-for]').each(function(){
+        var tabFor = $(this).data('tab-for');
+        if (tabs.origin == 'tab-link') {
+          $(this).removeClass('active');
+        }
+        if (tabFor === tabs.target) {
+          $(this).addClass('active');
+          matchTabForAndTab();
+        }
+      });
+    }
+
+    function matchTabForAndTab() {
+      $('[data-tab]').each(function(){
+        if (tabs.active != tabs.target) {
+          var tab = $(this).data('tab');
+          $(this).hide();
+          if (tab === tabs.target) {
+            $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
+            $(this).fadeIn();
+          }
+        }
+      });
+    }
+
+    openTabs();
+  }
 
 	_boardString(data){
 		var boardString;
+    var rootDir = "belaDiagram/";
 		if(data && data.trim)
 			boardString = data.trim();
 		else
 			return
 
-		if (boardString === 'BelaMini'){
-			$('#pin_diagram_object').prop('data', 'diagram_mini.html');
-		}
-		else if (boardString === 'CtagFace')
-		{
-			$('#pin_diagram_object').prop('data', 'diagram_ctag_FACE.html');
-		}
-		else if (boardString === 'CtagBeast')
-		{
-			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST.html');
-		}
-		else if (boardString === 'CtagFaceBela')
-		{
-			$('#pin_diagram_object').prop('data', 'diagram_ctag_BELA.html');
-		}
-		else if (boardString === 'CtagBeastBela')
-		{
-			$('#pin_diagram_object').prop('data', 'diagram_ctag_BEAST_BELA.html');
-		}
+    $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
 	}
 
 }

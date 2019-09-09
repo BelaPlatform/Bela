@@ -1,0 +1,15 @@
+name=ADSR
+version=1.0.0
+author=
+maintainer=Adan Benito<adan@bela.io>
+description=An ADSR envelope generator class.<br>Examples:<br>&middot Audio/envelope-generator
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

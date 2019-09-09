@@ -1,0 +1,15 @@
+name=I2c_TouchKey
+version=1.0.0
+author=Victor Zappi<victor.zappi@gmail.com>
+maintainer=Adan Benito<adanl.benito@gmail.com>
+description=I2C communication for TouchKey sensors. Originally implemented to work with D-Box.<br>Examples:<br>&middot Instruments/d-box
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

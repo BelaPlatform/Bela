@@ -1,0 +1,59 @@
+# This should be called from the Bela folder, with 
+# make -f Makefile.libraries LIBRARY=libraryname
+# set defaults
+CC := clang
+CXX := clang++
+LIBRARY_CC ?= $(CC)
+LIBRARY_CXX ?= $(CXX)
+.DEFAULT_GOAL := library
+AT?=@
+
+#TODO: these variables should actually be conditional and/or shared with the Base Makefile
+# although they are not really needed if this Makefile is called from the main Makefile
+BELA_USE_DEFINE:=BELA_USE_RTDM
+DEBIAN_VERSION :=stretch
+BELA_DIR := /root/Bela
+DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
+LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
+LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
+
+#all this Xenomai stuff is just for Midi.h at the moment and requires you to have run the Bela Makefile before
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+include $(SYSTEM_SPECIFIC_MAKEFILE)
+$(SYSTEM_SPECIFIC_MAKEFILE):
+	make lib
+LIBRARY_CPPFLAGS = $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR) -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -MMD -MP -MF"$(@:%.o=%.d)"
+#
+# the above default variables may be modified by the Makefile included here:
+MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile
+-include $(MKFILE_COMPILE)
+-include libraries/*/build/*.d
+
+LIBRARY_DIR := libraries/$(LIBRARY)
+LIBRARY_BUILD_DIR := $(LIBRARY_DIR)/build
+
+LIBRARY_FILES := $(wildcard $(LIBRARY_DIR)/*.c $(LIBRARY_DIR)/*.cpp)
+LIBRARY_CPPS := $(wildcard $(LIBRARY_DIR)/*.cpp)
+LIBRARY_OBJS :=$(LIBRARY_CPPS:$(LIBRARY_DIR)/%.cpp=$(LIBRARY_DIR)/build/%.o)
+LIBRARY_CS := $(wildcard $(LIBRARY_DIR)/*.c)
+LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_CS:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
+#LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_FILES:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
+#$(warning FILES: $(LIBRARY_FILES))
+#$(warning OBJS: $(LIBRARY_OBJS))
+all:
+	 for a in libraries/*; do A=`basename $$a`; echo $$A; $(MAKE) -f Makefile.libraries LIBRARY=$$A --no-print-directory; done
+library: $(LIBRARY_OBJS)
+clean:
+	$(AT) rm -rf $(LIBRARY_OBJS)
+
+cleanall:
+	$(AT) for LIB in libraries/*; do echo Cleaning $$LIB; $(MAKE) -f Makefile.libraries --no-print-directory LIBRARY=`basename $$LIB` clean AT=$(AT); done
+
+$(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
+	$(AT) $(LIBRARY_CC) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CFLAGS)
+$(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.cpp
+	$(AT) $(LIBRARY_CXX) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CXXFLAGS)
+ifneq ($(LIBRARY),)
+$(MKFILE_COMPILE):
+	$(AT) resources/tools/detectlibraries.sh --library $(LIBRARY)
+endif

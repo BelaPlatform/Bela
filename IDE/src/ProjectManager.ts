@@ -6,10 +6,11 @@ import * as paths from './paths';
 import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
 
-let max_file_size = 50000000;	// bytes (50Mb)
+let max_file_size = 52428800;	// bytes (50Mb)
+let max_preview_size = 524288000;	// bytes (500Mb)
 
 // all ProjectManager methods are async functions called when websocket messages
-// with the field event: 'project-event' is received. The function called is 
+// with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
 // as the data variable, and is modified and returned by the method, and sent
 // back over the websocket
@@ -18,7 +19,10 @@ let max_file_size = 50000000;	// bytes (50Mb)
 // it opens the file from the project, if it is not too big or binary
 // if the file is an image or audio file, it is symlinked from the media folder
 export async function openFile(data: any){
-	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+  if (typeof data.newFile == 'undefined') {
+    data.newFile = data.fileName;
+  }
+  let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	try{
 		var file_stat = await file_manager.stat_file(file_path);
 	}
@@ -42,9 +46,9 @@ export async function openFile(data: any){
 		data.fileType = 0;
 		return;
 	}
-	if (file_stat.size > max_file_size){
-		data.error = 'file is too large: '+(file_stat.size/1000000)+'Mb';
-		data.fileData = "The IDE can't open files larger than "+(max_file_size/1000000)+"Mb";
+	if (file_stat.size > max_preview_size){
+		data.error = 'file is too large: '+(file_stat.size/1048576)+'Mb';
+		data.fileData = "The IDE can't open files larger than "+(max_preview_size/1048576)+"Mb";
 		data.readOnly = true;
 		data.fileName = data.newFile;
 		data.newFile = undefined;
@@ -100,6 +104,21 @@ export async function openFile(data: any){
 export async function listProjects(): Promise<string[]>{
 	return file_manager.read_directory(paths.projects);
 }
+
+export async function listLibraries(): Promise<any>{
+	let libraries = [];
+	let categories = await file_manager.read_directory(paths.libraries);
+	for (let category of categories){
+		if (await file_manager.directory_exists(paths.libraries+'/'+category)){
+			libraries.push({
+				name: category,
+				children: await file_manager.read_directory(paths.libraries+'/'+category)
+			});
+		}
+	}
+	return libraries;
+}
+
 export async function listExamples(): Promise<any>{
 	let examples = [];
 	let categories = await file_manager.read_directory(paths.examples);
@@ -113,6 +132,7 @@ export async function listExamples(): Promise<any>{
 	}
 	return examples;
 }
+
 export async function openProject(data: any) {
 	data.fileList = await listFiles(data.currentProject);
 	let settings: any = await project_settings.read(data.currentProject);
@@ -125,6 +145,7 @@ export async function openProject(data: any) {
 	await git_manager.info(data.gitData);
 	await openFile(data);
 }
+
 export async function openExample(data: any){
 	await file_manager.empty_directory(paths.exampleTempProject);
 	await file_manager.copy_directory(paths.examples+data.currentProject, paths.exampleTempProject);
@@ -132,6 +153,7 @@ export async function openExample(data: any){
 	data.currentProject = 'exampleTempProject';
 	await openProject(data);
 }
+
 export async function newProject(data: any){
 	if (await file_manager.directory_exists(paths.projects+data.newProject)){
 		data.error = 'failed, project '+data.newProject+' already exists!';
@@ -156,6 +178,7 @@ export async function saveAs(data: any){
 	data.newProject = undefined;
 	await openProject(data);
 }
+
 export async function deleteProject(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject);
 	data.projectList = await listProjects();
@@ -170,21 +193,44 @@ export async function deleteProject(data: any){
 	data.readOnly = true;
 	data.fileData = 'please create a new project to continue';
 }
+
 export async function cleanProject(data: any){
 	await file_manager.empty_directory(paths.projects+data.currentProject+'/build');
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.currentProject);
 }
+
 export async function newFile(data: any){
-	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
+  let file_name = data.newFile.split('/').pop();
+  let file_path;
+  if (data.folder) {
+    let folder = data.folder;
+    file_path = paths.projects+data.currentProject + '/' + folder + '/' + file_name;
+    data.newFile = folder + '/' + file_name;
+  } else {
+    file_path = paths.projects + data.currentProject + '/' + file_name;
+    data.newFile = file_name;
+  }
 	if (await file_manager.file_exists(file_path)){
-		data.error = 'failed, file '+data.newFile+' already exists!';
+		data.error = 'failed, file '+ file_path +' already exists!';
 		return;
 	}
-	file_manager.write_file(file_path, '/***** '+data.newFile+' *****/\n');
+	file_manager.write_file(file_path, '/***** '+ file_name + ' *****/\n');
 	data.fileList = await listFiles(data.currentProject);
 	data.focus = {'line': 2, 'column': 1};
 	await openFile(data);
 }
+
+export async function newFolder(data: any){
+  console.log(data);
+	let file_path = paths.projects + data.currentProject + '/' + data.newFolder;
+	if (await file_manager.directory_exists(file_path)){
+		data.error = 'failed, folder ' + data.newFolder + ' already exists!';
+		return;
+	}
+  await file_manager.write_folder(file_path);
+	data.fileList = await listFiles(data.currentProject);
+}
+
 export async function uploadFile(data: any){
 	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
@@ -197,6 +243,7 @@ export async function uploadFile(data: any){
 	data.fileList = await listFiles(data.currentProject);
 	await openFile(data);
 }
+
 export async function cleanFile(project: string, file: string){
 	if (file.split && file.includes('.')){
 		let split_file = file.split('.');
@@ -206,28 +253,72 @@ export async function cleanFile(project: string, file: string){
 			let file_path = paths.projects+project+'/build/'+file_root;
 			await file_manager.delete_file(file_path+'.d');
 			await file_manager.delete_file(file_path+'.o');
-			await file_manager.delete_file(paths.projects+project+'/'+project);
+			await file_manager.delete_file(paths.projects + project + '/'+project);
 		}
 	}
-}	
+}
+
+export async function moveUploadedFile(data: any){
+  await file_manager.rename_file(paths.uploads+data.newFile, paths.projects+data.currentProject+'/'+data.sanitisedNewFile);
+  await cleanFile(data.currentProject, data.sanitisedNewFile);
+  data.newFile = data.sanitisedNewFile;
+  data.fileList = await listFiles(data.currentProject);
+  await openFile(data);
+}
+
 export async function renameFile(data: any){
-	let file_path = paths.projects+data.currentProject+'/'+data.newFile;
-	let file_exists = (await file_manager.file_exists(file_path) || await file_manager.directory_exists(file_path));
+  let old_file_name = data.oldName;
+  let file_name = data.oldName.split('/').pop();
+  let file_path;
+  if (data.folder) {
+    let folder = data.folder + '/';
+    file_path = paths.projects + data.currentProject + '/' + folder + file_name;
+  } else {
+    file_path = paths.projects + data.currentProject + '/' + file_name;
+  }
+  let new_file_path = file_path.replace(file_name, data.newFile);
+	let file_exists = (await file_manager.file_exists(new_file_path) || await file_manager.directory_exists(file_path));
 	if (file_exists){
-		data.error = 'failed, file '+data.newFile+' already exists!';
+		data.error = 'failed, file ' + data.newFile + ' already exists!';
 		return;
 	}
-	await file_manager.rename_file(paths.projects+data.currentProject+'/'+data.fileName, file_path);
-	await cleanFile(data.currentProject, data.fileName);
-	data.fileList = await listFiles(data.currentProject);
-	await openFile(data);
+	await file_manager.rename_file(file_path, new_file_path);
+	await cleanFile(data.currentProject, data.oldName);
+  if (data.fileName == data.oldName) {
+    data.fileName = data.newFile;
+    await openFile(data);
+  }
+  data.fileList = await listFiles(data.currentProject);
 }
+
+export async function renameFolder(data: any){
+	let folder_path = paths.projects + data.currentProject + "/" + data.oldName;
+  let new_folder_path = paths.projects + data.currentProject + "/" + data.newFolder;
+	let folder_exists = await file_manager.directory_exists(new_folder_path);
+	if (folder_exists){
+		data.error = 'failed, file ' + data.newFolder + ' already exists!';
+		return;
+	}
+	await file_manager.rename_file(folder_path, new_folder_path);
+	await cleanFile(data.currentProject, data.oldName);
+	data.fileList = await listFiles(data.currentProject);
+  let regex = RegExp(data.oldName);
+  if (regex.test(data.fileName)) {
+    data.fileName = data.fileName.replace(data.oldName, data.newFolder);
+    await openFile(data);
+  }
+}
+
 export async function deleteFile(data: any){
 	await file_manager.delete_file(paths.projects+data.currentProject+'/'+data.fileName);
 	await cleanFile(data.currentProject, data.fileName);
 	data.fileList = await listFiles(data.currentProject);
-	data.fileData = 'File deleted - open another file to continue';
-	data.fileName = '';
+  if (data.fileName == data.currentFile) {
+    data.fileData = 'File deleted - open another file to continue';
+  	data.fileName = '';
+  } else {
+    data.fileName = data.currentFile;
+  }
 	data.readOnly = true;
 }
 

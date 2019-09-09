@@ -126,7 +126,9 @@ do
 	[ "$EXAMPLE" = "$START_FROM" ] && START_FROM=
 	[ -z "$START_FROM" ] || { echo "Skipping $EXAMPLE"; continue; }
 	echo $EXAMPLE
-	MAKE_STRING="make --no-print-directory -C $BELA_HOME EXAMPLE=$EXAMPLE PROJECT=$TEST_PROJECT"
+	rm -rf "../projects/$TEST_PROJECT"
+	cp -r "$EXAMPLE" "../projects/$TEST_PROJECT"
+	MAKE_STRING="make --no-print-directory -C $BELA_HOME PROJECT=$TEST_PROJECT"
 	echo $MAKE_STRING
 	MAKE_STRING="$MAKE_STRING $J AT="
 	$MAKE_STRING  > $MAKE_OUT && build_succeeded || build_failed

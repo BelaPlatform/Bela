@@ -1,0 +1,159 @@
+#popup-nointeraction {
+  display: none;
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  &.active {
+    display: block;
+    z-index: 10000;
+  }
+}
+
+#popup {
+  background: white;
+  border: 1px solid $grey-mid;
+	display: none;
+	left: calc((100% / 2) - 300px);
+  margin-bottom: 10px;
+  min-height: 100px;
+  max-height: 500px;
+  overflow: hidden;
+	padding: 4em;
+  position: absolute;
+  top: calc((100% / 2) - 300px);
+  width: 600px;
+  &.active {
+    display: inline;
+    z-index: 9999;
+  }
+  #popup-content {
+    pre {
+      max-height: 300px;
+      overflow: auto;
+    }
+  }
+  h1 {
+    color: $teal-main;
+    font-size: 2em;
+    font-family: space_bold;
+    &.error {
+      color: $accent-red;
+    }
+  }
+  h3 {
+    color: $grey-dark;
+    font-size: 1em;
+    font-family: space_bold;
+  }
+  & p, & form {
+    color: #999;
+    font-family: poppins_light;
+    font-size: 1em;
+    margin-bottom: 10px;
+  }
+  input {
+    font-size: 1em;
+    line-height: 1em;
+    padding: .5em;
+    &[type=text] {
+      margin-top: 1em;
+      width: 15em;
+    }
+    &[type=file]{
+      background: initial;
+      border: initial;
+      width: initial;
+    }
+    &::-webkit-input-placeholder {
+      color: #bdbdbd;
+      font-style: italic;
+    }
+  }
+  /* Styles for custom radio buttons */
+  .radio-container {
+    cursor: pointer;
+    display: block;
+    padding-left: 2em;
+    position: relative;
+    user-select: none;
+  }
+  .radio-container input {
+    cursor: pointer;
+    opacity: 0;
+    position: absolute;
+  }
+  .radio-button {
+    background-color: $grey-mid;
+    border-radius: 50%;
+    height: 1em;
+    left: 0;
+    margin-top: .25em;
+    opacity: 0.5;
+    position: absolute;
+    top: 0;
+    width: 1em;
+  }
+  .radio-container:hover input ~ .radio-button {
+    opacity: 1;
+  }
+  .radio-container input:checked ~ .radio-button {
+    background-color: $teal-01;
+    opacity: 1;
+  }
+
+  /* Styles for custom UI buttons for popups */
+  button {
+    float: right;
+    font-size: 1em;
+    margin-left: .75em;
+    margin-top: .5em;
+    padding: .5em 2em;
+    margin-left: .75em;
+    &.confirm {
+      background: $teal-01;
+      border: 1px solid $teal-01;
+      color: $grey-dark;
+      &:hover {
+        background: $teal-02;
+        border: 1px solid $teal-02;
+      }
+    }
+    &.cancel {
+      background: $white;
+      border: 1px solid $grey-mid;
+      &:hover {
+        background: $grey-light-mid;
+        color: $grey-dark;
+      }
+    }
+    &.delete {
+      background-color: $accent-red-fade;
+      border: 1px solid $accent-red-fade;
+      color: $grey-dark;
+      &:hover {
+        background-color: $accent-red;
+        border: 1px solid $accent-red;
+      }
+    }
+  }
+}
+
+#overlay {
+  &.active {
+    background: rgba(0, 0, 0, 0.3);
+    height: 100vh;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    z-index: 9998;
+    &.drag-upload {
+      background: rgba(0, 255, 122, 0.3);
+      &.no {
+        background: rgba(255, 0, 0, 0.3);
+      }
+    }
+  }
+}

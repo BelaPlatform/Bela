@@ -1,0 +1,140 @@
+$blue: #0000ff;
+$upper-bg: #eeeeee;
+
+$black: #000;
+$white: #ffffff;
+
+// Base Material palette teal:
+$teal-base: #009587;
+
+// Main Bela color:
+$teal-main: #00bea4; //rgb(0,190,164)
+
+// Increasingly brighter - for rollovers:
+$teal-01: #1ce8b5; //rgb(28,232,81)
+$teal-02: #63ffd9;
+$teal-03: #a6ffea;
+
+$grey-extra-light: #fafafa;
+$grey-light: #f1f1f1;
+$grey-light-mid: #e5e5e5;
+$grey-mid: #bdbdbd;
+
+$grey-tabs: #c9c9c9;
+
+$accent-red: rgb(255, 94, 91);
+$accent-red-fade: #FF918E;
+
+$grey-editorbg: #eeeeee;
+
+$grey-toolbar: #c9c9c9;
+
+$amber-accent: #f26d21;
+
+$grey-dark: rgba(0,0,0,0.8);
+
+$trans-reg: 0.1s;
+
+$yellow-accent: #fff07c;
+$yellow-accent-fade: #FFFFC9;
+
+@import 'reset';
+@import 'fonts';
+
+body {
+	margin: 0;
+  padding: 0;
+	position: relative;
+}
+
+img {
+	padding-left: 40px;
+}
+
+*:focus {
+	outline: none;
+}
+
+/* Container for upper elements - editor and tabs */
+
+.hidden {
+  display: none;
+}
+
+.upper {
+	height: 100%;
+	position: relative;
+  z-index: 96;
+}
+
+/* CONTAINER FOR LOWER ELEMENTS */
+
+.activeBar {
+  background-color: #0000ff;
+	cursor: ns-resize;
+}
+.inactiveBar {
+	background-color: #0000ff;
+}
+.dragging {
+	background-color: #000;
+}
+
+/* console */
+.console {
+	background: white;
+	display: block;
+}
+
+hr {
+	border: 0;
+  margin-bottom: -22px;
+  opacity: 0.1;
+}
+
+.spacer {
+  display: block;
+  padding-top: 10px;
+}
+
+body {
+  &.uploading {
+    cursor: progress;
+    button {
+      &.submit {
+        opacity: 0.75!important;
+        cursor: auto!important;
+      }
+    }
+  }
+}
+
+ul {
+	font-family: inconsolata;
+}
+
+@import 'accordion-menu';
+@import 'buttons';
+@import 'slider';
+@import 'console';
+@import 'docs';
+@import 'dropdown';
+@import 'dropdown-mini';
+@import 'editor';
+@import 'example-list';
+@import 'file-list';
+@import 'git';
+@import 'icons';
+@import 'library-list';
+@import 'lower';
+@import 'number-selector';
+@import 'pins';
+@import 'popup';
+@import 'scrollbar';
+@import 'tabs';
+@import 'tab-content';
+@import 'tab-menu';
+@import 'text-input';
+@import 'toolbar';
+@import 'upper';
+@import 'scope';

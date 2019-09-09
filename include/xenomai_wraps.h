@@ -185,7 +185,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	 */
 	int s = __wrap_socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
 	if (s < 0) {
-		fprintf(stderr, "Failed call to socket\n");
+		fprintf(stderr, "Failed call to socket: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -197,6 +197,12 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	strcpy(plabel.label, portName);
 	int ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_LABEL,
 			 &plabel, sizeof(plabel));
+	if(ret)
+	{
+		fprintf(stderr, "Failed call to __wrap_setsockopt SOL_XDDP XDDP_LABEL: %d %s\n", errno, strerror(errno));
+		return -1;
+	}
+
 	/*
 	 * Set a local pool for the RT endpoint. Memory needed to
 	 * convey datagrams will be pulled from this pool, instead of
@@ -206,9 +212,9 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 		poolsz = 16384; /* bytes */
 	ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
 			 &poolsz, sizeof(poolsz));
-	if (ret)
+	if(ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_setsockopt\n");
+		fprintf(stderr, "Failed call to __wrap_setsockopt SOL_XDDP XDDP_POOLSZ: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -223,7 +229,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	ret = __wrap_bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
 	if (ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_bind\n");
+		fprintf(stderr, "Failed call to __wrap_bind: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 	return s;

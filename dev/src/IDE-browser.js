@@ -3,6 +3,9 @@ module.exports = {};
 
 var Model = require('./Models/Model');
 var popup = require('./popup');
+var json = require('./site-text.json');
+
+var devMode = true;
 
 // set up models
 var models = {};
@@ -24,10 +27,9 @@ tabView.on('change', () => editorView.emit('resize') );
 var settingsView = new (require('./Views/SettingsView'))('settingsManager', [models.project, models.settings], models.settings);
 settingsView.on('project-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
-	//console.log('project-settings', data);
-	//console.trace('project-settings');
 	socket.emit('project-settings', data);
 });
+
 settingsView.on('IDE-settings', (data) => {
 	data.currentProject = models.project.getKey('currentProject');
 	//console.log('IDE-settings', data);
@@ -66,6 +68,7 @@ fileView.on('message', (event, data) => {
 	consoleView.emit('openNotification', data);
 	socket.emit(event, data);
 });
+
 fileView.on('force-rebuild', () => {
 	socket.emit('process-event', {
 		event			: 'rebuild',
@@ -132,11 +135,15 @@ toolbarView.on('process-event', (event) => {
 		currentProject	: models.project.getKey('currentProject')
 	};
 	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', 'Stopping Bela...');
+	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
 	socket.emit('process-event', data);
 });
+toolbarView.on('halt', () => {
+	socket.emit('shutdown');
+	consoleView.emit('warn', 'Shutting down...');
+});
 toolbarView.on('clear-console', () => consoleView.emit('clear', true) );
-toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num+' mode switch'+(num!=1?'es':'')+' detected on the audio thread!') );
+toolbarView.on('mode-switch-warning', num => consoleView.emit('warn', num + (num!=1?json.ide_browser.mode_switches:json.ide_browser.mode_switch) ) );
 
 // console view
 var consoleView = new (require('./Views/ConsoleView'))('IDEconsole', [models.status, models.project, models.error, models.settings], models.settings);
@@ -179,7 +186,7 @@ documentationView.on('add-link', (link, type) => {
 });
 
 // git view
-var gitView = new (require('./Views/GitView'))('gitManager', [models.git]);
+var gitView = new (require('./Views/GitView'))('git-manager', [models.git]);
 gitView.on('git-event', data => {
 	data.currentProject = models.project.getKey('currentProject');
 	data.timestamp = performance.now();
@@ -206,10 +213,10 @@ socket.on('init', (data) => {
 	socket.emit('project-event', {func: 'openProject', currentProject: data.settings.project, timestamp})
 	consoleView.emit('openNotification', {func: 'init', timestamp});
 
-	models.project.setData({projectList: data.projects, exampleList: data.examples, currentProject: data.settings.project});
+	models.project.setData({projectList: data.projects, exampleList: data.examples, libraryList: data.libraries,  currentProject: data.settings.project});
 	models.settings.setData(data.settings);
 
-	$('#runOnBoot').val(data.boot_project);
+  $('data-run-on-boot').val(data.boot_project);
 
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
@@ -251,10 +258,8 @@ socket.on('stop-reply', (data) => {
 	consoleView.emit('closeNotification', data);
 });
 socket.on('project-list', (project, list) =>  {
-	//console.log(project, list);
 	if (project && list.indexOf(models.project.getKey('currentProject')) === -1){
 		// this project has just been deleted
-		console.log('project-list', 'openProject');
 		socket.emit('project-event', {func: 'openProject', currentProject: project});
 	}
 	models.project.setKey('projectList', list);
@@ -262,6 +267,7 @@ socket.on('project-list', (project, list) =>  {
 socket.on('file-list', (project, list) => {
 	if (project && project === models.project.getKey('currentProject')){
 		models.project.setKey('fileList', list);
+    // console.log(list);
 	}
 });
 
@@ -348,12 +354,12 @@ function fileChangedPopup(fileName){
 
 	if (fileChangedPopupVisible) return;
 
-	popup.title('File Changed on Disk');
-	popup.subtitle('Would you like to reload '+fileName+'?');
+	popup.title(json.popups.file_changed.title);
+	popup.subtitle(fileName + json.popups.file_changed.text);
 
 	var form = [];
-	form.push('<button type="submit" class="button popup-save">Reload from Disk</button>');
-	form.push('<button type="button" class="button popup-cancel">Keep Current</button>');
+	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
+	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
 
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
 		fileChangedPopupVisible = false;
@@ -368,7 +374,7 @@ function fileChangedPopup(fileName){
 		popup.hide();
 	});
 
-	popup.find('.popup-cancel').on('click', () => {
+	popup.find('.cancel').on('click', () => {
 		popup.hide();
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
@@ -391,12 +397,53 @@ models.project.on('change', (data, changedKeys) => {
 
 	var projectName = data.exampleName ? data.exampleName+' (example)' : data.currentProject;
 
-	// set the browser tab title
-	$('title').html((data.fileName ? data.fileName+', ' : '')+projectName);
 
-	// set the top-line stuff
-	$('#top-open-project').html(projectName ? 'Project: '+projectName : '');
-	$('#top-open-file').html(data.fileName ? 'File: '+data.fileName : '');
+
+  if (devMode) {
+    // set the browser tab title
+    $('[data-title]').html((data.fileName ? data.fileName+', ' : '') + projectName);
+    // set the top-line stuff
+    $('[data-current-project]').html(projectName ? projectName : '');
+  	$('[data-current-file]').html(data.fileName ?  data.fileName : '');
+
+    // status changes reflected here
+    models.status.on('change', (data, changedKeys) => {
+    	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
+        if (data.running) {
+    			$('[data-current-status-title]').html('Running: ');
+          $('[data-current-status]').html(data.runProject);
+    		} else if (data.building) {
+          $('[data-current-status-title]').html('Building: ');
+    			$('[data-current-status]').html(data.buildProject);
+    		} else {
+    			$('[data-current-status]').html('');
+          $('[data-current-status-title]').html('');
+        }
+    	}
+    });
+  } else {
+    // set the browser tab title
+    $('title').html((data.fileName ? data.fileName+', ' : '') + projectName);
+    // set the top-line stuff
+    $('[data-current-project]').html(projectName ? projectName : '');
+    $('[data-current-file]').html(data.fileName ?  data.fileName : '');
+
+    // status changes reflected here
+    models.status.on('change', (data, changedKeys) => {
+    	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
+        if (data.running) {
+    			$('[data-current-status-title]').html('Running: ');
+          $('[data-current-status]').html(data.runProject);
+    		} else if (data.building) {
+          $('[data-current-status-title]').html('Building: ');
+    			$('[data-current-status]').html(data.buildProject);
+    		} else {
+    			$('[data-current-status]').html('');
+          $('[data-current-status-title]').html('');
+        }
+    	}
+    });
+  }
 
 	if (data.exampleName){
 		$('#top-example-docs').css('visibility', 'visible');
@@ -406,17 +453,6 @@ models.project.on('change', (data, changedKeys) => {
 	}
 
 });
-models.status.on('change', (data, changedKeys) => {
-	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-		if (data.running)
-			$('#top-bela-status').html('Running: '+data.runProject);
-		else if (data.building)
-			$('#top-bela-status').html('Building: '+data.buildProject);
-		else
-			$('#top-bela-status').html('');
-	}
-});
-
 
 // history
 {
@@ -555,6 +591,7 @@ function parseErrors(data){
 var keypress = new window.keypress.Listener();
 
 keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
-keypress.simple_combo("meta o", function(){ tabView.emit('toggle') });
+keypress.simple_combo("meta f", function(){ editorView.emit('search') });
+keypress.simple_combo("meta o", function(){ tabView.emit('toggle', 'click', 'tab-control') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
 keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });

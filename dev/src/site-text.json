@@ -1,0 +1,181 @@
+{
+	"popups": {
+    "generic": {
+      "cancel": "Cancel"
+    },
+		"create_new": {
+			"title": "Create new project",
+			"text": "Choose the development language for this project, and give it a name:",
+			"button": "Create project"
+		},
+		"save_as": {
+			"title": "Save project as ...",
+			"text": "",
+			"input": "Enter your new project name",
+			"button": "Save project"
+		},
+		"delete_project": {
+			"title": "Delete this project?",
+			"text": "Warning: There is no undo.",
+			"button": "Delete project"
+		},
+		"create_new_file": {
+			"title": "Create new file",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"input": "Your new file name",
+			"button": "Create file"
+		},
+    "create_new_folder": {
+			"title": "Create new folder",
+			"text": "Enter the new folder name.",
+			"input": "Your new folder name",
+			"button": "Create folder"
+		},
+		"rename_file": {
+			"title": "Rename this file?",
+			"input": "The new file name",
+			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
+			"button": "Rename file"
+		},
+    "rename_folder": {
+			"title": "Rename this folder?",
+			"input": "The new folder name",
+			"text": "Enter the new folder name",
+			"button": "Rename folder"
+		},
+		"delete_project": {
+			"title": "Delete project ",
+			"text": "Warning: There is no undo.",
+			"button": "Delete project"
+		},
+		"delete_file": {
+			"title": "Delete this file?",
+			"text": "Warning: There is no undo.",
+			"button": "Delete file"
+		},
+    "upload_file": {
+			"title": "Upload a file?",
+			"text": "Select a file to upload.",
+			"button": "Upload file"
+		},
+    "upload_file_error": {
+			"title": "Uploading file error"
+		},
+		"restore_default_project_settings": {
+			"title": "Restore default project settings?",
+			"text": "Your current project settings will be restored to defaults. There is no undo.",
+			"button": "Restore defaults"
+		},
+		"restore_default_IDE_settings": {
+			"title": "Restore default IDE settings?",
+			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
+			"button": "Restore defaults"
+		},
+		"shutdown": {
+			"title": "Shut down Bela?",
+			"text": "Bela will disconnect from the IDE and shutdown gracefully.",
+			"button": "Yes, shut down Bela"
+		},
+		"update": {
+			"title": "Update Bela",
+			"text": "Select your Bela update (will be a ZIP file).",
+			"button": "Update now"
+		},
+		"about": {
+			"title": "About Bela",
+			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
+			"button": "Close"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": "Would you like to reload?",
+			"button": "Reload"
+		},
+		"overwrite": {
+			"title": "Overwrite file?",
+			"text": " already exists in this project. Overwrite?",
+			"button": "Overwite",
+			"tick": "Don't ask me again this session"
+		},
+		"commit": {
+			"title": "Commit your changes",
+			"text": "Enter a commit message:",
+			"input": "Your commit message",
+			"button": "Commit"
+		},
+		"branch": {
+			"title": "Create a new branch",
+			"text": "Specify this branch's name:",
+			"input": "Your new ranch name",
+			"button": "Create branch"
+		},
+		"discard": {
+			"title": "Discard changes?",
+			"text": "This will discard all changes since your last commit. There is no undo.",
+			"button": "Discard changes"
+		},
+		"file_changed": {
+			"title": "File changed on disk",
+			"text": " has changed. Would you like to reload it?",
+			"button": "Discard changes and reload",
+			"cancel": "Don't reload, keep this version"
+		}
+	},
+  "file_view": {
+    "sources": "Sources",
+    "headers": "Headers",
+    "images": "Images",
+    "resources": "Resources",
+    "directories": "Directories"
+  },
+	"editor_view": {
+			"preview": "This is a preview - these objects are not editable in the browser.",
+      "pd": {
+        "error": "Rendering pd patch failed!"
+      }
+	},
+	"settings_view": {
+		"update": "Beginning update - this may take several minutes",
+		"browser": "The browser will temporarily disconnect, and may become unresponsive",
+		"ide": "Do not use the IDE during this process",
+		"zip": "This is not a valid zip archive."
+	},
+	"toolbar": {
+		"run": "Build & run",
+		"stop": "Stop",
+		"clear": "Clear console",
+		"scope": "Launch scope",
+		"gui": "Launch GUI"
+	},
+	"console": {
+		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages.",
+		"disconnect": "Bela has disconnected. Any changes you make will not be saved. Check your USB connection and reboot Bela."
+	},
+	"ide_browser": {
+		"stop": "Stopping Bela ...",
+		"mode_switch": " mode switch detected on the audio thread.",
+		"mode_switches": " mode switches detected on the audio thread.",
+		"file_changed": "This file was edited in another window and has changed. Reopen the file to make edits.",
+		"zip_error": "There was a problem updating Bela. Make sure you have selected the correct zip file and try again."
+	},
+	"docs_view": {
+		"examples": "Examples that use this class:",
+		"button": "Launch documentation"
+	},
+  "funcKeys": {
+    "openProject"	: "Opening project",
+  	"openExample"	: "Opening example",
+  	"newProject"	: "Creating project",
+  	"saveAs"		: "Saving project",
+  	"deleteProject"	: "Deleting project",
+  	"cleanProject"	: "Cleaning project",
+  	"openFile"		: "Opening file",
+  	"newFile"		: "Creating file",
+  	"uploadFile"	: "Uploading file",
+  	"renameFile"	: "Renaming file",
+  	"deleteFile"	: "Deleting file",
+  	"init"			: "Initialising",
+  	"stop"			: "Stopping",
+  	"fileRejected"	: "Uploading file"
+  }
+}

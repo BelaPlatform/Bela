@@ -1,0 +1,53 @@
+a.button {
+  color: black;
+  font-size: 11px;
+  text-decoration: none;
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+button,
+.button {
+  border: 1px solid $teal-main;
+  background-color: $white;
+  border-radius: 3px;
+  color: $black;
+  font-size: .8em;
+  cursor: pointer;
+  font-family: poppins_light;
+  padding: .5em .7em;
+  &.active {
+    color: rgba(0, 0, 0, 0.4);
+    &:hover {
+      color: rgba(0, 0, 0, 0.4);
+    }
+  }
+  &:hover {
+    background-color: $teal-main;
+    color: rgba(255,255,255,0.9);
+    transition: 0.1s ease-in-out;
+  }
+  &.create-project {
+    font-size: .9em;
+    margin-top: 2px;
+    padding-right: 20px;
+    &:hover {
+      color: $white;
+    }
+    &:before {
+      color: $grey-dark;
+      content: '+'; /* Unicode character for "plus" sign (+) */
+      font-family: space_bold;
+      font-size: 36px;
+      line-height: 20px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+  }
+  &:disabled {
+    background-color: rgba(0, 0, 0, 0.1); // Background
+    border:  1px solid $grey-light-mid;
+    color: $grey-dark; // Text colour
+  }
+}

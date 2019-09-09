@@ -12,6 +12,7 @@
 #include <sstream>
 #include <getopt.h>
 #include "../include/Bela.h"
+#include "../include/board_detect.h"
 
 #define OPT_PRU_FILE 1000
 #define OPT_PGA_GAIN_LEFT 1001
@@ -46,9 +47,6 @@ struct option gDefaultLongOptions[] =
 	{"pga-gain-left", 1, NULL, OPT_PGA_GAIN_LEFT},
 	{"pga-gain-right", 1, NULL, OPT_PGA_GAIN_RIGHT},
 	{"hp-level", 1, NULL, 'H'},
-	{"receive-port", 1, NULL, 'R'},
-	{"transmit-port", 1, NULL, 'T'},
-	{"server-name", 1, NULL, 'S'},
 	{"mux-channels", 1, NULL, 'X'},
 	{"audio-expander-inputs", 1, NULL, 'Y'},
 	{"audio-expander-outputs", 1, NULL, 'Z'},
@@ -63,7 +61,7 @@ struct option gDefaultLongOptions[] =
 	{NULL, 0, NULL, 0}
 };
 
-const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:R:T:S:X:Y:Z:";
+const char gDefaultShortOptions[] = "p:vN:M:C:D:A:H:G:B:X:Y:Z:";
 
 
 BelaInitSettings* Bela_InitSettings_alloc()
@@ -83,8 +81,8 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->periodSize = 16;
 	settings->useAnalog = 1;
 	settings->useDigital = 1;
-	settings->numAudioInChannels = 2;
-	settings->numAudioOutChannels = 2;
+	settings->numAudioInChannels = 2; // ignored
+	settings->numAudioOutChannels = 2; // ignored
 
 	settings->numAnalogInChannels = 8;
 	settings->numAnalogOutChannels = 8;
@@ -107,7 +105,8 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->enableLED = 1;
 	settings->enableCapeButtonMonitoring = 1;
 	settings->highPerformanceMode = 0;
-	settings->board[0] = '\0';
+	settings->board = BelaHw_NoHw;
+	settings->projectName = NULL;
 
 	// These deliberately have no command-line flags by default,
 	// as it is unlikely the user would want to switch them
@@ -125,9 +124,6 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->render = NULL;
 	settings->cleanup = NULL;
 
-	settings->receivePort = 9998;
-	settings->transmitPort = 9999;
-	strcpy(settings->serverName, "127.0.0.1");
 	settings->ampMutePin = kAmplifierMutePin;
 	if(Bela_userSettings != NULL)
 	{
@@ -266,19 +262,6 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		case 'H':
 			settings->headphoneLevel = atof(optarg);
 			break;
-		case 'R':
-			settings->receivePort = atoi(optarg);
-			break;
-		case 'T':
-			settings->transmitPort = atoi(optarg);
-			break;
-		case 'S':
-			if(strlen(optarg)<MAX_SERVERNAME_LENGTH)
-				strcpy(settings->serverName, optarg);
-			else
-				std::cerr << "Warning: server name is too long (>" << MAX_SERVERNAME_LENGTH << " characters)."
-						" Using default severName Instead ( " << settings->serverName << " ).\n";
-			break;
 		case 'X':
 			settings->numMuxChannels = atoi(optarg);
 			break;
@@ -322,10 +305,7 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			printf("Uniform sample rate\n");
 			break;
 		case OPT_BOARD:
-			if(strlen(optarg) < MAX_BOARDNAME_LENGTH)
-				strcpy(settings->board, optarg);
-			else
-				std::cerr << "Warning: filename for the board name is too long (>" << MAX_BOARDNAME_LENGTH << " characters).\n";
+			settings->board = getBelaHw(std::string(optarg));
 			break;
 		case '?':
 		default:

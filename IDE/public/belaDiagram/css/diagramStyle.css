@@ -1,0 +1,149 @@
+@font-face {
+  font-family: 'inconsolata';
+  font-style: normal;
+  font-weight: normal;
+  src: url('/fonts/inconsolata-webfont.woff2') format('woff2'),
+       url('/fonts/inconsolata-webfont.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'poppins_regular';
+  font-style: normal;
+  font-weight: normal;
+  src: url("/fonts/poppins-regular-webfont.woff2") format("woff2"),
+       url("/fonts/poppins-regular-webfont.woff") format("woff");
+}
+
+#container {
+  overflow: hidden;
+}
+
+#image {
+  margin: 0;
+  overflow: visible;
+  padding-left: 0;
+  text-align: center;
+  width: 350px;
+}
+
+.diagram-text {
+  font-family: 'poppins_regular';
+  font-size: .9em;
+  line-height: 22px;
+  margin-top: -10px;
+}
+
+.dPin {
+  fill: rgba(0, 255, 0, 0.5);
+  stroke: none;
+}
+
+.new {
+  fill: rgb(255, 0, 0);
+}
+
+.gnd {
+  fill: rgba(255, 0, 0, 0.4);
+  stroke: rgb(255, 0, 0);
+}
+
+.aPin {
+  fill: rgba(255, 255, 0, 0.5);
+  stroke: none;
+}
+
+.aInPin {
+  fill: rgba(255, 165, 0, 0.6);
+  stroke: none;
+}
+
+.comms {
+  fill: rgba(0, 0, 255, 0.5);
+  stroke: none;
+}
+
+.audio {
+  fill: rgba(155, 48, 255, 0.5);
+  stroke: none;
+}
+
+.pins{
+  fill: transparent;
+  stroke: #000;
+}
+
+.util {
+  fill: rgba(255, 14, 154, 0.5);
+  stroke: none;
+}
+
+.led {
+  fill: rgba(0, 255, 0, 0.6);
+  stroke: none;
+}
+
+.caution {
+  fill: rgba(255, 14, 154, 0.7);
+  stroke: rgb(255, 0, 0);
+}
+
+.jumper {
+  fill: rgba(0, 255, 255, 0.2);
+  stroke: rgb(0, 255, 255);
+}
+
+.usbpwrJ {
+  fill: rgba(255, 150, 0, 0.5);
+  stroke: rgb(255, 150, 0);
+}
+
+.extpwrJ {
+  fill: transparent;
+  stroke: rgb(255, 255, 0);
+}
+
+.disabled {
+  fill: rgba(0, 0, 0, 0.6);
+  stroke: none;
+}
+
+.powerIn {
+  fill: rgba(255, 14, 154, 0.7);
+  stroke: #0effeb;
+}
+
+.tooltipster-content {
+  padding: 0!important;
+}
+
+.tipText {
+  background: #fff;
+  color: #000;
+  font-family: "inconsolata";
+  max-width: 350px;
+  padding: 5px 10px;
+  position: relative;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.tooltipster-box {
+  border-width: 2px!important;
+  border-color: #00bea4!important;
+}
+
+.tooltipster-bottom .tooltipster-arrow-border {
+  border-bottom-color: #00bea4!important;
+}
+
+.tooltipster-bottom .tooltipster-arrow-background {
+  border-bottom-color: white!important;
+}
+
+.tooltipster-top .tooltipster-arrow-border {
+  border-top-color: #00bea4!important;
+}
+
+.tooltipster-top .tooltipster-arrow-background {
+  border-top-color: white!important;
+}

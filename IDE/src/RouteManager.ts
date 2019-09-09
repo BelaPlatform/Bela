@@ -37,9 +37,22 @@ function send_zip(path: string, name: string, res: express.Response){
 	archive.finalize();
 }
 
+function upload_file(req: express.Request, res: express.Response){
+  let file = req.query.file;
+  fs.createWriteStream(paths.uploads+file);
+}
+
+export function upload(req: express.Request, res: express.Response){
+	if(req.query.all){
+    console.log(res);
+		upload_file(req, res);
+  }
+}
+
 function download_file(req: express.Request, res: express.Response){
 	let file = paths.projects+req.query.project+'/'+req.query.file;
-	res.setHeader('Content-disposition', 'attachment; filename='+req.query.file);
+  let fileName = req.query.file.split('/').pop();
+	res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
 	res.setHeader('Content-type', mime.getType(file));
 	// this should really go through the file_manager lock - TODO
 	fs.createReadStream(file).pipe(res);

@@ -1,26 +1,26 @@
 'use strict';
 var View = require('./View');
 var popup = require('../popup');
+var json = require('../site-text.json');
 
 class GitView extends View{
 
 	constructor(className, models, settings){
-		super(className, models, settings);		
-
-		this.$form = $('#gitForm');
-		this.$input = $('#gitInput');
+		super(className, models, settings);
+		this.$form = $('[data-git-form]');
+		this.$input = $('[data-git-input]');
 
 		// git input events
 		this.$form.on('submit', (e) => {
 			e.preventDefault();
 			this.emit('git-event', {
-				func: 'command', 
+				func: 'command',
 				command: this.$input.val()
 			});
 			this.$input.val('');
 		});
 	}
-	
+
 	buttonClicked($element, e){
 		var func = $element.data().func;
 		if (this[func]){
@@ -30,92 +30,92 @@ class GitView extends View{
 		var command = $element.data().command;
 		this.emit('git-event', {func, command});
 	}
-	
+
 	selectChanged($element, e){
 		this.emit('git-event', {
 			func: 'command',
 			command: 'checkout ' + ($("option:selected", $element).data('hash') || $("option:selected", $element).val())
 		});
 	}
-	
+
 	commit(){
-	
+
 		// build the popup content
-		popup.title('Committing to the project repository');
-		popup.subtitle('Enter a commit message');
-		
+		popup.title(json.popups.commit.title);
+		popup.subtitle(json.popups.commit.text);
+
 		var form = [];
-		form.push('<input type="text" placeholder="Enter your commit message">');
+		form.push('<input type="text" placeholder="' + json.popups.commit.input + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-commit">Commit</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.commit.button +'</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('git-event', {func: 'command', command: 'commit -am "'+popup.find('input[type=text]').val()+'"'});
 			popup.hide();
 		});
-		
-		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
+		popup.find('.cancel').on('click', popup.hide );
+
 		popup.show();
 
 	}
 	branch(){
-		
+
 		// build the popup content
-		popup.title('Creating a new branch');
-		popup.subtitle('Enter a name for the branch');
-		
+		popup.title(json.popups.branch.title);
+		popup.subtitle(json.popups.branch.text);
+
 		var form = [];
-		form.push('<input type="text" placeholder="Enter your new branch name">');
+		form.push('<input type="text" placeholder="' + json.popups.branch.input + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-create">Create</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.branch.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('git-event', {func: 'command', command: 'checkout -b '+popup.find('input[type=text]').val()});
 			popup.hide();
 		});
-		
-		popup.find('.popup-cancel').on('click', popup.hide );
-		
+
+		popup.find('.cancel').on('click', popup.hide );
+
 		popup.show();
 
 	}
-	
+
 	discardChanges(){
-		
+
 		// build the popup content
-		popup.title('Discarding changes');
-		popup.subtitle('You are about to discard all changes made in your project since the last commit. The command used is "git checkout -- .". Are you sure you wish to continue? This cannot be undone.');
-		
+		popup.title(json.popups.discard.title);
+		popup.subtitle(json.popups.discard.text);
+
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-		
+		form.push('<button type="submit" class="button popup confirm">' + json.popups.discard.button + '</button>');
+		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('git-event', {func: 'command', command: 'checkout -- .'});
 			popup.hide();
 		});
-		
-		popup.find('.popup-create').on('click', popup.hide );
-		
+
+		popup.find('.cancel').on('click', popup.hide );
+
 		popup.show();
-		
-		popup.find('.popup-continue').trigger('focus');
-		
+
+		popup.find('.confirm').trigger('focus');
+
 	}
-	
+
 	_repoExists(exists){
 		if (exists){
-			$('#repo').css('display', 'block');
-			$('#noRepo').css('display', 'none');
+			$('[data-git-repo]').css('display', 'block');
+			$('[data-git-no-repo]').css('display', 'none');
 		} else {
-			$('#repo').css('display', 'none');
-			$('#noRepo').css('display', 'block');
+			$('[data-git-repo]').css('display', 'none');
+			$('[data-git-no-repo]').css('display', 'block');
 		}
 	}
 	__commits(commits, git){
@@ -123,9 +123,10 @@ class GitView extends View{
 		var commits = commits.split('\n');
 		var current = git.currentCommit.trim();
 		var branches = git.branches.split('\n');
-		
+
 		// fill commits menu
-		var $commits = $('#commits');
+		// var $commits = $('#commits');
+    var $commits = $('[data-git-commits]');
 		$commits.empty();
 
 		var commit, hash, opt;
@@ -142,11 +143,12 @@ class GitView extends View{
 				if (!(commit.length == 1 && commit[0] === '')) console.log('skipped commit', commit);
 			}
 		}
-		
+
 		// fill branches menu
-		var $branches = $('#branches');
+		// var $branches = $('#branches');
+    var $branches = $('[data-git-branches]');
 		$branches.empty();
-		
+
 		for (var i=0; i<branches.length; i++){
 			if (branches[i]){
 				opt = $('<option></option>').html(branches[i]).appendTo($branches);
@@ -162,7 +164,7 @@ class GitView extends View{
 	__stderr(text){
 		this.emit('console', text);
 	}
-	
+
 }
 
 module.exports = GitView;

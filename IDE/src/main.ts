@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as http from 'http';
+import * as multer from 'multer'
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
 import * as file_manager from './FileManager';
@@ -7,6 +8,7 @@ import * as paths from './paths';
 import * as util from './utils';
 import * as routes from './RouteManager';
 import * as path from 'path';
+import * as fs from 'fs';
 var TerminalManager = require('./TerminalManager');
 
 export async function init(){
@@ -15,7 +17,7 @@ export async function init(){
 	await check_lockfile()
 		.catch( (e: Error) => console.log('error checking lockfile', e) );
 
-	// setup webserver 
+	// setup webserver
 	const app: express.Application = express();
 	const server: http.Server = new http.Server(app);
 	setup_routes(app);
@@ -58,17 +60,42 @@ export function get_backup_file_stats(): util.Backup_File_Stats {
 	return backup_file_stats;
 }
 
-
 function setup_routes(app: express.Application){
 	// static paths
 	app.use(express.static(paths.webserver_root)); // all files in this directory are served to bela.local/
 	app.use('/documentation', express.static(paths.Bela+'Documentation/html'));
+	app.use('/projects', express.static(paths.Bela+'projects'));
 
 	// ajax routes
+
+  var storage = multer.diskStorage({
+    destination: paths.uploads,
+    filename: function (req, file, callback) {
+      callback(null, file.originalname);
+      console.log('file is', file);
+    }
+  });
+
+  app.post('/uploads', function(req, res) {
+      var upload = multer({ storage : storage}).single('data');
+      upload(req, res, function(err) {
+        if(err) {
+            return res.end("Error uploading file.");
+        }
+        res.end("File is uploaded");
+      });
+  });
+
 	// file and project downloads
 	app.get('/download', routes.download);
 	// doxygen xml
 	app.get('/documentation_xml', routes.doxygen);
+	// examples
+	app.use('/examples', express.static(paths.examples));
+  // libs
+	app.use('/libraries', express.static(paths.libraries));
+	// gui
+	app.use('/gui', express.static(paths.gui));
 }
 
 export function get_xenomai_version(): Promise<string>{

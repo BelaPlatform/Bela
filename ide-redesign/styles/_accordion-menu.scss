@@ -1,0 +1,104 @@
+button.accordion {
+  background-color: $grey-light;
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  font-family: poppins_regular;
+  font-size: 16px;
+  margin-top: 10px;
+  outline: none;
+  padding: 8px 14px;
+  text-align: left;
+  transition: 0.25s ease-in-out;
+  width: 100%;
+  &:hover {
+    background: $grey-mid;
+    border-bottom: 2px solid $teal-main;
+  }
+  &.active {
+    background-color: $grey-light;
+    border-bottom: 2px solid $teal-main;
+    color: $grey-dark;
+    padding: 8px 14px;
+    &:hover {
+      color: $grey-dark;
+    }
+    &:after {
+      content: "\2796"; /* Unicode character for "minus" sign (-) */
+    }
+  }
+  &:after {
+    color: rgba(0, 0, 0, 0.6);
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    float: right;
+    font-size: 14px;
+    margin-left: 5px;
+  }
+}
+
+button.accordion-sub {
+  background: transparent;
+  border-bottom: 1px solid $grey-toolbar;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  color: $grey-dark;
+  font-size: 1em;
+  font-family: 'poppins_regular';
+  padding: .4em .8em .25em;
+  text-align: left;
+  width: 100%;
+  &:hover {
+    background: rgba($grey-toolbar,0.2);
+    color: $grey-dark;
+  }
+  &.active {
+    background: transparent;
+    border-bottom: 2px solid $teal-01;
+    color: $grey-dark;
+    padding-bottom: .2em;
+    margin-top: .2em;
+    &:hover {
+      color: $grey-dark;
+    }
+    &:after {
+      content: "\2796"; /* Unicode character for "minus" sign (-) */
+      font-size: .75em;
+      margin-top: 4px;
+    }
+  }
+  &:after {
+    color: rgba(0, 0, 0, 0.4);
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    float: right;
+    font-size: .75em;
+    margin-left: 5px;
+    margin-top: 2px;
+  }
+
+}
+
+.docs-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease;
+  &.show {
+    max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+    opacity: 1;
+  }
+}
+
+.panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: 0.2s ease-in-out;
+}
+
+.panel.show {
+  max-height: 100000px; /* Whatever you like, as long as its more than the height of the content (on all screen sizes) */
+  opacity: 1;
+}

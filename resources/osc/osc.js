@@ -1,7 +1,7 @@
 var dgram = require('dgram');
 var osc = require('osc-min');
 // Default IPs and ports
-var localIp = '0.0.0.0';
+var localIp = '127.0.0.1';
 var localPort = 7563;
 var remoteIp = '127.0.0.1';
 var remotePort = 7562;
@@ -23,7 +23,7 @@ if(args.length > 2){
 	if(args.length > 4)
 		localIp = args[4];
 	if(args.length > 5)
-		remotePort = args[5];
+		localPort = args[5];
 }
 
 console.log("send to: "+remoteIp+":"+remotePort+", receive on: "+localIp+":"+localPort)
@@ -72,6 +72,18 @@ function parseMessage(msg){
 		var receivedCount = msg.args[0].value;
 		console.timeEnd(baseTimeString + receivedCount);
 		//console.log('received osc-acknowledge', msg.args);
+	} else {
+		console.log('address:', msg.address);
+		for (let arg of msg.args){
+			console.log(arg);
+			if (arg.type === 'blob'){
+				floats = [];
+				for (let i=0; i<arg.value.length; i+=4){
+					floats.push(arg.value.readFloatLE(i).toPrecision(5));
+				}
+				console.log(floats);
+			}
+		}
 	}
 }
 

@@ -1,0 +1,11 @@
+[
+  "delay",
+  "sample-loader",
+  "sample-piezo-trigger",
+  "tremolo",
+  "telephone-filter",
+  "envelope-generator",
+  "FFT-phase-vocoder",
+  "sample-streamer",
+  "sample-streamer-multi"
+]

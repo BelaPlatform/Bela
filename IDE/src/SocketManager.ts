@@ -20,7 +20,7 @@ let interval: NodeJS.Timer;
 export function init(server: http.Server){
 	ide_sockets = io(server, {
 		pingInterval: 3000,
-		pingTimeout: 6500
+		pingTimeout: 100000
 	}).of('/IDE');
 	ide_sockets.on('connection', connection);
 }
@@ -68,6 +68,7 @@ async function init_message(socket: SocketIO.Socket){
 	let message: util.Init_Message = {
 		projects 	: await project_manager.listProjects(),
 		examples 	: await project_manager.listExamples(),
+    libraries 	: await project_manager.listLibraries(),
 		settings 	: await ide_settings.read(),
 		boot_project 	: await boot_project.get_boot_project(),
 		board_string	: await IDE.board_detect().catch(e => console.log('error in board detect', e)),
