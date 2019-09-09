@@ -250,8 +250,8 @@ _exampleList(examplesDir){
                 childLi.html(child).attr('data-example-link', link)
                 .on('click', (e) => {
                   link = e.target.dataset.exampleLink;
-                  if (this.exampleChanged){
-                    this.exampleChanged = false;
+                  if (that.exampleChanged){
+                    that.exampleChanged = false;
                     popup.exampleChanged( (link) => {
                       that.emit('message', 'project-event', {
                         func: 'openExample',
@@ -259,7 +259,7 @@ _exampleList(examplesDir){
                       });
                       $('.selectedExample').removeClass('selectedExample');
                       $(e.target).addClass('selectedExample');
-                    }, undefined, 0, () => this.exampleChanged = true );
+                    }, link, 0, () => that.exampleChanged = true );
                     return;
                   }
 

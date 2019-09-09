@@ -3381,8 +3381,6 @@ var ProjectView = function (_View) {
                   url: "/examples/" + item.name + "/" + child.name,
                   dataType: "json",
                   success: function success(text) {
-                    var _this7 = this;
-
                     newChildOrder = [];
                     text.forEach(function (item) {
                       newChildOrder.push({ "name": item });
@@ -3417,8 +3415,8 @@ var ProjectView = function (_View) {
                       var childLi = $('<li></li>');
                       childLi.html(child).attr('data-example-link', link).on('click', function (e) {
                         link = e.target.dataset.exampleLink;
-                        if (_this7.exampleChanged) {
-                          _this7.exampleChanged = false;
+                        if (that.exampleChanged) {
+                          that.exampleChanged = false;
                           popup.exampleChanged(function (link) {
                             that.emit('message', 'project-event', {
                               func: 'openExample',
@@ -3426,8 +3424,8 @@ var ProjectView = function (_View) {
                             });
                             $('.selectedExample').removeClass('selectedExample');
                             $(e.target).addClass('selectedExample');
-                          }, undefined, 0, function () {
-                            return _this7.exampleChanged = true;
+                          }, link, 0, function () {
+                            return that.exampleChanged = true;
                           });
                           return;
                         }
