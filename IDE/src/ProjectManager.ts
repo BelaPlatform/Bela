@@ -123,11 +123,22 @@ export async function listExamples(): Promise<any>{
 	let examples = [];
 	let categories = await file_manager.read_directory(paths.examples);
 	for (let category of categories){
+    let parsedChildren = [];
 		if (await file_manager.directory_exists(paths.examples+'/'+category)){
-			examples.push({
-				name: category,
-				children: await file_manager.read_directory(paths.examples+'/'+category)
-			});
+      let children = await file_manager.read_directory(paths.examples+'/'+category);
+      for (let child of children) {
+        if (child.split('.').length < 2 || child.split('.').pop() === 'json') {
+          parsedChildren.push(child);
+        } else {
+          console.log(child);
+          console.log('^^ this is NOT a json file or folder ^^');
+        }
+      }
+      examples.push({
+        name: category,
+        children: parsedChildren
+      });
+      parsedChildren = [];
 		}
 	}
 	return examples;

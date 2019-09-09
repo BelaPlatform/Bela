@@ -214,31 +214,42 @@ function listLibraries() {
 exports.listLibraries = listLibraries;
 function listExamples() {
     return __awaiter(this, void 0, void 0, function () {
-        var examples, categories, _i, categories_2, category, _a, _b, _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
+        var examples, categories, _i, categories_2, category, parsedChildren, children, _a, children_1, child;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     examples = [];
                     return [4 /*yield*/, file_manager.read_directory(paths.examples)];
                 case 1:
-                    categories = _d.sent();
+                    categories = _b.sent();
                     _i = 0, categories_2 = categories;
-                    _d.label = 2;
+                    _b.label = 2;
                 case 2:
                     if (!(_i < categories_2.length)) return [3 /*break*/, 6];
                     category = categories_2[_i];
+                    parsedChildren = [];
                     return [4 /*yield*/, file_manager.directory_exists(paths.examples + '/' + category)];
                 case 3:
-                    if (!_d.sent()) return [3 /*break*/, 5];
-                    _b = (_a = examples).push;
-                    _c = {
-                        name: category
-                    };
+                    if (!_b.sent()) return [3 /*break*/, 5];
                     return [4 /*yield*/, file_manager.read_directory(paths.examples + '/' + category)];
                 case 4:
-                    _b.apply(_a, [(_c.children = _d.sent(),
-                            _c)]);
-                    _d.label = 5;
+                    children = _b.sent();
+                    for (_a = 0, children_1 = children; _a < children_1.length; _a++) {
+                        child = children_1[_a];
+                        if (child.split('.').length < 2 || child.split('.').pop() === 'json') {
+                            parsedChildren.push(child);
+                        }
+                        else {
+                            console.log(child);
+                            console.log('^^ this is NOT a json file or folder ^^');
+                        }
+                    }
+                    examples.push({
+                        name: category,
+                        children: parsedChildren
+                    });
+                    parsedChildren = [];
+                    _b.label = 5;
                 case 5:
                     _i++;
                     return [3 /*break*/, 2];
