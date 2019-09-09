@@ -128,7 +128,16 @@ class Console extends EventEmitter {
       if (err.currentFile){
 				span.on('click', () => this.emit('focus', {line: err.row+1, column: err.column-1}) );
 			} else {
-				span.on('click', () => this.emit('open-file', err.file, {line: err.row+1, column: err.column-1}) );
+				if(err.file.includes && err.file.includes('projects')) {
+					var file = err.file.split("projects/");
+					// remove the project name
+					file = file[1].split("/");
+					file.splice(0, 1);
+					file = file.join("/");
+					span.on('click', () => this.emit('open-file', file, {line: err.row+1, column: err.column-1}) );
+				} else {
+					// TODO: remove hover style that makes it appear like a link
+				}
 			}
 
 		}

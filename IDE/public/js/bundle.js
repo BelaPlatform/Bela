@@ -949,7 +949,7 @@ function parseErrors(data) {
 
 				if (str[3] === ' error') {
 					errors.push({
-						file: str[0].split('/').pop(),
+						file: str[0],
 						row: str[1] - 1,
 						column: str[2],
 						text: str.slice(4).join(':').slice(1) + '\ncolumn: ' + str[2],
@@ -957,7 +957,7 @@ function parseErrors(data) {
 					});
 				} else if (str[3] == ' fatal error') {
 					errors.push({
-						file: str[0].split('/').pop(),
+						file: str[0],
 						row: str[1] - 1,
 						column: str[2],
 						text: str.slice(4).join(':').slice(1) + '\ncolumn: ' + str[2],
@@ -965,7 +965,7 @@ function parseErrors(data) {
 					});
 				} else if (str[3] == ' warning') {
 					errors.push({
-						file: str[0].split('/').pop(),
+						file: str[0],
 						row: str[1] - 1,
 						column: str[2],
 						text: '[warning] ' + str.slice(4).join(':').slice(1) + '\ncolumn: ' + str[2],
@@ -1009,12 +1009,22 @@ function parseErrors(data) {
 		for (var _iterator = errors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 			var err = _step.value;
 
-			if (!err.file || err.file === models.project.getKey('fileName')) {
+			var file;
+			if (err.file) {
+				file = err.file.split("projects/");
+				if (file.length >= 2) {
+					// remove the project name
+					file = file[1].split("/");
+					file.splice(0, 1);
+					file = file.join("/");
+				}
+			}
+			if (!err.file || file === models.project.getKey('fileName')) {
 				err.currentFile = true;
 				currentFileErrors.push(err);
 			} else {
 				err.currentFile = false;
-				err.text = 'In file ' + err.file + ': ' + err.text;
+				err.text = 'In file ' + file + ': ' + err.text;
 				otherFileErrors.push(err);
 			}
 		}
@@ -5140,9 +5150,19 @@ var Console = function (_EventEmitter) {
 							return _this2.emit('focus', { line: err.row + 1, column: err.column - 1 });
 						});
 					} else {
-						span.on('click', function () {
-							return _this2.emit('open-file', err.file, { line: err.row + 1, column: err.column - 1 });
-						});
+						if (err.file.includes && err.file.includes('projects')) {
+							file = err.file.split("projects/");
+							// remove the project name
+
+							file = file[1].split("/");
+							file.splice(0, 1);
+							file = file.join("/");
+							span.on('click', function () {
+								return _this2.emit('open-file', file, { line: err.row + 1, column: err.column - 1 });
+							});
+						} else {
+							// TODO: remove hover style that makes it appear like a link
+						}
 					}
 				};
 
@@ -5151,6 +5171,7 @@ var Console = function (_EventEmitter) {
 					var span;
 					var copyButton;
 					var clipboard;
+					var file;
 
 					_loop();
 				}
