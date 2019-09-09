@@ -3134,9 +3134,9 @@ var ProjectView = function (_View) {
 
       if (this.exampleChanged) {
         this.exampleChanged = false;
-        popup.exampleChanged(function () {
-          _this2.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data().name });
-        }, undefined, 0, function () {
+        popup.exampleChanged(function (arg) {
+          _this2.emit('message', 'project-event', arg);
+        }, { func: $element.data().func, currentProject: $element.data().name }, 0, function () {
           _this2.exampleChanged = true;
         });
         return;

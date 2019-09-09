@@ -16,9 +16,9 @@ class ProjectView extends View {
     selectChanged($element, e){
       if (this.exampleChanged){
         this.exampleChanged = false;
-        popup.exampleChanged( () => {
-        this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.data().name});
-      }, undefined, 0, () => {
+        popup.exampleChanged( (arg) => {
+        this.emit('message', 'project-event', arg);
+      }, {func: $element.data().func, currentProject: $element.data().name}, 0, () => {
         this.exampleChanged = true;
       });
       return;
