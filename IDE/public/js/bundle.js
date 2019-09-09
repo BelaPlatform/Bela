@@ -1094,6 +1094,7 @@ var Model = function (_EventEmitter) {
 		_this._getData = function () {
 			return _data;
 		};
+		_this.setMaxListeners(50);
 		return _this;
 	}
 
@@ -4867,6 +4868,7 @@ var View = function (_EventEmitter) {
 		_this.settings = settings;
 		_this.$elements = $('.' + CSSClassName);
 		_this.$parents = $('.' + CSSClassName + '-parent');
+		_this.setMaxListeners(50);
 
 		if (models) {
 			for (var i = 0; i < models.length; i++) {

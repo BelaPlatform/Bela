@@ -9,6 +9,7 @@ class View extends EventEmitter{
 		this.settings = settings;
 		this.$elements = $('.'+CSSClassName);
 		this.$parents = $('.'+CSSClassName+'-parent');
+    this.setMaxListeners(50);
 
 		if (models){
 			for (var i=0; i<models.length; i++){
