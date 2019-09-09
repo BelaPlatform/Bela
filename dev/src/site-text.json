@@ -124,6 +124,7 @@
   "file_view": {
     "sources": "Sources",
     "headers": "Headers",
+    "abstractions": "Abstractions",
     "images": "Images",
     "resources": "Resources",
     "directories": "Directories"
