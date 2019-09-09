@@ -109,49 +109,43 @@ static unsigned int getPortChannel(int* channel){
 		*channel -= 16;
 		port += 1;
 	}
-	if(port >= midi.size()){
-		// if the port number exceeds the number of ports available, send out
-		// of the first port 
-		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
-		port = 0;
-	}
 	return port;
 }
 
 void Bela_MidiOutNoteOn(int channel, int pitch, int velocity) {
 	int port = getPortChannel(&channel);
 	rt_printf("noteout _ port: %d, channel: %d, pitch: %d, velocity %d\n", port, channel, pitch, velocity);
-	midi[port]->writeNoteOn(channel, pitch, velocity);
+	port < midi.size() && midi[port]->writeNoteOn(channel, pitch, velocity);
 }
 
 void Bela_MidiOutControlChange(int channel, int controller, int value) {
 	int port = getPortChannel(&channel);
 	rt_printf("ctlout _ port: %d, channel: %d, controller: %d, value: %d\n", port, channel, controller, value);
-	midi[port]->writeControlChange(channel, controller, value);
+	port < midi.size() && midi[port]->writeControlChange(channel, controller, value);
 }
 
 void Bela_MidiOutProgramChange(int channel, int program) {
 	int port = getPortChannel(&channel);
 	rt_printf("pgmout _ port: %d, channel: %d, program: %d\n", port, channel, program);
-	midi[port]->writeProgramChange(channel, program);
+	port < midi.size() && midi[port]->writeProgramChange(channel, program);
 }
 
 void Bela_MidiOutPitchBend(int channel, int value) {
 	int port = getPortChannel(&channel);
 	rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
-	midi[port]->writePitchBend(channel, value);
+	port < midi.size() && midi[port]->writePitchBend(channel, value);
 }
 
 void Bela_MidiOutAftertouch(int channel, int pressure){
 	int port = getPortChannel(&channel);
 	rt_printf("touchout _ port: %d, channel: %d, pressure: %d\n", port, channel, pressure);
-	midi[port]->writeChannelPressure(channel, pressure);
+	port < midi.size() && midi[port]->writeChannelPressure(channel, pressure);
 }
 
 void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
 	int port = getPortChannel(&channel);
 	rt_printf("polytouchout _ port: %d, channel: %d, pitch: %d, pressure: %d\n", port, channel, pitch, pressure);
-	midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
+	port < midi.size() && midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 }
 
 void Bela_MidiOutByte(int port, int byte){
@@ -161,7 +155,7 @@ void Bela_MidiOutByte(int port, int byte){
 		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
 		port = 0;
 	}
-	midi[port]->writeOutput(byte);
+	port < midi.size() && midi[port]->writeOutput(byte);
 }
 
 void Bela_printHook(const char *received){

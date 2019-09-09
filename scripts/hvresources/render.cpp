@@ -123,12 +123,6 @@ static unsigned int getPortChannel(int* channel){
 		*channel -= 16;
 		port += 1;
 	}
-	if(port >= midi.size()){
-		// if the port number exceeds the number of ports available, send out
-		// of the first port
-		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
-		port = 0;
-	}
 	return port;
 }
 
@@ -272,7 +266,7 @@ static void sendHook(
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
 			//rt_printf("noteout[%d]: %d %d %d\n", port, channel, pitch, velocity);
-			midi[port]->writeNoteOn(channel, pitch, velocity);
+			port < midi.size() && midi[port]->writeNoteOn(channel, pitch, velocity);
 			break;
 		}
 		case 0xe5e2a040: { // __hv_ctlout
@@ -282,7 +276,7 @@ static void sendHook(
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
 			//rt_printf("controlout[%d]: %d %d %d\n", port, channel, controller, value);
-			midi[port]->writeControlChange(channel, controller, value);
+			port < midi.size() && midi[port]->writeControlChange(channel, controller, value);
 			break;
 		}
 		case 0x8753e39e: { // __hv_pgmout
@@ -290,7 +284,7 @@ static void sendHook(
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
 			//rt_printf("pgmout[%d]: %d %d\n", port, channel, program);
-			midi[port]->writeProgramChange(channel, program);
+			port < midi.size() && midi[port]->writeProgramChange(channel, program);
 			break;
 		}
 		case 0xe8458013: { // __hv_bendout
@@ -299,7 +293,7 @@ static void sendHook(
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
 			//rt_printf("bendout[%d]: %d %d\n", port, channel, value);
-			midi[port]->writePitchBend(channel, value);
+			port < midi.size() && midi[port]->writePitchBend(channel, value);
 			break;
 		}
 		case 0x476d4387: { // __hv_touchout
@@ -308,7 +302,7 @@ static void sendHook(
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
 			//rt_printf("touchout[%d]: %d %d\n", port, channel, pressure);
-			midi[port]->writeChannelPressure(channel, pressure);
+			port < midi.size() && midi[port]->writeChannelPressure(channel, pressure);
 			break;
 		}
 		case 0xd5aca9d1: { // __hv_polytouchout, not currently supported by Heavy. You have to [send __hv_polytouchout]
@@ -318,7 +312,7 @@ static void sendHook(
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 2);
 			int port = getPortChannel(&channel);
 			//rt_printf("polytouchout [%d]: %d %d %d\n", port, channel, pitch, pressure);
-			midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
+			port < midi.size() && midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 			break;
 		}
 		case 0x6511de55: { // __hv_midiout, not currently supported by Heavy. You have to [send __hv_midiout]
@@ -326,7 +320,7 @@ static void sendHook(
 			midi_byte_t byte = (midi_byte_t) hv_msg_getFloat(m, 0);
 			int port = (int) hv_msg_getFloat(m, 1);
 			//rt_printf("midiout port: %d, byte: %d\n", port, byte);
-			midi[port]->writeOutput(byte);
+			port < midi.size() && midi[port]->writeOutput(byte);
 			break;
 		}
 		default: {

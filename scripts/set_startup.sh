@@ -80,7 +80,7 @@ check_project_exists $BBB_PROJECT_NAME || {
 	list_available_projects
 	exit 1
 }
-MAKE_COMMAND="make --no-print-directory -C $BBB_BELA_HOME PROJECT=$BBB_PROJECT_NAME CL=\"$OPTARG\""
+MAKE_COMMAND="make --no-print-directory -C $BBB_BELA_HOME PROJECT=$BBB_PROJECT_NAME CL=\"$COMMAND_ARGS\""
 if [ $ENABLE_STARTUP -eq 0 ]
 then
     ssh $BBB_ADDRESS "$MAKE_COMMAND nostartup"

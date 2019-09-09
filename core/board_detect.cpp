@@ -181,7 +181,7 @@ static BelaHw parse_config_file(std::string path,  std::string searchStr)
 
 static int write_config_file(std::string path, BelaHw hardware)
 {
-	ofstream outputFile;
+	std::ofstream outputFile;
 	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
 	outputFile.open(path.c_str());
 	if(outputFile.is_open())
