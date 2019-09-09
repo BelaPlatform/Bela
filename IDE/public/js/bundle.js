@@ -633,7 +633,7 @@ socket.on('init', function (data) {
 	models.project.setData({ projectList: data.projects, exampleList: data.examples, libraryList: data.libraries, currentProject: data.settings.project });
 	models.settings.setData(data.settings);
 
-	$('data-run-on-boot').val(data.boot_project);
+	$('[data-run-on-boot]').val(data.boot_project);
 
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
