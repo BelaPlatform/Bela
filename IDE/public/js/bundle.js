@@ -3134,9 +3134,9 @@ var ProjectView = function (_View) {
 
       if (this.exampleChanged) {
         this.exampleChanged = false;
-        popup.exampleChanged(function () {
-          _this2.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.val() });
-        }, undefined, 0, function () {
+        popup.exampleChanged(function (arg) {
+          _this2.emit('message', 'project-event', arg);
+        }, { func: $element.data().func, currentProject: $element.data().name }, 0, function () {
           _this2.exampleChanged = true;
         });
         return;
@@ -3282,7 +3282,7 @@ var ProjectView = function (_View) {
       $projects.attr('size', projLen - 1);
       for (var i = 0; i < projLen; i++) {
         if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
-          $('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
+          $('<li></li>').addClass('projectManager proj-li').attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
             $(this).blur();
             $(this).parent().parent().removeClass('show');
           });
@@ -5849,7 +5849,6 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
-			console.log(arg);
 			cb(arg);
 		}, delay);
 		popup.hide();

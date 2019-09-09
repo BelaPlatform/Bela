@@ -16,9 +16,9 @@ class ProjectView extends View {
     selectChanged($element, e){
       if (this.exampleChanged){
         this.exampleChanged = false;
-        popup.exampleChanged( () => {
-        this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.val()});
-      }, undefined, 0, () => {
+        popup.exampleChanged( (arg) => {
+        this.emit('message', 'project-event', arg);
+      }, {func: $element.data().func, currentProject: $element.data().name}, 0, () => {
         this.exampleChanged = true;
       });
       return;
@@ -153,7 +153,7 @@ class ProjectView extends View {
     $projects.attr('size', (projLen - 1));
     for (let i=0; i < projLen; i++){
       if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
-        $('<li></li>').addClass('projectManager proj-li').val(projects[i]).attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
+        $('<li></li>').addClass('projectManager proj-li').attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
           $(this).blur();
           $(this).parent().parent().removeClass('show');
         });
