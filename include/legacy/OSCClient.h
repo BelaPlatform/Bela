@@ -1,2 +1,2 @@
 #pragma once
-#error You included file OSCClient.h. This is no longer available and you should instead use #include <libraries/OSCSender/OSCSender.h>. See the example Commmunication/OSC for more details
+#error You included file OSCClient.h. This is no longer available and you should instead use #include <libraries/OscSender/OscSender.h>. See the example Commmunication/OSC for more details

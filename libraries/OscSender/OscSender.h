@@ -1,6 +1,4 @@
-/***** OSCSender.h *****/
-#ifndef __OSCSender_H_INCLUDED__
-#define __OSCSender_H_INCLUDED__ 
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -13,7 +11,7 @@ namespace oscpkt{
 }
 
 /**
- * \brief OSCSender provides functions for sending OSC messages from Bela.
+ * \brief OscSender provides functions for sending OSC messages from Bela.
  *
  * Functionality is provided for sending messages with int, float, bool, 
  * std::string and binary blob arguments. Sending a stream of floats is
@@ -21,14 +19,14 @@ namespace oscpkt{
  *
  * Uses oscpkt (http://gruntthepeon.free.fr/oscpkt/) underneath
  */
-class OSCSender{
+class OscSender{
 	public:
-		OSCSender();
-		OSCSender(int port, std::string ip_address=std::string("127.0.0.1"));
-		~OSCSender();
+		OscSender();
+		OscSender(int port, std::string ip_address=std::string("127.0.0.1"));
+		~OscSender();
 		
         /**
-		 * \brief Initialises OSCSender
+		 * \brief Initialises OscSender
 		 *
 		 * Must be called once during setup()
 		 *
@@ -46,7 +44,7 @@ class OSCSender{
 		 * @param address the address which the OSC message will be sent to
 		 *
 		 */
-		OSCSender &newMessage(std::string address);
+		OscSender &newMessage(std::string address);
 		/**
 		 * \brief Adds an int argument to a message
 		 *
@@ -55,7 +53,7 @@ class OSCSender{
 		 *
 		 * @param payload the argument to be added to the message
 		 */
-		OSCSender &add(int payload);
+		OscSender &add(int payload);
 		/**
 		 * \brief Adds a float argument to a message
 		 *
@@ -64,7 +62,7 @@ class OSCSender{
 		 *
 		 * @param payload the argument to be added to the message
 		 */
-		OSCSender &add(float payload);
+		OscSender &add(float payload);
 		/**
 		 * \brief Adds a string argument to a message
 		 *
@@ -73,7 +71,7 @@ class OSCSender{
 		 *
 		 * @param payload the argument to be added to the message
 		 */
-		OSCSender &add(std::string payload);
+		OscSender &add(std::string payload);
 		/**
 		 * \brief Adds a boolean argument to a message
 		 *
@@ -82,7 +80,7 @@ class OSCSender{
 		 *
 		 * @param payload the argument to be added to the message
 		 */
-		OSCSender &add(bool payload);
+		OscSender &add(bool payload);
 		/**
 		 * \brief Adds a binary blob argument to a message
 		 *
@@ -93,7 +91,7 @@ class OSCSender{
 		 * @param ptr pointer to the data to be sent
 		 * @param num_bytes the number of bytes to be sent
 		 */
-		OSCSender &add(void *ptr, size_t num_bytes);
+		OscSender &add(void *ptr, size_t num_bytes);
 		/**
 		 * \brief Sends the message
 		 *
@@ -104,7 +102,6 @@ class OSCSender{
 		 */
 		void send();
 
-	private:
         	std::unique_ptr<UdpClient> socket;
         
         	std::unique_ptr<oscpkt::Message> msg;
@@ -113,5 +110,3 @@ class OSCSender{
 		std::unique_ptr<AuxTaskNonRT> send_task;
 		void send_task_func(void* buf, int size);
 };
-
-#endif

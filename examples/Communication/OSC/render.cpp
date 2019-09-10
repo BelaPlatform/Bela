@@ -23,11 +23,11 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 
 #include <Bela.h>
-#include <libraries/OSCSender/OSCSender.h>
-#include <libraries/OSCReceiver/OSCReceiver.h>
+#include <libraries/OscSender/OscSender.h>
+#include <libraries/OscReceiver/OscReceiver.h>
 
-OSCReceiver oscReceiver;
-OSCSender oscSender;
+OscReceiver oscReceiver;
+OscSender oscSender;
 int localPort = 7562;
 int remotePort = 7563;
 const char* remoteIp = "127.0.0.1";

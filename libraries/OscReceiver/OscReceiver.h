@@ -1,6 +1,4 @@
-/***** OSCReceiver.h *****/
-#ifndef __OSCReceiver_H_INCLUDED__
-#define __OSCReceiver_H_INCLUDED__ 
+#pragma once
 
 #include <memory>
 #include <oscpkt.hh>	// neccesary for definition of oscpkt::Message in callback
@@ -13,24 +11,24 @@ class UdpServer;
 #define OSCRECEIVER_BUFFERSIZE 65536
 
 /**
- * \brief OSCReceiver provides functions for receiving OSC messages in Bela.
+ * \brief OscReceiver provides functions for receiving OSC messages in Bela.
  *
  * When an OSC message is received over UDP on the port number passed to 
- * OSCReceiver::setup() it is passed in the form of an oscpkt::Message
+ * OscReceiver::setup() it is passed in the form of an oscpkt::Message
  * to the onreceive callback. This callback, which must be passed to
- * OSCReceiver::setup() by the user, is run off the audio thread at 
+ * OscReceiver::setup() by the user, is run off the audio thread at 
  * non-realtime priority.
  *
  * For documentation of oscpkt see http://gruntthepeon.free.fr/oscpkt/
  */
-class OSCReceiver{
+class OscReceiver{
     public:
-        OSCReceiver();
-        OSCReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive);
-        ~OSCReceiver();
+        OscReceiver();
+        OscReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive);
+        ~OscReceiver();
 	
         /**
-		 * \brief Initiliases OSCReceiver
+		 * \brief Initiliases OscReceiver
 		 *
 		 * Must be called once during setup()
 		 *
@@ -43,19 +41,16 @@ class OSCReceiver{
     private:
     	bool lShouldStop = false;
     	
-    	bool waitingForMessage = false;
+    	volatile bool waitingForMessage = false;
     	int waitForMessage(int timeout_ms);
     	
         std::unique_ptr<UdpServer> socket;
 
-        std::unique_ptr<AuxTaskNonRT> recieve_task;
-        void recieve_task_func();
+        std::unique_ptr<AuxTaskNonRT> receive_task;
+        void receive_task_func();
 		
         std::unique_ptr<oscpkt::PacketReader> pr;
         char* inBuffer[OSCRECEIVER_BUFFERSIZE];
         
         std::function<void(oscpkt::Message* msg)> on_receive;
 };
-
-
-#endif
