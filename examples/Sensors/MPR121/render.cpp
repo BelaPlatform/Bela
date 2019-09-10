@@ -132,7 +132,7 @@ void readMPR121(void*)
 
 
 /**
-\example capacitive-touch/render.cpp
+\example MPR121/render.cpp
 
 Capacitive touch sensing with MPR121
 ---------------------------
