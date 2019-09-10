@@ -1,11 +1,11 @@
-name=OSCSender
+name=OscReceiver
 version=1.0.0
 author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Adan Benito<adanl.benito@gmail.com>, Giulio Moro<giuliomoro@yahoo.it>
-description=OSC sender implementation.<br>Examples:<br>&middot Communication/OSC
+description=OSC sender class.<br>Examples:<br>&middot Communication/OSC<br>&middot Communication/OSC-Pipe
 url=
 board=*
-dependencies=UdpClient
+dependencies=UdpServer
 LDFLAGS=
 LDLIBS=
 CXXFLAGS=

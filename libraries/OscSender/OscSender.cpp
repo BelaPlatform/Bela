@@ -1,5 +1,5 @@
-/***** OSCSender.cpp *****/
-#include "OSCSender.h"
+/***** OscSender.cpp *****/
+#include "OscSender.h"
 #include <Bela.h>
 #include <libraries/UdpClient/UdpClient.h>
 #include <oscpkt.hh>
@@ -8,18 +8,18 @@
 #define OSCSENDER_MAX_ARGS 1024
 #define OSCSENDER_MAX_BYTES 65536
 
-OSCSender::OSCSender(){}
-OSCSender::OSCSender(int port, std::string ip_address){
+OscSender::OscSender(){}
+OscSender::OscSender(int port, std::string ip_address){
 	setup(port, ip_address);
 }
-OSCSender::~OSCSender(){}
+OscSender::~OscSender(){}
 
-void OSCSender::send_task_func(void* buf, int size){
-	OSCSender* instance = this;
+void OscSender::send_task_func(void* buf, int size){
+	OscSender* instance = this;
 	instance->socket->send(buf, size);
 }
 
-void OSCSender::setup(int port, std::string ip_address){
+void OscSender::setup(int port, std::string ip_address){
 
     pw = std::unique_ptr<oscpkt::PacketWriter>(new oscpkt::PacketWriter());
     msg = std::unique_ptr<oscpkt::Message>(new oscpkt::Message());
@@ -29,36 +29,36 @@ void OSCSender::setup(int port, std::string ip_address){
 	socket->setup(port, ip_address.c_str());
 	
 	send_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	send_task->create(std::string("OSCSenderTask_") + std::to_string(port), [this](void* buf, int size){send_task_func(buf, size); });
+	send_task->create(std::string("OscSenderTask_") + std::to_string(port), [this](void* buf, int size){send_task_func(buf, size); });
 }
 
-OSCSender &OSCSender::newMessage(std::string address){
+OscSender &OscSender::newMessage(std::string address){
 	msg->init(address);
 	return *this;
 }
 
-OSCSender &OSCSender::add(int payload){
+OscSender &OscSender::add(int payload){
 	msg->pushInt32(payload);
 	return *this;
 }
-OSCSender &OSCSender::add(float payload){
+OscSender &OscSender::add(float payload){
 	msg->pushFloat(payload);
 	return *this;
 }
-OSCSender &OSCSender::add(std::string payload){
+OscSender &OscSender::add(std::string payload){
 	msg->pushStr(payload);
 	return *this;
 }
-OSCSender &OSCSender::add(bool payload){
+OscSender &OscSender::add(bool payload){
 	msg->pushBool(payload);
 	return *this;
 }
-OSCSender &OSCSender::add(void *ptr, size_t num_bytes){
+OscSender &OscSender::add(void *ptr, size_t num_bytes){
 	msg->pushBlob(ptr, num_bytes);
 	return *this;
 }
 
-void OSCSender::send(){
+void OscSender::send(){
 	pw->init().addMessage(*msg);
 	send_task->schedule(pw->packetData(), pw->packetSize());
 }

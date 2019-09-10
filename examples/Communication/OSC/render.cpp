@@ -1,33 +1,31 @@
-/*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
-|____/|_____|_____/_/   \_\
+/**
+\example OSC/render.cpp
 
-The platform for ultra-low latency audio and sensor processing
+Open Sound Control
+------------------
 
-http://bela.io
+This example shows an implementation of OSC (Open Sound Control) which was 
+developed at UC Berkeley Center for New Music and Audio Technology (CNMAT).
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+It is designed to be run alongside resources/osc/osc.js.
+For the example to work, run in a terminal on the board
+```
+node /root/Bela/resources/osc/osc.js
+```
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+In `setup()` an OSC message to address `/osc-setup`, it then waits 
+1 second for a reply on `/osc-setup-reply`.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+After that, OSC communication takes place in the on_receive() callback,
+which is called every time a new message comes in.
 */
 
-
 #include <Bela.h>
-#include <libraries/OSCSender/OSCSender.h>
-#include <libraries/OSCReceiver/OSCReceiver.h>
+#include <libraries/OscSender/OscSender.h>
+#include <libraries/OscReceiver/OscReceiver.h>
 
-OSCReceiver oscReceiver;
-OSCSender oscSender;
+OscReceiver oscReceiver;
+OscSender oscSender;
 int localPort = 7562;
 int remotePort = 7563;
 const char* remoteIp = "127.0.0.1";
@@ -81,30 +79,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-
-/**
-\example OSC/render.cpp
-
-Open Sound Control
-------------------
-
-This example shows an implementation of OSC (Open Sound Control) which was 
-developed at UC Berkeley Center for New Music and Audio Technology (CNMAT).
-
-It is designed to be run alongside resources/osc/osc.js.
-For the example to work, run in a terminal on the board
-```
-node /root/Bela/resources/osc/osc.js
-```
-
-The OSC receiver port on which to receive is set in `setup()`
-via `oscReceiver.setup()`. Likewise the OSC client port on which to
-send is set in `oscSender.setup()`.
-
-In `setup()` an OSC message to address `/osc-setup`, it then waits 
-1 second for a reply on `/osc-setup-reply`.
-
-in `render()` the code receives OSC messages, parses them, and sends 
-back an acknowledgment.
-*/

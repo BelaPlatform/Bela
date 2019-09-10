@@ -1,3 +1,3 @@
 #pragma once
-#warning You included file OSCReceiver.h. This is now deprecated. You should instead use #include <libraries/OSCReceiver/OSCReceiver.h>
-#include <libraries/OSCReceiver/OSCReceiver.h>
+#warning You included file OSCReceiver.h. This class has been renamed to OscReceiver. You shall use #include <libraries/OscReceiver/OscReceiver.h>
+#include <libraries/OscReceiver/OscReceiver.h>

@@ -322,6 +322,14 @@ public:
   Message() { clear(); }
   Message(const std::string &s, TimeTag tt = TimeTag::immediate()) : time_tag(tt), address(s), err(OK_NO_ERROR) {}
   Message(const void *ptr, size_t sz, TimeTag tt = TimeTag::immediate()) { buildFromRawData(ptr, sz); time_tag = tt; }
+  Message(Message* msg) :
+	  time_tag(msg->time_tag),
+	  address(msg->address),
+	  type_tags(msg->type_tags),
+	  arguments(msg->arguments),
+	  storage(msg->storage),
+	  err(msg->err)
+	{}
 
   void reserve(int num_arguments, int num_bytes){
   	arguments.reserve(num_arguments);

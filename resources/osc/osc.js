@@ -49,6 +49,7 @@ socket.on('message', (message, info) => {
 
 var baseTimeString = "roundtripLatency";
 var count = 0;
+var timers = [];
 function parseMessage(msg){
 
 	var address = msg.address.split('/');
@@ -60,9 +61,16 @@ function parseMessage(msg){
 	// setup handshake
 	if (address[1] === 'osc-setup'){
 		sendHandshakeReply();
+		// ensure we do not keep stacking timer over timer when the Bela
+		// program restarts and sends a new osc-setup message
+		for(var i in timers)
+		{
+			clearTimeout(timers[i]);
+		}
+		timers = [];
 		
 		// start sending OSC messages to Bela
-		setInterval(sendOscTest, 1000);
+		timers.push(setInterval(sendOscTest, 1000));
 		
 	} else if (address[1] === 'osc-acknowledge'){
 		if(msg.args[0].type != 'integer'){
