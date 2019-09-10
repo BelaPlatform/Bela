@@ -4,8 +4,11 @@
   p {
     border-bottom: 1px solid $grey-mid;
     margin: 0;
-    padding: 3px 0 3px 10px;
+    padding: 0 0 3px 10px;
     width: calc(100% - 10px);
+  }
+  ul {
+    padding-bottom: .5em;
   }
   &:first-child > p {
     margin: -5px 0 0 0;

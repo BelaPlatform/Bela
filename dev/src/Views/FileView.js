@@ -6,6 +6,7 @@ var json = require('../site-text.json');
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
+var absIndeces = ['pd'];
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -312,7 +313,7 @@ class FileView extends View {
 
 		var headers = [];
 		var sources = [];
-    var images = [];
+    var abstractions = [];
 		var resources = [];
 		var directories = [];
 		var images = [];
@@ -346,7 +347,9 @@ class FileView extends View {
 					images.push(item);
 				} else if (ext == "pd" && item.name == "_main.pd") {
 					sources.push(item);
-				} else if (item){
+				} else if (ext == "pd") {
+          abstractions.push(item);
+        } else if (item){
 					resources.push(item);
 				}
 
@@ -360,21 +363,24 @@ class FileView extends View {
 		sources.sort( (a, b) => a.name - b.name );
 		sources.sort( (a, b) => a.name == pd ? -1 : b.name == pd ? 1 : 0 );
 		sources.sort( (a, b) => a.name == render ? -1 : b.name == render ? 1 : 0 );
+    abstractions.sort( (a, b) => a.name - b.name );
     images.sort( (a, b) => a.name - b.name );
 		resources.sort( (a, b) => a.name - b.name );
 		directories.sort( (a, b) => a.name - b.name );
 
-		var file_list_elements = [ sources, headers, images, resources, directories ];
+		var file_list_elements = [ sources, headers, abstractions, images, resources, directories ];
         file_list_elements[0].name = json.file_view.sources;
         file_list_elements[1].name = json.file_view.headers;
-        file_list_elements[2].name = json.file_view.images;
-        file_list_elements[3].name = json.file_view.resources;
-        file_list_elements[4].name = json.file_view.directories;
+        file_list_elements[2].name = json.file_view.abstractions;
+        file_list_elements[3].name = json.file_view.images;
+        file_list_elements[4].name = json.file_view.resources;
+        file_list_elements[5].name = json.file_view.directories;
     var i18n_dir_str = json.file_view.directories;
 
 		// Build file structure by listing the contents of each section (if they exist)
 
 		for (let i = 0; i < file_list_elements.length; i++) {
+      console.log(file_list_elements[i].name + ' is ' + file_list_elements[i].length);
 
 			if (file_list_elements[i].length) {
 
@@ -384,6 +390,7 @@ class FileView extends View {
             .addClass('file-heading')
             .html(file_list_elements[i].name)
             .appendTo(section);
+            console.log('current sec: ' + file_list_elements[i].name);
 				var fileList = $('<ul></ul>')
             .addClass('sub-file-list');
 
