@@ -16,15 +16,21 @@ For the example to work, run in a terminal on the board
 node /root/Bela/resources/osc/osc.js
 ```
 
-The OSC receiver port on which to receive is set in `setup()`
-via `oscReceiver.setup()`. Likewise the OSC port on which to
-send is set in `oscSender.setup()`.
-
 In `setup()` an OSC message is sent to address `/osc-setup`, it then waits
 1 second for a reply on `/osc-setup-reply`.
 
-in `render()` the code receives OSC messages, parses them, and sends
+In `render()` the code receives OSC messages, parses them, and sends
 back an acknowledgment.
+
+Incoming OSC messages reach the program through the on_receive() callback.
+In here, their content is written to a pipe. The pipe is read at the other
+end from within render(). Once render() is done with the data, the data
+is sent back through the pipe so that it can be deleted in a real-time safe
+way.
+
+Unfortunately, the process of creating a OSC message within render() is not
+itself real-time safe, but it seems to only cause a problem the first time
+render() is run, so it is acceptable.
 */
 
 #include <Bela.h>
