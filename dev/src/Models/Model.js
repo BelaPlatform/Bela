@@ -6,12 +6,13 @@ class Model extends EventEmitter{
 		super();
 		var _data = data || {};
 		this._getData = () => _data;
+    this.setMaxListeners(50);
 	}
-	
+
 	getKey(key){
 		return this._getData()[key];
 	}
-	
+
 	setData(newData){
 		if (!newData) return;
 		var newKeys = [];
@@ -27,7 +28,7 @@ class Model extends EventEmitter{
 		}
 		this.emit('set', this._getData(), Object.keys(newData));
 	}
-	
+
 	setKey(key, value){
 		if (!_equals(value, this._getData()[key], false)){
 			this._getData()[key] = value;
@@ -36,23 +37,23 @@ class Model extends EventEmitter{
 		}
 		this.emit('set', this._getData(), [key]);
 	}
-	
+
 	pushIntoKey(key, value){
 		this._getData()[key].push(value);
 		this.emit('change', this._getData(), [key]);
 		this.emit('set', this._getData(), [key]);
 	}
-	
+
 	spliceFromKey(key, index){
 		this._getData()[key].splice(index, 1);
 		this.emit('change', this._getData(), [key]);
 		this.emit('set', this._getData(), [key]);
 	}
-	
+
 	print(){
 		console.log(this._getData());
 	}
-	
+
 }
 
 module.exports = Model;
@@ -64,7 +65,7 @@ function _equals(a, b, log){
 		return ( (a.length === b.length) && a.every( function(element, index){ return _equals(element, b[index], log) }) );
 	} else if (a instanceof Object && b instanceof Object){
 		if (log) console.log('objects', 'a:', a, 'b:', b);
-		for (let c in a){ 
+		for (let c in a){
 			if (log) console.log('a[c]:', a[c], 'b[c]:', b[c], 'c:', c);
 			if (!_equals(a[c], b[c], log)) return false;
 		}
@@ -74,10 +75,3 @@ function _equals(a, b, log){
 		return Object.is(a, b);
 	}
 }
-	
-	
-	
-	
-	
-	
-	
