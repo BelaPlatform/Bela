@@ -689,11 +689,11 @@ function deleteFile(data) {
                     if (data.fileName == data.currentFile) {
                         data.fileData = 'File deleted - open another file to continue';
                         data.fileName = '';
+                        data.readOnly = true;
                     }
                     else {
                         data.fileName = data.currentFile;
                     }
-                    data.readOnly = true;
                     return [2 /*return*/];
             }
         });
