@@ -380,7 +380,6 @@ class FileView extends View {
 		// Build file structure by listing the contents of each section (if they exist)
 
 		for (let i = 0; i < file_list_elements.length; i++) {
-      console.log(file_list_elements[i].name + ' is ' + file_list_elements[i].length);
 
 			if (file_list_elements[i].length) {
 
