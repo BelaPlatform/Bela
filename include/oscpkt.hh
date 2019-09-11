@@ -153,6 +153,7 @@ template <typename POD> void pod2bytes(const POD value, char *bytes) {
 struct Storage {
   std::vector<char> data;
   Storage() { data.reserve(200); }
+  void reserve(int bytes){ data.reserve(bytes); }
   char *getBytes(size_t sz) {
     assert((data.size() & 3) == 0);
     if (data.size() + sz > data.capacity()) { data.reserve((data.size() + sz)*2); }
@@ -321,6 +322,19 @@ public:
   Message() { clear(); }
   Message(const std::string &s, TimeTag tt = TimeTag::immediate()) : time_tag(tt), address(s), err(OK_NO_ERROR) {}
   Message(const void *ptr, size_t sz, TimeTag tt = TimeTag::immediate()) { buildFromRawData(ptr, sz); time_tag = tt; }
+  Message(Message* msg) :
+	  time_tag(msg->time_tag),
+	  address(msg->address),
+	  type_tags(msg->type_tags),
+	  arguments(msg->arguments),
+	  storage(msg->storage),
+	  err(msg->err)
+	{}
+
+  void reserve(int num_arguments, int num_bytes){
+  	arguments.reserve(num_arguments);
+  	storage.reserve(num_bytes);
+  }
 
   bool isOk() const { return err == OK_NO_ERROR; }
   ErrorCode getErr() const { return err; }

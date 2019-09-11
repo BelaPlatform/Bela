@@ -554,10 +554,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 
 function ChannelConfig() {
-	this.yAmplitude = 1;
-	this.yOffset = 0;
-	this.color = '0xff0000';
-	this.lineWeight = 1.5;
+  this.yAmplitude = 1;
+  this.yOffset = 0;
+  this.color = '0xff0000';
+  this.lineWeight = 1.5;
 }
 
 var channelConfig = [new ChannelConfig()];
@@ -583,181 +583,181 @@ var FFTDGainVal = 70,
     FFTDOffsetMax = 100;
 
 var ChannelView = function (_View) {
-	_inherits(ChannelView, _View);
+  _inherits(ChannelView, _View);
 
-	function ChannelView(className, models) {
-		_classCallCheck(this, ChannelView);
+  function ChannelView(className, models) {
+    _classCallCheck(this, ChannelView);
 
-		return _possibleConstructorReturn(this, (ChannelView.__proto__ || Object.getPrototypeOf(ChannelView)).call(this, className, models));
-	}
+    return _possibleConstructorReturn(this, (ChannelView.__proto__ || Object.getPrototypeOf(ChannelView)).call(this, className, models));
+  }
 
-	// UI events
+  // UI events
 
 
-	_createClass(ChannelView, [{
-		key: 'inputChanged',
-		value: function inputChanged($element, e) {
-			var key = $element.data().key;
-			var channel = $element.data().channel;
-			var value = key === 'color' ? $element.val().replace('#', '0x') : parseFloat($element.val());
-			if (!(key === 'color') && isNaN(value)) return;
-			if (key === 'yAmplitude' && value == 0) value = 0.001; // prevent amplitude hitting zero
-			this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
-			channelConfig[channel][key] = value;
-			this.emit('channelConfig', channelConfig);
-		}
-	}, {
-		key: 'setChannelGains',
-		value: function setChannelGains(value, min, max) {
-			this.$elements.filterByData('key', 'yAmplitude').not('input[type=number]').prop('min', min).prop('max', max);
-			this.$elements.filterByData('key', 'yAmplitude').val(value);
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
+  _createClass(ChannelView, [{
+    key: 'inputChanged',
+    value: function inputChanged($element, e) {
+      var key = $element.data().key;
+      var channel = $element.data().channel;
+      var value = key === 'color' ? $element.val().replace('#', '0x') : parseFloat($element.val());
+      if (!(key === 'color') && isNaN(value)) return;
+      if (key === 'yAmplitude' && value == 0) value = 0.001; // prevent amplitude hitting zero
+      this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
+      channelConfig[channel][key] = value;
+      this.emit('channelConfig', channelConfig);
+    }
+  }, {
+    key: 'setChannelGains',
+    value: function setChannelGains(value, min, max) {
+      this.$elements.filterByData('key', 'yAmplitude').not('input[type=number]').prop('min', min).prop('max', max);
+      this.$elements.filterByData('key', 'yAmplitude').val(value);
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-			try {
-				for (var _iterator = channelConfig[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var item = _step.value;
+      try {
+        for (var _iterator = channelConfig[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var item = _step.value;
 
-					item.yAmplitude = value;
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
+          item.yAmplitude = value;
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
 
-			this.emit('channelConfig', channelConfig);
-			// console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
-		}
-	}, {
-		key: 'setChannelOffsets',
-		value: function setChannelOffsets(value, min, max) {
-			this.$elements.filterByData('key', 'yOffset').not('input[type=number]').prop('min', min).prop('max', max);
-			this.$elements.filterByData('key', 'yOffset').val(value);
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+      this.emit('channelConfig', channelConfig);
+      // console.log(value, this.$elements.filterByData('key', 'yAmplitude').val());
+    }
+  }, {
+    key: 'setChannelOffsets',
+    value: function setChannelOffsets(value, min, max) {
+      this.$elements.filterByData('key', 'yOffset').not('input[type=number]').prop('min', min).prop('max', max);
+      this.$elements.filterByData('key', 'yOffset').val(value);
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
 
-			try {
-				for (var _iterator2 = channelConfig[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var item = _step2.value;
+      try {
+        for (var _iterator2 = channelConfig[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var item = _step2.value;
 
-					item.yOffset = value;
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
-			}
+          item.yOffset = value;
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
 
-			this.emit('channelConfig', channelConfig);
-		}
-	}, {
-		key: 'resetAll',
-		value: function resetAll() {
-			for (var i = 0; i < channelConfig.length; i++) {
-				this.$elements.filterByData('key', 'yAmplitude').filterByData('channel', i).val(channelConfig[i].yAmplitude);
-				this.$elements.filterByData('key', 'yOffset').filterByData('channel', i).val(channelConfig[i].yOffset);
-			}
-		}
-	}, {
-		key: '_numChannels',
-		value: function _numChannels(val) {
-			var numChannels = val;
-			if (numChannels < channelConfig.length) {
-				while (numChannels < channelConfig.length) {
-					$('#channelViewChannel' + channelConfig.length).remove();
-					channelConfig.pop();
-				}
-			} else if (numChannels > channelConfig.length) {
-				while (numChannels > channelConfig.length) {
-					channelConfig.push(new ChannelConfig());
-					channelConfig[channelConfig.length - 1].color = colours[(channelConfig.length - 1) % colours.length];
-					var el = $('#channelViewChannel0').clone(true).prop('id', 'channelViewChannel' + channelConfig.length).appendTo($('#channelColumn'));
-					el.find('h1').html('Channel ' + channelConfig.length);
-					el.find('input').each(function () {
-						$(this).data('channel', channelConfig.length - 1);
-					});
-					el.find('input[type=color]').val(colours[(channelConfig.length - 1) % colours.length].replace('0x', '#'));
-				}
-			}
-			this.emit('channelConfig', channelConfig);
-			this.$elements = $('.' + this.className);
-		}
-	}, {
-		key: '_plotMode',
-		value: function _plotMode(val, data) {
+      this.emit('channelConfig', channelConfig);
+    }
+  }, {
+    key: 'resetAll',
+    value: function resetAll() {
+      for (var i = 0; i < channelConfig.length; i++) {
+        this.$elements.filterByData('key', 'yAmplitude').filterByData('channel', i).val(channelConfig[i].yAmplitude);
+        this.$elements.filterByData('key', 'yOffset').filterByData('channel', i).val(channelConfig[i].yOffset);
+      }
+    }
+  }, {
+    key: '_numChannels',
+    value: function _numChannels(val) {
+      var numChannels = val;
+      if (numChannels < channelConfig.length) {
+        while (numChannels < channelConfig.length) {
+          $('.channel-view-' + channelConfig.length).remove();
+          channelConfig.pop();
+        }
+      } else if (numChannels > channelConfig.length) {
+        while (numChannels > channelConfig.length) {
+          channelConfig.push(new ChannelConfig());
+          channelConfig[channelConfig.length - 1].color = colours[(channelConfig.length - 1) % colours.length];
+          var el = $('.channel-view-0').clone(true).prop('class', 'channel-view-' + channelConfig.length).appendTo($('.control-section.channel'));
+          el.find('h3').html('Channel ' + channelConfig.length);
+          el.find('input').each(function () {
+            $(this).data('channel', channelConfig.length - 1);
+          });
+          el.find('input[type=color]').val(colours[(channelConfig.length - 1) % colours.length].replace('0x', '#'));
+        }
+      }
+      this.emit('channelConfig', channelConfig);
+      this.$elements = $('.' + this.className);
+    }
+  }, {
+    key: '_plotMode',
+    value: function _plotMode(val, data) {
 
-			if (val == 0) {
-				// time domain
+      if (val == 0) {
+        // time domain
 
-				this.setChannelGains(tdGainVal, tdGainMin, tdGainMax);
-				this.setChannelOffsets(tdOffsetVal, tdOffsetMin, tdOffsetMax);
-			} else {
-				// FFT
+        this.setChannelGains(tdGainVal, tdGainMin, tdGainMax);
+        this.setChannelOffsets(tdOffsetVal, tdOffsetMin, tdOffsetMax);
+      } else {
+        // FFT
 
-				if (data.FFTYAxis == 0) {
-					// normalised
+        if (data.FFTYAxis == 0) {
+          // normalised
 
-					this.setChannelGains(FFTNGainVal, FFTNGainMin, FFTNGainMax);
-					this.setChannelOffsets(FFTNOffsetVal, FFTNOffsetMin, FFTNOffsetMax);
-				} else {
-					// decibels
+          this.setChannelGains(FFTNGainVal, FFTNGainMin, FFTNGainMax);
+          this.setChannelOffsets(FFTNOffsetVal, FFTNOffsetMin, FFTNOffsetMax);
+        } else {
+          // decibels
 
-					this.setChannelGains(FFTDGainVal, FFTDGainMin, FFTDGainMax);
-					this.setChannelOffsets(FFTDOffsetVal, FFTDOffsetMin, FFTDOffsetMax);
-				}
-			}
-		}
-	}, {
-		key: '_FFTYAxis',
-		value: function _FFTYAxis(val, data) {
+          this.setChannelGains(FFTDGainVal, FFTDGainMin, FFTDGainMax);
+          this.setChannelOffsets(FFTDOffsetVal, FFTDOffsetMin, FFTDOffsetMax);
+        }
+      }
+    }
+  }, {
+    key: '_FFTYAxis',
+    value: function _FFTYAxis(val, data) {
 
-			if (data.plotMode == 1) {
+      if (data.plotMode == 1) {
 
-				if (val == 0) {
-					// normalised
+        if (val == 0) {
+          // normalised
 
-					this.setChannelGains(FFTNGainVal, FFTNGainMin, FFTNGainMax);
-					this.setChannelOffsets(FFTNOffsetVal, FFTNOffsetMin, FFTNOffsetMax);
-				} else {
-					// decibels
+          this.setChannelGains(FFTNGainVal, FFTNGainMin, FFTNGainMax);
+          this.setChannelOffsets(FFTNOffsetVal, FFTNOffsetMin, FFTNOffsetMax);
+        } else {
+          // decibels
 
-					this.setChannelGains(FFTDGainVal, FFTDGainMin, FFTDGainMax);
-					this.setChannelOffsets(FFTDOffsetVal, FFTDOffsetMin, FFTDOffsetMax);
-				}
-			}
-		}
-	}]);
+          this.setChannelGains(FFTDGainVal, FFTDGainMin, FFTDGainMax);
+          this.setChannelOffsets(FFTDOffsetVal, FFTDOffsetMin, FFTDOffsetMax);
+        }
+      }
+    }
+  }]);
 
-	return ChannelView;
+  return ChannelView;
 }(View);
 
 module.exports = ChannelView;
 
 $.fn.filterByData = function (prop, val) {
-	return this.filter(function () {
-		return $(this).data(prop) == val;
-	});
+  return this.filter(function () {
+    return $(this).data(prop) == val;
+  });
 };
 
 },{"./View":7}],4:[function(require,module,exports){
@@ -773,205 +773,229 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 
-var xTime,
+var controls,
+    xTime,
     sampleRate,
     upSampling = 1,
     downSampling = 1;
 
 var ControlView = function (_View) {
-	_inherits(ControlView, _View);
+  _inherits(ControlView, _View);
 
-	function ControlView(className, models) {
-		_classCallCheck(this, ControlView);
+  function ControlView(className, models) {
+    _classCallCheck(this, ControlView);
 
-		var _this = _possibleConstructorReturn(this, (ControlView.__proto__ || Object.getPrototypeOf(ControlView)).call(this, className, models));
+    var _this = _possibleConstructorReturn(this, (ControlView.__proto__ || Object.getPrototypeOf(ControlView)).call(this, className, models));
 
-		$('#controlsButton').click(function () {
-			return _this.$parents.toggleClass('hidden');
-		});
-		return _this;
-	}
+    $('#controlsButton, .overlay').on('click', function () {
+      return _this.toggleControls();
+    });
+    $('body').on('keydown', function (e) {
+      return _this.keyHandler(e);
+    });
+    return _this;
+  }
 
-	// UI events
+  _createClass(ControlView, [{
+    key: 'toggleControls',
+    value: function toggleControls() {
+      if (controls) {
+        controls = false;
+        $('#control-panel').addClass('hidden');
+        $('.overlay').removeClass('active');
+      } else {
+        controls = true;
+        $('#control-panel').removeClass('hidden');
+        $('.overlay').addClass('active');
+      }
+    }
+  }, {
+    key: 'keyHandler',
+    value: function keyHandler(e) {
+      if (e.key === 'Escape') {
+        this.toggleControls();
+      }
+    }
 
+    // UI events
 
-	_createClass(ControlView, [{
-		key: 'selectChanged',
-		value: function selectChanged($element, e) {
-			var key = $element.data().key;
-			var value = $element.val();
-			//if (this[key]) this[key](value);
-			this.emit('settings-event', key, parseFloat(value));
-			this.$elements.not($element).filterByData('key', key).val(value);
-		}
-	}, {
-		key: 'inputChanged',
-		value: function inputChanged($element, e) {
-			var key = $element.data().key;
-			var value = $element.val();
-			this.emit('settings-event', key, parseFloat(value));
-			this.$elements.not($element).filterByData('key', key).val(value);
-		}
-	}, {
-		key: 'buttonClicked',
-		value: function buttonClicked($element, e) {
-			if ($element.data().key === 'upSampling') {
-				if (downSampling > 1) {
-					downSampling -= 1;
-					this.emit('settings-event', 'downSampling', downSampling);
-				} else {
-					upSampling += 1;
-					this.emit('settings-event', 'upSampling', upSampling);
-				}
-				// this._upSampling();
-			} else if ($element.data().key === 'downSampling') {
-				if (upSampling > 1) {
-					upSampling -= 1;
-					this.emit('settings-event', 'upSampling', upSampling);
-				} else {
-					downSampling += 1;
-					this.emit('settings-event', 'downSampling', downSampling);
-				}
-				// this._downSampling();
-			} else {
-				this.emit('settings-event', $element.data().key);
-			}
-		}
+  }, {
+    key: 'selectChanged',
+    value: function selectChanged($element, e) {
+      var key = $element.data().key;
+      var value = $element.val();
+      //if (this[key]) this[key](value);
+      this.emit('settings-event', key, parseFloat(value));
+      this.$elements.not($element).filterByData('key', key).val(value);
+    }
+  }, {
+    key: 'inputChanged',
+    value: function inputChanged($element, e) {
+      var key = $element.data().key;
+      var value = $element.val();
+      this.emit('settings-event', key, parseFloat(value));
+      this.$elements.not($element).filterByData('key', key).val(value);
+    }
+  }, {
+    key: 'buttonClicked',
+    value: function buttonClicked($element, e) {
+      if ($element.data().key === 'upSampling') {
+        if (downSampling > 1) {
+          downSampling -= 1;
+          this.emit('settings-event', 'downSampling', downSampling);
+        } else {
+          upSampling += 1;
+          this.emit('settings-event', 'upSampling', upSampling);
+        }
+        // this._upSampling();
+      } else if ($element.data().key === 'downSampling') {
+        if (upSampling > 1) {
+          upSampling -= 1;
+          this.emit('settings-event', 'upSampling', upSampling);
+        } else {
+          downSampling += 1;
+          this.emit('settings-event', 'downSampling', downSampling);
+        }
+        // this._downSampling();
+      } else {
+        this.emit('settings-event', $element.data().key);
+      }
+    }
 
-		// settings model events
+    // settings model events
 
-	}, {
-		key: 'modelChanged',
-		value: function modelChanged(data, changedKeys) {
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
+  }, {
+    key: 'modelChanged',
+    value: function modelChanged(data, changedKeys) {
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-			try {
-				for (var _iterator = changedKeys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var key = _step.value;
+      try {
+        for (var _iterator = changedKeys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var key = _step.value;
 
-					if (this['_' + key]) {
-						this['_' + key](data[key], data);
-					} else {
-						if (key === 'plotMode') this.plotMode(data[key], data);
-						//this.$elements.filterByData('key', key).val(data[key]);
-					}
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
-		}
-	}, {
-		key: 'setControls',
-		value: function setControls(data) {
-			for (var key in data) {
-				this.$elements.filterByData('key', key).val(data[key]);
-			}
-		}
-	}, {
-		key: 'plotMode',
-		value: function plotMode(val, data) {
-			this.emit('plotMode', val, data);
-			if (val == 0) {
-				if ($('#triggerControls').hasClass('hidden')) $('#triggerControls').removeClass('hidden');
-				if (!$('#FFTControls').hasClass('hidden')) $('#FFTControls').addClass('hidden');
-				$('.xAxisUnits').html('ms');
-				$('.xUnit-display').html((xTime * downSampling / upSampling).toPrecision(2));
-				$('#zoomUp').html('in');
-				$('#zoomDown').html('out');
-			} else if (val == 1) {
-				if (!$('#triggerControls').hasClass('hidden')) $('#triggerControls').addClass('hidden');
-				if ($('#FFTControls').hasClass('hidden')) $('#FFTControls').removeClass('hidden');
-				$('.xAxisUnits').html('Hz');
-				$('.xUnit-display').html(sampleRate / 20 * upSampling / downSampling);
-				$('#zoomUp').html('out');
-				$('#zoomDown').html('in');
-			}
-		}
-	}, {
-		key: '_upSampling',
-		value: function _upSampling(value, data) {
-			upSampling = value;
-			if (data.plotMode == 0) {
-				$('.xUnit-display').html((data.xTimeBase * data.downSampling / data.upSampling).toPrecision(2));
-			} else if (data.plotMode == 1) {
-				$('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
-			}
-			$('.zoom-display').html((100 * upSampling / downSampling).toPrecision(4) + '%');
-		}
-	}, {
-		key: '_downSampling',
-		value: function _downSampling(value, data) {
-			downSampling = value;
-			if (data.plotMode == 0) {
-				$('.xUnit-display').html((data.xTimeBase * data.downSampling / data.upSampling).toPrecision(2));
-			} else if (data.plotMode == 1) {
-				$('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
-			}
-			$('.zoom-display').html((100 * upSampling / downSampling).toPrecision(4) + '%');
-		}
-	}, {
-		key: '_xTimeBase',
-		value: function _xTimeBase(value, data) {
-			xTime = data.xTimeBase;
-			sampleRate = data.sampleRate;
-			if (data.plotMode == 0) {
-				$('.xUnit-display').html((data.xTimeBase * data.downSampling / data.upSampling).toPrecision(2));
-			}
-		}
-	}, {
-		key: '__numChannels',
-		value: function __numChannels(val, data) {
-			var el = this.$elements.filterByData('key', 'triggerChannel');
-			el.empty();
-			for (var i = 0; i < val; i++) {
-				var opt = $('<option></option>').html(i + 1).val(i).appendTo(el);
-				if (i === data.triggerChannel) opt.prop('selected', 'selected');
-			}
-		}
-	}, {
-		key: '_triggerMode',
-		value: function _triggerMode(value) {
-			this.$elements.filterByData('key', 'triggerMode').val(value);
-		}
-	}, {
-		key: '_triggerChannel',
-		value: function _triggerChannel(value) {
-			this.$elements.filterByData('key', 'triggerChannel').val(value);
-		}
-	}, {
-		key: '_triggerDir',
-		value: function _triggerDir(value) {
-			this.$elements.filterByData('key', 'triggerDir').val(value);
-		}
-	}, {
-		key: '_triggerLevel',
-		value: function _triggerLevel(value) {
-			this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
-		}
-	}]);
+          if (this['_' + key]) {
+            this['_' + key](data[key], data);
+          } else {
+            if (key === 'plotMode') this.plotMode(data[key], data);
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
+  }, {
+    key: 'setControls',
+    value: function setControls(data) {
+      for (var key in data) {
+        this.$elements.filterByData('key', key).val(data[key]);
+      }
+    }
+  }, {
+    key: 'plotMode',
+    value: function plotMode(val, data) {
+      this.emit('plotMode', val, data);
+      if (val == 0) {
+        if ($('#control-underlay').hasClass('')) $('#control-underlay').addClass('hidden');
+        if ($('#triggerControls').hasClass('hidden')) $('#triggerControls').removeClass('hidden');
+        if (!$('#FFTControls').hasClass('hidden')) $('#FFTControls').addClass('hidden');
+        $('.xAxisUnits').html('<p>ms</p>');
+        $('.xUnit-display').html('<p>' + (xTime * downSampling / upSampling).toPrecision(2) + '</p>');
+        $('#zoomUp').html('Zoom in');
+        $('#zoomDown').html('Zoom out');
+      } else if (val == 1) {
+        if ($('#control-underlay').hasClass('hidden')) $('#control-underlay').removeClass('hidden');
+        if (!$('#trigger-controls').hasClass('hidden')) $('#triggerControls').addClass('hidden');
+        if ($('#FFTControls').hasClass('hidden')) $('#FFTControls').removeClass('hidden');
+        $('.xAxisUnits').html('Hz');
+        $('.xUnit-display').html(sampleRate / 20 * upSampling / downSampling);
+        $('#zoomUp').html('Zoom out');
+        $('#zoomDown').html('Zoom in');
+      }
+    }
+  }, {
+    key: '_upSampling',
+    value: function _upSampling(value, data) {
+      upSampling = value;
+      if (data.plotMode == 0) {
+        $('.xUnit-display').html('<p>' + (xTime * downSampling / upSampling).toPrecision(2) + '</p>');
+      } else if (data.plotMode == 1) {
+        $('.xUnit-display').html(data.sampleRate / 20 * data.upSampling / data.downSampling);
+      }
+      $('.zoom-display').html((100 * upSampling / downSampling).toPrecision(4) + '%');
+    }
+  }, {
+    key: '_downSampling',
+    value: function _downSampling(value, data) {
+      downSampling = value;
+      if (data.plotMode == 0) {
+        $('.xUnit-display').html('<p>' + (xTime * downSampling / upSampling).toPrecision(2) + '</p>');
+      } else if (data.plotMode == 1) {
+        $('.xUnit-display').html('<p>' + (xTime * downSampling / upSampling).toPrecision(2) + '</p>');
+      }
+    }
+  }, {
+    key: '_xTimeBase',
+    value: function _xTimeBase(value, data) {
+      xTime = data.xTimeBase;
+      sampleRate = data.sampleRate;
+      if (data.plotMode == 0) {
+        $('.xUnit-display').html('<p>' + (xTime * downSampling / upSampling).toPrecision(2) + '</p>');;
+      }
+    }
+  }, {
+    key: '__numChannels',
+    value: function __numChannels(val, data) {
+      var el = this.$elements.filterByData('key', 'triggerChannel');
+      el.empty();
+      for (var i = 0; i < val; i++) {
+        var opt = $('<option></option>').html(i + 1).val(i).appendTo(el);
+        if (i === data.triggerChannel) opt.prop('selected', 'selected');
+      }
+    }
+  }, {
+    key: '_triggerMode',
+    value: function _triggerMode(value) {
+      this.$elements.filterByData('key', 'triggerMode').val(value);
+    }
+  }, {
+    key: '_triggerChannel',
+    value: function _triggerChannel(value) {
+      this.$elements.filterByData('key', 'triggerChannel').val(value);
+    }
+  }, {
+    key: '_triggerDir',
+    value: function _triggerDir(value) {
+      this.$elements.filterByData('key', 'triggerDir').val(value);
+    }
+  }, {
+    key: '_triggerLevel',
+    value: function _triggerLevel(value) {
+      this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
+    }
+  }]);
 
-	return ControlView;
+  return ControlView;
 }(View);
 
 module.exports = ControlView;
 
 $.fn.filterByData = function (prop, val) {
-	return this.filter(function () {
-		return $(this).data(prop) == val;
-	});
+  return this.filter(function () {
+    return $(this).data(prop) == val;
+  });
 };
 
 },{"./View":7}],5:[function(require,module,exports){
@@ -1323,7 +1347,7 @@ $('.scopeWrapper').append(renderer.view);
 var stage = new PIXI.Container();
 
 // views
-var controlView = new (require('./ControlView'))('scopeControls', [settings]);
+var controlView = new (require('./ControlView'))('scope-controls', [settings]);
 var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
 var sliderView = new (require('./SliderView'))('sliderView', [settings]);
@@ -1337,57 +1361,57 @@ var ws;
 var wsAddress = "ws://" + location.host + ":5432/scope_control";
 ws = new WebSocket(wsAddress);
 var ws_onerror = function ws_onerror(e) {
-	setTimeout(function () {
-		ws = new WebSocket(wsAddress);
-		ws.onerror = ws_onerror;
-		ws.onopen = ws_onopen;
-		ws.onmessage = ws_onmessage;
-	}, 500);
+  setTimeout(function () {
+    ws = new WebSocket(wsAddress);
+    ws.onerror = ws_onerror;
+    ws.onopen = ws_onopen;
+    ws.onmessage = ws_onmessage;
+  }, 500);
 };
 ws.onerror = ws_onerror;
 
 var ws_onopen = function ws_onopen() {
-	ws.binaryType = 'arraybuffer';
-	console.log('scope control websocket open');
-	ws.onclose = ws_onerror;
-	ws.onerror = undefined;
+  ws.binaryType = 'arraybuffer';
+  console.log('scope control websocket open');
+  ws.onclose = ws_onerror;
+  ws.onerror = undefined;
 };
 ws.onopen = ws_onopen;
 
 var ws_onmessage = function ws_onmessage(msg) {
-	// console.log('recieved scope control message:', msg.data);
-	var data;
-	try {
-		data = JSON.parse(msg.data);
-	} catch (e) {
-		console.log('could not parse scope control data:', e);
-		return;
-	}
-	if (data.event == 'connection') {
-		delete data.event;
-		data.frameWidth = window.innerWidth;
-		data.frameHeight = window.innerHeight;
-		settings.setData(data);
+  // console.log('recieved scope control message:', msg.data);
+  var data;
+  try {
+    data = JSON.parse(msg.data);
+  } catch (e) {
+    console.log('could not parse scope control data:', e);
+    return;
+  }
+  if (data.event == 'connection') {
+    delete data.event;
+    data.frameWidth = window.innerWidth;
+    data.frameHeight = window.innerHeight;
+    settings.setData(data);
 
-		if (settings.getKey('triggerChannel') >= data.numChannels) settings.setKey('triggerChannel', 0);
+    if (settings.getKey('triggerChannel') >= data.numChannels) settings.setKey('triggerChannel', 0);
 
-		var obj = settings._getData();
-		obj.event = "connection-reply";
-		var out;
-		try {
-			out = JSON.stringify(obj);
-		} catch (e) {
-			console.log('could not stringify settings:', e);
-			return;
-		}
-		if (ws.readyState === 1) ws.send(out);
-	} else if (data.event == 'set-slider') {
-		sliderView.emit('set-slider', data);
-	} else if (data.event == 'set-setting') {
-		if (settings.getKey(data.setting) !== undefined) {
-			settings.setKey(data.setting, data.value);
-		}
-	}
+    var obj = settings._getData();
+    obj.event = "connection-reply";
+    var out;
+    try {
+      out = JSON.stringify(obj);
+    } catch (e) {
+      console.log('could not stringify settings:', e);
+      return;
+    }
+    if (ws.readyState === 1) ws.send(out);
+  } else if (data.event == 'set-slider') {
+    sliderView.emit('set-slider', data);
+  } else if (data.event == 'set-setting') {
+    if (settings.getKey(data.setting) !== undefined) {
+      settings.setKey(data.setting, data.value);
+    }
+  }
 };
 ws.onmessage = ws_onmessage;
 
@@ -1396,353 +1420,353 @@ var paused = false,
 
 // view events
 controlView.on('settings-event', function (key, value) {
-	if (key === 'scopePause') {
-		if (paused) {
-			paused = false;
-			$('#pauseButton').html('pause');
-			$('#scopeStatus').html('waiting');
-		} else {
-			paused = true;
-			$('#pauseButton').html('resume');
-			$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
-		}
-		return;
-	} else if (key === 'scopeOneShot') {
-		oneShot = true;
-		if (paused) {
-			paused = false;
-			$('#pauseButton').html('pause');
-		}
-		$('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
-	}
-	if (value === undefined) return;
-	var obj = {};
-	obj[key] = value;
-	var out;
-	try {
-		out = JSON.stringify(obj);
-	} catch (e) {
-		console.log('error creating settings JSON', e);
-		return;
-	}
-	if (ws.readyState === 1) ws.send(out);
-	settings.setKey(key, value);
+  if (key === 'scopePause') {
+    if (paused) {
+      paused = false;
+      $('.pause-button').html('Pause plotting');
+      $('#scopeStatus').html('waiting');
+    } else {
+      paused = true;
+      $('.pause-button').html('Resume plotting');
+      $('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
+    }
+    return;
+  } else if (key === 'scopeOneShot') {
+    oneShot = true;
+    if (paused) {
+      paused = false;
+      $('#pauseButton').html('pause');
+    }
+    $('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
+  }
+  if (value === undefined) return;
+  var obj = {};
+  obj[key] = value;
+  var out;
+  try {
+    out = JSON.stringify(obj);
+  } catch (e) {
+    console.log('error creating settings JSON', e);
+    return;
+  }
+  if (ws.readyState === 1) ws.send(out);
+  settings.setKey(key, value);
 });
 
 channelView.on('channelConfig', function (channelConfig) {
-	worker.postMessage({
-		event: 'channelConfig',
-		channelConfig: channelConfig
-	});
+  worker.postMessage({
+    event: 'channelConfig',
+    channelConfig: channelConfig
+  });
 });
 
 sliderView.on('slider-value', function (slider, value) {
-	var obj = { event: "slider", slider: slider, value: value };
-	var out;
-	try {
-		out = JSON.stringify(obj);
-	} catch (e) {
-		console.log('could not stringify slider json:', e);
-		return;
-	}
-	if (ws.readyState === 1) ws.send(out);
+  var obj = { event: "slider", slider: slider, value: value };
+  var out;
+  try {
+    out = JSON.stringify(obj);
+  } catch (e) {
+    console.log('could not stringify slider json:', e);
+    return;
+  }
+  if (ws.readyState === 1) ws.send(out);
 });
 
 belaSocket.on('cpu-usage', CPU);
 
 // model events
 settings.on('set', function (data, changedKeys) {
-	if (changedKeys.indexOf('frameWidth') !== -1) {
-		var xTimeBase = Math.max(Math.floor(1000 * (data.frameWidth / 8) / data.sampleRate), 1);
-		settings.setKey('xTimeBase', xTimeBase);
-		var out;
-		try {
-			out = JSON.stringify({ frameWidth: data.frameWidth });
-		} catch (e) {
-			console.log('unable to stringify framewidth', e);
-			return;
-		}
-		if (ws.readyState === 1) ws.send(out);
-	} else {
-		worker.postMessage({
-			event: 'settings',
-			settings: data
-		});
-	}
+  if (changedKeys.indexOf('frameWidth') !== -1) {
+    var xTimeBase = Math.max(Math.floor(1000 * (data.frameWidth / 8) / data.sampleRate), 1);
+    settings.setKey('xTimeBase', xTimeBase);
+    var out;
+    try {
+      out = JSON.stringify({ frameWidth: data.frameWidth });
+    } catch (e) {
+      console.log('unable to stringify framewidth', e);
+      return;
+    }
+    if (ws.readyState === 1) ws.send(out);
+  } else {
+    worker.postMessage({
+      event: 'settings',
+      settings: data
+    });
+  }
 });
 
 // window events
 $(window).on('resize', function () {
-	settings.setKey('frameWidth', window.innerWidth);
-	settings.setKey('frameHeight', window.innerHeight);
+  settings.setKey('frameWidth', window.innerWidth);
+  settings.setKey('frameHeight', window.innerHeight);
 });
 
 $(window).on('mousemove', function (e) {
-	if (settings.getKey('plotMode') === undefined) return;
-	var plotMode = settings.getKey('plotMode');
-	var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
-	var x, y;
-	if (plotMode == 0) {
-		x = (1000 * scale * (e.clientX - window.innerWidth / 2) / settings.getKey('sampleRate')).toPrecision(4) + 'ms';
-		y = (1 - 2 * e.clientY / window.innerHeight).toPrecision(3);
-	} else if (plotMode == 1) {
-		if (parseInt(settings.getKey('FFTXAxis')) === 0) {
-			x = parseInt(settings.getKey('sampleRate') * e.clientX / (2 * window.innerWidth * scale));
-		} else {
-			x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (settings.getKey('sampleRate') / (2 * window.innerWidth)) * (settings.getKey('upSampling') / settings.getKey('downSampling')));
-		}
-		if (x > 1500) x = x / 1000 + 'khz';else x += 'hz';
-		if (parseInt(settings.getKey('FFTYAxis')) === 0) {
-			y = (1 - e.clientY / window.innerHeight).toPrecision(3);
-		} else {
-			y = (-70 * e.clientY / window.innerHeight).toPrecision(3) + 'db';
-		}
-	}
-	$('#scopeMouseX').html('x: ' + x);
-	$('#scopeMouseY').html('y: ' + y);
+  if (settings.getKey('plotMode') === undefined) return;
+  var plotMode = settings.getKey('plotMode');
+  var scale = settings.getKey('downSampling') / settings.getKey('upSampling');
+  var x, y;
+  if (plotMode == 0) {
+    x = (1000 * scale * (e.clientX - window.innerWidth / 2) / settings.getKey('sampleRate')).toPrecision(4) + 'ms';
+    y = (1 - 2 * e.clientY / window.innerHeight).toPrecision(3);
+  } else if (plotMode == 1) {
+    if (parseInt(settings.getKey('FFTXAxis')) === 0) {
+      x = parseInt(settings.getKey('sampleRate') * e.clientX / (2 * window.innerWidth * scale));
+    } else {
+      x = parseInt(Math.pow(Math.E, -Math.log(1 / window.innerWidth) * e.clientX / window.innerWidth) * (settings.getKey('sampleRate') / (2 * window.innerWidth)) * (settings.getKey('upSampling') / settings.getKey('downSampling')));
+    }
+    if (x > 1500) x = x / 1000 + 'khz';else x += 'hz';
+    if (parseInt(settings.getKey('FFTYAxis')) === 0) {
+      y = (1 - e.clientY / window.innerHeight).toPrecision(3);
+    } else {
+      y = (-70 * e.clientY / window.innerHeight).toPrecision(3) + 'db';
+    }
+  }
+  $('#scopeMouseX').html('x: ' + x);
+  $('#scopeMouseY').html('y: ' + y);
 });
 
 // CPU usage
 function CPU(data) {
-	var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
-	var bela = 0,
-	    rootCPU = 1;
+  var ide = (data.syntaxCheckProcess || 0) + (data.buildProcess || 0) + (data.node || 0);
+  var bela = 0,
+      rootCPU = 1;
 
-	if (data.bela != 0 && data.bela !== undefined) {
+  if (data.bela != 0 && data.bela !== undefined) {
 
-		// extract the data from the output
-		var lines = data.bela.split('\n');
-		var taskData = [],
-		    output = [];
-		for (var j = 0; j < lines.length; j++) {
-			taskData.push([]);
-			lines[j] = lines[j].split(' ');
-			for (var k = 0; k < lines[j].length; k++) {
-				if (lines[j][k]) {
-					taskData[j].push(lines[j][k]);
-				}
-			}
-		}
+    // extract the data from the output
+    var lines = data.bela.split('\n');
+    var taskData = [],
+        output = [];
+    for (var j = 0; j < lines.length; j++) {
+      taskData.push([]);
+      lines[j] = lines[j].split(' ');
+      for (var k = 0; k < lines[j].length; k++) {
+        if (lines[j][k]) {
+          taskData[j].push(lines[j][k]);
+        }
+      }
+    }
 
-		for (var j = 0; j < taskData.length; j++) {
-			if (taskData[j].length) {
-				var proc = {
-					'name': taskData[j][8],
-					'cpu': taskData[j][7],
-					'msw': taskData[j][2],
-					'csw': taskData[j][3]
-				};
-				if (proc.name === '[ROOT]') rootCPU = proc.cpu * 0.01;
-				// ignore uninteresting data
-				if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:') {
-					output.push(proc);
-				}
-			}
-		}
+    for (var j = 0; j < taskData.length; j++) {
+      if (taskData[j].length) {
+        var proc = {
+          'name': taskData[j][8],
+          'cpu': taskData[j][7],
+          'msw': taskData[j][2],
+          'csw': taskData[j][3]
+        };
+        if (proc.name === '[ROOT]') rootCPU = proc.cpu * 0.01;
+        // ignore uninteresting data
+        if (proc && proc.name && proc.name !== '[ROOT]' && proc.name !== 'NAME' && proc.name !== '[IRQ16:') {
+          output.push(proc);
+        }
+      }
+    }
 
-		for (var j = 0; j < output.length; j++) {
-			if (output[j].cpu) {
-				bela += parseFloat(output[j].cpu);
-			}
-		}
+    for (var j = 0; j < output.length; j++) {
+      if (output[j].cpu) {
+        bela += parseFloat(output[j].cpu);
+      }
+    }
 
-		bela += data.belaLinux * rootCPU;
-	}
+    bela += data.belaLinux * rootCPU;
+  }
 
-	$('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
-	$('#bela-cpu').html('Bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
+  $('#ide-cpu').html('IDE: ' + (ide * rootCPU).toFixed(1) + '%');
+  $('#bela-cpu').html('Bela: ' + (bela ? bela.toFixed(1) + '%' : '--'));
 
-	if (bela && ide * rootCPU + bela > 80) {
-		$('#ide-cpu, #bela-cpu').css('color', 'red');
-	} else {
-		$('#ide-cpu, #bela-cpu').css('color', 'black');
-	}
+  if (bela && ide * rootCPU + bela > 80) {
+    $('#ide-cpu, #bela-cpu').css('color', 'red');
+  } else {
+    $('#ide-cpu, #bela-cpu').css('color', 'black');
+  }
 }
 
 // plotting
 {
-	var plotLoop = function plotLoop() {
-		requestAnimationFrame(plotLoop);
-		if (plot) {
-			plot = false;
-			ctx.clear();
-			for (var i = 0; i < numChannels; i++) {
-				ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
-				var iLength = i * length;
-				ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));
-				for (var j = 1; j - xOff < length; j++) {
-					ctx.lineTo(j - xOff, frame[j + iLength]);
-				}
-			}
-			renderer.render(stage);
-			triggerStatus();
-		} /*else {
-    console.log('not plotting');
-    }*/
-	};
+  var plotLoop = function plotLoop() {
+    requestAnimationFrame(plotLoop);
+    if (plot) {
+      plot = false;
+      ctx.clear();
+      for (var i = 0; i < numChannels; i++) {
+        ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
+        var iLength = i * length;
+        ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));
+        for (var j = 1; j - xOff < length; j++) {
+          ctx.lineTo(j - xOff, frame[j + iLength]);
+        }
+      }
+      renderer.render(stage);
+      triggerStatus();
+    } /*else {
+      console.log('not plotting');
+      }*/
+  };
 
-	var triggerStatus = function triggerStatus() {
+  var triggerStatus = function triggerStatus() {
 
-		inactiveOverlay.removeClass('inactive-overlay-visible');
+    inactiveOverlay.removeClass('inactive-overlay-visible');
 
-		if (oneShot) {
-			oneShot = false;
-			paused = true;
-			$('#pauseButton').html('resume');
-			scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
-		} else {
-			scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
-			if (triggerTimeout) clearTimeout(triggerTimeout);
-			triggerTimeout = setTimeout(function () {
-				if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
-			}, 1000);
+    if (oneShot) {
+      oneShot = false;
+      paused = true;
+      $('.pause-button').html('resume');
+      scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
+    } else {
+      scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
+      if (triggerTimeout) clearTimeout(triggerTimeout);
+      triggerTimeout = setTimeout(function () {
+        if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
+      }, 1000);
 
-			if (inactiveTimeout) clearTimeout(inactiveTimeout);
-			inactiveTimeout = setTimeout(function () {
-				if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
-			}, 5000);
-		}
-	};
+      if (inactiveTimeout) clearTimeout(inactiveTimeout);
+      inactiveTimeout = setTimeout(function () {
+        if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
+      }, 5000);
+    }
+  };
 
-	var ctx = new PIXI.Graphics();
-	stage.addChild(ctx);
+  var ctx = new PIXI.Graphics();
+  stage.addChild(ctx);
 
-	var width = void 0,
-	    height = void 0,
-	    numChannels = void 0,
-	    channelConfig = [],
-	    xOff = 0,
-	    triggerChannel = 0,
-	    triggerLevel = 0,
-	    xOffset = 0,
-	    upSampling = 1;;
-	settings.on('change', function (data, changedKeys) {
-		if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
-			width = window.innerWidth;
-			height = window.innerHeight;
-			renderer.resize(width, height);
-		}
-		if (changedKeys.indexOf('numChannels') !== -1) {
-			numChannels = data.numChannels;
-		}
-		if (changedKeys.indexOf('triggerChannel') !== -1) {
-			triggerChannel = data.triggerChannel;
-		}
-		if (changedKeys.indexOf('triggerLevel') !== -1) {
-			triggerLevel = data.triggerLevel;
-		}
-		if (changedKeys.indexOf('xOffset') !== -1) {
-			xOffset = data.xOffset;
-		}
-		if (changedKeys.indexOf('upSampling') !== -1) {
-			upSampling = data.upSampling;
-		}
-	});
-	channelView.on('channelConfig', function (config) {
-		return channelConfig = config;
-	});
+  var width = void 0,
+      height = void 0,
+      numChannels = void 0,
+      channelConfig = [],
+      xOff = 0,
+      triggerChannel = 0,
+      triggerLevel = 0,
+      xOffset = 0,
+      upSampling = 1;;
+  settings.on('change', function (data, changedKeys) {
+    if (changedKeys.indexOf('frameWidth') !== -1 || changedKeys.indexOf('frameHeight') !== -1) {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      renderer.resize(width, height);
+    }
+    if (changedKeys.indexOf('numChannels') !== -1) {
+      numChannels = data.numChannels;
+    }
+    if (changedKeys.indexOf('triggerChannel') !== -1) {
+      triggerChannel = data.triggerChannel;
+    }
+    if (changedKeys.indexOf('triggerLevel') !== -1) {
+      triggerLevel = data.triggerLevel;
+    }
+    if (changedKeys.indexOf('xOffset') !== -1) {
+      xOffset = data.xOffset;
+    }
+    if (changedKeys.indexOf('upSampling') !== -1) {
+      upSampling = data.upSampling;
+    }
+  });
+  channelView.on('channelConfig', function (config) {
+    return channelConfig = config;
+  });
 
-	var frame = void 0,
-	    length = void 0,
-	    plot = false;
+  var frame = void 0,
+      length = void 0,
+      plot = false;
 
-	worker.onmessage = function (e) {
-		frame = e.data;
-		length = Math.floor(frame.length / numChannels);
-		// if scope is paused, don't set the plot flag
-		plot = !paused;
+  worker.onmessage = function (e) {
+    frame = e.data;
+    length = Math.floor(frame.length / numChannels);
+    // if scope is paused, don't set the plot flag
+    plot = !paused;
 
-		// interpolate the trigger sample to get the sub-pixel x-offset
-		if (settings.getKey('plotMode') == 0) {
-			//		if (upSampling == 1){
-			var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-			var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
-			xOff = one / (one + two) - 1.5;
-			/*		} else {
-   			for (var i=0; i<=(upSampling*2); i++){
-   				let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-   				let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-   				if ((one > triggerLevel && two < triggerLevel) || (one < triggerLevel && two > triggerLevel)){
-   					xOff = i*(Math.abs(one)/(Math.abs(one)+Math.abs(two))-1);
-   					break;
-   				}
-   			}
-   		}
-   		console.log(xOff);
-   */if (isNaN(xOff)) xOff = 0;
-		}
-	};
+    // interpolate the trigger sample to get the sub-pixel x-offset
+    if (settings.getKey('plotMode') == 0) {
+      //    if (upSampling == 1){
+      var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+      var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
+      xOff = one / (one + two) - 1.5;
+      /*    } else {
+            for (var i=0; i<=(upSampling*2); i++){
+              let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
+              let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
+              if ((one > triggerLevel && two < triggerLevel) || (one < triggerLevel && two > triggerLevel)){
+                xOff = i*(Math.abs(one)/(Math.abs(one)+Math.abs(two))-1);
+                break;
+              }
+            }
+          }
+          console.log(xOff);
+      */if (isNaN(xOff)) xOff = 0;
+    }
+  };
 
-	plotLoop();
+  plotLoop();
 
-	// update the status indicator when triggered
-	var triggerTimeout = void 0;
-	var inactiveTimeout = setTimeout(function () {
-		if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
-	}, 5000);
-	var scopeStatus = $('#scopeStatus');
-	var inactiveOverlay = $('#inactive-overlay');
+  // update the status indicator when triggered
+  var triggerTimeout = void 0;
+  var inactiveTimeout = setTimeout(function () {
+    if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
+  }, 5000);
+  var scopeStatus = $('#scopeStatus');
+  var inactiveOverlay = $('#inactive-overlay');
 
 
-	var saveCanvasData = document.getElementById('saveCanvasData');
-	saveCanvasData.addEventListener('click', function () {
+  var saveCanvasData = document.getElementById('saveCanvasData');
+  saveCanvasData.addEventListener('click', function () {
 
-		var downSampling = settings.getKey('downSampling');
-		var upSampling = settings.getKey('upSampling');
-		var sampleRate = settings.getKey('sampleRate');
-		var plotMode = settings.getKey('plotMode');
-		var scale = downSampling / upSampling;
-		var FFTAxis = settings.getKey('FFTXAxis');
+    var downSampling = settings.getKey('downSampling');
+    var upSampling = settings.getKey('upSampling');
+    var sampleRate = settings.getKey('sampleRate');
+    var plotMode = settings.getKey('plotMode');
+    var scale = downSampling / upSampling;
+    var FFTAxis = settings.getKey('FFTXAxis');
 
-		// console.log(FFTAxis)
+    // console.log(FFTAxis)
 
-		var out = "data:text/csv;charset=utf-8,";
+    var out = "data:text/csv;charset=utf-8,";
 
-		for (var i = 0; i < length; i++) {
+    for (var i = 0; i < length; i++) {
 
-			if (plotMode === 0) {
-				// time domain
-				out += scale * i / sampleRate;
-			} else if (plotMode === 1) {
-				// FFT
+      if (plotMode === 0) {
+        // time domain
+        out += scale * i / sampleRate;
+      } else if (plotMode === 1) {
+        // FFT
 
-				if (parseInt(settings.getKey('FFTXAxis')) === 0) {
-					// linear x-axis
-					out += sampleRate * i / (2 * length * scale);
-					// x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
-				} else {
-					out += Math.pow(Math.E, -Math.log(1 / length) * i / length) * sampleRate / (2 * length) + upSampling / downSampling;
-					// x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
-				}
-			}
+        if (parseInt(settings.getKey('FFTXAxis')) === 0) {
+          // linear x-axis
+          out += sampleRate * i / (2 * length * scale);
+          // x = parseInt(settings.getKey('sampleRate')*e.clientX/(2*window.innerWidth*scale));
+        } else {
+          out += Math.pow(Math.E, -Math.log(1 / length) * i / length) * sampleRate / (2 * length) + upSampling / downSampling;
+          // x = parseInt(Math.pow(Math.E, -(Math.log(1/window.innerWidth))*e.clientX/window.innerWidth) * (settings.getKey('sampleRate')/(2*window.innerWidth)) * (settings.getKey('upSampling')/(settings.getKey('downSampling'))));
+        }
+      }
 
-			for (var j = 0; j < numChannels; j++) {
-				out += ',' + ((1 - frame[j * length + i] / (height / 2)) * channelConfig[j].yAmplitude - channelConfig[j].yOffset);
-			}
-			out += '\n';
-		}
+      for (var j = 0; j < numChannels; j++) {
+        out += ',' + ((1 - frame[j * length + i] / (height / 2)) * channelConfig[j].yAmplitude - channelConfig[j].yOffset);
+      }
+      out += '\n';
+    }
 
-		this.href = encodeURI(out);
-	});
+    this.href = encodeURI(out);
+  });
 }
 
 settings.setData((_settings$setData = {
-	numChannels: 2,
-	sampleRate: 44100,
-	numSliders: 0,
-	frameWidth: 1280,
-	plotMode: 0,
-	triggerMode: 0,
-	triggerChannel: 0,
-	triggerDir: 0,
-	triggerLevel: 0,
-	xOffset: 0,
-	upSampling: 1,
-	downSampling: 1,
-	FFTLength: 1024,
-	FFTXAxis: 0,
-	FFTYAxis: 0,
-	holdOff: 0
+  numChannels: 2,
+  sampleRate: 44100,
+  numSliders: 0,
+  frameWidth: 1280,
+  plotMode: 0,
+  triggerMode: 0,
+  triggerChannel: 0,
+  triggerDir: 0,
+  triggerLevel: 0,
+  xOffset: 0,
+  upSampling: 1,
+  downSampling: 1,
+  FFTLength: 1024,
+  FFTXAxis: 0,
+  FFTYAxis: 0,
+  holdOff: 0
 }, _defineProperty(_settings$setData, 'numSliders', 0), _defineProperty(_settings$setData, 'interpolation', 0), _settings$setData));
 
 },{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5,"./SliderView":6}]},{},[8])

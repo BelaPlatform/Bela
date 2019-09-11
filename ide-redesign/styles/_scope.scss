@@ -1,0 +1,258 @@
+.scopeWrapper {
+  position: relative;
+  canvas {
+    left: 0;
+    position: absolute;
+    top: 0;
+  }
+}
+
+.buttonWrapper {
+  left: 0;
+  font-family: poppins_regular;
+  font-size: .85em;
+  padding: 10px 20px;
+  position: absolute;
+  top: 0;
+  width: calc(100vw - 40px);
+  z-index: 100;
+  .top {
+    display: inline-block;
+    .label {
+      p {
+        display: inline;
+        }
+    }
+    .value {
+      display: inline-block;
+    }
+  }
+}
+
+button.scope-controls {
+  padding: .3em .7em;
+  &.export {
+    margin-top: .3em;
+  }
+}
+
+#control-panel {
+  background-color: rgba(255,255, 255,0.9);
+  border: 1px solid $grey-light;
+  left: 50px;
+  padding: 2em 0 2em 2em;
+  position: absolute;
+  top: 55px;
+  z-index: 9999;
+  & * {
+    user-select: none;
+  }
+  &.hidden {
+    display: none;
+  }
+  .control-panel-column {
+    border-right: 1px dashed $grey-mid;
+    display: inline-block;
+    float: left;
+    padding: .5em 1.5em .5em 3em;
+    width: 375px;
+    &.channels {
+      border: 0;
+      display: inline-block;
+      padding: .5em 3em .5em 1.5em;
+      vertical-align: top;
+    }
+  }
+  .control-section {
+    vertical-align: top;
+    h3 {
+      color: $grey-dark;
+      font-family: space_bold;
+      font-size: 1.2em;
+      margin-block-end: .75em;
+      margin-block-start: 1em;
+
+    }
+    .block-section {
+      p {
+        display: inline;
+        font-family: poppins_regular;
+        font-size: .85em;
+      }
+      div span p {
+        font-family: inconsolata;
+        font-size: 1em;
+      }
+      .scope-label {
+        display: inline-block;
+        margin: 3px 0;
+        width: 75px;
+        text-align: right;
+      }
+      .scope-input {
+        display: inline-block;
+        margin: 2px 0;
+        padding-left: 60px;
+        position: absolute;
+        width: 200px;
+        >.mini-dropdown {
+          width: 100px;
+          select {
+            width: 110px;
+            -moz-appearance: button;
+          }
+        }
+      }
+      .after-dropdown {
+        display: inline;
+        margin-left: 165px;
+      }
+      &.slider-line {
+
+      }
+    }
+  }
+}
+
+.number-box[type=number] {
+  border: 0;
+  font-family: inconsolata;
+  font-size: 1em;
+  line-height: .5em;
+  -moz-appearance: textfield;
+  text-align: right;
+  width: 2.5em;
+  &::-webkit-inner-spin-button {
+    appearance: none;
+  }
+}
+
+input.scope-controls.range-slider {
+  padding-left: .5em;
+  width: 100%;
+}
+
+input.channelView.range-slider {
+  padding-left: .5em;
+  width: 100%;
+}
+
+.slider {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  &.label {
+    text-align: right;
+    width: 100px;
+  }
+  &.value {
+    text-align: left;
+    &.ms {
+      padding-right: 5px;
+      text-align: right;
+      width: 40px;
+    }
+    &.colour {
+      margin-left: 55px;
+    }
+  }
+  &.range {
+    width: 200px;
+  }
+}
+
+// #scope-drop {
+//   width: 110px;
+// }
+
+.hidden {
+  display: none;
+}
+
+.one-shot {
+  padding-left: 135px;
+}
+
+.label {
+  font-family: inconsolata;
+  size: 0.85em;
+}
+
+// This is the component used in the Scope to adjust values
+
+input[type="range"].scope-range-slider {
+  appearance: none;
+  background: transparent;
+  margin: 1 auto 0 auto;
+  width: 100%;
+  transition: .25s, ease-in-out;
+  &::-moz-focus-outer {
+    border: 0;
+  }
+  &::-moz-range-track {
+    background: rgba(0,0,0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 15px;
+    padding: 2px 2px 2px 2px;
+  }
+  &::-webkit-slider-runnable-track {
+    background: rgba(0,0,0, 0.2);
+    border-radius: 9px;
+    cursor: pointer;
+    height: 15px;
+    padding: 2px 2px 2px 2px;
+  }
+  &::-webkit-slider-thumb {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba($white, 0.8);
+    border-radius: 8px;
+    cursor: pointer;
+    height: 12px;
+    margin-top: -1px;
+    transition: .25s, ease-in-out;
+    width: 12px;
+  }
+  &:hover::-moz-range-track, &:active::-moz-range-track {
+    background: $teal-01;
+    transition: background, 100ms, ease-in-out;
+  }
+  &:hover::-webkit-slider-runnable-track, &:active::-webkit-slider-runnable-track {
+    background: $teal-01;
+    transition: background, 100ms, ease-in-out;
+    &::-webkit-slider-thumb {
+      margin-top: 0;
+    }
+  }
+  &:hover::-webkit-slider-thumb, &:active::-webkit-slider-thumb {
+    background-color: $white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+
+  }
+
+  &:disabled {
+    &::-webkit-slider-runnable-track {
+      background: rgba(0,0,0, 0.2);
+    }
+    &::-webkit-slider-thumb {
+      background: rgba($white, 0.2);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+}
+
+.overlay {
+  &.active {
+    background: rgba(0, 0, 0, 0.2);
+    height: 100vh;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    z-index: 1;
+  }
+}

@@ -1,0 +1,155 @@
+@keyframes running-button {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.running-button {
+  animation: running-button .75s linear infinite;
+}
+
+.building-button {
+  animation: running-button 2s linear infinite;
+}
+
+
+.toolbar {
+  background: $grey-toolbar;
+  bottom: 0;
+  box-shadow: 5px 5px #eee;
+  display: block;
+  font-family: inconsolata, monospace;
+  font-size: 12px;
+  height: 43px;
+  left: 0;
+  padding-left: 40px;
+  position: absolute;
+  right: 0;
+  z-index: 100;
+  > div {
+    display: inline;
+    float: left;
+    height: 35px;
+    margin-top: 3px;
+    span {
+      cursor: pointer;
+      display: inline-block;
+      height: 35px;
+      transition: 0.1s ease-in-out;
+      width: 35px;
+      &.run {
+        background-image: url("../images/icons/run_active.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/run_inactive.svg");
+        }
+        &.building {
+          background-image: url("../images/icons/run_building.svg");
+        }
+        &.running {
+          background-image: url("../images/icons/run_running.svg");
+        }
+      }
+      &.stop {
+        background-image: url("../images/icons/stop_active.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/stop_inactive.svg");
+        }
+      }
+      &.console-button {
+        background-image: url("../images/icons/console_inactive1.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/console_active1.svg");
+        }
+      }
+      &.gui-button {
+        background-image: url("../images/icons/gui_inactive4.svg");
+        background-repeat: no-repeat;
+        padding: 0;
+        &:hover {
+          background-image: url("../images/icons/gui_active4.svg");
+        }
+      }
+      &.scope-button {
+        background-image: url("../images/icons/scope_inactive3.svg");
+        background-repeat: no-repeat;
+        &:hover {
+          background-image: url("../images/icons/scope_active3.svg");
+        }
+      }
+      &.shutdown {
+        background-image: url("../images/icons/shutdown_active.svg");
+        background-repeat: no-repeat;
+        margin: 1px 0 0 5px;
+
+        &:hover {
+          background-image: url("../images/icons/shutdown_hover.svg");
+        }
+      }
+    }
+  }
+  .tool-text {
+    margin-top: 3px;
+    padding-left: 10px;
+    transition: 0.4s ease-in-out;
+    &#control-text-3 {
+      float: right;
+    }
+  }
+  .other {
+    min-width: 175px;
+  }
+  .st-st {
+    min-width: 100px;
+  }
+  .start-stop {
+    padding: 1px 0 0 10px;
+    width: 85px;
+  }
+  .shutdown-parent {
+    float: right;
+    width: 45px;
+    padding-right: 50px;
+  }
+  .toolbar-functions {
+    // min-width: 150px;
+    padding: 1px 0;
+  }
+  .system-status-text {
+    margin-top: 14px;
+    padding: 0 20px;
+    width: 60px;
+  }
+  .syntax-status {
+    background-image: url('../images/icons/syntax_pending.svg');
+    background-repeat: no-repeat;
+    margin-top: 4px;
+    min-width: 100px;
+    padding: 1px 20px 0;
+    &.pending {
+      background-image: url('../images/icons/syntax_pending.svg');
+      background-repeat: no-repeat;
+    }
+    &.ok {
+      background-image: url('../images/icons/syntax_ok.svg');
+      background-repeat: no-repeat;
+    }
+    &.stop {
+      background-image: url('../images/icons/syntax_stop.svg');
+      background-repeat: no-repeat;
+    }
+  }
+  .logo {
+    float: right;
+    min-width: 120px;
+    img {
+      margin-top: -14px;
+      padding-right: 2.3em;
+    }
+  }
+}

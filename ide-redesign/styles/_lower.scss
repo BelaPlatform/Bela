@@ -1,0 +1,31 @@
+.lower {
+  color: rgba(0, 0, 0, 0.8);
+	display: block;
+  font-family: inconsolata;
+  font-size: 12px;
+  // padding-top: 50px;
+	position: relative;
+  // top: -50px;
+  vertical-align: bottom;
+  z-index: 100;
+}
+
+// .dragButton {
+// 	position: absolute;
+// 	top: 0;
+// 	left: 5px;
+// 	background-color: black;
+// 	min-width: 100px;
+// 	min-height: 20px;
+// 	display: inline;
+// }
+// 	.dragactive {
+// 		background: red;
+// 		z-index:101;
+// 		cursor: ns-resize;
+// 	}
+//
+// // Class for when the lower portion is being dragged up and down.
+// // The .lower_dragging class is added to .lower, and the .lower_dragging * selector hooks all
+// // elements inside .lower when this class is added.
+// .lower_dragging, .lower_dragging *{ }

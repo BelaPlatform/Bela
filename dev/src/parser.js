@@ -2,7 +2,7 @@ var Range = ace.require('ace/range').Range;
 var Anchor = ace.require('ace/anchor').Anchor;
 var buf = new (require('./CircularBuffer'))(5);
 for (let i=0; i<buf.capacity(); i++) buf.enq({});
-
+var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 var editor;
 
 var parsingDeclaration = false;
@@ -26,12 +26,12 @@ var parser = {
 		this.enabled = false;
 		this.langTools = langTools;
 	},
-	
+
 	enable(status){
 		this.enabled = status;
 		this.doParse();
 	},
-	
+
 	highlights(hls){
 		highlights = hls;
 		if (!hls.contextType || !hls.contextType.length){
@@ -41,17 +41,17 @@ var parser = {
 		contextType = hls.contextType[0].name;
 		highlights.typerefs = [];
 		//console.log(highlights);
-		
+
 		this.doParse();
-		
+
 		this.autoComplete();
 	},
-	
+
 	autoComplete(){
 		 //console.log(highlights);
 		// console.log(contextName, highlights[contextName]);
 		if (!contextName) return;
-		
+
 		// context
 		var contextAutocompleteWords = [];
 		for (let item of highlights[contextName]){
@@ -70,7 +70,7 @@ var parser = {
 			}
 		}
 		this.langTools.addCompleter(contextWordCompleter);
-		
+
 		// class members
 		var classAutocompleteWords = [];
 		for (let typedef of highlights['typedef']){
@@ -94,7 +94,7 @@ var parser = {
 			}
 		}
 		this.langTools.addCompleter(classWordCompleter);
-		
+
 		// utilities
 		var utilityAutocompleteWords = [];
 		for (let utility of highlights['utility']){
@@ -114,32 +114,32 @@ var parser = {
 		}
 		this.langTools.addCompleter(utilityWordCompleter);
 	},
-	
+
 	getMarkers(){
 		return markers;
 	},
-	
+
 	getIncludes(){
 		return includes;
 	},
-	
+
 	parse(callback){
-		
+
 		if (this.parseTimeout) clearTimeout(this.parseTimeout);
 		this.parseTimeout = setTimeout( () => this.doParse(callback), 100);
-		
+
 	},
-	
+
 	doParse(callback){
 		for (let marker of markers){
 			editor.session.removeMarker(marker.id);
 		}
 		if (!this.enabled) return;
 		// console.time('parse time');
-		
+
 		var iterator = new TokenIterator(editor.getSession(), 0, 0);
 		var token = iterator.getCurrentToken();
-		
+
 		// are we parsing a file with Bela API included?
 		var parsingAPI = false;
 
@@ -148,16 +148,16 @@ var parser = {
 		markers = [];
 
 		while (token) {
-		
+
 			token.range = new Range(iterator.getCurrentTokenRow(), iterator.getCurrentTokenColumn(), iterator.getCurrentTokenRow(), iterator.getCurrentTokenColumn()+token.value.length);
 			//console.log(token);
-			
+
 			if (parsingDeclaration){
 				parseDeclaration(token);
 			} else if (parsingBody){
 				parseBody(token);
 			} else {
-			
+
 				// typedefs
 				if (typedefs.length &&
 						buf.get(1).type === 'identifier' && typedefs.indexOf(buf.get(1).value) !== -1 &&
@@ -170,21 +170,21 @@ var parser = {
 						id: 	link
 					});
 				}
-			
+
 				// includes
 				if (buf.get(0).type === 'keyword' && buf.get(0).value === '#include'){
-				
-					let include = token.value.split('<').pop().split('>')[0].split('.')[0];				
-					
+
+					let include = token.value.split('<').pop().split('>')[0].split('.')[0];
+
 					if (include === 'Bela') parsingAPI = true;
-					
+
 					if (searchHighlightsFor('header', include) !== -1){
 						includes.push(include);
 						if (searchHighlightsFor('typedef', include) !== -1){
 							typedefs.push(include);
 						}
 					}
-					
+
 				// function detection
 				} else if (parsingAPI &&
 						buf.get(1).type === 'storage.type' && buf.get(1).value === 'bool' &&
@@ -211,9 +211,9 @@ var parser = {
 					parsing = token.value;
 					if (highlights['api']) addMarker(token, highlights['api'][searchHighlightsFor('api', 'cleanup')]);
 				}
-				
+
 			}
-			
+
 			//if (highlights && highlights.typerefs && highlights.typerefs.length){
 				let index = searchHighlightsFor('typerefs', token.value);
 				if (index !== -1){
@@ -229,18 +229,18 @@ var parser = {
 						addMarker(token, highlights[typedef][searchHighlightsFor(typedef, token.value)]);
 					}
 				}
-								
-						
+
+
 			//}
-					
-			
-			buf.enq(token);			
+
+
+			buf.enq(token);
 			token = iterator.stepForward();
-			
+
 		}
-		
+
 		if (callback) callback();
-		
+
 		//console.log('includes', includes);
 		//console.log('typedefs', typedefs);
 		//console.log('markers', markers);
@@ -307,7 +307,7 @@ function addMarker(token, type){
 	/*marker.anchor.on('change', function(e){
 		range.setStart(e.value.row, e.value.column);
 		range.setEnd(e.value.row, e.value.column + token.value.length);
-	});*/ 
+	});*/
 	markers.push(marker);
 }
 

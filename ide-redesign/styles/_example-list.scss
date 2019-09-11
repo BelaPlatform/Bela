@@ -1,0 +1,23 @@
+ul {
+  &.projectManager {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    .example-list {
+      li {
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.example-list > li {
+	padding: 4px 10px;
+	&:before {
+    content: '>';
+		margin-right: 10px;
+	}
+	&:hover {
+		background: rgba(255, 255, 0, 0.2);
+	}
+}

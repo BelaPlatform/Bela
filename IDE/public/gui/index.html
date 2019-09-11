@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+            <title>Bela GUI</title>
+
+            <style> body {padding: 0; margin: 0;} </style>
+
+            <script src="../js/jquery.js"></script>
+
+            <script src="/gui/js/utils.js"></script>
+            <script src="/gui/js/gui-loader.js"></script>
+            <script type="module">
+                let isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+                if(isSafari) {
+                    import('../js/event-target-polyfill.js')
+                    .then(({default: EventTarget}) => {
+                        window.EventTarget = EventTarget;
+                    });
+                }
+            </script>
+            <script type="module">
+                import { default as Bela } from './js/Bela.js'
+                window.Bela = new Bela();
+            </script>
+          </head>
+
+          <body onload="sectionLoader(location.hash)"></body

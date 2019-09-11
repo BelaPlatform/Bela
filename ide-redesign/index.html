@@ -1,0 +1,558 @@
+
+<html>
+	<head>
+	<link rel="stylesheet" type="text/css" href="styles/style.css">
+	<title>new Bela</title>
+	</head>
+
+	<body>
+
+	<div class="container">
+
+		<div class="upper">
+			<div class="file-status">
+				<span class="project">Current project: <span class="current" data="current-project">None</span></span>
+        <span class="file">Current file: <span class="current" data="current-file">None</span></span>
+        <span class="status">Status: <span class="status" data="current-status">None</span></span>
+			</div>
+			<div class="editor">
+
+			</div><!-- end editor -->
+
+			<div class="tabs">
+
+				<div id="tab-menu">
+					<ul class="tab-switches">
+						<li id="open-tab"><span><a href="#" class="tab-button">+</a></span></li>
+						<li class="explorer"><a href="#expl" rel="expl" class="tab-button"></a></li>
+						<li class="examples"><a href="#examp" rel="examp" class="tab-button"></a></li>
+						<li class="settings"><a href="#set" rel="set" class="tab-button"></a></li>
+						<li class="pins"><a href="#pins" rel="pins" class="tab-button"></a></li>
+						<li class="refs"><a href="#refs" rel="refs" class="tab-button"></a></li>
+					</ul>
+				</div><!-- end tab menu -->
+
+				<div id="tab-content-area">
+					<section id="tab-content">
+						<div id="expl" class="tab-info">
+							<span class="title-container">
+								<h1> Project Explorer<hr /></h1>
+							</span>
+							<span class="dropdown">
+							  <button onclick="openDropdown('project-dropdown')" class="dropbtn">Select a project ...</button>
+							  <div id="project-dropdown" class="dropdown-content">
+							    <a href="#">Link 1</a>
+							    <a href="#">Link 2</a>
+							    <a href="#">Link 3</a>
+							  </div>
+							</span>
+
+							<button class="create-project">Create new</button>
+
+							<button class="accordion">Manage current project</button>
+							<div class="panel">
+								<button>Save as…</button>
+								<button>Rename</button>
+								<button>Clean</button>
+								<button>Delete</button>
+							</div>
+
+							<button class="accordion">Manage project files</button>
+							<div class="panel">
+								<button>Create file</button>
+								<button>Upload</button>
+								<button>Rename</button>
+								<button>Delete</button>
+							</div>
+
+							<button class="accordion">Project files</button>
+							<div class="panel">
+								<ul class="file-list">
+									<li><p class="file-heading">Headers:</p>
+										<ul class="sub-file-list">
+											<li>header.h</li>
+											<li>willthisend.h</li>
+										</ul>
+									</li>
+									<li><p class="file-heading">Sources:</p>
+										<ul class="sub-file-list">
+											<li>header.cpp</li>
+											<li>willthisend.cpp</li>
+										</ul>
+									</li>
+
+									<li><p class="file-heading">Resources:</p>
+										<ul class="sub-file-list">
+											<li>fml.json</li>
+										</ul>
+									</li>
+								</ul>
+							</div> <!-- end file list panel -->
+
+							<button class="accordion">Manage Git</button>
+							<div class="panel">
+								<button>Initialise repo</button>
+								<div id="git-controls" class="inactive">
+									<div>
+										<button disabled>Status</button><button disabled>Log</button><p>Command:</p> <input type="text" class="">
+									</div>
+									<!-- <div>
+										<p>Current branch: </p><select type="text" class="mini-dropdown git">
+											<option selected>* master</option>
+										</select>
+										<button>New branch</button>
+									</div> -->
+									<!-- <p>Commit history: </p>
+									<select type="text" class="dropdown">
+										<option selected>* master</option>
+									</select> -->
+								</div><!-- end git controls -->
+							</div><!-- end git panel -->
+							</div>
+
+						<div id="examp" class="tab-info">
+							<span class="title-container">
+								<h1>Examples<hr /></h1>
+							</span>
+							<button class="accordion">01. Basic</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+
+							<button class="accordion">02. Digital</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+
+							<button class="accordion">03. Analog</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">04. Audio</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">05. Magic</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">06. Buttons</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">07. Communication</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">08. Something that go woop woop</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">09. Dub sirens</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">10. Omg beeps</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">11. Sensor craziness</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+							<button class="accordion">12. Fart machines</button>
+							<div class="panel">
+								<ul class="example-list">
+									<li>thing one</li>
+									<li>thing two</li>
+									<li>thing three</li>
+								</ul>
+							</div>
+
+
+
+
+						</div> <!-- end example panel -->
+
+						<div id="set" class="tab-info">
+							<span class="title-container"><h1>Settings<hr /></h1></span>
+
+							<span class="dropdown" data-run-on-boot>
+                <button class="dropbtn" data-dropdown-for="run-on-boot">Your projects</button>
+                <div class="dropdown-content" data-dropdown="run-on-boot">
+                  <select class="projectManager" id="runOnBoot" data-run-on-boot>
+                  </select>
+                </div>
+              </span>
+
+							<!-- <span class="dropdown">
+							  <button onclick="openDropdown('project-dropdown')" class="dropbtn">Run project on boot ...</button>
+							  <div id="project-dropdown" class="dropdown-content">
+							    <a href="#">Link 1</a>
+							    <a href="#">Link 2</a>
+							    <a href="#">Link 3</a>
+							  </div>
+							</span> -->
+							<button class="accordion">Context Settings</button>
+							<div class="panel">
+								<div class="choice">
+									<div class="left-choice">Block size:</div>
+									<div class="right-choice">
+										<span class="mini-dropdown disabled">
+											<select disabled type="text" id="block-size">
+												<option>2</option>
+												<option>8</option>
+												<option>16</option>
+												<option selected>64</option>
+												<option>128</option>
+											</select>
+										<!-- end dropdown span -->
+									</div><!-- end rightchoice -->
+								</div><!-- end choice -->
+
+								<div class="choice">
+									<div class="left-choice">Analog channels:</div>
+									<div class="right-choice">
+										<span class="mini-dropdown">
+											<select type="text" id="num-analog-channels">
+												<option>2</option>
+												<option>4</option>
+												<option selected>8</option>
+											</select>
+										</span><!-- end dropdown span -->
+									</div><!-- end rightchoice -->
+								</div><!-- end choice -->
+								<div class="choice">
+									<div class="left-choice">Analog sample rate (Hz):</div>
+									<div class="right-choice">
+										<span class="mini-dropdown">
+											<select type="text" id="analog-sample-rate">
+												<option selected>22050</option>
+												<option>44100</option>
+												<option>88200</option>
+											</select>
+										</span><!-- end dropdown span -->
+									</div><!-- end rightchoice -->
+								</div><!-- end choice -->
+
+								<div class="choice">
+									<div class="left-choice">Digital channels:</div>
+									<div class="right-choice">
+										<span class="mini-dropdown">
+											<select type="text" id="digital-channels">
+												<option>2</option>
+												<option>4</option>
+												<option>8</option>
+												<option selected>16</option>
+											</select>
+										</span><!-- end dropdown span -->
+									</div><!-- end rightchoice -->
+								</div><!-- end choice -->
+								<div class="choice">
+									<div class="left-choice">&nbsp;</div>
+									<div class="right-choice"><button data-func="restoreDefaultCLArgs">Restore defaults</button></div>
+								</div>
+							</div><!-- end panel -->
+
+							<button class="accordion">Capelets</button>
+							<div class="panel">
+								<div class="choice">
+									<div class="left-choice">Multiplexer:</div>
+									<div class="right-choice">
+										<input type="checkbox" name="checkbox" id="multiplexer-capelet" data-func="setCLArg" data-key="-X" class="checkbox-slider" /></div>
+									<div class="mux inactive">
+										<div class="left-choice">Channels:</div>
+										<div class="right-choice">
+											<span class="mini-dropdown">
+											<select type="text" id="digital-channels">
+												<option selected>16</option>
+												<option>32</option>
+												<option>64</option>
+
+											</select>
+										</span><!-- end dropdown span -->
+										</div><!-- end rightchoice -->
+									</div><!-- end mux -->
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Audio expander:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" id="use-analog" data-func="setCLArg" data-key="-N" class="checkbox-slider" /></div>
+								</div>
+							</div>
+
+							<button class="accordion">Audio Settings</button>
+							<div class="panel">
+								<div class="choice">
+									<div class="left-choice">Headphone level (dB):</div>
+									<div class="right-choice">
+										<span class="number-picker">
+											<span class="input-number-decrement">–</span><input disabled class="input-number number-picker" type="text" data-func="setCLArg" value="0" min="-63" max="0" step="1" datakey="-H"><span class="input-number-increment">+</span>
+										</span>
+									</div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">Use analog:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" id="use-analog" data-func="setCLArg" data-key="-N" class="checkbox-slider"  checked="checked"/></div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">Use digital:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"   checked="checked"/></div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">Mute speaker:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"/></div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">DAC level (dB):</div>
+									<div class="right-choice">
+										<span class="input-number-decrement">–</span><input class="input-number number-picker" type="text" value="0" min="-63" max="0"><span class="input-number-increment">+</span>
+									</div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">ADC level (dB):</div>
+									<div class="right-choice">
+										<span class="input-number-decrement">–</span><input class="input-number number-picker" type="text" value="0" min="-63" max="0"><span class="input-number-increment">+</span>
+									</div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">PGA gain left (dB):</div>
+									<div class="right-choice">
+										<span class="input-number-decrement">–</span><input class="input-number number-picker" type="text" value="0" min="-63" max="0"><span class="input-number-increment">+</span>
+									</div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">PGA gain right (dB):</div>
+									<div class="right-choice">
+										<span class="input-number-decrement">–</span><input class="input-number number-picker" type="text" value="0" min="-63" max="0"><span class="input-number-increment">+</span>
+									</div>
+								</div>
+								<div class="choice">
+									<div class="left-choice">&nbsp;</div>
+									<div class="right-choice"><button disabled data-func="restoreDefaultCLArgs">Restore defaults</button></div>
+								</div>
+							</div>
+
+							<button class="accordion">Command line settings</button>
+							<div class="panel">
+								<div class="choice">
+									<div class="left-choice">Command line arguments:</div>
+									<div class="right-choice">
+										<input disabled id="user-clargs" class="settingsManager" data-func="setCLArg" type="text" data-key="user"></input>
+									</div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Make parameters:</div>
+									<div class="right-choice">
+										<input id="make-params" class="settingsManager" data-func="make-params" type="text" data-key="user"></input>
+									</div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">&nbsp;</div>
+									<div class="right-choice"><button>Restore defaults</button></div>
+								</div>
+							</div>
+
+							<button class="accordion">IDE Settings</button>
+							<div class="panel">
+								<div class="choice">
+									<div class="left-choice">Autocomplete:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"  checked="checked" /></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Syntax checking:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"  checked="checked"/></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Verbose output:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"/></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Show CPU stats:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"  checked="checked"/></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Show mode switches:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider" checked="checked"/></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Delete console logs:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"/></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">Show hidden files:</div>
+									<div class="right-choice"><input type="checkbox" name="checkbox" class="checkbox-slider"/></div>
+								</div>
+
+								<div class="choice">
+									<div class="left-choice">&nbsp;</div>
+									<div class="right-choice"><button>Restore defaults</button></div>
+								</div>
+
+							</div>
+
+							<button class="accordion">Other board functions</button>
+							<div class="panel">
+							<button>Shut down</button>
+							<button>Update</button>
+							<button>Download all</button>
+							<button>About Bela</button>
+							</div>
+
+						</div>
+
+						<div id="pins" class="tab-info">
+							<span class="title-container">
+								<h1>Pin Diagram<hr /></h1>
+							</span>
+
+							<div id="pin-container">
+						        <p class="diagram_text">Hover over the coloured sections for more information.</p>
+						        <div id="squares">
+
+						        <div id="image">
+						        </div><!-- end image -->
+						    	</div>
+							</div><!-- end container -->
+						</div><!-- end pins -->
+
+						<div id="refs" class="tab-info">
+							<span class="title-container">
+								<h1>Reference<hr /></h1>
+							</span>
+							<button class="accordion">The Bela Context</button>
+							<div class="panel">
+									<button class="accordion sub">Something</button>
+									<div class="panel sub">
+									</div>
+									<button class="accordion sub">Another thing</button>
+									<div class="panel sub">
+									</div>
+									<button class="accordion sub">Something else</button>
+									<div class="panel sub">
+									</div>
+							</div>
+							<button class="accordion">The API</button>
+							<div class="panel">
+									<button class="accordion sub">setup()</button>
+									<div class="panel sub">
+									</div>
+									<button class="accordion sub">render()</button>
+									<div class="panel sub">
+									</div>
+									<button class="accordion sub">cleanup()</button>
+									<div class="panel sub">
+									</div>
+							</div>
+							<button class="accordion">The Scope</button>
+							<div class="panel">
+									<button class="accordion sub">Scope thing 1</button>
+									<div class="panel sub">
+									</div>
+									<button class="accordion sub">Scope thing 2</button>
+									<div class="panel sub">
+									</div>
+									<button class="accordion sub">Scope thing 3</button>
+									<div class="panel sub">
+									</div>
+							</div>
+						</div><!-- end refs -->
+
+					</section> <!-- end actual section of tab content -->
+				</div><!-- end tab content -->
+			</div><!-- end tabs -->
+		</div> <!-- end upper  -->
+
+		<div class="lower">
+
+			<div class="toolbar">
+				<div class="start-stop">
+          <span class="start run" data="Run project"></span>
+          <span class="start stop" data="Stop project"></span>
+        </div>
+				<div class="tool-text st-st"></div>
+				<div class="toolbar-functions">
+					<span class="tab-button" data="New tab"></span>
+					<span class="scope-button" data="Launch scope"></span>
+					<span class="drag-button" data="Resize console"></span>
+					<span class="console-button" data="Clear console"></span>
+				</div>
+				<div class="tool-text other"></div>
+				<div class="system-status-text bela">Bela: --%</div>
+				<div class="system-status-text cpu">CPU: --%</div>
+				<div class="system-status-text msw">MSW: --</div>
+				<div class="syntax-status"></div>
+				<div class="logo"><img src="images/logo.png"></div>
+
+				<!-- <div class="dragButton"></div> -->
+			</div>
+
+			<div class="console">
+			</div>
+
+		</div><!-- end lower -->
+
+	</div><!-- end container -->
+
+	<script src="js/jquery-3.1.1.min.js"></script>
+	<script src="js/global.js"></script>
+	<script src="js/dropdown-menu.js"></script>
+	<script src="js/accordion_menu.js"></script>
+	<script src="js/pins.js"></script>
+	<script src="js/raphael-min.js"></script>
+	<script src="js/jquery.tooltipster.min.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,15 @@
+name=Pipe
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Giulio Moro<giuliomoro@yahoo.it>
+description=A bi-directional pipe to exchange data between a RT and a non-RT thread.<br>Examples:<br>&middot Communication/OSC-pipe
+url=
+board=*
+dependencies=
+LDFLAGS=-Wl,--no-as-needed -L/usr/xenomai/lib 
+LDLIBS=-lcobalt -lmodechk
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

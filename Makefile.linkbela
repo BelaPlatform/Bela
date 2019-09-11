@@ -1,0 +1,51 @@
+# call this file from within the main Makefile, with all the variables exported, and 
+# after re-making $(PROJECT_LIBRARIES_MAKEFILE)
+
+#disable default rules, which would make it try to rebuild libraries/*/build/*.d when no such files exists
+.SUFFIXES:
+%.d: ;
+%.o: ;
+
+-include libraries/*/build/*.d # dependencies for each of the libraries' object files
+-include $(PROJECT_LIBRARIES_MAKEFILE)
+#this file will contain, e.g.:
+#-include libraries/library1/build/Makefile.link
+#-include libraries/library2/build/Makefile.link
+#-include libraries/library3/build/Makefile.link
+#-include libraries/library4/build/Makefile.link
+# each of which will in turn contain:
+#
+#LIBRARY=libraryName
+#LIBRARIES_LDFLAGS += -l123
+#THIS_CPPFILES := $(wildcard libraries/$(LIBRARY)/*.cpp)
+#LIBRARIES_OBJS += $(addprefix $(LIBRARY)/build/,$(notdir $(THIS_CPPFILES:.cpp=.o)))
+#and the following rule tells the current Makefile how to build the LIBRARIES_OBJS:
+#either via a default Makefile.libraries, or using the library's custom one (if available)
+.EXPORT_ALL_VARIABLES:
+libraries/%.o:
+	$(AT) { echo "$@" | grep -q "\*" && exit 0; } ; \
+	LIBRARYNAME=`echo $@ | sed "s:libraries/\(.*\)/build/.*\.o:\1:"`; \
+	{ [ -z "$$LIBRARYNAME" ] && exit 0; } ;  \
+	{ echo "$$LIBRARYNAME" | grep -q "\*" && exit 0; } ; \
+	echo Building library $$LIBRARYNAME; \
+	MAKEFILE=libraries/$$LIBRARYNAME/Makefile; \
+	[ ! -f $$MAKEFILE ] && MAKEFILE=Makefile.libraries; \
+	$(MAKE) LIBRARY=$$LIBRARYNAME -f $$MAKEFILE CC=$(CC) CXX=$(CXX) $@
+
+LIBRARIES_OBJS := $(sort $(LIBRARIES_OBJS)) # remove duplicates (e.g.: from default_libpd_render)
+# This is a nasty kludge: we want to be able to optionally link in a default
+# main file if the user hasn't supplied one. We check for the presence of the main()
+# function, and conditionally call one of two recursive make targets depending on whether
+# we want to link in the default main file or not. The kludge is the mess of a shell script
+# line below. Surely there's a better way to do this?
+$(OUTPUT_FILE): $(ALL_OBJS) $(LIBRARIES_OBJS)
+	$(eval DEFAULT_MAIN_CONDITIONAL :=\
+	    $(shell bash -c '[ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
+ifeq ($(PROJECT_TYPE),libpd)
+#If it is a libpd project AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
+	$(eval DEFAULT_PD_CONDITIONAL :=\
+	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+endif # ifeq ($(PROJECT_TYPE),libpd)
+	$(AT) echo 'Linking...'
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LIBRARIES_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
+	$(AT) echo ' ...done'

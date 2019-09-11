@@ -23,7 +23,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <string.h> 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ne10/NE10.h>
+#include <libraries/ne10/NE10.h>
 
 extern "C" {
 	// Function prototype for ARM assembly implementation of oscillator bank

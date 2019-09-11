@@ -1,0 +1,15 @@
+name=UdpServer
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Adan Benito<adanl.benito@gmail.com>, Giulio Moro<giuliomoro@yahoo.it>
+description=UDP server implementation.<br>Examples:<br>&middot PureData/customRender
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

@@ -91,10 +91,8 @@ do
 	--distcc)
 		echo "Using distcc"
 		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --distcc"
-		export COMPILER="distcc arm-linux-gnueabihf-gcc"
-		export CC="distcc arm-linux-gnueabihf-gcc"
-		export CXX="distcc arm-linux-gnueabihf-g++"
-		J=" -j6"
+		J=" -j3"
+		DISTCC="DISTCC=1 AT="
 	;;
 	--only)
 		shift
@@ -119,14 +117,16 @@ cd $BELA_HOME || { echo "Error: no folder $BELA_HOME, set BELA_HOME variable app
 
 cd $BELA_EXAMPLES || { echo "Error: no folder $BELA_EXAMPLES, set BELA_EXAMPLES variable appropriately"; exit 1; }
 
-
-
+echo "Will build the following: $EXAMPLES_TO_RUN"
 for EXAMPLE in $EXAMPLES_TO_RUN
 do
+	[ -d "$EXAMPLE" ] || continue
 	[ "$EXAMPLE" = "$START_FROM" ] && START_FROM=
 	[ -z "$START_FROM" ] || { echo "Skipping $EXAMPLE"; continue; }
 	echo $EXAMPLE
-	MAKE_STRING="make --no-print-directory -C $BELA_HOME EXAMPLE=$EXAMPLE PROJECT=$TEST_PROJECT"
+	rm -rf "../projects/$TEST_PROJECT"
+	cp -r "$EXAMPLE" "../projects/$TEST_PROJECT"
+	MAKE_STRING="make --no-print-directory -C $BELA_HOME PROJECT=$TEST_PROJECT $DISTCC"
 	echo $MAKE_STRING
 	MAKE_STRING="$MAKE_STRING $J AT="
 	$MAKE_STRING  > $MAKE_OUT && build_succeeded || build_failed

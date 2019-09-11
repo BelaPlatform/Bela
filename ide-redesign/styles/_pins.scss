@@ -1,0 +1,55 @@
+#pin_container {
+  height: calc(100vh - 200px);
+  overflow: visible;
+  object {
+    height: 100%;
+    width: 100%;
+  }
+
+  .diagram-text {
+    font-family: 'poppins_regular';
+    font-size: .9em;
+    line-height: 22px;
+    margin-top: 0;
+  }
+
+  .dPin {
+    fill: rgba(0, 255, 0, 0.5);
+    stroke: none;
+  }
+  .new {
+    fill: rgb(255, 0, 0);
+  }
+  .gnd {
+    fill: rgba(255, 0, 0, 0.4);
+    stroke: rgb(255, 0, 0);
+  }
+  .aPin {
+    fill: rgba(255, 255, 0, 0.5);
+    stroke: none;
+  }
+  .aInPin {
+    fill: rgba(255, 165, 0, 0.6);
+    stroke: none;
+  }
+  .comms {
+    fill: rgba(0, 0, 255, 0.5);
+    stroke: none;
+  }
+  .audio {
+    fill: rgba(155, 48, 255, 0.5);
+    stroke: none;
+  }
+  .pins{
+    fill: transparent;
+    stroke: #000;
+  }
+  .util {
+    fill: rgba(255, 14, 154, 0.5);
+    stroke: none;
+  }
+  .led {
+    fill: rgba(0, 255, 0, 0.6);
+    stroke: none;
+  }
+}

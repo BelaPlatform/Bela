@@ -1,0 +1,70 @@
+$tab-width: 450px;
+
+/* Tabbed content */
+.tabs {
+	background-color: white;
+	height: calc(100% + 35px);
+  left: calc(100% - 50px);
+  position: absolute;
+  top: 0;
+  transition: .5s ease-in-out;
+  width: $tab-width;
+  z-index: 99;
+}
+
+.tabs-closed {
+	left: calc(100% - 50px);
+}
+
+.tabs-open {
+	/* Value of $tab-width doesn't work in calc!
+		Therefore it's hard coded. */
+	left: calc(100% - 438px);
+}
+
+#tab-menu {
+  background-color: $grey-tabs;
+  float: left;
+  height: 100%;
+  width: 50px;
+}
+
+#tab-content-area {
+  background-color: #fff;
+  height: calc(100% - 76px);
+  overflow: auto;
+}
+
+section#tab-content {
+  min-height: calc(100% - 76px);
+  padding: 0 20px 20px 20px;
+  position: relative;
+  .tab-info {
+    display: none;
+  }
+  .title-container {
+    background-color: $white;
+    height: 75px;
+    position: sticky;
+    position: -webkit-sticky; /* Required for Safari */
+    margin: 0;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    hr {
+      background: transparent;
+    }
+    h1 {
+      border-bottom: 10px solid $teal-01;
+      color: rgba(0, 0, 0, 0.8);
+      display: inline-block;
+      font-family: space_bold;
+      font-size: 24px;
+      opacity: 0.8;
+    }
+  }
+}
+
+.disabled {
+  display: none;
+}

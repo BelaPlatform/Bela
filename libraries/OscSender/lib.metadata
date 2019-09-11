@@ -1,0 +1,15 @@
+name=OscSender
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Adan Benito<adanl.benito@gmail.com>, Giulio Moro<giuliomoro@yahoo.it>
+description=OSC sender class.<br>Examples:<br>&middot Communication/OSC<br>&middot Communication/OSC-Pipe
+url=
+board=*
+dependencies=UdpClient
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

@@ -12,7 +12,8 @@ export class File_Descriptor {
 
 export interface Init_Message{
 	projects	: string[];
-	examples	: File_Descriptor[];
+  examples	: File_Descriptor[];
+  libraries	: File_Descriptor[];
 	settings	: any;
 	boot_project	: string;
 	board_string	: string;
