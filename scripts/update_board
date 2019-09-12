@@ -158,7 +158,7 @@ then
 else
   # if rsync is not available, then clean the folders before copying the files
   ssh "$BBB_ADDRESS" "rm -rf \"$FILES_TO_COPY\"; mkdir -p \"$BBB_BELA_HOME\"" &&\
-  scp -r -q "$FILES_TO_COPY" "$BBB_ADDRESS":"$BBB_BELA_HOME"
+  scp -r -q $FILES_TO_COPY "$BBB_ADDRESS":"$BBB_BELA_HOME"
 fi
 error_handler $?
 
