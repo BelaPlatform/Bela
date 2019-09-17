@@ -4473,6 +4473,13 @@ var TabView = function (_View) {
     $('[data-tab-for]').on('click', function () {
       return _this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor);
     });
+
+    // For changing the pin diagram in view:
+    // On dropdown change, load the selected image into the viewer.
+    $('[data-board-select]').on('change', function () {
+      var selected = $('#activeBoard').val(); // Get the value of the selection
+      $('[data-pin-diagram]').prop('data', 'belaDiagram/diagram.html?' + selected); // Load that image
+    });
     return _this;
   }
 
@@ -4566,7 +4573,10 @@ var TabView = function (_View) {
       var rootDir = "belaDiagram/";
       if (data && data.trim) boardString = data.trim();else return;
 
+      // Load the pin diagram image according to the board string:
       $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
+      // Also select that name from the dropdown menu so it matches:
+      $('[name=activeBoard]').val(boardString);
     }
   }]);
 

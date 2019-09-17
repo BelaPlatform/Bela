@@ -4,7 +4,7 @@ $(document).ready(function() {
 
   if (board == 'BelaMini') {
     var paper = new Raphael(mainImage, 300, 482);
-    var imageURL = '/belaDiagram/images/mini_pin_diagram.png';
+    var imageURL = '/belaDiagram/images/BelaMini.png';
     var url = '/belaDiagram/json/data_mini.json';
     paper.image(imageURL, 0, 0, 300, 482);
   } else if (board == 'ctag_FACE') {
@@ -14,7 +14,7 @@ $(document).ready(function() {
     paper.image(imageURL, 0, 0, 300, 686);
   } else if (board == 'ctag_BELA') {
     var paper = new Raphael(mainImage, 300, 686);
-    var imageURL = '/belaDiagram/images/ctag_BELA.jpg';
+    var imageURL = '/belaDiagram/images/ctag_FACE_BELA.jpg';
     var url = '/belaDiagram/json/data_ctag_BELA.json';
     paper.image(imageURL, 0, 0, 300, 686);
   } else if (board == 'ctag_BEAST') {
@@ -29,7 +29,7 @@ $(document).ready(function() {
     paper.image(imageURL, 0, 0, 300, 767);
   } else {
     var paper = new Raphael(mainImage, 300, 482);
-    var imageURL = '/belaDiagram/images/bela_pins_jun2016_rotated.jpg';
+    var imageURL = '/belaDiagram/images/Bela.jpg';
     var url = '/belaDiagram/json/data.json';
     paper.image(imageURL, 0, 0, 300, 482);
   }
