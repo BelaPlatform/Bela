@@ -18,12 +18,18 @@ var dropdowns = function(){
   // accordians
   $('[data-accordion-for]').on('click', function() {
     var that = $(this);
+    var parent = $('[data-tab=' + $(this)[0].dataset.parent + ']');
     var source = $(this).data('accordion-for');
-    $('[data-accordion]').each(function() {
+    $(parent).find('[data-accordion]').each(function() {
       var target = $(this).data('accordion');
       if (target === source) {
-        that.toggleClass('active');
-        $(this).toggleClass('show');
+        if (that.hasClass('active')) {
+          that.removeClass('active');
+          $(this).removeClass('show');
+        } else {
+          that.addClass('active');
+          $(this).addClass('show');
+        }
       }
     });
   });
