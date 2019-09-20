@@ -21,7 +21,7 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-DISTCC ?= 0 # set this to 1 to use distcc by default
+DISTCC ?= 1 # set this to 1 to use distcc by default
 
 # an empty recipe to avoid implicit rules for .d files
 %.d:
@@ -284,7 +284,7 @@ ifeq ($(XENOMAI_VERSION),3)
   BELA_USE_DEFINE=BELA_USE_RTDM
 endif
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
@@ -408,6 +408,16 @@ syntax: ## Only checks syntax
 syntax: SYNTAX_FLAG := -fsyntax-only
 syntax: $(PROJECT_OBJS) 
 
+# distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
+ifeq ($(DISTCC),1)
+ifeq ($(SYNTAX_FLAG),)
+GENERATE_PREPROCESSED := 1
+endif
+endif
+ifneq ($(SYNTAX_FLAG),)
+  DEFAULT_COMMON_FLAGS += -save-temps=obj
+endif
+
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
@@ -444,13 +454,6 @@ build/pru/%_bin.h: pru/%.p
 	$(AT) mv "$(@:build/pru/%=%)" build/pru/
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
-
-# distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
-ifeq ($(DISTCC),1)
-ifeq ($(SYNTAX_FLAG),)
-GENERATE_PREPROCESSED := 1
-endif
-endif
 
 # Rule for user-supplied C++ files
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
