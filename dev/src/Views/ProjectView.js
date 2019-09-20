@@ -192,7 +192,7 @@ _exampleList(examplesDir){
     var orderedList = newListOrder.concat(orphans);
 
 		for (let item of orderedList){
-      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name).attr('data-parent', 'examples');
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('example-list');
@@ -331,7 +331,7 @@ _exampleList(examplesDir){
       counter++;
 
       let name = item.name;
-      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+      let parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name).attr('data-parent', 'libraries');
       let libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
       let libraryItem = $('<li></li>'); // Individual library dropdown
 
