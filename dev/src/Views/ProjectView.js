@@ -339,12 +339,12 @@ _exampleList(examplesDir){
       let libDesc = $('<p></p>').addClass('library-desc');  // Div to contain lib descriotion
       let libVer = $('<p></p>').addClass('library-ver');
       // INCLUDES:
-      let includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter); // Header for include instructions
+      let includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
       let includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
       let includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
       let includeCopy = $('<button></button>').addClass('include-copy');
 
-      let infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter); // Header for include instructions
+      let infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
       let infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
 
       var clipboard = new Clipboard(includeCopy[0], {
@@ -354,7 +354,7 @@ _exampleList(examplesDir){
     });
 
     // FILES:
-    let filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter); // Header for include instructions
+    let filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
 
     let filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
     let filesList = $('<ul></ul>').addClass('libraries-list');
