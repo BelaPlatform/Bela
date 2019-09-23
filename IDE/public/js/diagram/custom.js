@@ -7,22 +7,22 @@ $(document).ready(function() {
     var imageURL = '/belaDiagram/images/BelaMini.png';
     var url = '/belaDiagram/json/data_mini.json';
     paper.image(imageURL, 0, 0, 300, 482);
-  } else if (board == 'ctag_FACE') {
+  } else if (board == 'CtagFace') {
     var paper = new Raphael(mainImage, 300, 686);
     var imageURL = '/belaDiagram/images/ctag_FACE.jpg';
     var url = '/belaDiagram/json/data_ctag_FACE.json';
     paper.image(imageURL, 0, 0, 300, 686);
-  } else if (board == 'ctag_BELA') {
+  } else if (board == 'CtagFaceBela') {
     var paper = new Raphael(mainImage, 300, 686);
     var imageURL = '/belaDiagram/images/ctag_FACE_BELA.jpg';
     var url = '/belaDiagram/json/data_ctag_BELA.json';
     paper.image(imageURL, 0, 0, 300, 686);
-  } else if (board == 'ctag_BEAST') {
+  } else if (board == 'CtagBeast') {
     var paper = new Raphael(mainImage, 300, 767);
     var imageURL = '/belaDiagram/images/ctag_BEAST.jpg';
     var url = '/belaDiagram/json/data_ctag_BEAST_slave.json';
     paper.image(imageURL, 0, 0, 300, 767);
-  } else if (board == 'ctag_BEAST_BELA') {
+  } else if (board == 'CtagBeastBela') {
     var paper = new Raphael(mainImage, 300, 767);
     var imageURL = '/belaDiagram/images/ctag_BEAST_BELA.jpg';
     var url = '/belaDiagram/json/data_ctag_BEAST_BELA.json';
