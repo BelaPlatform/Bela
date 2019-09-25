@@ -4576,7 +4576,7 @@ var TabView = function (_View) {
       // Load the pin diagram image according to the board string:
       $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
       // Also select that name from the dropdown menu so it matches:
-      $('[name=activeBoard]').val(boardString);
+      $('[data-board-select]').val(boardString);
     }
   }]);
 
