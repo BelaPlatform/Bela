@@ -13,7 +13,7 @@ var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xffff00', '0x00ffff', '0xff
 
 var tdGainVal = 1, tdOffsetVal = 0, tdGainMin = 0, tdGainMax = 10, tdOffsetMin = -5, tdOffsetMax = 5;
 var FFTNGainVal = 1, FFTNOffsetVal = -0.005, FFTNGainMin = 0, FFTNGainMax = 10, FFTNOffsetMin = -1, FFTNOffsetMax = 1;
-var FFTDGainVal = 70, FFTDOffsetVal = 69, FFTDGainMin = 0, FFTDGainMax = 1000, FFTDOffsetMin = 0, FFTDOffsetMax = 100;
+var FFTDGainVal = 1/70, FFTDOffsetVal = 69, FFTDGainMin = 0.00001, FFTDGainMax = 0.2, FFTDOffsetMin = 0, FFTDOffsetMax = 100;
 
 class ChannelView extends View{
 

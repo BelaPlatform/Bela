@@ -575,10 +575,10 @@ var FFTNGainVal = 1,
     FFTNGainMax = 10,
     FFTNOffsetMin = -1,
     FFTNOffsetMax = 1;
-var FFTDGainVal = 70,
+var FFTDGainVal = 1 / 70,
     FFTDOffsetVal = 69,
-    FFTDGainMin = 0,
-    FFTDGainMax = 1000,
+    FFTDGainMin = 0.00001,
+    FFTDGainMax = 0.2,
     FFTDOffsetMin = 0,
     FFTDOffsetMax = 100;
 
