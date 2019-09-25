@@ -1,38 +1,32 @@
 $(document).ready(function() {
   var mainImage = $('#image')[0];
-  const board = window.location.search.replace('?','');
+  var board = window.location.search.replace('?','');
 
+  var a, b;
   if (board == 'BelaMini') {
-    var paper = new Raphael(mainImage, 300, 482);
-    var imageURL = '/belaDiagram/images/BelaMini.png';
-    var url = '/belaDiagram/json/data_mini.json';
-    paper.image(imageURL, 0, 0, 300, 482);
+    a = 300;
+    b = 482;
   } else if (board == 'CtagFace') {
-    var paper = new Raphael(mainImage, 300, 686);
-    var imageURL = '/belaDiagram/images/ctag_FACE.jpg';
-    var url = '/belaDiagram/json/data_ctag_FACE.json';
-    paper.image(imageURL, 0, 0, 300, 686);
+    a = 300;
+    b = 686;
   } else if (board == 'CtagFaceBela') {
-    var paper = new Raphael(mainImage, 300, 686);
-    var imageURL = '/belaDiagram/images/ctag_FACE_BELA.jpg';
-    var url = '/belaDiagram/json/data_ctag_BELA.json';
-    paper.image(imageURL, 0, 0, 300, 686);
+    a = 300;
+    b = 686;
   } else if (board == 'CtagBeast') {
-    var paper = new Raphael(mainImage, 300, 767);
-    var imageURL = '/belaDiagram/images/ctag_BEAST.jpg';
-    var url = '/belaDiagram/json/data_ctag_BEAST_slave.json';
-    paper.image(imageURL, 0, 0, 300, 767);
+    a = 300;
+    b = 767;
   } else if (board == 'CtagBeastBela') {
-    var paper = new Raphael(mainImage, 300, 767);
-    var imageURL = '/belaDiagram/images/ctag_BEAST_BELA.jpg';
-    var url = '/belaDiagram/json/data_ctag_BEAST_BELA.json';
-    paper.image(imageURL, 0, 0, 300, 767);
-  } else {
-    var paper = new Raphael(mainImage, 300, 482);
-    var imageURL = '/belaDiagram/images/Bela.jpg';
-    var url = '/belaDiagram/json/data.json';
-    paper.image(imageURL, 0, 0, 300, 482);
+    a = 300;
+    b = 767;
+  } else { // catch all
+    board = "Bela";
+    a = 300;
+    b = 482;
   }
+  var imageURL = '/belaDiagram/images/'+board+'.jpg';
+  var url = '/belaDiagram/json/data_'+board+'.json';
+  var paper = new Raphael(mainImage, a, b);
+  paper.image(imageURL, 0, 0, a, b);
 
   $.getJSON(url, function(data){
     for (var i in data){
