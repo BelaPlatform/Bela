@@ -2,7 +2,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
-var example_order = require('../../../examples/order.json');
+var example_order = require('../../../../examples/order.json');
 
 class ProjectView extends View {
 

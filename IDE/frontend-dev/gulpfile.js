@@ -19,19 +19,21 @@ var host = '192.168.7.2';
 var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
+var idePath = '../';
+var designPath = './design/';
 
 gulp.task('commit', ['browserify', 'scope-browserify']);
 
 gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
 gulp.task('styles', function() {
-  return gulp.src('../ide-redesign/styles/*.scss')
+  return gulp.src(designPath+'styles/*.scss')
     .pipe(sass({
       'sourcemap=none': true
     }))
     .pipe(concat('style.css'))
     .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1'))
-    .pipe(gulp.dest('../IDE/public/css/'));
+    .pipe(gulp.dest(idePath+'public/css/'));
 });
 
 gulp.task('watch', ['upload'], function(){
@@ -39,7 +41,7 @@ gulp.task('watch', ['upload'], function(){
 	livereload.listen();
 
 	// when the node.js source files change, kill node, upload the files and restart node
-	gulp.watch(['../IDE/index.js', '../IDE/libs/**'], ['killnode', 'upload', 'restartnode']);
+	gulp.watch([idePath+'index.js', idePath+'libs/**'], ['killnode', 'upload', 'restartnode']);
 
 	// when the browser js changes, browserify it
 	gulp.watch(['./src/**'], ['browserify']);
@@ -49,15 +51,16 @@ gulp.task('watch', ['upload'], function(){
 
 	// when the sass changes, compile it and stick it in IDE/public
 	gulp.watch(['./sass/**'], ['sass']);
-  gulp.watch('../ide-redesign/styles/*.scss', ['styles']);
+	gulp.watch(designPath+'styles/*.scss', ['styles']);
 
 	// when the browser sources change, upload them without killing node
-	gulp.watch(['../IDE/public/**',
-    '../IDE/dist/**',
-    '../IDE/src/**',
-    '!../IDE/public/js/bundle.js.map',
-		'!../IDE/public/scope/js/bundle.js.map',
-		'!../IDE/public/js/ace/**'
+	gulp.watch([
+		idePath+'public/**',
+		idePath+'dist/**',
+		idePath+'src/**',
+		'!'+idePath+'public/js/bundle.js.map',
+		'!'+idePath+'public/scope/js/bundle.js.map',
+		'!'+idePath+'public/js/ace/**'
 	], ['upload-no-kill']);
 
 });
@@ -68,9 +71,9 @@ gulp.task('upload-no-kill', (cb) => rSync(cb, true) );
 gulp.task('nodemodules', ['upload-nodemodules', 'rebuild-nodemodules']);
 
 gulp.task('upload-nodemodules', () => {
-	return gulp.src(['../IDE/node_modules'])
+	return gulp.src([idePath+'node_modules'])
 		.pipe(rsync({
-			root: '../IDE/node_modules/',
+			root: idePath+'node_modules/',
 			hostname: user+'@'+host,
 			destination: remotePath+'node_modules/',
 			archive: true,
@@ -123,7 +126,7 @@ gulp.task('browserify', () => {
         .pipe(buffer())
 		.pipe(sourcemaps.init({loadMaps: true}))
         .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest('../IDE/public/js/'));
+        .pipe(gulp.dest(idePath+'public/js/'));
 });
 gulp.task('scope-browserify', () => {
     return browserify('scope-src/main.js', { debug: true })
@@ -137,7 +140,7 @@ gulp.task('scope-browserify', () => {
         .pipe(buffer())
 		.pipe(sourcemaps.init({loadMaps: true}))
         .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest('../IDE/public/scope/js/'));
+        .pipe(gulp.dest(idePath+'public/scope/js/'));
 });
 
 gulp.task('sass', () => {
@@ -145,7 +148,7 @@ gulp.task('sass', () => {
 		.pipe(sourcemaps.init())
 		.pipe(sass().on('error', sass.logError))
 		.pipe(sourcemaps.write())
-		.pipe(gulp.dest('../IDE/public/css/'));
+		.pipe(gulp.dest(idePath+'public/css/'));
 });
 
 function startNode(callback){
@@ -167,7 +170,7 @@ function startNode(callback){
 
 function rSync(callback, reload){
 
-	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '../IDE/', user+'@'+host+':'+remotePath]);
+	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '--exclude=frontend-dev', idePath, user+'@'+host+':'+remotePath]);
 
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){
