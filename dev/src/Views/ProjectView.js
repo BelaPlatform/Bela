@@ -8,6 +8,29 @@ class ProjectView extends View {
 
     constructor(className, models){
       super(className, models);
+  this.onClickOpenExample = function (e) {
+    let link = e.target.dataset.exampleLink;
+    if (this.exampleChanged){
+      this.exampleChanged = false;
+      popup.exampleChanged( (link) => {
+        this.emit('message', 'project-event', {
+          func: 'openExample',
+          currentProject: link
+        });
+        $('.selectedExample').removeClass('selectedExample');
+        $(e.target).addClass('selectedExample');
+      }, link, 0, () => this.exampleChanged = true );
+      return;
+    }
+
+    this.emit('message', 'project-event', {
+      func: 'openExample',
+      currentProject: link
+    });
+    $('.selectedExample').removeClass('selectedExample');
+    $(e.target).addClass('selectedExample');
+  }
+
 
       this.on('example-changed', () => this.exampleChanged = true );
     }
@@ -248,28 +271,7 @@ _exampleList(examplesDir){
                 var link = item.name + '/' + child;
                 let childLi = $('<li></li>');
                 childLi.html(child).attr('data-example-link', link)
-                .on('click', (e) => {
-                  link = e.target.dataset.exampleLink;
-                  if (that.exampleChanged){
-                    that.exampleChanged = false;
-                    popup.exampleChanged( (link) => {
-                      that.emit('message', 'project-event', {
-                        func: 'openExample',
-                        currentProject: link
-                      });
-                      $('.selectedExample').removeClass('selectedExample');
-                      $(e.target).addClass('selectedExample');
-                    }, link, 0, () => that.exampleChanged = true );
-                    return;
-                  }
-
-                  that.emit('message', 'project-event', {
-                    func: 'openExample',
-                    currentProject: link
-                  });
-                  $('.selectedExample').removeClass('selectedExample');
-                  $(e.target).addClass('selectedExample');
-                });
+                .on('click', that.onClickOpenExample.bind(that));
                 childLi.appendTo(childUl);
               }
 
@@ -353,12 +355,17 @@ _exampleList(examplesDir){
       }
     });
 
+      // EXAMPLES:
+      let examplesTitle = $('<div>Related examples:</div>');
+      let examplesList = $('<ul></ul>');
+
     // FILES:
     let filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
 
     let filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
     let filesList = $('<ul></ul>').addClass('libraries-list');
     let includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
+    let that = this;
     for (let child of item.children){
       if (child && child.length && child[0] === '.') continue;
         if (child == 'build') continue;
@@ -382,11 +389,21 @@ _exampleList(examplesDir){
               var object = {};
               var transformText = text.split('\n');
               for (let line of transformText) {
+                line = line.trim();
                 if (line.length > 0) {
                   var splitKeyVal = line.split('=');
                   var key = splitKeyVal[0];
                   if (key == 'include') {
                     includeArr.push(splitKeyVal[1]);
+                  } else if ('examples' === key) {
+                    for (let example of splitKeyVal[1].split(','))
+                    {
+                      example = example.trim();
+                      let exampleLi = $('<li></li>');
+                      exampleLi.html(example).attr('data-example-link', example)
+                      .on('click', that.onClickOpenExample.bind(that));
+                      exampleLi.appendTo(examplesList);
+                    }
                   } else {
                     object[key] = splitKeyVal[1];
                   }
@@ -418,6 +435,11 @@ _exampleList(examplesDir){
                 includeLines.appendTo(includeContent);
                 includeCopy.appendTo(includeContent);
                 includeInstructions.appendTo(includeContent);
+                if(!examplesList.is(':empty'))
+                {
+                  examplesTitle.appendTo(includeContent);
+                  examplesList.appendTo(includeContent);
+                }
               }
 
               includeArr = [];

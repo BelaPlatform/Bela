@@ -1,5 +1,6 @@
 name=ne10
-description=A convenience wrapper for ne10.<br>Examples:<br>&middot Audio/FFT-phase-vocoder<br>&middot Instruments/d-box<br>&middot terminal-only/filter-FIR
+description=A convenience wrapper for ne10.
+examples=Audio/FFT-phase-vocoder, Instruments/d-box, terminal-only/filter-FIR
 LDFLAGS=
 LDLIBS=-lNE10
 
