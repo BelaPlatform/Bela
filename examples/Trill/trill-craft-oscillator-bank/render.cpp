@@ -61,9 +61,9 @@ extern "C" {
 Trill touchSensor;
 
 // Prescaler options for Trill sensor
-int prescalerOpts[6] = {1, 2, 4, 8, 16, 32};
+int gPrescalerOpts[6] = {1, 2, 4, 8, 16, 32};
 // Threshold options for Trill sensor
-int thresholdOpts[7] = {0, 10, 20, 30, 40, 50, 60};
+int gThresholdOpts[7] = {0, 10, 20, 30, 40, 50, 60};
 
 // Range for re-mapping readins of the different input pads on the Trill sensor
 int gSensorRange[2] = { 200, 2000 };
@@ -71,7 +71,7 @@ int gSensorRange[2] = { 200, 2000 };
 float gSensorReading[NUM_SENSORS] = { 0.0 };
 
 // Sleep time for auxiliary task
-int gTaskSleepTime = 50000;
+int gTaskSleepTime = 5000;
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
@@ -119,8 +119,8 @@ bool setup(BelaContext *context, void *userData)
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 	
 	// Allocate filter buffers: 2 previous samples per filter, 1 filter per input
-	gFilterLastInputs = (float *)malloc(2 * NUM_SENSORS * sizeof(float));
-	gFilterLastOutputs = (float *)malloc(2 * NUM_SENSORS * sizeof(float));
+	gFilterLastInputs = (float *)malloc((2 * NUM_SENSORS + 1)* sizeof(float));
+	gFilterLastOutputs = (float *)malloc((2 * NUM_SENSORS + 1)* sizeof(float));
 
 	if(gFilterLastInputs == 0 || gFilterLastOutputs == 0) {
 		rt_printf("Unable to allocate memory buffers.\n");
@@ -188,7 +188,7 @@ void render(BelaContext *context, void *userData)
 	memset(context->audioOut, 0, context->audioOutChannels * context->audioFrames * sizeof(float));
 
 	// Render audio frames
-	oscillator_bank_neon(context->audioFrames, context->audioOut,
+	oscillator_bank_neon(2*context->audioFrames, context->audioOut,
 			gNumOscillators, gWavetableLength,
 			gPhases, gFrequencies, gAmplitudes,
 			gDFrequencies, gDAmplitudes,
