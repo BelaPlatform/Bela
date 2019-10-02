@@ -1,6 +1,33 @@
 /*
- * Default render file for Bela projects running Pd patches
- * using libpd.
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+
+The platform for ultra-low latency audio and sensor processing
+
+http://bela.io
+
+A project of the Augmented Instruments Laboratory within the
+Centre for Digital Music at Queen Mary University of London.
+http://www.eecs.qmul.ac.uk/~andrewm
+
+(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
+	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
+	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+
+The Bela software is distributed under the GNU Lesser General Public License
+(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+*/
+
+/*
+ *	USING A CUSTOM RENDER.CPP FILE FOR PUREDATA PATCHES - LIBPD
+ *  ===========================================================
+ *  ||                                                       ||
+ *  || OPEN THE ENCLOSED _main.pd PATCH FOR MORE INFORMATION ||
+ *  || ----------------------------------------------------- ||
+ *  ===========================================================
  */
 #include <Bela.h>
 #include <DigitalChannelManager.h>
@@ -11,9 +38,9 @@
 extern "C" {
 #include <libpd/s_stuff.h>
 };
-#include <UdpServer.h>
-#include <Midi.h>
-#include <Scope.h>
+#include <libraries/UdpServer/UdpServer.h>
+#include <libraries/Midi/Midi.h>
+#include <libraries/Scope/Scope.h>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -77,7 +104,7 @@ void dumpMidi()
 	      );
 	for(unsigned int n = 0; n < midi.size(); ++n)
 	{
-		printf("[%2d]%20s %3s %3s (%d-%d)\n", 
+		printf("[%2d]%20s %3s %3s (%d-%d)\n",
 			n,
 			gMidiPortNames[n].c_str(),
 			midi[n]->isInputEnabled() ? "x" : "_",
@@ -127,7 +154,7 @@ static unsigned int getPortChannel(int* channel){
 	}
 	if(port >= midi.size()){
 		// if the port number exceeds the number of ports available, send out
-		// of the first port 
+		// of the first port
 		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
 		port = 0;
 	}
@@ -204,7 +231,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			num[n] = libpd_get_float(&argv[n]);
 		}
 		std::ostringstream deviceName;
-		deviceName < symbol < ":" < num[0] < "," < num[1] < "," < num[2];
+    deviceName << symbol << ":" << num[0] << "," << num[1] << "," << num[2];
 		printf("Adding Midi device: %s\n", deviceName.str().c_str());
 		Midi* newMidi = openMidiDevice(deviceName.str(), false, true);
 		if(newMidi)
@@ -339,7 +366,7 @@ bool setup(BelaContext *context, void *userData)
 	if(context->digitalFrames > 0 && context->digitalChannels > 0)
 		gDigitalEnabled = 1;
 
-	// add here other devices you need 
+	// add here other devices you need
 	gMidiPortNames.push_back("hw:1,0,0");
 	//gMidiPortNames.push_back("hw:0,0,0");
 	//gMidiPortNames.push_back("hw:1,0,1");
@@ -376,10 +403,10 @@ bool setup(BelaContext *context, void *userData)
 	gFirstScopeChannel = gFirstDigitalChannel + gDigitalChannelsInUse;
 
 	gChannelsInUse = gFirstScopeChannel + gScopeChannelsInUse;
-	
+
 	// Create receiverNames for digital channels
 	generateDigitalNames(gDigitalChannelsInUse, gLibpdDigitalChannelOffset, gReceiverInputNames, gReceiverOutputNames);
-	
+
 	// digital setup
 	if(gDigitalEnabled)
 	{
@@ -449,7 +476,7 @@ bool setup(BelaContext *context, void *userData)
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
 	if(gPatch == NULL){
-		printf("Error: file %s/%s is corrupted.\n", folder, file); 
+		printf("Error: file %s/%s is corrupted.\n", folder, file);
 		return false;
 	}
 
@@ -478,7 +505,7 @@ bool setup(BelaContext *context, void *userData)
 
 	dcm.setVerbose(false);
 // MODIFICATION START
-	touchSensor.setup();
+	touchSensor.setup(1, 0x18, Trill::DIFF,20,2);
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(readCapSensorLoop, 50, "touchSensorRead", NULL));
 // MODIFICATION END
 	return true;
@@ -490,7 +517,7 @@ void render(BelaContext *context, void *userData)
 	libpd_start_message(touchSensor.numSensors);
 	for(unsigned int n = 0; n < touchSensor.numSensors; ++n)
 	{
-		libpd_add_float(touchSensor.rawData[n]/(4096.f));
+		libpd_add_float(touchSensor.rawData[n]/(2048.f));
 		// libpd_add_float(touchSensor.rawData[n]);
 	}
 	libpd_finish_message("bela_Trill", "list");
@@ -595,7 +622,7 @@ void render(BelaContext *context, void *userData)
 		{
 			memcpy(
 				gInBuf + n * gLibpdBlockSize,
-				context->audioIn + tick * gLibpdBlockSize + n * context->audioFrames, 
+				context->audioIn + tick * gLibpdBlockSize + n * context->audioFrames,
 				sizeof(context->audioIn[0]) * gLibpdBlockSize
 			);
 		}
@@ -605,7 +632,7 @@ void render(BelaContext *context, void *userData)
 		{
 			memcpy(
 				gInBuf + gLibpdBlockSize * gFirstAnalogInChannel + n * gLibpdBlockSize,
-				context->analogIn + tick * gLibpdBlockSize + n * context->analogFrames, 
+				context->analogIn + tick * gLibpdBlockSize + n * context->analogFrames,
 				sizeof(context->analogIn[0]) * gLibpdBlockSize
 			);
 		}
@@ -677,7 +704,7 @@ void render(BelaContext *context, void *userData)
 		for(int n = 0; n < context->audioOutChannels; ++n)
 		{
 			memcpy(
-				context->audioOut + tick * gLibpdBlockSize + n * context->audioFrames, 
+				context->audioOut + tick * gLibpdBlockSize + n * context->audioFrames,
 				gOutBuf + n * gLibpdBlockSize,
 				sizeof(context->audioOut[0]) * gLibpdBlockSize
 			);
@@ -687,7 +714,7 @@ void render(BelaContext *context, void *userData)
 		for(int n = 0; n < context->analogOutChannels; ++n)
 		{
 			memcpy(
-				context->analogOut + tick * gLibpdBlockSize + n * context->analogFrames, 
+				context->analogOut + tick * gLibpdBlockSize + n * context->analogFrames,
 				gOutBuf + gLibpdBlockSize * gFirstAnalogOutChannel + n * gLibpdBlockSize,
 				sizeof(context->analogOut[0]) * gLibpdBlockSize
 			);
