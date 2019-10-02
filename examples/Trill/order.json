@@ -1,5 +1,6 @@
 [
 	"trill-print-raw",
+	"trill-visual-raw",
 	"trill-bar-led",
 	"trill-bar-multitouch-theremin",
 	"trill-bar-visual",
