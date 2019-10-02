@@ -1,22 +1,22 @@
 /**
-* \example Trill/trill-bar-visual
-*
-* Trill Bar visual
-* ================
-*
-* New GUI fuctionality for Bela!
-*
-* This example demonstrates how to communicate with the Trill Bar sensor using
-* the Trill library and visualises the position of different touches in real time via the
-* integrated Bela  p5 GUI.
-*
-* The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
-* and the number of active touches, their position and size are stored as global variables.
-*
-* A p5 sketch is included in this project with a p5 class representation of the Trill
-* Bar sensor and the different touches. Touch position and size are represented on the sketch.
-*
-**/
+ * \example Trill/trill-bar-visual
+ *
+ * Trill Bar visual 
+ * ================
+ * 
+ * New GUI fuctionality for Bela! 
+ *
+ * This project showcases an example of how to communicate with the Trill Bar sensor using
+ * the Trill library and visualise position of different touches in real time via the 
+ * integrated Bela p5 GUI.
+ *
+ * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread 
+ * and the number of active touches, their position and size stored on global variables.
+ *
+ * A p5 sketch is included in this example with a p5 class representation of the Trill
+ * Bar sensor and the different touches. Touch position and size is represented on the sketch.
+ *
+ **/
 
 #include <Bela.h>
 #include <cmath>
