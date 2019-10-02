@@ -48,7 +48,7 @@ int gTouchSizeRange[2] = { 100, 6000 };
 // Sleep time for auxiliary task
 int gTaskSleepTime = 100;
 // Time period (in seconds) after which data will be sent to the GUI
-float gTimePeriod = 0.005;
+float gTimePeriod = 0.015;
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
