@@ -1,22 +1,22 @@
- /**
- * \example Trill/trill-bar-visual
- *
- * Trill Bar visual 
- * ================
- * 
- * New GUI fuctionality for Bela! 
- *
- * This project showcases an example of how to communicate with the Trill Bar sensor using
- * the Trill library and visualise position of different touches in real time via the 
- * integrated Bela  p5 GUI.
- *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread 
- * and the number of active touches, their position and size stored on global variables.
- *
- * A p5 sketch is included in this file with a p5 class representation of the Trill
- * Bar sensor and the different touches. Touch position and size is represented on the sketch.
- *
- **/
+/**
+* \example Trill/trill-bar-visual
+*
+* Trill Bar visual
+* ================
+*
+* New GUI fuctionality for Bela!
+*
+* This example demonstrates how to communicate with the Trill Bar sensor using
+* the Trill library and visualises the position of different touches in real time via the
+* integrated Bela  p5 GUI.
+*
+* The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+* and the number of active touches, their position and size are stored as global variables.
+*
+* A p5 sketch is included in this project with a p5 class representation of the Trill
+* Bar sensor and the different touches. Touch position and size are represented on the sketch.
+*
+**/
 
 #include <Bela.h>
 #include <cmath>
@@ -51,78 +51,78 @@ int gTaskSleepTime = 100;
 float gTimePeriod = 0.015;
 
 /*
- * Function to be run on an auxiliary task that reads data from the Trill sensor.
- * Here, a loop is defined so that the task runs recurrently for as long as the 
- * audio thread is running.
- */
+* Function to be run on an auxiliary task that reads data from the Trill sensor.
+* Here, a loop is defined so that the task runs recurrently for as long as the
+* audio thread is running.
+*/
 void loop(void*)
 {
-	// loop
-	while(!gShouldStop)
-	{
-		// Read locations from Trill sensor
-		touchSensor.readLocations(); 
-		// Remap location and size so that they are expressed in a 0-1 range
-		for(int i = 0; i <  touchSensor.numberOfTouches(); i++) {
-			gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 3200, 0, 1);
-			gTouchLocation[i] = constrain(gTouchLocation[i], 0, 1);
-			gTouchSize[i] = map(touchSensor.touchSize(i), gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
-			gTouchSize[i] = constrain(gTouchSize[i], 0, 1);
-		}
-		gNumActiveTouches = touchSensor.numberOfTouches();
-		// For all innactive touches, set location and size to 0
-		for(int i = gNumActiveTouches; i <  NUM_TOUCH; i++) {
-			gTouchLocation[i] = 0.0;
-			gTouchSize[i] = 0.0;
-		}
-	    
-		// Sleep for ... milliseconds	    
-		usleep(gTaskSleepTime);
-	}
+ // loop
+ while(!gShouldStop)
+ {
+	 // Read locations from Trill sensor
+	 touchSensor.readLocations();
+	 // Remap location and size so that they are expressed in a 0-1 range
+	 for(int i = 0; i <  touchSensor.numberOfTouches(); i++) {
+		 gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 3200, 0, 1);
+		 gTouchLocation[i] = constrain(gTouchLocation[i], 0, 1);
+		 gTouchSize[i] = map(touchSensor.touchSize(i), gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
+		 gTouchSize[i] = constrain(gTouchSize[i], 0, 1);
+	 }
+	 gNumActiveTouches = touchSensor.numberOfTouches();
+	 // For all innactive touches, set location and size to 0
+	 for(int i = gNumActiveTouches; i <  NUM_TOUCH; i++) {
+		 gTouchLocation[i] = 0.0;
+		 gTouchSize[i] = 0.0;
+	 }
+
+	 // Sleep for ... milliseconds
+	 usleep(gTaskSleepTime);
+ }
 }
 
 bool setup(BelaContext *context, void *userData)
 {
-	
-	if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
-		fprintf(stderr, "Unable to initialise touch sensor\n");
-		return false;
-	}
-	
-	touchSensor.printDetails();
 
-	// Exit program if sensor is not a Trill Bar
-	if(touchSensor.deviceType() != Trill::ONED) {
-		fprintf(stderr, "This example is supposed to work only with the Trill BAR. \n You may have to adapt it to make it work with other Trill devices.\n");
-		return false;
-	}
+ if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	 fprintf(stderr, "Unable to initialise touch sensor\n");
+	 return false;
+ }
 
-	// Set and schedule auxiliary task for reading sensor data from the I2C bus
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));	
+ touchSensor.printDetails();
 
-	// Setup GUI	
-	gui.setup(context->projectName);
-	return true;
+ // Exit program if sensor is not a Trill Bar
+ if(touchSensor.deviceType() != Trill::ONED) {
+	 fprintf(stderr, "This example is supposed to work only with the Trill BAR. \n You may have to adapt it to make it work with other Trill devices.\n");
+	 return false;
+ }
+
+ // Set and schedule auxiliary task for reading sensor data from the I2C bus
+ Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+
+ // Setup GUI
+ gui.setup(context->projectName);
+ return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-	static unsigned int count = 0;
-	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		// Send number of touches, touch location and size to the GUI
-		// after some time has elapsed.
-		if(count >= gTimePeriod*context->audioSampleRate) 
-		{
+ static unsigned int count = 0;
+ for(unsigned int n = 0; n < context->audioFrames; n++) {
+	 // Send number of touches, touch location and size to the GUI
+	 // after some time has elapsed.
+	 if(count >= gTimePeriod*context->audioSampleRate)
+	 {
 
-			int numTouches[1] = { gNumActiveTouches };
-			gui.sendBuffer(0, numTouches);
-			gui.sendBuffer(1, gTouchLocation);
-			gui.sendBuffer(2, gTouchSize);
+		 int numTouches[1] = { gNumActiveTouches };
+		 gui.sendBuffer(0, numTouches);
+		 gui.sendBuffer(1, gTouchLocation);
+		 gui.sendBuffer(2, gTouchSize);
 
-			count = 0;
-		}
-		count++;
-	}
+		 count = 0;
+	 }
+	 count++;
+ }
 }
 
 void cleanup(BelaContext *context, void *userData)
