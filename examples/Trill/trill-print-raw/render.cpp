@@ -55,7 +55,7 @@ void render(BelaContext *context, void *userData)
 			if(readCount >= readIntervalSamples) {
 				readCount = 0;
 				if(touchSensor.isReady()) {
-					for(unsigned int i = 0; i < sizeof(touchSensor.rawData)/sizeof(int); i++)
+					for(unsigned int i = 0; i < touchSensor.numSensors(); i++)
 						rt_printf("%5d ", touchSensor.rawData[i]);
 					rt_printf("\n");
 				}
