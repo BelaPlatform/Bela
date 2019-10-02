@@ -79,8 +79,7 @@ void render(BelaContext *context, void *userData)
 					gRawRange[1] = touchSensor.rawData[i];
 			}
 			if(touchSensor.isReady()) {
-				int numSensors[1] = { touchSensor.numSensors() };
-				gui.sendBuffer(0, numSensors);
+				gui.sendBuffer(0, touchSensor.numSensors());
 				gui.sendBuffer(1, gRawRange);
 				gui.sendBuffer(2, touchSensor.rawData);
 			}

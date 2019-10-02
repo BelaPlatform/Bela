@@ -113,9 +113,7 @@ void render(BelaContext *context, void *userData)
 	 // after some time has elapsed.
 	 if(count >= gTimePeriod*context->audioSampleRate)
 	 {
-
-		 int numTouches[1] = { gNumActiveTouches };
-		 gui.sendBuffer(0, numTouches);
+		 gui.sendBuffer(0, gNumActiveTouches);
 		 gui.sendBuffer(1, gTouchLocation);
 		 gui.sendBuffer(2, gTouchSize);
 
