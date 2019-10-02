@@ -1,7 +1,7 @@
 #include <libraries/Trill/Trill.h>
 
 #define MAX_TOUCH_1D_OR_2D ((device_type_ == TWOD ? kMaxTouchNum2D : kMaxTouchNum1D))
-
+#define NUM_SENSORS ((device_type_ == ONED ? kNumSensorsBar : kNumSensors))
 Trill::Trill(){}
 
 Trill::Trill(int i2c_bus, int i2c_address, int mode) {
@@ -249,7 +249,7 @@ int Trill::readI2C() {
 		fprintf(stderr, "Failure to read Byte Stream\n");
 		return 1;
 	}
-	for (unsigned int i=0; i < numSensors; i++) {
+	for (unsigned int i=0; i < NUM_SENSORS; i++) {
 		rawData[i] = ((dataBuffer[2*i] << 8) + dataBuffer[2*i+1]) & 0x0FFF;
 	}
 
@@ -372,4 +372,9 @@ int Trill::touchHorizontalSize(uint8_t touch_num)
 	size += dataBuffer[2*touch_num + 6*kMaxTouchNum2D + 1];
 
 	return size;
+}
+
+int Trill::numSensors()
+{
+	return NUM_SENSORS;
 }
