@@ -1,9 +1,9 @@
 [
+	"trill-print-raw",
 	"trill-bar-led",
 	"trill-bar-multitouch-theremin",
 	"trill-bar-visual",
 	"trill-craft-oscillator-bank",
-	"trill-print-aux-task",
 	"trill-sample-trigger-pd",
 	"trill-settings-test",
 	"trill-square-oscillator-pad-A",
