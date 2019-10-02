@@ -1,9 +1,28 @@
+/**
+ * \example Trill/trill-print-raw
+ *
+ * Trill Print Raw Values
+ * ======================
+ *
+ * This example uses the Trill library and will work with any Trill sensor connected.
+ *
+ * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+ * and is read in DIFF mode giving the differential reading of each pad on the sensor.
+ *
+ * Once you run the project you will see the value of each capacitive pad on the sensor
+ * being printed. This is a good project to run to debug your sensors and make sure they
+ * are connected correctly.
+ *
+ **/
+
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
 
 Trill touchSensor;
 
 AuxiliaryTask readI2cTask;
+
+// Interval for reading from the sensor
 int readInterval = 500; //ms
 int readIntervalSamples = 0;
 // Sleep time for auxiliary task
@@ -19,6 +38,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
+	// Setup a sensor on i2c 1, address 0x18 and in DIFF mode
 	touchSensor.setup(1, 0x18, Trill::DIFF);
 
 	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
@@ -45,4 +65,6 @@ void render(BelaContext *context, void *userData)
 }
 
 void cleanup(BelaContext *context, void *userData)
-{}
+{
+
+}
