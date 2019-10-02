@@ -1,0 +1,15 @@
+name=Trill
+version=1.0.0
+author=Adan Benito<adan@bela.io>
+maintainer=Adan Benito<adan@bela.io>
+description=Library to handle I2C communication with Trill sensors for capacitive touch interaction with Bela.
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
