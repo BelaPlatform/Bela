@@ -18,8 +18,8 @@ Scope::Scope(): isUsingOutBuffer(false),
 		cfg(NULL)
 		{}
 
-Scope::Scope(unsigned int numChannels, float sampleRate, int numSliders /* = 0 */){
-	setup(numChannels, sampleRate, numSliders);
+Scope::Scope(unsigned int numChannels, float sampleRate){
+	setup(numChannels, sampleRate);
 }
 
 void Scope::cleanup(){
@@ -44,11 +44,10 @@ void Scope::triggerTask(){
     }
 }
 
-void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders){
+void Scope::setup(unsigned int _numChannels, float _sampleRate){
    
     setSetting(L"numChannels", _numChannels);
     setSetting(L"sampleRate", _sampleRate);
-    setSetting(L"numSliders", _numSliders);
 	
 	// set up the websocket server
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
@@ -68,13 +67,6 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate, int _numSliders)
 	// setup the auxiliary tasks
 	scopeTriggerTask = std::unique_ptr<AuxTaskRT>(new AuxTaskRT());
 	scopeTriggerTask->create("scope-trigger-task", [this](){ triggerTask(); });
-
-	// setup the sliders
-	sliders.resize(_numSliders);
-	for(unsigned int n = 0; n < sliders.size(); ++n)
-	{
-		sliders[n].index = n;
-	}
 }
 
 void Scope::start(){
@@ -462,24 +454,6 @@ void Scope::doFFT(){
     isUsingOutBuffer = false;
 }
 
-bool Scope::sliderChanged(int slider){
-	return sliders[slider].changed;
-}
-
-float Scope::getSliderValue(int slider){
-	sliders[slider].changed = false;
-    return sliders[slider].value;
-}
-
-void Scope::setSlider(int index, float min, float max, float step, float value, std::string name){
-    sliders.at(index).value = value;
-    sliders.at(index).min = min;
-    sliders.at(index).max = max;
-    sliders.at(index).step = step;
-    sliders.at(index).name = name;
-    sliders.at(index).w_name = std::wstring(name.begin(), name.end());
-}
-
 void Scope::setXParams(){
     if (plotMode == 0){
         holdOffSamples = (int)(sampleRate*0.001*holdOff/downSampling);
@@ -556,7 +530,7 @@ void Scope::setSetting(std::wstring setting, float value){
 // called when scope_control websocket is connected
 // communication is started here with cpp sending a 
 // "connection" JSON with settings known by cpp
-// (i.e numChannels, sampleRate, numSliders)
+// (i.e numChannels, sampleRate)
 // JS replies with "connection-reply" which is parsed
 // by scope_control_data()
 void Scope::scope_control_connected(){
@@ -574,10 +548,6 @@ void Scope::scope_control_connected(){
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
 	ws_server->send("scope_control", str.c_str());
-	
-	for (auto slider : sliders){
-		sendSlider(&slider);
-	}
 }
 
 // on_data callback for scope_control websocket
@@ -602,16 +572,6 @@ void Scope::scope_control_data(const char* data){
 			// parse all settings and start scope
 			parse_settings(value);
 			start();
-		} else if (event.compare(L"slider") == 0){
-			int slider = -1;
-			float value = 0.0f;
-			if (root.find(L"slider") != root.end() && root[L"slider"]->IsNumber())
-				slider = (int)root[L"slider"]->AsNumber();
-			if (root.find(L"value") != root.end() && root[L"value"]->IsNumber())
-				value = (float)root[L"value"]->AsNumber();
-				
-			sliders.at(slider).value = value;
-			sliders.at(slider).changed = true;
 		}
 		return;
 	}
@@ -628,18 +588,3 @@ void Scope::parse_settings(JSONValue* value){
 	}
 }
 
-void Scope::sendSlider(ScopeSlider* slider){
-	JSONObject root;
-	root[L"event"] = new JSONValue(L"set-slider");
-	root[L"slider"] = new JSONValue(slider->index);
-	root[L"value"] = new JSONValue(slider->value);
-	root[L"min"] = new JSONValue(slider->min);
-	root[L"max"] = new JSONValue(slider->max);
-	root[L"step"] = new JSONValue(slider->step);
-	root[L"name"] = new JSONValue(slider->w_name);
-	JSONValue *json = new JSONValue(root);
-	// std::wcout << "constructed JSON: " << json->Stringify().c_str() << "\n";
-	std::wstring wide = json->Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	ws_server->send("scope_control", str.c_str());
-}
