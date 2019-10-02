@@ -12,7 +12,7 @@ if(typeof TrillSquare === 'undefined') {
 				color: 'ivory'
 			}
 		}
-		
+
 		draw() {
 			this.s.fill(0);
 	        this.s.rect(this.position[0], this.position[1], this.width, this.width, 20);
@@ -21,7 +21,7 @@ if(typeof TrillSquare === 'undefined') {
 	        	this.touch.active = 0;
 	        }
 		}
-		
+
 		updateTouch(location, size) {
 			this.touch.active = 1;
 			location[0] = this.s.constrain(location[0], 0, 1);
@@ -30,32 +30,32 @@ if(typeof TrillSquare === 'undefined') {
 			size = this.s.constrain(size, 0, 1);
 			this.touch.size = size;
 		}
-		
+
 		touchActive() {
 			return this.touch.active;
 		}
-		
+
 		setTouchState(state) {
 			this.touch.active = Boolean(state);
 		}
-		
+
 		drawTouch(i) {
 			this.s.fill(this.touch.color);
 			let diameter = this.width*this.touch.size*this.touch.scale;
 			this.s.ellipse(this.position[0] + this.touch.location[0], this.position[1] + this.touch.location[1], diameter);
-			
+
 		}
-		
+
 		changeTouchColor(newColor) {
 			this.touch.color = this.s.color(newColor);
 		}
-		
+
 		changeTouchScale(scale) {
 			if(scale <=1 ) {
 				this.touch.scale = scale;
 			}
 		}
-		
+
 		resize(width) {
 			this.width = width;
 		}
@@ -79,7 +79,7 @@ var guiSketch_template = function( sketch ) {
         startPoint=(sketch.width/2)-spacing*7;
         rectWidth = sketch.height*0.7;
         rectStart = sketch.height*0.1;
-        
+
         sketch.trill = new TrillSquare(sketch, rectWidth, [sketch.width/2-rectWidth/2, rectStart]);
 
         belaLogo = sketch.loadImage('../images/logo_bar14.png');
@@ -87,13 +87,13 @@ var guiSketch_template = function( sketch ) {
     };
 
     sketch.draw = function() {
-          
+
         sketch.background(240);
         sketch.resizeElements();
 
         if(typeof Bela.data.buffers[0] != 'undefined')
         	touchPosition = Bela.data.buffers[0];
-        
+
         if(typeof Bela.data.buffers[1] != 'undefined')
         	touchSize = Bela.data.buffers[1][0];
         sketch.print(touchSize);
@@ -119,4 +119,3 @@ var guiSketch_template = function( sketch ) {
 
 
 var guiSketch = new p5(guiSketch_template);
-
