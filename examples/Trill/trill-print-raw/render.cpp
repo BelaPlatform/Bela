@@ -50,21 +50,20 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-		static int readCount = 0;
-		for(unsigned int n = 0; n < context->audioFrames; n++) {
-			if(readCount >= readIntervalSamples) {
-				readCount = 0;
-				if(touchSensor.isReady()) {
-					for(unsigned int i = 0; i < touchSensor.numSensors(); i++)
-						rt_printf("%5d ", touchSensor.rawData[i]);
-					rt_printf("\n");
-				}
+	static int readCount = 0;
+	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		if(readCount >= readIntervalSamples) {
+			readCount = 0;
+			if(touchSensor.isReady()) {
+				for(unsigned int i = 0; i < touchSensor.numSensors(); i++)
+					rt_printf("%5d ", touchSensor.rawData[i]);
+				rt_printf("\n");
 			}
-			readCount++;
 		}
+		readCount++;
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)
 {
-
 }
