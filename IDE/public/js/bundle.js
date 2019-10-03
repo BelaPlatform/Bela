@@ -1682,7 +1682,7 @@ function createlifrommemberdef($xml, id, emitter, type) {
   // title
   var button = $('<button></button>');
   var elementName = name + "-" + i;
-  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html()).attr('data-parent', 'documentation');
+  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html()).attr('data-parent', 'refs');
   button.appendTo(li);
 
   var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
