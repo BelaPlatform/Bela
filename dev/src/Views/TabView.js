@@ -70,6 +70,13 @@ class TabView extends View {
 
     $('[data-tab-open]').on('click', () => this.toggle(event.type, 'tab-control', $('[data-tab-for].active').data('tab-for')) );
     $('[data-tab-for]').on('click', () => this.toggle(event.type, 'tab-link', event.srcElement.dataset.tabFor) );
+
+    // For changing the pin diagram in view:
+    // On dropdown change, load the selected image into the viewer.
+    $('[data-board-select]').on('change', () => {
+      var selected = $('#activeBoard').val(); // Get the value of the selection
+      $('[data-pin-diagram]').prop('data', 'belaDiagram/diagram.html?' + selected); // Load that image
+      });
 	}
 
   toggleClasses() {
@@ -165,8 +172,11 @@ class TabView extends View {
 		else
 			return
 
+    // Load the pin diagram image according to the board string:
     $('[data-pin-diagram]').prop('data', rootDir + 'diagram.html?' + boardString);
-	}
+    // Also select that name from the dropdown menu so it matches:
+    $('[data-board-select]').val(boardString);
+  }
 
 }
 
