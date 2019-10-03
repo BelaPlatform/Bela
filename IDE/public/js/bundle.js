@@ -5171,7 +5171,7 @@ var Console = function (_EventEmitter) {
 								return _this2.emit('open-file', file, { line: err.row + 1, column: err.column - 1 });
 							});
 						} else {
-							// TODO: remove hover style that makes it appear like a link
+							span.addClass('no-hover');
 						}
 					}
 				};
