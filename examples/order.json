@@ -6,11 +6,11 @@
   "Communication",
   "Gui",
   "Sensors",
+  "Trill",
   "PureData",
   "SuperCollider",
   "Csound",
   "Capelets",
   "Instruments",
-  "terminal-only",
-  "Trill"
+  "terminal-only"
 ]
