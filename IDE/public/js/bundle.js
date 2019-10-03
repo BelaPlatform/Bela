@@ -6098,6 +6098,7 @@ module.exports=[
   "Communication",
   "Gui",
   "Sensors",
+  "Trill",
   "PureData",
   "SuperCollider",
   "Csound",

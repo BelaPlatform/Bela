@@ -114,7 +114,13 @@ class Gui
 		 **/
 		template <typename T, size_t N>
 		void sendBuffer(unsigned int bufferId, T (&buffer)[N]);
-
+		/**
+		 * Sends a single value through the web-socket to the client with a given ID.
+		 * @param bufferId Given buffer ID
+		 * @param value of arbitrary type
+		 **/
+		template <typename T>
+		void sendBuffer(unsigned int bufferId, T value);
 };
 
 template<typename T, typename A>
@@ -135,4 +141,14 @@ void Gui::sendBuffer(unsigned int bufferId, T (&buffer)[N])
 	const char* type = typeid(T).name();
 	ws_server->send(_addressData.c_str(), type);
 	ws_server->send(_addressData.c_str(), buffer, (int)(N*sizeof(T)));
+}
+
+template <typename T>
+void Gui::sendBuffer(unsigned int bufferId, T value)
+{
+	std::string bufferStr = std::to_string(bufferId);
+	ws_server->send(_addressData.c_str(), bufferStr.c_str());
+	const char* type = typeid(T).name();
+	ws_server->send(_addressData.c_str(), type);
+	ws_server->send(_addressData.c_str(), &value, (int)sizeof(T));
 }

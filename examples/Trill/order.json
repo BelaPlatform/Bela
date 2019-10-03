@@ -1,0 +1,13 @@
+[
+	"trill-print-raw",
+	"trill-visual-raw",
+	"trill-bar-led",
+	"trill-bar-multitouch-theremin",
+	"trill-bar-visual",
+	"trill-square-oscillator-pad-A",
+	"trill-square-oscillator-pad-B",
+	"trill-square-visual",
+	"trill-craft-oscillator-bank",
+	"trill-craft-sampler-pd",
+	"trill-settings-test"
+]
