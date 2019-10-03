@@ -1,20 +1,22 @@
 /**
- * \example Trill/trill-square-visual
+ * \example Trill/trill-square-gui
  *
- * Trill Square visual 
+ * Trill Square GUI
  * ===================
  * 
  * New GUI fuctionality for Bela! 
  *
- * This project showcases an example of how to communicate with the Trill Square sensor
- * using the Trill library and visualise the X-Y position ofi touch in real time via the 
- * integrated Bela p5 GUI.
+ * This project showcases an example of how to communicate with the Trill
+ * Square sensor using the Trill library and visualise the X-Y position of the
+ * touch in real time via the integrated Bela p5.js GUI.
  *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread 
- * and the  horizontal and vertical position and size stored in global variablex.
+ * The Trill sensor is scanned in an AuxiliaryTask running in parallel with the
+ * audio thread and the horizontal and vertical position and size are stored
+ * in global variablex.
  *
- * A p5 sketch is included in this example with a p5 class representation of the Trill
- * Square sensor and touch. Touch position and size is represented on the sketch.
+ * A p5.js sketch is included in this example with a p5 class representation of
+ * the Trill Square sensor and touch. Touch position and size are displayed in
+ * the sketch.
  *
  **/
 
