@@ -1,4 +1,5 @@
 #include <I2c.h>
+#include <stdint.h>
 
 class Trill : public I2c
 {
