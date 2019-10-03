@@ -1549,7 +1549,8 @@ p.project {
  *
  */
 #tab-menu li#open-tab {
-  background-color: #c9c9c9; }
+  background-color: #c9c9c9;
+  padding-left: 10px; }
 
 #tab-menu li {
   background: #c9c9c9;
@@ -1636,7 +1637,6 @@ p.project {
   font-weight: bolder;
   margin: 0;
   line-height: 50px;
-  padding-left: 10px;
   text-decoration: none; }
 
 .tab-content-area {
