@@ -475,7 +475,13 @@ input[type="range"].range-slider {
   transition: transform 0.1s ease-out;
   transition: transform 0.1s ease-out, -webkit-transform 0.1s ease-out; }
 
-.beaglert-console-ierror > span:hover, .beaglert-console-iwarning > span:hover {
+.beaglert-console-ierror > span.no-hover:hover,
+.beaglert-console-iwarning > span.no-hover:hover {
+  cursor: default;
+  text-decoration: none; }
+
+.beaglert-console-ierror > span:hover,
+.beaglert-console-iwarning > span:hover {
   cursor: pointer;
   text-decoration: underline; }
 

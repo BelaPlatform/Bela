@@ -156,18 +156,32 @@
 	transition: transform 0.1s ease-out;
 	transition: transform 0.1s ease-out, -webkit-transform 0.1s ease-out;
 }
-.beaglert-console-ierror > span:hover, .beaglert-console-iwarning > span:hover{
-	cursor: pointer;
-	text-decoration: underline;
+
+.beaglert-console-ierror,
+.beaglert-console-iwarning {
+  > span {
+    &.no-hover {
+      &:hover {
+        cursor: default;
+        text-decoration: none;
+      }
+    }
+    &:hover {
+      cursor: pointer;
+    	text-decoration: underline;
+    }
+  }
 }
 
-.beaglert-console-collapsed{
+.beaglert-console-collapsed {
   transform: scaleY(0);
 }
-.beaglert-console-faded{
+
+.beaglert-console-faded {
 	background-color: rgba(255, 255, 255, 0.2);
 }
-.beaglert-console-rejectnotification{
+
+.beaglert-console-rejectnotification {
 	background-color: rgba(255, 0, 0, 0.2);
 	cursor: pointer;
 }
