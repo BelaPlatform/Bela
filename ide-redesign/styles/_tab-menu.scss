@@ -5,6 +5,7 @@
 #tab-menu {
   li#open-tab {
     background-color: $grey-tabs;
+    padding-left: 10px;
   }
   li {
     background: $grey-tabs;
@@ -115,7 +116,7 @@
   font-weight: bolder;
   margin: 0;
 	line-height: 50px;
-  padding-left: 10px;
+  // padding-left: 10px;
   text-decoration: none;
 }
 
