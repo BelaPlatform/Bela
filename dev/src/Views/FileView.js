@@ -226,7 +226,7 @@ class FileView extends View {
 		popup.subtitle(json.popups.rename_file.text);
 
 		var form = [];
-		form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '">');
+		form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '" value="' + name + '">');
 		form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
 		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
@@ -389,7 +389,7 @@ class FileView extends View {
             .addClass('file-heading')
             .html(file_list_elements[i].name)
             .appendTo(section);
-            console.log('current sec: ' + file_list_elements[i].name);
+            // console.log('current sec: ' + file_list_elements[i].name);
 				var fileList = $('<ul></ul>')
             .addClass('sub-file-list');
 
