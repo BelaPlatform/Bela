@@ -1682,7 +1682,7 @@ function createlifrommemberdef($xml, id, emitter, type) {
   // title
   var button = $('<button></button>');
   var elementName = name + "-" + i;
-  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html());
+  button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html()).attr('data-parent', 'documentation');
   button.appendTo(li);
 
   var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
@@ -2659,7 +2659,7 @@ var FileView = function (_View) {
 
 					var section = $('<div></div>').addClass('section');
 					$('<p></p>').addClass('file-heading').html(file_list_elements[i].name).appendTo(section);
-					console.log('current sec: ' + file_list_elements[i].name);
+					// console.log('current sec: ' + file_list_elements[i].name);
 					var fileList = $('<ul></ul>').addClass('sub-file-list');
 
 					for (var j = 0; j < file_list_elements[i].length; j++) {
@@ -3349,7 +3349,7 @@ var ProjectView = function (_View) {
         var _loop = function _loop() {
           var item = _step.value;
 
-          var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name + ':');
+          var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name).attr('data-parent', 'examples');
           var parentUl = $('<ul></ul>');
           var parentLi = $('<li></li>');
           var childUl = $('<ul></ul>').addClass('example-list');
@@ -3564,7 +3564,7 @@ var ProjectView = function (_View) {
           counter++;
 
           var name = item.name;
-          var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name);
+          var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name).attr('data-parent', 'libraries');
           var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
           var libraryItem = $('<li></li>'); // Individual library dropdown
 
