@@ -7,6 +7,7 @@
 
 
 #include "I2C_MPR121.h"
+#include <iostream>
 
 I2C_MPR121::I2C_MPR121() {
 

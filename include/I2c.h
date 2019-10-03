@@ -1,18 +1,6 @@
-/*
- * I2c.h
- *
- *  Created on: Oct 14, 2013
- *      Author: Victor Zappi
- */
+#pragma once
 
-#ifndef I2C_H_
-#define I2C_H_
-
-#include <iostream>
-#include <iomanip>
-#include <string>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
@@ -29,7 +17,6 @@ typedef unsigned char i2c_char_t;
 typedef char i2c_char_t;
 #endif
 #include <sys/ioctl.h>
-#include <stropts.h>
 
 #define MAX_BUF_NAME 64
 
@@ -90,6 +77,3 @@ inline int I2c::closeI2C()
 
 
 inline I2c::~I2c(){}
-
-
-#endif /* I2C_H_ */
