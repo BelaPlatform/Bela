@@ -1530,6 +1530,16 @@ p.project {
   font-size: .9em;
   line-height: 1.1em; }
 
+.tab-info > .panel p {
+  font-family: poppins-light;
+  font-size: .9em;
+  line-height: 1.1em;
+  -webkit-margin-before: 0;
+          margin-block-start: 0; }
+
+.tab-info > .panel button.feedback {
+  margin-bottom: 1.5em; }
+
 .tab-info button.feedback {
   background-color: rgba(0, 190, 164, 0.7);
   border: 1px solid #00bea4; }

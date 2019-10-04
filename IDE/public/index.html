@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title data-title>Bela IDE</title>
+  <head>
+    <meta charset="utf-8">
+    <title data-title>Bela IDE</title>
     <!-- <link rel="stylesheet" type="text/css" href="stylesheet.css?v=1" /> -->
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
-		<link rel="stylesheet" type="text/css" href="/css/goldenlayout-base.css" />
-		<link rel="stylesheet" type="text/css" href="/css/goldenlayout-light-theme.css" />
+    <link rel="stylesheet" type="text/css" href="/css/goldenlayout-base.css" />
+    <link rel="stylesheet" type="text/css" href="/css/goldenlayout-light-theme.css" />
     <script src="js/jquery.js"></script>
     <script src="js/dropdown.js" data-script-load></script>
-	</head>
+  </head>
 
-	<body>
+  <body>
 
     <div class="upper" data-upper>
 
       <div class="file-status">
-				<span class="project">Project: <span class="current" data-current-project>None</span></span>
-				<span class="file">File: <span class="current" data-current-file>None</span></span>
+        <span class="project">Project: <span class="current" data-current-project>None</span></span>
+        <span class="file">File: <span class="current" data-current-file>None</span></span>
         <span><span class="status" data-current-status-title></span> <span class="current" data-current-status></span></span>
-			</div>
+      </div>
 
       <div class="toolbar" id="toolbar" data-toolbar>
 
@@ -40,30 +40,30 @@
         <div id="control-text-1" class="tool-text st-st" data-toolbar-controltext1></div>
 
         <div class="toolbar-functions">
-					<span class="scope-button toolBar" data-toolbar-scope data="Launch scope"></span>
+          <span class="scope-button toolBar" data-toolbar-scope data="Launch scope"></span>
           <span class="gui-button toolBar" data-toolbar-gui data="Launch GUI"></span>
-					<span class="console-button toolBar" data-toolbar-console data="Clear console" data-func="clearConsole"></span>
-				</div>
+          <span class="console-button toolBar" data-toolbar-console data="Clear console" data-func="clearConsole"></span>
+        </div>
         <div id="control-text-2" class="tool-text st-st" data-toolbar-controltext2></div>
-				<!-- <div class="tool-text other"></div> -->
+        <!-- <div class="tool-text other"></div> -->
         <!-- <span id="control-text-3" class="control-text tool-text" data-toolbar-controltext3></span> -->
-				<!-- <div class="system-status-text bela">Bela: --%</div> -->
-				<div class="system-status-text cpu" data-toolbar-bela-cpu>CPU: --%</div>
-				<div class="system-status-text msw" data-toolbar-cpu-msw>MSW: --</div>
-				<div class="syntax-status" data-toolbar-status></div>
-			</div>
+        <!-- <div class="system-status-text bela">Bela: --%</div> -->
+        <div class="system-status-text cpu" data-toolbar-bela-cpu>CPU: --%</div>
+        <div class="system-status-text msw" data-toolbar-cpu-msw>MSW: --</div>
+        <div class="syntax-status" data-toolbar-status></div>
+      </div>
 
       <!-- media divs -->
 
       <div id="img-display-parent" data-img-display-parent>
-				<img id="img-display" data-img-display />
-			</div>
-			<div id="pd-svg-parent" data-pd-svg-parent>
-				<div id="pd-svg" data-pd-svg></div>
-			</div>
-			<div id="audio-parent" data-audio-parent>
-				<audio id="audio" data-audio controls></audio>
-			</div>
+        <img id="img-display" data-img-display />
+      </div>
+      <div id="pd-svg-parent" data-pd-svg-parent>
+        <div id="pd-svg" data-pd-svg></div>
+      </div>
+      <div id="audio-parent" data-audio-parent>
+        <audio id="audio" data-audio controls></audio>
+      </div>
 
       <pre id="editor" class="editor" data-editor></pre>
 
@@ -75,26 +75,23 @@
             <li id="open-tab" data-tab-open>
               <span><a href="#" class="tab-button">+</a></span>
             </li>
-						<li class="explorer" data-tab-for="explorer" title="File explorer">
+            <li class="explorer" data-tab-for="explorer" title="File explorer">
               <a href="#" rel="expl" class="tab-button"></a>
             </li>
-						<li class="examples" data-tab-for="examples" title="Examples">
+            <li class="examples" data-tab-for="examples" title="Examples">
               <a href="#" rel="examp" class="tab-button"></a>
             </li>
-						<li class="settings" data-tab-for="settings" title="Settings">
+            <li class="settings" data-tab-for="settings" title="Settings">
               <a href="#" rel="set" class="tab-button"></a>
             </li>
-						<li class="pins" data-tab-for="pins" title="Pin diagram">
+            <li class="pins" data-tab-for="pins" title="Pin diagram">
               <a href="#" rel="pins" class="tab-button"></a>
             </li>
-						<li class="refs" data-tab-for="refs" title="Documentation">
+            <li class="refs" data-tab-for="refs" title="Documentation">
               <a href="#" rel="refs" class="tab-button"></a>
             </li>
             <li class="libraries" data-tab-for="libraries" title="Libraries">
               <a href="#" rel="libs" class="tab-button"></a>
-            </li>
-            <li class="feedback" data-tab-for="feedback" title="Feedback">
-              <a href="#" rel="feedback" class="tab-button"></a>
             </li>
           </ul>
         </div>
@@ -108,14 +105,14 @@
               </div>
 
               <span class="dropdown" data-projects>
-							  <button class="dropbtn" data-dropdown-for="project">Your projects</button>
+                <button class="dropbtn" data-dropdown-for="project">Your projects</button>
                 <div class="dropdown-content" data-dropdown="project">
                   <ul class="projectManager" id="projects" data-projects-select data-func="openProject">
                   </ul>
                   <!-- <select class="projectManager" id="projects" data-projects-select data-func="openProject" multiple>
-  						    </select> -->
+                  </select> -->
                 </div>
-							</span>
+              </span>
               <button id="new" class="create-project projectManager" data-func="newProject">New Project</button>
 
               <div class="open-project">
@@ -470,64 +467,77 @@
               <button class="accordion" data-accordion-for="ide-settings" data-parent="settings">IDE Settings</button>
               <div class="panel" data-accordion="ide-settings">
 
-								<table class="tabTable choice">
+                <table class="tabTable choice">
 
-									<tr>
-										<td class="left-choice">Autocomplete:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">Autocomplete:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="liveAutocompletion" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="liveAutocompletion" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-									<tr>
-										<td class="left-choice">Syntax Checking:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">Syntax Checking:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="liveSyntaxChecking" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="liveSyntaxChecking" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-									<tr>
-										<td class="left-choice">Verbose build errors:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">Verbose build errors:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="verboseErrors" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="verboseErrors" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-									<tr>
-										<td class="left-choice">CPU monitoring:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">CPU monitoring:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="cpuMonitoring" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="cpuMonitoring" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-									<tr>
-										<td class="left-choice">Xenomai stats:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">Xenomai stats:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="cpuMonitoringVerbose" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="cpuMonitoringVerbose" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-									<tr>
-										<td class="left-choice">Never delete console logs:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">Never delete console logs:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="consoleDelete" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="consoleDelete" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-									<tr>
-										<td class="left-choice">View hidden files:</td>
-										<td class="right-choice">
+                  <tr>
+                    <td class="left-choice">View hidden files:</td>
+                    <td class="right-choice">
                       <input type="checkbox" id="viewHiddenFiles" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="viewHiddenFiles" value="1" >
                     </td>
-									</tr>
+                  </tr>
 
-								</table>
+                </table>
                 <button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">Restore default IDE settings</button>
               </div>
 
-							<button class="accordion" data-accordion-for="other-settings" data-parent="settings">Other system functions</button>
+              <button class="accordion" data-accordion-for="feedback-panel" data-parent="settings">Feedback</button>
+              <div class="panel" data-accordion="feedback-panel">
+                <p>We listen to and rely on your feedback to make this IDE the best it can be. We would love to hear what you think - these forms take only a few mintues, and require an internet conneciton.</p>
+              
+                <p>Please fill out our general feedback form to share your thoughts and experiences with the new IDE:</p>
+                
+                <button class="general feedback"><a href="https://forms.gle/hHkLMTUaCELPD8bR7" target="_blank">Go to the General Feedback form</a></button>
+
+                <p>Found a bug? Take some screenshots, and report it here:</p>
+                <button class="bug feedback"><a href="https://forms.gle/wEpF7Tp5ZBV2Q3bY7" target="_blank">Go to the Bug Report form</a></button>
+
+              </div>
+
+              <button class="accordion" data-accordion-for="other-settings" data-parent="settings">Other system functions</button>
               <div class="panel" data-accordion="other-settings">
-                <button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button>
+                <button class="settingsManager" data-func="shutdownBBB">Shutdown Bela</button>
                 <br />
                 <a href="download?all=all" download><button class="settingsManager">Download All Projects</button></a>
                 <br />
@@ -571,30 +581,30 @@
               <div class="title-container">
                 <h1>Documentation<hr /></h1>
               </div>
-							<a href="documentation" target="_blank">
+              <a href="documentation" target="_blank">
                 <button class="doc-button">Launch full documentation</button>
               </a>
-							<div id="docsParent" class="sections">
+              <div id="docsParent" class="sections">
 
                   <button class="accordion" data-parent="refs" data-accordion-for="bela-context">The Bela Context</button>
                   <div class="panel" data-accordion="bela-context">
-  									<ul class="subsections" data-docs-context>
-  									</ul>
+                    <ul class="subsections" data-docs-context>
+                    </ul>
                   </div>
 
                   <button class="accordion" data-parent="refs" data-accordion-for="api">The API</button>
                   <div class="panel" data-accordion="api">
-  									<ul class="subsections" data-docs-api>
-  									</ul>
+                    <ul class="subsections" data-docs-api>
+                    </ul>
                   </div>
 
                   <button class="accordion" data-parent="refs" data-accordion-for="utilities">Utilities</button>
                   <div class="panel" data-accordion="utilities">
-  									<ul class="subsections" data-docs-utility>
-  									</ul>
+                    <ul class="subsections" data-docs-utility>
+                    </ul>
                   </div>
 
-							</div>
+              </div>
             </div>
 
             <div class="tab-info" data-tab="libraries">
@@ -602,23 +612,6 @@
                 <h1>Libraries<hr /></h1>
               </div>
               <ul class="libraries-list-parent" data-libraries-list data-func="resources"></ul>
-            </div>
-
-            <div class="tab-info" data-tab="feedback">
-              <div class="title-container">
-                <h1>Feedback<hr /></h1>
-              </div>
-
-              <p>Thank you for using the early release of the Bela IDE!</p>
-              <p>We listen to and rely on your feedback to make this IDE the best it can be. We would love to hear what you think - these forms take only a few mintues, and require an internet conneciton.</p>
-              <p>Please fill out our general feedback form to share your thoughts and experiences with the new IDE:</p>
-              <button class="general feedback"><a href="https://forms.gle/y45V57FxHNRMyQci8" target="_blank">Go to the General Feedback form</a></button>
-
-              <p>Found a bug? Take some screenshots, and report it here:</p>
-              <button class="bug feedback"><a href="https://forms.gle/w5HAajdaJuVg4UZM6" target="_blank">Go to the Bug Report form</a></button>
-
-              <p>As always, thank you for being part of the global Bela community. We hope you enjoy this new IDE as much as we enjoy creating it. :)</p>
-
             </div>
           </section>
         </div>
@@ -638,34 +631,34 @@
       </form>
     </div>
 
-		<div id="overlay" data-overlay>
-		</div>
+    <div id="overlay" data-overlay>
+    </div>
 
-		<div id="popup" data-popup>
-			<div id="popup-content" data-popup-content>
-				<h1></h1>
+    <div id="popup" data-popup>
+      <div id="popup-content" data-popup-content>
+        <h1></h1>
         <h3></h3>
-				<p></p>
+        <p></p>
         <code></code>
-				<form>
+        <form>
         </form>
-			</div>
-		</div>
+      </div>
+    </div>
 
     <div id="popup-nointeraction" data-popup-nointeraction>
     </div>
 
-		<script src="js/ace/ace.js"></script>
-		<script src="js/ace/ext-language_tools.js"></script>
-		<script src="socket.io/socket.io.js"></script>
-		<script src="js/keypress.js"></script>
-		<script src="js/pd-fileutils.js"></script>
-		<script src="js/goldenlayout.js"></script>
-		<script src="js/polyfill.js"></script>
-		<script src="js/clipboard.min.js"></script>
-		<script src="js/bundle.js"></script>
+    <script src="js/ace/ace.js"></script>
+    <script src="js/ace/ext-language_tools.js"></script>
+    <script src="socket.io/socket.io.js"></script>
+    <script src="js/keypress.js"></script>
+    <script src="js/pd-fileutils.js"></script>
+    <script src="js/goldenlayout.js"></script>
+    <script src="js/polyfill.js"></script>
+    <script src="js/clipboard.min.js"></script>
+    <script src="js/bundle.js"></script>
     <script src="js/interface.js"></script>
 
-	</body>
+  </body>
 
 </html>
