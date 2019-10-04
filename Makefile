@@ -608,7 +608,7 @@ stop: stopstartup stoprunning
 
 ifeq ($(DEBIAN_VERSION),stretch)
 connect_startup: ## Connects to Bela program running at startup
-	$(AT) journalctl -fu bela_startup
+	$(AT) journalctl -fu bela_startup -n 30
 endif
 
 connect: ## Connects to the running Bela program (if any), can detach with ctrl-a ctrl-d.
