@@ -251,6 +251,17 @@ p.project {
         font-size: .9em;
         line-height: 1.1em;
       }
+  >.panel {
+    p {
+        font-family: poppins-light;
+        font-size: .9em;
+        line-height: 1.1em;
+        margin-block-start: 0;
+    }
+    button.feedback {
+      margin-bottom: 1.5em;
+    }
+  }
   button.feedback {
     background-color: rgba($teal-main, 0.7);
     border: 1px solid $teal-main;
