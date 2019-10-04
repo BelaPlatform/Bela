@@ -33,7 +33,7 @@ const char* remoteIp = "127.0.0.1";
 // parse messages received by the OSC receiver
 // msg is Message class of oscpkt: http://gruntthepeon.free.fr/oscpkt/
 bool handshakeReceived;
-void on_receive(oscpkt::Message* msg)
+void on_receive(oscpkt::Message* msg, void* arg)
 {
 	if(msg->match("/osc-setup-reply"))
 		handshakeReceived = true;

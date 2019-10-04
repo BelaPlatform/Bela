@@ -24,7 +24,7 @@ class UdpServer;
 class OscReceiver{
     public:
         OscReceiver();
-        OscReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive);
+        OscReceiver(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg = nullptr);
         ~OscReceiver();
 	
         /**
@@ -34,9 +34,10 @@ class OscReceiver{
 		 *
 		 * @param port the port number used to receive OSC messages
 		 * @param onreceive the callback function which recevied OSC messages are passed to
+		 * @param callbackArg an argument to pass to the callback
 		 *
 		 */
-        void setup(int port, std::function<void(oscpkt::Message* msg)> on_receive);
+        void setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg = nullptr);
         
     private:
     	bool lShouldStop = false;
@@ -52,5 +53,6 @@ class OscReceiver{
         std::unique_ptr<oscpkt::PacketReader> pr;
         char* inBuffer[OSCRECEIVER_BUFFERSIZE];
         
-        std::function<void(oscpkt::Message* msg)> on_receive;
+        std::function<void(oscpkt::Message* msg, void* arg)> on_receive;
+        void* onReceiveArg = nullptr;
 };

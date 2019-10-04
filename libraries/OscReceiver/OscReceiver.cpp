@@ -4,8 +4,8 @@
 #include <libraries/UdpServer/UdpServer.h>
 
 OscReceiver::OscReceiver(){}
-OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg)> on_receive){
-	setup(port, on_receive);
+OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg){
+	setup(port, on_receive, callbackArg);
 }
 OscReceiver::~OscReceiver(){
 	lShouldStop = true;
@@ -25,8 +25,9 @@ void OscReceiver::receive_task_func(){
 	}
 }
 
-void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg)> _on_receive){
+void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> _on_receive, void* callbackArg){
     
+    onReceiveArg = callbackArg;
     on_receive = _on_receive;
     pr = std::unique_ptr<oscpkt::PacketReader>(new oscpkt::PacketReader());
     
@@ -58,7 +59,7 @@ int OscReceiver::waitForMessage(int timeout){
         	fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i", pr->getErr());
         	return -1;
         }
-		on_receive(pr->popMessage());
+		on_receive(pr->popMessage(), onReceiveArg);
 	}
 	return ret;
 }
