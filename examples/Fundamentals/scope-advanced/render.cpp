@@ -19,10 +19,7 @@ float avg;
 
 bool setup(BelaContext *context, void *userData)
 {
-	scope.setup(NUM_OSC+1, context->audioSampleRate, 2);
-	scope.setSlider(0, -10.0f, 10.0f, 0.1f, 1.0f, "Frequency Variation");
-	scope.setSlider(1, 0.0f, 1.0f, 0.01f, 1.0f, "Amplitude Variation");
-	scope.setTrigger(1, 0, 0, 0.0f);
+	scope.setup(NUM_OSC+1, context->audioSampleRate);
 	
 	srand(time(NULL));
 	for (int i=0; i<NUM_OSC; i++){
@@ -41,15 +38,11 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	
-	if (scope.sliderChanged(0)){
-		for (int i=0; i<NUM_OSC; i++){
-			gFrequencies[i] = FREQ + deltaFreqs[i] * scope.getSliderValue(0);
-		}
+	for (int i=0; i<NUM_OSC; i++){
+		gFrequencies[i] = FREQ + deltaFreqs[i] * 0.1;
 	}
-	if (scope.sliderChanged(1)){
-		for (int i=0; i<NUM_OSC; i++){
-			gAmplitudes[i] = 1.0f + deltaAmps[i] * scope.getSliderValue(1);
-		}
+	for (int i=0; i<NUM_OSC; i++){
+		gAmplitudes[i] = 1.0f + deltaAmps[i] * 0.1;
 	}
 
 	for (int n=0; n<context->audioFrames; n++){
