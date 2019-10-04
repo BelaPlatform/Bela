@@ -135,13 +135,13 @@
               </div>
 
 
-              <button class="accordion active" data-accordion-for="project-files">Project contents</button>
+              <button class="accordion active" data-accordion-for="project-files" data-parent="explorer">Project contents</button>
               <div class="panel show" data-accordion="project-files">
                 <div class="file-list" data-file-list>
                 </div>
               </div>
 
-              <button class="accordion" data-accordion-for="git">Git manager</button>
+              <button class="accordion" data-accordion-for="git" data-parent="explorer">Git manager</button>
               <div class="panel" data-accordion="git">
 
                 <div class="git-no-repo" data-git-no-repo>
@@ -211,7 +211,7 @@
                 </td>
               </tr>
             </table>
-              <button class="accordion active" data-accordion-for="project-settings">Project Settings</button>
+              <button class="accordion active" data-accordion-for="project-settings" data-parent="settings">Project Settings</button>
 
               <div class="panel show" data-accordion="project-settings">
                 <table class="tabTable choice">
@@ -467,7 +467,7 @@
                 </table>
               </div>
 
-              <button class="accordion" data-accordion-for="ide-settings">IDE Settings</button>
+              <button class="accordion" data-accordion-for="ide-settings" data-parent="settings">IDE Settings</button>
               <div class="panel" data-accordion="ide-settings">
 
 								<table class="tabTable choice">
@@ -525,7 +525,7 @@
                 <button class="settingsManager settings-button" data-func="restoreDefaultIDESettings">Restore default IDE settings</button>
               </div>
 
-							<button class="accordion" data-accordion-for="other-settings">Other system functions</button>
+							<button class="accordion" data-accordion-for="other-settings" data-parent="settings">Other system functions</button>
               <div class="panel" data-accordion="other-settings">
                 <button class="settingsManager" data-func="shutdownBBB">Shutdown Board</button>
                 <br />
