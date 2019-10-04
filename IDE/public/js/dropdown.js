@@ -18,12 +18,10 @@ var dropdowns = function(){
   // accordians
   $('[data-accordion-for]').on('click', function() {
     var that = $(this);
-    // console.log(that);
     var parent = $('[data-tab=' + $(this)[0].dataset.parent + ']');
     var source = $(this).data('accordion-for');
     $(parent).find('[data-accordion]').each(function() {
       var target = $(this).data('accordion');
-      console.log(target);
       if (target === source) {
         if (that.hasClass('active')) {
           that.removeClass('active');
