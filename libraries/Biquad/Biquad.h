@@ -19,15 +19,6 @@
 #ifndef Biquad_h
 #define Biquad_h
 
-enum {
-    bq_type_lowpass = 0,
-    bq_type_highpass,
-    bq_type_bandpass,
-    bq_type_notch,
-    bq_type_peak,
-    bq_type_lowshelf,
-    bq_type_highshelf
-};
 
 class Biquad {
 public:
@@ -46,8 +37,19 @@ public:
     double getPeakGain();
 
     double getStartingQ();
-	double getStartingFc();
-	double getStartingPeakGain();
+    double getStartingFc();
+    double getStartingPeakGain();
+
+    enum filter_type 
+    {
+	    lowpass = 0,
+	    highpass,
+	    bandpass,
+	    notch,
+	    peak,
+	    lowshelf,
+	    highshelf
+    };
 
 protected:
     void calcBiquad(void);

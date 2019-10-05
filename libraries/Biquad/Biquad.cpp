@@ -21,7 +21,7 @@
 #include <iostream>
 
 Biquad::Biquad() {
-    type = bq_type_lowpass;
+    type = lowpass;
     a0 = 1.0;
     a1 = a2 = b1 = b2 = 0.0;
     Fc = 0.50;
@@ -73,7 +73,7 @@ void Biquad::calcBiquad(void) {
     double V = pow(10, fabs(peakGain) / 20.0);
     double K = tan(M_PI * Fc);
     switch (this->type) {
-        case bq_type_lowpass:
+        case lowpass:
             norm = 1 / (1 + K / Q + K * K);
             a0 = K * K * norm;
             a1 = 2 * a0;
@@ -82,7 +82,7 @@ void Biquad::calcBiquad(void) {
             b2 = (1 - K / Q + K * K) * norm;
             break;
             
-        case bq_type_highpass:
+        case highpass:
             norm = 1 / (1 + K / Q + K * K);
             a0 = 1 * norm;
             a1 = -2 * a0;
@@ -91,7 +91,7 @@ void Biquad::calcBiquad(void) {
             b2 = (1 - K / Q + K * K) * norm;
             break;
             
-        case bq_type_bandpass:
+        case bandpass:
             norm = 1 / (1 + K / Q + K * K);
             a0 = K / Q * norm;
             a1 = 0;
@@ -100,7 +100,7 @@ void Biquad::calcBiquad(void) {
             b2 = (1 - K / Q + K * K) * norm;
             break;
             
-        case bq_type_notch:
+        case notch:
             norm = 1 / (1 + K / Q + K * K);
             a0 = (1 + K * K) * norm;
             a1 = 2 * (K * K - 1) * norm;
@@ -109,7 +109,7 @@ void Biquad::calcBiquad(void) {
             b2 = (1 - K / Q + K * K) * norm;
             break;
             
-        case bq_type_peak:
+        case peak:
             if (peakGain >= 0) {    // boost
                 norm = 1 / (1 + 1/Q * K + K * K);
                 a0 = (1 + V/Q * K + K * K) * norm;
@@ -127,7 +127,7 @@ void Biquad::calcBiquad(void) {
                 b2 = (1 - V/Q * K + K * K) * norm;
             }
             break;
-        case bq_type_lowshelf:
+        case lowshelf:
             if (peakGain >= 0) {    // boost
                 norm = 1 / (1 + sqrt(2) * K + K * K);
                 a0 = (1 + sqrt(2*V) * K + V * K * K) * norm;
@@ -145,7 +145,7 @@ void Biquad::calcBiquad(void) {
                 b2 = (1 - sqrt(2*V) * K + V * K * K) * norm;
             }
             break;
-        case bq_type_highshelf:
+        case highshelf:
             if (peakGain >= 0) {    // boost
                 norm = 1 / (1 + sqrt(2) * K + K * K);
                 a0 = (V + sqrt(2*V) * K + K * K) * norm;
