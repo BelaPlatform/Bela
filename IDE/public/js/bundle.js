@@ -3164,6 +3164,34 @@ var ProjectView = function (_View) {
       this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
     }
   }, {
+    key: 'onClickOpenExample',
+    value: function onClickOpenExample(e) {
+      var _this3 = this;
+
+      var link = e.target.dataset.exampleLink;
+      if (this.exampleChanged) {
+        this.exampleChanged = false;
+        popup.exampleChanged(function (link) {
+          _this3.emit('message', 'project-event', {
+            func: 'openExample',
+            currentProject: link
+          });
+          $('.selectedExample').removeClass('selectedExample');
+          $(e.target).addClass('selectedExample');
+        }, link, 0, function () {
+          return _this3.exampleChanged = true;
+        });
+        return;
+      }
+
+      this.emit('message', 'project-event', {
+        func: 'openExample',
+        currentProject: link
+      });
+      $('.selectedExample').removeClass('selectedExample');
+      $(e.target).addClass('selectedExample');
+    }
+  }, {
     key: 'buttonClicked',
     value: function buttonClicked($element, e) {
       var func = $element.data().func;
@@ -3174,12 +3202,12 @@ var ProjectView = function (_View) {
   }, {
     key: 'newProject',
     value: function newProject(func) {
-      var _this3 = this;
+      var _this4 = this;
 
       if (this.exampleChanged) {
         this.exampleChanged = false;
         popup.exampleChanged(this.newProject.bind(this), func, 500, function () {
-          return _this3.exampleChanged = true;
+          return _this4.exampleChanged = true;
         });
         return;
       }
@@ -3212,7 +3240,7 @@ var ProjectView = function (_View) {
 
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
-        _this3.emit('message', 'project-event', {
+        _this4.emit('message', 'project-event', {
           func: func,
           newProject: sanitise(popup.find('input[type=text]').val()),
           projectType: popup.find('input[type=radio]:checked').data('type')
@@ -3228,7 +3256,7 @@ var ProjectView = function (_View) {
   }, {
     key: 'saveAs',
     value: function saveAs(func) {
-      var _this4 = this;
+      var _this5 = this;
 
       // build the popup content
       popup.title(json.popups.save_as.title);
@@ -3242,7 +3270,7 @@ var ProjectView = function (_View) {
 
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
-        _this4.emit('message', 'project-event', { func: func, newProject: sanitise(popup.find('input[type=text]').val()) });
+        _this5.emit('message', 'project-event', { func: func, newProject: sanitise(popup.find('input[type=text]').val()) });
         popup.hide();
       });
 
@@ -3253,7 +3281,7 @@ var ProjectView = function (_View) {
   }, {
     key: 'deleteProject',
     value: function deleteProject(e) {
-      var _this5 = this;
+      var _this6 = this;
 
       // build the popup content
       // Get the project name text from the object at the top of the editor
@@ -3269,7 +3297,7 @@ var ProjectView = function (_View) {
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
         $('[data-projects-select]').html('');
-        _this5.emit('message', 'project-event', { func: 'deleteProject' });
+        _this6.emit('message', 'project-event', { func: 'deleteProject' });
         popup.hide();
       });
 
@@ -3313,7 +3341,7 @@ var ProjectView = function (_View) {
   }, {
     key: '_exampleList',
     value: function _exampleList(examplesDir) {
-      var _this6 = this;
+      var _this7 = this;
 
       var $examples = $('[data-examples]');
       var oldListOrder = examplesDir;
@@ -3385,7 +3413,7 @@ var ProjectView = function (_View) {
           oldChildOrder = [];
           correctedChildOrder = [];
           childOrphans = [];
-          that = _this6;
+          that = _this7;
           var _iteratorNormalCompletion3 = true;
           var _didIteratorError3 = false;
           var _iteratorError3 = undefined;
@@ -3432,30 +3460,7 @@ var ProjectView = function (_View) {
                       child = childOrder[i].name;
                       var link = item.name + '/' + child;
                       var childLi = $('<li></li>');
-                      childLi.html(child).attr('data-example-link', link).on('click', function (e) {
-                        link = e.target.dataset.exampleLink;
-                        if (that.exampleChanged) {
-                          that.exampleChanged = false;
-                          popup.exampleChanged(function (link) {
-                            that.emit('message', 'project-event', {
-                              func: 'openExample',
-                              currentProject: link
-                            });
-                            $('.selectedExample').removeClass('selectedExample');
-                            $(e.target).addClass('selectedExample');
-                          }, link, 0, function () {
-                            return that.exampleChanged = true;
-                          });
-                          return;
-                        }
-
-                        that.emit('message', 'project-event', {
-                          func: 'openExample',
-                          currentProject: link
-                        });
-                        $('.selectedExample').removeClass('selectedExample');
-                        $(e.target).addClass('selectedExample');
-                      });
+                      childLi.html(child).attr('data-example-link', link).on('click', that.onClickOpenExample.bind(that));
                       childLi.appendTo(childUl);
                     }
 
@@ -3526,6 +3531,7 @@ var ProjectView = function (_View) {
   }, {
     key: '_libraryList',
     value: function _libraryList(librariesDir) {
+      var _this8 = this;
 
       var $libraries = $('[data-libraries-list]');
       var counter = 0;
@@ -3550,6 +3556,10 @@ var ProjectView = function (_View) {
           #include <example>                                // This line is includeLine
           (small) Copy and paste in the header of render.cpp// This line is includeInstructions
           // End includeContent
+           Examples:
+          ------------------------------
+          > one
+          > two
            Files:
           ------------------------------
           > one
@@ -3571,12 +3581,14 @@ var ProjectView = function (_View) {
           var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
           var libDesc = $('<p></p>').addClass('library-desc'); // Div to contain lib descriotion
           var libVer = $('<p></p>').addClass('library-ver');
+
           // INCLUDES:
           var includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
           var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
           var includeCopy = $('<button></button>').addClass('include-copy');
 
+          // INFO:
           var infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
 
@@ -3586,12 +3598,20 @@ var ProjectView = function (_View) {
             }
           });
 
-          // FILES:
+          // EXAMPLES:
 
+          var that = _this8;
+          var examplesParent = $('<div></div>');
+          var examplesTitle = $('<button></button>').addClass('accordion-sub').text('Examples').attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var examplesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'example-list-' + counter);
+          var examplesList = $('<ul></ul>').addClass('libraries-list');
+
+          // FILES:
           var filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
 
           var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
           var filesList = $('<ul></ul>').addClass('libraries-list');
+
           var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
           var _iteratorNormalCompletion5 = true;
           var _didIteratorError5 = false;
@@ -3630,18 +3650,47 @@ var ProjectView = function (_View) {
                       for (var _iterator6 = transformText[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
                         var line = _step6.value;
 
+                        line = line.trim();
                         if (line.length > 0) {
                           var splitKeyVal = line.split('=');
                           var key = splitKeyVal[0];
                           if (key == 'include') {
                             includeArr.push(splitKeyVal[1]);
+                          } else if ('examples' === key) {
+                            var _iteratorNormalCompletion8 = true;
+                            var _didIteratorError8 = false;
+                            var _iteratorError8 = undefined;
+
+                            try {
+                              for (var _iterator8 = splitKeyVal[1].split(',')[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+                                var example = _step8.value;
+
+                                example = example.trim();
+                                var exampleLi = $('<li></li>');
+                                exampleLi.html(example).attr('data-example-link', example).on('click', that.onClickOpenExample.bind(that));
+                                exampleLi.appendTo(examplesList);
+                              }
+                            } catch (err) {
+                              _didIteratorError8 = true;
+                              _iteratorError8 = err;
+                            } finally {
+                              try {
+                                if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                                  _iterator8.return();
+                                }
+                              } finally {
+                                if (_didIteratorError8) {
+                                  throw _iteratorError8;
+                                }
+                              }
+                            }
                           } else {
                             object[key] = splitKeyVal[1];
                           }
                         }
                       }
+
                       // Get the #include line and add to includeContent
-                      // libDesc.html('Version: ').html(object.version);
                     } catch (err) {
                       _didIteratorError6 = true;
                       _iteratorError6 = err;
@@ -3660,8 +3709,6 @@ var ProjectView = function (_View) {
                     libDesc.html(object.description);
 
                     // FOR LIBRARY INFO
-
-
                     if (object.version != null) {
                       var infoContent = $('<p></p>');
                       infoContent.append('Version: ' + object.version);
@@ -3698,6 +3745,11 @@ var ProjectView = function (_View) {
                       includeLines.appendTo(includeContent);
                     } else {
                       var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
+                      if (examplesList.find('li').length > 0) {
+                        examplesTitle.appendTo(examplesParent);
+                        examplesList.appendTo(examplesContainer);
+                        examplesContainer.appendTo(examplesParent);
+                      }
                       _includeText2.appendTo(includeLines);
                       includeLines.appendTo(includeContent);
                       includeCopy.appendTo(includeContent);
@@ -3745,8 +3797,8 @@ var ProjectView = function (_View) {
 
               if (_ret4 === 'continue') continue;
             }
-            // FOR LIBRARY INFO
 
+            // FOR LIBRARY INFO
             // per section
             // item.name -> parentDiv $examples
           } catch (err) {
@@ -3771,7 +3823,8 @@ var ProjectView = function (_View) {
           // childLi -> childUl -> parentDiv -> $examples
           includeTitle.appendTo(libraryPanel);
           includeContent.appendTo(libraryPanel);
-          // includeContainer.appendTo(libraryPanel);
+
+          examplesParent.appendTo(libraryPanel);
 
           filesTitle.appendTo(libraryPanel); // Include the Files: section title
           filesList.appendTo(filesContainer);
@@ -3852,13 +3905,13 @@ var ProjectView = function (_View) {
     key: 'subDirs',
     value: function subDirs(dir) {
       var ul = $('<ul></ul>').html(dir.name + ':');
-      var _iteratorNormalCompletion8 = true;
-      var _didIteratorError8 = false;
-      var _iteratorError8 = undefined;
+      var _iteratorNormalCompletion9 = true;
+      var _didIteratorError9 = false;
+      var _iteratorError9 = undefined;
 
       try {
-        for (var _iterator8 = dir.children[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-          var _child = _step8.value;
+        for (var _iterator9 = dir.children[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+          var _child = _step9.value;
 
           if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
             _child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
@@ -3866,16 +3919,16 @@ var ProjectView = function (_View) {
           }
         }
       } catch (err) {
-        _didIteratorError8 = true;
-        _iteratorError8 = err;
+        _didIteratorError9 = true;
+        _iteratorError9 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion8 && _iterator8.return) {
-            _iterator8.return();
+          if (!_iteratorNormalCompletion9 && _iterator9.return) {
+            _iterator9.return();
           }
         } finally {
-          if (_didIteratorError8) {
-            throw _iteratorError8;
+          if (_didIteratorError9) {
+            throw _iteratorError9;
           }
         }
       }
