@@ -11,9 +11,11 @@ function ChannelConfig(){
 var channelConfig = [new ChannelConfig()];
 var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xffff00', '0x00ffff', '0xff00ff'];
 
-var tdGainVal = 1, tdOffsetVal = 0, tdGainMin = 0, tdGainMax = 10, tdOffsetMin = -5, tdOffsetMax = 5;
-var FFTNGainVal = 1, FFTNOffsetVal = -0.005, FFTNGainMin = 0, FFTNGainMax = 10, FFTNOffsetMin = -1, FFTNOffsetMax = 1;
-var FFTDGainVal = 70, FFTDOffsetVal = 69, FFTDGainMin = 0, FFTDGainMax = 1000, FFTDOffsetMin = 0, FFTDOffsetMax = 100;
+var tdGainVal = 1, tdOffsetVal = 0, tdGainMin = 0.5, tdGainMax = 2, tdOffsetMin = -5, tdOffsetMax = 5;
+var FFTNGainVal = 1, FFTNOffsetVal = -0.005, FFTNGainMin = 0.5, FFTNGainMax = 2, FFTNOffsetMin = -1, FFTNOffsetMax = 1;
+var FFTDGainVal = 1/70, FFTDOffsetVal = 69, FFTDGainMin = 0.00001, FFTDGainMax = 1.5, FFTDOffsetMin = 0, FFTDOffsetMax = 100;
+const sliderPowExponent = Math.log2(100.1);
+const yAmplitudeMin = 0.0001;
 
 class ChannelView extends View{
 
@@ -27,14 +29,25 @@ class ChannelView extends View{
     var channel = $element.data().channel;
     var value = (key === 'color') ? $element.val().replace('#', '0x') : parseFloat($element.val());
     if (!(key === 'color') && isNaN(value)) return;
-    if (key === 'yAmplitude' && value == 0) value = 0.001; // prevent amplitude hitting zero
+	if("yAmplitude" === key || "yAmplitudeSlider" === key) {
+		if("yAmplitudeSlider" === key) {
+			// remap the slider position to a log scale
+			value = Math.pow(value, sliderPowExponent);
+			key = "yAmplitude";
+		} else {
+			// remap the textbox input to the slider scale
+			var sliderValue = Math.pow(value, 1/sliderPowExponent);
+			this.$elements.filterByData('key', "yAmplitudeSlider").filterByData('channel', channel).val(sliderValue);
+		}
+	}
+    if (key === 'yAmplitude' && value < yAmplitudeMin) value = yAmplitudeMin; // prevent amplitude hitting zero
     this.$elements.not($element).filterByData('key', key).filterByData('channel', channel).val(value);
     channelConfig[channel][key] = value;
     this.emit('channelConfig', channelConfig);
   }
 
   setChannelGains(value, min, max){
-    this.$elements.filterByData('key', 'yAmplitude').not('input[type=number]').prop('min', min).prop('max', max);
+    this.$elements.filterByData('key', 'yAmplitudeSlider').prop('min', min).prop('max', max);
     this.$elements.filterByData('key', 'yAmplitude').val(value);
     for (let item of channelConfig){
       item.yAmplitude = value;

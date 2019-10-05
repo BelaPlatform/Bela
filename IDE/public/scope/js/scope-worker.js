@@ -24,13 +24,16 @@ ws.onopen = ws_onopen;
 var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0;
 var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
 
+const plotModeTimeDomain = 0;
+const plotModeFft = 1;
+
 onmessage = function(e){
 	if (!e.data || !e.data.event) return;
 	if (e.data.event === 'settings'){
 		settings = e.data.settings;
-		if (settings.plotMode == 0){
+		if (plotModeTimeDomain == settings.plotMode){
 			zero = settings.frameHeight/2;
-		} else if (settings.plotMode == 1){
+		} else if (plotModeFft == settings.plotMode){
 			zero = settings.frameHeight;
 		}
 		
