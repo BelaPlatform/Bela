@@ -389,7 +389,7 @@ class FileView extends View {
             .addClass('file-heading')
             .html(file_list_elements[i].name)
             .appendTo(section);
-            console.log('current sec: ' + file_list_elements[i].name);
+            // console.log('current sec: ' + file_list_elements[i].name);
 				var fileList = $('<ul></ul>')
             .addClass('sub-file-list');
 

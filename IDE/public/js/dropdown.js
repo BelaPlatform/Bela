@@ -23,7 +23,7 @@ var dropdowns = function(){
     var source = $(this).data('accordion-for');
     $(parent).find('[data-accordion]').each(function() {
       var target = $(this).data('accordion');
-      console.log(target);
+      // console.log(target);
       if (target === source) {
         if (that.hasClass('active')) {
           that.removeClass('active');

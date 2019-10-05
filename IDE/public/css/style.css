@@ -988,7 +988,7 @@ ul.libraries-list-parent {
     font-family: inconsolata;
     font-size: 14px;
     padding: 4px 12px; }
-    ul.libraries-list-parent .libraries-list li:hover, ul.libraries-list-parent .libraries-list li.selected {
+    ul.libraries-list-parent .libraries-list li:hover, ul.libraries-list-parent .libraries-list li.selected, ul.libraries-list-parent .libraries-list li.selectedExample {
       background: rgba(255, 255, 0, 0.2); }
     ul.libraries-list-parent .libraries-list li:before {
       content: '>';

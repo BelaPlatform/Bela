@@ -2659,7 +2659,7 @@ var FileView = function (_View) {
 
 					var section = $('<div></div>').addClass('section');
 					$('<p></p>').addClass('file-heading').html(file_list_elements[i].name).appendTo(section);
-					console.log('current sec: ' + file_list_elements[i].name);
+					// console.log('current sec: ' + file_list_elements[i].name);
 					var fileList = $('<ul></ul>').addClass('sub-file-list');
 
 					for (var j = 0; j < file_list_elements[i].length; j++) {
@@ -3137,33 +3137,6 @@ var ProjectView = function (_View) {
 
     var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
 
-    _this.onClickOpenExample = function (e) {
-      var _this2 = this;
-
-      var link = e.target.dataset.exampleLink;
-      if (this.exampleChanged) {
-        this.exampleChanged = false;
-        popup.exampleChanged(function (link) {
-          _this2.emit('message', 'project-event', {
-            func: 'openExample',
-            currentProject: link
-          });
-          $('.selectedExample').removeClass('selectedExample');
-          $(e.target).addClass('selectedExample');
-        }, link, 0, function () {
-          return _this2.exampleChanged = true;
-        });
-        return;
-      }
-
-      this.emit('message', 'project-event', {
-        func: 'openExample',
-        currentProject: link
-      });
-      $('.selectedExample').removeClass('selectedExample');
-      $(e.target).addClass('selectedExample');
-    };
-
     _this.on('example-changed', function () {
       return _this.exampleChanged = true;
     });
@@ -3176,19 +3149,47 @@ var ProjectView = function (_View) {
   _createClass(ProjectView, [{
     key: 'selectChanged',
     value: function selectChanged($element, e) {
-      var _this3 = this;
+      var _this2 = this;
 
       if (this.exampleChanged) {
         this.exampleChanged = false;
         popup.exampleChanged(function (arg) {
-          _this3.emit('message', 'project-event', arg);
+          _this2.emit('message', 'project-event', arg);
         }, { func: $element.data().func, currentProject: $element.data().name }, 0, function () {
-          _this3.exampleChanged = true;
+          _this2.exampleChanged = true;
         });
         return;
       }
 
       this.emit('message', 'project-event', { func: $element.data().func, currentProject: $element.data('name') });
+    }
+  }, {
+    key: 'onClickOpenExample',
+    value: function onClickOpenExample(e) {
+      var _this3 = this;
+
+      var link = e.target.dataset.exampleLink;
+      if (this.exampleChanged) {
+        this.exampleChanged = false;
+        popup.exampleChanged(function (link) {
+          _this3.emit('message', 'project-event', {
+            func: 'openExample',
+            currentProject: link
+          });
+          $('.selectedExample').removeClass('selectedExample');
+          $(e.target).addClass('selectedExample');
+        }, link, 0, function () {
+          return _this3.exampleChanged = true;
+        });
+        return;
+      }
+
+      this.emit('message', 'project-event', {
+        func: 'openExample',
+        currentProject: link
+      });
+      $('.selectedExample').removeClass('selectedExample');
+      $(e.target).addClass('selectedExample');
     }
   }, {
     key: 'buttonClicked',
@@ -3555,6 +3556,10 @@ var ProjectView = function (_View) {
           #include <example>                                // This line is includeLine
           (small) Copy and paste in the header of render.cpp// This line is includeInstructions
           // End includeContent
+           Examples:
+          ------------------------------
+          > one
+          > two
            Files:
           ------------------------------
           > one
@@ -3576,12 +3581,14 @@ var ProjectView = function (_View) {
           var libraryPanel = $('<div></div>').addClass('panel').attr('data-accordion', name); // Div container for library dropdown info
           var libDesc = $('<p></p>').addClass('library-desc'); // Div to contain lib descriotion
           var libVer = $('<p></p>').addClass('library-ver');
+
           // INCLUDES:
           var includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
           var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
           var includeCopy = $('<button></button>').addClass('include-copy');
 
+          // INFO:
           var infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
 
@@ -3593,16 +3600,19 @@ var ProjectView = function (_View) {
 
           // EXAMPLES:
 
-          var examplesTitle = $('<div>Related examples:</div>');
-          var examplesList = $('<ul></ul>');
+          var that = _this8;
+          var examplesParent = $('<div></div>');
+          var examplesTitle = $('<button></button>').addClass('accordion-sub').text('Examples').attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var examplesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'example-list-' + counter);
+          var examplesList = $('<ul></ul>').addClass('libraries-list');
 
           // FILES:
           var filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
 
           var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
           var filesList = $('<ul></ul>').addClass('libraries-list');
+
           var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
-          var that = _this8;
           var _iteratorNormalCompletion5 = true;
           var _didIteratorError5 = false;
           var _iteratorError5 = undefined;
@@ -3679,8 +3689,8 @@ var ProjectView = function (_View) {
                           }
                         }
                       }
+
                       // Get the #include line and add to includeContent
-                      // libDesc.html('Version: ').html(object.version);
                     } catch (err) {
                       _didIteratorError6 = true;
                       _iteratorError6 = err;
@@ -3699,8 +3709,6 @@ var ProjectView = function (_View) {
                     libDesc.html(object.description);
 
                     // FOR LIBRARY INFO
-
-
                     if (object.version != null) {
                       var infoContent = $('<p></p>');
                       infoContent.append('Version: ' + object.version);
@@ -3737,14 +3745,15 @@ var ProjectView = function (_View) {
                       includeLines.appendTo(includeContent);
                     } else {
                       var _includeText2 = $('<pre></pre>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>').attr('data-include', 'include-text');
+                      if (examplesList.find('li').length > 0) {
+                        examplesTitle.appendTo(examplesParent);
+                        examplesList.appendTo(examplesContainer);
+                        examplesContainer.appendTo(examplesParent);
+                      }
                       _includeText2.appendTo(includeLines);
                       includeLines.appendTo(includeContent);
                       includeCopy.appendTo(includeContent);
                       includeInstructions.appendTo(includeContent);
-                      if (!examplesList.is(':empty')) {
-                        examplesTitle.appendTo(includeContent);
-                        examplesList.appendTo(includeContent);
-                      }
                     }
 
                     includeArr = [];
@@ -3788,8 +3797,8 @@ var ProjectView = function (_View) {
 
               if (_ret4 === 'continue') continue;
             }
-            // FOR LIBRARY INFO
 
+            // FOR LIBRARY INFO
             // per section
             // item.name -> parentDiv $examples
           } catch (err) {
@@ -3814,7 +3823,8 @@ var ProjectView = function (_View) {
           // childLi -> childUl -> parentDiv -> $examples
           includeTitle.appendTo(libraryPanel);
           includeContent.appendTo(libraryPanel);
-          // includeContainer.appendTo(libraryPanel);
+
+          examplesParent.appendTo(libraryPanel);
 
           filesTitle.appendTo(libraryPanel); // Include the Files: section title
           filesList.appendTo(filesContainer);
