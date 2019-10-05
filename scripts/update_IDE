@@ -67,7 +67,7 @@ printf "Copying new IDE files to the board..."
 if [ "$USE_RSYNC" -eq 1 ]
 then
   printf "using rsync..."
-  rsync -ac --no-t --delete-after "$SCRIPTDIR"/../IDE "$BBB_ADDRESS":"$BBB_BELA_HOME"
+  rsync -ac --no-t --delete-after --exclude=IDE/frontend-dev "$SCRIPTDIR"/../IDE "$BBB_ADDRESS":"$BBB_BELA_HOME"
 else
   #if rsync is not available, let's clean the folder first
   ssh "$BBB_ADDRESS" "rm -rf \"$BBB_BELA_HOME\"/IDE ; mkdir -p \"$BBB_BELA_HOME\"/IDE" || { printf "\nError while removing the old files, is the board connected?\n"; exit 1; }

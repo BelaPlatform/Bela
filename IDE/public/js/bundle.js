@@ -3127,7 +3127,7 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
-var example_order = require('../../../examples/order.json');
+var example_order = require('../../../../examples/order.json');
 
 var ProjectView = function (_View) {
   _inherits(ProjectView, _View);
@@ -3942,7 +3942,7 @@ var ProjectView = function (_View) {
 
 module.exports = ProjectView;
 
-},{"../../../examples/order.json":21,"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
+},{"../../../../examples/order.json":21,"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],11:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
