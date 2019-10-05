@@ -3,6 +3,7 @@ version=1.0.0
 author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Adan Benito<adan@bela.io>, Giulio Moro<giuliomoro@yahoo.it>
 description=Bela Scope.<br>Examples:<br>&middot Audio/sample-piezo-trigger<br>&middot Analog/scope-analog<br>&middot Basics/scope<br>&middot Basics/scope-advanced<br>&middot Communication/scope-sliders<br>&middot Sensors/ultrasonic-distance<br>&middot Extras/salt-factory-taste<br>&middot PureData/customRender
+license=LGPL 3.0
 url=
 board=*
 dependencies=

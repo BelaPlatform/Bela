@@ -3,6 +3,7 @@ version=1.0.0
 author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Adan Benito<adanl.benito@gmail.com>, Giulio Moro<giuliomoro@yahoo.it>
 description=OSC sender class.<br>Examples:<br>&middot Communication/OSC<br>&middot Communication/OSC-Pipe
+license=LGPL 3.0
 url=
 board=*
 dependencies=UdpClient

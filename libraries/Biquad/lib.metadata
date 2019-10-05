@@ -3,6 +3,7 @@ version=1.0.0
 author=
 maintainer=Adan Benito<adan@bela.io>
 description=Biquad filter class.<br>Examples:<br>&middot Audio/telephone-filter
+license=
 url=
 board=*
 dependencies=
