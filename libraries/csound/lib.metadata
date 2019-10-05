@@ -1,5 +1,6 @@
 name=csound
 description=A convenience wrapper for libcsound.
 examples=Csound/C++-libcsound-Control, Csound/C++-libcsound-gain, Csound/C++-libcsound-Loopback, Csound/C++-libcsound-Sine, Csound/C++-libcsound-Trigger
+license=LGPL
 LDLIBS=-lcsound
 

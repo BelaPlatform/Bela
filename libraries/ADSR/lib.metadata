@@ -4,6 +4,7 @@ author=
 maintainer=Adan Benito<adan@bela.io>
 description=An ADSR envelope generator class.
 examples=Audio/envelope-generator
+license=
 url=
 board=*
 dependencies=

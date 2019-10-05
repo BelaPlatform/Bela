@@ -4,6 +4,7 @@ author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Giulio Moro<giuliomoro@yahoo.it>
 description=A bi-directional pipe to exchange data between a RT and a non-RT thread.
 examples=Communication/OSC-pipe
+license=LGPL 3.0
 url=
 board=*
 dependencies=

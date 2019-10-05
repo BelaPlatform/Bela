@@ -1,6 +1,7 @@
 name=ne10
 description=A convenience wrapper for ne10.
 examples=Audio/FFT-phase-vocoder, Instruments/d-box, terminal-only/filter-FIR
+license=LGPL 3.0
 LDFLAGS=
 LDLIBS=-lNE10
 

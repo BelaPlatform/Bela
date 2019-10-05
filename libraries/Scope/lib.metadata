@@ -4,6 +4,7 @@ author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Adan Benito<adan@bela.io>, Giulio Moro<giuliomoro@yahoo.it>
 description=Bela Scope.
 examples=Audio/sample-piezo-trigger, Analog/scope-analog, Fundamentals/scope, Fundamentals/scope-advanced, Sensors/ultrasonic-distance, PureData/custom-render
+license=LGPL 3.0
 url=
 board=*
 dependencies=

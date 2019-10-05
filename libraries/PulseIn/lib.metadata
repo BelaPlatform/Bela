@@ -4,6 +4,7 @@ author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Adan Benito<adanl.benito@gmail.com>, Giulio Moro<giuliomoro@yahoo.it>
 description=A class to measure the duration of a pulse on a digital pin. This can be used to measure distance in conjunction with an ultrasonic ranging sensor (e.g.: HC-SR04).
 examples=Sensors/ultrasonic-distance
+license=LGPL 3.0
 url=
 board=*
 dependencies=
