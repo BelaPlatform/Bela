@@ -3583,7 +3583,7 @@ var ProjectView = function (_View) {
           var libVer = $('<p></p>').addClass('library-ver');
 
           // INCLUDES:
-          var includeTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.use).attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var includeTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.includeTitle).attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
           var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
           var includeCopy = $('<button></button>').addClass('include-copy');

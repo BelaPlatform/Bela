@@ -361,7 +361,7 @@ _exampleList(examplesDir){
 
       // INCLUDES:
       let includeTitle = $('<button></button>').addClass('accordion-sub')
-                                               .text( json.tabs.use )
+                                               .text( json.tabs.includeTitle )
                                                .attr('data-accordion-for', 'use-' + counter)
                                                .attr('data-parent', 'libraries'); // Header for include instructions
       let includeContent = $('<div></div>').addClass('include-container docs-content')
