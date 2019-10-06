@@ -121,6 +121,13 @@
 			"cancel": "Don't reload, keep this version"
 		}
 	},
+  "tabs": {
+    "includeTitle": "Include this Library",
+    "infoTitle": "Library info",
+    "examplesTitle": "Examples",
+    "filesTitle": "Files",
+    "includeInstructions": "Copy & paste at the top of each .cpp file in your project."
+  },
   "file_view": {
     "sources": "Sources",
     "headers": "Headers",

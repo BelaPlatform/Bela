@@ -361,7 +361,7 @@ _exampleList(examplesDir){
 
       // INCLUDES:
       let includeTitle = $('<button></button>').addClass('accordion-sub')
-                                               .text('Use this library')
+                                               .text( json.tabs.use )
                                                .attr('data-accordion-for', 'use-' + counter)
                                                .attr('data-parent', 'libraries'); // Header for include instructions
       let includeContent = $('<div></div>').addClass('include-container docs-content')
@@ -371,7 +371,7 @@ _exampleList(examplesDir){
 
       // INFO:
       let infoTitle = $('<button></button>').addClass('accordion-sub')
-                                            .text('Library info')
+                                            .text( json.tabs.infoTitle )
                                             .attr('data-accordion-for', 'info-' + counter)
                                             .attr('data-parent', 'libraries'); // Header for include instructions
       let infoContainer = $('<div></div>').addClass('info-container docs-content')
@@ -388,7 +388,7 @@ _exampleList(examplesDir){
     let that = this;
     let examplesParent = $('<div></div>');
     let examplesTitle = $('<button></button>').addClass('accordion-sub')
-                                              .text('Examples')
+                                              .text( json.tabs.examplesTitle )
                                               .attr('data-accordion-for', 'example-list-' + counter)
                                               .attr('data-parent', 'libraries'); // Header for include instructions
     let examplesContainer = $('<div></div>').addClass('docs-content')
@@ -397,7 +397,7 @@ _exampleList(examplesDir){
 
     // FILES:
     let filesTitle = $('<button></button>').addClass('accordion-sub')
-                                           .text('Files')
+                                           .text( json.tabs.filesTitle )
                                            .attr('data-accordion-for', 'file-list-' + counter)
                                            .attr('data-parent', 'libraries'); // Header for include instructions
 
@@ -405,7 +405,7 @@ _exampleList(examplesDir){
                                          .attr('data-accordion', 'file-list-' + counter);
     let filesList = $('<ul></ul>').addClass('libraries-list');
 
-    let includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
+    let includeInstructions = $('<p></p>').text( json.tabs.includeInstructions);
     for (let child of item.children){
       if (child && child.length && child[0] === '.') continue;
         if (child == 'build') continue;
