@@ -1560,6 +1560,7 @@ p.project {
  */
 #tab-menu li#open-tab {
   background-color: #c9c9c9;
+  max-width: 40px;
   padding-left: 10px; }
 
 #tab-menu li {
