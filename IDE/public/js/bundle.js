@@ -3583,13 +3583,13 @@ var ProjectView = function (_View) {
           var libVer = $('<p></p>').addClass('library-ver');
 
           // INCLUDES:
-          var includeTitle = $('<button></button>').addClass('accordion-sub').text('Use this library').attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var includeTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.includeTitle).attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
           var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
           var includeCopy = $('<button></button>').addClass('include-copy');
 
           // INFO:
-          var infoTitle = $('<button></button>').addClass('accordion-sub').text('Library info').attr('data-accordion-for', 'info-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var infoTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.infoTitle).attr('data-accordion-for', 'info-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
 
           clipboard = new Clipboard(includeCopy[0], {
@@ -3602,17 +3602,17 @@ var ProjectView = function (_View) {
 
           var that = _this8;
           var examplesParent = $('<div></div>');
-          var examplesTitle = $('<button></button>').addClass('accordion-sub').text('Examples').attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var examplesTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.examplesTitle).attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           var examplesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'example-list-' + counter);
           var examplesList = $('<ul></ul>').addClass('libraries-list');
 
           // FILES:
-          var filesTitle = $('<button></button>').addClass('accordion-sub').text('Files').attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          var filesTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.filesTitle).attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
 
           var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
           var filesList = $('<ul></ul>').addClass('libraries-list');
 
-          var includeInstructions = $('<p></p>').text('Copy & paste at the top of each .cpp file in your project.');
+          var includeInstructions = $('<p></p>').text(json.tabs.includeInstructions);
           var _iteratorNormalCompletion5 = true;
           var _didIteratorError5 = false;
           var _iteratorError5 = undefined;
@@ -6082,6 +6082,13 @@ module.exports={
 			"cancel": "Don't reload, keep this version"
 		}
 	},
+  "tabs": {
+    "includeTitle": "Include this Library",
+    "infoTitle": "Library info",
+    "examplesTitle": "Examples",
+    "filesTitle": "Files",
+    "includeInstructions": "Copy & paste at the top of each .cpp file in your project."
+  },
   "file_view": {
     "sources": "Sources",
     "headers": "Headers",
