@@ -4562,7 +4562,9 @@ var TabView = function (_View) {
       if (tabs.event == undefined) {
         return;
       }
+
       tabs.active = $('[data-tab-for].active').data('tabFor');
+
       if (tabs.target == undefined && tabs.active == null) {
         tabs.target = 'explorer';
       }
@@ -4570,10 +4572,12 @@ var TabView = function (_View) {
       function openTabs() {
         if (tabs.origin == 'tab-control') {
           if (menuOpened == false) {
+            $('[data-editor]').addClass('tabs-open');
             $('[data-tabs]').addClass('tabs-open');
             $('[data-tab-open] span').addClass('rot');
             menuOpened = true;
           } else {
+            $('[data-editor]').removeClass('tabs-open');
             $('[data-tabs]').removeClass('tabs-open');
             $('[data-tab-open] span').removeClass('rot');
             menuOpened = false;
@@ -4584,6 +4588,7 @@ var TabView = function (_View) {
           that.toggleClasses();
         }
         if (tabs.origin == 'tab-link' && menuOpened == false) {
+          $('[data-editor]').addClass('tabs-open');
           $('[data-tabs]').addClass('tabs-open');
           $('[data-tab-open] span').addClass('rot');
           menuOpened = true;

@@ -106,18 +106,23 @@ class TabView extends View {
     if (tabs.event == undefined) {
       return;
     }
+
     tabs.active = $('[data-tab-for].active').data('tabFor');
+
     if (tabs.target == undefined && tabs.active == null) {
       tabs.target = 'explorer';
     }
 
+
     function openTabs() {
       if (tabs.origin == 'tab-control') {
         if (menuOpened == false) {
+          $('[data-editor]').addClass('tabs-open');
           $('[data-tabs]').addClass('tabs-open');
           $('[data-tab-open] span').addClass('rot');
           menuOpened = true;
         } else {
+          $('[data-editor]').removeClass('tabs-open');
           $('[data-tabs]').removeClass('tabs-open');
           $('[data-tab-open] span').removeClass('rot');
           menuOpened = false;
@@ -128,6 +133,7 @@ class TabView extends View {
         that.toggleClasses();
       }
       if (tabs.origin == 'tab-link' && menuOpened == false) {
+        $('[data-editor]').addClass('tabs-open');
         $('[data-tabs]').addClass('tabs-open');
         $('[data-tab-open] span').addClass('rot');
         menuOpened = true;
