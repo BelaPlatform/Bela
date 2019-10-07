@@ -21,19 +21,10 @@
 #include <iostream>
 
 Biquad::Biquad() {
-    type = lowpass;
-    a0 = 1.0;
-    a1 = a2 = b1 = b2 = 0.0;
-    Fc = 0.50;
-    Fs = 44100;
-    Q = 0.707;
-    peakGain = 0.0;
-    z1 = z2 = 0.0;
 }
 
-Biquad::Biquad(double Fc, double Fs, int type, double Q = 0.707, double peakGainDB = 0.0) {
-    setBiquad(Fc, Fs, type, Q, peakGainDB);
-    z1 = z2 = 0.0;
+Biquad::Biquad(double Fc, float Fs, int type, double Q, double peakGainDB) {
+    setup(Fc, Fs, type, Q, peakGainDB);
 }
 
 Biquad::~Biquad() {
@@ -59,7 +50,7 @@ void Biquad::setPeakGain(double peakGainDB) {
     calcBiquad();
 }
     
-void Biquad::setBiquad(double Fc, double Fs, int type, double Q, double peakGainDB) {
+int Biquad::setup(double Fc, float Fs, int type, double Q, double peakGainDB) {
     this->type = type;
     this->Q = Q;
     this->Fs = Fs;
@@ -68,6 +59,9 @@ void Biquad::setBiquad(double Fc, double Fs, int type, double Q, double peakGain
     startQ = Q;
     startPeakGain = peakGainDB;
     setPeakGain(peakGainDB);
+    z1 = z2 = 0.0;
+    
+    return 0;
 }
 
 void Biquad::calcBiquad(void) {
