@@ -25,13 +25,14 @@ Biquad::Biquad() {
     a0 = 1.0;
     a1 = a2 = b1 = b2 = 0.0;
     Fc = 0.50;
+    Fs = 44100;
     Q = 0.707;
     peakGain = 0.0;
     z1 = z2 = 0.0;
 }
 
-Biquad::Biquad(int type, double Fc, double Q, double peakGainDB) {
-    setBiquad(type, Fc, Q, peakGainDB);
+Biquad::Biquad(double Fc, double Fs, int type, double Q, double peakGainDB) {
+    setBiquad(Fc, Fs, type, Q, peakGainDB);
     z1 = z2 = 0.0;
 }
 
@@ -49,7 +50,7 @@ void Biquad::setQ(double Q) {
 }
 
 void Biquad::setFc(double Fc) {
-    this->Fc = Fc;
+    this->Fc = Fc/this->Fs;
     calcBiquad();
 }
 
@@ -58,11 +59,12 @@ void Biquad::setPeakGain(double peakGainDB) {
     calcBiquad();
 }
     
-void Biquad::setBiquad(int type, double Fc, double Q, double peakGainDB) {
+void Biquad::setBiquad(double Fc, double Fs, int type, double Q, double peakGainDB) {
     this->type = type;
     this->Q = Q;
-    this->Fc = Fc;
-    startFc = Fc;
+    this->Fs = Fs;
+    this->Fc = Fc/Fs;
+    startFc = this->Fc;
     startQ = Q;
     startPeakGain = peakGainDB;
     setPeakGain(peakGainDB);
