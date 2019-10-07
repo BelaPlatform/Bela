@@ -107,7 +107,7 @@ bool setup(BelaContext *context, void *userData)
  // For each possible touch...
  for(unsigned int i = 0; i < NUM_TOUCH; i++) {
 	 // Setup corresponding oscillator
-	 osc[i].setup(context->audioSampleRate, gFreqRange[0], Oscillator::sine);
+	 osc[i].setup(gFreqRange[0], context->audioSampleRate, Oscillator::sine);
 	 // Setup low pass filters for smoothing frequency and amplitude
 	 freqFilt[i].setup(gCutOffFreq, context->audioSampleRate);
 	 ampFilt[i].setup(gCutOffAmp, context->audioSampleRate);

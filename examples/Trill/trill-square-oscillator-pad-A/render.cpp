@@ -137,7 +137,7 @@ bool setup(BelaContext *context, void *userData)
 	ampFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 
 	// Setup triangle oscillator	
-	osc.setup(context->audioSampleRate, gFreqRange[0], Oscillator::triangle);
+	osc.setup(gFreqRange[0], context->audioSampleRate, Oscillator::triangle);
 
 	return true;
 }

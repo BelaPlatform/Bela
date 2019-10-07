@@ -133,8 +133,8 @@ bool setup(BelaContext *context, void *userData)
 	freqFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 	ampFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 	
-	osc[0].setup(context->audioSampleRate, gFreqRange[0], Oscillator::square);
-	osc[1].setup(context->audioSampleRate, gFreqRange[0], Oscillator::square);
+	osc[0].setup(gFreqRange[0], context->audioSampleRate, Oscillator::square);
+	osc[1].setup(gFreqRange[0], context->audioSampleRate, Oscillator::square);
 
 	return true;
 }
