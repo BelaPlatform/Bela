@@ -1,149 +1,149 @@
 {
 	"BelaMini": [
 		{
-			"section": "03-Analog",
+			"section": "Analog",
 			"name": "analog-output"
 		},
 		{
-			"section": "10-Instruments",
+			"section": "Instruments",
 			"name": "d-box"
 		},
 		{
-			"section": "11-Extras",
-			"name": "gpioAnalogLoopbackTest"
+			"section": "Extras",
+			"name": "gpio-analog-loopback-test"
 		},
 		{
-			"section": "11-Extras",
+			"section": "Extras",
 			"name": "salt-factory-taste"
 		}
 	],
 	"Ctag": [
 		{
-			"section": "07-DataLogging",
+			"section": "Communication",
 			"name": "logging-sensors"
 		},
 		{
-			"section": "09-Capelets",
-			"name": "multiplexer_display"
+			"section": "Capelets",
+			"name": "multiplexer-display"
 		},
 		{
-			"section": "09-Capelets",
+			"section": "Capelets",
 			"name": "audio-expander"
 		},
 		{
-			"section": "03-Analog",
+			"section": "Analog",
 			"name": "analog-input"
 		},
 		{
-			"section": "03-Analog",
+			"section": "Analog",
 			"name": "analog-output"
 		},
 		{
-			"section": "03-Analog",
+			"section": "Analog",
 			"name": "scope-analog"
 		},
 		{
-			"section": "04-Audio",
+			"section": "Audio",
 			"name": "tremolo"
 		},
 		{
-			"section": "12-SuperCollider",
+			"section": "SuperCollider",
 			"name": "3-analog-in"
 		},
 		{
-			"section": "12-SuperCollider",
+			"section": "SuperCollider",
 			"name": "4-analog-out"
 		},
 		{
-			"section": "12-SuperCollider",
+			"section": "SuperCollider",
 			"name": "6-pattern-control"
 		},
 		{
-			"section": "11-Extras",
+			"section": "Extras",
 			"name": "cape-test"
 		},
 		{
-			"section": "11-Extras",
+			"section": "Extras",
 			"name": "tank-wars"
 		},
 		{
-			"section": "11-Extras",
+			"section": "Extras",
 			"name": "salt-factory-taste"
 		},
 		{
-			"section": "11-Extras",
+			"section": "Extras",
 			"name": "measure-noisefloor"
 		},
 		{
-			"section": "11-Extras",
-			"name": "gpioAnalogLoopbackTest"
+			"section": "Extras",
+			"name": "gpio-analog-loopback-test"
 		},
 		{
-			"section": "11-Extras",
+			"section": "Extras",
 			"name": "oscillator-bank"
 		},
 		{
-			"section": "06-Sensors",
+			"section": "Sensors",
 			"name": "ultrasonic-distance"
 		},
 		{
-			"section": "06-Sensors",
+			"section": "Sensors",
 			"name": "LDR"
 		},
 		{
-			"section": "10-Instruments",
+			"section": "Instruments",
 			"name": "d-box"
 		},
 		{
-			"section": "08-PureData",
+			"section": "PureData",
 			"name": "sample-scrub"
 		},
 		{
-			"section": "08-PureData",
-			"name": "karplusStrong"
+			"section": "PureData",
+			"name": "karplus-strong"
 		},
 		{
-			"section": "08-PureData",
+			"section": "PureData",
 			"name": "midi-cv-midi"
 		},
 		{
-			"section": "08-PureData",
-			"name": "basicAnalogIn"
+			"section": "PureData",
+			"name": "analog-in"
 		},
 		{
-			"section": "08-PureData",
-			"name": "envelopeTrigger"
+			"section": "PureData",
+			"name": "envelope-trigger"
 		},
 		{
-			"section": "08-PureData",
-			"name": "rubberDuckie"
+			"section": "PureData",
+			"name": "rubber-duckie"
 		},
 		{
-			"section": "08-PureData",
-			"name": "basicAnalogOut"
+			"section": "PureData",
+			"name": "analog-out"
 		},
 		{
-			"section": "08-PureData",
+			"section": "PureData",
 			"name": "simple-fm"
 		},
 		{
-			"section": "14-Csound",
-			"name": "1-AnalogIn"
+			"section": "Csound",
+			"name": "1-analog-in"
 		},
 		{
-			"section": "14-Csound",
-			"name": "2-AnalogOut"
+			"section": "Csound",
+			"name": "2-analog-out"
 		},
 		{
-			"section": "14-Csound",
+			"section": "Csound",
 			"name": "C++-libcsound-Control"
 		},
 		{
-			"section": "14-Csound",
+			"section": "Csound",
 			"name": "C++-libcsound-gain"
 		},
 		{
-			"section": "14-Csound",
+			"section": "Csound",
 			"name": "COSMO_FX"
 		}
 	]

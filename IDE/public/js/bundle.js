@@ -3872,7 +3872,7 @@ var ProjectView = function (_View) {
           for (var example in data[exceptString]) {
             var exampleId = data[exceptString][example].section + "/" + data[exceptString][example].name;
             try {
-              document.getElementById(exampleId).style.display = 'none';
+              $("[data-example-link='" + exampleId + "']")[0].style.display = 'none';
             } catch (err) {}
           }
         }
