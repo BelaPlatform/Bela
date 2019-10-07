@@ -21,44 +21,44 @@
 
 
 class Biquad {
-public:
-    Biquad();
-    Biquad(int type, double Fc, double Q, double peakGainDB);
-    ~Biquad();
-    void setType(int type);
-    void setQ(double Q);
-    void setFc(double Fc);
-    void setPeakGain(double peakGainDB);
-    void setBiquad(int type, double Fc, double Q, double peakGain);
-    float process(float in);
-    
-    double getQ();
-    double getFc();
-    double getPeakGain();
+	public:
+		Biquad();
+		Biquad(int type, double Fc, double Q, double peakGainDB);
+		~Biquad();
+		void setType(int type);
+		void setQ(double Q);
+		void setFc(double Fc);
+		void setPeakGain(double peakGainDB);
+		void setBiquad(int type, double Fc, double Q, double peakGain);
+		float process(float in);
 
-    double getStartingQ();
-    double getStartingFc();
-    double getStartingPeakGain();
+		double getQ();
+		double getFc();
+		double getPeakGain();
 
-    enum filter_type 
-    {
-	    lowpass = 0,
-	    highpass,
-	    bandpass,
-	    notch,
-	    peak,
-	    lowshelf,
-	    highshelf
-    };
+		double getStartingQ();
+		double getStartingFc();
+		double getStartingPeakGain();
 
-protected:
-    void calcBiquad(void);
+		enum filter_type
+		{
+			lowpass = 0,
+			highpass,
+			bandpass,
+			notch,
+			peak,
+			lowshelf,
+			highshelf
+		};
 
-    int type;
-    double a0, a1, a2, b1, b2;
-    double Fc, Q, peakGain;
-    double startFc, startQ, startPeakGain;
-    double z1, z2;
+	protected:
+		void calcBiquad(void);
+
+		int type;
+		double a0, a1, a2, b1, b2;
+		double Fc, Q, peakGain;
+		double startFc, startQ, startPeakGain;
+		double z1, z2;
 };
 
 inline double Biquad::getQ()
@@ -92,10 +92,10 @@ inline double Biquad::getStartingPeakGain()
 }
 
 inline float Biquad::process(float in) {
-    double out = in * a0 + z1;
-    z1 = in * a1 + z2 - b1 * out;
-    z2 = in * a2 - b2 * out;
-    return out;
+	double out = in * a0 + z1;
+	z1 = in * a1 + z2 - b1 * out;
+	z2 = in * a2 - b2 * out;
+	return out;
 }
 
 #endif // Biquad_h
