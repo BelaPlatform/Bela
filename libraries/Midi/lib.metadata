@@ -3,7 +3,7 @@ version=1.0.0
 author=Giulio Moro<giuliomoro@yahoo.it>
 maintainer=Adan Benito<adan@bela.io>, Giulio Moro<giuliomoro@yahoo.it>
 description=Xenomai-friendly implementation of a Midi class built on top of ALSA's raw API. The MIDI I/O itself is not boosted by Xenomai. The Xenomai-friendly bit is the fact that the I/O thread communicates to the "audio" thread through a Xenomai pipe.
-examples=Audio/FFT-phase-vocoder, Communication/MIDI, PureData/customRender, Salt/PinkTrombone
+examples=Audio/FFT-phase-vocoder, Communication/MIDI, PureData/custom-Render, Salt/pink-trombone
 license=LGPL 3.0
 url=
 board=*
@@ -15,4 +15,3 @@ CC=
 CXX=
 CFLAGS=
 CPPFLAGS=
-
