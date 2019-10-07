@@ -31,7 +31,7 @@ Biquad::Biquad() {
     z1 = z2 = 0.0;
 }
 
-Biquad::Biquad(double Fc, double Fs, int type, double Q, double peakGainDB) {
+Biquad::Biquad(double Fc, double Fs, int type, double Q = 0.707, double peakGainDB = 0.0) {
     setBiquad(Fc, Fs, type, Q, peakGainDB);
     z1 = z2 = 0.0;
 }

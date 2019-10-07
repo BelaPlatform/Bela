@@ -23,13 +23,13 @@
 class Biquad {
 	public:
 		Biquad();
-		Biquad(double Fc, double Fs, int type, double Q, double peakGainDB);
+		Biquad(double Fc, float Fs, int type, double Q, double peakGainDB);
 		~Biquad();
 		void setType(int type);
 		void setQ(double Q);
 		void setFc(double Fc);
 		void setPeakGain(double peakGainDB);
-		void setBiquad(double Fc, double Fs, int type, double Q, double peakGainDB);
+		void setBiquad(double Fc, float Fs, int type, double Q, double peakGainDB);
 		float process(float in);
 
 		double getQ();
@@ -56,7 +56,8 @@ class Biquad {
 
 		int type;
 		double a0, a1, a2, b1, b2;
-		double Fc, Fs, Q, peakGain;
+		double Fc, Q, peakGain;
+		float Fs;
 		double startFc, startQ, startPeakGain;
 		double z1, z2;
 };

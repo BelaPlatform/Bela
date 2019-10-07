@@ -4,13 +4,13 @@
 class Oscillator {
 	public:
 		Oscillator(){};
-		Oscillator(float frequency, unsigned int fs, unsigned int type = sine, float initialPhase = 0)
+		Oscillator(float frequency, float fs, unsigned int type = sine, float initialPhase = 0)
 		{
 			setup(frequency, fs, type, initialPhase);
 		}
 		~Oscillator(){};
 		
-		void setup(float frequency, unsigned int fs, unsigned int type = sine, float initialPhase = 0)
+		void setup(float frequency, float fs, unsigned int type = sine, float initialPhase = 0)
 		{
 			fs_ = fs;
 			invSampleRate_ = 1.0 / fs_;
@@ -77,7 +77,7 @@ class Oscillator {
 	private:
 		float phase_ = 0;
 		float frequency_;
-		unsigned int fs_;
+		float fs_;
 		float invSampleRate_;
 		unsigned int type_ = sine;
 
