@@ -179,3 +179,15 @@ Gui::~Gui()
 void Gui::cleanup()
 {
 }
+
+int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)
+{
+	std::string bufferStr = std::to_string(bufferId);
+	int ret;
+	if(0 == (ret = ws_server->send(_addressData.c_str(), bufferStr.c_str())))
+		if(0 == (ret = ws_server->send(_addressData.c_str(), (void*)type, 1)))
+			if(0 == (ret = ws_server->send(_addressData.c_str(), (void*)data, size)))
+				return 0;
+	rt_fprintf(stderr, "You are sending messages to the GUI too fast. Please slow down\n");
+	return ret;
+}

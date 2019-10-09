@@ -24,6 +24,7 @@ class Gui
 		void ws_disconnect();
 		void ws_onControlData(const char* data, int size);
 		void ws_onData(const char* data, int size);
+		int doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size);
 
 		unsigned int _port;
 		std::string _addressControl;
@@ -106,49 +107,40 @@ class Gui
 		 * @param buffer Vector of arbitrary length and type
 		 **/
 		template<typename T, typename A>
-		void sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
+		int sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer);
 		/**
 		 * Sends a buffer (an array) through the web-socket to the client with a given ID.
 		 * @param bufferId Given buffer ID
 		 * @param buffer Array of arbitrary size and type
 		 **/
 		template <typename T, size_t N>
-		void sendBuffer(unsigned int bufferId, T (&buffer)[N]);
+		int sendBuffer(unsigned int bufferId, T (&buffer)[N]);
 		/**
 		 * Sends a single value through the web-socket to the client with a given ID.
 		 * @param bufferId Given buffer ID
 		 * @param value of arbitrary type
 		 **/
 		template <typename T>
-		void sendBuffer(unsigned int bufferId, T value);
+		int sendBuffer(unsigned int bufferId, T value);
 };
 
 template<typename T, typename A>
-void Gui::sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer)
+int Gui::sendBuffer(unsigned int bufferId, std::vector<T,A> & buffer)
 {
-	std::string bufferStr = std::to_string(bufferId);
-	ws_server->send(_addressData.c_str(), bufferStr.c_str());
 	const char* type = typeid(T).name();
-	ws_server->send(_addressData.c_str(), type);
-	ws_server->send(_addressData.c_str(), buffer.data(), (int)(buffer.size()*sizeof(T)));
+	return doSendBuffer(type, bufferId, (const void*)buffer.data(), (buffer.size()*sizeof(T)));
 }
 
 template <typename T, size_t N>
-void Gui::sendBuffer(unsigned int bufferId, T (&buffer)[N])
+int Gui::sendBuffer(unsigned int bufferId, T (&buffer)[N])
 {
-	std::string bufferStr = std::to_string(bufferId);
-	ws_server->send(_addressData.c_str(), bufferStr.c_str());
 	const char* type = typeid(T).name();
-	ws_server->send(_addressData.c_str(), type);
-	ws_server->send(_addressData.c_str(), buffer, (int)(N*sizeof(T)));
+	return doSendBuffer(type, bufferId, (const void*)buffer, N*sizeof(T));
 }
 
 template <typename T>
-void Gui::sendBuffer(unsigned int bufferId, T value)
+int Gui::sendBuffer(unsigned int bufferId, T value)
 {
-	std::string bufferStr = std::to_string(bufferId);
-	ws_server->send(_addressData.c_str(), bufferStr.c_str());
 	const char* type = typeid(T).name();
-	ws_server->send(_addressData.c_str(), type);
-	ws_server->send(_addressData.c_str(), &value, (int)sizeof(T));
+	return doSendBuffer(type, bufferId, (const void*)&value, sizeof(T));
 }
