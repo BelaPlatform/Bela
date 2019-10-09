@@ -92,9 +92,9 @@ check_board_alive_and_set_date(){
 	# try the specified address first
 	try_and_set_address $BBB_HOSTNAME $BBB_ADDRESS && return 0
 	# try some standard ones
-	try_and_set_address bela.local root@bela.local && return 0
 	try_and_set_address 192.168.6.2 root@192.168.6.2 && return 0
-	# this is the default, but worth checking again in case someone screwed it up earlier
+	try_and_set_address bela.local root@bela.local && return 0
+	# this is the default, but worth checking again in case someone changed it earlier
 	try_and_set_address 192.168.7.2 root@192.168.6.2 && return 0
 	return 1
 }
