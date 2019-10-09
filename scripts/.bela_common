@@ -3,7 +3,7 @@
 [ -f ~/.belarc ] && . ~/.belarc
 
 [ -z "$BBB_USER" ] && BBB_USER="root"
-[ -z "$BBB_HOSTNAME" ] && BBB_HOSTNAME="192.168.7.2"
+[ -z "$BBB_HOSTNAME" ] && BBB_HOSTNAME="192.168.7.2" # this is also used below when trying to clear the cached ssh key
 [ -z "$BBB_ADDRESS" ] && BBB_ADDRESS="$BBB_USER@$BBB_HOSTNAME"
 [ -z "$BBB_BELA_HOME" ] && BBB_BELA_HOME="/root/Bela"
 [ -z "$RUN_PROJECT" ] && RUN_PROJECT=1
@@ -69,14 +69,34 @@ get_board_debian_version(){
 	ssh $BBB_ADDRESS 'grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/g"'
 }
 
-check_board_alive_and_set_date(){
-	printf "Checking the board is up and running at $BBB_ADDRESS..."
+ssh_connect_and_set_date(){
+	printf "Checking the board is up and running at $2..."
 	# Clear the host if it is cached in ~/.ssh/known_hosts.
-	ssh-keygen -R $BBB_HOSTNAME &> /dev/null || true
-	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 $BBB_ADDRESS "date -s \"`date '+%Y%m%d %T %z'`\" > /dev/null" && printf "done\n" || {
-		printf "\nERROR: the board does not respond at $BBB_ADDRESS, check that the address is correct and the board is connected.\n";
-		exit 1;
+	ssh-keygen -R $1 &> /dev/null || true
+	ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 $2 "date -s \"`date '+%Y%m%d %T %z'`\" > /dev/null" && printf "done\n" || {
+		printf "\nERROR: the board does not respond at $2, check that the address is correct and the board is connected.\n";
+		return 1;
 	}
+	return 0;
+}
+
+try_and_set_address(){
+	ssh_connect_and_set_date $1 $2 && {
+		BBB_ADDRESS=$2
+		echo "Board found at $BBB_ADDRESS"
+		return 0;
+	} || return 1;
+}
+
+check_board_alive_and_set_date(){
+	# try the specified address first
+	try_and_set_address $BBB_HOSTNAME $BBB_ADDRESS && return 0
+	# try some standard ones
+	try_and_set_address bela.local root@bela.local && return 0
+	try_and_set_address 192.168.6.2 root@192.168.6.2 && return 0
+	# this is the default, but worth checking again in case someone screwed it up earlier
+	try_and_set_address 192.168.7.2 root@192.168.6.2 && return 0
+	return 1
 }
 
 check_project_exists(){
