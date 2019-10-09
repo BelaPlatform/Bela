@@ -29,9 +29,9 @@ class AuxTaskNonRT{
 		void create(std::string _name, std::function<void(std::string str)> callback);
 		void create(std::string _name, std::function<void(void* buf, int size)> callback);
 		
-		void schedule(void* ptr, size_t size);
-		void schedule(const char* str);
-		void schedule();
+		int schedule(void* ptr, size_t size);
+		int schedule(const char* str);
+		int schedule();
 		
 	private:
 		bool lShouldStop = false;

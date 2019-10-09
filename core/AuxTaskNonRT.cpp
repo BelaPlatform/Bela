@@ -75,7 +75,7 @@ void AuxTaskNonRT::__create(){
 	}
 }
 
-void AuxTaskNonRT::schedule(void* ptr, size_t size){
+int AuxTaskNonRT::schedule(void* ptr, size_t size){
 #ifdef XENOMAI_SKIN_native
 	int ret = rt_pipe_write(&pipe, ptr, size, P_NORMAL);
 #endif
@@ -85,14 +85,16 @@ void AuxTaskNonRT::schedule(void* ptr, size_t size){
 	if(ret < 0)
 	{
 		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name.c_str(), errno, strerror(errno), size);
+		return errno;
 	}
+	return 0;
 }
-void AuxTaskNonRT::schedule(const char* str){
-	schedule((void*)str, strlen(str));
+int AuxTaskNonRT::schedule(const char* str){
+	return schedule((void*)str, strlen(str));
 }
-void AuxTaskNonRT::schedule(){
+int AuxTaskNonRT::schedule(){
 	char t = 0;
-	schedule((void*)&t, 1);
+	return schedule((void*)&t, 1);
 }
 
 void AuxTaskNonRT::cleanup(){
