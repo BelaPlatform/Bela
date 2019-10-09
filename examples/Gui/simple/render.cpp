@@ -20,7 +20,6 @@
  **/
 #include <Bela.h>
 #include <cmath>
-#include <vector>
 #include <libraries/Gui/Gui.h>
 
 Gui gui;

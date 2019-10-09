@@ -29,10 +29,9 @@
  **/
 
 #include <Bela.h>
-#include <typeinfo> 
 #include <libraries/Gui/Gui.h>
-#include <cmath>
 #include <libraries/OnePole/OnePole.h>
+#include <cmath>
 
 // GUI object declaration
 Gui myGui;

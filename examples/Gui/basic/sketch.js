@@ -12,8 +12,8 @@ var guiSketch = new p5(function( sketch ) {
         sketch.textSize(sketch.round(sketch.windowWidth/50));
         sketch.textFont('Courier');
         sketch.textAlign(sketch.CENTER, sketch.CENTER);
-    	string = string + "Hello!"
-    	string = string + "\n\n This is a basic p5 example \nto help you get started with the Bela GUI";
+		string = string + "Hello!"
+		string = string + "\n\n This is a basic p5 example \nto help you get started with the Bela GUI";
         sketch.text(string,  sketch.width/2,  sketch.height/2);
         sketch.noLoop();
     }

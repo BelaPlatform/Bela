@@ -19,11 +19,8 @@
  **/
 
 #include <Bela.h>
-#include <typeinfo>
 #include <libraries/Gui/Gui.h>
-#include <algorithm>
 #include <string>
-#include <iterator>
 #include <sstream>
 #include <math.h>
 #include <time.h>
