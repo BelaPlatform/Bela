@@ -58,6 +58,10 @@ bool setup(BelaContext *context, void *userData)
 {
 	// Setup GUI. By default, the Bela GUI runs on port 5555 and address 'gui'
 	gui.setup(context->projectName);
+	// maximum number of elements to have in the array ()
+	unsigned int numElements = gSendPeriod / gReadPeriod + 0.5;
+	gTimestamps.reserve(numElements);
+	gVoltage.reserve(numElements);
 	
 	gInverseAnalogSampleRate = 1/context->analogSampleRate;
 	return true; 
