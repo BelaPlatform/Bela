@@ -27,7 +27,7 @@ var sketch = function(p) {
     p.setup = function() {
 
         // Create canvas
-        p.createCanvas(1500, 700);
+        p.createCanvas(p.windowWidth, p.windowHeight);
 
         // Creat plot
         voltPlot = new GPlot(p);
