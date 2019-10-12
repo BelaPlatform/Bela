@@ -312,12 +312,16 @@ function list_files(socket, project) {
         var files;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, project_manager.listFiles(project)
-                        .catch(function (e) { return console.log('error refreshing file list', e.toString()); })];
+                case 0: return [4 /*yield*/, project_manager.projectExists(project)];
                 case 1:
+                    if (!_a.sent()) return [3 /*break*/, 3];
+                    return [4 /*yield*/, project_manager.listFiles(project)
+                            .catch(function (e) { return console.log('error refreshing file list', e.toString()); })];
+                case 2:
                     files = _a.sent();
                     socket.emit('file-list', project, files);
-                    return [2 /*return*/];
+                    _a.label = 3;
+                case 3: return [2 /*return*/];
             }
         });
     });

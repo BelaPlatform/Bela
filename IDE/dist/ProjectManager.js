@@ -261,16 +261,28 @@ function listExamples() {
 exports.listExamples = listExamples;
 function openProject(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, settings;
+        var projectRetryString, exists, _a, settings;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
+                    projectRetryString = "Select a project from the projects menu, or create a new one.";
+                    if (!data.currentProject.trim()) {
+                        data.error = "No project is selected. " + projectRetryString;
+                        return [2 /*return*/];
+                    }
+                    return [4 /*yield*/, projectExists(data.currentProject)];
+                case 1:
+                    exists = _b.sent();
+                    if (!exists) {
+                        data.error = "Project `" + data.currentProject + "' does not exist. " + projectRetryString;
+                        return [2 /*return*/];
+                    }
                     _a = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
-                case 1:
+                case 2:
                     _a.fileList = _b.sent();
                     return [4 /*yield*/, project_settings.read(data.currentProject)];
-                case 2:
+                case 3:
                     settings = _b.sent();
                     data.newFile = settings.fileName;
                     data.CLArgs = settings.CLArgs;
@@ -280,10 +292,10 @@ function openProject(data) {
                         data.gitData = {};
                     data.gitData.currentProject = data.currentProject;
                     return [4 /*yield*/, git_manager.info(data.gitData)];
-                case 3:
+                case 4:
                     _b.sent();
                     return [4 /*yield*/, openFile(data)];
-                case 4:
+                case 5:
                     _b.sent();
                     return [2 /*return*/];
             }
@@ -719,3 +731,14 @@ function listFiles(project) {
     });
 }
 exports.listFiles = listFiles;
+function projectExists(project) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, file_manager.directory_exists(paths.projects + project)];
+                case 1: return [2 /*return*/, _a.sent()];
+            }
+        });
+    });
+}
+exports.projectExists = projectExists;

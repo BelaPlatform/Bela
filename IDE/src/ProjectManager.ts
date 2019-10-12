@@ -145,6 +145,17 @@ export async function listExamples(): Promise<any>{
 }
 
 export async function openProject(data: any) {
+	let projectRetryString: string = "Select a project from the projects menu, or create a new one.";
+	if(!data.currentProject.trim()) {
+
+		data.error = "No project is selected. "+projectRetryString;
+		return;
+	}
+	let exists: boolean = await projectExists(data.currentProject);
+	if(!exists) {
+		data.error = "Project `"+data.currentProject+"' does not exist. "+projectRetryString;
+		return;
+	}
 	data.fileList = await listFiles(data.currentProject);
 	let settings: any = await project_settings.read(data.currentProject);
 	data.newFile = settings.fileName;
@@ -343,4 +354,8 @@ export async function deleteFile(data: any){
 
 export async function listFiles(project: string): Promise<util.File_Descriptor[]>{
 	return await file_manager.deep_read_directory(paths.projects+project);
+}
+
+export async function projectExists(project: string): Promise<boolean>{
+	return await file_manager.directory_exists(paths.projects+project);
 }

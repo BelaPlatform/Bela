@@ -189,7 +189,10 @@ async function git_event(socket: SocketIO.Socket, data: any){
 }
 
 async function list_files(socket: SocketIO.Socket, project: string){
-	let files: util.File_Descriptor[] = await project_manager.listFiles(project)
-		.catch((e: Error) => console.log('error refreshing file list', e.toString()) );
-	socket.emit('file-list', project, files);
+	if(await project_manager.projectExists(project))
+	{
+		let files: util.File_Descriptor[] = await project_manager.listFiles(project)
+			.catch((e: Error) => console.log('error refreshing file list', e.toString()) );
+		socket.emit('file-list', project, files);
+	}
 }
