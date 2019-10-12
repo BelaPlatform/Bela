@@ -166,6 +166,14 @@ export async function openExample(data: any){
 }
 
 export async function newProject(data: any){
+	if(typeof(data.newProject) === "string")
+	{
+		data.newProject = data.newProject.trim();
+	}
+	if(!data.newProject) {
+		data.error = 'failed, project name is empty.';
+		return;
+	}
 	if (await file_manager.directory_exists(paths.projects+data.newProject)){
 		data.error = 'failed, project '+data.newProject+' already exists!';
 		return;

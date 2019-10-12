@@ -92,9 +92,10 @@ class ProjectView extends View {
 
   popup.form.append(form.join('')).off('submit').on('submit', e => {
     e.preventDefault();
+    var newProject = sanitise(popup.find('input[type=text]').val().trim());
     this.emit('message', 'project-event', {
       func,
-      newProject	: sanitise(popup.find('input[type=text]').val()),
+      newProject	: newProject,
       projectType	: popup.find('input[type=radio]:checked').data('type')
     });
     $('[data-projects-select]').html('');

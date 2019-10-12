@@ -317,7 +317,15 @@ function newProject(data) {
         var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, file_manager.directory_exists(paths.projects + data.newProject)];
+                case 0:
+                    if (typeof (data.newProject) === "string") {
+                        data.newProject = data.newProject.trim();
+                    }
+                    if (!data.newProject) {
+                        data.error = 'failed, project name is empty.';
+                        return [2 /*return*/];
+                    }
+                    return [4 /*yield*/, file_manager.directory_exists(paths.projects + data.newProject)];
                 case 1:
                     if (_b.sent()) {
                         data.error = 'failed, project ' + data.newProject + ' already exists!';
