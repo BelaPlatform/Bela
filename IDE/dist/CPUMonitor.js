@@ -52,7 +52,6 @@ var find_pid_count;
 function start(pid, project, cb) {
     root_pid = pid;
     // the process name gets cut off at 15 chars
-    console.log("typeof(project): ", typeof (project), "project: ", project);
     if (typeof (project) === "object") {
         project = project.join("");
     }

@@ -18,7 +18,6 @@ let find_pid_count: number;
 export function start(pid: number, project: string, cb: (cpu: any)=>void){
 	root_pid = pid;
 	// the process name gets cut off at 15 chars
-	console.log("typeof(project): ", typeof(project), "project: ", project);
 	if(typeof(project) === "object") {
 		project = project.join("");
 	} else if (typeof(project) !== "string") {
