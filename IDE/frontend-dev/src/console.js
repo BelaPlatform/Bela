@@ -193,7 +193,7 @@ class Console extends EventEmitter {
     popup.subtitle(this.popUpComponents);
     popup.body(message);
     form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-    popup.form.append(form.join(''));
+    popup.form.empty().append(form.join(''));
     popup.find('.popup-cancel').on('click', () => {
   		popup.hide();
     });
