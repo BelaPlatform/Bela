@@ -140,18 +140,18 @@ class EditorView extends View {
 	// model events
 	// new file saved
 	__fileData(data, opts){
+	// hide the pd patch and image displays if present, and the editor
+	$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]') .removeClass('active');
     tmpData = data;
     tmpOpts = opts;
-		// hide the pd patch and image displays if present, and the editor
+	if(null === data)
+		return;
 
 		if (!opts.fileType) opts.fileType = '0';
 
 		if (opts.fileType.indexOf('image') !== -1){
 
 			// opening image file
-      $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
-      .removeClass('active');
-
       $('[data-img-display-parent], [data-img-display]').css({
 				'max-width'	: $('[data-editor]').width() + 'px',
 				'max-height': $('[data-editor]').height() + 'px'
@@ -166,10 +166,6 @@ class EditorView extends View {
 			this.emit('compare-files', false);
 
 		} else if (opts.fileType.indexOf('audio') !== -1){
-
-			//console.log('opening audio file');
-      $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
-      .removeClass('active');
 
       $('[data-audio-parent]')
       .addClass('active')
@@ -206,9 +202,6 @@ class EditorView extends View {
 						'max-height': height + 'px'
 					});
 
-          $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
-          .removeClass('active');
-
           $('[data-pd-svg-parent]')
           .addClass('active')
           .css({
@@ -236,9 +229,6 @@ class EditorView extends View {
 			} else {
 
 				// show the editor
-        $('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]')
-        .removeClass('active');
-
         $('[data-editor]')
         .addClass('active');
 

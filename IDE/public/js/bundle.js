@@ -1970,17 +1970,17 @@ var EditorView = function (_View) {
 	}, {
 		key: '__fileData',
 		value: function __fileData(data, opts) {
+			// hide the pd patch and image displays if present, and the editor
+			$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 			tmpData = data;
 			tmpOpts = opts;
-			// hide the pd patch and image displays if present, and the editor
+			if (null === data) return;
 
 			if (!opts.fileType) opts.fileType = '0';
 
 			if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
-				$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
-
 				$('[data-img-display-parent], [data-img-display]').css({
 					'max-width': $('[data-editor]').width() + 'px',
 					'max-height': $('[data-editor]').height() + 'px'
@@ -1993,9 +1993,6 @@ var EditorView = function (_View) {
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
 			} else if (opts.fileType.indexOf('audio') !== -1) {
-
-				//console.log('opening audio file');
-				$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 
 				$('[data-audio-parent]').addClass('active').css({
 					'position': 'absolute',
@@ -2028,8 +2025,6 @@ var EditorView = function (_View) {
 							'max-height': height + 'px'
 						});
 
-						$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
-
 						$('[data-pd-svg-parent]').addClass('active').css({
 							'max-width': width + 'px',
 							'max-height': height + 'px'
@@ -2052,8 +2047,6 @@ var EditorView = function (_View) {
 				} else {
 
 					// show the editor
-					$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
-
 					$('[data-editor]').addClass('active');
 
 					// stop comparison with file on disk

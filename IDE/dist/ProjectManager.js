@@ -86,8 +86,8 @@ function openFile(data) {
                     _i++;
                     return [3 /*break*/, 4];
                 case 7:
-                    data.error = 'error opening file ' + data.newFile + ': ' + e_1.toString();
-                    data.fileData = 'Error opening file. Please open a different file to continue';
+                    data.error = 'Error opening file ' + data.newFile + ': files does not exist.';
+                    data.fileData = null;
                     data.fileName = data.newFile;
                     data.newFile = undefined;
                     data.readOnly = true;
@@ -707,7 +707,9 @@ function deleteFile(data) {
                 case 3:
                     _a.fileList = _b.sent();
                     if (data.fileName == data.currentFile) {
-                        data.fileData = 'File deleted - open another file to continue';
+                        //TODO: ideally we would send a message to the frontend, but currently we
+                        //can only send "errors", and we don't want to
+                        data.fileData = null;
                         data.fileName = '';
                         data.readOnly = true;
                     }
