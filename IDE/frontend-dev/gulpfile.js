@@ -22,7 +22,7 @@ var remotePath = '/root/Bela/IDE/';
 var idePath = '../';
 var designPath = './design/';
 
-gulp.task('commit', ['browserify', 'scope-browserify']);
+gulp.task('commit', ['browserify', 'scope-browserify', 'styles']);
 
 gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
