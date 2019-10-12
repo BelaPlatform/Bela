@@ -182,8 +182,13 @@ function project_event(socket, data) {
                         if (data.projectList)
                             socket.broadcast.emit('project-list', data.currentProject, data.projectList);
                         // if a file was opened save this in the project settings
-                        if (data.fileName)
+                        if (data.fileName) {
                             project_settings.set_fileName(data.currentProject, data.fileName);
+                        }
+                        if (!data.fileName && "deleteFile" === data.func) {
+                            console.log("Delete file, setting filename to null");
+                            project_settings.set_fileName(data.currentProject, null);
+                        }
                     }
                     return [2 /*return*/];
             }

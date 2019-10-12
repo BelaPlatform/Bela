@@ -60,6 +60,9 @@ function openFile(data) {
                     if (typeof data.newFile == 'undefined') {
                         data.newFile = data.fileName;
                     }
+                    if (null === data.newFile) {
+                        return [2 /*return*/];
+                    }
                     file_path = paths.projects + data.currentProject + '/' + data.newFile;
                     _c.label = 1;
                 case 1:
@@ -86,7 +89,7 @@ function openFile(data) {
                     _i++;
                     return [3 /*break*/, 4];
                 case 7:
-                    data.error = 'Error opening file ' + data.newFile + ': files does not exist.';
+                    data.error = 'Error opening file ' + data.newFile + ': file does not exist.';
                     data.fileData = null;
                     data.fileName = data.newFile;
                     data.newFile = undefined;
@@ -710,7 +713,7 @@ function deleteFile(data) {
                         //TODO: ideally we would send a message to the frontend, but currently we
                         //can only send "errors", and we don't want to
                         data.fileData = null;
-                        data.fileName = '';
+                        data.fileName = null;
                         data.readOnly = true;
                     }
                     else {

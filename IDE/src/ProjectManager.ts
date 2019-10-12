@@ -22,6 +22,9 @@ export async function openFile(data: any){
   if (typeof data.newFile == 'undefined') {
     data.newFile = data.fileName;
   }
+  if(null === data.newFile) {
+    return;
+  }
   let file_path = paths.projects+data.currentProject+'/'+data.newFile;
 	try{
 		var file_stat = await file_manager.stat_file(file_path);
@@ -38,7 +41,7 @@ export async function openFile(data: any){
 				}
 			}
 		}
-		data.error = 'Error opening file '+data.newFile+': files does not exist.';
+		data.error = 'Error opening file '+data.newFile+': file does not exist.';
 		data.fileData = null;
 		data.fileName = data.newFile;
 		data.newFile = undefined;
@@ -347,7 +350,7 @@ export async function deleteFile(data: any){
     //TODO: ideally we would send a message to the frontend, but currently we
     //can only send "errors", and we don't want to
     data.fileData = null;
-    data.fileName = '';
+    data.fileName = null;
     data.readOnly = true;
   } else {
     data.fileName = data.currentFile;
