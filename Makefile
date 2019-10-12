@@ -250,7 +250,7 @@ BELA_IDE_START_COMMAND=systemctl restart bela_ide
 BELA_IDE_STOP_COMMAND=systemctl stop bela_ide
 BELA_IDE_ENABLE_STARTUP_COMMAND=systemctl enable bela_ide
 BELA_IDE_DISABLE_STARTUP_COMMAND=systemctl disable bela_ide
-BELA_IDE_CONNECT_COMMAND=journalctl -fu bela_ide
+BELA_IDE_CONNECT_COMMAND=journalctl -fu bela_ide -n 50
 endif
 ifeq ($(DEBIAN_VERSION), wheezy)
 BELA_IDE_SCREEN_NAME?=IDE-Bela
