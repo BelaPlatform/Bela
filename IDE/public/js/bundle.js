@@ -3128,8 +3128,12 @@ var ProjectView = function (_View) {
   function ProjectView(className, models) {
     _classCallCheck(this, ProjectView);
 
+    // add extra callback registration for selectChanged
     var _this = _possibleConstructorReturn(this, (ProjectView.__proto__ || Object.getPrototypeOf(ProjectView)).call(this, className, models));
 
+    _this.$elements.on('click', 'li.proj-li', function (e) {
+      return _this.selectChanged($(e.currentTarget), e);
+    });
     _this.on('example-changed', function () {
       return _this.exampleChanged = true;
     });
@@ -4950,7 +4954,7 @@ var View = function (_EventEmitter) {
 				});
 			}
 		}
-		_this.$elements.on('click', 'li.proj-li', function (e) {
+		_this.$elements.filter('select').on('change', function (e) {
 			return _this.selectChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input').on('input', function (e) {

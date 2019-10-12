@@ -8,6 +8,8 @@ class ProjectView extends View {
 
   constructor(className, models){
     super(className, models);
+    // add extra callback registration for selectChanged
+    this.$elements.on('click', 'li.proj-li', (e) => this.selectChanged($(e.currentTarget), e));
     this.on('example-changed', () => this.exampleChanged = true );
   }
 
