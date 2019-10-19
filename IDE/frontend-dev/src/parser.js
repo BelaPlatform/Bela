@@ -48,8 +48,6 @@ var parser = {
 	},
 
 	autoComplete(){
-		 //console.log(highlights);
-		// console.log(contextName, highlights[contextName]);
 		if (!contextName) return;
 
 		// context
@@ -73,12 +71,16 @@ var parser = {
 
 		// class members
 		var classAutocompleteWords = [];
-		for (let typedef of highlights['typedef']){
-			classAutocompleteWords.push(typedef.name);
+		if(highlights['typedef']) {
+			for (let typedef of highlights['typedef']){
+				classAutocompleteWords.push(typedef.name);
+			}
 		}
-		for (let typeref of highlights['typerefs']){
-			for (let item of highlights[typeref.id.name]){
-				classAutocompleteWords.push(typeref.name+'.'+item.name);
+		if(highlights['typerefs']) {
+			for (let typeref of highlights['typerefs']){
+				for (let item of highlights[typeref.id.name]){
+					classAutocompleteWords.push(typeref.name+'.'+item.name);
+				}
 			}
 		}
 		var classWordCompleter = {
