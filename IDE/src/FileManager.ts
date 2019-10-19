@@ -168,7 +168,8 @@ export async function write_json(file_path: string, data: any): Promise<void> {
 	return write_file(file_path, JSON.stringify(data));
 }
 export async function directory_exists(dir_path: string): Promise<boolean>{
-	let stat: any = await stat_file(dir_path)
+	// the "/" ensure return stat.isDirectory() is "true" for symlinks to directories
+	let stat: any = await stat_file(dir_path+"/")
 		.catch( e => {} );
 	return (stat && stat.isDirectory && stat.isDirectory()) ? true : false;
 }

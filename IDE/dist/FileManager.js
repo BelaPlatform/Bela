@@ -403,7 +403,7 @@ function directory_exists(dir_path) {
         var stat;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, stat_file(dir_path)
+                case 0: return [4 /*yield*/, stat_file(dir_path + "/")
                         .catch(function (e) { })];
                 case 1:
                     stat = _a.sent();
