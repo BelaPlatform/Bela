@@ -227,6 +227,7 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 			cfg->analogInChannels = 8;
 			cfg->analogOutChannels = 8;
 			break;
+		case BelaHw_BelaMiniMultiAudio:
 		case BelaHw_BelaMini:
 			cfg->analogInChannels = 8;
 			break;
@@ -469,7 +470,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
 	BelaHw belaHw = Bela_detectHw();
-	if(gRTAudioVerbose)
+	// belaHw = BelaHw_BelaMini;
+	// belaHw = BelaHw_BelaMiniMultiAudio;	// TESTING
+	if(gRTAudioVerbose)	
 		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
 	// Check for user-selected hardware
 	BelaHw userHw = settings->board;

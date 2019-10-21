@@ -589,8 +589,10 @@ void PRU::initialisePruCommon()
 	uint32_t board_flags = 0;
 	switch(belaHw) {
 	case BelaHw_BelaMini:
-	case BelaHw_BelaMiniMultiAudio:
 		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
+		break;
+	case BelaHw_BelaMiniMultiAudio:
+		board_flags |= 1 << BOARD_FLAGS_BELA_MULTI_TLV;
 		break;
 	case BelaHw_CtagFace:
 	case BelaHw_CtagFaceBela:
@@ -683,11 +685,11 @@ int PRU::start(char * const filename)
 			//nobreak
 		case BelaHw_BelaMini:
 			//nobreak
-		case BelaHw_BelaMiniMultiAudio:
-			//nobreak
 		case BelaHw_Salt:
 			pruUsesMcaspIrq = false;
 			break;
+		case BelaHw_BelaMiniMultiAudio:
+			//nobreak
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagBeast:

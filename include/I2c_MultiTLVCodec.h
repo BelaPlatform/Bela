@@ -10,9 +10,7 @@
  *      Author: Andrew McPherson
  */
 
-
-#ifndef I2C_MULTITLV_CODEC_H_
-#define I2C_MULTITLV_CODEC_H_
+#pragma once
 
 #include "I2c_Codec.h"
 
@@ -42,6 +40,3 @@ private:
 	bool running;
 	bool verbose;
 };
-
-
-#endif /* I2C_MULTITLV_CODEC_H_ */

@@ -11,15 +11,16 @@
 // At least one needs to be selected. Maximum 2 can be selected without having
 // the "jump too long" error mentioned above
 
-#define ENABLE_CTAG_FACE // enables run-time selection of the CTAG Face codec.
-#define ENABLE_CTAG_BEAST // enables run-time selection of the CTAG Beast codecs
-//#define ENABLE_BELA_TLV32 // enables run-time selection of the Bela TLV32 codec
+//#define ENABLE_CTAG_FACE // enables run-time selection of the CTAG Face codec.
+//#define ENABLE_CTAG_BEAST // enables run-time selection of the CTAG Beast codecs
+#define ENABLE_BELA_TLV32 // enables run-time selection of the Bela TLV32 codec
+//#define ENABLE_BELA_MULTI_TLV32 // enables run-time selection of multiple Bela TLV32 codecs
 //#define ENABLE_MUXER // enables run-time selection of the Multiplexer capelet
 // there are some issues with this code and this codec.
 // See https://github.com/BelaPlatform/Bela/issues/480
 
 #define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
-#define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS // TODO: make it runtime (should not be there for BELA_TLV)
+//#define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS // TODO: make it runtime (should not be there for BELA_TLV)
 
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
@@ -136,6 +137,7 @@
 #define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
 #define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruBoardFlags.h)
 #define COMM_ERROR_OCCURED      	68          // Signals the ARM CPU that an error happened
+#define COMM_ACTIVE_TDM_SLOTS  		72          // How many TDM slots contain useful data 
 
 #define ARM_ERROR_TIMEOUT 1
 #define ARM_ERROR_XUNDRUN 2
@@ -350,18 +352,32 @@
 #define CTAG_BEAST_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
 #define CTAG_BEAST_MCASP_XINTCTL_VALUE MCASP_XINTCTL_VALUE
 
-#define BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x18074    // MSB first, 1 bit delay, 16 bits, DAT bus, ROR 16bits
-#define BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x28074    // MSB first, 2 bit delay, 16 bits, DAT bus, ROR 16bits
+#define BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
+#define BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
 #define BELA_TLV_MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)
 #define BELA_TLV_MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge)
 #define BELA_TLV_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define BELA_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
 #define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
-#define BELA_TLV_MCASP_AFSXCTL_VALUE 0x101       // 2 Slot I2S, external clk, polarity (falling edge), single bit
+#define BELA_TLV_MCASP_AFSXCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
 #define BELA_TLV_MCASP_RTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define BELA_TLV_MCASP_XTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define BELA_TLV_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
 #define BELA_TLV_MCASP_XINTCTL_VALUE MCASP_XINTCTL_VALUE
+
+// Values below are for 16x 16-bit TDM slots
+
+#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+#define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)
+#define BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge)
+#define BELA_MULTI_TLV_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
+#define BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
+#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM, rising edge means beginning of frame
+// RTDM and XTDM are calculated dynamically
+#define BELA_MULTI_TLV_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
+#define BELA_MULTI_TLV_MCASP_XINTCTL_VALUE MCASP_XINTCTL_VALUE
 
 #define C_MCASP_MEM             C28         // Shared PRU mem
 
@@ -382,6 +398,12 @@
 #define FLAG_BIT_CTAG           11
 #define FLAG_BIT_CTAG_FACE      12
 #define FLAG_BIT_CTAG_BEAST     13
+#define FLAG_BIT_BELA_MULTI_TLV	14
+
+#define FLAG_BIT_AUDIO_CHANNELS0 16
+#define FLAG_BIT_AUDIO_CHANNELS1 17
+#define FLAG_BIT_AUDIO_CHANNELS2 18
+#define FLAG_BIT_AUDIO_CHANNELS3 19
         
 // Registers used throughout
 
@@ -450,6 +472,16 @@ MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
     QBBC DEST, reg_flags, FLAG_BIT_BELA_MINI
 .endm
 
+.macro BELA_MULTI_TLV_OR_JMP_TO
+.mparam DEST
+    QBBC DEST, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+.endm
+
+.macro BELA_NOT_MULTI_TLV_OR_JMP_TO
+.mparam DEST
+    QBBS DEST, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+.endm
+
 .macro CTAG_OR_JMP_TO
 .mparam DEST
     QBBC DEST, reg_flags, FLAG_BIT_CTAG
@@ -515,6 +547,16 @@ SETINPUT: //if it is an input, set the relevant bit
     SET gpio_oe, gpio_num_bit
     QBA DONE
 DONE:
+.endm
+
+// Read the number of audio channels from the flags register
+// 4 bits indicate pairs of channels (i.e. 2 to 32)
+.macro READ_MULTI_TLV_CHANNELS
+.mparam DEST
+	LSR DEST, reg_flags, FLAG_BIT_AUDIO_CHANNELS0
+    AND DEST, DEST, 0x0F
+	ADD DEST, DEST, 1
+	LSL DEST, DEST, 1
 .endm
 
 QBA START // when first starting, go to START, skipping this section.
@@ -1016,6 +1058,10 @@ PRU_NUMBER_CHECK_DONE:
      QBBC BELA_MINI_CHECK_DONE, r2, BOARD_FLAGS_BELA_MINI
      SET reg_flags, reg_flags, FLAG_BIT_BELA_MINI
 BELA_MINI_CHECK_DONE:
+	 // Find out whether we are on a multi-TLV Bela setup
+     QBBC BELA_MULTI_TLV_CHECK_DONE, r2, BOARD_FLAGS_BELA_MULTI_TLV
+     SET reg_flags, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+BELA_MULTI_TLV_CHECK_DONE: 
      // Find out whether we are on CTAG_FACE
      QBBC CTAG_FACE_CHECK_DONE, r2, BOARD_FLAGS_CTAG_FACE
      SET reg_flags, reg_flags, FLAG_BIT_CTAG_FACE
@@ -1186,8 +1232,37 @@ MCASP_SET_RX_NOT_CTAG_FACE:
 MCASP_SET_RX_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+    BELA_NOT_MULTI_TLV_OR_JMP_TO MCASP_SET_RX_MULTI_TLV
     MCASP_SET_RX BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE, BELA_TLV_MCASP_AFSRCTL_VALUE, BELA_TLV_MCASP_ACLKRCTL_VALUE, BELA_TLV_MCASP_AHCLKRCTL_VALUE, BELA_TLV_MCASP_RTDM_VALUE, BELA_TLV_MCASP_RINTCTL_VALUE, MCASP_DATA_MASK
+MCASP_SET_RX_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+    BELA_MULTI_TLV_OR_JMP_TO MCASP_SET_RX_NOT_MULTI_TLV
+		
+	// reg_flags should hold the number of active channels, up to
+	// 32, in pairs (i.e. 0 --> 2, 1 --> 4, ..., 15 --> 32)
+	LBBO r2, reg_comm_addr, COMM_ACTIVE_TDM_SLOTS, 4 	// How many audio channels?
+	
+	QBNE MCASP_SET_RX_MULTI_TLV_NONZERO, r2, 0
+	LDI r2, 2											// Sanity check: empty value defaults to stereo
+MCASP_SET_RX_MULTI_TLV_NONZERO:
+	LSR r3, r2, 1
+	SUB r3, r3, 1										// r3 = (r3 / 2) - 1
+	AND r3, r3, 0x0F									// mask out high bits (sanity check)
+	LSL r3, r3, FLAG_BIT_AUDIO_CHANNELS0				// shift to the right bit offset
+	OR reg_flags, reg_flags, r3							// this works because we know these bits are 0 in reg_flags before now
+
+	// Calculate which TDM slots to activate
+	MOV r3, 0x1											// mask = (1 << numchannels) - 1
+	LSL r3, r3, r2
+	SUB r3, r3, 1
+	OR r3, r3, 0x03										// Always activate the first two slots (failsafe)
+	AND r3, r3, 0x1F									// Never more than 32 slots
+	
+    MCASP_SET_RX BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE, BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE, BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE, BELA_MULTI_TLV_MCASP_AHCLKRCTL_VALUE, r3, BELA_MULTI_TLV_MCASP_RINTCTL_VALUE, MCASP_DATA_MASK
+MCASP_SET_RX_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
+
 MCASP_SET_RX_DONE:
 
 // set MCASP TX
@@ -1204,8 +1279,24 @@ MCASP_SET_TX_NOT_CTAG_FACE:
 MCASP_SET_TX_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+    BELA_NOT_MULTI_TLV_OR_JMP_TO MCASP_SET_TX_MULTI_TLV
     MCASP_SET_TX BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE, BELA_TLV_MCASP_AFSXCTL_VALUE, BELA_TLV_MCASP_ACLKXCTL_VALUE, BELA_TLV_MCASP_AHCLKXCTL_VALUE, BELA_TLV_MCASP_XTDM_VALUE, BELA_TLV_MCASP_XINTCTL_VALUE
+MCASP_SET_TX_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+    BELA_MULTI_TLV_OR_JMP_TO MCASP_SET_TX_NOT_MULTI_TLV
+	
+	// Calculate which TDM slots to activate
+	LBBO r2, reg_comm_addr, COMM_ACTIVE_TDM_SLOTS, 4 	// How many audio channels?
+	MOV r3, 0x1											// mask = (1 << numchannels) - 1
+	LSL r3, r3, r2
+	SUB r3, r3, 1
+	OR r3, r3, 0x03										// Always activate the first two slots (failsafe)
+	AND r3, r3, 0x1F									// Never more than 32 slots
+	
+    MCASP_SET_TX BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE, BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE, BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE, BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE, r3, BELA_MULTI_TLV_MCASP_XINTCTL_VALUE
+MCASP_SET_TX_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
 MCASP_SET_TX_DONE:
 
     MCASP_REG_WRITE_EXT MCASP_SRCTL_R, 0x02     // Set up receive serialiser
@@ -1276,9 +1367,22 @@ WRITE_FRAME_NOT_CTAG_FACE:
 WRITE_FRAME_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+    BELA_NOT_MULTI_TLV_OR_JMP_TO WRITE_FRAME_MULTI_TLV
     MCASP_WRITE_TO_DATAPORT 0x00, 4
     MCASP_WRITE_TO_DATAPORT 0x00, 4
+WRITE_FRAME_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+    BELA_MULTI_TLV_OR_JMP_TO WRITE_FRAME_NOT_MULTI_TLV
+
+	READ_MULTI_TLV_CHANNELS r2					// How many channels?
+WRITE_FRAME_MULTI_TLV_LOOP:
+	MCASP_WRITE_TO_DATAPORT 0x00, 4				// Write 4 bytes for each channel
+	SUB r2, r2, 1
+	QBGT WRITE_FRAME_MULTI_TLV_LOOP, r2, 0
+
+WRITE_FRAME_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
 WRITE_FRAME_DONE:
 
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)  // Set RFRST
@@ -1432,7 +1536,7 @@ INNER_EVENT_LOOP:
 
      // Check if ARM says should finish: flag is zero as long as it should run
      LBBO r27, reg_comm_addr, COMM_SHOULD_STOP, 4
-     QBNE CLEANUP, r27, 0
+     QBNE GO_TO_CLEANUP, r27, 0
 
      SUB r28, r28, 1
      QBNE MCASP_CHECK_TX_ERROR_END, r28, 0
@@ -1440,6 +1544,11 @@ INNER_EVENT_LOOP:
      // an interrupt, an error must have occurred
      SEND_ERROR_TO_ARM ARM_ERROR_TIMEOUT
      JMP START // TODO: should HALT and wait for ARM to restart
+	 
+GO_TO_CLEANUP:
+	JMP CLEANUP
+	 
+	 
 MCASP_CHECK_TX_ERROR_END:
 
      QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH1
@@ -1533,21 +1642,42 @@ CTAG_BEAST_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_CTAG_BEAST
 LOAD_AUDIO_FRAME_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+BELA_NOT_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_MULTI_TLV
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
      SBCO r8, C_MCASP_MEM, reg_mcasp_dac_current, 4
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4
+LOAD_AUDIO_FRAME_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+BELA_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_MULTI_TLV
+     // Number of bytes to load depends on number of active TDM slots
+	 // LBCO/SBCO only support r0 as indicator of number of bytes
+	 // so load begins from r1
+	 LDI r16, 0
+	 
+	 // TLVTODO: this only works up to 16 channels based on number of registers
+	 READ_MULTI_TLV_CHANNELS r0
+	 QBLT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, 16
+	 LDI r0, 16
+LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
+	 LSL r0, r0, 1										// 16 bits per channel
+     LBCO r1, C_MCASP_MEM, reg_mcasp_dac_current, b0
+     SBCO r9, C_MCASP_MEM, reg_mcasp_dac_current, b0
+	 ADD reg_mcasp_dac_current, reg_mcasp_dac_current, r0.b0
+	
+LOAD_AUDIO_FRAME_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
 LOAD_AUDIO_FRAME_DONE:
 
      //TODO: Change data structure in RAM to 32 bit samples 
      //     => no masking and shifting required
      //     => support for 24 bit audio
      MOV r17, 0xFFFF
-     AND r8, r17, r0
-     LSR r9, r0, 16
 
 #ifdef ENABLE_CTAG_FACE
 CTAG_FACE_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_FACE
+     AND r8, r17, r0
+     LSR r9, r0, 16
      AND r10, r17, r1
      LSR r11, r1, 16
      AND r12, r17, r2
@@ -1562,6 +1692,8 @@ WRITE_AUDIO_FRAME_NOT_CTAG_FACE:
 CTAG_BEAST_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_BEAST
 	 // Note: Could be optimized by only using single operation to write data to McASP FIFO,
 	 // but 24 registers need to be free for use
+     AND r8, r17, r0
+     LSR r9, r0, 16
 	 AND r10, r17, r1
      LSR r11, r1, 16
      AND r12, r17, r2
@@ -1583,8 +1715,60 @@ CTAG_BEAST_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_BEAST
 WRITE_AUDIO_FRAME_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+BELA_NOT_MULTI_TLV_OR_JMP_TO WRITE_AUDIO_FRAME_MULTI_TLV
+     AND r8, r17, r0
+     LSR r9, r0, 16
+	 
+	 LDI r8, 0
+	 LDI r9, 0xFFFF
      MCASP_WRITE_TO_DATAPORT r8, 8
+WRITE_AUDIO_FRAME_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+BELA_MULTI_TLV_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_MULTI_TLV
+     AND r9, r17, r1
+     LSR r10, r1, 16
+	 MCASP_WRITE_TO_DATAPORT r9, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 4	// r0 = channels * 2 
+	 
+	 AND r11, r17, r2
+     LSR r12, r2, 16
+	 MCASP_WRITE_TO_DATAPORT r11, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 8
+	 
+     AND r13, r17, r3
+     LSR r14, r3, 16
+	 MCASP_WRITE_TO_DATAPORT r13, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 12
+	 
+     AND r15, r17, r4
+     LSR r16, r4, 16
+	 MCASP_WRITE_TO_DATAPORT r15, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 16
+	 
+     AND r9, r17, r5
+     LSR r10, r5, 16
+	 MCASP_WRITE_TO_DATAPORT r9, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 20
+	 
+     AND r11, r17, r6
+     LSR r12, r6, 16
+	 MCASP_WRITE_TO_DATAPORT r11, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 24
+	 
+     AND r13, r17, r7
+     LSR r14, r7, 16
+	 MCASP_WRITE_TO_DATAPORT r13, 8
+	 QBLE WRITE_AUDIO_FRAME_MULTI_TLV_DONE, r0, 28
+	 
+     AND r15, r17, r8
+     LSR r16, r8, 16
+	 MCASP_WRITE_TO_DATAPORT r15, 8
+	 // (r0 * 2) >= 32
+	 	 
+WRITE_AUDIO_FRAME_MULTI_TLV_DONE:
+WRITE_AUDIO_FRAME_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
 WRITE_AUDIO_FRAME_DONE:
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
@@ -1695,6 +1879,7 @@ SKIP_AUDIO_RX_FRAME:
 FRAME_READ_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+     BELA_NOT_MULTI_TLV_OR_JMP_TO FRAME_READ_MULTI_TLV
 
      MCASP_READ_FROM_DATAPORT r8, 32
      AND r0, r8, r17
@@ -1703,7 +1888,71 @@ FRAME_READ_NOT_CTAG_BEAST:
 
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4 // increment memory pointer
+FRAME_READ_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+     BELA_MULTI_TLV_OR_JMP_TO FRAME_READ_NOT_MULTI_TLV
+	 
+	 READ_MULTI_TLV_CHANNELS r0
+	 QBLT FRAME_READ_MULTI_TLV_LT16CHAN, r0, 16
+	 LDI r0, 16
+FRAME_READ_MULTI_TLV_LT16CHAN:
+	 LSL r0, r0, 1										// 16 bits per channel
+	 
+	 MCASP_READ_FROM_DATAPORT r9, 8						// TLVTODO: should this be 32 bytes like above?
+	 AND r1, r9, r17
+	 LSL r10, r10, 16
+	 OR r1, r1, r10
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 4				// r0 = channels * 2
+	 
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r2, r9, r17
+	 LSL r10, r10, 16
+	 OR r2, r2, r10
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 8
+	 
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r3, r9, r17
+	 LSL r10, r10, 16
+	 OR r3, r3, r10
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 12
+
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r4, r9, r17
+	 LSL r10, r10, 16
+	 OR r4, r4, r10 
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 16	 
+
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r5, r9, r17
+	 LSL r10, r10, 16
+	 OR r5, r5, r10
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 20
+	 
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r6, r9, r17
+	 LSL r10, r10, 16
+	 OR r6, r6, r10
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 24
+
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r7, r9, r17
+	 LSL r10, r10, 16
+	 OR r7, r7, r10
+	 QBLE FRAME_READ_MULTI_TLV_STORE, r0, 28
+	 
+	 MCASP_READ_FROM_DATAPORT r9, 8						
+	 AND r8, r9, r17
+	 LSL r10, r10, 16
+	 OR r8, r8, r10
+	  
+FRAME_READ_MULTI_TLV_STORE:
+     SBCO r1, C_MCASP_MEM, reg_mcasp_adc_current, b0 	     // store result
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, r0.b0 // increment memory pointer
+	 
+FRAME_READ_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
+
 FRAME_READ_DONE:
 
      XIN SCRATCHPAD_ID_BANK0, r0, 72 // load back register states from scratchpad
@@ -1972,6 +2221,7 @@ CTAG_BEAST_16CH_ANALOG_CFG_END:
 SET_REG_FRAMES_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
+BELA_NOT_MULTI_TLV_OR_JMP_TO BELA_TLV_ANALOG_CFG_END
      // Set reg frames total based on number of analog channels
      // 8 analog ch => LSL 1
      // 4 analog ch => no shifting
@@ -1987,6 +2237,25 @@ BELA_TLV_ANALOG_2: // Two channels
 	 LSR r14, reg_frame_mcasp_total, 1
 BELA_TLV_ANALOG_CFG_END:
 #endif /* ENABLE_BELA_TLV32 */
+#ifdef ENABLE_BELA_MULTI_TLV32
+BELA_MULTI_TLV_OR_JMP_TO BELA_MULTI_TLV_ANALOG_CFG_END
+     // Set reg frames total based on number of analog channels
+     // 8 analog ch => LSL 1
+     // 4 analog ch => no shifting
+     // 2 analog ch => LSR 1
+     QBEQ BELA_MULTI_TLV_ANALOG_8, reg_num_channels, 0x8
+     QBEQ BELA_MULTI_TLV_ANALOG_CFG_END, reg_num_channels, 0x4
+     QBEQ BELA_MULTI_TLV_ANALOG_8, reg_num_channels, 0x2
+
+BELA_MULTI_TLV_ANALOG_8: // Eight channels
+     LSL r14, reg_frame_spi_total, 1
+     JMP BELA_MULTI_TLV_ANALOG_CFG_END
+BELA_MULTI_TLV_ANALOG_2: // Two channels
+	 LSR r14, reg_frame_spi_total, 1
+
+BELA_MULTI_TLV_ANALOG_CFG_END:
+#endif /* ENABLE_BELA_MULTI_TLV32 */
+
 SET_REG_FRAMES_DONE:
 
      ADD reg_frame_current, reg_frame_current, 1
@@ -2044,7 +2313,8 @@ LED_BLINK_OFF:
 LED_BLINK_DONE: 
      // Check if we should finish: flag is zero as long as it should run
      LBBO r2, reg_comm_addr, COMM_SHOULD_STOP, 4
-     QBEQ WRITE_ONE_BUFFER, r2, 0
+     QBNE CLEANUP, r2, 0
+	 JMP WRITE_ONE_BUFFER
 
 CLEANUP:
      MCASP_REG_WRITE MCASP_GBLCTL, 0x00 // Turn off McASP

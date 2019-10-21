@@ -209,8 +209,10 @@ BelaHw Bela_detectHw()
 	{
 		bool hasTlv32[4]; 
 		
-		for(int i = 0; i < 4; i++)
+		for(int i = 0; i < 4; i++) {
 			hasTlv32[i] = detectTlv32(codecI2cBus, codecI2cAddress + i);
+			printf("codec at %d = %d\n", codecI2cAddress + i, hasTlv32[i]);
+		}
 		
 		if(hasTlv32[1] || hasTlv32[2] || hasTlv32[3])
 			hw = BelaHw_BelaMiniMultiAudio;
