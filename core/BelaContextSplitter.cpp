@@ -34,6 +34,10 @@ int BelaContextSplitter::setup(unsigned int in, unsigned int out, const BelaCont
 	offsets[kAnalogOut].frames = offsetof(BelaContext, analogFrames);
 	offsets[kAnalogOut].channels = offsetof(BelaContext, analogOutChannels);
 	offsets[kAnalogOut].data = offsetof(BelaContext, analogOut);
+
+	offsets[kDigital].frames = offsetof(BelaContext, digitalFrames);
+	offsets[kDigital].channels = offsetof(BelaContext, digitalChannels);
+	offsets[kDigital].data = offsetof(BelaContext, digital);
 	return 0;
 }
 
@@ -64,6 +68,8 @@ int BelaContextSplitter::push(const BelaContext* inContext)
 		{
 			const struct streamOffsets& o = offsets[n];
 			unsigned int channels = getChannelsForStream(o, sourceCtx);
+			if(kDigital == n) // hack: we treat this as 1 channel with a 32 bit word
+				channels = 1;
 			unsigned int sourceStartFrame;
 			unsigned int destStartFrame;
 			if(kIn == direction)
@@ -195,9 +201,8 @@ bool BelaContextSplitter::contextEqual(const InternalBelaContext* ctx1, const In
 		ctx1->analogInChannels * sizeof(ctx1->analogIn[0])));
 	TEST(arrayEqual((const void*) ctx1->analogOut, (const void*) ctx2->analogOut, 
 		ctx1->analogOutChannels * sizeof(ctx1->analogOut[0])));
-	//TODO: digital
-	//TEST(arrayEqual((const void*) ctx1->digital, (const void*) ctx2->digital,
-		//ctx1->digitalFrames * sizeof(ctx1->digital[0])));
+	TEST(arrayEqual((const void*) ctx1->digital, (const void*) ctx2->digital,
+		ctx1->digitalFrames * sizeof(ctx1->digital[0])));
 	return true;
 }
 void BelaContextSplitter::contextAllocate(InternalBelaContext* ctx)

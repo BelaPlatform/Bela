@@ -32,6 +32,7 @@ private:
 		kAudioOut,
 		kAnalogIn,
 		kAnalogOut,
+		kDigital,
 		kNumStreams,
 	} stream_t;
 	struct streamOffsets {
