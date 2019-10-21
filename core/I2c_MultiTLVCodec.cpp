@@ -16,6 +16,7 @@
 I2c_MultiTLVCodec::I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
 : masterCodec(0), running(false), verbose(isVerbose)
 {
+	// for(int address = i2cAddress + 3; address >= i2cAddress; address--) {
 	for(int address = i2cAddress; address < i2cAddress + 4; address++) {
 		// Check for presence of TLV codec and take the first one we find as the master codec
 		I2c_Codec *testCodec = new I2c_Codec(i2cBus, address);
