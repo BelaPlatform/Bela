@@ -9,38 +9,55 @@ DataFifo::~DataFifo()
 	cleanup();
 }
 
-int DataFifo::setup(const std::string& name, size_t queueSize, bool blocking)
+int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool blocking, bool recreate)
 {
+	this->msgSize = msgSize;
 	struct mq_attr attr;
-	attr.mq_maxmsg = 100;
-	attr.mq_msgsize = queueSize;
+	attr.mq_maxmsg = maxMsg;
+	attr.mq_msgsize = msgSize;
 	// Check if queue already exists
 	queue = __wrap_mq_open(name.c_str(), O_RDWR);
 	if(queue != -1)
 	{
-		// queue with this name already exists
-		return -1;
+		if(recreate)
+		{
+			// if there already is a queue with this name, try to close it.
+			__wrap_mq_close(queue);
+			__wrap_mq_unlink(name.c_str());
+		}
 	}		
 	// Open a new queue
-	queue = __wrap_mq_open(name.c_str(), O_CREAT | O_RDWR | (blocking ? O_NONBLOCK : 0) , 0644, &attr);
+	int flags = O_CREAT | O_RDWR | (blocking ? 0 : O_NONBLOCK);
+	queue = __wrap_mq_open(name.c_str(), flags, 0644, &attr);
 	if(queue < 0)
 		return -errno;
-	qName = name.c_str();
+	struct mq_attr newAttr;
+	__wrap_mq_getattr(queue, &newAttr);
+	// verify that all settings have been applied (a reason for failure
+	// could be that the queue was not successfully closed above
+	if(recreate && (
+			newAttr.mq_maxmsg != attr.mq_maxmsg
+			|| newAttr.mq_msgsize != attr.mq_msgsize
+			|| ((newAttr.mq_flags & flags) == flags)
+		       )
+	  )
+		return -1;
+	qName = name;
 	return 0;
 }
 
-int DataFifo::send(char* buf, size_t size)
+int DataFifo::send(const char* buf, size_t size)
 {
-	int ret = __wrap_mq_send(queue, (char*)buf, size, 0);
+	int ret = __wrap_mq_send(queue, (const char*)buf, size, 0);
 	if(ret != 0)
 		return -errno;
 	return 0;
 }
 
-int DataFifo::receive(char* buf, size_t size)
+int DataFifo::receive(char* buf)
 {
 	unsigned int prio;
-	ssize_t ret = __wrap_mq_receive(queue, buf, size, &prio); 
+	ssize_t ret = __wrap_mq_receive(queue, buf, msgSize, &prio);
 	if(ret < 0)
 		return -errno;
 	return ret;
@@ -55,4 +72,80 @@ int DataFifo::cleanup()
 	if(ret <0)
 		return -errno;
 	return 0;
+}
+
+#include <vector>
+#undef NDEBUG
+#include <assert.h>
+#include <stdlib.h>
+static bool arrayEqual(const void* data1, const void* data2, size_t size)
+{
+	for(size_t n = 0; n < size; ++n)
+		if(((const char*)data1)[n] != ((const char*)data2)[n])
+			return false;
+	return true;
+}
+template<typename T>
+void fillArray(std::vector<T>& vec)
+{
+	for(auto& a : vec)
+		a = rand();
+}
+bool DataFifo::test()
+{
+	DataFifo df;
+	size_t msgSize = 1000;
+	size_t numMsg = 100;
+	std::vector<char> sent(msgSize * numMsg);
+	std::vector<char> received(msgSize * numMsg);
+	for(unsigned int n = 0; n < sent.size(); ++n)
+	{
+		sent[n] = n + 1;
+	}
+	int ret = df.setup("/testname", msgSize, numMsg, false);
+	assert(0 == ret);
+	ret = df.receive(received.data());
+	assert(-EAGAIN == ret);
+
+	ret = df.send(sent.data(), msgSize);
+	assert(0 == ret);
+	ret = df.receive(received.data());
+	assert(ret == msgSize);
+	assert(arrayEqual(sent.data(), received.data(), msgSize));
+
+	ret = df.send(sent.data(), msgSize * 2);
+	assert(-EMSGSIZE == ret);
+
+	size_t newsz = msgSize / 2;
+	ret = df.send(sent.data(), newsz);
+	assert(0 == ret);
+	fillArray(received);
+	ret = df.receive(received.data());
+	assert(ret == newsz);
+	assert(arrayEqual(sent.data(), received.data(), newsz));
+
+	// ensure the queue is empty
+	assert(-EAGAIN == df.receive(received.data()));
+	fillArray(received);
+	// fill up the queue
+	for(unsigned int n = 0; n < sent.size(); n += msgSize)
+	{
+		ret = df.send(&sent[n], msgSize);
+		assert(0 == ret);
+	}
+	// try to send one more message
+	ret = df.send(sent.data(), msgSize);
+	// it will fail
+	assert(-EAGAIN == ret);
+	// now drain the queue
+	for(unsigned int n = 0; n < received.size(); n += msgSize)
+	{
+		ret = df.receive(&received[n]);
+		assert(msgSize == ret);
+	}
+	assert(arrayEqual(sent.data(), received.data(), sent.size()));
+	// ensure the queue is empty
+	assert(-EAGAIN == df.receive(received.data()));
+
+	return true;
 }
