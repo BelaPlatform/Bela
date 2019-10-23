@@ -176,13 +176,6 @@ bool BelaContextSplitter::contextEqual(const InternalBelaContext* ctx1, const In
 		// ignores
 		c.audioFramesElapsed = 0;
 		//ignore arrays
-		/*
-		memset((void*)c.audioIn, 0, sizeof(c.audioIn[0])*c.audioFrames*c.audioInChannels);
-		memset((void*)c.audioOut, 0, sizeof(c.audioOut[0])*c.audioFrames*c.audioOutChannels);
-		memset((void*)c.analogIn, 0, sizeof(c.analogIn[0])*c.analogFrames*c.analogInChannels);
-		memset((void*)c.analogOut, 0, sizeof(c.analogOut[0])*c.analogFrames*c.analogOutChannels);
-		memset((void*)c.digital, 0, sizeof(c.digital[0])*c.digitalFrames);
-		*/
 		c.audioIn = 0;
 		c.audioOut = 0;
 		c.analogIn = 0;
@@ -290,7 +283,7 @@ bool BelaContextSplitter::test()
 	ctx2.digitalFrames *= factor;
 	spl2.setup(1, factor, (BelaContext*)&ctx2);
 
-	for(unsigned int k = 0; k < 10000; ++k)
+	for(unsigned int k = 0; k < 500; ++k)
 	{
 		static int count = 0;
 		for(unsigned int n = 0; n < factor; ++n)
