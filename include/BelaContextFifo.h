@@ -30,7 +30,7 @@ public:
 	 * @param fifo the fifo to write to.
 	 * @param the context to push in.
 	 */
-	void push(fifo_id_t fifo, BelaContext* context);
+	void push(fifo_id_t fifo, const BelaContext* context);
 	/**
 	 * Receive a context.
 	 *

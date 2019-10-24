@@ -30,7 +30,7 @@ int BelaContextFifo::setup(const BelaContext* context, unsigned int factor)
 	return 0;
 }
 
-void BelaContextFifo::push(fifo_id_t fifo, BelaContext* context)
+void BelaContextFifo::push(fifo_id_t fifo, const BelaContext* context)
 {
 	unsigned int& count = counts[fifo];
 	BelaContextSplitter& bcs = bcss[fifo][getCurrentBuffer(fifo)];
