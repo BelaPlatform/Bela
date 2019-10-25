@@ -57,7 +57,10 @@ BelaContext* BelaContextFifo::pop(fifo_id_t fifo)
 
 unsigned int BelaContextFifo::getCurrentBuffer(fifo_id_t fifo)
 {
-	return (counts[fifo] / kNumFifos) % kNumBuffers;
+	if(kToLong == fifo)
+		return counts[fifo] % kNumBuffers;
+	else
+		return (counts[fifo] / factor) % kNumBuffers;
 }
 
 #undef NDEBUG
