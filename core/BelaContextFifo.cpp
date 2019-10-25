@@ -15,12 +15,12 @@ int BelaContextFifo::setup(const BelaContext* context, unsigned int factor)
 	for(auto& bcs : bcss[kToShort])
 		bcs.setup(1, factor, (BelaContext*)ctx);
 
-	if(dfs[kToLong].setup("/toLong", sizeof(BelaContext*), 10, 1))
+	if(dfs[kToLong].setup("/toLong", sizeof(BelaContext*), factor * kNumBuffers, 1))
 	{
 		printf("couldn't create queue\n");
 		return -1;
 	}
-	if(dfs[kToShort].setup("/toShort", sizeof(BelaContext*), 10, 0))
+	if(dfs[kToShort].setup("/toShort", sizeof(BelaContext*), factor * kNumBuffers, 0))
 	{
 		printf("couldn't create queue\n");
 		return -1;
