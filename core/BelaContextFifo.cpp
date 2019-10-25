@@ -68,6 +68,20 @@ unsigned int BelaContextFifo::getCurrentBuffer(fifo_id_t fifo)
 #include <vector>
 #include <string.h>
 
+static void contextFill(InternalBelaContext* ctx, unsigned int start)
+{
+	for(unsigned int n = 0; n < ctx->audioFrames * ctx->audioInChannels; ++n)
+		ctx->audioIn[n] = n + start;
+	for(unsigned int n = 0; n < ctx->audioFrames * ctx->audioOutChannels; ++n)
+		ctx->audioOut[n] = n + start;
+	for(unsigned int n = 0; n < ctx->analogFrames * ctx->analogInChannels; ++n)
+		ctx->analogIn[n] = n + start;
+	for(unsigned int n = 0; n < ctx->analogFrames * ctx->analogOutChannels; ++n)
+		ctx->analogOut[n] = n + start;
+	for(unsigned int n = 0; n < ctx->digitalFrames; ++n)
+		ctx->digital[n] = n + start;
+}
+
 bool BelaContextFifo::test()
 {
 	InternalBelaContext ctx;
@@ -87,23 +101,34 @@ bool BelaContextFifo::test()
 	int ret = bcf.setup((BelaContext*)&ctx, factor);
 	assert(0 == ret);
 
+	unsigned int buffers = BelaContextFifo::kNumBuffers;
 	// short thread
-	for(unsigned int n = 0; n < factor; ++n)
-		bcf.push(kToLong, ctx);
+	std::vector<InternalBelaContext> sentCtxs(factor * buffers, ctx);
+	for(unsigned int n = 0; n < sentCtxs.size(); ++n)
+	{
+		BelaContextSplitter::contextAllocate(&sentCtxs[n]);
+		contextFill(&sentCtxs[n], n * ctx.audioFrames);
+		bcf.push(kToLong, (BelaContext*)&sentCtxs[n]);
+	}
 
 	// long thread
-	BelaContext* context = bcf.pop(kToLong);
-	assert(context);
-	//render(context, NULL);
-	bcf.push(kToShort, context);
+	for(unsigned int n = 0; n < buffers; ++n)
+	{
+		BelaContext* context = bcf.pop(kToLong);
+		assert(context);
+		//render(context, NULL);
+		bcf.push(kToShort, context);
+	}
 
 	// short thread
-	std::vector<InternalBelaContext> recCtxs(factor);
-	for(unsigned int n = 0; n < factor; ++n)
+	std::vector<InternalBelaContext> recCtxs(sentCtxs.size(), ctx);
+	for(unsigned int n = 0; n < factor * buffers; ++n)
 	{
+		BelaContextSplitter::contextAllocate(&recCtxs[n]);
 		const InternalBelaContext* rctx = (InternalBelaContext*)bcf.pop(kToShort);
+		assert(rctx);
 		BelaContextSplitter::contextCopy(rctx, &recCtxs[n]);
-		assert(BelaContextSplitter::contextEqual(&recCtxs[n], &ctx));
+		assert(BelaContextSplitter::contextEqual(&recCtxs[n], &sentCtxs[n]));
 	}
 
 	return true;
