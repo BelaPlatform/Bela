@@ -44,7 +44,7 @@ public:
 	*
 	* @return size of message on success, `-errno` otherwise
 	*/
-	int receive(char* buf);
+	int receive(char* buf, double timeoutMs = 0);
 
 	/**
 	* Cleanup queue

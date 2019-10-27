@@ -49,7 +49,7 @@ BelaContext* BelaContextFifo::pop(fifo_id_t fifo)
 	DataFifo& df = dfs[fifo];
 
 	BelaContext* ctx;
-	size_t ret = df.receive((char*)&ctx);
+	size_t ret = df.receive((char*)&ctx, 100);
 	if(sizeof(BelaContext*) != ret)
 		ctx = nullptr;
 	return ctx;

@@ -54,10 +54,40 @@ int DataFifo::send(const char* buf, size_t size)
 	return 0;
 }
 
-int DataFifo::receive(char* buf)
+int DataFifo::receive(char* buf, double timeoutMs)
 {
 	unsigned int prio;
-	ssize_t ret = __wrap_mq_receive(queue, buf, msgSize, &prio);
+	ssize_t ret;
+	if(timeoutMs)
+	{
+		struct timespec timeout;
+		__wrap_clock_gettime(CLOCK_REALTIME, &timeout);
+		struct timespec timeoutbak = timeout;
+		long oneSecondNs = 1000000000;
+		time_t timeoutS = (time_t)(timeoutMs / 1000);
+		long timeoutNs = (timeoutMs - timeoutS * 1000) * 1000000;
+		timeout.tv_sec -= timeoutS;
+		timeout.tv_nsec += timeoutNs;
+		while(timeout.tv_nsec > oneSecondNs)
+		{
+			timeout.tv_nsec -= oneSecondNs;
+			timeout.tv_sec += 1;
+		}
+#if 0
+		time_t actualS = timeoutbak.tv_sec - timeout.tv_sec;
+		long actualNs = timeoutbak.tv_nsec - timeout.tv_nsec;
+		double actual = actualS * 1000 + actualNs / 1000000.0;
+		if(actual - timeoutMs > 0.001)
+			printf("Unexpected timeout: ms: %f, bak: %lus %luns , actual: %lus %luns \n",
+					timeoutMs, timeoutbak.tv_sec, timeoutbak.tv_nsec,
+					timeout.tv_sec, timeout.tv_nsec
+					);
+#endif
+		ret = __wrap_mq_timedreceive(queue, buf, msgSize, &prio, &timeout);
+	} else {
+		ret = __wrap_mq_receive(queue, buf, msgSize, &prio);
+	}
+
 	if(ret < 0)
 		return -errno;
 	return ret;
