@@ -44,7 +44,16 @@ public:
 	BelaContext* pop();
 	void cleanup();
 	static bool contextEqual(const InternalBelaContext* ctx1, const InternalBelaContext* ctx2);
+	/**
+	 * Copy context by allocating memory as necessary.
+	 */
 	static void contextCopy(const InternalBelaContext* src, InternalBelaContext* dst);
+	/**
+	 * Copy context data between two pre-allocated contexts. The caller has
+	 * to ensure that he number of analog, audio and digital frames and
+	 * channels has to be the same between the two contexts.
+	 */
+	static void contextCopyData(const InternalBelaContext* src, InternalBelaContext* dst);
 	static void contextAllocate(InternalBelaContext* ctx);
 	static bool test();
 private:

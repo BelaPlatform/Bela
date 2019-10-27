@@ -208,19 +208,23 @@ void BelaContextSplitter::contextAllocate(InternalBelaContext* ctx)
 	ctx->digital = new uint32_t[ctx->digitalFrames];
 	ctx->multiplexerAnalogIn = nullptr; // TODO
 }
+
 void BelaContextSplitter::contextCopy(const InternalBelaContext* csrc, InternalBelaContext* cdst)
 {
 	const InternalBelaContext* src = (InternalBelaContext*)csrc;
 	InternalBelaContext* dst = (InternalBelaContext*)cdst;
 	memcpy((void*)dst, (void*)src, sizeof(InternalBelaContext));
 	contextAllocate(dst);
+	contextCopyData(src, dst);
+}
+
+void BelaContextSplitter::contextCopyData(const InternalBelaContext* src, InternalBelaContext* dst)
+{
 	memcpy((void*)dst->audioIn, (void*)src->audioIn, sizeof(src->audioIn[0])*src->audioFrames*src->audioInChannels);
 	memcpy((void*)dst->audioOut, (void*)src->audioOut, sizeof(src->audioOut[0])*src->audioFrames*src->audioOutChannels);
 	memcpy((void*)dst->analogIn, (void*)src->analogIn, sizeof(src->analogIn[0])*src->analogFrames*src->analogInChannels);
 	memcpy((void*)dst->analogOut, (void*)src->analogOut, sizeof(src->analogOut[0])*src->analogFrames*src->analogOutChannels);
 	memcpy((void*)dst->digital, (void*)src->digital, sizeof(src->digital[0])*src->digitalFrames);
-
-	return;
 }
 
 #undef NDEBUG
