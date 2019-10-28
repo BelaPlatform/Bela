@@ -25,7 +25,8 @@ class ProjectView extends View {
       return;
     }
 
-    this.emit('message', 'project-event', {func: $element.data().func, currentProject: $element.data('name')})
+    this.emit('message', 'project-event', { func: $element.attr("data-func"), currentProject: $element.attr("data-name") });
+
   }
 
   onClickOpenExample(e) {
