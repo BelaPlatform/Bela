@@ -27,6 +27,7 @@
 #include "../include/Bela.h"
 #include "../include/bela_hw_settings.h"
 #include "../include/board_detect.h"
+#include "../include/BelaContextFifo.h"
 
 // Xenomai-specific includes
 #if XENOMAI_MAJOR == 3
@@ -167,11 +168,13 @@ RT_TASK gRTAudioThread;
 #endif
 #ifdef XENOMAI_SKIN_posix
 pthread_t gRTAudioThread;
+static pthread_t gFifoThread;
 #endif
 #if XENOMAI_MAJOR == 3
 int gXenomaiInited = 0;
 #endif
 static const char gRTAudioThreadName[] = "bela-audio";
+static const char gFifoThreadName[] = "bela-audio-fifo";
 
 PRU* gPRU = NULL;
 
@@ -188,11 +191,17 @@ unsigned int gAuxiliaryTaskStackSize;
 
 // Context which holds all the audio/sensor data passed to the render routines
 InternalBelaContext gContext;
+BelaContext* gUserContext = nullptr;
 
 // User data passed in from main()
 void *gUserData;
-void (*gBelaRender)(BelaContext*, void*);
+void (*gCoreRender)(BelaContext*, void*);
+void (*gUserRender)(BelaContext*, void*);
 void (*gBelaCleanup)(BelaContext*, void*);
+static BelaContextFifo* gBcf = nullptr;
+static double gBlockDurationMs;
+
+void fifoRender(BelaContext*, void*);
 
 // initAudio() prepares the infrastructure for running PRU-based real-time
 // audio, but does not actually start the calculations.
@@ -254,7 +263,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		fprintf(stderr, "Error: no audio callback defined. Make sure you set settings->render to point to your audio callback\n");
 		return -1;
 	}
-	gBelaRender = settings->render;
 	gBelaCleanup = settings->cleanup;
 	
 	// Sanity checks
@@ -361,7 +369,43 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gContext.audioSampleRate = cfg.audioSampleRate;
 	gContext.audioInChannels = cfg.audioInChannels;
 	gContext.audioOutChannels = cfg.audioOutChannels;
-	gContext.audioFrames = settings->periodSize;
+	// only some period sizes are available, depending on the available PRU memory and channel count.
+	// when a requested period size exceeds available "native" limit, we add another thread and fifo.
+	// TODO: make the below detection smarter (e.g.: consider analog channel count, and verify numbers)
+	// TODO: validate values of audio frames.
+	unsigned int fifoFactor = 1;
+	switch(belaHw)
+	{
+		case BelaHw_Bela:
+			//nobreak
+		case BelaHw_BelaMini:
+			//nobreak
+		case BelaHw_Salt:
+			fifoFactor = settings->periodSize / 128;
+		break;
+		case BelaHw_CtagFace:
+			//nobreak
+		case BelaHw_CtagFaceBela:
+			fifoFactor = settings->periodSize / 64;
+		break;
+		case BelaHw_CtagBeast:
+			//nobreak
+		case BelaHw_CtagBeastBela:
+			fifoFactor = settings->periodSize / 32;
+		break;
+		case BelaHw_NoHw:
+		break;
+	}
+	if(1 > fifoFactor)
+		fifoFactor = 1;
+
+	if(gRTAudioVerbose)
+		printf("fifoFactor: %u\n", fifoFactor);
+
+	gContext.audioFrames = settings->periodSize / fifoFactor;
+	if(gRTAudioVerbose)
+		printf("core audioFrames: %u\n", gContext.audioFrames);
+
 	if(settings->projectName)
 	{
 		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH);
@@ -429,6 +473,22 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->detectUnderruns)
 		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
+	if(1 < fifoFactor)
+	{
+		gBcf = new BelaContextFifo;
+		if(!(gUserContext = gBcf->setup((BelaContext*)&gContext, fifoFactor)))
+		{
+			fprintf(stderr, "Error: unable to initialise BelaContextFifo\n");
+			return 1;
+		}
+		gUserRender = settings->render;
+		gCoreRender = fifoRender;
+	} else {
+		gUserContext = (BelaContext*)&gContext;
+		gUserRender = nullptr;
+		gCoreRender = settings->render;
+	}
+
 	// Use PRU for audio
 	gPRU = new PRU(&gContext, gAudioCodec);
 
@@ -457,11 +517,13 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	Bela_setHeadphoneLevel(settings->headphoneLevel);
 
+	gBlockDurationMs = gUserContext->audioFrames / gUserContext->audioSampleRate * 1000;
 	// Call the user-defined initialisation function
-	if(settings->setup && !(*settings->setup)((BelaContext *)&gContext, userData)) {
+	if(settings->setup && !(*settings->setup)(gUserContext, userData)) {
 		fprintf(stderr, "Couldn't initialise audio rendering\n");
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -476,7 +538,7 @@ void audioLoop(void *)
 		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
-	gPRU->loop(gUserData, gBelaRender, gHighPerformanceMode);
+	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode);
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
@@ -485,6 +547,43 @@ void audioLoop(void *)
 
 	if(gRTAudioVerbose == 1)
 		rt_printf("audio thread ended\n");
+}
+
+// when using fifo, this is called by PRU::loop()
+// It quickly sends the data to the fifo and retrieves data from the fifo.
+void fifoRender(BelaContext* context, void* userData)
+{
+	gBcf->push(BelaContextFifo::kToLong, context);
+	const InternalBelaContext* rctx = (InternalBelaContext*)gBcf->pop(BelaContextFifo::kToShort);
+
+	if(rctx) {
+		BelaContextSplitter::contextCopyData(rctx, (InternalBelaContext*)context);
+	}
+}
+
+// when using fifo, this is where the user-defined render() is called
+void fifoLoop(void* userData)
+{
+	if(gRTAudioVerbose)
+		rt_printf("_________________Fifo Thread!\n");
+	uint64_t audioFramesElapsed = 0;
+	while(!gShouldStop)
+	{
+		BelaContext* context = gBcf->pop(BelaContextFifo::kToLong, gBlockDurationMs * 2);
+		if(context)
+		{
+			((InternalBelaContext*)context)->audioFramesElapsed = audioFramesElapsed;
+			gUserRender(context, gUserData);
+			audioFramesElapsed += context->audioFrames;
+			gBcf->push(BelaContextFifo::kToShort, context);
+		} else {
+			if(gRTAudioVerbose)
+				rt_fprintf(stderr, "fifoTask did not receive a valid context\n");
+			usleep(1000); // TODO: this  should not be needed, given how the timeout in pop() is for a reasonable amount of time
+		}
+	}
+	if(gRTAudioVerbose)
+		rt_printf("fifo thread ended\n");
 }
 
 static int startAudioInline(){
@@ -583,9 +682,29 @@ int Bela_startAudio()
 		fprintf(stderr,"Error: unable to start Xenomai audio thread: %s \n" ,strerror(-ret));
       		return -1;
 	}
+	if(gBcf)
+	{
+		fprintf(stderr,"Error: cannot use SKIN_native with audio fifo\n");
+		return -1;
+	}
 #endif
 #ifdef XENOMAI_SKIN_posix
-	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, BELA_AUDIO_PRIORITY, stackSize, (pthread_callback_t*)audioLoop, NULL);
+	int audioPriority;
+	if(gBcf)
+	{
+		//if there is a fifo, the core audio thread below will need a higher priority
+		audioPriority = BELA_AUDIO_PRIORITY + 1;
+		// and we start an extra thread with usual audio priority in which the user's render() will run
+		ret = create_and_start_thread(&gFifoThread, gFifoThreadName, audioPriority - 1, stackSize, (pthread_callback_t*)fifoLoop, NULL);
+		if(ret)
+		{
+			fprintf(stderr, "Error: unable to start Xenomai fifo audio thread: %d %s\n", ret, strerror(-ret));
+			return -1;
+		}
+	} else {
+		audioPriority = BELA_AUDIO_PRIORITY;
+	}
+	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, audioPriority, stackSize, (pthread_callback_t*)audioLoop, NULL);
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to start Xenomai audio thread: %d %s\n", ret, strerror(-ret));
@@ -619,6 +738,12 @@ void Bela_stopAudio()
 	{
 		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));
 	}
+	if(gBcf)
+	{
+		ret = __wrap_pthread_join(gFifoThread, &threadReturnValue);
+		if(ret)
+			fprintf(stderr, "Failed to join audio fifo thread: (%d) %s\n", ret, strerror(ret));
+	}
 #endif
 
 	Bela_stopAllAuxiliaryTasks();
@@ -628,7 +753,7 @@ void Bela_stopAudio()
 void Bela_cleanupAudio()
 {
 	if(gBelaCleanup)
-		(*gBelaCleanup)((BelaContext *)&gContext, gUserData);
+		(*gBelaCleanup)(gUserContext, gUserData);
 
 	disable_runfast();
 	// Shut down the prussdrv system
@@ -646,6 +771,7 @@ void Bela_cleanupAudio()
 		delete gPRU;
 	if(gAudioCodec != 0)
 		delete gAudioCodec;
+	delete gBcf;
 
 	if(gAmplifierMutePin >= 0)
 		gpio_unexport(gAmplifierMutePin);
