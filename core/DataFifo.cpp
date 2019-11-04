@@ -62,7 +62,7 @@ int DataFifo::receive(char* buf, double timeoutMs)
 	{
 		struct timespec timeout;
 		__wrap_clock_gettime(CLOCK_REALTIME, &timeout);
-		struct timespec timeoutbak = timeout;
+		//struct timespec timeoutbak = timeout;
 		long oneSecondNs = 1000000000;
 		time_t timeoutS = (time_t)(timeoutMs / 1000);
 		long timeoutNs = (timeoutMs - timeoutS * 1000) * 1000000;
