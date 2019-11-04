@@ -44,12 +44,12 @@ void BelaContextFifo::push(fifo_id_t fifo, const BelaContext* context)
 	}
 }
 
-BelaContext* BelaContextFifo::pop(fifo_id_t fifo)
+BelaContext* BelaContextFifo::pop(fifo_id_t fifo, double timeoutMs)
 {
 	DataFifo& df = dfs[fifo];
 
 	BelaContext* ctx;
-	size_t ret = df.receive((char*)&ctx, 100);
+	size_t ret = df.receive((char*)&ctx, timeoutMs);
 	if(sizeof(BelaContext*) != ret)
 		ctx = nullptr;
 	return ctx;

@@ -37,7 +37,7 @@ public:
 	 * @param fifoId the fifo to write tp
 	 * @return the context, or NULL if no context is ready to be retrieved.
 	 */
-	BelaContext* pop(fifo_id_t fifo);
+	BelaContext* pop(fifo_id_t fifo, double timeoutMs = 100);
 	static constexpr unsigned int kNumBuffers = 2;
 	static bool test();
 private:
