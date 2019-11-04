@@ -274,9 +274,9 @@ bool BelaContextSplitter::test()
 
 	// test casting
 	{
-		BelaContext* bcp = ctx3;
+		BelaContext* bcp = (BelaContext*)&ctx3;
 		assert(contextEqual((InternalBelaContext*)bcp, &ctx3));
-		BelaContext bc = *ctx3;
+		BelaContext bc = ctx3;
 		assert(contextEqual((InternalBelaContext*)&bc, &ctx3));
 	}
 
