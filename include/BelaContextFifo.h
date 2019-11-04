@@ -23,7 +23,7 @@ public:
 	 * @param factor the number of 
 	 *
 	 */
-	int setup(const BelaContext* context, unsigned int factor);
+	BelaContext* setup(const BelaContext* context, unsigned int factor);
 	/**
 	 * Send in a context.
 	 *

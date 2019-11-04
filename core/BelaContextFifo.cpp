@@ -1,6 +1,6 @@
 #include <BelaContextFifo.h>
 
-int BelaContextFifo::setup(const BelaContext* context, unsigned int factor)
+BelaContext* BelaContextFifo::setup(const BelaContext* context, unsigned int factor)
 {
 	this->factor = factor;
 	for(auto& bcs : bcss[kToLong])
@@ -18,16 +18,16 @@ int BelaContextFifo::setup(const BelaContext* context, unsigned int factor)
 	if(dfs[kToLong].setup("/toLong", sizeof(BelaContext*), factor * kNumBuffers, 1))
 	{
 		printf("couldn't create queue\n");
-		return -1;
+		return nullptr;
 	}
 	if(dfs[kToShort].setup("/toShort", sizeof(BelaContext*), factor * kNumBuffers, 0))
 	{
 		printf("couldn't create queue\n");
-		return -1;
+		return nullptr;
 	}
 
 	counts.fill(0);
-	return 0;
+	return bcss[kToLong][0].getContext();
 }
 
 void BelaContextFifo::push(fifo_id_t fifo, const BelaContext* context)
@@ -98,8 +98,9 @@ bool BelaContextFifo::test()
 
 	unsigned int factor = 4;
 	BelaContextFifo bcf;
-	int ret = bcf.setup((BelaContext*)&ctx, factor);
-	assert(0 == ret);
+
+	BelaContext* tmp = bcf.setup((BelaContext*)&ctx, factor);
+	assert(tmp);
 
 	unsigned int buffers = BelaContextFifo::kNumBuffers;
 	// short thread

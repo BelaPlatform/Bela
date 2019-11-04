@@ -43,6 +43,13 @@ public:
 	 */
 	BelaContext* pop();
 	void cleanup();
+	/**
+	 *
+	 * Return one of the output contexts, initialised, but containing
+	 * invalid data.
+	 */
+	BelaContext* getContext();
+
 	static bool contextEqual(const InternalBelaContext* ctx1, const InternalBelaContext* ctx2);
 	/**
 	 * Copy context by allocating memory as necessary.

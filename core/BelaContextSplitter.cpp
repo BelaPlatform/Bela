@@ -151,6 +151,10 @@ void BelaContextSplitter::cleanup()
 	outContexts.clear();
 }
 
+BelaContext* BelaContextSplitter::getContext()
+{
+	return (BelaContext*)&outContexts[0];
+}
 #include <string.h>
 static bool arrayEqual(const void* data1, const void* data2, size_t size)
 {
