@@ -1,5 +1,6 @@
 /***** SampleStream.cpp *****/
 #include <SampleStream.h>
+#include <string>
 
 SampleStream::SampleStream(const char* filename, int numChannels, int bufferLength) {
     
@@ -30,8 +31,8 @@ int SampleStream::openFile(const char* filename, int numChannels, int bufferLeng
     
     sf_close(sndfile);
     sfinfo.format = 0; 
-    if (!(sndfile = sf_open (string(filename).c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << filename << ": " << sf_strerror(sndfile) << endl;
+    if (!(sndfile = sf_open (std::string(filename).c_str(), SFM_READ, &sfinfo))) {
+		std::cout << "Couldn't open file " << filename << ": " << sf_strerror(sndfile) << std::endl;
 		return 1;
 	}
     
@@ -42,7 +43,7 @@ int SampleStream::openFile(const char* filename, int numChannels, int bufferLeng
     
     for(int i=0;i<2;i++) {
         if(gSampleBuf[i] != NULL) {
-            cout << "I AM NOT A NULL" << endl;
+            std::cout << "I AM NOT A NULL" << std::endl;
             for(int ch=0;ch<numChannels;ch++) {
                 if(gSampleBuf[i][ch].samples != NULL)
                     delete[] gSampleBuf[i][ch].samples;
@@ -85,7 +86,7 @@ int SampleStream::openFile(const char* filename, int numChannels, int bufferLeng
         }
     }
     
-    cout << "Loaded " << filename << endl;
+    std::cout << "Loaded " << filename << std::endl;
     
     gBusy = 0;
     
@@ -220,7 +221,7 @@ int SampleStream::getSamples(const char* file, float *buf, int channel, int star
 	int numChannelsInFile = sfinfo.channels;
 	if(numChannelsInFile < channel+1)
 	{
-		cout << "Error: " << file << " doesn't contain requested channel" << endl;
+		std::cout << "Error: " << file << " doesn't contain requested channel" << std::endl;
 		return 1;
 	}
     
@@ -228,7 +229,7 @@ int SampleStream::getSamples(const char* file, float *buf, int channel, int star
     
     if(frameLen <= 0 || startFrame < 0 || endFrame <= 0 || endFrame > sfinfo.frames)
 	{
-	    cout << "Error: " << file << " invalid frame range requested" << endl;
+	    std::cout << "Error: " << file << " invalid frame range requested" << std::endl;
 		return 1;
 	}
     
@@ -252,7 +253,7 @@ int SampleStream::getSamples(const char* file, float *buf, int channel, int star
 			scale = 1.0 ;
 		else
 			scale = 32700.0 / scale ;
-		cout << "File samples scale = " << scale << endl;
+		std::cout << "File samples scale = " << scale << std::endl;
 
 		for (m = 0; m < frameLen; m++)
 			tempBuf[m] *= scale;

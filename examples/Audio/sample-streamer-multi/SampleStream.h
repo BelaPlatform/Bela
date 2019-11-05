@@ -6,14 +6,11 @@
 #define SAMPLESTREAM_H_
 
 #include <SampleData.h>
-#include <string>
 #include <Bela.h>
 
 #include <libraries/sndfile/sndfile.h>	// to load audio files
 #include <iostream>
 #include <cstdlib>
-
-using namespace std;
 
 class SampleStream
 {

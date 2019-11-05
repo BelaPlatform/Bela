@@ -29,7 +29,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #define NUM_CHANNELS 2
 
-string gFilename = "waves.wav";
+std::string gFilename = "waves.wav";
 int gStartFrame = 44100;
 int gEndFrame = 88200;
 int gFrameRange;

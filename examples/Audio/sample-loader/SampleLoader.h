@@ -6,23 +6,21 @@
 #include <iostream>
 #include <cstdlib>
 
-using namespace std;
-
 // Load samples from file
-int getSamples(string file, float *buf, int channel, int startFrame, int endFrame)
+int getSamples(std::string file, float *buf, int channel, int startFrame, int endFrame)
 {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
+		std::cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << std::endl;
 		return 1;
 	}
 
 	int numChannelsInFile = sfinfo.channels;
 	if(numChannelsInFile < channel+1)
 	{
-		cout << "Error: " << file << " doesn't contain requested channel" << endl;
+		std::cout << "Error: " << file << " doesn't contain requested channel" << std::endl;
 		return 1;
 	}
     
@@ -30,7 +28,7 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
     
     if(frameLen <= 0 || startFrame < 0 || endFrame <= 0 || endFrame > sfinfo.frames)
 	{
-		cout << "Error: " << file << " invalid frame range requested" << endl;
+		std::cout << "Error: " << file << " invalid frame range requested" << std::endl;
 		return 1;
 	}
     
@@ -53,26 +51,26 @@ int getSamples(string file, float *buf, int channel, int startFrame, int endFram
 	return 0;
 }
 
-int getNumChannels(string file) {
+int getNumChannels(std::string file) {
     
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
+		std::cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << std::endl;
 		return -1;
 	}
 
 	return sfinfo.channels;
 }
 
-int getNumFrames(string file) {
+int getNumFrames(std::string file) {
     
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;
 	if (!(sndfile = sf_open (file.c_str(), SFM_READ, &sfinfo))) {
-		cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << endl;
+		std::cout << "Couldn't open file " << file << ": " << sf_strerror(sndfile) << std::endl;
 		return -1;
 	}
 
