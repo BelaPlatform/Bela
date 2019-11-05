@@ -151,55 +151,100 @@ void Midi::enableParser(bool enable){
 	}
 }
 
-void Midi::readInputLoop(void* obj){
-	Midi* that = (Midi*)obj;
-	unsigned short revents;
-	int npfds = snd_rawmidi_poll_descriptors_count(that->alsaIn);
-	struct pollfd* pfds = (struct pollfd*)alloca(npfds * sizeof(struct pollfd));
-	snd_rawmidi_poll_descriptors(that->alsaIn, pfds, npfds);
-
-	while(!gShouldStop){ 
-		int maxBytesToRead = that->inputBytes.size() - that->inputBytesWritePointer;
-		int timeout = 50; // ms
-		int err = poll(pfds, npfds, timeout);
-		if (err < 0) {
-			fprintf(stderr, "poll failed: %s", strerror(errno));
-			break;
-		}
-		if ((err = snd_rawmidi_poll_descriptors_revents(that->alsaIn, pfds, npfds, &revents)) < 0) {
-			fprintf(stderr, "cannot get poll events: %s", snd_strerror(-err));
-			continue;
-		}
-		if (revents & (POLLERR | POLLHUP))
-			break;
-		if (!(revents & POLLIN))
-			continue;	
-		// else some data is available!
-		int ret = snd_rawmidi_read(
-			that->alsaIn,
-			&that->inputBytes[that->inputBytesWritePointer],
-			sizeof(midi_byte_t)*maxBytesToRead
-		);
-		if(ret < 0){
-			// read() would return EAGAIN when no data are available to read just now
-			if(-ret != EAGAIN){ 
-				fprintf(stderr, "Error while reading midi %s\n", strerror(-ret));
-			}
-			continue;
-		}
-		that->inputBytesWritePointer += ret;
-		if(that->inputBytesWritePointer == that->inputBytes.size()){ //wrap pointer around
-			that->inputBytesWritePointer = 0;
-		}
-
-		if(that->parserEnabled == true && ret > 0){ // if the parser is enabled and there is new data, send the data to it
-			int input;
-			while((input=that->_getInput()) >= 0){
-				midi_byte_t inputByte = (midi_byte_t)(input);
-				that->inputParser->parse(&inputByte, 1);
-			}
+int Midi::attemptRecoveryRead()
+{
+	snd_rawmidi_close(alsaIn);
+	alsaIn = NULL;
+	printf("MIDI: attempting to reopen input %s\n", inPort.c_str());
+	while(!gShouldStop)
+	{
+		int err = snd_rawmidi_open(&alsaIn, NULL, inPort.c_str(), SND_RAWMIDI_NONBLOCK);
+		if (err) {
+			usleep(100000);
+		} else {
+			printf("MIDI: Successfully reopened input %s\n", inPort.c_str());
+			return 0;
 		}
 	}
+	return -1;
+}
+
+void Midi::readInputLoop(void* obj){
+	Midi* that = (Midi*)obj;
+	while(!gShouldStop){
+		unsigned short revents;
+		int npfds = snd_rawmidi_poll_descriptors_count(that->alsaIn);
+		struct pollfd* pfds = (struct pollfd*)alloca(npfds * sizeof(struct pollfd));
+		snd_rawmidi_poll_descriptors(that->alsaIn, pfds, npfds);
+
+		while(!gShouldStop){
+			int maxBytesToRead = that->inputBytes.size() - that->inputBytesWritePointer;
+			int timeout = 50; // ms
+			int err = poll(pfds, npfds, timeout);
+			if (err < 0) {
+				fprintf(stderr, "poll failed: %s", strerror(errno));
+				break;
+			}
+			if ((err = snd_rawmidi_poll_descriptors_revents(that->alsaIn, pfds, npfds, &revents)) < 0) {
+				fprintf(stderr, "cannot get poll events: %s", snd_strerror(-err));
+				break;
+			}
+			if (revents & (POLLERR | POLLHUP | POLLNVAL))
+			{
+				break;
+			}
+			if (!(revents & POLLIN))
+			{
+				continue;	
+			}
+			// else some data is available!
+			int ret = snd_rawmidi_read(
+				that->alsaIn,
+				&that->inputBytes[that->inputBytesWritePointer],
+				sizeof(midi_byte_t)*maxBytesToRead
+			);
+			if(ret < 0){
+				// read() would return EAGAIN when no data are available to read just now
+				if(-ret != EAGAIN){ 
+					fprintf(stderr, "Error while reading midi %s\n", strerror(-ret));
+					break;
+				}
+				continue;
+			}
+			that->inputBytesWritePointer += ret;
+			if(that->inputBytesWritePointer == that->inputBytes.size()){ //wrap pointer around
+				that->inputBytesWritePointer = 0;
+			}
+
+			if(that->parserEnabled == true && ret > 0){ // if the parser is enabled and there is new data, send the data to it
+				int input;
+				while((input=that->_getInput()) >= 0){
+					midi_byte_t inputByte = (midi_byte_t)(input);
+					that->inputParser->parse(&inputByte, 1);
+				}
+			}
+		}
+		if(!gShouldStop)
+			that->attemptRecoveryRead();
+	}
+}
+
+int Midi::attemptRecoveryWrite()
+{
+	snd_rawmidi_close(alsaOut);
+	alsaOut = NULL;
+	printf("MIDI: attempting to reopen output %s\n", outPort.c_str());
+	while(!gShouldStop)
+	{
+		int err = snd_rawmidi_open(NULL, &alsaOut, outPort.c_str(), SND_RAWMIDI_NONBLOCK);
+		if (err) {
+			usleep(100000);
+		} else {
+			printf("MIDI: Successfully reopened output %s\n", outPort.c_str());
+			return 0;
+		}
+	}
+	return -1;
 }
 
 void Midi::writeOutputLoop(void* obj){
@@ -211,35 +256,41 @@ void Midi::writeOutputLoop(void* obj){
 		return;
 	}
 	void* data = &that->outputBytes.front();
-	struct pollfd fds = {
-		pipe_fd,
-		POLLIN,
-		0
-	}; 
 	while(!gShouldStop){
-		//TODO: C++11 would allow to use outputBytes.data() instead of &outputBytes.front()
-		int timeout = 50; //ms
-		int ret = poll(&fds, 1, timeout);
-		unsigned int revents = fds.revents;
-		if (revents & (POLLERR | POLLHUP))
-			break;
-		if (!(revents & POLLIN))
-			continue;	
-		// else some data is available!
-		if(revents & POLLIN){
-			// there is data available
-			ret = read(pipe_fd, data, that->outputBytes.size());
-			if(ret > 0){
-				//printf("obtained %d bytes: writing\n", ret);
-				// write the received message to the output
-				ret = snd_rawmidi_write(that->alsaOut, data, ret);
-				// make sure it is written
-				// NOTE:using _drain actually increases the latency
-				// under heavy load, so we leave it out and
-				// leave it to the driver to figure out.
-				//snd_rawmidi_drain(that->alsaOut);
+		struct pollfd fds = {
+			pipe_fd,
+			POLLIN,
+			0
+		}; 
+		while(!gShouldStop){
+			//TODO: C++11 would allow to use outputBytes.data() instead of &outputBytes.front()
+			int timeout = 50; //ms
+			int ret = poll(&fds, 1, timeout);
+			unsigned int revents = fds.revents;
+			if (revents & (POLLERR | POLLHUP))
+				break;
+			if (!(revents & POLLIN))
+				continue;	
+			// else some data is available!
+			if(revents & POLLIN){
+				// there is data available
+				ret = read(pipe_fd, data, that->outputBytes.size());
+				if(ret > 0){
+					//printf("obtained %d bytes: writing\n", ret);
+					// write the received message to the output
+					ret = snd_rawmidi_write(that->alsaOut, data, ret);
+					if(ret < 0)
+						break;
+					// make sure it is written
+					// NOTE:using _drain actually increases the latency
+					// under heavy load, so we leave it out and
+					// leave it to the driver to figure out.
+					//snd_rawmidi_drain(that->alsaOut);
+				}
 			}
 		}
+		if(!gShouldStop)
+			that->attemptRecoveryWrite();
 	}
 	close(pipe_fd);
 }
@@ -248,11 +299,12 @@ int Midi::readFrom(const char* port){
 	if(port == NULL){
 		port = defaultPort;
 	}
+	inPort = port;
 	int size = snprintf(inId, 0, "bela-midiIn_%s", port);
 	inId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(inId, size + 1, "bela-midiIn_%s", port);
 
-	int err = snd_rawmidi_open(&alsaIn,NULL,port,SND_RAWMIDI_NONBLOCK);
+	int err = snd_rawmidi_open(&alsaIn, NULL, inPort.c_str(), SND_RAWMIDI_NONBLOCK);
 	if (err) {
 		return err;
 	}
@@ -266,6 +318,7 @@ int Midi::writeTo(const char* port){
 	if(port == NULL){
 		port = defaultPort;
 	}
+	outPort = port;
 	int size = snprintf(outId, 0, "bela-midiOut_%s", port);
 	outId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(outId, size + 1, "bela-midiOut_%s", port);
@@ -292,7 +345,7 @@ int Midi::writeTo(const char* port){
 		fprintf(stderr, "Error while creating pipe %s: %s\n", outId, strerror(-ret));
 		return -1;
 	}
-	int err = snd_rawmidi_open(NULL, &alsaOut, port,0);
+	int err = snd_rawmidi_open(NULL, &alsaOut, outPort.c_str(), 0);
 	if (err) {
 		return err;
 	}
