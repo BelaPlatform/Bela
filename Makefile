@@ -157,8 +157,6 @@ ifeq ($(SHOULD_BUILD),true)
 BUILD_DIRS+=$(PROJECT_DIR)/build
 endif
 endif
-#create build directories, should probably be conditional to PROJECT or lib
-$(shell mkdir -p  $(BUILD_DIRS) lib)
 
 OUTPUT_FILE?=$(PROJECT_DIR)/$(PROJECT)
 RUN_FROM?=$(PROJECT_DIR)
@@ -341,20 +339,30 @@ ifeq ($(DISTCC),1)
 endif
 
 ALL_DEPS=
-ASM_SRCS := $(wildcard $(PROJECT_DIR)/*.S)
+define find_files
+$(shell find $(PROJECT_DIR) -type f -name "$(1)")
+endef
+ASM_SRCS := $(call find_files,*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
 
-P_SRCS := $(wildcard $(PROJECT_DIR)/*.p)
+P_SRCS := $(call find_files,*.p)
 P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
 
-C_SRCS := $(wildcard $(PROJECT_DIR)/*.c)
+C_SRCS := $(call find_files,*.c)
 C_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.o)))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
 
-CPP_SRCS := $(wildcard $(PROJECT_DIR)/*.cpp)
-CPP_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.o)))
+CPP_SRCS := $(call find_files,*.cpp)
+CPP_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(CPP_SRCS:.cpp=.o))
+
+BUILD_DIRS += $(dir $(CPP_OBJS))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
+#create build directories, should probably be conditional to PROJECT or li
+#TODO: currently `make clean run PROJECT=...` will fail when the project has
+#subfolders, because `clean` will remove them after they have been created
+#below.
+$(shell mkdir -p  $(BUILD_DIRS) lib)
 
 PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
