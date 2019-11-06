@@ -29,7 +29,7 @@ if [ "$1" = "--examples" ]
 then
 	for e in `cd examples/$EXAMPLE_FOLDER/ && ls`
 	do
-		if [ "$e" != salt-demo ]
+		if [ "$e" != salt-demo ] && [ -d "$e" ]
 		then
 			PROJECTNAME=loop_$e
 			echo Building project $PROJECTNAME

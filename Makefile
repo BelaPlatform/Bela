@@ -145,7 +145,7 @@ $(info Automatically detected PROJECT_TYPE: $(PROJECT_TYPE) )
 endif
 ifeq ($(PROJECT_TYPE),invalid)
 ifeq ($(HAS_RUN_FILE),false)
-$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(CSOUND_FILE) or $(notdir $(RUN_FILE)) file )
+$(error Invalid/empty project. A project needs to have at least one .cpp or .c or .cc or $(notdir $(LIBPD_FILE)) or $(notdir $(SUPERCOLLIDER_FILE)) or $(notdir $(CSOUND_FILE) or $(notdir $(RUN_FILE)) file ))
 endif
 endif
 
