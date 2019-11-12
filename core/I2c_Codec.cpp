@@ -16,8 +16,8 @@
 
 #define TLV320_DSP_MODE
 
-I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
-: dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0),
+I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
+: codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0), 
   master(true), running(false)
 {
 	setVerbose(isVerbose);
@@ -96,12 +96,12 @@ int I2c_Codec::startAudio(int dual_rate, int is_master, int tdm_mode, int slotSi
 	}
 
 	if(is_master) {
-		if(writeRegister(0x08, 0xC0))	// Audio serial control register A: BLCK, WCLK outputs
-			return 1;
+		if(writeRegister(0x08, 0xE0))	// Audio serial control register A: BLCK, WCLK outputs,
+			return 1;					// DOUT tri-state when inactive
 	}
 	else {
-		if(writeRegister(0x08, 0x00))	// Audio serial control register A: BLCK, WCLK inputs
-			return 1;
+		if(writeRegister(0x08, 0x20))	// Audio serial control register A: BLCK, WCLK inputs,
+			return 1;					// DOUT tri-state when inactive
 	}
 
 	if(tdm_mode) {
@@ -163,7 +163,7 @@ int I2c_Codec::startAudio(int dual_rate, int is_master, int tdm_mode, int slotSi
 			return 1;
 	}
 
-	//Set-up hardware high-pass filter for DC removal
+	//Set-up hardware high-pass filter for DC removal -- TLVTODO: disable
 	if(configureDCRemovalIIR())
 		return 1;
 	if(writeRegister(25, 0b10000000))	// Enable mic bias 2.5V
@@ -232,7 +232,7 @@ int I2c_Codec::configureDCRemovalIIR(){
 	//
 	//  Config Page 0 commands
 	//
-	if(writeRegister(0x0C, 0x50))	// Digital filter register: enable HPF on L&R Channels
+	if(writeRegister(0x0C, 0x50))	// Digital filter register: enable HPF on L&R Channels -- TLVTODO: 0x00 for disabled
 		return 1;
 	if(writeRegister(0x6B, 0xC0))	// HPF coeff select register: Use programmable coeffs
 		return 1;
@@ -241,7 +241,7 @@ int I2c_Codec::configureDCRemovalIIR(){
 	if(writeRegister(0x00, 0x01))	//Page 1/Register 0: Page Select Register
 		return 1;
 	//
-	//  Config Page 0 commands
+	//  Config Page 1 commands
 	//
 
 	//Left Channel HPF Coeffiecient Registers
@@ -488,10 +488,20 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 			return 1;
 		if(writeRegister(0x16, 0x7C))	// Line1R disabled; right ADC powered up with soft step
 			return 1;
-		if(writeRegister(0x11, (volumeBits << 4) | 0x0F))	// Line2L connected to left ADC
-			return 1;
-		if(writeRegister(0x12, volumeBits | 0xF0))		    // Line2R connected to right ADC
-			return 1;
+		
+		if(codecType == TLV320AIC3106) {
+			// Configure inputs as fully differential, weak biasing
+			if(writeRegister(0x14, (volumeBits << 3) | 0x84))	// Line2L connected to left ADC
+				return 1;
+			if(writeRegister(0x17, (volumeBits << 3) | 0x84))	// Line2R connected to right ADC
+				return 1;			
+		}
+		else {	// TLV320AIC3104
+			if(writeRegister(0x11, (volumeBits << 4) | 0x0F))	// Line2L connected to left ADC
+				return 1;
+			if(writeRegister(0x12, volumeBits | 0xF0))		    // Line2R connected to right ADC
+				return 1;
+		}
 	}
 
 	return 0;
@@ -578,8 +588,8 @@ int I2c_Codec::stopAudio()
 		return 1;
 	if(writeRegister(0x03, 0x11))		// PLL register A: disable
 		return 1;
-	if(writeRegister(0x01, 0x80))		// Reset codec to defaults
-		return 1;
+	//if(writeRegister(0x01, 0x80))		// Reset codec to defaults
+	//	return 1;
 
 	running = false;
 	return 0;
@@ -610,7 +620,7 @@ int I2c_Codec::disable(){
 			return 1;
 	}
 	else {
-		if (writeRegister(0x08, 0x00)) // Leave codec in slave mode
+		if (writeRegister(0x08, 0x20)) // Leave codec in slave mode
 			return 1;
 	}
 	if(writeRegister(0x03, 0x11)) // PLL register A: disable

@@ -855,9 +855,12 @@ int PRU::testPruError()
 				verbose && rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
 				ret = 1;
 		}
+		codec->stopAudio();
 		codec->reset();
-		codec->initCodec();
-		codec->startAudio(0);
+		//codec->initCodec();
+		if(codec->startAudio(0)) {
+			rt_fprintf(stderr, "Error restarting codec\n");
+		}
 		pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
                 // TODO: should restart PRU and codec from scratch
 		return ret;
