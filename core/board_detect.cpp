@@ -64,7 +64,7 @@ static std::string trim(std::string const& str)
 // Returns false if the Tlv32 codec is not detected
 static bool detectTlv32(int bus, int address)
 {
-	I2c_Codec codec(bus, address);
+	I2c_Codec codec(bus, address, I2c_Codec::TLV320AIC3104);
 	// I2c_Codec codec(i2cBus, i2cAddress); // get these variable from RTAudio.cpp
 	int ret = codec.initCodec();
 	if (ret == 0)

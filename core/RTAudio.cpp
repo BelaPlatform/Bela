@@ -495,7 +495,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
         else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
         if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace && belaHw != BelaHw_BelaMiniMultiAudio)
-                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 		if(belaHw == BelaHw_BelaMiniMultiAudio)
 			gI2cMultiTLVCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
 		

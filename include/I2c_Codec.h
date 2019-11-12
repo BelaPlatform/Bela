@@ -27,6 +27,11 @@ class I2c_Codec : public I2c, public AudioCodec
 	short unsigned int pllP;
 	short unsigned int pllR;
 public:
+	typedef enum {
+		TLV320AIC3104 = 0,
+		TLV320AIC3106,
+	} CodecType;
+	
 	int writeRegister(unsigned int reg, unsigned int value);
 
 	int initCodec();
@@ -61,11 +66,12 @@ public:
 	int readI2C();
 	void setVerbose(bool isVerbose);
 
-	I2c_Codec(int i2cBus, int I2cAddress, bool verbose = false);
+	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
 	~I2c_Codec();
 
 private:
 	int configureDCRemovalIIR(); //called by startAudio()
+	int codecType;
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;
 	int hpVolumeHalfDbs;
