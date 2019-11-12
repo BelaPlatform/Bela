@@ -70,7 +70,7 @@ public:
 	~I2c_Codec();
 
 private:
-	int configureDCRemovalIIR(); //called by startAudio()
+	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;

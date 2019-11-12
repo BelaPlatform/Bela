@@ -162,10 +162,17 @@ int I2c_Codec::startAudio(int dual_rate, int is_master, int tdm_mode, int slotSi
 		if(writeRegister(0x66, 0x82))	// Clock generation control register: use BCLK, PLL N = 2
 			return 1;
 	}
-
-	//Set-up hardware high-pass filter for DC removal -- TLVTODO: disable
-	if(configureDCRemovalIIR())
-		return 1;
+	
+	//Set-up hardware high-pass filter for DC removal
+	if(codecType == TLV320AIC3104) {
+		if(configureDCRemovalIIR(true))
+			return 1;
+	}
+	else {
+		// Disable DC blocking for differential analog inputs
+		if(configureDCRemovalIIR(false))
+			return 1;
+	}
 	if(writeRegister(25, 0b10000000))	// Enable mic bias 2.5V
 		return 1;
 
@@ -223,12 +230,18 @@ int I2c_Codec::startAudio(int dual_rate, int is_master, int tdm_mode, int slotSi
 //          The selected cut-off should be acceptable up to 96 kHz sampling rate.
 //
 
-int I2c_Codec::configureDCRemovalIIR(){
+int I2c_Codec::configureDCRemovalIIR(bool enable){
 
 	//Explicit Switch to config register page 0:
 	if(writeRegister(0x00, 0x00))	//Page 1/Register 0: Page Select Register
 		return 1;
 
+	if(!enable) {
+		if(writeRegister(0x0C, 0x00))	// Digital filter register: disable HPF on L&R Channels 
+			return 1;		
+		return 0;
+	}
+	
 	//
 	//  Config Page 0 commands
 	//
