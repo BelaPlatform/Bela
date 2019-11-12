@@ -45,6 +45,53 @@ var Lock_1 = require("./Lock");
 // only the primitive file and directory manipulation methods should touch the lock
 // OR the filesystem, in the whole app
 var lock = new Lock_1.Lock();
+function commit(path) {
+    return __awaiter(this, void 0, void 0, function () {
+        var fd;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fs.openAsync(path, 'r')];
+                case 1:
+                    fd = _a.sent();
+                    return [4 /*yield*/, fs.fsyncAsync(fd)];
+                case 2:
+                    _a.sent();
+                    return [4 /*yield*/, fs.closeAsync(fd)];
+                case 3:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function commit_folder(path) {
+    return __awaiter(this, void 0, void 0, function () {
+        var list, _i, list_1, file_path;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, commit(path)];
+                case 1:
+                    _a.sent();
+                    return [4 /*yield*/, deep_read_directory(path)];
+                case 2:
+                    list = _a.sent();
+                    _i = 0, list_1 = list;
+                    _a.label = 3;
+                case 3:
+                    if (!(_i < list_1.length)) return [3 /*break*/, 6];
+                    file_path = list_1[_i];
+                    return [4 /*yield*/, commit(path + "/" + file_path.name)];
+                case 4:
+                    _a.sent();
+                    _a.label = 5;
+                case 5:
+                    _i++;
+                    return [3 /*break*/, 3];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
 // primitive file and directory manipulation
 function write_file(file_path, data) {
     return __awaiter(this, void 0, void 0, function () {
@@ -55,15 +102,18 @@ function write_file(file_path, data) {
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, , 4, 5]);
+                    _a.trys.push([2, , 5, 6]);
                     return [4 /*yield*/, fs.outputFileAsync(file_path, data)];
                 case 3:
                     _a.sent();
-                    return [3 /*break*/, 5];
+                    return [4 /*yield*/, commit(file_path)];
                 case 4:
+                    _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                case 6: return [2 /*return*/];
             }
         });
     });
@@ -80,15 +130,18 @@ function write_folder(file_path) {
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, , 4, 5]);
+                    _a.trys.push([2, , 5, 6]);
                     return [4 /*yield*/, fs.mkdirSync(file_path)];
                 case 3:
                     _a.sent();
-                    return [3 /*break*/, 5];
+                    return [4 /*yield*/, commit(file_path)];
                 case 4:
+                    _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                case 6: return [2 /*return*/];
             }
         });
     });
@@ -151,17 +204,20 @@ function rename_file(src, dest) {
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, , 4, 5]);
+                    _a.trys.push([2, , 5, 6]);
                     console.log('source: ' + src);
                     console.log('dest: ' + dest);
                     return [4 /*yield*/, fs.moveAsync(src, dest, { overwrite: true })];
                 case 3:
                     _a.sent();
-                    return [3 /*break*/, 5];
+                    return [4 /*yield*/, commit(dest)];
                 case 4:
+                    _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                case 6: return [2 /*return*/];
             }
         });
     });
@@ -255,7 +311,17 @@ function copy_directory(src_path, dest_path) {
                 case 4:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                case 5: 
+                // TODO: this would normally be in the finally(), however it cannot be
+                // within lock-guarded section because (for unclear reasons) read_directory
+                // (whcih is called under the hood by commit_folder() ) also needs the lock.
+                return [4 /*yield*/, commit_folder(dest_path)];
+                case 6:
+                    // TODO: this would normally be in the finally(), however it cannot be
+                    // within lock-guarded section because (for unclear reasons) read_directory
+                    // (whcih is called under the hood by commit_folder() ) also needs the lock.
+                    _a.sent();
+                    return [2 /*return*/];
             }
         });
     });
