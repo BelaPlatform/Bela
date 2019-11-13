@@ -297,6 +297,7 @@ BELA_LDLIBS += $(LIBPD_LIBS)
 # TODO: replace the below with proper parsing of default_libpd_render.ii
 include libraries/Midi/build/Makefile.link
 include libraries/Scope/build/Makefile.link
+include libraries/Gui/build/Makefile.link
 endif
 
 ifndef COMPILER

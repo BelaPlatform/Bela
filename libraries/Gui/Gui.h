@@ -116,6 +116,15 @@ class Gui
 		template <typename T, size_t N>
 		int sendBuffer(unsigned int bufferId, T (&buffer)[N]);
 		/**
+		 * Sends a buffer (pointer) of specified length through the
+		 * websocket to the client with a given ID.
+		 * @param bufferId Buffer ID
+		 * @param buffer Pointer to the location of memory to send
+		 * @param count number of elements to send
+		 */
+		template <typename T>
+		int sendBuffer(unsigned int bufferId, T* ptr, size_t count);
+		/**
 		 * Sends a single value through the web-socket to the client with a given ID.
 		 * @param bufferId Given buffer ID
 		 * @param value of arbitrary type
@@ -136,6 +145,12 @@ int Gui::sendBuffer(unsigned int bufferId, T (&buffer)[N])
 {
 	const char* type = typeid(T).name();
 	return doSendBuffer(type, bufferId, (const void*)buffer, N*sizeof(T));
+}
+
+template <typename T>
+int Gui::sendBuffer(unsigned int bufferId, T* ptr, size_t count){
+	const char* type = typeid(T).name();
+	return doSendBuffer(type, bufferId, ptr, count * sizeof(T));
 }
 
 template <typename T>
