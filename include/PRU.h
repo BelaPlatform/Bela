@@ -140,7 +140,7 @@ typedef struct {
 
 	/// Name of running project.
 	char projectName[MAX_PROJECTNAME_LENGTH];
-
+	operator BelaContext () {return *(BelaContext*)this;}
 } InternalBelaContext;
 
 class PruMemory;
