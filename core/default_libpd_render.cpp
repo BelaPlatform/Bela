@@ -173,7 +173,6 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
-	rt_printf("listhook: %s\n", source);
 	if(0 == strcmp(source, "bela_guiOut"))
 	{
 		if(!libpd_is_float(&argv[0]))
