@@ -244,6 +244,9 @@ int Trill::prepareForDataRead() {
 // This should maybe be renamed readRawData()
 int Trill::readI2C() {
 
+	if(NONE == device_type_)
+		return 1;
+
 	if(!preparedForDataRead_)
 		prepareForDataRead();
 
@@ -261,6 +264,9 @@ int Trill::readI2C() {
 }
 
 int Trill::readLocations() {
+	if(NONE == device_type_)
+		return 1;
+
 	if(!preparedForDataRead_)
 		prepareForDataRead();
 
