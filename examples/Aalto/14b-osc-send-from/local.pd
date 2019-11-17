@@ -1,0 +1,28 @@
+#N canvas 544 22 616 359 10;
+#X obj 59 59 loadbang;
+#X msg 89 131 listen 0;
+#X obj 59 193 oscparse;
+#X obj 191 260 print parse-output;
+#X msg 59 95 listen 7562;
+#X obj 59 169 netreceive -u -b;
+#X text 196 28 Make sure this patch is open before running the patch
+on Bela;
+#X text 197 91 Listen to port 7562;
+#X text 197 131 This can close the connection;
+#X text 197 171 The arguments -u and -b must match those in netsend
+on Bela;
+#X text 197 191 oscparse converts OSC packets into PD messages;
+#X text 197 211 print the resultant message;
+#X floatatom 45 288 5 0 0 0 - - -, f 5;
+#X floatatom 102 287 5 0 0 0 - - -, f 5;
+#X obj 23 226 route list;
+#X obj 44 259 route slider counter;
+#X connect 0 0 4 0;
+#X connect 1 0 5 0;
+#X connect 2 0 3 0;
+#X connect 2 0 14 0;
+#X connect 4 0 5 0;
+#X connect 5 0 2 0;
+#X connect 14 0 15 0;
+#X connect 15 0 12 0;
+#X connect 15 1 13 0;

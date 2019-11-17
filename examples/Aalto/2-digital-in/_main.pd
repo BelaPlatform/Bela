@@ -1,0 +1,38 @@
+#N canvas 0 22 945 547 10;
+#X obj 60 297 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X text 88 296 Blink that LED!;
+#X obj 64 149 s bela_setDigital;
+#X obj 64 102 loadbang;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X text 64 40 ===============;
+#X text 165 123 initialise the pins to input and output;
+#X text 64 30 Digital Input;
+#X text 58 199 Digital input and out \, message rate;
+#X obj 60 353 s bela_digitalOut17;
+#X msg 64 124 in 18 \, out 17;
+#X obj 60 245 r bela_digitalIn18;
+#X text 445 155 Hardware: connect a button to P9_14 \, see;
+#X text 445 169 attached diagram and Bela pin diagram.;
+#X text 445 208 Task1: print the value of the button;
+#X text 445 222 to the console of the IDE.;
+#X text 445 248 Task2: trigger the;
+#X obj 584 247 kick;
+#X obj 671 293 snare;
+#X text 446 263 with each button down;
+#X text 445 292 Task3: alternate between [kick] and;
+#X text 445 344 Task5: add a debouncer using [delay].;
+#X text 445 319 Task4: play a random freq tone on each press using
+[random].;
+#X text 445 367 Task 6: select from a group of notes using [rand] and
+[sel].;
+#X connect 0 0 15 0;
+#X connect 3 0 16 0;
+#X connect 16 0 2 0;
+#X connect 17 0 0 0;

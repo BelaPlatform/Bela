@@ -1,0 +1,23 @@
+[
+  "0-hello-sound",
+  "1-digital-out",
+  "2-digital-in",
+  "3-analog-in",
+  "4-duckie",
+  "5-fm-synthesis",
+  "6-mic-test",
+  "7a-samples-playback",
+  "7b-samples-record",
+  "7c-sample-scrub",
+  "8-karplus-strong",
+  "9-RGB-led",
+  "10-motor-control",
+  "11-velostat",
+  "12-capacitive-breakout",
+  "13-midi-send-&-receive",
+  "14a-osc-receive-on",
+  "14b-osc-send-from",
+  "15-IR-distance-sensor",
+  "16-GUI",
+  "17-GUI-noise"
+]

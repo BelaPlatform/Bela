@@ -1,0 +1,48 @@
+#N canvas 186 60 1093 756 10;
+#N canvas 0 22 450 300 (subpatch) 0;
+#X array table-1 201388 float 2;
+#X coords 0 1 201388 -1 200 140 1 0 0;
+#X restore 15 543 graph;
+#X text 266 57 <<< loading a file:;
+#X text 266 77 point soundfiler to the samples folder;
+#X obj 19 86 soundfiler;
+#X obj 19 24 loadbang;
+#X text 265 122 <<< If you include your own samples in the project
+;
+#X text 266 97 name_of_file.wav;
+#X text 265 142 just change the path to the file name;
+#X obj 32 462 *~ 0.2;
+#X obj 32 483 dac~ 1 2;
+#X obj 32 286 *~;
+#X obj 109 179 r sampleLength1;
+#X obj 19 110 s sampleLength1;
+#X obj 62 202 expr 44100/$f1;
+#X obj 32 245 phasor~;
+#X text 163 205 <<< sample rate divided by sample length to calculate
+;
+#X text 163 225 frequency of the phasor that looks up from the table
+;
+#X obj 32 321 tabread4~ table-1;
+#X text 266 20 table-1 contains a sample from file;
+#X text 397 347 task1: change sample;
+#X msg 19 58 read -resize greek-rumba.wav table-1;
+#X obj 32 153 adc~ 4;
+#X obj 32 174 map~ -2 2;
+#X obj 32 215 *~;
+#X text 397 372 task2: Use threshold to trigger the sound only when
+above;
+#X text 397 397 task3: Make the sample restart every time;
+#X connect 3 0 12 0;
+#X connect 4 0 20 0;
+#X connect 8 0 9 0;
+#X connect 8 0 9 1;
+#X connect 10 0 17 0;
+#X connect 11 0 10 1;
+#X connect 11 0 13 0;
+#X connect 13 0 23 1;
+#X connect 14 0 10 0;
+#X connect 17 0 8 0;
+#X connect 20 0 3 0;
+#X connect 21 0 22 0;
+#X connect 22 0 23 0;
+#X connect 23 0 14 0;

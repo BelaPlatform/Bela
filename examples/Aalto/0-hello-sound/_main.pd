@@ -1,0 +1,18 @@
+#N canvas 0 22 704 319 10;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X text 200 29 to access the Bela IDE.;
+#X text 64 30 Hello World;
+#X text 64 40 ===========;
+#X text 450 144 Press the run button in the IDE;
+#X obj 58 205 dac~ 1 2;
+#X text 121 205 <== Audio out L + R;
+#X obj 58 154 techno-world;
+#X text 200 17 Go to webpage http://bela.local/;
+#X connect 13 0 11 0;
+#X connect 13 0 11 1;

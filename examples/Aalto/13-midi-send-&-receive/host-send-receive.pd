@@ -1,0 +1,116 @@
+#N canvas 41 37 1195 632 10;
+#X obj 171 211 ctlout 2;
+#X obj 233 211 ctlout 3;
+#X obj 298 212 ctlout 4;
+#X obj 116 135 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 220 165 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 312 189 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 24 241 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 116 265 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 220 295 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 312 319 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 102 342 ctlout 5;
+#X obj 171 343 ctlout 6;
+#X obj 233 343 ctlout 7;
+#X obj 298 344 ctlout 8;
+#X obj 102 210 ctlout 1;
+#X obj 24 111 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 154 430 ctlout 10;
+#X obj 85 430 ctlout 9;
+#X obj 238 428 ctlout 11;
+#X obj 318 428 ctlout 12;
+#X obj 89 377 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 149 377 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 86 401 * 127;
+#X obj 153 401 * 127;
+#X obj 236 377 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 314 377 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 236 401 * 127;
+#X obj 318 401 * 127;
+#X obj 699 193 ctlin 1;
+#X floatatom 701 232 5 0 0 0 - - -, f 5;
+#X floatatom 790 233 5 0 0 0 - - -, f 5;
+#X obj 788 194 ctlin 2;
+#X floatatom 853 234 5 0 0 0 - - -, f 5;
+#X floatatom 942 235 5 0 0 0 - - -, f 5;
+#X obj 851 195 ctlin 3;
+#X obj 940 196 ctlin 4;
+#X floatatom 701 302 5 0 0 0 - - -, f 5;
+#X floatatom 790 303 5 0 0 0 - - -, f 5;
+#X floatatom 853 304 5 0 0 0 - - -, f 5;
+#X floatatom 942 305 5 0 0 0 - - -, f 5;
+#X obj 699 263 ctlin 5;
+#X obj 788 264 ctlin 6;
+#X obj 851 265 ctlin 7;
+#X obj 940 266 ctlin 8;
+#X obj 698 352 ctlin 9;
+#X obj 702 388 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 772 388 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 768 352 ctlin 10;
+#X obj 852 388 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 922 388 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 848 352 ctlin 11;
+#X obj 918 352 ctlin 12;
+#X text 277 27 Run this patch on the host while the midi-cv-midi patch
+is;
+#X text 694 141 vvv Receive MIDI messages from Bela's analog and digital
+;
+#X text 694 151 inputs;
+#X text 263 109 <<vv send MIDI messages to Bela so that they are;
+#X text 263 119 sent to the analog and digital outputs;
+#X text 797 22 ............................;
+#X text 797 32 . ____ ._____ _ .......___ .;
+#X text 797 42 .| __ )| ____| |....../ _ |.;
+#X text 797 62 .| |_) | |___| |___ / ___ |.;
+#X text 797 72 .|____/|_____|_____/_/..._|.io;
+#X text 797 82 ............................;
+#X text 797 52 .| __ || __|.| |...../ _| |.;
+#X text 276 37 running on Bela. On the host \, select Bela as the MIDI
+;
+#X text 277 47 interface (may show up as "USB Midi Device".;
+#X text 277 59 NOTE: this requires that Bela runs image v0.3 or above
+;
+#X connect 3 0 0 0;
+#X connect 4 0 1 0;
+#X connect 5 0 2 0;
+#X connect 6 0 10 0;
+#X connect 7 0 11 0;
+#X connect 8 0 12 0;
+#X connect 9 0 13 0;
+#X connect 15 0 14 0;
+#X connect 20 0 22 0;
+#X connect 21 0 23 0;
+#X connect 22 0 17 0;
+#X connect 23 0 16 0;
+#X connect 24 0 26 0;
+#X connect 25 0 27 0;
+#X connect 26 0 18 0;
+#X connect 27 0 19 0;
+#X connect 28 0 29 0;
+#X connect 31 0 30 0;
+#X connect 34 0 32 0;
+#X connect 35 0 33 0;
+#X connect 40 0 36 0;
+#X connect 41 0 37 0;
+#X connect 42 0 38 0;
+#X connect 43 0 39 0;
+#X connect 44 0 45 0;
+#X connect 47 0 46 0;
+#X connect 50 0 48 0;
+#X connect 51 0 49 0;
