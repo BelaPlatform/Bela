@@ -1,0 +1,137 @@
+#N canvas 0 4 1280 770 10;
+#N canvas 0 22 450 278 (subpatch) 0;
+#X array \$0-table1 65238 float 2;
+#X coords 0 1 65238 -1 200 140 1 0 0;
+#X restore 23 511 graph;
+#X obj 164 480 dac~;
+#X obj 20 319 lop~ 1;
+#X text 20 28 Load sample into table and scrub using analog input;
+#X text 20 38 ===================================================;
+#X text 226 97 <<< loading a file:;
+#X text 226 117 point soundfiler to the samples folder;
+#X obj 20 380 *~;
+#X obj 303 377 *~;
+#N canvas 0 22 450 278 (subpatch) 0;
+#X array \$0-table2 441000 float 2;
+#X coords 0 1 441000 -1 200 140 1 0 0;
+#X restore 240 511 graph;
+#X obj 19 146 soundfiler;
+#X obj 19 64 loadbang;
+#X text 225 162 <<< If you include your own samples in the project
+;
+#X text 92 223 Connect two potentiometers to analog in 0 and 1;
+#X text 590 7 ............................;
+#X text 590 17 . ____ ._____ _ .......___ .;
+#X text 590 27 .| __ )| ____| |....../ _ |.;
+#X text 590 47 .| |_) | |___| |___ / ___ |.;
+#X text 590 57 .|____/|_____|_____/_/..._|.io;
+#X text 590 67 ............................;
+#X text 590 37 .| __ || __|.| |...../ _| |.;
+#X text 226 137 name_of_file.wav;
+#X obj 303 316 lop~ 2;
+#X msg 19 118 read -resize rt.wav \$1-table1;
+#X text 226 60 \$0-table1 contains a sample from file;
+#X text 596 89 We can record into \$0-table2 from the audio input;
+#X text 595 103 \$0-table2 can store up to 10 seconds of audio at 44100kHz.
+;
+#X obj 658 191 s bela_setDigital;
+#X obj 658 148 loadbang;
+#X text 596 121 Initialize Bela digital: use digital 0 as an input
+;
+#X text 225 182 just change the path to the file name;
+#X obj 631 289 delay 3;
+#X obj 630 311 f;
+#X obj 630 332 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 630 351 select 1 0;
+#X msg 675 375 stop;
+#X text 519 448 Record the input to the table;
+#X obj 503 306 adc~ 1;
+#X text 621 241 Receive the button value as it changes;
+#X text 695 288 debounce for 3ms;
+#X text 770 257 0: non-pressed;
+#X text 770 273 1: pressed;
+#X obj 557 428 tabwrite~ \$0-table2;
+#X text 568 500 timer returns the duration of the recorded sample;
+#X obj 19 89 \$0;
+#X obj 20 431 tabread4~ \$0-table1;
+#X obj 303 428 tabread4~ \$0-table2;
+#X obj 712 450 timer 1 sample;
+#X text 567 512 (interval between start and stop) in samples;
+#X obj 712 476 s \$0-sampleLength2;
+#X obj 318 351 r \$0-sampleLength2;
+#X obj 35 354 r \$0-sampleLength1;
+#X obj 19 170 s \$0-sampleLength1;
+#X text 465 283 to scope channel 1;
+#X text 465 272 Monitor left audio input;
+#X text 80 376 <<< multiply by sample length >>>;
+#X text 78 389 to play the whole sample;
+#X text 82 320 <<< avoid zipper noise >>>;
+#X text 64 277 <<< analog input 0 (range 0-1) >>>;
+#X obj 630 399 print recording;
+#X obj 503 338 dac~ 27;
+#X msg 630 375 start;
+#X msg 658 169 in 18 message;
+#X obj 631 262 r bela_digitalIn18;
+#X text 889 195 Hardware: connect a button to P9_14 \, connect two
+analog;
+#X text 890 208 sensors to analog in 0 and 1 \, connect a sound source
+;
+#X obj 21 249 adc~ 3;
+#X obj 303 275 adc~ 4;
+#X text 891 380 sample playback at the original speed (use \, e.g.:
+;
+#X text 891 237 Task1: playback \$0-table1 using the sensor connected
+to;
+#X text 891 248 analog in 0 The voltage outputof the sensor controls
+;
+#X text 891 260 the position of the playhead in the table.;
+#X text 891 282 Task2: use the button to control the recording of a
+sample;
+#X text 891 293 from your sound source. Use the scope to check that
+your;
+#X text 891 304 audio input is working properly.;
+#X text 891 369 Task3: connect another button and use it to trigger
+;
+#X text 891 315 You can adjust the input gain of your sound source
+in the;
+#X text 891 326 IDE with "pga-gain-left".;
+#X text 891 336 Playback the recorded sample with the sensor connected
+to;
+#X text 891 346 analog in 1;
+#X text 890 220 to left audio input.;
+#X text 891 392 [tabplay~]).;
+#X connect 2 0 7 0;
+#X connect 7 0 45 0;
+#X connect 8 0 46 0;
+#X connect 10 0 52 0;
+#X connect 11 0 44 0;
+#X connect 22 0 8 0;
+#X connect 23 0 10 0;
+#X connect 28 0 62 0;
+#X connect 31 0 32 0;
+#X connect 32 0 33 0;
+#X connect 33 0 34 0;
+#X connect 34 0 42 0;
+#X connect 34 0 47 0;
+#X connect 34 0 61 0;
+#X connect 34 1 35 0;
+#X connect 34 1 47 1;
+#X connect 35 0 42 0;
+#X connect 35 0 59 0;
+#X connect 37 0 42 0;
+#X connect 37 0 60 0;
+#X connect 44 0 23 0;
+#X connect 45 0 1 0;
+#X connect 45 0 1 1;
+#X connect 46 0 1 0;
+#X connect 46 0 1 1;
+#X connect 47 0 49 0;
+#X connect 50 0 8 1;
+#X connect 51 0 7 1;
+#X connect 61 0 59 0;
+#X connect 62 0 27 0;
+#X connect 63 0 32 1;
+#X connect 63 0 31 0;
+#X connect 66 0 2 0;
+#X connect 67 0 22 0;

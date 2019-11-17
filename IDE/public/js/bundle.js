@@ -6140,6 +6140,7 @@ module.exports.sanitise = sanitise;
 
 },{}],21:[function(require,module,exports){
 module.exports=[
+  "Workshop",
   "Fundamentals",
   "Digital",
   "Analog",

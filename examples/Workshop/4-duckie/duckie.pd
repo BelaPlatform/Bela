@@ -1,0 +1,219 @@
+#N canvas 157 0 896 736 10;
+#X obj 186 510 *~;
+#X obj 306 517 *~;
+#X obj 372 468 noise~;
+#X obj 372 492 bp~ 3000 10;
+#X obj 366 162 abs~;
+#X obj 529 158 sig~ 0;
+#X obj 487 371 +~;
+#X obj 431 210 -~ 0.55;
+#X obj 431 231 /~ 0.2;
+#X obj 431 252 clip~ 0 1;
+#X obj 431 282 *~;
+#X obj 431 308 *~ 1000;
+#X obj 366 334 +~;
+#X obj 366 308 +~ 800;
+#X obj 366 282 *~ 800;
+#N canvas 568 775 135 226 <~ 0;
+#X obj 20 -43 -~;
+#X obj 20 27 +~ 1e-37;
+#X obj 20 6 clip~ -1e-37 0;
+#X obj 20 -88 inlet~;
+#X obj 64 -87 inlet~;
+#X obj 20 -64 max~;
+#X obj 20 -19 *~ -1;
+#X obj 20 79 outlet~;
+#X obj 20 48 *~ 1e+37;
+#X connect 0 0 6 0;
+#X connect 1 0 8 0;
+#X connect 2 0 1 0;
+#X connect 3 0 5 0;
+#X connect 4 0 0 1;
+#X connect 4 0 5 1;
+#X connect 5 0 0 0;
+#X connect 6 0 2 0;
+#X connect 8 0 7 0;
+#X restore 186 367 pd <~ 0;
+#N canvas 568 775 135 226 <~ 0;
+#X obj 20 -43 -~;
+#X obj 20 27 +~ 1e-37;
+#X obj 20 6 clip~ -1e-37 0;
+#X obj 20 -88 inlet~;
+#X obj 64 -87 inlet~;
+#X obj 20 -64 max~;
+#X obj 20 -19 *~ -1;
+#X obj 20 79 outlet~;
+#X obj 20 48 *~ 1e+37;
+#X connect 0 0 6 0;
+#X connect 1 0 8 0;
+#X connect 2 0 1 0;
+#X connect 3 0 5 0;
+#X connect 4 0 0 1;
+#X connect 4 0 5 1;
+#X connect 5 0 0 0;
+#X connect 6 0 2 0;
+#X connect 8 0 7 0;
+#X restore 502 181 pd <~;
+#X obj 186 428 *~;
+#X obj 225 345 sig~ 1;
+#X obj 186 394 lop~ 10;
+#X text 573 393 << band-limited pulse;
+#X text 10 367 reed stops when overblown >>;
+#X obj 186 460 *~;
+#X obj 186 480 *~;
+#X text 25 470 exp amplitude response >>;
+#X text 577 211 << detune frequency on change of direction;
+#X obj 502 209 *~ -300;
+#X obj 306 485 *~;
+#X obj 306 449 *~ 0.1;
+#X text 478 493 << noise simulates non-oscillating airflow when overblown
+;
+#X obj 186 580 outlet~;
+#N canvas 219 819 407 525 pulse 0;
+#X obj 83 340 *~;
+#X obj 83 366 *~;
+#X obj 31 366 sig~ 1;
+#X obj 52 419 /~;
+#X obj 67 393 +~;
+#X text 116 366 X^2;
+#X text 97 396 1+X^2;
+#X text 84 421 1/(1+X^2);
+#X obj 83 317 osc~;
+#X obj 167 320 clip~ 0 999999;
+#X obj 52 483 outlet~;
+#X text 271 218 << tweak all this;
+#X text 25 14 based on F04.waveshaping.pulse.pd;
+#X obj 83 84 /~ 2;
+#X obj 167 148 -~;
+#X obj 167 170 /~ 127;
+#X obj 52 452 hip~ 5;
+#X obj 167 202 *~;
+#X obj 167 232 *~;
+#X obj 167 262 *~;
+#X obj 167 294 *~ 1000;
+#X obj 118 125 sig~ 139;
+#X obj 83 58 inlet~;
+#N canvas 331 1377 277 202 _ftom 0;
+#X obj 97 95 tabread4~ _ftom;
+#X obj 97 53 /~ 10000;
+#X obj 97 74 *~ 256;
+#N canvas 0 23 450 278 (subpatch) 0;
+#X array _ftom 256 float 3;
+#A 0 0 27.0762 39.0762 46.0958 51.0762 54.9394 58.0958 60.7645 63.0762
+65.1153 66.9394 68.5894 70.0958 71.4815 72.7645 73.9589 75.0762 76.1258
+77.1153 78.0514 78.9394 79.784 80.5894 81.359 82.0958 82.8025 83.4815
+84.1349 84.7645 85.372 85.9589 86.5266 87.0762 87.609 88.1258 88.6276
+89.1153 89.5897 90.0514 90.5011 90.9394 91.3669 91.784 92.1914 92.5894
+92.9785 93.359 93.7313 94.0958 94.4528 94.8025 95.1453 95.4815 95.8113
+96.1349 96.4525 96.7645 97.0709 97.372 97.6679 97.9589 98.2451 98.5266
+98.8036 99.0762 99.3446 99.609 99.8693 100.126 100.379 100.628 100.873
+101.115 101.354 101.59 101.822 102.051 102.278 102.501 102.722 102.939
+103.154 103.367 103.577 103.784 103.989 104.191 104.392 104.589 104.785
+104.978 105.17 105.359 105.546 105.731 105.914 106.096 106.275 106.453
+106.629 106.803 106.975 107.145 107.314 107.482 107.647 107.811 107.974
+108.135 108.294 108.453 108.609 108.764 108.918 109.071 109.222 109.372
+109.521 109.668 109.814 109.959 110.103 110.245 110.386 110.527 110.666
+110.804 110.94 111.076 111.211 111.345 111.477 111.609 111.74 111.869
+111.998 112.126 112.253 112.379 112.504 112.628 112.751 112.873 112.995
+113.115 113.235 113.354 113.472 113.59 113.706 113.822 113.937 114.051
+114.165 114.278 114.39 114.501 114.612 114.722 114.831 114.939 115.047
+115.154 115.261 115.367 115.472 115.577 115.681 115.784 115.887 115.989
+116.09 116.191 116.292 116.392 116.491 116.589 116.688 116.785 116.882
+116.978 117.074 117.17 117.265 117.359 117.453 117.546 117.639 117.731
+117.823 117.915 118.005 118.096 118.186 118.275 118.364 118.453 118.541
+118.629 118.716 118.803 118.889 118.975 119.06 119.145 119.23 119.314
+119.398 119.482 119.565 119.647 119.729 119.811 119.893 119.974 120.055
+120.135 120.215 120.294 120.374 120.453 120.531 120.609 120.687 120.764
+120.842 120.918 120.995 121.071 121.147 121.222 121.297 121.372 121.446
+121.521 121.594 121.668 121.741 121.814 121.887 121.959 122.031 122.103
+122.174 122.245 122.316 122.386 122.457 122.527 122.596 122.666 122.735
+122.804 122.872 122.94 123.008;
+#X coords 0 127 256 -12 50 50 1 0 0;
+#X restore 33 78 graph;
+#X obj 97 33 clip~ 0 10000;
+#X obj 97 13 inlet~;
+#X obj 97 116 outlet~;
+#X text 12 162 (for heavy compatibility);
+#X text 12 149 (very) shoddy temp replacement for ftom~;
+#X connect 0 0 6 0;
+#X connect 1 0 2 0;
+#X connect 2 0 0 0;
+#X connect 4 0 1 0;
+#X connect 5 0 4 0;
+#X restore 182 125 pd _ftom;
+#X connect 0 0 1 0;
+#X connect 0 0 1 1;
+#X connect 1 0 4 1;
+#X connect 2 0 3 0;
+#X connect 2 0 4 0;
+#X connect 3 0 16 0;
+#X connect 4 0 3 1;
+#X connect 8 0 0 0;
+#X connect 9 0 0 1;
+#X connect 13 0 8 0;
+#X connect 13 0 23 0;
+#X connect 14 0 15 0;
+#X connect 15 0 17 0;
+#X connect 15 0 17 1;
+#X connect 16 0 10 0;
+#X connect 17 0 18 0;
+#X connect 17 0 18 1;
+#X connect 18 0 19 0;
+#X connect 18 0 19 1;
+#X connect 19 0 20 0;
+#X connect 20 0 9 0;
+#X connect 21 0 14 0;
+#X connect 22 0 13 0;
+#X connect 23 0 14 1;
+#X restore 487 394 pd pulse;
+#X obj 366 105 inlet~;
+#X text 295 104 airflow >>;
+#X text 218 118 ('squeeze pressure');
+#X text 13 20 Sound model of a rubber duckie toy;
+#X text 14 51 Hint: use the differential of a continuous signal as
+input for a realistic response;
+#X text 13 29 ==================================;
+#X obj 366 133 lop~ 0.5;
+#X text 443 132 << airflow resistance;
+#X obj 186 558 hip~ 10;
+#X text 759 581 @krighxz 2015;
+#X obj 186 536 *~ 60;
+#X connect 0 0 42 0;
+#X connect 1 0 42 0;
+#X connect 2 0 3 0;
+#X connect 3 0 1 1;
+#X connect 4 0 7 0;
+#X connect 4 0 14 0;
+#X connect 4 0 28 0;
+#X connect 4 0 17 1;
+#X connect 4 0 15 0;
+#X connect 5 0 16 1;
+#X connect 6 0 31 0;
+#X connect 7 0 8 0;
+#X connect 8 0 9 0;
+#X connect 9 0 10 0;
+#X connect 9 0 10 1;
+#X connect 10 0 11 0;
+#X connect 11 0 12 1;
+#X connect 12 0 6 0;
+#X connect 13 0 12 0;
+#X connect 14 0 13 0;
+#X connect 15 0 19 0;
+#X connect 16 0 26 0;
+#X connect 17 0 22 0;
+#X connect 17 0 22 1;
+#X connect 18 0 15 1;
+#X connect 19 0 17 0;
+#X connect 22 0 23 1;
+#X connect 22 0 23 0;
+#X connect 23 0 0 0;
+#X connect 26 0 6 1;
+#X connect 27 0 1 0;
+#X connect 28 0 27 1;
+#X connect 28 0 27 0;
+#X connect 31 0 0 1;
+#X connect 32 0 38 0;
+#X connect 38 0 4 0;
+#X connect 38 0 16 0;
+#X connect 40 0 30 0;
+#X connect 42 0 40 0;
