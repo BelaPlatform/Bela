@@ -4536,23 +4536,26 @@ var TabView = function (_View) {
       var selected = $('#activeBoard').val(); // Get the value of the selection
       $('[data-pin-diagram]').prop('data', 'belaDiagram/diagram.html?' + selected); // Load that image
     });
+
+    _this.toggleClassesTimeout = undefined;
     return _this;
   }
 
   _createClass(TabView, [{
     key: 'toggleClasses',
     value: function toggleClasses() {
+      clearTimeout(this.toggleClassesTimeout);
       var that = this;
       if ($('[data-tabs]').hasClass('tabs-open')) {
-        setTimeout(function () {
+        // tab is opening
+        this.toggleClassesTimeout = setTimeout(function () {
           $('[data-editor]').addClass('tabs-open');
-          that.editor.resize();
-        }, 750);
-      } else {
-        $('[data-editor]').removeClass('tabs-open');
-        setTimeout(function () {
-          that.editor.resize();
+          that.emit('change');
         }, 500);
+      } else {
+        // tab is closing
+        $('[data-editor]').removeClass('tabs-open');
+        that.emit('change');
       }
     }
   }, {
@@ -4575,12 +4578,10 @@ var TabView = function (_View) {
       function openTabs() {
         if (tabs.origin == 'tab-control') {
           if (menuOpened == false) {
-            $('[data-editor]').addClass('tabs-open');
             $('[data-tabs]').addClass('tabs-open');
             $('[data-tab-open] span').addClass('rot');
             menuOpened = true;
           } else {
-            $('[data-editor]').removeClass('tabs-open');
             $('[data-tabs]').removeClass('tabs-open');
             $('[data-tab-open] span').removeClass('rot');
             menuOpened = false;
@@ -4588,14 +4589,13 @@ var TabView = function (_View) {
               $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
             }, 500);
           }
-          that.toggleClasses();
         }
         if (tabs.origin == 'tab-link' && menuOpened == false) {
-          $('[data-editor]').addClass('tabs-open');
           $('[data-tabs]').addClass('tabs-open');
           $('[data-tab-open] span').addClass('rot');
           menuOpened = true;
         }
+        that.toggleClasses();
         matchTabFor();
       }
 
