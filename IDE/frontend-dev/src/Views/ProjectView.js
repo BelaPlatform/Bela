@@ -238,66 +238,68 @@ _exampleList(examplesDir){
       for (let child of item.children){
         childOrder.push({"name": child});
       }
-      var newChildOrder = [];
-      var oldChildOrder = [];
-      var correctedChildOrder = [];
-      var childOrphans = [];
 
-      var that = this;
-      for (let child of childOrder){
-        if (child.name == "order.json") {
-          $.ajax({
-            type: "GET",
-            url: "/examples/" + item.name + "/" + child.name,
-            dataType: "json",
-            success: function(text){
-              newChildOrder = [];
-              text.forEach(item => {
-                newChildOrder.push({"name": item});
-              });
+	function generateChildren(childOrder, item, that)
+	{
+		for (var i = 0; i < childOrder.length; i++) {
+			var child = childOrder[i].name;
+			if("order.json" === child)
+			continue;
+			var link = item.name + '/' + child;
+			let childLi = $('<li></li>');
+			childLi.html(child).attr('data-example-link', link)
+			.on('click', that.onClickOpenExample.bind(that));
+			childLi.appendTo(childUl);
+		}
+	}
+	if(childOrder.find(child => child.name === 'order.json'))
+	{
+		$.ajax({
+			type: "GET",
+			url: "/examples/" + item.name + "/order.json",
+			dataType: "json",
+			error: function(item, childOrder, jqXHR, textStatus){
+				console.log("Error while retrieving order.json for ", item.name, ": ", textStatus, ". Using default ordering.");
+				generateChildren(childOrder, item, this);
+			}.bind(this, item, childOrder),
+			success: function(item, text){
+				let newChildOrder = [];
+				text.forEach(item => {
+					newChildOrder.push({"name": item});
+				});
 
-              item.children.forEach(item => {
-                if (item !== "order.json") {
-                  oldChildOrder.push({"name": item});
-                }
-              });
+				let oldChildOrder = [];
+				item.children.forEach(item => {
+					if (item !== "order.json") {
+						oldChildOrder.push({"name": item});
+					}
+				});
 
-              newChildOrder.forEach(new_item => {
-                oldChildOrder.forEach(old_item => {
-                  if (new_item.name == old_item.name) {
-                    correctedChildOrder.push(new_item);
-                    old_item.moved = true;
-                  }
-                });
-              });
+				let correctedChildOrder = [];
+				newChildOrder.forEach(new_item => {
+					oldChildOrder.forEach(old_item => {
+						if (new_item.name == old_item.name) {
+							correctedChildOrder.push(new_item);
+							old_item.moved = true;
+						}
+					});
+				});
 
-              oldChildOrder.forEach(old_item => {
-                if (old_item.moved != true) {
-                  childOrphans.push(old_item);
-                }
-              });
+				let childOrphans = [];
+				oldChildOrder.forEach(old_item => {
+					if (old_item.moved != true) {
+						childOrphans.push(old_item);
+					}
+				});
 
-              childOrder = correctedChildOrder.concat(childOrphans);
+				childOrder = correctedChildOrder.concat(childOrphans);
 
-              for (var i = 0; i < childOrder.length; i++) {
-                child = childOrder[i].name;
-                var link = item.name + '/' + child;
-                let childLi = $('<li></li>');
-                childLi.html(child).attr('data-example-link', link)
-                .on('click', that.onClickOpenExample.bind(that));
-                childLi.appendTo(childUl);
-              }
-
-              childOrder = [];
-              newChildOrder = [];
-              oldChildOrder = [];
-              correctedChildOrder = [];
-              childOrphans = [];
-            }
-          });
-
-        }
-      }
+				generateChildren(childOrder, item, this);
+			}.bind(this, item),
+		});
+	} else {
+		generateChildren(childOrder, item, this);
+	}
       // per section
       // item.name -> parentDiv $examples
       parentButton.appendTo(parentLi);
