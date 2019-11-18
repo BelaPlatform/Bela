@@ -1,30 +1,40 @@
-#N canvas 26 22 1042 605 10;
-#X obj 71 297 vline~;
-#X obj 70 69 loadbang;
-#X obj 264 301 vline~;
-#X obj 480 301 vline~;
-#X obj 70 97 metro 6000;
-#X text 144 97 metro generates a bang message every 6 seconds;
-#X obj 369 450 dac~ 3 4 5;
-#X text 599 130 Currently the LED is only showing one colour at a time.
+#N canvas 26 22 1042 835 10;
+#X obj 71 387 vline~;
+#X obj 70 159 loadbang;
+#X obj 264 391 vline~;
+#X obj 480 391 vline~;
+#X obj 70 187 metro 6000;
+#X text 144 187 metro generates a bang message every 6 seconds;
+#X obj 369 540 dac~ 3 4 5;
+#X text 599 220 Currently the LED is only showing one colour at a time.
 ;
-#X text 599 150 Try and make the LED cycle through every combination
+#X text 599 240 Try and make the LED cycle through every combination
 of;
-#X text 599 170 colours by changing the timings of the ramps generated
+#X text 599 260 colours by changing the timings of the ramps generated
 by;
-#X text 599 190 [vline~].;
-#X text 693 270 Arguments of vline~ are as follows:;
-#X text 693 290 - the value to reach;
-#X text 693 310 - the time to take to reach it;
-#X text 693 330 - the delay before doing it;
-#X msg 71 267 0 1000 \, 1 1000 1000;
-#X msg 264 268 0 1000 2000 \, 1 1000 3000;
-#X msg 480 270 0 1000 4000 \, 1 1000 5000;
-#X text 696 231 HINTS;
-#X text 693 390 When it receives 1 from dac~ it is off.;
-#X text 693 370 When the LED receives 0 from dac~ it is on.;
-#X text 693 450 Extra step: control the speed of the cycling;
-#X text 693 470 with a pot.;
+#X text 599 280 [vline~].;
+#X text 693 360 Arguments of vline~ are as follows:;
+#X text 693 380 - the value to reach;
+#X text 693 400 - the time to take to reach it;
+#X text 693 420 - the delay before doing it;
+#X msg 71 357 0 1000 \, 1 1000 1000;
+#X msg 264 358 0 1000 2000 \, 1 1000 3000;
+#X msg 480 360 0 1000 4000 \, 1 1000 5000;
+#X text 696 321 HINTS;
+#X text 693 480 When it receives 1 from dac~ it is off.;
+#X text 693 460 When the LED receives 0 from dac~ it is on.;
+#X text 693 540 Extra step: control the speed of the cycling;
+#X text 693 560 with a pot.;
+#X text 85 870;
+#X text 525 35 ............................;
+#X text 525 45 . ____ ._____ _ .......___ .;
+#X text 525 55 .| __ )| ____| |....../ _ |.;
+#X text 525 75 .| |_) | |___| |___ / ___ |.;
+#X text 525 85 .|____/|_____|_____/_/..._|.io;
+#X text 525 95 ............................;
+#X text 525 65 .| __ || __|.| |...../ _| |.;
+#X text 73 42 RGB LED Cycling;
+#X text 73 52 ===============;
 #X connect 0 0 6 0;
 #X connect 1 0 4 0;
 #X connect 2 0 6 1;

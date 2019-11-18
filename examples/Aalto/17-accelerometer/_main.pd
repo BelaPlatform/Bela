@@ -1,0 +1,50 @@
+#N canvas 12 22 1233 686 10;
+#X obj 82 308 dac~ 27 28 29 30;
+#X obj 78 500 *~;
+#X obj 78 453 osc~ 200;
+#X obj 78 541 dac~ 1 2;
+#X obj 83 123 accelerometer-integration;
+#X obj 93 476 r~ swingVelocity;
+#X obj 81 227 r~ x-axis;
+#X obj 151 227 r~ y-axis;
+#X obj 221 227 r~ z-axis;
+#X obj 294 227 r~ swingVelocity;
+#X text 313 122 <<<<< signal treatment happening in here;
+#X text 313 303 <<<<< visualise raw signal and velocity;
+#X text 263 473 <<<<< use the overall velocity to control amplitude
+of tone;
+#X text 669 257 depending on the orientation of the accelerometer.
+;
+#X obj 303 378 threshold~;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X text 200 29 to access the Bela IDE.;
+#X text 200 17 Go to webpage http://bela.local/;
+#X text 64 30 Accelerometer;
+#X text 669 207 Task 1: view the accelerometer data on the scope.;
+#X text 669 237 Task 2: create a three state system that mixes samples
+;
+#X text 669 287 A first step is identify the different orientations
+;
+#X text 669 307 remap to sensible range and then create states with
+;
+#X text 669 327 threshold.;
+#X obj 304 416 map~ 0.2 0.4 -1 1;
+#X text 265 506 For a more accomplished use of the swing velocity have
+;
+#X text 265 526 a look at the saber example in the Instruments folder.
+;
+#X text 64 40 =============;
+#X connect 1 0 3 0;
+#X connect 1 0 3 1;
+#X connect 2 0 1 0;
+#X connect 5 0 1 1;
+#X connect 6 0 0 0;
+#X connect 7 0 0 1;
+#X connect 8 0 0 2;
+#X connect 9 0 0 3;

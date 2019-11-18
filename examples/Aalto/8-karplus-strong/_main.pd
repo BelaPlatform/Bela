@@ -1,4 +1,4 @@
-#N canvas 207 23 878 762 10;
+#N canvas 207 23 1127 782 10;
 #X obj 40 660 dac~ 1 2;
 #X text 33 22 Karplus Strong;
 #X text 33 32 ==============;
@@ -58,6 +58,15 @@ input;
 #X obj 479 589 * 5000;
 #X obj 480 496 adc~ 3;
 #X obj 193 431 adc~ 4;
+#X text 613 179 Task 1: Add a second piezo disk to the right audio
+input;
+#X text 613 199 Task 2: Duplicate the code to create a second delay
+line.;
+#X text 613 219 Remember to rename any reference to the first delay
+line.;
+#X text 613 239 Task 3: Give the string a different tuning but still
+make it;
+#X text 613 259 controlled by the pot.;
 #X connect 3 0 4 0;
 #X connect 3 0 0 0;
 #X connect 3 0 0 1;

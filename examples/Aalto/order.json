@@ -8,16 +8,16 @@
   "6-mic-test",
   "7a-samples-playback",
   "7b-samples-record",
-  "7c-sample-scrub",
   "8-karplus-strong",
   "9-RGB-led",
-  "10-motor-control",
-  "11-velostat",
-  "12-capacitive-breakout",
+  "10-velostat",
+  "11-capacitive-sensing",
+  "12a-GUI",
+  "12b-GUI-analog",
   "13-midi-send-&-receive",
   "14a-osc-receive-on",
   "14b-osc-send-from",
-  "15-IR-distance-sensor",
-  "16-GUI",
-  "17-GUI-noise"
+  "15-motor-control",
+  "16-IR-distance-sensor",
+  "17-accelerometer"
 ]

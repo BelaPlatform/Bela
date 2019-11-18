@@ -1,0 +1,69 @@
+#N canvas 88 22 1195 723 10;
+#X obj 48 119 loadbang;
+#X obj 48 141 metro 20;
+#X obj 86 292 snapshot~;
+#X msg 56 328 0;
+#X obj 88 399 s bela_guiOut;
+#X obj 48 162 s clock;
+#X obj 97 268 r clock;
+#X obj 166 292 snapshot~;
+#X obj 177 268 r clock;
+#X obj 246 292 snapshot~;
+#X obj 257 268 r clock;
+#X obj 326 292 snapshot~;
+#X obj 337 268 r clock;
+#X obj 88 369 pack f f f f f, f 26;
+#X obj 86 225 osc~ 0.8;
+#X obj 166 225 osc~ 0.4;
+#X obj 246 225 osc~ 0.2;
+#X obj 326 225 osc~ 0.1;
+#X text 600 7 ............................;
+#X text 600 17 . ____ ._____ _ .......___ .;
+#X text 600 27 .| __ )| ____| |....../ _ |.;
+#X text 600 47 .| |_) | |___| |___ / ___ |.;
+#X text 600 57 .|____/|_____|_____/_/..._|.io;
+#X text 600 67 ............................;
+#X text 600 37 .| __ || __|.| |...../ _| |.;
+#X text 30 28 GUIs in p5.js;
+#X text 30 38 ==============;
+#X text 198 399 send to the Bela GUI;
+#X text 417 292 Convert to control rate;
+#X text 317 332 Prepend with buffer number;
+#X text 399 224 Oscillators give out -1 to 1;
+#X text 667 152 Task 1: press the GUI button to see the visualisation
+;
+#X text 667 182 Task 2: open sketch.js in the IDE and change the size
+and;
+#X text 667 202 arrangement of the elipses.;
+#X text 667 222 See comments in sketch.js for information.;
+#X text 667 252 Task 3: experiment with one or two more functions from
+;
+#X text 667 272 https://p5js.org/reference/ for example sketch.square()
+;
+#X text 667 292 or sketch.scale() or sketch.fill().;
+#X text 667 322 You can either start from scratch by clearing the draw
+;
+#X text 667 342 function or make a sketch that interacts with the;
+#X text 667 362 data from Bela.;
+#X text 667 412 Currently you have to write your p5.js sketches in
+;
+#X text 667 452 https://github.com/processing/p5.js/wiki/Global-and-instance-mode
+;
+#X text 667 432 instance mode:;
+#X connect 0 0 1 0;
+#X connect 1 0 5 0;
+#X connect 2 0 13 1;
+#X connect 3 0 13 0;
+#X connect 6 0 2 0;
+#X connect 6 0 3 0;
+#X connect 7 0 13 2;
+#X connect 8 0 7 0;
+#X connect 9 0 13 3;
+#X connect 10 0 9 0;
+#X connect 11 0 13 4;
+#X connect 12 0 11 0;
+#X connect 13 0 4 0;
+#X connect 14 0 2 0;
+#X connect 15 0 7 0;
+#X connect 16 0 9 0;
+#X connect 17 0 11 0;

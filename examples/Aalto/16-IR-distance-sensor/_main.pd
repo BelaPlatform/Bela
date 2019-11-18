@@ -1,0 +1,30 @@
+#N canvas 383 52 1233 686 10;
+#X obj 82 308 dac~ 27 28 29 30;
+#X obj 276 443 dac~ 1 2;
+#X text 311 169 <<<<< signal treatment happening in here;
+#X text 669 207 Tasks:;
+#X text 669 247 Hint \, begin by thresholding the sensor reading.;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X text 64 40 ===============;
+#X text 200 29 to access the Bela IDE.;
+#X text 200 17 Go to webpage http://bela.local/;
+#X text 64 30 Distance sensor;
+#X obj 83 120 adc~ 3;
+#X obj 113 171 lop~ 5;
+#X text 313 303 <<<<< visualise raw signal and filtered;
+#X text 669 227 Task 1: trigger four discrete notes with different
+freq;
+#X text 669 267 You can then use this to trigger amplitude envelope
+;
+#X text 669 287 and change the frequency of the note.;
+#X obj 277 415 vline~;
+#X obj 303 378 threshold~;
+#X connect 16 0 17 0;
+#X connect 16 0 0 0;
+#X connect 17 0 0 1;

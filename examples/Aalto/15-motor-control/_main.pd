@@ -1,0 +1,27 @@
+#N canvas 243 332 1007 386 10;
+#X obj 573 214 s bela_setDigital;
+#X obj 573 167 loadbang;
+#X msg 573 189 out 17 ~;
+#X text 643 187 initialise the pin to output at signal rate;
+#X obj 57 255 dac~ 17;
+#X text 129 255 <<< digital output 6 at signal rate (see digital example
+for numbering explanation).;
+#X obj 57 149 phasor~ 2000;
+#X obj 57 190 expr~ $v1 < 0.5;
+#X text 189 190 <<< PWM signal with 50% duty cycle;
+#X text 683 21 ............................;
+#X text 683 31 . ____ ._____ _ .......___ .;
+#X text 683 41 .| __ )| ____| |....../ _ |.;
+#X text 683 61 .| |_) | |___| |___ / ___ |.;
+#X text 683 71 .|____/|_____|_____/_/..._|.io;
+#X text 683 81 ............................;
+#X text 683 51 .| __ || __|.| |...../ _| |.;
+#X text 64 50 ===========;
+#X text 64 40 Motor control;
+#X text 200 77 https://blog.bela.io/2018/12/10/bela-controlling-dc-motors/
+;
+#X text 200 57 For a full tutorial on using motors with Bela see;
+#X connect 1 0 2 0;
+#X connect 2 0 0 0;
+#X connect 6 0 7 0;
+#X connect 7 0 4 0;

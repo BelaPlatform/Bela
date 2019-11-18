@@ -38,18 +38,21 @@ three;
 #X obj 756 509 simple-sequencer;
 #X obj 755 467 metro 500;
 #X text 634 250 Task 1: look at the LDR on the scope and decide;
-#X text 634 282 Task 2: use FSR to trigger an envelope once over a
-;
-#X text 634 294 threshold. Use [threshold~] and [vline~];
-#X text 634 325 fade an LED in time by connecting to analog out 0 [dac~
+#X text 634 331 threshold. Use [threshold~] and [vline~];
+#X text 634 365 fade an LED in time by connecting to analog out 0 [dac~
 3];
 #X obj 164 173 *~ 16;
 #X obj 323 171 *~ 2000;
-#X text 634 313 Task 3: (extra) use simple-sequencer to arpeggiate
-\,;
 #X text 634 262 how to map to 0-2000 range.;
-#X connect 0 0 40 0;
-#X connect 1 0 41 0;
+#X text 634 353 Task 4: (extra) use simple-sequencer to arpeggiate
+\,;
+#X text 634 319 Task 3: use FSR to trigger an envelope once over a
+;
+#X text 634 283 Task 2: experiment with mapping different sensor to
+control;
+#X text 634 295 find your preferred combination and mapping.;
+#X connect 0 0 39 0;
+#X connect 1 0 40 0;
 #X connect 4 0 9 0;
 #X connect 5 0 6 0;
 #X connect 6 0 4 1;
@@ -68,5 +71,5 @@ three;
 #X connect 30 0 27 0;
 #X connect 33 0 35 0;
 #X connect 35 0 34 0;
-#X connect 40 0 13 0;
-#X connect 41 0 14 0;
+#X connect 39 0 13 0;
+#X connect 40 0 14 0;

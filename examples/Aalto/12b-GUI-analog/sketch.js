@@ -1,17 +1,17 @@
 var guiSketch = new p5(function( sketch ) {
 
-  let dragging = false;
+  // These parameters effect the behaviour of the waves
   let minFrequency = 0.5;
   let maxFrequency = 6;
   let minAmplitude = 0.05;
   let maxAmplitude = 0.5;
 
+  // variables
   let amplitude;
   let frequency;
 
-  // Included in index.html
-  // This is an alternative to p5.js builtin 'noise' function,
-  // It provides 4D noise and returns a value between -1 and 1
+  // Perlin noise is a random sequence generator producing a more natural ordered, 
+  // harmonic succession of numbers compared to the standard random() function.
   const simplex = new sketch.noise();
 
   // Create a new canvas to the browser size
@@ -31,8 +31,10 @@ var guiSketch = new p5(function( sketch ) {
   sketch.draw = function() {
     sketch.background(0);
     
+    // Read from Bela
     let input = Bela.data.buffers[0];
     
+    // lerp() calculates a number between two numbers at a specific increment. 
     const frequency = sketch.lerp(minFrequency, maxFrequency, input);
     const amplitude = sketch.lerp(minAmplitude, maxAmplitude, input);
     
