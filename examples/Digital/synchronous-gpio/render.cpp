@@ -47,8 +47,8 @@ void render(BelaContext *context, void *userData)
 		gShouldBlink = true; // button is not pressed
 	else
 		gShouldBlink = false; // button is pressed
-	for(unsigned int n = 0; n < context->digitalFrames; ++n){
-		if(gCount == (int)(context->digitalSampleRate * gInterval)){ //if enough samples have elapsed
+	for(unsigned int n = 0; n < context->audioFrames; ++n){
+		if(gCount == (int)(context->audioSampleRate * gInterval)){ //if enough samples have elapsed
 			gCount = 0; //reset the counter
 			//toggle the status
 			if(gStatus == 0)
@@ -98,7 +98,7 @@ action (system shutdown).
 Preparation:
 
 On Bela:
-- Connect an LED in series with a 470ohm resistor between digital pin P8.29 and ground. 
+- Connect an LED in series with a 470ohm resistor between digital pin P8.30 and ground.
 - Make sure you run it with Bela's digitals disabled. This is not normally needed when using
 the Gpio class, unless - like in this case - one of the pins in use would otherwise be used by the
 Bela Digital I/Os.
