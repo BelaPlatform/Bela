@@ -34,6 +34,8 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <algorithm>
 #include <array>
 
+#define BELA_HEAVY_I2C
+
 enum { minFirstDigitalChannel = 10 };
 
 static unsigned int gAudioChannelsInUse;
@@ -61,6 +63,14 @@ bool gDigitalEnabled = 0;
 unsigned int hvMidiHashes[7]; // heavy-specific
 static std::vector<Midi*> midi;
 std::vector<std::string> gMidiPortNames;
+
+#ifdef BELA_HEAVY_I2C
+#include <I2cRt.h>
+I2cRt i2c;
+bool i2cEnabled = false;
+unsigned int maxI2cMsgPerCallback = 100;
+char i2cReceiverName[] = "bela_i2c_in";
+#endif // BELA_HEAVY_I2C
 
 void dumpMidi()
 {
@@ -259,6 +269,123 @@ static void sendHook(
 			}
 			break;
 		}
+#ifdef BELA_HEAVY_I2C
+		case 0xa49dc232: // bela_i2c
+		{
+			int argc = hv_msg_getNumElements(m);
+			if (!argc || !(hv_msg_isSymbol(m, 0))) return;
+			const char *symbol = hv_msg_getSymbol(m, 0);
+			if(strcmp(symbol, "debug") == 0)
+			{
+				int debugMode = 1;
+				if(argc > 1 && hv_msg_isFloat(m, 1))
+				{
+					float val = hv_msg_getFloat(m, 1);
+					debugMode = (int)val;
+				}
+				i2c.setDebug(debugMode);
+				return;
+			}
+			if(strcmp(symbol, "open") == 0)
+			{
+				if(argc < 2 || !hv_msg_isFloat(m, 1))
+				{
+					rt_fprintf(stderr, "bela_i2c: first argument to `open` must be a float (number of i2c bus)\n");
+					return;
+				}
+				int bus = (int)hv_msg_getFloat(m, 1);
+				int address;
+				if(argc < 2)
+					address = 0;
+				else
+				{
+					if(!hv_msg_isFloat(m, 2))
+					{
+						rt_fprintf(stderr, "bela_i2c: second argument to `open` must be a float (address, default 0)\n");
+						return;
+					}
+					address = hv_msg_getFloat(m, 2);
+				}
+				if(i2c.initI2C_RW(bus, address))
+				{
+					rt_fprintf(stderr, "bela_i2c: unable to open bus %d\n", bus);
+					return;
+				}
+				i2c.setAddressRt(address);
+				i2c.startThread(&gShouldStop);
+				i2cEnabled = true;
+				//TODO: (re-)enable the i2c I/O in a thread-safe way
+				return;
+			}
+			if(strcmp(symbol, "address") == 0)
+			{
+				if(!hv_msg_isFloat(m, 1))
+				{
+					rt_fprintf(stderr, "bela_i2c: argument to `address` must be a float (i2c address of device)\n");
+					return;
+				}
+				int address = hv_msg_getFloat(m, 1);
+				i2c.setAddressRt(address);
+				return;
+			}
+			if(strcmp(symbol, "read") == 0)
+			{
+				if(!hv_msg_isFloat(m, 1))
+				{
+					rt_fprintf(stderr, "bela_i2c: argument to `read` must be a float (number of bytes to read)\n");
+					return;
+				}
+				int size = hv_msg_getFloat(m, 1);
+				i2c.readRt(size);
+				return;
+			}
+			if(strcmp(symbol, "write") == 0)
+			{
+				unsigned int writeSize = argc;
+				i2c_char_t outbuf[writeSize];
+				for(int n = 1; n < argc; n++)
+				{
+					if(!hv_msg_isFloat(m, n))
+					{
+						rt_fprintf(stderr, "bela_i2c: arguments to `write` must be floats (values to write)\n");
+						return;
+					}
+					i2c_char_t byte = hv_msg_getFloat(m, n);
+					outbuf[n - 1] = byte;
+				}
+				if(i2c.writeRt(outbuf, sizeof(outbuf)))
+				{
+					rt_fprintf(stderr, "Failed to write %d bytes to i2c bus\n", sizeof(outbuf));
+					return;
+				}
+				return;
+			}
+			if(strcmp(symbol, "writeread") == 0)
+			{
+				unsigned int writeSize = argc - 2;
+				i2c_char_t outbuf[writeSize];
+				for(int n = 1; n < argc - 1; n++)
+				{
+					if(!hv_msg_isFloat(m, n))
+					{
+						rt_fprintf(stderr, "bela_i2c: arguments to `writeread` must be floats (values to write, last one is number of bytes to read)\n");
+						return;
+					}
+					i2c_char_t byte = hv_msg_getFloat(m, n);
+					outbuf[n - 1] = byte;
+				}
+				if(!hv_msg_isFloat(m, argc - 1))
+				{
+					rt_fprintf(stderr, "bela_i2c: arguments to `writeread` must be floats (values to write, last one is number of bytes to read)\n");
+					return;
+				}
+				unsigned int readSize  = hv_msg_getFloat(m, argc - 1);
+				i2c.writeReadRt(outbuf, sizeof(outbuf), readSize);
+				return;
+			}
+			break;
+		}
+#endif // BELA_HEAVY_I2C
 		case 0xd1d4ac2: { // __hv_noteout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
@@ -336,7 +463,6 @@ static void sendHook(
 
 
 bool setup(BelaContext *context, void *userData)	{
-
 	// Check if digitals are enabled
 	if(context->digitalFrames > 0 && context->digitalChannels > 0)
 		gDigitalEnabled = 1;
@@ -484,6 +610,41 @@ bool setup(BelaContext *context, void *userData)	{
 
 void render(BelaContext *context, void *userData)
 {
+#ifdef BELA_HEAVY_I2C
+	if(i2cEnabled)
+	{
+		for(unsigned int n = 0; n < maxI2cMsgPerCallback; ++n)
+		{
+			I2cRt::Msg msg = i2c.retrieveMessage();
+			if (msg.status == I2cRt::MsgStatus::noMessage) {
+				break;
+			}
+			if(msg.status == I2cRt::MsgStatus::success)
+			{
+				if(msg.type == I2cRt::MsgType::writeRead || msg.type == I2cRt::MsgType::read)
+				{
+					int numElements = msg.readSize;
+					HvMessage* m = (HvMessage*)hv_alloca(hv_msg_getByteSize(numElements));
+					hv_msg_init(m, numElements, 0);
+					for(int n = 0; n < msg.readSize; ++n)
+					{
+						hv_msg_setFloat(m, n, msg.payload[n]);
+					}
+					hv_sendMessageToReceiver(gHeavyContext, hv_stringToHash(i2cReceiverName), 0,  m);
+					//rt_printf("read %d bytes: ", msg.readSize);
+					//for(int n = 0; n < msg.readSize; ++n)
+						//rt_printf("%d ", msg.payload[n]);
+					//rt_printf("\n");
+				}
+				//else
+					//rt_printf("Success writing\n");
+			} else {
+				rt_fprintf(stderr, "bela_i2c: error while communicating with the device\n");
+				hv_sendFloatToReceiver(gHeavyContext, hv_stringToHash(i2cReceiverName), -1);
+			}
+		}
+	}
+#endif // BELA_HEAVY_I2C
 	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
