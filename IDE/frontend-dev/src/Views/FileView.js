@@ -18,6 +18,10 @@ var firstViewHiddenFiles = true;
 
 var listCount = 0;
 
+function isDragEvent(e, type)
+{
+	return e.originalEvent.dataTransfer.types.includes(type);
+}
 class FileView extends View {
 
 	constructor(className, models){
@@ -44,6 +48,8 @@ class FileView extends View {
              .removeClass('active');
     });
 		$('body').on('dragenter dragover drop', (e) => {
+			if(!isDragEvent(e, "Files"))
+				return;
 			e.stopPropagation();
 			e.preventDefault();
       if (e.type == 'dragenter') {

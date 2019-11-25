@@ -11,11 +11,25 @@ import { Lock } from "./Lock";
 
 const lock: Lock = new Lock();
 
+async function commit(path: string)
+{
+	let fd = await fs.openAsync(path, 'r');
+	await fs.fsyncAsync(fd);
+	await fs.closeAsync(fd);
+}
+async function commit_folder(path: string)
+{
+	await commit(path);
+	let list = await deep_read_directory(path);
+	for(let file_path of list)
+		await commit(path+"/"+file_path.name);
+}
 // primitive file and directory manipulation
 export async function write_file(file_path: string, data: string): Promise<void>{
 	await lock.acquire();
 	try{
 		await fs.outputFileAsync(file_path, data);
+		await commit(file_path);
 	}
 	finally{
 		lock.release();
@@ -26,6 +40,7 @@ export async function write_folder(file_path: string): Promise<void>{
 	await lock.acquire();
 	try{
 		await fs.mkdirSync(file_path);
+		await commit(file_path);
 	}
 	finally{
 		lock.release();
@@ -59,6 +74,7 @@ export async function rename_file(src: string, dest: string): Promise<void>{
 		console.log('source: ' + src);
 		console.log('dest: ' + dest);
 		await fs.moveAsync(src, dest, {overwrite: true});
+		await commit(dest);
 	}
 	finally{
 		lock.release();
@@ -103,6 +119,10 @@ export async function copy_directory(src_path: string, dest_path: string): Promi
 	finally{
 		lock.release();
 	}
+	// TODO: this would normally be in the finally(), however it cannot be
+	// within lock-guarded section because (for unclear reasons) read_directory
+	// (whcih is called under the hood by commit_folder() ) also needs the lock.
+	await commit_folder(dest_path);
 }
 export async function copy_file(src_path: string, dest_path: string): Promise<void>{
 	return copy_directory(src_path, dest_path);

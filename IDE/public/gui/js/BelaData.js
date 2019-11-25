@@ -34,7 +34,8 @@ export default class BelaData extends BelaWebSocket {
                 }
         } else if (this.currentState == this.states[2]) { // data
                 this.currentState = this.states[0];
-                switch(this.newBuffer['type']) {
+                let type = this.newBuffer['type'];
+                switch(type) {
                         case 'c':
                                 let charInt = new Uint8Array(data);
                                 charInt = Array.from(charInt);
@@ -56,7 +57,7 @@ export default class BelaData extends BelaWebSocket {
                                 this.newBuffer['data'] = Array.from(doubleArr);
                                 break;
                         default:
-                                console.log("Unknown buffer type");
+                                console.log("Unknown buffer type ", type);
 
                 }
                 this.buffers[this.newBuffer['id']] = this.newBuffer['data'];

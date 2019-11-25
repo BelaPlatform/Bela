@@ -2224,6 +2224,10 @@ var firstViewHiddenFiles = true;
 
 var listCount = 0;
 
+function isDragEvent(e, type) {
+	return e.originalEvent.dataTransfer.types.includes(type);
+}
+
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
@@ -2252,6 +2256,7 @@ var FileView = function (_View) {
 			overlay.removeClass('drag-upload').removeClass('active');
 		});
 		$('body').on('dragenter dragover drop', function (e) {
+			if (!isDragEvent(e, "Files")) return;
 			e.stopPropagation();
 			e.preventDefault();
 			if (e.type == 'dragenter') {
