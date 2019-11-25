@@ -340,7 +340,7 @@ endif
 
 ALL_DEPS=
 define find_files
-$(shell find $(PROJECT_DIR) -type f -name "$(1)")
+$(shell find $(PROJECT_DIR) -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp")
 endef
 ASM_SRCS := $(call find_files,*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
