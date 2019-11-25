@@ -66,7 +66,11 @@ ifdef EXAMPLE
   $(shell rm -rf $(PROJECT_DIR))
   $(shell cp -r examples/$(EXAMPLE) $(PROJECT_DIR))
 else
+ifdef PROJECT
   PROJECT_DIR := $(abspath projects/$(PROJECT))
+else
+  PROJECT_DIR :=
+endif
 endif
 
 COMMAND_LINE_OPTIONS?=$(CL)
@@ -342,6 +346,7 @@ ALL_DEPS=
 define find_files
 $(shell find $(PROJECT_DIR) -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp")
 endef
+ifneq ($(PROJECT),)
 ASM_SRCS := $(call find_files,*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
@@ -358,6 +363,7 @@ CPP_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(CPP_SRCS:.cpp=.o))
 
 BUILD_DIRS += $(dir $(CPP_OBJS))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
+endif # $(PROJECT)
 #create build directories, should probably be conditional to PROJECT or li
 #TODO: currently `make clean run PROJECT=...` will fail when the project has
 #subfolders, because `clean` will remove them after they have been created
