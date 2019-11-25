@@ -19,11 +19,9 @@ export default class BelaData extends BelaWebSocket {
         if(this.currentState == this.states[0]) { // buffer id
                 this.bufferReady = false;
                 this.newBuffer = {};
-                if(data.byteLength == 1) {
-                        let msgId = new Uint8Array(data);
-                        this.newBuffer['id'] = parseInt(String.fromCharCode(msgId));
-                        this.currentState = this.states[1];
-                }
+		let msgId = new Uint8Array(data);
+		this.newBuffer['id'] = parseInt(String.fromCharCode.apply(null, msgId));
+		this.currentState = this.states[1];
         } else if (this.currentState == this.states[1]) { // type
                 if(data.byteLength == 1) {
                         let msgType = new Uint8Array(data);
