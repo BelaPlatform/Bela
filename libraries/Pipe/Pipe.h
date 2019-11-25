@@ -62,11 +62,11 @@ public:
 	/**
 	 * Read data from the non-RT side.
 	 */
-	template<typename T> ssize_t readRt(T & dest);
+	template<typename T> ssize_t readNonRt(T* dest, size_t count);
 	/**
 	 * Read data from the RT side.
 	 */
-	template<typename T> ssize_t readNonRt(T* dest, size_t count);
+	template<typename T> ssize_t readRt(T & dest);
 	/**
 	 * Read data from the RT side.
 	 */

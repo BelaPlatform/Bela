@@ -11,6 +11,7 @@
 #include <Bela.h>
 #include <vector>
 #include <alsa/asoundlib.h>
+#include <string>
 #ifdef XENOMAI_SKIN_native
 #include <native/pipe.h>
 #endif
@@ -370,8 +371,12 @@ public:
 	static void destroyPorts(std::vector<Midi*>& ports);
 private:
 	char defaultPort[9];
+	std::string inPort;
+	std::string outPort;
 	int _getInput();
-	static void readInputLoop(void* obj) ;
+	int attemptRecoveryRead();
+	static void readInputLoop(void* obj);
+	int attemptRecoveryWrite();
 	static void writeOutputLoop(void* obj);
 	snd_rawmidi_t *alsaIn,*alsaOut;
 	std::vector<midi_byte_t> inputBytes;

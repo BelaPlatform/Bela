@@ -14,10 +14,12 @@ extern "C" {
 #include <libraries/UdpServer/UdpServer.h>
 #include <libraries/Midi/Midi.h>
 #include <libraries/Scope/Scope.h>
+#include <libraries/Gui/Gui.h>
 #include <string>
 #include <sstream>
 #include <algorithm>
 
+Gui gui;
 enum { minFirstDigitalChannel = 10 };
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
@@ -169,6 +171,47 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
+void Bela_listHook(const char *source, int argc, t_atom *argv)
+{
+	if(0 == strcmp(source, "bela_guiOut"))
+	{
+		if(!libpd_is_float(&argv[0]))
+		{
+			rt_fprintf(stderr, "Wrong format for bela_gui, the first element should be a float\n");
+			return;
+		}
+		unsigned int bufNum = libpd_get_float(&argv[1]);
+		if(libpd_is_float(&argv[1])) // if the first element is a float, we send an array of floats
+		{
+			float buf[argc - 1];
+			for(int n = 1; n < argc; ++n)
+			{
+				t_atom *a = &argv[n];
+				if(!libpd_is_float(a))
+				{
+					rt_fprintf(stderr, "Wrong format for bela_gui\n"); // this should never happen, because then the selector would've not been "float"
+					return;
+				}
+				buf[n - 1] = libpd_get_float(a);
+			}
+			gui.sendBuffer(bufNum, buf, argc - 1);
+			return;
+		} else { // otherwise we send each element of the list separately
+			for(int n = 1; n < argc; ++n)
+			{
+				t_atom *a = &argv[n];
+				if (libpd_is_float(a)) {
+					float x = libpd_get_float(a);
+					gui.sendBuffer(bufNum, x);
+				} else if (libpd_is_symbol(a)) {
+					char *s = libpd_get_symbol(a);
+					gui.sendBuffer(bufNum, s, strlen(s)); // TODO: should it be strlen(s)+1?
+				}
+			}
+		}
+		return;
+	}
+}
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
 	if(strcmp(source, "bela_setMidi") == 0){
 		int num[3] = {0, 0, 0};
@@ -296,6 +339,7 @@ bool gDigitalEnabled = 0;
 
 bool setup(BelaContext *context, void *userData)
 {
+	gui.setup(context->projectName);
 	// Check Pd's version
 	int major, minor, bugfix;
 	sys_getversion(&major, &minor, &bugfix);
@@ -393,6 +437,7 @@ bool setup(BelaContext *context, void *userData)
 	// set hooks before calling libpd_init
 	libpd_set_printhook(Bela_printHook);
 	libpd_set_floathook(Bela_floatHook);
+	libpd_set_listhook(Bela_listHook);
 	libpd_set_messagehook(Bela_messageHook);
 	libpd_set_noteonhook(Bela_MidiOutNoteOn);
 	libpd_set_controlchangehook(Bela_MidiOutControlChange);
@@ -423,6 +468,7 @@ bool setup(BelaContext *context, void *userData)
 		libpd_bind(gReceiverOutputNames[i].c_str());
 	libpd_bind("bela_setDigital");
 	libpd_bind("bela_setMidi");
+	libpd_bind("bela_guiOut");
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);

@@ -2224,6 +2224,10 @@ var firstViewHiddenFiles = true;
 
 var listCount = 0;
 
+function isDragEvent(e, type) {
+	return e.originalEvent.dataTransfer.types.includes(type);
+}
+
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
@@ -2252,6 +2256,7 @@ var FileView = function (_View) {
 			overlay.removeClass('drag-upload').removeClass('active');
 		});
 		$('body').on('dragenter dragover drop', function (e) {
+			if (!isDragEvent(e, "Files")) return;
 			e.stopPropagation();
 			e.preventDefault();
 			if (e.type == 'dragenter') {
@@ -3407,91 +3412,67 @@ var ProjectView = function (_View) {
             }
           }
 
-          newChildOrder = [];
-          oldChildOrder = [];
-          correctedChildOrder = [];
-          childOrphans = [];
-          that = _this7;
-          var _iteratorNormalCompletion3 = true;
-          var _didIteratorError3 = false;
-          var _iteratorError3 = undefined;
-
-          try {
-            var _loop2 = function _loop2() {
-              var child = _step3.value;
-
-              if (child.name == "order.json") {
-                $.ajax({
-                  type: "GET",
-                  url: "/examples/" + item.name + "/" + child.name,
-                  dataType: "json",
-                  success: function success(text) {
-                    newChildOrder = [];
-                    text.forEach(function (item) {
-                      newChildOrder.push({ "name": item });
-                    });
-
-                    item.children.forEach(function (item) {
-                      if (item !== "order.json") {
-                        oldChildOrder.push({ "name": item });
-                      }
-                    });
-
-                    newChildOrder.forEach(function (new_item) {
-                      oldChildOrder.forEach(function (old_item) {
-                        if (new_item.name == old_item.name) {
-                          correctedChildOrder.push(new_item);
-                          old_item.moved = true;
-                        }
-                      });
-                    });
-
-                    oldChildOrder.forEach(function (old_item) {
-                      if (old_item.moved != true) {
-                        childOrphans.push(old_item);
-                      }
-                    });
-
-                    childOrder = correctedChildOrder.concat(childOrphans);
-
-                    for (var i = 0; i < childOrder.length; i++) {
-                      child = childOrder[i].name;
-                      var link = item.name + '/' + child;
-                      var childLi = $('<li></li>');
-                      childLi.html(child).attr('data-example-link', link).on('click', that.onClickOpenExample.bind(that));
-                      childLi.appendTo(childUl);
-                    }
-
-                    childOrder = [];
-                    newChildOrder = [];
-                    oldChildOrder = [];
-                    correctedChildOrder = [];
-                    childOrphans = [];
-                  }
-                });
-              }
-            };
-
-            for (var _iterator3 = childOrder[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-              _loop2();
-            }
-            // per section
-            // item.name -> parentDiv $examples
-          } catch (err) {
-            _didIteratorError3 = true;
-            _iteratorError3 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                _iterator3.return();
-              }
-            } finally {
-              if (_didIteratorError3) {
-                throw _iteratorError3;
-              }
+          function generateChildren(childOrder, item, that) {
+            for (var i = 0; i < childOrder.length; i++) {
+              var child = childOrder[i].name;
+              if ("order.json" === child) continue;
+              var link = item.name + '/' + child;
+              var childLi = $('<li></li>');
+              childLi.html(child).attr('data-example-link', link).on('click', that.onClickOpenExample.bind(that));
+              childLi.appendTo(childUl);
             }
           }
+          if (childOrder.find(function (child) {
+            return child.name === 'order.json';
+          })) {
+            $.ajax({
+              type: "GET",
+              url: "/examples/" + item.name + "/order.json",
+              dataType: "json",
+              error: function (item, childOrder, jqXHR, textStatus) {
+                console.log("Error while retrieving order.json for ", item.name, ": ", textStatus, ". Using default ordering.");
+                generateChildren(childOrder, item, this);
+              }.bind(_this7, item, childOrder),
+              success: function (item, text) {
+                var newChildOrder = [];
+                text.forEach(function (item) {
+                  newChildOrder.push({ "name": item });
+                });
 
+                var oldChildOrder = [];
+                item.children.forEach(function (item) {
+                  if (item !== "order.json") {
+                    oldChildOrder.push({ "name": item });
+                  }
+                });
+
+                var correctedChildOrder = [];
+                newChildOrder.forEach(function (new_item) {
+                  oldChildOrder.forEach(function (old_item) {
+                    if (new_item.name == old_item.name) {
+                      correctedChildOrder.push(new_item);
+                      old_item.moved = true;
+                    }
+                  });
+                });
+
+                var childOrphans = [];
+                oldChildOrder.forEach(function (old_item) {
+                  if (old_item.moved != true) {
+                    childOrphans.push(old_item);
+                  }
+                });
+
+                childOrder = correctedChildOrder.concat(childOrphans);
+
+                generateChildren(childOrder, item, this);
+              }.bind(_this7, item)
+            });
+          } else {
+            generateChildren(childOrder, item, _this7);
+          }
+          // per section
+          // item.name -> parentDiv $examples
           parentButton.appendTo(parentLi);
           // per item in section
           // childLi -> childUl -> parentDiv -> $examples
@@ -3503,11 +3484,6 @@ var ProjectView = function (_View) {
 
         for (var _iterator = orderedList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var childOrder;
-          var newChildOrder;
-          var oldChildOrder;
-          var correctedChildOrder;
-          var childOrphans;
-          var that;
 
           _loop();
         }
@@ -3536,13 +3512,13 @@ var ProjectView = function (_View) {
       $libraries.empty(librariesDir);
       if (!librariesDir.length) return;
 
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
       try {
-        var _loop3 = function _loop3() {
-          var item = _step4.value;
+        var _loop2 = function _loop2() {
+          var item = _step3.value;
 
           /*
           Button header text    +
@@ -3611,13 +3587,13 @@ var ProjectView = function (_View) {
           var filesList = $('<ul></ul>').addClass('libraries-list');
 
           var includeInstructions = $('<p></p>').text(json.tabs.includeInstructions);
-          var _iteratorNormalCompletion5 = true;
-          var _didIteratorError5 = false;
-          var _iteratorError5 = undefined;
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
 
           try {
-            var _loop4 = function _loop4() {
-              var child = _step5.value;
+            var _loop3 = function _loop3() {
+              var child = _step4.value;
 
               if (child && child.length && child[0] === '.') return 'continue';
               if (child == 'build') return 'continue';
@@ -3640,13 +3616,13 @@ var ProjectView = function (_View) {
                     i += 1;
                     var object = {};
                     var transformText = text.split('\n');
-                    var _iteratorNormalCompletion6 = true;
-                    var _didIteratorError6 = false;
-                    var _iteratorError6 = undefined;
+                    var _iteratorNormalCompletion5 = true;
+                    var _didIteratorError5 = false;
+                    var _iteratorError5 = undefined;
 
                     try {
-                      for (var _iterator6 = transformText[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                        var line = _step6.value;
+                      for (var _iterator5 = transformText[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                        var line = _step5.value;
 
                         line = line.trim();
                         if (line.length > 0) {
@@ -3655,13 +3631,13 @@ var ProjectView = function (_View) {
                           if (key == 'include') {
                             includeArr.push(splitKeyVal[1]);
                           } else if ('examples' === key) {
-                            var _iteratorNormalCompletion8 = true;
-                            var _didIteratorError8 = false;
-                            var _iteratorError8 = undefined;
+                            var _iteratorNormalCompletion7 = true;
+                            var _didIteratorError7 = false;
+                            var _iteratorError7 = undefined;
 
                             try {
-                              for (var _iterator8 = splitKeyVal[1].split(',')[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                                var example = _step8.value;
+                              for (var _iterator7 = splitKeyVal[1].split(',')[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                                var example = _step7.value;
 
                                 example = example.trim();
                                 var exampleLi = $('<li></li>');
@@ -3669,16 +3645,16 @@ var ProjectView = function (_View) {
                                 exampleLi.appendTo(examplesList);
                               }
                             } catch (err) {
-                              _didIteratorError8 = true;
-                              _iteratorError8 = err;
+                              _didIteratorError7 = true;
+                              _iteratorError7 = err;
                             } finally {
                               try {
-                                if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                                  _iterator8.return();
+                                if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                                  _iterator7.return();
                                 }
                               } finally {
-                                if (_didIteratorError8) {
-                                  throw _iteratorError8;
+                                if (_didIteratorError7) {
+                                  throw _iteratorError7;
                                 }
                               }
                             }
@@ -3690,16 +3666,16 @@ var ProjectView = function (_View) {
 
                       // Get the #include line and add to includeContent
                     } catch (err) {
-                      _didIteratorError6 = true;
-                      _iteratorError6 = err;
+                      _didIteratorError5 = true;
+                      _iteratorError5 = err;
                     } finally {
                       try {
-                        if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                          _iterator6.return();
+                        if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                          _iterator5.return();
                         }
                       } finally {
-                        if (_didIteratorError6) {
-                          throw _iteratorError6;
+                        if (_didIteratorError5) {
+                          throw _iteratorError5;
                         }
                       }
                     }
@@ -3714,28 +3690,28 @@ var ProjectView = function (_View) {
                     }
 
                     if (includeArr.length > 0) {
-                      var _iteratorNormalCompletion7 = true;
-                      var _didIteratorError7 = false;
-                      var _iteratorError7 = undefined;
+                      var _iteratorNormalCompletion6 = true;
+                      var _didIteratorError6 = false;
+                      var _iteratorError6 = undefined;
 
                       try {
-                        for (var _iterator7 = includeArr[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-                          var include = _step7.value;
+                        for (var _iterator6 = includeArr[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                          var include = _step6.value;
 
                           var _includeText = $('<p></p>').text('#include <' + 'libraries/' + object.name + '/' + object.name + '.h>\n').attr('data-include', 'include-text');
                           _includeText.appendTo(includeLines);
                         }
                       } catch (err) {
-                        _didIteratorError7 = true;
-                        _iteratorError7 = err;
+                        _didIteratorError6 = true;
+                        _iteratorError6 = err;
                       } finally {
                         try {
-                          if (!_iteratorNormalCompletion7 && _iterator7.return) {
-                            _iterator7.return();
+                          if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                            _iterator6.return();
                           }
                         } finally {
-                          if (_didIteratorError7) {
-                            throw _iteratorError7;
+                          if (_didIteratorError6) {
+                            throw _iteratorError6;
                           }
                         }
                       }
@@ -3790,26 +3766,26 @@ var ProjectView = function (_View) {
               }
             };
 
-            for (var _iterator5 = item.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-              var _ret4 = _loop4();
+            for (var _iterator4 = item.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var _ret3 = _loop3();
 
-              if (_ret4 === 'continue') continue;
+              if (_ret3 === 'continue') continue;
             }
 
             // FOR LIBRARY INFO
             // per section
             // item.name -> parentDiv $examples
           } catch (err) {
-            _didIteratorError5 = true;
-            _iteratorError5 = err;
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                _iterator5.return();
+              if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                _iterator4.return();
               }
             } finally {
-              if (_didIteratorError5) {
-                throw _iteratorError5;
+              if (_didIteratorError4) {
+                throw _iteratorError4;
               }
             }
           }
@@ -3836,22 +3812,22 @@ var ProjectView = function (_View) {
           libraryItem.appendTo($libraries);
         };
 
-        for (var _iterator4 = librariesDir[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        for (var _iterator3 = librariesDir[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
           var clipboard;
 
-          _loop3();
+          _loop2();
         }
       } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
           }
         } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
+          if (_didIteratorError3) {
+            throw _iteratorError3;
           }
         }
       }
@@ -3903,13 +3879,13 @@ var ProjectView = function (_View) {
     key: 'subDirs',
     value: function subDirs(dir) {
       var ul = $('<ul></ul>').html(dir.name + ':');
-      var _iteratorNormalCompletion9 = true;
-      var _didIteratorError9 = false;
-      var _iteratorError9 = undefined;
+      var _iteratorNormalCompletion8 = true;
+      var _didIteratorError8 = false;
+      var _iteratorError8 = undefined;
 
       try {
-        for (var _iterator9 = dir.children[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-          var _child = _step9.value;
+        for (var _iterator8 = dir.children[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+          var _child = _step8.value;
 
           if (!_child.dir) $('<li></li>').addClass('sourceFile').html(_child.name).data('file', (dir.dirPath || dir.name) + '/' + _child.name).appendTo(ul);else {
             _child.dirPath = (dir.dirPath || dir.name) + '/' + _child.name;
@@ -3917,16 +3893,16 @@ var ProjectView = function (_View) {
           }
         }
       } catch (err) {
-        _didIteratorError9 = true;
-        _iteratorError9 = err;
+        _didIteratorError8 = true;
+        _iteratorError8 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion9 && _iterator9.return) {
-            _iterator9.return();
+          if (!_iteratorNormalCompletion8 && _iterator8.return) {
+            _iterator8.return();
           }
         } finally {
-          if (_didIteratorError9) {
-            throw _iteratorError9;
+          if (_didIteratorError8) {
+            throw _iteratorError8;
           }
         }
       }
@@ -4531,23 +4507,26 @@ var TabView = function (_View) {
       var selected = $('#activeBoard').val(); // Get the value of the selection
       $('[data-pin-diagram]').prop('data', 'belaDiagram/diagram.html?' + selected); // Load that image
     });
+
+    _this.toggleClassesTimeout = undefined;
     return _this;
   }
 
   _createClass(TabView, [{
     key: 'toggleClasses',
     value: function toggleClasses() {
+      clearTimeout(this.toggleClassesTimeout);
       var that = this;
       if ($('[data-tabs]').hasClass('tabs-open')) {
-        setTimeout(function () {
+        // tab is opening
+        this.toggleClassesTimeout = setTimeout(function () {
           $('[data-editor]').addClass('tabs-open');
-          that.editor.resize();
-        }, 750);
-      } else {
-        $('[data-editor]').removeClass('tabs-open');
-        setTimeout(function () {
-          that.editor.resize();
+          that.emit('change');
         }, 500);
+      } else {
+        // tab is closing
+        $('[data-editor]').removeClass('tabs-open');
+        that.emit('change');
       }
     }
   }, {
@@ -4570,12 +4549,10 @@ var TabView = function (_View) {
       function openTabs() {
         if (tabs.origin == 'tab-control') {
           if (menuOpened == false) {
-            $('[data-editor]').addClass('tabs-open');
             $('[data-tabs]').addClass('tabs-open');
             $('[data-tab-open] span').addClass('rot');
             menuOpened = true;
           } else {
-            $('[data-editor]').removeClass('tabs-open');
             $('[data-tabs]').removeClass('tabs-open');
             $('[data-tab-open] span').removeClass('rot');
             menuOpened = false;
@@ -4583,14 +4560,13 @@ var TabView = function (_View) {
               $('[data-tab-content]').scrollTop($('#tab-content-area').offset().top);
             }, 500);
           }
-          that.toggleClasses();
         }
         if (tabs.origin == 'tab-link' && menuOpened == false) {
-          $('[data-editor]').addClass('tabs-open');
           $('[data-tabs]').addClass('tabs-open');
           $('[data-tab-open] span').addClass('rot');
           menuOpened = true;
         }
+        that.toggleClasses();
         matchTabFor();
       }
 
