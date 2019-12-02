@@ -48,16 +48,16 @@
  */
 
 /// Set the given bit in \c word to 1.
-#define setBit(word,bit) 			((word) | (1 << (bit)))
+#define Bela_setBit(word,bit) 			((word) | (1 << (bit)))
 
 /// Clear the given bit in \c word to 0.
-#define clearBit(word,bit) 			((word) &~ (1 << (bit)))
+#define Bela_clearBit(word,bit) 			((word) &~ (1 << (bit)))
 
 /// Check if the given bit in \c word is 1 (returns nonzero) or 0 (returns zero).
-#define getBit(word,bit) 			(((word) >> (bit)) & 1)
+#define Bela_getBit(word,bit) 			(((word) >> (bit)) & 1)
 
 /// Set/clear the given bit in \c word to \c value.
-#define changeBit(word,bit,value) 	((clearBit((word),(bit))) | ((value) << (bit)))
+#define Bela_changeBit(word,bit,value) 	((Bela_clearBit((word),(bit))) | ((value) << (bit)))
 
 /** @}
  * \endcond
@@ -448,7 +448,7 @@ static inline void analogWriteNI(BelaContext *context, int frame, int channel, f
 //
 // Returns the value of a given digital input at the given frame number
 static inline int digitalRead(BelaContext *context, int frame, int channel) {
-	return getBit(context->digital[frame], channel + 16);
+	return Bela_getBit(context->digital[frame], channel + 16);
 }
 
 // digitalWrite()
