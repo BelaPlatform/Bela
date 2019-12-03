@@ -300,6 +300,8 @@ BELA_LDLIBS += $(LIBPD_LIBS)
 include libraries/Midi/build/Makefile.link
 include libraries/Scope/build/Makefile.link
 include libraries/Gui/build/Makefile.link
+include libraries/Trill/build/Makefile.link
+include libraries/Pipe/build/Makefile.link
 endif
 
 ifndef COMPILER

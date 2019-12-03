@@ -19,6 +19,72 @@ extern "C" {
 #include <sstream>
 #include <algorithm>
 
+#define ENABLE_TRILL
+
+#ifdef ENABLE_TRILL
+#include <tuple>
+#include <libraries/Trill/Trill.h>
+#include <libraries/Pipe/Pipe.h>
+AuxiliaryTask gTrillTask;
+Pipe gTrillPipe;
+static std::vector<std::pair<std::string,Trill*>> gTouchSensors;
+// how often to read the cap sensors inputs.
+float touchSensorSleepInterval = 0.005;
+typedef enum {
+	TrillBoard_none,
+	TrillBoard_craft,
+	TrillBoard_bar,
+	TrillBoard_square,
+} TrillBoard;
+const char* TrillBoardNames[] = {"none", "craft", "bar", "square"};
+
+int getIdxFromId(const char* sensorId)
+{
+	for(unsigned int n = 0; n < gTouchSensors.size(); ++n)
+	{
+		if(0 == strcmp(sensorId, gTouchSensors[n].first.c_str()))
+			return n;
+	}
+	return -1;
+}
+
+TrillBoard trillGetBoard(Trill& trill)
+{
+	const Trill::Device type = trill.deviceType();
+	const Trill::Mode mode = trill.getMode();
+	if(Trill::ONED == type && Trill::DIFF == mode)
+		return TrillBoard_craft;
+	else if(Trill::ONED == type && Trill::NORMAL == mode)
+		return TrillBoard_bar;
+	else if(Trill::TWOD == type && Trill::NORMAL == mode)
+		return TrillBoard_square;
+	else
+		return TrillBoard_none;
+}
+void readTouchSensors(void*)
+{
+	for(unsigned int n = 0; n < gTouchSensors.size(); ++n)
+	{
+		Trill& touchSensor = *gTouchSensors[n].second;
+		int ret;
+		const Trill::Device type = touchSensor.deviceType();
+		const Trill::Mode mode = touchSensor.getMode();
+		if(Trill::NONE == type)
+			ret = 1;
+		else if(Trill::DIFF == mode)
+			ret = touchSensor.readI2C();
+		else if(Trill::NORMAL == mode)
+			ret = touchSensor.readLocations();
+		else
+			ret = 1;
+		if(!ret)
+		{
+			gTrillPipe.writeNonRt(n);
+		}
+	}
+}
+#endif // ENABLE_TRILL
+
 Gui gui;
 enum { minFirstDigitalChannel = 10 };
 static unsigned int gAnalogChannelsInUse;
@@ -273,6 +339,97 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		dcm.manage(channel, direction, isMessageRate);
 		return;
 	}
+#ifdef ENABLE_TRILL
+	if(0 == strcmp(source, "bela_setTrill"))
+	{
+		if(0 == strcmp(symbol, "new"))
+		{
+			if(
+				argc < 4
+				|| !libpd_is_symbol(argv)
+				|| !libpd_is_float(argv + 1)
+				|| !libpd_is_float(argv + 2)
+				|| !libpd_is_symbol(argv + 3)
+						)
+			{
+				rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
+					"[new <sensor_id> <bus> <address> <mode>(\n");
+				return;
+			}
+			const char* name = libpd_get_symbol(argv);
+			unsigned int bus = libpd_get_float(argv + 1);
+			unsigned int address = libpd_get_float(argv + 2);
+			const char* modeString = libpd_get_symbol(argv + 3);
+			Trill::Mode mode;
+			if(0 == strcmp(modeString, "normal"))
+				mode = Trill::NORMAL;
+			else if (0 == strcmp(modeString, "diff"))
+				mode = Trill::DIFF;
+			else {
+				rt_fprintf(stderr, "bela_setTrill unknown mode `%s'\n", modeString);
+				return;
+			}
+			Trill* trill = new Trill(bus, address, mode);
+			if(Trill::NONE == trill->deviceType())
+			{
+				rt_fprintf(stderr, "Unable to create Trill sensor on bus %u at address %u (%#x). Is the sensor connected?\n", bus, address, address);
+				return;
+			}
+			gTouchSensors.emplace_back(std::string(name), trill);
+			rt_printf("Created new sensor \"%s\" mode: %s, board: %s\n", name, modeString, TrillBoardNames[trillGetBoard(*trill)]);
+			//TODO: send ack to Pd upon success. Hard to do now without a dedicated receiver because of https://github.com/libpd/libpd/issues/274
+		}
+		if(
+			0 == strcmp(symbol, "threshold")
+			|| 0 == strcmp(symbol, "prescaler")
+		)
+		{
+			if(
+				argc < 2
+				|| !libpd_is_symbol(argv)
+				|| !libpd_is_float(argv + 1)
+			  ) {
+				rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
+					"[threshold <sensor_id> <threshold_value>(\n"
+					" or\n"
+					"[prescaler <sensor_id> <prescaler_value>(\n");
+				return;
+			}
+			const char* sensorId = libpd_get_symbol(argv);
+			unsigned int value = libpd_get_float(argv + 1);
+			int idx = getIdxFromId(sensorId);
+			if(idx < 0)
+			{
+				rt_fprintf(stderr, "bela_setTrill sensor_id unknown: %s\n", sensorId);
+				return;
+			}
+			if(0 == strcmp(symbol, "threshold"))
+			{
+				if(6 < value)
+				{
+					value = 6;
+					rt_printf("bela_setTrill threshold value out of range, clipping to %u\n", value);
+				}
+				unsigned int threshold = Trill::thresholdValues[value];
+				gTouchSensors[idx].second->setNoiseThreshold(threshold);
+			}
+			if(0 == strcmp(symbol, "prescaler"))
+			{
+				if(6 < value || 0 == value)
+				{
+					if(0 == value)
+						value = 1;
+					if(6 < value)
+						value = 6;
+					rt_printf("bela_setTrill prescaler value out of range, clipping to %u\n", value);
+				}
+				unsigned int prescaler = Trill::prescalerValues[value - 1];
+				gTouchSensors[idx].second->setPrescaler(prescaler);
+			}
+		}
+		return;
+	}
+#endif // ENABLE_TRILL
 }
 
 void Bela_floatHook(const char *source, float value){
@@ -469,6 +626,9 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_setDigital");
 	libpd_bind("bela_setMidi");
 	libpd_bind("bela_guiOut");
+#ifdef ENABLE_TRILL
+	libpd_bind("bela_setTrill");
+#endif // ENABLE_TRILL
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
@@ -501,13 +661,99 @@ bool setup(BelaContext *context, void *userData)
 #endif /* PD_THREADED_IO */
 
 	dcm.setVerbose(false);
+#ifdef ENABLE_TRILL
+	gTrillTask = Bela_createAuxiliaryTask(readTouchSensors, 51, "touchSensorRead", NULL);
+	gTrillPipe.setup("trillPipe", 1024);
+#endif // ENABLE_TRILL
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-	int num;
+#ifdef ENABLE_TRILL
+	bool doTrill = false;
+	for(auto& t : gTouchSensors)
+	{
+		if(Trill::NONE != t.second->deviceType())
+		{
+			doTrill = true;
+			break;
+		}
+	}
+	if(doTrill)
+	{
+		int idx;
+		while(gTrillPipe.readRt(idx) > 0)
+		{
+			Trill& touchSensor = *gTouchSensors[idx].second;
+			const char* sensorId = gTouchSensors[idx].first.c_str();
+			TrillBoard board = trillGetBoard(touchSensor);
+			if(TrillBoard_none == board)
+				continue;
+
+			if(TrillBoard_craft == board)
+			{
+				libpd_start_message(touchSensor.numSensors());
+				for(unsigned int n = 0; n < touchSensor.numSensors(); ++n)
+				{
+					libpd_add_float(touchSensor.rawData[n]/(2048.f));
+				}
+			} else if(TrillBoard_bar == board)
+			{
+				libpd_start_message(2 * touchSensor.numberOfTouches() + 1);
+				libpd_add_float(touchSensor.numberOfTouches());
+				for(int i = 0; i < touchSensor.numberOfTouches(); i++) {
+					libpd_add_float(touchSensor.touchLocation(i));
+					libpd_add_float(touchSensor.touchSize(i));
+				}
+			} else if(TrillBoard_square == board)
+			{
+				int avgLocation = 0;
+				int avgSize = 0;
+				int numTouches = touchSensor.numberOfTouches();
+				libpd_start_message(2 * numTouches + 1);
+				libpd_add_float(numTouches > 0);
+				if(numTouches)
+				{
+					for(int i = 0; i < numTouches; i++) {
+						if(touchSensor.touchLocation(i) != 0) {
+							avgLocation += touchSensor.touchLocation(i);
+							avgSize += touchSensor.touchSize(i);
+						}
+					}
+					avgLocation = floor((float)avgLocation / numTouches);
+					avgSize = floor((float)avgSize / numTouches);
+					int avgHorizontalLocation = 0;
+					int numHorizontalTouches = 0;
+					for(int i = 0; i < touchSensor.numberOfHorizontalTouches(); i++) {
+						if(touchSensor.touchHorizontalLocation(i) != 0) {
+							avgHorizontalLocation += touchSensor.touchHorizontalLocation(i);
+							numHorizontalTouches += 1;
+						}
+					}
+					avgHorizontalLocation = floor((float)avgHorizontalLocation / numHorizontalTouches);
+					libpd_add_float(avgLocation);
+					libpd_add_float(avgHorizontalLocation);
+					libpd_add_float(avgSize);
+				}
+			}
+			else
+				continue;
+			libpd_finish_message("bela_trill", sensorId);
+		}
+
+		static int count = 0;
+		unsigned int readIntervalSamples = touchSensorSleepInterval * context->audioSampleRate;
+		count += context->audioFrames;
+		if(count > readIntervalSamples)
+		{
+			Bela_scheduleAuxiliaryTask(gTrillTask);
+			count -= readIntervalSamples;
+		}
+	}
+#endif // ENABLE_TRILL
 #ifdef PARSE_MIDI
+	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
@@ -712,6 +958,13 @@ void cleanup(BelaContext *context, void *userData)
 	{
 		delete a;
 	}
+#ifdef ENABLE_TRILL
+	for(auto t : gTouchSensors)
+	{
+		// t.first is a std::string, so the memory will be deallocated automatically
+		delete t.second;
+	}
+#endif // ENABLE_TRILL
 	libpd_closefile(gPatch);
 	delete [] gScopeOut;
 }

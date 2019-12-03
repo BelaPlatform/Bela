@@ -3,6 +3,20 @@
 
 class Trill : public I2c
 {
+	public:
+		enum Mode {
+			NORMAL = 0,
+			RAW = 1,
+			BASELINE = 2,
+			DIFF = 3,
+		};
+
+		enum Device {
+			NONE = 0,
+			ONED = 1,
+			TWOD = 2,
+		};
+
 	private:
 
 		enum {
@@ -38,11 +52,10 @@ class Trill : public I2c
 			kNumSensors = 30
 		};
 
-		bool preparedForDataRead_ = false;
-		uint8_t device_type_; // Which type of device is connected (if any)
+		Device device_type_; // Which type of device is connected (if any)
+		Mode mode_; // Which mode the device is in
 		uint8_t firmware_version_; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
-		uint8_t mode_; // Which mode the device is in
 
 		uint8_t dataBuffer[kRawLength];
 		uint16_t commandSleepTime = 10000;
@@ -50,24 +63,14 @@ class Trill : public I2c
 	public:
 		int rawData[kNumSensors];
 
-		enum Modes {
-			NORMAL = 0,
-			RAW = 1,
-			BASELINE = 2,
-			DIFF = 3
-		};
-
-		enum Devices {
-			NONE = 0,
-			ONED = 1,
-			TWOD = 2
-		};
-
+		static constexpr unsigned int prescalerValues[6] = {1, 2, 4, 8, 16, 32};
+		static constexpr unsigned int thresholdValues[7] = {0, 10, 20, 30, 40, 50, 60};
+		bool preparedForDataRead_ = false;
 		Trill();
 		~Trill();
-		Trill(int i2c_bus, int i2c_address, int mode);
-		int setup(int i2c_bus = 1, int i2c_address = 0x18, int mode = NORMAL);
-		int setup(int i2c_bus, int i2c_address, int mode, int threshold, int prescaler);
+		Trill(int i2c_bus, int i2c_address, Mode mode);
+		int setup(int i2c_bus = 1, int i2c_address = 0x18, Mode mode = NORMAL);
+		int setup(int i2c_bus, int i2c_address, Mode mode, int threshold, int prescaler);
 		void cleanup();
 
 		bool isReady(){ return preparedForDataRead_; }
@@ -78,9 +81,9 @@ class Trill : public I2c
 		int readI2C(); // This should maybe be renamed readRawData()
 		int readLocations();
 		/* Return the type of the device attached or 0 if none is attached */
-		int deviceType() { return device_type_; }
+		Device deviceType() { return device_type_; }
 		int firmwareVersion() { return firmware_version_; }
-		int getMode() { return mode_; }
+		Mode getMode() { return mode_; }
 		int identify();
 		void printDetails() {
 			printf("Device type: %d\n", deviceType());
@@ -89,7 +92,7 @@ class Trill : public I2c
 		int numSensors();
 
 		/* --- Scan configuration settings --- */
-		int setMode(uint8_t mode);
+		int setMode(Mode mode);
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
 		int setPrescaler(uint8_t prescaler);
 		int setNoiseThreshold(uint8_t threshold);
