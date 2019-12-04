@@ -126,6 +126,8 @@ ssize_t Pipe::_readRt(void* ptr, size_t size)
 	}
 	if(!blockingRt || doIt){
 		ret = __wrap_recv(pipeSocket, ptr, size, 0);
+		if(-1 == ret)
+			ret = -errno;
 	}
 	return ret;
 }
