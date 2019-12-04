@@ -37,7 +37,7 @@ export default class BelaControl extends BelaWebSocket {
                 this.events[2].detail.projectName = this.projectName;
             }
             this.target.dispatchEvent(this.events[2]);
-            this.sendEvent({event: "connection-reply"});
+            this.send({event: "connection-reply"});
     	} else if (parsedData.event == 'set-slider') {
     		console.log("Set slider");
             let slider;
@@ -62,7 +62,7 @@ export default class BelaControl extends BelaWebSocket {
         }
     }
 
-    sendEvent (data) {
+    send(data) {
         let obj = JSON.stringify(data);
         if (this.ws.readyState === 1)
             this.ws.send(obj);
