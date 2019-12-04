@@ -3,6 +3,9 @@
  * using libpd.
  */
 #include <Bela.h>
+
+#define BELA_LIBPD_GUI
+
 #include <DigitalChannelManager.h>
 #include <cmath>
 #include <stdio.h>
@@ -14,17 +17,29 @@ extern "C" {
 #include <libraries/UdpServer/UdpServer.h>
 #include <libraries/Midi/Midi.h>
 #include <libraries/Scope/Scope.h>
-#include <libraries/Gui/Gui.h>
 #include <string>
 #include <sstream>
 #include <algorithm>
 
 #define ENABLE_TRILL
 
+#if (defined(BELA_LIBPD_GUI) || defined(ENABLE_TRILL))
+#include <libraries/Pipe/Pipe.h>
+template <typename T>
+int getIdxFromId(const char* id, std::vector<std::pair<std::string,T>>& db)
+{
+	for(unsigned int n = 0; n < db.size(); ++n)
+	{
+		if(0 == strcmp(id, db[n].first.c_str()))
+			return n;
+	}
+	return -1;
+}
+#endif // BELA_LIBPD_GUI || ENABLE_TRILL
+
 #ifdef ENABLE_TRILL
 #include <tuple>
 #include <libraries/Trill/Trill.h>
-#include <libraries/Pipe/Pipe.h>
 AuxiliaryTask gTrillTask;
 Pipe gTrillPipe;
 static std::vector<std::pair<std::string,Trill*>> gTouchSensors;
@@ -37,16 +52,6 @@ typedef enum {
 	TrillBoard_square,
 } TrillBoard;
 const char* TrillBoardNames[] = {"none", "craft", "bar", "square"};
-
-int getIdxFromId(const char* sensorId)
-{
-	for(unsigned int n = 0; n < gTouchSensors.size(); ++n)
-	{
-		if(0 == strcmp(sensorId, gTouchSensors[n].first.c_str()))
-			return n;
-	}
-	return -1;
-}
 
 TrillBoard trillGetBoard(Trill& trill)
 {
@@ -85,7 +90,83 @@ void readTouchSensors(void*)
 }
 #endif // ENABLE_TRILL
 
+#ifdef BELA_LIBPD_GUI
+#include <libraries/Gui/Gui.h>
+
+Pipe gGuiPipe;
 Gui gui;
+struct bufferDescription
+{
+	std::string name;
+	int id;
+	int size;
+};
+static std::vector<struct bufferDescription> gGuiDataBuffers;
+static std::vector<std::string> gGuiControlBuffers;
+struct guiControlMessageHeader
+{
+	uint32_t size;
+	uint32_t type;
+	uint32_t id;
+};
+
+bool guiControlDataCallback(const char* data, int size, void* arg)
+{
+	// parse the data into a JSONValue
+	JSONValue *value = JSON::Parse(data);
+	if (value == NULL || !value->IsObject()){
+		fprintf(stderr, "Could not parse JSON:\n%s\n", data);
+		return false;
+	}
+	JSONObject root = value->AsObject();
+	int ret = true;
+	for(unsigned int n = 0; n < gGuiControlBuffers.size(); ++n)
+	{
+		const auto& b = gGuiControlBuffers[n];
+		std::wstring key = JSON::s2ws(b);
+		if (root.end() != root.find(key))
+		{
+			JSONValue* found = root[key];
+			struct guiControlMessageHeader header;
+			header.id = n;
+			char* array;
+			if(found->IsString())
+			{
+				std::string value = JSON::ws2s(found->AsString());
+				header.type = 's';
+				header.size = value.size();
+				array = (char*)alloca(header.size);
+				memcpy(array, value.c_str(), header.size);
+			} else if(found->IsNumber())
+			{
+				float value = found->AsNumber();
+				header.type = 'f';
+				header.size = sizeof(value);
+				array = (char*)alloca(header.size);
+				memcpy(array, &value, header.size);
+			} else {
+				continue;
+			}
+			// do two separate reads: the pipe is datagram-based
+			// so it would be impossible to receive partial messages
+			// at the other end
+			gGuiPipe.writeNonRt(header);
+			gGuiPipe.writeNonRt(&array[0], header.size);
+			// we have successully parsed this message, so the
+			// default parser shouldn't when we return
+			// note: in practice there may be times when we'd want
+			// to have the default parser handle this message
+			// (e.g.: when an "event" field is also present), but
+			// for now we ignore them
+			ret = false;
+			continue;
+		}
+	}
+	delete value;
+	return ret;
+}
+
+#endif // BELA_LIBPD_GUI
 enum { minFirstDigitalChannel = 10 };
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
@@ -239,6 +320,7 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
+#ifdef BELA_LIBPD_GUI
 	if(0 == strcmp(source, "bela_guiOut"))
 	{
 		if(!libpd_is_float(&argv[0]))
@@ -277,6 +359,7 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 		}
 		return;
 	}
+#endif // BELA_LIBPD_GUI
 }
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
 	if(strcmp(source, "bela_setMidi") == 0){
@@ -339,6 +422,41 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		dcm.manage(channel, direction, isMessageRate);
 		return;
 	}
+#ifdef BELA_LIBPD_GUI
+	if(0 == strcmp(source, "bela_setGui"))
+	{
+		if(0 == strcmp(symbol, "new"))
+		{
+			if(
+				argc < 2
+				|| !libpd_is_symbol(argv)
+				|| !libpd_is_symbol(argv + 1)
+			)
+			{
+				return;
+			}
+			const char* mode = libpd_get_symbol(argv);
+			const char* name = libpd_get_symbol(argv + 1);
+			if(0 == strcmp(mode, "control"))
+			{
+				gGuiControlBuffers.emplace_back(name);
+				return;
+			}
+			if(0 == strcmp(mode, "array"))
+			{
+				// because of
+				// https://github.com/libpd/libpd/issues/274
+				// (again), we cannot access the arrays right
+				// here (as it would deadlock on loadbang), so
+				// we have to defer creation of the Gui
+				// buffers until render() runs
+				gGuiDataBuffers.emplace_back(bufferDescription{.name = name, .id = -1, .size = 0});
+				return;
+			}
+			return;
+		}
+	}
+#endif // BELA_LIBPD_GUI
 #ifdef ENABLE_TRILL
 	if(0 == strcmp(source, "bela_setTrill"))
 	{
@@ -397,7 +515,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			}
 			const char* sensorId = libpd_get_symbol(argv);
 			unsigned int value = libpd_get_float(argv + 1);
-			int idx = getIdxFromId(sensorId);
+			int idx = getIdxFromId(sensorId, gTouchSensors);
 			if(idx < 0)
 			{
 				rt_fprintf(stderr, "bela_setTrill sensor_id unknown: %s\n", sensorId);
@@ -496,7 +614,11 @@ bool gDigitalEnabled = 0;
 
 bool setup(BelaContext *context, void *userData)
 {
+#ifdef BELA_LIBPD_GUI
 	gui.setup(context->projectName);
+	gui.setControlDataCallback(guiControlDataCallback, nullptr);
+	gGuiPipe.setup("guiControlPipe", 16384);
+#endif // BELA_LIBPD_GUI
 	// Check Pd's version
 	int major, minor, bugfix;
 	sys_getversion(&major, &minor, &bugfix);
@@ -625,7 +747,10 @@ bool setup(BelaContext *context, void *userData)
 		libpd_bind(gReceiverOutputNames[i].c_str());
 	libpd_bind("bela_setDigital");
 	libpd_bind("bela_setMidi");
+#ifdef BELA_LIBPD_GUI
 	libpd_bind("bela_guiOut");
+	libpd_bind("bela_setGui");
+#endif // BELA_LIBPD_GUI
 #ifdef ENABLE_TRILL
 	libpd_bind("bela_setTrill");
 #endif // ENABLE_TRILL
@@ -670,6 +795,73 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
+#ifdef BELA_LIBPD_GUI
+	while(gGuiControlBuffers.size()) // this won't change within the loop, but it's good not to have to use a separate flag
+	{
+		static struct guiControlMessageHeader header;
+		static bool waitingForHeader = true;
+		if(waitingForHeader)
+		{
+			int ret = gGuiPipe.readRt(header);
+			if(1 != ret)
+				break;
+			else
+				waitingForHeader = false;
+		}
+		if(!waitingForHeader)
+		{
+			char payload[header.size];
+			int ret = gGuiPipe.readRt(&payload[0], header.size);
+			if(header.size != ret)
+			{
+				break;
+			}
+			const char* name = gGuiControlBuffers[header.id].c_str();
+			if('f' == header.type)
+			{
+				if(header.size != sizeof(float))
+				{
+					rt_fprintf(stderr, "Unexpected message length for float: %u\n", header.size);
+					continue;
+				}
+				float value = ((float*)payload)[0];
+				libpd_start_message(1);
+				libpd_add_float(value);
+				libpd_finish_message("bela_guiControl", name);
+			}
+			if('s' == header.type)
+			{
+				libpd_symbol(name, payload);
+			}
+			waitingForHeader = true;
+		}
+	}
+	for(auto& b : gGuiDataBuffers)
+	{
+		int id = b.id;
+		int size = b.size;
+		const char* name = b.name.c_str();
+		if(id < 0)
+		{
+			// initialize
+			size = libpd_arraysize(name);
+			if(size <= 0)
+			{
+				continue;
+			} else {
+				// this is thread-unsafe: what happens if this causes reallocation while the Gui thread is writing to a buffer?
+				id = gui.setBuffer('f', size);
+				b.id = id;
+				b.size = size;
+				DataBuffer& dataBuffer = gui.getDataBuffer(id);
+				// initialize gui buffer with the initial content of the array
+				libpd_read_array(dataBuffer.getAsFloat(), b.name.c_str(), 0, size);
+			}
+		}
+		DataBuffer& dataBuffer = gui.getDataBuffer(b.id);
+		libpd_write_array(b.name.c_str(), 0, dataBuffer.getAsFloat(), dataBuffer.getNumElements());
+	}
+#endif // BELA_LIBPD_GUI
 #ifdef ENABLE_TRILL
 	bool doTrill = false;
 	for(auto& t : gTouchSensors)
