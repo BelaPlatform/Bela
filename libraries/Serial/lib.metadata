@@ -1,0 +1,17 @@
+name=Serial
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Giulio Moro<giuliomoro@yahoo.it>
+description=A class for communication over serial
+examples=Communication/Serial
+license=
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
