@@ -91,28 +91,26 @@ void Gui::ws_disconnect()
  */
 void Gui::ws_onControlData(const char* data, int size)
 {
-	if(customOnControlData && !customOnControlData(data, size, userControlData))
-	{
+	// parse the data into a JSONValue
+	JSONValue *value = JSON::Parse(data);
+	if (value == NULL || !value->IsObject()){
+		fprintf(stderr, "Could not parse JSON:\n%s\n", data);
 		return;
 	}
-	else
+	// look for the "event" key
+	JSONObject root = value->AsObject();
+	if(customOnControlData && !customOnControlData(root, userControlData))
 	{
-		// parse the data into a JSONValue
-		JSONValue *value = JSON::Parse(data);
-		if (value == NULL || !value->IsObject()){
-			fprintf(stderr, "Could not parse JSON:\n%s\n", data);
-			return;
-		}
-		// look for the "event" key
-		JSONObject root = value->AsObject();
-		if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
-			std::wstring event = root[L"event"]->AsString();
-			if (event.compare(L"connection-reply") == 0){
-				wsIsConnected = true;
-			}
-		}
 		delete value;
+		return;
 	}
+	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+		std::wstring event = root[L"event"]->AsString();
+		if (event.compare(L"connection-reply") == 0){
+			wsIsConnected = true;
+		}
+	}
+	delete value;
 	return;
 }
 

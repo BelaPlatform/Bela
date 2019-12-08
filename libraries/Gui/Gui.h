@@ -8,8 +8,6 @@
 
 // forward declarations
 class WSServer;
-class JSONValue;
-class AuxTaskRT;
 
 class Gui
 {
@@ -32,7 +30,7 @@ class Gui
 		std::wstring _projectName;
 
 		// User defined functions
-		std::function<bool(const char*, int, void*)> customOnControlData;
+		std::function<bool(JSONObject&, void*)> customOnControlData;
 		std::function<bool(const char*, int, void*)> customOnData;
 
 		void* userControlData = nullptr;
@@ -82,7 +80,7 @@ class Gui
 		 *
 		 * @param customControlData Pointer to data structure to be pased to the callback.
 		 **/
-		void setControlDataCallback(std::function<bool(const char*, int, void*)> callback, void* customControlData=nullptr){
+		void setControlDataCallback(std::function<bool(JSONObject&, void*)> callback, void* customControlData=nullptr){
 			customOnControlData = callback;
 			userControlData = customControlData;
 		};
