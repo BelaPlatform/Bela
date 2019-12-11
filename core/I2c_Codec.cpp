@@ -125,10 +125,7 @@ int I2c_Codec::startAudio(int dual_rate)
 		return 1;
 	if(writeRegister(0x41, 0x0D))	// HPROUT output level control: output level = 0dB, not muted, powered up
 		return 1;
-	if(writeRegister(0x56, 0x09))	// LEFT_LOP output level control: 0dB, not muted, powered up
-		return 1;
-	if(writeRegister(0x5D, 0x09))	// RIGHT_LOP output level control: 0dB, not muted, powered up
-		return 1;
+	enableLineOut(true);
 	if(writeDACVolumeRegisters(false))	// Unmute and set volume
 		return 1;
 
@@ -441,9 +438,18 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 int I2c_Codec::setHPVolume(int halfDbSteps)
 {
 	hpVolumeHalfDbs = halfDbSteps;
+	hpEnabled = true;
 	if(running)
 		return writeHPVolumeRegisters();
 
+	return 0;
+}
+
+int I2c_Codec::enableHpOut(bool enable)
+{
+	hpEnabled = enable;
+	if(running)
+		return writeHPVolumeRegisters();
 	return 0;
 }
 
@@ -459,11 +465,33 @@ int I2c_Codec::writeHPVolumeRegisters()
 			volumeBits = 127;
 	}
 
-	if(writeRegister(0x2F, volumeBits | 0x80)) // DAC_L1 to HPLOUT register: route to HPLOUT, volume 0dB
+	// DAC_x routed to HPxOUT ?
+	char routed = hpEnabled << 7;
+	if(writeRegister(0x2F, volumeBits | routed)) // DAC_L1 to HPLOUT register
 		return 1;
-	if(writeRegister(0x40, volumeBits | 0x80)) // DAC_R1 to HPROUT register: route to HPROUT, volume 0dB
+	if(writeRegister(0x40, volumeBits | routed)) // DAC_R1 to HPROUT register
 		return 1;
 
+	return 0;
+}
+
+int I2c_Codec::enableLineOut(bool enable)
+{
+	char value;
+	if(enable)
+	{
+		// output level control: 0dB, not muted, powered up
+		value = 0x09;
+	} else {
+		// output level control: muted
+		value = 0x08;
+	}
+	// LEFT_LOP
+	if(writeRegister(0x56, value))
+		return 1;
+	// RIGHT_LOP
+	if(writeRegister(0x5D, value))
+		return 1;
 	return 0;
 }
 
@@ -481,9 +509,7 @@ int I2c_Codec::stopAudio()
 		return 1;
 	if(writeRegister(0x41, 0x0C))		// HPROUT output level register: muted
 		return 1;
-	if(writeRegister(0x56, 0x08))		// LEFT_LOP output level control: muted
-		return 1;
-	if(writeRegister(0x5D, 0x08))		// RIGHT_LOP output level control: muted
+	if(enableLineOut(false))
 		return 1;
 	if(writeRegister(0x25, 0x00))		// DAC power/driver register: power off
 		return 1;
