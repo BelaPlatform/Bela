@@ -24,6 +24,11 @@ export default class BelaControl extends BelaWebSocket {
                 detail: {
                     projectName: null
                 }
+            }),
+            new CustomEvent('custom', {
+                detail: {
+                    data: null
+                }
             })
         ];
     }
@@ -59,6 +64,8 @@ export default class BelaControl extends BelaWebSocket {
             this.events[1].detail.id = parsedData.select;
             this.target.dispatchEvent(this.events[1]);
 
+        } else if (parsedData.event == 'custom') {
+            console.log(parsedData)
         }
     }
 

@@ -79,14 +79,16 @@ export default class BelaWebSocket {
         let parsedData = isJson(data);
 
         if(parsedData) {
-            if(parsedData.event.data == 'connection') {
-                let obj = {
-                    event: "connection-reply"
-                };
-                print("Connection reply: \n" + obj);
-                obj = JSON.stringify(obj);
-                if (this.readyState === 1)
-                    this.send(obj);
+            if(typeof parsedData.event != "undefined"){
+                if(parsedData.event.data == 'connection') {
+                    let obj = {
+                        event: "connection-reply"
+                    };
+                    print("Connection reply: \n" + obj);
+                    obj = JSON.stringify(obj);
+                    if (this.readyState === 1)
+                        this.send(obj);
+                }
             }
         }
         this.parent.onData(data, parsedData);

@@ -181,6 +181,7 @@ void Gui::cleanup()
 int Gui::sendControl(JSONValue* root) {
     std::wstring wide = JSON::Stringify(root);
     std::string str(wide.begin(), wide.end());
+    int ret;
     if(0 == (ret = ws_server->send(_addressControl.c_str(), str.c_str())))
        return 0;
     return ret;
