@@ -178,6 +178,14 @@ void Gui::cleanup()
 {
 }
 
+int Gui::sendControl(JSONValue* root) {
+    std::wstring wide = JSON::Stringify(root);
+    std::string str(wide.begin(), wide.end());
+    if(0 == (ret = ws_server->send(_addressControl.c_str(), str.c_str())))
+       return 0;
+    return ret;
+}
+
 int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)
 {
 	std::string bufferStr = std::to_string(bufferId);
