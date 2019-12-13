@@ -77,4 +77,9 @@ export default class BelaControl extends BelaWebSocket {
         if (this.ws.readyState === 1)
             this.ws.send(obj);
     }
+
+    send(data) {
+        if (this.ws.readyState === 1)
+            this.ws.send(JSON.stringify(data));
+    }
 }
