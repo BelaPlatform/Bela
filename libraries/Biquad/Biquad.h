@@ -62,6 +62,11 @@ class Biquad {
 		double z1, z2;
 };
 
+inline int Biquad::getType()
+{
+	return type;
+}
+
 inline double Biquad::getQ()
 {
 	return Q;
