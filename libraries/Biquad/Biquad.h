@@ -32,6 +32,7 @@ class Biquad {
 		int setup(double Fc, float Fs, int type, double Q = 0.707, double peakGainDB = 0.0);
 		float process(float in);
 
+		int getType();
 		double getQ();
 		double getFc();
 		double getPeakGain();
