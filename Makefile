@@ -748,7 +748,7 @@ update: stop
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
 # some library objects are required by libbelaextra.
-LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o libraries/Midi/build/Midi_c.o
 libraries/%.o: # how to build those objects needed by libbelaextra
 	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $@
 
