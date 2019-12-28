@@ -13,17 +13,22 @@
 #include <vector>
 #include "../include/I2c_MultiTLVCodec.h"
 
+#undef CODEC_WCLK_MASTER	// Match this with pru_rtaudio_irq.p
+
 I2c_MultiTLVCodec::I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
 : masterCodec(0), running(false), verbose(isVerbose)
 {
 	// for(int address = i2cAddress + 3; address >= i2cAddress; address--) {
 	for(int address = i2cAddress; address < i2cAddress + 4; address++) {
 		// Check for presence of TLV codec and take the first one we find as the master codec
-		// TODO: this code assumes the first codec is a 3104 (Bela Mini cape), which might not always be true 
+		// TODO: this code assumes the first codec is a 3104 (Bela Mini cape), which might not always be true
 		I2c_Codec::CodecType type = (address == i2cAddress) ? I2c_Codec::TLV320AIC3104 : I2c_Codec::TLV320AIC3106;
 		I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
 		if(testCodec->initCodec() != 0) {
 			delete testCodec;
+			if(verbose) {
+				fprintf(stderr, "Error initialising I2C codec on bus %d address %d\n", i2cBus, address);
+			}
 		}
 		else {
 			// codec found
@@ -70,14 +75,21 @@ int I2c_MultiTLVCodec::startAudio(int dual_rate)
 		return 1;
 
 	// Master codec generates the clocks with its PLL and occupies the first two slots
-	if((ret = masterCodec->startAudio(dual_rate, 1, 1, slotSize, 0)))
+#ifdef CODEC_WCLK_MASTER
+	// Main codec generates word clock
+	if((ret = masterCodec->startAudio(dual_rate, 1, 1, 1, slotSize, 0)))
 		return ret;
+#else
+	// AM335x generates word clock
+	if((ret = masterCodec->startAudio(dual_rate, 1, 0, 1, slotSize, 0)))
+		return ret;
+#endif
 
 	// Each subsequent codec occupies the next 2 slots
 	std::vector<I2c_Codec*>::iterator it;
 	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		slotNum += 2;
-		if((ret = (*it)->startAudio(dual_rate, 0, 1, slotSize, slotNum)))
+		if((ret = (*it)->startAudio(dual_rate, 0, 0, 1, slotSize, slotNum)))
 			return ret;
 	}
 
@@ -218,6 +230,25 @@ int I2c_MultiTLVCodec::numDetectedCodecs()
 	if(!masterCodec)
 		return 0;
 	return extraCodecs.size() + 1;
+}
+
+// For debugging purposes only!
+void I2c_MultiTLVCodec::debugWriteRegister(int codecNum, int regNum, int value) {
+	if(codecNum == 0) {
+		masterCodec->writeRegister(regNum, value);
+	}
+	else {
+		extraCodecs[codecNum - 1]->writeRegister(regNum, value);
+	}
+}
+
+int I2c_MultiTLVCodec::debugReadRegister(int codecNum, int regNum) {
+	if(codecNum == 0) {
+		return masterCodec->readRegister(regNum);
+	}
+	else {
+		return extraCodecs[codecNum - 1]->readRegister(regNum);
+	}
 }
 
 I2c_MultiTLVCodec::~I2c_MultiTLVCodec()

@@ -22,6 +22,8 @@
 #define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
 //#define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS // TODO: make it runtime (should not be there for BELA_TLV)
 
+#undef CODEC_WCLK_MASTER		// Match this with I2c_MultiTLVCodec.cpp
+
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
 #define CLOCK_BASE   0x44E00000
@@ -312,7 +314,11 @@
 #define MCASP_PIN_AMUTE     (1 << 25)   // Also, 0 to 3 are XFR0 to XFR3
 
 #ifdef DBOX_CAPE
+#ifdef CODEC_WCLK_MASTER
 #define MCASP_OUTPUT_PINS       MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
+#else
+#define MCASP_OUTPUT_PINS       MCASP_PIN_AHCLKX |  MCASP_PIN_AFSX | (1 << 2) // AHCLKX, FSX, AXR2 outputs
+#endif
 #else
 #define MCASP_OUTPUT_PINS       (1 << 3)    // Which pins are outputs
 #endif
@@ -373,8 +379,13 @@
 #define BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge)
 #define BELA_MULTI_TLV_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
-#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM, rising edge means beginning of frame
-#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM, rising edge means beginning of frame
+#ifdef CODEC_WCLK_MASTER
+#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
+#else
+#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
+#endif
 // RTDM and XTDM are calculated dynamically
 #define BELA_MULTI_TLV_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
 #define BELA_MULTI_TLV_MCASP_XINTCTL_VALUE MCASP_XINTCTL_VALUE

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <vector>
 #include "I2c_Codec.h"
 
 class I2c_MultiTLVCodec : public AudioCodec
@@ -29,6 +30,9 @@ public:
 	int reset();
 
 	int numDetectedCodecs();
+
+	void debugWriteRegister(int codecNum, int regNum, int value);
+	int debugReadRegister(int codecNum, int regNum);
 
 	I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool verbose = false);
 	~I2c_MultiTLVCodec();
