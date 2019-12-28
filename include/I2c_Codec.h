@@ -33,10 +33,11 @@ public:
 	} CodecType;
 	
 	int writeRegister(unsigned int reg, unsigned int value);
+	int readRegister(unsigned int reg);
 
 	int initCodec();
 	int startAudio(int dual_rate);
-	int startAudio(int dual_rate, int is_master, int tdm_mode, int slotSize, int startingSlot);
+	int startAudio(int dual_rate, int generates_bclk, int generates_wclk, int tdm_mode, int slotSize, int startingSlot);
 	int stopAudio();
 
 	int setPllJ(short unsigned int j);
@@ -75,7 +76,8 @@ private:
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;
 	int hpVolumeHalfDbs;
-	bool master;
+	bool generatesBclk;
+	bool generatesWclk;
 	bool running;
 	bool verbose;
 	bool hpEnabled;
