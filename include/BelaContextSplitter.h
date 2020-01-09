@@ -57,7 +57,7 @@ public:
 	static void contextCopy(const InternalBelaContext* src, InternalBelaContext* dst);
 	/**
 	 * Copy context data between two pre-allocated contexts. The caller has
-	 * to ensure that he number of analog, audio and digital frames and
+	 * to ensure that the number of analog, audio and digital frames and
 	 * channels has to be the same between the two contexts.
 	 */
 	static void contextCopyData(const InternalBelaContext* src, InternalBelaContext* dst);
