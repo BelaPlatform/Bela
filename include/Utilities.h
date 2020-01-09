@@ -89,7 +89,9 @@
 static inline float audioRead(BelaContext *context, int frame, int channel);
 
 /**
- * Non-interleaved version of audioRead()
+ * \brief Non-interleaved version of audioRead()
+ *
+ * To be used when `(context->flags | BELA_FLAG_INTERLEAVED) == false)`
  */
 static inline float audioReadNI(BelaContext *context, int frame, int channel);
 
@@ -109,7 +111,9 @@ static inline float audioReadNI(BelaContext *context, int frame, int channel);
 static inline void audioWrite(BelaContext *context, int frame, int channel, float value);
 
 /**
- * Non-interleaved version of audioWrite()
+ * \brief Non-interleaved version of audioWrite()
+ *
+ * To be used when `(context->flags | BELA_FLAG_INTERLEAVED) == false)`
  */
 static inline void audioWriteNI(BelaContext *context, int frame, int channel, float value);
 
@@ -129,7 +133,9 @@ static inline void audioWriteNI(BelaContext *context, int frame, int channel, fl
 static inline float analogRead(BelaContext *context, int frame, int channel);
 
 /**
- * Non-interleaved version of analogRead()
+ * \brief Non-interleaved version of analogRead()
+ *
+ * To be used when `(context->flags | BELA_FLAG_INTERLEAVED) == false)`
  */
 static inline float analogReadNI(BelaContext *context, int frame, int channel);
 
@@ -152,7 +158,9 @@ static inline float analogReadNI(BelaContext *context, int frame, int channel);
 static inline void analogWrite(BelaContext *context, int frame, int channel, float value);
 
 /**
- * Non-interleaved version of analogWrite()
+ * \brief Non-interleaved version of analogWrite()
+ *
+ * To be used when `(context->flags | BELA_FLAG_INTERLEAVED) == false)`
  */
 static inline void analogWriteNI(BelaContext *context, int frame, int channel, float value);
 
@@ -178,7 +186,9 @@ static inline void analogWriteNI(BelaContext *context, int frame, int channel, f
 static inline void analogWriteOnce(BelaContext *context, int frame, int channel, float value);
 
 /**
- * Non-interleaved version of analogWriteNI();
+ * \brief Non-interleaved version of analogWriteNI()
+ *
+ * To be used when `(context->flags | BELA_FLAG_INTERLEAVED) == false)`
  */
 static inline void analogWriteOnceNI(BelaContext *context, int frame, int channel, float value);
 
