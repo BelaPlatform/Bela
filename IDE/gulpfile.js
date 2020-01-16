@@ -51,6 +51,7 @@ gulp.task('compile', () => {
 		//.pipe(sourcemaps.init())
 		.pipe(ts({
 			"noImplicitAny": true,
+			"noEmitOnError": true,
 			"target": "es5"
 		}))
 		//.pipe(sourcemaps.write())
