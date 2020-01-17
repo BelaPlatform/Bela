@@ -41,13 +41,30 @@ var project_settings = require("./ProjectSettings");
 var paths = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
+var unzip = require("unzip-stream");
+var fs = require("fs-extra-promise");
 var max_file_size = 52428800; // bytes (50Mb)
 var max_preview_size = 524288000; // bytes (500Mb)
+function emptyObject(obj) {
+    Object.keys(obj).forEach(function (key) { delete obj[key]; });
+}
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
 // as the data variable, and is modified and returned by the method, and sent
 // back over the websocket
+// NOTE: the current  way of handling project-event events is horrible, at
+// least for the following reasons:
+// - it allows the client to execute arbitrary functions (security risk)
+// - it does not rely on the functions to actively return something, instead
+// it relies on the modifications they perform (or don't) to the data object to
+// determine whether anything useful / interesting happened
+// - future changes in the calling code in SocketManager.ts may inadvertently
+// break any of these functions, in case it starts relying on other attributes
+// (or their absence) in order to make some decisions. You can use
+// emptyObject(data) to prevent the caller from doing anything
+// - types and the presence of properties are unspecified and unenforced, and
+// we blindly rely on the client to send a data object with the appropriate fields
 // openFile takes a message with currentProject and newFile fields
 // it opens the file from the project, if it is not too big or binary
 // if the file is an image or audio file, it is symlinked from the media folder
@@ -262,6 +279,8 @@ function listExamples() {
     });
 }
 exports.listExamples = listExamples;
+// this only opens the project, but a notification needs to be emitted to the
+// frontend to actually switch project
 function openProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var projectRetryString, exists, _a, settings;
@@ -550,6 +569,101 @@ function uploadFile(data) {
     });
 }
 exports.uploadFile = uploadFile;
+function uploadZipProject(data) {
+    return __awaiter(this, void 0, void 0, function () {
+        var _this = this;
+        var tmp_path, tmp_target_path, target_path, file_exists, _a, _cleanup;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    tmp_path = paths.tmp + data.newFile;
+                    tmp_target_path = tmp_path.replace(/\.zip$/, "/");
+                    target_path = paths.projects + data.newProject;
+                    return [4 /*yield*/, file_manager.file_exists(target_path)];
+                case 1:
+                    _a = (_b.sent());
+                    if (_a) return [3 /*break*/, 3];
+                    return [4 /*yield*/, file_manager.directory_exists(target_path)];
+                case 2:
+                    _a = (_b.sent());
+                    _b.label = 3;
+                case 3:
+                    file_exists = (_a);
+                    if (file_exists && !data.force) {
+                        data.error = 'Failed to create project ' + data.newProject + ': it already exists!';
+                        data.fileData = null;
+                        data.fileName = null;
+                        return [2 /*return*/];
+                    }
+                    return [4 /*yield*/, file_manager.save_file(tmp_path, data.fileData)];
+                case 4:
+                    _b.sent();
+                    _cleanup = function (tmp_path, tmp_target_path) {
+                        //file_manager.delete_file(tmp_path);
+                        //file_manager.delete_file(tmp_target_path);
+                    }.bind(null, tmp_path, tmp_target_path);
+                    _cleanup();
+                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                            fs.createReadStream(tmp_path)
+                                .pipe(unzip.Extract({ path: tmp_target_path }))
+                                .on("close", function (e) { return __awaiter(_this, void 0, void 0, function () {
+                                var fileList, isRoot, source_path;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0: 
+                                        // purify folder from macos garbage
+                                        return [4 /*yield*/, file_manager.delete_matching_recursive(tmp_target_path, ["__MACOSX", ".DS_Store"])];
+                                        case 1:
+                                            // purify folder from macos garbage
+                                            _a.sent();
+                                            return [4 /*yield*/, file_manager.deep_read_directory(tmp_target_path)];
+                                        case 2:
+                                            fileList = _a.sent();
+                                            isRoot = false;
+                                            if (fileList.length > 1)
+                                                isRoot = true;
+                                            else {
+                                                if (fileList[0] && fileList[0].size !== undefined)
+                                                    isRoot = true;
+                                            }
+                                            if (isRoot) {
+                                                source_path = tmp_target_path;
+                                                console.log("Use as is: ", source_path);
+                                            }
+                                            else {
+                                                // peel off the first folder
+                                                source_path = tmp_target_path + fileList[0].name + "/";
+                                                console.log("Strip off the top-level folder: ", source_path);
+                                            }
+                                            return [4 /*yield*/, file_manager.copy_directory(source_path, target_path)];
+                                        case 3:
+                                            _a.sent();
+                                            data.currentProject = data.newProject;
+                                            return [4 /*yield*/, openProject(data)];
+                                        case 4:
+                                            _a.sent();
+                                            _cleanup();
+                                            resolve();
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            }); })
+                                .on("error", function (e) { return __awaiter(_this, void 0, void 0, function () {
+                                return __generator(this, function (_a) {
+                                    data.fileData = null;
+                                    data.fileName = null;
+                                    data.error = "Error extracting zip archive " + tmp_path + ": " + e.message;
+                                    _cleanup();
+                                    resolve();
+                                    return [2 /*return*/];
+                                });
+                            }); });
+                        })];
+            }
+        });
+    });
+}
+exports.uploadZipProject = uploadZipProject;
 function cleanFile(project, file) {
     return __awaiter(this, void 0, void 0, function () {
         var split_file, ext, file_root, file_path;

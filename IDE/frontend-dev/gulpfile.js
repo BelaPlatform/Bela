@@ -135,6 +135,7 @@ gulp.task('scope-browserify', () => {
         .on('error', function(error){
     		console.error(error);
     		this.emit('end');
+			exit(1);
     	})
         .pipe(source('bundle.js'))
         .pipe(buffer())

@@ -25,6 +25,12 @@
 			"input": "Your new file name",
 			"button": "Create file"
 		},
+		"create_new_project_from_zip": {
+			"title": "Create new project from zip archive",
+			"text": "Enter the new project name",
+			"input": "Your new project name",
+			"button": "Create project"
+		},
     "create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
@@ -172,6 +178,7 @@
 	},
   "funcKeys": {
     "openProject"	: "Opening project",
+	"uploadZipProject" : "Creating project from zip archive",
   	"openExample"	: "Opening example",
   	"newProject"	: "Creating project",
   	"saveAs"		: "Saving project",

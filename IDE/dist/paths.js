@@ -15,6 +15,7 @@ exports.startup_env = '/opt/Bela/startup_env';
 exports.lockfile = exports.Bela + 'IDE/.lockfile';
 exports.xenomai_stat = '/proc/xenomai/sched/stat';
 exports.update = exports.Bela + 'updates/';
+exports.tmp = "/tmp/";
 function set_xenomai_stat(new_path) { exports.xenomai_stat = new_path; }
 exports.set_xenomai_stat = set_xenomai_stat;
 ;

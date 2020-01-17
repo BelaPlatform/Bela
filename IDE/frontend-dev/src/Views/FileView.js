@@ -565,8 +565,8 @@ class FileView extends View {
 					askForOverwrite = false;
 					overwriteAction = 'upload';
 				}
-				this.actuallyDoFileUpload(file, true);
 				popup.hide();
+				this.actuallyDoFileUpload(file, true);
 				uploadingFile = false;
 				if (fileQueue.length){
 					this.doFileUpload(fileQueue.pop());
@@ -642,11 +642,32 @@ class FileView extends View {
 
 	actuallyDoFileUpload(file, force){
 		var reader = new FileReader();
-		reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
-		reader.readAsArrayBuffer(file);
 		if (forceRebuild && !fileQueue.length){
 			forceRebuild = false;
 			this.emit('force-rebuild');
+		}
+		if (file.name.search(/\.zip$/) != -1) {
+			let newProject = sanitise(file.name.replace(/\.zip$/, ""));
+			var form = [];
+			popup.title(json.popups.create_new_project_from_zip.title);
+			popup.subtitle(json.popups.create_new_project_from_zip.text);
+			form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="'+newProject+'">');
+			form.push('</br >');
+			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
+			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+			popup.form.empty().append(form.join('')).off('submit').on('submit', e => {
+				e.preventDefault();
+				newProject = sanitise(popup.find('input[type=text]').val());
+				console.log("newProject", newProject);
+				reader.readAsArrayBuffer(file);
+				reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject, force} );
+				popup.hide();
+			});
+			popup.find('.cancel').on('click', popup.hide );
+			popup.show();
+		} else {
+			reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
+			reader.readAsArrayBuffer(file);
 		}
 	}
 

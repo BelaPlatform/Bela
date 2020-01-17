@@ -1,0 +1,2 @@
+declare module 'unzip-stream';
+
