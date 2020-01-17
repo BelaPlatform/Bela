@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "archiver": "^2.1.1",
+    "decompress-zip": "^0.2.2",
     "express": "^4.16.3",
     "file-type": "^7.7.1",
     "fs-extra-promise": "^1.0.1",
