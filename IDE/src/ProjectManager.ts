@@ -5,7 +5,7 @@ import * as util from './utils';
 import * as paths from './paths';
 import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
-import * as unzip from 'unzip-stream';
+import * as DecompressZip from 'decompress-zip';
 import * as fs from 'fs-extra-promise';
 
 let max_file_size = 52428800;	// bytes (50Mb)
@@ -315,12 +315,9 @@ export async function uploadZipProject(data: any){
 	}.bind(null, tmp_path, tmp_target_path);
 	_cleanup();
 	return new Promise<never> ((resolve, reject) => {
-		fs.createReadStream(tmp_path)
-		.pipe(unzip.Extract({ path: tmp_target_path}))
-		.on("close", async (e: any) => {
-			// purify folder from macos garbage
-			await file_manager.delete_matching_recursive(tmp_target_path,
-				[ "__MACOSX", ".DS_Store" ]);
+		let pathsToRemove = [ "__MACOSX", ".DS_Store" ];
+		let unzipper = new DecompressZip(tmp_path);
+		unzipper.on("extract", async (e: any) => {
 			let fileList = await file_manager.deep_read_directory(tmp_target_path);
 			//TODO: find root recursively as the first folder containing a file or more than one folder
 			let isRoot = false;
@@ -345,14 +342,26 @@ export async function uploadZipProject(data: any){
 			await openProject(data);
 			_cleanup();
 			resolve();
-		})
-		.on("error", async (e: any) => {
+		});
+		unzipper.on("error", async (e: any) => {
 			data.fileData = null;
 			data.fileName = null;
 			data.error = "Error extracting zip archive "+tmp_path+": "+e.message;
 			_cleanup();
 			resolve();
 		})
+		unzipper.extract({
+			path: tmp_target_path,
+			filter: function (file: any) {
+				let matching : Array<string> = pathsToRemove.filter((needle) => {
+					let path : string = file.path;
+					let reg = RegExp("\\b"+needle+"\\b");
+					return needle === file.filename || path.search(reg) != -1;
+				})
+				console.log("For file ", file.path+file.filename, ". Matches: ", matching, "return: ", matching.length === 0);
+				return 0 === matching.length;
+			}
+		});
 	})
 }
 

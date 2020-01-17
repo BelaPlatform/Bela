@@ -41,8 +41,7 @@ var project_settings = require("./ProjectSettings");
 var paths = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
-var unzip = require("unzip-stream");
-var fs = require("fs-extra-promise");
+var DecompressZip = require("decompress-zip");
 var max_file_size = 52428800; // bytes (50Mb)
 var max_preview_size = 524288000; // bytes (500Mb)
 function emptyObject(obj) {
@@ -604,20 +603,14 @@ function uploadZipProject(data) {
                     }.bind(null, tmp_path, tmp_target_path);
                     _cleanup();
                     return [2 /*return*/, new Promise(function (resolve, reject) {
-                            fs.createReadStream(tmp_path)
-                                .pipe(unzip.Extract({ path: tmp_target_path }))
-                                .on("close", function (e) { return __awaiter(_this, void 0, void 0, function () {
+                            var pathsToRemove = ["__MACOSX", ".DS_Store"];
+                            var unzipper = new DecompressZip(tmp_path);
+                            unzipper.on("extract", function (e) { return __awaiter(_this, void 0, void 0, function () {
                                 var fileList, isRoot, source_path;
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
-                                        case 0: 
-                                        // purify folder from macos garbage
-                                        return [4 /*yield*/, file_manager.delete_matching_recursive(tmp_target_path, ["__MACOSX", ".DS_Store"])];
+                                        case 0: return [4 /*yield*/, file_manager.deep_read_directory(tmp_target_path)];
                                         case 1:
-                                            // purify folder from macos garbage
-                                            _a.sent();
-                                            return [4 /*yield*/, file_manager.deep_read_directory(tmp_target_path)];
-                                        case 2:
                                             fileList = _a.sent();
                                             isRoot = false;
                                             if (fileList.length > 1)
@@ -636,19 +629,19 @@ function uploadZipProject(data) {
                                                 console.log("Strip off the top-level folder: ", source_path);
                                             }
                                             return [4 /*yield*/, file_manager.copy_directory(source_path, target_path)];
-                                        case 3:
+                                        case 2:
                                             _a.sent();
                                             data.currentProject = data.newProject;
                                             return [4 /*yield*/, openProject(data)];
-                                        case 4:
+                                        case 3:
                                             _a.sent();
                                             _cleanup();
                                             resolve();
                                             return [2 /*return*/];
                                     }
                                 });
-                            }); })
-                                .on("error", function (e) { return __awaiter(_this, void 0, void 0, function () {
+                            }); });
+                            unzipper.on("error", function (e) { return __awaiter(_this, void 0, void 0, function () {
                                 return __generator(this, function (_a) {
                                     data.fileData = null;
                                     data.fileName = null;
@@ -658,6 +651,18 @@ function uploadZipProject(data) {
                                     return [2 /*return*/];
                                 });
                             }); });
+                            unzipper.extract({
+                                path: tmp_target_path,
+                                filter: function (file) {
+                                    var matching = pathsToRemove.filter(function (needle) {
+                                        var path = file.path;
+                                        var reg = RegExp("\\b" + needle + "\\b");
+                                        return needle === file.filename || path.search(reg) != -1;
+                                    });
+                                    console.log("For file ", file.path + file.filename, ". Matches: ", matching, "return: ", matching.length === 0);
+                                    return 0 === matching.length;
+                                }
+                            });
                         })];
             }
         });
