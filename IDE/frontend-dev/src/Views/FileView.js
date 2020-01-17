@@ -646,27 +646,37 @@ class FileView extends View {
 			forceRebuild = false;
 			this.emit('force-rebuild');
 		}
+		let uploadEmit = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
+
 		if (file.name.search(/\.zip$/) != -1) {
 			let newProject = sanitise(file.name.replace(/\.zip$/, ""));
+			let values = { extract: "extract", asIs: "asIs" };
 			var form = [];
-			popup.title(json.popups.create_new_project_from_zip.title);
+			popup.title(json.popups.create_new_project_from_zip.title + ' ' + file.name);
 			popup.subtitle(json.popups.create_new_project_from_zip.text);
+			form.push('<input type="radio" name="upload-zip" value="'+values.extract+'" checked> '+json.popups.create_new_project_from_zip.radioExtract + '<br />');
 			form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="'+newProject+'">');
 			form.push('</br >');
+			form.push('</br >');
+			form.push('<input type="radio" name="upload-zip" value="'+values.asIs+'"> '+json.popups.create_new_project_from_zip.radioAsIs) + "<br />";
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 			popup.form.empty().append(form.join('')).off('submit').on('submit', e => {
 				e.preventDefault();
-				newProject = sanitise(popup.find('input[type=text]').val());
-				console.log("newProject", newProject);
+				let extract = popup.find('input[type=radio]:checked').val() === values.extract;
+				if(extract) {
+					newProject = sanitise(popup.find('input[type=text]').val());
+					reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject, force} );
+				} else {
+					reader.onload = uploadEmit;
+				}
 				reader.readAsArrayBuffer(file);
-				reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject, force} );
 				popup.hide();
 			});
 			popup.find('.cancel').on('click', popup.hide );
 			popup.show();
 		} else {
-			reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
+			reader.onload = uploadEmit;
 			reader.readAsArrayBuffer(file);
 		}
 	}

@@ -26,10 +26,12 @@
 			"button": "Create file"
 		},
 		"create_new_project_from_zip": {
-			"title": "Create new project from zip archive",
-			"text": "Enter the new project name",
+			"title": "Uploading a zip archive",
+			"text": "You are uploading a zip file. Do you want to upload it as-is, or extract it as a new project?",
+			"radioExtract": "extract as a new project called",
+			"radioAsIs": "upload as-is",
 			"input": "Your new project name",
-			"button": "Create project"
+			"button": "Submit"
 		},
     "create_new_folder": {
 			"title": "Create new folder",
