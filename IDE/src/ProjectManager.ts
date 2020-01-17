@@ -358,7 +358,6 @@ export async function uploadZipProject(data: any){
 					let reg = RegExp("\\b"+needle+"\\b");
 					return needle === file.filename || path.search(reg) != -1;
 				})
-				console.log("For file ", file.path+file.filename, ". Matches: ", matching, "return: ", matching.length === 0);
 				return 0 === matching.length;
 			}
 		});
