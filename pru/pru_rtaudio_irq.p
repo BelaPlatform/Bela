@@ -579,7 +579,7 @@ DONE:
 	LSL DEST, DEST, 1
 .endm
 
-QBA START // when first starting, go to START, skipping this section.
+QBA START_INTERMEDIATE // when first starting, go to START, skipping this section.
 
 DIGITAL:
 //IMPORTANT: do NOT use r28 in this macro, as it contains the return address for JAL
@@ -599,9 +599,28 @@ DIGITAL:
 //r8 will contain GPIO1_SETDATAOUT
     MOV r8, 0 
     MOV r7, 0
-//map GPIO_ANALOG to gpio1 pins,
+//map GPIO to gpio1 pins,
 //r2 is gpio1_oe, r8 is gpio1_setdataout, r7 is gpio1_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r2,r7,r8
+QBBS BELA_SET_GPIO_BITS_0_MINI, reg_flags, FLAG_BIT_BELA_MINI
+QBBS BELA_SET_GPIO_BITS_0_MINI, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+QBA BELA_SET_GPIO_BITS_0_NOT_MINI
+BELA_SET_GPIO_BITS_0_MINI:
+    SET_GPIO_BITS r2, r8, r7, 18, 0, r27
+    SET_GPIO_BITS r2, r8, r7, 27, 1, r27
+    SET_GPIO_BITS r2, r8, r7, 26, 2, r27
+    SET_GPIO_BITS r2, r8, r7, 25, 3, r27
+    SET_GPIO_BITS r2, r8, r7, 28, 4, r27
+    SET_GPIO_BITS r2, r8, r7, 20, 5, r27
+    SET_GPIO_BITS r2, r8, r7, 15, 6, r27
+    SET_GPIO_BITS r2, r8, r7, 14, 8, r27
+    SET_GPIO_BITS r2, r8, r7, 12, 9, r27
+    SET_GPIO_BITS r2, r8, r7, 9, 10, r27
+    SET_GPIO_BITS r2, r8, r7, 8, 11, r27
+    SET_GPIO_BITS r2, r8, r7, 10, 14, r27
+    SET_GPIO_BITS r2, r8, r7, 11, 15, r27
+QBA SET_GPIO_BITS_0_DONE
+BELA_SET_GPIO_BITS_0_NOT_MINI:
     SET_GPIO_BITS r2, r8, r7, 13, 4, r27
     SET_GPIO_BITS r2, r8, r7, 12, 5, r27
     SET_GPIO_BITS r2, r8, r7, 28, 6, r27
@@ -609,6 +628,7 @@ DIGITAL:
     SET_GPIO_BITS r2, r8, r7, 15, 8, r27
     SET_GPIO_BITS r2, r8, r7, 14, 9, r27
     SET_GPIO_BITS r2, r8, r7, 19, 10, r27
+SET_GPIO_BITS_0_DONE:
 //set the output enable register for gpio1.
     MOV r3, GPIO1 | GPIO_OE  //use r3 as a temp register
     SBBO r2, r3, 0, 4 //takes two cycles (10ns)
@@ -626,9 +646,18 @@ DIGITAL:
 //r5 will contain GPIO2_SETDATAOUT
     MOV r5, 0
     MOV r4, 0 
-//map GPIO_ANALOG to gpio2 pins
+//map GPIO to gpio2 pins
 //r3 is gpio2_oe, r5 is gpio2_setdataout, r4 is gpio2_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r3,r4,r5
+QBBS BELA_SET_GPIO_BITS_1_MINI, reg_flags, FLAG_BIT_BELA_MINI
+QBBS BELA_SET_GPIO_BITS_1_MINI, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+QBA BELA_SET_GPIO_BITS_1_NOT_MINI
+BELA_SET_GPIO_BITS_1_MINI:
+    SET_GPIO_BITS r3, r5, r4, 0, 7, r27
+    SET_GPIO_BITS r3, r5, r4, 22, 12, r27
+    SET_GPIO_BITS r3, r5, r4, 24, 13, r27
+    QBA SET_GPIO_BITS_1_DONE
+BELA_SET_GPIO_BITS_1_NOT_MINI:
     SET_GPIO_BITS r3, r5, r4, 2, 0, r27
     SET_GPIO_BITS r3, r5, r4, 3, 1, r27
     SET_GPIO_BITS r3, r5, r4, 5, 2, r27
@@ -638,11 +667,17 @@ DIGITAL:
     SET_GPIO_BITS r3, r5, r4, 24, 13, r27
     SET_GPIO_BITS r3, r5, r4, 23, 14, r27
     SET_GPIO_BITS r3, r5, r4, 25, 15, r27
+SET_GPIO_BITS_1_DONE:
 //set the output enable register for gpio2.
     MOV r2, GPIO2 | GPIO_OE  //use r2 as a temp registerp
     SBBO r3, r2, 0, 4 //takes two cycles (10ns)
 //GPIO2-end
 //r3 is now unused
+
+QBA START_INTERMEDIATE_DONE
+START_INTERMEDIATE: // intermediate step to jump to START
+    QBA START
+START_INTERMEDIATE_DONE:
 
 //load current inputs in r2, r3
 //r2 will contain GPIO1_DATAIN
@@ -656,7 +691,30 @@ DIGITAL:
     LBBO r3, r3, 0, 4
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
+QBBS BELA_READ_GPIO_BITS_MINI, reg_flags, FLAG_BIT_BELA_MINI
+QBBS BELA_READ_GPIO_BITS_MINI, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+QBA BELA_READ_GPIO_BITS_NOT_MINI
+BELA_READ_GPIO_BITS_MINI:
 //GPIO1
+    READ_GPIO_BITS r2, 18, 0, r27
+    READ_GPIO_BITS r2, 27, 1, r27
+    READ_GPIO_BITS r2, 26, 2, r27
+    READ_GPIO_BITS r2, 25, 3, r27
+    READ_GPIO_BITS r2, 28, 4, r27
+    READ_GPIO_BITS r2, 20, 5, r27
+    READ_GPIO_BITS r2, 15, 6, r27
+    READ_GPIO_BITS r2, 14, 8, r27
+    READ_GPIO_BITS r2, 12, 9, r27
+    READ_GPIO_BITS r2, 9, 10, r27
+    READ_GPIO_BITS r2, 8, 11, r27
+    READ_GPIO_BITS r2, 10, 14, r27
+    READ_GPIO_BITS r2, 11, 15, r27
+//GPIO2
+    READ_GPIO_BITS r3, 0, 7, r27
+    READ_GPIO_BITS r3, 22, 12, r27
+    READ_GPIO_BITS r3, 24, 13, r27
+    QBA READ_GPIO_BITS_DONE
+BELA_READ_GPIO_BITS_NOT_MINI:
     READ_GPIO_BITS r2, 13, 4, r27
     READ_GPIO_BITS r2, 12, 5, r27
     READ_GPIO_BITS r2, 28, 6, r27
@@ -674,6 +732,7 @@ DIGITAL:
     READ_GPIO_BITS r3, 24, 13, r27
     READ_GPIO_BITS r3, 23, 14, r27
     READ_GPIO_BITS r3, 25, 15, r27
+READ_GPIO_BITS_DONE:
 //r2, r3 are now unused
 
 //now all the setdataout and cleardataout are ready to be written to the GPIO register.
@@ -1109,6 +1168,7 @@ DIGITAL_INIT_BUFFER_LOOP:
      ADD r3, r3, 4 //increment pointer
      QBGT DIGITAL_INIT_BUFFER_LOOP, r3, r4 //loop until we reach the end of the buffer
 */
+
 DIGITAL_INIT_DONE:
      // Check if we should use an external multiplexer capelet
      // The valid values are 0 (off), 1 (2 ch), 2 (4 ch), 3 (8 ch)
@@ -2356,7 +2416,7 @@ MUX_CHANNEL_SAVE_DONE:
      QBEQ LED_BLINK_DONE, r3, 0 
      MOV r1, 0x1000
      AND r2, r2, r1          // Test (frame count & 4096)
-     QBEQ LED_BLINK_OFF, r2, 0
+	 QBEQ LED_BLINK_OFF, r2, 0
      LBBO r2, reg_comm_addr, COMM_LED_PIN_MASK, 4   
      MOV r1, GPIO_SETDATAOUT
      ADD r3, r3, r1          // Address for GPIO set register
