@@ -106,10 +106,13 @@
 #ifdef DBOX_CAPE
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-#else
+// for BELA_MINI, this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
+#define ADC_GPIO_BELA_MINI      GPIO0
+#define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO1:5 = P1 pin 6
+#else /* DBOX_CAPE */
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<17) // GPIO1:17 = P9 pin 23
-#endif
+#endif /* DBOX_CAPE */
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL        16      // Word length
 #define ADC_CLK_MODE  0       // SPI mode
@@ -502,6 +505,14 @@ MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
     QBBS DEST, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 .endm
 
+.macro BELA_MINI_OR_MULTI_TLV_OR_JMP_TO
+.mparam DEST
+    QBBS DONE, reg_flags, FLAG_BIT_BELA_MINI
+	QBBS DONE, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+	QBA DEST
+DONE:
+.endm
+
 .macro CTAG_OR_JMP_TO
 .mparam DEST
     QBBC DEST, reg_flags, FLAG_BIT_CTAG
@@ -833,15 +844,27 @@ DAC_CHANNEL_REORDER_DONE:
     
 // Bring CS line low to write to ADC
 .macro ADC_CS_ASSERT
+     BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA
+     MOV r27, ADC_CS_PIN_BELA_MINI
+     MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
+     QBA DONE
+BELA:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
+DONE:
      SBBO r27, r28, 0, 4
 .endm
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
+     BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA
+     MOV r27, ADC_CS_PIN_BELA_MINI
+     MOV r28, ADC_GPIO_BELA_MINI + GPIO_SETDATAOUT
+     QBA DONE
+BELA:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_SETDATAOUT
+DONE:
      SBBO r27, r28, 0, 4
 .endm
 
@@ -1616,7 +1639,9 @@ INNER_EVENT_LOOP:
 	 MOV r27, (1 << FLAG_BIT_MCASP_TX_PROCESSED)
 	 OR r27, r27, (1 << FLAG_BIT_MCASP_RX_PROCESSED)
 	 AND r27, r27, reg_flags
-	 QBEQ NEXT_FRAME, r27, 0x60
+	 QBNE NOT_NEXT_FRAME, r27, 0x60
+	 JMP NEXT_FRAME
+NOT_NEXT_FRAME:
 
      // Check if ARM says should finish: flag is zero as long as it should run
      LBBO r27, reg_comm_addr, COMM_SHOULD_STOP, 4
@@ -2376,8 +2401,9 @@ BELA_MULTI_TLV_ANALOG_CFG_END:
 SET_REG_FRAMES_DONE:
 
      ADD reg_frame_current, reg_frame_current, 1
-     QBNE EVENT_LOOP, reg_frame_current, r14
-
+     QBEQ ALL_FRAMES_PROCESSED, reg_frame_current, r14
+	 JMP EVENT_LOOP
+	 
 ALL_FRAMES_PROCESSED:
      // Now done, swap the buffers and do the next one
      // Use r2 as a temp register
