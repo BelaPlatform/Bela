@@ -7,14 +7,12 @@
 #define BELA_LIBPD_GUI
 
 #include <DigitalChannelManager.h>
-#include <cmath>
 #include <stdio.h>
 #define PD_THREADED_IO
 #include <libpd/z_libpd.h>
 extern "C" {
 #include <libpd/s_stuff.h>
 };
-#include <libraries/UdpServer/UdpServer.h>
 #include <libraries/Midi/Midi.h>
 #include <libraries/Scope/Scope.h>
 #include <string>
