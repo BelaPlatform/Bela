@@ -2239,13 +2239,6 @@ var FileView = function (_View) {
 
 		_this.listOfFiles = [];
 
-		// hack to upload file
-		$('[data-upload-file-input]').on('change', function (e) {
-			for (var i = 0; i < e.target.files.length; i++) {
-				_this.doFileUpload(e.target.files[i]);
-			}
-		});
-
 		var data = {
 			fileName: "",
 			project: ""

@@ -29,13 +29,6 @@ class FileView extends View {
 
 		this.listOfFiles = [];
 
-		// hack to upload file
-    $('[data-upload-file-input]').on('change', (e) => {
-			for (var i=0; i < e.target.files.length; i++){
-				this.doFileUpload(e.target.files[i]);
-			}
-		});
-
     var data = {
       fileName: "",
       project: ""
