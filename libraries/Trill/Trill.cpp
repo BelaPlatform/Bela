@@ -1,14 +1,16 @@
 #include <libraries/Trill/Trill.h>
 
+const unsigned int Trill::prescalerValues[6];
+const unsigned int Trill::thresholdValues[7];
 #define MAX_TOUCH_1D_OR_2D ((device_type_ == TWOD ? kMaxTouchNum2D : kMaxTouchNum1D))
 #define NUM_SENSORS ((device_type_ == ONED ? kNumSensorsBar : kNumSensors))
 Trill::Trill(){}
 
-Trill::Trill(int i2c_bus, int i2c_address, int mode) {
+Trill::Trill(int i2c_bus, int i2c_address, Mode mode) {
 	setup(i2c_bus, i2c_address, mode);
 }
 
-int Trill::setup(int i2c_bus, int i2c_address, int mode) {
+int Trill::setup(int i2c_bus, int i2c_address, Mode mode) {
 
 	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
 		fprintf(stderr, "Unable to initialise I2C communication\n");
@@ -38,7 +40,7 @@ int Trill::setup(int i2c_bus, int i2c_address, int mode) {
 	return 0;
 }
 
-int Trill::setup(int i2c_bus, int i2c_address, int mode, int threshold, int prescaler) {
+int Trill::setup(int i2c_bus, int i2c_address, Mode mode, int threshold, int prescaler) {
 
 	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
 		fprintf(stderr, "Unable to initialise I2C communication\n");
@@ -110,15 +112,17 @@ int Trill::identify() {
 		return -1;
 	}
 
-	device_type_ = dataBuffer[1];
+	if(dataBuffer[1] < 0 || dataBuffer[1] > TWOD)
+		dataBuffer[1] = NONE;
+	device_type_ = (Device)dataBuffer[1];
 	firmware_version_ = dataBuffer[2];
 
 	return 0;
 }
 
-int Trill::setMode(uint8_t mode) {
+int Trill::setMode(Mode mode) {
 	unsigned int bytesToWrite = 3;
-	char buf[3] = { kOffsetCommand, kCommandMode, mode };
+	char buf[3] = { kOffsetCommand, kCommandMode, (char)mode };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
 		fprintf(stderr, "Failed to set Trill's mode.\n");
@@ -240,6 +244,9 @@ int Trill::prepareForDataRead() {
 // This should maybe be renamed readRawData()
 int Trill::readI2C() {
 
+	if(NONE == device_type_)
+		return 1;
+
 	if(!preparedForDataRead_)
 		prepareForDataRead();
 
@@ -257,6 +264,9 @@ int Trill::readI2C() {
 }
 
 int Trill::readLocations() {
+	if(NONE == device_type_)
+		return 1;
+
 	if(!preparedForDataRead_)
 		prepareForDataRead();
 

@@ -139,7 +139,6 @@ ssize_t Pipe::_readRtNonRt(void* ptr, size_t size, bool rt)
 			doIt = true;
 	}
 	if(!blocking || doIt){
-		//ret = _read(file, ptr, size);
 		if(rt)
 			ret = __wrap_recv(file, ptr, size, 0);
 		else

@@ -89,7 +89,7 @@ void Gui::ws_disconnect()
  *  on_data callback for scope_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onControlData(const char* data, int size)
+void Gui::ws_onControlData(const char* data, unsigned int size)
 {
 	if(customOnControlData && !customOnControlData(data, size, userControlData))
 	{
@@ -116,7 +116,7 @@ void Gui::ws_onControlData(const char* data, int size)
 	return;
 }
 
-void Gui::ws_onData(const char* data, int size)
+void Gui::ws_onData(const char* data, unsigned int size)
 {
 	if(customOnData && !customOnData(data, size, userBinaryData))
 	{
