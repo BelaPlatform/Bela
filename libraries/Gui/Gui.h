@@ -76,14 +76,15 @@ class Gui
 		 *
 		 * @param callback Callback to be called whenever new control
 		 * data is received.
-		 * It takes a byte buffer, the size of the buffer and a pointer
-		 * as parameters, returns `true `if the default callback should
-		 * be called afterward or `false` otherwise. The first two
-		 * parameters are used for the data received on the web-socket.
-		 * The third parameter is a user-defined opaque pointer
+		 * The callback takes a JSONObject, and an opaque pointer, which is
+		 * passed at the moment of registering the callback.
+		 * The callback should return `true` if the default callback should
+		 * be called afterward or `false` otherwise.
 		 *
-		 * @param customBinaryData: Pointer to be passed to the
-		 * callback.
+		 * @param callback the function to be called upon receiving data on the
+		 * control WebSocket
+		 * @param customBinaryData an opaque pointer that will be passed to the
+		 * callback
 		 **/
 		void setControlDataCallback(std::function<bool(JSONObject&, void*)> callback, void* customControlData=nullptr){
 			customOnControlData = callback;
@@ -108,6 +109,10 @@ class Gui
 			customOnData = callback;
 			userBinaryData = customBinaryData;
 		};
+		/** Sends a JSON value to the control websocket.
+		 * Returns 0 on success, or an error code otherwise.
+		 * */
+		int sendControl(JSONValue* root);
 
 		/**
 		 * Sends a buffer (a vector) through the web-socket to the client with a given ID.
