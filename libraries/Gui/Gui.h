@@ -8,8 +8,6 @@
 
 // forward declarations
 class WSServer;
-class JSONValue;
-class AuxTaskRT;
 
 class Gui
 {
@@ -32,7 +30,7 @@ class Gui
 		std::wstring _projectName;
 
 		// User defined functions
-		std::function<bool(const char*, unsigned int, void*)> customOnControlData;
+		std::function<bool(JSONObject&, void*)> customOnControlData;
 		std::function<bool(const char*, unsigned int, void*)> customOnData;
 
 		void* userControlData = nullptr;
@@ -87,7 +85,7 @@ class Gui
 		 * @param customBinaryData: Pointer to be passed to the
 		 * callback.
 		 **/
-		void setControlDataCallback(std::function<bool(const char*, unsigned int, void*)> callback, void* customControlData=nullptr){
+		void setControlDataCallback(std::function<bool(JSONObject&, void*)> callback, void* customControlData=nullptr){
 			customOnControlData = callback;
 			userControlData = customControlData;
 		};
