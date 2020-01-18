@@ -1590,10 +1590,16 @@ WRITE_ONE_BUFFER:
      // Write a single buffer of DAC samples and read a buffer of ADC samples
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
-     LMBD r2, reg_num_channels, 1       // 1, 2 or 3 for 2, 4 or 8 channels
+     LMBD r2, reg_num_channels, 1		// 1, 2 or 3 for 2, 4 or 8 channels
+BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA_CHANNELS
+     // there are 0 dac values, so ADC starts at the same point as DAC
+     MOV reg_adc_current, reg_dac_current
+     QBA CHANNELS_DONE
+BELA_CHANNELS:
      LSL reg_adc_current, reg_frame_spi_total, r2
      LSL reg_adc_current, reg_adc_current, 2   // N * 2 * 2 * bufsize
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
+CHANNELS_DONE:
      MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
      //  the CTAGs only use half as many input channels as there are outputs, so divide by 2 (LSR by 1) when computing offsets
      // if I/O buffers are the same size, then  McASP ADC: starts (N/2)*2bytes*bufsize beyond DAC
