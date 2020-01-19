@@ -44,14 +44,31 @@ var file_manager = require("./FileManager");
 var paths = require("./paths");
 var routes = require("./RouteManager");
 var path = require("path");
+var globals = require("./globals");
 var TerminalManager = require('./TerminalManager');
 function init() {
     return __awaiter(this, void 0, void 0, function () {
-        var app, server;
+        var httpPort, ideDev, app, server;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log('starting IDE');
+                    httpPort = 80;
+                    // load customised "dev" settings, if available. See
+                    // IDE/ide-dev.js.template for details on the file content
+                    try {
+                        ideDev = require('../ide-dev.js');
+                        if (ideDev) {
+                            console.log("ideDev: ", ideDev);
+                            if (ideDev.hasOwnProperty('Bela'))
+                                paths.set_Bela(ideDev.Bela);
+                            if (ideDev.hasOwnProperty('local_dev'))
+                                globals.set_local_dev(ideDev.local_dev);
+                            if (ideDev.hasOwnProperty('httpPort'))
+                                httpPort = ideDev.httpPort;
+                        }
+                    }
+                    catch (err) { }
+                    console.log('starting IDE from ' + paths.Bela);
                     return [4 /*yield*/, check_lockfile()
                             .catch(function (e) { return console.log('error checking lockfile', e); })];
                 case 1:
@@ -59,8 +76,8 @@ function init() {
                     app = express();
                     server = new http.Server(app);
                     setup_routes(app);
-                    // start serving the IDE on port 80
-                    server.listen(80, function () { return console.log('listening on port', 80); });
+                    // start serving the IDE
+                    server.listen(httpPort, function () { return console.log('listening on port', httpPort); });
                     // initialise websocket
                     socket_manager.init(server);
                     TerminalManager.init();

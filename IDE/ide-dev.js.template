@@ -1,0 +1,3 @@
+exports.Bela = "/path/to/your/Bela";
+exports.local_dev = true; // disables some checks/tasks that are unneeded or would generate an error if ran outside Bela
+exports.httpPort = 1080; // custom http port
