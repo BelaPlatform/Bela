@@ -1,12 +1,13 @@
 .mini-dropdown select {
-  border: transparent;
-  height: 25px;
-  width: 100%;
-  padding-left: 10px;
+  -moz-appearance: none;
+  -webkit-appearance: none;
   background: transparent;
+  border: transparent;
   font-family: poppins_light;
-  -webkit-appearance: button;
+  height: 25px;
+  padding-left: 10px;
   vertical-align: center;
+  width: 100%;
   option {
     width: 100%;
   }
