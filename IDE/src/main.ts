@@ -116,6 +116,8 @@ function setup_routes(app: express.Application){
 }
 
 export function get_xenomai_version(): Promise<string>{
+	if(globals.local_dev)
+		return new Promise((resolve) => resolve("3.0"));
 	return new Promise(function(resolve, reject){
 		child_process.exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
 			if (err){
@@ -132,6 +134,8 @@ export function get_xenomai_version(): Promise<string>{
 }
 
 export function set_time(time: string){
+	if(globals.local_dev)
+		return;
 	child_process.exec('date -s "'+time+'"', (err, stdout, stderr) => {
 		if (err || stderr){
 			console.log('error setting time', err, stderr);
@@ -146,6 +150,8 @@ export function shutdown(){
 }
 
 export async function board_detect(): Promise<any>{
+	if(globals.local_dev)
+		return 'unknown';
 	return new Promise( (resolve, reject) => {
 		child_process.exec('board_detect', (err, stdout, stderr) => {
 			if (err) stdout = 'unknown';

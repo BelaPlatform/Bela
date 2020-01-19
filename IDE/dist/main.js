@@ -169,6 +169,8 @@ function setup_routes(app) {
     app.use('/gui', express.static(paths.gui));
 }
 function get_xenomai_version() {
+    if (globals.local_dev)
+        return new Promise(function (resolve) { return resolve("3.0"); });
     return new Promise(function (resolve, reject) {
         child_process.exec('/usr/xenomai/bin/xeno-config --version', function (err, stdout, stderr) {
             if (err) {
@@ -186,6 +188,8 @@ function get_xenomai_version() {
 }
 exports.get_xenomai_version = get_xenomai_version;
 function set_time(time) {
+    if (globals.local_dev)
+        return;
     child_process.exec('date -s "' + time + '"', function (err, stdout, stderr) {
         if (err || stderr) {
             console.log('error setting time', err, stderr);
@@ -203,6 +207,8 @@ exports.shutdown = shutdown;
 function board_detect() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
+            if (globals.local_dev)
+                return [2 /*return*/, 'unknown'];
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     child_process.exec('board_detect', function (err, stdout, stderr) {
                         if (err)
