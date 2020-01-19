@@ -120,7 +120,6 @@ export function get_xenomai_version(): Promise<string>{
 		child_process.exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
 			if (err){
 				console.log('error reading xenomai version');
-				reject(err);
 			}
 			if (stdout.includes('2.6')){
 				paths.set_xenomai_stat('/proc/xenomai/stat');
@@ -149,7 +148,7 @@ export function shutdown(){
 export async function board_detect(): Promise<any>{
 	return new Promise( (resolve, reject) => {
 		child_process.exec('board_detect', (err, stdout, stderr) => {
-			if (err) reject(err);
+			if (err) stdout = 'unknown';
 			console.log('running on', stdout);
 			resolve(stdout);
 		});

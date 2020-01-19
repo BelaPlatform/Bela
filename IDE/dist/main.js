@@ -173,7 +173,6 @@ function get_xenomai_version() {
         child_process.exec('/usr/xenomai/bin/xeno-config --version', function (err, stdout, stderr) {
             if (err) {
                 console.log('error reading xenomai version');
-                reject(err);
             }
             if (stdout.includes('2.6')) {
                 paths.set_xenomai_stat('/proc/xenomai/stat');
@@ -207,7 +206,7 @@ function board_detect() {
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     child_process.exec('board_detect', function (err, stdout, stderr) {
                         if (err)
-                            reject(err);
+                            stdout = 'unknown';
                         console.log('running on', stdout);
                         resolve(stdout);
                     });
