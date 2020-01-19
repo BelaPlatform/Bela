@@ -52,7 +52,7 @@ function emptyObject(obj) {
 // contained in the 'func' field. The websocket message is passed into the method
 // as the data variable, and is modified and returned by the method, and sent
 // back over the websocket
-// NOTE: the current  way of handling project-event events is horrible, at
+// NOTE: the current  way of handling project-event events is sub-optimal, at
 // least for the following reasons:
 // - it allows the client to execute arbitrary functions (security risk)
 // - it does not rely on the functions to actively return something, instead

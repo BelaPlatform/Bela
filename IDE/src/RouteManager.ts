@@ -49,6 +49,7 @@ function upload_file(req: express.Request, res: express.Response){
   fs.createWriteStream(paths.uploads+file);
 }
 
+//WARNING: this upload route is unused
 export function upload(req: express.Request, res: express.Response){
 	if(req.query.all){
     console.log(res);

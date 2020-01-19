@@ -48,6 +48,7 @@ function upload_file(req, res) {
     var file = req.query.file;
     fs.createWriteStream(paths.uploads + file);
 }
+//WARNING: this upload route is unused
 function upload(req, res) {
     if (req.query.all) {
         console.log(res);
