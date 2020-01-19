@@ -1385,7 +1385,8 @@ input[type="checkbox"].checkbox-slider,
   height: 18px;
   left: 5px;
   position: relative;
-  width: 18px; }
+  width: 18px;
+  -moz-appearance: none !important; }
   input[type="checkbox"].checkbox-slider::before, input[type="checkbox"].checkbox-slider::after,
   .checkbox-slider input[type="checkbox"]::before,
   .checkbox-slider input[type="checkbox"]::after {

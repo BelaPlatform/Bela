@@ -816,7 +816,7 @@ select.dropdown-num {
 input[type="checkbox"].checkbox-slider,
 .checkbox-slider input[type="checkbox"] {
   position: relative;
-  left: 10000px;
+  left: -10000px;
   height: 18px;
   width: 18px; }
   input[type="checkbox"].checkbox-slider::before, input[type="checkbox"].checkbox-slider::after,
@@ -826,7 +826,7 @@ input[type="checkbox"].checkbox-slider,
     content: '';
     display: block;
     cursor: pointer;
-    left: -10000px; }
+    left: 10000px; }
   input[type="checkbox"].checkbox-slider::before,
   .checkbox-slider input[type="checkbox"]::before {
     border-radius: 18px;
