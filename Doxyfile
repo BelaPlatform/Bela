@@ -844,17 +844,23 @@ EXCLUDE_SYMBOLS        =
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           = examples/01-Basics \
-                         examples/02-Digital \
-                         examples/03-Analog \
-                         examples/04-Audio \
-                         examples/05-Communication \
-                         examples/06-Sensors \
-                         examples/07-DataLogging \
-                         examples/08-PureData \
-                         examples/09-Capelets \
-                         examples/10-Instruments \
-                         examples/11-Extras \
+EXAMPLE_PATH           = \
+                         examples/Analog \
+                         examples/Audio \
+                         examples/Basics \
+                         examples/Capelets \
+                         examples/Communication \
+                         examples/Csound \
+                         examples/Digital \
+                         examples/Extras \
+                         examples/Fundamentals \
+                         examples/Gui \
+                         examples/Instruments \
+                         examples/PureData \
+                         examples/Salt \
+                         examples/Sensors \
+                         examples/SuperCollider \
+                         examples/Trill \
 						 examples/terminal-only
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
