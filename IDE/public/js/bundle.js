@@ -2887,17 +2887,8 @@ var FileView = function (_View) {
 				popup.title(json.popups.create_new_project_from_zip.title + file.name);
 				popup.subtitle(json.popups.create_new_project_from_zip.text);
 
-				// form.push('<label for="upload-zip" class="radio-container">' + json.popups.create_new_project_from_zip.radioExtract );
-				// form.push('<input type="radio" name="upload-zip" value="' + values.extract + '" checked />');
-				// form.push('<span class="radio-button"></span>')
-				// 		form.push('</label>');
-
 				form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />');
 				form.push('<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>');
-				// form.push('<label for="upload-zip-asis" class="radio-container">' + json.popups.create_new_project_from_zip.radioAsIs );
-				// form.push('<input type="radio" name="upload-zip-asis" value="' + values.asIs + '" /> ');
-				// form.push('<span class="radio-button"></span>')
-				// 		form.push('</label>');
 				form.push('<br/><br/>');
 				form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
 				form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
