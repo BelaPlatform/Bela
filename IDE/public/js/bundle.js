@@ -2884,26 +2884,30 @@ var FileView = function (_View) {
 				var newProject = sanitise(file.name.replace(/\.zip$/, ""));
 				var values = { extract: "extract", asIs: "asIs" };
 				var form = [];
-				popup.title(json.popups.create_new_project_from_zip.title + ' ' + file.name);
+				popup.title(json.popups.create_new_project_from_zip.title + file.name);
 				popup.subtitle(json.popups.create_new_project_from_zip.text);
-				form.push('<input type="radio" name="upload-zip" value="' + values.extract + '" checked> ' + json.popups.create_new_project_from_zip.radioExtract + '<br />');
-				form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '">');
-				form.push('</br >');
-				form.push('</br >');
-				form.push('<input type="radio" name="upload-zip" value="' + values.asIs + '"> ' + json.popups.create_new_project_from_zip.radioAsIs) + "<br />";
+
+				// form.push('<label for="upload-zip" class="radio-container">' + json.popups.create_new_project_from_zip.radioExtract );
+				// form.push('<input type="radio" name="upload-zip" value="' + values.extract + '" checked />');
+				// form.push('<span class="radio-button"></span>')
+				// 		form.push('</label>');
+
+				form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />');
+				form.push('<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>');
+				// form.push('<label for="upload-zip-asis" class="radio-container">' + json.popups.create_new_project_from_zip.radioAsIs );
+				// form.push('<input type="radio" name="upload-zip-asis" value="' + values.asIs + '" /> ');
+				// form.push('<span class="radio-button"></span>')
+				// 		form.push('</label>');
+				form.push('<br/><br/>');
 				form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
 				form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
 				popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
-					var extract = popup.find('input[type=radio]:checked').val() === values.extract;
-					if (extract) {
-						newProject = sanitise(popup.find('input[type=text]').val());
-						reader.onload = function (ev) {
-							return _this12.emit('message', 'project-event', { func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject: newProject, force: force });
-						};
-					} else {
-						reader.onload = uploadEmit;
-					}
+					newProject = sanitise(popup.find('input[type=text]').val());
+					reader.onload = function (ev) {
+						return _this12.emit('message', 'project-event', { func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject: newProject, force: force });
+					};
 					reader.readAsArrayBuffer(file);
 					popup.hide();
 				});
@@ -5993,12 +5997,11 @@ module.exports={
 			"button": "Create file"
 		},
 		"create_new_project_from_zip": {
-			"title": "Uploading a zip archive",
-			"text": "You are uploading a zip file. Do you want to upload it as-is, or extract it as a new project?",
-			"radioExtract": "extract as a new project called",
-			"radioAsIs": "upload as-is",
-			"input": "Your new project name",
-			"button": "Submit"
+			"title": "Create project from ",
+			"text": "Choose a name for this project:",
+			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
+			"input": "New project name",
+			"button": "Create project"
 		},
     "create_new_folder": {
 			"title": "Create new folder",
@@ -6029,7 +6032,7 @@ module.exports={
 			"button": "Delete file"
 		},
     "upload_file": {
-			"title": "Upload a file?",
+			"title": "Upload a file",
 			"text": "Select a file to upload.",
 			"button": "Upload file"
 		},
@@ -6146,21 +6149,21 @@ module.exports={
 		"button": "Launch documentation"
 	},
   "funcKeys": {
-    "openProject"	: "Opening project",
-	"uploadZipProject" : "Creating project from zip archive",
-  	"openExample"	: "Opening example",
-  	"newProject"	: "Creating project",
-  	"saveAs"		: "Saving project",
-  	"deleteProject"	: "Deleting project",
-  	"cleanProject"	: "Cleaning project",
-  	"openFile"		: "Opening file",
-  	"newFile"		: "Creating file",
-  	"uploadFile"	: "Uploading file",
-  	"renameFile"	: "Renaming file",
-  	"deleteFile"	: "Deleting file",
-  	"init"			: "Initialising",
-  	"stop"			: "Stopping",
-  	"fileRejected"	: "Uploading file"
+    "openProject"	: "Open project",
+	"uploadZipProject" : "Create project from zip archive",
+  	"openExample"	: "Open example",
+  	"newProject"	: "Create project",
+  	"saveAs"		: "Save project",
+  	"deleteProject"	: "Delete project",
+  	"cleanProject"	: "Clean project",
+  	"openFile"		: "Open file",
+  	"newFile"		: "Create file",
+  	"uploadFile"	: "Upload file",
+  	"renameFile"	: "Rename file",
+  	"deleteFile"	: "Delete file",
+  	"init"			: "Initialise",
+  	"stop"			: "Stop",
+  	"fileRejected"	: "Upload file"
   }
 }
 
