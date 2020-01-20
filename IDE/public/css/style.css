@@ -715,14 +715,15 @@ select.dropdown-num {
     display: block; }
 
 .mini-dropdown select {
-  border: transparent;
-  height: 25px;
-  width: 100%;
-  padding-left: 10px;
-  background: transparent;
-  font-family: poppins_light;
+  -moz-appearance: none;
   -webkit-appearance: none;
-  vertical-align: center; }
+  background: transparent;
+  border: transparent;
+  font-family: poppins_light;
+  height: 25px;
+  padding-left: 10px;
+  vertical-align: center;
+  width: 100%; }
   .mini-dropdown select option {
     width: 100%; }
   .mini-dropdown select .git {
