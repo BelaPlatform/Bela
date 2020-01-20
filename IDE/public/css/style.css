@@ -1218,6 +1218,8 @@ ul dl {
   #popup .radio-container input:checked ~ .radio-button {
     background-color: #1ce8b5;
     opacity: 1; }
+  #popup .create_file_subtext {
+    font-size: .8em; }
   #popup button {
     float: right;
     font-size: 1em;

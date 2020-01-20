@@ -41,7 +41,7 @@ gulp.task('watch', ['upload'], function(){
 	livereload.listen();
 
 	// when the node.js source files change, kill node, upload the files and restart node
-	gulp.watch([idePath+'index.js', idePath+'libs/**'], ['killnode', 'upload', 'restartnode']);
+	gulp.watch([idePath+'index.js', idePath+'dist/**'], ['killnode', 'upload', 'restartnode']);
 
 	// when the browser js changes, browserify it
 	gulp.watch(['./src/**'], ['browserify']);
@@ -57,7 +57,6 @@ gulp.task('watch', ['upload'], function(){
 	gulp.watch([
 		idePath+'public/**',
 		idePath+'dist/**',
-		idePath+'src/**',
 		'!'+idePath+'public/js/bundle.js.map',
 		'!'+idePath+'public/scope/js/bundle.js.map',
 		'!'+idePath+'public/js/ace/**'
@@ -135,6 +134,7 @@ gulp.task('scope-browserify', () => {
         .on('error', function(error){
     		console.error(error);
     		this.emit('end');
+			exit(1);
     	})
         .pipe(source('bundle.js'))
         .pipe(buffer())

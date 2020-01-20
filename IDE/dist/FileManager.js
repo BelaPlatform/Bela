@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -494,3 +494,62 @@ function file_exists(file_path) {
     });
 }
 exports.file_exists = file_exists;
+function delete_matching_recursive(path, matches) {
+    return __awaiter(this, void 0, void 0, function () {
+        var all, contents, matching, updated, _i, matching_1, match, full_path, _a, contents_2, file, full_path, stat;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, read_directory(path)];
+                case 1:
+                    all = _b.sent();
+                    return [4 /*yield*/, read_directory(path)];
+                case 2:
+                    contents = _b.sent();
+                    matching = contents.filter(function (file) {
+                        var matching = matches.filter(function (match) { return match === file; });
+                        return matching.length > 0;
+                    });
+                    updated = false;
+                    _i = 0, matching_1 = matching;
+                    _b.label = 3;
+                case 3:
+                    if (!(_i < matching_1.length)) return [3 /*break*/, 6];
+                    match = matching_1[_i];
+                    full_path = path + '/' + match;
+                    return [4 /*yield*/, delete_file(full_path)];
+                case 4:
+                    _b.sent();
+                    updated = true;
+                    _b.label = 5;
+                case 5:
+                    _i++;
+                    return [3 /*break*/, 3];
+                case 6:
+                    if (!updated) return [3 /*break*/, 8];
+                    return [4 /*yield*/, read_directory(path)];
+                case 7:
+                    contents = _b.sent();
+                    _b.label = 8;
+                case 8:
+                    _a = 0, contents_2 = contents;
+                    _b.label = 9;
+                case 9:
+                    if (!(_a < contents_2.length)) return [3 /*break*/, 12];
+                    file = contents_2[_a];
+                    full_path = path + '/' + file;
+                    return [4 /*yield*/, stat_file(full_path)];
+                case 10:
+                    stat = _b.sent();
+                    if (stat.isDirectory()) {
+                        delete_matching_recursive(full_path, matches);
+                    }
+                    _b.label = 11;
+                case 11:
+                    _a++;
+                    return [3 /*break*/, 9];
+                case 12: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.delete_matching_recursive = delete_matching_recursive;

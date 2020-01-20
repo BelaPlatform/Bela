@@ -198,3 +198,28 @@ export async function file_exists(file_path: string): Promise<boolean>{
 		.catch( e => {} );
 	return (stat && stat.isFile && stat.isFile()) ? true : false;
 }
+export async function delete_matching_recursive(path: string, matches: Array<string>) {
+	// maybe `find path -name=i$match -exec rm {}\;` could be faster?
+	let all: any = await read_directory(path);
+	let contents: Array<string> = await read_directory(path);
+	let matching: Array<string> = contents.filter((file) => {
+		let matching = matches.filter((match) => { return match === file; });
+		return matching.length > 0;
+	});
+	let updated: boolean = false;
+	for(let match of matching) {
+		let full_path = path+'/'+match;
+		await delete_file(full_path);
+		updated = true;
+	}
+	// re-read once updated
+	if(updated)
+		contents = await read_directory(path);
+	for(let file of contents) {
+		let full_path = path+'/'+file;
+		let stat = await stat_file(full_path);
+		if(stat.isDirectory()) {
+			delete_matching_recursive(full_path, matches);
+		}
+	}
+}

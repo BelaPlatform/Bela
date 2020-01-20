@@ -21,10 +21,14 @@ function download_all(res: express.Response){
 }
 // zip a single project directory and send back
 function download_project(req: express.Request, res: express.Response){
-	send_zip(paths.projects+req.query.project, req.query.project, res);
+	let path = paths.projects+req.query.project;
+	send_zip(path, req.query.project, res, [
+		"build",
+		req.query.project,
+	]);
 }
 
-function send_zip(path: string, name: string, res: express.Response){
+function send_zip(path: string, name: string, res: express.Response, ignore?: Array<string>){
 	res.setHeader('Content-disposition', 'attachment; filename='+name+'.zip');
 	res.setHeader('Content-type', 'application/zip');
 	let archive = archiver('zip');
@@ -33,7 +37,10 @@ function send_zip(path: string, name: string, res: express.Response){
 		res.end();
 	});
 	archive.pipe(res);
-	archive.directory(path, name, {name: name+'.zip'});
+	if(ignore)
+		archive.glob("*", {ignore: ignore, cwd: path});
+	else
+		archive.directory(path, name, {name: name+'.zip'});
 	archive.finalize();
 }
 
@@ -42,6 +49,7 @@ function upload_file(req: express.Request, res: express.Response){
   fs.createWriteStream(paths.uploads+file);
 }
 
+//WARNING: this upload route is unused
 export function upload(req: express.Request, res: express.Response){
 	if(req.query.all){
     console.log(res);

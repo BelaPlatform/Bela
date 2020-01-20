@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -41,15 +41,22 @@ var child_process = require("child_process");
 var IDE = require("./main");
 var socket_manager = require("./SocketManager");
 var paths = require("./paths");
+var globals = require("./globals");
 function get_boot_project() {
     return __awaiter(this, void 0, void 0, function () {
         var startup_env, lines, _i, lines_1, line, split_line, project;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, file_manager.read_file(paths.startup_env)
+                case 0:
+                    if (!globals.local_dev) return [3 /*break*/, 1];
+                    startup_env = "";
+                    return [3 /*break*/, 3];
+                case 1: return [4 /*yield*/, file_manager.read_file(paths.startup_env)
                         .catch(function (e) { return console.log('error: no startup_env found'); })];
-                case 1:
+                case 2:
                     startup_env = _a.sent();
+                    _a.label = 3;
+                case 3:
                     if ((typeof startup_env) === 'undefined')
                         return [2 /*return*/, '*none*'];
                     lines = startup_env.split('\n');

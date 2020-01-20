@@ -40,6 +40,27 @@ gulp.task('watch', () => {
 
 });
 
+let localProcess;
+gulp.task('start-local', (callback) => {
+	if(localProcess) {
+		localProcess.kill();
+	}
+	localProcess = spawn('node', ['index.js']);
+	localProcess.stdout.on('data', function(data){
+		process.stdout.write(data);
+		if (data.includes('listening on port')) livereload.reload();
+	});
+	localProcess.stderr.on('data', function(data){
+		process.stdout.write('error: '+data);
+	});
+	callback();
+});
+
+gulp.task('watch-local', () => {
+	livereload.listen();
+	gulp.watch(['src/*.ts'], gulp.series('compile', 'start-local'));
+});
+
 gulp.task('watch_test', () => {
 	gulp.watch(['src/*.ts'], gulp.series('compile'));
 	gulp.watch(['test/*.spec.ts'], gulp.series('compile_test'));
@@ -51,6 +72,7 @@ gulp.task('compile', () => {
 		//.pipe(sourcemaps.init())
 		.pipe(ts({
 			"noImplicitAny": true,
+			"noEmitOnError": true,
 			"target": "es5"
 		}))
 		//.pipe(sourcemaps.write())
@@ -125,3 +147,4 @@ function rsync(callback, dir){
 
 gulp.task('test', gulp.series('compile', 'compile_test', 'upload_dist', 'test_start', 'watch_test'));
 gulp.task('default', gulp.series('compile', 'idestop', 'upload_dist', 'idestart', 'watch'));
+gulp.task('local', gulp.series('compile', 'start-local', 'watch-local'));
