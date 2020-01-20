@@ -108,15 +108,8 @@ struct guiControlMessageHeader
 	uint32_t id;
 };
 
-bool guiControlDataCallback(const char* data, int size, void* arg)
+bool guiControlDataCallback(JSONObject& root, void* arg)
 {
-	// parse the data into a JSONValue
-	JSONValue *value = JSON::Parse(data);
-	if (value == NULL || !value->IsObject()){
-		fprintf(stderr, "Could not parse JSON:\n%s\n", data);
-		return false;
-	}
-	JSONObject root = value->AsObject();
 	int ret = true;
 	for(unsigned int n = 0; n < gGuiControlBuffers.size(); ++n)
 	{
@@ -160,7 +153,6 @@ bool guiControlDataCallback(const char* data, int size, void* arg)
 			continue;
 		}
 	}
-	delete value;
 	return ret;
 }
 
