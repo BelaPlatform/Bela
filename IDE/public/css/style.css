@@ -1384,16 +1384,17 @@ input[type="number"].number-picker {
 input[type="checkbox"].checkbox-slider,
 .checkbox-slider input[type="checkbox"] {
   height: 18px;
-  left: 10000px;
+  left: 5px;
   position: relative;
-  width: 18px; }
+  width: 18px;
+  -moz-appearance: none !important; }
   input[type="checkbox"].checkbox-slider::before, input[type="checkbox"].checkbox-slider::after,
   .checkbox-slider input[type="checkbox"]::before,
   .checkbox-slider input[type="checkbox"]::after {
     content: '';
     cursor: pointer;
     display: block;
-    left: -10000px;
+    left: -5px;
     position: absolute; }
   input[type="checkbox"].checkbox-slider::before,
   .checkbox-slider input[type="checkbox"]::before {
