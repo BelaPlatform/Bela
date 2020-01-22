@@ -38,6 +38,14 @@
     }
     .source-text {
       position: relative;
+      .source-text-name {
+        display: inline-block;
+        overflow: hidden;
+        text-align: left;
+        text-indent: 0;
+        text-overflow: ellipsis;
+        width: 70%;
+      }
     }
     &.is-dir {
       .source-file {

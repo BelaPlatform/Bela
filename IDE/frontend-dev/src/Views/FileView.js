@@ -395,7 +395,6 @@ class FileView extends View {
             .addClass('file-heading')
             .html(file_list_elements[i].name)
             .appendTo(section);
-            // console.log('current sec: ' + file_list_elements[i].name);
 				var fileList = $('<ul></ul>')
             .addClass('sub-file-list');
 
@@ -403,8 +402,7 @@ class FileView extends View {
 	        var listItem = $('<li></li>')
                 .addClass('source-file')
                 .appendTo(fileList);
-          var item = file_list_elements[i][j];
-	        // var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
+					var item = file_list_elements[i][j];
           if (file_list_elements[i].name != i18n_dir_str) {
             var itemText = $('<div></div>')
                   .addClass('source-text')
@@ -462,10 +460,14 @@ class FileView extends View {
                   .on('click', (e) => this.deleteFile(e));
             var subList = $('<ul></ul>');
             for (var k = 0; k < item.children.length; k++) {
-              var child = item.children[k];
+							var child = item.children[k];
+							var innerSpan = $('<span></span>')
+										.addClass('source-text-name')
+										.text(child.name)
+										.attr('title', child.name);
               var subListItem = $('<li></li>')
                     .addClass('source-text')
-                    .text(child.name)
+                    .append(innerSpan)
                     .data('file', item.name + "/" + child.name)
                     .on('click', (e) => this.openFile(e));
               var deleteButton = $('<button></button>')
