@@ -169,12 +169,12 @@ export default class GuiHandler {
       sketch.then((resolved) => {
           scriptElement = resolved;
           console.log("... "+sketchSource+ " loaded");
+          utils.loadScript("../js/p5.min.js", "head", dom);
       }).catch((rejected) => {
           console.log("... "+sketchSource + " couldn't be loaded.")
           if(defaultSource != null) {
               console.log("Loading %s instead", defaultSource);
               scriptElement = utils.loadScript(defaultSource, parentSection, dom);
-              // scriptElement = this.loadSketch(defaultSource, parentSection, dom);
           }
       })
       return scriptElement;
