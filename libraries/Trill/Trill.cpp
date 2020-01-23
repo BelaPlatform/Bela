@@ -3,7 +3,9 @@
 const unsigned int Trill::prescalerValues[6];
 const unsigned int Trill::thresholdValues[7];
 #define MAX_TOUCH_1D_OR_2D ((device_type_ == TWOD ? kMaxTouchNum2D : kMaxTouchNum1D))
-#define NUM_SENSORS ((device_type_ == ONED ? kNumSensorsBar : kNumSensors))
+#define NUM_SENSORS ((device_type_ == BAR ? kNumSensorsBar \
+			: device_type_ == HEX ? kNumSensorsHex \
+			: kNumSensors))
 Trill::Trill(){}
 
 Trill::Trill(int i2c_bus, int i2c_address, Mode mode) {
@@ -271,7 +273,7 @@ int Trill::readLocations() {
 		prepareForDataRead();
 
 	uint8_t bytesToRead = kNormalLengthDefault;
-	if(device_type_ == TWOD)
+	if(device_type_ == SQUARE)
 		bytesToRead = kNormalLength2D;
 	int bytesRead = ::read(i2C_file, dataBuffer, kNormalLengthDefault);
 	if (bytesRead != kNormalLengthDefault)
@@ -290,7 +292,7 @@ int Trill::readLocations() {
 	}
 	num_touches_ = locations;
 
-	if(device_type_ == TWOD)
+	if(device_type_ == SQUARE)
 	{
 		// Look for the number of horizontal touches in 2D sliders
 		// which might be different from number of vertical touches
@@ -308,7 +310,7 @@ int Trill::readLocations() {
 
 int Trill::numberOfTouches()
 {
-	if(mode_ != NORMAL)
+	if(mode_ != CENTROID)
 		return 0;
 
 	// Lower 4 bits hold number of 1-axis or vertical touches
@@ -318,7 +320,7 @@ int Trill::numberOfTouches()
 // Number of horizontal touches for Trill 2D
 int Trill::numberOfHorizontalTouches()
 {
-	if(mode_ != NORMAL || device_type_ != TWOD)
+	if(mode_ != CENTROID || device_type_ != SQUARE)
 		return 0;
 
 	// Upper 4 bits hold number of horizontal touches
@@ -330,7 +332,7 @@ int Trill::numberOfHorizontalTouches()
 // Returns -1 if no such touch exists.
 int Trill::touchLocation(uint8_t touch_num)
 {
-	if(mode_ != NORMAL)
+	if(mode_ != CENTROID)
 		return -1;
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
@@ -347,7 +349,7 @@ int Trill::touchLocation(uint8_t touch_num)
 // Returns -1 if no such touch exists.
 int Trill::touchSize(uint8_t touch_num)
 {
-	if(mode_ != NORMAL)
+	if(mode_ != CENTROID)
 		return -1;
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
@@ -360,7 +362,7 @@ int Trill::touchSize(uint8_t touch_num)
 
 int Trill::touchHorizontalLocation(uint8_t touch_num)
 {
-	if(mode_ != NORMAL || device_type_ != TWOD)
+	if(mode_ != CENTROID || device_type_ != SQUARE)
 		return -1;
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
@@ -373,7 +375,7 @@ int Trill::touchHorizontalLocation(uint8_t touch_num)
 
 int Trill::touchHorizontalSize(uint8_t touch_num)
 {
-	if(mode_ != NORMAL || device_type_ != TWOD)
+	if(mode_ != CENTROID || device_type_ != SQUARE)
 		return -1;
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;

@@ -49,6 +49,7 @@ class Trill : public I2c
 
 		enum {
 			kNumSensorsBar = 26,
+			kNumSensorsHex = 30,
 			kNumSensors = 30
 		};
 
