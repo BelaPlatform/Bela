@@ -320,7 +320,7 @@ int Trill::numberOfTouches()
 // Number of horizontal touches for Trill 2D
 int Trill::numberOfHorizontalTouches()
 {
-	if(mode_ != CENTROID || device_type_ != SQUARE) || device_type_ != HEX
+	if(mode_ != CENTROID || device_type_ != SQUARE || device_type_ != HEX)
 		return 0;
 
 	// Upper 4 bits hold number of horizontal touches

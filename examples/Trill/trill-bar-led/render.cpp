@@ -86,8 +86,8 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup Trill sensor in NORMAL mode
-	if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	// Setup Trill sensor in CENTROID mode
+	if(touchSensor.setup(1, 0x18, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
