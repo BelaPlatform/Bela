@@ -102,20 +102,21 @@ export function getType(variable, recursive = false) {
     return type;
 }
 
-export function getUserProperties() {
+export function getUserProperties(dom=document, wObj=window) {
     let results = [];
-    let currentWindow;
     // create an iframe and append to body to load a clean window object
-    iframe = document.createElement('iframe');
+    let iframe = dom.createElement('iframe');
     iframe.style.display = 'none';
-    document.body.appendChild(iframe);
+    dom.body.appendChild(iframe);
 
-    for (let prop in window) {
-            if (!(prop in iframe.contentWindow))
-                results.push(window[prop]);
+    for (let p in wObj) {
+            if (!(p in iframe.contentWindow)) {
+                console.log(p);
+                results.push(wObj[p]);
+            }
     }
 
-    document.body.removeChild(iframe);
+    dom.body.removeChild(iframe);
     return results;
 }
 
