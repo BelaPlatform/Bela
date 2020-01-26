@@ -1063,7 +1063,7 @@ keypress.simple_combo("meta o", function () {
 	tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
-	consoleView.emit('clear');
+	consoleView.emit('clear', true);
 });
 keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
