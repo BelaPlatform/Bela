@@ -849,6 +849,13 @@ ul.projectManager {
       top: 5px; }
   .file-list .section .source-text {
     position: relative; }
+    .file-list .section .source-text .source-text-name {
+      display: inline-block;
+      overflow: hidden;
+      text-align: left;
+      text-indent: 0;
+      text-overflow: ellipsis;
+      width: 70%; }
   .file-list .section.is-dir .source-file:hover {
     background-color: inherit; }
   .file-list .section.is-dir .source-file > .source-text {

@@ -2651,13 +2651,11 @@ var FileView = function (_View) {
 
 					var section = $('<div></div>').addClass('section');
 					$('<p></p>').addClass('file-heading').html(file_list_elements[i].name).appendTo(section);
-					// console.log('current sec: ' + file_list_elements[i].name);
 					var fileList = $('<ul></ul>').addClass('sub-file-list');
 
 					for (var j = 0; j < file_list_elements[i].length; j++) {
 						var listItem = $('<li></li>').addClass('source-file').appendTo(fileList);
 						var item = file_list_elements[i][j];
-						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						if (file_list_elements[i].name != i18n_dir_str) {
 							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + item.size + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
 								return _this10.openFile(e);
@@ -2686,7 +2684,8 @@ var FileView = function (_View) {
 							var subList = $('<ul></ul>');
 							for (var k = 0; k < item.children.length; k++) {
 								var child = item.children[k];
-								var subListItem = $('<li></li>').addClass('source-text').text(child.name).data('file', item.name + "/" + child.name).on('click', function (e) {
+								var innerSpan = $('<span></span>').addClass('source-text-name').text(child.name).attr('title', child.name);
+								var subListItem = $('<li></li>').addClass('source-text').append(innerSpan).data('file', item.name + "/" + child.name).on('click', function (e) {
 									return _this10.openFile(e);
 								});
 								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e) {
