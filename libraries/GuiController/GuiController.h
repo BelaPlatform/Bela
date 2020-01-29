@@ -32,11 +32,13 @@ class GuiController {
 
 		int setup();
 		void cleanup();
-		int addSlider(std::string name, float value = 0.5, float min = 0.0, float max = 0.1, float step = 0.001);
+		int addSlider(std::string name, float value = 0.5f, float min = 0.0f, float max = 1.0, float step = 0.001f);
+
 		float getSliderValue(int sliderIndex);
 		int setSliderValue(int sliderIndex, float value);
-
 		GuiSlider* getSlider(int sliderIndex) { return &_sliders.at(sliderIndex); };
+
+		std::string getName() { return _name; };
 
 		int getNumSliders() { return _sliders.size(); };
 

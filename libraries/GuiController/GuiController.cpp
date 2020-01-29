@@ -1,4 +1,5 @@
 #include "GuiController.h"
+#include <iostream>
 
 GuiController::GuiController() 
 {
@@ -15,7 +16,8 @@ int GuiController::setup(Gui* gui, std::string name)
 	_name = name;
 	_wname = std::wstring(name.begin(), name.end());
 	_gui->setControlDataCallback(controlCallback, this);
-	return sendController();
+	int ret = sendController();
+	return ret;
 }
 
 int GuiController::sendController()
@@ -44,6 +46,7 @@ bool GuiController::controlCallback(JSONObject &root, void* param)
 		std::wstring event = root[L"event"]->AsString();
 		if (event.compare(L"connection-reply") == 0)
 		{
+			controller->sendController();
 			if(controller->getNumSliders() != 0)
 			{
 				for (auto slider : controller->_sliders)
@@ -71,6 +74,7 @@ int GuiController::sendSlider(GuiSlider* slider)
 {
 	JSONObject root = slider->getParametersAsJSON();
 	root[L"event"] = new JSONValue(L"set-slider");
+	root[L"controller"] = new JSONValue(_wname);
 	JSONValue *json = new JSONValue(root);
 	return _gui->sendControl(json);
 }
@@ -80,6 +84,7 @@ int GuiController::sendSliderValue(int sliderIndex)
 	auto slider = _sliders.at(sliderIndex);
 	JSONObject root;	
 	root[L"event"] = new JSONValue(L"set-slider");
+	root[L"controller"] = new JSONValue(_wname);
 	root[L"index"] = new JSONValue(slider.getIndex());
 	root[L"name"] = new JSONValue(slider.getNameW());
 	root[L"value"] = new JSONValue(slider.getValue());
