@@ -1,3 +1,6 @@
+#ifndef GUI_H_
+#define GUI_H_
+
 #include <vector>
 #include <string>
 #include <WSServer.h>
@@ -172,3 +175,4 @@ int Gui::sendBuffer(unsigned int bufferId, T value)
 	const char* type = typeid(T).name();
 	return doSendBuffer(type, bufferId, (const void*)&value, sizeof(T));
 }
+#endif /* GUI_H_ */
