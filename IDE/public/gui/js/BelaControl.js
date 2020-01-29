@@ -7,6 +7,7 @@ export default class BelaControl extends BelaWebSocket {
         this.projectName = null;
         this.sliders = [];
         this.selectors = [];
+        this.gui = null;
 
         this.target = new EventTarget();
         this.events = [
@@ -25,15 +26,27 @@ export default class BelaControl extends BelaWebSocket {
                     projectName: null
                 }
             }),
+            new CustomEvent('new-controller', {
+                detail: {
+                    name: null
+                }
+            }),
             new CustomEvent('custom', {
                 detail: {
                     data: null
                 }
-            })
+            }),
+            new CustomEvent('slider-changed', {
+                detail: { }
+            }),
         ];
+
     }
 
     onData(data, parsedData) {
+        console.log("Data!")
+        console.log(parsedData)
+
 
     	if (parsedData.event == 'connection') {
             if(parsedData.projectName) {
@@ -42,31 +55,96 @@ export default class BelaControl extends BelaWebSocket {
                 this.events[2].detail.projectName = this.projectName;
             }
             this.target.dispatchEvent(this.events[2]);
-            this.send({event: "connection-reply"});
-    	} else if (parsedData.event == 'set-slider') {
-    		console.log("Set slider");
-            let slider;
-    		if ((slider = this.sliders.find(e => e.id == parsedData.slider)) != undefined) {
-                slider.setVal(parsedData.value);
-            } else {
-    			this.sliders.push(new this.Slider(parsedData.slider, parsedData.name, parsedData.min, parsedData.max, parsedData.value, parsedData.step));
-    		}
-            this.events[0].detail.id = parsedData.slider;
-            this.target.dispatchEvent(this.events[0]);
-    	} else if (parsedData.event == 'set-select'){
-            console.log("Set select");
-            let select;
-            if ((select = this.selectors.find(e => e.id == parsedData.select)) != undefined) {
-                select.setVal(parsedData.value);
-            } else {
-                this.selectors.push(new this.Select(parsedData.select, parsedData.name, parsedData.options, parsedData.value));
+            if(this.gui != null) {
+                this.gui.destroy();
+                this.gui = null;
             }
-            this.events[1].detail.id = parsedData.select;
-            this.target.dispatchEvent(this.events[1]);
-
-        } else if (parsedData.event == 'custom') {
-            console.log(parsedData)
         }
+        let that = this;
+        (async function() {
+            await new Promise(resolve => that.target.addEventListener('gui-ready', function(){
+                resolve();
+            }));
+            that.target.removeEventListener('gui-ready', function(){
+                resolve();
+            });
+
+            if (parsedData.event == 'connection') {
+                if(parsedData.projectName) {
+                    console.log("Project name: "+parsedData.projectName);
+                    that.projectName = parsedData.projectName;
+                    that.events[2].detail.projectName = that.projectName;
+                }
+                if(that.gui != null) {
+                    that.gui.destroy();
+                    that.gui = null;
+                }
+                that.target.dispatchEvent(that.events[2]);
+                that.send({event: "connection-reply"});
+
+            } else if (parsedData.event == 'set-controller') {
+                if(parsedData.name) {
+                    console.log("Controller name: "+parsedData.name);
+                    console.log(that.gui);
+                    if(that.gui == null || typeof that.gui == 'undefined') {
+                        that.gui = new that.handler.creator('gui-container', that.handler.iframeEl.contentDocument, that.handler.iframeEl.contentWindow);
+                        that.gui.sliderCallback = that.sliderCallback;
+                        console.log("that.gui->"+that.gui);
+                    }
+                    let panel
+                    if(that.gui.panels.length < 1)
+                        panel = that.gui.newPanel(parsedData.name);
+
+                    // that.send({event: "controller-reply", id: panel.id})
+                }
+            } else if (parsedData.event == 'set-slider') {
+                console.log("Set slider");
+                let precision = 7; // float32
+                parsedData.value = Number(parsedData.value.toFixed(7));
+                parsedData.max = Number(parsedData.max.toFixed(7));
+                parsedData.min = Number(parsedData.min.toFixed(7));
+                parsedData.step = Number(0.0001.toFixed(7));
+
+                if(typeof(that.gui.parameters[0]) == 'undefined' || !(parsedData.name in that.gui.parameters[0][parsedData.controller]))
+                    that.gui.newSlider( {guiId: parsedData.controller, name: parsedData.name, val: parsedData.value, min: parsedData.min, max: parsedData.max, step: parsedData.step })
+
+                // that.events[0].detail.id = parsedData.slider;
+                // this.target.dispatchEvent(this.events[0]);
+            } else if (parsedData.event == 'set-select'){
+                console.log("Set select");
+
+            } else if (parsedData.event == 'custom') {
+                console.log(parsedData)
+            } else {
+                console.log(parsedData);
+            }
+        })();
+    }
+
+    sliderCallback(value) {
+        let val = Number(value.toFixed(7));
+        let obj = {};
+        obj['event'] = 'slider';
+        obj['controller'] = this.__gui.name;
+        obj['name'] = this.property;
+        obj['value'] = val;
+        let p = window.Bela.control.gui.getPanel({guiId: obj['controller']});
+        let params = window.Bela.control.gui.parameters[p.id][obj['controller']];
+        let index =  Object.keys(params).indexOf(obj['name']);
+        obj['slider'] = index;
+        console.log(obj);
+        window.Bela.control.send(obj);
+    }
+
+    send(data) {
+        var obj;
+        try {
+                obj = JSON.stringify(data);
+        } catch (e) {
+                console.log('Could not stringify slider json:', e);
+        }
+        if (this.ws.readyState === 1)
+            this.ws.send(obj);
     }
 
     send(data) {
