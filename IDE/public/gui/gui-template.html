@@ -2,6 +2,7 @@
 	<head>
 		<script src="../js/p5.min.js"></script>
 		<script src="../js/p5.dom.min.js"></script>
+		<script src="../js/dat.gui.min.js"></script>
 		<script src="../js/jquery.js"></script>
 		<style>
 			body {
@@ -24,6 +25,7 @@
 
 			window.addEventListener("message", function(event) {
 				$("body").append($(event.data));
+				window.parent.postMessage({ready: true});
 			});
 		</script>
 	</body>
