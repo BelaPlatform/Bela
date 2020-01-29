@@ -1,15 +1,19 @@
 import * as utils from './utils.js'
+import GuiCreator from './GuiCreator.js'
 
 export default class GuiHandler {
   constructor(bela, parentId='gui') {
     this.bela = bela;
+    this.bela['control']['handler'] = this;
     this.parentId = parentId;
     this.parentEl = document.getElementById(this.parentId);
     this.project = null;
     this.sketchName = 'sketch';
     this.iframeId = 'gui-iframe';
     this.iframeEl = null;
-    this.resources = ["../js/p5.min.js", "../js/p5.dom.min.js"];
+    this.resources = ["../js/p5.min.js", "../js/p5.dom.min.js", "..js/dat.gui.min.js"];
+    this.ready = false;
+    this.creator = GuiCreator;
 
     this.placeholder = {
       css: `
@@ -131,6 +135,13 @@ export default class GuiHandler {
 
       that.bela.control.target.removeEventListener('new-connection', that.onNewConnection);
 
+      window.addEventListener("message", function(event) {
+          if(event.data['ready'] == true) {
+              that.ready = true;
+              that.bela.control.target.dispatchEvent(new Event('gui-ready'));
+          }
+      });
+
       let htmlLocation = "/projects/"+projectName+"/main.html";
       utils.getHtml(htmlLocation)
       .then((val) => {
@@ -152,9 +163,10 @@ export default class GuiHandler {
           this.loadSketch(this.project, 'head', this.iframeEl.contentWindow.document);
         };
       });
-
+      that.bela.control.target.dispatchEvent(new Event('gui-ready'));
       that.bela.control.target.addEventListener('new-connection', that.onNewConnection);
       that.bela.control.target.resolve = null;
+
   }
 
   loadSketch(projectName, parentSection, dom, sketchName='sketch', defaultSource = "/gui/p5-sketches/sketch.js") {
