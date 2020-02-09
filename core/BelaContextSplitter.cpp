@@ -63,7 +63,6 @@ int BelaContextSplitter::push(const BelaContext* inContext)
 		return -1;
 	for(auto& ctx : outContexts)
 	{
-		//TODO: digitals are missing
 		for(unsigned int n = 0; n < kNumStreams; ++n)
 		{
 			const struct streamOffsets& o = offsets[n];
@@ -294,10 +293,12 @@ bool BelaContextSplitter::test()
 	for(unsigned int k = 0; k < 500; ++k)
 	{
 		static int count = 0;
+		std::vector<InternalBelaContext> sentCtxs(factor, ctx1);
 		for(unsigned int n = 0; n < factor; ++n)
 		{
-			contextFill(&ctx1, count);
-			spl1.push((BelaContext*)&ctx1);
+			contextAllocate(&sentCtxs[n]);
+			contextFill(&sentCtxs[n], count + n);
+			spl1.push((BelaContext*)&sentCtxs[n]);
 		}
 		auto ctx4 = spl1.pop();
 		assert(ctx4);
@@ -306,7 +307,7 @@ bool BelaContextSplitter::test()
 		{
 			BelaContext* ctx = spl2.pop();
 			assert(ctx);
-			assert(contextEqual((InternalBelaContext*)ctx, &ctx1));
+			assert(contextEqual((InternalBelaContext*)ctx, &sentCtxs[n]));
 		}
 		count += ctx1.audioFrames;
 	}
