@@ -20,14 +20,13 @@ var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
 var idePath = '../';
-var designPath = './design/';
 
-gulp.task('commit', ['browserify', 'scope-browserify', 'styles']);
+gulp.task('compile', ['browserify', 'scope-browserify', 'styles']);
 
-gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
+gulp.task('default', ['compile', 'killnode', 'upload', 'restartnode', 'watch']);
 
 gulp.task('styles', function() {
-  return gulp.src(designPath+'styles/*.scss')
+  return gulp.src('scss/*.scss')
     .pipe(sass({
       'sourcemap=none': true
     }))
@@ -50,8 +49,7 @@ gulp.task('watch', ['upload'], function(){
 	gulp.watch(['./scope-src/**'], ['scope-browserify']);
 
 	// when the sass changes, compile it and stick it in IDE/public
-	gulp.watch(['./sass/**'], ['sass']);
-	gulp.watch(designPath+'styles/*.scss', ['styles']);
+	gulp.watch('./scss/*.scss', ['styles']);
 
 	// when the browser sources change, upload them without killing node
 	gulp.watch([
@@ -150,6 +148,18 @@ gulp.task('sass', () => {
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest(idePath+'public/css/'));
 });
+
+gulp.task('watch-local', () => {
+	//livereload.listen();
+	// when the browser js changes, browserify it
+	gulp.watch(['./src/**'], ['browserify']);
+	// when the scope browser js changes, browserify it
+	gulp.watch(['./scope-src/**'], ['scope-browserify']);
+	// when the sass changes, compile it and stick it in IDE/public
+	gulp.watch('./scss/*.scss', ['styles']);
+});
+
+gulp.task('local', ['compile', 'watch-local']);
 
 function startNode(callback){
 	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+';', 'node', '/root/Bela/IDE/index.js']);
