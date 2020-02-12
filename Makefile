@@ -344,7 +344,7 @@ endif
 
 ALL_DEPS=
 define find_files
-$(shell find $(PROJECT_DIR) -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp")
+$(shell find $(PROJECT_DIR)/ -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp")
 endef
 ifneq ($(PROJECT),)
 ASM_SRCS := $(call find_files,*.S)
