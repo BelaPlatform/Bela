@@ -343,10 +343,10 @@ ifeq ($(DISTCC),1)
 endif
 
 ALL_DEPS=
-define find_files
-$(shell find $(PROJECT_DIR)/ -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp")
-endef
+
 ifneq ($(PROJECT),)
+find_files = $(if $(if $(PROJECT_DIR),$(if $(1),_)), $(shell find $(PROJECT_DIR)/ -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp"))
+
 ASM_SRCS := $(call find_files,*.S)
 ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
