@@ -381,7 +381,7 @@ exports.save_file = SaveFile_1.save_file;
 // recursively read the contents of a directory, returning an array of File_Descriptors
 function deep_read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var contents, output, _i, contents_1, name_1, stat, desc, _a;
+        var contents, output, _i, contents_1, name_1, original_path, path, stat, maxLevels, levels, desc, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, read_directory(dir_path)];
@@ -391,28 +391,53 @@ function deep_read_directory(dir_path) {
                     _i = 0, contents_1 = contents;
                     _b.label = 2;
                 case 2:
-                    if (!(_i < contents_1.length)) return [3 /*break*/, 8];
+                    if (!(_i < contents_1.length)) return [3 /*break*/, 12];
                     name_1 = contents_1[_i];
-                    return [4 /*yield*/, stat_file(dir_path + '/' + name_1)];
+                    original_path = dir_path + '/' + name_1;
+                    path = original_path;
+                    return [4 /*yield*/, stat_file(path)];
                 case 3:
                     stat = _b.sent();
-                    desc = new util.File_Descriptor(name_1);
-                    if (!stat.isDirectory()) return [3 /*break*/, 5];
-                    _a = desc;
-                    return [4 /*yield*/, deep_read_directory(dir_path + '/' + name_1)];
+                    maxLevels = 100;
+                    levels = 0;
+                    _b.label = 4;
                 case 4:
-                    _a.children = _b.sent();
-                    return [3 /*break*/, 6];
+                    if (!stat.isSymbolicLink()) return [3 /*break*/, 7];
+                    return [4 /*yield*/, fs.readlinkAsync(path)];
                 case 5:
-                    desc.size = stat.size;
-                    _b.label = 6;
+                    path = _b.sent();
+                    if ('/' != path[0])
+                        path = dir_path + '/' + path;
+                    return [4 /*yield*/, stat_file(path)];
                 case 6:
-                    output.push(desc);
-                    _b.label = 7;
+                    stat = _b.sent();
+                    ++levels;
+                    if (maxLevels <= levels) {
+                        return [3 /*break*/, 7];
+                    }
+                    return [3 /*break*/, 4];
                 case 7:
+                    if (maxLevels <= levels) {
+                        console.error('Unable to properly stat %s: too many symlinks to follow(%d)', original_path, levels);
+                        path = original_path;
+                    }
+                    desc = new util.File_Descriptor(name_1);
+                    if (!stat.isDirectory()) return [3 /*break*/, 9];
+                    _a = desc;
+                    return [4 /*yield*/, deep_read_directory(path)];
+                case 8:
+                    _a.children = _b.sent();
+                    return [3 /*break*/, 10];
+                case 9:
+                    desc.size = stat.size;
+                    _b.label = 10;
+                case 10:
+                    output.push(desc);
+                    _b.label = 11;
+                case 11:
                     _i++;
                     return [3 /*break*/, 2];
-                case 8: return [2 /*return*/, output];
+                case 12: return [2 /*return*/, output];
             }
         });
     });

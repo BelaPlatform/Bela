@@ -155,10 +155,29 @@ export async function deep_read_directory(dir_path: string): Promise<util.File_D
 	let contents: any = await read_directory(dir_path);
 	let output: util.File_Descriptor[] = [];
 	for (let name of contents){
-		let stat = await stat_file(dir_path+'/'+name);
+		const original_path = dir_path+'/'+name;
+		let path = original_path;
+		let stat = await stat_file(path);
+		// follow symlinks (with a maximum limit)
+		const maxLevels = 100;
+		let levels = 0;
+		while(stat.isSymbolicLink()) {
+			path = await fs.readlinkAsync(path);
+			if('/' != path[0])
+				path = dir_path+'/'+path;
+			stat = await stat_file(path);
+			++levels;
+			if(maxLevels <= levels) {
+				break;
+			}
+		}
+		if(maxLevels <= levels) {
+			console.error('Unable to properly stat %s: too many symlinks to follow(%d)', original_path, levels);
+			path = original_path;
+		}
 		let desc: util.File_Descriptor = new util.File_Descriptor(name);
 		if (stat.isDirectory())
-			desc.children = await deep_read_directory(dir_path+'/'+name);
+			desc.children = await deep_read_directory(path);
 		else
 			desc.size = stat.size;
 		output.push(desc);
