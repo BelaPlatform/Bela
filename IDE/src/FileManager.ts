@@ -71,8 +71,6 @@ export async function read_file_raw(file_path: string): Promise<Buffer>{
 export async function rename_file(src: string, dest: string): Promise<void>{
 	await lock.acquire();
 	try{
-		console.log('source: ' + src);
-		console.log('dest: ' + dest);
 		await fs.moveAsync(src, dest, {overwrite: true});
 		await commit(dest);
 	}

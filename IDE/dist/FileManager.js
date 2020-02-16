@@ -205,8 +205,6 @@ function rename_file(src, dest) {
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, , 5, 6]);
-                    console.log('source: ' + src);
-                    console.log('dest: ' + dest);
                     return [4 /*yield*/, fs.moveAsync(src, dest, { overwrite: true })];
                 case 3:
                     _a.sent();
