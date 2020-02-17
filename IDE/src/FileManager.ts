@@ -92,6 +92,9 @@ export async function read_directory(dir_path: string): Promise<string[]>{
 	let out: string[];
 	try{
 		out = await fs.readdirAsync(dir_path);
+		out.sort(function(a, b) {
+			return a.toLowerCase().localeCompare(b.toLowerCase());
+		});
 	}
 	finally{
 		lock.release();

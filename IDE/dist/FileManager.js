@@ -258,6 +258,9 @@ function read_directory(dir_path) {
                     return [4 /*yield*/, fs.readdirAsync(dir_path)];
                 case 3:
                     out = _a.sent();
+                    out.sort(function (a, b) {
+                        return a.toLowerCase().localeCompare(b.toLowerCase());
+                    });
                     return [3 /*break*/, 5];
                 case 4:
                     lock.release();
