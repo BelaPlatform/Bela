@@ -28,6 +28,7 @@ class Trill : public I2c
 			kCommandIdac = 5,
 			kCommandBaselineUpdate = 6,
 			kCommandMinimumSize = 7,
+			kCommandAutoScanInterval = 16,
 			kCommandIdentify = 255
 		};
 
@@ -100,6 +101,7 @@ class Trill : public I2c
 		int setNoiseThreshold(uint8_t threshold);
 		int setIDACValue(uint8_t value);
 		int setMinimumTouchSize(uint16_t size);
+		int setAutoScanInterval(uint16_t interval);
 
 		/* --- Touch-related information --- */
 		int numberOfTouches();

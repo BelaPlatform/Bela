@@ -215,6 +215,21 @@ int Trill::setMinimumTouchSize(uint16_t size) {
 	return 0;
 }
 
+int Trill::setAutoScanInterval(uint16_t interval) {
+	unsigned int bytesToWrite = 4;
+	char buf[4] = { kOffsetCommand, kCommandAutoScanInterval, (char)(interval >> 8), (char)(interval & 0xFF) };
+	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
+	{
+		fprintf(stderr, "Failed to set Trill's `tuo scan interval.\n");
+		fprintf(stderr, "%d\n", writtenValue);
+		return 1;
+	}
+	preparedForDataRead_ = false;
+	usleep(commandSleepTime); // need to give enough time to process command
+
+	return 0;
+}
+
 int Trill::updateBaseLine() {
 	unsigned int bytesToWrite = 2;
 	char buf[2] = { kOffsetCommand, kCommandBaselineUpdate };
