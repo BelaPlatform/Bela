@@ -110,7 +110,7 @@ int Trill::identify() {
 	int bytesRead = ::read(i2C_file, dataBuffer, bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
-		fprintf(stderr, "Failure to read Byte Stream\n");
+		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
 		device_type_ = NONE;
 		return -1;
 	}
@@ -220,7 +220,7 @@ int Trill::setAutoScanInterval(uint16_t interval) {
 	char buf[4] = { kOffsetCommand, kCommandAutoScanInterval, (char)(interval >> 8), (char)(interval & 0xFF) };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
-		fprintf(stderr, "Failed to set Trill's `tuo scan interval.\n");
+		fprintf(stderr, "Failed to set Trill's auto scan interval.\n");
 		fprintf(stderr, "%d\n", writtenValue);
 		return 1;
 	}
@@ -271,7 +271,7 @@ int Trill::readI2C() {
 	int bytesRead = ::read(i2C_file, dataBuffer, kRawLength);
 	if (bytesRead != kRawLength)
 	{
-		fprintf(stderr, "Failure to read Byte Stream\n");
+		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
 		return 1;
 	}
 	for (unsigned int i=0; i < NUM_SENSORS; i++) {
@@ -288,14 +288,16 @@ int Trill::readLocations() {
 	if(!preparedForDataRead_)
 		prepareForDataRead();
 
-	uint8_t bytesToRead = kNormalLengthDefault;
+	uint8_t bytesToRead = kCentroidLengthDefault;
 	if(device_type_ == SQUARE || device_type_ == HEX)
-		bytesToRead = kNormalLength2D;
-	int bytesRead = ::read(i2C_file, dataBuffer, kNormalLengthDefault);
-	if (bytesRead != kNormalLengthDefault)
+		bytesToRead = kCentroidLength2D;
+	if(device_type_ == RING)
+		bytesToRead = kCentroidLengthRing;
+	int bytesRead = ::read(i2C_file, dataBuffer, bytesToRead);
+	if (bytesRead != bytesToRead)
 	{
 		num_touches_ = 0;
-		fprintf(stderr, "Failure to read Byte Stream\n");
+		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
 		return 1;
 	}
 
@@ -312,10 +314,10 @@ int Trill::readLocations() {
 	{
 		// Look for the number of horizontal touches in 2D sliders
 		// which might be different from number of vertical touches
-		for(locations = 0; locations < kMaxTouchNum2D; locations++)
+		for(locations = 0; locations < MAX_TOUCH_1D_OR_2D; locations++)
 		{
-			if(dataBuffer[2 * locations + 4 * kMaxTouchNum2D] == 0xFF
-				&& dataBuffer[2 * locations + 4 * kMaxTouchNum2D + 1] == 0xFF)
+			if(dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D] == 0xFF
+				&& dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D+ 1] == 0xFF)
 				break;
 		}
 		num_touches_ |= (locations << 4);
@@ -359,6 +361,19 @@ int Trill::touchLocation(uint8_t touch_num)
 	return location;
 }
 
+int Trill::readButtons(uint8_t button_num)
+{
+	if(mode_ != CENTROID)
+		return -1;
+	if(button_num > 1)
+		return -1;
+	if(device_type_ != RING)
+		return -1;
+
+	int buttonValue = ((dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num] << 8) + dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num+1]) & 0x0FFF;
+	return buttonValue;
+}
+
 
 // Size of a particular touch.
 // Range: 0 to N-1.
@@ -383,8 +398,8 @@ int Trill::touchHorizontalLocation(uint8_t touch_num)
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
 
-	int location = dataBuffer[2*touch_num + 4*kMaxTouchNum2D] * 256;
-	location += dataBuffer[2*touch_num + 4*kMaxTouchNum2D + 1];
+	int location = dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D] * 256;
+	location += dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D+ 1];
 
 	return location;
 }
@@ -396,8 +411,8 @@ int Trill::touchHorizontalSize(uint8_t touch_num)
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
 
-	int size = dataBuffer[2*touch_num + 6*kMaxTouchNum2D] * 256;
-	size += dataBuffer[2*touch_num + 6*kMaxTouchNum2D + 1];
+	int size = dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D] * 256;
+	size += dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D+ 1];
 
 	return size;
 }

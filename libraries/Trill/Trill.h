@@ -38,8 +38,9 @@ class Trill : public I2c
 		};
 
 		enum {
-			kNormalLengthDefault = 20,
-			kNormalLength2D = 32,
+			kCentroidLengthDefault = 20,
+			kCentroidLengthRing = 24,
+			kCentroidLength2D = 32,
 			kRawLength = 60
 		};
 
@@ -108,8 +109,10 @@ class Trill : public I2c
 		int numberOfHorizontalTouches();
 		int touchLocation(uint8_t touch_num);
 		int touchSize(uint8_t touch_num);
-		/* Only for 2D sensors */
+		/* --- Only for 2D sensors --- */
 		int touchHorizontalLocation(uint8_t touch_num);
 		int touchHorizontalSize(uint8_t touch_num);
+		/* --- Only for Ring sensors --- */
+		int readButtons(uint8_t button_num);
 
 };
