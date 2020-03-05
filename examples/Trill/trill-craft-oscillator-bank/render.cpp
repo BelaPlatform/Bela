@@ -108,7 +108,7 @@ bool setup(BelaContext *context, void *userData)
 	
 	gAudioSampleRate = context->audioSampleRate;
 	
-	if(touchSensor.setup(1, 0x18, Trill::DIFF, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	if(touchSensor.setup(1, 0x30, Trill::DIFF, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
