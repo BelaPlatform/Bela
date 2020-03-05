@@ -271,7 +271,7 @@ int Trill::readI2C() {
 	int bytesRead = ::read(i2C_file, dataBuffer, kRawLength);
 	if (bytesRead != kRawLength)
 	{
-		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
+		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, kRawLength);
 		return 1;
 	}
 	for (unsigned int i=0; i < NUM_SENSORS; i++) {
