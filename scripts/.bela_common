@@ -47,6 +47,20 @@ check_rsync(){
 	fi
 }
 
+check_if_sources_copied(){
+	input=$(</dev/stdin)
+	[ -n "$input" ] && echo "$input" # rsync output is printed normally
+
+	source_exist=0
+	while read i; do
+		ext=$(echo "$i" | sed 's/.*\.//')
+		if [ "$ext" = "c" ] || [ "$ext" = "cpp" ] || [ "$ext" = "S" ] || [ "$ext" = "pd" ] || [ "$ext" = "scd" ]; then source_exist=1; fi
+	done <<< "$input"
+
+	[ $source_exist -eq "0" ] && echo "Warning: no new source files were copied to the board" # possibly could be handled automatically (ex. deleting associated .o files if they exist)
+	return 0
+}
+
 folder_has_changed(){
 	[ -z "$2" ] && { echo "Error: folder_has_changed(folder, reference, [filter])"; return 1; }
 	[ -z "$3" ] && FILTER="." || FILTER="$3"
