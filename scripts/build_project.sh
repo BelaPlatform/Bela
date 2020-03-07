@@ -158,7 +158,7 @@ uploadBuildRun(){
 		# --no-t makes sure file timestamps are not preserved, so that the Makefile will not think that targets are up to date when replacing files on the BBB
 		#  with older files from the host. This will solve 99% of the issues with Makefile thinking a target is up to date when it is not.
 		echo "using rsync..."
-		rsync -ac --out-format="   %n" --no-t --delete-after --exclude=$BBB_PROJECT_NAME --exclude=build $HOST_SOURCE_PATH"/" "$BBB_NETWORK_TARGET_FOLDER/" #trailing slashes used here make sure rsync does not create another folder inside the target folder
+		rsync -ac --out-format="   %n" --no-t --delete-after --exclude=$BBB_PROJECT_NAME --exclude=build $HOST_SOURCE_PATH"/" "$BBB_NETWORK_TARGET_FOLDER/" | tee | checkIfOnlyHeaders #trailing slashes used here make sure rsync does not create another folder inside the target folder
 	fi
 
 	if [ $? -ne 0 ]
@@ -176,6 +176,24 @@ uploadBuildRun(){
         echo "Building and running project..."
 	    case_run_mode
 	fi
+}
+
+# checks if the files copied to the board are only header files, prints a warning if so
+checkIfOnlyHeaders() {
+    input=$(</dev/stdin)
+    echo "$input"
+    source_exist=0
+
+    while read i; do
+        ext=$(echo "$i" | sed 's/.*\.//')
+        if [ $ext != "hpp" ] && [ $ext != "hh" ] && [ $ext != "h" ]; then
+            source_exist=1
+        fi
+    done <<< "$input"
+
+    if [ $source_exist -eq "0" ]; then
+        echo "WARNING: only header files were copied to the board - you may want to clean the project before building" # or whatever. possibly rm the associated .o file on the BBB?
+    fi
 }
 
 # run it once (or just touch the time_file)  and then (in case) start waiting for changes
