@@ -38,6 +38,10 @@
     color: $teal-main;
     font-size: 2em;
     font-family: space_bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    white-space: nowrap;
     &.error {
       color: $accent-red;
     }
