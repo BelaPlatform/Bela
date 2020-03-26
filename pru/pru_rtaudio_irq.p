@@ -380,21 +380,12 @@
 #define BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE 0x00      		// External clk, polarity (falling edge)
 #define BELA_MULTI_TLV_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
-#ifdef CODEC_WCLK_MASTER
 #define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
 #define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)
+#ifdef CODEC_WCLK_MASTER
 #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
 #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
 #else
-// The settings below shouldn't work according to the datasheet, but in practice this 
-// combination does work, perhaps due to a signal quality issue with the high-speed bit clock (?)
-// The datasheet would suggest 0x8074, 0x00 and 0x802 respectively.
-// #define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x18074    // MSB first, 1 bit delay, 16 bits, CFG bus, ROR 16bits
-// #define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x80       // External clk, polarity (rising edge)
-// #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x803       // 16-slot TDM output, falling edge means beginning of frame
-// #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x803       // 16-slot TDM output, falling edge means beginning of frame
-#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
-#define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)
 #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
 #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
 #endif
