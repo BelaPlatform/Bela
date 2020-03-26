@@ -216,34 +216,32 @@
 #define MCASP_AFSCTL_VALUE 0x101		// 2-slot TDM I2S mode, falling edge means beginning of frame
 #define MCASP_DATA_FORMAT_VALUE	0x1807C		// MSB first, 1 bit delay, 16 bits, CFG bus, ROR 16bits
 #define MCASP_ACLKXCTL_VALUE 0x80		// Transmit on rising edge, sync. xmit and recv
-#define MCASP_TDM_VALUE 0x03			// Enable TDM slots 0 and 1
 #endif
 
 #ifdef TLV320_MODE_DSP
 #define MCASP_AFSCTL_VALUE 0x100		// 2-slot TDM I2S mode, rising edge means beginning of frame
 #define MCASP_ACLKXCTL_VALUE 0x00		// Transmit on falling edge, sync. xmit and recv
 #define MCASP_DATA_FORMAT_VALUE	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
-#define MCASP_TDM_VALUE 0x03			// Enable TDM slots 0 and 1
 #endif
 
 #ifdef TLV320_MODE_TDM
+
 #ifdef MCASP_SLOT_16BITS
 #define MCASP_AFSCTL_VALUE 0x800		// 16-slot TDM, rising edge means beginning of frame
 #define MCASP_DATA_FORMAT_VALUE	0x807C	// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
-#endif
+#endif // MCASP_SLOT_16BITS
 
 #ifdef MCASP_SLOT_32BITS
 #define MCASP_AFSCTL_VALUE 0x400		// 8-slot TDM, rising edge means beginning of frame
 #define MCASP_DATA_FORMAT_VALUE	0x80F8	// MSB first, 0 bit delay, 32 bits, CFG bus, ROR 0bits
-#endif
+#endif // MCASP_SLOT_32BITS
 
 // 20 and 24 bit slots not supported in 256-cycle TDM
 // Hypothetically, for 20 bits, MCASP_DATA_FORMAT_VALUE = 0x809B
 // Hypothetically, for 24 bits, MCASP_DATA_FORMAT_VALUE = 0x80BA
 
 #define MCASP_ACLKXCTL_VALUE 0x00		// Transmit on falling edge, sync. xmit and recv
-#define MCASP_TDM_VALUE 0x03			// Enable TDM slots 0 and 1
-#endif
+#endif // TLV320_MODE_TDM
 
 #define C_MCASP_MEM             C28     	// Shared PRU mem
 
