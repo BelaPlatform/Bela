@@ -523,6 +523,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		case BelaHw_Salt:
 			fifoFactor = settings->periodSize / 128;
 		break;
+		case BelaHw_BelaMiniMultiAudio:
+		//TODO: we are assuming 6 in / 6 out
+			//nobreak
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagFaceBela:
