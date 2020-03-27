@@ -68,28 +68,31 @@ int I2c_MultiTLVCodec::startAudio(int dual_rate)
 	// Supported values of slot size in the PRU code: 16 and 32 bits. Note that
 	// altering slot size requires changing #defines in the PRU code.
 	const int slotSize = 16;
-	int slotNum = 0;
-	int ret = 0;
+	unsigned int slotNum = 0;
+	unsigned int bitDelay = 0;
+	int ret;
 
 	if(!masterCodec)
 		return 1;
 
-	// Master codec generates the clocks with its PLL and occupies the first two slots
+	bool codecWclkMaster =
 #ifdef CODEC_WCLK_MASTER
 	// Main codec generates word clock
-	if((ret = masterCodec->startAudio(dual_rate, 1, 1, 1, slotSize, 0)))
-		return ret;
+		true;
 #else
 	// AM335x generates word clock
-	if((ret = masterCodec->startAudio(dual_rate, 1, 0, 1, slotSize, 0)))
-		return ret;
+		false;
 #endif
+	// Master codec generates bclk (and possibly wclk) with its PLL
+	// and occupies the first two slots
+	if((ret = masterCodec->startAudio(dual_rate, true, codecWclkMaster, true, slotSize, slotNum, bitDelay)))
+		return ret;
 
 	// Each subsequent codec occupies the next 2 slots
 	std::vector<I2c_Codec*>::iterator it;
 	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		slotNum += 2;
-		if((ret = (*it)->startAudio(dual_rate, 0, 0, 1, slotSize, slotNum)))
+		if((ret = (*it)->startAudio(dual_rate, false, false, true, slotSize, slotNum, bitDelay)))
 			return ret;
 	}
 

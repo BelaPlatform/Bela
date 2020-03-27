@@ -37,7 +37,7 @@ public:
 
 	int initCodec();
 	int startAudio(int dual_rate);
-	int startAudio(int dual_rate, int generates_bclk, int generates_wclk, int tdm_mode, int slotSize, int startingSlot);
+	int startAudio(bool dual_rate, bool generates_bclk, bool generates_wclk, bool tdm_mode, unsigned int slotSize, unsigned int startingSlot, unsigned int bitDelay);
 	int stopAudio();
 
 	int setPllJ(short unsigned int j);

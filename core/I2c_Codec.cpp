@@ -46,7 +46,7 @@ int I2c_Codec::initCodec()
 // it runs at 44.1kHz
 int I2c_Codec::startAudio(int dual_rate)
 {
-	return startAudio(dual_rate, 1, 1, 0, 16, 0);
+	return startAudio(dual_rate, true, true, false, 16, 0, 0);
 }
 
 // Start audio with more setting control
@@ -56,8 +56,9 @@ int I2c_Codec::startAudio(int dual_rate)
 // slotSize: size of a slot in bits
 // startingSlot: where in the TDM frame to place the first channel
 
-int I2c_Codec::startAudio(int dual_rate, int generates_bclk, int generates_wclk, int tdm_mode, 
-						  int slotSize, int startingSlot)
+int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wclk,
+		bool tdm_mode, unsigned int slotSize, unsigned int startingSlot,
+		unsigned int bitDelay)
 {
 	generatesBclk = generates_bclk;
 	generatesWclk = generates_wclk;
@@ -133,10 +134,9 @@ int I2c_Codec::startAudio(int dual_rate, int generates_bclk, int generates_wclk,
 		else
 			return 1;
 
-		unsigned int transmitSyncBitDelay = 0;
 		if(writeRegister(0x09, crb))   // Audio serial control register B: DSP mode, word len specified by slotSize
 			return 1;
-		if(writeRegister(0x0A, startingSlot * slotSize + transmitSyncBitDelay))   // Audio serial control register C: specifying offset in bits
+		if(writeRegister(0x0A, startingSlot * slotSize + bitDelay))   // Audio serial control register C: specifying offset in bits
 			return 1;
 	}
 	else {
