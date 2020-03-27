@@ -260,27 +260,64 @@ BelaHw Bela_detectUserHw()
 	return BelaHw_NoHw;
 }
 
+using namespace BelaHwComponent;
 bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 {
-	if(userHw == BelaHw_Bela &&
-			(detectedHw == BelaHw_Bela || detectedHw == BelaHw_CtagFaceBela || detectedHw == BelaHw_CtagBeastBela))
-	{
+	if(userHw == BelaHw_Bela && Bela_hwContains(detectedHw, BelaCape))
 		return true;
-	}
-	else if(userHw == BelaHw_CtagFace &&
-			(detectedHw == BelaHw_CtagBeast || detectedHw == BelaHw_CtagFaceBela|| detectedHw == BelaHw_CtagBeastBela))
-	{
+	else if(userHw == BelaHw_CtagFace && Bela_hwContains(detectedHw, CtagCape))
 		return true;
-	}
-	else if(userHw == BelaHw_CtagBeast &&
-			detectedHw == BelaHw_CtagBeastBela)
-	{
+	else if(userHw == BelaHw_CtagBeast && 2 == Bela_hwContains(detectedHw, CtagCape))
 		return true;
-	}
-	else if(userHw == BelaHw_Salt &&
-			detectedHw == BelaHw_Bela)
-	{
+	else if(userHw == BelaHw_Salt && Bela_hwContains(detectedHw, BelaCape))
 		return true;
-	}
+	else if (userHw == BelaHw_BelaMini && Bela_hwContains(detectedHw, BelaMiniCape))
+		return true;
 	return false;
+}
+
+unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component component)
+{
+	switch(component) {
+		case BelaCape:
+			switch(hw) {
+				case BelaHw_Bela:
+				case BelaHw_Salt:
+				case BelaHw_CtagFaceBela:
+				case BelaHw_CtagBeastBela:
+					return 1;
+				default:
+					return 0;
+			}
+			break;
+		case BelaMiniCape:
+			switch(hw) {
+				case BelaHw_BelaMini:
+					return 1;
+				default:
+					return 0;
+			}
+			break;
+		case CtagCape:
+			switch(hw) {
+				case BelaHw_CtagFace:
+				case BelaHw_CtagFaceBela:
+					return 1;
+				case BelaHw_CtagBeastBela:
+				case BelaHw_CtagBeast:
+					return 2;
+				default:
+					return 0;
+			}
+			break;
+		case PocketBeagle:
+			return Bela_hwContains(hw, BelaMiniCape);
+			break;
+		case BeagleBoneBlack:
+			return Bela_hwContains(hw, BelaCape) || Bela_hwContains(hw, CtagCape);
+			break;
+		case Tlv320aic3104:
+			return Bela_hwContains(hw, BelaCape) || Bela_hwContains(hw, BelaMiniCape);
+			break;
+	}
 }

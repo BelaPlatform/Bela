@@ -21,6 +21,7 @@
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 #include "../include/PruArmCommon.h"
+#include "../include/board_detect.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -73,6 +74,7 @@ static int rtdm_fd_mcasp_to_pru = 0;
 #include "../include/xenomai_wraps.h"
 
 using namespace std;
+using namespace BelaHwComponent;
 
 // Select whether to use NEON-based sample conversion
 // (this will probably go away in a future commit once its performance
@@ -309,7 +311,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
-		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
+		if(Bela_hwContains(belaHw, PocketBeagle))
 		{
 			gDigitalPins = digitalPinsPocketBeagle;
 		} else {
@@ -334,7 +336,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
+		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
@@ -377,7 +379,7 @@ void PRU::cleanupGPIO()
 		}
 	}
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
+		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
@@ -421,7 +423,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
 	}
-	if((belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio) && enableLed){
+	if(Bela_hwContains(belaHw, BelaMiniCape) && enableLed){
 		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
 		underrunLed.clear();
 	}
@@ -645,7 +647,7 @@ void PRU::initialisePruCommon()
 	}
 	
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMini || belaHw == BelaHw_BelaMiniMultiAudio)
+		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
 			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
 			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
