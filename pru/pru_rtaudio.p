@@ -210,7 +210,7 @@
 #define MCASP_DATA_MASK 	0xFFFFFFFF	// 32 bit data
 #endif
 
-#define TLV320_MODE_TDM
+#define TLV320_MODE_DSP
 
 #ifdef TLV320_MODE_I2S
 #define MCASP_AFSCTL_VALUE 0x101		// 2-slot TDM I2S mode, falling edge means beginning of frame
