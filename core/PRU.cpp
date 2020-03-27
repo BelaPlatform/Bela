@@ -565,6 +565,7 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_BelaMini:
 		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
 		break;
+	case BelaHw_BelaMiniMultiTdm:
 	case BelaHw_BelaMiniMultiAudio:
 		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
@@ -664,6 +665,8 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 			break;
 		case BelaHw_BelaMiniMultiAudio:
 			//nobreak
+		case BelaHw_BelaMiniMultiTdm:
+                        //nobreak
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagBeast:

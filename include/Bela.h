@@ -89,6 +89,7 @@ typedef enum
 	BelaHw_CtagFaceBela,
 	BelaHw_CtagBeastBela,
 	BelaHw_BelaMiniMultiAudio,
+	BelaHw_BelaMiniMultiTdm,
 } BelaHw;
 
 typedef struct _BelaHwConfig
