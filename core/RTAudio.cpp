@@ -112,6 +112,7 @@ void sigdebug_handler(int sig, siginfo_t *si, void *context)
 }
 #endif // XENOMAI_CATCH_MSW
 using namespace std;
+using namespace BelaHwComponent;
 
 typedef struct
 {
@@ -131,41 +132,16 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 		printf("Bela_getHwConfigPrivate()\n");
 	memset((void*)cfg, 0, sizeof(BelaHwConfig));
 	cfg->digitalChannels = 16;
-	// set audio codec
-	AudioCodec* activeCodec;
-	AudioCodec* disabledCodec;
-	switch(hw)
+	// set audio codec (order of the below statements is important)
+	if(pcfg)
 	{
-		case BelaHw_Bela:
-			//nobreak
-		case BelaHw_BelaMini:
-			//nobreak
-		case BelaHw_Salt:
-			//nobreak
-			activeCodec = gI2cCodec;
-			disabledCodec = gSpiCodec;
-			break;
-		case BelaHw_BelaMiniMultiAudio:
-			cfg->activeCodec = gI2cMultiTLVCodec;
-			cfg->disabledCodec = gSpiCodec;
-			break;			
-		case BelaHw_CtagFace:
-			//nobreak
-		case BelaHw_CtagFaceBela:
-			//nobreak
-		case BelaHw_CtagBeast:
-			//nobreak
-		case BelaHw_CtagBeastBela:
-			activeCodec = gSpiCodec;
-			disabledCodec = gI2cCodec;
-			break;
-		case BelaHw_NoHw:
-		default:
-		return -1; // unrecognized hw
-	}
-	if(pcfg) {
-		pcfg->activeCodec = activeCodec;
-		pcfg->disabledCodec = disabledCodec;
+		if(Bela_hwContains(hw, CtagCape)) {
+			pcfg->activeCodec = gSpiCodec;
+			pcfg->disabledCodec = gI2cCodec;
+		} else if (Bela_hwContains(hw, Tlv320aic3104)) {
+			pcfg->activeCodec = gI2cCodec;
+			pcfg->disabledCodec = gSpiCodec;
+		}
 	}
 	// set audio I/O
 	switch(hw)
@@ -215,30 +191,11 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 			return -1; // unrecognized hw
 	}
 	// set analogs:
-	switch(hw)
-	{
-		case BelaHw_Bela:
-			//nobreak
-		case BelaHw_Salt:
-			//nobreak
-		case BelaHw_CtagFaceBela:
-			//nobreak
-		case BelaHw_CtagBeastBela:
-			cfg->analogInChannels = 8;
-			cfg->analogOutChannels = 8;
-			break;
-		case BelaHw_BelaMiniMultiAudio:
-		case BelaHw_BelaMini:
-			cfg->analogInChannels = 8;
-			break;
-		case BelaHw_CtagFace:
-			//nobreak
-		case BelaHw_CtagBeast:
-			//nobreak
-		case BelaHw_NoHw:
-			//nobreak
-		default:
-			break;
+	if(Bela_hwContains(hw, BelaCape)) {
+		cfg->analogInChannels = 8;
+		cfg->analogOutChannels = 8;
+	} else if(Bela_hwContains(hw, BelaMiniCape)) {
+		cfg->analogInChannels = 8;
 	}
 	return 0;
 }
@@ -490,14 +447,12 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
 
         // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
-        if(belaHw == BelaHw_CtagFace || belaHw == BelaHw_CtagFaceBela)
+        if(1 == Bela_hwContains(belaHw, CtagCape))
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
-        else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
+        else if(2 == Bela_hwContains(belaHw, CtagCape))
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
-        if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace && belaHw != BelaHw_BelaMiniMultiAudio)
-                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
-		if(belaHw == BelaHw_BelaMiniMultiAudio)
-			gI2cMultiTLVCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+	else
+		gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 		
 	BelaHwConfig cfg;
 	BelaHwConfigPrivate pcfg;
