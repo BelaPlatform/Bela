@@ -21,6 +21,7 @@ static const std::map<std::string,BelaHw> belaHwMap = {
         {"CtagFaceBela", BelaHw_CtagFaceBela},
         {"CtagBeastBela", BelaHw_CtagBeastBela},
         {"BelaMiniMultiAudio", BelaHw_BelaMiniMultiAudio},
+        {"BelaMiniMultiTdm", BelaHw_BelaMiniMultiTdm},
 };
 
 static const int EEPROM_NUMCHARS = 30;
@@ -255,6 +256,8 @@ bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 		return true;
 	else if (userHw == BelaHw_BelaMiniMultiAudio && Bela_hwContains(detectedHw, BelaMiniCape))
 		return true;
+	else if (userHw == BelaHw_BelaMiniMultiTdm && Bela_hwContains(detectedHw, BelaMiniCape))
+		return true;
 	return false;
 }
 
@@ -276,6 +279,7 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 			switch(hw) {
 				case BelaHw_BelaMini:
 				case BelaHw_BelaMiniMultiAudio:
+				case BelaHw_BelaMiniMultiTdm:
 					return 1;
 				default:
 					return 0;

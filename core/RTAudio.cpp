@@ -53,6 +53,7 @@
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/I2c_MultiTLVCodec.h"
+#include "../include/I2c_MultiTdmCodec.h"
 #include "../include/GPIOcontrol.h"
 extern "C" void enable_runfast();
 extern "C" void disable_runfast();
@@ -419,6 +420,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	else if(belaHw == BelaHw_BelaMiniMultiAudio)
 		gAudioCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+	else if(belaHw == BelaHw_BelaMiniMultiTdm)
+		gAudioCodec = new I2c_MultiTdmCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
 	else if(Bela_hwContains(belaHw, Tlv320aic3104))
 	{
 		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
@@ -458,6 +461,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		case BelaHw_Salt:
 			fifoFactor = settings->periodSize / 128;
 		break;
+		case BelaHw_BelaMiniMultiTdm:
 		case BelaHw_BelaMiniMultiAudio:
 		//TODO: we are assuming 6 in / 6 out
 			//nobreak
