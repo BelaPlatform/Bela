@@ -273,6 +273,8 @@ bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 		return true;
 	else if (userHw == BelaHw_BelaMini && Bela_hwContains(detectedHw, BelaMiniCape))
 		return true;
+	else if (userHw == BelaHw_BelaMiniMultiAudio && Bela_hwContains(detectedHw, BelaMiniCape))
+		return true;
 	return false;
 }
 
