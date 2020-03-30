@@ -140,7 +140,7 @@
 #define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
 #define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
 #define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
-#define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruBoardFlags.h)
+#define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruArmCommon.h)
 #define COMM_ERROR_OCCURED      	68          // Signals the ARM CPU that an error happened
 #define COMM_ACTIVE_TDM_SLOTS  		72          // How many TDM slots contain useful data 
 
@@ -335,8 +335,8 @@
 #define CTAG_FACE_MCASP_ACLKXCTL_VALUE CTAG_MCASP_ACLKRCTL_VALUE
 #define CTAG_FACE_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define CTAG_FACE_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
-#define CTAG_FACE_MCASP_AFSRCTL_VALUE 0x410       // 8 Slot I2S, external clk, polarity (rising edge), single word
-#define CTAG_FACE_MCASP_AFSXCTL_VALUE 0x410       // 8 Slot I2S, external clk, polarity (rising edge), single word
+#define CTAG_FACE_MCASP_AFSRCTL_VALUE 0x410       // 8 Slot TDM, external fsclk, polarity (rising edge), single word
+#define CTAG_FACE_MCASP_AFSXCTL_VALUE 0x410       // 8 Slot TDM, external fsclk, polarity (rising edge), single word
 #define CTAG_FACE_MCASP_RTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
 #define CTAG_FACE_MCASP_XTDM_VALUE 0xFF           // Enable TDM slots 0 to 7
 #define CTAG_FACE_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
@@ -348,8 +348,8 @@
 #define CTAG_BEAST_MCASP_ACLKXCTL_VALUE CTAG_MCASP_ACLKRCTL_VALUE
 #define CTAG_BEAST_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define CTAG_BEAST_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
-#define CTAG_BEAST_MCASP_AFSRCTL_VALUE 0x810       // 16 Slot I2S, external clk, polarity (rising edge), single word
-#define CTAG_BEAST_MCASP_AFSXCTL_VALUE 0x810       // 16 Slot I2S, external clk, polarity (rising edge), single word
+#define CTAG_BEAST_MCASP_AFSRCTL_VALUE 0x810       // 16 Slot TDM, external fsclk, polarity (rising edge), single word
+#define CTAG_BEAST_MCASP_AFSXCTL_VALUE 0x810       // 16 Slot TDM, external fsclk, polarity (rising edge), single word
 #define CTAG_BEAST_MCASP_RTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
 #define CTAG_BEAST_MCASP_XTDM_VALUE 0xFFFF         // Enable TDM slots 0 to 15
 #define CTAG_BEAST_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
@@ -361,8 +361,8 @@
 #define BELA_TLV_MCASP_ACLKXCTL_VALUE 0x00       // External clk, polarity (falling edge)
 #define BELA_TLV_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define BELA_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
-#define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
-#define BELA_TLV_MCASP_AFSXCTL_VALUE 0x100       // 2 Slot I2S, external clk, polarity (rising edge), single bit
+#define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100       // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
+#define BELA_TLV_MCASP_AFSXCTL_VALUE 0x100       // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
 #define BELA_TLV_MCASP_RTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define BELA_TLV_MCASP_XTDM_VALUE 0x3            // Enable TDM slots 0 and 1
 #define BELA_TLV_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
@@ -370,19 +370,19 @@
 
 // Values below are for 16x 16-bit TDM slots
 
-#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
 #define BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE 0x00      		// External clk, polarity (falling edge)
 #define BELA_MULTI_TLV_MCASP_AHCLKRCTL_VALUE MCASP_AHCLKRCTL_VALUE
 #define BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
-#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
+#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
 #define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)
 
 #ifdef CODEC_WCLK_MASTER
-#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
-#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM external fsclk, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM external fsclk, rising edge means beginning of frame
 #else
-#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
-#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802       // 16-slot TDM internal fsclk, rising edge means beginning of frame
+#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802       // 16-slot TDM internal fsclk, rising edge means beginning of frame
 #endif
 
 // RTDM and XTDM are calculated dynamically
