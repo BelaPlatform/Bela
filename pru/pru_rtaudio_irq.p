@@ -144,12 +144,6 @@
 #define COMM_ERROR_OCCURED      	68          // Signals the ARM CPU that an error happened
 #define COMM_ACTIVE_TDM_SLOTS  		72          // How many TDM slots contain useful data 
 
-#define ARM_ERROR_TIMEOUT 1
-#define ARM_ERROR_XUNDRUN 2
-#define ARM_ERROR_XSYNCERR 3
-#define ARM_ERROR_XCKFAIL 4
-#define ARM_ERROR_XDMAERR 5
-
 // General constants for local PRU peripherals (used for interrupt configuration)
 #define PRU_ICSS_INTC_LOCAL     0x00020000
 #define PRU_ICSS_CFG_LOCAL      0x00026000
