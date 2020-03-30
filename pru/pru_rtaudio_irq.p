@@ -376,6 +376,7 @@
 #define BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE MCASP_AHCLKXCTL_VALUE
 #define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074    // MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
 #define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00       // External clk, polarity (falling edge)
+
 #ifdef CODEC_WCLK_MASTER
 #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
 #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800       // 16-slot TDM input, rising edge means beginning of frame
@@ -383,6 +384,7 @@
 #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
 #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802       // 16-slot TDM output, rising edge means beginning of frame
 #endif
+
 // RTDM and XTDM are calculated dynamically
 #define BELA_MULTI_TLV_MCASP_RINTCTL_VALUE MCASP_RINTCTL_VALUE
 #define BELA_MULTI_TLV_MCASP_XINTCTL_VALUE MCASP_XINTCTL_VALUE
@@ -423,10 +425,10 @@
 #define reg_digital_current r6  	// Pointer to current storage location of DIGITAL
 #define reg_num_channels    r9      // Number of SPI ADC/DAC channels to use
 #define reg_frame_current   r10     // Current frame count in SPI ADC/DAC transfer
-#define reg_frame_mcasp_total     r11     // Total frame count for SPI ADC/DAC
+#define reg_frame_mcasp_total r11   // Total frame count for McASP
 #define reg_dac_data        r12     // Current dword for SPI DAC
 #define reg_adc_data        r13     // Current dword for SPI ADC
-#define reg_frame_spi_total r15     // Current dword for McASP ADC
+#define reg_frame_spi_total r15     // Current dword for SPI ADC/DAC
 #define reg_dac_buf0        r16     // Start pointer to SPI DAC buffer 0
 #define reg_dac_buf1        r17     // Start pointer to SPI DAC buffer 1
 #define reg_dac_current     r18     // Pointer to current storage location of SPI DAC
@@ -570,7 +572,7 @@ DONE:
 .macro READ_MULTI_TLV_CHANNELS
 .mparam DEST
 	LSR DEST, reg_flags, FLAG_BIT_AUDIO_CHANNELS0
-    AND DEST, DEST, 0x0F
+	AND DEST, DEST, 0x0F
 	ADD DEST, DEST, 1
 	LSL DEST, DEST, 1
 .endm
@@ -1466,16 +1468,9 @@ WRITE_FRAME_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
     BELA_MULTI_TLV_OR_JMP_TO WRITE_FRAME_NOT_MULTI_TLV
-
-
-	// TLVTODO TESTNG
-    //MCASP_WRITE_TO_DATAPORT 0x00, 4
-    //MCASP_WRITE_TO_DATAPORT 0x00, 4
-	//QBA WRITE_FRAME_NOT_MULTI_TLV
-
-	READ_MULTI_TLV_CHANNELS r2					// How many channels?
+	READ_MULTI_TLV_CHANNELS r2 // How many channels?
 WRITE_FRAME_MULTI_TLV_LOOP:
-	MCASP_WRITE_TO_DATAPORT 0x00, 4				// Write 4 bytes for each channel
+	MCASP_WRITE_TO_DATAPORT 0x00, 4 // Write 4 bytes for each channel
 	SUB r2, r2, 1
 	QBNE WRITE_FRAME_MULTI_TLV_LOOP, r2, 0
 
@@ -1487,7 +1482,7 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)  // Set RFRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
 
 // Initialisation
-    LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count (0.5x-2x for McASP)
+    LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count for McASP
     LBBO reg_frame_spi_total, reg_comm_addr, COMM_BUFFER_SPI_FRAMES, 4 // Total frame count for SPI
     MOV reg_dac_buf0, 0                      // DAC buffer 0 start pointer
     LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
@@ -1575,7 +1570,7 @@ WRITE_ONE_BUFFER:
      // Write a single buffer of DAC samples and read a buffer of ADC samples
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
-     LMBD r2, reg_num_channels, 1		// 1, 2 or 3 for 2, 4 or 8 channels
+     LMBD r2, reg_num_channels, 1 // 1, 2 or 3 for 2, 4 or 8 channels
 BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA_CHANNELS
      // there are 0 dac values, so ADC starts at the same point as DAC
      MOV reg_adc_current, reg_dac_current
@@ -1650,11 +1645,10 @@ NOT_NEXT_FRAME:
      // an interrupt, an error must have occurred
      SEND_ERROR_TO_ARM ARM_ERROR_TIMEOUT
      JMP START // TODO: should HALT and wait for ARM to restart
-	 
+
 GO_TO_CLEANUP:
 	JMP CLEANUP
-	 
-	 
+
 MCASP_CHECK_TX_ERROR_END:
 
      QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH1
@@ -1755,32 +1749,21 @@ BELA_NOT_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_MULTI_TLV
 LOAD_AUDIO_FRAME_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
-BELA_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_MULTI_TLV
-
-	 // TLVTODO TESTING
-     //LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
-     //SBCO r8, C_MCASP_MEM, reg_mcasp_dac_current, 4	 
-     //ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4	 
-	 //QBA LOAD_AUDIO_FRAME_NOT_MULTI_TLV
-
+     BELA_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_MULTI_TLV
      // Number of bytes to load depends on number of active TDM slots
-	 // LBCO/SBCO only support r0 as indicator of number of bytes
-	 // so load begins from r1
-	 LDI r16, 0
-	 
-	 // TLVTODO: this only works up to 16 channels based on number of registers
-	 READ_MULTI_TLV_CHANNELS r0
-	 QBGT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, 16
-	 LDI r0, 16
+     // LBCO/SBCO only support r0 as indicator of number of bytes
+     // so load begins from r1
+     LDI r16, 0
+
+     // TLVTODO: this only works up to 16 channels based on number of registers
+     READ_MULTI_TLV_CHANNELS r0
+     QBGT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, 16
+     LDI r0, 16
 LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
-	 LSL r0, r0, 1										// 16 bits per channel
+     LSL r0, r0, 1										// 16 bits per channel
      LBCO r1, C_MCASP_MEM, reg_mcasp_dac_current, b0
      SBCO r9, C_MCASP_MEM, reg_mcasp_dac_current, b0
-	 ADD reg_mcasp_dac_current, reg_mcasp_dac_current, r0.b0
-	 
-//	 MOV r0, r1 // TLVTODO TESTING
-//	 MOV r8, r9
-	
+     ADD reg_mcasp_dac_current, reg_mcasp_dac_current, r0.b0
 LOAD_AUDIO_FRAME_NOT_MULTI_TLV:
 #endif /* ENABLE_BELA_MULTI_TLV32 */
 LOAD_AUDIO_FRAME_DONE:
@@ -1810,7 +1793,7 @@ CTAG_BEAST_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_BEAST
 	 // but 24 registers need to be free for use
      AND r8, r17, r0
      LSR r9, r0, 16
-	 AND r10, r17, r1
+     AND r10, r17, r1
      LSR r11, r1, 16
      AND r12, r17, r2
      LSR r13, r2, 16
@@ -1834,23 +1817,11 @@ WRITE_AUDIO_FRAME_NOT_CTAG_BEAST:
 BELA_NOT_MULTI_TLV_OR_JMP_TO WRITE_AUDIO_FRAME_MULTI_TLV
      AND r8, r17, r0
      LSR r9, r0, 16
-	 
      MCASP_WRITE_TO_DATAPORT r8, 8
 WRITE_AUDIO_FRAME_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
 BELA_MULTI_TLV_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_MULTI_TLV
-
-
-	 // TLVTODO TESTING
-     //AND r8, r17, r0
-     //LSR r9, r0, 16
-	 
-	 //LDI r8, 0
-	 //LDI r9, 0xFFFF
-     //MCASP_WRITE_TO_DATAPORT r8, 8
-	 //QBA WRITE_AUDIO_FRAME_NOT_MULTI_TLV
-	 
      AND r9, r17, r1
      LSR r10, r1, 16
 	 MCASP_WRITE_TO_DATAPORT r9, 8
@@ -2017,17 +1988,6 @@ FRAME_READ_MULTI_TLV:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
      BELA_MULTI_TLV_OR_JMP_TO FRAME_READ_NOT_MULTI_TLV
-	 
-	 // TLVTODO TESTING
-	 
-     //MCASP_READ_FROM_DATAPORT r8, 32
-     //AND r0, r8, r17
-     //LSL r16, r9, 16
-     //OR r0, r0, r16
-
-     //SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
-     //ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4 // increment memory pointer
-	 
 	 //QBA FRAME_READ_NOT_MULTI_TLV
 	 
 	 // END TLVTODO TESTING
@@ -2311,7 +2271,7 @@ MCSPI_INTR_RX1_FULL:
 
 
 NEXT_FRAME:
-	 CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
+     CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED
      CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
 
 #ifdef ENABLE_CTAG_FACE
@@ -2390,7 +2350,7 @@ BELA_MULTI_TLV_ANALOG_8: // Eight channels
      LSL r14, reg_frame_spi_total, 1
      JMP BELA_MULTI_TLV_ANALOG_CFG_END
 BELA_MULTI_TLV_ANALOG_2: // Two channels
-	 LSR r14, reg_frame_spi_total, 1
+     LSR r14, reg_frame_spi_total, 1
 
 BELA_MULTI_TLV_ANALOG_CFG_END:
 #endif /* ENABLE_BELA_MULTI_TLV32 */
@@ -2399,8 +2359,8 @@ SET_REG_FRAMES_DONE:
 
      ADD reg_frame_current, reg_frame_current, 1
      QBEQ ALL_FRAMES_PROCESSED, reg_frame_current, r14
-	 JMP EVENT_LOOP
-	 
+     JMP EVENT_LOOP
+
 ALL_FRAMES_PROCESSED:
      // Now done, swap the buffers and do the next one
      // Use r2 as a temp register
@@ -2439,7 +2399,7 @@ MUX_CHANNEL_SAVE_DONE:
      QBEQ LED_BLINK_DONE, r3, 0 
      MOV r1, 0x1000
      AND r2, r2, r1          // Test (frame count & 4096)
-	 QBEQ LED_BLINK_OFF, r2, 0
+     QBEQ LED_BLINK_OFF, r2, 0
      LBBO r2, reg_comm_addr, COMM_LED_PIN_MASK, 4   
      MOV r1, GPIO_SETDATAOUT
      ADD r3, r3, r1          // Address for GPIO set register
