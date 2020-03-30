@@ -1448,10 +1448,12 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     LBBO reg_frame_spi_total, reg_comm_addr, COMM_BUFFER_SPI_FRAMES, 4 // Total frame count for SPI
     MOV reg_dac_buf0, 0                      // DAC buffer 0 start pointer
     LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
+    ADD reg_dac_buf1, reg_dac_buf1, reg_dac_buf0
     LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
     LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
     MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT            // McASP DAC buffer 0 start pointer
     LSL reg_mcasp_buf1, reg_frame_mcasp_total, r2  // McASP DAC buffer 1 start pointer = 2[ch]*2[bytes]*(N/4)[samples/spi]*bufsize
+    ADD reg_mcasp_buf1, reg_mcasp_buf1, reg_mcasp_buf0
     CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
     SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
     SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
