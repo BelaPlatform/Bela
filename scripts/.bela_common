@@ -95,7 +95,7 @@ check_board_alive_and_set_date(){
 	try_and_set_address 192.168.6.2 root@192.168.6.2 && return 0
 	try_and_set_address bela.local root@bela.local && return 0
 	# this is the default, but worth checking again in case someone changed it earlier
-	try_and_set_address 192.168.7.2 root@192.168.6.2 && return 0
+	try_and_set_address 192.168.7.2 root@192.168.7.2 && return 0
 	return 1
 }
 
