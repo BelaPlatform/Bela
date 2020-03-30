@@ -492,13 +492,21 @@ MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
     QBBS DEST, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 .endm
 
-.macro BELA_MINI_OR_MULTI_TLV_OR_JMP_TO
+.macro IF_NOT_BELA_TLV32_JMP_TO
 .mparam DEST
-    QBBS DONE, reg_flags, FLAG_BIT_BELA_MINI
-	QBBS DONE, reg_flags, FLAG_BIT_BELA_MULTI_TLV
-	QBA DEST
+     QBBS DEST, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+     QBBS DEST, reg_flags, FLAG_BIT_CTAG
 DONE:
 .endm
+
+.macro IF_HAS_ANALOG_DAC_JMP_TO
+.mparam DEST
+     QBBS DONE, reg_flags, FLAG_BIT_BELA_MINI
+     QBBS DONE, reg_flags, FLAG_BIT_BELA_MULTI_TLV
+     QBA DEST
+DONE:
+.endm
+#define IF_HAS_BELA_SPI_ADC_CS_JMP_TO IF_HAS_ANALOG_DAC_JMP_TO
 
 .macro CTAG_OR_JMP_TO
 .mparam DEST
@@ -837,11 +845,11 @@ DAC_CHANNEL_REORDER_DONE:
     
 // Bring CS line low to write to ADC
 .macro ADC_CS_ASSERT
-     BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA
+     IF_HAS_BELA_SPI_ADC_CS_JMP_TO BELA_CS
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
      QBA DONE
-BELA:
+BELA_CS:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
 DONE:
@@ -850,11 +858,11 @@ DONE:
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
-     BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA
+     IF_HAS_BELA_SPI_ADC_CS_JMP_TO BELA_CS
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_SETDATAOUT
      QBA DONE
-BELA:
+BELA_CS:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_SETDATAOUT
 DONE:
@@ -1571,7 +1579,7 @@ WRITE_ONE_BUFFER:
      // Load starting positions
      MOV reg_dac_current, reg_dac_buf0         // DAC: reg_dac_current is current pointer
      LMBD r2, reg_num_channels, 1 // 1, 2 or 3 for 2, 4 or 8 channels
-BELA_MINI_OR_MULTI_TLV_OR_JMP_TO BELA_CHANNELS
+IF_HAS_ANALOG_DAC_JMP_TO BELA_CHANNELS
      // there are 0 dac values, so ADC starts at the same point as DAC
      MOV reg_adc_current, reg_dac_current
      QBA CHANNELS_DONE
@@ -1742,11 +1750,12 @@ CTAG_BEAST_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_CTAG_BEAST
 LOAD_AUDIO_FRAME_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
-BELA_NOT_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_MULTI_TLV
+     IF_NOT_BELA_TLV32_JMP_TO LOAD_AUDIO_FRAME_NOT_BELA_TLV32
      LBCO r0, C_MCASP_MEM, reg_mcasp_dac_current, 4
      SBCO r8, C_MCASP_MEM, reg_mcasp_dac_current, 4
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, 4
-LOAD_AUDIO_FRAME_MULTI_TLV:
+     QBA LOAD_AUDIO_FRAME_DONE
+LOAD_AUDIO_FRAME_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
      BELA_MULTI_TLV_OR_JMP_TO LOAD_AUDIO_FRAME_NOT_MULTI_TLV
@@ -1764,8 +1773,11 @@ LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
      LBCO r1, C_MCASP_MEM, reg_mcasp_dac_current, b0
      SBCO r9, C_MCASP_MEM, reg_mcasp_dac_current, b0
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, r0.b0
+     QBA LOAD_AUDIO_FRAME_DONE
 LOAD_AUDIO_FRAME_NOT_MULTI_TLV:
 #endif /* ENABLE_BELA_MULTI_TLV32 */
+     SEND_ERROR_TO_ARM ARM_ERROR_INVALID_INIT
+     HALT
 LOAD_AUDIO_FRAME_DONE:
 
      //TODO: Change data structure in RAM to 32 bit samples 
@@ -1814,11 +1826,11 @@ CTAG_BEAST_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_CTAG_BEAST
 WRITE_AUDIO_FRAME_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
-BELA_NOT_MULTI_TLV_OR_JMP_TO WRITE_AUDIO_FRAME_MULTI_TLV
+IF_NOT_BELA_TLV32_JMP_TO WRITE_AUDIO_FRAME_NOT_BELA_TLV32
      AND r8, r17, r0
      LSR r9, r0, 16
      MCASP_WRITE_TO_DATAPORT r8, 8
-WRITE_AUDIO_FRAME_MULTI_TLV:
+WRITE_AUDIO_FRAME_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
 BELA_MULTI_TLV_OR_JMP_TO WRITE_AUDIO_FRAME_NOT_MULTI_TLV
@@ -1975,7 +1987,7 @@ SKIP_AUDIO_RX_FRAME:
 FRAME_READ_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
-     BELA_NOT_MULTI_TLV_OR_JMP_TO FRAME_READ_MULTI_TLV
+     IF_NOT_BELA_TLV32_JMP_TO FRAME_READ_NOT_BELA_TLV32
 
      MCASP_READ_FROM_DATAPORT r8, 32
      AND r0, r8, r17
@@ -1984,7 +1996,7 @@ FRAME_READ_NOT_CTAG_BEAST:
 
      SBCO r0, C_MCASP_MEM, reg_mcasp_adc_current, 4 // store result
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4 // increment memory pointer
-FRAME_READ_MULTI_TLV:
+FRAME_READ_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
      BELA_MULTI_TLV_OR_JMP_TO FRAME_READ_NOT_MULTI_TLV
@@ -2320,31 +2332,33 @@ CTAG_BEAST_16CH_ANALOG_CFG_END:
 SET_REG_FRAMES_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
-BELA_NOT_MULTI_TLV_OR_JMP_TO BELA_TLV_ANALOG_CFG_END
+IF_NOT_BELA_TLV32_JMP_TO SET_REG_FRAMES_NOT_BELA_TLV32
      // Set reg frames total based on number of analog channels
      // 8 analog ch => LSL 1
      // 4 analog ch => no shifting
      // 2 analog ch => LSR 1
-     QBEQ BELA_TLV_ANALOG_8, reg_num_channels, 0x8
-     QBEQ BELA_TLV_ANALOG_CFG_END, reg_num_channels, 0x4
-     QBEQ BELA_TLV_ANALOG_2, reg_num_channels, 0x2
+     QBEQ BELA_TLV32_ANALOG_8, reg_num_channels, 0x8
+     QBEQ BELA_TLV32_ANALOG_CFG_END, reg_num_channels, 0x4
+     QBEQ BELA_TLV32_ANALOG_2, reg_num_channels, 0x2
 
-BELA_TLV_ANALOG_8: // Eight channels
+BELA_TLV32_ANALOG_8: // Eight channels
      LSL r14, reg_frame_mcasp_total, 1
-     JMP BELA_TLV_ANALOG_CFG_END
-BELA_TLV_ANALOG_2: // Two channels
+     JMP BELA_TLV32_ANALOG_CFG_END
+BELA_TLV32_ANALOG_2: // Two channels
 	 LSR r14, reg_frame_mcasp_total, 1
-BELA_TLV_ANALOG_CFG_END:
+BELA_TLV32_ANALOG_CFG_END:
+     QBA SET_REG_FRAMES_DONE
+SET_REG_FRAMES_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
-BELA_MULTI_TLV_OR_JMP_TO BELA_MULTI_TLV_ANALOG_CFG_END
+BELA_MULTI_TLV_OR_JMP_TO SET_REG_FRAMES_NOT_BELA_MULTI_TLV
      // Set reg frames total based on number of analog channels
      // 8 analog ch => LSL 1
      // 4 analog ch => no shifting
      // 2 analog ch => LSR 1
      QBEQ BELA_MULTI_TLV_ANALOG_8, reg_num_channels, 0x8
      QBEQ BELA_MULTI_TLV_ANALOG_CFG_END, reg_num_channels, 0x4
-     QBEQ BELA_MULTI_TLV_ANALOG_8, reg_num_channels, 0x2
+     QBEQ BELA_MULTI_TLV_ANALOG_2, reg_num_channels, 0x2
 
 BELA_MULTI_TLV_ANALOG_8: // Eight channels
      LSL r14, reg_frame_spi_total, 1
@@ -2353,6 +2367,8 @@ BELA_MULTI_TLV_ANALOG_2: // Two channels
      LSR r14, reg_frame_spi_total, 1
 
 BELA_MULTI_TLV_ANALOG_CFG_END:
+     QBA SET_REG_FRAMES_DONE
+SET_REG_FRAMES_NOT_BELA_MULTI_TLV:
 #endif /* ENABLE_BELA_MULTI_TLV32 */
 
 SET_REG_FRAMES_DONE:
