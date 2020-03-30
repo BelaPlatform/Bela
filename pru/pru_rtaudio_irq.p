@@ -1078,39 +1078,6 @@ START:
      // Configure PRU to receive external events: disable all MII_RT events
      PRU_ICSS_CFG_REG_WRITE_EXT CFG_REG_MII_RT, 0x0
 
-#ifdef AAA
-     // Set polarity of system events
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SIPR0, 0xFFFFFFFF
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SIPR1, 0xFFFFFFFF
-
-     // Set type of system events
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SITR0, 0x00000000
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SITR1, 0x00000000
-
-     // Map McASP0 (Tx / Rx) and McSPI0 interrupts to channel 0
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_CMR11, 0x00000000
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_CMR13, 0x00000000
-
-     // Map interrupt channel N to host interrupt N
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_HMR0, 0x3020100
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_HMR1, 0x7060504
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_HMR2, 0x908
-
-     // Clear all system events (maybe safer to only clear system event 54 and 55)
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SECR0, 0xFFFFFFFF
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_SECR1, 0xFFFFFFFF
-
-     // Enable system events 44 (SINTERRUPTN), 54 (mcasp_r_intr_pend) and 55 (mcasp_x_intr_pend)
-     //PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_EISR, (0x00000000 | PRU_SYS_EV_MCSPI_INTR)
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_EISR, (0x00000000 | PRU_SYS_EV_MCASP_RX_INTR)
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_EISR, (0x00000000 | PRU_SYS_EV_MCASP_TX_INTR)
-
-     // Enable all host interrupts (0/1: PRU, 2-9: ARM)
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_HIER, 0x3FF
-
-     // Globally enable all interrupts
-     PRU_ICSS_INTC_REG_WRITE_EXT INTC_REG_GER, 0x1
-#endif
 PRU_INTC_INIT_DONE:
 
      // Load useful registers for addressing SPI
@@ -1175,18 +1142,6 @@ CTAG_BEAST_CHECK_DONE:
      LBBO r2, reg_comm_addr, COMM_USE_DIGITAL, 4
      QBEQ DIGITAL_INIT_DONE, r2, 0 // if we use digital
      SET reg_flags, reg_flags, FLAG_BIT_USE_DIGITAL 
-/* This block of code is not really needed, as the memory is initialized by ARM before the PRU is started.
-Will leave it here for future reference
-DIGITAL_INIT: //set the digital buffer to 0x0000ffff (all inputs), to prevent unwanted high outputs
-              //the loop is unrolled by a factor of four just to take advantage of the speed of SBBO on larger byte bursts, but there is no real need for it
-     MOV r2, 0x0000ffff //value to store. 0x0000ffff means all inputs
-     MOV r3, MEM_DIGITAL_BASE //start of the digital buffer
-     MOV r4, MEM_DIGITAL_BASE+2*MEM_DIGITAL_BUFFER1_OFFSET //end of the digital buffer
-DIGITAL_INIT_BUFFER_LOOP:
-     SBBO r2, r3, 0, 4 
-     ADD r3, r3, 4 //increment pointer
-     QBGT DIGITAL_INIT_BUFFER_LOOP, r3, r4 //loop until we reach the end of the buffer
-*/
 
 DIGITAL_INIT_DONE:
      // Check if we should use an external multiplexer capelet
@@ -1505,72 +1460,6 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     SET reg_flags, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
     MOV r2, 0
     SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
-/* This block of code is not really needed, as the memory is initialized by ARM before the PRU is started.
-Will leave it here for future reference
-//Initialise all SPI and audio buffers (DAC0, DAC1, ADC0, ADC1) to zero.
-//This is useful for analog outs so they do not have spikes during the first buffer.
-//This is not very useful for audio, as you still hear the initial "tumpf" when the converter starts 
-//and each sample in the DAC buffer is reset to 0 after it is written to the DAC.
-
-    QBBC SPI_INIT_BUFFER_DONE, reg_flags, FLAG_BIT_USE_SPI
-//Initialize SPI buffers
-//compute the memory offset of the end of the audio buffer and store it in r4
-    SUB r4, reg_dac_buf1, reg_dac_buf0 // length of the buffer, assumes reg_dac_buf1>ref_dac_buf0
-    LSL r4, r4, 2 //length of four buffers (DAC0, DAC1, ADC0, ADC1)
-    ADD r4, reg_dac_buf0, r4 //total offset
-    MOV r2, 0// value to store
-    MOV r3, 0 // offset counter
-SPI_INIT_BUFFER_LOOP:
-    SBCO r2, C_ADC_DAC_MEM, r3, 4
-    ADD r3, r3, 4
-    QBGT SPI_INIT_BUFFER_LOOP, r3, r4
-SPI_INIT_BUFFER_DONE:
-
-//Initialize audio buffers
-//compute the memory offset of the end of the audio buffer and store it in r4
-    SUB r4, reg_mcasp_buf1, reg_mcasp_buf0 // length of the buffer, assumes reg_mcasp_buf1>ref_mcasp_buf0
-    LSL r4, r4, 2 //length of four buffers (DAC0, DAC1, ADC0, ADC1)
-    ADD r4, reg_mcasp_buf0, r4 //total offset
-    MOV r2, 0 // value to store
-    MOV r3, 0 // offset counter
-    MCASP_INIT_BUFFER_LOOP:
-    SBCO r2, C_MCASP_MEM, r3, 4
-    ADD r3, r3, 4
-    QBGT MCASP_INIT_BUFFER_LOOP, r3, r4
-*/
-
-/*
-// Here we are out of sync by one TDM slot since the 0 word transmitted above will have occupied
-// the first output slot. Send one more word before jumping into the loop.
-#ifdef CTAG_FACE_8CH // commented
-#error NOT IMPLEMENTED
-// the 8 channel version is out of sync by 7 TDM slots.
-// Using reg_dac_current as a temp register
-MOV reg_dac_current, 7
-#endif
-MCASP_DAC_WAIT_BEFORE_LOOP: 
-     LBBO r2, reg_mcasp_addr, MCASP_XSTAT, 4
-     QBBC MCASP_DAC_WAIT_BEFORE_LOOP, r2, MCASP_XSTAT_XDATA_BIT
-
-     MCASP_WRITE_TO_DATAPORT 0x00
-
-// Likewise, read and discard the first sample we get back from the ADC. This keeps the DAC and ADC
-// in sync in terms of which TDM slot we are reading (empirically found that we should throw this away
-// rather than keep it and invert the phase)
-
-MCASP_ADC_WAIT_BEFORE_LOOP:
-     LBBO r2, reg_mcasp_addr, MCASP_RSTAT, 4
-     QBBC MCASP_ADC_WAIT_BEFORE_LOOP, r2, MCASP_RSTAT_RDATA_BIT
-
-     MCASP_READ_FROM_DATAPORT r2
-
-#ifdef CTAG_FACE_8CH // commented
-#error NOT IMPLEMENTED
-     SUB reg_dac_current, reg_dac_current, 1
-     QBNE MCASP_DAC_WAIT_BEFORE_LOOP, reg_dac_current, 0
-#endif
-*/
-
 
 WRITE_ONE_BUFFER:
 
@@ -1769,7 +1658,7 @@ LOAD_AUDIO_FRAME_NOT_BELA_TLV32:
      QBGT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, 16
      LDI r0, 16
 LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
-     LSL r0, r0, 1										// 16 bits per channel
+     LSL r0, r0, 1 // 16 bits per channel
      LBCO r1, C_MCASP_MEM, reg_mcasp_dac_current, b0
      SBCO r9, C_MCASP_MEM, reg_mcasp_dac_current, b0
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, r0.b0
