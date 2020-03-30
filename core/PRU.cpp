@@ -207,13 +207,6 @@ private:
 #define PRU_ERROR_OCCURRED     17
 #define PRU_ACTIVE_TDM_SLOTS   18
 
-// error codes sent from the PRU
-#define ARM_ERROR_TIMEOUT 1
-#define ARM_ERROR_XUNDRUN 2
-#define ARM_ERROR_XSYNCERR 3
-#define ARM_ERROR_XCKFAIL 4
-#define ARM_ERROR_XDMAERR 5
-
 static unsigned int* gDigitalPins = NULL;
 
 #define USERLED3_GPIO_BASE (Gpio::getBankAddress(1))// GPIO1(24) is user LED 3
@@ -853,6 +846,10 @@ int PRU::testPruError()
 				verbose && rt_fprintf(stderr, "PRU event loop timed out\n");
 				ret = 1;
 			break;
+			case ARM_ERROR_INVALID_INIT:
+				fprintf(stderr, "Invalid PRU configuration settings\n");
+				ret = 2;
+			break;
 			default:
 				verbose && rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
 				ret = 1;
@@ -916,6 +913,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	int underrunLedCount = -1;
 	while(!Bela_stopRequested()) {
 
+		int error = 0;
 #if defined BELA_USE_POLL || defined BELA_USE_BUSYWAIT
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
@@ -924,7 +922,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #ifdef BELA_USE_POLL
 			task_sleep_ns(sleepTime);
 #endif /* BELA_USE_POLL */
-			if(testPruError())
+			if(error = testPruError())
 			{
 				break;
 			}
@@ -937,7 +935,11 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
 		int ret = __wrap_read(rtdm_fd_pru_to_arm, NULL, 0);
-		testPruError();
+		error = testPruError();
+		if(2 == error) {
+                        gShouldStop = true;
+                        break;
+                }
 		if(ret < 0)
 		{
 			static int interruptTimeoutCount = 0;
