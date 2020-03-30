@@ -1730,6 +1730,7 @@ MCASP_TX_ERROR_HANDLE_END:
      LDI r13, 0
      LDI r14, 0
      LDI r15, 0
+     LDI r16, 0
 
      // Load audio frame from memory, store zeros in their place, and increment pointer to next frame
 #ifdef ENABLE_CTAG_FACE
