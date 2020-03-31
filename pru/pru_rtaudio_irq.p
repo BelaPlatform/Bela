@@ -20,7 +20,6 @@
 // See https://github.com/BelaPlatform/Bela/issues/480
 
 #define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
-//#define MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS // TODO: make it runtime (should not be there for BELA_TLV)
 
 #undef CODEC_WCLK_MASTER		// Match this with I2c_MultiTLVCodec.cpp
 
@@ -410,10 +409,20 @@
 #define FLAG_BIT_CTAG_BEAST     13
 #define FLAG_BIT_BELA_MULTI_TLV	14
 
-#define FLAG_BIT_AUDIO_CHANNELS0 16
-#define FLAG_BIT_AUDIO_CHANNELS1 17
-#define FLAG_BIT_AUDIO_CHANNELS2 18
-#define FLAG_BIT_AUDIO_CHANNELS3 19
+// reg_flags should hold the number of audio in/out channels, up to 32
+#define FLAG_BIT_AUDIO_IN_CHANNELS0 16
+#define FLAG_BIT_AUDIO_IN_CHANNELS1 17
+#define FLAG_BIT_AUDIO_IN_CHANNELS2 18
+#define FLAG_BIT_AUDIO_IN_CHANNELS3 19
+#define FLAG_BIT_AUDIO_IN_CHANNELS4 20
+#define FLAG_BIT_AUDIO_IN_CHANNELS5 21
+
+#define FLAG_BIT_AUDIO_OUT_CHANNELS0 22
+#define FLAG_BIT_AUDIO_OUT_CHANNELS1 23
+#define FLAG_BIT_AUDIO_OUT_CHANNELS2 24
+#define FLAG_BIT_AUDIO_OUT_CHANNELS3 25
+#define FLAG_BIT_AUDIO_OUT_CHANNELS4 26
+#define FLAG_BIT_AUDIO_OUT_CHANNELS5 27
         
 // Registers used throughout
 
@@ -570,14 +579,82 @@ SETINPUT: //if it is an input, set the relevant bit
 DONE:
 .endm
 
+.macro READ_ACTIVE_TDM_SLOTS_INTO_FLAGS
+	LBBO r27, reg_comm_addr, COMM_ACTIVE_TDM_SLOTS, 4
+	// the high word contains the number of outputs
+	LSR r28, r27, 16
+	LSL r28, r28, FLAG_BIT_AUDIO_OUT_CHANNELS0
+	OR reg_flags, reg_flags, r28
+	// the low word contains the number of inputs
+	MOV r28, 0xFFFF
+	AND r28, r27, r28
+	LSL r28, r28, FLAG_BIT_AUDIO_IN_CHANNELS0
+	OR reg_flags, reg_flags, r28
+.endm
+
 // Read the number of audio channels from the flags register
-// 4 bits indicate pairs of channels (i.e. 2 to 32)
-.macro READ_MULTI_TLV_CHANNELS
+.macro GET_NUM_AUDIO_IN_CHANNELS
 .mparam DEST
-	LSR DEST, reg_flags, FLAG_BIT_AUDIO_CHANNELS0
-	AND DEST, DEST, 0x0F
-	ADD DEST, DEST, 1
-	LSL DEST, DEST, 1
+	LSR DEST, reg_flags, FLAG_BIT_AUDIO_IN_CHANNELS0
+	AND DEST, DEST, (64-1)
+.endm
+
+.macro GET_NUM_AUDIO_OUT_CHANNELS
+.mparam DEST
+	LSR DEST, reg_flags, FLAG_BIT_AUDIO_OUT_CHANNELS0
+	AND DEST, DEST, (64-1)
+.endm
+
+.macro COMPUTE_TDM_MASK
+.mparam reg_io
+	QBEQ DONE, reg_io, 0
+	MOV r27, 0x1 // mask = (1 << numchannels) - 1
+	LSL r27, r27, reg_io
+	SUB reg_io, r27, 1
+DONE:
+.endm
+
+// reg_io should contain number of channels when the macro is called, and will
+// contain the output value by the end
+.macro COMPUTE_SIZE_OF_BUFFER
+.mparam reg_io, reg_total_frames
+	// if there are 0 channels, return immediately (reg_io will already contain 0!)
+	QBEQ DONE, reg_io, 0
+	LSL r27, reg_total_frames, 1 // r27 = 2[bytes]*n[frames]
+	MOV r28, reg_io
+	// from now on reg_io contains the output value
+	MOV reg_io, 0
+SIZE_LOOP: // compute r27 * N[ch]
+	ADD reg_io, reg_io, r27
+	SUB r28, r28, 1
+	QBNE SIZE_LOOP, r28, 0
+	// now reg_out = N[ch]*2[bytes]*n[frames]
+DONE:
+.endm
+
+.macro COMPUTE_SIZE_OF_MCASP_DAC_BUFFER
+.mparam reg_out
+	// The memory needed for one McASP DAC buffer is N[ch]*2[bytes]*n[frames]
+	GET_NUM_AUDIO_OUT_CHANNELS reg_out
+	COMPUTE_SIZE_OF_BUFFER reg_out, reg_frame_mcasp_total
+.endm
+
+// this can only be used after reg_mcasp_buf0 and reg_mcasp_buf1 have been initialized
+.macro COMPUTE_SIZE_OF_MCASP_DAC_BUFFER_FAST
+.mparam reg_out
+        QBGT GREATER, reg_mcasp_buf1, reg_mcasp_buf0
+	SUB reg_out, reg_mcasp_buf1, reg_mcasp_buf0
+        QBA DONE
+GREATER:
+	SUB reg_out, reg_mcasp_buf0, reg_mcasp_buf1
+DONE:
+.endm
+
+.macro COMPUTE_SIZE_OF_MCASP_ADC_BUFFER
+.mparam reg_out
+	// The memory needed for one McASP DAC buffer is N[ch]*2[bytes]*n[frames]
+	GET_NUM_AUDIO_IN_CHANNELS reg_out
+	COMPUTE_SIZE_OF_BUFFER reg_out, reg_frame_mcasp_total
 .endm
 
 QBA START_INTERMEDIATE // when first starting, go to START, skipping this section.
@@ -1293,26 +1370,18 @@ MCASP_SET_RX_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
     IF_NOT_BELA_MULTI_TLV_JMP_TO MCASP_SET_RX_NOT_MULTI_TLV
-		
-	// reg_flags should hold the number of active channels, up to
-	// 32, in pairs (i.e. 0 --> 2, 1 --> 4, ..., 15 --> 32)
-	LBBO r2, reg_comm_addr, COMM_ACTIVE_TDM_SLOTS, 4 	// How many audio channels?
-	
-	QBNE MCASP_SET_RX_MULTI_TLV_NONZERO, r2, 0
-	LDI r2, 2											// Sanity check: empty value defaults to stereo
-MCASP_SET_RX_MULTI_TLV_NONZERO:
-	LSR r3, r2, 1
-	SUB r3, r3, 1										// r3 = (r3 / 2) - 1
-	AND r3, r3, 0x0F									// mask out high bits (sanity check)
-	LSL r3, r3, FLAG_BIT_AUDIO_CHANNELS0				// shift to the right bit offset
-	OR reg_flags, reg_flags, r3							// this works because we know these bits are 0 in reg_flags before now
 
-	// Calculate which TDM slots to activate
-	MOV r3, 0x1											// mask = (1 << numchannels) - 1
-	LSL r3, r3, r2
-	SUB r3, r3, 1
-	OR r3, r3, 0x03										// Always activate the first two slots (failsafe)
+    READ_ACTIVE_TDM_SLOTS_INTO_FLAGS
+    GET_NUM_AUDIO_IN_CHANNELS r2
+    GET_NUM_AUDIO_OUT_CHANNELS r3
+    QBNE CHANNEL_COUNT_NOT_ZERO, r2, 0
+    QBNE CHANNEL_COUNT_NOT_ZERO, r3, 0
+    SEND_ERROR_TO_ARM ARM_ERROR_INVALID_INIT
+    HALT
+CHANNEL_COUNT_NOT_ZERO:
 
+    GET_NUM_AUDIO_IN_CHANNELS r3
+    COMPUTE_TDM_MASK r3
     MCASP_SET_RX BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE, BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE, BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE, BELA_MULTI_TLV_MCASP_AHCLKRCTL_VALUE, r3, BELA_MULTI_TLV_MCASP_RINTCTL_VALUE, MCASP_DATA_MASK
     QBA MCASP_SET_RX_DONE
 MCASP_SET_RX_NOT_MULTI_TLV:
@@ -1341,13 +1410,8 @@ MCASP_SET_TX_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
     IF_NOT_BELA_MULTI_TLV_JMP_TO MCASP_SET_TX_NOT_MULTI_TLV
-	
-	// Calculate which TDM slots to activate
-	LBBO r2, reg_comm_addr, COMM_ACTIVE_TDM_SLOTS, 4 	// How many audio channels?
-	MOV r3, 0x1											// mask = (1 << numchannels) - 1
-	LSL r3, r3, r2
-	SUB r3, r3, 1
-	OR r3, r3, 0x03										// Always activate the first two slots (failsafe)
+    GET_NUM_AUDIO_OUT_CHANNELS r3
+    COMPUTE_TDM_MASK r3
 
     MCASP_SET_TX BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE, BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE, BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE, BELA_MULTI_TLV_MCASP_AHCLKXCTL_VALUE, r3, BELA_MULTI_TLV_MCASP_XINTCTL_VALUE
     QBA MCASP_SET_TX_DONE
@@ -1430,7 +1494,7 @@ WRITE_FRAME_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
 	IF_NOT_BELA_MULTI_TLV_JMP_TO WRITE_FRAME_NOT_MULTI_TLV
-	READ_MULTI_TLV_CHANNELS r2 // How many channels?
+	GET_NUM_AUDIO_OUT_CHANNELS r2 // How many channels?
 WRITE_FRAME_MULTI_TLV_LOOP:
 	MCASP_WRITE_TO_DATAPORT 0x00, 4 // Write 4 bytes for each channel
 	SUB r2, r2, 1
@@ -1451,9 +1515,9 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     ADD reg_dac_buf1, reg_dac_buf1, reg_dac_buf0
     LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
     LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
-    MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT            // McASP DAC buffer 0 start pointer
-    LSL reg_mcasp_buf1, reg_frame_mcasp_total, r2  // McASP DAC buffer 1 start pointer = 2[ch]*2[bytes]*(N/4)[samples/spi]*bufsize
-    ADD reg_mcasp_buf1, reg_mcasp_buf1, reg_mcasp_buf0
+    MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT // McASP DAC buffer 0 start pointer
+    COMPUTE_SIZE_OF_MCASP_DAC_BUFFER r2
+    ADD reg_mcasp_buf1, r2, reg_mcasp_buf0
     CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
     SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
     SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
@@ -1479,34 +1543,22 @@ BELA_CHANNELS:
      ADD reg_adc_current, reg_adc_current, reg_dac_current // ADC: starts N * 2 * 2 * bufsize beyond DAC
 CHANNELS_DONE:
      MOV reg_mcasp_dac_current, reg_mcasp_buf0 // McASP: set current DAC pointer
-     //  the CTAGs only use half as many input channels as there are outputs, so divide by 2 (LSR by 1) when computing offsets
-     // if I/O buffers are the same size, then  McASP ADC: starts (N/2)*2bytes*bufsize beyond DAC
-     // otherwise:
-     // McASP ADC: starts
-     // 2bytes*nDacChannels*nDacFrames*2dacBuffers
-     // beyond DAC0 buffer
-     // or McASP ADC: starts
-     // 2bytes*nDacChannels*nDacFrames*1dacBuffer +
-     //    + 2bytes*nAdcChannels+nAdcFrames*1adcBuffer
-     // beyond DAC1 buffer
-     // TODO: it seems that reg_frame_mcasp_total is not very meaningful(cf PRU.cpp)
-     LSL reg_mcasp_adc_current, reg_frame_mcasp_total, r2
-#ifdef MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS
+     // If we are on the first buffer, mcasp_adc_current starts
+     // MCASP_DAC_BUFFER_SIZE*2 after reg_mcasp_dac_current
+     // If we are on the second buffer, mcasp_adc_current starts
+     // MCASP_DAC_BUFFER_SIZE + MCASP_ADC_BUFFER_SIZE after reg_mcasp_dac_current
+     COMPUTE_SIZE_OF_MCASP_DAC_BUFFER_FAST r2
+     ADD reg_mcasp_adc_current, reg_mcasp_dac_current, r2 // add one DAC_BLK_SIZE
 QBNE MCASP_IS_ON_BUF1, reg_mcasp_buf0, REG_MCASP_BUF0_INIT
-     LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, r2 // add another DAC_BLK_SIZE
      QBA MCASP_IS_ON_BUF_DONE
 MCASP_IS_ON_BUF1:
-     // r2 = reg_mcasp_adc_current * 1.5
-     LSR r2, reg_mcasp_adc_current, 1
-     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, r2
+     COMPUTE_SIZE_OF_MCASP_ADC_BUFFER r2
+     ADD reg_mcasp_adc_current, reg_mcasp_adc_current, r2 // add one ADC_BLK_SIZE
 MCASP_IS_ON_BUF_DONE:
-#else /* MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS */
-     LSL reg_mcasp_adc_current, reg_mcasp_adc_current, 1
-#endif /* MCASP_INPUTS_ARE_HALF_AS_MANY_AS_OUTPUTS */
-     ADC reg_mcasp_adc_current, reg_mcasp_adc_current, reg_mcasp_dac_current
      MOV reg_frame_current, 0
      QBBS DIGITAL_BASE_CHECK_SET, reg_flags, FLAG_BIT_BUFFER1  //check which buffer we are using for DIGITAL
-                  // if we are here, we are using buffer0 
+     // if we are here, we are using buffer0
      MOV reg_digital_current, MEM_DIGITAL_BASE
      QBA DIGITAL_BASE_CHECK_DONE
 DIGITAL_BASE_CHECK_SET: //if we are here, we are using buffer1 
@@ -1656,7 +1708,7 @@ LOAD_AUDIO_FRAME_NOT_BELA_TLV32:
      LDI r16, 0
 
      // TLVTODO: this only works up to 16 channels based on number of registers
-     READ_MULTI_TLV_CHANNELS r0
+     GET_NUM_AUDIO_OUT_CHANNELS r0
      QBGT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, 16
      LDI r0, 16
 LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
@@ -1895,7 +1947,7 @@ FRAME_READ_NOT_BELA_TLV32:
 #ifdef ENABLE_BELA_MULTI_TLV32
      IF_NOT_BELA_MULTI_TLV_JMP_TO FRAME_READ_NOT_MULTI_TLV
 	 
-	 READ_MULTI_TLV_CHANNELS r0
+	 GET_NUM_AUDIO_IN_CHANNELS r0
 	 QBGT FRAME_READ_MULTI_TLV_LT16CHAN, r0, 16
 	 LDI r0, 16
 FRAME_READ_MULTI_TLV_LT16CHAN:
@@ -2244,21 +2296,7 @@ SET_REG_FRAMES_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_MULTI_TLV32
 IF_NOT_BELA_MULTI_TLV_JMP_TO SET_REG_FRAMES_NOT_BELA_MULTI_TLV
-     // Set reg frames total based on number of analog channels
-     // 8 analog ch => LSL 1
-     // 4 analog ch => no shifting
-     // 2 analog ch => LSR 1
-     QBEQ BELA_MULTI_TLV_ANALOG_8, reg_num_channels, 0x8
-     QBEQ BELA_MULTI_TLV_ANALOG_CFG_END, reg_num_channels, 0x4
-     QBEQ BELA_MULTI_TLV_ANALOG_2, reg_num_channels, 0x2
-
-BELA_MULTI_TLV_ANALOG_8: // Eight channels
-     LSL r14, reg_frame_spi_total, 1
-     JMP BELA_MULTI_TLV_ANALOG_CFG_END
-BELA_MULTI_TLV_ANALOG_2: // Two channels
-     LSR r14, reg_frame_spi_total, 1
-
-BELA_MULTI_TLV_ANALOG_CFG_END:
+     MOV r14, reg_frame_mcasp_total
      QBA SET_REG_FRAMES_DONE
 SET_REG_FRAMES_NOT_BELA_MULTI_TLV:
 #endif /* ENABLE_BELA_MULTI_TLV32 */
