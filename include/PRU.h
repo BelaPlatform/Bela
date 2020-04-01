@@ -1,12 +1,4 @@
-/*
- * PRU.h
- *
- *  Created on: May 27, 2014
- *      Author: andrewm
- */
-
-#ifndef PRU_H_
-#define PRU_H_
+#pragma once
 
 #include <stdint.h>
 #include "Bela.h"
@@ -172,7 +164,7 @@ public:
 				   int stopButtonPin, bool enableLed);
 
 	// Run the code image in pru_rtaudio_bin.h
-	int start(char * const filename);
+	int start(char * const filename, const McaspConfig& mcaspConfig);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
 	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode);
@@ -187,7 +179,7 @@ public:
 	void exitPRUSS();
 
 private:
-	void initialisePruCommon();
+	void initialisePruCommon(const McaspConfig& mcaspConfig);
 	int testPruError();
 	InternalBelaContext *context;	// Overall settings
 
@@ -218,6 +210,3 @@ private:
 	Gpio underrunLed; // Flashing an LED upon underrun
 	AudioCodec *codec; // Required to hard reset audio codec from loop
 };
-
-
-#endif /* PRU_H_ */

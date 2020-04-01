@@ -12,9 +12,7 @@
  *      Author: Andrew McPherson
  */
 
-
-#ifndef I2CCODEC_H_
-#define I2CCODEC_H_
+#pragma once
 
 #include "AudioCodec.h"
 #include "I2c.h"
@@ -70,18 +68,17 @@ public:
 	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
 	~I2c_Codec();
 
+	const McaspConfig& getMcaspConfig();
 private:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;
 	int hpVolumeHalfDbs;
+	McaspConfig mcaspConfig;
 	bool generatesBclk;
 	bool generatesWclk;
 	bool running;
 	bool verbose;
 	bool hpEnabled;
 };
-
-
-#endif /* I2CCODEC_H_ */

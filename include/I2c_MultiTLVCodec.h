@@ -33,6 +33,7 @@ public:
 
 	void debugWriteRegister(int codecNum, int regNum, int value);
 	int debugReadRegister(int codecNum, int regNum);
+	const McaspConfig& getMcaspConfig();
 
 	I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool verbose = false);
 	~I2c_MultiTLVCodec();
@@ -40,6 +41,7 @@ public:
 private:
 	I2c_Codec *masterCodec;
 	std::vector<I2c_Codec*> extraCodecs;
+	McaspConfig mcaspConfig;
 
 	bool running;
 	bool verbose;
