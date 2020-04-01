@@ -558,7 +558,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	return 0;
 }
 
-void PRU::initialisePruCommon()
+void PRU::initialisePruCommon(const McaspConfig& mcaspConfig)
 {
 	uint32_t board_flags = 0;
 	switch(belaHw) {
@@ -600,7 +600,13 @@ void PRU::initialisePruCommon()
 	pru_buffer_comm[PRU_COMM_PRU_NUMBER] = pru_number;
 	pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
 	pru_buffer_comm[PRU_COMM_ACTIVE_CHANNELS] = ((uint16_t)context->audioOutChannels & 0xFFFF) << 16 | ((uint16_t)(context->audioInChannels) & 0xFFFF);
-
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_XFMT] = mcaspConfig.xfmt;
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_ACLKXCTL] = mcaspConfig.aclkxctl;
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_AFSXCTL] = mcaspConfig.afsxctl;
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_RFMT] = mcaspConfig.rfmt;
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_ACLKRCTL] = mcaspConfig.aclkrctl;
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_AFSRCTL] = mcaspConfig.afsrctl;
+	pru_buffer_comm[PRU_COMM_MCASP_CONF_PDIR] = mcaspConfig.pdir;
 	/* Set up multiplexer info */
 	if(context->multiplexerChannels == 2) {
 		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 1;
@@ -650,7 +656,7 @@ void PRU::initialisePruCommon()
 }
 
 // Run the code image in the specified file
-int PRU::start(char * const filename)
+int PRU::start(char * const filename, const McaspConfig& mcaspConfig)
 {
 	switch(belaHw)
 	{
@@ -753,7 +759,7 @@ int PRU::start(char * const filename)
 #endif /* RTDM_PRUSS_IRQ_VERSION >= 1 */
 #endif /* BELA_USE_RTDM */
 	pru_buffer_comm = pruMemory->getPruBufferComm();
-	initialisePruCommon();
+	initialisePruCommon(mcaspConfig);
 
 	unsigned int* pruCode;
 	unsigned int pruCodeSize;

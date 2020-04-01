@@ -56,12 +56,14 @@ public:
 	int setHPVolume(int halfDbSteps) {return 0;};
 	int setPga(float newGain, unsigned short int channel) {return 0;};
 	int disable() {return 0;};
+	const McaspConfig& getMcaspConfig();
 
 private:
 	int _fd_master, _fd_slave;
 	int _dacVolumethreeEighthsDbs;
 	int _writeDACVolumeRegisters(bool mute);
 	int _spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t bytes, CODEC_TYPE codec = MASTER_CODEC);
+	McaspConfig mcaspConfig;
 	bool _isBeast = false;
 	bool _verbose;
 };

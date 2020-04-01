@@ -39,6 +39,13 @@
 #define COMM_BOARD_FLAGS                64 // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruArmCommon.h)
 #define COMM_ERROR_OCCURRED             68 // Signals the ARM CPU that an error happened
 #define COMM_ACTIVE_CHANNELS            72 // How many TDM slots contain useful data
+#define COMM_MCASP_CONF_XFMT            76
+#define COMM_MCASP_CONF_ACLKXCTL        80
+#define COMM_MCASP_CONF_AFSXCTL         84
+#define COMM_MCASP_CONF_RFMT            88
+#define COMM_MCASP_CONF_ACLKRCTL        92
+#define COMM_MCASP_CONF_AFSRCTL         96
+#define COMM_MCASP_CONF_PDIR           100
 
 // ARM accesses these memory locations as uint32_t
 // to avoid duplication and mistakes, we use macros to generate the values for ARM
@@ -67,6 +74,13 @@ ENUM(COMM_BUFFER_SPI_FRAMES)
 ENUM(COMM_BOARD_FLAGS)
 ENUM(COMM_ERROR_OCCURRED)
 ENUM(COMM_ACTIVE_CHANNELS)
+ENUM(COMM_MCASP_CONF_XFMT)
+ENUM(COMM_MCASP_CONF_ACLKXCTL)
+ENUM(COMM_MCASP_CONF_AFSXCTL)
+ENUM(COMM_MCASP_CONF_RFMT)
+ENUM(COMM_MCASP_CONF_ACLKRCTL)
+ENUM(COMM_MCASP_CONF_AFSRCTL)
+ENUM(COMM_MCASP_CONF_PDIR)
 } PruCommonFlags;
 #endif // __TIME__
 

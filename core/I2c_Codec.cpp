@@ -722,3 +722,21 @@ I2c_Codec::~I2c_Codec()
 		stopAudio();
 }
 
+const McaspConfig& I2c_Codec::getMcaspConfig() {
+#define BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
+#define BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
+#define BELA_TLV_MCASP_ACLKRCTL_VALUE 0x00 // External clk, polarity (falling edge)
+#define BELA_TLV_MCASP_ACLKXCTL_VALUE 0x00 // External clk, polarity (falling edge)
+#define BELA_TLV_MCASP_AFSXCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
+#define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
+#define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
+
+	mcaspConfig.xfmt = BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE;
+	mcaspConfig.aclkxctl = BELA_TLV_MCASP_ACLKXCTL_VALUE;
+	mcaspConfig.afsxctl = BELA_TLV_MCASP_AFSXCTL_VALUE;
+	mcaspConfig.rfmt = BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE;
+	mcaspConfig.aclkrctl = BELA_TLV_MCASP_ACLKRCTL_VALUE;
+	mcaspConfig.afsrctl = BELA_TLV_MCASP_AFSRCTL_VALUE;
+	mcaspConfig.pdir = MCASP_OUTPUT_PINS;
+	return mcaspConfig;
+}
