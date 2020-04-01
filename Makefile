@@ -87,8 +87,9 @@ ifeq ($(RUN_WITH_PRU_BIN),true)
 ifndef PROJECT
 $(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
 endif # ifndef PROJECT
-COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
+COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio_irq.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
+run: pru_rtaudio_irq.bin
 else
 build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
 endif #ifeq($(RUN_WITH_PRU_BIN),true)
@@ -463,7 +464,7 @@ endif
 %.bin: pru/%.p
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -b "$<" > /dev/null
+	$(AT) pasm -V2 -L -c -b "$<" > /dev/null
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '
