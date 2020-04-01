@@ -740,3 +740,15 @@ const McaspConfig& I2c_Codec::getMcaspConfig() {
 	mcaspConfig.pdir = MCASP_OUTPUT_PINS;
 	return mcaspConfig;
 }
+
+unsigned int I2c_Codec::getNumIns(){
+	return 2;
+}
+
+unsigned int I2c_Codec::getNumOuts(){
+	return 2;
+}
+
+float I2c_Codec::getSampleRate() {
+	return 44100;
+}

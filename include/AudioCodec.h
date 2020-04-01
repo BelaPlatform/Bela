@@ -30,6 +30,9 @@ public:
 	virtual int initCodec() = 0;
 	virtual int startAudio(int parameter) = 0;
 	virtual int stopAudio() = 0;
+	virtual unsigned int getNumIns() = 0;
+	virtual unsigned int getNumOuts() = 0;
+	virtual float getSampleRate() = 0;
 	virtual int setPga(float newGain, unsigned short int channel) = 0;
 	virtual int setDACVolume(int halfDbSteps) = 0;
 	virtual int setADCVolume(int halfDbSteps) = 0;

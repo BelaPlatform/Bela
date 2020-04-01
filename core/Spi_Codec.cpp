@@ -356,3 +356,21 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 const McaspConfig& Spi_Codec::getMcaspConfig() {
         return mcaspConfig;
 }
+
+unsigned int Spi_Codec::getNumIns(){
+	if(_isBeast)
+		return 8;
+	else
+		return 4;
+}
+
+unsigned int Spi_Codec::getNumOuts(){
+	if(_isBeast)
+		return 16;
+	else
+		return 8;
+}
+
+float Spi_Codec::getSampleRate() {
+	return 48000;
+}

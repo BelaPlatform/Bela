@@ -47,6 +47,9 @@ public:
 	int initCodec();
 	int startAudio(int dummy_parameter = 0);
 	int stopAudio();
+	unsigned int getNumIns();
+	unsigned int getNumOuts();
+	float getSampleRate();
 	int setDACVolume(int halfDbSteps);
 	int dumpRegisters();
 	int reset(); // Hard reset of codec(s)
