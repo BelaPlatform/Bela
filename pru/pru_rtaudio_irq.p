@@ -1528,6 +1528,44 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12) // Set XFRST
     MOV r2, 0
     SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
 
+#ifdef ATTEMPT_TO_RESYNC_BELA_ADC
+// for BELA_TLV32, the left and right channels are swapped, so that each frame contains:
+//R[n-1], L[n].
+//something similar was happening in pru_rtaudio.p and the trick was to wait for
+//one sample to come in and then discard it
+//we try two approaches here, one based on the same solution as there, and one based on a hack, but none of them seems to work.
+
+//perform a write to avoid a TX underrun. This is just for testing, remove it
+//later, as it would be adding latency and possibly causing offset of the
+//outputs
+     MCASP_WRITE_TO_DATAPORT r8, 32
+     // temporarily enable writes through the CFG port (if not already enabled)
+     // (note: datasheet does not say that changing this after the McASP has
+     // started would work, but it seems that it does)
+     MOV r2, BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE // TODO: get this value by reading the register
+     MOV r3, r2 // back up the value
+     SET r2.t3 // set it to read from CFG port
+     MCASP_REG_WRITE MCASP_RFMT, r2 // Set data format
+#ifdef ATTEMPT_TO_RESYNC_BELA_ADC_OLD_STYLE
+MCASP_ADC_WAIT_BEFORE_LOOP:
+     LBBO r2, reg_mcasp_addr, MCASP_RSTAT, 4
+     QBBC MCASP_ADC_WAIT_BEFORE_LOOP, r2, MCASP_RSTAT_RDATA_BIT
+     MCASP_REG_READ_EXT MCASP_RBUF, r2 // actually read and discard the value
+#endif // ATTEMPT_TO_RESYNC_BELA_ADC_OLD_STYLE
+#ifdef ATTEMPT_TO_RESYNC_BELA_ADC_HACK
+/// wait for an actual non-zero value. Hopefully this would mean that one valid
+// sample has been received from the codec
+     MOV r4, 0
+LOOPTHIS:
+     MCASP_REG_READ_EXT MCASP_RBUF, r2 // actually read and discard the value
+     QBNE DONELOOPTHIS, r2, 0
+     ADD r4, r4, 1
+     QBA LOOPTHIS
+DONELOOPTHIS:
+#endif // ATTEMPT_TO_RESYNC_BELA_ADC_HACK
+     MCASP_REG_WRITE MCASP_RFMT, r3 // Restore original value
+#endif // ATTEMPT_TO_RESYNC_BELA_ADC
+
 WRITE_ONE_BUFFER:
 
      // Write a single buffer of DAC samples and read a buffer of ADC samples
@@ -1935,7 +1973,7 @@ FRAME_READ_NOT_CTAG_BEAST:
 #ifdef ENABLE_BELA_TLV32
      IF_NOT_BELA_TLV32_JMP_TO FRAME_READ_NOT_BELA_TLV32
 
-     MCASP_READ_FROM_DATAPORT r8, 32
+     MCASP_READ_FROM_DATAPORT r8, 8
      AND r0, r8, r17
      LSL r16, r9, 16
      OR r0, r0, r16
@@ -2278,20 +2316,7 @@ SET_REG_FRAMES_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
 #ifdef ENABLE_BELA_TLV32
 IF_NOT_BELA_TLV32_JMP_TO SET_REG_FRAMES_NOT_BELA_TLV32
-     // Set reg frames total based on number of analog channels
-     // 8 analog ch => LSL 1
-     // 4 analog ch => no shifting
-     // 2 analog ch => LSR 1
-     QBEQ BELA_TLV32_ANALOG_8, reg_num_channels, 0x8
-     QBEQ BELA_TLV32_ANALOG_CFG_END, reg_num_channels, 0x4
-     QBEQ BELA_TLV32_ANALOG_2, reg_num_channels, 0x2
-
-BELA_TLV32_ANALOG_8: // Eight channels
-     LSL r14, reg_frame_mcasp_total, 1
-     JMP BELA_TLV32_ANALOG_CFG_END
-BELA_TLV32_ANALOG_2: // Two channels
-	 LSR r14, reg_frame_mcasp_total, 1
-BELA_TLV32_ANALOG_CFG_END:
+     MOV r14, reg_frame_mcasp_total
      QBA SET_REG_FRAMES_DONE
 SET_REG_FRAMES_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
