@@ -699,6 +699,9 @@ int PRU::start(char * const filename)
 			return 1;
 	}
 
+        if(gRTAudioVerbose)
+                printf("%ssing McASP->PRU irq\n", pruUsesMcaspIrq ? "U" : "Not u");
+
 #if RTDM_PRUSS_IRQ_VERSION < 1
         if(pruUsesMcaspIrq)
         {
