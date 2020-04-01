@@ -21,6 +21,9 @@ public:
 	int initCodec();
 	int startAudio(int dual_rate);
 	int stopAudio();
+	unsigned int getNumIns();
+	unsigned int getNumOuts();
+	float getSampleRate();
 
 	int setPga(float newGain, unsigned short int channel);
 	int setDACVolume(int halfDbSteps);

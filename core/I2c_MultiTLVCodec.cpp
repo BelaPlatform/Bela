@@ -291,3 +291,15 @@ const McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 	mcaspConfig.pdir = MCASP_OUTPUT_PINS;
 	return mcaspConfig;
 }
+
+unsigned int I2c_MultiTLVCodec::getNumIns(){
+	return 2 * numDetectedCodecs();
+}
+
+unsigned int I2c_MultiTLVCodec::getNumOuts(){
+	return 2 * numDetectedCodecs();
+}
+
+float I2c_MultiTLVCodec::getSampleRate() {
+	return 44100;
+}

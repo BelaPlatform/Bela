@@ -147,52 +147,9 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 		}
 	}
 	// set audio I/O
-	switch(hw)
-	{
-		case BelaHw_Bela:
-			//nobreak
-		case BelaHw_BelaMini:
-			//nobreak
-		case BelaHw_Salt:
-			cfg->audioInChannels = 2;
-			cfg->audioOutChannels = 2;
-			cfg->audioSampleRate = 44100;
-			break;
-		case BelaHw_BelaMiniMultiAudio:		
-			if(gI2cMultiTLVCodec) {
-				if(gI2cMultiTLVCodec->numDetectedCodecs() > 0) {
-					cfg->audioInChannels = 2*gI2cMultiTLVCodec->numDetectedCodecs();
-					cfg->audioOutChannels = 2*gI2cMultiTLVCodec->numDetectedCodecs();
-				}
-				else {
-					cfg->audioInChannels = 2;
-					cfg->audioOutChannels = 2;						
-				}
-			}
-			else {
-				cfg->audioInChannels = 2;
-				cfg->audioOutChannels = 2;				
-			}
-			cfg->audioSampleRate = 44100;
-			break;
-		case BelaHw_CtagFace:
-			//nobreak
-		case BelaHw_CtagFaceBela:
-			cfg->audioInChannels = 4;
-			cfg->audioOutChannels = 8;
-			cfg->audioSampleRate = 48000;
-			break;
-		case BelaHw_CtagBeast:
-			//nobreak
-		case BelaHw_CtagBeastBela:
-			cfg->audioInChannels = 8;
-			cfg->audioOutChannels = 16;
-			cfg->audioSampleRate = 48000;
-			break;
-		case BelaHw_NoHw:
-		default:
-			return -1; // unrecognized hw
-	}
+	cfg->audioInChannels = cfg->activeCodec->getNumIns();
+	cfg->audioOutChannels = cfg->activeCodec->getNumOuts();
+	cfg->audioSampleRate = cfg->activeCodec->getSampleRate();
 	// set analogs:
 	if(Bela_hwContains(hw, BelaCape)) {
 		cfg->analogInChannels = 8;

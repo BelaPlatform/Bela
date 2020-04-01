@@ -37,6 +37,9 @@ public:
 	int startAudio(int dual_rate);
 	int startAudio(bool dual_rate, bool generates_bclk, bool generates_wclk, bool tdm_mode, unsigned int slotSize, unsigned int startingSlot, unsigned int bitDelay);
 	int stopAudio();
+	unsigned int getNumIns();
+	unsigned int getNumOuts();
+	float getSampleRate();
 
 	int setPllJ(short unsigned int j);
 	int setPllD(unsigned int d);
