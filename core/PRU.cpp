@@ -90,7 +90,7 @@ using namespace BelaHwComponent;
 #define PRU_MEM_DAC_LENGTH 0x2000  // Length of ADC+DAC memory, in bytes
 #define PRU_MEM_COMM_OFFSET 0x0    // Offset within PRU-SHARED RAM
 #define PRU_MEM_DIGITAL_OFFSET 0x1000 //Offset within PRU-SHARED RAM
-#define MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words.
+#define PRU_MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words.
                                          // 256 is the maximum number of frames allowed
 extern int gRTAudioVerbose;
 
@@ -109,7 +109,7 @@ public:
 		pruAudioInStart[0] = pruAudioOutStart[1] + audioOut.size() * sizeof(audioOut[0]);
 		pruAudioInStart[1] = pruAudioInStart[0] + audioIn.size() * sizeof(audioIn[0]);
 		pruDigitalStart[0] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET;
-		pruDigitalStart[1] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET + MEM_DIGITAL_BUFFER1_OFFSET;
+		pruDigitalStart[1] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET + PRU_MEM_DIGITAL_BUFFER1_OFFSET;
 		if(context->analogFrames > 0)
 		{
 			prussdrv_map_prumem (pruNumber == 0 ? PRUSS0_PRU0_DATARAM : PRUSS0_PRU1_DATARAM, (void**)&pruDataRam);
@@ -185,27 +185,6 @@ private:
 	std::vector<uint32_t> digital;
 	InternalBelaContext* context;
 };
-
-// Offsets within CPU <-> PRU communication memory (4 byte slots)
-#define PRU_SHOULD_STOP         0
-#define PRU_CURRENT_BUFFER      1
-#define PRU_BUFFER_MCASP_FRAMES 2
-#define PRU_SHOULD_SYNC         3
-#define PRU_SYNC_ADDRESS        4
-#define PRU_SYNC_PIN_MASK       5
-#define PRU_LED_ADDRESS         6
-#define PRU_LED_PIN_MASK        7
-#define PRU_FRAME_COUNT         8
-#define PRU_USE_SPI             9
-#define PRU_SPI_NUM_CHANNELS   10
-#define PRU_USE_DIGITAL        11
-#define PRU_PRU_NUMBER         12
-#define PRU_MUX_CONFIG         13
-#define PRU_MUX_END_CHANNEL    14
-#define PRU_BUFFER_SPI_FRAMES  15
-#define PRU_BOARD_FLAGS        16
-#define PRU_ERROR_OCCURRED     17
-#define PRU_ACTIVE_TDM_SLOTS   18
 
 static unsigned int* gDigitalPins = NULL;
 
@@ -603,70 +582,70 @@ void PRU::initialisePruCommon()
 	default:
 		break;
 	}
-	pru_buffer_comm[PRU_BOARD_FLAGS] = board_flags;
+	pru_buffer_comm[PRU_COMM_BOARD_FLAGS] = board_flags;
     /* Set up flags */
-	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
-	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
+	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 0;
+	pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] = 0;
 	unsigned int pruFrames;
 	if(analog_enabled)
 		pruFrames = hardware_analog_frames;
 	else
 		pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
-	pru_buffer_comm[PRU_BUFFER_SPI_FRAMES] = pruFrames;
+	pru_buffer_comm[PRU_COMM_BUFFER_SPI_FRAMES] = pruFrames;
 	pruBufferMcaspFrames = context->audioFrames;
-	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
-	pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
-	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
-	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
-	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
-	pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
-	pru_buffer_comm[PRU_ACTIVE_TDM_SLOTS] = ((uint16_t)context->audioOutChannels & 0xFFFF) << 16 | ((uint16_t)(context->audioInChannels) & 0xFFFF);
+	pru_buffer_comm[PRU_COMM_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
+	pru_buffer_comm[PRU_COMM_SHOULD_SYNC] = 0;
+	pru_buffer_comm[PRU_COMM_SYNC_ADDRESS] = 0;
+	pru_buffer_comm[PRU_COMM_SYNC_PIN_MASK] = 0;
+	pru_buffer_comm[PRU_COMM_PRU_NUMBER] = pru_number;
+	pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
+	pru_buffer_comm[PRU_COMM_ACTIVE_CHANNELS] = ((uint16_t)context->audioOutChannels & 0xFFFF) << 16 | ((uint16_t)(context->audioInChannels) & 0xFFFF);
 
 	/* Set up multiplexer info */
 	if(context->multiplexerChannels == 2) {
-		pru_buffer_comm[PRU_MUX_CONFIG] = 1;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 1;
 	}
 	else if(context->multiplexerChannels == 4) {
-		pru_buffer_comm[PRU_MUX_CONFIG] = 2;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 2;
 	}
 	else if(context->multiplexerChannels == 8) {
-		pru_buffer_comm[PRU_MUX_CONFIG] = 3;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 3;
 	}
 	else { 
 		// we trust that the number of multiplexer channels has been
 		// checked elsewhere
-		pru_buffer_comm[PRU_MUX_CONFIG] = 0;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 0;
 	}
 	
 	if(led_enabled) {
 		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
-			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
-			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
+			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = belaMiniLedBlueGpioBase;
+			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
 		} else {
-			pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
-			pru_buffer_comm[PRU_LED_PIN_MASK] = USERLED3_PIN_MASK;
+			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = USERLED3_GPIO_BASE;
+			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = USERLED3_PIN_MASK;
 		}
 	}
 	else {
-		pru_buffer_comm[PRU_LED_ADDRESS] = 0;
-		pru_buffer_comm[PRU_LED_PIN_MASK] = 0;
+		pru_buffer_comm[PRU_COMM_LED_ADDRESS] = 0;
+		pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = 0;
 	}
 	if(analog_enabled) {
-		pru_buffer_comm[PRU_USE_SPI] = 1;
+		pru_buffer_comm[PRU_COMM_USE_SPI] = 1;
 		// TODO : a different number of channels for inputs and outputs
 		// is not yet supported
 		unsigned int analogChannels = context->analogInChannels;
-		pru_buffer_comm[PRU_SPI_NUM_CHANNELS] = analogChannels;
+		pru_buffer_comm[PRU_COMM_SPI_NUM_CHANNELS] = analogChannels;
 	} else {
-		pru_buffer_comm[PRU_USE_SPI] = 0;
-		pru_buffer_comm[PRU_SPI_NUM_CHANNELS] = 0;
+		pru_buffer_comm[PRU_COMM_USE_SPI] = 0;
+		pru_buffer_comm[PRU_COMM_SPI_NUM_CHANNELS] = 0;
 	}
 	if(digital_enabled) {
-		pru_buffer_comm[PRU_USE_DIGITAL] = 1;
+		pru_buffer_comm[PRU_COMM_USE_DIGITAL] = 1;
 	}
 	else {
-		pru_buffer_comm[PRU_USE_DIGITAL] = 0;
+		pru_buffer_comm[PRU_COMM_USE_DIGITAL] = 0;
 	}
 }
 
@@ -817,7 +796,7 @@ int PRU::start(char * const filename)
 
 int PRU::testPruError()
 {
-	if (unsigned int errorCode = pru_buffer_comm[PRU_ERROR_OCCURRED])
+	if (unsigned int errorCode = pru_buffer_comm[PRU_COMM_ERROR_OCCURRED])
 	{
 		// only print warnings if we have been running for a while, or forced to do so
 		bool verbose = (context->audioFramesElapsed > 5000) || gRTAudioVerbose;
@@ -862,7 +841,7 @@ int PRU::testPruError()
 		if(codec->startAudio(0)) {
 			rt_fprintf(stderr, "Error restarting codec\n");
 		}
-		pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
+		pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
                 // TODO: should restart PRU and codec from scratch
 		return ret;
 	} else {
@@ -920,7 +899,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
 		// Poll
-		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !Bela_stopRequested()) {
+		while(pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] == lastPRUBuffer && !Bela_stopRequested()) {
 #ifdef BELA_USE_POLL
 			task_sleep_ns(sleepTime);
 #endif /* BELA_USE_POLL */
@@ -930,7 +909,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			}
 		}
 
-		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
+		lastPRUBuffer = pru_buffer_comm[PRU_COMM_CURRENT_BUFFER];
 #endif /* BELA_USE_POLL || BELA_USE_BUSYWAIT */
 #ifdef BELA_USE_RTDM
 		// make sure we always sleep a tiny bit to prevent hanging the board
@@ -971,10 +950,10 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(Bela_stopRequested())
 			break;
 
-		// pru_buffer_comm[PRU_CURRENT_BUFFER] will have been set by
+		// pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] will have been set by
 		// the PRU just before signalling ARM. We use buffer that is
 		// not in use by the PRU
-		int pruBufferForArm = pru_buffer_comm[PRU_CURRENT_BUFFER] == 0 ? 1 : 0;
+		int pruBufferForArm = pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] == 0 ? 1 : 0;
 		pruMemory->copyFromPru(pruBufferForArm);
 
 		// Convert short (16-bit) samples to float
@@ -1009,7 +988,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 				// If multiplexer is enabled, find out which channels we have by pulling out
 				// the place that it ended. Based on the buffer size, we can work out the
 				// mux setting for the beginning of the buffer.
-				int pruMuxReference = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+				int pruMuxReference = pru_buffer_comm[PRU_COMM_MUX_END_CHANNEL];
 			
 				
 				// Value from the PRU is ahead by 1 + (frame size % 8); correct that when unrolling here.
@@ -1461,7 +1440,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			// half as many analog frames as audio frames
 			uint32_t pruFramesPerBlock = pruBufferMcaspFrames;
 			// read the PRU counter
-			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
+			uint32_t pruFrameCount = pru_buffer_comm[PRU_COMM_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,
 			// just in case the PRU is already ahead of us
 			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
@@ -1505,7 +1484,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #endif /* BELA_USE_RTDM */
 
 	// Tell PRU to stop
-	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
+	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 1;
 	if(underrunLed.enabled())
 		underrunLed.clear();
 
