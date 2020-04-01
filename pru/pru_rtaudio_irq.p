@@ -123,25 +123,6 @@
 #define AD7699_SEQ_OFFSET     3      // sequencer (0 = disable, 3 = scan all)
 
 #define SHARED_COMM_MEM_BASE  		0x00010000  // Location where comm flags are written
-#define COMM_SHOULD_STOP      		0       	// Set to be nonzero when loop should stop
-#define COMM_CURRENT_BUFFER   		4           // Which buffer we are on
-#define COMM_BUFFER_MCASP_FRAMES    8           // How many frames per buffer for audio
-#define COMM_SHOULD_SYNC      		12          // Whether to synchronise to an external clock
-#define COMM_SYNC_ADDRESS     		16          // Which memory address to find the GPIO on
-#define COMM_SYNC_PIN_MASK    		20          // Which pin to read for the sync
-#define COMM_LED_ADDRESS      		24          // Which memory address to find the status LED on
-#define COMM_LED_PIN_MASK     		28          // Which pin to write to change LED
-#define COMM_FRAME_COUNT      		32      	// How many frames have elapse since beginning
-#define COMM_USE_SPI          		36          // Whether or not to use SPI ADC and DAC
-#define COMM_NUM_CHANNELS     		40      	// Low 2 bits indicate 8 [0x3], 4 [0x1] or 2 [0x0] channels
-#define COMM_USE_DIGITAL      		44      	// Whether or not to use DIGITAL
-#define COMM_PRU_NUMBER       		48          // Which PRU this code is running on
-#define COMM_MUX_CONFIG       		52          // Whether to use the mux capelet, and how many channels
-#define COMM_MUX_END_CHANNEL  		56          // Which mux channel the last buffer ended on
-#define COMM_BUFFER_SPI_FRAMES 		60          // How many frames per buffer for analog i/o
-#define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruArmCommon.h)
-#define COMM_ERROR_OCCURED      	68          // Signals the ARM CPU that an error happened
-#define COMM_ACTIVE_TDM_SLOTS  		72          // How many TDM slots contain useful data 
 
 // General constants for local PRU peripherals (used for interrupt configuration)
 #define PRU_ICSS_INTC_LOCAL     0x00020000
@@ -482,7 +463,7 @@
 .macro SEND_ERROR_TO_ARM
 .mparam error
 MOV r27, error
-SBBO r27, reg_comm_addr, COMM_ERROR_OCCURED, 4
+SBBO r27, reg_comm_addr, COMM_ERROR_OCCURRED, 4
 MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
 .endm
 
@@ -579,8 +560,8 @@ SETINPUT: //if it is an input, set the relevant bit
 DONE:
 .endm
 
-.macro READ_ACTIVE_TDM_SLOTS_INTO_FLAGS
-	LBBO r27, reg_comm_addr, COMM_ACTIVE_TDM_SLOTS, 4
+.macro READ_ACTIVE_CHANNELS_INTO_FLAGS
+	LBBO r27, reg_comm_addr, COMM_ACTIVE_CHANNELS, 4
 	// the high word contains the number of outputs
 	LSR r28, r27, 16
 	LSL r28, r28, FLAG_BIT_AUDIO_OUT_CHANNELS0
@@ -1246,7 +1227,7 @@ SPI_FLAG_CHECK_DONE:
      QBBC SPI_INIT_DONE, reg_flags, FLAG_BIT_USE_SPI
 
      // Load the number of channels: valid values are 8, 4 or 2
-     LBBO reg_num_channels, reg_comm_addr, COMM_NUM_CHANNELS, 4
+     LBBO reg_num_channels, reg_comm_addr, COMM_SPI_NUM_CHANNELS, 4
      QBGT SPI_NUM_CHANNELS_LT8, reg_num_channels, 8 // 8 > num_channels ?
      LDI reg_num_channels, 8        // If N >= 8, N = 8
      QBA SPI_NUM_CHANNELS_DONE
@@ -1350,7 +1331,7 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_RMASK, MCASP_DATA_MASK    // 16 bit data receive
 
     // Check how many channels we have
-    READ_ACTIVE_TDM_SLOTS_INTO_FLAGS
+    READ_ACTIVE_CHANNELS_INTO_FLAGS
     GET_NUM_AUDIO_IN_CHANNELS r2
     GET_NUM_AUDIO_OUT_CHANNELS r3
     // And that they are a valid number
