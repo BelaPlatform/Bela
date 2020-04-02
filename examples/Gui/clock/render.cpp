@@ -14,7 +14,6 @@
  * 
  * The p5.js file displays the received data (time and date).
  * 
- * If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
  * 
  **/
 
