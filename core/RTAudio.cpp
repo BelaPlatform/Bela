@@ -150,6 +150,14 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 	cfg->audioInChannels = cfg->activeCodec->getNumIns();
 	cfg->audioOutChannels = cfg->activeCodec->getNumOuts();
 	cfg->audioSampleRate = cfg->activeCodec->getSampleRate();
+	if(!cfg->audioInChannels && cfg->audioOutChannels) {
+		fprintf(stderr, "Error: 0 inputs and 0 outputs channels.\n");
+		return -1;
+	}
+	if(!cfg->audioSampleRate) {
+		fprintf(stderr, "Error: audio sampling rate is 0. Is the codec enabled?\n");
+		return -1;
+	}
 	// set analogs:
 	if(Bela_hwContains(hw, BelaCape)) {
 		cfg->analogInChannels = 8;

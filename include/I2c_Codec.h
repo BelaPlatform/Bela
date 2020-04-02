@@ -17,7 +17,6 @@
 #include "AudioCodec.h"
 #include "I2c.h"
 
-
 class I2c_Codec : public I2c, public AudioCodec
 {
 	short unsigned int pllJ;
@@ -34,8 +33,8 @@ public:
 	int readRegister(unsigned int reg);
 
 	int initCodec();
-	int startAudio(int dual_rate);
-	int startAudio(bool dual_rate, bool generates_bclk, bool generates_wclk, bool tdm_mode, unsigned int slotSize, unsigned int startingSlot, unsigned int bitDelay);
+	int setParameters(AudioCodecParams& codecParams);
+	int startAudio(int dummy);
 	int stopAudio();
 	unsigned int getNumIns();
 	unsigned int getNumOuts();
@@ -78,9 +77,8 @@ private:
 	int dacVolumeHalfDbs;
 	int adcVolumeHalfDbs;
 	int hpVolumeHalfDbs;
+	AudioCodecParams params;
 	McaspConfig mcaspConfig;
-	bool generatesBclk;
-	bool generatesWclk;
 	bool running;
 	bool verbose;
 	bool hpEnabled;

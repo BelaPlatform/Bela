@@ -18,9 +18,15 @@
 
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
 : codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0), 
-  generatesBclk(true), generatesWclk(true), running(false)
+running(false)
 {
-	setVerbose(isVerbose);
+	params.slotSize = 16;
+	params.startingSlot = 0;
+	params.bitDelay = 0;
+	params.dualRate = false;
+	params.tdmMode = false;
+	params.generatesBclk = true;
+	params.generatesWclk = true;
 	initI2C_RW(i2cBus, i2cAddress, -1);
 }
 
@@ -42,27 +48,8 @@ int I2c_Codec::initCodec()
 
 // Tell the codec to start generating audio
 // See the TLV320AIC3106 datasheet for full details of the registers
-// The dual_rate flag, when true, runs the codec at 88.2kHz; otherwise
-// it runs at 44.1kHz
-int I2c_Codec::startAudio(int dual_rate)
+int I2c_Codec::startAudio(int dummy)
 {
-	return startAudio(dual_rate, true, true, false, 16, 0, 0);
-}
-
-// Start audio with more setting control
-// generates_bclk: whether the codec generates the bit clock from its PLL
-// generates_wclk: whether the codec generates the frame sync
-// tdm_mode: whether to use TDM rather than I2S mode
-// slotSize: size of a slot in bits
-// startingSlot: where in the TDM frame to place the first channel
-
-int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wclk,
-		bool tdm_mode, unsigned int slotSize, unsigned int startingSlot,
-		unsigned int bitDelay)
-{
-	generatesBclk = generates_bclk;
-	generatesWclk = generates_wclk;
-	
 	// As a best-practice it's safer not to assume the implementer has issued initCodec()
 	// or has not otherwise modified codec registers since that call.
 	// Explicit Switch to config register page 0:
@@ -73,7 +60,7 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 	if(writeRegister(0x02, 0x00))	// Codec sample rate register: fs_ref / 1
 		return 1;
 
-	if(generatesBclk) {
+	if(params.generatesBclk) {
 		// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
 		// The master clock PLLCLK_IN is 12MHz
 		// K can be varied in intervals of resolution of 0.0001 up to 63.9999
@@ -94,7 +81,7 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 			return 1;
 	}
 
-	if(dual_rate) {
+	if(params.dualRate) {
 		if(writeRegister(0x07, 0xEA))	// Codec datapath register: 44.1kHz; dual rate; standard datapath
 			return 1;
 	}
@@ -103,8 +90,8 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 			return 1;
 	}
 
-	if(generatesBclk) {
-		if(generatesWclk) {
+	if(params.generatesBclk) {
+		if(params.generatesWclk) {
 			if(writeRegister(0x08, 0xE0)) {	// Audio serial control register A: BCLK, WCLK outputs,
 				return 1;					// DOUT tri-state when inactive
 			}
@@ -121,22 +108,30 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 			return 1;					// DOUT tri-state when inactive
 	}
 
-	if(tdm_mode) {
+	if(params.tdmMode) {
+	// Supported values of slot size in the PRU code: 16 and 32 bits. Note that
+	// altering slot size requires changing #defines in the PRU code.
 		unsigned int crb; 	// Audio serial control register B
-		if(slotSize == 16)	// The below values all enable 256-clock mode when Bclk is an output
+		switch(params.slotSize)	{// The below values all enable 256-clock mode when Bclk is an output
+		case 16:
 			crb = 0x48;
-		else if(slotSize == 20)
+			break;
+		case 20:
 			crb = 0x58;
-		else if(slotSize == 24)
+			break;
+		case 24:
 			crb = 0x68;
-		else if(slotSize == 32)
+			break;
+		case 32:
 			crb = 0x78;
-		else
+			break;
+		default:
 			return 1;
+		}
 
-		if(writeRegister(0x09, crb))   // Audio serial control register B: DSP mode, word len specified by slotSize
+		if(writeRegister(0x09, crb))   // Audio serial control register B: DSP/TDM mode, word len specified by slotSize
 			return 1;
-		if(writeRegister(0x0A, startingSlot * slotSize + bitDelay))   // Audio serial control register C: specifying offset in bits
+		if(writeRegister(0x0A, params.startingSlot * params.slotSize + params.bitDelay))   // Audio serial control register C: specifying offset in bits
 			return 1;
 	}
 	else {
@@ -171,7 +166,7 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 	if(writeHPVolumeRegisters())	// Send DAC to high-power outputs
 		return 1;
 
-	if(generatesBclk) {
+	if(params.generatesBclk) {
 		if(writeRegister(0x66, 0x02))	// Clock generation control register: use MCLK, PLL N = 2
 			return 1;
 	}
@@ -197,7 +192,7 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 
 	// wait for the codec to stabilize before unmuting the HP amp.
 	// this gets rid of the loud pop.
-	if(generatesBclk)
+	if(params.generatesBclk)
 		usleep(10000);
 
 	// note : a small click persists, but it is unavoidable
@@ -211,7 +206,7 @@ int I2c_Codec::startAudio(bool dual_rate, bool generates_bclk, bool generates_wc
 	if(writeDACVolumeRegisters(false))	// Unmute and set volume
 		return 1;
 
-	if(generatesBclk) {
+	if(params.generatesBclk) {
 		if(writeRegister(0x65, 0x00))	// GPIO control register B: disabled; codec uses PLLDIV_OUT
 			return 1;
 	}
@@ -676,8 +671,8 @@ int I2c_Codec::disable(){
 		return 1;
 	if(writeRegister(0x01, 0x80)) // Reset codec to defaults
 		return 1;
-	if(generatesBclk) {
-		if(generatesWclk) {
+	if(params.generatesBclk) {
+		if(params.generatesWclk) {
 			if(writeRegister(0x08, 0xE0)) {	// Put codec in master mode (required for hi-z mode)
 				return 1;					
 			}
@@ -750,5 +745,33 @@ unsigned int I2c_Codec::getNumOuts(){
 }
 
 float I2c_Codec::getSampleRate() {
-	return 44100;
+	if(params.dualRate)
+		return 88200;
+	else
+		return 44100;
+}
+
+int I2c_Codec::setParameters(AudioCodecParams& codecParams)
+{
+	params = codecParams;
+	int ret = 0;
+	if(!params.generatesBclk && params.generatesWclk) {
+		verbose && fprintf(stderr, "I2c_Codec: cannot generate Wclk if it doesn't generate Bclk\n");
+		ret = -1;
+	}
+	if(params.dualRate) {
+		verbose && fprintf(stderr, "I2c_Codec: dualRate is not tested\n");
+		ret = -1;
+	}
+	if(params.bitDelay > 2) {
+		verbose && fprintf(stderr, "I2c_Codec: max bitDelay is 2\n");
+		params.bitDelay = 2;
+		ret = -1;
+	}
+	if(!params.tdmMode && 0 != params.startingSlot) {
+		verbose && fprintf(stderr, "I2c_Codec: startingSlot has to be 0 in DSP mode\n");
+		params.startingSlot = 0;
+		ret = -1;
+	}
+	return ret;
 }
