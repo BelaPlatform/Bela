@@ -42,15 +42,43 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool isVerbose 
 				extraCodecs.push_back(testCodec);
 		}
 	}
+	// Master codec generates bclk (and possibly wclk) with its PLL
+	// and occupies the first two slots
+	const int slotSize = 16;
+	const unsigned int bitDelay = 0;
+	unsigned int slotNum = 0;
+	bool codecWclkMaster =
+#ifdef CODEC_WCLK_MASTER
+		true; // Main codec generates word clock
+#else
+		false; // AM335x generates word clock
+#endif
+
+	AudioCodecParams params;
+	params.slotSize = slotSize;
+	params.bitDelay = bitDelay;
+	params.dualRate = false;
+	params.tdmMode = true;
+	if(masterCodec) {
+		params.startingSlot = slotNum;
+		params.generatesBclk = true;
+		params.generatesWclk = codecWclkMaster;
+		masterCodec->setParameters(params);
+	}
+	params.generatesBclk = false;
+	params.generatesWclk = false;
+	for(auto& codec : extraCodecs) {
+		slotNum += 2;
+		params.startingSlot = slotNum;
+		codec->setParameters(params);
+	}
 }
 
 // This method initialises the audio codec to its default state
 int I2c_MultiTLVCodec::initCodec()
 {
-	int ret = 0;
-	if(!masterCodec)
-		return 1;
-	if((ret = masterCodec->initCodec()))
+	int ret = 1;
+	if(!masterCodec || (ret = masterCodec->initCodec()))
 		return ret;
 
 	std::vector<I2c_Codec*>::iterator it;
@@ -65,34 +93,14 @@ int I2c_MultiTLVCodec::initCodec()
 // Tell the codec to start generating audio
 int I2c_MultiTLVCodec::startAudio(int dual_rate)
 {
-	// Supported values of slot size in the PRU code: 16 and 32 bits. Note that
-	// altering slot size requires changing #defines in the PRU code.
-	const int slotSize = 16;
-	unsigned int slotNum = 0;
-	unsigned int bitDelay = 0;
-	int ret;
-
-	if(!masterCodec)
-		return 1;
-
-	bool codecWclkMaster =
-#ifdef CODEC_WCLK_MASTER
-	// Main codec generates word clock
-		true;
-#else
-	// AM335x generates word clock
-		false;
-#endif
-	// Master codec generates bclk (and possibly wclk) with its PLL
-	// and occupies the first two slots
-	if((ret = masterCodec->startAudio(dual_rate, true, codecWclkMaster, true, slotSize, slotNum, bitDelay)))
+	int ret = 1;
+	if(!masterCodec || (ret = masterCodec->startAudio(0)))
 		return ret;
 
 	// Each subsequent codec occupies the next 2 slots
 	std::vector<I2c_Codec*>::iterator it;
 	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
-		slotNum += 2;
-		if((ret = (*it)->startAudio(dual_rate, false, false, true, slotSize, slotNum, bitDelay)))
+		if((ret = (*it)->startAudio(0)))
 			return ret;
 	}
 
@@ -301,5 +309,7 @@ unsigned int I2c_MultiTLVCodec::getNumOuts(){
 }
 
 float I2c_MultiTLVCodec::getSampleRate() {
-	return 44100;
+	if(masterCodec)
+		return masterCodec->getSampleRate();
+	return 0;
 }
