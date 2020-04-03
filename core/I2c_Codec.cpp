@@ -21,6 +21,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 running(false)
 {
 	params.slotSize = 16;
+	params.tdmSlots = 2;
 	params.startingSlot = 0;
 	params.bitDelay = 0;
 	params.dualRate = false;
@@ -717,7 +718,9 @@ I2c_Codec::~I2c_Codec()
 		stopAudio();
 }
 
-const McaspConfig& I2c_Codec::getMcaspConfig() {
+const McaspConfig& I2c_Codec::getMcaspConfig()
+{
+/*
 #define BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
 #define BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
 #define BELA_TLV_MCASP_ACLKRCTL_VALUE 0x00 // External clk, polarity (falling edge)
@@ -725,14 +728,31 @@ const McaspConfig& I2c_Codec::getMcaspConfig() {
 #define BELA_TLV_MCASP_AFSXCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
 #define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
+*/
+	bool externalSamplingOnRisingEdge = true;
+	bool wclkIsWord = false;
+	bool wclkIsInternal = !params.generatesWclk;
+	bool wclkFalling = false;
+	uint32_t numSlots;
+	if(params.tdmMode)
+		numSlots = 256 / params.slotSize; // codec is in 256-bit mode
+	else
+		numSlots = 2;
 
-	mcaspConfig.xfmt = BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE;
-	mcaspConfig.aclkxctl = BELA_TLV_MCASP_ACLKXCTL_VALUE;
-	mcaspConfig.afsxctl = BELA_TLV_MCASP_AFSXCTL_VALUE;
-	mcaspConfig.rfmt = BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE;
-	mcaspConfig.aclkrctl = BELA_TLV_MCASP_ACLKRCTL_VALUE;
-	mcaspConfig.afsrctl = BELA_TLV_MCASP_AFSRCTL_VALUE;
-	mcaspConfig.pdir = MCASP_OUTPUT_PINS;
+	int ret = mcaspConfig.setFmt(params.slotSize, params.bitDelay);
+	if(ret)
+		fprintf(stderr, "Error while setting FMT\n");
+	ret = mcaspConfig.setAclkctl(externalSamplingOnRisingEdge);
+	if(ret)
+		fprintf(stderr, "Error while setting ACLKCTL\n");
+	ret = mcaspConfig.setAfsctl(numSlots, wclkIsWord, wclkIsInternal, wclkFalling);
+	if(ret)
+		fprintf(stderr, "Error while setting AFSCTL\n");
+	unsigned char axr = 1 << 2;
+	ret = mcaspConfig.setPdir(wclkIsInternal, axr);
+	if(ret)
+		fprintf(stderr, "Error while setting PDIR\n");
+
 	return mcaspConfig;
 }
 
