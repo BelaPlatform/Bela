@@ -474,17 +474,18 @@ DONE:
     MCASP_REG_WRITE MCASP_AHCLKRCTL, mcasp_ahclkrctl_value
     MCASP_REG_WRITE MCASP_RTDM, mcasp_rtdm_value
     MCASP_REG_WRITE MCASP_RINTCTL, mcasp_rintctl_value     // Enable receive start of frame interrupt
-    MCASP_REG_WRITE MCASP_XMASK, mcasp_data_mask    // xx bit data transmit
+    MCASP_REG_WRITE MCASP_RMASK, mcasp_data_mask    // xx bit data transmit
 .endm
 
 .macro MCASP_SET_TX
-.mparam mcasp_data_format, mcasp_afsxctl_value, mcasp_aclkxctl_value, mcasp_ahclkxctl_value, mcasp_xtdm_value, mcasp_xintctl_value
+.mparam mcasp_data_format, mcasp_afsxctl_value, mcasp_aclkxctl_value, mcasp_ahclkxctl_value, mcasp_xtdm_value, mcasp_xintctl_value, mcasp_data_mask
     MCASP_REG_WRITE MCASP_XFMT, mcasp_data_format   // Set data format
     MCASP_REG_WRITE MCASP_AFSXCTL, mcasp_afsxctl_value // Set transmit frameclock
     MCASP_REG_WRITE MCASP_ACLKXCTL, mcasp_aclkxctl_value // Set transmit bitclock
     MCASP_REG_WRITE MCASP_AHCLKXCTL, mcasp_ahclkxctl_value
     MCASP_REG_WRITE MCASP_XTDM, mcasp_xtdm_value
     MCASP_REG_WRITE MCASP_XINTCTL, mcasp_xintctl_value
+    MCASP_REG_WRITE MCASP_XMASK, mcasp_data_mask    // xx bit data transmit
 .endm
 
 .macro READ_GPIO_BITS
@@ -542,6 +543,24 @@ DONE:
 .mparam DEST
 	LSR DEST, reg_flags, FLAG_BIT_AUDIO_OUT_CHANNELS0
 	AND DEST, DEST, (64-1)
+.endm
+
+.macro CONFIGURE_FIFO
+.mparam fifo_address, reg_value
+    // The descriptions for WFIFOCTL and RWFIFOCTL seem to indicate that you
+    // need to set the lower bits first and only then set the enable bit.
+    // So we mask out the enable bit, write the value, wait a bit for the value
+    // to be recorded by the McASP, unmask the bit, write again
+    MOV r27, reg_value
+    // this has to be r27 (and not r28), or it will be overwritten
+    // by MCASP_REG_WRITE_EXT
+    CLR r27, r27, 16
+    MCASP_REG_WRITE_EXT fifo_address, r27
+    MOV r28, 1000
+WAIT:
+    SUB r28, r28, 1
+    QBNE WAIT, r28, 0
+    MCASP_REG_WRITE_EXT fifo_address, reg_value
 .endm
 
 .macro COMPUTE_TDM_MASK
@@ -1270,10 +1289,11 @@ SPI_INIT_DONE:
 
     // Prepare McASP0 for audio
     MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
-    MCASP_REG_WRITE_EXT MCASP_WFIFOCTL, 0x1 // Configure FIFOs
-    MCASP_REG_WRITE_EXT MCASP_RFIFOCTL, 0x1
-    MCASP_REG_WRITE_EXT MCASP_WFIFOCTL, 0x10001 // Enable FIFOs
-    MCASP_REG_WRITE_EXT MCASP_RFIFOCTL, 0x10001
+    // Configure FIFOs
+    LBBO r2, reg_comm_addr, COMM_MCASP_CONF_WFIFOCTL, 4
+    CONFIGURE_FIFO MCASP_WFIFOCTL, r2
+    LBBO r2, reg_comm_addr, COMM_MCASP_CONF_RFIFOCTL, 4
+    CONFIGURE_FIFO MCASP_RFIFOCTL, r2
     MCASP_REG_WRITE_EXT MCASP_SRCTL0, 0     // All serialisers off
     MCASP_REG_WRITE_EXT MCASP_SRCTL1, 0
     MCASP_REG_WRITE_EXT MCASP_SRCTL2, 0
@@ -1283,15 +1303,15 @@ SPI_INIT_DONE:
 
     MCASP_REG_WRITE MCASP_PWRIDLESYSCONFIG, 0x02    // Power on
     MCASP_REG_WRITE MCASP_PFUNC, 0x00       // All pins are McASP
+    // Set pin direction
 #ifdef DBOX_CAPE
     LBBO r2, reg_comm_addr, COMM_MCASP_CONF_PDIR, 4
 #else // DBOX_CAPE
     MOV r2, MCASP_OUTPUT_PINS
 #endif // DBOX_CAPE
-    MCASP_REG_WRITE MCASP_PDIR, r2 // Set pin direction
-    MCASP_REG_WRITE MCASP_DLBCTL, 0x00
-    MCASP_REG_WRITE MCASP_DITCTL, 0x00
-    MCASP_REG_WRITE MCASP_RMASK, MCASP_DATA_MASK    // 16 bit data receive
+    MCASP_REG_WRITE MCASP_PDIR, r2
+    MCASP_REG_WRITE MCASP_DLBCTL, 0x00 // disable loopback
+    MCASP_REG_WRITE MCASP_DITCTL, 0x00A // disable DIT
 
     // Check how many channels we have
     READ_ACTIVE_CHANNELS_INTO_FLAGS
@@ -1321,9 +1341,9 @@ MCASP_SET_RX_NOT_CTAG_BEAST:
     LBBO r1, reg_comm_addr, COMM_MCASP_CONF_RFMT, 4
     LBBO r2, reg_comm_addr, COMM_MCASP_CONF_AFSRCTL, 4
     LBBO r3, reg_comm_addr, COMM_MCASP_CONF_ACLKRCTL, 4
-    GET_NUM_AUDIO_OUT_CHANNELS r4
-    COMPUTE_TDM_MASK r4
-    MCASP_SET_RX r1, r2, r3, MCASP_AHCLKRCTL_VALUE, r4, MCASP_RINTCTL_VALUE, MCASP_DATA_MASK
+    LBBO r4, reg_comm_addr, COMM_MCASP_CONF_RTDM, 4
+    LBBO r5, reg_comm_addr, COMM_MCASP_CONF_RMASK, 4
+    MCASP_SET_RX r1, r2, r3, MCASP_AHCLKRCTL_VALUE, r4, MCASP_RINTCTL_VALUE, r5
     QBA MCASP_SET_RX_DONE
 MCASP_SET_RX_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 
@@ -1332,13 +1352,13 @@ MCASP_SET_RX_DONE:
 // set MCASP TX
 #ifdef ENABLE_CTAG_FACE
     IF_NOT_CTAG_FACE_JMP_TO MCASP_SET_TX_NOT_CTAG_FACE
-    MCASP_SET_TX CTAG_FACE_MCASP_DATA_FORMAT_TX_VALUE, CTAG_FACE_MCASP_AFSXCTL_VALUE, CTAG_FACE_MCASP_ACLKXCTL_VALUE, CTAG_FACE_MCASP_AHCLKXCTL_VALUE, CTAG_FACE_MCASP_XTDM_VALUE, CTAG_FACE_MCASP_XINTCTL_VALUE
+    MCASP_SET_TX CTAG_FACE_MCASP_DATA_FORMAT_TX_VALUE, CTAG_FACE_MCASP_AFSXCTL_VALUE, CTAG_FACE_MCASP_ACLKXCTL_VALUE, CTAG_FACE_MCASP_AHCLKXCTL_VALUE, CTAG_FACE_MCASP_XTDM_VALUE, CTAG_FACE_MCASP_XINTCTL_VALUE, MCASP_DATA_MASK
     QBA MCASP_SET_TX_DONE
 MCASP_SET_TX_NOT_CTAG_FACE:
 #endif /* ENABLE_CTAG_FACE */
 #ifdef ENABLE_CTAG_BEAST
     IF_NOT_CTAG_BEAST_JMP_TO MCASP_SET_TX_NOT_CTAG_BEAST
-    MCASP_SET_TX CTAG_BEAST_MCASP_DATA_FORMAT_TX_VALUE, CTAG_BEAST_MCASP_AFSXCTL_VALUE, CTAG_BEAST_MCASP_ACLKXCTL_VALUE, CTAG_BEAST_MCASP_AHCLKXCTL_VALUE, CTAG_BEAST_MCASP_XTDM_VALUE, CTAG_BEAST_MCASP_XINTCTL_VALUE
+    MCASP_SET_TX CTAG_BEAST_MCASP_DATA_FORMAT_TX_VALUE, CTAG_BEAST_MCASP_AFSXCTL_VALUE, CTAG_BEAST_MCASP_ACLKXCTL_VALUE, CTAG_BEAST_MCASP_AHCLKXCTL_VALUE, CTAG_BEAST_MCASP_XTDM_VALUE, CTAG_BEAST_MCASP_XINTCTL_VALUE, MCASP_DATA_MASK
     QBA MCASP_SET_TX_DONE
 MCASP_SET_TX_NOT_CTAG_BEAST:
 #endif /* ENABLE_CTAG_BEAST */
@@ -1347,16 +1367,31 @@ MCASP_SET_TX_NOT_CTAG_BEAST:
     LBBO r1, reg_comm_addr, COMM_MCASP_CONF_XFMT, 4
     LBBO r2, reg_comm_addr, COMM_MCASP_CONF_AFSXCTL, 4
     LBBO r3, reg_comm_addr, COMM_MCASP_CONF_ACLKXCTL, 4
-    GET_NUM_AUDIO_OUT_CHANNELS r4
-    COMPUTE_TDM_MASK r4
-    MCASP_SET_TX r1, r2, r3, MCASP_AHCLKXCTL_VALUE, r4, MCASP_XINTCTL_VALUE
+    LBBO r4, reg_comm_addr, COMM_MCASP_CONF_XTDM, 4
+    LBBO r5, reg_comm_addr, COMM_MCASP_CONF_XMASK, 4
+    MCASP_SET_TX r1, r2, r3, MCASP_AHCLKXCTL_VALUE, r4, MCASP_XINTCTL_VALUE, r5
     QBA MCASP_SET_TX_DONE
 MCASP_SET_TX_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 
 MCASP_SET_TX_DONE:
 
+    IF_NOT_CTAG_JMP_TO MCASP_SRCTL_NOT_CTAG
     MCASP_REG_WRITE_EXT MCASP_SRCTL_R, 0x02     // Set up receive serialiser
     MCASP_REG_WRITE_EXT MCASP_SRCTL_X, 0x01     // Set up transmit serialiser
+MCASP_SRCTL_NOT_CTAG:
+    IF_NOT_BELA_TLV32_OR_BELA_MULTI_TLV_JMP_TO MCASP_SRCTL_NOT_BELA_TLV32_OR_BELA_MULTI_TLV
+    LBBO r1, reg_comm_addr, COMM_MCASP_CONF_SRCTLN, 4
+    // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
+    MOV r2, 0
+    MOV r2, r1.b0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL0, r2
+    MOV r2, r1.b1
+    MCASP_REG_WRITE_EXT MCASP_SRCTL1, r2
+    MOV r2, r1.b2
+    MCASP_REG_WRITE_EXT MCASP_SRCTL2, r2
+    MOV r2, r1.b3
+    MCASP_REG_WRITE_EXT MCASP_SRCTL3, r2
+MCASP_SRCTL_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 
     MCASP_REG_WRITE MCASP_XSTAT, 0xFF       // Clear transmit errors
     MCASP_REG_WRITE MCASP_RSTAT, 0xFF       // Clear receive errors

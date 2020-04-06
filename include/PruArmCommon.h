@@ -39,13 +39,22 @@
 #define COMM_BOARD_FLAGS                64 // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruArmCommon.h)
 #define COMM_ERROR_OCCURRED             68 // Signals the ARM CPU that an error happened
 #define COMM_ACTIVE_CHANNELS            72 // How many TDM slots contain useful data
-#define COMM_MCASP_CONF_XFMT            76
-#define COMM_MCASP_CONF_ACLKXCTL        80
-#define COMM_MCASP_CONF_AFSXCTL         84
-#define COMM_MCASP_CONF_RFMT            88
+// the order of the following registers has to strictly follow the order of the
+// members of McaspRegisters
+#define COMM_MCASP_CONF_PDIR            76
+#define COMM_MCASP_CONF_RMASK           80
+#define COMM_MCASP_CONF_RFMT            84
+#define COMM_MCASP_CONF_AFSRCTL         88
 #define COMM_MCASP_CONF_ACLKRCTL        92
-#define COMM_MCASP_CONF_AFSRCTL         96
-#define COMM_MCASP_CONF_PDIR           100
+#define COMM_MCASP_CONF_RTDM            96
+#define COMM_MCASP_CONF_XMASK          100
+#define COMM_MCASP_CONF_XFMT           104
+#define COMM_MCASP_CONF_AFSXCTL        108
+#define COMM_MCASP_CONF_ACLKXCTL       112
+#define COMM_MCASP_CONF_XTDM           116
+#define COMM_MCASP_CONF_SRCTLN         120 // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
+#define COMM_MCASP_CONF_WFIFOCTL       124
+#define COMM_MCASP_CONF_RFIFOCTL       128
 
 // ARM accesses these memory locations as uint32_t
 // to avoid duplication and mistakes, we use macros to generate the values for ARM

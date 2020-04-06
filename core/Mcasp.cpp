@@ -1,6 +1,12 @@
 #include "../include/Mcasp.h"
 #include <string.h>
 
+McaspConfig::McaspConfig() :
+	regs({0})
+{
+	regs.rmask = regs.xmask = 0xFFFF;
+}
+
 int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
 {
 	struct {
@@ -89,8 +95,8 @@ int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
 		return -1;
 	s.ROT = rotation >> 2;
 
-	memcpy(&xfmt, &s, sizeof(xfmt));
-	rfmt = xfmt;
+	memcpy(&regs.xfmt, &s, sizeof(regs.xfmt));
+	regs.rfmt = regs.xfmt;
 	return 0;
 }
 
@@ -132,8 +138,8 @@ int McaspConfig::setAclkctl(bool externalRisingEdge)
 // 2h-1Fh Divide-by-3 to divide-by-32.
 	s.CLKDIV = 0;
 
-	memcpy(&aclkxctl, &s, sizeof(aclkxctl));
-	aclkrctl = aclkxctl;
+	memcpy(&regs.aclkxctl, &s, sizeof(regs.aclkxctl));
+	regs.aclkrctl = regs.aclkxctl;
 	return 0;
 }
 
@@ -166,13 +172,13 @@ int McaspConfig::setAfsctl(unsigned int numSlots, bool wclkIsWord, bool wclkIsIn
 // FSXM: Transmit frame sync generation select bit.
 // 0 Externally-generated transmit frame sync.
 // 1 Internally-generated transmit frame sync.
-	s.FSM  = wclkIsInternal;
+	s.FSM = wclkIsInternal;
 // FSXP: Transmit frame sync polarity select bit.
 //0 A rising edge on transmit frame sync (AFSX) indicates the beginning of a frame.
 //1 A falling edge on transmit frame sync (AFSX) indicates the beginning of a frame.
 	s.FSP = wclkFalling;
-	memcpy(&afsxctl, &s, sizeof(afsxctl));
-	afsrctl = afsxctl;
+	memcpy(&regs.afsxctl, &s, sizeof(regs.afsxctl));
+	regs.afsrctl = regs.afsxctl;
 	return 0;
 }
 
@@ -222,8 +228,111 @@ int McaspConfig::setPdir(bool wclkIsInternal, unsigned char axr)
 // 1 Pin functions as output
 	s.AXR = axr;
 
-	memcpy(&pdir, &s, sizeof(pdir));
+	memcpy(&regs.pdir, &s, sizeof(regs.pdir));
 	return 0;
+}
+
+uint32_t McaspConfig::computeTdm(unsigned int numChannels)
+{
+// XTDMS[31-0]: Transmitter mode during TDM time slot n.
+// 0 Transmit TDM time slot n is inactive. The transmit serializer does not shift out data during this slot.
+// 1 Transmit TDM time slot n is active. The transmit serializer shifts out
+// data during this slot according to the serializer control register (SRCTL).
+	if(0 == numChannels)
+		return 0;
+	return (1 << numChannels) - 1;
+}
+
+uint32_t McaspConfig::computeFifoctl(unsigned int numSerializers)
+{
+	struct {
+		unsigned NUMDMA : 8;
+		unsigned NUMEVT : 8;
+		unsigned ENA : 1;
+		unsigned : 15;
+	} s;
+// WENA: Write FIFO enable bit.
+// 0 Write FIFO is disabled. The WLVL bit in the Write FIFO status register (WFIFOSTS) is reset to 0
+// and pointers are initialized, that is, the Write FIFO is “flushed.”
+// 1 Write FIFO is enabled. If Write FIFO is to be enabled, it must be enabled prior to taking McASP
+// out of reset.
+	s.ENA = 1; // this should be masked out during the first write, and unmasked during a successive write immediately following the first
+
+// WNUMEVT: 0-FFh Write word count per DMA event (32-bit). When the Write FIFO has space for at least WNUMEVT
+// words of data, then an AXEVT (transmit DMA event) is generated to the host/DMA controller. This
+// value should be set to a non-zero integer multiple of the number of serializers enabled as
+// transmitters. This value must be set prior to enabling the Write FIFO.
+// 0 0 words
+// 1h 1 word
+// 2h 2 words
+// 3h-40h 3 to 64 words
+// 41h-FFh Reserved
+	s.NUMEVT = 0; // TODO: don't know why we keep it this way, but this is what was in our PRU code (as written by @henrix)
+
+// 7-0 WNUMDMA 0-FFh Write word count per transfer (32-bit words). Upon a transmit DMA event from the McASP,
+// WNUMDMA words are transferred from the Write FIFO to the McASP. This value must equal the
+// number of McASP serializers used as transmitters. This value must be set prior to enabling the
+// Write FIFO.
+// 0 0 words
+// 1h 1 word
+// 2h 2 words
+// 3h-10h 3-16 words
+// 11h-FFh Reserved
+	s.NUMDMA = numSerializers;
+	uint32_t ret;
+	memcpy(&ret, &s, sizeof(ret));
+	return ret;
+}
+
+int McaspConfig::setSrctln(unsigned int n, McaspConfig::SrctlMode mode, McaspConfig::SrctlDrive drive)
+{
+// regs.srctln contains data corresponding to SRCTLn for n 0:3 (inclusive). Given
+// how only the lower 4 bits of each are to be set at configuration time, we
+// pack all of them in srctl0123 as groups of 8 bits
+	if(n >= 4)
+		return -1;
+	struct {
+		unsigned SRMOD : 2;
+		unsigned DISMOD : 2;
+		unsigned : 4;
+	} s = {0};
+// DISMOD: 0-3h Serializer pin drive mode bit. Drive on pin when in inactive TDM slot of transmit mode or when serializer
+// is inactive. This field only applies if the pin is configured as a McASP pin (PFUNC = 0).
+// 0 Drive on pin is 3-state.
+// 1h Reserved.
+// 2h Drive on pin is logic low.
+// 3h Drive on pin is logic high.
+	s.DISMOD = (unsigned int)drive;
+// 1-0 SRMOD 0-3h Serializer mode bit.
+// 0 Serializer is inactive.
+// 1h Serializer is transmitter.
+// 2h Serializer is receiver.
+// 3h Reserved.
+	s.SRMOD = mode;
+	memcpy(((uint8_t*)&regs.srctln) + n, &s, 1);
+	return 0;
+}
+
+int McaspConfig::setChannels(unsigned int numChannels, std::vector<unsigned int>& serializers, bool input)
+{
+	uint32_t tdm = computeTdm(numChannels / serializers.size());
+	input ? regs.rtdm = tdm : regs.xtdm = tdm;
+	uint32_t fifoctl = computeFifoctl(serializers.size());
+	input ? regs.rfifoctl = fifoctl : regs.wfifoctl = fifoctl;
+	int ret = 0;
+	for(auto const& s : serializers)
+		ret |= setSrctln(s, input ? SrctlMode_RX : SrctlMode_TX, SrctlDrive_TRISTATE);
+	return ret;
+}
+
+int McaspConfig::setInChannels(unsigned int numChannels, std::vector<unsigned int> serializers)
+{
+	return setChannels(numChannels, serializers, true);
+}
+
+int McaspConfig::setOutChannels(unsigned int numChannels, std::vector<unsigned int> serializers)
+{
+	return setChannels(numChannels, serializers, false);
 }
 
 #include <stdio.h>

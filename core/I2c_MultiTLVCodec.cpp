@@ -276,7 +276,10 @@ I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 
 const McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 {
-	return masterCodec->getMcaspConfig();
+	mc = masterCodec->getMcaspConfig();
+	mc.setInChannels(getNumIns(), {0});
+	mc.setOutChannels(getNumOuts(), {2});
+	return mc;
 /*
 // Values below are for 16x 16-bit TDM slots
 #define BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits

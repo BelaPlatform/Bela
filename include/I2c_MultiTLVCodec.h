@@ -44,6 +44,7 @@ public:
 private:
 	I2c_Codec *masterCodec;
 	std::vector<I2c_Codec*> extraCodecs;
+	McaspConfig mc;
 
 	bool running;
 	bool verbose;
