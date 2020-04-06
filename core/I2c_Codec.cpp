@@ -753,6 +753,12 @@ const McaspConfig& I2c_Codec::getMcaspConfig()
 	if(ret)
 		fprintf(stderr, "Error while setting PDIR\n");
 
+	ret = mcaspConfig.setInChannels(2, {0});
+	if(ret)
+		fprintf(stderr, "Error while setting input channels\n");
+	ret = mcaspConfig.setOutChannels(2, {2});
+	if(ret)
+		fprintf(stderr, "Error while setting output channels\n");
 	return mcaspConfig;
 }
 

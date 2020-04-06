@@ -164,7 +164,7 @@ public:
 				   int stopButtonPin, bool enableLed);
 
 	// Run the code image in pru_rtaudio_bin.h
-	int start(char * const filename, const McaspConfig& mcaspConfig);
+	int start(char * const filename, const McaspRegisters& mcaspRegisters);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
 	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode);
@@ -179,7 +179,7 @@ public:
 	void exitPRUSS();
 
 private:
-	void initialisePruCommon(const McaspConfig& mcaspConfig);
+	void initialisePruCommon(const McaspRegisters& mcaspRegisters);
 	int testPruError();
 	InternalBelaContext *context;	// Overall settings
 
