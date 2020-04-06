@@ -59,7 +59,7 @@ public:
 	int setHPVolume(int halfDbSteps) {return 0;};
 	int setPga(float newGain, unsigned short int channel) {return 0;};
 	int disable() {return 0;};
-	const McaspConfig& getMcaspConfig();
+	McaspConfig& getMcaspConfig();
 
 private:
 	int _fd_master, _fd_slave;

@@ -36,7 +36,7 @@ public:
 
 	void debugWriteRegister(int codecNum, int regNum, int value);
 	int debugReadRegister(int codecNum, int regNum);
-	const McaspConfig& getMcaspConfig();
+	McaspConfig& getMcaspConfig();
 
 	I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool verbose = false);
 	~I2c_MultiTLVCodec();

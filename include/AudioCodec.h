@@ -29,5 +29,5 @@ public:
 	virtual int setHPVolume(int halfDbSteps) = 0;
 	virtual int disable() = 0;
 	virtual int reset() = 0;
-	virtual const McaspConfig& getMcaspConfig() = 0;
+	virtual McaspConfig& getMcaspConfig() = 0;
 };

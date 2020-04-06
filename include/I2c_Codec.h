@@ -70,7 +70,7 @@ public:
 	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
 	~I2c_Codec();
 
-	const McaspConfig& getMcaspConfig();
+	McaspConfig& getMcaspConfig();
 private:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
