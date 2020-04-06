@@ -332,23 +332,25 @@ McaspRegisters McaspConfig::getRegisters()
 {
 	int ret = setFmt();
 	if(ret)
-		fprintf(stderr, "Error while setting FMT\n");
+		fprintf(stderr, "McaspConfig: error while setting FMT\n");
 	ret = setAclkctl();
 	if(ret)
-		fprintf(stderr, "Error while setting ACLKCTL\n");
+		fprintf(stderr, "McaspConfig: error while setting ACLKCTL\n");
 	ret = setAfsctl();
 	if(ret)
-		fprintf(stderr, "Error while setting AFSCTL\n");
+		fprintf(stderr, "McaspConfig: error while setting AFSCTL\n");
 	ret = setPdir();
 	if(ret)
-		fprintf(stderr, "Error while setting PDIR\n");
+		fprintf(stderr, "McaspConfig: error while setting PDIR\n");
 	// individual bytes of regs.srctln are set by setSrctln(), which is
 	// called by setChannels()
 	regs.srctln = 0;
 	ret = setChannels(params.inChannels, params.inSerializers, true);
-		fprintf(stderr, "Error while setting input channels\n");
+	if(ret)
+		fprintf(stderr, "McaspConfig: error while setting input channels\n");
 	ret = setChannels(params.outChannels, params.outSerializers, false);
-		fprintf(stderr, "Error while setting output channels\n");
+	if(ret)
+		fprintf(stderr, "McaspConfig: error while setting output channels\n");
 	regs.rmask = regs.xmask = (1 << params.slotSize) - 1;
 	return regs;
 }
