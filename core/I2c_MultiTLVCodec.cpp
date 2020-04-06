@@ -274,11 +274,11 @@ I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 		delete masterCodec;
 }
 
-const McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
+McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 {
 	mc = masterCodec->getMcaspConfig();
-	mc.setInChannels(getNumIns(), {0});
-	mc.setOutChannels(getNumOuts(), {2});
+	mc.params.inChannels = getNumIns();
+	mc.params.outChannels = getNumOuts();
 	return mc;
 /*
 // Values below are for 16x 16-bit TDM slots

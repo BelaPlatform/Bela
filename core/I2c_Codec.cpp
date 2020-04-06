@@ -718,7 +718,7 @@ I2c_Codec::~I2c_Codec()
 		stopAudio();
 }
 
-const McaspConfig& I2c_Codec::getMcaspConfig()
+McaspConfig& I2c_Codec::getMcaspConfig()
 {
 /*
 #define BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
@@ -729,36 +729,24 @@ const McaspConfig& I2c_Codec::getMcaspConfig()
 #define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
 */
-	bool externalSamplingOnRisingEdge = true;
-	bool wclkIsWord = false;
-	bool wclkIsInternal = !params.generatesWclk;
-	bool wclkFalling = false;
-	uint32_t numSlots;
+	unsigned int numSlots;
 	if(params.tdmMode)
-		numSlots = 256 / params.slotSize; // codec is in 256-bit mode
+		// codec is in 256-bit mode
+		numSlots = 256 / params.slotSize;
 	else
 		numSlots = 2;
+	mcaspConfig.params.inChannels = 2;
+	mcaspConfig.params.outChannels = 2;
+	mcaspConfig.params.inSerializers = {0};
+	mcaspConfig.params.outSerializers = {2};
+	mcaspConfig.params.numSlots = numSlots;
+	mcaspConfig.params.slotSize = params.slotSize;
+	mcaspConfig.params.bitDelay = params.bitDelay;
+	mcaspConfig.params.wclkIsInternal = !params.generatesWclk;
+	mcaspConfig.params.wclkIsWord = false;
+	mcaspConfig.params.wclkFalling = false;
+	mcaspConfig.params.externalRisingEdge = true;
 
-	int ret = mcaspConfig.setFmt(params.slotSize, params.bitDelay);
-	if(ret)
-		fprintf(stderr, "Error while setting FMT\n");
-	ret = mcaspConfig.setAclkctl(externalSamplingOnRisingEdge);
-	if(ret)
-		fprintf(stderr, "Error while setting ACLKCTL\n");
-	ret = mcaspConfig.setAfsctl(numSlots, wclkIsWord, wclkIsInternal, wclkFalling);
-	if(ret)
-		fprintf(stderr, "Error while setting AFSCTL\n");
-	unsigned char axr = 1 << 2;
-	ret = mcaspConfig.setPdir(wclkIsInternal, axr);
-	if(ret)
-		fprintf(stderr, "Error while setting PDIR\n");
-
-	ret = mcaspConfig.setInChannels(2, {0});
-	if(ret)
-		fprintf(stderr, "Error while setting input channels\n");
-	ret = mcaspConfig.setOutChannels(2, {2});
-	if(ret)
-		fprintf(stderr, "Error while setting output channels\n");
 	return mcaspConfig;
 }
 

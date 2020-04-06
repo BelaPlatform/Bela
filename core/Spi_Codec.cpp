@@ -353,7 +353,7 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 	return 0;
 }
 
-const McaspConfig& Spi_Codec::getMcaspConfig() {
+McaspConfig& Spi_Codec::getMcaspConfig() {
         return mcaspConfig;
 }
 

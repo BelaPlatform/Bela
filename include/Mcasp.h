@@ -27,6 +27,20 @@ struct McaspRegisters
 class McaspConfig
 {
 public:
+	struct Parameters
+	{
+		unsigned int inChannels;
+		unsigned int outChannels;
+		std::vector<unsigned int> inSerializers;
+		std::vector<unsigned int> outSerializers;
+		unsigned int numSlots;
+		unsigned int slotSize;
+		unsigned int bitDelay;
+		bool wclkIsInternal;
+		bool wclkIsWord;
+		bool wclkFalling;
+		bool externalRisingEdge;
+	};
 	typedef enum {
 		SrctlMode_DISABLED = 0,
 		SrctlMode_TX = 1,
@@ -38,16 +52,17 @@ public:
 		SrctlDrive_HIGH = 3,
 	} SrctlDrive;
 	McaspConfig();
-	int setFmt(unsigned int slotSize, unsigned int bitDelay);
-	int setAclkctl(bool externalRisingEdge);
-	int setAfsctl(unsigned int numSlots, bool wclkIsWord, bool wclkIsInternal, bool wclkFalling);
-	int setPdir(bool wclkIsInternal, unsigned char axr);
-	int setSrctln(unsigned int n, SrctlMode mode, SrctlDrive drive);
-	int setInChannels(unsigned int numChannels, std::vector<unsigned int> serializers);
-	int setOutChannels(unsigned int numChannels, std::vector<unsigned int> serializers);
-	int setChannels(unsigned int numChannels, std::vector<unsigned int>& serializers, bool input);
+	Parameters params;
+	McaspRegisters getRegisters();
+private:
 	static uint32_t computeTdm(unsigned int numChannels);
 	static uint32_t computeFifoctl(unsigned int numSerializers);
+	int setFmt();
+	int setAclkctl();
+	int setAfsctl();
+	int setPdir();
+	int setSrctln(unsigned int n, McaspConfig::SrctlMode mode, McaspConfig::SrctlDrive drive);
+	int setChannels(unsigned int numChannels, std::vector<unsigned int>& serializers, bool input);
 	McaspRegisters regs;
 };
 

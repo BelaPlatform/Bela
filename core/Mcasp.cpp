@@ -1,13 +1,12 @@
 #include "../include/Mcasp.h"
 #include <string.h>
+#include <stdio.h>
 
-McaspConfig::McaspConfig() :
-	regs({0})
+McaspConfig::McaspConfig()
 {
-	regs.rmask = regs.xmask = 0xFFFF;
 }
 
-int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
+int McaspConfig::setFmt()
 {
 	struct {
 		unsigned ROT : 3;
@@ -20,6 +19,7 @@ int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
 		unsigned : 14;
 	} s = {0};
 
+	unsigned int slotSize = params.slotSize;
 	int rotation = 32 - slotSize;
 
 //XDATDLY: 0-3h Transmit sync bit delay.
@@ -30,7 +30,7 @@ int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
 //2h 2-bit delay. The first transmit data bit, AXRn, occurs two ACLKX cycles
 //after the transmit frame sync (AFSX).
 //3h Reserved.
-	s.DATADLY = bitDelay;
+	s.DATADLY = params.bitDelay;
 
 //15 XRVRS Transmit serial bitstream order.
 //0 Bitstream is LSB first. No bit reversal is performed in transmit format bit
@@ -91,7 +91,7 @@ int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
 //5h Rotate right by 20 bit positions.
 //6h Rotate right by 24 bit positions.
 //7h Rotate right by 28 bit positions.
-	if(rotation & 3) // has to be a multiple of 4
+	if(rotation & 3 || rotation < 0) // has to be a multiple of 4
 		return -1;
 	s.ROT = rotation >> 2;
 
@@ -100,7 +100,7 @@ int McaspConfig::setFmt(unsigned int slotSize, unsigned int bitDelay)
 	return 0;
 }
 
-int McaspConfig::setAclkctl(bool externalRisingEdge)
+int McaspConfig::setAclkctl()
 {
 	struct {
 		unsigned CLKDIV : 5;
@@ -117,7 +117,7 @@ int McaspConfig::setAclkctl(bool externalRisingEdge)
 // 1 Falling edge. External receiver samples data on the rising edge of the
 // serial clock, so the transmitter must shift data out on the falling edge of
 // the serial clock.
-	s.CLKP = !externalRisingEdge;
+	s.CLKP = !params.externalRisingEdge;
 
 // ASYNC: Transmit/receive operation asynchronous enable bit.
 // 0 Synchronous. Transmit clock and frame sync provides the source for both
@@ -143,7 +143,7 @@ int McaspConfig::setAclkctl(bool externalRisingEdge)
 	return 0;
 }
 
-int McaspConfig::setAfsctl(unsigned int numSlots, bool wclkIsWord, bool wclkIsInternal, bool wclkFalling)
+int McaspConfig::setAfsctl()
 {
 	struct {
 		unsigned FSP : 1;
@@ -161,28 +161,28 @@ int McaspConfig::setAfsctl(unsigned int numSlots, bool wclkIsWord, bool wclkIsIn
 // 21h-17Fh Reserved.
 // 180h 384-slot DIT mode.
 // 181h-1FFh Reserved.
-	if(numSlots > 32 || numSlots < 2)
+	if(params.numSlots > 32 || params.numSlots < 2)
 		return 1;
-	s.MOD = numSlots;
+	s.MOD = params.numSlots;
 // FXWID: Transmit frame sync width select bit indicates the width of the
 // transmit frame sync (AFSX) during its active period.
 // 0 Single bit.
 // 1 Single word.
-	s.FWID = wclkIsWord;
+	s.FWID = params.wclkIsWord;
 // FSXM: Transmit frame sync generation select bit.
 // 0 Externally-generated transmit frame sync.
 // 1 Internally-generated transmit frame sync.
-	s.FSM = wclkIsInternal;
+	s.FSM = params.wclkIsInternal;
 // FSXP: Transmit frame sync polarity select bit.
 //0 A rising edge on transmit frame sync (AFSX) indicates the beginning of a frame.
 //1 A falling edge on transmit frame sync (AFSX) indicates the beginning of a frame.
-	s.FSP = wclkFalling;
+	s.FSP = params.wclkFalling;
 	memcpy(&regs.afsxctl, &s, sizeof(regs.afsxctl));
 	regs.afsrctl = regs.afsxctl;
 	return 0;
 }
 
-int McaspConfig::setPdir(bool wclkIsInternal, unsigned char axr)
+int McaspConfig::setPdir()
 {
 	struct {
 		unsigned AXR : 6;
@@ -210,7 +210,7 @@ int McaspConfig::setPdir(bool wclkIsInternal, unsigned char axr)
 // AFSX: Determines if AFSX pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
-	s.AFSX = wclkIsInternal;
+	s.AFSX = params.wclkIsInternal;
 // AHCLKX: Determines if AHCLKX pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
@@ -226,6 +226,9 @@ int McaspConfig::setPdir(bool wclkIsInternal, unsigned char axr)
 // AXR[5-0]: Determines if AXRn pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output
+	uint8_t axr = 0;
+	for(const auto& n : params.outSerializers)
+		axr |= (1 << n);
 	s.AXR = axr;
 
 	memcpy(&regs.pdir, &s, sizeof(regs.pdir));
@@ -325,14 +328,29 @@ int McaspConfig::setChannels(unsigned int numChannels, std::vector<unsigned int>
 	return ret;
 }
 
-int McaspConfig::setInChannels(unsigned int numChannels, std::vector<unsigned int> serializers)
+McaspRegisters McaspConfig::getRegisters()
 {
-	return setChannels(numChannels, serializers, true);
-}
-
-int McaspConfig::setOutChannels(unsigned int numChannels, std::vector<unsigned int> serializers)
-{
-	return setChannels(numChannels, serializers, false);
+	int ret = setFmt();
+	if(ret)
+		fprintf(stderr, "Error while setting FMT\n");
+	ret = setAclkctl();
+	if(ret)
+		fprintf(stderr, "Error while setting ACLKCTL\n");
+	ret = setAfsctl();
+	if(ret)
+		fprintf(stderr, "Error while setting AFSCTL\n");
+	ret = setPdir();
+	if(ret)
+		fprintf(stderr, "Error while setting PDIR\n");
+	// individual bytes of regs.srctln are set by setSrctln(), which is
+	// called by setChannels()
+	regs.srctln = 0;
+	ret = setChannels(params.inChannels, params.inSerializers, true);
+		fprintf(stderr, "Error while setting input channels\n");
+	ret = setChannels(params.outChannels, params.outSerializers, false);
+		fprintf(stderr, "Error while setting output channels\n");
+	regs.rmask = regs.xmask = (1 << params.slotSize) - 1;
+	return regs;
 }
 
 #include <stdio.h>
