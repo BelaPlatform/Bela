@@ -734,8 +734,8 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 		numSlots = 256 / params.slotSize;
 	else
 		numSlots = 2;
-	mcaspConfig.params.inChannels = 2;
-	mcaspConfig.params.outChannels = 2;
+	mcaspConfig.params.inChannels = getNumIns();
+	mcaspConfig.params.outChannels = getNumOuts();;
 	mcaspConfig.params.inSerializers = {0};
 	mcaspConfig.params.outSerializers = {2};
 	mcaspConfig.params.numSlots = numSlots;
