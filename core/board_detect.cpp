@@ -5,10 +5,22 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <map>
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/bela_hw_settings.h"
 #include "../include/board_detect.h"
+
+static const std::map<std::string,BelaHw> belaHwMap = {
+        {"NoHardware", BelaHw_NoHw},
+        {"Bela", BelaHw_Bela},
+        {"BelaMini", BelaHw_BelaMini},
+        {"Salt", BelaHw_Salt},
+        {"CtagFace", BelaHw_CtagFace},
+        {"CtagBeast", BelaHw_CtagBeast},
+        {"CtagFaceBela", BelaHw_CtagFaceBela},
+        {"CtagBeastBela", BelaHw_CtagBeastBela},
+};
 
 static const int EEPROM_NUMCHARS = 30;
 static char eeprom_str[EEPROM_NUMCHARS];
@@ -96,62 +108,23 @@ static int detectCtag()
 
 BelaHw getBelaHw(std::string board)
 {
-	BelaHw hw;
-	if(board == "Bela")
-		hw = BelaHw_Bela;
-	else if(board == "BelaMini")
-		hw = BelaHw_BelaMini;
-	else if(board == "Salt")
-		hw = BelaHw_Salt;
-	else if(board == "CtagFace")
-		hw = BelaHw_CtagFace;
-	else if(board == "CtagBeast")
-		hw = BelaHw_CtagBeast;
-	else if(board == "CtagFaceBela")
-		hw = BelaHw_CtagFaceBela;
-	else if(board == "CtagBeastBela")
-		hw = BelaHw_CtagBeastBela;
-	else if(board == "BelaMiniMultiAudio")
-		hw = BelaHw_BelaMiniMultiAudio;
-	else
-		hw = BelaHw_NoHw;
-	return hw;
+        try {
+                return belaHwMap.at(board);
+        } catch (std::exception e) {
+                return BelaHw_NoHw;
+        }
 }
 
-std::string getBelaHwName(BelaHw hardware)
+std::string getBelaHwName(const BelaHw hardware)
 {
-	std::string hwName;
-	switch(hardware)
-	{
-		case BelaHw_Bela:
-			hwName = "Bela";
-			break;
-		case BelaHw_BelaMini:
-			hwName = "BelaMini";
-			break;
-		case BelaHw_Salt:
-			hwName = "Salt";
-			break;
-		case BelaHw_CtagFace:
-			hwName = "CtagFace";
-			break;
-		case BelaHw_CtagBeast:
-			hwName = "CtagBeast";
-			break;
-		case BelaHw_CtagFaceBela:
-			hwName = "CtagFaceBela";
-			break;
-		case BelaHw_CtagBeastBela:
-			hwName = "CtagBeastBela";
-			break;
-		case BelaHw_BelaMiniMultiAudio:
-			hwName = "BelaMiniMultiAudio";
-			break;
-		default:
-			hwName = "NoHardware";
-			break;
-	}
-	return hwName;
+        std::string noHw;
+        for(const auto & hw : belaHwMap) {
+                if(hw.second == hardware)
+                        return hw.first;
+                else if (BelaHw_NoHw == hw.second)
+                        noHw = hw.first;
+        }
+        return noHw;
 }
 
 static BelaHw parse_config_file(std::string path,  std::string searchStr)
