@@ -80,6 +80,8 @@ done
 	usage_brief
 	exit 1
 }
+
+check_board_alive_and_set_date
 check_project_exists $BBB_PROJECT_NAME || {
 	echo "Error: project $BBB_PROJECT_NAME not found. Available projects on the board are:"
 	list_available_projects
