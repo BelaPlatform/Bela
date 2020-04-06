@@ -4,7 +4,6 @@
 
 struct AudioCodecParams {
 	unsigned int slotSize; // size of a slot in bits
-	unsigned int tdmSlots; // how many tdm slots
 	unsigned int startingSlot; // what slot in the TDM frame to place the first channel in
 	unsigned int bitDelay; // additional offset in the TDM frame (in bits)
 	bool dualRate; // whether to run at single or double sampling rate

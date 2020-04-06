@@ -21,7 +21,6 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 running(false)
 {
 	params.slotSize = 16;
-	params.tdmSlots = 2;
 	params.startingSlot = 0;
 	params.bitDelay = 0;
 	params.dualRate = false;
