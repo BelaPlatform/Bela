@@ -400,6 +400,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		belaHw = actualHw;
 	if(gRTAudioVerbose)
 		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
+	if(BelaHw_NoHw == belaHw)
+	{
+		fprintf(stderr, "Error: unrecognized Bela hardware. Is a cape connected?\n");
+		return 1;
+	}
 
 	// figure out which codec to use and which to disable if several are present and conflicting
 	unsigned int ctags;
@@ -421,13 +426,19 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			gDisabledCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
 	}
 		
+	if(!gAudioCodec)
+	{
+		fprintf(stderr, "Error: invalid combinations of selected and available hardware\n");
+		return 1;
+	}
+
 	BelaHwConfig cfg = {0};
 	BelaHwConfigPrivate pcfg;
 	pcfg.activeCodec = gAudioCodec;
 	pcfg.disabledCodec = gDisabledCodec;
 	if(Bela_getHwConfigPrivate(belaHw, &cfg, &pcfg))
 	{
-		fprintf(stderr, "Unrecognized Bela hardware: is a cape connected?\n");
+		fprintf(stderr, "Error while retrieving hardware settings Bela hardware: is a cape connected?\n");
 		return 1;
 	}
 	gContext.audioSampleRate = cfg.audioSampleRate;
@@ -606,7 +617,7 @@ void audioLoop(void *)
 	pthread_setmode_np(0, PTHREAD_WARNSW, NULL);
 #endif // XENOMAI_CATCH_MSW
 	if(gRTAudioVerbose)
-		printf("_________________Audio Thread!\n");
+		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode);

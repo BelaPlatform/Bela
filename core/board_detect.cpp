@@ -147,7 +147,7 @@ static BelaHw parse_config_file(std::string path,  std::string searchStr)
 				if(hw != BelaHw_NoHw)
 					return hw;
 				else
-					fprintf(stderr, "Unknown BOARD= in %s: %s. Ignoring.\n", path.c_str(), board.c_str());
+					fprintf(stderr, "Unknown setting %s= in %s: %s. Ignoring.\n", searchStr.c_str(), path.c_str(), board.c_str());
 			}
 		}
 		inputFile.close();
