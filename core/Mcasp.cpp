@@ -2,7 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 
-McaspConfig::McaspConfig()
+McaspConfig::McaspConfig() :
+	params({0})
 {
 }
 
@@ -19,8 +20,7 @@ int McaspConfig::setFmt()
 		unsigned : 14;
 	} s = {0};
 
-	unsigned int slotSize = params.slotSize;
-	int rotation = 32 - slotSize;
+	int rotation = 32 - params.dataSize;
 
 //XDATDLY: 0-3h Transmit sync bit delay.
 //0 0-bit delay. The first transmit data bit, AXRn, occurs in same ACLKX cycle
@@ -69,6 +69,7 @@ int McaspConfig::setFmt()
 //Dh Slot size is 28 bits.
 //Eh Reserved.
 //Fh Slot size is 32 bits.
+	unsigned int slotSize = params.slotSize;
 	if(slotSize & 3 || slotSize < 8 || slotSize > 32)
 		return -1;
 	s.SSZ = (slotSize) / 2 - 1;
