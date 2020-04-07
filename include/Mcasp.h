@@ -35,6 +35,7 @@ public:
 		std::vector<unsigned int> outSerializers;
 		unsigned int numSlots;
 		unsigned int slotSize;
+		unsigned int dataSize;
 		unsigned int bitDelay;
 		bool wclkIsInternal;
 		bool wclkIsWord;

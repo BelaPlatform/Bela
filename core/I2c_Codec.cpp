@@ -740,6 +740,7 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 	mcaspConfig.params.outSerializers = {2};
 	mcaspConfig.params.numSlots = numSlots;
 	mcaspConfig.params.slotSize = params.slotSize;
+	mcaspConfig.params.dataSize = params.slotSize;
 	mcaspConfig.params.bitDelay = params.bitDelay;
 	mcaspConfig.params.wclkIsInternal = !params.generatesWclk;
 	mcaspConfig.params.wclkIsWord = false;
