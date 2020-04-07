@@ -71,7 +71,7 @@ public:
 	~I2c_Codec();
 
 	McaspConfig& getMcaspConfig();
-private:
+protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
 	int dacVolumeHalfDbs;
