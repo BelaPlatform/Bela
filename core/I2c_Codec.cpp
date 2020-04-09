@@ -13,6 +13,8 @@
  */
 
 #include "../include/I2c_Codec.h"
+#include <algorithm>
+#include <limits>
 
 #define TLV320_DSP_MODE
 
@@ -66,16 +68,6 @@ int I2c_Codec::startAudio(int dummy)
 		return 1;
 
 	if(params.generatesBclk) {
-		// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
-		// The master clock PLLCLK_IN is 12MHz
-		// K can be varied in intervals of resolution of 0.0001 up to 63.9999
-		// using P=8 and R=1 gives a resolution of 0.0732421875Hz ( 0.000166% at 44.1kHz)
-		// to obtain Fs=44100 we need to have K=60.2112
-
-		if(setPllP(8))
-			return 1;
-		if(setPllR(1))
-			return 1;
 		if(setAudioSamplingRate(44100)) //this will automatically find and set K for the given P and R so that Fs=44100
 			return 1;
 	}
@@ -392,11 +384,88 @@ int I2c_Codec::setPllR(unsigned int r){
 	pllR = r;
 	return 0;
 }
+
 int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
-	long int PLLCLK_IN=12000000;
-	//	f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
-	float k = ((double)(newSamplingRate * pllP * 2048.0f/(float)pllR)) / PLLCLK_IN ;
-	return (setPllK(k));
+	double MHz = 1000000;
+	long int PLLCLK_IN = 12 * MHz;
+
+	// From the TLV3201AIC3104 datasheet, 10.3.3.1 Audio Clock Generation
+	// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
+	// The master clock PLLCLK_IN is 12MHz
+	// K is J.D and can be varied in intervals of resolution of 0.0001 up to 63.9999
+
+	// NOTE: This code does not account for the special case where D = 0
+	// which has fewer constrains (useful for clock values such as 2.8224
+	// and multiples for 44.1kHz and values such as 1.024MHz and multiples
+	// for 48kHz (see Table 1. Typical MCLK Rates)
+
+	//When the PLL is enabled and D ≠ 0000, the following conditions must be satisfied to meet specified
+	//performance:
+	//constraint 1: R = 1
+	unsigned int R = 1;
+	//constraint 2: 10 MHz ≤ PLLCLK_IN/P ≤ 20 MHz
+	unsigned int Pmin = 1;
+	unsigned int Pmax = 8;
+	while(PLLCLK_IN / Pmin > 20*MHz && Pmin <= Pmax)
+		++Pmin;
+	while(PLLCLK_IN / Pmax < 10*MHz && Pmin <= Pmax)
+		--Pmax;
+	//constraint 3: 4 ≤ J ≤ 11  (remember that K = J.D)
+	double Kmin = 4;
+	double Kmax = 11.9999;
+	struct PllSettings {
+		unsigned int P;
+		unsigned int R;
+		double K;
+		double Fs;
+	};
+	std::vector<struct PllSettings> settings;
+	for(unsigned int P = Pmin; P <= Pmax; ++P)
+	{
+		//constraint 4: 80 MHz ≤ PLLCLK_IN × K × R/P ≤ 110 MHz
+		double localKmin = 80*MHz * P / (PLLCLK_IN * R);
+		double localKmax = 110*MHz * P / (PLLCLK_IN * R);
+		localKmin = std::max(localKmin, Kmin);
+		localKmax = std::min(localKmax, Kmax);
+		// round the Ks up and down to a value with only 4 decimals
+		localKmin = ((unsigned int)(localKmin * 10000 + 1)) / 10000.0;
+		localKmax = ((unsigned int)(localKmax * 10000)) / 10000.0;
+		if(localKmin < localKmax)
+		{
+			// constrains are met, see if we can find a valid combination of settings
+			// f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
+			// solve for K and check that it is in the valid range
+			double K = (newSamplingRate * P * 2048.0/R) / (double)PLLCLK_IN;
+			// round K to 4 decimals
+			K = ((unsigned int)(K * 10000 + 0.5)) / 10000.0;
+			if(K >= localKmin && K <= localKmax)
+			{
+				double Fs = (PLLCLK_IN * K * R)/(2048 * P);
+				settings.push_back({.P = P, .R = R, .K = K, .Fs = Fs});
+			}
+		}
+	}
+	if(0 == settings.size()) {
+		fprintf(stderr, "I2c_Codec: error, no valid PLL settings found\n");
+		return 1;
+	}
+	// find the settings that minimise the Fs error
+	PllSettings optimalSettings;
+	double error = std::numeric_limits<double>::max();
+	for(auto & s : settings) {
+		double newError = s.Fs - newSamplingRate;
+		if(newError < error) {
+			error = newError;
+			optimalSettings = s;
+		}
+	}
+
+	// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
+	if(setPllP(optimalSettings.P))
+		return 1;
+	if(setPllR(optimalSettings.R))
+		return 1;
+	return (setPllK(optimalSettings.K));
 }
 
 
