@@ -1,10 +1,32 @@
 #include "../include/Mcasp.h"
 #include <string.h>
 #include <stdio.h>
+#include <limits>
+#include <cmath>
 
 McaspConfig::McaspConfig() :
-	params({0})
+	params({.auxClkIn = 24000000})
 {
+}
+
+double McaspConfig::getValidAhclk(double desiredClk, unsigned int* outDiv)
+{
+	double error = std::numeric_limits<double>::max();
+	unsigned int div;
+	// search for a local minimum in the error
+	for(div = 1; div <= 4096; ++div)
+	{
+		double newError = std::abs(params.auxClkIn / div - desiredClk);
+		if(newError < error)
+			error = newError;
+		else {
+			--div;
+			break;
+		}
+	}
+	if(outDiv)
+		*outDiv = div;
+	return params.auxClkIn/div;
 }
 
 int McaspConfig::setFmt()
@@ -183,6 +205,50 @@ int McaspConfig::setAfsctl()
 	return 0;
 }
 
+int McaspConfig::setAhclkctl()
+{
+	struct {
+		unsigned HCLKDIV : 12;
+		unsigned : 2;
+		unsigned HCLKP : 1;
+		unsigned HCLKM : 1;
+		unsigned : 16;
+	} s = {0};
+// HCLKXM: Transmit high-frequency clock source bit.
+// 0 External transmit high-frequency clock source from AHCLKX pin.
+// 1 Internal transmit high-frequency clock source from output of programmable
+// high clock divider.
+	s.HCLKM = params.ahclkIsInternal;
+// HCLKXP: Transmit bitstream high-frequency clock polarity select bit.
+// 0 AHCLKX is not inverted before programmable bit clock divider. In the
+// special case where the transmit bit clock (ACLKX) is internally generated
+// and the programmable bit clock divider is set to divide-by-1 (CLKXDIV = 0 in
+// ACLKXCTL), AHCLKX is directly passed through to the ACLKX pin.
+// 1 AHCLKX is inverted before programmable bit clock divider. In the special
+// case where the transmit bit clock (ACLKX) is internally generated and the
+// programmable bit clock divider is set to divideby-1 (CLKXDIV = 0 in
+// ACLKXCTL), AHCLKX is directly passed through to the ACLKX pin.
+	s.HCLKP = 0;
+// HCLKXDIV: 0-FFFh Transmit high-frequency clock divide ratio bits determine the divide-down ratio from AUXCLK to
+// AHCLKX.
+// 0 Divide-by-1.
+// 1h Divide-by-2.
+// 2h-FFFh Divide-by-3 to divide-by-4096.
+	unsigned int hclkdiv;
+	if(params.ahclkIsInternal)
+	{
+		unsigned int div;
+		getValidAhclk(params.ahclkFreq, &div);
+		hclkdiv = div - 1;
+	} else {
+		hclkdiv = 0;
+	}
+	s.HCLKDIV = hclkdiv;
+	memcpy(&regs.ahclkxctl, &s, sizeof(regs.ahclkxctl));
+	regs.ahclkrctl = regs.ahclkxctl;
+	return 0;
+}
+
 int McaspConfig::setPdir()
 {
 	struct {
@@ -337,6 +403,9 @@ McaspRegisters McaspConfig::getRegisters()
 	ret = setAclkctl();
 	if(ret)
 		fprintf(stderr, "McaspConfig: error while setting ACLKCTL\n");
+	ret = setAhclkctl();
+	if(ret)
+		fprintf(stderr, "McaspConfig: error while setting AHCLKCTL\n");
 	ret = setAfsctl();
 	if(ret)
 		fprintf(stderr, "McaspConfig: error while setting AFSCTL\n");

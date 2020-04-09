@@ -46,15 +46,17 @@
 #define COMM_MCASP_CONF_RFMT            84
 #define COMM_MCASP_CONF_AFSRCTL         88
 #define COMM_MCASP_CONF_ACLKRCTL        92
-#define COMM_MCASP_CONF_RTDM            96
-#define COMM_MCASP_CONF_XMASK          100
-#define COMM_MCASP_CONF_XFMT           104
-#define COMM_MCASP_CONF_AFSXCTL        108
-#define COMM_MCASP_CONF_ACLKXCTL       112
-#define COMM_MCASP_CONF_XTDM           116
-#define COMM_MCASP_CONF_SRCTLN         120 // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
-#define COMM_MCASP_CONF_WFIFOCTL       124
-#define COMM_MCASP_CONF_RFIFOCTL       128
+#define COMM_MCASP_CONF_AHCLKRCTL       96
+#define COMM_MCASP_CONF_RTDM           100
+#define COMM_MCASP_CONF_XMASK          104
+#define COMM_MCASP_CONF_XFMT           108
+#define COMM_MCASP_CONF_AFSXCTL        112
+#define COMM_MCASP_CONF_ACLKXCTL       116
+#define COMM_MCASP_CONF_AHCLKXCTL      120
+#define COMM_MCASP_CONF_XTDM           124
+#define COMM_MCASP_CONF_SRCTLN         128 // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
+#define COMM_MCASP_CONF_WFIFOCTL       132
+#define COMM_MCASP_CONF_RFIFOCTL       136
 
 // ARM accesses these memory locations as uint32_t
 // to avoid duplication and mistakes, we use macros to generate the values for ARM
@@ -83,12 +85,6 @@ ENUM(COMM_BUFFER_SPI_FRAMES)
 ENUM(COMM_BOARD_FLAGS)
 ENUM(COMM_ERROR_OCCURRED)
 ENUM(COMM_ACTIVE_CHANNELS)
-ENUM(COMM_MCASP_CONF_XFMT)
-ENUM(COMM_MCASP_CONF_ACLKXCTL)
-ENUM(COMM_MCASP_CONF_AFSXCTL)
-ENUM(COMM_MCASP_CONF_RFMT)
-ENUM(COMM_MCASP_CONF_ACLKRCTL)
-ENUM(COMM_MCASP_CONF_AFSRCTL)
 ENUM(COMM_MCASP_CONF_PDIR)
 } PruCommonFlags;
 #endif // __TIME__

@@ -33,7 +33,8 @@ public:
 	int readRegister(unsigned int reg);
 
 	int initCodec();
-	int setParameters(AudioCodecParams& codecParams);
+	int setParameters(const AudioCodecParams& codecParams);
+	AudioCodecParams getParameters();
 	int startAudio(int dummy);
 	int stopAudio();
 	unsigned int getNumIns();
