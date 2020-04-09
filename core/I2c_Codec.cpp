@@ -13,7 +13,7 @@
  */
 
 #include "../include/I2c_Codec.h"
-#include <algorithm>
+#include <cmath>
 #include <limits>
 
 #define TLV320_DSP_MODE
@@ -30,6 +30,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 	params.tdmMode = false;
 	params.generatesBclk = true;
 	params.generatesWclk = true;
+	params.mclk = mcaspConfig.getValidAhclk(24000000);
 	initI2C_RW(i2cBus, i2cAddress, -1);
 }
 
@@ -68,7 +69,7 @@ int I2c_Codec::startAudio(int dummy)
 		return 1;
 
 	if(params.generatesBclk) {
-		if(setAudioSamplingRate(44100)) //this will automatically find and set K for the given P and R so that Fs=44100
+		if(setAudioSamplingRate(44100))
 			return 1;
 	}
 	else {
@@ -387,7 +388,7 @@ int I2c_Codec::setPllR(unsigned int r){
 
 int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
 	double MHz = 1000000;
-	long int PLLCLK_IN = 12 * MHz;
+	double PLLCLK_IN = params.mclk;
 
 	// From the TLV3201AIC3104 datasheet, 10.3.3.1 Audio Clock Generation
 	// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
@@ -453,7 +454,7 @@ int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
 	PllSettings optimalSettings;
 	double error = std::numeric_limits<double>::max();
 	for(auto & s : settings) {
-		double newError = s.Fs - newSamplingRate;
+		double newError = std::abs(s.Fs - newSamplingRate);
 		if(newError < error) {
 			error = newError;
 			optimalSettings = s;
@@ -489,9 +490,9 @@ float I2c_Codec::getPllK(){
 }
 
 float I2c_Codec::getAudioSamplingRate(){
-	long int PLLCLK_IN=12000000;
+	double PLLCLK_IN = params.mclk;
 	//	f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
-	float fs = (PLLCLK_IN/2048.0f) * getPllK()*getPllR()/(float)getPllP();
+	float fs = (PLLCLK_IN/2048.0) * getPllK()*getPllR()/(float)getPllP();
 	return fs;
 }
 
@@ -818,6 +819,8 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 	mcaspConfig.params.slotSize = params.slotSize;
 	mcaspConfig.params.dataSize = params.slotSize;
 	mcaspConfig.params.bitDelay = params.bitDelay;
+	mcaspConfig.params.ahclkIsInternal = true;
+	mcaspConfig.params.ahclkFreq = params.mclk;
 	mcaspConfig.params.wclkIsInternal = !params.generatesWclk;
 	mcaspConfig.params.wclkIsWord = false;
 	mcaspConfig.params.wclkFalling = false;
@@ -841,7 +844,7 @@ float I2c_Codec::getSampleRate() {
 		return 44100;
 }
 
-int I2c_Codec::setParameters(AudioCodecParams& codecParams)
+int I2c_Codec::setParameters(const AudioCodecParams& codecParams)
 {
 	params = codecParams;
 	int ret = 0;
@@ -866,6 +869,10 @@ int I2c_Codec::setParameters(AudioCodecParams& codecParams)
 	return ret;
 }
 
+AudioCodecParams I2c_Codec::getParameters()
+{
+	return params;
+}
 
 int I2c_Codec::setMode(std::string parameter)
 {

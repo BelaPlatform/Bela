@@ -7,6 +7,7 @@ struct AudioCodecParams {
 	unsigned int slotSize; // size of a slot in bits
 	unsigned int startingSlot; // what slot in the TDM frame to place the first channel in
 	unsigned int bitDelay; // additional offset in the TDM frame (in bits)
+	double mclk; // frequency of the master clock passed to the codec
 	bool dualRate; // whether to run at single or double sampling rate
 	bool tdmMode; // whether to use TDM rather than DSP mode
 	bool generatesBclk; // whether the codec generates the bit clock

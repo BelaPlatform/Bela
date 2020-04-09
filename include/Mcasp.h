@@ -13,11 +13,13 @@ struct McaspRegisters
 	uint32_t rfmt;
 	uint32_t afsrctl;
 	uint32_t aclkrctl;
+	uint32_t ahclkrctl;
 	uint32_t rtdm;
 	uint32_t xmask;
 	uint32_t xfmt;
 	uint32_t afsxctl;
 	uint32_t aclkxctl;
+	uint32_t ahclkxctl;
 	uint32_t xtdm;
 	uint32_t srctln;
 	uint32_t wfifoctl;
@@ -37,6 +39,9 @@ public:
 		unsigned int slotSize;
 		unsigned int dataSize;
 		unsigned int bitDelay;
+		double auxClkIn;
+		double ahclkFreq;
+		bool ahclkIsInternal;
 		bool wclkIsInternal;
 		bool wclkIsWord;
 		bool wclkFalling;
@@ -52,6 +57,7 @@ public:
 		SrctlDrive_LOW = 2,
 		SrctlDrive_HIGH = 3,
 	} SrctlDrive;
+	double getValidAhclk(double desiredClock, unsigned int* outDiv = nullptr);
 	McaspConfig();
 	Parameters params;
 	McaspRegisters getRegisters();
@@ -59,8 +65,9 @@ private:
 	static uint32_t computeTdm(unsigned int numChannels);
 	static uint32_t computeFifoctl(unsigned int numSerializers);
 	int setFmt();
-	int setAclkctl();
 	int setAfsctl();
+	int setAclkctl();
+	int setAhclkctl();
 	int setPdir();
 	int setSrctln(unsigned int n, McaspConfig::SrctlMode mode, McaspConfig::SrctlDrive drive);
 	int setChannels(unsigned int numChannels, std::vector<unsigned int>& serializers, bool input);
