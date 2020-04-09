@@ -71,6 +71,7 @@ public:
 	~I2c_Codec();
 
 	McaspConfig& getMcaspConfig();
+	int setMode(std::string mode);
 protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
@@ -82,4 +83,11 @@ protected:
 	bool running;
 	bool verbose;
 	bool hpEnabled;
+	typedef enum
+	{
+		InitMode_init = 0,
+		InitMode_noDeinit = 1,
+		InitMode_noInit = 2,
+	} InitMode;
+	InitMode mode;
 };

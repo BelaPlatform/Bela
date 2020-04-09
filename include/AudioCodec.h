@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <string>
 #include "Mcasp.h"
 
 struct AudioCodecParams {
@@ -28,5 +29,6 @@ public:
 	virtual int setHPVolume(int halfDbSteps) = 0;
 	virtual int disable() = 0;
 	virtual int reset() = 0;
+	virtual int setMode(std::string parameter) {return 0;};
 	virtual McaspConfig& getMcaspConfig() = 0;
 };

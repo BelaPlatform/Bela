@@ -20,6 +20,7 @@
 #define OPT_UNIFORM_SAMPLE_RATE 1007
 #define OPT_HIGH_PERFORMANCE_MODE 1008
 #define OPT_BOARD 1009
+#define OPT_CODEC_MODE 1010
 
 // whether it's the first time that Bela_getopt_long is run
 static bool gFirstRun = 1;
@@ -52,6 +53,7 @@ struct option gDefaultLongOptions[] =
 	{"high-performance-mode", 0, NULL, OPT_HIGH_PERFORMANCE_MODE},
 	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
 	{"board", 1, NULL, OPT_BOARD},
+	{"codec-mode", 1, NULL, OPT_CODEC_MODE},
 	{NULL, 0, NULL, 0}
 };
 
@@ -65,12 +67,15 @@ BelaInitSettings* Bela_InitSettings_alloc()
 
 void Bela_InitSettings_free(BelaInitSettings* settings)
 {
+	free(settings->codecMode);
 	free(settings);
 }
 
 // This function sets the default settings for the BelaInitSettings structure
 void Bela_defaultSettings(BelaInitSettings *settings)
 {
+	memset(settings, 0, sizeof(*settings));
+
 	// Set default values for settings
 	settings->periodSize = 16;
 	settings->useAnalog = 1;
@@ -317,10 +322,13 @@ int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptio
 			break;
 		case OPT_UNIFORM_SAMPLE_RATE:
 			settings->uniformSampleRate = 1;
-			printf("Uniform sample rate\n");
 			break;
 		case OPT_BOARD:
 			settings->board = getBelaHw(std::string(optarg));
+			break;
+		case OPT_CODEC_MODE:
+			settings->codecMode = new char[strlen(optarg) + 1];
+			strcpy(settings->codecMode, optarg);
 			break;
 		case '?':
 		default:
@@ -358,6 +366,7 @@ void Bela_usage()
 	std::cerr << "   --high-performance-mode             Gives more CPU to the Bela process. The system may become unresponsive and you will have to use the button on the Bela cape when you want to stop it.\n";
 	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --board val:                        Select a different board to work with\n";
+	std::cerr << "   --codec-mode val:                   A codec-specific string representing an intialisation parameter\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 }
 

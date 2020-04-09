@@ -428,12 +428,14 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		if(Bela_hwContains(actualHw, CtagCape))
 			gDisabledCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
 	}
-		
+
 	if(!gAudioCodec)
 	{
 		fprintf(stderr, "Error: invalid combinations of selected and available hardware\n");
 		return 1;
 	}
+	if(settings->codecMode)
+		gAudioCodec->setMode(settings->codecMode);
 
 	BelaHwConfig cfg = {0};
 	BelaHwConfigPrivate pcfg;
