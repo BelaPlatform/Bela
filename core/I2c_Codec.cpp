@@ -17,8 +17,9 @@
 #define TLV320_DSP_MODE
 
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
-: codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0), 
-running(false)
+: codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
+	, running(false)
+	, mode(InitMode_init)
 {
 	params.slotSize = 16;
 	params.startingSlot = 0;
@@ -33,6 +34,8 @@ running(false)
 // This method initialises the audio codec to its default state
 int I2c_Codec::initCodec()
 {
+	if(InitMode_noInit == mode)
+		return 0;
 	// Write the reset register of the codec
 	if(writeRegister(0x01, 0x80)) // Software reset register
 	{
@@ -50,6 +53,8 @@ int I2c_Codec::initCodec()
 // See the TLV320AIC3106 datasheet for full details of the registers
 int I2c_Codec::startAudio(int dummy)
 {
+	if(InitMode_noInit == mode)
+		return 0;
 	// As a best-practice it's safer not to assume the implementer has issued initCodec()
 	// or has not otherwise modified codec registers since that call.
 	// Explicit Switch to config register page 0:
@@ -596,6 +601,8 @@ int I2c_Codec::enableLineOut(bool enable)
 // This tells the codec to stop generating audio and mute the outputs
 int I2c_Codec::stopAudio()
 {
+	if(InitMode_noInit == mode || InitMode_noDeinit == mode)
+		return 0;
 	if(writeDACVolumeRegisters(true))	// Mute the DACs
 		return 1;
 	if(writeADCVolumeRegisters(true))	// Mute the ADCs
@@ -788,4 +795,21 @@ int I2c_Codec::setParameters(AudioCodecParams& codecParams)
 		ret = -1;
 	}
 	return ret;
+}
+
+
+int I2c_Codec::setMode(std::string parameter)
+{
+	if("init" == parameter)
+		mode = InitMode_init;
+	else if("noDeinit" == parameter)
+		mode = InitMode_noDeinit;
+	else if("noInit" == parameter)
+		mode = InitMode_noInit;
+	else {
+		mode = InitMode_init;
+		return 1;
+	}
+	verbose && printf("Codec mode: %d (%s)\n", mode, parameter.c_str());
+	return 0;
 }

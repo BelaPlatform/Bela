@@ -32,7 +32,9 @@
 
 // Version history / changelog:
 // 1.10.0
-// - added parameter to Bela_detectHw(), and associated typedef. Added more values to the BelaHw enum.
+// - added parameter to Bela_detectHw(), and associated typedef
+// - added more values to the BelaHw enum
+// - added codecMode to BelaInitSettings
 // 1.9.0
 // - added Bela_HwConfig_{new,delete}
 // 1.8.0
@@ -488,7 +490,8 @@ typedef struct {
 	/// Pointer to an optional function to be called when the audio thread is done.
 	/// This function is called from the audio thread itself just before it returns.
 	void (*audioThreadDone)(BelaContext*, void*);
-	int unused1;
+	/// A codec-specific intialisation parameter
+	char* codecMode;
 	char unused2[MAX_UNUSED2_LENGTH];
 
 	/// User selected board to work with (as opposed to detected hardware).
