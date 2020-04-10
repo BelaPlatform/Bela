@@ -1258,6 +1258,37 @@ SPI_WAIT_RESET:
      ADC_WRITE r2, r2
 
 SPI_INIT_DONE:	
+
+    // Check how many channels we have
+    READ_ACTIVE_CHANNELS_INTO_FLAGS
+    GET_NUM_AUDIO_IN_CHANNELS r2
+    GET_NUM_AUDIO_OUT_CHANNELS r3
+    // And that they are a valid number (at least one input OR output channel)
+    QBNE CHANNEL_COUNT_NOT_ZERO, r2, 0
+    QBNE CHANNEL_COUNT_NOT_ZERO, r3, 0
+    SEND_ERROR_TO_ARM ARM_ERROR_INVALID_INIT
+    HALT
+CHANNEL_COUNT_NOT_ZERO:
+
+// Initialisation of PRU memory pointers and counters
+    LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count for McASP
+    LBBO reg_frame_spi_total, reg_comm_addr, COMM_BUFFER_SPI_FRAMES, 4 // Total frame count for SPI
+    MOV reg_dac_buf0, 0                      // DAC buffer 0 start pointer
+    LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
+    ADD reg_dac_buf1, reg_dac_buf1, reg_dac_buf0
+    LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
+    LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
+    MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT // McASP DAC buffer 0 start pointer
+    COMPUTE_SIZE_OF_MCASP_DAC_BUFFER r2
+    ADD reg_mcasp_buf1, r2, reg_mcasp_buf0
+    CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
+    SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
+    SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
+    CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED // Jump not NEXT_FRAME label if both ADCs and DACs have been processed
+    CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
+    SET reg_flags, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
+    MOV r2, 0
+    SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
 	
     // enable MCASP interface clock in PRCM
     MOV r2, 0x30002
@@ -1265,6 +1296,15 @@ SPI_INIT_DONE:
     SBBO r2, r3, 0, 4
 
     // Prepare McASP0 for audio
+MCASP_INIT:
+MCASP_ERROR_RECOVERY: // we also come back here if there are any issues while running
+
+// Comments on McASP initialisation below are from the AM335x TRM, TI SPRUH73H
+// 22.3.12.2 Transmit/Receive Section Initialization
+// You must follow the following steps to properly configure the McASP. If
+// external clocks are used, they should be present prior to the following
+// initialization steps
+// 1. Reset McASP to default values by setting GBLCTL = 0.
     MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
     // Configure FIFOs
     LBBO r2, reg_comm_addr, COMM_MCASP_CONF_WFIFOCTL, 4
@@ -1278,26 +1318,13 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE_EXT MCASP_SRCTL4, 0
     MCASP_REG_WRITE_EXT MCASP_SRCTL5, 0
 
+// 2. Configure all McASP registers except GBLCTL in the following order:
+// (a) Power Idle SYSCONFIG: PWRIDLESYSCONFIG.
     MCASP_REG_WRITE MCASP_PWRIDLESYSCONFIG, 0x02    // Power on
-    MCASP_REG_WRITE MCASP_PFUNC, 0x00       // All pins are McASP
-    // Set pin direction
-    LBBO r2, reg_comm_addr, COMM_MCASP_CONF_PDIR, 4
-    MCASP_REG_WRITE MCASP_PDIR, r2
-    MCASP_REG_WRITE MCASP_DLBCTL, 0x00 // disable loopback
-    MCASP_REG_WRITE MCASP_DITCTL, 0x00A // disable DIT
 
-    // Check how many channels we have
-    READ_ACTIVE_CHANNELS_INTO_FLAGS
-    GET_NUM_AUDIO_IN_CHANNELS r2
-    GET_NUM_AUDIO_OUT_CHANNELS r3
-    // And that they are a valid number
-    QBNE CHANNEL_COUNT_NOT_ZERO, r2, 0
-    QBNE CHANNEL_COUNT_NOT_ZERO, r3, 0
-    SEND_ERROR_TO_ARM ARM_ERROR_INVALID_INIT
-    HALT
-CHANNEL_COUNT_NOT_ZERO:
-
-// set MCASP RX
+// (b) Receive registers: RMASK, RFMT, AFSRCTL, ACLKRCTL, AHCLKRCTL, RTDM,
+// RINTCTL, RCLKCHK. If external clocks AHCLKR and/or ACLKR are used, they must
+// be running already for proper synchronization of the GBLCTL register.
 #ifdef ENABLE_CTAG_FACE
     IF_NOT_CTAG_FACE_JMP_TO MCASP_SET_RX_NOT_CTAG_FACE
     MCASP_SET_RX CTAG_FACE_MCASP_DATA_FORMAT_RX_VALUE, CTAG_FACE_MCASP_AFSRCTL_VALUE, CTAG_FACE_MCASP_ACLKRCTL_VALUE, CTAG_FACE_MCASP_AHCLKRCTL_VALUE, CTAG_FACE_MCASP_RTDM_VALUE, CTAG_FACE_MCASP_RINTCTL_VALUE, MCASP_DATA_MASK
@@ -1317,12 +1344,16 @@ MCASP_SET_RX_NOT_CTAG_BEAST:
     LBBO r4, reg_comm_addr, COMM_MCASP_CONF_AHCLKRCTL, 4
     LBBO r5, reg_comm_addr, COMM_MCASP_CONF_RTDM, 4
     LBBO r6, reg_comm_addr, COMM_MCASP_CONF_RMASK, 4
+//TODO: set RCLKCHK
     MCASP_SET_RX r1, r2, r3, r4, r5, MCASP_RINTCTL_VALUE, r6
     QBA MCASP_SET_RX_DONE
 MCASP_SET_RX_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 
 MCASP_SET_RX_DONE:
 
+// (c) Transmit registers: XMASK, XFMT, AFSXCTL, ACLKXCTL, AHCLKXCTL, XTDM,
+// XINTCTL, XCLKCHK. If external clocks AHCLKX and/or ACLKX are used, they must be
+// running already for proper synchronization of the GBLCTL register.
 // set MCASP TX
 #ifdef ENABLE_CTAG_FACE
     IF_NOT_CTAG_FACE_JMP_TO MCASP_SET_TX_NOT_CTAG_FACE
@@ -1344,12 +1375,14 @@ MCASP_SET_TX_NOT_CTAG_BEAST:
     LBBO r4, reg_comm_addr, COMM_MCASP_CONF_AHCLKXCTL, 4
     LBBO r5, reg_comm_addr, COMM_MCASP_CONF_XTDM, 4
     LBBO r6, reg_comm_addr, COMM_MCASP_CONF_XMASK, 4
+//TODO: set XCLKCHK
     MCASP_SET_TX r1, r2, r3, r4, r5, MCASP_XINTCTL_VALUE, r6
     QBA MCASP_SET_TX_DONE
 MCASP_SET_TX_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 
 MCASP_SET_TX_DONE:
 
+// (d) Serializer registers: SRCTL[n].
     IF_NOT_CTAG_JMP_TO MCASP_SRCTL_NOT_CTAG
     MCASP_REG_WRITE_EXT MCASP_SRCTL_R, 0x02     // Set up receive serialiser
     MCASP_REG_WRITE_EXT MCASP_SRCTL_X, 0x01     // Set up transmit serialiser
@@ -1368,15 +1401,39 @@ MCASP_SRCTL_NOT_CTAG:
     MCASP_REG_WRITE_EXT MCASP_SRCTL3, r2
 MCASP_SRCTL_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
 
-    MCASP_REG_WRITE MCASP_XSTAT, 0xFF       // Clear transmit errors
-    MCASP_REG_WRITE MCASP_RSTAT, 0xFF       // Clear receive errors
+// (e) Global registers: Registers PFUNC, PDIR, DITCTL, DLBCTL, AMUTE. Note that
+// PDIR should only be programmed after the clocks and frames are set up in the
+// steps above. This is because the moment a clock pin is configured as an output
+// in PDIR, the clock pin starts toggling at the rate defined in the corresponding
+// clock control register. Therefore you must ensure that the clock control
+// register is configured appropriately before you set the pin to be an output. A
+// similar argument applies to the frame sync pins. Also note that the reset state
+// for the transmit high-frequency clock divide register (HCLKXDIV) is
+// divide-by-1, and the divide-by-1 clocks are not gated by the transmit
+// high-frequency clock divider reset enable (XHCLKRST).
 
+    MCASP_REG_WRITE MCASP_PFUNC, 0x00 // All pins are McASP
+    // Set pin direction
+    LBBO r2, reg_comm_addr, COMM_MCASP_CONF_PDIR, 4
+    MCASP_REG_WRITE MCASP_PDIR, r2
+    MCASP_REG_WRITE MCASP_DITCTL, 0x00A // disable DIT
+    MCASP_REG_WRITE MCASP_DLBCTL, 0x00 // disable loopback
+    MCASP_REG_WRITE MCASP_AMUTE, 0x0 // disable audio mute
+
+// (f) DIT registers: For DIT mode operation, set up registers DITCSRA[n],
+// DITCSRB[n], DITUDRA[n], and DITUDRB[n]. [not needed here]
+
+// 3. Start the respective high-frequency serial clocks AHCLKX and/or AHCLKR. This
+// step is necessary even if external high-frequency serial clocks are used:
+// (a) Take the respective internal high-frequency serial clock divider(s) out of
+// reset by setting the RHCLKRST bit for the receiver and/or the XHCLKRST bit for
+// the transmitter in GBLCTL. All other bits in GBLCTL should be held at 0.
     MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 1)  // Set RHCLKRST
     MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 9)  // Set XHCLKRST
 
-// The above write sequence will have temporarily changed the AHCLKX frequency
-// The PLL needs time to settle or the sample rate will be unstable and possibly
-// cause an underrun. Give it ~1ms before going on.
+// The above write sequence may have temporarily changed the AHCLKX frequency
+// The codec's PLL (if any) needs time to settle or the sample rate will be
+// unstable and possibly cause an underrun. Give it ~1ms before going on.
 // 10ns per loop iteration = 10^-8s --> 10^5 iterations needed
 
 MOV r2, 100000
@@ -1386,14 +1443,44 @@ MCASP_INIT_WAIT:
 
 MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 0)  // Set RCLKRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 8)  // Set XCLKRST
+
+// 5. Setup data acquisition as required:
+// (a) If DMA is used to service the McASP, set up data acquisition as desired
+// and start the DMA in this step, before the McASP is taken out of reset.
+// (b) If CPU interrupt is used to service the McASP, enable the transmit and/
+// or receive interrupt as required.
+// (c) If CPU polling is used to service the McASP, no action is required in
+// this step.
+
+// [not mcuh to do here, McASP->PRU interrupts have been set up by the rtdm driver]
+
+// 6. Activate serializers.
+// (a) Before starting, clear the respective transmitter and receiver status registers by writing XSTAT = FFFFh and RSTAT = FFFFh.
+MCASP_REG_WRITE MCASP_XSTAT, 0xFFFF
+MCASP_REG_WRITE MCASP_RSTAT, 0xFFFF
+// (b) Take the respective serializers out of reset by setting the RSRCLR bit
+// for the receiver and/or the XSRCLR bit for the transmitter in GBLCTL.
 MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 2)  // Set RSRCLR
 MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 10) // Set XSRCLR
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 3)  // Set RSMRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 11) // Set XSMRST
 
-// Seems to be not required (was used to avoid transmit clock failure)
-//MCASP_REG_WRITE MCASP_XSTAT, 0xFF
-//MCASP_REG_WRITE MCASP_RSTAT, 0xFF
+// 7. Verify that all transmit buffers are serviced. Skip this step if the
+// transmitter is not used. Also, skip this step if time slot 0 is selected as
+// inactive (special cases, see Figure 22-21, second waveform). As soon as the
+// transmit serializer is taken out of reset, XDATA in the XSTAT register is set,
+// indicating that XBUF is empty and ready to be serviced. The XDATA status causes
+// an DMA event AXEVT to be generated, and can cause an interrupt AXINT to be
+// generated if it is enabled in the XINTCTL register.
+// (a) If DMA is used to service the McASP, the DMA automatically services the
+// McASP upon receiving AXEVT. Before proceeding in this step, you should verify
+// that the XDATA bit in the XSTAT is cleared to 0, indicating that all transmit
+// buffers are already serviced by the DMA.
+// (b) If CPU interrupt is used to service the McASP, interrupt service routine is
+// entered upon the AXINT interrupt. The interrupt service routine should service
+// the XBUF registers. Before proceeding in this step, you should verify that the
+// XDATA bit in XSTAT is cleared to 0, indicating that all transmit buffers are
+// already serviced by the CPU.
+// (c) If CPU polling is used to service the McASP, the XBUF registers should be
+// written to in this step.
 
 // Write a full frame to transmit FIFOs to prevent underflow and keep slots synced
 // Can be probably ignored if first underrun gets ignored for better performance => TODO: test
@@ -1450,28 +1537,13 @@ WRITE_FRAME_NOT_MULTI_TLV:
 #endif /* ENABLE_BELA_GENERIC_TDM */
 WRITE_FRAME_DONE:
 
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 4)  // Set RFRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 12) // Set XFRST
+// 8. Release state machines from reset.
+// (a) Take the respective state machine(s) out of reset by setting the RSMRST bit
+// for the receiver and/or the XSMRST bit for the transmitter in GBLCTL. All other
+// bits in GBLCTL should be left at the previous state.
 
-// Initialisation
-    LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count for McASP
-    LBBO reg_frame_spi_total, reg_comm_addr, COMM_BUFFER_SPI_FRAMES, 4 // Total frame count for SPI
-    MOV reg_dac_buf0, 0                      // DAC buffer 0 start pointer
-    LSL reg_dac_buf1, reg_frame_spi_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
-    ADD reg_dac_buf1, reg_dac_buf1, reg_dac_buf0
-    LMBD r2, reg_num_channels, 1         // Returns 1, 2 or 3 depending on the number of channels
-    LSL reg_dac_buf1, reg_dac_buf1, r2   // Multiply by 2, 4 or 8 to get the N[ch] scaling above
-    MOV reg_mcasp_buf0, REG_MCASP_BUF0_INIT // McASP DAC buffer 0 start pointer
-    COMPUTE_SIZE_OF_MCASP_DAC_BUFFER r2
-    ADD reg_mcasp_buf1, r2, reg_mcasp_buf0
-    CLR reg_flags, reg_flags, FLAG_BIT_BUFFER1  // Bit 0 holds which buffer we are on
-    SET reg_flags, reg_flags, FLAG_BIT_MCASP_TX_FIRST_FRAME // 0 = first half of frame period
-    SET reg_flags, reg_flags, FLAG_BIT_MCASP_RX_FIRST_FRAME
-    CLR reg_flags, reg_flags, FLAG_BIT_MCASP_TX_PROCESSED // Jump not NEXT_FRAME label if both ADCs and DACs have been processed
-    CLR reg_flags, reg_flags, FLAG_BIT_MCASP_RX_PROCESSED
-    SET reg_flags, reg_flags, FLAG_BIT_MCSPI_FIRST_FOUR_CH
-    MOV r2, 0
-    SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
+MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 3)  // Set RSMRST
+MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 11) // Set XSMRST
 
 #ifdef ATTEMPT_TO_RESYNC_BELA_ADC
 // for BELA_TLV32, the left and right channels are swapped, so that each frame contains:
@@ -1510,6 +1582,21 @@ DONELOOPTHIS:
 #endif // ATTEMPT_TO_RESYNC_BELA_ADC_HACK
      MCASP_REG_WRITE MCASP_RFMT, r3 // Restore original value
 #endif // ATTEMPT_TO_RESYNC_BELA_ADC
+
+// 9. Release frame sync generators from reset. Note that it is necessary to
+// release the internal frame sync generators from reset, even if an external
+// frame sync is being used, because the frame sync error detection logic is built
+// into the frame sync generator.
+// (a) Take the respective frame sync generator(s) out of reset by setting the
+// RFRST bit for the receiver, and/or the XFRST bit for the transmitter in GBLCTL.
+// All other bits in GBLCTL should be left at the previous state.
+MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 4)  // Set RFRST
+MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 12) // Set XFRST
+// 10. Upon the first frame sync signal, McASP transfers begin. The McASP
+// synchronizes to an edge on the frame sync pin, not the level on the frame sync
+// pin.
+
+// [In other words: we are good to go]
 
 WRITE_ONE_BUFFER:
 
@@ -1571,18 +1658,16 @@ NOT_NEXT_FRAME:
 
      // Check if ARM says should finish: flag is zero as long as it should run
      LBBO r27, reg_comm_addr, COMM_SHOULD_STOP, 4
-     QBNE GO_TO_CLEANUP, r27, 0
+     QBEQ CONTINUE_RUNNING, r27, 0
+     JAL r28.w0, CLEANUP // JAL allows longer jumps than JMP, but we actually ignore r28 (will never come back)
+CONTINUE_RUNNING:
 
      SUB r28, r28, 1
      QBNE MCASP_CHECK_TX_ERROR_END, r28, 0
      // If we go through EVENT_LOOP_TIMEOUT_COUNT iterations without receiving
      // an interrupt, an error must have occurred
      SEND_ERROR_TO_ARM ARM_ERROR_TIMEOUT
-     JMP START // TODO: should HALT and wait for ARM to restart
-
-GO_TO_CLEANUP:
-	JMP CLEANUP
-
+     JMP MCASP_ERROR_RECOVERY
 MCASP_CHECK_TX_ERROR_END:
 
      QBBC INNER_EVENT_LOOP, r31, PRU_INTR_BIT_CH1
@@ -1618,12 +1703,12 @@ MCASP_TX_INTR_RECEIVED: // mcasp_x_intr_pend
 MCASP_TX_UNDERRUN_OCCURRED:
      SEND_ERROR_TO_ARM ARM_ERROR_XUNDRUN
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XUNDRN_BIT // Clear underrun bit (0)
-     JMP START // TODO: should HALT and wait for ARM to restart
+     JMP MCASP_ERROR_RECOVERY
 
 MCASP_TX_UNEXPECTED_FRAME_SYNC_OCCURRED:
      SEND_ERROR_TO_ARM ARM_ERROR_XSYNCERR
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XSYNCERR_BIT // Clear frame sync error bit (1)
-     JMP START // TODO: should HALT and wait for ARM to restart
+     JMP MCASP_ERROR_RECOVERY
 
 MCASP_TX_CLOCK_FAILURE_OCCURRED:
 // A McASP transmit clock error is automatically solved by resetting the bit and jumping back
@@ -1636,7 +1721,7 @@ MCASP_TX_CLOCK_FAILURE_OCCURRED:
 MCASP_TX_DMA_ERROR_OCCURRED:
      SEND_ERROR_TO_ARM ARM_ERROR_XDMAERR
      MCASP_REG_WRITE_EXT MCASP_XSTAT, 1 << MCASP_XSTAT_XDMAERR_BIT // Clear DMA error bit (7)
-     JMP START // TODO: should HALT and wait for ARM to restart
+     JMP MCASP_ERROR_RECOVERY
 
 MCASP_TX_ERROR_HANDLE_END:
 
@@ -1703,8 +1788,6 @@ LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
      QBA LOAD_AUDIO_FRAME_DONE
 LOAD_AUDIO_FRAME_NOT_MULTI_TLV:
 #endif /* ENABLE_BELA_GENERIC_TDM */
-     SEND_ERROR_TO_ARM ARM_ERROR_INVALID_INIT
-     HALT
 LOAD_AUDIO_FRAME_DONE:
 
      //TODO: Change data structure in RAM to 32 bit samples 
