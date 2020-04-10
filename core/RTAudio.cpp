@@ -558,7 +558,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
 	// Use PRU for audio
-	gPRU = new PRU(&gContext, gAudioCodec);
+	gPRU = new PRU(&gContext);
 
 	// Get the PRU memory buffers ready to go
 	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,

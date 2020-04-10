@@ -147,7 +147,7 @@ private:
 
 public:
 	// Constructor
-	PRU(InternalBelaContext *input_context, AudioCodec *audio_codec);
+	PRU(InternalBelaContext *input_context);
 
 	// Destructor
 	~PRU();
@@ -208,5 +208,4 @@ private:
 
 	Gpio stopButton; // Monitoring the bela cape button
 	Gpio underrunLed; // Flashing an LED upon underrun
-	AudioCodec *codec; // Required to hard reset audio codec from loop
 };
