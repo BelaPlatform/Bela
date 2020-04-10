@@ -63,6 +63,7 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool isVerbose 
 		params.startingSlot = slotNum;
 		params.generatesBclk = true;
 		params.generatesWclk = codecWclkMaster;
+		params.mclk = masterCodec->getMcaspConfig().getValidAhclk(24000000);
 		masterCodec->setParameters(params);
 	}
 	params.generatesBclk = false;
