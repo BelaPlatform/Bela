@@ -20,7 +20,6 @@
 // See https://github.com/BelaPlatform/Bela/issues/480
 
 #define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
-#define DBOX_CAPE	// Define this to use new cape hardware
 	
 #define CLOCK_BASE   0x44E00000
 #define CLOCK_MCASP0 0x34
@@ -81,13 +80,8 @@
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
-#ifdef DBOX_CAPE
 #define DAC_GPIO      GPIO0
 #define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
-#else
-#define DAC_GPIO      GPIO1
-#define DAC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-#endif
 #define DAC_TRM       0       // SPI transmit and receive
 #define DAC_WL        32      // Word length
 #define DAC_CLK_MODE  1       // SPI mode
@@ -99,16 +93,11 @@
 #define AD5668_DATA_OFFSET    4
 #define AD5668_REF_OFFSET     0
 
-#ifdef DBOX_CAPE
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
 // for BELA_MINI, this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
 #define ADC_GPIO_BELA_MINI      GPIO0
-#define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO1:5 = P1 pin 6
-#else /* DBOX_CAPE */
-#define ADC_GPIO      GPIO1
-#define ADC_CS_PIN    (1<<17) // GPIO1:17 = P9 pin 23
-#endif /* DBOX_CAPE */
+#define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO0:5 = P1 pin 6
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL        16      // Word length
 #define ADC_CLK_MODE  0       // SPI mode
@@ -270,22 +259,10 @@
 // Constants used for this particular audio setup
 #define MCASP_BASE  MCASP0_BASE
 #define MCASP_DATAPORT  MCASP0_DATAPORT
-#ifdef DBOX_CAPE
 #define MCASP_SRCTL_X   MCASP_SRCTL2    // Ser. 2 is transmitter
 #define MCASP_SRCTL_R   MCASP_SRCTL0    // Ser. 0 is receiver
 #define MCASP_XBUF  MCASP_XBUF2
 #define MCASP_RBUF  MCASP_RBUF0
-#else
-#define MCASP_SRCTL_X   MCASP_SRCTL3    // Ser. 3 is transmitter
-#define MCASP_SRCTL_R   MCASP_SRCTL2    // Ser. 2 is receiver
-#define MCASP_XBUF  MCASP_XBUF3
-#define MCASP_RBUF  MCASP_RBUF2
-#endif
-    
-#ifdef DBOX_CAPE
-#else // DBOX_CAPE
-#define MCASP_OUTPUT_PINS       (1 << 3)    // Which pins are outputs
-#endif // DBOX_CAPE
 
 #define MCASP_DATA_MASK     0xFFFF      // 16 bit data
 #define MCASP_AHCLKRCTL_VALUE 0x8001     // Internal clock, not inv, /2; irrelevant?
@@ -1304,11 +1281,7 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_PWRIDLESYSCONFIG, 0x02    // Power on
     MCASP_REG_WRITE MCASP_PFUNC, 0x00       // All pins are McASP
     // Set pin direction
-#ifdef DBOX_CAPE
     LBBO r2, reg_comm_addr, COMM_MCASP_CONF_PDIR, 4
-#else // DBOX_CAPE
-    MOV r2, MCASP_OUTPUT_PINS
-#endif // DBOX_CAPE
     MCASP_REG_WRITE MCASP_PDIR, r2
     MCASP_REG_WRITE MCASP_DLBCTL, 0x00 // disable loopback
     MCASP_REG_WRITE MCASP_DITCTL, 0x00A // disable DIT
