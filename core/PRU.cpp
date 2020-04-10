@@ -211,7 +211,7 @@ extern "C" {
 #endif /* USE_NEON_FORMAT_CONVERSION */
 
 // Constructor: specify a PRU number (0 or 1)
-PRU::PRU(InternalBelaContext *input_context, AudioCodec *audio_codec)
+PRU::PRU(InternalBelaContext *input_context)
 : context(input_context),
   pru_number(1),
   initialised(false),
@@ -220,8 +220,7 @@ PRU::PRU(InternalBelaContext *input_context, AudioCodec *audio_codec)
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw),
-  codec(audio_codec)
+  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
 {
 }
 
@@ -839,14 +838,7 @@ int PRU::testPruError()
 				verbose && rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
 				ret = 1;
 		}
-		codec->stopAudio();
-		codec->reset();
-		//codec->initCodec();
-		if(codec->startAudio(0)) {
-			rt_fprintf(stderr, "Error restarting codec\n");
-		}
 		pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
-                // TODO: should restart PRU and codec from scratch
 		return ret;
 	} else {
 		return 0;
