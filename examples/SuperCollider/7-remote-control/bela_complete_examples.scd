@@ -8,7 +8,7 @@ Get them here: https://github.com/sensestage/bela-remote
 *****/
 
 // connect to an already running server on Bela.
-Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
+Server.default = s = Server("belaServer", NetAddr("bela.local", 57110));
 s.initTree;
 s.startAliveThread;
 
