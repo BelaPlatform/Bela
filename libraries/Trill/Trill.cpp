@@ -1,4 +1,5 @@
 #include <libraries/Trill/Trill.h>
+#include <map>
 
 const unsigned int Trill::prescalerValues[6];
 const unsigned int Trill::thresholdValues[7];
@@ -7,6 +8,17 @@ const unsigned int Trill::thresholdValues[7];
 			: device_type_ == HEX ? kNumSensorsHex \
 			: device_type_ == RING ? kNumSensorsRing \
 			: kNumSensors))
+
+static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
+	{Trill::UNKNOWN, "Unknown device"},
+	{Trill::NONE, "No device"},
+	{Trill::BAR, "Bar"},
+	{Trill::SQUARE, "Square"},
+	{Trill::CRAFT, "Craft"},
+	{Trill::RING, "Ring"},
+	{Trill::HEX, "Hex"},
+};
+
 Trill::Trill(){}
 
 Trill::Trill(int i2c_bus, int i2c_address, Mode mode) {
@@ -15,6 +27,7 @@ Trill::Trill(int i2c_bus, int i2c_address, Mode mode) {
 
 int Trill::setup(int i2c_bus, int i2c_address, Mode mode) {
 
+	address = i2c_address;
 	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
 		fprintf(stderr, "Unable to initialise I2C communication\n");
 		return 1;
@@ -91,6 +104,15 @@ Trill::~Trill() {
 	cleanup();
 }
 
+const std::string& Trill::getDeviceName()
+{
+	try {
+		return trillDeviceNameMap.at(device_type_);
+	} catch (std::exception e) {
+		return trillDeviceNameMap.at(Device::UNKNOWN);
+	}
+}
+
 int Trill::identify() {
 	unsigned int bytesToWrite = 2;
 	char buf[2] = { kOffsetCommand, kCommandIdentify };
@@ -115,12 +137,17 @@ int Trill::identify() {
 		return -1;
 	}
 
-	if(dataBuffer[1] < 0 || dataBuffer[1] > TWOD)
-		dataBuffer[1] = NONE;
 	device_type_ = (Device)dataBuffer[1];
 	firmware_version_ = dataBuffer[2];
 
 	return 0;
+}
+
+void Trill::printDetails()
+{
+	printf("Device type: %s (%d)\n", getDeviceName().c_str(), deviceType());
+	printf("Address: %#x\n", address);
+	printf("Firmware version: %d\n", firmwareVersion());
 }
 
 int Trill::setMode(Mode mode) {

@@ -1,22 +1,26 @@
 #include <I2c.h>
 #include <stdint.h>
+#include <string>
 
 class Trill : public I2c
 {
 	public:
 		enum Mode {
-			NORMAL = 0,
+			CENTROID = 0,
 			RAW = 1,
 			BASELINE = 2,
-			DIFF = 3,
+			DIFF = 3
 		};
 
-		enum Device {
+		typedef enum {
+			UNKNOWN = -1,
 			NONE = 0,
-			ONED = 1,
-			TWOD = 2,
-		};
-
+			BAR = 1,
+			SQUARE = 2,
+			CRAFT = 3,
+			RING = 4,
+			HEX = 5,
+		} Device;
 	private:
 
 		enum {
@@ -56,11 +60,11 @@ class Trill : public I2c
 			kNumSensors = 30
 		};
 
-		Device device_type_; // Which type of device is connected (if any)
 		Mode mode_; // Which mode the device is in
+		Device device_type_; // Which type of device is connected (if any)
+		uint8_t address;
 		uint8_t firmware_version_; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
-
 		uint8_t dataBuffer[kRawLength];
 		uint16_t commandSleepTime = 10000;
 
@@ -73,7 +77,7 @@ class Trill : public I2c
 		Trill();
 		~Trill();
 		Trill(int i2c_bus, int i2c_address, Mode mode);
-		int setup(int i2c_bus = 1, int i2c_address = 0x18, Mode mode = NORMAL);
+		int setup(int i2c_bus = 1, int i2c_address = 0x18, Mode mode = CENTROID);
 		int setup(int i2c_bus, int i2c_address, Mode mode, int threshold, int prescaler);
 		void cleanup();
 
@@ -86,13 +90,11 @@ class Trill : public I2c
 		int readLocations();
 		/* Return the type of the device attached or 0 if none is attached */
 		Device deviceType() { return device_type_; }
+		const std::string& getDeviceName();
 		int firmwareVersion() { return firmware_version_; }
 		Mode getMode() { return mode_; }
 		int identify();
-		void printDetails() {
-			printf("Device type: %d\n", deviceType());
-			printf("Firmware version: %d\n", firmwareVersion());
-		};
+		void printDetails() ;
 		int numSensors();
 
 		/* --- Scan configuration settings --- */
