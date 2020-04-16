@@ -42,11 +42,15 @@ export default class BelaData extends BelaWebSocket {
                                 });
                                 this.newBuffer['data'] = charArr;
                                 break;
-                        case 'i':
+                        case 'j': // unsigned int
+                                let uintArr = new Uint32Array(data);
+                                this.newBuffer['data'] = Array.from(uintArr);
+                                break;
+                        case 'i': // int
                                 let intArr = new Int32Array(data);
                                 this.newBuffer['data'] = Array.from(intArr);
                                 break;
-                        case 'f':
+                        case 'f': // float
                                 let floatArr = new Float32Array(data);
                                 this.newBuffer['data'] = Array.from(floatArr);
                                 break;
