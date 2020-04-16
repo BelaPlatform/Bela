@@ -4,10 +4,6 @@
 const unsigned int Trill::prescalerValues[6];
 const unsigned int Trill::thresholdValues[7];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
-#define NUM_SENSORS ((device_type_ == BAR ? kNumSensorsBar \
-			: device_type_ == HEX ? kNumSensorsHex \
-			: device_type_ == RING ? kNumSensorsRing \
-			: kNumSensors))
 
 static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
 	{Trill::UNKNOWN, "Unknown device"},
@@ -301,7 +297,7 @@ int Trill::readI2C() {
 		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, kRawLength);
 		return 1;
 	}
-	for (unsigned int i=0; i < NUM_SENSORS; i++) {
+	for (unsigned int i=0; i < numSensors(); i++) {
 		rawData[i] = ((dataBuffer[2*i] << 8) + dataBuffer[2*i+1]) & 0x0FFF;
 	}
 
@@ -444,7 +440,11 @@ int Trill::touchHorizontalSize(uint8_t touch_num)
 	return size;
 }
 
-int Trill::numSensors()
+unsigned int Trill::numSensors()
 {
-	return NUM_SENSORS;
+	switch(device_type_) {
+		case BAR: return kNumSensorsBar;
+		case RING: return kNumSensorsRing;
+		default: return kNumSensorsMax;
+	}
 }

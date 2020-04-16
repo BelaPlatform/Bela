@@ -55,9 +55,8 @@ class Trill : public I2c
 
 		enum {
 			kNumSensorsBar = 26,
-			kNumSensorsHex = 30,
 			kNumSensorsRing = 28,
-			kNumSensors = 30
+			kNumSensorsMax = 30,
 		};
 
 		Mode mode_; // Which mode the device is in
@@ -69,7 +68,7 @@ class Trill : public I2c
 		uint16_t commandSleepTime = 10000;
 
 	public:
-		int rawData[kNumSensors];
+		int rawData[kNumSensorsMax];
 
 		static constexpr unsigned int prescalerValues[6] = {1, 2, 4, 8, 16, 32};
 		static constexpr unsigned int thresholdValues[7] = {0, 10, 20, 30, 40, 50, 60};
@@ -95,7 +94,7 @@ class Trill : public I2c
 		Mode getMode() { return mode_; }
 		int identify();
 		void printDetails() ;
-		int numSensors();
+		unsigned int numSensors();
 
 		/* --- Scan configuration settings --- */
 		int setMode(Mode mode);
