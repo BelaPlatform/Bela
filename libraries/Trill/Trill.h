@@ -5,12 +5,12 @@
 class Trill : public I2c
 {
 	public:
-		enum Mode {
+		typedef enum {
 			CENTROID = 0,
 			RAW = 1,
 			BASELINE = 2,
-			DIFF = 3
-		};
+			DIFF = 3,
+		} Mode;
 
 		typedef enum {
 			UNKNOWN = -1,
@@ -75,9 +75,9 @@ class Trill : public I2c
 		bool preparedForDataRead_ = false;
 		Trill();
 		~Trill();
-		Trill(int i2c_bus, int i2c_address, Mode mode);
-		int setup(int i2c_bus = 1, int i2c_address = 0x18, Mode mode = CENTROID);
-		int setup(int i2c_bus, int i2c_address, Mode mode, int threshold, int prescaler);
+		Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode);
+		int setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode,
+				int threshold = -1, int prescaler = -1);
 		void cleanup();
 
 		bool isReady(){ return preparedForDataRead_; }

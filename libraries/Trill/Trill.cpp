@@ -17,78 +17,53 @@ static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
 
 Trill::Trill(){}
 
-Trill::Trill(int i2c_bus, int i2c_address, Mode mode) {
+Trill::Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode) {
 	setup(i2c_bus, i2c_address, mode);
 }
 
-int Trill::setup(int i2c_bus, int i2c_address, Mode mode) {
+int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, int threshold, int prescaler) {
+
+	address = 0;
+	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
+		fprintf(stderr, "Unable to initialise I2C communication\n");
+		return 1;
+	}
+
+	if(identify() != 0) {
+		fprintf(stderr, "Unable to identify device\n");
+		return 2;
+	}
+
+	if(setMode(mode) != 0) {
+		fprintf(stderr, "Unable to set mode\n");
+		return 3;
+	}
+
+	if(threshold >= 0){
+		if(setNoiseThreshold(threshold) != 0) {
+			fprintf(stderr, "Unable to set threshold\n");
+			return 4;
+		}
+	}
+
+	if(prescaler >= 0) {
+		if(setPrescaler(prescaler) != 0) {
+			fprintf(stderr, "Unabe to set prescaler\n");
+			return 5;
+		}
+	}
+
+	if(updateBaseLine() != 0) {
+		fprintf(stderr, "Unable to update baseline\n");
+		return 6;
+	}
+
+	if(prepareForDataRead() != 0) {
+		fprintf(stderr, "Unable to prepare for reading data\n");
+		return 7;
+	}
 
 	address = i2c_address;
-	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
-		fprintf(stderr, "Unable to initialise I2C communication\n");
-		return 1;
-	}
-
-	if(identify() != 0) {
-		fprintf(stderr, "Unable to identify device\n");
-		return 2;
-	}
-
-	if(setMode(mode) != 0) {
-		fprintf(stderr, "Unable to set mode\n");
-		return 3;
-	}
-
-	if(updateBaseLine() != 0) {
-		fprintf(stderr, "Unable to update baseline\n");
-		return 6;
-	}
-
-	if(prepareForDataRead() != 0) {
-		fprintf(stderr, "Unable to prepare for reading data\n");
-		return 7;
-	}
-
-	return 0;
-}
-
-int Trill::setup(int i2c_bus, int i2c_address, Mode mode, int threshold, int prescaler) {
-
-	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
-		fprintf(stderr, "Unable to initialise I2C communication\n");
-		return 1;
-	}
-
-	if(identify() != 0) {
-		fprintf(stderr, "Unable to identify device\n");
-		return 2;
-	}
-
-	if(setMode(mode) != 0) {
-		fprintf(stderr, "Unable to set mode\n");
-		return 3;
-	}
-
-	if(setNoiseThreshold(threshold) != 0) {
-		fprintf(stderr, "Unable to set threshold\n");
-		return 4;
-	}
-
-	if(setPrescaler(prescaler) != 0) {
-		fprintf(stderr, "Unabe to set prescaler\n");
-		return 5;
-	}
-
-	if(updateBaseLine() != 0) {
-		fprintf(stderr, "Unable to update baseline\n");
-		return 6;
-	}
-
-	if(prepareForDataRead() != 0) {
-		fprintf(stderr, "Unable to prepare for reading data\n");
-		return 7;
-	}
-
 	return 0;
 }
 
