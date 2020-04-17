@@ -23,7 +23,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup() != 0) {
+	if(touchSensor.setup(1, 0x30, Trill::DIFF) != 0) { // default for Trill Craft
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
@@ -50,9 +50,6 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	if(touchSensor.updateBaseLine() != 0)
-		return false;
-
-	if(touchSensor.prepareForDataRead() != 0)
 		return false;
 
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
