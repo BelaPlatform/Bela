@@ -18,16 +18,16 @@ McaspConfig& I2c_MultiTdmCodec::getMcaspConfig()
 	mcaspConfig.params.dataSize = 16;
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels	= getNumOuts();
-	mcaspConfig.params.outSerializers = {1, 2};
+	mcaspConfig.params.inSerializers = {0, 1};
 	return mcaspConfig;
 }
 
 unsigned int I2c_MultiTdmCodec::getNumIns()
 {
-	return 2;
+	return 8;
 }
 
 unsigned int I2c_MultiTdmCodec::getNumOuts()
 {
-	return 4;
+	return 8;
 }
