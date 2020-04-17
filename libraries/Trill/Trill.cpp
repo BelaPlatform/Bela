@@ -324,6 +324,32 @@ int Trill::readLocations() {
 	return 0;
 }
 
+bool Trill::is1D()
+{
+	if(CENTROID != mode_)
+		return false;
+	switch(device_type_) {
+		case BAR:
+		case RING:
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool Trill::is2D()
+{
+	if(CENTROID != mode_)
+		return false;
+	switch(device_type_) {
+		case SQUARE:
+		case HEX:
+			return true;
+		default:
+			return false;
+	}
+}
+
 int Trill::numberOfTouches()
 {
 	if(mode_ != CENTROID)

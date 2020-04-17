@@ -87,7 +87,7 @@ class Trill : public I2c
 		int prepareForDataRead();
 		int readI2C(); // This should maybe be renamed readRawData()
 		int readLocations();
-		/* Return the type of the device attached or 0 if none is attached */
+		/* Return the type of the device attached*/
 		Device deviceType() { return device_type_; }
 		const std::string& getDeviceName();
 		int firmwareVersion() { return firmware_version_; }
@@ -106,6 +106,9 @@ class Trill : public I2c
 		int setAutoScanInterval(uint16_t interval);
 
 		/* --- Touch-related information --- */
+		bool is1D();
+		bool is2D();
+		int hasButtons() { return getMode() == CENTROID && RING == deviceType();};
 		int numberOfTouches();
 		int numberOfHorizontalTouches();
 		int touchLocation(uint8_t touch_num);
