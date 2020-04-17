@@ -66,13 +66,14 @@ class Trill : public I2c
 		uint8_t num_touches_; // Number of touches on last read
 		uint8_t dataBuffer[kRawLength];
 		uint16_t commandSleepTime = 10000;
-
+		bool preparedForDataRead_ = false;
+		int prepareForDataRead();
+		int identify();
 	public:
 		int rawData[kNumSensorsMax];
 
 		static constexpr unsigned int prescalerValues[6] = {1, 2, 4, 8, 16, 32};
 		static constexpr unsigned int thresholdValues[7] = {0, 10, 20, 30, 40, 50, 60};
-		bool preparedForDataRead_ = false;
 		Trill();
 		~Trill();
 		Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode);
@@ -84,7 +85,6 @@ class Trill : public I2c
 
 		/* Update the baseline value on the sensor*/
 		int updateBaseLine();
-		int prepareForDataRead();
 		int readI2C(); // This should maybe be renamed readRawData()
 		int readLocations();
 		/* Return the type of the device attached*/
@@ -92,7 +92,6 @@ class Trill : public I2c
 		const std::string& getDeviceName();
 		int firmwareVersion() { return firmware_version_; }
 		Mode getMode() { return mode_; }
-		int identify();
 		void printDetails() ;
 		unsigned int numSensors();
 
@@ -118,5 +117,4 @@ class Trill : public I2c
 		int touchHorizontalSize(uint8_t touch_num);
 		/* --- Only for Ring sensors --- */
 		int readButtons(uint8_t button_num);
-
 };
