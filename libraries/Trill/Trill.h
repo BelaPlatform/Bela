@@ -72,8 +72,9 @@ class Trill : public I2c
 	public:
 		int rawData[kNumSensorsMax];
 
-		static constexpr unsigned int prescalerValues[6] = {1, 2, 4, 8, 16, 32};
-		static constexpr unsigned int thresholdValues[7] = {0, 10, 20, 30, 40, 50, 60};
+		static constexpr uint8_t speedValues[4] = {0, 1, 2, 3}; // Ordered in decreasing speed: 0 is CSD_ULTRA_FAST_SPEED and 3 is CSD_SLOW_SPEED
+		static constexpr uint8_t prescalerValues[6] = {1, 2, 4, 8, 16, 32};
+		static constexpr uint8_t thresholdValues[7] = {0, 10, 20, 30, 40, 50, 60};
 		Trill();
 		~Trill();
 		Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode);

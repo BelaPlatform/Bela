@@ -3,9 +3,6 @@
 
 Trill touchSensor;
 
-int speedOpts[4] = {0, 1, 2, 3};
-int prescalerOpts[6] = {1, 2, 4, 8, 16, 32};
-int thresholdOpts[7] = {0, 10, 20, 30, 40, 50, 60};
 int bitResolution = 12;
 
 void loop(void*)
@@ -28,21 +25,21 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	int newSpeed = speedOpts[0];
-	if(touchSensor.setScanSettings(newSpeed) == 0) {
+	int newSpeed = Trill::speedValues[0];
+	if(touchSensor.setScanSettings(newSpeed, bitResolution) == 0) {
 		fprintf(stderr, "Scan speed set to %d.\n", newSpeed);
 	} else {
 		return false;
 	}
 
-	int newPrescaler = prescalerOpts[0];
+	int newPrescaler = Trill::prescalerValues[0];
 	if(touchSensor.setPrescaler(newPrescaler) == 0) {
 		fprintf(stderr, "Prescaler set to %d.\n", newPrescaler);
 	} else {
 		return false;
 	}
 
-	int newThreshold= thresholdOpts[1];
+	int newThreshold = Trill::thresholdValues[1];
 	if(touchSensor.setNoiseThreshold(newThreshold) == 0) {
 		fprintf(stderr, "Threshold set to %d.\n", newThreshold);
 	} else {

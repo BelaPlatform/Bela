@@ -1,8 +1,9 @@
 #include <libraries/Trill/Trill.h>
 #include <map>
 
-const unsigned int Trill::prescalerValues[6];
-const unsigned int Trill::thresholdValues[7];
+const uint8_t Trill::speedValues[4];
+const uint8_t Trill::prescalerValues[6];
+const  uint8_t Trill::thresholdValues[7];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 
 static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
@@ -140,6 +141,12 @@ int Trill::setMode(Mode mode) {
 int Trill::setScanSettings(uint8_t speed, uint8_t num_bits) {
 	unsigned int bytesToWrite = 4;
 	char buf[4] = { kOffsetCommand, kCommandScanSettings, speed, num_bits };
+	if(speed > 3)
+		speed = 3;
+	if(num_bits < 9)
+		num_bits = 9;
+	if(num_bits > 16)
+		num_bits = 16;
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
 		fprintf(stderr, "Failed to set Trill's scan settings.\n");
