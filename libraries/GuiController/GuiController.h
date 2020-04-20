@@ -42,5 +42,5 @@ class GuiController {
 
 		int getNumSliders() { return _sliders.size(); };
 
-		static bool controlCallback(JSONObject &root, void* param);	
+		static bool controlCallback(JSONObject &root, void* param);
 };

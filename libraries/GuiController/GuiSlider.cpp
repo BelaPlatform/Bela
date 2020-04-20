@@ -43,11 +43,11 @@ int GuiSlider::setValue(float val)
 	_changed = true;
 
 	return 0;
-} 
+}
 int GuiSlider::setRange(float min, float max)
 {
 	if(max <= min)
-       	{
+	{
 		return -1;
 	}
 	_range[0] = min;
@@ -80,7 +80,7 @@ JSONObject GuiSlider::getParametersAsJSON()
 	return obj;
 }
 
-GuiSlider::~GuiSlider() 
+GuiSlider::~GuiSlider()
 {
 	cleanup();
 }

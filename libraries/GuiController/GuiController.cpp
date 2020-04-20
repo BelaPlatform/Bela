@@ -1,10 +1,10 @@
 #include "GuiController.h"
 #include <iostream>
 
-GuiController::GuiController() 
+GuiController::GuiController()
 {
 }
- 
+
 GuiController::GuiController(Gui *gui, std::string name)
 {
 	setup(gui, name);
@@ -82,7 +82,7 @@ int GuiController::sendSlider(GuiSlider* slider)
 int GuiController::sendSliderValue(int sliderIndex)
 {
 	auto slider = _sliders.at(sliderIndex);
-	JSONObject root;	
+	JSONObject root;
 	root[L"event"] = new JSONValue(L"set-slider");
 	root[L"controller"] = new JSONValue(_wname);
 	root[L"index"] = new JSONValue(slider.getIndex());
@@ -94,7 +94,7 @@ int GuiController::sendSliderValue(int sliderIndex)
 
 int GuiController::addSlider(std::string name, float value, float min, float max, float step)
 {
-	GuiSlider* s = new GuiSlider(name, value, min, max, step); 
+	GuiSlider* s = new GuiSlider(name, value, min, max, step);
 	s->setIndex(getNumSliders());
 	_sliders.push_back(*s);
 	return s->getIndex();
