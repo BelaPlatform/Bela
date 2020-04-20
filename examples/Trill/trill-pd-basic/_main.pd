@@ -12,15 +12,15 @@
 #X text 285 182 [<num_sensors> <values .... >(;
 #X text 88 375 [new <sensor_id> <bus> <address> <mode>(;
 #X obj 565 125 route craft bar square;
-#X text 122 392 Suggestion: use mode=diff for Trill Craft and mode=normal
+#X text 122 392 Suggestion: use mode=diff for Trill Craft and mode=centroid
 ;
 #X text 122 402 for Bar/Square;
 #X text 463 244 [<num_touches> <x> <size> ...(;
 #X text 644 323 [<num_touches> <x> <y> <size>(;
 #X text 729 126 << these are the sensor_ids specified at creation;
 #X text 420 89 [<sensor_id> <....board-specific data...>(;
-#X msg 105 432 new craft 1 24 diff \, new bar 1 25 normal \, new square
-1 26 normal \, prescaler craft 3 \, threshold bar 5;
+#X msg 105 432 new craft 1 48 diff \, new bar 1 32 centroid \, new square
+1 40 centroid \, prescaler craft 3 \, threshold bar 5;
 #X connect 1 0 19 0;
 #X connect 2 0 12 0;
 #X connect 12 0 5 0;
