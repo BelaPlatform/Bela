@@ -17,3 +17,9 @@
 /updates/
 include/pru_rtaudio_bin.h
 IDE/public/media
+pru_rtaudio.txt
+pru_rtaudio_irq.txt
+resources/tools/bela-cape-btn/bela-cape-btn
+resources/tools/board_detect/board_detect
+resources/tools/mcasp-dump-tool/mcasp-dump-tool
+lib/libbelafull.*
