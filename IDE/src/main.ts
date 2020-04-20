@@ -9,10 +9,27 @@ import * as util from './utils';
 import * as routes from './RouteManager';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as globals from './globals';
 var TerminalManager = require('./TerminalManager');
 
 export async function init(){
-	console.log('starting IDE');
+
+	let httpPort = 80;
+	// load customised "dev" settings, if available. See
+	// IDE/ide-dev.js.template for details on the file content
+	try {
+		let ideDev = require('../ide-dev.js');
+		if(ideDev) {
+			console.log("ideDev: ", ideDev)
+			if(ideDev.hasOwnProperty('Bela'))
+				paths.set_Bela(ideDev.Bela);
+			if(ideDev.hasOwnProperty('local_dev'))
+				globals.set_local_dev(ideDev.local_dev);
+			if(ideDev.hasOwnProperty('httpPort'))
+				httpPort = ideDev.httpPort;
+		}
+	} catch (err) {}
+	console.log('starting IDE from ' + paths.Bela);
 
 	await check_lockfile()
 		.catch( (e: Error) => console.log('error checking lockfile', e) );
@@ -22,8 +39,8 @@ export async function init(){
 	const server: http.Server = new http.Server(app);
 	setup_routes(app);
 
-	// start serving the IDE on port 80
-	server.listen(80, () => console.log('listening on port', 80) );
+	// start serving the IDE
+	server.listen(httpPort, () => console.log('listening on port', httpPort) );
 
 	// initialise websocket
 	socket_manager.init(server);
@@ -99,11 +116,12 @@ function setup_routes(app: express.Application){
 }
 
 export function get_xenomai_version(): Promise<string>{
+	if(globals.local_dev)
+		return new Promise((resolve) => resolve("3.0"));
 	return new Promise(function(resolve, reject){
 		child_process.exec('/usr/xenomai/bin/xeno-config --version', (err, stdout, stderr) => {
 			if (err){
 				console.log('error reading xenomai version');
-				reject(err);
 			}
 			if (stdout.includes('2.6')){
 				paths.set_xenomai_stat('/proc/xenomai/stat');
@@ -116,6 +134,8 @@ export function get_xenomai_version(): Promise<string>{
 }
 
 export function set_time(time: string){
+	if(globals.local_dev)
+		return;
 	child_process.exec('date -s "'+time+'"', (err, stdout, stderr) => {
 		if (err || stderr){
 			console.log('error setting time', err, stderr);
@@ -130,9 +150,11 @@ export function shutdown(){
 }
 
 export async function board_detect(): Promise<any>{
+	if(globals.local_dev)
+		return 'unknown';
 	return new Promise( (resolve, reject) => {
 		child_process.exec('board_detect', (err, stdout, stderr) => {
-			if (err) reject(err);
+			if (err) stdout = 'unknown';
 			console.log('running on', stdout);
 			resolve(stdout);
 		});

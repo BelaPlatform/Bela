@@ -89,34 +89,32 @@ void Gui::ws_disconnect()
  *  on_data callback for scope_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onControlData(const char* data, int size)
+void Gui::ws_onControlData(const char* data, unsigned int size)
 {
-	if(customOnControlData && !customOnControlData(data, size, userControlData))
-	{
+	// parse the data into a JSONValue
+	JSONValue *value = JSON::Parse(data);
+	if (value == NULL || !value->IsObject()){
+		fprintf(stderr, "Could not parse JSON:\n%s\n", data);
 		return;
 	}
-	else
+	// look for the "event" key
+	JSONObject root = value->AsObject();
+	if(customOnControlData && !customOnControlData(root, userControlData))
 	{
-		// parse the data into a JSONValue
-		JSONValue *value = JSON::Parse(data);
-		if (value == NULL || !value->IsObject()){
-			fprintf(stderr, "Could not parse JSON:\n%s\n", data);
-			return;
-		}
-		// look for the "event" key
-		JSONObject root = value->AsObject();
-		if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
-			std::wstring event = root[L"event"]->AsString();
-			if (event.compare(L"connection-reply") == 0){
-				wsIsConnected = true;
-			}
-		}
 		delete value;
+		return;
 	}
+	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
+		std::wstring event = root[L"event"]->AsString();
+		if (event.compare(L"connection-reply") == 0){
+			wsIsConnected = true;
+		}
+	}
+	delete value;
 	return;
 }
 
-void Gui::ws_onData(const char* data, int size)
+void Gui::ws_onData(const char* data, unsigned int size)
 {
 	if(customOnData && !customOnData(data, size, userBinaryData))
 	{
@@ -178,6 +176,15 @@ Gui::~Gui()
 }
 void Gui::cleanup()
 {
+}
+
+int Gui::sendControl(JSONValue* root) {
+    std::wstring wide = JSON::Stringify(root);
+    std::string str(wide.begin(), wide.end());
+    int ret;
+    if(0 == (ret = ws_server->send(_addressControl.c_str(), str.c_str())))
+       return 0;
+    return ret;
 }
 
 int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)

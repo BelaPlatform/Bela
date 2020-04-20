@@ -47,20 +47,18 @@ int64_t gPeriodNS = 500000000LL;		// 0.5 seconds
 bool load_pru(int pru_number);			// Load the PRU environment
 bool start_pru(int pru_number);			// Start the PRU
 void set_period(uint64_t period_ns);	// Set the period of the blink
+int gPruNumber;
+void Bela_userSettings(BelaInitSettings* settings)
+{
+		// Set user PRU to the opposite number as the default Bela PRU
+	if(settings->pruNumber == 0)
+		gPruNumber = 1;
+	else
+		gPruNumber = 0;
+}
 
 bool setup(BelaContext *context, void *userData)
 {
-	int pruNumber;		 // comes from userData
-	
-	// Which PRU to use is in userData, assuming this project
-	// is using the included main.cpp file.
-	if(userData == 0) {
-		printf("Error: PRU number not provided. Are you using the right main.cpp file?\n");
-		return false;
-	}
-	
-	pruNumber = *((int *)userData);
-	
 	if(gpio_export(gpioNumber0)) {
 		printf("Warning: couldn't export GPIO pin %d\n", gpioNumber0);
 	}
@@ -69,14 +67,14 @@ bool setup(BelaContext *context, void *userData)
 	}
 		
 	// Load PRU environment and map memory
-	if(!load_pru(pruNumber)) {
+	if(!load_pru(gPruNumber)) {
 		printf("Error: could not initialise user PRU code.\n");
 		return false;
 	}
 	
 	set_period(gPeriodNS);
 	
-	if(!start_pru(pruNumber)) {
+	if(!start_pru(gPruNumber)) {
 		printf("Error: could not start user PRU code.\n");
 		return false;		
 	}
@@ -114,11 +112,8 @@ void cleanup(BelaContext *context, void *userData)
 	if(gpio_unexport(gpioNumber0)) {
 		printf("Warning: couldn't unexport GPIO pin %d\n", gpioNumber0);
 	}
-
-	int pruNumber = *((int *)userData);
-	
-    /* Disable PRU */
-    prussdrv_pru_disable(pruNumber);
+	/* Disable PRU */
+	prussdrv_pru_disable(gPruNumber);
 }
 
 // Load environment for the second PRU, but don't run it yet

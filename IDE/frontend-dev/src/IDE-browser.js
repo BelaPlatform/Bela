@@ -603,5 +603,5 @@ var keypress = new window.keypress.Listener();
 keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
 keypress.simple_combo("meta f", function(){ editorView.emit('search') });
 keypress.simple_combo("meta o", function(){ tabView.emit('toggle', 'click', 'tab-control') });
-keypress.simple_combo("meta k", function(){ consoleView.emit('clear') });
+keypress.simple_combo("meta k", function(){ consoleView.emit('clear', true) });
 keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });

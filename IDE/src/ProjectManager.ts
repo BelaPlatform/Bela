@@ -5,15 +5,33 @@ import * as util from './utils';
 import * as paths from './paths';
 import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
+import * as DecompressZip from 'decompress-zip';
+import * as fs from 'fs-extra-promise';
 
 let max_file_size = 52428800;	// bytes (50Mb)
 let max_preview_size = 524288000;	// bytes (500Mb)
+
+function emptyObject(obj: any) {
+	Object.keys(obj).forEach(function(key) { delete obj[key]; });
+}
 
 // all ProjectManager methods are async functions called when websocket messages
 // with the field event: 'project-event' is received. The function called is
 // contained in the 'func' field. The websocket message is passed into the method
 // as the data variable, and is modified and returned by the method, and sent
 // back over the websocket
+// NOTE: the current  way of handling project-event events is sub-optimal, at
+// least for the following reasons:
+// - it allows the client to execute arbitrary functions (security risk)
+// - it does not rely on the functions to actively return something, instead
+// it relies on the modifications they perform (or don't) to the data object to
+// determine whether anything useful / interesting happened
+// - future changes in the calling code in SocketManager.ts may inadvertently
+// break any of these functions, in case it starts relying on other attributes
+// (or their absence) in order to make some decisions. You can use
+// emptyObject(data) to prevent the caller from doing anything
+// - types and the presence of properties are unspecified and unenforced, and
+// we blindly rely on the client to send a data object with the appropriate fields
 
 // openFile takes a message with currentProject and newFile fields
 // it opens the file from the project, if it is not too big or binary
@@ -105,7 +123,15 @@ export async function openFile(data: any){
 
 // these two methods are exceptions and don't take the data object
 export async function listProjects(): Promise<string[]>{
-	return file_manager.read_directory(paths.projects);
+	let projects = await file_manager.read_directory(paths.projects);
+	// remove all non-directories
+	let toRemove : any = [];
+	for(let n = 0; n < projects.length; ++n) {
+		if(!await file_manager.directory_exists(paths.projects+projects[n]))
+			toRemove.push(n);
+	}
+	projects = projects.filter((project, n) => { return !toRemove.includes(n);});
+	return projects;
 }
 
 export async function listLibraries(): Promise<any>{
@@ -147,6 +173,8 @@ export async function listExamples(): Promise<any>{
 	return examples;
 }
 
+// this only opens the project, but a notification needs to be emitted to the
+// frontend to actually switch project
 export async function openProject(data: any) {
 	let projectRetryString: string = "Select a project from the projects menu, or create a new one.";
 	if(!data.currentProject.trim()) {
@@ -275,6 +303,73 @@ export async function uploadFile(data: any){
 	await file_manager.save_file(file_path, data.fileData);
 	data.fileList = await listFiles(data.currentProject);
 	await openFile(data);
+}
+
+export async function uploadZipProject(data: any){
+	let tmp_path = paths.tmp + data.newFile;
+	let tmp_target_path = tmp_path.replace(/\.zip$/, "/");
+	let target_path = paths.projects + data.newProject;
+	let file_exists = (await file_manager.file_exists(target_path) || await file_manager.directory_exists(target_path));
+	if (file_exists && !data.force){
+		data.error = 'Failed to create project '+data.newProject+': it already exists!';
+		data.fileData = null;
+		data.fileName = null;
+		return;
+	}
+	await file_manager.save_file(tmp_path, data.fileData);
+	let _cleanup = function (tmp_path: string, tmp_target_path: string) {
+		//file_manager.delete_file(tmp_path);
+		//file_manager.delete_file(tmp_target_path);
+	}.bind(null, tmp_path, tmp_target_path);
+	_cleanup();
+	return new Promise<never> ((resolve, reject) => {
+		let pathsToRemove = [ "__MACOSX", ".DS_Store" ];
+		let unzipper = new DecompressZip(tmp_path);
+		unzipper.on("extract", async (e: any) => {
+			let fileList = await file_manager.deep_read_directory(tmp_target_path);
+			//TODO: find root recursively as the first folder containing a file or more than one folder
+			let isRoot = false;
+			if(fileList.length > 1)
+				isRoot = true;
+			else {
+				if(fileList[0] && fileList[0].size !== undefined)
+					isRoot = true;
+			}
+
+			let source_path : string;
+			if(isRoot) {
+				source_path = tmp_target_path;
+				console.log("Use as is: ", source_path);
+			} else {
+				// peel off the first folder
+				source_path = tmp_target_path+fileList[0].name+"/";
+				console.log("Strip off the top-level folder: ", source_path);
+			}
+			await file_manager.copy_directory(source_path, target_path);
+			data.currentProject = data.newProject;
+			await openProject(data);
+			_cleanup();
+			resolve();
+		});
+		unzipper.on("error", async (e: any) => {
+			data.fileData = null;
+			data.fileName = null;
+			data.error = "Error extracting zip archive "+tmp_path+": "+e.message;
+			_cleanup();
+			resolve();
+		})
+		unzipper.extract({
+			path: tmp_target_path,
+			filter: function (file: any) {
+				let matching : Array<string> = pathsToRemove.filter((needle) => {
+					let path : string = file.path;
+					let reg = RegExp("\\b"+needle+"\\b");
+					return needle === file.filename || path.search(reg) != -1;
+				})
+				return 0 === matching.length;
+			}
+		});
+	})
 }
 
 export async function cleanFile(project: string, file: string){

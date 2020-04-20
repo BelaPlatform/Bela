@@ -71,8 +71,6 @@ export async function read_file_raw(file_path: string): Promise<Buffer>{
 export async function rename_file(src: string, dest: string): Promise<void>{
 	await lock.acquire();
 	try{
-		console.log('source: ' + src);
-		console.log('dest: ' + dest);
 		await fs.moveAsync(src, dest, {overwrite: true});
 		await commit(dest);
 	}
@@ -94,6 +92,9 @@ export async function read_directory(dir_path: string): Promise<string[]>{
 	let out: string[];
 	try{
 		out = await fs.readdirAsync(dir_path);
+		out.sort(function(a, b) {
+			return a.toLowerCase().localeCompare(b.toLowerCase());
+		});
 	}
 	finally{
 		lock.release();
@@ -157,10 +158,29 @@ export async function deep_read_directory(dir_path: string): Promise<util.File_D
 	let contents: any = await read_directory(dir_path);
 	let output: util.File_Descriptor[] = [];
 	for (let name of contents){
-		let stat = await stat_file(dir_path+'/'+name);
+		const original_path = dir_path+'/'+name;
+		let path = original_path;
+		let stat = await stat_file(path);
+		// follow symlinks (with a maximum limit)
+		const maxLevels = 100;
+		let levels = 0;
+		while(stat.isSymbolicLink()) {
+			path = await fs.readlinkAsync(path);
+			if('/' != path[0])
+				path = dir_path+'/'+path;
+			stat = await stat_file(path);
+			++levels;
+			if(maxLevels <= levels) {
+				break;
+			}
+		}
+		if(maxLevels <= levels) {
+			console.error('Unable to properly stat %s: too many symlinks to follow(%d)', original_path, levels);
+			path = original_path;
+		}
 		let desc: util.File_Descriptor = new util.File_Descriptor(name);
 		if (stat.isDirectory())
-			desc.children = await deep_read_directory(dir_path+'/'+name);
+			desc.children = await deep_read_directory(path);
 		else
 			desc.size = stat.size;
 		output.push(desc);
@@ -197,4 +217,29 @@ export async function file_exists(file_path: string): Promise<boolean>{
 	let stat: any = await stat_file(file_path)
 		.catch( e => {} );
 	return (stat && stat.isFile && stat.isFile()) ? true : false;
+}
+export async function delete_matching_recursive(path: string, matches: Array<string>) {
+	// maybe `find path -name=i$match -exec rm {}\;` could be faster?
+	let all: any = await read_directory(path);
+	let contents: Array<string> = await read_directory(path);
+	let matching: Array<string> = contents.filter((file) => {
+		let matching = matches.filter((match) => { return match === file; });
+		return matching.length > 0;
+	});
+	let updated: boolean = false;
+	for(let match of matching) {
+		let full_path = path+'/'+match;
+		await delete_file(full_path);
+		updated = true;
+	}
+	// re-read once updated
+	if(updated)
+		contents = await read_directory(path);
+	for(let file of contents) {
+		let full_path = path+'/'+file;
+		let stat = await stat_file(full_path);
+		if(stat.isDirectory()) {
+			delete_matching_recursive(full_path, matches);
+		}
+	}
 }

@@ -182,11 +182,11 @@ public:
 	 */
 	void setValue(unsigned int channel, bool value){
 		if(value == 0){
-			clearDataOut = setBit(clearDataOut, channel);
-			setDataOut = clearBit(setDataOut, channel);
+			clearDataOut = Bela_setBit(clearDataOut, channel);
+			setDataOut = Bela_clearBit(setDataOut, channel);
 		} else {
-			setDataOut = setBit(setDataOut, channel);
-			clearDataOut = clearBit(clearDataOut, channel);
+			setDataOut = Bela_setBit(setDataOut, channel);
+			clearDataOut = Bela_clearBit(clearDataOut, channel);
 		}
 	}
 
@@ -196,12 +196,12 @@ public:
 	 * @param channel the channel number
 	 */
 	void unmanage(unsigned int channel){
-		messageRate = clearBit(messageRate, channel);
-		signalRate = clearBit(signalRate, channel);
-		modeInput = clearBit(modeInput, channel);
-		modeOutput = clearBit(modeOutput, channel);
-		clearDataOut = clearBit(clearDataOut, channel);
-		setDataOut = clearBit(setDataOut, channel);
+		messageRate = Bela_clearBit(messageRate, channel);
+		signalRate = Bela_clearBit(signalRate, channel);
+		modeInput = Bela_clearBit(modeInput, channel);
+		modeOutput = Bela_clearBit(modeOutput, channel);
+		clearDataOut = Bela_clearBit(clearDataOut, channel);
+		setDataOut = Bela_clearBit(setDataOut, channel);
 	}
 
 	/**
@@ -217,14 +217,14 @@ public:
 	 */
 	void manage(unsigned int channel, bool direction, bool isMessageRate){
 		// direction is expected to be one of INPUT or OUTPUT
-		messageRate = changeBit(messageRate, channel, isMessageRate);
-		signalRate = changeBit(signalRate, channel, !isMessageRate);
+		messageRate = Bela_changeBit(messageRate, channel, isMessageRate);
+		signalRate = Bela_changeBit(signalRate, channel, !isMessageRate);
 		if(direction == OUTPUT){
-			modeOutput = setBit(modeOutput, channel);
-			modeInput = clearBit(modeInput, channel);
+			modeOutput = Bela_setBit(modeOutput, channel);
+			modeInput = Bela_clearBit(modeInput, channel);
 		} else { // direction == INPUT
-			modeInput = setBit(modeInput, channel);
-			modeOutput = clearBit(modeOutput, channel);
+			modeInput = Bela_setBit(modeInput, channel);
+			modeOutput = Bela_clearBit(modeOutput, channel);
 		}
 		if(verbose)
 			rt_printf("Bela digital: channel %d is set as %s at %s rate\n", channel,

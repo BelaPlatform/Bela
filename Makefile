@@ -300,6 +300,8 @@ BELA_LDLIBS += $(LIBPD_LIBS)
 include libraries/Midi/build/Makefile.link
 include libraries/Scope/build/Makefile.link
 include libraries/Gui/build/Makefile.link
+include libraries/Trill/build/Makefile.link
+include libraries/Pipe/build/Makefile.link
 endif
 
 ifndef COMPILER
@@ -379,7 +381,7 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
@@ -420,10 +422,12 @@ debug: all
 
 # syntax = check syntax
 syntax: ## Only checks syntax
-syntax: SYNTAX_FLAG := -fsyntax-only
 syntax: CC=clang
 syntax: CXX=clang++
 syntax: $(PROJECT_OBJS) 
+ifneq (,$(filter syntax,$(MAKECMDGOALS)))
+SYNTAX_FLAG := -fsyntax-only
+endif
 
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
@@ -443,23 +447,29 @@ build/core/%.o: ./core/%.cpp
 
 # Rule for Bela core ASM files
 build/core/%.o: ./core/%.S
+ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
-	$(AT) as  -o "$@" "$<"
+	$(AT) as -o "$@" "$<"
 	$(AT) echo ' ...done'
+endif
 	$(AT) echo ' '
 
 %.bin: pru/%.p
+ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
 	$(AT) pasm -V2 -b "$<" > /dev/null
 	$(AT) echo ' ...done'
+endif
 	$(AT) echo ' '
 
 build/pru/%_bin.h: pru/%.p
+ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
 	$(AT) pasm -V2 -L -c "$<" > /dev/null
 	$(AT) mv "$(@:build/pru/%=%)" build/pru/
 	$(AT) echo ' ...done'
+endif
 	$(AT) echo ' '
 
 # distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
@@ -493,23 +503,26 @@ endif
 
 # Rule for user-supplied assembly files
 $(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.S
+ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
-	$(AT) as  -o "$@" "$<"
+	$(AT) as -o "$@" "$<"
 	$(AT) echo ' ...done'
+endif
 	$(AT) echo ' '
 
 # Rule for user-supplied assembly files
 $(PROJECT_DIR)/%_bin.h: $(PROJECT_DIR)/%.p
+ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 	$(AT) echo 'Invoking: PRU Assembler'
-	$(AT)#Note that pasm will most likely run during the syntax check and will actually generate the output ...
 	$(AT)#check if pasm exists, skip otherwise. This provides (sort of)
 	$(AT)#backwards compatibility in case pre-compiled header is available.
 	$(AT)#pasm outputs to the same folder, so cd to the project folder before running it
 	$(AT) if [ -z "`which pasm`" ]; then echo 'pasm not found, .p files not compiled.' 1>&2; else \
 	      cd $(PROJECT_DIR) &&\
 	      pasm "$<" -c >/dev/null && echo ' ...done'; fi
+endif
 	$(AT) echo ' '
 
 
@@ -748,7 +761,7 @@ update: stop
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
 # some library objects are required by libbelaextra.
-LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o libraries/Midi/build/Midi_c.o
 libraries/%.o: # how to build those objects needed by libbelaextra
 	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $@
 

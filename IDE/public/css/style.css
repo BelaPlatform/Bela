@@ -715,14 +715,15 @@ select.dropdown-num {
     display: block; }
 
 .mini-dropdown select {
-  border: transparent;
-  height: 25px;
-  width: 100%;
-  padding-left: 10px;
+  -moz-appearance: none;
+  -webkit-appearance: none;
   background: transparent;
+  border: transparent;
   font-family: poppins_light;
-  -webkit-appearance: button;
-  vertical-align: center; }
+  height: 25px;
+  padding-left: 10px;
+  vertical-align: center;
+  width: 100%; }
   .mini-dropdown select option {
     width: 100%; }
   .mini-dropdown select .git {
@@ -1217,6 +1218,8 @@ ul dl {
   #popup .radio-container input:checked ~ .radio-button {
     background-color: #1ce8b5;
     opacity: 1; }
+  #popup .create_file_subtext {
+    font-size: .8em; }
   #popup button {
     float: right;
     font-size: 1em;
@@ -1383,16 +1386,17 @@ input[type="number"].number-picker {
 input[type="checkbox"].checkbox-slider,
 .checkbox-slider input[type="checkbox"] {
   height: 18px;
-  left: 10000px;
+  left: 5px;
   position: relative;
-  width: 18px; }
+  width: 18px;
+  -moz-appearance: none !important; }
   input[type="checkbox"].checkbox-slider::before, input[type="checkbox"].checkbox-slider::after,
   .checkbox-slider input[type="checkbox"]::before,
   .checkbox-slider input[type="checkbox"]::after {
     content: '';
     cursor: pointer;
     display: block;
-    left: -10000px;
+    left: -5px;
     position: absolute; }
   input[type="checkbox"].checkbox-slider::before,
   .checkbox-slider input[type="checkbox"]::before {
@@ -1996,7 +2000,7 @@ input[type="range"].scope-range-slider {
     width: 12px; }
   input[type="range"].scope-range-slider:hover::-moz-range-track, input[type="range"].scope-range-slider:active::-moz-range-track {
     background: #1ce8b5;
-    -webkit-transition: background, 100ms, ease-in-out;
+    -moz-transition: background, 100ms, ease-in-out;
     transition: background, 100ms, ease-in-out; }
   input[type="range"].scope-range-slider:hover::-webkit-slider-runnable-track, input[type="range"].scope-range-slider:active::-webkit-slider-runnable-track {
     background: #1ce8b5;

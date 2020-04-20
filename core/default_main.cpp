@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	settings->setup = setup;
 	settings->render = render;
 	settings->cleanup = cleanup;
-	if(argc > 1 && argv[0])
+	if(argc > 0 && argv[0])
 	{
 		settings->projectName = strrchr(argv[0], '/') + 1;
 	}

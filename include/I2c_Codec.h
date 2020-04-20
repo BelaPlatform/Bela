@@ -52,6 +52,8 @@ public:
 	int writeADCVolumeRegisters(bool mute);
 	int setHPVolume(int halfDbSteps);
 	int writeHPVolumeRegisters();
+	int enableHpOut(bool enable);
+	int enableLineOut(bool enable);
 	int disable();
 	int reset(){ return 0; } // Not needed for audio codec on Bela cape
 
@@ -68,6 +70,7 @@ private:
 	int hpVolumeHalfDbs;
 	bool running;
 	bool verbose;
+	bool hpEnabled;
 };
 
 

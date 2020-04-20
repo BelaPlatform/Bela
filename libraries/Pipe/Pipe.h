@@ -20,6 +20,7 @@ public:
 	 * pipe is full, writes will fail.
 	 * @param whether reads at the RT side should be blocking (can be modified later)
 	 * @param whether reads at the non-RT side should be blocking (can be modified later)
+	 * @return true on success, false otherwise
 	 */
 	bool setup(const std::string& pipeName = defaultName, size_t size = 65536 * 128, bool newBlockingRt = false, bool newBlockingNonRt = false);
 	void cleanup();
@@ -74,6 +75,7 @@ public:
 private:
 	bool _writeNonRt(void* ptr, size_t size);
 	bool _writeRt(void* ptr, size_t size);
+	ssize_t _readRtNonRt(void* ptr, size_t size, bool rt);
 	ssize_t _readNonRt(void* ptr, size_t size);
 	ssize_t _readRt(void* ptr, size_t size);
 	static std::string defaultName;
