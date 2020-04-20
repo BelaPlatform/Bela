@@ -20,8 +20,6 @@ class GuiController {
 		int sendSlider(GuiSlider* slider);
 		int sendSliderValue(int sliderIndex);
 
-		friend class Gui;
-
 	public:
 		GuiController();
 		~GuiController();

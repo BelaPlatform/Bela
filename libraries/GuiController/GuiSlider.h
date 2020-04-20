@@ -1,6 +1,7 @@
+#pragma once
+
 #include <string>
 #include <JSON.h>
-#include <iostream>
 
 class GuiSlider {
 	private:
