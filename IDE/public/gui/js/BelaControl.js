@@ -103,7 +103,7 @@ export default class BelaControl extends BelaWebSocket {
                 parsedData.value = Number(parsedData.value.toFixed(7));
                 parsedData.max = Number(parsedData.max.toFixed(7));
                 parsedData.min = Number(parsedData.min.toFixed(7));
-                parsedData.step = Number(0.0001.toFixed(7));
+                parsedData.step = Number(parsedData.step.toFixed(7));
 
                 if(typeof(that.gui.parameters[0]) == 'undefined' || !(parsedData.name in that.gui.parameters[0][parsedData.controller]))
                     that.gui.newSlider( {guiId: parsedData.controller, name: parsedData.name, val: parsedData.value, min: parsedData.min, max: parsedData.max, step: parsedData.step })
