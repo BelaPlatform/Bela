@@ -1,4 +1,5 @@
 import BelaWebSocket from './BelaWebSocket.js'
+import GuiHandler from './GuiHandler.js'
 
 export default class BelaControl extends BelaWebSocket {
     constructor(port=5555, address='gui_control', ip=location.host) {
@@ -8,7 +9,7 @@ export default class BelaControl extends BelaWebSocket {
         this.sliders = [];
         this.selectors = [];
         this.gui = null;
-
+        this.gui_prototype = {}
         this.target = new EventTarget();
         this.events = [
             new CustomEvent('new-slider', {
@@ -41,61 +42,84 @@ export default class BelaControl extends BelaWebSocket {
             }),
         ];
 
+        this.handler = new GuiHandler(this);
+    }
+
+    addGui(name) {
+        if(this.gui == null || typeof this.gui == 'undefined') {
+            this.gui = new this.handler.creator('gui-container', this.handler.iframeEl.contentDocument, this.handler.iframeEl.contentWindow);
+            this.gui.sliderCallback = this.sliderCallback;
+        }
+        let panel
+        if(this.gui.panels.length < 1) {
+            panel = this.gui.newPanel(name);
+        }
+    }
+
+    addSlider(sliderObject) {
+        if(this.gui != null) {
+            let param_exist = typeof(this.gui.parameters[0]) != 'undefined'
+            param_exist = param_exist && sliderObject.controller in this.gui.parameters[0]
+
+            if(!param_exist || !(sliderObject.name in this.gui.parameters[0][sliderObject.controller])) {
+                    delete Object.assign(sliderObject, {['guiId']: sliderObject['controller'] })['controller'];
+                    this.gui.newSlider(sliderObject)
+            }
+        }
     }
 
     onData(data, parsedData) {
-        console.log("Data!")
-        console.log(parsedData)
+        console.log("Data!", parsedData)
 
-
-    	if (parsedData.event == 'connection') {
-            if(parsedData.projectName) {
-                console.log("Project name: "+parsedData.projectName);
-                this.projectName = parsedData.projectName;
-                this.events[2].detail.projectName = this.projectName;
-            }
-            this.target.dispatchEvent(this.events[2]);
-            if(this.gui != null) {
-                this.gui.destroy();
-                this.gui = null;
-            }
-        }
         let that = this;
         (async function() {
             await new Promise(resolve => that.target.addEventListener('gui-ready', function(){
+                console.log("New event -> gui-ready")
                 resolve();
             }));
             that.target.removeEventListener('gui-ready', function(){
                 resolve();
             });
+            console.log("____GUI PROTOTYPES____")
+            if(!(Object.keys(that.gui_prototype).length === 0 && that.gui_prototype.constructor === Object)) {
+                for (let p in that.gui_prototype) {
+                    that.addGui.bind(that)
+                    that.addGui(p)
+                    that.gui_prototype[p]['sliders'].forEach(s => {
+                        that.addSlider(s)
+                    });
+                    delete that.gui_prototype[p]
+                }
+            }
+        })();
 
             if (parsedData.event == 'connection') {
+                console.log('_____NEW_CONNECTION_____')
                 if(parsedData.projectName) {
                     console.log("Project name: "+parsedData.projectName);
-                    that.projectName = parsedData.projectName;
-                    that.events[2].detail.projectName = that.projectName;
+                    this.projectName = parsedData.projectName;
+                    this.events[2].detail.projectName = this.projectName;
                 }
-                if(that.gui != null) {
-                    that.gui.destroy();
-                    that.gui = null;
+                if(this.gui != null) {
+                    this.gui.destroy();
+                    this.gui = null;
                 }
-                that.target.dispatchEvent(that.events[2]);
-                that.send({event: "connection-reply"});
+                this.handler.ready = false;
+                Object.keys(this.handler.type).forEach(k => this.handler.type[k] = false)
+
+                this.target.dispatchEvent(this.events[2]);
+                this.send({event: "connection-reply"});
 
             } else if (parsedData.event == 'set-controller') {
+                console.log('____SET CONTROLLER____')
+                this.handler.type['controller'] = true
                 if(parsedData.name) {
-                    console.log("Controller name: "+parsedData.name);
-                    console.log(that.gui);
-                    if(that.gui == null || typeof that.gui == 'undefined') {
-                        that.gui = new that.handler.creator('gui-container', that.handler.iframeEl.contentDocument, that.handler.iframeEl.contentWindow);
-                        that.gui.sliderCallback = that.sliderCallback;
-                        console.log("that.gui->"+that.gui);
+                    if(this.handler.ready) {
+                        this.addGui.bind(that)
+                        this.addGui(parsedData.name)
+                    } else {
+                        this.gui_prototype[parsedData.name] = {sliders: []}
                     }
-                    let panel
-                    if(that.gui.panels.length < 1)
-                        panel = that.gui.newPanel(parsedData.name);
-
-                    // that.send({event: "controller-reply", id: panel.id})
                 }
             } else if (parsedData.event == 'set-slider') {
                 console.log("Set slider");
@@ -104,21 +128,24 @@ export default class BelaControl extends BelaWebSocket {
                 parsedData.max = Number(parsedData.max.toFixed(7));
                 parsedData.min = Number(parsedData.min.toFixed(7));
                 parsedData.step = Number(parsedData.step.toFixed(7));
-
-                if(typeof(that.gui.parameters[0]) == 'undefined' || !(parsedData.name in that.gui.parameters[0][parsedData.controller]))
-                    that.gui.newSlider( {guiId: parsedData.controller, name: parsedData.name, val: parsedData.value, min: parsedData.min, max: parsedData.max, step: parsedData.step })
-
-                // that.events[0].detail.id = parsedData.slider;
-                // this.target.dispatchEvent(this.events[0]);
+                let slider = {
+                    controller: parsedData.controller,
+                    name: parsedData.name,
+                    value: parsedData.value,
+                    max: parsedData.max,
+                    min: parsedData.min,
+                    step: parsedData.step
+                }
+                if(this.handler.ready) {
+                    this.addSlider.bind(that)
+                    this.addSlider(slider)
+                } else {
+                    this.gui_prototype[parsedData.controller]['sliders'].push(slider);
+                }
             } else if (parsedData.event == 'set-select'){
-                console.log("Set select");
-
             } else if (parsedData.event == 'custom') {
-                console.log(parsedData)
             } else {
-                console.log(parsedData);
             }
-        })();
     }
 
     sliderCallback(value) {
@@ -132,7 +159,6 @@ export default class BelaControl extends BelaWebSocket {
         let params = window.Bela.control.gui.parameters[p.id][obj['controller']];
         let index =  Object.keys(params).indexOf(obj['name']);
         obj['slider'] = index;
-        console.log(obj);
         window.Bela.control.send(obj);
     }
 
