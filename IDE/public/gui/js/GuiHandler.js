@@ -10,7 +10,7 @@ export default class GuiHandler {
 		this.sketchName = 'sketch';
 		this.iframeId = 'gui-iframe';
 		this.iframeEl = null;
-		this.resources = ["../js/p5.min.js", "../js/p5.dom.min.js", "..js/dat.gui.min.js"];
+		this.resources = ["../js/p5.min.js", "..js/dat.gui.min.js"];
 		this.ready = false;
 		this.creator = GuiCreator;
 		this.type = {
