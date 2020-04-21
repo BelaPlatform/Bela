@@ -4,7 +4,11 @@ export default class GuiCreator {
         this.dom = dom;
         this.window = win;
         this.container = dom.getElementById(containerId);
-        this.container.setAttribute("class", "flex-container");
+        if(this.container == null) {
+            this.container = dom.createElement('div');
+            this.container.setAttribute("id", containerId);
+            this.container.setAttribute("class", "flex-container");
+        }
         this.panel = function(id, element, gui) {
             this.id = id;
             this.element = element;
