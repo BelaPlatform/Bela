@@ -118,16 +118,11 @@ export default class GuiCreator {
 
     sliderCallback(value) {
         let val = Number(value.toFixed(7));
-        // console.log(this);
-        // console.log(this.__gui);
-        // console.log(this.property+' ['+this.__gui.name+'] -> '+val);
 
         let obj = {};
         obj['controller'] = this.__gui.name;
         obj['name'] = this.property;
         obj['value'] = val;
-
-        console.log(obj);
         return obj;
     }
 
