@@ -1,0 +1,16 @@
+body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#gui-container {
+    max-width: 50%;
+}
+.gui-panel{
+    flex-basis: auto;
+    margin: 5px;
+}
