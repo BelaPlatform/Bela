@@ -2,9 +2,8 @@ import * as utils from './utils.js'
 import GuiCreator from './GuiCreator.js'
 
 export default class GuiHandler {
-  constructor(bela, parentId='gui') {
-    this.bela = bela;
-    this.bela['control']['handler'] = this;
+  constructor(control, parentId='gui') {
+    this.control = control;
     this.parentId = parentId;
     this.parentEl = document.getElementById(this.parentId);
     this.project = null;
@@ -14,6 +13,11 @@ export default class GuiHandler {
     this.resources = ["../js/p5.min.js", "../js/p5.dom.min.js", "..js/dat.gui.min.js"];
     this.ready = false;
     this.creator = GuiCreator;
+    this.type = {
+        html: false,
+        p5: false,
+        controller: false
+    }
 
     this.placeholder = {
       css: `
@@ -48,20 +52,18 @@ export default class GuiHandler {
   }
 
   onNewConnection(event) {
-      console.log('onNewConnection');
       let projName = event.detail.projectName;
       if(projName != null)
       {
           if(event.target.resolve) {
               event.target.resolve(projName);
           } else {
-              window.GuiHandler.selectGui(projName);
+              this.selectGui(projName);
           }
       }
   }
 
   getProjectName() {
-      console.log('getProjectName');
       let that = this;
       let promise = new Promise(function(resolve, reject) {
           let projName = null;
@@ -71,10 +73,10 @@ export default class GuiHandler {
           if(queryString.has('project'))
               projName = queryString.get('project');
 
-          projName = projName || that.bela.control.projectName;
+          projName = projName || that.control.projectName;
 
-          that.bela.control.target.addEventListener('new-connection', that.onNewConnection);
-          that.bela.control.target.resolve = resolve;
+          that.control.target.addEventListener('new-connection', that.onNewConnection);
+          that.control.target.resolve = resolve;
 
           if(projName != null)
               resolve(projName);
@@ -83,9 +85,7 @@ export default class GuiHandler {
   }
 
   selectProject () {
-      console.log('selectProject');
       this.getProjectName().then((projectName) => {
-          console.log(projectName);
           if(projectName != "null") {
               this.project = projectName;
               this.selectGui(this.project)
@@ -116,8 +116,6 @@ export default class GuiHandler {
   }
 
   selectGui(projectName) {
-      console.log("selectGui");
-
       // Remove iframe
       if(this.iframeEl != null) {
         this.iframeEl.parentNode.removeChild(this.iframeEl);
@@ -126,47 +124,54 @@ export default class GuiHandler {
       let that = this;
       this.project = projectName;
 
-      if(this.project != "exampleTempProject" && this.project != null)
-      {
+      if(this.project != "exampleTempProject" && this.project != null){
           window.location.hash = '#'+this.project;
       } else {
           history.replaceState(null, null, ' ');
       }
 
-      that.bela.control.target.removeEventListener('new-connection', that.onNewConnection);
+      that.control.target.removeEventListener('new-connection', that.onNewConnection);
 
       window.addEventListener("message", function(event) {
           if(event.data['ready'] == true) {
               that.ready = true;
-              that.bela.control.target.dispatchEvent(new Event('gui-ready'));
+              that.control.target.dispatchEvent(new Event('gui-ready'));
           }
       });
 
       let htmlLocation = "/projects/"+projectName+"/main.html";
-      utils.getHtml(htmlLocation)
-      .then((val) => {
-        console.log("Load HTML file on iFrame...")
-        this.clearPlaceholder();
-        this.iframeEl = this.createIframe("/gui/gui-template.html");
-        let htmlContent = val;
-        this.iframeEl.onload = () => {
-          this.iframeEl.contentWindow.postMessage(htmlContent);
-        };
-      })
-      .catch((err) => {
-        console.log("HTML not loaded...");
-        console.log("... try loading script");
-        this.clearPlaceholder();
+      utils.getHtml(htmlLocation).then((val) => {
+            console.log("Load HTML file on iFrame...")
+            that.clearPlaceholder();
+            that.iframeEl = that.createIframe("/gui/gui-template.html");
+            let htmlContent = val;
+            that.iframeEl.onload = () => {
+                that.iframeEl.contentWindow.postMessage(htmlContent);
+            };
+            this.type['html'] = true
 
-        this.iframeEl = this.createIframe("/gui/gui-template.html");
-        this.iframeEl.onload = () => {
-          this.loadSketch(this.project, 'head', this.iframeEl.contentWindow.document);
-        };
+      }).catch((err) => {
+          console.log("HTML not loaded...");
+              console.log("... try loading script");
+              that.clearPlaceholder();
+
+              that.iframeEl = that.createIframe("/gui/gui-template.html");
+
+              that.iframeEl.onload = () => {
+                if(!this.type['controller']) {
+                    that.loadSketch(that.project, 'head', that.iframeEl.contentWindow.document);
+                    this.type['p5'] = true
+                } else {
+
+                }
+                    that.control.target.dispatchEvent(new Event('gui-ready'));
+              };
       });
-      that.bela.control.target.dispatchEvent(new Event('gui-ready'));
-      that.bela.control.target.addEventListener('new-connection', that.onNewConnection);
-      that.bela.control.target.resolve = null;
+        console.log('____LOADED____')
 
+          that.control.target.dispatchEvent(new Event('gui-ready'));
+          that.control.target.addEventListener('new-connection', that.onNewConnection.bind(that));
+          that.control.target.resolve = null;
   }
 
   loadSketch(projectName, parentSection, dom, sketchName='sketch', defaultSource = "/gui/p5-sketches/sketch.js") {
@@ -187,6 +192,12 @@ export default class GuiHandler {
           if(defaultSource != null) {
               console.log("Loading %s instead", defaultSource);
               scriptElement = utils.loadScript(defaultSource, parentSection, dom);
+              scriptElement
+              .then((resolved) => {
+                  console.log("... "+defaultSource+ " loaded");
+              }).catch((rejected) => {
+                  console.log("... "+defaultSource + " couldn't be loaded.")
+              })
           }
       })
       return scriptElement;
