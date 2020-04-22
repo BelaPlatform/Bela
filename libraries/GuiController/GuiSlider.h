@@ -26,8 +26,8 @@ class GuiSlider {
 			return _value;
 		};
 		float getStep() { return _step; };
-		std::string getName() { return _name; };
-		std::wstring getNameW() { return _wname; }
+		std::string& getName() { return _name; };
+		std::wstring& getNameW() { return _wname; }
 		float getMin() { return _range[0]; };
 		float getMax() { return _range[1]; };
 		float getIndex() { return _index; };
@@ -39,5 +39,5 @@ class GuiSlider {
 		int setRange(float min, float max);
 		int setIndex(int index) { return (index < 0) ? -1 : _index=index; };
 
-		JSONObject getParametersAsJSON();
+		JSONObject getParametersAsJSON() const;
 };

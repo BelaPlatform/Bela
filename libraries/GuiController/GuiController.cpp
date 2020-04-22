@@ -49,8 +49,8 @@ bool GuiController::controlCallback(JSONObject &root, void* param)
 			controller->sendController();
 			if(controller->getNumSliders() != 0)
 			{
-				for (auto slider : controller->_sliders)
-					controller->sendSlider(&slider);
+				for (auto& slider : controller->_sliders)
+					controller->sendSlider(slider);
 			}
 		}
 		else if (event.compare(L"slider") == 0)
@@ -70,9 +70,9 @@ bool GuiController::controlCallback(JSONObject &root, void* param)
 	return true;
 }
 
-int GuiController::sendSlider(GuiSlider* slider)
+int GuiController::sendSlider(const GuiSlider& slider)
 {
-	JSONObject root = slider->getParametersAsJSON();
+	JSONObject root = slider.getParametersAsJSON();
 	root[L"event"] = new JSONValue(L"set-slider");
 	root[L"controller"] = new JSONValue(_wname);
 	JSONValue json(root);

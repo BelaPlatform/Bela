@@ -67,7 +67,7 @@ int GuiSlider::setStep(float step)
 	return 0;
 }
 
-JSONObject GuiSlider::getParametersAsJSON()
+JSONObject GuiSlider::getParametersAsJSON() const
 {
 	JSONObject obj;
 	obj[L"name"] = new JSONValue(_wname);

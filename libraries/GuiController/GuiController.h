@@ -17,7 +17,7 @@ class GuiController {
 		std::wstring _wname;
 
 		int sendController();
-		int sendSlider(GuiSlider* slider);
+		int sendSlider(const GuiSlider& slider);
 		int sendSliderValue(int sliderIndex);
 
 	public:
@@ -34,7 +34,7 @@ class GuiController {
 
 		float getSliderValue(int sliderIndex);
 		int setSliderValue(int sliderIndex, float value);
-		GuiSlider* getSlider(int sliderIndex) { return &_sliders.at(sliderIndex); };
+		GuiSlider& getSlider(int sliderIndex) { return _sliders.at(sliderIndex); };
 
 		std::string getName() { return _name; };
 
