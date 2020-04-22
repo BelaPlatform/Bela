@@ -24,14 +24,12 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #include <Bela.h>
 #include <libraries/Scope/Scope.h>
-#include <SampleLoader.h>
-#include <SampleData.h>
-
-#define NUM_CHANNELS 1
+#include <libraries/AudioFile/AudioFile.h>
+#include <vector>
 
 std::string gFilename = "sample.wav";
 
-SampleData gSampleData[NUM_CHANNELS];
+std::vector<std::vector<float> > gSampleData;
 
 int gReadPtr;	// Position of last read sample from file
 
@@ -63,11 +61,7 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	for(int ch=0;ch<NUM_CHANNELS;ch++) {
-        	gSampleData[ch].sampleLen = getNumFrames(gFilename);
-    		gSampleData[ch].samples = new float[gSampleData[ch].sampleLen];
-        	getSamples(gFilename,gSampleData[ch].samples,ch,0,gSampleData[ch].sampleLen);
-	}
+	gSampleData = AudioFileUtilities::load(gFilename);
 
 	gReadPtr = -1;
 	
@@ -121,11 +115,11 @@ void render(BelaContext *context, void *userData)
         for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
             
             // If triggered...
-		    if(gReadPtr != -1)
-		    	out = gSampleData[channel%NUM_CHANNELS].samples[gReadPtr++];	// ...read each sample...
+		if(gReadPtr != -1)
+			out = gSampleData[channel % gSampleData.size()][gReadPtr++];	// ...read each sample...
 
-	    	if(gReadPtr >= gSampleData[channel%NUM_CHANNELS].sampleLen)
-		    	gReadPtr = -1;
+		if(gReadPtr >= gSampleData[channel % gSampleData.size()].size())
+			gReadPtr = -1;
 		    	
     		audioWrite(context, n, channel, out);
     	}
@@ -139,8 +133,6 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
-    for(int ch=0;ch<NUM_CHANNELS;ch++)
-    	delete[] gSampleData[ch].samples;
 }
 
 

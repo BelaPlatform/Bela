@@ -21,13 +21,10 @@ The Bela software is distributed under the GNU Lesser General Public License
 (LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
 
-
 #include <Bela.h>
-#include <cmath>
-#include <SampleLoader.h>
-#include <SampleData.h>
+#include <libraries/AudioFile/AudioFile.h>
+#include <vector>
 
-#define NUM_CHANNELS 2    // NUMBER OF CHANNELS IN THE FILE
 #define BUFFER_LEN 22050   // BUFFER LENGTH
 
 std::string gFilename = "waves.wav";
@@ -35,7 +32,7 @@ int gNumFramesInFile;
 
 // Two buffers for each channel:
 // one of them loads the next chunk of audio while the other one is used for playback
-SampleData gSampleBuf[2][NUM_CHANNELS];
+std::vector<std::vector<float> > gSampleBuf[2];
 
 // read pointer relative current buffer (range 0-BUFFER_LEN)
 // initialise at BUFFER_LEN to pre-load second buffer (see render())
@@ -68,17 +65,17 @@ void fillBuffer(void*) {
           zeroPad = 1;
     }
     
-    for(int ch=0;ch<NUM_CHANNELS;ch++) {
+    for(int ch=0;ch<gSampleBuf[0].size();ch++) {
         
         // fill (nonactive) buffer
-        getSamples(gFilename,gSampleBuf[!gActiveBuffer][ch].samples,ch
+        AudioFileUtilities::getSamples(gFilename,gSampleBuf[!gActiveBuffer][ch].data(),ch
                     ,gBufferReadPtr,endFrame);
                     
         // zero-pad if necessary
         if(zeroPad) {
             int numFramesToPad = BUFFER_LEN - (endFrame-gBufferReadPtr);
             for(int n=0;n<numFramesToPad;n++)
-                gSampleBuf[!gActiveBuffer][ch].samples[n+(BUFFER_LEN-numFramesToPad)] = 0;
+                gSampleBuf[!gActiveBuffer][ch][n+(BUFFER_LEN-numFramesToPad)] = 0;
         }
         
     }
@@ -96,10 +93,7 @@ bool setup(BelaContext *context, void *userData)
 	if((gFillBufferTask = Bela_createAuxiliaryTask(&fillBuffer, 90, "fill-buffer")) == 0)
 		return false;
 	
-    // getNumFrames() and getSamples() are helper functions for getting data from wav files declared in SampleLoader.h
-    // SampleData is a struct that contains an array of floats and an int declared in SampleData.h
-    
-    gNumFramesInFile = getNumFrames(gFilename);
+    gNumFramesInFile = AudioFileUtilities::getNumFrames(gFilename);
     
     if(gNumFramesInFile <= 0)
         return false;
@@ -109,14 +103,8 @@ bool setup(BelaContext *context, void *userData)
         return false;
     }
     
-    for(int ch=0;ch<NUM_CHANNELS;ch++) {
-        for(int i=0;i<2;i++) {
-            gSampleBuf[i][ch].sampleLen = BUFFER_LEN;
-        	gSampleBuf[i][ch].samples = new float[BUFFER_LEN];
-            if(getSamples(gFilename,gSampleBuf[i][ch].samples,ch,0,BUFFER_LEN))
-                return false;
-        }
-    }
+	gSampleBuf[0] = AudioFileUtilities::load(gFilename, BUFFER_LEN, 0);
+	gSampleBuf[1] = gSampleBuf[0]; // initialise the inactive buffer with the same channels and frames as the first one
 
 	return true;
 }
@@ -137,7 +125,7 @@ void render(BelaContext *context, void *userData)
 
     	for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
     	    // Wrap channel index in case there are more audio output channels than the file contains
-    	    float out = gSampleBuf[gActiveBuffer][channel%NUM_CHANNELS].samples[gReadPtr];
+		float out = gSampleBuf[gActiveBuffer][channel%gSampleBuf[0].size()][gReadPtr];
     		audioWrite(context, n, channel, out);
     	}
     	
@@ -147,11 +135,6 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
-    // Delete the allocated buffers
-    for(int ch=0;ch<NUM_CHANNELS;ch++) {
-        for(int i=0;i<2;i++)
-        	delete[] gSampleBuf[i][ch].samples;
-    }
 }
 
 
