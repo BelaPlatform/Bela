@@ -25,8 +25,8 @@ int GuiController::sendController()
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"set-controller");
 	root[L"name"] = new JSONValue(_wname);
-	JSONValue *json = new JSONValue(root);
-	return _gui->sendControl(json);
+	JSONValue json(root);
+	return _gui->sendControl(&json);
 }
 
 void GuiController::cleanup()
@@ -75,8 +75,8 @@ int GuiController::sendSlider(GuiSlider* slider)
 	JSONObject root = slider->getParametersAsJSON();
 	root[L"event"] = new JSONValue(L"set-slider");
 	root[L"controller"] = new JSONValue(_wname);
-	JSONValue *json = new JSONValue(root);
-	return _gui->sendControl(json);
+	JSONValue json(root);
+	return _gui->sendControl(&json);
 }
 
 int GuiController::sendSliderValue(int sliderIndex)
@@ -88,16 +88,15 @@ int GuiController::sendSliderValue(int sliderIndex)
 	root[L"index"] = new JSONValue(slider.getIndex());
 	root[L"name"] = new JSONValue(slider.getNameW());
 	root[L"value"] = new JSONValue(slider.getValue());
-	JSONValue *json = new JSONValue(root);
-	return _gui->sendControl(json);
+	JSONValue json = JSONValue(root);
+	return _gui->sendControl(&json);
 }
 
 int GuiController::addSlider(std::string name, float value, float min, float max, float step)
 {
-	GuiSlider* s = new GuiSlider(name, value, min, max, step);
-	s->setIndex(getNumSliders());
-	_sliders.push_back(*s);
-	return s->getIndex();
+	_sliders.push_back(GuiSlider(name, value, min, max, step));
+	_sliders.back().setIndex(getNumSliders() - 1);
+	return _sliders.back().getIndex();
 }
 
 float GuiController::getSliderValue(int sliderIndex)
