@@ -9,7 +9,7 @@ Get them here: https://github.com/sensestage/bela-remote
 
 
 ( // connect to the already-running remote belaserver
-Server.default = s = Server("belaServer", NetAddr("192.168.7.2", 57110));
+Server.default = s = Server("belaServer", NetAddr("bela.local", 57110));
 s.options.maxLogins = 4; // should match the settings on the Bela
 s.initTree;
 s.startAliveThread;

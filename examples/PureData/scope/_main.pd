@@ -12,12 +12,8 @@ click;
 #X text 16 43 You can log any signal to the scope by using the DAC~
 ;
 #X text 16 57 outputs 27-30;
-#X text 17 117 If using the build scripts or compiled using Heavy \,
-make;
-#X text 16 146 up the scope in your browser http://192.168.7.2/scope/
+#X text 16 120 Open the scope in your browser by going to http://bela.local/scope/
 ;
-#X text 17 132 sure the IDE is running ( ./ide.sh start ) and then
-bring;
 #X connect 1 0 0 0;
 #X connect 2 0 0 1;
 #X connect 3 0 0 3;
