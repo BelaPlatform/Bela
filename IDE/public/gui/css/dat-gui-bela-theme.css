@@ -86,6 +86,7 @@
 }
 .dg .cr.number input[type="text"] {
     color: rgb(0, 190, 164);
+    -webkit-text-fill-color: rgb(0, 190, 164); /* bloody Safari, why on earth? */
     background: rgba(201, 201, 201, 0.75);
 }
 .dg .cr.number {
