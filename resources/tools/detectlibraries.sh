@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+[ -z "$DETECT_LIBRARIES_VERBOSE" ] && DETECT_LIBRARIES_VERBOSE=0
 getfield() {
 	awk -v pat="$1" -F"=" ' $0 ~ pat { print $2 } ' $2
 }
@@ -20,7 +21,10 @@ extract_dependencies() {
 		if ! grep -Fxq "$D" "$LIBLIST" ; then
 			extract_dependencies $D ;
 		else
-			echo Library $D has already been checked for dependencies
+			if [ "$DETECT_LIBRARIES_VERBOSE" != 0 ]
+			then
+				echo Library $D has already been checked for dependencies
+			fi
 		fi
 	done
 }
