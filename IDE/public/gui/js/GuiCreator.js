@@ -80,6 +80,7 @@ export default class GuiCreator {
 
 		value = value>max ? max : value;
 		value = value<min ? min : value;
+		step = step === undefined || step === 0 ? 0.0001 : step;
 
 		let p = this.getPanel({guiId: parent});
 		if(p == null)
