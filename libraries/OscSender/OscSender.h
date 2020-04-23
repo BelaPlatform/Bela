@@ -49,7 +49,7 @@ class OscSender{
 		 * \brief Adds an int argument to a message
 		 *
 		 * Can optionally be chained with other calls to add(), newMessage() and
-		 * send() or sendNow()
+		 * send()
 		 *
 		 * @param payload the argument to be added to the message
 		 */
@@ -58,7 +58,7 @@ class OscSender{
 		 * \brief Adds a float argument to a message
 		 *
 		 * Can optionally be chained with other calls to add(), newMessage() and
-		 * send() or sendNow()
+		 * send()
 		 *
 		 * @param payload the argument to be added to the message
 		 */
@@ -67,7 +67,7 @@ class OscSender{
 		 * \brief Adds a string argument to a message
 		 *
 		 * Can optionally be chained with other calls to add(), newMessage() and
-		 * send() or sendNow()
+		 * send()
 		 *
 		 * @param payload the argument to be added to the message
 		 */
@@ -76,7 +76,7 @@ class OscSender{
 		 * \brief Adds a boolean argument to a message
 		 *
 		 * Can optionally be chained with other calls to add(), newMessage() and
-		 * send() or sendNow()
+		 * send()
 		 *
 		 * @param payload the argument to be added to the message
 		 */
@@ -86,7 +86,7 @@ class OscSender{
 		 *
 		 * Copies binary data into a buffer, which is sent as a binary blob.
 		 * Can optionally be chained with other calls to add(), newMessage() and
-		 * send() or sendNow()
+		 * send()
 		 *
 		 * @param ptr pointer to the data to be sent
 		 * @param num_bytes the number of bytes to be sent
