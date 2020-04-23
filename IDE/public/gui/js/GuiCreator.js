@@ -75,11 +75,11 @@ export default class GuiCreator {
 		}
 	}
 
-	newSlider({guiId, name, val=0.5, min=0, max=1, step=0.01, panelId, parent}) {
+	newSlider({guiId, name, value=0.5, min=0, max=1, step=0.01, panelId, parent}) {
 		if(typeof(guiId) == 'undefined') return null;
 
-		val = val>max ? max : val;
-		val = val<min ? min : val;
+		value = value>max ? max : value;
+		value = value<min ? min : value;
 
 		let p = this.getPanel({guiId: parent});
 		if(p == null)
@@ -95,7 +95,7 @@ export default class GuiCreator {
 
 		this.parameters[p.id] = this.parameters[p.id] || {};
 		this.parameters[p.id][guiId] = this.parameters[p.id][guiId] || {};
-		this.parameters[p.id][guiId][name] = val;
+		this.parameters[p.id][guiId][name] = value;
 
 		let slider = guiF.add(this.parameters[p.id][guiId], name, min, max, step);
 		// disable input
