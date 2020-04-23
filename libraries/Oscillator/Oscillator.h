@@ -1,6 +1,8 @@
 /***** Oscillator.h *****/
 #pragma once
 #include <cmath>
+#include <math_neon.h>
+
 class Oscillator {
 	public:
 		Oscillator(){};
@@ -26,7 +28,7 @@ class Oscillator {
 				default:
 				// SINEWAVE
 				case sine:
-					out = sinf(phase_);
+					out = sinf_neon(phase_);
 					break;
 				// TRIANGLE WAVE
 				case triangle:
