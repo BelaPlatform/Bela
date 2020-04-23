@@ -107,7 +107,7 @@ bool setup(BelaContext *context, void *userData)
  // For each possible touch...
  for(unsigned int i = 0; i < NUM_TOUCH; i++) {
 	 // Setup corresponding oscillator
-	 osc[i].setup(gFreqRange[0], context->audioSampleRate, Oscillator::sine);
+	 osc[i].setup(context->audioSampleRate, Oscillator::sine);
 	 // Setup low pass filters for smoothing frequency and amplitude
 	 freqFilt[i].setup(gCutOffFreq, context->audioSampleRate);
 	 ampFilt[i].setup(gCutOffAmp, context->audioSampleRate);
@@ -136,12 +136,10 @@ void render(BelaContext *context, void *userData)
 		 frequency = map(gTouchLocation[i], 0, 1, gFreqRange[0], gFreqRange[1]);
 		 // Uncomment the line below to apply a filter to the frequency of the oscillators
 		 // frequency = freqFilt[i].process(frequency);
-		 osc[i].setFrequency(frequency);
-
 		 amplitude = map(gTouchSize[i], 0, 1, gAmplitudeRange[0], gAmplitudeRange[1]);
 		 amplitude = ampFilt[i].process(amplitude);
 
-		 out += (1.f/NUM_TOUCH) * amplitude * osc[i].process();
+		 out += (1.f/NUM_TOUCH) * amplitude * osc[i].process(frequency);
 	 }
 	 // Write computed output to audio channels
 	 for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {

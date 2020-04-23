@@ -137,7 +137,7 @@ bool setup(BelaContext *context, void *userData)
 	ampFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 
 	// Setup triangle oscillator	
-	osc.setup(gFreqRange[0], context->audioSampleRate, Oscillator::triangle);
+	osc.setup(context->audioSampleRate, Oscillator::triangle);
 
 	return true;
 }
@@ -151,7 +151,6 @@ void render(BelaContext *context, void *userData)
 		frequency = map(gTouchPosition[1], 0, 1, gFreqRange[0], gFreqRange[1]);
 		// Smooth frequency using low-pass filter
 		frequency = freqFilt.process(frequency);
-		osc.setFrequency(frequency);
 	
 		// Smooth panning (given by the X-axis) changes using low-pass filter
 		float panning = panFilt.process(gTouchPosition[0]);
@@ -163,7 +162,7 @@ void render(BelaContext *context, void *userData)
 		// size) using a low-pass filter	
 		float amplitude = ampFilt.process(gTouchSize);
 		// Calculate output of the oscillator	
-		float out = amplitude * osc.process();
+		float out = amplitude * osc.process(frequency);
 
 		// Write oscillator to left and right channels
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {

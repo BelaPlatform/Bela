@@ -13,6 +13,7 @@ at the GUI page: bela.local/gui/
 #include <libraries/Oscillator/Oscillator.h>
 #include <libraries/Gui/Gui.h>
 #include <libraries/GuiController/GuiController.h>
+#include <cmath>
 
 Gui gui;
 GuiController controller;
@@ -23,7 +24,7 @@ unsigned int gAmplitudeSliderIdx;
 
 bool setup(BelaContext *context, void *userData)
 {
-	oscillator.setup(0, context->audioSampleRate);
+	oscillator.setup(context->audioSampleRate);
 
 	// Set up the GUI
 	gui.setup(context->projectName);
