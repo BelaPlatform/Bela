@@ -42,13 +42,6 @@ var paths = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
 var DecompressZip = require("decompress-zip");
-var fs = require("fs-extra-promise");
-//if mkdtempAsync below fails
-//You could use the horrible workaround below while waiting for this to be merged:
-// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44119
-//or apply this https://github.com/giuliomoro/DefinitelyTyped/commit/a6be5230e9986e09d1450eef8d04f124b8432400 to your node_modules/@types/fs-extra-promise/
-//import * as fsTmp from 'fs-extra-promise';
-//let fs : any = fsTmp;
 var max_file_size = 52428800; // bytes (50Mb)
 var max_preview_size = 524288000; // bytes (500Mb)
 function emptyObject(obj) {
@@ -599,10 +592,12 @@ exports.uploadFile = uploadFile;
 function uploadZipProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
-        var target_path, file_exists, _a, tmp_folder, tmp_zip_path, tmp_project_path, _cleanup;
+        var tmp_path, tmp_target_path, target_path, file_exists, _a, _cleanup;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
+                    tmp_path = paths.tmp + data.newFile;
+                    tmp_target_path = tmp_path.replace(/\.zip$/, "/");
                     target_path = paths.projects + data.newProject;
                     return [4 /*yield*/, file_manager.file_exists(target_path)];
                 case 1:
@@ -620,35 +615,22 @@ function uploadZipProject(data) {
                         data.fileName = null;
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, fs.mkdtempAsync(paths.tmp + data.newProject + '_')];
+                    return [4 /*yield*/, file_manager.save_file(tmp_path, data.fileData)];
                 case 4:
-                    tmp_folder = _b.sent();
-                    tmp_zip_path = tmp_folder + '/' + data.newFile;
-                    tmp_project_path = tmp_folder + '/' + data.newProject;
-                    return [4 /*yield*/, file_manager.save_file(tmp_zip_path, data.fileData)];
-                case 5:
                     _b.sent();
-                    _cleanup = function (tmp_folder) {
-                        return __awaiter(this, void 0, void 0, function () {
-                            return __generator(this, function (_a) {
-                                switch (_a.label) {
-                                    case 0: return [4 /*yield*/, file_manager.file_exists(tmp_folder)];
-                                    case 1:
-                                        if (_a.sent())
-                                            file_manager.delete_file(tmp_folder);
-                                        return [2 /*return*/];
-                                }
-                            });
-                        });
-                    }.bind(null, tmp_folder);
+                    _cleanup = function (tmp_path, tmp_target_path) {
+                        //file_manager.delete_file(tmp_path);
+                        //file_manager.delete_file(tmp_target_path);
+                    }.bind(null, tmp_path, tmp_target_path);
+                    _cleanup();
                     return [2 /*return*/, new Promise(function (resolve, reject) {
                             var pathsToRemove = ["__MACOSX", ".DS_Store"];
-                            var unzipper = new DecompressZip(tmp_zip_path);
+                            var unzipper = new DecompressZip(tmp_path);
                             unzipper.on("extract", function (e) { return __awaiter(_this, void 0, void 0, function () {
                                 var fileList, isRoot, source_path;
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
-                                        case 0: return [4 /*yield*/, file_manager.deep_read_directory(tmp_project_path)];
+                                        case 0: return [4 /*yield*/, file_manager.deep_read_directory(tmp_target_path)];
                                         case 1:
                                             fileList = _a.sent();
                                             isRoot = false;
@@ -659,12 +641,12 @@ function uploadZipProject(data) {
                                                     isRoot = true;
                                             }
                                             if (isRoot) {
-                                                source_path = tmp_project_path;
+                                                source_path = tmp_target_path;
                                                 console.log("Use as is: ", source_path);
                                             }
                                             else {
                                                 // peel off the first folder
-                                                source_path = tmp_project_path + fileList[0].name + "/";
+                                                source_path = tmp_target_path + fileList[0].name + "/";
                                                 console.log("Strip off the top-level folder: ", source_path);
                                             }
                                             return [4 /*yield*/, file_manager.copy_directory(source_path, target_path)];
@@ -684,14 +666,14 @@ function uploadZipProject(data) {
                                 return __generator(this, function (_a) {
                                     data.fileData = null;
                                     data.fileName = null;
-                                    data.error = "Error extracting zip archive " + tmp_zip_path + ": " + e.message;
+                                    data.error = "Error extracting zip archive " + tmp_path + ": " + e.message;
                                     _cleanup();
                                     resolve();
                                     return [2 /*return*/];
                                 });
                             }); });
                             unzipper.extract({
-                                path: tmp_project_path,
+                                path: tmp_target_path,
                                 filter: function (file) {
                                     var matching = pathsToRemove.filter(function (needle) {
                                         var path = file.path;

@@ -8,13 +8,6 @@ import * as fileType from 'file-type';
 import * as DecompressZip from 'decompress-zip';
 import * as fs from 'fs-extra-promise';
 
-//if mkdtempAsync below fails
-//You could use the horrible workaround below while waiting for this to be merged:
-// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44119
-//or apply this https://github.com/giuliomoro/DefinitelyTyped/commit/a6be5230e9986e09d1450eef8d04f124b8432400 to your node_modules/@types/fs-extra-promise/
-//import * as fsTmp from 'fs-extra-promise';
-//let fs : any = fsTmp;
-
 let max_file_size = 52428800;	// bytes (50Mb)
 let max_preview_size = 524288000;	// bytes (500Mb)
 
@@ -313,6 +306,8 @@ export async function uploadFile(data: any){
 }
 
 export async function uploadZipProject(data: any){
+	let tmp_path = paths.tmp + data.newFile;
+	let tmp_target_path = tmp_path.replace(/\.zip$/, "/");
 	let target_path = paths.projects + data.newProject;
 	let file_exists = (await file_manager.file_exists(target_path) || await file_manager.directory_exists(target_path));
 	if (file_exists && !data.force){
@@ -321,20 +316,17 @@ export async function uploadZipProject(data: any){
 		data.fileName = null;
 		return;
 	}
-	// if the next line fails to compile, see workaround above
-	let tmp_folder: string = await fs.mkdtempAsync(paths.tmp + data.newProject + '_');
-	let tmp_zip_path = tmp_folder + '/' + data.newFile;
-	let tmp_project_path = tmp_folder + '/' + data.newProject;
-	await file_manager.save_file(tmp_zip_path, data.fileData);
-	let _cleanup = async function (tmp_folder: string) {
-		if(await file_manager.file_exists(tmp_folder))
-			file_manager.delete_file(tmp_folder);
-	}.bind(null, tmp_folder);
+	await file_manager.save_file(tmp_path, data.fileData);
+	let _cleanup = function (tmp_path: string, tmp_target_path: string) {
+		//file_manager.delete_file(tmp_path);
+		//file_manager.delete_file(tmp_target_path);
+	}.bind(null, tmp_path, tmp_target_path);
+	_cleanup();
 	return new Promise<never> ((resolve, reject) => {
 		let pathsToRemove = [ "__MACOSX", ".DS_Store" ];
-		let unzipper = new DecompressZip(tmp_zip_path);
+		let unzipper = new DecompressZip(tmp_path);
 		unzipper.on("extract", async (e: any) => {
-			let fileList = await file_manager.deep_read_directory(tmp_project_path);
+			let fileList = await file_manager.deep_read_directory(tmp_target_path);
 			//TODO: find root recursively as the first folder containing a file or more than one folder
 			let isRoot = false;
 			if(fileList.length > 1)
@@ -346,11 +338,11 @@ export async function uploadZipProject(data: any){
 
 			let source_path : string;
 			if(isRoot) {
-				source_path = tmp_project_path;
+				source_path = tmp_target_path;
 				console.log("Use as is: ", source_path);
 			} else {
 				// peel off the first folder
-				source_path = tmp_project_path+fileList[0].name+"/";
+				source_path = tmp_target_path+fileList[0].name+"/";
 				console.log("Strip off the top-level folder: ", source_path);
 			}
 			await file_manager.copy_directory(source_path, target_path);
@@ -362,12 +354,12 @@ export async function uploadZipProject(data: any){
 		unzipper.on("error", async (e: any) => {
 			data.fileData = null;
 			data.fileName = null;
-			data.error = "Error extracting zip archive "+tmp_zip_path+": "+e.message;
+			data.error = "Error extracting zip archive "+tmp_path+": "+e.message;
 			_cleanup();
 			resolve();
 		})
 		unzipper.extract({
-			path: tmp_project_path,
+			path: tmp_target_path,
 			filter: function (file: any) {
 				let matching : Array<string> = pathsToRemove.filter((needle) => {
 					let path : string = file.path;
