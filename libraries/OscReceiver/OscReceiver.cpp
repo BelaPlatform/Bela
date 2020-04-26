@@ -3,6 +3,8 @@
 #include <AuxTaskNonRT.h>
 #include <libraries/UdpServer/UdpServer.h>
 
+#define OSCRECEIVER_POLL_US 5000
+
 OscReceiver::OscReceiver(){}
 OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg){
 	setup(port, on_receive, callbackArg);

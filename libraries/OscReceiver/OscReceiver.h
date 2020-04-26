@@ -1,13 +1,13 @@
 #pragma once
 
+#include <functional>
 #include <memory>
-#include <oscpkt.hh>	// neccesary for definition of oscpkt::Message in callback
+#include <oscpkt.hh> // necessary for definition of oscpkt::Message in callback
 
 // forward declarations to speed up compilation
 class AuxTaskNonRT;
 class UdpServer;
 
-#define OSCRECEIVER_POLL_US 5000
 #define OSCRECEIVER_BUFFERSIZE 65536
 
 /**
