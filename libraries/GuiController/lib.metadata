@@ -1,0 +1,17 @@
+name=GuiController
+version=1.0.0
+author=Adan Benito<adan@bela.io>
+maintainer=Adan Benito<adan@bela.io>
+description=
+examples=
+license=LGPL 3.0
+url=
+board=*
+dependencies=Gui
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

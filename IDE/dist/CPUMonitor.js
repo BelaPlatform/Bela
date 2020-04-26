@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -52,12 +52,6 @@ var find_pid_count;
 function start(pid, project, cb) {
     root_pid = pid;
     // the process name gets cut off at 15 chars
-    if (typeof (project) === "object") {
-        project = project.join("");
-    }
-    else if (typeof (project) !== "string") {
-        project = "";
-    }
     name = project.substring(0, 15) || project[0].substring(0, 15);
     callback = cb;
     stopped = false;

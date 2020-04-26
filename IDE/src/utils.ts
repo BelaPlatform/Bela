@@ -5,7 +5,7 @@ export class File_Descriptor {
 		this.size = size;
 		this.children = children;
 	}
-	private name: string;
+	readonly name: string;
 	size: number | undefined = undefined;
 	children: File_Descriptor[] | undefined = undefined;
 }

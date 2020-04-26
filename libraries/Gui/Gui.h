@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <string>
 #include <WSServer.h>
@@ -8,8 +10,6 @@
 
 // forward declarations
 class WSServer;
-class JSONValue;
-class AuxTaskRT;
 
 class Gui
 {
@@ -22,8 +22,8 @@ class Gui
 
 		void ws_connect();
 		void ws_disconnect();
-		void ws_onControlData(const char* data, int size);
-		void ws_onData(const char* data, int size);
+		void ws_onControlData(const char* data, unsigned int size);
+		void ws_onData(const char* data, unsigned int size);
 		int doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size);
 
 		unsigned int _port;
@@ -32,8 +32,8 @@ class Gui
 		std::wstring _projectName;
 
 		// User defined functions
-		std::function<bool(const char*, int, void*)> customOnControlData;
-		std::function<bool(const char*, int, void*)> customOnData;
+		std::function<bool(JSONObject&, void*)> customOnControlData;
+		std::function<bool(const char*, unsigned int, void*)> customOnData;
 
 		void* userControlData = nullptr;
 		void* userBinaryData = nullptr;
@@ -75,31 +75,46 @@ class Gui
 
 		/**
 		 * Set callback to parse control data received from the client.
-		 * @param callback Callback to be called whenever new control data is received.
-		 * 	Takes a byte buffer, the size of the buffer and a pointer as parameters.
-		 * 	The first two parameters are used for the data received on the web-socket.
-		 *	The third parameter is used to access data structures pointed by the user.
 		 *
-		 * @param customControlData Pointer to data structure to be pased to the callback.
+		 * @param callback Callback to be called whenever new control
+		 * data is received.
+		 * The callback takes a JSONObject, and an opaque pointer, which is
+		 * passed at the moment of registering the callback.
+		 * The callback should return `true` if the default callback should
+		 * be called afterward or `false` otherwise.
+		 *
+		 * @param callback the function to be called upon receiving data on the
+		 * control WebSocket
+		 * @param customBinaryData an opaque pointer that will be passed to the
+		 * callback
 		 **/
-		void setControlDataCallback(std::function<bool(const char*, int, void*)> callback, void* customControlData=nullptr){
+		void setControlDataCallback(std::function<bool(JSONObject&, void*)> callback, void* customControlData=nullptr){
 			customOnControlData = callback;
 			userControlData = customControlData;
 		};
+
 		/**
 		 * Set callback to parse binary data received from the client.
-		 * @param callback: Callback to be called whenever new data is received.
-		 * 	Takes a byte buffer, the size of the buffer and a pointer as parameters.
-		 * 	The first two parameters are used for the data received on the web-socket.
-		 *	The third parameter is used to access data structures pointed by the user.
 		 *
-		 * @param customBinaryData: Pointer to data structure to be pased to the callback.
+		 * @param callback Callback to be called whenever new control
+		 * data is received.
+		 * It takes a byte buffer, the size of the buffer and a pointer
+		 * as parameters, returns `true `if the default callback should
+		 * be called afterward or `false` otherwise. The first two
+		 * parameters are used for the data received on the web-socket.
+		 * The third parameter is a user-defined opaque pointer
+		 *
+		 * @param customBinaryData: Pointer to be passed to the
+		 * callback.
 		 **/
-
-		void setBinaryDataCallback(std::function<bool(const char*, int, void*)> callback, void* customBinaryData=nullptr){
+		void setBinaryDataCallback(std::function<bool(const char*, unsigned int, void*)> callback, void* customBinaryData=nullptr){
 			customOnData = callback;
 			userBinaryData = customBinaryData;
 		};
+		/** Sends a JSON value to the control websocket.
+		 * Returns 0 on success, or an error code otherwise.
+		 * */
+		int sendControl(JSONValue* root);
 
 		/**
 		 * Sends a buffer (a vector) through the web-socket to the client with a given ID.

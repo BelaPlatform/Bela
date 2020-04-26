@@ -84,8 +84,8 @@ void dumpMidi()
 			gMidiPortNames[n].c_str(),
 			midi[n]->isInputEnabled() ? "x" : "_",
 			midi[n]->isOutputEnabled() ? "x" : "_",
-			n * 16,
-			n * 16 + 15
+			n * 16 + 1,
+			n * 16 + 16
 		);
 	}
 }
@@ -119,7 +119,7 @@ Midi* openMidiDevice(std::string name, bool verboseSuccess = false, bool verbose
 
 static unsigned int getPortChannel(int* channel){
 	unsigned int port = 0;
-	while(*channel > 16){
+	while(*channel >= 16){
 		*channel -= 16;
 		port += 1;
 	}

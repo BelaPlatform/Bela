@@ -14,8 +14,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -44,14 +44,31 @@ var file_manager = require("./FileManager");
 var paths = require("./paths");
 var routes = require("./RouteManager");
 var path = require("path");
+var globals = require("./globals");
 var TerminalManager = require('./TerminalManager');
 function init() {
     return __awaiter(this, void 0, void 0, function () {
-        var app, server;
+        var httpPort, ideDev, app, server;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log('starting IDE');
+                    httpPort = 80;
+                    // load customised "dev" settings, if available. See
+                    // IDE/ide-dev.js.template for details on the file content
+                    try {
+                        ideDev = require('../ide-dev.js');
+                        if (ideDev) {
+                            console.log("ideDev: ", ideDev);
+                            if (ideDev.hasOwnProperty('Bela'))
+                                paths.set_Bela(ideDev.Bela);
+                            if (ideDev.hasOwnProperty('local_dev'))
+                                globals.set_local_dev(ideDev.local_dev);
+                            if (ideDev.hasOwnProperty('httpPort'))
+                                httpPort = ideDev.httpPort;
+                        }
+                    }
+                    catch (err) { }
+                    console.log('starting IDE from ' + paths.Bela);
                     return [4 /*yield*/, check_lockfile()
                             .catch(function (e) { return console.log('error checking lockfile', e); })];
                 case 1:
@@ -59,8 +76,8 @@ function init() {
                     app = express();
                     server = new http.Server(app);
                     setup_routes(app);
-                    // start serving the IDE on port 80
-                    server.listen(80, function () { return console.log('listening on port', 80); });
+                    // start serving the IDE
+                    server.listen(httpPort, function () { return console.log('listening on port', httpPort); });
                     // initialise websocket
                     socket_manager.init(server);
                     TerminalManager.init();
@@ -152,11 +169,12 @@ function setup_routes(app) {
     app.use('/gui', express.static(paths.gui));
 }
 function get_xenomai_version() {
+    if (globals.local_dev)
+        return new Promise(function (resolve) { return resolve("3.0"); });
     return new Promise(function (resolve, reject) {
         child_process.exec('/usr/xenomai/bin/xeno-config --version', function (err, stdout, stderr) {
             if (err) {
                 console.log('error reading xenomai version');
-                reject(err);
             }
             if (stdout.includes('2.6')) {
                 paths.set_xenomai_stat('/proc/xenomai/stat');
@@ -170,6 +188,8 @@ function get_xenomai_version() {
 }
 exports.get_xenomai_version = get_xenomai_version;
 function set_time(time) {
+    if (globals.local_dev)
+        return;
     child_process.exec('date -s "' + time + '"', function (err, stdout, stderr) {
         if (err || stderr) {
             console.log('error setting time', err, stderr);
@@ -187,10 +207,12 @@ exports.shutdown = shutdown;
 function board_detect() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
+            if (globals.local_dev)
+                return [2 /*return*/, 'unknown'];
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     child_process.exec('board_detect', function (err, stdout, stderr) {
                         if (err)
-                            reject(err);
+                            stdout = 'unknown';
                         console.log('running on', stdout);
                         resolve(stdout);
                     });

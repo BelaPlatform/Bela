@@ -115,7 +115,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	if(touchSensor.setup(1, 0x28, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
@@ -123,7 +123,7 @@ bool setup(BelaContext *context, void *userData)
 	touchSensor.printDetails();
 
 	// Exit program if sensor is not a Trill Square
-	if(touchSensor.deviceType() != Trill::TWOD) {
+	if(touchSensor.deviceType() != Trill::SQUARE) {
 		fprintf(stderr, "This example is supposed to work only with the Trill SQUARE. \n You may have to adapt it to make it work with other Trill devices.\n");
 		return false;
 	}
@@ -137,7 +137,7 @@ bool setup(BelaContext *context, void *userData)
 	ampFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 
 	// Setup triangle oscillator	
-	osc.setup(gFreqRange[0], context->audioSampleRate, Oscillator::triangle);
+	osc.setup(context->audioSampleRate, Oscillator::triangle);
 
 	return true;
 }
@@ -151,7 +151,6 @@ void render(BelaContext *context, void *userData)
 		frequency = map(gTouchPosition[1], 0, 1, gFreqRange[0], gFreqRange[1]);
 		// Smooth frequency using low-pass filter
 		frequency = freqFilt.process(frequency);
-		osc.setFrequency(frequency);
 	
 		// Smooth panning (given by the X-axis) changes using low-pass filter
 		float panning = panFilt.process(gTouchPosition[0]);
@@ -163,7 +162,7 @@ void render(BelaContext *context, void *userData)
 		// size) using a low-pass filter	
 		float amplitude = ampFilt.process(gTouchSize);
 		// Calculate output of the oscillator	
-		float out = amplitude * osc.process();
+		float out = amplitude * osc.process(frequency);
 
 		// Write oscillator to left and right channels
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {

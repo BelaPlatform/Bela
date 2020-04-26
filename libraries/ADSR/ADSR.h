@@ -16,13 +16,10 @@
 //  You may modify and use this source code to create binary code for your own purposes, free or commercial.
 //
 
-#ifndef ADRS_h
-#define ADRS_h
+#pragma once
 
 #include <stdio.h>
 #include <string>
-
-using namespace std;
 
 enum envState {
 	env_idle = 0,
@@ -64,7 +61,7 @@ protected:
     float attackBase;
     float decayBase;
     float releaseBase;
-	string name;
+    std::string name;
     float calcCoef(float rate, float targetRatio);
 };
 
@@ -132,6 +129,3 @@ inline void ADSR::reset() {
 inline float ADSR::getOutput() {
 	return output;
 }
-
-
-#endif

@@ -928,7 +928,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			rt_fprintf(stderr, "PRU interrupt timeout, %d %d %s\n", ret, errno, strerror(errno));
 			if(interruptTimeoutCount >= 5)
 			{
-				fprintf(stderr, "The PRU stopped responding. Is the light still blinking? It would be very helpful if you could send the output of the `dmesg` command to the developers to help track down the issue. Quitting.\n");
+				fprintf(stderr, "McASP error, abort\n");
 				exit(1); // Quitting abruptly, purposedly skipping the cleanup so that we can inspect the PRU with prudebug.
 			}
 			task_sleep_ns(100000000);

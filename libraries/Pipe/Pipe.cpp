@@ -110,29 +110,41 @@ bool Pipe::_writeRt(void* ptr, size_t size)
 
 ssize_t Pipe::_readRt(void* ptr, size_t size)
 {
-	bool doIt = false;
-	int ret = 0;
-	if(blockingRt)
-	{
-		struct timeval tv;
-		tv.tv_sec = ((unsigned int)timeoutMsRt) / 1000;
-		tv.tv_usec = (timeoutMsRt - tv.tv_sec * 1000.f) * 1000.f;
-		fd_set fdSet;
-		FD_ZERO(&fdSet);
-		FD_SET(pipeSocket, &fdSet);
-		ret = __wrap_select(pipeSocket + 1, &fdSet, NULL, NULL, &tv);
-		if(1 == ret && FD_ISSET(pipeSocket, &fdSet))
-			doIt = true;
-	}
-	if(!blockingRt || doIt){
-		ret = __wrap_recv(pipeSocket, ptr, size, 0);
-	}
-	return ret;
+	return _readRtNonRt(ptr, size, true);
 }
 
 ssize_t Pipe::_readNonRt(void* ptr, size_t size)
 {
-	return read(fd, ptr, size);
+	return _readRtNonRt(ptr, size, false);
+}
+
+ssize_t Pipe::_readRtNonRt(void* ptr, size_t size, bool rt)
+{
+	bool blocking = rt ? blockingRt : blockingNonRt;
+	double timeoutMs = rt ? timeoutMsRt : timeoutMsNonRt;
+	int (*_select)(int, fd_set*, fd_set*, fd_set*, struct timeval*) = rt ? __wrap_select : select;
+	int file = rt ? pipeSocket : fd;
+	bool doIt = false;
+	int ret = 0;
+	if(blocking)
+	{
+		struct timeval tv;
+		tv.tv_sec = ((unsigned int)timeoutMs) / 1000;
+		tv.tv_usec = (timeoutMs - tv.tv_sec * 1000.f) * 1000.f;
+		fd_set fdSet;
+		FD_ZERO(&fdSet);
+		FD_SET(file, &fdSet);
+		ret = _select(file + 1, &fdSet, NULL, NULL, &tv);
+		if(1 == ret && FD_ISSET(file, &fdSet))
+			doIt = true;
+	}
+	if(!blocking || doIt){
+		if(rt)
+			ret = __wrap_recv(file, ptr, size, 0);
+		else
+			ret = read(file, ptr, size);
+	}
+	return ret;
 }
 
 #if 0

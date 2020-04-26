@@ -153,7 +153,7 @@ printf "Updating files..."
 if [ "$RSYNC_AVAILABLE" -eq 1 ];
 then
   [ -z `which sed` ] && FILTER=cat || FILTER="sed s/\\n// | sed s/^.*:/Updated\ files:\/g | tr \"\n\" \" \""
-  rsync -ac --no-t --exclude .DS_Store --delete-after --stats $FILES_TO_COPY "$BBB_ADDRESS":"$BBB_BELA_HOME" 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval "$FILTER" &&\
+  rsync -ac --no-t --exclude=.DS_Store,IDE/ide-dev.js --delete-after --stats $FILES_TO_COPY "$BBB_ADDRESS":"$BBB_BELA_HOME" 2>/dev/null |grep -i "Number" | grep -i "files" | grep -i "transferred" | eval "$FILTER" &&\
   printf "..."
 else
   # if rsync is not available, then clean the folders before copying the files
@@ -163,7 +163,7 @@ fi
 error_handler $?
 
 # build libraries required for Pd
-ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME; for LIBRARY in Scope Midi; do make -f Makefile.libraries LIBRARY=\$LIBRARY; done"
+ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME; for LIBRARY in Scope Midi Gui Trill Pipe; do make -f Makefile.libraries LIBRARY=\$LIBRARY; done"
 
 # a bunch of files to be processed manually to special locations
 ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do [ -d \"\$DIR\" ] && { make -C \"\$DIR\" install || exit 1; }; done"

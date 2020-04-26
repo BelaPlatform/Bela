@@ -25,6 +25,13 @@
 			"input": "Your new file name",
 			"button": "Create file"
 		},
+		"create_new_project_from_zip": {
+			"title": "Create project from ",
+			"text": "Choose a name for this project:",
+			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
+			"input": "New project name",
+			"button": "Create project"
+		},
     "create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
@@ -54,7 +61,7 @@
 			"button": "Delete file"
 		},
     "upload_file": {
-			"title": "Upload a file?",
+			"title": "Upload a file",
 			"text": "Select a file to upload.",
 			"button": "Upload file"
 		},
@@ -171,19 +178,20 @@
 		"button": "Launch documentation"
 	},
   "funcKeys": {
-    "openProject"	: "Opening project",
-  	"openExample"	: "Opening example",
-  	"newProject"	: "Creating project",
-  	"saveAs"		: "Saving project",
-  	"deleteProject"	: "Deleting project",
-  	"cleanProject"	: "Cleaning project",
-  	"openFile"		: "Opening file",
-  	"newFile"		: "Creating file",
-  	"uploadFile"	: "Uploading file",
-  	"renameFile"	: "Renaming file",
-  	"deleteFile"	: "Deleting file",
-  	"init"			: "Initialising",
-  	"stop"			: "Stopping",
-  	"fileRejected"	: "Uploading file"
+    "openProject"	: "Open project",
+	"uploadZipProject" : "Create project from zip archive",
+  	"openExample"	: "Open example",
+  	"newProject"	: "Create project",
+  	"saveAs"		: "Save project",
+  	"deleteProject"	: "Delete project",
+  	"cleanProject"	: "Clean project",
+  	"openFile"		: "Open file",
+  	"newFile"		: "Create file",
+  	"uploadFile"	: "Upload file",
+  	"renameFile"	: "Rename file",
+  	"deleteFile"	: "Delete file",
+  	"init"			: "Initialise",
+  	"stop"			: "Stop",
+  	"fileRejected"	: "Upload file"
   }
 }

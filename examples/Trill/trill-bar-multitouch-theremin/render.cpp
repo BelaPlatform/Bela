@@ -88,7 +88,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
- if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+ if(touchSensor.setup(1, 0x20, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 	 fprintf(stderr, "Unable to initialise touch sensor\n");
 	 return false;
  }
@@ -96,7 +96,7 @@ bool setup(BelaContext *context, void *userData)
  touchSensor.printDetails();
 
  // Exit render if sensor is not a Trill Bar
- if(touchSensor.deviceType() != Trill::ONED) {
+ if(touchSensor.deviceType() != Trill::BAR) {
 	 fprintf(stderr, "This example is supposed to work only with the Trill BAR. \n You may have to adapt it to make it work with other Trill devices.\n");
 	 return false;
  }
@@ -107,7 +107,7 @@ bool setup(BelaContext *context, void *userData)
  // For each possible touch...
  for(unsigned int i = 0; i < NUM_TOUCH; i++) {
 	 // Setup corresponding oscillator
-	 osc[i].setup(gFreqRange[0], context->audioSampleRate, Oscillator::sine);
+	 osc[i].setup(context->audioSampleRate, Oscillator::sine);
 	 // Setup low pass filters for smoothing frequency and amplitude
 	 freqFilt[i].setup(gCutOffFreq, context->audioSampleRate);
 	 ampFilt[i].setup(gCutOffAmp, context->audioSampleRate);
@@ -136,12 +136,10 @@ void render(BelaContext *context, void *userData)
 		 frequency = map(gTouchLocation[i], 0, 1, gFreqRange[0], gFreqRange[1]);
 		 // Uncomment the line below to apply a filter to the frequency of the oscillators
 		 // frequency = freqFilt[i].process(frequency);
-		 osc[i].setFrequency(frequency);
-
 		 amplitude = map(gTouchSize[i], 0, 1, gAmplitudeRange[0], gAmplitudeRange[1]);
 		 amplitude = ampFilt[i].process(amplitude);
 
-		 out += (1.f/NUM_TOUCH) * amplitude * osc[i].process();
+		 out += (1.f/NUM_TOUCH) * amplitude * osc[i].process(frequency);
 	 }
 	 // Write computed output to audio channels
 	 for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {

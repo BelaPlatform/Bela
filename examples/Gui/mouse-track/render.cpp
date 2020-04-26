@@ -1,23 +1,32 @@
- /**
- * \example Gui/mouse-tracker
+/**
+ * \example Gui/mouse-track/render.cpp
  *
  * GUI mouse tracker
  * =================
  *
  * New GUI fuctionality for Bela!
  *
- * Is this project you can find a sketch.js file which is a p5.js file that is rendered
+ * In this project you can find a sketch.js file which is a p5.js file that is rendered
  * in a browser tab. Click the GUI button (next to the Scope button) in the IDE to see the rendering of this file.
  * 
  * This example receives a buffer of data from the GUI with the X-Y coordinates of the mouse (normalised to the size of the window). The Y axis controls the pitch of an oscillator while the X axis controls L/R panning.
  * In order to receive a buffer from the GUI, the type of the buffer and maximum number of values that it will hold need to be specified in setup:
- * 	`myGUi.setBuffer('f', 2);`
+ * ```
+ * myGUi.setBuffer('f', 2);
+ * ```
  *
  * In this case we are expecting to receive a buffer of floats with a maximum of 2 elements. 
  * This function will return the index of the buffer (which is given automatically based on the order they are set on).
  * This buffer will have index = 0.
  * The buffer can then be accessed using this index:
- * 	`DataBuffer buffer = myGui.getDataBuffer(0);`
+ * ```
+ * DataBuffer& buffer = myGui.getDataBuffer(0);
+ * ```
+ *
+ * Notice that the Gui::getDataBuffer() method returns a DataBuffer&(that is: a
+ * _reference_ to a DataBuffer. You should always be storing the return
+ * value in a DataBuffer& variable to minimize copy overhead, and ensure
+ * that it can be used safely from within a real-time  context.
  *
  * And its contents retrieved in the desired format (floats in this case): 
  * 	`float* data = buffer.getAsFloat();`
@@ -26,7 +35,7 @@
  * 
  * If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
  * 
- **/
+**/
 
 #include <Bela.h>
 #include <libraries/Gui/Gui.h>
@@ -69,7 +78,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 	
 		// Get buffer 0		
-		DataBuffer buffer = myGui.getDataBuffer(0);
+		DataBuffer& buffer = myGui.getDataBuffer(0);
 		// Retrieve contents of the buffer as floats
 		float* data = buffer.getAsFloat();
 

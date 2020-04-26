@@ -1,90 +1,44 @@
-/***** Oscillator.h *****/
 #pragma once
-#include <cmath>
+
 class Oscillator {
-	public:
-		Oscillator(){};
-		Oscillator(float frequency, float fs, unsigned int type = sine, float initialPhase = 0)
-		{
-			setup(frequency, fs, type, initialPhase);
-		}
-		~Oscillator(){};
-		
-		void setup(float frequency, float fs, unsigned int type = sine, float initialPhase = 0)
-		{
-			fs_ = fs;
-			invSampleRate_ = 1.0 / fs_;
-			setFrequency(frequency);
-			setType(type);	
-			phase_ = (-M_PI < initialPhase < M_PI) ? initialPhase : 0;
-		}
+public:
+	typedef enum {
+		sine,
+		triangle,
+		square,
+		sawtooth,
+		numOscTypes,
+	} Type;
 
-		float process()
-		{
-			float out;
-			switch(type_) {
-				default:
-				// SINEWAVE
-				case sine:
-					out = sinf(phase_);
-					break;
-				// TRIANGLE WAVE
-				case triangle:
-					if (phase_ > 0) {
-					      out = -1 + (2 * phase_ / (float)M_PI);
-					} else {
-					      out = -1 - (2 * phase_/ (float)M_PI);
-					}
-					break;
-				// SQUARE WAVE
-				case square:
-					if (phase_ > 0) {
-					      out = 1;
-					} else {
-					      out = -1;
-					}
-					break;
-				// SAWTOOTH
-				case sawtooth:
-					out = 1 - (1 / (float)M_PI * phase_);
-					break;
-			}
-			computePhase();
-			return out;
-		}
-		
-		unsigned int setType(unsigned int type) {
-			type_ = (type < numOscTypes) ? type : sawtooth;
-			return type_;
-		}
-		void setFrequency(float frequency) {
-			frequency_ = (frequency < 0.5*fs_) ? frequency : 0.5*fs_;
-		}
-		
-		float getPhase() { return phase_; }	
-		float getFrequency() { return frequency_; }
-		int getType() { return type_; }
-		
-		enum osc_type
-		{
-			sine,		// 0
-			triangle,	// 1
-			square,		// 2
-			sawtooth,	// 3
-			numOscTypes
-		};
+	Oscillator(){};
+	Oscillator(float fs, Oscillator::Type type = sine)
+	{
+		setup(fs, type);
+	}
+	~Oscillator(){};
 
-	private:
-		float phase_ = 0;
-		float frequency_;
-		float fs_;
-		float invSampleRate_;
-		unsigned int type_ = sine;
+	void setup(float fs, Oscillator::Type type = sine);
 
-		void computePhase() {
-			// Compute phase
-			phase_ += 2.0f * (float)M_PI * frequency_ * invSampleRate_;
-			if(phase_ > M_PI)
-				phase_ -= 2.0f * (float)M_PI;
-		}
+	float process();
+	float process(float frequency);
+	void setType(Oscillator::Type type) {
+		type_ = type;
+	}
+	void setFrequency(float frequency) {
+		frequency_ = frequency;
+	}
+	void setPhase(float phase) {
+		phase_ = phase;
+	}
+
+	float getPhase() { return phase_; }
+	float getFrequency() { return frequency_; }
+	int getType() { return type_; }
+
+private:
+	float phase_;
+	float frequency_;
+	float invSampleRate_;
+	unsigned int type_ = sine;
+	void computePhase();
 };

@@ -473,6 +473,16 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->detectUnderruns)
 		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
+	// Use PRU for audio
+	gPRU = new PRU(&gContext, gAudioCodec);
+
+	// Get the PRU memory buffers ready to go
+	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
+                                settings->numMuxChannels, settings->enableCapeButtonMonitoring, settings->enableLED)) {
+		fprintf(stderr, "Error: unable to initialise PRU\n");
+		return 1;
+	}
+
 	if(1 < fifoFactor)
 	{
 		gBcf = new BelaContextFifo;
@@ -487,16 +497,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gUserContext = (BelaContext*)&gContext;
 		gUserRender = nullptr;
 		gCoreRender = settings->render;
-	}
-
-	// Use PRU for audio
-	gPRU = new PRU(&gContext, gAudioCodec);
-
-	// Get the PRU memory buffers ready to go
-	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
-                                settings->numMuxChannels, settings->enableCapeButtonMonitoring, settings->enableLED)) {
-		fprintf(stderr, "Error: unable to initialise PRU\n");
-		return 1;
 	}
 
 	if(gAudioCodec->initCodec()) {

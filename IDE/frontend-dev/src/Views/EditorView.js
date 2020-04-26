@@ -199,7 +199,7 @@ class EditorView extends View {
 					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
           .css({
 						'max-width'	: width + 'px',
-						'max-height': height + 'px'
+						'height': height + 'px'
 					});
 
           $('[data-pd-svg-parent]')

@@ -23,9 +23,13 @@ function download_all(res) {
 }
 // zip a single project directory and send back
 function download_project(req, res) {
-    send_zip(paths.projects + req.query.project, req.query.project, res);
+    var path = paths.projects + req.query.project;
+    send_zip(path, req.query.project, res, [
+        "build",
+        req.query.project,
+    ]);
 }
-function send_zip(path, name, res) {
+function send_zip(path, name, res, ignore) {
     res.setHeader('Content-disposition', 'attachment; filename=' + name + '.zip');
     res.setHeader('Content-type', 'application/zip');
     var archive = archiver('zip');
@@ -34,13 +38,17 @@ function send_zip(path, name, res) {
         res.end();
     });
     archive.pipe(res);
-    archive.directory(path, name, { name: name + '.zip' });
+    if (ignore)
+        archive.glob("*", { ignore: ignore, cwd: path });
+    else
+        archive.directory(path, name, { name: name + '.zip' });
     archive.finalize();
 }
 function upload_file(req, res) {
     var file = req.query.file;
     fs.createWriteStream(paths.uploads + file);
 }
+//WARNING: this upload route is unused
 function upload(req, res) {
     if (req.query.all) {
         console.log(res);

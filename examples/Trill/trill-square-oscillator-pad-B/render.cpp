@@ -115,14 +115,14 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	if(touchSensor.setup(1, 0x28, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
 
 	touchSensor.printDetails();
 
-	if(touchSensor.deviceType() != Trill::TWOD) {
+	if(touchSensor.deviceType() != Trill::SQUARE) {
 		fprintf(stderr, "This example is supposed to work only with the Trill SQUARE. \n You may have to adapt it to make it work with other Trill devices.\n");
 		return false;
 	}
@@ -133,8 +133,8 @@ bool setup(BelaContext *context, void *userData)
 	freqFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 	ampFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 	
-	osc[0].setup(gFreqRange[0], context->audioSampleRate, Oscillator::square);
-	osc[1].setup(gFreqRange[0], context->audioSampleRate, Oscillator::square);
+	osc[0].setup(context->audioSampleRate, Oscillator::square);
+	osc[1].setup(context->audioSampleRate, Oscillator::square);
 
 	return true;
 }

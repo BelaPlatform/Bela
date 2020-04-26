@@ -4,9 +4,14 @@ import * as child_process from 'child_process';
 import * as IDE from './main';
 import * as socket_manager from './SocketManager';
 import * as paths from './paths';
+import * as globals from './globals';
 
 export async function get_boot_project(): Promise<string> {
-	let startup_env: string|undefined = await file_manager.read_file(paths.startup_env)
+	let startup_env: string|undefined;
+	if(globals.local_dev)
+		startup_env = "";
+	else
+		startup_env = await file_manager.read_file(paths.startup_env)
 		.catch(e => console.log('error: no startup_env found') );
 	if ((typeof startup_env) === 'undefined') return '*none*';
 	let lines = startup_env.split('\n');

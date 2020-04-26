@@ -1063,7 +1063,7 @@ keypress.simple_combo("meta o", function () {
 	tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
-	consoleView.emit('clear');
+	consoleView.emit('clear', true);
 });
 keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
@@ -1506,6 +1506,7 @@ module.exports = ConsoleView;
 
 var funcKey = {
 	'openProject': json.funcKeys.openProject,
+	'uploadZipProject': json.funcKeys.uploadZipProject,
 	'openExample': json.funcKeys.openExample,
 	'newProject': json.funcKeys.newProject,
 	'saveAs': json.funcKeys.saveAs,
@@ -2022,7 +2023,7 @@ var EditorView = function (_View) {
 						var height = $('[data-editor]').height() + 8;
 						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
 							'max-width': width + 'px',
-							'max-height': height + 'px'
+							'height': height + 'px'
 						});
 
 						$('[data-pd-svg-parent]').addClass('active').css({
@@ -2237,13 +2238,6 @@ var FileView = function (_View) {
 		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
 
 		_this.listOfFiles = [];
-
-		// hack to upload file
-		$('[data-upload-file-input]').on('change', function (e) {
-			for (var i = 0; i < e.target.files.length; i++) {
-				_this.doFileUpload(e.target.files[i]);
-			}
-		});
 
 		var data = {
 			fileName: "",
@@ -2802,8 +2796,8 @@ var FileView = function (_View) {
 						askForOverwrite = false;
 						overwriteAction = 'upload';
 					}
-					_this11.actuallyDoFileUpload(file, true);
 					popup.hide();
+					_this11.actuallyDoFileUpload(file, true);
 					uploadingFile = false;
 					if (fileQueue.length) {
 						_this11.doFileUpload(fileQueue.pop());
@@ -2878,13 +2872,41 @@ var FileView = function (_View) {
 			var _this12 = this;
 
 			var reader = new FileReader();
-			reader.onload = function (ev) {
-				return _this12.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
-			};
-			reader.readAsArrayBuffer(file);
 			if (forceRebuild && !fileQueue.length) {
 				forceRebuild = false;
 				this.emit('force-rebuild');
+			}
+			var uploadEmit = function uploadEmit(ev) {
+				return _this12.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+			};
+
+			if (file.name.search(/\.zip$/) != -1) {
+				var newProject = sanitise(file.name.replace(/\.zip$/, ""));
+				var values = { extract: "extract", asIs: "asIs" };
+				var form = [];
+				popup.title(json.popups.create_new_project_from_zip.title + file.name);
+				popup.subtitle(json.popups.create_new_project_from_zip.text);
+
+				form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />');
+				form.push('<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>');
+				form.push('<br/><br/>');
+				form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
+				form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+
+				popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
+					e.preventDefault();
+					newProject = sanitise(popup.find('input[type=text]').val());
+					reader.onload = function (ev) {
+						return _this12.emit('message', 'project-event', { func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject: newProject, force: force });
+					};
+					reader.readAsArrayBuffer(file);
+					popup.hide();
+				});
+				popup.find('.cancel').on('click', popup.hide);
+				popup.show();
+			} else {
+				reader.onload = uploadEmit;
+				reader.readAsArrayBuffer(file);
 			}
 		}
 	}, {
@@ -5965,6 +5987,13 @@ module.exports={
 			"input": "Your new file name",
 			"button": "Create file"
 		},
+		"create_new_project_from_zip": {
+			"title": "Create project from ",
+			"text": "Choose a name for this project:",
+			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
+			"input": "New project name",
+			"button": "Create project"
+		},
     "create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
@@ -5994,7 +6023,7 @@ module.exports={
 			"button": "Delete file"
 		},
     "upload_file": {
-			"title": "Upload a file?",
+			"title": "Upload a file",
 			"text": "Select a file to upload.",
 			"button": "Upload file"
 		},
@@ -6111,20 +6140,21 @@ module.exports={
 		"button": "Launch documentation"
 	},
   "funcKeys": {
-    "openProject"	: "Opening project",
-  	"openExample"	: "Opening example",
-  	"newProject"	: "Creating project",
-  	"saveAs"		: "Saving project",
-  	"deleteProject"	: "Deleting project",
-  	"cleanProject"	: "Cleaning project",
-  	"openFile"		: "Opening file",
-  	"newFile"		: "Creating file",
-  	"uploadFile"	: "Uploading file",
-  	"renameFile"	: "Renaming file",
-  	"deleteFile"	: "Deleting file",
-  	"init"			: "Initialising",
-  	"stop"			: "Stopping",
-  	"fileRejected"	: "Uploading file"
+    "openProject"	: "Open project",
+	"uploadZipProject" : "Create project from zip archive",
+  	"openExample"	: "Open example",
+  	"newProject"	: "Create project",
+  	"saveAs"		: "Save project",
+  	"deleteProject"	: "Delete project",
+  	"cleanProject"	: "Clean project",
+  	"openFile"		: "Open file",
+  	"newFile"		: "Create file",
+  	"uploadFile"	: "Upload file",
+  	"renameFile"	: "Rename file",
+  	"deleteFile"	: "Delete file",
+  	"init"			: "Initialise",
+  	"stop"			: "Stop",
+  	"fileRejected"	: "Upload file"
   }
 }
 
@@ -6132,8 +6162,14 @@ module.exports={
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
-function sanitise(name) {
-	return name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
+function sanitise(name, options) {
+	var isPath = false;
+	if (options && options.isPath) isPath = options.isPath;
+	var newName = name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
+	// if this is a folder or file name (and not a path), then we do not allow '/'
+	if (!isPath) newName = newName.replace(/[\/]/g, '_');
+	console.log("FROM: ", name, "SANITISED: ", newName);
+	return newName;
 }
 
 module.exports.sanitise = sanitise;

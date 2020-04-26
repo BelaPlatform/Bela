@@ -86,8 +86,8 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup Trill sensor in NORMAL mode
-	if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	// Setup Trill sensor in CENTROID mode
+	if(touchSensor.setup(1, 0x20, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
@@ -95,7 +95,7 @@ bool setup(BelaContext *context, void *userData)
 	touchSensor.printDetails();
 
 	// Exit render if sensor is not a Trill Bar
-	if(touchSensor.deviceType() != Trill::ONED) {
+	if(touchSensor.deviceType() != Trill::BAR) {
 		fprintf(stderr, "This example is supposed to work only with the Trill BAR. \n You may have to adapt it to make it work with other Trill devices.\n");
 		return false;
 	}

@@ -1,0 +1,94 @@
+.dg.main.taller-than-window .close-button {
+    border-top: 1px solid #ddd;
+}
+
+.dg.main .close-button {
+    background-color: rgb(201, 201, 201);
+}
+
+.dg.main .close-button:hover {
+    background-color: #ddd;
+}
+
+@font-face {
+    font-family: 'poppins_regular';
+    src: url("../../fonts/poppins-regular-webfont.woff2") format("woff2"), url("../../fonts/poppins-regular-webfont.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+}
+
+.dg {
+    color: #555;
+    text-shadow: none !important;
+    font-family: 'poppins_regular';
+    font-size: 14px
+}
+
+.dg.main::-webkit-scrollbar {
+    background: #f1f1f1;
+}
+
+.dg.main::-webkit-scrollbar-thumb {
+    background: #bbb;
+}
+
+.dg li:not(.folder) {
+    background: #f1f1f1;
+    border-bottom: 1px solid #ddd;
+}
+
+.dg li.save-row .button {
+    text-shadow: none !important;
+}
+
+.dg li.title {
+    background: rgb(201, 201, 201) url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+}
+
+.dg .cr.function:hover,.dg .cr.boolean:hover {
+    background: #fff;
+}
+
+.dg .c input[type=text] {
+    background: rgba(201, 201, 201, 0.75);
+    font-family: 'poppins_regular';
+    font-size: 14px
+}
+
+.dg .c input[type=text]:hover {
+    background: rgb(201, 201, 201);
+}
+
+.dg .c input[type=text]:focus {
+    background: rgb(201, 201, 201);
+}
+
+.dg .c .slider {
+  background: rgb(201, 201, 201);
+  cursor: ew-resize;
+  opacity: 0.75;
+}
+
+.dg .c .slider-fg {
+  background: rgb(0, 190, 164);
+  max-width: 99%;
+  border-color: #ffffff;
+  opacity: 0.75;
+}
+
+.dg .c .slider:hover {
+  background: rgb(201, 201, 201);
+  opacity: 1;
+}
+.dg .c .slider:hover .slider-fg {
+  background: rgb(0, 190, 164);
+  opacity: 1;
+}
+.dg .cr.number input[type="text"] {
+    color: rgb(0, 190, 164);
+    -webkit-text-fill-color: rgb(0, 190, 164); /* bloody Safari, why on earth? */
+    background: rgba(201, 201, 201, 0.75);
+}
+.dg .cr.number {
+    border-left: 5px solid rgb(0, 190, 164);
+}

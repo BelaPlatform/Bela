@@ -109,7 +109,7 @@ void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 
- if(touchSensor.setup(1, 0x18, Trill::NORMAL, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+ if(touchSensor.setup(1, 0x28, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 	 fprintf(stderr, "Unable to initialise touch sensor\n");
 	 return false;
  }
@@ -117,7 +117,7 @@ bool setup(BelaContext *context, void *userData)
  touchSensor.printDetails();
 
  // Exit program if sensor is not a Trill Square
- if(touchSensor.deviceType() != Trill::TWOD) {
+ if(touchSensor.deviceType() != Trill::SQUARE) {
 	 fprintf(stderr, "This example is supposed to work only with the Trill SQUARE. \n You may have to adapt it to make it work with other Trill devices.\n");
 	 return false;
  }

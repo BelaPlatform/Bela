@@ -242,6 +242,7 @@ module.exports = ConsoleView;
 
 var funcKey = {
 	'openProject'	  : json.funcKeys.openProject,
+	'uploadZipProject' : json.funcKeys.uploadZipProject,
 	'openExample'	  : json.funcKeys.openExample,
 	'newProject'  	: json.funcKeys.newProject,
 	'saveAs'    		: json.funcKeys.saveAs,

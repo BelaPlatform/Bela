@@ -1,8 +1,7 @@
 #include <Bela.h>
-#include <cstdlib>
+#include <libraries/AudioFile/AudioFile.h>
+#include <vector>
 #include <cmath>
-#include <cstring>
-#include "SampleLoader.h"
 
 #define NUM_CHANNELS 8
 
@@ -12,7 +11,6 @@ enum {
     kStateSignalOff,
     kStateTurningOn
 };
-
 
 int gChannelState[NUM_CHANNELS];   // State of each channel...
 unsigned int gSamplesInState[NUM_CHANNELS]; // ...and how long we have been there
@@ -56,8 +54,7 @@ uint32_t gEnvelopeSampleCount = 0;
 float gEnvelopeValue = 0.5;
 float gEnvelopeDecayRate = 0.9995;
 
-float *gAudioChannelBuffers[NUM_CHANNELS] = { 0 };
-unsigned int gAudioChannelBufferLengths[NUM_CHANNELS] = { 0 };
+std::vector<float> gAudioChannelBuffers[NUM_CHANNELS];
 int gAudioChannelBufferNumber = -1;             // Which buffer we are playing
 unsigned int gAudioChannelBufferPointer = 0;    // and where we are in it
 
@@ -73,10 +70,8 @@ bool setup(BelaContext *context, void *userData)
         char filename[32];
         snprintf(filename, 32, "number%d.wav", i);
         
-        gAudioChannelBufferLengths[i] = getNumFrames(std::string(filename));
-        gAudioChannelBuffers[i] = (float *)malloc(gAudioChannelBufferLengths[i] * sizeof(float));
-        if(getSamples(std::string(filename), gAudioChannelBuffers[i], 0, 0, 
-                      gAudioChannelBufferLengths[i] - 1) != 0)
+        gAudioChannelBuffers[i] = AudioFileUtilities::loadMono(filename);
+        if(!gAudioChannelBuffers[i].size())
             return false;
     }
   
@@ -223,7 +218,7 @@ void render(BelaContext *context, void *userData)
 			if(gAudioChannelBufferNumber >= 0) {
 			    sample += gAudioChannelBuffers[gAudioChannelBufferNumber][gAudioChannelBufferPointer] * 0.8;
 			    gAudioChannelBufferPointer++;
-			    if(gAudioChannelBufferPointer >= gAudioChannelBufferLengths[gAudioChannelBufferNumber]) {
+			    if(gAudioChannelBufferPointer >= gAudioChannelBuffers[gAudioChannelBufferNumber].size()) {
 			        // Got to the end of one sample; play the next
 			        gAudioChannelBufferPointer = 0;
 			        
@@ -271,9 +266,4 @@ void render(BelaContext *context, void *userData)
 }
 
 void cleanup(BelaContext *context, void *userData)
-{
-    for(int i = 0; i < NUM_CHANNELS; i++) {
-        if(gAudioChannelBuffers[i] != 0)
-            free(gAudioChannelBuffers[i]);
-    }
-}
+{ }

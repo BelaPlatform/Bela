@@ -1,4 +1,4 @@
-function downloadObjectAsJson(exportObj, exportName, space, format) {
+export function downloadObjectAsJson(exportObj, exportName, space, format) {
     var format = format || ".json";
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, space || null));
     var downloadAnchorNode = document.createElement('a');
@@ -8,7 +8,7 @@ function downloadObjectAsJson(exportObj, exportName, space, format) {
     downloadAnchorNode.remove();
 }
 
-function loadHtmlSection(section, location, hide=true) {
+export function loadHtmlSection(section, location, hide=true) {
     let promise = new Promise(function(resolve, reject) {
         if(hide)
             $(section).hide();
@@ -26,11 +26,16 @@ function loadHtmlSection(section, location, hide=true) {
     return promise;
 }
 
-function loadScript(src, parent) {
+export function getHtml(location) {
+	let jQueryPromise = $.get(location);
+	return Promise.resolve(jQueryPromise)
+}
+
+export function loadScript(src, parent, dom=document) {
     let promise = new Promise(function(resolve, reject) {
-        let scriptElement = document.createElement('script');
+        let scriptElement = dom.createElement('script');
         scriptElement.setAttribute('src', src);
-        let parentElement = document.getElementById(parent) || document.head;
+        let parentElement = dom.getElementById(parent) || dom.head;
 
         parentElement.appendChild(scriptElement);
         scriptElement.onerror = (error) => {
@@ -43,14 +48,14 @@ function loadScript(src, parent) {
     return promise;
 }
 
-function removeElementById(elementId) {
+export function removeElementById(elementId) {
     // Removes an element from the document
     var element = document.getElementById(elementId);
     if(element != null)
         element.parentNode.removeChild(element);
 }
 
-function removeElementByClassName(className) {
+export function removeElementByClassName(className) {
     // Removes an element from the document
     var elements = document.getElementsByClassName(className);
     for (let elem of elements) {
@@ -58,15 +63,15 @@ function removeElementByClassName(className) {
     }
 }
 
-function isInteger(n) {
+export function isInteger(n) {
     return Number(n) === n && n % 1 === 0;
 }
 
-function isFloat(n) {
+export function isFloat(n) {
     return Number(n) === n && n % 1 !== 0;
 }
 
-function getType(variable, recursive = false) {
+export function getType(variable, recursive = false) {
     let type = typeof variable;
     if(type === 'number') {
         if(isFloat(variable)) {
@@ -97,28 +102,29 @@ function getType(variable, recursive = false) {
     return type;
 }
 
-function getUserProperties() {
+export function getUserProperties(dom=document, wObj=window) {
     let results = [];
-    let currentWindow;
     // create an iframe and append to body to load a clean window object
-    iframe = document.createElement('iframe');
+    let iframe = dom.createElement('iframe');
     iframe.style.display = 'none';
-    document.body.appendChild(iframe);
+    dom.body.appendChild(iframe);
 
-    for (let prop in window) {
-            if (!(prop in iframe.contentWindow))
-                results.push(window[prop]);
+    for (let p in wObj) {
+            if (!(p in iframe.contentWindow)) {
+                console.log(p);
+                results.push(wObj[p]);
+            }
     }
 
-    document.body.removeChild(iframe);
+    dom.body.removeChild(iframe);
     return results;
 }
 
-function getInstancesOf(objArray, constructor) {
+export function getInstancesOf(objArray, constructor) {
     return objArray.filter((e) => { return (e instanceof constructor) });
 }
 
-function isJson(str) {
+export function isJson(str) {
 	let data;
     try {
 		data = JSON.parse(str);
@@ -126,4 +132,9 @@ function isJson(str) {
 	} catch (e) {
 		return false;
 	}
+}
+
+export const getBlobURL = (code, type) => {
+	const blob = new Blob([code], { type })
+	return URL.createObjectURL(blob)
 }

@@ -1,0 +1,29 @@
+#N canvas 0 0 1138 625 12;
+#X obj 170 569 s bela_setTrill;
+#X obj 124 34 loadbang;
+#X obj 567 46 r bela_trill;
+#X obj 652 295 print square;
+#X obj 473 221 print bar;
+#X obj 375 161 print craft;
+#X text 528 421 [prescaler <sensor_id> <value>(;
+#X text 528 455 [threshold <sensor_id> <value>(;
+#X text 592 432 value betwen 1 and 6;
+#X text 597 467 value betwen 0 and 6;
+#X text 285 182 [<num_sensors> <values .... >(;
+#X text 88 375 [new <sensor_id> <bus> <address> <mode>(;
+#X obj 565 125 route craft bar square;
+#X text 122 392 Suggestion: use mode=diff for Trill Craft and mode=centroid
+;
+#X text 122 402 for Bar/Square;
+#X text 463 244 [<num_touches> <x> <size> ...(;
+#X text 644 323 [<num_touches> <x> <y> <size>(;
+#X text 729 126 << these are the sensor_ids specified at creation;
+#X text 420 89 [<sensor_id> <....board-specific data...>(;
+#X msg 105 432 new craft 1 48 diff \, new bar 1 32 centroid \, new square
+1 40 centroid \, prescaler craft 3 \, threshold bar 5;
+#X connect 1 0 19 0;
+#X connect 2 0 12 0;
+#X connect 12 0 5 0;
+#X connect 12 1 4 0;
+#X connect 12 2 3 0;
+#X connect 19 0 0 0;

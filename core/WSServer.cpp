@@ -53,7 +53,7 @@ void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, vo
 	} else {
 		// make a copy of the data before we send it out
 		std::string str = (const char*)buf;
-		handler->server->execute([handler, str, size]{
+		handler->server->execute([handler, str]{
 			for (auto c : handler->connections){
 				c->send(str.c_str());
 			}
