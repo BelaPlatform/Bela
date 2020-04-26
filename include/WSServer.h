@@ -4,8 +4,7 @@
 #include <set>
 #include <map>
 #include <vector>
-
-#define WSSERVER_STREAM_BUFFERSIZE 1024
+#include <functional>
 
 // forward declarations for faster render.cpp compiles
 namespace seasocks{
