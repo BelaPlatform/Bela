@@ -70,6 +70,12 @@ int gpio_export(unsigned int gpio)
 	int fd, len, result = 0;
 	char buf[MAX_BUF];
 
+	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d", gpio);
+	fd = open(buf, O_RDONLY);
+	if(fd > 0) {
+		return 0;
+	}
+	close(fd);
 	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
 	if (fd < 0) {
 		perror("gpio/export");
@@ -78,16 +84,7 @@ int gpio_export(unsigned int gpio)
 
 	len = snprintf(buf, sizeof(buf), "%d", gpio);
 	if(write(fd, buf, len) < 0)
-	{
-		// on Linux 4.14, exporting an already-exported pin has the
-		// side effect of ... unexporting it ...
-		// clever, uh? So, we try to export it again if we failed the first time
-		// because it may well be that WE unexported by exporting it
-		if(write(fd, buf, len) < 0)
-			result = -1;
-		else
-			result = 0;
-	}
+		result = -1;
 	close(fd);
 
 	return result;
