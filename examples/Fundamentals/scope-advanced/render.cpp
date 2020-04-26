@@ -1,6 +1,6 @@
 #include <Bela.h>
 #include <libraries/Scope/Scope.h>
-#include <math_neon.h>
+#include <libraries/math_neon/math_neon.h>
 
 #define NUM_OSC 12
 #define FREQ 50.0f

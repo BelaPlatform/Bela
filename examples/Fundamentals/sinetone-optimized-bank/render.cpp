@@ -22,7 +22,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 */
 
 #include <Bela.h>
-#include <math_neon.h>
+#include <libraries/math_neon/math_neon.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -98,10 +98,10 @@ void cleanup(BelaContext *context, void *userData)
 Using optimized neon functions
 ---------------------------
 
-This sketch shows how to use the math-neon library which provides optimized
+This sketch shows how to use the mathneon library which provides optimized
 implementation of many simple math functions.
 The code is based on the sinetone/render.cpp project, with the following differences:
-- we include math_neon.h instead of cmath
+- we include libraries/math_neon/math_neon.h instead of cmath
 - we call sinf_neon() instead of sinf()
 - we can therefore have many more oscillators than in the basic project (just about 90)
   and we are using them for a weird additive synth

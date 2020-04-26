@@ -1,6 +1,6 @@
 #include "Oscillator.h"
 #include <cmath>
-#include <math_neon.h>
+#include <libraries/math_neon/math_neon.h>
 
 void Oscillator::setup(float fs, Oscillator::Type type)
 {

@@ -1,6 +1,6 @@
 #include <Bela.h>
-# include <math.h>
-#include <math_neon.h>
+#include <math.h>
+#include <libraries/math_neon/math_neon.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
