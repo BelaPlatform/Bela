@@ -40,8 +40,14 @@ LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_CS:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/b
 #LIBRARY_OBJS := $(LIBRARY_OBJS) $(LIBRARY_FILES:$(LIBRARY_DIR)/%.c=$(LIBRARY_DIR)/build/%.o)
 #$(warning FILES: $(LIBRARY_FILES))
 #$(warning OBJS: $(LIBRARY_OBJS))
-all:
-	 for a in libraries/*; do A=`basename $$a`; echo $$A; $(MAKE) -f Makefile.libraries LIBRARY=$$A --no-print-directory; done
+ifneq (,$(filter all,$(MAKECMDGOALS)))
+ALL_LIBRARIES := $(shell ls -d libraries/*)
+endif
+.PHONY: $(ALL_LIBRARIES)
+$(ALL_LIBRARIES):
+	$(AT) LIB=$(@:libraries/%=%); echo Building library $$LIB; $(MAKE) -f Makefile.libraries LIBRARY=$$LIB --no-print-directory
+all: $(ALL_LIBRARIES)
+
 library: $(LIBRARY_OBJS)
 clean:
 	$(AT) rm -rf $(LIBRARY_OBJS)
