@@ -3,12 +3,12 @@
  *
  * Trill Craft Oscillator Bank
  * ===========================
- * 
+ *
  * This project showcases an example of how to communicate with the Trill Craft sensor using
  * the Trill library and sonifies the readings from the different pads using a bank of
  * oscillators.
  *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread 
+ * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
  * and the raw values re-mapped to a range 0-1 and stored in a global variable.
  *
  * The amplitudes of each pad on the Trill craft are used to control the amplitudes of a
@@ -23,7 +23,7 @@
 #include <cmath>
 #include <unistd.h>
 
-#define NUM_SENSORS 26
+#define NUM_SENSORS 30
 
 // Filter info
 float *gFilterLastInputs;
@@ -57,7 +57,7 @@ extern "C" {
 							  float *lookupTable);
 }
 
-// Trill object declaration 
+// Trill object declaration
 Trill touchSensor;
 
 // Prescaler options for Trill sensor
@@ -75,7 +75,7 @@ int gTaskSleepTime = 5000;
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
- * Here, a loop is defined so that the task runs recurrently for as long as the 
+ * Here, a loop is defined so that the task runs recurrently for as long as the
  * audio thread is running.
  */
 void loop(void*)
@@ -105,9 +105,9 @@ bool setup(BelaContext *context, void *userData)
 		rt_printf("Error: this example needs stereo audio enabled\n");
 		return false;
 	}
-	
+
 	gAudioSampleRate = context->audioSampleRate;
-	
+
 	if(touchSensor.setup(1, 0x30, Trill::DIFF, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
@@ -117,7 +117,7 @@ bool setup(BelaContext *context, void *userData)
 
 	// Set and schedule auxiliary task for readin sensor data from the I2C bus
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
-	
+
 	// Allocate filter buffers: 2 previous samples per filter, 1 filter per input
 	gFilterLastInputs = (float *)malloc((2 * NUM_SENSORS + 1)* sizeof(float));
 	gFilterLastOutputs = (float *)malloc((2 * NUM_SENSORS + 1)* sizeof(float));
@@ -147,9 +147,9 @@ bool setup(BelaContext *context, void *userData)
 	gNumOscillators = NUM_SENSORS;
 	if(!initialise_oscillators(55.0))
 		return false;
-		
+
 	gIsStdoutTty = isatty(1); // Check if stdout is a terminal
-	
+
 	return true;
 }
 
@@ -157,7 +157,7 @@ void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->analogFrames; n++) {
 		for(unsigned int i = 0; i < NUM_SENSORS; i++) {
-			// Get sensor reading 
+			// Get sensor reading
 			float input = gSensorReading[i];
 
 			// Calculate filtered output
@@ -181,7 +181,7 @@ void render(BelaContext *context, void *userData)
 			gAmplitudes[i] = output * output / 4.f;
 		}
 	}
-	
+
 	// Render oscillator bank:
 
 	// Initialise buffer to 0
@@ -193,7 +193,7 @@ void render(BelaContext *context, void *userData)
 			gPhases, gFrequencies, gAmplitudes,
 			gDFrequencies, gDAmplitudes,
 			gWavetable);
-	
+
 }
 
 void cleanup(BelaContext *context, void *userData)
