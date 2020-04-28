@@ -1,108 +1,94 @@
-class TrillSquare {
-	constructor(width, position = [50, 50]) {
-		this.position = position;
-		this.width = width;
-		this.touch = {
-			scale: 0.25,
-			size: 0,
-			location: [null, null],
-			active: 0,
-			color: 'ivory'
-		}
-	}
 
-	draw() {
-		fill(0);
-		rect(this.position[0], this.position[1], this.width, this.width, 20);
-		if(this.touchActive()) {
-			this.drawTouch();
-			this.touch.active = 0;
-		}
-	}
+let sensorNumber;
 
-	touchActive() {
-		return this.touch.active;
-	}
+let chartTop = 100;
+let chartBottom;
+let chartLeft = 100;
+let chartRight;
+let barWidth;
 
-	updateTouch(location, size) {
-		this.touch.active = 1;
-		location[0] = constrain(location[0], 0, 1);
-		location[1] = constrain(location[1], 0, 1);
-		this.touch.location = [this.width*location[0], this.width*location[1]];
-		size = constrain(size, 0, 1);
-		this.touch.size = size;
-	}
+let dataRange = [0, 1];
 
-	setTouchState(state) {
-		this.touch.active = Boolean(state);
-	}
-
-	drawTouch(i) {
-		fill(this.touch.color);
-		let diameter = this.width*this.touch.size*this.touch.scale;
-		ellipse(this.position[0] + this.touch.location[0], this.position[1] + this.touch.location[1], diameter);
-	}
-
-	changeTouchColor(newColor) {
-		this.touch.color = color(newColor);
-	}
-
-	changeTouchScale(scale) {
-		if(scale <=1 ) {
-			this.touch.scale = scale;
-		}
-	}
-
-	resize(width, start) {
-		this.width = width;
-		this.position[0] = windowWidth/2-width/2;
-		this.position[1] = start;
-	}
-}
-
-
-let spacing;
-let startPoint;
-
-let numTouches = 0;
-let touchSize = 0;
-let touchPosition = [0, 0];
-
+// Create a variable for radio-button object
+var radio;
+// Create a variable for slider object
+var slider;
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
-    spacing=height/20;
-    startPoint=(width/2)-spacing*7;
-    rectWidth = height*0.7;
-    rectStart = height*0.1;
+	createCanvas(windowWidth, windowHeight);
+	chartBottom = windowHeight-chartTop*2;
+	chartRight = windowWidth-chartLeft;
+	barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
 
-    trill = new TrillSquare(rectWidth, [width/2-rectWidth/2, rectStart]);
+	// Create a radio-button object
+    radio = createRadio();
 
-    belaLogo = loadImage('../images/logo_bar14.png');
+    // Set up options
+    radio.option('1');
+    radio.option('2');
+    radio.option('3');
+    radio.option('4');
+    radio.option('5');
+    radio.option('6');
+    radio.option('7');
+    radio.option('8');
+
+    // Set the width
+    radio.style("width", "400px");
+    // Position the radio-button object
+    radio.position(chartLeft, windowHeight-chartTop);
+
+    // Create a slider object (min, max, initial value, increment)
+    slider = createSlider(0, 200, 10, 10);
+	slider.position(chartRight-200, windowHeight-chartTop);
+	slider.style("width", "200px");
 }
 
 function draw() {
-    background(240);
-    resizeElements();
+	background(255);
 
-    if(typeof Bela.data.buffers[0] != 'undefined')
-    	touchPosition = Bela.data.buffers[0];
+	noStroke();
+	textSize(10);
 
-    if(typeof Bela.data.buffers[1] != 'undefined')
-    	touchSize = Bela.data.buffers[1][0];
-    print(touchSize);
-    trill.updateTouch(touchPosition, touchSize);
-    trill.draw();
-    image(belaLogo,width-170, height-70,120,50);
-}
+	sensorNumber = Bela.data.buffers[0];
+	dataRange = Bela.data.buffers[1];
+	barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
 
-function resizeElements() {
-    rectWidth = height*0.7;
-    rectStart = height*0.1;
+	createRadio();
+
+	for (let i = 0; i < sensorNumber; i++) {
+    	let x = map(i, 0, sensorNumber - 1, chartLeft, chartRight);
+    	//let data = sketch.random(dataRange[0], dataRange[1]);
+    	let data =  Bela.data.buffers[2][i];
+    	let y = map(data, dataRange[0], dataRange[1], chartBottom, chartTop);
+
+    	strokeWeight(barWidth);
+    	strokeCap(SQUARE);
+    	stroke(0);
+    	line(x, chartBottom, x, y);
+
+    	noStroke();
+    	textAlign(CENTER);
+    	text(i, x, chartBottom + 15);
+	}
+
+	textAlign(LEFT);
+	text("PRESCALAR VALUE:", chartLeft, windowHeight-chartTop-20);
+	var radioVal = radio.value();
+	// Send radio value here
+	text("THRESHOLD VALUE:", chartRight-200, windowHeight-chartTop-20);
+	var sliderVal = slider.value();
+	// Send slider value here
+	Bela.data.sendBuffer(0, 'int', [radioVal, sliderVal]);
 }
 
 function windowResized() {
-	resizeElements();
-    trill.resize(rectWidth, rectStart);
-    resizeCanvas(windowWidth, windowHeight);
+	if(windowWidth > 350  & windowHeight > 250) {
+		resizeCanvas(windowWidth, windowHeight);
+		chartBottom = windowHeight-chartTop*2;
+		chartRight = windowWidth-chartLeft;
+		barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
+		radio.position(chartLeft, windowHeight-chartTop);
+		slider.position(chartRight-200, windowHeight-chartTop);
+	}
 }
