@@ -61,14 +61,28 @@
 #include <poll.h>
 #include <time.h>
 
+#define AUTOMATIC_POLL_EDGE
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define HOMEPAGE_URL "http://bela.io/wiki"
 #define MAX_BUF 64
 
+#ifdef AUTOMATIC_POLL_EDGE
+#include <linux/version.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,108)) // first TI Xenomai kernel which does not break Linux GPIO interrupts
+	#define EDGE
+#else // LINUX_VERSION
+	#define POLL
+#endif // LINUX_VERSION
+#else // AUTOMATIC_POLL_EDGE
 #define POLL
 //#define EDGE // This is more efficient as it gets IRQ from the kernel. When using it, check in `dmesg` that there are no OOOOPS
+#endif // AUTOMATIC_POLL_EDGE
 
-enum { BELA_CAPE_BTN_VERSION = 0x0101 };
+#if (!defined(POLL) && !defined(EDGE))
+#error POLL or EDGE needs to be defined
+#endif
+
+enum { BELA_CAPE_BTN_VERSION = 0x0102 };
 enum { INVALID_VERSION = 0xffff };
 enum { DEFAULT_BUTTON_PIN = 115 }; // The Bela cape button, which is on P9.27 / GPIO3[19]
 enum { DEFAULT_PRESSED_VALUE = 0 };
@@ -323,7 +337,12 @@ int run(void)
 
 	timestamp_ms_t pressed_at = 0;
 
-	printf("Monitoring pin `%d`, will execute `%s` on click and `%s` on hold (>%dms). Button is pressed when pin is %s...\n", BUTTON_PIN, 
+	printf("Monitoring pin `%d` (%s), will execute `%s` on click and `%s` on hold (>%dms). Button is pressed when pin is %s...\n", BUTTON_PIN, 
+#ifdef POLL
+		"poll",
+#else // POLL
+		"edge",
+#endif // POLL
 		MONITOR_CLICK ? CLICK_ACTION : "(nothing)", 
 		MONITOR_HOLD ? HOLD_ACTION : "(nothing)",
 		HOLD_PRESS_TIMEOUT_MS,
