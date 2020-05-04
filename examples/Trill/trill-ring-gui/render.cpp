@@ -44,7 +44,7 @@ void loop(void*)
 	 touchSensor.readLocations();
 	 // Remap location and size so that they are expressed in a 0-1 range
 	 for(int i = 0; i <  touchSensor.numberOfTouches(); i++) {
-		 gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 3200, 0, 1);
+		 gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 0xE00, 0, 1);
 		 gTouchLocation[i] = constrain(gTouchLocation[i], 0, 1);
 		 gTouchSize[i] = map(touchSensor.touchSize(i), gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
 		 gTouchSize[i] = constrain(gTouchSize[i], 0, 1);
