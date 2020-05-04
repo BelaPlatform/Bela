@@ -24,9 +24,9 @@ class TrillBar {
         	}
         }
 	}
-	
+
 	updateTouch(i, location, size) {
-		if(i<5) {
+		if(i < this.touches.num) {
 			this.touches.activations[i] = 1;
 			location = constrain(location, 0, 1);
 			this.touches.locations[i] = this.dimensions[0]*location;
@@ -40,17 +40,17 @@ class TrillBar {
 	}
 
 	touchActive(i) {
-		if(i<5)
+		if(i < this.touches.num)
 			return this.touches.activations[i];
 	}
 
 	setTouchState(i, state) {
-		if(i<5)
+		if(i < this.touches.num)
 			this.touches.activations[t] = Boolean(state);
 	}
 
 	drawTouch(i) {
-		if(i<5) {
+		if(i < this.touches.num) {
 			fill(this.touches.colors[i]);
 			let diameter = this.dimensions[1]*this.touches.sizes[i]*this.touches.scale;
 			ellipse(this.position[0] + this.touches.locations[i], this.position[1] + this.dimensions[1]/2, diameter);
@@ -80,7 +80,7 @@ let belaLogo;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    frameRate(120);
+    frameRate(60);
     belaLogo = loadImage('../images/logo_bar14.png');
     sliderLength = width-100;
     trillBar = new TrillBar(sliderLength*0.60);
