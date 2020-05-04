@@ -19,10 +19,8 @@ class TrillRing {
 
 	draw() {
 		fill(35);
-
-    	push();
-	    translate(width*0.5, height*0.5);
-
+		push();
+		translate(width*0.5, height*0.5);
 		noFill();
 		stroke(0);
 		strokeWeight(this.ringRadius*0.25);
@@ -30,21 +28,18 @@ class TrillRing {
 
 		pop();
 
-        for(let t = 0; t < this.touches.num; t++) {
-        	if(this.touchActive(t)) {
-        		this.drawTouch(t);
-        		this.touches.activations[t] = 0;
-        	}
-        }
-
+		for(let t = 0; t < this.touches.num; t++) {
+			if(this.touchActive(t)) {
+				this.drawTouch(t);
+				this.touches.activations[t] = 0;
+			}
+		}
 	}
 
 	updateTouch(i, location, size) {
-		if(i<5) {
-			this.touches.activations[i] = 1;
-			location = constrain(location, 0, 1);
+		if(i < this.touches.num) {
+			this.touches.activations[i] = size > 0;
 			this.touches.locations[i] = location;
-			size = constrain(size, 0, 1);
 			this.touches.sizes[i] = size;
 		}
 	}
@@ -54,13 +49,13 @@ class TrillRing {
 	}
 
 	touchActive(i) {
-		if(i< this.touches.num)
+		if(i < this.touches.num)
 			return this.touches.activations[i];
 		else return 0;
 	}
 
 	setTouchState(i, state) {
-		if(i< this.touches.num)
+		if(i < this.touches.num)
 			this.touches.activations[t] = Boolean(state);
 	}
 
@@ -110,25 +105,25 @@ let sliderLength = 200.0;
 let belaLogo;
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
-    frameRate(60);
-    belaLogo = loadImage('../images/logo_bar14.png');
+	createCanvas(windowWidth, windowHeight);
+	frameRate(60);
+	belaLogo = loadImage('../images/logo_bar14.png');
 
-    trillRing = new TrillRing(windowWidth, windowHeight);
+	trillRing = new TrillRing(windowWidth, windowHeight);
 }
 
 function draw() {
 	background(240);
-    resizeElements();
+	resizeElements();
 
-    activeTouches = Bela.data.buffers[0];
-    for(let t = 0; t < activeTouches; t++) {
-    	trillRing.updateTouch(t, Bela.data.buffers[1][t], Bela.data.buffers[2][t]);
-    }
+	activeTouches = Bela.data.buffers[0];
+	for(let t = 0; t < activeTouches; t++) {
+		trillRing.updateTouch(t, Bela.data.buffers[1][t], Bela.data.buffers[2][t]);
+	}
 
-    trillRing.draw();
+	trillRing.draw();
 
-    image(belaLogo, width-170, height-70, 120, 50);
+	image(belaLogo, width-170, height-70, 120, 50);
 }
 
 function resizeElements() {
@@ -137,5 +132,5 @@ function resizeElements() {
 
 function windowResized() {
 	resizeElements();
-    resizeCanvas(windowWidth, windowHeight);
+	resizeCanvas(windowWidth, windowHeight);
 }

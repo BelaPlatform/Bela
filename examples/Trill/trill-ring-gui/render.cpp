@@ -37,71 +37,73 @@ float gTimePeriod = 0.015;
 */
 void loop(void*)
 {
- // loop
- while(!gShouldStop)
- {
-	 // Read locations from Trill sensor
-	 touchSensor.readLocations();
-	 // Remap location and size so that they are expressed in a 0-1 range
-	 for(int i = 0; i <  touchSensor.numberOfTouches(); i++) {
-		 gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 0xE00, 0, 1);
-		 gTouchLocation[i] = constrain(gTouchLocation[i], 0, 1);
-		 gTouchSize[i] = map(touchSensor.touchSize(i), gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
-		 gTouchSize[i] = constrain(gTouchSize[i], 0, 1);
-	 }
-	 gNumActiveTouches = touchSensor.numberOfTouches();
-	 // For all innactive touches, set location and size to 0
-	 for(int i = gNumActiveTouches; i <  NUM_TOUCH; i++) {
-		 gTouchLocation[i] = 0.0;
-		 gTouchSize[i] = 0.0;
-	 }
+	// loop
+	while(!gShouldStop)
+	{
+		 // Read locations from Trill sensor
+		 touchSensor.readLocations();
+		 // Remap location and size so that they are expressed in a 0-1 range
+		 for(int i = 0; i <  touchSensor.numberOfTouches(); i++) {
+			 gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 3584, 0, 1);
+			 gTouchSize[i] = map(touchSensor.touchSize(i), gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
+			 gTouchSize[i] = constrain(gTouchSize[i], 0, 1);
+		 }
+		 gNumActiveTouches = touchSensor.numberOfTouches();
+		 // For all innactive touches, set location and size to 0
+		 for(int i = gNumActiveTouches; i <  NUM_TOUCH; i++) {
+			 gTouchLocation[i] = 0.0;
+			 gTouchSize[i] = 0.0;
+		 }
 
-	 // Sleep for ... milliseconds
-	 usleep(gTaskSleepTime);
- }
+		 // Sleep for ... milliseconds
+		 usleep(gTaskSleepTime);
+	}
 }
 
 bool setup(BelaContext *context, void *userData)
 {
 
- if(touchSensor.setup(1, 0x38, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
-	 fprintf(stderr, "Unable to initialise touch sensor\n");
-	 return false;
- }
+	if(touchSensor.setup(1, 0x38, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+		fprintf(stderr, "Unable to initialise touch sensor\n");
+		return false;
+	}
 
- touchSensor.printDetails();
+	touchSensor.printDetails();
 
- // Exit program if sensor is not a Trill Ring
- if(touchSensor.deviceType() != Trill::RING) {
-	 fprintf(stderr, "This example is supposed to work only with the Trill Ring. \n You may have to adapt it to make it work with other Trill devices.\n");
-	 return false;
- }
+	// Exit program if sensor is not a Trill Ring
+	if(touchSensor.deviceType() != Trill::RING) {
+		fprintf(stderr, "This example is supposed to work only with the Trill Ring. \n You may have to adapt it to make it work with other Trill devices.\n");
+		return false;
+	}
 
- // Set and schedule auxiliary task for reading sensor data from the I2C bus
- Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+	// Set and schedule auxiliary task for reading sensor data from the I2C bus
+	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 
- // Setup GUI
- gui.setup(context->projectName);
- return true;
+	// Setup GUI
+	gui.setup(context->projectName);
+	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
- static unsigned int count = 0;
- for(unsigned int n = 0; n < context->audioFrames; n++) {
-	 // Send number of touches, touch location and size to the GUI
-	 // after some time has elapsed.
-	 if(count >= gTimePeriod*context->audioSampleRate)
-	 {
-		 gui.sendBuffer(0, gNumActiveTouches);
-		 gui.sendBuffer(1, gTouchLocation);
-		 gui.sendBuffer(2, gTouchSize);
+	static unsigned int count = 0;
 
-		 count = 0;
-	 }
-	 count++;
- }
+	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		// Send number of touches, touch location and size to the GUI
+		// after some time has elapsed.
+		if(count >= gTimePeriod*context->audioSampleRate)
+		{
+			gui.sendBuffer(0, gNumActiveTouches);
+			gui.sendBuffer(1, gTouchLocation);
+			gui.sendBuffer(2, gTouchSize);
+
+			count = 0;
+		}
+		count++;
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)
-{}
+{
+
+}
