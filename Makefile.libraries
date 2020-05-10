@@ -13,7 +13,7 @@ AT?=@
 BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
 BELA_DIR := /root/Bela
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
+DEFAULT_COMMON_FLAGS := -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
 LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
