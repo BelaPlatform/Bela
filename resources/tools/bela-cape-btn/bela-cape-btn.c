@@ -126,6 +126,12 @@ int gpio_export(unsigned int gpio)
 	int fd, len, result = 0;
 	char buf[MAX_BUF];
 
+	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d", gpio);
+	fd = open(buf, O_RDONLY);
+	if(fd > 0) {
+		return 0;
+	}
+	close(fd);
 	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
 	if (fd < 0) {
 		perror("gpio/export");
