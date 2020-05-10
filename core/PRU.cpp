@@ -728,6 +728,15 @@ int PRU::start(char * const filename)
                 }
                 return 1;
         }
+#if RTDM_PRUSS_IRQ_VERSION >= 2
+	{
+		// From version 2 onwards we can set the verbose level
+		int ret = __wrap_ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_VERBOSE, 0);
+		if(ret == -1)
+			fprintf(stderr, "ioctl verbose failed: %d %s\n", errno, strerror(errno));
+		// do not fail
+	}
+#endif // RTDM_PRUSS_IRQ_VERSION >= 2
 #if RTDM_PRUSS_IRQ_VERSION >= 1
         // From version 1 onwards, we need to specify the PRU system event we want to receive interrupts from (see rtdm_pruss_irq.h)
         // For rtdm_fd_pru_to_arm we use the default mapping
