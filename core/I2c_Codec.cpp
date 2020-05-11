@@ -21,6 +21,7 @@
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
 : codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
 	, running(false)
+	, verbose(isVerbose)
 	, mode(InitMode_init)
 {
 	params.slotSize = 16;
