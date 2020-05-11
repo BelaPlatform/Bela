@@ -4,9 +4,10 @@
 #include <limits>
 #include <cmath>
 
-McaspConfig::McaspConfig() :
-	params({.auxClkIn = 24000000})
+McaspConfig::McaspConfig()
 {
+	params = {0};
+	params.auxClkIn = 24000000;
 }
 
 double McaspConfig::getValidAhclk(double desiredClk, unsigned int* outDiv)
