@@ -4,6 +4,13 @@
 #include "../include/PruArmCommon.h"
 
 #define DBOX_CAPE	// Define this to use new cape hardware
+
+#define ENABLE_BELA_MINI_MUX // Define this to drive a binary counter on the Mini on P1.32 and P1.30 (requires running `config-pin P1.30 pruout; config-pin P1.32 pruout`)
+#ifdef ENABLE_BELA_MINI_MUX
+// so it writes to 14, 15 and 16 (though 16 is not pinned out, thus limiting the muxing to 4x)
+#define BELA_MINI_MUX_MASK 0xFFFE3FFF
+#define BELA_MINI_MUX_SHIFT 14
+#endif // ENABLE_BELA_MINI_MUX
 	
 #define CLOCK_BASE  0x44E00000
 #define CLOCK_MCASP0 0x34
@@ -99,7 +106,7 @@
 #define COMM_BUFFER_SPI_FRAMES 60         // Unused (used in pru_rtaudio_irq.p)
 #define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruBoardFlags.h)
 #define PRU_ERROR_OCCURRED     68         // Unused here
-	
+
 // General constants for McASP peripherals (used for audio codec)
 #define MCASP0_BASE 0x48038000
 #define MCASP1_BASE 0x4803C000
@@ -688,6 +695,21 @@ POLL:
      QBEQ POLL, r28, 0
 .endm
 
+#ifdef ENABLE_BELA_MINI_MUX
+.macro BELA_MINI_MUX_PRE_WRITE
+.mparam reg_io, reg_tmp
+     // we keep the low three bits as our counter (so the rest of the code
+     // doesn't need to change)
+     // and we make sure that they are the same as the ones that we are
+     // actually writing to
+     // clear the relevant bits
+     MOV reg_tmp, BELA_MINI_MUX_MASK
+     AND reg_io, reg_io, reg_tmp
+     LSL reg_tmp, reg_io, BELA_MINI_MUX_SHIFT
+     OR reg_io, reg_io, reg_tmp
+.endm
+#endif // ENABLE_BELA_MINI_MUX
+
 // Multiplexer Capelet: Increment channel on muxes 0-3
 .macro MUX_INCREMENT_0_TO_3
      MOV r28, FLAG_MASK_MUX_CONFIG
@@ -705,6 +727,11 @@ UPDATE:
      MOV r28, 0xFFFFFFF8
      AND r28, reg_pru1_mux_pins, r28  // Mask out low 3 bits of r30
      OR  r28, r28, r27                // Combine with new value
+#ifdef ENABLE_BELA_MINI_MUX
+     BELA_MINI_OR_JMP_TO DO_UPDATE
+     BELA_MINI_MUX_PRE_WRITE r28, r27
+DO_UPDATE:
+#endif // ENABLE_BELA_MINI_MUX
      MOV reg_pru1_mux_pins, r28       // Move back to r30 to propagate to pins
 DONE:
 .endm
@@ -726,6 +753,11 @@ UPDATE:
      MOV r28, 0xFFFFFFC7
      AND r28, reg_pru1_mux_pins, r28  // Mask out bits 5-3 of r30
      OR  r28, r28, r27                // Combine with new value
+#ifdef ENABLE_BELA_MINI_MUX
+     BELA_MINI_OR_JMP_TO DO_UPDATE
+     BELA_MINI_MUX_PRE_WRITE r28, r27
+DO_UPDATE:
+#endif // ENABLE_BELA_MINI_MUX
      MOV reg_pru1_mux_pins, r28       // Move back to r30 to propagate to pins
 DONE:
 .endm
@@ -801,8 +833,7 @@ DIGITAL_INIT_DONE:
      LSL r2, r2, FLAG_BIT_MUX_CONFIG0
      OR  reg_flags, reg_flags, r2
      // Clear lower 6 bits of r30 which controls the mux pins
-     MOV r2, 0xFFFFFFC0
-     AND reg_pru1_mux_pins, reg_pru1_mux_pins, r2
+     MOV reg_pru1_mux_pins, 0
 MUX_INIT_DONE:
 	
      // Find out whether we should use SPI ADC and DAC
