@@ -1,10 +1,25 @@
 /**
- * \example Trill/trill-print-raw
+ * \example Trill/general-print
  *
  * Trill Print Raw Values
  * ======================
  *
- * This example uses the Trill library and will work with any Trill sensor connected.
+ * This example will work with all types of Trill sensor and will print the raw
+ * reading from each pad.
+ *
+ * We are using the Trill library to read from the sensor. The first thing to do
+ * is make sure that the correct address is given to `touchSensor.setup();`.
+ * Every different type of Trill sensor has different address which you
+ * can see in the below table:
+ *
+ * | Type:  | Address |
+ * |--------|---------|
+ * | BAR    |  0x20   |
+ * | SQUARE |  0x28   |
+ * | CRAFT  |  0x30   |
+ * | RING   |  0x38   |
+ * | HEX    |  0x40   |
+ * | FLEX   |  0x48   |
  *
  * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
  * and is read in DIFF mode giving the differential reading of each pad on the sensor.
@@ -39,6 +54,7 @@ void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 	// Setup a sensor on i2c 1, address 0x30 and in DIFF mode
+	// Update the address to the correct address for your sensor.
 	touchSensor.setup(1, 0x30, Trill::DIFF);
 
 	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
