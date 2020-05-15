@@ -32,7 +32,6 @@ class TrillHex {
 		endShape(CLOSE);
 		pop();
 
-		// rect(this.position[0], this.position[1], this.width, this.width, 20);
 		if(this.touchActive()) {
 			this.drawTouch();
 			this.touch.active = 0;
@@ -47,7 +46,8 @@ class TrillHex {
 		this.touch.active = 1;
 		location[0] = constrain(location[0], 0, 1);
 		location[1] = constrain((-location[1] + 1), 0, 1);
-		this.touch.location = [windowHeight * 0.5 * location[0], windowHeight * 0.5 * location[1]];
+		// scale the touch position by the width and height of the hex
+		this.touch.location = [location[0] * windowHeight * 0.433, location[1] * windowHeight * 0.5];
 		size = constrain(size, 0, 0.5);
 		this.touch.size = size;
 	}
