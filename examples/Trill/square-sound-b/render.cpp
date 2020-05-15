@@ -165,5 +165,4 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	touchSensor.cleanup();
 }
