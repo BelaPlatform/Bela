@@ -1,3 +1,28 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/ring-sound
+
+Trill Ring GUI
+==============
+
+This example shows how to communicate with the Trill Ring
+sensor using the Trill library. It visualises the touch position and size
+of up to five touches in real time on the GUI.
+
+In this file Trill sensor is scanned in an AuxiliaryTask running in parallel with the
+audio thread and the horizontal and vertical position and size are stored
+in global variables.
+
+Click the GUI button to see the visualisation.
+Touch position and size are displayed in the sketch.
+*/
+
 #include <Bela.h>
 #include <cmath>
 #include <libraries/Trill/Trill.h>
@@ -40,7 +65,7 @@ void loop(void*)
 			 gTouchSize[i] = touchSensor.touchSize(i);
 		 }
 		 // For all inactive touches, set location and size to 0
-		 for(unsigned int i = gNumActiveTouches; i <  NUM_TOUCH; i++) {
+		 for(unsigned int i = gNumActiveTouches; i < NUM_TOUCH; i++) {
 			 gTouchLocation[i] = 0.0;
 			 gTouchSize[i] = 0.0;
 		 }

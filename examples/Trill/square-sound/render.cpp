@@ -1,21 +1,30 @@
- /**
- * \example Trill/trill-square-oscillator-pad-A
- *
- * Trill Square oscillator pad 
- * ===========================
- *
- * This project showcases an example of how to communicate with the Trill Square sensor using
- * the Trill library and sonifies the X-Y position and size of the touch via an oscillator.
- *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread 
- * and the X-Y position and size stored on global variables.
- *
- * The vertical position of the touch is mapped to frequency, while the horizontal position
- * maps to left/right panning. Touch size is used to control the overal amplitude of the
- * oscillator.
- * Changes in frequency, amplitude and panning are smoothed using LP filters to avoid artifacts.
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/square-sound
+
+Trill Square oscillator pad
+===================
+
+This example shows how to communicate with the Trill Square
+sensor using the Trill library. It sonifies the X-Y position
+and size of the touch via the control of an oscillator.
+
+In this file Trill sensor is scanned in an AuxiliaryTask running in parallel with the
+audio thread and the horizontal and vertical position and size are stored
+in global variables.
+
+The vertical position of the touch is mapped to frequency, while the horizontal position
+maps to left/right panning. Touch size is used to control the overal amplitude of the
+oscillator.
+
+Changes in frequency, amplitude and panning are smoothed using LP filters to avoid artifacts.
+*/
 
 #include <Bela.h>
 #include <cmath>
@@ -49,7 +58,7 @@ unsigned int gTaskSleepTime = 12000; // microseconds
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
- * Here, a loop is defined so that the task runs recurrently for as long as the 
+ * Here, a loop is defined so that the task runs recurrently for as long as the
  * audio thread is running.
  */
 void loop(void*)
@@ -57,7 +66,7 @@ void loop(void*)
 	while(!gShouldStop)
 	{
 		// Read locations from Trill sensor
-		touchSensor.readLocations(); 
+		touchSensor.readLocations();
 		gTouchSize = touchSensor.compoundTouchSize();
 		gTouchPosition[0] = touchSensor.compoundTouchHorizontalLocation();
 		gTouchPosition[1] = touchSensor.compoundTouchLocation();
@@ -71,7 +80,7 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
-	
+
 	touchSensor.printDetails();
 
 	// Exit program if sensor is not a Trill Square
@@ -81,14 +90,14 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));	
-		
+	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+
 	// Setup low pass filters for smoothing frequency, amplitude and panning
 	freqFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 	panFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 	ampFilt.setup(1, context->audioSampleRate); // Cut-off frequency = 1Hz
 
-	// Setup triangle oscillator	
+	// Setup triangle oscillator
 	osc.setup(context->audioSampleRate, Oscillator::triangle);
 
 	return true;
@@ -97,23 +106,23 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-	
+
 		float frequency;
-		// Map Y-axis to a frequency range	
+		// Map Y-axis to a frequency range
 		frequency = map(gTouchPosition[1], 0, 1, gFreqRange[0], gFreqRange[1]);
 		// Smooth frequency using low-pass filter
 		frequency = freqFilt.process(frequency);
-	
+
 		// Smooth panning (given by the X-axis) changes using low-pass filter
 		float panning = panFilt.process(gTouchPosition[0]);
 		// Calculate amplitude of left and right channels
-		gAmpL = 1 - panning; 
+		gAmpL = 1 - panning;
 		gAmpR = panning;
-	
+
 		// Smooth changes in the amplitude of the oscillator (given by touch
-		// size) using a low-pass filter	
+		// size) using a low-pass filter
 		float amplitude = ampFilt.process(gTouchSize);
-		// Calculate output of the oscillator	
+		// Calculate output of the oscillator
 		float out = amplitude * osc.process(frequency);
 
 		// Write oscillator to left and right channels
@@ -121,7 +130,7 @@ void render(BelaContext *context, void *userData)
 			if(channel == 0) {
 				audioWrite(context, n, channel, gAmpL*out);
 			} else if (channel == 1) {
-				audioWrite(context, n, channel, gAmpR*out);	
+				audioWrite(context, n, channel, gAmpR*out);
 			}
 		}
 	}
