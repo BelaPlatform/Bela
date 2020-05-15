@@ -1,35 +1,42 @@
-/**
- * \example Trill/general-visual
- *
- * Trill Visualiser
- * ================
- *
- * This example will work with all types of Trill sensor and will visualise the raw
- * reading from each pad.
- *
- * We are using the Trill library to read from the sensor and the Gui library for
- * the visualisation. The first thing to do is make sure that the correct address is
- * given to `touchSensor.setup();`. Every different type of Trill sensor has different
- * address which you can see in the below table:
- *
- * | Type:  | Address |
- * |--------|---------|
- * | BAR    |  0x20   |
- * | SQUARE |  0x28   |
- * | CRAFT  |  0x30   |
- * | RING   |  0x38   |
- * | HEX    |  0x40   |
- * | FLEX   |  0x48   |
- *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
- * and is read in DIFF mode giving the differential reading of each pad on the sensor.
- *
- * Readings are sent to the integrated p5.js GUI every few milliseconds.
- *
- * Once you run the project you will be able to visualise the value of each capacitive pad
- * on the sensor by clicking the GUI button in the IDE. Each bar represents a pad on the sensor.
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/general-visual
+
+Trill Visualiser
+================
+
+This example will work with all types of Trill sensor and will visualise the raw
+reading from each pad.
+
+We are using the Trill library to read from the sensor and the Gui library for
+the visualisation. The first thing to do is make sure that the correct address is
+given to `touchSensor.setup();`. Every different type of Trill sensor has different
+address which you can see in the below table:
+
+| Type:  | Address |
+|--------|---------|
+| BAR    |  0x20   |
+| SQUARE |  0x28   |
+| CRAFT  |  0x30   |
+| RING   |  0x38   |
+| HEX    |  0x40   |
+| FLEX   |  0x48   |
+
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+and is read in DIFF mode giving the differential reading of each pad on the sensor.
+
+Readings are sent to the integrated p5.js GUI every few milliseconds.
+
+Once you run the project you will be able to visualise the value of each capacitive pad
+on the sensor by clicking the GUI button in the IDE. Each bar represents a pad on the sensor.
+
+*/
 
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
