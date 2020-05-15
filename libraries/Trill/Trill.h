@@ -13,8 +13,8 @@ class Trill : public I2c
 		} Mode;
 
 		typedef enum {
-			UNKNOWN = -1,
-			NONE = 0,
+			NONE = -1,
+			UNKNOWN = 0,
 			BAR = 1,
 			SQUARE = 2,
 			CRAFT = 3,
@@ -109,13 +109,17 @@ class Trill : public I2c
 		bool is1D();
 		bool is2D();
 		int hasButtons() { return getMode() == CENTROID && RING == deviceType();};
-		int numberOfTouches();
-		int numberOfHorizontalTouches();
-		int touchLocation(uint8_t touch_num);
-		int touchSize(uint8_t touch_num);
+		unsigned int numberOfTouches();
+		unsigned int numberOfHorizontalTouches();
+		float touchLocation(uint8_t touch_num);
+		float touchSize(uint8_t touch_num);
 		/* --- Only for 2D sensors --- */
-		int touchHorizontalLocation(uint8_t touch_num);
-		int touchHorizontalSize(uint8_t touch_num);
+		float touchHorizontalLocation(uint8_t touch_num);
+		float touchHorizontalSize(uint8_t touch_num);
+		/* --- For all sensors, but most useful for 2D sensors --- */
+		float compoundTouchSize();
+		float compoundTouchHorizontalLocation();
+		float compoundTouchLocation();
 		/* --- Only for Ring sensors --- */
 		int readButtons(uint8_t button_num);
 };

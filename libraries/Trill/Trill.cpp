@@ -1,5 +1,6 @@
 #include <libraries/Trill/Trill.h>
 #include <map>
+#include <vector>
 
 const uint8_t Trill::speedValues[4];
 const uint8_t Trill::prescalerValues[6];
@@ -7,13 +8,27 @@ const  uint8_t Trill::thresholdValues[7];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 
 static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
-	{Trill::UNKNOWN, "Unknown device"},
 	{Trill::NONE, "No device"},
+	{Trill::UNKNOWN, "Unknown device"},
 	{Trill::BAR, "Bar"},
 	{Trill::SQUARE, "Square"},
 	{Trill::CRAFT, "Craft"},
 	{Trill::RING, "Ring"},
 	{Trill::HEX, "Hex"},
+};
+
+struct trillRescaleFactors_t {
+	float pos;
+	float size;
+};
+
+static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
+	{.pos = 1, .size = 1}, // UNKNOWN = 0,
+	{.pos = 3200, .size = 6000}, // BAR = 1,
+	{.pos = 1792, .size = 1000}, // SQUARE = 2,
+	{.pos = 4096, .size = 1}, // CRAFT = 3,
+	{.pos = 3584, .size = 6000}, // RING = 4,
+	{.pos = 1792, .size = 1000}, // HEX = 5,
 };
 
 Trill::Trill(){}
@@ -357,7 +372,7 @@ bool Trill::is2D()
 	}
 }
 
-int Trill::numberOfTouches()
+unsigned int Trill::numberOfTouches()
 {
 	if(mode_ != CENTROID)
 		return 0;
@@ -367,7 +382,7 @@ int Trill::numberOfTouches()
 }
 
 // Number of horizontal touches for Trill 2D
-int Trill::numberOfHorizontalTouches()
+unsigned int Trill::numberOfHorizontalTouches()
 {
 	if(mode_ != CENTROID  || (device_type_ != SQUARE && device_type_ != HEX))
 		return 0;
@@ -379,7 +394,7 @@ int Trill::numberOfHorizontalTouches()
 // Location of a particular touch.
 // Range: 0 to N-1.
 // Returns -1 if no such touch exists.
-int Trill::touchLocation(uint8_t touch_num)
+float Trill::touchLocation(uint8_t touch_num)
 {
 	if(mode_ != CENTROID)
 		return -1;
@@ -389,7 +404,7 @@ int Trill::touchLocation(uint8_t touch_num)
 	int location = dataBuffer[2*touch_num] * 256;
 	location += dataBuffer[2*touch_num + 1];
 
-	return location;
+	return location / trillRescaleFactors[device_type_].pos;
 }
 
 int Trill::readButtons(uint8_t button_num)
@@ -409,7 +424,7 @@ int Trill::readButtons(uint8_t button_num)
 // Size of a particular touch.
 // Range: 0 to N-1.
 // Returns -1 if no such touch exists.
-int Trill::touchSize(uint8_t touch_num)
+float Trill::touchSize(uint8_t touch_num)
 {
 	if(mode_ != CENTROID)
 		return -1;
@@ -419,10 +434,10 @@ int Trill::touchSize(uint8_t touch_num)
 	int size = dataBuffer[2*touch_num + 2*MAX_TOUCH_1D_OR_2D] * 256;
 	size += dataBuffer[2*touch_num + 2*MAX_TOUCH_1D_OR_2D + 1];
 
-	return size;
+	return size / trillRescaleFactors[device_type_].size;
 }
 
-int Trill::touchHorizontalLocation(uint8_t touch_num)
+float Trill::touchHorizontalLocation(uint8_t touch_num)
 {
 	if(mode_ != CENTROID  || (device_type_ != SQUARE && device_type_ != HEX))
 		return -1;
@@ -432,10 +447,10 @@ int Trill::touchHorizontalLocation(uint8_t touch_num)
 	int location = dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D] * 256;
 	location += dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D+ 1];
 
-	return location;
+	return location / trillRescaleFactors[device_type_].pos;
 }
 
-int Trill::touchHorizontalSize(uint8_t touch_num)
+float Trill::touchHorizontalSize(uint8_t touch_num)
 {
 	if(mode_ != CENTROID  || (device_type_ != SQUARE && device_type_ != HEX))
 		return -1;
@@ -445,7 +460,33 @@ int Trill::touchHorizontalSize(uint8_t touch_num)
 	int size = dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D] * 256;
 	size += dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D+ 1];
 
-	return size;
+	return size / trillRescaleFactors[device_type_].size;
+}
+
+#define compoundTouch(METHOD) {\
+	float avg = 0;\
+	unsigned int numTouches = numberOfTouches();\
+	for(unsigned int i = 0; i < numTouches; i++) {\
+		avg += METHOD(i);\
+	}\
+	if(numTouches)\
+		avg = avg / numTouches;\
+	return avg;\
+	}
+
+float Trill::compoundTouchLocation()
+{
+	compoundTouch(touchLocation);
+}
+
+float Trill::compoundTouchHorizontalLocation()
+{
+	compoundTouch(touchHorizontalLocation);
+}
+
+float Trill::compoundTouchSize()
+{
+	compoundTouch(touchSize);
 }
 
 unsigned int Trill::numSensors()

@@ -32,11 +32,9 @@ float gTouchLocation[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 float gTouchSize[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 // Number of active touches
 int gNumActiveTouches = 0;
-// Touch range on which the re-mapping will be done
-int gTouchSizeRange[2] = { 100, 6000 };
 
 // Sleep time for auxiliary task
-int gTaskSleepTime = 100; // microseconds
+int gTaskSleepTime = 10000; // microseconds
 // Time period for printing 
 float gTimePeriod = 0.01; // seconds
 
@@ -53,28 +51,22 @@ bool gLedStatus[NUM_LED] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
  */
 void loop(void*)
 {
-	// loop
 	while(!gShouldStop)
 	{
 		// Read locations from Trill sensor
 		touchSensor.readLocations(); 
-		// Remap location and size so that they are expressed in a 0-1 range
-		for(int i = 0; i <  touchSensor.numberOfTouches(); i++)
-		{
-	    		gTouchLocation[i] = map(touchSensor.touchLocation(i), 0, 3200, 0, 1);
-			gTouchLocation[i] = constrain(gTouchLocation[i], 0, 1);
-			gTouchSize[i] = map(touchSensor.touchSize(i), gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
-	    		gTouchSize[i] = constrain(gTouchSize[i], 0, 1);
-	    	}
 		gNumActiveTouches = touchSensor.numberOfTouches();
-		// For all innactive touches, set location and size to 0
-		for(int i = gNumActiveTouches; i <  NUM_TOUCH; i++)
+		for(unsigned int i = 0; i < gNumActiveTouches; i++)
+		{
+			gTouchLocation[i] = touchSensor.touchLocation(i);
+			gTouchSize[i] = touchSensor.touchSize(i);
+	    	}
+		// For all inactive touches, set location and size to 0
+		for(unsigned int i = gNumActiveTouches; i <  NUM_TOUCH; i++)
 		{
 			gTouchLocation[i] = 0.0;
 			gTouchSize[i] = 0.0;
 		}
-
-		// Sleep for ... milliseconds	    
 		usleep(gTaskSleepTime);
 	}
 }

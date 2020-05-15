@@ -33,8 +33,6 @@ Trill touchSensor;
 float gTouchPosition[2] = { 0.0 , 0.0 };
 // Touch size
 float gTouchSize = 0.0;
-// Touch range on which the re-mapping will be done
-int gTouchSizeRange[2] = { 100, 1000 };
 
 // Sleep time for auxiliary task
 int gTaskSleepTime = 5000;
@@ -49,52 +47,19 @@ float gTimePeriod = 0.015;
 */
 void loop(void*)
 {
-	// loop
 	while(!gShouldStop)
 	{
 		// Read locations from Trill sensor
-		touchSensor.readLocations();
-
+		touchSensor.readLocations(); 
 		/*
-		* The Trill Hex sensor can detect multiple touches but will not be
-		* able to clearly differentiate their locations.
-		* The sensor should be used for 1-touch detections but, just in the case
-		* there is a multitouch event, we will average the position and size to
-		* obtain a single touch behaviour.
+		* The Trill Hex sensor can detect multiple touches but will
+		* not be able to clearly differentiate their locations, so we
+		* normally use the compoundTouch... methods to retrieve the
+		* average of the location and size of the detected touches
 		*/
-		int avgLocation = 0;
-		int avgSize = 0;
-		int numTouches = 0;
-		// Calculate vertical position and size and map to a 0-1 range
-		for(int i = 0; i < touchSensor.numberOfTouches(); i++) {
-			if(touchSensor.touchLocation(i) != 0) {
-				avgLocation += touchSensor.touchLocation(i);
-				avgSize += touchSensor.touchSize(i);
-				numTouches += 1;
-			}
-		}
-		avgLocation = floor(1.0f * avgLocation / numTouches);
-		avgSize = floor(1.0f * avgSize / numTouches);
-		gTouchSize = map(avgSize, gTouchSizeRange[0], gTouchSizeRange[1], 0, 1);
-		gTouchSize = constrain(gTouchSize, 0, 1);
-		gTouchPosition[1] = map(avgLocation, 0, 1792, 1, 0);
-		gTouchPosition[1] = constrain(gTouchPosition[1], 0, 1);
-
-		int avgHorizontalLocation = 0;
-		int numHorizontalTouches = 0;
-		// Calculate horizontal position and map to a 0-1 range
-		for(int i = 0; i < touchSensor.numberOfHorizontalTouches(); i++) {
-			if(touchSensor.touchHorizontalLocation(i) != 0) {
-				avgHorizontalLocation += touchSensor.touchHorizontalLocation(i);
-				numHorizontalTouches += 1;
-			}
-		}
-		avgHorizontalLocation = floor(1.0f * avgHorizontalLocation / numHorizontalTouches);
-
-		gTouchPosition[0] = map(avgHorizontalLocation, 0, 1792, 0, 1);
-		gTouchPosition[0] = constrain(gTouchPosition[0], 0, 1);
-
-		// Sleep for ... milliseconds
+		gTouchSize = touchSensor.compoundTouchSize();
+		gTouchPosition[0] = touchSensor.compoundTouchHorizontalLocation();
+		gTouchPosition[1] = touchSensor.compoundTouchLocation();
 		usleep(gTaskSleepTime);
 	}
 }
