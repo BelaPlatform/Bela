@@ -35,7 +35,6 @@ Readings are sent to the integrated p5.js GUI every few milliseconds.
 
 Once you run the project you will be able to visualise the value of each capacitive pad
 on the sensor by clicking the GUI button in the IDE. Each bar represents a pad on the sensor.
-
 */
 
 #include <Bela.h>
