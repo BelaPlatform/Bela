@@ -22,6 +22,8 @@ int bitResolution = 12;
 
 void loop(void*)
 {
+	DataBuffer& buffer = gui.getDataBuffer(0);
+	int oldBuffer[2] = {0, 0};
 	while(!gShouldStop)
 	{
 		touchSensor.readI2C();
@@ -29,6 +31,20 @@ void loop(void*)
 			// printf("%5d ", touchSensor.rawData[i]);
 		}
 		printf("\n");
+
+		// Retrieve contents of the buffer as ints
+		int* data = buffer.getAsInt();
+		if(data[0] != oldBuffer[0]) {
+			oldBuffer[0] = data[0];
+			printf("setting prescaler to %d\n", data[0]);
+			touchSensor.setPrescaler(data[0]);
+		}
+		if(data[1] != oldBuffer[1]) {
+			oldBuffer[1] = data[1];
+			printf("setting noiseThreshold to %d\n", data[1]);
+			touchSensor.setNoiseThreshold(data[1]);
+		}
+
 		usleep(50000);
 	}
 }
@@ -42,50 +58,43 @@ bool setup(BelaContext *context, void *userData)
 
 	int newSpeed = Trill::speedValues[0];
 	if(touchSensor.setScanSettings(newSpeed, bitResolution) == 0) {
-		fprintf(stderr, "Scan speed set to %d.\n", newSpeed);
+		printf("Scan speed set to %d.\n", newSpeed);
 	} else {
+		fprintf(stderr, "Unable to set scan setting\n");
 		return false;
 	}
 
 	int newPrescaler = Trill::prescalerValues[1];
 	if(touchSensor.setPrescaler(newPrescaler) == 0) {
-		fprintf(stderr, "Prescaler set to %d.\n", newPrescaler);
+		printf("Prescaler set to %d.\n", newPrescaler);
 	} else {
+		fprintf(stderr, "Unable to set prescaler\n");
 		return false;
 	}
 
 	int newThreshold = Trill::thresholdValues[1];
 	if(touchSensor.setNoiseThreshold(newThreshold) == 0) {
-		fprintf(stderr, "Threshold set to %d.\n", newThreshold);
+		printf("Threshold set to %d.\n", newThreshold);
 	} else {
+		fprintf(stderr, "Unable to set threshold\n");
 		return false;
 	}
 
 	if(touchSensor.updateBaseLine() != 0)
 		return false;
 
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
-
 	gui.setup(context->projectName);
 
-	// Setup buffer of floats (holding a maximum of 2 values)
-	gui.setBuffer('d', 2); // Index = 0
+	// Setup buffer of integers (holding a maximum of 2 values)
+	gui.setBuffer('d', 2); // buffer index == 0
 
+	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
 	static unsigned int count = 0;
-
-	// Get buffer 0
-	DataBuffer& buffer = gui.getDataBuffer(0);
-	// Retrieve contents of the buffer as ints
-	int* data = buffer.getAsInt();
-	// data[0] is prescalar
-	// touchSensor.setPrescaler(data[1]);
-	// data[1] is noise threshold
-	// touchSensor.setNoiseThreshold(data[1]);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		// Send number of touches, touch location and size to the GUI

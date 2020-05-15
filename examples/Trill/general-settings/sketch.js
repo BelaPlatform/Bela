@@ -73,7 +73,7 @@ function draw() {
 	}
 
 	textAlign(LEFT);
-	text("PRESCALAR VALUE:", chartLeft, windowHeight-chartTop-20);
+	text("PRESCALER VALUE:", chartLeft, windowHeight-chartTop-20);
 	var radioVal = radio.value();
 	// Send radio value here
 	text("THRESHOLD VALUE:", chartRight-200, windowHeight-chartTop-20);
