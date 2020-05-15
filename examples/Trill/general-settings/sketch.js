@@ -1,7 +1,7 @@
 
 let sensorNumber;
 
-let chartTop = 100;
+let chartTop = 150;
 let chartBottom;
 let chartLeft = 100;
 let chartRight;
@@ -13,6 +13,8 @@ let dataRange = [0, 1];
 var radio;
 // Create a variable for slider object
 var slider;
+// Current state of the reset button.
+let buttonState = 1;
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
@@ -26,12 +28,12 @@ function setup() {
     // Set up options
     radio.option('1');
     radio.option('2');
-    radio.option('3');
     radio.option('4');
-    radio.option('5');
-    radio.option('6');
-    radio.option('7');
     radio.option('8');
+    radio.option('16');
+    radio.option('32');
+
+    radio.value('2');
 
     // Set the width
     radio.style("width", "400px");
@@ -42,6 +44,12 @@ function setup() {
     slider = createSlider(0, 200, 10, 10);
 	slider.position(chartRight-200, windowHeight-chartTop);
 	slider.style("width", "200px");
+
+	//Create a button to reset the graph scaling
+	button = createButton("RESET BASELINE AND Y-AXIS SCALING");
+	button.position(windowWidth*0.5-100, windowHeight-chartTop);
+	//call changeButtonState when button is pressed
+	button.mouseClicked(changeButtonState);
 }
 
 function draw() {
@@ -70,16 +78,25 @@ function draw() {
     	noStroke();
     	textAlign(CENTER);
     	text(i, x, chartBottom + 15);
+
+    	push();
+    	textAlign(RIGHT, CENTER);
+    	translate(x, chartBottom + 30);
+		rotate(-HALF_PI);
+		text(data, 0, 0);
+		pop();
+
 	}
 
 	textAlign(LEFT);
 	text("PRESCALER VALUE:", chartLeft, windowHeight-chartTop-20);
 	var radioVal = radio.value();
-	// Send radio value here
 	text("THRESHOLD VALUE:", chartRight-200, windowHeight-chartTop-20);
+	text(slider.value(), chartRight-50, windowHeight-chartTop-20);
 	var sliderVal = slider.value();
-	// Send slider value here
-	Bela.data.sendBuffer(0, 'int', [radioVal, sliderVal]);
+	var buttonVal = button.value();
+	// Send values from interface to Bela
+	Bela.data.sendBuffer(0, 'int', [radioVal, sliderVal, buttonState]);
 }
 
 function windowResized() {
@@ -90,5 +107,11 @@ function windowResized() {
 		barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
 		radio.position(chartLeft, windowHeight-chartTop);
 		slider.position(chartRight-200, windowHeight-chartTop);
+		button.position(windowWidth*0.5-100, windowHeight-chartTop);
 	}
+}
+
+//Function that changes buttonState variable and changes button's background-color
+function changeButtonState() {
+	buttonState = !buttonState;
 }

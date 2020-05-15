@@ -1,3 +1,62 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/general-settings
+
+Adjusting Trill Settings
+========================
+
+This example will work with all types of Trill sensor and will allow you to adjust
+the sensitivity and threshold settings.
+
+We are using the Trill library to read from the sensor and the Gui library for
+a visualisation. The first thing to do is make sure that the correct address is
+given to `touchSensor.setup();`. Every different type of Trill sensor has different
+address which you can see in the below table:
+
+| Type:  | Address |
+|--------|---------|
+| BAR    |  0x20   |
+| SQUARE |  0x28   |
+| CRAFT  |  0x30   |
+| RING   |  0x38   |
+| HEX    |  0x40   |
+| FLEX   |  0x48   |
+
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+and is read in DIFF mode giving the differential reading of each pad on the sensor.
+
+Launch the GUI to visualise the value of each capacitive pad on the sensor.
+
+There are two important sensor settings that you may want to adjust when working
+with the Trill sensors: the `threshold` and the `prescalar`.
+
+The `threshold` setting is simply the threshold above which to read and is for
+ignoring any noise that might be present in the lowest regions of the sensor reading.
+This only applies to `DIFF` mode and is an integer that can be anything within
+the 12-bit range (0-4095). Typical values would be between 10 and 100.
+
+The `prescalar` setting equates to the sensitivity of the sensor. Technically, this
+value is a divider for the clock on the cypress chip and so it decides how long the
+chip charges the connected material for before taking a reading. The recommended
+values for the prescaler are `1, 2, 4, 8, 16, 32`.
+
+The rule of thumb when adjusting these values is:
+- A higher value prescaler (i.e. longer charging time as it is a divider of the clock)
+  is better for more resistive materials and larger pads.
+- A lower value prescaler is better for proximity sensing.
+
+When connecting different materials to Trill Craft we recommend experimenting with
+the settings using the `raw-readings-visual` example. This example allows you to
+experiment with different settings from within the GUI which you can then hard code
+in your project once you're happy.
+*/
+
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
 #include <libraries/Gui/Gui.h>
@@ -16,14 +75,17 @@ unsigned int gTaskSleepTime = 12000; // microseconds
 // Time period (in seconds) after which data will be sent to the GUI
 float gTimePeriod = 0.015;
 
-int gRawRange[2] = {0, 0};
+int gRawRange[2] = {0, 200};
 
 int bitResolution = 12;
+
+int gButtonValue = 0;
+
 
 void loop(void*)
 {
 	DataBuffer& buffer = gui.getDataBuffer(0);
-	int oldBuffer[2] = {0, 0};
+	int oldBuffer[3] = {0, 0};
 	while(!gShouldStop)
 	{
 		touchSensor.readI2C();
@@ -44,6 +106,12 @@ void loop(void*)
 			printf("setting noiseThreshold to %d\n", data[1]);
 			touchSensor.setNoiseThreshold(data[1]);
 		}
+		if(data[2] != oldBuffer[2]) {
+			oldBuffer[2] = data[2];
+			printf("reset baseline\n");
+			touchSensor.updateBaseLine();
+			gRawRange[1] = 200;
+		}
 
 		usleep(50000);
 	}
@@ -51,7 +119,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup(1, 0x20, Trill::DIFF) != 0) { // default for Trill Craft
+	if(touchSensor.setup(1, 0x38, Trill::DIFF) != 0) { // default for Trill Craft
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
@@ -85,8 +153,8 @@ bool setup(BelaContext *context, void *userData)
 
 	gui.setup(context->projectName);
 
-	// Setup buffer of integers (holding a maximum of 2 values)
-	gui.setBuffer('d', 2); // buffer index == 0
+	// Setup buffer of integers (holding a maximum of 3 values)
+	gui.setBuffer('d', 3); // buffer index == 0
 
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 	return true;
