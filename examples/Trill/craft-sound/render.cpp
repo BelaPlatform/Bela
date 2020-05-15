@@ -60,11 +60,6 @@ extern "C" {
 // Trill object declaration
 Trill touchSensor;
 
-// Prescaler options for Trill sensor
-int gPrescalerOpts[6] = {1, 2, 4, 8, 16, 32};
-// Threshold options for Trill sensor
-int gThresholdOpts[7] = {0, 10, 20, 30, 40, 50, 60};
-
 // Range for re-mapping readins of the different input pads on the Trill sensor
 int gSensorRange[2] = { 200, 2000 };
 // Readins for all the different pads on the Trill Craft
@@ -108,7 +103,7 @@ bool setup(BelaContext *context, void *userData)
 
 	gAudioSampleRate = context->audioSampleRate;
 
-	if(touchSensor.setup(1, 0x30, Trill::DIFF, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	if(touchSensor.setup(1, 0x30, Trill::DIFF) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}

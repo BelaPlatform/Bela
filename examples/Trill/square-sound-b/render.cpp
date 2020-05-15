@@ -27,11 +27,6 @@
 // Trill object declaration
 Trill touchSensor;
 
-// Prescaler options for Trill sensor
-int gPrescalerOpts[6] = {1, 2, 4, 8, 16, 32};
-// Threshold options for Trill sensor
-int gThresholdOpts[7] = {0, 10, 20, 30, 40, 50, 60};
-
 // Horizontal and vertical position for Trill sensor
 float gTouchPosition[2] = { 0.0 , 0.0 };
 // Touch size
@@ -115,7 +110,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup(1, 0x28, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	if(touchSensor.setup(1, 0x28, Trill::CENTROID) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}

@@ -4,8 +4,6 @@
  * Trill Visual Raw
  * ================
  *
- * New GUI fuctionality for Bela! 
- *
  * This example uses the Trill library and will work with any Trill sensor connected.
  *
  * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
