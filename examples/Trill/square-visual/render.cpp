@@ -1,24 +1,27 @@
-/**
- * \example Trill/trill-square-gui
- *
- * Trill Square GUI
- * ===================
- * 
- * New GUI fuctionality for Bela! 
- *
- * This project showcases an example of how to communicate with the Trill
- * Square sensor using the Trill library and visualise the X-Y position of the
- * touch in real time via the integrated Bela p5.js GUI.
- *
- * The Trill sensor is scanned in an AuxiliaryTask running in parallel with the
- * audio thread and the horizontal and vertical position and size are stored
- * in global variablex.
- *
- * A p5.js sketch is included in this example with a p5 class representation of
- * the Trill Square sensor and touch. Touch position and size are displayed in
- * the sketch.
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/square-visual
+
+Trill Square GUI
+===================
+
+This example shows how to communicate with the Trill Square
+sensor using the Trill library. It visualises the X-Y position of the
+touch in real time on the GUI.
+
+In this file Trill sensor is scanned in an AuxiliaryTask running in parallel with the
+audio thread and the horizontal and vertical position and size are stored
+in global variables.
+
+Click the GUI button to see the visualisation.
+Touch position and size are displayed in the sketch.
+*/
 
 #include <Bela.h>
 #include <cmath>
@@ -52,7 +55,7 @@ void loop(void*)
 	while(!gShouldStop)
 	{
 		// Read locations from Trill sensor
-		touchSensor.readLocations(); 
+		touchSensor.readLocations();
 		/*
 		* The Trill Square sensor can detect multiple touches but will
 		* not be able to clearly differentiate their locations, so we
@@ -69,42 +72,42 @@ void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 
- if(touchSensor.setup(1, 0x28, Trill::CENTROID) != 0) {
-	 fprintf(stderr, "Unable to initialise touch sensor\n");
-	 return false;
- }
+	if(touchSensor.setup(1, 0x28, Trill::CENTROID) != 0) {
+		fprintf(stderr, "Unable to initialise touch sensor\n");
+		return false;
+	}
 
- touchSensor.printDetails();
+	touchSensor.printDetails();
 
- // Exit program if sensor is not a Trill Square
- if(touchSensor.deviceType() != Trill::SQUARE) {
-	 fprintf(stderr, "This example is supposed to work only with the Trill SQUARE. \n You may have to adapt it to make it work with other Trill devices.\n");
-	 return false;
- }
+	// Exit program if sensor is not a Trill Square
+	if(touchSensor.deviceType() != Trill::SQUARE) {
+		fprintf(stderr, "This example is supposed to work only with the Trill SQUARE. \n You may have to adapt it to make it work with other Trill devices.\n");
+		return false;
+	}
 
- // Set and schedule auxiliary task for reading sensor data from the I2C bus
- Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+	// Set and schedule auxiliary task for reading sensor data from the I2C bus
+	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 
- // Setup GUI
- gui.setup(context->projectName);
- return true;
+	// Setup GUI
+	gui.setup(context->projectName);
+	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
- static unsigned int count = 0;
- for(unsigned int n = 0; n < context->audioFrames; n++) {
-	 // Send X-Y position of the touch and size to the GUI
-	 // after some time has elapsed.
-	 if(count >= gTimePeriod*context->audioSampleRate)
-	 {
-		 gui.sendBuffer(0, gTouchPosition);
-		 gui.sendBuffer(1, gTouchSize);
+	static unsigned int count = 0;
+	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		// Send X-Y position of the touch and size to the GUI
+		// after some time has elapsed.
+		if(count >= gTimePeriod*context->audioSampleRate)
+		{
+			gui.sendBuffer(0, gTouchPosition);
+			gui.sendBuffer(1, gTouchSize);
 
-		 count = 0;
-	 }
-	 count ++;
- }
+			count = 0;
+		}
+		count ++;
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)

@@ -27,7 +27,7 @@ class TrillSquare {
 	updateTouch(location, size) {
 		this.touch.active = 1;
 		location[0] = constrain(location[0], 0, 1);
-		location[1] = constrain(location[1], 0, 1);
+		location[1] = constrain((-location[1] + 1), 0, 1);
 		this.touch.location = [this.width*location[0], this.width*location[1]];
 		size = constrain(size, 0, 1);
 		this.touch.size = size;
