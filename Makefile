@@ -545,7 +545,11 @@ $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
 	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
 
 ifeq ($(RELINK),1)
-  $(shell rm -rf $(OUTPUT_FILE))
+  ifeq (,$(filter runide runonly,$(MAKECMDGOALS)))
+    ifneq (,$(PROJECT_DIR))
+      $(shell rm -rf $(OUTPUT_FILE))
+    endif
+  endif
 endif
 # first make sure the Makefile included by Makefile.linkbela is up to date ...
 # ... then call Makefile.linkbela
