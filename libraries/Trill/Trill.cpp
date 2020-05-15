@@ -466,7 +466,7 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 
 #define compoundTouch(METHOD, TOUCHES) {\
 	float avg = 0;\
-	unsigned int numTouches = TOUCHES();\
+	unsigned int numTouches = TOUCHES;\
 	for(unsigned int i = 0; i < numTouches; i++) {\
 		avg += METHOD(i);\
 	}\
@@ -477,17 +477,17 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 
 float Trill::compoundTouchLocation()
 {
-	compoundTouch(touchLocation, numberOfTouches);
+	compoundTouch(touchLocation, numberOfTouches());
 }
 
 float Trill::compoundTouchHorizontalLocation()
 {
-	compoundTouch(touchHorizontalLocation, numberOfHorizontalTouches);
+	compoundTouch(touchHorizontalLocation, numberOfHorizontalTouches());
 }
 
 float Trill::compoundTouchSize()
 {
-	compoundTouch(touchSize, numberOfTouches);
+	compoundTouch(touchSize, std::min(numberOfTouches(), numberOfHorizontalTouches()));
 }
 
 unsigned int Trill::numSensors()
