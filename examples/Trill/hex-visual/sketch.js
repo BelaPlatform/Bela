@@ -46,7 +46,7 @@ class TrillHex {
 	updateTouch(location, size) {
 		this.touch.active = 1;
 		location[0] = constrain(location[0], 0, 1);
-		location[1] = constrain(location[1], 0, 1);
+		location[1] = constrain((-location[1] + 1), 0, 1);
 		this.touch.location = [windowHeight * 0.5 * location[0], windowHeight * 0.5 * location[1]];
 		size = constrain(size, 0, 0.5);
 		this.touch.size = size;
