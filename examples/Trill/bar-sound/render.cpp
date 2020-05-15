@@ -1,20 +1,28 @@
-/**
-* \example Trill/trill-bar-multitouch-theremin
-*
-* Trill Bar Multitouch Theremin
-* =============================
-*
-* This example shows how to communicate with the Trill Bar sensor using
-* the Trill library. Each touch on the sensor controls the pitch and volume of an oscillator.
-*
-* The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
-* and the number of active touches, their position and size stored as global variables.
-*
-* Position and size for each touch are then mapped to frequency and amplitude of their
-* corresponding oscillator. Changes in frequency and amplitude are smoothed using LP
-* filters to avoid artifacts.
-*
-**/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/bar-sound
+
+Trill Bar Multitouch Theremin
+=============================
+
+This example shows how to communicate with the Trill Bar sensor using
+the Trill library.
+
+Each touch on the sensor controls the pitch and volume of an oscillator.
+
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+and the number of active touches, their position and size stored as global variables.
+
+Position and size for each touch are then mapped to frequency and amplitude of their
+corresponding oscillator. Changes in frequency and amplitude are smoothed using
+low pass filters to avoid artifacts.
+*/
 
 #include <Bela.h>
 #include <cmath>
@@ -140,4 +148,4 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-// 
+//

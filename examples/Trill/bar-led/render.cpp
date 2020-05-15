@@ -1,20 +1,27 @@
- /**
- * \example Trill/trill-bar-led
- *
- * Trill Bar LED 
- * =============
- * 
- * This project showcases an example of how to communicate with the Trill Bar sensor using
- * the Trill library and visualise position of different touches in real time via LEDs.
- *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread 
- * and the number of active touches, their position and size stored on global variables.
- *
- * Twelve LEDs are used to represent positions on the Trill sensor. The longitude of the 
- * Trill Bar sensor will be virtually divided into 12 different sections. When a touch 
- * occurs on one of these sections, the corresponding LED will be turned on. 
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/bar-led
+
+Trill Bar LED
+=============
+
+This is example of how to communicate with the Trill Bar sensor using
+the Trill library. It also visualises position of different touches in real time via
+a series of LEDs connected to the digital outputs.
+
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+and the number of active touches, their position and size stored on global variables.
+
+Twelve LEDs are used to represent positions on the Trill sensor. The length of the
+Trill Bar sensor is divided into 12 different sections. When a touch
+occurs on one of these sections, the corresponding LED turns on. 
+*/
 
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
@@ -35,7 +42,7 @@ int gNumActiveTouches = 0;
 
 // Sleep time for auxiliary task
 unsigned int gTaskSleepTime = 12000; // microseconds
-// Time period for printing 
+// Time period for printing
 float gTimePeriod = 0.01; // seconds
 
 // Digital pins assigned to LEDs used for visualisation
@@ -46,7 +53,7 @@ bool gLedStatus[NUM_LED] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
- * Here, a loop is defined so that the task runs recurrently for as long as the 
+ * Here, a loop is defined so that the task runs recurrently for as long as the
  * audio thread is running.
  */
 void loop(void*)
@@ -54,7 +61,7 @@ void loop(void*)
 	while(!gShouldStop)
 	{
 		// Read locations from Trill sensor
-		touchSensor.readLocations(); 
+		touchSensor.readLocations();
 		gNumActiveTouches = touchSensor.numberOfTouches();
 		for(unsigned int i = 0; i < gNumActiveTouches; i++)
 		{
@@ -88,10 +95,10 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));	
+	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 	// Set all digital pins corresponding to LEDs as outputs
 	for(unsigned int l = 0; l < NUM_LED; l++)
-		pinMode(context, 0, gLedPins[l], OUTPUT); 
+		pinMode(context, 0, gLedPins[l], OUTPUT);
 
 	return true;
 }
@@ -106,7 +113,7 @@ void render(BelaContext *context, void *userData)
 
 	// Each audio frame, check location of active touches and round to the the number
 	// of sections on which the Trill bar has been devided.
-	// Set LED status based on activations of corresponding sections. 
+	// Set LED status based on activations of corresponding sections.
 	// Print LED status.
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 
@@ -117,10 +124,10 @@ void render(BelaContext *context, void *userData)
 
 		for(unsigned int l = 0; l < NUM_LED; l++) {
 			gLedStatus[l] = activeSections[l];
-			digitalWrite(context, n, gLedPins[l], gLedStatus[l]);	
+			digitalWrite(context, n, gLedPins[l], gLedStatus[l]);
 		}
-		
-		if(count >= gTimePeriod*context->audioSampleRate) 
+
+		if(count >= gTimePeriod*context->audioSampleRate)
 		{
 			for(unsigned int l = 0; l < NUM_LED; l++)
 				rt_printf("%d ",gLedStatus[l]);

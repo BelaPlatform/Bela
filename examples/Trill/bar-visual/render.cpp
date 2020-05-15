@@ -1,22 +1,27 @@
-/**
- * \example Trill/trill-bar-gui
- *
- * Trill Bar GUI
- * ================
- *
- * This project showcases an example of how to communicate with the Trill Bar
- * sensor using the Trill library and visualise position of different touches
- * in real time via the integrated Bela p5.js GUI.
- *
- * The Trill sensor is scanned in an AuxiliaryTask running in parallel with the
- * audio thread and the number of active touches, their position and size are
- * stored in global variables.
- *
- * A p5.js sketch is included in this example with a p5 class representation of
- * the Trill Bar sensor and the different touches. Touch position and size are
- * displayed in the sketch.
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/bar-visual
+
+Trill Bar GUI
+=============
+
+This is an example of how to communicate with the Trill Bar
+sensor using the Trill library. We also visualise position of each touch
+in real time via the integrated Bela p5.js GUI.
+
+The Trill sensor is scanned in an AuxiliaryTask running in parallel with the
+audio thread and the number of active touches, their position and size are
+stored in global variables.
+
+Click the GUI button to see a visualisation of the sensor. Up to 5 touches
+position with touch size are displayed in the sketch.
+*/
 
 #include <Bela.h>
 #include <cmath>
