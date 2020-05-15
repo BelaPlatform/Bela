@@ -66,7 +66,7 @@ int gSensorRange[2] = { 200, 2000 };
 float gSensorReading[NUM_SENSORS] = { 0.0 };
 
 // Sleep time for auxiliary task
-int gTaskSleepTime = 5000;
+unsigned int gTaskSleepTime = 12000; // microseconds
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
@@ -88,8 +88,6 @@ void loop(void*)
 		} else {
 			printf("Sensor is not ready\n");
 		}
-
-		// Sleep for ... milliseconds
 		usleep(gTaskSleepTime);
 	}
 }

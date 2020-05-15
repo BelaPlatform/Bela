@@ -47,7 +47,7 @@ AuxiliaryTask readI2cTask;
 int readInterval = 500; //ms
 int readIntervalSamples = 0;
 // Sleep time for auxiliary task
-int gTaskSleepTime = 5000; // microseconds
+unsigned int gTaskSleepTime = 12000; // microseconds
 
 void loop(void*)
 {

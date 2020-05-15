@@ -19,7 +19,7 @@ float gTouchSize[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 unsigned int gNumActiveTouches = 0;
 
 // Sleep time for auxiliary task
-int gTaskSleepTime = 15000;
+unsigned int gTaskSleepTime = 12000; // microseconds
 // Time period (in seconds) after which data will be sent to the GUI
 float gTimePeriod = 0.015;
 

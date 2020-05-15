@@ -35,7 +35,7 @@ float gTouchSize[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 int gNumActiveTouches = 0;
 
 // Sleep time for auxiliary task in microseconds
-int gTaskSleepTime = 10000;
+unsigned int gTaskSleepTime = 12000; // microseconds
 
 // One Pole filters objects declaration
 OnePole freqFilt[NUM_TOUCH], ampFilt[NUM_TOUCH];

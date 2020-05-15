@@ -45,7 +45,7 @@ float gAmpL = 1.0;
 float gAmpR = 1.0;
 
 // Sleep time for auxiliary task
-int gTaskSleepTime = 5000;
+unsigned int gTaskSleepTime = 12000; // microseconds
 
 /*
  * Function to be run on an auxiliary task that reads data from the Trill sensor.
