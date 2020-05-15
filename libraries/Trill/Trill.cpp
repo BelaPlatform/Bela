@@ -19,16 +19,17 @@ static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
 
 struct trillRescaleFactors_t {
 	float pos;
+	float posH;
 	float size;
 };
 
 static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 	{.pos = 1, .size = 1}, // UNKNOWN = 0,
 	{.pos = 3200, .size = 6000}, // BAR = 1,
-	{.pos = 1792, .size = 1000}, // SQUARE = 2,
+	{.pos = 1792, .posH = 1792, .size = 1000}, // SQUARE = 2,
 	{.pos = 4096, .size = 1}, // CRAFT = 3,
 	{.pos = 3584, .size = 6000}, // RING = 4,
-	{.pos = 1792, .size = 1000}, // HEX = 5,
+	{.pos = 1920, .posH = 1664, .size = 1000}, // HEX = 5,
 };
 
 Trill::Trill(){}
@@ -447,7 +448,7 @@ float Trill::touchHorizontalLocation(uint8_t touch_num)
 	int location = dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D] * 256;
 	location += dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D+ 1];
 
-	return location / trillRescaleFactors[device_type_].pos;
+	return location / trillRescaleFactors[device_type_].posH;
 }
 
 float Trill::touchHorizontalSize(uint8_t touch_num)
@@ -463,9 +464,9 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 	return size / trillRescaleFactors[device_type_].size;
 }
 
-#define compoundTouch(METHOD) {\
+#define compoundTouch(METHOD, TOUCHES) {\
 	float avg = 0;\
-	unsigned int numTouches = numberOfTouches();\
+	unsigned int numTouches = TOUCHES();\
 	for(unsigned int i = 0; i < numTouches; i++) {\
 		avg += METHOD(i);\
 	}\
@@ -476,17 +477,17 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 
 float Trill::compoundTouchLocation()
 {
-	compoundTouch(touchLocation);
+	compoundTouch(touchLocation, numberOfTouches);
 }
 
 float Trill::compoundTouchHorizontalLocation()
 {
-	compoundTouch(touchHorizontalLocation);
+	compoundTouch(touchHorizontalLocation, numberOfHorizontalTouches);
 }
 
 float Trill::compoundTouchSize()
 {
-	compoundTouch(touchSize);
+	compoundTouch(touchSize, numberOfTouches);
 }
 
 unsigned int Trill::numSensors()
