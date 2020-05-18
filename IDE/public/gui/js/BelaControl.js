@@ -1,5 +1,6 @@
 import BelaWebSocket from './BelaWebSocket.js'
 import GuiHandler from './GuiHandler.js'
+import * as utils from './utils.js'
 
 export default class BelaControl extends BelaWebSocket {
 	constructor(port=5555, address='gui_control', ip=location.host) {
@@ -158,8 +159,6 @@ export default class BelaControl extends BelaWebSocket {
 		let p = window.Bela.control.gui.getPanel({guiId: obj['controller']});
 		let params = window.Bela.control.gui.parameters[p.id][obj['controller']];
 		let index =  Object.keys(params).indexOf(obj['name']);
-		obj['slider'] = index;
-		window.Bela.control.send(obj);
 	}
 
 	send(data) {
@@ -182,5 +181,9 @@ export default class BelaControl extends BelaWebSocket {
 	send(data) {
 		if (this.ws.readyState === 1)
 			this.ws.send(JSON.stringify(data));
+	}
+
+	loadResource(path, module=false) {
+		 utils.loadScript(path, "head", this.handler.iframeEl.contentWindow.document, module);
 	}
 }
