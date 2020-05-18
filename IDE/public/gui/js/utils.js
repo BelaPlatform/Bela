@@ -31,10 +31,13 @@ export function getHtml(location) {
 	return Promise.resolve(jQueryPromise)
 }
 
-export function loadScript(src, parent, dom=document) {
+export function loadScript(src, parent, dom=document, module=false) {
     let promise = new Promise(function(resolve, reject) {
         let scriptElement = dom.createElement('script');
         scriptElement.setAttribute('src', src);
+	if(module) {
+		scriptElement.setAttribute('type', 'module');
+	}
         let parentElement = dom.getElementById(parent) || dom.head;
 
         parentElement.appendChild(scriptElement);
