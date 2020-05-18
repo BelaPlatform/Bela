@@ -85,14 +85,10 @@ int gButtonValue = 0;
 void loop(void*)
 {
 	DataBuffer& buffer = gui.getDataBuffer(0);
-	int oldBuffer[3] = {0, 0};
+	int oldBuffer[3] = {0, 0, 0};
 	while(!gShouldStop)
 	{
 		touchSensor.readI2C();
-		for(unsigned int i = 0; i < sizeof(touchSensor.rawData)/sizeof(int); i++) {
-			// printf("%5d ", touchSensor.rawData[i]);
-		}
-		printf("\n");
 
 		// Retrieve contents of the buffer as ints
 		int* data = buffer.getAsInt();
@@ -119,7 +115,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup(1, 0x38, Trill::DIFF) != 0) { // default for Trill Craft
+	if(touchSensor.setup(1, 0x30, Trill::DIFF) != 0) { // default for Trill Craft
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
