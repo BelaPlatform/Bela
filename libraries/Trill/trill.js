@@ -10,7 +10,6 @@ class TrillTouch {
 
 	update(location, size) {
 		this.active = 1;
-		this.touch.active = 1;
 		this.location = location;
 		this.size = constrain(size, 0, 1);
 	}
@@ -29,12 +28,13 @@ class TrillTouch {
 }
 
 class Trill {
-	constructor(type, length, position = [50, 50]) {
+	constructor(type, length, position = [50, 50], touchScale = 0.9) {
 		this.position = position;
 		this.types = ['bar', 'square', 'hex', 'ring']
 		this.type = (this.types.includes(type)) ? type : null;
 		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] : [length, length];
 		this.numTouches = (this.type == 'bar' || this.type == 'ring') ? 5 : 1;
+		this.touchScale = touchScale;
 
 		this.cornerRadius = 0;
 		if(this.type == 'square') {
@@ -48,7 +48,7 @@ class Trill {
 
 		this.touches = [];
 		for(let t = 0; t < this.numTouches; t++) {
-			this.touches.push(new TrillTouch(t, 0.25, this.touchColors[t]))
+			this.touches.push(new TrillTouch(t, touchScale, this.touchColors[t]))
 		}
 	}
 
@@ -69,28 +69,29 @@ class Trill {
 	}
 
 	updateTouch(i, location, size) {
+		location = (location instanceof Array) ? location : [location];
 		if(i < this.numTouches) {
-			let loc = new Array(2);
-			loc[0] = location[0];
+			let _location= new Array(2);
+			_location[0] = location[0];
 			if(this.type == 'bar') {
-				loc[1] = this.dimensions[1]/2;
+				_location[1] = 0.5;
 			} else if (this.type == 'square') {
-				loc[1] = location[1]
+				_location[1] = location[1]
 			} else if (this.type == 'ring') {
 			} else if (this.type == 'hex') {
 			}
-			let size = constrain(size, 0, 1);
-			touches[i].update(loc, size);
+			let _size = constrain(size, 0, 1);
+			this.touches[i].update(_location, _size);
 		}
 	}
 
 	drawTouch(i) {
-		if(i < this.this.numTouches) {
+		if(i < this.numTouches) {
 			fill(this.touches[i].color);
 			let diameter = this.dimensions[1]*this.touches[i].size*this.touches[i].scale;
 
 			if(this.type == 'bar' || this.type == 'square') {
-				ellipse(this.position[0] + this.touches[i].locations[0], this.position[1] + touches[i].locations[1], diameter);
+				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
 			} else if (this.type == 'hex') {
 			}
@@ -101,6 +102,13 @@ class Trill {
 		return touches.filter(touch => {
 			return touch.active === 1
 		}).length
+	}
+
+	changeTouchScale(scale) {
+		this.touchScale = scale;
+		for(let t = 0; t < this.numTouches; t++) {
+			this.touches[t]. changeScale(this.touchScale);
+		}
 	}
 
 	resize(length) {
