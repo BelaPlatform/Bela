@@ -70,18 +70,14 @@ export default class BelaControl extends BelaWebSocket {
 	}
 
 	onData(data, parsedData) {
-		console.log("Data!", parsedData)
-
 		let that = this;
 		(async function() {
 			await new Promise(resolve => that.target.addEventListener('gui-ready', function(){
-				console.log("New event -> gui-ready")
 				resolve();
 			}));
 			that.target.removeEventListener('gui-ready', function(){
 				resolve();
 			});
-			console.log("____GUI PROTOTYPES____")
 			if(!(Object.keys(that.gui_prototype).length === 0 && that.gui_prototype.constructor === Object)) {
 				for (let p in that.gui_prototype) {
 					that.addGui.bind(that)
@@ -123,7 +119,6 @@ export default class BelaControl extends BelaWebSocket {
 				}
 			}
 		} else if (parsedData.event == 'set-slider') {
-			console.log("Set slider");
 			let precision = 7; // float32
 			parsedData.value = Number(parsedData.value.toFixed(7));
 			parsedData.max = Number(parsedData.max.toFixed(7));
