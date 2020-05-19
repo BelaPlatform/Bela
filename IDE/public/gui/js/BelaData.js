@@ -5,7 +5,7 @@ export default class BelaData extends BelaWebSocket {
 		super(port, address, ip)
 
         this.buffers = new Array();
-        this.states = ['id', 'type', 'data'];
+        this.states = ['id/type', 'data'];
         this.currentState = this.states[0];
         this.bufferReady = false;
         this.newBuffer = {};
@@ -16,21 +16,39 @@ export default class BelaData extends BelaWebSocket {
     }
 
     onData(data) {
-        if(this.currentState == this.states[0]) { // buffer id
-                this.bufferReady = false;
-                this.newBuffer = {};
-		let msgId = new Uint8Array(data);
-		this.newBuffer['id'] = parseInt(String.fromCharCode.apply(null, msgId));
-		this.currentState = this.states[1];
-        } else if (this.currentState == this.states[1]) { // type
-                if(data.byteLength == 1) {
-                        let msgType = new Uint8Array(data);
-                        this.newBuffer['type'] = String.fromCharCode(msgType);
-                        this.currentState = this.states[2];
-                } else {
-                        this.currentState = this.states[0];
+        if('id/type' === this.currentState) {
+            this.bufferReady = false;
+            this.newBuffer = {};
+            let msgIdType = new Uint8Array(data);
+            msgIdType = String.fromCharCode.apply(null, msgIdType).split('/');
+            let err = false;
+            if(2 != msgIdType.length) {
+                err = true;
+            } else if (1 != msgIdType[1].length) {
+                err = true;
+            } else {
+                let success = false;
+                this.newBuffer['type'] = msgIdType[1];
+                for(let ch of ['c', 'j', 'i', 'f', 'd']) {
+                    if(this.newBuffer['type'] === ch) {
+                        success = true;
+                        break;
+                    }
                 }
-        } else if (this.currentState == this.states[2]) { // data
+                if(!success)
+                    err = true;
+            }
+            this.newBuffer['id'] = parseInt(msgIdType[0]);
+            if(isNaN(this.newBuffer['id']))
+                err = true;
+            if(err) {
+                console.log('Unknown buffer type ', this.newBuffer['type'],
+                    'for bufferId ', this.newBuffer['id'],
+                    ', or wrong length. Restarting state machine');
+                this.currentState = this.states[0];
+            }
+            this.currentState = this.states[1];
+        } else if ('data' === this.currentState) {
                 this.currentState = this.states[0];
                 let type = this.newBuffer['type'];
                 switch(type) {
