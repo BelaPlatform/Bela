@@ -6,7 +6,7 @@ let trill;
 
 function preload() {
 	belaLogo = loadImage('../images/logo_bar14.png');
-	Bela.control.loadResource("/libraries/Trill/trill.js")
+	Bela.control.loadResource("/libraries/Trill/Trill.js")
 }
 
 function setup() {
