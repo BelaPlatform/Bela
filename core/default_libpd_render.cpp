@@ -484,7 +484,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				return;
 			}
 			const char* sensorId = libpd_get_symbol(argv);
-			unsigned int value = libpd_get_float(argv + 1);
+			float value = libpd_get_float(argv + 1);
 			int idx = getIdxFromId(sensorId, gTouchSensors);
 			if(idx < 0)
 			{
@@ -493,26 +493,19 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			}
 			if(0 == strcmp(symbol, "threshold"))
 			{
-				if(6 < value)
-				{
-					value = 6;
-					rt_printf("bela_setTrill threshold value out of range, clipping to %u\n", value);
-				}
-				unsigned int threshold = Trill::thresholdValues[value];
-				gTouchSensors[idx].second->setNoiseThreshold(threshold);
+				gTouchSensors[idx].second->setNoiseThreshold(value);
 			}
 			if(0 == strcmp(symbol, "prescaler"))
 			{
-				if(6 < value || 0 == value)
+				if(Trill::prescalerMax < value || 0 > value)
 				{
 					if(0 == value)
-						value = 1;
-					if(6 < value)
-						value = 6;
+						value = 0;
+					if(Trill::prescalerMax < value)
+						value = Trill::prescalerMax;
 					rt_printf("bela_setTrill prescaler value out of range, clipping to %u\n", value);
 				}
-				unsigned int prescaler = Trill::prescalerValues[value - 1];
-				gTouchSensors[idx].second->setPrescaler(prescaler);
+				gTouchSensors[idx].second->setPrescaler(value);
 			}
 		}
 		return;
@@ -858,7 +851,7 @@ void render(BelaContext *context, void *userData)
 				libpd_start_message(touchSensor.numSensors());
 				for(unsigned int n = 0; n < touchSensor.numSensors(); ++n)
 				{
-					libpd_add_float(touchSensor.rawData[n]/(2048.f));
+					libpd_add_float(touchSensor.rawData[n]);
 				}
 			} else if(Trill::CENTROID == mode)
 			{
@@ -870,33 +863,14 @@ void render(BelaContext *context, void *userData)
 						libpd_add_float(touchSensor.touchSize(i));
 					}
 				} else if (touchSensor.is2D()) {
-					int avgLocation = 0;
-					int avgSize = 0;
-					int numTouches = touchSensor.numberOfTouches();
+					int numTouches = touchSensor.compoundTouchSize() > 0;
 					libpd_start_message(2 * numTouches + 1);
 					libpd_add_float(numTouches > 0);
 					if(numTouches)
 					{
-						for(int i = 0; i < numTouches; i++) {
-							if(touchSensor.touchLocation(i) != 0) {
-								avgLocation += touchSensor.touchLocation(i);
-								avgSize += touchSensor.touchSize(i);
-							}
-						}
-						avgLocation = floor((float)avgLocation / numTouches);
-						avgSize = floor((float)avgSize / numTouches);
-						int avgHorizontalLocation = 0;
-						int numHorizontalTouches = 0;
-						for(int i = 0; i < touchSensor.numberOfHorizontalTouches(); i++) {
-							if(touchSensor.touchHorizontalLocation(i) != 0) {
-								avgHorizontalLocation += touchSensor.touchHorizontalLocation(i);
-								numHorizontalTouches += 1;
-							}
-						}
-						avgHorizontalLocation = floor((float)avgHorizontalLocation / numHorizontalTouches);
-						libpd_add_float(avgLocation);
-						libpd_add_float(avgHorizontalLocation);
-						libpd_add_float(avgSize);
+						libpd_add_float(touchSensor.compoundTouchLocation());
+						libpd_add_float(touchSensor.compoundTouchHorizontalLocation());
+						libpd_add_float(touchSensor.compoundTouchSize());
 					}
 				}
 			}
