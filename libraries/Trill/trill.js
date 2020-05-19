@@ -69,7 +69,7 @@ class Trill {
 	}
 
 	updateTouch(i, location, size) {
-		location = (location instanceof Array) ? location : [location];
+		location = Array.isArray(location) ? location : [location, null];
 		if(i < this.numTouches) {
 			let _location= new Array(2);
 			_location[0] = location[0];
