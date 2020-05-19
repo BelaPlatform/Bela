@@ -13,7 +13,8 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 
 	hexWidth = height*0.25;
-	trill = new Trill('hex', hexWidth, [width * 0.5, height * 0.5]);
+	position = [width * 0.5, height * 0.5];
+	trill = new Trill('hex', hexWidth, position);
 }
 
 function draw() {
@@ -33,6 +34,7 @@ function draw() {
 
 function resizeElements() {
 	hexWidth = height*0.25;
+	position = [width * 0.5, height * 0.5];
 }
 
 function windowResized() {
