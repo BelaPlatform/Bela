@@ -67,22 +67,24 @@ class Trill : public I2c
 		uint8_t dataBuffer[kRawLength];
 		uint16_t commandSleepTime = 10000;
 		bool preparedForDataRead_ = false;
+		unsigned int numBits;
+		float posRescale;
+		float posHRescale;
+		float sizeRescale;
+		float rawRescale;
 		int prepareForDataRead();
 		int identify();
+		void updateRescale();
 	public:
-		int rawData[kNumSensorsMax];
+		float rawData[kNumSensorsMax];
 
 		static constexpr uint8_t speedValues[4] = {0, 1, 2, 3}; // Ordered in decreasing speed: 0 is CSD_ULTRA_FAST_SPEED and 3 is CSD_SLOW_SPEED
-		static constexpr uint8_t prescalerValues[6] = {1, 2, 4, 8, 16, 32};
-		static constexpr uint8_t thresholdValues[7] = {0, 10, 20, 30, 40, 50, 60};
 		Trill();
 		~Trill();
 		Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode);
 		int setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode,
-				int threshold = -1, int prescaler = -1);
+				float threshold = -1, int prescaler = -1);
 		void cleanup();
-
-		bool isReady(){ return preparedForDataRead_; }
 
 		/* Update the baseline value on the sensor*/
 		int updateBaseLine();
@@ -100,7 +102,7 @@ class Trill : public I2c
 		int setMode(Mode mode);
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
 		int setPrescaler(uint8_t prescaler);
-		int setNoiseThreshold(uint8_t threshold);
+		int setNoiseThreshold(float threshold);
 		int setIDACValue(uint8_t value);
 		int setMinimumTouchSize(uint16_t size);
 		int setAutoScanInterval(uint16_t interval);

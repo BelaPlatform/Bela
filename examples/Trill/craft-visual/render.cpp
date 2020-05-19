@@ -39,8 +39,6 @@ unsigned int gTaskSleepTime = 12000; // microseconds
 // Time period (in seconds) after which data will be sent to the GUI
 float gTimePeriod = 0.015;
 
-int gRawRange[2] = {0, 0};
-
 void loop(void*)
 {
 	while(!gShouldStop) {
@@ -72,15 +70,8 @@ void render(BelaContext *context, void *userData)
 		// after some time has elapsed.
 		if(count >= gTimePeriod*context->audioSampleRate) 
 		{
-			for(unsigned int i = 0; i < touchSensor.numSensors(); i++) {
-				if(touchSensor.rawData[i] > gRawRange[1])
-					gRawRange[1] = touchSensor.rawData[i];
-			}
-			if(touchSensor.isReady()) {
-				gui.sendBuffer(0, touchSensor.numSensors());
-				gui.sendBuffer(1, gRawRange);
-				gui.sendBuffer(2, touchSensor.rawData);
-			}
+			gui.sendBuffer(0, touchSensor.numSensors());
+			gui.sendBuffer(1, touchSensor.rawData);
 			count = 0;
 		}
 		count++;

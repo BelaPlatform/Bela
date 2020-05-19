@@ -1,7 +1,7 @@
 
 let sensorNumber;
 
-let chartTop = 150;
+let chartTop = 20;
 let chartBottom;
 let chartLeft = 100;
 let chartRight;
@@ -10,65 +10,57 @@ let barWidth;
 let dataRange = [0, 1];
 
 // Create a variable for radio-button object
-var radio;
+var radioPres;
+var radioBits;
+var radioMode;
+var controlStart;
 // Create a variable for slider object
 var slider;
 // Current state of the reset button.
 let buttonState = 1;
 
 function setup() {
-	createCanvas(windowWidth, windowHeight);
-	chartBottom = windowHeight-chartTop*2;
-	chartRight = windowWidth-chartLeft;
-	barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
 
-	// Create a radio-button object
-    radio = createRadio();
+    radioMode = createRadio();
+    radioMode.option("Raw");
+    radioMode.option("Diff");
+    radioMode.option("Baseline");
+	radioMode.value("Diff");
 
-    // Set up options
-    radio.option('1');
-    radio.option('2');
-    radio.option('4');
-    radio.option('8');
-    radio.option('16');
-    radio.option('32');
+    radioPres = createRadio();
+    for(let n = 0; n <= 8; ++n)
+		radioPres.option(n+"");
+	radioPres.value("2");
 
-    radio.value('2');
+	radioBits = createRadio();
+	for(let n = 9; n <=12 ; ++n)
+		radioBits.option(n);
+	radioBits.value("12");
 
-    // Set the width
-    radio.style("width", "400px");
-    // Position the radio-button object
-    radio.position(chartLeft, windowHeight-chartTop);
+	// Create a slider object (min, max, initial value, increment)
+	slider = createSlider(0, 255/4096, 0, 1/4096); // TODO: the range and step of this should change with the number of bits
 
-    // Create a slider object (min, max, initial value, increment)
-    slider = createSlider(0, 200, 10, 10);
-	slider.position(chartRight-200, windowHeight-chartTop);
-	slider.style("width", "200px");
-
-	//Create a button to reset the graph scaling
-	button = createButton("RESET BASELINE AND Y-AXIS SCALING");
-	button.position(windowWidth*0.5-100, windowHeight-chartTop);
-	//call changeButtonState when button is pressed
+	button = createButton("RESET BASELINE");
 	button.mouseClicked(changeButtonState);
+	windowResized();
 }
+
 
 function draw() {
 	background(255);
-
+	stroke(0);
+	strokeWeight(0.4);
+	rect(chartLeft - barWidth, chartTop, chartRight - chartLeft + 2 * barWidth, chartBottom - chartTop);
 	noStroke();
 	textSize(10);
 
 	sensorNumber = Bela.data.buffers[0];
-	dataRange = Bela.data.buffers[1];
 	barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
 
-	createRadio();
-
 	for (let i = 0; i < sensorNumber; i++) {
-    	let x = map(i, 0, sensorNumber - 1, chartLeft, chartRight);
-    	//let data = sketch.random(dataRange[0], dataRange[1]);
-    	let data =  Bela.data.buffers[2][i];
-    	let y = map(data, dataRange[0], dataRange[1], chartBottom, chartTop);
+		let x = map(i, 0, sensorNumber - 1, chartLeft, chartRight);
+		let data =  Bela.data.buffers[1][i];
+		let y = map(data, dataRange[0], dataRange[1], chartBottom, chartTop);
 
     	strokeWeight(barWidth);
     	strokeCap(SQUARE);
@@ -83,31 +75,58 @@ function draw() {
     	textAlign(RIGHT, CENTER);
     	translate(x, chartBottom + 30);
 		rotate(-HALF_PI);
-		text(data, 0, 0);
+		text(data.toFixed(3), 0, 0);
 		pop();
 
 	}
 
 	textAlign(LEFT);
-	text("PRESCALER VALUE:", chartLeft, windowHeight-chartTop-20);
-	var radioVal = radio.value();
-	text("THRESHOLD VALUE:", chartRight-200, windowHeight-chartTop-20);
-	text(slider.value(), chartRight-50, windowHeight-chartTop-20);
+	text("MODE:", chartLeft, controlStart - 10);
+	var radioModeVal = radioMode.value();
+	var mode;
+	switch(radioModeVal){
+		case("Diff"):
+			mode = 3;
+			break;
+		case("Raw"):
+			mode = 1;
+			break;
+		case("Baseline"):
+			mode = 2;
+			break;
+		default:
+			mode = 3;
+	}
+
+	text("PRESCALER VALUE:", chartLeft, controlStart + 40);
+	var radioPresVal = radioPres.value();
+	text("NUMBER OF BITS:", chartLeft, controlStart + 90);
+	var radioBitsVal = radioBits.value();
+	text("THRESHOLD VALUE:", chartRight-200, controlStart -20);
+	text(slider.value(), chartRight-50, controlStart - 20);
 	var sliderVal = slider.value();
 	var buttonVal = button.value();
 	// Send values from interface to Bela
-	Bela.data.sendBuffer(0, 'int', [radioVal, sliderVal, buttonState]);
+	Bela.data.sendBuffer(0, 'float', [radioPresVal, sliderVal, buttonState, radioBitsVal, mode]);
 }
 
 function windowResized() {
-	if(windowWidth > 350  & windowHeight > 250) {
-		resizeCanvas(windowWidth, windowHeight);
-		chartBottom = windowHeight-chartTop*2;
-		chartRight = windowWidth-chartLeft;
+	if(windowWidth > 750 && windowHeight > 300) {
+		createCanvas(windowWidth, windowHeight);
+		chartBottom = windowHeight - chartTop - 200;
+		chartRight = windowWidth - chartLeft;
 		barWidth = (chartRight-chartLeft) / (sensorNumber*1.5);
-		radio.position(chartLeft, windowHeight-chartTop);
-		slider.position(chartRight-200, windowHeight-chartTop);
-		button.position(windowWidth*0.5-100, windowHeight-chartTop);
+		controlStart = chartBottom + 100;
+		let radioWidth = "400px";
+		radioMode.style("width", radioWidth);
+		radioMode.position(chartLeft, controlStart);
+		radioPres.style("width", radioWidth);
+		radioPres.position(chartLeft, controlStart + 50);
+		radioBits.style("width", radioWidth)
+		radioBits.position(chartLeft, controlStart + 100);
+		slider.position(chartRight-200, controlStart);
+		slider.style("width", "200px");
+		button.position(windowWidth * 0.5 - 100, controlStart);
 	}
 }
 

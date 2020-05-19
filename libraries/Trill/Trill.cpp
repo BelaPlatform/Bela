@@ -3,8 +3,6 @@
 #include <vector>
 
 const uint8_t Trill::speedValues[4];
-const uint8_t Trill::prescalerValues[6];
-const  uint8_t Trill::thresholdValues[7];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 
 static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
@@ -38,7 +36,7 @@ Trill::Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode) {
 	setup(i2c_bus, i2c_address, mode);
 }
 
-int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, int threshold, int prescaler) {
+int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, float threshold, int prescaler) {
 
 	address = 0;
 	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
@@ -54,6 +52,11 @@ int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, int thres
 	if(setMode(mode) != 0) {
 		fprintf(stderr, "Unable to set mode\n");
 		return 3;
+	}
+
+	if(setScanSettings(0, 12)){
+		fprintf(stderr, "Unable to set scan settings\n");
+		return 7;
 	}
 
 	if(threshold >= 0){
@@ -131,6 +134,15 @@ int Trill::identify() {
 	return 0;
 }
 
+void Trill::updateRescale()
+{
+	float scale = 1 << (12 - numBits);
+	posRescale = 1.f / trillRescaleFactors[device_type_].pos;
+	posHRescale = 1.f / trillRescaleFactors[device_type_].posH;
+	sizeRescale = scale / trillRescaleFactors[device_type_].size;
+	rawRescale = 1.f / (1 << numBits);
+}
+
 void Trill::printDetails()
 {
 	printf("Device type: %s (%d)\n", getDeviceName().c_str(), deviceType());
@@ -156,21 +168,23 @@ int Trill::setMode(Mode mode) {
 
 int Trill::setScanSettings(uint8_t speed, uint8_t num_bits) {
 	unsigned int bytesToWrite = 4;
-	char buf[4] = { kOffsetCommand, kCommandScanSettings, speed, num_bits };
 	if(speed > 3)
 		speed = 3;
 	if(num_bits < 9)
 		num_bits = 9;
 	if(num_bits > 16)
 		num_bits = 16;
+	char buf[4] = { kOffsetCommand, kCommandScanSettings, speed, num_bits };
+	preparedForDataRead_ = false;
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
 		fprintf(stderr, "Failed to set Trill's scan settings.\n");
 		fprintf(stderr, "%d\n", writtenValue);
 		return 1;
 	}
-	preparedForDataRead_ = false;
 	usleep(commandSleepTime); // need to give enough time to process command
+	numBits = num_bits;
+	updateRescale();
 
 	return 0;
 }
@@ -190,9 +204,15 @@ int Trill::setPrescaler(uint8_t prescaler) {
 	return 0;
 }
 
-int Trill::setNoiseThreshold(uint8_t threshold) {
+int Trill::setNoiseThreshold(float threshold) {
 	unsigned int bytesToWrite = 3;
-	char buf[3] = { kOffsetCommand, kCommandNoiseThreshold, threshold};
+	threshold = threshold * (1 << numBits);
+	if(threshold > 255)
+		threshold = 255;
+	if(threshold < 0)
+		threshold = 0;
+	char thByte = char(threshold + 0.5);
+	char buf[3] = { kOffsetCommand, kCommandNoiseThreshold, thByte };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
 		fprintf(stderr, "Failed to set Trill's threshold.\n");
@@ -296,7 +316,7 @@ int Trill::readI2C() {
 		return 1;
 	}
 	for (unsigned int i=0; i < numSensors(); i++) {
-		rawData[i] = ((dataBuffer[2*i] << 8) + dataBuffer[2*i+1]) & 0x0FFF;
+		rawData[i] = (((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) & 0x0FFF) * rawRescale;
 	}
 
 	return 0;
@@ -405,7 +425,7 @@ float Trill::touchLocation(uint8_t touch_num)
 	int location = dataBuffer[2*touch_num] * 256;
 	location += dataBuffer[2*touch_num + 1];
 
-	return location / trillRescaleFactors[device_type_].pos;
+	return location * posRescale;
 }
 
 int Trill::readButtons(uint8_t button_num)
@@ -435,7 +455,7 @@ float Trill::touchSize(uint8_t touch_num)
 	int size = dataBuffer[2*touch_num + 2*MAX_TOUCH_1D_OR_2D] * 256;
 	size += dataBuffer[2*touch_num + 2*MAX_TOUCH_1D_OR_2D + 1];
 
-	return size / trillRescaleFactors[device_type_].size;
+	return size * sizeRescale;
 }
 
 float Trill::touchHorizontalLocation(uint8_t touch_num)
@@ -448,7 +468,7 @@ float Trill::touchHorizontalLocation(uint8_t touch_num)
 	int location = dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D] * 256;
 	location += dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D+ 1];
 
-	return location / trillRescaleFactors[device_type_].posH;
+	return location * posHRescale;
 }
 
 float Trill::touchHorizontalSize(uint8_t touch_num)
@@ -461,7 +481,7 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 	int size = dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D] * 256;
 	size += dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D+ 1];
 
-	return size / trillRescaleFactors[device_type_].size;
+	return size * sizeRescale;
 }
 
 #define compoundTouch(METHOD, TOUCHES) {\

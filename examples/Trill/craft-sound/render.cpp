@@ -60,9 +60,7 @@ extern "C" {
 // Trill object declaration
 Trill touchSensor;
 
-// Range for re-mapping readins of the different input pads on the Trill sensor
-int gSensorRange[2] = { 200, 2000 };
-// Readins for all the different pads on the Trill Craft
+// Readings for all the different pads on the Trill Craft
 float gSensorReading[NUM_SENSORS] = { 0.0 };
 
 // Sleep time for auxiliary task
@@ -78,16 +76,10 @@ void loop(void*)
 	// loop
 	while(!gShouldStop)
 	{
-		if(touchSensor.isReady()) {
-			// Read raw data from sensor
-			touchSensor.readI2C();
-			for(unsigned int i = 0; i < NUM_SENSORS; i++) {
-				gSensorReading[i] = map(touchSensor.rawData[i], gSensorRange[0], gSensorRange[1], 0, 1);
-				gSensorReading[i] = constrain(gSensorReading[i], 0, 1);
-			}
-		} else {
-			printf("Sensor is not ready\n");
-		}
+		// Read raw data from sensor
+		touchSensor.readI2C();
+		for(unsigned int i = 0; i < NUM_SENSORS; i++) {
+			gSensorReading[i] = touchSensor.rawData[i];
 		usleep(gTaskSleepTime);
 	}
 }
