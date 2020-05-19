@@ -90,6 +90,8 @@ export default class BelaData extends BelaWebSocket {
         }
 
         let pkt = this.formatPkt(id, type, data);
+        if(this.ws.OPEN !== this.ws.readyState)
+            return false;
         this.ws.send(pkt);
         return true;
     }
