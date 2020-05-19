@@ -32,7 +32,8 @@ class Trill {
 		this.position = position;
 		this.types = ['bar', 'square', 'hex', 'ring']
 		this.type = (this.types.includes(type)) ? type : null;
-		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] : [length, length];
+		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
+			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
 		this.numTouches = (this.type == 'bar' || this.type == 'ring') ? 5 : 1;
 		this.touchScale = touchScale;
 
@@ -58,6 +59,19 @@ class Trill {
 			rect(this.position[0], this.position[1], this.dimensions[0], this.dimensions[1], this.cornerRadius);
 		} else if (this.type == 'ring') {
 		} else if (this.type == 'hex') {
+			push();
+			// move to the centre of the hex
+			translate(this.position[0], this.position[1]);
+			// draw the hexagon
+			beginShape();
+			vertex(0, this.dimensions[1] * -0.5);
+			vertex(this.dimensions[0]*0.5, this.dimensions[1] * -0.25);
+			vertex(this.dimensions[0]*0.5, this.dimensions[1] * 0.25);
+			vertex(0, this.dimensions[1] * 0.5);
+			vertex(-this.dimensions[0]*0.5, this.dimensions[1] * 0.25);
+			vertex(-this.dimensions[0]*0.5, this.dimensions[1] * -0.25);
+			endShape(CLOSE);
+			pop();
 		}
 
 		for(let t = 0; t < this.numTouches; t++) {
@@ -79,6 +93,7 @@ class Trill {
 				_location[1] = location[1]
 			} else if (this.type == 'ring') {
 			} else if (this.type == 'hex') {
+				_location[1] = location[1];
 			}
 			let _size = constrain(size, 0, 1);
 			this.touches[i].update(_location, _size);
@@ -94,6 +109,7 @@ class Trill {
 				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
 			} else if (this.type == 'hex') {
+				ellipse(this.touches[i].location[0] + this.position[0] - this.dimensions[0] * 0.5, this.touches[i].location[1] + this.position[1] - this.dimensions[1] * 0.5, diameter);
 			}
 		}
 	}
