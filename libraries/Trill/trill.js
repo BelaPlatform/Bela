@@ -109,7 +109,7 @@ class Trill {
 				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
 			} else if (this.type == 'hex') {
-				ellipse(this.touches[i].location[0] + this.position[0] - this.dimensions[0] * 0.5, this.touches[i].location[1] + this.position[1] - this.dimensions[1] * 0.5, diameter);
+				ellipse((this.position[0] - this.dimensions[0] * 0.5) + this.touches[i].location[0] * this.dimensions[0], (this.position[1] - this.dimensions[1] * 0.5) + this.touches[i].location[1] * dimensions[1], diameter);
 			}
 		}
 	}
