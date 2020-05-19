@@ -128,6 +128,7 @@ class Trill {
 	}
 
 	resize(length) {
-		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] : [length, length];
+		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
+			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
 	}
 }

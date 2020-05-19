@@ -2,6 +2,8 @@ let touchSize = 0;
 let touchPosition = [0, 0];
 let trill;
 
+let hexWidth;
+
 function preload() {
 	belaLogo = loadImage('../images/logo_bar14.png');
 	Bela.control.loadResource("/libraries/Trill/trill.js")
@@ -11,7 +13,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 
 	hexWidth = height*0.25;
-	trill = new Trill('hex', hexWidth, [200, 200]);
+	trill = new Trill('hex', hexWidth, [width * 0.5, height * 0.5]);
 }
 
 function draw() {
@@ -30,12 +32,11 @@ function draw() {
 }
 
 function resizeElements() {
-	rectWidth = height*0.7;
-	rectStart = height*0.1;
+	hexWidth = height*0.25;
 }
 
 function windowResized() {
 	resizeElements();
-	trill.resize(rectWidth, rectStart);
+	trill.resize(hexWidth);
 	resizeCanvas(windowWidth, windowHeight);
 }
