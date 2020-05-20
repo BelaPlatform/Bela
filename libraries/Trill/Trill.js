@@ -45,7 +45,7 @@ class Trill {
 		}
 
 		this.sensorColor = 'black';
-		this.touchColors = [ 'ivory', 'honeydew', 'azure', 'lavenderblush' , 'navajowhite']
+		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan' ]
 
 		this.touches = [];
 		for(let t = 0; t < this.numTouches; t++) {
@@ -58,6 +58,13 @@ class Trill {
 		if (this.type == 'bar' || this.type == 'square') {
 			rect(this.position[0], this.position[1], this.dimensions[0], this.dimensions[1], this.cornerRadius);
 		} else if (this.type == 'ring') {
+			push();
+			translate(this.position[0], this.position[1]);
+			noFill();
+			stroke(0);
+			strokeWeight(this.ringRadius*0.25);
+			ellipse(0,0,this.ringRadius,this.ringRadius);
+			pop();
 		} else if (this.type == 'hex') {
 			push();
 			// move to the centre of the hex
@@ -92,6 +99,7 @@ class Trill {
 			} else if (this.type == 'square') {
 				_location[1] = location[1]
 			} else if (this.type == 'ring') {
+				_location[1] = 0.5;
 			} else if (this.type == 'hex') {
 				_location[1] = location[1];
 			}
@@ -108,6 +116,12 @@ class Trill {
 			if(this.type == 'bar' || this.type == 'square') {
 				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
+				let _radial= new Array(5);
+				_radial[i] = (this.touches.locations[i]) * PI * 2.0;
+				if (_radial[i] >= PI*2){
+					_radial[i] = 0;
+				}
+				ellipse((this.ringRadius * 0.5) * cos(_radial[i]), (this.ringRadius * 0.5) * sin(_radial[i]), diameter);
 			} else if (this.type == 'hex') {
 				ellipse((this.position[0] - this.dimensions[0] * 0.5) + this.touches[i].location[0] * this.dimensions[0], (this.position[1] - this.dimensions[1] * 0.5) + this.touches[i].location[1] * this.dimensions[1], diameter);
 			}
