@@ -1,6 +1,6 @@
 
 let activeTouches = 0;
-let ringWidth = 800.0;
+let ringWidth;
 let belaLogo;
 
 function preload() {
