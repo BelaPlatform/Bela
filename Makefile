@@ -19,6 +19,7 @@
 ## RELINK=              -- specify whether to force re-linking the project file (1) or not (0, default). Set it to 1 when developing a library.
 ###
 ##available targets: #
+-include CustomMakefileTop.in
 .DEFAULT_GOAL := Bela
 
 DISTCC ?= 0 # set this to 1 to use distcc by default
@@ -27,7 +28,7 @@ DISTCC ?= 0 # set this to 1 to use distcc by default
 %.d:
 	
 AT?=@
-NO_PROJECT_TARGETS=help coreclean distclean startup startuploop stopstartup stoprunning stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib lib/libbela.so lib/libbelaextra.so lib/libbela.a lib/libbelaextra.a csoundstart
+NO_PROJECT_TARGETS+=help coreclean distclean startup startuploop stopstartup stoprunning stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe lib lib/libbela.so lib/libbelaextra.so lib/libbela.a lib/libbelaextra.a csoundstart
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
@@ -809,3 +810,4 @@ heavy-unzip-archive: stop
 	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
 
 .PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stopstartup stoprunning stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe csoundstart scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib c
+-include CustomMakefileBottom.in

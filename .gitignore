@@ -24,3 +24,5 @@ resources/tools/mcasp-dump-tool/mcasp-dump-tool
 lib/
 uploads/
 tmp/
+CustomMakefileTop.in
+CustomMakefileBottom.in
