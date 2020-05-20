@@ -374,6 +374,7 @@ bool Trill::is1D()
 	switch(device_type_) {
 		case BAR:
 		case RING:
+		case CRAFT:
 			return true;
 		default:
 			return false;
@@ -424,7 +425,7 @@ float Trill::touchLocation(uint8_t touch_num)
 	return location * posRescale;
 }
 
-int Trill::buttonValue(uint8_t button_num)
+float Trill::getButtonValue(uint8_t button_num)
 {
 	if(mode_ != CENTROID)
 		return -1;
@@ -433,8 +434,7 @@ int Trill::buttonValue(uint8_t button_num)
 	if(device_type_ != RING)
 		return -1;
 
-	int buttonValue = ((dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num] << 8) + dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num+1]) & 0x0FFF;
-	return buttonValue;
+	return (((dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num] << 8) + dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num+1]) & 0x0FFF) * rawRescale;
 }
 
 float Trill::touchSize(uint8_t touch_num)

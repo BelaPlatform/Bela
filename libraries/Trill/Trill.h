@@ -2,14 +2,22 @@
 #include <stdint.h>
 #include <string>
 
+/**
+ * \brief A class to use the Trill family of capacitive sensors.
+ * http://bela.io/trill
+ */
+
 class Trill : public I2c
 {
 	public:
+		/**
+		 * The acquisition modes that the device can be set to.
+		 */
 		typedef enum {
-			CENTROID = 0,
-			RAW = 1,
-			BASELINE = 2,
-			DIFF = 3,
+			CENTROID = 0, /**< Centroid mode: detect discrete touches */
+			RAW = 1, /**< Raw mode */
+			BASELINE = 2, /**< Baseline mode */
+			DIFF = 3, /**< Differential mode */
 		} Mode;
 
 		typedef enum {
@@ -77,8 +85,10 @@ class Trill : public I2c
 		void updateRescale();
 	public:
 		/**
-		 * An array containing the raw reading when the sensor is in
-		 * RAW, BASELINE or DIFF mode
+		 * An array containing the raw reading when the device is in
+		 * \link Trill::RAW RAW\endlink, \link Trill::BASELINE BASELINE \endlink
+		 * or \link Trill::DIFF DIFF \endlink
+		 * mode
 		 */
 		float rawData[kNumChannelsMax];
 
@@ -99,7 +109,7 @@ class Trill : public I2c
 		void cleanup();
 
 		/**
-		 * Update the baseline value on the sensor.
+		 * Update the baseline value on the device.
 		 */
 		int updateBaseLine();
 
@@ -132,50 +142,53 @@ class Trill : public I2c
 		unsigned int getNumChannels();
 
 		/**
-		 * @name TrillScanConfigurationSettings
+		 * @name Scan Configuration Settings
 		 * @{
 		 *
 		 * Some of the methods below map directly to function calls and
-		 * values described in the Cypress CapSense Sigma-Delta Datasheet v2.20
-		 * available [here](https://www.cypress.com/file/124551/download)
+		 * variables with the `CSD_` prefix, which are described in the
+		 * [Cypress CapSense Sigma-Delta * Datasheet
+		 * v2.20](https://www.cypress.com/file/124551/download).
 		 */
 		/**
 		 * Set the operational mode of the device.
 		 *
 		 * @param mode The device mode. Possible values are:
-		 * - CENTROID: touches are detected as discrete entities and
-		 *   can be retrieved with the touch...() methods
-		 * - RAW: the rawData array contains the raw readings of each
-		 *   individual capacitive sensing channel. This corresponds to
-		 *   CSD_waSnsResult.
-		 * - BASELINE: the rawData arraty contains the baseline
-		 *   readings of each individual capacitive sensing channel.
-		 *   This corresponds to CSD_waSnsBaseline.
-		 * - DIFF: the rawData array contains differential readings
-		 *   between the baseline and the raw reading. This corresponds
-		 *   to CSD_waSnsDiff.
+		 * - \link Trill::CENTROID CENTROID \endlink: touches are
+		 *   detected as discrete entities and can be retrieved with
+		 *   the touch...() methods
+		 * - \link Trill::RAW RAW\endlink: the rawData array contains
+		 *   the raw readings of each individual capacitive sensing
+		 *   channel. This corresponds to `CSD_waSnsResult`.
+		 * - \link Trill::BASELINE BASELINE \endlink: the rawData
+		 *   arraty contains the baseline readings of each individual
+		 *   capacitive sensing channel.
+		 *   This corresponds to `CSD_waSnsBaseline`.
+		 * - \link Trill::DIFF DIFF \endlink: the rawData array
+		 *   contains differential readings between the baseline and
+		 *   the raw reading. This corresponds to `CSD_waSnsDiff`.
 		 */
 		int setMode(Mode mode);
 		/**
 		 * Set the speed and bit depth of the capacitive scanning.
-		 * This triggers a call to CSD_SetScanMode(speed, num_bits)
+		 * This triggers a call to `CSD_SetScanMode(speed, num_bits)`
 		 * on the device.
 		 *
 		 * @param speed The speed of the scanning
 		 * Valid values of speed are, ordered by decreasing speed, are
-		 * comprised between 0 (CSD_ULTRA_FAST_SPEED) and 3 (CSD_SLOW_SPEED)
+		 * comprised between 0 (`CSD_ULTRA_FAST_SPEED`) and 3 (`CSD_SLOW_SPEED`)
 		 * @param num_bits The bit depth of the scanning.
 		 * Valid values are comprised between 9 and 12.
 		 */
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
 		/**
 		 * Set the prescaler value for the capacitive scanning.
-		 * This triggers a call to CSD_SetPrescaler(prescaler)
+		 * This triggers a call to `CSD_SetPrescaler(prescaler)`
 		 * on the device.
 		 *
 		 * @param prescaler The prescaler value. Valid values are
 		 * between 0 and 8, inclusive, and map directly to values
-		 * CSD_PRESCALER_1 to CSD_PRESCALER_256.
+		 * `CSD_PRESCALER_1` to `CSD_PRESCALER_256`.
 		 */
 		int setPrescaler(uint8_t prescaler);
 		/**
@@ -189,20 +202,20 @@ class Trill : public I2c
 		 * The value is internally converted to an 8-bit integer by
 		 * multiplying it times `1 << numBits` before being sent to the device.
 		 * On the device, the received value is used to set the
-		 * CSD_bNoiseThreshold variable.
+		 * `CSD_bNoiseThreshold` variable.
 		 */
 		int setNoiseThreshold(float threshold);
 		/**
-		 * Sets the IDAC value for the sensors.
+		 * Sets the IDAC value for the device.
 		 *
-		 * Thie triggers a call to CSD_SetIdacValue(value) on the device.
+		 * Thie triggers a call to `CSD_SetIdacValue(value)` on the device.
 		 *
 		 * @param value the IDAC value. Valid values are between 0 and 255.
 		 */
 		int setIDACValue(uint8_t value);
 		int setMinimumTouchSize(uint16_t size);
 		/**
-		 * Set the sensor to scan automatically at the specified intervals.
+		 * Set the device to scan automatically at the specified intervals.
 		 *
 		 * @param interval The scanning period, measured in ticks of a
 		 * 32kHz clock. This effective scanning period will be limited
@@ -211,33 +224,145 @@ class Trill : public I2c
 		 * of 0 disables auto scanning.
 		 */
 		int setAutoScanInterval(uint16_t interval);
+		/** @} */ // end of Scan Configuration Settings
+
 		/**
-		 * @}
+		 * @name Centroid Mode
+		 * @{
+		 *
+		 * These methods are to be used while the device is in
+		 * \link Trill::CENTROID CENTROID \endlink mode.
+		 *
+		 * The `location` of a touch is a normalised value where `0` and
+		 * `1` are the extremes of the axis.
+		 *
+		 * The `size` of a touch is a rescalued value of the total
+		 * activation measured on the sensing channels that contribute
+		 * to the touch. The rescaling factor is affected by each
+		 * device's geometry and is determined empirically.
+		 *
+		 * A _compound touch_ is a single touch represntation obtained
+		 * by averaging the location and size of the touches on each
+		 * axis and their size.
+		 * This is most useful for 2-axes devices, in order to get a
+		 * single touch.
+		 *
+		 * @class TAGS_1d
+		 * \note It is only valid to call this method if one of is1D() and
+		 * is2D() returns `true`.
+		 * @endcode
+		 * @class TAGS_2d
+		 * \note It is only valid to call this method is2D() returns `true`
+		 * @endcode
+		 *
+		*/
+		/**
+		 * Does the device have one axis of position sensing?
+		 *
+		 * @return `true` if the device has one axis of position sensing
+		 * and is set in \link Trill::CENTROID \endlink mode, `false`
+		 * otherwise.
 		 */
-
-		/* --- Touch-related information --- */
 		bool is1D();
+		/**
+		 * Does the device have two axes of position sensing?
+		 *
+		 * @return `true` if the device has two axes of position sensing
+		 * and is set in \link Trill::CENTROID \endlink mode, `false`
+		 * otherwise.
+		 */
 		bool is2D();
-		int hasButtons() { return getMode() == CENTROID && RING == deviceType();};
+		/**
+		 * Return the number of "button" channels on the device.
+		 */
+		unsigned int getNumButtons() { return 2 * (getMode() == CENTROID && RING == deviceType());};
+		/**
+		 * Get the number of touches currently active on the
+		 * vertical axis of the device.
+		 *
+		 * \copydoc TAG_1d
+		 */
 		unsigned int numberOfTouches();
-// Number of horizontal touches for Trill 2D
-		unsigned int numberOfHorizontalTouches();
-// Location of a particular touch.
-// Range: 0 to N-1.
-// Returns -1 if no such touch exists.
+		/**
+		 * Get the location of a touch on the vertical axis of the
+		 * device.
+		 *
+		 * \copydoc TAGS_1d
+		 *
+		 * @param touch_num the number of the touch. This value needs
+		 * to be comprised between 0 and `numberOfTouches() - 1`.
+		 * @return the position of the touch relative to the axis, or
+		 * -1 if no such touch exists.
+		 */
 		float touchLocation(uint8_t touch_num);
-
-// Size of a particular touch.
-// Range: 0 to N-1.
-// Returns -1 if no such touch exists.
+		/**
+		 * Get the size of a touch.
+		 *
+		 * \copydoc TAGS_1d
+		 *
+		 * @return the size of the touch, if the touch exists, or 0
+		 * otherwise.
+		 */
 		float touchSize(uint8_t touch_num);
-		/* --- Only for 2D sensors --- */
+		/**
+		 * Get the number of touches currently active on the
+		 * horizontal axis of the device.
+		 *
+		 * \copydoc TAGS_2d
+		 */
+		unsigned int numberOfHorizontalTouches();
+		/**
+		 * Get the location of a touch on the horizontal axis of the
+		 * device.
+		 *
+		 * \copydoc TAGS_2d
+		 *
+		 * @param touch_num the number of the touch. This value needs
+		 * to be comprised between 0 and `numberOfHorizontalTouches() - 1`.
+		 * @return the position of the touch relative to the axis, or
+		 * -1 if no such touch exists.
+		 *  */
 		float touchHorizontalLocation(uint8_t touch_num);
+		/**
+		 * Get the size of a touch.
+		 *
+		 * \copydoc TAGS_2d
+		 *
+		 * @return the size of the touch, if the touch exists, or 0
+		 * otherwise.
+		 */
 		float touchHorizontalSize(uint8_t touch_num);
-		/* --- For all sensors, but most useful for 2D sensors --- */
-		float compoundTouchSize();
-		float compoundTouchHorizontalLocation();
+		/**
+		 * Get the vertical location of the compound touch on the
+		 * device.
+		 *
+		 * \copydoc TAGS_1d
+		 *  */
 		float compoundTouchLocation();
-		/* --- Only for Ring sensors --- */
-		int buttonValue(uint8_t button_num);
+		/**
+		 * Get the horizontal location of the compound touch on the
+		 * device.
+		 *
+		 * \copydoc TAGS_1d
+		 */
+		float compoundTouchHorizontalLocation();
+		/**
+		 * Get the size of the compound touch on the
+		 * device.
+		 *
+		 * \copydoc TAGS_1d
+		 */
+		float compoundTouchSize();
+		/**
+		 * Get the value of the capacitive "button" channels on the
+		 * device
+		 *
+		 * @param button_num the button number. Valid values are
+		 * comprised between `0` and `getNumButtons() - 1`.
+		 * @return The differential reading on the button, normalised
+		 * between 0 and 1.
+		 */
+		float getButtonValue(uint8_t button_num);
+
+		/** @}*/ // end of centroid mode
 };
