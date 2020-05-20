@@ -70,7 +70,7 @@ void render(BelaContext *context, void *userData)
 		// after some time has elapsed.
 		if(count >= gTimePeriod*context->audioSampleRate) 
 		{
-			gui.sendBuffer(0, touchSensor.numSensors());
+			gui.sendBuffer(0, touchSensor.getNumChannels());
 			gui.sendBuffer(1, touchSensor.rawData);
 			count = 0;
 		}

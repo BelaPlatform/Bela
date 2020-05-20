@@ -848,8 +848,8 @@ void render(BelaContext *context, void *userData)
 			const Trill::Mode mode = touchSensor.getMode();
 			if(Trill::DIFF == mode)
 			{
-				libpd_start_message(touchSensor.numSensors());
-				for(unsigned int n = 0; n < touchSensor.numSensors(); ++n)
+				libpd_start_message(touchSensor.getNumChannels());
+				for(unsigned int n = 0; n < touchSensor.getNumChannels(); ++n)
 				{
 					libpd_add_float(touchSensor.rawData[n]);
 				}

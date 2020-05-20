@@ -76,7 +76,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		if(readCount >= readIntervalSamples) {
 			readCount = 0;
-			for(unsigned int i = 0; i < touchSensor.numSensors(); i++)
+			for(unsigned int i = 0; i < touchSensor.getNumChannels(); i++)
 				rt_printf("%1.3f ", touchSensor.rawData[i]);
 			rt_printf("\n");
 		}

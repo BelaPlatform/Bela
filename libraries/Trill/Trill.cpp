@@ -315,7 +315,7 @@ int Trill::readI2C() {
 		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, kRawLength);
 		return 1;
 	}
-	for (unsigned int i=0; i < numSensors(); i++) {
+	for (unsigned int i=0; i < getNumChannels(); i++) {
 		rawData[i] = (((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) & 0x0FFF) * rawRescale;
 	}
 
@@ -502,11 +502,11 @@ float Trill::compoundTouchSize()
 	compoundTouch(touchSize, std::min(numberOfTouches(), numberOfHorizontalTouches()));
 }
 
-unsigned int Trill::numSensors()
+unsigned int Trill::getNumChannels()
 {
 	switch(device_type_) {
-		case BAR: return kNumSensorsBar;
-		case RING: return kNumSensorsRing;
-		default: return kNumSensorsMax;
+		case BAR: return kNumChannelsBar;
+		case RING: return kNumChannelsRing;
+		default: return kNumChannelsMax;
 	}
 }

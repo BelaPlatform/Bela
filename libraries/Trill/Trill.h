@@ -54,9 +54,9 @@ class Trill : public I2c
 		};
 
 		enum {
-			kNumSensorsBar = 26,
-			kNumSensorsRing = 28,
-			kNumSensorsMax = 30,
+			kNumChannelsBar = 26,
+			kNumChannelsRing = 28,
+			kNumChannelsMax = 30,
 		};
 
 		Mode mode_; // Which mode the device is in
@@ -80,7 +80,7 @@ class Trill : public I2c
 		 * An array containing the raw reading when the sensor is in
 		 * RAW, BASELINE or DIFF mode
 		 */
-		float rawData[kNumSensorsMax];
+		float rawData[kNumChannelsMax];
 
 		/**
 		 * An array containing the valid values for the speed parameter
@@ -129,7 +129,7 @@ class Trill : public I2c
 		/**
 		 * Get the number of capacitive channels on the device.
 		 */
-		unsigned int numSensors();
+		unsigned int getNumChannels();
 
 		/**
 		 * @name TrillScanConfigurationSettings
