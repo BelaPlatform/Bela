@@ -1,4 +1,4 @@
-/*
+ /*
  ____  _____ _        _
 | __ )| ____| |      / \
 |  _ \|  _| | |     / _ \
@@ -27,11 +27,9 @@ Touch position and size are displayed in the sketch.
 #include <libraries/Scope/Scope.h>
 #include <libraries/Gui/Gui.h>
 #include <libraries/Trill/Trill.h>
+#include <libraries/Oscillator/Oscillator.h>
 #include <cmath>
 #include <vector>
-#include "Sine.h"
-
-#define NUM_TOUCH 5 // Number of touches on Trill sensor
 
 // *** Constants: change these to alter the sound of the Shepard-Risset effect
 // How many simultaneous oscillators?
@@ -66,7 +64,7 @@ const float kGuiTimePeriod = 1.0 / 25.0;
 unsigned int gGuiCount = 0; // counting samples to update the GUI
 
 // *** Global variables: these keep track of the current state of the
-std::vector<Sine> gOscillators; // Oscillator bank
+std::vector<Oscillator> gOscillators; // Oscillator bank
 std::vector<float> gLogFrequencies; // Log-scale frequencies for each oscillator
 std::vector<float> gAmplitudes; // Amplitudes of each oscillator
 std::vector<float> gSpectralWindow; // Window defining spectral rolloff
@@ -75,12 +73,10 @@ Scope gScope; // The Bela oscilloscope
 Gui gGui; // The custom browser-based GUI
 Trill touchSensor; // Trill object declaration
 
-// Location of touches on Trill Ring
-float gTouchLocation[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-// Size of touches on Trill Ring
-float gTouchSize[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-// Number of active touches
-unsigned int gNumActiveTouches = 0;
+// Location of touch on Trill Ring
+float gTouchLocation = 0;
+// Size of touch on Trill Ring
+float gTouchSize = 0;
 
 // Sleep time for auxiliary task
 unsigned int gTaskSleepTime = 12000; // microseconds
@@ -94,21 +90,34 @@ float gTimePeriod = 0.015;
 */
 void loop(void*)
 {
+	int wraps = 0;
+	float pastRead = 0;
 	while(!gShouldStop)
 	{
-		 // Read locations from Trill sensor
-		 touchSensor.readLocations();
-		 gNumActiveTouches = touchSensor.numberOfTouches();
-		 for(unsigned int i = 0; i < gNumActiveTouches; i++) {
-			 gTouchLocation[i] = touchSensor.touchLocation(i);
-			 gTouchSize[i] = touchSensor.touchSize(i);
-		 }
-		 // For all inactive touches, set location and size to 0
-		 for(unsigned int i = gNumActiveTouches; i < NUM_TOUCH; i++) {
-			 gTouchLocation[i] = 0.0;
-			 gTouchSize[i] = 0.0;
-		 }
-		 usleep(gTaskSleepTime);
+		// Read locations from Trill sensor
+		touchSensor.readLocations();
+		if(touchSensor.numberOfTouches())
+		{
+			float newRead = touchSensor.touchLocation(0);
+			// Keep track of how many times we have gone around the sensor.
+			// If we have crossed the end of the sensor...
+			if(pastRead > 0.92 && newRead < 0.08) { // increment if we were going forward
+				wraps++;
+			} else if(newRead > 0.92 && pastRead < 0.08) { // decrement if we were going backwards
+				wraps--;
+			}
+			// We only need to keep track of up to kNumOscillators revolutions
+			wraps = (wraps + kNumOscillators) % kNumOscillators;
+			gTouchLocation = newRead + wraps;
+			gTouchSize = touchSensor.touchSize(0);
+			pastRead = newRead;
+			// optionally, print the current location and see how it keeps track of the revolutions around the circle
+			printf("%.3f\n", gTouchLocation);
+		} else {
+			// if there was no touch, we keep in mind the location of the last one ...
+			// ... by simply doing nothing
+		}
+		usleep(gTaskSleepTime);
 	}
 }
 
@@ -131,7 +140,7 @@ bool setup(BelaContext *context, void *userData)
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 
 	// Initialise the oscillator bank and set its sample rate
-	gOscillators.resize(kNumOscillators);
+	gOscillators.resize(kNumOscillators, Oscillator(context->audioSampleRate));
 	for(unsigned int i = 0; i < kNumOscillators; i++)
 	{
 		gOscillators[i].setup(context->audioSampleRate);
@@ -163,7 +172,6 @@ bool setup(BelaContext *context, void *userData)
 		gSpectralWindow[n] = 0.5f * (1.0f - cosf(2.0 * M_PI * n / (float)(kSpectralWindowSize - 1)));
 	}
 
-
 	// Initialise the Bela oscilloscope with 1 channel
 	gScope.setup(1, context->audioSampleRate);
 
@@ -178,28 +186,19 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	// Get buffer from the p5.js GUI
-	DataBuffer& buffer = gGui.getDataBuffer(0);
-
-	// Retrieve contents of the buffer as floats
-	float* data = buffer.getAsFloat();
-
-	// How long (in seconds) to complete one cycle, i.e. an increase by kFrequencyRatio
-	// The effect is better when this is longer
-	// Map Y-axis (2nd element in the buffer) to cycle time
-	// Logarithmic mapping between 0.1 and 20.0
-	float cycleTime = powf(10.0, map(data[1], 0.0, 1.0, log(2.0), -1.0));
-
-	// Amount to update the frequency by on a normalised 0-1 scale
-	// Controls how fast the glissando moves
-	// In the time span of cycleTime, the frequency should go up to the spacing between oscillators
-	// (i.e. complete one cycle) -- so it traverses a span of (1.0 / kNumOscillators) over cycleTime seconds
-	float logFrequencyIncrement = (float)kUpdateInterval / (kNumOscillators * cycleTime * context->audioSampleRate);
-
+	// update the frequencies based on the touch location
+	for(unsigned int i = 0; i < kNumOscillators; i++)
+	{
+		// In the space of one full rotation on the ring, the frequency should go up by the spacing between oscillators
+		// (i.e. complete one cycle)
+		gLogFrequencies[i] = fmodf((float)i / (float)kNumOscillators + gTouchLocation/kNumOscillators, 1);
+		// Calculate the amplitude of this oscillator by finding its position in the
+		// window on a normalised logarithmic frequency scale
+		gAmplitudes[i] = gSpectralWindow[(int)(gLogFrequencies[i] * kSpectralWindowSize)];
+	}
 	// Iterate through all the samples in this block
 	for(unsigned int n = 0; n < context->audioFrames; n++)
 	{
-		float out = 0;
 
 		if(gUpdateCount >= kUpdateInterval)
 		{
@@ -212,36 +211,17 @@ void render(BelaContext *context, void *userData)
 				float frequency = kLowestBaseFrequency * powf(2.0, gLogFrequencies[i] * kMaxFrequencyRatio);
 				gOscillators[i].setFrequency(frequency);
 
-				// Calculate the amplitude of this oscillator by finding its position in the
-				// window on a normalised logarithmic frequency scale
-				gAmplitudes[i] = gSpectralWindow[(int)(gLogFrequencies[i] * kSpectralWindowSize)];
 
-				// Update the frequency of this oscillator and wrap around if it falls
-				// off the end of the range
-				gLogFrequencies[i] += logFrequencyIncrement;
-				if(gLogFrequencies[i] >= 1.0) {
-					// Recalculate all the other oscillator frequencies as a function of this one
-					// to prevent numerical precision errors from accumulating
-					unsigned int osc = i;
-					for(unsigned int k = 0; k < kNumOscillators; k++)
-					{
-						gLogFrequencies[osc] = (float)k / (float)kNumOscillators;
-						osc++;
-						if(osc >= kNumOscillators)
-							osc = 0;
-					}
-				}
-				if(gLogFrequencies[i] < 0.0)
-					gLogFrequencies[i] += 1.0;
 			}
 		}
 		++gUpdateCount;
 
+		float out = 0;
 		// Compute the oscillator outputs every sample
 		for(unsigned int i = 0; i < kNumOscillators; i++)
 		{
 			// Mix this oscillator into the audio output
-			out += gOscillators[i].nextSample() * gAmplitudes[i] * kAmplitude;
+			out += gOscillators[i].process() * gAmplitudes[i] * kAmplitude;
 		}
 
 		// Write the output to all the audio channels
@@ -259,7 +239,7 @@ void render(BelaContext *context, void *userData)
 			gGuiCount = 0;
 
 			// Send data to GUI
-			gGui.sendBuffer(0, gNumActiveTouches);
+			gGui.sendBuffer(0, 1);
 			gGui.sendBuffer(1, gTouchLocation);
 			gGui.sendBuffer(2, gTouchSize);
 		}
