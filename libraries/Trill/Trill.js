@@ -28,7 +28,7 @@ class TrillTouch {
 }
 
 class Trill {
-	constructor(type, length, position = [50, 50], touchScale = 0.9) {
+	constructor(type, length, position = [50, 50], touchScale = 0.4) {
 		this.position = position;
 		this.types = ['bar', 'square', 'hex', 'ring']
 		this.type = (this.types.includes(type)) ? type : null;
@@ -61,9 +61,9 @@ class Trill {
 			push();
 			translate(this.position[0], this.position[1]);
 			noFill();
-			stroke(0);
-			strokeWeight(this.ringRadius*0.25);
-			ellipse(0,0,this.ringRadius,this.ringRadius);
+			stroke(this.sensorColor);
+			strokeWeight(this.dimensions[0] * 0.25);
+			ellipse(0,0,this.dimensions[0], this.dimensions[1]);
 			pop();
 		} else if (this.type == 'hex') {
 			push();
@@ -116,12 +116,15 @@ class Trill {
 			if(this.type == 'bar' || this.type == 'square') {
 				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
+				push();
+				translate(this.position[0], this.position[1]);
 				let _radial = new Array(5);
 				_radial[i] = (this.touches[i].location[0]) * PI * 2.0;
 				if (_radial[i] >= PI*2){
 					_radial[i] = 0;
 				}
-				ellipse((this.ringRadius * 0.5) * cos(_radial[i]), (this.ringRadius * 0.5) * sin(_radial[i]), diameter);
+				ellipse((this.dimensions[0] * 0.5) * cos(_radial[i]), (this.dimensions[0] * 0.5) * sin(_radial[i]), diameter);
+				pop();
 			} else if (this.type == 'hex') {
 				ellipse((this.position[0] - this.dimensions[0] * 0.5) + this.touches[i].location[0] * this.dimensions[0], (this.position[1] - this.dimensions[1] * 0.5) + this.touches[i].location[1] * this.dimensions[1], diameter);
 			}

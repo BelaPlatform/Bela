@@ -1,7 +1,5 @@
 
-let spacing;
 let activeTouches = 0;
-let sliderTouchSizeScaler = 0.5;
 let ringWidth = 800.0;
 let belaLogo;
 
@@ -13,7 +11,7 @@ function preload() {
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	frameRate(60);
-	sliderLength = width-100;
+	ringWidth = windowWidth * 0.3
 	trill = new Trill('ring', ringWidth, [ windowWidth * 0.5, windowHeight * 0.5 ]);
 }
 
@@ -30,6 +28,7 @@ function draw() {
 }
 
 function resizeElements() {
+	ringWidth = windowWidth * 0.3
 	trill.resize(ringWidth);
 }
 
