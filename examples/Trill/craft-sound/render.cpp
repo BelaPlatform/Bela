@@ -78,7 +78,7 @@ void loop(void*)
 	{
 		// Read raw data from sensor
 		touchSensor.readI2C();
-		for(unsigned int i = 0; i < NUM_SENSORS; i++) {
+		for(unsigned int i = 0; i < NUM_SENSORS; i++)
 			gSensorReading[i] = touchSensor.rawData[i];
 		usleep(gTaskSleepTime);
 	}
