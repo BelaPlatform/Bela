@@ -98,7 +98,7 @@ void loop(void*)
 		touchSensor.readLocations();
 		if(touchSensor.numberOfTouches())
 		{
-			float newRead = touchSensor.touchLocation(0);
+			float newRead = touchSensor.compoundTouchLocation();
 			// Keep track of how many times we have gone around the sensor.
 			// If we have crossed the end of the sensor...
 			if(pastRead > 0.92 && newRead < 0.08) { // increment if we were going forward
@@ -109,10 +109,10 @@ void loop(void*)
 			// We only need to keep track of up to kNumOscillators revolutions
 			wraps = (wraps + kNumOscillators) % kNumOscillators;
 			gTouchLocation = newRead + wraps;
-			gTouchSize = touchSensor.touchSize(0);
+			gTouchSize = touchSensor.compoundTouchSize();
 			pastRead = newRead;
 			// optionally, print the current location and see how it keeps track of the revolutions around the circle
-			printf("%.3f\n", gTouchLocation);
+			// printf("%.3f\n", gTouchSize);
 		} else {
 			// if there was no touch, we keep in mind the location of the last one ...
 			// ... by simply doing nothing
