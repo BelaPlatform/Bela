@@ -38,7 +38,7 @@ function setup() {
 	radioBits.value("12");
 
 	// Create a slider object (min, max, initial value, increment)
-	slider = createSlider(0, 255/4096, 0, 1/4096); // TODO: the range and step of this should change with the number of bits
+	slider = createSlider(0, 255/4096, 0.0, 1/4096); // TODO: the range and step of this should change with the number of bits
 
 	button = createButton("RESET BASELINE");
 	button.mouseClicked(changeButtonState);
@@ -100,10 +100,10 @@ function draw() {
 
 	text("PRESCALER VALUE:", chartLeft, controlStart + 40);
 	var radioPresVal = radioPres.value();
-	text("NUMBER OF BITS:", chartLeft, controlStart + 90);
+	text("NUMBER OF BITS:", chartRight-200, controlStart + 40);
 	var radioBitsVal = radioBits.value();
-	text("THRESHOLD VALUE:", chartRight-200, controlStart -20);
-	text(slider.value(), chartRight-50, controlStart - 20);
+	text("THRESHOLD VALUE:", chartRight-200, controlStart -10);
+	text(slider.value(), chartRight-50, controlStart - 10);
 	var sliderVal = slider.value();
 	var buttonVal = button.value();
 	// Send values from interface to Bela
@@ -123,7 +123,7 @@ function windowResized() {
 		radioPres.style("width", radioWidth);
 		radioPres.position(chartLeft, controlStart + 50);
 		radioBits.style("width", radioWidth)
-		radioBits.position(chartLeft, controlStart + 100);
+		radioBits.position(chartRight-200, controlStart + 50);
 		slider.position(chartRight-200, controlStart);
 		slider.style("width", "200px");
 		button.position(windowWidth * 0.5 - 100, controlStart);

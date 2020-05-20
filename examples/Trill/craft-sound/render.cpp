@@ -1,20 +1,26 @@
- /**
- * \example Trill/trill-craft-oscillator-bank
- *
- * Trill Craft Oscillator Bank
- * ===========================
- *
- * This project showcases an example of how to communicate with the Trill Craft sensor using
- * the Trill library and sonifies the readings from the different pads using a bank of
- * oscillators.
- *
- * The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
- * and the raw values re-mapped to a range 0-1 and stored in a global variable.
- *
- * The amplitudes of each pad on the Trill craft are used to control the amplitudes of a
- * bank of harmonically-tuned oscillators. You can hear the effect by touching each pad.
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/craft-sound
+
+Trill Craft Oscillator Bank
+===========================
+
+This project sonifies the readings from the different channels of Trill craft
+using a bank of oscillators.
+
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+and stored in a global variable.
+
+The reading from each channel on Trill craft are used to control the amplitudes of a
+bank of harmonically-tuned oscillators. You can hear the effect by running your
+finger across each pad of the sensor.
+*/
 
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
