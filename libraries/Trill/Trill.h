@@ -76,9 +76,20 @@ class Trill : public I2c
 		int identify();
 		void updateRescale();
 	public:
+		/**
+		 * An array containing the raw reading when the sensor is in
+		 * RAW, BASELINE or DIFF mode
+		 */
 		float rawData[kNumSensorsMax];
 
-		static constexpr uint8_t speedValues[4] = {0, 1, 2, 3}; // Ordered in decreasing speed: 0 is CSD_ULTRA_FAST_SPEED and 3 is CSD_SLOW_SPEED
+		/**
+		 * An array containing the valid values for the speed parameter
+		 * in setScanSettings()
+		 */
+		static constexpr uint8_t speedValues[4] = {0, 1, 2, 3};
+		/**
+		 * The maximum value for the setPrescaler() method
+		 */
 		static constexpr uint8_t prescalerMax = 8;
 		Trill();
 		~Trill();
@@ -87,34 +98,138 @@ class Trill : public I2c
 				float threshold = -1, int prescaler = -1);
 		void cleanup();
 
-		/* Update the baseline value on the sensor*/
+		/**
+		 * Update the baseline value on the sensor.
+		 */
 		int updateBaseLine();
+
 		int readI2C(); // This should maybe be renamed readRawData()
 		int readLocations();
-		/* Return the type of the device attached*/
+
+		/**
+		 * Get the device type.
+		 */
 		Device deviceType() { return device_type_; }
+		/**
+		 * Get the device type as a string.
+		 */
 		const std::string& getDeviceName();
+		/**
+		 * Get the firmware version of the device.
+		 */
 		int firmwareVersion() { return firmware_version_; }
+		/**
+		 * Get the mode that the device is currently in.
+		 */
 		Mode getMode() { return mode_; }
+		/**
+		 * Print details about the device to standard output
+		 */
 		void printDetails() ;
+		/**
+		 * Get the number of capacitive channels on the device.
+		 */
 		unsigned int numSensors();
 
-		/* --- Scan configuration settings --- */
+		/**
+		 * @name TrillScanConfigurationSettings
+		 * @{
+		 *
+		 * Some of the methods below map directly to function calls and
+		 * values described in the Cypress CapSense Sigma-Delta Datasheet v2.20
+		 * available [here](https://www.cypress.com/file/124551/download)
+		 */
+		/**
+		 * Set the operational mode of the device.
+		 *
+		 * @param mode The device mode. Possible values are:
+		 * - CENTROID: touches are detected as discrete entities and
+		 *   can be retrieved with the touch...() methods
+		 * - RAW: the rawData array contains the raw readings of each
+		 *   individual capacitive sensing channel. This corresponds to
+		 *   CSD_waSnsResult.
+		 * - BASELINE: the rawData arraty contains the baseline
+		 *   readings of each individual capacitive sensing channel.
+		 *   This corresponds to CSD_waSnsBaseline.
+		 * - DIFF: the rawData array contains differential readings
+		 *   between the baseline and the raw reading. This corresponds
+		 *   to CSD_waSnsDiff.
+		 */
 		int setMode(Mode mode);
+		/**
+		 * Set the speed and bit depth of the capacitive scanning.
+		 * This triggers a call to CSD_SetScanMode(speed, num_bits)
+		 * on the device.
+		 *
+		 * @param speed The speed of the scanning
+		 * Valid values of speed are, ordered by decreasing speed, are
+		 * comprised between 0 (CSD_ULTRA_FAST_SPEED) and 3 (CSD_SLOW_SPEED)
+		 * @param num_bits The bit depth of the scanning.
+		 * Valid values are comprised between 9 and 12.
+		 */
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
+		/**
+		 * Set the prescaler value for the capacitive scanning.
+		 * This triggers a call to CSD_SetPrescaler(prescaler)
+		 * on the device.
+		 *
+		 * @param prescaler The prescaler value. Valid values are
+		 * between 0 and 8, inclusive, and map directly to values
+		 * CSD_PRESCALER_1 to CSD_PRESCALER_256.
+		 */
 		int setPrescaler(uint8_t prescaler);
+		/**
+		 * Set the noise threshold for the capacitive channels.
+		 *
+		 * When a channel's scan returns a value smaller than the
+		 * threshold, its value is set to 0.
+		 *
+		 * @param threshold the noise threshold level. Valid values are
+		 * between 0 and `255.0/(1 << numBits)`.
+		 * The value is internally converted to an 8-bit integer by
+		 * multiplying it times `1 << numBits` before being sent to the device.
+		 * On the device, the received value is used to set the
+		 * CSD_bNoiseThreshold variable.
+		 */
 		int setNoiseThreshold(float threshold);
+		/**
+		 * Sets the IDAC value for the sensors.
+		 *
+		 * Thie triggers a call to CSD_SetIdacValue(value) on the device.
+		 *
+		 * @param value the IDAC value. Valid values are between 0 and 255.
+		 */
 		int setIDACValue(uint8_t value);
 		int setMinimumTouchSize(uint16_t size);
+		/**
+		 * Set the sensor to scan automatically at the specified intervals.
+		 *
+		 * @param interval The scanning period, measured in ticks of a
+		 * 32kHz clock. This effective scanning period will be limited
+		 * by the scanning speed, bit depth and any computation
+		 * happening on the device (such as touch detection). A value
+		 * of 0 disables auto scanning.
+		 */
 		int setAutoScanInterval(uint16_t interval);
+		/**
+		 * @}
+		 */
 
 		/* --- Touch-related information --- */
 		bool is1D();
 		bool is2D();
 		int hasButtons() { return getMode() == CENTROID && RING == deviceType();};
 		unsigned int numberOfTouches();
+// Number of horizontal touches for Trill 2D
 		unsigned int numberOfHorizontalTouches();
+// Location of a particular touch.
+// Range: 0 to N-1.
+// Returns -1 if no such touch exists.
 		float touchLocation(uint8_t touch_num);
+
+// Size of a particular touch.
+// Range: 0 to N-1.
+// Returns -1 if no such touch exists.
 		float touchSize(uint8_t touch_num);
 		/* --- Only for 2D sensors --- */
 		float touchHorizontalLocation(uint8_t touch_num);
@@ -124,5 +239,5 @@ class Trill : public I2c
 		float compoundTouchHorizontalLocation();
 		float compoundTouchLocation();
 		/* --- Only for Ring sensors --- */
-		int readButtons(uint8_t button_num);
+		int buttonValue(uint8_t button_num);
 };

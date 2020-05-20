@@ -402,7 +402,6 @@ unsigned int Trill::numberOfTouches()
 	return (num_touches_ & 0x0F);
 }
 
-// Number of horizontal touches for Trill 2D
 unsigned int Trill::numberOfHorizontalTouches()
 {
 	if(mode_ != CENTROID  || (device_type_ != SQUARE && device_type_ != HEX))
@@ -412,9 +411,6 @@ unsigned int Trill::numberOfHorizontalTouches()
 	return (num_touches_ >> 4);
 }
 
-// Location of a particular touch.
-// Range: 0 to N-1.
-// Returns -1 if no such touch exists.
 float Trill::touchLocation(uint8_t touch_num)
 {
 	if(mode_ != CENTROID)
@@ -428,7 +424,7 @@ float Trill::touchLocation(uint8_t touch_num)
 	return location * posRescale;
 }
 
-int Trill::readButtons(uint8_t button_num)
+int Trill::buttonValue(uint8_t button_num)
 {
 	if(mode_ != CENTROID)
 		return -1;
@@ -441,10 +437,6 @@ int Trill::readButtons(uint8_t button_num)
 	return buttonValue;
 }
 
-
-// Size of a particular touch.
-// Range: 0 to N-1.
-// Returns -1 if no such touch exists.
 float Trill::touchSize(uint8_t touch_num)
 {
 	if(mode_ != CENTROID)
