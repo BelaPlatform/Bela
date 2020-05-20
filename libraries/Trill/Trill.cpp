@@ -499,7 +499,7 @@ float Trill::compoundTouchHorizontalLocation()
 
 float Trill::compoundTouchSize()
 {
-	compoundTouch(touchSize, std::min(numberOfTouches(), numberOfHorizontalTouches()));
+	compoundTouch(touchSize, is2D() ? std::min(numberOfTouches(), numberOfHorizontalTouches()) : numberOfTouches());
 }
 
 unsigned int Trill::getNumChannels()
