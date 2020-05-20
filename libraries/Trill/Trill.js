@@ -116,7 +116,7 @@ class Trill {
 			if(this.type == 'bar' || this.type == 'square') {
 				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
-				let _radial= new Array(5);
+				let _radial = [];
 				_radial[i] = (this.touches.locations[i]) * PI * 2.0;
 				if (_radial[i] >= PI*2){
 					_radial[i] = 0;
