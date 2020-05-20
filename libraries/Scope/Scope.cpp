@@ -45,6 +45,8 @@ void Scope::triggerTask(){
 }
 
 void Scope::setup(unsigned int _numChannels, float _sampleRate){
+	if(_numChannels > 50)
+		throw std::runtime_error(std::string("Scope::setup(): too many channels (")+std::to_string(_numChannels)+std::string(")."));
    
     setSetting(L"numChannels", _numChannels);
     setSetting(L"sampleRate", _sampleRate);
