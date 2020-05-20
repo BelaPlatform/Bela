@@ -1,0 +1,51 @@
+#N canvas 273 52 1033 776 10;
+#X obj 225 601 list;
+#X obj 55 431 metro 200;
+#X obj 55 405 loadbang;
+#X text 147 433 Throttle printing;
+#X obj 35 48 loadbang;
+#X obj 323 360 r bela_trill;
+#X obj 35 296 s bela_setTrill;
+#X text 189 69 Args: [new <sensor_id> <bus> <address> <mode>];
+#X text 520 417 Which will be prepended with the sensor_id;
+#X text 399 592 [<num_touches> <position> <size>];
+#X text 631 99 You can also change settings on initialisation:;
+#X text 632 119 [prescaler <sensor_id> <value> (between 1 and 8);
+#X text 632 153 [threshold <sensor_id> <value>(between 0 and 1.0);
+#X text 189 49 First initialise the Trill sensors;
+#X text 188 98 Recommend to use mode=diff for Trill Craft and mode=centroid
+;
+#X text 188 118 for Bar/Square/Ring/Hex.;
+#X text 188 148 In this example we initialise a Craft \, Bar and Square.
+;
+#X obj 323 418 route craft bar square;
+#X obj 55 462 delay 30;
+#X obj 55 492 delay 30;
+#X obj 226 641 print craft;
+#X text 325 643 [<num_channels> <values .... >];
+#X obj 315 551 list;
+#X obj 315 592 print bar;
+#X obj 405 511 list;
+#X text 497 551 [<num_touches> <x> <y> <size>];
+#X text 440 361 This receives the reading from the Trill sensors;
+#X msg 35 238 new craft 1 48 diff \, new bar 1 32 centroid \, new square
+1 40 centroid \, prescaler craft 2 \, threshold craft 0.01;
+#X obj 405 552 print square;
+#X text 188 168 You will need to have these 3 sensors connected for
+this;
+#X text 188 188 example to run.;
+#X connect 0 0 20 0;
+#X connect 1 0 18 0;
+#X connect 2 0 1 0;
+#X connect 4 0 27 0;
+#X connect 5 0 17 0;
+#X connect 17 0 0 1;
+#X connect 17 1 22 1;
+#X connect 17 2 24 1;
+#X connect 18 0 19 0;
+#X connect 18 0 24 0;
+#X connect 19 0 0 0;
+#X connect 19 0 22 0;
+#X connect 22 0 23 0;
+#X connect 24 0 28 0;
+#X connect 27 0 6 0;
