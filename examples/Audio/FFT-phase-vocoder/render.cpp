@@ -105,7 +105,7 @@ void midiCallback(MidiChannelMessage message, void* arg){
 			gDryWet = data;
 			break;
 		case 5:
-			gGain = data*10;
+			gGain = data * 300;
 			break;
 		default:
 			shouldPrint = true;
