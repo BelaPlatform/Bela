@@ -82,7 +82,7 @@ void loop(void*)
 	float oldBuffer[5] = {0};
 	int numBits;
 	int speed = 0;
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		touchSensor.readI2C();
 

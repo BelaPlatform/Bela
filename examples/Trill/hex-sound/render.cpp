@@ -63,7 +63,7 @@ unsigned int gTaskSleepTime = 12000; // microseconds
 void loop(void*)
 {
 	// loop
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
 		touchSensor.readLocations();

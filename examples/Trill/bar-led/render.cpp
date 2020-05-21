@@ -58,7 +58,7 @@ bool gLedStatus[NUM_LED] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
  */
 void loop(void*)
 {
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
 		touchSensor.readLocations();

@@ -60,7 +60,7 @@ float gTimePeriod = 0.015;
 
 void loop(void*)
 {
-	while(!gShouldStop) {
+	while(!Bela_stopRequested()) {
 		touchSensor.readI2C();
 		usleep(gTaskSleepTime);
 	}

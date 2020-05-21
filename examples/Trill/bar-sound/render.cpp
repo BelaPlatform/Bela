@@ -63,7 +63,7 @@ float gAmplitudeRange[2] = { 0.0, 1.0 } ;
 */
 void loop(void*)
 {
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
 		touchSensor.readLocations();

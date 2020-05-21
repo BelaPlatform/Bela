@@ -51,7 +51,7 @@ unsigned int gTaskSleepTime = 12000; // microseconds
 
 void loop(void*)
 {
-	while(!gShouldStop) {
+	while(!Bela_stopRequested()) {
 		touchSensor.readI2C();
 		usleep(gTaskSleepTime);
 	}

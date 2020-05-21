@@ -92,7 +92,7 @@ void loop(void*)
 {
 	int wraps = 0;
 	float pastRead = 0;
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
 		touchSensor.readLocations();

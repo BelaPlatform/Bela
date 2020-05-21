@@ -52,7 +52,7 @@ float gTimePeriod = 0.015;
 */
 void loop(void*)
 {
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
 		touchSensor.readLocations();
