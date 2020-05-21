@@ -5,6 +5,7 @@
 /**
  * \brief A class to use the Trill family of capacitive sensors.
  * http://bela.io/trill
+ * \nosubgrouping
  */
 
 class Trill : public I2c
@@ -15,13 +16,16 @@ class Trill : public I2c
 		 */
 		typedef enum {
 			AUTO = -1, /**< Auto mode: the mode is set
-				     automatically based on sensor type */
+				     automatically based on the device type */
 			CENTROID = 0, /**< Centroid mode: detect discrete touches */
 			RAW = 1, /**< Raw mode */
 			BASELINE = 2, /**< Baseline mode */
 			DIFF = 3, /**< Differential mode */
 		} Mode;
 
+		/**
+		 * The types of Trill devices
+		 */
 		typedef enum {
 			NONE = -1,
 			UNKNOWN = 0,
@@ -87,12 +91,31 @@ class Trill : public I2c
 		void updateRescale();
 	public:
 		/**
-		 * An array containing the raw reading when the device is in
-		 * \link Trill::RAW RAW\endlink, \link Trill::BASELINE BASELINE \endlink
-		 * or \link Trill::DIFF DIFF \endlink
-		 * mode
+		 * @name RAW, BASELINE or DIFF mode
+		 * When the device is in #RAW, #BASELINE, or #DIFF mode, the
+		 * readings from the individual sensing channels are accessed
+		 * through #rawData.
+		 * @{
+		 */
+		/**
+		 * An array containing the readings from the device's
+		 * channel  when the device is in
+		 * #RAW, #BASELINE or #DIFF mode.
+		 *
+		 * The type of data it contains depend on the device mode:
+		 * - #RAW: the #rawData array contains
+		 *   the raw readings of each individual capacitive sensing
+		 *   channel. This corresponds to `CSD_waSnsResult`.
+		 * - #BASELINE:the #rawData
+		 *   array contains the baseline readings of each individual
+		 *   capacitive sensing channel.
+		 *   This corresponds to `CSD_waSnsBaseline`.
+		 * - #DIFF: the #rawData array
+		 *   contains differential readings between the baseline and
+		 *   the raw reading. This corresponds to `CSD_waSnsDiff`.
 		 */
 		float rawData[kNumChannelsMax];
+		/** @} */
 
 		/**
 		 * An array containing the valid values for the speed parameter
@@ -105,8 +128,23 @@ class Trill : public I2c
 		static constexpr uint8_t prescalerMax = 8;
 		Trill();
 		~Trill();
+		/**
+		 * \copydoc Trill::setup
+		 */
 		Trill(unsigned int i2c_bus, Device device, Mode mode = AUTO,
 				uint8_t i2c_address = 255);
+		/**
+		 * Initialise the device.
+		 *
+		 * @param i2c_bus the bus that the device is connected to
+		 * @param device the device type
+		 * @param mode the mode to set the device to. Defaults to
+		 * #AUTO, which selects the device-specific default
+		 * mode.
+		 * @param i2c_address the address at which the device can be
+		 * found. Defaults to the default address for the specified
+		 * device type.
+		 */
 		int setup(unsigned int i2c_bus, Device device, Mode mode = AUTO,
 				uint8_t i2c_address = 255);
 
@@ -155,20 +193,7 @@ class Trill : public I2c
 		/**
 		 * Set the operational mode of the device.
 		 *
-		 * @param mode The device mode. Possible values are:
-		 * - \link Trill::CENTROID CENTROID \endlink: touches are
-		 *   detected as discrete entities and can be retrieved with
-		 *   the touch...() methods
-		 * - \link Trill::RAW RAW\endlink: the rawData array contains
-		 *   the raw readings of each individual capacitive sensing
-		 *   channel. This corresponds to `CSD_waSnsResult`.
-		 * - \link Trill::BASELINE BASELINE \endlink: the rawData
-		 *   arraty contains the baseline readings of each individual
-		 *   capacitive sensing channel.
-		 *   This corresponds to `CSD_waSnsBaseline`.
-		 * - \link Trill::DIFF DIFF \endlink: the rawData array
-		 *   contains differential readings between the baseline and
-		 *   the raw reading. This corresponds to `CSD_waSnsDiff`.
+		 * @param mode The device mode.
 		 */
 		int setMode(Mode mode);
 		/**
@@ -215,6 +240,9 @@ class Trill : public I2c
 		 * @param value the IDAC value. Valid values are between 0 and 255.
 		 */
 		int setIDACValue(uint8_t value);
+		/**
+		 * Set minimum touch size
+		 */
 		int setMinimumTouchSize(uint16_t size);
 		/**
 		 * Set the device to scan automatically at the specified intervals.
@@ -232,8 +260,9 @@ class Trill : public I2c
 		 * @name Centroid Mode
 		 * @{
 		 *
-		 * These methods are to be used while the device is in
-		 * \link Trill::CENTROID CENTROID \endlink mode.
+		 * When the device is in #CENTROID mode, touches are
+		 * detected as discrete entities and can be retrieved with
+		 * the methods in this section.
 		 *
 		 * The `location` of a touch is a normalised value where `0` and
 		 * `1` are the extremes of the axis.
@@ -243,7 +272,7 @@ class Trill : public I2c
 		 * to the touch. The rescaling factor is affected by each
 		 * device's geometry and is determined empirically.
 		 *
-		 * A _compound touch_ is a single touch represntation obtained
+		 * A `compoundTouch` is a single touch represntation obtained
 		 * by averaging the location and size of the touches on each
 		 * axis and their size.
 		 * This is most useful for 2-axes devices, in order to get a
@@ -252,17 +281,14 @@ class Trill : public I2c
 		 * @class TAGS_1d
 		 * \note It is only valid to call this method if one of is1D() and
 		 * is2D() returns `true`.
-		 * @endcode
 		 * @class TAGS_2d
 		 * \note It is only valid to call this method is2D() returns `true`
-		 * @endcode
-		 *
 		*/
 		/**
 		 * Does the device have one axis of position sensing?
 		 *
 		 * @return `true` if the device has one axis of position sensing
-		 * and is set in \link Trill::CENTROID \endlink mode, `false`
+		 * and is set in #CENTROID mode, `false`
 		 * otherwise.
 		 */
 		bool is1D();
@@ -270,7 +296,7 @@ class Trill : public I2c
 		 * Does the device have two axes of position sensing?
 		 *
 		 * @return `true` if the device has two axes of position sensing
-		 * and is set in \link Trill::CENTROID \endlink mode, `false`
+		 * and is set in #CENTROID mode, `false`
 		 * otherwise.
 		 */
 		bool is2D();
@@ -282,7 +308,7 @@ class Trill : public I2c
 		 * Get the number of touches currently active on the
 		 * vertical axis of the device.
 		 *
-		 * \copydoc TAG_1d
+		 * \copydoc TAGS_1d
 		 */
 		unsigned int numberOfTouches();
 		/**
