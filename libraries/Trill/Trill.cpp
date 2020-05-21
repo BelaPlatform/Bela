@@ -160,6 +160,8 @@ void Trill::printDetails()
 
 int Trill::setMode(Mode mode) {
 	unsigned int bytesToWrite = 3;
+	if(AUTO == mode)
+		mode = trillDefaults.at(device_type_).mode;
 	char buf[3] = { kOffsetCommand, kCommandMode, (char)mode };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
