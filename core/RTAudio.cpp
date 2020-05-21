@@ -194,7 +194,7 @@ InternalBelaContext gContext;
 BelaContext* gUserContext = nullptr;
 
 // User data passed in from main()
-void *gUserData;
+static void *gUserData;
 void (*gCoreRender)(BelaContext*, void*);
 void (*gUserRender)(BelaContext*, void*);
 void (*gBelaCleanup)(BelaContext*, void*);
@@ -776,6 +776,21 @@ void Bela_cleanupAudio()
 	if(gAmplifierMutePin >= 0)
 		gpio_unexport(gAmplifierMutePin);
 	gAmplifierMutePin = -1;
+}
+
+void Bela_setUserData(void* newUserData)
+{
+	gUserData = newUserData;
+}
+
+void Bela_requestStop()
+{
+	gShouldStop = true;
+}
+
+int Bela_stopRequested()
+{
+	return gShouldStop;
 }
 
 // Set the level of the DAC; affects all outputs (headphone, line, speaker)
