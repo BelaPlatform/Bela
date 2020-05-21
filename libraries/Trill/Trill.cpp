@@ -297,15 +297,18 @@ int Trill::updateBaseLine() {
 }
 
 int Trill::prepareForDataRead() {
-	unsigned int bytesToWrite = 1;
-	char buf[1] = { kOffsetData };
-	if(::write(i2C_file, buf, bytesToWrite) != bytesToWrite)
+	if(!preparedForDataRead_)
 	{
-		fprintf(stderr, "Failed to prepare Trill data collection\n");
-		return 1;
+		unsigned int bytesToWrite = 1;
+		char buf[1] = { kOffsetData };
+		if(::write(i2C_file, buf, bytesToWrite) != bytesToWrite)
+		{
+			fprintf(stderr, "Failed to prepare Trill data collection\n");
+			return 1;
+		}
+		preparedForDataRead_ = true;
+		usleep(commandSleepTime); // need to give enough time to process command
 	}
-	preparedForDataRead_ = true;
-	usleep(commandSleepTime); // need to give enough time to process command
 
 	return 0;
 }
@@ -316,8 +319,7 @@ int Trill::readI2C() {
 	if(NONE == device_type_)
 		return 1;
 
-	if(!preparedForDataRead_)
-		prepareForDataRead();
+	prepareForDataRead();
 
 	int bytesRead = ::read(i2C_file, dataBuffer, kRawLength);
 	if (bytesRead != kRawLength)
@@ -336,8 +338,7 @@ int Trill::readLocations() {
 	if(NONE == device_type_)
 		return 1;
 
-	if(!preparedForDataRead_)
-		prepareForDataRead();
+	prepareForDataRead();
 
 	uint8_t bytesToRead = kCentroidLengthDefault;
 	if(device_type_ == SQUARE || device_type_ == HEX)
