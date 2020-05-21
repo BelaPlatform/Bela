@@ -1,8 +1,11 @@
 [
-  "basic",
+  "Bela-to-p5-basic",
+  "p5-to-Bela-basic",
+  "empty-project",
   "simple",
   "clock",
   "mouse-track",
   "sequencer",
-  "graph"
+  "graph",
+  "gui-sliders"
 ]
