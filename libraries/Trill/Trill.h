@@ -14,6 +14,8 @@ class Trill : public I2c
 		 * The acquisition modes that the device can be set to.
 		 */
 		typedef enum {
+			AUTO = -1, /**< Auto mode: the mode is set
+				     automatically based on sensor type */
 			CENTROID = 0, /**< Centroid mode: detect discrete touches */
 			RAW = 1, /**< Raw mode */
 			BASELINE = 2, /**< Baseline mode */
@@ -103,10 +105,10 @@ class Trill : public I2c
 		static constexpr uint8_t prescalerMax = 8;
 		Trill();
 		~Trill();
-		Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode);
-		int setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode,
-				float threshold = -1, int prescaler = -1);
-		void cleanup();
+		Trill(unsigned int i2c_bus, Device device, Mode mode = AUTO,
+				uint8_t i2c_address = 255);
+		int setup(unsigned int i2c_bus, Device device, Mode mode = AUTO,
+				uint8_t i2c_address = 255);
 
 		/**
 		 * Update the baseline value on the device.

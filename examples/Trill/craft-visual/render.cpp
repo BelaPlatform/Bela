@@ -75,8 +75,11 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup a sensor on i2c 1, address 0x30 and in DIFF mode
-	touchSensor.setup(1, 0x30, Trill::DIFF);
+	// Setup a Trill Craft on i2c bus 1, using the default mode and address
+	if(touchSensor.setup(1, Trill::CRAFT)) {
+		fprintf(stderr, "Unable to initialise touch sensor\n");
+		return false;
+	}
 
 	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
 	Bela_scheduleAuxiliaryTask(readI2cTask);

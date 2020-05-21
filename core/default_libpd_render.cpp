@@ -457,7 +457,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				rt_fprintf(stderr, "bela_setTrill unknown mode `%s'\n", modeString);
 				return;
 			}
-			Trill* trill = new Trill(bus, address, mode);
+			Trill* trill = new Trill(bus, Trill::UNKNOWN, mode, address);
 			if(Trill::NONE == trill->deviceType())
 			{
 				rt_fprintf(stderr, "Unable to create Trill sensor on bus %u at address %u (%#x). Is the sensor connected?\n", bus, address, address);

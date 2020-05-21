@@ -99,7 +99,8 @@ bool setup(BelaContext *context, void *userData)
 
 	gAudioSampleRate = context->audioSampleRate;
 
-	if(touchSensor.setup(1, 0x30, Trill::DIFF) != 0) {
+	// Setup a Trill Craft sensor on i2c bus 1, using the default mode and address
+	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}

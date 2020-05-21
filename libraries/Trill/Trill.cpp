@@ -1,18 +1,27 @@
-#include <libraries/Trill/Trill.h>
+#include "Trill.h"
 #include <map>
 #include <vector>
 
 const uint8_t Trill::speedValues[4];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 
-static const std::map<Trill::Device, std::string> trillDeviceNameMap = {
-	{Trill::NONE, "No device"},
-	{Trill::UNKNOWN, "Unknown device"},
-	{Trill::BAR, "Bar"},
-	{Trill::SQUARE, "Square"},
-	{Trill::CRAFT, "Craft"},
-	{Trill::RING, "Ring"},
-	{Trill::HEX, "Hex"},
+struct TrillDefaults
+{
+	TrillDefaults(std::string name, Trill::Mode mode, uint8_t address) :
+		name(name), mode(mode), address(address) {}
+	std::string name;
+	Trill::Mode mode;
+	uint8_t address;
+};
+
+static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
+	{Trill::NONE, TrillDefaults("No device", Trill::AUTO, 0xFF)},
+	{Trill::UNKNOWN, TrillDefaults("Unknown device", Trill::AUTO, 0xFF)},
+	{Trill::BAR, TrillDefaults("Bar", Trill::CENTROID, 0x20)},
+	{Trill::SQUARE, TrillDefaults("Square", Trill::CENTROID, 0x28)},
+	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, 0x30)},
+	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, 0x38)},
+	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0x40)},
 };
 
 struct trillRescaleFactors_t {
@@ -32,13 +41,30 @@ static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 
 Trill::Trill(){}
 
-Trill::Trill(unsigned int i2c_bus, uint8_t i2c_address, Mode mode) {
-	setup(i2c_bus, i2c_address, mode);
+Trill::Trill(unsigned int i2c_bus, Device device, Mode mode, uint8_t i2c_address) {
+	setup(i2c_bus, device, mode, i2c_address);
 }
 
-int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, float threshold, int prescaler) {
-
+int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
+		uint8_t i2c_address)
+{
 	address = 0;
+
+	if(AUTO == mode)
+		mode = trillDefaults.at(device).mode;
+	if(128 <= i2c_address)
+		i2c_address = trillDefaults.at(device).address;
+
+	if(AUTO == mode) {
+		fprintf(stderr, "Unknown default mode for device type %s\n",
+			trillDefaults.at(device).name.c_str());
+		return -1;
+	}
+	if(128 <= i2c_address) {
+		fprintf(stderr, "Unknown default address for device type %s\n",
+			trillDefaults.at(device).name.c_str());
+		return -2;
+	}
 	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
 		fprintf(stderr, "Unable to initialise I2C communication\n");
 		return 1;
@@ -59,20 +85,6 @@ int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, float thr
 		return 7;
 	}
 
-	if(threshold >= 0){
-		if(setNoiseThreshold(threshold) != 0) {
-			fprintf(stderr, "Unable to set threshold\n");
-			return 4;
-		}
-	}
-
-	if(prescaler >= 0) {
-		if(setPrescaler(prescaler) != 0) {
-			fprintf(stderr, "Unabe to set prescaler\n");
-			return 5;
-		}
-	}
-
 	if(updateBaseLine() != 0) {
 		fprintf(stderr, "Unable to update baseline\n");
 		return 6;
@@ -87,20 +99,16 @@ int Trill::setup(unsigned int i2c_bus, uint8_t i2c_address, Mode mode, float thr
 	return 0;
 }
 
-void Trill::cleanup() {
-	closeI2C();
-}
-
 Trill::~Trill() {
-	cleanup();
+	closeI2C();
 }
 
 const std::string& Trill::getDeviceName()
 {
 	try {
-		return trillDeviceNameMap.at(device_type_);
+		return trillDefaults.at(device_type_).name;
 	} catch (std::exception e) {
-		return trillDeviceNameMap.at(Device::UNKNOWN);
+		return trillDefaults.at(Device::UNKNOWN).name;
 	}
 }
 
