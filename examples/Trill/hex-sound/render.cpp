@@ -18,10 +18,11 @@ detuned oscillators.
 The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
 and the X-Y position and size stored on global variables.
 
-The vertical position of the touch is mapped to frequency, while the horizontal position
-maps to amplitude. Touch size is used to control the detuning (difference in frequency)
-between the otherwise identic pair of oscillators.
-Changes in frequency and amplitude are smoothed using LP filters to avoid artifacts.
+The vertical position of the touch is mapped to frequency, while the size of the touch
+maps to amplitude. Horizontal position is used to control the detuning (difference in frequency)
+between the otherwise identic pair of oscillators. The centre of the horizontal axis is both
+oscillators in tune. Changes in frequency and amplitude are smoothed using
+LP filters to avoid artifacts.
 */
 
 #include <Bela.h>
@@ -32,11 +33,6 @@ Changes in frequency and amplitude are smoothed using LP filters to avoid artifa
 
 // Trill object declaration
 Trill touchSensor;
-
-// Prescaler options for Trill sensor
-int gPrescalerOpts[6] = {1, 2, 4, 8, 16, 32};
-// Threshold options for Trill sensor
-int gThresholdOpts[7] = {0, 10, 20, 30, 40, 50, 60};
 
 // Horizontal and vertical position for Trill sensor
 float gTouchPosition[2] = { 0.0 , 0.0 };
@@ -51,7 +47,7 @@ float gFreqRange[2] = { 100.0, 400.0 };
 // Range for oscillator amplitude mapping
 float gAmplitudeRange[2] = { 0.0, 1.0 } ;
 // Range for oscillator detuning mapping
-float gDetuneRange[2] = { -10.0, 10.0 };
+float gDetuneRange[2] = { -25.0, 25.0 };
 
 // One Pole filters objects declaration
 OnePole freqFilt, ampFilt;
@@ -80,7 +76,7 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(touchSensor.setup(1, 0x40, Trill::CENTROID, gThresholdOpts[6], gPrescalerOpts[0]) != 0) {
+	if(touchSensor.setup(1, 0x40, Trill::CENTROID) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
