@@ -6,9 +6,9 @@
  */
 
 #include "logger.h"
+#include <Bela.h>
 
 // main extern vars
-extern int gShouldStop;
 extern int gVerbose;
 
 // file nanme extern vars
@@ -167,7 +167,7 @@ void *logLoop(void *)
 
 	usleep(5000);
 
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		gettimeofday(&logTimeVal, NULL);
 		unsigned long long currentTime = logTimeVal.tv_usec;

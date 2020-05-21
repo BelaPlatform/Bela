@@ -100,7 +100,7 @@ void trigger_samples(void*)
     struct timeval tv;
     int    fd_stdin;
 	fd_stdin = fileno(stdin);
-	while (!gShouldStop){
+	while (!Bela_stopRequested()){
 		FD_ZERO(&readfds);
 		FD_SET(fileno(stdin), &readfds);
 		tv.tv_sec = 0;
@@ -121,7 +121,7 @@ void trigger_samples(void*)
 						gReadPtr = -1;
 						break;
 					case 'q':
-						gShouldStop = true;
+						Bela_requestStop();
 						break;
 					default:
 						break;

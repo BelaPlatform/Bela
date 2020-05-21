@@ -18,7 +18,7 @@ using namespace std;
 // Handle Ctrl-C by requesting that the audio rendering stop
 void interrupt_handler(int var)
 {
-	gShouldStop = true;
+	Bela_requestStop();
 }
 
 // Print usage information
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, interrupt_handler);
 
 	// Run until told to stop
-	while(!gShouldStop) {
+	while(!Bela_stopRequested()) {
 		usleep(100000);
 	}
 

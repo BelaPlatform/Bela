@@ -567,7 +567,7 @@ void fifoLoop(void* userData)
 	if(gRTAudioVerbose)
 		rt_printf("_________________Fifo Thread!\n");
 	uint64_t audioFramesElapsed = 0;
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		BelaContext* context = gBcf->pop(BelaContextFifo::kToLong, gBlockDurationMs * 2);
 		if(context)
@@ -645,7 +645,7 @@ int Bela_runInSameThread()
 		return ret;
 
 	// this starts the infinite loop that can only be broken out of
-	// by setting gShouldStop = 1
+	// by calling Bela_requestStop()
 	audioLoop(NULL);
 
 	// Once you get out of it, stop properly (in case you didn't already):
@@ -722,7 +722,7 @@ int Bela_startAudio()
 void Bela_stopAudio()
 {
 	// Tell audio thread to stop (if this hasn't been done already)
-	gShouldStop = true;
+	Bela_requestStop();
 
 	if(gRTAudioVerbose)
 		printf("Stopping audio...\n");

@@ -10,8 +10,8 @@
 #include <iostream>
 #include "StatusLED.h"
 #include <GPIOcontrol.h>
+#include <Bela.h>
 
-extern int gShouldStop;
 extern int gVerbose;
 
 using namespace std;
@@ -76,11 +76,11 @@ void StatusLED::blink(int ms_on, int ms_off) {
 }
 
 void* StatusLED::blink_loop(void *) {
-	while(!gShouldStop && !this_should_stop) {
+	while(!Bela_stopRequested() && !this_should_stop) {
 		if(milliseconds_on != 0)
 			gpio_set_value(gpio_number, HIGH);
 		usleep(1000 * milliseconds_on);
-		if(gShouldStop)
+		if(Bela_stopRequested())
 			break;
 		if(milliseconds_off != 0)
 			gpio_set_value(gpio_number, LOW);

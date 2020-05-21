@@ -9,7 +9,7 @@
 extern int volatile gRTAudioVerbose;
 
 bool AuxTaskNonRT::shouldStop(){
-	return (gShouldStop || lShouldStop);
+	return (Bela_stopRequested() || lShouldStop);
 }
 
 void AuxTaskNonRT::create(std::string _name, std::function<void()> callback){

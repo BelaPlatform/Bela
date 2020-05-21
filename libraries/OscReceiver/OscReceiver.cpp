@@ -1,5 +1,5 @@
 #include "OscReceiver.h"
-#include <Bela.h> // gShouldStop
+#include <Bela.h> // Bela_stopRequested
 #include <AuxTaskNonRT.h>
 #include <libraries/UdpServer/UdpServer.h>
 
@@ -19,7 +19,7 @@ OscReceiver::~OscReceiver(){
 
 void OscReceiver::receive_task_func(){
 	OscReceiver* instance = this;
-	while(!gShouldStop && !instance->lShouldStop){
+	while(!Bela_stopRequested() && !instance->lShouldStop){
 		instance->waitingForMessage = true;
 		instance->waitForMessage(0);
 		instance->waitingForMessage = false;

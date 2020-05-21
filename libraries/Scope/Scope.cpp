@@ -89,7 +89,7 @@ void Scope::stop(){
 void Scope::setPlotMode(){
 // printf("setPlotMode\n");
 	isResizing = true;
-	while(!gShouldStop && (isUsingBuffer || isUsingOutBuffer)){
+	while(!Bela_stopRequested() && (isUsingBuffer || isUsingOutBuffer)){
 		// printf("waiting for threads\n");
 		usleep(100000);
 	}

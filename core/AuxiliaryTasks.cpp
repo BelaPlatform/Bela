@@ -188,7 +188,7 @@ void auxiliaryTaskLoop(void *taskStruct)
 	// Wait for a notification
 	suspendCurrentTask(task);
 
-	while(!gShouldStop) {
+	while(!Bela_stopRequested()) {
 		// Then run the calculations
 		auxiliary_argfunction(task->args);
 
@@ -196,7 +196,7 @@ void auxiliaryTaskLoop(void *taskStruct)
 		// otherwise, if we are during cleanup, the task would hang indefinitely
 		// if rt_task_suspend is called after rt_task_join (below) has
 		// already been called
-		if(!gShouldStop){
+		if(!Bela_stopRequested()){
 		// Wait for a notification from Bela_scheduleAuxiliaryTask
 			suspendCurrentTask(task);
 		} else {
@@ -248,9 +248,9 @@ void Bela_stopAllAuxiliaryTasks()
 		InternalAuxiliaryTask *taskStruct = *it;
 
 		// Wake up each thread and join it
-		// each thread should be checking on gShouldStop, which
-		// should be true at this point. Let's make sure it is:
-		gShouldStop = 1;
+		// each thread should be checking on Bela_stopRequested(), which
+		// should return true at this point. Let's make sure it does:
+		Bela_requestStop();
 #ifdef XENOMAI_SKIN_native
 		rt_task_resume(&taskStruct->task);
 		rt_task_join(&(taskStruct->task));

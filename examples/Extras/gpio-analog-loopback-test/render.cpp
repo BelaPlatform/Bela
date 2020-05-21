@@ -175,7 +175,7 @@ void render(BelaContext *context, void *userData)
 		count++;
 	}
 	if(context->audioFramesElapsed > 30000){
-		gShouldStop = true;
+		Bela_requestStop();
 	}
 }
 

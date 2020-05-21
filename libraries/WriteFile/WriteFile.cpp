@@ -265,7 +265,7 @@ void WriteFile::stopThread(){
 }
 
 bool WriteFile::threadShouldExit(){
-	return(gShouldStop || threadIsExiting);
+	return(Bela_stopRequested() || threadIsExiting);
 }
 
 bool WriteFile::isThreadRunning(){
