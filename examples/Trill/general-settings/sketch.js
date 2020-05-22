@@ -28,7 +28,7 @@ function setup() {
 	radioMode.value("Diff");
 
     radioPres = createRadio();
-    for(let n = 0; n <= 8; ++n)
+    for(let n = 1; n <= 8; ++n)
 		radioPres.option(n+"");
 	radioPres.value("2");
 
