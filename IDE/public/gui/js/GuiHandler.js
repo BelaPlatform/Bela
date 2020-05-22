@@ -10,7 +10,7 @@ export default class GuiHandler {
 		this.sketchName = 'sketch';
 		this.iframeId = 'gui-iframe';
 		this.iframeEl = null;
-		this.resources = ["../js/p5.min.js", "..js/dat.gui.min.js"];
+		this.resources = ["../js/p5.min.js", "../js/dat.gui.min.js", "../js/jquery.js"];
 		this.ready = false;
 		this.creator = GuiCreator;
 		this.type = {
@@ -158,13 +158,15 @@ export default class GuiHandler {
 			that.iframeEl = that.createIframe("/gui/gui-template.html");
 
 			that.iframeEl.onload = () => {
-				if(!this.type['controller']) {
-					that.loadSketch(that.project, 'head', that.iframeEl.contentWindow.document);
-					this.type['p5'] = true
-				} else {
+				that.loadIframeResources(that.iframeEl).then(() => {
+					if(!this.type['controller']) {
+						that.loadSketch(that.project, 'head', that.iframeEl.contentWindow.document);
+						this.type['p5'] = true
+					} else {
 
-				}
-				that.control.target.dispatchEvent(new Event('gui-ready'));
+					}
+					that.control.target.dispatchEvent(new Event('gui-ready'));
+				});
 			};
 		});
 		console.log('____LOADED____')
@@ -186,7 +188,6 @@ export default class GuiHandler {
 		sketch.then((resolved) => {
 			scriptElement = resolved;
 			console.log("... "+sketchSource+ " loaded");
-			utils.loadScript("../js/p5.min.js", "head", dom);
 		}).catch((rejected) => {
 			console.log("... "+sketchSource + " couldn't be loaded.")
 			if(defaultSource != null) {
