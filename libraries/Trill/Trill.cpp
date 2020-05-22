@@ -487,30 +487,35 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 	return size * sizeRescale;
 }
 
-#define compoundTouch(METHOD, TOUCHES) {\
+#define compoundTouch(LOCATION, SIZE, TOUCHES) {\
 	float avg = 0;\
+	float totalSize = 0;\
 	unsigned int numTouches = TOUCHES;\
 	for(unsigned int i = 0; i < numTouches; i++) {\
-		avg += METHOD(i);\
+		avg += LOCATION(i) * SIZE(i);\
+		totalSize += SIZE(i);\
 	}\
 	if(numTouches)\
-		avg = avg / numTouches;\
+		avg = avg / totalSize;\
 	return avg;\
 	}
 
 float Trill::compoundTouchLocation()
 {
-	compoundTouch(touchLocation, numberOfTouches());
+	compoundTouch(touchLocation, touchSize, numberOfTouches());
 }
 
 float Trill::compoundTouchHorizontalLocation()
 {
-	compoundTouch(touchHorizontalLocation, numberOfHorizontalTouches());
+	compoundTouch(touchHorizontalLocation, touchHorizontalSize, numberOfHorizontalTouches());
 }
 
 float Trill::compoundTouchSize()
 {
-	compoundTouch(touchSize, is2D() ? std::min(numberOfTouches(), numberOfHorizontalTouches()) : numberOfTouches());
+	float size = 0;
+	for(unsigned int i = 0; i < numberOfTouches(); i++)
+		size += touchSize(i);
+	return size;
 }
 
 unsigned int Trill::getNumChannels()
