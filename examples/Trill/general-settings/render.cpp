@@ -125,6 +125,9 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
+	// Change sensor to differential mode for bargraph display
+	touchSensor.setMode(Trill::DIFF);
+
 	gui.setup(context->projectName);
 
 	// Setup buffer of integers (holding a maximum of 3 values)

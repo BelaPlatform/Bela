@@ -74,6 +74,9 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
+	// Change sensor to differential mode for bargraph display
+	touchSensor.setMode(Trill::DIFF);
+
 	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
 	Bela_scheduleAuxiliaryTask(readI2cTask);
 
@@ -88,8 +91,7 @@ void render(BelaContext *context, void *userData)
 {
 	static unsigned int count = 0;
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		// Send number of touches, touch location and size to the GUI
-		// after some time has elapsed.
+		// Send raw data to the GUI after some time has elapsed
 		if(count >= gTimePeriod*context->audioSampleRate)
 		{
 			gui.sendBuffer(0, touchSensor.getNumChannels());

@@ -65,6 +65,9 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
+	// Change sensor to differential mode for bargraph display
+	touchSensor.setMode(Trill::DIFF);
+
 	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
 	Bela_scheduleAuxiliaryTask(readI2cTask);
 
