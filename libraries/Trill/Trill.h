@@ -165,9 +165,21 @@ class Trill : public I2c
 		 */
 		Device deviceType() { return device_type_; }
 		/**
-		 * Get the device type as a string.
+		 * Get the name from the device.
 		 */
-		const std::string& getDeviceName();
+		static const std::string& getNameFromDevice(Device device);
+		/**
+		 * Get the device from the name.
+		 */
+		static Device getDeviceFromName(const std::string& name);
+		/**
+		 * Get the mode from the name.
+		 */
+		static const std::string& getNameFromMode(Mode mode);
+		/**
+		 * Get the mode from the name.
+		 */
+		static Mode getModeFromName(const std::string& name);
 		/**
 		 * Get the firmware version of the device.
 		 */
@@ -176,6 +188,10 @@ class Trill : public I2c
 		 * Get the mode that the device is currently in.
 		 */
 		Mode getMode() { return mode_; }
+		/**
+		 * Get the current address of the device.
+		 */
+		uint8_t getAddress() { return address; }
 		/**
 		 * Print details about the device to standard output
 		 */

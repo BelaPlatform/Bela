@@ -24,6 +24,14 @@ static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
 	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0x40)},
 };
 
+static const std::map<Trill::Mode, std::string> trillModes= {
+	{Trill::AUTO, "Auto"},
+	{Trill::CENTROID, "Centroid"},
+	{Trill::RAW, "Raw"},
+	{Trill::BASELINE, "Baseline"},
+	{Trill::DIFF, "Diff"},
+};
+
 struct trillRescaleFactors_t {
 	float pos;
 	float posH;
@@ -103,13 +111,60 @@ Trill::~Trill() {
 	closeI2C();
 }
 
-const std::string& Trill::getDeviceName()
+const std::string& Trill::getNameFromDevice(Device device)
 {
 	try {
-		return trillDefaults.at(device_type_).name;
+		return trillDefaults.at(device).name;
 	} catch (std::exception e) {
 		return trillDefaults.at(Device::UNKNOWN).name;
 	}
+}
+
+static bool strCmpIns(const std::string& str1, const std::string& str2)
+{
+	bool equal = true;
+	if(str1.size() == str2.size()) {
+		for(unsigned int n = 0; n < str1.size(); ++n) {
+			if(std::tolower(str1[n]) != std::tolower(str2[n])) {
+				equal = false;
+				break;
+			}
+		}
+	} else
+		equal = false;
+	return equal;
+}
+
+Trill::Device Trill::getDeviceFromName(const std::string& name)
+{
+	for(auto& td : trillDefaults)
+	{
+		Device device = td.first;
+		const std::string& str2 = trillDefaults.at(device).name;
+		if(strCmpIns(name, str2))
+			return Device(device);
+	}
+	return Trill::UNKNOWN;
+}
+
+const std::string& Trill::getNameFromMode(Mode mode)
+{
+	try {
+		return trillModes.at(mode);
+	} catch (std::exception e) {
+		return trillModes.at(Mode::AUTO);
+	}
+}
+
+Trill::Mode Trill::getModeFromName(const std::string& name)
+{
+	for(auto& m : trillModes)
+	{
+		const std::string& str2 = m.second;
+		if(strCmpIns(name, str2))
+			return m.first;
+	}
+	return Trill::AUTO;
 }
 
 int Trill::identify() {
@@ -153,7 +208,7 @@ void Trill::updateRescale()
 
 void Trill::printDetails()
 {
-	printf("Device type: %s (%d)\n", getDeviceName().c_str(), deviceType());
+	printf("Device type: %s (%d)\n", getNameFromDevice(device_type_).c_str(), deviceType());
 	printf("Address: %#x\n", address);
 	printf("Firmware version: %d\n", firmwareVersion());
 }
