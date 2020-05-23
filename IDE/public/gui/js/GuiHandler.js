@@ -188,6 +188,7 @@ export default class GuiHandler {
 		sketch.then((resolved) => {
 			scriptElement = resolved;
 			console.log("... "+sketchSource+ " loaded");
+			this.updateP5(this.iframeEl.contentWindow.p5);
 		}).catch((rejected) => {
 			console.log("... "+sketchSource + " couldn't be loaded.")
 			if(defaultSource != null) {
@@ -202,6 +203,28 @@ export default class GuiHandler {
 			}
 		})
 		return scriptElement;
+	}
+
+	updateP5(p5) {
+		p5.prototype.loadScript = function (path) {
+
+			const ret = {};
+			var self = this;
+			let resource = Bela.control.loadResource(path)
+			.then(()=>{
+				if (typeof self._decrementPreload === 'function') {
+					self._decrementPreload();
+				}
+			})
+			.catch(()=>{
+			});
+
+			return resource;
+		};
+
+		p5.prototype.registerPreloadMethod('loadScript', p5.prototype);
+		p5 = new p5();
+		return p5;
 	}
 
 }
