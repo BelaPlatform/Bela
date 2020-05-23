@@ -104,6 +104,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 	}
 
 	address = i2c_address;
+	readErrorOccurred = false;
 	return 0;
 }
 
@@ -375,9 +376,8 @@ int Trill::prepareForDataRead() {
 }
 
 int Trill::readI2C() {
-	if(NONE == device_type_)
+	if(NONE == device_type_ || readErrorOccurred)
 		return 1;
-
 	prepareForDataRead();
 
 	uint8_t bytesToRead = kCentroidLengthDefault;
@@ -393,7 +393,9 @@ int Trill::readI2C() {
 	if (bytesRead != bytesToRead)
 	{
 		num_touches_ = 0;
-		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
+		fprintf(stderr, "Trill: error while reading from device %s at address %#x (%d)\n",
+			getNameFromDevice(device_type_).c_str(), address, address);
+		readErrorOccurred = true;
 		return 1;
 	}
 	if(CENTROID != mode_) {

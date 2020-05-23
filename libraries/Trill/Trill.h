@@ -89,6 +89,7 @@ class Trill : public I2c
 		int prepareForDataRead();
 		int identify();
 		void updateRescale();
+		bool readErrorOccurred;
 	public:
 		/**
 		 * @name RAW, BASELINE or DIFF mode
