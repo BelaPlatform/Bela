@@ -54,12 +54,8 @@ void readTouchSensors(void*)
 		const Trill::Mode mode = touchSensor.getMode();
 		if(Trill::NONE == type)
 			ret = 1;
-		else if(Trill::DIFF == mode)
-			ret = touchSensor.readI2C();
-		else if(Trill::CENTROID == mode)
-			ret = touchSensor.readLocations();
 		else
-			ret = 1;
+			ret = touchSensor.readI2C();
 		if(!ret)
 		{
 			gTrillPipe.writeNonRt(n);

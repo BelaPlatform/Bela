@@ -55,7 +55,7 @@ void loop(void*)
 	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
-		touchSensor.readLocations();
+		touchSensor.readI2C();
 		/*
 		* The Trill Hex sensor can detect multiple touches but will
 		* not be able to clearly differentiate their locations, so we

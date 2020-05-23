@@ -313,44 +313,33 @@ int Trill::prepareForDataRead() {
 	return 0;
 }
 
-// This should maybe be renamed readRawData()
 int Trill::readI2C() {
-
-	if(NONE == device_type_)
-		return 1;
-
-	prepareForDataRead();
-
-	int bytesRead = ::read(i2C_file, dataBuffer, kRawLength);
-	if (bytesRead != kRawLength)
-	{
-		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, kRawLength);
-		return 1;
-	}
-	for (unsigned int i=0; i < getNumChannels(); i++) {
-		rawData[i] = (((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) & 0x0FFF) * rawRescale;
-	}
-
-	return 0;
-}
-
-int Trill::readLocations() {
 	if(NONE == device_type_)
 		return 1;
 
 	prepareForDataRead();
 
 	uint8_t bytesToRead = kCentroidLengthDefault;
-	if(device_type_ == SQUARE || device_type_ == HEX)
-		bytesToRead = kCentroidLength2D;
-	if(device_type_ == RING)
-		bytesToRead = kCentroidLengthRing;
+	if(CENTROID == mode_) {
+		if(device_type_ == SQUARE || device_type_ == HEX)
+			bytesToRead = kCentroidLength2D;
+		if(device_type_ == RING)
+			bytesToRead = kCentroidLengthRing;
+	} else {
+		bytesToRead = kRawLength;
+	}
 	int bytesRead = ::read(i2C_file, dataBuffer, bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		num_touches_ = 0;
 		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
 		return 1;
+	}
+	if(CENTROID != mode_) {
+		// parse, rescale and copy data to public buffer
+		for (unsigned int i = 0; i < getNumChannels(); ++i)
+			rawData[i] = (((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) & 0x0FFF) * rawRescale;
+		return 0;
 	}
 
 	unsigned int locations = 0;

@@ -95,7 +95,7 @@ void loop(void*)
 	while(!Bela_stopRequested())
 	{
 		// Read locations from Trill sensor
-		touchSensor.readLocations();
+		touchSensor.readI2C();
 		if(touchSensor.numberOfTouches())
 		{
 			float newRead = touchSensor.compoundTouchLocation();

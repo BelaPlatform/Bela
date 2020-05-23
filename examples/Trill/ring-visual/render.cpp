@@ -58,7 +58,7 @@ void loop(void*)
 	while(!Bela_stopRequested())
 	{
 		 // Read locations from Trill sensor
-		 touchSensor.readLocations();
+		 touchSensor.readI2C();
 		 gNumActiveTouches = touchSensor.numberOfTouches();
 		 for(unsigned int i = 0; i < gNumActiveTouches; i++) {
 			 gTouchLocation[i] = touchSensor.touchLocation(i);

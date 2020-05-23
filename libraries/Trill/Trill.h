@@ -153,8 +153,12 @@ class Trill : public I2c
 		 */
 		int updateBaseLine();
 
-		int readI2C(); // This should maybe be renamed readRawData()
-		int readLocations();
+		/**
+		 * \brief Read data from the device.
+		 *
+		 * Performs an I2C transaction with the device to retrieve new data.
+		 */
+		int readI2C();
 
 		/**
 		 * Get the device type.
