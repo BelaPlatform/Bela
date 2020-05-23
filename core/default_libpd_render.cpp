@@ -475,6 +475,25 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			gTouchSensors.emplace_back(std::string(name), trill);
 			gTrillAcks.push_back(name);
 			//an ack is sent to Pd during the next audio callback because of https://github.com/libpd/libpd/issues/274
+			return;
+		}
+		if(argc < 1 || !libpd_is_symbol(argv))
+		{
+			rt_fprintf(stderr, "bela_setTrill: wrong format. It should be\n"
+					"[<command> <sensor_id> ...(");
+			return;
+		}
+		const char* sensorId = libpd_get_symbol(argv);
+		int idx = getIdxFromId(sensorId, gTouchSensors);
+		if(idx < 0)
+		{
+			rt_fprintf(stderr, "bela_setTrill sensor_id unknown: %s\n", sensorId);
+			return;
+		}
+		if(0 == strcmp(symbol, "updateBaseline"))
+		{
+			gTouchSensors[idx].second->updateBaseLine();
+			return;
 		}
 		if(
 			0 == strcmp(symbol, "threshold")
@@ -492,14 +511,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 					"[prescaler <sensor_id> <prescaler_value>(\n");
 				return;
 			}
-			const char* sensorId = libpd_get_symbol(argv);
 			float value = libpd_get_float(argv + 1);
-			int idx = getIdxFromId(sensorId, gTouchSensors);
-			if(idx < 0)
-			{
-				rt_fprintf(stderr, "bela_setTrill sensor_id unknown: %s\n", sensorId);
-				return;
-			}
 			if(0 == strcmp(symbol, "threshold"))
 			{
 				gTouchSensors[idx].second->setNoiseThreshold(value);
@@ -516,6 +528,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				}
 				gTouchSensors[idx].second->setPrescaler(value);
 			}
+			return;
 		}
 		return;
 	}
