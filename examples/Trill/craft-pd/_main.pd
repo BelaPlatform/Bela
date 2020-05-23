@@ -1,4 +1,4 @@
-#N canvas 305 29 1058 801 10;
+#N canvas 270 0 1003 778 10;
 #X obj 35 351 list;
 #X obj 35 311 metro 200;
 #X obj 35 285 loadbang;
@@ -32,22 +32,32 @@ f f f;
 #X msg 895 507 four.wav;
 #X obj 36 391 print touchSensor;
 #X obj 35 48 loadbang;
-#X obj 243 190 r bela_trill;
-#X obj 35 156 s bela_setTrill;
-#X obj 243 248 route craft;
+#X obj 243 211 r bela_trill;
+#X obj 35 167 s bela_setTrill;
 #X text 189 49 First initialise the Trill sensor;
-#X text 189 69 Args: [new <sensor_id> <bus> <address> <mode>];
-#X text 360 191 This receives the reading from the Trill sensor.;
-#X text 700 287 and then the individual channels if in diff mode;
-#X text 700 327 In this example we use the first 4 channels to;
+#X text 356 211 This receives the reading from the Trill sensor.;
+#X text 567 314 and then the individual channels if in diff mode;
+#X text 567 335 In this example we use the first 4 channels to;
 #X text 360 247 Which will be prepended with the sensor_id;
-#X text 551 49 You can also change settings on initialisation:;
-#X msg 35 128 new craft 1 48 diff \, prescaler craft 2 \, threshold
-craft 0.01;
-#X text 552 69 [prescaler <sensor_id> <value> (between 1 and 8);
-#X text 552 103 [threshold <sensor_id> <value>(between 0 and 1.0);
-#X text 700 347 trigger sample playback and print all on the console.
+#X text 517 128 [prescaler <sensor_id> <value> (between 1 and 8);
+#X text 517 162 [threshold <sensor_id> <value>(between 0 and 1.0);
+#X text 567 355 trigger sample playback and print all on the console.
 ;
+#X msg 35 128 new mycraft 1 CRAFT diff \, prescaler mycraft 2 \, threshold
+mycraft 0.01;
+#X obj 243 248 route mycraft;
+#X text 159 82 Message: [new <sensor_id> <bus> <device> <mode=AUTO>
+<address=255>(;
+#X text 20 613 device that was successfully initialised. The message
+;
+#X text 20 623 will contain: <sensor_id> <device> <mode> <address>
+;
+#X text 19 602 bela_trillCreated will receive a message for each;
+#X obj 24 655 r bela_trillCreated;
+#X obj 24 684 print bela_trillCreated;
+#X text 84 16 >>> See full documentation in examples/Trill/general-pd
+<<<;
+#X text 516 108 We are also changing settings on initialisation:;
 #X connect 0 0 30 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
@@ -88,7 +98,8 @@ craft 0.01;
 #X connect 28 0 29 0;
 #X connect 29 0 24 3;
 #X connect 31 0 42 0;
-#X connect 32 0 0 1;
-#X connect 32 0 34 0;
-#X connect 34 0 4 0;
+#X connect 32 0 43 0;
 #X connect 42 0 33 0;
+#X connect 43 0 4 0;
+#X connect 43 0 0 1;
+#X connect 48 0 49 0;

@@ -1,51 +1,101 @@
-#N canvas 273 52 1033 776 10;
-#X obj 225 601 list;
-#X obj 55 431 metro 200;
-#X obj 55 405 loadbang;
-#X text 147 433 Throttle printing;
+#N canvas 247 2 1033 776 10;
+#X obj 225 661 list;
+#X obj 137 505 metro 200;
+#X obj 137 479 loadbang;
+#X text 23 503 Throttle printing;
 #X obj 35 48 loadbang;
-#X obj 323 360 r bela_trill;
-#X obj 35 296 s bela_setTrill;
-#X text 189 69 Args: [new <sensor_id> <bus> <address> <mode>];
-#X text 520 417 Which will be prepended with the sensor_id;
-#X text 399 592 [<num_touches> <position> <size>];
-#X text 631 99 You can also change settings on initialisation:;
-#X text 632 119 [prescaler <sensor_id> <value> (between 1 and 8);
-#X text 632 153 [threshold <sensor_id> <value>(between 0 and 1.0);
-#X text 189 49 First initialise the Trill sensors;
-#X text 188 98 Recommend to use mode=diff for Trill Craft and mode=centroid
+#X obj 327 480 r bela_trill;
+#X obj 34 424 s bela_setTrill;
+#X text 401 661 [<num_touches> <position> <size>];
+#X obj 137 536 delay 30;
+#X obj 137 566 delay 30;
+#X obj 226 701 print craft;
+#X obj 315 611 list;
+#X obj 315 652 print bar;
+#X obj 405 571 list;
+#X text 497 611 [<num_touches> <x> <y> <size>];
+#X obj 405 612 print square;
+#X text 112 116 <bus> is the i2c bus that yout sensor is connected
+to;
+#X text 133 176 AUTO(default) will use the default mode for the device
+type.;
+#X text 113 196 <address> is the address of the sensor. If unspecified
+\, the;
+#X text 136 208 default address for the device type will be used;
+#X text 113 166 <mode> can be one of AUTO \, CENTROID. RAW BASELINE
+DIFF.;
+#X text 112 136 <device> the type of sensor you are connecting: BAR
+SQUARE;
+#X text 123 145 CRAFT RING HEX;
+#X text 114 39 [new <sensor_id> <bus> <device> <mode=AUTO> <address=255>(
 ;
-#X text 188 118 for Bar/Square/Ring/Hex.;
-#X text 188 148 In this example we initialise a Craft \, Bar and Square.
+#X obj 569 60 r bela_trillCreated;
+#X obj 569 84 print bela_trillCreated;
+#X text 672 121 device that was successfully initialised. The message
 ;
-#X obj 323 418 route craft bar square;
-#X obj 55 462 delay 30;
-#X obj 55 492 delay 30;
-#X obj 226 641 print craft;
-#X text 325 643 [<num_channels> <values .... >];
-#X obj 315 551 list;
-#X obj 315 592 print bar;
-#X obj 405 511 list;
-#X text 497 551 [<num_touches> <x> <y> <size>];
-#X text 440 361 This receives the reading from the Trill sensors;
-#X msg 35 238 new craft 1 48 diff \, new bar 1 32 centroid \, new square
-1 40 centroid \, prescaler craft 2 \, threshold craft 0.01;
-#X obj 405 552 print square;
-#X text 188 168 You will need to have these 3 sensors connected for
-this;
-#X text 188 188 example to run.;
-#X connect 0 0 20 0;
-#X connect 1 0 18 0;
+#X text 672 131 will contain: <sensor_id> <device> <mode> <address>
+;
+#X text 671 110 bela_trillCreated will receive a message for each;
+#X obj 120 60 s bela_setTrill;
+#X obj 603 352 s bela_setTrill;
+#X text 112 86 <sensor_id> is the name you assign to your sensor \,
+which;
+#X text 112 96 will identify it throughout the patch;
+#X text 51 281 In this example we initialise a Craft \, Bar and Square.
+;
+#X msg 33 309 new mycraft 1 CRAFT \, new mybar 1 BAR \, new mysquare
+1 SQUARE;
+#X obj 534 103 route mycraft;
+#X obj 534 127 route Craft;
+#X text 166 342 If the "mycraft" device was initialised correctly \,
+;
+#X text 603 371 More details on these settings can be found at learn.bela.io/trill
+;
+#X text 594 247 Set the prescaler:;
+#X text 593 282 Set the threshold:;
+#X text 414 484 This receives the reading from all the Trills;
+#X text 513 515 each message will be prepended with the <sensor_id>
+;
+#X text 314 722 [<num_channels> <values .... >];
+#X text 313 708 Devices in RAW \, DIFF or BASELINE mode will receive:
+;
+#X text 404 638 Devices in CENTROID mode with 2 axes (SQUARE \, HEX)
+will receive:;
+#X text 504 588 Devices in CENTROID mode with 1 axis (BAR \, RING)
+will receive:;
+#X obj 327 516 route mycraft mybar mysquare;
+#X text 592 312 Reset the baseline:;
+#X text 594 325 [updateBaseline <sensor_id>(;
+#X text 593 261 [prescaler <sensor_id> <value>( <value> is between
+1 and 8;
+#X text 595 295 [threshold <sensor_id> <value>( <value> is between
+0 and 0.1;
+#X text 601 400 or in the Trill/general-settings example;
+#X text 106 21 1 Initialise the Trill device;
+#X text 638 35 2 Verify that the device was initialised correctly;
+#X text 581 219 3 If needed \, adjust some parameters;
+#X msg 116 383 prescaler mycraft 2 \, threshold mycraft 0.01 \, updateBaseline
+mycraft;
+#X text 166 352 we change its prescaler and threshold values \, and
+;
+#X text 165 362 update the baseline of the capacitive channels.;
+#X connect 0 0 10 0;
+#X connect 1 0 8 0;
 #X connect 2 0 1 0;
-#X connect 4 0 27 0;
-#X connect 5 0 17 0;
-#X connect 17 0 0 1;
-#X connect 17 1 22 1;
-#X connect 17 2 24 1;
-#X connect 18 0 19 0;
-#X connect 18 0 24 0;
-#X connect 19 0 0 0;
-#X connect 19 0 22 0;
-#X connect 22 0 23 0;
-#X connect 24 0 28 0;
-#X connect 27 0 6 0;
+#X connect 4 0 34 0;
+#X connect 5 0 47 0;
+#X connect 8 0 9 0;
+#X connect 8 0 13 0;
+#X connect 9 0 0 0;
+#X connect 9 0 11 0;
+#X connect 11 0 12 0;
+#X connect 13 0 15 0;
+#X connect 24 0 25 0;
+#X connect 24 0 35 0;
+#X connect 34 0 6 0;
+#X connect 35 0 36 0;
+#X connect 36 0 56 0;
+#X connect 47 0 0 1;
+#X connect 47 1 11 1;
+#X connect 47 2 13 1;
+#X connect 56 0 6 0;
