@@ -40,9 +40,11 @@ int getIdxFromId(const char* id, std::vector<std::pair<std::string,T>>& db)
 #include <libraries/Trill/Trill.h>
 AuxiliaryTask gTrillTask;
 Pipe gTrillPipe;
+
+static std::vector<std::string> gTrillAcks;
 static std::vector<std::pair<std::string,Trill*>> gTouchSensors;
 // how often to read the cap sensors inputs.
-float touchSensorSleepInterval = 0.005;
+float touchSensorSleepInterval = 0.007;
 
 void readTouchSensors(void*)
 {
@@ -51,7 +53,6 @@ void readTouchSensors(void*)
 		Trill& touchSensor = *gTouchSensors[n].second;
 		int ret;
 		const Trill::Device type = touchSensor.deviceType();
-		const Trill::Mode mode = touchSensor.getMode();
 		if(Trill::NONE == type)
 			ret = 1;
 		else
@@ -428,40 +429,52 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 	{
 		if(0 == strcmp(symbol, "new"))
 		{
-			if(
-				argc < 4
-				|| !libpd_is_symbol(argv)
-				|| !libpd_is_float(argv + 1)
-				|| !libpd_is_float(argv + 2)
-				|| !libpd_is_symbol(argv + 3)
-						)
+			bool err = false;
+			char const* modeString = "AUTO";
+
+			uint8_t address = 0xff;
+			if(argc < 3)
+				err = true;
+			else if (!libpd_is_symbol(argv) // sensor_id
+				|| !libpd_is_float(argv + 1) // bus
+				|| !libpd_is_symbol(argv + 2) // device
+			)
+				err = true;
+			if(argc >= 4)
 			{
-				rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
-					"[new <sensor_id> <bus> <address> <mode>(\n");
+				if(libpd_is_symbol(argv + 3))
+					modeString = libpd_get_symbol(argv + 3);
+				else
+					err = true;
+			}
+			if(argc >= 5)
+			{
+				if(libpd_is_float(argv + 4))
+					address = libpd_get_float(argv + 4);
+				else
+					err = true;
+			}
+			if(err)
+			{
+				rt_fprintf(stderr, "bela_setTrill wrong format. Should be:\n"
+					"[new <sensor_id> <bus> <device> <mode> <address>(\n");
 				return;
 			}
 			const char* name = libpd_get_symbol(argv);
 			unsigned int bus = libpd_get_float(argv + 1);
-			unsigned int address = libpd_get_float(argv + 2);
-			const char* modeString = libpd_get_symbol(argv + 3);
-			Trill::Mode mode;
-			if(0 == strcmp(modeString, "centroid"))
-				mode = Trill::CENTROID;
-			else if (0 == strcmp(modeString, "diff"))
-				mode = Trill::DIFF;
-			else {
-				rt_fprintf(stderr, "bela_setTrill unknown mode `%s'\n", modeString);
-				return;
-			}
-			Trill* trill = new Trill(bus, Trill::UNKNOWN, mode, address);
+			const char* deviceString = libpd_get_symbol(argv + 2);
+			Trill::Mode mode = Trill::getModeFromName(modeString);
+			Trill::Device device = Trill::getDeviceFromName(deviceString);
+
+			Trill* trill = new Trill(bus, device, mode, address);
 			if(Trill::NONE == trill->deviceType())
 			{
 				rt_fprintf(stderr, "Unable to create Trill sensor on bus %u at address %u (%#x). Is the sensor connected?\n", bus, address, address);
 				return;
 			}
 			gTouchSensors.emplace_back(std::string(name), trill);
-			rt_printf("Created new sensor \"%s\" mode: %s, board: %s\n", name, modeString, trill->getDeviceName().c_str());
-			//TODO: send ack to Pd upon success. Hard to do now without a dedicated receiver because of https://github.com/libpd/libpd/issues/274
+			gTrillAcks.push_back(name);
+			//an ack is sent to Pd during the next audio callback because of https://github.com/libpd/libpd/issues/274
 		}
 		if(
 			0 == strcmp(symbol, "threshold")
@@ -822,6 +835,16 @@ void render(BelaContext *context, void *userData)
 	}
 #endif // BELA_LIBPD_GUI
 #ifdef ENABLE_TRILL
+	for(auto& name : gTrillAcks)
+	{
+		unsigned int idx = getIdxFromId(name.c_str(), gTouchSensors);
+		libpd_start_message(3);
+		libpd_add_symbol(Trill::getNameFromDevice(gTouchSensors[idx].second->deviceType()).c_str());
+		libpd_add_symbol(Trill::getNameFromMode(gTouchSensors[idx].second->getMode()).c_str());
+		libpd_add_float(gTouchSensors[idx].second->getAddress());
+		libpd_finish_message("bela_trillCreated", name.c_str());
+	}
+	gTrillAcks.resize(0);
 	bool doTrill = false;
 	for(auto& t : gTouchSensors)
 	{
@@ -842,7 +865,7 @@ void render(BelaContext *context, void *userData)
 				continue;
 
 			const Trill::Mode mode = touchSensor.getMode();
-			if(Trill::DIFF == mode)
+			if(Trill::DIFF == mode || Trill::RAW == mode || Trill::BASELINE == mode)
 			{
 				libpd_start_message(touchSensor.getNumChannels());
 				for(unsigned int n = 0; n < touchSensor.getNumChannels(); ++n)
