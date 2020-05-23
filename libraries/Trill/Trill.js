@@ -34,7 +34,7 @@ class Trill {
 		this.type = (this.types.includes(type)) ? type : null;
 		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
 			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
-		this.numTouches = (this.type == 'bar' || this.type == 'ring') ? 5 : 1;
+		this.numTouches = (this.type == 'bar' || this.type == 'ring') ? 5 : 9;
 		this.touchScale = touchScale;
 
 		this.cornerRadius = 0;
@@ -45,7 +45,8 @@ class Trill {
 		}
 
 		this.sensorColor = 'black';
-		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan' ]
+		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan',
+							 'red', 'blue', 'yellow', 'white', 'cyan' ];
 
 		this.touches = [];
 		for(let t = 0; t < this.numTouches; t++) {
