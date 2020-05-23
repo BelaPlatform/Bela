@@ -255,15 +255,18 @@ class Trill : public I2c
 		/**
 		 * Sets the IDAC value for the device.
 		 *
-		 * Thie triggers a call to `CSD_SetIdacValue(value)` on the device.
+		 * This triggers a call to `CSD_SetIdacValue(value)` on the device.
 		 *
 		 * @param value the IDAC value. Valid values are between 0 and 255.
 		 */
 		int setIDACValue(uint8_t value);
 		/**
 		 * Set minimum touch size
+		 *
+		 * Sets the minimum touch size below which a touch is ignored.
+		 *
 		 */
-		int setMinimumTouchSize(uint16_t size);
+		int setMinimumTouchSize(float minSize);
 		/**
 		 * Set the device to scan automatically at the specified intervals.
 		 *
@@ -287,10 +290,12 @@ class Trill : public I2c
 		 * The `location` of a touch is a normalised value where `0` and
 		 * `1` are the extremes of the axis.
 		 *
-		 * The `size` of a touch is a rescalued value of the total
+		 * The `size` of a touch is a rescaled value of the total
 		 * activation measured on the sensing channels that contribute
-		 * to the touch. The rescaling factor is affected by each
-		 * device's geometry and is determined empirically.
+		 * to the touch. The amount of activation for a touch of a
+		 * given size is dependent (among other things) on the geometry
+		 * of the device. The values used here have been determined
+		 * empirically.
 		 *
 		 * A `compoundTouch` is a single touch represntation obtained
 		 * by averaging the location and size of the touches on each
