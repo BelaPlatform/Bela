@@ -119,14 +119,12 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup a Trill Craft on i2c bus 1, using the default mode and address
-	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
+	// Setup a Trill Craft on i2c bus 1, using the default address.
+	// Set it to differential mode for bargraph display
+	if(touchSensor.setup(1, Trill::CRAFT, Trill::DIFF) != 0) {
 		fprintf(stderr, "Unable to initialise touch sensor\n");
 		return false;
 	}
-
-	// Change sensor to differential mode for bargraph display
-	touchSensor.setMode(Trill::DIFF);
 
 	gui.setup(context->projectName);
 
