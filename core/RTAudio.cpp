@@ -511,7 +511,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	for(int n = 0; n < 2; n++){
 		if(settings->pgaGain[n] > 59.5){
 			fprintf(stderr, "PGA gain out of range [0,59.5] for channel %d: %fdB\n", n, settings->pgaGain[n]);
-			exit(1);
+			return 1;
 		}
 		Bela_setPgaGain(settings->pgaGain[n], n);
 	}
@@ -520,7 +520,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gBlockDurationMs = gUserContext->audioFrames / gUserContext->audioSampleRate * 1000;
 	// Call the user-defined initialisation function
 	if(settings->setup && !(*settings->setup)(gUserContext, userData)) {
-		fprintf(stderr, "Couldn't initialise audio rendering\n");
+		if(gRTAudioVerbose)
+			fprintf(stderr, "Couldn't initialise audio rendering: setup() returned false\n");
 		return 1;
 	}
 
