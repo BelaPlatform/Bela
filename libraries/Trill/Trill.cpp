@@ -120,6 +120,16 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 		fprintf(stderr, "Unable to identify device\n");
 		return 2;
 	}
+	if(UNKNOWN != device && device_type_ != device) {
+		fprintf(stderr, "Wrong device type detected. `%s` was requested "
+				"but `%s` was detected on bus %d at address %#x(%d).\n",
+				trillDefaults.at(device).name.c_str(),
+				trillDefaults.at(device_type_).name.c_str(),
+				i2c_bus, i2c_address, i2c_address
+		       );
+		device_type_ = NONE;
+		return -3;
+	}
 
 	if(setMode(mode) != 0) {
 		fprintf(stderr, "Unable to set mode\n");
