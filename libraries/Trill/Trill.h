@@ -94,11 +94,6 @@ class Trill : public I2c
 		Trill();
 		~Trill();
 		/**
-		 * \copydoc Trill::setup
-		 */
-		Trill(unsigned int i2c_bus, Device device, Mode mode = AUTO,
-				uint8_t i2c_address = 255);
-		/**
 		 * Initialise the device.
 		 *
 		 * @param i2c_bus the bus that the device is connected to.
@@ -114,6 +109,13 @@ class Trill : public I2c
 		 * @param i2c_address the address at which the device can be
 		 * found. If `255` or no value is passed, the default address
 		 * for the specified device type will be used.
+		 */
+		Trill(unsigned int i2c_bus, Device device, Mode mode = AUTO,
+				uint8_t i2c_address = 255);
+		/**
+		 * \copydoc Trill::Trill(unsigned int, Device, Mode, uint8_t)
+		 *
+		 * @return 0 upon success, an error code otherwise.
 		 */
 		int setup(unsigned int i2c_bus, Device device, Mode mode = AUTO,
 				uint8_t i2c_address = 255);
