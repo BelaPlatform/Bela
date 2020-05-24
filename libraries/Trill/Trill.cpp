@@ -141,7 +141,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 		return 7;
 	}
 
-	if(updateBaseLine() != 0) {
+	if(updateBaseline() != 0) {
 		fprintf(stderr, "Unable to update baseline\n");
 		return 6;
 	}
@@ -402,7 +402,7 @@ int Trill::setAutoScanInterval(uint16_t interval) {
 	return 0;
 }
 
-int Trill::updateBaseLine() {
+int Trill::updateBaseline() {
 	unsigned int bytesToWrite = 2;
 	char buf[2] = { kOffsetCommand, kCommandBaselineUpdate };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)

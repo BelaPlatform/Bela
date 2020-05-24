@@ -492,7 +492,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 		if(0 == strcmp(symbol, "updateBaseline"))
 		{
-			gTouchSensors[idx].second->updateBaseLine();
+			gTouchSensors[idx].second->updateBaseline();
 			return;
 		}
 		if(

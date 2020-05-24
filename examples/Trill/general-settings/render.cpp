@@ -101,7 +101,7 @@ void loop(void*)
 		if(data[2] != oldBuffer[2]) {
 			oldBuffer[2] = data[2];
 			printf("reset baseline\n");
-			touchSensor.updateBaseLine();
+			touchSensor.updateBaseline();
 		}
 		if(data[3] != oldBuffer[3]) {
 			numBits = oldBuffer[3] = data[3];

@@ -131,7 +131,7 @@ class Trill : public I2c
 		/**
 		 * Update the baseline value on the device.
 		 */
-		int updateBaseLine();
+		int updateBaseline();
 
 		/**
 		 * \brief Read data from the device.
