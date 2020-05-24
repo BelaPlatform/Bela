@@ -3,6 +3,7 @@
 	"general-print",
 	"general-settings",
 	"general-pd",
+	"detect-all-devices",
 	"bar-visual",
 	"bar-sound",
 	"bar-led",
