@@ -155,3 +155,13 @@ export const getBlobURL = (code, type) => {
 	const blob = new Blob([code], { type })
 	return URL.createObjectURL(blob)
 }
+
+export function serialResolve(promises) {
+	return promises.reduce((promiseChain, currentTask) => {
+		return promiseChain.then(chainResults =>
+			currentTask.then(currentResult =>
+				[...chainResults, currentResult]
+			)
+		);
+	}, Promise.resolve([]));
+}
