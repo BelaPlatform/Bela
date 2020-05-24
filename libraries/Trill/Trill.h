@@ -1,6 +1,7 @@
 #include <I2c.h>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 /**
  * \brief A class to use the Trill family of capacitive sensors.
@@ -36,49 +37,12 @@ class Trill : public I2c
 			HEX = 5,
 		} Device;
 	private:
-
-		enum {
-			kCommandNone = 0,
-			kCommandMode = 1,
-			kCommandScanSettings = 2,
-			kCommandPrescaler = 3,
-			kCommandNoiseThreshold = 4,
-			kCommandIdac = 5,
-			kCommandBaselineUpdate = 6,
-			kCommandMinimumSize = 7,
-			kCommandAutoScanInterval = 16,
-			kCommandIdentify = 255
-		};
-
-		enum {
-			kOffsetCommand = 0,
-			kOffsetData = 4
-		};
-
-		enum {
-			kCentroidLengthDefault = 20,
-			kCentroidLengthRing = 24,
-			kCentroidLength2D = 32,
-			kRawLength = 60
-		};
-
-		enum {
-			kMaxTouchNum1D = 5,
-			kMaxTouchNum2D = 4
-		};
-
-		enum {
-			kNumChannelsBar = 26,
-			kNumChannelsRing = 28,
-			kNumChannelsMax = 30,
-		};
-
 		Mode mode_; // Which mode the device is in
 		Device device_type_; // Which type of device is connected (if any)
 		uint8_t address;
 		uint8_t firmware_version_; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
-		uint8_t dataBuffer[kRawLength];
+		std::vector<uint8_t> dataBuffer;
 		uint16_t commandSleepTime = 10000;
 		bool preparedForDataRead_ = false;
 		unsigned int numBits;
@@ -115,7 +79,7 @@ class Trill : public I2c
 		 *   contains differential readings between the baseline and
 		 *   the raw reading. This corresponds to `CSD_waSnsDiff`.
 		 */
-		float rawData[kNumChannelsMax];
+		std::vector<float> rawData;
 		/** @} */
 
 		/**

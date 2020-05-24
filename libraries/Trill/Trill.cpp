@@ -5,6 +5,42 @@
 const uint8_t Trill::speedValues[4];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 
+enum {
+	kCentroidLengthDefault = 20,
+	kCentroidLengthRing = 24,
+	kCentroidLength2D = 32,
+	kRawLength = 60
+};
+
+enum {
+	kCommandNone = 0,
+	kCommandMode = 1,
+	kCommandScanSettings = 2,
+	kCommandPrescaler = 3,
+	kCommandNoiseThreshold = 4,
+	kCommandIdac = 5,
+	kCommandBaselineUpdate = 6,
+	kCommandMinimumSize = 7,
+	kCommandAutoScanInterval = 16,
+	kCommandIdentify = 255
+};
+
+enum {
+	kOffsetCommand = 0,
+	kOffsetData = 4
+};
+
+enum {
+	kNumChannelsBar = 26,
+	kNumChannelsRing = 28,
+	kNumChannelsMax = 30,
+};
+
+enum {
+	kMaxTouchNum1D = 5,
+	kMaxTouchNum2D = 4
+};
+
 struct TrillDefaults
 {
 	TrillDefaults(std::string name, Trill::Mode mode, uint8_t address) :
@@ -56,6 +92,8 @@ Trill::Trill(unsigned int i2c_bus, Device device, Mode mode, uint8_t i2c_address
 int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 		uint8_t i2c_address)
 {
+	dataBuffer.resize(kRawLength);
+	rawData.resize(kNumChannelsMax);
 	address = 0;
 
 	if(AUTO == mode)
@@ -181,10 +219,10 @@ int Trill::identify() {
 
 	usleep(commandSleepTime); // need to give enough time to process command
 
-	::read(i2C_file, dataBuffer, 4); // discard first read
+	::read(i2C_file, dataBuffer.data(), 4); // discard first read
 
 	unsigned int bytesToRead = 4;
-	int bytesRead = ::read(i2C_file, dataBuffer, bytesToRead);
+	int bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
@@ -389,7 +427,7 @@ int Trill::readI2C() {
 	} else {
 		bytesToRead = kRawLength;
 	}
-	int bytesRead = ::read(i2C_file, dataBuffer, bytesToRead);
+	int bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		num_touches_ = 0;
