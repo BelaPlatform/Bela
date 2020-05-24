@@ -96,16 +96,9 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 	rawData.resize(kNumChannelsMax);
 	address = 0;
 
-	if(AUTO == mode)
-		mode = trillDefaults.at(device).mode;
 	if(128 <= i2c_address)
 		i2c_address = trillDefaults.at(device).address;
 
-	if(AUTO == mode) {
-		fprintf(stderr, "Unknown default mode for device type %s\n",
-			trillDefaults.at(device).name.c_str());
-		return -1;
-	}
 	if(128 <= i2c_address) {
 		fprintf(stderr, "Unknown default address for device type %s\n",
 			trillDefaults.at(device).name.c_str());
@@ -131,6 +124,13 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 		return -3;
 	}
 
+	if(AUTO == mode)
+		mode = trillDefaults.at(device_type_).mode;
+	if(AUTO == mode) {
+		fprintf(stderr, "Unknown default mode for device type `%s`\n",
+			trillDefaults.at(device_type_).name.c_str());
+		return -1;
+	}
 	if(setMode(mode) != 0) {
 		fprintf(stderr, "Unable to set mode\n");
 		return 3;

@@ -28,13 +28,13 @@ class Trill : public I2c
 		 * The types of Trill devices
 		 */
 		typedef enum {
-			NONE = -1,
-			UNKNOWN = 0,
-			BAR = 1,
-			SQUARE = 2,
-			CRAFT = 3,
-			RING = 4,
-			HEX = 5,
+			NONE = -1, ///< No device
+			UNKNOWN = 0, ///< A valid device of unknown type
+			BAR = 1, ///< %Trill Bar
+			SQUARE = 2, ///< %Trill Square
+			CRAFT = 3, ///< %Trill Craft
+			RING = 4, ///< %Trill Ring
+			HEX = 5, ///< %Trill Hex
 		} Device;
 	private:
 		Mode mode_; // Which mode the device is in
@@ -101,14 +101,19 @@ class Trill : public I2c
 		/**
 		 * Initialise the device.
 		 *
-		 * @param i2c_bus the bus that the device is connected to
-		 * @param device the device type
+		 * @param i2c_bus the bus that the device is connected to.
+		 * @param device the device type. If #UNKNOWN is passed, then
+		 * the \p i2c_address parameter has to be a valid address, and
+		 * any detected device type will be accepted. If something else
+		 * than #UNKNOWN is passed, and the detected device type is
+		 * different from the requested one, the function will fail and
+		 * the object will be left uninitialised.
 		 * @param mode the mode to set the device to. Defaults to
 		 * #AUTO, which selects the device-specific default
-		 * mode.
+		 * mode for the _detected_ device type.
 		 * @param i2c_address the address at which the device can be
-		 * found. Defaults to the default address for the specified
-		 * device type.
+		 * found. If `255` or no value is passed, the default address
+		 * for the specified device type will be used.
 		 */
 		int setup(unsigned int i2c_bus, Device device, Mode mode = AUTO,
 				uint8_t i2c_address = 255);
