@@ -78,16 +78,11 @@ bool setup(BelaContext *context, void *userData)
 {
 	// Setup a Trill Hex on i2c bus 1, using the default mode and address
 	if(touchSensor.setup(1, Trill::HEX) != 0) {
-		fprintf(stderr, "Unable to initialise touch sensor\n");
+		fprintf(stderr, "Unable to initialise Trill Hex\n");
 		return false;
 	}
 
 	touchSensor.printDetails();
-
-	if(touchSensor.deviceType() != Trill::HEX) {
-		fprintf(stderr, "This example is supposed to work only with the Trill HEX. \n You may have to adapt it to make it work with other Trill devices.\n");
-		return false;
-	}
 
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 

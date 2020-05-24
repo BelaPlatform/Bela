@@ -85,31 +85,24 @@ bool setup(BelaContext *context, void *userData)
 {
 	// Setup a Trill Bar sensor on i2c bus 1, using the default mode and address
 	if(touchSensor.setup(1, Trill::BAR) != 0) {
-		fprintf(stderr, "Unable to initialise touch sensor\n");
+		fprintf(stderr, "Unable to initialise Trill Bar\n");
 		return false;
 	}
+	touchSensor.printDetails();
 
- touchSensor.printDetails();
+	// Set and schedule auxiliary task for reading sensor data from the I2C bus
+	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 
- // Exit render if sensor is not a Trill Bar
- if(touchSensor.deviceType() != Trill::BAR) {
-	 fprintf(stderr, "This example is supposed to work only with the Trill BAR. \n You may have to adapt it to make it work with other Trill devices.\n");
-	 return false;
- }
+	// For each possible touch...
+	for(unsigned int i = 0; i < NUM_TOUCH; i++) {
+		// Setup corresponding oscillator
+		osc[i].setup(context->audioSampleRate, Oscillator::sine);
+		// Setup low pass filters for smoothing frequency and amplitude
+		freqFilt[i].setup(gCutOffFreq, context->audioSampleRate);
+		ampFilt[i].setup(gCutOffAmp, context->audioSampleRate);
+	}
 
- // Set and schedule auxiliary task for reading sensor data from the I2C bus
- Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
-
- // For each possible touch...
- for(unsigned int i = 0; i < NUM_TOUCH; i++) {
-	 // Setup corresponding oscillator
-	 osc[i].setup(context->audioSampleRate, Oscillator::sine);
-	 // Setup low pass filters for smoothing frequency and amplitude
-	 freqFilt[i].setup(gCutOffFreq, context->audioSampleRate);
-	 ampFilt[i].setup(gCutOffAmp, context->audioSampleRate);
- }
-
- return true;
+	return true;
 }
 
 void render(BelaContext *context, void *userData)

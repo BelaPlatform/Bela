@@ -125,17 +125,11 @@ bool setup(BelaContext *context, void *userData)
 {
 	// Setup a Trill Ring on i2c bus 1, using the default mode and address
 	if(touchSensor.setup(1, Trill::RING) != 0) {
-		fprintf(stderr, "Unable to initialise touch sensor\n");
+		fprintf(stderr, "Unable to initialise Trill Ring\n");
 		return false;
 	}
 
 	touchSensor.printDetails();
-
-	// Exit program if sensor is not a Trill Ring
-	if(touchSensor.deviceType() != Trill::RING) {
-		fprintf(stderr, "This example is supposed to work only with the Trill Ring. \n You may have to adapt it to make it work with other Trill devices.\n");
-		return false;
-	}
 
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
