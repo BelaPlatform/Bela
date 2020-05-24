@@ -156,6 +156,19 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 	return 0;
 }
 
+Trill::Device Trill::probe(unsigned int i2c_bus, uint8_t i2c_address)
+{
+	Trill t;
+	t.dataBuffer.resize(kRawLength);
+	if(t.initI2C_RW(i2c_bus, i2c_address, -1)) {
+		return Trill::NONE;
+	}
+	if(t.identify() != 0) {
+		return Trill::NONE;
+	}
+	return t.device_type_;
+}
+
 Trill::~Trill() {
 	closeI2C();
 }
@@ -221,8 +234,6 @@ int Trill::identify() {
 	char buf[2] = { kOffsetCommand, kCommandIdentify };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
-		fprintf(stderr, "Unexpected or no response.\n No valid device connected.\n");
-		fprintf(stderr, "%d\n", writtenValue);
 		return -1;
 	}
 	preparedForDataRead_ = false;

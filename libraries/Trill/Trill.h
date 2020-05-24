@@ -121,6 +121,14 @@ class Trill : public I2c
 				uint8_t i2c_address = 255);
 
 		/**
+		 * Probe the bus for a device at the specified address.
+		 *
+		 * @return The type of the device that was found. If no device
+		 * was found, #NONE is returned.
+		 */
+		static Device probe(unsigned int i2c_bus, uint8_t i2c_address);
+
+		/**
 		 * Update the baseline value on the device.
 		 */
 		int updateBaseLine();
