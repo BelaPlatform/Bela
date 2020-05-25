@@ -42,8 +42,27 @@ export default class BelaControl extends BelaWebSocket {
 				detail: { }
 			}),
 		];
-
+		this.callbacks = {};
 		this.handler = new GuiHandler(this);
+	}
+
+	registerCallback(name, callback, object=null) {
+		if(typeof callback === 'function') {
+			this.callbacks[name] =  {
+				object: object,
+				function: callback
+			};
+			return true;
+		}
+		return false;
+	}
+
+	removeCallback(name) {
+		if(name in callbacks) {
+			delete callbacks[name];
+			return true;
+		}
+		return false;
 	}
 
 	addGui(name) {
@@ -140,8 +159,9 @@ export default class BelaControl extends BelaWebSocket {
 			}
 		} else if (parsedData.event == 'set-select'){
 		} else if (parsedData.event == 'custom') {
-		} else {
 		}
+
+		Object.values(this.callbacks).forEach( c  => c.function.call(f.object, parsedData) );
 	}
 
 	sliderCallback(value) {
