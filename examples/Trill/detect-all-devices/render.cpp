@@ -1,3 +1,27 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/detect-all-devices
+
+Detect All I2C Devices
+======================
+
+This example is a handy utility which will identify and all connected
+I2C devices and print information on them to the console.
+
+When the program runs it will print the address and sensor type
+of all the Trill sensors you currently have connected to the I2C bus.
+
+This is particularly useful if you are unsure of the address of the sensor after
+changing it via the solder bridges on the back. This example will also give
+you a total count of the amount of Trill sensors connected to Bela.
+*/
+
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
 

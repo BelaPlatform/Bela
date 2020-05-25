@@ -8,19 +8,32 @@ http://bela.io
 
 \example Trill/ring-sound
 
-Trill Ring GUI
-==============
+Trill Ring – Interactive Shepard-Risset Glissando
+=================================================
 
-This example shows how to communicate with the Trill Ring
-sensor using the Trill library. It visualises the touch position and size
-of up to five touches in real time on the GUI.
+This example sonifies the position readings from a Trill Ring
+sensor using the Trill library. It also visualises the touch position
+and size of a single touche in real time on the GUI.
+Click the GUI button to see the visualisation.
+
+The position on the Ring sensor is used to control a Shepard-Risset
+infinite glissando effect. This auditory illusion involves a bank of sinetones
+which are tuned an octave apart whose pitch changes in unison. The pitch
+changing across all of the sinetones at the same time creates an auditory
+illusion of a tone that is forever increasing or decreasing in pitch.
+
+In this example we have mapped position around the ring to pitch with
+one full rotation around the Ring being mapped to an octave.
+To hear the auditory illusion to its full effect try moving your finger
+around the Trill Ring sensor at a steady pace.
 
 In this file Trill sensor is scanned in an AuxiliaryTask running in parallel with the
 audio thread and the horizontal and vertical position and size are stored
 in global variables.
 
-Click the GUI button to see the visualisation.
-Touch position and size are displayed in the sketch.
+In `void loop()` there is also a very useful cycle counter which increments for
+every rotation around the Ring. This is a useful bit of reusable code for working
+with the Ring in general.
 */
 
 #include <Bela.h>
@@ -36,6 +49,7 @@ Touch position and size are displayed in the sketch.
 const unsigned int kNumOscillators = 8;
 
 // Ratio between oscillators. 2.0 = octave. Try also powf(2.0, 1.0/3.0)
+// together with setting kNumOscillators = 24;
 const float kFrequencyRatio = 2.0;
 
 // Starting frequency of the lowest oscillator
