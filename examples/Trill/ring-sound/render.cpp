@@ -44,6 +44,8 @@ with the Ring in general.
 #include <cmath>
 #include <vector>
 
+#define NUM_TOUCH 5 // Number of touches on Trill sensor
+
 // *** Constants: change these to alter the sound of the Shepard-Risset effect
 // How many simultaneous oscillators?
 const unsigned int kNumOscillators = 8;
@@ -88,9 +90,16 @@ Gui gGui; // The custom browser-based GUI
 Trill touchSensor; // Trill object declaration
 
 // Location of touch on Trill Ring
-float gTouchLocation = 0;
+float gTouchLocationCycle = 0;
 // Size of touch on Trill Ring
-float gTouchSize = 0;
+float gTouchSizeCycle = 0;
+
+// Location of touches on Trill Ring
+float gTouchLocation[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+// Size of touches on Trill Ring
+float gTouchSize[NUM_TOUCH] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+// Number of active touches
+unsigned int gNumActiveTouches = 0;
 
 // Sleep time for auxiliary task
 unsigned int gTaskSleepTime = 12000; // microseconds
@@ -108,8 +117,20 @@ void loop(void*)
 	float pastRead = 0;
 	while(!Bela_stopRequested())
 	{
+
 		// Read locations from Trill sensor
 		touchSensor.readI2C();
+		gNumActiveTouches = touchSensor.numberOfTouches();
+		for(unsigned int i = 0; i < gNumActiveTouches; i++) {
+			gTouchLocation[i] = touchSensor.touchLocation(i);
+			gTouchSize[i] = touchSensor.touchSize(i);
+		}
+		// For all inactive touches, set location and size to 0
+		for(unsigned int i = gNumActiveTouches; i < NUM_TOUCH; i++) {
+			gTouchLocation[i] = 0.0;
+			gTouchSize[i] = 0.0;
+		}
+
 		if(touchSensor.numberOfTouches())
 		{
 			float newRead = touchSensor.compoundTouchLocation();
@@ -120,13 +141,12 @@ void loop(void*)
 			} else if(newRead > 0.92 && pastRead < 0.08) { // decrement if we were going backwards
 				wraps--;
 			}
-			// We only need to keep track of up to kNumOscillators revolutions
-			wraps = (wraps + kNumOscillators) % kNumOscillators;
-			gTouchLocation = newRead + wraps;
-			gTouchSize = touchSensor.compoundTouchSize();
+
+			gTouchLocationCycle = newRead + wraps;
+			gTouchSizeCycle = touchSensor.compoundTouchSize();
 			pastRead = newRead;
 			// optionally, print the current location and see how it keeps track of the revolutions around the circle
-			// printf("%.3f\n", gTouchSize);
+			// printf("%.3f\n", gTouchSizeCycle);
 		} else {
 			// if there was no touch, we keep in mind the location of the last one ...
 			// ... by simply doing nothing
@@ -200,7 +220,7 @@ void render(BelaContext *context, void *userData)
 	{
 		// In the space of one full rotation on the ring, the frequency should go up by the spacing between oscillators
 		// (i.e. complete one cycle)
-		gLogFrequencies[i] = fmodf((float)i / (float)kNumOscillators + gTouchLocation/kNumOscillators, 1);
+		gLogFrequencies[i] = fmodf((float)i / (float)kNumOscillators + gTouchLocationCycle/kNumOscillators, 1);
 		// Calculate the amplitude of this oscillator by finding its position in the
 		// window on a normalised logarithmic frequency scale
 		gAmplitudes[i] = gSpectralWindow[(int)(gLogFrequencies[i] * kSpectralWindowSize)];
@@ -251,6 +271,9 @@ void render(BelaContext *context, void *userData)
 			gGui.sendBuffer(0, 1);
 			gGui.sendBuffer(1, gTouchLocation);
 			gGui.sendBuffer(2, gTouchSize);
+			// Send data to GUI for Barber Pole
+			gGui.sendBuffer(3, (int)kNumOscillators);
+			gGui.sendBuffer(4, gTouchLocationCycle + 1000.0);
 		}
 		++gGuiCount;
 	}
