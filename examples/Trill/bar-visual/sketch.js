@@ -14,7 +14,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight);
 	frameRate(60);
 	sliderLength = width-100;
-	trill = new Trill('bar', sliderLength);
+	trill = new Trill('bar', sliderLength, [ width * 0.5, sliderLength * 0.2 ]);
 }
 
 function draw() {

@@ -11,12 +11,9 @@ function preload() {
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	spacing=height/20;
-	startPoint=(width/2)-spacing*7;
 	rectWidth = height*0.7;
-	rectStart = height*0.1;
 
-	trill = new Trill('square', rectWidth, [width/2-rectWidth/2, rectStart]);
+	trill = new Trill('square', rectWidth, [ width * 0.5, height * 0.5 ]);
 }
 
 function draw() {

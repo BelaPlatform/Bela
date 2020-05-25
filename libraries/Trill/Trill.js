@@ -25,7 +25,7 @@ class TrillTouch {
 }
 
 class Trill {
-	constructor(type, length, position = [50, 50], touchScale = 0.4) {
+	constructor(type, length, position = [200, 200], touchScale = 0.4) {
 		this.position = position;
 		this.types = ['bar', 'square', 'hex', 'ring']
 		type = type.toLowerCase();
@@ -43,6 +43,7 @@ class Trill {
 	draw() {
 		fill(this.sensorColor);
 		if (this.type == 'bar' || this.type == 'square') {
+			rectMode(CENTER);
 			rect(this.position[0], this.position[1], this.dimensions[0], this.dimensions[1], this.cornerRadius);
 		} else if (this.type == 'ring') {
 			push();
@@ -102,7 +103,7 @@ class Trill {
 			let diameter = this.dimensions[1]*this.touches[i].size*this.touches[i].scale;
 
 			if(this.type == 'bar' || this.type == 'square') {
-				ellipse(this.position[0] + this.dimensions[0] * this.touches[i].location[0], this.position[1] + this.dimensions[1] * this.touches[i].location[1], diameter);
+				ellipse(this.position[0] - this.dimensions[0] * 0.5 + this.dimensions[0] * this.touches[i].location[0], this.position[1] - this.dimensions[1] * 0.5 + this.dimensions[1] * this.touches[i].location[1], diameter);
 			} else if (this.type == 'ring') {
 				push();
 				translate(this.position[0], this.position[1]);
