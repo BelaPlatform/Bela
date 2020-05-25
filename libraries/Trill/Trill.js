@@ -28,7 +28,10 @@ class Trill {
 	constructor(type, length, position = [50, 50], touchScale = 0.4) {
 		this.position = position;
 		this.types = ['bar', 'square', 'hex', 'ring']
-		this.type = (this.types.includes(type)) ? type : null;
+		type = type.toLowerCase();
+		this.type = (this.types.includes(type)) ? type :null;
+		if(!this.type)
+			throw("Trill: Unknown Trill type `"+type+"`");
 		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
 			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
 		this.touchScale = touchScale;
