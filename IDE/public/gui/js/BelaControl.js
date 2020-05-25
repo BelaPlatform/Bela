@@ -161,7 +161,7 @@ export default class BelaControl extends BelaWebSocket {
 		} else if (parsedData.event == 'custom') {
 		}
 
-		Object.values(this.callbacks).forEach( c  => c.function.call(f.object, parsedData) );
+		Object.values(this.callbacks).forEach( c  => c.function.call(c.object, parsedData) );
 	}
 
 	sliderCallback(value) {
