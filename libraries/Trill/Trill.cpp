@@ -77,7 +77,7 @@ struct trillRescaleFactors_t {
 static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 	{.pos = 1, .size = 1}, // UNKNOWN = 0,
 	{.pos = 3200, .size = 4566}, // BAR = 1,
-	{.pos = 1792, .posH = 1792, .size = 2700}, // SQUARE = 2,
+	{.pos = 1792, .posH = 1792, .size = 3780}, // SQUARE = 2,
 	{.pos = 4096, .size = 1}, // CRAFT = 3,
 	{.pos = 3584, .size = 5000}, // RING = 4,
 	{.pos = 1920, .posH = 1664, .size = 4000}, // HEX = 5,
