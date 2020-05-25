@@ -678,3 +678,139 @@ unsigned int Trill::getNumChannels()
 		default: return kNumChannelsMax;
 	}
 }
+
+#ifdef TRILLTHREADED
+Pipe TrillThreaded::pipe;
+std::thread TrillThreaded::ioThread;
+std::vector<TrillThreaded*> TrillThreaded::objs;
+bool TrillThreaded::shouldStop;
+
+void TrillThreaded::ioLoop(unsigned int us, std::function<int()> externShouldStop)
+{
+	while(!externShouldStop() && !shouldStop)
+	{
+		for(auto t : objs)
+			t->Trill::readI2C();
+		Command command;
+		while(1 == pipe.readNonRt(command))
+		{
+			// TODO: should find it instead of relying on position
+			Trill* t = objs[command.id];
+			float v0 = command.value0;
+			float v1 = command.value1;
+			switch(command.cmd)
+			{
+				case kUpdateBaseline:
+					t->updateBaseline();
+					break;
+				case kReadI2C:
+					t->readI2C();
+					break;
+				case kSetMode:
+					t->setMode((Mode)v0);
+					break;
+				case kSetScanSettings:
+					t->setScanSettings(v0, v1);
+					break;
+				case kSetPrescaler:
+					t->setPrescaler(v0);
+					break;
+				case kSetNoiseThreshold:
+					t->setNoiseThreshold(v0);
+					break;
+				case kSetIdacValue:
+					t->setIDACValue(v0);
+					break;
+				case kSetMinimumTouchSize:
+					t->setMinimumTouchSize(v0);
+					break;
+				case kSetAutoScanInterval:
+					t->setAutoScanInterval(v0);
+					break;
+			}
+		} // while data is coming out of the pipe
+		usleep(us);
+	} // while shouldn't stop
+}
+
+void TrillThreaded::start(unsigned int us, std::function<int()> func)
+{
+	stop();
+	//TODO: why calling pipe = Pipe("TrillCommands"); fails instead?
+	pipe.setup("TrillCommands");
+	shouldStop = false;
+	if(func)
+		ioThread = std::thread(ioLoop, us, func);
+	else
+		ioThread = std::thread(ioLoop, us, [](){return 0;});
+}
+
+void TrillThreaded::stop()
+{
+	if(ioThread.get_id() != std::thread::id()) {
+		shouldStop = true;
+		ioThread.join();
+	}
+}
+
+int TrillThreaded::sendCmd(cmds_t cmd, float value0, float value1)
+{
+	Command command({.id = id, .cmd = cmd, .value0 = value0, .value1 = value1});
+	int ret = pipe.writeRt(command);
+	return  ret;
+}
+
+int TrillThreaded::setup(unsigned int i2c_bus, Trill::Device device, Trill::Mode
+		mode, uint8_t i2c_address)
+{
+	int ret;
+	if((ret = Trill::setup(i2c_bus, device, mode, i2c_address)))
+		return ret;
+	//TODO: refcount the objects and kill the thread when they are all gone.
+	objs.push_back(this);
+	id = objs.size() - 1;
+	return 0;
+}
+
+int TrillThreaded::updateBaseline()
+{
+	return sendCmd(kUpdateBaseline);
+}
+
+int TrillThreaded::readI2C()
+{
+	return sendCmd(kReadI2C);
+}
+
+int TrillThreaded::setMode(Mode mode)
+{
+	return sendCmd(kSetMode, (float)mode);
+}
+
+int TrillThreaded::setScanSettings(uint8_t speed, uint8_t num_bits)
+{
+	return sendCmd(kSetMode, speed, num_bits);
+}
+int TrillThreaded::setPrescaler(uint8_t prescaler)
+{
+	return sendCmd(kSetPrescaler, prescaler);
+}
+int TrillThreaded::setNoiseThreshold(float threshold)
+{
+	return sendCmd(kSetNoiseThreshold, threshold);
+}
+
+int TrillThreaded::setIDACValue(uint8_t value)
+{
+	return sendCmd(kSetIdacValue, value);
+}
+int TrillThreaded::setMinimumTouchSize(float minSize)
+{
+	return sendCmd(kSetMinimumTouchSize, minSize);
+}
+
+int TrillThreaded::setAutoScanInterval(uint16_t interval)
+{
+	return sendCmd(kSetAutoScanInterval, interval);
+}
+#endif // TRILLTHREADED

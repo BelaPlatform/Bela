@@ -426,3 +426,55 @@ class Trill : public I2c
 
 		/** @}*/ // end of centroid mode
 };
+
+#ifdef BELA
+// nothing actually Bela-specific here, only the Pipe class.
+// Find a suitable replacement and you are all set!
+#define TRILLTHREADED
+#include <libraries/Pipe/Pipe.h>
+#include <thread>
+
+class TrillThreaded : public Trill
+{
+private:
+	typedef enum {
+		kUpdateBaseline,
+		kReadI2C,
+		kSetMode,
+		kSetScanSettings,
+		kSetPrescaler,
+		kSetNoiseThreshold,
+		kSetIdacValue,
+		kSetMinimumTouchSize,
+		kSetAutoScanInterval,
+	} cmds_t;
+	struct Command {
+		unsigned int id;
+		cmds_t cmd;
+		float value0;
+		float value1;
+	};
+	static void ioLoop(unsigned int us, std::function<int()> externShouldStop);
+	static Pipe pipe;
+	static std::thread ioThread;
+	static std::vector<TrillThreaded*> objs;
+	static bool shouldStop;
+	int sendCmd(cmds_t cmd, float value0 = 0, float value1 = 0);
+	unsigned int id;
+public:
+	static void start(unsigned int us, std::function<int()> = nullptr);
+	static void stop();
+	int setup(unsigned int i2c_bus, Device device, Mode mode = AUTO,
+			uint8_t i2c_address = 255);
+	int updateBaseline();
+	int readI2C();
+	int setMode(Mode mode);
+	int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
+	int setPrescaler(uint8_t prescaler);
+	int setNoiseThreshold(float threshold);
+	int setIDACValue(uint8_t value);
+	int setMinimumTouchSize(float minSize);
+	int setAutoScanInterval(uint16_t interval);
+};
+
+#endif // BELA
