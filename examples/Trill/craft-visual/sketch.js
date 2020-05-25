@@ -19,32 +19,86 @@ var slider;
 // Current state of the reset button.
 let buttonState = 1;
 
+function radioModeParser(value)
+{
+	var mode;
+	switch(value){
+		case("Diff"):
+			mode = 3;
+			break;
+		case("Raw"):
+			mode = 1;
+			break;
+		case("Baseline"):
+			mode = 2;
+			break;
+		default:
+			mode = 3;
+	}
+	return mode;
+}
+
+// `this` is the object that has changed
+function sendToBela()
+{
+	let value = this.value();
+	if(this.parser)
+		value = this.parser(value);
+	else
+		if(typeof(value) === "string")
+			value = parseFloat(value);
+	if(isNaN(value)) {
+		// this is required for the C++ parser to recognize is it as a
+		// number (NaN is not recognized as a number)
+		value = 0;
+	}
+	let obj = {};
+	obj[this.guiKey] = value;
+	console.log("Sending ", obj);
+	Bela.control.send(obj);
+}
+
+function belaSenderInit(obj, guiKey, parser)
+{
+	obj.guiKey = guiKey;
+	if("button" === obj.elt.localName)
+		obj.mouseReleased(sendToBela);
+	else
+		obj.input(sendToBela);
+	obj.parser = parser;
+	sendToBela.call(obj);
+}
+
 function setup() {
 
-    radioMode = createRadio();
-    radioMode.option("Raw");
-    radioMode.option("Diff");
-    radioMode.option("Baseline");
+	radioMode = createRadio();
+	radioMode.option("Raw");
+	radioMode.option("Diff");
+	radioMode.option("Baseline");
 	radioMode.value("Diff");
+	belaSenderInit(radioMode, "mode", radioModeParser);
 
-    radioPres = createRadio();
-    for(let n = 1; n <= 8; ++n)
+	radioPres = createRadio();
+	for(let n = 1; n <= 8; ++n)
 		radioPres.option(n+"");
 	radioPres.value("2");
+	belaSenderInit(radioPres, "prescaler");
 
 	radioBits = createRadio();
 	for(let n = 9; n <=12 ; ++n)
 		radioBits.option(n);
 	radioBits.value("12");
+	belaSenderInit(radioBits, "numBits");
 
 	// Create a slider object (min, max, initial value, increment)
 	slider = createSlider(0, 255/4096, 0.0, 1/4096); // TODO: the range and step of this should change with the number of bits
+	belaSenderInit(slider, "noiseThreshold");
 
 	button = createButton("RESET BASELINE");
-	button.mouseClicked(changeButtonState);
+	belaSenderInit(button, "baseline");
+
 	windowResized();
 }
-
 
 function draw() {
 	background(255);
@@ -83,31 +137,11 @@ function draw() {
 	textAlign(LEFT);
 	text("MODE:", chartLeft, controlStart - 10);
 	var radioModeVal = radioMode.value();
-	var mode;
-	switch(radioModeVal){
-		case("Diff"):
-			mode = 3;
-			break;
-		case("Raw"):
-			mode = 1;
-			break;
-		case("Baseline"):
-			mode = 2;
-			break;
-		default:
-			mode = 3;
-	}
 
 	text("PRESCALER VALUE:", chartLeft, controlStart + 40);
-	var radioPresVal = radioPres.value();
 	text("NUMBER OF BITS:", chartRight-200, controlStart + 40);
-	var radioBitsVal = radioBits.value();
 	text("THRESHOLD VALUE:", chartRight-200, controlStart -10);
 	text(slider.value(), chartRight-50, controlStart - 10);
-	var sliderVal = slider.value();
-	var buttonVal = button.value();
-	// Send values from interface to Bela
-	Bela.data.sendBuffer(0, 'float', [radioPresVal, sliderVal, buttonState, radioBitsVal, mode]);
 }
 
 function windowResized() {

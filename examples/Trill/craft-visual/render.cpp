@@ -11,7 +11,8 @@ http://bela.io
 Trill Visual Raw
 ================
 
-This example visualises the reading from a Trill Craft sensor.
+This example visualises the reading from a Trill Craft sensor and it is largely
+the same as the general-settings example.
 
 The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
 and is read in DIFF mode giving the differential reading of each pad on the sensor.
@@ -47,10 +48,11 @@ once you're happy with the behaviour of the sensors.
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
 #include <libraries/Gui/Gui.h>
+#include <libraries/Pipe/Pipe.h>
 
 Trill touchSensor;
 
-// Gui object declaration
+Pipe gPipe;
 Gui gui;
 
 // Sleep time for auxiliary task
@@ -63,42 +65,84 @@ int bitResolution = 12;
 
 int gButtonValue = 0;
 
+typedef enum {
+	kPrescaler,
+	kBaseline,
+	kNoiseThreshold,
+	kNumBits,
+	kMode,
+} ids_t;
+struct Command {
+	ids_t id;
+	float value;
+};
+
+#include <tuple>
+std::vector<std::pair<std::wstring, ids_t>> gKeys =
+{
+	{L"prescaler", kPrescaler},
+	{L"baseline", kBaseline},
+	{L"noiseThreshold", kNoiseThreshold},
+	{L"numBits", kNumBits},
+	{L"mode", kMode},
+};
+
+// This callback is called every time a new message is received from the Gui.
+// Given how we cannot operate on the touchSensor object from a separate
+// thread, we need to pipe the received messages to the loop() thread, so that
+// they can be processed there
+bool guiCallback(JSONObject& json, void*)
+{
+	struct Command command;
+	for(auto& k : gKeys)
+	{
+		if(json.find(k.first) != json.end() && json[k.first]->IsNumber())
+		{
+			command.id = k.second;
+			command.value = json[k.first]->AsNumber();
+			gPipe.writeNonRt(command);
+		}
+	}
+	return false;
+}
+
 void loop(void*)
 {
-	DataBuffer& buffer = gui.getDataBuffer(0);
-	float oldBuffer[5] = {0};
 	int numBits;
 	int speed = 0;
 	while(!Bela_stopRequested())
 	{
 		touchSensor.readI2C();
 
-		// Retrieve contents of the buffer as ints
-		float* data = buffer.getAsFloat();
-		if(data[0] != oldBuffer[0]) {
-			oldBuffer[0] = data[0];
-			printf("setting prescaler to %.0f\n", data[0]);
-			touchSensor.setPrescaler(data[0]);
-		}
-		if(data[1] != oldBuffer[1]) {
-			oldBuffer[1] = data[1];
-			printf("setting noiseThreshold to %f\n", data[1]);
-			touchSensor.setNoiseThreshold(data[1]);
-		}
-		if(data[2] != oldBuffer[2]) {
-			oldBuffer[2] = data[2];
-			printf("reset baseline\n");
-			touchSensor.updateBaseline();
-		}
-		if(data[3] != oldBuffer[3]) {
-			numBits = oldBuffer[3] = data[3];
-			printf("setting number of bits to %d\n", numBits);
-			touchSensor.setScanSettings(speed, numBits);
-		}
-		if(data[4] != oldBuffer[4]) {
-			oldBuffer[4] = data[4];
-			printf("setting mode to %.0f\n", data[4]);
-			touchSensor.setMode((Trill::Mode)data[4]);
+		Command command;
+		// receive any command from the gui through the pipe
+		while(1 == gPipe.readRt(command))
+		{
+			float value = command.value;
+			switch(command.id)
+			{
+				case kPrescaler:
+					printf("setting prescaler to %.0f\n", value);
+					touchSensor.setPrescaler(value);
+					break;
+				case kBaseline:
+					printf("reset baseline\n");
+					touchSensor.updateBaseline();
+					break;
+				case kNoiseThreshold:
+					printf("setting noiseThreshold to %f\n", value);
+					touchSensor.setNoiseThreshold(value);
+					break;
+				case kNumBits:
+					numBits = value;
+					printf("setting number of bits to %d\n", numBits);
+					touchSensor.setScanSettings(speed, numBits);
+					break;
+				case kMode:
+					printf("setting mode to %.0f\n", value);
+					touchSensor.setMode((Trill::Mode)value);
+					break;
+			}
 		}
 		usleep(50000);
 	}
@@ -106,16 +150,16 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup a Trill Craft on i2c bus 1, using the default mode and address
-	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
+	// Setup a Trill Craft on i2c bus 1, using the default address.
+	// Set it to differential mode for bargraph display
+	if(touchSensor.setup(1, Trill::CRAFT, Trill::DIFF) != 0) {
 		fprintf(stderr, "Unable to initialise Trill Craft\n");
 		return false;
 	}
 
 	gui.setup(context->projectName);
-
-	// Setup buffer of integers (holding a maximum of 3 values)
-	gui.setBuffer('f', 5); // buffer index == 0
+	gui.setControlDataCallback(guiCallback, nullptr);
+	gPipe.setup("guiToLoop");
 
 	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
 	return true;
