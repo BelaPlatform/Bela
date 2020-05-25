@@ -120,7 +120,7 @@ void loop(void*)
 
 		// Read locations from Trill sensor
 		touchSensor.readI2C();
-		gNumActiveTouches = touchSensor.numberOfTouches();
+		gNumActiveTouches = touchSensor.getNumTouches();
 		for(unsigned int i = 0; i < gNumActiveTouches; i++) {
 			gTouchLocation[i] = touchSensor.touchLocation(i);
 			gTouchSize[i] = touchSensor.touchSize(i);
@@ -131,7 +131,7 @@ void loop(void*)
 			gTouchSize[i] = 0.0;
 		}
 
-		if(touchSensor.numberOfTouches())
+		if(touchSensor.getNumTouches())
 		{
 			float newRead = touchSensor.compoundTouchLocation();
 			// Keep track of how many times we have gone around the sensor.

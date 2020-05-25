@@ -888,9 +888,9 @@ void render(BelaContext *context, void *userData)
 			} else if(Trill::CENTROID == mode)
 			{
 				if(touchSensor.is1D()) {
-					libpd_start_message(2 * touchSensor.numberOfTouches() + 1);
-					libpd_add_float(touchSensor.numberOfTouches());
-					for(int i = 0; i < touchSensor.numberOfTouches(); i++) {
+					libpd_start_message(2 * touchSensor.getNumTouches() + 1);
+					libpd_add_float(touchSensor.getNumTouches());
+					for(int i = 0; i < touchSensor.getNumTouches(); i++) {
 						libpd_add_float(touchSensor.touchLocation(i));
 						libpd_add_float(touchSensor.touchSize(i));
 					}

@@ -91,8 +91,8 @@ void render(BelaContext *context, void *userData)
 			readCount = 0;
 			// we print the sensor readings depending on the device mode
 			if(Trill::CENTROID == touchSensor.getMode()) {
-				rt_printf("Touches: %d:", touchSensor.numberOfTouches());
-				for(unsigned int i = 0; i < touchSensor.numberOfTouches(); i++) {
+				rt_printf("Touches: %d:", touchSensor.getNumTouches());
+				for(unsigned int i = 0; i < touchSensor.getNumTouches(); i++) {
 					rt_printf("%1.3f ", touchSensor.touchLocation(i));
 					if(touchSensor.is2D())
 						rt_printf("%1.3f ", touchSensor.touchHorizontalLocation(i));

@@ -315,7 +315,7 @@ class Trill : public I2c
 		 *
 		 * \copydoc TAGS_1d
 		 */
-		unsigned int numberOfTouches();
+		unsigned int getNumTouches();
 		/**
 		 * Get the location of a touch on the vertical axis of the
 		 * device.
@@ -323,7 +323,7 @@ class Trill : public I2c
 		 * \copydoc TAGS_1d
 		 *
 		 * @param touch_num the number of the touch. This value needs
-		 * to be comprised between 0 and `numberOfTouches() - 1`.
+		 * to be comprised between 0 and `getNumTouches() - 1`.
 		 * @return the position of the touch relative to the axis, or
 		 * -1 if no such touch exists.
 		 */
@@ -343,7 +343,7 @@ class Trill : public I2c
 		 *
 		 * \copydoc TAGS_2d
 		 */
-		unsigned int numberOfHorizontalTouches();
+		unsigned int getNumHorizontalTouches();
 		/**
 		 * Get the location of a touch on the horizontal axis of the
 		 * device.
@@ -351,7 +351,7 @@ class Trill : public I2c
 		 * \copydoc TAGS_2d
 		 *
 		 * @param touch_num the number of the touch. This value needs
-		 * to be comprised between 0 and `numberOfHorizontalTouches() - 1`.
+		 * to be comprised between 0 and `getNumHorizontalTouches() - 1`.
 		 * @return the position of the touch relative to the axis, or
 		 * -1 if no such touch exists.
 		 *  */

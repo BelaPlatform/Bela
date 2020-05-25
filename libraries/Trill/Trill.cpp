@@ -516,7 +516,7 @@ bool Trill::is2D()
 	}
 }
 
-unsigned int Trill::numberOfTouches()
+unsigned int Trill::getNumTouches()
 {
 	if(mode_ != CENTROID)
 		return 0;
@@ -525,7 +525,7 @@ unsigned int Trill::numberOfTouches()
 	return (num_touches_ & 0x0F);
 }
 
-unsigned int Trill::numberOfHorizontalTouches()
+unsigned int Trill::getNumHorizontalTouches()
 {
 	if(mode_ != CENTROID  || (device_type_ != SQUARE && device_type_ != HEX))
 		return 0;
@@ -613,18 +613,18 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 
 float Trill::compoundTouchLocation()
 {
-	compoundTouch(touchLocation, touchSize, numberOfTouches());
+	compoundTouch(touchLocation, touchSize, getNumTouches());
 }
 
 float Trill::compoundTouchHorizontalLocation()
 {
-	compoundTouch(touchHorizontalLocation, touchHorizontalSize, numberOfHorizontalTouches());
+	compoundTouch(touchHorizontalLocation, touchHorizontalSize, getNumHorizontalTouches());
 }
 
 float Trill::compoundTouchSize()
 {
 	float size = 0;
-	for(unsigned int i = 0; i < numberOfTouches(); i++)
+	for(unsigned int i = 0; i < getNumTouches(); i++)
 		size += touchSize(i);
 	return size;
 }

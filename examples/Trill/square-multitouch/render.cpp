@@ -73,8 +73,8 @@ void loop(void*)
 		// Nonetheless, multi-touch data can be useful in some 
 		// circumstances and it is gathered here.
 		
-		gNumVerticalTouches = touchSensor.numberOfTouches();
-		gNumHorizontalTouches = touchSensor.numberOfHorizontalTouches();
+		gNumVerticalTouches = touchSensor.getNumTouches();
+		gNumHorizontalTouches = touchSensor.getNumHorizontalTouches();
 		if(gNumVerticalTouches > NUM_TOUCH)
 			gNumVerticalTouches = NUM_TOUCH;
 		if(gNumHorizontalTouches > NUM_TOUCH)
