@@ -89,6 +89,16 @@ struct Command {
 	float value;
 };
 
+#include <tuple>
+std::vector<std::pair<std::wstring, ids_t>> gKeys =
+{
+	{L"prescaler", kPrescaler},
+	{L"baseline", kBaseline},
+	{L"noiseThreshold", kNoiseThreshold},
+	{L"numBits", kNumBits},
+	{L"mode", kMode},
+};
+
 // This callback is called every time a new message is received from the Gui.
 // Given how we cannot operate on the touchSensor object from a separate
 // thread, we need to pipe the received messages to the loop() thread, so that
@@ -96,35 +106,14 @@ struct Command {
 bool guiCallback(JSONObject& json, void*)
 {
 	struct Command command;
-	if(json.find(L"prescaler") != json.end() && json[L"prescaler"]->IsNumber())
+	for(auto& k : gKeys)
 	{
-		command.id = kPrescaler;
-		command.value = json[L"prescaler"]->AsNumber();
-		gPipe.writeNonRt(command);
-	}
-	if(json.find(L"baseline") != json.end())
-	{
-		command.id = kBaseline;
-		command.value = 0;
-		gPipe.writeNonRt(command);
-	}
-	if(json.find(L"noiseThreshold") != json.end() && json[L"noiseThreshold"]->IsNumber())
-	{
-		command.id = kNoiseThreshold;
-		command.value = json[L"noiseThreshold"]->AsNumber();
-		gPipe.writeNonRt(command);
-	}
-	if(json.find(L"numBits") != json.end() && json[L"numBits"]->IsNumber())
-	{
-		command.id = kNumBits;
-		command.value = json[L"numBits"]->AsNumber();
-		gPipe.writeNonRt(command);
-	}
-	if(json.find(L"mode") != json.end() && json[L"mode"]->IsNumber())
-	{
-		command.id = kMode;
-		command.value = json[L"mode"]->AsNumber();
-		gPipe.writeNonRt(command);
+		if(json.find(k.first) != json.end() && json[k.first]->IsNumber())
+		{
+			command.id = k.second;
+			command.value = json[k.first]->AsNumber();
+			gPipe.writeNonRt(command);
+		}
 	}
 	return false;
 }
@@ -139,8 +128,8 @@ void loop(void*)
 
 		Command command;
 		// receive any command from the gui through the pipe
-		int ret = gPipe.readRt(command);
-		if(1 == ret) {
+		while(1 == gPipe.readRt(command))
+		{
 			float value = command.value;
 			switch(command.id)
 			{
