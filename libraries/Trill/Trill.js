@@ -1,6 +1,5 @@
 class TrillTouch {
-	constructor(idx, scale = 0.25, color = 'ivory', size = [0, 0], location = [null, null], active = 0 ) {
-		this.idx = idx;
+	constructor(scale = 0.25, color = 'ivory', size = [0, 0], location = [null, null], active = 0 ) {
 		this.scale = scale;
 		this.size = size;
 		this.location = location;
@@ -13,8 +12,6 @@ class TrillTouch {
 		this.location = location;
 		this.size = constrain(size, 0, 1);
 	}
-
-	setState(state) { this.active = Boolean(state); }
 
 	changeColor(newColor) { this.color = color(newColor); }
 
@@ -34,7 +31,6 @@ class Trill {
 		this.type = (this.types.includes(type)) ? type : null;
 		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
 			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
-		this.numTouches = (this.type == 'bar' || this.type == 'ring') ? 5 : 9;
 		this.touchScale = touchScale;
 
 		this.cornerRadius = 0;
@@ -45,13 +41,8 @@ class Trill {
 		}
 
 		this.sensorColor = 'black';
-		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan',
-							 'red', 'blue', 'yellow', 'white', 'cyan' ];
-
+		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan'];
 		this.touches = [];
-		for(let t = 0; t < this.numTouches; t++) {
-			this.touches.push(new TrillTouch(t, touchScale, this.touchColors[t]))
-		}
 	}
 
 	draw() {
@@ -82,35 +73,36 @@ class Trill {
 			pop();
 		}
 
-		for(let t = 0; t < this.numTouches; t++) {
-			if(this.touches[t].active) {
+		for(let t = 0; t < this.touches.length; t++) {
+			if(this.touches[t] && this.touches[t].active) {
 				this.drawTouch(t);
-				this.touches[t].setState(0);
+				this.touches[t].active = 0;
 			}
 		}
 	}
 
 	updateTouch(i, location, size) {
 		location = Array.isArray(location) ? location : [location, null];
-		if(i < this.numTouches) {
-			let _location= new Array(2);
-			_location[0] = location[0];
-			if(this.type == 'bar') {
-				_location[1] = 0.5;
-			} else if (this.type == 'square') {
-				_location[1] = location[1]
-			} else if (this.type == 'ring') {
-				_location[1] = 0.5;
-			} else if (this.type == 'hex') {
-				_location[1] = location[1];
-			}
-			let _size = constrain(size, 0, 1);
-			this.touches[i].update(_location, _size);
+		let _location= new Array(2);
+		_location[0] = location[0];
+		if(this.type == 'bar') {
+			_location[1] = 0.5;
+		} else if (this.type == 'square') {
+			_location[1] = location[1]
+		} else if (this.type == 'ring') {
+			_location[1] = 0.5;
+		} else if (this.type == 'hex') {
+			_location[1] = location[1];
 		}
+		let _size = constrain(size, 0, 1);
+		if(!this.touches[i])
+			this.touches[i] = new TrillTouch(this.touchScale,
+				this.touchColors[i % this.touchColors.length]);
+		this.touches[i].update(_location, _size);
 	}
 
 	drawTouch(i) {
-		if(i < this.numTouches) {
+		if(i < this.touches.length) {
 			fill(this.touches[i].color);
 			let diameter = this.dimensions[1]*this.touches[i].size*this.touches[i].scale;
 
@@ -140,7 +132,7 @@ class Trill {
 
 	changeTouchScale(scale) {
 		this.touchScale = scale;
-		for(let t = 0; t < this.numTouches; t++) {
+		for(let t = 0; t < this.touches.length; t++) {
 			this.touches[t]. changeScale(this.touchScale);
 		}
 	}
