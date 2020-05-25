@@ -15,6 +15,14 @@ export default class BelaData extends BelaWebSocket {
         ];
     }
 
+    dataError(data) {
+        // most likely we are off by 1 in the state machine, so we attempt to resync.
+        console.log("Invalid data length %d. Resetting state machine", data.byteLength);
+        this.currentState = 'id/type';
+        this.onData(data);
+        return true;
+	}
+
     onData(data) {
         if('id/type' === this.currentState) {
             this.bufferReady = false;
@@ -46,11 +54,13 @@ export default class BelaData extends BelaWebSocket {
                     'for bufferId ', this.newBuffer['id'],
                     ', or wrong length. Restarting state machine');
                 this.currentState = this.states[0];
+                return;
             }
             this.currentState = this.states[1];
         } else if ('data' === this.currentState) {
                 this.currentState = this.states[0];
                 let type = this.newBuffer['type'];
+                let err = false;
                 switch(type) {
                         case 'c':
                                 let charInt = new Uint8Array(data);
@@ -61,25 +71,43 @@ export default class BelaData extends BelaWebSocket {
                                 this.newBuffer['data'] = charArr;
                                 break;
                         case 'j': // unsigned int
-                                let uintArr = new Uint32Array(data);
-                                this.newBuffer['data'] = Array.from(uintArr);
+                                if(data.byteLength & 3)
+                                        err = this.dataError(data);
+                                else {
+                                        let uintArr = new Uint32Array(data);
+                                        this.newBuffer['data'] = Array.from(uintArr);
+                                }
                                 break;
                         case 'i': // int
-                                let intArr = new Int32Array(data);
-                                this.newBuffer['data'] = Array.from(intArr);
+                                if(data.byteLength & 3)
+                                        err = this.dataError(data);
+                                else {
+                                        let intArr = new Int32Array(data);
+                                        this.newBuffer['data'] = Array.from(intArr);
+                                }
                                 break;
                         case 'f': // float
-                                let floatArr = new Float32Array(data);
-                                this.newBuffer['data'] = Array.from(floatArr);
+                                if(data.byteLength & 3)
+                                        err = this.dataError(data);
+                                else {
+                                        let floatArr = new Float32Array(data);
+                                        this.newBuffer['data'] = Array.from(floatArr);
+                                }
                                 break;
                         case 'd':
-                                let doubleArr = new Float64Array(data);
-                                this.newBuffer['data'] = Array.from(doubleArr);
+                                if(data.byteLength & 7)
+                                        err = this.dataError(data);
+                                else {
+                                        let doubleArr = new Float64Array(data);
+                                        this.newBuffer['data'] = Array.from(doubleArr);
+                                }
                                 break;
                         default:
                                 console.log("Unknown buffer type ", type);
 
                 }
+                if(err)
+                        return;
                 this.buffers[this.newBuffer['id']] = this.newBuffer['data'];
                 this.bufferReady = true;
 
