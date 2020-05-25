@@ -1,3 +1,6 @@
+/// NOTE: this example scans several addresses on the i2c bus
+// and it could cause non-Trill peripherals connected to it to malfunction
+
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
 #include <libraries/Gui/Gui.h>
@@ -10,7 +13,8 @@ unsigned int gSendIntervalSamples;
 
 bool controlCallback(JSONObject& json, void*)
 {
-	// when any data from the Gui is received, we can send back the id and type of each sensor.
+	// when any data from the Gui is received (which means it's ready)
+	// we send back the id and type of each sensor.
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"connectedDevices");
 	JSONArray devices;
