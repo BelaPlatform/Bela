@@ -15,9 +15,9 @@ This example will work with all types of Trill sensor and will visualise the raw
 reading from each pad.
 
 We are using the Trill library to read from the sensor and the Gui library for
-the visualisation. The first thing to do is make sure that the sensor type is
-given to `touchSensor.setup();`. If you have changed the address of the sensor
-then you will need to add that to this function too.
+the visualisation. The first thing to do is make sure that the correct sensor type is
+given to `touchSensor.setup()`. If you have changed the address of the sensor
+then you will need to add the new address to this function too.
 
 The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
 and is read in DIFF mode giving the differential reading of each pad on the sensor.

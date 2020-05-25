@@ -14,19 +14,12 @@ Adjusting Trill Settings
 This example will work with all types of Trill sensor and will allow you to adjust
 the sensitivity and threshold settings.
 
-We are using the Trill library to read from the sensor and the Gui library for
-a visualisation. The first thing to do is make sure that the correct address is
-given to `touchSensor.setup();`. Every different type of Trill sensor has different
-address which you can see in the below table:
+The first thing to do is make sure that the correct sensor type is
+given to `touchSensor.setup();`. If you have changed the address of the sensor
+then you will need to add that to this function too.
 
-| Type:  | Address |
-|--------|---------|
-| BAR    |  0x20   |
-| SQUARE |  0x28   |
-| CRAFT  |  0x30   |
-| RING   |  0x38   |
-| HEX    |  0x40   |
-| FLEX   |  0x48   |
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
+and is read in DIFF mode giving the differential reading of each pad on the sensor.
 
 The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
 and is read in DIFF mode giving the differential reading of each pad on the sensor.

@@ -38,6 +38,14 @@ notation), or 33 (in decimal notation).
 We have to pass this address to the `touchSensors.setup()` function in order
 to be able to use this sensor.
 
+The address is the fourth argument to setup(), so we have to
+explicitate the third argument (scanning mode). We set it to AUTO, so
+that it will be the default mode for the sensor that is detected at the
+specified address.
+
+If no device is detected at the specified address, or a device of a different
+type from the one we requested is detected, setup() will return an error
+code and will stop.
 */
 
 #include <Bela.h>
