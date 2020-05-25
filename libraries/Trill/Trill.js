@@ -32,16 +32,8 @@ class Trill {
 		this.type = (this.types.includes(type)) ? type :null;
 		if(!this.type)
 			throw("Trill: Unknown Trill type `"+type+"`");
-		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
-			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
 		this.touchScale = touchScale;
-
-		this.cornerRadius = 0;
-		if(this.type == 'square') {
-			this.cornerRadius = 0.02*this.dimensions[0];
-		} else if (this.type == 'bar') {
-			this.cornerRadius = 0.03*this.dimensions[0];
-		}
+		this.resize(length);
 
 		this.sensorColor = 'black';
 		this.touchColors = [ 'red', 'blue', 'yellow', 'white', 'cyan'];
@@ -143,5 +135,11 @@ class Trill {
 	resize(length) {
 		this.dimensions = (this.type == 'bar') ? [ length, length/5 ] :
 			(this.type == 'hex') ? [ length, length/0.866 ] : [length, length];
+		if(this.type == 'square')
+			this.cornerRadius = 0.02*this.dimensions[0];
+		else if (this.type == 'bar')
+			this.cornerRadius = 0.03*this.dimensions[0];
+		else
+			this.cornerRadius = 0;
 	}
 }
