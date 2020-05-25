@@ -45,6 +45,11 @@ function setup() {
 	windowResized();
 }
 
+var oldRadioPresVal;
+var oldButtonState;
+var oldSliderVal;
+var oldRadioBitsVal;
+var oldMode;
 
 function draw() {
 	background(255);
@@ -99,15 +104,28 @@ function draw() {
 	}
 
 	text("PRESCALER VALUE:", chartLeft, controlStart + 40);
-	var radioPresVal = radioPres.value();
 	text("NUMBER OF BITS:", chartRight-200, controlStart + 40);
-	var radioBitsVal = radioBits.value();
 	text("THRESHOLD VALUE:", chartRight-200, controlStart -10);
 	text(slider.value(), chartRight-50, controlStart - 10);
+	var radioPresVal = parseInt(radioPres.value());
+	if(oldRadioPresVal != radioPresVal)
+		Bela.control.send({prescaler: radioPresVal});
+	var radioBitsVal = parseInt(radioBits.value());
+	if(oldRadioBitsVal != radioBitsVal)
+		Bela.control.send({numBits: radioBitsVal});
 	var sliderVal = slider.value();
+	if(oldSliderVal != sliderVal)
+		Bela.control.send({noiseThreshold: sliderVal});
 	var buttonVal = button.value();
-	// Send values from interface to Bela
-	Bela.data.sendBuffer(0, 'float', [radioPresVal, sliderVal, buttonState, radioBitsVal, mode]);
+	if(oldButtonState != buttonState)
+		Bela.control.send({baseline: 1});
+	if(oldMode != mode)
+		Bela.control.send({mode: mode});
+	oldRadioPresVal = radioPresVal;
+	oldRadioBitsVal = radioBitsVal;
+	oldSliderVal = sliderVal;
+	oldMode = mode;
+	oldButtonState = buttonState;
 }
 
 function windowResized() {
