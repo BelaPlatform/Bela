@@ -37,14 +37,22 @@ function draw() {
 }
 
 function windowResized() {
-	let trillWidth = width / 5;
-	for(let t of trills)
-		t.resize(trillWidth);
+	let trillWidth = width / 2.1;
+	for(let t of trills) {
+		let width = trillWidth;
+		if('square' == t.type)
+			width *= 0.7;
+		else if('ring' == t.type)
+			width *= 0.5;
+		else if('hex' == t.type)
+			width *= 0.6;
+		t.resize(width);
+	}
 	let hSpace = width * 3 / 4;
-	let vSpace = height * 3 / 4;
+	let vSpace = height / 2;
 	for(let n = 0; n < trills.length; ++n) {
 		// two columns, two rows
-		trills[n].position = [50 + hSpace * Math.floor(n / 2), 50 + vSpace * (n & 1)];
+		trills[n].position = [50 + hSpace * Math.floor(n / 2), 200 + vSpace * (n & 1)];
 	}
 	resizeCanvas(windowWidth, windowHeight);
 }
