@@ -2024,7 +2024,7 @@ var EditorView = function (_View) {
 					// render pd patch
 					try {
 						var width = $('[data-editor]').width();
-						var height = $('[data-editor]').height() + 8;
+						var height = $('[data-editor]').height() - 2;
 						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
 							'max-width': width + 'px',
 							'height': height + 'px'

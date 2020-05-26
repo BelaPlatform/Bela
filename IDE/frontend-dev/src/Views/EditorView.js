@@ -200,7 +200,7 @@ class EditorView extends View {
 				// render pd patch
 				try {
           let width = $('[data-editor]').width();
-          let height = $('[data-editor]').height() + 8;
+          let height = $('[data-editor]').height() - 2;
 					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
           .css({
 						'max-width'	: width + 'px',
