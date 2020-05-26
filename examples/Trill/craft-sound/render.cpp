@@ -108,7 +108,7 @@ bool setup(BelaContext *context, void *userData)
 	touchSensor.printDetails();
 
 	// Set and schedule auxiliary task for readin sensor data from the I2C bus
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+	Bela_runAuxiliaryTask(loop);
 
 	// Allocate filter buffers: 2 previous samples per filter, 1 filter per input
 	gFilterLastInputs = (float *)malloc((2 * NUM_SENSORS + 1)* sizeof(float));

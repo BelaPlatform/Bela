@@ -84,7 +84,7 @@ bool setup(BelaContext *context, void *userData)
 
 	touchSensor.printDetails();
 
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+	Bela_runAuxiliaryTask(loop);
 
 	// Setup low pass filters for smoothing frequency and amplitude
 	freqFilt.setup(20, context->audioSampleRate); // Cut-off frequency = 1Hz

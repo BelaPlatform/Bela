@@ -161,7 +161,7 @@ bool setup(BelaContext *context, void *userData)
 	gui.setControlDataCallback(guiCallback, nullptr);
 	gPipe.setup("guiToLoop");
 
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+	Bela_runAuxiliaryTask(loop);
 	return true;
 }
 

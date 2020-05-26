@@ -53,8 +53,6 @@ code and will stop.
 
 Trill touchSensor;
 
-AuxiliaryTask readI2cTask;
-
 // Interval for printing the readings from the sensor
 float printInterval = 0.1; //s
 unsigned int printIntervalSamples = 0;
@@ -84,8 +82,7 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
-	Bela_scheduleAuxiliaryTask(readI2cTask);
+	Bela_runAuxiliaryTask(loop);
 
 	printIntervalSamples = context->audioSampleRate*(printInterval);
 	return true;

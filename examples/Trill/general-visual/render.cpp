@@ -38,8 +38,6 @@ Trill touchSensor;
 // Gui object declaration
 Gui gui;
 
-AuxiliaryTask readI2cTask;
-
 // Interval for reading from the sensor
 int readInterval = 500; //ms
 int readIntervalSamples = 0;
@@ -66,11 +64,8 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 
-	readI2cTask = Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL);
-	Bela_scheduleAuxiliaryTask(readI2cTask);
-
+	Bela_runAuxiliaryTask(loop);
 	readIntervalSamples = context->audioSampleRate*(readInterval/1000.0);
-
 	gui.setup(context->projectName);
 
 	return true;

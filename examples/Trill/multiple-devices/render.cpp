@@ -51,7 +51,7 @@ bool setup(BelaContext *context, void *userData)
 			gTouchSensors.push_back(new Trill(i2cBus, device, Trill::AUTO, addr));
 		}
 	}
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(readLoop, 0, "readLoop", nullptr));
+	Bela_runAuxiliaryTask(readLoop);
 	gGui.setup(context->projectName);
 	gGui.setControlDataCallback(controlCallback);
 	gSendIntervalSamples = context->audioSampleRate * gSendInterval;

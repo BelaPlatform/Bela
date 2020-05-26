@@ -112,7 +112,7 @@ bool setup(BelaContext *context, void *userData)
 	touchSensor.printDetails();
 
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
-	Bela_scheduleAuxiliaryTask(Bela_createAuxiliaryTask(loop, 50, "I2C-read", NULL));
+	Bela_runAuxiliaryTask(loop);
 
 	// Setup GUI
 	gui.setup(context->projectName);
