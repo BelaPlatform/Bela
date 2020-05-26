@@ -25,7 +25,7 @@ finger across each pad of the Trill device.
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
 #include <libraries/Biquad/Biquad.h>
-#include <libraries/OscillatorBank/OscillatorBank.h>
+#include <libraries/Oscillator/Oscillator.h>
 #include <vector>
 #include <cstring>
 #include <cmath>
@@ -34,7 +34,7 @@ finger across each pad of the Trill device.
 
 // Trill object declaration
 Trill touchSensor;
-OscillatorBank gOscBank;
+std::vector<Oscillator> gOscBank;
 
 #if 1
 std::vector<Biquad> gFilters;
@@ -66,43 +66,37 @@ bool setup(BelaContext *context, void *userData)
 	}
 	touchSensor.printDetails();
 
-	// Set and schedule auxiliary task for readin sensor data from the I2C bus
+	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_runAuxiliaryTask(loop);
 
-	gFilters.resize(NUM_CAP_CHANNELS, {50, context->audioSampleRate / context->audioFrames, Biquad::lowpass});
+	float filterCutoff = 50; // Hz, this is the cutoff of the smoothing ilfer
+	gFilters.resize(NUM_CAP_CHANNELS, {filterCutoff, context->audioSampleRate, Biquad::lowpass});
+	gOscBank.resize(NUM_CAP_CHANNELS, {context->audioSampleRate, Oscillator::sine});
 
-	gOscBank.setup(context->audioSampleRate, 1024, NUM_CAP_CHANNELS);
-
-	for(unsigned int n = 0; n < gOscBank.getWavetableLength() + 1; ++n)
-		gOscBank.getWavetable()[n] = sinf(2.0 * M_PI * (float)n / (float)gOscBank.getWavetableLength());
-	// Initialise the oscillator bank in a slightly harmonic series, one
+	// Initialise the oscillator bank in a slightly inharmonic series, one
 	// oscillator per each capacitive channel
 	float fundFreq = 50;
-	for(unsigned int n = 0; n < gOscBank.getNumOscillators(); n++) {
+	for(unsigned int n = 0; n < gOscBank.size(); n++) {
 		float freq = fundFreq * powf(1.0 + n, 1.002);
-		gOscBank.setFrequency(n, freq);
+		gOscBank[n].setFrequency(freq);
 	}
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-	for(unsigned int i = 0; i < NUM_CAP_CHANNELS; i++) {
-		// Get sensor reading and filter it to smooth it
-		float input = gFilters[i].process(gSensorReading[i]);
-		// Use output to control oscillator amplitude (with some headroom)
-		// Square it to de-emphasise low but nonzero values
-		gOscBank.setAmplitude(i, input * input / 6.f);
-	}
-
-	// Render oscillator bank:
-	float arr[context->audioFrames];
-	gOscBank.process(context->audioFrames, arr);
 	for(unsigned int n = 0; n < context->audioFrames; ++n){
+		float out = 0;
+		for(unsigned int o = 0; o < gOscBank.size(); ++o) {
+			float amplitude = gFilters[o].process(gSensorReading[o]);
+			// Get sensor reading and filter it to smooth it
+			// Use output to control oscillator amplitude (with some headroom)
+			// Square it to de-emphasise low but nonzero values
+			out += gOscBank[o].process() * amplitude * amplitude / 6.f;
+		}
 		for(unsigned int c = 0; c < context->audioOutChannels; ++c)
-			audioWrite(context, n, c, arr[n]);
+			audioWrite(context, n, c, out);
 	}
-
 }
 
 void cleanup(BelaContext *context, void *userData)
