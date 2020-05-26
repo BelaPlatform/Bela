@@ -141,7 +141,9 @@ void loop(void*)
 			} else if(newRead > 0.92 && pastRead < 0.08) { // decrement if we were going backwards
 				wraps--;
 			}
-
+			if(wraps < 0)
+				wraps += 8;
+			wraps %= 8;
 			gTouchLocationCycle = newRead + wraps;
 			gTouchSizeCycle = touchSensor.compoundTouchSize();
 			pastRead = newRead;
