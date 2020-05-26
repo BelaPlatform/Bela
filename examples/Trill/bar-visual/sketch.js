@@ -1,7 +1,3 @@
-let spacing;
-let activeTouches = 0;
-let sliderTouchSizeScaler = 0.5;
-let sliderLength = 0.0;
 let belaLogo;
 let trill;
 
@@ -12,15 +8,13 @@ function preload() {
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	frameRate(60);
-	sliderLength = width-100;
-	trill = new Trill('bar', sliderLength, [ width * 0.5, sliderLength * 0.2 ]);
+	trill = new Trill('bar');
+	windowResized();
 }
 
 function draw() {
 	background(240);
-	resizeElements();
-	activeTouches = Bela.data.buffers[0];
+	let activeTouches = Bela.data.buffers[0];
 	for(let t = 0; t < activeTouches; t++) {
 		trill.updateTouch(t, Bela.data.buffers[1][t], Bela.data.buffers[2][t]);
 	}
@@ -29,12 +23,8 @@ function draw() {
 	image(belaLogo, width-170, height-70, 120, 50);
 }
 
-function resizeElements() {
-	sliderLength = width-100;
-	trill.resize(sliderLength);
-}
-
 function windowResized() {
-	resizeElements();
 	resizeCanvas(windowWidth, windowHeight);
+	trill.resize(height * 0.7);
+	trill.position = [width / 2, height / 2];
 }

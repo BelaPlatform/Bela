@@ -1,6 +1,4 @@
-
-let activeTouches = 0;
-let ringWidth;
+let trill;
 let belaLogo;
 
 function preload() {
@@ -10,29 +8,22 @@ function preload() {
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	frameRate(60);
-	ringWidth = windowWidth * 0.3
-	trill = new Trill('ring', ringWidth, [ windowWidth * 0.5, windowHeight * 0.5 ]);
+	trill = new Trill('ring');
+	windowResized();
 }
 
 function draw() {
 	background(240);
-	resizeElements();
-	activeTouches = Bela.data.buffers[0];
+	let activeTouches = Bela.data.buffers[0];
 	for(let t = 0; t < activeTouches; t++) {
 		trill.updateTouch(t, Bela.data.buffers[1][t], Bela.data.buffers[2][t]);
 	}
 	trill.draw();
-
 	image(belaLogo, width-170, height-70, 120, 50);
 }
 
-function resizeElements() {
-	ringWidth = windowWidth * 0.3
-	trill.resize(ringWidth);
-}
-
 function windowResized() {
-	resizeElements();
 	resizeCanvas(windowWidth, windowHeight);
+	trill.resize(height * 0.5);
+	trill.position = [width / 2, height / 2];
 }
