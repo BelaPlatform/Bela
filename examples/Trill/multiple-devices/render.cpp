@@ -1,5 +1,22 @@
-/// NOTE: this example scans several addresses on the i2c bus
-// and it could cause non-Trill peripherals connected to it to malfunction
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Trill/multiple-devices
+
+Connecting and Detecting Multiple Trill
+=========================================
+
+This example scans the I2C bus for Trill sensors and will then generate
+a GUI element for each one.
+
+NOTE: as this example scans several addresses on the i2c bus
+it could cause non-Trill peripherals connected to it to malfunction.
+*/
 
 #include <Bela.h>
 #include <libraries/Trill/Trill.h>
