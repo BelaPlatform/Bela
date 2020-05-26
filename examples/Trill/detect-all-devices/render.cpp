@@ -11,7 +11,7 @@ http://bela.io
 Detect All I2C Devices
 ======================
 
-This example is a handy utility which will identify and all connected
+This example is a handy utility which will identify all connected
 I2C devices and print information on them to the console.
 
 When the program runs it will print the address and sensor type
