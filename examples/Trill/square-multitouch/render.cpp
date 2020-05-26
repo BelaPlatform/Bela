@@ -81,7 +81,7 @@ void loop(void*)
 			gNumHorizontalTouches = NUM_TOUCH;
 			
 		for(unsigned int i = 0; i < gNumVerticalTouches; i++) {
-			gTouchVerticalLocation[i] = 1.0 - touchSensor.touchLocation(i);	// invert for display
+			gTouchVerticalLocation[i] = touchSensor.touchLocation(i);
 			gTouchSize[i] = touchSensor.touchSize(i);
 		}
 		for(unsigned int i = 0; i < gNumHorizontalTouches; i++) {

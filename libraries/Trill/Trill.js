@@ -84,11 +84,11 @@ class Trill {
 		if(this.type == 'bar') {
 			_location[1] = 0.5;
 		} else if (this.type == 'square') {
-			_location[1] = location[1]
+			_location[1] = 1 - location[1]
 		} else if (this.type == 'ring') {
 			_location[1] = 0.5;
 		} else if (this.type == 'hex') {
-			_location[1] = location[1];
+			_location[1] = 1 - location[1];
 		}
 		let _size = constrain(size, 0, 1);
 		if(!this.touches[i])

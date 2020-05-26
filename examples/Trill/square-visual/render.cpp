@@ -64,7 +64,7 @@ void loop(void*)
 		*/
 		gTouchSize = touchSensor.compoundTouchSize();
 		gTouchPosition[0] = touchSensor.compoundTouchHorizontalLocation();
-		gTouchPosition[1] = -touchSensor.compoundTouchLocation() + 1;
+		gTouchPosition[1] = touchSensor.compoundTouchLocation();
 		usleep(gTaskSleepTime);
 	}
 }
