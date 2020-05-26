@@ -1,29 +1,6 @@
-/*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
-|____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
-http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
-*/
-#include <string.h> 
+#pragma once
+#include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <libraries/ne10/NE10.h>
 
 extern "C" {
 	// Function prototype for ARM assembly implementation of oscillator bank
@@ -37,6 +14,8 @@ extern "C" {
 /**
  * A class for computing a table-lookup oscillator bank.
  * The internal routine is highly optimized, written in NEON assembly.
+ * All oscillators in the bank share the same wavetable. Linear interpolation
+ * is used.
  */
 class OscillatorBank{
 public:
@@ -62,17 +41,17 @@ public:
 	/**
 	 * Initialize the oscillator bank, allocating the memory
 	 * with the appropriate alignment required by the NEON code.
-	 * 
-	 * @param newWavetableLength the length of the wavetable. The internal wavetable 
+	 *
+	 * @param newSampleRate the sampling rate of the output samples. This affects the
+	 * internal scaling of the oscillator frequencies.
+	 * @param newWavetableLength the length of the wavetable. The internal wavetable
 	 * will have length *(newWavetableLength + 1)*.
 	 * @param newNumOscillators the number of oscillators to use. The class will internally
 	 * increment and store the frequency, amplitude and phase of each oscillator.
-	 * @param newSampleRate the sampling rate of the output samples. This affects the
-	 * internal scaling of the oscillator frequencies.
-	 * 
+	 *
 	 * @return 0 upon success, a negative value otherwise.
 	 */
-	int init(int newWavetableLength, int newNumOscillators, float newSampleRate){
+	int setup(float newSampleRate, unsigned int newWavetableLength, unsigned int newNumOscillators){
 		wavetableLength = newWavetableLength;
 		numOscillators = newNumOscillators;
 		sampleRate = newSampleRate;
@@ -108,21 +87,21 @@ public:
 	}
 
 	/**
-	 * Get the wavetable. It is the responsibilty of the user to 
+	 * Get the wavetable. It is the responsibilty of the user to
 	 * fill it with the waveform that will be played by the oscillators.
 	 * The internally stored wavetable will have length `(getWavetableLength() + 1)`
 	 * The user should fill the last sample with the same value as the first sample.
-	 * 
+	 *
 	 * @return a pointer to the wavetable array, of length `(getWavetableLength() + 1)`
 	 */
 	float* getWavetable(){
-		return wavetable;	
+		return wavetable;
 	}
-	
+
 	/**
-	 * Get the length of the wavetable. The internally allocated array 
+	 * Get the length of the wavetable. The internally allocated array
 	 * is actually of size `getWavetableLength() + 1`.
-	 * 
+	 *
 	 * @return the length of the wavtable.
 	 */
 	int getWavetableLength(){
@@ -131,7 +110,7 @@ public:
 
 	/**
 	 * Get the number of oscillators.
-	 * 
+	 *
 	 * @return the number of oscillators.
 	 */
 	int getNumOscillators(){
@@ -141,7 +120,7 @@ public:
 	/**
 	 * Get the array of amplitudes. This array
 	 * has length `getNumOscillators()`
-	 * 
+	 *
 	 * @return a pointer to the array of amplitudes.
 	 */
 	float* getAmplitudes(){
@@ -151,7 +130,7 @@ public:
 	/**
 	 * Get the internal array of phases which hold the state of
 	 * the oscillators. This array has length `getNumOscillators()`
-	 * 
+	 *
 	 * @return a pointer to the arrat of phases.
 	 */
 	float* getPhases(){
@@ -160,8 +139,8 @@ public:
 
 	/**
 	 * Sets the amplitude of a given oscillator.
-	 * 
-	 * @param n the oscillator to set 
+	 *
+	 * @param n the oscillator to set
 	 * @param amplitude the amplitude of the oscillator
 	 */
 	void setAmplitude(int n, float amplitude){
@@ -170,8 +149,8 @@ public:
 
 	/**
 	 * Sets the frequency for a given oscillator.
-	 * 
-	 * @param n the oscillator to set 
+	 *
+	 * @param n the oscillator to set
 	 * @param frequency the frequency of the oscillator
 	 */
 	void setFrequency(int n, float frequency){
@@ -192,7 +171,7 @@ public:
 	/**
 	 * Process the oscillator bank, update the internal states
 	 * and return the output values .
-	 * 
+	 *
 	 * @param frames the number of frames to process
 	 * @param output the array where the *frames* output values will be stored.
 	 */
@@ -205,7 +184,7 @@ public:
 				dFrequencies, dAmplitudes,
 				wavetable);
 	}
-	
+
 private:
 	float sampleRate;
 	int numOscillators;

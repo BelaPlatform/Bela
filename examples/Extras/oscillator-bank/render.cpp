@@ -24,7 +24,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <stdlib.h> //random
 #include <math.h> //sinf
 #include <time.h> //time
-#include <OscillatorBank.h>
+#include <libraries/OscillatorBank/OscillatorBank.h>
 
 const float kMinimumFrequency = 20.0f;
 const float kMaximumFrequency = 8000.0f;
@@ -52,8 +52,8 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	srandom(time(NULL));
-	osc.init(gWavetableLength, gNumOscillators, context->audioSampleRate);
-	
+	osc.setup(context->audioSampleRate, gWavetableLength, gNumOscillators);
+
 	// Fill in the wavetable with one period of your waveform
 	float* wavetable = osc.getWavetable();
 	for(int n = 0; n < osc.getWavetableLength() + 1; n++){
