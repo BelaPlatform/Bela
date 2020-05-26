@@ -34,8 +34,8 @@ are connected correctly.
 Trill touchSensor;
 
 // Interval for reading from the sensor
-int readInterval = 500; //ms
-int readIntervalSamples = 0;
+int gPrintInterval = 500; //ms
+int gPrintIntervalSamples = 0;
 // Sleep time for auxiliary task
 unsigned int gTaskSleepTime = 12000; // microseconds
 
@@ -58,7 +58,7 @@ bool setup(BelaContext *context, void *userData)
 
 	Bela_runAuxiliaryTask(loop);
 
-	readIntervalSamples = context->audioSampleRate*(readInterval/1000.0);
+	gPrintIntervalSamples = context->audioSampleRate*(gPrintInterval/1000.0);
 	return true;
 }
 
@@ -66,7 +66,7 @@ void render(BelaContext *context, void *userData)
 {
 	static int readCount = 0;
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		if(readCount >= readIntervalSamples) {
+		if(readCount >= gPrintIntervalSamples) {
 			readCount = 0;
 			for(unsigned int i = 0; i < touchSensor.getNumChannels(); i++)
 				rt_printf("%1.3f ", touchSensor.rawData[i]);

@@ -38,9 +38,6 @@ Trill touchSensor;
 // Gui object declaration
 Gui gui;
 
-// Interval for reading from the sensor
-int readInterval = 500; //ms
-int readIntervalSamples = 0;
 // Sleep time for auxiliary task
 unsigned int gTaskSleepTime = 12000; // microseconds
 
@@ -65,7 +62,6 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	Bela_runAuxiliaryTask(loop);
-	readIntervalSamples = context->audioSampleRate*(readInterval/1000.0);
 	gui.setup(context->projectName);
 
 	return true;
