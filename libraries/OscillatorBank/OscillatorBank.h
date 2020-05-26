@@ -56,7 +56,7 @@ public:
 		numOscillators = newNumOscillators;
 		sampleRate = newSampleRate;
 		// Initialise the sine wavetable
-		if(posix_memalign((void **)&wavetable, 8, (wavetableLength + 1) * sizeof(float))) {
+		if(posix_memalign((void **)&wavetable, 16, (wavetableLength + 1) * sizeof(float))) {
 			fprintf(stderr, "Error allocating wavetable\n");
 			return -1;
 		}
@@ -173,9 +173,9 @@ public:
 	 * and return the output values .
 	 *
 	 * @param frames the number of frames to process
-	 * @param output the array where the *frames* output values will be stored.
+	 * @param output the array where the \p frames output values will be stored.
 	 */
-	void process(int frames, float* output){
+	void process(unsigned int frames, float* output){
 		// Initialise buffer to 0
 		memset(output, 0, frames * sizeof(float));
 		oscillator_bank_neon(frames, output,
