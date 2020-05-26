@@ -20,6 +20,9 @@ of all the Trill sensors you currently have connected to the I2C bus.
 This is particularly useful if you are unsure of the address of the sensor after
 changing it via the solder bridges on the back. This example will also give
 you a total count of the amount of Trill sensors connected to Bela.
+
+NOTE: as this example scans several addresses on the i2c bus
+it could cause non-Trill peripherals connected to it to malfunction.
 */
 
 #include <Bela.h>

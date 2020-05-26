@@ -20,6 +20,9 @@ running parallel to the audio thread and stored in a global variable.
 The reading from each channel on Trill craft are used to control the amplitudes of a
 bank of quasi-harmonically-tuned oscillators. You can hear the effect by running your
 finger across each pad of the Trill device.
+
+Try changing the cutoff frequency of the smoothing filter which is applied to the Trill
+readings to change the response of this example. try filterCutoff = 50;
 */
 
 #include <Bela.h>
@@ -69,7 +72,7 @@ bool setup(BelaContext *context, void *userData)
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_runAuxiliaryTask(loop);
 
-	float filterCutoff = 50; // Hz, this is the cutoff of the smoothing ilfer
+	float filterCutoff = 1; // Hz, this is the cutoff of the smoothing filter
 	gFilters.resize(NUM_CAP_CHANNELS, {filterCutoff, context->audioSampleRate, Biquad::lowpass});
 	gOscBank.resize(NUM_CAP_CHANNELS, {context->audioSampleRate, Oscillator::sine});
 
