@@ -374,7 +374,25 @@
       "y": "18",
       "width": "20",
       "height": "30",
-      "text": "Bela shutdown button",
+      "text": "Bela Button",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "powerIn",
+      "x": "270",
+      "y": "205",
+      "width": "10",
+      "height": "10",
+      "text": "I2C-1 SCL (P9.24)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "powerIn",
+      "x": "270",
+      "y": "192",
+      "width": "10",
+      "height": "10",
+      "text": "I2C-1 SDA (P9.26)",
       "tip": "tooltip"
     },
     {
@@ -707,7 +725,7 @@
       "y": "205",
       "width": "38",
       "height": "60",
-      "text": "I2C",
+      "text": "I2C-1 Header",
       "tip": "tooltip"
     },
     {
@@ -716,7 +734,7 @@
       "y": "252",
       "width": "10",
       "height": "10",
-      "text": "I2C 3.3V",
+      "text": "3.3V",
       "tip": "tooltip"
     },
     {
@@ -725,7 +743,7 @@
       "y": "238",
       "width": "10",
       "height": "10",
-      "text": "SCL (clock)",
+      "text": "I2C-1 SCL",
       "tip": "tooltip"
     },
     {
@@ -734,7 +752,7 @@
       "y": "224",
       "width": "10",
       "height": "10",
-      "text": "SDA (data)",
+      "text": "I2C-1 SDA",
       "tip": "tooltip"
     },
     {
@@ -743,7 +761,7 @@
       "y": "210",
       "width": "10",
       "height": "10",
-      "text": "I2C GND",
+      "text": "GND",
       "tip": "tooltip"
     }
   ]
