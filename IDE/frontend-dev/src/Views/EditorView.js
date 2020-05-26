@@ -41,6 +41,11 @@ class EditorView extends View {
 			enableLiveAutocompletion: false,
 			enableSnippets: true
 		});
+		this.editor.renderer.setOptions({
+			//this ensures that the offset to hide the scrollbar in #editor is constant
+			vScrollBarAlwaysVisible: true,
+		});
+
 
 		// use hard tabs, not spaces
 		this.editor.session.setOption('useSoftTabs', false);

@@ -771,10 +771,13 @@ select.dropdown-num {
   overflow: auto;
   position: absolute;
   top: 28px;
-  width: 100vw;
+  width: calc(100vw - 38px);
   z-index: 97; }
   #editor.active {
     display: block; }
+  #editor.tabs-changing {
+    -webkit-transition: 0.5s ease-in-out;
+    transition: 0.5s ease-in-out; }
   #editor .ace_search.right {
     right: 60px;
     -webkit-transition: 0.5s ease-in-out;
@@ -782,7 +785,7 @@ select.dropdown-num {
   #editor .ace_search.active {
     right: 448px; }
   #editor.tabs-open {
-    width: calc(100vw - 390px); }
+    width: calc(100vw - 426px); }
 
 #audio-parent,
 #img-display-parent {
