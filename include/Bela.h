@@ -28,7 +28,7 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 6
+#define BELA_MINOR_VERSION 7
 #define BELA_BUGFIX_VERSION 1
 
 // Version history / changelog:
@@ -891,6 +891,21 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, co
  */
 int Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
 
+/**
+ * \brief Create and start an AuxiliaryTask.
+ *
+ * Effectively this is a shorthand for Bela_createAuxiliaryTask() followed by
+ * Bela_scheduleAuxiliaryTask(), with fewer parameters to make it easier to use.
+ *
+ * @param callback the function to run in the thread.
+ * @param priority the priority of the thread. Defaults to 0.
+ * @param arg the argument to be passed to the callback. Defaults to `nullptr`.
+ * @return the `AuxiliaryTask` on success, so that it can be scheduled again
+ * later if needed, or `0` if an error occurred.
+ */
+#ifdef __cplusplus
+AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority = 0, void* arg = nullptr);
+#endif // __cplusplus
 /**
  * \brief Initialize an auxiliary task so that it can be scheduled.
  *

@@ -158,6 +158,20 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 	}
 #endif
 }
+AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void* arg)
+{
+	char name[11];
+	snprintf(name, 11, "%p", callback);
+	AuxiliaryTask task = Bela_createAuxiliaryTask(callback, priority, name, arg);
+	if(!task)
+		return 0;
+	int ret = Bela_scheduleAuxiliaryTask(task);
+	if(ret) {
+		// TODO: cleanup
+		return 0;
+	}
+	return task;
+}
 
 static void suspendCurrentTask(InternalAuxiliaryTask* task)
 {
