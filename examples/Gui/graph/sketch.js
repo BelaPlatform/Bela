@@ -59,21 +59,21 @@ var sketch = function(p) {
         if(autoScroll) {
             voltPlot.setXLim(voltPlot.calculatePlotXLim())
         }
-      
+
     	// If space bar is pressed
         if (p.keyIsPressed === true && p.key === ' ') {
             if(!keyPressed) {
                 keyPressed = true;
                 // Change auto scroll
                 autoScroll = !autoScroll;
-                
+
                 if(!autoScroll) { //If auto scroll not active
                 	// Activate panning
                     voltPlot.activatePanning();
                     // Activate zooming
                     voltPlot.activateZooming(1.1, p.CENTER, p.CENTER);
                     voltPlot.setPointColor(p.color(0, 0, 255));
-                    
+
                 } else { //If auto scroll active
                 	// Deactivate panning
                     voltPlot.deactivatePanning();

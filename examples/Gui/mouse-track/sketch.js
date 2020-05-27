@@ -1,21 +1,19 @@
-var guiSketch = new p5(( sketch ) => {
-	
-    let canvas_dimensions = [sketch.windowWidth, sketch.windowHeight];
+let canvas_dimensions;
 
-    sketch.setup = function() {
-        sketch.createCanvas(canvas_dimensions[0], canvas_dimensions[1]);
-    };
+function setup() {
+	//Create a canvas of dimensions given by current browser window
+	createCanvas(windowWidth, windowHeight);
+}
 
-    sketch.draw = function() {
-        sketch.background(220);
-		sketch.line(sketch.mouseX, 0, sketch.mouseX, sketch.height);
-  		sketch.line(0, sketch.mouseY, sketch.width, sketch.mouseY);
-    };
-    
-    sketch.mouseMoved = function() {
-    	sketch.print(sketch.mouseX/sketch.width, sketch.mouseY/sketch.height);
-    	Bela.data.sendBuffer(0, 'float', [sketch.mouseX/sketch.width, sketch.mouseY/sketch.height]);	
-    };
-}, 'gui');
+function draw() {
+	background(220);
+	//draw horizontal and vertical line that intersect in mouse position
+	line(mouseX, 0, mouseX, height);
+  	line(0, mouseY, width, mouseY);
+}
 
-
+function mouseMoved() {
+	//Sends to render.cpp a buffer. First argument is buffer index, second one is data type and third one is data sent.
+	//In this case we send an array with two elements.
+	Bela.data.sendBuffer(0, 'float', [mouseX/width, mouseY/height]);
+}

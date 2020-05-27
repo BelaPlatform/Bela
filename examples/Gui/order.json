@@ -1,7 +1,10 @@
 [
-  "basic",
-  "simple",
+  "bela-to-gui",
+  "gui-to-bela",
+  "ambient-ellipse",
   "clock",
   "mouse-track",
-  "graph"
+  "graph",
+  "sliders",
+  "empty-project"
 ]

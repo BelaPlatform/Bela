@@ -1,23 +1,27 @@
-var guiSketch = new p5(function( sketch ) {
+function setup() {
+	//Create a canvas of dimensions given by current browser window
+	createCanvas(windowWidth, windowHeight);
 
-    let canvas_dimensions = [sketch.windowWidth, sketch.windowHeight];
+	//text formatting
+	textSize(50);
+	textFont('Courier New');
+}
 
+function draw() {
+	background(254);
 
-    sketch.setup = function() {
-        sketch.createCanvas(canvas_dimensions[0], canvas_dimensions[1]);
-        sketch.textSize(50);
-        sketch.textFont('Courier New');
-    };
+	//Read buffer with index 0 coming from render.cpp.
+	let date = Bela.data.buffers[0];
 
-    sketch.draw = function() {
-        sketch.background(254);
-  
-        let date = Bela.data.buffers[0];
-        if(date && date.length >= 7){
-	        let dateString = date[2]+'-'+date[1]+'-'+date[0];
-	        dateString += ' '+date[3]+':'+date[4]+':'+date[5]+'.'+date[6];
-	        sketch.fill(255, 0, 255);
-	        sketch.text(dateString , 40, sketch.height/2);
-        }
-    }
-}, 'gui');
+	//Transform to a string
+	if(date && date.length >= 7){
+		//Store dd-mm-yyyy
+		let dateString = date[2]+'-'+date[1]+'-'+date[0];
+		//Store hour:minutes:seconds.miliseconds
+		dateString += ' '+date[3]+':'+date[4]+':'+date[5]+'.'+date[6];
+
+		//Format and display text
+		fill(255, 0, 255);
+		text(dateString , 40,height/2);
+	}
+}

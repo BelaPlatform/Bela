@@ -1,22 +1,24 @@
- /**
- * \example Gui/clock
- *
- * GUI clock
- * =========
- *
- * New GUI fuctionality for Bela!
- *
- * Is this project you can find a sketch.js file which is a p5.js file that is rendered
- * in a browser tab. Click the GUI button (next to the Scope button) in the IDE to see the rendering of this file.
- * 
- * This example sends a buffer of data from the Bela render to the browser via a web socket:
- * 	`gui.sendBuffer(0, dateTimeComponents);`
- * 
- * The p5.js file displays the received data (time and date).
- * 
- * If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
- * 
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Gui/clock
+
+Telling the Time
+================
+
+Is this project you can find a sketch.js file which is a p5.js file that is rendered
+in a browser tab. Click the GUI button (next to the Scope button) in the IDE to see the rendering of this file.
+
+This example sends a buffer of data from the Bela render to the browser via a web socket:
+	`gui.sendBuffer(0, dateTimeComponents);`
+
+The p5.js file displays the received data (time and date).
+*/
 
 #include <Bela.h>
 #include <libraries/Gui/Gui.h>
@@ -32,7 +34,7 @@ Gui gui;
 // Order after filling the values using calcDate() should be: [year, month, day, hours, minutes, seconds, milliseconds]
 std::vector<int> dateTimeComponents;
 
-// Time period (in seconds) after which date will be updated and sent 
+// Time period (in seconds) after which date will be updated and sent
 float gTimePeriod = 0.01;
 
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
@@ -50,7 +52,7 @@ const std::vector<std::string> currentDateTime() {
 	dateTime.emplace_back(date);
 	dateTime.emplace_back(time);
 
-    // Returns vector holding 2 strings: [ "Y-m-d", "h-M-s"] 
+    // Returns vector holding 2 strings: [ "Y-m-d", "h-M-s"]
     return dateTime;
 }
 

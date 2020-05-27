@@ -1,38 +1,42 @@
- /**
- * \example Gui/graph
- *
- * GUI graph 
- * =========
- *
- * New GUI fuctionality for Bela!
- *
- * Is this project you can find a sketch.js file which is a p5.js file that is rendered
- * in a browser tab. Click the GUI button (next to the Scope button) in the IDE to see the rendering of this file.
- * 
- * This example sends voltage readings from one of the analog inputs in Bela and the corresponding timestamp (in milliseconds) to be represented as a graph in the browser.
- * Buffers are sent with id 0 and 1 corresponding to the timestamps and the voltage respectively:
- * 	`gui.sendBuffer(0, gTimestamps);`
- * 	`gui.sendBuffer(1, gVoltage);`
- * 
- * The p5.js file displays the received data in a graph using a library called grafica.js
- * The graph will be updated with new values until the page is refreshed,
- * Pressing the space bar will stop the auto scrolling and allow to scroll manually and zoom in to se the values of the different points.
- * Pressing the space bar again will resume the auto scrolling.
- * 
- * If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
- * 
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
 
-#include <Bela.h> 
+\example Gui/graph
+
+GUI graph
+=========
+
+Is this project you can find a sketch.js file which is a p5.js file that is rendered
+in a browser tab. Click the GUI button (next to the Scope button) in the IDE to see the rendering of this file.
+
+This example sends voltage readings from one of the analog inputs in Bela and the corresponding timestamp (in milliseconds) to be represented as a graph in the browser.
+Buffers are sent with id 0 and 1 corresponding to the timestamps and the voltage respectively:
+	`gui.sendBuffer(0, gTimestamps);`
+	`gui.sendBuffer(1, gVoltage);`
+
+The p5.js file displays the received data in a graph using a library called grafica.js
+The graph will be updated with new values until the page is refreshed,
+Pressing the space bar will stop the auto scrolling and allow to scroll manually and zoom in to se the values of the different points.
+Pressing the space bar again will resume the auto scrolling.
+
+If you want to edit sketch.js you can do so in the browser but must write your p5.js code in instance mode.
+*/
+
+#include <Bela.h>
 #include <vector>
 #include <libraries/Gui/Gui.h>
 
 // GUI object declaration
 Gui gui;
-	
+
 // Vector that will hold the timestamps
 std::vector <float> gTimestamps;
-// Vector that will hold the voltage readings 
+// Vector that will hold the voltage readings
 std::vector <float> gVoltage;
 
 // Analog sensor channel
@@ -59,9 +63,9 @@ bool setup(BelaContext *context, void *userData)
 	unsigned int numElements = gSendPeriod / gReadPeriod + 0.5;
 	gTimestamps.reserve(numElements);
 	gVoltage.reserve(numElements);
-	
+
 	gInverseAnalogSampleRate = 1/context->analogSampleRate;
-	return true; 
+	return true;
 }
 
 void render(BelaContext *context, void *userData)
@@ -70,8 +74,8 @@ void render(BelaContext *context, void *userData)
 	static int sendFramesElapsed = 0;
 
 	for(unsigned int n = 0; n < context->analogFrames; ++n) {
-		
-		// Read analog input once enough frames have elapsed 
+
+		// Read analog input once enough frames have elapsed
 		if(readFramesElapsed > gReadPeriod * context->analogSampleRate) {
 			// Get milliseconds elapsed since last reading.
 			float millis = gLastTimeRecorded + 1000*readFramesElapsed*gInverseAnalogSampleRate;
@@ -83,24 +87,24 @@ void render(BelaContext *context, void *userData)
 			gVoltage.push_back(analogVolt);
 
 			readFramesElapsed = 0;
-		} 
+		}
 		++readFramesElapsed;
-		
+
 		// Send data to GUI for visualisation once enough frames have elapsed
 		if(sendFramesElapsed > gSendPeriod * context->analogSampleRate) {
 			// If GUI is connected
 			if(gui.isConnected()) {
-				// send buffers 
+				// send buffers
 				gui.sendBuffer(0, gTimestamps);
 				gui.sendBuffer(1, gVoltage);
-				
-				// delete vectors holding timestamps and readings		
+
+				// delete vectors holding timestamps and readings
 				gTimestamps.clear();
 				gVoltage.clear();
 			}
-			
+
 			sendFramesElapsed = 0;
-		} 
+		}
 		++sendFramesElapsed;
 
 	}
@@ -109,4 +113,3 @@ void render(BelaContext *context, void *userData)
 void cleanup(BelaContext *context, void *userData)
 {
 }
-
