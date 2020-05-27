@@ -454,7 +454,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			if(argc >= 4)
 			{
 				if(libpd_is_float(argv + 3))
-					address = libpd_get_float(argv + 4);
+					address = libpd_get_float(argv + 3);
 				else
 					err = true;
 			}
@@ -472,7 +472,12 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			Trill* trill = new Trill(bus, device, address);
 			if(Trill::NONE == trill->deviceType())
 			{
-				rt_fprintf(stderr, "Unable to create Trill sensor on bus %u at address %u (%#x). Is the sensor connected?\n", bus, address, address);
+				rt_fprintf(stderr, "Unable to create Trill %s device `%s` on bus %u at ", deviceString, name, bus);
+				if(128 < address)
+					rt_fprintf(stderr, "default address. ");
+				else
+					rt_fprintf(stderr, "address: %#x (%d). ", address, address);
+				rt_fprintf(stderr, "Is the device connected?\n");
 				return;
 			}
 			gTouchSensors.emplace_back(std::string(name), trill);
