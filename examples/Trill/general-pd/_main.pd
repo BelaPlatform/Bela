@@ -1,23 +1,18 @@
 #N canvas 247 2 1033 776 10;
-#X obj 225 661 list;
-#X obj 137 505 metro 200;
-#X obj 137 479 loadbang;
-#X text 23 503 Throttle printing;
+#X text 26 486 Throttle printing;
 #X obj 35 48 loadbang;
 #X obj 327 480 r bela_trill;
 #X obj 34 424 s bela_setTrill;
-#X text 401 661 [<num_touches> <position> <size>];
-#X obj 137 536 delay 30;
-#X obj 137 566 delay 30;
-#X obj 226 701 print craft;
-#X obj 315 611 list;
-#X obj 315 652 print bar;
-#X obj 405 571 list;
-#X text 497 611 [<num_touches> <x> <y> <size>];
+#X text 386 682 [<num_touches> <position> <size>];
+#X obj 93 720 print craft;
+#X obj 326 615 list;
+#X obj 325 658 print bar;
+#X obj 403 587 list;
+#X text 496 629 [<num_touches> <x> <y> <size>];
 #X obj 405 612 print square;
 #X text 112 116 <bus> is the i2c bus that yout sensor is connected
 to;
-#X text 591 238 AUTO(default) will use the default mode for the device
+#X text 596 247 AUTO(default) will use the default mode for the device
 type.;
 #X text 113 166 <address> is the address of the sensor. If unspecified
 \, the;
@@ -27,74 +22,97 @@ SQUARE;
 #X text 123 145 CRAFT RING HEX;
 #X obj 569 60 r bela_trillCreated;
 #X obj 569 84 print bela_trillCreated;
-#X text 672 121 device that was successfully initialised. The message
+#X text 665 138 device that was successfully initialised. The message
 ;
-#X text 671 110 bela_trillCreated will receive a message for each;
+#X text 664 127 bela_trillCreated will receive a message for each;
 #X obj 120 60 s bela_setTrill;
-#X obj 603 382 s bela_setTrill;
+#X obj 608 391 s bela_setTrill;
 #X text 112 86 <sensor_id> is the name you assign to your sensor \,
 which;
 #X text 112 96 will identify it throughout the patch;
 #X text 51 281 In this example we initialise a Craft \, Bar and Square.
 ;
-#X msg 33 309 new mycraft 1 CRAFT \, new mybar 1 BAR \, new mysquare
-1 SQUARE;
-#X obj 534 103 route mycraft;
 #X text 166 342 If the "mycraft" device was initialised correctly \,
 ;
-#X text 603 401 More details on these settings can be found at learn.bela.io/trill
+#X text 608 410 More details on these settings can be found at learn.bela.io/trill
 ;
-#X text 594 277 Set the prescaler:;
-#X text 593 312 Set the threshold:;
-#X text 414 484 This receives the reading from all the Trills;
+#X text 599 286 Set the prescaler:;
+#X text 598 321 Set the threshold:;
+#X text 407 478 This receives the reading from all the Trills;
 #X text 513 515 each message will be prepended with the <sensor_id>
 ;
-#X text 314 722 [<num_channels> <values .... >];
-#X text 313 708 Devices in RAW \, DIFF or BASELINE mode will receive:
+#X text 186 733 [<num_channels> <values .... >];
+#X text 185 719 Devices in RAW \, DIFF or BASELINE mode will receive:
 ;
-#X text 404 638 Devices in CENTROID mode with 2 axes (SQUARE \, HEX)
+#X text 496 603 Devices in CENTROID mode with 2 axes (SQUARE \, HEX)
 will receive:;
-#X text 504 588 Devices in CENTROID mode with 1 axis (BAR \, RING)
+#X text 387 656 Devices in CENTROID mode with 1 axis (BAR \, RING)
 will receive:;
 #X obj 327 516 route mycraft mybar mysquare;
-#X text 592 342 Reset the baseline:;
-#X text 594 355 [updateBaseline <sensor_id>(;
-#X text 593 291 [prescaler <sensor_id> <value>( <value> is between
+#X text 597 351 Reset the baseline:;
+#X text 599 364 [updateBaseline <sensor_id>(;
+#X text 598 300 [prescaler <sensor_id> <value>( <value> is between
 1 and 8;
-#X text 595 325 [threshold <sensor_id> <value>( <value> is between
+#X text 600 334 [threshold <sensor_id> <value>( <value> is between
 0 and 0.1;
-#X text 601 430 or in the Trill/general-settings example;
+#X text 606 439 or in the Trill/general-settings example;
 #X text 106 21 1 Initialise the Trill device;
 #X text 638 35 2 Verify that the device was initialised correctly;
-#X text 581 189 3 If needed \, adjust some parameters;
+#X text 586 198 3 If needed \, adjust some parameters;
 #X text 165 362 update the baseline of the capacitive channels.;
 #X text 114 39 [new <sensor_id> <bus> <device> <address=255>(;
-#X text 588 215 Set the device mode:;
-#X text 591 227 can be one of AUTO \, CENTROID. RAW BASELINE DIFF.
+#X text 593 224 Set the device mode:;
+#X text 596 236 can be one of AUTO \, CENTROID. RAW BASELINE DIFF.
 ;
-#X text 591 254 [mode <sensor_id> <mode>(;
+#X text 596 263 [mode <sensor_id> <mode>(;
 #X text 166 352 we change its mode \, prescaler and threshold values
 \, and;
-#X text 672 131 will contain: <sensor_id> <device> <address> <mode>
+#X text 665 148 will contain: <sensor_id> <device> <address> <mode>
 ;
 #X msg 116 383 mode mycraft raw \, prescaler mycraft 2 \, threshold
 mycraft 0.01 \, updateBaseline mycraft;
-#X connect 0 0 10 0;
-#X connect 1 0 8 0;
-#X connect 2 0 1 0;
-#X connect 4 0 31 0;
-#X connect 5 0 43 0;
-#X connect 8 0 9 0;
-#X connect 8 0 13 0;
-#X connect 9 0 0 0;
-#X connect 9 0 11 0;
-#X connect 11 0 12 0;
-#X connect 13 0 15 0;
-#X connect 22 0 23 0;
-#X connect 22 0 32 0;
-#X connect 31 0 6 0;
-#X connect 32 0 59 0;
-#X connect 43 0 0 1;
-#X connect 43 1 11 1;
-#X connect 43 2 13 1;
-#X connect 59 0 6 0;
+#X obj 135 640 list split 6;
+#X obj 57 568 metro 200;
+#X obj 326 590 delay 30;
+#X obj 326 566 metro 200;
+#X obj 62 606 delay 60;
+#X obj 396 559 metro 200;
+#X text 26 496 If a device was correctly initialised;
+#X text 94 686 The Craft returns many values;
+#X text 97 698 but we only print the first 6;
+#X obj 58 540 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 326 543 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 395 537 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 62 677 list;
+#X obj 534 103 route mycraft mybar mysquare;
+#X text 26 506 then start printing its readings;
+#X msg 33 309 new mycraft 1 CRAFT \, new mybar 1 BAR \, new mysquare
+1 SQUARE;
+#X connect 1 0 68 0;
+#X connect 2 0 36 0;
+#X connect 6 0 7 0;
+#X connect 8 0 10 0;
+#X connect 17 0 18 0;
+#X connect 17 0 66 0;
+#X connect 36 0 53 0;
+#X connect 36 1 6 1;
+#X connect 36 2 8 1;
+#X connect 52 0 3 0;
+#X connect 53 0 65 1;
+#X connect 54 0 57 0;
+#X connect 55 0 6 0;
+#X connect 56 0 55 0;
+#X connect 57 0 65 0;
+#X connect 58 0 8 0;
+#X connect 62 0 54 0;
+#X connect 63 0 56 0;
+#X connect 64 0 58 0;
+#X connect 65 0 5 0;
+#X connect 66 0 52 0;
+#X connect 66 0 62 0;
+#X connect 66 1 63 0;
+#X connect 66 2 64 0;
+#X connect 68 0 3 0;
