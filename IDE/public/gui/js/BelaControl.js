@@ -174,6 +174,8 @@ export default class BelaControl extends BelaWebSocket {
 		let p = window.Bela.control.gui.getPanel({guiId: obj['controller']});
 		let params = window.Bela.control.gui.parameters[p.id][obj['controller']];
 		let index =  Object.keys(params).indexOf(obj['name']);
+		obj['slider'] = index;
+		window.Bela.control.send(obj);
 	}
 
 	send(data) {
