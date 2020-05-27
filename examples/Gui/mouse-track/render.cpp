@@ -28,10 +28,10 @@ The buffer can then be accessed using this index:
 DataBuffer& buffer = myGui.getDataBuffer(0);
 ```
 
-Notice that the Gui::getDataBuffer() method returns a DataBuffer&(that is: a
-_reference_ to a DataBuffer. You should always be storing the return
-value in a DataBuffer& variable to minimize copy overhead, and ensure
-that it can be used safely from within a real-time  context.
+Notice that the Gui::getDataBuffer() method returns a `DataBuffer& `(that is: a
+_reference_ to a DataBuffer). You should in turn always be storing the return
+value in a `DataBuffer&` variable to minimize copy overhead, and ensure
+that it can be used safely from within a real-time context.
 
 And its contents retrieved in the desired format (floats in this case):
 	`float* data = buffer.getAsFloat();`
