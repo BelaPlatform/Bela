@@ -259,7 +259,7 @@ void interrupt_handler(int var)
 	if(forceKeyboard)
 		pthread_cancel(keyboardThread);
 
-	gShouldStop = true;
+	Bela_requestStop();
 }
 
 
@@ -469,7 +469,7 @@ int main(int argc, char *argv[])
 	gIsLoading = false;
 
 	// Run until told to stop
-	while(!gShouldStop) {
+	while(!Bela_stopRequested()) {
 		usleep(100000);
 	}
 

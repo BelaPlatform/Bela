@@ -1864,6 +1864,10 @@ var EditorView = function (_View) {
 			enableLiveAutocompletion: false,
 			enableSnippets: true
 		});
+		_this.editor.renderer.setOptions({
+			//this ensures that the offset to hide the scrollbar in #editor is constant
+			vScrollBarAlwaysVisible: true
+		});
 
 		// use hard tabs, not spaces
 		_this.editor.session.setOption('useSoftTabs', false);
@@ -2020,7 +2024,7 @@ var EditorView = function (_View) {
 					// render pd patch
 					try {
 						var width = $('[data-editor]').width();
-						var height = $('[data-editor]').height() + 8;
+						var height = $('[data-editor]').height() - 2;
 						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
 							'max-width': width + 'px',
 							'height': height + 'px'
@@ -4538,17 +4542,19 @@ var TabView = function (_View) {
     key: 'toggleClasses',
     value: function toggleClasses() {
       clearTimeout(this.toggleClassesTimeout);
-      var that = this;
+      // the tabs-changing class enables a 0.5s animation upon transition
+      $('[data-editor]').addClass('tabs-changing');
+      // and we can remove it once the transition is done:
+      this.toggleClassesTimeout = setTimeout(function () {
+        $('[data-editor]').removeClass('tabs-changing');
+        this.emit('change');
+      }.bind(this), 500);
       if ($('[data-tabs]').hasClass('tabs-open')) {
         // tab is opening
-        this.toggleClassesTimeout = setTimeout(function () {
-          $('[data-editor]').addClass('tabs-open');
-          that.emit('change');
-        }, 500);
+        $('[data-editor]').addClass('tabs-open');
       } else {
         // tab is closing
         $('[data-editor]').removeClass('tabs-open');
-        that.emit('change');
       }
     }
   }, {

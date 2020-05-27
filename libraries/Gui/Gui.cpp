@@ -189,12 +189,11 @@ int Gui::sendControl(JSONValue* root) {
 
 int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)
 {
-	std::string bufferStr = std::to_string(bufferId);
+	std::string idTypeStr = std::to_string(bufferId) + "/" + std::string(type);
 	int ret;
-	if(0 == (ret = ws_server->send(_addressData.c_str(), bufferStr.c_str())))
-		if(0 == (ret = ws_server->send(_addressData.c_str(), (void*)type, 1)))
-			if(0 == (ret = ws_server->send(_addressData.c_str(), (void*)data, size)))
-				return 0;
+	if(0 == (ret = ws_server->send(_addressData.c_str(), idTypeStr.c_str())))
+                    if(0 == (ret = ws_server->send(_addressData.c_str(), (void*)data, size)))
+                            return 0;
 	rt_fprintf(stderr, "You are sending messages to the GUI too fast. Please slow down\n");
 	return ret;
 }

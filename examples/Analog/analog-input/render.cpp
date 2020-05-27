@@ -53,8 +53,8 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	float frequency = 440.0;
-	float amplitude = 0.8;
+	float frequency;
+	float amplitude;
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		if(gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {

@@ -10,7 +10,7 @@ export default class GuiHandler {
 		this.sketchName = 'sketch';
 		this.iframeId = 'gui-iframe';
 		this.iframeEl = null;
-		this.resources = ["../js/p5.min.js", "..js/dat.gui.min.js"];
+		this.resources = ["../js/p5.min.js", "../js/dat.gui.min.js", "../js/jquery.js"];
 		this.ready = false;
 		this.creator = GuiCreator;
 		this.type = {
@@ -146,7 +146,9 @@ export default class GuiHandler {
 			that.iframeEl = that.createIframe("/gui/gui-template.html");
 			let htmlContent = val;
 			that.iframeEl.onload = () => {
-				that.iframeEl.contentWindow.postMessage(htmlContent);
+				that.loadIframeResources(that.iframeEl).then(() => {
+					that.iframeEl.contentWindow.postMessage(htmlContent);
+				});
 			};
 			this.type['html'] = true
 
@@ -158,13 +160,15 @@ export default class GuiHandler {
 			that.iframeEl = that.createIframe("/gui/gui-template.html");
 
 			that.iframeEl.onload = () => {
-				if(!this.type['controller']) {
-					that.loadSketch(that.project, 'head', that.iframeEl.contentWindow.document);
-					this.type['p5'] = true
-				} else {
+				that.loadIframeResources(that.iframeEl).then(() => {
+					if(!this.type['controller']) {
+						that.loadSketch(that.project, 'head', that.iframeEl.contentWindow.document);
+						this.type['p5'] = true
+					} else {
 
-				}
-				that.control.target.dispatchEvent(new Event('gui-ready'));
+					}
+					that.control.target.dispatchEvent(new Event('gui-ready'));
+				});
 			};
 		});
 		console.log('____LOADED____')
@@ -174,7 +178,11 @@ export default class GuiHandler {
 		that.control.target.resolve = null;
 	}
 
-	loadSketch(projectName, parentSection, dom, sketchName='sketch', defaultSource = "/gui/p5-sketches/sketch.js") {
+	loadSketch(projectName, parentSection, dom, sketchName='sketch', resources=null, defaultSource = "/gui/p5-sketches/sketch.js") {
+		resources = (resources == null || Array.isArray(resources)) ? resources : [resources];
+		let resourcePromises = [];
+		if(resources != null)
+			resources.forEach(r => resourcePromises.push(this.control.loadResource("/projects/"+projectName+"/"+r)) );
 
 		console.log("Loading "+projectName+" ...");
 
@@ -182,11 +190,20 @@ export default class GuiHandler {
 
 		let sketch = utils.loadScript(sketchSource, parentSection, dom);
 
+		let that = this;
+
 		let scriptElement;
+
 		sketch.then((resolved) => {
 			scriptElement = resolved;
 			console.log("... "+sketchSource+ " loaded");
-			utils.loadScript("../js/p5.min.js", "head", dom);
+			let updatePromise = new Promise( (resolve, reject) => {
+				let p5 = that.updateP5(that.iframeEl.contentWindow.p5);
+				resolve(p5);
+			})
+			updatePromise.then(() => {
+				utils.serialResolve(resourcePromises);
+			})
 		}).catch((rejected) => {
 			console.log("... "+sketchSource + " couldn't be loaded.")
 			if(defaultSource != null) {
@@ -201,6 +218,28 @@ export default class GuiHandler {
 			}
 		})
 		return scriptElement;
+	}
+
+	updateP5(p5) {
+		p5.prototype.loadScript = function (path) {
+
+			const ret = {};
+			var that = this;
+			let resource = Bela.control.loadResource(path)
+			.then(()=>{
+				if (typeof that._decrementPreload === 'function') {
+					that._decrementPreload();
+				}
+			})
+			.catch(()=>{
+			});
+
+			return resource;
+		};
+
+		p5.prototype.registerPreloadMethod('loadScript', p5.prototype);
+		p5 = new p5();
+		return p5;
 	}
 
 }

@@ -1,0 +1,29 @@
+#N canvas 277 230 941 498 10;
+#X obj 55 331 list;
+#X obj 55 291 metro 200;
+#X obj 55 265 loadbang;
+#X text 166 291 Throttle printing;
+#X obj 35 48 loadbang;
+#X obj 243 190 r bela_trill;
+#X obj 35 156 s bela_setTrill;
+#X text 189 49 First initialise the Trill sensor;
+#X text 360 191 This receives the reading from the Trill sensor.;
+#X text 202 371 [<num_touches> <x> <y> <size>];
+#X obj 56 371 print squareReadings;
+#X obj 537 19 r bela_trillCreated;
+#X obj 537 48 print bela_trillCreated;
+#X text 141 84 Message: [new <sensor_id> <bus> <device> <mode=AUTO>
+<address=255>(;
+#X text 84 16 >>> See full documentation in examples/Trill/general-pd
+<<<;
+#X msg 35 128 new mysquare 1 SQUARE;
+#X obj 243 248 route mysquare;
+#X text 360 247 Which will be prepended with the <sensor_id>;
+#X connect 0 0 10 0;
+#X connect 1 0 0 0;
+#X connect 2 0 1 0;
+#X connect 4 0 15 0;
+#X connect 5 0 16 0;
+#X connect 11 0 12 0;
+#X connect 15 0 6 0;
+#X connect 16 0 0 1;

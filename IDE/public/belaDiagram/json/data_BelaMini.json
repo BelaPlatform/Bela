@@ -86,7 +86,7 @@
       "y": "426",
       "width": "35",
       "height": "28",
-      "text": "Button (stops current program)",
+      "text": "Bela Button",
       "tip": "tooltip"
     },
     {
@@ -185,7 +185,7 @@
       "y": "326",
       "width": "13",
       "height": "13",
-      "text": "I2C SCL",
+      "text": "I2C-1 SCL",
       "tip": "tooltip"
     },
     {
@@ -194,7 +194,7 @@
       "y": "304",
       "width": "13",
       "height": "13",
-      "text": "I2C SDA",
+      "text": "I2C-1 SDA",
       "tip": "tooltip"
     },
     {

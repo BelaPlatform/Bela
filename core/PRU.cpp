@@ -906,13 +906,13 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	bool interleaved = context->flags & BELA_FLAG_INTERLEAVED;
 	int underrunLedCount = -1;
-	while(!gShouldStop) {
+	while(!Bela_stopRequested()) {
 
 #if defined BELA_USE_POLL || defined BELA_USE_BUSYWAIT
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
 		// Poll
-		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !gShouldStop) {
+		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !Bela_stopRequested()) {
 #ifdef BELA_USE_POLL
 			task_sleep_ns(sleepTime);
 #endif /* BELA_USE_POLL */
@@ -949,14 +949,14 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			if(belaCapeButton.read() == 0){
 				if(++belaCapeButtonCount > 10){
 					printf("Button pressed, quitting\n");
-					gShouldStop = true;
+					Bela_requestStop();
 				}
 			} else {
 				belaCapeButtonCount = 0;
 			}
 		}
 
-		if(gShouldStop)
+		if(Bela_stopRequested())
 			break;
 
 		// pru_buffer_comm[PRU_CURRENT_BUFFER] will have been set by
@@ -1457,7 +1457,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			if(pruFrameCount > expectedFrameCount)
 			{
 				// don't print a warning if we are stopping
-				if(!gShouldStop)
+				if(!Bela_stopRequested())
 				{
 					rt_fprintf(stderr, "Underrun detected: %u blocks dropped\n", (pruFrameCount - expectedFrameCount) / pruFramesPerBlock);
 					if(underrunLed.enabled())

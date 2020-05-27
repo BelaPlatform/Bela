@@ -8,10 +8,16 @@
   overflow: auto;
   position: absolute;
   top: 28px;
-  width: 100vw;
+  // ace.js does not provide an API to always hide the vertical scrollbar,
+  // so we cover it with the sidebar here and below.
+  width: calc(100vw - 38px); // make it (100vw - 50px) to show the scrollbar
   z-index: 97;
   &.active {
     display: block;
+  }
+  // this animation ensures the horizontal scrollbar is smoothly resized
+  &.tabs-changing {
+    transition: 0.5s ease-in-out;
   }
   .ace_search {
     &.right {
@@ -24,7 +30,7 @@
     }
   }
   &.tabs-open {
-    width: calc(100vw - 390px);
+    width: calc(100vw - 426px); //make it (100vw - 438px) to show the scrollbar
   }
 }
 

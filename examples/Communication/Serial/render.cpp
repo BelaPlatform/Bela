@@ -30,7 +30,7 @@ int gKickTime = 0;
 float gKickPhase = 0;
 
 void serialIo(void* arg) {
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		unsigned int maxLen = 128;
 		char serialBuffer[maxLen];

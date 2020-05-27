@@ -29,6 +29,8 @@ protected:
 	int i2C_file;
 
 public:
+	I2c(){};
+	I2c(I2c&&) = delete;
 	int initI2C_RW(int bus, int address, int file);
 	virtual int readI2C() = 0;
 	int closeI2C();
@@ -67,10 +69,11 @@ inline int I2c::initI2C_RW(int bus, int address, int fileHnd)
 
 inline int I2c::closeI2C()
 {
-	if(close(i2C_file)>0)
-	{
-		fprintf(stderr, "Failed to close  file %d\n", i2C_file);
-		return 1;
+	if(i2C_file > 0) {
+		if(close(i2C_file) > 0)
+			return 1;
+		else
+			i2C_file = -1;
 	}
 	return 0;
 }

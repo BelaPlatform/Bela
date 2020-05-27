@@ -28,10 +28,12 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 5
+#define BELA_MINOR_VERSION 7
 #define BELA_BUGFIX_VERSION 1
 
 // Version history / changelog:
+// 1.6.0
+// - added Bela_setUserData(), Bela_requestStop(), Bela_stopRequested()
 // 1.5.0
 // - in BelaInitSettings, renamed unused members, preserving binary compatibility
 // 1.5.0
@@ -457,10 +459,19 @@ typedef void* AuxiliaryTask;	// Opaque data type to keep track of aux tasks
 
 /** \ingroup render
  *
- * Flag that indicates when the audio will stop. Threads can poll this variable to indicate when
+ * Flag that indicates whether the audio thread shuold stop. Threads can poll
+ * this variable to indicate when
  * they should stop. Additionally, a program can set this to \c true
- * to indicate that audio processing should terminate. Calling Bela_stopAudio()
- * has the effect of setting this to \c true.
+ * to indicate that audio processing should terminate. Calling
+ * Bela_requestStop() simply returns the value of `gShouldStop`, and calling
+ * Bela_requestStop() simply sets `gShouldStop`. Bela_stopAudio() has the side
+ * effect of setting `gShouldStop`, but it also does other steps to stop running
+ * the program and should *not* be called from the audio thread.
+ *
+ * \note Normally the user wouldn't access this variable directly, but would
+ * call Bela_stopRequested() or Bela_requestStop()
+ *
+ * \warning The use of this variable is deprecated and may be removed in a future version.
  */
 extern int volatile gShouldStop;
 
@@ -693,6 +704,40 @@ void Bela_stopAudio();
  */
 void Bela_cleanupAudio();
 
+/**
+ * \brief Set the `userData` variable, which is passed to setup(), render() and cleanup().
+ *
+ * This function can be used to override `userData` after it has been set by Bela_initAudio().
+ *
+ * \note This function is experimental and may be removed in a future version.
+ */
+void Bela_setUserData(void* newUserData);
+
+/**
+ * \brief Tell the Bela program to stop.
+ *
+ * This can be safely called anywhere in the code to tell the audio thread, and
+ * all threads monitoring Bela_stopRequested() that they should stop at the
+ * earliest occasion. The program will not stop immediately. If the render()
+ * function is currently running, it will keep running until it concludes its
+ * current execution, but will not be called again. The program's execution
+ * will stop when all threads have completed their execution. For this reason,
+ * all threads should check for Bela_stopRequested() to be notified when
+ * Bela_requestStop() has been called.
+ */
+void Bela_requestStop();
+
+/**
+ * \brief Check whether the program should stop.
+ *
+ * If you have several threads of execution, each of them should be regularly
+ * calling this function and complete execution as soon as possible if a
+ * non-zero value is returned.
+ *
+ * @return a non-zero value if stop has been requested, 0 otherwise.
+ */
+int Bela_stopRequested();
+
 /** @} */
 
 /**
@@ -846,6 +891,21 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*callback)(void*), int priority, co
  */
 int Bela_scheduleAuxiliaryTask(AuxiliaryTask task);
 
+/**
+ * \brief Create and start an AuxiliaryTask.
+ *
+ * Effectively this is a shorthand for Bela_createAuxiliaryTask() followed by
+ * Bela_scheduleAuxiliaryTask(), with fewer parameters to make it easier to use.
+ *
+ * @param callback the function to run in the thread.
+ * @param priority the priority of the thread. Defaults to 0.
+ * @param arg the argument to be passed to the callback. Defaults to `nullptr`.
+ * @return the `AuxiliaryTask` on success, so that it can be scheduled again
+ * later if needed, or `0` if an error occurred.
+ */
+#ifdef __cplusplus
+AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority = 0, void* arg = nullptr);
+#endif // __cplusplus
 /**
  * \brief Initialize an auxiliary task so that it can be scheduled.
  *

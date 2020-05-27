@@ -1,5 +1,6 @@
 import BelaWebSocket from './BelaWebSocket.js'
 import GuiHandler from './GuiHandler.js'
+import * as utils from './utils.js'
 
 export default class BelaControl extends BelaWebSocket {
 	constructor(port=5555, address='gui_control', ip=location.host) {
@@ -41,8 +42,27 @@ export default class BelaControl extends BelaWebSocket {
 				detail: { }
 			}),
 		];
-
+		this.callbacks = {};
 		this.handler = new GuiHandler(this);
+	}
+
+	registerCallback(name, callback, object=null) {
+		if(typeof callback === 'function') {
+			this.callbacks[name] =  {
+				object: object,
+				function: callback
+			};
+			return true;
+		}
+		return false;
+	}
+
+	removeCallback(name) {
+		if(name in callbacks) {
+			delete callbacks[name];
+			return true;
+		}
+		return false;
 	}
 
 	addGui(name) {
@@ -69,18 +89,14 @@ export default class BelaControl extends BelaWebSocket {
 	}
 
 	onData(data, parsedData) {
-		console.log("Data!", parsedData)
-
 		let that = this;
 		(async function() {
 			await new Promise(resolve => that.target.addEventListener('gui-ready', function(){
-				console.log("New event -> gui-ready")
 				resolve();
 			}));
 			that.target.removeEventListener('gui-ready', function(){
 				resolve();
 			});
-			console.log("____GUI PROTOTYPES____")
 			if(!(Object.keys(that.gui_prototype).length === 0 && that.gui_prototype.constructor === Object)) {
 				for (let p in that.gui_prototype) {
 					that.addGui.bind(that)
@@ -122,7 +138,6 @@ export default class BelaControl extends BelaWebSocket {
 				}
 			}
 		} else if (parsedData.event == 'set-slider') {
-			console.log("Set slider");
 			let precision = 7; // float32
 			parsedData.value = Number(parsedData.value.toFixed(7));
 			parsedData.max = Number(parsedData.max.toFixed(7));
@@ -144,8 +159,9 @@ export default class BelaControl extends BelaWebSocket {
 			}
 		} else if (parsedData.event == 'set-select'){
 		} else if (parsedData.event == 'custom') {
-		} else {
 		}
+
+		Object.values(this.callbacks).forEach( c  => c.function.call(c.object, parsedData) );
 	}
 
 	sliderCallback(value) {
@@ -158,8 +174,6 @@ export default class BelaControl extends BelaWebSocket {
 		let p = window.Bela.control.gui.getPanel({guiId: obj['controller']});
 		let params = window.Bela.control.gui.parameters[p.id][obj['controller']];
 		let index =  Object.keys(params).indexOf(obj['name']);
-		obj['slider'] = index;
-		window.Bela.control.send(obj);
 	}
 
 	send(data) {
@@ -182,5 +196,9 @@ export default class BelaControl extends BelaWebSocket {
 	send(data) {
 		if (this.ws.readyState === 1)
 			this.ws.send(JSON.stringify(data));
+	}
+
+	loadResource(path, module=false) {
+		return utils.loadScript(path, "head", this.handler.iframeEl.contentWindow.document, module);
 	}
 }

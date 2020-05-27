@@ -156,7 +156,7 @@ int Midi::attemptRecoveryRead()
 	snd_rawmidi_close(alsaIn);
 	alsaIn = NULL;
 	printf("MIDI: attempting to reopen input %s\n", inPort.c_str());
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		int err = snd_rawmidi_open(&alsaIn, NULL, inPort.c_str(), SND_RAWMIDI_NONBLOCK);
 		if (err) {
@@ -171,13 +171,13 @@ int Midi::attemptRecoveryRead()
 
 void Midi::readInputLoop(void* obj){
 	Midi* that = (Midi*)obj;
-	while(!gShouldStop){
+	while(!Bela_stopRequested()){
 		unsigned short revents;
 		int npfds = snd_rawmidi_poll_descriptors_count(that->alsaIn);
 		struct pollfd* pfds = (struct pollfd*)alloca(npfds * sizeof(struct pollfd));
 		snd_rawmidi_poll_descriptors(that->alsaIn, pfds, npfds);
 
-		while(!gShouldStop){
+		while(!Bela_stopRequested()){
 			int maxBytesToRead = that->inputBytes.size() - that->inputBytesWritePointer;
 			int timeout = 50; // ms
 			int err = poll(pfds, npfds, timeout);
@@ -224,7 +224,7 @@ void Midi::readInputLoop(void* obj){
 				}
 			}
 		}
-		if(!gShouldStop)
+		if(!Bela_stopRequested())
 			that->attemptRecoveryRead();
 	}
 }
@@ -234,7 +234,7 @@ int Midi::attemptRecoveryWrite()
 	snd_rawmidi_close(alsaOut);
 	alsaOut = NULL;
 	printf("MIDI: attempting to reopen output %s\n", outPort.c_str());
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		int err = snd_rawmidi_open(NULL, &alsaOut, outPort.c_str(), SND_RAWMIDI_NONBLOCK);
 		if (err) {
@@ -256,13 +256,13 @@ void Midi::writeOutputLoop(void* obj){
 		return;
 	}
 	void* data = &that->outputBytes.front();
-	while(!gShouldStop){
+	while(!Bela_stopRequested()){
 		struct pollfd fds = {
 			pipe_fd,
 			POLLIN,
 			0
 		}; 
-		while(!gShouldStop){
+		while(!Bela_stopRequested()){
 			//TODO: C++11 would allow to use outputBytes.data() instead of &outputBytes.front()
 			int timeout = 50; //ms
 			int ret = poll(&fds, 1, timeout);
@@ -289,7 +289,7 @@ void Midi::writeOutputLoop(void* obj){
 				}
 			}
 		}
-		if(!gShouldStop)
+		if(!Bela_stopRequested())
 			that->attemptRecoveryWrite();
 	}
 	close(pipe_fd);

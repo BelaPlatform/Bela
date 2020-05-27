@@ -42,7 +42,7 @@ AuxiliaryTask updatePll;
 
 void updatePllFunction(void*){
 	static int count = 0;
-	while(!gShouldStop){
+	while(!Bela_stopRequested()){
 		gAudioCodec->setPllD(D);
 		count++;
 		if((count&4095)==0)

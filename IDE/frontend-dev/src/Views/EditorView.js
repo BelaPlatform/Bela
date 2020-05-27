@@ -41,6 +41,11 @@ class EditorView extends View {
 			enableLiveAutocompletion: false,
 			enableSnippets: true
 		});
+		this.editor.renderer.setOptions({
+			//this ensures that the offset to hide the scrollbar in #editor is constant
+			vScrollBarAlwaysVisible: true,
+		});
+
 
 		// use hard tabs, not spaces
 		this.editor.session.setOption('useSoftTabs', false);
@@ -195,7 +200,7 @@ class EditorView extends View {
 				// render pd patch
 				try {
           let width = $('[data-editor]').width();
-          let height = $('[data-editor]').height() + 8;
+          let height = $('[data-editor]').height() - 2;
 					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
           .css({
 						'max-width'	: width + 'px',

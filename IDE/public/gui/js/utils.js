@@ -27,14 +27,31 @@ export function loadHtmlSection(section, location, hide=true) {
 }
 
 export function getHtml(location) {
-	let jQueryPromise = $.get(location);
-	return Promise.resolve(jQueryPromise)
+	let promise = new Promise((resolve, reject) => {
+		let xhr = new XMLHttpRequest();
+		xhr.open('GET', location, true);
+		xhr.onload = () => {
+			if(xhr.status >= 200 && xhr.status < 300) {
+				resolve(xhr.response);
+				console.log('request resolved');
+			} else {
+				reject(xhr.statusText);
+				console.log('request rejected');
+			}
+		}
+		xhr.onerror = () => reject(xhr.statusText);
+		xhr.send();
+	});
+	return promise;
 }
 
-export function loadScript(src, parent, dom=document) {
+export function loadScript(src, parent, dom=document, module=false) {
     let promise = new Promise(function(resolve, reject) {
         let scriptElement = dom.createElement('script');
         scriptElement.setAttribute('src', src);
+	if(module) {
+		scriptElement.setAttribute('type', 'module');
+	}
         let parentElement = dom.getElementById(parent) || dom.head;
 
         parentElement.appendChild(scriptElement);
@@ -137,4 +154,14 @@ export function isJson(str) {
 export const getBlobURL = (code, type) => {
 	const blob = new Blob([code], { type })
 	return URL.createObjectURL(blob)
+}
+
+export function serialResolve(promises) {
+	return promises.reduce((promiseChain, currentTask) => {
+		return promiseChain.then(chainResults =>
+			currentTask.then(currentResult =>
+				[...chainResults, currentResult]
+			)
+		);
+	}, Promise.resolve([]));
 }

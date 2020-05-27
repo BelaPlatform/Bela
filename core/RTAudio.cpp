@@ -194,7 +194,7 @@ InternalBelaContext gContext;
 BelaContext* gUserContext = nullptr;
 
 // User data passed in from main()
-void *gUserData;
+static void *gUserData;
 void (*gCoreRender)(BelaContext*, void*);
 void (*gUserRender)(BelaContext*, void*);
 void (*gBelaCleanup)(BelaContext*, void*);
@@ -511,7 +511,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	for(int n = 0; n < 2; n++){
 		if(settings->pgaGain[n] > 59.5){
 			fprintf(stderr, "PGA gain out of range [0,59.5] for channel %d: %fdB\n", n, settings->pgaGain[n]);
-			exit(1);
+			return 1;
 		}
 		Bela_setPgaGain(settings->pgaGain[n], n);
 	}
@@ -520,7 +520,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	gBlockDurationMs = gUserContext->audioFrames / gUserContext->audioSampleRate * 1000;
 	// Call the user-defined initialisation function
 	if(settings->setup && !(*settings->setup)(gUserContext, userData)) {
-		fprintf(stderr, "Couldn't initialise audio rendering\n");
+		if(gRTAudioVerbose)
+			fprintf(stderr, "Couldn't initialise audio rendering: setup() returned false\n");
 		return 1;
 	}
 
@@ -567,7 +568,7 @@ void fifoLoop(void* userData)
 	if(gRTAudioVerbose)
 		rt_printf("_________________Fifo Thread!\n");
 	uint64_t audioFramesElapsed = 0;
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		BelaContext* context = gBcf->pop(BelaContextFifo::kToLong, gBlockDurationMs * 2);
 		if(context)
@@ -645,7 +646,7 @@ int Bela_runInSameThread()
 		return ret;
 
 	// this starts the infinite loop that can only be broken out of
-	// by setting gShouldStop = 1
+	// by calling Bela_requestStop()
 	audioLoop(NULL);
 
 	// Once you get out of it, stop properly (in case you didn't already):
@@ -722,7 +723,7 @@ int Bela_startAudio()
 void Bela_stopAudio()
 {
 	// Tell audio thread to stop (if this hasn't been done already)
-	gShouldStop = true;
+	Bela_requestStop();
 
 	if(gRTAudioVerbose)
 		printf("Stopping audio...\n");
@@ -776,6 +777,21 @@ void Bela_cleanupAudio()
 	if(gAmplifierMutePin >= 0)
 		gpio_unexport(gAmplifierMutePin);
 	gAmplifierMutePin = -1;
+}
+
+void Bela_setUserData(void* newUserData)
+{
+	gUserData = newUserData;
+}
+
+void Bela_requestStop()
+{
+	gShouldStop = true;
+}
+
+int Bela_stopRequested()
+{
+	return gShouldStop;
 }
 
 // Set the level of the DAC; affects all outputs (headphone, line, speaker)

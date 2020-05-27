@@ -1746,7 +1746,7 @@ void log(void*)
 {
 return;
 	// logging the tract
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		//std::vector<sample_t>& diameter = Tract.targetDiameter;
 		//for(int n = 0; n < diameter.size(); ++n)

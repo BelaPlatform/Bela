@@ -1,5 +1,24 @@
 [{
-  "things": [{
+  "things": [
+    {
+      "elemclass": "powerIn",
+      "x": "269",
+      "y": "220",
+      "width": "10",
+      "height": "10",
+      "text": "I2C-1 SCL (P9.24)",
+      "tip": "tooltip"
+    },
+    {
+      "elemclass": "powerIn",
+      "x": "269",
+      "y": "205",
+      "width": "10",
+      "height": "10",
+      "text": "I2C-1 SDA (P9.26)",
+      "tip": "tooltip"
+    },
+    {
       "elemclass": "dPin",
       "x": "6",
       "y": "326",
@@ -257,7 +276,7 @@
       "y": "22",
       "width": "20",
       "height": "28",
-      "text": "Ctag shutdown button",
+      "text": "Bela Button",
       "tip": "tooltip"
     },
     {

@@ -7,7 +7,7 @@ getfield() {
 
 extract_dependencies() {
 	LIBRARY=$1
-	echo Extracting dependencies of library $LIBRARY
+	echo Using library $LIBRARY
 	MDFILE="libraries/$LIBRARY/lib.metadata";
 	echo "$LIBRARY" >> "$LIBLIST"
 

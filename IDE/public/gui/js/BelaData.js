@@ -5,7 +5,7 @@ export default class BelaData extends BelaWebSocket {
 		super(port, address, ip)
 
         this.buffers = new Array();
-        this.states = ['id', 'type', 'data'];
+        this.states = ['id/type', 'data'];
         this.currentState = this.states[0];
         this.bufferReady = false;
         this.newBuffer = {};
@@ -15,24 +15,52 @@ export default class BelaData extends BelaWebSocket {
         ];
     }
 
+    dataError(data) {
+        // most likely we are off by 1 in the state machine, so we attempt to resync.
+        console.log("Invalid data length %d. Resetting state machine", data.byteLength);
+        this.currentState = 'id/type';
+        this.onData(data);
+        return true;
+	}
+
     onData(data) {
-        if(this.currentState == this.states[0]) { // buffer id
-                this.bufferReady = false;
-                this.newBuffer = {};
-		let msgId = new Uint8Array(data);
-		this.newBuffer['id'] = parseInt(String.fromCharCode.apply(null, msgId));
-		this.currentState = this.states[1];
-        } else if (this.currentState == this.states[1]) { // type
-                if(data.byteLength == 1) {
-                        let msgType = new Uint8Array(data);
-                        this.newBuffer['type'] = String.fromCharCode(msgType);
-                        this.currentState = this.states[2];
-                } else {
-                        this.currentState = this.states[0];
+        if('id/type' === this.currentState) {
+            this.bufferReady = false;
+            this.newBuffer = {};
+            let msgIdType = new Uint8Array(data);
+            msgIdType = String.fromCharCode.apply(null, msgIdType).split('/');
+            let err = false;
+            if(2 != msgIdType.length) {
+                err = true;
+            } else if (1 != msgIdType[1].length) {
+                err = true;
+            } else {
+                let success = false;
+                this.newBuffer['type'] = msgIdType[1];
+                for(let ch of ['c', 'j', 'i', 'f', 'd']) {
+                    if(this.newBuffer['type'] === ch) {
+                        success = true;
+                        break;
+                    }
                 }
-        } else if (this.currentState == this.states[2]) { // data
+                if(!success)
+                    err = true;
+            }
+            this.newBuffer['id'] = parseInt(msgIdType[0]);
+            if(isNaN(this.newBuffer['id']))
+                err = true;
+            if(err) {
+                console.log('Unknown buffer type ', this.newBuffer['type'],
+                    'for bufferId ', this.newBuffer['id'],
+                    ', or wrong length. Restarting state machine');
+                this.currentState = this.states[0];
+                return;
+            }
+            this.currentState = this.states[1];
+        } else if ('data' === this.currentState) {
                 this.currentState = this.states[0];
                 let type = this.newBuffer['type'];
+                let err = false;
                 switch(type) {
                         case 'c':
                                 let charInt = new Uint8Array(data);
@@ -43,25 +71,43 @@ export default class BelaData extends BelaWebSocket {
                                 this.newBuffer['data'] = charArr;
                                 break;
                         case 'j': // unsigned int
-                                let uintArr = new Uint32Array(data);
-                                this.newBuffer['data'] = Array.from(uintArr);
+                                if(data.byteLength & 3)
+                                        err = this.dataError(data);
+                                else {
+                                        let uintArr = new Uint32Array(data);
+                                        this.newBuffer['data'] = Array.from(uintArr);
+                                }
                                 break;
                         case 'i': // int
-                                let intArr = new Int32Array(data);
-                                this.newBuffer['data'] = Array.from(intArr);
+                                if(data.byteLength & 3)
+                                        err = this.dataError(data);
+                                else {
+                                        let intArr = new Int32Array(data);
+                                        this.newBuffer['data'] = Array.from(intArr);
+                                }
                                 break;
                         case 'f': // float
-                                let floatArr = new Float32Array(data);
-                                this.newBuffer['data'] = Array.from(floatArr);
+                                if(data.byteLength & 3)
+                                        err = this.dataError(data);
+                                else {
+                                        let floatArr = new Float32Array(data);
+                                        this.newBuffer['data'] = Array.from(floatArr);
+                                }
                                 break;
                         case 'd':
-                                let doubleArr = new Float64Array(data);
-                                this.newBuffer['data'] = Array.from(doubleArr);
+                                if(data.byteLength & 7)
+                                        err = this.dataError(data);
+                                else {
+                                        let doubleArr = new Float64Array(data);
+                                        this.newBuffer['data'] = Array.from(doubleArr);
+                                }
                                 break;
                         default:
                                 console.log("Unknown buffer type ", type);
 
                 }
+                if(err)
+                        return;
                 this.buffers[this.newBuffer['id']] = this.newBuffer['data'];
                 this.bufferReady = true;
 
@@ -90,6 +136,8 @@ export default class BelaData extends BelaWebSocket {
         }
 
         let pkt = this.formatPkt(id, type, data);
+        if(this.ws.OPEN !== this.ws.readyState)
+            return false;
         this.ws.send(pkt);
         return true;
     }

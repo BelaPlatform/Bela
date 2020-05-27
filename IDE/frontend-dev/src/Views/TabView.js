@@ -83,17 +83,19 @@ class TabView extends View {
 
   toggleClasses() {
     clearTimeout(this.toggleClassesTimeout);
-    var that = this;
+    // the tabs-changing class enables a 0.5s animation upon transition
+    $('[data-editor]').addClass('tabs-changing');
+    // and we can remove it once the transition is done:
+    this.toggleClassesTimeout = setTimeout(
+      function() {
+        $('[data-editor]').removeClass('tabs-changing');
+        this.emit('change');
+      }.bind(this),
+    500);
     if ($('[data-tabs]').hasClass('tabs-open')) { // tab is opening
-      this.toggleClassesTimeout = setTimeout(
-        function() {
           $('[data-editor]').addClass('tabs-open');
-          that.emit('change');
-        },
-      500);
     } else { // tab is closing
       $('[data-editor]').removeClass('tabs-open');
-      that.emit('change');
     }
   }
 

@@ -14,6 +14,7 @@
 #include "sensors.h"
 #include "DboxOscillatorBank.h"
 #include "DboxSensors.h"
+#include <Bela.h>
 
 
 //----------------------------------------
@@ -22,7 +23,6 @@
 extern vector<DboxOscillatorBank*> gOscBanks;
 extern int gCurrentOscBank;
 extern int gNextOscBank;
-extern int gShouldStop;
 extern int gVerbose;
 
 float gSensor0LatestTouchPos = 0;	// most recent pitch touch location [0-1] on sensor 0, used by render.cpp
@@ -69,7 +69,7 @@ int initSensorLoop(int sensorAddress0, int sensorAddress1, int sensorType)
 
 	if(Sensors.initSensors(tk0_bus, tk0_address, tk1_bus, tk1_address, tk_file, sensorType)>0)
 	{
-		gShouldStop = 1;
+		Bela_requestStop();
 		cout << "control cannot start" << endl;
 		return -1;
 	}
@@ -128,7 +128,7 @@ void sensorLoop(void *)
 	gettimeofday(&start, NULL);
 
 	// here we go, sensor loop until the end of the application
-	while(!gShouldStop)
+	while(!Bela_stopRequested())
 	{
 		gettimeofday(&end, NULL);
 		elapsedTime = ( (end.tv_sec*1000000+end.tv_usec) - (start.tv_sec*1000000+start.tv_usec) );
@@ -621,7 +621,7 @@ void *keyboardLoop(void *)
 				break;
 			//----------------------------------------------------------------------------
 			case 'q':
-				gShouldStop = true;
+				Bela_requestStop();
 				break;
 			case 'o':
 				gNextOscBank = (gCurrentOscBank + 1) % gOscBanks.size();
