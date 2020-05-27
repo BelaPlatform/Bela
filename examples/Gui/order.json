@@ -1,11 +1,10 @@
 [
-  "Bela-to-p5-basic",
-  "p5-to-Bela-basic",
-  "empty-project",
-  "simple",
+  "bela-to-gui",
+  "gui-to-bela",
+  "ambient-ellipse",
   "clock",
   "mouse-track",
-  "sequencer",
   "graph",
-  "gui-sliders"
+  "sliders",
+  "empty-project"
 ]

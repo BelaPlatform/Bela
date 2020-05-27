@@ -1,16 +1,3 @@
-/**
- * \example Gui/basic
- *
- * GUI basic
- * =========
- *
- * p5js file that display a basic text in the browser
- *
- * This is a very simple example, it doesn't implement any communication (sending buffers) between render.cpp and sketch.js
- *
- **/
-
-
 let canvas_dimensions;
 let string;
 

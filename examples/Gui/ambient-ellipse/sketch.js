@@ -1,13 +1,3 @@
- /**
- * \example Gui/simple
- *
- * GUI simple
- * =========
- * p5js file that receives a buffer of data from render.cpp (sinewave value). Then, it creates a circle whose size depends
- * on the input read.
- *
- **/
-
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 }

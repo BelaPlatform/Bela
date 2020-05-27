@@ -1,14 +1,3 @@
-/**
- * \example Gui/mouse-track
- *
- * GUI mouse tracker
- * =========
- *
- * p5js file that reads mouse (x,y) coordinates and send them to render.cpp through a buffer
- *
- **/
-
-
 let canvas_dimensions;
 
 function setup() {
@@ -28,5 +17,3 @@ function mouseMoved() {
 	//In this case we send an array with two elements.
 	Bela.data.sendBuffer(0, 'float', [mouseX/width, mouseY/height]);
 }
-
-

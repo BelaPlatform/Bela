@@ -1,15 +1,3 @@
- /**
- * \example Gui/clock
- *
- * GUI clock
- * =========
- * p5js file that displays a clock with current time and date
- *
- * It receives the date and time from render.cpp through a buffer
- *
- *
- **/
-
 function setup() {
 	//Create a canvas of dimensions given by current browser window
 	createCanvas(windowWidth, windowHeight);
@@ -37,4 +25,3 @@ function draw() {
 		text(dateString , 40,height/2);
 	}
 }
-
