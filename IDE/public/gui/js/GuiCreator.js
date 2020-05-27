@@ -23,7 +23,7 @@ export default class GuiCreator {
 		this.panel_props = {
 			autoPlace: false,
 			resizable : false,
-			width: 400 
+			width: 400
 		}
 	}
 
