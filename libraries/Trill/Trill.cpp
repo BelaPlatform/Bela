@@ -94,6 +94,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	dataBuffer.resize(kRawLength);
 	rawData.resize(kNumChannelsMax);
 	address = 0;
+	device_type_ = NONE;
 
 	if(128 <= i2c_address)
 		i2c_address = trillDefaults.at(device).address;
@@ -244,6 +245,11 @@ int Trill::identify() {
 		return -1;
 	}
 
+	// if we read back just zeros, we assume the device did not answer
+	if(0 == dataBuffer[1] && 0 == dataBuffer[2]) {
+		device_type_ = NONE;
+		return -1;
+	}
 	device_type_ = (Device)dataBuffer[1];
 	firmware_version_ = dataBuffer[2];
 

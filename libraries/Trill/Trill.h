@@ -39,7 +39,7 @@ class Trill : public I2c
 		} Device;
 	private:
 		Mode mode_; // Which mode the device is in
-		Device device_type_; // Which type of device is connected (if any)
+		Device device_type_ = NONE; // Which type of device is connected (if any)
 		uint8_t address;
 		uint8_t firmware_version_; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
