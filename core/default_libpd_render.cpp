@@ -919,8 +919,8 @@ void render(BelaContext *context, void *userData)
 					libpd_add_float(numTouches > 0);
 					if(numTouches)
 					{
-						libpd_add_float(touchSensor.compoundTouchLocation());
 						libpd_add_float(touchSensor.compoundTouchHorizontalLocation());
+						libpd_add_float(touchSensor.compoundTouchLocation());
 						libpd_add_float(touchSensor.compoundTouchSize());
 					}
 				}
