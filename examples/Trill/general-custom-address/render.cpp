@@ -68,6 +68,7 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Unable to initialise Trill device. Are the address and device type correct?\n");
 		return false;
 	}
+	touchSensor.printDetails();
 
 	Bela_runAuxiliaryTask(loop);
 

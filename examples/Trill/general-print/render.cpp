@@ -56,6 +56,7 @@ bool setup(BelaContext *context, void *userData)
 	}
 	// ensure the device is in DIFF mode for printing raw values
 	touchSensor.setMode(Trill::DIFF);
+	touchSensor.printDetails();
 
 	Bela_runAuxiliaryTask(loop);
 

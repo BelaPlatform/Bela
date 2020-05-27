@@ -156,6 +156,7 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Unable to initialise Trill Craft\n");
 		return false;
 	}
+	touchSensor.printDetails();
 
 	gui.setup(context->projectName);
 	gui.setControlDataCallback(guiCallback, nullptr);
