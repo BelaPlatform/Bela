@@ -109,10 +109,10 @@ for (int i=0; i < 16;i++){
 		gReadPointers[i]=0;
 		break;
 	}
-	
-}	
-	
-	
+
+}
+
+
 }
 
 /* Start playing the next event in the pattern */
@@ -122,17 +122,17 @@ void startNextEvent() {
 // Retrieve contents of the buffer as floats
 
 
-	
+
 	for (int i = 0; i<16;i++){
 		int doPlay = eventContainsDrum(pattern2[gCurrentIndexInPattern],i);
 		if (doPlay){
 			startPlayingDrum(i);
-		    playedDrums[i]=1;	
+		    playedDrums[i]=1;
 		}
 		else
 			playedDrums[i]=0;
 	}
-	
+
 	gCurrentIndexInPattern++;
 	if (gCurrentIndexInPattern >= gPatternLengths[2])
 		gCurrentIndexInPattern=0;
@@ -145,14 +145,14 @@ myGui.sendBuffer(2, gBeats);
 
 myGui.sendBuffer(1, playedDrums);
 
-	
+
 }
 
 /* Returns whether the given event contains the given drum sound */
 int eventContainsDrum(int event, int drum) {
 	if(event & (1 << drum)){
 		return 1;
-	
+
 	}
 	return 0;
 }
@@ -244,7 +244,7 @@ void initPatterns() {
 	pattern2[5] = 0x40;
 	pattern2[6] = 0x04;
 	pattern2[7] = 0x40;
-	
+
 	int pattern3[32] = {0x81, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x81, 0, 0, 0, 0x41, 0x80, 0x80, 0x80,
 		0x81, 0x80, 0x80, 0, 0x41, 0, 0x80, 0x80, 0x81, 0x80, 0x80, 0x80, 0xC1, 0, 0, 0};
 	int pattern4[16] = {0x81, 0x02, 0, 0x81, 0x0A, 0, 0xA1, 0x10, 0xA2, 0x11, 0x46, 0x41, 0xC5, 0x81, 0x81, 0x89};
@@ -275,8 +275,8 @@ void initPatterns() {
 }
 
 void updatePatterns() {
-	
-// Get buffer 0		
+
+// Get buffer 0
 		DataBuffer buffer = myGui.getDataBuffer(0);
 		// Retrieve contents of the buffer as floats
 		float* data = buffer.getAsFloat();
@@ -288,7 +288,7 @@ void updatePatterns() {
 	    //rt_printf(" \n");
 			//pattern2[i]=(int)data[i];
 			pattern2[gBeats]=y;
-		
+
 gEventIntervalMilliseconds=400-(int)data[8];
 gIsPlaying = (int)data[9];
 
@@ -311,13 +311,13 @@ bool setup(BelaContext *context, void *userData)
     	return -1;
     }
     initPatterns();
-	
+
 	myGui.setup(context->projectName);
-	
+
 	// Setup buffer of floats (holding a maximum of 2 values)
 	myGui.setBuffer('f', 10); // Index = 0
-	
-	
+
+
 	return true;
 }
 
@@ -336,77 +336,77 @@ void render(BelaContext *context, void *userData)
 
 //int speed = map(value,0,3.3/4.096,50,1000);
 
-	
-	
+
+
 	for (int n = 0; n < context->audioFrames; n++) {
-	
-		
-		
-		
-		
+
+
+
+
+
 	   //gEventIntervalMilliseconds = 500;
-		
+
 		gCounter++;
-		
-		
+
+
 		if (gCounter * 1000 / context->audioSampleRate >= gEventIntervalMilliseconds ){
 		    gCounter=0;
 		    updatePatterns();
 		    if ((int) gIsPlaying == 0) {
 		    startNextEvent();
 		    }
-		    
-		    
+
+
 		}
-		
-		
-		
-		
-    
-  
+
+
+
+
+
+
         for (int i=0;i<16;i++) {
     	if (gDrumBufferForReadPointer[i]>=0){
     		if (gReadPointers[i] < gDrumSampleBufferLengths[gDrumBufferForReadPointer[i]]) {
     			gReadPointers[i]++;
-    	
-    				
+
+
     		}
     		else {
     			gReadPointers[i]=0;
     			gDrumBufferForReadPointer[i]=-1;
     		}
-    		
-    		
+
+
     	}
-    	
+
     }
-    
+
     //initially output in silence
     float out = 0;
-    
-    //if gReadPointer hasn't got until the end of the buffer, write the sample to out and increase gReadPointer by one 
+
+    //if gReadPointer hasn't got until the end of the buffer, write the sample to out and increase gReadPointer by one
     // when gReadPointer == gDrumSampleBufferLengths[] then it stay on that value until the button is pressed again
     for (int i=0;i<16;i++){
     if (gDrumBufferForReadPointer[i]>=0) {
     	out += gDrumSampleBuffers[gDrumBufferForReadPointer[i]][gReadPointers[i]];
-	
+
     }
     }
-    
+
     out /= 2;
-    
+
 	//write to both channels
 	audioWrite(context,n,0,out/2);
 	audioWrite(context,n,1,out/2);
 
 
-	
 
-	
-	
+
+
+
 	}
-	
-	
+
+
 	}
 
 
