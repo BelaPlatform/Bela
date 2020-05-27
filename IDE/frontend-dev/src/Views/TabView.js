@@ -82,20 +82,29 @@ class TabView extends View {
 	}
 
   toggleClasses() {
+    let tabIsOpening = $('[data-tabs]').hasClass('tabs-open');
     clearTimeout(this.toggleClassesTimeout);
     // the tabs-changing class enables a 0.5s animation upon transition
     $('[data-editor]').addClass('tabs-changing');
     // and we can remove it once the transition is done:
     this.toggleClassesTimeout = setTimeout(
-      function() {
+      function(tabIsOpening) {
         $('[data-editor]').removeClass('tabs-changing');
-        this.emit('change');
-      }.bind(this),
+        // this "change" is here so that if pd-svg is .active,
+        // it shrinks after the sidebar has opened
+        if(tabIsOpening){
+          this.emit('change');
+        }
+      }.bind(this, tabIsOpening),
     500);
-    if ($('[data-tabs]').hasClass('tabs-open')) { // tab is opening
-          $('[data-editor]').addClass('tabs-open');
+
+    if (tabIsOpening) {
+      $('[data-editor]').addClass('tabs-open');
     } else { // tab is closing
       $('[data-editor]').removeClass('tabs-open');
+      // this "change" here so that if pd-svg is .active
+      // it extends horizontally before the sidebar closes.
+      this.emit('change');
     }
   }
 
