@@ -40,14 +40,10 @@ f f f;
 #X text 567 335 In this example we use the first 4 channels to;
 #X text 360 247 Which will be prepended with the sensor_id;
 #X text 517 128 [prescaler <sensor_id> <value> (between 1 and 8);
-#X text 517 162 [threshold <sensor_id> <value>(between 0 and 1.0);
+#X text 516 149 [threshold <sensor_id> <value>(between 0 and 1.0);
 #X text 567 355 trigger sample playback and print all on the console.
 ;
-#X msg 35 128 new mycraft 1 CRAFT diff \, prescaler mycraft 2 \, threshold
-mycraft 0.01;
 #X obj 243 248 route mycraft;
-#X text 159 82 Message: [new <sensor_id> <bus> <device> <mode=AUTO>
-<address=255>(;
 #X text 20 613 device that was successfully initialised. The message
 ;
 #X text 20 623 will contain: <sensor_id> <device> <mode> <address>
@@ -58,6 +54,10 @@ mycraft 0.01;
 #X text 84 16 >>> See full documentation in examples/Trill/general-pd
 <<<;
 #X text 516 108 We are also changing settings on initialisation:;
+#X msg 35 128 new mycraft 1 CRAFT \, prescaler mycraft 2 \, threshold
+mycraft 0.01;
+#X text 159 82 Message: [new <sensor_id> <bus> <device> <address=255>(
+;
 #X connect 0 0 30 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
@@ -97,9 +97,9 @@ mycraft 0.01;
 #X connect 27 0 25 0;
 #X connect 28 0 29 0;
 #X connect 29 0 24 3;
-#X connect 31 0 42 0;
-#X connect 32 0 43 0;
-#X connect 42 0 33 0;
-#X connect 43 0 4 0;
-#X connect 43 0 0 1;
-#X connect 48 0 49 0;
+#X connect 31 0 50 0;
+#X connect 32 0 42 0;
+#X connect 42 0 4 0;
+#X connect 42 0 0 1;
+#X connect 46 0 47 0;
+#X connect 50 0 33 0;

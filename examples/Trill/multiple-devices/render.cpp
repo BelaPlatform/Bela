@@ -65,7 +65,7 @@ bool setup(BelaContext *context, void *userData)
 		Trill::Device device = Trill::probe(i2cBus, addr);
 		if(Trill::NONE != device && Trill::CRAFT != device)
 		{
-			gTouchSensors.push_back(new Trill(i2cBus, device, Trill::AUTO, addr));
+			gTouchSensors.push_back(new Trill(i2cBus, device, addr));
 		}
 	}
 	Bela_runAuxiliaryTask(readLoop);

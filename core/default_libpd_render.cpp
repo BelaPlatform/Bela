@@ -285,6 +285,18 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
+#ifdef ENABLE_TRILL
+void setTrillPrintError()
+{
+	rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
+		"[mode <sensor_id> <prescaler_value>(\n"
+		" or\n"
+		"[threshold <sensor_id> <threshold_value>(\n"
+		" or\n"
+		"[prescaler <sensor_id> <prescaler_value>(\n");
+}
+#endif // ENABLE_TRILL
+
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
 #ifdef BELA_LIBPD_GUI
@@ -430,7 +442,6 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		if(0 == strcmp(symbol, "new"))
 		{
 			bool err = false;
-			char const* modeString = "AUTO";
 
 			uint8_t address = 0xff;
 			if(argc < 3)
@@ -442,14 +453,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				err = true;
 			if(argc >= 4)
 			{
-				if(libpd_is_symbol(argv + 3))
-					modeString = libpd_get_symbol(argv + 3);
-				else
-					err = true;
-			}
-			if(argc >= 5)
-			{
-				if(libpd_is_float(argv + 4))
+				if(libpd_is_float(argv + 3))
 					address = libpd_get_float(argv + 4);
 				else
 					err = true;
@@ -457,16 +461,15 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			if(err)
 			{
 				rt_fprintf(stderr, "bela_setTrill wrong format. Should be:\n"
-					"[new <sensor_id> <bus> <device> <mode> <address>(\n");
+					"[new <sensor_id> <bus> <device> <address>(\n");
 				return;
 			}
 			const char* name = libpd_get_symbol(argv);
 			unsigned int bus = libpd_get_float(argv + 1);
 			const char* deviceString = libpd_get_symbol(argv + 2);
-			Trill::Mode mode = Trill::getModeFromName(modeString);
 			Trill::Device device = Trill::getDeviceFromName(deviceString);
 
-			Trill* trill = new Trill(bus, device, mode, address);
+			Trill* trill = new Trill(bus, device, address);
 			if(Trill::NONE == trill->deviceType())
 			{
 				rt_fprintf(stderr, "Unable to create Trill sensor on bus %u at address %u (%#x). Is the sensor connected?\n", bus, address, address);
@@ -495,6 +498,20 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			gTouchSensors[idx].second->updateBaseline();
 			return;
 		}
+		if(0 == strcmp(symbol, "mode"))
+		{
+			if(argc < 2
+				|| !libpd_is_symbol(argv)
+				|| !libpd_is_symbol(argv + 1)
+			) {
+				setTrillPrintError();
+				return;
+			}
+			char* modeString;
+			modeString = libpd_get_symbol(argv + 1);
+			Trill::Mode mode = Trill::getModeFromName(modeString);
+			gTouchSensors[idx].second->setMode(mode);
+		}
 		if(
 			0 == strcmp(symbol, "threshold")
 			|| 0 == strcmp(symbol, "prescaler")
@@ -505,10 +522,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				|| !libpd_is_symbol(argv)
 				|| !libpd_is_float(argv + 1)
 			  ) {
-				rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
-					"[threshold <sensor_id> <threshold_value>(\n"
-					" or\n"
-					"[prescaler <sensor_id> <prescaler_value>(\n");
+				setTrillPrintError();
 				return;
 			}
 			float value = libpd_get_float(argv + 1);
@@ -853,8 +867,8 @@ void render(BelaContext *context, void *userData)
 		unsigned int idx = getIdxFromId(name.c_str(), gTouchSensors);
 		libpd_start_message(3);
 		libpd_add_symbol(Trill::getNameFromDevice(gTouchSensors[idx].second->deviceType()).c_str());
-		libpd_add_symbol(Trill::getNameFromMode(gTouchSensors[idx].second->getMode()).c_str());
 		libpd_add_float(gTouchSensors[idx].second->getAddress());
+		libpd_add_symbol(Trill::getNameFromMode(gTouchSensors[idx].second->getMode()).c_str());
 		libpd_finish_message("bela_trillCreated", name.c_str());
 	}
 	gTrillAcks.resize(0);

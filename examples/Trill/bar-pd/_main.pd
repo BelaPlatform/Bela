@@ -14,13 +14,9 @@
 #X obj 126 317 route mybar;
 #X text 175 112 <bus> is the i2c bus that yout sensor is connected
 to;
-#X text 196 172 AUTO(default) will use the default mode for the device
-type.;
-#X text 176 192 <address> is the address of the sensor. If unspecified
+#X text 176 162 <address> is the address of the sensor. If unspecified
 \, the;
-#X text 199 204 default address for the device type will be used;
-#X text 176 162 <mode> can be one of AUTO \, CENTROID. RAW BASELINE
-DIFF.;
+#X text 199 174 default address for the device type will be used;
 #X text 175 132 <device> the type of sensor you are connecting: BAR
 SQUARE;
 #X text 186 141 CRAFT RING HEX;
@@ -29,8 +25,6 @@ SQUARE;
 ;
 #X text 600 300 will contain: <sensor_id> <device> <mode> <address>
 ;
-#X text 174 82 Message: [new <sensor_id> <bus> <device> <mode=AUTO>
-<address=255>(;
 #X text 599 279 bela_trillCreated will receive a message for each;
 #X obj 604 332 r bela_trillCreated;
 #X obj 604 361 print bela_trillCreated;
@@ -39,11 +33,13 @@ SQUARE;
 #X text 84 16 >>> See full documentation in examples/Trill/general-pd
 <<<;
 #X text 180 47 First initialise the Trill sensor;
-#X connect 0 0 27 0;
+#X text 174 82 Message: [new <sensor_id> <bus> <device> <address=255>(
+;
+#X connect 0 0 24 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
-#X connect 4 0 20 0;
+#X connect 4 0 18 0;
 #X connect 5 0 12 0;
 #X connect 12 0 0 1;
-#X connect 20 0 6 0;
-#X connect 25 0 26 0;
+#X connect 18 0 6 0;
+#X connect 22 0 23 0;

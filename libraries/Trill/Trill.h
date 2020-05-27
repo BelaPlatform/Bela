@@ -104,22 +104,17 @@ class Trill : public I2c
 		 * than #UNKNOWN is passed, and the detected device type is
 		 * different from the requested one, the function will fail and
 		 * the object will be left uninitialised.
-		 * @param mode the mode to set the device to. Defaults to
-		 * #AUTO, which selects the device-specific default
-		 * mode for the _detected_ device type.
 		 * @param i2c_address the address at which the device can be
 		 * found. If `255` or no value is passed, the default address
 		 * for the specified device type will be used.
 		 */
-		Trill(unsigned int i2c_bus, Device device, Mode mode = AUTO,
-				uint8_t i2c_address = 255);
+		Trill(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
 		/**
 		 * \copydoc Trill::Trill(unsigned int, Device, Mode, uint8_t)
 		 *
 		 * @return 0 upon success, an error code otherwise.
 		 */
-		int setup(unsigned int i2c_bus, Device device, Mode mode = AUTO,
-				uint8_t i2c_address = 255);
+		int setup(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
 
 		/**
 		 * Probe the bus for a device at the specified address.

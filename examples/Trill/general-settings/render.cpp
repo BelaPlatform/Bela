@@ -18,13 +18,9 @@ The first thing to do is make sure that the correct sensor type is
 given to `touchSensor.setup();`. If you have changed the address of the sensor
 then you will need to add that to this function too.
 
-The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
-and is read in DIFF mode giving the differential reading of each pad on the sensor.
+The Trill sensor is scanned on an auxiliary task running parallel to the audio thread.
 
-The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
-and is read in DIFF mode giving the differential reading of each pad on the sensor.
-
-Launch the GUI to visualise the value of each capacitive pad on the sensor.
+Launch the GUI to visualise the value of each capacitive channel on the sensor.
 
 There are two important sensor settings that you may want to adjust when working
 with the Trill sensors: the `threshold` and the `prescalar`.
@@ -156,8 +152,7 @@ void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 	// Setup a Trill Craft on i2c bus 1, using the default address.
-	// Set it to differential mode for bargraph display
-	if(touchSensor.setup(1, Trill::CRAFT, Trill::DIFF) != 0) {
+	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
 		fprintf(stderr, "Unable to initialise Trill Craft\n");
 		return false;
 	}

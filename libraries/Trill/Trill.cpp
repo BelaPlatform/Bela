@@ -85,12 +85,11 @@ static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 
 Trill::Trill(){}
 
-Trill::Trill(unsigned int i2c_bus, Device device, Mode mode, uint8_t i2c_address) {
-	setup(i2c_bus, device, mode, i2c_address);
+Trill::Trill(unsigned int i2c_bus, Device device, uint8_t i2c_address) {
+	setup(i2c_bus, device, i2c_address);
 }
 
-int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
-		uint8_t i2c_address)
+int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
 	dataBuffer.resize(kRawLength);
 	rawData.resize(kNumChannelsMax);
@@ -124,13 +123,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, Mode mode,
 		return -3;
 	}
 
-	if(AUTO == mode)
-		mode = trillDefaults.at(device_type_).mode;
-	if(AUTO == mode) {
-		fprintf(stderr, "Unknown default mode for device type `%s`\n",
-			trillDefaults.at(device_type_).name.c_str());
-		return -1;
-	}
+	Mode mode = trillDefaults.at(device_type_).mode;
 	if(setMode(mode) != 0) {
 		fprintf(stderr, "Unable to set mode\n");
 		return 3;

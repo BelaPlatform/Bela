@@ -14,11 +14,10 @@ Trill Visual Raw
 This example visualises the reading from a Trill Craft sensor and it is largely
 the same as the general-settings example.
 
-The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
-and is read in DIFF mode giving the differential reading of each pad on the sensor.
+The Trill sensor is scanned on an auxiliary task running in parallel to the
+audio thread.
 
 Once the project is running click the GUI button to see the reading on each channel.
-
 From this GUI you can also adjust the setting of the Craft sensor to best suit your needs.
 
 There are two important sensor settings that you may want to adjust when working
@@ -151,8 +150,7 @@ void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 	// Setup a Trill Craft on i2c bus 1, using the default address.
-	// Set it to differential mode for bargraph display
-	if(touchSensor.setup(1, Trill::CRAFT, Trill::DIFF) != 0) {
+	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
 		fprintf(stderr, "Unable to initialise Trill Craft\n");
 		return false;
 	}

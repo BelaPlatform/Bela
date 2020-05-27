@@ -12,7 +12,7 @@ Trill Visualiser
 ================
 
 This example will work with all types of Trill sensor and will visualise the raw
-reading from each pad.
+reading from each capacitive channel.
 
 We are using the Trill library to read from the sensor and the Gui library for
 the visualisation. The first thing to do is make sure that the correct sensor type is
@@ -20,7 +20,7 @@ given to `touchSensor.setup()`. If you have changed the address of the sensor
 then you will need to add the new address to this function too.
 
 The Trill sensor is scanned on an auxiliary task running parallel to the audio thread
-and is read in DIFF mode giving the differential reading of each pad on the sensor.
+and is read in DIFF mode giving the differential reading of each channel on the sensor.
 
 Readings are sent to the integrated p5.js GUI every few milliseconds.
 
@@ -55,11 +55,12 @@ void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 	// Setup a Trill Craft on i2c bus 1, using the default address.
-	// Set it to differential mode for bargraph display
-	if(touchSensor.setup(1, Trill::CRAFT, Trill::DIFF) != 0) {
+	if(touchSensor.setup(1, Trill::CRAFT) != 0) {
 		fprintf(stderr, "Unable to initialise Trill Craft\n");
 		return false;
 	}
+	// ensure the device is in DIFF mode for printing raw values
+	touchSensor.setMode(Trill::DIFF);
 
 	Bela_runAuxiliaryTask(loop);
 	gui.setup(context->projectName);

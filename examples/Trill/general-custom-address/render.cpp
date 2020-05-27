@@ -34,13 +34,8 @@ In this example we use a Trill Bar where we bridged together the two left-most
 pads of the ADR0 line, which corresponds to an address of 0x21 (in hexadecimal
 notation), or 33 (in decimal notation).
 
-We have to pass this address to the `touchSensors.setup()` function in order
-to be able to use this sensor.
-
-The address is the fourth argument to setup(), so we have to
-explicitate the third argument (scanning mode). We set it to AUTO, so
-that it will be the default mode for the sensor that is detected at the
-specified address.
+We have to pass this address as the third argument  to the
+`touchSensors.setup()` function in order to be able to use this sensor.
 
 If no device is detected at the specified address, or a device of a different
 type from the one we requested is detected, setup() will return an error
@@ -68,16 +63,9 @@ void loop(void*)
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Setup a Trill Bar on i2c bus 1, using the custom address 0x21 (33 in
-	// decimal). The address is the fourth argument to setup(), so we have to
-	// explicitate the third argument (scanning mode). We set it to AUTO, so
-	// that it will be the default mode for the sensor that is detected at the
-	// specified address.
-	// If no device is detected at the specified address, or a device of a different
-	// type from the one we requested is detected, setup() will return an error
-	// code and we should stop.
-	if(touchSensor.setup(1, Trill::BAR, Trill::AUTO, 0x21) != 0) {
-		fprintf(stderr, "Unable to initialise Trill device. Is the address correct?\n");
+	// Setup a Trill Bar on i2c bus 1, using the custom address 0x21 (or 33 in decimal).
+	if(touchSensor.setup(1, Trill::BAR, 0x21) != 0) {
+		fprintf(stderr, "Unable to initialise Trill device. Are the address and device type correct?\n");
 		return false;
 	}
 
@@ -93,7 +81,9 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		if(readCount >= printIntervalSamples) {
 			readCount = 0;
-			// we print the sensor readings depending on the device mode
+			// we print the sensor readings depending on the device mode,
+			// so that if you change the device type above, you get meaningful
+			// values for your device
 			if(Trill::CENTROID == touchSensor.getMode()) {
 				rt_printf("Touches: %d:", touchSensor.getNumTouches());
 				for(unsigned int i = 0; i < touchSensor.getNumTouches(); i++) {
