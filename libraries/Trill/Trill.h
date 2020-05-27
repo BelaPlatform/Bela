@@ -14,7 +14,7 @@ class Trill : public I2c
 {
 	public:
 		/**
-		 * The acquisition modes that the device can be set to.
+		 * The acquisition modes that a device can be set to.
 		 */
 		typedef enum {
 			AUTO = -1, /**< Auto mode: the mode is set
@@ -110,7 +110,7 @@ class Trill : public I2c
 		 */
 		Trill(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
 		/**
-		 * \copydoc Trill::Trill(unsigned int, Device, Mode, uint8_t)
+		 * \copydoc Trill::Trill(unsigned int, Device, uint8_t)
 		 *
 		 * @return 0 upon success, an error code otherwise.
 		 */
@@ -189,7 +189,9 @@ class Trill : public I2c
 		/**
 		 * Set the operational mode of the device.
 		 *
-		 * @param mode The device mode.
+		 * @param mode The device mode. The special mode #AUTO, selects the
+		 * device-specific default mode for the _detected_ device type.
+		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setMode(Mode mode);
 		/**
@@ -202,6 +204,7 @@ class Trill : public I2c
 		 * comprised between 0 (`CSD_ULTRA_FAST_SPEED`) and 3 (`CSD_SLOW_SPEED`)
 		 * @param num_bits The bit depth of the scanning.
 		 * Valid values are comprised between 9 and 12.
+		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
 		/**
@@ -212,6 +215,7 @@ class Trill : public I2c
 		 * @param prescaler The prescaler value. Valid values are
 		 * between 0 and 8, inclusive, and map directly to values
 		 * `CSD_PRESCALER_1` to `CSD_PRESCALER_256`.
+		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setPrescaler(uint8_t prescaler);
 		/**
@@ -226,6 +230,7 @@ class Trill : public I2c
 		 * multiplying it times `1 << numBits` before being sent to the device.
 		 * On the device, the received value is used to set the
 		 * `CSD_bNoiseThreshold` variable.
+		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setNoiseThreshold(float threshold);
 		/**
@@ -234,12 +239,14 @@ class Trill : public I2c
 		 * This triggers a call to `CSD_SetIdacValue(value)` on the device.
 		 *
 		 * @param value the IDAC value. Valid values are between 0 and 255.
+		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setIDACValue(uint8_t value);
 		/**
 		 * Set minimum touch size
 		 *
 		 * Sets the minimum touch size below which a touch is ignored.
+		 * @return 0 on success, or an error code otherwise.
 		 *
 		 */
 		int setMinimumTouchSize(float minSize);
@@ -251,6 +258,7 @@ class Trill : public I2c
 		 * by the scanning speed, bit depth and any computation
 		 * happening on the device (such as touch detection). A value
 		 * of 0 disables auto scanning.
+		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setAutoScanInterval(uint16_t interval);
 		/** @} */ // end of Scan Configuration Settings
