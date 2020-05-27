@@ -1,12 +1,12 @@
-#N canvas 273 52 941 498 10;
+#N canvas 228 17 941 568 10;
 #X obj 55 331 list;
-#X obj 55 291 metro 200;
+#X obj 55 287 metro 200;
 #X obj 55 265 loadbang;
 #X text 166 291 Throttle printing;
 #X obj 243 190 r bela_trill;
 #X text 360 191 This receives the reading from the Trill sensor.;
-#X text 189 370 [<num_touches> <position> <size>];
-#X obj 56 371 print ringReadings;
+#X text 89 331 [<num_touches> <position> <size>];
+#X obj 87 518 print ringReadings;
 #X obj 35 48 loadbang;
 #X obj 35 156 s bela_setTrill;
 #X text 189 49 First initialise the Trill sensor;
@@ -14,16 +14,42 @@
 #X obj 537 48 print bela_trillCreated;
 #X text 84 16 >>> See full documentation in examples/Trill/general-pd
 <<<;
-#X msg 35 128 new myring 1 RING;
 #X obj 243 248 route myring;
 #X text 360 247 Which will be prepended with the <sensor_id>;
 #X text 141 84 Message: [new <sensor_id> <bus> <device> <address=255>(
 ;
-#X connect 0 0 7 0;
+#X obj 90 488 list append;
+#X obj 57 355 t l l;
+#X obj 240 467 pack f f;
+#X obj 241 438 cos;
+#X obj 287 437 sin;
+#X obj 210 359 unpack f f f;
+#X obj 273 404 t f f;
+#X obj 263 385 * -6.28319;
+#X text 341 352 The reading is 0 to 1 clockwise \, starting at 0 degrees
+;
+#X text 340 338 compute x and y location for the first touch;
+#X text 334 385 << this converts to radians (spinning counter-clockwise)
+;
+#X text 218 520 printing: <num_touches> <p1> <s1> <...px sx...> <x1>
+<y1>;
+#X text 285 538 pX and sX are position and size of each touch;
+#X msg 35 128 new myring 1 RING;
+#X connect 0 0 18 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
-#X connect 4 0 15 0;
-#X connect 8 0 14 0;
+#X connect 4 0 14 0;
+#X connect 8 0 30 0;
 #X connect 11 0 12 0;
-#X connect 14 0 9 0;
-#X connect 15 0 0 1;
+#X connect 14 0 0 1;
+#X connect 17 0 7 0;
+#X connect 18 0 17 0;
+#X connect 18 1 22 0;
+#X connect 19 0 17 1;
+#X connect 20 0 19 0;
+#X connect 21 0 19 1;
+#X connect 22 1 24 0;
+#X connect 23 0 20 0;
+#X connect 23 1 21 0;
+#X connect 24 0 23 0;
+#X connect 30 0 9 0;
