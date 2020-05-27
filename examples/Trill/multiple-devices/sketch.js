@@ -30,7 +30,12 @@ function draw() {
 		let size = Bela.data.buffers[n][0];
 		let loc = Bela.data.buffers[n][1];
 		let locH = Bela.data.buffers[n][2];
-		trills[n].updateTouch(0, [loc, locH], size);
+		let location;
+		if('hex' === trills[n].type || 'square' === trills[n].type)
+			location = [locH, loc];
+		else
+			location = loc;
+		trills[n].updateTouch(0, location, size);
 		trills[n].draw();
 	}
 	image(belaLogo, width-170, height-70, 120, 50);
