@@ -1,5 +1,12 @@
-/**
-\example gui-slider
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+
+\example Gui/slider
 
 Sliders for your GUI
 ------------

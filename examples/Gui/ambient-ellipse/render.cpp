@@ -19,8 +19,8 @@ containing the value of a sinewave LFO:
 	`gui.sendBuffer(0, sineValue);`
 
 The p5.js file displays the position of the sinewave in two different ways.
- **/
- 
+*/
+
 #include <Bela.h>
 #include <cmath>
 #include <libraries/Gui/Gui.h>

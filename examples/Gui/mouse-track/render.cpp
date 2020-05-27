@@ -37,7 +37,7 @@ And its contents retrieved in the desired format (floats in this case):
 	`float* data = buffer.getAsFloat();`
 
 Additionally, two One-pole low pass filters are used to smooth the values read from the GUI and avoid glitches.
-**/
+*/
 
 #include <Bela.h>
 #include <libraries/Gui/Gui.h>
