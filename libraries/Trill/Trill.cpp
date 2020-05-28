@@ -245,12 +245,18 @@ int Trill::identify() {
 		return -1;
 	}
 
-	// if we read back just zeros, we assume the device did not answer
-	if(0 == dataBuffer[1] && 0 == dataBuffer[2]) {
+	// if we read back just zeros, we assume the device did not respond
+	if(0 == dataBuffer[1]) {
 		device_type_ = NONE;
 		return -1;
 	}
-	device_type_ = (Device)dataBuffer[1];
+	Device readDeviceType = (Device)dataBuffer[1];
+	// if we do not recognize the device type, we also return an error
+	if(trillDefaults.find(readDeviceType) == trillDefaults.end()) {
+		device_type_ = NONE;
+		return -1;
+	}
+	device_type_ = readDeviceType;
 	firmware_version_ = dataBuffer[2];
 
 	return 0;
