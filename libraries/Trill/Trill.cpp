@@ -2,7 +2,7 @@
 #include <map>
 #include <vector>
 
-const uint8_t Trill::speedValues[4];
+constexpr uint8_t Trill::speedValues[4];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 
 enum {
@@ -60,7 +60,7 @@ static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
 	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0x40)},
 };
 
-static const std::map<Trill::Mode, std::string> trillModes= {
+static const std::map<Trill::Mode, std::string> trillModes = {
 	{Trill::AUTO, "Auto"},
 	{Trill::CENTROID, "Centroid"},
 	{Trill::RAW, "Raw"},
@@ -75,11 +75,11 @@ struct trillRescaleFactors_t {
 };
 
 static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
-	{.pos = 1, .size = 1}, // UNKNOWN = 0,
-	{.pos = 3200, .size = 4566}, // BAR = 1,
+	{.pos = 1, .posH = 0, .size = 1}, // UNKNOWN = 0,
+	{.pos = 3200, .posH = 0, .size = 4566}, // BAR = 1,
 	{.pos = 1792, .posH = 1792, .size = 3780}, // SQUARE = 2,
-	{.pos = 4096, .size = 1}, // CRAFT = 3,
-	{.pos = 3584, .size = 5000}, // RING = 4,
+	{.pos = 4096, .posH = 0, .size = 1}, // CRAFT = 3,
+	{.pos = 3584, .posH = 0, .size = 5000}, // RING = 4,
 	{.pos = 1920, .posH = 1664, .size = 4000}, // HEX = 5,
 };
 
