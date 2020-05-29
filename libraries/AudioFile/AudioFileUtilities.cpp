@@ -77,7 +77,7 @@ int getNumFrames(std::string file) {
 	return sfinfo.frames;
 }
 
-int write(std::string file, float *buf, unsigned int channels, unsigned int frames, unsigned int samplerate)
+int write(const std::string& file, float *buf, unsigned int channels, unsigned int frames, unsigned int samplerate)
 {
 	SNDFILE *sndfile;
 	SF_INFO sfinfo;
@@ -108,16 +108,26 @@ int write(std::string file, float *buf, unsigned int channels, unsigned int fram
 	return frames;
 }
 
-int write(std::string file, std::vector<std::vector<float> > dataIn, unsigned int sampleRate)
+int write(const std::string& file, const std::vector<std::vector<float> >& dataIn, unsigned int sampleRate)
 {
 	unsigned int channels = dataIn.size();
 	if(channels < 1)
 		return -1;
-	unsigned int frames = dataIn[0].size();
+	// output file will have as many frames as the longest of the channels
+	// shorter channels are padded with zeros
+	unsigned int frames = 0;
+	for(auto& c : dataIn) {
+		if(c.size() > frames)
+			frames = c.size();
+	}
+
 	std::vector<float> dataOut(frames * channels);
-	for(unsigned int n = 0; n < frames; ++n)
+
+	// interleave data into dataOut
+	for(unsigned int c = 0; c < channels; ++c)
 	{
-		for(unsigned int c = 0; c < channels; ++c)
+		size_t siz = dataIn[c].size();
+		for(unsigned int n = 0; n < siz; ++n)
 			dataOut[n * channels + c] = dataIn[c][n];
 	}
 	return AudioFileUtilities::write(file, dataOut.data(), channels, frames, sampleRate);

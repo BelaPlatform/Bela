@@ -15,7 +15,7 @@ namespace AudioFileUtilities {
 	 * @param frames the frames in the data and output file
 	 * @param sampleRate the sampling rate of the data
 	 */
-	int write(std::string filename, float *buf, unsigned int channels, unsigned int frames, unsigned int samplerate);
+	int write(const std::string& filename, float *buf, unsigned int channels, unsigned int frames, unsigned int samplerate);
 	/**
 	 * Write non-interlaved samples from memory into an audio file on disk.
 	 *
@@ -24,7 +24,7 @@ namespace AudioFileUtilities {
 	 * @param sampleRate the sampling rate of the data
 	 *
 	 */
-	int write(std::string filename, std::vector<std::vector<float> > dataIn, unsigned int sampleRate);
+	int write(const std::string& filename, const std::vector<std::vector<float> >& dataIn, unsigned int sampleRate);
 	/**
 	 * Load audio samples from a file into memory.
 	 *
