@@ -203,7 +203,7 @@ class Trill : public I2c
 		 * Valid values of speed are, ordered by decreasing speed, are
 		 * comprised between 0 (`CSD_ULTRA_FAST_SPEED`) and 3 (`CSD_SLOW_SPEED`)
 		 * @param num_bits The bit depth of the scanning.
-		 * Valid values are comprised between 9 and 12.
+		 * Valid values are comprised between 9 and 16.
 		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
