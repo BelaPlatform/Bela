@@ -76,6 +76,6 @@ function resizeElements() {
 }
 
 function windowResized() {
-	resizeElements();
 	resizeCanvas(windowWidth, windowHeight);
+	resizeElements();
 }

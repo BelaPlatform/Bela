@@ -42,6 +42,7 @@ function draw() {
 }
 
 function windowResized() {
+	resizeCanvas(windowWidth, windowHeight);
 	let trillWidth = width / 2.1;
 	for(let t of trills) {
 		let width = trillWidth;
@@ -65,5 +66,4 @@ function windowResized() {
 			vPos = height - vPos;
 		trills[n].position = [hPos, vPos];
 	}
-	resizeCanvas(windowWidth, windowHeight);
 }
