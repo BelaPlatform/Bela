@@ -1,6 +1,7 @@
 #include "Trill.h"
 #include <map>
 #include <vector>
+#include <string.h>
 
 constexpr uint8_t Trill::speedValues[4];
 #define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
@@ -453,12 +454,13 @@ int Trill::readI2C() {
 	} else {
 		bytesToRead = kRawLength;
 	}
+	errno = 0;
 	int bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		num_touches_ = 0;
-		fprintf(stderr, "Trill: error while reading from device %s at address %#x (%d)\n",
-			getNameFromDevice(device_type_).c_str(), address, address);
+		fprintf(stderr, "Trill: error while reading from device %s at address %#x (%d): %d of %d bytes read (error: %d %s)\n",
+			getNameFromDevice(device_type_).c_str(), address, address, bytesRead, bytesToRead, errno, strerror(errno));
 		readErrorOccurred = true;
 		return 1;
 	}
