@@ -27,11 +27,14 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <Bela.h>
 #include <cmath>
 #include <libraries/ne10/NE10.h> // neon library
-#include "SampleData.h"
+#include <libraries/AudioFile/AudioFile.h>
+#include <string>
+#include <vector>
 #include "FIRfilter.h"
 
-SampleData gSampleData;	// User defined structure to get complex data from main
+std::string fileName;		// Name of the file to load
 int gReadPtr;			// Position of last read sample from file
+std::vector<float> data;
 
 // filter vars
 ne10_fir_instance_f32_t gFIRfilter;
@@ -50,8 +53,13 @@ void trigger_samples(void*);
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Retrieve a parameter passed in from the initAudio() call
-	gSampleData = *(SampleData *)userData;
+	// Retrieve the argument of the --file parameter (passed in from main())
+	fileName = (const char *)userData;
+	data = AudioFileUtilities::loadMono(fileName);
+	if(0 == data.size()) {
+		fprintf(stderr, "Unable to load file\n");
+		return false;
+	}
 
 	gReadPtr = -1;
 
@@ -71,9 +79,9 @@ void render(BelaContext *context, void *userData)
 
 		// If triggered...
 		if(gReadPtr != -1)
-			in += gSampleData.samples[gReadPtr++];	// ...read each sample...
+			in += data[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= gSampleData.sampleLen)
+		if(gReadPtr >= data.size())
 			gReadPtr = -1;
 
 		gFIRfilterIn[n] = in;
@@ -172,8 +180,6 @@ void trigger_samples(void*)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	delete[] gSampleData.samples;
-
 	NE10_FREE(gFIRfilterState);
 	NE10_FREE(gFIRfilterIn);
 	NE10_FREE(gFIRfilterOut);

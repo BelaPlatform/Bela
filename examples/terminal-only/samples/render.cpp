@@ -20,14 +20,15 @@ http://www.eecs.qmul.ac.uk/~andrewm
 The Bela software is distributed under the GNU Lesser General Public License
 (LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
-
-
 #include <Bela.h>
 #include <sys/types.h>
-#include "SampleData.h"
+#include <libraries/AudioFile/AudioFile.h>
+#include <string>
+#include <vector>
 
-SampleData gSampleData;	// User defined structure to get complex data from main
+std::string fileName;		// Name of the file to load
 int gReadPtr;			// Position of last read sample from file
+std::vector<float> data;
 
 bool initialise_trigger();
 void trigger_samples(void*);
@@ -35,8 +36,13 @@ AuxiliaryTask gTriggerSamplesTask;
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Retrieve a parameter passed in from the initAudio() call
-	gSampleData = *(SampleData *)userData;
+	// Retrieve the argument of the --file parameter (passed in from main())
+	fileName = (const char *)userData;
+	data = AudioFileUtilities::loadMono(fileName);
+	if(0 == data.size()) {
+		fprintf(stderr, "Unable to load file\n");
+		return false;
+	}
 
 	gReadPtr = -1;
 	if(initialise_trigger() == false)
@@ -56,9 +62,9 @@ void render(BelaContext *context, void *userData)
 		float out = 0;
 		// If triggered...
 		if(gReadPtr != -1)
-			out += gSampleData.samples[gReadPtr++];	// ...read each sample...
+			out += data[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= gSampleData.sampleLen)
+		if(gReadPtr >= data.size())
 			gReadPtr = -1;
 
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++)
@@ -136,7 +142,6 @@ void trigger_samples(void*)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	delete[] gSampleData.samples;
 }
 
 
@@ -152,16 +157,16 @@ Note that it CAN NOT be run from within the IDE or the IDE's console.
 
 See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
 
-This sketch shows how to playback audio samples from a buffer using
+This program shows how to playback audio samples from a buffer using
 key strokes.
 
-An audio file is loaded into a buffer `SampleData` as `gSampleData`. This is 
+An audio file is loaded into a vector `data`. This is 
 accessed with a read pointer that is incremented at audio rate within the render 
-function: `out += gSampleData.samples[gReadPtr++]`.
+function: `out += data[gReadPtr++]`.
 
 Note that the read pointer is stopped from incrementing past the length of the 
-`gSampleData`. This is achieved by comparing the read pointer value against the 
-sample length which we can access as follows: `gSampleData.sampleLen`.
+`data`. This is achieved by comparing the read pointer value against the 
+sample length which we can access as follows: `data.size()`.
 
 You can trigger the sample with keyboard input:
 

@@ -27,10 +27,14 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <algorithm>
 #include <stdio.h>
 #include <sys/types.h>
-#include "SampleData.h"
+#include <libraries/AudioFile/AudioFile.h>
+#include <string>
+#include <vector>
 
-SampleData gSampleData;	// User defined structure to get complex data from main
+std::string fileName;		// Name of the file to load
 int gReadPtr;			// Position of last read sample from file
+std::vector<float> data;
+float gCutFreq = 200;		// the initial cutoff frequency, set from within main()
 
 // filter vars
 float gLastX[2];
@@ -41,7 +45,7 @@ double lb0, lb1, lb2, la1, la2 = 0.0;
 int gChangeCoeff = 0;
 int gFreqDelta = 0;
 
-void initialise_filter(float freq);
+void initialise_filter(float sample_rate, float freq);
 
 void calculate_coeff(float cutFreq);
 
@@ -54,21 +58,22 @@ void check_coeff(void*);
 
 // Task for handling the update of the frequencies using the analog inputs
 AuxiliaryTask gInputTask;
-
 void read_input(void*);
-
-
-extern float gCutFreq;
 
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Retrieve a parameter passed in from the initAudio() call
-	gSampleData = *(SampleData *)userData;
+	// Retrieve the argument of the --file parameter (passed in from main())
+	fileName = (const char *)userData;
+	data = AudioFileUtilities::loadMono(fileName);
+	if(0 == data.size()) {
+		fprintf(stderr, "Unable to load file\n");
+		return false;
+	}
 
 	gReadPtr = -1;
 
-	initialise_filter(200);
+	initialise_filter(context->audioSampleRate, gCutFreq);
 
 	// Initialise auxiliary tasks
 	if(!initialise_aux_tasks())
@@ -85,9 +90,9 @@ void render(BelaContext *context, void *userData)
 
 		// If triggered...
 		if(gReadPtr != -1)
-			sample += gSampleData.samples[gReadPtr++];	// ...read each sample...
+			sample += data[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= gSampleData.sampleLen)
+		if(gReadPtr >= data.size())
 			gReadPtr = -1;
 
 		out = lb0*sample+lb1*gLastX[0]+lb2*gLastX[1]-la1*gLastY[0]-la2*gLastY[1];
@@ -108,10 +113,12 @@ void render(BelaContext *context, void *userData)
 	Bela_scheduleAuxiliaryTask(gInputTask);
 }
 
+float gSampleRate = 1;
 // First calculation of coefficients
-
-void initialise_filter(float freq)
+void initialise_filter(float sample_rate, float freq)
 {
+	// store the sample rate for later use
+	gSampleRate = sample_rate;
 	calculate_coeff(freq);
 }
 
@@ -123,7 +130,7 @@ void calculate_coeff(float cutFreq)
 {
 	// Initialise any previous state (clearing buffers etc.)
 	// to prepare for calls to render()
-	float sampleRate = 44100;
+	float sampleRate = gSampleRate;
 	double f = 2*M_PI*cutFreq/sampleRate;
 	double denom = 4+2*sqrt(2)*f+f*f;
 	lb0 = f*f/denom;
@@ -235,7 +242,6 @@ void read_input(void*)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	delete[] gSampleData.samples;
 }
 
 
