@@ -35,7 +35,7 @@ int gReadPtr;	// Position of last read sample from file
 
 bool setup(BelaContext *context, void *userData)
 {
-	gSampleData = AudioFileUtilities::load(gFilename, gStartFrame, gEndFrame - gStartFrame);
+	gSampleData = AudioFileUtilities::load(gFilename, gEndFrame - gStartFrame, gStartFrame);
 	return true;
 }
 
