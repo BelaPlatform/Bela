@@ -6,7 +6,7 @@
 
 namespace AudioFileUtilities {
 
-int getSamples(std::string file, float *buf, int channel, int startFrame, int endFrame)
+int getSamples(const std::string& file, float *buf, unsigned int channel, unsigned int startFrame, unsigned int endFrame)
 {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
@@ -25,14 +25,13 @@ int getSamples(std::string file, float *buf, int channel, int startFrame, int en
 		return 1;
 	}
 
-	int frameLen = endFrame-startFrame;
-
-	if(frameLen <= 0 || startFrame < 0 || endFrame <= 0 || endFrame > sfinfo.frames)
+	if(endFrame <= startFrame || endFrame > sfinfo.frames)
 	{
 		std::cerr << "Error: " << file << " invalid frame range requested" << std::endl;
 		sf_close(sndfile);
 		return 1;
 	}
+	unsigned int frameLen = endFrame - startFrame;
 
 	sf_seek(sndfile,startFrame,SEEK_SET);
 
@@ -51,7 +50,7 @@ int getSamples(std::string file, float *buf, int channel, int startFrame, int en
 	return 0;
 }
 
-int getNumChannels(std::string file) {
+int getNumChannels(const std::string& file) {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;
@@ -64,7 +63,7 @@ int getNumChannels(std::string file) {
 	return sfinfo.channels;
 }
 
-int getNumFrames(std::string file) {
+int getNumFrames(const std::string& file) {
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	sfinfo.format = 0;

@@ -2,10 +2,38 @@
 #include <string>
 #include <vector>
 
+/**
+ *@brief A collection of functions for loading and storing audio files.
+ *
+ * A collection of functions for loading and storing audio files.
+ */
+
 namespace AudioFileUtilities {
-	int getSamples(std::string file, float *buf, int channel, int startFrame, int endFrame);
-	int getNumChannels(std::string file);
-	int getNumFrames(std::string file);
+	/**
+	 * @addtogroup AudioFileUtilities
+	 */
+	/**
+	 * Load audio frames between @p startFrame and @p endFrame from @p
+	 * channel of the specified @p file into the preallocated memory
+	 * location @p buf.
+	 *
+	 * @return 0 on success, or an error code upon failure.
+	 */
+	int getSamples(const std::string& file, float *buf, unsigned int channel, unsigned int startFrame, unsigned int endFrame);
+	/**
+	 * Get the number of audio channels in @p file.
+	 *
+	 * @return the number of audio channels on success, or a negative error
+	 * code upon failure.
+	 */
+	int getNumChannels(const std::string& file);
+	/**
+	 * Get the number of audio frames in @p file.
+	 *
+	 * @return the number of frames on success, or a negative error code
+	 * upon failure.
+	 */
+	int getNumFrames(const std::string& file);
 	/**
 	 * Store samples from memory into an audio file on disk.
 	 *
