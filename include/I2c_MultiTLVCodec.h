@@ -49,10 +49,11 @@ public:
 	I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, TdmConfig tdmConfig = TdmConfig(), bool verbose = false);
 	~I2c_MultiTLVCodec();
 
+protected:
+	McaspConfig mcaspConfig;
 private:
 	I2c_Codec *masterCodec;
 	std::vector<I2c_Codec*> extraCodecs;
-	McaspConfig mc;
 
 	bool running;
 	bool verbose;

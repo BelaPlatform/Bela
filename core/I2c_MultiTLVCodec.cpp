@@ -47,8 +47,6 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2
 	}
 	// Master codec generates bclk (and possibly wclk) with its PLL
 	// and occupies the first two slots starting from tdmConfig.firstSlot
-	const unsigned int slotSize = tdmConfig.slotSize;
-	const unsigned int bitDelay = tdmConfig.bitDelay;
 	unsigned int slotNum = tdmConfig.firstSlot;
 	bool codecWclkMaster =
 #ifdef CODEC_WCLK_MASTER
@@ -58,8 +56,8 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2
 #endif
 
 	AudioCodecParams params;
-	params.slotSize = slotSize;
-	params.bitDelay = bitDelay;
+	params.slotSize = tdmConfig.slotSize;
+	params.bitDelay = tdmConfig.bitDelay;
 	params.dualRate = false;
 	params.tdmMode = true;
 	params.startingSlot = slotNum;
@@ -74,6 +72,11 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2
 		params.startingSlot = slotNum;
 		codec->setParameters(params);
 	}
+	// initialise the McASP configuration.
+	mcaspConfig = masterCodec->getMcaspConfig();
+	mcaspConfig.params.dataSize = kDataSize;
+	mcaspConfig.params.inChannels = getNumIns();
+	mcaspConfig.params.outChannels = getNumOuts();
 }
 
 // This method initialises the audio codec to its default state
@@ -278,11 +281,7 @@ I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 
 McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 {
-	mc = masterCodec->getMcaspConfig();
-	mc.params.dataSize = kDataSize;
-	mc.params.inChannels = getNumIns();
-	mc.params.outChannels = getNumOuts();
-	return mc;
+	return mcaspConfig;
 /*
 // Values below are for 16x 16-bit TDM slots
 #define BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
