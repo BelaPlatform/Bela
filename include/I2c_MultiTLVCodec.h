@@ -45,6 +45,7 @@ public:
 	int debugReadRegister(int codecNum, int regNum);
 	McaspConfig& getMcaspConfig();
 
+	I2c_MultiTLVCodec(I2c_MultiTLVCodec&&) = delete;
 	I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, TdmConfig tdmConfig = TdmConfig(), bool verbose = false);
 	~I2c_MultiTLVCodec();
 
