@@ -6,47 +6,50 @@
  * I2C addresses). Codec 0 provides the clock signals
  * via its PLL and the other codecs are clocked to it.
  *
- *  Created on: August 9, 2019
- *      Author: Andrew McPherson
  */
 
 #include <vector>
 #include "../include/I2c_MultiTLVCodec.h"
 
+static const unsigned int kDataSize = 16;
 #undef CODEC_WCLK_MASTER	// Match this with pru_rtaudio_irq.p
 
-I2c_MultiTLVCodec::I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
+I2c_MultiTLVCodec::I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, TdmConfig tdmConfig, bool isVerbose /*= false*/)
 : masterCodec(0), running(false), verbose(isVerbose)
 {
-	// for(int address = i2cAddress + 3; address >= i2cAddress; address--) {
-	for(int address = i2cAddress; address < i2cAddress + 4; address++) {
-		// Check for presence of TLV codec and take the first one we find as the master codec
-		// TODO: this code assumes the first codec is a 3104 (Bela Mini cape), which might not always be true
-		I2c_Codec::CodecType type = (address == i2cAddress) ? I2c_Codec::TLV320AIC3104 : I2c_Codec::TLV320AIC3106;
-		I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
-		if(testCodec->initCodec() != 0) {
-			delete testCodec;
-			if(verbose) {
-				fprintf(stderr, "Error initialising I2C codec on bus %d address %d\n", i2cBus, address);
+	for(auto i2cBus : i2cBusses) {
+		for(int address = i2cAddress; address < i2cAddress + 4; address++) {
+			// Check for presence of TLV codec and take the first one we find as the master codec
+			// TODO: this code assumes the first codec is a 3104 (Bela Mini cape), which might not always be true
+			I2c_Codec::CodecType type = (address == i2cAddress) ? I2c_Codec::TLV320AIC3104 : I2c_Codec::TLV320AIC3106;
+			I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
+			if(testCodec->initCodec() != 0) {
+				delete testCodec;
+				if(verbose) {
+					fprintf(stderr, "Error initialising I2C codec on bus %d address %d\n", i2cBus, address);
+				}
 			}
-		}
-		else {
-			// codec found
-			if(verbose) {
-				fprintf(stderr, "Found I2C codec on bus %d address %d\n", i2cBus, address);
-			}
+			else {
+				// codec found
+				if(verbose) {
+					fprintf(stderr, "Found I2C codec on bus %d address %d\n", i2cBus, address);
+				}
 
-			if(!masterCodec)
-				masterCodec = testCodec;
-			else
-				extraCodecs.push_back(testCodec);
+				if(!masterCodec)
+					masterCodec = testCodec;
+				else
+					extraCodecs.push_back(testCodec);
+			}
 		}
 	}
+	if(!masterCodec) {
+		return;
+	}
 	// Master codec generates bclk (and possibly wclk) with its PLL
-	// and occupies the first two slots
-	const int slotSize = 16;
-	const unsigned int bitDelay = 0;
-	unsigned int slotNum = 0;
+	// and occupies the first two slots starting from tdmConfig.firstSlot
+	const unsigned int slotSize = tdmConfig.slotSize;
+	const unsigned int bitDelay = tdmConfig.bitDelay;
+	unsigned int slotNum = tdmConfig.firstSlot;
 	bool codecWclkMaster =
 #ifdef CODEC_WCLK_MASTER
 		true; // Main codec generates word clock
@@ -59,13 +62,11 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool isVerbose 
 	params.bitDelay = bitDelay;
 	params.dualRate = false;
 	params.tdmMode = true;
-	if(masterCodec) {
-		params.startingSlot = slotNum;
-		params.generatesBclk = true;
-		params.generatesWclk = codecWclkMaster;
-		params.mclk = masterCodec->getMcaspConfig().getValidAhclk(24000000);
-		masterCodec->setParameters(params);
-	}
+	params.startingSlot = slotNum;
+	params.generatesBclk = true;
+	params.generatesWclk = codecWclkMaster;
+	params.mclk = masterCodec->getMcaspConfig().getValidAhclk(24000000);
+	masterCodec->setParameters(params);
 	params.generatesBclk = false;
 	params.generatesWclk = false;
 	for(auto& codec : extraCodecs) {
@@ -278,6 +279,7 @@ I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 {
 	mc = masterCodec->getMcaspConfig();
+	mc.params.dataSize = kDataSize;
 	mc.params.inChannels = getNumIns();
 	mc.params.outChannels = getNumOuts();
 	return mc;

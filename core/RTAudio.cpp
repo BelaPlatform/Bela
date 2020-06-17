@@ -419,7 +419,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			gDisabledCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 	}
 	else if(belaHw == BelaHw_BelaMiniMultiAudio)
-		gAudioCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+		gAudioCodec = new I2c_MultiTLVCodec({codecI2cBus}, codecI2cAddress, {}, gRTAudioVerbose);
 	else if(belaHw == BelaHw_BelaMiniMultiTdm)
 		gAudioCodec = new I2c_MultiTdmCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
 	else if(Bela_hwContains(belaHw, Tlv320aic3104))

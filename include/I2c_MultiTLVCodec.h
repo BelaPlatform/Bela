@@ -18,6 +18,13 @@
 class I2c_MultiTLVCodec : public AudioCodec
 {
 public:
+	class TdmConfig {
+	public:
+		TdmConfig(){};
+		unsigned int slotSize = 16;
+		unsigned int bitDelay = 0;
+		unsigned int firstSlot = 0;
+	};
 	int initCodec();
 	int startAudio(int dual_rate);
 	int stopAudio();
@@ -38,7 +45,7 @@ public:
 	int debugReadRegister(int codecNum, int regNum);
 	McaspConfig& getMcaspConfig();
 
-	I2c_MultiTLVCodec(int i2cBus, int i2cAddress, bool verbose = false);
+	I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, TdmConfig tdmConfig = TdmConfig(), bool verbose = false);
 	~I2c_MultiTLVCodec();
 
 private:
