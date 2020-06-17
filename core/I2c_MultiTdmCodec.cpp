@@ -1,33 +1,39 @@
 #include "../include/I2c_MultiTdmCodec.h"
 
-I2c_MultiTdmCodec::I2c_MultiTdmCodec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/) :
-        I2c_Codec(i2cBus, i2cAddress, CodecType::TLV320AIC3104, isVerbose)
+static const unsigned int minTdmIns = 4;
+static const unsigned int minTdmOuts = 4;
+
+I2c_MultiTLVCodec::TdmConfig I2c_MultiTdmCodec::makeTdmConfig()
 {
-	params.slotSize = 32;
-	params.tdmMode = true;
-	params.startingSlot = 0;
-	params.bitDelay = 1;
-	params.dualRate = false;
-	params.generatesBclk = true;
-	params.generatesWclk = true;
+	I2c_MultiTLVCodec::TdmConfig tdm;
+	tdm.slotSize = 32;
+	tdm.bitDelay = 1;
+	tdm.firstSlot = 0;
+	return tdm;
+}
+
+I2c_MultiTdmCodec::I2c_MultiTdmCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, bool isVerbose)
+	: I2c_MultiTLVCodec(i2cBusses, i2cAddress, makeTdmConfig(), isVerbose)
+{
+	I2c_MultiTLVCodec::getMcaspConfig();
+	mcaspConfig.params.inSerializers = {0, 1};
 }
 
 McaspConfig& I2c_MultiTdmCodec::getMcaspConfig()
 {
-	mcaspConfig = I2c_Codec::getMcaspConfig();
-	mcaspConfig.params.dataSize = 16;
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels	= getNumOuts();
-	mcaspConfig.params.inSerializers = {0, 1};
 	return mcaspConfig;
 }
 
 unsigned int I2c_MultiTdmCodec::getNumIns()
 {
-	return 8;
+	unsigned int mul = mcaspConfig.params.inSerializers.size();
+	return std::max(I2c_MultiTLVCodec::getNumIns() * mul, minTdmIns * mul);
 }
 
 unsigned int I2c_MultiTdmCodec::getNumOuts()
 {
-	return 8;
+	unsigned int mul = mcaspConfig.params.outSerializers.size();
+	return std::max(I2c_MultiTLVCodec::getNumOuts() * mul, minTdmOuts * mul);
 }
