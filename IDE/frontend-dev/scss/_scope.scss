@@ -44,6 +44,8 @@ button.scope-controls {
   position: absolute;
   top: 55px;
   z-index: 9999;
+  overflow-y: auto;
+  height: calc(100vh - (55px + 2*2em + 2*1px)); // remove the sum of top, padding, border
   & * {
     user-select: none;
   }
