@@ -34,6 +34,11 @@ class Scope{
 		NORMAL, ///< Normal triggering
 		CUSTOM, ///< Triggering when calling trigger()
 	} TriggerMode;
+	typedef enum {
+		POSITIVE, ///< Trigger when crossing the threshold and the signal is increasing
+		NEGATIVE, ///< Trigger when crossing the threshold and the signal is decreasing
+		BOTH, ///< Trigger on any crossing of the threshold.
+	} TriggerSlope;
 
         Scope();
 	Scope(unsigned int numChannels, float sampleRate);
@@ -83,7 +88,7 @@ class Scope{
 	/**
 	 * Set the triggering mode for the scope
 	 */
-	void setTrigger(TriggerMode mode, int channel, int dir, float level);
+	void setTrigger(TriggerMode mode, unsigned int channel, TriggerSlope dir, float level);
 		
     private:
 	typedef enum {
@@ -116,8 +121,8 @@ class Scope{
         int frameWidth;
         PlotMode plotMode = TIME_DOMAIN;
         TriggerMode triggerMode;
-        int triggerChannel;
-        int triggerDir;
+        unsigned int triggerChannel;
+        TriggerSlope triggerDir;
         float triggerLevel;
         int xOffset;
         int xOffsetSamples;

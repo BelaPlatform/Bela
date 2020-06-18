@@ -212,20 +212,24 @@ bool Scope::trigger(){
 }
 
 bool Scope::triggered(){
-    if (AUTO == triggerMode || NORMAL == triggerMode){
-        return ((triggerDir==0) && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel // positive trigger direction
-                && buffer[channelWidth*triggerChannel+readPointer] >= triggerLevel) || 
-                ((triggerDir==1) && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel // negative trigger direciton
-                && buffer[channelWidth*triggerChannel+readPointer] <= triggerLevel) ||
-                ((triggerDir==2) && 																								// bi-directional trigger
-                	((buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel
-                	&& buffer[channelWidth*triggerChannel+readPointer] >= triggerLevel) || 
-                	(buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel
-	                && buffer[channelWidth*triggerChannel+readPointer] <= triggerLevel)));
-    } else if (CUSTOM == triggerMode){
-        return (customTriggered && readPointer == customTriggerPointer);
-    }
-    return false;
+	if (AUTO == triggerMode || NORMAL == triggerMode){
+		float prev = buffer[channelWidth * triggerChannel + ((readPointer - 1 + channelWidth) % channelWidth)];
+		float cur = buffer[channelWidth * triggerChannel + readPointer];
+		bool negativeEdge = prev >= triggerLevel && cur < triggerLevel;
+		bool positiveEdge = prev < triggerLevel && cur >= triggerLevel;
+		switch (triggerDir) {
+		case POSITIVE:
+			return positiveEdge;
+		case NEGATIVE:
+			return negativeEdge;
+		case BOTH:
+		default:
+			return positiveEdge || negativeEdge;
+		}
+	} else if (CUSTOM == triggerMode){
+		return (customTriggered && readPointer == customTriggerPointer);
+	}
+	return false;
 }
 
 void Scope::triggerTimeDomain(){
@@ -465,7 +469,7 @@ void Scope::setXParams(){
     xOffsetSamples = xOffset/upSampling;
 }
 
-void Scope::setTrigger(TriggerMode mode, int channel, int dir, float level){
+void Scope::setTrigger(TriggerMode mode, unsigned int channel, TriggerSlope dir, float level){
 	setSetting(L"triggerMode", mode);
 	setSetting(L"triggerChannel", channel);
 	setSetting(L"triggerDir", dir);
@@ -491,9 +495,9 @@ void Scope::setSetting(std::wstring setting, float value){
 	} else if (setting.compare(L"triggerMode") == 0){
 		triggerMode = (TriggerMode)value;
 	} else if (setting.compare(L"triggerChannel") == 0){
-		triggerChannel = (int)value;
+		triggerChannel = (unsigned int)value;
 	} else if (setting.compare(L"triggerDir") == 0){
-		triggerDir = (int)value;
+		triggerDir = (TriggerSlope)value;
 	} else if (setting.compare(L"triggerLevel") == 0){
 		triggerLevel = value;
 	} else if (setting.compare(L"xOffset") == 0){
