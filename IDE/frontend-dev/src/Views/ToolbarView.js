@@ -120,7 +120,7 @@ class ToolbarView extends View {
         .removeClass('running')
         .removeClass('running-button');
 			$('[data-toolbar-bela-cpu]').html('CPU: --').css('color', 'black');
-  		$('[data-toolbar-msw-cpu]').html('MSW: --').css('color', 'black');
+			$('[data-toolbar-cpu-msw]').html('MSW: --').css('color', 'black');
 			modeswitches = 0;
 		}
 	}
@@ -256,10 +256,10 @@ class ToolbarView extends View {
 	}
 
 	mode_switches(value){
-		$('[data-toolbar-msw-cpu]').html('MSW: '+value);
+		$('[data-toolbar-cpu-msw]').html('MSW: '+value);
 		if (value > modeswitches){
 			this.emit('mode-switch-warning', value);
-			$('[data-toolbar-msw-cpu]').css('color', 'red');
+			$('[data-toolbar-cpu-msw]').css('color', 'red');
 		}
 		modeswitches = value;
 	}
