@@ -1,7 +1,7 @@
 #include "../include/I2c_MultiTdmCodec.h"
 
-static const unsigned int minTdmIns = 4;
-static const unsigned int minTdmOuts = 4;
+static const unsigned int minTdmIns = 6;
+static const unsigned int minTdmOuts = 6;
 
 I2c_MultiTLVCodec::TdmConfig I2c_MultiTdmCodec::makeTdmConfig()
 {
@@ -17,6 +17,7 @@ I2c_MultiTdmCodec::I2c_MultiTdmCodec(std::vector<unsigned int> i2cBusses, int i2
 {
 	I2c_MultiTLVCodec::getMcaspConfig();
 	mcaspConfig.params.inSerializers = {0, 1};
+	mcaspConfig.params.outSerializers = {2, 3};
 }
 
 McaspConfig& I2c_MultiTdmCodec::getMcaspConfig()
