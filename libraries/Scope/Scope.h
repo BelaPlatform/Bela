@@ -29,6 +29,12 @@ class AuxTaskRT;
  */
 class Scope{
     public:
+	typedef enum {
+		AUTO, ///< Auto triggering
+		NORMAL, ///< Normal triggering
+		CUSTOM, ///< Triggering when calling trigger()
+	} TriggerMode;
+
         Scope();
 	Scope(unsigned int numChannels, float sampleRate);
 	~Scope();
@@ -77,10 +83,13 @@ class Scope{
 	/**
 	 * Set the triggering mode for the scope
 	 */
-	void setTrigger(int mode, int channel, int dir, float level);
+	void setTrigger(TriggerMode mode, int channel, int dir, float level);
 		
     private:
-
+	typedef enum {
+		TIME_DOMAIN, ///< Time domain
+		FREQ_DOMAIN, ///< Frequency domain
+	} PlotMode;
 	void dealloc();
         void start();
         void stop();
@@ -105,8 +114,8 @@ class Scope{
         float sampleRate;
         int pixelWidth;
         int frameWidth;
-        int plotMode = 0;
-        int triggerMode;
+        PlotMode plotMode = TIME_DOMAIN;
+        TriggerMode triggerMode;
         int triggerChannel;
         int triggerDir;
         float triggerLevel;

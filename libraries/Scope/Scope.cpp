@@ -37,9 +37,9 @@ void Scope::dealloc(){
 }
 
 void Scope::triggerTask(){
-    if (plotMode == 0){
+    if (TIME_DOMAIN == plotMode){
         triggerTimeDomain();
-    } else if (plotMode == 1){
+    } else if (FREQ_DOMAIN == plotMode){
         triggerFFT();
     }
 }
@@ -99,7 +99,7 @@ void Scope::setPlotMode(){
     
     // setup the input buffer
     frameWidth = pixelWidth/upSampling;
-	if(plotMode == 0 ) { // time domain 
+	if(TIME_DOMAIN == plotMode) {
 		channelWidth = frameWidth * FRAMES_STORED;
 	} else {
 		channelWidth = FFTLength;
@@ -119,7 +119,7 @@ void Scope::setPlotMode(){
     autoTriggerCount = 0;
     customTriggered = false;
         
-    if (plotMode == 1){ // frequency domain
+    if (FREQ_DOMAIN == plotMode){
 		dealloc();
 		inFFT  = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
 		outFFT = (ne10_fft_cpx_float32_t*) NE10_MALLOC (FFTLength * sizeof (ne10_fft_cpx_float32_t));
@@ -179,7 +179,7 @@ bool Scope::prelog(){
 	
     if (!started || isResizing || isUsingBuffer) return false;
     
-    if (plotMode == 0 && downSampling > 1){
+    if (TIME_DOMAIN == plotMode && downSampling > 1){
         if (downSampleCount < downSampling){
             downSampleCount++;
             return false;
@@ -203,7 +203,7 @@ void Scope::postlog(){
 }
 
 bool Scope::trigger(){
-    if (triggerMode == 2 && !customTriggered && triggerPrimed && started){
+    if (CUSTOM == triggerMode && !customTriggered && triggerPrimed && started){
         customTriggerPointer = (writePointer-xOffset+channelWidth)%channelWidth;
         customTriggered = true;
         return true;
@@ -212,7 +212,7 @@ bool Scope::trigger(){
 }
 
 bool Scope::triggered(){
-    if (triggerMode == 0 || triggerMode == 1){  // normal or auto trigger
+    if (AUTO == triggerMode || NORMAL == triggerMode){
         return ((triggerDir==0) && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] < triggerLevel // positive trigger direction
                 && buffer[channelWidth*triggerChannel+readPointer] >= triggerLevel) || 
                 ((triggerDir==1) && buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel // negative trigger direciton
@@ -222,7 +222,7 @@ bool Scope::triggered(){
                 	&& buffer[channelWidth*triggerChannel+readPointer] >= triggerLevel) || 
                 	(buffer[channelWidth*triggerChannel+((readPointer-1+channelWidth)%channelWidth)] > triggerLevel
 	                && buffer[channelWidth*triggerChannel+readPointer] <= triggerLevel)));
-    } else if (triggerMode == 2){   // custom trigger
+    } else if (CUSTOM == triggerMode){
         return (customTriggered && readPointer == customTriggerPointer);
     }
     return false;
@@ -251,7 +251,7 @@ void Scope::triggerTimeDomain(){
                 
             } else {
                 // auto triggering
-                if (triggerMode == 0 && (autoTriggerCount++ > (frameWidth+holdOffSamples))){
+                if (AUTO == triggerMode && (autoTriggerCount++ > (frameWidth+holdOffSamples))){
                     // it's been a whole frameWidth since we've found a trigger, so auto-trigger anyway
                     triggerPrimed = false;
                     triggerCollecting = true;
@@ -457,15 +457,15 @@ void Scope::doFFT(){
 }
 
 void Scope::setXParams(){
-    if (plotMode == 0){
+    if (TIME_DOMAIN == plotMode){
         holdOffSamples = (int)(sampleRate*0.001*holdOff/downSampling);
-    } else if (plotMode == 1){
+    } else if (FREQ_DOMAIN == plotMode){
         holdOffSamples = (int)(sampleRate*0.001*holdOff*upSampling);
     }
     xOffsetSamples = xOffset/upSampling;
 }
 
-void Scope::setTrigger(int mode, int channel, int dir, float level){
+void Scope::setTrigger(TriggerMode mode, int channel, int dir, float level){
 	setSetting(L"triggerMode", mode);
 	setSetting(L"triggerChannel", channel);
 	setSetting(L"triggerDir", dir);
@@ -484,12 +484,12 @@ void Scope::setSetting(std::wstring setting, float value){
         start();
 	} else if (setting.compare(L"plotMode") == 0){
 		stop();
-        plotMode = (int)value;
+        plotMode = (PlotMode)value;
         setPlotMode();
         setXParams();
         start();
 	} else if (setting.compare(L"triggerMode") == 0){
-		triggerMode = (int)value;
+		triggerMode = (TriggerMode)value;
 	} else if (setting.compare(L"triggerChannel") == 0){
 		triggerChannel = (int)value;
 	} else if (setting.compare(L"triggerDir") == 0){
