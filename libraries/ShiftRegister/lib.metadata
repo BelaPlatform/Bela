@@ -1,0 +1,17 @@
+name=Shift Register
+version=1.0.0
+author=Giulio Moro<giulio@bela.io>
+maintainer=Giulio Moro<giulio@bela.io>>
+description=A class to control a shift register from Bela's digital outputs.
+examples=Sensors/shift-register
+license=LGPL 3.0
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
