@@ -1022,6 +1022,14 @@ GPIO_DONE:
     LBBO start_reg, r28, 0, num_bytes
 .endm
     
+.macro FIFO_READ_2_WORDS_AND_PACK
+.mparam reg_dest, reg_tmp1, reg_tmp2
+	MCASP_READ_FROM_DATAPORT reg_tmp1, 8
+	AND reg_dest, reg_tmp1, r17
+	LSL reg_tmp2,reg_tmp2, 16
+	OR reg_dest, reg_dest, reg_tmp2
+.endm
+
 // Set a bit and wait for it to come up
 .macro MCASP_REG_SET_BIT_AND_POLL
 .mparam reg, mask
@@ -1993,52 +2001,28 @@ FRAME_READ_MULTI_TLV_LT16CHAN:
 
 	LSL r0, r0, 1 // r0 now contains the size in bytes of the packed data (16 bits per channel)
 	 
-	 MCASP_READ_FROM_DATAPORT r9, 8
-	 AND r1, r9, r17
-	 LSL r10, r10, 16
-	 OR r1, r1, r10
+	FIFO_READ_2_WORDS_AND_PACK r1, r9, r10
 	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 4
 	 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r2, r9, r17
-	 LSL r10, r10, 16
-	 OR r2, r2, r10
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 8
-	 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r3, r9, r17
-	 LSL r10, r10, 16
-	 OR r3, r3, r10
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 12
+	FIFO_READ_2_WORDS_AND_PACK r2, r9, r10
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 8
 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r4, r9, r17
-	 LSL r10, r10, 16
-	 OR r4, r4, r10 
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 16	 
+	FIFO_READ_2_WORDS_AND_PACK r3, r9, r10
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 12
 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r5, r9, r17
-	 LSL r10, r10, 16
-	 OR r5, r5, r10
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 20
-	 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r6, r9, r17
-	 LSL r10, r10, 16
-	 OR r6, r6, r10
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 24
+	FIFO_READ_2_WORDS_AND_PACK r4, r9, r10
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 16
 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r7, r9, r17
-	 LSL r10, r10, 16
-	 OR r7, r7, r10
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 28
+	FIFO_READ_2_WORDS_AND_PACK r5, r9, r10
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 20
 	 
-	 MCASP_READ_FROM_DATAPORT r9, 8						
-	 AND r8, r9, r17
-	 LSL r10, r10, 16
-	 OR r8, r8, r10
+	FIFO_READ_2_WORDS_AND_PACK r6, r9, r10
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 24
+
+	FIFO_READ_2_WORDS_AND_PACK r7, r9, r10
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 28
+	 
+	FIFO_READ_2_WORDS_AND_PACK r8, r9, r10
 	  
 FRAME_READ_MULTI_TLV_STORE:
      SBCO r1, C_MCASP_MEM, reg_mcasp_adc_current, b0 	     // store result
