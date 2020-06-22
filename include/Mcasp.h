@@ -59,6 +59,7 @@ public:
 	} SrctlDrive;
 	double getValidAhclk(double desiredClock, unsigned int* outDiv = nullptr);
 	McaspConfig();
+	void print();
 	Parameters params;
 	McaspRegisters getRegisters();
 private:
