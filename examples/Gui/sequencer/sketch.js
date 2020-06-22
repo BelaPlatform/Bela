@@ -18,7 +18,7 @@ and it will play them. At the same time, Bela will send to the GUI the beat upda
 
 let patches=[]; //rectangles to be displayed in the GUI interface
 let playHead = []; //play head displayed in the GUI interface
-let patterns = [0,0,0,0,0,0,0,0,0,0]; //array to be sent to Bela
+let patterns = [0,0,0,0,0,0,0,0,0,0,0]; //array to be sent to Bela
 let buttonState = 0; //PLAY/STOP button
 let beats = 0; //Current beat being played (8 beats, from 0 to 7)
 
@@ -102,10 +102,13 @@ function draw() {
 
 	patterns[8]=rSlider.value();
 	patterns[9]=buttonState;
-
-	//Send data buffer of floats to Bela containing the patterns array.
-	//See the gui-to-bela example to see details on how this function works
-	Bela.data.sendBuffer(0, 'float', patterns);
+	
+	//Finally, we send an extra value containing the current beat, so we can check in Bela if the Gui is being updated
+	patterns[10]=beats;
+	
+	//Send data buffer of floats to Bela containing the patterns array. 
+	//See the gui-to-bela example to see details on how this function works 
+	Bela.data.sendBuffer(0, 'float', patterns); 
 }
 
 //rectangles of interface

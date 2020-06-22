@@ -54,8 +54,8 @@ int gDrumBufferForReadPointer[NUMBER_OF_READPOINTERS];
 //the actual read pointers
 int gReadPointers[NUMBER_OF_READPOINTERS];
 //array to store the pattern to be played (i.e, which drums to be played on each beat)
-//For example, gPatterns = [1,0,1,0,0,0,0,0] means that in that beat, sounds 0 and 2 will be played simoultaneously
-int gPattern[PATTERN_LENGTH];
+//For example, gPattern = {1,0,1,0,0,0,0,0} means that in that beat, sounds 0 and 2 will be played simoultaneously
+int gPattern[NUMBER_OF_DRUMS][PATTERN_LENGTH];
 int gPatternLength = PATTERN_LENGTH;
 
 //time interval between each beat, in millliseconds. As the user move the (speed) slider in the GUI, then it will send
@@ -86,16 +86,18 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	//initialize gPattern with all sounds off.
-	for (int i = 0; i<8; i++)
-		gPattern[i] = 0;
+	for (int i = 0; i<NUMBER_OF_DRUMS; i++){
+		for (int j = 0; j<PATTERN_LENGTH; j++){
+			gPattern[i][j]= 0;
+		}
+	}
+
 
 	//setup the GUI
 	myGui.setup(context->projectName);
 
 	// Setup a buffer of floats (holding a maximum of 10 values) to be received from the GUI
-	myGui.setBuffer('f', 10); // Index = 0
-
-
+	myGui.setBuffer('f', 11); // Index = 0
 	return true;
 }
 
@@ -166,24 +168,31 @@ void updatePattern() {
 	DataBuffer buffer = myGui.getDataBuffer(0);
 	// Retrieve contents of the buffer as floats
 	float* data = buffer.getAsFloat();
-	//copy values to gPattern. Values are 1 if drum "i" is active for the current beat, and 0 if not
-	for (unsigned int i = 0; i < 8; i++){
-		gPattern[i] = (int)data[i];
-	}
 
-	//read slider value sent from the GUI, and map it to proper values of event intervals
-	gEventIntervalMilliseconds=400-(int)data[8];
-	//read status of PLAY/STOP button from GUI
-	gIsPlaying = (int)data[9];
+	//If the GUI tab is inactive, the sketch.js file will stop looping, so we will read always the same value.
+	//We check that the GUI sketch is active by checking if the beat sent from the GUI is the current beat.
+	if ((int)data[10]==gCurrentBeat){
+
+		//copy values to gPattern. Values are 1 if drum "i" is active for the current beat, and 0 if not
+		for (unsigned int i = 0; i < 8; i++){
+			gPattern[i][gCurrentBeat] = (int)data[i];
+		}
+
+		//read slider value sent from the GUI, and map it to proper values of event intervals
+		gEventIntervalMilliseconds=400-(int)data[8];
+		//read status of PLAY/STOP button from GUI
+		gIsPlaying = (int)data[9];
+	}
 }
 
 //Start playing the next beat
 //This function is called in render when we move to the next beat. It checks which drums are contained in the next beat
 //and it calls startPlayingDrum() to start playing each one of the drums contained in that beat.
 void startNextBeat() {
+
 	//we loop through gPattern. If gPattern[i]==1, that means drum "i" should be played
-	for (int i = 0; i < 8; i++){
-		if (gPattern[i]){
+	for (int i = 0; i < NUMBER_OF_DRUMS; i++){
+		if (gPattern[i][gCurrentBeat]){
 			startPlayingDrum(i);
 		}
 	}
