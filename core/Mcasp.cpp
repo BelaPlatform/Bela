@@ -426,10 +426,55 @@ McaspRegisters McaspConfig::getRegisters()
 	return regs;
 }
 
-#include <stdio.h>
-
-void mcasp_test(const char* name, uint32_t val1, uint32_t val2)
+#include <iostream>
+#include <iterator>
+// https://stackoverflow.com/questions/10750057/how-to-print-out-the-contents-of-a-vector
+template <typename T>
+std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
+  if ( !v.empty() ) {
+    out << '{';
+    std::copy (v.begin(), v.end(), std::ostream_iterator<T>(out, ", "));
+    out << "\b\b}";
+  }
+  return out;
+}
+void McaspConfig::print()
 {
-	printf("mcasp %s %#10x %#10x %s\n", name, val1, val2,
-		val1 == val2 ? "SUCCESS" : "ERROR");
+#define P(FIELD) std::cout << #FIELD << ": " <<  params.FIELD << "\n"
+	std::cout << "Parameters:\n";
+	P(inChannels);
+	P(outChannels);
+	P(inSerializers);
+	P(outSerializers);
+	P(numSlots);
+	P(slotSize);
+	P(dataSize);
+	P(bitDelay);
+	P(auxClkIn);
+	P(ahclkFreq);
+	P(ahclkIsInternal);
+	P(wclkIsInternal);
+	P(wclkIsWord);
+	P(wclkFalling);
+	P(externalRisingEdge);
+
+	getRegisters(); // update the registers with the current parameters
+#define R(FIELD) printf("%10s: 0x%08x\n", #FIELD, regs.FIELD)
+	printf("Registers:\n");
+	R(pdir);
+	R(rmask);
+	R(rfmt);
+	R(afsrctl);
+	R(aclkrctl);
+	R(ahclkrctl);
+	R(rtdm);
+	R(xmask);
+	R(xfmt);
+	R(afsxctl);
+	R(aclkxctl);
+	R(ahclkxctl);
+	R(xtdm);
+	R(srctln);
+	R(wfifoctl);
+	R(rfifoctl);
 }
