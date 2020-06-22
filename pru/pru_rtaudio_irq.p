@@ -1545,44 +1545,6 @@ WRITE_FRAME_DONE:
 MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 3)  // Set RSMRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 11) // Set XSMRST
 
-#ifdef ATTEMPT_TO_RESYNC_BELA_ADC
-// for BELA_TLV32, the left and right channels are swapped, so that each frame contains:
-//R[n-1], L[n].
-//something similar was happening in pru_rtaudio.p and the trick was to wait for
-//one sample to come in and then discard it
-//we try two approaches here, one based on the same solution as there, and one based on a hack, but none of them seems to work.
-
-//perform a write to avoid a TX underrun. This is just for testing, remove it
-//later, as it would be adding latency and possibly causing offset of the
-//outputs
-     MCASP_WRITE_TO_DATAPORT r8, 32
-     // temporarily enable writes through the CFG port (if not already enabled)
-     // (note: datasheet does not say that changing this after the McASP has
-     // started would work, but it seems that it does)
-     MOV r2, BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE // TODO: get this value by reading the register
-     MOV r3, r2 // back up the value
-     SET r2.t3 // set it to read from CFG port
-     MCASP_REG_WRITE MCASP_RFMT, r2 // Set data format
-#ifdef ATTEMPT_TO_RESYNC_BELA_ADC_OLD_STYLE
-MCASP_ADC_WAIT_BEFORE_LOOP:
-     LBBO r2, reg_mcasp_addr, MCASP_RSTAT, 4
-     QBBC MCASP_ADC_WAIT_BEFORE_LOOP, r2, MCASP_RSTAT_RDATA_BIT
-     MCASP_REG_READ_EXT MCASP_RBUF, r2 // actually read and discard the value
-#endif // ATTEMPT_TO_RESYNC_BELA_ADC_OLD_STYLE
-#ifdef ATTEMPT_TO_RESYNC_BELA_ADC_HACK
-/// wait for an actual non-zero value. Hopefully this would mean that one valid
-// sample has been received from the codec
-     MOV r4, 0
-LOOPTHIS:
-     MCASP_REG_READ_EXT MCASP_RBUF, r2 // actually read and discard the value
-     QBNE DONELOOPTHIS, r2, 0
-     ADD r4, r4, 1
-     QBA LOOPTHIS
-DONELOOPTHIS:
-#endif // ATTEMPT_TO_RESYNC_BELA_ADC_HACK
-     MCASP_REG_WRITE MCASP_RFMT, r3 // Restore original value
-#endif // ATTEMPT_TO_RESYNC_BELA_ADC
-
 // 9. Release frame sync generators from reset. Note that it is necessary to
 // release the internal frame sync generators from reset, even if an external
 // frame sync is being used, because the frame sync error detection logic is built
@@ -2018,13 +1980,24 @@ FRAME_READ_NOT_BELA_TLV32:
 	 QBGT FRAME_READ_MULTI_TLV_LT16CHAN, r0, 16
 	 LDI r0, 16
 FRAME_READ_MULTI_TLV_LT16CHAN:
-	 LSL r0, r0, 1										// 16 bits per channel
+	// read from RFIFOSTS the number of words available to read
+	MCASP_REG_READ_EXT MCASP_RFIFOSTS, r27
+	// Only start reading if all the words we need are available to read.
+	// This ensures we do not end up out of sync.
+	QBGT FRAME_READ_DONE, r27, r0
+
+	// one FIFO word is 32 bit.
+	// below we read two FIFO words at a time into r9 and r10 and then pack
+	// them as 16 bit words into r1 to (max) r8. This assumes the number of
+	// inputs is even.
+
+	LSL r0, r0, 1 // r0 now contains the size in bytes of the packed data (16 bits per channel)
 	 
-	 MCASP_READ_FROM_DATAPORT r9, 8						// TLVTODO: should this be 32 bytes like above?
+	 MCASP_READ_FROM_DATAPORT r9, 8
 	 AND r1, r9, r17
 	 LSL r10, r10, 16
 	 OR r1, r1, r10
-	 QBGE FRAME_READ_MULTI_TLV_STORE, r0, 4				// r0 = channels * 2
+	QBGE FRAME_READ_MULTI_TLV_STORE, r0, 4
 	 
 	 MCASP_READ_FROM_DATAPORT r9, 8						
 	 AND r2, r9, r17
