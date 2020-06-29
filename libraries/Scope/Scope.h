@@ -88,7 +88,7 @@ class Scope{
 	/**
 	 * Set the triggering mode for the scope
 	 */
-	void setTrigger(TriggerMode mode, unsigned int channel, TriggerSlope dir, float level);
+	void setTrigger(TriggerMode mode, unsigned int channel = 0, TriggerSlope dir = BOTH, float level = 0);
 		
     private:
 	typedef enum {
