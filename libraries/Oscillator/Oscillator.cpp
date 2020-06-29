@@ -36,7 +36,7 @@ float Oscillator::process() {
 			}
 			break;
 		case sawtooth:
-			out = 1 - (1 / (float)M_PI * phase_);
+			out = 1.f / (float)M_PI * phase_;
 			break;
 	}
 	computePhase();
