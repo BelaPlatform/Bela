@@ -46,7 +46,7 @@ public:
 	McaspConfig& getMcaspConfig();
 
 	I2c_MultiTLVCodec(I2c_MultiTLVCodec&&) = delete;
-	I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, TdmConfig tdmConfig = TdmConfig(), bool verbose = false);
+	I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdmConfig = TdmConfig(), bool isVerbose = false);
 	~I2c_MultiTLVCodec();
 
 protected:

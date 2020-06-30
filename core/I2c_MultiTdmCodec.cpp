@@ -12,8 +12,8 @@ I2c_MultiTLVCodec::TdmConfig I2c_MultiTdmCodec::makeTdmConfig()
 	return tdm;
 }
 
-I2c_MultiTdmCodec::I2c_MultiTdmCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, bool isVerbose)
-	: I2c_MultiTLVCodec(i2cBusses, i2cAddress, makeTdmConfig(), isVerbose)
+I2c_MultiTdmCodec::I2c_MultiTdmCodec(const std::string& cfgString, bool isVerbose)
+	: I2c_MultiTLVCodec(cfgString, makeTdmConfig(), isVerbose)
 {
 	I2c_MultiTLVCodec::getMcaspConfig();
 	mcaspConfig.params.inSerializers = {0, 1};
@@ -24,6 +24,7 @@ McaspConfig& I2c_MultiTdmCodec::getMcaspConfig()
 {
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels	= getNumOuts();
+	mcaspConfig.params.wclkIsInternal = false;
 	return mcaspConfig;
 }
 
