@@ -26,8 +26,10 @@
 
 #include "../include/Bela.h"
 #include "../include/bela_hw_settings.h"
+#include "../include/bela_sw_settings.h"
 #include "../include/board_detect.h"
 #include "../include/BelaContextFifo.h"
+#include "../include/MiscUtilities.h"
 
 // Xenomai-specific includes
 #if XENOMAI_MAJOR == 3
@@ -410,6 +412,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	std::string codecMode;
 	if(settings->codecMode)
 		codecMode = settings->codecMode;
+	else
+		codecMode = IoUtils::ConfigFile::readValue(userBelaConfig, "CODEC_MODE");
+
 	// figure out which codec to use and which to disable if several are present and conflicting
 	unsigned int ctags;
         if((ctags = Bela_hwContains(belaHw, CtagCape)))
