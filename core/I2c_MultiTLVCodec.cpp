@@ -12,34 +12,121 @@
 #include "../include/I2c_MultiTLVCodec.h"
 
 static const unsigned int kDataSize = 16;
-#undef CODEC_WCLK_MASTER	// Match this with pru_rtaudio_irq.p
+#undef CODEC_WCLK_MASTER
 
-I2c_MultiTLVCodec::I2c_MultiTLVCodec(std::vector<unsigned int> i2cBusses, int i2cAddress, TdmConfig tdmConfig, bool isVerbose /*= false*/)
+#include <map>
+#include <sstream>
+// duplicated from board_detect.cpp
+static std::vector<std::string> split(const std::string& s, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(s);
+	while (std::getline(tokenStream, token, delimiter))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
+}
+
+static std::string trim(std::string const& str)
+{
+    if(str.empty())
+        return str;
+
+    std::size_t firstScan = str.find_first_not_of(' ');
+    std::size_t first     = firstScan == std::string::npos ? str.length() : firstScan;
+    std::size_t last      = str.find_last_not_of(' ');
+    return str.substr(first, last - first + 1);
+}
+
+struct Address {
+	unsigned int bus;
+	uint8_t address;
+	I2c_Codec::CodecType type;
+	bool required;
+};
+
+static const std::map<std::string, I2c_Codec::CodecType> codecTypeMap = {
+        {"3104", I2c_Codec::TLV320AIC3104},
+        {"3106", I2c_Codec::TLV320AIC3106},
+};
+
+[[noreturn]] static void throwErr(std::string err, std::string token = "")
+{
+	throw std::runtime_error("I2c_MultiTLVCodec: " + err + (token != "" ? "`" + token : "") + "`\n");
+}
+
+static I2c_Codec::CodecType getCodecTypeFromString(const std::string& str)
+{
+	try {
+		return codecTypeMap.at(trim(str));
+	} catch(std::exception e) {
+		throwErr("Unrecognised codec type", str);
+	}
+}
+
+I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdmConfig, bool isVerbose)
 : masterCodec(0), running(false), verbose(isVerbose)
 {
-	for(auto i2cBus : i2cBusses) {
-		for(int address = i2cAddress; address < i2cAddress + 4; address++) {
-			// Check for presence of TLV codec and take the first one we find as the master codec
-			// TODO: this code assumes the first codec is a 3104 (Bela Mini cape), which might not always be true
-			I2c_Codec::CodecType type = (address == i2cAddress) ? I2c_Codec::TLV320AIC3104 : I2c_Codec::TLV320AIC3106;
-			I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
-			if(testCodec->initCodec() != 0) {
-				delete testCodec;
-				if(verbose) {
-					fprintf(stderr, "Error initialising I2C codec on bus %d address %d\n", i2cBus, address);
-				}
-			}
-			else {
-				// codec found
-				if(verbose) {
-					fprintf(stderr, "Found I2C codec on bus %d address %d\n", i2cBus, address);
-				}
+	std::vector<Address> addresses;
+	std::vector<std::string> tokens = split(cfgString, ';');
+	if(tokens.size() < 1)
+		throwErr("Wrong format for cfgString ", cfgString);
+	if("" == trim(tokens.back()))
+		tokens.pop_back();
+	std::string mode;
+	for(auto& token: tokens) {
+		// the string will contain semicolon-separated label:value pairs
+		// ADDR: <bus>,<addr>,<type>,<required>
+		// MODE: <mode>
+		// e.g.: ADDR: 2,24,3104,1;ADDR: 1,24,3106,0;MODE: noInit
+		std::vector<std::string> tks = split(token, ':');
+		if(tks.size() != 2)
+			throwErr("Wrong format for token ", token);
+		if("ADDR" == trim(tks[0])) {
+			std::vector<std::string> ts = split(tks[1], ',');
+			if(ts.size() != 4)
+				throwErr("Wrong format for argument", tks[1]);
+			addresses.push_back({
+					.bus = (unsigned int)std::stoi(ts[0]),
+					.address = (uint8_t)std::stoi(ts[1]),
+					.type = getCodecTypeFromString(ts[2]),
+					.required = (bool)std::stoi(ts[3]),
+				});
+		} else if("MODE" == trim(tks[0]) && "" == mode) {
+			mode = trim(tks[1]);
+		} else {
+			throwErr("Unknown token ", token);
+		}
+	}
 
-				if(!masterCodec)
-					masterCodec = testCodec;
-				else
-					extraCodecs.push_back(testCodec);
+	for(auto& addr : addresses) {
+		unsigned int i2cBus = addr.bus;
+		uint8_t address = addr.address;
+		I2c_Codec::CodecType type = addr.type;
+		bool required = addr.required;
+		// Check for presence of TLV codec and take the first one we find as the master codec
+		I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
+		testCodec->setMode(mode);
+		if(testCodec->initCodec() != 0) {
+			delete testCodec;
+			std::string err = "Codec requested but not found at: " + std::to_string(i2cBus) + ", " + std::to_string(address) + ", " + std::to_string(type) + "\n";
+			if(required)
+				throwErr(err);
+			if(verbose)
+				fprintf(stderr, "%s", err.c_str());
+		}
+		else {
+			// codec found
+			if(verbose) {
+				fprintf(stderr, "Found I2C codec on bus %d address %d\n", i2cBus, address);
 			}
+
+			if(!masterCodec)
+				masterCodec = testCodec;
+			else
+				extraCodecs.push_back(testCodec);
 		}
 	}
 	if(!masterCodec) {

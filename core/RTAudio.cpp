@@ -407,6 +407,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
+	std::string codecMode;
+	if(settings->codecMode)
+		codecMode = settings->codecMode;
 	// figure out which codec to use and which to disable if several are present and conflicting
 	unsigned int ctags;
         if((ctags = Bela_hwContains(belaHw, CtagCape)))
@@ -418,10 +421,14 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		if(Bela_hwContains(actualHw, Tlv320aic3104))
 			gDisabledCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 	}
-	else if(belaHw == BelaHw_BelaMiniMultiAudio)
-		gAudioCodec = new I2c_MultiTLVCodec({codecI2cBus}, codecI2cAddress, {}, gRTAudioVerbose);
+	else if(belaHw == BelaHw_BelaMiniMultiAudio) {
+		std::string mode;
+		if("" != codecMode)
+			mode = "MODE:"+codecMode;
+		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,0;ADDR:2,25,3106,0;ADDR:2,26,3106,0;ADDR:2,27,3106,0;"+mode, {}, gRTAudioVerbose);
+	}
 	else if(belaHw == BelaHw_BelaMiniMultiTdm)
-		gAudioCodec = new I2c_MultiTdmCodec({codecI2cBus, 1}, codecI2cAddress, gRTAudioVerbose);
+		gAudioCodec = new I2c_MultiTdmCodec(codecMode, gRTAudioVerbose);
 	else if(Bela_hwContains(belaHw, Tlv320aic3104))
 	{
 		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
@@ -434,8 +441,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		fprintf(stderr, "Error: invalid combinations of selected and available hardware\n");
 		return 1;
 	}
-	if(settings->codecMode)
-		gAudioCodec->setMode(settings->codecMode);
+	// note: for some of the codecs, codecMode may have been
+	// been used above and/or this may be a NOP
+	gAudioCodec->setMode(codecMode);
 
 	BelaHwConfig cfg = {0};
 	BelaHwConfigPrivate pcfg;
