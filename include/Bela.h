@@ -80,18 +80,21 @@ int rt_fprintf(FILE *stream, const char *format, ...);
 int rt_vprintf(const char *format, va_list ap);
 int rt_vfprintf(FILE *stream, const char *format, va_list ap);
 
+/**
+ * A type of Bela hardware.
+ */
 typedef enum
 {
-	BelaHw_NoHw = -1,
-	BelaHw_Bela,
-	BelaHw_BelaMini,
-	BelaHw_Salt,
-	BelaHw_CtagFace,
-	BelaHw_CtagBeast,
-	BelaHw_CtagFaceBela,
-	BelaHw_CtagBeastBela,
-	BelaHw_BelaMiniMultiAudio,
-	BelaHw_BelaMiniMultiTdm,
+	BelaHw_NoHw = -1, ///< No hardware
+	BelaHw_Bela, ///< Bela
+	BelaHw_BelaMini, ///< Bela Mini
+	BelaHw_Salt, ///< Salt
+	BelaHw_CtagFace, ///< Ctag Face
+	BelaHw_CtagBeast, ///< Ctag Beast
+	BelaHw_CtagFaceBela, ///< Ctag Face and Bela cape
+	BelaHw_CtagBeastBela, ///< Ctag Beast and Bela cape
+	BelaHw_BelaMiniMultiAudio, ///< Bela Mini with extra codecs
+	BelaHw_BelaMiniMultiTdm, ///< Bela Mini with extra codes and tdm devices
 } BelaHw;
 
 typedef struct _BelaHwConfig
@@ -117,13 +120,16 @@ BelaHwConfig* Bela_HwConfig_new(BelaHw hw);
  */
 void Bela_HwConfig_delete(BelaHwConfig* cfg);
 
+/**
+ * Arguments to be passed to Bela_detectHw()
+ */
 typedef enum
 {
-	BelaHwDetectMode_Scan,
-	BelaHwDetectMode_Cache,
-	BelaHwDetectMode_CacheOnly,
-	BelaHwDetectMode_User,
-	BelaHwDetectMode_UserOnly,
+	BelaHwDetectMode_Scan, ///< perform an automatic detection by scanning the peripherals and busses available, and cache value in `/run/bela/belaconfig`
+	BelaHwDetectMode_Cache, ///< read cached value from `/run/bela/belaconfig` first. If it does not exist, fall back to #BelaHwDetectMode_Scan
+	BelaHwDetectMode_CacheOnly, ///<read cached value from `/run/bela/belaconfig`. If it does not exist, return #BelaHw_NoHw
+	BelaHwDetectMode_User, ///<read user-specified value from `~/.bela/belaconfig`. If it does not exist, fall back to #BelaHwDetectMode_Cache
+	BelaHwDetectMode_UserOnly, ///<read user-specified value from `~/.bela/belaconfig`. If it does not exist, return #BelaHw_NoHw
 } BelaHwDetectMode;
 
 #include <GPIOcontrol.h>
@@ -698,12 +704,8 @@ void Bela_setVerboseLevel(int level);
 /**
  * \brief Detect what hardware we are running on.
  *
- * \param mode How to perform the detection. Possible values are:
- *  BelaHwDetect_Scan : perform an automatic detection by scanning the peripherals and busses available, and cache value in `/run/bela/`
- *  BelaHwDetect_Cache: read cached value from `/run/bela` first. If it does not exist, fall back to BelaHwDetect_Scan
- *  BelaHwDetect_CacheOnly: read cached value from `/run/bela`. If it does not exist, return BelaHw_NoHw
- *  BelaHwDetect_User: read user-specified value from `~/.bela`. If it does not exist, fall back to BelaHwDetect_Cache
- *  BelaHwDetect_UserOnly: read user-specified value from `~/.bela`. If it does not exist, return BelaHw_NoHw
+ *
+ * \param mode How to perform the detection. The behaviour is described in #BelaHwDetectMode.
  */
 BelaHw Bela_detectHw(BelaHwDetectMode mode);
 

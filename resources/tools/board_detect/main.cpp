@@ -11,12 +11,13 @@ static void printHelp(const char* command)
 		"  %s <parameter>\n"
 		"Where <parameter> is one of:\n"
 		"   scan\n"
-		"   scanWithCache\n"
+		"   cache\n"
+		"   cacheOnly\n"
 		"   user    (default)\n"
 		"   userOnly\n"
-		"   full\n"
+		"   all\n"
 		"   help\n"
-		"Each of these (except for `help' and `full') has the same role as the corresponding argument to `Bela_detectHw()' (see `Bela.h' for details). `full' performs each of the others in turn and prints all of the results in order\n", command);
+		"Each of these (except for `help' and `all') has the same role as the corresponding argument to `Bela_detectHw()' (see `Bela.h' for details). `all' performs each of the others in turn and prints all of the results in order\n", command);
 }
 
 
