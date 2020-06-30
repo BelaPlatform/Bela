@@ -20,7 +20,6 @@
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
-#include "../include/Utilities.h"
 #include "../include/PruArmCommon.h"
 
 #include <iostream>
