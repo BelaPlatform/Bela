@@ -32,6 +32,8 @@
 #define BELA_BUGFIX_VERSION 1
 
 // Version history / changelog:
+// 1.8.0
+// - Bela_getopt_long takes a char* const []
 // 1.6.0
 // - added Bela_setUserData(), Bela_requestStop(), Bela_stopRequested()
 // 1.5.0
@@ -617,7 +619,7 @@ void Bela_userSettings(BelaInitSettings *settings);
  * argument list has been exhausted. Similar to the return value of getopt_long() except that Bela
  * standard options are handled internally and not returned.
  */
-int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions,
+int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptions,
 				   const struct option *customLongOptions, BelaInitSettings *settings);
 
 /**

@@ -137,7 +137,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 // be stored in settings, otherwise arguments will be returned
 // as getopt() normally does.
 
-int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, const struct option *customLongOptions, BelaInitSettings *settings)
+int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptions, const struct option *customLongOptions, BelaInitSettings *settings)
 {
 	static int firstRun = 1;
 	static char totalShortOptions[256];
