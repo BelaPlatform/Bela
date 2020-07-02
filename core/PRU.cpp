@@ -223,8 +223,6 @@ const unsigned int belaMiniLedRed = 89;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
-const unsigned int BELA_CAPE_BUTTON_PIN = 115;
-
 const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
 const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
 
@@ -394,7 +392,7 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, bool capeButtonMonitoring, bool enableLed)
+int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, int stopButtonPin, bool enableLed)
 {
 	belaHw = newBelaHw;
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
@@ -420,8 +418,8 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	}
 	pruMemory = new PruMemory(pru_number, context);
 
-	if(capeButtonMonitoring){
-		belaCapeButton.open(BELA_CAPE_BUTTON_PIN, INPUT, false);
+	if(0 <= stopButtonPin){
+		stopButton.open(stopButtonPin, INPUT, false);
 	}
 	if(belaHw == BelaHw_BelaMini && enableLed){
 		underrunLed.open(belaMiniLedRed, OUTPUT);
@@ -944,15 +942,15 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		}
 #endif
 
-		if(belaCapeButton.enabled()){
-			static int belaCapeButtonCount = 0;
-			if(belaCapeButton.read() == 0){
-				if(++belaCapeButtonCount > 10){
+		if(stopButton.enabled()){
+			static int stopButtonCount = 0;
+			if(stopButton.read() == 0){
+				if(++stopButtonCount > 10){
 					printf("Button pressed, quitting\n");
 					Bela_requestStop();
 				}
 			} else {
-				belaCapeButtonCount = 0;
+				stopButtonCount = 0;
 			}
 		}
 

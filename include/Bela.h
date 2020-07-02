@@ -404,8 +404,9 @@ typedef struct {
 	int verbose;
 	/// Whether to use the blinking LED to indicate Bela is running
 	int enableLED;
-	/// Whether to monitor the Bela cape button on P9.27 / GPIO3[19]
-	int enableCapeButtonMonitoring;
+	/// What GPIO pin to monitor for stopping the program. Defaults to 115
+	/// (button on P9.27/P2.34/GPIO3[19]). Pass -1 to disable monitoring.
+	int stopButtonPin;
 	/// Whether to use high-performance mode: gives more CPU to
 	/// the Bela task. The Linux part of the board and the IDE may
 	/// freeze while the program is running. Use the button on the

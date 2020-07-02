@@ -1,6 +1,8 @@
 #pragma once
 const unsigned int codecI2cBus  = 2;	// Bus for TLV320AIC3104 codec
 const unsigned int codecI2cAddress  = 0x18;	// Address of TLV320AIC3104 codec
+const unsigned int kBelaCapeButtonPin = 115; //P9.27 / P2.34 connected to The Button
+const unsigned int kAmplifierMutePin = 61; // P8.26 controls amplifier mute
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 108) // first kernel we shipped with a different location of the spidevs

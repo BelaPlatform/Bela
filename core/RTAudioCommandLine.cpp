@@ -1,10 +1,3 @@
-/*
- * RTAudioCommandLine.cpp
- *
- *  Created on: Nov 8, 2014
- *      Author: parallels
- */
-
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -13,22 +6,21 @@
 #include <getopt.h>
 #include "../include/Bela.h"
 #include "../include/board_detect.h"
+#include "../include/bela_hw_settings.h"
+#include "../include/bela_sw_settings.h"
+#include "../include/MiscUtilities.h"
 
 #define OPT_PRU_FILE 1000
 #define OPT_PGA_GAIN_LEFT 1001
 #define OPT_PGA_GAIN_RIGHT 1002
 #define OPT_PRU_NUMBER 1003
 #define OPT_DISABLE_LED 1004
-#define OPT_DISABLE_CAPE_BUTTON 1005
+#define OPT_STOP_BUTTON_PIN 1005
 #define OPT_DETECT_UNDERRUNS 1006
 #define OPT_UNIFORM_SAMPLE_RATE 1007
 #define OPT_HIGH_PERFORMANCE_MODE 1008
 #define OPT_BOARD 1009
 
-
-enum {
-	kAmplifierMutePin = 61	// P8-26 controls amplifier mute
-};
 
 bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSettings *settings);
 
@@ -54,7 +46,7 @@ struct option gDefaultLongOptions[] =
 	{"pru-number", 1, NULL, OPT_PRU_NUMBER},
 	{"detect-underruns", 1, NULL, OPT_DETECT_UNDERRUNS},
 	{"disable-led", 0, NULL, OPT_DISABLE_LED},
-	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
+	{"stop-button-pin", 1, NULL, OPT_STOP_BUTTON_PIN},
 	{"high-performance-mode", 0, NULL, OPT_HIGH_PERFORMANCE_MODE},
 	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
 	{"board", 1, NULL, OPT_BOARD},
@@ -103,7 +95,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->pruFilename[0] = '\0';
 	settings->detectUnderruns = 1;
 	settings->enableLED = 1;
-	settings->enableCapeButtonMonitoring = 1;
+	settings->stopButtonPin = kBelaCapeButtonPin;
 	settings->highPerformanceMode = 0;
 	settings->board = BelaHw_NoHw;
 	settings->projectName = NULL;
@@ -294,8 +286,8 @@ int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptio
 		case OPT_DISABLE_LED:
 			settings->enableLED = 0;
 			break;
-		case OPT_DISABLE_CAPE_BUTTON:
-			settings->enableCapeButtonMonitoring = 0;
+		case OPT_STOP_BUTTON_PIN:
+			settings->stopButtonPin = atoi(optarg);
 			break;
 		case OPT_HIGH_PERFORMANCE_MODE:
 			settings->highPerformanceMode = 1;
@@ -339,7 +331,7 @@ void Bela_usage()
 	std::cerr << "   --pru-number val:                   Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
 	std::cerr << "   --detect-underruns val:             Set whether to warn the user in case of underruns (options: 0 or 1, default: 1)\n";
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
-	std::cerr << "   --disable-cape-button-monitoring    Disable the monitoring of the Bela cape button (which otherwise stops the running program)\n";
+	std::cerr << "   --stop-button-pin                   What pin to monitor for stopping the program. Pass -1 to disable button monitoring\n";
 	std::cerr << "   --high-performance-mode             Gives more CPU to the Bela process. The system may become unresponsive and you will have to use the button on the Bela cape when you want to stop it.\n";
 	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --board val:                        Select a different board to work with\n";

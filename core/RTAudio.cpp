@@ -478,7 +478,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Get the PRU memory buffers ready to go
 	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
-                                settings->numMuxChannels, settings->enableCapeButtonMonitoring, settings->enableLED)) {
+                                settings->numMuxChannels, settings->stopButtonPin, settings->enableLED)) {
 		fprintf(stderr, "Error: unable to initialise PRU\n");
 		return 1;
 	}
