@@ -21,6 +21,8 @@
 #define OPT_HIGH_PERFORMANCE_MODE 1008
 #define OPT_BOARD 1009
 
+// whether it's the first time that Bela_getopt_long is run
+static bool gFirstRun = 1;
 
 bool parseAudioExpanderChannels(const char *arg, bool inputChannel, BelaInitSettings *settings);
 
@@ -117,6 +119,27 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->cleanup = NULL;
 
 	settings->ampMutePin = kAmplifierMutePin;
+
+	// read user default command line options CL= from userBelaConfig and
+	// pass them on to Bela_getopt_long to override default settings.
+	std::string belaConfig = IoUtils::readTextFile(userBelaConfig);
+	std::string cl = ConfigFileUtils::readValueFromString(belaConfig, "CL");
+	std::vector<std::string> args = StringUtils::split(cl, ' ', true);
+	std::vector<char*> argv = StringUtils::makeArgv(args);
+
+	optind = 1;
+	gFirstRun = true;
+	while (1) {
+		// requested:: char *const *
+		// argv.data() is const char **
+		int c = Bela_getopt_long(argv.size(), argv.data(), "", NULL, settings);
+		if (c != 0)
+			break;
+	}
+	// reset globals for when the user code calls Bela_getopt_long again
+	// with a different set of arguments.
+	optind = 1;
+	gFirstRun = true;
 	if(Bela_userSettings != NULL)
 	{
 		Bela_userSettings(settings);
@@ -124,14 +147,13 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 }
 
 // This function drops in place of getopt() in the main() function
-// and handles the initialisation of the RTAudio settings using
+// and handles the initialisation of the Bela settings using
 // standard command-line arguments. System default arguments will
 // be stored in settings, otherwise arguments will be returned
 // as getopt() normally does.
 
 int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptions, const struct option *customLongOptions, BelaInitSettings *settings)
 {
-	static int firstRun = 1;
 	static char totalShortOptions[256];
 	static struct option totalLongOptions[256];
 
@@ -140,8 +162,8 @@ int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptio
 	// Prep total option string the first time this is
 	// run. As a getopt() substitute, it will be called repeatedly working its
 	// way through argc and argv.
-	if(firstRun) {
-		firstRun = 0;
+	if(gFirstRun) {
+		gFirstRun = 0;
 
 		// Copy short options into one string
 		strcpy(totalShortOptions, gDefaultShortOptions);
