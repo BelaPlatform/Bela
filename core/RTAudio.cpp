@@ -412,8 +412,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	std::string codecMode;
 	if(settings->codecMode)
 		codecMode = settings->codecMode;
-	else
-		codecMode = ConfigFileUtils::readValue(userBelaConfig, "CODEC_MODE");
 
 	// figure out which codec to use and which to disable if several are present and conflicting
 	unsigned int ctags;
