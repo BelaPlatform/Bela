@@ -8,13 +8,15 @@ using namespace IoUtils;
 using namespace ConfigFileUtils;
 namespace StringUtils
 {
-std::vector<std::string> split(const std::string& s, char delimiter)
+std::vector<std::string> split(const std::string& s, char delimiter, bool removeEmpty)
 {
 	std::vector<std::string> tokens;
 	std::string token;
 	std::istringstream tokenStream(s);
 	while (std::getline(tokenStream, token, delimiter))
 	{
+		if(removeEmpty && "" == token)
+			continue;
 		tokens.push_back(token);
 	}
 	return tokens;
@@ -31,6 +33,15 @@ std::string trim(std::string const& str)
 	return str.substr(first, last - first + 1);
 }
 
+std::vector<char*> makeArgv(std::vector<std::string>& strings)
+{
+	std::vector<char*> out;
+	out.push_back(nullptr);
+	for(auto& s : strings) {
+		out.push_back(&s[0]);
+	}
+	return out;
+}
 } // StringUtils
 
 namespace IoUtils
@@ -58,6 +69,26 @@ int writeTextFile(const std::string& path, const std::string& content, Mode mode
 	}
 	fprintf(stderr, "File %s could not be opened\n.", path.c_str());
 	return -1;
+}
+
+std::string readTextFile(const std::string& path)
+{
+	// https://stackoverflow.com/a/57973715/2958741
+	std::ifstream in;
+	try
+	{
+		// Set to throw on failure
+		in.exceptions(std::fstream::failbit | std::fstream::badbit);
+		in.open(path);
+	}
+	catch (std::exception e)
+	{
+		return "";
+	}
+
+	std::stringstream out;
+	out << in.rdbuf();
+	return out.str();
 }
 
 } // IoUtils

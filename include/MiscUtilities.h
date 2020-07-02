@@ -10,11 +10,25 @@ namespace StringUtils
 	/**
 	 * Split a string at a given separator.
 	 */
-	std::vector<std::string> split(const std::string& s, char delimiter);
+	std::vector<std::string> split(const std::string& s, char delimiter, bool removeEmpty = false);
 	/**
 	 * Remove leading and trailing spaces from a string.
 	 */
 	std::string trim(std::string const& str);
+	/**
+	 * Turns a vector of strings into a vector of `char*`, useful for
+	 * generating `argv`, with the first element being a `nullptr`.
+	 * Note: the pointers are _not_ `const char*`,
+	 * because this is the way `argv` normally is. However, I don't think
+	 * `getopt_long()` and the likes actually change the content of the
+	 * memory locations.
+	 *
+	 * @param strings the vector of strings.
+	 * @return a vector of `const char*`. Each element points to the memory
+	 * allocated by each of the elements of @p strings, and is therefore
+	 * only valid as long as the latter remains unchanged.
+	 */
+	std::vector<char*> makeArgv(std::vector<std::string>& strings);
 }
 
 /**
