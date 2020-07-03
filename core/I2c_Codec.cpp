@@ -588,16 +588,17 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 			return 1;
 		
 		if(codecType == TLV320AIC3106) {
-			// Configure inputs as fully differential, weak biasing
-			if(writeRegister(0x14, (volumeBits << 3) | 0x84))	// Line2L connected to left ADC
+			// Configure inputs as fully differential, weak biasing.
+			// LINE2L/R connected to corresponding L/R ADC PGA mix with specified gain.
+			if(writeRegister(0x14, (volumeBits << 3) | 0x84))
 				return 1;
-			if(writeRegister(0x17, (volumeBits << 3) | 0x84))	// Line2R connected to right ADC
+			if(writeRegister(0x17, (volumeBits << 3) | 0x84))
 				return 1;			
 		}
 		else {	// TLV320AIC3104
-			if(writeRegister(0x11, (volumeBits << 4) | 0x0F))	// Line2L connected to left ADC
+			if(writeRegister(0x11, (volumeBits << 4) | 0x0F)) // Mic2L (sic) Input connected connected to left-ADC PGA mix with specified gain
 				return 1;
-			if(writeRegister(0x12, volumeBits | 0xF0))		    // Line2R connected to right ADC
+			if(writeRegister(0x12, volumeBits | 0xF0)) // Mic2R/Line2R connected to right-ADC PGA mix with specified gain
 				return 1;
 		}
 	}
