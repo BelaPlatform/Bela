@@ -121,19 +121,29 @@ int gpio_set_dir(unsigned int gpio, int out_flag)
 
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%d/direction", gpio);
 
-	fd = open(buf, O_WRONLY);
+	fd = open(buf, O_RDWR);
 	if (fd < 0) {
 		perror("gpio/direction");
 		return fd;
 	}
 
+	const char* val;
 	if (out_flag == OUTPUT_PIN) {
-		if(write(fd, "out", 4) < 0)
-			result = -1;
+		val = "out";
 	}
 	else {
-		if(write(fd, "in", 3) < 0)
-			result = -1;
+		val = "in";
+	}
+
+	// read current value ...
+	if(read(fd, buf, 4) <= 0) {
+		result = -1;
+	} else {
+		if(strcmp(val, buf)) {
+			// ... and only write if it has changed
+			if(write(fd, val, strlen(val) + 1) < 0)
+				result = -1;
+		}
 	}
 
 	close(fd);
