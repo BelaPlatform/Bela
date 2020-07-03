@@ -331,7 +331,7 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 					float x = libpd_get_float(a);
 					gui.sendBuffer(bufNum, x);
 				} else if (libpd_is_symbol(a)) {
-					char *s = libpd_get_symbol(a);
+					const char *s = libpd_get_symbol(a);
 					gui.sendBuffer(bufNum, s, strlen(s)); // TODO: should it be strlen(s)+1?
 				}
 			}
@@ -392,7 +392,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		if(argc >= 2){
 			t_atom* a = &argv[1];
 			if(libpd_is_symbol(a)){
-				char *s = libpd_get_symbol(a);
+				const char *s = libpd_get_symbol(a);
 				if(strcmp(s, "~") == 0  || strncmp(s, "sig", 3) == 0){
 					isMessageRate = false;
 				}
@@ -512,8 +512,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				setTrillPrintError();
 				return;
 			}
-			char* modeString;
-			modeString = libpd_get_symbol(argv + 1);
+			const char* modeString = libpd_get_symbol(argv + 1);
 			Trill::Mode mode = Trill::getModeFromName(modeString);
 			gTouchSensors[idx].second->setMode(mode);
 		}
