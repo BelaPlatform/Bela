@@ -32,6 +32,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 	params.generatesBclk = true;
 	params.generatesWclk = true;
 	params.mclk = mcaspConfig.getValidAhclk(24000000);
+	params.samplingRate = 44100;
 	initI2C_RW(i2cBus, i2cAddress, -1);
 }
 
@@ -88,7 +89,7 @@ int I2c_Codec::startAudio(int dummy)
 			return 1;
 
 		if(params.generatesBclk) {
-			if(setAudioSamplingRate(44100))
+			if(setAudioSamplingRate(params.samplingRate))
 				return 1;
 		}
 		else {
@@ -180,17 +181,33 @@ int I2c_Codec::startAudio(int dummy)
 		}
 	} // if not noInit
 	
-	//Set-up hardware high-pass filter for DC removal
+	bool dcRemoval;
+	double micBias;
 	if(codecType == TLV320AIC3104) {
-		if(configureDCRemovalIIR(true))
-			return 1;
+		//Set-up hardware high-pass filter for DC removal
+		dcRemoval = true;
+		micBias = 2.5;
 	}
 	else {
 		// Disable DC blocking for differential analog inputs
-		if(configureDCRemovalIIR(false))
-			return 1;
+		dcRemoval = false;
+		// mini string preamp uses micBias for virtual ground reference
+		micBias = 2;
 	}
-	if(writeRegister(25, 0b10000000))	// Enable mic bias 2.5V
+
+	if(configureDCRemovalIIR(dcRemoval))
+		return 1;
+	uint8_t micBiasField;
+	if(2.5 < micBias)
+		micBiasField = 0b11; // MICBIAS is connected to AVDD
+	else if (2 < micBias)
+		micBiasField = 0b10; // MICBIAS is powered to 2.5V
+	else if (micBias == 2)
+		micBiasField = 0b01; // MICBIAS is powered to 2V
+	else
+		micBiasField = 0b00; // MICBIAS is powered down
+
+	if(writeRegister(0x19, micBiasField << 6)) // Set MICBIAS
 		return 1;
 
 	// TODO: may need to separate the code below for non-master codecs so they enable amps after the master clock starts
@@ -835,10 +852,7 @@ unsigned int I2c_Codec::getNumOuts(){
 }
 
 float I2c_Codec::getSampleRate() {
-	if(params.dualRate)
-		return 88200;
-	else
-		return 44100;
+	return params.samplingRate;
 }
 
 int I2c_Codec::setParameters(const AudioCodecParams& codecParams)
@@ -849,8 +863,8 @@ int I2c_Codec::setParameters(const AudioCodecParams& codecParams)
 		verbose && fprintf(stderr, "I2c_Codec: cannot generate Wclk if it doesn't generate Bclk\n");
 		ret = -1;
 	}
-	if(params.dualRate) {
-		verbose && fprintf(stderr, "I2c_Codec: dualRate is not tested\n");
+	if(params.samplingRate > 53000 || params.samplingRate < 39000) {
+		verbose && fprintf(stderr, "I2c_Codec: sample rate %f out of range\n", params.samplingRate);
 		ret = -1;
 	}
 	if(params.bitDelay > 2) {

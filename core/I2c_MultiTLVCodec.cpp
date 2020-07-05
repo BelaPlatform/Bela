@@ -133,6 +133,7 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 	params.generatesBclk = true;
 	params.generatesWclk = primaryCodecGeneratesWclk;
 	params.mclk = primaryCodec->getMcaspConfig().getValidAhclk(24000000);
+	params.samplingRate = 44100;
 	primaryCodec->setParameters(params);
 
 	params.generatesBclk = false;
