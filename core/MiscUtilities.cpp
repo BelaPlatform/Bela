@@ -47,7 +47,7 @@ std::vector<char*> makeArgv(std::vector<std::string>& strings)
 namespace IoUtils
 {
 
-int writeTextFile(const std::string& path, const std::string& content, Mode mode)
+std::ofstream openOutput(const std::string& path, Mode mode)
 {
 	std::ofstream outputFile;
 	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
@@ -61,10 +61,15 @@ int writeTextFile(const std::string& path, const std::string& content, Mode mode
 			break;
 	}
 	outputFile.open(path.c_str(), openmode);
+	return outputFile;
+}
+
+int writeTextFile(const std::string& path, const std::string& content, Mode mode)
+{
+	std::ofstream outputFile = openOutput(path, mode);
 	if(outputFile.is_open())
 	{
 		outputFile << content;
-		outputFile.close();
 		return 0;
 	}
 	fprintf(stderr, "File %s could not be opened\n.", path.c_str());

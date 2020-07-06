@@ -41,6 +41,10 @@ namespace IoUtils
 		TRUNCATE, ///<When opening a file for writing, truncate the existing content of the file.
 	} Mode;
 	/**
+	 * Open a file for output.
+	 */
+	std::ofstream openOutput(const std::string& path, Mode mode = TRUNCATE);
+	/**
 	 * Write a string to a file.
 	 */
 	int writeTextFile(const std::string& path, const std::string& content, Mode mode = TRUNCATE);
