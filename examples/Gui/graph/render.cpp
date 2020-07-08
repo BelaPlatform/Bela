@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/graph
+*/
+/**
+\example Gui/graph/render.cpp
 
 GUI graph
 =========

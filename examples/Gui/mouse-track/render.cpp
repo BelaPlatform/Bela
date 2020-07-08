@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/mouse-track
+*/
+/**
+\example Gui/mouse-track/render.cpp
 
 GUI Mouse Tracker
 =================

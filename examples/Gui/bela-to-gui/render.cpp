@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/bela-to-gui
+*/
+/**
+\example Gui/bela-to-gui/render.cpp
 
 Sending from Bela to the GUI
 ============================

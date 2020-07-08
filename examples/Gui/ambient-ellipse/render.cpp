@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/ambient-ellipse
+*/
+/**
+\example Gui/ambient-ellipse/render.cpp
 
 Visualising a Low Frequency Oscillator
 =====================================

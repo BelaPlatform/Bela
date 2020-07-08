@@ -5,15 +5,6 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-\example Gui/sequencer
-Make your own drum patterns with Bela
-============================
-This project uses Bela GUI library to build a drum sample sequencer, and it is a good example of sending data back anf forth
-between Bela (render.cpp) and the GUI (sketch.js).
-The GUI displays an 8x8 matrix of rectangles, in which each column is a beat and each row will correspond to a speceific
-WAV sound that is loaded to the project and then stored in a buffer. The user can activate and deactivate the rectangles
-by clicking on them. For each beat, Bela will receive from the GUI the sounds of that column (beat) that are active,
-and it will play them. At the same time, Bela will send to the GUI the beat update.
 */
 
 let patches=[]; //rectangles to be displayed in the GUI interface
@@ -102,13 +93,13 @@ function draw() {
 
 	patterns[8]=rSlider.value();
 	patterns[9]=buttonState;
-	
+
 	//Finally, we send an extra value containing the current beat, so we can check in Bela if the Gui is being updated
 	patterns[10]=beats;
-	
-	//Send data buffer of floats to Bela containing the patterns array. 
-	//See the gui-to-bela example to see details on how this function works 
-	Bela.data.sendBuffer(0, 'float', patterns); 
+
+	//Send data buffer of floats to Bela containing the patterns array.
+	//See the gui-to-bela example to see details on how this function works
+	Bela.data.sendBuffer(0, 'float', patterns);
 }
 
 //rectangles of interface

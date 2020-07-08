@@ -5,15 +5,21 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/slider
+*/
+/**
+\example Gui/sliders/render.cpp
 
 Sliders for your GUI
-------------
+--------------------
 
 This example demonstrates how to create some GUI sliders to control the behaviour of your program while it
-is running. It uses the GuiController library, which uses dat.gui to create some control sliders which appear
+is running. It uses the GuiController library, which uses dat.gui to auto create some control sliders which appear
 at the GUI page: bela.local/gui/
+
+The sliders are created in setup() with the function controller.addSlider("Pitch (MIDI note)", 60, 48, 84, 1);.
+The arguments are: name, initial value, minimum, maximum, and increment.
+
+We read from the sliders in render() with the following function: controller.getSliderValue(slider-name);
 */
 
 #include <Bela.h>

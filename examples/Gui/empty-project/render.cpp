@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/empty-project
+*/
+/**
+\example Gui/empty-project/render.cpp
 
 Template Empty Project
 ======================

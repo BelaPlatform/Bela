@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Gui/clock
+*/
+/**
+\example Gui/clock/render.cpp
 
 Telling the Time
 ================
