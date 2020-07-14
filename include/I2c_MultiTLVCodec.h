@@ -13,6 +13,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include "I2c_Codec.h"
 
 class I2c_MultiTLVCodec : public AudioCodec
@@ -52,9 +53,9 @@ public:
 protected:
 	McaspConfig mcaspConfig;
 private:
-	I2c_Codec *masterCodec;
-	std::vector<I2c_Codec*> extraCodecs;
-	std::vector<I2c_Codec*> disabledCodecs;
+	std::unique_ptr<I2c_Codec> masterCodec;
+	std::vector<std::unique_ptr<I2c_Codec>> extraCodecs;
+	std::vector<std::unique_ptr<I2c_Codec>> disabledCodecs;
 
 	bool running;
 	bool verbose;

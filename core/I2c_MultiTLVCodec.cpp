@@ -44,7 +44,7 @@ static I2c_Codec::CodecType getCodecTypeFromString(const std::string& str)
 }
 
 I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdmConfig, bool isVerbose)
-: masterCodec(0), running(false), verbose(isVerbose)
+: masterCodec(nullptr), running(false), verbose(isVerbose)
 {
 	std::vector<Address> addresses;
 	std::vector<std::string> tokens = split(cfgString, ';');
@@ -88,10 +88,9 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		I2c_Codec::CodecType type = addr.type;
 		std::string required = addr.required;
 		// Check for presence of TLV codec and take the first one we find as the master codec
-		I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
+		std::unique_ptr<I2c_Codec> testCodec(new I2c_Codec(i2cBus, address, type));
 		testCodec->setMode(mode);
 		if(testCodec->initCodec() != 0) {
-			delete testCodec;
 			std::string err = "Codec requested but not found at: " + std::to_string(i2cBus) + ", " + std::to_string(address) + ", " + std::to_string(type) + "\n";
 			if("r" == required)
 				throwErr(err);
@@ -104,11 +103,11 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 				fprintf(stderr, "Found I2C codec on bus %d address %d, required: %s\n", i2cBus, address, required.c_str());
 			}
 			if("d" == required)
-				disabledCodecs.push_back(testCodec);
+				disabledCodecs.push_back(std::move(testCodec));
 			else if(!masterCodec)
-				masterCodec = testCodec;
+				masterCodec = std::move(testCodec);
 			else
-				extraCodecs.push_back(testCodec);
+				extraCodecs.push_back(std::move(testCodec));
 		}
 	}
 	if(!masterCodec) {
@@ -155,8 +154,7 @@ int I2c_MultiTLVCodec::initCodec()
 	if(!masterCodec || (ret = masterCodec->initCodec()))
 		return ret;
 
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->initCodec()))
 			return ret;
 	}
@@ -172,8 +170,7 @@ int I2c_MultiTLVCodec::startAudio(int dual_rate)
 		return ret;
 
 	// Each subsequent codec occupies the next 2 slots
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->startAudio(0)))
 			return ret;
 	}
@@ -191,8 +188,7 @@ int I2c_MultiTLVCodec::stopAudio()
 
 	if(running) {
 		// Stop extra codecs
-		std::vector<I2c_Codec*>::iterator it;
-		for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+		for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 			(*it)->stopAudio();
 		}
 
@@ -213,8 +209,7 @@ int I2c_MultiTLVCodec::setPga(float newGain, unsigned short int channel)
 	if((ret = masterCodec->setPga(newGain, channel)))
 		return ret;
 
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->setPga(newGain, channel)))
 			return ret;
 	}
@@ -231,8 +226,7 @@ int I2c_MultiTLVCodec::setDACVolume(int halfDbSteps)
 	if((ret = masterCodec->setDACVolume(halfDbSteps)))
 		return ret;
 
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->setDACVolume(halfDbSteps)))
 			return ret;
 	}
@@ -249,8 +243,7 @@ int I2c_MultiTLVCodec::setADCVolume(int halfDbSteps)
 	if((ret = masterCodec->setADCVolume(halfDbSteps)))
 		return ret;
 
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->setADCVolume(halfDbSteps)))
 			return ret;
 	}
@@ -267,8 +260,7 @@ int I2c_MultiTLVCodec::setHPVolume(int halfDbSteps)
 	if((ret = masterCodec->setHPVolume(halfDbSteps)))
 		return ret;
 
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->setHPVolume(halfDbSteps)))
 			return ret;
 	}
@@ -282,8 +274,7 @@ int I2c_MultiTLVCodec::disable()
 		return 1;
 
 	// Disable extra codecs first
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		(*it)->stopAudio();
 	}
 
@@ -300,8 +291,7 @@ int I2c_MultiTLVCodec::reset()
 	if((ret = masterCodec->reset()))
 		return ret;
 
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
+	for(auto it = extraCodecs.begin(); it != extraCodecs.end(); ++it) {
 		if((ret = (*it)->reset()))
 			return ret;
 	}
@@ -339,15 +329,6 @@ int I2c_MultiTLVCodec::debugReadRegister(int codecNum, int regNum) {
 I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 {
 	stopAudio();
-
-	// Delete codec objects we created
-	std::vector<I2c_Codec*>::iterator it;
-	for(it = extraCodecs.begin(); it != extraCodecs.end(); ++it)
-		delete *it;
-	if(masterCodec)
-		delete masterCodec;
-	for(it = disabledCodecs.begin(); it != disabledCodecs.end(); ++it)
-		delete *it;
 }
 
 McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
