@@ -15,7 +15,7 @@
 using namespace StringUtils;
 
 static const unsigned int kDataSize = 16;
-#undef CODEC_WCLK_MASTER
+#undef CODEC_GENERATES_WCLK
 
 struct Address {
 	unsigned int bus;
@@ -44,7 +44,7 @@ static I2c_Codec::CodecType getCodecTypeFromString(const std::string& str)
 }
 
 I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdmConfig, bool isVerbose)
-: masterCodec(nullptr), running(false), verbose(isVerbose)
+: primaryCodec(nullptr), running(false), verbose(isVerbose)
 {
 	std::vector<Address> addresses;
 	std::vector<std::string> tokens = split(cfgString, ';');
@@ -87,7 +87,8 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		uint8_t address = addr.address;
 		I2c_Codec::CodecType type = addr.type;
 		std::string required = addr.required;
-		// Check for presence of TLV codec and take the first one we find as the master codec
+		// Check for presence of TLV codecs and take the first one we
+		// find as the primary codec
 		std::shared_ptr<I2c_Codec> testCodec(new I2c_Codec(i2cBus, address, type));
 		testCodec->setMode(mode);
 		if(testCodec->initCodec() != 0) {
@@ -112,15 +113,15 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		return;
 	}
 
-	masterCodec = codecs[0];
-	// Master codec generates bclk (and possibly wclk) with its PLL
+	primaryCodec = codecs[0];
+	// primaryCodec generates bclk (and possibly wclk) with its PLL
 	// and occupies the first two slots starting from tdmConfig.firstSlot
 	unsigned int slotNum = tdmConfig.firstSlot;
-	bool codecWclkMaster =
-#ifdef CODEC_WCLK_MASTER
-		true; // Main codec generates word clock
+	bool primaryCodecGeneratesWclk =
+#ifdef CODEC_GENERATES_WCLK
+		true; // primaryCodec generates word clock
 #else
-		false; // AM335x generates word clock
+		false; // AM335x or external device generates word clock
 #endif
 
 	AudioCodecParams params;
@@ -130,21 +131,21 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 	params.tdmMode = true;
 	params.startingSlot = slotNum;
 	params.generatesBclk = true;
-	params.generatesWclk = codecWclkMaster;
-	params.mclk = masterCodec->getMcaspConfig().getValidAhclk(24000000);
-	masterCodec->setParameters(params);
+	params.generatesWclk = primaryCodecGeneratesWclk;
+	params.mclk = primaryCodec->getMcaspConfig().getValidAhclk(24000000);
+	primaryCodec->setParameters(params);
 
 	params.generatesBclk = false;
 	params.generatesWclk = false;
 	for(auto& codec : codecs) {
-		if(codec == masterCodec)
+		if(codec == primaryCodec)
 			continue;
 		slotNum += 2;
 		params.startingSlot = slotNum;
 		codec->setParameters(params);
 	}
 	// initialise the McASP configuration.
-	mcaspConfig = masterCodec->getMcaspConfig();
+	mcaspConfig = primaryCodec->getMcaspConfig();
 	mcaspConfig.params.dataSize = kDataSize;
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels = getNumOuts();
@@ -156,23 +157,23 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		return ret; \
 // end DO_AND_RETURN_ON_ERR
 
-#define FOR_EACH_CODEC_DO_MASTER(DO,MASTER_POS) \
-	if(1 == MASTER_POS) { \
-		DO_AND_RETURN_ON_ERR(masterCodec->DO); \
+#define FOR_EACH_CODEC_DO_PRIMARY(DO,PRIMARY_POS) \
+	if(1 == PRIMARY_POS) { \
+		DO_AND_RETURN_ON_ERR(primaryCodec->DO); \
 	} \
 	for(auto& c : codecs) { \
-		if(MASTER_POS && masterCodec == c) \
+		if(PRIMARY_POS && primaryCodec == c) \
 			continue; \
 		DO_AND_RETURN_ON_ERR(c->DO); \
 	} \
-	if(2 == MASTER_POS) { \
-		DO_AND_RETURN_ON_ERR(masterCodec->DO); \
+	if(2 == PRIMARY_POS) { \
+		DO_AND_RETURN_ON_ERR(primaryCodec->DO); \
 	} \
-// end FOR_EACH_CODEC_DO_MASTER
+// end FOR_EACH_CODEC_DO_PRIMARY
 
-#define FOR_EACH_CODEC_DO_MASTER_FIRST(DO) FOR_EACH_CODEC_DO_MASTER(DO,1)
-#define FOR_EACH_CODEC_DO_MASTER_LAST(DO) FOR_EACH_CODEC_DO_MASTER(DO,2)
-#define FOR_EACH_CODEC_DO(DO) FOR_EACH_CODEC_DO_MASTER(DO,0)
+#define FOR_EACH_CODEC_DO_PRIMARY_FIRST(DO) FOR_EACH_CODEC_DO_PRIMARY(DO,1)
+#define FOR_EACH_CODEC_DO_PRIMARY_LAST(DO) FOR_EACH_CODEC_DO_PRIMARY(DO,2)
+#define FOR_EACH_CODEC_DO(DO) FOR_EACH_CODEC_DO_PRIMARY(DO,0)
 
 // This method initialises the audio codec to its default state
 int I2c_MultiTLVCodec::initCodec()
@@ -193,7 +194,7 @@ int I2c_MultiTLVCodec::startAudio(int dual_rate)
 int I2c_MultiTLVCodec::stopAudio()
 {
 	if(running) {
-		FOR_EACH_CODEC_DO_MASTER_LAST(stopAudio());
+		FOR_EACH_CODEC_DO_PRIMARY_LAST(stopAudio());
 	}
 
 	running = false;
@@ -227,7 +228,7 @@ int I2c_MultiTLVCodec::setHPVolume(int halfDbSteps)
 int I2c_MultiTLVCodec::disable()
 {
 	// Disable extra codecs first
-	FOR_EACH_CODEC_DO_MASTER_LAST(stopAudio());
+	FOR_EACH_CODEC_DO_PRIMARY_LAST(stopAudio());
 	return 0;
 }
 
@@ -266,15 +267,15 @@ McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 #define BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE 0x00 // External clk, polarity (falling edge)
 #define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
 #define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00 // External clk, polarity (falling edge)
-#ifdef CODEC_WCLK_MASTER
+#ifdef CODEC_GENERATES_WCLK
 #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800 // 16-slot TDM external fsclk, rising edge means beginning of frame
 #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800 // 16-slot TDM external fsclk, rising edge means beginning of frame
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
-#else // CODEC_WCLK_MASTER
+#else // CODEC_GENERATES_WCLK
 #define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802 // 16-slot TDM internal fsclk, rising edge means beginning of frame
 #define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802 // 16-slot TDM internal fsclk, rising edge means beginning of frame
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | MCASP_PIN_AFSX | (1 << 2) // AHCLKX, FSX, AXR2 outputs
-#endif // CODEC_WCLK_MASTER
+#endif // CODEC_GENERATES_WCLK
 */
 }
 
@@ -293,7 +294,7 @@ unsigned int I2c_MultiTLVCodec::getNumOuts(){
 }
 
 float I2c_MultiTLVCodec::getSampleRate() {
-	if(masterCodec)
-		return masterCodec->getSampleRate();
+	if(primaryCodec)
+		return primaryCodec->getSampleRate();
 	return 0;
 }
