@@ -21,7 +21,7 @@ struct Address {
 	unsigned int bus;
 	uint8_t address;
 	I2c_Codec::CodecType type;
-	bool required;
+	std::string required;
 };
 
 static const std::map<std::string, I2c_Codec::CodecType> codecTypeMap = {
@@ -56,8 +56,12 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 	for(auto& token: tokens) {
 		// the string will contain semicolon-separated label:value pairs
 		// ADDR: <bus>,<addr>,<type>,<required>
+		//  (where "required" can be:
+		//   - `r` equired
+		//   - `n` ot required
+		//   - `d` isabled
 		// MODE: <mode>
-		// e.g.: ADDR: 2,24,3104,1;ADDR: 1,24,3106,0;MODE: noInit
+		// e.g.: ADDR: 2,24,3104,r;ADDR: 1,24,3106,o;MODE: noInit
 		std::vector<std::string> tks = split(token, ':');
 		if(tks.size() != 2)
 			throwErr("Wrong format for token ", token);
@@ -69,7 +73,7 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 					.bus = (unsigned int)std::stoi(ts[0]),
 					.address = (uint8_t)std::stoi(ts[1]),
 					.type = getCodecTypeFromString(ts[2]),
-					.required = (bool)std::stoi(ts[3]),
+					.required = trim(ts[3]),
 				});
 		} else if("MODE" == trim(tks[0]) && "" == mode) {
 			mode = trim(tks[1]);
@@ -82,14 +86,14 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		unsigned int i2cBus = addr.bus;
 		uint8_t address = addr.address;
 		I2c_Codec::CodecType type = addr.type;
-		bool required = addr.required;
+		std::string required = addr.required;
 		// Check for presence of TLV codec and take the first one we find as the master codec
 		I2c_Codec *testCodec = new I2c_Codec(i2cBus, address, type);
 		testCodec->setMode(mode);
 		if(testCodec->initCodec() != 0) {
 			delete testCodec;
 			std::string err = "Codec requested but not found at: " + std::to_string(i2cBus) + ", " + std::to_string(address) + ", " + std::to_string(type) + "\n";
-			if(required)
+			if("r" == required)
 				throwErr(err);
 			if(verbose)
 				fprintf(stderr, "%s", err.c_str());
@@ -97,10 +101,11 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		else {
 			// codec found
 			if(verbose) {
-				fprintf(stderr, "Found I2C codec on bus %d address %d\n", i2cBus, address);
+				fprintf(stderr, "Found I2C codec on bus %d address %d, required: %s\n", i2cBus, address, required.c_str());
 			}
-
-			if(!masterCodec)
+			if("d" == required)
+				disabledCodecs.push_back(testCodec);
+			else if(!masterCodec)
 				masterCodec = testCodec;
 			else
 				extraCodecs.push_back(testCodec);
@@ -341,6 +346,8 @@ I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 		delete *it;
 	if(masterCodec)
 		delete masterCodec;
+	for(it = disabledCodecs.begin(); it != disabledCodecs.end(); ++it)
+		delete *it;
 }
 
 McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()

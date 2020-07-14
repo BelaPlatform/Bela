@@ -428,7 +428,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		std::string mode;
 		if("" != codecMode)
 			mode = "MODE:"+codecMode;
-		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,0;ADDR:2,25,3106,0;ADDR:2,26,3106,0;ADDR:2,27,3106,0;"+mode, {}, gRTAudioVerbose);
+		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
 	}
 	else if(belaHw == BelaHw_BelaMiniMultiTdm)
 		gAudioCodec = new I2c_MultiTdmCodec(codecMode, gRTAudioVerbose);
