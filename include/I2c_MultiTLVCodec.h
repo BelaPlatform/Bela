@@ -54,6 +54,7 @@ protected:
 private:
 	I2c_Codec *masterCodec;
 	std::vector<I2c_Codec*> extraCodecs;
+	std::vector<I2c_Codec*> disabledCodecs;
 
 	bool running;
 	bool verbose;
