@@ -188,8 +188,8 @@ private:
 
 static unsigned int* gDigitalPins = NULL;
 
-#define USERLED3_GPIO_BASE (Gpio::getBankAddress(1))// GPIO1(24) is user LED 3
-#define USERLED3_PIN_MASK   (1 << 24)
+const uint32_t userLed3GpioBase = Gpio::getBankAddress(1);
+const uint32_t userLed3GpioPinMask = 1 << 24;
 const unsigned int belaMiniLedBlue = 87;
 const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
 const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
@@ -624,8 +624,8 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = belaMiniLedBlueGpioBase;
 			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
 		} else {
-			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = USERLED3_GPIO_BASE;
-			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = USERLED3_PIN_MASK;
+			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = userLed3GpioBase;
+			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = userLed3GpioPinMask;
 		}
 	}
 	else {
