@@ -1,11 +1,25 @@
 #include "../include/Gpio.h"
+#include "GPIOcontrol.h"
 
-int Gpio::open(unsigned int newPin, unsigned int direction, bool unexport){
+static const uint32_t GPIO_SIZE =  0x198;
+static const uint32_t GPIO_ADDRESSES[4] = {
+	0x44E07000,
+	0x4804C000,
+	0x481AC000,
+	0x481AE000,
+};
+
+Gpio::Gpio() : pin(-1), gpio(nullptr)
+{}
+
+Gpio::~Gpio()
+{
+	close();
+}
+
+int Gpio::open(unsigned int newPin, Direction direction, bool unexport){
 	if(newPin >= 128){
 		return -1;
-	}
-	if(fd != -1){
-		close();
 	}
 	pin = newPin;
 	// gpio_export can fail if the pin has already been exported.
@@ -19,16 +33,14 @@ int Gpio::open(unsigned int newPin, unsigned int direction, bool unexport){
 	if(gpio_set_dir(pin, direction) < 0){
 		return -1;
 	}
-	fd = ::open("/dev/mem", O_RDWR);
 	int bank = pin / 32;
 	pin = pin - bank * 32;
 	pinMask = 1 << pin;
 	uint32_t gpioBase = GPIO_ADDRESSES[bank];
-	gpio = (uint32_t *)mmap(0, GPIO_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, gpioBase); // NOWRAP
-	if(gpio == MAP_FAILED){
-		fprintf(stderr, "Unable to map GPIO pin %u\n", pin);
+	gpio = (uint32_t*)mmap.map(gpioBase, GPIO_SIZE);
+	if(!gpio)
 		return -2;
-	}
+
 	// actually use the memmapped memory,
 	// to avoid mode switches later:
 	// read the current value
@@ -43,7 +55,10 @@ void Gpio::close(){
 	{
 		gpio_unexport(pin);
 	}
-	::close(fd);
 	pin = -1;
-	fd = -1;
+}
+
+uint32_t Gpio::getBankAddress(unsigned int bank)
+{
+	return GPIO_ADDRESSES[bank];
 }

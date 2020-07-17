@@ -213,11 +213,11 @@ private:
 
 static unsigned int* gDigitalPins = NULL;
 
-#define USERLED3_GPIO_BASE  GPIO_ADDRESSES[1] // GPIO1(24) is user LED 3
+#define USERLED3_GPIO_BASE (Gpio::getBankAddress(1))// GPIO1(24) is user LED 3
 #define USERLED3_PIN_MASK   (1 << 24)
 const unsigned int belaMiniLedBlue = 87;
-const unsigned int belaMiniLedBlueGpioBase = GPIO_ADDRESSES[2]; // GPIO2(23) is BelaMini LED blue
-const unsigned int belaMiniLedBlueGpioPinMask = 1 << 23;
+const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
+const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
 const unsigned int belaMiniLedRed = 89;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
@@ -323,7 +323,7 @@ int PRU::prepareGPIO(int include_led)
 				if(gRTAudioVerbose)
 					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , gDigitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
 			}
-			if(gpio_set_dir(gDigitalPins[i], INPUT_PIN)) {
+			if(gpio_set_dir(gDigitalPins[i], Gpio::INPUT)) {
 				if(gRTAudioVerbose)
 					fprintf(stderr,"Error: Couldn't set direction on digital GPIO pin %d\n" , gDigitalPins[i]);
 				return -1;
@@ -418,10 +418,10 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	pruMemory = new PruMemory(pru_number, context);
 
 	if(0 <= stopButtonPin){
-		stopButton.open(stopButtonPin, INPUT, false);
+		stopButton.open(stopButtonPin, Gpio::INPUT, false);
 	}
 	if(belaHw == BelaHw_BelaMini && enableLed){
-		underrunLed.open(belaMiniLedRed, OUTPUT);
+		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
 		underrunLed.clear();
 	}
 

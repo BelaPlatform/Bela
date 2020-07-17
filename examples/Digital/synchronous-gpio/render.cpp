@@ -36,8 +36,8 @@ bool gStatus = false;
 
 bool setup(BelaContext *context, void *userData)
 {
-	gpioIn.open(gInputPin, INPUT); // Open the pin as an output
-	gpioOut.open(gOutputPin, OUTPUT); // Open the pin as an output
+	gpioIn.open(gInputPin, Gpio::INPUT); // Open the pin as an output
+	gpioOut.open(gOutputPin, Gpio::OUTPUT); // Open the pin as an output
 	return true;
 }
 

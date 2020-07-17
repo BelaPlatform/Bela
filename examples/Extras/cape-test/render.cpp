@@ -75,9 +75,9 @@ bool setup(BelaContext *context, void *userData)
 		ANALOG_IN_HIGH = 0.5;
 		// also init the LEDs as outputs
 		led1 = new Gpio;
-		led1->open(87, OUTPUT);
+		led1->open(87, Gpio::OUTPUT);
 		led2 = new Gpio;
-		led2->open(89, OUTPUT);
+		led2->open(89, Gpio::OUTPUT);
 	} else {
 		ANALOG_OUT_LOW = 0;
 		ANALOG_OUT_HIGH = 50000.0 / 65536.0;

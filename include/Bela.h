@@ -34,6 +34,7 @@
 // 1.7.0
 // - Bela_getopt_long takes a char* const []
 // - added the functions and definitions from Utilities.h
+// - INPUT and OUTPUT are now an enum
 // 1.6.0
 // - added Bela_setUserData(), Bela_requestStop(), Bela_stopRequested()
 // 1.5.0
@@ -955,14 +956,10 @@ void Bela_deleteAllAuxiliaryTasks();
  * @{
  */
 
-#ifndef INPUT
-	#define INPUT 0x0
-#endif /* INPUT */
-
-#ifndef OUTPUT
-	#define OUTPUT 0x1
-#endif /* OUTPUT */
-
+enum {
+	INPUT = 0,
+	OUTPUT = 1,
+};
 /** @} */
 
 /**
