@@ -6,6 +6,7 @@
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/bela_hw_settings.h"
+#include "../include/bela_sw_settings.h"
 #include "../include/board_detect.h"
 #include "../include/MiscUtilities.h"
 
@@ -124,8 +125,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 {
 	if(BelaHwDetectMode_User == mode || BelaHwDetectMode_UserOnly == mode)
 	{
-		std::string configPath = "/root/.bela/belaconfig";
-		BelaHw hw = read_hw_from_file(configPath, "BOARD");
+		BelaHw hw = read_hw_from_file(userBelaConfig, "BOARD");
 		if(hw != BelaHw_NoHw)
 			return hw;
 		if(BelaHwDetectMode_UserOnly == mode)
@@ -134,10 +134,9 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 			return Bela_detectHw(BelaHwDetectMode_Cache);
 	}
 
-	std::string configPath = "/run/bela/belaconfig";
 	if(BelaHwDetectMode_Cache == mode || BelaHwDetectMode_CacheOnly == mode)
 	{
-		BelaHw hw = read_hw_from_file(configPath, "HARDWARE");
+		BelaHw hw = read_hw_from_file(sysBelaConfig, "HARDWARE");
 		if(hw != BelaHw_NoHw)
 			return hw;
 		if(BelaHwDetectMode_CacheOnly == mode)
@@ -185,7 +184,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 		}
 	}
 	if(hw != BelaHw_NoHw)
-		write_hw_to_file(configPath, hw);
+		write_hw_to_file(sysBelaConfig, hw);
 	return hw;
 }
 
