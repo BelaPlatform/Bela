@@ -31,26 +31,39 @@ namespace IoUtils
 	 */
 	int writeTextFile(const std::string& path, const std::string& content, Mode mode = TRUNCATE);
 	/**
-	 * Utilities to read and write config files with one `KEY=VALUE` pair per lin.
+	 * Read a text file as a string.
 	 */
-	namespace ConfigFile {
-		/**
-		 * Read the value corresponding to \p key from \p path.
-		 *
-		 * @param path path to the file to read from.
-		 * @param key the key to find.
-		 * @return The read value, or an empty string if the \p key was not found.
-		 */
-		std::string readValue(const std::string& path, const std::string& key);
-		/**
-		 * Write the key-value pair to \p path.
-		 *
-		 * @param path path to the file to write.
-		 * @param key the key
-		 * @param value the value
-		 * @param mode whether to truncate or append to the path.
-		 * @return 0 on success, or an error code otherwise.
-		 */
-		int writeValue(const std::string& file, const std::string& key, const std::string& value, Mode mode = TRUNCATE);
-	}
+	std::string readTextFile(const std::string& path);
+}
+
+/**
+ * Utilities to read and write config files with one `KEY=VALUE` pair per lin.
+ */
+namespace ConfigFileUtils {
+	/**
+	 * Read the value corresponding to \p key from \p path.
+	 *
+	 * @param path path to the file to read from.
+	 * @param key the key to find.
+	 * @return The read value, or an empty string if the \p key was not found.
+	 */
+	std::string readValue(const std::string& path, const std::string& key);
+	/**
+	 * Read the value corresponding to \p key from the string in \p str.
+	 *
+	 * @param str the string the parse.
+	 * @param key the key to find.
+	 * @return The read value, or an empty string if the \p key was not found.
+	 */
+	std::string readValueFromString(const std::string& str, const std::string& key);
+	/**
+	 * Write the key-value pair to \p path.
+	 *
+	 * @param path path to the file to write.
+	 * @param key the key
+	 * @param value the value
+	 * @param mode whether to truncate or append to the path.
+	 * @return 0 on success, or an error code otherwise.
+	 */
+	int writeValue(const std::string& file, const std::string& key, const std::string& value, IoUtils::Mode mode = IoUtils::TRUNCATE);
 }

@@ -3,7 +3,12 @@
 #include <fstream>
 #include <sstream>
 
-std::vector<std::string> StringUtils::split(const std::string& s, char delimiter)
+using namespace StringUtils;
+using namespace IoUtils;
+using namespace ConfigFileUtils;
+namespace StringUtils
+{
+std::vector<std::string> split(const std::string& s, char delimiter)
 {
 	std::vector<std::string> tokens;
 	std::string token;
@@ -15,7 +20,7 @@ std::vector<std::string> StringUtils::split(const std::string& s, char delimiter
 	return tokens;
 }
 
-std::string StringUtils::trim(std::string const& str)
+std::string trim(std::string const& str)
 {
 	if(str.empty())
 		return str;
@@ -26,7 +31,12 @@ std::string StringUtils::trim(std::string const& str)
 	return str.substr(first, last - first + 1);
 }
 
-int IoUtils::writeTextFile(const std::string& path, const std::string& content, Mode mode)
+} // StringUtils
+
+namespace IoUtils
+{
+
+int writeTextFile(const std::string& path, const std::string& content, Mode mode)
 {
 	std::ofstream outputFile;
 	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
@@ -50,27 +60,53 @@ int IoUtils::writeTextFile(const std::string& path, const std::string& content, 
 	return -1;
 }
 
-std::string IoUtils::ConfigFile::readValue(const std::string& path, const std::string& searchStr)
+} // IoUtils
+
+namespace ConfigFileUtils
+{
+
+static std::string readValueFromLine(const std::string& line, const std::string& key)
+{
+	auto vec = split(line, '=');
+	if(vec.size() == 2 && trim(vec[0]) == key)
+		return trim(vec[1]);
+	return "";
+}
+
+std::string readValue(const std::string& path, const std::string& key)
 {
 	std::ifstream inputFile;
 	std::string line;
 	inputFile.open(path.c_str());
+	std::string found;
 	if(!inputFile.fail())
 	{
 		while (std::getline(inputFile, line))
 		{
-			auto vec = StringUtils::split(line, '=');
-			if(vec.size() != 2)
-				continue;
-			if(StringUtils::trim(vec[0]) == searchStr)
-				return StringUtils::trim(vec[1]);
+			std::string ret = readValueFromLine(line, key);
+			if("" != ret)
+				found = ret;
 		}
 		inputFile.close();
 	}
-	return "";
+	return found;
 }
 
-int IoUtils::ConfigFile::writeValue(const std::string& path, const std::string& key, const std::string& value, Mode mode)
+std::string readValueFromString(const std::string& str, const std::string& key)
+{
+	std::vector<std::string> lines = split(str, '\n');
+	std::string found;
+	for(auto& line : lines) {
+		std::string ret = readValueFromLine(line, key);
+		if("" != ret)
+			found = ret;
+	}
+	return found;
+}
+
+int writeValue(const std::string& path, const std::string& key, const std::string& value, Mode mode)
 {
 	return writeTextFile(path, key + "=" + value + "\n", mode);
 }
+
+} // ConfigFileUtils
