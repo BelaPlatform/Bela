@@ -20,6 +20,7 @@ static const std::map<std::string,BelaHw> belaHwMap = {
         {"CtagBeast", BelaHw_CtagBeast},
         {"CtagFaceBela", BelaHw_CtagFaceBela},
         {"CtagBeastBela", BelaHw_CtagBeastBela},
+        {"BelaMiniMultiAudio", BelaHw_BelaMiniMultiAudio},
 };
 
 static const int EEPROM_NUMCHARS = 30;
