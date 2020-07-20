@@ -10,35 +10,12 @@
 
 #include <vector>
 #include "../include/I2c_MultiTLVCodec.h"
+#include <map>
+#include "../include/MiscUtilities.h"
+using namespace StringUtils;
 
 static const unsigned int kDataSize = 16;
 #undef CODEC_WCLK_MASTER
-
-#include <map>
-#include <sstream>
-// duplicated from board_detect.cpp
-static std::vector<std::string> split(const std::string& s, char delimiter)
-{
-	std::vector<std::string> tokens;
-	std::string token;
-	std::istringstream tokenStream(s);
-	while (std::getline(tokenStream, token, delimiter))
-	{
-		tokens.push_back(token);
-	}
-	return tokens;
-}
-
-static std::string trim(std::string const& str)
-{
-    if(str.empty())
-        return str;
-
-    std::size_t firstScan = str.find_first_not_of(' ');
-    std::size_t first     = firstScan == std::string::npos ? str.length() : firstScan;
-    std::size_t last      = str.find_last_not_of(' ');
-    return str.substr(first, last - first + 1);
-}
 
 struct Address {
 	unsigned int bus;
