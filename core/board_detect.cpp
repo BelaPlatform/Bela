@@ -107,7 +107,7 @@ std::string getBelaHwName(const BelaHw hardware)
 
 static BelaHw read_hw_from_file(const std::string& path, const std::string& searchStr)
 {
-	std::string board = IoUtils::ConfigFile::readValue(path, searchStr);
+	std::string board = ConfigFileUtils::readValue(path, searchStr);
 	BelaHw hw = getBelaHw(board);
 	if(hw != BelaHw_NoHw)
 		return hw;
@@ -118,7 +118,7 @@ static BelaHw read_hw_from_file(const std::string& path, const std::string& sear
 
 static int write_hw_to_file(std::string path, BelaHw hardware)
 {
-	return IoUtils::ConfigFile::writeValue(path, "HARDWARE", getBelaHwName(hardware));
+	return ConfigFileUtils::writeValue(path, "HARDWARE", getBelaHwName(hardware));
 }
 
 BelaHw Bela_detectHw(const BelaHwDetectMode mode)
