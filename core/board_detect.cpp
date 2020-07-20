@@ -1,15 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "../include/Bela.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <vector>
 #include <map>
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/bela_hw_settings.h"
 #include "../include/board_detect.h"
+#include "../include/MiscUtilities.h"
 
 static const std::map<std::string,BelaHw> belaHwMap = {
         {"NoHardware", BelaHw_NoHw},
@@ -46,29 +44,6 @@ static int is_belamini(){
 		return 1;
 	}
 	return 0;
-}
-
-static std::vector<std::string> split(const std::string& s, char delimiter)
-{
-	std::vector<std::string> tokens;
-	std::string token;
-	std::istringstream tokenStream(s);
-	while (std::getline(tokenStream, token, delimiter))
-	{
-		tokens.push_back(token);
-	}
-	return tokens;
-}
-
-static std::string trim(std::string const& str)
-{
-    if(str.empty())
-        return str;
-
-    std::size_t firstScan = str.find_first_not_of(' ');
-    std::size_t first     = firstScan == std::string::npos ? str.length() : firstScan;
-    std::size_t last      = str.find_last_not_of(' ');
-    return str.substr(first, last - first + 1);
 }
 
 // Returns true if the Tlv32 codec is detected
@@ -129,46 +104,20 @@ std::string getBelaHwName(const BelaHw hardware)
         return noHw;
 }
 
-static BelaHw parse_config_file(std::string path,  std::string searchStr)
+static BelaHw read_hw_from_file(const std::string& path, const std::string& searchStr)
 {
-	std::ifstream inputFile;
-	std::string line;
-	inputFile.open(path.c_str());
-	if(!inputFile.fail())
-	{
-		while (std::getline(inputFile, line))
-		{
-			auto vec = split(line, '=');
-			if(vec.size() != 2)
-				continue;
-			if(trim(vec[0]) == searchStr)
-			{
-				std::string board = trim(vec[1]);
-				BelaHw hw = getBelaHw(board);
-				if(hw != BelaHw_NoHw)
-					return hw;
-				else
-					fprintf(stderr, "Unknown setting %s= in %s: %s. Ignoring.\n", searchStr.c_str(), path.c_str(), board.c_str());
-			}
-		}
-		inputFile.close();
-	}
+	std::string board = IoUtils::ConfigFile::readValue(path, searchStr);
+	BelaHw hw = getBelaHw(board);
+	if(hw != BelaHw_NoHw)
+		return hw;
+	else
+		fprintf(stderr, "Unknown setting %s= in %s: %s. Ignoring.\n", searchStr.c_str(), path.c_str(), board.c_str());
 	return BelaHw_NoHw;
 }
 
-static int write_config_file(std::string path, BelaHw hardware)
+static int write_hw_to_file(std::string path, BelaHw hardware)
 {
-	std::ofstream outputFile;
-	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
-	outputFile.open(path.c_str());
-	if(outputFile.is_open())
-	{
-		outputFile << "HARDWARE=" << getBelaHwName(hardware);
-		outputFile.close();
-		return 0;
-	}
-	fprintf(stderr, "File %s could not be opened\n.", path.c_str());
-	return -1;
+	return IoUtils::ConfigFile::writeValue(path, "HARDWARE", getBelaHwName(hardware));
 }
 
 BelaHw Bela_detectHw(const BelaHwDetectMode mode)
@@ -176,7 +125,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	if(BelaHwDetectMode_User == mode || BelaHwDetectMode_UserOnly == mode)
 	{
 		std::string configPath = "/root/.bela/belaconfig";
-		BelaHw hw = parse_config_file(configPath, "BOARD");
+		BelaHw hw = read_hw_from_file(configPath, "BOARD");
 		if(hw != BelaHw_NoHw)
 			return hw;
 		if(BelaHwDetectMode_UserOnly == mode)
@@ -188,7 +137,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	std::string configPath = "/run/bela/belaconfig";
 	if(BelaHwDetectMode_Cache == mode || BelaHwDetectMode_CacheOnly == mode)
 	{
-		BelaHw hw = parse_config_file(configPath, "HARDWARE");
+		BelaHw hw = read_hw_from_file(configPath, "HARDWARE");
 		if(hw != BelaHw_NoHw)
 			return hw;
 		if(BelaHwDetectMode_CacheOnly == mode)
@@ -236,7 +185,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 		}
 	}
 	if(hw != BelaHw_NoHw)
-		write_config_file(configPath, hw);
+		write_hw_to_file(configPath, hw);
 	return hw;
 }
 
