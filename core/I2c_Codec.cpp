@@ -133,9 +133,10 @@ int I2c_Codec::startAudio(int dual_rate, int generates_bclk, int generates_wclk,
 		else
 			return 1;
 
+		unsigned int transmitSyncBitDelay = 0;
 		if(writeRegister(0x09, crb))   // Audio serial control register B: DSP mode, word len specified by slotSize
 			return 1;
-		if(writeRegister(0x0A, startingSlot*slotSize))   // Audio serial control register C: specifying offset in bits
+		if(writeRegister(0x0A, startingSlot * slotSize + transmitSyncBitDelay))   // Audio serial control register C: specifying offset in bits
 			return 1;
 	}
 	else {
