@@ -135,7 +135,10 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 	// set audio codec (order of the below statements is important)
 	if(pcfg)
 	{
-		if(Bela_hwContains(hw, CtagCape)) {
+		if(BelaHw_BelaMiniMultiAudio == hw) {
+			cfg->activeCodec = gI2cMultiTLVCodec;
+			cfg->disabledCodec = gSpiCodec;
+		} else if(Bela_hwContains(hw, CtagCape)) {
 			pcfg->activeCodec = gSpiCodec;
 			pcfg->disabledCodec = gI2cCodec;
 		} else if (Bela_hwContains(hw, Tlv320aic3104)) {
@@ -427,8 +430,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
 	BelaHw belaHw = Bela_detectHw();
-	// belaHw = BelaHw_BelaMini;
-	// belaHw = BelaHw_BelaMiniMultiAudio;	// TESTING
 	if(gRTAudioVerbose)	
 		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
 	// Check for user-selected hardware
@@ -451,6 +452,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
         else if(2 == Bela_hwContains(belaHw, CtagCape))
                 gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
+	else if(belaHw == BelaHw_BelaMiniMultiAudio)
+		gI2cMultiTLVCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
 	else
 		gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 		

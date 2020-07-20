@@ -293,6 +293,7 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 		case BelaMiniCape:
 			switch(hw) {
 				case BelaHw_BelaMini:
+				case BelaHw_BelaMiniMultiAudio:
 					return 1;
 				default:
 					return 0;
