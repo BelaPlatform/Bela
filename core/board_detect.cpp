@@ -112,7 +112,8 @@ static BelaHw read_hw_from_file(const std::string& path, const std::string& sear
 	if(hw != BelaHw_NoHw)
 		return hw;
 	else
-		fprintf(stderr, "Unknown setting %s= in %s: %s. Ignoring.\n", searchStr.c_str(), path.c_str(), board.c_str());
+		if("" != board)
+			fprintf(stderr, "Unknown setting %s= in %s: %s. Ignoring.\n", searchStr.c_str(), path.c_str(), board.c_str());
 	return BelaHw_NoHw;
 }
 
