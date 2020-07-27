@@ -153,8 +153,9 @@ private:
 	bool waitingForStatus;
 	bool receivingSysex;
 	void (*messageReadyCallback)(MidiChannelMessage,void*);
-	bool callbackEnabled;
 	void* callbackArg;
+	void (*sysexCallback)(midi_byte_t,void*);
+	void* sysexCallbackArg;
 public:
 	MidiParser(){
 		waitingForStatus = true;
@@ -163,9 +164,10 @@ public:
 		messages.resize(100); // 100 is the number of messages that can be buffered
 		writePointer = 0;
 		readPointer = 0;
-		callbackEnabled = false;
-		messageReadyCallback = NULL;
-		callbackArg = NULL;
+		messageReadyCallback = nullptr;
+		callbackArg = nullptr;
+		sysexCallback = nullptr;
+		sysexCallbackArg = nullptr;
 	}
 
 	/**
@@ -198,11 +200,6 @@ public:
 	void setCallback(void (*newCallback)(MidiChannelMessage, void*), void* arg=NULL){
 		callbackArg = arg;
 		messageReadyCallback = newCallback;
-		if(newCallback != NULL){
-			callbackEnabled = true;
-		} else {
-			callbackEnabled = false;
-		}
 	};
 
 	/**
@@ -211,7 +208,37 @@ public:
 	 * input port.
 	 */
 	bool isCallbackEnabled(){
-		return callbackEnabled;
+		return messageReadyCallback != nullptr;
+	};
+
+	/**
+	 * Sets the callback to call when a new sysex byte is available
+	 * from the input port.
+	 *
+	 * The callback will be called with two arguments:
+	 *   callback(midi_byte_t byte, void* arg)
+	 *
+	 * To signal the end of a sysex transmission, byte `0xF0` will be
+	 * passed to the callback.
+	 * In order to deactivate the callback, call this method with nullptr as the
+	 * first argument.
+	 *
+	 * @param newCallback the callback function.
+	 * @param arg the third argument to be passed to the callback function.
+	 *
+	 */
+	void setSysexCallback(void (*newCallback)(midi_byte_t, void*), void* arg=nullptr){
+		sysexCallbackArg = arg;
+		sysexCallback = newCallback;
+	};
+
+	/**
+	 * Checks whether there is a callback currently set to be called
+	 * every time a new sysex byte is available from the
+	 * input port.
+	 */
+	bool isSysexCallbackEnabled(){
+		return sysexCallback != nullptr;
 	};
 
 	/**
@@ -219,7 +246,6 @@ public:
 	 * input port.
 	 *
 	 */
-
 	int numAvailableMessages(){
 		int num = (writePointer - readPointer + messages.size() ) % messages.size();
 		return num;

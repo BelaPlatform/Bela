@@ -59,18 +59,22 @@ int MidiParser::parse(midi_byte_t* input, unsigned int length){
 				//sysex!!!
 				waitingForStatus = false;
 				receivingSysex = true;
-				rt_printf("Receiving sysex\n");
+				if(!isSysexCallbackEnabled())
+					rt_printf("Receiving sysex\n");
 				continue;
 			} else { // other system common
 				continue;
 			}
 		} else if (receivingSysex){
-			// Just wait for the message to end
-			rt_printf("%c", input[n]);
+			if(isSysexCallbackEnabled())
+				sysexCallback(input[n], sysexCallbackArg);
+			else
+				rt_printf("%c", input[n]);
 			if(input[n] == 0xF7){
 				receivingSysex = false;
 				waitingForStatus = true;
-				rt_printf("\nCompleted receiving sysex\n");
+				if(!isSysexCallbackEnabled())
+					rt_printf("\n...done receiving sysex\n");
 			}
 			continue;
 		} else {

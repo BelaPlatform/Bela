@@ -54,6 +54,15 @@ void midiMessageCallback(MidiChannelMessage message, void* arg){
 	}
 }
 
+void sysexCallback(midi_byte_t byte, void* arg)
+{
+	printf("Sysex byte");
+	if(arg != NULL){
+		 printf(" from midi port %s", (const char*) arg);
+	}
+	printf(": %d\n", byte);
+}
+
 Midi midi;
 
 const char* gMidiPort0 = "hw:1,0,0";
@@ -63,7 +72,8 @@ bool setup(BelaContext *context, void *userData)
 	midi.readFrom(gMidiPort0);
 	midi.writeTo(gMidiPort0);
 	midi.enableParser(true);
-	midi.setParserCallback(midiMessageCallback, (void*) gMidiPort0);
+	midi.getParser()->setCallback(midiMessageCallback, (void*) gMidiPort0);
+	midi.getParser()->setSysexCallback(sysexCallback, (void*) gMidiPort0);
 	gSamplingPeriod = 1 / context->audioSampleRate;
 	return true;
 }
