@@ -29,10 +29,17 @@ float gFilterQ = 0.707; // Quality factor for the biquad filters to provide a Bu
 
 bool setup(BelaContext *context, void *userData)
 {
-	// Set low pass filter parameters (type, frequency & Q)
-	lpFilter.setup(gLPfreq, context->audioSampleRate, Biquad::lowpass, gFilterQ, 0);
-	// Set high pass filter parameters (type, frequency & Q)
-	hpFilter.setup(gHPfreq, context->audioSampleRate, Biquad::highpass, gFilterQ, 0);
+	Biquad::Settings settings{
+			.fs = context->audioSampleRate,
+			.cutoff = gLPfreq,
+			.type = Biquad::lowpass,
+			.q = gFilterQ,
+			.peakGainDb = 0,
+			};
+	lpFilter.setup(settings);
+	settings.cutoff = gHPfreq;
+	settings.type = Biquad::highpass;
+	hpFilter.setup(settings);
 
 	return true;
 }

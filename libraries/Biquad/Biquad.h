@@ -1,3 +1,4 @@
+// This code is based on the code credited below, but it has been modified further
 //
 //  Biquad.h
 //
@@ -16,23 +17,51 @@
 //  for your own purposes, free or commercial.
 //
 
-#ifndef Biquad_h
-#define Biquad_h
+#pragma once
 
-
+/**
+ * A class to compute Biquad filter coefficents and process biquad filters.
+ */
 class Biquad {
 	public:
+		typedef enum
+		{
+			lowpass,
+			highpass,
+			bandpass,
+			notch,
+			peak,
+			lowshelf,
+			highshelf
+		} Type;
+		struct Settings {
+			double fs; ///< Sample rate in Hz
+			Type type; ///< Filter type
+			double cutoff; ///< Cutoff in Hz
+			double q; ///< Quality factor
+			double peakGainDb; ///< Maximum filter gain
+		};
 		Biquad();
-		Biquad(double Fc, float Fs, int type, double Q = 0.707, double peakGainDB = 0.0);
+		Biquad(const Settings& settings);
 		~Biquad();
-		void setType(int type);
+		int setup(const Settings& settings);
+
+		/**
+		 * Process one input sample and return one output sample.
+		 */
+		float process(float in);
+
+		/**
+		 * Reset the internal state of the filter to 0.
+		 */
+		void clean();
+
+		void setType(Type type);
 		void setQ(double Q);
 		void setFc(double Fc);
 		void setPeakGain(double peakGainDB);
-		int setup(double Fc, float Fs, int type, double Q = 0.707, double peakGainDB = 0.0);
-		float process(float in);
 
-		int getType();
+		Type getType();
 		double getQ();
 		double getFc();
 		double getPeakGain();
@@ -41,62 +70,16 @@ class Biquad {
 		double getStartingFc();
 		double getStartingPeakGain();
 
-		enum filter_type
-		{
-			lowpass = 0,
-			highpass,
-			bandpass,
-			notch,
-			peak,
-			lowshelf,
-			highshelf
-		};
-
 	protected:
 		void calcBiquad(void);
 
-		int type;
+		Type type;
 		double a0, a1, a2, b1, b2;
 		double Fc, Q, peakGain;
-		float Fs;
+		double Fs;
 		double startFc, startQ, startPeakGain;
 		double z1, z2;
 };
-
-inline int Biquad::getType()
-{
-	return type;
-}
-
-inline double Biquad::getQ()
-{
-	return Q;
-}
-
-inline double Biquad::getFc()
-{
-	return Fc;
-}
-
-inline double Biquad::getPeakGain()
-{
-	return peakGain;
-}
-
-inline double Biquad::getStartingQ()
-{
-	return startQ;
-}
-
-inline double Biquad::getStartingFc()
-{
-	return startFc;
-}
-
-inline double Biquad::getStartingPeakGain()
-{
-	return startPeakGain;
-}
 
 inline float Biquad::process(float in) {
 	double out = in * a0 + z1;
@@ -104,5 +87,3 @@ inline float Biquad::process(float in) {
 	z2 = in * a2 - b2 * out;
 	return out;
 }
-
-#endif // Biquad_h

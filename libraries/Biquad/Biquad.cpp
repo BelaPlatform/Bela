@@ -1,3 +1,4 @@
+// This code is based on the code credited below, but it has been modified further
 //
 //  Biquad.cpp
 //
@@ -18,19 +19,18 @@
 
 #include <math.h>
 #include "Biquad.h"
-#include <iostream>
 
 Biquad::Biquad() {
 }
 
-Biquad::Biquad(double Fc, float Fs, int type, double Q, double peakGainDB) {
-    setup(Fc, Fs, type, Q, peakGainDB);
+Biquad::Biquad(const Biquad::Settings& settings) {
+    setup(settings);
 }
 
 Biquad::~Biquad() {
 }
 
-void Biquad::setType(int type) {
+void Biquad::setType(Biquad::Type type) {
     this->type = type;
     calcBiquad();
 }
@@ -49,19 +49,22 @@ void Biquad::setPeakGain(double peakGainDB) {
     this->peakGain = peakGainDB;
     calcBiquad();
 }
-    
-int Biquad::setup(double Fc, float Fs, int type, double Q, double peakGainDB) {
-    this->type = type;
-    this->Q = Q;
-    this->Fs = Fs;
-    this->Fc = Fc/Fs;
-    startFc = this->Fc;
-    startQ = Q;
-    startPeakGain = peakGainDB;
-    setPeakGain(peakGainDB);
+
+int Biquad::setup(const Biquad::Settings& settings) {
+    type = settings.type;
+    Fs = settings.fs;
+    startFc = Fc = settings.cutoff / Fs;
+    startQ = Q = settings.q;
+    startPeakGain = peakGain =  settings.peakGainDb;
+    calcBiquad();
     z1 = z2 = 0.0;
-    
+
     return 0;
+}
+
+void Biquad::clean()
+{
+    z1 = z2 = 0.0;
 }
 
 void Biquad::calcBiquad(void) {
@@ -77,7 +80,7 @@ void Biquad::calcBiquad(void) {
             b1 = 2 * (K * K - 1) * norm;
             b2 = (1 - K / Q + K * K) * norm;
             break;
-            
+
         case highpass:
             norm = 1 / (1 + K / Q + K * K);
             a0 = 1 * norm;
@@ -86,7 +89,7 @@ void Biquad::calcBiquad(void) {
             b1 = 2 * (K * K - 1) * norm;
             b2 = (1 - K / Q + K * K) * norm;
             break;
-            
+
         case bandpass:
             norm = 1 / (1 + K / Q + K * K);
             a0 = K / Q * norm;
@@ -95,7 +98,7 @@ void Biquad::calcBiquad(void) {
             b1 = 2 * (K * K - 1) * norm;
             b2 = (1 - K / Q + K * K) * norm;
             break;
-            
+
         case notch:
             norm = 1 / (1 + K / Q + K * K);
             a0 = (1 + K * K) * norm;
@@ -104,7 +107,7 @@ void Biquad::calcBiquad(void) {
             b1 = a1;
             b2 = (1 - K / Q + K * K) * norm;
             break;
-            
+
         case peak:
             if (peakGain >= 0) {    // boost
                 norm = 1 / (1 + 1/Q * K + K * K);
@@ -160,6 +163,41 @@ void Biquad::calcBiquad(void) {
             }
             break;
     }
-    
+
     return;
+}
+
+Biquad::Type Biquad::getType()
+{
+	return type;
+}
+
+double Biquad::getQ()
+{
+	return Q;
+}
+
+double Biquad::getFc()
+{
+	return Fc;
+}
+
+double Biquad::getPeakGain()
+{
+	return peakGain;
+}
+
+double Biquad::getStartingQ()
+{
+	return startQ;
+}
+
+double Biquad::getStartingFc()
+{
+	return startFc;
+}
+
+double Biquad::getStartingPeakGain()
+{
+	return startPeakGain;
 }
