@@ -1,0 +1,17 @@
+name=Fft
+version=1.0.0
+author=Giulio Moro<giuliomoro@yahoo.it>
+maintainer=Giulio Moro<giuliomoro@yahoo.it>
+description=A real-to-complex FFT and complex-to-real IFFT. This is a wrapper for the libne10 FFT.
+examples=Gui/frequency-response
+license=LGPL 3.0
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
