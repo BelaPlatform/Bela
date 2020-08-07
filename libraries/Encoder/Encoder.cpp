@@ -49,6 +49,8 @@ Encoder::Rotation Encoder::process(bool a, bool b)
 				ret = CCW;
 			else
 				ret = CW;
+			if(ACTIVE_LOW == polarity_)
+				ret = CCW == ret ? CW : CCW;
 			position_ += ret;
 		}
 	}
