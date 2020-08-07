@@ -119,7 +119,7 @@ typedef enum
 /**
  * Default level of the audio ADC in decibels. See Bela_setADCLevel().
  */
-#define DEFAULT_ADC_LEVEL	-6.0
+#define DEFAULT_ADC_LEVEL	0.0
 
 
 /**
