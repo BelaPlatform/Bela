@@ -10,11 +10,27 @@ http://bela.io
 
 \example Gui/frequency-response/render.cpp
 
-Compute and display a filter's frequency response
+Adjustable filter parameters
 ===========================
 
-This project serves a Gui to set a filter's parameter and display its frequency
-response. It also processes the incoming audio through the filter.
+This is an example of a more complex use of the GUI as a controller.
+The GUI here is used to set a filter's parameters and display its
+frequency response.
+
+This example uses four libraries:
+	- the Biquad library is used to create the low pass filter which is applied to the audio input
+	- the Pipe library is used for sending information to the GUI
+	- the GUI library is used for creating the GUI
+	- the FFT library is used to calculate the frequency response of the filter
+
+The best way to exerience this example is to play some audio into Bela's audio inputs.
+A low pass filter is applied to the audio input. If you press the GUI button you
+will find a control interface which allows you to control the Cutoff frequency (in Hertz)
+and Q (or resonance) of the filter applied to the audio input.
+
+There are also various controls which allow you to adjust the visualisation of the
+filter's frequency response. The audio filter is applied in `render()` and we listen
+for changes to the settings of the GUI with the `guiCallback` function. 
 
 */
 #include <Bela.h>
