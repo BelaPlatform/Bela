@@ -12,6 +12,7 @@ public:
 	Pipe() {};
 	Pipe(const std::string& pipeName, size_t size = 65536 * 128, bool newBlockingRt = false, bool newBlockingNonRt = false);
 	~Pipe() {cleanup();}
+	Pipe(Pipe&&) = delete;
 	/**
 	 * Initialise the Pipe.
 	 * 
