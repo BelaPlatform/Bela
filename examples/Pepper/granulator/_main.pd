@@ -2,7 +2,7 @@
 #N canvas 0 22 450 278 (subpatch) 0;
 #X array buf 227106 float 2;
 #X coords 0 1 227106 -1 100 100 1 0 0;
-#X restore 21 262 graph;
+#X restore 21 302 graph;
 #X obj 92 544 dac~;
 #X floatatom 351 611 5 0 0 0 - - -;
 #X obj 351 631 sig~;
@@ -144,15 +144,15 @@
 #X obj 646 52 hsl 128 15 0.01 8 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
 #X obj 596 32 r speed @hv_param 0.01 88 1;
-#X obj 22 396 sgrain~ \$0;
-#X text 701 894 .;
-#X text 711 924 .;
-#X text 731 934 .;
-#X text 781 924 .;
-#X text 761 934 .;
-#X text 801 914 .;
-#X text 831 904 .;
-#X text 787 883 ch.dc.2019.3;
+#X obj 22 406 sgrain~ \$0;
+#X text 19 226 .;
+#X text 29 256 .;
+#X text 49 266 .;
+#X text 99 256 .;
+#X text 79 266 .;
+#X text 119 246 .;
+#X text 149 236 .;
+#X text 105 215 ch.dc.2019.3;
 #X obj 363 316 soundfiler;
 #X obj 422 341 unpack f f f;
 #X obj 21 490 catch~ \$0-out;
@@ -162,9 +162,9 @@
 #X msg 479 44 1;
 #X msg 479 134 0.125;
 #X msg 479 164 0.125;
-#X obj 22 416 sgrain~ \$0;
-#X obj 22 436 sgrain~ \$0;
-#X obj 22 456 sgrain~ \$0;
+#X obj 22 426 sgrain~ \$0;
+#X obj 22 446 sgrain~ \$0;
+#X obj 22 466 sgrain~ \$0;
 #X msg 479 104 0.05;
 #X obj 370 405 print;
 #X obj 422 399 print;

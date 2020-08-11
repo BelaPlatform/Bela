@@ -1,0 +1,20 @@
+#N canvas 515 22 730 302 10;
+#X obj 26 81 s bela_setDigital;
+#X obj 26 34 loadbang;
+#X obj 26 161 s bela_setDigital;
+#X obj 26 114 loadbang;
+#X msg 26 56 out 17 \, out 18 \, out 21 \, out 13 \, out 14 \, out
+11 \, out 12 \, out 15 \, out 16 \, out 19, f 79;
+#X obj 26 241 s bela_setDigital;
+#X obj 26 194 loadbang;
+#X text 255 135 Initialise the buttons;
+#X text 225 215 Initialise the digital inputs;
+#X text 523 56 Initialise the LED pins;
+#X msg 26 216 in 22 \, in 20;
+#X msg 26 136 in 25 \, in 26 \, in 24 \, in 23;
+#X connect 1 0 4 0;
+#X connect 3 0 11 0;
+#X connect 4 0 0 0;
+#X connect 6 0 10 0;
+#X connect 10 0 5 0;
+#X connect 11 0 2 0;

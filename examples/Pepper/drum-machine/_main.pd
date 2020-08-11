@@ -1,0 +1,228 @@
+#N canvas 153 38 1092 743 10;
+#X obj 69 494 kick1;
+#X obj 269 494 snare1;
+#X obj 459 494 hat1;
+#X obj 171 494 kick2;
+#X obj 366 494 snare2;
+#X obj 545 494 hat2;
+#X obj 637 494 blocks;
+#X obj 740 494 tom;
+#X obj 69 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 171 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 269 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 364 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 459 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 545 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 637 473 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 740 472 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 69 545 throw~ out;
+#X obj 171 545 throw~ out;
+#X obj 366 545 throw~ out;
+#X obj 459 545 throw~ out;
+#X obj 545 545 throw~ out;
+#X obj 637 545 throw~ out;
+#X obj 740 545 throw~ out;
+#X obj 69 625 catch~ out;
+#X obj 69 666 dac~ 1 2;
+#X obj 516 214 led-bargraph, f 60;
+#X obj 516 86 buttons, f 58;
+#X obj 516 49 initialise_digitals;
+#X text 677 49 Initialise LEDs \, buttons and trigger inputs;
+#X text 893 85 Read from all buttons;
+#X obj 746 130 s trigger3;
+#X obj 631 130 s trigger2;
+#X obj 516 130 s trigger1;
+#X obj 861 129 s trigger4;
+#N canvas 0 22 557 279 flash-leds 0;
+#X obj 86 187 outlet;
+#X obj 86 82 r trigger1;
+#X obj 86 153 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 104 110 delay 200;
+#X obj 176 187 outlet;
+#X obj 176 153 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 194 110 delay 200;
+#X obj 266 187 outlet;
+#X obj 266 153 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 284 110 delay 200;
+#X obj 356 187 outlet;
+#X obj 356 153 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 374 110 delay 200;
+#X obj 176 82 r trigger2;
+#X obj 266 82 r trigger3;
+#X obj 356 82 r trigger4;
+#X msg 104 131 0;
+#X msg 194 131 0;
+#X msg 284 131 0;
+#X msg 374 131 0;
+#X connect 1 0 2 0;
+#X connect 1 0 3 0;
+#X connect 2 0 0 0;
+#X connect 3 0 16 0;
+#X connect 5 0 4 0;
+#X connect 6 0 17 0;
+#X connect 8 0 7 0;
+#X connect 9 0 18 0;
+#X connect 11 0 10 0;
+#X connect 12 0 19 0;
+#X connect 13 0 5 0;
+#X connect 13 0 6 0;
+#X connect 14 0 8 0;
+#X connect 14 0 9 0;
+#X connect 15 0 11 0;
+#X connect 15 0 12 0;
+#X connect 16 0 2 0;
+#X connect 17 0 5 0;
+#X connect 18 0 8 0;
+#X connect 19 0 11 0;
+#X restore 517 169 pd flash-leds;
+#X obj 140 384 adc~ 3;
+#X obj 141 427 abs~;
+#X obj 69 515 *~;
+#X obj 141 406 -~ 1;
+#X obj 171 515 *~;
+#X obj 69 384 r trigger1;
+#X obj 514 265 loadbang;
+#X obj 514 286 metro 20;
+#X obj 514 307 s snapshot-timer;
+#X obj 198 384 adc~ 4;
+#X obj 340 427 abs~;
+#X obj 340 406 -~ 1;
+#X obj 269 515 *~;
+#X obj 366 515 *~;
+#X obj 269 545 throw~ out;
+#X obj 269 384 r trigger2;
+#X obj 340 384 adc~ 5;
+#X obj 398 384 adc~ 6;
+#X obj 459 515 *~;
+#X obj 545 515 *~;
+#X obj 531 427 abs~;
+#X obj 531 406 -~ 1;
+#X obj 459 384 r trigger3;
+#X obj 530 384 adc~ 7;
+#X obj 588 384 adc~ 8;
+#X obj 637 515 *~;
+#X obj 740 515 *~;
+#X obj 710 447 abs~;
+#X obj 710 426 -~ 1;
+#X obj 639 384 r trigger4;
+#X obj 710 384 adc~ 9;
+#X obj 768 384 adc~ 10;
+#X obj 516 107 sel 1;
+#X obj 631 107 sel 1;
+#X obj 746 107 sel 1;
+#X obj 861 107 sel 1;
+#X text 28 54 This is a 4 voice drum machine which synthesises drum
+sounds;
+#X text 28 134 To do this change the jumpers on the back.;
+#X text 595 281 snapshot for converting from signal to control rate
+;
+#X text 28 194 a trigger signal to inputs 4 \, 5 \, 6 \, 7 The left
+hand column;
+#X text 28 214 of pots control the mix between two different synthesis
+;
+#X text 28 234 techniques and the right column adjust a parameter.
+;
+#X text 28 24 Drum Synthesis;
+#X text 28 34 ==============;
+#X text 28 274 This patch was developed by Jon Pigrem \, Robert Jack
+and;
+#X text 28 294 was heavily influenced by the work of Andy Farnell.
+;
+#X text 663 168 LED feedback;
+#X text 28 74 from 1st principles. There are two Kicks \, Snares \,
+Hihats and;
+#X text 28 94 Toms. This patch is designed to work with PEPPER. Make
+sure;
+#X text 28 114 to configure the last 4 analog inputs to be digital
+inputs.;
+#X text 28 174 The buttons will trigger the drums or you can connect
+;
+#X connect 0 0 37 0;
+#X connect 1 0 47 0;
+#X connect 2 0 53 0;
+#X connect 3 0 39 0;
+#X connect 4 0 48 0;
+#X connect 5 0 54 0;
+#X connect 6 0 60 0;
+#X connect 7 0 61 0;
+#X connect 8 0 0 0;
+#X connect 9 0 3 0;
+#X connect 10 0 1 0;
+#X connect 11 0 4 0;
+#X connect 12 0 2 0;
+#X connect 13 0 5 0;
+#X connect 14 0 6 0;
+#X connect 15 0 7 0;
+#X connect 23 0 24 0;
+#X connect 23 0 24 1;
+#X connect 26 0 67 0;
+#X connect 26 1 68 0;
+#X connect 26 2 69 0;
+#X connect 26 3 70 0;
+#X connect 34 0 25 0;
+#X connect 34 0 25 1;
+#X connect 34 0 25 2;
+#X connect 34 1 25 3;
+#X connect 34 1 25 4;
+#X connect 34 2 25 5;
+#X connect 34 2 25 6;
+#X connect 34 3 25 7;
+#X connect 34 3 25 8;
+#X connect 34 3 25 9;
+#X connect 35 0 39 1;
+#X connect 35 0 38 0;
+#X connect 36 0 37 1;
+#X connect 37 0 16 0;
+#X connect 38 0 36 0;
+#X connect 39 0 17 0;
+#X connect 40 0 8 0;
+#X connect 40 0 9 0;
+#X connect 41 0 42 0;
+#X connect 42 0 43 0;
+#X connect 44 0 3 1;
+#X connect 44 0 0 1;
+#X connect 45 0 47 1;
+#X connect 46 0 45 0;
+#X connect 47 0 49 0;
+#X connect 48 0 18 0;
+#X connect 50 0 10 0;
+#X connect 50 0 11 0;
+#X connect 51 0 46 0;
+#X connect 51 0 48 1;
+#X connect 52 0 4 1;
+#X connect 53 0 19 0;
+#X connect 54 0 20 0;
+#X connect 55 0 53 1;
+#X connect 56 0 55 0;
+#X connect 57 0 12 0;
+#X connect 57 0 13 0;
+#X connect 58 0 54 1;
+#X connect 58 0 56 0;
+#X connect 59 0 5 1;
+#X connect 59 0 2 1;
+#X connect 60 0 21 0;
+#X connect 61 0 22 0;
+#X connect 62 0 60 1;
+#X connect 63 0 62 0;
+#X connect 64 0 14 0;
+#X connect 64 0 15 0;
+#X connect 65 0 63 0;
+#X connect 65 0 61 1;
+#X connect 66 0 7 1;
+#X connect 66 0 6 1;
+#X connect 67 0 32 0;
+#X connect 68 0 31 0;
+#X connect 69 0 30 0;
+#X connect 70 0 33 0;

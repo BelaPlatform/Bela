@@ -2,29 +2,29 @@
 #N canvas 0 22 450 300 (subpatch) 0;
 #X array sample-1 441000 float 2;
 #X coords 0 1 441000 -1 200 140 1 0 0;
-#X restore 42 707 graph;
-#X obj 52 593 dac~ 1 2;
-#X obj 62 470 adc~ 1;
-#X obj 790 300 tabwrite~ sample-1;
-#X obj 41 231 tabplay~ sample-1;
-#X obj 31 34 initialise_digitals;
-#X text 192 34 Initialise LEDs \, buttons and trigger inputs;
-#X obj 518 497 led-bargraph, f 60;
-#X obj 41 322 throw~ output;
-#X obj 52 560 catch~ output;
+#X restore 42 757 graph;
+#X obj 52 653 dac~ 1 2;
+#X obj 62 530 adc~ 1;
+#X obj 810 270 tabwrite~ sample-1;
+#X obj 41 341 tabplay~ sample-1;
+#X obj 821 44 initialise_digitals;
+#X text 982 44 Initialise LEDs \, buttons and trigger inputs;
+#X obj 518 627 led-bargraph, f 60;
+#X obj 41 432 throw~ output;
+#X obj 52 620 catch~ output;
 #N canvas 0 22 450 300 (subpatch) 0;
 #X array sample-2 441000 float 2;
 #X coords 0 1 441000 -1 200 140 1 0 0;
-#X restore 252 707 graph;
+#X restore 252 757 graph;
 #N canvas 0 22 450 300 (subpatch) 0;
 #X array sample-3 441000 float 2;
 #X coords 0 1 441000 -1 200 140 1 0 0;
-#X restore 462 707 graph;
+#X restore 462 757 graph;
 #N canvas 0 22 450 300 (subpatch) 0;
 #X array sample-4 441000 float 2;
 #X coords 0 1 441000 -1 200 140 1 0 0;
-#X restore 672 707 graph;
-#X obj 890 204 buttons, f 57;
+#X restore 672 757 graph;
+#X obj 910 174 buttons, f 57;
 #N canvas 457 28 516 435 recorder-1 0;
 #X obj 117 189 f;
 #X obj 117 210 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
@@ -74,9 +74,9 @@
 #X connect 19 0 10 0;
 #X connect 19 0 0 1;
 #X connect 20 0 15 0;
-#X restore 853 272 pd recorder-1;
-#X obj 62 491 s~ input;
-#X obj 790 254 r~ input;
+#X restore 873 242 pd recorder-1;
+#X obj 62 551 s~ input;
+#X obj 810 224 r~ input;
 #N canvas 613 22 252 276 loop-1 0;
 #X obj 36 17 inlet;
 #X obj 39 204 outlet;
@@ -101,9 +101,9 @@
 #X connect 6 0 4 0;
 #X connect 8 0 9 0;
 #X connect 9 0 7 0;
-#X restore 119 207 pd loop-1;
-#X obj 519 450 r flash-1;
-#X obj 950 254 r~ input;
+#X restore 119 317 pd loop-1;
+#X obj 519 580 r flash-1;
+#X obj 970 224 r~ input;
 #N canvas 0 22 463 470 recorder-2 0;
 #X obj 117 220 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
@@ -153,9 +153,9 @@
 #X connect 19 0 13 0;
 #X connect 19 0 11 1;
 #X connect 20 0 15 0;
-#X restore 1013 272 pd recorder-2;
-#X obj 950 300 tabwrite~ sample-2;
-#X obj 201 322 throw~ output;
+#X restore 1033 242 pd recorder-2;
+#X obj 970 270 tabwrite~ sample-2;
+#X obj 201 432 throw~ output;
 #N canvas 613 22 252 276 loop-2 0;
 #X obj 36 17 inlet;
 #X obj 39 204 outlet;
@@ -180,18 +180,18 @@
 #X connect 7 0 9 0;
 #X connect 8 0 3 1;
 #X connect 8 0 3 0;
-#X restore 279 209 pd loop-2;
-#X obj 201 233 tabplay~ sample-2;
-#X obj 66 252 adc~ 3;
-#X obj 66 273 *~ 3;
-#X obj 41 294 *~;
-#X obj 226 273 *~ 3;
-#X obj 201 294 *~;
-#X obj 599 450 r flash-2;
-#X obj 226 252 adc~ 4;
-#X obj 391 322 throw~ output;
-#X obj 416 273 *~ 3;
-#X obj 391 294 *~;
+#X restore 279 319 pd loop-2;
+#X obj 201 343 tabplay~ sample-2;
+#X obj 66 362 adc~ 3;
+#X obj 66 383 *~ 3;
+#X obj 41 404 *~;
+#X obj 226 383 *~ 3;
+#X obj 201 404 *~;
+#X obj 599 580 r flash-2;
+#X obj 226 362 adc~ 4;
+#X obj 391 432 throw~ output;
+#X obj 416 383 *~ 3;
+#X obj 391 404 *~;
 #N canvas 613 22 252 276 loop-3 0;
 #X obj 36 17 inlet;
 #X obj 39 204 outlet;
@@ -216,12 +216,12 @@
 #X connect 7 0 9 0;
 #X connect 8 0 3 1;
 #X connect 8 0 3 0;
-#X restore 469 209 pd loop-3;
-#X obj 391 233 tabplay~ sample-3;
-#X obj 416 252 adc~ 5;
-#X obj 679 450 r flash-3;
-#X obj 1110 254 r~ input;
-#X obj 1110 300 tabwrite~ sample-3;
+#X restore 469 319 pd loop-3;
+#X obj 391 343 tabplay~ sample-3;
+#X obj 416 362 adc~ 5;
+#X obj 679 580 r flash-3;
+#X obj 1130 224 r~ input;
+#X obj 1130 270 tabwrite~ sample-3;
 #N canvas 0 22 442 503 recorder-3 0;
 #X obj 118 221 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
@@ -271,8 +271,8 @@
 #X connect 19 0 13 0;
 #X connect 19 0 11 1;
 #X connect 20 0 15 0;
-#X restore 1173 272 pd recorder-3;
-#X obj 1260 254 r~ input;
+#X restore 1193 242 pd recorder-3;
+#X obj 1280 224 r~ input;
 #N canvas 0 22 485 499 recorder-4 0;
 #X obj 117 217 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
@@ -322,12 +322,12 @@
 #X connect 19 0 13 0;
 #X connect 19 0 11 1;
 #X connect 20 0 15 0;
-#X restore 1323 272 pd recorder-4;
-#X obj 1260 300 tabwrite~ sample-4;
-#X obj 759 450 r flash-4;
-#X obj 581 322 throw~ output;
-#X obj 606 273 *~ 3;
-#X obj 581 294 *~;
+#X restore 1343 242 pd recorder-4;
+#X obj 1280 270 tabwrite~ sample-4;
+#X obj 759 580 r flash-4;
+#X obj 581 432 throw~ output;
+#X obj 606 383 *~ 3;
+#X obj 581 404 *~;
 #N canvas 613 22 252 276 loop-4 0;
 #X obj 36 17 inlet;
 #X obj 39 204 outlet;
@@ -352,19 +352,19 @@
 #X connect 7 0 9 0;
 #X connect 8 0 3 1;
 #X connect 8 0 3 0;
-#X restore 659 209 pd loop-4;
-#X obj 581 233 tabplay~ sample-4;
-#X obj 606 252 adc~ 6;
-#X obj 259 496 adc~ 10;
-#X obj 259 517 threshold~ 0.3 50 0.1 50;
-#X obj 259 540 s cv-clock;
-#X obj 834 450 r record-latch;
-#X obj 17 122 r cv-clock;
-#X text 47 428 audio input;
-#X text 44 530 audio output;
-#X text 542 414 Leds show loop restart \, last two show when record
+#X restore 659 319 pd loop-4;
+#X obj 581 343 tabplay~ sample-4;
+#X obj 606 362 adc~ 6;
+#X obj 259 576 adc~ 10;
+#X obj 259 597 threshold~ 0.3 50 0.1 50;
+#X obj 259 620 s cv-clock;
+#X obj 834 580 r record-latch;
+#X obj 17 232 r cv-clock;
+#X text 47 488 audio input;
+#X text 44 590 audio output;
+#X text 542 544 Leds show loop restart \, last two show when record
 is armed;
-#N canvas 0 22 310 226 selector 1;
+#N canvas 0 22 310 226 selector 0;
 #X obj 37 37 inlet~;
 #X obj 173 54 metro 20;
 #X obj 188 32 loadbang;
@@ -381,53 +381,63 @@ is armed;
 #X connect 4 0 5 0;
 #X connect 5 0 6 0;
 #X connect 7 0 6 0;
-#X restore 962 474 pd selector;
-#X obj 962 453 adc~ 7;
-#X text 1099 422 Pot 5 controls whether loop is locked to clock;
-#X obj 962 495 send clock-select;
-#X text 1099 462 based on the clock signal. If it's all the way right
+#X restore 862 404 pd selector;
+#X obj 862 383 adc~ 7;
+#X text 999 352 Pot 5 controls whether loop is locked to clock;
+#X obj 862 425 send clock-select;
+#X text 999 392 based on the clock signal. If it's all the way right
 ;
-#X text 1099 482 then the loops restarted are based on their length.
+#X text 999 412 then the loops restarted are based on their length.
 ;
-#X text 1099 442 If it's all the way left then the loops are restarted
+#X text 999 372 If it's all the way left then the loops are restarted
 ;
-#X text 1099 502 This means you can change the clock before recording
+#X text 999 432 This means you can change the clock before recording
 each;
-#X text 1099 522 for interesting polyrhythms but it is also prone to
+#X text 999 452 for interesting polyrhythms but it is also prone to
 phasing;
-#X text 1099 542 if the loops run for a long time.;
-#X obj 92 124 r clock-select;
-#X obj 92 155 == 0;
-#X obj 132 155 == 1;
-#X obj 93 181 spigot;
-#X obj 143 181 spigot;
-#X obj 207 122 r cv-clock;
-#X obj 282 124 r clock-select;
-#X obj 282 155 == 0;
-#X obj 322 155 == 1;
-#X obj 283 181 spigot;
-#X obj 333 181 spigot;
-#X obj 387 122 r cv-clock;
-#X obj 462 124 r clock-select;
-#X obj 462 155 == 0;
-#X obj 502 155 == 1;
-#X obj 463 181 spigot;
-#X obj 513 181 spigot;
-#X obj 567 122 r cv-clock;
-#X obj 642 124 r clock-select;
-#X obj 642 155 == 0;
-#X obj 682 155 == 1;
-#X obj 643 181 spigot;
-#X obj 693 181 spigot;
-#X text 889 152 Hold button to arm channel for record \, record starts
+#X text 999 472 if the loops run for a long time.;
+#X obj 92 234 r clock-select;
+#X obj 92 265 == 0;
+#X obj 132 265 == 1;
+#X obj 93 291 spigot;
+#X obj 143 291 spigot;
+#X obj 207 232 r cv-clock;
+#X obj 282 234 r clock-select;
+#X obj 282 265 == 0;
+#X obj 322 265 == 1;
+#X obj 283 291 spigot;
+#X obj 333 291 spigot;
+#X obj 387 232 r cv-clock;
+#X obj 462 234 r clock-select;
+#X obj 462 265 == 0;
+#X obj 502 265 == 1;
+#X obj 463 291 spigot;
+#X obj 513 291 spigot;
+#X obj 567 232 r cv-clock;
+#X obj 642 234 r clock-select;
+#X obj 642 265 == 0;
+#X obj 682 265 == 1;
+#X obj 643 291 spigot;
+#X obj 693 291 spigot;
+#X text 909 142 clock received in CV in 7;
+#X text 149 200 The first 4 pots control the volume of each loop;
+#X text 245 525 CV In 7 is the clock;
+#X text 185 548 Make sure it's configured as analog on the back;
+#X text 345 705 Store up to 10 seconds for each channel;
+#X text 909 122 Push button to arm channel for record \, record starts
 on next;
-#X text 889 172 clock received in CV in 7;
-#X text 149 90 The first 4 pots control the volume of each loop;
-#X text 245 445 CV In 7 is the clock;
-#X text 185 468 Make sure it's configured as analog on the back;
-#X text 345 655 Store up to 10 seconds for each channel;
-#X text 902 45 4 CHANNEL LOOPER – CLOCKABLE;
-#X text 902 65 robert-jack 2020;
+#X text 28 24 4 Channel Looper;
+#X text 28 34 =================;
+#X text 28 54 This patch is a 4 channel looper designed for PEPPER.
+;
+#X text 28 74 The volume of each loop can be controlled and the recording
+;
+#X text 28 94 new samples happens when a clock signal is received.
+;
+#X text 28 114 Different clock signals can be used for each channel
+giving;
+#X text 28 134 complex polyrhythms.;
+#X text 28 164 robert-jack 2020;
 #X connect 2 0 15 0;
 #X connect 4 0 27 0;
 #X connect 4 1 74 0;

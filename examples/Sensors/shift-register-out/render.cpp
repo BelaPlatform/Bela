@@ -10,37 +10,46 @@ http://bela.io
 \example Sensors/shift-register-out/render.cpp
 
 Many more digital outputs!
--------------------------
+--------------------------
 
-This examples shows how to use a 74HC595 (or similar) shift register to increase
-the number of digital outputs on Bela.
+This examples shows how to use a 74HC595 shift register (or similar) to vastly
+increase the number of digital outputs on Bela.
 
 The 74HC595 is what is known as a "serial-in, parallel-out shift register".
-This means that you can control 8 digital outputs with only 3 digital  pins of the Bela.
-The shift register requires three connections:
+This means that you can control 8 digital outputs with only 3 digital pins of the Bela.
+The shift register has three main pins for the data transfer:
 
 - data pin (DS)
 - clock pin (SH_CP)
 - latch pin (ST_CP)
 
+The Data pin is where we communicate data bytes to the register in a bit by bit manner.
+
+The Clock pin differentiates between one bit and the next.
+
+The Latch pin specifies when data should be coming in to be stored in the register and
+when it should be passed out to the individual output pins.
+
 The shift register works by receiving different sequences of pulses
-to these three pins. It can store 8 bits of memory which it then outputs all at
-once when the correct sequence of pulses are received. We are using the ShiftRegister.h
-library to take care of the timing of the communication.
+to these three pins. It can store 8 bits of memory received through the data pin
+which it then outputs all at once when the correct sequence of pulses
+are received. We are using the ShiftRegister.h library to take care of the
+timing of the communication.
 
 Circuit
 -------
 
 The exact pin out of each model of shift register can differ slightly so we recommend
-checking the data sheet to see where the power, ground and
-three serial-in connections should be made.
+checking the data sheet and pin numbering for where the power, ground and
+three input connections should be made. There is a circuit digram for the 74HC595
+in this project.
 
 On the output pins you should connect 8 LEDs with a 220ohm resistor in series.
 When the project runs you will see a chaser sequencer on the LEDs as they
 flash in order.
 
-You can also link multiple registers together to extend the number of digital
-outputs even more.
+You can also easily link multiple registers together to extend the number of digital
+outputs even more while still using very few pins on Bela.
 */
 
 #include <Bela.h>

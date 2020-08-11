@@ -19,7 +19,7 @@ The user can activate and deactivate the rectangles by clicking on them. For eac
 the GUI the sound files for that column which are active and it will play them. At the same time, Bela will send
 a message back to the GUI on each beat to update what is shown.
 
-How to read several sounds simultaneously
+How to read several samples simultaneously
 =========================================
 
 Note that for each beat we can have up to eight different sounds playing simultaneously (more if a sound is still playing
@@ -33,7 +33,6 @@ is playing. Then, we will assign the first available read pointer to that buffer
 then gReadPointers[0] will keep track of where in the buffer we are reading. Additionally we need an array to store the fact
 that gReadPointers[0] corresponds to gDrumSampleBuffers[4]. Thus, the array gDrumBufferForReadPointer[] will indicate this.
 This means that gDrumBufferForReadPointer[0]=4;
-
 */
 
 #include <iostream>
