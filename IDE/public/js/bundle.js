@@ -6203,7 +6203,9 @@ module.exports=[
   "Csound",
   "Capelets",
   "Instruments",
-  "terminal-only"
+  "terminal-only",
+  "Salt",
+  "Pepper"
 ]
 
 },{}]},{},[16])
