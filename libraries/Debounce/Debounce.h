@@ -3,7 +3,8 @@
 /**
  * @brief Debounce a boolean reading.
  *
- * Debounce a boolean reading which is read at regular intervals.
+ * Debounce a boolean reading which is read at regular intervals. Additionally,
+ * provide edge detection functionalities.
  */
 
 class Debounce
@@ -20,6 +21,11 @@ public:
 		unsigned int intervalPositiveEdge; ///< Debouncing interval when encountering a positive edge (`false` to `true` transition)
 		unsigned int intervalNegativeEdge; ///< Debouncing interval when encountering a negative edge ('true' to 'false' transition)
 	};
+	typedef enum {
+		FALLING = -1, ///< The state has transitioned from high to low
+		NONE = 0, ///< The state has remained the same
+		RISING = 1, ///< The state has transitioned from low to high
+	} Edge;
 	Debounce();
 	/**
 	 * Same as setup().
@@ -50,13 +56,16 @@ public:
 	 */
 	bool process(bool input)
 	{
+		oldState = state;
 		if(debouncing) {
 			--debouncing;
 		} else {
-			if(input > state)
+			if(input > state) {
 				debouncing = intervalPositiveEdge;
-			else if(input < state)
+			}
+			else if(input < state) {
 				debouncing = intervalNegativeEdge;
+			}
 			state = input;
 		}
 		return state;
@@ -65,9 +74,24 @@ public:
 	 * Get the current debounced state.
 	 */
 	bool get() { return state; }
+	/**
+	 * Return what edge was detected during the previous call to process()
+	 */
+	Edge edgeDetected() { return detectEdge(oldState, state); };
+	/**
+	 * Detect what edge occurs between two values.
+	 */
+	static Edge detectEdge(bool oldState, bool newState) {
+		Edge edge = NONE;
+		if(oldState != newState)
+			edge = newState > oldState ? RISING : FALLING;
+		return edge;
+	}
 private:
-	bool state;
 	unsigned int debouncing;
 	unsigned int intervalPositiveEdge;
 	unsigned int intervalNegativeEdge;
+protected:
+	bool state;
+	bool oldState;
 };

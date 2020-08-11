@@ -22,6 +22,8 @@ void Debounce::setup(const Settings& settings)
 	intervalPositiveEdge = settings.intervalPositiveEdge;
 	intervalNegativeEdge = settings.intervalNegativeEdge;
 	debouncing = 0;
+	state = false;
+	oldState = false;
 }
 
 #if 0
@@ -31,11 +33,13 @@ void Debounce::setup(const Settings& settings)
 #include <stdlib.h>
 #include <stdio.h>
 #include <cmath>
+#include "Debouncer.h"
 
 bool DebounceTest()
 {
-	std::vector<unsigned int> debouncingLengths = {0, 1, 50, 100};
+	std::vector<unsigned int> debouncingLengths = {0, 1, 10, 50, 100};
 	std::vector<double> bouncingToDebouncingRatio = {0.1, 0.5, 0.9, 1, 1.2};
+	unsigned int count = 0;
 	for(auto& positiveDebouncingLength : debouncingLengths)
 	{
 		for(auto& negativeDebouncingLength : debouncingLengths)
@@ -51,6 +55,7 @@ bool DebounceTest()
 					negativeBouncingLength = 1;
 				std::vector<unsigned int> transitions;
 				std::vector<bool> inputs(2000);
+				srand(0);
 				unsigned int inc = std::max(5u, std::max(positiveDebouncingLength, negativeDebouncingLength)) * 2;
 				unsigned int idx = inc;
 				while(idx < inputs.size())
@@ -85,6 +90,7 @@ bool DebounceTest()
 				state = initialState;
 				ti = 0;
 				int error = -1;
+				bool pastComputedState = false;
 				for(unsigned int n = 0; n < inputs.size(); ++n)
 				{
 					if(ti < transitions.size() && transitions[ti] == n) {
@@ -92,11 +98,26 @@ bool DebounceTest()
 						++ti;
 					}
 					bool computedState = deb.process(inputs[n]);
-					//printf("[%4d] +%d(%d) -%d(%d): %d, %d, %d\n", n, positiveBouncingLength, positiveDebouncingLength, negativeBouncingLength, negativeDebouncingLength, (int)inputs[n], state, computedState);
+					const Debounce::Edge computedEdge = deb.edgeDetected();
+					Debounce::Edge expectedEdge;
+					if(computedState > pastComputedState)
+						expectedEdge = Debounce::RISING;
+					else if(computedState < pastComputedState)
+						expectedEdge = Debounce::FALLING;
+					else
+						expectedEdge = Debounce::NONE;
+					pastComputedState = computedState;
+					//printf("{%5d} [%4d] +%d(%d) -%d(%d): in %d, exSt %d, comSt %d, exEd %+d, comEd %+d %s%s\n", count++, n, positiveBouncingLength, positiveDebouncingLength, negativeBouncingLength, negativeDebouncingLength, (int)inputs[n], state, computedState, expectedEdge, computedEdge, computedState != state ? "*" : " ", computedEdge != expectedEdge ? "&" : " ");
+					if(count > 10018)
+						assert(computedEdge == expectedEdge);
 					assert(deb.get() == computedState);
-					if(state != computedState) {
+
+					// we would expect that we will fail
+					// sometimes, specifically when the
+					// bouncing time is longer than the
+					// debounce time. So we log it here and check it below
+					if(state != computedState)
 						error = n;
-					}
 				}
 				bool success;
 				if(positiveBouncingLength > positiveDebouncingLength || negativeBouncingLength > negativeDebouncingLength)

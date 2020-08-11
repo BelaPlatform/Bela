@@ -6,7 +6,7 @@
  * A debounced switch connected to a Bela digital in.
  */
 
-class BelaDebounce
+class BelaDebounce : public Debounce
 {
 public:
 	struct Settings{
@@ -39,11 +39,6 @@ public:
 	 * @return the debounced value of the switch.
 	 */
 	bool process(BelaContext* context, unsigned int frame);
-	/**
-	 * Return the current debounced value of the switch.
-	 */
-	bool get() { return debounce.get(); }
 private:
-	Debounce debounce;
 	unsigned int channel;
 };
