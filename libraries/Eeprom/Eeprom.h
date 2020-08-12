@@ -75,6 +75,9 @@ public:
 	 * Verify whether the latest version of the memory buffer has been
 	 * written to the EEPROM. This does not actually re-read the content
 	 * of the EEPROM, so it will not detect changes performed by others.
+	 *
+	 * This internally performs a comparison between portions of memory of
+	 * the size of the EEPROM, so it could be slow.
 	 */
 	bool isSynced();
 	/**
@@ -97,7 +100,7 @@ public:
 	}
 	/**
 	 * Access an element of the memory buffer. The number of elements
-	 * that are accessible is returned by gsize().
+	 * that are accessible is returned by size().
 	 */
 	const char& operator[](std::size_t idx) const {
 		return content[idx];
