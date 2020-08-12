@@ -3,7 +3,7 @@
 #include <libraries/Debounce/Debounce.h>
 
 /**
- * A debounced switch connected to a Bela digital in.
+ * A debounced reading from a Bela digital in.
  */
 
 class BelaDebounce : public Debounce
