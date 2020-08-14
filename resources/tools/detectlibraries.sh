@@ -32,8 +32,14 @@ extract_dependencies() {
 create_linkmakefile() {
 	LIBRARY=$1
 	MDFILE=$2
-	mkdir -p "libraries/$LIBRARY/build/"
 	MKFILELINK="libraries/$LIBRARY/build/Makefile.link"
+	# check if we need to rebuild, or return
+	if [ -f $MKFILELINK ]; then
+		FOUND=`find "libraries/$LIBRARY/" -maxdepth 1 -regex ".*\.cpp\|.*\.c\|.*.cc" -newer $MKFILELINK 2> /dev/null | wc -l`
+		[ $FOUND -eq 0 ] && return
+	fi
+
+	mkdir -p "libraries/$LIBRARY/build/"
 	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT" > $MKFILELINK
 	echo "LIBRARY := $LIBRARY" >> $MKFILELINK
 	echo "THIS_CPPFILES := \$(wildcard libraries/\$(LIBRARY)/*.cpp)" >> $MKFILELINK 
@@ -58,8 +64,10 @@ echo_field() {
 create_compilemakefile() {
 	LIBRARY=$1
 	MDFILE=$2
-	mkdir -p "libraries/$LIBRARY/build/"
 	MKFILECOMP="libraries/$LIBRARY/build/Makefile.compile"
+	# check if we need to rebuild, or return
+	[ "$MKFILECOMP" -nt "$MDFILE"  ] && return
+	mkdir -p "libraries/$LIBRARY/build/"
 	echo "#This file is generated automatically by `basename $0`. DO NOT EDIT" > $MKFILECOMP
 	echo_field CC LIBRARY_CC
 	echo_field CXX LIBRARY_CXX	
