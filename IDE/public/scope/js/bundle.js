@@ -996,7 +996,7 @@ var ControlView = function (_View) {
   }, {
     key: '_triggerLevel',
     value: function _triggerLevel(value) {
-      this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
+      this.$elements.filterByData('key', 'triggerLevel').val(value);
     }
   }]);
 

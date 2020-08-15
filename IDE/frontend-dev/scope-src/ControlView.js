@@ -152,7 +152,7 @@ class ControlView extends View{
   }
 
   _triggerLevel(value){
-    this.$elements.filterByData('key', 'triggerDir').find('input').val(value);
+    this.$elements.filterByData('key', 'triggerLevel').val(value);
   }
 }
 
