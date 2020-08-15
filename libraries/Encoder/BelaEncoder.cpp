@@ -1,6 +1,8 @@
 #include "BelaEncoder.h"
 #include <stdexcept>
 
+BelaEncoder::BelaEncoder() {}
+
 BelaEncoder::BelaEncoder(const Settings& settings)
 {
 	if(setup(settings))
