@@ -301,7 +301,7 @@ void Scope::triggerTimeDomain(){
 					// the whole frame has been saved in outBuffer, so send it
 					// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
 					// rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
-					ws_server->send("scope_data", outBuffer.data(), outBuffer.size()*sizeof(float));
+					ws_server->sendRt("scope_data", outBuffer.data(), outBuffer.size() * sizeof(float));
 					
 					isUsingOutBuffer = false;
                 }
@@ -455,7 +455,7 @@ void Scope::doFFT(){
 	
 	// sendBufferTask.schedule((void*)&outBuffer[0], outBuffer.size()*sizeof(float));
     // rt_printf("scheduling sendBufferTask size: %i\n", outBuffer.size());
-    ws_server->send("scope_data", outBuffer.data(), outBuffer.size()*sizeof(float));
+    ws_server->sendRt("scope_data", outBuffer.data(), outBuffer.size() * sizeof(float));
 
     isUsingOutBuffer = false;
 }
@@ -553,7 +553,7 @@ void Scope::scope_control_connected(){
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
-	ws_server->send("scope_control", str.c_str());
+	ws_server->sendNonRt("scope_control", str.c_str());
 }
 
 // on_data callback for scope_control websocket

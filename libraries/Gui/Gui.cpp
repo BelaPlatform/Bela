@@ -69,10 +69,7 @@ void Gui::ws_connect()
 	// Parse whatever needs to be parsed on connection
 
 	JSONValue *value = new JSONValue(root);
-	std::wstring wide = value->Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
-	ws_server->send(_addressControl.c_str(), str.c_str());
-
+	sendControl(value);
 	delete value;
 }
 
@@ -181,18 +178,15 @@ void Gui::cleanup()
 int Gui::sendControl(JSONValue* root) {
     std::wstring wide = JSON::Stringify(root);
     std::string str(wide.begin(), wide.end());
-    int ret;
-    if(0 == (ret = ws_server->send(_addressControl.c_str(), str.c_str())))
-       return 0;
-    return ret;
+    return ws_server->sendNonRt(_addressControl.c_str(), str.c_str());
 }
 
 int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)
 {
 	std::string idTypeStr = std::to_string(bufferId) + "/" + std::string(type);
 	int ret;
-	if(0 == (ret = ws_server->send(_addressData.c_str(), idTypeStr.c_str())))
-                    if(0 == (ret = ws_server->send(_addressData.c_str(), (void*)data, size)))
+	if(0 == (ret = ws_server->sendRt(_addressData.c_str(), idTypeStr.c_str())))
+                    if(0 == (ret = ws_server->sendRt(_addressData.c_str(), (void*)data, size)))
                             return 0;
 	rt_fprintf(stderr, "You are sending messages to the GUI too fast. Please slow down\n");
 	return ret;

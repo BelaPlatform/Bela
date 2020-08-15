@@ -75,7 +75,7 @@ void AuxTaskNonRT::__create(){
 	}
 }
 
-int AuxTaskNonRT::schedule(void* ptr, size_t size){
+int AuxTaskNonRT::schedule(const void* ptr, size_t size){
 #ifdef XENOMAI_SKIN_native
 	int ret = rt_pipe_write(&pipe, ptr, size, P_NORMAL);
 #endif

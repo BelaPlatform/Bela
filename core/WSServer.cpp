@@ -40,7 +40,7 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	}
 };
 
-void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, void* buf, int size){
+void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size){
 	if (handler->binary){
 		// make a copy of the data before we send it out
 		auto data = std::make_shared<std::vector<void*> >(size);
@@ -82,15 +82,40 @@ void WSServer::addAddress(std::string _address, std::function<void(std::string, 
 	handler->binary = binary;
 	server->addWebSocketHandler((std::string("/")+_address).c_str(), handler);
 	
-	address_book[_address] = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	address_book[_address]->create(std::string("WSClient_")+_address, [this, handler](void* buf, int size){ client_task_func(handler, buf, size); });
+	address_book[_address] = {
+		.thread = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT()),
+		.handler = handler,
+	};
+	address_book[_address].thread->create(std::string("WSClient_")+_address, [this, handler](void* buf, int size){ client_task_func(handler, buf, size); });
 }
 
-int WSServer::send(const char* _address, const char* str){
-	return address_book[_address]->schedule(str);
+int WSServer::sendNonRt(const char* _address, const char* str) {
+	return sendNonRt(_address, (const void*)str, strlen(str));
 }
-int WSServer::send(const char* _address, void* buf, int num_bytes){
-	return address_book[_address]->schedule(buf, num_bytes);
+
+int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size) {
+	try {
+		client_task_func(address_book.at(_address).handler, buf, size);
+		return 0;
+	} catch (std::exception) {
+		return -1;
+	}
+}
+
+int WSServer::sendRt(const char* _address, const char* str){
+	try {
+		return address_book.at(_address).thread->schedule(str);
+	} catch (std::exception) {
+		return -1;
+	}
+}
+
+int WSServer::sendRt(const char* _address, const void* buf, unsigned int size){
+	try {
+		return address_book.at(_address).thread->schedule(buf, size);
+	} catch (std::exception) {
+		return -1;
+	}
 }
 
 void WSServer::cleanup(){
