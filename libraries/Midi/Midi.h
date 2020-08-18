@@ -39,13 +39,13 @@ class MidiChannelMessage{
 public:
 	MidiChannelMessage();
 	MidiChannelMessage(MidiMessageType type);
-	midi_byte_t getStatusByte(){
+	midi_byte_t getStatusByte() const {
 		return _statusByte;
 	}
 	virtual ~MidiChannelMessage();
-	MidiMessageType getType();
-	int getChannel();
-	const char* getTypeText(){
+	MidiMessageType getType() const;
+	int getChannel() const;
+	const char* getTypeText() const {
 		return getTypeText(getType());
 	}
 	static const char* getTypeText(MidiMessageType type){
@@ -74,7 +74,7 @@ public:
 		}
 	}
 
-	unsigned int getNumDataBytes(){
+	unsigned int getNumDataBytes() const {
 		return midiMessageNumDataBytes[(unsigned int)_type];
 	}
 	void setDataByte(unsigned int dataByteIndex, midi_byte_t input){
@@ -87,7 +87,7 @@ public:
 	void setChannel(midi_byte_t channel){
 		_channel = channel;
 	}
-	midi_byte_t getDataByte(unsigned int index){
+	midi_byte_t getDataByte(unsigned int index) const {
 		return _dataBytes[index];
 	}
 	void clear(){
@@ -97,7 +97,7 @@ public:
 		_type = kmmNone;
 		_statusByte = 0;
 	}
-	void prettyPrint(){
+	void prettyPrint() const {
 		rt_printf("type: %s,  ", this->getTypeText());
 		rt_printf("channel: %u, ", this->getChannel());
 		for(unsigned int n = 0; n < this->getNumDataBytes(); n++){
@@ -365,6 +365,7 @@ public:
 	static midi_byte_t makeStatusByte(midi_byte_t statusCode, midi_byte_t dataByte);
 	int writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte);
 	int writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t dataByte1, midi_byte_t dataByte2);
+	int writeMessage(const MidiChannelMessage& msg);
 	int writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
 	int writeNoteOn(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity);
 	int writePolyphonicKeyPressure(midi_byte_t channel, midi_byte_t pitch, midi_byte_t pressure);

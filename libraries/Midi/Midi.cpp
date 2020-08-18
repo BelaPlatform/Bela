@@ -526,6 +526,17 @@ int Midi::writeMessage(midi_byte_t statusCode, midi_byte_t channel, midi_byte_t 
 	return writeOutput(bytes, 3);
 }
 
+int Midi::writeMessage(const MidiChannelMessage& msg)
+{
+	unsigned int len = 1 + msg.getNumDataBytes();
+	midi_byte_t bytes[len];
+	bytes[0] = msg.getStatusByte();
+	bytes[1] = msg.getDataByte(0);
+	if(len > 2)
+		bytes[2] = msg.getDataByte(1);
+	return writeOutput(bytes, len);
+}
+
 int Midi::writeNoteOff(midi_byte_t channel, midi_byte_t pitch, midi_byte_t velocity){
 	return writeMessage(midiMessageStatusBytes[kmmNoteOff], channel, pitch, velocity);
 }
@@ -560,10 +571,10 @@ MidiChannelMessage::MidiChannelMessage(MidiMessageType type){
 	setType(type);
 };
 MidiChannelMessage::~MidiChannelMessage(){};
-MidiMessageType MidiChannelMessage::getType(){
+MidiMessageType MidiChannelMessage::getType() const {
 	return _type;
 };
-int MidiChannelMessage::getChannel(){
+int MidiChannelMessage::getChannel() const {
 	return _channel;
 };
 //int MidiChannelMessage::set(midi_byte_t* input);
