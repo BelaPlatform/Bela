@@ -1,65 +1,47 @@
 #include "OnePole.h"
 #include <Bela.h>
 #include <math.h>
-#include <stdio.h>
+#include <stdexcept>
 
 OnePole::OnePole() {}
 
-OnePole::OnePole(float fc, float fs, int type)
+OnePole::OnePole(float cutoff, float samplingRate, Type type)
 {
-	setup(fc, fs, type);
+	int ret;
+	if((ret = setup(cutoff, samplingRate, type)))
+		throw std::runtime_error("OnePole: cutoff is above Nyquist");
 }
 
-int OnePole::setup(float fc, float fs, int type)
+int OnePole::setup(float cutoff, float samplingRate, Type type)
 {
+	if(cutoff > samplingRate / 2)
+		return -1;
 	ym1 = 0.0; // Reset filter state
-	_fs = fs;
-	setFilter(fc, _fs,  type);
+	_samplingRate = samplingRate;
+	setFilter(cutoff, type);
 	return 0;
 }
 
-void OnePole::setFilter(float fc, float fs, int type)
+void OnePole::setFilter(float cutoff, Type type)
 {
-	_fs= fs;
-	setType(type);
-	setFc(fc);
+	_type = type;
+	setFc(cutoff);
 }
 
-void OnePole::setFc(float fc)
+void OnePole::setFc(float cutoff)
 {
-	if(_type == LP)
-	{
-		b1 = expf(-2.0f * (float)M_PI * fc/_fs);
+	switch(_type) {
+	case LOWPASS:
+		b1 = expf(-2.0f * (float)M_PI * cutoff/_samplingRate);
 		a0 = 1.0f - b1;
-	}
-	else if(_type == HP)
-	{
-		b1 = -expf(-2.0f * (float)M_PI * (0.5f - fc/_fs));
+		break;
+	case HIGHPASS:
+		b1 = -expf(-2.0f * (float)M_PI * (0.5f - cutoff/_samplingRate));
 		a0 = 1.0f + b1;
 	}
-	_fc = fc;
 }
-
-void OnePole::setType(int type)
-{
-	if(type == LP || type == HP)
-	{
-		_type = type;
-	}	
-	else
-	{
-		fprintf(stderr, "Invalid type\n");
-	}
-}	
 
 float OnePole::process(float input)
 {
 	return ym1 = input * a0 + ym1 * b1;
 }
-
-OnePole::~OnePole()
-{
-	cleanup();
-}
-
-void OnePole::cleanup() { }
