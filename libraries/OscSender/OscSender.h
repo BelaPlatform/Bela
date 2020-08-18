@@ -101,6 +101,13 @@ class OscSender{
 		 *
 		 */
 		void send();
+		/**
+		 * \brief Sends a message
+		 *
+		 * Sends the message you pass in, which you will have created
+		 * externally. It is safe to call from the audio thread.
+		 */
+		void send(const oscpkt::Message& extMsg);
 
         	std::unique_ptr<UdpClient> socket;
         

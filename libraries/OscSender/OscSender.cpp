@@ -62,3 +62,8 @@ void OscSender::send(){
 	pw->init().addMessage(*msg);
 	send_task->schedule(pw->packetData(), pw->packetSize());
 }
+
+void OscSender::send(const oscpkt::Message& extMsg){
+	pw->init().addMessage(extMsg);
+	send_task->schedule(pw->packetData(), pw->packetSize());
+}
