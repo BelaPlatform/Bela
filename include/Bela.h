@@ -95,6 +95,7 @@ typedef enum
 	BelaHw_CtagBeastBela, ///< Ctag Beast and Bela cape
 	BelaHw_BelaMiniMultiAudio, ///< Bela Mini with extra codecs
 	BelaHw_BelaMiniMultiTdm, ///< Bela Mini with extra codes and tdm devices
+	BelaHw_Batch, ///< Dummy offline
 } BelaHw;
 
 typedef struct _BelaHwConfig
@@ -193,6 +194,10 @@ typedef enum
  * Flag for BelaContext. If set, indicates the user will be warned if an underrun occurs
  */
 #define BELA_FLAG_DETECT_UNDERRUNS	(1 << 2)	// Set if the user will be displayed a message when an underrun occurs
+/**
+ * Flag for BelaContext. If set, it means that render() is called offline, i.e.: the audio time does not correspond to wall clock time.
+ */
+#define BELA_FLAG_OFFLINE (1 << 3)
 
 struct option;
 
@@ -383,10 +388,10 @@ typedef struct {
 	///
 	/// Binary combination of flags including:
 	///
-	/// BELA_FLAG_INTERLEAVED: indicates the audio and analog buffers are interleaved
-	///
-	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
-	/// persist for future frames. If not set, writes affect one frame only.
+	/// BELA_FLAG_INTERLEAVED
+	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST
+	/// BELA_FLAG_DETECT_UNDERRUNS
+	/// BELA_FLAG_OFFLINE
 	const uint32_t flags;
 
 	/// Name of running project.
@@ -408,10 +413,11 @@ typedef struct {
 typedef struct {
 	// These items might be adjusted by the user:
 
-	/// \brief Number of (analog) frames per period.
+	/// \brief Number of audio frames per period ("blocksize").
 	///
-	/// Number of audio frames depends on relative sample rates of the two. By default,
-	/// audio is twice the sample rate, so has twice the period size.
+	/// The number of analog frames depends on relative sample rates of the
+	/// two. By default, audio is twice the sample rate, so has twice the
+	/// period size.
 	int periodSize;
 	/// Whether to use the analog input and output
 	int useAnalog;
