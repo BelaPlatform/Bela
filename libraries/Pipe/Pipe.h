@@ -83,7 +83,7 @@ private:
 	std::string name;
 	std::string path;
 	int pipeSocket;
-	int fd;
+	int fd = 0;
 	int pipeSize;
 	double timeoutMsRt = 0;
 	double timeoutMsNonRt = 0;

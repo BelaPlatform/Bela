@@ -12,6 +12,9 @@ Pipe::Pipe(const std::string& pipeName, size_t size, bool newBlockingRt, bool ne
 
 bool Pipe::setup(const std::string& pipeName, size_t size, bool newBlockingRt, bool newBlockingNonRt)
 {
+	if(fd)
+		cleanup();
+	fd = 0;
 	pipeSize = size;
 
 	name = "p_" + pipeName;
