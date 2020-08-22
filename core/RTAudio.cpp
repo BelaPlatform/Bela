@@ -126,6 +126,7 @@ typedef struct
 int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
 static AudioCodec* gDisabledCodec = NULL;
+static BelaHw belaHw;
 
 static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
 {
@@ -225,6 +226,44 @@ void fifoRender(BelaContext*, void*);
 // function for application-specific use
 //
 // Returns 0 on success.
+
+int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const std::string& codecMode, void* userData)
+{
+	ctx->audioFrames = settings->periodSize;
+	ctx->audioInChannels = 12;
+	ctx->audioOutChannels = 12;
+	ctx->digitalChannels = 16;
+	ctx->analogInChannels = settings->numAnalogInChannels;
+	ctx->analogOutChannels = settings->numAnalogOutChannels;
+	ctx->analogFrames = ctx->audioFrames / 2;
+	ctx->digitalFrames = ctx->audioFrames;
+	ctx->audioSampleRate = 44100;
+	ctx->digitalSampleRate = ctx->audioSampleRate;
+	ctx->analogSampleRate = ctx->audioSampleRate / 2;
+	BelaContextSplitter::contextAllocate(ctx);
+	ctx->flags |= BELA_FLAG_OFFLINE;
+	// Call the user-defined initialisation function
+	if(settings->setup && !(*settings->setup)((BelaContext*)ctx, userData)) {
+		if(gRTAudioVerbose)
+			fprintf(stderr, "Couldn't initialise audio rendering: setup() returned false\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaContext*,void*), void* userData)
+{
+	context->audioFramesElapsed = 0;
+	unsigned int i = 100000;
+	while(i--) {
+		render((BelaContext*)context, userData);
+		context->audioFramesElapsed += context->audioFrames;
+	}
+	gShouldStop = 1;
+	return 0;
+}
+
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
@@ -394,7 +433,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		if(gRTAudioVerbose)
 			printf("Hardware specified in the user's belaconfig: %s\n", getBelaHwName(userHw).c_str());
 	}
-	BelaHw belaHw;
 	if(userHw == actualHw)
 		belaHw = userHw;
 	else if(userHw != BelaHw_NoHw && Bela_checkHwCompatibility(userHw, actualHw))
@@ -413,6 +451,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->codecMode)
 		codecMode = settings->codecMode;
 
+	if(BelaHw_Batch == belaHw)
+	{
+		gCoreRender = settings->render;
+		return initBatch(settings, &gContext, codecMode, gUserData);
+	}
 	// figure out which codec to use and which to disable if several are present and conflicting
 	unsigned int ctags;
         if((ctags = Bela_hwContains(belaHw, CtagCape)))
@@ -483,6 +526,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			fifoFactor = settings->periodSize / 32;
 		break;
 		case BelaHw_NoHw:
+		case BelaHw_Batch:
 		break;
 	}
 	if(1 > fifoFactor)
@@ -684,6 +728,10 @@ void fifoLoop(void* userData)
 static int startAudioInline(){
 	if(gRTAudioVerbose)
 		printf("startAudioInilne\n");
+	gShouldStop = 0;
+	if(BelaHw_Batch == belaHw) {
+		return 0;
+	}
 	// make sure we have everything
 	assert(gAudioCodec != 0 && gPRU != 0);
 
@@ -708,7 +756,6 @@ static int startAudioInline(){
 	}
 
 	// ready to go
-	gShouldStop = 0;
 	return 0;
 }
 
@@ -774,6 +821,10 @@ int Bela_startAudio()
 	if(ret < 0)
 		return ret;
 
+	if(BelaHw_Batch == belaHw) {
+		return batchCallbackLoop(&gContext, gCoreRender, gUserData);
+	}
+
 	// Start all RT threads
 #ifdef XENOMAI_SKIN_native
 	if(ret = rt_task_start(&gRTAudioThread, &audioLoop, 0))
@@ -824,6 +875,8 @@ void Bela_stopAudio()
 		printf("Stopping audio...\n");
 	// Tell audio thread to stop (if this hasn't been done already)
 	Bela_requestStop();
+	if(BelaHw_Batch == belaHw)
+		return;
 
 	// Now wait for threads to respond and actually stop...
 #ifdef XENOMAI_SKIN_native
@@ -857,7 +910,8 @@ void Bela_cleanupAudio()
 
 	disable_runfast();
 	// Shut down the prussdrv system
-	gPRU->exitPRUSS();
+	if(gPRU)
+		gPRU->exitPRUSS();
 
 	// Clean up the auxiliary tasks
 	Bela_deleteAllAuxiliaryTasks();

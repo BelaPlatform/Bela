@@ -21,6 +21,7 @@ static const std::map<std::string,BelaHw> belaHwMap = {
         {"CtagBeastBela", BelaHw_CtagBeastBela},
         {"BelaMiniMultiAudio", BelaHw_BelaMiniMultiAudio},
         {"BelaMiniMultiTdm", BelaHw_BelaMiniMultiTdm},
+        {"Batch", BelaHw_Batch},
 };
 
 static const int EEPROM_NUMCHARS = 30;
@@ -193,6 +194,8 @@ using namespace BelaHwComponent;
 /// can I run userHw when I actually have detectedHw?
 bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 {
+	if(BelaHw_Batch == userHw)
+		return true;
 	if(userHw == BelaHw_Bela && Bela_hwContains(detectedHw, BelaCape))
 		return true;
 	else if(userHw == BelaHw_CtagFace && Bela_hwContains(detectedHw, CtagCape))
