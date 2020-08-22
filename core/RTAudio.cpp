@@ -761,7 +761,7 @@ void Bela_cleanupAudio()
 	gPRU->exitPRUSS();
 
 	// Clean up the auxiliary tasks
-	void Bela_deleteAllAuxiliaryTasks();
+	Bela_deleteAllAuxiliaryTasks();
 
 	// Delete the audio task
 #ifdef XENOMAI_SKIN_native
