@@ -201,14 +201,23 @@ bool BelaContextSplitter::contextEqual(const InternalBelaContext* ctx1, const In
 		ctx1->digitalFrames * sizeof(ctx1->digital[0])));
 	return true;
 }
+
+template <typename T>
+static T* zeroedVals(unsigned int n)
+{
+	T* ptr = new T[n];
+	memset(ptr, 0, sizeof(T) * n);
+	return ptr;
+}
+
 void BelaContextSplitter::contextAllocate(InternalBelaContext* ctx)
 {
 	// todo: make each of the below aligned to 128-bit boundaries
-	ctx->audioIn = new float[ctx->audioFrames * ctx->audioInChannels];
-	ctx->audioOut = new float[ctx->audioFrames * ctx->audioOutChannels];
-	ctx->analogIn = new float[ctx->analogFrames * ctx->analogInChannels];
-	ctx->analogOut = new float[ctx->analogFrames * ctx->analogOutChannels];
-	ctx->digital = new uint32_t[ctx->digitalFrames];
+	ctx->audioIn = zeroedVals<float>(ctx->audioFrames * ctx->audioInChannels);
+	ctx->audioOut = zeroedVals<float>(ctx->audioFrames * ctx->audioOutChannels);
+	ctx->analogIn = zeroedVals<float>(ctx->analogFrames * ctx->analogInChannels);
+	ctx->analogOut = zeroedVals<float>(ctx->analogFrames * ctx->analogOutChannels);
+	ctx->digital = zeroedVals<uint32_t>(ctx->digitalFrames);
 	ctx->multiplexerAnalogIn = nullptr; // TODO
 }
 
