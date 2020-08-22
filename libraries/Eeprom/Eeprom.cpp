@@ -73,8 +73,11 @@ int Eeprom::write(unsigned int start, unsigned int length)
 	if(file.good()) {
 		writtenContent = content;
 		return 0;
-	} else
+	} else {
+		// an error occurred, try to clear it, and let the caller know about it so they can retry
+		file.clear();
 		return -1;
+	}
 }
 
 int Eeprom::prepareToReadWrite(unsigned int start, unsigned int& length)
