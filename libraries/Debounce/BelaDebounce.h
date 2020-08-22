@@ -39,6 +39,7 @@ public:
 	 * @return the debounced value of the switch.
 	 */
 	bool process(BelaContext* context, unsigned int frame);
+	using Debounce::process;
 private:
 	unsigned int channel;
 };
