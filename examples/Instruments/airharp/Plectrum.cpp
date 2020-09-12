@@ -9,11 +9,7 @@
  */
 
 #include "Plectrum.h"
-
-#include "../include/Utilities.h"
 #include <cmath>
-#include <stdio.h>
-#include <cstdlib>
 
 Plectrum::Plectrum()	{
 

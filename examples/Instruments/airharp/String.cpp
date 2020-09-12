@@ -9,11 +9,7 @@
 #include "String.h"
 #include "Junction.h"
 #include "Waveguide.h"
-
-#include "../include/Utilities.h"
 #include <cmath>
-#include <stdio.h>
-#include <cstdlib>
 
 String::String(){
 

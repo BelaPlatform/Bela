@@ -5,10 +5,7 @@
  */
 
 #include "Waveguide.h"
-#include "../include/Utilities.h"
 #include <cmath>
-#include <stdio.h>
-#include <cstdlib>
 
 #define DECAY 0.995//0.999
 #define DAMPING 0.01//0.05

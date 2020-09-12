@@ -7,7 +7,7 @@
  */
 
 #include "Junction.h"
-#include "../include/Utilities.h"
+#include <Utilities.h>
 
 Junction::Junction()	{
 

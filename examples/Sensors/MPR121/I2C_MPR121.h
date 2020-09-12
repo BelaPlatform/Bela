@@ -9,7 +9,7 @@
 #define I2CTK_H_
 
 #include <I2c.h>
-#include "Utilities.h"
+#include <Utilities.h>
 
 typedef bool boolean;
 
