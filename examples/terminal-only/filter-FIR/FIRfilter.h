@@ -1,20 +1,7 @@
-/*
- * FIRfilter.h
- *
- *  Created on: Aug 5, 2014
- *      Author: Victor Zappi and Andrew McPherson
- */
-
-#ifndef FIRFILTER_H_
-#define FIRFILTER_H_
-
-
-#include <libraries/ne10/NE10.h>
-
-#define FILTER_TAP_NUM 31
+#pragma once
 
 // Coefficients for FIR High Pass Filter at 3 KHz
-ne10_float32_t filterTaps[FILTER_TAP_NUM] = {
+static std::vector<std::vector<float>> filterTaps = {{
 		-0.000055,
 		0.000318,
 		0.001401,
@@ -46,6 +33,4 @@ ne10_float32_t filterTaps[FILTER_TAP_NUM] = {
 		0.001401,
 		0.000318,
 		-0.000055
-};
-
-#endif /* FIRFILTER_H_ */
+}};

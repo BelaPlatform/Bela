@@ -21,12 +21,9 @@ The Bela software is distributed under the GNU Lesser General Public License
 (LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
 
-
-#define ENABLE_NE10_FIR_FLOAT_NEON	// Define needed for Ne10 library
-
 #include <Bela.h>
 #include <cmath>
-#include <libraries/ne10/NE10.h> // neon library
+#include <libraries/Convolver/Convolver.h>
 #include <libraries/AudioFile/AudioFile.h>
 #include <string>
 #include <vector>
@@ -36,15 +33,9 @@ std::string fileName;		// Name of the file to load
 int gReadPtr;			// Position of last read sample from file
 std::vector<float> data;
 
-// filter vars
-ne10_fir_instance_f32_t gFIRfilter;
-ne10_float32_t *gFIRfilterIn;
-ne10_float32_t *gFIRfilterOut;
-ne10_uint32_t blockSize;
-ne10_float32_t *gFIRfilterState;
-
 void initialise_filter(BelaContext *context);
 
+Convolver convolver;
 // Task for handling input from the keyboard
 AuxiliaryTask gTriggerSamplesTask;
 
@@ -63,7 +54,7 @@ bool setup(BelaContext *context, void *userData)
 
 	gReadPtr = -1;
 
-	initialise_filter(context);
+	convolver.setup(filterTaps, context->audioFrames);
 
 	// Initialise auxiliary tasks
 	if(!initialise_trigger())
@@ -74,6 +65,8 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
+	float ins[context->audioFrames];
+	float outs[context->audioFrames];
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		float in = 0;
 
@@ -84,32 +77,19 @@ void render(BelaContext *context, void *userData)
 		if(gReadPtr >= data.size())
 			gReadPtr = -1;
 
-		gFIRfilterIn[n] = in;
+		ins[n] = in;
 	}
 
-	ne10_fir_float_neon(&gFIRfilter, gFIRfilterIn, gFIRfilterOut, blockSize);
-
+	convolver.process(outs, ins, context->audioFrames);
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		for(unsigned int channel = 0; channel < context->audioOutChannels; ++channel)
 			// ...and copy it to all the output channels
-			audioWrite(context, n, channel, gFIRfilterOut[n]);
+			audioWrite(context, n, channel, outs[n]);
 	}
 
 	// Request that the lower-priority task run at next opportunity
 	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
 }
-
-// Initialise NE10 data structures to define FIR filter
-
-void initialise_filter(BelaContext *context)
-{
-	blockSize = context->audioFrames;
-	gFIRfilterState	= (ne10_float32_t *) NE10_MALLOC ((FILTER_TAP_NUM+blockSize-1) * sizeof (ne10_float32_t));
-	gFIRfilterIn = (ne10_float32_t *) NE10_MALLOC (blockSize * sizeof (ne10_float32_t));
-	gFIRfilterOut = (ne10_float32_t *) NE10_MALLOC (blockSize * sizeof (ne10_float32_t));
-	ne10_fir_init_float(&gFIRfilter, FILTER_TAP_NUM, filterTaps, gFIRfilterState, blockSize);
-}
-
 
 // Initialise the auxiliary task
 // and print info
@@ -180,11 +160,7 @@ void trigger_samples(void*)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	NE10_FREE(gFIRfilterState);
-	NE10_FREE(gFIRfilterIn);
-	NE10_FREE(gFIRfilterOut);
 }
-
 
 /**
 \example filter-FIR/render.cpp
