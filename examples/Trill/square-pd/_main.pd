@@ -1,4 +1,4 @@
-#N canvas 277 230 941 498 10;
+#N canvas 277 230 1174 697 10;
 #X obj 55 331 list;
 #X obj 55 291 metro 200;
 #X obj 55 265 loadbang;
@@ -19,6 +19,9 @@
 #X text 360 247 Which will be prepended with the <sensor_id>;
 #X text 141 84 Message: [new <sensor_id> <bus> <device> <address=255>(
 ;
+#X obj 533 373 dac~ 1 2;
+#X obj 533 347 square-synth;
+#X text 640 347 Control a synth with the Trill Square sensor;
 #X connect 0 0 10 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
@@ -27,3 +30,6 @@
 #X connect 11 0 12 0;
 #X connect 14 0 6 0;
 #X connect 15 0 0 1;
+#X connect 15 0 19 0;
+#X connect 19 0 18 0;
+#X connect 19 0 18 1;
