@@ -1,4 +1,4 @@
-#N canvas 194 41 941 498 10;
+#N canvas 194 41 973 615 10;
 #X obj 33 372 list;
 #X obj 33 304 metro 200;
 #X obj 33 278 loadbang;
@@ -35,7 +35,11 @@ SQUARE;
 #X text 180 47 First initialise the Trill sensor;
 #X text 174 82 Message: [new <sensor_id> <bus> <device> <address=255>(
 ;
+#X obj 411 432 dac~ 1 2;
+#X obj 411 401 sample-scrub;
+#X text 517 401 Use position to scrub through a sample table;
 #X connect 0 0 24 0;
+#X connect 0 0 30 0;
 #X connect 1 0 0 0;
 #X connect 2 0 1 0;
 #X connect 4 0 18 0;
@@ -43,3 +47,5 @@ SQUARE;
 #X connect 12 0 0 1;
 #X connect 18 0 6 0;
 #X connect 22 0 23 0;
+#X connect 30 0 29 0;
+#X connect 30 0 29 1;
