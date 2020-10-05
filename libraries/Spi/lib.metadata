@@ -1,0 +1,17 @@
+name=SPI
+version=1.0.0
+author=Jeremiah Rose<jeremiah.aaron.rose@gmail.com>
+maintainer=Jeremiah Rose<jeremiah.aaron.rose@gmail.com>
+description=Read and write to the hardware SPI interface on the Bela Mini.
+examples=Communication/Spi
+license=MIT
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
