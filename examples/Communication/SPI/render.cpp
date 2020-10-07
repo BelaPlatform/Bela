@@ -1,51 +1,52 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
-|____/|_____|_____/_/   \_\
+MIT License
 
-The platform for ultra-low latency audio and sensor processing
+Copyright (c) 2020 Jeremiah Rose
 
-http://bela.io
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
 
 #include <Bela.h>
 #include <stdio.h>
-#include <libraries/SPI/SPI.h>
+#include "SPI.h"
 
-const int busSpeedHz = 32000000; // Fastest speed available
-const int csDelay = 0; // how long to delay after the last bit transfer before deselecting the device 
-const int wordLength = 8;
-
+// Create a seperate thread to poll SPI from
 AuxiliaryTask SPITask;
-void readSPI(void*);
-int readInterval = 50;// Change this to change how often SPI is read (in Hz)
-int readCount = 0; // How long until we read again...
-int readIntervalSamples; // How many samples between reads
+void readSPI(void*); // Function to be called by the thread
+int readInterval = 2;// How often readSPI() is run (in Hz)
+
+int readCount = 0; // Used for scheduling, do not change
+int readIntervalSamples; // How many samples between, do not change
+
+SPI exampleDevice;
 
 unsigned char exampleOutput;
 
 bool setup(BelaContext *context, void *userData)
-{
-	// Initialise SPI
-	if (SPIDEV_init("/dev/spidev2.0", 0, busSpeedHz, SPI_SS_LOW,
-                      csDelay, wordLength,
-                      SPI_MODE3) == -1)
-        printf("SPI initialization failed\r\n");
-    else
-        printf("SPI initialized - READY\r\n");
+{	
+	exampleDevice.setup("/dev/spidev2.1", // Device to open
+						500000, // Clock speed in Hz
+		                SPI::SS_LOW, // Chip select
+		            	0, // Delay after last transfer before deselecting the device
+            			8, // No. of bits per transaction word
+	            		SPI::MODE3 // SPI mode
+	            		);
         
     // Set up auxiliary task to read SPI outside of the real-time audio thread:
     SPITask = Bela_createAuxiliaryTask(readSPI, 50, "bela-SPI");
@@ -53,8 +54,10 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
+// Runs every audio frame
 void render(BelaContext *context, void *userData)
 {
+	// Runs every audio sample
     for(unsigned int n = 0; n < context->audioFrames; n++) {
 		
         // Schedule auxiliary task for SPI readings
@@ -64,34 +67,36 @@ void render(BelaContext *context, void *userData)
         }
 	    
 	    // use SPI output for whatever you need here
-	    exampleOutput;
+	    // exampleCalculation = (int) exampleOutput + 1;
     }
 }
 
 // Auxiliary task to read SPI
 void readSPI(void*)
 {
-	int transmissionLength = 4;
-	unsigned char Tx_spi[transmissionLength];
-	unsigned char Rx_spi[transmissionLength];
-    Tx_spi[0] = 0xff;
-    Tx_spi[1] = 0x22;
-    Tx_spi[2] = 0xff;
-    Tx_spi[3] = 0x0;
+	// Example transmission
+	int transmissionLength = 4; // Number of bytes to send/receive
+	unsigned char Tx[transmissionLength]; // Buffer to send
+	unsigned char Rx[transmissionLength]; // Buffer to receive into
+    Tx[0] = 0xff; // Fill each byte of the send buffer
+    Tx[1] = 0x22;
+    Tx[2] = 0xff;
+    Tx[3] = 0x0;
 
-    if (SPIDEV_transfer(Tx_spi, Rx_spi, transmissionLength) == 0)
+    if (exampleDevice.transfer(Tx, Rx, transmissionLength) == 0)
     {
     	// Print result
         printf("SPI: Transaction Complete. Sent %d bytes, received: ", transmissionLength);
     	int n = 0;
         for(n = 0; n < transmissionLength; ++n)
         {
-            printf("%#02x ", Rx_spi[n]);
+            printf("%#02x ", Rx[n]);
         }
         printf("\n");
         
-        // Send first byte of result to audio thread via global variable
-        exampleOutput = Rx_spi[0];
+        // Process received buffer. In this example we just send the first byte 
+        // to the audio thread via the global variable exampleOutput
+        exampleOutput = Rx[0];
     }
     else
         printf("SPI: Transaction Failed\r\n");
