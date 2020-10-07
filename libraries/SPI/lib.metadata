@@ -1,10 +1,10 @@
 name=SPI
-version=0.0.1
+version=1.0.0
 author=Jeremiah Rose<jeremiah.aaron.rose@gmail.com>
 maintainer=Jeremiah Rose<jeremiah.aaron.rose@gmail.com>
 description=Read and write to the hardware SPI interface on the Bela Mini.
 examples=Communication/SPI
-license=LGPL 3.0
+license=MIT
 url=
 board=*
 dependencies=
