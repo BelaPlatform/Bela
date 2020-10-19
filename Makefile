@@ -267,7 +267,7 @@ BELA_IDE_ENABLE_STARTUP_COMMAND=systemctl enable bela_ide
 BELA_IDE_DISABLE_STARTUP_COMMAND=systemctl disable bela_ide
 BELA_IDE_CONNECT_COMMAND=journalctl -fu bela_ide -n 50
 endif
-SC_CL?=-u 57110 -z 16 -J 8 -K 8 -G 16 -i 2 -o 2
+SC_CL?=-u 57110 -z 16 -J 8 -K 8 -G 16 -i 2 -o 2 -B 0.0.0.0
 
 ifneq (,$(filter $(QUIET_TARGETS),$(MAKECMDGOALS)))
   QUIET=true
