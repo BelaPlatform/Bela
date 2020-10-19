@@ -43,7 +43,7 @@ color: rgb(60, 76, 114);\
 color: rgb(6, 150, 14);\
 }\
 .ace-chrome .ace_support.ace_type,\
-.ace-chrome .ace_support.ace_class\
+.ace-chrome .ace_support.ace_class,\
 .ace-chrome .ace_support.ace_other {\
 color: rgb(109, 121, 222);\
 }\

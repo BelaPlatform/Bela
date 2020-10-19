@@ -1892,10 +1892,8 @@ var EditorView = function (_View) {
 				_this.editor.session.setMode('ace/mode/javascript');
 			} else if (opts.fileType && opts.fileType == "csd") {
 				_this.editor.session.setMode('ace/mode/csound_document');
-				// the following is only there for the sake of completeness - there
-				// is no SuperCollider syntax highlighting for the Ace editor
-				// } else if (opts.fileType && opts.fileType == "scd") {
-				//   this.editor.session.setMode('ace/mode/text');
+			} else if (opts.fileType && opts.fileType == "scd") {
+				_this.editor.session.setMode('ace/mode/supercollider');
 			} else {
 				// if we don't know what the file extension is just default to plain text
 				_this.editor.session.setMode('ace/mode/text');
