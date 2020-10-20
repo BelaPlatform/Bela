@@ -10,6 +10,7 @@
 
 #include <I2c.h>
 #include <Utilities.h>
+#include <stdint.h>
 
 typedef bool boolean;
 
