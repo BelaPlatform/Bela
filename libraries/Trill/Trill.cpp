@@ -225,9 +225,9 @@ Trill::Mode Trill::getModeFromName(const std::string& name)
 }
 
 int Trill::identify() {
-	unsigned int bytesToWrite = 2;
+	ssize_t bytesToWrite = 2;
 	char buf[2] = { kOffsetCommand, kCommandIdentify };
-	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
+	if((::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
 		return -1;
 	}
@@ -237,8 +237,8 @@ int Trill::identify() {
 
 	::read(i2C_file, dataBuffer.data(), 4); // discard first read
 
-	unsigned int bytesToRead = 4;
-	int bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
+	ssize_t bytesToRead = 4;
+	ssize_t bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
@@ -280,7 +280,7 @@ void Trill::printDetails()
 }
 
 int Trill::setMode(Mode mode) {
-	unsigned int bytesToWrite = 3;
+	ssize_t bytesToWrite = 3;
 	if(AUTO == mode)
 		mode = trillDefaults.at(device_type_).mode;
 	char buf[3] = { kOffsetCommand, kCommandMode, (char)mode };
@@ -298,7 +298,7 @@ int Trill::setMode(Mode mode) {
 }
 
 int Trill::setScanSettings(uint8_t speed, uint8_t num_bits) {
-	unsigned int bytesToWrite = 4;
+	ssize_t bytesToWrite = 4;
 	if(speed > 3)
 		speed = 3;
 	if(num_bits < 9)
@@ -321,7 +321,7 @@ int Trill::setScanSettings(uint8_t speed, uint8_t num_bits) {
 }
 
 int Trill::setPrescaler(uint8_t prescaler) {
-	unsigned int bytesToWrite = 3;
+	ssize_t bytesToWrite = 3;
 	char buf[3] = { kOffsetCommand, kCommandPrescaler, prescaler };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
@@ -336,7 +336,7 @@ int Trill::setPrescaler(uint8_t prescaler) {
 }
 
 int Trill::setNoiseThreshold(float threshold) {
-	unsigned int bytesToWrite = 3;
+	ssize_t bytesToWrite = 3;
 	threshold = threshold * (1 << numBits);
 	if(threshold > 255)
 		threshold = 255;
@@ -358,7 +358,7 @@ int Trill::setNoiseThreshold(float threshold) {
 
 
 int Trill::setIDACValue(uint8_t value) {
-	unsigned int bytesToWrite = 3;
+	ssize_t bytesToWrite = 3;
 	char buf[3] = { kOffsetCommand, kCommandIdac, value };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
@@ -373,7 +373,7 @@ int Trill::setIDACValue(uint8_t value) {
 }
 
 int Trill::setMinimumTouchSize(float minSize) {
-	unsigned int bytesToWrite = 4;
+	ssize_t bytesToWrite = 4;
 	uint16_t size;
 	float maxMinSize = (1<<16) - 1;
 	if(maxMinSize > minSize / sizeRescale) // clipping to the max value we can transmit
@@ -394,7 +394,7 @@ int Trill::setMinimumTouchSize(float minSize) {
 }
 
 int Trill::setAutoScanInterval(uint16_t interval) {
-	unsigned int bytesToWrite = 4;
+	ssize_t bytesToWrite = 4;
 	char buf[4] = { kOffsetCommand, kCommandAutoScanInterval, (char)(interval >> 8), (char)(interval & 0xFF) };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
@@ -409,7 +409,7 @@ int Trill::setAutoScanInterval(uint16_t interval) {
 }
 
 int Trill::updateBaseline() {
-	unsigned int bytesToWrite = 2;
+	ssize_t bytesToWrite = 2;
 	char buf[2] = { kOffsetCommand, kCommandBaselineUpdate };
 	if(int writtenValue = (::write(i2C_file, buf, bytesToWrite)) != bytesToWrite)
 	{
@@ -426,7 +426,7 @@ int Trill::updateBaseline() {
 int Trill::prepareForDataRead() {
 	if(!preparedForDataRead_)
 	{
-		unsigned int bytesToWrite = 1;
+		ssize_t bytesToWrite = 1;
 		char buf[1] = { kOffsetData };
 		if(::write(i2C_file, buf, bytesToWrite) != bytesToWrite)
 		{
@@ -445,7 +445,7 @@ int Trill::readI2C() {
 		return 1;
 	prepareForDataRead();
 
-	uint8_t bytesToRead = kCentroidLengthDefault;
+	ssize_t bytesToRead = kCentroidLengthDefault;
 	if(CENTROID == mode_) {
 		if(device_type_ == SQUARE || device_type_ == HEX)
 			bytesToRead = kCentroidLength2D;
@@ -455,7 +455,7 @@ int Trill::readI2C() {
 		bytesToRead = kRawLength;
 	}
 	errno = 0;
-	int bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
+	ssize_t bytesRead = ::read(i2C_file, dataBuffer.data(), bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		num_touches_ = 0;
