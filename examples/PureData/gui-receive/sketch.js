@@ -1,26 +1,20 @@
-var guiSketch = new p5(( sketch ) => {
-	
-    let canvas_dimensions = [sketch.windowWidth, sketch.windowHeight];
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+}
 
-    sketch.setup = function() {
-        sketch.createCanvas(canvas_dimensions[0], canvas_dimensions[1]);
-    };
+function draw() {
+    background(220);
+	line(mouseX, 0, mouseX, height);
+		line(0, mouseY, width, mouseY);
+}
 
-    sketch.draw = function() {
-        sketch.background(220);
-		sketch.line(sketch.mouseX, 0, sketch.mouseX, sketch.height);
-  		sketch.line(0, sketch.mouseY, sketch.width, sketch.mouseY);
-    };
-    
-    sketch.mouseMoved = function() {
-    	let mouseX = sketch.mouseX/sketch.width;
-    	let mouseY = sketch.mouseY/sketch.height;
-    	Bela.data.sendBuffer(0, 'float', [mouseX, mouseY]);
-    	Bela.control.send({mouseX: mouseX, mouseY: mouseY});
-    };
-    sketch.mousePressed = function(event) {
-    	Bela.control.send({clickX: event.screenX/sketch.width, clickY: event.screenY/sketch.height});
-    };
-}, 'gui');
+function mouseMoved() {
+	mouseX = mouseX/windowWidth;
+	mouseY = mouseY/windowHeight;
+	Bela.data.sendBuffer(0, 'float', [mouseX, mouseY]);
+	Bela.control.send({mouseX: mouseX, mouseY: mouseY});
+}
 
-
+function mousePressed(event) {
+	Bela.control.send({clickX: event.screenX/width, clickY: event.screenY/height});
+}
