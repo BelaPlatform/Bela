@@ -236,9 +236,26 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return -1;
 	}
 #if (XENOMAI_MAJOR == 3)
-	// initialize Xenomai with manual bootstrapping
-	if(!gXenomaiInited)
-	{
+	// initialize Xenomai with manual bootstrapping if needed
+	// we cannot trust gXenomaiInited exclusively, in case the caller
+	// already initialised Xenomai.
+	bool xenomaiNeedsInit = false;
+	if(!gXenomaiInited) {
+		// To figure out if we need to intialize it, attempt to create a Cobalt
+		// object (a mutex). If it fails with EPERM, Xenomai needs to be initialized
+		// See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
+		pthread_mutex_t dummyMutex;
+		ret = __wrap_pthread_mutex_init(&dummyMutex, NULL);
+		if(0 == ret) {
+			// success: cleanup
+			__wrap_pthread_mutex_destroy(&dummyMutex);
+		} else if (EPERM == ret) {
+			xenomaiNeedsInit = true;
+		} else {
+			// it could fail for other reasons, but we couldn't do much about it anyhow.
+		}
+	}
+	if(xenomaiNeedsInit) {
 		int argc = 0;
 		char *const *argv;
 		xenomai_init(&argc, &argv);
