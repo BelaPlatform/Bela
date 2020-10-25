@@ -73,10 +73,13 @@ typedef struct _BelaHwConfig
 
 static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
+int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
 
 int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 {
+	if(gRTAudioVerbose)
+		printf("Bela_getHwConfig()\n");
 	memset((void*)cfg, 0, sizeof(BelaHwConfig));
 	// set audio codec
 	switch(hw)
@@ -179,7 +182,6 @@ static const char gFifoThreadName[] = "bela-audio-fifo";
 PRU* gPRU = NULL;
 
 int volatile gShouldStop = false; // Flag which tells the audio task to stop
-int gRTAudioVerbose = 0; // Verbosity level for debugging
 
 // general settings
 static char gPRUFilename[MAX_PRU_FILENAME_LENGTH]; // Path to PRU binary file (internal code if empty)_
@@ -295,6 +297,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	enable_runfast();
 
 	Bela_setVerboseLevel(settings->verbose);
+	if(gRTAudioVerbose)
+		printf("Bela_initAudio()\n");
 	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
 	gUserData = userData;
 
@@ -353,21 +357,21 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
 	BelaHw belaHw = Bela_detectHw();
-	if(gRTAudioVerbose==1)	
+	if(gRTAudioVerbose)
 		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
 	// Check for user-selected hardware
 	BelaHw userHw = settings->board;
-	if(gRTAudioVerbose==1)	
+	if(gRTAudioVerbose)
 		printf("Hardware specified by user: %s\n", getBelaHwName(settings->board).c_str());
 	if(userHw == BelaHw_NoHw)
 	{
 		userHw = Bela_detectUserHw();
-		if(gRTAudioVerbose==1)
+		if(gRTAudioVerbose)
 			printf("Hardware specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
 	}
 	if(userHw != BelaHw_NoHw && userHw != belaHw && Bela_checkHwCompatibility(userHw, belaHw))
 		belaHw = userHw;
-	if(gRTAudioVerbose==1)
+	if(gRTAudioVerbose)
 		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
 
         // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
@@ -552,8 +556,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 void audioLoop(void *)
 {
-	if(gRTAudioVerbose==1)
-		rt_printf("_________________Audio Thread!\n");
+	if(gRTAudioVerbose)
+		printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode);
@@ -563,8 +567,8 @@ void audioLoop(void *)
 	gAudioCodec->stopAudio();
 	gPRU->cleanupGPIO();
 
-	if(gRTAudioVerbose == 1)
-		rt_printf("audio thread ended\n");
+	if(gRTAudioVerbose)
+		printf("audio thread ended\n");
 }
 
 // when using fifo, this is called by PRU::loop()
@@ -583,7 +587,7 @@ void fifoRender(BelaContext* context, void* userData)
 void fifoLoop(void* userData)
 {
 	if(gRTAudioVerbose)
-		rt_printf("_________________Fifo Thread!\n");
+		printf("_________________Fifo Thread!\n");
 	uint64_t audioFramesElapsed = 0;
 	while(!Bela_stopRequested())
 	{
@@ -601,10 +605,12 @@ void fifoLoop(void* userData)
 		}
 	}
 	if(gRTAudioVerbose)
-		rt_printf("fifo thread ended\n");
+		printf("fifo thread ended\n");
 }
 
 static int startAudioInline(){
+	if(gRTAudioVerbose)
+		printf("startAudioInilne\n");
 	// make sure we have everything
 	assert(gAudioCodec != 0 && gPRU != 0);
 
@@ -624,7 +630,7 @@ static int startAudioInline(){
 		// First unmute the amplifier
 		if(Bela_muteSpeakers(0)) {
 			if(gRTAudioVerbose)
-				rt_printf("Warning: couldn't set value (high) on amplifier mute pin\n");
+				printf("Warning: couldn't set value (high) on amplifier mute pin\n");
 		}
 	}
 
@@ -678,6 +684,8 @@ int Bela_runInSameThread()
 
 int Bela_startAudio()
 {
+	if(gRTAudioVerbose)
+		printf("Bela_startAudio\n");
 	// Create audio thread with high Xenomai priority
 	unsigned int stackSize = gAudioThreadStackSize;
 	int ret;
@@ -739,11 +747,10 @@ int Bela_startAudio()
 
 void Bela_stopAudio()
 {
-	// Tell audio thread to stop (if this hasn't been done already)
-	Bela_requestStop();
-
 	if(gRTAudioVerbose)
 		printf("Stopping audio...\n");
+	// Tell audio thread to stop (if this hasn't been done already)
+	Bela_requestStop();
 
 	// Now wait for threads to respond and actually stop...
 #ifdef XENOMAI_SKIN_native
@@ -770,6 +777,8 @@ void Bela_stopAudio()
 // Free any resources associated with PRU real-time audio
 void Bela_cleanupAudio()
 {
+	if(gRTAudioVerbose)
+		printf("Bela_cleanupAudio()\n");
 	if(gBelaCleanup)
 		(*gBelaCleanup)(gUserContext, gUserData);
 
@@ -877,5 +886,5 @@ void Bela_getVersion(int* major, int* minor, int* bugfix)
 // Set the verbosity level
 void Bela_setVerboseLevel(int level)
 {
-	gRTAudioVerbose = level;
+	gRTAudioVerbose = level >= 0 ? level : 0;
 }
