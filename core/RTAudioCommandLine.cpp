@@ -119,6 +119,7 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->cleanup = NULL;
 
 	settings->ampMutePin = kAmplifierMutePin;
+	settings->audioThreadDone = NULL;
 
 	// read user default command line options CL= from userBelaConfig and
 	// pass them on to Bela_getopt_long to override default settings.

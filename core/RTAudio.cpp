@@ -200,6 +200,7 @@ static void *gUserData;
 void (*gCoreRender)(BelaContext*, void*);
 void (*gUserRender)(BelaContext*, void*);
 void (*gBelaCleanup)(BelaContext*, void*);
+void (*gBelaAudioThreadDone)(BelaContext*, void*);
 static BelaContextFifo* gBcf = nullptr;
 static double gBlockDurationMs;
 
@@ -283,6 +284,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return -1;
 	}
 	gBelaCleanup = settings->cleanup;
+	gBelaAudioThreadDone = settings->audioThreadDone;
 	
 	// Sanity checks
 	if(settings->pruNumber < 0 || settings->pruNumber > 1) {
@@ -567,6 +569,8 @@ void audioLoop(void *)
 	gAudioCodec->stopAudio();
 	gPRU->cleanupGPIO();
 
+	if(gBelaAudioThreadDone)
+		gBelaAudioThreadDone(gUserContext, gUserData);
 	if(gRTAudioVerbose)
 		printf("audio thread ended\n");
 }

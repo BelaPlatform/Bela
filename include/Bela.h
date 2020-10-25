@@ -27,10 +27,12 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 7
-#define BELA_BUGFIX_VERSION 1
+#define BELA_MINOR_VERSION 8
+#define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.8.0
+// - added callback for when the audio thread is done: settings->audioThreadDone
 // 1.7.0
 // - Bela_getopt_long takes a char* const []
 // - added the functions and definitions from Utilities.h
@@ -442,7 +444,10 @@ typedef struct {
 
 	/// Pin where amplifier mute can be found
 	int ampMutePin;
-	int unused0;
+
+	/// Pointer to an optional function to be called when the audio thread is done.
+	/// This function is called from the audio thread itself just before it returns.
+	void (*audioThreadDone)(BelaContext*, void*);
 	int unused1;
 	char unused2[MAX_UNUSED2_LENGTH];
 
