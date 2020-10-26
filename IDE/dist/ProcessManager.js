@@ -43,7 +43,7 @@ var processes = require("./IDEProcesses");
 var paths = require("./paths");
 var Lock_1 = require("./Lock");
 var cpu_monitor = require("./CPUMonitor");
-var lock = new Lock_1.Lock();
+var lock = new Lock_1.Lock("ProcessManager");
 // this function gets called whenever the ace editor is modified
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
@@ -58,6 +58,7 @@ function upload(data) {
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, 4, , 5]);
+                    process.stdout.write(".");
                     return [4 /*yield*/, file_manager.save_file(paths.projects + data.currentProject + '/' + data.newFile, data.fileData, paths.lockfile)];
                 case 3:
                     _a.sent();
@@ -68,6 +69,10 @@ function upload(data) {
                 case 4:
                     e_1 = _a.sent();
                     lock.release();
+                    console.log("START");
+                    console.log(data);
+                    console.log(e_1);
+                    console.log("DONE, NOW THROWING");
                     throw e_1;
                 case 5:
                     lock.release();

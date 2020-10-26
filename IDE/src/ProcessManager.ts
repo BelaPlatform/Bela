@@ -7,7 +7,7 @@ import * as util from './utils';
 import { Lock } from './Lock';
 import * as cpu_monitor from './CPUMonitor';
 
-const lock: Lock = new Lock();
+const lock: Lock = new Lock("ProcessManager");
 
 // this function gets called whenever the ace editor is modified
 // the file data is saved robustly using a lockfile, and a syntax
@@ -15,6 +15,7 @@ const lock: Lock = new Lock();
 export async function upload(data: any){
 	await lock.acquire();
 	try{
+		process.stdout.write(".");
 		await file_manager.save_file(paths.projects+data.currentProject+'/'+data.newFile, data.fileData, paths.lockfile);
 		if (data.checkSyntax){
 			checkSyntax(data);
@@ -22,6 +23,10 @@ export async function upload(data: any){
 	}
 	catch(e){
 		lock.release();
+		console.log("START");
+		console.log(data);
+		console.log(e);
+		console.log("DONE, NOW THROWING");
 		throw e;
 	}
 	lock.release();
