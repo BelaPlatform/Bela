@@ -1,39 +1,27 @@
-import * as EventEmitter from 'events';
+import AwaitLock from 'await-lock';
 
 export class Lock {
-	private locked: boolean;
-	private ee: EventEmitter;
-	constructor(){
-		this.locked = false;
-		this.ee = new EventEmitter();
-		// without this we sometimes get a warning when more than 10 threads hold the lock
-		this.ee.setMaxListeners(100);
+	private lock: AwaitLock;
+	private arg: string;
+	constructor(arg? : string){
+		this.lock = new AwaitLock();
+		this.arg = arg;
 	}
 	acquire(): Promise<void> {
-		return new Promise( resolve => {
-			// if the lock is free, lock it immediately
-			if (!this.locked){
-				this.locked = true;
-				// console.log('lock acquired');
-				return resolve();
-			}
-			// otherwise sleep the thread and register a callback for when the lock is released
-			let reacquire = () => {
-				if (!this.locked){
-					this.locked = true;
-					// console.log('lock acquired');
-					this.ee.removeListener('release', reacquire);
-					return resolve();
-				}
-			};
-			this.ee.on('release', reacquire);
-		});
+		let ret = this.lock.tryAcquire();
+		if(ret) {
+			if("ProcessManager" === this.arg)
+				console.log("FAST Acquire: ", this.arg);
+			return new Promise( (resolve) => resolve());
+		} else {
+			if("ProcessManager" === this.arg)
+				console.log("SLOW Acquire: ", this.arg);
+			return this.lock.acquireAsync();
+		}
 	}
-	release(): void{
-		// unlock and call any queued callbacks
-		this.locked = false;
-		// console.log('lock released');
-		setImmediate( () => this.ee.emit('release') );
+	release(): void {
+		if("ProcessManager" === this.arg)
+			console.log("Release: ", this.arg);
+		this.lock.release();
 	}
 }
-
