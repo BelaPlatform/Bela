@@ -1,40 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var EventEmitter = require("events");
+var await_lock_1 = require("await-lock");
 var Lock = /** @class */ (function () {
-    function Lock() {
-        this.locked = false;
-        this.ee = new EventEmitter();
-        // without this we sometimes get a warning when more than 10 threads hold the lock
-        this.ee.setMaxListeners(100);
+    function Lock(arg) {
+        this.lock = new await_lock_1.default();
+        this.arg = arg;
     }
     Lock.prototype.acquire = function () {
-        var _this = this;
-        return new Promise(function (resolve) {
-            // if the lock is free, lock it immediately
-            if (!_this.locked) {
-                _this.locked = true;
-                // console.log('lock acquired');
-                return resolve();
-            }
-            // otherwise sleep the thread and register a callback for when the lock is released
-            var reacquire = function () {
-                if (!_this.locked) {
-                    _this.locked = true;
-                    // console.log('lock acquired');
-                    _this.ee.removeListener('release', reacquire);
-                    return resolve();
-                }
-            };
-            _this.ee.on('release', reacquire);
-        });
+        var ret = this.lock.tryAcquire();
+        if (ret) {
+            if ("ProcessManager" === this.arg)
+                console.log("FAST Acquire: ", this.arg);
+            return new Promise(function (resolve) { return resolve(); });
+        }
+        else {
+            if ("ProcessManager" === this.arg)
+                console.log("SLOW Acquire: ", this.arg);
+            return this.lock.acquireAsync();
+        }
     };
     Lock.prototype.release = function () {
-        var _this = this;
-        // unlock and call any queued callbacks
-        this.locked = false;
-        // console.log('lock released');
-        setImmediate(function () { return _this.ee.emit('release'); });
+        if ("ProcessManager" === this.arg)
+            console.log("Release: ", this.arg);
+        this.lock.release();
     };
     return Lock;
 }());
