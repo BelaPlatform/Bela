@@ -8,6 +8,8 @@ import { Lock } from './Lock';
 import * as cpu_monitor from './CPUMonitor';
 
 const lock: Lock = new Lock("ProcessManager");
+let syntaxTimeout : number; // storing the value returned by setTimeout
+const syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
 
 // this function gets called whenever the ace editor is modified
 // the file data is saved robustly using a lockfile, and a syntax
@@ -17,8 +19,13 @@ export async function upload(data: any){
 	try{
 		process.stdout.write(".");
 		await file_manager.save_file(paths.projects+data.currentProject+'/'+data.newFile, data.fileData, paths.lockfile);
-		if (data.checkSyntax){
-			checkSyntax(data);
+		if(syntaxTimeout) {
+			clearTimeout(syntaxTimeout)
+		}
+		if (data.checkSyntax) {
+			syntaxTimeout = setTimeout(function (project: string) {
+				checkSyntax(project);
+			}.bind(null, data.currentProject), syntaxTimeoutMs);
 		}
 	}
 	catch(e){
@@ -35,15 +42,15 @@ export async function upload(data: any){
 // this function starts a syntax check
 // if a syntax check or build process is in progress they are stopped
 // a running program is not stopped
-export function checkSyntax(data: any){
+export function checkSyntax(project: string){
 	if (processes.syntax.get_status()){
 		processes.syntax.stop();
-		processes.syntax.queue(() => processes.syntax.start(data.currentProject));
+		processes.syntax.queue(() => processes.syntax.start(project));
 	} else if (processes.build.get_status()){
 		processes.build.stop();
-		processes.build.queue( () => processes.syntax.start(data.currentProject) );
+		processes.build.queue( () => processes.syntax.start(project) );
 	} else {
-		processes.syntax.start(data.currentProject);
+		processes.syntax.start(project);
 	}
 }
 
