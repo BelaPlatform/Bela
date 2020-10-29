@@ -10,19 +10,20 @@ var Lock = /** @class */ (function () {
         var ret = this.lock.tryAcquire();
         if (ret) {
             if ("ProcessManager" === this.arg)
-                console.log("FAST Acquire: ", this.arg);
+                console.log("FAST Acquire: ", this.arg, this.lock._waitingResolvers.length);
             return new Promise(function (resolve) { return resolve(); });
         }
         else {
+            var p = this.lock.acquireAsync();
             if ("ProcessManager" === this.arg)
-                console.log("SLOW Acquire: ", this.arg);
-            return this.lock.acquireAsync();
+                console.log("SLOW Acquire: ", this.arg, this.lock._waitingResolvers.length);
+            return p;
         }
     };
     Lock.prototype.release = function () {
-        if ("ProcessManager" === this.arg)
-            console.log("Release: ", this.arg);
         this.lock.release();
+        if ("ProcessManager" === this.arg)
+            console.log("Release: ", this.arg, this.lock._waitingResolvers.length);
     };
     return Lock;
 }());
