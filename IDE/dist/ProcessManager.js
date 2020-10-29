@@ -44,6 +44,8 @@ var paths = require("./paths");
 var Lock_1 = require("./Lock");
 var cpu_monitor = require("./CPUMonitor");
 var lock = new Lock_1.Lock("ProcessManager");
+var syntaxTimeout; // storing the value returned by setTimeout
+var syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
 // this function gets called whenever the ace editor is modified
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
@@ -62,8 +64,13 @@ function upload(data) {
                     return [4 /*yield*/, file_manager.save_file(paths.projects + data.currentProject + '/' + data.newFile, data.fileData, paths.lockfile)];
                 case 3:
                     _a.sent();
+                    if (syntaxTimeout) {
+                        clearTimeout(syntaxTimeout);
+                    }
                     if (data.checkSyntax) {
-                        checkSyntax(data);
+                        syntaxTimeout = setTimeout(function (project) {
+                            checkSyntax(project);
+                        }.bind(null, data.currentProject), syntaxTimeoutMs);
                     }
                     return [3 /*break*/, 5];
                 case 4:
@@ -85,17 +92,17 @@ exports.upload = upload;
 // this function starts a syntax check
 // if a syntax check or build process is in progress they are stopped
 // a running program is not stopped
-function checkSyntax(data) {
+function checkSyntax(project) {
     if (processes.syntax.get_status()) {
         processes.syntax.stop();
-        processes.syntax.queue(function () { return processes.syntax.start(data.currentProject); });
+        processes.syntax.queue(function () { return processes.syntax.start(project); });
     }
     else if (processes.build.get_status()) {
         processes.build.stop();
-        processes.build.queue(function () { return processes.syntax.start(data.currentProject); });
+        processes.build.queue(function () { return processes.syntax.start(project); });
     }
     else {
-        processes.syntax.start(data.currentProject);
+        processes.syntax.start(project);
     }
 }
 exports.checkSyntax = checkSyntax;
