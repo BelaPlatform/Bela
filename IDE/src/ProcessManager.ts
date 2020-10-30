@@ -6,10 +6,12 @@ import * as paths from './paths';
 import * as util from './utils';
 import { Lock } from './Lock';
 import * as cpu_monitor from './CPUMonitor';
+import * as path from 'path';
 
 const lock: Lock = new Lock("ProcessManager");
 let syntaxTimeout : number; // storing the value returned by setTimeout
 const syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
+const extensionsForSyntaxCheck : Array<string> = [ '.cpp', '.c', '.h', '.hh', '.hpp' ];
 
 // this function gets called whenever the ace editor is modified
 // the file data is saved robustly using a lockfile, and a syntax
@@ -19,10 +21,11 @@ export async function upload(data: any){
 	try{
 		process.stdout.write(".");
 		await file_manager.save_file(paths.projects+data.currentProject+'/'+data.newFile, data.fileData, paths.lockfile);
-		if(syntaxTimeout) {
-			clearTimeout(syntaxTimeout)
-		}
-		if (data.checkSyntax) {
+		var ext = path.extname(data.newFile);
+		if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
+			if(syntaxTimeout) {
+				clearTimeout(syntaxTimeout)
+			}
 			syntaxTimeout = setTimeout(function (project: string) {
 				checkSyntax(project);
 			}.bind(null, data.currentProject), syntaxTimeoutMs);
