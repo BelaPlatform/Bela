@@ -43,15 +43,17 @@ var processes = require("./IDEProcesses");
 var paths = require("./paths");
 var Lock_1 = require("./Lock");
 var cpu_monitor = require("./CPUMonitor");
+var path = require("path");
 var lock = new Lock_1.Lock("ProcessManager");
 var syntaxTimeout; // storing the value returned by setTimeout
 var syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
+var extensionsForSyntaxCheck = ['.cpp', '.c', '.h', '.hh', '.hpp'];
 // this function gets called whenever the ace editor is modified
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
 function upload(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1;
+        var ext, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, lock.acquire()];
@@ -64,10 +66,11 @@ function upload(data) {
                     return [4 /*yield*/, file_manager.save_file(paths.projects + data.currentProject + '/' + data.newFile, data.fileData, paths.lockfile)];
                 case 3:
                     _a.sent();
-                    if (syntaxTimeout) {
-                        clearTimeout(syntaxTimeout);
-                    }
-                    if (data.checkSyntax) {
+                    ext = path.extname(data.newFile);
+                    if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
+                        if (syntaxTimeout) {
+                            clearTimeout(syntaxTimeout);
+                        }
                         syntaxTimeout = setTimeout(function (project) {
                             checkSyntax(project);
                         }.bind(null, data.currentProject), syntaxTimeoutMs);
