@@ -13,7 +13,6 @@ class GuiController {
 	private:
 		std::vector<GuiSlider> _sliders;
 		Gui *_gui;
-		std::string _name;
 		std::wstring _wname;
 
 		int sendController();
@@ -36,7 +35,7 @@ class GuiController {
 		int setSliderValue(int sliderIndex, float value);
 		GuiSlider& getSlider(int sliderIndex) { return _sliders.at(sliderIndex); };
 
-		std::string getName() { return _name; };
+		std::string getName() { return std::string(_wname.begin(), _wname.end()); };
 
 		int getNumSliders() { return _sliders.size(); };
 

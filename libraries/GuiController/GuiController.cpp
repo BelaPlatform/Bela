@@ -13,7 +13,6 @@ GuiController::GuiController(Gui *gui, std::string name)
 int GuiController::setup(Gui* gui, std::string name)
 {
 	_gui = gui;
-	_name = name;
 	_wname = std::wstring(name.begin(), name.end());
 	_gui->setControlDataCallback(controlCallback, this);
 	int ret = sendController();
