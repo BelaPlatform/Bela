@@ -1,17 +1,24 @@
 #include "GuiController.h"
 #include <iostream>
 
+unsigned int GuiController::nextGuiBufferId = -1;
+
 GuiController::GuiController()
 {
 }
 
-GuiController::GuiController(Gui *gui, std::string name)
+GuiController::GuiController(Gui *gui, std::string name, unsigned int guiBufferId)
 {
-	setup(gui, name);
+	setup(gui, name, guiBufferId);
 }
 
-int GuiController::setup(Gui* gui, std::string name)
+int GuiController::setup(Gui* gui, std::string name, unsigned int guiBufferId)
 {
+	if(-1 == guiBufferId) {
+		guiBufferId = nextGuiBufferId;
+		nextGuiBufferId--;
+	}
+	_guiBufferId = guiBufferId;
 	_gui = gui;
 	_wname = std::wstring(name.begin(), name.end());
 	_gui->setControlDataCallback(controlCallback, this);
@@ -105,7 +112,11 @@ float GuiController::getSliderValue(int sliderIndex)
 
 int GuiController::setSliderValue(int sliderIndex, float value)
 {
-	auto s = _sliders.at(sliderIndex);
-	s.setValue(value);
-	return sendSliderValue(sliderIndex);
+	// casting sliderIndex to float is going to cause troubles if sliderIndex
+	// is larger than 16777216
+	if(sliderIndex >= (1 << 24);
+		return -1;
+	float data[] = {(float)sliderIndex, value};
+	return _gui->sendBuffer(_guiBufferId, data);
+
 }

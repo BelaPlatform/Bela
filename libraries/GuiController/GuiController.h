@@ -11,9 +11,12 @@ class Gui;
 
 class GuiController {
 	private:
+		static unsigned int nextGuiBufferId;
+		unsigned int guiBufferId;
 		std::vector<GuiSlider> _sliders;
 		Gui *_gui;
 		std::wstring _wname;
+		unsigned int _guiBufferId;
 
 		int sendController();
 		int sendSlider(const GuiSlider& slider);
@@ -23,12 +26,13 @@ class GuiController {
 		GuiController();
 		~GuiController();
 
-		GuiController(Gui *gui, std::string name);
+		GuiController(Gui *gui, std::string name, unsigned int guiBufferId = - 1);
 
-		int setup(Gui *gui, std::string name);
+		int setup(Gui *gui, std::string name, unsigned int guiBufferId = -1);
 
 		int setup();
 		void cleanup();
+		unsigned int getGuiBufferId() { return guiBufferId; };
 		int addSlider(std::string name, float value = 0.5f, float min = 0.0f, float max = 1.0, float step = 0.001f);
 
 		float getSliderValue(int sliderIndex);
