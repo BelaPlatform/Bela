@@ -3,7 +3,7 @@ import * as child_process from 'child_process';
 import * as paths from './paths';
 import {Lock} from './Lock';
 
-const lock: Lock = new Lock();
+const lock: Lock = new Lock("GitManager");
 
 // simple check to see if a git repo exists in a project
 export async function repo_exists(project: string): Promise<boolean>{

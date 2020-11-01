@@ -38,7 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var paths = require("./paths");
 var file_manager = require("./FileManager");
 var Lock_1 = require("./Lock");
-var lock = new Lock_1.Lock();
+var lock = new Lock_1.Lock("ProjectSettings");
 function read(project) {
     return __awaiter(this, void 0, void 0, function () {
         var output;
