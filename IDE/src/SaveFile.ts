@@ -2,7 +2,7 @@ import * as file_manager from './FileManager';
 import * as path from 'path';
 import { Lock } from './Lock';
 
-const lock: Lock = new Lock();
+const lock: Lock = new Lock("SaveFile");
 
 // save_file follows vim's strategy to save a file in a crash-proof way
 // it first writes the file to .<file_name>~

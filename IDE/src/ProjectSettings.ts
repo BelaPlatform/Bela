@@ -2,7 +2,7 @@ import * as paths from './paths';
 import * as file_manager from "./FileManager";
 import { Lock } from "./Lock";
 
-var lock: Lock = new Lock();
+var lock: Lock = new Lock("ProjectSettings");
 	
 export async function read(project: string): Promise<any> {
 	let output: any = await file_manager.read_json(paths.projects+project+'/settings.json')

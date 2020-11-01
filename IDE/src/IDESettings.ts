@@ -2,7 +2,7 @@ import * as file_manager from './FileManager';
 import * as paths from './paths';
 import { Lock } from './Lock';
 
-var lock: Lock = new Lock();
+var lock: Lock = new Lock("IDESettings");
 let cached: boolean = false;
 let cached_settings: any;
 	

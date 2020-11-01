@@ -9,7 +9,7 @@ import { Lock } from "./Lock";
 // only the primitive file and directory manipulation methods should touch the lock
 // OR the filesystem, in the whole app
 
-const lock: Lock = new Lock();
+const lock: Lock = new Lock("FileManager");
 
 async function commit(path: string)
 {

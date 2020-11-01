@@ -38,7 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var file_manager = require("./FileManager");
 var paths = require("./paths");
 var Lock_1 = require("./Lock");
-var lock = new Lock_1.Lock();
+var lock = new Lock_1.Lock("IDESettings");
 var cached = false;
 var cached_settings;
 function read() {

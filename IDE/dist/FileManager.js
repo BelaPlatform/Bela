@@ -44,7 +44,7 @@ var Lock_1 = require("./Lock");
 // thus concurent access is prohibited
 // only the primitive file and directory manipulation methods should touch the lock
 // OR the filesystem, in the whole app
-var lock = new Lock_1.Lock();
+var lock = new Lock_1.Lock("FileManager");
 function commit(path) {
     return __awaiter(this, void 0, void 0, function () {
         var fd;

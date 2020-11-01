@@ -38,7 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var file_manager = require("./FileManager");
 var path = require("path");
 var Lock_1 = require("./Lock");
-var lock = new Lock_1.Lock();
+var lock = new Lock_1.Lock("SaveFile");
 // save_file follows vim's strategy to save a file in a crash-proof way
 // it first writes the file to .<file_name>~
 // then it deletes the existing file at <file_name>

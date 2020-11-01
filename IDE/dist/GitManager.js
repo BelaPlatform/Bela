@@ -39,7 +39,7 @@ var file_manager = require("./FileManager");
 var child_process = require("child_process");
 var paths = require("./paths");
 var Lock_1 = require("./Lock");
-var lock = new Lock_1.Lock();
+var lock = new Lock_1.Lock("GitManager");
 // simple check to see if a git repo exists in a project
 function repo_exists(project) {
     return __awaiter(this, void 0, void 0, function () {
