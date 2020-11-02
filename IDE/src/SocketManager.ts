@@ -195,11 +195,26 @@ async function git_event(socket: SocketIO.Socket, data: any){
 	}
 }
 
+function arrayRemove(arr : Array<any>, value : any) {
+	return arr.filter(function(ele : any){ return ele != value; });
+}
+
+var list_files_doing_it : Array<string> = [];
 async function list_files(socket: SocketIO.Socket, project: string){
+	// avoid piling up of tasks for the same client(browser tab) and project
+	var slug = project + socket.id;
+	if(list_files_doing_it.indexOf(slug) != -1) {
+		console.log("SKIPPING: list_files_doing_it:", list_files_doing_it);
+		return;
+	}
+	list_files_doing_it.push(slug);
+	console.log("DOING list_files_doing_it:", list_files_doing_it);
 	if(await project_manager.projectExists(project))
 	{
 		let files: util.File_Descriptor[] = await project_manager.listFiles(project)
 			.catch((e: Error) => console.log('error refreshing file list', e.toString()) );
 		socket.emit('file-list', project, files);
 	}
+	list_files_doing_it = arrayRemove(list_files_doing_it, slug);
+	console.log("DONE list_files_doing_it:", list_files_doing_it);
 }

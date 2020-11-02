@@ -312,12 +312,24 @@ function git_event(socket, data) {
         });
     });
 }
+function arrayRemove(arr, value) {
+    return arr.filter(function (ele) { return ele != value; });
+}
+var list_files_doing_it = [];
 function list_files(socket, project) {
     return __awaiter(this, void 0, void 0, function () {
-        var files;
+        var slug, files;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, project_manager.projectExists(project)];
+                case 0:
+                    slug = project + socket.id;
+                    if (list_files_doing_it.indexOf(slug) != -1) {
+                        console.log("SKIPPING: list_files_doing_it:", list_files_doing_it);
+                        return [2 /*return*/];
+                    }
+                    list_files_doing_it.push(slug);
+                    console.log("DOING list_files_doing_it:", list_files_doing_it);
+                    return [4 /*yield*/, project_manager.projectExists(project)];
                 case 1:
                     if (!_a.sent()) return [3 /*break*/, 3];
                     return [4 /*yield*/, project_manager.listFiles(project)
@@ -326,7 +338,10 @@ function list_files(socket, project) {
                     files = _a.sent();
                     socket.emit('file-list', project, files);
                     _a.label = 3;
-                case 3: return [2 /*return*/];
+                case 3:
+                    list_files_doing_it = arrayRemove(list_files_doing_it, slug);
+                    console.log("DONE list_files_doing_it:", list_files_doing_it);
+                    return [2 /*return*/];
             }
         });
     });
