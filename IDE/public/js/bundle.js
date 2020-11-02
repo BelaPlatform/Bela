@@ -610,9 +610,8 @@ gitView.on('console-warn', function (text) {
 });
 
 // refresh file list
-setInterval(function () {
-	return socket.emit('list-files', models.project.getKey('currentProject'));
-}, 5000);
+var listFilesIntervalMs = 5000;
+var listFilesInterval = 0;
 
 // setup socket
 var socket = io('/IDE');
@@ -640,6 +639,15 @@ socket.on('init', function (data) {
 	console.log('running on', data.board_string);
 	models.settings.setKey('boardString', data.board_string);
 	tabView.emit('boardString', data.board_string);
+
+	clearInterval(listFilesInterval);
+	listFilesInterval = setInterval(function () {
+		var currentProject = models.project.getKey('currentProject');
+		if (currentProject) {
+			console.log("listing");
+			socket.emit('list-files', currentProject);
+		}
+	}, listFilesIntervalMs);
 
 	// TODO! models.status.setData(data[5]);
 
@@ -711,6 +719,7 @@ socket.on('cpu-usage', function (data) {
 
 socket.on('disconnect', function (reason) {
 	console.log('disconnect reason:', reason);
+	clearInterval(listFilesInterval);
 	consoleView.disconnect();
 	toolbarView.emit('disconnected');
 	models.project.setKey('readOnly', true);
