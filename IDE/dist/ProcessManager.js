@@ -193,10 +193,12 @@ function get_status() {
 }
 // each process emits start and finish events, which are handled here
 processes.syntax.on('start', function (project) { return socket_manager.broadcast('status', get_status()); });
-processes.syntax.on('finish', function (stderr) {
-    var status = get_status();
-    status.syntaxError = stderr;
-    socket_manager.broadcast('status', status);
+processes.syntax.on('finish', function (stderr, killed) {
+    if (!killed) {
+        var status_1 = get_status();
+        status_1.syntaxError = stderr;
+        socket_manager.broadcast('status', status_1);
+    }
 });
 processes.build.on('start', function (project) { return socket_manager.broadcast('status', get_status()); });
 processes.build.on('finish', function (stderr, killed) {
