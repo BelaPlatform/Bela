@@ -140,10 +140,12 @@ function get_status(): util.Process_Status {
 
 // each process emits start and finish events, which are handled here
 processes.syntax.on('start', (project: string) => socket_manager.broadcast('status', get_status()) );
-processes.syntax.on('finish', (stderr: string) => {
-	let status: util.Process_Status = get_status();
-	status.syntaxError = stderr;
-	socket_manager.broadcast('status', status);
+processes.syntax.on('finish', (stderr: string, killed: boolean) => {
+	if(!killed) {
+		let status: util.Process_Status = get_status();
+		status.syntaxError = stderr;
+		socket_manager.broadcast('status', status);
+	}
 });
 
 processes.build.on('start', (project: string) => socket_manager.broadcast('status', get_status()) );
