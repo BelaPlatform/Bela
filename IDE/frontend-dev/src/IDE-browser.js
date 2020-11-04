@@ -229,7 +229,6 @@ socket.on('init', (data) => {
 	listFilesInterval = setInterval( () => {
 		var currentProject = models.project.getKey('currentProject');
 		if(currentProject) {
-			console.log("listing");
 			socket.emit('list-files', currentProject);
 		}
 	}, listFilesIntervalMs);
@@ -277,7 +276,6 @@ socket.on('project-list', (project, list) =>  {
 socket.on('file-list', (project, list) => {
 	if (project && project === models.project.getKey('currentProject')){
 		models.project.setKey('fileList', list);
-    // console.log(list);
 	}
 });
 

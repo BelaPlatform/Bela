@@ -303,12 +303,12 @@ class FileView extends View {
 	// model events
 	_fileList(files, data){
 
+		if (!Array.isArray(files)) return;
+
 		this.listOfFiles = files;
 
 		var $files = $('[data-file-list]')
 		$files.empty();
-
-		if (!files.length) return;
 
 		var headers = [];
 		var sources = [];
