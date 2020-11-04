@@ -211,9 +211,12 @@ async function list_files(socket: SocketIO.Socket, project: string){
 	console.log("DOING list_files_doing_it:", list_files_doing_it);
 	if(await project_manager.projectExists(project))
 	{
-		let files: util.File_Descriptor[] = await project_manager.listFiles(project)
-			.catch((e: Error) => console.log('error refreshing file list', e.toString()) );
-		socket.emit('file-list', project, files);
+		try {
+			let files: util.File_Descriptor[] = await project_manager.listFiles(project);
+			socket.emit('file-list', project, files);
+		} catch (e) {
+			console.log('error refreshing file list', e.toString());
+		}
 	}
 	list_files_doing_it = arrayRemove(list_files_doing_it, slug);
 	console.log("DONE list_files_doing_it:", list_files_doing_it);
