@@ -644,7 +644,6 @@ socket.on('init', function (data) {
 	listFilesInterval = setInterval(function () {
 		var currentProject = models.project.getKey('currentProject');
 		if (currentProject) {
-			console.log("listing");
 			socket.emit('list-files', currentProject);
 		}
 	}, listFilesIntervalMs);
@@ -693,7 +692,6 @@ socket.on('project-list', function (project, list) {
 socket.on('file-list', function (project, list) {
 	if (project && project === models.project.getKey('currentProject')) {
 		models.project.setKey('fileList', list);
-		// console.log(list);
 	}
 });
 
@@ -2547,12 +2545,12 @@ var FileView = function (_View) {
 		value: function _fileList(files, data) {
 			var _this10 = this;
 
+			if (!Array.isArray(files)) return;
+
 			this.listOfFiles = files;
 
 			var $files = $('[data-file-list]');
 			$files.empty();
-
-			if (!files.length) return;
 
 			var headers = [];
 			var sources = [];
