@@ -318,7 +318,7 @@ function arrayRemove(arr, value) {
 var list_files_doing_it = [];
 function list_files(socket, project) {
     return __awaiter(this, void 0, void 0, function () {
-        var slug, files;
+        var slug, files, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -331,14 +331,20 @@ function list_files(socket, project) {
                     console.log("DOING list_files_doing_it:", list_files_doing_it);
                     return [4 /*yield*/, project_manager.projectExists(project)];
                 case 1:
-                    if (!_a.sent()) return [3 /*break*/, 3];
-                    return [4 /*yield*/, project_manager.listFiles(project)
-                            .catch(function (e) { return console.log('error refreshing file list', e.toString()); })];
+                    if (!_a.sent()) return [3 /*break*/, 5];
+                    _a.label = 2;
                 case 2:
+                    _a.trys.push([2, 4, , 5]);
+                    return [4 /*yield*/, project_manager.listFiles(project)];
+                case 3:
                     files = _a.sent();
                     socket.emit('file-list', project, files);
-                    _a.label = 3;
-                case 3:
+                    return [3 /*break*/, 5];
+                case 4:
+                    e_2 = _a.sent();
+                    console.log('error refreshing file list', e_2.toString());
+                    return [3 /*break*/, 5];
+                case 5:
                     list_files_doing_it = arrayRemove(list_files_doing_it, slug);
                     console.log("DONE list_files_doing_it:", list_files_doing_it);
                     return [2 /*return*/];
