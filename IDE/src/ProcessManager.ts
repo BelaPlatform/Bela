@@ -26,9 +26,10 @@ export async function upload(data: any){
 			if(syntaxTimeout) {
 				clearTimeout(syntaxTimeout)
 			}
-			syntaxTimeout = setTimeout(function (project: string) {
-				checkSyntax(project);
-			}.bind(null, data.currentProject), syntaxTimeoutMs);
+			console.log("settimeout", data);
+			syntaxTimeout = setTimeout(function (data: any) {
+				checkSyntax(data);
+			}.bind(null, {currentProject: data.currentProject}), syntaxTimeoutMs);
 		}
 	}
 	catch(e){
@@ -45,7 +46,11 @@ export async function upload(data: any){
 // this function starts a syntax check
 // if a syntax check or build process is in progress they are stopped
 // a running program is not stopped
-export function checkSyntax(project: string){
+// this can be called either from upload() or from the frontend (via SocketManager)
+export function checkSyntax(data: any){
+	if(!data.currentProject)
+		return;
+	let project : string = data.currentProject;
 	if (processes.syntax.get_status()){
 		processes.syntax.stop();
 		processes.syntax.queue(() => processes.syntax.start(project));
