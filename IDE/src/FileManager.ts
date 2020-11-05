@@ -101,7 +101,7 @@ export async function read_directory(dir_path: string): Promise<string[]>{
 	}
 	return out;
 }
-export async function stat_file(file_name: string): Promise<any>{
+export async function stat_file(file_name: string): Promise<fs.Stats>{
 	await lock.acquire();
 	let out: any;
 	try{
