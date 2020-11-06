@@ -42,7 +42,7 @@
 #X text 22 59 This example show how to receive data from the GUI.;
 #X text 22 79 Launch the GUI in the IDE to start sending mouse position.
 ;
-#X text 22 99 Launch the GUI in the IDE to start sending mouse position.
+#X text 22 109 https://learn.bela.io/tutorials/pure-data/communication/graphical-user-interfaces/
 ;
 #X connect 1 0 15 0;
 #X connect 3 0 7 0;

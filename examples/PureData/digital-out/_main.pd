@@ -1,12 +1,12 @@
 #N canvas 0 22 1289 791 10;
-#X text 58 229 Digital out \, message rate;
-#X obj 60 307 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+#X text 58 249 Digital out \, message rate;
+#X obj 60 327 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
 1;
-#X obj 60 257 loadbang;
-#X text 88 306 Blink that LED!;
-#X obj 64 179 s bela_setDigital;
-#X obj 64 132 loadbang;
-#X text 134 152 initialise the pin to output;
+#X obj 60 277 loadbang;
+#X text 88 326 Blink that LED!;
+#X obj 64 199 s bela_setDigital;
+#X obj 64 152 loadbang;
+#X text 134 172 initialise the pin to output;
 #X text 463 11 ............................;
 #X text 463 21 . ____ ._____ _ .......___ .;
 #X text 463 31 .| __ )| ____| |....../ _ |.;
@@ -16,10 +16,12 @@
 #X text 463 41 .| __ || __|.| |...../ _| |.;
 #X text 64 30 Digital Output;
 #X text 64 40 ===============;
-#X msg 64 154 out 17;
-#X obj 60 346 s bela_digitalOut17;
-#X obj 60 282 metro 1000;
+#X msg 64 174 out 17;
+#X obj 60 366 s bela_digitalOut17;
+#X obj 60 302 metro 1000;
 #X text 64 60 This example blinks an LED once per second.;
+#X text 64 90 https://learn.bela.io/tutorials/pure-data/connecting/digital-output/
+;
 #X connect 1 0 17 0;
 #X connect 2 0 18 0;
 #X connect 5 0 16 0;

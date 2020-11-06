@@ -3,13 +3,13 @@
 #X obj 78 570 *~;
 #X obj 78 523 osc~ 200;
 #X obj 78 611 dac~ 1 2;
-#X obj 83 123 accelerometer-integration;
+#X obj 83 153 accelerometer-integration;
 #X obj 93 546 r~ swingVelocity;
 #X obj 81 227 r~ x-axis;
 #X obj 151 227 r~ y-axis;
 #X obj 221 227 r~ z-axis;
 #X obj 294 227 r~ swingVelocity;
-#X text 313 122 <<<<< signal treatment happening in here;
+#X text 313 152 <<<<< signal treatment happening in here;
 #X text 313 303 <<<<< visualise raw signal and velocity;
 #X text 233 543 <<<<< use the overall velocity to control amplitude
 of tone;
@@ -75,6 +75,8 @@ of tone;
 #X text 64 80 three audio stream depending on orientation.;
 #X text 788 353 samples courtesy of EJTECH;
 #X text 64 60 This example uses an acceleromoter to mix between;
+#X text 64 110 https://learn.bela.io/tutorials/pure-data/sensors/accelerometer/
+;
 #X connect 1 0 3 0;
 #X connect 1 0 3 1;
 #X connect 5 0 1 1;

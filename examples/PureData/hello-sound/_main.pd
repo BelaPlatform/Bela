@@ -7,14 +7,16 @@
 #X text 463 71 ............................;
 #X text 463 41 .| __ || __|.| |...../ _| |.;
 #X text 64 40 ===========;
-#X obj 58 205 dac~ 1 2;
-#X obj 58 154 techno-world;
-#X text 141 205 < Audio out L + R;
-#X text 151 155 < techno generator;
+#X obj 58 225 dac~ 1 2;
+#X obj 58 174 techno-world;
+#X text 141 225 < Audio out L + R;
+#X text 151 175 < techno generator;
 #X text 64 67 Press the run button in the IDE to hear this example.
 ;
 #X text 64 87 You will hear algorithimic techno from the audio output.
 ;
 #X text 64 30 Hello Sound;
+#X text 64 117 https://learn.bela.io/tutorials/pure-data/fundamentals/hello-sound/
+;
 #X connect 9 0 8 0;
 #X connect 9 0 8 1;

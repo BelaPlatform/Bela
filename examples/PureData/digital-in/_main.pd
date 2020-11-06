@@ -1,9 +1,9 @@
 #N canvas 735 22 945 547 10;
-#X obj 60 297 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+#X obj 60 327 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
-#X text 88 296 Blink that LED!;
-#X obj 64 149 s bela_setDigital;
-#X obj 64 102 loadbang;
+#X text 88 326 Blink that LED!;
+#X obj 64 179 s bela_setDigital;
+#X obj 64 132 loadbang;
 #X text 463 11 ............................;
 #X text 463 21 . ____ ._____ _ .......___ .;
 #X text 463 31 .| __ )| ____| |....../ _ |.;
@@ -12,16 +12,18 @@
 #X text 463 71 ............................;
 #X text 463 41 .| __ || __|.| |...../ _| |.;
 #X text 64 40 ===============;
-#X text 165 123 initialise the pins to input and output;
+#X text 165 153 initialise the pins to input and output;
 #X text 64 30 Digital Input;
-#X text 58 199 Digital input and out \, message rate;
-#X obj 60 353 s bela_digitalOut17;
-#X msg 64 124 in 18 \, out 17;
-#X obj 60 245 r bela_digitalIn18;
-#X obj 398 298 kick;
-#X obj 461 298 snare;
+#X text 58 229 Digital input and out \, message rate;
+#X obj 60 383 s bela_digitalOut17;
+#X msg 64 154 in 18 \, out 17;
+#X obj 60 275 r bela_digitalIn18;
+#X obj 398 328 kick;
+#X obj 461 328 snare;
 #X text 64 60 This example uses a button to control an LED.;
-#X text 522 297 < extra sound making abstractions;
+#X text 522 327 < extra sound making abstractions;
+#X text 64 90 https://learn.bela.io/tutorials/pure-data/connecting/digital-input/
+;
 #X connect 0 0 15 0;
 #X connect 3 0 16 0;
 #X connect 16 0 2 0;

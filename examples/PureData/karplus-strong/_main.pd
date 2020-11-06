@@ -1,31 +1,31 @@
 #N canvas 207 23 1127 782 10;
-#X obj 40 660 dac~ 1 2;
+#X obj 40 710 dac~ 1 2;
 #X text 33 22 Karplus Strong;
 #X text 33 32 ==============;
-#X obj 40 613 vd~ \$0-wg1;
-#X obj 120 635 lop~ 1000;
-#X obj 120 679 s~ \$0-fb1;
-#X obj 40 286 hip~ 100;
-#X obj 105 345 r~ \$0-fb1;
-#X obj 40 368 delwrite~ \$0-wg1 100;
-#X obj 40 538 *~;
-#X obj 40 560 *~ 10;
-#X text 135 286 <<< centre (i.e. DC block) signal with high-pass filter
+#X obj 40 663 vd~ \$0-wg1;
+#X obj 120 685 lop~ 1000;
+#X obj 120 729 s~ \$0-fb1;
+#X obj 40 336 hip~ 100;
+#X obj 105 395 r~ \$0-fb1;
+#X obj 40 418 delwrite~ \$0-wg1 100;
+#X obj 40 588 *~;
+#X obj 40 610 *~ 10;
+#X text 135 336 <<< centre (i.e. DC block) signal with high-pass filter
 ;
-#X text 126 492 <<< use potentiometer or fader on second analog in
+#X text 126 542 <<< use potentiometer or fader on second analog in
 ;
-#X text 37 190 EXCITATION INPUT:;
-#X text 37 418 DELAY PERIOD:;
-#X text 214 655 <<< and decay here [0-0.9999];
-#X text 155 307 <<< thresholding to remove any consistent noise in
+#X text 37 240 EXCITATION INPUT:;
+#X text 37 468 DELAY PERIOD:;
+#X text 214 705 <<< and decay here [0-0.9999];
+#X text 155 357 <<< thresholding to remove any consistent noise in
 the excitation signal;
-#X obj 40 234 adc~ 1;
-#X obj 40 466 sig~ 1;
-#X obj 40 515 -~;
-#X obj 40 582 +~ 2;
-#X text 214 635 <<< set damping here [100-20000];
-#X text 126 573 <<< period range between 2-12ms;
-#X text 151 505 to set period (or 'length of string');
+#X obj 40 284 adc~ 1;
+#X obj 40 516 sig~ 1;
+#X obj 40 565 -~;
+#X obj 40 632 +~ 2;
+#X text 214 685 <<< set damping here [100-20000];
+#X text 126 623 <<< period range between 2-12ms;
+#X text 151 555 to set period (or 'length of string');
 #X text 36 55 This is an example of simple 'Karplus Strong' synthesis
 ;
 #X text 36 69 which produces a sound resembling a plucked string by
@@ -46,18 +46,20 @@ input;
 #X text 485 65 .|____/|_____|_____/_/..._|.io;
 #X text 485 75 ............................;
 #X text 485 45 .| __ || __|.| |...../ _| |.;
-#X text 116 234 <<< use piezo or microphone on left audio channel;
-#X text 140 248 (you can even try hooking up an accelerometer...);
-#X text 37 200 ----------------;
-#X text 37 429 ------------;
-#X obj 120 657 *~ 0.9999;
-#X obj 479 568 snapshot~;
-#X obj 528 540 metro 10;
-#X obj 528 518 loadbang;
-#X obj 479 610 + 100;
-#X obj 479 589 * 5000;
-#X obj 480 496 adc~ 3;
-#X obj 193 431 adc~ 4;
+#X text 116 284 <<< use piezo or microphone on left audio channel;
+#X text 140 298 (you can even try hooking up an accelerometer...);
+#X text 37 250 ----------------;
+#X text 37 479 ------------;
+#X obj 120 707 *~ 0.9999;
+#X obj 479 618 snapshot~;
+#X obj 528 590 metro 10;
+#X obj 528 568 loadbang;
+#X obj 479 660 + 100;
+#X obj 479 639 * 5000;
+#X obj 480 546 adc~ 3;
+#X obj 193 481 adc~ 4;
+#X text 37 169 https://learn.bela.io/tutorials/pure-data/audio/virtual-string-synthesis/
+;
 #X connect 3 0 4 0;
 #X connect 3 0 0 0;
 #X connect 3 0 0 1;

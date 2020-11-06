@@ -1,15 +1,15 @@
 #N canvas 419 170 1021 708 10;
-#X obj 196 429 dac~ 27 28 29 30;
-#X obj 75 429 dac~ 1 2;
-#X obj 101 132 adc~ 3 4;
-#X obj 76 190 noise~;
-#X obj 76 311 vcf~, f 8;
-#X obj 160 260 + 0.2;
-#X obj 160 282 * 40;
-#X obj 182 190 loadbang;
-#X obj 182 211 metro 50;
-#X obj 160 238 snapshot~;
-#X obj 98 227 *~ 8000;
+#X obj 196 469 dac~ 27 28 29 30;
+#X obj 75 469 dac~ 1 2;
+#X obj 101 172 adc~ 3 4;
+#X obj 76 230 noise~;
+#X obj 76 351 vcf~, f 8;
+#X obj 160 300 + 0.2;
+#X obj 160 322 * 40;
+#X obj 182 230 loadbang;
+#X obj 182 251 metro 50;
+#X obj 160 278 snapshot~;
+#X obj 98 267 *~ 8000;
 #X text 590 7 ............................;
 #X text 590 17 . ____ ._____ _ .......___ .;
 #X text 590 27 .| __ )| ____| |....../ _ |.;
@@ -22,8 +22,10 @@
 #X text 22 59 Push scope button in the IDE. This example sends two
 analog;
 #X text 22 79 inputs to the scope and filtered white noise.;
-#X text 338 429 < the Bela scope;
-#X obj 76 392 *~ 0.2;
+#X text 338 469 < the Bela scope;
+#X obj 76 432 *~ 0.2;
+#X text 23 107 https://learn.bela.io/tutorials/pure-data/communication/oscilloscope/
+;
 #X connect 2 0 0 0;
 #X connect 2 0 10 0;
 #X connect 2 1 0 1;

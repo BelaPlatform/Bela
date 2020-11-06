@@ -28,6 +28,8 @@
 #X obj 88 471 delwrite~ mydelay 1000;
 #X text 33 22 Delay Effect;
 #X text 33 32 ============;
+#X text 33 113 https://learn.bela.io/tutorials/pure-data/audio/delays/
+;
 #X connect 0 0 1 0;
 #X connect 0 0 1 1;
 #X connect 2 0 0 0;

@@ -66,11 +66,13 @@ the;
 #X obj 614 742 dac~ 1 2;
 #X text 30 58 This example is for capacitive sensing with Trill Craft.
 ;
-#X text 30 78 Connect the sensor via I2C and open the GUI to see readigns.
-;
 #X msg 56 215 new mycraft 1 CRAFT;
 #X msg 205 215 prescaler mycraft 2;
 #X obj 264 336 route mycraft;
+#X text 30 78 Connect the sensor via I2C and open the GUI to see readings.
+;
+#X text 30 108 https://learn.bela.io/tutorials/pure-data/sensors/capacitive-sensing/
+;
 #X connect 0 0 4 0;
 #X connect 0 1 9 0;
 #X connect 0 2 16 0;
@@ -104,16 +106,16 @@ the;
 #X connect 23 0 24 0;
 #X connect 24 0 19 3;
 #X connect 25 0 54 0;
-#X connect 26 0 65 0;
+#X connect 26 0 64 0;
 #X connect 35 0 60 0;
 #X connect 35 0 60 1;
 #X connect 49 0 50 0;
 #X connect 50 0 51 0;
 #X connect 51 0 53 0;
 #X connect 53 0 52 0;
-#X connect 54 0 64 0;
-#X connect 54 1 63 0;
-#X connect 63 0 27 0;
-#X connect 64 0 45 0;
-#X connect 65 0 0 0;
-#X connect 65 0 53 1;
+#X connect 54 0 63 0;
+#X connect 54 1 62 0;
+#X connect 62 0 27 0;
+#X connect 63 0 45 0;
+#X connect 64 0 0 0;
+#X connect 64 0 53 1;

@@ -1,4 +1,4 @@
-#N canvas 1521 -584 1164 862 10;
+#N canvas 516 22 1164 862 10;
 #X obj 91 425 kick1;
 #X obj 215 425 snare1;
 #X obj 338 425 hat1;
@@ -44,6 +44,8 @@
 #X text 445 75 ............................;
 #X text 445 45 .| __ || __|.| |...../ _| |.;
 #X text 33 55 Synthesisng and sequencing drum sounds.;
+#X text 33 85 https://learn.bela.io/tutorials/pure-data/synthesis/drum-synthesis/
+;
 #X connect 0 0 25 0;
 #X connect 1 0 25 1;
 #X connect 2 0 25 1;

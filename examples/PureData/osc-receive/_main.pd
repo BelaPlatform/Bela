@@ -1,20 +1,20 @@
 #N canvas 180 22 1211 809 10;
-#X obj 99 149 loadbang;
-#X msg 129 221 listen 0;
-#X obj 99 283 oscparse;
-#X obj 231 350 print parse-output;
-#X msg 99 185 listen 7562;
-#X obj 99 259 netreceive -u -b;
-#X text 237 181 Listen to port 7562;
-#X text 237 221 This can close the connection;
-#X text 237 261 The arguments -u and -b must match those in netsend
+#X obj 99 199 loadbang;
+#X msg 129 271 listen 0;
+#X obj 99 333 oscparse;
+#X obj 231 400 print parse-output;
+#X msg 99 235 listen 7562;
+#X obj 99 309 netreceive -u -b;
+#X text 237 231 Listen to port 7562;
+#X text 237 271 This can close the connection;
+#X text 237 311 The arguments -u and -b must match those in netsend
 on Bela;
-#X text 237 281 oscparse converts OSC packets into PD messages;
-#X text 237 301 print the resultant message;
-#X floatatom 63 428 5 0 0 0 - - -;
-#X floatatom 120 427 5 0 0 0 - - -;
-#X obj 63 323 route list;
-#X obj 62 399 route slider counter;
+#X text 237 331 oscparse converts OSC packets into PD messages;
+#X text 237 351 print the resultant message;
+#X floatatom 63 478 5 0 0 0 - - -;
+#X floatatom 120 477 5 0 0 0 - - -;
+#X obj 63 373 route list;
+#X obj 62 449 route slider counter;
 #N canvas 570 187 435 501 env 0;
 #X obj 39 15 inlet;
 #X obj 39 467 outlet~;
@@ -28,12 +28,12 @@ on Bela;
 #X connect 3 0 5 0;
 #X connect 4 0 2 0;
 #X connect 5 0 2 0;
-#X restore 49 488 pd env;
-#X msg 49 462 bang;
-#X obj 117 521 osc~ 440;
-#X obj 120 479 *~ 220;
-#X obj 117 542 *~;
-#X obj 117 563 dac~ 1 2;
+#X restore 49 538 pd env;
+#X msg 49 512 bang;
+#X obj 117 571 osc~ 440;
+#X obj 120 529 *~ 220;
+#X obj 117 592 *~;
+#X obj 117 613 dac~ 1 2;
 #X text 590 7 ............................;
 #X text 590 17 . ____ ._____ _ .......___ .;
 #X text 590 27 .| __ )| ____| |....../ _ |.;
@@ -46,6 +46,8 @@ on Bela;
 #X text 22 59 This example shows how to receive osc messages on Bela.
 ;
 #X text 22 79 Run local.pd on your machine to see the patch in action.
+;
+#X text 23 107 https://learn.bela.io/tutorials/pure-data/communication/open-sound-control/
 ;
 #X connect 0 0 4 0;
 #X connect 1 0 5 0;

@@ -64,6 +64,8 @@
 #X text 22 60 This example shows how to do record samples on the fly.
 ;
 #X text 22 99 Hold down button to record in a new sample.;
+#X text 23 127 https://learn.bela.io/tutorials/pure-data/audio/recording-samples/
+;
 #X connect 3 0 14 0;
 #X connect 4 0 46 0;
 #X connect 9 0 10 0;

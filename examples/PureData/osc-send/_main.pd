@@ -1,19 +1,19 @@
 #N canvas 216 161 958 554 10;
-#X obj 170 400 print backward;
-#X obj 188 156 loadbang;
-#X obj 238 212 metro 500;
-#X obj 238 233 f;
-#X obj 268 234 + 1;
-#X obj 238 254 % 6;
-#X msg 103 255 disconnect;
-#X msg 45 216 connect 192.168.7.1 7562;
-#X obj 238 317 list prepend send;
-#X obj 238 338 list trim;
-#X obj 97 367 netsend -u -b;
-#X obj 364 233 adc~ 3;
-#X obj 364 254 snapshot~;
-#X obj 365 281 oscformat slider;
-#X obj 238 283 oscformat counter;
+#X obj 170 420 print backward;
+#X obj 188 176 loadbang;
+#X obj 238 232 metro 500;
+#X obj 238 253 f;
+#X obj 268 254 + 1;
+#X obj 238 274 % 6;
+#X msg 103 275 disconnect;
+#X msg 45 236 connect 192.168.7.1 7562;
+#X obj 238 337 list prepend send;
+#X obj 238 358 list trim;
+#X obj 97 387 netsend -u -b;
+#X obj 364 253 adc~ 3;
+#X obj 364 274 snapshot~;
+#X obj 365 301 oscformat slider;
+#X obj 238 303 oscformat counter;
 #X text 590 7 ............................;
 #X text 590 17 . ____ ._____ _ .......___ .;
 #X text 590 27 .| __ )| ____| |....../ _ |.;
@@ -26,6 +26,8 @@
 #X text 20 28 Send OSC messages from Bela;
 #X text 20 38 ===========================;
 #X text 22 59 This example shows how to send osc messages from Bela.
+;
+#X text 23 107 https://learn.bela.io/tutorials/pure-data/communication/open-sound-control/
 ;
 #X connect 1 0 2 0;
 #X connect 1 0 7 0;

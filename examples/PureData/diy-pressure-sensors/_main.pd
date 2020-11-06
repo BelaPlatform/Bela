@@ -53,6 +53,8 @@
 #X text 49 784 comment;
 #X text 20 28 Sonifying a diy FSR by scrubbing through a sample;
 #X text 20 38 =================================================;
+#X text 22 109 https://learn.bela.io/tutorials/pure-data/sensors/diy-pressure-sensor/
+;
 #X connect 2 0 5 0;
 #X connect 5 0 23 0;
 #X connect 6 0 24 0;

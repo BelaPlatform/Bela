@@ -1,4 +1,4 @@
-#N canvas 1774 -471 936 702 10;
+#N canvas 744 22 936 702 10;
 #X text 35 361 ------------;
 #X text 385 32 ............................;
 #X text 385 42 . ____ ._____ _ .......___ .;
@@ -29,6 +29,8 @@
 #X text 248 231 << Analog outputs;
 #X text 34 74 This example uses a ramp generator to control;
 #X text 34 88 the brightness of 8 LEDs.;
+#X text 34 118 https://learn.bela.io/tutorials/pure-data/connecting/analog-output/
+;
 #X connect 23 0 24 0;
 #X connect 23 0 24 1;
 #X connect 23 0 24 2;
