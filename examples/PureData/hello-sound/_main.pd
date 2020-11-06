@@ -1,0 +1,20 @@
+#N canvas 0 22 704 319 10;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X text 64 40 ===========;
+#X obj 58 205 dac~ 1 2;
+#X obj 58 154 techno-world;
+#X text 141 205 < Audio out L + R;
+#X text 151 155 < techno generator;
+#X text 64 67 Press the run button in the IDE to hear this example.
+;
+#X text 64 87 You will hear algorithimic techno from the audio output.
+;
+#X text 64 30 Hello Sound;
+#X connect 9 0 8 0;
+#X connect 9 0 8 1;

@@ -1,35 +1,49 @@
-#N canvas -4 22 945 523 12;
-#X obj 190 169 s bela_setGui;
-#X obj 34 259 r bela_guiControl;
+#N canvas 0 22 1064 710 12;
+#X obj 190 359 s bela_setGui;
+#X obj 34 449 r bela_guiControl;
 #N canvas 0 22 450 278 (subpatch) 0;
 #X array xy 2 float 3;
 #A 0 -0.414296 -0.214291;
 #X coords 0 1 2 -1 200 140 1 0 0;
-#X restore 693 254 graph;
-#X obj 410 291 metro 400;
-#X obj 178 77 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
--1;
-#X obj 179 59 loadbang;
-#X msg 395 122 new array xy;
-#X obj 410 324 array get xy;
-#X obj 410 256 loadbang;
-#X obj 410 367 print array xy;
-#X text 420 350 Periodically print the array content;
-#X text 22 22 Receive a message when mousex or mousey are received
+#X restore 693 444 graph;
+#X obj 410 481 metro 400;
+#X obj 178 267 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 179 249 loadbang;
+#X msg 395 312 new array xy;
+#X obj 410 514 array get xy;
+#X obj 410 446 loadbang;
+#X obj 410 557 print array xy;
+#X text 420 540 Periodically print the array content;
+#X text 22 212 Receive a message when mousex or mousey are received
 ;
-#X text 390 88 Update array xy with the input values from buffer 0:
+#X text 390 278 Update array xy with the input values from buffer 0:
 ;
-#X text 391 102 Bela.data.sendBuffer(0 \, 'float' \, [...]);
-#X text 22 32 on the control websocket: Bela.control.send(...);
-#X obj 34 293 route mouseX mouseY clickX clickY;
-#X obj 34 331 print guiControl: mouseX;
-#X obj 92 364 print guiControl: mouseY;
-#X obj 148 399 print guiControl: clickX;
-#X obj 208 434 print guiControl: clickY;
-#X msg 37 105 new control mouseX;
-#X msg 214 105 new control mouseY;
-#X msg 39 137 new control clickX;
-#X msg 184 137 new control clickY;
+#X text 391 292 Bela.data.sendBuffer(0 \, 'float' \, [...]);
+#X text 22 222 on the control websocket: Bela.control.send(...);
+#X obj 34 483 route mouseX mouseY clickX clickY;
+#X obj 34 521 print guiControl: mouseX;
+#X obj 92 554 print guiControl: mouseY;
+#X obj 148 589 print guiControl: clickX;
+#X obj 208 624 print guiControl: clickY;
+#X msg 37 295 new control mouseX;
+#X msg 214 295 new control mouseY;
+#X msg 39 327 new control clickX;
+#X msg 184 327 new control clickY;
+#X text 590 7 ............................;
+#X text 590 17 . ____ ._____ _ .......___ .;
+#X text 590 27 .| __ )| ____| |....../ _ |.;
+#X text 590 47 .| |_) | |___| |___ / ___ |.;
+#X text 590 57 .|____/|_____|_____/_/..._|.io;
+#X text 590 67 ............................;
+#X text 590 37 .| __ || __|.| |...../ _| |.;
+#X text 20 28 Receive data from the GUI;
+#X text 20 38 =========================;
+#X text 22 59 This example show how to receive data from the GUI.;
+#X text 22 79 Launch the GUI in the IDE to start sending mouse position.
+;
+#X text 22 99 Launch the GUI in the IDE to start sending mouse position.
+;
 #X connect 1 0 15 0;
 #X connect 3 0 7 0;
 #X connect 4 0 20 0;

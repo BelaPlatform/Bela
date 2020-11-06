@@ -1,0 +1,203 @@
+#N canvas 551 22 916 833 10;
+#X text 32 30 ==============================;
+#X obj 100 528 osc~ 440;
+#X obj 100 550 *~ 0.1;
+#X obj 100 572 dac~;
+#X text 33 491 Here's how you produce a sine wave out of Bela's stereo
+output:;
+#X text 33 601 Similarly \, Bela's stereo input can be addressed as
+follows:;
+#X obj 100 632 adc~;
+#X obj 100 654 dac~;
+#X text 177 643 Audio pass-through;
+#X text 33 1721 Supported objects;
+#X text 33 1731 -----------------;
+#X text 33 1765 All native pd (vanilla) objects can be used.;
+#X text 33 1751 By default Bela uses libpd to run puredata patches.
+;
+#X text 33 1785 It is also possible to compile pd objects to optimised
+;
+#X text 33 1798 C code using the Heavy Cloud Compiler \, in which case
+;
+#X text 33 1811 a different set of objects is supported (see below).
+;
+#X text 33 691 Analog I/O;
+#X text 33 701 ----------;
+#X text 33 721 Analog inputs and outputs are treated as audio signals
+and;
+#X text 33 735 are addressed using the next 8 channels of the [adc~]
+and;
+#X text 33 749 [dac~] objects:;
+#X obj 36 775 adc~ 3 4 5 6 7 8 9 10;
+#X text 191 775 Analog Inputs 0 \, 1 \, 2 \, 3 \, 4 \, 5 \, 6 \, 7
+;
+#X text 191 805 Analog Outputs 0 \, 1 \, 2 \, 3 \, 4 \, 5 \, 6 \, 7
+;
+#X obj 36 805 dac~ 3 4 5 6 7 8 9 10;
+#X text 33 843 examples.;
+#X text 33 1031 MIDI;
+#X text 33 1041 ----;
+#X text 99 1061 and;
+#X obj 36 1060 notein;
+#X obj 125 1060 ctlin;
+#X text 183 1061 objects can be used to interface MIDI devices;
+#X text 33 1079 with the patch.;
+#X text 33 1094 Most MIDI devices can be plugged into the Beaglebone's
+USB;
+#X text 33 1108 port and can be used with these objects.;
+#X text 33 829 See the 'BasicAnalogIn' and 'BasicAnalogOut' projects
+for;
+#X text 33 1123 See the 'hello-midi' and 'midi-poly-synth' projects
+for more;
+#X text 33 1137 for examples.;
+#X obj 57 1198 print;
+#X text 33 1198 The;
+#X text 115 1198 object can be used to log messages directly to Bela's
+;
+#X text 33 1216 terminal output (e.g. as viewable in the browser IDE).
+;
+#X obj 100 1242 loadbang;
+#X obj 100 1286 print;
+#X msg 100 1264 Puredata says: 'Hello Bela!';
+#X text 33 1181 ----------------;
+#X text 33 1171 Debugging: print;
+#X text 33 1331 ----------------;
+#X text 33 1321 Debugging: scope;
+#X text 33 1348 Any signal can be visualised using Bela's browser-based
+;
+#X text 33 1362 scope. DAC channels 27 \, 28 \, 29 \, 30 address four
+separate;
+#X text 33 1376 scope channels.;
+#X obj 147 1449 dac~ 27 28 29 30;
+#X obj 79 1401 osc~ 440;
+#X obj 149 1401 noise~;
+#X obj 209 1401 osc~ 880;
+#X obj 209 1423 *~;
+#X text 33 1504 visualised.;
+#X text 33 1850 Compiling Puredata patches with Heavy;
+#X text 33 1860 -------------------------------------;
+#X text 33 1880 As an alternative to libpd \, Puredata patches can
+be;
+#X text 33 1894 converted into optimised C code using the Heavy Cloud
+;
+#X text 33 1908 Compiler by Enzien Audio. The resulting code can result
+;
+#X text 33 1922 in large increases in performance and is therefore
+well;
+#X text 33 1936 suited for complex patches and final stages of development.
+;
+#X text 33 1950 We recommend to use libpd for prototyping and less
+CPU;
+#X text 33 1964 intensive patches.;
+#X text 33 1978 See our documentation to learn more about compiling
+patches;
+#X text 33 1991 using Heavy \, and visit enzienaudio.com for more info
+and;
+#X text 33 2005 a list of currently supported objects.;
+#X text 33 1541 Combining Pd and C++;
+#X text 33 1551 --------------------;
+#X text 33 1568 There are many cases where it is useful to combine
+Pd;
+#X text 33 1582 patches with C++ code \, for example when needing to
+;
+#X text 33 1596 incorporate system calls (e.g. networking) or for;
+#X text 33 1610 sample-accurate dsp processes that are inconvenient
+;
+#X text 33 1624 to program in Puredata.;
+#X text 33 1657 is used \, which functions as a libpd wrapper. It is
+;
+#X text 33 1644 When running Puredata patches a template render.cpp
+file;
+#X text 33 1671 possible to modify this file when starting a new pd
+project.;
+#X text 33 1685 See the 'CustomRenderFile' example project for more
+info.;
+#X text 177 550 Sine Wave;
+#X obj 149 1423 *~ 0.1;
+#X obj 279 1401 osc~ 0.5;
+#X text 33 1490 click the scope button to see the above signals being
+;
+#X text 33 1476 If you're viewing this patch using the Bela IDE you
+can;
+#X text 33 151 Patches can be drag-and-dropped into the browser IDE
+;
+#X text 33 165 and will be added to the current project that is open.
+;
+#X text 33 179 In order for the patch to run you need to fulfill the
+;
+#X text 33 193 following two requirements:;
+#X text 59 215 a) The top-level patch needs to be named '_main.pd'
+;
+#X text 77 228 (you can still use abstractions);
+#X text 59 245 b) Make sure there is no 'render.cpp' file inside;
+#X text 77 258 the project. A template file will be used instead;
+#X text 77 272 which acts as a wrapper for libpd.;
+#X text 77 285 Alternatively you can modify this wrapper and place
+;
+#X text 77 298 it inside the project. See below for more information.
+;
+#X text 33 121 Loading and running patches in the Bela IDE;
+#X text 33 131 -------------------------------------------;
+#X text 33 461 Audio I/O;
+#X text 33 471 ---------;
+#X text 33 322 If you're viewing this inside the Bela IDE \, then you've
+;
+#X text 33 336 noticed by now that all pd patches can be previewed
+within;
+#X text 33 350 the browser. Note \, however \, that patches cannot
+currently;
+#X text 33 364 be edited or interacted with inside this preview.;
+#X text 33 394 To view the contents of abstractions supplied with a
+;
+#X text 33 407 project in the IDE \, simply go to the project navigator
+;
+#X text 33 420 and open the corresponding patches from there.;
+#X text 33 881 Digital I/O;
+#X text 33 891 -----------;
+#X text 33 911 Digital pins can also be addressed from within a patch.
+;
+#X text 33 924 Unlike analog pins \, digital pins can be set to work
+as;
+#X text 33 937 inputs or outputs and can be read/written as signals
+or;
+#X text 33 950 as messages.;
+#X text 33 963 See the 'digital' example for instructions on how to
+;
+#X text 33 977 initialise \, read and write to digital pins as well
+as some;
+#X text 33 990 usage examples;
+#X text 33 2023 When sending a message from a Pd-heavy patch to a receiver
+;
+#X obj 87 2073 send bela_setDigital @hv_param;
+#X text 33 2033 in the C++ wrapper (e.g.: when sending to bela_setDigital
+\,;
+#X text 33 2043 or if you add any custom receivers in there) you need
+;
+#X text 33 2053 to add @hv_param to the name of your receiver \, e.g.:
+;
+#X text 32 20 Pure Data on Bela Introduction;
+#X text 33 61 Puredata patches can easily be run on Bela and this guide
+;
+#X text 33 76 gives an introduction to running patches on the board.
+;
+#X text 463 11 ............................;
+#X text 463 21 . ____ ._____ _ .......___ .;
+#X text 463 31 .| __ )| ____| |....../ _ |.;
+#X text 463 51 .| |_) | |___| |___ / ___ |.;
+#X text 463 61 .|____/|_____|_____/_/..._|.io;
+#X text 463 71 ............................;
+#X text 463 41 .| __ || __|.| |...../ _| |.;
+#X connect 1 0 2 0;
+#X connect 2 0 3 0;
+#X connect 2 0 3 1;
+#X connect 6 0 7 0;
+#X connect 6 1 7 1;
+#X connect 42 0 44 0;
+#X connect 44 0 43 0;
+#X connect 53 0 52 0;
+#X connect 54 0 82 0;
+#X connect 55 0 56 0;
+#X connect 56 0 52 2;
+#X connect 82 0 52 1;
+#X connect 83 0 56 1;
+#X connect 83 0 52 3;

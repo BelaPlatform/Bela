@@ -1,0 +1,28 @@
+#N canvas 48 22 236 376 10;
+#X obj 27 132 noise~;
+#X obj 27 262 *~, f 5;
+#X obj 29 53 inlet;
+#X obj 27 306 outlet~;
+#X obj 61 238 line~;
+#X msg 61 199 1;
+#X obj 29 74 t b b;
+#X obj 27 174 hip~ 8000;
+#X obj 27 153 hip~ 8000;
+#X obj 27 283 *~ 0.4;
+#X obj 99 37 inlet;
+#X obj 99 63 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X msg 99 199 0 \$1;
+#X connect 0 0 8 0;
+#X connect 1 0 9 0;
+#X connect 2 0 6 0;
+#X connect 4 0 1 1;
+#X connect 5 0 4 0;
+#X connect 6 0 11 0;
+#X connect 6 1 5 0;
+#X connect 7 0 1 0;
+#X connect 8 0 7 0;
+#X connect 9 0 3 0;
+#X connect 10 0 11 0;
+#X connect 11 0 12 0;
+#X connect 12 0 4 0;

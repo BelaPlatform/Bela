@@ -1,0 +1,83 @@
+#N canvas 1521 -584 1164 862 10;
+#X obj 91 425 kick1;
+#X obj 215 425 snare1;
+#X obj 338 425 hat1;
+#X obj 154 425 kick2;
+#X obj 277 425 snare2;
+#X obj 402 425 hat2;
+#X obj 465 425 blocks;
+#X obj 540 425 tom;
+#X obj 91 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 154 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 215 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 275 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 338 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 402 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 465 404 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 540 403 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 90 208 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+1;
+#X obj 90 229 metro 200;
+#X obj 90 334 sel 0 1 2 3 4 5 6 7, f 78;
+#X obj 90 162 loadbang;
+#X obj 90 253 int 1;
+#X obj 134 253 + 1;
+#X floatatom 90 295 5 0 0 0 - - -;
+#X obj 90 274 % 8;
+#X obj 304 574 dac~ 1 2;
+#X obj 304 550 +~;
+#X text 33 22 Drum Synthesis;
+#X text 33 32 ==============;
+#X text 445 15 ............................;
+#X text 445 25 . ____ ._____ _ .......___ .;
+#X text 445 35 .| __ )| ____| |....../ _ |.;
+#X text 445 55 .| |_) | |___| |___ / ___ |.;
+#X text 445 65 .|____/|_____|_____/_/..._|.io;
+#X text 445 75 ............................;
+#X text 445 45 .| __ || __|.| |...../ _| |.;
+#X text 33 55 Synthesisng and sequencing drum sounds.;
+#X connect 0 0 25 0;
+#X connect 1 0 25 1;
+#X connect 2 0 25 1;
+#X connect 3 0 25 1;
+#X connect 4 0 25 1;
+#X connect 5 0 25 1;
+#X connect 6 0 25 1;
+#X connect 7 0 25 1;
+#X connect 8 0 0 0;
+#X connect 9 0 3 0;
+#X connect 10 0 1 0;
+#X connect 11 0 4 0;
+#X connect 12 0 2 0;
+#X connect 13 0 5 0;
+#X connect 14 0 6 0;
+#X connect 15 0 7 0;
+#X connect 16 0 17 0;
+#X connect 17 0 20 0;
+#X connect 18 0 8 0;
+#X connect 18 0 13 0;
+#X connect 18 1 9 0;
+#X connect 18 2 13 0;
+#X connect 18 4 10 0;
+#X connect 18 4 11 0;
+#X connect 18 4 13 0;
+#X connect 18 5 12 0;
+#X connect 18 6 14 0;
+#X connect 18 6 13 0;
+#X connect 18 7 15 0;
+#X connect 19 0 16 0;
+#X connect 20 0 21 0;
+#X connect 20 0 23 0;
+#X connect 21 0 20 1;
+#X connect 22 0 18 0;
+#X connect 23 0 22 0;
+#X connect 25 0 24 0;
+#X connect 25 0 24 1;

@@ -1,0 +1,56 @@
+#N canvas 144 22 1093 756 10;
+#N canvas 0 22 450 300 (subpatch) 0;
+#X array table-1 201388 float 2;
+#X coords 0 1 201388 -1 200 140 1 0 0;
+#X restore 25 603 graph;
+#X text 266 207 <<< loading a file:;
+#X text 266 227 point soundfiler to the samples folder;
+#X obj 19 236 soundfiler;
+#X obj 19 174 loadbang;
+#X text 265 272 <<< If you include your own samples in the project
+;
+#X text 266 247 name_of_file.wav;
+#X text 265 292 just change the path to the file name;
+#X obj 22 542 *~ 0.2;
+#X obj 22 563 dac~ 1 2;
+#X obj 22 466 *~;
+#X obj 99 359 r sampleLength1;
+#X obj 19 260 s sampleLength1;
+#X obj 52 382 expr 44100/$f1;
+#X obj 22 425 phasor~;
+#X text 153 385 <<< sample rate divided by sample length to calculate
+;
+#X text 153 405 frequency of the phasor that looks up from the table
+;
+#X obj 22 501 tabread4~ table-1;
+#X text 266 170 table-1 contains a sample from file;
+#X msg 19 208 read -resize greek-rumba.wav table-1;
+#X obj 22 333 adc~ 4;
+#X obj 22 354 map~ -2 2;
+#X obj 22 395 *~;
+#X text 590 7 ............................;
+#X text 590 17 . ____ ._____ _ .......___ .;
+#X text 590 27 .| __ )| ____| |....../ _ |.;
+#X text 590 47 .| |_) | |___| |___ / ___ |.;
+#X text 590 57 .|____/|_____|_____/_/..._|.io;
+#X text 590 67 ............................;
+#X text 590 37 .| __ || __|.| |...../ _| |.;
+#X text 22 79 Run local.pd on your machine to see the patch in action.
+;
+#X text 20 28 Playback samples;
+#X text 20 38 ================;
+#X text 22 59 This example shows how to do basic sample playback.;
+#X connect 3 0 12 0;
+#X connect 4 0 19 0;
+#X connect 8 0 9 0;
+#X connect 8 0 9 1;
+#X connect 10 0 17 0;
+#X connect 11 0 10 1;
+#X connect 11 0 13 0;
+#X connect 13 0 22 1;
+#X connect 14 0 10 0;
+#X connect 17 0 8 0;
+#X connect 19 0 3 0;
+#X connect 20 0 21 0;
+#X connect 21 0 22 0;
+#X connect 22 0 14 0;
