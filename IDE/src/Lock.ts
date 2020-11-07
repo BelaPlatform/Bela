@@ -31,25 +31,17 @@ export class Lock {
 	acquire(): Promise<void> {
 		let ret = this.lock.tryAcquire();
 		if(ret) {
-			if(this.arg === "FileManager") {
-				console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
-			}
+			console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
 			return new Promise( (resolve) => resolve());
 		} else {
-			if(this.arg === "FileManager") {
-				console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
-			}
+			console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
 			var p = this.lock.acquireAsync();
-			if(this.arg === "FileManager") {
-				console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
-			}
+			console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
 			return p;
 		}
 	}
 	release(): void {
 		this.lock.release();
-		if(this.arg === "FileManager") {
-			console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
-		}
+		console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
 	}
 }

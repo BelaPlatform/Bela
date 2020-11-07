@@ -30,27 +30,19 @@ var Lock = /** @class */ (function () {
     Lock.prototype.acquire = function () {
         var ret = this.lock.tryAcquire();
         if (ret) {
-            if (this.arg === "FileManager") {
-                console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
-            }
+            console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
             return new Promise(function (resolve) { return resolve(); });
         }
         else {
-            if (this.arg === "FileManager") {
-                console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
-            }
+            console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
             var p = this.lock.acquireAsync();
-            if (this.arg === "FileManager") {
-                console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
-            }
+            console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
             return p;
         }
     };
     Lock.prototype.release = function () {
         this.lock.release();
-        if (this.arg === "FileManager") {
-            console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
-        }
+        console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
     };
     return Lock;
 }());
