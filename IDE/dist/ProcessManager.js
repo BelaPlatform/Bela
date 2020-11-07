@@ -44,26 +44,45 @@ var paths = require("./paths");
 var Lock_1 = require("./Lock");
 var cpu_monitor = require("./CPUMonitor");
 var path = require("path");
+var MostRecentQueue_1 = require("./MostRecentQueue");
 var lock = new Lock_1.Lock("ProcessManager");
 var syntaxTimeout; // storing the value returned by setTimeout
 var syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
 var extensionsForSyntaxCheck = ['.cpp', '.c', '.h', '.hh', '.hpp'];
-// this function gets called whenever the ace editor is modified
+function makePath(data) {
+    return paths.projects + data.currentProject + '/' + data.newFile;
+}
+var queuedUploads = new MostRecentQueue_1.MostRecentQueue();
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
-function upload(data) {
+function processUpload(id) {
     return __awaiter(this, void 0, void 0, function () {
-        var ext, e_1;
+        var data, ext, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, lock.acquire()];
+                case 0:
+                    // ensure there is a reason to wait
+                    if (!queuedUploads.get(id)) {
+                        console.log("WARNING: processUpload skip ", id, queuedUploads);
+                        return [2 /*return*/];
+                    }
+                    // wait for our turn
+                    return [4 /*yield*/, lock.acquire()];
                 case 1:
+                    // wait for our turn
                     _a.sent();
+                    data = queuedUploads.pop(id);
+                    // abandon if someone else has already processed it before us
+                    if (!data) {
+                        lock.release();
+                        console.log("WARNING: processUpload: waited for the lock but nothing to do for", id);
+                        return [2 /*return*/];
+                    }
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, 4, , 5]);
                     process.stdout.write(".");
-                    return [4 /*yield*/, file_manager.save_file(paths.projects + data.currentProject + '/' + data.newFile, data.fileData, paths.lockfile)];
+                    return [4 /*yield*/, file_manager.save_file(makePath(data), data.fileData, paths.lockfile)];
                 case 3:
                     _a.sent();
                     ext = path.extname(data.newFile);
@@ -71,7 +90,6 @@ function upload(data) {
                         if (syntaxTimeout) {
                             clearTimeout(syntaxTimeout);
                         }
-                        console.log("settimeout", data);
                         syntaxTimeout = setTimeout(function (data) {
                             checkSyntax(data);
                         }.bind(null, { currentProject: data.currentProject }), syntaxTimeoutMs);
@@ -89,6 +107,25 @@ function upload(data) {
                     lock.release();
                     return [2 /*return*/];
             }
+        });
+    });
+}
+// this function gets called whenever the ace editor is modified.
+// New data will be pushed to the queue, overwriting any old data.
+function upload(data) {
+    return __awaiter(this, void 0, void 0, function () {
+        var id, existed;
+        return __generator(this, function (_a) {
+            id = makePath(data);
+            existed = queuedUploads.push(id, data);
+            // did we overwrite an element in the queue?
+            // If yes, then processUpload(id) has already been called and is waiting for a lock
+            if (existed)
+                console.log("upload: ", id, "is already pending");
+            // If not, then we call it
+            if (!existed)
+                processUpload(id);
+            return [2 /*return*/];
         });
     });
 }
