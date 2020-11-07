@@ -7,26 +7,45 @@ import * as util from './utils';
 import { Lock } from './Lock';
 import * as cpu_monitor from './CPUMonitor';
 import * as path from 'path';
+import { MostRecentQueue } from './MostRecentQueue';
 
 const lock: Lock = new Lock("ProcessManager");
 let syntaxTimeout : number; // storing the value returned by setTimeout
 const syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
 const extensionsForSyntaxCheck : Array<string> = [ '.cpp', '.c', '.h', '.hh', '.hpp' ];
 
-// this function gets called whenever the ace editor is modified
+function makePath (data : any) {
+	return paths.projects+data.currentProject+'/'+data.newFile;
+}
+
+let queuedUploads = new MostRecentQueue();
+
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
-export async function upload(data: any){
+async function processUpload(id : any) {
+	// ensure there is a reason to wait
+	if(!queuedUploads.get(id)) {
+		console.log("WARNING: processUpload skip ", id, queuedUploads);
+		return;
+	}
+	// wait for our turn
 	await lock.acquire();
+	// grab data from the queue for processing
+	let data = queuedUploads.pop(id);
+	// abandon if someone else has already processed it before us
+	if(!data) {
+		lock.release();
+		console.log("WARNING: processUpload: waited for the lock but nothing to do for", id);
+		return;
+	}
 	try{
 		process.stdout.write(".");
-		await file_manager.save_file(paths.projects+data.currentProject+'/'+data.newFile, data.fileData, paths.lockfile);
+		await file_manager.save_file(makePath(data), data.fileData, paths.lockfile);
 		var ext = path.extname(data.newFile);
 		if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
 			if(syntaxTimeout) {
 				clearTimeout(syntaxTimeout)
 			}
-			console.log("settimeout", data);
 			syntaxTimeout = setTimeout(function (data: any) {
 				checkSyntax(data);
 			}.bind(null, {currentProject: data.currentProject}), syntaxTimeoutMs);
@@ -41,6 +60,20 @@ export async function upload(data: any){
 		throw e;
 	}
 	lock.release();
+}
+
+// this function gets called whenever the ace editor is modified.
+// New data will be pushed to the queue, overwriting any old data.
+export async function upload(data: any){
+	let id = makePath(data);
+	let existed = queuedUploads.push(id, data);
+	// did we overwrite an element in the queue?
+	// If yes, then processUpload(id) has already been called and is waiting for a lock
+	if(existed)
+		console.log("upload: ", id, "is already pending");
+	// If not, then we call it
+	if(!existed)
+		processUpload(id);
 }
 
 // this function starts a syntax check
