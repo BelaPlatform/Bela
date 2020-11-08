@@ -1542,6 +1542,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var json = require('../site-text.json');
+var addAccordionEvent = require('../utils').addAccordionEvent;
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 var i = 0;
@@ -1691,6 +1692,7 @@ function createlifrommemberdef($xml, id, emitter, type) {
   var button = $('<button></button>');
   var elementName = name + "-" + i;
   button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html()).attr('data-parent', 'refs');
+  addAccordionEvent(button);
   button.appendTo(li);
 
   var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
@@ -1733,6 +1735,7 @@ function createlifromxml($xml, id, filename, emitter, type) {
 
   // subtitle
   li.append($('<h3></h3>').addClass('intro-header').attr('data-accordion-for', name).html($xml.find('compounddef > briefdescription > para').html() || ''));
+  addAccordionEvent(li);
 
   // main text
   $xml.find('compounddef > detaileddescription > para').each(function () {
@@ -1814,7 +1817,7 @@ function xmlClassDocs(classname, emitter) {
   });
 }
 
-},{"../site-text.json":19,"./View":14}],7:[function(require,module,exports){
+},{"../site-text.json":19,"../utils":20,"./View":14}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3159,6 +3162,7 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 var example_order = require('../../../../examples/order.json');
+var addAccordionEvent = require('../utils').addAccordionEvent;
 
 var ProjectView = function (_View) {
   _inherits(ProjectView, _View);
@@ -3414,6 +3418,7 @@ var ProjectView = function (_View) {
           var item = _step.value;
 
           var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', item.name).html(item.name).attr('data-parent', 'examples');
+          addAccordionEvent(parentButton);
           var parentUl = $('<ul></ul>');
           var parentLi = $('<li></li>');
           var childUl = $('<ul></ul>').addClass('example-list');
@@ -3582,6 +3587,7 @@ var ProjectView = function (_View) {
 
           var name = item.name;
           var parentButton = $('<button></button>').addClass('accordion').attr('data-accordion-for', name).html(name).attr('data-parent', 'libraries');
+          addAccordionEvent(parentButton);
           var libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
           var libraryItem = $('<li></li>'); // Individual library dropdown
 
@@ -3591,12 +3597,14 @@ var ProjectView = function (_View) {
 
           // INCLUDES:
           var includeTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.includeTitle).attr('data-accordion-for', 'use-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          addAccordionEvent(includeTitle);
           var includeContent = $('<div></div>').addClass('include-container docs-content').attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
           var includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
           var includeCopy = $('<button></button>').addClass('include-copy');
 
           // INFO:
           var infoTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.infoTitle).attr('data-accordion-for', 'info-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          addAccordionEvent(infoTitle);
           var infoContainer = $('<div></div>').addClass('info-container docs-content').attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
 
           clipboard = new Clipboard(includeCopy[0], {
@@ -3610,11 +3618,13 @@ var ProjectView = function (_View) {
           var that = _this8;
           var examplesParent = $('<div></div>');
           var examplesTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.examplesTitle).attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          addAccordionEvent(examplesTitle);
           var examplesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'example-list-' + counter);
           var examplesList = $('<ul></ul>').addClass('libraries-list');
 
           // FILES:
           var filesTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.filesTitle).attr('data-accordion-for', 'file-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
+          addAccordionEvent(filesTitle);
 
           var filesContainer = $('<div></div>').addClass('docs-content').attr('data-accordion', 'file-list-' + counter);
           var filesList = $('<ul></ul>').addClass('libraries-list');
@@ -4454,6 +4464,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var View = require('./View');
+var addAccordionEvent = require('../utils').addAccordionEvent;
+var addDropdownEvent = require('../utils').addDropdownEvent;
 
 var menuOpened = false;
 var tabs = {};
@@ -4542,6 +4554,9 @@ var TabView = function (_View) {
     });
 
     _this.toggleClassesTimeout = undefined;
+    // set events for existing accordions.
+    addAccordionEvent();
+    addDropdownEvent();
     return _this;
   }
 
@@ -4660,7 +4675,7 @@ var TabView = function (_View) {
 
 module.exports = new TabView();
 
-},{"./View":14}],13:[function(require,module,exports){
+},{"../utils":20,"./View":14}],13:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6183,7 +6198,7 @@ module.exports={
 'use strict';
 
 // replace most non alpha-numeric chars with '_'
-function sanitise(name, options) {
+module.exports.sanitise = function (name, options) {
 	var isPath = false;
 	if (options && options.isPath) isPath = options.isPath;
 	var newName = name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
@@ -6191,9 +6206,52 @@ function sanitise(name, options) {
 	if (!isPath) newName = newName.replace(/[\/]/g, '_');
 	console.log("FROM: ", name, "SANITISED: ", newName);
 	return newName;
-}
+};
 
-module.exports.sanitise = sanitise;
+// add onClick events for accordion functionality to relevant elements of the
+// provided elements
+module.exports.addAccordionEvent = function (elements) {
+	if (!elements) elements = $("*");
+	elements = elements.filter('[data-accordion-for]:not([data-accordion-ready])');
+	elements.on('click', function () {
+		var that = $(this);
+		var parent = $('[data-tab=' + $(this)[0].dataset.parent + ']');
+		var source = $(this).data('accordion-for');
+		$(parent).find('[data-accordion]').each(function () {
+			var target = $(this).data('accordion');
+			if (target === source) {
+				if (that.hasClass('active')) {
+					that.removeClass('active');
+					$(this).removeClass('show');
+				} else {
+					that.addClass('active');
+					$(this).addClass('show');
+				}
+			}
+		});
+	});
+	elements.attr('data-accordion-ready', "");
+};
+
+// dropdowns
+module.exports.addDropdownEvent = function (elements) {
+	if (!elements) elements = $("*");
+	elements.filter('[data-dropdown-for]').on('click', function () {
+		var source = $(this).data('dropdown-for');
+		$('[data-dropdown]').each(function () {
+			var target = $(this).data('dropdown');
+			if (target === source) {
+				$(this).addClass('show');
+			}
+		});
+	});
+	// Close the dropdown menu if the user clicks outside of it
+	window.onclick = function (event) {
+		if (!event.target.matches('[data-dropdown-for]') && !event.target.matches('[data-dropdown] *')) {
+			$('[data-dropdown]').removeClass('show');
+		}
+	};
+};
 
 },{}],21:[function(require,module,exports){
 module.exports=[

@@ -1,6 +1,5 @@
-
 // replace most non alpha-numeric chars with '_'
-function sanitise(name, options){
+module.exports.sanitise = function (name, options){
 	var isPath = false;
 	if(options && options.isPath)
 		isPath = options.isPath;
@@ -12,4 +11,49 @@ function sanitise(name, options){
 	return newName;
 }
 
-module.exports.sanitise = sanitise;
+// add onClick events for accordion functionality to relevant elements of the
+// provided elements
+module.exports.addAccordionEvent = function(elements) {
+	if(!elements)
+		elements = $("*");
+	elements = elements.filter('[data-accordion-for]:not([data-accordion-ready])');
+	elements.on('click', function() {
+		var that = $(this);
+		var parent = $('[data-tab=' + $(this)[0].dataset.parent + ']');
+		var source = $(this).data('accordion-for');
+		$(parent).find('[data-accordion]').each(function() {
+			var target = $(this).data('accordion');
+			if (target === source) {
+				if (that.hasClass('active')) {
+					that.removeClass('active');
+					$(this).removeClass('show');
+				} else {
+					that.addClass('active');
+					$(this).addClass('show');
+				}
+			}
+		});
+	});
+	elements.attr('data-accordion-ready', "");
+}
+
+// dropdowns
+module.exports.addDropdownEvent = function (elements){
+	if(!elements)
+		elements = $("*");
+	elements.filter('[data-dropdown-for]').on('click', function() {
+		var source = $(this).data('dropdown-for');
+		$('[data-dropdown]').each(function() {
+			var target = $(this).data('dropdown');
+			if (target === source) {
+				$(this).addClass('show');
+			}
+		});
+	});
+	// Close the dropdown menu if the user clicks outside of it
+	window.onclick = function(event) {
+		if (!event.target.matches('[data-dropdown-for]') && !event.target.matches('[data-dropdown] *')) {
+			$('[data-dropdown]').removeClass('show')
+		}
+	}
+}
