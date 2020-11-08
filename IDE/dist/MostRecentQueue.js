@@ -7,8 +7,18 @@ var MostRecentQueue = /** @class */ (function () {
     function MostRecentQueue() {
         this.q = new Map;
     }
-    MostRecentQueue.prototype.count = function (id) {
-        return this.q.size;
+    Object.defineProperty(MostRecentQueue.prototype, "size", {
+        get: function () {
+            return this.q.size;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    MostRecentQueue.prototype.keys = function () {
+        return this.q.keys();
+    };
+    MostRecentQueue.prototype.values = function () {
+        return this.q.values();
     };
     MostRecentQueue.prototype.push = function (id, data) {
         var ret = this.q.has(id);
