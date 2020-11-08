@@ -21,6 +21,12 @@ function stacktrace() : string{
 .replace(/_[_]+/g, "__")
 .replace(/\s+/gm, " ")
 }
+
+let toLog = [ "ProcessManager", "FileManager" ];
+function shouldLog(s : string) {
+	return toLog.indexOf(s) != -1;
+}
+
 export class Lock {
 	private lock: AwaitLock;
 	private arg: string;
@@ -28,20 +34,30 @@ export class Lock {
 		this.lock = new AwaitLock();
 		this.arg = arg;
 	}
+	get acquired(): boolean {
+		return (this.lock.acquired as any);
+	}
+	tryAcquire(): boolean {
+		return this.lock.tryAcquire();
+	}
 	acquire(): Promise<void> {
 		let ret = this.lock.tryAcquire();
 		if(ret) {
-			console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
+			if(shouldLog(this.arg))
+				console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
 			return new Promise( (resolve) => resolve());
 		} else {
-			console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
+			if(shouldLog(this.arg))
+				console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
 			var p = this.lock.acquireAsync();
-			console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
+			if(shouldLog(this.arg))
+				console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
 			return p;
 		}
 	}
 	release(): void {
 		this.lock.release();
-		console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
+		if(shouldLog(this.arg))
+			console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
 	}
 }
