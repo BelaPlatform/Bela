@@ -10,7 +10,7 @@ import * as path from 'path';
 import { MostRecentQueue } from './MostRecentQueue';
 
 const lock: Lock = new Lock("ProcessManager");
-let syntaxTimeout : number; // storing the value returned by setTimeout
+let syntaxTimeout : NodeJS.Timer; // storing the value returned by setTimeout
 const syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
 const extensionsForSyntaxCheck : Array<string> = [ '.cpp', '.c', '.h', '.hh', '.hpp' ];
 
@@ -38,10 +38,8 @@ async function processUploads() {
 				console.log("SAVED", id);
 				var ext = path.extname(data.newFile);
 				if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
-					if(syntaxTimeout) {
-						clearTimeout(syntaxTimeout)
-					}
-					syntaxTimeout = setTimeout(function (data: any) {
+					clearTimeout(syntaxTimeout)
+					syntaxTimeout = global.setTimeout(function (data: any) {
 						checkSyntax(data);
 					}.bind(null, {currentProject: data.currentProject}), syntaxTimeoutMs);
 				}
