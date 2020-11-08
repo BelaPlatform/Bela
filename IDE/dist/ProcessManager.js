@@ -34,6 +34,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var child_process = require("child_process");
@@ -187,19 +197,29 @@ function build_run(project) {
 // returning true if build errors (not warnings) are found
 function build_error(stderr) {
     var lines = stderr.split('\n');
-    for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
-        var line = lines_1[_i];
-        var split_line = line.split(':');
-        if (split_line.length >= 4) {
-            if (split_line[3] === ' error' || split_line[3] === ' fatal error') {
-                return true;
-            }
-            else if (split_line[3] === ' warning') {
-                //console.log('warning');
+    try {
+        for (var lines_1 = __values(lines), lines_1_1 = lines_1.next(); !lines_1_1.done; lines_1_1 = lines_1.next()) {
+            var line = lines_1_1.value;
+            var split_line = line.split(':');
+            if (split_line.length >= 4) {
+                if (split_line[3] === ' error' || split_line[3] === ' fatal error') {
+                    return true;
+                }
+                else if (split_line[3] === ' warning') {
+                    //console.log('warning');
+                }
             }
         }
     }
+    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+    finally {
+        try {
+            if (lines_1_1 && !lines_1_1.done && (_a = lines_1.return)) _a.call(lines_1);
+        }
+        finally { if (e_2) throw e_2.error; }
+    }
     return false;
+    var e_2, _a;
 }
 // this function is called when the stop button is clicked
 // it calls the stop() method of any running process

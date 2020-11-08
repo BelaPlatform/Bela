@@ -34,6 +34,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var child_process = require("child_process");
 var pidtree = require("pidtree");
@@ -111,29 +121,43 @@ function timeout_func() {
 }
 function find_pid() {
     return __awaiter(this, void 0, void 0, function () {
-        var pids, _i, pids_1, pid, test_name;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var pids, pids_1, pids_1_1, pid, test_name, e_2_1, e_2, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0: return [4 /*yield*/, pidtree(root_pid, { root: true })];
                 case 1:
-                    pids = _a.sent();
-                    _i = 0, pids_1 = pids;
-                    _a.label = 2;
+                    pids = _b.sent();
+                    _b.label = 2;
                 case 2:
-                    if (!(_i < pids_1.length)) return [3 /*break*/, 5];
-                    pid = pids_1[_i];
-                    return [4 /*yield*/, name_from_pid(pid)];
+                    _b.trys.push([2, 7, 8, 9]);
+                    pids_1 = __values(pids), pids_1_1 = pids_1.next();
+                    _b.label = 3;
                 case 3:
-                    test_name = (_a.sent()).trim();
+                    if (!!pids_1_1.done) return [3 /*break*/, 6];
+                    pid = pids_1_1.value;
+                    return [4 /*yield*/, name_from_pid(pid)];
+                case 4:
+                    test_name = (_b.sent()).trim();
                     if (test_name === name) {
                         main_pid = pid;
                         found_pid = true;
                     }
-                    _a.label = 4;
-                case 4:
-                    _i++;
-                    return [3 /*break*/, 2];
-                case 5: return [2 /*return*/];
+                    _b.label = 5;
+                case 5:
+                    pids_1_1 = pids_1.next();
+                    return [3 /*break*/, 3];
+                case 6: return [3 /*break*/, 9];
+                case 7:
+                    e_2_1 = _b.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 9];
+                case 8:
+                    try {
+                        if (pids_1_1 && !pids_1_1.done && (_a = pids_1.return)) _a.call(pids_1);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                    return [7 /*endfinally*/];
+                case 9: return [2 /*return*/];
             }
         });
     });

@@ -34,6 +34,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var file_manager = require("./FileManager");
 var git_manager = require("./GitManager");
@@ -69,9 +79,9 @@ function emptyObject(obj) {
 // if the file is an image or audio file, it is symlinked from the media folder
 function openFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var file_path, file_stat, e_1, _i, _a, file, chunk, file_type, is_binary, _b, e_2;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var file_path, file_stat, e_1, _a, _b, file, e_2_1, chunk, file_type, is_binary, _c, e_3, e_2, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0:
                     if (typeof data.newFile == 'undefined') {
                         data.newFile = data.fileName;
@@ -80,31 +90,45 @@ function openFile(data) {
                         return [2 /*return*/];
                     }
                     file_path = paths.projects + data.currentProject + '/' + data.newFile;
-                    _c.label = 1;
+                    _e.label = 1;
                 case 1:
-                    _c.trys.push([1, 3, , 8]);
+                    _e.trys.push([1, 3, , 12]);
                     return [4 /*yield*/, file_manager.stat_file(file_path)];
                 case 2:
-                    file_stat = _c.sent();
-                    return [3 /*break*/, 8];
+                    file_stat = _e.sent();
+                    return [3 /*break*/, 12];
                 case 3:
-                    e_1 = _c.sent();
-                    if (!(typeof data.exampleName !== 'undefined' || data.func === 'newProject')) return [3 /*break*/, 7];
-                    _i = 0, _a = data.fileList;
-                    _c.label = 4;
+                    e_1 = _e.sent();
+                    if (!(typeof data.exampleName !== 'undefined' || data.func === 'newProject')) return [3 /*break*/, 11];
+                    _e.label = 4;
                 case 4:
-                    if (!(_i < _a.length)) return [3 /*break*/, 7];
-                    file = _a[_i];
-                    if (!file.name.includes('_main')) return [3 /*break*/, 6];
+                    _e.trys.push([4, 9, 10, 11]);
+                    _a = __values(data.fileList), _b = _a.next();
+                    _e.label = 5;
+                case 5:
+                    if (!!_b.done) return [3 /*break*/, 8];
+                    file = _b.value;
+                    if (!file.name.includes('_main')) return [3 /*break*/, 7];
                     data.newFile = file.name;
                     return [4 /*yield*/, openFile(data)];
-                case 5:
-                    _c.sent();
-                    return [2 /*return*/];
                 case 6:
-                    _i++;
-                    return [3 /*break*/, 4];
+                    _e.sent();
+                    return [2 /*return*/];
                 case 7:
+                    _b = _a.next();
+                    return [3 /*break*/, 5];
+                case 8: return [3 /*break*/, 11];
+                case 9:
+                    e_2_1 = _e.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 11];
+                case 10:
+                    try {
+                        if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                    return [7 /*endfinally*/];
+                case 11:
                     data.error = 'Error opening file ' + data.newFile + ': file does not exist.';
                     data.fileData = null;
                     data.fileName = data.newFile;
@@ -112,7 +136,7 @@ function openFile(data) {
                     data.readOnly = true;
                     data.fileType = 0;
                     return [2 /*return*/];
-                case 8:
+                case 12:
                     if (file_stat.size > max_preview_size) {
                         data.error = 'file is too large: ' + (file_stat.size / 1048576) + 'Mb';
                         data.fileData = "The IDE can't open files larger than " + (max_preview_size / 1048576) + "Mb";
@@ -123,27 +147,27 @@ function openFile(data) {
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, readChunk(file_path, 0, 4100)];
-                case 9:
-                    chunk = _c.sent();
+                case 13:
+                    chunk = _e.sent();
                     return [4 /*yield*/, fileType(chunk)];
-                case 10:
-                    file_type = _c.sent();
-                    if (!(file_type && (file_type.mime.includes('image') || file_type.mime.includes('audio')))) return [3 /*break*/, 13];
+                case 14:
+                    file_type = _e.sent();
+                    if (!(file_type && (file_type.mime.includes('image') || file_type.mime.includes('audio')))) return [3 /*break*/, 17];
                     return [4 /*yield*/, file_manager.empty_directory(paths.media)];
-                case 11:
-                    _c.sent();
+                case 15:
+                    _e.sent();
                     return [4 /*yield*/, file_manager.make_symlink(file_path, paths.media + data.newFile)];
-                case 12:
-                    _c.sent();
+                case 16:
+                    _e.sent();
                     data.fileData = '';
                     data.readOnly = true;
                     data.fileName = data.newFile;
                     data.newFile = undefined;
                     data.fileType = file_type.mime;
                     return [2 /*return*/];
-                case 13: return [4 /*yield*/, file_manager.is_binary(file_path)];
-                case 14:
-                    is_binary = _c.sent();
+                case 17: return [4 /*yield*/, file_manager.is_binary(file_path)];
+                case 18:
+                    is_binary = _e.sent();
                     if (is_binary) {
                         data.error = 'can\'t open binary files';
                         data.fileData = 'Binary files can not be edited in the IDE';
@@ -153,24 +177,24 @@ function openFile(data) {
                         data.fileType = 0;
                         return [2 /*return*/];
                     }
-                    _c.label = 15;
-                case 15:
-                    _c.trys.push([15, 17, , 18]);
-                    _b = data;
+                    _e.label = 19;
+                case 19:
+                    _e.trys.push([19, 21, , 22]);
+                    _c = data;
                     return [4 /*yield*/, file_manager.read_file(file_path)];
-                case 16:
-                    _b.fileData = _c.sent();
-                    return [3 /*break*/, 18];
-                case 17:
-                    e_2 = _c.sent();
-                    data.error = 'error opening file ' + data.newFile + ': ' + e_2.toString();
+                case 20:
+                    _c.fileData = _e.sent();
+                    return [3 /*break*/, 22];
+                case 21:
+                    e_3 = _e.sent();
+                    data.error = 'error opening file ' + data.newFile + ': ' + e_3.toString();
                     data.fileData = 'Error opening file. Please open a different file to continue';
                     data.fileName = data.newFile;
                     data.newFile = undefined;
                     data.readOnly = true;
                     data.fileType = 0;
                     return [2 /*return*/];
-                case 18:
+                case 22:
                     if (data.newFile.split && data.newFile.includes('.')) {
                         data.fileType = data.newFile.split('.').pop();
                     }
@@ -218,35 +242,49 @@ function listProjects() {
 exports.listProjects = listProjects;
 function listLibraries() {
     return __awaiter(this, void 0, void 0, function () {
-        var libraries, categories, _i, categories_1, category, _a, _b, _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
+        var libraries, categories, categories_1, categories_1_1, category, _a, _b, _c, e_4_1, e_4, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0:
                     libraries = [];
                     return [4 /*yield*/, file_manager.read_directory(paths.libraries)];
                 case 1:
-                    categories = _d.sent();
-                    _i = 0, categories_1 = categories;
-                    _d.label = 2;
+                    categories = _e.sent();
+                    _e.label = 2;
                 case 2:
-                    if (!(_i < categories_1.length)) return [3 /*break*/, 6];
-                    category = categories_1[_i];
-                    return [4 /*yield*/, file_manager.directory_exists(paths.libraries + '/' + category)];
+                    _e.trys.push([2, 8, 9, 10]);
+                    categories_1 = __values(categories), categories_1_1 = categories_1.next();
+                    _e.label = 3;
                 case 3:
-                    if (!_d.sent()) return [3 /*break*/, 5];
+                    if (!!categories_1_1.done) return [3 /*break*/, 7];
+                    category = categories_1_1.value;
+                    return [4 /*yield*/, file_manager.directory_exists(paths.libraries + '/' + category)];
+                case 4:
+                    if (!_e.sent()) return [3 /*break*/, 6];
                     _b = (_a = libraries).push;
                     _c = {
                         name: category
                     };
                     return [4 /*yield*/, file_manager.read_directory(paths.libraries + '/' + category)];
-                case 4:
-                    _b.apply(_a, [(_c.children = _d.sent(),
-                            _c)]);
-                    _d.label = 5;
                 case 5:
-                    _i++;
-                    return [3 /*break*/, 2];
-                case 6: return [2 /*return*/, libraries];
+                    _b.apply(_a, [(_c.children = _e.sent(),
+                            _c)]);
+                    _e.label = 6;
+                case 6:
+                    categories_1_1 = categories_1.next();
+                    return [3 /*break*/, 3];
+                case 7: return [3 /*break*/, 10];
+                case 8:
+                    e_4_1 = _e.sent();
+                    e_4 = { error: e_4_1 };
+                    return [3 /*break*/, 10];
+                case 9:
+                    try {
+                        if (categories_1_1 && !categories_1_1.done && (_d = categories_1.return)) _d.call(categories_1);
+                    }
+                    finally { if (e_4) throw e_4.error; }
+                    return [7 /*endfinally*/];
+                case 10: return [2 /*return*/, libraries];
             }
         });
     });
@@ -254,46 +292,69 @@ function listLibraries() {
 exports.listLibraries = listLibraries;
 function listExamples() {
     return __awaiter(this, void 0, void 0, function () {
-        var examples, categories, _i, categories_2, category, parsedChildren, children, _a, children_1, child;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var examples, categories, categories_2, categories_2_1, category, parsedChildren, children, children_1, children_1_1, child, e_5_1, e_5, _a, e_6, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     examples = [];
                     return [4 /*yield*/, file_manager.read_directory(paths.examples)];
                 case 1:
-                    categories = _b.sent();
-                    _i = 0, categories_2 = categories;
-                    _b.label = 2;
+                    categories = _c.sent();
+                    _c.label = 2;
                 case 2:
-                    if (!(_i < categories_2.length)) return [3 /*break*/, 6];
-                    category = categories_2[_i];
+                    _c.trys.push([2, 8, 9, 10]);
+                    categories_2 = __values(categories), categories_2_1 = categories_2.next();
+                    _c.label = 3;
+                case 3:
+                    if (!!categories_2_1.done) return [3 /*break*/, 7];
+                    category = categories_2_1.value;
                     parsedChildren = [];
                     return [4 /*yield*/, file_manager.directory_exists(paths.examples + '/' + category)];
-                case 3:
-                    if (!_b.sent()) return [3 /*break*/, 5];
-                    return [4 /*yield*/, file_manager.read_directory(paths.examples + '/' + category)];
                 case 4:
-                    children = _b.sent();
-                    for (_a = 0, children_1 = children; _a < children_1.length; _a++) {
-                        child = children_1[_a];
-                        if (child.split('.').length < 2 || child.split('.').pop() === 'json') {
-                            parsedChildren.push(child);
+                    if (!_c.sent()) return [3 /*break*/, 6];
+                    return [4 /*yield*/, file_manager.read_directory(paths.examples + '/' + category)];
+                case 5:
+                    children = _c.sent();
+                    try {
+                        for (children_1 = __values(children), children_1_1 = children_1.next(); !children_1_1.done; children_1_1 = children_1.next()) {
+                            child = children_1_1.value;
+                            if (child.split('.').length < 2 || child.split('.').pop() === 'json') {
+                                parsedChildren.push(child);
+                            }
+                            else {
+                                console.log(child);
+                                console.log('^^ this is NOT a json file or folder ^^');
+                            }
                         }
-                        else {
-                            console.log(child);
-                            console.log('^^ this is NOT a json file or folder ^^');
+                    }
+                    catch (e_6_1) { e_6 = { error: e_6_1 }; }
+                    finally {
+                        try {
+                            if (children_1_1 && !children_1_1.done && (_b = children_1.return)) _b.call(children_1);
                         }
+                        finally { if (e_6) throw e_6.error; }
                     }
                     examples.push({
                         name: category,
                         children: parsedChildren
                     });
                     parsedChildren = [];
-                    _b.label = 5;
-                case 5:
-                    _i++;
-                    return [3 /*break*/, 2];
-                case 6: return [2 /*return*/, examples];
+                    _c.label = 6;
+                case 6:
+                    categories_2_1 = categories_2.next();
+                    return [3 /*break*/, 3];
+                case 7: return [3 /*break*/, 10];
+                case 8:
+                    e_5_1 = _c.sent();
+                    e_5 = { error: e_5_1 };
+                    return [3 /*break*/, 10];
+                case 9:
+                    try {
+                        if (categories_2_1 && !categories_2_1.done && (_a = categories_2.return)) _a.call(categories_2);
+                    }
+                    finally { if (e_5) throw e_5.error; }
+                    return [7 /*endfinally*/];
+                case 10: return [2 /*return*/, examples];
             }
         });
     });
@@ -437,31 +498,45 @@ function saveAs(data) {
 exports.saveAs = saveAs;
 function deleteProject(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _i, _b, project;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var _a, _b, _c, project, e_7_1, e_7, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0: return [4 /*yield*/, file_manager.delete_file(paths.projects + data.currentProject)];
                 case 1:
-                    _c.sent();
+                    _e.sent();
                     _a = data;
                     return [4 /*yield*/, listProjects()];
                 case 2:
-                    _a.projectList = _c.sent();
-                    _i = 0, _b = data.projectList;
-                    _c.label = 3;
+                    _a.projectList = _e.sent();
+                    _e.label = 3;
                 case 3:
-                    if (!(_i < _b.length)) return [3 /*break*/, 6];
-                    project = _b[_i];
-                    if (!(project && project !== 'undefined' && project !== 'exampleTempProject')) return [3 /*break*/, 5];
+                    _e.trys.push([3, 8, 9, 10]);
+                    _b = __values(data.projectList), _c = _b.next();
+                    _e.label = 4;
+                case 4:
+                    if (!!_c.done) return [3 /*break*/, 7];
+                    project = _c.value;
+                    if (!(project && project !== 'undefined' && project !== 'exampleTempProject')) return [3 /*break*/, 6];
                     data.currentProject = project;
                     return [4 /*yield*/, openProject(data)];
-                case 4:
-                    _c.sent();
-                    return [2 /*return*/];
                 case 5:
-                    _i++;
-                    return [3 /*break*/, 3];
+                    _e.sent();
+                    return [2 /*return*/];
                 case 6:
+                    _c = _b.next();
+                    return [3 /*break*/, 4];
+                case 7: return [3 /*break*/, 10];
+                case 8:
+                    e_7_1 = _e.sent();
+                    e_7 = { error: e_7_1 };
+                    return [3 /*break*/, 10];
+                case 9:
+                    try {
+                        if (_c && !_c.done && (_d = _b.return)) _d.call(_b);
+                    }
+                    finally { if (e_7) throw e_7.error; }
+                    return [7 /*endfinally*/];
+                case 10:
                     data.currentProject = '';
                     data.readOnly = true;
                     data.fileData = 'please create a new project to continue';

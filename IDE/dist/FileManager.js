@@ -34,6 +34,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs-extra-promise");
 var isBinary = require("isbinaryfile");
@@ -66,28 +76,42 @@ function commit(path) {
 }
 function commit_folder(path) {
     return __awaiter(this, void 0, void 0, function () {
-        var list, _i, list_1, file_path;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var list, list_1, list_1_1, file_path, e_1_1, e_1, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0: return [4 /*yield*/, commit(path)];
                 case 1:
-                    _a.sent();
+                    _b.sent();
                     return [4 /*yield*/, deep_read_directory(path)];
                 case 2:
-                    list = _a.sent();
-                    _i = 0, list_1 = list;
-                    _a.label = 3;
+                    list = _b.sent();
+                    _b.label = 3;
                 case 3:
-                    if (!(_i < list_1.length)) return [3 /*break*/, 6];
-                    file_path = list_1[_i];
-                    return [4 /*yield*/, commit(path + "/" + file_path.name)];
+                    _b.trys.push([3, 8, 9, 10]);
+                    list_1 = __values(list), list_1_1 = list_1.next();
+                    _b.label = 4;
                 case 4:
-                    _a.sent();
-                    _a.label = 5;
+                    if (!!list_1_1.done) return [3 /*break*/, 7];
+                    file_path = list_1_1.value;
+                    return [4 /*yield*/, commit(path + "/" + file_path.name)];
                 case 5:
-                    _i++;
-                    return [3 /*break*/, 3];
-                case 6: return [2 /*return*/];
+                    _b.sent();
+                    _b.label = 6;
+                case 6:
+                    list_1_1 = list_1.next();
+                    return [3 /*break*/, 4];
+                case 7: return [3 /*break*/, 10];
+                case 8:
+                    e_1_1 = _b.sent();
+                    e_1 = { error: e_1_1 };
+                    return [3 /*break*/, 10];
+                case 9:
+                    try {
+                        if (list_1_1 && !list_1_1.done && (_a = list_1.return)) _a.call(list_1);
+                    }
+                    finally { if (e_1) throw e_1.error; }
+                    return [7 /*endfinally*/];
+                case 10: return [2 /*return*/];
             }
         });
     });
@@ -384,63 +408,77 @@ exports.save_file = SaveFile_1.save_file;
 // recursively read the contents of a directory, returning an array of File_Descriptors
 function deep_read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var contents, output, _i, contents_1, name_1, original_path, path, stat, maxLevels, levels, desc, _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var contents, output, contents_1, contents_1_1, name_1, original_path, path, stat, maxLevels, levels, desc, _a, e_2_1, e_2, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0: return [4 /*yield*/, read_directory(dir_path)];
                 case 1:
-                    contents = _b.sent();
+                    contents = _c.sent();
                     output = [];
-                    _i = 0, contents_1 = contents;
-                    _b.label = 2;
+                    _c.label = 2;
                 case 2:
-                    if (!(_i < contents_1.length)) return [3 /*break*/, 12];
-                    name_1 = contents_1[_i];
+                    _c.trys.push([2, 14, 15, 16]);
+                    contents_1 = __values(contents), contents_1_1 = contents_1.next();
+                    _c.label = 3;
+                case 3:
+                    if (!!contents_1_1.done) return [3 /*break*/, 13];
+                    name_1 = contents_1_1.value;
                     original_path = dir_path + '/' + name_1;
                     path = original_path;
                     return [4 /*yield*/, stat_file(path)];
-                case 3:
-                    stat = _b.sent();
+                case 4:
+                    stat = _c.sent();
                     maxLevels = 100;
                     levels = 0;
-                    _b.label = 4;
-                case 4:
-                    if (!stat.isSymbolicLink()) return [3 /*break*/, 7];
-                    return [4 /*yield*/, fs.readlinkAsync(path)];
+                    _c.label = 5;
                 case 5:
-                    path = _b.sent();
+                    if (!stat.isSymbolicLink()) return [3 /*break*/, 8];
+                    return [4 /*yield*/, fs.readlinkAsync(path)];
+                case 6:
+                    path = _c.sent();
                     if ('/' != path[0])
                         path = dir_path + '/' + path;
                     return [4 /*yield*/, stat_file(path)];
-                case 6:
-                    stat = _b.sent();
+                case 7:
+                    stat = _c.sent();
                     ++levels;
                     if (maxLevels <= levels) {
-                        return [3 /*break*/, 7];
+                        return [3 /*break*/, 8];
                     }
-                    return [3 /*break*/, 4];
-                case 7:
+                    return [3 /*break*/, 5];
+                case 8:
                     if (maxLevels <= levels) {
                         console.error('Unable to properly stat %s: too many symlinks to follow(%d)', original_path, levels);
                         path = original_path;
                     }
                     desc = new util.File_Descriptor(name_1);
-                    if (!stat.isDirectory()) return [3 /*break*/, 9];
+                    if (!stat.isDirectory()) return [3 /*break*/, 10];
                     _a = desc;
                     return [4 /*yield*/, deep_read_directory(path)];
-                case 8:
-                    _a.children = _b.sent();
-                    return [3 /*break*/, 10];
                 case 9:
-                    desc.size = stat.size;
-                    _b.label = 10;
+                    _a.children = _c.sent();
+                    return [3 /*break*/, 11];
                 case 10:
-                    output.push(desc);
-                    _b.label = 11;
+                    desc.size = stat.size;
+                    _c.label = 11;
                 case 11:
-                    _i++;
-                    return [3 /*break*/, 2];
-                case 12: return [2 /*return*/, output];
+                    output.push(desc);
+                    _c.label = 12;
+                case 12:
+                    contents_1_1 = contents_1.next();
+                    return [3 /*break*/, 3];
+                case 13: return [3 /*break*/, 16];
+                case 14:
+                    e_2_1 = _c.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 16];
+                case 15:
+                    try {
+                        if (contents_1_1 && !contents_1_1.done && (_b = contents_1.return)) _b.call(contents_1);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                    return [7 /*endfinally*/];
+                case 16: return [2 /*return*/, output];
             }
         });
     });
@@ -522,58 +560,84 @@ function file_exists(file_path) {
 exports.file_exists = file_exists;
 function delete_matching_recursive(path, matches) {
     return __awaiter(this, void 0, void 0, function () {
-        var all, contents, matching, updated, _i, matching_1, match, full_path, _a, contents_2, file, full_path, stat;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var all, contents, matching, updated, matching_1, matching_1_1, match, full_path, e_3_1, contents_2, contents_2_1, file, full_path, stat, e_4_1, e_3, _a, e_4, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0: return [4 /*yield*/, read_directory(path)];
                 case 1:
-                    all = _b.sent();
+                    all = _c.sent();
                     return [4 /*yield*/, read_directory(path)];
                 case 2:
-                    contents = _b.sent();
+                    contents = _c.sent();
                     matching = contents.filter(function (file) {
                         var matching = matches.filter(function (match) { return match === file; });
                         return matching.length > 0;
                     });
                     updated = false;
-                    _i = 0, matching_1 = matching;
-                    _b.label = 3;
+                    _c.label = 3;
                 case 3:
-                    if (!(_i < matching_1.length)) return [3 /*break*/, 6];
-                    match = matching_1[_i];
+                    _c.trys.push([3, 8, 9, 10]);
+                    matching_1 = __values(matching), matching_1_1 = matching_1.next();
+                    _c.label = 4;
+                case 4:
+                    if (!!matching_1_1.done) return [3 /*break*/, 7];
+                    match = matching_1_1.value;
                     full_path = path + '/' + match;
                     return [4 /*yield*/, delete_file(full_path)];
-                case 4:
-                    _b.sent();
-                    updated = true;
-                    _b.label = 5;
                 case 5:
-                    _i++;
-                    return [3 /*break*/, 3];
+                    _c.sent();
+                    updated = true;
+                    _c.label = 6;
                 case 6:
-                    if (!updated) return [3 /*break*/, 8];
-                    return [4 /*yield*/, read_directory(path)];
-                case 7:
-                    contents = _b.sent();
-                    _b.label = 8;
+                    matching_1_1 = matching_1.next();
+                    return [3 /*break*/, 4];
+                case 7: return [3 /*break*/, 10];
                 case 8:
-                    _a = 0, contents_2 = contents;
-                    _b.label = 9;
+                    e_3_1 = _c.sent();
+                    e_3 = { error: e_3_1 };
+                    return [3 /*break*/, 10];
                 case 9:
-                    if (!(_a < contents_2.length)) return [3 /*break*/, 12];
-                    file = contents_2[_a];
+                    try {
+                        if (matching_1_1 && !matching_1_1.done && (_a = matching_1.return)) _a.call(matching_1);
+                    }
+                    finally { if (e_3) throw e_3.error; }
+                    return [7 /*endfinally*/];
+                case 10:
+                    if (!updated) return [3 /*break*/, 12];
+                    return [4 /*yield*/, read_directory(path)];
+                case 11:
+                    contents = _c.sent();
+                    _c.label = 12;
+                case 12:
+                    _c.trys.push([12, 17, 18, 19]);
+                    contents_2 = __values(contents), contents_2_1 = contents_2.next();
+                    _c.label = 13;
+                case 13:
+                    if (!!contents_2_1.done) return [3 /*break*/, 16];
+                    file = contents_2_1.value;
                     full_path = path + '/' + file;
                     return [4 /*yield*/, stat_file(full_path)];
-                case 10:
-                    stat = _b.sent();
+                case 14:
+                    stat = _c.sent();
                     if (stat.isDirectory()) {
                         delete_matching_recursive(full_path, matches);
                     }
-                    _b.label = 11;
-                case 11:
-                    _a++;
-                    return [3 /*break*/, 9];
-                case 12: return [2 /*return*/];
+                    _c.label = 15;
+                case 15:
+                    contents_2_1 = contents_2.next();
+                    return [3 /*break*/, 13];
+                case 16: return [3 /*break*/, 19];
+                case 17:
+                    e_4_1 = _c.sent();
+                    e_4 = { error: e_4_1 };
+                    return [3 /*break*/, 19];
+                case 18:
+                    try {
+                        if (contents_2_1 && !contents_2_1.done && (_b = contents_2.return)) _b.call(contents_2);
+                    }
+                    finally { if (e_4) throw e_4.error; }
+                    return [7 /*endfinally*/];
+                case 19: return [2 /*return*/];
             }
         });
     });
