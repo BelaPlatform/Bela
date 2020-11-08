@@ -324,11 +324,9 @@ function list_files(socket, project) {
                 case 0:
                     slug = project + socket.id;
                     if (list_files_doing_it.indexOf(slug) != -1) {
-                        console.log("SKIPPING: list_files_doing_it:", list_files_doing_it);
                         return [2 /*return*/];
                     }
                     list_files_doing_it.push(slug);
-                    console.log("DOING list_files_doing_it:", list_files_doing_it);
                     return [4 /*yield*/, project_manager.projectExists(project)];
                 case 1:
                     if (!_a.sent()) return [3 /*break*/, 5];
@@ -346,7 +344,6 @@ function list_files(socket, project) {
                     return [3 /*break*/, 5];
                 case 5:
                     list_files_doing_it = arrayRemove(list_files_doing_it, slug);
-                    console.log("DONE list_files_doing_it:", list_files_doing_it);
                     return [2 /*return*/];
             }
         });

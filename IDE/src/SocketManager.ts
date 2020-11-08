@@ -204,11 +204,9 @@ async function list_files(socket: SocketIO.Socket, project: string){
 	// avoid piling up of tasks for the same client(browser tab) and project
 	var slug = project + socket.id;
 	if(list_files_doing_it.indexOf(slug) != -1) {
-		console.log("SKIPPING: list_files_doing_it:", list_files_doing_it);
 		return;
 	}
 	list_files_doing_it.push(slug);
-	console.log("DOING list_files_doing_it:", list_files_doing_it);
 	if(await project_manager.projectExists(project))
 	{
 		try {
@@ -219,5 +217,4 @@ async function list_files(socket: SocketIO.Socket, project: string){
 		}
 	}
 	list_files_doing_it = arrayRemove(list_files_doing_it, slug);
-	console.log("DONE list_files_doing_it:", list_files_doing_it);
 }
