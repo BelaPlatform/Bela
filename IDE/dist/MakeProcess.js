@@ -44,6 +44,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var child_process = require("child_process");
 var Event_Emitter = require("events");
@@ -62,9 +72,9 @@ var MakeProcess = /** @class */ (function (_super) {
     MakeProcess.prototype.start = function (project) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
-            var project_args, args, _i, _a, arg;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var project_args, args, _a, _b, arg, e_1, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
                         this.active = true;
                         this.project = project;
@@ -72,7 +82,7 @@ var MakeProcess = /** @class */ (function (_super) {
                         this.killed = false;
                         return [4 /*yield*/, project_settings.getArgs(project)];
                     case 1:
-                        project_args = _b.sent();
+                        project_args = _d.sent();
                         args = [
                             '--no-print-directory',
                             '-C',
@@ -82,11 +92,20 @@ var MakeProcess = /** @class */ (function (_super) {
                             'CL=' + project_args.CL
                         ];
                         if (project_args.make) {
-                            for (_i = 0, _a = project_args.make; _i < _a.length; _i++) {
-                                arg = _a[_i];
-                                arg = arg.trim();
-                                if (arg.length > 0)
-                                    args.push(arg);
+                            try {
+                                for (_a = __values(project_args.make), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                    arg = _b.value;
+                                    arg = arg.trim();
+                                    if (arg.length > 0)
+                                        args.push(arg);
+                                }
+                            }
+                            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                            finally {
+                                try {
+                                    if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                                }
+                                finally { if (e_1) throw e_1.error; }
                             }
                         }
                         console.log("make '" + args.join("' '") + "'");

@@ -34,6 +34,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var file_manager = require("./FileManager");
 var project_settings = require("./ProjectSettings");
@@ -44,9 +54,9 @@ var paths = require("./paths");
 var globals = require("./globals");
 function get_boot_project() {
     return __awaiter(this, void 0, void 0, function () {
-        var startup_env, lines, _i, lines_1, line, split_line, project;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var startup_env, lines, lines_1, lines_1_1, line, split_line, project, e_1, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     if (!globals.local_dev) return [3 /*break*/, 1];
                     startup_env = "";
@@ -54,29 +64,38 @@ function get_boot_project() {
                 case 1: return [4 /*yield*/, file_manager.read_file(paths.startup_env)
                         .catch(function (e) { return console.log('error: no startup_env found'); })];
                 case 2:
-                    startup_env = _a.sent();
-                    _a.label = 3;
+                    startup_env = _b.sent();
+                    _b.label = 3;
                 case 3:
                     if ((typeof startup_env) === 'undefined')
                         return [2 /*return*/, '*none*'];
                     lines = startup_env.split('\n');
-                    for (_i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
-                        line = lines_1[_i];
-                        split_line = line.split('=');
-                        if (split_line[0] === 'ACTIVE' && split_line[1] === '0') {
-                            return [2 /*return*/, '*none*'];
-                        }
-                        else if (split_line[0] === 'PROJECT') {
-                            project = void 0;
-                            if (split_line[1] === '') {
-                                project = '*loop*';
+                    try {
+                        for (lines_1 = __values(lines), lines_1_1 = lines_1.next(); !lines_1_1.done; lines_1_1 = lines_1.next()) {
+                            line = lines_1_1.value;
+                            split_line = line.split('=');
+                            if (split_line[0] === 'ACTIVE' && split_line[1] === '0') {
+                                return [2 /*return*/, '*none*'];
                             }
-                            else {
-                                project = split_line[1];
+                            else if (split_line[0] === 'PROJECT') {
+                                project = void 0;
+                                if (split_line[1] === '') {
+                                    project = '*loop*';
+                                }
+                                else {
+                                    project = split_line[1];
+                                }
+                                listen_on_boot();
+                                return [2 /*return*/, project];
                             }
-                            listen_on_boot();
-                            return [2 /*return*/, project];
                         }
+                    }
+                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                    finally {
+                        try {
+                            if (lines_1_1 && !lines_1_1.done && (_a = lines_1.return)) _a.call(lines_1);
+                        }
+                        finally { if (e_1) throw e_1.error; }
                     }
                     return [2 /*return*/];
             }
@@ -86,9 +105,9 @@ function get_boot_project() {
 exports.get_boot_project = get_boot_project;
 function set_boot_project(socket, project) {
     return __awaiter(this, void 0, void 0, function () {
-        var project_args, args, _i, _a, arg;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var project_args, args, _a, _b, arg, e_2, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
                     if (!(project === '*none*')) return [3 /*break*/, 1];
                     run_on_boot(socket, [
@@ -110,7 +129,7 @@ function set_boot_project(socket, project) {
                     return [3 /*break*/, 4];
                 case 2: return [4 /*yield*/, project_settings.getArgs(project)];
                 case 3:
-                    project_args = _b.sent();
+                    project_args = _d.sent();
                     args = [
                         '--no-print-directory',
                         '-C',
@@ -120,13 +139,22 @@ function set_boot_project(socket, project) {
                         'CL=' + project_args.CL
                     ];
                     if (project_args.make) {
-                        for (_i = 0, _a = project_args.make; _i < _a.length; _i++) {
-                            arg = _a[_i];
-                            args.push(arg.trim());
+                        try {
+                            for (_a = __values(project_args.make), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                arg = _b.value;
+                                args.push(arg.trim());
+                            }
+                        }
+                        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                        finally {
+                            try {
+                                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                            }
+                            finally { if (e_2) throw e_2.error; }
                         }
                     }
                     run_on_boot(socket, args);
-                    _b.label = 4;
+                    _d.label = 4;
                 case 4: return [2 /*return*/];
             }
         });

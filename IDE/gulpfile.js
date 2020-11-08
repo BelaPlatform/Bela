@@ -73,7 +73,8 @@ gulp.task('compile', () => {
 		.pipe(ts({
 			"noImplicitAny": true,
 			"noEmitOnError": true,
-			"target": "es5"
+			"target": "es5",
+			"downlevelIteration": true,
 		}))
 		//.pipe(sourcemaps.write())
 		.pipe(gulp.dest('dist'));
@@ -83,7 +84,8 @@ gulp.task('compile_test', () => {
 		.pipe(sourcemaps.init())
 		.pipe(ts({
 			"noImplicitAny": true,
-			"target": "es5"
+			"target": "es5",
+			"downlevelIteration": true,
 		}))
 		.pipe(replace('require("../src', 'require("../dist'))
 		.pipe(sourcemaps.write())

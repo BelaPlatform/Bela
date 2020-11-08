@@ -34,6 +34,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var paths = require("./paths");
 var file_manager = require("./FileManager");
@@ -101,20 +111,29 @@ function setCLArg(data) {
 exports.setCLArg = setCLArg;
 function setCLArgs(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var settings, _i, _a, item;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var settings, _a, _b, item, e_2, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
                     lock.acquire();
-                    _b.label = 1;
+                    _d.label = 1;
                 case 1:
-                    _b.trys.push([1, , 3, 4]);
+                    _d.trys.push([1, , 3, 4]);
                     return [4 /*yield*/, read(data.currentProject)];
                 case 2:
-                    settings = _b.sent();
-                    for (_i = 0, _a = data.args; _i < _a.length; _i++) {
-                        item = _a[_i];
-                        settings.CLArgs[item.key] = item.value;
+                    settings = _d.sent();
+                    try {
+                        for (_a = __values(data.args), _b = _a.next(); !_b.done; _b = _a.next()) {
+                            item = _b.value;
+                            settings.CLArgs[item.key] = item.value;
+                        }
+                    }
+                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                    finally {
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_2) throw e_2.error; }
                     }
                     write(data.currentProject, settings);
                     return [3 /*break*/, 4];
@@ -154,7 +173,7 @@ function set_fileName(project, fileName) {
 exports.set_fileName = set_fileName;
 function restoreDefaultCLArgs(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var settings, e_2;
+        var settings, e_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -169,9 +188,9 @@ function restoreDefaultCLArgs(data) {
                     write(data.currentProject, settings);
                     return [3 /*break*/, 4];
                 case 3:
-                    e_2 = _a.sent();
+                    e_3 = _a.sent();
                     lock.release();
-                    throw e_2;
+                    throw e_3;
                 case 4:
                     lock.release();
                     return [2 /*return*/, settings];
