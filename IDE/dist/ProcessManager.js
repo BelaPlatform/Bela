@@ -65,36 +65,35 @@ function makePath(data) {
 var queuedUploads = new MostRecentQueue_1.MostRecentQueue();
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
-function processUpload(id) {
+function processUploads() {
     return __awaiter(this, void 0, void 0, function () {
-        var data, ext, e_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a, _b, id, data, ext, e_1, e_2_1, e_2, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    // ensure there is a reason to wait
-                    if (!queuedUploads.get(id)) {
-                        console.log("WARNING: processUpload skip ", id, queuedUploads);
-                        return [2 /*return*/];
-                    }
-                    // wait for our turn
-                    return [4 /*yield*/, lock.acquire()];
+                    if (!queuedUploads.size) return [3 /*break*/, 11];
+                    _d.label = 1;
                 case 1:
-                    // wait for our turn
-                    _a.sent();
-                    data = queuedUploads.pop(id);
-                    // abandon if someone else has already processed it before us
-                    if (!data) {
-                        lock.release();
-                        console.log("WARNING: processUpload: waited for the lock but nothing to do for", id);
-                        return [2 /*return*/];
-                    }
-                    _a.label = 2;
+                    _d.trys.push([1, 8, 9, 10]);
+                    _a = __values(queuedUploads.keys()), _b = _a.next();
+                    _d.label = 2;
                 case 2:
-                    _a.trys.push([2, 4, , 5]);
+                    if (!!_b.done) return [3 /*break*/, 7];
+                    id = _b.value;
+                    console.log("SAVING:", id);
+                    data = queuedUploads.pop(id);
+                    if (!data) {
+                        console.log("WARNING: processUpload: found no data for", id);
+                        return [3 /*break*/, 6];
+                    }
+                    _d.label = 3;
+                case 3:
+                    _d.trys.push([3, 5, , 6]);
                     process.stdout.write(".");
                     return [4 /*yield*/, file_manager.save_file(makePath(data), data.fileData, paths.lockfile)];
-                case 3:
-                    _a.sent();
+                case 4:
+                    _d.sent();
+                    console.log("SAVED", id);
                     ext = path.extname(data.newFile);
                     if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
                         if (syntaxTimeout) {
@@ -104,16 +103,28 @@ function processUpload(id) {
                             checkSyntax(data);
                         }.bind(null, { currentProject: data.currentProject }), syntaxTimeoutMs);
                     }
-                    return [3 /*break*/, 5];
-                case 4:
-                    e_1 = _a.sent();
-                    lock.release();
-                    console.log("START");
+                    return [3 /*break*/, 6];
+                case 5:
+                    e_1 = _d.sent();
                     console.log(data);
                     console.log(e_1);
-                    console.log("DONE, NOW THROWING");
-                    throw e_1;
-                case 5:
+                    return [3 /*break*/, 6];
+                case 6:
+                    _b = _a.next();
+                    return [3 /*break*/, 2];
+                case 7: return [3 /*break*/, 10];
+                case 8:
+                    e_2_1 = _d.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 10];
+                case 9:
+                    try {
+                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                    return [7 /*endfinally*/];
+                case 10: return [3 /*break*/, 0];
+                case 11:
                     lock.release();
                     return [2 /*return*/];
             }
@@ -124,18 +135,23 @@ function processUpload(id) {
 // New data will be pushed to the queue, overwriting any old data.
 function upload(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var id, existed;
+        var id;
         return __generator(this, function (_a) {
-            id = makePath(data);
-            existed = queuedUploads.push(id, data);
-            // did we overwrite an element in the queue?
-            // If yes, then processUpload(id) has already been called and is waiting for a lock
-            if (existed)
-                console.log("upload: ", id, "is already pending");
-            // If not, then we call it
-            if (!existed)
-                processUpload(id);
-            return [2 /*return*/];
+            switch (_a.label) {
+                case 0:
+                    id = makePath(data);
+                    queuedUploads.push(id, data);
+                    if (!!lock.acquired) return [3 /*break*/, 2];
+                    return [4 /*yield*/, lock.acquire()];
+                case 1:
+                    _a.sent();
+                    // If not already running, process uploads at the first chance
+                    // note: this could actually be called directly from here (with or without await),
+                    // but this way it gives sort of a cleaner "thread-like" behaviour
+                    setTimeout(processUploads, 0);
+                    _a.label = 2;
+                case 2: return [2 /*return*/];
+            }
         });
     });
 }
@@ -211,15 +227,15 @@ function build_error(stderr) {
             }
         }
     }
-    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+    catch (e_3_1) { e_3 = { error: e_3_1 }; }
     finally {
         try {
             if (lines_1_1 && !lines_1_1.done && (_a = lines_1.return)) _a.call(lines_1);
         }
-        finally { if (e_2) throw e_2.error; }
+        finally { if (e_3) throw e_3.error; }
     }
     return false;
-    var e_2, _a;
+    var e_3, _a;
 }
 // this function is called when the stop button is clicked
 // it calls the stop() method of any running process
