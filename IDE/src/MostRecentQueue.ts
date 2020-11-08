@@ -7,8 +7,14 @@ export class MostRecentQueue {
 	constructor(){
 		this.q = new Map;
 	}
-	count(id : any) {
+	get size() {
 		return this.q.size;
+	}
+	keys() {
+		return this.q.keys() as any;
+	}
+	values() {
+		return this.q.values() as any;
 	}
 	push(id : any, data : any) : boolean {
 		let ret = this.q.has(id);
