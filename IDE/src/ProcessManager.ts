@@ -22,42 +22,35 @@ let queuedUploads = new MostRecentQueue();
 
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
-async function processUpload(id : any) {
-	// ensure there is a reason to wait
-	if(!queuedUploads.get(id)) {
-		console.log("WARNING: processUpload skip ", id, queuedUploads);
-		return;
-	}
-	// wait for our turn
-	await lock.acquire();
-	// grab data from the queue for processing
-	let data = queuedUploads.pop(id);
-	// abandon if someone else has already processed it before us
-	if(!data) {
-		lock.release();
-		console.log("WARNING: processUpload: waited for the lock but nothing to do for", id);
-		return;
-	}
-	try{
-		process.stdout.write(".");
-		await file_manager.save_file(makePath(data), data.fileData, paths.lockfile);
-		var ext = path.extname(data.newFile);
-		if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
-			if(syntaxTimeout) {
-				clearTimeout(syntaxTimeout)
+async function processUploads() {
+	while(queuedUploads.size) {
+		for(let id of queuedUploads.keys()) {
+			console.log("SAVING:", id);
+			// grab data from the queue for processing
+			let data = queuedUploads.pop(id);
+			if(!data) {
+				console.log("WARNING: processUpload: found no data for", id);
+				continue;
 			}
-			syntaxTimeout = setTimeout(function (data: any) {
-				checkSyntax(data);
-			}.bind(null, {currentProject: data.currentProject}), syntaxTimeoutMs);
+			try{
+				process.stdout.write(".");
+				await file_manager.save_file(makePath(data), data.fileData, paths.lockfile);
+				console.log("SAVED", id);
+				var ext = path.extname(data.newFile);
+				if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
+					if(syntaxTimeout) {
+						clearTimeout(syntaxTimeout)
+					}
+					syntaxTimeout = setTimeout(function (data: any) {
+						checkSyntax(data);
+					}.bind(null, {currentProject: data.currentProject}), syntaxTimeoutMs);
+				}
+			}
+			catch(e){
+				console.log(data);
+				console.log(e);
+			}
 		}
-	}
-	catch(e){
-		lock.release();
-		console.log("START");
-		console.log(data);
-		console.log(e);
-		console.log("DONE, NOW THROWING");
-		throw e;
 	}
 	lock.release();
 }
@@ -66,14 +59,14 @@ async function processUpload(id : any) {
 // New data will be pushed to the queue, overwriting any old data.
 export async function upload(data: any){
 	let id = makePath(data);
-	let existed = queuedUploads.push(id, data);
-	// did we overwrite an element in the queue?
-	// If yes, then processUpload(id) has already been called and is waiting for a lock
-	if(existed)
-		console.log("upload: ", id, "is already pending");
-	// If not, then we call it
-	if(!existed)
-		processUpload(id);
+	queuedUploads.push(id, data);
+	if(!lock.acquired) {
+		await lock.acquire();
+		// If not already running, process uploads at the first chance
+		// note: this could actually be called directly from here (with or without await),
+		// but this way it gives sort of a cleaner "thread-like" behaviour
+		setTimeout(processUploads, 0);
+	}
 }
 
 // this function starts a syntax check
