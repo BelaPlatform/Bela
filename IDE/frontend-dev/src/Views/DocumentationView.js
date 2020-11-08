@@ -1,5 +1,6 @@
 var View = require('./View');
 var json = require('../site-text.json');
+var addAccordionEvent = require('../utils').addAccordionEvent;
 
 var apiFuncs = ['setup', 'render', 'cleanup', 'Bela_createAuxiliaryTask', 'Bela_scheduleAuxiliaryTask'];
 var i = 0;
@@ -99,6 +100,7 @@ function createlifrommemberdef($xml, id, emitter, type){
   var button = $('<button></button>');
   var elementName = name + "-" + i;
   button.addClass('accordion-sub').attr('data-accordion-for', elementName).html($xml.find('name').html()).attr('data-parent', 'refs');
+  addAccordionEvent(button);
   button.appendTo(li);
 
   var content = $('<div></div>').addClass('docs-content').attr('data-accordion', elementName);
@@ -141,6 +143,7 @@ function createlifromxml($xml, id, filename, emitter, type){
 
   // subtitle
   li.append($('<h3></h3>').addClass('intro-header').attr('data-accordion-for', name).html( $xml.find('compounddef > briefdescription > para').html() || '' ));
+  addAccordionEvent(li);
 
   // main text
   $xml.find('compounddef > detaileddescription > para').each(function(){

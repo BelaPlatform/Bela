@@ -3,6 +3,7 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 var example_order = require('../../../../examples/order.json');
+var addAccordionEvent = require('../utils').addAccordionEvent;
 
 class ProjectView extends View {
 
@@ -228,6 +229,7 @@ _exampleList(examplesDir){
                                                .attr('data-accordion-for', item.name)
                                                .html(item.name)
                                                .attr('data-parent', 'examples');
+      addAccordionEvent(parentButton);
 			let parentUl = $('<ul></ul>');
       let parentLi = $('<li></li>');
       let childUl = $('<ul></ul>').addClass('example-list');
@@ -357,6 +359,7 @@ _exampleList(examplesDir){
                                                .attr('data-accordion-for', name)
                                                .html(name)
                                                .attr('data-parent', 'libraries');
+      addAccordionEvent(parentButton);
       let libraryList = $('<ul></ul>'); // This is the list of library items headed by dropdowns
       let libraryItem = $('<li></li>'); // Individual library dropdown
 
@@ -370,6 +373,7 @@ _exampleList(examplesDir){
                                                .text( json.tabs.includeTitle )
                                                .attr('data-accordion-for', 'use-' + counter)
                                                .attr('data-parent', 'libraries'); // Header for include instructions
+      addAccordionEvent(includeTitle);
       let includeContent = $('<div></div>').addClass('include-container docs-content')
                                            .attr('data-accordion', 'use-' + counter); // Div that contains include instructions.
       let includeLines = $('<div></div>').addClass('include-lines'); // Div to contain the lines to include
@@ -380,6 +384,7 @@ _exampleList(examplesDir){
                                             .text( json.tabs.infoTitle )
                                             .attr('data-accordion-for', 'info-' + counter)
                                             .attr('data-parent', 'libraries'); // Header for include instructions
+      addAccordionEvent(infoTitle);
       let infoContainer = $('<div></div>').addClass('info-container docs-content')
                                           .attr('data-accordion', 'info-' + counter); // Div that contains include instructions.
 
@@ -397,6 +402,7 @@ _exampleList(examplesDir){
                                               .text( json.tabs.examplesTitle )
                                               .attr('data-accordion-for', 'example-list-' + counter)
                                               .attr('data-parent', 'libraries'); // Header for include instructions
+    addAccordionEvent(examplesTitle);
     let examplesContainer = $('<div></div>').addClass('docs-content')
                                             .attr('data-accordion', 'example-list-' + counter);
     let examplesList = $('<ul></ul>').addClass('libraries-list');
@@ -406,6 +412,7 @@ _exampleList(examplesDir){
                                            .text( json.tabs.filesTitle )
                                            .attr('data-accordion-for', 'file-list-' + counter)
                                            .attr('data-parent', 'libraries'); // Header for include instructions
+    addAccordionEvent(filesTitle);
 
     let filesContainer = $('<div></div>').addClass('docs-content')
                                          .attr('data-accordion', 'file-list-' + counter);

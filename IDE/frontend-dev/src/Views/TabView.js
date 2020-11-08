@@ -1,4 +1,6 @@
 var View = require('./View');
+var addAccordionEvent = require('../utils').addAccordionEvent;
+var addDropdownEvent = require('../utils').addDropdownEvent;
 
 var menuOpened = false;
 var tabs = {};
@@ -79,6 +81,9 @@ class TabView extends View {
       });
 
 		this.toggleClassesTimeout = undefined;
+		// set events for existing accordions.
+		addAccordionEvent();
+		addDropdownEvent();
 	}
 
   toggleClasses() {

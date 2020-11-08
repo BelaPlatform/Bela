@@ -1,13 +1,3 @@
-var dropdownLoaded = false;
-
-$('[data-tabs]').on('click', function(){
-  if (!dropdownLoaded) {
-    var $script = $("<script></script>").attr('src', '/js/dropdown.js');
-    $script.appendTo($('head'));
-    dropdownLoaded = true;
-  }
-});
-
 // increment / decrement the text inputs styled to look like the number inputs
 $('[data-number-picker]').each(function(){
   $(this).find('[data-number-picker-increment]').on('click', function(){
