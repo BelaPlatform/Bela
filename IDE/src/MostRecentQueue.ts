@@ -16,7 +16,7 @@ export class MostRecentQueue {
 	values() {
 		return this.q.values() as any;
 	}
-	push(id : any, data : any) : boolean {
+	push(id : any, data? : any) : boolean {
 		let ret = this.q.has(id);
 		this.q.set(id, data);
 		return ret;

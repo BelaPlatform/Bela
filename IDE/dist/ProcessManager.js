@@ -96,10 +96,8 @@ function processUploads() {
                     console.log("SAVED", id);
                     ext = path.extname(data.newFile);
                     if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
-                        if (syntaxTimeout) {
-                            clearTimeout(syntaxTimeout);
-                        }
-                        syntaxTimeout = setTimeout(function (data) {
+                        clearTimeout(syntaxTimeout);
+                        syntaxTimeout = global.setTimeout(function (data) {
                             checkSyntax(data);
                         }.bind(null, { currentProject: data.currentProject }), syntaxTimeoutMs);
                     }
