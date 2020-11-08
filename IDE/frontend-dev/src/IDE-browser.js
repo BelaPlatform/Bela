@@ -5,8 +5,6 @@ var Model = require('./Models/Model');
 var popup = require('./popup');
 var json = require('./site-text.json');
 
-var devMode = true;
-
 // set up models
 var models = {};
 models.project = new Model();
@@ -405,54 +403,11 @@ models.status.on('set', (data, changedKeys) => {
 models.project.on('change', (data, changedKeys) => {
 
 	var projectName = data.exampleName ? data.exampleName+' (example)' : data.currentProject;
-
-
-
-  if (devMode) {
-    // set the browser tab title
-    $('[data-title]').html((data.fileName ? data.fileName+', ' : '') + projectName);
-    // set the top-line stuff
-    $('[data-current-project]').html(projectName ? projectName : '');
-  	$('[data-current-file]').html(data.fileName ?  data.fileName : '');
-
-    // status changes reflected here
-    models.status.on('change', (data, changedKeys) => {
-    	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-        if (data.running) {
-    			$('[data-current-status-title]').html('Running: ');
-          $('[data-current-status]').html(data.runProject);
-    		} else if (data.building) {
-          $('[data-current-status-title]').html('Building: ');
-    			$('[data-current-status]').html(data.buildProject);
-    		} else {
-    			$('[data-current-status]').html('');
-          $('[data-current-status-title]').html('');
-        }
-    	}
-    });
-  } else {
-    // set the browser tab title
-    $('title').html((data.fileName ? data.fileName+', ' : '') + projectName);
-    // set the top-line stuff
-    $('[data-current-project]').html(projectName ? projectName : '');
-    $('[data-current-file]').html(data.fileName ?  data.fileName : '');
-
-    // status changes reflected here
-    models.status.on('change', (data, changedKeys) => {
-    	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
-        if (data.running) {
-    			$('[data-current-status-title]').html('Running: ');
-          $('[data-current-status]').html(data.runProject);
-    		} else if (data.building) {
-          $('[data-current-status-title]').html('Building: ');
-    			$('[data-current-status]').html(data.buildProject);
-    		} else {
-    			$('[data-current-status]').html('');
-          $('[data-current-status-title]').html('');
-        }
-    	}
-    });
-  }
+	// set the browser tab title
+	$('[data-title]').html((data.fileName ? data.fileName+', ' : '') + projectName);
+	// set the top-line stuff
+	$('[data-current-project]').html(projectName ? projectName : '');
+	$('[data-current-file]').html(data.fileName ?  data.fileName : '');
 
 	if (data.exampleName){
 		$('#top-example-docs').css('visibility', 'visible');
@@ -460,7 +415,22 @@ models.project.on('change', (data, changedKeys) => {
 	} else {
 		$('#top-example-docs').css('visibility', 'hidden');
 	}
+});
 
+// status changes reflected here
+models.status.on('change', (data, changedKeys) => {
+	if (changedKeys.indexOf('running') !== -1 || changedKeys.indexOf('building') !== -1){
+		if (data.running) {
+			$('[data-current-status-title]').html('Running: ');
+			$('[data-current-status]').html(data.runProject);
+		} else if (data.building) {
+			$('[data-current-status-title]').html('Building: ');
+			$('[data-current-status]').html(data.buildProject);
+		} else {
+			$('[data-current-status]').html('');
+			$('[data-current-status-title]').html('');
+		}
+	}
 });
 
 // history
