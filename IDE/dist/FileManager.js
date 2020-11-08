@@ -49,13 +49,23 @@ var fs = require("fs-extra-promise");
 var isBinary = require("isbinaryfile");
 var util = require("./utils");
 var Lock_1 = require("./Lock");
+var MostRecentQueue_1 = require("./MostRecentQueue");
 // FileManager is only available as a single instance accross the app, exported as fm
 // it has a private Lock which is always acquired before manipulating the filesystem
 // thus concurent access is prohibited
 // only the primitive file and directory manipulation methods should touch the lock
 // OR the filesystem, in the whole app
 var lock = new Lock_1.Lock("FileManager");
-function commit(path) {
+var commitLock = new Lock_1.Lock("CommitLock");
+var queuedCommits = new MostRecentQueue_1.MostRecentQueue;
+// wait at least commitShortTimeoutMs after a file change before committing to disk
+var commitShortTimeoutMs = 500;
+// but do commit at least every commitLongTimeoutMs
+var commitLongTimeoutMs = 2000;
+var commitShortTimeout;
+var commitLongTimeout;
+var commitLongTimeoutScheduled = false;
+function commitPathNow(path) {
     return __awaiter(this, void 0, void 0, function () {
         var fd;
         return __generator(this, function (_a) {
@@ -74,9 +84,100 @@ function commit(path) {
         });
     });
 }
+function processCommits(short) {
+    return __awaiter(this, void 0, void 0, function () {
+        var _a, _b, path, e_1, e_2_1, e_2, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    // Regardless of how we got here, we are going to process all outstanding commits.
+                    // Clear all timers before waiting on the lock, so they do not expire while we are running,
+                    // as they would anyhow have to wait for the lock, and ultimately be left with no job to do
+                    clearTimeout(commitShortTimeout);
+                    clearTimeout(commitLongTimeout);
+                    return [4 /*yield*/, commitLock.acquire()];
+                case 1:
+                    _d.sent();
+                    _d.label = 2;
+                case 2:
+                    if (!queuedCommits.size) return [3 /*break*/, 13];
+                    _d.label = 3;
+                case 3:
+                    _d.trys.push([3, 10, 11, 12]);
+                    _a = __values(queuedCommits.keys()), _b = _a.next();
+                    _d.label = 4;
+                case 4:
+                    if (!!_b.done) return [3 /*break*/, 9];
+                    path = _b.value;
+                    _d.label = 5;
+                case 5:
+                    _d.trys.push([5, 7, , 8]);
+                    queuedCommits.pop(path);
+                    return [4 /*yield*/, commitPathNow(path)];
+                case 6:
+                    _d.sent();
+                    return [3 /*break*/, 8];
+                case 7:
+                    e_1 = _d.sent();
+                    console.log("File to be committed", path, "no longer exists");
+                    return [3 /*break*/, 8];
+                case 8:
+                    _b = _a.next();
+                    return [3 /*break*/, 4];
+                case 9: return [3 /*break*/, 12];
+                case 10:
+                    e_2_1 = _d.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 12];
+                case 11:
+                    try {
+                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                    return [7 /*endfinally*/];
+                case 12: return [3 /*break*/, 2];
+                case 13:
+                    // clear the flag once we are done, so that the LongTimeout can be scheduled again
+                    commitLongTimeoutScheduled = false;
+                    commitLock.release();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function commit(path, now) {
+    if (now === void 0) { now = false; }
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!now) return [3 /*break*/, 2];
+                    return [4 /*yield*/, commitPathNow(path)];
+                case 1:
+                    _a.sent();
+                    return [3 /*break*/, 3];
+                case 2:
+                    queuedCommits.push(path);
+                    // if the lock is busy, anything we just pushed will be processed soon
+                    if (!commitLock.acquired) {
+                        // otherwise schedule processing
+                        clearTimeout(commitShortTimeout);
+                        commitShortTimeout = global.setTimeout(processCommits.bind(null, true), commitShortTimeoutMs);
+                        if (!commitLongTimeoutScheduled) {
+                            commitLongTimeoutScheduled = true;
+                            clearTimeout(commitLongTimeout);
+                            commitLongTimeout = global.setTimeout(processCommits.bind(null, false), commitLongTimeoutMs);
+                        }
+                    }
+                    _a.label = 3;
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
 function commit_folder(path) {
     return __awaiter(this, void 0, void 0, function () {
-        var list, list_1, list_1_1, file_path, e_1_1, e_1, _a;
+        var list, list_1, list_1_1, file_path, e_3_1, e_3, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, commit(path)];
@@ -102,14 +203,14 @@ function commit_folder(path) {
                     return [3 /*break*/, 4];
                 case 7: return [3 /*break*/, 10];
                 case 8:
-                    e_1_1 = _b.sent();
-                    e_1 = { error: e_1_1 };
+                    e_3_1 = _b.sent();
+                    e_3 = { error: e_3_1 };
                     return [3 /*break*/, 10];
                 case 9:
                     try {
                         if (list_1_1 && !list_1_1.done && (_a = list_1.return)) _a.call(list_1);
                     }
-                    finally { if (e_1) throw e_1.error; }
+                    finally { if (e_3) throw e_3.error; }
                     return [7 /*endfinally*/];
                 case 10: return [2 /*return*/];
             }
@@ -408,7 +509,7 @@ exports.save_file = SaveFile_1.save_file;
 // recursively read the contents of a directory, returning an array of File_Descriptors
 function deep_read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var contents, output, contents_1, contents_1_1, name_1, original_path, path, stat, maxLevels, levels, desc, _a, e_2_1, e_2, _b;
+        var contents, output, contents_1, contents_1_1, name_1, original_path, path, stat, maxLevels, levels, desc, _a, e_4_1, e_4, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0: return [4 /*yield*/, read_directory(dir_path)];
@@ -469,14 +570,14 @@ function deep_read_directory(dir_path) {
                     return [3 /*break*/, 3];
                 case 13: return [3 /*break*/, 16];
                 case 14:
-                    e_2_1 = _c.sent();
-                    e_2 = { error: e_2_1 };
+                    e_4_1 = _c.sent();
+                    e_4 = { error: e_4_1 };
                     return [3 /*break*/, 16];
                 case 15:
                     try {
                         if (contents_1_1 && !contents_1_1.done && (_b = contents_1.return)) _b.call(contents_1);
                     }
-                    finally { if (e_2) throw e_2.error; }
+                    finally { if (e_4) throw e_4.error; }
                     return [7 /*endfinally*/];
                 case 16: return [2 /*return*/, output];
             }
@@ -560,7 +661,7 @@ function file_exists(file_path) {
 exports.file_exists = file_exists;
 function delete_matching_recursive(path, matches) {
     return __awaiter(this, void 0, void 0, function () {
-        var all, contents, matching, updated, matching_1, matching_1_1, match, full_path, e_3_1, contents_2, contents_2_1, file, full_path, stat, e_4_1, e_3, _a, e_4, _b;
+        var all, contents, matching, updated, matching_1, matching_1_1, match, full_path, e_5_1, contents_2, contents_2_1, file, full_path, stat, e_6_1, e_5, _a, e_6, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0: return [4 /*yield*/, read_directory(path)];
@@ -593,14 +694,14 @@ function delete_matching_recursive(path, matches) {
                     return [3 /*break*/, 4];
                 case 7: return [3 /*break*/, 10];
                 case 8:
-                    e_3_1 = _c.sent();
-                    e_3 = { error: e_3_1 };
+                    e_5_1 = _c.sent();
+                    e_5 = { error: e_5_1 };
                     return [3 /*break*/, 10];
                 case 9:
                     try {
                         if (matching_1_1 && !matching_1_1.done && (_a = matching_1.return)) _a.call(matching_1);
                     }
-                    finally { if (e_3) throw e_3.error; }
+                    finally { if (e_5) throw e_5.error; }
                     return [7 /*endfinally*/];
                 case 10:
                     if (!updated) return [3 /*break*/, 12];
@@ -628,14 +729,14 @@ function delete_matching_recursive(path, matches) {
                     return [3 /*break*/, 13];
                 case 16: return [3 /*break*/, 19];
                 case 17:
-                    e_4_1 = _c.sent();
-                    e_4 = { error: e_4_1 };
+                    e_6_1 = _c.sent();
+                    e_6 = { error: e_6_1 };
                     return [3 /*break*/, 19];
                 case 18:
                     try {
                         if (contents_2_1 && !contents_2_1.done && (_b = contents_2.return)) _b.call(contents_2);
                     }
-                    finally { if (e_4) throw e_4.error; }
+                    finally { if (e_6) throw e_6.error; }
                     return [7 /*endfinally*/];
                 case 19: return [2 /*return*/];
             }

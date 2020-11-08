@@ -2,6 +2,7 @@ import * as fs from 'fs-extra-promise';
 import * as isBinary from 'isbinaryfile';
 import * as util from './utils';
 import { Lock } from "./Lock";
+import { MostRecentQueue } from './MostRecentQueue';
 
 // FileManager is only available as a single instance accross the app, exported as fm
 // it has a private Lock which is always acquired before manipulating the filesystem
@@ -10,13 +11,66 @@ import { Lock } from "./Lock";
 // OR the filesystem, in the whole app
 
 const lock: Lock = new Lock("FileManager");
+const commitLock: Lock = new Lock("CommitLock");
+let queuedCommits : MostRecentQueue = new MostRecentQueue;
 
-async function commit(path: string)
+// wait at least commitShortTimeoutMs after a file change before committing to disk
+const commitShortTimeoutMs = 500;
+// but do commit at least every commitLongTimeoutMs
+const commitLongTimeoutMs = 2000;
+let commitShortTimeout : NodeJS.Timer;
+let commitLongTimeout : NodeJS.Timer;
+let commitLongTimeoutScheduled : boolean = false;
+
+async function commitPathNow(path: string)
 {
 	let fd = await fs.openAsync(path, 'r');
 	await fs.fsyncAsync(fd);
 	await fs.closeAsync(fd);
 }
+
+async function processCommits(short : boolean) {
+	// Regardless of how we got here, we are going to process all outstanding commits.
+	// Clear all timers before waiting on the lock, so they do not expire while we are running,
+	// as they would anyhow have to wait for the lock, and ultimately be left with no job to do
+	clearTimeout(commitShortTimeout);
+	clearTimeout(commitLongTimeout);
+	await commitLock.acquire();
+	while(queuedCommits.size) {
+		for(let path of queuedCommits.keys()) {
+			try {
+				queuedCommits.pop(path);
+				await commitPathNow(path);
+			} catch (e) {
+				console.log("File to be committed", path, "no longer exists");
+			}
+		}
+	}
+	// clear the flag once we are done, so that the LongTimeout can be scheduled again
+	commitLongTimeoutScheduled = false;
+	commitLock.release();
+}
+
+async function commit(path: string, now: boolean = false)
+{
+	if(now) {
+		await commitPathNow(path);
+	} else {
+		queuedCommits.push(path);
+		// if the lock is busy, anything we just pushed will be processed soon
+		if(!commitLock.acquired) {
+			// otherwise schedule processing
+			clearTimeout(commitShortTimeout);
+			commitShortTimeout = global.setTimeout(processCommits.bind(null, true), commitShortTimeoutMs);
+			if(!commitLongTimeoutScheduled) {
+				commitLongTimeoutScheduled = true;
+				clearTimeout(commitLongTimeout);
+				commitLongTimeout = global.setTimeout(processCommits.bind(null, false), commitLongTimeoutMs);
+			}
+		}
+	}
+}
+
 async function commit_folder(path: string)
 {
 	await commit(path);
