@@ -22,27 +22,45 @@ function stacktrace() {
         .replace(/_[_]+/g, "__")
         .replace(/\s+/gm, " ");
 }
+var toLog = ["ProcessManager", "FileManager"];
+function shouldLog(s) {
+    return toLog.indexOf(s) != -1;
+}
 var Lock = /** @class */ (function () {
     function Lock(arg) {
         this.lock = new await_lock_1.default();
         this.arg = arg;
     }
+    Object.defineProperty(Lock.prototype, "acquired", {
+        get: function () {
+            return this.lock.acquired;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Lock.prototype.tryAcquire = function () {
+        return this.lock.tryAcquire();
+    };
     Lock.prototype.acquire = function () {
         var ret = this.lock.tryAcquire();
         if (ret) {
-            console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
+            if (shouldLog(this.arg))
+                console.log(this.arg, "FAST Acquire: ", this.lock._waitingResolvers.length, stacktrace());
             return new Promise(function (resolve) { return resolve(); });
         }
         else {
-            console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
+            if (shouldLog(this.arg))
+                console.log(this.arg, "SLOW Acquiring: ", this.lock._waitingResolvers.length, stacktrace());
             var p = this.lock.acquireAsync();
-            console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
+            if (shouldLog(this.arg))
+                console.log(this.arg, "SLOW Acquired: ", this.lock._waitingResolvers.length, stacktrace());
             return p;
         }
     };
     Lock.prototype.release = function () {
         this.lock.release();
-        console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
+        if (shouldLog(this.arg))
+            console.log(this.arg, "Release: ", this.lock._waitingResolvers.length, stacktrace());
     };
     return Lock;
 }());
