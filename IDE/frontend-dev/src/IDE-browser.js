@@ -227,7 +227,7 @@ socket.on('init', (data) => {
 	listFilesInterval = setInterval( () => {
 		var currentProject = models.project.getKey('currentProject');
 		if(currentProject) {
-			socket.emit('list-files', currentProject);
+			socket.emit('list-files-subscribe', currentProject);
 		}
 	}, listFilesIntervalMs);
 

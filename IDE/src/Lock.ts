@@ -22,7 +22,7 @@ function stacktrace() : string{
 .replace(/\s+/gm, " ")
 }
 
-let toLog = [ "ProcessManager", "FileManager" ];
+let toLog = [ "aaaaa"];//"ProcessManager", "FileManager" ];
 function shouldLog(s : string) {
 	return toLog.indexOf(s) != -1;
 }

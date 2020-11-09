@@ -9,6 +9,9 @@ import * as project_settings from './ProjectSettings';
 import * as ide_settings from './IDESettings';
 import * as boot_project from './RunOnBoot';
 import * as util from './utils';
+import * as chokidar from 'chokidar';
+import * as paths from './paths';
+
 var TerminalManager = require('./TerminalManager');
 TerminalManager.on('shell-event', (evt: any, data: any) => ide_sockets.emit('shell-event', evt, data) );
 
@@ -38,12 +41,13 @@ function connection(socket: SocketIO.Socket){
 	socket.on('IDE-settings', (data: any) => ide_settings_event(socket, data) );
 	socket.on('git-event', (data: any) => git_event(socket, data) );
 	socket.on('list-files', (project: string) => list_files(socket, project) );
+	socket.on('list-files-subscribe', (project: string) => list_files_subscribe(socket, project) );
 	socket.on('run-on-boot', (project: string) => boot_project.set_boot_project(socket, project) );
 	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
 	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
 	socket.on('upload-update', (data: any) => update_manager.upload(data) );
 	socket.on('shutdown', IDE.shutdown);
-	socket.on('disconnect', disconnect);
+	socket.on('disconnect', disconnect.bind(null, socket));
 	init_message(socket);
 	TerminalManager.pwd();
 	num_connections += 1;
@@ -52,7 +56,11 @@ function connection(socket: SocketIO.Socket){
 	}
 }
 
-function disconnect(){
+type Lfso = { watcher: chokidar.FSWatcher, sockets: Array<SocketIO.Socket> };
+let listFilesSubscribed : Map<string, Lfso> = new Map;
+function disconnect(socket: SocketIO.Socket){
+	console.log('disconnect', socket.id);
+	list_files_unsubscribe(socket);
 	num_connections = num_connections - 1;
 	if (num_connections <= 0 && interval){
 		clearInterval(interval);
@@ -217,4 +225,42 @@ async function list_files(socket: SocketIO.Socket, project: string){
 		}
 	}
 	list_files_doing_it = arrayRemove(list_files_doing_it, slug);
+}
+
+async function  projectChanged(project : string, path : string) {
+	console.log("project changed", project, path);
+	let obj : Lfso;
+	if(obj = listFilesSubscribed.get(project)) {
+		for(let socket of obj.sockets) {
+			list_files(socket, project);
+		}
+	}
+}
+
+//https://bezkoder.com/node-js-watch-folder-changes/
+async function list_files_subscribe(socket: SocketIO.Socket, project: string){
+	console.log("subscribing", project, socket.id);
+	if(listFilesSubscribed.has(project)) {
+		let obj = listFilesSubscribed.get(project);
+		// we are already monitoring changes to this project folder, just make
+		// a note of the new socket unless it's already there
+		if(obj.sockets.indexOf(socket) === -1)
+			obj.sockets.push(socket);
+	} else {
+		let watcher = chokidar.watch(paths.projects + project);
+		watcher.on('change', projectChanged.bind(null, project));
+		listFilesSubscribed.set(project, { watcher: watcher, sockets: [socket] });
+	}
+}
+
+function list_files_unsubscribe(socket: SocketIO.Socket) {
+	console.log("list_files_unsubscribe", listFilesSubscribed)
+	for(let [key, obj] of (listFilesSubscribed as any)) {
+		obj.sockets = arrayRemove(obj.sockets, socket);
+		console.log("removed array", obj.sockets.length);
+		if(0 === obj.sockets.length) {
+			listFilesSubscribed.delete(key);
+			console.log("Stop watching project", key, listFilesSubscribed)
+		}
+	}
 }

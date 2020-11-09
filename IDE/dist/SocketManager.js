@@ -34,6 +34,32 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var io = require("socket.io");
 var IDE = require("./main");
@@ -44,6 +70,8 @@ var update_manager = require("./UpdateManager");
 var project_settings = require("./ProjectSettings");
 var ide_settings = require("./IDESettings");
 var boot_project = require("./RunOnBoot");
+var chokidar = require("chokidar");
+var paths = require("./paths");
 var TerminalManager = require('./TerminalManager');
 TerminalManager.on('shell-event', function (evt, data) { return ide_sockets.emit('shell-event', evt, data); });
 // all connected sockets
@@ -72,12 +100,13 @@ function connection(socket) {
     socket.on('IDE-settings', function (data) { return ide_settings_event(socket, data); });
     socket.on('git-event', function (data) { return git_event(socket, data); });
     socket.on('list-files', function (project) { return list_files(socket, project); });
+    socket.on('list-files-subscribe', function (project) { return list_files_subscribe(socket, project); });
     socket.on('run-on-boot', function (project) { return boot_project.set_boot_project(socket, project); });
     socket.on('sh-command', function (cmd) { return TerminalManager.execute(cmd); });
     socket.on('sh-tab', function (cmd) { return TerminalManager.tab(cmd); });
     socket.on('upload-update', function (data) { return update_manager.upload(data); });
     socket.on('shutdown', IDE.shutdown);
-    socket.on('disconnect', disconnect);
+    socket.on('disconnect', disconnect.bind(null, socket));
     init_message(socket);
     TerminalManager.pwd();
     num_connections += 1;
@@ -85,7 +114,10 @@ function connection(socket) {
         interval = setInterval(interval_func, 2000);
     }
 }
-function disconnect() {
+var listFilesSubscribed = new Map;
+function disconnect(socket) {
+    console.log('disconnect', socket.id);
+    list_files_unsubscribe(socket);
     num_connections = num_connections - 1;
     if (num_connections <= 0 && interval) {
         clearInterval(interval);
@@ -348,4 +380,72 @@ function list_files(socket, project) {
             }
         });
     });
+}
+function projectChanged(project, path) {
+    return __awaiter(this, void 0, void 0, function () {
+        var obj, _a, _b, socket, e_3, _c;
+        return __generator(this, function (_d) {
+            console.log("project changed", project, path);
+            if (obj = listFilesSubscribed.get(project)) {
+                try {
+                    for (_a = __values(obj.sockets), _b = _a.next(); !_b.done; _b = _a.next()) {
+                        socket = _b.value;
+                        list_files(socket, project);
+                    }
+                }
+                catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                finally {
+                    try {
+                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                    }
+                    finally { if (e_3) throw e_3.error; }
+                }
+            }
+            return [2 /*return*/];
+        });
+    });
+}
+//https://bezkoder.com/node-js-watch-folder-changes/
+function list_files_subscribe(socket, project) {
+    return __awaiter(this, void 0, void 0, function () {
+        var obj, watcher;
+        return __generator(this, function (_a) {
+            console.log("subscribing", project, socket.id);
+            if (listFilesSubscribed.has(project)) {
+                obj = listFilesSubscribed.get(project);
+                // we are already monitoring changes to this project folder, just make
+                // a note of the new socket unless it's already there
+                if (obj.sockets.indexOf(socket) === -1)
+                    obj.sockets.push(socket);
+            }
+            else {
+                watcher = chokidar.watch(paths.projects + project);
+                watcher.on('change', projectChanged.bind(null, project));
+                listFilesSubscribed.set(project, { watcher: watcher, sockets: [socket] });
+            }
+            return [2 /*return*/];
+        });
+    });
+}
+function list_files_unsubscribe(socket) {
+    console.log("list_files_unsubscribe", listFilesSubscribed);
+    try {
+        for (var _a = __values(listFilesSubscribed), _b = _a.next(); !_b.done; _b = _a.next()) {
+            var _c = __read(_b.value, 2), key = _c[0], obj = _c[1];
+            obj.sockets = arrayRemove(obj.sockets, socket);
+            console.log("removed array", obj.sockets.length);
+            if (0 === obj.sockets.length) {
+                listFilesSubscribed.delete(key);
+                console.log("Stop watching project", key, listFilesSubscribed);
+            }
+        }
+    }
+    catch (e_4_1) { e_4 = { error: e_4_1 }; }
+    finally {
+        try {
+            if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+        }
+        finally { if (e_4) throw e_4.error; }
+    }
+    var e_4, _d;
 }
