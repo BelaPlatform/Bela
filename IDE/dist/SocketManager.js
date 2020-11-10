@@ -50,6 +50,7 @@ TerminalManager.on('shell-event', function (evt, data) { return ide_sockets.emit
 var ide_sockets;
 var num_connections = 0;
 var interval;
+var intervalMs = 5000; // how often to scan for new projects
 function init(server) {
     ide_sockets = io(server, {
         pingInterval: 3000,
@@ -82,13 +83,13 @@ function connection(socket) {
     TerminalManager.pwd();
     num_connections += 1;
     if (num_connections === 1) {
-        interval = setInterval(interval_func, 2000);
+        interval = setTimeout(interval_func, intervalMs);
     }
 }
 function disconnect() {
     num_connections = num_connections - 1;
     if (num_connections <= 0 && interval) {
-        clearInterval(interval);
+        clearTimeout(interval);
     }
 }
 function interval_func() {
@@ -96,10 +97,13 @@ function interval_func() {
         var projects;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, project_manager.listProjects()];
+                case 0:
+                    clearTimeout(interval);
+                    return [4 /*yield*/, project_manager.listProjects()];
                 case 1:
                     projects = _a.sent();
                     ide_sockets.emit('project-list', undefined, projects);
+                    interval = setTimeout(interval_func, intervalMs);
                     return [2 /*return*/];
             }
         });

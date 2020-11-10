@@ -16,6 +16,7 @@ TerminalManager.on('shell-event', (evt: any, data: any) => ide_sockets.emit('she
 let ide_sockets: SocketIO.Namespace;
 let num_connections: number = 0;
 let interval: NodeJS.Timer;
+let intervalMs = 5000; // how often to scan for new projects
 
 export function init(server: http.Server){
 	ide_sockets = io(server, {
@@ -48,20 +49,22 @@ function connection(socket: SocketIO.Socket){
 	TerminalManager.pwd();
 	num_connections += 1;
 	if (num_connections === 1){
-		interval = setInterval(interval_func, 2000);
+		interval = setTimeout(interval_func, intervalMs);
 	}
 }
 
 function disconnect(){
 	num_connections = num_connections - 1;
 	if (num_connections <= 0 && interval){
-		clearInterval(interval);
+		clearTimeout(interval);
 	}
 }
 
 async function interval_func(){
+	clearTimeout(interval);
 	let projects: string[] = await project_manager.listProjects();
 	ide_sockets.emit('project-list', undefined, projects);
+	interval = setTimeout(interval_func, intervalMs);
 }
 
 async function init_message(socket: SocketIO.Socket){
