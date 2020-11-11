@@ -1,4 +1,5 @@
 import * as fs from 'fs-extra-promise';
+import * as child_process from 'child_process';
 import * as isBinary from 'isbinaryfile';
 import * as util from './utils';
 import { Lock } from "./Lock";
@@ -140,6 +141,23 @@ export async function delete_file(file_path: string): Promise<void>{
 	finally{
 		lock.release();
 	}
+}
+export async function read_subfolders(dir_path: string) {
+	await lock.acquire();
+	return new Promise( (resolve, reject) => {
+		child_process.exec('find . -type d -maxdepth 1', { cwd: dir_path }, (error : Error, stdout : string, stderr : string) => {
+			lock.release();
+			if (error) {
+				console.error(`exec error: ${error}`);
+				reject(error);
+			}
+			let files : string = stdout.replace(/\.\//mg, '');
+			files = files.replace(/^\.\n/gm, ''); // remove the . folder
+			files = files.replace(/\n$/g, ''); // remove trailing newline to avoid empty element when splitting
+			let projects : Array<string> = files.split('\n').sort();
+			resolve(projects);
+		});
+	});
 }
 export async function read_directory(dir_path: string): Promise<string[]>{
 	await lock.acquire();

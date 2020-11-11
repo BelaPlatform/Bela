@@ -123,14 +123,7 @@ export async function openFile(data: any){
 
 // these two methods are exceptions and don't take the data object
 export async function listProjects(): Promise<string[]>{
-	let projects = await file_manager.read_directory(paths.projects);
-	// remove all non-directories
-	let toRemove : any = [];
-	for(let n = 0; n < projects.length; ++n) {
-		if(!await file_manager.directory_exists(paths.projects+projects[n]))
-			toRemove.push(n);
-	}
-	projects = projects.filter((project, n) => { return !toRemove.includes(n);});
+	let projects = await file_manager.read_subfolders(paths.projects) as Array<string>;
 	return projects;
 }
 

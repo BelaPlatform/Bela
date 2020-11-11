@@ -213,27 +213,12 @@ exports.openFile = openFile;
 // these two methods are exceptions and don't take the data object
 function listProjects() {
     return __awaiter(this, void 0, void 0, function () {
-        var projects, toRemove, n;
+        var projects;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, file_manager.read_directory(paths.projects)];
+                case 0: return [4 /*yield*/, file_manager.read_subfolders(paths.projects)];
                 case 1:
                     projects = _a.sent();
-                    toRemove = [];
-                    n = 0;
-                    _a.label = 2;
-                case 2:
-                    if (!(n < projects.length)) return [3 /*break*/, 5];
-                    return [4 /*yield*/, file_manager.directory_exists(paths.projects + projects[n])];
-                case 3:
-                    if (!(_a.sent()))
-                        toRemove.push(n);
-                    _a.label = 4;
-                case 4:
-                    ++n;
-                    return [3 /*break*/, 2];
-                case 5:
-                    projects = projects.filter(function (project, n) { return !toRemove.includes(n); });
                     return [2 /*return*/, projects];
             }
         });

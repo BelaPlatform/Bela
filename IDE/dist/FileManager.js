@@ -46,6 +46,7 @@ var __values = (this && this.__values) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs-extra-promise");
+var child_process = require("child_process");
 var isBinary = require("isbinaryfile");
 var util = require("./utils");
 var Lock_1 = require("./Lock");
@@ -369,6 +370,32 @@ function delete_file(file_path) {
     });
 }
 exports.delete_file = delete_file;
+function read_subfolders(dir_path) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, lock.acquire()];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                            child_process.exec('find . -type d -maxdepth 1', { cwd: dir_path }, function (error, stdout, stderr) {
+                                lock.release();
+                                if (error) {
+                                    console.error("exec error: " + error);
+                                    reject(error);
+                                }
+                                var files = stdout.replace(/\.\//mg, '');
+                                files = files.replace(/^\.\n/gm, ''); // remove the . folder
+                                files = files.replace(/\n$/g, ''); // remove trailing newline to avoid empty element when splitting
+                                var projects = files.split('\n').sort();
+                                resolve(projects);
+                            });
+                        })];
+            }
+        });
+    });
+}
+exports.read_subfolders = read_subfolders;
 function read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
         var out;
