@@ -36,6 +36,7 @@ class Trill : public I2c
 			CRAFT = 3, ///< %Trill Craft
 			RING = 4, ///< %Trill Ring
 			HEX = 5, ///< %Trill Hex
+			FLEX = 6, ///< %Trill Flex
 		} Device;
 	private:
 		Mode mode_; // Which mode the device is in

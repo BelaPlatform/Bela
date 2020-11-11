@@ -59,6 +59,7 @@ static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
 	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, 0x30)},
 	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, 0x38)},
 	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0x40)},
+	{Trill::FLEX, TrillDefaults("Flex", Trill::DIFF, 0x48)},
 };
 
 static const std::map<Trill::Mode, std::string> trillModes = {
@@ -82,6 +83,7 @@ static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 	{.pos = 4096, .posH = 0, .size = 1}, // CRAFT = 3,
 	{.pos = 3584, .posH = 0, .size = 5000}, // RING = 4,
 	{.pos = 1920, .posH = 1664, .size = 4000}, // HEX = 5,
+	{.pos = 4096, .posH = 0, .size = 1}, // FLEX = 6,
 };
 
 Trill::Trill(){}
@@ -504,6 +506,7 @@ bool Trill::is1D()
 		case BAR:
 		case RING:
 		case CRAFT:
+		case FLEX:
 			return true;
 		default:
 			return false;
