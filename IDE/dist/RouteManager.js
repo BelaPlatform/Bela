@@ -39,7 +39,7 @@ function send_zip(path, name, res, ignore) {
     });
     archive.pipe(res);
     if (ignore)
-        archive.glob("*", { ignore: ignore, cwd: path });
+        archive.glob("**/*", { ignore: ignore, cwd: path });
     else
         archive.directory(path, name, { name: name + '.zip' });
     archive.finalize();
