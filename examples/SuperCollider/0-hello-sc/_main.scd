@@ -26,8 +26,4 @@ s.waitForBoot {
 	}.play;
 };
 
-
-
-
-
-
+ServerQuit.add({ 0.exit }); // quit if the button is pressed

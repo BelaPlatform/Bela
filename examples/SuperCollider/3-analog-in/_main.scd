@@ -38,3 +38,4 @@ s.waitForBoot{
 	Synth.new("AnalogIn-test", target: s);
 };
 
+ServerQuit.add({ 0.exit }); // quit if the button is pressed

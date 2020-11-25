@@ -2,6 +2,7 @@
 Analog Input
 Connect analog sources (e.g.: potentiometers, LDR, FSR) to analog input 0 and 1
 Connect a LED+resistor to analog output 0
+Connect a button + resistor to digital input 0
 
 AnalogIn returns a value from 0-1
 
@@ -43,7 +44,7 @@ s.waitForBoot{
 
 	SynthDef('record', {arg buf;
 		var in = SoundIn.ar(0);
-		var button = DigitalIn.ar(7);
+		var button = DigitalIn.ar(0);
 		button.poll(0.5);
 		RecordBuf.ar(in, buf, run: button, trigger: button);
 	}).add;
@@ -54,8 +55,4 @@ s.waitForBoot{
 	r = Synth('record', ['buf', b]);
 };
 
-
-
-
-
-
+ServerQuit.add({ 0.exit }); // quit if the button is pressed

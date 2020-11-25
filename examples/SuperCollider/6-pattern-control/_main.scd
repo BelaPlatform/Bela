@@ -62,3 +62,5 @@ s.waitForBoot{
 		'pan', Pseq([-0.3, 0.3],inf),
 	).play;
 };
+
+ServerQuit.add({ 0.exit }); // quit if the button is pressed

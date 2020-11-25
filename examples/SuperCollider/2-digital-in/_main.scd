@@ -40,6 +40,7 @@ s.waitForBoot{
 	
 	s.sync;
 	
-	a = Synth('buttonControl', ['inPin', 7, 'outPin', 6]);
+	a = Synth('buttonControl', ['inPin', 1, 'outPin', 0]);
 };
 
+ServerQuit.add({ 0.exit }); // quit if the button is pressed

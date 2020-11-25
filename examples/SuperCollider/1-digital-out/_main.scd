@@ -33,6 +33,7 @@ s.waitForBoot{
 	
 	s.sync;
 	
-	a = Synth('blinker', ['outPin', 6, 'rate', 1]);
+	a = Synth('blinker', ['outPin', 0, 'rate', 1]);
 };
 
+ServerQuit.add({ 0.exit }); // quit if the button is pressed

@@ -1,7 +1,7 @@
 /*
 Fm7 example
 
-This example generates a slow modulating drone using the FM7 plugin. You need the sc3-plugins installed in order for this to work (get them from https://github.com/giuliomoro/supercollider/releases if you don't have them).
+This example generates a slow modulating drone using the FM7 plugin. You need the sc3-plugins installed in order for this to work.
 
 (c) 2018: David Meckin
 */
@@ -49,3 +49,5 @@ SynthDef(\fm7BelaTest,
   s.sync;
   ~synth = Synth(\fm7BelaTest, [\freq, 110, \attackTime, 3], target: s);
 });
+
+ServerQuit.add({ 0.exit }); // quit if the button is pressed
