@@ -359,18 +359,12 @@ class SettingsView extends View {
 			Face: {
 				sections: [],
 				subsections: [],
-				options: [{
-					selector: 'buffer-size',
-					optVal: [128]
-				}]
+				options: []
 			},
 			Beast: {
 				sections: [],
 				subsections: [],
-				options: [{
-					selector: 'buffer-size',
-					optVal: [64, 128]
-				}]
+				options: []
 			}
 		}
 

@@ -4350,18 +4350,12 @@ var SettingsView = function (_View) {
 				Face: {
 					sections: [],
 					subsections: [],
-					options: [{
-						selector: 'buffer-size',
-						optVal: [128]
-					}]
+					options: []
 				},
 				Beast: {
 					sections: [],
 					subsections: [],
-					options: [{
-						selector: 'buffer-size',
-						optVal: [64, 128]
-					}]
+					options: []
 				}
 			};
 
