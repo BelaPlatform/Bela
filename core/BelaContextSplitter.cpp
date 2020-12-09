@@ -1,5 +1,6 @@
 #include <BelaContextSplitter.h>
 #include <stddef.h>
+#include <string.h>
 
 int BelaContextSplitter::setup(unsigned int in, unsigned int out, const BelaContext* context)
 {
@@ -94,6 +95,7 @@ int BelaContextSplitter::push(const BelaContext* inContext)
 					sourceStartFrame, destStartFrame,
 					sourceFrames, destFrames);
 		}
+		memcpy(ctx.multiplexerAnalogIn, sourceCtx->multiplexerAnalogIn, ctx.multiplexerChannels * ctx.analogInChannels * sizeof(ctx.analogIn[0]));
 		++inCount;
 	}
 	if(inCount >= inLength)
@@ -146,6 +148,7 @@ void BelaContextSplitter::cleanup()
 		delete [] context.analogIn;
 		delete [] context.analogOut;
 		delete [] context.digital;
+		delete [] context.multiplexerAnalogIn;
 	}
 	outContexts.clear();
 }
@@ -218,7 +221,7 @@ void BelaContextSplitter::contextAllocate(InternalBelaContext* ctx)
 	ctx->analogIn = zeroedVals<float>(ctx->analogFrames * ctx->analogInChannels);
 	ctx->analogOut = zeroedVals<float>(ctx->analogFrames * ctx->analogOutChannels);
 	ctx->digital = zeroedVals<uint32_t>(ctx->digitalFrames);
-	ctx->multiplexerAnalogIn = nullptr; // TODO
+	ctx->multiplexerAnalogIn = zeroedVals<float>(ctx->multiplexerChannels * ctx->analogInChannels);
 }
 
 void BelaContextSplitter::contextCopy(const InternalBelaContext* csrc, InternalBelaContext* cdst)
@@ -237,6 +240,7 @@ void BelaContextSplitter::contextCopyData(const InternalBelaContext* src, Intern
 	memcpy((void*)dst->analogIn, (void*)src->analogIn, sizeof(src->analogIn[0])*src->analogFrames*src->analogInChannels);
 	memcpy((void*)dst->analogOut, (void*)src->analogOut, sizeof(src->analogOut[0])*src->analogFrames*src->analogOutChannels);
 	memcpy((void*)dst->digital, (void*)src->digital, sizeof(src->digital[0])*src->digitalFrames);
+	memcpy((void*)dst->multiplexerAnalogIn, (void*)src->digital, sizeof(src->multiplexerAnalogIn[0])*src->multiplexerChannels * src->analogInChannels);
 }
 
 #undef NDEBUG
@@ -253,6 +257,8 @@ static void contextFill(InternalBelaContext* ctx, unsigned int start)
 		ctx->analogOut[n] = n + start;
 	for(unsigned int n = 0; n < ctx->digitalFrames; ++n)
 		ctx->digital[n] = n + start;
+	for(unsigned int n = 0; n < ctx->multiplexerChannels * ctx->analogInChannels; ++n)
+		ctx->multiplexerAnalogIn[n] = n + start;
 }
 bool BelaContextSplitter::test()
 {
