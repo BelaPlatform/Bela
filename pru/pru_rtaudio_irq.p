@@ -422,7 +422,6 @@ DONE:
 .macro IF_HAS_ANALOG_DAC_JMP_TO
 .mparam DEST
      QBBS DONE, reg_flags, FLAG_BIT_BELA_MINI
-     QBBS DONE, reg_flags, FLAG_BIT_BELA_MULTI_TLV
      QBA DEST
 DONE:
 .endm
@@ -616,7 +615,6 @@ DIGITAL:
 //r2 is gpio1_oe, r8 is gpio1_setdataout, r7 is gpio1_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r2,r7,r8
 QBBS BELA_SET_GPIO_BITS_0_MINI, reg_flags, FLAG_BIT_BELA_MINI
-QBBS BELA_SET_GPIO_BITS_0_MINI, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 QBA BELA_SET_GPIO_BITS_0_NOT_MINI
 BELA_SET_GPIO_BITS_0_MINI:
     SET_GPIO_BITS r2, r8, r7, 18, 0, r27
@@ -663,7 +661,6 @@ SET_GPIO_BITS_0_DONE:
 //r3 is gpio2_oe, r5 is gpio2_setdataout, r4 is gpio2_cleardataout, r27 is the input word
 //the following operations will read from r27 and update r3,r4,r5
 QBBS BELA_SET_GPIO_BITS_1_MINI, reg_flags, FLAG_BIT_BELA_MINI
-QBBS BELA_SET_GPIO_BITS_1_MINI, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 QBA BELA_SET_GPIO_BITS_1_NOT_MINI
 BELA_SET_GPIO_BITS_1_MINI:
     SET_GPIO_BITS r3, r5, r4, 0, 7, r27
@@ -705,7 +702,6 @@ START_INTERMEDIATE_DONE:
 //now read from r2 and r3 only the channels that are set as input in the lower word of r27 
 // and set their value in the high word of r27
 QBBS BELA_READ_GPIO_BITS_MINI, reg_flags, FLAG_BIT_BELA_MINI
-QBBS BELA_READ_GPIO_BITS_MINI, reg_flags, FLAG_BIT_BELA_MULTI_TLV
 QBA BELA_READ_GPIO_BITS_NOT_MINI
 BELA_READ_GPIO_BITS_MINI:
 //GPIO1
@@ -808,13 +804,11 @@ QBA DALOOP
 .macro DAC_WRITE
 .mparam reg
      QBBS SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_BELA_MINI
-	 QBBS SKIP_DAC_WRITE_1, reg_flags, FLAG_BIT_BELA_MULTI_TLV
      DAC_CS_ASSERT
 SKIP_DAC_WRITE_1:	 
      DAC_TX reg
      DAC_WAIT_FOR_FINISH
      QBBS SKIP_DAC_WRITE_2, reg_flags, FLAG_BIT_BELA_MINI
-	 QBBS SKIP_DAC_WRITE_2, reg_flags, FLAG_BIT_BELA_MULTI_TLV
      DAC_CS_UNASSERT
 SKIP_DAC_WRITE_2:
      DAC_DISCARD_RX

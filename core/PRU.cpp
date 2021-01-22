@@ -561,9 +561,6 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 {
 	uint32_t board_flags = 0;
 	switch(belaHw) {
-	case BelaHw_BelaMini:
-		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
-		break;
 	case BelaHw_BelaMiniMultiTdm:
 	case BelaHw_BelaMiniMultiAudio:
 		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
@@ -577,11 +574,14 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 		board_flags |= 1 << BOARD_FLAGS_CTAG_BEAST;
 		break;
 	case BelaHw_Bela:
+	case BelaHw_BelaMini:
 	case BelaHw_Salt:
 	case BelaHw_NoHw:
 	default:
 		break;
 	}
+	if(Bela_hwContains(belaHw, BelaMiniCape))
+		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
 	pru_buffer_comm[PRU_COMM_BOARD_FLAGS] = board_flags;
     /* Set up flags */
 	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 0;
