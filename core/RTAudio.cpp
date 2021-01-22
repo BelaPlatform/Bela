@@ -473,8 +473,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			mode = "MODE:"+codecMode;
 		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
 	}
-	else if(belaHw == BelaHw_BelaMiniMultiTdm)
-		gAudioCodec = new I2c_MultiTdmCodec(codecMode, gRTAudioVerbose);
+	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
+		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);
 	else if(Bela_hwContains(belaHw, Tlv320aic3104))
 	{
 		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
@@ -520,6 +520,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			fifoFactor = settings->periodSize / 64;
 		break;
 		case BelaHw_CtagBeast:
+		case BelaHw_BelaMultiTdm:
 		case BelaHw_BelaMiniMultiTdm:
 		case BelaHw_BelaMiniMultiAudio:
 		case BelaHw_CtagBeastBela:

@@ -94,7 +94,8 @@ typedef enum
 	BelaHw_CtagFaceBela, ///< Ctag Face and Bela cape
 	BelaHw_CtagBeastBela, ///< Ctag Beast and Bela cape
 	BelaHw_BelaMiniMultiAudio, ///< Bela Mini with extra codecs
-	BelaHw_BelaMiniMultiTdm, ///< Bela Mini with extra codes and tdm devices
+	BelaHw_BelaMiniMultiTdm, ///< Bela Mini with extra codecs and/or tdm devices
+	BelaHw_BelaMultiTdm, ///< Bela with extra codecs and/or tdm devices
 	BelaHw_Batch, ///< Dummy offline
 } BelaHw;
 
