@@ -8,6 +8,7 @@ import { Lock } from './Lock';
 import * as cpu_monitor from './CPUMonitor';
 import * as path from 'path';
 import { MostRecentQueue } from './MostRecentQueue';
+import * as globals from './globals';
 
 const lock: Lock = new Lock("ProcessManager");
 let syntaxTimeout : NodeJS.Timer; // storing the value returned by setTimeout
@@ -25,7 +26,8 @@ let queuedUploads = new MostRecentQueue();
 async function processUploads() {
 	while(queuedUploads.size) {
 		for(let id of queuedUploads.keys()) {
-			console.log("SAVING:", id);
+			if(globals.verbose)
+				console.log("SAVING:", id);
 			// grab data from the queue for processing
 			let data = queuedUploads.pop(id);
 			if(!data) {
@@ -33,9 +35,9 @@ async function processUploads() {
 				continue;
 			}
 			try{
-				process.stdout.write(".");
 				await file_manager.save_file(makePath(data), data.fileData, paths.lockfile);
-				console.log("SAVED", id);
+				if(globals.verbose)
+					console.log("SAVED", id);
 				var ext = path.extname(data.newFile);
 				if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
 					clearTimeout(syntaxTimeout)

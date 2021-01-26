@@ -4,6 +4,7 @@ import * as isBinary from 'isbinaryfile';
 import * as util from './utils';
 import { Lock } from "./Lock";
 import { MostRecentQueue } from './MostRecentQueue';
+import * as globals from './globals';
 
 // FileManager is only available as a single instance accross the app, exported as fm
 // it has a private Lock which is always acquired before manipulating the filesystem
@@ -43,7 +44,8 @@ async function processCommits(short : boolean) {
 				queuedCommits.pop(path);
 				await commitPathNow(path);
 			} catch (e) {
-				console.log("File to be committed", path, "no longer exists");
+				if(globals.verbose)
+					console.log("File to be committed", path, "no longer exists");
 			}
 		}
 	}
@@ -91,7 +93,8 @@ export async function write_file(file_path: string, data: string): Promise<void>
 	}
 }
 export async function write_folder(file_path: string): Promise<void>{
-  console.log(file_path);
+	if(globals.verbose)
+		console.log("write_folder :", file_path);
 	await lock.acquire();
 	try{
 		await fs.mkdirSync(file_path);

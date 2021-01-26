@@ -22,7 +22,7 @@ function stacktrace() {
         .replace(/_[_]+/g, "__")
         .replace(/\s+/gm, " ");
 }
-var toLog = ["ProcessManager", "FileManager"];
+var toLog = [];
 function shouldLog(s) {
     return toLog.indexOf(s) != -1;
 }

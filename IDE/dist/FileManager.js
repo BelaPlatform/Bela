@@ -51,6 +51,7 @@ var isBinary = require("isbinaryfile");
 var util = require("./utils");
 var Lock_1 = require("./Lock");
 var MostRecentQueue_1 = require("./MostRecentQueue");
+var globals = require("./globals");
 // FileManager is only available as a single instance accross the app, exported as fm
 // it has a private Lock which is always acquired before manipulating the filesystem
 // thus concurent access is prohibited
@@ -120,7 +121,8 @@ function processCommits(short) {
                     return [3 /*break*/, 8];
                 case 7:
                     e_1 = _d.sent();
-                    console.log("File to be committed", path, "no longer exists");
+                    if (globals.verbose)
+                        console.log("File to be committed", path, "no longer exists");
                     return [3 /*break*/, 8];
                 case 8:
                     _b = _a.next();
@@ -250,7 +252,8 @@ function write_folder(file_path) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log(file_path);
+                    if (globals.verbose)
+                        console.log("write_folder :", file_path);
                     return [4 /*yield*/, lock.acquire()];
                 case 1:
                     _a.sent();

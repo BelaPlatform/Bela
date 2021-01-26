@@ -55,6 +55,7 @@ var Lock_1 = require("./Lock");
 var cpu_monitor = require("./CPUMonitor");
 var path = require("path");
 var MostRecentQueue_1 = require("./MostRecentQueue");
+var globals = require("./globals");
 var lock = new Lock_1.Lock("ProcessManager");
 var syntaxTimeout; // storing the value returned by setTimeout
 var syntaxTimeoutMs = 300; // ms between received data and start of syntax checking
@@ -80,7 +81,8 @@ function processUploads() {
                 case 2:
                     if (!!_b.done) return [3 /*break*/, 7];
                     id = _b.value;
-                    console.log("SAVING:", id);
+                    if (globals.verbose)
+                        console.log("SAVING:", id);
                     data = queuedUploads.pop(id);
                     if (!data) {
                         console.log("WARNING: processUpload: found no data for", id);
@@ -89,11 +91,11 @@ function processUploads() {
                     _d.label = 3;
                 case 3:
                     _d.trys.push([3, 5, , 6]);
-                    process.stdout.write(".");
                     return [4 /*yield*/, file_manager.save_file(makePath(data), data.fileData, paths.lockfile)];
                 case 4:
                     _d.sent();
-                    console.log("SAVED", id);
+                    if (globals.verbose)
+                        console.log("SAVED", id);
                     ext = path.extname(data.newFile);
                     if (data.checkSyntax && (extensionsForSyntaxCheck.indexOf(ext) >= 0)) { // old typescript doesn't like .includes()
                         clearTimeout(syntaxTimeout);

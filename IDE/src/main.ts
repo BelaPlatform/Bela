@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as globals from './globals';
 var TerminalManager = require('./TerminalManager');
 
-export async function init(){
+export async function init(args : Array<any>){
 
 	let httpPort = 80;
 	// load customised "dev" settings, if available. See
@@ -27,8 +27,21 @@ export async function init(){
 				globals.set_local_dev(ideDev.local_dev);
 			if(ideDev.hasOwnProperty('httpPort'))
 				httpPort = ideDev.httpPort;
+			if(ideDev.hasOwnProperty('verbose'))
+				globals.set_verbose(ideDev.verbose);
 		}
 	} catch (err) {}
+	let n = 0;
+	while(n < args.length)
+	{
+		let arg = args[n];
+		switch (arg) {
+			case "-v":
+				globals.set_verbose(1);
+				break;
+		}
+		++n;
+	}
 	console.log('starting IDE from ' + paths.Bela);
 
 	await check_lockfile()

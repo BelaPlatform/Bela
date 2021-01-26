@@ -46,9 +46,9 @@ var routes = require("./RouteManager");
 var path = require("path");
 var globals = require("./globals");
 var TerminalManager = require('./TerminalManager');
-function init() {
+function init(args) {
     return __awaiter(this, void 0, void 0, function () {
-        var httpPort, ideDev, app, server;
+        var httpPort, ideDev, n, arg, app, server;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -65,9 +65,21 @@ function init() {
                                 globals.set_local_dev(ideDev.local_dev);
                             if (ideDev.hasOwnProperty('httpPort'))
                                 httpPort = ideDev.httpPort;
+                            if (ideDev.hasOwnProperty('verbose'))
+                                globals.set_verbose(ideDev.verbose);
                         }
                     }
                     catch (err) { }
+                    n = 0;
+                    while (n < args.length) {
+                        arg = args[n];
+                        switch (arg) {
+                            case "-v":
+                                globals.set_verbose(1);
+                                break;
+                        }
+                        ++n;
+                    }
                     console.log('starting IDE from ' + paths.Bela);
                     return [4 /*yield*/, check_lockfile()
                             .catch(function (e) { return console.log('error checking lockfile', e); })];
