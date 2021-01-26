@@ -4217,6 +4217,10 @@ var SettingsView = function (_View) {
 				var el = this.$elements.filterByData('key', key);
 
 				// set the input value
+				if (!el.length) {
+					console.log("Unrecognized CLArg received: ", key, data[key]);
+					continue;
+				}
 				if (el[0].type === 'checkbox') {
 					el.prop('checked', data[key] == 1);
 				} else {
