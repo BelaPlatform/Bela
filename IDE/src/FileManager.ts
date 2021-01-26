@@ -280,7 +280,7 @@ export async function read_json(file_path: string): Promise<any> {
 	return JSON.parse(output);
 }
 export async function write_json(file_path: string, data: any): Promise<void> {
-	return write_file(file_path, JSON.stringify(data));
+	return write_file(file_path, JSON.stringify(data, null, 2) + '\n');
 }
 export async function directory_exists(dir_path: string): Promise<boolean>{
 	// the "/" ensure return stat.isDirectory() is "true" for symlinks to directories

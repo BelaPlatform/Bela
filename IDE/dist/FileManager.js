@@ -654,7 +654,7 @@ exports.read_json = read_json;
 function write_json(file_path, data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            return [2 /*return*/, write_file(file_path, JSON.stringify(data))];
+            return [2 /*return*/, write_file(file_path, JSON.stringify(data, null, 2) + '\n')];
         });
     });
 }
