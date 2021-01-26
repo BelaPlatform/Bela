@@ -18,24 +18,21 @@ export async function write(project: string, data: any): Promise<any> {
 	return data;
 }
 export async function setCLArg(data: any): Promise<any> {
-	lock.acquire();
-	try{
-		var settings = await read(data.currentProject);
-		settings.CLArgs[data.key] = data.value;
-		write(data.currentProject, settings);
-	}
-	catch(e){
-		lock.release();
-		throw e;
-	}
-	lock.release();
-	return settings;
+	let newData = data;
+	newData.args = [
+		{ key: data.key, value: data.value}
+	];
+	delete newData.key;
+	delete newData.value;
+	return await setCLArgs(newData);
 }
 export async function setCLArgs(data: any): Promise<any> {
 	lock.acquire();
 	try{
 		var settings = await read(data.currentProject);
 		for (let item of data.args){
+			if("undefined" === typeof(settings.CLArgs))
+				settings.CLArgs = {};
 			settings.CLArgs[item.key] = item.value;
 		}
 		write(data.currentProject, settings);
