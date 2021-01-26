@@ -1339,7 +1339,8 @@ var ConsoleView = function (_View) {
 	}, {
 		key: 'connect',
 		value: function connect() {
-			$('[data-console-disconnect]').remove();
+			console.log('connect');
+			$('.beaglert-console-warning#console-disconnect').remove();
 			_console.unblock();
 		}
 	}, {

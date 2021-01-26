@@ -139,7 +139,8 @@ class ConsoleView extends View{
 	}
 
 	connect(){
-		$('[data-console-disconnect]').remove();
+		console.log('connect');
+		$('.beaglert-console-warning#console-disconnect').remove();
 		_console.unblock();
 	}
 
