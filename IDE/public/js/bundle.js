@@ -531,6 +531,7 @@ toolbarView.on('process-event', function (event) {
 	};
 	//data.timestamp = performance.now();
 	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
+	if (event === 'run' || event === 'stop') toolbarView.emit('msw-start-grace', event);
 	socket.emit('process-event', data);
 });
 toolbarView.on('halt', function () {
@@ -4665,6 +4666,10 @@ var json = require('../site-text.json');
 var modeswitches = 0;
 var NORMAL_MSW = 1;
 var nameIndex, CPUIndex, rootName, IRQName;
+var mswGraceEnd = 0;
+// avoid spurious MSWs when stopping or restarting
+var mswGraceMsStop = 3000;
+var mswGraceMsRun = 2000;
 
 var ToolbarView = function (_View) {
 	_inherits(ToolbarView, _View);
@@ -4680,6 +4685,12 @@ var ToolbarView = function (_View) {
 
 		_this.on('disconnected', function () {
 			$('[data-toolbar-run]').removeClass('running-button').removeClass('building-button');
+		});
+		// set externally upon start/stop
+		_this.on('msw-start-grace', function (event) {
+			var t;
+			if ('run' === event) t = mswGraceMsRun;else if ('stop' === event) t = mswGraceMsStop;
+			mswGraceEnd = t + performance.now();
 		});
 
 		$('[data-toolbar-run]').mouseover(function () {
@@ -4906,6 +4917,7 @@ var ToolbarView = function (_View) {
 	}, {
 		key: 'mode_switches',
 		value: function mode_switches(value) {
+			if (performance.now() < mswGraceEnd) return;
 			$('[data-toolbar-cpu-msw]').html('MSW: ' + value);
 			if (value > modeswitches) {
 				this.emit('mode-switch-warning', value);

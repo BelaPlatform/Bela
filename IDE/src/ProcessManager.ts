@@ -92,6 +92,7 @@ export function checkSyntax(data: any){
 // if a program is already building or running it is stopped and restarted
 // any syntax check in progress is stopped
 export function run(data: any){
+	cpu_monitor.stop();
 	if (processes.run.get_status()){
 		processes.run.stop();
 		processes.run.queue( () => build_run(data.currentProject) );
@@ -140,6 +141,7 @@ function build_error(stderr: string): boolean {
 // it calls the stop() method of any running process
 // if there is no running process, 'make stop' is called
 export function stop(){
+	cpu_monitor.stop();
 	let stopped: boolean = false;
 	if (processes.run.get_status()){
 		processes.run.stop();

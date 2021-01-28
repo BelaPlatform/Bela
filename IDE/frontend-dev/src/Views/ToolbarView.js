@@ -7,6 +7,10 @@ var json = require('../site-text.json');
 var modeswitches = 0;
 var NORMAL_MSW = 1;
 var nameIndex, CPUIndex, rootName, IRQName;
+var mswGraceEnd = 0;
+// avoid spurious MSWs when stopping or restarting
+const mswGraceMsStop = 3000;
+const mswGraceMsRun = 2000;
 
 class ToolbarView extends View {
 
@@ -17,6 +21,15 @@ class ToolbarView extends View {
 
 		this.on('disconnected', () => {
       $('[data-toolbar-run]').removeClass('running-button').removeClass('building-button');
+		});
+		// set externally upon start/stop
+		this.on('msw-start-grace', (event) => {
+			var t;
+			if('run' === event)
+				t = mswGraceMsRun;
+			else if('stop' === event)
+				t = mswGraceMsStop;
+			mswGraceEnd = t + performance.now();
 		});
 
     $('[data-toolbar-run]')
@@ -256,6 +269,8 @@ class ToolbarView extends View {
 	}
 
 	mode_switches(value){
+		if(performance.now() < mswGraceEnd)
+			return;
 		$('[data-toolbar-cpu-msw]').html('MSW: '+value);
 		if (value > modeswitches){
 			this.emit('mode-switch-warning', value);

@@ -134,6 +134,8 @@ toolbarView.on('process-event', (event) => {
 	};
 	//data.timestamp = performance.now();
 	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
+	if (event === 'run' || event === 'stop')
+		toolbarView.emit('msw-start-grace', event);
 	socket.emit('process-event', data);
 });
 toolbarView.on('halt', () => {
