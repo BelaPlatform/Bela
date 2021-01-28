@@ -31,6 +31,33 @@ var popup = {
 		overlay.toggleClass('active');
 	},
 
+	// a template popup with two buttons which will hide itself and call the
+	// provided callbacks on button presses.
+	// strings must have fields: title, text, submit, cancel
+	// strings.button can be used instead of strings.submit  for backwards
+	// compatibility
+	submitCancel(strings, onSubmit, onCancel) {
+		popup.title(strings.title);
+		popup.subtitle(strings.text);
+
+		// strings.button is provided for backwards compatbility.
+		if(typeof(strings.submit) === 'undefined')
+			strings.submit = strings.button;
+		var form = [];
+		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
+		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
+
+		popup.form.empty().append(form.join('')).off('submit').on('submit', (e) => {
+			popup.hide();
+			onSubmit(e);
+		});
+		popup.find('.cancel').on('click', () => {
+			popup.hide();
+			onCancel();
+		});
+		popup.show();
+	},
+
 	find: selector => content.find(selector),
 
 	title: text => titleEl.text(text),
