@@ -7,16 +7,17 @@ var codeEl = parent.find('code');
 var bodyEl = parent.find('p');
 var formEl	= parent.find('form');
 
+const overlayActiveClass = 'active-popup';
 var popup = {
 
 	show(){
-		overlay.addClass('active');
+		overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
 		content.find('input[type=text]').first().trigger('focus');
 	},
 
 	hide(keepOverlay){
-		if (keepOverlay !== 'keep overlay') overlay.removeClass('active');
+		if (keepOverlay !== 'keep overlay') overlay.removeClass(overlayActiveClass);
 		parent.removeClass('active');
     titleEl.removeClass('error');
 		titleEl.empty();
@@ -28,7 +29,7 @@ var popup = {
 	},
 
 	overlay(){
-		overlay.toggleClass('active');
+		overlay.toggleClass(overlayActiveClass);
 	},
 
 	// a template popup with two buttons which will hide itself and call the

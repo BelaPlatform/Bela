@@ -2300,17 +2300,18 @@ var FileView = function (_View) {
 			project: ""
 		};
 
+		var overlayActiveClass = 'active-drag-upload';
 		// drag and drop file upload on editor
 		var overlay = $('[data-overlay]');
 		overlay.on('dragleave', function (e) {
-			overlay.removeClass('drag-upload').removeClass('active');
+			overlay.removeClass(overlayActiveClass);
 		});
 		$('body').on('dragenter dragover drop', function (e) {
 			if (!isDragEvent(e, "Files")) return;
 			e.stopPropagation();
 			e.preventDefault();
 			if (e.type == 'dragenter') {
-				overlay.addClass('active').addClass('drag-upload');
+				overlay.addClass(overlayActiveClass);
 			}
 			if (e.type === 'drop') {
 				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
@@ -2321,7 +2322,7 @@ var FileView = function (_View) {
 							var that = _this;
 							overlay.addClass('no');
 							setTimeout(function () {
-								overlay.removeClass('no').removeClass('drag-upload');
+								overlay.removeClass('no').removeClass(overlayActiveClass);
 								that.uploadSizeError();
 							}, 1500);
 							return {
@@ -2335,7 +2336,7 @@ var FileView = function (_View) {
 					}
 					if (i == e.originalEvent.dataTransfer.files.length - 1) {
 						setTimeout(function () {
-							overlay.removeClass('active').removeClass('drag-upload').removeClass('no');
+							overlay.removeClass(overlayActiveClass).removeClass('no');
 						}, 1500);
 					}
 				}
@@ -6042,14 +6043,15 @@ var codeEl = parent.find('code');
 var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
+var overlayActiveClass = 'active-popup';
 var popup = {
 	show: function show() {
-		_overlay.addClass('active');
+		_overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
 		content.find('input[type=text]').first().trigger('focus');
 	},
 	hide: function hide(keepOverlay) {
-		if (keepOverlay !== 'keep overlay') _overlay.removeClass('active');
+		if (keepOverlay !== 'keep overlay') _overlay.removeClass(overlayActiveClass);
 		parent.removeClass('active');
 		titleEl.removeClass('error');
 		titleEl.empty();
@@ -6060,7 +6062,7 @@ var popup = {
 		_formEl.empty();
 	},
 	overlay: function overlay() {
-		_overlay.toggleClass('active');
+		_overlay.toggleClass(overlayActiveClass);
 	},
 
 
