@@ -4029,7 +4029,7 @@ var SettingsView = function (_View) {
 			var key = data.key;
 			var type = $element.prop('type');
 			console.log(key);
-			if (type === 'number' || type === 'text') {
+			if (type == 'textarea' || type === 'number' || type === 'text') {
 				if (func && this[func]) {
 					this[func](func, key, $element.val());
 				}
@@ -4962,6 +4962,9 @@ var View = function (_EventEmitter) {
 			return _this.selectChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input').on('input', function (e) {
+			return _this.inputChanged($(e.currentTarget), e);
+		});
+		_this.$elements.filter('textarea').on('input', function (e) {
 			return _this.inputChanged($(e.currentTarget), e);
 		});
 		_this.$elements.filter('input[type=checkbox]').on('change', function (e) {

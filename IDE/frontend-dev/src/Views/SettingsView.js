@@ -74,7 +74,7 @@ class SettingsView extends View {
 		var key = data.key;
 		var type = $element.prop('type');
 		console.log(key);
-		if (type === 'number' || type === 'text'){
+		if (type == 'textarea' || type === 'number' || type === 'text'){
 			if (func && this[func]){
 				this[func](func, key, $element.val());
 			}
