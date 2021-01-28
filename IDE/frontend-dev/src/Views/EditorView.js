@@ -96,13 +96,16 @@ class EditorView extends View {
 		});*/
 
 		this.on('resize', () => {
-      this.editor.resize();
-      var data = tmpData;
-      var opts = tmpOpts;
-      if (opts.fileType && opts.fileType == "pd") {
-        this.__fileData(data, opts);
-      }
-    });
+			this.editor.resize();
+			var data = tmpData;
+			var opts = tmpOpts;
+			if (opts.fileType && (
+				opts.fileType == "pd"
+				|| opts.fileType.indexOf('image') !== -1)
+			) {
+				this.__fileData(data, opts);
+			}
+		});
 
 		this.on('add-link', (link, type) => {
 

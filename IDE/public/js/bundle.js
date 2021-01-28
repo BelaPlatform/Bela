@@ -1901,7 +1901,7 @@ var EditorView = function (_View) {
 			_this.editor.resize();
 			var data = tmpData;
 			var opts = tmpOpts;
-			if (opts.fileType && opts.fileType == "pd") {
+			if (opts.fileType && (opts.fileType == "pd" || opts.fileType.indexOf('image') !== -1)) {
 				_this.__fileData(data, opts);
 			}
 		});
