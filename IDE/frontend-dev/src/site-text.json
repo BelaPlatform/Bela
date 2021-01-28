@@ -93,11 +93,6 @@
 			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
 			"button": "Close"
 		},
-		"file_changed": {
-			"title": "File changed on disk",
-			"text": "Would you like to reload?",
-			"button": "Reload"
-		},
 		"overwrite": {
 			"title": "Overwrite file?",
 			"text": " already exists in this project. Overwrite?",
@@ -126,6 +121,12 @@
 			"text": " has changed. Would you like to reload it?",
 			"button": "Discard changes and reload",
 			"cancel": "Don't reload, keep this version"
+		},
+		"file_opened": {
+			"title": "File opened in another tab",
+			"text": " has been opened in another tab. Only one tab at a time can edit the file.",
+			"button": "Keep editing here",
+			"cancel": "Set this tab to read-only. Refresh or reopen the file to edit again."
 		}
 	},
   "tabs": {
@@ -147,7 +148,8 @@
 			"preview": "This is a preview - these objects are not editable in the browser.",
       "pd": {
         "error": "Rendering pd patch failed!"
-      }
+      },
+      "keypress_read_only": "This file is read-only. Open a file or refresh the page to keep editing."
 	},
 	"settings_view": {
 		"update": "Beginning update - this may take several minutes",

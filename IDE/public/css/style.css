@@ -806,6 +806,9 @@ select.dropdown-num {
   #pd-svg-parent.active {
     display: block; }
 
+#editor .editor_read_only {
+  background: #fdd; }
+
 ul.projectManager {
   list-style: none;
   margin: 0;

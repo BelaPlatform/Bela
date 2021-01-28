@@ -380,6 +380,8 @@ module.exports = CircularBuffer;
 },{}],3:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 //// IDE controller
 module.exports = {};
 
@@ -522,6 +524,16 @@ editorView.on('compare-files', function (compare) {
 	// unset the interval
 	if (!compare) setModifiedTimeInterval(undefined);
 });
+editorView.on('console-brief', function (text, id) {
+	consoleView.emit('openNotification', {
+		func: 'editor',
+		timestamp: id,
+		text: text
+	});
+	setTimeout(function (id) {
+		consoleView.emit('closeNotification', { timestamp: id, fulfillMessage: '' });
+	}.bind(null, id), 500);
+});
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings]);
@@ -614,10 +626,21 @@ var listFilesIntervalMs = 5000;
 var listFilesInterval = 0;
 
 // setup socket
-var socket = io('/IDE');
+var _socket = io('/IDE');
+// sub- minimal wrapper for socket.io to inject clientId
+var socket = {
+	on: function on(what, cb) {
+		return _socket.on(what, cb);
+	},
+	io: _socket.io,
+	emit: function emit(what, data) {
+		socket.id = _socket.id;
+		if ("object" === (typeof data === 'undefined' ? 'undefined' : _typeof(data)) && !Array.isArray(data)) data.clientId = socket.id;
+		_socket.emit(what, data);
+	}
 
-// socket events
-socket.on('report-error', function (error) {
+	// socket events
+};socket.on('report-error', function (error) {
 	return consoleView.emit('warn', error.message || error);
 });
 
@@ -670,6 +693,9 @@ socket.on('init', function (data) {
 // project events
 socket.on('project-data', function (data) {
 
+	// if the file gets to us, it's because we requested it,
+	// so we are going to use it regardless of the current state
+	models.project.setKey('openElsewhere', false);
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
 
@@ -723,14 +749,25 @@ socket.on('disconnect', function (reason) {
 	models.project.setKey('readOnly', true);
 });
 
-socket.on('file-changed', function (project, fileName) {
-	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
-		console.log('file changed!');
-		models.project.setKey('readOnly', true);
-		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
-		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
-	}
+socket.on('file-opened', function (data) {
+	fileOpenedOrChanged(data, 0);
 });
+
+socket.on('file-changed', function (data) {
+	fileOpenedOrChanged(data, 1);
+});
+
+function fileOpenedOrChanged(data, changed) {
+	var str = changed ? 'changed' : 'opened';
+	var project = data.currentProject;
+	var fileName = data.fileName;
+	var clientId = data.clientId;
+	// if someone else opened or changed our file
+	// and we arenot ignoring it
+	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName') && clientId != socket.id && !models.project.getKey('openElsewhere') && !models.project.getKey('readOnly')) {
+		if (changed) fileChangedPopup(fileName);else fileOpenedPopup(fileName);
+	}
+}
 
 // run-on-boot
 socket.on('run-on-boot-log', function (text) {
@@ -792,17 +829,11 @@ function setModifiedTimeInterval(mtime) {
 // current file changed
 var fileChangedPopupVisible = false;
 function fileChangedPopup(fileName) {
-
 	if (fileChangedPopupVisible) return;
 
-	popup.title(json.popups.file_changed.title);
-	popup.subtitle(fileName + json.popups.file_changed.text);
-
-	var form = [];
-	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
-	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
-
-	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+	var strings = Object.assign({}, json.popups.file_changed); // make a copy ...
+	strings.text = fileName + strings.text; // ... so we can modify it
+	popup.submitCancel(strings, function (e) {
 		fileChangedPopupVisible = false;
 		e.preventDefault();
 		var data = {
@@ -812,17 +843,30 @@ function fileChangedPopup(fileName) {
 		};
 		socket.emit('project-event', data);
 		consoleView.emit('openNotification', data);
-		popup.hide();
-	});
-
-	popup.find('.cancel').on('click', function () {
-		popup.hide();
+	}, function () {
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
 	});
-
-	popup.show();
 	fileChangedPopupVisible = true;
+}
+
+function fileOpenedPopup(fileName) {
+	if (fileChangedPopupVisible) return; // changed file takes priority
+	var strings = Object.assign({}, json.popups.file_opened); // make a copy ...
+	strings.text = fileName + strings.text; // ... so we can modify it
+
+	popup.submitCancel(strings, function (e) {
+		e.preventDefault();
+		var data = {
+			func: 'openProject',
+			currentProject: models.project.getKey('currentProject'),
+			timestamp: performance.now()
+		};
+		socket.emit('project-event', data);
+		consoleView.emit('openNotification', data);
+	}, function () {
+		models.project.setKey('openElsewhere', true);
+	});
 }
 
 // model events
@@ -1328,7 +1372,9 @@ var ConsoleView = function (_View) {
 			if (data.error) {
 				_console.reject(' ' + data.error, data.timestamp);
 			} else {
-				_console.fulfill(' done', data.timestamp);
+				var fulfillMessage = ' done';
+				if (typeof data.fulfillMessage !== 'undefined') fulfillMessage = data.fulfillMessage;
+				_console.fulfill(fulfillMessage, data.timestamp);
 			}
 		}
 	}, {
@@ -1827,6 +1873,8 @@ var EditorView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
 
+		_this.projectModel = models[0];
+
 		_this.highlights = {};
 		var data = tmpData;
 		var opts = tmpOpts;
@@ -1960,8 +2008,12 @@ var EditorView = function (_View) {
 			$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
 			tmpData = data;
 			tmpOpts = opts;
+
+			this.modelChanged({ readOnly: true }, ['readOnly']);
+			this.modelChanged({ openElsewhere: false }, ['openElsewhere']);
 			if (null === data) return;
 
+			this.projectModel.setKey('readOnly', true);
 			if (!opts.fileType) opts.fileType = '0';
 
 			if (opts.fileType.indexOf('image') !== -1) {
@@ -2032,6 +2084,7 @@ var EditorView = function (_View) {
 					this.emit('compare-files', true);
 				} else {
 
+					this.projectModel.setKey('readOnly', false);
 					// show the editor
 					$('[data-editor]').addClass('active');
 
@@ -2093,14 +2146,32 @@ var EditorView = function (_View) {
 				enableLiveAutocompletion: parseInt(status) === 1
 			});
 		}
+	}, {
+		key: '_openElsewhere',
+		value: function _openElsewhere(status) {
+			var _this3 = this;
+
+			var magic = 23985235;
+			this.projectModel.setKey('readOnly', status);
+			if (status) {
+				$('#editor').on('keypress', function (e) {
+					_this3.emit('console-brief', json.editor_view.keypress_read_only, magic);
+				});
+			} else {
+				$('#editor').off('keypress');
+			}
+		}
+
 		// readonly status has changed
 
 	}, {
 		key: '_readOnly',
 		value: function _readOnly(status) {
 			if (status) {
+				$('.ace_content').addClass('editor_read_only');
 				this.editor.setReadOnly(true);
 			} else {
+				$('.ace_content').removeClass('editor_read_only');
 				this.editor.setReadOnly(false);
 			}
 		}
@@ -5993,6 +6064,33 @@ var popup = {
 	},
 
 
+	// a template popup with two buttons which will hide itself and call the
+	// provided callbacks on button presses.
+	// strings must have fields: title, text, submit, cancel
+	// strings.button can be used instead of strings.submit  for backwards
+	// compatibility
+	submitCancel: function submitCancel(strings, onSubmit, onCancel) {
+		popup.title(strings.title);
+		popup.subtitle(strings.text);
+
+		// strings.button is provided for backwards compatbility.
+		if (typeof strings.submit === 'undefined') strings.submit = strings.button;
+		var form = [];
+		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
+		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
+
+		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
+			popup.hide();
+			onSubmit(e);
+		});
+		popup.find('.cancel').on('click', function () {
+			popup.hide();
+			onCancel();
+		});
+		popup.show();
+	},
+
+
 	find: function find(selector) {
 		return content.find(selector);
 	},
@@ -6149,11 +6247,6 @@ module.exports={
 			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
 			"button": "Close"
 		},
-		"file_changed": {
-			"title": "File changed on disk",
-			"text": "Would you like to reload?",
-			"button": "Reload"
-		},
 		"overwrite": {
 			"title": "Overwrite file?",
 			"text": " already exists in this project. Overwrite?",
@@ -6182,6 +6275,12 @@ module.exports={
 			"text": " has changed. Would you like to reload it?",
 			"button": "Discard changes and reload",
 			"cancel": "Don't reload, keep this version"
+		},
+		"file_opened": {
+			"title": "File opened in another tab",
+			"text": " has been opened in another tab. Only one tab at a time can edit the file.",
+			"button": "Keep editing here",
+			"cancel": "Set this tab to read-only. Refresh or reopen the file to edit again."
 		}
 	},
   "tabs": {
@@ -6203,7 +6302,8 @@ module.exports={
 			"preview": "This is a preview - these objects are not editable in the browser.",
       "pd": {
         "error": "Rendering pd patch failed!"
-      }
+      },
+      "keypress_read_only": "This file is read-only. Open a file or refresh the page to keep editing."
 	},
 	"settings_view": {
 		"update": "Beginning update - this may take several minutes",
