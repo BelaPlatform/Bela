@@ -8,7 +8,7 @@ import * as paths from './paths';
 import * as util from './utils';
 import * as routes from './RouteManager';
 import * as path from 'path';
-import * as fs from 'fs';
+import * as fs from 'fs-extra-promise';
 import * as globals from './globals';
 var TerminalManager = require('./TerminalManager');
 
@@ -42,6 +42,9 @@ export async function init(args : Array<any>){
 		}
 		++n;
 	}
+
+	// ensure required folders exist
+	await fs.mkdirp(paths.projects);
 	console.log('starting IDE from ' + paths.Bela);
 
 	await check_lockfile()

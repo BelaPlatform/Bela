@@ -44,6 +44,7 @@ var file_manager = require("./FileManager");
 var paths = require("./paths");
 var routes = require("./RouteManager");
 var path = require("path");
+var fs = require("fs-extra-promise");
 var globals = require("./globals");
 var TerminalManager = require('./TerminalManager');
 function init(args) {
@@ -80,10 +81,15 @@ function init(args) {
                         }
                         ++n;
                     }
+                    // ensure required folders exist
+                    return [4 /*yield*/, fs.mkdirp(paths.projects)];
+                case 1:
+                    // ensure required folders exist
+                    _a.sent();
                     console.log('starting IDE from ' + paths.Bela);
                     return [4 /*yield*/, check_lockfile()
                             .catch(function (e) { return console.log('error checking lockfile', e); })];
-                case 1:
+                case 2:
                     _a.sent();
                     app = express();
                     server = new http.Server(app);
