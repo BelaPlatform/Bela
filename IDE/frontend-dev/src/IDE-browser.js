@@ -241,6 +241,8 @@ socket.on('init', (data) => {
 
 	$('[data-run-on-boot]').val(data.boot_project);
 
+	models.settings.setKey('belaCoreVersion', data.bela_core_version);
+	models.settings.setKey('belaImageVersion', data.bela_image_version);
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
 	console.log('running on', data.board_string);

@@ -401,7 +401,7 @@ function read_subfolders(dir_path) {
 exports.read_subfolders = read_subfolders;
 function read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var out;
+        var out, e_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, lock.acquire()];
@@ -409,18 +409,21 @@ function read_directory(dir_path) {
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, , 4, 5]);
+                    _a.trys.push([2, 4, 5, 6]);
                     return [4 /*yield*/, fs.readdirAsync(dir_path)];
                 case 3:
                     out = _a.sent();
                     out.sort(function (a, b) {
                         return a.toLowerCase().localeCompare(b.toLowerCase());
                     });
-                    return [3 /*break*/, 5];
+                    return [3 /*break*/, 6];
                 case 4:
+                    e_4 = _a.sent();
+                    return [3 /*break*/, 6];
+                case 5:
                     lock.release();
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/, out];
+                case 6: return [2 /*return*/, out];
             }
         });
     });
@@ -539,7 +542,7 @@ exports.save_file = SaveFile_1.save_file;
 // recursively read the contents of a directory, returning an array of File_Descriptors
 function deep_read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var contents, output, _loop_1, contents_1, contents_1_1, name_1, e_4_1, e_4, _a;
+        var contents, output, _loop_1, contents_1, contents_1_1, name_1, e_5_1, e_5, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, read_directory(dir_path)];
@@ -625,14 +628,14 @@ function deep_read_directory(dir_path) {
                     return [3 /*break*/, 3];
                 case 6: return [3 /*break*/, 9];
                 case 7:
-                    e_4_1 = _b.sent();
-                    e_4 = { error: e_4_1 };
+                    e_5_1 = _b.sent();
+                    e_5 = { error: e_5_1 };
                     return [3 /*break*/, 9];
                 case 8:
                     try {
                         if (contents_1_1 && !contents_1_1.done && (_a = contents_1.return)) _a.call(contents_1);
                     }
-                    finally { if (e_4) throw e_4.error; }
+                    finally { if (e_5) throw e_5.error; }
                     return [7 /*endfinally*/];
                 case 9: return [2 /*return*/, output];
             }
@@ -716,7 +719,7 @@ function file_exists(file_path) {
 exports.file_exists = file_exists;
 function delete_matching_recursive(path, matches) {
     return __awaiter(this, void 0, void 0, function () {
-        var all, contents, matching, updated, matching_1, matching_1_1, match, full_path, e_5_1, contents_2, contents_2_1, file, full_path, stat, e_6_1, e_5, _a, e_6, _b;
+        var all, contents, matching, updated, matching_1, matching_1_1, match, full_path, e_6_1, contents_2, contents_2_1, file, full_path, stat, e_7_1, e_6, _a, e_7, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0: return [4 /*yield*/, read_directory(path)];
@@ -749,14 +752,14 @@ function delete_matching_recursive(path, matches) {
                     return [3 /*break*/, 4];
                 case 7: return [3 /*break*/, 10];
                 case 8:
-                    e_5_1 = _c.sent();
-                    e_5 = { error: e_5_1 };
+                    e_6_1 = _c.sent();
+                    e_6 = { error: e_6_1 };
                     return [3 /*break*/, 10];
                 case 9:
                     try {
                         if (matching_1_1 && !matching_1_1.done && (_a = matching_1.return)) _a.call(matching_1);
                     }
-                    finally { if (e_5) throw e_5.error; }
+                    finally { if (e_6) throw e_6.error; }
                     return [7 /*endfinally*/];
                 case 10:
                     if (!updated) return [3 /*break*/, 12];
@@ -784,14 +787,14 @@ function delete_matching_recursive(path, matches) {
                     return [3 /*break*/, 13];
                 case 16: return [3 /*break*/, 19];
                 case 17:
-                    e_6_1 = _c.sent();
-                    e_6 = { error: e_6_1 };
+                    e_7_1 = _c.sent();
+                    e_7 = { error: e_7_1 };
                     return [3 /*break*/, 19];
                 case 18:
                     try {
                         if (contents_2_1 && !contents_2_1.done && (_b = contents_2.return)) _b.call(contents_2);
                     }
-                    finally { if (e_6) throw e_6.error; }
+                    finally { if (e_7) throw e_7.error; }
                     return [7 /*endfinally*/];
                 case 19: return [2 /*return*/];
             }

@@ -32,18 +32,24 @@ var popup = {
 		overlay.toggleClass(overlayActiveClass);
 	},
 
-	// a template popup with two buttons which will hide itself and call the
-	// provided callbacks on button presses.
-	// strings must have fields: title, text, submit, cancel
-	// strings.button can be used instead of strings.submit  for backwards
-	// compatibility
-	submitCancel(strings, onSubmit, onCancel) {
-		popup.title(strings.title);
-		popup.subtitle(strings.text);
+	initWithStrings(strings) {
+		popup.hide();
+		if(strings.title)
+			popup.title(strings.title);
+		if(strings.body)
+			popup.body('a<br />\nb<br />\n' + strings.body);
+		if(strings.text)
+			popup.subtitle(strings.text);
+		if(strings.code)
+			popup.code(strings.code);
+	},
+	// shorthands for common popup configurations.
+	// strings may have fields: title, text(subtitle), code, body, button, cancel
 
-		// strings.button is provided for backwards compatbility.
-		if(typeof(strings.submit) === 'undefined')
-			strings.submit = strings.button;
+	// a popup with two buttons which will hide itself and call the
+	// provided callbacks on button presses.
+	submitCancel(strings, onSubmit, onCancel) {
+		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
 		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
@@ -57,6 +63,25 @@ var popup = {
 			onCancel();
 		});
 		popup.show();
+	},
+
+	// a popup with one button which will hide itself upon click
+	ok(strings) {
+		this.initWithStrings(strings);
+		var button;
+		if(strings.button)
+			button = strings.button;
+		else
+			button = "OK";
+
+		var form = [];
+		form.push('<button type="submit" class="button popup cancel">' + button + '</button>');
+		popup.form.empty().append(form.join('')).off('submit').on('submit', e => {
+			e.preventDefault();
+			popup.hide();
+		});
+		popup.show();
+		popup.find('.cancel').trigger('focus');
 	},
 
 	find: selector => content.find(selector),

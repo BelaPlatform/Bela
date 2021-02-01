@@ -657,6 +657,8 @@ socket.on('init', function (data) {
 
 	$('[data-run-on-boot]').val(data.boot_project);
 
+	models.settings.setKey('belaCoreVersion', data.bela_core_version);
+	models.settings.setKey('belaImageVersion', data.bela_image_version);
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
 	console.log('running on', data.board_string);
@@ -4046,7 +4048,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var json = require('../site-text.json');
+var utils = require('../utils');
 
+var belaCoreVersionString = "Unknown";
+var belaImageVersionString = "Unknown";
 var inputChangedTimeout;
 
 var SettingsView = function (_View) {
@@ -4114,7 +4119,6 @@ var SettingsView = function (_View) {
 			var func = data.func;
 			var key = data.key;
 			var val = $element.val();
-			console.log(func, key, val);
 			if (func && this[func]) {
 				if (val) {
 					this[func](func, key, $element.val());
@@ -4561,6 +4565,56 @@ var SettingsView = function (_View) {
 				$('[data-accordion="' + exceptions['sections'][sect] + '"]').remove();
 			}
 		}
+	}, {
+		key: 'versionPopup',
+		value: function versionPopup() {
+			var strings = {};
+			strings.title = json.popups.version.title;
+			strings.button = json.popups.version.button;
+			// popup.code is the only one that accepts HTML, so we have to use that
+			// to make it pickup the line breaks
+			strings.code = utils.formatString('<p>{0}<br />{1}</p><p>{2}<br />{3}</p>', json.popups.version.image_version_label, belaImageVersionString, json.popups.version.core_version_label, belaCoreVersionString);
+			popup.ok(strings);
+		}
+	}, {
+		key: '_belaCoreVersion',
+		value: function _belaCoreVersion(ver) {
+			var format = utils.formatString;
+			var s = [];
+			var templates = json.popups.version;
+			if (ver.date || ver.fileName) {
+				var t;
+				switch (ver.success) {
+					case 0:
+						t = templates.textTemplateFailed;
+						break;
+					case 1:
+						t = templates.textTemplateSuccess;
+						break;
+					default:
+					case -1:
+						t = templates.textTemplateUnknown; // unknown success (e.g.: incomplete legacy log)
+						break;
+				}
+				if (ver.date) {
+					var date = new Date(ver.date);
+					var dateString = date.getDay() + ' ' + date.toLocaleString('default', { month: "short" }) + ' ' + date.getFullYear() + ' ' + date.toTimeString().replace(/GMT.*/, '');
+					s.push(format(t[0], dateString));
+				}
+				if (ver.fileName) s.push(format(t[1], ver.fileName));
+				if (ver.method) s.push(format(t[2], ver.method));
+				s.push(t[3]);
+			} else {
+				s.push(templates.textUnknown); // no info available
+			}
+			if (ver.git_desc) s.push(format(templates.textTemplateGitDesc, ver.git_desc));
+			belaCoreVersionString = s.join('<br \>');
+		}
+	}, {
+		key: '_belaImageVersion',
+		value: function _belaImageVersion(ver) {
+			if (ver) belaImageVersionString = ver;
+		}
 	}]);
 
 	return SettingsView;
@@ -4568,7 +4622,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6064,19 +6118,21 @@ var popup = {
 	overlay: function overlay() {
 		_overlay.toggleClass(overlayActiveClass);
 	},
+	initWithStrings: function initWithStrings(strings) {
+		popup.hide();
+		if (strings.title) popup.title(strings.title);
+		if (strings.body) popup.body('a<br />\nb<br />\n' + strings.body);
+		if (strings.text) popup.subtitle(strings.text);
+		if (strings.code) popup.code(strings.code);
+	},
 
+	// shorthands for common popup configurations.
+	// strings may have fields: title, text(subtitle), code, body, button, cancel
 
-	// a template popup with two buttons which will hide itself and call the
+	// a popup with two buttons which will hide itself and call the
 	// provided callbacks on button presses.
-	// strings must have fields: title, text, submit, cancel
-	// strings.button can be used instead of strings.submit  for backwards
-	// compatibility
 	submitCancel: function submitCancel(strings, onSubmit, onCancel) {
-		popup.title(strings.title);
-		popup.subtitle(strings.text);
-
-		// strings.button is provided for backwards compatbility.
-		if (typeof strings.submit === 'undefined') strings.submit = strings.button;
+		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
 		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
@@ -6090,6 +6146,23 @@ var popup = {
 			onCancel();
 		});
 		popup.show();
+	},
+
+
+	// a popup with one button which will hide itself upon click
+	ok: function ok(strings) {
+		this.initWithStrings(strings);
+		var button;
+		if (strings.button) button = strings.button;else button = "OK";
+
+		var form = [];
+		form.push('<button type="submit" class="button popup cancel">' + button + '</button>');
+		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
+			e.preventDefault();
+			popup.hide();
+		});
+		popup.show();
+		popup.find('.cancel').trigger('focus');
 	},
 
 
@@ -6155,6 +6228,7 @@ function example(cb, arg, delay, cancelCb) {
 
 },{}],19:[function(require,module,exports){
 module.exports={
+    "locale": "en",
 	"popups": {
     "generic": {
       "cancel": "Cancel"
@@ -6247,6 +6321,17 @@ module.exports={
 		"about": {
 			"title": "About Bela",
 			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
+			"button": "Close"
+		},
+		"version": {
+			"title": "Version details",
+			"image_version_label": "Image: ",
+			"core_version_label": "Core code: ",
+			"textTemplateSuccess": [ "Last updated on '{0}'", "from file '{0}'", "via '{0}'", "Update was successful"],
+			"textTemplateFailed": [ "Last attempted update on '{0}'", "from file '{0}'", "via '{0}'", "Update failed"],
+			"textTemplateUnknown": [ "Last attempted update on '{0}'", "from file '{0}'", "via '{0}'", ""],
+			"textUnknown": [ "We could not determine the last time your core code was updated" ],
+			"textTemplateGitDesc": "Git desc: '{0}'",
 			"button": "Close"
 		},
 		"overwrite": {
@@ -6367,6 +6452,13 @@ module.exports.sanitise = function (name, options) {
 	if (!isPath) newName = newName.replace(/[\/]/g, '_');
 	console.log("FROM: ", name, "SANITISED: ", newName);
 	return newName;
+};
+
+module.exports.formatString = function (format, vargs) {
+	var args = Array.prototype.slice.call(arguments, 1);
+	return format.replace(/{(\d+)}/g, function (match, number) {
+		return typeof args[number] != 'undefined' ? args[number] : match;
+	});
 };
 
 // add onClick events for accordion functionality to relevant elements of the
