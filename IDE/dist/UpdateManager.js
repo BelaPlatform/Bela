@@ -76,38 +76,30 @@ function upload(data) {
 }
 exports.upload = upload;
 function check_update() {
+    return spawn_process('checkupdate');
+}
+function apply_update() {
+    return spawn_process('update');
+}
+function spawn_process(target) {
     return new Promise(function (resolve, reject) {
-        var proc = spawn_process('checkupdate');
+        var proc = child_process.spawn('make', ['--no-print-directory', '-C', paths.Bela, target]);
+        proc.stdout.setEncoding('utf8');
+        proc.stderr.setEncoding('utf8');
+        proc.stdout.on('data', function (data) {
+            console.log('stdout', data);
+            socket_manager.broadcast('std-log', data);
+        });
+        proc.stderr.on('data', function (data) {
+            console.log('stderr', data);
+            socket_manager.broadcast('std-warn', data);
+        });
         proc.on('close', function (code) {
-            if (code === 0) {
+            if (0 === code)
                 resolve();
-            }
-            else {
-                reject(new Error('checkupate failed with code ' + code));
-            }
-            ;
+            else
+                reject(new Error('make ' + target + ' failed with code ' + code));
         });
         proc.on('error', function (e) { return reject(e); });
     });
-}
-function apply_update() {
-    return new Promise(function (resolve, reject) {
-        var proc = spawn_process('update');
-        proc.on('close', function () { return resolve(); });
-        proc.on('error', function (e) { return reject(e); });
-    });
-}
-function spawn_process(target) {
-    var proc = child_process.spawn('make', ['--no-print-directory', '-C', paths.Bela, target]);
-    proc.stdout.setEncoding('utf8');
-    proc.stderr.setEncoding('utf8');
-    proc.stdout.on('data', function (data) {
-        console.log('stdout', data);
-        socket_manager.broadcast('std-log', data);
-    });
-    proc.stderr.on('data', function (data) {
-        console.log('stderr', data);
-        socket_manager.broadcast('std-warn', data);
-    });
-    return proc;
 }

@@ -22,38 +22,32 @@ export async function upload(data: any){
 }
 
 function check_update(){
-	return new Promise( (resolve, reject) => {
-		let proc = spawn_process('checkupdate');
-		proc.on('close', (code: number) => {
-			if (code === 0){
-				resolve();
-			} else {
-				reject(new Error('checkupate failed with code '+code))
-			};
-		});
-		proc.on('error', (e: Error) => reject(e) );
-	});
+	return spawn_process('checkupdate');
 }
 
 function apply_update(){
-	return new Promise( (resolve, reject) => {
-		let proc = spawn_process('update');
-		proc.on('close', () => resolve() );
-		proc.on('error', (e: Error) => reject(e) );
-	});
+	return spawn_process('update');
 }
 
-function spawn_process(target: string): child_process.ChildProcess{
-	let proc = child_process.spawn('make', ['--no-print-directory', '-C', paths.Bela, target]);
-	proc.stdout.setEncoding('utf8');
-	proc.stderr.setEncoding('utf8');
-	proc.stdout.on('data', (data: string) => {
-		console.log('stdout', data);
-		socket_manager.broadcast('std-log', data);
+function spawn_process(target: string): Promise<void>{
+	return new Promise( (resolve, reject) => {
+		let proc = child_process.spawn('make', ['--no-print-directory', '-C', paths.Bela, target]);
+		proc.stdout.setEncoding('utf8');
+		proc.stderr.setEncoding('utf8');
+		proc.stdout.on('data', (data: string) => {
+			console.log('stdout', data);
+			socket_manager.broadcast('std-log', data);
+		});
+		proc.stderr.on('data', (data: string) => {
+			console.log('stderr', data);
+			socket_manager.broadcast('std-warn', data);
+		});
+		proc.on('close', (code: number) => {
+			if (0 === code)
+				resolve();
+			else
+				reject(new Error('make ' + target + ' failed with code ' +  code));
+		});
+		proc.on('error', (e: Error) => reject(e) );
 	});
-	proc.stderr.on('data', (data: string) => {
-		console.log('stderr', data);
-		socket_manager.broadcast('std-warn', data);
-	});
-	return proc;
 }

@@ -386,6 +386,7 @@ module.exports = {};
 var Model = require('./Models/Model');
 var popup = require('./popup');
 var json = require('./site-text.json');
+var utils = require('./utils.js');
 
 // set up models
 var models = {};
@@ -761,7 +762,7 @@ socket.on('force-reload', function () {
 });
 socket.on('update-error', function (err) {
 	popup.overlay();
-	consoleView.emit('warn', 'Error updating the board, please try a different zip archive');
+	consoleView.emit('warn', utils.formatString(json.console.update_error, err));
 });
 
 socket.on('mtime', setModifiedTimeInterval);
@@ -1050,7 +1051,7 @@ keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
 
-},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19}],4:[function(require,module,exports){
+},{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19,"./utils.js":20}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6146,6 +6147,7 @@ module.exports={
 		"gui": "Launch GUI"
 	},
 	"console": {
+		"update_error": "Error updating the board: `{0}`. Please try a different zip archive",
 		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages.",
 		"disconnect": "Bela has disconnected. Any changes you make will not be saved. Check your USB connection and reboot Bela."
 	},

@@ -4,6 +4,7 @@ module.exports = {};
 var Model = require('./Models/Model');
 var popup = require('./popup');
 var json = require('./site-text.json');
+var utils = require('./utils.js');
 
 // set up models
 var models = {};
@@ -329,7 +330,7 @@ socket.on('syntax-highlighted', () => editorView.emit('syntax-highlighted') );
 socket.on('force-reload', () => setTimeout( () => window.location.reload(true), 1000));
 socket.on('update-error', err => {
 	popup.overlay();
-	consoleView.emit('warn', 'Error updating the board, please try a different zip archive');
+	consoleView.emit('warn', utils.formatString(json.console.update_error, err));
 });
 
 socket.on('mtime', setModifiedTimeInterval);

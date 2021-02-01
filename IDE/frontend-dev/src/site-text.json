@@ -163,6 +163,7 @@
 		"gui": "Launch GUI"
 	},
 	"console": {
+		"update_error": "Error updating the board: `{0}`. Please try a different zip archive",
 		"messages": "Your code is printing to the console too quickly. Check your audio thread for print messages.",
 		"disconnect": "Bela has disconnected. Any changes you make will not be saved. Check your USB connection and reboot Bela."
 	},
