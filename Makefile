@@ -741,7 +741,7 @@ update: stop
 	$(AT) #TODO: this would allow to trim trailing slashes in case we want to be safer: a="`pwd`/" ; target=${a%/} ; echo $target
 	$(AT) $(MAKE) --no-print-directory coreclean
 	$(AT) echo Copying $(BELA_DIR) to $(UPDATE_BELA_PATCH) ... | tee -a $(UPDATE_LOG)
-	$(AT) rsync -a --delete-during --exclude Documentation $(BELA_DIR)/ $(UPDATE_BELA_PATCH)
+	$(AT) rsync -a --delete-during --exclude Documentation --exclude .git $(BELA_DIR)/ $(UPDATE_BELA_PATCH)
 	$(AT) echo Applying patch in $(UPDATE_BELA_PATCH)... | tee -a $(UPDATE_LOG)
 	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(UPDATE_BELA_PATCH) ./update_board -y --no-frills
 	$(AT) # If everything went ok, we now have the updated version of $(BELA_DIR) in $(UPDATE_BELA_PATCH)
@@ -755,6 +755,7 @@ update: stop
 	        echo Kill the IDE $(LOG) && \
 	        $(MAKE) --no-print-directory idestop $(LOG) &&\
 	        mv $(BELA_DIR) $(UPDATE_BELA_MV_BACKUP) $(LOG) && mv $(UPDATE_BELA_PATCH) $(BELA_DIR) $(LOG) &&\
+	        mv $(UPDATE_BELA_MV_BACKUP)/.git $(BELA_DIR) $(LOG) &&\
 	        echo Hope we are still alive here $(LOG) &&\
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
