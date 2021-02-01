@@ -722,36 +722,44 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	$(AT) echo 	...done
 UPDATE_LOG?=/root/update.log
 LOG=>> $(UPDATE_LOG) 2>&1
+TEE_LOG=2>&1 | tee -a $(UPDATE_LOG)
+UPDATE_LOG_INIT:=echo > $(UPDATE_LOG); \
+ echo DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` $(LOG); \
+ echo FILENAME=`ls $(UPDATES_DIR)/*zip` $(LOG);
+UPDATE_LOG_SUCCESS:=echo SUCCESS=true $(LOG)
+
 updateunsafe: ## Installs the update from $(UPDATES_DIR) in a more brick-friendly way
-	$(AT) echo > $(UPDATE_LOG)
+	$(AT) $(UPDATE_LOG_INIT)
+	$(AT) echo METHOD=make updateunsafe $(LOG)
 	# Re-perform the check, just in case ...	
 	$(AT) cd $(UPDATE_SOURCE_DIR) && FAIL=0 && for path in $(UPDATE_REQUIRED_PATHS); do `ls $$path >/dev/null 2>&1` || { FAIL=1; break; }; done;\
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
-	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(BELA_DIR) ./update_board -y --no-frills
+	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts $(LOG) && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(BELA_DIR) ./update_board -y --no-frills $(TEE_LOG)
 	$(AT) screen -S update-Bela -d -m bash -c "echo Restart the IDE $(LOG) &&\
-	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update successful $(LOG);" $(LOG)
+	  $(MAKE) --no-print-directory idestart $(LOG) && echo Update successful $(LOG); $(UPDATE_LOG_SUCCESS)" $(LOG)
 update: ## Installs the update from $(UPDATES_DIR)
 update: stop
-	$(AT) # Truncate the log file
-	$(AT) echo > $(UPDATE_LOG)
+	$(AT) $(UPDATE_LOG_INIT)
+	$(AT) echo METHOD=make update $(LOG)
 	$(AT) echo Re-perform the check, just in case ... >> $(UPDATE_LOG)
 	$(AT) cd $(UPDATE_SOURCE_DIR) && FAIL=0 && for path in $(UPDATE_REQUIRED_PATHS); do `ls $$path >/dev/null 2>&1` || { FAIL=1; break; }; done;\
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) [ -n $(UPDATE_BELA_PATCH) ] && mkdir -p $(UPDATE_BELA_PATCH)
+	$(AT) [ -n "$(UPDATE_BELA_MV_BACKUP)" ] && rm -rf $(UPDATE_BELA_MV_BACKUP) $(LOG)
 	$(AT) #TODO: this would allow to trim trailing slashes in case we want to be safer: a="`pwd`/" ; target=${a%/} ; echo $target
-	$(AT) $(MAKE) --no-print-directory coreclean
-	$(AT) echo Copying $(BELA_DIR) to $(UPDATE_BELA_PATCH) ... | tee -a $(UPDATE_LOG)
+	$(AT) $(MAKE) --no-print-directory coreclean > /dev/null || true
+	$(AT) $(MAKE) --no-print-directory -f Makefile.libraries cleanall > /dev/null || true
+	$(AT) echo Copying $(BELA_DIR) to $(UPDATE_BELA_PATCH) ... $(TEE_LOG)
 	$(AT) rsync -a --delete-during --exclude Documentation --exclude .git $(BELA_DIR)/ $(UPDATE_BELA_PATCH)
-	$(AT) echo Applying patch in $(UPDATE_BELA_PATCH)... | tee -a $(UPDATE_LOG)
-	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(UPDATE_BELA_PATCH) ./update_board -y --no-frills
+	$(AT) echo Applying patch in $(UPDATE_BELA_PATCH)... | $(TEE_LOG)
+	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(UPDATE_BELA_PATCH) ./update_board -y --no-frills $(LOG)
 	$(AT) # If everything went ok, we now have the updated version of $(BELA_DIR) in $(UPDATE_BELA_PATCH)
 	$(AT) # So let's operate the magic swap. $(BELA_DIR) is moved to $(UPDATE_BELA_MV_BACKUP) and $(UPDATE_BELA_PATCH) is moved to $(BELA_DIR).
 	$(AT) # The fun part is that this Makefile is moved as well...
 	$(AT) # We are about to kill the IDE, so just in case you are running this from within the IDE, we run the remainder of this update in a screen.
 	$(AT) # Output will be logged to $(UPDATE_LOG)
-	$(AT) echo Restoring directory structure... | tee -a $(UPDATE_LOG)
-	$(AT) [ -n $(UPDATE_BELA_MV_BACKUP) ] $(LOG) && rm -rf $(UPDATE_BELA_MV_BACKUP) $(LOG)
-	$(AT) screen -S update-Bela -d -m bash -c '\
+	$(AT) echo Restoring directory structure... $(TEE_LOG)
+	$(AT) set -x; screen -S update-Bela -d -m bash -c '\
 	        echo Kill the IDE $(LOG) && \
 	        $(MAKE) --no-print-directory idestop $(LOG) &&\
 	        mv $(BELA_DIR) $(UPDATE_BELA_MV_BACKUP) $(LOG) && mv $(UPDATE_BELA_PATCH) $(BELA_DIR) $(LOG) &&\
@@ -760,7 +768,7 @@ update: stop
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
 	        echo Update successful $(LOG); \
-	        ' $(LOG)
+			$(UPDATE_LOG_SUCCESS); ' $(LOG)
 
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
