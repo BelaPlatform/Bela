@@ -18,6 +18,10 @@ FILES_TO_COPY="core include Makefile Makefile.libraries Makefile.linkbela exampl
 # in any arbitrarily (bad) condition and try to handle it the best we can
 BELA_IDE_SCREEN_NAME=IDE-Bela
 SCREEN_NAME=Bela
+REMOTE_UPDATE_LOG=$BBB_BELA_HOME/../update.log
+LOCAL_UPDATE_LOG=`{ [ -z "$TMPDIR" ] && TMPDIR=/tmp; }; mktemp $TMPDIR/Bela-update.log.XXXXX || true`
+DOLOG=1
+FORCELOG=1
 
 usage ()
 {
@@ -40,7 +44,9 @@ Command line options:
     -d : skips re-generating Doxygen documentation on the board.
     -n : do not try to update the IDE.
     --no-frills : skips some optional commands.
-	--replace-user: replace user-editable scripts.
+    --log : force logging to $REMOTE_UPDATE_LOG on the board, using $LOCAL_UPDATE_LOG as a tmp file
+    --no-log : avoids logging to file (see --log)
+    --replace-user: replace user-editable scripts.
     -y : does not prompt the user before deleting the remote files.
     "
 }
@@ -80,6 +86,13 @@ while [ "$1" != "" ]; do
       RESET_BOARD=1
 	  FORCE_REPLACE=1
     ;;
+    --log)
+		FORCELOG=1
+		DOLOG=1
+	;;
+    --no-log)
+        DOLOG=0
+    ;;
     -d)
       DOXYGEN=0
     ;;
@@ -99,6 +112,24 @@ while [ "$1" != "" ]; do
   esac
   shift
 done
+
+# make update is currently not calling --no-log, though it may in the future.
+# For now, let's do heuristics to detect if we are being called by it (i.e.:
+# the target is localhost) or this is an update procedure started from a remote
+# machine.
+if [ 0 -eq "$FORCELOG" ]; then
+	if [ "$BBB_HOSTNAME" = 127.0.0.1 ]; then
+		DOLOG=0
+	fi
+fi
+
+if [ 1 -eq "$DOLOG" ]; then
+	# copy all following stdout/stderrr to UPDATE_LOG
+	exec > >(tee "$LOCAL_UPDATE_LOG") 2>&1
+	echo DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
+	echo FILENAME=`basename \`realpath $SCRIPTDIR/..\``
+	echo METHOD=update_board
+fi
 
 check_board_alive_and_set_date
 # Check if destination folder exists
@@ -167,10 +198,6 @@ ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME; for LIBRARY in Scope Midi Gui Trill Pipe;
 
 # a bunch of files to be processed manually to special locations
 ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do [ -d \"\$DIR\" ] && { make -C \"\$DIR\" install || exit 1; }; done"
-error_handler $?
-
-# create build files for libraries that are used by Pd
-ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME && for LIB in Scope Midi; do ./resources/tools/detectlibraries.sh -l \"\$LIB\"; done"
 error_handler $?
 
 # remove stale version of libs from old images
@@ -253,3 +280,9 @@ fi
 
 # cd back to the original folder.
 cd "$RUN_FOLDER"
+
+if [ 1 -eq "$DOLOG" ]; then
+	echo SUCCESS=true
+	scp "$LOCAL_UPDATE_LOG" "$BBB_ADDRESS:$REMOTE_UPDATE_LOG"
+	rm "$LOCAL_UPDATE_LOG"
+fi
