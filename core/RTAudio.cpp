@@ -60,28 +60,26 @@
 
 using namespace std;
 
-typedef struct _BelaHwConfig
+typedef struct
 {
-	float audioSampleRate;
-	unsigned int audioInChannels;
-	unsigned int audioOutChannels;
-	unsigned int analogInChannels;
-	unsigned int analogOutChannels;
 	AudioCodec* activeCodec;
 	AudioCodec* disabledCodec;
-} BelaHwConfig;
+} BelaHwConfigPrivate;
 
 static I2c_Codec* gI2cCodec = NULL;
 static Spi_Codec* gSpiCodec = NULL;
 int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
 
-int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
+static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
 {
 	if(gRTAudioVerbose)
-		printf("Bela_getHwConfig()\n");
+		printf("Bela_getHwConfigPrivate()\n");
 	memset((void*)cfg, 0, sizeof(BelaHwConfig));
+	cfg->digitalChannels = 16;
 	// set audio codec
+	AudioCodec* activeCodec;
+	AudioCodec* disabledCodec;
 	switch(hw)
 	{
 		case BelaHw_Bela:
@@ -90,8 +88,8 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 			//nobreak
 		case BelaHw_Salt:
 			//nobreak
-			cfg->activeCodec = gI2cCodec;
-			cfg->disabledCodec = gSpiCodec;
+			activeCodec = gI2cCodec;
+			disabledCodec = gSpiCodec;
 			break;
 		case BelaHw_CtagFace:
 			//nobreak
@@ -100,12 +98,16 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 		case BelaHw_CtagBeast:
 			//nobreak
 		case BelaHw_CtagBeastBela:
-			cfg->activeCodec = gSpiCodec;
-			cfg->disabledCodec = gI2cCodec;
+			activeCodec = gSpiCodec;
+			disabledCodec = gI2cCodec;
 			break;
 		case BelaHw_NoHw:
 		default:
 		return -1; // unrecognized hw
+	}
+	if(pcfg) {
+		pcfg->activeCodec = activeCodec;
+		pcfg->disabledCodec = disabledCodec;
 	}
 	// set audio I/O
 	switch(hw)
@@ -163,6 +165,22 @@ int Bela_getHwConfig(BelaHw hw, BelaHwConfig* cfg)
 			break;
 	}
 	return 0;
+}
+
+BelaHwConfig* Bela_HwConfig_new(BelaHw hw)
+{
+	BelaHwConfig* cfg = new BelaHwConfig;
+	if(Bela_getHwConfigPrivate(hw, cfg, nullptr))
+	{
+		delete cfg;
+		return nullptr;
+	}
+	return cfg;
+}
+
+void Bela_HwConfig_delete(BelaHwConfig* cfg)
+{
+	delete cfg;
 }
 
 // Real-time tasks and objects
@@ -384,7 +402,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
         if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
                 gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
 	BelaHwConfig cfg;
-	if(Bela_getHwConfig(belaHw, &cfg))
+	BelaHwConfigPrivate pcfg;
+	if(Bela_getHwConfigPrivate(belaHw, &cfg, &pcfg))
 	{
 		fprintf(stderr, "Unrecognized Bela hardware: is a cape connected?\n");
 		return 1;
@@ -435,10 +454,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		if(gRTAudioVerbose)
 			printf("Project name: %s\n", gContext.projectName);
 	}
-	gAudioCodec = cfg.activeCodec;
-	if(cfg.disabledCodec)
+	gAudioCodec = pcfg.activeCodec;
+	if(pcfg.disabledCodec)
 	{
-		cfg.disabledCodec->disable(); // Put unused codec in high impedance state
+		pcfg.disabledCodec->disable(); // Put unused codec in high impedance state
 	}
 
 	if(settings->useAnalog && (cfg.analogInChannels || cfg.analogOutChannels)) {

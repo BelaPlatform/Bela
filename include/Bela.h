@@ -27,10 +27,12 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 8
+#define BELA_MINOR_VERSION 9
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.9.0
+// - added Bela_HwConfig_{new,delete}
 // 1.8.0
 // - added callback for when the audio thread is done: settings->audioThreadDone
 // 1.7.0
@@ -85,6 +87,29 @@ typedef enum
 	BelaHw_CtagFaceBela,
 	BelaHw_CtagBeastBela,
 } BelaHw;
+
+typedef struct _BelaHwConfig
+{
+	float audioSampleRate;
+	unsigned int audioInChannels;
+	unsigned int audioOutChannels;
+	unsigned int analogInChannels;
+	unsigned int analogOutChannels;
+	unsigned int digitalChannels;
+} BelaHwConfig;
+
+/**
+ * Returns the configuration for a given BelaHw or `nullptr` if `hw` is
+ * invalid.
+ *
+ * The returned pointer has to be deleted with Bela_HwConfig_delete().
+ */
+BelaHwConfig* Bela_HwConfig_new(BelaHw hw);
+
+/**
+ * Use this to delete a pointer returned by Bela_HwConfig_new()
+ */
+void Bela_HwConfig_delete(BelaHwConfig* cfg);
 
 #include <GPIOcontrol.h>
 
