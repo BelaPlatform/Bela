@@ -1869,9 +1869,6 @@ var EditorView = function (_View) {
 				// console.log('firing tokenizer');
 			}
 			// set syntax mode - defaults to text
-			_this.on('syntax-highlighted', function () {
-				return _this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() });
-			});
 			if (opts.fileType && opts.fileType == "cpp" || opts.fileType == "c" || opts.fileType == "h" || opts.fileType == "hh" || opts.fileType == "hpp" || opts.fileType == "cc") {
 				_this.editor.session.setMode('ace/mode/c_cpp');
 			} else if (opts.fileType && opts.fileType == "js") {

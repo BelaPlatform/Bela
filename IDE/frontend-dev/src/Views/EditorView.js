@@ -61,7 +61,6 @@ class EditorView extends View {
 				// console.log('firing tokenizer');
 			}
       // set syntax mode - defaults to text
-      this.on('syntax-highlighted', () => this.editor.session.setMode({ path: "ace/mode/text", v: Date.now() }));
       if (opts.fileType &&
           opts.fileType == "cpp" ||
           opts.fileType == "c" ||
