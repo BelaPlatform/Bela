@@ -53,7 +53,8 @@
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/GPIOcontrol.h"
-#include "../include/math_neon.h"
+extern "C" void enable_runfast();
+extern "C" void disable_runfast();
 
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
