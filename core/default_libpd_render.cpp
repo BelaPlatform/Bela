@@ -159,6 +159,8 @@ float* gOutBuf;
 #define PARSE_MIDI
 static std::vector<Midi*> midi;
 std::vector<std::string> gMidiPortNames;
+int gMidiVerbose = 1;
+const int kMidiVerbosePrintLevel = 1;
 
 void dumpMidi()
 {
@@ -230,42 +232,49 @@ static unsigned int getPortChannel(int* channel){
 
 void Bela_MidiOutNoteOn(int channel, int pitch, int velocity) {
 	int port = getPortChannel(&channel);
-	rt_printf("noteout _ port: %d, channel: %d, pitch: %d, velocity %d\n", port, channel, pitch, velocity);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("noteout _ port: %d, channel: %d, pitch: %d, velocity %d\n", port, channel, pitch, velocity);
 	port < midi.size() && midi[port]->writeNoteOn(channel, pitch, velocity);
 }
 
 void Bela_MidiOutControlChange(int channel, int controller, int value) {
 	int port = getPortChannel(&channel);
-	rt_printf("ctlout _ port: %d, channel: %d, controller: %d, value: %d\n", port, channel, controller, value);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("ctlout _ port: %d, channel: %d, controller: %d, value: %d\n", port, channel, controller, value);
 	port < midi.size() && midi[port]->writeControlChange(channel, controller, value);
 }
 
 void Bela_MidiOutProgramChange(int channel, int program) {
 	int port = getPortChannel(&channel);
-	rt_printf("pgmout _ port: %d, channel: %d, program: %d\n", port, channel, program);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("pgmout _ port: %d, channel: %d, program: %d\n", port, channel, program);
 	port < midi.size() && midi[port]->writeProgramChange(channel, program);
 }
 
 void Bela_MidiOutPitchBend(int channel, int value) {
 	int port = getPortChannel(&channel);
-	rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
 	port < midi.size() && midi[port]->writePitchBend(channel, value);
 }
 
 void Bela_MidiOutAftertouch(int channel, int pressure){
 	int port = getPortChannel(&channel);
-	rt_printf("touchout _ port: %d, channel: %d, pressure: %d\n", port, channel, pressure);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("touchout _ port: %d, channel: %d, pressure: %d\n", port, channel, pressure);
 	port < midi.size() && midi[port]->writeChannelPressure(channel, pressure);
 }
 
 void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
 	int port = getPortChannel(&channel);
-	rt_printf("polytouchout _ port: %d, channel: %d, pitch: %d, pressure: %d\n", port, channel, pitch, pressure);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("polytouchout _ port: %d, channel: %d, pitch: %d, pressure: %d\n", port, channel, pitch, pressure);
 	port < midi.size() && midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
 }
 
 void Bela_MidiOutByte(int port, int byte){
-	rt_printf("port: %d, byte: %d\n", port, byte);
+	if(gMidiVerbose >= kMidiVerbosePrintLevel)
+		rt_printf("port: %d, byte: %d\n", port, byte);
 	if(port > (int)midi.size()){
 		// if the port is out of range, redirect to the first port.
 		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
@@ -341,13 +350,25 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 #endif // BELA_LIBPD_GUI
 }
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
-	if(strcmp(source, "bela_setMidi") == 0){
+	if(strcmp(source, "bela_setMidi") == 0)
+	{
+		if(0 == strcmp("verbose", symbol))
+		{
+			if(1 != argc || !libpd_is_float(argv))
+			{
+				rt_fprintf(stderr, "Wrong format for bela_setMidi, expected: [verbose <n>(\n");
+			} else {
+				gMidiVerbose = libpd_get_float(argv);
+				rt_printf("MIDI verbose: %d\n", gMidiVerbose);
+			}
+			return;
+		}
 		int num[3] = {0, 0, 0};
 		for(int n = 0; n < argc && n < 3; ++n)
 		{
 			if(!libpd_is_float(&argv[n]))
 			{
-				fprintf(stderr, "Wrong format for Bela_setMidi, expected:[hw 1 0 0(");
+				fprintf(stderr, "Wrong format for bela_setMidi, expected:[hw 1 0 0(");
 				return;
 			}
 			num[n] = libpd_get_float(&argv[n]);
@@ -945,8 +966,11 @@ void render(BelaContext *context, void *userData)
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
 			message = midi[port]->getParser()->getNextChannelMessage();
-			rt_printf("On port %d (%s): ", port, gMidiPortNames[port].c_str());
-			message.prettyPrint(); // use this to print beautified message (channel, data bytes)
+			if(gMidiVerbose >= kMidiVerbosePrintLevel)
+			{
+				rt_printf("On port %d (%s): ", port, gMidiPortNames[port].c_str());
+				message.prettyPrint(); // use this to print beautified message (channel, data bytes)
+			}
 			switch(message.getType()){
 				case kmmNoteOn:
 				{
