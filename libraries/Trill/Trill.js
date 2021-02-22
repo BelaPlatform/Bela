@@ -108,7 +108,7 @@ class Trill {
 				push();
 				translate(this.position[0], this.position[1]);
 				let _radial = new Array(5);
-				_radial[i] = (this.touches[i].location[0]) * PI * 2.0;
+				_radial[i] = (this.touches[i].location[0]) * PI * 2.0 - 0.5 * PI;
 				if (_radial[i] >= PI*2){
 					_radial[i] = 0;
 				}
