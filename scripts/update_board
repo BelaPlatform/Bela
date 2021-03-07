@@ -200,8 +200,8 @@ ssh "$BBB_ADDRESS" "cd $BBB_BELA_HOME; for LIBRARY in Scope Midi Gui Trill Pipe;
 ssh "$BBB_ADDRESS" "for DIR in \"$BBB_BELA_HOME\"/resources/tools/*; do [ -d \"\$DIR\" ] && { make -C \"\$DIR\" install || exit 1; }; done"
 error_handler $?
 
-# remove stale version of libs from old images
-ssh "$BBB_ADDRESS" rm -rf /usr/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libprussdrv.a \"$BBB_BELA_HOME\"/lib/libNE10.a \"$BBB_BELA_HOME\"/lib/libmathneon.a
+# remove stale version of libs and incompatible programs from older versions
+ssh "$BBB_ADDRESS" "rm -rf /usr/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libpd.so \"$BBB_BELA_HOME\"/lib/libprussdrv.a \"$BBB_BELA_HOME\"/lib/libNE10.a \"$BBB_BELA_HOME\"/lib/libmathneon.a; dpkg -r supercollider-bela-xenomai-3 &> /dev/null"
 error_handler $?
 
 DEBIAN_VERSION=`get_board_debian_version`
