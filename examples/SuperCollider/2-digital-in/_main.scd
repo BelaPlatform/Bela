@@ -34,8 +34,12 @@ s.options.numOutputBusChannels = 2;
 
 s.waitForBoot{
 	SynthDef('buttonControl', {arg inPin, outPin;
+		// read the value at the pin
 		var button = DigitalIn.ar(inPin);
+		// toggle an LED on outPin
 		DigitalOut.ar(outPin, button);
+		// gate a sinewave
+		Out.ar(0, SinOsc.ar(300, 0, 0.2 * button));
 	}).add;	
 	
 	s.sync;
