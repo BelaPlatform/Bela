@@ -58,6 +58,7 @@ extern "C" void disable_runfast();
 
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
+//#define XENOMAI_CATCH_MSW // get SIGDEBUG when a mode switch takes place
 
 using namespace std;
 
@@ -571,13 +572,41 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	return 0;
 }
 
+#ifdef XENOMAI_CATCH_MSW
+#include <signal.h>
+void sigdebug_handler(int reason)
+{
+	char const* s;
+	switch(reason)
+	{
+		case SIGDEBUG_MIGRATE_SYSCALL:
+			s = "SIGDEBUG_MIGRATE_SYSCALL";
+			break;
+		case SIGDEBUG_MIGRATE_SIGNAL:
+			s = "SIGDEBUG_MIGRATE_SIGNAL";
+			break;
+		case SIGDEBUG_MIGRATE_FAULT:
+			s = "SIGDEBUG_MIGRATE_FAULT";
+			break;
+		default:
+			s = "unknown";
+	}
+	fprintf(stderr, "SIGDEBUG (%d)\n", reason);
+}
+#endif // XENOMAI_CATCH_MSW
+
 // audioLoop() is the main function which starts the PRU audio code
 // and then transfers control to the PRU object. The PRU object in
 // turn will call the audio render() callback function every time
 // there is new data to process.
 
+
 void audioLoop(void *)
 {
+#ifdef XENOMAI_CATCH_MSW
+	pthread_setmode_np(0, PTHREAD_WARNSW, NULL);
+	signal(SIGDEBUG, sigdebug_handler);
+#endif // 
 	if(gRTAudioVerbose)
 		printf("_________________Audio Thread!\n");
 
