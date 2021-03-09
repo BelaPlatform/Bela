@@ -1,13 +1,13 @@
-/**
+/*
 This script exemplifies the use of SuperCollider on Bela.
 When a project contains a `_main.scd` file, `sclang` is started
 and the content of the file is executed.
+The examples in SuperCollider/ include more code examples to interface
+with Bela-specific UGens.
 If you want to interact with SuperCollider running on the board
 from within the SuperCollider IDE on your computer, check out 
-the 12-SuperCollider/remote examples instead.
-Those files also include more code examples to interface with
-Bela-specific UGens.
- */
+the SuperCollider/7-remote-control examples instead.
+*/
 s = Server.default;
 
 s.options.numAnalogInChannels = 8;
@@ -33,3 +33,4 @@ s.waitForBoot({
   s.sync;
   Synth.new("help-AnalogIn", target: s);
 });
+ServerQuit.add({ 0.exit }); // quit if the button is pressed
