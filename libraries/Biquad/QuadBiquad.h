@@ -14,6 +14,7 @@
 class QuadBiquad
 {
 public:
+	static unsigned int constexpr kNumFilters = 4;
 	/**
 	 * The four filters whose parameters are used by the QuadBiquad object.
 	 *
@@ -21,7 +22,7 @@ public:
 	 * After manipulating one or more of the elements of #filters, call
 	 * update() before calling QuadBiquad::process().
 	 */
-	std::array<BiquadCoeffT<float>, 4> filters;
+	std::array<BiquadCoeffT<float>, kNumFilters> filters;
 
 	/**
 	 * Construct the object.
@@ -35,7 +36,7 @@ public:
 	{
 		if(size_t(this) & size_t(alignof(QuadBiquad) - 1))
 		{
-			fprintf(stderr, "QuadBiquad object is improperly aligned. Avoid heap allocation, use operator new or use -std=c++17");
+			fprintf(stderr, "QuadBiquad object is improperly aligned. Avoid heap allocation, use operator new or use -std=c++17\n");
 			std::bad_alloc e;
 			throw(e);
 		}
@@ -74,7 +75,7 @@ public:
 	 * @param data input / output. Each element of the vector corresponds
 	 * to the corresponding filtering channel in #filters.
 	 */
-	void process(float data[4])
+	void process(float data[kNumFilters])
 	{
 		// See here https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/intrinsics
 		// for more on ARM intrinsics

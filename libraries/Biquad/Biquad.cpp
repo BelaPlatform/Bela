@@ -124,6 +124,8 @@ int QuadBiquad::setup(const BiquadCoeff::Settings& settings)
 	for(auto & b : filters)
 		ret |= b.setup(settings);
 	update();
+	z1 = {0};
+	z2 = {0};
 	return ret;
 }
 void QuadBiquad::update()
