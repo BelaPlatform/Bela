@@ -62,44 +62,44 @@ int gPrintfCount = 0;
 
 bool setup(BelaContext *context, void *userData)
 {
-    // Set the mode of digital pins
-    pinMode(context, 0, gTrigDigitalOutPin, OUTPUT); // writing to TRIGGER pin
-    pinMode(context, 0, gEchoDigitalInPin, INPUT); // reading from ECHO pin
-    pulseIn.setup(context, gEchoDigitalInPin, HIGH); //detect HIGH pulses on the ECHO pin
-    scope.setup(2, context->digitalSampleRate);
-    return true;
+	// Set the mode of digital pins
+	pinMode(context, 0, gTrigDigitalOutPin, OUTPUT); // writing to TRIGGER pin
+	pinMode(context, 0, gEchoDigitalInPin, INPUT); // reading from ECHO pin
+	pulseIn.setup(context, gEchoDigitalInPin, HIGH); //detect HIGH pulses on the ECHO pin
+	scope.setup(2, context->digitalSampleRate);
+	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-    for(unsigned int n = 0; n < context->digitalFrames; ++n){
-        gTriggerCount++;
-        bool state;
-        if(gTriggerCount == gTriggerInterval){
-            gTriggerCount = 0;
-            state = HIGH;
-        } else {
-            state = LOW;
-        }
+	for(unsigned int n = 0; n < context->digitalFrames; ++n){
+		gTriggerCount++;
+		bool state;
+		if(gTriggerCount == gTriggerInterval){
+			gTriggerCount = 0;
+			state = HIGH;
+		} else {
+			state = LOW;
+		}
 
-        digitalWrite(context, n, gTrigDigitalOutPin, state); //write the state to the trig pin
+		digitalWrite(context, n, gTrigDigitalOutPin, state); //write the state to the trig pin
 
-        int pulseLength = pulseIn.hasPulsed(context, n); // will return the pulse duration(in samples) if a pulse just ended
-        float duration = 1e6 * pulseLength / context->digitalSampleRate; // pulse duration in microseconds
-        static float distance = 0;
-        if(pulseLength >= gMinPulseLength){
-            static int count = 0;
-            // rescaling according to the datasheet
-            distance = duration / gRescale;
-            if(count > 5000){ // we do not want to print the value every time we read it
-                rt_printf("pulseLength: %d, distance: %fcm\n", pulseLength, distance);
-                count -= 5000;
-            }
-            ++count;
-        }
-        // Logging to the scope the pulse inputs (gEchoDigitalInPin) and the distance
-        scope.log(digitalRead(context, n, gEchoDigitalInPin), distance/100);
-    }
+		int pulseLength = pulseIn.hasPulsed(context, n); // will return the pulse duration(in samples) if a pulse just ended
+		float duration = 1e6 * pulseLength / context->digitalSampleRate; // pulse duration in microseconds
+		static float distance = 0;
+		if(pulseLength >= gMinPulseLength){
+			static int count = 0;
+			// rescaling according to the datasheet
+			distance = duration / gRescale;
+			if(count > 5000){ // we do not want to print the value every time we read it
+				rt_printf("pulseLength: %d, distance: %fcm\n", pulseLength, distance);
+				count -= 5000;
+			}
+			++count;
+		}
+		// Logging to the scope the pulse inputs (gEchoDigitalInPin) and the distance
+		scope.log(digitalRead(context, n, gEchoDigitalInPin), distance/100);
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)
