@@ -7,15 +7,27 @@
 http://bela.io
 */
 /**
-\example Audio/record-to-file/render.cpp
+\example Audio/record-audio/render.cpp
 
-Record the inputs and outputs of Bela to an audio file on disk of a fixed length.
-The program will attempt to allocate enough memory for to store `gDurationSec` seconds
-of audio data per each of the input and output channels. If you request an excessive amount of RAM,
-it may fail when starting or while running.
-The program processes the input audio and it stores the input and output samples into `gInputs`
-and `gOutputs`.
-Åfter running for `gDurationSec` it will automatically stop and write a `.wav` file to disk.
+Recording the audio input and output to file
+--------------------------------------------
+
+This example records the inputs and outputs of Bela to an audio file of a fixed length on disk.
+
+When the program begins it will attempt to allocate enough memory to store `gDurationSec`
+seconds of audio data for each of the input and output channels. If you request an excessive
+amount of RAM then the program may fail when starting or while running.
+
+The program processes the input audio and it stores the input samples into the array
+`gInputs[]`. In order to generate something to send to the outputs we apply a filter
+to the input audio and store this as the output samples into the array `gOutputs`.
+
+Åfter running for `gDurationSec` this program will automatically stop and write
+a two `.wav` files to disk. If you have more audio input or output channels then
+these `.wav` files will be multichannel.
+
+These `.wav` files will be created in the Resources section of the Project explorer
+amongst your other project files.
 */
 
 #include <Bela.h>

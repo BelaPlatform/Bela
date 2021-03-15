@@ -10,13 +10,28 @@ http://bela.io
 \example Audio/filterbanks/render.cpp
 
 Using optimised filter banks
--------------------------
+----------------------------
 
-Process up to four input channels through some looong filterbanks.
-We use the QuadBiquad class which can process up to four channels in parallel.
-We create 150 instances of it which are connected in series to create
-some long filterbanks, each of which contains lowpass and highpass filters.
-We then process (up to) four audio inputs through the filterbanks.
+This example creates a bank of filters using the `QuadBiquad` class.
+
+The `QuadBiquad` class is an extension of the `Biquad` filter class which allows you
+to process four channels in parallel. To learn more about Biquad filters and how
+to use the Biquad library, make sure to check Nigel Redmon's fantastic blog:
+https://www.earlevel.com/main/category/digital-audio/filters/iir-filters/biquads/
+
+In this example we create 150 instances the QuadBiquad filter using `bs(150)`.
+These instances are connected in series to create some very very long filterbanks,
+each of which contains lowpass and highpass filters.
+
+In `setup()` we set the type of filters and their cutoff frequency.
+
+As each QuadBiquad object contains four filters (in parallel), which are completely
+independent of each other you can set each to a different type of filter, cutoff, Q, etc.
+Here we give to each of these four filters an increasing cutoff. This will result,
+in the right channel being brighter than the left channel.
+
+We then process (up to) four audio inputs through the filterbanks and output the
+result through all available output channels.
 */
 
 #include <Bela.h>
