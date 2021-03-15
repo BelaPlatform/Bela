@@ -5,6 +5,8 @@
   "tremolo",
   "telephone-filter",
   "envelope-generator",
+  "record-audio",
+  "filterbanks",
   "FFT-phase-vocoder",
   "sample-streamer",
   "sample-streamer-multi"
