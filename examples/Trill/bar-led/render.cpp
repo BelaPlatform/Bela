@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/bar-led
+*/
+/**
+\example Trill/bar-led/render.cpp
 
 Trill Bar LED
 =============
@@ -20,7 +21,7 @@ and the number of active touches, their position and size stored on global varia
 
 Twelve LEDs are used to represent positions on the Trill sensor. The length of the
 Trill Bar sensor is divided into 12 different sections. When a touch
-occurs on one of these sections, the corresponding LED turns on. 
+occurs on one of these sections, the corresponding LED turns on.
 */
 
 #include <Bela.h>

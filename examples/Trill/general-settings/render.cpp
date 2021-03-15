@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/general-settings
+*/
+/**
+\example Trill/general-settings/render.cpp
 
 Adjusting Trill Settings
 ========================

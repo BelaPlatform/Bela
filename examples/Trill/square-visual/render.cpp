@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/square-visual
+*/
+/**
+\example Trill/square-visual/render.cpp
 
 Trill Square GUI
 ===================

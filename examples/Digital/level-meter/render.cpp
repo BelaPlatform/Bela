@@ -1,26 +1,31 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
+/**
+\example Digital/level-meter/render.cpp
 
+Visualise music with leds
+-------------------------
+
+This example shows how to make an audio level meter with a set of ten LEDs.
+
+- Connect an LED in series with a 470ohm resistor between every Digital pin 0 - 9 and ground.
+
+You will also need to connect an audio adapter to the audio input pins and connect something
+that can produce an audio signal to this (a laptop, mp3 player, phone or keyboard). The code
+preforms peak detection on the audio input and lights the LEDs once the amplitude of the
+input signal passes a certain threshold stored in `gThresholds[i]`. Each LED has its
+own threshold, the values of which are set in `setup()` and are steps of -3dB. All digital
+pins are set to output `pinMode(context, 0, i, OUTPUT);` and they are toggled on and off
+in `render()` when the amplitude passes the threshold for that LED. The LEDs below the
+current peak value always remain lit to create a classic amplitude peak meter. The audio
+input is passed through to the output so you can listen as you watch the light show.
+*/
 
 #include <Bela.h>
 #include <cmath>
@@ -54,7 +59,7 @@ double gA1 = -1.99899254;
 double gA2 = 0.99899305;
 
 bool setup(BelaContext *context, void *userData)
-{	
+{
 	// This project makes the assumption that the audio and digital
 	// sample rates are the same. But check it to be sure!
 	if(context->audioFrames != context->digitalFrames) {
@@ -83,7 +88,7 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-			
+
 		// Get average of audio input channels
 		float sample = 0;
 		for(unsigned int ch = 0; ch < context->audioInChannels; ch++) {
@@ -104,13 +109,13 @@ void render(BelaContext *context, void *userData)
 		gLastY[0] = out;
 
 		out = fabsf(out / (float)gAudioChannelNum);
-		
+
 		// Do peak detection: fast-responding local level
 		if(out > gAudioLocalLevel)
 			gAudioLocalLevel = out;
 		else
 			gAudioLocalLevel *= gLocalDecayRate;
-		
+
 		// Do peak detection: slow-responding peak level
 		if(out > gAudioPeakLevel)
 			gAudioPeakLevel = out;
@@ -119,13 +124,13 @@ void render(BelaContext *context, void *userData)
 			// every few samples
 			if(((context->audioFramesElapsed + n) & 31) == 0)
 				gAudioPeakLevel *= gPeakDecayRate;
-		}	
+		}
 		// LED bargraph on digital outputs 0-9
 		for(int led = 0; led < NUMBER_OF_SEGMENTS; led++) {
 			// All LEDs up to the local level light up. The LED
 			// for the peak level also remains lit.
 			int state = LOW;
-				
+
 			if(gAudioLocalLevel > gThresholds[led]) {
 				state = HIGH;
 				gSamplesToLight[led] = 1000;
@@ -136,7 +141,7 @@ void render(BelaContext *context, void *userData)
 			}*/
 			else if(--gSamplesToLight[led] > 0)
 				state = HIGH;
-			
+
 			// Write LED
 			digitalWriteOnce(context, n, led, state);
 		}
@@ -147,25 +152,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-/**
-\example level-meter/render.cpp
-
-Visualise music with leds
--------------------------
-
-This example shows how to make an audio level meter with a set of ten LEDs.
-
-- Connect an LED in series with a 470ohm resistor between every Digital pin 0 - 9 and ground.
-
-You will also need to connect an audio adapter to the audio input pins and connect something 
-that can produce an audio signal to this (a laptop, mp3 player, phone or keyboard). The code 
-preforms peak detection on the audio input and lights the LEDs once the amplitude of the 
-input signal passes a certain threshold stored in `gThresholds[i]`. Each LED has its 
-own threshold, the values of which are set in `setup()` and are steps of -3dB. All digital 
-pins are set to output `pinMode(context, 0, i, OUTPUT);` and they are toggled on and off 
-in `render()` when the amplitude passes the threshold for that LED. The LEDs below the 
-current peak value always remain lit to create a classic amplitude peak meter. The audio 
-input is passed through to the output so you can listen as you watch the light show.
-
-*/

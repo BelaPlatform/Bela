@@ -4,23 +4,28 @@
 |  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
+/**
+\example Communication/MIDI/render.cpp
 
+Connecting MIDI devices to Bela!
+-------------------------------
+
+Connect a USB MIDI device to Bela and try out our MIDI API.
+This example by default opens the MIDI port `"hw:1,0,0"`, which normally
+corresponds to the first USB device that is plugged in. You can run `amidi -l`
+on the terminal to check which devices are available and edit this file
+accordingly.
+The device `"hw:0,0,0"` is (on Bela images v0.3 and above) a virtual MIDI
+device to the host computer over the USB port.
+
+Every time a MIDI message comes in, the `midiMessageCallback()` function is
+called. In this example, we detect NoteOn messages and we use them to generate
+a sinewave with given frequency and amplitude.
+We can also write MIDI messages, by sending a sequence of bytes with
+`writeOutput()`.
+*/
 
 #include <Bela.h>
 #include <libraries/Midi/Midi.h>
@@ -188,25 +193,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-/**
-\example MIDI/render.cpp
-
-Connecting MIDI devices to Bela!
--------------------------------
-
-Connect a USB MIDI device to Bela and try out our MIDI API.
-This example by default opens the MIDI port `"hw:1,0,0"`, which normally
-corresponds to the first USB device that is plugged in. You can run `amidi -l`
-on the terminal to check which devices are available and edit this file
-accordingly.
-The device `"hw:0,0,0"` is (on Bela images v0.3 and above) a virtual MIDI
-device to the host computer over the USB port.
-
-Every time a MIDI message comes in, the `midiMessageCallback()` function is
-called. In this example, we detect NoteOn messages and we use them to generate
-a sinewave with given frequency and amplitude.
-We can also write MIDI messages, by sending a sequence of bytes with
-`writeOutput()`.
-
-*/

@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/square-multitouch
+*/
+/**
+\example Trill/square-multitouch/render.cpp
 
 Trill Square Multitouch GUI
 ===================
@@ -66,20 +67,20 @@ void loop(void*)
 	{
 		// Read locations from Trill sensor
 		touchSensor.readI2C();
-		
+
 		// The Trill Square sensor can detect multiple touches
 		// in each axis, but it is not able to differentiate between
 		// which X-axis touches correspond to which Y-axis touches.
-		// Nonetheless, multi-touch data can be useful in some 
+		// Nonetheless, multi-touch data can be useful in some
 		// circumstances and it is gathered here.
-		
+
 		gNumVerticalTouches = touchSensor.getNumTouches();
 		gNumHorizontalTouches = touchSensor.getNumHorizontalTouches();
 		if(gNumVerticalTouches > NUM_TOUCH)
 			gNumVerticalTouches = NUM_TOUCH;
 		if(gNumHorizontalTouches > NUM_TOUCH)
 			gNumHorizontalTouches = NUM_TOUCH;
-			
+
 		for(unsigned int i = 0; i < gNumVerticalTouches; i++) {
 			gTouchVerticalLocation[i] = touchSensor.touchLocation(i);
 			gTouchSize[i] = touchSensor.touchSize(i);
@@ -87,12 +88,12 @@ void loop(void*)
 		for(unsigned int i = 0; i < gNumHorizontalTouches; i++) {
 			gTouchHorizontalLocation[i] = touchSensor.touchHorizontalLocation(i);
 		}
-		
+
 		// For all inactive touches, set location and size to 0
 		for(unsigned int i = gNumVerticalTouches; i <  NUM_TOUCH; i++) {
 			gTouchVerticalLocation[i] = 0.0;
 			gTouchSize[i] = 0.0;
-		}		
+		}
 		for(unsigned int i = gNumHorizontalTouches; i < NUM_TOUCH; i++) {
 			gTouchHorizontalLocation[i] = 0.0;
 		}

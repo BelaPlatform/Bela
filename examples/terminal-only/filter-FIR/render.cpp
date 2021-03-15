@@ -1,24 +1,31 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example terminal-only/filter-FIR/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Finite Impulse Response Filter
+------------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+This scripts needs to be run in a terminal because it requires you to interact with Bela using your computer's keyboard.
+Note that it cannot be run from within the IDE or the IDE's console.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
+
+In this project an audio recording processesd through an FIR filter.
+
+To control the playback of the audio sample, use your computer keyboard, by pressing:
+
+'a' \<enter\> to start playing the sample
+
+'s' \<enter\> to stop
+
+'q' \<enter\> or ctrl-C to quit
 */
 
 #include <Bela.h>
@@ -161,26 +168,3 @@ void trigger_samples(void*)
 void cleanup(BelaContext *context, void *userData)
 {
 }
-
-/**
-\example filter-FIR/render.cpp
-
-Finite Impulse Response Filter
-------------------------------
-
-This scripts needs to be run in a terminal because it requires you to interact with Bela using your computer's keyboard.
-Note that it cannot be run from within the IDE or the IDE's console.
-
-See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
-
-In this project an audio recording processesd through an FIR filter.
-
-To control the playback of the audio sample, use your computer keyboard, by pressing:
-
-'a' \<enter\> to start playing the sample
-
-'s' \<enter\> to stop
-
-'q' \<enter\> or ctrl-C to quit
-
-*/

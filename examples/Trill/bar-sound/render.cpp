@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/bar-sound
+*/
+/**
+\example Trill/bar-sound/render.cpp
 
 Trill Bar Multitouch Theremin
 =============================

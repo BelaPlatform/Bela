@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/general-visual
+*/
+/**
+\example Trill/general-visual/render.cpp
 
 Trill Visualiser
 ================

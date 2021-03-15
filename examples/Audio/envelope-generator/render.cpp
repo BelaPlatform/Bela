@@ -1,26 +1,34 @@
- /**
- * \example Audio/envelope-generator
- *
- * ADSR envelope generator
- * =======================
- *
- * This sketch demonstrates how to make a simple oscillator with different waveforms and how to use
- * the ADSR library to apply an envelope to an audio signal.
- *
- * The ADSR gate is controlled by a button connected to digital pin 0. When the button is pressed the
- * gate is turned ON and when it is released the gate is turned OFF.
- *
- * The oscillator has 4 different waveforms available: sinewave, square wave, triangle wave and sawtooth.
- * A button connected to digital pin 1. When the button is pressed the waveform of the oscillator changes.
- * Continuous presses of the button will cycle over the different waveforms.
- *
- * The frequency of the oscillator and the parameters of the ADSR are fixed to some predefined values in
- * global variables. You can explore how to change these at runtime.
- *
- * To learn more about ADSRs and how to use the ADSR library, make sure to check Nigel Redmon's fantastic blog:
- * https://www.earlevel.com/main/category/envelope-generators/
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+/**
+\example Audio/envelope-generator/render.cpp
+
+ADSR envelope generator
+=======================
+
+This sketch demonstrates how to make a simple oscillator with different waveforms and how to use
+the ADSR library to apply an envelope to an audio signal.
+
+The ADSR gate is controlled by a button connected to digital pin 0. When the button is pressed the
+gate is turned ON and when it is released the gate is turned OFF.
+
+The oscillator has 4 different waveforms available: sinewave, square wave, triangle wave and sawtooth.
+A button connected to digital pin 1. When the button is pressed the waveform of the oscillator changes.
+Continuous presses of the button will cycle over the different waveforms.
+
+The frequency of the oscillator and the parameters of the ADSR are fixed to some predefined values in
+global variables. You can explore how to change these at runtime.
+
+To learn more about ADSRs and how to use the ADSR library, make sure to check Nigel Redmon's fantastic blog:
+https://www.earlevel.com/main/category/envelope-generators/
+*/
+
 #include <Bela.h>
 #include <cmath>
 #include <libraries/ADSR/ADSR.h>

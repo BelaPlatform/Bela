@@ -1,25 +1,46 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
+/**
+\example terminal-only/samples/render.cpp
+
+Keypress to WAV file playback
+-----------------------------
+
+This scripts needs to be run in a terminal because it requires you to interact
+with Bela using your computer's keyboard.
+Note that it CAN NOT be run from within the IDE or the IDE's console.
+
+See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
+
+This program shows how to playback audio samples from a buffer using
+key strokes.
+
+An audio file is loaded into a vector `data`. This is
+accessed with a read pointer that is incremented at audio rate within the render
+function: `out += data[gReadPtr++]`.
+
+Note that the read pointer is stopped from incrementing past the length of the
+`data`. This is achieved by comparing the read pointer value against the
+sample length which we can access as follows: `data.size()`.
+
+You can trigger the sample with keyboard input:
+
+'a' \<enter\> to start playing the sample
+
+'s' \<enter\> to stop
+
+'q' \<enter\> or ctrl-C to quit
+
+Monitoring of the keyboard input is done in a low priority task to avoid
+interfering with the audio processing.
+*/
+
 #include <Bela.h>
 #include <sys/types.h>
 #include <libraries/AudioFile/AudioFile.h>
@@ -50,7 +71,7 @@ bool setup(BelaContext *context, void *userData)
 
 	// Start the lower-priority task. It will run forever in a loop
 	Bela_scheduleAuxiliaryTask(gTriggerSamplesTask);
-	
+
 	return true;
 }
 
@@ -143,39 +164,3 @@ void trigger_samples(void*)
 void cleanup(BelaContext *context, void *userData)
 {
 }
-
-
-/**
-\example samples/render.cpp
-
-Keypress to WAV file playback
---------------------------------
-
-This scripts needs to be run in a terminal because it requires you to interact
-with Bela using your computer's keyboard.
-Note that it CAN NOT be run from within the IDE or the IDE's console.
-
-See <a href="https://github.com/BelaPlatform/Bela/wiki/Interact-with-Bela-using-the-Bela-scripts" target="_blank">here</a> how to use Bela with a terminal.
-
-This program shows how to playback audio samples from a buffer using
-key strokes.
-
-An audio file is loaded into a vector `data`. This is 
-accessed with a read pointer that is incremented at audio rate within the render 
-function: `out += data[gReadPtr++]`.
-
-Note that the read pointer is stopped from incrementing past the length of the 
-`data`. This is achieved by comparing the read pointer value against the 
-sample length which we can access as follows: `data.size()`.
-
-You can trigger the sample with keyboard input:
-
-'a' \<enter\> to start playing the sample
-
-'s' \<enter\> to stop
-
-'q' \<enter\> or ctrl-C to quit
-
-Monitoring of the keyboard input is done in a low priority task to avoid
-interfering with the audio processing.
-*/

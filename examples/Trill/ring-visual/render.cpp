@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/ring-visual
+*/
+/**
+\example Trill/ring-visual/render.cpp
 
 Trill Ring GUI
 ==============

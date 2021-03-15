@@ -4,9 +4,6 @@
 |  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
 */
 /**
@@ -21,16 +18,18 @@ light is a problem.
 For this example we used the [HC-SR04](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf).
 
 After it receives a short pulse (> 10us) at its TRIGGER input, the module outputs from the
-ECHO output a pulse of length proportional to the distance of the object that is in
-front of the sensor.
-According to the datasheet, the following relation stands:
-  time[us] / 58 = distance[cm]
+ECHO output a pulse whose length is proportional to the distance of the object that is in
+front of the sensor. When a trigger is received the module emits an ultrasonic wave
+from its emitter and then receives the signal back in its receiver, measuring the time
+difference between the two.
+
+According to the datasheet of this sensor, the following relation stands:
+	time[us] / 58 = distance[cm]
 The dataseheet recommends a minimum interval of 60ms between triggers, in order to be able to
 read the result appropriately.
 
 Bela sends out the TRIGGER event every 2646 samples(60ms) and then waits for a pulse to come
-in on the ECHO pin.
-The PulseIn class is used here to monitor a digital pin for an HIGH
+appear on the ECHO pin. The `PulseIn` class is used here to monitor a digital pin for an HIGH
 pulse and once the pulse termiantes, it returnes the duration ( in samples ) of the pulse.
 
 The module requires a 5V power supply and its digital inputs and outputs are low at 0V and
@@ -39,7 +38,7 @@ It is important that the 5V ECHO output from the module *is not* connected
 straight to Bela's digital inputs, as that would most likely kill the Bela board
 (digital I/Os are 3.3V tolerant). You will need to use a passive resistor divider from the
 HC-SR04's ECHO output to scale down the voltage before connecting it to the digital input
-on gEchoDigitalInPin.
+on `gEchoDigitalInPin`.
 
 On the scope you should see the pulses coming in from the trigger and the distance. The closer
 the object, the shorter the pulses. Make sure you set the trigger to "channel 1" (the pulse) and
@@ -82,6 +81,7 @@ void render(BelaContext *context, void *userData)
         } else {
             state = LOW;
         }
+
         digitalWrite(context, n, gTrigDigitalOutPin, state); //write the state to the trig pin
 
         int pulseLength = pulseIn.hasPulsed(context, n); // will return the pulse duration(in samples) if a pulse just ended
@@ -102,8 +102,6 @@ void render(BelaContext *context, void *userData)
     }
 }
 
-
 void cleanup(BelaContext *context, void *userData)
 {
 }
-

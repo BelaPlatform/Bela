@@ -1,3 +1,12 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+
 #include <Bela.h>
 #include <libraries/AudioFile/AudioFile.h>
 #include <vector>
@@ -16,10 +25,10 @@ int gChannelState[NUM_CHANNELS];   // State of each channel...
 unsigned int gSamplesInState[NUM_CHANNELS]; // ...and how long we have been there
 
 // Whether the channel passed the test with and without signal
-bool gChannelOKWhenOn[NUM_CHANNELS];     
+bool gChannelOKWhenOn[NUM_CHANNELS];
 bool gChannelOKWhenOff[NUM_CHANNELS];
 
-unsigned int gHighSamples[NUM_CHANNELS]; 
+unsigned int gHighSamples[NUM_CHANNELS];
 unsigned int gLowSamples[NUM_CHANNELS];
 
 // How long to spend in each state
@@ -64,21 +73,21 @@ bool setup(BelaContext *context, void *userData)
         printf("Error: this example needs analog enabled with 8 channels to run.\n");
         return false;
     }
-    
+
     // Load sound file
     for(unsigned int i = 0; i < NUM_CHANNELS; i++) {
         char filename[32];
         snprintf(filename, 32, "number%d.wav", i);
-        
+
         gAudioChannelBuffers[i] = AudioFileUtilities::loadMono(filename);
         if(!gAudioChannelBuffers[i].size())
             return false;
     }
-  
+
     // Set up initial state
     for(unsigned int i = 0; i < NUM_CHANNELS; i++) {
         gChannelOKWhenOn[i] = gChannelOKWhenOff[i] = false;
-        
+
         // Set up channels in different states that will
         // switch at different times
         if(i % 2)
@@ -88,7 +97,7 @@ bool setup(BelaContext *context, void *userData)
         gSamplesInState[i] = kSamplesInSignalState * i / 8;
         gHighSamples[i] = gLowSamples[i] = 0;
     }
-    
+
 	return true;
 }
 
@@ -99,27 +108,27 @@ void render(BelaContext *context, void *userData)
         gPhase += 2.0 * M_PI * kFrequency / context->analogSampleRate;
         if(gPhase >= 2.0 * M_PI)
             gPhase -= 2.0 * M_PI;
-            
+
         for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
             float input = analogRead(context, n, ch);
             gSamplesInState[ch]++;
-            
+
             // State machine: turn each signal on and off
             if(gChannelState[ch] == kStateSignalOn) {
                 analogWriteOnce(context, n, ch, signal);
-                
+
                 // Check for inputs that are outside of range
                 // (this is good here)
                 if(input > kSignalOnHighThreshold)
                     gHighSamples[ch]++;
                 if(input < kSignalOnLowThreshold)
                     gLowSamples[ch]++;
-                
+
                 if(gSamplesInState[ch] >= kSamplesInSignalState) {
                     // Here we evaluate whether the channel has passed
                     // or failed, based on the number of out-of-range
                     // samples, which should be above the thresholds
-                    
+
                     if(gHighSamples[ch] >= kSignalOnHighCount &&
                        gLowSamples[ch] >= kSignalOnLowCount) {
                         gChannelOKWhenOn[ch] = true;
@@ -129,27 +138,27 @@ void render(BelaContext *context, void *userData)
                                     ch, gHighSamples[ch], kSignalOnHighCount, gLowSamples[ch], kSignalOnLowCount);
                         gChannelOKWhenOn[ch] = false;
                     }
-                    
+
                    gSamplesInState[ch] = 0;
                    gChannelState[ch] = kStateTurningOff;
                    gHighSamples[ch] = gLowSamples[ch] = 0;
-                } 
+                }
             }
             else if(gChannelState[ch] == kStateSignalOff) {
                 analogWrite(context, n, ch, 0.5);
-                
+
                 // Check for inputs that are outside of range
                 // (this is bad here)
                 if(input > kSignalOffHighThreshold)
                     gHighSamples[ch]++;
                 if(input < kSignalOffLowThreshold)
                     gLowSamples[ch]++;
-                
+
                 if(gSamplesInState[ch] >= kSamplesInSignalState) {
                     // Here we evaluate whether the channel has passed
                     // or failed, based on the number of out-of-range
                     // samples, which should be above the thresholds
-                    
+
                     if(gHighSamples[ch] <= kSignalOffHighCount &&
                        gLowSamples[ch] <= kSignalOffLowCount) {
                         gChannelOKWhenOff[ch] = true;
@@ -159,7 +168,7 @@ void render(BelaContext *context, void *userData)
                                     ch, gHighSamples[ch], kSignalOffHighCount, gLowSamples[ch], kSignalOffLowCount);
                         gChannelOKWhenOff[ch] = false;
                     }
-                    
+
                    gSamplesInState[ch] = 0;
                    gChannelState[ch] = kStateTurningOn;
                    gHighSamples[ch] = gLowSamples[ch] = 0;
@@ -167,7 +176,7 @@ void render(BelaContext *context, void *userData)
             }
             else if(gChannelState[ch] == kStateTurningOff) {
                 analogWrite(context, n, ch, 0.5);
-                
+
                 if(gSamplesInState[ch] >= kSamplesInTransitionState) {
                    gSamplesInState[ch] = 0;
                    gChannelState[ch] = kStateSignalOff;
@@ -176,28 +185,28 @@ void render(BelaContext *context, void *userData)
             }
             else if(gChannelState[ch] == kStateTurningOn) {
                 analogWriteOnce(context, n, ch, signal);
-                
+
                 if(gSamplesInState[ch] >= kSamplesInTransitionState) {
                    gSamplesInState[ch] = 0;
                    gChannelState[ch] = kStateSignalOn;
                    gHighSamples[ch] = gLowSamples[ch] = 0;
                 }
             }
-        }    
+        }
     }
-    
+
     bool passed = true;
     for(unsigned int ch = 0; ch < context->analogOutChannels; ch++) {
         if(!gChannelOKWhenOff[ch] || !gChannelOKWhenOn[ch])
             passed = false;
     }
-    
+
     // Play a signal out the audio output to indicate whether the
     // channels have passed or failed
     for(unsigned int n = 0; n < context->audioFrames; n++) {
         float sample = gEnvelopeValue * sinf(gAudioPhase);
         float frequency;
-        
+
 		// If one second has gone by with no error, play one sound, else
 		// play another
 		if(passed) {
@@ -214,14 +223,14 @@ void render(BelaContext *context, void *userData)
 		    // Fail: play a low tone and sound files indicating which channel failed
 			gEnvelopeValue = 0.2;
 			frequency = 220.0;
-		
+
 			if(gAudioChannelBufferNumber >= 0) {
 			    sample += gAudioChannelBuffers[gAudioChannelBufferNumber][gAudioChannelBufferPointer] * 0.8;
 			    gAudioChannelBufferPointer++;
 			    if(gAudioChannelBufferPointer >= gAudioChannelBuffers[gAudioChannelBufferNumber].size()) {
 			        // Got to the end of one sample; play the next
 			        gAudioChannelBufferPointer = 0;
-			        
+
 			        while(++gAudioChannelBufferNumber < NUM_CHANNELS) {
 			            // Loop until we either get to the end or find
 			            // a failed channel
@@ -258,10 +267,10 @@ void render(BelaContext *context, void *userData)
 
         audioWrite(context, n, 0, sample);
         audioWrite(context, n, 1, sample);
-        
+
 		gAudioPhase += 2.0 * M_PI * frequency / context->audioSampleRate;
 		if(gAudioPhase >= 2.0 * M_PI)
-			gAudioPhase -= 2.0 * M_PI;        
+			gAudioPhase -= 2.0 * M_PI;
     }
 }
 

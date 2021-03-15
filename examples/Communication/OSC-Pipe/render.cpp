@@ -1,5 +1,13 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
 /**
-\example OSC-pipe/render.cpp
+\example Communication/OSC-pipe/render.cpp
 
 Open Sound Control
 ------------------

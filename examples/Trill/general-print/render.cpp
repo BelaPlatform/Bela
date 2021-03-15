@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/general-print
+*/
+/**
+\example Trill/general-print/render.cpp
 
 Trill Print Raw Values
 ======================

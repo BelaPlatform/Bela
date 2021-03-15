@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/hex-visual
+*/
+/**
+\example Trill/hex-visual/render.cpp
 
 Trill Hex GUI
 =============

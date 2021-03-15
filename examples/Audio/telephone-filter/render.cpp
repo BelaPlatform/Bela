@@ -1,20 +1,28 @@
- /**
- * \example Audio/telephone-fiter
- *
- * Telephone filter
- * ================
- *
- * This sketch demonstrates how to use the Biquad library to filter an audio signal.
- * A low-pass and a high-pass Butterwoth filters are used at 2kHz and 800Hz respectively to recreate
- * the so-called 'Telephone filter' effect by band-limitting the input signal, making it sound like
- * if it was played through a small bandwith speaker.
- *
- * Both biquad filters are applied in series to a mono sum of the input signal creating a bandpass filter.
- *
- * To learn more about Biquad filters and how to use the Biquad library, make sure to check Nigel Redmon's fantastic blog:
- * https://www.earlevel.com/main/category/digital-audio/filters/iir-filters/biquads/
- *
- **/
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+/**
+\example Audio/telephone-fiter/render.cpp
+
+Telephone filter
+================
+
+This sketch demonstrates how to use the Biquad library to filter an audio signal.
+A low-pass and a high-pass Butterwoth filters are used at 2kHz and 800Hz respectively to recreate
+the so-called 'Telephone filter' effect by band-limitting the input signal, making it sound like
+if it was played through a small bandwith speaker.
+
+Both biquad filters are applied in series to a mono sum of the input signal creating a bandpass filter.
+
+To learn more about Biquad filters and how to use the Biquad library, make sure to check Nigel Redmon's fantastic blog:
+https://www.earlevel.com/main/category/digital-audio/filters/iir-filters/biquads/
+*/
+
 #include <Bela.h>
 #include <libraries/Biquad/Biquad.h>
 

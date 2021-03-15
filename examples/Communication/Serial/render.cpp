@@ -1,5 +1,13 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
 /**
-\example Communication/Serial
+\example Communication/Serial/render.cpp
 
 Serial communication
 ------------
@@ -60,7 +68,7 @@ void serialIo(void* arg) {
 
 bool setup(BelaContext *context, void *userData) {
 	gSerial.setup ("/dev/ttyUSB0", 19200);
-	AuxiliaryTask serialCommsTask = Bela_createAuxiliaryTask(serialIo, 0, "serial-thread", NULL); 
+	AuxiliaryTask serialCommsTask = Bela_createAuxiliaryTask(serialIo, 0, "serial-thread", NULL);
 	Bela_scheduleAuxiliaryTask(serialCommsTask);
 
 	gPipe.setup("serialpipe", 1024);

@@ -1,3 +1,12 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+
 #include <Bela.h>
 #include <libraries/Scope/Scope.h>
 #include <libraries/math_neon/math_neon.h>
@@ -20,7 +29,7 @@ float avg;
 bool setup(BelaContext *context, void *userData)
 {
 	scope.setup(NUM_OSC+1, context->audioSampleRate);
-	
+
 	srand(time(NULL));
 	for (int i=0; i<NUM_OSC; i++){
 		deltaFreqs[i] = FREQ * (rand() % 100 - 50) / 10000.0f;
@@ -29,7 +38,7 @@ bool setup(BelaContext *context, void *userData)
 		gPhases[i] = 0.0f;
 		gAmplitudes[i] = 1.0f + deltaAmps[i];
 	}
-	
+
 	gInverseSampleRate = 1.0f/context->audioSampleRate;
 
 	return true;
@@ -37,7 +46,7 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	
+
 	for (int i=0; i<NUM_OSC; i++){
 		gFrequencies[i] = FREQ + deltaFreqs[i] * 0.1;
 	}
@@ -46,7 +55,7 @@ void render(BelaContext *context, void *userData)
 	}
 
 	for (int n=0; n<context->audioFrames; n++){
-		
+
 		avg = 0.0f;
 		for (int i=0; i<NUM_OSC; i++){
 			gOutput[i+1] = gAmplitudes[i] * sinf_neon(gPhases[i]);
@@ -58,7 +67,7 @@ void render(BelaContext *context, void *userData)
 		gOutput[0] = avg / NUM_OSC;
 
 		scope.log(gOutput);
-		
+
 	}
 }
 

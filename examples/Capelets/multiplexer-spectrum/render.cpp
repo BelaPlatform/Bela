@@ -1,24 +1,38 @@
 /*
- ____  _____ _		  _
-| __ )| ____| |		 / \
-|  _ \|  _| | |		/ _ \
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
-|____/|_____|_____/_/	\_\
-
-The platform for ultra-low latency audio and sensor processing
-
+|____/|_____|_____/_/   \_\
 http://bela.io
+*/
+/**
+\example Capelets/multiplexer-spectrum/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Display and sonify filtered signals from the multiplexer capelet
+----------------------------------------------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+This sketch displays and sonifies the values of up to 64 analog inputs connected
+by the multiplexer capelet, after lowpass filtering. The capelet is a separate
+piece of hardware that attaches to the Bela cape.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+This sketch demonstrates the use of frame-by-frame querying of the multiplexer
+capelet. When enabled, each analog frame represents a different multiplexer
+setting. This sketch checks each frame and assigns it to the correct filter.
+
+As a demo, the amplitudes of each multiplexer input are used to control the
+amplitudes of a bank of harmonically-tuned oscillators. You can hear the effect
+by taking a wire connected to 5V or 3.3V, holding it in one hand while running
+your finger along the (otherwise unconnected) inputs to the multiplexer capelet.
+Alternatively, you can hook up each input to a separate control.
+
+To run the sketch, the multiplexer capelet needs to be enabled using the IDE
+or with the -X command line option. The multiplexer capelet requires 8 analog
+inputs to work, and depending on the settings can use either 2, 4 or 8 multiplexer
+channels per analog input (for a total of 16, 32 or 64 inputs).
+
+The sample rate for each multiplexed input will be 11.025kHz (16 inputs),
+5.5kHz (32 inputs) or 2.75kHz (64 inputs).
 */
 
 #include <Bela.h>
@@ -290,32 +304,3 @@ void print_results(void*)
 		rt_printf("\n");
 	}
 }
-
-/**
-\example multiplexer-spectrum/render.cpp
-
-Display and sonify filtered signals from the multiplexer capelet
-----------------------------------------------------------------
-
-This sketch displays and sonifies the values of up to 64 analog inputs connected
-by the multiplexer capelet, after lowpass filtering. The capelet is a separate
-piece of hardware that attaches to the Bela cape.
-
-This sketch demonstrates the use of frame-by-frame querying of the multiplexer
-capelet. When enabled, each analog frame represents a different multiplexer
-setting. This sketch checks each frame and assigns it to the correct filter.
-
-As a demo, the amplitudes of each multiplexer input are used to control the
-amplitudes of a bank of harmonically-tuned oscillators. You can hear the effect
-by taking a wire connected to 5V or 3.3V, holding it in one hand while running
-your finger along the (otherwise unconnected) inputs to the multiplexer capelet.
-Alternatively, you can hook up each input to a separate control.
-
-To run the sketch, the multiplexer capelet needs to be enabled using the IDE
-or with the -X command line option. The multiplexer capelet requires 8 analog
-inputs to work, and depending on the settings can use either 2, 4 or 8 multiplexer
-channels per analog input (for a total of 16, 32 or 64 inputs).
-
-The sample rate for each multiplexed input will be 11.025kHz (16 inputs),
-5.5kHz (32 inputs) or 2.75kHz (64 inputs).
-*/

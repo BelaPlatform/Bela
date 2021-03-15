@@ -1,24 +1,25 @@
 /*
- ____  _____ _		  _
-| __ )| ____| |		 / \
-|  _ \|  _| | |		/ _ \
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
-|____/|_____|_____/_/	\_\
-
-The platform for ultra-low latency audio and sensor processing
-
+|____/|_____|_____/_/   \_\
 http://bela.io
+*/
+/**
+\example Capelets/multiplexer-display/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Display signals from the multiplexer capelet
+--------------------------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+This sketch displays the values of up to 64 analog inputs connected by the
+multiplexer capelet. The capelet is a separate piece of hardware that attaches
+to the Bela cape.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+To run the sketch, the multiplexer capelet needs to be enabled using the IDE
+or with the -X command line option. The multiplexer capelet requires 8 analog
+inputs to work, and depending on the settings can use either 2, 4 or 8 multiplexer
+channels per analog input (for a total of 16, 32 or 64 inputs).
 */
 
 #include <Bela.h>
@@ -68,20 +69,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-
-/**
-\example multiplexer-display/render.cpp
-
-Display signals from the multiplexer capelet
---------------------------------------------
-
-This sketch displays the values of up to 64 analog inputs connected by the
-multiplexer capelet. The capelet is a separate piece of hardware that attaches
-to the Bela cape.
-
-To run the sketch, the multiplexer capelet needs to be enabled using the IDE
-or with the -X command line option. The multiplexer capelet requires 8 analog
-inputs to work, and depending on the settings can use either 2, 4 or 8 multiplexer
-channels per analog input (for a total of 16, 32 or 64 inputs).
-*/

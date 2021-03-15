@@ -4,21 +4,21 @@
 |  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example Fundamentals/sinetone-optimized/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Using optimized neon functions
+---------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+This sketch shows how to use the math-neon library which provides optimized
+implementation of many simple math functions.
+The code is based on the sinetone/render.cpp project, with the following differences:
+- we include libraries/math_neon/math_neon.h instead of cmath
+- we call sinf_neon() instead of sinf()
+- we can therefore have many more oscillators than in the basic project (just about 90)
+  and we are using them for a weird additive synth
 */
 
 #include <Bela.h>
@@ -59,20 +59,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-
-/**
-\example sinetone-optimized/render.cpp
-
-Using optimized neon functions
----------------------------
-
-This sketch shows how to use the math-neon library which provides optimized
-implementation of many simple math functions.
-The code is based on the sinetone/render.cpp project, with the following differences:
-- we include libraries/math_neon/math_neon.h instead of cmath
-- we call sinf_neon() instead of sinf()
-- we can therefore have many more oscillators than in the basic project (just about 90)
-  and we are using them for a weird additive synth
-
-*/

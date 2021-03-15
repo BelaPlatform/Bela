@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/hex-sound
+*/
+/**
+\example Trill/hex-sound/render.cpp
 
 Trill Hex Oscillator Pad
 ===========================

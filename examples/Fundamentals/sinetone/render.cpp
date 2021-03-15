@@ -1,24 +1,27 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example Fundamentals/sinetone/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Producing your first bleep!
+---------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+This sketch is the hello world of embedded interactive audio. Better known as bleep, it
+produces a sine tone.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+The frequency of the sine tone is determined by a global variable, `gFrequency`.
+The sine tone is produced by incrementing the phase of a sin function
+on every audio frame.
+
+In render() you'll see a nested for loop structure. You'll see this in all Bela projects.
+The first for loop cycles through 'audioFrames', the second through 'audioChannels' (in this case left 0 and right 1).
+It is good to familiarise yourself with this structure as it's fundamental to producing sound with the system.
 */
 
 #include <Bela.h>
@@ -54,22 +57,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-
-/**
-\example sinetone/render.cpp
-
-Producing your first bleep!
----------------------------
-
-This sketch is the hello world of embedded interactive audio. Better known as bleep, it 
-produces a sine tone.
-
-The frequency of the sine tone is determined by a global variable, `gFrequency`. 
-The sine tone is produced by incrementing the phase of a sin function 
-on every audio frame.
-
-In render() you'll see a nested for loop structure. You'll see this in all Bela projects. 
-The first for loop cycles through 'audioFrames', the second through 'audioChannels' (in this case left 0 and right 1). 
-It is good to familiarise yourself with this structure as it's fundamental to producing sound with the system.
-*/

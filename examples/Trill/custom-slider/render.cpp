@@ -1,3 +1,34 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+/**
+\example Trill/custom-slider/render.cpp
+
+Defining a custom slider
+========================
+
+This example allows you to create a slider from an arbitrary number of pads
+which can be in any order.
+
+The order of the pads and their pin numbering is
+defined in slider0Pads etc. We can also set the max number of centroid
+which will define how many touches can be registered per slider. This
+is currently set to 3 meaning that 3 individual touch points can be registered
+per sensor.
+
+Each touch has a location and a touch size which equates to how hard the finger
+is pushing on the sensor. This example is particularly useful for working with
+Trill Flex and Trill Craft. When working with these sensors it always important
+to check that the Prescalar and Noisethreshold settings are optimum for your
+application. Experiment with different values if you are not getting a reading
+or seeing lots of cross talk between the sensors.
+*/
+
 #include <Bela.h>
 #include <cmath>
 #include <libraries/Trill/Trill.h>

@@ -1,10 +1,18 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
 /**
-\example OSC/render.cpp
+\example Communication/OSC/render.cpp
 
 Open Sound Control
 ------------------
 
-This example shows an implementation of OSC (Open Sound Control) which was 
+This example shows an implementation of OSC (Open Sound Control) which was
 developed at UC Berkeley Center for New Music and Audio Technology (CNMAT).
 
 It is designed to be run alongside resources/osc/osc.js.
@@ -13,7 +21,7 @@ For the example to work, run in a terminal on the board
 node /root/Bela/resources/osc/osc.js
 ```
 
-In `setup()` an OSC message to address `/osc-setup`, it then waits 
+In `setup()` an OSC message to address `/osc-setup`, it then waits
 1 second for a reply on `/osc-setup-reply`.
 
 After that, OSC communication takes place in the on_receive() callback,

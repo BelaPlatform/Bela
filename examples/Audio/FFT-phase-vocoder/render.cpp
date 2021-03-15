@@ -1,26 +1,22 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
+/**
+\example Audio/FFT-phase-vocoder/render.cpp
 
+Phase Vocoder
+-------------
+
+This sketch shows an implementation of a phase vocoder and builds on the previous FFT example.
+Again it uses the NE10 library, included at the top of the file.
+
+Read the documentation on the NE10 library [here](http://projectne10.github.io/Ne10/doc/annotated.html).
+*/
 
 #include <Bela.h>
 #include <libraries/ne10/NE10.h> // NEON FFT library
@@ -121,15 +117,15 @@ bool setup(BelaContext* context, void* userData)
 	// If the amout of audio input and output channels is not the same
 	// we will use the minimum between input and output
 	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
-	
+
 	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels){
 		printf("Different number of audio outputs and inputs available. Using %d channels.\n", gAudioChannelNum);
 	}
-	
+
 	midi.readFrom(0);
 	midi.setParserCallback(midiCallback);
-	
+
 	// Retrieve a parameter passed in from the initAudio() call
 	gSampleData = *(SampleData *)userData;
 
@@ -291,16 +287,3 @@ void cleanup(BelaContext* context, void* userData)
 	free(gInputAudio);
 	free(gWindowBuffer);
 }
-
-
-/**
-\example FFT-phase-vocoder/render.cpp
-
-Phase Vocoder
-----------------------
-
-This sketch shows an implementation of a phase vocoder and builds on the previous FFT example.
-Again it uses the NE10 library, included at the top of the file.
-
-Read the documentation on the NE10 library [here](http://projectne10.github.io/Ne10/doc/annotated.html).
-*/

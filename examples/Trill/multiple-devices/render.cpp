@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/multiple-devices
+*/
+/**
+\example Trill/multiple-devices/render.cpp
 
 Connecting and Detecting Multiple Trill
 =========================================

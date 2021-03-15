@@ -5,10 +5,8 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
 */
 /**
-
 \example Audio/filterbanks/render.cpp
 
 Using optimised filter banks
@@ -20,6 +18,7 @@ We create 150 instances of it which are connected in series to create
 some long filterbanks, each of which contains lowpass and highpass filters.
 We then process (up to) four audio inputs through the filterbanks.
 */
+
 #include <Bela.h>
 #include <vector>
 #include <libraries/Biquad/QuadBiquad.h>

@@ -7,7 +7,6 @@
 http://bela.io
 */
 /**
-
 \example Sensors/rotary-encoder/render.cpp
 
 Rotary Encoder
@@ -75,7 +74,7 @@ void render(BelaContext *context, void *userData)
 
 		}
 		gScope.log( // log the values with a vertical offset to make them easier to see
-			a * 0.5 + 0.333, 
+			a * 0.5 + 0.333,
 			b * 0.5 - 0.333,
 			button * 0.5 - 0.88
 		);

@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/detect-all-devices
+*/
+/**
+\example Trill/detect-all-devices/render.cpp
 
 Detect All I2C Devices
 ======================

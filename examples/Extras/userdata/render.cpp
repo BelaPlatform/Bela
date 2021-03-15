@@ -1,24 +1,22 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example Extras/userdata/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Passing parameters using the `*userData` argument
+-------------------------------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+This sketch demonstrates how to pass command line arguments using the `*userData` argument inside the `setup()` function.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+In main.cpp we first parse a command line argument `-f` and allocate its value to the variable `frequency`.
+We then pass the address of this variable when we call `Bela_initAudio()`. The variable can now be accessed from the
+`setup()` and `render()` functions inside render.cpp.
 */
 
 #include <Bela.h>
@@ -60,18 +58,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-
-/**
-\example userdata/render.cpp
-
-Passing parameters using the `*userData` argument
--------------------------------------------------
-
-This sketch demonstrates how to pass command line arguments using the `*userData` argument inside the `setup()` function.
-
-In main.cpp we first parse a command line argument `-f` and allocate its value to the variable `frequency`.
-We then pass the address of this variable when we call `Bela_initAudio()`. The variable can now be accessed from the
-`setup()` and `render()` functions inside render.cpp.
-
-*/

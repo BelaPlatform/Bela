@@ -1,10 +1,11 @@
 /*
- * render.cpp
- *
- *  Created on: Oct 24, 2014
- *      Author: parallels
- */
-
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
 
 #include <Bela.h>
 #include "game.h"
@@ -230,7 +231,7 @@ void render(BelaContext *context, void *userData)
 			if(gameStatusCollisionOccurred()) {
 				gSoundBoomBufferPointer = 0;
 			}
-			
+
 			if(gameStatusTankHitOccurred()) {
 				gSoundHitBufferPointer = 0;
 			}

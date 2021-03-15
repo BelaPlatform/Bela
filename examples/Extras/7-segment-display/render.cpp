@@ -1,26 +1,11 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
-
 
 #include <Bela.h>
 
@@ -52,16 +37,16 @@ const int kMaxState = 25;
 const unsigned char kBELA[4] = {0x7C, 0x7B, 0x38, 0x5F};
 
 int gCharacterToDisplay[4] = {0, 0, 0, 0};
-	
+
 bool setup(BelaContext *context, void *userData)
-{	
+{
 	// This project makes the assumption that the audio and digital
 	// sample rates are the same. But check it to be sure!
 	if(context->audioFrames != context->digitalFrames) {
 		rt_printf("Error: this project needs the audio and digital sample rates to be the same.\n");
 		return false;
 	}
-	
+
 	for(int i = 0; i < NUM_PINS; i++) {
 		pinMode(context, 0, kPins[i], OUTPUT);
 	}
@@ -77,18 +62,18 @@ void render(BelaContext *context, void *userData)
 			gCurrentlyDisplayingDigit = (gCurrentlyDisplayingDigit + 1) % 4;
 			gDigitDisplayTime = kDigitMaxDisplayTime;
 		}
-	
+
 		// Write the currently displaying digit low and the rest high
 		for(int i = 0; i < 4; i++)
 				digitalWriteOnce(context, n, kPins[kDigits[i]], HIGH);
 		digitalWriteOnce(context, n, kPins[kDigits[gCurrentlyDisplayingDigit]], LOW);
-		
+
 		// Write the digit to the other outputs
 		digitalWriteOnce(context, n, kPins[11],
 			gCharacterToDisplay[gCurrentlyDisplayingDigit] & 0x01);	// a
-		digitalWriteOnce(context, n, kPins[6], 
+		digitalWriteOnce(context, n, kPins[6],
 			gCharacterToDisplay[gCurrentlyDisplayingDigit] & 0x02);	// b
-		digitalWriteOnce(context, n, kPins[4], 
+		digitalWriteOnce(context, n, kPins[4],
 			gCharacterToDisplay[gCurrentlyDisplayingDigit] & 0x04);	// c
 		digitalWriteOnce(context, n, kPins[1],
 			gCharacterToDisplay[gCurrentlyDisplayingDigit] & 0x08);	// d
@@ -100,7 +85,7 @@ void render(BelaContext *context, void *userData)
 			gCharacterToDisplay[gCurrentlyDisplayingDigit] & 0x40);	// g
 		digitalWriteOnce(context, n, kPins[2],
 			gCharacterToDisplay[gCurrentlyDisplayingDigit] & 0x80);	// .
-			
+
 		// Check for changing state
 		if(--gStateCounter <= 0) {
 			gState = (gState + 1) % kMaxState;
@@ -120,5 +105,5 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
-	
+
 }

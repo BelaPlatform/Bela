@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/general-custom-address
+*/
+/**
+\example Trill/general-custom-address/render.cpp
 
 Trill use a custom address
 ======================

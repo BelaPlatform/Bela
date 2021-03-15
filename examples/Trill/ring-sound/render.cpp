@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/ring-sound
+*/
+/**
+\example Trill/ring-sound/render.cpp
 
 Trill Ring – Interactive Shepard-Risset Glissando
 =================================================

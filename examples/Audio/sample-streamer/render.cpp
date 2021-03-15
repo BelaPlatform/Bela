@@ -1,24 +1,31 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example Audio/sample-streamer/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Playback of large wav files
+---------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-  Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-  Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+When dealing with large wav files it is usually not a good idea to load the
+entire file into memory. This example shows how to use two buffers to continually
+load chunks of the file, thus allowing playback of very large files. While one buffer
+is being used for playback the other buffer is being filled with the next chunk
+of samples.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+In order to do this, an AuxiliaryTask is used to load the file into the inactive
+buffer without interrupting the audio thread. We can set the global variable
+`gDoneLoadingBuffer` to 1 each time the buffer has finished loading, allowing us
+to detect cases were the buffers havn't been filled in time. These cases can usually
+be mitigated by using a larger buffer size.
+
+Try uploading a large wav file into the project and playing it back. You will need
+specify the amount of channels (`#``define NUM_CHANNELS`) and the name of the file (`gFilename`).
 */
 
 #include <Bela.h>
@@ -47,62 +54,62 @@ int gDoneLoadingBuffer = 1;
 AuxiliaryTask gFillBufferTask;
 
 void fillBuffer(void*) {
-    
+
     // increment buffer read pointer by buffer length
     gBufferReadPtr+=BUFFER_LEN;
-    
+
     // reset buffer pointer if it exceeds the number of frames in the file
     if(gBufferReadPtr>=gNumFramesInFile)
         gBufferReadPtr=0;
-    
+
     int endFrame = gBufferReadPtr + BUFFER_LEN;
     int zeroPad = 0;
-    
+
     // if reaching the end of the file take note of the last frame index
     // so we can zero-pad the rest later
     if((gBufferReadPtr+BUFFER_LEN)>=gNumFramesInFile-1) {
           endFrame = gNumFramesInFile-1;
           zeroPad = 1;
     }
-    
+
     for(int ch=0;ch<gSampleBuf[0].size();ch++) {
-        
+
         // fill (nonactive) buffer
         AudioFileUtilities::getSamples(gFilename,gSampleBuf[!gActiveBuffer][ch].data(),ch
                     ,gBufferReadPtr,endFrame);
-                    
+
         // zero-pad if necessary
         if(zeroPad) {
             int numFramesToPad = BUFFER_LEN - (endFrame-gBufferReadPtr);
             for(int n=0;n<numFramesToPad;n++)
                 gSampleBuf[!gActiveBuffer][ch][n+(BUFFER_LEN-numFramesToPad)] = 0;
         }
-        
+
     }
-    
+
     gDoneLoadingBuffer = 1;
-    
+
     //printf("done loading buffer!\n");
-    
+
 }
 
 bool setup(BelaContext *context, void *userData)
 {
-    
+
     // Initialise auxiliary tasks
 	if((gFillBufferTask = Bela_createAuxiliaryTask(&fillBuffer, 90, "fill-buffer")) == 0)
 		return false;
-	
+
     gNumFramesInFile = AudioFileUtilities::getNumFrames(gFilename);
-    
+
     if(gNumFramesInFile <= 0)
         return false;
-    
+
     if(gNumFramesInFile <= BUFFER_LEN) {
         printf("Sample needs to be longer than buffer size. This example is intended to work with long samples.");
         return false;
     }
-    
+
 	gSampleBuf[0] = AudioFileUtilities::load(gFilename, BUFFER_LEN, 0);
 	gSampleBuf[1] = gSampleBuf[0]; // initialise the inactive buffer with the same channels and frames as the first one
 
@@ -112,7 +119,7 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
     for(unsigned int n = 0; n < context->audioFrames; n++) {
-        
+
         // Increment read pointer and reset to 0 when end of file is reached
         if(++gReadPtr >= BUFFER_LEN) {
             if(!gDoneLoadingBuffer)
@@ -128,7 +135,7 @@ void render(BelaContext *context, void *userData)
 		float out = gSampleBuf[gActiveBuffer][channel%gSampleBuf[0].size()][gReadPtr];
     		audioWrite(context, n, channel, out);
     	}
-    	
+
     }
 }
 
@@ -136,28 +143,3 @@ void render(BelaContext *context, void *userData)
 void cleanup(BelaContext *context, void *userData)
 {
 }
-
-
-/**
-\example sample-streamer/render.cpp
-
-Playback of large wav files
----------------------------
-
-When dealing with large wav files it is usually not a good idea to load the
-entire file into memory. This example shows how to use two buffers to continually
-load chunks of the file, thus allowing playback of very large files. While one buffer
-is being used for playback the other buffer is being filled with the next chunk
-of samples.
-
-In order to do this, an AuxiliaryTask is used to load the file into the inactive
-buffer without interrupting the audio thread. We can set the global variable
-`gDoneLoadingBuffer` to 1 each time the buffer has finished loading, allowing us
-to detect cases were the buffers havn't been filled in time. These cases can usually
-be mitigated by using a larger buffer size.
-
-Try uploading a large wav file into the project and playing it back. You will need
-specify the amount of channels (`#``define NUM_CHANNELS`) and the name of the file (`gFilename`).
-
-
-*/

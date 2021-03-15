@@ -5,10 +5,8 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
 */
 /**
-
 \example Communication/Spi/render.cpp
 
 Reading a SPI device on the Bela Mini

@@ -4,23 +4,34 @@
 |  _ \|  _| | |     / _ \
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
-
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
-
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
 */
+/**
+\example Digital/digital-input/render.cpp
 
+Switching an LED on and off
+---------------------------
+
+This example brings together digital input and digital output. The program will read
+a button and turn the LED on and off according to the state of the button.
+
+- connect an LED in series with a 470ohm resistor between gOutputPin (digital pin 0) and ground.
+- connect a 1k resistor to +3.3V.
+- connect the other end of the resistor to both a button and gInputPin (digital pin 1)
+- connect the other end of the button to ground.
+
+Before using the digital pins we need to set whether they are input or output.
+This is done via `pinMode(context, 0, gInputPin, INPUT);`.
+
+You will notice that the LED will normally stay on and will turn off only when
+the button is pressed. This is due to the fact that the LED is set to the same
+value read at gInputPin. When the button is not pressed, gInputPin is `HIGH` and so
+gOutputPin is set to `HIGH` as well, so that the LED conducts and emits light. When
+the button is pressed, gInputPin goes `LOW` and gOutputPin is set to `LOW`, turning off the LED.
+
+As an exercise try and change the code so that the LED only turns on when
+the button is pressed.
+*/
 
 #include <Bela.h>
 #include <stdlib.h>
@@ -54,31 +65,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 	// Nothing to do here
 }
-
-
-/**
-\example digital-input/render.cpp
-
-Switching an LED on and off
----------------------------
-
-This example brings together digital input and digital output. The program will read
-a button and turn the LED on and off according to the state of the button.
-
-- connect an LED in series with a 470ohm resistor between gOutputPin (digital pin 0) and ground.
-- connect a 1k resistor to +3.3V.
-- connect the other end of the resistor to both a button and gInputPin (digital pin 1)
-- connect the other end of the button to ground.
-
-Before using the digital pins we need to set whether they are input or output.
-This is done via `pinMode(context, 0, gInputPin, INPUT);`.
-
-You will notice that the LED will normally stay on and will turn off only when
-the button is pressed. This is due to the fact that the LED is set to the same
-value read at gInputPin. When the button is not pressed, gInputPin is `HIGH` and so
-gOutputPin is set to `HIGH` as well, so that the LED conducts and emits light. When
-the button is pressed, gInputPin goes `LOW` and gOutputPin is set to `LOW`, turning off the LED.
-
-As an exercise try and change the code so that the LED only turns on when 
-the button is pressed.
-*/

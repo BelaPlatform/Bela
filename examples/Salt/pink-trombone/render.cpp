@@ -1,3 +1,12 @@
+/*
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+
 #include <Bela.h>
 #include <math.h>
 #include <libraries/math_neon/math_neon.h>
@@ -162,7 +171,7 @@ Tract::handleTouches()
 - checks for touches to use as tongueTouch
 - processes the tongueTouch to set the tongueIndex and tongueDiameter
 - setRestDiameter(): set the diameter of the tract as dictated by the tongue
-- processes other touches: 
+- processes other touches:
 -- Tract.velumTarget is set to : 0.4 if the touch opens the velum, 0.01 otherwise
 -- Tract.targetDiameter is updated if other touches shrink it more than the tongue does
 
@@ -867,7 +876,7 @@ public:
 
 		// TODO:
 		// attempt to compensate for touch.fricative_intensity when setting
-		// diameter directly (no touches used). This is very 
+		// diameter directly (no touches used). This is very
 		// CPU intensive though.
 		//for(unsigned int n = 2; n < this->targetDiameter.size() - 1; ++n)
 		//{
@@ -893,7 +902,7 @@ public:
         this->R[i+2] += noise1 * (sample_t)0.5;
         this->L[i+2] += noise1 * (sample_t)0.5;
     }
-	
+
 };
 
 class AudioSystemClass
@@ -1048,7 +1057,7 @@ public:
 	int tongueUpperIndexBound;
 	float tongueIndexCentre;
 
-	TractUIClass(TractClass& newTract, UIClass& newUI) : 
+	TractUIClass(TractClass& newTract, UIClass& newUI) :
 		Tract(newTract)
 		, UI(newUI)
 	{
@@ -1296,7 +1305,7 @@ function redraw(highResTimestamp)
 
   module.seed(Date.now());
 
-  
+
   //for(var i=0; i<256; i++) {
     //perm[i] = perm[i + 256] = p[i];
     //gradP[i] = gradP[i + 256] = grad3[perm[i] % 12];
@@ -1461,7 +1470,7 @@ bool setup(BelaContext* context, void*)
 	for(unsigned int n = 0; n < digitalOuts.size(); ++n)
 		pinMode(context, 0, digitalOuts[n], OUTPUT);
 
-	// Create and enable the appropriate number of touches: 
+	// Create and enable the appropriate number of touches:
 	std::vector<Touch>& touches = UI.touchesWithMouse;
 	for(unsigned int n = 0; n < touchesIndexAnIn.size(); ++n)
 	{
@@ -1531,7 +1540,7 @@ void render(BelaContext* context, void*)
 				//t.alive = true;
 				//t.enabled = true;
 				//TractUI->handleTouches();
-				
+
 				if(message.getDataByte(0) == 3)
 				{
 					float tenseness = message.getDataByte(1)/127.f;
@@ -1569,8 +1578,8 @@ void render(BelaContext* context, void*)
 			// TODO: add a condition for velumTarget
 		}
 	}
-	
-	if(1) 
+
+	if(1)
 	{
 		// handle I/O
 
@@ -1616,7 +1625,7 @@ void render(BelaContext* context, void*)
 
 		Glottis.UITenseness = tenseness;
 		Glottis.UIFrequency = frequency;
-		
+
 		// set digital out 1 and 2 to "high". This can be useful to control the trig inputs
 		digitalWrite(context, 0, high1DigOut, 1);
 		digitalWrite(context, 0, high2DigOut, 1);
@@ -1712,7 +1721,7 @@ void render(BelaContext* context, void*)
 		inputArray[n] = 0.5f * (audioRead(context, n, 0) + audioRead(context, n, 1));
 	}
 	AudioSystem->doScriptProcessor(inputArray, glottalOutArray, tractOutArray, gLength);
-	
+
 	// write pitch out, smoothed
 	//TODO: this could probably be extracted sample-accurate from the Glottis.
 	float targetFrequency = log2f(Glottis.newFrequency / cvFrequencyOffset) * cvOutScaling;

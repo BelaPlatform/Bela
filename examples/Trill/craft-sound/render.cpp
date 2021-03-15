@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/craft-sound
+*/
+/**
+\example Trill/craft-sound/render.cpp
 
 Trill Craft Oscillator Bank
 ===========================

@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/craft-visual
+*/
+/**
+\example Trill/craft-visual/render.cpp
 
 Trill Visual Raw
 ================

@@ -1,24 +1,20 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example Extras/cape-test/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+Testing the functionalities of the Bela cape
+-----------------------------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
-
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+This program checks that audio and analog I/O work properly.
+You should physically connect each audio and analog output back to its
+respective input.
 */
 
 #include <Bela.h>
@@ -89,7 +85,7 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	
+
 	// float* aoc = (float*)&context->analogOutChannels;
 	// *aoc = 0; // simulate Bela Mini. Should also change the condition in setup() accordingly
 	static float phase = 0.0;
@@ -110,7 +106,7 @@ void render(BelaContext *context, void *userData)
 
 	// Play a sine wave on the audio output
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		
+
 		// Peak detection on the audio inputs, with offset to catch
 		// DC errors
 		for(int ch = 0; ch < context->audioInChannels; ch++) {
@@ -126,7 +122,7 @@ void render(BelaContext *context, void *userData)
 			gNegativePeakLevels[ch] *= gPeakLevelDecayRate;
 			gNegativePeakLevels[ch] += 0.1f;
 		}
-		
+
 		int enabledChannel;
 		int disabledChannel;
 		const char* enabledChannelLabel;
@@ -146,18 +142,18 @@ void render(BelaContext *context, void *userData)
 		{
 			audioWrite(context, n, enabledChannel, 0.2f * sinf(phase));
 			audioWrite(context, n, disabledChannel, 0);
-			
+
 			frequency = 3000.0;
 			phase += 2.0f * (float)M_PI * frequency / context->audioSampleRate;
 			if(phase >= M_PI)
 				phase -= 2.0f * (float)M_PI;
-			
+
 			gAudioTestStateSampleCount++;
 			if(gAudioTestStateSampleCount >= gAudioTestStateSampleThreshold) {
 				// Check if we have the expected input: signal on the enabledChannel but not
 				// on the disabledChannel. Also check that there is not too much DC offset on the
 				// inactive channel
-				if((gPositivePeakLevels[enabledChannel] - gNegativePeakLevels[enabledChannel]) >= gPeakLevelHighThreshold 
+				if((gPositivePeakLevels[enabledChannel] - gNegativePeakLevels[enabledChannel]) >= gPeakLevelHighThreshold
 					&& (gPositivePeakLevels[disabledChannel] -  gNegativePeakLevels[disabledChannel]) <= gPeakLevelLowThreshold &&
 					fabsf(gPositivePeakLevels[disabledChannel]) < gDCOffsetThreshold &&
 					fabsf(gNegativePeakLevels[disabledChannel]) < gDCOffsetThreshold) {
@@ -287,8 +283,8 @@ void render(BelaContext *context, void *userData)
 						)
 					)
 					{
-						rt_printf("Analog FAIL [output %d, input %d] -- output %s input %f %s\n", 
-							k % outChannels, 
+						rt_printf("Analog FAIL [output %d, input %d] -- output %s input %f %s\n",
+							k % outChannels,
 							k,
 							(sampleCounter == 256 && inverted) || (sampleCounter == 768 && !inverted) ? "HIGH" : "LOW",
 							inValue,
@@ -326,14 +322,3 @@ void cleanup(BelaContext *context, void *userData)
 	delete led1;
 	delete led2;
 }
-
-/**
- * \example cape-test/render.cpp
- *
- * Testing the functionalities of the Bela cape
- * -----------------------------------------
- *
- *  This program checks that audio and analog I/O work properly.
- *  You should physically connect each audio and analog output back to its
- *  respective input.
- */

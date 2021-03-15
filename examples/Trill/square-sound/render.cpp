@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/square-sound
+*/
+/**
+\example Trill/square-sound/render.cpp
 
 Trill Square oscillator pad
 ===================

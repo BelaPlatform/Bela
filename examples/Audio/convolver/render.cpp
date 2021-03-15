@@ -5,11 +5,12 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Audio/convolution
+*/
+/**
+\example Audio/convolution/render.cpp
 
 Convolve a signal with an impulse response.
-======================
+==========================================
 
 This project performs a time-domain convolution of a signal with an impulse
 response. Both the input signal and the inpulse response are loaded from audio

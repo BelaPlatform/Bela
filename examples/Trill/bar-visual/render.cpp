@@ -5,8 +5,9 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
-
-\example Trill/bar-visual
+*/
+/**
+\example Trill/bar-visual/render.cpp
 
 Trill Bar GUI
 =============

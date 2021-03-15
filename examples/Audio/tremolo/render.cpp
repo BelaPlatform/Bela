@@ -1,24 +1,43 @@
 /*
- ____  _____ _        _    
-| __ )| ____| |      / \   
-|  _ \|  _| | |     / _ \  
-| |_) | |___| |___ / ___ \ 
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
-
-The platform for ultra-low latency audio and sensor processing
-
 http://bela.io
+*/
+/**
+\example Audio/tremolo/render.cpp
 
-A project of the Augmented Instruments Laboratory within the
-Centre for Digital Music at Queen Mary University of London.
-http://www.eecs.qmul.ac.uk/~andrewm
+A simple tremolo effect
+-----------------------
 
-(c) 2016 Augmented Instruments Laboratory: Andrew McPherson,
-	Astrid Bin, Liam Donovan, Christian Heinrichs, Robert Jack,
-	Giulio Moro, Laurel Pardue, Victor Zappi. All rights reserved.
+This sketch demonstrates how to make a simple tremolo effect with one potiometer to
+control the rate of the effect. A tremolo effect is a simple type of amplitude modulation
+where the amplitude of one signal is continuous modulated by the amplitude of another.
+This is achieved by multiplying two signals together.
 
-The Bela software is distributed under the GNU Lesser General Public License
-(LGPL 3.0), available here: https://www.gnu.org/licenses/lgpl-3.0.txt
+In this example we want to create a tremolo effect like that you would find in a guitar
+effects box so our first signal will be our audio input into which we could plug a guitar
+or external sound source. This will be our 'carrier' signal.
+
+The second signal that we will use, the 'modulator', will be a low freqeuncy oscillator (LFO),
+in this case a sinetone which we will generate in the same way as the 01-Basic/sinetone example.
+The frequency of this sinetone is determined by a global variable, `gFrequency`. Again, the
+sinetone is produced by incrementing the phase of a sine function on every audio frame.
+
+In `render()` you'll see two nested for loop structures, one for audio and the other for the
+analogs. You should be pretty familiar with this structure by now. In the first of these loops
+we deal with all the audio -- in the second with reading the analog input channels. We read the
+value of analog input 0 and map it to an appropriate range for controlling the frequency
+of the sine tone.
+
+The lfo is then mulitplied together with the audio input and sent to the audio output.
+
+Hardware
+-----------------------
+- connect a 10K pot to 3.3V and GND on its 1st and 3rd pins.
+- connect the 2nd middle pin of the pot to analogIn 0.
 */
 
 #include <Bela.h>
@@ -38,7 +57,7 @@ bool setup(BelaContext *context, void *userData)
 	// If the amout of audio input and output channels is not the same
 	// we will use the minimum between input and output
 	gAudioChannelNum = std::min(context->audioInChannels, context->audioOutChannels);
-	
+
 	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels){
 		printf("Different number of audio outputs and inputs available. Using %d channels.\n", gAudioChannelNum);
@@ -90,39 +109,3 @@ void cleanup(BelaContext *context, void *userData)
 {
 
 }
-
-
-/**
-\example tremolo/render.cpp
-
-A simple tremolo effect
------------------------
-
-This sketch demonstrates how to make a simple tremolo effect with one potiometer to
-control the rate of the effect. A tremolo effect is a simple type of amplitude modulation
-where the amplitude of one signal is continuous modulated by the amplitude of another.
-This is achieved by multiplying two signals together.
-
-In this example we want to create a tremolo effect like that you would find in a guitar
-effects box so our first signal will be our audio input into which we could plug a guitar
-or external sound source. This will be our 'carrier' signal.
-
-The second signal that we will use, the 'modulator', will be a low freqeuncy oscillator (LFO),
-in this case a sinetone which we will generate in the same way as the 01-Basic/sinetone example. 
-The frequency of this sinetone is determined by a global variable, `gFrequency`. Again, the 
-sinetone is produced by incrementing the phase of a sine function on every audio frame.
-
-In `render()` you'll see two nested for loop structures, one for audio and the other for the 
-analogs. You should be pretty familiar with this structure by now. In the first of these loops
-we deal with all the audio -- in the second with reading the analog input channels. We read the 
-value of analog input 0 and map it to an appropriate range for controlling the frequency
-of the sine tone.
-
-The lfo is then mulitplied together with the audio input and sent to the audio output.
-
-Hardware
------------------------
-- connect a 10K pot to 3.3V and GND on its 1st and 3rd pins.
-- connect the 2nd middle pin of the pot to analogIn 0.
-
-*/
