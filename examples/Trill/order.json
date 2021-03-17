@@ -21,5 +21,9 @@
 	"hex-pd",
 	"ring-visual",
 	"ring-sound",
-	"ring-pd"
+	"ring-pd",
+	"flex-default",
+	"flex-visual",
+	"custom-slider",
+	"multiple-devices"
 ]

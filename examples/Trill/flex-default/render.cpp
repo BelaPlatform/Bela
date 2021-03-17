@@ -5,15 +5,20 @@
 | |_) | |___| |___ / ___ \
 |____/|_____|_____/_/   \_\
 http://bela.io
+*/
+/**
+\example Trill/flex-default/render.cpp
 
-\example Trill/flex-visual
-
-Trill Flex GUI
-=============
+Trill Flex Default Example
+==========================
 
 This is an example of how to communicate with the Trill Flex
-sensor using the Trill library. We also visualise position of each touch
+sensor using the Trill library. We will visualise the position of each touch
 in real time via the integrated Bela p5.js GUI.
+
+This example is designed to work with the default flexible sensor which comes
+with Trill Flex. Connect the sensor to the base and then connect the base to
+the I2C pins on Bela.
 
 The Trill sensor is scanned in an AuxiliaryTask running in parallel with the
 audio thread and the number of active touches, their position and size are
@@ -81,6 +86,9 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Unable to initialise Trill Flex\n");
 		// return false;
 	}
+	// Set Prescaler and Noise Threshold to appropriate values for Trill Flex
+	touchSensor.setPrescaler(4);
+	touchSensor.setNoiseThreshold(0.03);
 	touchSensor.printDetails();
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_runAuxiliaryTask(loop);

@@ -76,7 +76,7 @@ function setup() {
 	radioPres = createRadio();
 	for(let n = 1; n <= 8; ++n)
 		radioPres.option(n+"");
-	radioPres.value("2");
+	radioPres.value("4");
 	belaSenderInit(radioPres, "prescaler");
 
 	radioBits = createRadio();
@@ -87,6 +87,7 @@ function setup() {
 
 	// Create a slider object (min, max, initial value, increment)
 	slider = createSlider(0, 255/4096, 0.0, 1/4096); // TODO: the range and step of this should change with the number of bit
+	slider.value("0.03");
 	belaSenderInit(slider, "noiseThreshold");
 
 	button = createButton("RESET BASELINE");
