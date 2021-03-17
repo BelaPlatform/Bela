@@ -44,22 +44,25 @@ enum {
 
 struct TrillDefaults
 {
-	TrillDefaults(std::string name, Trill::Mode mode, uint8_t address) :
-		name(name), mode(mode), address(address) {}
+	TrillDefaults(std::string name, Trill::Mode mode, float noiseThreshold, uint8_t address, uint8_t prescaler) :
+		name(name), mode(mode), noiseThreshold(noiseThreshold),
+			address(address), prescaler(prescaler) {}
 	std::string name;
 	Trill::Mode mode;
+	float noiseThreshold;
 	uint8_t address;
+	uint8_t prescaler;
 };
 
 static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
-	{Trill::NONE, TrillDefaults("No device", Trill::AUTO, 0xFF)},
-	{Trill::UNKNOWN, TrillDefaults("Unknown device", Trill::AUTO, 0xFF)},
-	{Trill::BAR, TrillDefaults("Bar", Trill::CENTROID, 0x20)},
-	{Trill::SQUARE, TrillDefaults("Square", Trill::CENTROID, 0x28)},
-	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, 0x30)},
-	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, 0x38)},
-	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0x40)},
-	{Trill::FLEX, TrillDefaults("Flex", Trill::DIFF, 0x48)},
+	{Trill::NONE, TrillDefaults("No device", Trill::AUTO, 0, 0xFF, -1)},
+	{Trill::UNKNOWN, TrillDefaults("Unknown device", Trill::AUTO, 0, 0xFF, -1)},
+	{Trill::BAR, TrillDefaults("Bar", Trill::CENTROID, 0, 0x20, -1)},
+	{Trill::SQUARE, TrillDefaults("Square", Trill::CENTROID, 0, 0x28, -1)},
+	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, 0, 0x30, -1)},
+	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, 0, 0x38, -1)},
+	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0, 0x40, -1)},
+	{Trill::FLEX, TrillDefaults("Flex", Trill::CENTROID, 0.0625, 0x48, 2)},
 };
 
 static const std::map<Trill::Mode, std::string> trillModes = {
@@ -83,7 +86,7 @@ static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 	{.pos = 4096, .posH = 0, .size = 1}, // CRAFT = 3,
 	{.pos = 3584, .posH = 0, .size = 5000}, // RING = 4,
 	{.pos = 1920, .posH = 1664, .size = 4000}, // HEX = 5,
-	{.pos = 4096, .posH = 0, .size = 1}, // FLEX = 6,
+	{.pos = 3712, .posH = 0, .size = 4000}, // FLEX = 6,
 };
 
 Trill::Trill(){}
@@ -98,13 +101,14 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	rawData.resize(kNumChannelsMax);
 	address = 0;
 	device_type_ = NONE;
+	TrillDefaults defaults = trillDefaults.at(device);
 
 	if(128 <= i2c_address)
-		i2c_address = trillDefaults.at(device).address;
+		i2c_address = defaults.address;
 
 	if(128 <= i2c_address) {
 		fprintf(stderr, "Unknown default address for device type %s\n",
-			trillDefaults.at(device).name.c_str());
+			defaults.name.c_str());
 		return -2;
 	}
 	if(initI2C_RW(i2c_bus, i2c_address, -1)) {
@@ -119,18 +123,29 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	if(UNKNOWN != device && device_type_ != device) {
 		fprintf(stderr, "Wrong device type detected. `%s` was requested "
 				"but `%s` was detected on bus %d at address %#x(%d).\n",
-				trillDefaults.at(device).name.c_str(),
+				defaults.name.c_str(),
 				trillDefaults.at(device_type_).name.c_str(),
 				i2c_bus, i2c_address, i2c_address
 		       );
 		device_type_ = NONE;
 		return -3;
 	}
+	// if the device was unknown it will have changed by now
+	defaults = trillDefaults.at(device_type_);
 
-	Mode mode = trillDefaults.at(device_type_).mode;
+	Mode mode = defaults.mode;
 	if(setMode(mode) != 0) {
 		fprintf(stderr, "Unable to set mode\n");
 		return 3;
+	}
+
+	uint8_t prescaler = defaults.prescaler;
+	if(prescaler != (uint8_t)-1)
+	{
+		if(setPrescaler(prescaler)){
+			fprintf(stderr, "Unable to set prescaler\n");
+			return 8;
+		}
 	}
 
 	if(setScanSettings(0, 12)){
@@ -143,9 +158,15 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		return 6;
 	}
 
+	float noiseThreshold = defaults.noiseThreshold;
+	if(setNoiseThreshold(defaults.noiseThreshold)) {
+		fprintf(stderr, "Unable to update baseline\n");
+		return 9;
+	}
+
 	if(prepareForDataRead() != 0) {
 		fprintf(stderr, "Unable to prepare for reading data\n");
-		return 7;
+		return 10;
 	}
 
 	address = i2c_address;
