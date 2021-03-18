@@ -81,24 +81,23 @@ void render(BelaContext *context, void *userData)
 		} else {
 			state = LOW;
 		}
-
 		digitalWrite(context, n, gTrigDigitalOutPin, state); //write the state to the trig pin
 
 		int pulseLength = pulseIn.hasPulsed(context, n); // will return the pulse duration(in samples) if a pulse just ended
 		float duration = 1e6 * pulseLength / context->digitalSampleRate; // pulse duration in microseconds
 		static float distance = 0;
 		if(pulseLength >= gMinPulseLength){
-			static int count = 0;
 			// rescaling according to the datasheet
 			distance = duration / gRescale;
-			if(count > 5000){ // we do not want to print the value every time we read it
-				rt_printf("pulseLength: %d, distance: %fcm\n", pulseLength, distance);
-				count -= 5000;
-			}
-			++count;
 		}
+		static int count = 0;
+		if(count > 5000){ // we do not want to print the value every time we read it
+			rt_printf("pulseLength: %d, distance: %fcm\n", pulseLength, distance);
+			count = 0;
+		}
+		++count;
 		// Logging to the scope the pulse inputs (gEchoDigitalInPin) and the distance
-		scope.log(digitalRead(context, n, gEchoDigitalInPin), distance/100);
+		scope.log(digitalRead(context, n, gEchoDigitalInPin) * 0.5, distance/100);
 	}
 }
 
