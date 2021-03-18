@@ -86,9 +86,6 @@ bool setup(BelaContext *context, void *userData)
 		fprintf(stderr, "Unable to initialise Trill Flex\n");
 		// return false;
 	}
-	// Set Prescaler and Noise Threshold to appropriate values for Trill Flex
-	touchSensor.setPrescaler(4);
-	touchSensor.setNoiseThreshold(0.03);
 	touchSensor.printDetails();
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_runAuxiliaryTask(loop);

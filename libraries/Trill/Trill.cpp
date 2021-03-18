@@ -62,7 +62,7 @@ static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
 	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, 0, 0x30, -1)},
 	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, 0, 0x38, -1)},
 	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0, 0x40, -1)},
-	{Trill::FLEX, TrillDefaults("Flex", Trill::CENTROID, 0.0625, 0x48, 2)},
+	{Trill::FLEX, TrillDefaults("Flex", Trill::CENTROID, 0.03, 0x48, 4)},
 };
 
 static const std::map<Trill::Mode, std::string> trillModes = {
@@ -86,7 +86,7 @@ static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 	{.pos = 4096, .posH = 0, .size = 1}, // CRAFT = 3,
 	{.pos = 3584, .posH = 0, .size = 5000}, // RING = 4,
 	{.pos = 1920, .posH = 1664, .size = 4000}, // HEX = 5,
-	{.pos = 3712, .posH = 0, .size = 4000}, // FLEX = 6,
+	{.pos = 3712, .posH = 0, .size = 1200}, // FLEX = 6,
 };
 
 Trill::Trill(){}
