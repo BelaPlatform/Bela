@@ -99,17 +99,17 @@ void render(BelaContext *context, void *userData)
 {
 	static unsigned int count = 0;
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		 // Send number of touches, touch location and size to the GUI
-		 // after some time has elapsed.
-		 if(count >= gTimePeriod*context->audioSampleRate)
-		 {
-			 gui.sendBuffer(0, gNumActiveTouches);
-			 gui.sendBuffer(1, gTouchLocation);
-			 gui.sendBuffer(2, gTouchSize);
+		// Send number of touches, touch location and size to the GUI
+		// after some time has elapsed.
+		if(count >= gTimePeriod * context->audioSampleRate)
+		{
+			gui.sendBuffer(0, gNumActiveTouches);
+			gui.sendBuffer(1, gTouchLocation);
+			gui.sendBuffer(2, gTouchSize);
 
-			 count = 0;
-		 }
-	 count++;
+			count = 0;
+		}
+		count++;
 	}
 }
 
