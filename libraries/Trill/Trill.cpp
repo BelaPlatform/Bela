@@ -51,17 +51,18 @@ struct TrillDefaults
 	Trill::Mode mode;
 	float noiseThreshold;
 	uint8_t address;
-	uint8_t prescaler;
+	int8_t prescaler;
 };
 
+const float defaultThreshold = 0x28 / 4096.f;
 static const std::map<Trill::Device, struct TrillDefaults> trillDefaults = {
 	{Trill::NONE, TrillDefaults("No device", Trill::AUTO, 0, 0xFF, -1)},
 	{Trill::UNKNOWN, TrillDefaults("Unknown device", Trill::AUTO, 0, 0xFF, -1)},
-	{Trill::BAR, TrillDefaults("Bar", Trill::CENTROID, 0, 0x20, -1)},
-	{Trill::SQUARE, TrillDefaults("Square", Trill::CENTROID, 0, 0x28, -1)},
-	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, 0, 0x30, -1)},
-	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, 0, 0x38, -1)},
-	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, 0, 0x40, -1)},
+	{Trill::BAR, TrillDefaults("Bar", Trill::CENTROID, defaultThreshold, 0x20, 2)},
+	{Trill::SQUARE, TrillDefaults("Square", Trill::CENTROID, defaultThreshold, 0x28, 1)},
+	{Trill::CRAFT, TrillDefaults("Craft", Trill::DIFF, defaultThreshold, 0x30, 1)},
+	{Trill::RING, TrillDefaults("Ring", Trill::CENTROID, defaultThreshold, 0x38, 1)},
+	{Trill::HEX, TrillDefaults("Hex", Trill::CENTROID, defaultThreshold, 0x40, 1)},
 	{Trill::FLEX, TrillDefaults("Flex", Trill::CENTROID, 0.03, 0x48, 4)},
 };
 
@@ -139,8 +140,8 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		return 3;
 	}
 
-	uint8_t prescaler = defaults.prescaler;
-	if(prescaler != (uint8_t)-1)
+	int8_t prescaler = defaults.prescaler;
+	if(prescaler >= 0)
 	{
 		if(setPrescaler(prescaler)){
 			fprintf(stderr, "Unable to set prescaler\n");
