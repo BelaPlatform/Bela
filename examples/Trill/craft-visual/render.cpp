@@ -22,17 +22,17 @@ Once the project is running click the GUI button to see the reading on each chan
 From this GUI you can also adjust the setting of the Craft sensor to best suit your needs.
 
 There are two important sensor settings that you may want to adjust when working
-with the Trill Craft: the `threshold` and the `prescalar`.
+with the Trill Craft: the `threshold` and the `prescaler`.
 
 The `threshold` setting is simply the threshold above which to read and is for
 ignoring any noise that might be present in the lowest regions of the sensor reading.
 This only applies to `DIFF` mode and is a float between 0.0 and 1.0. Typically values
 would stay below 0.1.
 
-The `prescalar` setting equates to the sensitivity of the sensor. Technically, this
+The `prescaler` setting equates to the sensitivity of the sensor. Technically, this
 value is a divider for the clock on the cypress chip and so it decides how long the
 chip charges the connected material for before taking a reading. There are 8 different
-settings for the prescalar.
+settings for the prescaler.
 
 The rule of thumb when adjusting these values is:
 - A higher value prescaler (i.e. longer charging time as it is a divider of the clock)

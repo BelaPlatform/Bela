@@ -23,7 +23,7 @@ Once the project is running click the GUI button to see the reading on each chan
 From this GUI you can also adjust the setting of the sensor to best suit your needs.
 
 There are two important sensor settings that you may want to adjust when working
-with Trill Flex: the `threshold` and the `prescalar`.
+with Trill Flex: the `threshold` and the `prescaler`.
 
 The `threshold` setting is simply the threshold above which to read and is for
 ignoring any noise that might be present in the lowest regions of the sensor reading.
@@ -33,7 +33,7 @@ we recommend a value of 0.03 or above.
 The `prescaler` setting equates to the sensitivity of the sensor. Technically, this
 value is a divider for the clock on the cypress chip and so it decides how long the
 chip charges the connected material for before taking a reading. There are 8 different
-settings for the prescalar. For Trill Flex we recommend a value of 4.
+settings for the prescaler. For Trill Flex we recommend a value of 4.
 
 The rule of thumb when adjusting these values is:
 - A higher value prescaler (i.e. longer charging time as it is a divider of the clock)

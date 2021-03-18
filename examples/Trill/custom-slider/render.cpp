@@ -24,7 +24,7 @@ per sensor.
 Each touch has a location and a touch size which equates to how hard the finger
 is pushing on the sensor. This example is particularly useful for working with
 Trill Flex and Trill Craft. When working with these sensors it always important
-to check that the Prescalar and Noisethreshold settings are optimum for your
+to check that the Prescaler and Noisethreshold settings are optimum for your
 application. Experiment with different values if you are not getting a reading
 or seeing lots of cross talk between the sensors.
 */
