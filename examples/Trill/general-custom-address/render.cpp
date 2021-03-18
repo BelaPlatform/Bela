@@ -35,7 +35,7 @@ In this example we use a Trill Bar where we bridged together the two left-most
 pads of the ADR0 line, which corresponds to an address of 0x21 (in hexadecimal
 notation), or 33 (in decimal notation).
 
-We have to pass this address as the third argument  to the
+We have to pass this address as the third argument to the
 `touchSensors.setup()` function in order to be able to use this sensor.
 
 If no device is detected at the specified address, or a device of a different

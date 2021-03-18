@@ -68,7 +68,7 @@ void loop(void*)
 		{
 			gTouchLocation[i] = touchSensor.touchLocation(i);
 			gTouchSize[i] = touchSensor.touchSize(i);
-	    	}
+		}
 		// For all inactive touches, set location and size to 0
 		for(unsigned int i = gNumActiveTouches; i <  NUM_TOUCH; i++)
 		{

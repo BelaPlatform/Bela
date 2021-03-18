@@ -50,7 +50,7 @@ float gFreqRange[2] = { 200.0, 1500.0 };
 // One Pole filters objects declaration
 OnePole freqFilt, panFilt, ampFilt;
 
-// Default  panning values for the sinewave
+// Default panning values for the sinewave
 float gAmpL = 1.0;
 float gAmpR = 1.0;
 

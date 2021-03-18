@@ -108,11 +108,9 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
- for(unsigned int n = 0; n < context->audioFrames; n++) {
-
-	 float out = 0.0;
-
-	 /* For each touch:
+	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		float out = 0.0;
+		/* For each touch:
 		*
 		* 	- Map touch location to frequency of the oscillator
 		* 	and smooth value changes using a single pole LP filter
@@ -121,26 +119,22 @@ void render(BelaContext *context, void *userData)
 		* 	- Compute oscillator value and add to output.
 		* 	- The overall output will be scaled by the number of touches.
 		*/
-	 for(unsigned int i = 0; i < NUM_TOUCH; i++) {
-		 float frequency, amplitude;
-		 frequency = map(gTouchLocation[i], 0, 1, gFreqRange[0], gFreqRange[1]);
-		 // Uncomment the line below to apply a filter to the frequency of the oscillators
-		 // frequency = freqFilt[i].process(frequency);
-		 amplitude = map(gTouchSize[i], 0, 1, gAmplitudeRange[0], gAmplitudeRange[1]);
-		 amplitude = ampFilt[i].process(amplitude);
+		for(unsigned int i = 0; i < NUM_TOUCH; i++) {
+			float frequency, amplitude;
+			frequency = map(gTouchLocation[i], 0, 1, gFreqRange[0], gFreqRange[1]);
+			// Uncomment the line below to apply a filter to the frequency of the oscillators
+			// frequency = freqFilt[i].process(frequency);
+			amplitude = map(gTouchSize[i], 0, 1, gAmplitudeRange[0], gAmplitudeRange[1]);
+			amplitude = ampFilt[i].process(amplitude);
 
-		 out += (1.f/NUM_TOUCH) * amplitude * osc[i].process(frequency);
-	 }
-	 // Write computed output to audio channels
-	 for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
-		 audioWrite(context, n, channel, out);
-	 }
-
- }
+			out += (1.f/NUM_TOUCH) * amplitude * osc[i].process(frequency);
+		}
+		// Write computed output to audio channels
+		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
+			audioWrite(context, n, channel, out);
+		}
+	}
 }
 
 void cleanup(BelaContext *context, void *userData)
-{
-
-}
-//
+{}

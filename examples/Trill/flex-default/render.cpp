@@ -62,19 +62,19 @@ void loop(void*)
 {
 	while(!Bela_stopRequested())
 	{
-		 // Read locations from Trill sensor
-		 touchSensor.readI2C();
-		 gNumActiveTouches = touchSensor.getNumTouches();
-		 for(unsigned int i = 0; i < gNumActiveTouches; i++) {
-			 gTouchLocation[i] = touchSensor.touchLocation(i);
-			 gTouchSize[i] = touchSensor.touchSize(i);
-		 }
-		 // For all inactive touches, set location and size to 0
-		 for(unsigned int i = gNumActiveTouches; i <  NUM_TOUCH; i++) {
-			 gTouchLocation[i] = 0.0;
-			 gTouchSize[i] = 0.0;
-		 }
-		 usleep(gTaskSleepTime);
+		// Read locations from Trill sensor
+		touchSensor.readI2C();
+		gNumActiveTouches = touchSensor.getNumTouches();
+		for(unsigned int i = 0; i < gNumActiveTouches; i++) {
+			gTouchLocation[i] = touchSensor.touchLocation(i);
+			gTouchSize[i] = touchSensor.touchSize(i);
+		}
+		// For all inactive touches, set location and size to 0
+		for(unsigned int i = gNumActiveTouches; i < NUM_TOUCH; i++) {
+			gTouchLocation[i] = 0.0;
+			gTouchSize[i] = 0.0;
+		}
+		usleep(gTaskSleepTime);
 	}
 }
 

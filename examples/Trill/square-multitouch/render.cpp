@@ -90,7 +90,7 @@ void loop(void*)
 		}
 
 		// For all inactive touches, set location and size to 0
-		for(unsigned int i = gNumVerticalTouches; i <  NUM_TOUCH; i++) {
+		for(unsigned int i = gNumVerticalTouches; i < NUM_TOUCH; i++) {
 			gTouchVerticalLocation[i] = 0.0;
 			gTouchSize[i] = 0.0;
 		}
