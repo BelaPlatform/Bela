@@ -60,6 +60,56 @@ extern "C" void disable_runfast();
 #define PRU_RTAUDIO_IRQ		21
 //#define XENOMAI_CATCH_MSW // get SIGDEBUG when a mode switch takes place
 
+#ifdef XENOMAI_CATCH_MSW
+#include <sys/types.h>
+#include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
+#include <execinfo.h>
+
+static const char *sigdebug_msg[] = {
+	[SIGDEBUG_UNDEFINED] = "latency: received SIGXCPU for unknown reason",
+	[SIGDEBUG_MIGRATE_SIGNAL] = "received signal",
+	[SIGDEBUG_MIGRATE_SYSCALL] = "invoked syscall",
+	[SIGDEBUG_MIGRATE_FAULT] = "triggered fault",
+	[SIGDEBUG_MIGRATE_PRIOINV] = "affected by priority inversion",
+	[SIGDEBUG_NOMLOCK] = "Xenomai: process memory not locked "
+	"(missing mlockall?)",
+	[SIGDEBUG_WATCHDOG] = "Xenomai: watchdog triggered "
+	"(period too short?)",
+};
+
+void sigdebug_handler(int sig, siginfo_t *si, void *context)
+{
+	const char fmt[] = "Mode switch (reason: %s). Backtrace:\n";
+	unsigned int cause = sigdebug_reason(si);
+	static char buffer[256];
+	static void *bt[200];
+	unsigned int n;
+
+	if (cause > SIGDEBUG_WATCHDOG)
+		cause = SIGDEBUG_UNDEFINED;
+
+	switch(cause) {
+	case SIGDEBUG_UNDEFINED:
+	case SIGDEBUG_NOMLOCK:
+	case SIGDEBUG_WATCHDOG:
+		/* These errors are lethal, something went really wrong. */
+		n = snprintf(buffer, sizeof(buffer), "%s\n", sigdebug_msg[cause]);
+		write(STDERR_FILENO, buffer, n);
+		exit(EXIT_FAILURE);
+	}
+
+	/* Retrieve the current backtrace, and decode it to stdout. */
+	n = snprintf(buffer, sizeof(buffer), fmt, sigdebug_msg[cause]);
+	n = write(STDERR_FILENO, buffer, n);
+	n = backtrace(bt, sizeof(bt)/sizeof(bt[0]));
+	backtrace_symbols_fd(bt, n, STDERR_FILENO);
+
+	//signal(sig, SIG_DFL);
+	//kill(getpid(), sig);
+}
+#endif // XENOMAI_CATCH_MSW
 using namespace std;
 
 typedef struct
@@ -285,6 +335,13 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gXenomaiInited = 1;
 	}
 #endif
+#ifdef XENOMAI_CATCH_MSW
+	struct sigaction sa;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = sigdebug_handler;
+	sa.sa_flags = SA_SIGINFO;
+	sigaction(SIGDEBUG, &sa, NULL);
+#endif // XENOMAI_CATCH_MSW
 #if defined(XENOMAI_SKIN_native) || XENOMAI_MAJOR == 2
 	rt_print_auto_init(1);
 #endif
@@ -572,41 +629,16 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	return 0;
 }
 
-#ifdef XENOMAI_CATCH_MSW
-#include <signal.h>
-void sigdebug_handler(int reason)
-{
-	char const* s;
-	switch(reason)
-	{
-		case SIGDEBUG_MIGRATE_SYSCALL:
-			s = "SIGDEBUG_MIGRATE_SYSCALL";
-			break;
-		case SIGDEBUG_MIGRATE_SIGNAL:
-			s = "SIGDEBUG_MIGRATE_SIGNAL";
-			break;
-		case SIGDEBUG_MIGRATE_FAULT:
-			s = "SIGDEBUG_MIGRATE_FAULT";
-			break;
-		default:
-			s = "unknown";
-	}
-	fprintf(stderr, "SIGDEBUG (%d)\n", reason);
-}
-#endif // XENOMAI_CATCH_MSW
-
 // audioLoop() is the main function which starts the PRU audio code
 // and then transfers control to the PRU object. The PRU object in
 // turn will call the audio render() callback function every time
 // there is new data to process.
 
-
 void audioLoop(void *)
 {
 #ifdef XENOMAI_CATCH_MSW
 	pthread_setmode_np(0, PTHREAD_WARNSW, NULL);
-	signal(SIGDEBUG, sigdebug_handler);
-#endif // 
+#endif // XENOMAI_CATCH_MSW
 	if(gRTAudioVerbose)
 		printf("_________________Audio Thread!\n");
 
