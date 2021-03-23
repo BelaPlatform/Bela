@@ -1461,6 +1461,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 						underrunLed.set();
 					underrunLedCount = underrunLedDuration;
 				}
+				context->underrunCount++;
 			}
 			lastPruFrameCount = pruFrameCount;
 			if(underrunLedCount > 0)

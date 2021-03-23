@@ -371,6 +371,8 @@ typedef struct {
 	/// Name of running project.
 	char projectName[MAX_PROJECTNAME_LENGTH];
 
+	/// Number of detected underruns.
+	const unsigned int underrunCount;
 } BelaContext;
 
 /**
