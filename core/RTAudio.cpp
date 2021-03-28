@@ -292,6 +292,8 @@ void fifoRender(BelaContext*, void*);
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
+	if(!settings)
+		return -1;
 	// Before we go ahead, let's check if Bela is alreadt running:
 	// check if another real-time thread of the same name is already running.
 	char command[200];
