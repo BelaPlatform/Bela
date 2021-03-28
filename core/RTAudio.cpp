@@ -343,8 +343,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		int argc = 0;
 		char *const *argv;
 		xenomai_init(&argc, &argv);
-		gXenomaiInited = 1;
 	}
+	gXenomaiInited = 1;
 #endif
 #ifdef XENOMAI_CATCH_MSW
 	struct sigaction sa;
