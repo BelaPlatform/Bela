@@ -294,6 +294,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
 	if(!settings)
 		return -1;
+	Bela_setVerboseLevel(settings->verbose);
 	// Before we go ahead, let's check if Bela is alreadt running:
 	// check if another real-time thread of the same name is already running.
 	char command[200];
@@ -377,7 +378,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	
 	enable_runfast();
 
-	Bela_setVerboseLevel(settings->verbose);
 	if(gRTAudioVerbose)
 		printf("Bela_initAudio()\n");
 	strncpy(gPRUFilename, settings->pruFilename, MAX_PRU_FILENAME_LENGTH);
