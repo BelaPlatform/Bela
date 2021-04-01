@@ -27,10 +27,12 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 9
+#define BELA_MINOR_VERSION 10
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.10.0
+// - added parameter to Bela_detectHw(), and associated typedef. Added more values to the BelaHw enum.
 // 1.9.0
 // - added Bela_HwConfig_{new,delete}
 // 1.8.0
@@ -41,7 +43,7 @@
 // - INPUT and OUTPUT are now an enum
 // 1.6.0
 // - added Bela_setUserData(), Bela_requestStop(), Bela_stopRequested()
-// 1.5.0
+// 1.5.1
 // - in BelaInitSettings, renamed unused members, preserving binary compatibility
 // 1.5.0
 // - in BelaInitSettings, board becomes BelaHw
@@ -111,6 +113,15 @@ BelaHwConfig* Bela_HwConfig_new(BelaHw hw);
  * Use this to delete a pointer returned by Bela_HwConfig_new()
  */
 void Bela_HwConfig_delete(BelaHwConfig* cfg);
+
+typedef enum
+{
+	BelaHwDetectMode_Scan,
+	BelaHwDetectMode_Cache,
+	BelaHwDetectMode_CacheOnly,
+	BelaHwDetectMode_User,
+	BelaHwDetectMode_UserOnly,
+} BelaHwDetectMode;
 
 #include <GPIOcontrol.h>
 
@@ -682,8 +693,15 @@ void Bela_setVerboseLevel(int level);
 
 /**
  * \brief Detect what hardware we are running on.
+ *
+ * \param mode How to perform the detection. Possible values are:
+ *  BelaHwDetect_Scan : perform an automatic detection by scanning the peripherals and busses available, and cache value in `/run/bela/`
+ *  BelaHwDetect_Cache: read cached value from `/run/bela` first. If it does not exist, fall back to BelaHwDetect_Scan
+ *  BelaHwDetect_CacheOnly: read cached value from `/run/bela`. If it does not exist, return BelaHw_NoHw
+ *  BelaHwDetect_User: read user-specified value from `~/.bela`. If it does not exist, fall back to BelaHwDetect_Cache
+ *  BelaHwDetect_UserOnly: read user-specified value from `~/.bela`. If it does not exist, return BelaHw_NoHw
  */
-BelaHw Bela_detectHw(void);
+BelaHw Bela_detectHw(BelaHwDetectMode mode);
 
 // *** Audio control functions ***
 

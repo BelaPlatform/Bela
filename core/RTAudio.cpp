@@ -120,36 +120,18 @@ typedef struct
 	AudioCodec* disabledCodec;
 } BelaHwConfigPrivate;
 
-static I2c_Codec* gI2cCodec = NULL;
-static Spi_Codec* gSpiCodec = NULL;
 int gRTAudioVerbose = 0; // Verbosity level for debugging
-static I2c_MultiTLVCodec* gI2cMultiTLVCodec = NULL;
 AudioCodec* gAudioCodec = NULL;
+static AudioCodec* gDisabledCodec = NULL;
 
 static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
 {
-	if(gRTAudioVerbose)
-		printf("Bela_getHwConfigPrivate()\n");
-	memset((void*)cfg, 0, sizeof(BelaHwConfig));
-	cfg->digitalChannels = 16;
-	// set audio codec (order of the below statements is important)
-	if(pcfg)
-	{
-		if(BelaHw_BelaMiniMultiAudio == hw) {
-			cfg->activeCodec = gI2cMultiTLVCodec;
-			cfg->disabledCodec = gSpiCodec;
-		} else if(Bela_hwContains(hw, CtagCape)) {
-			pcfg->activeCodec = gSpiCodec;
-			pcfg->disabledCodec = gI2cCodec;
-		} else if (Bela_hwContains(hw, Tlv320aic3104)) {
-			pcfg->activeCodec = gI2cCodec;
-			pcfg->disabledCodec = gSpiCodec;
-		}
-	}
 	// set audio I/O
-	cfg->audioInChannels = cfg->activeCodec->getNumIns();
-	cfg->audioOutChannels = cfg->activeCodec->getNumOuts();
-	cfg->audioSampleRate = cfg->activeCodec->getSampleRate();
+	if(!cfg || ! pcfg)
+		return 1;
+	cfg->audioInChannels = pcfg->activeCodec->getNumIns();
+	cfg->audioOutChannels = pcfg->activeCodec->getNumOuts();
+	cfg->audioSampleRate = pcfg->activeCodec->getSampleRate();
 	if(!cfg->audioInChannels && cfg->audioOutChannels) {
 		fprintf(stderr, "Error: 0 inputs and 0 outputs channels.\n");
 		return -1;
@@ -171,6 +153,8 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 BelaHwConfig* Bela_HwConfig_new(BelaHw hw)
 {
 	BelaHwConfig* cfg = new BelaHwConfig;
+	// TODO: this will always return error because of nullptr.
+	// Codec detection needs to be factored out of Bela_initAudio
 	if(Bela_getHwConfigPrivate(hw, cfg, nullptr))
 	{
 		delete cfg;
@@ -394,36 +378,53 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	BelaHw belaHw = Bela_detectHw();
-	if(gRTAudioVerbose)	
-		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
-	// Check for user-selected hardware
+	BelaHw actualHw = Bela_detectHw(BelaHwDetectMode_Cache);
+	if(gRTAudioVerbose)
+		printf("Detected hardware: %s\n", getBelaHwName(actualHw).c_str());
+	// Check for user-selected hardware, either on the command line ...
 	BelaHw userHw = settings->board;
 	if(gRTAudioVerbose)
-		printf("Hardware specified by user: %s\n", getBelaHwName(settings->board).c_str());
+		printf("Hardware specified at the command line: %s\n", getBelaHwName(settings->board).c_str());
 	if(userHw == BelaHw_NoHw)
 	{
-		userHw = Bela_detectUserHw();
+		userHw = Bela_detectHw(BelaHwDetectMode_UserOnly); // ... or in the user belaconfig
 		if(gRTAudioVerbose)
-			printf("Hardware specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
+			printf("Hardware specified in the user's belaconfig: %s\n", getBelaHwName(userHw).c_str());
 	}
-	if(userHw != BelaHw_NoHw && userHw != belaHw && Bela_checkHwCompatibility(userHw, belaHw))
+	BelaHw belaHw;
+	if(userHw == actualHw)
 		belaHw = userHw;
+	else if(userHw != BelaHw_NoHw && Bela_checkHwCompatibility(userHw, actualHw))
+		belaHw = userHw;
+	else
+		belaHw = actualHw;
 	if(gRTAudioVerbose)
 		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
 
-        // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
-        if(1 == Bela_hwContains(belaHw, CtagCape))
-                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
-        else if(2 == Bela_hwContains(belaHw, CtagCape))
-                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
+	// figure out which codec to use and which to disable if several are present and conflicting
+	unsigned int ctags;
+        if((ctags = Bela_hwContains(belaHw, CtagCape)))
+	{
+		if(1 == ctags)
+			gAudioCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
+		else if (2 == ctags)
+			gAudioCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
+		if(Bela_hwContains(actualHw, Tlv320aic3104))
+			gDisabledCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+	}
 	else if(belaHw == BelaHw_BelaMiniMultiAudio)
-		gI2cMultiTLVCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
-	else
-		gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+		gAudioCodec = new I2c_MultiTLVCodec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
+	else if(Bela_hwContains(belaHw, Tlv320aic3104))
+	{
+		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+		if(Bela_hwContains(actualHw, CtagCape))
+			gDisabledCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
+	}
 		
-	BelaHwConfig cfg;
+	BelaHwConfig cfg = {0};
 	BelaHwConfigPrivate pcfg;
+	pcfg.activeCodec = gAudioCodec;
+	pcfg.disabledCodec = gDisabledCodec;
 	if(Bela_getHwConfigPrivate(belaHw, &cfg, &pcfg))
 	{
 		fprintf(stderr, "Unrecognized Bela hardware: is a cape connected?\n");
@@ -844,10 +845,9 @@ void Bela_cleanupAudio()
 	rt_task_delete(&gRTAudioThread);
 #endif
 
-	if(gPRU != 0)
-		delete gPRU;
-	if(gAudioCodec != 0)
-		delete gAudioCodec;
+	delete gPRU;
+	delete gAudioCodec;
+	delete gDisabledCodec;
 	delete gBcf;
 
 	if(gAmplifierMutePin >= 0)
