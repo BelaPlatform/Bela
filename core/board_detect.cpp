@@ -10,9 +10,6 @@
 #include "../include/bela_hw_settings.h"
 #include "../include/board_detect.h"
 
-
-
-
 static const int EEPROM_NUMCHARS = 30;
 static char eeprom_str[EEPROM_NUMCHARS];
 static void read_eeprom(){
@@ -151,7 +148,7 @@ std::string getBelaHwName(BelaHw hardware)
 			hwName = "BelaMiniMultiAudio";
 			break;
 		default:
-			hwName = "";
+			hwName = "NoHardware";
 			break;
 	}
 	return hwName;
@@ -199,19 +196,39 @@ static int write_config_file(std::string path, BelaHw hardware)
 	return -1;
 }
 
-BelaHw Bela_detectHw()
+BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 {
+	if(BelaHwDetectMode_User == mode || BelaHwDetectMode_UserOnly == mode)
+	{
+		std::string configPath = "/root/.bela/belaconfig";
+		BelaHw hw = parse_config_file(configPath, "BOARD");
+		if(hw != BelaHw_NoHw)
+			return hw;
+		if(BelaHwDetectMode_UserOnly == mode)
+			return BelaHw_NoHw;
+		else
+			return Bela_detectHw(BelaHwDetectMode_Cache);
+	}
+
 	std::string configPath = "/run/bela/belaconfig";
-	BelaHw hw = parse_config_file(configPath, "HARDWARE");
-	if(hw != BelaHw_NoHw)
-		return hw;
+	if(BelaHwDetectMode_Cache == mode || BelaHwDetectMode_CacheOnly == mode)
+	{
+		BelaHw hw = parse_config_file(configPath, "HARDWARE");
+		if(hw != BelaHw_NoHw)
+			return hw;
+		if(BelaHwDetectMode_CacheOnly == mode)
+			return BelaHw_NoHw;
+		else
+			return Bela_detectHw(BelaHwDetectMode_Scan);
+	}
+
+	BelaHw hw = BelaHw_NoHw;
 	if(is_belamini())
 	{
 		bool hasTlv32[4]; 
 		
 		for(int i = 0; i < 4; i++) {
 			hasTlv32[i] = detectTlv32(codecI2cBus, codecI2cAddress + i);
-			printf("codec at %d = %d\n", codecI2cAddress + i, hasTlv32[i]);
 		}
 		
 		if(hasTlv32[1] || hasTlv32[2] || hasTlv32[3])
@@ -248,19 +265,8 @@ BelaHw Bela_detectHw()
 	return hw;
 }
 
-BelaHw Bela_detectUserHw()
-{
-	//TODO: Function not implemented yet.
-	//This should check for command line options first and
-	//check in /root/.bela/belaconfig. 
-	std::string configPath = "/root/.bela/belaconfig";
-	BelaHw hw = parse_config_file(configPath, "BOARD");
-	if(hw != BelaHw_NoHw)
-		return hw;
-	return BelaHw_NoHw;
-}
-
 using namespace BelaHwComponent;
+/// can I run userHw when I actually have detectedHw?
 bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 {
 	if(userHw == BelaHw_Bela && Bela_hwContains(detectedHw, BelaCape))
