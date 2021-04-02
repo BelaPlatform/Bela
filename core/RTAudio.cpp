@@ -56,6 +56,7 @@
 #include "../include/Spi_Codec.h"
 #include "../include/I2c_MultiTLVCodec.h"
 #include "../include/I2c_MultiTdmCodec.h"
+#include "../include/I2c_MultiI2sCodec.h"
 #include "../include/GPIOcontrol.h"
 extern "C" void enable_runfast();
 extern "C" void disable_runfast();
@@ -475,6 +476,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
 		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);
+	else if(BelaHw_BelaMiniMultiI2s == belaHw)
+		gAudioCodec = new I2c_MultiI2sCodec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 	else if(Bela_hwContains(belaHw, Tlv320aic3104))
 	{
 		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
@@ -517,6 +520,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		break;
 		case BelaHw_CtagFace:
 		case BelaHw_CtagFaceBela:
+		case BelaHw_BelaMiniMultiI2s:
 			fifoFactor = settings->periodSize / 64;
 		break;
 		case BelaHw_CtagBeast:
