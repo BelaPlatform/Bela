@@ -141,7 +141,7 @@ int McaspConfig::setAclkctl()
 // 1 Falling edge. External receiver samples data on the rising edge of the
 // serial clock, so the transmitter must shift data out on the falling edge of
 // the serial clock.
-	s.CLKP = !params.externalRisingEdge;
+	s.CLKP = params.externalSamplesRisingEdge;
 
 // ASYNC: Transmit/receive operation asynchronous enable bit.
 // 0 Synchronous. Transmit clock and frame sync provides the source for both
@@ -456,7 +456,7 @@ void McaspConfig::print()
 	P(wclkIsInternal);
 	P(wclkIsWord);
 	P(wclkFalling);
-	P(externalRisingEdge);
+	P(externalSamplesRisingEdge);
 
 	getRegisters(); // update the registers with the current parameters
 #define R(FIELD) printf("%10s: 0x%08x\n", #FIELD, regs.FIELD)
