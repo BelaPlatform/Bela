@@ -22,6 +22,7 @@ static const std::map<std::string,BelaHw> belaHwMap = {
         {"BelaMiniMultiAudio", BelaHw_BelaMiniMultiAudio},
         {"BelaMiniMultiTdm", BelaHw_BelaMiniMultiTdm},
         {"BelaMultiTdm", BelaHw_BelaMultiTdm},
+        {"BelaMiniMultiI2s", BelaHw_BelaMiniMultiI2s},
         {"Batch", BelaHw_Batch},
 };
 
@@ -207,6 +208,8 @@ bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 		return true;
 	else if (userHw == BelaHw_BelaMultiTdm && Bela_hwContains(detectedHw, BelaCape))
 		return true;
+	else if (userHw == BelaHw_BelaMiniMultiI2s && Bela_hwContains(detectedHw, BelaMiniCape))
+		return true;
 	else if (userHw == BelaHw_BelaMini && Bela_hwContains(detectedHw, BelaMiniCape))
 		return true;
 	else if (userHw == BelaHw_BelaMiniMultiAudio && Bela_hwContains(detectedHw, BelaMiniCape))
@@ -236,6 +239,7 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 				case BelaHw_BelaMini:
 				case BelaHw_BelaMiniMultiAudio:
 				case BelaHw_BelaMiniMultiTdm:
+				case BelaHw_BelaMiniMultiI2s:
 					return 1;
 				default:
 					return 0;

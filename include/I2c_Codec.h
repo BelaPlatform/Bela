@@ -72,7 +72,7 @@ public:
 	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
 	~I2c_Codec();
 
-	McaspConfig& getMcaspConfig();
+	virtual McaspConfig& getMcaspConfig();
 	int setMode(std::string mode);
 protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
