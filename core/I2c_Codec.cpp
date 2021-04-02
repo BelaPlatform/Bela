@@ -16,7 +16,10 @@
 #include <cmath>
 #include <limits>
 
-#define TLV320_DSP_MODE
+// if only we could be `using` these...
+constexpr AudioCodecParams::TdmMode kTdmModeI2s = AudioCodecParams::kTdmModeI2s;
+constexpr AudioCodecParams::TdmMode kTdmModeDsp = AudioCodecParams::kTdmModeDsp;
+constexpr AudioCodecParams::TdmMode kTdmModeTdm = AudioCodecParams::kTdmModeTdm;
 
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
 : codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
@@ -28,7 +31,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 	params.startingSlot = 0;
 	params.bitDelay = 0;
 	params.dualRate = false;
-	params.tdmMode = false;
+	params.tdmMode = kTdmModeDsp;
 	params.generatesBclk = true;
 	params.generatesWclk = true;
 	params.mclk = mcaspConfig.getValidAhclk(24000000);
@@ -127,46 +130,47 @@ int I2c_Codec::startAudio(int dummy)
 				return 1;					// DOUT tri-state when inactive
 		}
 
-		if(params.tdmMode) {
 		// Supported values of slot size in the PRU code: 16 and 32 bits. Note that
-		// altering slot size requires changing #defines in the PRU code.
-			unsigned int crb; 	// Audio serial control register B
-			switch(params.slotSize)	{// The below values all enable 256-clock mode when Bclk is an output
-			case 16:
-				crb = 0x48;
+		// altering slot size may require changing #defines in the PRU code.
+		unsigned int crb = 0; 	// Audio serial control register B
+		switch(params.tdmMode)
+		{
+			case kTdmModeI2s:
+				crb |= 0;
+			break;
+			case kTdmModeDsp:
+				crb |= (1 << 6); // Transfer mode: DSP
 				break;
-			case 20:
-				crb = 0x58;
-				break;
-			case 24:
-				crb = 0x68;
-				break;
-			case 32:
-				crb = 0x78;
+			case kTdmModeTdm:
+				crb |= (1 << 6); // Transfer mode: DSP
+				crb |= 1 << 3; // enable 256-clock mode when Bclk is an output
 				break;
 			default:
 				return 1;
-			}
-
-			if(writeRegister(0x09, crb))   // Audio serial control register B: DSP/TDM mode, word len specified by slotSize
-				return 1;
-			if(writeRegister(0x0A, params.startingSlot * params.slotSize + params.bitDelay))   // Audio serial control register C: specifying offset in bits
-				return 1;
 		}
-		else {
-#ifdef TLV320_DSP_MODE // to use with old PRU code
-			if(writeRegister(0x09, 0x40))   // Audio serial control register B: DSP mode, word len 16 bits
-#else
-			if(writeRegister(0x09, 0x00))   // Audio serial control register B: I2S mode, word len 16 bits
-#endif
-				return 1;
-#ifdef TLV320_DSP_MODE // to use with old PRU code
-			if(writeRegister(0x0A, 0x00))   // Audio serial control register C: 0 bit offset
-#else
-			if(writeRegister(0x0A, 0x01))   // Audio serial control register C: 1 bit offset
-#endif
-				return 1;
+		unsigned int wlc; // word length control
+		switch(params.slotSize)	{
+		case 16:
+			wlc = 0;
+			break;
+		case 20:
+			wlc = 1;
+			break;
+		case 24:
+			wlc = 2;
+			break;
+		case 32:
+			wlc = 3;
+			break;
+		default:
+			return 1;
 		}
+		crb |= (wlc << 4);
+		if(writeRegister(0x09, crb)) // Audio serial control register B
+			return 1;
+		unsigned int crc = params.startingSlot * params.slotSize + params.bitDelay;
+		if(writeRegister(0x0A, crc)) // Audio serial control register C: specifying offset in bits
+			return 1;
 
 		// clock generation
 		if(params.generatesBclk) {
@@ -822,11 +826,17 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
 */
 	unsigned int numSlots;
-	if(params.tdmMode)
-		// codec is in 256-bit mode
-		numSlots = 256 / params.slotSize;
-	else
-		numSlots = 2;
+	switch(params.tdmMode)
+	{
+		case kTdmModeI2s:
+		case kTdmModeDsp:
+			numSlots = 2;
+			break;
+		case kTdmModeTdm:
+			// codec is in 256-bit mode
+			numSlots = 256 / params.slotSize;
+			break;
+	}
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels = getNumOuts();;
 	mcaspConfig.params.inSerializers = {0};
@@ -874,7 +884,7 @@ int I2c_Codec::setParameters(const AudioCodecParams& codecParams)
 		params.bitDelay = 2;
 		ret = -1;
 	}
-	if(!params.tdmMode && 0 != params.startingSlot) {
+	if(kTdmModeDsp == params.tdmMode && 0 != params.startingSlot) {
 		verbose && fprintf(stderr, "I2c_Codec: startingSlot has to be 0 in DSP mode\n");
 		params.startingSlot = 0;
 		ret = -1;

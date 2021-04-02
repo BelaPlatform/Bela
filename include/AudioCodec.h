@@ -4,13 +4,18 @@
 #include "Mcasp.h"
 
 struct AudioCodecParams {
+	typedef enum {
+		kTdmModeI2s,
+		kTdmModeDsp,
+		kTdmModeTdm,
+	} TdmMode;
 	unsigned int slotSize; // size of a slot in bits
 	unsigned int startingSlot; // what slot in the TDM frame to place the first channel in
 	unsigned int bitDelay; // additional offset in the TDM frame (in bits)
 	double mclk; // frequency of the master clock passed to the codec
 	double samplingRate; // audio sampling rate
 	bool dualRate; // whether to run at single or double sampling rate
-	bool tdmMode; // whether to use TDM rather than DSP mode
+	TdmMode tdmMode; // what TDM mode to use
 	bool generatesBclk; // whether the codec generates the bit clock
 	bool generatesWclk; // whether the codec generates the frame sync
 	void print();

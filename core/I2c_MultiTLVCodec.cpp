@@ -128,7 +128,7 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 	params.slotSize = tdmConfig.slotSize;
 	params.bitDelay = tdmConfig.bitDelay;
 	params.dualRate = false;
-	params.tdmMode = true;
+	params.tdmMode = AudioCodecParams::kTdmModeTdm;
 	params.startingSlot = slotNum;
 	params.generatesBclk = true;
 	params.generatesWclk = primaryCodecGeneratesWclk;
