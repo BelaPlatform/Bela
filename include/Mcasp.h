@@ -45,7 +45,7 @@ public:
 		bool wclkIsInternal;
 		bool wclkIsWord;
 		bool wclkFalling;
-		bool externalRisingEdge;
+		bool externalSamplesRisingEdge;
 	};
 	typedef enum {
 		SrctlMode_DISABLED = 0,

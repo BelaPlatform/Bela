@@ -850,7 +850,7 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 	mcaspConfig.params.wclkIsInternal = !params.generatesWclk;
 	mcaspConfig.params.wclkIsWord = false;
 	mcaspConfig.params.wclkFalling = false;
-	mcaspConfig.params.externalRisingEdge = true;
+	mcaspConfig.params.externalSamplesRisingEdge = false;
 
 	return mcaspConfig;
 }
