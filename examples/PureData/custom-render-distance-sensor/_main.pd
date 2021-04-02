@@ -1,0 +1,18 @@
+#N canvas 0 23 842 417 12;
+#X obj 46 247 r distance;
+#X obj 46 280 print;
+#X text 505 32 ............................;
+#X text 505 42 . ____ ._____ _ .......___ .;
+#X text 505 52 .| __ )| ____| |....../ _ |.;
+#X text 505 72 .| |_) | |___| |___ / ___ |.;
+#X text 505 82 .|____/|_____|_____/_/..._|.io;
+#X text 505 92 ............................;
+#X text 505 62 .| __ || __|.| |...../ _| |.;
+#X text 44 41 Ultrasonic Distance Sensor;
+#X text 44 51 ==========================;
+#X text 44 71 This example shows how to use an HC-SR04 ultrasonic;
+#X text 44 121 https://learn.bela.io/tutorials/pure-data/sensors/distance-sensor/
+;
+#X text 44 91 distance sensor but with a custom render file in cpp.
+;
+#X connect 0 0 1 0;

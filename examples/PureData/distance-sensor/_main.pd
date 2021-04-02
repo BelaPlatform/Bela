@@ -1,0 +1,93 @@
+#N canvas 1 23 1190 986 12;
+#X obj 80 350 loadbang;
+#X obj 80 514 dac~ 11;
+#X obj 56 204 loadbang;
+#X obj 56 266 s bela_setDigital;
+#X obj 568 452 adc~ 12;
+#X obj 568 477 rzero~ 1;
+#X obj 568 501 *~ -1;
+#X obj 80 410 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X msg 56 234 out 11 ~ \, in 12 ~;
+#X text 156 514 Send pulse to TRIG (digital out 0);
+#X text 156 408 When a pulse starts \, also restart the timing phasor
+;
+#X text 236 230 Initialise digital input and output at signal rate
+;
+#X obj 508 602 samphold~;
+#X obj 78 737 snapshot~;
+#X obj 77 653 loadbang;
+#X obj 77 681 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+1;
+#X text 46 629 Printing metro;
+#X obj 77 704 metro 100;
+#X obj 488 517 t b b;
+#X msg 545 543 0;
+#X msg 488 543 1 1000;
+#X obj 488 571 line~;
+#X text 174 739 time (seconds);
+#X text 174 769 time (µs);
+#X obj 79 770 * 1e+06;
+#X msg 80 484 1;
+#X msg 43 483 0;
+#X obj 80 378 metro 60;
+#X obj 80 457 delay 7;
+#X obj 79 793 / 58;
+#X obj 79 816 - 21.1;
+#X text 153 344 Pulse generator. Can run faster \, but not faster;
+#X text 155 362 than the delay between TRIG OUT and ECHO IN;
+#X text 155 382 We are triggering every 60ms.;
+#X text 156 460 Pulse duration is 7ms;
+#X text 174 791 distance[cm] = time[µs] / 58;
+#X text 174 817 correct for an offset which is dependant on block size.
+;
+#X obj 79 845 print Distance(cm):;
+#X text 646 450 Read from ECHO Pin;
+#X text 594 622 This will be equivalent to the number of seconds which
+have;
+#X text 594 642 passed since the signal was emitted.;
+#X text 594 602 When ECHO received check where we are in the line.
+;
+#X text 594 572 "timing capacitor" which grows from zero with each
+trigger;
+#X text 646 478 look for changes in the signal;
+#X text 236 250 Connect to ECHO and TRIG;
+#X text 505 32 ............................;
+#X text 505 42 . ____ ._____ _ .......___ .;
+#X text 505 52 .| __ )| ____| |....../ _ |.;
+#X text 505 72 .| |_) | |___| |___ / ___ |.;
+#X text 505 82 .|____/|_____|_____/_/..._|.io;
+#X text 505 92 ............................;
+#X text 505 62 .| __ || __|.| |...../ _| |.;
+#X text 44 41 Ultrasonic Distance Sensor;
+#X text 44 51 ==========================;
+#X text 44 71 This example shows how to use an HC-SR04 ultrasonic;
+#X text 44 91 distance sensor.;
+#X text 44 121 https://learn.bela.io/tutorials/pure-data/sensors/distance-sensor/
+;
+#X connect 0 0 27 0;
+#X connect 2 0 8 0;
+#X connect 4 0 5 0;
+#X connect 5 0 6 0;
+#X connect 6 0 12 1;
+#X connect 7 0 18 0;
+#X connect 7 0 28 0;
+#X connect 7 0 26 0;
+#X connect 8 0 3 0;
+#X connect 12 0 13 0;
+#X connect 13 0 24 0;
+#X connect 14 0 15 0;
+#X connect 15 0 17 0;
+#X connect 17 0 13 0;
+#X connect 18 0 20 0;
+#X connect 18 1 19 0;
+#X connect 19 0 21 0;
+#X connect 20 0 21 0;
+#X connect 21 0 12 0;
+#X connect 24 0 29 0;
+#X connect 25 0 1 0;
+#X connect 26 0 1 0;
+#X connect 27 0 7 0;
+#X connect 28 0 25 0;
+#X connect 29 0 30 0;
+#X connect 30 0 37 0;
