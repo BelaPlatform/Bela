@@ -25,7 +25,7 @@
   "osc-receive",
   "osc-send",
   "custom-render",
-  "custom-render-distance-sensor",
+  "custom-render-ultrasonic-distance-sensor",
   "digital-advanced",
   "envelope-trigger",
   "monophonic-synth",

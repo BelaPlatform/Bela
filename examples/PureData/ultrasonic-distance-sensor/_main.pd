@@ -1,4 +1,4 @@
-#N canvas 1 23 1190 986 12;
+#N canvas 1 23 1190 778 12;
 #X obj 80 350 loadbang;
 #X obj 80 514 dac~ 11;
 #X obj 56 204 loadbang;
@@ -69,9 +69,9 @@ is;
 #X text 698 227 not connected straight to Bela's digital inputs.;
 #X text 698 247 You will need to use a passive resistor divider from
 the;
-#X text 698 267 HC-SR04's ECHO output to scale down the voltage.;
-#X text 698 187 This module requires a 5V power supply uses digital
-pins.;
+#X text 698 267 HC-SR04's ECHO output to scale the output voltage down
+to 3.3V.;
+#X text 698 187 This module requires a 5V power supply.;
 #X connect 0 0 27 0;
 #X connect 2 0 8 0;
 #X connect 4 0 5 0;

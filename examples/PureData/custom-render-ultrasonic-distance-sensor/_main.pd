@@ -1,4 +1,4 @@
-#N canvas 0 23 842 417 12;
+#N canvas 0 23 965 532 12;
 #X obj 46 247 r distance;
 #X obj 46 280 print;
 #X text 505 32 ............................;
@@ -15,4 +15,18 @@
 ;
 #X text 44 91 distance sensor but with a custom render file in cpp.
 ;
+#X text 505 207 It is important that the 5V ECHO output from the module
+is;
+#X text 505 227 not connected straight to Bela's digital inputs.;
+#X text 505 247 You will need to use a passive resistor divider from
+the;
+#X text 505 267 HC-SR04's ECHO output to scale the output voltage down
+to 3.3V.;
+#X text 505 187 This module requires a 5V power supply.;
+#X text 45 174 All the sensor communication is done in render.cpp using
+;
+#X text 45 194 digital channels 0 (TRIG) and 1 (ECHO). The resulting
+;
+#X text 45 214 distance measurement (in cm) is sent to the Pd patch
+below;
 #X connect 0 0 1 0;
