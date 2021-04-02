@@ -89,7 +89,7 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 		std::string required = addr.required;
 		// Check for presence of TLV codecs and take the first one we
 		// find as the primary codec
-		std::shared_ptr<I2c_Codec> testCodec(new I2c_Codec(i2cBus, address, type));
+		std::shared_ptr<I2c_Codec> testCodec(new I2c_Codec(i2cBus, address, type, isVerbose));
 		testCodec->setMode(mode);
 		if(testCodec->initCodec() != 0) {
 			std::string err = "Codec requested but not found at: " + std::to_string(i2cBus) + ", " + std::to_string(address) + ", " + std::to_string(type) + "\n";
