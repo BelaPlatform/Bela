@@ -441,7 +441,7 @@ std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
 void McaspConfig::print()
 {
 #define P(FIELD) std::cout << #FIELD << ": " <<  params.FIELD << "\n"
-	std::cout << "Parameters:\n";
+	std::cout << "Mcasp parameters:\n";
 	P(inChannels);
 	P(outChannels);
 	P(inSerializers);
@@ -460,7 +460,7 @@ void McaspConfig::print()
 
 	getRegisters(); // update the registers with the current parameters
 #define R(FIELD) printf("%10s: 0x%08x\n", #FIELD, regs.FIELD)
-	printf("Registers:\n");
+	std::cout << "Mcasp registers:\n";
 	R(pdir);
 	R(rmask);
 	R(rfmt);
