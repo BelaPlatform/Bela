@@ -742,8 +742,11 @@ static int startAudioInline(){
 		return -1;
 	}
 
+	McaspConfig mcaspConfig = gAudioCodec->getMcaspConfig();
+	if(gRTAudioVerbose)
+		mcaspConfig.print();
 	// initialize and run the PRU
-	if(gPRU->start(gPRUFilename, gAudioCodec->getMcaspConfig().getRegisters())) {
+	if(gPRU->start(gPRUFilename, mcaspConfig.getRegisters())) {
 		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);
 		return -1;
 	}
