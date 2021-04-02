@@ -13,6 +13,7 @@ struct AudioCodecParams {
 	bool tdmMode; // whether to use TDM rather than DSP mode
 	bool generatesBclk; // whether the codec generates the bit clock
 	bool generatesWclk; // whether the codec generates the frame sync
+	void print();
 };
 
 class AudioCodec

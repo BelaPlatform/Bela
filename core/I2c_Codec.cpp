@@ -58,6 +58,8 @@ int I2c_Codec::initCodec()
 // See the TLV320AIC3106 datasheet for full details of the registers
 int I2c_Codec::startAudio(int dummy)
 {
+	if(verbose)
+		getParameters().print();
 	// As a best-practice it's safer not to assume the implementer has issued initCodec()
 	// or has not otherwise modified codec registers since that call.
 	// Explicit Switch to config register page 0:
@@ -900,3 +902,19 @@ int I2c_Codec::setMode(std::string parameter)
 	verbose && printf("Codec mode: %d (%s)\n", mode, parameter.c_str());
 	return 0;
 }
+
+#include <iostream>
+void AudioCodecParams::print()
+{
+#define P(FIELD) std::cout << #FIELD << ": " << FIELD << "\n"
+	std::cout << "AudioCodec parameters:\n";
+	P(slotSize);
+	P(startingSlot);
+	P(bitDelay);
+	P(mclk);
+	P(samplingRate);
+	P(dualRate);
+	P(tdmMode);
+	P(generatesBclk);
+	P(generatesWclk);
+};
