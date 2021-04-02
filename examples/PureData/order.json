@@ -16,7 +16,7 @@
   "capacitive-sensing",
   "diy-pressure-sensors",
   "accelerometer",
-  "distance-sensor",
+  "ultrasonic-distance-sensor",
   "oscilloscope",
   "gui-send",
   "gui-receive",

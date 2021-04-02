@@ -31,20 +31,16 @@
 #X msg 80 484 1;
 #X msg 43 483 0;
 #X obj 80 378 metro 60;
-#X obj 80 457 delay 7;
 #X obj 79 793 / 58;
 #X obj 79 816 - 21.1;
 #X text 153 344 Pulse generator. Can run faster \, but not faster;
 #X text 155 362 than the delay between TRIG OUT and ECHO IN;
 #X text 155 382 We are triggering every 60ms.;
-#X text 156 460 Pulse duration is 7ms;
 #X text 174 791 distance[cm] = time[µs] / 58;
 #X text 174 817 correct for an offset which is dependant on block size.
 ;
 #X obj 79 845 print Distance(cm):;
 #X text 646 450 Read from ECHO Pin;
-#X text 594 622 This will be equivalent to the number of seconds which
-have;
 #X text 594 642 passed since the signal was emitted.;
 #X text 594 602 When ECHO received check where we are in the line.
 ;
@@ -65,14 +61,25 @@ trigger;
 #X text 44 91 distance sensor.;
 #X text 44 121 https://learn.bela.io/tutorials/pure-data/sensors/distance-sensor/
 ;
+#X obj 80 457 delay 1;
+#X text 156 460 Pulse duration is 1ms;
+#X text 594 622 This will be the time (in seconds) which have;
+#X text 698 207 It is important that the 5V ECHO output from the module
+is;
+#X text 698 227 not connected straight to Bela's digital inputs.;
+#X text 698 247 You will need to use a passive resistor divider from
+the;
+#X text 698 267 HC-SR04's ECHO output to scale down the voltage.;
+#X text 698 187 This module requires a 5V power supply uses digital
+pins.;
 #X connect 0 0 27 0;
 #X connect 2 0 8 0;
 #X connect 4 0 5 0;
 #X connect 5 0 6 0;
 #X connect 6 0 12 1;
 #X connect 7 0 18 0;
-#X connect 7 0 28 0;
 #X connect 7 0 26 0;
+#X connect 7 0 54 0;
 #X connect 8 0 3 0;
 #X connect 12 0 13 0;
 #X connect 13 0 24 0;
@@ -84,10 +91,10 @@ trigger;
 #X connect 19 0 21 0;
 #X connect 20 0 21 0;
 #X connect 21 0 12 0;
-#X connect 24 0 29 0;
+#X connect 24 0 28 0;
 #X connect 25 0 1 0;
 #X connect 26 0 1 0;
 #X connect 27 0 7 0;
-#X connect 28 0 25 0;
-#X connect 29 0 30 0;
-#X connect 30 0 37 0;
+#X connect 28 0 29 0;
+#X connect 29 0 35 0;
+#X connect 54 0 25 0;

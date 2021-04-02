@@ -7,7 +7,7 @@
 http://bela.io
 */
 /**
-\example Sensors/ultrasonic-distance/render.cpp
+\example Sensors/ultrasonic-distance-sensor/render.cpp
 
 Measuring distances with ultrasonic sensors
 ---------------------------
