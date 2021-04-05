@@ -9,6 +9,11 @@ struct AudioCodecParams {
 		kTdmModeDsp,
 		kTdmModeTdm,
 	} TdmMode;
+	typedef enum {
+		kClockSourceMcasp,
+		kClockSourceCodec,
+		kClockSourceExternal,
+	} ClockSource;
 	unsigned int slotSize; // size of a slot in bits
 	unsigned int startingSlot; // what slot in the TDM frame to place the first channel in
 	unsigned int bitDelay; // additional offset in the TDM frame (in bits)
@@ -16,8 +21,8 @@ struct AudioCodecParams {
 	double samplingRate; // audio sampling rate
 	bool dualRate; // whether to run at single or double sampling rate
 	TdmMode tdmMode; // what TDM mode to use
-	bool generatesBclk; // whether the codec generates the bit clock
-	bool generatesWclk; // whether the codec generates the frame sync
+	ClockSource bclk; // who generates the bit clock
+	ClockSource wclk; // who generates the frame sync
 	void print();
 };
 

@@ -20,6 +20,9 @@
 constexpr AudioCodecParams::TdmMode kTdmModeI2s = AudioCodecParams::kTdmModeI2s;
 constexpr AudioCodecParams::TdmMode kTdmModeDsp = AudioCodecParams::kTdmModeDsp;
 constexpr AudioCodecParams::TdmMode kTdmModeTdm = AudioCodecParams::kTdmModeTdm;
+constexpr AudioCodecParams::ClockSource kClockSourceMcasp = AudioCodecParams::kClockSourceMcasp;
+constexpr AudioCodecParams::ClockSource kClockSourceCodec = AudioCodecParams::kClockSourceCodec;
+constexpr AudioCodecParams::ClockSource kClockSourceExternal = AudioCodecParams::kClockSourceExternal;
 
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
 : codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
@@ -32,8 +35,8 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 	params.bitDelay = 0;
 	params.dualRate = false;
 	params.tdmMode = kTdmModeDsp;
-	params.generatesBclk = true;
-	params.generatesWclk = true;
+	params.bclk = kClockSourceCodec;
+	params.wclk = kClockSourceCodec;
 	params.mclk = mcaspConfig.getValidAhclk(24000000);
 	params.samplingRate = 44100;
 	initI2C_RW(i2cBus, i2cAddress, -1);
@@ -93,7 +96,7 @@ int I2c_Codec::startAudio(int dummy)
 		if(writeRegister(0x02, 0x00))	// Codec sample rate register: fs_ref / 1
 			return 1;
 
-		if(params.generatesBclk) {
+		if(kClockSourceCodec == params.bclk) {
 			if(setAudioSamplingRate(params.samplingRate))
 				return 1;
 		}
@@ -112,8 +115,8 @@ int I2c_Codec::startAudio(int dummy)
 				return 1;
 		}
 
-		if(params.generatesBclk) {
-			if(params.generatesWclk) {
+		if(kClockSourceCodec == params.bclk) {
+			if(kClockSourceCodec == params.wclk) {
 				if(writeRegister(0x08, 0xE0)) {	// Audio serial control register A: BCLK, WCLK outputs,
 					return 1;					// DOUT tri-state when inactive
 				}
@@ -173,7 +176,7 @@ int I2c_Codec::startAudio(int dummy)
 			return 1;
 
 		// clock generation
-		if(params.generatesBclk) {
+		if(kClockSourceCodec == params.bclk) {
 			if(writeRegister(0x66, 0x02))	// Clock generation control register: use MCLK, PLL N = 2
 				return 1;
 			if(writeRegister(0x65, 0x00))	// GPIO control register B: disabled; codec uses PLLDIV_OUT
@@ -220,7 +223,7 @@ int I2c_Codec::startAudio(int dummy)
 
 	// wait for the codec to stabilize before unmuting the HP amp.
 	// this gets rid of the loud pop.
-	if(params.generatesBclk)
+	if(kClockSourceCodec == params.bclk)
 		usleep(10000);
 
 	// note : a small click persists, but it is unavoidable
@@ -768,8 +771,8 @@ int I2c_Codec::disable(){
 		return 1;
 	if(writeRegister(0x01, 0x80)) // Reset codec to defaults
 		return 1;
-	if(params.generatesBclk) {
-		if(params.generatesWclk) {
+	if(kClockSourceCodec == params.bclk) {
+		if(kClockSourceCodec == params.wclk) {
 			if(writeRegister(0x08, 0xE0)) {	// Put codec in master mode (required for hi-z mode)
 				return 1;					
 			}
@@ -837,6 +840,7 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 			numSlots = 256 / params.slotSize;
 			break;
 	}
+	bool isI2s = (kTdmModeI2s == params.tdmMode);
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels = getNumOuts();;
 	mcaspConfig.params.inSerializers = {0};
@@ -844,13 +848,18 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 	mcaspConfig.params.numSlots = numSlots;
 	mcaspConfig.params.slotSize = params.slotSize;
 	mcaspConfig.params.dataSize = params.slotSize;
-	mcaspConfig.params.bitDelay = params.bitDelay;
+	// in I2S mode, 0 bitDelay means (10.3.2.3) "the MSB of the left
+	// channel is valid on the second rising edge of the bit clock after
+	// the falling edge of the word clock", which - for the McASP - means 1
+	// bit delay.
+	// Therefore in I2s mode the codec always has 1 implicity extra bit delay.
+	mcaspConfig.params.bitDelay = isI2s ? params.bitDelay + 1 : params.bitDelay;
 	mcaspConfig.params.ahclkIsInternal = true;
 	mcaspConfig.params.ahclkFreq = params.mclk;
-	mcaspConfig.params.wclkIsInternal = !params.generatesWclk;
-	mcaspConfig.params.wclkIsWord = false;
-	mcaspConfig.params.wclkFalling = false;
-	mcaspConfig.params.externalSamplesRisingEdge = false;
+	mcaspConfig.params.wclkIsInternal = (kClockSourceMcasp == params.wclk);
+	mcaspConfig.params.wclkIsWord = isI2s;
+	mcaspConfig.params.wclkFalling = isI2s;
+	mcaspConfig.params.externalSamplesRisingEdge = isI2s;
 
 	return mcaspConfig;
 }
@@ -871,7 +880,7 @@ int I2c_Codec::setParameters(const AudioCodecParams& codecParams)
 {
 	params = codecParams;
 	int ret = 0;
-	if(!params.generatesBclk && params.generatesWclk) {
+	if(kClockSourceCodec != params.bclk && kClockSourceCodec == params.wclk) {
 		verbose && fprintf(stderr, "I2c_Codec: cannot generate Wclk if it doesn't generate Bclk\n");
 		ret = -1;
 	}
@@ -905,10 +914,14 @@ int I2c_Codec::setMode(std::string parameter)
 		mode = InitMode_noDeinit;
 	else if("noInit" == parameter)
 		mode = InitMode_noInit;
-	else {
-		mode = InitMode_init;
+	else if("I2sMain" == parameter || "I2sSecondary" == parameter)
+	{
+		params.tdmMode = kTdmModeI2s;
+		AudioCodecParams::ClockSource cg = ("I2sMain" == parameter) ? kClockSourceCodec : kClockSourceExternal;
+		params.bclk = cg;
+		params.wclk = cg;
+	} else
 		return 1;
-	}
 	verbose && printf("Codec mode: %d (%s)\n", mode, parameter.c_str());
 	return 0;
 }
@@ -925,6 +938,6 @@ void AudioCodecParams::print()
 	P(samplingRate);
 	P(dualRate);
 	P(tdmMode);
-	P(generatesBclk);
-	P(generatesWclk);
+	P(bclk);
+	P(wclk);
 };
