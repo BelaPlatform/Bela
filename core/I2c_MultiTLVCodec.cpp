@@ -121,7 +121,7 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 #ifdef CODEC_GENERATES_WCLK
 		true; // primaryCodec generates word clock
 #else
-		false; // AM335x or external device generates word clock
+		false; // McASP generates word clock
 #endif
 
 	AudioCodecParams params;
@@ -130,14 +130,14 @@ I2c_MultiTLVCodec::I2c_MultiTLVCodec(const std::string& cfgString, TdmConfig tdm
 	params.dualRate = false;
 	params.tdmMode = AudioCodecParams::kTdmModeTdm;
 	params.startingSlot = slotNum;
-	params.generatesBclk = true;
-	params.generatesWclk = primaryCodecGeneratesWclk;
+	params.bclk = AudioCodecParams::kClockSourceCodec;
+	params.wclk = primaryCodecGeneratesWclk ? AudioCodecParams::kClockSourceCodec : AudioCodecParams::kClockSourceMcasp;
 	params.mclk = primaryCodec->getMcaspConfig().getValidAhclk(24000000);
 	params.samplingRate = 44100;
 	primaryCodec->setParameters(params);
 
-	params.generatesBclk = false;
-	params.generatesWclk = false;
+	params.bclk = AudioCodecParams::kClockSourceExternal;
+	params.wclk = AudioCodecParams::kClockSourceExternal;
 	for(auto& codec : codecs) {
 		if(codec == primaryCodec)
 			continue;
