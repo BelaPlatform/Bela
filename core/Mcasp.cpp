@@ -328,7 +328,7 @@ uint32_t McaspConfig::computeFifoctl(unsigned int numSerializers)
 		unsigned NUMEVT : 8;
 		unsigned ENA : 1;
 		unsigned : 15;
-	} s;
+	} s = {0};
 // WENA: Write FIFO enable bit.
 // 0 Write FIFO is disabled. The WLVL bit in the Write FIFO status register (WFIFOSTS) is reset to 0
 // and pointers are initialized, that is, the Write FIFO is “flushed.”
@@ -345,7 +345,7 @@ uint32_t McaspConfig::computeFifoctl(unsigned int numSerializers)
 // 2h 2 words
 // 3h-40h 3 to 64 words
 // 41h-FFh Reserved
-	s.NUMEVT = 0; // TODO: don't know why we keep it this way, but this is what was in our PRU code (as written by @henrix)
+	s.NUMEVT = numSerializers; // we are not using the DMA events in the PRU code, so this value is unused
 
 // 7-0 WNUMDMA 0-FFh Write word count per transfer (32-bit words). Upon a transmit DMA event from the McASP,
 // WNUMDMA words are transferred from the Write FIFO to the McASP. This value must equal the
