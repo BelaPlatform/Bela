@@ -23,6 +23,7 @@ class I2c_Codec : public I2c, public AudioCodec
 	short unsigned int pllD;
 	short unsigned int pllP;
 	short unsigned int pllR;
+	double PLLCLK_IN;
 public:
 	typedef enum {
 		TLV320AIC3104 = 0,
