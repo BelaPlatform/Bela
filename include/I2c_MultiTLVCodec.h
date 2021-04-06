@@ -52,8 +52,8 @@ public:
 
 protected:
 	McaspConfig mcaspConfig;
-private:
 	std::shared_ptr<I2c_Codec> primaryCodec; // this will be the same as one of the elements of codecs
+private:
 	std::vector<std::shared_ptr<I2c_Codec>> codecs;
 	std::vector<std::shared_ptr<I2c_Codec>> disabledCodecs;
 
