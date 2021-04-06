@@ -1564,8 +1564,7 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 11) // Set XSMRST
 // (a) Take the respective frame sync generator(s) out of reset by setting the
 // RFRST bit for the receiver, and/or the XFRST bit for the transmitter in GBLCTL.
 // All other bits in GBLCTL should be left at the previous state.
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 4)  // Set RFRST
-MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, (1 << 12) // Set XFRST
+MCASP_REG_SET_BIT_AND_POLL MCASP_GBLCTL, ((1 << 4) | (1 << 12))  // Set RFRST and XFRST
 // 10. Upon the first frame sync signal, McASP transfers begin. The McASP
 // synchronizes to an edge on the frame sync pin, not the level on the frame sync
 // pin.
