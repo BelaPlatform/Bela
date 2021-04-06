@@ -43,8 +43,6 @@ int McaspConfig::setFmt()
 		unsigned : 14;
 	} s = {0};
 
-	int rotation = 32 - params.dataSize;
-
 //XDATDLY: 0-3h Transmit sync bit delay.
 //0 0-bit delay. The first transmit data bit, AXRn, occurs in same ACLKX cycle
 //as the transmit frame sync (AFSX).
@@ -115,12 +113,21 @@ int McaspConfig::setFmt()
 //5h Rotate right by 20 bit positions.
 //6h Rotate right by 24 bit positions.
 //7h Rotate right by 28 bit positions.
-	if(rotation & 3 || rotation < 0) // has to be a multiple of 4
+	if(params.dataSize & 3 || params.dataSize > 32) // has to be a multiple of 4
 		return -1;
-	s.ROT = rotation >> 2;
 
+	int WORD = 16; // word size is always 16 for the current PRU code, so dataSize is ignored.
+	int rotation;
+	// Table 22-9. Transmit Bitstream Data Alignment:
+	// Tx, MSB first, left-aligned, integer should have XROT=WORD
+	rotation = WORD;
+	s.ROT = rotation >> 2;
 	memcpy(&regs.xfmt, &s, sizeof(regs.xfmt));
-	regs.rfmt = regs.xfmt;
+	// Table 22-10. Receive Bitstream Data Alignment:
+	// Rx, MSB first, left-aligned, integer should have XROT=SLOT-WORD
+	rotation = params.slotSize - WORD;
+	s.ROT = rotation >> 2;
+	memcpy(&regs.rfmt, &s, sizeof(regs.rfmt));
 	return 0;
 }
 
