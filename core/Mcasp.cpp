@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <limits>
 #include <cmath>
+#include <stdexcept>
 
 McaspConfig::McaspConfig()
 {
@@ -289,7 +290,11 @@ int McaspConfig::setPdir()
 // AHCLKX: Determines if AHCLKX pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
-	s.AHCLKX = 1;
+	s.AHCLKX = params.ahclkIsInternal;
+	if(!params.ahclkIsInternal)
+	{
+		throw std::runtime_error("McASP: external ahclk is unsupported\n"); //TODO: not sure where else we nned to make changes to support it.
+	}
 // ACLKX: Determines if ACLKX pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
