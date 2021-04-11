@@ -6129,9 +6129,9 @@ var popup = {
 	// shorthands for common popup configurations.
 	// strings may have fields: title, text(subtitle), code, body, button, cancel
 
-	// a popup with two buttons which will hide itself and call the
-	// provided callbacks on button presses.
-	submitCancel: function submitCancel(strings, onSubmit, onCancel) {
+	// A popup with two buttons - Submit and Cancel
+	// Builds the popup with the initWithStrings() function, then adds the two button callbacks.
+	twoButtons: function twoButtons(strings, onSubmit, onCancel) {
 		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
@@ -6149,7 +6149,22 @@ var popup = {
 	},
 
 
+	// For popups with only one button that needs to fire an event when clicked (eg, confirmation)
+	// To work a strings.button string must be present in the strings object that's passed in
+	oneButton: function oneButton(strings, onCancel) {
+		this.initWithStrings(strings);
+		var form = [];
+		form.push('<button type="cancel" class="button popup-save">' + strings.button + '</button>');
+		popup.form.empty().append(form.join('')).find('.popup-save').on('click', function () {
+			popup.hide();
+			onCancel();
+		});
+		popup.show();
+	},
+
+
 	// a popup with one button which will hide itself upon click
+	// To change the text on the button pass in strings.button to the strings object
 	ok: function ok(strings) {
 		this.initWithStrings(strings);
 		var button;
