@@ -835,7 +835,7 @@ function fileChangedPopup(fileName) {
 
 	var strings = Object.assign({}, json.popups.file_changed); // make a copy ...
 	strings.text = fileName + strings.text; // ... so we can modify it
-	popup.submitCancel(strings, function (e) {
+	popup.twoButtons(strings, function (e) {
 		fileChangedPopupVisible = false;
 		e.preventDefault();
 		var data = {
@@ -853,20 +853,15 @@ function fileChangedPopup(fileName) {
 }
 
 function fileOpenedPopup(fileName) {
-	if (fileChangedPopupVisible) return; // changed file takes priority
-	var strings = Object.assign({}, json.popups.file_opened); // make a copy ...
-	strings.text = fileName + strings.text; // ... so we can modify it
+	if (fileChangedPopupVisible) return; //	 changed file takes priority
+	var strings = {};
+	strings.title = json.popups.file_opened.title;
+	strings.code = utils.formatString('<p>{0}</p><p>{1}</p>', json.popups.file_opened.text1, json.popups.file_opened.text2);
+	strings.button = json.popups.file_opened.button;
+	strings.cancel = json.popups.file_opened.cancel;
 
-	popup.submitCancel(strings, function (e) {
-		e.preventDefault();
-		var data = {
-			func: 'openProject',
-			currentProject: models.project.getKey('currentProject'),
-			timestamp: performance.now()
-		};
-		socket.emit('project-event', data);
-		consoleView.emit('openNotification', data);
-	}, function () {
+	// Click the OK button to put page in read-only
+	popup.oneButton(strings, function () {
 		models.project.setKey('openElsewhere', true);
 	});
 }
