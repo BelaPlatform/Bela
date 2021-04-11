@@ -871,14 +871,14 @@ function setReadOnlyStatus(status) {
 	if (status) {
 		$('div.read-only').addClass('active');
 		$('div.read-only').click(function () {
-			return readOnlyPopup();
+			return exitReadonlyPopup();
 		});
 	} else {
 		$('div.read-only').removeClass('active');
 	}
 }
 
-function readOnlyPopup() {
+function exitReadonlyPopup() {
 	var strings = {};
 	strings.title = json.popups.exit_readonly.title;
 	strings.code = '<p>' + json.popups.exit_readonly.text[0] + '</p><p>' + json.popups.exit_readonly.text[1] + '</p>';
