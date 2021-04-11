@@ -355,7 +355,7 @@ function fileOpenedOrChanged(data, changed) {
 		if(changed)
 			fileChangedPopup(fileName);
 		else
-			fileOpenedPopup(fileName);
+			enterReadonlyPopup(fileName);
 	}
 }
 
@@ -430,13 +430,13 @@ function fileChangedPopup(fileName){
 	fileChangedPopupVisible = true;
 }
 
-function fileOpenedPopup(fileName) {
+function enterReadonlyPopup(fileName) {
 	if(fileChangedPopupVisible) return; //	 changed file takes priority
 	var strings = {};
-	strings.title = json.popups.file_opened.title;
-	strings.text = json.popups.file_opened.text;
-	strings.button = json.popups.file_opened.button;
-	strings.cancel = json.popups.file_opened.cancel;
+	strings.title = json.popups.enter_readonly.title;
+	strings.text = json.popups.enter_readonly.text;
+	strings.button = json.popups.enter_readonly.button;
+	strings.cancel = json.popups.enter_readonly.cancel;
 
 	// Click the OK button to put page in read-only
 	popup.oneButton(strings,

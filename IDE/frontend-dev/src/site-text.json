@@ -134,7 +134,7 @@
 			"button": "Yes, reload",
 			"cancel": "No, keep going"
 		},
-		"file_opened": {
+		"enter_readonly": {
 			"title": "This window is now read-only",
 			"text": "You have opened this file in more than one browser window. Because files can only be edited in one window at a time, this window is now in read-only mode.",
 			"button": "OK"

@@ -767,7 +767,7 @@ function fileOpenedOrChanged(data, changed) {
 	// if someone else opened or changed our file
 	// and we arenot ignoring it
 	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName') && clientId != socket.id && !models.project.getKey('openElsewhere') && !models.project.getKey('readOnly')) {
-		if (changed) fileChangedPopup(fileName);else fileOpenedPopup(fileName);
+		if (changed) fileChangedPopup(fileName);else enterReadonlyPopup(fileName);
 	}
 }
 
@@ -852,13 +852,13 @@ function fileChangedPopup(fileName) {
 	fileChangedPopupVisible = true;
 }
 
-function fileOpenedPopup(fileName) {
+function enterReadonlyPopup(fileName) {
 	if (fileChangedPopupVisible) return; //	 changed file takes priority
 	var strings = {};
-	strings.title = json.popups.file_opened.title;
-	strings.text = json.popups.file_opened.text;
-	strings.button = json.popups.file_opened.button;
-	strings.cancel = json.popups.file_opened.cancel;
+	strings.title = json.popups.enter_readonly.title;
+	strings.text = json.popups.enter_readonly.text;
+	strings.button = json.popups.enter_readonly.button;
+	strings.cancel = json.popups.enter_readonly.cancel;
 
 	// Click the OK button to put page in read-only
 	popup.oneButton(strings, function () {
@@ -6403,7 +6403,7 @@ module.exports={
 			"button": "Yes, reload",
 			"cancel": "No, keep going"
 		},
-		"file_opened": {
+		"enter_readonly": {
 			"title": "This window is now read-only",
 			"text": "You have opened this file in more than one browser window. Because files can only be edited in one window at a time, this window is now in read-only mode.",
 			"button": "OK"
