@@ -856,13 +856,43 @@ function fileOpenedPopup(fileName) {
 	if (fileChangedPopupVisible) return; //	 changed file takes priority
 	var strings = {};
 	strings.title = json.popups.file_opened.title;
-	strings.code = utils.formatString('<p>{0}</p><p>{1}</p>', json.popups.file_opened.text1, json.popups.file_opened.text2);
+	strings.text = json.popups.file_opened.text;
 	strings.button = json.popups.file_opened.button;
 	strings.cancel = json.popups.file_opened.cancel;
 
 	// Click the OK button to put page in read-only
 	popup.oneButton(strings, function () {
 		models.project.setKey('openElsewhere', true);
+		setReadOnlyStatus(true);
+	});
+}
+
+function setReadOnlyStatus(status) {
+	if (status) {
+		$('div.read-only').addClass('active');
+		$('div.read-only').click(function () {
+			return readOnlyPopup();
+		});
+	} else {
+		$('div.read-only').removeClass('active');
+	}
+}
+
+function readOnlyPopup() {
+	var strings = {};
+	strings.title = json.popups.exit_readonly.title;
+	strings.code = '<p>' + json.popups.exit_readonly.text[0] + '</p><p>' + json.popups.exit_readonly.text[1] + '</p>';
+	strings.cancel = json.popups.exit_readonly.cancel;
+	strings.button = json.popups.exit_readonly.submit;
+	popup.twoButtons(strings,
+	// on Submit:
+	function (e) {
+		setReadOnlyStatus(false);
+		window.location.reload();
+	},
+	// on Cancel:
+	function () {
+		popup.hide();
 	});
 }
 
@@ -6374,10 +6404,18 @@ module.exports={
 			"cancel": "No, keep going"
 		},
 		"file_opened": {
-			"title": "This tab is now read-only",
-			"text1": "You have opened this file in more than one browser window. Because files can only be edited in one window at a time, this window is now in read-only mode.",
-			"text2": "Exit read-only mode at any time by refreshing the page. If you close this tab, no work will be lost.",
+			"title": "This window is now read-only",
+			"text": "You have opened this file in more than one browser window. Because files can only be edited in one window at a time, this window is now in read-only mode.",
 			"button": "OK"
+		},
+		"exit_readonly": {
+			"title": "Exit read-only mode?",
+			"text": [
+				"To exit read-only mode and edit this file, click Reload. This will refresh the page and load the most recent version of this file, and you'll be able to edit it here.",
+				"To stay in read-only mode, click Cancel."
+			],
+			"submit": "Reload",
+			"cancel": "Cancel"
 		}
 	},
   "tabs": {

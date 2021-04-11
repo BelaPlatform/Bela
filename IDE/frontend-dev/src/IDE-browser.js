@@ -434,8 +434,7 @@ function fileOpenedPopup(fileName) {
 	if(fileChangedPopupVisible) return; //	 changed file takes priority
 	var strings = {};
 	strings.title = json.popups.file_opened.title;
-	strings.code = utils.formatString('<p>{0}</p><p>{1}</p>',
-			json.popups.file_opened.text1, json.popups.file_opened.text2);
+	strings.text = json.popups.file_opened.text;
 	strings.button = json.popups.file_opened.button;
 	strings.cancel = json.popups.file_opened.cancel;
 
@@ -443,6 +442,36 @@ function fileOpenedPopup(fileName) {
 	popup.oneButton(strings,
 		() => {
 			models.project.setKey('openElsewhere', true);
+			setReadOnlyStatus(true);
+		}
+	);
+}
+
+function setReadOnlyStatus(status) {
+	if (status) {
+		$('div.read-only').addClass('active');
+		$('div.read-only').click(() => readOnlyPopup());
+	} else {
+		$('div.read-only').removeClass('active');
+	}
+}
+
+
+function readOnlyPopup() {
+	var strings = {};
+	strings.title = json.popups.exit_readonly.title;
+	strings.code = '<p>' + json.popups.exit_readonly.text[0] + '</p><p>' + json.popups.exit_readonly.text[1] + '</p>';
+	strings.cancel = json.popups.exit_readonly.cancel;
+	strings.button = json.popups.exit_readonly.submit;
+	popup.twoButtons(strings,
+		// on Submit:
+		e => {
+			setReadOnlyStatus(false);
+			window.location.reload();
+		},
+		// on Cancel:
+		() => {
+			popup.hide();
 		}
 	);
 }
