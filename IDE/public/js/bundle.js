@@ -6359,15 +6359,15 @@ module.exports={
 		},
 		"file_changed": {
 			"title": "File changed on disk",
-			"text": " has changed. Would you like to reload it?",
-			"button": "Discard changes and reload",
-			"cancel": "Don't reload, keep this version"
+			"text": "This file has been edited in another tab. Would you like to reload to discard your changes here and switch to the edited version?",
+			"button": "Yes, reload",
+			"cancel": "No, keep going"
 		},
 		"file_opened": {
-			"title": "File opened in another tab",
-			"text": " has been opened in another tab. Only one tab at a time can edit the file.",
-			"button": "Keep editing here",
-			"cancel": "Set this tab to read-only. Refresh or reopen the file to edit again."
+			"title": "This tab is now read-only",
+			"text1": "You have opened this file in more than one browser window. Because files can only be edited in one window at a time, this window is now in read-only mode.",
+			"text2": "Exit read-only mode at any time by refreshing the page. If you close this tab, no work will be lost.",
+			"button": "OK"
 		}
 	},
   "tabs": {
