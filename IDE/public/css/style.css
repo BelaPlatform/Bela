@@ -1833,6 +1833,25 @@ input[type="number"] {
     margin-top: 0;
     padding-bottom: 5px;
     padding-top: 5px; }
+    .file-status .project.read-only,
+    .file-status .file.read-only,
+    .file-status .status.read-only {
+      background-color: rgba(255, 94, 91, 0.75);
+      height: 100%;
+      width: auto;
+      border: 0;
+      color: #ffffff;
+      display: none;
+      padding: 0 10px; }
+      .file-status .project.read-only:hover,
+      .file-status .file.read-only:hover,
+      .file-status .status.read-only:hover {
+        background-color: #ff5e5b;
+        cursor: pointer; }
+      .file-status .project.read-only.active,
+      .file-status .file.read-only.active,
+      .file-status .status.read-only.active {
+        display: inline-block; }
   .file-status .current {
     font-family: poppins_regular;
     color: rgba(0, 0, 0, 0.7);
