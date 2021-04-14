@@ -283,3 +283,9 @@ float I2c_MultiTLVCodec::getSampleRate() {
 		return primaryCodec->getSampleRate();
 	return 0;
 }
+
+int I2c_MultiTLVCodec::setMode(std::string str)
+{
+	FOR_EACH_CODEC_DO(setMode(str));
+	return 0;
+}
