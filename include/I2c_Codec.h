@@ -85,6 +85,7 @@ protected:
 	bool running;
 	bool verbose;
 	bool hpEnabled;
+	bool differentialInput;
 	typedef enum
 	{
 		InitMode_init = 0,

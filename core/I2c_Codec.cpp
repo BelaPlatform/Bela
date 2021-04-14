@@ -28,6 +28,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 : codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
 	, running(false)
 	, verbose(isVerbose)
+	, differentialInput(false)
 	, mode(InitMode_init)
 {
 	params.slotSize = 16;
@@ -234,7 +235,7 @@ int I2c_Codec::startAudio(int dummy)
 	
 	bool dcRemoval;
 	double micBias;
-	if(codecType == TLV320AIC3104) {
+	if(!differentialInput) {
 		//Set-up hardware high-pass filter for DC removal
 		dcRemoval = true;
 		micBias = 2.5;
@@ -702,11 +703,16 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 			return 1;
 		
 		if(codecType == TLV320AIC3106) {
-			// Configure inputs as fully differential, weak biasing.
+			// TODO: 3106/11.3.7 seems to indicate that weakBiasing
+			// should always be disabled when the channel is
+			// enabled. For now we keep it enabled for
+			// differentialInput, pending further testing.
+			bool weakBiasing = differentialInput;
 			// LINE2L/R connected to corresponding L/R ADC PGA mix with specified gain.
-			if(writeRegister(0x14, (volumeBits << 3) | 0x84))
+			uint8_t byte = (differentialInput << 7) | (volumeBits << 3) | (weakBiasing << 2);
+			if(writeRegister(0x14, byte))
 				return 1;
-			if(writeRegister(0x17, (volumeBits << 3) | 0x84))
+			if(writeRegister(0x17, byte))
 				return 1;			
 		}
 		else {	// TLV320AIC3104
@@ -1014,6 +1020,10 @@ int I2c_Codec::setMode(std::string str)
 			AudioCodecParams::ClockSource cg = ("I2sMain" == parameter) ? kClockSourceCodec : kClockSourceExternal;
 			params.bclk = cg;
 			params.wclk = cg;
+		} else if("diff" == parameter) {
+			differentialInput = true;
+		} else if("single" == parameter) {
+			differentialInput = false;
 		} else {
 			++err;
 			continue;
