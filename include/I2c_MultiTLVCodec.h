@@ -39,6 +39,7 @@ public:
 	int setHPVolume(int halfDbSteps);
 	int disable();
 	int reset();
+	int setMode(std::string parameter);
 
 	int numDetectedCodecs();
 
