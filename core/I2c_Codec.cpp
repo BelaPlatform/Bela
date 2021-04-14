@@ -994,24 +994,39 @@ AudioCodecParams I2c_Codec::getParameters()
 	return params;
 }
 
-int I2c_Codec::setMode(std::string parameter)
+#include "../include/MiscUtilities.h"
+int I2c_Codec::setMode(std::string str)
 {
-	if("init" == parameter)
-		mode = InitMode_init;
-	else if("noDeinit" == parameter)
-		mode = InitMode_noDeinit;
-	else if("noInit" == parameter)
-		mode = InitMode_noInit;
-	else if("I2sMain" == parameter || "I2sSecondary" == parameter)
+	std::vector<std::string> tokens = StringUtils::split(str, ',');
+	int err = 0;
+	for(auto parameter : tokens)
 	{
-		params.tdmMode = kTdmModeI2s;
-		AudioCodecParams::ClockSource cg = ("I2sMain" == parameter) ? kClockSourceCodec : kClockSourceExternal;
-		params.bclk = cg;
-		params.wclk = cg;
-	} else
-		return 1;
-	verbose && printf("Codec mode: %d (%s)\n", mode, parameter.c_str());
-	return 0;
+		parameter = StringUtils::trim(parameter);
+		if("init" == parameter)
+			mode = InitMode_init;
+		else if("noDeinit" == parameter)
+			mode = InitMode_noDeinit;
+		else if("noInit" == parameter)
+			mode = InitMode_noInit;
+		else if("I2sMain" == parameter || "I2sSecondary" == parameter)
+		{
+			params.tdmMode = kTdmModeI2s;
+			AudioCodecParams::ClockSource cg = ("I2sMain" == parameter) ? kClockSourceCodec : kClockSourceExternal;
+			params.bclk = cg;
+			params.wclk = cg;
+		} else {
+			++err;
+			continue;
+		}
+	}
+	if(verbose)
+	{
+		if(err)
+			fprintf(stderr, "%d error(s) occurred while setting codec to %s\n", err, str.c_str());
+		else
+			printf("Codec mode: %d (%s)\n", mode, str.c_str());
+	}
+	return err;
 }
 
 #include <iostream>
