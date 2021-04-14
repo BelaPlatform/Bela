@@ -262,22 +262,6 @@ I2c_MultiTLVCodec::~I2c_MultiTLVCodec()
 McaspConfig& I2c_MultiTLVCodec::getMcaspConfig()
 {
 	return mcaspConfig;
-/*
-// Values below are for 16x 16-bit TDM slots
-#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
-#define BELA_MULTI_TLV_MCASP_ACLKXCTL_VALUE 0x00 // External clk, polarity (falling edge)
-#define BELA_MULTI_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
-#define BELA_MULTI_TLV_MCASP_ACLKRCTL_VALUE 0x00 // External clk, polarity (falling edge)
-#ifdef CODEC_GENERATES_WCLK
-#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x800 // 16-slot TDM external fsclk, rising edge means beginning of frame
-#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x800 // 16-slot TDM external fsclk, rising edge means beginning of frame
-#define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
-#else // CODEC_GENERATES_WCLK
-#define BELA_MULTI_TLV_MCASP_AFSRCTL_VALUE 0x802 // 16-slot TDM internal fsclk, rising edge means beginning of frame
-#define BELA_MULTI_TLV_MCASP_AFSXCTL_VALUE 0x802 // 16-slot TDM internal fsclk, rising edge means beginning of frame
-#define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | MCASP_PIN_AFSX | (1 << 2) // AHCLKX, FSX, AXR2 outputs
-#endif // CODEC_GENERATES_WCLK
-*/
 }
 
 unsigned int I2c_MultiTLVCodec::getNumIns(){
