@@ -27,10 +27,16 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 10
+#define BELA_MINOR_VERSION 11
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.11.0
+// - added BelaChannelGain and BelaChannelGainArray
+// - added setHpLevel(), setAudioInputGain(), setAdcLevel(), setDacLevel(),
+// deprecated the functions they are intended to replace
+// - added the corresponding fields in BelaInitSettings: headphoneGains,
+// audioInputGains, adcGains, dacGains
 // 1.10.0
 // - added parameter to Bela_detectHw(), and associated typedef
 // - added more values to the BelaHw enum
@@ -141,7 +147,7 @@ typedef enum
 
 /** \cond PRIVATE */
 #define MAX_PRU_FILENAME_LENGTH 256
-#define MAX_UNUSED2_LENGTH 256
+#define MAX_UNUSED_LENGTH 224
 #define MAX_PROJECTNAME_LENGTH 256
 /** \endcond */
 
@@ -403,6 +409,15 @@ typedef struct {
 	const unsigned int underrunCount;
 } BelaContext;
 
+struct BelaChannelGain {
+	int channel; ///< Channel number. Negative value means all the channels
+	float gain; ///< Gain in dB.
+};
+
+struct BelaChannelGainArray {
+	unsigned int length;
+	struct BelaChannelGain* data;
+};
 /**
  * \ingroup control
  * \brief Structure containing initialisation parameters for the real-time
@@ -438,13 +453,13 @@ typedef struct {
 
 	/// Whether to begin with the speakers muted
 	int beginMuted;
-	/// Level for the audio DAC output
+	/// Level for the audio DAC output. DEPRECATED: ues dacGains
 	float dacLevel;
-	/// Level for the audio ADC input
+	/// Level for the audio ADC input. DEPRECATED: use adcGains
 	float adcLevel;
-	/// Gains for the PGA, left and right channels
+	/// Gains for the PGA, left and right channels. DEPRECATED: use audioInputGains
 	float pgaGain[2];
-	/// Level for the headphone output
+	/// Level for the headphone output. DEPRECATED: use headphoneGains
 	float headphoneLevel;
 	/// How many channels to use on the multiplexer capelet, if enabled
 	int numMuxChannels;
@@ -506,7 +521,16 @@ typedef struct {
 	void (*audioThreadDone)(BelaContext*, void*);
 	/// A codec-specific intialisation parameter
 	char* codecMode;
-	char unused2[MAX_UNUSED2_LENGTH];
+	/// audio input gains
+	struct BelaChannelGainArray audioInputGains;
+	/// level for headphone outputs
+	struct BelaChannelGainArray headphoneGains;
+	/// Level for the audio ADC input
+	struct BelaChannelGainArray adcGains;
+	/// Level for the audio DAC output
+	struct BelaChannelGainArray dacGains;
+
+	char unused[MAX_UNUSED_LENGTH];
 
 	/// User selected board to work with (as opposed to detected hardware).
 	BelaHw board;
@@ -829,10 +853,18 @@ int Bela_stopRequested();
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
+ * \param channel The channel to set. Use a negative value to set all channels.
  * \param decibels Level of the DAC output. Valid levels range from -63.5 (lowest) to
  * 0 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded down.
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setDacLevel(int channel, float decibels);
+
+/**
+ * DEPRECATED.
+ *
+ * Equivalent to `Bela_setDacLevel(-1, decibels)`.
  */
 int Bela_setDACLevel(float decibels);
 
@@ -845,16 +877,24 @@ int Bela_setDACLevel(float decibels);
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
+ * \param channel The channel to set. Use a negative value to set all channels.
  * \param decibels Level of the ADC input. Valid levels range from -12 (lowest) to
  * 0 (highest) in steps of 1.5dB. Levels between increments of 1.5 will be rounded down.
  *
  * \return 0 on success, or nonzero if an error occurred.
  */
+int Bela_setAdcLevel(int channel, float decibels);
+
+/**
+ * DEPRECATED.
+ *
+ * Equivalent to `Bela_setAdcLevel(-1, decibels)`.
+ */
 int Bela_setADCLevel(float decibels);
 
 
 /**
- * \brief Set the gain of the audio preamplifier.
+ * \brief Set the gain of the audio input preamplifier.
  *
  * This function sets the level of the Programmable Gain Amplifier(PGA), which
  * amplifies the signal before the ADC.
@@ -862,12 +902,19 @@ int Bela_setADCLevel(float decibels);
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
+ * \param channel The channel to set. Use a negative value to set all channels.
  * \param decibels Level of the PGA Valid levels range from 0 (lowest) to
  * 59.5 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded.
- * \param channel Specifies which channel to apply the gain to. Channel 0 is left,
  * channel 1 is right
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setAudioInputGain(int channel, float decibels);
+
+/**
+ * DEPRECATED.
+ *
+ * Equivalent to `Bela_setAudioInputGain(channel, decibels)`.
  */
 int Bela_setPgaGain(float decibels, int channel);
 
@@ -881,10 +928,16 @@ int Bela_setPgaGain(float decibels, int channel);
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
- * \param decibels Level of the DAC output. Valid levels range from -63.5 (lowest) to
+ * \param channel The channel to set. Use a negative value to set all channels.
+ * \param decibels Level of the headphone output. Valid levels range from -63.5 (lowest) to
  * 0 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded down.
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setHpLevel(int channel, float decibels);
+/**
+ * DEPRECATED
+ * Equivalent to Bela_setHpLevel(-1, decibels);
  */
 int Bela_setHeadphoneLevel(float decibels);
 

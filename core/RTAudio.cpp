@@ -128,6 +128,7 @@ int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
 static AudioCodec* gDisabledCodec = NULL;
 static BelaHw belaHw;
+extern const float BELA_INVALID_GAIN;
 
 static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
 {
@@ -265,6 +266,17 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 	return 0;
 }
 
+static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
+{
+	for(unsigned int n = 0; n < cga.length; n++)
+	{
+		BelaChannelGain& cg = cga.data[n];
+		int ret = cb(cg.channel, cg.gain);
+		if(ret)
+			return ret;
+	}
+	return 0;
+}
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
@@ -642,18 +654,31 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	// Set default volume levels
-	Bela_setDACLevel(settings->dacLevel);
-	Bela_setADCLevel(settings->adcLevel);
 	// TODO: add more argument checks
-	for(int n = 0; n < 2; n++){
-		if(settings->pgaGain[n] > 59.5){
-			fprintf(stderr, "PGA gain out of range [0,59.5] for channel %d: %fdB\n", n, settings->pgaGain[n]);
-			return 1;
-		}
-		Bela_setPgaGain(settings->pgaGain[n], n);
+
+	if(setChannelGains(settings->audioInputGains, Bela_setAudioInputGain))
+		return 1;
+	if(setChannelGains(settings->headphoneGains, Bela_setHpLevel))
+		return 1;
+	if(setChannelGains(settings->dacGains, Bela_setDacLevel))
+		return 1;
+	if(setChannelGains(settings->adcGains, Bela_setAdcLevel))
+		return 1;
+
+	// These are deprecated. We keep them for bw compatibilty.
+	// will be removed later.
+	// They have to come after the newer ones above
+	for(unsigned int n = 0; n < 2; n++)
+	{
+		if(BELA_INVALID_GAIN != settings->pgaGain[n])
+			Bela_setPgaGain(settings->pgaGain[n], n); // DEPRECATED
 	}
-	Bela_setHeadphoneLevel(settings->headphoneLevel);
+	if(BELA_INVALID_GAIN != settings->headphoneLevel)
+		Bela_setHeadphoneLevel(settings->headphoneLevel); // DEPRECATED
+	if(BELA_INVALID_GAIN != settings->dacLevel)
+		Bela_setDACLevel(settings->dacLevel); // DEPRECATED
+	if(BELA_INVALID_GAIN != settings->adcLevel)
+		Bela_setADCLevel(settings->adcLevel); // DEPRECATED
 
 	gBlockDurationMs = gUserContext->audioFrames / gUserContext->audioSampleRate * 1000;
 	// Call the user-defined initialisation function
@@ -958,9 +983,14 @@ int Bela_stopRequested()
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setDACLevel(float decibels)
 {
+	return Bela_setDacLevel(-1, decibels);
+}
+
+int Bela_setDacLevel(int channel, float decibels)
+{
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setDACVolume((int)floorf(decibels * 2.0 + 0.5));
+	return gAudioCodec->setDacVolume(channel, decibels);
 
 	return 0;
 }
@@ -969,30 +999,42 @@ int Bela_setDACLevel(float decibels)
 // 0dB is the maximum, -12dB is the minimum; 1.5dB steps
 int Bela_setADCLevel(float decibels)
 {
+	return Bela_setAdcLevel(-1, decibels);
+}
 
+int Bela_setAdcLevel(int channel, float decibels)
+{
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setADCVolume((int)floorf(decibels * 2.0 + 0.5));
+	return gAudioCodec->setAdcVolume(channel, decibels);
 }
 
 // Set the level of the Programmable Gain Amplifier
 // 59.5dB is maximum, 0dB is minimum; 0.5dB steps
 int Bela_setPgaGain(float decibels, int channel){
+	return Bela_setAudioInputGain(channel, decibels);
+}
+
+int Bela_setAudioInputGain(int channel, float decibels){
 
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setPga(decibels, channel);
+	return gAudioCodec->setInputGain(channel, decibels);
 }
 
 // Set the level of the onboard headphone amplifier; affects headphone
 // output only (not line out or speaker)
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
-int Bela_setHeadphoneLevel(float decibels)
+int Bela_setHpLevel(int channel, float decibels)
 {
-
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setHPVolume((int)floorf(decibels * 2.0 + 0.5));
+	return gAudioCodec->setHpVolume(channel, decibels);
+}
+
+int Bela_setHeadphoneLevel(float decibels)
+{
+	return Bela_setHpLevel(-1, decibels);
 }
 
 // Mute or unmute the onboard speaker amplifiers

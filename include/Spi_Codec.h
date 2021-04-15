@@ -50,20 +50,20 @@ public:
 	unsigned int getNumIns();
 	unsigned int getNumOuts();
 	float getSampleRate();
-	int setDACVolume(int halfDbSteps);
 	int dumpRegisters();
 	int reset(); // Hard reset of codec(s)
 	bool masterIsDetected(); // CTAG face2|4
 	bool slaveIsDetected();  // CTAG Beast
-	int setADCVolume(int halfDbSteps) {return 0;};
-	int setHPVolume(int halfDbSteps) {return 0;};
-	int setPga(float newGain, unsigned short int channel) {return 0;};
+	int setDacVolume(int channel, float gain);
+	int setAdcVolume(int channel, float gain) { return 0; };
+	int setHpVolume(int channel, float gain) { return 0; };
+	int setInputGain(int channel, float newGain) { return 0; };
 	int disable() {return 0;};
 	McaspConfig& getMcaspConfig();
 
 private:
 	int _fd_master, _fd_slave;
-	int _dacVolumethreeEighthsDbs;
+	std::vector<int> _dacVolumethreeEighthsDbs;
 	int _writeDACVolumeRegisters(bool mute);
 	int _spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t bytes, CODEC_TYPE codec = MASTER_CODEC);
 	McaspConfig mcaspConfig;
