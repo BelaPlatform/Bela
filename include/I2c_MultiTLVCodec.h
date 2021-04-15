@@ -33,10 +33,10 @@ public:
 	unsigned int getNumOuts();
 	float getSampleRate();
 
-	int setPga(float newGain, unsigned short int channel);
-	int setDACVolume(int halfDbSteps);
-	int setADCVolume(int halfDbSteps);
-	int setHPVolume(int halfDbSteps);
+	int setInputGain(int channel, float newGain);
+	int setDacVolume(int channel, float gain);
+	int setAdcVolume(int channel, float gain);
+	int setHpVolume(int channel, float gain);
 	int disable();
 	int reset();
 	int setMode(std::string parameter);

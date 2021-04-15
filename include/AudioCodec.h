@@ -36,10 +36,10 @@ public:
 	virtual unsigned int getNumIns() = 0;
 	virtual unsigned int getNumOuts() = 0;
 	virtual float getSampleRate() = 0;
-	virtual int setPga(float newGain, unsigned short int channel) = 0;
-	virtual int setDACVolume(int halfDbSteps) = 0;
-	virtual int setADCVolume(int halfDbSteps) = 0;
-	virtual int setHPVolume(int halfDbSteps) = 0;
+	virtual int setInputGain(int channel, float newGain) = 0;
+	virtual int setDacVolume(int channel, float gain) = 0;
+	virtual int setAdcVolume(int channel, float gain) = 0;
+	virtual int setHpVolume(int channel, float gain) = 0;
 	virtual int disable() = 0;
 	virtual int reset() = 0;
 	virtual int setMode(std::string parameter) {return 0;};

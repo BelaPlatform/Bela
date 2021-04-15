@@ -202,27 +202,42 @@ int I2c_MultiTLVCodec::stopAudio()
 	return 0;
 }
 
-int I2c_MultiTLVCodec::setPga(float newGain, unsigned short int channel)
+#define FOR_CODEC_CHANNEL_DO(do) {\
+	if(channel < 0) /* all channels on all codecs*/\
+	{\
+		int ret = 0;\
+		for(auto& c : codecs)\
+			ret |= c->do;\
+		return ret;\
+	}\
+	int cod = channel / 2;\
+	channel = channel % 2;\
+	if(cod >= codecs.size())\
+		return -1;\
+	codecs[cod]->do;\
+	return 0;\
+}
+
+int I2c_MultiTLVCodec::setInputGain(int channel, float gain)
 {
-	FOR_EACH_CODEC_DO(setPga(newGain, channel));
+	FOR_CODEC_CHANNEL_DO(setInputGain(channel, gain));
+}
+
+int I2c_MultiTLVCodec::setDacVolume(int channel, float gain)
+{
+	FOR_CODEC_CHANNEL_DO(setDacVolume(channel, gain));
 	return 0;
 }
 
-int I2c_MultiTLVCodec::setDACVolume(int halfDbSteps)
+int I2c_MultiTLVCodec::setAdcVolume(int channel, float gain)
 {
-	FOR_EACH_CODEC_DO(setDACVolume(halfDbSteps));
+	FOR_CODEC_CHANNEL_DO(setAdcVolume(channel, gain));
 	return 0;
 }
 
-int I2c_MultiTLVCodec::setADCVolume(int halfDbSteps)
+int I2c_MultiTLVCodec::setHpVolume(int channel, float gain)
 {
-	FOR_EACH_CODEC_DO(setADCVolume(halfDbSteps));
-	return 0;
-}
-
-int I2c_MultiTLVCodec::setHPVolume(int halfDbSteps)
-{
-	FOR_EACH_CODEC_DO(setHPVolume(halfDbSteps));
+	FOR_CODEC_CHANNEL_DO(setHpVolume(channel, gain));
 	return 0;
 }
 

@@ -25,7 +25,7 @@ constexpr AudioCodecParams::ClockSource kClockSourceCodec = AudioCodecParams::kC
 constexpr AudioCodecParams::ClockSource kClockSourceExternal = AudioCodecParams::kClockSourceExternal;
 
 I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
-: codecType(type), dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0)
+: codecType(type)
 	, running(false)
 	, verbose(isVerbose)
 	, differentialInput(false)
@@ -277,10 +277,10 @@ int I2c_Codec::startAudio(int dummy)
 	if(writeRegister(0x41, 0x0D))	// HPROUT output level control: output level = 0dB, not muted, powered up
 		return 1;
 	enableLineOut(true);
-	if(writeDACVolumeRegisters(false))	// Unmute and set volume
+	if(writeDacVolumeRegisters(false))	// Unmute and set volume
 		return 1;
 
-	if(writeADCVolumeRegisters(false))	// Unmute and set ADC volume
+	if(writeAdcVolumeRegisters(false))	// Unmute and set ADC volume
 		return 1;
 
 	running = true;
@@ -609,85 +609,111 @@ float I2c_Codec::getAudioSamplingRate(){
 	return fs;
 }
 
-int I2c_Codec::setPga(float newGain, unsigned short int channel){
-	unsigned short int reg;
-	if(channel == 0)
-		reg = 0x0F;
-	else if(channel == 1)
-		reg =  0x10;
-	else
-		return 1; // error, wrong channel
-	if(newGain > 59.5)
+int I2c_Codec::setInputGain(int channel, float gain){
+	const uint8_t regLeft = 0x0F;
+	const uint8_t regRight = 0x10;
+	std::vector<uint8_t> regs;
+	if(0 == channel)
+		regs = {regLeft};
+	else if(1 == channel)
+		regs = {regRight};
+	else if(channel < 0)
+		regs = {{regLeft, regRight}}; // both channels
+	if(gain > 59.5)
 		return 2; // error, gain out of range
 	unsigned short int value;
-	if(newGain < 0)
+	if(gain < 0)
 		value = 0b10000000; // PGA is muted
 	else {
 		// gain is adjustable from 0 to 59.5dB in steps of 0.5dB between 0x0 and 0x7f.
 		// Values between 0b01110111 and 0b01111111 are clipped to 59.5dB
-		value = (int)(newGain * 2 + 0.5) & 0x7f;
+		value = (int)(gain * 2 + 0.5) & 0x7f;
 	}
-	return writeRegister(reg, value);
+	int ret = 0;
+	for(auto& reg : regs)
+		ret |=  writeRegister(reg, value);
+	return ret;
+}
+
+template<typename T, typename U>
+static int setByChannel(T& dest, const int channel, U val)
+{
+	if(channel >= (int)dest.size())
+		return 1;
+	for(unsigned int n = 0; n < dest.size(); ++n)
+	{
+		if(channel == n || channel < 0)
+		{
+			dest[n] = val;
+			if(channel >= 0)
+				break;
+		}
+	}
+	return 0;
+}
+
+static int getHalfDbs(float gain)
+{
+	return floorf(gain * 2.0 + 0.5);
 }
 
 // Set the volume of the DAC output
-int I2c_Codec::setDACVolume(int halfDbSteps)
+int I2c_Codec::setDacVolume(int channel, float gain)
 {
-	dacVolumeHalfDbs = halfDbSteps;
+	if(setByChannel(dacVolumeHalfDbs, channel, getHalfDbs(gain)))
+		return 1;
 	if(running)
-		return writeDACVolumeRegisters(false);
-
+		return writeDacVolumeRegisters(false);
 	return 0;
 }
 
 // Set the volume of the ADC input
-int I2c_Codec::setADCVolume(int halfDbSteps)
+int I2c_Codec::setAdcVolume(int channel, float gain)
 {
-	adcVolumeHalfDbs = halfDbSteps;
+	if(setByChannel(adcVolumeHalfDbs, channel, getHalfDbs(gain)))
+		return 1;
 	if(running)
-		return writeADCVolumeRegisters(false);
-
+		return writeAdcVolumeRegisters(false);
 	return 0;
 }
 
 // Update the DAC volume control registers
-int I2c_Codec::writeDACVolumeRegisters(bool mute)
+int I2c_Codec::writeDacVolumeRegisters(bool mute)
 {
-	int volumeBits = 0;
-
-	if(dacVolumeHalfDbs < 0) { // Volume is specified in half-dBs with 0 as full scale
-		volumeBits = -dacVolumeHalfDbs;
-		if(volumeBits > 127)
-			volumeBits = 127;
+	std::array<int,kNumIoChannels> volumeBits{};
+	for(unsigned int n = 0; n < volumeBits.size(); ++n)
+	{
+		// Volume is specified in half-dBs with 0 as full scale
+		volumeBits[n] = -dacVolumeHalfDbs[n];
+		if(volumeBits[n] > 127)
+			volumeBits[n] = 127;
 	}
-
-	if(mute) {
-		if(writeRegister(0x2B, volumeBits | 0x80))	// Left DAC volume control: muted
-			return 1;
-		if(writeRegister(0x2C, volumeBits | 0x80))	// Right DAC volume control: muted
-			return 1;
-	}
-	else {
-		if(writeRegister(0x2B, volumeBits))	// Left DAC volume control: not muted
-			return 1;
-		if(writeRegister(0x2C, volumeBits))	// Right DAC volume control: not muted
+	std::array<int,kNumIoChannels> regs = {{
+		0x2B, // Left DAC volume control
+		0x2C, // Right DAC volume control
+	}};
+	uint8_t muteBits = mute << 7;
+	for(unsigned int n = 0; n < regs.size(); ++n)
+	{
+		if(writeRegister(regs[n], volumeBits[n] | muteBits)) // DAC volume control
 			return 1;
 	}
-
 	return 0;
 }
 
 // Update the ADC volume control registers
-int I2c_Codec::writeADCVolumeRegisters(bool mute)
+int I2c_Codec::writeAdcVolumeRegisters(bool mute)
 {
-	int volumeBits = 0;
-
+	std::array<int,kNumIoChannels> volumeBits{};
 	// Volume is specified in half-dBs with 0 as full scale
 	// The codec uses 1.5dB steps so we divide this number by 3
-	if(adcVolumeHalfDbs < 0) {
-		volumeBits = -adcVolumeHalfDbs / 3;
-		if(volumeBits > 8)
-			volumeBits = 8;
+	for(unsigned int n = 0; n < volumeBits.size(); ++n)
+	{
+		if(adcVolumeHalfDbs[n] < 0) {
+			volumeBits[n] = -adcVolumeHalfDbs[n] / 3;
+			if(volumeBits[n] > 8)
+				volumeBits[n] = 8;
+		}
 	}
 
 	if(mute) {
@@ -709,16 +735,21 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 			// differentialInput, pending further testing.
 			bool weakBiasing = differentialInput;
 			// LINE2L/R connected to corresponding L/R ADC PGA mix with specified gain.
-			uint8_t byte = (differentialInput << 7) | (volumeBits << 3) | (weakBiasing << 2);
-			if(writeRegister(0x14, byte))
-				return 1;
-			if(writeRegister(0x17, byte))
-				return 1;			
+			std::array<int,kNumIoChannels> regs = {{
+				0x14,
+				0x17,
+			}};
+			for(unsigned int n = 0; n < regs.size(); ++n)
+			{
+				uint8_t byte = (differentialInput << 7) | (volumeBits[n] << 3) | (weakBiasing << 2);
+				if(writeRegister(regs[n], byte))
+					return 1;
+			}
 		}
 		else {	// TLV320AIC3104
-			if(writeRegister(0x11, (volumeBits << 4) | 0x0F)) // Mic2L (sic) Input connected connected to left-ADC PGA mix with specified gain
+			if(writeRegister(0x11, (volumeBits[0] << 4) | 0x0F)) // Mic2L (sic) Input connected connected to left-ADC PGA mix with specified gain
 				return 1;
-			if(writeRegister(0x12, volumeBits | 0xF0)) // Mic2R/Line2R connected to right-ADC PGA mix with specified gain
+			if(writeRegister(0x12, volumeBits[1] | 0xF0)) // Mic2R/Line2R connected to right-ADC PGA mix with specified gain
 				return 1;
 		}
 	}
@@ -727,9 +758,11 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 }
 
 // Set the volume of the headphone output
-int I2c_Codec::setHPVolume(int halfDbSteps)
+int I2c_Codec::setHpVolume(int channel, float gain)
 {
-	hpVolumeHalfDbs = halfDbSteps;
+	int hd = (int)floorf(gain * 2 + 0.5);
+	if(setByChannel(hpVolumeHalfDbs, channel, hd))
+		return 1;
 	hpEnabled = true;
 	if(running)
 		return writeHPVolumeRegisters();
@@ -749,21 +782,23 @@ int I2c_Codec::enableHpOut(bool enable)
 // Update the headphone volume control registers
 int I2c_Codec::writeHPVolumeRegisters()
 {
-	int volumeBits = 0;
-
-	if(hpVolumeHalfDbs < 0) { // Volume is specified in half-dBs with 0 as full scale
-		volumeBits = -hpVolumeHalfDbs;
-		if(volumeBits > 127)
-			volumeBits = 127;
+	std::array<uint8_t,kNumIoChannels> regs = {{
+		0x2F, // DAC_L1 to HPLOUT
+		0x40, // DAC_R1 to HPROUT
+	}};
+	for(unsigned int n = 0; n < hpVolumeHalfDbs.size(); ++n)
+	{
+		int volumeBits = 0;
+		int hd = hpVolumeHalfDbs[n];
+		if(hd < 0) { // Volume is specified in half-dBs with 0 as full scale
+			volumeBits = -hd;
+			if(volumeBits > 127)
+				volumeBits = 127;
+		}
+		uint8_t routed = hpEnabled << 7; // DAC_x routed to HPxOUT ?
+		if(writeRegister(regs[n], volumeBits | routed))
+			return 1;
 	}
-
-	// DAC_x routed to HPxOUT ?
-	char routed = hpEnabled << 7;
-	if(writeRegister(0x2F, volumeBits | routed)) // DAC_L1 to HPLOUT register
-		return 1;
-	if(writeRegister(0x40, volumeBits | routed)) // DAC_R1 to HPROUT register
-		return 1;
-
 	return 0;
 }
 
@@ -790,9 +825,9 @@ int I2c_Codec::enableLineOut(bool enable)
 // This tells the codec to stop generating audio and mute the outputs
 int I2c_Codec::stopAudio()
 {
-	if(writeDACVolumeRegisters(true))	// Mute the DACs
+	if(writeDacVolumeRegisters(true))	// Mute the DACs
 		return 1;
-	if(writeADCVolumeRegisters(true))	// Mute the ADCs
+	if(writeAdcVolumeRegisters(true))	// Mute the ADCs
 		return 1;
 
 	usleep(10000);

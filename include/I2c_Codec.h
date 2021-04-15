@@ -16,6 +16,7 @@
 
 #include "AudioCodec.h"
 #include "I2c.h"
+#include <array>
 
 class I2c_Codec : public I2c, public AudioCodec
 {
@@ -54,13 +55,10 @@ public:
 	unsigned int getPllR();
 	float getPllK();
 	float getAudioSamplingRate();
-	int setPga(float newGain, unsigned short int channel);
-	int setDACVolume(int halfDbSteps);
-	int writeDACVolumeRegisters(bool mute);
-	int setADCVolume(int halfDbSteps);
-	int writeADCVolumeRegisters(bool mute);
-	int setHPVolume(int halfDbSteps);
-	int writeHPVolumeRegisters();
+	int setInputGain(int channel, float gain);
+	int setDacVolume(int channel, float gain);
+	int setAdcVolume(int channel, float gain);
+	int setHpVolume(int channel, float gain);
 	int enableHpOut(bool enable);
 	int enableLineOut(bool enable);
 	int disable();
@@ -74,12 +72,17 @@ public:
 
 	virtual McaspConfig& getMcaspConfig();
 	int setMode(std::string str);
+private:
+	enum {kNumIoChannels = 2};
+	int writeDacVolumeRegisters(bool mute);
+	int writeAdcVolumeRegisters(bool mute);
+	int writeHPVolumeRegisters();
 protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
-	int dacVolumeHalfDbs;
-	int adcVolumeHalfDbs;
-	int hpVolumeHalfDbs;
+	std::array<int,kNumIoChannels> dacVolumeHalfDbs{};
+	std::array<int,kNumIoChannels> adcVolumeHalfDbs{};
+	std::array<int,kNumIoChannels> hpVolumeHalfDbs{};
 	AudioCodecParams params;
 	McaspConfig mcaspConfig;
 	bool running;
