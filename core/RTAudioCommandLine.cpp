@@ -327,8 +327,7 @@ int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptio
 			settings->board = getBelaHw(std::string(optarg));
 			break;
 		case OPT_CODEC_MODE:
-			settings->codecMode = new char[strlen(optarg) + 1];
-			strcpy(settings->codecMode, optarg);
+			settings->codecMode = strdup(optarg);
 			break;
 		case '?':
 		default:
