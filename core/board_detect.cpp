@@ -114,8 +114,6 @@ BelaHw getBelaHw(std::string board)
 		hw = BelaHw_CtagFaceBela;
 	else if(board == "CtagBeastBela")
 		hw = BelaHw_CtagBeastBela;
-	else if (board == "Bela_AI")
-		hw = BelaHw_AI;	
 	else
 		hw = BelaHw_NoHw;
 	return hw;
@@ -146,9 +144,6 @@ std::string getBelaHwName(BelaHw hardware)
 			break;
 		case BelaHw_CtagBeastBela:
 			hwName = "CtagBeastBela";
-			break;
-		case BelaHw_AI:
-			hwName = "Bela_AI";
 			break;
 		default:
 			hwName = "";
@@ -268,11 +263,6 @@ bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 	}
 	else if(userHw == BelaHw_Salt &&
 			detectedHw == BelaHw_Bela)
-	{
-		return true;
-	}
-	else if(userHw == BelaHw_AI &&
-			detectedHw == BelaHw_AI)	//will add Ctag dev.s and compat. in future
 	{
 		return true;
 	}

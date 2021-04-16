@@ -79,14 +79,13 @@ int rt_vfprintf(FILE *stream, const char *format, va_list ap);
 typedef enum
 {
 	BelaHw_NoHw = -1,
-	BelaHw_Bela,			//Bela on BBB
-	BelaHw_BelaMini,		//BelaMini on PocketBeagle
-	BelaHw_Salt,			//
-	BelaHw_CtagFace,		//
-	BelaHw_CtagBeast,		//
-	BelaHw_CtagFaceBela,	//
-	BelaHw_CtagBeastBela,	//
-	BelaHw_AI				//Bela on BBAI
+	BelaHw_Bela,
+	BelaHw_BelaMini,
+	BelaHw_Salt,
+	BelaHw_CtagFace,
+	BelaHw_CtagBeast,
+	BelaHw_CtagFaceBela,
+	BelaHw_CtagBeastBela,
 } BelaHw;
 
 typedef struct _BelaHwConfig
