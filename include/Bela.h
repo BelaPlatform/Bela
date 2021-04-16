@@ -78,14 +78,14 @@ int rt_vfprintf(FILE *stream, const char *format, va_list ap);
 
 typedef enum
 {
-	BelaHw_NoHw = -1,
-	BelaHw_Bela,
-	BelaHw_BelaMini,
-	BelaHw_Salt,
-	BelaHw_CtagFace,
-	BelaHw_CtagBeast,
-	BelaHw_CtagFaceBela,
-	BelaHw_CtagBeastBela,
+	BelaHw_NoHw = -1, 			///< No hardware
+	BelaHw_Bela, 				///< Bela
+	BelaHw_BelaMini, 			///< Bela Mini
+	BelaHw_Salt, 				///< Salt
+	BelaHw_CtagFace, 			///< Ctag Face
+	BelaHw_CtagBeast, 			///< Ctag Beast
+	BelaHw_CtagFaceBela, 		///< Ctag Face and Bela cape
+	BelaHw_CtagBeastBela, 		///< Ctag Beast and Bela cape
 } BelaHw;
 
 typedef struct _BelaHwConfig
