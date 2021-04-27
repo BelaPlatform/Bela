@@ -2,14 +2,13 @@
 
 #include <functional>
 #include <memory>
-#include <oscpkt.hh> // necessary for definition of oscpkt::Message in callback
+#include <vector>
+#include <oscpkt.hh>
 
-// forward declarations to speed up compilation
-class AuxTaskNonRT;
 class UdpServer;
-
-#define OSCRECEIVER_BUFFERSIZE 65536
-
+namespace std {
+	class thread;
+};
 /**
  * \brief OscReceiver provides functions for receiving OSC messages in Bela.
  *
@@ -46,12 +45,12 @@ class OscReceiver{
     	int waitForMessage(int timeout_ms);
     	
         std::unique_ptr<UdpServer> socket;
+        std::unique_ptr<std::thread> receive_task;
 
-        std::unique_ptr<AuxTaskNonRT> receive_task;
         void receive_task_func();
 		
         std::unique_ptr<oscpkt::PacketReader> pr;
-        char* inBuffer[OSCRECEIVER_BUFFERSIZE];
+        std::vector<char> inBuffer;
         
         std::function<void(oscpkt::Message* msg, void* arg)> on_receive;
         void* onReceiveArg = nullptr;

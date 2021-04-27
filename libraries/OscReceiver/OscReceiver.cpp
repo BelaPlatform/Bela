@@ -1,33 +1,41 @@
 #include "OscReceiver.h"
-#include <Bela.h> // Bela_stopRequested
-#include <AuxTaskNonRT.h>
 #include <libraries/UdpServer/UdpServer.h>
+#include <thread>
 
-#define OSCRECEIVER_POLL_US 5000
+constexpr unsigned int OscReceiverBlockReadUs = 50000;
+constexpr unsigned int OscReceiverSleepBetweenReadsUs = 5000;
+constexpr unsigned int OscReceiverInBufferSize = 65536; // maximum UDP packet size
 
 OscReceiver::OscReceiver(){}
 OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg){
 	setup(port, on_receive, callbackArg);
 }
+
 OscReceiver::~OscReceiver(){
 	lShouldStop = true;
 	// allow in-progress read to complete before destructing
-	while(waitingForMessage){
-		usleep(OSCRECEIVER_POLL_US/2);
+	if(receive_task->joinable())
+	{
+		receive_task->join();
 	}
 }
 
 void OscReceiver::receive_task_func(){
 	OscReceiver* instance = this;
-	while(!Bela_stopRequested() && !instance->lShouldStop){
-		instance->waitingForMessage = true;
-		instance->waitForMessage(0);
-		instance->waitingForMessage = false;
-		usleep(OSCRECEIVER_POLL_US);
+	while(!instance->lShouldStop){
+		int ret = instance->waitForMessage(OscReceiverBlockReadUs / 1000);
+		if(ret < 0)
+			break; // error. Abort
+		else if(ret >= 0)
+			continue; // message retrieved successfully. Try again immediately
+		else
+			//(0 == ret) no message retrieved. Briefly sleep before retrying
+			usleep(OscReceiverSleepBetweenReadsUs);
 	}
 }
 
 void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> _on_receive, void* callbackArg){
+	inBuffer.resize(OscReceiverInBufferSize);
     
     onReceiveArg = callbackArg;
     on_receive = _on_receive;
@@ -38,11 +46,7 @@ void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, void*
         fprintf(stderr, "OscReceiver: Unable to initialise UDP socket: %d %s\n", errno, strerror(errno));
         return;
     }
-	
-	receive_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	receive_task->create(std::string("OscReceiverTask_") + std::to_string(port), [this](){receive_task_func(); });
-
-    receive_task->schedule();
+	receive_task = std::unique_ptr<std::thread>(new std::thread(&OscReceiver::receive_task_func, this));
 }
 
 int OscReceiver::waitForMessage(int timeout){
@@ -51,15 +55,15 @@ int OscReceiver::waitForMessage(int timeout){
 		fprintf(stderr, "OscReceiver: Error polling UDP socket: %d %s\n", errno, strerror(errno));
 		return -1;
 	} else if(ret == 1){
-		int msgLength = socket->read(&inBuffer, OSCRECEIVER_BUFFERSIZE, false);
+		int msgLength = socket->read(inBuffer.data(), inBuffer.size(), false);
 		if (msgLength < 0){
 			fprintf(stderr, "OscReceiver: Error reading UDP socket: %d %s\n", errno, strerror(errno));
 			return -1;
         }
-        pr->init(inBuffer, msgLength);
+        pr->init(inBuffer.data(), msgLength);
         if (!pr->isOk()){
         	fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i", pr->getErr());
-        	return -1;
+		return ret;
         }
 		on_receive(pr->popMessage(), onReceiveArg);
 	}
