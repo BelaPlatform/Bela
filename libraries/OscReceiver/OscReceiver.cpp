@@ -34,18 +34,19 @@ void OscReceiver::receive_task_func(){
 	}
 }
 
-void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> _on_receive, void* callbackArg){
+void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> _on_receive, void* callbackArg)
+{
 	inBuffer.resize(OscReceiverInBufferSize);
-    
-    onReceiveArg = callbackArg;
-    on_receive = _on_receive;
-    pr = std::unique_ptr<oscpkt::PacketReader>(new oscpkt::PacketReader());
-    
-    socket = std::unique_ptr<UdpServer>(new UdpServer());
-    if(!socket->setup(port)){
-        fprintf(stderr, "OscReceiver: Unable to initialise UDP socket: %d %s\n", errno, strerror(errno));
-        return;
-    }
+
+	onReceiveArg = callbackArg;
+	on_receive = _on_receive;
+	pr = std::unique_ptr<oscpkt::PacketReader>(new oscpkt::PacketReader());
+
+	socket = std::unique_ptr<UdpServer>(new UdpServer());
+	if(!socket->setup(port)){
+		fprintf(stderr, "OscReceiver: Unable to initialise UDP socket: %d %s\n", errno, strerror(errno));
+		return;
+	}
 	receive_task = std::unique_ptr<std::thread>(new std::thread(&OscReceiver::receive_task_func, this));
 }
 
@@ -59,12 +60,12 @@ int OscReceiver::waitForMessage(int timeout){
 		if (msgLength < 0){
 			fprintf(stderr, "OscReceiver: Error reading UDP socket: %d %s\n", errno, strerror(errno));
 			return -1;
-        }
-        pr->init(inBuffer.data(), msgLength);
-        if (!pr->isOk()){
-        	fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i", pr->getErr());
-		return ret;
-        }
+		}
+		pr->init(inBuffer.data(), msgLength);
+		if (!pr->isOk()){
+			fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i", pr->getErr());
+			return ret;
+		}
 		on_receive(pr->popMessage(), onReceiveArg);
 	}
 	return ret;
