@@ -356,12 +356,13 @@ P_SRCS := $(call find_files,*.p)
 P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
 
 C_SRCS := $(call find_files,*.c)
-C_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.o)))
+C_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(C_SRCS:.c=.o))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
 
 CPP_SRCS := $(call find_files,*.cpp)
 CPP_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(CPP_SRCS:.cpp=.o))
 
+BUILD_DIRS += $(dir $(C_OBJS))
 BUILD_DIRS += $(dir $(CPP_OBJS))
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 endif # $(PROJECT)
