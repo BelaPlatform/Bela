@@ -294,9 +294,18 @@
     CLR gpio_oe, gpio_num_bit //if it is an output, configure pin as output
     QBBC CLEARDATAOUT, digital, digital_bit+16 // check the output value. If it is 0, branch
     SET gpio_setdataout, gpio_num_bit //if it is 1, set output to high
-    QBA DONE
+    QBA RESETOUT
 CLEARDATAOUT:
     SET gpio_cleardataout, gpio_num_bit // set output to low
+    QBA RESETOUT
+RESETOUT:
+    // reset the value or direction of a channel marked as output, so that the
+    // `digital` word gets stored back in
+    // memory. This will only take effect if ARM crashes or pauses (e.g.: dropout)
+    // while the PRU keeps running.
+    CLR digital, digital_bit + 16 // reset output value to 0
+    //SET digital, digital_bit + 16 // reset output value to 1
+    //SET digital, digital_bit // set pin to input. This may be confusing from the ARM side, as the pin will read as if it was an input
     QBA DONE
 SETINPUT: //if it is an input, set the relevant bit
     SET gpio_oe, gpio_num_bit
