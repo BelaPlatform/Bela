@@ -220,6 +220,8 @@ function getArgs(project) {
                 case 0: return [4 /*yield*/, read(project)];
                 case 1:
                     CLArgs = (_a.sent()).CLArgs;
+                    if (!CLArgs)
+                        return [2 /*return*/, { CL: "", make: [] }];
                     CL = '';
                     for (key in CLArgs) {
                         if (key[0] === '-' && key[1] === '-') {

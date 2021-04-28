@@ -87,6 +87,8 @@ export async function restoreDefaultCLArgs(data: any): Promise<any> {
 }
 export async function getArgs(project: any): Promise<{CL: string, make: string[]}> {
 	let CLArgs = (await read(project)).CLArgs;
+	if(!CLArgs)
+		return { CL: "", make: []};
 	let CL: string = '';
 	for (let key in CLArgs) {
 		if (key[0] === '-' && key[1] === '-'){
