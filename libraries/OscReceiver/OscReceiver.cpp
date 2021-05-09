@@ -63,7 +63,7 @@ int OscReceiver::waitForMessage(int timeout){
 		}
 		pr->init(inBuffer.data(), msgLength);
 		if (!pr->isOk()){
-			fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i", pr->getErr());
+			fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i\n", pr->getErr());
 			return ret;
 		}
 		on_receive(pr->popMessage(), onReceiveArg);
