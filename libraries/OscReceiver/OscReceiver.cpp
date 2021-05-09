@@ -14,7 +14,7 @@ OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg, void
 OscReceiver::~OscReceiver(){
 	lShouldStop = true;
 	// allow in-progress read to complete before destructing
-	if(receive_task->joinable())
+	if(receive_task && receive_task->joinable())
 	{
 		receive_task->join();
 	}
