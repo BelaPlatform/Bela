@@ -240,6 +240,7 @@ public:
     bool isInt64() { return currentTypeTag() == TYPE_TAG_INT64; }
     bool isFloat() { return currentTypeTag() == TYPE_TAG_FLOAT; }
     bool isDouble() { return currentTypeTag() == TYPE_TAG_DOUBLE; }
+    bool isNumber() { return isInt32() || isInt64() || isFloat() || isDouble() || isBool(); }
     bool isStr() { return currentTypeTag() == TYPE_TAG_STRING; }
     bool isBlob() { return currentTypeTag() == TYPE_TAG_BLOB; }
 
@@ -259,6 +260,35 @@ public:
     ArgReader &popFloat(float &f) { return popPod<float>(TYPE_TAG_FLOAT, f); }
     /** retrieve a double precision floating point argument */
     ArgReader &popDouble(double &d) { return popPod<double>(TYPE_TAG_DOUBLE, d); }
+    /** retrieve a number - if possible - and cast it to the provided type */
+    template <typename T>
+    ArgReader &popNumber(T& val)
+    {
+        if (isInt32()) {
+            int32_t i;
+            popInt32(i);
+            val = i;
+        } else if (isInt64()) {
+            int64_t i;
+            popInt64(i);
+            val = i;
+        } else if(isFloat()) {
+            float f;
+            popFloat(f);
+            val = f;
+        } else if(isDouble()) {
+            double d;
+            popDouble(d);
+            val = d;
+        } else {
+            // no "if isBool" : if it's not even a bool, the below will set an
+            // internal error as expected.
+            bool b;
+            popBool(b);
+            val = b;
+        }
+        return *this;
+    }
     /** retrieve a string argument (no check performed on its content, so it may contain any byte value except 0) */
     ArgReader &popStr(std::string &s) {
       if (precheck(TYPE_TAG_STRING)) {
