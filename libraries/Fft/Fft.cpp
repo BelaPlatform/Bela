@@ -72,6 +72,17 @@ void Fft::ifft()
 	ne10_fft_c2r_1d_float32_neon(timeDomain, frequencyDomain, cfg);
 }
 
+void Fft::ifft(const std::vector<float>& reInput, const std::vector<float>& imInput)
+{
+	if(reInput.size() < length / 2 + 1 || imInput.size() < length / 2 + 1)
+		return;
+	for (int i = 0; i < length/2 + 1; i++) {
+		fdr(i) = reInput[i];
+		fdi(i) = imInput[i];
+	}
+	ifft();
+}
+
 #if 0
 #include <stdio.h>
 #include <array>

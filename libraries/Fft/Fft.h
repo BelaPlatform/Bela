@@ -23,7 +23,15 @@ public:
 	 * Perform the FFT of the signal whose time-domain representation is passed as an argument.
 	 */
 	void fft(const std::vector<float>& input);
+	/**
+	 * Perform the IFFT of the internal frequency-domain signal.
+	 */
 	void ifft();
+	/**
+	 * Perform the IFFT of the signal whose frequency-domain representation
+	 * is passed as arguments.
+	 */
+	void ifft(const std::vector<float>& reInput, const std::vector<float>& imInput);
 	/**
 	 * Get the real part of the frequency-domain representation at index `n`.
 	 */
