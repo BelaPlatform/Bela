@@ -7,13 +7,22 @@ class CentroidDetection::CalculateCentroids
 public:
 	typedef CentroidDetection::WORD WORD;
 	typedef uint8_t BYTE;
+	typedef uint8_t BOOL;
 	WORD* CSD_waSnsDiff;
 	WORD wMinimumCentroidSize = 0;
 	BYTE SLIDER_BITS = 7;
 	WORD wAdjacentCentroidNoiseThreshold = 400; // Trough between peaks needed to identify two centroids
-	//WORD calculateCentroids(WORD *centroidBuffer, WORD *sizeBuffer, BYTE maxNumCentroids, BYTE minSensor, BYTE maxSensor, BYTE numSensors);
 	// calculateCentroids is defined here:
 #include "calculateCentroids.h"
+	void processCentroids(WORD *wVCentroid, WORD *wVCentroidSize, BYTE MAX_NUM_CENTROIDS, BYTE FIRST_SENSOR_V, BYTE LAST_SENSOR_V, BYTE numSensors) {
+		long temp;
+		signed char firstActiveSensor;
+		signed char lastActiveSensor;
+		BOOL bActivityDetected;
+		BYTE counter;
+		WORD posEndOfLoop = (LAST_SENSOR_V - FIRST_SENSOR_V) << SLIDER_BITS;
+#include "processCentroids.h"
+	}
 };
 
 CentroidDetection::CentroidDetection(unsigned int numReadings, unsigned int maxNumCentroids, float sizeScale)
@@ -37,6 +46,7 @@ int CentroidDetection::setup(unsigned int numReadings, unsigned int maxNumCentro
 int CentroidDetection::setup(const std::vector<unsigned int>& order, unsigned int maxNumCentroids, float sizeScale)
 {
 	this->order = order;
+	setWrapAround(0);
 	this->maxNumCentroids = maxNumCentroids;
 	centroidBuffer.resize(maxNumCentroids);
 	sizeBuffer.resize(maxNumCentroids);
@@ -45,9 +55,20 @@ int CentroidDetection::setup(const std::vector<unsigned int>& order, unsigned in
 	data.resize(order.size());
 	setSizeScale(sizeScale);
 	cc = std::shared_ptr<CalculateCentroids>(new CalculateCentroids());
-	locationScale = order.size() * (1 << cc->SLIDER_BITS);
+	setMultiplierBits(cc->SLIDER_BITS);
 	num_touches = 0;
 	return 0;
+}
+
+void CentroidDetection::setWrapAround(unsigned int n)
+{
+	num_sensors = order.size() + n;
+}
+
+void CentroidDetection::setMultiplierBits(unsigned int n)
+{
+	cc->SLIDER_BITS = n;
+	locationScale = order.size() * (1 << cc->SLIDER_BITS);
 }
 
 void CentroidDetection::process(const DATA_T* rawData)
@@ -55,7 +76,7 @@ void CentroidDetection::process(const DATA_T* rawData)
 	for(unsigned int n = 0; n < order.size(); ++n)
 		data[n] = rawData[order[n]] * (1 << 12);
 	cc->CSD_waSnsDiff = data.data();
-	cc->calculateCentroids(centroidBuffer.data(), sizeBuffer.data(), maxNumCentroids, 0, order.size(), order.size());
+	cc->processCentroids(centroidBuffer.data(), sizeBuffer.data(), maxNumCentroids, 0, order.size(), num_sensors);
 
 	unsigned int locations = 0;
 	// Look for 1st instance of 0xFFFF (no touch) in the buffer
