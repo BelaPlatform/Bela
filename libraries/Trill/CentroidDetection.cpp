@@ -74,7 +74,13 @@ void CentroidDetection::setMultiplierBits(unsigned int n)
 void CentroidDetection::process(const DATA_T* rawData)
 {
 	for(unsigned int n = 0; n < order.size(); ++n)
-		data[n] = rawData[order[n]] * (1 << 12);
+	{
+		float val = rawData[order[n]] * (1 << 12);
+		val -= noiseThreshold;
+		if(val < 0)
+			val = 0;
+		data[n] = val;
+	}
 	cc->CSD_waSnsDiff = data.data();
 	cc->processCentroids(centroidBuffer.data(), sizeBuffer.data(), maxNumCentroids, 0, order.size(), num_sensors);
 
@@ -99,6 +105,11 @@ void CentroidDetection::setSizeScale(float sizeScale)
 void CentroidDetection::setMinimumTouchSize(DATA_T minSize)
 {
 	cc->wMinimumCentroidSize = minSize;
+}
+
+void CentroidDetection::setNoiseThreshold(DATA_T threshold)
+{
+	noiseThreshold = threshold;
 }
 
 unsigned int CentroidDetection::getNumTouches()

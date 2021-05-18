@@ -15,6 +15,7 @@ public:
 	void process(const DATA_T* rawData);
 	void setSizeScale(float sizeScale);
 	void setMinimumTouchSize(DATA_T minSize);
+	void setNoiseThreshold(DATA_T threshold);
 	/**
 	 * Set how many of the values at the beginning of `rawData` can be
 	 * joined in a single centroid with those at the end of `rawData` if a
@@ -47,4 +48,5 @@ private:
 	float locationScale;
 	std::shared_ptr<CalculateCentroids> cc;
 	unsigned int num_touches;
+	DATA_T noiseThreshold;
 };
