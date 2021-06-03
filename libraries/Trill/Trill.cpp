@@ -159,7 +159,6 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		return 6;
 	}
 
-	float noiseThreshold = defaults.noiseThreshold;
 	if(setNoiseThreshold(defaults.noiseThreshold)) {
 		fprintf(stderr, "Unable to update baseline\n");
 		return 9;
