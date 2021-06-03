@@ -27,6 +27,8 @@ protected:
 	int i2C_bus;
 	int i2C_address;
 	int i2C_file;
+	ssize_t readBytes(void* buf, size_t count);
+	ssize_t writeBytes(const void* buf, size_t count);
 
 public:
 	I2c(){};
@@ -78,5 +80,14 @@ inline int I2c::closeI2C()
 	return 0;
 }
 
+inline ssize_t I2c::readBytes(void *buf, size_t count)
+{
+	return read(i2C_file, buf, count);
+}
+
+inline ssize_t I2c::writeBytes(const void *buf, size_t count)
+{
+	return write(i2C_file, buf, count);
+}
 
 inline I2c::~I2c(){}
