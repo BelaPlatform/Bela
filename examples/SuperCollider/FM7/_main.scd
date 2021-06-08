@@ -11,6 +11,8 @@ s = Server.default;
 s.options.numAnalogInChannels = 8;
 s.options.numAnalogOutChannels = 8;
 s.options.numDigitalChannels = 16;
+s.options.maxLogins = 4;
+s.options.bindAddress = "0.0.0.0"; // allow anyone on the network connect to this server
 
 s.options.blockSize = 16;
 s.options.numInputBusChannels = 2;

@@ -14,6 +14,7 @@ s.options.numDigitalChannels = 16;
 s.options.numInputBusChannels = 2;
 s.options.numOutputBusChannels = 2;
 s.options.maxLogins = 4;
+s.options.bindAddress = "0.0.0.0"; // allow anyone on the network connect to this server
 
 s.options.belaMaxScopeChannels = 8;
 

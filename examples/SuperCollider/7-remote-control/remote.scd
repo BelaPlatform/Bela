@@ -21,11 +21,11 @@ s.freeAll;  // free all nodes
 
 (
 SynthDef('karp', {arg freq=200, amp=0.5, pan=0, dur=1, trig=1, delaytime=2, decaytime=2, coef=0.1;
-		var sig, env;
+	var sig, env;
 	coef.poll(2);
-		sig = Pluck.ar(WhiteNoise.ar(1), trig, delaytime, freq.reciprocal, decaytime, coef);
-		env = EnvGen.ar(Env.perc(0.01, dur), trig, doneAction: 2);
-		Out.ar(50, Pan2.ar(sig * env * amp, pan));
+	sig = Pluck.ar(WhiteNoise.ar(1), trig, delaytime, freq.reciprocal, decaytime, coef);
+	env = EnvGen.ar(Env.perc(0.01, dur), trig, doneAction: 2);
+	Out.ar(0, Pan2.ar(sig * env * amp, pan));
 }).add;
 );
 
@@ -34,9 +34,7 @@ Ndef('mix', {
 	Out.ar(0, FreeVerb.ar(sig));
 }).play;
 
-
-
-Synth('karp', ['dur', 20, 'freq', 62.midicps, 'amp', 1.0, 'decaytime', 0.5, 'coef', 0.1]);
+Synth('karp', ['dur', 2, 'freq', 62.midicps, 'amp', 1.0, 'decaytime', 0.5, 'coef', 0.1]);
 
 (
 p = Pdef('arp', Pbind('instrument', 'karp',

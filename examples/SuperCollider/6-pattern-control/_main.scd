@@ -18,7 +18,8 @@ s.options.memSize = 8192 * 16; // the default is 8192 which is quite little
 s.options.numAnalogInChannels = 2; // can only be 2, 4 or 8
 s.options.numAnalogOutChannels = 2;
 s.options.numDigitalChannels = 0;
-s.options.maxLogins = 8;  	   // set max number of clients
+s.options.maxLogins = 4;  	   // set max number of clients
+s.options.bindAddress = "0.0.0.0"; // allow anyone on the network connect to this server
 s.options.headphoneLevel = -14; // sets the headphone level to -14 dB: it might get loud
 
 s.options.blockSize = 128;

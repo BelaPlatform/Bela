@@ -27,6 +27,7 @@ s.options.numAnalogInChannels = 2; // can only be 2, 4 or 8
 s.options.numAnalogOutChannels = 2;
 s.options.numDigitalChannels = 16;
 s.options.maxLogins = 4;  	   // set max number of clients
+s.options.bindAddress = "0.0.0.0"; // allow anyone on the network connect to this server
 
 s.options.blockSize = 16;
 s.options.numInputBusChannels = 2;
