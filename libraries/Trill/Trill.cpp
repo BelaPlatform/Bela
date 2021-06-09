@@ -487,36 +487,45 @@ int Trill::readI2C() {
 		readErrorOccurred = true;
 		return 1;
 	}
+	parseNewData();
+	return 0;
+}
+
+void Trill::newData(const uint8_t* newData, size_t len)
+{
+	memcpy(dataBuffer.data(), newData, std::min(len * sizeof(newData[0]), sizeof(dataBuffer[0]) * dataBuffer.size()));
+	parseNewData();
+}
+
+void Trill::parseNewData()
+{
 	if(CENTROID != mode_) {
 		// parse, rescale and copy data to public buffer
 		for (unsigned int i = 0; i < getNumChannels(); ++i)
 			rawData[i] = (((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) & 0x0FFF) * rawRescale;
-		return 0;
-	}
-
-	unsigned int locations = 0;
-	// Look for 1st instance of 0xFFFF (no touch) in the buffer
-	for(locations = 0; locations < MAX_TOUCH_1D_OR_2D; locations++)
-	{
-		if(dataBuffer[2 * locations] == 0xFF && dataBuffer[2 * locations + 1] == 0xFF)
-			break;
-	}
-	num_touches_ = locations;
-
-	if(device_type_ == SQUARE || device_type_ == HEX)
-	{
-		// Look for the number of horizontal touches in 2D sliders
-		// which might be different from number of vertical touches
+	} else {
+		unsigned int locations = 0;
+		// Look for 1st instance of 0xFFFF (no touch) in the buffer
 		for(locations = 0; locations < MAX_TOUCH_1D_OR_2D; locations++)
 		{
-			if(dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D] == 0xFF
-				&& dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D+ 1] == 0xFF)
+			if(dataBuffer[2 * locations] == 0xFF && dataBuffer[2 * locations + 1] == 0xFF)
 				break;
 		}
-		num_touches_ |= (locations << 4);
-	}
+		num_touches_ = locations;
 
-	return 0;
+		if(device_type_ == SQUARE || device_type_ == HEX)
+		{
+			// Look for the number of horizontal touches in 2D sliders
+			// which might be different from number of vertical touches
+			for(locations = 0; locations < MAX_TOUCH_1D_OR_2D; locations++)
+			{
+				if(dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D] == 0xFF
+					&& dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D+ 1] == 0xFF)
+					break;
+			}
+			num_touches_ |= (locations << 4);
+		}
+	}
 }
 
 bool Trill::is1D()

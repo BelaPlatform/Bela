@@ -55,6 +55,7 @@ class Trill : public I2c
 		int prepareForDataRead();
 		int identify();
 		void updateRescale();
+		void parseNewData();
 		bool readErrorOccurred;
 	public:
 		/**
@@ -133,9 +134,23 @@ class Trill : public I2c
 		/**
 		 * \brief Read data from the device.
 		 *
-		 * Performs an I2C transaction with the device to retrieve new data.
+		 * Performs an I2C transaction with the device to retrieve new data
+		 * and parse them. Users calling this method won't need to call newData().
 		 */
 		int readI2C();
+
+		/**
+		 * \brief Set data retrieved from the device.
+		 *
+		 * Sets the data retrieved from the device.
+		 * This can be used to pass to the object
+		 * data retrieved elsewhere (e.g.: from an I2C callback).
+		 * Users calling readI2C() won't need to call this method.
+		 *
+		 * @param newData A pointer to an array containing new data.
+		 * @param len The length of the array.
+		 */
+		void newData(const uint8_t* newData, size_t len);
 
 		/**
 		 * Get the device type.
