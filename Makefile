@@ -33,8 +33,13 @@ NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets exce
 # list of targets that automatically activate the QUIET=true flag
 QUIET_TARGETS=runide
 
+# not sure exactly whether we need separate values for BASE_DIR and BELA_DIR.
+# By having them separate they can be overridden individually if needed
+# BELA_DIR is the path to be used as a reference for updates
 BELA_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-UPDATES_DIR?=/root/Bela/updates
+# BASE_DIR is the place where the files to be built are located
+BASE_DIR:=$(BELA_DIR)
+UPDATES_DIR?=$(BELA_DIR)/updates
 UPDATE_SOURCE_DIR?=/tmp/belaUpdate
 UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board
 UPDATE_BELA_PATCH?=/tmp/belaPatch
@@ -81,7 +86,7 @@ ifeq ($(RUN_WITH_PRU_BIN),true)
 ifndef PROJECT
 $(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
 endif # ifndef PROJECT
-COMMAND_LINE_OPTIONS := --pru-file $(BELA_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
+COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
 else
 build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
@@ -182,7 +187,6 @@ endif
 
 RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -oL -eL $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
-BELA_IDE_HOME?=/root/Bela/IDE
 XENO_CONFIG=/usr/xenomai/bin/xeno-config
 XENOMAI_SKIN=posix
 
@@ -247,6 +251,8 @@ BELA_POST_ENABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=1\nPROJECT
 BELA_PRE_DISABLE_STARTUP_COMMAND=mkdir -p /opt/Bela && printf "ACTIVE=0\n" > $(BELA_STARTUP_ENV)
 
 ifeq ($(DEBIAN_VERSION), wheezy)
+# this section contains some hardcoded and/or obsolete variables. It is currently unsupported and deprecated and we'll remove it "soon" (GM said on 2021.06.09)
+BELA_IDE_HOME?=$(BELA_DIR)/IDE
 BELA_IDE_SCREEN_NAME?=IDE-Bela
 BELA_IDE_STARTUP_SCRIPT?=/root/Bela_node.sh
 BELA_STARTUP_SCRIPT?=/root/Bela_startup.sh
@@ -286,7 +292,7 @@ ifeq ($(XENOMAI_VERSION),3)
   BELA_USE_DEFINE=BELA_USE_RTDM
 endif
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
@@ -721,7 +727,7 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	$(AT) cd $(UPDATE_SOURCE_DIR) && FAIL=0 && for path in $(UPDATE_REQUIRED_PATHS); do `ls $$path >/dev/null 2>&1` || { FAIL=1; break; }; done;\
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) echo 	...done
-UPDATE_LOG?=/root/update.log
+UPDATE_LOG?=$(BELA_DIR)/../update.log
 LOG=>> $(UPDATE_LOG) 2>&1
 TEE_LOG=2>&1 | tee -a $(UPDATE_LOG)
 UPDATE_LOG_INIT:=echo > $(UPDATE_LOG); \
@@ -781,7 +787,7 @@ libraries/%.o: # how to build those objects needed by libbelaextra
 lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
 	$(AT) echo Building lib/$(LIB_EXTRA_SO)
 	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_EXTRA_SO) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDLIBS) $(BELA_EXTRA_LDLIBS)
-	$(AT) ldconfig $(BELA_DIR)/$@
+	$(AT) ldconfig $(BASE_DIR)/$@
 
 lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) echo Building lib/$(LIB_EXTRA_A)
@@ -793,7 +799,7 @@ LIB_OBJS = $(CORE_CORE_OBJS) build/core/AuxiliaryTasks.o build/core/Gpio.o
 lib/$(LIB_SO): $(LIB_OBJS)
 	$(AT) echo Building lib/$(LIB_SO)
 	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_SO) $(LDLIBS) -o lib/$(LIB_SO) $(LIB_OBJS) $(LDLIBS) $(BELA_CORE_LDLIBS)
-	$(AT) ldconfig $(BELA_DIR)/$@
+	$(AT) ldconfig $(BASE_DIR)/$@
 
 lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) echo Building lib/$(LIB_A)
@@ -821,7 +827,7 @@ heavy-unzip-archive: stop
 # For each object file, move it to the destination and make sure it is older than the source
 	$(AT) for file in $(HEAVY_OBJ_FILES); do touch "$$file"; mv "$$file" "$(HEAVY_OBJ_TARGET_DIR)"; done
 # If there is no render.cpp, copy the default Heavy one
-	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BELA_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
+	$(AT) [ -f $(PROJECT_DIR)/render.cpp ] || { cp $(BASE_DIR)/scripts/hvresources/render.cpp $(PROJECT_DIR)/ 2> /dev/null || echo "No default render.cpp found on the board"; }
 
 .PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stopstartup stoprunning stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe csoundstart scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib c
 -include CustomMakefileBottom.in

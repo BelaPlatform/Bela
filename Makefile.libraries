@@ -12,7 +12,7 @@ AT?=@
 # although they are not really needed if this Makefile is called from the main Makefile
 BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
-BELA_DIR := /root/Bela
+BASE_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 DEFAULT_COMMON_FLAGS := -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
 LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
@@ -22,7 +22,7 @@ SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
 include $(SYSTEM_SPECIFIC_MAKEFILE)
 $(SYSTEM_SPECIFIC_MAKEFILE):
 	make lib
-LIBRARY_CPPFLAGS = $(DEFAULT_XENOMAI_CFLAGS) -I$(BELA_DIR) -I$(BELA_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BELA_DIR)/resources/$(DEBIAN_VERSION)/include -MMD -MP -MF"$(@:%.o=%.d)"
+LIBRARY_CPPFLAGS = $(DEFAULT_XENOMAI_CFLAGS) -I$(BASE_DIR) -I$(BASE_DIR)/include -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -MMD -MP -MF"$(@:%.o=%.d)"
 #
 # the above default variables may be modified by the Makefile included here:
 MKFILE_COMPILE := libraries/$(LIBRARY)/build/Makefile.compile
