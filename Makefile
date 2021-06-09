@@ -128,7 +128,7 @@ endif # heavy-unzip-archive
 ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
 PROJECT_TYPE=sc
 SHOULD_BUILD=false
-RUN_PREREQUISITES+=lib/libbela.so
+RUN_PREREQUISITES+=lib/libbela.so lib/libbelaextra.so
 else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
 PROJECT_TYPE=libpd
