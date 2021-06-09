@@ -44,6 +44,7 @@ UPDATE_SOURCE_DIR?=/tmp/belaUpdate
 UPDATE_REQUIRED_PATHS?=scripts include core scripts/update_board
 UPDATE_BELA_PATCH?=/tmp/belaPatch
 UPDATE_BELA_MV_BACKUP?=$(BELA_DIR)/../_BelaUpdateBackup
+ALL_DEPS:=
 
 # Type `$ make help` to get a description of the functionalities of this Makefile.
 help: ## Show this help
@@ -301,6 +302,12 @@ BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 # addit
 BELA_LDLIBS = $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
 ifeq ($(PROJECT_TYPE),libpd)
 BELA_LDLIBS += $(LIBPD_LIBS)
+# Objects for a system-supplied default render() file for libpd projects,
+# if the user only wants to provide the Pd files.
+DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
+DEFAULT_PD_OBJS := $(addprefix build/core/,$(notdir $(DEFAULT_PD_CPP_SRCS:.cpp=.o)))
+ALL_DEPS += $(addprefix build/core/,$(notdir $(DEFAULT_PD_CPP_SRCS:.cpp=.d)))
+
 # TODO: replace the below with proper parsing of default_libpd_render.ii
 include libraries/Midi/build/Makefile.link
 include libraries/Scope/build/Makefile.link
@@ -348,8 +355,6 @@ ifeq ($(DISTCC),1)
   CC = /usr/local/bin/distcc-clang
   CXX = /usr/local/bin/distcc-clang++
 endif
-
-ALL_DEPS=
 
 ifneq ($(PROJECT),)
 find_files = $(if $(if $(PROJECT_DIR),$(if $(1),_)), $(shell find $(PROJECT_DIR)/ -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp"))
@@ -400,12 +405,6 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
 DEFAULT_MAIN_OBJS := ./build/core/default_main.o
 ALL_DEPS += ./build/core/default_main.d
-
-# Objects for a system-supplied default render() file for libpd projects,
-# if the user only wants to provide the Pd files.
-DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
-DEFAULT_PD_OBJS := ./build/core/default_libpd_render.o
-ALL_DEPS += ./build/core/default_libpd_render.d
 
 # include all dependencies - necessary to force recompilation when a header is changed
 # (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
