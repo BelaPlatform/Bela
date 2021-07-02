@@ -173,56 +173,8 @@
 #define MCASP_OUTPUT_PINS   	(1 << 3)	// Which pins are outputs
 #endif
 
-#define MCASP_SLOT_16BITS
-
-#ifdef MCASP_SLOT_16BITS
 #define MCASP_DATA_MASK 	0xFFFF		// 16 bit data
-#endif
-
-#ifdef MCASP_SLOT_20BITS
-#define MCASP_DATA_MASK 	0xFFFFF		// 20 bit data
-#endif
-
-#ifdef MCASP_SLOT_24BITS
-#define MCASP_DATA_MASK 	0xFFFFFF	// 24 bit data
-#endif
-
-#ifdef MCASP_SLOT_32BITS
-#define MCASP_DATA_MASK 	0xFFFFFFFF	// 32 bit data
-#endif
-
-#define TLV320_MODE_DSP
-
-#ifdef TLV320_MODE_I2S
-#define MCASP_AFSCTL_VALUE 0x101		// 2-slot TDM I2S mode, falling edge means beginning of frame
-#define MCASP_DATA_FORMAT_VALUE	0x1807C		// MSB first, 1 bit delay, 16 bits, CFG bus, ROR 16bits
-#define MCASP_ACLKXCTL_VALUE 0x80		// Transmit on rising edge, sync. xmit and recv
-#endif
-
-#ifdef TLV320_MODE_DSP
-#define MCASP_AFSCTL_VALUE 0x100		// 2-slot TDM I2S mode, rising edge means beginning of frame
-#define MCASP_ACLKXCTL_VALUE 0x00		// Transmit on falling edge, sync. xmit and recv
-#define MCASP_DATA_FORMAT_VALUE	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
-#endif
-
-#ifdef TLV320_MODE_TDM
-
-#ifdef MCASP_SLOT_16BITS
-#define MCASP_AFSCTL_VALUE 0x800		// 16-slot TDM, rising edge means beginning of frame
-#define MCASP_DATA_FORMAT_VALUE	0x807C	// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
-#endif // MCASP_SLOT_16BITS
-
-#ifdef MCASP_SLOT_32BITS
-#define MCASP_AFSCTL_VALUE 0x400		// 8-slot TDM, rising edge means beginning of frame
-#define MCASP_DATA_FORMAT_VALUE	0x80F8	// MSB first, 0 bit delay, 32 bits, CFG bus, ROR 0bits
-#endif // MCASP_SLOT_32BITS
-
-// 20 and 24 bit slots not supported in 256-cycle TDM
-// Hypothetically, for 20 bits, MCASP_DATA_FORMAT_VALUE = 0x809B
-// Hypothetically, for 24 bits, MCASP_DATA_FORMAT_VALUE = 0x80BA
-
-#define MCASP_ACLKXCTL_VALUE 0x00		// Transmit on falling edge, sync. xmit and recv
-#endif // TLV320_MODE_TDM
+#define MCASP_DATA_FORMAT	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
 
 #define C_MCASP_MEM             C28     	// Shared PRU mem
 
@@ -931,27 +883,18 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_DLBCTL, 0x00
     MCASP_REG_WRITE MCASP_DITCTL, 0x00
     MCASP_REG_WRITE MCASP_RMASK, MCASP_DATA_MASK	// 16 bit data receive
-    MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT_VALUE	// Set data format
-    MCASP_REG_WRITE MCASP_AFSRCTL, MCASP_AFSCTL_VALUE
+    MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT	// Set data format
+    MCASP_REG_WRITE MCASP_AFSRCTL, 0x100		// I2S mode
     MCASP_REG_WRITE MCASP_ACLKRCTL, 0x80		// Sample on rising edge
     MCASP_REG_WRITE MCASP_AHCLKRCTL, 0x8001		// Internal clock, not inv, /2; irrelevant?
-
-	// Calculate which TDM slots to activate
-	LBBO r2, reg_comm_addr, COMM_ACTIVE_CHANNELS, 4 	// How many audio channels?
-	MOV r3, 0x1											// mask = (1 << numchannels) - 1
-	LSL r3, r3, r2
-	SUB r3, r3, 1
-	OR r3, r3, 0x03										// Always activate the first two slots (failsafe)
-	AND r3, r3, 0x1F									// Never more than 32 slots
-
-    MCASP_REG_WRITE MCASP_RTDM, r3			// Set enabled TDM slots
+    MCASP_REG_WRITE MCASP_RTDM, 0x03		// Enable TDM slots 0 and 1
     MCASP_REG_WRITE MCASP_RINTCTL, 0x00		// No interrupts
     MCASP_REG_WRITE MCASP_XMASK, MCASP_DATA_MASK	// 16 bit data transmit
-    MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT_VALUE	// Set data format
-    MCASP_REG_WRITE MCASP_AFSXCTL, MCASP_AFSCTL_VALUE
-    MCASP_REG_WRITE MCASP_ACLKXCTL, MCASP_ACLKXCTL_VALUE
+    MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT	// Set data format
+    MCASP_REG_WRITE MCASP_AFSXCTL, 0x100		// I2S mode
+    MCASP_REG_WRITE MCASP_ACLKXCTL, 0x00		// Transmit on rising edge, sync. xmit and recv
     MCASP_REG_WRITE MCASP_AHCLKXCTL, 0x8001		// External clock from AHCLKX
-    MCASP_REG_WRITE MCASP_XTDM, r3			// Set enabled TDM slots
+    MCASP_REG_WRITE MCASP_XTDM, 0x03		// Enable TDM slots 0 and 1
     MCASP_REG_WRITE MCASP_XINTCTL, 0x00		// No interrupts
 	
     MCASP_REG_WRITE_EXT MCASP_SRCTL_R, 0x02		// Set up receive serialiser
@@ -1047,11 +990,6 @@ MCASP_ADC_WAIT_BEFORE_LOOP:
      QBBC MCASP_ADC_WAIT_BEFORE_LOOP, r2, MCASP_RSTAT_RDATA_BIT
 
      MCASP_REG_READ_EXT MCASP_RBUF, r2
-
-//   TODO: may need to wait a full cycle in TDM mode >2 channels; see XSLOT register
-//         ...but which slot do we wait for, and how do we know to skip inactive slots?
-//	 LBBO r2, reg_mcasp_addr, MCASP_XSLOT, 4
-//	 QBNE MCASP_DAC_WAIT_BEFORE_LOOP, r2, 0
 	
 WRITE_ONE_BUFFER:
 
@@ -1109,22 +1047,11 @@ MCASP_DAC_LOW_WORD:
      // Mask out the low word (first in little endian)
      MOV r2, 0xFFFF
      AND r7, reg_mcasp_dac_data, r2
-
-#ifdef MCASP_SLOT_32BITS
-	 LSL r7, r7, 16			// Convert 16-bit number to 32-bit
-#endif
 	
      QBA MCASP_WAIT_XSTAT
 MCASP_DAC_HIGH_WORD:
      // Take the high word of the previously loaded data
-#ifdef MCASP_SLOT_16BITS
-     LSR r7, reg_mcasp_dac_data, 16		// Move high word to low 16 bits
-#endif
-
-#ifdef MCASP_SLOT_32BITS
-	MOV r2, 0xFFFF0000
-	AND r7, reg_mcasp_dac_data, r2		// Mask out low 16 bits
-#endif
+     LSR r7, reg_mcasp_dac_data, 16
 	
      // Every 2 channels we send one audio sample; this loop already
      // sends exactly two SPI channels.
@@ -1151,9 +1078,6 @@ MCASP_WAIT_RSTAT_LOW:
 
      // Mask low word and store in ADC data register
      MCASP_REG_READ_EXT MCASP_RBUF, r3
-#ifdef MCASP_SLOT_32BITS
-	 LSR r3, r3, 16			// 32-bit value to 16-bit
-#endif
      MOV r2, 0xFFFF
      AND reg_mcasp_adc_data, r3, r2
      QBA MCASP_ADC_DONE
@@ -1166,14 +1090,7 @@ MCASP_WAIT_RSTAT_HIGH:
 
      // Read data and shift 16 bits to the left (into the high word)
      MCASP_REG_READ_EXT MCASP_RBUF, r3
-#ifdef MCASP_SLOT_16BITS
-     LSL r3, r3, 16			// 16-bit value to high part of word
-#endif
-
-#ifdef MCASP_SLOT_32BITS
-	 MOV r2, 0xFFFF0000		// Mask out low 16 bits of 32-bit word
-	 AND r3, r3, r2
-#endif
+     LSL r3, r3, 16
      OR reg_mcasp_adc_data, reg_mcasp_adc_data, r3
 
      // Now store the result and increment the pointer
