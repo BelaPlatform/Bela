@@ -14,8 +14,7 @@
  */
 
 #include "../include/PRU.h"
-#include "../include/PruBinary.h"
-#include <prussdrv.h>
+
 #include "../include/digital_gpio_mapping.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
@@ -97,10 +96,10 @@ extern int gRTAudioVerbose;
 class PruMemory
 {
 public:
-	PruMemory(int pruNumber, InternalBelaContext* newContext) :
+	PruMemory(int pruNumber, InternalBelaContext* newContext, PruManager& pruManager) :
 		context(newContext)
 	{
-		prussdrv_map_prumem (PRUSS0_SHARED_DATARAM, (void **)&pruSharedRam);
+		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
 		audioOut.resize(context->audioOutChannels * context->audioFrames);
 		digital.resize(context->digitalFrames);
@@ -112,7 +111,7 @@ public:
 		pruDigitalStart[1] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET + PRU_MEM_DIGITAL_BUFFER1_OFFSET;
 		if(context->analogFrames > 0)
 		{
-			prussdrv_map_prumem (pruNumber == 0 ? PRUSS0_PRU0_DATARAM : PRUSS0_PRU1_DATARAM, (void**)&pruDataRam);
+			pruDataRam = static_cast<char*>(pruManager.getOwnMemory());
 			analogOut.resize(context->analogOutChannels * context->analogFrames);
 			analogIn.resize(context->analogInChannels * context->analogFrames);
 			pruAnalogOutStart[0] = pruDataRam + PRU_MEM_DAC_OFFSET;
@@ -384,12 +383,8 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	pru_number = pru_num;
 
 	/* Allocate and initialize memory */
-	prussdrv_init();
-	if(prussdrv_open(PRU_EVTOUT_0)) {
-		fprintf(stderr, "Failed to open PRU driver\n");
-		return 1;
-	}
-	pruMemory = new PruMemory(pru_number, context);
+	pruManager = new PruManagerUio(pru_number, gRTAudioVerbose);
+	pruMemory = new PruMemory(pru_number, context, *pruManager);
 
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
@@ -766,42 +761,25 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 #endif /* BELA_USE_RTDM */
 	pru_buffer_comm = pruMemory->getPruBufferComm();
 	initialisePruCommon(mcaspRegisters);
-
-	unsigned int* pruCode;
-	unsigned int pruCodeSize;
-	switch((int)pruUsesMcaspIrq) // (int) is here to avoid stupid compiler warning
-	{
-		case false:
-			pruCode = (unsigned int*)NonIrqPruCode::getBinary();
-			pruCodeSize = NonIrqPruCode::getBinarySize();
-			break;
-		case true:
-			pruCode = (unsigned int*)IrqPruCode::getBinary();
-			pruCodeSize = IrqPruCode::getBinarySize();
-			// NOTE: we assume that something else has masked the McASP interrupts
-			// from ARM, or rather that no one else unmasked them.
-			// For instance, make sure the McASP driver does not get to get hold of them
-			// by NOT setting `interrupt-names = "rx", "tx";` in the overlay
-			break;
-	}
+	// NOTE: we assume that something else has masked the McASP interrupts
+	// from ARM, or rather that no one else unmasked them.
+	// For instance, make sure the McASP driver does not get to get hold of them
+	// by NOT setting `interrupt-names = "rx", "tx";` in the overlay
 
 	/* Load and execute binary on PRU */
-	if(filename[0] == '\0') { //if the string is empty, load the embedded code
-		if(gRTAudioVerbose)
-			printf("Using embedded PRU code\n");
-		if(prussdrv_exec_code(pru_number, pruCode, pruCodeSize)) {
-			fprintf(stderr, "Failed to execute PRU code\n");
-			return 1;
-		}
-	} else {
-		if(gRTAudioVerbose)
-			printf("Using PRU code from %s\n",filename);
-		if(prussdrv_exec_program(pru_number, filename)) {
-			fprintf(stderr, "Failed to execute PRU code from %s\n", filename);
-			return 1;
-		}
+	bool useEmbeddedPruCode = ("" == std::string(filename));
+	unsigned int pruManager_ret = 0;
+	if(gRTAudioVerbose)
+		printf("Using %s %s PRU firmware\n", pruUsesMcaspIrq ? "McASP IRQ" : "Non-McASP IRQ", useEmbeddedPruCode ? "embedded" : filename);
+	if(useEmbeddedPruCode)
+		pruManager_ret = pruManager->start(pruUsesMcaspIrq);
+	else
+		pruManager_ret = pruManager->start(filename);
+	if(pruManager_ret)
+	{
+		fprintf(stderr, "Failed to execute PRU code\n");
+		return 1;
 	}
-
 	running = true;
 	return 0;
 }
@@ -1541,16 +1519,16 @@ void PRU::waitForFinish()
 // Turn off the PRU when done
 void PRU::disable()
 {
-    /* Disable PRU and close memory mapping*/
-    prussdrv_pru_disable(pru_number);
+	/* Disable PRU and close memory mapping*/
+	pruManager->stop();
 	running = false;
 }
 
-// Exit the prussdrv subsystem (affects both PRUs)
+// Exit the pru subsystem
 void PRU::exitPRUSS()
 {
 	if(initialised)
-	    prussdrv_exit();
+		delete pruManager;
 	initialised = false;
 }
 
