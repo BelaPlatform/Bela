@@ -87,9 +87,9 @@ ifeq ($(RUN_WITH_PRU_BIN),true)
 ifndef PROJECT
 $(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
 endif # ifndef PROJECT
-COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio_irq.bin $(COMMAND_LINE_OPTIONS)
-run: pru_rtaudio.bin
-run: pru_rtaudio_irq.bin
+COMMAND_LINE_OPTIONS := --pru-file build/pru/pru_rtaudio_irq.bin $(COMMAND_LINE_OPTIONS)
+run: build/pru/pru_rtaudio.bin
+run: build/pru/pru_rtaudio_irq.bin
 else
 build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
 endif #ifeq($(RUN_WITH_PRU_BIN),true)
@@ -312,17 +312,31 @@ ifeq (,$(AT))
 endif
 
 ifeq (1,$(strip $(ENABLE_PRU_RPROC)))
-  firmwareBelaRProcNoMcaspIrq ?= $(BELA_DIR)/build/pru/pru_rtaudio_bin.out
-  firmwareBelaRProcMcaspIrq ?= $(BELA_DIR)/build/pru/pru_rtaudio_irq_bin.out
+  firmwareBelaRProcNoMcaspIrqRelative ?= build/pru/pru_rtaudio.out
+  firmwareBelaRProcMcaspIrqRelative ?= build/pru/pru_rtaudio_irq.out
+  firmwareBelaRProcNoMcaspIrq ?=$(BELA_DIR)/$(strip $(firmwareBelaRProcNoMcaspIrqRelative))
+  firmwareBelaRProcMcaspIrq ?=$(BELA_DIR)/$(strip $(firmwareBelaRProcMcaspIrqRelative))
   BOARD_CORE_LDLIBS =
   BOARD_CORE_CORE_OBJS =
-else
+  RPROC_BUILD_DIR = build/pru/rproc
+  RPROC_RESOURCES_BASE=$(BELA_DIR)/resources/rproc-build
+  RPROC_TEMPLATE=$(RPROC_RESOURCES_BASE)/rproc-template.c
+  RPROC_TMP_FILE=$(RPROC_BUILD_DIR)/temp
+  RPROC_INCLUDE=$(RPROC_RESOURCES_BASE)/common
+  RPROC_INCLUDED_ASSEMBLY = $(RPROC_BUILD_DIR)/included_assembly.h
+  ifeq (1,$(IS_AM572x))
+    RPROC_CMD:=$(RPROC_RESOURCES_BASE)/am57xx_pru.cmd
+  else
+    RPROC_CMD:=$(RPROC_RESOURCES_BASE)/am335x_pru.cmd
+  endif
+else # ENABLE_PRU_RPROC is 0
   BOARD_CORE_CPP_SRCS_FILTER_OUT :=
 endif
+
 ifeq (1,$(strip $(ENABLE_PRU_UIO)))
   BOARD_CORE_LDLIBS = -lprussdrv
   BOARD_CORE_CORE_OBJS = build/core/PruBinary.o
-else
+else # ENABLE_PRU_UIO is 0
   BOARD_CORE_CPP_SRCS_FILTER_OUT := core/PruBinary.cpp
 endif
 
@@ -410,6 +424,7 @@ CPP_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(CPP_SRCS:.cpp=.o))
 
 BUILD_DIRS += $(dir $(C_OBJS))
 BUILD_DIRS += $(dir $(CPP_OBJS))
+BUILD_DIRS += $(RPROC_BUILD_DIR)
 ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(CPP_SRCS:.cpp=.d)))
 endif # $(PROJECT)
 #create build directories, should probably be conditional to PROJECT or li
@@ -448,6 +463,9 @@ ALL_DEPS += ./build/core/default_main.d
 -include libraries/*/build/*.d # dependencies for each of the libraries' object files
 
 Bela: ## Builds the Bela program with all the optimizations
+ifeq (1,$(strip $(ENABLE_PRU_RPROC)))
+Bela: $(firmwareBelaRProcNoMcaspIrqRelative) $(firmwareBelaRProcMcaspIrqRelative)
+endif
 Bela: $(OUTPUT_FILE)
 
 # all = build Bela 
@@ -496,19 +514,30 @@ ifeq (,$(SYNTAX_FLAG))
 endif
 	$(AT) echo ' '
 
-%.bin: pru/%.p
+%.out: %.bin
 ifeq (,$(SYNTAX_FLAG))
-	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -L -c -b "$<" > /dev/null
+	$(AT) echo 'Building $< into $@...'
+	$(AT) prudis $< | sed 's/^\(.*\)$$/" \1\\n"/' > $(RPROC_INCLUDED_ASSEMBLY)
+	$(AT) clpru -fe $(RPROC_TMP_FILE).o $(RPROC_TEMPLATE) -v3 --endian=little --include_path=$(RPROC_BUILD_DIR) --include_path=$(RPROC_INCLUDE) --include_path=/usr/lib/ti/pru-software-support-package/include
+	$(AT) lnkpru -o $(RPROC_TMP_FILE).out $(RPROC_TMP_FILE).o --stack_size=0x0 --heap_size=0x0 -m $(RPROC_TMP_FILE).map $(RPROC_CMD)
+	$(AT) dd if=$< of=$(RPROC_TMP_FILE).out bs=1 obs=1 seek=52 conv=notrunc status=none
+	$(AT) mv $(RPROC_TMP_FILE).out $@
+	$(AT) echo ' ...done'
+endif
+	$(AT) echo ' '
+
+build/pru/%.bin: pru/%.p
+ifeq (,$(SYNTAX_FLAG))
+	$(AT) echo 'Building $< into $@...'
+	$(AT) cd $(dir $@) && pasm -V2 -L -c -b $(BOARD_COMMON_FLAGS) $(BELA_DIR)/$< > /dev/null
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '
 
 build/pru/%_bin.h: pru/%.p
 ifeq (,$(SYNTAX_FLAG))
-	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -L -c "$<" > /dev/null
-	$(AT) mv "$(@:build/pru/%=%)" build/pru/
+	$(AT) echo 'Building $< into $@...'
+	$(AT) cd $(dir $@) && pasm -V2 -L -c $(BOARD_COMMON_FLAGS) $(BELA_DIR)/"$<" > /dev/null
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '
@@ -866,3 +895,4 @@ heavy-unzip-archive: stop
 
 .PHONY: all clean distclean help projectclean nostartup startup startuploop debug run runfg runscreen runscreenfg stopstartup stoprunning stop idestart idestop idestartup idenostartup ideconnect connect update checkupdate updateunsafe csoundstart scsynthstart scsynthstop scsynthstartup scsynthnostartup scsynthconnect lib c
 -include CustomMakefileBottom.in
+.SECONDARY: build/pru/pru_rtaudio.bin build/pru/pru_rtaudio_irq.bin # prevents temporary files from being deleted)
