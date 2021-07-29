@@ -7,6 +7,7 @@
 	
 #define CLOCK_BASE  0x44E00000
 #define CLOCK_MCASP0 0x34
+#define CLOCK_MCASP_VALUE 0x30002 // should probably be just 0x2
 #define CLOCK_SPI0  0x4C
 #define CLOCK_SPI1  0x50
 #define CLOCK_L4LS  0x60
@@ -864,7 +865,7 @@ SPI_WAIT_RESET:
 SPI_INIT_DONE:	
 
     // enable MCASP interface clock in PRCM
-    MOV r2, 0x30002
+    MOV r2, CLOCK_MCASP_VALUE
     MOV r3, CLOCK_BASE + CLOCK_MCASP0
     SBBO r2, r3, 0, 4
 
