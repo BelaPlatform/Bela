@@ -869,6 +869,14 @@ SPI_INIT_DONE:
     MOV r3, CLOCK_BASE + CLOCK_MCASP0
     SBBO r2, r3, 0, 4
 
+    // we need to wait for a few cycles after enabling the clock in order for
+    // the McASP to work properly (we found experimentally that this is
+    // required for some SoCs (e.g.: AM572x))
+    MOV r2, 1000
+MCASP_CLOCK_ENABLE_LOOP:
+    SUB r2, r2, 1
+    QBNE MCASP_CLOCK_ENABLE_LOOP, r2, 0
+
     // Prepare McASP0 for audio
     MCASP_REG_WRITE MCASP_GBLCTL, 0			// Disable McASP
     MCASP_REG_WRITE_EXT MCASP_SRCTL0, 0		// All serialisers off
