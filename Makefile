@@ -279,35 +279,50 @@ BELA_RT_WRAP_FLAGS?="-DBELA_RT_WRAP(call)=call" -Drt_printf=printf -D rt_fprintf
 BELA_RT_BACKEND_LDLIBS := -lpthread -lrt
 endif
 
-IS_AM572x = $(shell grep -q AI /proc/device-tree/model && echo '-DIS_AM572x')
-
-ifeq ($(AT),)
-  $(info  AI flag = $(IS_AM572x))
-endif
+IS_AM572x ?= $(shell grep -q AI /proc/device-tree/model && echo 1 || echo 0)
 
 #	Flag for using/ not using (UIO+prussdrv)/(RPROC+Mmap)
-ifneq (,$(findstring IS,$(IS_AM572x)))
+ifeq (1,$(strip $(IS_AM572x)))
   ENABLE_PRU_UIO = 0
   ENABLE_PRU_RPROC = 1
-  firmwareBelaRProcNoMcaspIrq = $(BELA_DIR)/build/pru/pru_rtaudio_bin.out
-  firmwareBelaRProcMcaspIrq = $(BELA_DIR)/build/pru/pru_rtaudio_irq_bin.out
+  BOARD_COMMON_FLAGS = -DIS_AM572x
 else
   ENABLE_PRU_UIO = 1
   ENABLE_PRU_RPROC = 0
+  BOARD_COMMON_FLAGS =
+endif
+
+ifeq (1,$(strip $(ENABLE_PRU_RPROC)))
+  firmwareBelaRProcNoMcaspIrq ?= $(BELA_DIR)/build/pru/pru_rtaudio_bin.out
+  firmwareBelaRProcMcaspIrq ?= $(BELA_DIR)/build/pru/pru_rtaudio_irq_bin.out
+  BOARD_CORE_LDLIBS =
+  BOARD_CORE_CORE_OBJS =
+else
+  BOARD_CORE_CPP_SRCS_FILTER_OUT :=
+endif
+ifeq (1,$(strip $(ENABLE_PRU_UIO)))
+  BOARD_CORE_LDLIBS = -lprussdrv
+  BOARD_CORE_CORE_OBJS = build/core/PruBinary.o
+else
+  BOARD_CORE_CPP_SRCS_FILTER_OUT := core/PruBinary.cpp
 endif
 
 ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj $(IS_AM572x) -DENABLE_PRU_UIO=$(ENABLE_PRU_UIO) -DENABLE_PRU_RPROC=$(ENABLE_PRU_RPROC) -DfirmwareBelaRProcMcaspIrq=\"$(firmwareBelaRProcMcaspIrq)\" -DfirmwareBelaRProcNoMcaspIrq=\"$(firmwareBelaRProcNoMcaspIrq)\" $(BELA_RT_WRAP_FLAGS)
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj -DENABLE_PRU_UIO=$(ENABLE_PRU_UIO) -DENABLE_PRU_RPROC=$(ENABLE_PRU_RPROC) -DfirmwareBelaRProcMcaspIrq='"$(firmwareBelaRProcMcaspIrq)"' -DfirmwareBelaRProcNoMcaspIrq='"$(firmwareBelaRProcNoMcaspIrq)"' $(BOARD_COMMON_FLAGS) $(BELA_RT_WRAP_FLAGS)
 ifeq ($(SHARED),1)
 DEFAULT_COMMON_FLAGS+= -fPIC
 PROJ_INFIX=.fpic
 else
 PROJ_INFIX=
 endif # SHARED
+ifeq (,$(AT))
+  $(info BOARD IS_AM572x? $(IS_AM572x))
+endif
+
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/ -Wl,--as-needed
-BELA_CORE_LDLIBS = $(BELA_RT_BACKEND_LDLIBS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
+BELA_CORE_LDLIBS = $(BELA_RT_BACKEND_LDLIBS) $(BOARD_CORE_LDLIBS) -lstdc++ # libraries needed by core code (libbela.so)
 BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so), taken from the dependencies of the libraries of the objects included in $(LIB_EXTRA_OBJS)
 BELA_LDLIBS := $(BELA_CORE_LDLIBS)
 BELA_LDLIBS := $(filter-out -lstdc++,$(BELA_LDLIBS))
@@ -399,8 +414,11 @@ CORE_C_SRCS = $(wildcard core/*.c)
 CORE_OBJS := $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.o)))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
-CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
+CORE_CPP_SRCS := $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
+CORE_CPP_SRCS := $(filter-out $(BOARD_CORE_CPP_SRCS_FILTER_OUT),$(CORE_CPP_SRCS))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o $(BOARD_CORE_CORE_OBJS)
+EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
