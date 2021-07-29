@@ -288,10 +288,10 @@ LEGACY_INCLUDE_PATH := ./include/legacy
 
 INCLUDES := -I$(PROJECT_DIR) -I$(LEGACY_INCLUDE_PATH)  -I./include -I./build/pru/ -I./
 ifeq ($(XENOMAI_VERSION),2.6)
-  BELA_USE_DEFINE=BELA_USE_POLL
+  BELA_USE_DEFINE?=BELA_USE_POLL
 endif
 ifeq ($(XENOMAI_VERSION),3)
-  BELA_USE_DEFINE=BELA_USE_RTDM
+  BELA_USE_DEFINE?=BELA_USE_RTDM
 endif
 
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj
