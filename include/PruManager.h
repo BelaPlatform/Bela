@@ -9,7 +9,11 @@
  */
 
 #include <string>
+
+#if ENABLE_PRU_UIO == 1
 #include <prussdrv.h>
+#endif
+
 #include <vector>
 #include "Mmap.h"
 
@@ -30,6 +34,29 @@ public:
 	virtual void* getSharedMemory() = 0;
 };
 
+#if ENABLE_PRU_RPROC == 1
+class PruManagerRprocMmap : public PruManager
+{
+// use rproc for start/stop and mmap for memory sharing
+public:
+	PruManagerRprocMmap(unsigned int pruNum, int v);
+	void stop();
+	int start(bool useMcaspIrq);
+	int start(const std::string& path);
+	void* getOwnMemory();
+	void* getSharedMemory();
+private:
+	std::vector<uint32_t> prussAddresses;
+	std::string basePath;
+	std::string statePath;
+	std::string firmwarePath;
+	std::string firmware;
+	Mmap ownMemory;
+	Mmap sharedMemory;
+};
+#endif // ENABLE_PRU_RPROC
+
+#if ENABLE_PRU_UIO == 1
 class PruManagerUio : public PruManager
 {
 /* wrapper for libprussdrv for both start/stop and memory sharing
@@ -43,3 +70,5 @@ public:
 	void* getOwnMemory();
 	void* getSharedMemory();
 };
+
+#endif // ENABLE_PRU_UIO

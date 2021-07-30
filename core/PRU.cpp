@@ -383,7 +383,12 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	pru_number = pru_num;
 
 	/* Allocate and initialize memory */
+#if ENABLE_PRU_UIO == 1
 	pruManager = new PruManagerUio(pru_number, gRTAudioVerbose);
+#endif	// ENABLE_PRU_UIO
+#if ENABLE_PRU_RPROC == 1
+	pruManager = new PruManagerRprocMmap(pru_number, gRTAudioVerbose);
+#endif	// ENABLE_PRU_RPROC
 	pruMemory = new PruMemory(pru_number, context, *pruManager);
 
 	if(0 <= stopButtonPin){
