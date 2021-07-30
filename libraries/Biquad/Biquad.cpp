@@ -118,14 +118,15 @@ void BiquadCoeffT<T>::calc()
 	return;
 }
 
+#include <string.h>
 int QuadBiquad::setup(const BiquadCoeff::Settings& settings)
 {
 	int ret = 0;
 	for(auto & b : filters)
 		ret |= b.setup(settings);
 	update();
-	z1 = {0};
-	z2 = {0};
+	memset(&z1, 0, sizeof(z1));
+	memset(&z2, 0, sizeof(z2));
 	return ret;
 }
 void QuadBiquad::update()

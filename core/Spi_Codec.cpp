@@ -197,7 +197,7 @@ int Spi_Codec::setDacVolume(const int channel, float gain) {
 	// Calculcate volume from gain dB in 3/8 dB steps und cast to int
 	for(unsigned int n = 0; n < _dacVolumethreeEighthsDbs.size(); ++n)
 	{
-		if(channel < 0 || channel == n)
+		if(channel < 0 || channel == int(n))
 			_dacVolumethreeEighthsDbs[n] = (int) ((float) (gain * 2) * (1.0 + 1.0/3.0));
 	}
 
@@ -286,7 +286,7 @@ int Spi_Codec::_writeDACVolumeRegisters(bool mute){
 			MASTER_CODEC,
 			SLAVE_CODEC,
 		}};
-		for(unsigned int c = 0; c < _isBeast + 1; ++c)
+		for(int c = 0; c < _isBeast + 1; ++c)
 		{
 			for(unsigned int n = 0; n < volumeBits.size() && n < regsDacVolume.size(); ++n)
 			{

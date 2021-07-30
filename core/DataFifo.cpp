@@ -124,8 +124,8 @@ void fillArray(std::vector<T>& vec)
 bool DataFifo::test()
 {
 	DataFifo df;
-	size_t msgSize = 1000;
-	size_t numMsg = 100;
+	ssize_t msgSize = 1000;
+	ssize_t numMsg = 100;
 	std::vector<char> sent(msgSize * numMsg);
 	std::vector<char> received(msgSize * numMsg);
 	for(unsigned int n = 0; n < sent.size(); ++n)
@@ -146,7 +146,7 @@ bool DataFifo::test()
 	ret = df.send(sent.data(), msgSize * 2);
 	assert(-EMSGSIZE == ret);
 
-	size_t newsz = msgSize / 2;
+	ssize_t newsz = msgSize / 2;
 	ret = df.send(sent.data(), newsz);
 	assert(0 == ret);
 	fillArray(received);

@@ -558,7 +558,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	if(settings->projectName)
 	{
-		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH);
+		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH - 1);
 		if(gRTAudioVerbose)
 			printf("Project name: %s\n", gContext.projectName);
 	}

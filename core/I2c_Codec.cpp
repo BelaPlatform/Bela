@@ -15,6 +15,7 @@
 #include "../include/I2c_Codec.h"
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 // if only we could be `using` these...
 constexpr AudioCodecParams::TdmMode kTdmModeI2s = AudioCodecParams::kTdmModeI2s;
@@ -460,8 +461,8 @@ struct PllSettings {
 	double Fs;
 };
 
-std::vector<PllSettings> findSettingsWithConstraints(
-		int Rmin, int Rmax,
+static std::vector<PllSettings> findSettingsWithConstraints(
+		unsigned int Rmin, unsigned int Rmax,
 		double Kmin, double Kmax,
 		double ratioMin, double ratioMax,
 		bool integerK, double PLLCLK_IN,
@@ -558,7 +559,7 @@ int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
 		return 1;
 	}
 	// find the settings that minimise the Fs error
-	PllSettings optimalSettings;
+	PllSettings optimalSettings = {0};
 	double error = std::numeric_limits<double>::max();
 	for(auto & s : settings) {
 		double newError = std::abs(s.Fs - newSamplingRate);
@@ -642,7 +643,7 @@ static int setByChannel(T& dest, const int channel, U val)
 		return 1;
 	for(unsigned int n = 0; n < dest.size(); ++n)
 	{
-		if(channel == n || channel < 0)
+		if(channel == int(n) || channel < 0)
 		{
 			dest[n] = val;
 			if(channel >= 0)
@@ -968,6 +969,8 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 			// codec is in 256-bit mode
 			numSlots = 256 / params.slotSize;
 			break;
+		default:
+			throw std::runtime_error("I2c_Codec: invalid TdmMode");
 	}
 	bool isI2s = (kTdmModeI2s == params.tdmMode);
 	mcaspConfig.params.inChannels = getNumIns();

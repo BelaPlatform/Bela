@@ -347,6 +347,8 @@ else
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
+    DEFAULT_CPPFLAGS += -Wno-psabi
+    DEFAULT_CFLAGS += -Wno-psabi
     LDFLAGS+=-fno-pie -no-pie
   endif
 endif

@@ -57,6 +57,7 @@ std::ofstream openOutput(const std::string& path, Mode mode)
 			openmode = std::ios_base::app;
 			break;
 		case TRUNCATE:
+		default:
 			openmode = std::ios_base::trunc;
 			break;
 	}
@@ -86,7 +87,7 @@ std::string readTextFile(const std::string& path)
 		in.exceptions(std::fstream::failbit | std::fstream::badbit);
 		in.open(path);
 	}
-	catch (std::exception e)
+	catch (std::exception&)
 	{
 		return "";
 	}
