@@ -38,10 +38,16 @@ PruManagerRprocMmap::PruManagerRprocMmap(unsigned int pruNum, int v) :
 	basePath = "/dev/remoteproc/pruss" + std::to_string(pruss) + "-core" + std::to_string(pruCore) + "/";
 	statePath = basePath + "state";
 	firmwarePath = basePath + "firmware";
+#ifdef IS_AM572x
+	prussAddresses.push_back(0x4b200000);
+	prussAddresses.push_back(0x4b280000);
+	firmware = "am57xx";
+#else // IS_AM572x
 #warning Untested PRU addresses for am3358
 	prussAddresses.push_back(0x4a334000);
 	prussAddresses.push_back(0x4a338000);
 	firmware = "am335x";
+#endif // IS_AM572x
 	firmware += "-pru" + std::to_string(pruss) + "_" + std::to_string(pruCore) + "-fw";
 }
 
