@@ -27,6 +27,8 @@ PruManager::~PruManager()
 {}
 
 #if ENABLE_PRU_RPROC == 1
+#include <unistd.h>
+
 const std::vector<uint32_t> prussOwnRamOffsets = {0x0, 0x2000};
 const uint32_t prussSharedRamOffset = 0x10000;
 
@@ -36,11 +38,11 @@ PruManagerRprocMmap::PruManagerRprocMmap(unsigned int pruNum, int v) :
 	basePath = "/dev/remoteproc/pruss" + std::to_string(pruss) + "-core" + std::to_string(pruCore) + "/";
 	statePath = basePath + "state";
 	firmwarePath = basePath + "firmware";
-	firmware = "am57xx-pru" + std::to_string(pruss) + "_" + std::to_string(pruCore) + "-fw";
-
 #warning Untested PRU addresses for am3358
 	prussAddresses.push_back(0x4a334000);
 	prussAddresses.push_back(0x4a338000);
+	firmware = "am335x";
+	firmware += "-pru" + std::to_string(pruss) + "_" + std::to_string(pruCore) + "-fw";
 }
 
 void PruManagerRprocMmap::stop()
@@ -66,15 +68,37 @@ int PruManagerRprocMmap::start(const std::string& path)
 	stop();
 	std::string symlinkTarget = "/lib/firmware/" + firmware;
 	std::string firmwareCopyCommand = "ln -s -f " + path + " " + symlinkTarget;
-	system(firmwareCopyCommand.c_str());
+	int wstatus = system(firmwareCopyCommand.c_str());
+	int ret = !WIFEXITED(wstatus) ? -1 : WEXITSTATUS(wstatus);
+	if (ret)
+	{
+		fprintf(stderr, "Error while executing `%s` to load PRU: %d\n", firmwareCopyCommand.c_str(), ret);
+		return -1;
+	}
 	if(verbose)
 		printf("Loading firmware into %s: %s symlinked from %s\n", pruStringId.c_str(), symlinkTarget.c_str(), path.c_str());
-	IoUtils::writeTextFile(firmwarePath, firmware);	// reload the new fw in PRU
+	// reload the new fw in PRU
+	if(IoUtils::writeTextFile(firmwarePath, firmware))
+	{
+		fprintf(stderr, "PruManagerRprocMmap: unable to write %s to %s\n", firmware.c_str(), firmwarePath.c_str());
+		return -1;
+	}
 	// performs echo start > state
 	if(verbose)
 		printf("Starting %s\n", pruStringId.c_str());
-	IoUtils::writeTextFile(statePath, "start");
-	return 0;	// TODO: If system returns any error then detect it and then return 1 instead
+	if(IoUtils::writeTextFile(statePath, "start"))
+	{
+		fprintf(stderr, "PruManagerRprocMmap: unable to write %s to %s\n", "start", statePath.c_str());
+		return -1;
+	}
+	usleep(10000); // not sure if needed, but it won't hurt to wait to give it time to load the firmware and become "running"
+	std::string state = IoUtils::readTextFile(statePath);
+	if(state != "running\n")
+	{
+		fprintf(stderr, "PruManagerRprocMmap: we started PRU but state in %s is %s\n", statePath.c_str(), state.c_str());
+		return -1;
+	}
+	return 0;
 }
 
 void* PruManagerRprocMmap::getOwnMemory()
