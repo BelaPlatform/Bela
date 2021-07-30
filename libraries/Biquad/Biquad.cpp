@@ -118,6 +118,7 @@ void BiquadCoeffT<T>::calc()
 	return;
 }
 
+#include <string.h>
 int QuadBiquad::setup(const BiquadCoeff::Settings& settings)
 {
 	int ret = 0;

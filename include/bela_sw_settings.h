@@ -1,4 +1,4 @@
 #pragma once
 
-static const char* sysBelaConfig = "/run/bela/belaconfig";
-static const char* userBelaConfig = "/root/.bela/belaconfig";
+static const char* const sysBelaConfig = "/run/bela/belaconfig";
+static const char* const userBelaConfig = "/root/.bela/belaconfig";

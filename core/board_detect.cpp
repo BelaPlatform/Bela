@@ -91,7 +91,7 @@ BelaHw getBelaHw(std::string board)
 {
         try {
                 return belaHwMap.at(board);
-        } catch (std::exception e) {
+        } catch (std::exception& e) {
                 return BelaHw_NoHw;
         }
 }
@@ -267,4 +267,5 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 			return Bela_hwContains(hw, BelaCape) || Bela_hwContains(hw, BelaMiniCape);
 			break;
 	}
+	return 0;
 }

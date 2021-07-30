@@ -124,17 +124,17 @@ public:
 		// Clear / initialize memory
 		for(int buffer = 0; buffer < 2; ++buffer)
 		{
-			for(int i = 0; i < analogOut.size(); i++)
+			for(unsigned int i = 0; i < analogOut.size(); i++)
 				pruAnalogOutStart[buffer][i] = 0;
-			for(int i = 0; i < analogIn.size(); i++)
+			for(unsigned int i = 0; i < analogIn.size(); i++)
 				pruAnalogInStart[buffer][i] = 0;
-			for(int i = 0; i < audioOut.size(); i++)
+			for(unsigned int i = 0; i < audioOut.size(); i++)
 				pruAudioOutStart[buffer][i] = 0;
-			for(int i = 0; i < audioIn.size(); i++)
+			for(unsigned int i = 0; i < audioIn.size(); i++)
 				pruAudioInStart[buffer][i] = 0;
 			 // set digital to all inputs, to avoid unexpected spikes
 			uint32_t* digitalUint32View = (uint32_t*)pruDigitalStart[buffer];
-			for(int i = 0; i < digital.size(); i++)
+			for(unsigned int i = 0; i < digital.size(); i++)
 			{
 				digitalUint32View[i] = 0x0000ffff;
 			}
@@ -899,7 +899,6 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 	int underrunLedCount = -1;
 	while(!Bela_stopRequested()) {
 
-		int error = 0;
 #if defined BELA_USE_POLL || defined BELA_USE_BUSYWAIT
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
@@ -908,10 +907,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #ifdef BELA_USE_POLL
 			task_sleep_ns(sleepTime);
 #endif /* BELA_USE_POLL */
-			if(error = testPruError())
-			{
+			if(testPruError())
 				break;
-			}
 		}
 
 		lastPRUBuffer = pru_buffer_comm[PRU_COMM_CURRENT_BUFFER];
@@ -921,7 +918,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
 		int ret = __wrap_read(rtdm_fd_pru_to_arm, NULL, 0);
-		error = testPruError();
+		int error = testPruError();
 		if(2 == error) {
                         gShouldStop = true;
                         break;
@@ -966,7 +963,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
 		// TODO: implement non-interlaved
 #else
-		int audioInChannels = context->audioInChannels;
+		unsigned int audioInChannels = context->audioInChannels;
 		if(interleaved)
 		{
 			for(unsigned int n = 0; n < audioInChannels * context->audioFrames; n++) {

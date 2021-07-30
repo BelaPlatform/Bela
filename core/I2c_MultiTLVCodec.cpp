@@ -38,7 +38,7 @@ static I2c_Codec::CodecType getCodecTypeFromString(const std::string& str)
 {
 	try {
 		return codecTypeMap.at(trim(str));
-	} catch(std::exception e) {
+	} catch(std::exception&) {
 		throwErr("Unrecognised codec type", str);
 	}
 }
@@ -210,7 +210,7 @@ int I2c_MultiTLVCodec::stopAudio()
 			ret |= c->do;\
 		return ret;\
 	}\
-	int cod = channel / 2;\
+	unsigned int cod = channel / 2;\
 	channel = channel % 2;\
 	if(cod >= codecs.size())\
 		return -1;\
