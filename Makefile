@@ -279,9 +279,25 @@ BELA_RT_WRAP_FLAGS?="-DBELA_RT_WRAP(call)=call" -Drt_printf=printf -D rt_fprintf
 BELA_RT_BACKEND_LDLIBS := -lpthread -lrt
 endif
 
-ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
+IS_AM572x = $(shell grep -q AI /proc/device-tree/model && echo '-DIS_AM572x')
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj -DENABLE_PRU_UIO=1 $(BELA_RT_WRAP_FLAGS)
+ifeq ($(AT),)
+  $(info  AI flag = $(IS_AM572x))
+endif
+
+#	Flag for using/ not using (UIO+prussdrv)/(RPROC+Mmap)
+ifneq (,$(findstring IS,$(IS_AM572x)))
+  ENABLE_PRU_UIO = 0
+  ENABLE_PRU_RPROC = 1
+  firmwareBelaRProcNoMcaspIrq = $(BELA_DIR)/build/pru/pru_rtaudio_bin.out
+  firmwareBelaRProcMcaspIrq = $(BELA_DIR)/build/pru/pru_rtaudio_irq_bin.out
+else
+  ENABLE_PRU_UIO = 1
+  ENABLE_PRU_RPROC = 0
+endif
+
+ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g $(ARCH_FLAGS) -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj $(IS_AM572x) -DENABLE_PRU_UIO=$(ENABLE_PRU_UIO) -DENABLE_PRU_RPROC=$(ENABLE_PRU_RPROC) -DfirmwareBelaRProcMcaspIrq=\"$(firmwareBelaRProcMcaspIrq)\" -DfirmwareBelaRProcNoMcaspIrq=\"$(firmwareBelaRProcNoMcaspIrq)\" $(BELA_RT_WRAP_FLAGS)
 ifeq ($(SHARED),1)
 DEFAULT_COMMON_FLAGS+= -fPIC
 PROJ_INFIX=.fpic

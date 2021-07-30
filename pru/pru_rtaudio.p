@@ -5,15 +5,26 @@
 
 #define DBOX_CAPE	// Define this to use new cape hardware
 	
+#ifdef IS_AM572x
+#define CLOCK_BASE 0x4A005000
+#define CLOCK_MCASP0 0x550
+#define CLOCK_MCASP_VALUE 0x7000002
+#else // IS_AM572x
 #define CLOCK_BASE  0x44E00000
 #define CLOCK_MCASP0 0x34
 #define CLOCK_MCASP_VALUE 0x30002 // should probably be just 0x2
+#endif // IS_AM572x
 #define CLOCK_SPI0  0x4C
 #define CLOCK_SPI1  0x50
 #define CLOCK_L4LS  0x60
 
+#ifdef IS_AM572x
+#define SPI0_BASE   0x4809A100
+#define SPI1_BASE   0x480B8100
+#else
 #define SPI0_BASE   0x48030100
 #define SPI1_BASE   0x481A0100
+#endif
 #define SPI_BASE    SPI0_BASE
 	
 #define SPI_SYSCONFIG 0x10
@@ -92,8 +103,11 @@
 #define SHARED_COMM_MEM_BASE  0x00010000  // Location where comm flags are written
 
 // General constants for McASP peripherals (used for audio codec)
+#ifdef IS_AM572x
+#define MCASP0_BASE 0x48460000  // pg 6118 of AM57x Manual, it actually is MCASP1 but temporarily keeping as 0 for testing ease
+#else
 #define MCASP0_BASE 0x48038000
-#define MCASP1_BASE 0x4803C000
+#endif
 
 #define MCASP_PWRIDLESYSCONFIG 		0x04
 #define MCASP_PFUNC			0x10
@@ -136,18 +150,31 @@
 #define MCASP_SRCTL3			0x18C
 #define MCASP_SRCTL4			0x190
 #define MCASP_SRCTL5			0x194
+#define MCASP_SRCTL6			0x198
+#define MCASP_SRCTL7			0x19C
+#define MCASP_SRCTL8			0x1A0
+#define MCASP_SRCTL9			0x1A4
+#define MCASP_SRCTL10			0x1A8
+#define MCASP_SRCTL11			0x1AC
+#define MCASP_SRCTL12			0x1B0
+#define MCASP_SRCTL13			0x1B4
+#define MCASP_SRCTL14			0x1B8
+#define MCASP_SRCTL15			0x1BC
 #define MCASP_XBUF0			0x200
 #define MCASP_XBUF1			0x204
 #define MCASP_XBUF2			0x208
 #define MCASP_XBUF3			0x20C
 #define MCASP_XBUF4			0x210
 #define MCASP_XBUF5			0x214
+#define MCASP_XBUF10			0x228
+#define MCASP_XBUF11			0x22C
 #define MCASP_RBUF0			0x280
 #define MCASP_RBUF1			0x284
 #define MCASP_RBUF2			0x288
 #define MCASP_RBUF3			0x28C
 #define MCASP_RBUF4			0x290
 #define MCASP_RBUF5			0x294
+#define MCASP_RBUF10			0x2A8
 #define MCASP_WFIFOCTL			0x1000
 #define MCASP_WFIFOSTS			0x1004
 #define MCASP_RFIFOCTL			0x1008
@@ -160,10 +187,17 @@
 // Constants used for this particular audio setup
 #define MCASP_BASE 	MCASP0_BASE
 #ifdef DBOX_CAPE
+#ifdef IS_AM572x
+#define MCASP_SRCTL_X	MCASP_SRCTL11	// Ser. 11 is transmitter
+#define MCASP_SRCTL_R	MCASP_SRCTL10	// Ser. 10 is receiver
+#define MCASP_XBUF	MCASP_XBUF11
+#define MCASP_RBUF	MCASP_RBUF10
+#else // IS_AM572x
 #define MCASP_SRCTL_X	MCASP_SRCTL2	// Ser. 2 is transmitter
 #define MCASP_SRCTL_R	MCASP_SRCTL0	// Ser. 0 is receiver
 #define MCASP_XBUF	MCASP_XBUF2
 #define MCASP_RBUF	MCASP_RBUF0
+#endif // IS_AM572x
 #else
 #define MCASP_SRCTL_X	MCASP_SRCTL3	// Ser. 3 is transmitter
 #define MCASP_SRCTL_R	MCASP_SRCTL2	// Ser. 2 is receiver
@@ -177,7 +211,11 @@
 #define MCASP_PIN_AMUTE		(1 << 25)	// Also, 0 to 3 are XFR0 to XFR3
 
 #ifdef DBOX_CAPE
+#ifdef IS_AM572x
+#define MCASP_OUTPUT_PINS   	MCASP_PIN_AHCLKX | (1 << 11) // AHCLKX and AXR2 outputs
+#else // IS_AM572x
 #define MCASP_OUTPUT_PINS   	MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
+#endif // IS_AM572x
 #else
 #define MCASP_OUTPUT_PINS   	(1 << 3)	// Which pins are outputs
 #endif
@@ -960,6 +998,18 @@ MCASP_CLOCK_ENABLE_LOOP:
     MCASP_REG_WRITE_EXT MCASP_SRCTL3, 0
     MCASP_REG_WRITE_EXT MCASP_SRCTL4, 0
     MCASP_REG_WRITE_EXT MCASP_SRCTL5, 0
+#ifdef IS_AM572x
+    MCASP_REG_WRITE_EXT MCASP_SRCTL6, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL7, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL8, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL9, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL10, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL11, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL12, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL13, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL14, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL15, 0
+#endif // IS_AM572x
 
     MCASP_REG_WRITE MCASP_PWRIDLESYSCONFIG, 0x02	// Power on
     MCASP_REG_WRITE MCASP_PFUNC, 0x00		// All pins are McASP
