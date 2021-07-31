@@ -72,6 +72,10 @@ public:
 	}
 
 	/**
+	 * A utility function to return the bank from a Gpio number.
+	 */
+	static uint32_t getBankNumber(unsigned int pin);
+	/**
 	 * A utility function to return the base address of a Gpio bank.
 	 */
 	static uint32_t getBankAddress(unsigned int bank);
