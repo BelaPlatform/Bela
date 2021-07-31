@@ -72,6 +72,10 @@ public:
 	}
 
 	/**
+	 * A utility function to return the mask from a Gpio number.
+	 */
+	static uint32_t getMask(unsigned int pin);
+	/**
 	 * A utility function to return the bank from a Gpio number.
 	 */
 	static uint32_t getBankNumber(unsigned int pin);

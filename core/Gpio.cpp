@@ -40,8 +40,7 @@ int Gpio::open(unsigned int newPin, Direction direction, bool unexport){
 	if(gpio_set_dir(pin, direction) < 0){
 		return -1;
 	}
-	unsigned int bit = pin % kBitsPerGpioBank;
-	pinMask = 1 << bit;
+	pinMask = getMask(pin);
 	gpio = (uint32_t*)mmap.map(gpioBase, GPIO_SIZE);
 	if(!gpio)
 		return -2;
@@ -61,6 +60,12 @@ void Gpio::close(){
 		gpio_unexport(pin);
 	}
 	pin = -1;
+}
+
+uint32_t Gpio::getMask(unsigned int pin)
+{
+	unsigned int bit = pin % kBitsPerGpioBank;
+	return 1 << bit;
 }
 
 uint32_t Gpio::getBankNumber(unsigned int pin)
