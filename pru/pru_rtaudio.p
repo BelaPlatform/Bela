@@ -402,7 +402,7 @@ SET_GPIO_BITS_0_DONE:
 // r2 is now unused
 
 //GPIO2-start
-//r3 will hold GPIO1_OE
+//r3 will hold GPIO2_OE
 //load current status of GPIO_OE in r3
     MOV r3, GPIO2 | GPIO_OE  
 //it takes 200ns to go through the next instructions
