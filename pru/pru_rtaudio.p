@@ -41,8 +41,22 @@
 #define SPI_CH1TX     0x4C
 #define SPI_CH1RX     0x50
 
+#ifdef IS_AM572x
+#define GPIO1 0x4AE10000
+#define GPIO2 0x48055000
+#define GPIO3 0x48057000
+#define GPIO4 0x48059000
+#define GPIO5 0x4805B000
+#define GPIO6 0x4805D000
+#define GPIO7 0x48051000
+#define GPIO8 0x48053000
+#else // IS_AM572x
 #define GPIO0 0x44E07000
 #define GPIO1 0x4804C000
+#define GPIO2 0x481AC000
+#define GPIO3 0x481AE000,
+#endif // IS_AM572x
+
 #define GPIO_CLEARDATAOUT 0x190
 #define GPIO_SETDATAOUT 0x194
 
@@ -53,13 +67,13 @@
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
-#ifdef DBOX_CAPE
+#ifdef IS_AM572x
+#define DAC_GPIO      GPIO7
+#define DAC_CS_PIN    (1<<17) // GPIO7:17 = P9 pin 17
+#else // IS_AM572x
 #define DAC_GPIO      GPIO0
 #define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
-#else /* DBOX_CAPE */
-#define DAC_GPIO      GPIO1
-#define DAC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-#endif /* DBOX_CAPE */
+#endif // IS_AM572x
 #define DAC_TRM       0       // SPI transmit and receive
 #define DAC_WL        32      // Word length
 #define DAC_CLK_MODE  1       // SPI mode
@@ -71,16 +85,16 @@
 #define AD5668_DATA_OFFSET    4
 #define AD5668_REF_OFFSET     0
 
-#ifdef DBOX_CAPE
+#ifdef IS_AM572x
+#define ADC_GPIO      GPIO3
+#define ADC_CS_PIN    (1<<12) // GPIO3:12 = P9 pin 15
+#else // IS_AM572x
 #define ADC_GPIO      GPIO1
 #define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
 // for BELA_MINI, this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
 #define ADC_GPIO_BELA_MINI      GPIO0
 #define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO1:5 = P1 pin 6
-#else /* DBOX_CAPE */
-#define ADC_GPIO      GPIO1
-#define ADC_CS_PIN    (1<<17) // GPIO1:17 = P9 pin 23
-#endif /* DBOX_CAPE */
+#endif // IS_AM572x
 
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL_ADS816X   24   // Word length for ADS816x ADC
@@ -287,8 +301,6 @@
 //15 P8_30 59 0x8ec/0ec 89 gpio2[25]
 
 //generic GPIOs constants
-//#define GPIO1 0x4804c000
-#define GPIO2 0x481ac000
 //#define GPIO_CLEARDATAOUT 0x190 //SETDATAOUT is CLEARDATAOUT+4
 #define GPIO_OE 0x134 
 #define GPIO_DATAIN 0x138
@@ -611,10 +623,12 @@ DONE:
 
 // Bring CS line low to write to ADC
 .macro ADC_CS_ASSERT
+#ifndef IS_AM572x
      BELA_MINI_OR_JMP_TO BELA
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
      QBA DONE
+#endif // IS_AM572x
 BELA:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
@@ -624,10 +638,12 @@ DONE:
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
+#ifndef IS_AM572x
      BELA_MINI_OR_JMP_TO BELA
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_SETDATAOUT
      QBA DONE
+#endif // IS_AM572x
 BELA:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_SETDATAOUT
