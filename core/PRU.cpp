@@ -187,8 +187,8 @@ const unsigned int belaRevCLedBlue = 79;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
-const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
-const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
+const unsigned int PRU::kPruGPIODACSyncPin = kSpiDacChipSelectPin;
+const unsigned int PRU::kPruGPIOADCSyncPin = kSpiAdcChipSelectPin;
 
 #ifdef USE_NEON_FORMAT_CONVERSION
 // These four functions are written in assembly in FormatConvert.S
