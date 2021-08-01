@@ -79,7 +79,11 @@
 #define DAC_WL        32      // Word length
 #define DAC_CLK_MODE  1       // SPI mode
 #define DAC_CLK_DIV   1       // Clock divider (48MHz / 2^n)
-#define DAC_DPE       1       // d0 = receive, d1 = transmit
+#ifdef IS_AM572x
+#define SPI_DPE_IS 0x6 // d1 = receive, d0 = transmit, input select d1
+#else // IS_AM572x
+#define SPI_DPE_IS 0x1 // d0 = receive, d1 = transmit, input select d0
+#endif // IS_AM572x
 
 #define AD5668_COMMAND_OFFSET 24
 #define AD5668_ADDRESS_OFFSET 20
@@ -102,7 +106,6 @@
 #define ADC_WL_AD7699    16   // Word length for AD7699 ADC
 #define ADC_CLK_MODE  0       // SPI mode
 #define ADC_CLK_DIV   1       // Clock divider (48MHz / 2^n)
-#define ADC_DPE       1       // d0 = receive, d1 = transmit
 
 #define AD7699_CFG_MASK       0xF120 // Mask for config update, unipolar, full BW
 #define AD7699_CHANNEL_OFFSET 9      // 7 bits offset of a 14-bit left-justified word
@@ -982,11 +985,11 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_MODULCTRL, 4
   
      // Configure CH0 for DAC
-     MOV r2, (3 << 27) | (DAC_DPE << 16) | (DAC_TRM << 12) | ((DAC_WL - 1) << 7) | (DAC_CLK_DIV << 2) | DAC_CLK_MODE | (1 << 6)
+     MOV r2, (3 << 27) | (SPI_DPE_IS << 16) | (DAC_TRM << 12) | ((DAC_WL - 1) << 7) | (DAC_CLK_DIV << 2) | DAC_CLK_MODE | (1 << 6)
      SBBO r2, reg_spi_addr, SPI_CH0CONF, 4
 
      // Configure CH1 for ADC, starting with ADS816X
-     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL_ADS816X - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
+     MOV r2, (3 << 27) | (SPI_DPE_IS << 16) | (ADC_TRM << 12) | ((ADC_WL_ADS816X - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
      SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
    
      // Turn on SPI channels
@@ -1025,7 +1028,7 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
 
      // Configure CH1 for AD7699 instead
-     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL_AD7699 - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
+     MOV r2, (3 << 27) | (SPI_DPE_IS << 16) | (ADC_TRM << 12) | ((ADC_WL_AD7699 - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
      SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
 
      // Turn on ADC SPI channels
