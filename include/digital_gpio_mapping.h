@@ -34,6 +34,25 @@ enum
 
 enum
 {
+#ifdef IS_AM572x
+	// these are for BeagleBoneAI
+	P8_07_GPIO_NO = 165,
+	P8_08_GPIO_NO = 166,
+	P8_09_GPIO_NO = 178,
+	P8_10_GPIO_NO = 164,
+	P8_11_GPIO_NO = 75,
+	P8_12_GPIO_NO = 74,
+	P9_12_GPIO_NO = 128,
+	P9_14_GPIO_NO = 121,
+	P8_15_GPIO_NO = 99,
+	P8_16_GPIO_NO = 125,
+	P9_16_GPIO_NO = 122,
+	P8_18_GPIO_NO = 105,
+	P8_27_GPIO_NO = 119,
+	P8_28_GPIO_NO = 115,
+	P8_29_GPIO_NO = 118,
+	P8_30_GPIO_NO = 116,
+#else // IS_AM572x
 	// these are for BeagleBone (Everything else)
 	P8_07_GPIO_NO = 66,
 	P8_08_GPIO_NO = 67,
@@ -51,6 +70,7 @@ enum
 	P8_28_GPIO_NO = 88,
 	P8_29_GPIO_NO = 87,
 	P8_30_GPIO_NO = 89,
+#endif // IS_AM572x
 };
 
 //mapping pin headers to bits in the digital word.
