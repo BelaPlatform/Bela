@@ -356,7 +356,37 @@ DIGITAL:
 //r27 is now the input word passed in render(), one word per frame
 //[31:16]: data(1=high, 0=low), [15:0]: direction (0=output, 1=input) )
 
-
+#ifdef IS_AM572x
+// same code as below with different mappings and without comments for brevity
+// GPIO6-start
+    MOV r2, GPIO6 | GPIO_OE
+    LBBO r2, r2, 0, 4
+    MOV r8, 0
+    MOV r7, 0
+    SET_GPIO_BITS r2, r8, r7, 5, 0, r27
+    SET_GPIO_BITS r2, r8, r7, 6, 1, r27
+    SET_GPIO_BITS r2, r8, r7, 18, 2, r27
+    SET_GPIO_BITS r2, r8, r7, 4, 3, r27
+    MOV r3, GPIO6 | GPIO_OE
+    SBBO r2, r3, 0, 4
+//GPIO6-end
+//GPIO4-start
+    MOV r3, GPIO4 | GPIO_OE
+    LBBO r3, r3, 0, 4
+    MOV r5, 0
+    MOV r4, 0
+    SET_GPIO_BITS r3, r5, r4, 3, 8, r27
+    SET_GPIO_BITS r3, r5, r4, 29, 9, r27
+    SET_GPIO_BITS r3, r5, r4, 26, 10, r27
+    SET_GPIO_BITS r3, r5, r4, 9, 11, r27
+    SET_GPIO_BITS r3, r5, r4, 23, 12, r27
+    SET_GPIO_BITS r3, r5, r4, 19, 13, r27
+    SET_GPIO_BITS r3, r5, r4, 22, 14, r27
+    SET_GPIO_BITS r3, r5, r4, 20, 15, r27
+    MOV r2, GPIO4 | GPIO_OE  //use r2 as a temp registerp
+    SBBO r3, r2, 0, 4 //takes two cycles (10ns)
+//GPIO4-end
+#else // IS_AM572x
 //Preparing the gpio_oe, gpio_cleardataout and gpio_setdataout for each module
 //r2 will hold GPIO1_OE
 //load current status of GPIO_OE in r2
@@ -437,12 +467,37 @@ SET_GPIO_BITS_1_DONE:
     SBBO r3, r2, 0, 4 //takes two cycles (10ns)
 //GPIO2-end
 //r3 is now unused
+#endif // IS_AM572x
 
 QBA START_INTERMEDIATE_DONE
 START_INTERMEDIATE: // intermediate step to jump to START
     QBA START
 START_INTERMEDIATE_DONE:
 
+#ifdef IS_AM572x
+    MOV r2, GPIO6 | GPIO_DATAIN
+    MOV r3, GPIO4 | GPIO_DATAIN
+    LBBO r2, r2, 0, 4
+    LBBO r3, r3, 0, 4
+//GPIO6
+    READ_GPIO_BITS r2, 5, 0, r27
+    READ_GPIO_BITS r2, 6, 1, r27
+    READ_GPIO_BITS r2, 18, 2, r27
+    READ_GPIO_BITS r2, 4, 3, r27
+//GPIO4
+    READ_GPIO_BITS r3, 3, 8, r27
+    READ_GPIO_BITS r3, 29, 9, r27
+    READ_GPIO_BITS r3, 26, 10, r27
+    READ_GPIO_BITS r3, 9, 11, r27
+    READ_GPIO_BITS r3, 23, 12, r27
+    READ_GPIO_BITS r3, 19, 13, r27
+    READ_GPIO_BITS r3, 22, 14, r27
+    READ_GPIO_BITS r3, 20, 15, r27
+    MOV r2, GPIO6 | GPIO_CLEARDATAOUT
+    MOV r3, GPIO4 | GPIO_CLEARDATAOUT
+    SBBO r7, r2, 0, 8
+    SBBO r4, r3, 0, 8
+#else // IS_AM572x
 //load current inputs in r2, r3
 //r2 will contain GPIO1_DATAIN
 //r3 will contain GPIO2_DATAIN
@@ -511,6 +566,7 @@ READ_GPIO_BITS_DONE:
 //reversing the order of the two lines above will swap the performances between the GPIO modules
 //i.e.: the first line will always take 145ns/185ns and the second one will always take 95ns/130ns, 
 //regardless of whether the order is gpio1-gpio2 or gpio2-gpio1
+#endif // IS_AM572x
 JMP r28.w0 // go back to ADC_WRITE_AND_PROCESS_GPIO
 
 .macro HANG //useful for debugging
