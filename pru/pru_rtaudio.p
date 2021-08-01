@@ -9,18 +9,19 @@
 #define CLOCK_BASE 0x4A005000
 #define CLOCK_MCASP0 0x550
 #define CLOCK_MCASP_VALUE 0x7000002
+#define CLOCK_SPI0  0x47F8
 #else // IS_AM572x
 #define CLOCK_BASE  0x44E00000
 #define CLOCK_MCASP0 0x34
 #define CLOCK_MCASP_VALUE 0x30002 // should probably be just 0x2
-#endif // IS_AM572x
 #define CLOCK_SPI0  0x4C
+#endif // IS_AM572x
 #define CLOCK_SPI1  0x50
 #define CLOCK_L4LS  0x60
 
 #ifdef IS_AM572x
-#define SPI0_BASE   0x4809A100
-#define SPI1_BASE   0x480B8100
+#define SPI0_BASE   0x4809A100 // McSPI2_REVISION AM572x
+#define SPI1_BASE   0x4809A100
 #else
 #define SPI0_BASE   0x48030100
 #define SPI1_BASE   0x481A0100
