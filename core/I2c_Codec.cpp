@@ -1130,8 +1130,13 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 	bool isI2s = (kTdmModeI2s == params.tdmMode);
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels = getNumOuts();;
+#ifdef IS_AM572x
+	mcaspConfig.params.inSerializers = {10};
+	mcaspConfig.params.outSerializers = {11};
+#else // IS_AM572x
 	mcaspConfig.params.inSerializers = {0};
 	mcaspConfig.params.outSerializers = {2};
+#endif // IS_AM572x
 	mcaspConfig.params.numSlots = numSlots;
 	mcaspConfig.params.slotSize = params.slotSize;
 	mcaspConfig.params.dataSize = params.slotSize;
