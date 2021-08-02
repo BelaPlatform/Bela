@@ -7,27 +7,32 @@
 	
 #ifdef IS_AM572x
 #define CLOCK_BASE 0x4A005000
-#define CLOCK_MCASP0 0x550
+#define CLOCK_MCASP1 0x550
 #define CLOCK_MCASP_VALUE 0x7000002
-#define CLOCK_SPI0  0x47F8
+#define CLOCK_SPI2  0x47F8
+#define SPI2_BASE   0x4809A100
+#define MCASP1_BASE 0x48460000
 #else // IS_AM572x
 #define CLOCK_BASE  0x44E00000
 #define CLOCK_MCASP0 0x34
 #define CLOCK_MCASP_VALUE 0x30002 // should probably be just 0x2
 #define CLOCK_SPI0  0x4C
+#define SPI0_BASE   0x48030100
+#define MCASP0_BASE 0x48038000
 #endif // IS_AM572x
-#define CLOCK_SPI1  0x50
-#define CLOCK_L4LS  0x60
 
 #ifdef IS_AM572x
-#define SPI0_BASE   0x4809A100 // McSPI2_REVISION AM572x
-#define SPI1_BASE   0x4809A100
+#define SPI_BASE    SPI2_BASE
+#define CLOCK_SPI CLOCK_SPI2
+#define MCASP_BASE MCASP1_BASE
+#define CLOCK_MCASP CLOCK_MCASP1
 #else
-#define SPI0_BASE   0x48030100
-#define SPI1_BASE   0x481A0100
-#endif
 #define SPI_BASE    SPI0_BASE
-	
+#define CLOCK_SPI CLOCK_SPI0
+#define MCASP_BASE MCASP0_BASE
+#define CLOCK_MCASP CLOCK_MCASP0
+#endif
+
 #define SPI_SYSCONFIG 0x10
 #define SPI_SYSSTATUS 0x14
 #define SPI_MODULCTRL 0x28
@@ -120,13 +125,6 @@
 
 #define SHARED_COMM_MEM_BASE  0x00010000  // Location where comm flags are written
 
-// General constants for McASP peripherals (used for audio codec)
-#ifdef IS_AM572x
-#define MCASP0_BASE 0x48460000  // pg 6118 of AM57x Manual, it actually is MCASP1 but temporarily keeping as 0 for testing ease
-#else
-#define MCASP0_BASE 0x48038000
-#endif
-
 #define MCASP_PWRIDLESYSCONFIG 		0x04
 #define MCASP_PFUNC			0x10
 #define MCASP_PDIR			0x14
@@ -203,7 +201,6 @@
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
 	
 // Constants used for this particular audio setup
-#define MCASP_BASE 	MCASP0_BASE
 #ifdef DBOX_CAPE
 #ifdef IS_AM572x
 #define MCASP_SRCTL_X	MCASP_SRCTL11	// Ser. 11 is transmitter
@@ -964,7 +961,7 @@ SPI_NUM_CHANNELS_DONE:
 	
      // Init SPI clock
      MOV r2, 0x02
-     MOV r3, CLOCK_BASE + CLOCK_SPI0
+     MOV r3, CLOCK_BASE + CLOCK_SPI
      SBBO r2, r3, 0, 4
 
      // Reset SPI and wait for finish
@@ -1055,7 +1052,7 @@ SPI_INIT_DONE:
 
     // enable MCASP interface clock in PRCM
     MOV r2, CLOCK_MCASP_VALUE
-    MOV r3, CLOCK_BASE + CLOCK_MCASP0
+    MOV r3, CLOCK_BASE + CLOCK_MCASP
     SBBO r2, r3, 0, 4
 
     // we need to wait for a few cycles after enabling the clock in order for
