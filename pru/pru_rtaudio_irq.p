@@ -2,6 +2,7 @@
 .entrypoint START
 
 #include "../include/PruArmCommon.h"
+#include "board_specific.h"
 
 // The jump from  QBEQ WRITE_ONE_BUFFER, r1, 0 is too long when all the devices
 // are enabled. The code in there can probably be simplified and/or
@@ -21,20 +22,11 @@
 
 #define CTAG_IGNORE_UNUSED_INPUT_TDM_SLOTS
 	
-#define CLOCK_BASE   0x44E00000
-#define CLOCK_MCASP0 0x34
-#define CLOCK_SPI0   0x4C
-#define CLOCK_SPI1   0x50
-#define CLOCK_L4LS   0x60
 
 #define SCRATCHPAD_ID_BANK0 10
 #define SCRATCHPAD_ID_BANK1 11
 #define SCRATCHPAD_ID_BANK2 12
 
-#define SPI0_BASE   0x48030100
-#define SPI1_BASE   0x481A0100
-#define SPI_BASE    SPI0_BASE
-    
 #define SPI_SYSCONFIG 0x10
 #define SPI_SYSSTATUS 0x14
 #define SPI_IRQSTATUS 0x18
@@ -68,8 +60,8 @@
 #define SPI_INTR_BIT_RX3_FULL 14
 #define SPI_INTR_BIT_EOW 17 // end of word
 
-#define GPIO0 0x44E07000
-#define GPIO1 0x4804C000
+#define GPIO_OE 0x134
+#define GPIO_DATAIN 0x138
 #define GPIO_CLEARDATAOUT 0x190
 #define GPIO_SETDATAOUT 0x194
 
@@ -80,30 +72,21 @@
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
-#define DAC_GPIO      GPIO0
-#define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
 #define DAC_TRM       0       // SPI transmit and receive
 #define DAC_WL        32      // Word length
 #define DAC_CLK_MODE  1       // SPI mode
 #define DAC_CLK_DIV   1       // Clock divider (48MHz / 2^n)
-#define DAC_DPE       1       // d0 = receive, d1 = transmit
 
 #define AD5668_COMMAND_OFFSET 24
 #define AD5668_ADDRESS_OFFSET 20
 #define AD5668_DATA_OFFSET    4
 #define AD5668_REF_OFFSET     0
 
-#define ADC_GPIO      GPIO1
-#define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-// for BELA_MINI, this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
-#define ADC_GPIO_BELA_MINI      GPIO0
-#define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO0:5 = P1 pin 6
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL_ADS816X   24   // Word length for ADS816x ADC
 #define ADC_WL_AD7699    16   // Word length for AD7699 ADC
 #define ADC_CLK_MODE  0       // SPI mode
 #define ADC_CLK_DIV   1       // Clock divider (48MHz / 2^n)
-#define ADC_DPE       1       // d0 = receive, d1 = transmit
 
 #define AD7699_CFG_MASK       0xF120 // Mask for config update, unipolar, full BW
 #define AD7699_CHANNEL_OFFSET 9      // 7 bits offset of a 14-bit left-justified word
@@ -191,13 +174,6 @@
 #define CFG_REG_SPP         0x34
 #define CFG_REG_PIN_MX      0x40
 
-// General constants for McASP peripherals (used for audio codec)
-#define MCASP0_BASE 0x48038000
-#define MCASP1_BASE 0x4803C000
-
-#define MCASP0_DATAPORT 0x46000000
-#define MCASP1_DATAPORT 0x46400000
-
 #define MCASP_PWRIDLESYSCONFIG      0x04
 #define MCASP_PFUNC         0x10
 #define MCASP_PDIR          0x14
@@ -239,18 +215,16 @@
 #define MCASP_SRCTL3            0x18C
 #define MCASP_SRCTL4            0x190
 #define MCASP_SRCTL5            0x194
-#define MCASP_XBUF0         0x200
-#define MCASP_XBUF1         0x204
-#define MCASP_XBUF2         0x208
-#define MCASP_XBUF3         0x20C
-#define MCASP_XBUF4         0x210
-#define MCASP_XBUF5         0x214
-#define MCASP_RBUF0         0x280
-#define MCASP_RBUF1         0x284
-#define MCASP_RBUF2         0x288
-#define MCASP_RBUF3         0x28C
-#define MCASP_RBUF4         0x290
-#define MCASP_RBUF5         0x294
+#define MCASP_SRCTL6            0x198
+#define MCASP_SRCTL7            0x19C
+#define MCASP_SRCTL8            0x1A0
+#define MCASP_SRCTL9            0x1A4
+#define MCASP_SRCTL10           0x1A8
+#define MCASP_SRCTL11           0x1AC
+#define MCASP_SRCTL12           0x1B0
+#define MCASP_SRCTL13           0x1B4
+#define MCASP_SRCTL14           0x1B8
+#define MCASP_SRCTL15           0x1BC
 #define MCASP_WFIFOCTL          0x1000
 #define MCASP_WFIFOSTS          0x1004
 #define MCASP_RFIFOCTL          0x1008
@@ -264,14 +238,6 @@
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
     
-// Constants used for this particular audio setup
-#define MCASP_BASE  MCASP0_BASE
-#define MCASP_DATAPORT  MCASP0_DATAPORT
-#define MCASP_SRCTL_X   MCASP_SRCTL2    // Ser. 2 is transmitter
-#define MCASP_SRCTL_R   MCASP_SRCTL0    // Ser. 0 is receiver
-#define MCASP_XBUF  MCASP_XBUF2
-#define MCASP_RBUF  MCASP_RBUF0
-
 #define MCASP_DATA_MASK     0xFFFF      // 16 bit data
 #define MCASP_AHCLKRCTL_VALUE 0x8001     // Internal clock, not inv, /2; irrelevant?
 #define MCASP_AHCLKXCTL_VALUE 0x8001     // External clock from AHCLKX
@@ -391,13 +357,6 @@
 //13 P8_28 58 0x8e8/0e8 88 gpio2[24]
 //14 P8_29 57 0x8e4/0e4 87 gpio2[23]
 //15 P8_30 59 0x8ec/0ec 89 gpio2[25]
-
-//generic GPIOs constants
-//#define GPIO1 0x4804c000
-#define GPIO2 0x481ac000
-//#define GPIO_CLEARDATAOUT 0x190 //SETDATAOUT is CLEARDATAOUT+4
-#define GPIO_OE 0x134 
-#define GPIO_DATAIN 0x138
 
 .macro SEND_ERROR_TO_ARM
 .mparam error
@@ -633,6 +592,37 @@ QBBC DONE, reg_flags, FLAG_BIT_ADS816X
 DONE:
 .endm
 
+#ifdef IS_AM572x
+// same code as below with different mappings and without comments for brevity
+// GPIO6-start
+    MOV r2, GPIO6 | GPIO_OE
+    LBBO r2, r2, 0, 4
+    MOV r8, 0
+    MOV r7, 0
+    SET_GPIO_BITS r2, r8, r7, 5, 0, r27
+    SET_GPIO_BITS r2, r8, r7, 6, 1, r27
+    SET_GPIO_BITS r2, r8, r7, 18, 2, r27
+    SET_GPIO_BITS r2, r8, r7, 4, 3, r27
+    MOV r3, GPIO6 | GPIO_OE
+    SBBO r2, r3, 0, 4
+//GPIO6-end
+//GPIO4-start
+    MOV r3, GPIO4 | GPIO_OE
+    LBBO r3, r3, 0, 4
+    MOV r5, 0
+    MOV r4, 0
+    SET_GPIO_BITS r3, r5, r4, 3, 8, r27
+    SET_GPIO_BITS r3, r5, r4, 29, 9, r27
+    SET_GPIO_BITS r3, r5, r4, 26, 10, r27
+    SET_GPIO_BITS r3, r5, r4, 9, 11, r27
+    SET_GPIO_BITS r3, r5, r4, 23, 12, r27
+    SET_GPIO_BITS r3, r5, r4, 19, 13, r27
+    SET_GPIO_BITS r3, r5, r4, 22, 14, r27
+    SET_GPIO_BITS r3, r5, r4, 20, 15, r27
+    MOV r2, GPIO4 | GPIO_OE  //use r2 as a temp registerp
+    SBBO r3, r2, 0, 4 //takes two cycles (10ns)
+//GPIO4-end
+#else // IS_AM572x
 //Preparing the gpio_oe, gpio_cleardataout and gpio_setdataout for each module
 //r2 will hold GPIO1_OE
 //load current status of GPIO_OE in r2
@@ -681,7 +671,7 @@ SET_GPIO_BITS_0_DONE:
 // r2 is now unused
 
 //GPIO2-start
-//r3 will hold GPIO1_OE
+//r3 will hold GPIO2_OE
 //load current status of GPIO_OE in r3
     MOV r3, GPIO2 | GPIO_OE  
 //it takes 200ns to go through the next instructions
@@ -717,12 +707,37 @@ SET_GPIO_BITS_1_DONE:
     SBBO r3, r2, 0, 4 //takes two cycles (10ns)
 //GPIO2-end
 //r3 is now unused
+#endif // IS_AM572x
 
 QBA START_INTERMEDIATE_DONE
 START_INTERMEDIATE: // intermediate step to jump to START
     QBA START
 START_INTERMEDIATE_DONE:
 
+#ifdef IS_AM572x
+    MOV r2, GPIO6 | GPIO_DATAIN
+    MOV r3, GPIO4 | GPIO_DATAIN
+   LBBO r2, r2, 0, 4
+    LBBO r3, r3, 0, 4
+//GPIO6
+    READ_GPIO_BITS r2, 5, 0, r27
+    READ_GPIO_BITS r2, 6, 1, r27
+    READ_GPIO_BITS r2, 18, 2, r27
+    READ_GPIO_BITS r2, 4, 3, r27
+//GPIO4
+    READ_GPIO_BITS r3, 3, 8, r27
+    READ_GPIO_BITS r3, 29, 9, r27
+    READ_GPIO_BITS r3, 26, 10, r27
+    READ_GPIO_BITS r3, 9, 11, r27
+    READ_GPIO_BITS r3, 23, 12, r27
+    READ_GPIO_BITS r3, 19, 13, r27
+    READ_GPIO_BITS r3, 22, 14, r27
+    READ_GPIO_BITS r3, 20, 15, r27
+    MOV r2, GPIO6 | GPIO_CLEARDATAOUT
+    MOV r3, GPIO4 | GPIO_CLEARDATAOUT
+    SBBO r7, r2, 0, 8
+    SBBO r4, r3, 0, 8
+#else // IS_AM572x
 //load current inputs in r2, r3
 //r2 will contain GPIO1_DATAIN
 //r3 will contain GPIO2_DATAIN
@@ -793,6 +808,7 @@ READ_GPIO_BITS_DONE:
 //reversing the order of the two lines above will swap the performances between the GPIO modules
 //i.e.: the first line will always take 145ns/185ns and the second one will always take 95ns/130ns, 
 //regardless of whether the order is gpio1-gpio2 or gpio2-gpio1
+#endif // IS_AM572x
 JMP r28.w0 // go back to ADC_WRITE_AND_PROCESS_GPIO
 
 .macro HANG //useful for debugging
@@ -880,10 +896,12 @@ DAC_CHANNEL_REORDER_DONE:
     
 // Bring CS line low to write to ADC
 .macro ADC_CS_ASSERT
+#ifndef IS_AM572x
      IF_HAS_BELA_SPI_ADC_CS_JMP_TO BELA_CS
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_CLEARDATAOUT
      QBA DONE
+#endif // IS_AM572x
 BELA_CS:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_CLEARDATAOUT
@@ -893,10 +911,12 @@ DONE:
 
 // Bring CS line high at end of ADC transaction
 .macro ADC_CS_UNASSERT
+#ifndef IS_AM572x
      IF_HAS_BELA_SPI_ADC_CS_JMP_TO BELA_CS
      MOV r27, ADC_CS_PIN_BELA_MINI
      MOV r28, ADC_GPIO_BELA_MINI + GPIO_SETDATAOUT
      QBA DONE
+#endif // IS_AM572x
 BELA_CS:
      MOV r27, ADC_CS_PIN
      MOV r28, ADC_GPIO + GPIO_SETDATAOUT
@@ -1241,7 +1261,7 @@ SPI_NUM_CHANNELS_DONE:
     
      // Init SPI clock
      MOV r2, 0x02
-     MOV r3, CLOCK_BASE + CLOCK_SPI0
+     MOV r3, CLOCK_BASE + CLOCK_SPI
      SBBO r2, r3, 0, 4
 
      // Reset SPI and wait for finish
@@ -1263,11 +1283,11 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_MODULCTRL, 4
   
      // Configure CH0 for DAC
-     MOV r2, (3 << 27) | (DAC_DPE << 16) | (DAC_TRM << 12) | ((DAC_WL - 1) << 7) | (DAC_CLK_DIV << 2) | DAC_CLK_MODE | (1 << 6)
+     MOV r2, (3 << 27) | (SPI_DPE_IS << 16) | (DAC_TRM << 12) | ((DAC_WL - 1) << 7) | (DAC_CLK_DIV << 2) | DAC_CLK_MODE | (1 << 6)
      SBBO r2, reg_spi_addr, SPI_CH0CONF, 4
 
      // Configure CH1 for ADC, starting with ADS816X
-     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL_ADS816X - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
+     MOV r2, (3 << 27) | (SPI_DPE_IS << 16) | (ADC_TRM << 12) | ((ADC_WL_ADS816X - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
      SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
 
      // Enable interrupts TX0_EMPTY__ENABLE for DACs and RX1_FULL__ENABLE for ADCs
@@ -1315,7 +1335,7 @@ SPI_WAIT_RESET:
      SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
 
      // Configure CH1 for AD7699 instead
-     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL_AD7699 - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
+     MOV r2, (3 << 27) | (SPI_DPE_IS << 16) | (ADC_TRM << 12) | ((ADC_WL_AD7699 - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
      SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
 
      // Turn on ADC SPI channels
@@ -1373,8 +1393,8 @@ CHANNEL_COUNT_NOT_ZERO:
     SBBO r2, reg_comm_addr, COMM_FRAME_COUNT, 4  // Start with frame count of 0
 	
     // enable MCASP interface clock in PRCM
-    MOV r2, 0x30002
-    MOV r3, CLOCK_BASE + CLOCK_MCASP0
+    MOV r2, CLOCK_MCASP_VALUE
+    MOV r3, CLOCK_BASE + CLOCK_MCASP
     SBBO r2, r3, 0, 4
 
     // Prepare McASP0 for audio
@@ -1399,6 +1419,18 @@ MCASP_ERROR_RECOVERY: // we also come back here if there are any issues while ru
     MCASP_REG_WRITE_EXT MCASP_SRCTL3, 0
     MCASP_REG_WRITE_EXT MCASP_SRCTL4, 0
     MCASP_REG_WRITE_EXT MCASP_SRCTL5, 0
+#ifdef IS_AM572x
+    MCASP_REG_WRITE_EXT MCASP_SRCTL6, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL7, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL8, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL9, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL10, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL11, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL12, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL13, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL14, 0
+    MCASP_REG_WRITE_EXT MCASP_SRCTL15, 0
+#endif // IS_AM572x
 
 // 2. Configure all McASP registers except GBLCTL in the following order:
 // (a) Power Idle SYSCONFIG: PWRIDLESYSCONFIG.
