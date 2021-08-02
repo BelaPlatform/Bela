@@ -2,36 +2,7 @@
 .entrypoint START
 
 #include "../include/PruArmCommon.h"
-
-#define DBOX_CAPE	// Define this to use new cape hardware
-	
-#ifdef IS_AM572x
-#define CLOCK_BASE 0x4A005000
-#define CLOCK_MCASP1 0x550
-#define CLOCK_MCASP_VALUE 0x7000002
-#define CLOCK_SPI2  0x47F8
-#define SPI2_BASE   0x4809A100
-#define MCASP1_BASE 0x48460000
-#else // IS_AM572x
-#define CLOCK_BASE  0x44E00000
-#define CLOCK_MCASP0 0x34
-#define CLOCK_MCASP_VALUE 0x30002 // should probably be just 0x2
-#define CLOCK_SPI0  0x4C
-#define SPI0_BASE   0x48030100
-#define MCASP0_BASE 0x48038000
-#endif // IS_AM572x
-
-#ifdef IS_AM572x
-#define SPI_BASE    SPI2_BASE
-#define CLOCK_SPI CLOCK_SPI2
-#define MCASP_BASE MCASP1_BASE
-#define CLOCK_MCASP CLOCK_MCASP1
-#else
-#define SPI_BASE    SPI0_BASE
-#define CLOCK_SPI CLOCK_SPI0
-#define MCASP_BASE MCASP0_BASE
-#define CLOCK_MCASP CLOCK_MCASP0
-#endif
+#include "board_specific.h"
 
 #define SPI_SYSCONFIG 0x10
 #define SPI_SYSSTATUS 0x14
@@ -47,22 +18,8 @@
 #define SPI_CH1TX     0x4C
 #define SPI_CH1RX     0x50
 
-#ifdef IS_AM572x
-#define GPIO1 0x4AE10000
-#define GPIO2 0x48055000
-#define GPIO3 0x48057000
-#define GPIO4 0x48059000
-#define GPIO5 0x4805B000
-#define GPIO6 0x4805D000
-#define GPIO7 0x48051000
-#define GPIO8 0x48053000
-#else // IS_AM572x
-#define GPIO0 0x44E07000
-#define GPIO1 0x4804C000
-#define GPIO2 0x481AC000
-#define GPIO3 0x481AE000,
-#endif // IS_AM572x
-
+#define GPIO_OE 0x134
+#define GPIO_DATAIN 0x138
 #define GPIO_CLEARDATAOUT 0x190
 #define GPIO_SETDATAOUT 0x194
 
@@ -73,38 +30,15 @@
 #define PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE (1 << 5) | (PRU_SYSTEM_EVENT_RTDM - 16)
 
 #define C_ADC_DAC_MEM C24     // PRU0 mem
-#ifdef IS_AM572x
-#define DAC_GPIO      GPIO7
-#define DAC_CS_PIN    (1<<17) // GPIO7:17 = P9 pin 17
-#else // IS_AM572x
-#define DAC_GPIO      GPIO0
-#define DAC_CS_PIN    (1<<5) // GPIO0:5 = P9 pin 17
-#endif // IS_AM572x
 #define DAC_TRM       0       // SPI transmit and receive
 #define DAC_WL        32      // Word length
 #define DAC_CLK_MODE  1       // SPI mode
 #define DAC_CLK_DIV   1       // Clock divider (48MHz / 2^n)
-#ifdef IS_AM572x
-#define SPI_DPE_IS 0x6 // d1 = receive, d0 = transmit, input select d1
-#else // IS_AM572x
-#define SPI_DPE_IS 0x1 // d0 = receive, d1 = transmit, input select d0
-#endif // IS_AM572x
 
 #define AD5668_COMMAND_OFFSET 24
 #define AD5668_ADDRESS_OFFSET 20
 #define AD5668_DATA_OFFSET    4
 #define AD5668_REF_OFFSET     0
-
-#ifdef IS_AM572x
-#define ADC_GPIO      GPIO3
-#define ADC_CS_PIN    (1<<12) // GPIO3:12 = P9 pin 15
-#else // IS_AM572x
-#define ADC_GPIO      GPIO1
-#define ADC_CS_PIN    (1<<16) // GPIO1:16 = P9 pin 15
-// for BELA_MINI, this is the same as DAC_CS_PIN, but the latter is disabled in DAC_WRITE
-#define ADC_GPIO_BELA_MINI      GPIO0
-#define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO1:5 = P1 pin 6
-#endif // IS_AM572x
 
 #define ADC_TRM       0       // SPI transmit and receive
 #define ADC_WL_ADS816X   24   // Word length for ADS816x ADC
@@ -199,41 +133,11 @@
 #define MCASP_XSTAT_XUNDRN_BIT          0        // Bit to test if there was an underrun
 #define MCASP_XSTAT_XDATA_BIT           5        // Bit to test for transmit ready
 #define MCASP_RSTAT_RDATA_BIT           5        // Bit to test for receive ready 
-	
-// Constants used for this particular audio setup
-#ifdef DBOX_CAPE
-#ifdef IS_AM572x
-#define MCASP_SRCTL_X	MCASP_SRCTL11	// Ser. 11 is transmitter
-#define MCASP_SRCTL_R	MCASP_SRCTL10	// Ser. 10 is receiver
-#define MCASP_XBUF	MCASP_XBUF11
-#define MCASP_RBUF	MCASP_RBUF10
-#else // IS_AM572x
-#define MCASP_SRCTL_X	MCASP_SRCTL2	// Ser. 2 is transmitter
-#define MCASP_SRCTL_R	MCASP_SRCTL0	// Ser. 0 is receiver
-#define MCASP_XBUF	MCASP_XBUF2
-#define MCASP_RBUF	MCASP_RBUF0
-#endif // IS_AM572x
-#else
-#define MCASP_SRCTL_X	MCASP_SRCTL3	// Ser. 3 is transmitter
-#define MCASP_SRCTL_R	MCASP_SRCTL2	// Ser. 2 is receiver
-#define MCASP_XBUF	MCASP_XBUF3
-#define MCASP_RBUF	MCASP_RBUF2
-#endif
-	
+
 #define MCASP_PIN_AFSX		(1 << 28)
 #define MCASP_PIN_AHCLKX	(1 << 27)
 #define MCASP_PIN_ACLKX		(1 << 26)
 #define MCASP_PIN_AMUTE		(1 << 25)	// Also, 0 to 3 are XFR0 to XFR3
-
-#ifdef DBOX_CAPE
-#ifdef IS_AM572x
-#define MCASP_OUTPUT_PINS   	MCASP_PIN_AHCLKX | (1 << 11) // AHCLKX and AXR2 outputs
-#else // IS_AM572x
-#define MCASP_OUTPUT_PINS   	MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
-#endif // IS_AM572x
-#else
-#define MCASP_OUTPUT_PINS   	(1 << 3)	// Which pins are outputs
-#endif
 
 #define MCASP_DATA_MASK 	0xFFFF		// 16 bit data
 #define MCASP_DATA_FORMAT	0x807C		// MSB first, 0 bit delay, 16 bits, CFG bus, ROR 16bits
@@ -300,11 +204,6 @@
 //13 P8_28 58 0x8e8/0e8 88 gpio2[24]
 //14 P8_29 57 0x8e4/0e4 87 gpio2[23]
 //15 P8_30 59 0x8ec/0ec 89 gpio2[25]
-
-//generic GPIOs constants
-//#define GPIO_CLEARDATAOUT 0x190 //SETDATAOUT is CLEARDATAOUT+4
-#define GPIO_OE 0x134 
-#define GPIO_DATAIN 0x138
 
 .macro BELA_MINI_AND_JMP_TO
 .mparam DEST
