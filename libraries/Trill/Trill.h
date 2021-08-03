@@ -52,7 +52,6 @@ class Trill : public I2c
 		float posHRescale;
 		float sizeRescale;
 		float rawRescale;
-		int prepareForDataRead();
 		int identify();
 		void updateRescale();
 		void parseNewData();
@@ -144,7 +143,7 @@ class Trill : public I2c
 		 *
 		 * Sets the data retrieved from the device.
 		 * This can be used to pass to the object
-		 * data retrieved elsewhere (e.g.: from an I2C callback).
+		 * data retrieved elsewhere (e.g.: from an I2C DMA callback).
 		 * Users calling readI2C() won't need to call this method.
 		 *
 		 * @param newData A pointer to an array containing new data.
@@ -152,6 +151,14 @@ class Trill : public I2c
 		 */
 		void newData(const uint8_t* newData, size_t len);
 
+		/**
+		 * \brief Prepare the device so that successive reads will return data.
+		 *
+		 * This should be called once before trying to read I2C bytes from the
+		 * device via an external method. It is not needed to call this when using
+		 * readI2C().
+		 */
+		int prepareForDataRead();
 		/**
 		 * Get the device type.
 		 */
