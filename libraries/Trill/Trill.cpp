@@ -400,7 +400,7 @@ int Trill::setMinimumTouchSize(float minSize) {
 	uint16_t size;
 	float maxMinSize = (1<<16) - 1;
 	if(maxMinSize > minSize / sizeRescale) // clipping to the max value we can transmit
-		minSize = maxMinSize;
+		size = maxMinSize;
 	else
 		size = minSize / sizeRescale;
 	char buf[4] = { kOffsetCommand, kCommandMinimumSize, (char)(size >> 8), (char)(size & 0xFF) };
