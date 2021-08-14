@@ -11,12 +11,6 @@
 
 PruManager::PruManager(unsigned int pruNum, int v)
 {
-	/* based on the value of pru_num to choose:
-	 * 0 for PRUSS1 core 0
-	 * 1 for PRUSS1 core 1
-	 * 2 for PRUSS2 core 0
-	 * 3 for PRUSS2 core 1
-	 */
 	verbose = v;
 	pruss = pruNum / 2 + 1;
 	pruCore = pruNum % 2;
@@ -53,7 +47,6 @@ PruManagerRprocMmap::PruManagerRprocMmap(unsigned int pruNum, int v) :
 
 void PruManagerRprocMmap::stop()
 {
-	// performs echo stop > state
 	if(verbose)
 		printf("Stopping %s\n", pruStringId.c_str());
 	IoUtils::writeTextFile(statePath, "stop");
