@@ -11,12 +11,6 @@
 
 PruManager::PruManager(unsigned int pruNum, int v)
 {
-	/* based on the value of pru_num to choose:
-	 * 0 for PRUSS1 core 0
-	 * 1 for PRUSS1 core 1
-	 * 2 for PRUSS2 core 0
-	 * 3 for PRUSS2 core 1
-	 */
 	verbose = v;
 	pruss = pruNum / 2 + 1;
 	pruCore = pruNum % 2;
@@ -38,16 +32,21 @@ PruManagerRprocMmap::PruManagerRprocMmap(unsigned int pruNum, int v) :
 	basePath = "/dev/remoteproc/pruss" + std::to_string(pruss) + "-core" + std::to_string(pruCore) + "/";
 	statePath = basePath + "state";
 	firmwarePath = basePath + "firmware";
+#ifdef IS_AM572x
+	prussAddresses.push_back(0x4b200000);
+	prussAddresses.push_back(0x4b280000);
+	firmware = "am57xx";
+#else // IS_AM572x
 #warning Untested PRU addresses for am3358
 	prussAddresses.push_back(0x4a334000);
 	prussAddresses.push_back(0x4a338000);
 	firmware = "am335x";
+#endif // IS_AM572x
 	firmware += "-pru" + std::to_string(pruss) + "_" + std::to_string(pruCore) + "-fw";
 }
 
 void PruManagerRprocMmap::stop()
 {
-	// performs echo stop > state
 	if(verbose)
 		printf("Stopping %s\n", pruStringId.c_str());
 	IoUtils::writeTextFile(statePath, "stop");

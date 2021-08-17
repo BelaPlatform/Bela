@@ -21,6 +21,7 @@
 #include "../include/Gpio.h"
 #include "../include/PruArmCommon.h"
 #include "../include/board_detect.h"
+#include "../include/bela_hw_settings.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -187,8 +188,8 @@ private:
 
 static unsigned int* gDigitalPins = NULL;
 
-const uint32_t userLed3GpioBase = Gpio::getBankAddress(1);
-const uint32_t userLed3GpioPinMask = 1 << 24;
+const uint32_t userLedGpioBase = Gpio::getBankAddress(Gpio::getBankNumber(kUserLedGpioPin));
+const uint32_t userLedGpioPinMask = Gpio::getMask(kUserLedGpioPin);
 const unsigned int belaMiniLedBlue = 87;
 const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
 const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
@@ -196,8 +197,8 @@ const unsigned int belaMiniLedRed = 89;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
-const unsigned int PRU::kPruGPIODACSyncPin = 5;	// GPIO0(5); P9-17
-const unsigned int PRU::kPruGPIOADCSyncPin = 48; // GPIO1(16); P9-15
+const unsigned int PRU::kPruGPIODACSyncPin = kSpiDacChipSelectPin;
+const unsigned int PRU::kPruGPIOADCSyncPin = kSpiAdcChipSelectPin;
 
 #ifdef USE_NEON_FORMAT_CONVERSION
 // These four functions are written in assembly in FormatConvert.S
@@ -315,7 +316,7 @@ int PRU::prepareGPIO(int include_led)
 		} else {
 			// Using BeagleBone's USR3 LED
 			// Turn off system function for LED3 so it can be reused by PRU
-			led_set_trigger(3, "none");
+			led_set_trigger(kUserLedNumber, "none");
 			led_enabled = true;
 		}
 	}
@@ -354,10 +355,10 @@ void PRU::cleanupGPIO()
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
 		} else {
-			// Set LED back to default eMMC status
+			// Set LED back to default status
 			// TODO: make it go back to its actual value before this program,
 			// rather than the system default
-			led_set_trigger(3, "mmc1");
+			led_set_trigger(kUserLedNumber, kUserLedDefaultTrigger);
 		}
 	}
 	gpio_enabled = false;
@@ -629,8 +630,8 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = belaMiniLedBlueGpioBase;
 			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
 		} else {
-			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = userLed3GpioBase;
-			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = userLed3GpioPinMask;
+			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = userLedGpioBase;
+			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = userLedGpioPinMask;
 		}
 	}
 	else {
