@@ -69,7 +69,7 @@ void CentroidDetection::setWrapAround(unsigned int n)
 void CentroidDetection::setMultiplierBits(unsigned int n)
 {
 	cc->SLIDER_BITS = n;
-	locationScale = order.size() * (1 << cc->SLIDER_BITS);
+	locationScale = (order.size() - 1) * (1 << cc->SLIDER_BITS);
 }
 
 void CentroidDetection::process(const DATA_T* rawData)
