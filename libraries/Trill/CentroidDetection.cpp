@@ -54,7 +54,7 @@ int CentroidDetection::setup(const std::vector<unsigned int>& order, unsigned in
 	sizes.resize(maxNumCentroids);
 	data.resize(order.size());
 	setSizeScale(sizeScale);
-  setNoiseThreshold(0);
+	setNoiseThreshold(0);
 	cc = std::shared_ptr<CalculateCentroids>(new CalculateCentroids());
 	setMultiplierBits(cc->SLIDER_BITS);
 	num_touches = 0;
