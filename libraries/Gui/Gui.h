@@ -60,7 +60,7 @@ class Gui
 		// BUFFERS
 		/**
 		 * Sets the buffer type and size of the container.
-		 * @param bufferType type of the buffer, can be float (f), int (i) or char (c)
+		 * @param bufferType type of the buffer, can be float (f), int (d) or char (c)
 		 * @param size Maximum number of elements that the buffer can hold.
 		 * @retur Buffer ID, generated automatically based on the number of buffers and
 		 * 	the order on which they have been created.
