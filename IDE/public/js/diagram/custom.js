@@ -18,7 +18,11 @@ $(document).ready(function() {
   } else if (board == 'CtagBeastBela') {
     a = 300;
     b = 767;
-  } else { // catch all
+  } else if (board == 'BelaMiniMultichannelExpander') { // catch all
+    a = 300;
+    b = 482;
+  }
+  else { // catch all
     board = "Bela";
     a = 300;
     b = 482;
