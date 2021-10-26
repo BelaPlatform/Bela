@@ -268,7 +268,7 @@ export async function newFile(data: any){
 		data.error = 'failed, file '+ file_path +' already exists!';
 		return;
 	}
-	file_manager.write_file(file_path, '/***** '+ file_name + ' *****/\n');
+	file_manager.write_file(file_path, '');
 	data.fileList = await listFiles(data.currentProject);
 	data.focus = {'line': 2, 'column': 1};
 	await openFile(data);

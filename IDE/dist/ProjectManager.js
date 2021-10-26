@@ -569,7 +569,7 @@ function newFile(data) {
                         data.error = 'failed, file ' + file_path + ' already exists!';
                         return [2 /*return*/];
                     }
-                    file_manager.write_file(file_path, '/***** ' + file_name + ' *****/\n');
+                    file_manager.write_file(file_path, '');
                     _a = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
                 case 2:
