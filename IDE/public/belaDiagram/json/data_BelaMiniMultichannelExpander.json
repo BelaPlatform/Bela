@@ -533,7 +533,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "405",
+      "y": "408",
       "width": "13",
       "height": "13",
       "text": "Analog IN 1 (Pd: [adc~ 4])",
@@ -542,7 +542,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "384",
+      "y": "390",
       "width": "13",
       "height": "13",
       "text": "Analog IN 2 (Pd: [adc~ 5])",
@@ -551,7 +551,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "363",
+      "y": "371",
       "width": "13",
       "height": "13",
       "text": "Analog IN 3 (Pd: [adc~ 6])",
@@ -560,7 +560,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "342",
+      "y": "354",
       "width": "13",
       "height": "13",
       "text": "Analog IN 4 (Pd: [adc~ 7])",
@@ -569,7 +569,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "321",
+      "y": "336",
       "width": "13",
       "height": "13",
       "text": "Analog IN 5 (Pd: [adc~ 8])",
@@ -578,7 +578,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "300",
+      "y": "318",
       "width": "13",
       "height": "13",
       "text": "Analog IN 6 (Pd: [adc~ 9])",
@@ -587,7 +587,7 @@
     {
       "elemclass": "aInPin",
       "x": "72",
-      "y": "279",
+      "y": "300",
       "width": "13",
       "height": "13",
       "text": "Analog IN 7 (Pd: [adc~ 10])",
@@ -596,7 +596,7 @@
     {
       "elemclass": "gnd",
       "x": "72",
-      "y": "258",
+      "y": "282",
       "width": "13",
       "height": "13",
       "text": "GND",
