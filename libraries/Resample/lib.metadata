@@ -1,0 +1,17 @@
+name=Resample
+version=1.0.0
+author=Franz Heuchel<franz.heuchel@gmail.com>
+maintainer=Giulio Moro<giuliomoro@yahoo.it>
+description=Decimating and interpolating filters. This is a wrapper for the libne10 FIR filter.
+examples=Audio/resample
+license=LGPL 3.0
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
