@@ -6246,6 +6246,7 @@ module.exports=[
   "Communication",
   "Gui",
   "Sensors",
+  "Multichannel",
   "Trill",
   "PureData",
   "SuperCollider",
