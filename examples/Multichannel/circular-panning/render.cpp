@@ -42,7 +42,7 @@ float gOscDetune = 3.0; // Oscillator detuning
 float gLfoFreqRange[2] = { 0.1, 10 }; // LFO frequency range
 
 int gCurrentChannel = 0; // Current active channel
-floa gPrevPanning = 0.0; // Previous panning vaue
+float gPrevPanning = 0.0; // Previous panning value
 
 /*
  * Function for incrementing channel number and wrapping in both directions, ascending order of id (clockwise) or descending order (counterwise).
