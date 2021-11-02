@@ -4315,21 +4315,46 @@ var SettingsView = function (_View) {
 			var boardString;
 			if (data && data.trim) boardString = data.trim();else return;
 
+			function excludeSubsecs(num, max, prefix) {
+				var subsections = [];
+				for (var i = num; i < max; ++i) {
+					subsections = subsections.concat(prefix + i);
+				}return subsections;
+			}
+			function excludeInputSubsecs(num) {
+				return excludeSubsecs(num, 8, 'input-level');
+			}
+			function excludeHpSubsecs(num) {
+				return excludeSubsecs(num, 8, 'headphone-level');
+			}
 			var settingExceptions = {
 				Bela: {
 					sections: [],
 					subsections: ['disable-led'],
-					options: []
+					options: [],
+					inputsWithGain: 2,
+					headphones: 2
 				},
 				BelaMini: {
 					sections: ['capelet-settings'],
 					subsections: ['mute-speaker'],
-					options: []
+					options: [],
+					inputsWithGain: 2,
+					headphones: 2
+				},
+				BelaMiniMultichannel: {
+					sections: ['capelet-settings'],
+					subsections: ['mute-speaker'],
+					options: [],
+					inputsWithGain: 8,
+					headphones: 8
 				},
 				Ctag: {
 					sections: ['capelet-settings'],
 					subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right', 'analog-channels', 'analog-samplerate', 'use-analog', 'adc-level'],
-					options: []
+					options: [],
+					inputsWithGain: 0,
+					headphones: 0
 				},
 				CtagBela: {
 					sections: [],
@@ -4340,17 +4365,23 @@ var SettingsView = function (_View) {
 					}, {
 						selector: 'analog-channels',
 						optVal: [2]
-					}]
+					}],
+					inputsWithGain: 0,
+					headphones: 0
 				},
 				Face: {
 					sections: [],
 					subsections: [],
-					options: []
+					options: [],
+					inputsWithGain: 0,
+					headphones: 0
 				},
 				Beast: {
 					sections: [],
 					subsections: [],
-					options: []
+					options: [],
+					inputsWithGain: 0,
+					headphones: 0
 				}
 			};
 
@@ -4359,23 +4390,21 @@ var SettingsView = function (_View) {
 				subsections: null
 			};
 
-			if (boardString === 'BelaMini') {
-				exceptions['sections'] = settingExceptions['BelaMini']['sections'];
-				exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
-				exceptions['options'] = settingExceptions['BelaMini']['options'];
-			} else if (boardString === 'CtagFace' || boardString === 'CtagBeast') {
-				exceptions['sections'] = settingExceptions['Ctag']['sections'];
-				exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
-				exceptions['options'] = settingExceptions['Ctag']['options'];
+			var excLabel = boardString;
+			// possible overrides for composite cases
+			if (boardString === 'CtagFace' || boardString === 'CtagBeast') {
+				excLabel = 'Ctag';
 			} else if (boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
-				exceptions['sections'] = settingExceptions['CtagBela']['sections'];
-				exceptions['subsections'] = settingExceptions['CtagBela']['subsections'];
-				exceptions['options'] = settingExceptions['CtagBela']['options'];
-			} else {
-				exceptions['sections'] = settingExceptions['Bela']['sections'];
-				exceptions['subsections'] = settingExceptions['Bela']['subsections'];
-				exceptions['options'] = settingExceptions['Bela']['options'];
+				excLabel = 'CtagBela';
 			}
+			if (!settingExceptions[excLabel]) {
+				// default in case something went wrong above
+				excLabel = 'Bela';
+			}
+			exceptions['sections'] = settingExceptions[excLabel]['sections'];
+			var ioSubsecExcepts = excludeInputSubsecs(settingExceptions[excLabel].inputsWithGain).concat(excludeHpSubsecs(settingExceptions[excLabel].headphones));
+			exceptions['subsections'] = settingExceptions[excLabel]['subsections'].concat(ioSubsecExcepts);
+			exceptions['options'] = settingExceptions[excLabel]['options'];
 
 			if (boardString === 'CtagFace' || boardString === 'CtagFaceBela') {
 				exceptions['options'] = exceptions['options'].concat(settingExceptions['Face']['options']);
@@ -4396,7 +4425,6 @@ var SettingsView = function (_View) {
 			}
 
 			for (var e in exceptions['options']) {
-				console.log("exception", e);
 				var opts = $('#' + exceptions['options'][e].selector).children("option");
 				var exceptOpts = exceptions['options'][e].optVal;
 				for (var _i = 0; _i < opts.length; _i++) {
@@ -4408,11 +4436,11 @@ var SettingsView = function (_View) {
 			}
 
 			for (var subsect in exceptions['subsections']) {
-				$('[data-settings="' + exceptions['subsections'][subsect] + '"]').css('display', 'none');
+				$('[data-settings="' + exceptions['subsections'][subsect] + '"]').remove();
 			}
 			for (var sect in exceptions['sections']) {
-				$('[data-accordion-for="' + exceptions['sections'][sect] + '"]').css('display', 'none');
-				$('[data-accordion="' + exceptions['sections'][sect] + '"]').css('display', 'none');
+				$('[data-accordion-for="' + exceptions['sections'][sect] + '"]').remove();
+				$('[data-accordion="' + exceptions['sections'][sect] + '"]').remove();
 			}
 		}
 	}]);
