@@ -1,0 +1,17 @@
+name=Envelope Detector
+version=1.0.0
+author=Adan Benito<adan@bela.io>
+maintainer=Adan Benito<adan@bela.io>
+descriptiona=Envelope detector library usinge one-pole IIR filters to extract the approximate envelope of an inut signal. Different modes of operation have been implemented to simulate detectors commonly empliyed in compressors and other audio effets.
+examples=
+license=LGPL 3.0
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
