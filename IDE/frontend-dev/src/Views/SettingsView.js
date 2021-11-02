@@ -12,7 +12,13 @@ class SettingsView extends View {
 		this.settings.on('change', (data) => this._IDESettings(data) );
 		this.$elements.filterByData = function(prop, val) {
 			return this.filter(
-				function() { return $(this).data(prop)==val; }
+				function() {
+					let text = $(this).data(prop);
+					if (typeof(val) === 'string')
+						return text === val;
+					else
+						return text && text.match(val) !== null;
+					}
 			);
 		}
 

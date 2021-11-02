@@ -3961,7 +3961,8 @@ var SettingsView = function (_View) {
 		});
 		_this.$elements.filterByData = function (prop, val) {
 			return this.filter(function () {
-				return $(this).data(prop) == val;
+				var text = $(this).data(prop);
+				if (typeof val === 'string') return text === val;else return text && text.match(val) !== null;
 			});
 		};
 
