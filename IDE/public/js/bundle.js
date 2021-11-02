@@ -4342,7 +4342,7 @@ var SettingsView = function (_View) {
 					inputsWithGain: 2,
 					headphones: 2
 				},
-				BelaMiniMultichannel: {
+				BelaMiniMultiAudio: {
 					sections: ['capelet-settings'],
 					subsections: ['mute-speaker'],
 					options: [],
