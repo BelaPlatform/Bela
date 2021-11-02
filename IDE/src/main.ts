@@ -29,6 +29,8 @@ export async function init(args : Array<any>){
 				httpPort = ideDev.httpPort;
 			if(ideDev.hasOwnProperty('verbose'))
 				globals.set_verbose(ideDev.verbose);
+			if(ideDev.hasOwnProperty('board'))
+				globals.set_board(ideDev.board);
 		}
 	} catch (err) {}
 	let n = 0;
@@ -166,11 +168,13 @@ export function shutdown(){
 }
 
 export async function board_detect(): Promise<any>{
-	if(globals.local_dev)
-		return 'unknown';
+	if(globals.local_dev) {
+		return new Promise ( (resolve, reject) => {
+			resolve(globals.board);
+		});
+	}
 	return new Promise( (resolve, reject) => {
 		child_process.exec('board_detect', (err, stdout, stderr) => {
-			if (err) stdout = 'unknown';
 			console.log('running on', stdout);
 			resolve(stdout);
 		});
