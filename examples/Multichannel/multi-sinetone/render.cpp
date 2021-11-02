@@ -9,12 +9,12 @@ http://bela.io
 /**
 \example Multichannel/multi-sinetone/render.cpp
 
-Multichannel Sintone
+Multichannel Sinetone
 --------------------
 
 This project is designed to work with the Bela Mini Multichannel Expander or the CTAG multichannel board.
 
-This project generates a sinetone with a different frequency on each of the 8 audio inputs.
+This project generates a sinetone with a different frequency on each of the audio outputs.
 */
 
 #include <Bela.h>
