@@ -18,19 +18,23 @@ audio channels.
 A pair of detuned oscillators are used as a single audio source that is 'rotated' around the available audio output channels
 based on the frequency of the LFO.
 
-Only two adjacent channels are active at each time. Zero-crossings in the LFO are counted to increment channel count and the absolute value of the LFO is employed to compute
-panning within the active adjacent channels.
+Only two adjacent channels are active at each time. Resets in the sawtooth LFO are detected to increment channel count and the
+absolute value of the LFO is employed to compute panning within the active adjacent channels to achieve constant power
+panning via a sine function.
 
 A GUI slider is provide to adjust the oscillator frequency and another one to change the direction of rotation.
-**/
+The scope displays panning gains for each channel and the LFO.
+*/
 #include <Bela.h>
 #include <cmath>
 #include <libraries/Oscillator/Oscillator.h>
 #include <libraries/Gui/Gui.h>
 #include <libraries/GuiController/GuiController.h>
+#include <libraries/Scope/Scope.h>
 
 Gui gui;
 GuiController controller;
+Scope scope;
 
 #define NUM_OSC 2 // Number of audio-rate oscillators
 // Oscillator object declaration
@@ -39,7 +43,7 @@ Oscillator lfo; // LFO
 
 float gOscFreq = 320; // Oscillator frequency
 float gOscDetune = 3.0; // Oscillator detuning
-float gLfoFreqRange[2] = { 0.1, 10 }; // LFO frequency range
+float gLfoFreqRange[2] = { 0.1, 100 }; // LFO frequency range
 
 int gCurrentChannel = 0; // Current active channel
 float gPrevPanning = 0.0; // Previous panning value
@@ -77,17 +81,18 @@ int getNextChannel(int channel, int numChannels, bool counterwise = false)
 
 bool setup(BelaContext *context, void *userData)
 {
+	scope.setup(context->audioOutChannels + 1, context->audioSampleRate);
 	// Set up the GUI
 	gui.setup(context->projectName);
 	// and attach controller to it
 	controller.setup(&gui, "Controls");
 
 	// Add slider to control LFO frequency
-	controller.addSlider("LFO Frequency", 2, gLfoFreqRange[0], gLfoFreqRange[1], 0.01);
+	controller.addSlider("LFO Frequency", 10, gLfoFreqRange[0], gLfoFreqRange[1], 0.01);
 	controller.addSlider("Panning Direction", 1, 0, 1, 1);
 
 	// Setup LFO
-	lfo.setup(context->audioSampleRate, Oscillator::sine);
+	lfo.setup(context->audioSampleRate, Oscillator::sawtooth); // a phasor
 
 	// Setup oscillators
 	for(unsigned int i = 0; i < NUM_OSC; i++)
@@ -95,7 +100,6 @@ bool setup(BelaContext *context, void *userData)
 
 	return true;
 }
-
 
 void render(BelaContext *context, void *userData)
 {
@@ -112,38 +116,43 @@ void render(BelaContext *context, void *userData)
 		for(unsigned int i = 0; i<NUM_OSC; i++)
 			out += (0.05 / NUM_OSC) * osc[i].process(gOscFreq+i*gOscDetune);
 
-		// Get index for next channel
-		unsigned int nextChannel = getNextChannel(gCurrentChannel, context->audioOutChannels, counterwisePanning);
-
 		// Modulate panning with LFO
-		// Note that the frequency of the lfo has been divided by 2 since we take the absolute value
-		// effectively doubling the frequency of the modulation
-		float panning = lfo.process(0.5 * lfoFreq);
+		float panning = lfo.process(lfoFreq) * 0.5f + 0.5f; // between 0 and 1
 
-		// Increment current channel when there is a zero crossing
-		// zero crossing estimaed by comparing changes of sign of current and previous value
-		if( (panning < 0) != (gPrevPanning < 0) )
+		// Increment current channel when the sawtooth resets
+		if( (panning < 0.5) && (gPrevPanning > 0.5))
 		{
 			gCurrentChannel = getNextChannel(gCurrentChannel, context->audioOutChannels, counterwisePanning);
 		}
 		gPrevPanning = panning;
-		// Rectify panning value to modulate panning from 0 to 1
-		panning = fabsf(panning);
+		// Get index for next channel
+		unsigned int nextChannel = getNextChannel(gCurrentChannel, context->audioOutChannels, counterwisePanning);
 
 		// Compute panning for audio audio channels
+		float logs[context->audioOutChannels + 1];
 		for(unsigned int ch = 0; ch < context->audioOutChannels; ch++)
 		{
 			float chPanning = 0.0;
-			if(ch == gCurrentChannel)		// If channel is the current channel...
-				chPanning = panning;		// Set panning value
-			else if(ch == nextChannel)		// If channel is the next channel...
-				chPanning = 1 - panning;	// Compute and set panning value
-			else							// Otherwise...
-				chPanning = 0.0;			// Set to 0
+			// constant power panning.
+			// Remove sinf to obtain constant amplitude (linear) panning (and save CPU)
+			if(ch == gCurrentChannel)
+			{
+				chPanning = sinf(1.f - panning);
+			} else if(ch == nextChannel)
+			{
+				chPanning = sinf(panning);
+			}
+			else
+				chPanning = 0.0;
 
-			// Write output multiplied by panning value
+			// Write output scaled by panning value
 			audioWrite(context, n, ch, out * chPanning);
+			// log to the scope the gain of each channel with a vertical scale and offset
+			logs[ch] = chPanning / float(context->audioOutChannels) + ch / float(context->audioOutChannels);
 		}
+		// the last channel logged to the scope if the LFO (offsetted)
+		logs[context->audioOutChannels] = panning - 1;
+		scope.log(logs);
 	}
 }
 
