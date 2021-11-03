@@ -13,7 +13,7 @@ Multichannel Sidechain Ducker
 =============================
 
 This example implements a multichannel ducker based on a feedfoward compressor architecture which makes use
-the Envelope Detector library for peak detection.
+of the Envelope Detector library for peak detection.
 
 The sidechain ducker works similarly to a compressor: a gain-reduction control signal is computed based on
 envelope of an incoming signal. However, in this case, the gain reduction is applied to a different channel
@@ -25,9 +25,9 @@ reduced based on the envelope of the audio input for that channel.
 
 A control GUI has been prepared to be able to change the parameters of the ducker/compressor.
 Sliders for attack time and release time (in milliseconds) as well as threshold (dB), compression ratio, knee
-width (dB) and makeup gain (dB) are provide to make the example fully customisable.
+width (dB) and makeup gain (dB) are provided to make the example fully customisable.
 
-Input channels are assigned to the same number of outptu channel.
+Input channels are assigned to the same number of outptut channel.
 If the number of outputs is greater than the number of inputs then the remaining output channels will be silent.
 If the number of inputs is greater than the number of outputs then only the first few channels will be used.
 **/
