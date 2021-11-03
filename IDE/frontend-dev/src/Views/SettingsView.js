@@ -426,7 +426,9 @@ class SettingsView extends View {
 			excLabel = 'Bela';
 		}
 		exceptions['sections'] = settingExceptions[excLabel]['sections'];
-		var ioSubsecExcepts = excludeInputSubsecs(settingExceptions[excLabel].inputsWithGain).concat(excludeHpSubsecs(settingExceptions[excLabel].headphones));
+		var inputsWithGain = settingExceptions[excLabel].inputsWithGain;
+		var headphones = settingExceptions[excLabel].headphones;
+		var ioSubsecExcepts = excludeInputSubsecs(inputsWithGain).concat(excludeHpSubsecs(headphones));
 		exceptions['subsections'] = settingExceptions[excLabel]['subsections'].concat(ioSubsecExcepts);
 		exceptions['options'] = settingExceptions[excLabel]['options'];
 
@@ -447,7 +449,21 @@ class SettingsView extends View {
 				}
 			}
 		}
-
+		function replaceDataSettings(value, find, replace) {
+			var tags = $('[data-settings="' + value + '"]>td.left-choice');
+			if (tags.length) {
+				var tag = tags[0];
+				tag.innerHTML = tag.innerHTML.replace(find, replace);
+			}
+		}
+		if (2 === settingExceptions[excLabel].inputsWithGain) {
+			replaceDataSettings('input-level0', '0', 'Left');
+			replaceDataSettings('input-level1', '1', 'Right');
+		}
+		if (2 === settingExceptions[excLabel].headphones) {
+			replaceDataSettings('headphone-level0', '0', 'Left');
+			replaceDataSettings('headphone-level1', '1', 'Right');
+		}
 		for(var e in exceptions['options']) {
 			var opts = $('#'+exceptions['options'][e].selector).children("option");
 			var exceptOpts = exceptions['options'][e].optVal;
