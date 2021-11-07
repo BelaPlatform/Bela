@@ -19,42 +19,26 @@ This project generates a sinetone with a different frequency on each of the audi
 
 #include <Bela.h>
 #include <cmath>
+#include <vector>
+#include <libraries/Oscillator/Oscillator.h>
 
-#define NUM_OUTPUTS 8
+std::vector<Oscillator> oscs;
+float gBaseFrequency = 80;
+float gAmplitude = 0.8;
 
-float gPhases[NUM_OUTPUTS];
-float gFrequencies[NUM_OUTPUTS] = {
-	220,
-	330,
-	440,
-	550,
-	660,
-	770,
-	880,
-	990
-};
-
-float gInverseSampleRate;
-
-bool setup(BelaContext *context, void *userData)
+bool setup(BelaContext* context, void *userData)
 {
-	gInverseSampleRate = 1.0 / context->audioSampleRate;
-	for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
-		gPhases[channel] = 0.0;
-	}
+	for(unsigned int n = 0; n < context->audioOutChannels; ++n)
+		oscs.push_back({context->audioSampleRate, Oscillator::sine});
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-
 		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
-			float out = 0.8 * sinf(gPhases[channel]);
-			gPhases[channel] += 2.0 * M_PI * gFrequencies[channel] * gInverseSampleRate;
-			if(gPhases[channel] > 2.0 * M_PI)
-				gPhases[channel] -= 2.0 * M_PI;
-			audioWrite(context, n, channel, out);
+			float out = oscs[channel].process(gBaseFrequency * (channel + 1));
+			audioWrite(context, n, channel, gAmplitude * out);
 		}
 	}
 }
