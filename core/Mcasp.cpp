@@ -434,7 +434,7 @@ McaspRegisters McaspConfig::getRegisters()
 	ret = setChannels(params.outChannels, params.outSerializers, false);
 	if(ret)
 		fprintf(stderr, "McaspConfig: error while setting output channels\n");
-	regs.rmask = regs.xmask = (1 << params.slotSize) - 1;
+	regs.rmask = regs.xmask = ((uint64_t)1 << (uint64_t)params.dataSize) - 1;
 	return regs;
 }
 
