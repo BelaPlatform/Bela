@@ -1418,7 +1418,7 @@ MCASP_SRCTL_NOT_BELA_TLV32_OR_BELA_MULTI_TLV:
     // Set pin direction
     LBBO r2, reg_comm_addr, COMM_MCASP_CONF_PDIR, 4
     MCASP_REG_WRITE MCASP_PDIR, r2
-    MCASP_REG_WRITE MCASP_DITCTL, 0x00A // disable DIT
+    MCASP_REG_WRITE MCASP_DITCTL, 0x00 // disable DIT
     MCASP_REG_WRITE MCASP_DLBCTL, 0x00 // disable loopback
     MCASP_REG_WRITE MCASP_AMUTE, 0x0 // disable audio mute
 
