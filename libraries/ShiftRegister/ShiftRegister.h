@@ -3,10 +3,10 @@
 #include <vector>
 
 /**
- * @brief A class to drive a shift register using Bela's digital outputs.
+ * @brief A class to drive a shift register using Bela's digital I/O.
  *
- * A class to drive a shift register using Bela's digital outputs.
- * This class accesses the BelaContext directly to perform data output.
+ * A class to drive a shift register using Bela's digital I/O.
+ * This class accesses the BelaContext directly to perform data I/O.
  * You need to assign it three digital channels at initialisation, to which
  * data will be written at each call to process().
  */
@@ -40,20 +40,38 @@ public:
 	 */
 	 void setup(const Pins& pins, unsigned int maxSize);
 	/**
+	 * Shift I/O data for all the digital frames in @p context.
+	 */
+	virtual void process(BelaContext* context) = 0;
+	/**
+	 * Shift I/O data for frame @p n.
+	 */
+	virtual void process(BelaContext* context, unsigned int n) = 0;
+protected:
+	Pins pins;
+	typedef enum {
+		kStart,
+		kTransmitting,
+		kStop,
+		kIdle,
+	} State;
+
+	State state = kStop;
+	unsigned int currentDataFrame = 0;
+	std::vector<bool> data;
+	bool pinModeSet = false;
+};
+
+class ShiftRegisterOut : public ShiftRegister
+{
+public:
+	/**
 	 * Check whether the last data set with setData() has been fully shifted out.
 	 *
 	 * @return `true` if all data has been shifted out, or `false` if
 	 * shifting is still in progress.
 	 */
 	bool dataSent();
-	/**
-	 * Shift out data for all the digital frames in @p context.
-	 */
-	void process(BelaContext* context);
-	/**
-	 * Shift out data for frame @p n.
-	 */
-	void process(BelaContext* context, unsigned int n);
 	/**
 	 * Set new data bits to be shifted out. Data willl be shifted out during the
 	 * subsequent calls to process(), until dataSent() returns `true`.
@@ -70,17 +88,6 @@ public:
 	 * @param length the length of the data.
 	 */
 	void setData(const bool* dataBuf, unsigned int length);
-private:
-	Pins pins;
-	typedef enum {
-		kStart,
-		kTransmitting,
-		kStop,
-		kIdle,
-	} State;
-
-	State state = kStop;
-	unsigned int currentDataFrame = 0;
-	std::vector<bool> data;
-	bool pinModeSet = false;
+	void process(BelaContext* context);
+	void process(BelaContext* context, unsigned int n);
 };

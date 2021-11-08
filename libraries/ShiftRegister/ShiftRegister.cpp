@@ -12,18 +12,18 @@ void ShiftRegister::setup(const Pins& pins, unsigned int maxSize)
 	data.resize(maxSize);
 }
 
-bool ShiftRegister::dataSent()
+bool ShiftRegisterOut::dataSent()
 {
 	return kIdle == state;
 }
 
-void ShiftRegister::process(BelaContext* context)
+void ShiftRegisterOut::process(BelaContext* context)
 {
 	for(unsigned int n = 0; n < context->digitalFrames; ++n)
 		process(context, n);
 }
 
-void ShiftRegister::process(BelaContext* context, unsigned int n)
+void ShiftRegisterOut::process(BelaContext* context, unsigned int n)
 {
 	if(!pinModeSet)
 	{
@@ -65,14 +65,14 @@ void ShiftRegister::process(BelaContext* context, unsigned int n)
 	digitalWriteOnce(context, n, pins.latch, latchValue);
 }
 
-void ShiftRegister::setData(const std::vector<bool>& dataBuf)
+void ShiftRegisterOut::setData(const std::vector<bool>& dataBuf)
 {
 	// if dataBuf is larger than data, reallocation may occur
 	data = dataBuf;
 	state = kStart;
 }
 
-void ShiftRegister::setData(const bool* dataBuf, unsigned int length)
+void ShiftRegisterOut::setData(const bool* dataBuf, unsigned int length)
 {
 	// if length is larger than data.capacity(), reallocation will occur
 	data.resize(length);

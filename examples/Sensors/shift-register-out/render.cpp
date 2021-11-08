@@ -71,7 +71,7 @@ int gCounter = 0;
 const int gIntervalSamples = 2000; // samples between updates of the LEDs
 int litLED = 0;
 
-ShiftRegister shiftRegister;
+ShiftRegisterOut shiftRegister;
 
 bool setup(BelaContext *context, void *userData)
 {
