@@ -17,6 +17,13 @@ bool ShiftRegisterOut::dataSent()
 	return kIdle == state;
 }
 
+void ShiftRegisterOut::setClockPeriod(unsigned int period)
+{
+	if(period < 2)
+		period = 2;
+	this->period = period;
+}
+
 void ShiftRegisterOut::process(BelaContext* context)
 {
 	for(unsigned int n = 0; n < context->digitalFrames; ++n)
@@ -46,18 +53,27 @@ void ShiftRegisterOut::process(BelaContext* context, unsigned int n)
 		break;
 	case kTransmitting:
 		latchValue = 1;
-		dataValue = data[currentDataFrame / 2];
-		clockValue = currentDataFrame & 1;
+		dataValue = data[currentDataFrame / period];
+		clockValue = (currentDataFrame % period) >= (period / 2);
 		++currentDataFrame;
-		if(2 * data.size() == currentDataFrame)
+		if(period * data.size() == currentDataFrame)
+		{
+			currentStopFrame = 0;
 			state = kStop;
+		}
 		break;
 	case kStop:
+		latchValue = 0;
+		dataValue = 0;
+		clockValue = 0;
+		++currentStopFrame;
+		if(currentStopFrame >= (unsigned int)(period / 2.f + 0.5f)) // round up to ensure at least half period of latch for odd periods
+			state = kIdle;
+		break;
 	case kIdle:
 		latchValue = 0;
 		dataValue = 0;
 		clockValue = 0;
-		state = kIdle;
 		break;
 	}
 	digitalWriteOnce(context, n, pins.data, dataValue);

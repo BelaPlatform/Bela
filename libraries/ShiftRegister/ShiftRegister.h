@@ -40,10 +40,6 @@ public:
 	 */
 	 void setup(const Pins& pins, unsigned int maxSize);
 	/**
-	 * Shift I/O data for all the digital frames in @p context.
-	 */
-	virtual void process(BelaContext* context) = 0;
-	/**
 	 * Shift I/O data for frame @p n.
 	 */
 	virtual void process(BelaContext* context, unsigned int n) = 0;
@@ -57,7 +53,6 @@ protected:
 	} State;
 
 	State state = kStop;
-	unsigned int currentDataFrame = 0;
 	std::vector<bool> data;
 	bool pinModeSet = false;
 };
@@ -65,6 +60,11 @@ protected:
 class ShiftRegisterOut : public ShiftRegister
 {
 public:
+	/**
+	 * Set the period of the clock expressed in samples.
+	 * The minimum value is 2.
+	 */
+	void setClockPeriod(unsigned int period);
 	/**
 	 * Check whether the last data set with setData() has been fully shifted out.
 	 *
@@ -88,6 +88,13 @@ public:
 	 * @param length the length of the data.
 	 */
 	void setData(const bool* dataBuf, unsigned int length);
+	/**
+	 * Shift I/O data for all the digital frames in @p context.
+	 */
 	void process(BelaContext* context);
-	void process(BelaContext* context, unsigned int n);
+	void process(BelaContext* context, unsigned int n) override;
+private:
+	unsigned int period = 2;
+	unsigned int currentDataFrame;
+	unsigned int currentStopFrame;
 };
