@@ -963,6 +963,38 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			}
 		}
 #endif /* defined USE_NEON_FORMAT_CONVERSION */
+		if(BelaHw_CtagBeast == belaHw || BelaHw_CtagBeastBela == belaHw)
+		{
+			// on the input data line we get:
+			// - inputs from main codec (slots 0:3)
+			// - inputs from secondary codec (slots 4:7)
+			// on the output data line we get:
+			// - outputs to secondary codec (slots 0:7)
+			// - outputs to main codec (slots 8:15)
+			// For historical reasons, we want them to be all in the same
+			// order, with secondary codec's channels first. So here we
+			// swap the inputs
+			for(unsigned int f = 0; f < context->audioFrames; ++f)
+			{
+				for(unsigned int c = 0; c < audioInChannels / 2; ++c)
+				{
+					size_t offset0;
+					size_t offset1;
+					if(interleaved)
+					{
+						offset0 = context->audioInChannels * f + c;
+						offset1 = context->audioInChannels * f + c + context->audioInChannels / 2;
+					} else {
+						offset0 = context->audioFrames * c + f;
+						offset1 = context->audioFrames * (c + context->audioInChannels / 2) + f;
+					}
+					float valueA = context->audioIn[offset1];
+					float valueB = context->audioIn[offset0];
+					context->audioIn[offset0] = valueA;
+					context->audioIn[offset1] = valueB;
+				}
+			}
+		}
 		
 		if(analog_enabled) {
 			if(context->multiplexerChannels != 0) {
