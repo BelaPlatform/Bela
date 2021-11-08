@@ -775,7 +775,7 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 	if(useEmbeddedPruCode)
 		pruManager_ret = pruManager->start(pruUsesMcaspIrq);
 	else
-		pruManager_ret = pruManager->start(filename);
+		pruManager_ret = pruManager->start(std::string(filename)); // simply passing filename calls the wrong overload
 	if(pruManager_ret)
 	{
 		fprintf(stderr, "Failed to execute PRU code\n");
