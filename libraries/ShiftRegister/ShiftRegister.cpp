@@ -101,3 +101,48 @@ void ShiftRegisterOut::setData(const bool* dataBuf, unsigned int length)
 		data[n] = dataBuf[n];
 	state = kStart;
 }
+
+const std::vector<bool>& ShiftRegisterIn::getData()
+{
+	return data;
+}
+
+void ShiftRegisterIn::process(BelaContext* context, unsigned int n)
+{
+	if(!pinModeSet)
+	{
+		// TODO: should set this from frame n to be rigorous, but this
+		// requires fixing https://github.com/BelaPlatform/Bela/issues/412 first
+		pinMode(context, 0, pins.data, INPUT);
+		pinMode(context, 0, pins.clock, INPUT);
+		pinMode(context, 0, pins.latch, INPUT);
+		pinModeSet = true;
+	}
+	bool latchValue = digitalRead(context, n, pins.latch);
+	bool dataValue = digitalRead(context, n, pins.data);
+	bool clockValue = digitalRead(context, n, pins.clock);
+	if(latchValue && !pastLatch)
+		state = kStart;
+	if(!latchValue && pastLatch)
+	{
+		state = kStop;
+		notified = false;
+	}
+	switch(state)
+	{
+	case kStart:
+		data.resize(0);
+		state = kTransmitting;
+		break;
+	case kTransmitting:
+		if(clockValue && !pastClock)
+			data.push_back(dataValue);
+		break;
+	case kStop:
+	case kIdle:
+		state = kIdle;
+		break;
+	}
+	pastLatch = latchValue;
+	pastClock = clockValue;
+}

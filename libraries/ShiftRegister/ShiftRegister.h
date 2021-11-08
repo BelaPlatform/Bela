@@ -101,3 +101,28 @@ private:
 	unsigned int currentDataFrame;
 	unsigned int currentStopFrame;
 };
+
+class ShiftRegisterIn : public ShiftRegister
+{
+public:
+	/**
+	 * Check whether there is data that has been shifted in and the
+	 * transmission has completed.
+	 *
+	 * @return `true` if the last transmission has completed and the data
+	 * is ready to be accessed via getData().
+	 */
+	bool dataReceived();
+	/**
+	 * Get the data that has been shifted in. This is only guaranteed to
+	 * contain the complete content of a transmission if it is called
+	 * in the same frame as dataReceived() returns `true`.
+	 *
+	 * @return the incoming data.
+	 */
+	const std::vector<bool>& getData();
+	void process(BelaContext* context, unsigned int n) override;
+private:
+	bool pastLatch = false;
+	bool pastClock = false;
+};
