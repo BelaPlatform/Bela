@@ -12,9 +12,11 @@ void ShiftRegister::setup(const Pins& pins, unsigned int maxSize)
 	data.resize(maxSize);
 }
 
-bool ShiftRegisterOut::dataSent()
+bool ShiftRegister::dataReady()
 {
-	return kIdle == state;
+	bool ret = kIdle == state && !notified;
+	notified = true;
+	return ret;
 }
 
 void ShiftRegisterOut::setClockPeriod(unsigned int period)
@@ -68,7 +70,10 @@ void ShiftRegisterOut::process(BelaContext* context, unsigned int n)
 		clockValue = 0;
 		++currentStopFrame;
 		if(currentStopFrame >= (unsigned int)(period / 2.f + 0.5f)) // round up to ensure at least half period of latch for odd periods
+		{
+			notified = false;
 			state = kIdle;
+		}
 		break;
 	case kIdle:
 		latchValue = 0;

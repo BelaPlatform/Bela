@@ -40,6 +40,15 @@ public:
 	 */
 	 void setup(const Pins& pins, unsigned int maxSize);
 	/**
+	 * Check whether the last I/O transmission is completed.
+	 * After one call has returned `true`, future calls will return `false`
+	 * until a new transmission is completed.
+	 *
+	 * @return `true` if all data has been shifted, or `false` if
+	 * shifting is still in progress.
+	 */
+	bool dataReady();
+	/**
 	 * Shift I/O data for frame @p n.
 	 */
 	virtual void process(BelaContext* context, unsigned int n) = 0;
@@ -55,6 +64,7 @@ protected:
 	State state = kStop;
 	std::vector<bool> data;
 	bool pinModeSet = false;
+	bool notified = true;
 };
 
 class ShiftRegisterOut : public ShiftRegister
@@ -65,13 +75,6 @@ public:
 	 * The minimum value is 2.
 	 */
 	void setClockPeriod(unsigned int period);
-	/**
-	 * Check whether the last data set with setData() has been fully shifted out.
-	 *
-	 * @return `true` if all data has been shifted out, or `false` if
-	 * shifting is still in progress.
-	 */
-	bool dataSent();
 	/**
 	 * Set new data bits to be shifted out. Data willl be shifted out during the
 	 * subsequent calls to process(), until dataSent() returns `true`.
