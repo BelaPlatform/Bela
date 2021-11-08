@@ -90,6 +90,8 @@ endif # ifndef PROJECT
 COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio_irq.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
 run: pru_rtaudio_irq.bin
+runide: pru_rtaudio.bin
+runide: pru_rtaudio_irq.bin
 else
 build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
 endif #ifeq($(RUN_WITH_PRU_BIN),true)
