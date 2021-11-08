@@ -657,13 +657,17 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// TODO: add more argument checks
 
 	if(setChannelGains(settings->audioInputGains, Bela_setAudioInputGain))
-		return 1;
+		if(gRTAudioVerbose)
+			printf("Setting audio input gains: channels out of range\n");
 	if(setChannelGains(settings->headphoneGains, Bela_setHpLevel))
-		return 1;
+		if(gRTAudioVerbose)
+			printf("Setting audio headphone gains: channels out of range\n");
 	if(setChannelGains(settings->dacGains, Bela_setDacLevel))
-		return 1;
+		if(gRTAudioVerbose)
+			printf("Setting audio dac gains: channels out of range\n");
 	if(setChannelGains(settings->adcGains, Bela_setAdcLevel))
-		return 1;
+		if(gRTAudioVerbose)
+			printf("Setting audio adc gains: channels out of range\n");
 
 	// These are deprecated. We keep them for bw compatibilty.
 	// will be removed later.
