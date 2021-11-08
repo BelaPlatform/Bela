@@ -1534,7 +1534,9 @@ WRITE_FRAME_MULTI_TLV_LOOP:
 	MCASP_WRITE_TO_DATAPORT 0x00, 4 // Write 4 bytes for each channel
 	SUB r2, r2, 1
 	QBNE WRITE_FRAME_MULTI_TLV_LOOP, r2, 0
-
+WRITE_FRAME_NOT_MULTI_TLV:
+#endif /* ENABLE_BELA_GENERIC_TDM */
+WRITE_FRAME_DONE:
         // the RX fifo should be empty according to the docs, but it's not
         // always case, so we may end up with an offset of 1*numSerializers
         // the below seems to be taking care of that by emptying the FIFO before we start
@@ -1544,9 +1546,6 @@ WRITE_FRAME_EMPTY_RX:
 	FIFO_READ_2_WORDS_AND_PACK r1, r9, r10
         ADD r2, r2, 1
         QBEQ WRITE_FRAME_EMPTY_RX, r2, 128 // 128 is arbitrary. Let's say it's large enough
-WRITE_FRAME_NOT_MULTI_TLV:
-#endif /* ENABLE_BELA_GENERIC_TDM */
-WRITE_FRAME_DONE:
 
 
 // 8. Release state machines from reset.
