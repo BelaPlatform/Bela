@@ -565,15 +565,11 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_BelaMiniMultiAudio:
 	case BelaHw_BelaMultiTdm:
 	case BelaHw_BelaMiniMultiI2s:
-		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
-		break;
 	case BelaHw_CtagFace:
-	case BelaHw_CtagFaceBela:
-		board_flags |= 1 << BOARD_FLAGS_CTAG_FACE;
-		break;
 	case BelaHw_CtagBeast:
+	case BelaHw_CtagFaceBela:
 	case BelaHw_CtagBeastBela:
-		board_flags |= 1 << BOARD_FLAGS_CTAG_BEAST;
+		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
 	case BelaHw_Bela:
 	case BelaHw_BelaMini:

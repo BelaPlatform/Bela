@@ -349,6 +349,20 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 }
 
 McaspConfig& Spi_Codec::getMcaspConfig() {
+        mcaspConfig.params.inChannels = getNumIns();
+        mcaspConfig.params.outChannels = getNumOuts();
+        mcaspConfig.params.inSerializers = {0};
+        mcaspConfig.params.outSerializers = {2};
+        mcaspConfig.params.numSlots = getNumOuts();
+        mcaspConfig.params.slotSize = 32;
+        mcaspConfig.params.dataSize = 16;
+        mcaspConfig.params.bitDelay = 1;
+        mcaspConfig.params.ahclkIsInternal = true; // ignored in practice
+        mcaspConfig.params.ahclkFreq = 12000000; // ignored in practice
+        mcaspConfig.params.wclkIsInternal = false;
+        mcaspConfig.params.wclkIsWord = true;
+        mcaspConfig.params.wclkFalling = false;
+        mcaspConfig.params.externalSamplesRisingEdge = true;
         return mcaspConfig;
 }
 
