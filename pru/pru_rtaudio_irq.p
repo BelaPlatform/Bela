@@ -1543,7 +1543,7 @@ WRITE_FRAME_DONE:
         MOV r2, 0
 WRITE_FRAME_EMPTY_RX:
         // read and discard words
-	FIFO_READ_2_WORDS_AND_PACK r1, r9, r10
+        FIFO_READ_2_WORDS_AND_PACK r1, r1, r1
         ADD r2, r2, 1
         QBEQ WRITE_FRAME_EMPTY_RX, r2, 128 // 128 is arbitrary. Let's say it's large enough
 
