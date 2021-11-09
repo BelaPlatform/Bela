@@ -248,7 +248,7 @@
       "y": "18",
       "width": "13",
       "height": "13",
-      "text": "Audio In 4 (Pd: [adc~ 5])",
+      "text": "Audio In 6 (Pd: [adc~ 7])",
       "tip": "tooltip"
     },
     {
@@ -257,7 +257,7 @@
       "y": "18",
       "width": "13",
       "height": "13",
-      "text": "Audio In 5 (Pd: [adc~ 6])",
+      "text": "Audio In 7 (Pd: [adc~ 8])",
       "tip": "tooltip"
     },
 	{
@@ -275,7 +275,7 @@
       "y": "18",
       "width": "13",
       "height": "13",
-      "text": "Audio In 6 (Pd: [adc~ 7])",
+      "text": "Audio In 4 (Pd: [adc~ 5])",
       "tip": "tooltip"
     },
     {
@@ -284,7 +284,7 @@
       "y": "18",
       "width": "13",
       "height": "13",
-      "text": "Audio In 7 (Pd: [adc~ 8])",
+      "text": "Audio In 5 (Pd: [adc~ 6])",
       "tip": "tooltip"
     },
     {
