@@ -104,7 +104,7 @@
 		"y": "17",
 		"width": "13",
 		"height": "13",
-		"text": "Audio Out 6 (Pd: [dac~ 7])",
+		"text": "Audio Out 4 (Pd: [dac~ 5])",
 		"tip": "tooltip"
 	},
 	{
@@ -113,7 +113,7 @@
 		"y": "17",
 		"width": "13",
 		"height": "13",
-		"text": "Audio Out 7 (Pd: [dac~ 8])",
+		"text": "Audio Out 5 (Pd: [dac~ 6])",
 		"tip": "tooltip"
 	},
 	{
@@ -131,7 +131,7 @@
 		"y": "17",
 		"width": "13",
 		"height": "13",
-		"text": "Audio Out 4 (Pd: [dac~ 5])",
+		"text": "Audio Out 6 (Pd: [dac~ 7])",
 		"tip": "tooltip"
 	},
 	{
@@ -140,7 +140,7 @@
 		"y": "17",
 		"width": "13",
 		"height": "13",
-		"text": "Audio Out 5 (Pd: [dac~ 6])",
+		"text": "Audio Out 7 (Pd: [dac~ 8])",
 		"tip": "tooltip"
 	},
     {
@@ -347,7 +347,7 @@
       "y": "440",
       "width": "13",
       "height": "13",
-      "text": "Digital 0 (Pd: 11)",
+      "text": "Digital 0 (Pd: 17)",
       "tip": "tooltip"
     },
     {
@@ -356,7 +356,7 @@
       "y": "440",
       "width": "13",
       "height": "13",
-      "text": "Digital 1 (Pd: 12)",
+      "text": "Digital 1 (Pd: 18)",
       "tip": "tooltip"
     },
     {
@@ -365,7 +365,7 @@
       "y": "420",
       "width": "13",
       "height": "13",
-      "text": "Digital 2 (Pd: 13)",
+      "text": "Digital 2 (Pd: 19)",
       "tip": "tooltip"
     },
     {
@@ -374,7 +374,7 @@
       "y": "400",
       "width": "13",
       "height": "13",
-      "text": "Digital 3 (Pd: 14)",
+      "text": "Digital 3 (Pd: 20)",
       "tip": "tooltip"
     },
     {
@@ -383,7 +383,7 @@
       "y": "380",
       "width": "13",
       "height": "13",
-      "text": "Digital 4 (Pd: 15)",
+      "text": "Digital 4 (Pd: 21)",
       "tip": "tooltip"
     },
     {
@@ -392,7 +392,7 @@
       "y": "358",
       "width": "13",
       "height": "13",
-      "text": "Digital 5 (Pd: 16)",
+      "text": "Digital 5 (Pd: 22)",
       "tip": "tooltip"
     },
     {
@@ -419,7 +419,7 @@
       "y": "276",
       "width": "13",
       "height": "13",
-      "text": "Digital 6 (Pd: 17)",
+      "text": "Digital 6 (Pd: 23)",
       "tip": "tooltip"
     },
     {
@@ -428,7 +428,7 @@
       "y": "256",
       "width": "13",
       "height": "13",
-      "text": "Digital 7 (Pd: 18)",
+      "text": "Digital 7 (Pd: 24)",
       "tip": "tooltip"
     },
     {
@@ -437,7 +437,7 @@
       "y": "236",
       "width": "13",
       "height": "13",
-      "text": "Digital 8 (Pd: 19)",
+      "text": "Digital 8 (Pd: 25)",
       "tip": "tooltip"
     },
     {
@@ -446,7 +446,7 @@
       "y": "216",
       "width": "13",
       "height": "13",
-      "text": "Digital 9 (Pd: 20)",
+      "text": "Digital 9 (Pd: 26)",
       "tip": "tooltip"
     },
     {
@@ -455,7 +455,7 @@
       "y": "174",
       "width": "13",
       "height": "13",
-      "text": "Digital 10 (Pd: 21)",
+      "text": "Digital 10 (Pd: 27)",
       "tip": "tooltip"
     },
     {
@@ -464,7 +464,7 @@
       "y": "154",
       "width": "13",
       "height": "13",
-      "text": "Digital 11 (Pd: 22)",
+      "text": "Digital 11 (Pd: 28)",
       "tip": "tooltip"
     },
     {
@@ -473,7 +473,7 @@
       "y": "92",
       "width": "13",
       "height": "13",
-      "text": "Digital 12 (Pd: 23)",
+      "text": "Digital 12 (Pd: 29)",
       "tip": "tooltip"
     },
     {
@@ -482,7 +482,7 @@
       "y": "93",
       "width": "13",
       "height": "13",
-      "text": "Digital 13 (Pd: 24)",
+      "text": "Digital 13 (Pd: 30)",
       "tip": "tooltip"
     },
     {
@@ -491,7 +491,7 @@
       "y": "133",
       "width": "13",
       "height": "13",
-      "text": "Digital 14 (Pd: 25)",
+      "text": "Digital 14 (Pd: 31)",
       "tip": "tooltip"
     },
     {
@@ -500,7 +500,7 @@
       "y": "153",
       "width": "13",
       "height": "13",
-      "text": "Digital 15 (Pd: 26)",
+      "text": "Digital 15 (Pd: 32)",
       "tip": "tooltip"
     },
     {
@@ -527,7 +527,7 @@
       "y": "426",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 0 (Pd: [adc~ 3])",
+      "text": "Analog IN 0 (Pd: [adc~ 9])",
       "tip": "tooltip"
     },
     {
@@ -536,7 +536,7 @@
       "y": "408",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 1 (Pd: [adc~ 4])",
+      "text": "Analog IN 1 (Pd: [adc~ 10])",
       "tip": "tooltip"
     },
     {
@@ -545,7 +545,7 @@
       "y": "390",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 2 (Pd: [adc~ 5])",
+      "text": "Analog IN 2 (Pd: [adc~ 11])",
       "tip": "tooltip"
     },
     {
@@ -554,7 +554,7 @@
       "y": "371",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 3 (Pd: [adc~ 6])",
+      "text": "Analog IN 3 (Pd: [adc~ 12])",
       "tip": "tooltip"
     },
     {
@@ -563,7 +563,7 @@
       "y": "354",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 4 (Pd: [adc~ 7])",
+      "text": "Analog IN 4 (Pd: [adc~ 13])",
       "tip": "tooltip"
     },
     {
@@ -572,7 +572,7 @@
       "y": "336",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 5 (Pd: [adc~ 8])",
+      "text": "Analog IN 5 (Pd: [adc~ 14])",
       "tip": "tooltip"
     },
     {
@@ -581,7 +581,7 @@
       "y": "318",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 6 (Pd: [adc~ 9])",
+      "text": "Analog IN 6 (Pd: [adc~ 15])",
       "tip": "tooltip"
     },
     {
@@ -590,7 +590,7 @@
       "y": "300",
       "width": "13",
       "height": "13",
-      "text": "Analog IN 7 (Pd: [adc~ 10])",
+      "text": "Analog IN 7 (Pd: [adc~ 16])",
       "tip": "tooltip"
     },
     {
