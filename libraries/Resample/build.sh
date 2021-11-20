@@ -1,2 +1,0 @@
-cd "$(dirname "$0")"
-../../bela-remote-tools/Bela/scripts/build_project.sh . --force -c '--period 16' -m 'LDFLAGS=-L./libraries/ne10 LDLIBS=-lNE10 CPPFLAGS="-D PIMP_WITH_NE10=1 -D PIMP_USE_DOUBLES=0 -I./libraries/ne10" CFLAGS="-D PIMP_WITH_NE10=1 -D PIMP_USE_DOUBLES=0 -I./libraries/ne10"'

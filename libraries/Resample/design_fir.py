@@ -1,14 +1,13 @@
-# %% import scipy.signal as sig
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
 import os
 
-fs = 1                                 # samplerate
+sr = 1                                 # samplerate
 ripple = {"high": 80, "low": 60}       # stopband attenuation and passband ripple
 cutoff_ny = {"high": 0.9, "low": 0.7}  # cutoff relative to nyquist
 
-fname = f"aa_fir.h"
+fname = "aa_fir.h"
 try:
     os.remove(fname)
 except FileNotFoundError:
@@ -19,19 +18,22 @@ file.write("#include <vector>\n\n")
 
 for down in [2, 4, 8, 16]:
     for quality in ripple:
-        nyquist_resampled = fs/down/2            # new nyquist
-        cutoff = 0.5/down * cutoff_ny[quality]   # filter cutoff
-        width = (nyquist_resampled - cutoff)*2   # filter transition bandwidth
+        nyquist_resampled = sr/down/2                 # new nyquist
+        cutoff = 0.5 * sr/down * cutoff_ny[quality]   # filter cutoff
+        width = (nyquist_resampled - cutoff)*2     # filter transition bandwidth
 
         # design kaiser such that stopband starts at nyquist
-        numtaps, beta = sig.kaiserord(ripple[quality], width/(0.5*fs))
-        taps = sig.firwin(numtaps, cutoff, window=('kaiser', beta), fs=fs)
+        numtaps, beta = sig.kaiserord(ripple[quality], width/(0.5*sr))
+        taps = sig.firwin(numtaps, cutoff, window=('kaiser', beta), fs=sr)
         tapsmin = sig.minimum_phase(taps)
+
+        taps = taps/np.sum(taps)
+        tapsmin = tapsmin/np.sum(tapsmin)
 
         w, h = sig.freqz(taps, worN=8000)
         w, hmin = sig.freqz(taps, worN=8000)
 
-        f = w * 0.5*fs/np.pi  # Convert w to Hz.
+        f = w * 0.5*sr/np.pi  # Convert w to Hz.
 
         plt.figure(1)
         plt.plot(f, 20*np.log10(np.abs(h)))
@@ -51,6 +53,7 @@ for down in [2, 4, 8, 16]:
         plt.plot(f, 20*np.log10(np.abs(hmin)))
         plt.ylim(-10, 2)
 
+        print("fac", down, "\tQ", quality, "\tcut", cutoff)
         file.write(f"// cutoff:  {cutoff} * sr\n")
         file.write(f"// numTaps: {len(tapsmin)}\n")
         file.write(f"// ripple:  {ripple[quality]}\n")
