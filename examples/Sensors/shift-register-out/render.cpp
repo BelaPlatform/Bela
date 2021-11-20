@@ -71,7 +71,7 @@ int gCounter = 0;
 const int gIntervalSamples = 2000; // samples between updates of the LEDs
 int litLED = 0;
 
-ShiftRegister shiftRegister;
+ShiftRegisterOut shiftRegister;
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -86,7 +86,7 @@ void render(BelaContext *context, void *userData)
 		shiftRegister.process(context, n);
 		// once all previous data has been shifted out,
 		// start sending new data
-		if(shiftRegister.dataSent())
+		if(shiftRegister.dataReady())
 			shiftRegister.setData(data);
 
 		// Cycle through LEDs, updating the data that is sent out every gIntervalSamples samples

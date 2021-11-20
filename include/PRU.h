@@ -1,17 +1,10 @@
-/*
- * PRU.h
- *
- *  Created on: May 27, 2014
- *      Author: andrewm
- */
-
-#ifndef PRU_H_
-#define PRU_H_
+#pragma once
 
 #include <stdint.h>
 #include "Bela.h"
 #include "Gpio.h"
 #include "AudioCodec.h"
+#include "PruManager.h"
 
 /**
  * Internal version of the BelaContext struct which does not have const
@@ -155,7 +148,7 @@ private:
 
 public:
 	// Constructor
-	PRU(InternalBelaContext *input_context, AudioCodec *audio_codec);
+	PRU(InternalBelaContext *input_context);
 
 	// Destructor
 	~PRU();
@@ -172,7 +165,7 @@ public:
 				   int stopButtonPin, bool enableLed);
 
 	// Run the code image in pru_rtaudio_bin.h
-	int start(char * const filename);
+	int start(char * const filename, const McaspRegisters& mcaspRegisters);
 
 	// Loop: read and write data from the PRU and call the user-defined audio callback
 	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode);
@@ -185,9 +178,10 @@ public:
 
 	// Exit the whole PRU subsystem
 	void exitPRUSS();
+	PruManager *pruManager;
 
 private:
-	void initialisePruCommon();
+	void initialisePruCommon(const McaspRegisters& mcaspRegisters);
 	int testPruError();
 	InternalBelaContext *context;	// Overall settings
 
@@ -216,8 +210,4 @@ private:
 
 	Gpio stopButton; // Monitoring the bela cape button
 	Gpio underrunLed; // Flashing an LED upon underrun
-	AudioCodec *codec; // Required to hard reset audio codec from loop
 };
-
-
-#endif /* PRU_H_ */

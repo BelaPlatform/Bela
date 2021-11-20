@@ -12,6 +12,7 @@
   "delay-effect",
   "samples-playback",
   "samples-record",
+  "pitch-tracking",
   "karplus-strong",
   "capacitive-sensing",
   "diy-pressure-sensors",

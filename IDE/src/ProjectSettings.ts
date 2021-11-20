@@ -3,6 +3,8 @@ import * as file_manager from "./FileManager";
 import { Lock } from "./Lock";
 
 var lock: Lock = new Lock("ProjectSettings");
+const maxHp = 8;
+const maxInputGains = 8;
 	
 export async function read(project: string): Promise<any> {
 	let output: any = await file_manager.read_json(paths.projects+project+'/settings.json')
@@ -11,6 +13,22 @@ export async function read(project: string): Promise<any> {
 			// console.log('recreating default settings.json');
 			return write(project, default_project_settings());
 		});
+	// backwards compatibility: update legacy command lines
+	for (let key in output.CLArgs) {
+		if (key === '-H') {
+			for (let n = 0; n < maxHp; ++n)
+				output.CLArgs[`-H${n},`] = output.CLArgs[key];
+			delete output.CLArgs[key];
+		} else if (key.match(/^--pga-left/)) {
+			for (let n = 0; n < maxInputGains; n += 2)
+				output.CLArgs[`-I${n},`] = output.CLArgs[key];
+			delete output.CLArgs[key];
+		} else if (key.match(/^--pga-right/)) {
+			for (let n = 1; n < maxInputGains; n += 2)
+				output.CLArgs[`-I${n},`] = output.CLArgs[key];
+			delete output.CLArgs[key];
+		}
+	}
 	return output;
 }
 export async function write(project: string, data: any): Promise<any> {
@@ -98,14 +116,27 @@ export function default_project_settings(){
 		"-p": "16",		// audio buffer size
 		"-C": "8",		// no. analog channels
 		"-B": "16",		// no. digital channels
-		"-H": "-6",		// headphone level (dB)
 		"-N": "1",		// use analog
 		"-G": "1",		// use digital
 		"-M": "0", 		// mute speaker
-		"-D": "0",		// dac level
-		"-A": "0", 		// adc level
-		"--pga-gain-left": "10",
-		"--pga-gain-right": "10",
+		// headphone level (dB)
+		"-H0,": "-6",
+		"-H1,": "-6",
+		"-H2,": "-6",
+		"-H3,": "-6",
+		"-H4,": "-6",
+		"-H5,": "-6",
+		"-H6,": "-6",
+		"-H7,": "-6",
+		// input gain (dB)
+		"-I0,": "10",
+		"-I1,": "10",
+		"-I2,": "10",
+		"-I3,": "10",
+		"-I4,": "10",
+		"-I5,": "10",
+		"-I6,": "10",
+		"-I7,": "10",
 		"user": '',		// user-defined clargs
 		"make": '',		// user-defined Makefile parameters
 		"-X": "0",		// multiplexer capelet

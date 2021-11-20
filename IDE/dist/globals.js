@@ -8,3 +8,6 @@ exports.set_local_dev = set_local_dev;
 function set_verbose(vb) { exports.verbose = vb; }
 exports.set_verbose = set_verbose;
 ;
+function set_board(brd) { exports.board = brd; }
+exports.set_board = set_board;
+;

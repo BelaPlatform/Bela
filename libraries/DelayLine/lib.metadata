@@ -1,0 +1,17 @@
+name=Delay Line
+version=1.0.0
+author=Adan Benito<adan@bela.io>
+maintainer=Adan Benito<adan@bela.io>
+descriptiona=Multi-tap delay line implementation with arbitrary tap number and maximum delay buffer length specified on setup. Feedback can either be taken from the main delay tap or provided externaly.
+examples=
+license=LGPL 3.0
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=

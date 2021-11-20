@@ -14,13 +14,13 @@
  */
 
 #include "../include/PRU.h"
-#include "../include/PruBinary.h"
-#include <prussdrv.h>
+
 #include "../include/digital_gpio_mapping.h"
 #include "../include/GPIOcontrol.h"
 #include "../include/Bela.h"
 #include "../include/Gpio.h"
 #include "../include/PruArmCommon.h"
+#include "../include/board_detect.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -73,6 +73,7 @@ static int rtdm_fd_mcasp_to_pru = 0;
 #include "../include/xenomai_wraps.h"
 
 using namespace std;
+using namespace BelaHwComponent;
 
 // Select whether to use NEON-based sample conversion
 // (this will probably go away in a future commit once its performance
@@ -88,17 +89,17 @@ using namespace std;
 #define PRU_MEM_DAC_LENGTH 0x2000  // Length of ADC+DAC memory, in bytes
 #define PRU_MEM_COMM_OFFSET 0x0    // Offset within PRU-SHARED RAM
 #define PRU_MEM_DIGITAL_OFFSET 0x1000 //Offset within PRU-SHARED RAM
-#define MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words.
+#define PRU_MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words.
                                          // 256 is the maximum number of frames allowed
 extern int gRTAudioVerbose;
 
 class PruMemory
 {
 public:
-	PruMemory(int pruNumber, InternalBelaContext* newContext) :
+	PruMemory(int pruNumber, InternalBelaContext* newContext, PruManager& pruManager) :
 		context(newContext)
 	{
-		prussdrv_map_prumem (PRUSS0_SHARED_DATARAM, (void **)&pruSharedRam);
+		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
 		audioOut.resize(context->audioOutChannels * context->audioFrames);
 		digital.resize(context->digitalFrames);
@@ -107,10 +108,10 @@ public:
 		pruAudioInStart[0] = pruAudioOutStart[1] + audioOut.size() * sizeof(audioOut[0]);
 		pruAudioInStart[1] = pruAudioInStart[0] + audioIn.size() * sizeof(audioIn[0]);
 		pruDigitalStart[0] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET;
-		pruDigitalStart[1] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET + MEM_DIGITAL_BUFFER1_OFFSET;
+		pruDigitalStart[1] = pruSharedRam + PRU_MEM_DIGITAL_OFFSET + PRU_MEM_DIGITAL_BUFFER1_OFFSET;
 		if(context->analogFrames > 0)
 		{
-			prussdrv_map_prumem (pruNumber == 0 ? PRUSS0_PRU0_DATARAM : PRUSS0_PRU1_DATARAM, (void**)&pruDataRam);
+			pruDataRam = static_cast<char*>(pruManager.getOwnMemory());
 			analogOut.resize(context->analogOutChannels * context->analogFrames);
 			analogIn.resize(context->analogInChannels * context->analogFrames);
 			pruAnalogOutStart[0] = pruDataRam + PRU_MEM_DAC_OFFSET;
@@ -122,17 +123,17 @@ public:
 		// Clear / initialize memory
 		for(int buffer = 0; buffer < 2; ++buffer)
 		{
-			for(int i = 0; i < analogOut.size(); i++)
+			for(unsigned int i = 0; i < analogOut.size(); i++)
 				pruAnalogOutStart[buffer][i] = 0;
-			for(int i = 0; i < analogIn.size(); i++)
+			for(unsigned int i = 0; i < analogIn.size(); i++)
 				pruAnalogInStart[buffer][i] = 0;
-			for(int i = 0; i < audioOut.size(); i++)
+			for(unsigned int i = 0; i < audioOut.size(); i++)
 				pruAudioOutStart[buffer][i] = 0;
-			for(int i = 0; i < audioIn.size(); i++)
+			for(unsigned int i = 0; i < audioIn.size(); i++)
 				pruAudioInStart[buffer][i] = 0;
 			 // set digital to all inputs, to avoid unexpected spikes
 			uint32_t* digitalUint32View = (uint32_t*)pruDigitalStart[buffer];
-			for(int i = 0; i < digital.size(); i++)
+			for(unsigned int i = 0; i < digital.size(); i++)
 			{
 				digitalUint32View[i] = 0x0000ffff;
 			}
@@ -184,37 +185,10 @@ private:
 	InternalBelaContext* context;
 };
 
-// Offsets within CPU <-> PRU communication memory (4 byte slots)
-#define PRU_SHOULD_STOP         0
-#define PRU_CURRENT_BUFFER      1
-#define PRU_BUFFER_MCASP_FRAMES 2
-#define PRU_SHOULD_SYNC         3
-#define PRU_SYNC_ADDRESS        4
-#define PRU_SYNC_PIN_MASK       5
-#define PRU_LED_ADDRESS         6
-#define PRU_LED_PIN_MASK        7
-#define PRU_FRAME_COUNT         8
-#define PRU_USE_SPI             9
-#define PRU_SPI_NUM_CHANNELS   10
-#define PRU_USE_DIGITAL        11
-#define PRU_PRU_NUMBER         12
-#define PRU_MUX_CONFIG         13
-#define PRU_MUX_END_CHANNEL    14
-#define PRU_BUFFER_SPI_FRAMES  15
-#define PRU_BOARD_FLAGS        16
-#define PRU_ERROR_OCCURRED     17
-
-// error codes sent from the PRU
-#define ARM_ERROR_TIMEOUT 1
-#define ARM_ERROR_XUNDRUN 2
-#define ARM_ERROR_XSYNCERR 3
-#define ARM_ERROR_XCKFAIL 4
-#define ARM_ERROR_XDMAERR 5
-
 static unsigned int* gDigitalPins = NULL;
 
-#define USERLED3_GPIO_BASE (Gpio::getBankAddress(1))// GPIO1(24) is user LED 3
-#define USERLED3_PIN_MASK   (1 << 24)
+const uint32_t userLed3GpioBase = Gpio::getBankAddress(1);
+const uint32_t userLed3GpioPinMask = 1 << 24;
 const unsigned int belaMiniLedBlue = 87;
 const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
 const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
@@ -236,7 +210,7 @@ extern "C" {
 #endif /* USE_NEON_FORMAT_CONVERSION */
 
 // Constructor: specify a PRU number (0 or 1)
-PRU::PRU(InternalBelaContext *input_context, AudioCodec *audio_codec)
+PRU::PRU(InternalBelaContext *input_context)
 : context(input_context),
   pru_number(1),
   initialised(false),
@@ -245,8 +219,7 @@ PRU::PRU(InternalBelaContext *input_context, AudioCodec *audio_codec)
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
-  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw),
-  codec(audio_codec)
+  audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
 {
 }
 
@@ -308,7 +281,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(context->digitalFrames != 0){
-		if(belaHw == BelaHw_BelaMini)
+		if(Bela_hwContains(belaHw, PocketBeagle))
 		{
 			gDigitalPins = digitalPinsPocketBeagle;
 		} else {
@@ -333,7 +306,7 @@ int PRU::prepareGPIO(int include_led)
 	}
 
 	if(include_led) {
-		if(belaHw == BelaHw_BelaMini)
+		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
@@ -376,7 +349,7 @@ void PRU::cleanupGPIO()
 		}
 	}
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMini)
+		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
@@ -410,17 +383,18 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	pru_number = pru_num;
 
 	/* Allocate and initialize memory */
-	prussdrv_init();
-	if(prussdrv_open(PRU_EVTOUT_0)) {
-		fprintf(stderr, "Failed to open PRU driver\n");
-		return 1;
-	}
-	pruMemory = new PruMemory(pru_number, context);
+#if ENABLE_PRU_UIO == 1
+	pruManager = new PruManagerUio(pru_number, gRTAudioVerbose);
+#endif	// ENABLE_PRU_UIO
+#if ENABLE_PRU_RPROC == 1
+	pruManager = new PruManagerRprocMmap(pru_number, gRTAudioVerbose);
+#endif	// ENABLE_PRU_RPROC
+	pruMemory = new PruMemory(pru_number, context, *pruManager);
 
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
 	}
-	if(belaHw == BelaHw_BelaMini && enableLed){
+	if(Bela_hwContains(belaHw, BelaMiniCape) && enableLed){
 		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
 		underrunLed.clear();
 	}
@@ -583,97 +557,102 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	return 0;
 }
 
-void PRU::initialisePruCommon()
+void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 {
 	uint32_t board_flags = 0;
 	switch(belaHw) {
-	case BelaHw_BelaMini:
-		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
-		break;
+	case BelaHw_BelaMiniMultiTdm:
+	case BelaHw_BelaMiniMultiAudio:
+	case BelaHw_BelaMultiTdm:
+	case BelaHw_BelaMiniMultiI2s:
 	case BelaHw_CtagFace:
-	case BelaHw_CtagFaceBela:
-		board_flags |= 1 << BOARD_FLAGS_CTAG_FACE;
-		break;
 	case BelaHw_CtagBeast:
+	case BelaHw_CtagFaceBela:
 	case BelaHw_CtagBeastBela:
-		board_flags |= 1 << BOARD_FLAGS_CTAG_BEAST;
+		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
 	case BelaHw_Bela:
+	case BelaHw_BelaMini:
 	case BelaHw_Salt:
 	case BelaHw_NoHw:
 	default:
 		break;
 	}
-	pru_buffer_comm[PRU_BOARD_FLAGS] = board_flags;
+	if(Bela_hwContains(belaHw, BelaMiniCape))
+		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
+	pru_buffer_comm[PRU_COMM_BOARD_FLAGS] = board_flags;
     /* Set up flags */
-	pru_buffer_comm[PRU_SHOULD_STOP] = 0;
-	pru_buffer_comm[PRU_CURRENT_BUFFER] = 0;
+	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 0;
+	pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] = 0;
 	unsigned int pruFrames;
 	if(analog_enabled)
 		pruFrames = hardware_analog_frames;
 	else
 		pruFrames = context->audioFrames / 2; // PRU assumes 8 "fake" channels when SPI is disabled
-	pru_buffer_comm[PRU_BUFFER_SPI_FRAMES] = pruFrames;
-	pruBufferMcaspFrames = pruFrames * context->audioOutChannels / 2;
-     // TODO: it seems that PRU_BUFFER_MCASP_FRAMES is not very meaningful(cf pru_rtaudio_irq.p)
-	pru_buffer_comm[PRU_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
-	pru_buffer_comm[PRU_SHOULD_SYNC] = 0;
-	pru_buffer_comm[PRU_SYNC_ADDRESS] = 0;
-	pru_buffer_comm[PRU_SYNC_PIN_MASK] = 0;
-	pru_buffer_comm[PRU_PRU_NUMBER] = pru_number;
-	pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
-
-
+	pru_buffer_comm[PRU_COMM_BUFFER_SPI_FRAMES] = pruFrames;
+	if(pruUsesMcaspIrq)
+		pruBufferMcaspFrames = context->audioFrames;
+	else // TODO: it seems that PRU_COMM_BUFFER_MCASP_FRAMES is not very meaningful(cf pru_rtaudio_irq.p)
+		pruBufferMcaspFrames = pruFrames * context->audioOutChannels / 2;
+	pru_buffer_comm[PRU_COMM_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
+	pru_buffer_comm[PRU_COMM_SHOULD_SYNC] = 0;
+	pru_buffer_comm[PRU_COMM_SYNC_ADDRESS] = 0;
+	pru_buffer_comm[PRU_COMM_SYNC_PIN_MASK] = 0;
+	pru_buffer_comm[PRU_COMM_PRU_NUMBER] = pru_number;
+	pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
+	pru_buffer_comm[PRU_COMM_ACTIVE_CHANNELS] = ((uint16_t)context->audioOutChannels & 0xFFFF) << 16 | ((uint16_t)(context->audioInChannels) & 0xFFFF);
+	memcpy((void*)(pru_buffer_comm + PRU_COMM_MCASP_CONF_PDIR), &mcaspRegisters,
+			sizeof(mcaspRegisters));
 	/* Set up multiplexer info */
 	if(context->multiplexerChannels == 2) {
-		pru_buffer_comm[PRU_MUX_CONFIG] = 1;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 1;
 	}
 	else if(context->multiplexerChannels == 4) {
-		pru_buffer_comm[PRU_MUX_CONFIG] = 2;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 2;
 	}
 	else if(context->multiplexerChannels == 8) {
-		pru_buffer_comm[PRU_MUX_CONFIG] = 3;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 3;
 	}
 	else { 
 		// we trust that the number of multiplexer channels has been
 		// checked elsewhere
-		pru_buffer_comm[PRU_MUX_CONFIG] = 0;
+		pru_buffer_comm[PRU_COMM_MUX_CONFIG] = 0;
 	}
 	
 	if(led_enabled) {
-		if(belaHw == BelaHw_BelaMini)
+		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
-			pru_buffer_comm[PRU_LED_ADDRESS] = belaMiniLedBlueGpioBase;
-			pru_buffer_comm[PRU_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
+			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = belaMiniLedBlueGpioBase;
+			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
 		} else {
-			pru_buffer_comm[PRU_LED_ADDRESS] = USERLED3_GPIO_BASE;
-			pru_buffer_comm[PRU_LED_PIN_MASK] = USERLED3_PIN_MASK;
+			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = userLed3GpioBase;
+			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = userLed3GpioPinMask;
 		}
 	}
 	else {
-		pru_buffer_comm[PRU_LED_ADDRESS] = 0;
-		pru_buffer_comm[PRU_LED_PIN_MASK] = 0;
+		pru_buffer_comm[PRU_COMM_LED_ADDRESS] = 0;
+		pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = 0;
 	}
 	if(analog_enabled) {
-		pru_buffer_comm[PRU_USE_SPI] = 1;
+		pru_buffer_comm[PRU_COMM_USE_SPI] = 1;
 		// TODO : a different number of channels for inputs and outputs
 		// is not yet supported
 		unsigned int analogChannels = context->analogInChannels;
-		pru_buffer_comm[PRU_SPI_NUM_CHANNELS] = analogChannels;
+		pru_buffer_comm[PRU_COMM_SPI_NUM_CHANNELS] = analogChannels;
 	} else {
-		pru_buffer_comm[PRU_USE_SPI] = 0;
-		pru_buffer_comm[PRU_SPI_NUM_CHANNELS] = 0;
+		pru_buffer_comm[PRU_COMM_USE_SPI] = 0;
+		pru_buffer_comm[PRU_COMM_SPI_NUM_CHANNELS] = 0;
 	}
 	if(digital_enabled) {
-		pru_buffer_comm[PRU_USE_DIGITAL] = 1;
+		pru_buffer_comm[PRU_COMM_USE_DIGITAL] = 1;
 	}
 	else {
-		pru_buffer_comm[PRU_USE_DIGITAL] = 0;
+		pru_buffer_comm[PRU_COMM_USE_DIGITAL] = 0;
 	}
 }
 
 // Run the code image in the specified file
-int PRU::start(char * const filename)
+int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 {
 	switch(belaHw)
 	{
@@ -684,6 +663,14 @@ int PRU::start(char * const filename)
 		case BelaHw_Salt:
 			pruUsesMcaspIrq = false;
 			break;
+		case BelaHw_BelaMiniMultiAudio:
+			//nobreak
+		case BelaHw_BelaMiniMultiTdm:
+                        //nobreak
+		case BelaHw_BelaMultiTdm:
+                        //nobreak
+		case BelaHw_BelaMiniMultiI2s:
+                        //nobreak
 		case BelaHw_CtagFace:
 			//nobreak
 		case BelaHw_CtagBeast:
@@ -698,6 +685,9 @@ int PRU::start(char * const filename)
 			fprintf(stderr, "Error: unrecognized hardware\n");
 			return 1;
 	}
+
+        if(gRTAudioVerbose)
+                printf("%ssing McASP->PRU irq\n", pruUsesMcaspIrq ? "U" : "Not u");
 
 #if RTDM_PRUSS_IRQ_VERSION < 1
         if(pruUsesMcaspIrq)
@@ -771,50 +761,33 @@ int PRU::start(char * const filename)
 #endif /* RTDM_PRUSS_IRQ_VERSION >= 1 */
 #endif /* BELA_USE_RTDM */
 	pru_buffer_comm = pruMemory->getPruBufferComm();
-	initialisePruCommon();
-
-	unsigned int* pruCode;
-	unsigned int pruCodeSize;
-	switch((int)pruUsesMcaspIrq) // (int) is here to avoid stupid compiler warning
-	{
-		case false:
-			pruCode = (unsigned int*)NonIrqPruCode::getBinary();
-			pruCodeSize = NonIrqPruCode::getBinarySize();
-			break;
-		case true:
-			pruCode = (unsigned int*)IrqPruCode::getBinary();
-			pruCodeSize = IrqPruCode::getBinarySize();
-			// NOTE: we assume that something else has masked the McASP interrupts
-			// from ARM, or rather that no one else unmasked them.
-			// For instance, make sure the McASP driver does not get to get hold of them
-			// by NOT setting `interrupt-names = "rx", "tx";` in the overlay
-			break;
-	}
+	initialisePruCommon(mcaspRegisters);
+	// NOTE: we assume that something else has masked the McASP interrupts
+	// from ARM, or rather that no one else unmasked them.
+	// For instance, make sure the McASP driver does not get to get hold of them
+	// by NOT setting `interrupt-names = "rx", "tx";` in the overlay
 
 	/* Load and execute binary on PRU */
-	if(filename[0] == '\0') { //if the string is empty, load the embedded code
-		if(gRTAudioVerbose)
-			printf("Using embedded PRU code\n");
-		if(prussdrv_exec_code(pru_number, pruCode, pruCodeSize)) {
-			fprintf(stderr, "Failed to execute PRU code\n");
-			return 1;
-		}
-	} else {
-		if(gRTAudioVerbose)
-			printf("Using PRU code from %s\n",filename);
-		if(prussdrv_exec_program(pru_number, filename)) {
-			fprintf(stderr, "Failed to execute PRU code from %s\n", filename);
-			return 1;
-		}
+	bool useEmbeddedPruCode = ("" == std::string(filename));
+	unsigned int pruManager_ret = 0;
+	if(gRTAudioVerbose)
+		printf("Using %s %s PRU firmware\n", pruUsesMcaspIrq ? "McASP IRQ" : "Non-McASP IRQ", useEmbeddedPruCode ? "embedded" : filename);
+	if(useEmbeddedPruCode)
+		pruManager_ret = pruManager->start(pruUsesMcaspIrq);
+	else
+		pruManager_ret = pruManager->start(std::string(filename)); // simply passing filename calls the wrong overload
+	if(pruManager_ret)
+	{
+		fprintf(stderr, "Failed to execute PRU code\n");
+		return 1;
 	}
-
 	running = true;
 	return 0;
 }
 
 int PRU::testPruError()
 {
-	if (unsigned int errorCode = pru_buffer_comm[PRU_ERROR_OCCURRED])
+	if (unsigned int errorCode = pru_buffer_comm[PRU_COMM_ERROR_OCCURRED])
 	{
 		// only print warnings if we have been running for a while, or forced to do so
 		bool verbose = (context->audioFramesElapsed > 5000) || gRTAudioVerbose;
@@ -845,15 +818,15 @@ int PRU::testPruError()
 				verbose && rt_fprintf(stderr, "PRU event loop timed out\n");
 				ret = 1;
 			break;
+			case ARM_ERROR_INVALID_INIT:
+				fprintf(stderr, "Invalid PRU configuration settings\n");
+				ret = 2;
+			break;
 			default:
 				verbose && rt_fprintf(stderr, "Unknown PRU error: %d\n", errorCode);
 				ret = 1;
 		}
-		codec->reset();
-		codec->initCodec();
-		codec->startAudio(0);
-		pru_buffer_comm[PRU_ERROR_OCCURRED] = 0;
-                // TODO: should restart PRU and codec from scratch
+		pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
 		return ret;
 	} else {
 		return 0;
@@ -909,24 +882,26 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// Which buffer the PRU was last processing
 		static uint32_t lastPRUBuffer = 0;
 		// Poll
-		while(pru_buffer_comm[PRU_CURRENT_BUFFER] == lastPRUBuffer && !Bela_stopRequested()) {
+		while(pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] == lastPRUBuffer && !Bela_stopRequested()) {
 #ifdef BELA_USE_POLL
 			task_sleep_ns(sleepTime);
 #endif /* BELA_USE_POLL */
 			if(testPruError())
-			{
 				break;
-			}
 		}
 
-		lastPRUBuffer = pru_buffer_comm[PRU_CURRENT_BUFFER];
+		lastPRUBuffer = pru_buffer_comm[PRU_COMM_CURRENT_BUFFER];
 #endif /* BELA_USE_POLL || BELA_USE_BUSYWAIT */
 #ifdef BELA_USE_RTDM
 		// make sure we always sleep a tiny bit to prevent hanging the board
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
 		int ret = __wrap_read(rtdm_fd_pru_to_arm, NULL, 0);
-		testPruError();
+		int error = testPruError();
+		if(2 == error) {
+                        gShouldStop = true;
+                        break;
+                }
 		if(ret < 0)
 		{
 			static int interruptTimeoutCount = 0;
@@ -956,10 +931,10 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		if(Bela_stopRequested())
 			break;
 
-		// pru_buffer_comm[PRU_CURRENT_BUFFER] will have been set by
+		// pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] will have been set by
 		// the PRU just before signalling ARM. We use buffer that is
 		// not in use by the PRU
-		int pruBufferForArm = pru_buffer_comm[PRU_CURRENT_BUFFER] == 0 ? 1 : 0;
+		int pruBufferForArm = pru_buffer_comm[PRU_COMM_CURRENT_BUFFER] == 0 ? 1 : 0;
 		pruMemory->copyFromPru(pruBufferForArm);
 
 		// Convert short (16-bit) samples to float
@@ -967,7 +942,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		int16_to_float_audio(2 * context->audioFrames, audio_adc_pru_buffer, context->audioIn);
 		// TODO: implement non-interlaved
 #else
-		int audioInChannels = context->audioInChannels;
+		unsigned int audioInChannels = context->audioInChannels;
 		if(interleaved)
 		{
 			for(unsigned int n = 0; n < audioInChannels * context->audioFrames; n++) {
@@ -988,13 +963,45 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			}
 		}
 #endif /* defined USE_NEON_FORMAT_CONVERSION */
+		if(BelaHw_CtagBeast == belaHw || BelaHw_CtagBeastBela == belaHw)
+		{
+			// on the input data line we get:
+			// - inputs from main codec (slots 0:3)
+			// - inputs from secondary codec (slots 4:7)
+			// on the output data line we get:
+			// - outputs to secondary codec (slots 0:7)
+			// - outputs to main codec (slots 8:15)
+			// For historical reasons, we want them to be all in the same
+			// order, with secondary codec's channels first. So here we
+			// swap the inputs
+			for(unsigned int f = 0; f < context->audioFrames; ++f)
+			{
+				for(unsigned int c = 0; c < audioInChannels / 2; ++c)
+				{
+					size_t offset0;
+					size_t offset1;
+					if(interleaved)
+					{
+						offset0 = context->audioInChannels * f + c;
+						offset1 = context->audioInChannels * f + c + context->audioInChannels / 2;
+					} else {
+						offset0 = context->audioFrames * c + f;
+						offset1 = context->audioFrames * (c + context->audioInChannels / 2) + f;
+					}
+					float valueA = context->audioIn[offset1];
+					float valueB = context->audioIn[offset0];
+					context->audioIn[offset0] = valueA;
+					context->audioIn[offset1] = valueB;
+				}
+			}
+		}
 		
 		if(analog_enabled) {
 			if(context->multiplexerChannels != 0) {
 				// If multiplexer is enabled, find out which channels we have by pulling out
 				// the place that it ended. Based on the buffer size, we can work out the
 				// mux setting for the beginning of the buffer.
-				int pruMuxReference = pru_buffer_comm[PRU_MUX_END_CHANNEL];
+				int pruMuxReference = pru_buffer_comm[PRU_COMM_MUX_END_CHANNEL];
 			
 				
 				// Value from the PRU is ahead by 1 + (frame size % 8); correct that when unrolling here.
@@ -1446,7 +1453,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			// half as many analog frames as audio frames
 			uint32_t pruFramesPerBlock = pruBufferMcaspFrames;
 			// read the PRU counter
-			uint32_t pruFrameCount = pru_buffer_comm[PRU_FRAME_COUNT];
+			uint32_t pruFrameCount = pru_buffer_comm[PRU_COMM_FRAME_COUNT];
 			// we initialize lastPruFrameCount the first time we get here,
 			// just in case the PRU is already ahead of us
 			static uint32_t lastPruFrameCount = pruFrameCount - pruFramesPerBlock;
@@ -1490,7 +1497,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #endif /* BELA_USE_RTDM */
 
 	// Tell PRU to stop
-	pru_buffer_comm[PRU_SHOULD_STOP] = 1;
+	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 1;
 	if(underrunLed.enabled())
 		underrunLed.clear();
 
@@ -1545,16 +1552,16 @@ void PRU::waitForFinish()
 // Turn off the PRU when done
 void PRU::disable()
 {
-    /* Disable PRU and close memory mapping*/
-    prussdrv_pru_disable(pru_number);
+	/* Disable PRU and close memory mapping*/
+	pruManager->stop();
 	running = false;
 }
 
-// Exit the prussdrv subsystem (affects both PRUs)
+// Exit the pru subsystem
 void PRU::exitPRUSS()
 {
 	if(initialised)
-	    prussdrv_exit();
+		delete pruManager;
 	initialised = false;
 }
 

@@ -87,8 +87,11 @@ ifeq ($(RUN_WITH_PRU_BIN),true)
 ifndef PROJECT
 $(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
 endif # ifndef PROJECT
-COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio.bin $(COMMAND_LINE_OPTIONS)
+COMMAND_LINE_OPTIONS := --pru-file $(BASE_DIR)/pru_rtaudio_irq.bin $(COMMAND_LINE_OPTIONS)
 run: pru_rtaudio.bin
+run: pru_rtaudio_irq.bin
+runide: pru_rtaudio.bin
+runide: pru_rtaudio_irq.bin
 else
 build/core/PruBinary.o: build/pru/pru_rtaudio_bin.h build/pru/pru_rtaudio_irq_bin.h
 endif #ifeq($(RUN_WITH_PRU_BIN),true)
@@ -287,13 +290,13 @@ LEGACY_INCLUDE_PATH := ./include/legacy
 
 INCLUDES := -I$(PROJECT_DIR) -I$(LEGACY_INCLUDE_PATH)  -I./include -I./build/pru/ -I./
 ifeq ($(XENOMAI_VERSION),2.6)
-  BELA_USE_DEFINE=BELA_USE_POLL
+  BELA_USE_DEFINE?=BELA_USE_POLL
 endif
 ifeq ($(XENOMAI_VERSION),3)
-  BELA_USE_DEFINE=BELA_USE_RTDM
+  BELA_USE_DEFINE?=BELA_USE_RTDM
 endif
 
-DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj -DENABLE_PRU_UIO=1
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
@@ -346,6 +349,8 @@ else
   ifeq ($(COMPILER), gcc)
     CC=gcc
     CXX=g++
+    DEFAULT_CPPFLAGS += -Wno-psabi
+    DEFAULT_CFLAGS += -Wno-psabi
     LDFLAGS+=-fno-pie -no-pie
   endif
 endif
@@ -392,7 +397,7 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
@@ -463,7 +468,7 @@ endif
 %.bin: pru/%.p
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
-	$(AT) pasm -V2 -b "$<" > /dev/null
+	$(AT) pasm -V2 -L -c -b "$<" > /dev/null
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '

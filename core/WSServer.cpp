@@ -97,7 +97,7 @@ int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size
 	try {
 		client_task_func(address_book.at(_address).handler, buf, size);
 		return 0;
-	} catch (std::exception) {
+	} catch (std::exception&) {
 		return -1;
 	}
 }
@@ -105,7 +105,7 @@ int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size
 int WSServer::sendRt(const char* _address, const char* str){
 	try {
 		return address_book.at(_address).thread->schedule(str);
-	} catch (std::exception) {
+	} catch (std::exception&) {
 		return -1;
 	}
 }
@@ -113,7 +113,7 @@ int WSServer::sendRt(const char* _address, const char* str){
 int WSServer::sendRt(const char* _address, const void* buf, unsigned int size){
 	try {
 		return address_book.at(_address).thread->schedule(buf, size);
-	} catch (std::exception) {
+	} catch (std::exception&) {
 		return -1;
 	}
 }

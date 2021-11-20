@@ -49,85 +49,56 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#define MCASP_NUM_REG 37;
 
-/* McASP register definitions */
-#define DAVINCI_MCASP_PID_REG		0x00
-#define DAVINCI_MCASP_PWREMUMGT_REG	0x04
-#define DAVINCI_MCASP_PFUNC_REG		0x10
-#define DAVINCI_MCASP_PDIR_REG		0x14
-#define DAVINCI_MCASP_PDOUT_REG		0x18
-#define DAVINCI_MCASP_PDSET_REG		0x1c
-#define DAVINCI_MCASP_PDCLR_REG		0x20
-#define DAVINCI_MCASP_TLGC_REG		0x30
-#define DAVINCI_MCASP_TLMR_REG		0x34
-#define DAVINCI_MCASP_GBLCTL_REG	0x44
-#define DAVINCI_MCASP_AMUTE_REG		0x48
-#define DAVINCI_MCASP_LBCTL_REG		0x4c
-#define DAVINCI_MCASP_TXDITCTL_REG	0x50
-#define DAVINCI_MCASP_GBLCTLR_REG	0x60
-#define DAVINCI_MCASP_RXMASK_REG	0x64
-#define DAVINCI_MCASP_RXFMT_REG		0x68
-#define DAVINCI_MCASP_RXFMCTL_REG	0x6c
-#define DAVINCI_MCASP_ACLKRCTL_REG	0x70
-#define DAVINCI_MCASP_AHCLKRCTL_REG	0x74
-#define DAVINCI_MCASP_RXTDM_REG		0x78
-#define DAVINCI_MCASP_EVTCTLR_REG	0x7c
-#define DAVINCI_MCASP_RXSTAT_REG	0x80
-#define DAVINCI_MCASP_RXTDMSLOT_REG	0x84
-#define DAVINCI_MCASP_RXCLKCHK_REG	0x88
-#define DAVINCI_MCASP_REVTCTL_REG	0x8c
-#define DAVINCI_MCASP_GBLCTLX_REG	0xa0
-#define DAVINCI_MCASP_TXMASK_REG	0xa4
-#define DAVINCI_MCASP_TXFMT_REG		0xa8
-#define DAVINCI_MCASP_TXFMCTL_REG	0xac
-#define DAVINCI_MCASP_ACLKXCTL_REG	0xb0
-#define DAVINCI_MCASP_AHCLKXCTL_REG	0xb4
-#define DAVINCI_MCASP_TXTDM_REG		0xb8
-#define DAVINCI_MCASP_EVTCTLX_REG	0xbc
-#define DAVINCI_MCASP_TXSTAT_REG	0xc0
-#define DAVINCI_MCASP_TXTDMSLOT_REG	0xc4
-#define DAVINCI_MCASP_TXCLKCHK_REG	0xc8
-#define DAVINCI_MCASP_XEVTCTL_REG	0xcc
-
-unsigned int MCASP_REGS[] = {
-	DAVINCI_MCASP_PID_REG,
-	DAVINCI_MCASP_PWREMUMGT_REG,
-	DAVINCI_MCASP_PFUNC_REG,
-	DAVINCI_MCASP_PDIR_REG,
-	DAVINCI_MCASP_PDOUT_REG,
-	DAVINCI_MCASP_PDSET_REG,
-	DAVINCI_MCASP_PDCLR_REG,
-	DAVINCI_MCASP_TLGC_REG,
-	DAVINCI_MCASP_TLMR_REG,
-	DAVINCI_MCASP_GBLCTL_REG,
-	DAVINCI_MCASP_AMUTE_REG,
-	DAVINCI_MCASP_LBCTL_REG,
-	DAVINCI_MCASP_TXDITCTL_REG,
-	DAVINCI_MCASP_GBLCTLR_REG,
-	DAVINCI_MCASP_RXMASK_REG,
-	DAVINCI_MCASP_RXFMT_REG,
-	DAVINCI_MCASP_RXFMCTL_REG,
-	DAVINCI_MCASP_ACLKRCTL_REG,
-	DAVINCI_MCASP_AHCLKRCTL_REG,
-	DAVINCI_MCASP_RXTDM_REG,
-	DAVINCI_MCASP_EVTCTLR_REG,
-	DAVINCI_MCASP_RXSTAT_REG,
-	DAVINCI_MCASP_RXTDMSLOT_REG,
-	DAVINCI_MCASP_RXCLKCHK_REG,
-	DAVINCI_MCASP_REVTCTL_REG,
-	DAVINCI_MCASP_GBLCTLX_REG,
-	DAVINCI_MCASP_TXMASK_REG,
-	DAVINCI_MCASP_TXFMT_REG,
-	DAVINCI_MCASP_TXFMCTL_REG,
-	DAVINCI_MCASP_ACLKXCTL_REG,
-	DAVINCI_MCASP_AHCLKXCTL_REG,
-	DAVINCI_MCASP_TXTDM_REG,
-	DAVINCI_MCASP_EVTCTLX_REG,
-	DAVINCI_MCASP_TXSTAT_REG,
-	DAVINCI_MCASP_TXTDMSLOT_REG,
-	DAVINCI_MCASP_TXCLKCHK_REG,
-	DAVINCI_MCASP_XEVTCTL_REG
+struct {
+	unsigned int offset;
+	const char* label;
+} MCASP_REGS[] = {
+	{ 0x00, "REV" },
+	{ 0x04, "PWRIDLESYSCONFIG" },
+	{ 0x10, "PFUNC" },
+	{ 0x14, "PDIR" },
+	{ 0x18, "PDOUT" },
+	{ 0x1c, "PDIN" },
+	{ 0x20, "PDCLR" },
+	{ 0x30, "TLGC" },
+	{ 0x34, "TLMR" },
+	{ 0x44, "GBLCTL" },
+	{ 0x48, "AMUTE" },
+	{ 0x4c, "DLBCTL" },
+	{ 0x50, "DITCTL" },
+	{ 0x60, "GLBCTLR" },
+	{ 0x64, "RMASK" },
+	{ 0x68, "RFMT" },
+	{ 0x6c, "AFSRCTL" },
+	{ 0x70, "ACLKRCTL" },
+	{ 0x74, "AHCLKRCTL" },
+	{ 0x78, "RTDM" },
+	{ 0x7c, "RINTCTL" },
+	{ 0x80, "RSTAT" },
+	{ 0x84, "RSLOT" },
+	{ 0x88, "RCLKCHK" },
+	{ 0x8c, "RCLKCHK" },
+	{ 0xa0, "XGBLCTL" },
+	{ 0xa4, "XMASK" },
+	{ 0xa8, "XFMT" },
+	{ 0xac, "AFSXCTL" },
+	{ 0xb0, "ACLKXCTL" },
+	{ 0xb4, "AHCLKXCTL" },
+	{ 0xb8, "XTDM" },
+	{ 0xbc, "XINTCTL" },
+	{ 0xc0, "XSTAT" },
+	{ 0xc4, "XSLOT" },
+	{ 0xc8, "XCLKCHK" },
+	{ 0xcc, "XEVTCTL" },
+	{ 0x180, "SRCTL_0" },
+	{ 0x184, "SRCTL_1" },
+	{ 0x188, "SRCTL_2" },
+	{ 0x18b, "SRCTL_3" },
+	{ 0x190, "SRCTL_4" },
+	{ 0x194, "SRCTL_5" },
+	{ 0x1000, "WFIFOCTL" },
+	{ 0x1008, "RFIFOCTL" },
 };
   
 #define FATAL do { fprintf(stderr, "Error at line %d, file %s (%d) [%s]\n", \
@@ -150,10 +121,10 @@ int main(int argc, char **argv) {
     map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK);
     if(map_base == (void *) -1) FATAL;
     
-    for (i=0; i < 37; i++){
-    	virt_addr = map_base + ((target + MCASP_REGS[i]) & MAP_MASK);
-    	read_result = *((unsigned long *) virt_addr);
-    	printf("Reg 0x%X: 0x%X\n", MCASP_REGS[i], read_result); 
+    for (i=0; i < sizeof(MCASP_REGS) / sizeof(MCASP_REGS[0]); i++){
+        virt_addr = map_base + ((target + MCASP_REGS[i].offset) & MAP_MASK);
+        read_result = *((unsigned long *) virt_addr);
+        printf("0x%X (%s): 0x%X\n", MCASP_REGS[i].offset, MCASP_REGS[i].label, read_result);
     }
     
     fflush(stdout);

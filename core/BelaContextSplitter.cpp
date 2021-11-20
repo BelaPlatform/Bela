@@ -297,7 +297,7 @@ bool BelaContextSplitter::test()
 	// test the actual class
 	BelaContextSplitter spl1;
 	BelaContextSplitter spl2;
-	int factor = 4;
+	unsigned int factor = 4;
 	spl1.setup(factor, 1, (BelaContext*)&ctx1);
 	ctx2 = ctx1;
 	ctx2.audioFrames *= factor;

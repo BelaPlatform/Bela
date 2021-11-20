@@ -12,7 +12,13 @@ class SettingsView extends View {
 		this.settings.on('change', (data) => this._IDESettings(data) );
 		this.$elements.filterByData = function(prop, val) {
 			return this.filter(
-				function() { return $(this).data(prop)==val; }
+				function() {
+					let text = $(this).data(prop);
+					if (typeof(val) === 'string')
+						return text === val;
+					else
+						return text && text.match(val) !== null;
+					}
 			);
 		}
 
@@ -332,21 +338,46 @@ class SettingsView extends View {
 		else
 			return
 
+		function excludeSubsecs(num, max, prefix) {
+			var subsections = [];
+			for (let i = num; i < max; ++i)
+				subsections = subsections.concat(prefix + i);
+			return subsections;
+		}
+		function excludeInputSubsecs(num) {
+			return excludeSubsecs(num, 8, 'input-level');
+		}
+		function excludeHpSubsecs(num) {
+			return excludeSubsecs(num, 8, 'headphone-level');
+		}
 		var settingExceptions = {
 			Bela: {
 				sections: [],
 				subsections: ['disable-led'],
-				options: []
+				options: [],
+				inputsWithGain: 2,
+				headphones: 2,
 			},
 			BelaMini: {
 				sections: ['capelet-settings'],
 				subsections: ['mute-speaker'],
-				options: []
+				options: [],
+				inputsWithGain: 2,
+				headphones: 2,
+			},
+			BelaMiniMultiAudio: {
+				sections: ['capelet-settings'],
+				subsections: ['mute-speaker'],
+				options: [],
+				inputsWithGain: 8,
+				headphones: 8,
 			},
 			Ctag: {
 				sections: ['capelet-settings'],
 				subsections: ['disable-led', 'mute-speaker', 'hp-level', 'pga-left', 'pga-right', 'analog-channels', 'analog-samplerate', 'use-analog', 'adc-level'],
-				options: []
+				options: [],
+				inputsWithGain: 0,
+				headphones: 0,
 			},
 			CtagBela: {
 				sections: [],
@@ -358,17 +389,23 @@ class SettingsView extends View {
 					{
 						selector: 'analog-channels',
 						optVal: [2]
-					}]
+					}],
+				inputsWithGain: 0,
+				headphones: 0,
 			},
 			Face: {
 				sections: [],
 				subsections: [],
-				options: []
+				options: [],
+				inputsWithGain: 0,
+				headphones: 0,
 			},
 			Beast: {
 				sections: [],
 				subsections: [],
-				options: []
+				options: [],
+				inputsWithGain: 0,
+				headphones: 0,
 			}
 		}
 
@@ -377,23 +414,23 @@ class SettingsView extends View {
 			subsections: null
 		};
 
-		if (boardString === 'BelaMini') {
-			exceptions['sections'] = settingExceptions['BelaMini']['sections'];
-			exceptions['subsections'] = settingExceptions['BelaMini']['subsections'];
-			exceptions['options'] = settingExceptions['BelaMini']['options'];
-		} else if(boardString === 'CtagFace' || boardString === 'CtagBeast') {
-			exceptions['sections'] = settingExceptions['Ctag']['sections'];
-			exceptions['subsections'] = settingExceptions['Ctag']['subsections'];
-			exceptions['options'] = settingExceptions['Ctag']['options'];
+		var excLabel = boardString;
+		// possible overrides for composite cases
+		if(boardString === 'CtagFace' || boardString === 'CtagBeast') {
+			excLabel = 'Ctag'
 		} else if(boardString === 'CtagFaceBela' || boardString === 'CtagBeastBela') {
-			exceptions['sections'] = settingExceptions['CtagBela']['sections'];
-			exceptions['subsections'] = settingExceptions['CtagBela']['subsections'];
-			exceptions['options'] = settingExceptions['CtagBela']['options'];
-		} else {
-			exceptions['sections'] = settingExceptions['Bela']['sections'];
-			exceptions['subsections'] = settingExceptions['Bela']['subsections'];
-			exceptions['options'] = settingExceptions['Bela']['options'];
+			excLabel = 'CtagBela'
 		}
+		if (!settingExceptions[excLabel]) {
+			// default in case something went wrong above
+			excLabel = 'Bela';
+		}
+		exceptions['sections'] = settingExceptions[excLabel]['sections'];
+		var inputsWithGain = settingExceptions[excLabel].inputsWithGain;
+		var headphones = settingExceptions[excLabel].headphones;
+		var ioSubsecExcepts = excludeInputSubsecs(inputsWithGain).concat(excludeHpSubsecs(headphones));
+		exceptions['subsections'] = settingExceptions[excLabel]['subsections'].concat(ioSubsecExcepts);
+		exceptions['options'] = settingExceptions[excLabel]['options'];
 
 		if(boardString === 'CtagFace' || boardString === 'CtagFaceBela') {
 			exceptions['options'] = exceptions['options'].concat(settingExceptions['Face']['options'])
@@ -412,9 +449,22 @@ class SettingsView extends View {
 				}
 			}
 		}
-
+		function replaceDataSettings(value, find, replace) {
+			var tags = $('[data-settings="' + value + '"]>td.left-choice');
+			if (tags.length) {
+				var tag = tags[0];
+				tag.innerHTML = tag.innerHTML.replace(find, replace);
+			}
+		}
+		if (2 === settingExceptions[excLabel].inputsWithGain) {
+			replaceDataSettings('input-level0', '0', 'Left');
+			replaceDataSettings('input-level1', '1', 'Right');
+		}
+		if (2 === settingExceptions[excLabel].headphones) {
+			replaceDataSettings('headphone-level0', '0', 'Left');
+			replaceDataSettings('headphone-level1', '1', 'Right');
+		}
 		for(var e in exceptions['options']) {
-      console.log("exception", e);
 			var opts = $('#'+exceptions['options'][e].selector).children("option");
 			var exceptOpts = exceptions['options'][e].optVal;
 			for(let i = 0; i < opts.length; i++) {
@@ -426,11 +476,11 @@ class SettingsView extends View {
 		}
 
 		for(var subsect in exceptions['subsections']) {
-      $('[data-settings="' + exceptions['subsections'][subsect] + '"]').css('display', 'none');
+			$('[data-settings="' + exceptions['subsections'][subsect] + '"]').remove();
 		}
 		for(var sect in exceptions['sections']) {
-      $('[data-accordion-for="' + exceptions['sections'][sect] + '"]').css('display', 'none');
-      $('[data-accordion="' + exceptions['sections'][sect] + '"]').css('display', 'none');
+			$('[data-accordion-for="' + exceptions['sections'][sect] + '"]').remove();
+			$('[data-accordion="' + exceptions['sections'][sect] + '"]').remove();
 		}
 	}
 }

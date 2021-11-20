@@ -49,9 +49,11 @@ var paths = require("./paths");
 var file_manager = require("./FileManager");
 var Lock_1 = require("./Lock");
 var lock = new Lock_1.Lock("ProjectSettings");
+var maxHp = 8;
+var maxInputGains = 8;
 function read(project) {
     return __awaiter(this, void 0, void 0, function () {
-        var output;
+        var output, key, n, n, n;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, file_manager.read_json(paths.projects + project + '/settings.json')
@@ -62,6 +64,24 @@ function read(project) {
                     })];
                 case 1:
                     output = _a.sent();
+                    // backwards compatibility: update legacy command lines
+                    for (key in output.CLArgs) {
+                        if (key === '-H') {
+                            for (n = 0; n < maxHp; ++n)
+                                output.CLArgs["-H" + n + ","] = output.CLArgs[key];
+                            delete output.CLArgs[key];
+                        }
+                        else if (key.match(/^--pga-left/)) {
+                            for (n = 0; n < maxInputGains; n += 2)
+                                output.CLArgs["-I" + n + ","] = output.CLArgs[key];
+                            delete output.CLArgs[key];
+                        }
+                        else if (key.match(/^--pga-right/)) {
+                            for (n = 1; n < maxInputGains; n += 2)
+                                output.CLArgs["-I" + n + ","] = output.CLArgs[key];
+                            delete output.CLArgs[key];
+                        }
+                    }
                     return [2 /*return*/, output];
             }
         });
@@ -234,14 +254,27 @@ function default_project_settings() {
         "-p": "16",
         "-C": "8",
         "-B": "16",
-        "-H": "-6",
         "-N": "1",
         "-G": "1",
         "-M": "0",
-        "-D": "0",
-        "-A": "0",
-        "--pga-gain-left": "10",
-        "--pga-gain-right": "10",
+        // headphone level (dB)
+        "-H0,": "-6",
+        "-H1,": "-6",
+        "-H2,": "-6",
+        "-H3,": "-6",
+        "-H4,": "-6",
+        "-H5,": "-6",
+        "-H6,": "-6",
+        "-H7,": "-6",
+        // input gain (dB)
+        "-I0,": "10",
+        "-I1,": "10",
+        "-I2,": "10",
+        "-I3,": "10",
+        "-I4,": "10",
+        "-I5,": "10",
+        "-I6,": "10",
+        "-I7,": "10",
         "user": '',
         "make": '',
         "-X": "0",

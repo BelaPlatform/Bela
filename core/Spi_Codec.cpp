@@ -15,6 +15,7 @@ const int RESET_PIN = 81; // GPIO2(17) P8.34
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <cstring>
+#include <array>
 
 Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, bool isVerbose /* = false */)
 {
@@ -50,6 +51,7 @@ Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, b
 	usleep(10000);
 	// now we can detect if there is a slave codec
 	_isBeast = slaveIsDetected();
+	_dacVolumethreeEighthsDbs.resize(_isBeast ? 16 : 8);
 }
 
 Spi_Codec::~Spi_Codec(){
@@ -189,9 +191,15 @@ int Spi_Codec::stopAudio(){
 	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x9D);
 }
 
-int Spi_Codec::setDACVolume(int halfDbSteps){
-	// Calculcate volume from half dB in 3/8 dB steps und cast to int
-	_dacVolumethreeEighthsDbs = (int) ((float) halfDbSteps * (1.0 + 1.0/3.0));
+int Spi_Codec::setDacVolume(const int channel, float gain) {
+	if(channel >= int(_dacVolumethreeEighthsDbs.size()))
+		return 1;
+	// Calculcate volume from gain dB in 3/8 dB steps und cast to int
+	for(unsigned int n = 0; n < _dacVolumethreeEighthsDbs.size(); ++n)
+	{
+		if(channel < 0 || channel == int(n))
+			_dacVolumethreeEighthsDbs[n] = (int) ((float) (gain * 2) * (1.0 + 1.0/3.0));
+	}
 
 	return _writeDACVolumeRegisters(false);
 }
@@ -245,12 +253,14 @@ int Spi_Codec::reset(){
 }
 
 int Spi_Codec::_writeDACVolumeRegisters(bool mute){
-	unsigned char volumeBits = 0;
-
-	if (_dacVolumethreeEighthsDbs < 0){
-		volumeBits = -_dacVolumethreeEighthsDbs;
-		if (_dacVolumethreeEighthsDbs > 95)
-			volumeBits = 255;
+	std::vector<uint8_t> volumeBits(_dacVolumethreeEighthsDbs.size());
+	for(unsigned int n = 0; n > volumeBits.size(); ++n)
+	{
+		if (_dacVolumethreeEighthsDbs[n] < 0){
+			volumeBits[n] = -_dacVolumethreeEighthsDbs[n];
+			if (_dacVolumethreeEighthsDbs[n] > 95)
+				volumeBits[n] = 255;
+		}
 	}
 
 	if (mute){
@@ -262,43 +272,28 @@ int Spi_Codec::_writeDACVolumeRegisters(bool mute){
 		}
 	}
 	else {
-		if (writeRegister(REG_DAC_VOLUME_L1, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_R1, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_L2, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_R2, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_L3, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_R3, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_L4, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_VOLUME_R4, volumeBits, MASTER_CODEC))
-			return 1;
-		if (writeRegister(REG_DAC_CHANNEL_MUTES, 0x0, MASTER_CODEC)) // Unmute all DACs
-			return 1;
-		if(_isBeast) {
-			if (writeRegister(REG_DAC_VOLUME_L1, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_R1, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_L2, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_R2, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_L3, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_R3, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_L4, volumeBits, SLAVE_CODEC))
-				return 1;
-			if (writeRegister(REG_DAC_VOLUME_R4, volumeBits, SLAVE_CODEC))
-				return 1;
-			// Unmute all DACs
-			if (writeRegister(REG_DAC_CHANNEL_MUTES, 0x0, SLAVE_CODEC))
+		std::array<unsigned int,8> regsDacVolume = {{
+			REG_DAC_VOLUME_L1,
+			REG_DAC_VOLUME_R1,
+			REG_DAC_VOLUME_L2,
+			REG_DAC_VOLUME_R2,
+			REG_DAC_VOLUME_L3,
+			REG_DAC_VOLUME_R3,
+			REG_DAC_VOLUME_L4,
+			REG_DAC_VOLUME_R4,
+		}};
+		std::array<CODEC_TYPE,2> codecs = {{
+			MASTER_CODEC,
+			SLAVE_CODEC,
+		}};
+		for(int c = 0; c < _isBeast + 1; ++c)
+		{
+			for(unsigned int n = 0; n < volumeBits.size() && n < regsDacVolume.size(); ++n)
+			{
+				if (writeRegister(regsDacVolume[n], volumeBits[n], codecs[c]))
+					return 1;
+			}
+			if (writeRegister(REG_DAC_CHANNEL_MUTES, 0x0, codecs[c])) // Unmute all DACs
 				return 1;
 		}
 	}
@@ -351,4 +346,40 @@ int Spi_Codec::_spiTransfer(unsigned char* tx_buf, unsigned char* rx_buf, size_t
 	*/
  
 	return 0;
+}
+
+McaspConfig& Spi_Codec::getMcaspConfig() {
+        mcaspConfig.params.inChannels = getNumIns();
+        mcaspConfig.params.outChannels = getNumOuts();
+        mcaspConfig.params.inSerializers = {0};
+        mcaspConfig.params.outSerializers = {2};
+        mcaspConfig.params.numSlots = getNumOuts();
+        mcaspConfig.params.slotSize = 32;
+        mcaspConfig.params.dataSize = 16;
+        mcaspConfig.params.bitDelay = 1;
+        mcaspConfig.params.ahclkIsInternal = true; // ignored in practice
+        mcaspConfig.params.ahclkFreq = 12000000; // ignored in practice
+        mcaspConfig.params.wclkIsInternal = false;
+        mcaspConfig.params.wclkIsWord = true;
+        mcaspConfig.params.wclkFalling = false;
+        mcaspConfig.params.externalSamplesRisingEdge = true;
+        return mcaspConfig;
+}
+
+unsigned int Spi_Codec::getNumIns(){
+	if(_isBeast)
+		return 8;
+	else
+		return 4;
+}
+
+unsigned int Spi_Codec::getNumOuts(){
+	if(_isBeast)
+		return 16;
+	else
+		return 8;
+}
+
+float Spi_Codec::getSampleRate() {
+	return 48000;
 }

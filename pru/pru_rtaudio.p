@@ -7,6 +7,7 @@
 	
 #define CLOCK_BASE  0x44E00000
 #define CLOCK_MCASP0 0x34
+#define CLOCK_MCASP_VALUE 0x30002 // should probably be just 0x2
 #define CLOCK_SPI0  0x4C
 #define CLOCK_SPI1  0x50
 #define CLOCK_L4LS  0x60
@@ -81,25 +82,7 @@
 #define AD7699_SEQ_OFFSET     3      // sequencer (0 = disable, 3 = scan all)
 
 #define SHARED_COMM_MEM_BASE  0x00010000  // Location where comm flags are written
-#define COMM_SHOULD_STOP      0		  // Set to be nonzero when loop should stop
-#define COMM_CURRENT_BUFFER   4           // Which buffer we are on
-#define COMM_BUFFER_FRAMES    8           // How many frames per buffer
-#define COMM_SHOULD_SYNC      12          // Whether to synchronise to an external clock
-#define COMM_SYNC_ADDRESS     16          // Which memory address to find the GPIO on
-#define COMM_SYNC_PIN_MASK    20          // Which pin to read for the sync
-#define COMM_LED_ADDRESS      24          // Which memory address to find the status LED on
-#define COMM_LED_PIN_MASK     28          // Which pin to write to change LED
-#define COMM_FRAME_COUNT      32	  // How many frames have elapse since beginning
-#define COMM_USE_SPI          36          // Whether or not to use SPI ADC and DAC
-#define COMM_NUM_CHANNELS     40	  // Low 2 bits indicate 8 [0x3], 4 [0x1] or 2 [0x0] channels
-#define COMM_USE_DIGITAL      44	  // Whether or not to use DIGITAL
-#define COMM_PRU_NUMBER       48          // Which PRU this code is running on
-#define COMM_MUX_CONFIG       52          // Whether to use the mux capelet, and how many channels
-#define COMM_MUX_END_CHANNEL  56          // Which mux channel the last buffer ended on
-#define COMM_BUFFER_SPI_FRAMES 60         // Unused (used in pru_rtaudio_irq.p)
-#define COMM_BOARD_FLAGS       64         // Flags for the board we are on (BOARD_FLAGS_... are defined in include/PruBoardFlags.h)
-#define PRU_ERROR_OCCURRED     68         // Unused here
-	
+
 // General constants for McASP peripherals (used for audio codec)
 #define MCASP0_BASE 0x48038000
 #define MCASP1_BASE 0x4803C000
@@ -814,7 +797,7 @@ SPI_FLAG_CHECK_DONE:
      QBBC SPI_INIT_DONE, reg_flags, FLAG_BIT_USE_SPI
 
      // Load the number of channels: valid values are 8, 4 or 2
-     LBBO reg_num_channels, reg_comm_addr, COMM_NUM_CHANNELS, 4
+     LBBO reg_num_channels, reg_comm_addr, COMM_SPI_NUM_CHANNELS, 4
      QBGT SPI_NUM_CHANNELS_LT8, reg_num_channels, 8 // 8 > num_channels ?
      LDI reg_num_channels, 8		// If N >= 8, N = 8
      QBA SPI_NUM_CHANNELS_DONE
@@ -882,9 +865,17 @@ SPI_WAIT_RESET:
 SPI_INIT_DONE:	
 
     // enable MCASP interface clock in PRCM
-    MOV r2, 0x30002
+    MOV r2, CLOCK_MCASP_VALUE
     MOV r3, CLOCK_BASE + CLOCK_MCASP0
     SBBO r2, r3, 0, 4
+
+    // we need to wait for a few cycles after enabling the clock in order for
+    // the McASP to work properly (we found experimentally that this is
+    // required for some SoCs (e.g.: AM572x))
+    MOV r2, 1000
+MCASP_CLOCK_ENABLE_LOOP:
+    SUB r2, r2, 1
+    QBNE MCASP_CLOCK_ENABLE_LOOP, r2, 0
 
     // Prepare McASP0 for audio
     MCASP_REG_WRITE MCASP_GBLCTL, 0			// Disable McASP
@@ -904,14 +895,14 @@ SPI_INIT_DONE:
     MCASP_REG_WRITE MCASP_RFMT, MCASP_DATA_FORMAT	// Set data format
     MCASP_REG_WRITE MCASP_AFSRCTL, 0x100		// I2S mode
     MCASP_REG_WRITE MCASP_ACLKRCTL, 0x80		// Sample on rising edge
-    MCASP_REG_WRITE MCASP_AHCLKRCTL, 0x8001		// Internal clock, not inv, /2; irrelevant?
+    MCASP_REG_WRITE MCASP_AHCLKRCTL, 0x8000		// Internal clock, not inv, /1; irrelevant?
     MCASP_REG_WRITE MCASP_RTDM, 0x03		// Enable TDM slots 0 and 1
     MCASP_REG_WRITE MCASP_RINTCTL, 0x00		// No interrupts
     MCASP_REG_WRITE MCASP_XMASK, MCASP_DATA_MASK	// 16 bit data transmit
     MCASP_REG_WRITE MCASP_XFMT, MCASP_DATA_FORMAT	// Set data format
     MCASP_REG_WRITE MCASP_AFSXCTL, 0x100		// I2S mode
     MCASP_REG_WRITE MCASP_ACLKXCTL, 0x00		// Transmit on rising edge, sync. xmit and recv
-    MCASP_REG_WRITE MCASP_AHCLKXCTL, 0x8001		// External clock from AHCLKX
+    MCASP_REG_WRITE MCASP_AHCLKXCTL, 0x8000		// External clock from AHCLKX
     MCASP_REG_WRITE MCASP_XTDM, 0x03		// Enable TDM slots 0 and 1
     MCASP_REG_WRITE MCASP_XINTCTL, 0x00		// No interrupts
 	
@@ -949,7 +940,7 @@ MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)	// Set RFRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12)	// Set XFRST
 
 // Initialisation
-    LBBO reg_frame_total, reg_comm_addr, COMM_BUFFER_FRAMES, 4  // Total frame count (SPI; 0.5x-2x for McASP)
+    LBBO reg_frame_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count (SPI; 0.5x-2x for McASP)
     MOV reg_dac_buf0, 0                      // DAC buffer 0 start pointer
     LSL reg_dac_buf1, reg_frame_total, 1     // DAC buffer 1 start pointer = N[ch]*2[bytes]*bufsize
     LMBD r2, reg_num_channels, 1		 // Returns 1, 2 or 3 depending on the number of channels

@@ -13,18 +13,42 @@
  */
 
 #include "../include/I2c_Codec.h"
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 
-#define TLV320_DSP_MODE
-I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, bool isVerbose /*= false*/)
-: dacVolumeHalfDbs(0), adcVolumeHalfDbs(0), hpVolumeHalfDbs(0), running(false)
+// if only we could be `using` these...
+constexpr AudioCodecParams::TdmMode kTdmModeI2s = AudioCodecParams::kTdmModeI2s;
+constexpr AudioCodecParams::TdmMode kTdmModeDsp = AudioCodecParams::kTdmModeDsp;
+constexpr AudioCodecParams::TdmMode kTdmModeTdm = AudioCodecParams::kTdmModeTdm;
+constexpr AudioCodecParams::ClockSource kClockSourceMcasp = AudioCodecParams::kClockSourceMcasp;
+constexpr AudioCodecParams::ClockSource kClockSourceCodec = AudioCodecParams::kClockSourceCodec;
+constexpr AudioCodecParams::ClockSource kClockSourceExternal = AudioCodecParams::kClockSourceExternal;
+
+I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose /*= false*/)
+: codecType(type)
+	, running(false)
+	, verbose(isVerbose)
+	, differentialInput(false)
+	, mode(InitMode_init)
 {
-	setVerbose(isVerbose);
+	params.slotSize = 16;
+	params.startingSlot = 0;
+	params.bitDelay = 0;
+	params.dualRate = false;
+	params.tdmMode = kTdmModeDsp;
+	params.bclk = kClockSourceCodec;
+	params.wclk = kClockSourceCodec;
+	params.mclk = mcaspConfig.getValidAhclk(24000000);
+	params.samplingRate = 44100;
 	initI2C_RW(i2cBus, i2cAddress, -1);
 }
 
 // This method initialises the audio codec to its default state
 int I2c_Codec::initCodec()
 {
+	if(InitMode_noInit == mode)
+		return 0;
 	// Write the reset register of the codec
 	if(writeRegister(0x01, 0x80)) // Software reset register
 	{
@@ -40,53 +64,38 @@ int I2c_Codec::initCodec()
 
 // Tell the codec to start generating audio
 // See the TLV320AIC3106 datasheet for full details of the registers
-// The dual_rate flag, when true, runs the codec at 88.2kHz; otherwise
-// it runs at 44.1kHz
-int I2c_Codec::startAudio(int dual_rate)
+int I2c_Codec::startAudio(int dummy)
 {
+	if(verbose)
+		getParameters().print();
+	// setting forceEnablePll = false will attempt (and probably fail) to use clock
+	// divider instead of PLL when bit clock is generated externally
+	bool forceEnablePll = true;
+	bool pllEnabled;
+	bool pllclkInIsBitClock;
+	if(kClockSourceCodec == params.bclk) {
+		// we generate the bit clock via PLL
+		PLLCLK_IN = params.mclk;
+		pllclkInIsBitClock = false;
+		pllEnabled = true;
+	} else {
+		getMcaspConfig(); // updates mcaspConfig.params.numSlots if needed
+		unsigned int numSlots = mcaspConfig.params.numSlots;
+		// bit clock is generated externally.
+		// Reconstruct its frequency:
+		PLLCLK_IN = params.samplingRate * params.slotSize * numSlots;
+		pllclkInIsBitClock = true;
+		if(forceEnablePll)
+			pllEnabled = true;
+		else
+			pllEnabled = false;
+	}
 	// As a best-practice it's safer not to assume the implementer has issued initCodec()
 	// or has not otherwise modified codec registers since that call.
 	// Explicit Switch to config register page 0:
 	if(writeRegister(0x00, 0x00))	// Page Select Register
 		return 1;
-	
-	// see datasehet for TLV320AIC3104 from page 44
-	if(writeRegister(0x02, 0x00))	// Codec sample rate register: fs_ref / 1
-		return 1;
-	//	The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
-	// The master clock PLLCLK_IN is 12MHz
-	// K can be varied in intervals of resolution of 0.0001 up to 63.9999
-	// using P=8 and R=1 gives a resolution of 0.0732421875Hz ( 0.000166% at 44.1kHz)
-	// to obtain Fs=44100 we need to have K=60.2112
 
-	if(setPllP(8))
-		return 1;
-	if(setPllR(1))
-		return 1;
-	if(setAudioSamplingRate(44100)) //this will automatically find and set K for the given P and R so that Fs=44100
-		return 1;
-	if(dual_rate) {
-		if(writeRegister(0x07, 0xEA))	// Codec datapath register: 44.1kHz; dual rate; standard datapath
-			return 1;
-	}
-	else {
-		if(writeRegister(0x07, 0x8A))	// Codec datapath register: 44.1kHz; std rate; standard datapath
-			return 1;
-	}
-	if(writeRegister(0x08, 0xC0))	// Audio serial control register A: BLCK, WCLK outputs
-		return 1;
-#ifdef TLV320_DSP_MODE // to use with old PRU code
-	if(writeRegister(0x09, 0x40))   // Audio serial control register B: DSP mode, word len 16 bits
-#else
-	if(writeRegister(0x09, 0x00))   // Audio serial control register B: I2S mode, word len 16 bits
-#endif
-		return 1;
-#ifdef TLV320_DSP_MODE // to use with old PRU code
-	if(writeRegister(0x0A, 0x00))   // Audio serial control register C: 0 bit offset
-#else
-	if(writeRegister(0x0A, 0x01))   // Audio serial control register C: 1 bit offset
-#endif
-		return 1;
 	if(writeRegister(0x0D, 0x00))	// Headset / button press register A: disabled
 		return 1;
 	if(writeRegister(0x0E, 0x00))	// Headset / button press register B: disabled
@@ -105,19 +114,162 @@ int I2c_Codec::startAudio(int dual_rate)
 	if(writeHPVolumeRegisters())	// Send DAC to high-power outputs
 		return 1;
 
-	if(writeRegister(0x66, 0x02))	// Clock generation control register: use MCLK, PLL N = 2
-		return 1;
+
+	if(InitMode_noInit != mode) {
+		// see datasehet for TLV320AIC3104 from page 44
+		if(writeRegister(0x02, 0x00))	// Codec sample rate register: fs_ref / 1
+			return 1;
+
+		if(pllEnabled) {
+			if(setAudioSamplingRate(params.samplingRate))
+				return 1;
+		} else {
+			// when the PLL is disabled, we use the clock divider instead.
+			// this will only work when the external clock has (n+1)*128 cycles per frame
+			// 10.3.3.1:
+			// The audio converters in the TLV320AIC3104 need an internal audio master clock at a frequency of 256*fs(ref),
+			// which can be obtained in a variety of manners from an external clock signal applied to the device.
+			// ....
+			// when the PLL is disabled, fs(ref) = CLKDIV_IN / (128 * Q)
+
+			unsigned int numSlots = mcaspConfig.params.numSlots;
+			unsigned int Q = (params.slotSize * numSlots) / 128;
+			// Table 10-9. Page 0, Register 3: PLL Programming Register A
+			if(Q < 2 || Q > 17) // valid values are 2 to 17, inclusive
+			{
+				fprintf(stderr, "I2c_Codec: trying to disable PLL in incompatible mode\n");
+				return 1;
+			}
+			unsigned int q;
+			if(Q <= 15)
+				q = Q;
+			else
+				q = Q - 16;
+			unsigned int pllEnableBit = 0; // clock is generated externally
+			uint8_t byte = pllEnableBit << 7 | q << 3;
+			if(writeRegister(0x03, byte))
+				return 1;
+		}
+
+		if(params.dualRate) {
+			if(writeRegister(0x07, 0xEA))	// Codec datapath register: 44.1kHz; dual rate; standard datapath
+				return 1;
+		}
+		else {
+			if(writeRegister(0x07, 0x8A))	// Codec datapath register: 44.1kHz; std rate; standard datapath
+				return 1;
+		}
+
+		if(kClockSourceCodec == params.bclk) {
+			if(kClockSourceCodec == params.wclk) {
+				if(writeRegister(0x08, 0xE0)) {	// Audio serial control register A: BCLK, WCLK outputs,
+					return 1;					// DOUT tri-state when inactive
+				}
+			}
+			else {
+				if(writeRegister(0x08, 0xA0)) {	// Audio serial control register A: BCLK output, WCLK input,
+					return 1;					// DOUT tri-state when inactive
+				}			
+			}
+		}
+		else {
+			// If we don't generate the bit clock then we don't generate the word clock
+			if(writeRegister(0x08, 0x20))	// Audio serial control register A: BCLK, WCLK inputs,
+				return 1;					// DOUT tri-state when inactive
+		}
+
+		// Supported values of slot size in the PRU code: 16 and 32 bits. Note that
+		// altering slot size may require changing #defines in the PRU code.
+		unsigned int crb = 0; 	// Audio serial control register B
+		switch(params.tdmMode)
+		{
+			case kTdmModeI2s:
+				crb |= 0;
+			break;
+			case kTdmModeDsp:
+				crb |= (1 << 6); // Transfer mode: DSP
+				break;
+			case kTdmModeTdm:
+				crb |= (1 << 6); // Transfer mode: DSP
+				crb |= 1 << 3; // enable 256-clock mode when Bclk is an output
+				break;
+			default:
+				return 1;
+		}
+		unsigned int wlc; // word length control
+		switch(params.slotSize)	{
+		case 16:
+			wlc = 0;
+			break;
+		case 20:
+			wlc = 1;
+			break;
+		case 24:
+			wlc = 2;
+			break;
+		case 32:
+			wlc = 3;
+			break;
+		default:
+			return 1;
+		}
+		crb |= (wlc << 4);
+		if(writeRegister(0x09, crb)) // Audio serial control register B
+			return 1;
+		unsigned int crc = params.startingSlot * params.slotSize + params.bitDelay;
+		if(writeRegister(0x0A, crc)) // Audio serial control register C: specifying offset in bits
+			return 1;
+
+		// clock generation
+		uint8_t clkSource = pllclkInIsBitClock ? 0x2 : 0x0; // uses BCLK or uses MCLK
+		uint8_t byte = clkSource << 6 | clkSource << 4 | 2; // CLKDIV_IN, PLLCLK_IN, PLL N = 2
+		if(writeRegister(0x66, byte))
+			return 1;
+		if(pllEnabled) {
+			if(writeRegister(0x65, 0x00))	// GPIO control register B: disabled; codec uses PLLDIV_OUT
+				return 1;
+		} else {
+			if(writeRegister(0x65, 0x01))	// GPIO control register B: disabled; codec uses CLKDIV_OUT
+				return 1;
+		}
+	} // if not noInit
 	
-	//Set-up hardware high-pass filter for DC removal
-	if(configureDCRemovalIIR())
+	bool dcRemoval;
+	double micBias;
+	if(!differentialInput) {
+		//Set-up hardware high-pass filter for DC removal
+		dcRemoval = true;
+		micBias = 2.5;
+	}
+	else {
+		// Disable DC blocking for differential analog inputs
+		dcRemoval = false;
+		// mini string preamp uses micBias for virtual ground reference
+		micBias = 2;
+	}
+
+	if(configureDCRemovalIIR(dcRemoval))
 		return 1;
-	if(writeRegister(25, 0b10000000))	// Enable mic bias 2.5V
+	uint8_t micBiasField;
+	if(2.5 < micBias)
+		micBiasField = 0b11; // MICBIAS is connected to AVDD
+	else if (2 < micBias)
+		micBiasField = 0b10; // MICBIAS is powered to 2.5V
+	else if (micBias == 2)
+		micBiasField = 0b01; // MICBIAS is powered to 2V
+	else
+		micBiasField = 0b00; // MICBIAS is powered down
+
+	if(writeRegister(0x19, micBiasField << 6)) // Set MICBIAS
 		return 1;
 
-	
+	// TODO: may need to separate the code below for non-master codecs so they enable amps after the master clock starts
+
 	// wait for the codec to stabilize before unmuting the HP amp.
 	// this gets rid of the loud pop.
-	usleep(10000);
+	if(kClockSourceCodec == params.bclk)
+		usleep(10000);
+
 	// note : a small click persists, but it is unavoidable
 	// (i.e.: fading in the hpVolumeHalfDbs after it is turned on does not remove it).
 
@@ -126,13 +278,10 @@ int I2c_Codec::startAudio(int dual_rate)
 	if(writeRegister(0x41, 0x0D))	// HPROUT output level control: output level = 0dB, not muted, powered up
 		return 1;
 	enableLineOut(true);
-	if(writeDACVolumeRegisters(false))	// Unmute and set volume
+	if(writeDacVolumeRegisters(false))	// Unmute and set volume
 		return 1;
 
-	if(writeRegister(0x65, 0x00))	// GPIO control register B: disabled; codec uses PLLDIV_OUT
-		return 1;
-
-	if(writeADCVolumeRegisters(false))	// Unmute and set ADC volume
+	if(writeAdcVolumeRegisters(false))	// Unmute and set ADC volume
 		return 1;
 
 	running = true;
@@ -159,16 +308,22 @@ int I2c_Codec::startAudio(int dual_rate)
 //          The selected cut-off should be acceptable up to 96 kHz sampling rate.
 //
 
-int I2c_Codec::configureDCRemovalIIR(){
+int I2c_Codec::configureDCRemovalIIR(bool enable){
 
 	//Explicit Switch to config register page 0:
 	if(writeRegister(0x00, 0x00))	//Page 1/Register 0: Page Select Register
 		return 1;
 
+	if(!enable) {
+		if(writeRegister(0x0C, 0x00))	// Digital filter register: disable HPF on L&R Channels 
+			return 1;		
+		return 0;
+	}
+	
 	//
 	//  Config Page 0 commands
 	//
-	if(writeRegister(0x0C, 0x50))	// Digital filter register: enable HPF on L&R Channels
+	if(writeRegister(0x0C, 0x50))	// Digital filter register: enable HPF on L&R Channels -- TLVTODO: 0x00 for disabled
 		return 1;
 	if(writeRegister(0x6B, 0xC0))	// HPF coeff select register: Use programmable coeffs
 		return 1;
@@ -177,7 +332,7 @@ int I2c_Codec::configureDCRemovalIIR(){
 	if(writeRegister(0x00, 0x01))	//Page 1/Register 0: Page Select Register
 		return 1;
 	//
-	//  Config Page 0 commands
+	//  Config Page 1 commands
 	//
 
 	//Left Channel HPF Coeffiecient Registers
@@ -220,7 +375,6 @@ int I2c_Codec::configureDCRemovalIIR(){
 
 	return 0;
 }
-
 //set the numerator multiplier for the PLL
 int I2c_Codec::setPllK(float k){
 	short unsigned int j=(int)k;
@@ -299,13 +453,137 @@ int I2c_Codec::setPllR(unsigned int r){
 	pllR = r;
 	return 0;
 }
-int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
-	long int PLLCLK_IN=12000000;
-	//	f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
-	float k = ((double)(newSamplingRate * pllP * 2048.0f/(float)pllR)) / PLLCLK_IN ;
-	return (setPllK(k));
+
+struct PllSettings {
+	unsigned int P;
+	unsigned int R;
+	double K;
+	double Fs;
+};
+
+static std::vector<PllSettings> findSettingsWithConstraints(
+		unsigned int Rmin, unsigned int Rmax,
+		double Kmin, double Kmax,
+		double ratioMin, double ratioMax,
+		bool integerK, double PLLCLK_IN,
+		double newSamplingRate
+	)
+{
+	const double MHz = 1000000;
+	std::vector<struct PllSettings> settings;
+	unsigned int Pmin = 1;
+	unsigned int Pmax = 8;
+	// constraint: ratioMin Mhz ≤ (PLLCLK_IN/P) ≤ ratioMax MHz
+	while(PLLCLK_IN / Pmin > ratioMax*MHz && Pmin <= Pmax)
+		++Pmin;
+	while(PLLCLK_IN / Pmax < ratioMin*MHz && Pmin <= Pmax)
+		--Pmax;
+	for(unsigned int R = Rmin; R <= Rmax; ++R)
+	{
+		for(unsigned int P = Pmin; P <= Pmax; ++P)
+		{
+			//80 MHz ≤ PLLCLK_IN × K × R/P ≤ 110 MHz
+			double localKmin = 80*MHz * P / (PLLCLK_IN * R);
+			double localKmax = 110*MHz * P / (PLLCLK_IN * R);
+			localKmin = std::max(localKmin, Kmin);
+			localKmax = std::min(localKmax, Kmax);
+			// round the Ks up and down to a value with 4 decimals
+			localKmin = ((unsigned int)(localKmin * 10000 + 1)) / 10000.0;
+			localKmax = ((unsigned int)(localKmax * 10000)) / 10000.0;
+			if(localKmin < localKmax)
+			{
+				// constraints are met, see if we can find a valid combination of settings
+				// f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
+				// solve for K and check that it is in the valid range
+				double K = (newSamplingRate * P * 2048.0/R) / (double)PLLCLK_IN;
+				if(integerK)
+					// round to int
+					K = ((unsigned int)(K + 0.5));
+				else
+					// round K to 4 decimals
+					K = ((unsigned int)(K * 10000 + 0.5)) / 10000.0;
+				if(K >= localKmin && K <= localKmax)
+				{
+					double Fs = (PLLCLK_IN * K * R)/(2048 * P);
+					settings.push_back({.P = P, .R = R, .K = K, .Fs = Fs});
+				}
+			}
+		}
+	}
+	return settings;
 }
 
+int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
+	std::vector<struct PllSettings> settings;
+	// From the TLV3201AIC3104 datasheet, 10.3.3.1 Audio Clock Generation
+	// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
+
+	// • P = 1, 2, 3,…, 8
+	// • R = 1, 2, …, 16
+	// • K = J.D
+	// • J = 1, 2, 3, …, 63
+	// • D = 0000, 0001, 0002, 0003, …, 9998, 9999
+	// • PLLCLK_IN can be MCLK or BCLK, selected by Page 0, register 102, bits D5–D4
+
+	// When the PLL is enabled and D = 0000, the following conditions must be satisfied to meet specified
+	// performance:
+	// constraint 1: 512 kHz ≤ (PLLCLK_IN/P) ≤ 20 MHz
+	// constraint 2: 4 ≤ J ≤ 55 (remember that K = J.D)
+	// constraint 3: 80 MHz ≤ (PLLCLK_IN × K × R/P) ≤ 110 MHz
+	auto newSettings = findSettingsWithConstraints(
+		1, 16, // Rmin, Rmax (full range of R values)
+		4.0, 55.0, // Kmin, Kmax
+		0.512, 20, // ratioMin, ratioMax
+		true, // only integer values of K (D = 0)
+		PLLCLK_IN, newSamplingRate
+	);
+	settings.insert(settings.end(), newSettings.begin(), newSettings.end());
+
+	//When the PLL is enabled and D ≠ 0000, the following conditions must be satisfied to meet specified
+	//performance:
+	//constraint 1: R = 1
+	//constraint 2: 10 MHz ≤ PLLCLK_IN/P ≤ 20 MHz
+	//constraint 3: 4 ≤ J ≤ 11  (remember that K = J.D)
+	//constraint 4: 80 MHz ≤ PLLCLK_IN × K × R/P ≤ 110 MHz
+	newSettings = findSettingsWithConstraints(
+			1, 1, // Rmin, Rmax
+			4, 11.9999, // Kmin, Kmax
+			10, 20, // ratioMin, ratioMax
+			false, // fractional values of K allowed
+			PLLCLK_IN, newSamplingRate
+	);
+	settings.insert(settings.end(), newSettings.begin(), newSettings.end());
+
+	if(0 == settings.size()) {
+		fprintf(stderr, "I2c_Codec: error, no valid PLL settings found\n");
+		return 1;
+	}
+	// find the settings that minimise the Fs error
+	PllSettings optimalSettings = {0};
+	double error = std::numeric_limits<double>::max();
+	for(auto & s : settings) {
+		double newError = std::abs(s.Fs - newSamplingRate);
+		if(newError < error) {
+			error = newError;
+			optimalSettings = s;
+		}
+	}
+	// The sampling frequency is given as f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
+	if(setPllP(optimalSettings.P))
+		return 1;
+	if(setPllR(optimalSettings.R))
+		return 1;
+	if((setPllK(optimalSettings.K)))
+		return 1;
+	PllSettings& s = optimalSettings;
+	if(verbose)
+		printf("MCLK: %.4f MHz, fs(ref): %.4f, P: %u, R: %u, J: %d, D: %d, Achieved Fs: %f (err: %.4f%%), \n",
+			PLLCLK_IN / 1000000, newSamplingRate,
+			pllP, pllR, pllJ, pllD,
+			s.Fs, (s.Fs - newSamplingRate) / newSamplingRate * 100
+		);
+	return 0;
+}
 
 short unsigned int I2c_Codec::getPllJ(){
 	return pllJ;
@@ -327,91 +605,116 @@ float I2c_Codec::getPllK(){
 }
 
 float I2c_Codec::getAudioSamplingRate(){
-	long int PLLCLK_IN=12000000;
 	//	f_{S(ref)} = (PLLCLK_IN × K × R)/(2048 × P)
-	float fs = (PLLCLK_IN/2048.0f) * getPllK()*getPllR()/(float)getPllP();
+	float fs = (PLLCLK_IN/2048.0) * getPllK()*getPllR()/(float)getPllP();
 	return fs;
 }
 
-int I2c_Codec::setPga(float newGain, unsigned short int channel){
-	unsigned short int reg;
-	if(channel == 0)
-		reg = 0x0F;
-	else if(channel == 1)
-		reg =  0x10;
-	else
-		return 1; // error, wrong channel
-	if(newGain > 59.5)
+int I2c_Codec::setInputGain(int channel, float gain){
+	const uint8_t regLeft = 0x0F;
+	const uint8_t regRight = 0x10;
+	std::vector<uint8_t> regs;
+	if(0 == channel)
+		regs = {regLeft};
+	else if(1 == channel)
+		regs = {regRight};
+	else if(channel < 0)
+		regs = {{regLeft, regRight}}; // both channels
+	if(gain > 59.5)
 		return 2; // error, gain out of range
 	unsigned short int value;
-	if(newGain < 0)
+	if(gain < 0)
 		value = 0b10000000; // PGA is muted
 	else {
 		// gain is adjustable from 0 to 59.5dB in steps of 0.5dB between 0x0 and 0x7f.
 		// Values between 0b01110111 and 0b01111111 are clipped to 59.5dB
-		value = (int)(newGain * 2 + 0.5) & 0x7f;
+		value = (int)(gain * 2 + 0.5) & 0x7f;
 	}
-	return writeRegister(reg, value);
+	int ret = 0;
+	for(auto& reg : regs)
+		ret |=  writeRegister(reg, value);
+	return ret;
+}
+
+template<typename T, typename U>
+static int setByChannel(T& dest, const int channel, U val)
+{
+	if(channel >= (int)dest.size())
+		return 1;
+	for(unsigned int n = 0; n < dest.size(); ++n)
+	{
+		if(channel == int(n) || channel < 0)
+		{
+			dest[n] = val;
+			if(channel >= 0)
+				break;
+		}
+	}
+	return 0;
+}
+
+static int getHalfDbs(float gain)
+{
+	return floorf(gain * 2.0 + 0.5);
 }
 
 // Set the volume of the DAC output
-int I2c_Codec::setDACVolume(int halfDbSteps)
+int I2c_Codec::setDacVolume(int channel, float gain)
 {
-	dacVolumeHalfDbs = halfDbSteps;
+	if(setByChannel(dacVolumeHalfDbs, channel, getHalfDbs(gain)))
+		return 1;
 	if(running)
-		return writeDACVolumeRegisters(false);
-
+		return writeDacVolumeRegisters(false);
 	return 0;
 }
 
 // Set the volume of the ADC input
-int I2c_Codec::setADCVolume(int halfDbSteps)
+int I2c_Codec::setAdcVolume(int channel, float gain)
 {
-	adcVolumeHalfDbs = halfDbSteps;
+	if(setByChannel(adcVolumeHalfDbs, channel, getHalfDbs(gain)))
+		return 1;
 	if(running)
-		return writeADCVolumeRegisters(false);
-
+		return writeAdcVolumeRegisters(false);
 	return 0;
 }
 
 // Update the DAC volume control registers
-int I2c_Codec::writeDACVolumeRegisters(bool mute)
+int I2c_Codec::writeDacVolumeRegisters(bool mute)
 {
-	int volumeBits = 0;
-
-	if(dacVolumeHalfDbs < 0) { // Volume is specified in half-dBs with 0 as full scale
-		volumeBits = -dacVolumeHalfDbs;
-		if(volumeBits > 127)
-			volumeBits = 127;
+	std::array<int,kNumIoChannels> volumeBits{};
+	for(unsigned int n = 0; n < volumeBits.size(); ++n)
+	{
+		// Volume is specified in half-dBs with 0 as full scale
+		volumeBits[n] = -dacVolumeHalfDbs[n];
+		if(volumeBits[n] > 127)
+			volumeBits[n] = 127;
 	}
-
-	if(mute) {
-		if(writeRegister(0x2B, volumeBits | 0x80))	// Left DAC volume control: muted
-			return 1;
-		if(writeRegister(0x2C, volumeBits | 0x80))	// Right DAC volume control: muted
-			return 1;
-	}
-	else {
-		if(writeRegister(0x2B, volumeBits))	// Left DAC volume control: not muted
-			return 1;
-		if(writeRegister(0x2C, volumeBits))	// Right DAC volume control: not muted
+	std::array<int,kNumIoChannels> regs = {{
+		0x2B, // Left DAC volume control
+		0x2C, // Right DAC volume control
+	}};
+	uint8_t muteBits = mute << 7;
+	for(unsigned int n = 0; n < regs.size(); ++n)
+	{
+		if(writeRegister(regs[n], volumeBits[n] | muteBits)) // DAC volume control
 			return 1;
 	}
-
 	return 0;
 }
 
 // Update the ADC volume control registers
-int I2c_Codec::writeADCVolumeRegisters(bool mute)
+int I2c_Codec::writeAdcVolumeRegisters(bool mute)
 {
-	int volumeBits = 0;
-
+	std::array<int,kNumIoChannels> volumeBits{};
 	// Volume is specified in half-dBs with 0 as full scale
 	// The codec uses 1.5dB steps so we divide this number by 3
-	if(adcVolumeHalfDbs < 0) {
-		volumeBits = -adcVolumeHalfDbs / 3;
-		if(volumeBits > 8)
-			volumeBits = 8;
+	for(unsigned int n = 0; n < volumeBits.size(); ++n)
+	{
+		if(adcVolumeHalfDbs[n] < 0) {
+			volumeBits[n] = -adcVolumeHalfDbs[n] / 3;
+			if(volumeBits[n] > 8)
+				volumeBits[n] = 8;
+		}
 	}
 
 	if(mute) {
@@ -425,19 +728,42 @@ int I2c_Codec::writeADCVolumeRegisters(bool mute)
 			return 1;
 		if(writeRegister(0x16, 0x7C))	// Line1R disabled; right ADC powered up with soft step
 			return 1;
-		if(writeRegister(0x11, (volumeBits << 4) | 0x0F))	// Line2L connected to left ADC
-			return 1;
-		if(writeRegister(0x12, volumeBits | 0xF0))		    // Line2R connected to right ADC
-			return 1;
+		
+		if(codecType == TLV320AIC3106) {
+			// TODO: 3106/11.3.7 seems to indicate that weakBiasing
+			// should always be disabled when the channel is
+			// enabled. For now we keep it enabled for
+			// differentialInput, pending further testing.
+			bool weakBiasing = differentialInput;
+			// LINE2L/R connected to corresponding L/R ADC PGA mix with specified gain.
+			std::array<int,kNumIoChannels> regs = {{
+				0x14,
+				0x17,
+			}};
+			for(unsigned int n = 0; n < regs.size(); ++n)
+			{
+				uint8_t byte = (differentialInput << 7) | (volumeBits[n] << 3) | (weakBiasing << 2);
+				if(writeRegister(regs[n], byte))
+					return 1;
+			}
+		}
+		else {	// TLV320AIC3104
+			if(writeRegister(0x11, (volumeBits[0] << 4) | 0x0F)) // Mic2L (sic) Input connected connected to left-ADC PGA mix with specified gain
+				return 1;
+			if(writeRegister(0x12, volumeBits[1] | 0xF0)) // Mic2R/Line2R connected to right-ADC PGA mix with specified gain
+				return 1;
+		}
 	}
 
 	return 0;
 }
 
 // Set the volume of the headphone output
-int I2c_Codec::setHPVolume(int halfDbSteps)
+int I2c_Codec::setHpVolume(int channel, float gain)
 {
-	hpVolumeHalfDbs = halfDbSteps;
+	int hd = (int)floorf(gain * 2 + 0.5);
+	if(setByChannel(hpVolumeHalfDbs, channel, hd))
+		return 1;
 	hpEnabled = true;
 	if(running)
 		return writeHPVolumeRegisters();
@@ -457,21 +783,23 @@ int I2c_Codec::enableHpOut(bool enable)
 // Update the headphone volume control registers
 int I2c_Codec::writeHPVolumeRegisters()
 {
-	int volumeBits = 0;
-
-	if(hpVolumeHalfDbs < 0) { // Volume is specified in half-dBs with 0 as full scale
-		volumeBits = -hpVolumeHalfDbs;
-		if(volumeBits > 127)
-			volumeBits = 127;
+	std::array<uint8_t,kNumIoChannels> regs = {{
+		0x2F, // DAC_L1 to HPLOUT
+		0x40, // DAC_R1 to HPROUT
+	}};
+	for(unsigned int n = 0; n < hpVolumeHalfDbs.size(); ++n)
+	{
+		int volumeBits = 0;
+		int hd = hpVolumeHalfDbs[n];
+		if(hd < 0) { // Volume is specified in half-dBs with 0 as full scale
+			volumeBits = -hd;
+			if(volumeBits > 127)
+				volumeBits = 127;
+		}
+		uint8_t routed = hpEnabled << 7; // DAC_x routed to HPxOUT ?
+		if(writeRegister(regs[n], volumeBits | routed))
+			return 1;
 	}
-
-	// DAC_x routed to HPxOUT ?
-	char routed = hpEnabled << 7;
-	if(writeRegister(0x2F, volumeBits | routed)) // DAC_L1 to HPLOUT register
-		return 1;
-	if(writeRegister(0x40, volumeBits | routed)) // DAC_R1 to HPROUT register
-		return 1;
-
 	return 0;
 }
 
@@ -498,9 +826,9 @@ int I2c_Codec::enableLineOut(bool enable)
 // This tells the codec to stop generating audio and mute the outputs
 int I2c_Codec::stopAudio()
 {
-	if(writeDACVolumeRegisters(true))	// Mute the DACs
+	if(writeDacVolumeRegisters(true))	// Mute the DACs
 		return 1;
-	if(writeADCVolumeRegisters(true))	// Mute the ADCs
+	if(writeAdcVolumeRegisters(true))	// Mute the ADCs
 		return 1;
 
 	usleep(10000);
@@ -511,12 +839,12 @@ int I2c_Codec::stopAudio()
 		return 1;
 	if(enableLineOut(false))
 		return 1;
-	if(writeRegister(0x25, 0x00))		// DAC power/driver register: power off
-		return 1;
-	if(writeRegister(0x03, 0x11))		// PLL register A: disable
-		return 1;
-	if(writeRegister(0x01, 0x80))		// Reset codec to defaults
-		return 1;
+	if(InitMode_noInit != mode && InitMode_noDeinit != mode) {
+		if(writeRegister(0x25, 0x00))		// DAC power/driver register: power off. For whatever reason, executing this also turns off the BCLK output
+			return 1;
+		if(writeRegister(0x03, 0x11))		// PLL register A: disable
+			return 1;
+	}
 
 	running = false;
 	return 0;
@@ -536,14 +864,59 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 	return 0;
 }
 
+// Read a specific register on the codec
+int I2c_Codec::readRegister(unsigned int reg)
+{	
+    i2c_char_t inbuf, outbuf;
+    struct i2c_rdwr_ioctl_data packets;
+    struct i2c_msg messages[2];
+
+	/* Reading a register involves a repeated start condition which needs ioctl() */
+    outbuf = reg;
+    messages[0].addr  = i2C_address;
+    messages[0].flags = 0;
+    messages[0].len   = sizeof(outbuf);
+    messages[0].buf   = &outbuf;
+
+    /* The data will get returned in this structure */
+    messages[1].addr  = i2C_address;
+    messages[1].flags = I2C_M_RD/* | I2C_M_NOSTART*/;
+    messages[1].len   = sizeof(inbuf);
+    messages[1].buf   = &inbuf;
+
+    /* Send the request to the kernel and get the result back */
+    packets.msgs      = messages;
+    packets.nmsgs     = 2;
+    if(ioctl(i2C_file, I2C_RDWR, &packets) < 0) {
+        verbose && fprintf(stderr, "Failed to read register %d on I2c codec\n", reg);
+        return -1;
+    }
+
+    return inbuf;	
+}
+
 // Put codec to Hi-z (required for CTAG face)
 int I2c_Codec::disable(){
 	if (writeRegister(0x0, 0)) // Select page 0
 		return 1;
 	if(writeRegister(0x01, 0x80)) // Reset codec to defaults
 		return 1;
-	if (writeRegister(0x08, 0xE0)) // Put codec in master mode (required for hi-z mode)
-		return 1;
+	if(kClockSourceCodec == params.bclk) {
+		if(kClockSourceCodec == params.wclk) {
+			if(writeRegister(0x08, 0xE0)) {	// Put codec in master mode (required for hi-z mode)
+				return 1;					
+			}
+		}
+		else {
+			if(writeRegister(0x08, 0xA0)) { 
+				return 1;					
+			}			
+		}
+	}
+	else {
+		if (writeRegister(0x08, 0x20)) // Leave codec in slave mode
+			return 1;
+	}
 	if(writeRegister(0x03, 0x11)) // PLL register A: disable
 		return 1;
 	if (writeRegister(0x24, 0x44)) // Power down left and right ADC
@@ -574,3 +947,148 @@ I2c_Codec::~I2c_Codec()
 		stopAudio();
 }
 
+McaspConfig& I2c_Codec::getMcaspConfig()
+{
+/*
+#define BELA_TLV_MCASP_DATA_FORMAT_TX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
+#define BELA_TLV_MCASP_DATA_FORMAT_RX_VALUE 0x8074 // MSB first, 0 bit delay, 16 bits, DAT bus, ROR 16bits
+#define BELA_TLV_MCASP_ACLKRCTL_VALUE 0x00 // External clk, polarity (falling edge)
+#define BELA_TLV_MCASP_ACLKXCTL_VALUE 0x00 // External clk, polarity (falling edge)
+#define BELA_TLV_MCASP_AFSXCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
+#define BELA_TLV_MCASP_AFSRCTL_VALUE 0x100 // 2 Slot I2S, external fsclk, polarity (rising edge), single bit
+#define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
+*/
+	unsigned int numSlots;
+	switch(params.tdmMode)
+	{
+		case kTdmModeI2s:
+		case kTdmModeDsp:
+			numSlots = 2;
+			break;
+		case kTdmModeTdm:
+			// codec is in 256-bit mode
+			numSlots = 256 / params.slotSize;
+			break;
+		default:
+			throw std::runtime_error("I2c_Codec: invalid TdmMode");
+	}
+	bool isI2s = (kTdmModeI2s == params.tdmMode);
+	mcaspConfig.params.inChannels = getNumIns();
+	mcaspConfig.params.outChannels = getNumOuts();;
+	mcaspConfig.params.inSerializers = {0};
+	mcaspConfig.params.outSerializers = {2};
+	mcaspConfig.params.numSlots = numSlots;
+	mcaspConfig.params.slotSize = params.slotSize;
+	mcaspConfig.params.dataSize = params.slotSize;
+	// in I2S mode, 0 bitDelay means (10.3.2.3) "the MSB of the left
+	// channel is valid on the second rising edge of the bit clock after
+	// the falling edge of the word clock", which - for the McASP - means 1
+	// bit delay.
+	// Therefore in I2s mode the codec always has 1 implicity extra bit delay.
+	mcaspConfig.params.bitDelay = isI2s ? params.bitDelay + 1 : params.bitDelay;
+	mcaspConfig.params.ahclkIsInternal = true;
+	mcaspConfig.params.ahclkFreq = params.mclk;
+	mcaspConfig.params.wclkIsInternal = (kClockSourceMcasp == params.wclk);
+	mcaspConfig.params.wclkIsWord = isI2s;
+	mcaspConfig.params.wclkFalling = isI2s;
+	mcaspConfig.params.externalSamplesRisingEdge = isI2s;
+
+	return mcaspConfig;
+}
+
+unsigned int I2c_Codec::getNumIns(){
+	return 2;
+}
+
+unsigned int I2c_Codec::getNumOuts(){
+	return 2;
+}
+
+float I2c_Codec::getSampleRate() {
+	return params.samplingRate;
+}
+
+int I2c_Codec::setParameters(const AudioCodecParams& codecParams)
+{
+	params = codecParams;
+	int ret = 0;
+	if(kClockSourceCodec != params.bclk && kClockSourceCodec == params.wclk) {
+		verbose && fprintf(stderr, "I2c_Codec: cannot generate Wclk if it doesn't generate Bclk\n");
+		ret = -1;
+	}
+	if(params.samplingRate > 53000 || params.samplingRate < 39000) {
+		verbose && fprintf(stderr, "I2c_Codec: sample rate %f out of range\n", params.samplingRate);
+		ret = -1;
+	}
+	if(params.bitDelay > 2) {
+		verbose && fprintf(stderr, "I2c_Codec: max bitDelay is 2\n");
+		params.bitDelay = 2;
+		ret = -1;
+	}
+	if(kTdmModeDsp == params.tdmMode && 0 != params.startingSlot) {
+		verbose && fprintf(stderr, "I2c_Codec: startingSlot has to be 0 in DSP mode\n");
+		params.startingSlot = 0;
+		ret = -1;
+	}
+	return ret;
+}
+
+AudioCodecParams I2c_Codec::getParameters()
+{
+	return params;
+}
+
+#include "../include/MiscUtilities.h"
+int I2c_Codec::setMode(std::string str)
+{
+	std::vector<std::string> tokens = StringUtils::split(str, ',');
+	int err = 0;
+	for(auto parameter : tokens)
+	{
+		parameter = StringUtils::trim(parameter);
+		if("init" == parameter)
+			mode = InitMode_init;
+		else if("noDeinit" == parameter)
+			mode = InitMode_noDeinit;
+		else if("noInit" == parameter)
+			mode = InitMode_noInit;
+		else if("I2sMain" == parameter || "I2sSecondary" == parameter)
+		{
+			params.tdmMode = kTdmModeI2s;
+			AudioCodecParams::ClockSource cg = ("I2sMain" == parameter) ? kClockSourceCodec : kClockSourceExternal;
+			params.bclk = cg;
+			params.wclk = cg;
+		} else if("diff" == parameter) {
+			differentialInput = true;
+		} else if("single" == parameter) {
+			differentialInput = false;
+		} else {
+			++err;
+			continue;
+		}
+	}
+	if(verbose)
+	{
+		if(err)
+			fprintf(stderr, "%d error(s) occurred while setting codec to %s\n", err, str.c_str());
+		else
+			printf("Codec mode: %d (%s)\n", mode, str.c_str());
+	}
+	return err;
+}
+
+#include <iostream>
+void AudioCodecParams::print()
+{
+#define P(FIELD) std::cout << #FIELD << ": " << FIELD << "\n"
+	std::cout << "AudioCodec parameters:\n";
+	P(slotSize);
+	P(startingSlot);
+	P(bitDelay);
+	P(mclk);
+	P(samplingRate);
+	P(dualRate);
+	P(tdmMode);
+	P(bclk);
+	P(wclk);
+};

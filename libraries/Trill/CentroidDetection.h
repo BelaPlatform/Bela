@@ -28,11 +28,11 @@ public:
 	 * that computes the centroids position. Defaults to 7.
 	 */
 	void setMultiplierBits(unsigned int n);
-	unsigned int getNumTouches();
-	DATA_T touchLocation(unsigned int touch_num);
-	DATA_T touchSize(unsigned int touch_num);
-	DATA_T compoundTouchLocation();
-	DATA_T compoundTouchSize();
+	unsigned int getNumTouches() const;
+	DATA_T touchLocation(unsigned int touch_num) const;
+	DATA_T touchSize(unsigned int touch_num) const;
+	DATA_T compoundTouchLocation() const;
+	DATA_T compoundTouchSize() const;
 private:
 	typedef uint16_t WORD;
 	class CalculateCentroids;

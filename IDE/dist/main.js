@@ -68,6 +68,8 @@ function init(args) {
                                 httpPort = ideDev.httpPort;
                             if (ideDev.hasOwnProperty('verbose'))
                                 globals.set_verbose(ideDev.verbose);
+                            if (ideDev.hasOwnProperty('board'))
+                                globals.set_board(ideDev.board);
                         }
                     }
                     catch (err) { }
@@ -225,12 +227,13 @@ exports.shutdown = shutdown;
 function board_detect() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            if (globals.local_dev)
-                return [2 /*return*/, 'unknown'];
+            if (globals.local_dev) {
+                return [2 /*return*/, new Promise(function (resolve, reject) {
+                        resolve(globals.board);
+                    })];
+            }
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     child_process.exec('board_detect', function (err, stdout, stderr) {
-                        if (err)
-                            stdout = 'unknown';
                         console.log('running on', stdout);
                         resolve(stdout);
                     });

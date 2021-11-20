@@ -12,13 +12,11 @@
  *      Author: Andrew McPherson
  */
 
-
-#ifndef I2CCODEC_H_
-#define I2CCODEC_H_
+#pragma once
 
 #include "AudioCodec.h"
 #include "I2c.h"
-
+#include <array>
 
 class I2c_Codec : public I2c, public AudioCodec
 {
@@ -26,12 +24,24 @@ class I2c_Codec : public I2c, public AudioCodec
 	short unsigned int pllD;
 	short unsigned int pllP;
 	short unsigned int pllR;
+	double PLLCLK_IN;
 public:
+	typedef enum {
+		TLV320AIC3104 = 0,
+		TLV320AIC3106,
+	} CodecType;
+	
 	int writeRegister(unsigned int reg, unsigned int value);
+	int readRegister(unsigned int reg);
 
 	int initCodec();
-	int startAudio(int dual_rate);
+	int setParameters(const AudioCodecParams& codecParams);
+	AudioCodecParams getParameters();
+	int startAudio(int dummy);
 	int stopAudio();
+	unsigned int getNumIns();
+	unsigned int getNumOuts();
+	float getSampleRate();
 
 	int setPllJ(short unsigned int j);
 	int setPllD(unsigned int d);
@@ -45,13 +55,10 @@ public:
 	unsigned int getPllR();
 	float getPllK();
 	float getAudioSamplingRate();
-	int setPga(float newGain, unsigned short int channel);
-	int setDACVolume(int halfDbSteps);
-	int writeDACVolumeRegisters(bool mute);
-	int setADCVolume(int halfDbSteps);
-	int writeADCVolumeRegisters(bool mute);
-	int setHPVolume(int halfDbSteps);
-	int writeHPVolumeRegisters();
+	int setInputGain(int channel, float gain);
+	int setDacVolume(int channel, float gain);
+	int setAdcVolume(int channel, float gain);
+	int setHpVolume(int channel, float gain);
 	int enableHpOut(bool enable);
 	int enableLineOut(bool enable);
 	int disable();
@@ -60,18 +67,33 @@ public:
 	int readI2C();
 	void setVerbose(bool isVerbose);
 
-	I2c_Codec(int i2cBus, int I2cAddress, bool verbose = false);
+	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
 	~I2c_Codec();
 
+	virtual McaspConfig& getMcaspConfig();
+	int setMode(std::string str);
 private:
-	int configureDCRemovalIIR(); //called by startAudio()
-	int dacVolumeHalfDbs;
-	int adcVolumeHalfDbs;
-	int hpVolumeHalfDbs;
+	enum {kNumIoChannels = 2};
+	int writeDacVolumeRegisters(bool mute);
+	int writeAdcVolumeRegisters(bool mute);
+	int writeHPVolumeRegisters();
+protected:
+	int configureDCRemovalIIR(bool enable); //called by startAudio()
+	int codecType;
+	std::array<int,kNumIoChannels> dacVolumeHalfDbs{};
+	std::array<int,kNumIoChannels> adcVolumeHalfDbs{};
+	std::array<int,kNumIoChannels> hpVolumeHalfDbs{};
+	AudioCodecParams params;
+	McaspConfig mcaspConfig;
 	bool running;
 	bool verbose;
 	bool hpEnabled;
+	bool differentialInput;
+	typedef enum
+	{
+		InitMode_init = 0,
+		InitMode_noDeinit = 1,
+		InitMode_noInit = 2,
+	} InitMode;
+	InitMode mode;
 };
-
-
-#endif /* I2CCODEC_H_ */

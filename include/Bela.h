@@ -27,10 +27,20 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 9
+#define BELA_MINOR_VERSION 11
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.11.0
+// - added BelaChannelGain and BelaChannelGainArray
+// - added setHpLevel(), setAudioInputGain(), setAdcLevel(), setDacLevel(),
+// deprecated the functions they are intended to replace
+// - added the corresponding fields in BelaInitSettings: headphoneGains,
+// audioInputGains, adcGains, dacGains
+// 1.10.0
+// - added parameter to Bela_detectHw(), and associated typedef
+// - added more values to the BelaHw enum
+// - added codecMode to BelaInitSettings
 // 1.9.0
 // - added Bela_HwConfig_{new,delete}
 // 1.8.0
@@ -41,7 +51,7 @@
 // - INPUT and OUTPUT are now an enum
 // 1.6.0
 // - added Bela_setUserData(), Bela_requestStop(), Bela_stopRequested()
-// 1.5.0
+// 1.5.1
 // - in BelaInitSettings, renamed unused members, preserving binary compatibility
 // 1.5.0
 // - in BelaInitSettings, board becomes BelaHw
@@ -76,16 +86,24 @@ int rt_fprintf(FILE *stream, const char *format, ...);
 int rt_vprintf(const char *format, va_list ap);
 int rt_vfprintf(FILE *stream, const char *format, va_list ap);
 
+/**
+ * A type of Bela hardware.
+ */
 typedef enum
 {
-	BelaHw_NoHw = -1,
-	BelaHw_Bela,
-	BelaHw_BelaMini,
-	BelaHw_Salt,
-	BelaHw_CtagFace,
-	BelaHw_CtagBeast,
-	BelaHw_CtagFaceBela,
-	BelaHw_CtagBeastBela,
+	BelaHw_NoHw = -1, ///< No hardware
+	BelaHw_Bela, ///< Bela
+	BelaHw_BelaMini, ///< Bela Mini
+	BelaHw_Salt, ///< Salt
+	BelaHw_CtagFace, ///< Ctag Face
+	BelaHw_CtagBeast, ///< Ctag Beast
+	BelaHw_CtagFaceBela, ///< Ctag Face and Bela cape
+	BelaHw_CtagBeastBela, ///< Ctag Beast and Bela cape
+	BelaHw_BelaMiniMultiAudio, ///< Bela Mini with extra codecs
+	BelaHw_BelaMiniMultiTdm, ///< Bela Mini with extra codecs and/or tdm devices
+	BelaHw_BelaMultiTdm, ///< Bela with extra codecs and/or tdm devices
+	BelaHw_BelaMiniMultiI2s, ///< Bela Mini with extra rx and tx I2S data lines.
+	BelaHw_Batch, ///< Dummy offline
 } BelaHw;
 
 typedef struct _BelaHwConfig
@@ -111,13 +129,25 @@ BelaHwConfig* Bela_HwConfig_new(BelaHw hw);
  */
 void Bela_HwConfig_delete(BelaHwConfig* cfg);
 
+/**
+ * Arguments to be passed to Bela_detectHw()
+ */
+typedef enum
+{
+	BelaHwDetectMode_Scan, ///< perform an automatic detection by scanning the peripherals and busses available, and cache value in `/run/bela/belaconfig`
+	BelaHwDetectMode_Cache, ///< read cached value from `/run/bela/belaconfig` first. If it does not exist, fall back to #BelaHwDetectMode_Scan
+	BelaHwDetectMode_CacheOnly, ///<read cached value from `/run/bela/belaconfig`. If it does not exist, return #BelaHw_NoHw
+	BelaHwDetectMode_User, ///<read user-specified value from `~/.bela/belaconfig`. If it does not exist, fall back to #BelaHwDetectMode_Cache
+	BelaHwDetectMode_UserOnly, ///<read user-specified value from `~/.bela/belaconfig`. If it does not exist, return #BelaHw_NoHw
+} BelaHwDetectMode;
+
 #include <GPIOcontrol.h>
 
 // Useful constants
 
 /** \cond PRIVATE */
 #define MAX_PRU_FILENAME_LENGTH 256
-#define MAX_UNUSED2_LENGTH 256
+#define MAX_UNUSED_LENGTH 224
 #define MAX_PROJECTNAME_LENGTH 256
 /** \endcond */
 
@@ -172,6 +202,10 @@ void Bela_HwConfig_delete(BelaHwConfig* cfg);
  * Flag for BelaContext. If set, indicates the user will be warned if an underrun occurs
  */
 #define BELA_FLAG_DETECT_UNDERRUNS	(1 << 2)	// Set if the user will be displayed a message when an underrun occurs
+/**
+ * Flag for BelaContext. If set, it means that render() is called offline, i.e.: the audio time does not correspond to wall clock time.
+ */
+#define BELA_FLAG_OFFLINE (1 << 3)
 
 struct option;
 
@@ -362,10 +396,10 @@ typedef struct {
 	///
 	/// Binary combination of flags including:
 	///
-	/// BELA_FLAG_INTERLEAVED: indicates the audio and analog buffers are interleaved
-	///
-	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST: indicates that writes to the analog outputs will
-	/// persist for future frames. If not set, writes affect one frame only.
+	/// BELA_FLAG_INTERLEAVED
+	/// BELA_FLAG_ANALOG_OUTPUTS_PERSIST
+	/// BELA_FLAG_DETECT_UNDERRUNS
+	/// BELA_FLAG_OFFLINE
 	const uint32_t flags;
 
 	/// Name of running project.
@@ -375,6 +409,15 @@ typedef struct {
 	const unsigned int underrunCount;
 } BelaContext;
 
+struct BelaChannelGain {
+	int channel; ///< Channel number. Negative value means all the channels
+	float gain; ///< Gain in dB.
+};
+
+struct BelaChannelGainArray {
+	unsigned int length;
+	struct BelaChannelGain* data;
+};
 /**
  * \ingroup control
  * \brief Structure containing initialisation parameters for the real-time
@@ -387,10 +430,11 @@ typedef struct {
 typedef struct {
 	// These items might be adjusted by the user:
 
-	/// \brief Number of (analog) frames per period.
+	/// \brief Number of audio frames per period ("blocksize").
 	///
-	/// Number of audio frames depends on relative sample rates of the two. By default,
-	/// audio is twice the sample rate, so has twice the period size.
+	/// The number of analog frames depends on relative sample rates of the
+	/// two. By default, audio is twice the sample rate, so has twice the
+	/// period size.
 	int periodSize;
 	/// Whether to use the analog input and output
 	int useAnalog;
@@ -409,13 +453,13 @@ typedef struct {
 
 	/// Whether to begin with the speakers muted
 	int beginMuted;
-	/// Level for the audio DAC output
+	/// Level for the audio DAC output. DEPRECATED: ues dacGains
 	float dacLevel;
-	/// Level for the audio ADC input
+	/// Level for the audio ADC input. DEPRECATED: use adcGains
 	float adcLevel;
-	/// Gains for the PGA, left and right channels
+	/// Gains for the PGA, left and right channels. DEPRECATED: use audioInputGains
 	float pgaGain[2];
-	/// Level for the headphone output
+	/// Level for the headphone output. DEPRECATED: use headphoneGains
 	float headphoneLevel;
 	/// How many channels to use on the multiplexer capelet, if enabled
 	int numMuxChannels;
@@ -475,8 +519,18 @@ typedef struct {
 	/// Pointer to an optional function to be called when the audio thread is done.
 	/// This function is called from the audio thread itself just before it returns.
 	void (*audioThreadDone)(BelaContext*, void*);
-	int unused1;
-	char unused2[MAX_UNUSED2_LENGTH];
+	/// A codec-specific intialisation parameter
+	char* codecMode;
+	/// audio input gains
+	struct BelaChannelGainArray audioInputGains;
+	/// level for headphone outputs
+	struct BelaChannelGainArray headphoneGains;
+	/// Level for the audio ADC input
+	struct BelaChannelGainArray adcGains;
+	/// Level for the audio DAC output
+	struct BelaChannelGainArray dacGains;
+
+	char unused[MAX_UNUSED_LENGTH];
 
 	/// User selected board to work with (as opposed to detected hardware).
 	BelaHw board;
@@ -681,8 +735,11 @@ void Bela_setVerboseLevel(int level);
 
 /**
  * \brief Detect what hardware we are running on.
+ *
+ *
+ * \param mode How to perform the detection. The behaviour is described in #BelaHwDetectMode.
  */
-BelaHw Bela_detectHw(void);
+BelaHw Bela_detectHw(BelaHwDetectMode mode);
 
 // *** Audio control functions ***
 
@@ -796,10 +853,18 @@ int Bela_stopRequested();
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
+ * \param channel The channel to set. Use a negative value to set all channels.
  * \param decibels Level of the DAC output. Valid levels range from -63.5 (lowest) to
  * 0 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded down.
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setDacLevel(int channel, float decibels);
+
+/**
+ * DEPRECATED.
+ *
+ * Equivalent to `Bela_setDacLevel(-1, decibels)`.
  */
 int Bela_setDACLevel(float decibels);
 
@@ -812,16 +877,24 @@ int Bela_setDACLevel(float decibels);
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
+ * \param channel The channel to set. Use a negative value to set all channels.
  * \param decibels Level of the ADC input. Valid levels range from -12 (lowest) to
  * 0 (highest) in steps of 1.5dB. Levels between increments of 1.5 will be rounded down.
  *
  * \return 0 on success, or nonzero if an error occurred.
  */
+int Bela_setAdcLevel(int channel, float decibels);
+
+/**
+ * DEPRECATED.
+ *
+ * Equivalent to `Bela_setAdcLevel(-1, decibels)`.
+ */
 int Bela_setADCLevel(float decibels);
 
 
 /**
- * \brief Set the gain of the audio preamplifier.
+ * \brief Set the gain of the audio input preamplifier.
  *
  * This function sets the level of the Programmable Gain Amplifier(PGA), which
  * amplifies the signal before the ADC.
@@ -829,12 +902,19 @@ int Bela_setADCLevel(float decibels);
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
+ * \param channel The channel to set. Use a negative value to set all channels.
  * \param decibels Level of the PGA Valid levels range from 0 (lowest) to
  * 59.5 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded.
- * \param channel Specifies which channel to apply the gain to. Channel 0 is left,
  * channel 1 is right
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setAudioInputGain(int channel, float decibels);
+
+/**
+ * DEPRECATED.
+ *
+ * Equivalent to `Bela_setAudioInputGain(channel, decibels)`.
  */
 int Bela_setPgaGain(float decibels, int channel);
 
@@ -848,10 +928,16 @@ int Bela_setPgaGain(float decibels, int channel);
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
- * \param decibels Level of the DAC output. Valid levels range from -63.5 (lowest) to
+ * \param channel The channel to set. Use a negative value to set all channels.
+ * \param decibels Level of the headphone output. Valid levels range from -63.5 (lowest) to
  * 0 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded down.
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setHpLevel(int channel, float decibels);
+/**
+ * DEPRECATED
+ * Equivalent to Bela_setHpLevel(-1, decibels);
  */
 int Bela_setHeadphoneLevel(float decibels);
 

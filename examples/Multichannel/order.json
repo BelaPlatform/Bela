@@ -1,0 +1,10 @@
+[
+  "multi-sinetone",
+  "multitap-delay",
+  "multichannel-player",
+  "manual-panning",
+  "circular-panning",
+  "sidechain-ducker",
+  "pd-multi-sample-player",
+  "sc-multichannel-output"
+]

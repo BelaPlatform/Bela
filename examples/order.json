@@ -6,6 +6,7 @@
   "Communication",
   "Gui",
   "Sensors",
+  "Multichannel",
   "Trill",
   "PureData",
   "SuperCollider",

@@ -26,8 +26,10 @@
 
 #include "../include/Bela.h"
 #include "../include/bela_hw_settings.h"
+#include "../include/bela_sw_settings.h"
 #include "../include/board_detect.h"
 #include "../include/BelaContextFifo.h"
+#include "../include/MiscUtilities.h"
 
 // Xenomai-specific includes
 #if XENOMAI_MAJOR == 3
@@ -52,6 +54,9 @@
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"
 #include "../include/Spi_Codec.h"
+#include "../include/I2c_MultiTLVCodec.h"
+#include "../include/I2c_MultiTdmCodec.h"
+#include "../include/I2c_MultiI2sCodec.h"
 #include "../include/GPIOcontrol.h"
 extern "C" void enable_runfast();
 extern "C" void disable_runfast();
@@ -111,6 +116,7 @@ void sigdebug_handler(int sig, siginfo_t *si, void *context)
 }
 #endif // XENOMAI_CATCH_MSW
 using namespace std;
+using namespace BelaHwComponent;
 
 typedef struct
 {
@@ -118,103 +124,34 @@ typedef struct
 	AudioCodec* disabledCodec;
 } BelaHwConfigPrivate;
 
-static I2c_Codec* gI2cCodec = NULL;
-static Spi_Codec* gSpiCodec = NULL;
 int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
+static AudioCodec* gDisabledCodec = NULL;
+static BelaHw belaHw;
+extern const float BELA_INVALID_GAIN;
 
 static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
 {
-	if(gRTAudioVerbose)
-		printf("Bela_getHwConfigPrivate()\n");
-	memset((void*)cfg, 0, sizeof(BelaHwConfig));
-	cfg->digitalChannels = 16;
-	// set audio codec
-	AudioCodec* activeCodec;
-	AudioCodec* disabledCodec;
-	switch(hw)
-	{
-		case BelaHw_Bela:
-			//nobreak
-		case BelaHw_BelaMini:
-			//nobreak
-		case BelaHw_Salt:
-			//nobreak
-			activeCodec = gI2cCodec;
-			disabledCodec = gSpiCodec;
-			break;
-		case BelaHw_CtagFace:
-			//nobreak
-		case BelaHw_CtagFaceBela:
-			//nobreak
-		case BelaHw_CtagBeast:
-			//nobreak
-		case BelaHw_CtagBeastBela:
-			activeCodec = gSpiCodec;
-			disabledCodec = gI2cCodec;
-			break;
-		case BelaHw_NoHw:
-		default:
-		return -1; // unrecognized hw
-	}
-	if(pcfg) {
-		pcfg->activeCodec = activeCodec;
-		pcfg->disabledCodec = disabledCodec;
-	}
 	// set audio I/O
-	switch(hw)
-	{
-		case BelaHw_Bela:
-			//nobreak
-		case BelaHw_BelaMini:
-			//nobreak
-		case BelaHw_Salt:
-			cfg->audioInChannels = 2;
-			cfg->audioOutChannels = 2;
-			cfg->audioSampleRate = 44100;
-			break;
-		case BelaHw_CtagFace:
-			//nobreak
-		case BelaHw_CtagFaceBela:
-			cfg->audioInChannels = 4;
-			cfg->audioOutChannels = 8;
-			cfg->audioSampleRate = 48000;
-			break;
-		case BelaHw_CtagBeast:
-			//nobreak
-		case BelaHw_CtagBeastBela:
-			cfg->audioInChannels = 8;
-			cfg->audioOutChannels = 16;
-			cfg->audioSampleRate = 48000;
-			break;
-		case BelaHw_NoHw:
-		default:
-			return -1; // unrecognized hw
+	if(!cfg || ! pcfg)
+		return 1;
+	cfg->audioInChannels = pcfg->activeCodec->getNumIns();
+	cfg->audioOutChannels = pcfg->activeCodec->getNumOuts();
+	cfg->audioSampleRate = pcfg->activeCodec->getSampleRate();
+	if(!cfg->audioInChannels && cfg->audioOutChannels) {
+		fprintf(stderr, "Error: 0 inputs and 0 outputs channels.\n");
+		return -1;
+	}
+	if(!cfg->audioSampleRate) {
+		fprintf(stderr, "Error: audio sampling rate is 0. Is the codec enabled?\n");
+		return -1;
 	}
 	// set analogs:
-	switch(hw)
-	{
-		case BelaHw_Bela:
-			//nobreak
-		case BelaHw_Salt:
-			//nobreak
-		case BelaHw_CtagFaceBela:
-			//nobreak
-		case BelaHw_CtagBeastBela:
-			cfg->analogInChannels = 8;
-			cfg->analogOutChannels = 8;
-			break;
-		case BelaHw_BelaMini:
-			cfg->analogInChannels = 8;
-			break;
-		case BelaHw_CtagFace:
-			//nobreak
-		case BelaHw_CtagBeast:
-			//nobreak
-		case BelaHw_NoHw:
-			//nobreak
-		default:
-			break;
+	if(Bela_hwContains(hw, BelaCape)) {
+		cfg->analogInChannels = 8;
+		cfg->analogOutChannels = 8;
+	} else if(Bela_hwContains(hw, BelaMiniCape)) {
+		cfg->analogInChannels = 8;
 	}
 	return 0;
 }
@@ -222,6 +159,8 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 BelaHwConfig* Bela_HwConfig_new(BelaHw hw)
 {
 	BelaHwConfig* cfg = new BelaHwConfig;
+	// TODO: this will always return error because of nullptr.
+	// Codec detection needs to be factored out of Bela_initAudio
 	if(Bela_getHwConfigPrivate(hw, cfg, nullptr))
 	{
 		delete cfg;
@@ -289,6 +228,55 @@ void fifoRender(BelaContext*, void*);
 // function for application-specific use
 //
 // Returns 0 on success.
+
+int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const std::string& codecMode, void* userData)
+{
+	ctx->audioFrames = settings->periodSize;
+	ctx->audioInChannels = 12;
+	ctx->audioOutChannels = 12;
+	ctx->digitalChannels = 16;
+	ctx->analogInChannels = settings->numAnalogInChannels;
+	ctx->analogOutChannels = settings->numAnalogOutChannels;
+	ctx->analogFrames = ctx->audioFrames / 2;
+	ctx->digitalFrames = ctx->audioFrames;
+	ctx->audioSampleRate = 44100;
+	ctx->digitalSampleRate = ctx->audioSampleRate;
+	ctx->analogSampleRate = ctx->audioSampleRate / 2;
+	BelaContextSplitter::contextAllocate(ctx);
+	ctx->flags |= BELA_FLAG_OFFLINE;
+	// Call the user-defined initialisation function
+	if(settings->setup && !(*settings->setup)((BelaContext*)ctx, userData)) {
+		if(gRTAudioVerbose)
+			fprintf(stderr, "Couldn't initialise audio rendering: setup() returned false\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaContext*,void*), void* userData)
+{
+	context->audioFramesElapsed = 0;
+	unsigned int i = 100000;
+	while(i--) {
+		render((BelaContext*)context, userData);
+		context->audioFramesElapsed += context->audioFrames;
+	}
+	gShouldStop = 1;
+	return 0;
+}
+
+static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
+{
+	for(unsigned int n = 0; n < cga.length; n++)
+	{
+		BelaChannelGain& cg = cga.data[n];
+		int ret = cb(cg.channel, cg.gain);
+		if(ret)
+			return ret;
+	}
+	return 0;
+}
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
@@ -445,36 +433,86 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
-	BelaHw belaHw = Bela_detectHw();
+	BelaHw actualHw = Bela_detectHw(BelaHwDetectMode_Cache);
 	if(gRTAudioVerbose)
-		printf("Detected hardware: %s\n", getBelaHwName(belaHw).c_str());
-	// Check for user-selected hardware
+		printf("Detected hardware: %s\n", getBelaHwName(actualHw).c_str());
+	// Check for user-selected hardware, either on the command line ...
 	BelaHw userHw = settings->board;
 	if(gRTAudioVerbose)
-		printf("Hardware specified by user: %s\n", getBelaHwName(settings->board).c_str());
+		printf("Hardware specified at the command line: %s\n", getBelaHwName(settings->board).c_str());
 	if(userHw == BelaHw_NoHw)
 	{
-		userHw = Bela_detectUserHw();
+		userHw = Bela_detectHw(BelaHwDetectMode_UserOnly); // ... or in the user belaconfig
 		if(gRTAudioVerbose)
-			printf("Hardware specified in belaconfig: %s\n", getBelaHwName(userHw).c_str());
+			printf("Hardware specified in the user's belaconfig: %s\n", getBelaHwName(userHw).c_str());
 	}
-	if(userHw != BelaHw_NoHw && userHw != belaHw && Bela_checkHwCompatibility(userHw, belaHw))
+	if(userHw == actualHw)
 		belaHw = userHw;
+	else if(userHw != BelaHw_NoHw && Bela_checkHwCompatibility(userHw, actualHw))
+		belaHw = userHw;
+	else
+		belaHw = actualHw;
 	if(gRTAudioVerbose)
 		printf("Hardware to be used: %s\n", getBelaHwName(belaHw).c_str());
+	if(BelaHw_NoHw == belaHw)
+	{
+		fprintf(stderr, "Error: unrecognized Bela hardware. Is a cape connected?\n");
+		return 1;
+	}
 
-        // TODO: this is a bit dirty here, it should probably be in getHwConfig, which should probably contextually renamed
-        if(belaHw == BelaHw_CtagFace || belaHw == BelaHw_CtagFaceBela)
-                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
-        else if(belaHw == BelaHw_CtagBeast || belaHw == BelaHw_CtagBeastBela)
-                gSpiCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
-        if(belaHw != BelaHw_CtagBeast && belaHw != BelaHw_CtagFace)
-                gI2cCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, gRTAudioVerbose);
-	BelaHwConfig cfg;
+	std::string codecMode;
+	if(settings->codecMode)
+		codecMode = settings->codecMode;
+
+	if(BelaHw_Batch == belaHw)
+	{
+		gCoreRender = settings->render;
+		return initBatch(settings, &gContext, codecMode, gUserData);
+	}
+	// figure out which codec to use and which to disable if several are present and conflicting
+	unsigned int ctags;
+        if((ctags = Bela_hwContains(belaHw, CtagCape)))
+	{
+		if(1 == ctags)
+			gAudioCodec = new Spi_Codec(ctagSpidevGpioCs0, NULL);
+		else if (2 == ctags)
+			gAudioCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
+		if(Bela_hwContains(actualHw, Tlv320aic3104))
+			gDisabledCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+	}
+	else if(belaHw == BelaHw_BelaMiniMultiAudio) {
+		std::string mode;
+		if("" != codecMode)
+			mode = "MODE:"+codecMode;
+		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
+	}
+	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
+		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);
+	else if(BelaHw_BelaMiniMultiI2s == belaHw)
+		gAudioCodec = new I2c_MultiI2sCodec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+	else if(Bela_hwContains(belaHw, Tlv320aic3104))
+	{
+		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+		if(Bela_hwContains(actualHw, CtagCape))
+			gDisabledCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
+	}
+
+	if(!gAudioCodec)
+	{
+		fprintf(stderr, "Error: invalid combinations of selected and available hardware\n");
+		return 1;
+	}
+	// note: for some of the codecs, codecMode may have been
+	// been used above and/or this may be a NOP
+	gAudioCodec->setMode(codecMode);
+
+	BelaHwConfig cfg = {0};
 	BelaHwConfigPrivate pcfg;
+	pcfg.activeCodec = gAudioCodec;
+	pcfg.disabledCodec = gDisabledCodec;
 	if(Bela_getHwConfigPrivate(belaHw, &cfg, &pcfg))
 	{
-		fprintf(stderr, "Unrecognized Bela hardware: is a cape connected?\n");
+		fprintf(stderr, "Error while retrieving hardware settings Bela hardware: is a cape connected?\n");
 		return 1;
 	}
 	gContext.audioSampleRate = cfg.audioSampleRate;
@@ -488,23 +526,24 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	switch(belaHw)
 	{
 		case BelaHw_Bela:
-			//nobreak
 		case BelaHw_BelaMini:
-			//nobreak
 		case BelaHw_Salt:
 			fifoFactor = settings->periodSize / 128;
 		break;
 		case BelaHw_CtagFace:
-			//nobreak
 		case BelaHw_CtagFaceBela:
+		case BelaHw_BelaMiniMultiI2s:
 			fifoFactor = settings->periodSize / 64;
 		break;
 		case BelaHw_CtagBeast:
-			//nobreak
+		case BelaHw_BelaMultiTdm:
+		case BelaHw_BelaMiniMultiTdm:
+		case BelaHw_BelaMiniMultiAudio:
 		case BelaHw_CtagBeastBela:
 			fifoFactor = settings->periodSize / 32;
 		break;
 		case BelaHw_NoHw:
+		case BelaHw_Batch:
 		break;
 	}
 	if(1 > fifoFactor)
@@ -519,7 +558,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	if(settings->projectName)
 	{
-		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH);
+		strncpy(gContext.projectName, settings->projectName, MAX_PROJECTNAME_LENGTH - 1);
 		if(gRTAudioVerbose)
 			printf("Project name: %s\n", gContext.projectName);
 	}
@@ -585,7 +624,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gContext.flags |= BELA_FLAG_DETECT_UNDERRUNS;
 
 	// Use PRU for audio
-	gPRU = new PRU(&gContext, gAudioCodec);
+	gPRU = new PRU(&gContext);
 
 	// Get the PRU memory buffers ready to go
 	if(gPRU->initialise(belaHw, settings->pruNumber, settings->uniformSampleRate,
@@ -615,18 +654,35 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	// Set default volume levels
-	Bela_setDACLevel(settings->dacLevel);
-	Bela_setADCLevel(settings->adcLevel);
 	// TODO: add more argument checks
-	for(int n = 0; n < 2; n++){
-		if(settings->pgaGain[n] > 59.5){
-			fprintf(stderr, "PGA gain out of range [0,59.5] for channel %d: %fdB\n", n, settings->pgaGain[n]);
-			return 1;
-		}
-		Bela_setPgaGain(settings->pgaGain[n], n);
+
+	if(setChannelGains(settings->audioInputGains, Bela_setAudioInputGain))
+		if(gRTAudioVerbose)
+			printf("Setting audio input gains: channels out of range\n");
+	if(setChannelGains(settings->headphoneGains, Bela_setHpLevel))
+		if(gRTAudioVerbose)
+			printf("Setting audio headphone gains: channels out of range\n");
+	if(setChannelGains(settings->dacGains, Bela_setDacLevel))
+		if(gRTAudioVerbose)
+			printf("Setting audio dac gains: channels out of range\n");
+	if(setChannelGains(settings->adcGains, Bela_setAdcLevel))
+		if(gRTAudioVerbose)
+			printf("Setting audio adc gains: channels out of range\n");
+
+	// These are deprecated. We keep them for bw compatibilty.
+	// will be removed later.
+	// They have to come after the newer ones above
+	for(unsigned int n = 0; n < 2; n++)
+	{
+		if(BELA_INVALID_GAIN != settings->pgaGain[n])
+			Bela_setPgaGain(settings->pgaGain[n], n); // DEPRECATED
 	}
-	Bela_setHeadphoneLevel(settings->headphoneLevel);
+	if(BELA_INVALID_GAIN != settings->headphoneLevel)
+		Bela_setHeadphoneLevel(settings->headphoneLevel); // DEPRECATED
+	if(BELA_INVALID_GAIN != settings->dacLevel)
+		Bela_setDACLevel(settings->dacLevel); // DEPRECATED
+	if(BELA_INVALID_GAIN != settings->adcLevel)
+		Bela_setADCLevel(settings->adcLevel); // DEPRECATED
 
 	gBlockDurationMs = gUserContext->audioFrames / gUserContext->audioSampleRate * 1000;
 	// Call the user-defined initialisation function
@@ -650,7 +706,7 @@ void audioLoop(void *)
 	pthread_setmode_np(0, PTHREAD_WARNSW, NULL);
 #endif // XENOMAI_CATCH_MSW
 	if(gRTAudioVerbose)
-		printf("_________________Audio Thread!\n");
+		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode);
@@ -706,6 +762,10 @@ void fifoLoop(void* userData)
 static int startAudioInline(){
 	if(gRTAudioVerbose)
 		printf("startAudioInilne\n");
+	gShouldStop = 0;
+	if(BelaHw_Batch == belaHw) {
+		return 0;
+	}
 	// make sure we have everything
 	assert(gAudioCodec != 0 && gPRU != 0);
 
@@ -715,8 +775,11 @@ static int startAudioInline(){
 		return -1;
 	}
 
+	McaspConfig mcaspConfig = gAudioCodec->getMcaspConfig();
+	if(gRTAudioVerbose)
+		mcaspConfig.print();
 	// initialize and run the PRU
-	if(gPRU->start(gPRUFilename)) {
+	if(gPRU->start(gPRUFilename, mcaspConfig.getRegisters())) {
 		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);
 		return -1;
 	}
@@ -730,7 +793,6 @@ static int startAudioInline(){
 	}
 
 	// ready to go
-	gShouldStop = 0;
 	return 0;
 }
 
@@ -796,6 +858,10 @@ int Bela_startAudio()
 	if(ret < 0)
 		return ret;
 
+	if(BelaHw_Batch == belaHw) {
+		return batchCallbackLoop(&gContext, gCoreRender, gUserData);
+	}
+
 	// Start all RT threads
 #ifdef XENOMAI_SKIN_native
 	if(ret = rt_task_start(&gRTAudioThread, &audioLoop, 0))
@@ -846,6 +912,8 @@ void Bela_stopAudio()
 		printf("Stopping audio...\n");
 	// Tell audio thread to stop (if this hasn't been done already)
 	Bela_requestStop();
+	if(BelaHw_Batch == belaHw)
+		return;
 
 	// Now wait for threads to respond and actually stop...
 #ifdef XENOMAI_SKIN_native
@@ -879,7 +947,8 @@ void Bela_cleanupAudio()
 
 	disable_runfast();
 	// Shut down the prussdrv system
-	gPRU->exitPRUSS();
+	if(gPRU)
+		gPRU->exitPRUSS();
 
 	// Clean up the auxiliary tasks
 	Bela_deleteAllAuxiliaryTasks();
@@ -889,10 +958,9 @@ void Bela_cleanupAudio()
 	rt_task_delete(&gRTAudioThread);
 #endif
 
-	if(gPRU != 0)
-		delete gPRU;
-	if(gAudioCodec != 0)
-		delete gAudioCodec;
+	delete gPRU;
+	delete gAudioCodec;
+	delete gDisabledCodec;
 	delete gBcf;
 
 	if(gAmplifierMutePin >= 0)
@@ -919,9 +987,14 @@ int Bela_stopRequested()
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setDACLevel(float decibels)
 {
+	return Bela_setDacLevel(-1, decibels);
+}
+
+int Bela_setDacLevel(int channel, float decibels)
+{
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setDACVolume((int)floorf(decibels * 2.0 + 0.5));
+	return gAudioCodec->setDacVolume(channel, decibels);
 
 	return 0;
 }
@@ -930,30 +1003,42 @@ int Bela_setDACLevel(float decibels)
 // 0dB is the maximum, -12dB is the minimum; 1.5dB steps
 int Bela_setADCLevel(float decibels)
 {
+	return Bela_setAdcLevel(-1, decibels);
+}
 
+int Bela_setAdcLevel(int channel, float decibels)
+{
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setADCVolume((int)floorf(decibels * 2.0 + 0.5));
+	return gAudioCodec->setAdcVolume(channel, decibels);
 }
 
 // Set the level of the Programmable Gain Amplifier
 // 59.5dB is maximum, 0dB is minimum; 0.5dB steps
 int Bela_setPgaGain(float decibels, int channel){
+	return Bela_setAudioInputGain(channel, decibels);
+}
+
+int Bela_setAudioInputGain(int channel, float decibels){
 
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setPga(decibels, channel);
+	return gAudioCodec->setInputGain(channel, decibels);
 }
 
 // Set the level of the onboard headphone amplifier; affects headphone
 // output only (not line out or speaker)
 // 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
-int Bela_setHeadphoneLevel(float decibels)
+int Bela_setHpLevel(int channel, float decibels)
 {
-
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setHPVolume((int)floorf(decibels * 2.0 + 0.5));
+	return gAudioCodec->setHpVolume(channel, decibels);
+}
+
+int Bela_setHeadphoneLevel(float decibels)
+{
+	return Bela_setHpLevel(-1, decibels);
 }
 
 // Mute or unmute the onboard speaker amplifiers
