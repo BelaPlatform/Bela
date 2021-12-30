@@ -732,7 +732,7 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) echo 	...done
 UPDATE_LOG?=$(BELA_DIR)/../update.log
-LOG=>> $(UPDATE_LOG) 2>&1
+LOG=>> $(shell realpath $(UPDATE_LOG)) 2>&1
 TEE_LOG=2>&1 | tee -a $(UPDATE_LOG)
 UPDATE_LOG_INIT:=echo > $(UPDATE_LOG); \
  echo DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` $(LOG); \
@@ -762,8 +762,8 @@ update: stop
 	$(AT) $(MAKE) --no-print-directory -f Makefile.libraries cleanall > /dev/null || true
 	$(AT) echo Copying $(BELA_DIR) to $(UPDATE_BELA_PATCH) ... $(TEE_LOG)
 	$(AT) rsync -a --delete-during --exclude Documentation --exclude .git $(BELA_DIR)/ $(UPDATE_BELA_PATCH)
-	$(AT) echo Applying patch in $(UPDATE_BELA_PATCH)... | $(TEE_LOG)
-	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(UPDATE_BELA_PATCH) ./update_board -y --no-frills $(LOG)
+	$(AT) echo Applying patch in $(UPDATE_BELA_PATCH)... $(TEE_LOG)
+	$(AT) cd $(UPDATE_SOURCE_DIR)/scripts && BBB_ADDRESS=root@127.0.0.1 BBB_BELA_HOME=$(UPDATE_BELA_PATCH) ./update_board -y --no-frills --no-log $(LOG)
 	$(AT) # If everything went ok, we now have the updated version of $(BELA_DIR) in $(UPDATE_BELA_PATCH)
 	$(AT) # So let's operate the magic swap. $(BELA_DIR) is moved to $(UPDATE_BELA_MV_BACKUP) and $(UPDATE_BELA_PATCH) is moved to $(BELA_DIR).
 	$(AT) # The fun part is that this Makefile is moved as well...
@@ -771,6 +771,8 @@ update: stop
 	$(AT) # Output will be logged to $(UPDATE_LOG)
 	$(AT) echo Restoring directory structure... $(TEE_LOG)
 	$(AT) set -x; screen -S update-Bela -d -m bash -c '\
+		set -x;\
+		exec > >(tee "$(UPDATE_LOG)") 2>&1 ; \
 	        echo Kill the IDE $(LOG) && \
 	        $(MAKE) --no-print-directory idestop $(LOG) &&\
 	        mv $(BELA_DIR) $(UPDATE_BELA_MV_BACKUP) $(LOG) && mv $(UPDATE_BELA_PATCH) $(BELA_DIR) $(LOG) &&\
@@ -778,8 +780,9 @@ update: stop
 	        echo Hope we are still alive here $(LOG) &&\
 	        echo Restart the IDE $(LOG) &&\
 	        make --no-print-directory -C $(BELA_DIR) idestart $(LOG) &&\
-	        echo Update successful $(LOG); \
-			$(UPDATE_LOG_SUCCESS); ' $(LOG)
+		echo Update successful $(LOG) &&\
+		$(UPDATE_LOG_SUCCESS) ||\
+		{ echo Error updating $(LOG); exit 1; }' $(LOG)
 
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
