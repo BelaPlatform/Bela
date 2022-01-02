@@ -27,17 +27,15 @@ protected:
 	int i2C_bus;
 	int i2C_address;
 	int i2C_file;
+public:
 	ssize_t readBytes(void* buf, size_t count);
 	ssize_t writeBytes(const void* buf, size_t count);
-
-public:
 	I2c(){};
 	I2c(I2c&&) = delete;
 	int initI2C_RW(int bus, int address, int file);
 	int closeI2C();
 
 	virtual ~I2c();
-
 };
 
 
