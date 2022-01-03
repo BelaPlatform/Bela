@@ -21,7 +21,7 @@ SCREEN_NAME=Bela
 REMOTE_UPDATE_LOG=$BBB_BELA_HOME/../update.log
 LOCAL_UPDATE_LOG=`{ [ -z "$TMPDIR" ] && TMPDIR=/tmp; }; mktemp $TMPDIR/Bela-update.log.XXXXX || true`
 DOLOG=1
-FORCELOG=1
+FORCELOG=0
 
 usage ()
 {
@@ -121,6 +121,8 @@ if [ 0 -eq "$FORCELOG" ]; then
 	if [ "$BBB_HOSTNAME" = 127.0.0.1 ]; then
 		DOLOG=0
 	fi
+else
+	DOLOG=1
 fi
 
 if [ 1 -eq "$DOLOG" ]; then
