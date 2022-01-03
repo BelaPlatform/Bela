@@ -772,7 +772,7 @@ update: stop
 	$(AT) echo Restoring directory structure... $(TEE_LOG)
 	$(AT) set -x; screen -S update-Bela -d -m bash -c '\
 		set -x;\
-		exec > >(tee "$(UPDATE_LOG)") 2>&1 ; \
+		exec > >(tee -a "$(UPDATE_LOG)") 2>&1 ; \
 	        echo Kill the IDE $(LOG) && \
 	        $(MAKE) --no-print-directory idestop $(LOG) &&\
 	        mv $(BELA_DIR) $(UPDATE_BELA_MV_BACKUP) $(LOG) && mv $(UPDATE_BELA_PATCH) $(BELA_DIR) $(LOG) &&\
