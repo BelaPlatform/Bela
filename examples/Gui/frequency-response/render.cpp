@@ -137,7 +137,10 @@ void render(BelaContext *context, void *userData)
 	if(newSettingsReceived) {
 		settings.fs = context->audioSampleRate;
 		for(auto& b : gAudioBiquads)
+		{
 			b.setup(settings);
+			b.clean(); // clean the internal filter state to avoid blowing up the filter
+		}
 	}
 
 	for(unsigned int n = 0; n < context->audioFrames; ++n)
