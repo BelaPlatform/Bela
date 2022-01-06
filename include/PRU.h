@@ -13,7 +13,7 @@
  *
  * Important: make sure this retains the same structure as BelaContext!
  */
-typedef struct {
+typedef struct _InternalBelaContext {
 	/// \brief Buffer holding audio input samples
 	///
 	/// This buffer may be in either interleaved or non-interleaved format,

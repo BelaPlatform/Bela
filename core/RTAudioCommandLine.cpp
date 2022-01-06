@@ -24,7 +24,7 @@ enum {
 	OPT_CODEC_MODE,
 };
 
-extern const float BELA_INVALID_GAIN = 99999999999;
+extern const float BELA_INVALID_GAIN = 999999;
 
 // whether it's the first time that Bela_getopt_long is run
 static bool gFirstRun = 1;
