@@ -4,6 +4,7 @@
 #include <new>
 #include <stdlib.h>
 #include "Biquad.h"
+#include <stdio.h>
 
 /**
  * A class which processes four biquad filters in parallel in an optimised way.

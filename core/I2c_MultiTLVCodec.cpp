@@ -12,6 +12,7 @@
 #include "../include/I2c_MultiTLVCodec.h"
 #include <map>
 #include "../include/MiscUtilities.h"
+#include <stdexcept>
 using namespace StringUtils;
 
 static const unsigned int kDataSize = 16;
