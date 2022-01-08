@@ -1,6 +1,6 @@
 #include "Gui.h"
-#include <memory> // for shared pointers
 #include <iostream>
+#include <WSServer.h>
 
 Gui::Gui()
 {

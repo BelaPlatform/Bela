@@ -3,9 +3,9 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include <WSServer.h>
 #include <JSON.h>
 #include <typeinfo> // for types in templates
+#include <memory>
 #include <DataBuffer.h>
 
 // forward declarations

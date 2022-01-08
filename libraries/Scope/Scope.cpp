@@ -4,6 +4,7 @@
 #include <WSServer.h>
 #include <JSON.h>
 #include <AuxTaskRT.h>
+#include <stdexcept>
 
 Scope::Scope(): isUsingOutBuffer(false), 
                 isUsingBuffer(false), 

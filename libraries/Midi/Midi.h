@@ -10,7 +10,6 @@
 
 #include <Bela.h>
 #include <vector>
-#include <alsa/asoundlib.h>
 #include <string>
 #ifdef XENOMAI_SKIN_native
 #include <native/pipe.h>
@@ -288,6 +287,7 @@ public:
 };
 
 
+typedef struct _snd_rawmidi snd_rawmidi_t;
 class Midi {
 public:
 	Midi();

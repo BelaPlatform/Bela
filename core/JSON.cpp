@@ -121,6 +121,20 @@ std::wstring JSON::Stringify(const JSONValue *value)
 		return L"";
 }
 
+#include <codecvt>
+#include <locale>
+using convert_typeX = std::codecvt_utf8<wchar_t>;
+std::wstring JSON::s2ws(const std::string& str)
+{
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	return converterX.from_bytes(str);
+}
+
+std::string JSON::ws2s(const std::wstring& wstr)
+{
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	return converterX.to_bytes(wstr);
+}
 /**
  * Skips over any whitespace characters (space, tab, \r or \n) defined by the JSON spec
  *
