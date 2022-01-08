@@ -91,8 +91,6 @@ typedef std::vector<JSONValue*> JSONArray;
 typedef std::map<std::wstring, JSONValue*> JSONObject;
 
 #include "JSONValue.h"
-#include <codecvt>
-#include <locale>
 
 class JSON
 {
@@ -102,21 +100,8 @@ class JSON
 		static JSONValue* Parse(const char *data);
 		static JSONValue* Parse(const wchar_t *data);
 		static std::wstring Stringify(const JSONValue *value);
-		static std::wstring s2ws(const std::string& str)
-		{
-			using convert_typeX = std::codecvt_utf8<wchar_t>;
-			std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-			return converterX.from_bytes(str);
-		}
-
-		static std::string ws2s(const std::wstring& wstr)
-		{
-			using convert_typeX = std::codecvt_utf8<wchar_t>;
-			std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-			return converterX.to_bytes(wstr);
-		}
+		static std::wstring s2ws(const std::string& str);
+		static std::string ws2s(const std::wstring& wstr);
 	protected:
 		static bool SkipWhitespace(const wchar_t **data);
 		static bool ExtractString(const wchar_t **data, std::wstring &str);

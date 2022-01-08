@@ -5,10 +5,6 @@
 #include <ne10/NE10_types.h>
 #include <vector>
 #include <map>
-#include <string>
-#include <AuxTaskNonRT.h>
-#include <AuxTaskRT.h>
-#include <cmath>
 #include <memory>
 
 #define FRAMES_STORED 4
