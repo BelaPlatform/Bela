@@ -17,7 +17,7 @@ extern "C" {
 #include <libraries/Scope/Scope.h>
 #include <string>
 #include <sstream>
-#include <algorithm>
+#include <string.h>
 
 #define ENABLE_TRILL
 

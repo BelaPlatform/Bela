@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <glob.h>
 #include "../include/xenomai_wraps.h"
+#include <alsa/asoundlib.h>
 
 #define kMidiInput 0
 #define kMidiOutput 1
