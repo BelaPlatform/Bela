@@ -74,7 +74,7 @@ bool setup(BelaContext *context, void *userData)
 	Bela_runAuxiliaryTask(loop);
 
 	float filterCutoff = 1; // Hz, this is the cutoff of the smoothing filter
-	gFilters.resize(NUM_CAP_CHANNELS, Biquad::Settings({.fs = context->audioSampleRate, .cutoff = filterCutoff, .type = Biquad::lowpass}));
+	gFilters.resize(NUM_CAP_CHANNELS, Biquad::Settings({.fs = context->audioSampleRate, .type = Biquad::lowpass, .cutoff = filterCutoff}));
 	gOscBank.resize(NUM_CAP_CHANNELS, {context->audioSampleRate, Oscillator::sine});
 
 	// Initialise the oscillator bank in a slightly inharmonic series, one

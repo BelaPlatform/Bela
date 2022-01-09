@@ -202,16 +202,16 @@ bool setup(BelaContext *context, void *userData)
 	// Set switching period
 	gPeriod = 0.25 * context->digitalSampleRate; // duration (in samples) of a "brightness period", affects resolution of dimming. Larger values will cause flickering.
 	// Check if analog channels are enabled
-	if(context->audioFrames == 0 || context->audioFrames > context->audioFrames)
+	if(!context->audioFrames || context->analogFrames > context->audioFrames)
 	{
-		rt_printf("Error: analog channels must be enable to use the CV in and outs on Salt\n");
+		fprintf(stderr, "Error: analog channels must be enable to use the CV in and outs on Salt\n");
 		return false;
 	}
 
 	// Check that we have the same number of inputs and outputs.
 	if(context->audioInChannels != context->audioOutChannels || context->analogInChannels != context-> analogOutChannels)
 	{
-		printf("Error: there should be the same number of analog in and outs.\n");
+		fprintf(stderr, "Error: there should be the same number of analog in and outs.\n");
 		return false;
 	}
 	// Initialise CV range to absurdly high & low values
