@@ -39,8 +39,8 @@ bool setup(BelaContext *context, void *userData)
 {
 	Biquad::Settings settings{
 			.fs = context->audioSampleRate,
-			.cutoff = gLPfreq,
 			.type = Biquad::lowpass,
+			.cutoff = gLPfreq,
 			.q = gFilterQ,
 			.peakGainDb = 0,
 			};

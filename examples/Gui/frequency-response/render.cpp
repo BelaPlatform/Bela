@@ -39,6 +39,7 @@ for changes to the settings of the GUI with the `guiCallback` function.
 #include <libraries/Gui/Gui.h>
 #include <libraries/Biquad/Biquad.h>
 #include <libraries/Pipe/Pipe.h>
+#include <stdexcept>
 
 Pipe gPipe;
 Gui gui;

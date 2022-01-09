@@ -67,7 +67,7 @@ WriteFile file2;
 
 bool setup(BelaContext *context, void *userData)
 {
-	if(!context->flags & BELA_FLAG_INTERLEAVED)
+	if(!(context->flags & BELA_FLAG_INTERLEAVED))
 	{
 		fprintf(stderr, "Error: this example requires that we use interleaved buffers\n");
 		return false;

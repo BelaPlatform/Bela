@@ -8,6 +8,7 @@ http://bela.io
 */
 
 #include <Bela.h>
+#include <stdlib.h>
 #include <libraries/Scope/Scope.h>
 #include <libraries/math_neon/math_neon.h>
 
