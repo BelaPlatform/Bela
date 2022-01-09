@@ -23,6 +23,7 @@ Read the documentation on the NE10 library [here](http://projectne10.github.io/N
 #include "SampleData.h"
 #include <libraries/Midi/Midi.h>
 #include <cmath>
+#include <string.h>
 
 #define BUFFER_SIZE 16384
 
