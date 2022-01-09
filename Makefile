@@ -301,8 +301,9 @@ DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
-BELA_EXTRA_LDLIBS =$(DEFAULT_XENOMAI_LDFLAGS) -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so)
-BELA_LDLIBS = $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
+BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so)
+BELA_LDLIBS := $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
+BELA_LDLIBS := $(filter-out -lNE10 -lstdc++,$(BELA_LDLIBS))
 ifeq ($(PROJECT_TYPE),libpd)
 BELA_LDLIBS += $(LIBPD_LIBS)
 # Objects for a system-supplied default render() file for libpd projects,
@@ -793,7 +794,7 @@ libraries/%.o: # how to build those objects needed by libbelaextra
 
 lib/$(LIB_EXTRA_SO): $(LIB_EXTRA_OBJS)
 	$(AT) echo Building lib/$(LIB_EXTRA_SO)
-	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_EXTRA_SO) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDLIBS) $(BELA_EXTRA_LDLIBS)
+	$(AT) $(CXX) $(BELA_LDFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIB_EXTRA_SO) -o lib/$(LIB_EXTRA_SO) $(LIB_EXTRA_OBJS) $(LDLIBS) $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
 	$(AT) ldconfig $(BASE_DIR)/$@
 
 lib/$(LIB_EXTRA_A): $(LIB_EXTRA_OBJS) $(PRU_OBJS) $(LIB_DEPS)
