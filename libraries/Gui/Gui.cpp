@@ -96,7 +96,7 @@ void Gui::ws_onControlData(const char* data, unsigned int size)
 	}
 	// look for the "event" key
 	JSONObject root = value->AsObject();
-	if(customOnControlData && !customOnControlData(root, userControlData))
+	if(customOnControlData && !customOnControlData(root, controlCallbackArg))
 	{
 		delete value;
 		return;
@@ -113,7 +113,7 @@ void Gui::ws_onControlData(const char* data, unsigned int size)
 
 void Gui::ws_onData(const char* data, unsigned int size)
 {
-	if(customOnData && !customOnData(data, size, userBinaryData))
+	if(customOnData && !customOnData(data, size, binaryCallbackArg))
 	{
 		return;
 	}
