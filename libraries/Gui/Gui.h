@@ -35,8 +35,8 @@ class Gui
 		std::function<bool(JSONObject&, void*)> customOnControlData;
 		std::function<bool(const char*, unsigned int, void*)> customOnData;
 
-		void* userControlData = nullptr;
-		void* userBinaryData = nullptr;
+		void* controlCallbackArg = nullptr;
+		void* binaryCallbackArg = nullptr;
 
 	public:
 		Gui();
@@ -84,31 +84,32 @@ class Gui
 		 *
 		 * @param callback the function to be called upon receiving data on the
 		 * control WebSocket
-		 * @param customBinaryData an opaque pointer that will be passed to the
+		 * @param callbackArg an opaque pointer that will be passed to the
 		 * callback
 		 **/
-		void setControlDataCallback(std::function<bool(JSONObject&, void*)> callback, void* customControlData=nullptr){
+		void setControlDataCallback(std::function<bool(JSONObject&, void*)> callback, void* callbackArg=nullptr){
 			customOnControlData = callback;
-			userControlData = customControlData;
+			controlCallbackArg = callbackArg;
 		};
 
 		/**
 		 * Set callback to parse binary data received from the client.
 		 *
-		 * @param callback Callback to be called whenever new control
+		 * @param callback Callback to be called whenever new binary
 		 * data is received.
 		 * It takes a byte buffer, the size of the buffer and a pointer
 		 * as parameters, returns `true `if the default callback should
 		 * be called afterward or `false` otherwise. The first two
-		 * parameters are used for the data received on the web-socket.
-		 * The third parameter is a user-defined opaque pointer
+		 * parameters to the callback are a pointer to and the size of the
+		 * data received on the web-socket. The third parameter is a
+		 * user-defined opaque pointer.
 		 *
-		 * @param customBinaryData: Pointer to be passed to the
+		 * @param callbackArg: Pointer to be passed to the
 		 * callback.
 		 **/
-		void setBinaryDataCallback(std::function<bool(const char*, unsigned int, void*)> callback, void* customBinaryData=nullptr){
+		void setBinaryDataCallback(std::function<bool(const char*, unsigned int, void*)> callback, void* callbackArg=nullptr){
 			customOnData = callback;
-			userBinaryData = customBinaryData;
+			binaryCallbackArg = callbackArg;
 		};
 		/** Sends a JSON value to the control websocket.
 		 * @returns 0 on success, or an error code otherwise.
