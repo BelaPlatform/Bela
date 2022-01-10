@@ -229,8 +229,10 @@ void fifoRender(BelaContext*, void*);
 //
 // Returns 0 on success.
 
-int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const std::string& codecMode, void* userData)
+static std::string gBatchParams;
+static int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const std::string& codecMode, void* userData)
 {
+	gBatchParams = codecMode;
 	ctx->audioFrames = settings->periodSize;
 	ctx->audioInChannels = 12;
 	ctx->audioOutChannels = 12;
@@ -241,7 +243,7 @@ int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const std::s
 	ctx->digitalFrames = ctx->audioFrames;
 	ctx->audioSampleRate = 44100;
 	ctx->digitalSampleRate = ctx->audioSampleRate;
-	ctx->analogSampleRate = ctx->audioSampleRate / 2;
+	ctx->analogSampleRate = settings->uniformSampleRate ? ctx->audioSampleRate : ctx->audioSampleRate / 2;
 	BelaContextSplitter::contextAllocate(ctx);
 	ctx->flags |= BELA_FLAG_OFFLINE;
 	// Call the user-defined initialisation function
@@ -254,13 +256,92 @@ int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const std::s
 	return 0;
 }
 
+static const long long unsigned int kNsInSec = 1000000000;
+static long long unsigned int timespec_sub(const struct timespec *a, const struct timespec *b)
+{
+	long long unsigned int diff;
+	diff = (a->tv_sec - b->tv_sec) * kNsInSec;
+	diff += a->tv_nsec - b->tv_nsec;
+	return diff;
+}
+
 static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaContext*,void*), void* userData)
 {
+	using namespace StringUtils;
+	using namespace ConfigFileUtils;
 	context->audioFramesElapsed = 0;
-	unsigned int i = 100000;
-	while(i--) {
+	long long unsigned int i = 0;
+	int priority = 0;
+	bool printStats = false;
+	double maxTime = 0;
+	std::vector<std::string> tokens = split(gBatchParams, ',');
+	for(auto& token : tokens)
+	{
+		token = trim(token);
+		std::string value;
+		value = readValueFromString(token, "i");
+		if("" != value)
+			i = atoll(value.c_str());
+		value = readValueFromString(token, "p");
+		if("" != value)
+			priority = atoi(value.c_str());
+		value = readValueFromString(token, "s");
+		if("" != value)
+			printStats = atoi(value.c_str());
+		value = readValueFromString(token, "t");
+		if("" != value)
+			maxTime = atof(value.c_str());
+	}
+	gRTAudioVerbose && printf("Running %llu iterations or up to %.3f seconds with priority %d\n", i, maxTime, priority);
+	long long unsigned int maxTimeNs = maxTime * kNsInSec;
+	struct sched_param p = {
+		.sched_priority = priority,
+	};
+	__wrap_pthread_setschedparam(pthread_self(), SCHED_FIFO, &p);
+
+	// clock_gettime is relatively expensive. We read it less often to
+	// minimise overhead. This means we lose a bit of accuracy in duration,
+	// but normally that's no big deal.
+	const unsigned int kGetTimeIters = 10;
+	unsigned int nextGetTime = kGetTimeIters;
+	struct timespec begin, end;
+	if(__wrap_clock_gettime(CLOCK_MONOTONIC, &begin))
+	{
+		fprintf(stderr, "Error in clock_gettime(): %d %s\n", errno, strerror(errno));
+		return 1;
+	}
+	while(1) {
 		render((BelaContext*)context, userData);
 		context->audioFramesElapsed += context->audioFrames;
+		if(maxTimeNs)
+		{
+			// a max execution time was specified
+			if(!nextGetTime--)
+			{
+				nextGetTime = kGetTimeIters;
+				__wrap_clock_gettime(CLOCK_MONOTONIC, &end);
+				long long unsigned int elapsed = timespec_sub(&end, &begin);
+				if(elapsed > maxTimeNs)
+					break;
+			}
+		}
+		else
+		{
+			// if a max number of iterations was specified
+			if(!i--)
+				break;
+		}
+	}
+	if(!maxTimeNs) // we may have already gotten a more accurate timestamp above
+		__wrap_clock_gettime(CLOCK_MONOTONIC, &end);
+	long long unsigned int timeNs = timespec_sub(&end, &begin);
+	if(printStats)
+	{
+		printf("frames: %llu\n", context->audioFramesElapsed);
+		printf("wallTime: %llu.%09llus\n", timeNs / kNsInSec, timeNs % kNsInSec);
+		double wallTime = timeNs;
+		double dspTime = context->audioFramesElapsed / context->audioSampleRate * kNsInSec;
+		printf("cpu: %.3f%%\n", wallTime / dspTime * 100);
 	}
 	gShouldStop = 1;
 	return 0;
@@ -761,7 +842,7 @@ void fifoLoop(void* userData)
 
 static int startAudioInline(){
 	if(gRTAudioVerbose)
-		printf("startAudioInilne\n");
+		printf("startAudioInline\n");
 	gShouldStop = 0;
 	if(BelaHw_Batch == belaHw) {
 		return 0;
