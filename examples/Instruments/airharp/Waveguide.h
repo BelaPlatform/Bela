@@ -45,8 +45,6 @@ private:
 
 	float _filterBuffer_x[FILTER_BUFFER_SIZE];
 	float _filterBuffer_y[FILTER_BUFFER_SIZE];
-	float _hipBuffer_x[FILTER_BUFFER_SIZE];
-	float _hipBuffer_y[FILTER_BUFFER_SIZE];
 	int _filterReadPtr;
 
 	float b0_lp,b1_lp,b2_lp,a1_lp, a2_lp;
