@@ -49,7 +49,7 @@ void Junction::update(float excitation, float left, float right)	{
 
 float Junction::getOutput(int direction)	{
 
-	if(direction = 0)
+	if(direction == 0)
 		return _buffer_l[_readPtr];
 	else
 		return _buffer_r[_readPtr];
