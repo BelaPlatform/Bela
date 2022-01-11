@@ -6,8 +6,7 @@
  *
  */
 
-#ifndef PLECTRUM_H_
-#define PLECTRUM_H_
+#pragma once
 
 class Plectrum
 {
@@ -20,16 +19,10 @@ public:
 
 private:
 
-	double _dt;
 	float _spring;
 	float _damp;
-	double _position;
-	double _velocity;
 	float _hyst;
 	float _lastDistance;
 	int _contact;
 
 };
-
-#endif
-
