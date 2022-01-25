@@ -59,7 +59,7 @@ bool setup(BelaContext *context, void *Data)
 void render(BelaContext *context, void *Data)
 {
   if(gCsData.res == 0) {
-    int n, i;
+    unsigned int n, i;
     int res = gCsData.res;
     int frames = gCsData.frames;
     int bframes = gCsData.bframes;
@@ -67,7 +67,7 @@ void render(BelaContext *context, void *Data)
     MYFLT scal = csound->Get0dBFS();
     MYFLT* audioIn = csound->GetSpin();
     MYFLT* audioOut = csound->GetSpout();
-    int nchnls = csound->GetNchnls();
+    unsigned int nchnls = csound->GetNchnls();
     MYFLT *bus_chn = gCsData.bus_chn.data();
 
     // set the number of channels to

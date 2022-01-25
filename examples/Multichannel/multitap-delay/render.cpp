@@ -48,7 +48,7 @@ float gFeedback = 0; // Feedback
 
 std::vector<OnePole *> gDelayFilters;
 
-int gInputChannel = 0; // Designated input channel
+unsigned int gInputChannel = 0; // Designated input channel
 
 std::vector<int> gTapChannels; // Channels corresponding to each tap
 std::vector<int> gChannelTaps; // Taps corresponding to each channel
@@ -81,7 +81,7 @@ bool setup(BelaContext *context, void *userData)
 	// Assign channel to tap
 	for(unsigned int t=1; t<gNTaps; t++)
 	{
-		int channel = gInputChannel + t;
+		unsigned int channel = gInputChannel + t;
 		if(channel >= gNTaps)
 			channel = 0;
 		gTapChannels.push_back(channel);

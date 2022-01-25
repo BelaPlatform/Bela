@@ -72,7 +72,7 @@ void fillBuffer(void*) {
           zeroPad = 1;
     }
 
-    for(int ch=0;ch<gSampleBuf[0].size();ch++) {
+    for(unsigned int ch = 0; ch < gSampleBuf[0].size(); ++ch) {
 
         // fill (nonactive) buffer
         AudioFileUtilities::getSamples(gFilename,gSampleBuf[!gActiveBuffer][ch].data(),ch

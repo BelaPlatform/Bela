@@ -45,7 +45,7 @@ float gOscFreq = 320; // Oscillator frequency
 float gOscDetune = 3.0; // Oscillator detuning
 float gLfoFreqRange[2] = { 0.1, 100 }; // LFO frequency range
 
-int gCurrentChannel = 0; // Current active channel
+unsigned int gCurrentChannel = 0; // Current active channel
 float gPrevPanning = 0.0; // Previous panning value
 
 /*

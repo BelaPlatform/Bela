@@ -69,7 +69,7 @@ unsigned int latchPin = 2;
 // For cycling through the LEDs
 int gCounter = 0;
 const int gIntervalSamples = 2000; // samples between updates of the LEDs
-int litLED = 0;
+unsigned int litLED = 0;
 
 ShiftRegisterOut shiftRegister;
 

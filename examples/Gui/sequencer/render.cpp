@@ -111,7 +111,7 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 
-	for (int n = 0; n < context->audioFrames; n++) {
+	for (unsigned int n = 0; n < context->audioFrames; n++) {
 
 		//increase the counter for each audio frame
 		gCounter++;

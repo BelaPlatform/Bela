@@ -94,7 +94,7 @@ const int numPins = 4;
 int pins[numPins] = {0, 1, 2, 3}; // Digital pins 0 to 3
 bool useHardwarePwm = false; // if you want to use hardware PWM, check out the help text at the bottom - check the pin diagram in the IDE
 int softPwmPin = 4; // Digital pin 4 - check the pin diagram in the IDE
-int period = 176; // duration (in samples) of a "brightness period", affects resolution of dimming. Larger values will cause flickering.
+unsigned int period = 176; // duration (in samples) of a "brightness period", affects resolution of dimming. Larger values will cause flickering.
 bool useSequencer = true; // if disabled, control the brightness of each LED from the respective analog input
 
 const int numLeds = numPins * 2;

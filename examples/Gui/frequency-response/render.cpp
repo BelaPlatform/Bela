@@ -72,13 +72,13 @@ bool guiCallback(JSONObject& json, void*)
 	settings.fs = 44100; // this is only used for the visualisation and should match the one in sketch.js
 	try {
 		settings.cutoff = retrieveAsNumber(json, "cutoff");
-	} catch (std::exception e) {}
+	} catch (std::exception& e) {}
 	try {
 		settings.q = retrieveAsNumber(json, "q");
-	} catch (std::exception e) {}
+	} catch (std::exception& e) {}
 	try {
 		settings.peakGainDb = retrieveAsNumber(json, "peakGainDb");
-	} catch (std::exception e) {}
+	} catch (std::exception& e) {}
 
 	// send the new settings to the audio thread
 	gPipe.writeNonRt(settings);

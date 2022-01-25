@@ -28,7 +28,7 @@ int gEndFrame = 88200;
 
 std::vector<std::vector<float> > gSampleData;
 
-int gReadPtr;	// Position of last read sample from file
+unsigned int gReadPtr; // Position of last read sample from file
 
 bool setup(BelaContext *context, void *userData)
 {
