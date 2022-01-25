@@ -46,7 +46,7 @@ unsigned int gPulseTrigDigitalOutPin = 0; //channel to be connected to the modul
 unsigned int gPulseTrigAnalogOutPin = 0; //channel to be connected to the module's TRIGGER pin
 #endif // ULTRASONIC_DISTANCE_DIGITAL_OUT
 unsigned int gPulseEchoDigitalInPin = 1; //channel to be connected to the modules's ECHO pin via resistor divider. Check the pin diagram in the IDE
-int gPulseTriggerCount = 0;
+unsigned int gPulseTriggerCount = 0;
 #endif // ULTRASONIC_DISTANCE
 
 #if (defined(BELA_LIBPD_GUI) || defined(ENABLE_TRILL))
@@ -259,42 +259,42 @@ static unsigned int getPortChannel(int* channel){
 }
 
 void Bela_MidiOutNoteOn(int channel, int pitch, int velocity) {
-	int port = getPortChannel(&channel);
+	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("noteout _ port: %d, channel: %d, pitch: %d, velocity %d\n", port, channel, pitch, velocity);
 	port < midi.size() && midi[port]->writeNoteOn(channel, pitch, velocity);
 }
 
 void Bela_MidiOutControlChange(int channel, int controller, int value) {
-	int port = getPortChannel(&channel);
+	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("ctlout _ port: %d, channel: %d, controller: %d, value: %d\n", port, channel, controller, value);
 	port < midi.size() && midi[port]->writeControlChange(channel, controller, value);
 }
 
 void Bela_MidiOutProgramChange(int channel, int program) {
-	int port = getPortChannel(&channel);
+	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("pgmout _ port: %d, channel: %d, program: %d\n", port, channel, program);
 	port < midi.size() && midi[port]->writeProgramChange(channel, program);
 }
 
 void Bela_MidiOutPitchBend(int channel, int value) {
-	int port = getPortChannel(&channel);
+	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
 	port < midi.size() && midi[port]->writePitchBend(channel, value);
 }
 
 void Bela_MidiOutAftertouch(int channel, int pressure){
-	int port = getPortChannel(&channel);
+	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("touchout _ port: %d, channel: %d, pressure: %d\n", port, channel, pressure);
 	port < midi.size() && midi[port]->writeChannelPressure(channel, pressure);
 }
 
 void Bela_MidiOutPolyAftertouch(int channel, int pitch, int pressure){
-	int port = getPortChannel(&channel);
+	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("polytouchout _ port: %d, channel: %d, pitch: %d, pressure: %d\n", port, channel, pitch, pressure);
 	port < midi.size() && midi[port]->writePolyphonicKeyPressure(channel, pitch, pressure);
@@ -308,7 +308,7 @@ void Bela_MidiOutByte(int port, int byte){
 		rt_fprintf(stderr, "Port out of range, using port 0 instead\n");
 		port = 0;
 	}
-	port < midi.size() && midi[port]->writeOutput(byte);
+	port < (int)midi.size() && midi[port]->writeOutput(byte);
 }
 
 void Bela_printHook(const char *received){
@@ -872,7 +872,7 @@ void render(BelaContext *context, void *userData)
 		{
 			char payload[header.size];
 			int ret = gGuiPipe.readRt(&payload[0], header.size);
-			if(header.size != ret)
+			if(int(header.size) != ret)
 			{
 				break;
 			}
@@ -965,7 +965,7 @@ void render(BelaContext *context, void *userData)
 				if(touchSensor.is1D()) {
 					libpd_start_message(2 * touchSensor.getNumTouches() + 1);
 					libpd_add_float(touchSensor.getNumTouches());
-					for(int i = 0; i < touchSensor.getNumTouches(); i++) {
+					for(unsigned int i = 0; i < touchSensor.getNumTouches(); i++) {
 						libpd_add_float(touchSensor.touchLocation(i));
 						libpd_add_float(touchSensor.touchSize(i));
 					}
@@ -986,7 +986,7 @@ void render(BelaContext *context, void *userData)
 			libpd_finish_message("bela_trill", sensorId);
 		}
 
-		static int count = 0;
+		static unsigned int count = 0;
 		unsigned int readIntervalSamples = touchSensorSleepInterval * context->audioSampleRate;
 		count += context->audioFrames;
 		if(count > readIntervalSamples)
@@ -1095,7 +1095,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int tick = 0; tick < numberOfPdBlocksToProcess; ++tick)
 	{
 		//audio input
-		for(int n = 0; n < context->audioInChannels; ++n)
+		for(unsigned int n = 0; n < context->audioInChannels; ++n)
 		{
 			memcpy(
 				gInBuf + n * gLibpdBlockSize,
@@ -1105,7 +1105,7 @@ void render(BelaContext *context, void *userData)
 		}
 
 		// analog input
-		for(int n = 0; n < context->analogInChannels; ++n)
+		for(unsigned int n = 0; n < context->analogInChannels; ++n)
 		{
 			memcpy(
 				gInBuf + gLibpdBlockSize * gFirstAnalogInChannel + n * gLibpdBlockSize,
@@ -1178,7 +1178,7 @@ void render(BelaContext *context, void *userData)
 		}
 
 		// audio output
-		for(int n = 0; n < context->audioOutChannels; ++n)
+		for(unsigned int n = 0; n < context->audioOutChannels; ++n)
 		{
 			memcpy(
 				context->audioOut + tick * gLibpdBlockSize + n * context->audioFrames, 
@@ -1188,7 +1188,7 @@ void render(BelaContext *context, void *userData)
 		}
 
 		//analog output
-		for(int n = 0; n < context->analogOutChannels; ++n)
+		for(unsigned int n = 0; n < context->analogOutChannels; ++n)
 		{
 			memcpy(
 				context->analogOut + tick * gLibpdBlockSize + n * context->analogFrames, 
