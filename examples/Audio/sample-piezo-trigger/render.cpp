@@ -102,8 +102,8 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-    float currentSample;
-    float out = 0;
+	float currentSample;
+	float out = 0;
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 
@@ -120,7 +120,7 @@ void render(BelaContext *context, void *userData)
 		currentSample = readingDCOffset;
 
 		// Full wave rectify
-	    if(currentSample < 0)
+		if(currentSample < 0)
 			currentSample *= -1.0f;
 
 		// Onset Detection
@@ -128,32 +128,32 @@ void render(BelaContext *context, void *userData)
 			peakValue = currentSample;
 			triggered = 0;
 		}
-	  	else if(peakValue >= rolloffRate) // But have the peak value decay over time
-	    	peakValue -= rolloffRate;       // so we can catch the next peak later
+		else if(peakValue >= rolloffRate) // But have the peak value decay over time
+			peakValue -= rolloffRate; // so we can catch the next peak later
 
-	  	if(currentSample < peakValue - amountBelowPeak && peakValue >= thresholdToTrigger && !triggered) {
-	    	rt_printf("%f\n", peakValue);
-	    	triggered = 1; // Indicate that we've triggered and wait for the next peak before triggering
-		                   // again.
-	    	gReadPtr = 0;  // Start sample playback
-	  	}
+		if(currentSample < peakValue - amountBelowPeak && peakValue >= thresholdToTrigger && !triggered) {
+				rt_printf("%f\n", peakValue);
+				// Indicate that we've triggered and wait for
+				// the next peak before triggering again.
+				triggered = 1;
+				gReadPtr = 0; // Start sample playback
+		}
 
-        for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
+		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
 
-            // If triggered...
-		if(gReadPtr != -1)
-			out = gSampleData[channel % gSampleData.size()][gReadPtr++];	// ...read each sample...
+			// If triggered...
+			if(gReadPtr != -1)
+				out = gSampleData[channel % gSampleData.size()][gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= gSampleData[channel % gSampleData.size()].size())
-			gReadPtr = -1;
+			if(gReadPtr >= (int)gSampleData[channel % gSampleData.size()].size())
+				gReadPtr = -1;
 
-    		audioWrite(context, n, channel, out);
-    	}
-
+			audioWrite(context, n, channel, out);
+		}
 	}
 
 	// log the piezo input, peakValue from onset detection and audio output on the scope
-    scope.log(gPiezoInput, peakValue, out);
+	scope.log(gPiezoInput, peakValue, out);
 }
 
 

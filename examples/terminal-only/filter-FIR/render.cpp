@@ -81,7 +81,7 @@ void render(BelaContext *context, void *userData)
 		if(gReadPtr != -1)
 			in += data[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= data.size())
+		if(gReadPtr >= int(data.size()))
 			gReadPtr = -1;
 
 		ins[n] = in;

@@ -45,7 +45,7 @@ Hardware
 #include <algorithm>
 
 
-int gAudioChannelNum; // number of audio channels to iterate over
+unsigned int gAudioChannelNum; // number of audio channels to iterate over
 float gFrequency = 4.0;
 float gPhase;
 float gInverseSampleRate;

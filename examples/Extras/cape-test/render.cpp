@@ -109,7 +109,7 @@ void render(BelaContext *context, void *userData)
 
 		// Peak detection on the audio inputs, with offset to catch
 		// DC errors
-		for(int ch = 0; ch < context->audioInChannels; ch++) {
+		for(unsigned int ch = 0; ch < context->audioInChannels; ch++) {
 			float value = audioRead(context, n, ch);
 			if(value > gPositivePeakLevels[ch])
 				gPositivePeakLevels[ch] = value;
@@ -247,7 +247,7 @@ void render(BelaContext *context, void *userData)
 	{
 		for(unsigned int n = 0; n < outFrames; n++) {
 			// Change outputs every 512 samples
-			for(int k = 0; k < outChannels; k++) {
+			for(unsigned int k = 0; k < outChannels; k++) {
 				float outValue;
 				if((k % outChannels) == (invertChannel % outChannels))
 					outValue = sampleCounter < 512 ? ANALOG_OUT_HIGH : ANALOG_OUT_LOW;
@@ -264,7 +264,7 @@ void render(BelaContext *context, void *userData)
 			// Read after 256 samples: input should be low (high for inverted)
 			// Read after 768 samples: input should be high (low for inverted)
 			if(sampleCounter == 256 || sampleCounter == 768) {
-				for(int k = 0; k < context->analogInChannels; k++) {
+				for(unsigned int k = 0; k < context->analogInChannels; k++) {
 					float inValue = analogRead(context, n, k);
 					bool inverted = ((k % outChannels) == (invertChannel % outChannels));
 					if(
