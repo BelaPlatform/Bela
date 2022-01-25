@@ -103,7 +103,7 @@ void render(BelaContext *context, void *userData)
 		if(gReadPtr != -1)
 			sample += data[gReadPtr++];	// ...read each sample...
 
-		if(gReadPtr >= data.size())
+		if(gReadPtr >= int(data.size()))
 			gReadPtr = -1;
 
 		out = lb0*sample+lb1*gLastX[0]+lb2*gLastX[1]-la1*gLastY[0]-la2*gLastY[1];

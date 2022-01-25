@@ -25,7 +25,7 @@ the filter Bela's live audio input instead.
 #include <string>
 #include <vector>
 
-int gReadPtr; // Position of last read sample from file
+unsigned int gReadPtr; // Position of last read sample from file
 std::vector<float> data;
 Convolver convolver;
 

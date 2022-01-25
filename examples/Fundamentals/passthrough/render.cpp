@@ -60,8 +60,8 @@ It is also possible to address the buffers directly, for example:
 #include <Bela.h>
 #include <algorithm>
 
-int gAudioChannelNum; // number of audio channels to iterate over
-int gAnalogChannelNum; // number of analog channels to iterate over
+unsigned int gAudioChannelNum; // number of audio channels to iterate over
+unsigned int gAnalogChannelNum; // number of analog channels to iterate over
 
 bool setup(BelaContext *context, void *userData)
 {

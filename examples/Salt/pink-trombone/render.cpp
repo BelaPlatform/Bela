@@ -844,7 +844,7 @@ public:
 
     void processTransients()
     {
-        for (int i = 0; i < this->transients.size(); i++)
+        for (unsigned int i = 0; i < this->transients.size(); i++)
         {
             Transient& trans = this->transients[i];
             sample_t amplitude = trans.strength * Math::pow((sample_t)2, -trans.exponent * trans.timeAlive);
@@ -852,7 +852,7 @@ public:
             this->L[trans.position] += amplitude/(sample_t)2;
             trans.timeAlive += (sample_t)1.0/(sampleRate*(sample_t)2);
         }
-        for (int i=this->transients.size()-1; i>=0; i--)
+        for (unsigned int i=this->transients.size()-1; i>=0; i--)
         {
             Transient trans = this->transients[i];
             if (trans.timeAlive > trans.lifeTime)
@@ -864,7 +864,7 @@ public:
 
     void addTurbulenceNoise(sample_t turbulenceNoise)
     {
-        for (int j=0; j<UI.touchesWithMouse.size(); j++)
+        for (unsigned int j=0; j<UI.touchesWithMouse.size(); j++)
         {
             Touch& touch = UI.touchesWithMouse[j];
             if (touch.index<2 || touch.index>this->n) continue;
@@ -1122,7 +1122,7 @@ public:
 		// if there is no toungueTouch, look for one
         if (!this->tongueTouch.enabled)
         {
-            for (int j=0; j<UI.touchesWithMouse.size(); j++)
+            for (unsigned int j=0; j<UI.touchesWithMouse.size(); j++)
             {
                 Touch& touch = UI.touchesWithMouse[j];
                 if (!touch.alive) continue;
@@ -1161,7 +1161,7 @@ public:
 
         //other constrictions and nose
         //Tract.velumTarget = 0.01;
-        for (int j=0; j<UI.touchesWithMouse.size(); j++)
+        for (unsigned int j=0; j<UI.touchesWithMouse.size(); j++)
         {
             Touch& touch = UI.touchesWithMouse[j];
             if (!touch.alive) continue;
@@ -1568,7 +1568,7 @@ void render(BelaContext* context, void*)
 	{
 		std::vector<sample_t>& diameter = Tract.targetDiameter;
 		float ratio = ((float)localDiameter.size() - 1.f) / (float)diameter.size();
-		for(int n = 0; n < diameter.size(); ++n)
+		for(unsigned int n = 0; n < diameter.size(); ++n)
 		{
 			//linearly interpolate between the positions to obtain diameter
 			float index = n * ratio;
@@ -1764,7 +1764,7 @@ return;
 		//}
 		//rt_printf("V: %.2f", Tract.velumTarget);
 		//rt_printf("\n");
-		for(int n = 0; n < UI.touchesWithMouse.size(); ++n){
+		for(unsigned int n = 0; n < UI.touchesWithMouse.size(); ++n){
 			Touch& touch = UI.touchesWithMouse[n];
 			rt_printf("Touch %d: ", n);
 			rt_printf("index: %.2f, diameter: %.2f\n", touch.index, touch.diameter);

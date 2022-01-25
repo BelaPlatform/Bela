@@ -181,7 +181,7 @@ class DelayLine
 		float _feedbackReturn = 0.0; // Feebback loop return value
 		bool _externalFeedback = false; // Use external feedback flag
 
-		int _writePtr = 0; // Write pointer for delay line
+		unsigned int _writePtr = 0; // Write pointer for delay line
 
 		unsigned int _nTaps = 1; // Number of taps
 		float *_readPtr = nullptr; // Pointer to array of read pointers for delay taps

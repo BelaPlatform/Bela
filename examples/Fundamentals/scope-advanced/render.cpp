@@ -55,7 +55,7 @@ void render(BelaContext *context, void *userData)
 		gAmplitudes[i] = 1.0f + deltaAmps[i] * 0.1;
 	}
 
-	for (int n=0; n<context->audioFrames; n++){
+	for (unsigned int n=0; n<context->audioFrames; n++){
 
 		avg = 0.0f;
 		for (int i=0; i<NUM_OSC; i++){

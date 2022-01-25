@@ -51,7 +51,7 @@ EnvelopeDetector gDetector;
 float gAttackMs = 100; // attack time (ms)
 float gReleaseMs = 50; // release time (ms)
 
-int gDetectChannel = 0; // Input channel used to trigger the envelope detector
+unsigned int gDetectChannel = 0; // Input channel used to trigger the envelope detector
 
 bool setup(BelaContext *context, void *userData)
 {

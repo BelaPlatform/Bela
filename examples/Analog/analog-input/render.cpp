@@ -58,8 +58,7 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	// Useful calculations
-	if(context->analogFrames)
-		gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;
 	gPhase = 0.0;
 
@@ -68,8 +67,8 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	float frequency;
-	float amplitude;
+	static float frequency;
+	static float amplitude;
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		if(gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {

@@ -34,7 +34,7 @@ input is passed through to the output so you can listen as you watch the light s
 
 #define NUMBER_OF_SEGMENTS	10
 
-int gAudioChannelNum; // number of audio channels to iterate over
+unsigned int gAudioChannelNum; // number of audio channels to iterate over
 
 // Two levels of audio: one follows current value, the other holds
 // peaks for longer

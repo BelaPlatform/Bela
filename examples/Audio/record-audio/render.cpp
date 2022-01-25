@@ -58,7 +58,7 @@ bool setup(BelaContext *context, void *userData)
 			c.resize(numFrames);
 		for(auto& c : gOutputs)
 			c.resize(numFrames);
-	} catch (std::exception e) {
+	} catch (std::exception& e) {
 		fprintf(stderr, "Error while allocating memory. Maybe you are asking to record too many frames and/or too many channels\n");
 		return false;
 	}

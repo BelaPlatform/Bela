@@ -46,7 +46,7 @@ void serialIo(void* arg) {
 		int ret = gSerial.read(serialBuffer, maxLen, 100);
 		if (ret > 0) {
 			printf("Received: %.*s\n", ret, serialBuffer);
-			for(unsigned int n = 0; n < ret; ++n)
+			for(int n = 0; n < ret; ++n)
 			{
 				// when some relevant data is received
 				// send a notification to the audio thread via

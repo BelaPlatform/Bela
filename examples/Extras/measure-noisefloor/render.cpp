@@ -11,7 +11,7 @@ http://bela.io
 #include <cmath>
 #include <algorithm>
 
-int gAnalogChannelNum; // number of analog channels to iterate over
+unsigned int gAnalogChannelNum; // number of analog channels to iterate over
 
 int gBufferSize = 8192;
 
