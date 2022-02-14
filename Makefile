@@ -409,7 +409,7 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
-DEFAULT_MAIN_OBJS := ./build/core/default_main.o
+DEFAULT_MAIN_OBJS := build/core/default_main.o
 ALL_DEPS += ./build/core/default_main.d
 
 # include all dependencies - necessary to force recompilation when a header is changed
