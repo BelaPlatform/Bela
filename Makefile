@@ -17,6 +17,7 @@
 ## AT=                  -- used instead of @ to silence the output. Defaults AT=@, use AT= for a very verbose output
 ## DISTCC=              -- specify whether to use distcc (1) or not (0, default)
 ## RELINK=              -- specify whether to force re-linking the project file (1) or not (0, default). Set it to 1 when developing a library.
+## SHARED=              -- specify whether to build the project-specific files as a shared library and link the executable to it and libbela (1) or not (0, default).
 ###
 ##available targets: #
 -include CustomMakefileTop.in
@@ -297,7 +298,12 @@ ifeq ($(XENOMAI_VERSION),3)
 endif
 
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj -DENABLE_PRU_UIO=1
+ifeq ($(SHARED),1)
+DEFAULT_COMMON_FLAGS+= -fPIC
+PROJ_INFIX=.fpic
+else
 PROJ_INFIX=
+endif # SHARED
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
@@ -412,6 +418,16 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
 DEFAULT_MAIN_OBJS := build/core/default_main.o
 ALL_DEPS += ./build/core/default_main.d
+
+DEFAULT_ALL_OBJS:=$(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
+ifeq ($(SHARED),1)
+LIB_PROJECT_SO:=lib$(PROJECT).so
+LIB_PROJECT_SO_FULL:=$(PROJECT_DIR)/$(LIB_PROJECT_SO)
+ALL_OBJS=$(LIB_PROJECT_SO_FULL) lib/$(LIB_EXTRA_SO) lib/$(LIB_SO) $(DEFAULT_ALL_OBJS)
+BELA_LDFLAGS+=-Wl,-rpath,$(PROJECT_DIR)
+else # SHARED
+ALL_OBJS=$(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_ALL_OBJS)
+endif # SHARED
 
 # include all dependencies - necessary to force recompilation when a header is changed
 # (had to remove -MT"$(@:%.o=%.d)" from compiler call for this to work)
@@ -543,7 +559,6 @@ ifeq ($(SHOULD_BUILD),false)
 $(OUTPUT_FILE):
 else
 
-ALL_OBJS := $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_PD_OBJS)
 .EXPORT_ALL_VARIABLES:
 
 PROJECT_PREPROCESSED_FILES := $(C_OBJS:%.o=%.i) $(CPP_OBJS:%.o=%.ii)
@@ -815,6 +830,15 @@ lib/$(LIB_A): $(LIB_OBJS) $(PRU_OBJS) $(LIB_DEPS)
 	$(AT) ar rcs lib/$(LIB_A) $(LIB_OBJS)
 
 lib: lib/libbela.so lib/libbela.a lib/libbelaextra.so lib/libbelaextra.a
+
+LDFLAGS_SHARED_PROJECT=-shared -Wl,-Bsymbolic -Wl,-soname,$(LIB_PROJECT_SO)
+
+$(LIB_PROJECT_SO_FULL): $(PROJECT_OBJS) $(LIBRARIES_OBJS)
+	$(AT) echo 'Linking project shared library...'
+# we filter-out %.h because they could be added by P_OBJS
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$@" $(filter-out %.h,$^) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS) $(LDFLAGS_SHARED_PROJECT)
+	$(AT) echo ' ...done'
+	$(AT) echo ' '
 
 HEAVY_TMP_DIR=/tmp/heavy-bela/
 HEAVY_SRC_TARGET_DIR=$(PROJECT_DIR)
