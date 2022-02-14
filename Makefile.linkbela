@@ -47,5 +47,6 @@ ifeq ($(PROJECT_TYPE),libpd)
 	    $(shell bash -c '{ [ `nm -C /dev/null $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
 endif # ifeq ($(PROJECT_TYPE),libpd)
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(LIBRARIES_OBJS) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
+# we filter-out DEFAULT_ALL_OBJS because they are conditionally added one by one and %.h because they could be added by P_OBJS
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$@" $(filter-out $(DEFAULT_ALL_OBJS) %.h,$^) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
 	$(AT) echo ' ...done'
