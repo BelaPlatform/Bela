@@ -297,6 +297,7 @@ ifeq ($(XENOMAI_VERSION),3)
 endif
 
 DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -DNDEBUG -D$(BELA_USE_DEFINE) -I$(BASE_DIR)/resources/$(DEBIAN_VERSION)/include -save-temps=obj -DENABLE_PRU_UIO=1
+PROJ_INFIX=
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/
@@ -366,18 +367,18 @@ ifneq ($(PROJECT),)
 find_files = $(if $(if $(PROJECT_DIR),$(if $(1),_)), $(shell find $(PROJECT_DIR)/ -type f -name "$(1)" | grep -v "$(PROJECT_DIR)/heavy/.*\.cpp"))
 
 ASM_SRCS := $(call find_files,*.S)
-ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.o)))
-ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=.d)))
+ASM_OBJS := $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=$(PROJ_INFIX).o)))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(ASM_SRCS:.S=$(PROJ_INFIX).d)))
 
 P_SRCS := $(call find_files,*.p)
 P_OBJS := $(addprefix $(PROJECT_DIR)/,$(notdir $(P_SRCS:.p=_bin.h)))
 
 C_SRCS := $(call find_files,*.c)
-C_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(C_SRCS:.c=.o))
-ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=.d)))
+C_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(C_SRCS:.c=$(PROJ_INFIX).o))
+ALL_DEPS += $(addprefix $(PROJECT_DIR)/build/,$(notdir $(C_SRCS:.c=$(PROJ_INFIX).d)))
 
 CPP_SRCS := $(call find_files,*.cpp)
-CPP_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(CPP_SRCS:.cpp=.o))
+CPP_OBJS := $(subst $(PROJECT_DIR),$(PROJECT_DIR)/build,$(CPP_SRCS:.cpp=$(PROJ_INFIX).o))
 
 BUILD_DIRS += $(dir $(C_OBJS))
 BUILD_DIRS += $(dir $(CPP_OBJS))
@@ -491,7 +492,7 @@ endif
 endif
 
 # Rule for user-supplied C++ files
-$(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.cpp
+$(PROJECT_DIR)/build/%$(PROJ_INFIX).o: $(PROJECT_DIR)/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS)
@@ -502,7 +503,7 @@ endif
 	$(AT) echo ' '
 
 # Rule for user-supplied C files
-$(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.c
+$(PROJECT_DIR)/build/%$(PROJ_INFIX).o: $(PROJECT_DIR)/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C Compiler $(CC)'
 	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
@@ -513,7 +514,7 @@ endif
 	$(AT) echo ' '
 
 # Rule for user-supplied assembly files
-$(PROJECT_DIR)/build/%.o: $(PROJECT_DIR)/%.S
+$(PROJECT_DIR)/build/%$(PROJ_INFIX).o: $(PROJECT_DIR)/%.S
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
