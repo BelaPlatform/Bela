@@ -222,7 +222,7 @@ SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
 ifeq ($(XENOMAI_VERSION),2.6)
   DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
 else
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX))
+  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX) | sed s/-Wl,--no-as-needed//)
 endif
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
@@ -306,7 +306,7 @@ PROJ_INFIX=
 endif # SHARED
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
-BELA_LDFLAGS = -Llib/
+BELA_LDFLAGS = -Llib/ -Wl,--as-needed
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
 BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so)
 BELA_LDLIBS := $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
@@ -836,7 +836,7 @@ LDFLAGS_SHARED_PROJECT=-shared -Wl,-Bsymbolic -Wl,-soname,$(LIB_PROJECT_SO)
 $(LIB_PROJECT_SO_FULL): $(PROJECT_OBJS) $(LIBRARIES_OBJS)
 	$(AT) echo 'Linking project shared library...'
 # we filter-out %.h because they could be added by P_OBJS
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS) -pthread -o "$@" $(filter-out %.h,$^) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS) $(LDFLAGS_SHARED_PROJECT)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(BELA_LDFLAGS) $(LIBRARIES_LDFLAGS) $(LDFLAGS_SHARED_PROJECT) $(LDFLAGS) -pthread -o "$@" $(filter-out %.h,$^) $(LDLIBS) $(LIBRARIES_LDLIBS) $(BELA_LDLIBS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
