@@ -405,14 +405,14 @@ ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_C_SRCS:.c=.d)))
 
 CORE_CPP_SRCS = $(filter-out core/default_main.cpp core/default_libpd_render.cpp, $(wildcard core/*.cpp))
 CORE_OBJS := $(CORE_OBJS) $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.o)))
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiI2sCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o
-EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_CPP_SRCS:.cpp=.d)))
 
 CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiI2sCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o build/core/FormatConvert.o
+EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS)) $(filter-out $(CORE_CORE_OBJS),$(CORE_ASM_OBJS))
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
 DEFAULT_MAIN_CPP_SRCS := ./core/default_main.cpp
