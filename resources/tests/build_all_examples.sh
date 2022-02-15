@@ -8,6 +8,8 @@ This script build all the examples in $BELA_EXAMPLES and reports any errors
 encountered during the build process.
 Arguments: 
 	--continue : do not stop when a test fails
+	--shared : build the project with SHARED=1
+	--also-shared : build the project both with and without SHARED=1
 	--distcc : try to use distcc to offload the compilation to another
 		computer on the network.
 	--start arg : do not start from the first example, start from \`arg'
@@ -51,7 +53,6 @@ increment_failure ()
 build_succeeded ()
 {
 	increment_success
-	printf "Building $EXAMPLE succeeded\n\n"
 }
 
 build_failed ()
@@ -75,6 +76,7 @@ SUCCESS=0
 trap signal_handler 2 
 
 ORIGINAL_COMMAND="$0"
+MODES=NORMAL
 
 while [ -n "$1" ]
 do
@@ -82,6 +84,12 @@ do
 	--continue)
 		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --continue"
 		CONTINUE=1
+	;;
+	--shared)
+		MODES="SHARED"
+	;;
+	--also-shared)
+		MODES="SHARED NORMAL"
 	;;
 	--start)
 		shift
@@ -123,14 +131,31 @@ do
 	[ -d "$EXAMPLE" ] || continue
 	[ "$EXAMPLE" = "$START_FROM" ] && START_FROM=
 	[ -z "$START_FROM" ] || { echo "Skipping $EXAMPLE"; continue; }
-	echo $EXAMPLE
+	printf "$EXAMPLE -- "
 	rm -rf "../projects/$TEST_PROJECT"
 	cp -r "$EXAMPLE" "../projects/$TEST_PROJECT"
-	MAKE_STRING="make --no-print-directory -C $BELA_HOME PROJECT=$TEST_PROJECT $DISTCC"
-	echo $MAKE_STRING
-	MAKE_STRING="$MAKE_STRING $J AT="
-	$MAKE_STRING  > $MAKE_OUT && build_succeeded || build_failed
-	#make  AT= -C $BELA_HOME run PROJECT=$TEST_PROJECT && echo "Running $EXAMPLE succeeded" || { echo "Running $EXAMPLE failed"; exit 1; }
+	for mode in $MODES; do
+		case $mode in
+		NORMAL)
+			SHARED=
+		;;
+		SHARED)
+			SHARED="SHARED=1"
+		;;
+		*)
+			echo "Unknown mode '$mode'"
+			exit 1
+		esac
+		MAKE_STRING="make --no-print-directory -C $BELA_HOME PROJECT=$TEST_PROJECT $DISTCC $SHARED"
+		echo $MAKE_STRING
+		MAKE_STRING="$MAKE_STRING $J AT="
+		$MAKE_STRING  > $MAKE_OUT && build_succeeded || build_failed
+		EXEC_NAME=$(realpath ../projects/$TEST_PROJECT/$TEST_PROJECT)
+		if [ -f $EXEC_NAME ]; then
+			ldd $EXEC_NAME | grep -q "not found" && { echo "Missing libraries in $EXEC_NAME"; exit 1; }
+		fi
+		#make  AT= -C $BELA_HOME run PROJECT=$TEST_PROJECT && echo "Running $EXAMPLE succeeded" || { echo "Running $EXAMPLE failed"; exit 1; }
+	done
 done
 
 print_summary
