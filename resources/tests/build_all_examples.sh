@@ -87,9 +87,11 @@ do
 	;;
 	--shared)
 		MODES="SHARED"
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --shared"
 	;;
 	--also-shared)
 		MODES="SHARED NORMAL"
+		ORIGINAL_COMMAND="$ORIGINAL_COMMAND --also-shared"
 	;;
 	--start)
 		shift
