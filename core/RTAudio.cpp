@@ -274,6 +274,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 	int priority = 0;
 	bool printStats = false;
 	double maxTime = 0;
+	double intervalMs = 0;
 	std::vector<std::string> tokens = split(gBatchParams, ',');
 	for(auto& token : tokens)
 	{
@@ -291,8 +292,15 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 		value = readValueFromString(token, "t");
 		if("" != value)
 			maxTime = atof(value.c_str());
+		value = readValueFromString(token, "e");
+		if("" != value)
+			intervalMs = atof(value.c_str());
 	}
-	gRTAudioVerbose && printf("Running %llu iterations or up to %.3f seconds with priority %d\n", i, maxTime, priority);
+	gRTAudioVerbose && printf("Running %llu iterations or up to %.3f seconds with priority %d, sleeping %f ms in between\n", i, maxTime, priority, intervalMs);
+	struct timespec ts = {
+		.tv_sec = int(intervalMs / 1000),
+		.tv_nsec = int(int(intervalMs * kNsInSec / 1000) % kNsInSec),
+	};
 	long long unsigned int maxTimeNs = maxTime * kNsInSec;
 	struct sched_param p = {
 		.sched_priority = priority,
@@ -331,6 +339,8 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 			if(!i--)
 				break;
 		}
+		if(intervalMs)
+			__wrap_nanosleep(&ts, NULL);
 	}
 	if(!maxTimeNs) // we may have already gotten a more accurate timestamp above
 		__wrap_clock_gettime(CLOCK_MONOTONIC, &end);
