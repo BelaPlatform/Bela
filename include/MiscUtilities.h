@@ -10,7 +10,7 @@ namespace StringUtils
 	/**
 	 * Split a string at a given separator.
 	 */
-	std::vector<std::string> split(const std::string& s, char delimiter, bool removeEmpty = false);
+	std::vector<std::string> split(const std::string& s, char delimiter, bool removeEmpty = false, unsigned int limit = 0);
 	/**
 	 * Remove leading and trailing spaces from a string.
 	 */

@@ -8,7 +8,7 @@ using namespace IoUtils;
 using namespace ConfigFileUtils;
 namespace StringUtils
 {
-std::vector<std::string> split(const std::string& s, char delimiter, bool removeEmpty)
+std::vector<std::string> split(const std::string& s, char delimiter, bool removeEmpty, unsigned int limit)
 {
 	std::vector<std::string> tokens;
 	std::string token;
@@ -18,6 +18,15 @@ std::vector<std::string> split(const std::string& s, char delimiter, bool remove
 		if(removeEmpty && "" == token)
 			continue;
 		tokens.push_back(token);
+		if(limit && tokens.size() == limit - 1)
+		{
+			// if we reached the limit, put everything that's left
+			// in the final token
+			std::stringstream left;
+			left << tokenStream.rdbuf();
+			tokens.push_back(left.str());
+			break;
+		}
 	}
 	return tokens;
 }
@@ -104,7 +113,7 @@ namespace ConfigFileUtils
 
 static std::string readValueFromLine(const std::string& line, const std::string& key)
 {
-	auto vec = split(line, '=');
+	auto vec = split(line, '=', false, 2);
 	if(vec.size() == 2 && trim(vec[0]) == key)
 		return trim(vec[1]);
 	return "";
