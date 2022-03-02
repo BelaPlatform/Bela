@@ -29,7 +29,7 @@ void OscSender::setup(int port, std::string ip_address){
 	socket->setup(port, ip_address.c_str());
 	
 	send_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	send_task->create(std::string("OscSenderTask_") + ip_address + std::to_string(port), [this](void* buf, int size){send_task_func(buf, size); });
+	send_task->create(std::string("OscSndrTsk_") + ip_address + std::to_string(port), [this](void* buf, int size){send_task_func(buf, size); });
 }
 
 OscSender &OscSender::newMessage(std::string address){
