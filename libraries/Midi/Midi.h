@@ -1,13 +1,4 @@
-/*
- * Midi.h
- *
- *  Created on: 15 Jan 2016
- *      Author: giulio
- */
-
-#ifndef MIDI_H_
-#define MIDI_H_
-
+#pragma once
 #include <Bela.h>
 #include <vector>
 #include <string>
@@ -426,6 +417,3 @@ private:
 	int sock;
 #endif
 };
-
-
-#endif /* MIDI_H_ */

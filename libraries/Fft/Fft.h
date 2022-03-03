@@ -1,3 +1,4 @@
+#pragma once
 #include <libraries/ne10/NE10.h>
 #include <vector>
 #include <cmath>

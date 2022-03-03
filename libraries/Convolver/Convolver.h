@@ -1,3 +1,4 @@
+#pragma once
 #define ENABLE_NE10_FIR_FLOAT_NEON // Define needed for Ne10 library
 #include <libraries/ne10/NE10.h> // neon library
 #include <vector>

@@ -1,7 +1,4 @@
-/***** Scope.h *****/
-#ifndef __Scope_H_INCLUDED__
-#define __Scope_H_INCLUDED__ 
-
+#pragma once
 #include <ne10/NE10_types.h>
 #include <vector>
 #include <map>
@@ -175,5 +172,3 @@ class Scope{
         
 		std::map<std::wstring, float> settings;
 };
-
-#endif

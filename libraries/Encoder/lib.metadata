@@ -1,7 +1,7 @@
 name=Encoder
 version=1.0.0
 author=Giulio Moro<giulio@bela.io>
-maintainer=Giulio Moro<giulio@bela.io>>
+maintainer=Giulio Moro<giulio@bela.io>
 description=A class to connect a quadrature encoder.
 examples=Sensors/rotary-encoder
 license=LGPL 3.0
