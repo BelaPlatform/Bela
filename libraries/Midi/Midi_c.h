@@ -1,6 +1,4 @@
-#ifndef BELA_MIDI_H_
-#define BELA_MIDI_H_
-
+#pragma once
 #ifdef __cplusplus
 #include "Midi.h"
 extern "C" {
@@ -29,4 +27,3 @@ void Midi_delete(Midi* midi);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
-#endif /* BELA_MIDI_H_ */

@@ -1,12 +1,12 @@
-/*
- * udpClient.cpp
- *
- *  Created on: 19 May 2015
- *      Author: giulio moro
- */
 #include "UdpClient.h"
 #include <stdexcept>
 #include <string>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 	UdpClient::UdpClient(){}
 	UdpClient::UdpClient(int aPort, const char* aServerName){
