@@ -1,22 +1,6 @@
-/*
- * udpClient.h
- *
- *  Created on: 19 May 2015
- *      Author: giulio moro
- */
-
-#ifndef UDPCLIENT_H_
-#define UDPCLIENT_H_
-
+#pragma once
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 
 class UdpClient{
 	private:
@@ -64,7 +48,3 @@ class UdpClient{
 		int waitUntilReady(bool readyForReading, int timeoutMsecs);
 		int setSocketBroadcast(int broadcastEnable);
 };
-
-
-
-#endif /* UDPCLIENT_H_ */
