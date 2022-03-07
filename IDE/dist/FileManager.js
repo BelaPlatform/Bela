@@ -539,77 +539,102 @@ exports.save_file = SaveFile_1.save_file;
 // recursively read the contents of a directory, returning an array of File_Descriptors
 function deep_read_directory(dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var contents, output, contents_1, contents_1_1, name_1, original_path, path, stat, maxLevels, levels, desc, _a, e_4_1, e_4, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var contents, output, _loop_1, contents_1, contents_1_1, name_1, e_4_1, e_4, _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0: return [4 /*yield*/, read_directory(dir_path)];
                 case 1:
-                    contents = _c.sent();
+                    contents = _b.sent();
                     output = [];
-                    _c.label = 2;
+                    _loop_1 = function (name_1) {
+                        var original_path, path, shouldContinue, errorCatcher, stat, maxLevels, levels, desc, _a;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    original_path = dir_path + '/' + name_1;
+                                    path = original_path;
+                                    shouldContinue = false;
+                                    errorCatcher = function (e) {
+                                        // this may have been a temp file which by now has disappeared
+                                        console.log("File " + path + " may have disappeared");
+                                        shouldContinue = true;
+                                        return "";
+                                    };
+                                    return [4 /*yield*/, stat_file(path).catch(errorCatcher)];
+                                case 1:
+                                    stat = _b.sent();
+                                    if (shouldContinue)
+                                        return [2 /*return*/, "continue"];
+                                    maxLevels = 100;
+                                    levels = 0;
+                                    _b.label = 2;
+                                case 2:
+                                    if (!stat.isSymbolicLink()) return [3 /*break*/, 5];
+                                    return [4 /*yield*/, fs.readlinkAsync(path).catch(errorCatcher)];
+                                case 3:
+                                    path = _b.sent();
+                                    if ('/' != path[0])
+                                        path = dir_path + '/' + path;
+                                    return [4 /*yield*/, stat_file(path).catch(errorCatcher)];
+                                case 4:
+                                    stat = _b.sent();
+                                    if (shouldContinue)
+                                        return [3 /*break*/, 5];
+                                    ++levels;
+                                    if (maxLevels <= levels) {
+                                        return [3 /*break*/, 5];
+                                    }
+                                    return [3 /*break*/, 2];
+                                case 5:
+                                    if (shouldContinue)
+                                        return [2 /*return*/, "continue"];
+                                    if (maxLevels <= levels) {
+                                        console.error('Unable to properly stat %s: too many symlinks to follow(%d)', original_path, levels);
+                                        path = original_path;
+                                    }
+                                    desc = new util.File_Descriptor(name_1);
+                                    if (!stat.isDirectory()) return [3 /*break*/, 7];
+                                    _a = desc;
+                                    return [4 /*yield*/, deep_read_directory(path)];
+                                case 6:
+                                    _a.children = _b.sent();
+                                    return [3 /*break*/, 8];
+                                case 7:
+                                    desc.size = stat.size;
+                                    _b.label = 8;
+                                case 8:
+                                    output.push(desc);
+                                    return [2 /*return*/];
+                            }
+                        });
+                    };
+                    _b.label = 2;
                 case 2:
-                    _c.trys.push([2, 14, 15, 16]);
+                    _b.trys.push([2, 7, 8, 9]);
                     contents_1 = __values(contents), contents_1_1 = contents_1.next();
-                    _c.label = 3;
+                    _b.label = 3;
                 case 3:
-                    if (!!contents_1_1.done) return [3 /*break*/, 13];
+                    if (!!contents_1_1.done) return [3 /*break*/, 6];
                     name_1 = contents_1_1.value;
-                    original_path = dir_path + '/' + name_1;
-                    path = original_path;
-                    return [4 /*yield*/, stat_file(path)];
+                    return [5 /*yield**/, _loop_1(name_1)];
                 case 4:
-                    stat = _c.sent();
-                    maxLevels = 100;
-                    levels = 0;
-                    _c.label = 5;
+                    _b.sent();
+                    _b.label = 5;
                 case 5:
-                    if (!stat.isSymbolicLink()) return [3 /*break*/, 8];
-                    return [4 /*yield*/, fs.readlinkAsync(path)];
-                case 6:
-                    path = _c.sent();
-                    if ('/' != path[0])
-                        path = dir_path + '/' + path;
-                    return [4 /*yield*/, stat_file(path)];
-                case 7:
-                    stat = _c.sent();
-                    ++levels;
-                    if (maxLevels <= levels) {
-                        return [3 /*break*/, 8];
-                    }
-                    return [3 /*break*/, 5];
-                case 8:
-                    if (maxLevels <= levels) {
-                        console.error('Unable to properly stat %s: too many symlinks to follow(%d)', original_path, levels);
-                        path = original_path;
-                    }
-                    desc = new util.File_Descriptor(name_1);
-                    if (!stat.isDirectory()) return [3 /*break*/, 10];
-                    _a = desc;
-                    return [4 /*yield*/, deep_read_directory(path)];
-                case 9:
-                    _a.children = _c.sent();
-                    return [3 /*break*/, 11];
-                case 10:
-                    desc.size = stat.size;
-                    _c.label = 11;
-                case 11:
-                    output.push(desc);
-                    _c.label = 12;
-                case 12:
                     contents_1_1 = contents_1.next();
                     return [3 /*break*/, 3];
-                case 13: return [3 /*break*/, 16];
-                case 14:
-                    e_4_1 = _c.sent();
+                case 6: return [3 /*break*/, 9];
+                case 7:
+                    e_4_1 = _b.sent();
                     e_4 = { error: e_4_1 };
-                    return [3 /*break*/, 16];
-                case 15:
+                    return [3 /*break*/, 9];
+                case 8:
                     try {
-                        if (contents_1_1 && !contents_1_1.done && (_b = contents_1.return)) _b.call(contents_1);
+                        if (contents_1_1 && !contents_1_1.done && (_a = contents_1.return)) _a.call(contents_1);
                     }
                     finally { if (e_4) throw e_4.error; }
                     return [7 /*endfinally*/];
-                case 16: return [2 /*return*/, output];
+                case 9: return [2 /*return*/, output];
             }
         });
     });
