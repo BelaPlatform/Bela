@@ -12,6 +12,8 @@ import * as fs from 'fs-extra-promise';
 import * as globals from './globals';
 var TerminalManager = require('./TerminalManager');
 
+let motdPath = '/etc/motd'
+
 export async function init(args : Array<any>){
 
 	let httpPort = 80;
@@ -31,6 +33,8 @@ export async function init(args : Array<any>){
 				globals.set_verbose(ideDev.verbose);
 			if(ideDev.hasOwnProperty('board'))
 				globals.set_board(ideDev.board);
+			if(ideDev.hasOwnProperty('motdPath'))
+				motdPath = ideDev.motdPath;
 		}
 	} catch (err) {}
 	let n = 0;
@@ -200,7 +204,7 @@ export function get_bela_core_version(): Promise<util.Bela_Core_Version_Data>{
 export function get_bela_image_version(): Promise<string>{
 	return new Promise(async function(resolve, reject){
 		try {
-			var buffer = await fs.readFileAsync('/etc/motd', 'utf8');
+			var buffer = await fs.readFileAsync(motdPath, 'utf8');
 			if(!buffer) {
 				resolve('');
 				return;

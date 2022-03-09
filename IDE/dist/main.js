@@ -57,6 +57,7 @@ var path = require("path");
 var fs = require("fs-extra-promise");
 var globals = require("./globals");
 var TerminalManager = require('./TerminalManager');
+var motdPath = '/etc/motd';
 function init(args) {
     return __awaiter(this, void 0, void 0, function () {
         var httpPort, ideDev, n, arg, app, server;
@@ -80,6 +81,8 @@ function init(args) {
                                 globals.set_verbose(ideDev.verbose);
                             if (ideDev.hasOwnProperty('board'))
                                 globals.set_board(ideDev.board);
+                            if (ideDev.hasOwnProperty('motdPath'))
+                                motdPath = ideDev.motdPath;
                         }
                     }
                     catch (err) { }
@@ -296,7 +299,7 @@ function get_bela_image_version() {
                 switch (_b.label) {
                     case 0:
                         _b.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, fs.readFileAsync('/etc/motd', 'utf8')];
+                        return [4 /*yield*/, fs.readFileAsync(motdPath, 'utf8')];
                     case 1:
                         buffer = _b.sent();
                         if (!buffer) {
