@@ -466,10 +466,10 @@ fileView.on('force-rebuild', function () {
 		currentProject: models.project.getKey('currentProject')
 	});
 });
-fileView.on('file-rejected', function (filename) {
+fileView.on('file-rejected', function (errMsg) {
 	var timestamp = performance.now();
 	consoleView.emit('openNotification', { func: 'fileRejected', timestamp: timestamp });
-	consoleView.emit('closeNotification', { error: '... failed, file ' + filename + ' already exists. Refresh to allow overwriting', timestamp: timestamp });
+	consoleView.emit('closeNotification', { error: errMsg, timestamp: timestamp });
 });
 
 // editor view
@@ -2260,7 +2260,7 @@ var FileView = function (_View) {
 
 						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 					} else {
-						_this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+						fileQueue.push(e.originalEvent.dataTransfer.files[i]);
 					}
 					if (i == e.originalEvent.dataTransfer.files.length - 1) {
 						setTimeout(function () {
@@ -2268,6 +2268,7 @@ var FileView = function (_View) {
 						}, 1500);
 					}
 				}
+				_this.processQueue();
 			}
 			return false;
 		});
@@ -2721,15 +2722,32 @@ var FileView = function (_View) {
 			});
 		}
 	}, {
+		key: 'processQueue',
+		value: function processQueue() {
+			var _this11 = this;
+
+			// keep processing the queue in the background
+			console.log("processQueue", uploadingFile, fileQueue.length);
+			if (!uploadingFile && fileQueue.length) {
+				setTimeout(function () {
+					console.log("processQueue do file upload", uploadingFile, fileQueue.length);
+					if (!uploadingFile && fileQueue.length) {
+						console.log("processQueue do file upload");
+						_this11.doFileUpload(fileQueue.pop());
+					}
+				}, 0);
+			}
+		}
+	}, {
 		key: 'doFileUpload',
 		value: function doFileUpload(file) {
-			var _this11 = this;
+			var _this12 = this;
 
 			if (uploadingFile) {
 				fileQueue.push(file);
 				return;
 			}
-
+			uploadingFile = true;
 			var fileExists = false;
 			var _iteratorNormalCompletion2 = true;
 			var _didIteratorError2 = false;
@@ -2756,13 +2774,17 @@ var FileView = function (_View) {
 				}
 			}
 
-			if (file.name === 'settings.json') fileExists = true;
-
 			if (file.name === '_main.pd') forceRebuild = true;
 
+			var next = function next() {
+				uploadingFile = false;
+				_this12.processQueue();
+			};
+			// ensure that any of the cases below ends up either calling next() or calling
+			// actuallyDoFileUpload(), which will eventually do the equivalent
 			if (fileExists && askForOverwrite) {
+				// TODO: move this dialog so that it works also for button-uploaded files
 
-				uploadingFile = true;
 
 				// build the popup content
 				popup.title(json.popups.overwrite.title);
@@ -2782,11 +2804,7 @@ var FileView = function (_View) {
 						overwriteAction = 'upload';
 					}
 					popup.hide();
-					_this11.actuallyDoFileUpload(file, true);
-					uploadingFile = false;
-					if (fileQueue.length) {
-						_this11.doFileUpload(fileQueue.pop());
-					}
+					_this12.actuallyDoFileUpload(file, true);
 				});
 
 				popup.find('.cancel').on('click', function () {
@@ -2795,9 +2813,8 @@ var FileView = function (_View) {
 						overwriteAction = 'reject';
 					}
 					popup.hide();
-					uploadingFile = false;
 					forceRebuild = false;
-					if (fileQueue.length) _this11.doFileUpload(fileQueue.pop());
+					next();
 				});
 
 				popup.show();
@@ -2806,14 +2823,11 @@ var FileView = function (_View) {
 			} else if (fileExists && !askForOverwrite) {
 
 				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					this.emit('file-rejected', file.name);
+					this.emit('file-rejected', 'upload failed, file ' + file.name + ' already exists.');
+					next();
 				}
-
-				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			} else {
-
 				this.actuallyDoFileUpload(file, !askForOverwrite);
-				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
 			}
 		}
 	}, {
@@ -2854,17 +2868,32 @@ var FileView = function (_View) {
 	}, {
 		key: 'actuallyDoFileUpload',
 		value: function actuallyDoFileUpload(file, force) {
-			var _this12 = this;
+			var _this13 = this;
 
+			// ensure this eventually sets uploadingFile = false
 			var reader = new FileReader();
 			if (forceRebuild && !fileQueue.length) {
 				forceRebuild = false;
 				this.emit('force-rebuild');
 			}
-			var uploadEmit = function uploadEmit(ev) {
-				return _this12.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+			var onloadend = function onloadend(func, args, ev) {
+				if (func && ev) {
+					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this13.emit('file-rejected', 'error while uploading ' + file.name);else {
+						args.func = func;
+						args.newFile = sanitise(file.name);
+						args.fileData = ev.target.result;
+						args.force = force;
+						args.queue = fileQueue.length;
+						_this13.emit('message', 'project-event', args);
+					}
+				}
+				uploadingFile = false;
+				_this13.processQueue();
 			};
-
+			// TODO: existing projects are not checked before sending to server
+			// TODO: if something fails on the server(e.g.: project existing, file
+			// cannot be written, whatev), the rest of the queue may not be handled
+			// properly because the popup from the error will overwrite any active popup
 			if (file.name.search(/\.zip$/) != -1) {
 				var newProject = sanitise(file.name.replace(/\.zip$/, ""));
 				var values = { extract: "extract", asIs: "asIs" };
@@ -2881,16 +2910,17 @@ var FileView = function (_View) {
 				popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
 					e.preventDefault();
 					newProject = sanitise(popup.find('input[type=text]').val());
-					reader.onload = function (ev) {
-						return _this12.emit('message', 'project-event', { func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject: newProject, force: force });
-					};
+					reader.onloadend = onloadend.bind(_this13, 'uploadZipProject', { newProject: newProject });
 					reader.readAsArrayBuffer(file);
 					popup.hide();
 				});
-				popup.find('.cancel').on('click', popup.hide);
+				popup.find('.cancel').on('click', function () {
+					popup.hide();
+					reader.onloadend();
+				});
 				popup.show();
 			} else {
-				reader.onload = uploadEmit;
+				reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 				reader.readAsArrayBuffer(file);
 			}
 		}

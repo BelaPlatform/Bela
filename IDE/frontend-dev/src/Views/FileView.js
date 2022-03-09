@@ -63,7 +63,7 @@ class FileView extends View {
             }, 1500);
             return false;
           } else {
-            this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
+            fileQueue.push(e.originalEvent.dataTransfer.files[i])
           }
           if (i == e.originalEvent.dataTransfer.files.length - 1) {
             setTimeout(function(){
@@ -73,6 +73,7 @@ class FileView extends View {
             }, 1500);
           }
 				}
+				this.processQueue();
 			}
 			return false;
 		});
@@ -521,25 +522,45 @@ class FileView extends View {
 
 	}
 
+	processQueue(){
+		// keep processing the queue in the background
+		console.log("processQueue", uploadingFile, fileQueue.length)
+		if(!uploadingFile && fileQueue.length)
+		{
+			setTimeout(() => {
+				console.log("processQueue do file upload", uploadingFile, fileQueue.length)
+				if(!uploadingFile && fileQueue.length)
+				{
+					console.log("processQueue do file upload")
+					this.doFileUpload(fileQueue.pop());
+				}
+			}, 0);
+		}
+	}
+
 	doFileUpload(file){
 
 		if (uploadingFile){
 			fileQueue.push(file);
 			return;
 		}
-
+		uploadingFile = true;
 		var fileExists = false;
 		for (let item of this.listOfFiles){
 			if (item.name === sanitise(file.name)) fileExists = true;
 		}
 
-		if (file.name === 'settings.json') fileExists = true;
-
 		if (file.name === '_main.pd') forceRebuild = true;
 
+		let next = () => {
+			uploadingFile = false;
+			this.processQueue();
+		}
+		// ensure that any of the cases below ends up either calling next() or calling
+		// actuallyDoFileUpload(), which will eventually do the equivalent
 		if (fileExists && askForOverwrite){
+			// TODO: move this dialog so that it works also for button-uploaded files
 
-			uploadingFile = true;
 
 			// build the popup content
 			popup.title(json.popups.overwrite.title);
@@ -560,10 +581,6 @@ class FileView extends View {
 				}
 				popup.hide();
 				this.actuallyDoFileUpload(file, true);
-				uploadingFile = false;
-				if (fileQueue.length){
-					this.doFileUpload(fileQueue.pop());
-				}
 			});
 
 			popup.find('.cancel').on('click', () => {
@@ -572,9 +589,8 @@ class FileView extends View {
 					overwriteAction = 'reject';
 				}
 				popup.hide();
-				uploadingFile = false;
 				forceRebuild = false;
-				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
+				next();
 			});
 
 			popup.show();
@@ -586,16 +602,12 @@ class FileView extends View {
 			if (overwriteAction === 'upload')
 				this.actuallyDoFileUpload(file, !askForOverwrite);
 			else {
-				this.emit('file-rejected', file.name);
+				this.emit('file-rejected', 'upload failed, file '+file.name+' already exists.');
+				next();
 			}
 
-			if (fileQueue.length) this.doFileUpload(fileQueue.pop());
-
 		} else {
-
 			this.actuallyDoFileUpload(file, !askForOverwrite);
-			if (fileQueue.length) this.doFileUpload(fileQueue.pop());
-
 		}
 	}
 
@@ -634,13 +646,32 @@ class FileView extends View {
   }
 
 	actuallyDoFileUpload(file, force){
+		// ensure this eventually sets uploadingFile = false
 		var reader = new FileReader();
 		if (forceRebuild && !fileQueue.length){
 			forceRebuild = false;
 			this.emit('force-rebuild');
 		}
-		let uploadEmit = (ev) => this.emit('message', 'project-event', {func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force} );
-
+		let onloadend = (func, args, ev) => {
+				if(func && ev){
+					if(ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result)
+						this.emit('file-rejected', 'error while uploading '+file.name);
+					else {
+						args.func = func;
+						args.newFile = sanitise(file.name);
+						args.fileData = ev.target.result;
+						args.force = force;
+						args.queue = fileQueue.length;
+						this.emit('message', 'project-event', args);
+					}
+				}
+				uploadingFile = false;
+				this.processQueue();
+		}
+		// TODO: existing projects are not checked before sending to server
+		// TODO: if something fails on the server(e.g.: project existing, file
+		// cannot be written, whatev), the rest of the queue may not be handled
+		// properly because the popup from the error will overwrite any active popup
 		if (file.name.search(/\.zip$/) != -1) {
 			let newProject = sanitise(file.name.replace(/\.zip$/, ""));
 			let values = { extract: "extract", asIs: "asIs" };
@@ -650,21 +681,24 @@ class FileView extends View {
 
 			form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />');
 			form.push('<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>');
-  			form.push('<br/><br/>');
+			form.push('<br/><br/>');
 			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
 			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
 			
 			popup.form.empty().append(form.join('')).off('submit').on('submit', e => {
 				e.preventDefault();
 				newProject = sanitise(popup.find('input[type=text]').val());
-				reader.onload = (ev) => this.emit('message', 'project-event', {func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject, force} );
+				reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: newProject });
 				reader.readAsArrayBuffer(file);
 				popup.hide();
 			});
-			popup.find('.cancel').on('click', popup.hide );
+			popup.find('.cancel').on('click', () => {
+				popup.hide();
+				reader.onloadend();
+			});
 			popup.show();
 		} else {
-			reader.onload = uploadEmit;
+			reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 			reader.readAsArrayBuffer(file);
 		}
 	}

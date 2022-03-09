@@ -74,10 +74,10 @@ fileView.on('force-rebuild', () => {
 		currentProject	: models.project.getKey('currentProject')
 	});
 });
-fileView.on('file-rejected', filename => {
+fileView.on('file-rejected', errMsg => {
 	var timestamp = performance.now();
 	consoleView.emit('openNotification', {func: 'fileRejected', timestamp});
-	consoleView.emit('closeNotification', {error: '... failed, file '+filename+' already exists. Refresh to allow overwriting', timestamp});
+	consoleView.emit('closeNotification', {error: errMsg, timestamp});
 });
 
 // editor view
