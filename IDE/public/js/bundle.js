@@ -2501,7 +2501,6 @@ var FileView = function (_View) {
 			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 				e.preventDefault();
 				var file = $('[data-form-file]')[0];
-				var location = '/projects/basic';
 				var formEl = $('[data-popup] form')[0];
 				var formData = new FormData(formEl);
 				var popupBlock = $('[data-popup-nointeraction]');
@@ -2510,7 +2509,7 @@ var FileView = function (_View) {
 					$('body').addClass('uploading');
 					popupBlock.addClass('active');
 					popup.find('.confirm').attr('disabled', true);
-					_this6.doLargeFileUpload(formData, file, location);
+					_this6.doLargeFileUpload(formData, file);
 				} else {
 					popup.hide();
 					_this6.uploadFileError();
@@ -2931,7 +2930,7 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'doLargeFileUpload',
-		value: function doLargeFileUpload(formData, file, location, force) {
+		value: function doLargeFileUpload(formData, file, force) {
 			var fileName = file.value.split('\\').pop();
 			var popupBlock = $('[data-popup-nointeraction]').addClass('active');
 			var that = this;

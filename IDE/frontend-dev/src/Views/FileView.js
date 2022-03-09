@@ -191,7 +191,6 @@ class FileView extends View {
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
       var file = $('[data-form-file]')[0];
-      var location = '/projects/basic';
       var formEl = $('[data-popup] form')[0];
       var formData = new FormData(formEl);
       var popupBlock = $('[data-popup-nointeraction]');
@@ -201,7 +200,7 @@ class FileView extends View {
         popupBlock.addClass('active');
         popup.find('.confirm')
              .attr('disabled', true);
-        this.doLargeFileUpload(formData, file, location);
+        this.doLargeFileUpload(formData, file);
       } else {
         popup.hide();
         this.uploadFileError();
@@ -609,7 +608,7 @@ class FileView extends View {
 		}
 	}
 
-  doLargeFileUpload(formData, file, location, force){
+  doLargeFileUpload(formData, file, force){
     var fileName = file.value.split('\\').pop();
     var popupBlock = $('[data-popup-nointeraction]').addClass('active');
     var that = this;
