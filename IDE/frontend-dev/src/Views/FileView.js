@@ -182,7 +182,7 @@ class FileView extends View {
     $('[data-popup] form').attr('action', '/uploads')
                           .attr('enctype','multipart/form-data')
                           .attr('method', 'POST');
-    form.push('<input type="file" name="data" data-form-file></input>');
+    form.push('<input type="file" name="data" multiple data-form-file></input>');
 		form.push('</br >');
     form.push('</br >');
 		form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
@@ -194,7 +194,7 @@ class FileView extends View {
       var formEl = $('[data-popup] form')[0];
       var formData = new FormData(formEl);
       var popupBlock = $('[data-popup-nointeraction]');
-      if (file.value.length > 0) {
+      if (file.files.length > 0) {
         popupBlock.addClass('active');
         $('body').addClass('uploading');
         popupBlock.addClass('active');
@@ -609,7 +609,6 @@ class FileView extends View {
 	}
 
   doLargeFileUpload(formData, file, force){
-    var fileName = file.value.split('\\').pop();
     var popupBlock = $('[data-popup-nointeraction]').addClass('active');
     var that = this;
     $.ajax({
@@ -620,7 +619,10 @@ class FileView extends View {
       contentType: false,
       data: formData,
       success: function(r){
-        that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
+        for(let n = 0; n < file.files.length; ++n) {
+          let fileName = file.files[n].name.split('\\').pop();
+          that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
+        }
         $('body').removeClass('uploading');
         popupBlock.removeClass('active');
         popup.hide();

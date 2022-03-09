@@ -182,7 +182,7 @@ function setup_routes(app) {
         }
     });
     app.post('/uploads', function (req, res) {
-        var upload = multer({ storage: storage }).single('data');
+        var upload = multer({ storage: storage }).any();
         upload(req, res, function (err) {
             if (err) {
                 return res.end("Error uploading file.");
