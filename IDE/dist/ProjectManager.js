@@ -636,6 +636,7 @@ function uploadFile(data) {
                     return [4 /*yield*/, file_manager.save_file(file_path, data.fileData)];
                 case 4:
                     _c.sent();
+                    if (!(0 === data.queue)) return [3 /*break*/, 7];
                     _b = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
                 case 5:
@@ -643,7 +644,8 @@ function uploadFile(data) {
                     return [4 /*yield*/, openFile(data)];
                 case 6:
                     _c.sent();
-                    return [2 /*return*/];
+                    _c.label = 7;
+                case 7: return [2 /*return*/];
             }
         });
     });

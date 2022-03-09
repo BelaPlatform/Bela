@@ -294,8 +294,10 @@ export async function uploadFile(data: any){
 		return;
 	}
 	await file_manager.save_file(file_path, data.fileData);
-	data.fileList = await listFiles(data.currentProject);
-	await openFile(data);
+	if (0 === data.queue){
+		data.fileList = await listFiles(data.currentProject);
+		await openFile(data);
+	}
 }
 
 export async function uploadZipProject(data: any){
