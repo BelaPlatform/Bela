@@ -12,6 +12,12 @@ class ProjectView extends View {
     // add extra callback registration for selectChanged
     this.$elements.on('click', 'li.proj-li', (e) => this.selectChanged($(e.currentTarget), e));
     this.on('example-changed', () => this.exampleChanged = true );
+    this.getProjectList = () => {
+      if(this.projectList)
+        return this.projectList;
+      else
+        return [];
+    }
   }
 
   // UI events
@@ -184,8 +190,10 @@ class ProjectView extends View {
       var projLen = projects.length;
     }
     $projects.attr('size', (projLen - 1));
+    this.projectList = [];
     for (let i=0; i < projLen; i++){
       if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
+        this.projectList.push(projects[i]);
         $('<li></li>').addClass('projectManager proj-li').attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
           $(this).blur();
           $(this).parent().parent().removeClass('show');

@@ -7,7 +7,6 @@ module.exports.sanitise = function (name, options){
 	// if this is a folder or file name (and not a path), then we do not allow '/'
 	if(!isPath)
 		newName = newName.replace(/[\/]/g, '_');
-	console.log("FROM: ", name, "SANITISED: ", newName);
 	return newName;
 }
 

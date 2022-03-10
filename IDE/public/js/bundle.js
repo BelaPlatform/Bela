@@ -449,7 +449,7 @@ projectView.on('message', function (event, data) {
 });
 
 // file view
-var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings]);
+var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings], projectView.getProjectList);
 fileView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -2315,10 +2315,12 @@ function isDragEvent(e, type) {
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
-	function FileView(className, models) {
+	function FileView(className, models, getProjectList) {
 		_classCallCheck(this, FileView);
 
 		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
+
+		_this.getProjectList = getProjectList;
 
 		_this.listOfFiles = [];
 
@@ -2910,7 +2912,6 @@ var FileView = function (_View) {
 				uploadingFile = false;
 				_this5.processQueue();
 			};
-			// TODO: existing projects are not checked before sending to server
 			// TODO: if something fails on the server(e.g.: project existing, file
 			// cannot be written, whatev), the rest of the queue may not be handled
 			// properly because the popup from the error will overwrite any active popup
@@ -2921,14 +2922,34 @@ var FileView = function (_View) {
 					text: json.popups.create_new_project_from_zip.text,
 					button: json.popups.create_new_project_from_zip.button
 				}, function onSubmit(e) {
-					newProject = sanitise(popup.find('input[type=text]').val());
+					var val = popup.find('input[type=text]').val();
+					if (!val) return;
+					newProject = sanitise(val);
 					reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: newProject });
 					reader.readAsArrayBuffer(file);
 				}, function onCancel() {
 					onloadend(); // TODO: unclear to me why this works without a this or a bind
 				});
-				var projectNameInput = '<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />' + '<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>' + '<br/><br/>';
+				var projectNameInput = '<input type="text" data-name="newProjectName" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />' + '<span class="input-already-existing"></span>' + '<div class="input-sanitised"></div>' + '<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>' + '<br/><br/>';
 				popup.form.prepend(projectNameInput);
+				var input = $('input[data-name=newProjectName]', popup.form);
+				var existingWarning = $('.input-already-existing', popup.form);
+				var sanitisedWarning = $('.input-sanitised', popup.form);
+				var validateName = function validateName(e) {
+					var projectList = _this5.getProjectList();
+					var origName = input[0].value.trim();
+					var sanName = sanitise(origName);
+					if (sanName !== origName) sanitisedWarning.html(json.popups.create_new_project_from_zip.sanitised + sanName);else sanitisedWarning.html("");
+					if (projectList.includes(sanName)) {
+						existingWarning.html(json.popups.create_new_project_from_zip.exists);
+						popup.disableSubmit();
+					} else {
+						existingWarning.html("");
+						popup.enableSubmit();
+					}
+				};
+				validateName();
+				input.on('change keypress paste input', validateName);
 			} else {
 				reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 				reader.readAsArrayBuffer(file);
@@ -3190,6 +3211,9 @@ var ProjectView = function (_View) {
     _this.on('example-changed', function () {
       return _this.exampleChanged = true;
     });
+    _this.getProjectList = function () {
+      if (_this.projectList) return _this.projectList;else return [];
+    };
     return _this;
   }
 
@@ -3378,8 +3402,10 @@ var ProjectView = function (_View) {
         var projLen = projects.length;
       }
       $projects.attr('size', projLen - 1);
+      this.projectList = [];
       for (var i = 0; i < projLen; i++) {
         if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
+          this.projectList.push(projects[i]);
           $('<li></li>').addClass('projectManager proj-li').attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
             $(this).blur();
             $(this).parent().parent().removeClass('show');
@@ -6203,6 +6229,18 @@ var popup = {
 		if (this.seq === previousSeq) // the callback may have started a new popup. In that case, we don't want to hide the new one!
 			popup.hide();
 	},
+	disableSubmit: function disableSubmit() {
+		this.form.off('submit').on('submit', false);
+		$('button[type=submit]', this.form).addClass('button-disabled');
+	},
+	enableSubmit: function enableSubmit() {
+		var _this = this;
+
+		this.form.on('submit', function (e) {
+			_this.respondToEvent(_this.stashedOnSubmit, e);
+		});
+		$('button[type=submit]', this.form).removeClass('button-disabled');
+	},
 
 	// shorthands for common popup configurations.
 	// strings may have fields: title, text(subtitle), code, body, button, cancel
@@ -6210,18 +6248,19 @@ var popup = {
 	// A popup with two buttons - Submit and Cancel
 	// Builds the popup with the initWithStrings() function, then adds the two button callbacks.
 	twoButtons: function twoButtons(strings, onSubmit, onCancel, opts) {
-		var _this = this;
+		var _this2 = this;
 
 		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="submit" class="button popup-save confirm">' + strings.button + '</button>');
 		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
 
+		this.stashedOnSubmit = onSubmit;
 		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
-			_this.respondToEvent(onSubmit, e);
+			_this2.respondToEvent(onSubmit, e);
 		});
 		popup.find('.cancel').on('click', function (e) {
-			_this.respondToEvent(onCancel, e);
+			_this2.respondToEvent(onCancel, e);
 		});
 		popup.finalize(opts);
 	},
@@ -6230,13 +6269,13 @@ var popup = {
 	// For popups with only one button that needs to fire an event when clicked (eg, confirmation)
 	// To work a strings.button string must be present in the strings object that's passed in
 	oneButton: function oneButton(strings, onCancel, opts) {
-		var _this2 = this;
+		var _this3 = this;
 
 		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="cancel" class="button popup-save">' + strings.button + '</button>');
 		popup.form.empty().append(form.join('')).find('.popup-save').on('click', function (e) {
-			_this2.respondToEvent(onCancel, e);
+			_this3.respondToEvent(onCancel, e);
 		});
 		popup.finalize(opts);
 	},
@@ -6245,13 +6284,13 @@ var popup = {
 	// a popup with one button which will hide itself upon click
 	// To change the text on the button pass in strings.button to the strings object
 	ok: function ok(strings, opts) {
-		var _this3 = this;
+		var _this4 = this;
 
 		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="submit" class="button popup cancel">' + strings.button + '</button>');
 		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
-			_this3.respondToEvent(undefined, e);
+			_this4.respondToEvent(undefined, e);
 		});
 		popup.finalize(opts);
 	},
@@ -6354,7 +6393,9 @@ module.exports={
 			"text": "Choose a name for this project:",
 			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
 			"input": "New project name",
-			"button": "Create project"
+			"button": "Create project",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
     "create_new_folder": {
 			"title": "Create new folder",
@@ -6562,7 +6603,6 @@ module.exports.sanitise = function (name, options) {
 	var newName = name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
 	// if this is a folder or file name (and not a path), then we do not allow '/'
 	if (!isPath) newName = newName.replace(/[\/]/g, '_');
-	console.log("FROM: ", name, "SANITISED: ", newName);
 	return newName;
 };
 

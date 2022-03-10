@@ -71,6 +71,11 @@
       font-style: italic;
     }
   }
+  .input-already-existing {
+    color: $accent-red;
+  }
+  .input-sanitised {
+  }
   /* Styles for custom radio buttons */
   .radio-container {
     cursor: pointer;
@@ -122,6 +127,9 @@
       &:hover {
         background: $teal-02;
         border: 1px solid $teal-02;
+      }
+      &.button-disabled {
+        background: $grey-mid;
       }
     }
     &.cancel {

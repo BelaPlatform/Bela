@@ -32,7 +32,9 @@
 			"text": "Choose a name for this project:",
 			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
 			"input": "New project name",
-			"button": "Create project"
+			"button": "Create project",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
     "create_new_folder": {
 			"title": "Create new folder",

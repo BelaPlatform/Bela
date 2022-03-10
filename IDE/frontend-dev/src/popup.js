@@ -93,6 +93,16 @@ var popup = {
 			if(this.seq === previousSeq) // the callback may have started a new popup. In that case, we don't want to hide the new one!
 				popup.hide();
 	},
+	disableSubmit() {
+		this.form.off('submit').on('submit', false);
+		$('button[type=submit]', this.form).addClass('button-disabled');
+	},
+	enableSubmit() {
+		this.form.on('submit', (e) => {
+			this.respondToEvent(this.stashedOnSubmit, e)
+		});
+		$('button[type=submit]', this.form).removeClass('button-disabled');
+	},
 	// shorthands for common popup configurations.
 	// strings may have fields: title, text(subtitle), code, body, button, cancel
 
@@ -104,6 +114,7 @@ var popup = {
 		form.push('<button type="submit" class="button popup-save confirm">' + strings.button + '</button>');
 		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
 
+		this.stashedOnSubmit = onSubmit;
 		popup.form.empty().append(form.join('')).off('submit').on('submit', (e) => {
 			this.respondToEvent(onSubmit, e);
 		});

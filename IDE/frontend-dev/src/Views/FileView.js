@@ -24,8 +24,9 @@ function isDragEvent(e, type)
 }
 class FileView extends View {
 
-	constructor(className, models){
+	constructor(className, models, getProjectList){
 		super(className, models);
+		this.getProjectList = getProjectList;
 
 		this.listOfFiles = [];
 
@@ -572,7 +573,6 @@ class FileView extends View {
 				uploadingFile = false;
 				this.processQueue();
 		}
-		// TODO: existing projects are not checked before sending to server
 		// TODO: if something fails on the server(e.g.: project existing, file
 		// cannot be written, whatev), the rest of the queue may not be handled
 		// properly because the popup from the error will overwrite any active popup
@@ -583,17 +583,44 @@ class FileView extends View {
 				text: json.popups.create_new_project_from_zip.text,
 				button: json.popups.create_new_project_from_zip.button,
 			}, function onSubmit(e) {
-				newProject = sanitise(popup.find('input[type=text]').val());
+				let val = popup.find('input[type=text]').val();
+				if(!val)
+					return;
+				newProject = sanitise(val);
 				reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: newProject });
 				reader.readAsArrayBuffer(file);
 			}, function onCancel() {
 				onloadend(); // TODO: unclear to me why this works without a this or a bind
 			});
 			let projectNameInput =
-				'<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />'
+				'<input type="text" data-name="newProjectName" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />'
+				+ '<span class="input-already-existing"></span>'
+				+ '<div class="input-sanitised"></div>'
 				+ '<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>'
 				+ '<br/><br/>';
 			popup.form.prepend(projectNameInput);
+			let input = $('input[data-name=newProjectName]', popup.form);
+			let existingWarning = $('.input-already-existing', popup.form);
+			let sanitisedWarning = $('.input-sanitised', popup.form);
+			let validateName = (e) => {
+				let projectList = this.getProjectList();
+				let origName = input[0].value.trim();
+				let sanName = sanitise(origName);
+				if(sanName !== origName)
+					sanitisedWarning.html(json.popups.create_new_project_from_zip.sanitised + sanName);
+				else
+					sanitisedWarning.html("");
+				if(projectList.includes(sanName)) {
+					existingWarning.html(json.popups.create_new_project_from_zip.exists);
+					popup.disableSubmit();
+				}
+				else {
+					existingWarning.html("");
+					popup.enableSubmit();
+				}
+			};
+			validateName();
+			input.on('change keypress paste input', validateName);
 		} else {
 			reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 			reader.readAsArrayBuffer(file);
