@@ -70,6 +70,11 @@
     "upload_file_error": {
 			"title": "Uploading file error"
 		},
+		"upload_file_nofileselected_error": {
+			"title": "Error: No file selected for upload",
+			"text": "No file was selected for upload",
+			"button": "Try Again"
+		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
 			"text": "Your current project settings will be restored to defaults. There is no undo.",
@@ -148,7 +153,12 @@
 			],
 			"submit": "Reload",
 			"cancel": "Cancel"
-		}
+		},
+		"upload_size_error": {
+		   "title": "Error: File is too large",
+			 "text": "The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.",
+			 "button": "Try Again"
+		 }
 	},
   "tabs": {
     "includeTitle": "Include this Library",

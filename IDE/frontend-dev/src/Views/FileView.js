@@ -87,211 +87,139 @@ class FileView extends View {
 	}
 
 	newFile(func, base){
-		popup.title(json.popups.create_new_file.title);
-		popup.subtitle(json.popups.create_new_file.text);
-		var form = [];
-		form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
-		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
+		popup.twoButtons({
+			title: json.popups.create_new_file.title,
+			text: json.popups.create_new_file.text,
+			button: json.popups.create_new_file.button,
+		}, function onSubmit(e){
       if (!base) {
         this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
       } else {
         this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base});
       }
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
+		}.bind(this)
+		);
+		let filenameInput = '<input type="text" placeholder="' + json.popups.create_new_file.input + '"><br/>';
+		popup.form.prepend(filenameInput);
 	}
 
   newFolder(func){
-		// build the popup content
-		popup.title(json.popups.create_new_folder.title);
-		popup.subtitle(json.popups.create_new_folder.text);
-
-		var form = [];
-    form.push('<input type="hidden"></input>');
-		form.push('<input type="text" placeholder="' + json.popups.create_new_folder.input + '">');
-		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_folder.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
+		popup.twoButtons({
+			title: json.popups.create_new_folder.title,
+			subtitle: json.popups.create_new_folder.text,
+			button: json.popups.create_new_folder.button,
+		}, function onSubmit(e){
 			this.emit('message', 'project-event', {func, newFolder: sanitise(popup.find('input[type=text]').val())});
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
+		}.bind(this)
+		);
+		let foldernameInput = '<input type="text" placeholder="' + json.popups.create_new_folder.input + '"><br/>';
+		popup.form.prepend(foldernameInput);
 	}
 
   uploadSizeError(){
-    // build the popup content
-    popup.title("Error: File is too large")
-         .addClass("error");
-    popup.subtitle("The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.");
-
-    var form = [];
-    form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-    popup.form.append(form.join('')).off('submit').on('submit', e => {
-      e.preventDefault();
-      popup.hide();
-      this.uploadFile();
-    });
-	popup.find('.cancel').on('click', popup.hide );
-    popup.show();
+		popup.twoButtons(json.popups.upload_size_error,
+			function onSubmit(){
+				this.uploadFile();
+			}.bind(this),
+			undefined,
+			{
+				titleClass: 'error',
+			}
+		);
   }
 
   uploadFileError(){
-    // build the popup content
-    popup.title("Error: No file selected for upload")
-         .addClass("error");
-    popup.subtitle("No file was selected for upload");
-
-    var form = [];
-    form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-    popup.form.append(form.join('')).off('submit').on('submit', e => {
-      e.preventDefault();
-      popup.hide();
-      this.uploadFile();
-    });
-	popup.find('.cancel').on('click', popup.hide );
-    popup.show();
+		popup.twoButtons(
+			json.popups.upload_file_nofileselected_error,
+			function onSubmit(e){
+				this.uploadFile();
+			}.bind(this),
+			undefined, {
+				titleClass: 'error',
+			}
+		);
   }
 
 	uploadFile(func){
-    // build the popup content
-		popup.title(json.popups.upload_file.title);
-		popup.subtitle(json.popups.upload_file.text);
+		popup.twoButtons(json.popups.upload_file,
+			function onSubmit(e){
+				e.preventDefault();
+				var file = $('[data-form-file]')[0];
+				var formEl = $('[data-popup] form')[0];
+				var formDataOrig = new FormData(formEl);
+				let formData = new FormData;
+				for(let entry of formDataOrig.entries()){
+					// TODO: check for overwrite, project etc, prompting for each file
+					formData.append(entry[0], entry[1]);
+				}
+				var popupBlock = $('[data-popup-nointeraction]');
+				if (file.files.length > 0) {
+					popupBlock.addClass('active');
+					$('body').addClass('uploading');
+					popupBlock.addClass('active');
+					popup.find('.confirm')
+							 .attr('disabled', true);
+					this.doLargeFileUpload(formData);
+				} else {
+					this.uploadFileError();
+				}
+		}.bind(this)
+		);
+		popup.form.attr('action', '/uploads')
+			.attr('enctype','multipart/form-data')
+			.attr('method', 'POST');
+		popup.form.prepend('<input type="file" name="data" multiple data-form-file></input><br/><br/>');
+	}
 
-		var form = [];
-    $('[data-popup] form').attr('action', '/uploads')
-                          .attr('enctype','multipart/form-data')
-                          .attr('method', 'POST');
-    form.push('<input type="file" name="data" multiple data-form-file></input>');
-		form.push('</br >');
-    form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
+	rename(type, e){
+		let popupStrings;
+		if('file' === type)
+			popupStrings = json.popups.rename_file;
+		else if('folder' === type)
+			popupStrings = json.popups.rename_folder;
+		else
+			return;
+		// Get the name of the file to be renamed:
+		var name = $(e.target).data('name');
+    //var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
+    var folder = $(e.target).data('folder');
+		popup.twoButtons({
+			title: 'Rename ' + name + '?',
+			subtitle: popupStrings.text,
+			button: popupStrings.button,
+		}, function onSubmit(e){
 			e.preventDefault();
-      var file = $('[data-form-file]')[0];
-      var formEl = $('[data-popup] form')[0];
-      var formData = new FormData(formEl);
-      var popupBlock = $('[data-popup-nointeraction]');
-      if (file.files.length > 0) {
-        popupBlock.addClass('active');
-        $('body').addClass('uploading');
-        popupBlock.addClass('active');
-        popup.find('.confirm')
-             .attr('disabled', true);
-        this.doLargeFileUpload(formData);
-      } else {
-        popup.hide();
-        this.uploadFileError();
-      }
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
+			var newName = sanitise(popup.find('input[type=text]').val());
+			if('file' === type)
+				this.emit('message', 'project-event', {func: 'renameFile', folderName: folder, oldName: name, newFile: newName});
+			else if('folder' === type)
+				this.emit('message', 'project-event', {func: 'renameFolder', oldName: name, newFolder: newName});
+			popup.hide();
+		}.bind(this)
+		);
+		popup.form.prepend('<input type="text" placeholder="' + popupStrings.input + '" value="' + name + '"><br/>');
 	}
 
 	renameFile(e){
-		// Get the name of the file to be renamed:
-		var name = $(e.target).data('name');
-    var func = $(e.target).data('func');
-    var folder = $(e.target).data('folder');
-		// build the popup content
-		popup.title('Rename ' + name + '?');
-		popup.subtitle(json.popups.rename_file.text);
-
-		var form = [];
-		form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '" value="' + name + '">');
-		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			var newName = sanitise(popup.find('input[type=text]').val());
-			this.emit('message', 'project-event', {func: 'renameFile', folderName: folder, oldName: name, newFile: newName});
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
+		this.rename('file', e);
 	}
 
   renameFolder(e){
-    // Get the name of the file to be renamed:
-		var name = $(e.target).data('name');
-    var func = $(e.target).data('func');
-		// build the popup content
-		popup.title('Rename ' + name + '?');
-		popup.subtitle(json.popups.rename_folder.text);
-
-		var form = [];
-		form.push('<input type="text" placeholder="' + json.popups.rename_folder.input + '">');
-		form.push('</br >');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_folder.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			var newName = sanitise(popup.find('input[type=text]').val());
-			this.emit('message', 'project-event', {func: 'renameFolder', oldName: name, newFolder: newName});
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
+		this.rename('folder', e);
   }
 
 	deleteFile(e){
 		// Get the name of the file to be deleted:
 		var name = $(e.target).data('name');
     var func = $(e.target).data('func');
-		// build the popup content
-		popup.title('Delete ' + name + '?');
-		popup.subtitle(json.popups.delete_file.text);
-
-		var form = [];
-		form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
+		popup.twoButtons({
+			title: 'Delete ' + name + '?',
+			subtitle: json.popups.delete_file.text,
+			button: json.popups.delete_file.button,
+		}, function onSubmit(e){
 			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText});
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
-		popup.find('.delete').trigger('focus');
-
+		}.bind(this)
+		);
 	}
 
 	openFile(e){
@@ -556,42 +484,26 @@ class FileView extends View {
 		// ensure that any of the cases below ends up either calling next() or calling
 		// actuallyDoFileUpload(), which will eventually do the equivalent
 		if (fileExists && askForOverwrite){
-			// TODO: move this dialog so that it works also for button-uploaded files
-
-
-			// build the popup content
-			popup.title(json.popups.overwrite.title);
-			popup.subtitle(file.name + json.popups.overwrite.text);
-
-			var form = [];
-			form.push('<input id="popup-remember-upload" type="checkbox">');
-			form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>')
-			form.push('</br >');
-			form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', e => {
-				e.preventDefault();
+			popup.twoButtons({
+				title: json.popups.overwrite.title,
+				text: file.name + json.popups.overwrite.text,
+				button: json.popups.overwrite.button,
+			}, function onSubmit(e){
 				if (popup.find('input[type=checkbox]').is(':checked')){
 					askForOverwrite = false;
 					overwriteAction = 'upload';
 				}
-				popup.hide();
 				this.actuallyDoFileUpload(file, true);
-			});
-
-			popup.find('.cancel').on('click', () => {
+			}.bind(this), function onCancel() {
 				if (popup.find('input[type=checkbox]').is(':checked')){
 					askForOverwrite = false;
 					overwriteAction = 'reject';
 				}
-				popup.hide();
 				forceRebuild = false;
 				next();
 			});
-
-			popup.show();
-
+			let checkbox = '<input id="popup-remember-upload" type="checkbox"><label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label<br\>';
+			popup.form.prepend(checkbox);
 			popup.find('.cancel').focus();
 
 		} else if (fileExists && !askForOverwrite){
@@ -628,17 +540,10 @@ class FileView extends View {
         popup.hide();
       },
       error: function(e) {
-        popup.hide();
-        popup.title(json.popups.upload_file_error.title);
-    		popup.subtitle(e);
-
-    		var form = [];
-    		form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-    		popup.find('.cancel').on('click', popup.hide );
-        $('body').removeClass('uploading');
-        popupBlock.removeClass('active');
-    		popup.show();
+		oneButton({
+			title: json.popups.upload_file_error.title,
+			text: e,
+		})
       }
     });
     this.emit('force-rebuild');
@@ -673,29 +578,22 @@ class FileView extends View {
 		// properly because the popup from the error will overwrite any active popup
 		if (file.name.search(/\.zip$/) != -1) {
 			let newProject = sanitise(file.name.replace(/\.zip$/, ""));
-			let values = { extract: "extract", asIs: "asIs" };
-			var form = [];
-			popup.title(json.popups.create_new_project_from_zip.title + file.name);
-			popup.subtitle(json.popups.create_new_project_from_zip.text);
-
-			form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />');
-			form.push('<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>');
-			form.push('<br/><br/>');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-			
-			popup.form.empty().append(form.join('')).off('submit').on('submit', e => {
-				e.preventDefault();
+			popup.twoButtons({
+				title: json.popups.create_new_project_from_zip.title + file.name,
+				text: json.popups.create_new_project_from_zip.text,
+				button: json.popups.create_new_project_from_zip.button,
+			}, function onSubmit(e) {
 				newProject = sanitise(popup.find('input[type=text]').val());
 				reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: newProject });
 				reader.readAsArrayBuffer(file);
-				popup.hide();
+			}, function onCancel() {
+				onloadend(); // TODO: unclear to me why this works without a this or a bind
 			});
-			popup.find('.cancel').on('click', () => {
-				popup.hide();
-				reader.onloadend();
-			});
-			popup.show();
+			let projectNameInput =
+				'<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />'
+				+ '<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>'
+				+ '<br/><br/>';
+			popup.form.prepend(projectNameInput);
 		} else {
 			reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 			reader.readAsArrayBuffer(file);
