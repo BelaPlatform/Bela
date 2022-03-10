@@ -2,6 +2,7 @@
     "locale": "en",
 	"popups": {
     "generic": {
+      "ok": "OK",
       "cancel": "Cancel"
     },
 		"create_new": {

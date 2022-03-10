@@ -6136,6 +6136,12 @@ module.exports = parser;
 },{"./CircularBuffer":2}],18:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var json = require('./site-text.json');
+
 var _overlay = $('[data-overlay]');
 var parent = $('[data-popup]');
 var content = $('[data-popup-content]');
@@ -6145,12 +6151,26 @@ var codeEl = parent.find('code');
 var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
+function callFunc(func, arg) {
+	if ('function' === typeof func) func(arg);
+}
+
 var overlayActiveClass = 'active-popup';
 var popup = {
-	show: function show() {
+	defaultStrings: {
+		cancel: json.popups.generic.cancel,
+		button: json.popups.generic.ok
+	},
+	defaultOpts: {
+		focus: [// in reverse order of priority
+		'button[type=submit]', '.cancel', 'input[type=text]'],
+		titleClass: ''
+	},
+	show: function show(skipFocus) {
 		_overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
-		content.find('input[type=text]').first().trigger('focus');
+		if (!skipFocus) // used for backwards compatibilty
+			content.find('input[type=text]').first().focus();
 	},
 	hide: function hide(keepOverlay) {
 		if (keepOverlay !== 'keep overlay') _overlay.removeClass(overlayActiveClass);
@@ -6167,11 +6187,133 @@ var popup = {
 		_overlay.toggleClass(overlayActiveClass);
 	},
 	initWithStrings: function initWithStrings(strings) {
+		this.seq++;
 		popup.hide();
+		// override with default values if appropriate
+		var _iteratorNormalCompletion = true;
+		var _didIteratorError = false;
+		var _iteratorError = undefined;
+
+		try {
+			for (var _iterator = Object.entries(this.defaultStrings)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				var _step$value = _slicedToArray(_step.value, 2),
+				    key = _step$value[0],
+				    value = _step$value[1];
+
+				if (!strings.hasOwnProperty(key)) strings[key] = value;
+			}
+		} catch (err) {
+			_didIteratorError = true;
+			_iteratorError = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion && _iterator.return) {
+					_iterator.return();
+				}
+			} finally {
+				if (_didIteratorError) {
+					throw _iteratorError;
+				}
+			}
+		}
+
 		if (strings.title) popup.title(strings.title);
 		if (strings.body) popup.body('a<br />\nb<br />\n' + strings.body);
 		if (strings.text) popup.subtitle(strings.text);
 		if (strings.code) popup.code(strings.code);
+	},
+	finalize: function finalize(newOpts) {
+		popup.show();
+		var opts = {};
+		var _iteratorNormalCompletion2 = true;
+		var _didIteratorError2 = false;
+		var _iteratorError2 = undefined;
+
+		try {
+			for (var _iterator2 = Object.entries(this.defaultOpts)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+				var _step2$value = _slicedToArray(_step2.value, 2),
+				    key = _step2$value[0],
+				    value = _step2$value[1];
+
+				opts[key] = value;
+			}
+		} catch (err) {
+			_didIteratorError2 = true;
+			_iteratorError2 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion2 && _iterator2.return) {
+					_iterator2.return();
+				}
+			} finally {
+				if (_didIteratorError2) {
+					throw _iteratorError2;
+				}
+			}
+		}
+
+		if ('object' === (typeof newOpts === 'undefined' ? 'undefined' : _typeof(newOpts))) {
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
+
+			try {
+				for (var _iterator3 = Object.entries(newOpts)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var _step3$value = _slicedToArray(_step3.value, 2),
+					    key = _step3$value[0],
+					    value = _step3$value[1];
+
+					opts[key] = value;
+				}
+			} catch (err) {
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
+					}
+				} finally {
+					if (_didIteratorError3) {
+						throw _iteratorError3;
+					}
+				}
+			}
+		}
+		if (!Array.isArray(opts.focus)) opts.focus = [opts.focus];
+		var _iteratorNormalCompletion4 = true;
+		var _didIteratorError4 = false;
+		var _iteratorError4 = undefined;
+
+		try {
+			for (var _iterator4 = opts.focus[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+				var f = _step4.value;
+
+				content.find(f).first().focus();
+			}
+		} catch (err) {
+			_didIteratorError4 = true;
+			_iteratorError4 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion4 && _iterator4.return) {
+					_iterator4.return();
+				}
+			} finally {
+				if (_didIteratorError4) {
+					throw _iteratorError4;
+				}
+			}
+		}
+
+		titleEl.addClass(opts.titleClass);
+	},
+	respondToEvent: function respondToEvent(callback, e) {
+		e.preventDefault();
+		var previousSeq = this.seq;
+		callFunc(callback, e);
+		if (this.seq === previousSeq) // the callback may have started a new popup. In that case, we don't want to hide the new one!
+			popup.hide();
 	},
 
 	// shorthands for common popup configurations.
@@ -6179,53 +6321,51 @@ var popup = {
 
 	// A popup with two buttons - Submit and Cancel
 	// Builds the popup with the initWithStrings() function, then adds the two button callbacks.
-	twoButtons: function twoButtons(strings, onSubmit, onCancel) {
+	twoButtons: function twoButtons(strings, onSubmit, onCancel, opts) {
+		var _this = this;
+
 		this.initWithStrings(strings);
 		var form = [];
-		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
+		form.push('<button type="submit" class="button popup-save confirm">' + strings.button + '</button>');
 		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
 
 		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
-			popup.hide();
-			onSubmit(e);
+			_this.respondToEvent(onSubmit, e);
 		});
-		popup.find('.cancel').on('click', function () {
-			popup.hide();
-			onCancel();
+		popup.find('.cancel').on('click', function (e) {
+			_this.respondToEvent(onCancel, e);
 		});
-		popup.show();
+		popup.finalize(opts);
 	},
 
 
 	// For popups with only one button that needs to fire an event when clicked (eg, confirmation)
 	// To work a strings.button string must be present in the strings object that's passed in
-	oneButton: function oneButton(strings, onCancel) {
+	oneButton: function oneButton(strings, onCancel, opts) {
+		var _this2 = this;
+
 		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="cancel" class="button popup-save">' + strings.button + '</button>');
-		popup.form.empty().append(form.join('')).find('.popup-save').on('click', function () {
-			popup.hide();
-			onCancel();
+		popup.form.empty().append(form.join('')).find('.popup-save').on('click', function (e) {
+			_this2.respondToEvent(onCancel, e);
 		});
-		popup.show();
+		popup.finalize(opts);
 	},
 
 
 	// a popup with one button which will hide itself upon click
 	// To change the text on the button pass in strings.button to the strings object
-	ok: function ok(strings) {
-		this.initWithStrings(strings);
-		var button;
-		if (strings.button) button = strings.button;else button = "OK";
+	ok: function ok(strings, opts) {
+		var _this3 = this;
 
+		this.initWithStrings(strings);
 		var form = [];
-		form.push('<button type="submit" class="button popup cancel">' + button + '</button>');
+		form.push('<button type="submit" class="button popup cancel">' + strings.button + '</button>');
 		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
-			e.preventDefault();
-			popup.hide();
+			_this3.respondToEvent(undefined, e);
 		});
-		popup.show();
-		popup.find('.cancel').trigger('focus');
+		popup.finalize(opts);
 	},
 
 
@@ -6255,6 +6395,8 @@ var popup = {
 
 	form: _formEl,
 
+	seq: 0,
+
 	exampleChanged: example
 
 };
@@ -6274,26 +6416,27 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
-			cb(arg);
+			callFunc(cb, arg);
 		}, delay);
 		popup.hide();
 	});
 
-	popup.find('.cancel').on('click', function () {
+	popup.find('.cancel').on('click', function (e) {
 		popup.hide();
-		if (cancelCb) cancelCb();
+		callFunc(cancelCb, e);
 	});
 
 	popup.show();
 
-	popup.find('.confirm').trigger('focus');
+	popup.find('.confirm').focus();
 }
 
-},{}],19:[function(require,module,exports){
+},{"./site-text.json":19}],19:[function(require,module,exports){
 module.exports={
     "locale": "en",
 	"popups": {
     "generic": {
+      "ok": "OK",
       "cancel": "Cancel"
     },
 		"create_new": {

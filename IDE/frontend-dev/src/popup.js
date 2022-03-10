@@ -1,3 +1,5 @@
+var json = require('./site-text.json');
+
 var overlay	= $('[data-overlay]');
 var parent	= $('[data-popup]');
 var content	= $('[data-popup-content]');
@@ -7,13 +9,31 @@ var codeEl = parent.find('code');
 var bodyEl = parent.find('p');
 var formEl	= parent.find('form');
 
+function callFunc(func, arg)
+{
+	if('function' === typeof(func))
+		func(arg);
+}
+
 const overlayActiveClass = 'active-popup';
 var popup = {
-
-	show(){
+	defaultStrings: {
+		cancel: json.popups.generic.cancel,
+		button: json.popups.generic.ok,
+	},
+	defaultOpts: {
+		focus: [ // in reverse order of priority
+			'button[type=submit]',
+			'.cancel',
+			'input[type=text]',
+		],
+		titleClass: '',
+	},
+	show(skipFocus){
 		overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
-		content.find('input[type=text]').first().trigger('focus');
+		if(!skipFocus) // used for backwards compatibilty
+			content.find('input[type=text]').first().focus();
 	},
 
 	hide(keepOverlay){
@@ -33,7 +53,13 @@ var popup = {
 	},
 
 	initWithStrings(strings) {
+		this.seq++;
 		popup.hide();
+		// override with default values if appropriate
+		for (let [key, value] of Object.entries(this.defaultStrings)) {
+		  if(!strings.hasOwnProperty(key))
+				strings[key] = value;
+		}
 		if(strings.title)
 			popup.title(strings.title);
 		if(strings.body)
@@ -43,59 +69,72 @@ var popup = {
 		if(strings.code)
 			popup.code(strings.code);
 	},
+
+	finalize(newOpts) {
+		popup.show();
+		let opts = {};
+		for (let [key, value] of Object.entries(this.defaultOpts))
+			opts[key] = value;
+		if('object' === typeof(newOpts)){
+			for (let [key, value] of Object.entries(newOpts))
+				opts[key] = value;
+		}
+		if(!Array.isArray(opts.focus))
+			opts.focus = [opts.focus];
+		for (let f of opts.focus)
+			content.find(f).first().focus();
+		titleEl.addClass(opts.titleClass);
+	},
+
+	respondToEvent(callback, e) {
+			e.preventDefault();
+			let previousSeq = this.seq;
+			callFunc(callback, e);
+			if(this.seq === previousSeq) // the callback may have started a new popup. In that case, we don't want to hide the new one!
+				popup.hide();
+	},
 	// shorthands for common popup configurations.
 	// strings may have fields: title, text(subtitle), code, body, button, cancel
 
 	// A popup with two buttons - Submit and Cancel
 	// Builds the popup with the initWithStrings() function, then adds the two button callbacks.
-	twoButtons(strings, onSubmit, onCancel) {
+	twoButtons(strings, onSubmit, onCancel, opts) {
 		this.initWithStrings(strings);
 		var form = [];
-		form.push('<button type="submit" class="button popup-save">' + strings.button + '</button>');
+		form.push('<button type="submit" class="button popup-save confirm">' + strings.button + '</button>');
 		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
 
 		popup.form.empty().append(form.join('')).off('submit').on('submit', (e) => {
-			popup.hide();
-			onSubmit(e);
+			this.respondToEvent(onSubmit, e);
 		});
-		popup.find('.cancel').on('click', () => {
-			popup.hide();
-			onCancel();
-		});
-		popup.show();
+		popup.find('.cancel').on('click', (e) => {
+			this.respondToEvent(onCancel, e);
+		})
+		popup.finalize(opts);
 	},
 
 	// For popups with only one button that needs to fire an event when clicked (eg, confirmation)
 	// To work a strings.button string must be present in the strings object that's passed in
-	oneButton(strings, onCancel) {
+	oneButton(strings, onCancel, opts) {
 		this.initWithStrings(strings);
 		var form = [];
 		form.push('<button type="cancel" class="button popup-save">' + strings.button + '</button>');
-		popup.form.empty().append(form.join('')).find('.popup-save').on('click', () => {
-			popup.hide();
-			onCancel();
+		popup.form.empty().append(form.join('')).find('.popup-save').on('click', (e) => {
+			this.respondToEvent(onCancel, e);
 		});
-		popup.show();
+		popup.finalize(opts);
 	},
 
 	// a popup with one button which will hide itself upon click
 	// To change the text on the button pass in strings.button to the strings object
-	ok(strings) {
+	ok(strings, opts) {
 		this.initWithStrings(strings);
-		var button;
-		if(strings.button)
-			button = strings.button;
-		else
-			button = "OK";
-
 		var form = [];
-		form.push('<button type="submit" class="button popup cancel">' + button + '</button>');
+		form.push('<button type="submit" class="button popup cancel">' + strings.button + '</button>');
 		popup.form.empty().append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			popup.hide();
+			this.respondToEvent(undefined, e);
 		});
-		popup.show();
-		popup.find('.cancel').trigger('focus');
+		popup.finalize(opts);
 	},
 
 	find: selector => content.find(selector),
@@ -109,6 +148,8 @@ var popup = {
 	append: child => content.append(child),
 
 	form: formEl,
+
+	seq: 0,
 
 	exampleChanged: example
 
@@ -129,18 +170,18 @@ function example(cb, arg, delay, cancelCb){
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
 		e.preventDefault();
 		setTimeout(function(){
-			cb(arg);
+			callFunc(cb, arg);
 		}, delay);
 		popup.hide();
 	});
 
-	popup.find('.cancel').on('click', () => {
+	popup.find('.cancel').on('click', (e) => {
 		popup.hide();
-		if (cancelCb) cancelCb();
+		callFunc(cancelCb, e);
 	});
 
 	popup.show();
 
-	popup.find('.confirm').trigger('focus');
+	popup.find('.confirm').focus();
 
 }
