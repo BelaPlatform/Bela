@@ -200,7 +200,7 @@ class FileView extends View {
         popupBlock.addClass('active');
         popup.find('.confirm')
              .attr('disabled', true);
-        this.doLargeFileUpload(formData, file);
+        this.doLargeFileUpload(formData);
       } else {
         popup.hide();
         this.uploadFileError();
@@ -608,7 +608,7 @@ class FileView extends View {
 		}
 	}
 
-  doLargeFileUpload(formData, file, force){
+  doLargeFileUpload(formData, force){
     var popupBlock = $('[data-popup-nointeraction]').addClass('active');
     var that = this;
     $.ajax({
@@ -619,8 +619,8 @@ class FileView extends View {
       contentType: false,
       data: formData,
       success: function(r){
-        for(let n = 0; n < file.files.length; ++n) {
-          let fileName = file.files[n].name.split('\\').pop();
+        for(let entry of formData.entries()) {
+          let fileName = entry[1].name.split('\\').pop();
           that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
         }
         $('body').removeClass('uploading');

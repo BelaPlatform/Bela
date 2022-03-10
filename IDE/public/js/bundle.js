@@ -2509,7 +2509,7 @@ var FileView = function (_View) {
 					$('body').addClass('uploading');
 					popupBlock.addClass('active');
 					popup.find('.confirm').attr('disabled', true);
-					_this6.doLargeFileUpload(formData, file);
+					_this6.doLargeFileUpload(formData);
 				} else {
 					popup.hide();
 					_this6.uploadFileError();
@@ -2930,7 +2930,7 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'doLargeFileUpload',
-		value: function doLargeFileUpload(formData, file, force) {
+		value: function doLargeFileUpload(formData, force) {
 			var popupBlock = $('[data-popup-nointeraction]').addClass('active');
 			var that = this;
 			$.ajax({
@@ -2941,10 +2941,32 @@ var FileView = function (_View) {
 				contentType: false,
 				data: formData,
 				success: function success(r) {
-					for (var n = 0; n < file.files.length; ++n) {
-						var fileName = file.files[n].name.split('\\').pop();
-						that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
+					var _iteratorNormalCompletion3 = true;
+					var _didIteratorError3 = false;
+					var _iteratorError3 = undefined;
+
+					try {
+						for (var _iterator3 = formData.entries()[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+							var entry = _step3.value;
+
+							var fileName = entry[1].name.split('\\').pop();
+							that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
+						}
+					} catch (err) {
+						_didIteratorError3 = true;
+						_iteratorError3 = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion3 && _iterator3.return) {
+								_iterator3.return();
+							}
+						} finally {
+							if (_didIteratorError3) {
+								throw _iteratorError3;
+							}
+						}
 					}
+
 					$('body').removeClass('uploading');
 					popupBlock.removeClass('active');
 					popup.hide();
