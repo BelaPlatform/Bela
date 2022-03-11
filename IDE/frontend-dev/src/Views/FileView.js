@@ -575,52 +575,25 @@ class FileView extends View {
 		}
 		// TODO: if something fails on the server(e.g.: project existing, file
 		// cannot be written, whatev), the rest of the queue may not be handled
-		// properly because the popup from the error will overwrite any active popup
+		// properly because the popup from the error will overwrite any active popup.
+		// A reset may be required.
 		if (file.name.search(/\.zip$/) != -1) {
 			let newProject = sanitise(file.name.replace(/\.zip$/, ""));
-			popup.twoButtons({
-				title: json.popups.create_new_project_from_zip.title + file.name,
-				text: json.popups.create_new_project_from_zip.text,
-				button: json.popups.create_new_project_from_zip.button,
-			}, function onSubmit(e) {
-				let val = popup.find('input[type=text]').val();
-				if(!val)
-					return;
-				newProject = sanitise(val);
-				reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: newProject });
-				reader.readAsArrayBuffer(file);
-			}, function onCancel() {
-				onloadend(); // TODO: unclear to me why this works without a this or a bind
-			});
-			let projectNameInput =
-				'<input type="text" data-name="newProjectName" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />'
-				+ '<span class="input-already-existing"></span>'
-				+ '<div class="input-sanitised"></div>'
-				+ '<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>'
-				+ '<br/><br/>';
-			popup.form.prepend(projectNameInput);
-			let input = $('input[data-name=newProjectName]', popup.form);
-			let existingWarning = $('.input-already-existing', popup.form);
-			let sanitisedWarning = $('.input-sanitised', popup.form);
-			let validateName = (e) => {
-				let projectList = this.getProjectList();
-				let origName = input[0].value.trim();
-				let sanName = sanitise(origName);
-				if(sanName !== origName)
-					sanitisedWarning.html(json.popups.create_new_project_from_zip.sanitised + sanName);
-				else
-					sanitisedWarning.html("");
-				if(projectList.includes(sanName)) {
-					existingWarning.html(json.popups.create_new_project_from_zip.exists);
-					popup.disableSubmit();
-				}
+			let strings = Object.assign({}, json.popups.create_new_project_from_zip);
+			strings.title += file.name;
+			popup.requestValidInput({
+				initialValue: newProject,
+				getDisallowedValues: this.getProjectList,
+				strings: strings,
+				sanitise: sanitise,
+			}, (name) => {
+				if(null === name)
+					onloadend(); // TODO: unclear to me why this works without a this or a bind
 				else {
-					existingWarning.html("");
-					popup.enableSubmit();
+					reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: name });
+					reader.readAsArrayBuffer(file);
 				}
-			};
-			validateName();
-			input.on('change keypress paste input', validateName);
+			});
 		} else {
 			reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 			reader.readAsArrayBuffer(file);

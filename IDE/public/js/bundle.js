@@ -2914,42 +2914,24 @@ var FileView = function (_View) {
 			};
 			// TODO: if something fails on the server(e.g.: project existing, file
 			// cannot be written, whatev), the rest of the queue may not be handled
-			// properly because the popup from the error will overwrite any active popup
+			// properly because the popup from the error will overwrite any active popup.
+			// A reset may be required.
 			if (file.name.search(/\.zip$/) != -1) {
 				var newProject = sanitise(file.name.replace(/\.zip$/, ""));
-				popup.twoButtons({
-					title: json.popups.create_new_project_from_zip.title + file.name,
-					text: json.popups.create_new_project_from_zip.text,
-					button: json.popups.create_new_project_from_zip.button
-				}, function onSubmit(e) {
-					var val = popup.find('input[type=text]').val();
-					if (!val) return;
-					newProject = sanitise(val);
-					reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: newProject });
-					reader.readAsArrayBuffer(file);
-				}, function onCancel() {
-					onloadend(); // TODO: unclear to me why this works without a this or a bind
+				var strings = Object.assign({}, json.popups.create_new_project_from_zip);
+				strings.title += file.name;
+				popup.requestValidInput({
+					initialValue: newProject,
+					getDisallowedValues: this.getProjectList,
+					strings: strings,
+					sanitise: sanitise
+				}, function (name) {
+					if (null === name) onloadend(); // TODO: unclear to me why this works without a this or a bind
+					else {
+							reader.onloadend = onloadend.bind(_this5, 'uploadZipProject', { newProject: name });
+							reader.readAsArrayBuffer(file);
+						}
 				});
-				var projectNameInput = '<input type="text" data-name="newProjectName" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />' + '<span class="input-already-existing"></span>' + '<div class="input-sanitised"></div>' + '<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>' + '<br/><br/>';
-				popup.form.prepend(projectNameInput);
-				var input = $('input[data-name=newProjectName]', popup.form);
-				var existingWarning = $('.input-already-existing', popup.form);
-				var sanitisedWarning = $('.input-sanitised', popup.form);
-				var validateName = function validateName(e) {
-					var projectList = _this5.getProjectList();
-					var origName = input[0].value.trim();
-					var sanName = sanitise(origName);
-					if (sanName !== origName) sanitisedWarning.html(json.popups.create_new_project_from_zip.sanitised + sanName);else sanitisedWarning.html("");
-					if (projectList.includes(sanName)) {
-						existingWarning.html(json.popups.create_new_project_from_zip.exists);
-						popup.disableSubmit();
-					} else {
-						existingWarning.html("");
-						popup.enableSubmit();
-					}
-				};
-				validateName();
-				input.on('change keypress paste input', validateName);
 			} else {
 				reader.onloadend = onloadend.bind(this, 'uploadFile', {});
 				reader.readAsArrayBuffer(file);
@@ -6230,7 +6212,7 @@ var popup = {
 			popup.hide();
 	},
 	disableSubmit: function disableSubmit() {
-		this.form.off('submit').on('submit', false);
+		this.form.off('submit');
 		$('button[type=submit]', this.form).addClass('button-disabled');
 	},
 	enableSubmit: function enableSubmit() {
@@ -6293,6 +6275,58 @@ var popup = {
 			_this4.respondToEvent(undefined, e);
 		});
 		popup.finalize(opts);
+	},
+
+
+	// a popup with two buttons and an input field. The input field can be
+	// checked against an array of disallowedValues. If the name is disallowed,
+	// the submit button will be grayed out.
+	// args has: initialValue(string), getDisallowedValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
+	// callback takes a single argument: a valid value or null if the popup was cancelled or the input field was empty
+	requestValidInput: function requestValidInput(args, callback) {
+		var initialValue = args.initialValue;
+		var getDisallowedValues = args.getDisallowedValues;
+		var strings = args.strings;
+		var sanitise = args.sanitise;
+		// defaults
+		if (typeof initialValue !== "string") initialValue = "";
+		if (typeof getDisallowedValues !== 'function') getDisallowedValues = function getDisallowedValues() {
+			return [];
+		};
+		if ((typeof strings === 'undefined' ? 'undefined' : _typeof(strings)) !== "object") strings = {};
+		if (typeof sanitise !== "function") sanitise = function sanitise(a) {
+			return a;
+		};
+		popup.twoButtons(strings, function onSubmit(e) {
+			var val = popup.find('input[type=text]').val();
+			if (!val) val = null;else sanitise ? val = sanitise(val) : val;
+			callback(val);
+		}, function onCancel() {
+			callback(null);
+		});
+		var newValueInput = '<input type="text" data-name="newValue" placeholder="' + strings.input + '" value="' + initialValue + '" />' + '<span class="input-already-existing"></span>' + '<div class="input-sanitised"></div>';
+		if (strings.sub_text) newValueInput += '<p class="create_file_subtext">' + strings.sub_text + '</p>';
+		newValueInput += '<br/><br/>';
+		popup.form.prepend(newValueInput);
+		var input = $('input[data-name=newValue]', popup.form);
+		var existingWarning = $('.input-already-existing', popup.form);
+		var sanitisedWarning = $('.input-sanitised', popup.form);
+		var validateValue = function validateValue(e) {
+			var origValue = input[0].value.trim();
+			var sanValue = sanitise ? sanitise(origValue) : origValue;
+			if (sanValue !== origValue && strings.sanitised) sanitisedWarning.html(strings.sanitised + ' ' + sanValue);else sanitisedWarning.html('');
+			if (getDisallowedValues().includes(sanValue)) {
+				if (strings.exists) existingWarning.html(strings.exists);
+				popup.disableSubmit();
+			} else {
+				existingWarning.html('');
+				popup.enableSubmit();
+			}
+		};
+		validateValue();
+		input.on('change keypress paste input', validateValue);
+		// duplicated call, but this allows re-focus after input was created
+		popup.finalize();
 	},
 
 

@@ -94,7 +94,7 @@ var popup = {
 				popup.hide();
 	},
 	disableSubmit() {
-		this.form.off('submit').on('submit', false);
+		this.form.off('submit');
 		$('button[type=submit]', this.form).addClass('button-disabled');
 	},
 	enableSubmit() {
@@ -146,6 +146,69 @@ var popup = {
 			this.respondToEvent(undefined, e);
 		});
 		popup.finalize(opts);
+	},
+
+	// a popup with two buttons and an input field. The input field can be
+	// checked against an array of disallowedValues. If the name is disallowed,
+	// the submit button will be grayed out.
+	// args has: initialValue(string), getDisallowedValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
+	// callback takes a single argument: a valid value or null if the popup was cancelled or the input field was empty
+	requestValidInput(args, callback){
+		let initialValue = args.initialValue;
+		let getDisallowedValues = args.getDisallowedValues;
+		let strings = args.strings;
+		let sanitise = args.sanitise;
+		// defaults
+		if(typeof(initialValue) !== "string")
+			initialValue = "";
+		if(typeof(getDisallowedValues) !== 'function')
+			getDisallowedValues = () => { return []; }
+		if(typeof(strings) !== "object")
+			strings = {};
+		if(typeof(sanitise) !== "function")
+			sanitise = (a) => { return a;};
+		popup.twoButtons(strings, function onSubmit(e) {
+			let val = popup.find('input[type=text]').val();
+			if(!val)
+				val = null;
+			else
+				sanitise ? val = sanitise(val) : val;
+			callback(val);
+		}, function onCancel() {
+			callback(null);
+		});
+		let newValueInput =
+			'<input type="text" data-name="newValue" placeholder="' + strings.input + '" value="' + initialValue + '" />'
+			+ '<span class="input-already-existing"></span>'
+			+ '<div class="input-sanitised"></div>';
+		if(strings.sub_text)
+			newValueInput += '<p class="create_file_subtext">' + strings.sub_text + '</p>'
+		newValueInput += '<br/><br/>';
+		popup.form.prepend(newValueInput);
+		let input = $('input[data-name=newValue]', popup.form);
+		let existingWarning = $('.input-already-existing', popup.form);
+		let sanitisedWarning = $('.input-sanitised', popup.form);
+		let validateValue = (e) => {
+			let origValue = input[0].value.trim();
+			let sanValue = sanitise ? sanitise(origValue) : origValue;
+			if(sanValue !== origValue && strings.sanitised)
+				sanitisedWarning.html(strings.sanitised + ' ' + sanValue);
+			else
+				sanitisedWarning.html('');
+			if(getDisallowedValues().includes(sanValue)) {
+				if(strings.exists)
+					existingWarning.html(strings.exists);
+				popup.disableSubmit();
+			}
+			else {
+				existingWarning.html('');
+				popup.enableSubmit();
+			}
+		};
+		validateValue();
+		input.on('change keypress paste input', validateValue);
+		// duplicated call, but this allows re-focus after input was created
+		popup.finalize();
 	},
 
 	find: selector => content.find(selector),
