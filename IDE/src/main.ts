@@ -119,7 +119,7 @@ function setup_routes(app: express.Application){
       var upload = multer({ storage : storage}).any();
       upload(req, res, function(err) {
         if(err) {
-            return res.end("Error uploading file.");
+            return res.status(403).end("Error uploading file(s).");
         }
         res.end("File is uploaded");
       });

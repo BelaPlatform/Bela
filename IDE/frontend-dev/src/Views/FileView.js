@@ -552,7 +552,8 @@ class FileView extends View {
           let fileName = entry[1].name.split('\\').pop();
           that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
         }
-		popup.ok(json.popups.upload_file_success)
+        popup.ok(json.popups.upload_file_success)
+        that.emit('force-rebuild');
       },
       error: function(e) {
         popup.ok({
@@ -561,7 +562,6 @@ class FileView extends View {
         })
       }
     });
-    this.emit('force-rebuild');
   }
 
 	actuallyDoFileUpload(file, force){
