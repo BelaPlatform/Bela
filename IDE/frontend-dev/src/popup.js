@@ -29,6 +29,9 @@ var popup = {
 		],
 		titleClass: '',
 	},
+	isShown(){
+		return parent.hasClass('active');
+	},
 	show(skipFocus){
 		overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
@@ -46,6 +49,27 @@ var popup = {
 		codeEl.empty();
 		bodyEl.empty();
 		formEl.empty();
+	},
+
+	// presses the cancel button, which in turns should hide the popup
+	cancel(keepOverlay){
+		let done = false;
+		if(this.isShown()) {
+			let selectors = [
+				'.cancel',
+				// possibly add more here?
+			];
+			for(let s of selectors)
+			{
+				let target = this.find(s);
+				if(target.length){
+					target.click();
+					done = true;
+					break;
+				}
+			}
+		}
+		return done;
 	},
 
 	overlay(){
