@@ -5529,16 +5529,12 @@ var Console = function (_EventEmitter) {
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
-			var form = [];
-			popup.title('Error');
-			popup.subtitle(this.popUpComponents);
-			popup.body(message);
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-			popup.form.empty().append(form.join(''));
-			popup.find('.popup-cancel').on('click', function () {
-				popup.hide();
+			popup.ok({
+				title: 'Error',
+				subtitle: this.popUpComponents,
+				button: 'Cancel',
+				body: message
 			});
-			popup.show();
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);

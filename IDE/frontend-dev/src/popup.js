@@ -63,7 +63,7 @@ var popup = {
 		if(strings.title)
 			popup.title(strings.title);
 		if(strings.body)
-			popup.body('a<br />\nb<br />\n' + strings.body);
+			popup.body(strings.body);
 		if(strings.text)
 			popup.subtitle(strings.text);
 		if(strings.code)
