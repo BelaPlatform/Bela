@@ -77,6 +77,16 @@
 			"text": "Select a file to upload.",
 			"button": "Upload file"
 		},
+    "upload_file_progress": {
+			"title": "Uploading",
+			"text": "The files are being uploaded...",
+			"button": "OK"
+		},
+    "upload_file_success": {
+			"title": "Success",
+			"text": "All files uploaded successfully",
+			"button": "OK"
+		},
     "upload_file_error": {
 			"title": "Uploading file error"
 		},

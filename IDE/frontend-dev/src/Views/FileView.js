@@ -168,18 +168,12 @@ class FileView extends View {
 					// TODO: check for overwrite, project etc, prompting for each file
 					formData.append(entry[0], entry[1]);
 				}
-				var popupBlock = $('[data-popup-nointeraction]');
 				if (file.files.length > 0) {
-					popupBlock.addClass('active');
-					$('body').addClass('uploading');
-					popupBlock.addClass('active');
-					popup.find('.confirm')
-							 .attr('disabled', true);
 					this.doLargeFileUpload(formData);
 				} else {
 					this.uploadFileError();
 				}
-		}.bind(this)
+			}.bind(this)
 		);
 		popup.form.attr('action', '/uploads')
 			.attr('enctype','multipart/form-data')
@@ -544,8 +538,8 @@ class FileView extends View {
 	}
 
   doLargeFileUpload(formData, force){
-    var popupBlock = $('[data-popup-nointeraction]').addClass('active');
     var that = this;
+    popup.ok(json.popups.upload_file_progress);
     $.ajax({
       type: "POST",
       url: '/uploads',
@@ -558,15 +552,13 @@ class FileView extends View {
           let fileName = entry[1].name.split('\\').pop();
           that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
         }
-        $('body').removeClass('uploading');
-        popupBlock.removeClass('active');
-        popup.hide();
+		popup.ok(json.popups.upload_file_success)
       },
       error: function(e) {
-		oneButton({
-			title: json.popups.upload_file_error.title,
-			text: e,
-		})
+        popup.ok({
+          title: json.popups.upload_file_error.title,
+          text: e.responseText,
+        })
       }
     });
     this.emit('force-rebuild');
