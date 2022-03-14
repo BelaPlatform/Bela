@@ -2389,34 +2389,73 @@ var FileView = function (_View) {
 			}
 		}
 	}, {
+		key: '_getFlattenedFileList',
+		value: function _getFlattenedFileList(foldersOnly) {
+			var listDir = function listDir(out, inp, base) {
+				if (!base) base = '';
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = inp[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var f = _step.value;
+
+						if (!foldersOnly || isDir(f)) out.push(base + f.name);
+						if (isDir(f)) listDir(out, f.children, base + '/' + f.name);
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+			};
+			var flattenedFiles = [];
+			listDir(flattenedFiles, this.listOfFiles);
+			return flattenedFiles;
+		}
+	}, {
 		key: 'newFile',
 		value: function newFile(func, base) {
-			popup.twoButtons({
-				title: json.popups.create_new_file.title,
-				text: json.popups.create_new_file.text,
-				button: json.popups.create_new_file.button
-			}, function onSubmit(e) {
-				if (!base) {
-					this.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
-				} else {
-					this.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base });
-				}
-			}.bind(this));
-			var filenameInput = '<input type="text" placeholder="' + json.popups.create_new_file.input + '"><br/>';
-			popup.form.prepend(filenameInput);
+			var _this2 = this;
+
+			popup.requestValidInput({
+				initialValue: '',
+				getDisallowedValues: function getDisallowedValues() {
+					return _this2._getFlattenedFileList(false);
+				},
+				strings: json.popups.create_new_file,
+				sanitise: sanitise
+			}, function (name) {
+				if (null === name) return;
+				if (!base) _this2.emit('message', 'project-event', { func: func, newFile: name });else _this2.emit('message', 'project-event', { func: func, newFile: name, folder: base });
+			});
 		}
 	}, {
 		key: 'newFolder',
 		value: function newFolder(func) {
-			popup.twoButtons({
-				title: json.popups.create_new_folder.title,
-				subtitle: json.popups.create_new_folder.text,
-				button: json.popups.create_new_folder.button
-			}, function onSubmit(e) {
-				this.emit('message', 'project-event', { func: func, newFolder: sanitise(popup.find('input[type=text]').val()) });
-			}.bind(this));
-			var foldernameInput = '<input type="text" placeholder="' + json.popups.create_new_folder.input + '"><br/>';
-			popup.form.prepend(foldernameInput);
+			var _this3 = this;
+
+			popup.requestValidInput({
+				initialValue: '',
+				getDisallowedValues: function getDisallowedValues() {
+					return _this3._getFlattenedFileList(true);
+				},
+				strings: json.popups.create_new_folder,
+				sanitise: sanitise
+			}, function (name) {
+				if (null === name) return;
+				_this3.emit('message', 'project-event', { func: func, newFolder: name });
+			});
 		}
 	}, {
 		key: 'uploadSizeError',
@@ -2445,28 +2484,28 @@ var FileView = function (_View) {
 				var formEl = $('[data-popup] form')[0];
 				var formDataOrig = new FormData(formEl);
 				var formData = new FormData();
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
 
 				try {
-					for (var _iterator = formDataOrig.entries()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var entry = _step.value;
+					for (var _iterator2 = formDataOrig.entries()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var entry = _step2.value;
 
 						// TODO: check for overwrite, project etc, prompting for each file
 						formData.append(entry[0], entry[1]);
 					}
 				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
 						}
 					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
+						if (_didIteratorError2) {
+							throw _iteratorError2;
 						}
 					}
 				}
@@ -2488,23 +2527,31 @@ var FileView = function (_View) {
 	}, {
 		key: 'rename',
 		value: function rename(type, e) {
+			var _this4 = this;
+
 			var popupStrings = void 0;
 			if ('file' === type) popupStrings = json.popups.rename_file;else if ('folder' === type) popupStrings = json.popups.rename_folder;else return;
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
 			//var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
 			var folder = $(e.target).data('folder');
-			popup.twoButtons({
-				title: 'Rename ' + name + '?',
-				subtitle: popupStrings.text,
-				button: popupStrings.button
-			}, function onSubmit(e) {
-				e.preventDefault();
-				var newName = sanitise(popup.find('input[type=text]').val());
-				if ('file' === type) this.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });else if ('folder' === type) this.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
+			popupStrings = Object.assign({ title: 'Rename ' + name + '?' }, popupStrings);
+			popup.requestValidInput({
+				initialValue: name,
+				getDisallowedValues: function getDisallowedValues() {
+					// remove current name (i.e.: allow rename to same)
+					var arr = _this4._getFlattenedFileList(false);
+					arr.splice(arr.indexOf(name), 1);
+					return arr;
+				},
+				strings: popupStrings,
+				sanitise: sanitise
+			}, function (newName) {
+				if (null === newName) return;
+				if (newName === name) return;
+				if ('file' === type) _this4.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });else if ('folder' === type) _this4.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
 				popup.hide();
-			}.bind(this));
-			popup.form.prepend('<input type="text" placeholder="' + popupStrings.input + '" value="' + name + '"><br/>');
+			});
 		}
 	}, {
 		key: 'renameFile',
@@ -2541,7 +2588,7 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this2 = this;
+			var _this5 = this;
 
 			if (!Array.isArray(files)) return;
 
@@ -2556,13 +2603,13 @@ var FileView = function (_View) {
 			var resources = [];
 			var directories = [];
 			var images = [];
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
 
 			try {
-				for (var _iterator2 = files[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var _item = _step2.value;
+				for (var _iterator3 = files[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var _item = _step3.value;
 
 
 					// exclude hidden files
@@ -2600,16 +2647,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
 					}
 				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -2667,43 +2714,43 @@ var FileView = function (_View) {
 						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						if (file_list_elements[i].name != i18n_dir_str) {
 							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + item.size + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
-								return _this2.openFile(e);
+								return _this5.openFile(e);
 							});
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this2.renameFile(e);
+								return _this5.renameFile(e);
 							});
 							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name).appendTo(listItem).on('click', function (e, projName) {
-								return _this2.downloadFile(e, data.currentProject);
+								return _this5.downloadFile(e, data.currentProject);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this2.deleteFile(e);
+								return _this5.deleteFile(e);
 							});
 						} else {
 							section.addClass('is-dir');
 							var itemText = $('<div></div>').addClass('source-text').text(item.name).data('file', item.name).appendTo(listItem);
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFolder').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this2.renameFolder(e);
+								return _this5.renameFolder(e);
 							});
 							var newButton = $('<button></button>').addClass('file-new file-button fileManager').attr('title', 'New File').attr('data-func', 'newFile').attr('data-folder', item.name).appendTo(listItem).on('click', function () {
-								return _this2.newFile('newFile', event.target.dataset.folder);
+								return _this5.newFile('newFile', event.target.dataset.folder);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this2.deleteFile(e);
+								return _this5.deleteFile(e);
 							});
 							var subList = $('<ul></ul>');
 							for (var k = 0; k < item.children.length; k++) {
 								var child = item.children[k];
 								var subListItem = $('<li></li>').addClass('source-text').text(child.name).data('file', item.name + "/" + child.name).on('click', function (e) {
-									return _this2.openFile(e);
+									return _this5.openFile(e);
 								});
 								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e) {
-									return _this2.deleteFile(e);
+									return _this5.deleteFile(e);
 								});
 								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', child.name).attr('data-folder', item.name).appendTo(subListItem).on('click', function (e) {
-									return _this2.renameFile(e);
+									return _this5.renameFile(e);
 								});
 								var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e, projName) {
-									return _this2.downloadFile(e, data.currentProject);
+									return _this5.downloadFile(e, data.currentProject);
 								});
 								subListItem.appendTo(subList);
 							}
@@ -2745,7 +2792,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'processQueue',
 		value: function processQueue() {
-			var _this3 = this;
+			var _this6 = this;
 
 			// keep processing the queue in the background
 			console.log("processQueue", uploadingFile, fileQueue.length);
@@ -2754,7 +2801,7 @@ var FileView = function (_View) {
 					console.log("processQueue do file upload", uploadingFile, fileQueue.length);
 					if (!uploadingFile && fileQueue.length) {
 						console.log("processQueue do file upload");
-						_this3.doFileUpload(fileQueue.pop());
+						_this6.doFileUpload(fileQueue.pop());
 					}
 				}, 0);
 			}
@@ -2762,7 +2809,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'doFileUpload',
 		value: function doFileUpload(file) {
-			var _this4 = this;
+			var _this7 = this;
 
 			if (uploadingFile) {
 				fileQueue.push(file);
@@ -2770,27 +2817,27 @@ var FileView = function (_View) {
 			}
 			uploadingFile = true;
 			var fileExists = false;
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
 
 			try {
-				for (var _iterator3 = this.listOfFiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var item = _step3.value;
+				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var item = _step4.value;
 
 					if (item.name === sanitise(file.name)) fileExists = true;
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError4) {
+						throw _iteratorError4;
 					}
 				}
 			}
@@ -2799,7 +2846,7 @@ var FileView = function (_View) {
 
 			var next = function next() {
 				uploadingFile = false;
-				_this4.processQueue();
+				_this7.processQueue();
 			};
 			// ensure that any of the cases below ends up either calling next() or calling
 			// actuallyDoFileUpload(), which will eventually do the equivalent
@@ -2848,28 +2895,28 @@ var FileView = function (_View) {
 				contentType: false,
 				data: formData,
 				success: function success(r) {
-					var _iteratorNormalCompletion4 = true;
-					var _didIteratorError4 = false;
-					var _iteratorError4 = undefined;
+					var _iteratorNormalCompletion5 = true;
+					var _didIteratorError5 = false;
+					var _iteratorError5 = undefined;
 
 					try {
-						for (var _iterator4 = formData.entries()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-							var entry = _step4.value;
+						for (var _iterator5 = formData.entries()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+							var entry = _step5.value;
 
 							var fileName = entry[1].name.split('\\').pop();
 							that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
 						}
 					} catch (err) {
-						_didIteratorError4 = true;
-						_iteratorError4 = err;
+						_didIteratorError5 = true;
+						_iteratorError5 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion4 && _iterator4.return) {
-								_iterator4.return();
+							if (!_iteratorNormalCompletion5 && _iterator5.return) {
+								_iterator5.return();
 							}
 						} finally {
-							if (_didIteratorError4) {
-								throw _iteratorError4;
+							if (_didIteratorError5) {
+								throw _iteratorError5;
 							}
 						}
 					}
@@ -2890,7 +2937,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'actuallyDoFileUpload',
 		value: function actuallyDoFileUpload(file, force) {
-			var _this5 = this;
+			var _this8 = this;
 
 			// ensure this eventually sets uploadingFile = false
 			var reader = new FileReader();
@@ -2900,17 +2947,17 @@ var FileView = function (_View) {
 			}
 			var onloadend = function onloadend(func, args, ev) {
 				if (func && ev) {
-					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this5.emit('file-rejected', 'error while uploading ' + file.name);else {
+					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this8.emit('file-rejected', 'error while uploading ' + file.name);else {
 						args.func = func;
 						args.newFile = sanitise(file.name);
 						args.fileData = ev.target.result;
 						args.force = force;
 						args.queue = fileQueue.length;
-						_this5.emit('message', 'project-event', args);
+						_this8.emit('message', 'project-event', args);
 					}
 				}
 				uploadingFile = false;
-				_this5.processQueue();
+				_this8.processQueue();
 			};
 			// TODO: if something fails on the server(e.g.: project existing, file
 			// cannot be written, whatev), the rest of the queue may not be handled
@@ -2928,7 +2975,7 @@ var FileView = function (_View) {
 				}, function (name) {
 					if (null === name) onloadend(); // TODO: unclear to me why this works without a this or a bind
 					else {
-							reader.onloadend = onloadend.bind(_this5, 'uploadZipProject', { newProject: name });
+							reader.onloadend = onloadend.bind(_this8, 'uploadZipProject', { newProject: name });
 							reader.readAsArrayBuffer(file);
 						}
 				});
@@ -6420,7 +6467,9 @@ module.exports={
 			"title": "Create new file",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"input": "Your new file name",
-			"button": "Create file"
+			"button": "Create file",
+			"exists": "This file already exists",
+			"sanitised": "This file will be saved as"
 		},
 		"create_new_project_from_zip": {
 			"title": "Create project from ",
@@ -6431,23 +6480,29 @@ module.exports={
 			"exists": "This project already exists",
 			"sanitised": "This project will be saved as"
 		},
-    "create_new_folder": {
+		"create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
 			"input": "Your new folder name",
-			"button": "Create folder"
+			"button": "Create folder",
+			"exists": "This folder already exists",
+			"sanitised": "This folder will be saved as"
 		},
 		"rename_file": {
 			"title": "Rename this file?",
 			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
-			"button": "Rename file"
+			"button": "Rename file",
+			"exists": "This file already exists",
+			"sanitised": "This file will be saved as"
 		},
     "rename_folder": {
 			"title": "Rename this folder?",
 			"input": "The new folder name",
 			"text": "Enter the new folder name",
-			"button": "Rename folder"
+			"button": "Rename folder",
+			"exists": "This folder already exists",
+			"sanitised": "This folder will be saved as"
 		},
 		"delete_project": {
 			"title": "Delete project ",

@@ -25,7 +25,9 @@
 			"title": "Create new file",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"input": "Your new file name",
-			"button": "Create file"
+			"button": "Create file",
+			"exists": "This file already exists",
+			"sanitised": "This file will be saved as"
 		},
 		"create_new_project_from_zip": {
 			"title": "Create project from ",
@@ -36,23 +38,29 @@
 			"exists": "This project already exists",
 			"sanitised": "This project will be saved as"
 		},
-    "create_new_folder": {
+		"create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
 			"input": "Your new folder name",
-			"button": "Create folder"
+			"button": "Create folder",
+			"exists": "This folder already exists",
+			"sanitised": "This folder will be saved as"
 		},
 		"rename_file": {
 			"title": "Rename this file?",
 			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
-			"button": "Rename file"
+			"button": "Rename file",
+			"exists": "This file already exists",
+			"sanitised": "This file will be saved as"
 		},
     "rename_folder": {
 			"title": "Rename this folder?",
 			"input": "The new folder name",
 			"text": "Enter the new folder name",
-			"button": "Rename folder"
+			"button": "Rename folder",
+			"exists": "This folder already exists",
+			"sanitised": "This folder will be saved as"
 		},
 		"delete_project": {
 			"title": "Delete project ",

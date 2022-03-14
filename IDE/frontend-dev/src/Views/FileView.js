@@ -87,34 +87,49 @@ class FileView extends View {
 		}
 	}
 
-	newFile(func, base){
-		popup.twoButtons({
-			title: json.popups.create_new_file.title,
-			text: json.popups.create_new_file.text,
-			button: json.popups.create_new_file.button,
-		}, function onSubmit(e){
-      if (!base) {
-        this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
-      } else {
-        this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base});
-      }
-		}.bind(this)
-		);
-		let filenameInput = '<input type="text" placeholder="' + json.popups.create_new_file.input + '"><br/>';
-		popup.form.prepend(filenameInput);
+	_getFlattenedFileList(foldersOnly){
+		let listDir = (out, inp, base) => {
+			if(!base)
+				base = '';
+			for(let f of inp) {
+				if(!foldersOnly || isDir(f))
+					out.push(base + f.name);
+				if(isDir(f))
+					listDir(out, f.children, base + '/' + f.name);
+			}
+		}
+		let flattenedFiles = [];
+		listDir(flattenedFiles, this.listOfFiles);
+		return flattenedFiles;
 	}
 
-  newFolder(func){
-		popup.twoButtons({
-			title: json.popups.create_new_folder.title,
-			subtitle: json.popups.create_new_folder.text,
-			button: json.popups.create_new_folder.button,
-		}, function onSubmit(e){
-			this.emit('message', 'project-event', {func, newFolder: sanitise(popup.find('input[type=text]').val())});
-		}.bind(this)
-		);
-		let foldernameInput = '<input type="text" placeholder="' + json.popups.create_new_folder.input + '"><br/>';
-		popup.form.prepend(foldernameInput);
+	newFile(func, base){
+		popup.requestValidInput({
+			initialValue: '',
+			getDisallowedValues: () => { return this._getFlattenedFileList(false); },
+			strings: json.popups.create_new_file,
+			sanitise: sanitise,
+		}, (name) => {
+			if(null === name)
+				return;
+			if (!base)
+				this.emit('message', 'project-event', {func, newFile: name});
+			else
+				this.emit('message', 'project-event', {func, newFile: name, folder: base});
+		});
+	}
+
+  newFolder(func) {
+		popup.requestValidInput({
+			initialValue: '',
+			getDisallowedValues: () => { return this._getFlattenedFileList(true); },
+			strings: json.popups.create_new_folder,
+			sanitise: sanitise,
+		}, (name) => {
+			if(null === name)
+				return;
+			this.emit('message', 'project-event', {func, newFolder: name});
+		});
 	}
 
   uploadSizeError(){
@@ -182,23 +197,30 @@ class FileView extends View {
 			return;
 		// Get the name of the file to be renamed:
 		var name = $(e.target).data('name');
-    //var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
-    var folder = $(e.target).data('folder');
-		popup.twoButtons({
-			title: 'Rename ' + name + '?',
-			subtitle: popupStrings.text,
-			button: popupStrings.button,
-		}, function onSubmit(e){
-			e.preventDefault();
-			var newName = sanitise(popup.find('input[type=text]').val());
+		//var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
+		var folder = $(e.target).data('folder');
+		popupStrings = Object.assign({title: 'Rename ' + name + '?'}, popupStrings);
+		popup.requestValidInput({
+			initialValue: name,
+			getDisallowedValues: () => {
+				// remove current name (i.e.: allow rename to same)
+				let arr = this._getFlattenedFileList(false);
+				arr.splice(arr.indexOf(name), 1);
+				return arr;
+			},
+			strings: popupStrings,
+			sanitise: sanitise,
+		}, (newName) => {
+			if(null === newName)
+				return;
+			if(newName === name)
+				return;
 			if('file' === type)
 				this.emit('message', 'project-event', {func: 'renameFile', folderName: folder, oldName: name, newFile: newName});
 			else if('folder' === type)
 				this.emit('message', 'project-event', {func: 'renameFolder', oldName: name, newFolder: newName});
 			popup.hide();
-		}.bind(this)
-		);
-		popup.form.prepend('<input type="text" placeholder="' + popupStrings.input + '" value="' + name + '"><br/>');
+		});
 	}
 
 	renameFile(e){
