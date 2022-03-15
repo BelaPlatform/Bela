@@ -8,13 +8,18 @@
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
-			"button": "Create project"
+			"button": "Create project",
+			"input": "Enter your project name",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
 		"save_as": {
 			"title": "Save project as ...",
 			"text": "",
 			"input": "Enter your new project name",
-			"button": "Save project"
+			"button": "Save project",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
 		"delete_project": {
 			"title": "Delete this project?",

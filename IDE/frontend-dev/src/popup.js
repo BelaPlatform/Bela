@@ -238,6 +238,13 @@ var popup = {
 		// duplicated call, but this allows re-focus after input was created
 		popup.finalize();
 	},
+	async requestValidInputAsync(args){
+		return new Promise((resolve, reject) => {
+			this.requestValidInput(args, (value) => {
+				resolve(value);
+			});
+		});
+	},
 
 	find: selector => content.find(selector),
 

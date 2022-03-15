@@ -74,11 +74,22 @@ class ProjectView extends View {
     return;
   }
 
-  // build the popup content
-  popup.title(json.popups.create_new.title);
-  popup.subtitle(json.popups.create_new.text);
-
-  var form = [];
+  popup.requestValidInput({
+    getDisallowedValues: this.getProjectList,
+    strings: json.popups.create_new,
+    sanitise: sanitise,
+  }, (newProject) => {
+    if(null === newProject)
+      return;
+    this.emit('message', 'project-event', {
+      func,
+      newProject: newProject,
+      projectType: popup.find('input[type=radio]:checked').data('type')
+    });
+    $('[data-projects-select]').html('');
+    popup.hide();
+  });
+  let form = [];
   form.push('<label for="popup-C" class="radio-container">C++')
   form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>')
   form.push('<span class="radio-button"></span>')
@@ -95,54 +106,19 @@ class ProjectView extends View {
   form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
   form.push('<span class="radio-button"></span>')
   form.push('</label>');
-  form.push('<input type="text" placeholder="Enter your project name">');
-  form.push('</br>');
-  form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
-  form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-  popup.form.append(form.join('')).off('submit').on('submit', e => {
-    e.preventDefault();
-    var newProject = sanitise(popup.find('input[type=text]').val().trim());
-    this.emit('message', 'project-event', {
-      func,
-      newProject	: newProject,
-      projectType	: popup.find('input[type=radio]:checked').data('type')
-    });
-    $('[data-projects-select]').html('');
-    popup.hide();
-  });
-
-  popup.find('.cancel').on('click', popup.hide );
-
-  popup.show();
-
+  popup.form.prepend(form.join('\n'));
   }
-  saveAs(func){
 
-  // build the popup content
-  popup.title(json.popups.save_as.title);
-  popup.subtitle(json.popups.save_as.text);
-
-  var form = [];
-  form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
-  form.push('</br >');
-  form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
-  form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-  popup.form.append(form.join(''))
-                        .off('submit')
-                        .on('submit', e => {
-    e.preventDefault();
-    this.emit('message', 'project-event', {func, newProject: sanitise(popup.find('input[type=text]').val())});
-    popup.hide();
-  });
-
-  popup.find('.cancel')
-       .on('click', popup.hide );
-
-  popup.show();
-
-  }
+	async saveAs(func){
+		let newName = await popup.requestValidInputAsync({
+			getDisallowedValues: this.getProjectList,
+			strings: json.popups.save_as,
+			sanitise: sanitise,
+		});
+		if(null === newName)
+			return;
+		this.emit('message', 'project-event', {func, newProject: newName});
+	}
 
   deleteProject(e){
 
