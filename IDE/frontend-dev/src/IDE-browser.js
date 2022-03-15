@@ -77,7 +77,7 @@ fileView.on('force-rebuild', () => {
 fileView.on('file-rejected', errMsg => {
 	var timestamp = performance.now();
 	consoleView.emit('openNotification', {func: 'fileRejected', timestamp});
-	consoleView.emit('closeNotification', {error: errMsg, timestamp});
+	consoleView.emit('closeNotification', {error: errMsg, timestamp, skipPopup: true});
 });
 
 // editor view

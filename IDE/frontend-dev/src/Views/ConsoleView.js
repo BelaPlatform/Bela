@@ -126,7 +126,7 @@ class ConsoleView extends View{
 
 	closeNotification(data){
 		if (data.error){
-			_console.reject(' '+data.error, data.timestamp);
+			_console.reject(' '+data.error, data.timestamp, data.skipPopup);
 		} else {
 			let fulfillMessage = ' done';
 			if(typeof(data.fulfillMessage) !== 'undefined')
@@ -215,7 +215,7 @@ class ConsoleView extends View{
 		} else {
 			_console.notify('Bela stopped', timestamp, true);
 			/*if (data && data.belaResult && data.belaResult.signal && data.belaResult.signal !== 'undefined'){
-				_console.reject(' with signal '+data.belaResult.signal, timestamp, true);
+				_console.reject(' with signal '+data.belaResult.signal, timestamp, data.skipPopup);
 			} else {*/
 				_console.fulfill('', timestamp, true);
 			//}

@@ -181,19 +181,21 @@ class Console extends EventEmitter {
 		}
 	}
 
-	reject(message, id, persist){
+	reject(message, id, skipPopup){
 		var el = document.getElementById(id);
 		//if (!el) el = this.notify(message, id);
 		var $el = $(el);
 		$el.appendTo(this.$element);//.removeAttr('id');
 		$el.html($el.html() + message);
 		$el.addClass('beaglert-console-rejectnotification');
-		popup.ok({
-			title: 'Error',
-			subtitle: this.popUpComponents,
-			button: 'Cancel',
-			body: message,
-		});
+		if(!skipPopup){
+			popup.ok({
+				title: 'Error',
+				subtitle: this.popUpComponents,
+				button: 'Cancel',
+				body: message,
+			});
+		}
 		setTimeout( () => $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded'), 500);
 		$el.on('click', () => $el.addClass('beaglert-console-collapsed').on('transitionend', () => $el.remove() ));
 	}
