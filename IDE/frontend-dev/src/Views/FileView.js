@@ -280,8 +280,11 @@ class FileView extends View {
 		var resources = [];
 		var directories = [];
 		var images = [];
-		for (let item of files){
+		for (let it of files){
 
+			// defensive copy so that changes below to the way the size is
+			// displayed do not affect the model
+			let item = Object.assign({}, it);
 			// exclude hidden files
 
 			if (!viewHiddenFiles && (item.name[0] === '.' || (isDir(item) && item.name === 'build') || item.name === 'settings.json' || item.name == data.currentProject)) {
