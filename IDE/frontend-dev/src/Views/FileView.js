@@ -211,7 +211,8 @@ class FileView extends View {
 		var name = $(e.target).data('name');
 		//var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
 		var folder = $(e.target).data('folder');
-		popupStrings = Object.assign({title: 'Rename ' + name + '?'}, popupStrings);
+		popupStrings = Object.assign({}, popupStrings);
+		popupStrings.title = 'Rename `' + name + '`?';
 		let newName = await popup.requestValidInputAsync({
 			initialValue: name,
 			getDisallowedValues: () => {
@@ -246,11 +247,9 @@ class FileView extends View {
 		// Get the name of the file to be deleted:
 		var name = $(e.target).data('name');
     var func = $(e.target).data('func');
-		popup.twoButtons({
-			title: 'Delete ' + name + '?',
-			subtitle: json.popups.delete_file.text,
-			button: json.popups.delete_file.button,
-		}, function onSubmit(e){
+		let strings = Object.assign({}, json.popups.delete_file);
+		strings.title = 'Delete `' + name + '`?';
+		popup.twoButtons(strings, function onSubmit(e){
 			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText});
 		}.bind(this)
 		);
