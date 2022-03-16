@@ -3,6 +3,7 @@ import * as http from 'http';
 import * as multer from 'multer'
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
+import * as project_manager from './ProjectManager';
 import * as file_manager from './FileManager';
 import * as paths from './paths';
 import * as util from './utils';
@@ -116,13 +117,45 @@ function setup_routes(app: express.Application){
   });
 
   app.post('/uploads', function(req, res) {
-      var upload = multer({ storage : storage}).any();
-      upload(req, res, function(err) {
-        if(err) {
-            return res.status(403).end("Error uploading file(s).");
+    var upload = multer({ storage : storage}).any();
+    upload(req, res, async function(err) {
+      let eventError = '';
+      // the POST request _may_ contain some project-events (e.g.: to move
+      // files to their final location
+      if(req.body && !err) {
+        let events = req.body['project-event'];
+        // we observe it only becomes an array if there are more than one. We
+        // force it to be an array so the loop below handles all cases
+        if(!Array.isArray(events)){
+          if(events)
+            events = [events];
+          else
+            events = [];
         }
-        res.end("File is uploaded");
-      });
+        for(let event of events) {
+          let data : any;
+          try {
+            data = JSON.parse(event);
+          } catch (e) {
+            eventError += "Cannot parse event: `", event, "`";
+            continue;
+          }
+          if(!data.func) {
+            eventError += "Missing func";
+            continue;
+          }
+          try {
+            await (project_manager as any)[data.func](data)
+          } catch (e) {
+            eventError += e.toString() + " ";
+          }
+        }
+      }
+      if(err || eventError) {
+        return res.status(403).end("Error uploading file(s). " + eventError);
+      }
+      res.end("File successfully uploaded");
+    });
   });
 
 	// file and project downloads

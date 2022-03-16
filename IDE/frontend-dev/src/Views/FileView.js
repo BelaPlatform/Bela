@@ -27,7 +27,7 @@ class FileView extends View {
 	constructor(className, models, getProjectList){
 		super(className, models);
 		this.getProjectList = getProjectList;
-
+		this.currentProject = null;
 		this.listOfFiles = [];
 
     var data = {
@@ -164,12 +164,28 @@ class FileView extends View {
 				let selectedFiles = 0;
 				for(let entry of formDataOrig.entries()){
 					++selectedFiles;
-					let fileName = entry[1].name.split('\\').pop();
-					let ret = await this.promptForOverwrite(sanitise(entry[1].name));
+					// TODO: can we get useful directory information here?
+					let bareName = entry[1].name.split('\\').pop();
+					let destName = sanitise(bareName);
+					// TODO: this should check against sanitised versions of the
+					// filenames that have already been checked, so that we
+					// are forbidden to upload e.g.: 'ren er.cpp' and 'ren_er.cpp'
+					// at the same time.
+					////let file = Object.assign({}, entry[1]);
+					//file.name = sanitise(file.name);
+					let ret = await this.promptForOverwrite(destName);
 					if(ret.do) {
 						formData.append(entry[0], entry[1]);
 						uploadFiles++;
 					}
+					// bundle project-event messages in the POST in order to
+					// move the file once it's been saved _before_ returning success
+					formData.append("project-event", JSON.stringify({
+						currentProject: this.currentProject,
+						func: 'moveUploadedFile',
+						newFile: bareName,
+						sanitisedNewFile: destName
+					}));
 				}
 				if (!selectedFiles)
 					this.uploadFileError();
@@ -247,6 +263,10 @@ class FileView extends View {
 	// model events
 	_fileList(files, data){
 
+		// TODO: it would be great to be able to get this from this.models, but
+		// we don't actually know which one is the project model, so we cache
+		// it here instead
+		this.currentProject = data.currentProject;
 		if (!Array.isArray(files)) return;
 
 		this.listOfFiles = files;
@@ -580,14 +600,13 @@ class FileView extends View {
       contentType: false,
       data: formData,
       success: function(r){
-        for(let entry of formData.entries()) {
-          let fileName = entry[1].name.split('\\').pop();
-          that.emit('message', 'project-event', {func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName});
-        }
-        popup.ok(json.popups.upload_file_success)
+        // would be great if this could be sent as part of the POST body
+        that.emit('list-files');
+        popup.ok(json.popups.upload_file_success);
         that.emit('force-rebuild');
       },
       error: function(e) {
+        that.emit('list-files');
         popup.ok({
           title: json.popups.upload_file_error.title,
           text: e.responseText,

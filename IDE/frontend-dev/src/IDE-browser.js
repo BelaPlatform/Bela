@@ -79,6 +79,7 @@ fileView.on('file-rejected', errMsg => {
 	consoleView.emit('openNotification', {func: 'fileRejected', timestamp});
 	consoleView.emit('closeNotification', {error: errMsg, timestamp, skipPopup: true});
 });
+fileView.on('list-files', doListFiles);
 
 // editor view
 var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings], models.settings);
@@ -228,6 +229,12 @@ var socket = {
 // socket events
 socket.on('report-error', (error) => consoleView.emit('warn', error.message || error) );
 
+function doListFiles() {
+	var currentProject = models.project.getKey('currentProject');
+	if(currentProject) {
+		socket.emit('list-files', currentProject);
+	}
+}
 socket.on('init', (data) => {
 
 	consoleView.connect();
@@ -250,12 +257,7 @@ socket.on('init', (data) => {
 	tabView.emit('boardString', data.board_string);
 
 	clearInterval(listFilesInterval);
-	listFilesInterval = setInterval( () => {
-		var currentProject = models.project.getKey('currentProject');
-		if(currentProject) {
-			socket.emit('list-files', currentProject);
-		}
-	}, listFilesIntervalMs);
+	listFilesInterval = setInterval(doListFiles, listFilesIntervalMs);
 
 	// TODO! models.status.setData(data[5]);
 
