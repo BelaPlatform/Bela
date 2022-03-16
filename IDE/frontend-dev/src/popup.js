@@ -180,7 +180,7 @@ var popup = {
 	requestValidInput(args, callback){
 		let initialValue = args.initialValue;
 		let getDisallowedValues = args.getDisallowedValues;
-		let strings = args.strings;
+		let strings = Object.assign({}, args.strings);
 		let sanitise = args.sanitise;
 		// defaults
 		if(typeof(initialValue) !== "string")
@@ -191,6 +191,10 @@ var popup = {
 			strings = {};
 		if(typeof(sanitise) !== "function")
 			sanitise = (a) => { return a;};
+		for(let field of ['input', 'sub_text', ]) {
+			if(typeof(strings[field]) !== "string")
+				strings[field] = '';
+		}
 		popup.twoButtons(strings, function onSubmit(e) {
 			let val = popup.find('input[type=text]').val();
 			if(!val)
