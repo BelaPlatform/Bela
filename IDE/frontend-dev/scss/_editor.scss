@@ -58,6 +58,17 @@
   }
 }
 
+#editor-msg-parent {
+  display: none;
+  overflow: auto;
+  &.active {
+	margin-top: 20px;
+	margin-left: 20px;
+    display: block;
+  }
+}
+
+
 #editor .editor_read_only {
 	background: #fdd;
 }

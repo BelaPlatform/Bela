@@ -205,6 +205,9 @@
       "pd": {
         "error": "Rendering pd patch failed!"
       },
+      "binary": {
+        "error": "This type of file cannot be displayed."
+      },
       "keypress_read_only": "This file is read-only. Open a file or refresh the page to keep editing."
 	},
 	"settings_view": {

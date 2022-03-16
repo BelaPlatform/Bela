@@ -92,12 +92,11 @@ export async function openFile(data: any){
 	}
 	let is_binary = await file_manager.is_binary(file_path);
 	if (is_binary){
-		data.error = 'can\'t open binary files';
-		data.fileData = 'Binary files can not be edited in the IDE';
+		data.fileData = null;
 		data.fileName = data.newFile;
 		data.newFile = undefined;
 		data.readOnly = true;
-		data.fileType = 0;
+		data.fileType = 'binary';
 		return;
 	}
 	try{

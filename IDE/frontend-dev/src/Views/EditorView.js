@@ -146,15 +146,30 @@ class EditorView extends View {
 	// model events
 	// new file saved
 	__fileData(data, opts){
+	if(null === data && 'binary' !== opts.fileType) {
+		console.log("Unhandled empty fileData", opts);
+		return;
+	}
 	// hide the pd patch and image displays if present, and the editor
-	$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]') .removeClass('active');
+	let allAltSelectors = [
+		'data-img-display-parent', 'data-img-display',
+		'data-audio-parent', 'data-audio',
+		'data-pd-svg-parent', 'data-pd-svg',
+		'data-editor-msg-parent', 'data-editor-msg',
+		'data-editor'
+	];
+	allAltSelectors = '['+allAltSelectors.join('], [')+']'; // turn them into valid jquery selectors
+	let allEditorAlts = $(allAltSelectors);
+	allEditorAlts.removeClass('active');
+	allEditorAlts.css({
+		'max-width'	: $('[data-editor]').width() + 'px',
+		'max-height': ($('[data-editor]').height() - 2) + 'px' // -2 because it makes for a better Pd patch
+		});
     tmpData = data;
     tmpOpts = opts;
 
 	this.modelChanged({readOnly: true}, ['readOnly']);
 	this.modelChanged({openElsewhere: false}, ['openElsewhere']);
-	if(null === data)
-		return;
 
 		this.projectModel.setKey('readOnly', true);
 		if (!opts.fileType) opts.fileType = '0';
@@ -162,13 +177,7 @@ class EditorView extends View {
 		if (opts.fileType.indexOf('image') !== -1){
 
 			// opening image file
-      $('[data-img-display-parent], [data-img-display]').css({
-				'max-width'	: $('[data-editor]').width() + 'px',
-				'max-height': $('[data-editor]').height() + 'px'
-			});
-
-			$('[data-img-display-parent]')
-      .addClass('active');
+			$('[data-img-display-parent]').addClass('active');
 
 			$('[data-img-display]').prop('src', 'media/'+opts.fileName);
 
@@ -204,23 +213,9 @@ class EditorView extends View {
 
 				// render pd patch
 				try {
-          let width = $('[data-editor]').width();
-          let height = $('[data-editor]').height() - 2;
 					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
-          .css({
-						'max-width'	: width + 'px',
-						'height': height + 'px'
-					});
-
-          $('[data-pd-svg-parent]')
-          .addClass('active')
-          .css({
-						'max-width'	: width + 'px',
-						'max-height': height + 'px'
-					});
-
+					$('[data-pd-svg-parent]').addClass('active');
 					this.emit('close-notification', {timestamp});
-
 				}
 				catch(e){
 					this.emit('close-notification', {
@@ -236,12 +231,16 @@ class EditorView extends View {
 				// start comparison with file on disk
 				this.emit('compare-files', true);
 
+			} else if ('binary' === opts.fileType) {
+				// print a warning in the pd div. This is so that we don't need
+				// special handling of yet another div
+				$('[data-editor-msg]').html(json.editor_view.binary.error);
+				$('[data-editor-msg-parent]').addClass('active');
 			} else {
 
 				this.projectModel.setKey('readOnly', false);
 				// show the editor
-        $('[data-editor]')
-        .addClass('active');
+				$('[data-editor]').addClass('active');
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
@@ -252,6 +251,8 @@ class EditorView extends View {
 			uploadBlocked = true;
 
 			// put the file into the editor
+			if('string' !== typeof(data))
+				data = ''; // if no data, at least empty the editor
 			this.editor.session.setValue(data, -1);
 
 			// parse the data
