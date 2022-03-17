@@ -471,8 +471,9 @@ fileView.on('force-rebuild', function () {
 fileView.on('file-rejected', function (errMsg) {
 	var timestamp = performance.now();
 	consoleView.emit('openNotification', { func: 'fileRejected', timestamp: timestamp });
-	consoleView.emit('closeNotification', { error: errMsg, timestamp: timestamp });
+	consoleView.emit('closeNotification', { error: errMsg, timestamp: timestamp, skipPopup: true });
 });
+fileView.on('list-files', doListFiles);
 
 // editor view
 var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings], models.settings);
@@ -644,6 +645,12 @@ var socket = {
 	return consoleView.emit('warn', error.message || error);
 });
 
+function doListFiles() {
+	var currentProject = models.project.getKey('currentProject');
+	if (currentProject) {
+		socket.emit('list-files', currentProject);
+	}
+}
 socket.on('init', function (data) {
 
 	consoleView.connect();
@@ -666,12 +673,7 @@ socket.on('init', function (data) {
 	tabView.emit('boardString', data.board_string);
 
 	clearInterval(listFilesInterval);
-	listFilesInterval = setInterval(function () {
-		var currentProject = models.project.getKey('currentProject');
-		if (currentProject) {
-			socket.emit('list-files', currentProject);
-		}
-	}, listFilesIntervalMs);
+	listFilesInterval = setInterval(doListFiles, listFilesIntervalMs);
 
 	// TODO! models.status.setData(data[5]);
 
@@ -1121,6 +1123,12 @@ keypress.simple_combo("meta k", function () {
 keypress.simple_combo("meta h", function () {
 	$('#iDocsLink').trigger('click');
 });
+keypress.simple_combo("esc", function () {
+	// remove popup on ESC
+	var done = popup.cancel();
+	// do not prevent default if we did nothing
+	return !done;
+});
 
 },{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19,"./utils.js":20}],4:[function(require,module,exports){
 'use strict';
@@ -1397,7 +1405,7 @@ var ConsoleView = function (_View) {
 		key: 'closeNotification',
 		value: function closeNotification(data) {
 			if (data.error) {
-				_console.reject(' ' + data.error, data.timestamp);
+				_console.reject(' ' + data.error, data.timestamp, data.skipPopup);
 			} else {
 				var fulfillMessage = ' done';
 				if (typeof data.fulfillMessage !== 'undefined') fulfillMessage = data.fulfillMessage;
@@ -1527,7 +1535,7 @@ var ConsoleView = function (_View) {
 			} else {
 				_console.notify('Bela stopped', timestamp, true);
 				/*if (data && data.belaResult && data.belaResult.signal && data.belaResult.signal !== 'undefined'){
-    	_console.reject(' with signal '+data.belaResult.signal, timestamp, true);
+    	_console.reject(' with signal '+data.belaResult.signal, timestamp, data.skipPopup);
     } else {*/
 				_console.fulfill('', timestamp, true);
 				//}
@@ -2031,14 +2039,24 @@ var EditorView = function (_View) {
 	}, {
 		key: '__fileData',
 		value: function __fileData(data, opts) {
+			if (null === data && 'binary' !== opts.fileType) {
+				console.log("Unhandled empty fileData", opts);
+				return;
+			}
 			// hide the pd patch and image displays if present, and the editor
-			$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+			var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg', 'data-editor'];
+			allAltSelectors = '[' + allAltSelectors.join('], [') + ']'; // turn them into valid jquery selectors
+			var allEditorAlts = $(allAltSelectors);
+			allEditorAlts.removeClass('active');
+			allEditorAlts.css({
+				'max-width': $('[data-editor]').width() + 'px',
+				'max-height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch
+			});
 			tmpData = data;
 			tmpOpts = opts;
 
 			this.modelChanged({ readOnly: true }, ['readOnly']);
 			this.modelChanged({ openElsewhere: false }, ['openElsewhere']);
-			if (null === data) return;
 
 			this.projectModel.setKey('readOnly', true);
 			if (!opts.fileType) opts.fileType = '0';
@@ -2046,11 +2064,6 @@ var EditorView = function (_View) {
 			if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
-				$('[data-img-display-parent], [data-img-display]').css({
-					'max-width': $('[data-editor]').width() + 'px',
-					'max-height': $('[data-editor]').height() + 'px'
-				});
-
 				$('[data-img-display-parent]').addClass('active');
 
 				$('[data-img-display]').prop('src', 'media/' + opts.fileName);
@@ -2083,18 +2096,8 @@ var EditorView = function (_View) {
 
 					// render pd patch
 					try {
-						var width = $('[data-editor]').width();
-						var height = $('[data-editor]').height() - 2;
-						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
-							'max-width': width + 'px',
-							'height': height + 'px'
-						});
-
-						$('[data-pd-svg-parent]').addClass('active').css({
-							'max-width': width + 'px',
-							'max-height': height + 'px'
-						});
-
+						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false }));
+						$('[data-pd-svg-parent]').addClass('active');
 						this.emit('close-notification', { timestamp: timestamp });
 					} catch (e) {
 						this.emit('close-notification', {
@@ -2109,6 +2112,11 @@ var EditorView = function (_View) {
 
 					// start comparison with file on disk
 					this.emit('compare-files', true);
+				} else if ('binary' === opts.fileType) {
+					// print a warning in the pd div. This is so that we don't need
+					// special handling of yet another div
+					$('[data-editor-msg]').html(json.editor_view.binary.error);
+					$('[data-editor-msg-parent]').addClass('active');
 				} else {
 
 					this.projectModel.setKey('readOnly', false);
@@ -2123,6 +2131,7 @@ var EditorView = function (_View) {
 				uploadBlocked = true;
 
 				// put the file into the editor
+				if ('string' !== typeof data) data = ''; // if no data, at least empty the editor
 				this.editor.session.setValue(data, -1);
 
 				// parse the data
@@ -2292,6 +2301,10 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
+var sanitisePath = function sanitisePath(name) {
+	return sanitise(name, { isPath: true });
+};
+var prettySize = require('../utils').prettySize;
 
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -2321,7 +2334,7 @@ var FileView = function (_View) {
 		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
 
 		_this.getProjectList = getProjectList;
-
+		_this.currentProject = null;
 		_this.listOfFiles = [];
 
 		var data = {
@@ -2402,7 +2415,7 @@ var FileView = function (_View) {
 						var f = _step.value;
 
 						if (!foldersOnly || isDir(f)) out.push(base + f.name);
-						if (isDir(f)) listDir(out, f.children, base + '/' + f.name);
+						if (isDir(f)) listDir(out, f.children, base + f.name + '/');
 					}
 				} catch (err) {
 					_didIteratorError = true;
@@ -2425,37 +2438,35 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'newFile',
-		value: function newFile(func, base) {
+		value: async function newFile(func, base) {
 			var _this2 = this;
 
-			popup.requestValidInput({
-				initialValue: '',
+			var name = await popup.requestValidInputAsync({
+				initialValue: base + '/',
 				getDisallowedValues: function getDisallowedValues() {
 					return _this2._getFlattenedFileList(false);
 				},
 				strings: json.popups.create_new_file,
-				sanitise: sanitise
-			}, function (name) {
-				if (null === name) return;
-				if (!base) _this2.emit('message', 'project-event', { func: func, newFile: name });else _this2.emit('message', 'project-event', { func: func, newFile: name, folder: base });
+				sanitise: sanitisePath
 			});
+			if (null === name) return;
+			this.emit('message', 'project-event', { func: func, newFile: name });
 		}
 	}, {
 		key: 'newFolder',
-		value: function newFolder(func) {
+		value: async function newFolder(func) {
 			var _this3 = this;
 
-			popup.requestValidInput({
+			var name = await popup.requestValidInputAsync({
 				initialValue: '',
 				getDisallowedValues: function getDisallowedValues() {
 					return _this3._getFlattenedFileList(true);
 				},
 				strings: json.popups.create_new_folder,
-				sanitise: sanitise
-			}, function (name) {
-				if (null === name) return;
-				_this3.emit('message', 'project-event', { func: func, newFolder: name });
+				sanitise: sanitisePath
 			});
+			if (null === name) return;
+			this.emit('message', 'project-event', { func: func, newFolder: name });
 		}
 	}, {
 		key: 'uploadSizeError',
@@ -2478,12 +2489,12 @@ var FileView = function (_View) {
 	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			popup.twoButtons(json.popups.upload_file, function onSubmit(e) {
-				e.preventDefault();
-				var file = $('[data-form-file]')[0];
+			popup.twoButtons(json.popups.upload_file, async function onSubmit(e) {
 				var formEl = $('[data-popup] form')[0];
 				var formDataOrig = new FormData(formEl);
 				var formData = new FormData();
+				var uploadFiles = 0;
+				var selectedFiles = 0;
 				var _iteratorNormalCompletion2 = true;
 				var _didIteratorError2 = false;
 				var _iteratorError2 = undefined;
@@ -2492,8 +2503,29 @@ var FileView = function (_View) {
 					for (var _iterator2 = formDataOrig.entries()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 						var entry = _step2.value;
 
-						// TODO: check for overwrite, project etc, prompting for each file
-						formData.append(entry[0], entry[1]);
+						++selectedFiles;
+						// TODO: can we get useful directory information here?
+						var bareName = entry[1].name.split('\\').pop();
+						var destName = sanitise(bareName);
+						// TODO: this should check against sanitised versions of the
+						// filenames that have already been checked, so that we
+						// are forbidden to upload e.g.: 'ren er.cpp' and 'ren_er.cpp'
+						// at the same time.
+						////let file = Object.assign({}, entry[1]);
+						//file.name = sanitise(file.name);
+						var ret = await this.promptForOverwrite(destName);
+						if (ret.do) {
+							formData.append(entry[0], entry[1]);
+							uploadFiles++;
+						}
+						// bundle project-event messages in the POST in order to
+						// move the file once it's been saved _before_ returning success
+						formData.append("project-event", JSON.stringify({
+							currentProject: this.currentProject,
+							func: 'moveUploadedFile',
+							newFile: bareName,
+							sanitisedNewFile: destName
+						}));
 					}
 				} catch (err) {
 					_didIteratorError2 = true;
@@ -2510,48 +2542,41 @@ var FileView = function (_View) {
 					}
 				}
 
-				var popupBlock = $('[data-popup-nointeraction]');
-				if (file.files.length > 0) {
-					popupBlock.addClass('active');
-					$('body').addClass('uploading');
-					popupBlock.addClass('active');
-					popup.find('.confirm').attr('disabled', true);
-					this.doLargeFileUpload(formData);
-				} else {
-					this.uploadFileError();
-				}
+				if (!selectedFiles) this.uploadFileError();
+				if (uploadFiles) this.doLargeFileUpload(formData);
 			}.bind(this));
 			popup.form.attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
 			popup.form.prepend('<input type="file" name="data" multiple data-form-file></input><br/><br/>');
 		}
 	}, {
 		key: 'rename',
-		value: function rename(type, e) {
+		value: async function rename(type, e) {
 			var _this4 = this;
 
 			var popupStrings = void 0;
 			if ('file' === type) popupStrings = json.popups.rename_file;else if ('folder' === type) popupStrings = json.popups.rename_folder;else return;
 			// Get the name of the file to be renamed:
 			var name = $(e.target).data('name');
-			//var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
-			var folder = $(e.target).data('folder');
-			popupStrings = Object.assign({ title: 'Rename ' + name + '?' }, popupStrings);
-			popup.requestValidInput({
-				initialValue: name,
+			var path = name;
+			popupStrings = Object.assign({}, popupStrings);
+			popupStrings.title = 'Rename `' + path + '`?';
+			var newName = await popup.requestValidInputAsync({
+				initialValue: path,
 				getDisallowedValues: function getDisallowedValues() {
-					// remove current name (i.e.: allow rename to same)
+					// remove current name (i.e.: allow rename to same, which
+					// yields NOP)
 					var arr = _this4._getFlattenedFileList(false);
 					arr.splice(arr.indexOf(name), 1);
 					return arr;
 				},
 				strings: popupStrings,
-				sanitise: sanitise
-			}, function (newName) {
-				if (null === newName) return;
-				if (newName === name) return;
-				if ('file' === type) _this4.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });else if ('folder' === type) _this4.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
-				popup.hide();
+				sanitise: sanitisePath
 			});
+			if (null === newName) return;
+			if (newName === path) // rename to same: NOP
+				return;
+			if ('file' === type) this.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });else if ('folder' === type) this.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
+			popup.hide();
 		}
 	}, {
 		key: 'renameFile',
@@ -2569,11 +2594,9 @@ var FileView = function (_View) {
 			// Get the name of the file to be deleted:
 			var name = $(e.target).data('name');
 			var func = $(e.target).data('func');
-			popup.twoButtons({
-				title: 'Delete ' + name + '?',
-				subtitle: json.popups.delete_file.text,
-				button: json.popups.delete_file.button
-			}, function onSubmit(e) {
+			var strings = Object.assign({}, json.popups.delete_file);
+			strings.title = 'Delete `' + name + '`?';
+			popup.twoButtons(strings, function onSubmit(e) {
 				this.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 			}.bind(this));
 		}
@@ -2590,6 +2613,10 @@ var FileView = function (_View) {
 		value: function _fileList(files, data) {
 			var _this5 = this;
 
+			// TODO: it would be great to be able to get this from this.models, but
+			// we don't actually know which one is the project model, so we cache
+			// it here instead
+			this.currentProject = data.currentProject;
 			if (!Array.isArray(files)) return;
 
 			this.listOfFiles = files;
@@ -2609,9 +2636,12 @@ var FileView = function (_View) {
 
 			try {
 				for (var _iterator3 = files[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var _item = _step3.value;
+					var it = _step3.value;
 
 
+					// defensive copy so that changes below to the way the size is
+					// displayed do not affect the model
+					var _item = Object.assign({}, it);
 					// exclude hidden files
 
 					if (!viewHiddenFiles && (_item.name[0] === '.' || isDir(_item) && _item.name === 'build' || _item.name === 'settings.json' || _item.name == data.currentProject)) {
@@ -2624,12 +2654,6 @@ var FileView = function (_View) {
 					} else {
 
 						var ext = _item.name.split('.').pop();
-
-						if (_item.size < 1000000) {
-							_item.size = (_item.size / 1000).toFixed(1) + 'kb';
-						} else if (_item.size >= 1000000 && _item.size < 1000000000) {
-							_item.size = (_item.size / 1000000).toFixed(1) + 'mb';
-						}
 
 						if (sourceIndeces.indexOf(ext) !== -1) {
 							sources.push(_item);
@@ -2713,13 +2737,13 @@ var FileView = function (_View) {
 						var item = file_list_elements[i][j];
 						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						if (file_list_elements[i].name != i18n_dir_str) {
-							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + item.size + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
+							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + prettySize(item.size) + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
 								return _this5.openFile(e);
 							});
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
 								return _this5.renameFile(e);
 							});
-							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name).appendTo(listItem).on('click', function (e, projName) {
+							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data-name', item.name).appendTo(listItem).on('click', function (e, projName) {
 								return _this5.downloadFile(e, data.currentProject);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
@@ -2740,18 +2764,23 @@ var FileView = function (_View) {
 							var subList = $('<ul></ul>');
 							for (var k = 0; k < item.children.length; k++) {
 								var child = item.children[k];
-								var subListItem = $('<li></li>').addClass('source-text').text(child.name).data('file', item.name + "/" + child.name).on('click', function (e) {
+								var path = item.name + '/' + child.name;
+								var size = typeof child.size !== 'undefined' ? prettySize(child.size) : '';
+								var subListItem = $('<li></li>').addClass('source-file');
+								var itemText = $('<div></div>').addClass('source-text').html(child.name + ' <span class="file-list-size">' + size + '</span>').data('file', path).appendTo(subListItem).on('click', function (e) {
 									return _this5.openFile(e);
 								});
-								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e) {
+								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', path).appendTo(subListItem).on('click', function (e) {
 									return _this5.deleteFile(e);
 								});
-								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', child.name).attr('data-folder', item.name).appendTo(subListItem).on('click', function (e) {
+								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', path).appendTo(subListItem).on('click', function (e) {
 									return _this5.renameFile(e);
 								});
-								var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e, projName) {
-									return _this5.downloadFile(e, data.currentProject);
-								});
+								if (!child.children) {
+									var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data-name', path).appendTo(subListItem).on('click', function (e, projName) {
+										return _this5.downloadFile(e, data.currentProject);
+									});
+								}
 								subListItem.appendTo(subList);
 							}
 							subList.appendTo(listItem);
@@ -2766,7 +2795,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'downloadFile',
 		value: function downloadFile(e, projName) {
-			var filename = $(e.target).attr('data_name');
+			var filename = $(e.target).attr('data-name');
 			var project = projName;
 			var href = $(e.target).attr('href-stem') + filename;
 			e.preventDefault(); //stop the browser from following the link
@@ -2807,86 +2836,100 @@ var FileView = function (_View) {
 			}
 		}
 	}, {
-		key: 'doFileUpload',
-		value: function doFileUpload(file) {
+		key: 'promptForOverwrite',
+		value: async function promptForOverwrite(filename) {
 			var _this7 = this;
+
+			return new Promise(function (resolve, reject) {
+				var fileExists = _this7._getFlattenedFileList().includes(filename);
+				var dont = {
+					do: false,
+					force: false
+				};
+				if (fileExists && askForOverwrite) {
+					popup.twoButtons({
+						title: json.popups.overwrite.title,
+						text: filename + json.popups.overwrite.text,
+						button: json.popups.overwrite.button
+					}, function onSubmit(e) {
+						if (popup.find('input[type=checkbox]').is(':checked')) {
+							askForOverwrite = false;
+							overwriteAction = 'upload';
+						}
+						resolve({
+							do: true,
+							force: true
+						});
+					}.bind(_this7), function onCancel() {
+						if (popup.find('input[type=checkbox]').is(':checked')) {
+							askForOverwrite = false;
+							overwriteAction = 'reject';
+						}
+						resolve(dont);
+					});
+					var checkbox = '<input id="popup-remember-upload" type="checkbox"><label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label<br\>';
+					popup.form.prepend(checkbox);
+					popup.find('.cancel').focus();
+				} else if (fileExists && !askForOverwrite) {
+
+					if (overwriteAction === 'upload') {
+						resolve({
+							do: true,
+							force: true
+						});
+					} else {
+						resolve(dont);
+						_this7.emit('file-rejected', 'upload failed, file ' + filename + ' already exists.');
+					}
+				} else {
+					resolve({
+						do: true,
+						force: false
+					});
+				}
+			});
+		}
+	}, {
+		key: 'doFileUpload',
+		value: async function doFileUpload(file) {
 
 			if (uploadingFile) {
 				fileQueue.push(file);
 				return;
 			}
 			uploadingFile = true;
-			var fileExists = false;
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
-
-			try {
-				for (var _iterator4 = this.listOfFiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var item = _step4.value;
-
-					if (item.name === sanitise(file.name)) fileExists = true;
-				}
-			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
-					}
-				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
-					}
-				}
-			}
 
 			if (file.name === '_main.pd') forceRebuild = true;
 
-			var next = function next() {
-				uploadingFile = false;
-				_this7.processQueue();
-			};
-			// ensure that any of the cases below ends up either calling next() or calling
-			// actuallyDoFileUpload(), which will eventually do the equivalent
-			if (fileExists && askForOverwrite) {
-				popup.twoButtons({
-					title: json.popups.overwrite.title,
-					text: file.name + json.popups.overwrite.text,
-					button: json.popups.overwrite.button
-				}, function onSubmit(e) {
-					if (popup.find('input[type=checkbox]').is(':checked')) {
-						askForOverwrite = false;
-						overwriteAction = 'upload';
-					}
-					this.actuallyDoFileUpload(file, true);
-				}.bind(this), function onCancel() {
-					if (popup.find('input[type=checkbox]').is(':checked')) {
-						askForOverwrite = false;
-						overwriteAction = 'reject';
-					}
-					forceRebuild = false;
-					next();
-				});
-				var checkbox = '<input id="popup-remember-upload" type="checkbox"><label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label<br\>';
-				popup.form.prepend(checkbox);
-				popup.find('.cancel').focus();
-			} else if (fileExists && !askForOverwrite) {
-
-				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					this.emit('file-rejected', 'upload failed, file ' + file.name + ' already exists.');
-					next();
+			var obj = await this.promptForOverwrite(sanitise(file.name));
+			if (obj.do) {
+				var saveas = void 0;
+				var isProject = void 0;
+				if (file.name.search(/\.zip$/) != -1) {
+					var newProject = sanitise(file.name.replace(/\.zip$/, ""));
+					var strings = Object.assign({}, json.popups.create_new_project_from_zip);
+					strings.title += file.name;
+					saveas = await popup.requestValidInputAsync({
+						initialValue: newProject,
+						getDisallowedValues: this.getProjectList,
+						strings: strings,
+						sanitise: sanitise
+					});
+					isProject = true;
+				} else {
+					saveas = sanitise(file.name);
+					isProject = false;
 				}
-			} else {
-				this.actuallyDoFileUpload(file, !askForOverwrite);
+				if (null !== saveas) this.actuallyDoFileUpload(file, saveas, obj.force, isProject);
 			}
+			uploadingFile = false;
+			this.processQueue();
 		}
 	}, {
 		key: 'doLargeFileUpload',
 		value: function doLargeFileUpload(formData, force) {
-			var popupBlock = $('[data-popup-nointeraction]').addClass('active');
 			var that = this;
+			popup.ok(json.popups.upload_file_progress);
 			$.ajax({
 				type: "POST",
 				url: '/uploads',
@@ -2895,51 +2938,25 @@ var FileView = function (_View) {
 				contentType: false,
 				data: formData,
 				success: function success(r) {
-					var _iteratorNormalCompletion5 = true;
-					var _didIteratorError5 = false;
-					var _iteratorError5 = undefined;
-
-					try {
-						for (var _iterator5 = formData.entries()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-							var entry = _step5.value;
-
-							var fileName = entry[1].name.split('\\').pop();
-							that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
-						}
-					} catch (err) {
-						_didIteratorError5 = true;
-						_iteratorError5 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion5 && _iterator5.return) {
-								_iterator5.return();
-							}
-						} finally {
-							if (_didIteratorError5) {
-								throw _iteratorError5;
-							}
-						}
-					}
-
-					$('body').removeClass('uploading');
-					popupBlock.removeClass('active');
-					popup.hide();
+					// would be great if this could be sent as part of the POST body
+					that.emit('list-files');
+					popup.ok(json.popups.upload_file_success);
+					that.emit('force-rebuild');
 				},
 				error: function error(e) {
-					oneButton({
+					that.emit('list-files');
+					popup.ok({
 						title: json.popups.upload_file_error.title,
-						text: e
+						text: e.responseText
 					});
 				}
 			});
-			this.emit('force-rebuild');
 		}
 	}, {
 		key: 'actuallyDoFileUpload',
-		value: function actuallyDoFileUpload(file, force) {
+		value: async function actuallyDoFileUpload(file, saveas, force, isProject) {
 			var _this8 = this;
 
-			// ensure this eventually sets uploadingFile = false
 			var reader = new FileReader();
 			if (forceRebuild && !fileQueue.length) {
 				forceRebuild = false;
@@ -2949,40 +2966,24 @@ var FileView = function (_View) {
 				if (func && ev) {
 					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this8.emit('file-rejected', 'error while uploading ' + file.name);else {
 						args.func = func;
-						args.newFile = sanitise(file.name);
+						args.newFile = saveas;
 						args.fileData = ev.target.result;
 						args.force = force;
 						args.queue = fileQueue.length;
 						_this8.emit('message', 'project-event', args);
 					}
 				}
-				uploadingFile = false;
-				_this8.processQueue();
 			};
 			// TODO: if something fails on the server(e.g.: project existing, file
 			// cannot be written, whatev), the rest of the queue may not be handled
 			// properly because the popup from the error will overwrite any active popup.
 			// A reset may be required.
-			if (file.name.search(/\.zip$/) != -1) {
-				var newProject = sanitise(file.name.replace(/\.zip$/, ""));
-				var strings = Object.assign({}, json.popups.create_new_project_from_zip);
-				strings.title += file.name;
-				popup.requestValidInput({
-					initialValue: newProject,
-					getDisallowedValues: this.getProjectList,
-					strings: strings,
-					sanitise: sanitise
-				}, function (name) {
-					if (null === name) onloadend(); // TODO: unclear to me why this works without a this or a bind
-					else {
-							reader.onloadend = onloadend.bind(_this8, 'uploadZipProject', { newProject: name });
-							reader.readAsArrayBuffer(file);
-						}
-				});
+			if (isProject) {
+				reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: saveas });
 			} else {
 				reader.onloadend = onloadend.bind(this, 'uploadFile', {});
-				reader.readAsArrayBuffer(file);
 			}
+			reader.readAsArrayBuffer(file);
 		}
 	}, {
 		key: '_viewHiddenFiles',
@@ -3315,10 +3316,20 @@ var ProjectView = function (_View) {
         return;
       }
 
-      // build the popup content
-      popup.title(json.popups.create_new.title);
-      popup.subtitle(json.popups.create_new.text);
-
+      popup.requestValidInput({
+        getDisallowedValues: this.getProjectList,
+        strings: json.popups.create_new,
+        sanitise: sanitise
+      }, function (newProject) {
+        if (null === newProject) return;
+        _this4.emit('message', 'project-event', {
+          func: func,
+          newProject: newProject,
+          projectType: popup.find('input[type=radio]:checked').data('type')
+        });
+        $('[data-projects-select]').html('');
+        popup.hide();
+      });
       var form = [];
       form.push('<label for="popup-C" class="radio-container">C++');
       form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
@@ -3336,56 +3347,23 @@ var ProjectView = function (_View) {
       form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
       form.push('<span class="radio-button"></span>');
       form.push('</label>');
-      form.push('<input type="text" placeholder="Enter your project name">');
-      form.push('</br>');
-      form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
-      form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-        e.preventDefault();
-        var newProject = sanitise(popup.find('input[type=text]').val().trim());
-        _this4.emit('message', 'project-event', {
-          func: func,
-          newProject: newProject,
-          projectType: popup.find('input[type=radio]:checked').data('type')
-        });
-        $('[data-projects-select]').html('');
-        popup.hide();
-      });
-
-      popup.find('.cancel').on('click', popup.hide);
-
-      popup.show();
+      popup.form.prepend(form.join('\n'));
     }
   }, {
     key: 'saveAs',
-    value: function saveAs(func) {
-      var _this5 = this;
-
-      // build the popup content
-      popup.title(json.popups.save_as.title);
-      popup.subtitle(json.popups.save_as.text);
-
-      var form = [];
-      form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
-      form.push('</br >');
-      form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
-      form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-        e.preventDefault();
-        _this5.emit('message', 'project-event', { func: func, newProject: sanitise(popup.find('input[type=text]').val()) });
-        popup.hide();
+    value: async function saveAs(func) {
+      var newName = await popup.requestValidInputAsync({
+        getDisallowedValues: this.getProjectList,
+        strings: json.popups.save_as,
+        sanitise: sanitise
       });
-
-      popup.find('.cancel').on('click', popup.hide);
-
-      popup.show();
+      if (null === newName) return;
+      this.emit('message', 'project-event', { func: func, newProject: newName });
     }
   }, {
     key: 'deleteProject',
     value: function deleteProject(e) {
-      var _this6 = this;
+      var _this5 = this;
 
       // build the popup content
       // Get the project name text from the object at the top of the editor
@@ -3401,7 +3379,7 @@ var ProjectView = function (_View) {
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
         $('[data-projects-select]').html('');
-        _this6.emit('message', 'project-event', { func: 'deleteProject' });
+        _this5.emit('message', 'project-event', { func: 'deleteProject' });
         popup.hide();
       });
 
@@ -3447,7 +3425,7 @@ var ProjectView = function (_View) {
   }, {
     key: '_exampleList',
     value: function _exampleList(examplesDir) {
-      var _this7 = this;
+      var _this6 = this;
 
       var $examples = $('[data-examples]');
       var oldListOrder = examplesDir;
@@ -3536,7 +3514,7 @@ var ProjectView = function (_View) {
               error: function (item, childOrder, jqXHR, textStatus) {
                 console.log("Error while retrieving order.json for ", item.name, ": ", textStatus, ". Using default ordering.");
                 generateChildren(childOrder, item, this);
-              }.bind(_this7, item, childOrder),
+              }.bind(_this6, item, childOrder),
               success: function (item, text) {
                 var newChildOrder = [];
                 text.forEach(function (item) {
@@ -3570,10 +3548,10 @@ var ProjectView = function (_View) {
                 childOrder = correctedChildOrder.concat(childOrphans);
 
                 generateChildren(childOrder, item, this);
-              }.bind(_this7, item)
+              }.bind(_this6, item)
             });
           } else {
-            generateChildren(childOrder, item, _this7);
+            generateChildren(childOrder, item, _this6);
           }
           // per section
           // item.name -> parentDiv $examples
@@ -3609,7 +3587,7 @@ var ProjectView = function (_View) {
   }, {
     key: '_libraryList',
     value: function _libraryList(librariesDir) {
-      var _this8 = this;
+      var _this7 = this;
 
       var $libraries = $('[data-libraries-list]');
       var counter = 0;
@@ -3681,7 +3659,7 @@ var ProjectView = function (_View) {
 
           // EXAMPLES:
 
-          var that = _this8;
+          var that = _this7;
           var examplesParent = $('<div></div>');
           var examplesTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.examplesTitle).attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           addAccordionEvent(examplesTitle);
@@ -5522,19 +5500,21 @@ var Console = function (_EventEmitter) {
 		}
 	}, {
 		key: 'reject',
-		value: function reject(message, id, persist) {
+		value: function reject(message, id, skipPopup) {
 			var el = document.getElementById(id);
 			//if (!el) el = this.notify(message, id);
 			var $el = $(el);
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
-			popup.ok({
-				title: 'Error',
-				subtitle: this.popUpComponents,
-				button: 'Cancel',
-				body: message
-			});
+			if (!skipPopup) {
+				popup.ok({
+					title: 'Error',
+					subtitle: this.popUpComponents,
+					button: 'Cancel',
+					body: message
+				});
+			}
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);
@@ -6105,6 +6085,9 @@ var popup = {
 		'button[type=submit]', '.cancel', 'input[type=text]'],
 		titleClass: ''
 	},
+	isShown: function isShown() {
+		return parent.hasClass('active');
+	},
 	show: function show(skipFocus) {
 		_overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
@@ -6122,6 +6105,45 @@ var popup = {
 		bodyEl.empty();
 		_formEl.empty();
 	},
+
+
+	// presses the cancel button, which in turns should hide the popup
+	cancel: function cancel(keepOverlay) {
+		var done = false;
+		if (this.isShown()) {
+			var selectors = ['.cancel'];
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = selectors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var s = _step.value;
+
+					var target = this.find(s);
+					if (target.length) {
+						target.click();
+						done = true;
+						break;
+					}
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+		}
+		return done;
+	},
 	overlay: function overlay() {
 		_overlay.toggleClass(overlayActiveClass);
 	},
@@ -6129,52 +6151,17 @@ var popup = {
 		this.seq++;
 		popup.hide();
 		// override with default values if appropriate
-		var _iteratorNormalCompletion = true;
-		var _didIteratorError = false;
-		var _iteratorError = undefined;
-
-		try {
-			for (var _iterator = Object.entries(this.defaultStrings)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-				var _step$value = _slicedToArray(_step.value, 2),
-				    key = _step$value[0],
-				    value = _step$value[1];
-
-				if (!strings.hasOwnProperty(key)) strings[key] = value;
-			}
-		} catch (err) {
-			_didIteratorError = true;
-			_iteratorError = err;
-		} finally {
-			try {
-				if (!_iteratorNormalCompletion && _iterator.return) {
-					_iterator.return();
-				}
-			} finally {
-				if (_didIteratorError) {
-					throw _iteratorError;
-				}
-			}
-		}
-
-		if (strings.title) popup.title(strings.title);
-		if (strings.body) popup.body('a<br />\nb<br />\n' + strings.body);
-		if (strings.text) popup.subtitle(strings.text);
-		if (strings.code) popup.code(strings.code);
-	},
-	finalize: function finalize(newOpts) {
-		popup.show();
-		var opts = {};
 		var _iteratorNormalCompletion2 = true;
 		var _didIteratorError2 = false;
 		var _iteratorError2 = undefined;
 
 		try {
-			for (var _iterator2 = Object.entries(this.defaultOpts)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+			for (var _iterator2 = Object.entries(this.defaultStrings)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 				var _step2$value = _slicedToArray(_step2.value, 2),
 				    key = _step2$value[0],
 				    value = _step2$value[1];
 
-				opts[key] = value;
+				if (!strings.hasOwnProperty(key)) strings[key] = value;
 			}
 		} catch (err) {
 			_didIteratorError2 = true;
@@ -6191,56 +6178,101 @@ var popup = {
 			}
 		}
 
+		if (strings.title) popup.title(strings.title);
+		if (strings.body) popup.body(strings.body);
+		if (strings.text) popup.subtitle(strings.text);
+		if (strings.code) popup.code(strings.code);
+	},
+	finalize: function finalize(newOpts) {
+		popup.show();
+		var opts = {};
+		var _iteratorNormalCompletion3 = true;
+		var _didIteratorError3 = false;
+		var _iteratorError3 = undefined;
+
+		try {
+			for (var _iterator3 = Object.entries(this.defaultOpts)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+				var _step3$value = _slicedToArray(_step3.value, 2),
+				    key = _step3$value[0],
+				    value = _step3$value[1];
+
+				opts[key] = value;
+			}
+		} catch (err) {
+			_didIteratorError3 = true;
+			_iteratorError3 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion3 && _iterator3.return) {
+					_iterator3.return();
+				}
+			} finally {
+				if (_didIteratorError3) {
+					throw _iteratorError3;
+				}
+			}
+		}
+
 		if ('object' === (typeof newOpts === 'undefined' ? 'undefined' : _typeof(newOpts))) {
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
 
 			try {
-				for (var _iterator3 = Object.entries(newOpts)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var _step3$value = _slicedToArray(_step3.value, 2),
-					    key = _step3$value[0],
-					    value = _step3$value[1];
+				for (var _iterator4 = Object.entries(newOpts)[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var _step4$value = _slicedToArray(_step4.value, 2),
+					    key = _step4$value[0],
+					    value = _step4$value[1];
 
 					opts[key] = value;
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError4) {
+						throw _iteratorError4;
 					}
 				}
 			}
 		}
 		if (!Array.isArray(opts.focus)) opts.focus = [opts.focus];
-		var _iteratorNormalCompletion4 = true;
-		var _didIteratorError4 = false;
-		var _iteratorError4 = undefined;
+		var _iteratorNormalCompletion5 = true;
+		var _didIteratorError5 = false;
+		var _iteratorError5 = undefined;
 
 		try {
-			for (var _iterator4 = opts.focus[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-				var f = _step4.value;
+			for (var _iterator5 = opts.focus[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+				var f = _step5.value;
 
-				content.find(f).first().focus();
+				var $tag = content.find(f).first();
+				if ($tag.length) {
+					$tag.focus();
+					var tag = $tag[0];
+					if (tag.tagName == "INPUT" && tag.value) {
+						// * 2 because Opera sometimes interprets new lines as two
+						// characters
+						var end = tag.value.length * 2;
+						tag.setSelectionRange(end, end);
+					}
+				}
 			}
 		} catch (err) {
-			_didIteratorError4 = true;
-			_iteratorError4 = err;
+			_didIteratorError5 = true;
+			_iteratorError5 = err;
 		} finally {
 			try {
-				if (!_iteratorNormalCompletion4 && _iterator4.return) {
-					_iterator4.return();
+				if (!_iteratorNormalCompletion5 && _iterator5.return) {
+					_iterator5.return();
 				}
 			} finally {
-				if (_didIteratorError4) {
-					throw _iteratorError4;
+				if (_didIteratorError5) {
+					throw _iteratorError5;
 				}
 			}
 		}
@@ -6329,7 +6361,7 @@ var popup = {
 	requestValidInput: function requestValidInput(args, callback) {
 		var initialValue = args.initialValue;
 		var getDisallowedValues = args.getDisallowedValues;
-		var strings = args.strings;
+		var strings = Object.assign({}, args.strings);
 		var sanitise = args.sanitise;
 		// defaults
 		if (typeof initialValue !== "string") initialValue = "";
@@ -6340,6 +6372,11 @@ var popup = {
 		if (typeof sanitise !== "function") sanitise = function sanitise(a) {
 			return a;
 		};
+		var _arr = ['input', 'sub_text'];
+		for (var _i = 0; _i < _arr.length; _i++) {
+			var field = _arr[_i];
+			if (typeof strings[field] !== "string") strings[field] = '';
+		}
 		popup.twoButtons(strings, function onSubmit(e) {
 			var val = popup.find('input[type=text]').val();
 			if (!val) val = null;else sanitise ? val = sanitise(val) : val;
@@ -6357,7 +6394,7 @@ var popup = {
 		var validateValue = function validateValue(e) {
 			var origValue = input[0].value.trim();
 			var sanValue = sanitise ? sanitise(origValue) : origValue;
-			if (sanValue !== origValue && strings.sanitised) sanitisedWarning.html(strings.sanitised + ' ' + sanValue);else sanitisedWarning.html('');
+			if (sanValue !== origValue && strings.sanitised) sanitisedWarning.html(strings.sanitised + " '" + sanValue + "'");else sanitisedWarning.html('');
 			if (getDisallowedValues().includes(sanValue)) {
 				if (strings.exists) existingWarning.html(strings.exists);
 				popup.disableSubmit();
@@ -6370,6 +6407,15 @@ var popup = {
 		input.on('change keypress paste input', validateValue);
 		// duplicated call, but this allows re-focus after input was created
 		popup.finalize();
+	},
+	requestValidInputAsync: async function requestValidInputAsync(args) {
+		var _this5 = this;
+
+		return new Promise(function (resolve, reject) {
+			_this5.requestValidInput(args, function (value) {
+				resolve(value);
+			});
+		});
 	},
 
 
@@ -6446,13 +6492,18 @@ module.exports={
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
-			"button": "Create project"
+			"button": "Create project",
+			"input": "Enter your project name",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
 		"save_as": {
 			"title": "Save project as ...",
 			"text": "",
 			"input": "Enter your new project name",
-			"button": "Save project"
+			"button": "Save project",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
 		"delete_project": {
 			"title": "Delete this project?",
@@ -6514,6 +6565,16 @@ module.exports={
 			"title": "Upload a file",
 			"text": "Select a file to upload.",
 			"button": "Upload file"
+		},
+    "upload_file_progress": {
+			"title": "Uploading",
+			"text": "The files are being uploaded...",
+			"button": "OK"
+		},
+    "upload_file_success": {
+			"title": "Success",
+			"text": "All files uploaded successfully",
+			"button": "OK"
 		},
     "upload_file_error": {
 			"title": "Uploading file error"
@@ -6628,6 +6689,9 @@ module.exports={
       "pd": {
         "error": "Rendering pd patch failed!"
       },
+      "binary": {
+        "error": "This type of file cannot be displayed."
+      },
       "keypress_read_only": "This file is read-only. Open a file or refresh the page to keep editing."
 	},
 	"settings_view": {
@@ -6686,11 +6750,37 @@ module.exports.sanitise = function (name, options) {
 	var isPath = false;
 	if (options && options.isPath) isPath = options.isPath;
 	var newName = name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
-	// if this is a folder or file name (and not a path), then we do not allow '/'
-	if (!isPath) newName = newName.replace(/[\/]/g, '_');
+	if (isPath) {
+		// if this is a path, simply remove trailing slash
+		newName = newName.replace(/\/$/, '');
+	} else {
+		// otherwise do not allow any '/'
+		newName = newName.replace(/[\/]/g, '_');
+	}
 	return newName;
 };
 
+module.exports.dirname = function (path) {
+	var lastIndex = path.lastIndexOf('/');
+	return path.slice(0, lastIndex);
+};
+
+module.exports.filename = function (path) {
+	var lastIndex = path.lastIndexOf('/');
+	return path.slice(lastIndex + 1);
+};
+
+module.exports.prettySize = function (size) {
+	var ret = void 0;
+	if (size < 1000000) {
+		ret = (size / 1000).toFixed(1) + 'kB';
+	} else if (size >= 1000000 && size < 1000000000) {
+		ret = (size / 1000000).toFixed(1) + 'mB';
+	} else if (size >= 1000000000 && size < 1000000) {
+		ret = (size / 1000000).toFixed(1) + 'gB';
+	}
+	return ret;
+};
 module.exports.formatString = function (format, vargs) {
 	var args = Array.prototype.slice.call(arguments, 1);
 	return format.replace(/{(\d+)}/g, function (match, number) {

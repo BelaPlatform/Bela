@@ -806,6 +806,14 @@ select.dropdown-num {
   #pd-svg-parent.active {
     display: block; }
 
+#editor-msg-parent {
+  display: none;
+  overflow: auto; }
+  #editor-msg-parent.active {
+    margin-top: 20px;
+    margin-left: 20px;
+    display: block; }
+
 #editor .editor_read_only {
   background: #fdd; }
 
@@ -855,22 +863,25 @@ ul.projectManager {
       top: 5px; }
   .file-list .section .source-text {
     position: relative; }
-  .file-list .section.is-dir .source-file:hover {
-    background-color: inherit; }
-  .file-list .section.is-dir .source-file > .source-text {
-    text-indent: 22px; }
-    .file-list .section.is-dir .source-file > .source-text::before {
-      content: "-"; }
-  .file-list .section.is-dir .source-file::before {
-    content: ""; }
-  .file-list .section.is-dir .source-text {
+  .file-list .section.is-dir > .sub-file-list {
+    padding-left: 12px; }
+    .file-list .section.is-dir > .sub-file-list > .source-file:hover {
+      background-color: inherit; }
+    .file-list .section.is-dir > .sub-file-list > .source-file > .source-text {
+      text-indent: 0px; }
+      .file-list .section.is-dir > .sub-file-list > .source-file > .source-text::before {
+        content: "-"; }
+    .file-list .section.is-dir > .sub-file-list > .source-file::before {
+      content: ""; }
+  .file-list .section.is-dir .source-file {
     position: relative;
-    text-indent: 35px; }
-    .file-list .section.is-dir .source-text:hover {
+    text-indent: 12px;
+    padding-left: 0; }
+    .file-list .section.is-dir .source-file:hover {
       background: rgba(255, 255, 0, 0.2); }
-    .file-list .section.is-dir .source-text::before {
+    .file-list .section.is-dir .source-file::before {
       content: ">";
-      left: -12px;
+      left: 0;
       position: absolute;
       top: 3px; }
   .file-list button {
@@ -1144,7 +1155,8 @@ ul dl {
   width: 100vw; }
   #popup-nointeraction.active {
     display: block;
-    z-index: 10000; }
+    z-index: 10000;
+    background-color: rgba(100, 100, 100, 0.3); }
 
 #popup {
   background: white;

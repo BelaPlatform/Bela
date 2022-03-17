@@ -171,12 +171,11 @@ function openFile(data) {
                 case 18:
                     is_binary = _e.sent();
                     if (is_binary) {
-                        data.error = 'can\'t open binary files';
-                        data.fileData = 'Binary files can not be edited in the IDE';
+                        data.fileData = null;
                         data.fileName = data.newFile;
                         data.newFile = undefined;
                         data.readOnly = true;
-                        data.fileType = 0;
+                        data.fileType = 'binary';
                         return [2 /*return*/];
                     }
                     _e.label = 19;
@@ -556,20 +555,11 @@ function cleanProject(data) {
 exports.cleanProject = cleanProject;
 function newFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var file_name, file_path, folder, _a;
+        var file_path, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    file_name = data.newFile.split('/').pop();
-                    if (data.folder) {
-                        folder = data.folder;
-                        file_path = paths.projects + data.currentProject + '/' + folder + '/' + file_name;
-                        data.newFile = folder + '/' + file_name;
-                    }
-                    else {
-                        file_path = paths.projects + data.currentProject + '/' + file_name;
-                        data.newFile = file_name;
-                    }
+                    file_path = paths.projects + data.currentProject + '/' + data.newFile;
                     return [4 /*yield*/, file_manager.file_exists(file_path)];
                 case 1:
                     if (_b.sent()) {
@@ -813,38 +803,33 @@ function moveUploadedFile(data) {
 exports.moveUploadedFile = moveUploadedFile;
 function renameFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var old_file_name, file_name, file_path, folder, new_file_path, file_exists, _a, _b;
+        var src_name, dst_name, base_path, src_path, dst_path, dst_exists, _a, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    old_file_name = data.oldName;
-                    file_name = data.oldName.split('/').pop();
-                    if (data.folder) {
-                        folder = data.folder + '/';
-                        file_path = paths.projects + data.currentProject + '/' + folder + file_name;
-                    }
-                    else {
-                        file_path = paths.projects + data.currentProject + '/' + file_name;
-                    }
-                    new_file_path = file_path.replace(file_name, data.newFile);
-                    return [4 /*yield*/, file_manager.file_exists(new_file_path)];
+                    src_name = data.oldName;
+                    dst_name = data.newFile;
+                    base_path = paths.projects + data.currentProject + '/';
+                    src_path = base_path + '/' + src_name;
+                    dst_path = base_path + '/' + dst_name;
+                    return [4 /*yield*/, file_manager.file_exists(dst_path)];
                 case 1:
                     _a = (_c.sent());
                     if (_a) return [3 /*break*/, 3];
-                    return [4 /*yield*/, file_manager.directory_exists(file_path)];
+                    return [4 /*yield*/, file_manager.directory_exists(dst_path)];
                 case 2:
                     _a = (_c.sent());
                     _c.label = 3;
                 case 3:
-                    file_exists = (_a);
-                    if (file_exists) {
+                    dst_exists = (_a);
+                    if (dst_exists) {
                         data.error = 'failed, file ' + data.newFile + ' already exists!';
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, file_manager.rename_file(file_path, new_file_path)];
+                    return [4 /*yield*/, file_manager.rename_file(src_path, dst_path)];
                 case 4:
                     _c.sent();
-                    return [4 /*yield*/, cleanFile(data.currentProject, data.oldName)];
+                    return [4 /*yield*/, cleanFile(data.currentProject, src_name)];
                 case 5:
                     _c.sent();
                     if (!(data.fileName == data.oldName)) return [3 /*break*/, 7];

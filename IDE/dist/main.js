@@ -50,6 +50,7 @@ var http = require("http");
 var multer = require("multer");
 var child_process = require("child_process");
 var socket_manager = require("./SocketManager");
+var project_manager = require("./ProjectManager");
 var file_manager = require("./FileManager");
 var paths = require("./paths");
 var routes = require("./RouteManager");
@@ -184,10 +185,76 @@ function setup_routes(app) {
     app.post('/uploads', function (req, res) {
         var upload = multer({ storage: storage }).any();
         upload(req, res, function (err) {
-            if (err) {
-                return res.status(403).end("Error uploading file(s).");
-            }
-            res.end("File is uploaded");
+            return __awaiter(this, void 0, void 0, function () {
+                var eventError, events, events_1, events_1_1, event_1, data, e_1, e_2_1, e_2, _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            eventError = '';
+                            if (!(req.body && !err)) return [3 /*break*/, 10];
+                            events = req.body['project-event'];
+                            // we observe it only becomes an array if there are more than one. We
+                            // force it to be an array so the loop below handles all cases
+                            if (!Array.isArray(events)) {
+                                if (events)
+                                    events = [events];
+                                else
+                                    events = [];
+                            }
+                            _b.label = 1;
+                        case 1:
+                            _b.trys.push([1, 8, 9, 10]);
+                            events_1 = __values(events), events_1_1 = events_1.next();
+                            _b.label = 2;
+                        case 2:
+                            if (!!events_1_1.done) return [3 /*break*/, 7];
+                            event_1 = events_1_1.value;
+                            data = void 0;
+                            try {
+                                data = JSON.parse(event_1);
+                            }
+                            catch (e) {
+                                eventError += "Cannot parse event: `", event_1, "`";
+                                return [3 /*break*/, 6];
+                            }
+                            if (!data.func) {
+                                eventError += "Missing func";
+                                return [3 /*break*/, 6];
+                            }
+                            _b.label = 3;
+                        case 3:
+                            _b.trys.push([3, 5, , 6]);
+                            return [4 /*yield*/, project_manager[data.func](data)];
+                        case 4:
+                            _b.sent();
+                            return [3 /*break*/, 6];
+                        case 5:
+                            e_1 = _b.sent();
+                            eventError += e_1.toString() + " ";
+                            return [3 /*break*/, 6];
+                        case 6:
+                            events_1_1 = events_1.next();
+                            return [3 /*break*/, 2];
+                        case 7: return [3 /*break*/, 10];
+                        case 8:
+                            e_2_1 = _b.sent();
+                            e_2 = { error: e_2_1 };
+                            return [3 /*break*/, 10];
+                        case 9:
+                            try {
+                                if (events_1_1 && !events_1_1.done && (_a = events_1.return)) _a.call(events_1);
+                            }
+                            finally { if (e_2) throw e_2.error; }
+                            return [7 /*endfinally*/];
+                        case 10:
+                            if (err || eventError) {
+                                return [2 /*return*/, res.status(403).end("Error uploading file(s). " + eventError)];
+                            }
+                            res.end("File successfully uploaded");
+                            return [2 /*return*/];
+                    }
+                });
+            });
         });
     });
     // file and project downloads
@@ -204,7 +271,7 @@ function setup_routes(app) {
 function get_bela_core_version() {
     var _this = this;
     return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-        var data, updateLog, e_1, tokens, matches, keys, tokens_1, tokens_1_1, str, n, reg, stat, dir, cmd, e_2, _a;
+        var data, updateLog, e_3, tokens, matches, keys, tokens_1, tokens_1_1, str, n, reg, stat, dir, cmd, e_4, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -217,7 +284,7 @@ function get_bela_core_version() {
                     updateLog = _b.sent();
                     return [3 /*break*/, 4];
                 case 3:
-                    e_1 = _b.sent();
+                    e_3 = _b.sent();
                     return [3 /*break*/, 4];
                 case 4:
                     if (!updateLog) return [3 /*break*/, 7];
@@ -236,12 +303,12 @@ function get_bela_core_version() {
                             }
                         }
                     }
-                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                    catch (e_4_1) { e_4 = { error: e_4_1 }; }
                     finally {
                         try {
                             if (tokens_1_1 && !tokens_1_1.done && (_a = tokens_1.return)) _a.call(tokens_1);
                         }
-                        finally { if (e_2) throw e_2.error; }
+                        finally { if (e_4) throw e_4.error; }
                     }
                     if ('true' === data.success)
                         data.success = 1;
@@ -294,7 +361,7 @@ exports.get_bela_core_version = get_bela_core_version;
 function get_bela_image_version() {
     return new Promise(function (resolve, reject) {
         return __awaiter(this, void 0, void 0, function () {
-            var buffer, tokens, str, tokens_2, tokens_2_1, ret, e_3, e_4, _a;
+            var buffer, tokens, str, tokens_2, tokens_2_1, ret, e_5, e_6, _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -317,17 +384,17 @@ function get_bela_image_version() {
                                 }
                             }
                         }
-                        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+                        catch (e_6_1) { e_6 = { error: e_6_1 }; }
                         finally {
                             try {
                                 if (tokens_2_1 && !tokens_2_1.done && (_a = tokens_2.return)) _a.call(tokens_2);
                             }
-                            finally { if (e_4) throw e_4.error; }
+                            finally { if (e_6) throw e_6.error; }
                         }
                         return [3 /*break*/, 3];
                     case 2:
-                        e_3 = _b.sent();
-                        console.log("ERROR: ", e_3);
+                        e_5 = _b.sent();
+                        console.log("ERROR: ", e_5);
                         return [3 /*break*/, 3];
                     case 3:
                         resolve('');
