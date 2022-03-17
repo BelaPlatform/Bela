@@ -124,7 +124,7 @@ class FileView extends View {
 			initialValue: '',
 			getDisallowedValues: () => { return this._getFlattenedFileList(true); },
 			strings: json.popups.create_new_folder,
-			sanitise: sanitise,
+			sanitise: sanitisePath,
 		});
 		if(null === name)
 			return;
