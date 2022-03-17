@@ -441,12 +441,14 @@ class FileView extends View {
                     .attr('data-name', path)
                     .appendTo(subListItem)
                     .on('click', (e) => this.renameFile(e));
-    	        var downloadButton = $('<button></button>')
+              if(!child.children) {
+                var downloadButton = $('<button></button>')
                     .addClass('file-download file-button fileManager')
                     .attr('href-stem', '/download?project=' + data.currentProject + '&file=')
                     .attr('data-name', path)
                     .appendTo(subListItem)
                     .on('click', (e, projName) => this.downloadFile(e, data.currentProject));
+              }
               subListItem.appendTo(subList);
             }
             subList.appendTo(listItem);
