@@ -2,6 +2,9 @@ var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
+let sanitisePath = (name) => {
+	return sanitise(name, { isPath: true, });
+}
 
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -95,7 +98,7 @@ class FileView extends View {
 				if(!foldersOnly || isDir(f))
 					out.push(base + f.name);
 				if(isDir(f))
-					listDir(out, f.children, base + '/' + f.name);
+					listDir(out, f.children, base + f.name + '/');
 			}
 		}
 		let flattenedFiles = [];
@@ -108,7 +111,7 @@ class FileView extends View {
 			initialValue: '',
 			getDisallowedValues: () => { return this._getFlattenedFileList(false); },
 			strings: json.popups.create_new_file,
-			sanitise: sanitise,
+			sanitise: sanitisePath,
 		});
 		if(null === name)
 			return;
@@ -209,27 +212,27 @@ class FileView extends View {
 			return;
 		// Get the name of the file to be renamed:
 		var name = $(e.target).data('name');
-		//var func = $(e.target).data('func'); // TODO: do something with this or remove it from _fileList()
-		var folder = $(e.target).data('folder');
+		let path = name;
 		popupStrings = Object.assign({}, popupStrings);
-		popupStrings.title = 'Rename `' + name + '`?';
+		popupStrings.title = 'Rename `' + path + '`?';
 		let newName = await popup.requestValidInputAsync({
-			initialValue: name,
+			initialValue: path,
 			getDisallowedValues: () => {
-				// remove current name (i.e.: allow rename to same)
+				// remove current name (i.e.: allow rename to same, which
+				// yields NOP)
 				let arr = this._getFlattenedFileList(false);
 				arr.splice(arr.indexOf(name), 1);
 				return arr;
 			},
 			strings: popupStrings,
-			sanitise: sanitise,
+			sanitise: sanitisePath,
 		});
 		if(null === newName)
 			return;
-		if(newName === name) // rename to self: NOP
+		if(newName === path) // rename to same: NOP
 			return;
 		if('file' === type)
-			this.emit('message', 'project-event', {func: 'renameFile', folderName: folder, oldName: name, newFile: newName});
+			this.emit('message', 'project-event', {func: 'renameFile', oldName: name, newFile: newName});
 		else if('folder' === type)
 			this.emit('message', 'project-event', {func: 'renameFolder', oldName: name, newFolder: newName});
 		popup.hide();
@@ -381,7 +384,7 @@ class FileView extends View {
   	        var downloadButton = $('<button></button>')
                   .addClass('file-download file-button fileManager')
                   .attr('href-stem', '/download?project=' + data.currentProject + '&file=')
-                  .attr('data_name', item.name)
+                  .attr('data-name', item.name)
                   .appendTo(listItem)
                   .on('click', (e, projName) => this.downloadFile(e, data.currentProject));
             var deleteButton = $('<button></button>')
@@ -422,30 +425,30 @@ class FileView extends View {
             var subList = $('<ul></ul>');
             for (var k = 0; k < item.children.length; k++) {
               var child = item.children[k];
+              let path = item.name + '/' + child.name;
               var subListItem = $('<li></li>')
                     .addClass('source-text')
                     .text(child.name)
-                    .data('file', item.name + "/" + child.name)
+                    .data('file', path)
                     .on('click', (e) => this.openFile(e));
               var deleteButton = $('<button></button>')
                     .addClass('file-delete file-button fileManager')
                     .attr('title', 'Delete')
                     .attr('data-func', 'deleteFile')
-                    .attr('data-name', item.name + '/' + child.name)
+                    .attr('data-name', path)
                     .appendTo(subListItem)
                     .on('click', (e) => this.deleteFile(e));
               var renameButton = $('<button></button>')
                     .addClass('file-rename file-button fileManager')
                     .attr('title', 'Rename')
                     .attr('data-func', 'renameFile')
-                    .attr('data-name', child.name)
-                    .attr('data-folder', item.name)
+                    .attr('data-name', path)
                     .appendTo(subListItem)
                     .on('click', (e) => this.renameFile(e));
     	        var downloadButton = $('<button></button>')
                     .addClass('file-download file-button fileManager')
                     .attr('href-stem', '/download?project=' + data.currentProject + '&file=')
-                    .attr('data_name', item.name + '/' + child.name)
+                    .attr('data-name', path)
                     .appendTo(subListItem)
                     .on('click', (e, projName) => this.downloadFile(e, data.currentProject));
               subListItem.appendTo(subList);
@@ -462,7 +465,7 @@ class FileView extends View {
 	}
 
 	downloadFile(e, projName) {
-		var filename = $(e.target).attr('data_name');
+		var filename = $(e.target).attr('data-name');
 		var project = projName;
 		var href = $(e.target).attr('href-stem') + filename;
     e.preventDefault();  //stop the browser from following the link

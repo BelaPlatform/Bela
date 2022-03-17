@@ -260,16 +260,7 @@ export async function cleanProject(data: any){
 }
 
 export async function newFile(data: any){
-  let file_name = data.newFile.split('/').pop();
-  let file_path;
-  if (data.folder) {
-    let folder = data.folder;
-    file_path = paths.projects+data.currentProject + '/' + folder + '/' + file_name;
-    data.newFile = folder + '/' + file_name;
-  } else {
-    file_path = paths.projects + data.currentProject + '/' + file_name;
-    data.newFile = file_name;
-  }
+	let file_path = paths.projects + data.currentProject + '/' + data.newFile;
 	if (await file_manager.file_exists(file_path)){
 		data.error = 'failed, file '+ file_path +' already exists!';
 		return;
@@ -396,28 +387,24 @@ export async function moveUploadedFile(data: any){
 }
 
 export async function renameFile(data: any){
-  let old_file_name = data.oldName;
-  let file_name = data.oldName.split('/').pop();
-  let file_path;
-  if (data.folder) {
-    let folder = data.folder + '/';
-    file_path = paths.projects + data.currentProject + '/' + folder + file_name;
-  } else {
-    file_path = paths.projects + data.currentProject + '/' + file_name;
-  }
-  let new_file_path = file_path.replace(file_name, data.newFile);
-	let file_exists = (await file_manager.file_exists(new_file_path) || await file_manager.directory_exists(file_path));
-	if (file_exists){
+	let src_name = data.oldName;
+	let dst_name = data.newFile;
+	let base_path = paths.projects + data.currentProject + '/';
+	let src_path = base_path + '/' + src_name;
+	let dst_path = base_path + '/' + dst_name;
+	let dst_exists = (await file_manager.file_exists(dst_path) || await file_manager.directory_exists(dst_path));
+	if (dst_exists){
 		data.error = 'failed, file ' + data.newFile + ' already exists!';
 		return;
 	}
-	await file_manager.rename_file(file_path, new_file_path);
-	await cleanFile(data.currentProject, data.oldName);
-  if (data.fileName == data.oldName) {
-    data.fileName = data.newFile;
-    await openFile(data);
-  }
-  data.fileList = await listFiles(data.currentProject);
+	await file_manager.rename_file(src_path, dst_path);
+	await cleanFile(data.currentProject, src_name);
+	// if the renamed file was the current file, open the new path
+	if (data.fileName == data.oldName) {
+		data.fileName = data.newFile;
+		await openFile(data);
+	}
+	data.fileList = await listFiles(data.currentProject);
 }
 
 export async function renameFolder(data: any){
