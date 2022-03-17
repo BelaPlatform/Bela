@@ -105,8 +105,20 @@ var popup = {
 		}
 		if(!Array.isArray(opts.focus))
 			opts.focus = [opts.focus];
-		for (let f of opts.focus)
-			content.find(f).first().focus();
+		for (let f of opts.focus) {
+			let $tag = content.find(f).first();
+			if($tag.length) {
+				$tag.focus();
+				let tag = $tag[0];
+				if(tag.tagName == "INPUT" && tag.value)
+				{
+					// * 2 because Opera sometimes interprets new lines as two
+					// characters
+					let end = tag.value.length * 2;
+					tag.setSelectionRange(end, end);
+				}
+			}
+		}
 		titleEl.addClass(opts.titleClass);
 	},
 
