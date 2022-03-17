@@ -10,6 +10,16 @@ module.exports.sanitise = function (name, options){
 	return newName;
 }
 
+module.exports.dirname = function (path) {
+	let lastIndex = path.lastIndexOf('/');
+	return path.slice(0, lastIndex);
+}
+
+module.exports.filename = function (path) {
+	let lastIndex = path.lastIndexOf('/');
+	return path.slice(lastIndex + 1);
+}
+
 module.exports.formatString = function (format, vargs) {
 	var args = Array.prototype.slice.call(arguments, 1);
 	return format.replace(/{(\d+)}/g, function(match, number) {
