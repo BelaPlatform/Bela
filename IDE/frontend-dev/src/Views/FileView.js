@@ -109,17 +109,14 @@ class FileView extends View {
 
 	async newFile(func, base){
 		let name = await popup.requestValidInputAsync({
-			initialValue: '',
+			initialValue: base + '/',
 			getDisallowedValues: () => { return this._getFlattenedFileList(false); },
 			strings: json.popups.create_new_file,
 			sanitise: sanitisePath,
 		});
 		if(null === name)
 			return;
-		if (!base)
-			this.emit('message', 'project-event', {func, newFile: name});
-		else
-			this.emit('message', 'project-event', {func, newFile: name, folder: base});
+		this.emit('message', 'project-event', {func, newFile: name});
 	}
 
 	async newFolder(func) {

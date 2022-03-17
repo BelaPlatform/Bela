@@ -4,9 +4,13 @@ module.exports.sanitise = function (name, options){
 	if(options && options.isPath)
 		isPath = options.isPath;
 	var newName = name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
-	// if this is a folder or file name (and not a path), then we do not allow '/'
-	if(!isPath)
+	if(isPath) {
+		// if this is a path, simply remove trailing slash
+		newName = newName.replace(/\/$/, '');
+	} else {
+		// otherwise do not allow any '/'
 		newName = newName.replace(/[\/]/g, '_');
+	}
 	return newName;
 }
 

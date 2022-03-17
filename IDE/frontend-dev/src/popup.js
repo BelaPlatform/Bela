@@ -220,7 +220,7 @@ var popup = {
 			let origValue = input[0].value.trim();
 			let sanValue = sanitise ? sanitise(origValue) : origValue;
 			if(sanValue !== origValue && strings.sanitised)
-				sanitisedWarning.html(strings.sanitised + ' ' + sanValue);
+				sanitisedWarning.html(strings.sanitised + " '" + sanValue + "'");
 			else
 				sanitisedWarning.html('');
 			if(getDisallowedValues().includes(sanValue)) {
