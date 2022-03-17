@@ -5,6 +5,7 @@ var json = require('../site-text.json');
 let sanitisePath = (name) => {
 	return sanitise(name, { isPath: true, });
 }
+var prettySize = require('../utils').prettySize;
 
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -301,12 +302,6 @@ class FileView extends View {
 
 				let ext = item.name.split('.').pop();
 
-				if (item.size < 1000000){
-					item.size = (item.size/1000).toFixed(1) + 'kb';
-				} else if (item.size >= 1000000 && item.size < 1000000000){
-					item.size = (item.size/1000000).toFixed(1) + 'mb';
-				}
-
 				if (sourceIndeces.indexOf(ext) !== -1){
 					sources.push(item);
 				} else if (headerIndeces.indexOf(ext) !== -1){
@@ -370,7 +365,7 @@ class FileView extends View {
           if (file_list_elements[i].name != i18n_dir_str) {
             var itemText = $('<div></div>')
                   .addClass('source-text')
-                  .html(item.name + ' <span class="file-list-size">' + item.size + '</span>')
+                  .html(item.name + ' <span class="file-list-size">' + prettySize(item.size) + '</span>')
                   .data('file', item.name)
                   .appendTo(listItem)
                   .on('click', (e) => this.openFile(e));
@@ -426,11 +421,15 @@ class FileView extends View {
             for (var k = 0; k < item.children.length; k++) {
               var child = item.children[k];
               let path = item.name + '/' + child.name;
+              let size = (typeof(child.size) !== 'undefined') ? prettySize(child.size) : '';
               var subListItem = $('<li></li>')
-                    .addClass('source-text')
-                    .text(child.name)
-                    .data('file', path)
-                    .on('click', (e) => this.openFile(e));
+                    .addClass('source-file');
+              var itemText = $('<div></div>')
+                  .addClass('source-text')
+                  .html(child.name + ' <span class="file-list-size">' + size + '</span>')
+                  .data('file', path)
+                  .appendTo(subListItem)
+                  .on('click', (e) => this.openFile(e));
               var deleteButton = $('<button></button>')
                     .addClass('file-delete file-button fileManager')
                     .attr('title', 'Delete')

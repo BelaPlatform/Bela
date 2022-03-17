@@ -40,29 +40,33 @@
       position: relative;
     }
     &.is-dir {
-      .source-file {
-        &:hover {
-          background-color: inherit;
-        }
-        > .source-text {
-          text-indent: 22px;
+      >.sub-file-list{
+          padding-left: 12px;
+        >.source-file {
+          &:hover {
+            background-color: inherit;
+          }
+          > .source-text {
+            text-indent: 0px;
+            &::before {
+              content: "-";
+            }
+          }
           &::before {
-            content: "-";
+            content: "";
           }
         }
-        &::before {
-          content: "";
-        }
       }
-      .source-text {
+      .source-file {
         position: relative;
-        text-indent: 35px;
+        text-indent: 12px;
+        padding-left: 0;
         &:hover {
           background: rgba(255, 255, 0, 0.2);
         }
         &::before {
           content: ">";
-          left: -12px;
+          left: 0;
           position: absolute;
           top: 3px;
         }

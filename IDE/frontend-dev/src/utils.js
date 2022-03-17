@@ -20,6 +20,17 @@ module.exports.filename = function (path) {
 	return path.slice(lastIndex + 1);
 }
 
+module.exports.prettySize = function(size) {
+	let ret;
+	if (size < 1000000){
+		ret = (size/1000).toFixed(1) + 'kB';
+	} else if (size >= 1000000 && size < 1000000000){
+		ret = (size/1000000).toFixed(1) + 'mB';
+	} else if (size >= 1000000000 && size < 1000000){
+		ret = (size/1000000).toFixed(1) + 'gB';
+	}
+	return ret;
+}
 module.exports.formatString = function (format, vargs) {
 	var args = Array.prototype.slice.call(arguments, 1);
 	return format.replace(/{(\d+)}/g, function(match, number) {
