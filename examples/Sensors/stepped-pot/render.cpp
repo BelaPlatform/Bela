@@ -13,13 +13,14 @@ Stepped potentiometer
 =====================
 
 Connect a potentiometer (stepped or not) to Bela's analog input 0.
-This project will keep track of when it changes from one step to the next.
+This project quantises the reading from that potentiometer and
+will keep track of when it changes from one step to the next.
 
 We define the steps in volts and list them in steppedPot.setup().
 
 In this example we use the quantised range of the pot to change the frequecy of
-a sinetone oscillator. We read the position integer to multiply the base frequency
-and cycle through the harmonic series.
+a sinetone oscillator. We use the position integer to multiply the base frequency
+of the oscillator and cycle through the harmonic series.
 */
 
 #include <Bela.h>
