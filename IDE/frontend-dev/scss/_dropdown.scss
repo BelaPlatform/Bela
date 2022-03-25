@@ -1,7 +1,7 @@
 /* Dropdown Button */
 
 button.dropbtn {
-  background-color: var(--white-to-dark-toolbar-color);//#fff;
+  background-color: var(--white-to-dark-toolbar-color);
   border: 1px solid $teal-main;
   color: $teal-main;
   cursor: pointer;
@@ -75,7 +75,7 @@ select.dropdown-num {
 
 /* Dropdown content (hidden by default) */
 .dropdown-content {
-  background-color: var(--light-to-dark-dropdown-color); // #f9f9f9;
+  background-color: var(--light-to-dark-dropdown-color); 
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   display: none;
   min-width: 160px;
@@ -92,7 +92,7 @@ select.dropdown-num {
     padding-top: 0;
     width: 200px;
     option {
-      color: white;//black;
+      color: white;
       cursor: pointer;
       display: block;
       font-family: poppins_regular;
@@ -123,7 +123,7 @@ select.dropdown-num {
       user-select: none;
     }
     > li, span, a {
-      color: var(--black-to-light-text-color); //black;
+      color: var(--black-to-light-text-color); 
       cursor: pointer;
       display: block;
       font-family: poppins_regular;
@@ -132,8 +132,8 @@ select.dropdown-num {
       padding: 8px 16px;
       text-decoration: none;
       &:hover {
-        background-color: var(--cursor-highlight-color); //$grey-light;
-        color: var(--black-to-highlight-text-color); // rgba(0, 0, 0, 0.9);
+        background-color: var(--cursor-highlight-color); 
+        color: var(--black-to-highlight-text-color); 
       }
     }
   }
