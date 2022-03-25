@@ -4,12 +4,12 @@
  */
 #tab-menu {
   li#open-tab {
-    background-color: $grey-tabs;
+    background-color: var(--grey-to-dark-toolbar-color); //$grey-tabs;
     max-width: 40px;
     padding-left: 10px;
   }
   li {
-    background: $grey-tabs;
+    background: var(--grey-to-dark-toolbar-color); //$grey-tabs;
     cursor: pointer;
     height: 50px;
     padding: 0;
@@ -32,7 +32,7 @@
         background: url('../images/icons/folder_active.svg') no-repeat center;
       }
       &.active{
-        background: $white url('../images/icons/folder_active.svg') no-repeat center;
+        background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/folder_active.svg') no-repeat center;
       }
     }
     &.examples {
@@ -41,7 +41,7 @@
           background: url('../images/icons/examples_active.svg') no-repeat center;
         }
         &.active {
-          background: $white url('../images/icons/examples_active.svg') no-repeat center;
+          background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/examples_active.svg') no-repeat center;
         }
       }
       &.settings {
@@ -50,7 +50,7 @@
         background: url('../images/icons/settings_active.svg') no-repeat center;
       }
       &.active {
-        background: $white url('../images/icons/settings_active.svg') no-repeat center;
+        background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/settings_active.svg') no-repeat center;
       }
     }
     &.pins {
@@ -59,7 +59,7 @@
         background: url('../images/icons/pins_active.svg') no-repeat center;
       }
       &.active {
-        background: $white url('../images/icons/pins_active.svg') no-repeat center;
+        background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/pins_active.svg') no-repeat center;
       }
     }
     &.refs {
@@ -68,7 +68,7 @@
         background: url('../images/icons/refs_active.svg') no-repeat center;
       }
       &.active {
-        background: $white url('../images/icons/refs_active.svg') no-repeat center;
+        background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/refs_active.svg') no-repeat center;
       }
     }
     &.libraries {
@@ -77,7 +77,7 @@
         background: url('../images/icons/library_green.svg') no-repeat center;
       }
       &.active {
-        background: $white url('../images/icons/library_green.svg') no-repeat center;
+        background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/library_green.svg') no-repeat center;
       }
     }
     &.feedback {
@@ -86,7 +86,7 @@
         background: url('../images/icons/feedback_active.svg') no-repeat center;
       }
       &.active {
-        background: $white url('../images/icons/feedback_active.svg') no-repeat center;
+        background: var(--white-to-dark-toolbar-color) /*$white*/ url('../images/icons/feedback_active.svg') no-repeat center;
         border-left: 5px solid $accent-red;
       }
     }

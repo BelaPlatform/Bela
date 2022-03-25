@@ -294,6 +294,21 @@ class SettingsView extends View {
 
 	}
 
+	// editor theme has changed
+	_darkTheme(func, key, value)
+	{
+		const app = document.querySelector(".app");
+		
+		if(parseInt(func)) {
+			app.classList.remove('light');
+			app.classList.add('dark');
+		}
+		else {
+			app.classList.remove('dark');
+			app.classList.add('light');
+		}
+	}
+
 	_boardString(data){
 		var boardString;
 		if(data && data.trim)

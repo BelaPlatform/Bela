@@ -17,7 +17,7 @@
 
 
 .toolbar {
-  background: $grey-toolbar;
+  background: var(--grey-to-dark-toolbar-color); //$grey-toolbar;
   bottom: 0;
   box-shadow: 5px 5px #eee;
   display: block;
@@ -94,6 +94,7 @@
     }
   }
   .tool-text {
+    color: var(--black-to-light-text-color);
     margin-top: 3px;
     padding-left: 10px;
     transition: 0.4s ease-in-out;
@@ -121,6 +122,7 @@
     padding: 1px 0;
   }
   .system-status-text {
+    color: var(--black-to-light-text-color) !important;
     margin-top: 14px;
     padding: 0 20px;
     width: 60px;

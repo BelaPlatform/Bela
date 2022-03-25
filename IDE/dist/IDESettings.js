@@ -168,6 +168,7 @@ function default_IDE_settings() {
         'cpuMonitoring': 1,
         'cpuMonitoringVerbose': 0,
         'consoleDelete': 0,
-        'viewHiddenFiles': 0
+        'viewHiddenFiles': 0,
+        'darkTheme': 0,
     };
 }

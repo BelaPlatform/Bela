@@ -282,6 +282,18 @@ class EditorView extends View {
 		}
 
 	}
+
+	// editor theme has changed
+	__darkTheme(func, key, value) {
+		
+		if (parseInt(func)) {
+			this.editor.setTheme("ace/theme/xcode_dark");
+		}
+		else {
+			this.editor.setTheme("ace/theme/chrome");
+		}
+	}
+
 	// editor focus has changed
 	__focus(data){
 
