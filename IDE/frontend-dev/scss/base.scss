@@ -1,8 +1,77 @@
+$themes: (
+  "light": (
+    "shades": (
+      "shade-0": #ffffff, // white
+      "shade-1": #c9c9c9, // grey toolbar, tabs,
+      "shade-2": #ffffff, // $white
+      "shade-3": #e1e1e1, // grey top bar
+      "shade-4": #f1f1f1, // $grey-light 
+      "shade-5": #bdbdbd, // $grey-mid
+      "shade-6": rgba(0, 0, 0, 0.6), // almost black
+      "shade-7": rgba(0, 0, 0, 0.8), // $grey-dark
+      "shade-8": black, // full-black
+      "shade-9": #f9f9f9, // almost white
+      "shade-10": black,
+      "shade-11": #f1f1f1, // $grey-light 
+    )
+  ),
+
+  "dark": (
+    "shades": (
+      "shade-0": #292A2F, // background color
+      "shade-1": #252729, // dark toolbar, tabs color
+      "shade-2": #252729, // dark selected tab color
+      "shade-3": #252729, // dark top bar
+      "shade-4": #3f4045, // dark accordion menu background
+      "shade-5": #3e4d5c, // dark accordion menu background hovered
+      "shade-6": #DFDFE0, // accordion font color
+      "shade-7": #ededf2, // accordion font color accent
+      "shade-8": #DFDFE0, // Light font color
+      "shade-9": #3f4045, // dark accordion menu background hovered
+      "shade-10": #ededf2, // font color accent
+      "shade-11": rgb(44,44,44), // cursor highlight color
+      
+    )
+  )
+);
+
+@each $theme-name, $theme-vars in $themes {
+  $shades: map-get($theme-vars, "shades");
+  // $colors: map-get($theme-vars, "colors");
+
+  $theme: (
+    "white-to-dark-bg-color": map-get($shades, "shade-0"),
+    "grey-to-dark-toolbar-color": map-get($shades, "shade-1"),
+    "white-to-dark-toolbar-color": map-get($shades, "shade-2"),
+    "grey-to-dark-top-bar-color": map-get($shades, "shade-3"),
+    "grey-light-to-dark-accordion-color": map-get($shades, "shade-4"),
+    "grey-mid-to-dark-hov-accordion-color": map-get($shades, "shade-5"),
+    "accordion-font-color": map-get($shades, "shade-6"),
+    "accordion-highlight-font-color": map-get($shades, "shade-7"),
+    "black-to-light-text-color": map-get($shades, "shade-8"),
+    "light-to-dark-dropdown-color": map-get($shades, "shade-9"),
+    "black-to-highlight-text-color": map-get($shades, "shade-10"),
+    "cursor-highlight-color": map-get($shades, "shade-11"),
+  );
+
+  .app.#{$theme-name} {
+    // define a css variable for each shade
+    @each $name, $color in $shades {
+      --#{$name}: #{$color};
+    }
+
+    // define a css variable for each theme color
+    @each $name, $color in $theme {
+      --#{$name}: #{$color};
+    }
+  }
+}
+
 $blue: #0000ff;
 $upper-bg: #eeeeee;
 
 $black: #000;
-$white: #ffffff;
+$white: #ffffff; 
 
 // Base Material palette teal:
 $teal-base: #009587;
@@ -38,6 +107,7 @@ $trans-reg: 0.1s;
 $yellow-accent: #fff07c;
 $yellow-accent-fade: #FFFFC9;
 
+
 @import 'reset';
 @import 'fonts';
 
@@ -62,6 +132,7 @@ img {
 }
 
 .upper {
+  background-color: var(--grey-to-dark-top-bar-color);
 	height: 100%;
 	position: relative;
   z-index: 96;
@@ -111,6 +182,7 @@ body {
 
 ul {
 	font-family: inconsolata;
+  // color: white;
 }
 
 @import 'accordion-menu';

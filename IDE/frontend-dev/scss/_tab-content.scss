@@ -1,5 +1,5 @@
 .choice {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--accordion-font-color); // rgba(0, 0, 0, 0.6);
   font-family: poppins_light;
   font-size: 12px;
   padding-bottom: 10px;
@@ -113,6 +113,7 @@ input[type="checkbox"].checkbox-slider,
 
 p.project {
   background-color: rgba($teal-01,0.5);
+  color: var(--black-to-light-text-color);
   font-family: 'space_regular';
   margin-top: .5em;
   margin-bottom: 0;
@@ -161,7 +162,7 @@ p.project {
   >.project-text {
     display: inline;
     font-family: 'inconsolata';
-    color: $grey-dark;
+    color: var(--accordion-highlight-font-color); // $grey-dark;
     font-size: .85em;
     position: absolute;
     top: 0;

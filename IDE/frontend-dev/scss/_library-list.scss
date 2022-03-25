@@ -19,7 +19,7 @@ ul {
       white-space: nowrap;
     }
     .include-copy {
-      position: absoute;
+      position: absolute;
       top: 0;
       right: 0;
     }
@@ -68,7 +68,7 @@ ul {
     }
     .libraries-list {
       li {
-        color: rgba(0, 0, 0, 0.8);
+        color: var(--accordion-highlight-font-color);//rgba(0, 0, 0, 0.8);
         cursor: pointer;
         font-family: inconsolata;
       	font-size: 14px;

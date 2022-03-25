@@ -1,5 +1,6 @@
 #beaglert-console {
-  background-color: white;
+  background-color: var(--white-to-dark-bg-color);
+  color: var(--black-to-light-text-color);
   box-sizing: border-box;
   font-family: inconsolata, monospace;
   font-size: 12px;
