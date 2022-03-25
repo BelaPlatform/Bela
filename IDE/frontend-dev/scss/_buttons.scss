@@ -10,9 +10,9 @@ a.button {
 button,
 .button {
   border: 1px solid $teal-main;
-  background-color: $white;   // Background color of the "new project" button
+  background-color: $white;   
   border-radius: 3px;
-  color: $black;           // Colour font of 'New project button'
+  color: $black;           
   font-size: .8em;
   cursor: pointer;
   font-family: poppins_light;
@@ -24,8 +24,8 @@ button,
     }
   }
   &:hover {
-    background-color: $teal-main;    // Colour of "New porject button when hovered"
-    color: rgba(255,255,255,0.9);    // Colour of big tab menus when overed
+    background-color: $teal-main;    
+    color: rgba(255,255,255,0.9);   
     transition: 0.1s ease-in-out;
   }
   &.create-project {
@@ -36,7 +36,7 @@ button,
       color: $white;
     }
     &:before {
-      color: $grey-dark;            // Color of the cross in the "new Project" button
+      color: $grey-dark;            
       content: '+'; /* Unicode character for "plus" sign (+) */
       font-family: space_bold;
       font-size: 36px;

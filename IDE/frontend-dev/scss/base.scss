@@ -1,18 +1,18 @@
 $themes: (
   "light": (
     "shades": (
-      "shade-0": #ffffff, // white
-      "shade-1": #c9c9c9, // grey toolbar, tabs,
-      "shade-2": #ffffff, // $white
-      "shade-3": #e1e1e1, // grey top bar
-      "shade-4": #f1f1f1, // $grey-light 
-      "shade-5": #bdbdbd, // $grey-mid
+      "shade-0": #ffffff,            // white
+      "shade-1": #c9c9c9,            // grey toolbar, tabs,
+      "shade-2": #ffffff,            // $white
+      "shade-3": #e1e1e1,            // grey top bar
+      "shade-4": #f1f1f1,            // $grey-light 
+      "shade-5": #bdbdbd,            // $grey-mid
       "shade-6": rgba(0, 0, 0, 0.6), // almost black
       "shade-7": rgba(0, 0, 0, 0.8), // $grey-dark
-      "shade-8": black, // full-black
-      "shade-9": #f9f9f9, // almost white
+      "shade-8": black,              // full-black
+      "shade-9": #f9f9f9,            // almost white
       "shade-10": black,
-      "shade-11": #f1f1f1, // $grey-light 
+      "shade-11": #f1f1f1,           // $grey-light 
     )
   ),
 
@@ -37,7 +37,6 @@ $themes: (
 
 @each $theme-name, $theme-vars in $themes {
   $shades: map-get($theme-vars, "shades");
-  // $colors: map-get($theme-vars, "colors");
 
   $theme: (
     "white-to-dark-bg-color": map-get($shades, "shade-0"),
@@ -57,11 +56,6 @@ $themes: (
   .app.#{$theme-name} {
     // define a css variable for each shade
     @each $name, $color in $shades {
-      --#{$name}: #{$color};
-    }
-
-    // define a css variable for each theme color
-    @each $name, $color in $theme {
       --#{$name}: #{$color};
     }
   }
@@ -214,7 +208,6 @@ body {
 
 ul {
 	font-family: inconsolata;
-  // color: white;
 }
 
 @import 'accordion-menu';
