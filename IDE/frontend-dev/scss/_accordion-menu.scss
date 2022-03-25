@@ -1,8 +1,8 @@
 button.accordion {
-  background-color: var(--grey-light-to-dark-accordion-color); // $grey-light;
+  background-color: var(--grey-light-to-dark-accordion-color); 
   border: none;
-  border-bottom: 2px solid var(--white-to-dark-bg-color); // #fff;
-  color: var(--accordion-font-color); //rgba(0, 0, 0, 0.6);
+  border-bottom: 2px solid var(--white-to-dark-bg-color); 
+  color: var(--accordion-font-color); 
   cursor: pointer;
   font-family: poppins_regular;
   font-size: 16px;
@@ -13,23 +13,23 @@ button.accordion {
   transition: 0.25s ease-in-out;
   width: 100%;
   &:hover {
-    background: var(--grey-mid-to-dark-hov-accordion-color); // $grey-mid;
+    background: var(--grey-mid-to-dark-hov-accordion-color); 
     border-bottom: 2px solid $teal-main;
   }
   &.active {
-    background-color: var(--grey-light-to-dark-accordion-color); // $grey-light;
+    background-color: var(--grey-light-to-dark-accordion-color); 
     border-bottom: 2px solid $teal-main;
-    color: var(--accordion-highlight-font-color); // $grey-dark;
+    color: var(--accordion-highlight-font-color); 
     padding: 8px 14px;
     &:hover {
-      color: var(--accordion-highlight-font-color); // $grey-dark;
+      color: var(--accordion-highlight-font-color); 
     }
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
     }
   }
   &:after {
-    color: var(--accordion-font-color); //rgba(0, 0, 0, 0.6);
+    color: var(--accordion-font-color); 
     content: '\02795'; /* Unicode character for "plus" sign (+) */
     float: right;
     font-size: 14px;
@@ -39,12 +39,12 @@ button.accordion {
 
 button.accordion-sub {
   background: transparent;
-  border-bottom: 1px solid var(--grey-to-dark-toolbar-color); // $grey-toolbar
+  border-bottom: 1px solid var(--grey-to-dark-toolbar-color); 
   border-top: 0;
   border-left: 0;
   border-right: 0;
   border-radius: 0;
-  color: var(--accordion-highlight-font-color); // $grey-dark;
+  color: var(--accordion-highlight-font-color); 
   font-size: 1em;
   font-family: 'poppins_regular';
   padding: .4em .8em .25em;
@@ -52,16 +52,16 @@ button.accordion-sub {
   width: 100%;
   &:hover {
     background: rgba($grey-toolbar,0.2);
-    color: var(--accordion-highlight-font-color); // $grey-dark;
+    color: var(--accordion-highlight-font-color); 
   }
   &.active {
     background: transparent;
     border-bottom: 2px solid $teal-01;
-    color: var(--accordion-highlight-font-color); // $grey-dark;
+    color: var(--accordion-highlight-font-color); 
     padding-bottom: .2em;
     margin-top: .2em;
     &:hover {
-      color: var(--accordion-highlight-font-color); // $grey-dark;
+      color: var(--accordion-highlight-font-color); 
     }
     &:after {
       content: "\2796"; /* Unicode character for "minus" sign (-) */
