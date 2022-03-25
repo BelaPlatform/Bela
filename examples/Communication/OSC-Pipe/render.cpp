@@ -54,8 +54,9 @@ int localPort = 7562;
 int remotePort = 7563;
 const char* remoteIp = "127.0.0.1";
 
-void on_receive(oscpkt::Message* msg, void*)
+void on_receive(oscpkt::Message* msg, const char* addr, void* arg)
 {
+	printf("From %s\n", addr);
 	// we make a copy of the incoming message and we send it down the pipe to the real-time thread
 	oscpkt::Message* incomingMsg = new oscpkt::Message(msg);
 	oscPipe.writeNonRt(incomingMsg);

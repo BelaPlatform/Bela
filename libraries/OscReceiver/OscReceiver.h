@@ -23,7 +23,7 @@ namespace std {
 class OscReceiver{
 public:
 	OscReceiver();
-	OscReceiver(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg = nullptr);
+	OscReceiver(int port, std::function<void(oscpkt::Message* msg, const char* addr, void* arg)> on_receive, void* callbackArg = nullptr);
 	~OscReceiver();
 
 	/**
@@ -36,7 +36,7 @@ public:
 	* @param callbackArg an argument to pass to the callback
 	*
 	*/
-	void setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg = nullptr);
+	void setup(int port, std::function<void(oscpkt::Message* msg, const char* addr, void* arg)> on_receive, void* callbackArg = nullptr);
 
 private:
 	bool lShouldStop = false;
@@ -52,6 +52,6 @@ private:
 	std::unique_ptr<oscpkt::PacketReader> pr;
 	std::vector<char> inBuffer;
 
-	std::function<void(oscpkt::Message* msg, void* arg)> on_receive;
+	std::function<void(oscpkt::Message* msg, const char* addr, void* arg)> on_receive;
 	void* onReceiveArg = nullptr;
 };

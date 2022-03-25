@@ -64,6 +64,8 @@ class UdpServer{
 			If the socket is ready on return, this returns 1. If it times-out before the socket becomes ready, it returns 0. If an error occurs, it returns -1.
 		 */
 		int waitUntilReady(bool readyForReading, int timeoutMsecs);
+		int getLastRecvPort();
+		const char* getLastRecvAddr();
 };
 
 
