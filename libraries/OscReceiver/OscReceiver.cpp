@@ -7,7 +7,7 @@ constexpr unsigned int OscReceiverSleepBetweenReadsUs = 5000;
 constexpr unsigned int OscReceiverInBufferSize = 65536; // maximum UDP packet size
 
 OscReceiver::OscReceiver(){}
-OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg, void* arg)> on_receive, void* callbackArg){
+OscReceiver::OscReceiver(int port, std::function<void(oscpkt::Message* msg, const char* addr, void* arg)> on_receive, void* callbackArg){
 	setup(port, on_receive, callbackArg);
 }
 
@@ -34,7 +34,7 @@ void OscReceiver::receive_task_func(){
 	}
 }
 
-void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, void* arg)> _on_receive, void* callbackArg)
+void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, const char* addr, void* arg)> _on_receive, void* callbackArg)
 {
 	inBuffer.resize(OscReceiverInBufferSize);
 
@@ -61,12 +61,13 @@ int OscReceiver::waitForMessage(int timeout){
 			fprintf(stderr, "OscReceiver: Error reading UDP socket: %d %s\n", errno, strerror(errno));
 			return -1;
 		}
+		std::string addr = std::string(socket->getLastRecvAddr()) + ":" + std::to_string(socket->getLastRecvPort());
 		pr->init(inBuffer.data(), msgLength);
 		if (!pr->isOk()){
 			fprintf(stderr, "OscReceiver: oscpkt error parsing received message: %i\n", pr->getErr());
 			return ret;
 		}
-		on_receive(pr->popMessage(), onReceiveArg);
+		on_receive(pr->popMessage(), addr.c_str(), onReceiveArg);
 	}
 	return ret;
 }
