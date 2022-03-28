@@ -1,6 +1,5 @@
 #N canvas 0 23 965 532 12;
 #X obj 46 247 r distance;
-#X obj 46 280 print;
 #X text 505 32 ............................;
 #X text 505 42 . ____ ._____ _ .......___ .;
 #X text 505 52 .| __ )| ____| |....../ _ |.;
@@ -22,11 +21,20 @@ is;
 the;
 #X text 505 267 HC-SR04's ECHO output to scale the output voltage down
 to 3.3V.;
-#X text 505 187 This module requires a 5V power supply.;
 #X text 45 174 All the sensor communication is done in render.cpp using
 ;
 #X text 45 194 digital channels 0 (TRIG) and 1 (ECHO). The resulting
 ;
 #X text 45 214 distance measurement (in cm) is sent to the Pd patch
 below;
-#X connect 0 0 1 0;
+#X text 192 325 To connect more than one sensor \,;
+#X text 191 338 modify the C++ code as follows:;
+#X text 191 350 - change kNumSensors;
+#X text 191 360 - add relevant pins to gPulseEchoDigitalInPin;
+#X text 191 370 - add relevant pins to either gPulseTrigAnalogOutPin
+or gPulseTrigDigitalOutPin;
+#X obj 46 282 print;
+#X text 505 187 The HC-SR04 module requires a 5V power supply.;
+#X text 129 249 You receive a list of floats:;
+#X text 128 260 [ <sensor_id> <distance(cm)> (;
+#X connect 0 0 25 0;
