@@ -40,7 +40,6 @@ readings to change the response of this example. try filterCutoff = 50;
 Trill touchSensor;
 std::vector<Oscillator> gOscBank;
 
-#if 1
 std::vector<Biquad> gFilters;
 // Readings for all the different pads on the Trill Craft
 float gSensorReading[NUM_CAP_CHANNELS] = { 0.0 };
@@ -59,7 +58,6 @@ void loop(void*)
 		usleep(gTaskSleepTime);
 	}
 }
-#endif
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -73,8 +71,8 @@ bool setup(BelaContext *context, void *userData)
 	// Set and schedule auxiliary task for reading sensor data from the I2C bus
 	Bela_runAuxiliaryTask(loop);
 
-	float filterCutoff = 1; // Hz, this is the cutoff of the smoothing filter
-	gFilters.resize(NUM_CAP_CHANNELS, Biquad::Settings({.fs = context->audioSampleRate, .type = Biquad::lowpass, .cutoff = filterCutoff}));
+	float filterCutoff = 10; // Hz, this is the cutoff of the smoothing filter
+	gFilters.resize(NUM_CAP_CHANNELS, Biquad::Settings({.fs = context->audioSampleRate, .type = Biquad::lowpass, .cutoff = filterCutoff, .q = 0.707, .peakGainDb = 0}));
 	gOscBank.resize(NUM_CAP_CHANNELS, {context->audioSampleRate, Oscillator::sine});
 
 	// Initialise the oscillator bank in a slightly inharmonic series, one
