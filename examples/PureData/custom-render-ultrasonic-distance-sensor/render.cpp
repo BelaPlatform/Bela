@@ -8,6 +8,11 @@
 // [print]
 //
 // Pins in use are set below. Comment out `#define ULTRASONIC_DISTANCE_DIGITAL_OUT` to use an analog out instead.
+//
+// To connect more than one sensor, modify the C++ code as follows:
+// - change kNumSensors
+// - add relevant pins to gPulseEchoDigitalInPin
+// - add relevant pins to either gPulseTrigAnalogOutPin or gPulseTrigDigitalOutPin
 /*
  * Default render file for Bela projects running Pd patches
  * using libpd.
@@ -35,18 +40,19 @@ extern "C" {
 #ifdef ULTRASONIC_DISTANCE
 #define ULTRASONIC_DISTANCE_DIGITAL_OUT // undefine this to use ANALOG out instead
 #include <libraries/PulseIn/PulseIn.h>
-PulseIn pulseIn;
+enum { kNumSensors = 1 };
+PulseIn pulseIn[kNumSensors];
 unsigned int gPulseTriggerIntervalMs = 60; // how often to send out a trigger.
 unsigned int gPulseTriggerIntervalSamples; // Set in setup() based on the above
 int gPulseMinLength = 7; //to avoid spurious readings
 float gPulseRescale = 58; // taken from the datasheet
 #ifdef ULTRASONIC_DISTANCE_DIGITAL_OUT
-unsigned int gPulseTrigDigitalOutPin = 0; //channel to be connected to the module's TRIGGER pin - check the pin diagram in the IDE
+unsigned int gPulseTrigDigitalOutPin[kNumSensors] = {0, }; //channel to be connected to the module's TRIGGER pin - check the pin diagram in the IDE
 #else // ULTRASONIC_DISTANCE_DIGITAL_OUT
-unsigned int gPulseTrigAnalogOutPin = 0; //channel to be connected to the module's TRIGGER pin
+unsigned int gPulseTrigAnalogOutPin[kNumSensors] = {0, }; //channel to be connected to the module's TRIGGER pin
 #endif // ULTRASONIC_DISTANCE_DIGITAL_OUT
-unsigned int gPulseEchoDigitalInPin = 1; //channel to be connected to the modules's ECHO pin via resistor divider. Check the pin diagram in the IDE
-unsigned int gPulseTriggerCount = 0;
+unsigned int gPulseEchoDigitalInPin[kNumSensors] = {1, }; //channel to be connected to the modules's ECHO pin via resistor divider. Check the pin diagram in the IDE
+int gPulseTriggerCount [kNumSensors] = {0};
 #endif // ULTRASONIC_DISTANCE
 
 #if (defined(BELA_LIBPD_GUI) || defined(ENABLE_TRILL))
@@ -844,11 +850,14 @@ bool setup(BelaContext *context, void *userData)
 #endif // ENABLE_TRILL
 #ifdef ULTRASONIC_DISTANCE
 	gPulseTriggerIntervalSamples = context->digitalSampleRate * (gPulseTriggerIntervalMs / 1000.f);
+	for(unsigned int p = 0; p < kNumSensors; ++p)
+	{
 #ifdef ULTRASONIC_DISTANCE_DIGITAL_OUT
-	pinMode(context, 0, gPulseTrigDigitalOutPin, OUTPUT); // writing to TRIGGER pin
+		pinMode(context, 0, gPulseTrigDigitalOutPin[p], OUTPUT); // writing to TRIGGER pin
 #endif // ULTRASONIC_DISTANCE_DIGITAL_OUT
-	pinMode(context, 0, gPulseEchoDigitalInPin, INPUT); // reading from ECHO pin
-	pulseIn.setup(context, gPulseEchoDigitalInPin, HIGH); //detect HIGH pulses on the ECHO pin
+		pinMode(context, 0, gPulseEchoDigitalInPin[p], INPUT); // reading from ECHO pin
+		pulseIn[p].setup(context, gPulseEchoDigitalInPin[n], HIGH); //detect HIGH pulses on the ECHO pin
+	}
 #endif // ULTRASONIC_DISTANCE
 	return true;
 }
@@ -1199,30 +1208,36 @@ void render(BelaContext *context, void *userData)
 	}
 #ifdef ULTRASONIC_DISTANCE
 	// this has to be at the bottom in case you use analogOut instead of digitalOut
-	for(unsigned int n = 0; n < context->digitalFrames; ++n){
-		gPulseTriggerCount++;
-		bool state;
-		if(gPulseTriggerCount == gPulseTriggerIntervalSamples){
-			gPulseTriggerCount = 0;
-			state = HIGH;
-		} else {
-			state = LOW;
-		}
+	for(unsigned int n = 0; n < context->digitalFrames; ++n)
+	{
+		for(unsigned int p = 0; p < kNumSensors; ++p)
+		{
+			gPulseTriggerCount[p]++;
+			bool state;
+			if(gPulseTriggerCount[p] == gPulseTriggerIntervalSamples){
+				gPulseTriggerCount[p] = 0;
+				state = HIGH;
+			} else {
+				state = LOW;
+			}
 #ifdef ULTRASONIC_DISTANCE_DIGITAL_OUT
-		digitalWrite(context, n, gPulseTrigDigitalOutPin, state); //write the state to the trig pin
+			digitalWrite(context, n, gPulseTrigDigitalOutPin[p], state); //write the state to the trig pin
 #else // ULTRASONIC_DISTANCE_DIGITAL_OUT
-		// the below assumes analogFrames <= digitalFrames
-		unsigned int frame = n / (context->digitalFrames / context->analogFrames);
-		analogWrite(context, frame, gPulseTrigAnalogOutPin, state); //write the state to the trig pin
+			// the below assumes analogFrames <= digitalFrames
+			unsigned int frame = n / (context->digitalFrames / context->analogFrames);
+			analogWrite(context, frame, gPulseTrigAnalogOutPin[p], state); //write the state to the trig pin
 #endif // ULTRASONIC_DISTANCE_DIGITAL_OUT
-		int pulseLength = pulseIn.hasPulsed(context, n); // will return the pulse duration(in samples) if a pulse just ended
-		float duration = 1e6 * pulseLength / context->digitalSampleRate; // pulse duration in microseconds
-		static float distance = 0;
-		if(pulseLength >= gPulseMinLength){
-			// rescaling according to the datasheet
-			distance = duration / gPulseRescale;
-			// send to Pd
-			libpd_float("distance", distance);
+			int pulseLength = pulseIn[p].hasPulsed(context, n); // will return the pulse duration(in samples) if a pulse just ended
+			float duration = 1e6 * pulseLength / context->digitalSampleRate; // pulse duration in microseconds
+			if(pulseLength >= gPulseMinLength){
+				// rescaling according to the datasheet
+				float distance = duration / gPulseRescale;
+				// send to Pd
+				libpd_start_message(2);
+				libpd_add_float(p);
+				libpd_add_float(distance);
+				libpd_finish_list("distance");
+			}
 		}
 	}
 #endif // ULTRASONIC_DISTANCE
