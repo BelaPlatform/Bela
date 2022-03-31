@@ -83,8 +83,20 @@ export default class BelaControl extends BelaWebSocket {
 
 			if(!param_exist || !(sliderObject.name in this.gui.parameters[0][sliderObject.controller])) {
 				delete Object.assign(sliderObject, {['guiId']: sliderObject['controller'] })['controller'];
-				this.gui.newSlider(sliderObject)
+				let slider = this.gui.newSlider(sliderObject)
+				this.sliders.push(slider);
 			}
+		}
+	}
+
+	setSliderValue(sliderObject) {
+		if(this.gui != null) {
+			let slider = this.sliders[sliderObject.index];
+			if(!slider || slider.property != sliderObject.name) {
+				console.log("Unknown sliderObject ", sliderObject);
+				return;
+			}
+			slider.setValue(sliderObject.value);
 		}
 	}
 
@@ -157,6 +169,17 @@ export default class BelaControl extends BelaWebSocket {
 			} else {
 				this.gui_prototype[parsedData.controller]['sliders'].push(slider);
 			}
+		} else if (parsedData.event == 'set-slider-value') {
+			let precision = 7; // float32
+			parsedData.value = Number(parsedData.value.toFixed(7));
+			let slider = {
+				controller: parsedData.controller,
+				index: parsedData.index,
+				name: parsedData.name,
+				value: parsedData.value,
+			}
+			this.setSliderValue.bind(that);
+			this.setSliderValue(slider);
 		} else if (parsedData.event == 'set-select'){
 		} else if (parsedData.event == 'custom') {
 		}
