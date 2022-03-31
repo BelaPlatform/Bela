@@ -81,7 +81,7 @@ int GuiController::sendSlider(const GuiSlider& slider)
 
 int GuiController::sendSliderValue(int sliderIndex)
 {
-	auto slider = _sliders.at(sliderIndex);
+	auto& slider = _sliders.at(sliderIndex);
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"set-slider");
 	root[L"controller"] = new JSONValue(_wname);
@@ -106,7 +106,7 @@ float GuiController::getSliderValue(int sliderIndex)
 
 int GuiController::setSliderValue(int sliderIndex, float value)
 {
-	auto s = _sliders.at(sliderIndex);
+	auto& s = _sliders.at(sliderIndex);
 	s.setValue(value);
 	return sendSliderValue(sliderIndex);
 }
