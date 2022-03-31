@@ -42,19 +42,19 @@ public:
 	 */
 	void setTimeoutMsNonRt(double timeoutMs);
 	/**
-	 * Send data to the non-RT side.
+	 * Send data from the non-RT side.
 	 */
 	template<typename T> bool writeNonRt(const T& data);
 	/**
-	 * Send data to the non-RT side.
+	 * Send data from the non-RT side.
 	 */
 	template<typename T> bool writeNonRt(T* ptr, size_t count);
 	/**
-	 * Send data to the RT side.
+	 * Send data from the RT side.
 	 */
 	template<typename T> bool writeRt(const T& data);
 	/**
-	 * Send data to the RT side.
+	 * Send data from the RT side.
 	 */
 	template<typename T> bool writeRt(T* ptr, size_t count);
 	/**
