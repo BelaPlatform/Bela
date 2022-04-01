@@ -570,7 +570,7 @@ $(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/build/%.o ;
 $(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/build/%.o ;
 
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
-	$(AT)./resources/tools/detectlibraries.sh --project $(PROJECT)
+	$(AT)./resources/tools/detectlibraries.sh --path $(PROJECT_DIR)/build
 
 ifeq ($(RELINK),1)
   ifeq (,$(filter runide runonly,$(MAKECMDGOALS)))
