@@ -87,6 +87,14 @@ LIBLIST="tmp/liblist"
 >"tmp/Makefile.inc"
 TMPMKFILE="tmp/Makefile.inc"
 
+function processBuildFolder()
+{
+	# Get included libraries on project from pre-processor's output
+	DIR=$1
+	grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" "$DIR" | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
+	MKFILEPATH="$DIR"
+}
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-p|--project)
@@ -97,9 +105,17 @@ while [ $# -gt 0 ]; do
 				exit
 			fi
 			shift
-			# Get included libraries on project from pre-processor's output 
-			grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" projects/$PROJECT/build | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
-			MKFILEPATH="projects/$PROJECT/build"
+			processBuildFolder projects/$PROJECT/build
+			;;
+		--path)
+			shift
+			BUILD_FOLDER=$1
+			if [ -z "$BUILD_FOLDER" ] ; then
+				echo "Please, specify a path to the build folder."
+				exit
+			fi
+			shift
+			processBuildFolder $BUILD_FOLDER
 			break
 			;;
 		-f|--file)
