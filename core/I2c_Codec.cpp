@@ -929,13 +929,6 @@ int I2c_Codec::disable(){
 	return 0;
 }
 
-
-int I2c_Codec::readI2C()
-{
-	// Nothing to do here, we only write the registers
-	return 0;
-}
-
 void I2c_Codec::setVerbose(bool isVerbose)
 {
 	verbose = isVerbose;

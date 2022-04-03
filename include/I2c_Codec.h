@@ -64,7 +64,6 @@ public:
 	int disable();
 	int reset(){ return 0; } // Not needed for audio codec on Bela cape
 
-	int readI2C();
 	void setVerbose(bool isVerbose);
 
 	I2c_Codec(int i2cBus, int I2cAddress, CodecType type, bool verbose = false);
