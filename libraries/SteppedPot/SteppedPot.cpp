@@ -1,4 +1,5 @@
 #include "SteppedPot.h"
+#include <stddef.h>
 
 SteppedPot::SteppedPot(const std::vector<float>& levelsV, float toleranceV, float fullScale)
 {
