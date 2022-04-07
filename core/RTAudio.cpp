@@ -1086,8 +1086,6 @@ int Bela_setDacLevel(int channel, float decibels)
 	if(gAudioCodec == 0)
 		return -1;
 	return gAudioCodec->setDacVolume(channel, decibels);
-
-	return 0;
 }
 
 // Set the level of the ADC
