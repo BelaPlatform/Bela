@@ -19,6 +19,7 @@ function makePath (data : any) {
 	return paths.projects+data.currentProject+'/'+data.newFile;
 }
 
+let shouldRunWhenDoneUploads : any = undefined;
 let queuedUploads = new MostRecentQueue();
 
 // the file data is saved robustly using a lockfile, and a syntax
@@ -53,6 +54,10 @@ async function processUploads() {
 		}
 	}
 	lock.release();
+	if(shouldRunWhenDoneUploads) {
+		run(shouldRunWhenDoneUploads);
+		shouldRunWhenDoneUploads = undefined;
+	}
 }
 
 // this function gets called whenever the ace editor is modified.
@@ -99,6 +104,7 @@ export function checkSyntax(data: any){
 // any syntax check in progress is stopped
 export function run(data: any){
 	cpu_monitor.stop();
+	clearTimeout(syntaxTimeout);
 	if (processes.run.get_status()){
 		processes.run.stop();
 		processes.run.queue( () => build_run(data.currentProject) );
@@ -111,6 +117,9 @@ export function run(data: any){
 	} else {
 		build_run(data.currentProject);
 	}
+	// if uploads are in progress, reschedule
+	if(queuedUploads.size)
+		shouldRunWhenDoneUploads = data;
 }
 
 // this function starts a build process and when it ends it checks

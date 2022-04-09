@@ -63,6 +63,7 @@ var extensionsForSyntaxCheck = ['.cpp', '.c', '.h', '.hh', '.hpp'];
 function makePath(data) {
     return paths.projects + data.currentProject + '/' + data.newFile;
 }
+var shouldRunWhenDoneUploads = undefined;
 var queuedUploads = new MostRecentQueue_1.MostRecentQueue();
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
@@ -126,6 +127,10 @@ function processUploads() {
                 case 10: return [3 /*break*/, 0];
                 case 11:
                     lock.release();
+                    if (shouldRunWhenDoneUploads) {
+                        run(shouldRunWhenDoneUploads);
+                        shouldRunWhenDoneUploads = undefined;
+                    }
                     return [2 /*return*/];
             }
         });
@@ -188,6 +193,7 @@ exports.checkSyntax = checkSyntax;
 // any syntax check in progress is stopped
 function run(data) {
     cpu_monitor.stop();
+    clearTimeout(syntaxTimeout);
     if (processes.run.get_status()) {
         processes.run.stop();
         processes.run.queue(function () { return build_run(data.currentProject); });
@@ -203,6 +209,9 @@ function run(data) {
     else {
         build_run(data.currentProject);
     }
+    // if uploads are in progress, reschedule
+    if (queuedUploads.size)
+        shouldRunWhenDoneUploads = data;
 }
 exports.run = run;
 // this function starts a build process and when it ends it checks

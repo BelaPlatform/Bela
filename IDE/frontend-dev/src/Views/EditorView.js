@@ -6,6 +6,7 @@ var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 const uploadDelay = 50;
 
 var uploadBlocked = false;
+let editorDirty = false;
 var currentFile;
 var imageUrl;
 var tmpData = {};
@@ -57,7 +58,7 @@ class EditorView extends View {
       var data = tmpData;
       var opts = tmpOpts;
 			if (!uploadBlocked){
-				this.editorChanged();
+				this.editorChanged(false);
 				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
@@ -137,10 +138,24 @@ class EditorView extends View {
     this.editor.execCommand('find');
   }
 
-	editorChanged(){
+	flush(){
+		this.editorChanged(true);
+	}
+	editorChanged(flush){
 		this.emit('editor-changed');
 		clearTimeout(this.uploadTimeout);
-		this.uploadTimeout = setTimeout( () => this.emit('upload', this.editor.getValue()), uploadDelay );
+		let doUpdate = () => {
+			editorDirty = false;
+			this.emit('upload', this.editor.getValue());
+		}
+		if(flush) {
+			if(editorDirty)
+				doUpdate();
+		}
+		else {
+			editorDirty = true;
+			this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
+		}
 	}
 
 	// model events

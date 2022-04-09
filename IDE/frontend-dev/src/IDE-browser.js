@@ -483,6 +483,7 @@ function exitReadonlyPopup() {
 
 // helper functions
 function runProject() {
+	editorView.flush();
 	socket.emit('process-event', {
 		event: 'run',
 		currentProject: models.project.getKey('currentProject'),

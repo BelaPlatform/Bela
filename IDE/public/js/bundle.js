@@ -901,6 +901,7 @@ function exitReadonlyPopup() {
 
 // helper functions
 function runProject() {
+	editorView.flush();
 	socket.emit('process-event', {
 		event: 'run',
 		currentProject: models.project.getKey('currentProject')
@@ -1903,6 +1904,7 @@ var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 var uploadDelay = 50;
 
 var uploadBlocked = false;
+var editorDirty = false;
 var currentFile;
 var imageUrl;
 var tmpData = {};
@@ -1957,7 +1959,7 @@ var EditorView = function (_View) {
 			var data = tmpData;
 			var opts = tmpOpts;
 			if (!uploadBlocked) {
-				_this.editorChanged();
+				_this.editorChanged(false);
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
@@ -2032,15 +2034,27 @@ var EditorView = function (_View) {
 			this.editor.execCommand('find');
 		}
 	}, {
+		key: 'flush',
+		value: function flush() {
+			this.editorChanged(true);
+		}
+	}, {
 		key: 'editorChanged',
-		value: function editorChanged() {
+		value: function editorChanged(flush) {
 			var _this2 = this;
 
 			this.emit('editor-changed');
 			clearTimeout(this.uploadTimeout);
-			this.uploadTimeout = setTimeout(function () {
-				return _this2.emit('upload', _this2.editor.getValue());
-			}, uploadDelay);
+			var doUpdate = function doUpdate() {
+				editorDirty = false;
+				_this2.emit('upload', _this2.editor.getValue());
+			};
+			if (flush) {
+				if (editorDirty) doUpdate();
+			} else {
+				editorDirty = true;
+				this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
+			}
 		}
 
 		// model events
