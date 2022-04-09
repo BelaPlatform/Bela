@@ -2442,7 +2442,7 @@ var FileView = function (_View) {
 			var _this2 = this;
 
 			var name = await popup.requestValidInputAsync({
-				initialValue: base + '/',
+				initialValue: base ? base + '/' : '',
 				getDisallowedValues: function getDisallowedValues() {
 					return _this2._getFlattenedFileList(false);
 				},

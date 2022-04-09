@@ -109,7 +109,7 @@ class FileView extends View {
 
 	async newFile(func, base){
 		let name = await popup.requestValidInputAsync({
-			initialValue: base + '/',
+			initialValue: base ? base + '/' : '',
 			getDisallowedValues: () => { return this._getFlattenedFileList(false); },
 			strings: json.popups.create_new_file,
 			sanitise: sanitisePath,
