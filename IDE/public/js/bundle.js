@@ -462,11 +462,9 @@ fileView.on('message', function (event, data) {
 	socket.emit(event, data);
 });
 
-fileView.on('force-rebuild', function () {
-	socket.emit('process-event', {
-		event: 'rebuild',
-		currentProject: models.project.getKey('currentProject')
-	});
+fileView.on('file-uploaded', function () {
+	var restartUponUpload = parseInt(models.settings.getKey('restartUponUpload'));
+	if (restartUponUpload && models.status.getKey('running')) runProject();
 });
 fileView.on('file-rejected', function (errMsg) {
 	var timestamp = performance.now();
@@ -2327,7 +2325,6 @@ var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
 var fileQueue = [];
-var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
@@ -2911,8 +2908,6 @@ var FileView = function (_View) {
 			}
 			uploadingFile = true;
 
-			if (file.name === '_main.pd') forceRebuild = true;
-
 			var obj = await this.promptForOverwrite(sanitise(file.name));
 			if (obj.do) {
 				var saveas = void 0;
@@ -2950,10 +2945,12 @@ var FileView = function (_View) {
 				contentType: false,
 				data: formData,
 				success: function success(r) {
-					// would be great if this could be sent as part of the POST body
+					// would be great if these could be sent as part of the POST body
+					// note: for drag-and-drop files, the equivalent to these is
+					// done in ProjectManager::uploadFile on the server
 					that.emit('list-files');
+					that.emit('file-uploaded');
 					popup.ok(json.popups.upload_file_success);
-					that.emit('force-rebuild');
 				},
 				error: function error(e) {
 					that.emit('list-files');
@@ -2970,10 +2967,6 @@ var FileView = function (_View) {
 			var _this8 = this;
 
 			var reader = new FileReader();
-			if (forceRebuild && !fileQueue.length) {
-				forceRebuild = false;
-				this.emit('force-rebuild');
-			}
 			var onloadend = function onloadend(func, args, ev) {
 				if (func && ev) {
 					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this8.emit('file-rejected', 'error while uploading ' + file.name);else {

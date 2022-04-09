@@ -8,6 +8,9 @@ import * as fileType from 'file-type';
 import * as DecompressZip from 'decompress-zip';
 import * as fs from 'fs-extra-promise';
 import * as socket_manager from './SocketManager';
+import * as process_manager from './ProcessManager';
+import * as processes from './IDEProcesses';
+import * as ide_settings from './IDESettings';
 
 let max_file_size = 52428800;	// bytes (50Mb)
 let max_preview_size = 524288000;	// bytes (500Mb)
@@ -292,6 +295,9 @@ export async function uploadFile(data: any){
 	}
 	await file_manager.save_file(file_path, data.fileData);
 	if (0 === data.queue){
+		// restart if running and option ticked
+		if(await ide_settings.get_setting('restartUponUpload') && processes.run.get_status())
+			process_manager.run(data);
 		data.fileList = await listFiles(data.currentProject);
 		await openFile(data);
 	}

@@ -53,6 +53,9 @@ var readChunk = require("read-chunk");
 var fileType = require("file-type");
 var DecompressZip = require("decompress-zip");
 var socket_manager = require("./SocketManager");
+var process_manager = require("./ProcessManager");
+var processes = require("./IDEProcesses");
+var ide_settings = require("./IDESettings");
 var max_file_size = 52428800; // bytes (50Mb)
 var max_preview_size = 524288000; // bytes (500Mb)
 function emptyObject(obj) {
@@ -633,16 +636,21 @@ function uploadFile(data) {
                     return [4 /*yield*/, file_manager.save_file(file_path, data.fileData)];
                 case 4:
                     _c.sent();
-                    if (!(0 === data.queue)) return [3 /*break*/, 7];
+                    if (!(0 === data.queue)) return [3 /*break*/, 8];
+                    return [4 /*yield*/, ide_settings.get_setting('restartUponUpload')];
+                case 5:
+                    // restart if running and option ticked
+                    if ((_c.sent()) && processes.run.get_status())
+                        process_manager.run(data);
                     _b = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
-                case 5:
+                case 6:
                     _b.fileList = _c.sent();
                     return [4 /*yield*/, openFile(data)];
-                case 6:
+                case 7:
                     _c.sent();
-                    _c.label = 7;
-                case 7: return [2 /*return*/];
+                    _c.label = 8;
+                case 8: return [2 /*return*/];
             }
         });
     });

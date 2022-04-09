@@ -68,11 +68,10 @@ fileView.on('message', (event, data) => {
 	socket.emit(event, data);
 });
 
-fileView.on('force-rebuild', () => {
-	socket.emit('process-event', {
-		event			: 'rebuild',
-		currentProject	: models.project.getKey('currentProject')
-	});
+fileView.on('file-uploaded', () => {
+	let restartUponUpload = parseInt(models.settings.getKey('restartUponUpload'));
+	if(restartUponUpload && models.status.getKey('running'))
+		runProject();
 });
 fileView.on('file-rejected', errMsg => {
 	var timestamp = performance.now();

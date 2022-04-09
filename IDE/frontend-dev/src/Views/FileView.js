@@ -16,7 +16,6 @@ var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
 var fileQueue = [];
-var forceRebuild = false;
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
@@ -564,8 +563,6 @@ class FileView extends View {
 		}
 		uploadingFile = true;
 
-		if (file.name === '_main.pd') forceRebuild = true;
-
 		let obj = await this.promptForOverwrite(sanitise(file.name));
 		if(obj.do) {
 			let saveas;
@@ -603,10 +600,12 @@ class FileView extends View {
       contentType: false,
       data: formData,
       success: function(r){
-        // would be great if this could be sent as part of the POST body
+        // would be great if these could be sent as part of the POST body
+        // note: for drag-and-drop files, the equivalent to these is
+        // done in ProjectManager::uploadFile on the server
         that.emit('list-files');
+        that.emit('file-uploaded');
         popup.ok(json.popups.upload_file_success);
-        that.emit('force-rebuild');
       },
       error: function(e) {
         that.emit('list-files');
@@ -620,10 +619,6 @@ class FileView extends View {
 
 	async actuallyDoFileUpload(file, saveas, force, isProject){
 		var reader = new FileReader();
-		if (forceRebuild && !fileQueue.length){
-			forceRebuild = false;
-			this.emit('force-rebuild');
-		}
 		let onloadend = (func, args, ev) => {
 				if(func && ev){
 					if(ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result)

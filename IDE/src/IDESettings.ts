@@ -65,6 +65,7 @@ function default_IDE_settings(){
 	return {
 		'project'		: 'basic',
 		'liveAutocompletion'	: 1,
+		'restartUponUpload'	: 0,
 		'liveSyntaxChecking'	: 1,
 		'verboseErrors'		: 0,
 		'cpuMonitoring'		: 1,
