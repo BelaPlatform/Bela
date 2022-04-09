@@ -1200,7 +1200,7 @@ ul dl {
     padding: .5em; }
     #popup input[type=text] {
       margin-top: 1em;
-      width: 15em; }
+      width: 400px; }
     #popup input[type=file] {
       background: initial;
       border: initial;
