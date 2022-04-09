@@ -2063,10 +2063,6 @@ var EditorView = function (_View) {
 	}, {
 		key: '__fileData',
 		value: function __fileData(data, opts) {
-			if (null === data && 'binary' !== opts.fileType) {
-				console.log("Unhandled empty fileData", opts);
-				return;
-			}
 			// hide the pd patch and image displays if present, and the editor
 			var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg', 'data-editor'];
 			allAltSelectors = '[' + allAltSelectors.join('], [') + ']'; // turn them into valid jquery selectors
@@ -2085,7 +2081,13 @@ var EditorView = function (_View) {
 			this.projectModel.setKey('readOnly', true);
 			if (!opts.fileType) opts.fileType = '0';
 
-			if (opts.fileType.indexOf('image') !== -1) {
+			if (null === data || null === opts.fileName) {
+				// file was deleted
+				// print a warning in the pd div. This is so that we don't need
+				// special handling of yet another div
+				$('[data-editor-msg]').html(json.editor_view.deleted.error);
+				$('[data-editor-msg-parent]').addClass('active');
+			} else if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
 				$('[data-img-display-parent]').addClass('active');
@@ -2137,8 +2139,7 @@ var EditorView = function (_View) {
 					// start comparison with file on disk
 					this.emit('compare-files', true);
 				} else if ('binary' === opts.fileType) {
-					// print a warning in the pd div. This is so that we don't need
-					// special handling of yet another div
+					// print a warning in the pd div like above
 					$('[data-editor-msg]').html(json.editor_view.binary.error);
 					$('[data-editor-msg-parent]').addClass('active');
 				} else {
@@ -6725,6 +6726,9 @@ module.exports={
       },
       "binary": {
         "error": "This type of file cannot be displayed."
+      },
+      "deleted": {
+        "error": "This file no longer exists. Select or create another file."
       },
       "keypress_read_only": "This file is read-only. Open a file or refresh the page to keep editing."
 	},

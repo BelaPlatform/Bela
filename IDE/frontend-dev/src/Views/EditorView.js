@@ -161,10 +161,6 @@ class EditorView extends View {
 	// model events
 	// new file saved
 	__fileData(data, opts){
-	if(null === data && 'binary' !== opts.fileType) {
-		console.log("Unhandled empty fileData", opts);
-		return;
-	}
 	// hide the pd patch and image displays if present, and the editor
 	let allAltSelectors = [
 		'data-img-display-parent', 'data-img-display',
@@ -189,7 +185,12 @@ class EditorView extends View {
 		this.projectModel.setKey('readOnly', true);
 		if (!opts.fileType) opts.fileType = '0';
 
-		if (opts.fileType.indexOf('image') !== -1){
+		if (null === data || null === opts.fileName) { // file was deleted
+				// print a warning in the pd div. This is so that we don't need
+				// special handling of yet another div
+				$('[data-editor-msg]').html(json.editor_view.deleted.error);
+				$('[data-editor-msg-parent]').addClass('active');
+		} else if (opts.fileType.indexOf('image') !== -1){
 
 			// opening image file
 			$('[data-img-display-parent]').addClass('active');
@@ -247,8 +248,7 @@ class EditorView extends View {
 				this.emit('compare-files', true);
 
 			} else if ('binary' === opts.fileType) {
-				// print a warning in the pd div. This is so that we don't need
-				// special handling of yet another div
+				// print a warning in the pd div like above
 				$('[data-editor-msg]').html(json.editor_view.binary.error);
 				$('[data-editor-msg-parent]').addClass('active');
 			} else {
