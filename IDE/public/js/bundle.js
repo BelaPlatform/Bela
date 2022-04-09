@@ -2334,6 +2334,8 @@ var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 var absIndeces = ['pd'];
+var overlayActiveClass = 'active-drag-upload';
+var overlay = void 0;
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -2365,9 +2367,8 @@ var FileView = function (_View) {
 			project: ""
 		};
 
-		var overlayActiveClass = 'active-drag-upload';
 		// drag and drop file upload on editor
-		var overlay = $('[data-overlay]');
+		overlay = $('[data-overlay]');
 		overlay.on('dragleave', function (e) {
 			overlay.removeClass(overlayActiveClass);
 		});
@@ -2399,11 +2400,6 @@ var FileView = function (_View) {
 					} else {
 						fileQueue.push(e.originalEvent.dataTransfer.files[i]);
 					}
-					if (i == e.originalEvent.dataTransfer.files.length - 1) {
-						setTimeout(function () {
-							overlay.removeClass(overlayActiveClass).removeClass('no');
-						}, 1500);
-					}
 				}
 				_this.processQueue();
 			}
@@ -2413,10 +2409,15 @@ var FileView = function (_View) {
 		return _this;
 	}
 
-	// UI events
-
-
 	_createClass(FileView, [{
+		key: 'hideOverlay',
+		value: function hideOverlay() {
+			overlay.removeClass(overlayActiveClass).removeClass('no');
+		}
+
+		// UI events
+
+	}, {
 		key: 'buttonClicked',
 		value: function buttonClicked($element) {
 			var func = $element.data().func;
@@ -2923,8 +2924,8 @@ var FileView = function (_View) {
 			uploadingFile = true;
 
 			var obj = await this.promptForOverwrite(sanitise(file.name));
+			var saveas = null;
 			if (obj.do) {
-				var saveas = void 0;
 				var isProject = void 0;
 				if (file.name.search(/\.zip$/) != -1) {
 					var newProject = sanitise(file.name.replace(/\.zip$/, ""));
@@ -2942,6 +2943,13 @@ var FileView = function (_View) {
 					isProject = false;
 				}
 				if (null !== saveas) this.actuallyDoFileUpload(file, saveas, obj.force, isProject);
+			}
+			if (null === saveas) {
+				// when the last file is actuallyDoFileUpload'ed above, the overlay is
+				// removed there upon completion
+				// If the last file in the queue is not uploaded, however, we have to
+				// remove the overlay here
+				if (!fileQueue.length) this.hideOverlay();
 			}
 			uploadingFile = false;
 			this.processQueue();
@@ -2990,6 +2998,9 @@ var FileView = function (_View) {
 						args.force = force;
 						args.queue = fileQueue.length;
 						_this8.emit('message', 'project-event', args);
+					}
+					if (!fileQueue.length) {
+						_this8.hideOverlay();
 					}
 				}
 			};
