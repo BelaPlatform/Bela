@@ -632,7 +632,6 @@ class FileView extends View {
 						this.emit('file-rejected', 'error while uploading '+file.name);
 					else {
 						args.func = func;
-						args.newFile = saveas;
 						args.fileData = ev.target.result;
 						args.force = force;
 						args.queue = fileQueue.length;
@@ -648,9 +647,14 @@ class FileView extends View {
 		// properly because the popup from the error will overwrite any active popup.
 		// A reset may be required.
 		if (isProject) {
-			reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: saveas });
+			reader.onloadend = onloadend.bind(this, 'uploadZipProject', {
+				newProject: saveas,
+				newFile: saveas + '.zip',
+			});
 		} else {
-			reader.onloadend = onloadend.bind(this, 'uploadFile', {});
+			reader.onloadend = onloadend.bind(this, 'uploadFile', {
+				newFile: saveas,
+			});
 		}
 		reader.readAsArrayBuffer(file);
 	}

@@ -2993,7 +2993,6 @@ var FileView = function (_View) {
 				if (func && ev) {
 					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this8.emit('file-rejected', 'error while uploading ' + file.name);else {
 						args.func = func;
-						args.newFile = saveas;
 						args.fileData = ev.target.result;
 						args.force = force;
 						args.queue = fileQueue.length;
@@ -3009,9 +3008,14 @@ var FileView = function (_View) {
 			// properly because the popup from the error will overwrite any active popup.
 			// A reset may be required.
 			if (isProject) {
-				reader.onloadend = onloadend.bind(this, 'uploadZipProject', { newProject: saveas });
+				reader.onloadend = onloadend.bind(this, 'uploadZipProject', {
+					newProject: saveas,
+					newFile: saveas + '.zip'
+				});
 			} else {
-				reader.onloadend = onloadend.bind(this, 'uploadFile', {});
+				reader.onloadend = onloadend.bind(this, 'uploadFile', {
+					newFile: saveas
+				});
 			}
 			reader.readAsArrayBuffer(file);
 		}
