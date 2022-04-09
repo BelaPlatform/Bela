@@ -215,7 +215,7 @@ class Console extends EventEmitter {
 	}
 
 	checkScroll(){
-		if (this.parent.scrollHeight-this.parent.scrollTop === this.parent.clientHeight){
+		if (Math.abs(this.parent.scrollHeight - this.parent.scrollTop - this.parent.clientHeight) < 3){
 			scrollEnabled = true;
 		} else {
 			scrollEnabled = false;
