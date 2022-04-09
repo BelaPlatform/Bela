@@ -140,15 +140,19 @@ editorView.on('console-brief', (text, id) => {
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings]);
 toolbarView.on('process-event', (event) => {
-	var data = {
-		event,
-		currentProject	: models.project.getKey('currentProject')
-	};
-	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
-	if (event === 'run' || event === 'stop')
-		toolbarView.emit('msw-start-grace', event);
-	socket.emit('process-event', data);
+	if('run' === event)
+		runProject();
+	else {
+		var data = {
+			event,
+			currentProject: models.project.getKey('currentProject')
+		};
+		if (event === 'stop') {
+			consoleView.emit('openProcessNotification', json.ide_browser.stop);
+			toolbarView.emit('msw-start-grace', event);
+		}
+		socket.emit('process-event', data);
+	}
 });
 toolbarView.on('halt', () => {
 	socket.emit('shutdown');
@@ -476,6 +480,15 @@ function exitReadonlyPopup() {
 			popup.hide();
 		}
 	);
+}
+
+// helper functions
+function runProject() {
+	socket.emit('process-event', {
+		event: 'run',
+		currentProject: models.project.getKey('currentProject'),
+	});
+	toolbarView.emit('msw-start-grace', event);
 }
 
 // model events
