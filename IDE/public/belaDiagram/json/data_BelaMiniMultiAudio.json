@@ -452,7 +452,7 @@
     {
       "elemclass": "dPin",
       "x": "40",
-      "y": "174",
+      "y": "195",
       "width": "13",
       "height": "13",
       "text": "Digital 10 (Pd: 27)",
@@ -461,7 +461,7 @@
     {
       "elemclass": "dPin",
       "x": "40",
-      "y": "154",
+      "y": "174",
       "width": "13",
       "height": "13",
       "text": "Digital 11 (Pd: 28)",
