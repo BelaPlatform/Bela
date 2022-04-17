@@ -209,6 +209,13 @@ export async function openExample(data: any){
 	await openProject(data);
 }
 
+async function postNewProject(data: any){
+	data.projectList = await listProjects();
+	data.currentProject = data.newProject;
+	data.newProject = undefined;
+	await openProject(data);
+}
+
 export async function newProject(data: any){
 	if(typeof(data.newProject) === "string")
 	{
@@ -223,10 +230,7 @@ export async function newProject(data: any){
 		return;
 	}
 	await file_manager.copy_directory(paths.templates+data.projectType, paths.projects+data.newProject);
-	data.projectList = await listProjects();
-	data.currentProject = data.newProject;
-	data.newProject = undefined;
-	await openProject(data);
+	await postNewProject(data);
 }
 
 export async function saveAs(data: any){
@@ -236,10 +240,7 @@ export async function saveAs(data: any){
 	}
 	await cleanProject(data);
 	await file_manager.copy_directory(paths.projects+data.currentProject, paths.projects+data.newProject);
-	data.projectList = await listProjects();
-	data.currentProject = data.newProject;
-	data.newProject = undefined;
-	await openProject(data);
+	postNewProject(data);
 }
 
 export async function deleteProject(data: any){
@@ -344,8 +345,7 @@ export async function uploadZipProject(data: any){
 				console.log("Strip off the top-level folder: ", source_path);
 			}
 			await file_manager.copy_directory(source_path, target_path);
-			data.currentProject = data.newProject;
-			await openProject(data);
+			await postNewProject(data);
 			_cleanup();
 			resolve();
 		});

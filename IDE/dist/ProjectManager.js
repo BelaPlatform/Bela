@@ -421,11 +421,30 @@ function openExample(data) {
     });
 }
 exports.openExample = openExample;
-function newProject(data) {
+function postNewProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
+                case 0:
+                    _a = data;
+                    return [4 /*yield*/, listProjects()];
+                case 1:
+                    _a.projectList = _b.sent();
+                    data.currentProject = data.newProject;
+                    data.newProject = undefined;
+                    return [4 /*yield*/, openProject(data)];
+                case 2:
+                    _b.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function newProject(data) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     if (typeof (data.newProject) === "string") {
                         data.newProject = data.newProject.trim();
@@ -436,22 +455,16 @@ function newProject(data) {
                     }
                     return [4 /*yield*/, file_manager.directory_exists(paths.projects + data.newProject)];
                 case 1:
-                    if (_b.sent()) {
+                    if (_a.sent()) {
                         data.error = 'failed, project ' + data.newProject + ' already exists!';
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, file_manager.copy_directory(paths.templates + data.projectType, paths.projects + data.newProject)];
                 case 2:
-                    _b.sent();
-                    _a = data;
-                    return [4 /*yield*/, listProjects()];
+                    _a.sent();
+                    return [4 /*yield*/, postNewProject(data)];
                 case 3:
-                    _a.projectList = _b.sent();
-                    data.currentProject = data.newProject;
-                    data.newProject = undefined;
-                    return [4 /*yield*/, openProject(data)];
-                case 4:
-                    _b.sent();
+                    _a.sent();
                     return [2 /*return*/];
             }
         });
@@ -460,30 +473,21 @@ function newProject(data) {
 exports.newProject = newProject;
 function saveAs(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0: return [4 /*yield*/, file_manager.directory_exists(paths.projects + data.newProject)];
                 case 1:
-                    if (_b.sent()) {
+                    if (_a.sent()) {
                         data.error = 'failed, project ' + data.newProject + ' already exists!';
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, cleanProject(data)];
                 case 2:
-                    _b.sent();
+                    _a.sent();
                     return [4 /*yield*/, file_manager.copy_directory(paths.projects + data.currentProject, paths.projects + data.newProject)];
                 case 3:
-                    _b.sent();
-                    _a = data;
-                    return [4 /*yield*/, listProjects()];
-                case 4:
-                    _a.projectList = _b.sent();
-                    data.currentProject = data.newProject;
-                    data.newProject = undefined;
-                    return [4 /*yield*/, openProject(data)];
-                case 5:
-                    _b.sent();
+                    _a.sent();
+                    postNewProject(data);
                     return [2 /*return*/];
             }
         });
@@ -719,8 +723,7 @@ function uploadZipProject(data) {
                                             return [4 /*yield*/, file_manager.copy_directory(source_path, target_path)];
                                         case 2:
                                             _a.sent();
-                                            data.currentProject = data.newProject;
-                                            return [4 /*yield*/, openProject(data)];
+                                            return [4 /*yield*/, postNewProject(data)];
                                         case 3:
                                             _a.sent();
                                             _cleanup();
