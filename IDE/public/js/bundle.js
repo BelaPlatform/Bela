@@ -6323,7 +6323,7 @@ var popup = {
 	},
 	disableSubmit: function disableSubmit() {
 		this.form.off('submit');
-		$('button[type=submit]', this.form).addClass('button-disabled');
+		$('button[type=submit]', this.form).addClass('button-disabled').prop('disabled', true);
 	},
 	enableSubmit: function enableSubmit() {
 		var _this = this;
@@ -6331,7 +6331,7 @@ var popup = {
 		this.form.on('submit', function (e) {
 			_this.respondToEvent(_this.stashedOnSubmit, e);
 		});
-		$('button[type=submit]', this.form).removeClass('button-disabled');
+		$('button[type=submit]', this.form).removeClass('button-disabled').prop('disabled', false);
 	},
 
 	// shorthands for common popup configurations.

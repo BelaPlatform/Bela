@@ -131,13 +131,13 @@ var popup = {
 	},
 	disableSubmit() {
 		this.form.off('submit');
-		$('button[type=submit]', this.form).addClass('button-disabled');
+		$('button[type=submit]', this.form).addClass('button-disabled').prop('disabled', true);
 	},
 	enableSubmit() {
 		this.form.on('submit', (e) => {
 			this.respondToEvent(this.stashedOnSubmit, e)
 		});
-		$('button[type=submit]', this.form).removeClass('button-disabled');
+		$('button[type=submit]', this.form).removeClass('button-disabled').prop('disabled', false);
 	},
 	// shorthands for common popup configurations.
 	// strings may have fields: title, text(subtitle), code, body, button, cancel
