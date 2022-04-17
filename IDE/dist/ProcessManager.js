@@ -168,20 +168,20 @@ function upload(data) {
 }
 exports.upload = upload;
 // this function starts a syntax check
-// if a syntax check or build process is in progress they are stopped
-// a running program is not stopped
+// if a build is in progress, syntax check is not started
+// if a syntax check is in progress it is restarted
+// in all other cases, a syntax check is started immediately
 // this can be called either from upload() or from the frontend (via SocketManager)
 function checkSyntax(data) {
     if (!data.currentProject)
         return;
     var project = data.currentProject;
-    if (processes.syntax.get_status()) {
+    if (processes.build.get_status()) {
+        // do nothing
+    }
+    else if (processes.syntax.get_status()) {
         processes.syntax.stop();
         processes.syntax.queue(function () { return processes.syntax.start(project); });
-    }
-    else if (processes.build.get_status()) {
-        processes.build.stop();
-        processes.build.queue(function () { return processes.syntax.start(project); });
     }
     else {
         processes.syntax.start(project);
