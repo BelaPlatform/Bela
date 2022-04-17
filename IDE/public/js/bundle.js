@@ -2064,10 +2064,12 @@ var EditorView = function (_View) {
 		key: '__fileData',
 		value: function __fileData(data, opts) {
 			// hide the pd patch and image displays if present, and the editor
-			var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg', 'data-editor'];
+			var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg'];
 			allAltSelectors = '[' + allAltSelectors.join('], [') + ']'; // turn them into valid jquery selectors
 			var allEditorAlts = $(allAltSelectors);
 			allEditorAlts.removeClass('active');
+			$('[data-editor]').removeClass('active');
+
 			allEditorAlts.css({
 				'max-width': $('[data-editor]').width() + 'px',
 				'max-height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch

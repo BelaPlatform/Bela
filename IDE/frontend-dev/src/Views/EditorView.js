@@ -167,11 +167,12 @@ class EditorView extends View {
 		'data-audio-parent', 'data-audio',
 		'data-pd-svg-parent', 'data-pd-svg',
 		'data-editor-msg-parent', 'data-editor-msg',
-		'data-editor'
 	];
 	allAltSelectors = '['+allAltSelectors.join('], [')+']'; // turn them into valid jquery selectors
 	let allEditorAlts = $(allAltSelectors);
 	allEditorAlts.removeClass('active');
+	$('[data-editor]').removeClass('active');
+
 	allEditorAlts.css({
 		'max-width'	: $('[data-editor]').width() + 'px',
 		'max-height': ($('[data-editor]').height() - 2) + 'px' // -2 because it makes for a better Pd patch
