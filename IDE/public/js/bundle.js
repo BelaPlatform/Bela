@@ -1993,11 +1993,7 @@ var EditorView = function (_View) {
 
 		_this.on('resize', function () {
 			_this.editor.resize();
-			var data = tmpData;
-			var opts = tmpOpts;
-			if (opts.fileType && (opts.fileType == "pd" || opts.fileType.indexOf('image') !== -1)) {
-				_this.__fileData(data, opts);
-			}
+			_this.resize();
 		});
 
 		_this.on('add-link', function (link, type) {
@@ -2025,6 +2021,9 @@ var EditorView = function (_View) {
 
 		_this.on('search', _this.search);
 
+		var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg'];
+		allAltSelectors = '[' + allAltSelectors.join('], [') + ']'; // turn them into valid jquery selectors
+		_this.allEditorAlts = $(allAltSelectors);
 		return _this;
 	}
 
@@ -2056,24 +2055,25 @@ var EditorView = function (_View) {
 				this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
 			}
 		}
-
+	}, {
+		key: 'resize',
+		value: function resize() {
+			this.allEditorAlts.css({
+				'max-width': $('[data-editor]').width() + 'px',
+				'max-height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch
+			});
+		}
 		// model events
 		// new file saved
 
 	}, {
 		key: '__fileData',
-		value: function __fileData(data, opts) {
-			// hide the pd patch and image displays if present, and the editor
-			var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg'];
-			allAltSelectors = '[' + allAltSelectors.join('], [') + ']'; // turn them into valid jquery selectors
-			var allEditorAlts = $(allAltSelectors);
-			allEditorAlts.removeClass('active');
+		value: function __fileData(data, opts, dunno, resize) {
+			this.resize();
+			// hide all views. Below, the current one will be re-enabled
+			this.allEditorAlts.removeClass('active');
 			$('[data-editor]').removeClass('active');
 
-			allEditorAlts.css({
-				'max-width': $('[data-editor]').width() + 'px',
-				'max-height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch
-			});
 			tmpData = data;
 			tmpOpts = opts;
 

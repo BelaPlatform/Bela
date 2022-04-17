@@ -98,14 +98,7 @@ class EditorView extends View {
 
 		this.on('resize', () => {
 			this.editor.resize();
-			var data = tmpData;
-			var opts = tmpOpts;
-			if (opts.fileType && (
-				opts.fileType == "pd"
-				|| opts.fileType.indexOf('image') !== -1)
-			) {
-				this.__fileData(data, opts);
-			}
+			this.resize();
 		});
 
 		this.on('add-link', (link, type) => {
@@ -132,6 +125,14 @@ class EditorView extends View {
 
     this.on('search', this.search);
 
+		let allAltSelectors = [
+			'data-img-display-parent', 'data-img-display',
+			'data-audio-parent', 'data-audio',
+			'data-pd-svg-parent', 'data-pd-svg',
+			'data-editor-msg-parent', 'data-editor-msg',
+		];
+		allAltSelectors = '['+allAltSelectors.join('], [')+']'; // turn them into valid jquery selectors
+		this.allEditorAlts = $(allAltSelectors);
 	}
 
   search(){
@@ -158,25 +159,20 @@ class EditorView extends View {
 		}
 	}
 
+	resize() {
+		this.allEditorAlts.css({
+			'max-width'	: $('[data-editor]').width() + 'px',
+			'max-height': ($('[data-editor]').height() - 2) + 'px' // -2 because it makes for a better Pd patch
+			});
+	}
 	// model events
 	// new file saved
-	__fileData(data, opts){
-	// hide the pd patch and image displays if present, and the editor
-	let allAltSelectors = [
-		'data-img-display-parent', 'data-img-display',
-		'data-audio-parent', 'data-audio',
-		'data-pd-svg-parent', 'data-pd-svg',
-		'data-editor-msg-parent', 'data-editor-msg',
-	];
-	allAltSelectors = '['+allAltSelectors.join('], [')+']'; // turn them into valid jquery selectors
-	let allEditorAlts = $(allAltSelectors);
-	allEditorAlts.removeClass('active');
-	$('[data-editor]').removeClass('active');
+	__fileData(data, opts, dunno, resize){
+		this.resize();
+		// hide all views. Below, the current one will be re-enabled
+		this.allEditorAlts.removeClass('active');
+		$('[data-editor]').removeClass('active');
 
-	allEditorAlts.css({
-		'max-width'	: $('[data-editor]').width() + 'px',
-		'max-height': ($('[data-editor]').height() - 2) + 'px' // -2 because it makes for a better Pd patch
-		});
     tmpData = data;
     tmpOpts = opts;
 
