@@ -2084,9 +2084,7 @@ var EditorView = function (_View) {
 			if (!opts.fileType) opts.fileType = '0';
 
 			if (null === data || null === opts.fileName) {
-				// file was deleted
-				// print a warning in the pd div. This is so that we don't need
-				// special handling of yet another div
+				// file was deleted, print a warning
 				$('[data-editor-msg]').html(json.editor_view.deleted.error);
 				$('[data-editor-msg-parent]').addClass('active');
 			} else if (opts.fileType.indexOf('image') !== -1) {
@@ -2141,7 +2139,7 @@ var EditorView = function (_View) {
 					// start comparison with file on disk
 					this.emit('compare-files', true);
 				} else if ('binary' === opts.fileType) {
-					// print a warning in the pd div like above
+					// print a warning
 					$('[data-editor-msg]').html(json.editor_view.binary.error);
 					$('[data-editor-msg-parent]').addClass('active');
 				} else {

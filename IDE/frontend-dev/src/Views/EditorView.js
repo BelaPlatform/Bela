@@ -182,9 +182,7 @@ class EditorView extends View {
 		this.projectModel.setKey('readOnly', true);
 		if (!opts.fileType) opts.fileType = '0';
 
-		if (null === data || null === opts.fileName) { // file was deleted
-				// print a warning in the pd div. This is so that we don't need
-				// special handling of yet another div
+		if (null === data || null === opts.fileName) { // file was deleted, print a warning
 				$('[data-editor-msg]').html(json.editor_view.deleted.error);
 				$('[data-editor-msg-parent]').addClass('active');
 		} else if (opts.fileType.indexOf('image') !== -1){
@@ -245,7 +243,7 @@ class EditorView extends View {
 				this.emit('compare-files', true);
 
 			} else if ('binary' === opts.fileType) {
-				// print a warning in the pd div like above
+				// print a warning
 				$('[data-editor-msg]').html(json.editor_view.binary.error);
 				$('[data-editor-msg-parent]').addClass('active');
 			} else {
