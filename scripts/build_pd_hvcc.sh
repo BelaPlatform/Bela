@@ -19,4 +19,4 @@ set -u
 
 hvcc $SOURCE -o $tmppath -n bela -g c
 rsync -aq $SCRIPTDIR/hvresources/render.cpp $tmppath/c
-$SCRIPTDIR/build_project.sh $tmppath/c/ -p $PROJECT_NAME $@
+$SCRIPTDIR/build_project.sh $tmppath/c/ -p $PROJECT_NAME "$@"
