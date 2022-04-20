@@ -1137,7 +1137,7 @@ SPI_SKIP_DAC_WRITE_0:
      MOV r7, AD7699_CFG_MASK
      OR r7, r7, r8
 
-     ADC_WRITE_GPIO r7, r7, r1
+     ADC_WRITE_GPIO r7, r7, r1 // includes DO_DIGITAL
 
      // Mask out only the relevant 16 bits and store in reg_adc_data
      MOV r2, 0xFFFF
@@ -1196,6 +1196,13 @@ MUX_4_7_DONE:
      QBA ADC_DAC_LOOP_DONE
 SPI_SKIP_WRITE:
      // We get here only if the SPI ADC and DAC are disabled
+
+     // if digital is enabled and SPI is disabled, do digital here on even frames
+     QBBC GPIO_DONE, reg_flags, FLAG_BIT_USE_DIGITAL //skip if DIGITAL is disabled
+     AND r27, reg_frame_current, 0x1 // even frames only
+     QBNE GPIO_DONE, r27, 0
+     DO_DIGITAL
+GPIO_DONE:
      // Just keep the loop going for McASP
 
      // Toggle the high/low word for McASP control (since we send one word out of
