@@ -15,7 +15,6 @@
 *.js.map
 /.plugins/
 /updates/
-include/pru_rtaudio_bin.h
 IDE/public/media
 pru_rtaudio*.txt
 resources/tools/bela-cape-btn/bela-cape-btn
