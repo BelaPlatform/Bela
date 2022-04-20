@@ -1,4 +1,5 @@
 #!/bin/bash
+# OBSOLETE: unless you have a new server offering hvcc builds you should run it locally using build_pd_hvcc.sh
 # This script uploads Pd patches to Enzienaudio's server and compiles them on Bela
 
 pdpath=
