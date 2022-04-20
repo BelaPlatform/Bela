@@ -899,6 +899,25 @@ DONE:
      ADC_CS_UNASSERT
 .endm
 
+.macro DO_DIGITAL
+// execution from here to the end of the macro takes 1.8us, while usually
+// ADC_WAIT_FOR_FINISH only waits for 1.14us.
+//TODO: it would be better to split the DIGITAL stuff in two parts:
+//- one taking place during DAC_WRITE which sets the GPIO_OE
+//- and the other during ADC_WRITE which actually reads DATAIN and writes CLEAR/SET DATAOUT
+     // do not use r27 from here to ...
+     LBBO r27, reg_digital_current, 0, 4
+     JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
+     // in the low word, set the bits corresponding to output values to 0
+     // this way, if the ARM program crashes, the PRU will write 0s to the outputs
+     LSL r28, r27, 16
+     // high word now contains bitmask with 0s where outputs are
+     AND r27.w2, r28.w2, r27.w2 // mask them out
+     SBBO r27, reg_digital_current, 0, 4
+     //..here you can start using r27 again
+     ADD reg_digital_current, reg_digital_current, 4 //increment pointer
+.endm
+
 // Complete ADC write+read with chip select and also performs IO for digital
 .macro ADC_WRITE_GPIO
 .mparam in, out, do_gpio
@@ -914,16 +933,7 @@ CASE_4_OR_8_CHANNELS:
      AND r27, do_gpio, 0x3 // only do a DIGITAL every 2 SPI I/O
      QBNE GPIO_DONE, r27, 0 
 DO_GPIO:
-//from here to GPIO_DONE takes 1.8us, while usually ADC_WAIT_FOR_FINISH only waits for 1.14us.
-//TODO: it would be better to split the DIGITAL stuff in two parts:
-//- one taking place during DAC_WRITE which sets the GPIO_OE
-//- and the other during ADC_WRITE which actually reads DATAIN and writes CLEAR/SET DATAOUT
-                            //r27 is actually r27, so do not use r27 from here to ...
-     LBBO r27, reg_digital_current, 0, 4 
-     JAL r28.w0, DIGITAL // note that this is not called as a macro, but with JAL. r28 will contain the return address
-     SBBO r27, reg_digital_current, 0,   4 
-                            //..here you can start using r27 again
-     ADD reg_digital_current, reg_digital_current, 4 //increment pointer
+     DO_DIGITAL
 GPIO_DONE:
      ADC_WAIT_FOR_FINISH
      ADC_RX out
