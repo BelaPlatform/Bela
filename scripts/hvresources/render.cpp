@@ -289,7 +289,7 @@ static void sendHook(
 		}
 		case 0xe8458013: { // __hv_bendout
 			if (!hv_msg_hasFormat(m, "ff")) return;
-			unsigned int value = ((midi_byte_t) hv_msg_getFloat(m, 0)) + 8192;
+			unsigned int value = hv_msg_getFloat(m, 0);
 			int channel = (midi_byte_t) hv_msg_getFloat(m, 1);
 			int port = getPortChannel(&channel);
 			//rt_printf("bendout[%d]: %d %d\n", port, channel, value);
@@ -488,7 +488,7 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
 			static MidiChannelMessage message;
-			unsigned int channelOffset = port * 16 + 1; // remove + 1 if you want your first channel to be 0 (libpd-style)
+			unsigned int channelOffset = port * 16;
 			message = midi[port]->getParser()->getNextChannelMessage();
 			switch(message.getType()){
 			case kmmNoteOn: {
