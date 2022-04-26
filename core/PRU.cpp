@@ -834,7 +834,7 @@ int PRU::testPruError()
 }
 
 // Main loop to read and write data from/to PRU
-void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode)
+void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData)
 {
 
 	// these pointers will be constant throughout the lifetime of pruMemory
@@ -915,6 +915,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			task_sleep_ns(100000000);
 		}
 #endif
+		if(cpuData)
+			Bela_cpuTic(cpuData);
 
 		if(stopButton.enabled()){
 			static int stopButtonCount = 0;
@@ -1484,6 +1486,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 		// Increment total number of samples that have elapsed.
 		context->audioFramesElapsed += context->audioFrames;
+		if(cpuData)
+			Bela_cpuToc(cpuData);
 
 	}
 
