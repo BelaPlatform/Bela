@@ -128,6 +128,7 @@ int gRTAudioVerbose = 0; // Verbosity level for debugging
 AudioCodec* gAudioCodec = NULL;
 static AudioCodec* gDisabledCodec = NULL;
 static BelaHw belaHw;
+BelaCpuData belaCpuData;
 extern const float BELA_INVALID_GAIN;
 
 static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPrivate* pcfg)
@@ -800,7 +801,10 @@ void audioLoop(void *)
 		rt_printf("_________________Audio Thread!\n");
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
-	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode);
+	BelaCpuData* cpuData = NULL;
+	if(belaCpuData.init.enabled)
+		cpuData = &belaCpuData;
+	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode, cpuData);
 	// Now clean up
 	// gPRU->waitForFinish();
 	gPRU->disable();
@@ -1072,6 +1076,48 @@ void Bela_requestStop()
 int Bela_stopRequested()
 {
 	return gShouldStop;
+}
+
+int Bela_cpuMonitoringSet(BelaCpuInit const* init)
+{
+	if(!init)
+		return -1;
+	memset(&belaCpuData, 0, sizeof(belaCpuData));
+	belaCpuData.init = *init;
+	return 0;
+}
+
+BelaCpuData* Bela_cpuMonitoringGet()
+{
+	return &belaCpuData;
+}
+
+void Bela_cpuTic(BelaCpuData* data)
+{
+	if(!data || !data->init.enabled)
+		return;
+	struct timespec pastTimeStart = data->tic;
+	__wrap_clock_gettime(CLOCK_MONOTONIC, &data->tic);
+	long long unsigned int diff = timespec_sub(&data->tic, &pastTimeStart);
+	data->total += diff;
+	data->currentCount++;
+	if(data->init.count == data->currentCount)
+	{
+		data->percentage = (double(data->busy) / data->total) * 100;
+
+		data->busy = 0;
+		data->total = 0;
+		data->currentCount = 0;
+	}
+}
+
+void Bela_cpuToc(BelaCpuData* data)
+{
+	if(!data || !data->init.enabled)
+		return;
+	__wrap_clock_gettime(CLOCK_MONOTONIC, &data->toc);
+	long long unsigned int diff = timespec_sub(&data->toc, &data->tic);
+	data->busy += diff;
 }
 
 // Set the level of the DAC; affects all outputs (headphone, line, speaker)

@@ -831,7 +831,53 @@ void Bela_requestStop();
  */
 int Bela_stopRequested();
 
+typedef struct {
+	int enabled; ///< Number of samples (tic/toc pairs) in a sampling cycle
+	int count; ///< Whether sampling is enabled or disabled
+} BelaCpuInit;
 /** @} */
+#ifndef BELA_DISABLE_CPU_TIME
+/**
+ * \defgroup CPU Computing CPU time.
+ *
+ * These functions allow to monitor CPU usage of the whole audio thread or of
+ * arbitrary sections of the program while it is running.
+ *
+ * Manually calling Bela_cpuTic() and Bela_cpuToc() around specific sections of
+ * the code, the CPU performance of these sections can be evaluated. Calling
+ * these functions incurs an overhead.
+ *
+ * When setting the internal CPU monitoring via Bela_cpuMonitoringSet() (with
+ * `enabled = 1`), the user can compute the CPU time of the entire audio thread. The core
+ * code internally calls Bela_cpuTic() and Bela_cpuToc() and the user can get
+ * the CPU usage details vai Bela_cpuMonitoringGet();
+ */
+#include <time.h>
+typedef struct {
+	BelaCpuInit init;
+	unsigned int currentCount; ///< Number of tics in current sampling cycle
+	long long unsigned int busy; ///< Total CPU time spent being busy (between tic and toc)
+	long long unsigned int total; ///< Total CPU time (between toc and next toc)
+	struct timespec tic; ///< Internal
+	struct timespec toc; ///< Internal
+	float percentage; ///< Average CPU usage during previous sampling cycle
+} BelaCpuData;
+/**
+ * Set internal CPU monitoring.
+ */
+int Bela_cpuMonitoringSet(BelaCpuInit const* init);
+/**
+ * Get stats about internal CPU monitoring.
+ */
+BelaCpuData* Bela_cpuMonitoringGet();
+/**
+ * Compute CPU time between two calls
+ */
+void Bela_cpuTic(BelaCpuData* data);
+void Bela_cpuToc(BelaCpuData* data);
+
+/** @} */
+#endif // BELA_DISABLE_CPU_TIME
 
 /**
  * \defgroup levels Audio level controls
