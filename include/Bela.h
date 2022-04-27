@@ -27,10 +27,13 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 11
+#define BELA_MINOR_VERSION 12
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.12.0
+// - added Bela_cpuTic(), Bela_cpuToc(), Bela_cpuMonitoringInit(),
+// Bela_cpuMonitoringGet() and BelaCpuData.
 // 1.11.0
 // - added BelaChannelGain and BelaChannelGainArray
 // - added setHpLevel(), setAudioInputGain(), setAdcLevel(), setDacLevel(),
@@ -843,8 +846,8 @@ int Bela_stopRequested();
  * the code, the CPU performance of these sections can be evaluated. Calling
  * these functions incurs an overhead.
  *
- * When setting the internal CPU monitoring via Bela_cpuMonitoringSet() (with
- * `enabled = 1`), the user can compute the CPU time of the entire audio thread. The core
+ * When setting the internal CPU monitoring via Bela_cpuMonitoringInit(), the
+ * user can compute the CPU time of the entire audio thread. The core
  * code internally calls Bela_cpuTic() and Bela_cpuToc() and the user can get
  * the CPU usage details vai Bela_cpuMonitoringGet();
  *
