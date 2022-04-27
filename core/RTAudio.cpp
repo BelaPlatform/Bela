@@ -802,7 +802,7 @@ void audioLoop(void *)
 
 	// All systems go. Run the loop; it will end when gShouldStop is set to 1
 	BelaCpuData* cpuData = NULL;
-	if(belaCpuData.init.enabled)
+	if(belaCpuData.count)
 		cpuData = &belaCpuData;
 	gPRU->loop(gUserData, gCoreRender, gHighPerformanceMode, cpuData);
 	// Now clean up
@@ -1078,12 +1078,12 @@ int Bela_stopRequested()
 	return gShouldStop;
 }
 
-int Bela_cpuMonitoringSet(BelaCpuInit const* init)
+int Bela_cpuMonitoringInit(int count)
 {
-	if(!init)
-		return -1;
+	if(!count)
+		return 0;
 	memset(&belaCpuData, 0, sizeof(belaCpuData));
-	belaCpuData.init = *init;
+	belaCpuData.count = count;
 	return 0;
 }
 
@@ -1094,17 +1094,17 @@ BelaCpuData* Bela_cpuMonitoringGet()
 
 void Bela_cpuTic(BelaCpuData* data)
 {
-	if(!data || !data->init.enabled)
+	if(!data || !data->count)
 		return;
-	struct timespec pastTimeStart = data->tic;
-	__wrap_clock_gettime(CLOCK_MONOTONIC, &data->tic);
-	long long unsigned int diff = timespec_sub(&data->tic, &pastTimeStart);
+	struct timespec tic;
+	__wrap_clock_gettime(CLOCK_MONOTONIC, &tic);
+	long long unsigned int diff = timespec_sub(&tic, &data->tic);
+	data->tic = tic;
 	data->total += diff;
 	data->currentCount++;
-	if(data->init.count == data->currentCount)
+	if(data->count == data->currentCount)
 	{
 		data->percentage = (double(data->busy) / data->total) * 100;
-
 		data->busy = 0;
 		data->total = 0;
 		data->currentCount = 0;
@@ -1113,7 +1113,7 @@ void Bela_cpuTic(BelaCpuData* data)
 
 void Bela_cpuToc(BelaCpuData* data)
 {
-	if(!data || !data->init.enabled)
+	if(!data || !data->count)
 		return;
 	__wrap_clock_gettime(CLOCK_MONOTONIC, &data->toc);
 	long long unsigned int diff = timespec_sub(&data->toc, &data->tic);

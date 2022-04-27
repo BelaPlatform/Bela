@@ -35,17 +35,11 @@ the noise generator.
 Biquad gFilter;
 
 BelaCpuData gCpuNoise = {
-	.init = {
-		.count = 100,
-		.enabled = 1,
-	},
+	.count = 100,
 };
 
 BelaCpuData gCpuFilter = {
-	.init = {
-		.count = 100,
-		.enabled = 1,
-	},
+	.count = 100,
 };
 static void loop(void*)
 {
@@ -60,11 +54,7 @@ static void loop(void*)
 bool setup(BelaContext *context, void *userData)
 {
 	// enable CPU monitoring for the whole audio thread
-	BelaCpuInit init = {
-		.enabled = 1,
-		.count = 100,
-	};
-	Bela_cpuMonitoringSet(&init);
+	Bela_cpuMonitoringInit(100);
 	Bela_runAuxiliaryTask(loop);
 	gFilter.setup({
 		.fs = context->audioSampleRate,
