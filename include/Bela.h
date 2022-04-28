@@ -855,20 +855,22 @@ int Bela_stopRequested();
  * include not only actual CPU cycles consumed by the current thread but also
  * any time the thread spends idle, either because it's blocked or because a
  * higher priority thread is running.
+ *
+ * @{
  */
 #include <time.h>
 typedef struct {
-	int count; ///< Number of samples (tic/toc pairs) in a sampling cycle. Use 0 to disable
-	unsigned int currentCount; ///< Number of tics in current sampling cycle
-	long long unsigned int busy; ///< Total CPU time spent being busy (between tic and toc)
-	long long unsigned int total; ///< Total CPU time (between toc and next toc)
-	struct timespec tic; ///< Internal
-	struct timespec toc; ///< Internal
-	float percentage; ///< Average CPU usage during previous sampling cycle
+	int count; ///< Number of samples (tic/toc pairs) in a acquisition cycle. Use 0 to disable.
+	unsigned int currentCount; ///< Number of tics in current acquisition cycle
+	long long unsigned int busy; ///< Total CPU time spent being busy (between tic and toc) during the current acquisition cycle
+	long long unsigned int total; ///< Total CPU time (between tic and previous tic) during the current acquisition cycle
+	struct timespec tic; ///< Time of last tic
+	struct timespec toc; ///< Time of last toc
+	float percentage; ///< Average CPU usage during previous acquisition cycle
 } BelaCpuData;
 /**
  * Set internal CPU monitoring for the audio thread.
- * @param count Number of samples (tic/toc pairs) in a sampling cycle. Use 0 to disable.
+ * @param count Number of samples (tic/toc pairs) in a acquisition cycle. Use 0 to disable.
  * @return 0 on success, an error code otherwise.
  */
 int Bela_cpuMonitoringInit(int count);
@@ -880,11 +882,17 @@ int Bela_cpuMonitoringInit(int count);
  */
 BelaCpuData* Bela_cpuMonitoringGet();
 /**
- * Start measuring CPU time.
+ * Start measuring CPU time. When `data->currentCount` reaches `data->count`, a
+ * acquisition cycle is completed. `data->percentage` gives the average CPU busy time
+ * during the latest completed acquisition cycle.
+ *
+ * @param data The `count` field is an input and needs to be populated before calling. Other fields are used as I/O by the function.
  */
 void Bela_cpuTic(BelaCpuData* data);
 /**
  * Stop measuring CPU time.
+ *
+ * @param data The `count` field is an input and needs to be populated before calling. Other fields are used as I/O by the function.
  */
 void Bela_cpuToc(BelaCpuData* data);
 
