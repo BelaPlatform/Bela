@@ -9,5 +9,9 @@
   "filterbanks",
   "FFT-phase-vocoder",
   "sample-streamer",
-  "sample-streamer-multi"
+  "sample-streamer-multi",
+  "resonator-basic",
+  "resonator-model",
+  "resonator-bank",
+  "resonator-trill"
 ]

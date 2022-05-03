@@ -1,0 +1,17 @@
+{
+  "metadata": { 
+    "name": "marimba",
+    "fundamental": 800,
+    "resonators": 8
+  },
+  "resonators": [
+    { "freq": 800,  "gain": 0.500000, "decay": 0.2 },
+    { "freq": 1600, "gain": 0.033333, "decay": 0.4 },
+    { "freq": 2400, "gain": 0.016666, "decay": 0.6 },
+    { "freq": 3200, "gain": 0.006666, "decay": 0.7 },
+    { "freq": 4000, "gain": 0.003333, "decay": 0.8 },
+    { "freq": 4800, "gain": 0.001666, "decay": 0.9 },
+    { "freq": 5400, "gain": 0.000666, "decay": 1.0 },
+    { "freq": 6200, "gain": 0.000333, "decay": 1.0 }
+  ]
+}

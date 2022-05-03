@@ -1,0 +1,17 @@
+name=Resonators
+version=1.0.0
+author=Jack Armitage<jack@lhi.is>
+maintainer=Adan Benito<adan@bela.io>, Giulio Moro<giuliomoro@yahoo.it>
+description=Resonant filter bank synthesis based on the [resonators~] Max/Pd object:
+examples=Audio/resonators, Audio/resonators-bank, Audio/resonators-variable
+license=LGPL 3.0
+url=
+board=*
+dependencies=
+LDFLAGS=
+LDLIBS=
+CXXFLAGS=
+CC=
+CXX=
+CFLAGS=
+CPPFLAGS=
