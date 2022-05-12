@@ -383,7 +383,7 @@ void Bela_usage()
 	std::cerr << "   --audio-expander-inputs [-Y] vals:  Set the analog inputs to use with audio expander (comma-separated list)\n";
 	std::cerr << "   --audio-expander-outputs [-Z] vals: Set the analog outputs to use with audio expander (comma-separated list)\n";
 	std::cerr << "   --pru-file val:                     Set an optional external file to use for the PRU binary code\n";
-	std::cerr << "   --pru-number val:                   Set the PRU to use for I/O (options: 0 or 1, default: 0)\n";
+	std::cerr << "   --pru-number val:                   Set the PRU to use for I/O (options: 0 or 1, default: 1)\n";
 	std::cerr << "   --detect-underruns val:             Set whether to warn the user in case of underruns (options: 0 or 1, default: 1)\n";
 	std::cerr << "   --disable-led                       Disable the blinking LED indicator\n";
 	std::cerr << "   --stop-button-pin                   What pin to monitor for stopping the program. Pass -1 to disable button monitoring\n";
