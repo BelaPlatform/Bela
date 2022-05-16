@@ -129,7 +129,7 @@ if [ 1 -eq "$DOLOG" ]; then
 	# copy all following stdout/stderrr to UPDATE_LOG
 	exec > >(tee "$LOCAL_UPDATE_LOG") 2>&1
 	echo DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
-	echo FILENAME=`basename \`realpath $SCRIPTDIR/..\``
+	echo FILENAME=`basename $(cd $SCRIPTDIR/.. && pwd)`
 	echo METHOD=update_board
 fi
 
