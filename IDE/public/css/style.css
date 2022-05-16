@@ -10,19 +10,7 @@
   --shade-8: black;
   --shade-9: #f9f9f9;
   --shade-10: black;
-  --shade-11: #f1f1f1;
-  --white-to-dark-bg-color: #ffffff;
-  --grey-to-dark-toolbar-color: #c9c9c9;
-  --white-to-dark-toolbar-color: #ffffff;
-  --grey-to-dark-top-bar-color: #e1e1e1;
-  --grey-light-to-dark-accordion-color: #f1f1f1;
-  --grey-mid-to-dark-hov-accordion-color: #bdbdbd;
-  --accordion-font-color: rgba(0, 0, 0, 0.6);
-  --accordion-highlight-font-color: rgba(0, 0, 0, 0.8);
-  --black-to-light-text-color: black;
-  --light-to-dark-dropdown-color: #f9f9f9;
-  --black-to-highlight-text-color: black;
-  --cursor-highlight-color: #f1f1f1; }
+  --shade-11: #f1f1f1; }
 
 .app.dark {
   --shade-0: #292A2F;
@@ -36,19 +24,7 @@
   --shade-8: #DFDFE0;
   --shade-9: #3f4045;
   --shade-10: #ededf2;
-  --shade-11: #2c2c2c;
-  --white-to-dark-bg-color: #292A2F;
-  --grey-to-dark-toolbar-color: #252729;
-  --white-to-dark-toolbar-color: #252729;
-  --grey-to-dark-top-bar-color: #252729;
-  --grey-light-to-dark-accordion-color: #3f4045;
-  --grey-mid-to-dark-hov-accordion-color: #3e4d5c;
-  --accordion-font-color: #DFDFE0;
-  --accordion-highlight-font-color: #ededf2;
-  --black-to-light-text-color: #DFDFE0;
-  --light-to-dark-dropdown-color: #3f4045;
-  --black-to-highlight-text-color: #ededf2;
-  --cursor-highlight-color: #2c2c2c; }
+  --shade-11: #2c2c2c; }
 
 html,
 body,
