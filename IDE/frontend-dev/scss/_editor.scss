@@ -9,7 +9,7 @@
   position: absolute;
   top: 28px;
   // ace.js does not provide an API to always hide the vertical scrollbar,
-  // so we cover it with the sidebar here and below. 
+  // so we cover it with the sidebar here and below.
   width: calc(100vw - 38px); // make it (100vw - 50px) to show the scrollbar
   z-index: 97;
   &.active {

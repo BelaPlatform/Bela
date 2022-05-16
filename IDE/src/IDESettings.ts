@@ -72,6 +72,6 @@ function default_IDE_settings(){
 		'cpuMonitoringVerbose'	: 0,
 		'consoleDelete'		: 0,
 		'viewHiddenFiles'	: 0,
-		'darkTheme'			: 0,
+		'darkTheme': 0,
 	};
 }
