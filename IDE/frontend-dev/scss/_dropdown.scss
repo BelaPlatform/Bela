@@ -75,7 +75,7 @@ select.dropdown-num {
 
 /* Dropdown content (hidden by default) */
 .dropdown-content {
-  background-color: var(--light-to-dark-dropdown-color); 
+  background-color: var(--light-to-dark-dropdown-color);
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   display: none;
   min-width: 160px;
@@ -123,7 +123,7 @@ select.dropdown-num {
       user-select: none;
     }
     > li, span, a {
-      color: var(--black-to-light-text-color); 
+      color: var(--black-to-light-text-color);
       cursor: pointer;
       display: block;
       font-family: poppins_regular;
@@ -132,8 +132,8 @@ select.dropdown-num {
       padding: 8px 16px;
       text-decoration: none;
       &:hover {
-        background-color: var(--cursor-highlight-color); 
-        color: var(--black-to-highlight-text-color); 
+        background-color: var(--cursor-highlight-color);
+        color: var(--black-to-highlight-text-color);
       }
     }
   }

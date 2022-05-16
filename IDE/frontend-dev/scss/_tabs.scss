@@ -23,14 +23,14 @@ $tab-width: 450px;
 }
 
 #tab-menu {
-  background-color: var(--grey-to-dark-toolbar-color); 
+  background-color: var(--grey-to-dark-toolbar-color);
   float: left;
   height: 100%;
   width: 50px;
 }
 
 #tab-content-area {
-  background-color: var(--white-to-dark-bg-color); 
+  background-color: var(--white-to-dark-bg-color);
   height: calc(100% - 76px);
   overflow: auto;
 }
@@ -43,7 +43,7 @@ section#tab-content {
     display: none;
   }
   .title-container {
-    background-color: var(--white-to-dark-bg-color); 
+    background-color: var(--white-to-dark-bg-color);
     height: 75px;
     position: sticky;
     position: -webkit-sticky; /* Required for Safari */
