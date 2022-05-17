@@ -30,6 +30,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 	, running(false)
 	, verbose(isVerbose)
 	, differentialInput(false)
+	, micBias(2.5)
 	, mode(InitMode_init)
 {
 	params.slotSize = 16;
@@ -235,17 +236,13 @@ int I2c_Codec::startAudio(int dummy)
 	} // if not noInit
 	
 	bool dcRemoval;
-	double micBias;
 	if(!differentialInput) {
 		//Set-up hardware high-pass filter for DC removal
 		dcRemoval = true;
-		micBias = 2.5;
 	}
 	else {
 		// Disable DC blocking for differential analog inputs
 		dcRemoval = false;
-		// mini string preamp uses micBias for virtual ground reference
-		micBias = 2;
 	}
 
 	if(configureDCRemovalIIR(dcRemoval))
@@ -1055,6 +1052,12 @@ int I2c_Codec::setMode(std::string str)
 			differentialInput = true;
 		} else if("single" == parameter) {
 			differentialInput = false;
+		} else if("bias" == std::string(parameter.begin(), parameter.begin() + 4)) {
+			std::vector<std::string> tokens = StringUtils::split(str, '=');
+			if(2 == tokens.size())
+			{
+				micBias = atof(tokens[1].c_str());
+			}
 		} else {
 			++err;
 			continue;

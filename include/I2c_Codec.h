@@ -88,6 +88,7 @@ protected:
 	bool verbose;
 	bool hpEnabled;
 	bool differentialInput;
+	double micBias;
 	typedef enum
 	{
 		InitMode_init = 0,
