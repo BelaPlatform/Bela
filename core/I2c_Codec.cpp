@@ -458,6 +458,7 @@ int I2c_Codec::setPllR(unsigned int r){
 struct PllSettings {
 	unsigned int P;
 	unsigned int R;
+	double NCODEC;
 	double K;
 	double NCODEC;
 	double Fs;
