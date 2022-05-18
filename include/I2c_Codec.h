@@ -48,6 +48,7 @@ public:
 	int setPllP(short unsigned int p);
 	int setPllR(unsigned int r);
 	int setPllK(float k);
+	int setNcodec(double NCODEC);
 	int setAudioSamplingRate(float newSamplingRate);
 	short unsigned int getPllJ();
 	unsigned int getPllD();

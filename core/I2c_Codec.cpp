@@ -118,9 +118,6 @@ int I2c_Codec::startAudio(int dummy)
 
 	if(InitMode_noInit != mode) {
 		// see datasehet for TLV320AIC3104 from page 44
-		if(writeRegister(0x02, 0x00))	// Codec sample rate register: fs_ref / 1
-			return 1;
-
 		if(pllEnabled) {
 			if(setAudioSamplingRate(params.samplingRate))
 				return 1;
@@ -132,6 +129,13 @@ int I2c_Codec::startAudio(int dummy)
 			// which can be obtained in a variety of manners from an external clock signal applied to the device.
 			// ....
 			// when the PLL is disabled, fs(ref) = CLKDIV_IN / (128 * Q)
+			//
+
+			// TODO: what should we do when receiving an external bit clock that is outside the 39kHz to 53kHz for fs(ref)?
+			// can we set NCODEC to anything else than 1?
+			if(params.samplingRate < 39000 || params.samplingRate > 53000)
+				fprintf(stderr, "Using out of range sampling rate. It is not guaranteed to work as expected\n");
+			setNcodec(1);
 
 			unsigned int numSlots = mcaspConfig.params.numSlots;
 			unsigned int Q = (params.slotSize * numSlots) / 128;
@@ -455,8 +459,38 @@ struct PllSettings {
 	unsigned int P;
 	unsigned int R;
 	double K;
+	double NCODEC;
 	double Fs;
 };
+
+int I2c_Codec::setNcodec(double NCODEC)
+{
+	uint8_t prescalerReg = 0x0F & ( (int)(NCODEC * 2 - 2) );
+	prescalerReg = prescalerReg | ( prescalerReg << 4); // it has to be NCODEC = NADC = NDAC
+	return writeRegister(0x02, prescalerReg);
+}
+
+// the Fs_ref sampling frequency used internally has to be in the 39kHz
+// to 53khz range.
+// To achieve ADC/DAC frequencies lower than that, one has to divide it
+// down using the "Codec Sample Rate Select Register" (10.3.3 of the
+// 3104 datasheet). This divider (NCODEC) can be between 1 and 6 in
+// steps of 0.5.
+static int computeNcodec(float desiredSamplingRate, float& fs_ref, double& NCODEC)
+{
+	unsigned int TWICE_NCODEC = 2;
+	// if the sampling rate is below 39 kHz, try to bring it back in range
+	while(desiredSamplingRate * (0.5 * TWICE_NCODEC) <= 39000 && TWICE_NCODEC <= 12)
+		TWICE_NCODEC++;
+	NCODEC = TWICE_NCODEC / 2.0;
+	fs_ref = desiredSamplingRate * NCODEC;
+	if(TWICE_NCODEC > 12 || fs_ref > 53000 || fs_ref < 39000)
+	{
+		// we cannot achieve such sampling rate
+		return 1;
+	}
+	return 0;
+}
 
 static std::vector<PllSettings> findSettingsWithConstraints(
 		unsigned int Rmin, unsigned int Rmax,
@@ -475,6 +509,13 @@ static std::vector<PllSettings> findSettingsWithConstraints(
 		++Pmin;
 	while(PLLCLK_IN / Pmax < ratioMin*MHz && Pmin <= Pmax)
 		--Pmax;
+	double NCODEC;
+	float fs_ref;
+	int ret = computeNcodec(newSamplingRate, fs_ref, NCODEC);
+	if(ret)
+		return {};
+	newSamplingRate = fs_ref;
+
 	for(unsigned int R = Rmin; R <= Rmax; ++R)
 	{
 		for(unsigned int P = Pmin; P <= Pmax; ++P)
@@ -501,8 +542,8 @@ static std::vector<PllSettings> findSettingsWithConstraints(
 					K = ((unsigned int)(K * 10000 + 0.5)) / 10000.0;
 				if(K >= localKmin && K <= localKmax)
 				{
-					double Fs = (PLLCLK_IN * K * R)/(2048 * P);
-					settings.push_back({.P = P, .R = R, .K = K, .Fs = Fs});
+					double Fs = (PLLCLK_IN * K * R)/(2048 * P) / NCODEC;
+					settings.push_back({.P = P, .R = R, .K = K, .NCODEC = NCODEC, .Fs = Fs});
 				}
 			}
 		}
@@ -572,11 +613,13 @@ int I2c_Codec::setAudioSamplingRate(float newSamplingRate){
 		return 1;
 	if((setPllK(optimalSettings.K)))
 		return 1;
+	if(setNcodec(optimalSettings.NCODEC))
+		return 1;
 	PllSettings& s = optimalSettings;
 	if(verbose)
-		printf("MCLK: %.4f MHz, fs(ref): %.4f, P: %u, R: %u, J: %d, D: %d, Achieved Fs: %f (err: %.4f%%), \n",
+		printf("MCLK: %.4f MHz, fs(ref): %.4f, P: %u, R: %u, J: %d, D: %d, NCODEC: %f, Achieved Fs: %f (err: %.4f%%), \n",
 			PLLCLK_IN / 1000000, newSamplingRate,
-			pllP, pllR, pllJ, pllD,
+			pllP, pllR, pllJ, pllD, s.NCODEC,
 			s.Fs, (s.Fs - newSamplingRate) / newSamplingRate * 100
 		);
 	return 0;
