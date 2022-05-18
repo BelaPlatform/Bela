@@ -212,6 +212,8 @@ void (*gUserRender)(BelaContext*, void*);
 void (*gBelaCleanup)(BelaContext*, void*);
 void (*gBelaAudioThreadDone)(BelaContext*, void*);
 static BelaContextFifo* gBcf = nullptr;
+static int gFifoFactor;
+static int gFifoContent;
 static double gBlockDurationMs;
 
 void fifoRender(BelaContext*, void*);
@@ -614,37 +616,37 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// when a requested period size exceeds available "native" limit, we add another thread and fifo.
 	// TODO: make the below detection smarter (e.g.: consider analog channel count, and verify numbers)
 	// TODO: validate values of audio frames.
-	unsigned int fifoFactor = 1;
+	gFifoFactor = 1;
 	switch(belaHw)
 	{
 		case BelaHw_Bela:
 		case BelaHw_BelaMini:
 		case BelaHw_Salt:
-			fifoFactor = settings->periodSize / 128;
+			gFifoFactor = settings->periodSize / 128;
 		break;
 		case BelaHw_CtagFace:
 		case BelaHw_CtagFaceBela:
 		case BelaHw_BelaMiniMultiI2s:
-			fifoFactor = settings->periodSize / 64;
+			gFifoFactor = settings->periodSize / 64;
 		break;
 		case BelaHw_CtagBeast:
 		case BelaHw_BelaMultiTdm:
 		case BelaHw_BelaMiniMultiTdm:
 		case BelaHw_BelaMiniMultiAudio:
 		case BelaHw_CtagBeastBela:
-			fifoFactor = settings->periodSize / 32;
+			gFifoFactor = settings->periodSize / 32;
 		break;
 		case BelaHw_NoHw:
 		case BelaHw_Batch:
 		break;
 	}
-	if(1 > fifoFactor)
-		fifoFactor = 1;
+	if(1 > gFifoFactor)
+		gFifoFactor = 1;
 
 	if(gRTAudioVerbose)
-		printf("fifoFactor: %u\n", fifoFactor);
+		printf("gFifoFactor: %u\n", gFifoFactor);
 
-	gContext.audioFrames = settings->periodSize / fifoFactor;
+	gContext.audioFrames = settings->periodSize / gFifoFactor;
 	if(gRTAudioVerbose)
 		printf("core audioFrames: %u\n", gContext.audioFrames);
 
@@ -725,10 +727,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		return 1;
 	}
 
-	if(1 < fifoFactor)
+	if(1 < gFifoFactor)
 	{
+		gFifoContent = 0;
 		gBcf = new BelaContextFifo;
-		if(!(gUserContext = gBcf->setup((BelaContext*)&gContext, fifoFactor)))
+		if(!(gUserContext = gBcf->setup((BelaContext*)&gContext, gFifoFactor)))
 		{
 			fprintf(stderr, "Error: unable to initialise BelaContextFifo\n");
 			return 1;
@@ -822,11 +825,33 @@ void audioLoop(void *)
 void fifoRender(BelaContext* context, void* userData)
 {
 	gBcf->push(BelaContextFifo::kToLong, context);
-	const InternalBelaContext* rctx = (InternalBelaContext*)gBcf->pop(BelaContextFifo::kToShort);
-
-	if(rctx) {
-		BelaContextSplitter::contextCopyData(rctx, (InternalBelaContext*)context);
+	++gFifoContent;
+	InternalBelaContext* rctx = nullptr;
+	// only start reading when the FIFO is "full" to its nominal level:
+	// the 2 * is because of roundtrip.
+	// If we were reading unconditionally, we may obtain a smaller roundtrip
+	// to begin with, depending on CPU load, but it may increase when an
+	// "underrun" happens in the fifoLoop thread (currently undetected).
+	while(gFifoContent >= gFifoFactor * 2 && !Bela_stopRequested())
+	{
+		rctx = (InternalBelaContext*)gBcf->pop(BelaContextFifo::kToShort);
+		if(rctx) {
+			--gFifoContent;
+		} else {
+			// if a ctx was not ready, it means that the user's
+			// render function took too long to execute (i.e.:
+			// underrun), so we wait for it. This will cause an
+			// underrun in the audio thread which will be detected
+			// in PRU::loop() as usual
+			struct timespec ts = {
+				.tv_sec = 0,
+				.tv_nsec = 5 * 1000 * 1000,
+			};
+			__wrap_nanosleep(&ts, NULL);
+		}
 	}
+	if(rctx)
+		BelaContextSplitter::contextCopyData(rctx, (InternalBelaContext*)context);
 }
 
 // when using fifo, this is where the user-defined render() is called
