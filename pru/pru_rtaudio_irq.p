@@ -99,7 +99,8 @@
 #define ADC_GPIO_BELA_MINI      GPIO0
 #define ADC_CS_PIN_BELA_MINI    (1<<5) // GPIO0:5 = P1 pin 6
 #define ADC_TRM       0       // SPI transmit and receive
-#define ADC_WL        16      // Word length
+#define ADC_WL_ADS816X   24   // Word length for ADS816x ADC
+#define ADC_WL_AD7699    16   // Word length for AD7699 ADC
 #define ADC_CLK_MODE  0       // SPI mode
 #define ADC_CLK_DIV   1       // Clock divider (48MHz / 2^n)
 #define ADC_DPE       1       // d0 = receive, d1 = transmit
@@ -107,6 +108,13 @@
 #define AD7699_CFG_MASK       0xF120 // Mask for config update, unipolar, full BW
 #define AD7699_CHANNEL_OFFSET 9      // 7 bits offset of a 14-bit left-justified word
 #define AD7699_SEQ_OFFSET     3      // sequencer (0 = disable, 3 = scan all)
+
+#define ADS816X_INIT_DEVICE_CFG       0x081C00  // Write DEVICE_CFG to 0x00
+#define ADS816X_WRITE_CHANNEL_REG     0x081D00  // Write (0x01 << 19) CHANNEL_REG (0x1D << 8)
+#define ADS816X_DATA_OFFSET           8         // Right shift required to get ADC data
+#define ADS816X_COMMAND_WRITE         0x080000  // Write register command (0x01 << 19)
+#define ADS816X_COMMAND_READ          0x100000  // Read register command (0x02 << 19)
+#define ADS816X_REG_ACCESS            0x000000  // REG_ACCESS has address 0 (<< 8)
 
 #define SHARED_COMM_MEM_BASE  		0x00010000  // Location where comm flags are written
 
@@ -319,6 +327,7 @@
 #define FLAG_BIT_CTAG_FACE      12
 #define FLAG_BIT_CTAG_BEAST     13
 #define FLAG_BIT_BELA_MULTI_TLV	14
+#define FLAG_BIT_ADS816X        15
 
 // reg_flags should hold the number of audio in/out channels, up to 32
 #define FLAG_BIT_AUDIO_IN_CHANNELS0 16
@@ -598,6 +607,31 @@ DIGITAL:
 //r27 is now the input word passed in render(), one word per frame
 //[31:16]: data(1=high, 0=low), [15:0]: direction (0=output, 1=input) )
 
+// Prepare a write to the ADC depending on which part we use
+// Register holds channel number at input, then turns into
+// the value to write to the ADC to read that channel
+.macro ADC_PREPARE_DATA
+.mparam data
+QBBC ADC_IS_AD7699, reg_flags, FLAG_BIT_ADS816X
+     MOV r27, ADS816X_WRITE_CHANNEL_REG
+     OR data, data, r27
+     QBA DONE
+ADC_IS_AD7699:
+     MOV r27, AD7699_CFG_MASK
+     LSL data, data, AD7699_CHANNEL_OFFSET
+     OR data, data, r27
+DONE:
+.endm
+
+// Process the results of the ADC transaction to retrieve
+// the sampled value
+.macro ADC_PROCESS_DATA
+.mparam data
+QBBC DONE, reg_flags, FLAG_BIT_ADS816X
+     // Right shift ADC output to get result
+     LSR data, data, ADS816X_DATA_OFFSET
+DONE:
+.endm
 
 //Preparing the gpio_oe, gpio_cleardataout and gpio_setdataout for each module
 //r2 will hold GPIO1_OE
@@ -1232,8 +1266,8 @@ SPI_WAIT_RESET:
      MOV r2, (3 << 27) | (DAC_DPE << 16) | (DAC_TRM << 12) | ((DAC_WL - 1) << 7) | (DAC_CLK_DIV << 2) | DAC_CLK_MODE | (1 << 6)
      SBBO r2, reg_spi_addr, SPI_CH0CONF, 4
 
-     // Configure CH1 for ADC
-     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
+     // Configure CH1 for ADC, starting with ADS816X
+     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL_ADS816X - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
      SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
 
      // Enable interrupts TX0_EMPTY__ENABLE for DACs and RX1_FULL__ENABLE for ADCs
@@ -1254,19 +1288,55 @@ SPI_WAIT_RESET:
      MOV r2, (0x07 << AD5668_COMMAND_OFFSET)
      DAC_WRITE r2
 
-     // Initialise ADC
-     MOV r2, AD7699_CFG_MASK | (0 << AD7699_CHANNEL_OFFSET) | (0 << AD7699_SEQ_OFFSET)
+     // Detect ADS816x ADC by writing and reading back a magic number in a register
+     // This will have no effect as REG_ACCESS needs to be 0xAA to enable writing control
+     // registers (which we don't need to do anyway), and on AD7699 it will also not update
+     // any of the registers.
+     SET reg_flags, reg_flags, FLAG_BIT_ADS816X
+
+     MOV r2, ADS816X_COMMAND_WRITE | ADS816X_REG_ACCESS | 0x05
      ADC_WRITE r2, r2
+
+     MOV r2, ADS816X_COMMAND_READ | ADS816X_REG_ACCESS | 0x00
+     ADC_WRITE r2, r2
+
+     // Read back REG_ACCESS and initialise ADC
+     MOV r2, ADS816X_INIT_DEVICE_CFG
+     ADC_WRITE r2, r2
+
+     // REG_ACCESS is in top 8 bits of a 24-bit word
+     LSR r2, r2, 16
+     QBEQ ADC_INIT_DONE, r2, 0x05
+
+     // Expected value not found: assume AD7699 and reinit SPI
+
+     // Turn off ADC SPI channels
+     MOV r2, 0x00
+     SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
+
+     // Configure CH1 for AD7699 instead
+     MOV r2, (3 << 27) | (ADC_DPE << 16) | (ADC_TRM << 12) | ((ADC_WL_AD7699 - 1) << 7) | (ADC_CLK_DIV << 2) | ADC_CLK_MODE
+     SBBO r2, reg_spi_addr, SPI_CH1CONF, 4
+
+     // Turn on ADC SPI channels
+     MOV r2, 0x01
+     SBBO r2, reg_spi_addr, SPI_CH1CTRL, 4
+
+     CLR reg_flags, reg_flags, FLAG_BIT_ADS816X
+
+ADC_INIT_DONE:
 
      // Enable DAC internal reference
      MOV r2, (0x08 << AD5668_COMMAND_OFFSET) | (0x01 << AD5668_REF_OFFSET)
      DAC_WRITE r2
     
      // Read ADC ch0 and ch1: result is always 2 samples behind so start here
-     MOV r2, AD7699_CFG_MASK | (0x00 << AD7699_CHANNEL_OFFSET)
+     MOV r2, 0x00
+     ADC_PREPARE_DATA r2
      ADC_WRITE r2, r2
 
-     MOV r2, AD7699_CFG_MASK | (0x01 << AD7699_CHANNEL_OFFSET)
+     MOV r2, 0x01
+     ADC_PREPARE_DATA r2
      ADC_WRITE r2, r2
 
 SPI_INIT_DONE:	
@@ -2093,10 +2163,9 @@ ANALOG_CHANNEL_4_END:
      ADD r16, r16, 2
      SUB r17, reg_num_channels, 1
      AND r16, r16, r17
-     LSL r16, r16, AD7699_CHANNEL_OFFSET
-     MOV r17, AD7699_CFG_MASK
-     OR r16, r16, r17
-     ADC_WRITE r16, r16 // Get first sample
+     ADC_PREPARE_DATA r16
+     ADC_WRITE r16, r16
+     ADC_PROCESS_DATA r16
      MOV r17, 0xFFFF // Mask low word
      AND r0, r16, r17
 
@@ -2119,10 +2188,10 @@ ANALOG_CHANNEL_5_END:
      ADD r16, r16, 2
      SUB r17, reg_num_channels, 1
      AND r16, r16, r17
-     LSL r16, r16, AD7699_CHANNEL_OFFSET
-     MOV r17, AD7699_CFG_MASK
-     OR r16, r16, r17
-     ADC_WRITE r16, r16 // Get second sample
+     ADC_PREPARE_DATA r16
+     ADC_WRITE r16, r16
+     ADC_PROCESS_DATA r16
+
      LSL r16, r16, 16 // Move result to high word
      OR r0, r0, r16
 
@@ -2147,10 +2216,9 @@ ANALOG_CHANNEL_6_END:
      ADD r16, r16, 2
      SUB r17, reg_num_channels, 1
      AND r16, r16, r17
-     LSL r16, r16, AD7699_CHANNEL_OFFSET
-     MOV r17, AD7699_CFG_MASK
-     OR r16, r16, r17
-     ADC_WRITE r16, r16 // Get first sample
+     ADC_PREPARE_DATA r16
+     ADC_WRITE r16, r16
+     ADC_PROCESS_DATA r16
      MOV r17, 0xFFFF // Mask low word
      AND r1, r16, r17
 
@@ -2173,10 +2241,9 @@ ANALOG_CHANNEL_7_END:
      ADD r16, r16, 2
      SUB r17, reg_num_channels, 1
      AND r16, r16, r17
-     LSL r16, r16, AD7699_CHANNEL_OFFSET
-     MOV r17, AD7699_CFG_MASK
-     OR r16, r16, r17
-     ADC_WRITE r16, r16 // Get second sample
+     ADC_PREPARE_DATA r16
+     ADC_WRITE r16, r16
+     ADC_PROCESS_DATA r16
      LSL r16, r16, 16 // Move result to high word
      OR r1, r1, r16
 
