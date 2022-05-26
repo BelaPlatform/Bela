@@ -193,6 +193,7 @@ const unsigned int belaMiniLedBlue = 87;
 const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
 const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
 const unsigned int belaMiniLedRed = 89;
+const unsigned int belaMiniRevCAdcPin = 65;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
@@ -397,6 +398,16 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	if(Bela_hwContains(belaHw, BelaMiniCape) && enableLed){
 		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
 		underrunLed.clear();
+	}
+	if(Bela_hwContains(belaHw, BelaMiniCape))
+	{
+		// BelaMini Rev C requires resetting the SPI ADC via dedicated
+		// pin before we start
+		// TODO: make this dependent on whether we are using analogs at all.
+		adcNrstPin.open(belaMiniRevCAdcPin, Gpio::OUTPUT, true);
+		adcNrstPin.clear();
+		usleep(1000);
+		adcNrstPin.set();
 	}
 
 	// after setting all PRU settings, we adjust

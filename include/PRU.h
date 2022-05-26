@@ -210,4 +210,5 @@ private:
 
 	Gpio stopButton; // Monitoring the bela cape button
 	Gpio underrunLed; // Flashing an LED upon underrun
+	Gpio adcNrstPin; // Resetting the ADC on Bela Mini Rev C
 };
