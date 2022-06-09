@@ -1,11 +1,12 @@
 var View = require('./View');
 var popup = require('../popup');
-var sanitise = require('../utils').sanitise;
+var utils = require('../utils');
+var sanitise = utils.sanitise;
 var json = require('../site-text.json');
 let sanitisePath = (name) => {
 	return sanitise(name, { isPath: true, });
 }
-var prettySize = require('../utils').prettySize;
+var prettySize = utils.prettySize;
 
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
@@ -189,7 +190,20 @@ class FileView extends View {
 				if (!selectedFiles)
 					this.uploadFileError();
 				if (uploadFiles)
-					this.doLargeFileUpload(formData);
+					utils.doLargeFileUpload(formData, (r) => {
+						// would be great if these could be sent as part of the POST body
+						// note: for drag-and-drop files, the equivalent to these is
+						// done in ProjectManager::uploadFile on the server
+						this.emit('list-files');
+						this.emit('file-uploaded');
+						popup.ok(json.popups.upload_file_success);
+					}, (e) => {
+						this.emit('list-files');
+						popup.ok({
+							title: json.popups.upload_file_error.title,
+							text: e.responseText,
+						});
+					});
 			}.bind(this)
 		);
 		popup.form.attr('action', '/uploads')
@@ -596,33 +610,6 @@ class FileView extends View {
 		this.processQueue();
 	}
 
-  doLargeFileUpload(formData, force){
-    var that = this;
-    popup.ok(json.popups.upload_file_progress);
-    $.ajax({
-      type: "POST",
-      url: '/uploads',
-      enctype: 'multipart/form-data',
-      processData: false,
-      contentType: false,
-      data: formData,
-      success: function(r){
-        // would be great if these could be sent as part of the POST body
-        // note: for drag-and-drop files, the equivalent to these is
-        // done in ProjectManager::uploadFile on the server
-        that.emit('list-files');
-        that.emit('file-uploaded');
-        popup.ok(json.popups.upload_file_success);
-      },
-      error: function(e) {
-        that.emit('list-files');
-        popup.ok({
-          title: json.popups.upload_file_error.title,
-          text: e.responseText,
-        })
-      }
-    });
-  }
 
 	async actuallyDoFileUpload(file, saveas, force, isProject){
 		var reader = new FileReader();

@@ -1,3 +1,5 @@
+var json = require('./site-text.json');
+var popup = require('./popup');
 // replace most non alpha-numeric chars with '_'
 module.exports.sanitise = function (name, options){
 	var isPath = false;
@@ -89,4 +91,17 @@ module.exports.addDropdownEvent = function (elements){
 			$('[data-dropdown]').removeClass('show')
 		}
 	}
+}
+module.exports.doLargeFileUpload = function (formData, success, error){
+	popup.ok(json.popups.upload_file_progress);
+	$.ajax({
+		type: "POST",
+		url: '/uploads',
+		enctype: 'multipart/form-data',
+		processData: false,
+		contentType: false,
+		data: formData,
+		success: success,
+		error: error,
+	});
 }
