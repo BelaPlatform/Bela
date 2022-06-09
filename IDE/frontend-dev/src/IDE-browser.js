@@ -40,7 +40,7 @@ settingsView.on('halt', () => {
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', text => consoleView.emit('warn', text) );
-settingsView.on('upload-update', data => socket.emit('upload-update', data) );
+settingsView.on('do-update', data => socket.emit('do-update', data) );
 settingsView.on('error', text => consoleView.emit('warn', text) );
 
 // project view

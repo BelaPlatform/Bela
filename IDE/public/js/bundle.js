@@ -430,8 +430,8 @@ settingsView.on('halt', function () {
 settingsView.on('warning', function (text) {
 	return consoleView.emit('warn', text);
 });
-settingsView.on('upload-update', function (data) {
-	return socket.emit('upload-update', data);
+settingsView.on('do-update', function (data) {
+	return socket.emit('do-update', data);
 });
 settingsView.on('error', function (text) {
 	return consoleView.emit('warn', text);
@@ -4246,26 +4246,70 @@ var SettingsView = function (_View) {
 			popup.twoButtons(json.popups.update, async function onSubmit(e) {
 				var _this5 = this;
 
-				var file = popup.find('input[type=file]').prop('files')[0];
-				if (file && file.name.search(/\.zip$/) != -1) {
+				var formEl = $('[data-popup] form')[0];
+				var formDataOrig = new FormData(formEl);
+				var formData = new FormData();
+				console.log(formDataOrig.entries());
+				var selectedFiles = 0;
+				var file = void 0;
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
 
+				try {
+					for (var _iterator = formDataOrig.entries()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var entry = _step.value;
+
+						file = entry[1].name.split('\\').pop();
+						formData.append(entry[0], entry[1]);
+						++selectedFiles;
+						// there will be only one because the <input> is not `multiple`
+						// TODO: write it better than this ugly-but-effective
+						// single-iteration loop
+						break;
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+
+				if (file && file.search(/\.zip$/) != -1) {
 					this.emit('warning', json.settings_view.update);
 					this.emit('warning', json.settings_view.browser);
 					this.emit('warning', json.settings_view.ide);
 
-					popup.hide('keep overlay');
-
-					var reader = new FileReader();
-					reader.onload = function (ev) {
-						return _this5.emit('upload-update', { name: file.name, file: ev.target.result });
-					};
-					reader.readAsArrayBuffer(file);
+					formData.append("update-event", JSON.stringify({
+						currentProject: this.currentProject,
+						func: 'upload',
+						newFile: file
+					}));
+					utils.doLargeFileUpload(formData, function (r) {
+						// file has been successfully loaded, start the update.
+						// We do not do this in the POST request itself in
+						// order to avoid timeout.
+						_this5.emit('do-update');
+						popup.ok({});
+						popup.hide("keep overlay");
+					}, function (e) {
+						popup.ok({ text: "Error while uploading:", e: e });
+					});
 				} else {
 
 					this.emit('warning', json.settings_view.zip);
 					popup.hide();
 				}
 			}.bind(this));
+			popup.form.attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
 			popup.form.prepend('<input type="file" name="data" data-form-file></input><br/><br/>');
 		}
 
@@ -4350,27 +4394,27 @@ var SettingsView = function (_View) {
 				var $this = $(this);
 				if ($this.data('func') === 'input' && key === '-Y' || $this.data('func') === 'output' && key === '-Z') {
 					var checked = false;
-					var _iteratorNormalCompletion = true;
-					var _didIteratorError = false;
-					var _iteratorError = undefined;
+					var _iteratorNormalCompletion2 = true;
+					var _didIteratorError2 = false;
+					var _iteratorError2 = undefined;
 
 					try {
-						for (var _iterator = channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-							var channel = _step.value;
+						for (var _iterator2 = channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+							var channel = _step2.value;
 
 							if (channel == $this.data('channel')) checked = true;
 						}
 					} catch (err) {
-						_didIteratorError = true;
-						_iteratorError = err;
+						_didIteratorError2 = true;
+						_iteratorError2 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion && _iterator.return) {
-								_iterator.return();
+							if (!_iteratorNormalCompletion2 && _iterator2.return) {
+								_iterator2.return();
 							}
 						} finally {
-							if (_didIteratorError) {
-								throw _iteratorError;
+							if (_didIteratorError2) {
+								throw _iteratorError2;
 							}
 						}
 					}

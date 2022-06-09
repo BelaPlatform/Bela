@@ -76,7 +76,7 @@ function connection(socket) {
     socket.on('run-on-boot', function (project) { return boot_project.set_boot_project(socket, project); });
     socket.on('sh-command', function (cmd) { return TerminalManager.execute(cmd); });
     socket.on('sh-tab', function (cmd) { return TerminalManager.tab(cmd); });
-    socket.on('upload-update', function (data) { return update_manager.upload(data); });
+    socket.on('do-update', function () { return update_manager.update(); });
     socket.on('shutdown', IDE.shutdown);
     socket.on('disconnect', disconnect);
     init_message(socket);

@@ -42,7 +42,7 @@ function connection(socket: SocketIO.Socket){
 	socket.on('run-on-boot', (project: string) => boot_project.set_boot_project(socket, project) );
 	socket.on('sh-command', cmd => TerminalManager.execute(cmd) );
 	socket.on('sh-tab', cmd => TerminalManager.tab(cmd) );
-	socket.on('upload-update', (data: any) => update_manager.upload(data) );
+	socket.on('do-update', () => update_manager.update() );
 	socket.on('shutdown', IDE.shutdown);
 	socket.on('disconnect', disconnect);
 	init_message(socket);

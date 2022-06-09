@@ -4,6 +4,7 @@ import * as multer from 'multer'
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
 import * as project_manager from './ProjectManager';
+import * as update_manager from './UpdateManager';
 import * as file_manager from './FileManager';
 import * as paths from './paths';
 import * as util from './utils';
@@ -123,35 +124,46 @@ function setup_routes(app: express.Application){
       // the POST request _may_ contain some project-events (e.g.: to move
       // files to their final location
       if(req.body && !err) {
-        let events = req.body['project-event'];
-        // we observe it only becomes an array if there are more than one. We
-        // force it to be an array so the loop below handles all cases
-        if(!Array.isArray(events)){
-          if(events)
-            events = [events];
-          else
-            events = [];
-        }
-        for(let event of events) {
-          let data : any;
-          try {
-            data = JSON.parse(event);
-          } catch (e) {
-            eventError += "Cannot parse event: `", event, "`";
-            continue;
+        const pairs = [
+          { string: 'project-event', manager: project_manager },
+          { string: 'update-event', manager: update_manager },
+        ];
+        for(let pair of pairs)
+        {
+          let string = pair.string;
+          let manager = pair.manager;
+          let events = req.body[string];
+          // we observe it only becomes an array if there are more than one. We
+          // force it to be an array so the loop below handles all cases
+          if(!Array.isArray(events)){
+            if(events)
+              events = [events];
+            else
+              events = [];
           }
-          if(!data.func) {
-            eventError += "Missing func";
-            continue;
-          }
-          try {
-            await (project_manager as any)[data.func](data)
-          } catch (e) {
-            eventError += e.toString() + " ";
+          for(let event of events) {
+            let data : any;
+            try {
+              data = JSON.parse(event);
+            } catch (e) {
+              eventError += "Cannot parse `", string, "`: `", event, "`";
+              continue;
+            }
+            if(!data.func) {
+              eventError += "Missing func";
+              continue;
+            }
+            try {
+              data.fullPath = paths.uploads+'/'+data.newFile;
+              await (manager as any)[data.func](data)
+            } catch (e) {
+              eventError += e.toString() + " ";
+            }
           }
         }
       }
       if(err || eventError) {
+        console.log(eventError);
         return res.status(403).end("Error uploading file(s). " + eventError);
       }
       res.end("File successfully uploaded");

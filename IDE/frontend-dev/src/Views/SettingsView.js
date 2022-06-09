@@ -189,19 +189,41 @@ class SettingsView extends View {
 	updateBela(){
 		popup.twoButtons(json.popups.update,
 			async function onSubmit(e){
-				var file = popup.find('input[type=file]').prop('files')[0];
-				if (file && (file.name.search(/\.zip$/) != -1)) {
-
+				var formEl = $('[data-popup] form')[0];
+				var formDataOrig = new FormData(formEl);
+				var formData = new FormData();
+				console.log(formDataOrig.entries());
+				let selectedFiles = 0;
+				let file;
+				for(let entry of formDataOrig.entries()){
+					file = entry[1].name.split('\\').pop();
+					formData.append(entry[0], entry[1]);
+					++selectedFiles;
+					// there will be only one because the <input> is not `multiple`
+					// TODO: write it better than this ugly-but-effective
+					// single-iteration loop
+					break;
+				}
+				if (file && (file.search(/\.zip$/) != -1)) {
 					this.emit('warning', json.settings_view.update);
 					this.emit('warning', json.settings_view.browser);
 					this.emit('warning', json.settings_view.ide);
 
-					popup.hide('keep overlay');
-
-					var reader = new FileReader();
-					reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
-					reader.readAsArrayBuffer(file);
-
+					formData.append("update-event", JSON.stringify({
+						currentProject: this.currentProject,
+						func: 'upload',
+						newFile: file,
+					}));
+					utils.doLargeFileUpload(formData, (r) => {
+						// file has been successfully loaded, start the update.
+						// We do not do this in the POST request itself in
+						// order to avoid timeout.
+						this.emit('do-update');
+						popup.ok({});
+						popup.hide("keep overlay");
+					}, (e) => {
+						popup.ok({text: "Error while uploading:", e});
+					});
 				} else {
 
 					this.emit('warning', json.settings_view.zip);
@@ -210,6 +232,9 @@ class SettingsView extends View {
 				}
 			}.bind(this)
 		);
+		popup.form.attr('action', '/uploads')
+			.attr('enctype','multipart/form-data')
+			.attr('method', 'POST');
 		popup.form.prepend('<input type="file" name="data" data-form-file></input><br/><br/>');
 	}
 
