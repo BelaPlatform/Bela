@@ -4255,40 +4255,15 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'updateBela',
 		value: function updateBela() {
-			var _this5 = this;
-
-			// build the popup content
-			popup.title(json.popups.update.title);
-			popup.subtitle(json.popups.update.text);
-
-			var form = [];
-			form.push('<input id="popup-update-file" type="file">');
-			form.push('</br>');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-			/*popup.form.prop({
-   	action	: 'updates',
-   	method	: 'get',
-   	enctype	: 'multipart/form-data'
-   });*/
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-
-				//console.log('submitted', e);
-
-				e.preventDefault();
+			popup.twoButtons(json.popups.update, async function onSubmit(e) {
+				var _this5 = this;
 
 				var file = popup.find('input[type=file]').prop('files')[0];
-
-				//console.log('input', popup.find('input[type=file]'));
-				//console.log('file', file);
-
 				if (file) {
 
-					_this5.emit('warning', json.settings_view.update);
-					_this5.emit('warning', json.settings_view.browser);
-					_this5.emit('warning', json.settings_view.ide);
+					this.emit('warning', json.settings_view.update);
+					this.emit('warning', json.settings_view.browser);
+					this.emit('warning', json.settings_view.ide);
 
 					popup.hide('keep overlay');
 
@@ -4299,14 +4274,11 @@ var SettingsView = function (_View) {
 					reader.readAsArrayBuffer(file);
 				} else {
 
-					_this5.emit('warning', json.settings_view.zip);
+					this.emit('warning', json.settings_view.zip);
 					popup.hide();
 				}
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			}.bind(this));
+			popup.form.prepend('<input type="file" name="data" data-form-file></input><br/><br/>');
 		}
 
 		// model events

@@ -187,58 +187,30 @@ class SettingsView extends View {
 	}
 
 	updateBela(){
-		// build the popup content
-		popup.title(json.popups.update.title);
-		popup.subtitle(json.popups.update.text);
+		popup.twoButtons(json.popups.update,
+			async function onSubmit(e){
+				var file = popup.find('input[type=file]').prop('files')[0];
+				if (file) {
 
-		var form = [];
-		form.push('<input id="popup-update-file" type="file">');
-		form.push('</br>');
-		form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
+					this.emit('warning', json.settings_view.update);
+					this.emit('warning', json.settings_view.browser);
+					this.emit('warning', json.settings_view.ide);
 
-		/*popup.form.prop({
-			action	: 'updates',
-			method	: 'get',
-			enctype	: 'multipart/form-data'
-		});*/
+					popup.hide('keep overlay');
 
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
+					var reader = new FileReader();
+					reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
+					reader.readAsArrayBuffer(file);
 
-			//console.log('submitted', e);
+				} else {
 
-			e.preventDefault();
+					this.emit('warning', json.settings_view.zip);
+					popup.hide();
 
-			var file = popup.find('input[type=file]').prop('files')[0];
-
-			//console.log('input', popup.find('input[type=file]'));
-			//console.log('file', file);
-
-			if (file) {
-
-				this.emit('warning', json.settings_view.update);
-				this.emit('warning', json.settings_view.browser);
-				this.emit('warning', json.settings_view.ide);
-
-				popup.hide('keep overlay');
-
-				var reader = new FileReader();
-				reader.onload = (ev) => this.emit('upload-update', {name: file.name, file: ev.target.result} );
-				reader.readAsArrayBuffer(file);
-
-			} else {
-
-				this.emit('warning', json.settings_view.zip);
-				popup.hide();
-
-			}
-
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
+				}
+			}.bind(this)
+		);
+		popup.form.prepend('<input type="file" name="data" data-form-file></input><br/><br/>');
 	}
 
 	// model events
