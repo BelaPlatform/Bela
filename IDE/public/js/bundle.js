@@ -4259,7 +4259,7 @@ var SettingsView = function (_View) {
 				var _this5 = this;
 
 				var file = popup.find('input[type=file]').prop('files')[0];
-				if (file) {
+				if (file && file.name.search(/\.zip$/) != -1) {
 
 					this.emit('warning', json.settings_view.update);
 					this.emit('warning', json.settings_view.browser);

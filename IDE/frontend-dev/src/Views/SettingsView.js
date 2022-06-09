@@ -190,7 +190,7 @@ class SettingsView extends View {
 		popup.twoButtons(json.popups.update,
 			async function onSubmit(e){
 				var file = popup.find('input[type=file]').prop('files')[0];
-				if (file) {
+				if (file && (file.name.search(/\.zip$/) != -1)) {
 
 					this.emit('warning', json.settings_view.update);
 					this.emit('warning', json.settings_view.browser);
