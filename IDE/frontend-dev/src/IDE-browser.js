@@ -679,11 +679,14 @@ function parseErrors(data){
 // hotkeys
 var keypress = new window.keypress.Listener();
 
-keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
-keypress.simple_combo("meta f", function(){ editorView.emit('search') });
-keypress.simple_combo("meta o", function(){ tabView.emit('toggle', 'click', 'tab-control') });
+function allCombosActive() {
+	return !popup.isShown();
+}
+keypress.simple_combo("meta s", function(){ allCombosActive() && toolbarView.emit('process-event', 'run') });
+keypress.simple_combo("meta f", function(){ allCombosActive() && editorView.emit('search') });
+keypress.simple_combo("meta o", function(){ allCombosActive() && tabView.emit('toggle', 'click', 'tab-control') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear', true) });
-keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });
+keypress.simple_combo("meta h", function(){ allCombosActive() && $('#iDocsLink').trigger('click') });
 keypress.simple_combo("esc", function(){ // remove popup on ESC
 	let done = popup.cancel();
 	// do not prevent default if we did nothing

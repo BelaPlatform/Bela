@@ -1119,20 +1119,23 @@ function parseErrors(data) {
 // hotkeys
 var keypress = new window.keypress.Listener();
 
+function allCombosActive() {
+	return !popup.isShown();
+}
 keypress.simple_combo("meta s", function () {
-	toolbarView.emit('process-event', 'run');
+	allCombosActive() && toolbarView.emit('process-event', 'run');
 });
 keypress.simple_combo("meta f", function () {
-	editorView.emit('search');
+	allCombosActive() && editorView.emit('search');
 });
 keypress.simple_combo("meta o", function () {
-	tabView.emit('toggle', 'click', 'tab-control');
+	allCombosActive() && tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear', true);
 });
 keypress.simple_combo("meta h", function () {
-	$('#iDocsLink').trigger('click');
+	allCombosActive() && $('#iDocsLink').trigger('click');
 });
 keypress.simple_combo("esc", function () {
 	// remove popup on ESC
