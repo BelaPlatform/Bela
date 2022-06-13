@@ -119,7 +119,6 @@ editorView.on('goto-docs', (word, id) => {
 	}
 });
 editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
-editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
 editorView.on('compare-files', compare => {
 	compareFiles = compare;
 	// unset the interval

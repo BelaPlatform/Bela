@@ -113,7 +113,7 @@ class EditorView extends View {
 				activeWordIDs.push(id);
 			}*/
 			if (this.linkTimeout) clearTimeout(this.linkTimeout);
-			this.linkTimeout = setTimeout(() => this.parser.highlights(this.highlights) )//this.emit('highlight-syntax', activeWords), 100);
+			this.linkTimeout = setTimeout(() => this.parser.highlights(this.highlights) );
 		});
 
 		this.editor.session.on('tokenizerUpdate', (e) => {

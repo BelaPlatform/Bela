@@ -515,9 +515,6 @@ editorView.on('goto-docs', function (word, id) {
 editorView.on('clear-docs', function () {
 	return $('#iDocsLink').removeClass('iDocsVisible').off('click');
 });
-editorView.on('highlight-syntax', function (names) {
-	return socket.emit('highlight-syntax', names);
-});
 editorView.on('compare-files', function (compare) {
 	compareFiles = compare;
 	// unset the interval
@@ -2012,7 +2009,7 @@ var EditorView = function (_View) {
 			if (_this.linkTimeout) clearTimeout(_this.linkTimeout);
 			_this.linkTimeout = setTimeout(function () {
 				return _this.parser.highlights(_this.highlights);
-			}); //this.emit('highlight-syntax', activeWords), 100);
+			});
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
