@@ -28,13 +28,26 @@ module.exports.filename = function (path) {
 
 module.exports.prettySize = function(size) {
 	let ret;
+	let uom;
+	let s;
 	if (size < 1000000){
-		ret = (size/1000).toFixed(1) + 'kB';
+		s = size / 1000;
+		uom = "kB";
 	} else if (size >= 1000000 && size < 1000000000){
-		ret = (size/1000000).toFixed(1) + 'mB';
-	} else if (size >= 1000000000 && size < 1000000){
-		ret = (size/1000000).toFixed(1) + 'gB';
+		uom = "MB";
+		s = size / 1000 / 1000;
+	} else if (size >= 1000000000){
+		uom = "GB"
+		s = size / 1000 / 1000 / 1000;
 	}
+	let f;
+	if(s >= 100)
+		f = 0;
+	else if(s >= 10)
+		f = 1;
+	else
+		f = 2;
+	ret = (s).toFixed(f) + uom;
 	return ret;
 }
 module.exports.formatString = function (format, vargs) {
