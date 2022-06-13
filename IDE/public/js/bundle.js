@@ -1640,6 +1640,10 @@ var DocumentationView = function (_View) {
     value: function init() {
 
       var self = this;
+      ['context', 'api', 'utility'].forEach(function (section) {
+        var m = $('[data-docs-' + section + ']');
+        m.empty();
+      });
 
       // The API
       $.ajax({
