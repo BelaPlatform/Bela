@@ -6624,7 +6624,7 @@ module.exports={
 		"overwrite": {
 			"title": "Overwrite file?",
 			"text": " already exists in this project. Overwrite?",
-			"button": "Overwite",
+			"button": "Overwrite",
 			"tick": "Don't ask me again this session"
 		},
 		"commit": {
