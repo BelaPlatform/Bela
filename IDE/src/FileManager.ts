@@ -148,7 +148,7 @@ export async function delete_file(file_path: string): Promise<void>{
 export async function read_subfolders(dir_path: string) {
 	await lock.acquire();
 	return new Promise( (resolve, reject) => {
-		child_process.exec('find . -type d -maxdepth 1', { cwd: dir_path }, (error : Error, stdout : string, stderr : string) => {
+		child_process.exec('find -L . -maxdepth 1 -type d', { cwd: dir_path }, (error : Error, stdout : string, stderr : string) => {
 			lock.release();
 			if (error) {
 				console.error(`exec error: ${error}`);

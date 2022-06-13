@@ -381,7 +381,7 @@ function read_subfolders(dir_path) {
                 case 1:
                     _a.sent();
                     return [2 /*return*/, new Promise(function (resolve, reject) {
-                            child_process.exec('find . -type d -maxdepth 1', { cwd: dir_path }, function (error, stdout, stderr) {
+                            child_process.exec('find -L . -maxdepth 1 -type d', { cwd: dir_path }, function (error, stdout, stderr) {
                                 lock.release();
                                 if (error) {
                                     console.error("exec error: " + error);
