@@ -105,20 +105,11 @@ editorView.on('close-notification', data => consoleView.emit('closeNotification'
 editorView.on('editor-changed', () => {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
-editorView.on('goto-docs', (word, id) => {
-	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext'){
+editorView.on('goto-docs', (word, id, force) => {
+	if (force || tabView.getOpenTab() === 'refs'){
 		documentationView.emit('open', id);
-	} else {
-		$('#iDocsLink')
-			.addClass('iDocsVisible')
-			.prop('title', 'cmd + h: '+word)
-			.off('click').on('click', () => {
-				tabView.emit('open-tab', 'tab-5');
-				documentationView.emit('open', id);
-			});
 	}
 });
-editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
 editorView.on('compare-files', compare => {
 	compareFiles = compare;
 	// unset the interval
@@ -197,6 +188,9 @@ documentationView.on('open-example', (example) => {
 });
 documentationView.on('add-link', (link, type) => {
 	editorView.emit('add-link', link, type);
+});
+documentationView.on('open', (id) => {
+	documentationView.open(id);
 });
 
 // git view
@@ -685,7 +679,7 @@ keypress.simple_combo("meta s", function(){ allCombosActive() && toolbarView.emi
 keypress.simple_combo("meta f", function(){ allCombosActive() && editorView.emit('search') });
 keypress.simple_combo("meta o", function(){ allCombosActive() && tabView.emit('toggle', 'click', 'tab-control') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear', true) });
-keypress.simple_combo("meta h", function(){ allCombosActive() && $('#iDocsLink').trigger('click') });
+keypress.simple_combo("meta h", function(){ allCombosActive() && documentationView.emit('open') });
 keypress.simple_combo("esc", function(){ // remove popup on ESC
 	let done = popup.cancel();
 	// do not prevent default if we did nothing

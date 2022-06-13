@@ -350,7 +350,6 @@ class EditorView extends View {
 		var token = iterator.getCurrentToken();
 		if (!token || !token.range){
 			//console.log('no range');
-			this.emit('clear-docs');
 			return;
 		}
 
@@ -364,8 +363,6 @@ class EditorView extends View {
 				return;
 			}
 		}
-
-		this.emit('clear-docs');
 	}
 
 	getData(){

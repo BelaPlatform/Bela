@@ -113,6 +113,11 @@ class TabView extends View {
     }
   }
 
+  getOpenTab(){
+    tabs.active = $('[data-tab-for].active').data('tabFor');
+	return tabs.active;
+  }
+
   toggle(event, origin, target) {
     var that = this;
 

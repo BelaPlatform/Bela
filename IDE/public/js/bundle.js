@@ -502,18 +502,10 @@ editorView.on('close-notification', function (data) {
 editorView.on('editor-changed', function () {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
-editorView.on('goto-docs', function (word, id) {
-	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext') {
+editorView.on('goto-docs', function (word, id, force) {
+	if (force || tabView.getOpenTab() === 'refs') {
 		documentationView.emit('open', id);
-	} else {
-		$('#iDocsLink').addClass('iDocsVisible').prop('title', 'cmd + h: ' + word).off('click').on('click', function () {
-			tabView.emit('open-tab', 'tab-5');
-			documentationView.emit('open', id);
-		});
 	}
-});
-editorView.on('clear-docs', function () {
-	return $('#iDocsLink').removeClass('iDocsVisible').off('click');
 });
 editorView.on('compare-files', function (compare) {
 	compareFiles = compare;
@@ -603,6 +595,9 @@ documentationView.on('open-example', function (example) {
 });
 documentationView.on('add-link', function (link, type) {
 	editorView.emit('add-link', link, type);
+});
+documentationView.on('open', function (id) {
+	documentationView.open(id);
 });
 
 // git view
@@ -1132,7 +1127,7 @@ keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear', true);
 });
 keypress.simple_combo("meta h", function () {
-	allCombosActive() && $('#iDocsLink').trigger('click');
+	allCombosActive() && documentationView.emit('open');
 });
 keypress.simple_combo("esc", function () {
 	// remove popup on ESC
@@ -1742,6 +1737,11 @@ var DocumentationView = function (_View) {
         }
       }
     }
+  }, {
+    key: 'open',
+    value: function open(id) {
+      console.log("TODO: open documentation tab at `", id, "`");
+    }
   }]);
 
   return DocumentationView;
@@ -2259,7 +2259,6 @@ var EditorView = function (_View) {
 			var token = iterator.getCurrentToken();
 			if (!token || !token.range) {
 				//console.log('no range');
-				this.emit('clear-docs');
 				return;
 			}
 
@@ -2294,8 +2293,6 @@ var EditorView = function (_View) {
 					}
 				}
 			}
-
-			this.emit('clear-docs');
 		}
 	}, {
 		key: 'getData',
@@ -4719,6 +4716,12 @@ var TabView = function (_View) {
         // it extends horizontally before the sidebar closes.
         this.emit('change');
       }
+    }
+  }, {
+    key: 'getOpenTab',
+    value: function getOpenTab() {
+      tabs.active = $('[data-tab-for].active').data('tabFor');
+      return tabs.active;
     }
   }, {
     key: 'toggle',

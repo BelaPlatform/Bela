@@ -85,6 +85,10 @@ class DocumentationView extends View {
     }
 
   }
+	open(id)
+	{
+		console.log("TODO: open documentation tab at `", id, "`");
+	}
 
 }
 module.exports = DocumentationView;
