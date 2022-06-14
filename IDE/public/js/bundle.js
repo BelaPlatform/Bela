@@ -2637,7 +2637,7 @@ var FileView = function (_View) {
 			var name = $(e.target).data('name');
 			var func = $(e.target).data('func');
 			var strings = Object.assign({}, json.popups.delete_file);
-			strings.title = 'Delete `' + name + '`?';
+			strings.title = utils.formatString(strings.title, utils.breakable(name));
 			popup.twoButtons(strings, function onSubmit(e) {
 				this.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
 			}.bind(this));
@@ -3247,7 +3247,8 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 var example_order = require('../../../../examples/order.json');
-var addAccordionEvent = require('../utils').addAccordionEvent;
+var utils = require('../utils');
+var addAccordionEvent = utils.addAccordionEvent;
 
 var ProjectView = function (_View) {
   _inherits(ProjectView, _View);
@@ -3392,7 +3393,7 @@ var ProjectView = function (_View) {
       // Get the project name text from the object at the top of the editor
       var name = $('[data-current-project]')[0].innerText;
 
-      popup.title(json.popups.delete_project.title + name + '?');
+      popup.title(utils.formatString(json.popups.delete_project.title, utils.breakable(name)));
       popup.subtitle(json.popups.delete_project.text);
 
       var form = [];
@@ -6597,12 +6598,12 @@ module.exports={
 			"sanitised": "This folder will be saved as"
 		},
 		"delete_project": {
-			"title": "Delete project ",
+			"title": "Delete project `{0}`",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
-			"title": "Delete this file?",
+			"title": "Delete file `{0}`?",
 			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},

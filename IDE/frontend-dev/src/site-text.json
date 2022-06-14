@@ -68,12 +68,12 @@
 			"sanitised": "This folder will be saved as"
 		},
 		"delete_project": {
-			"title": "Delete project ",
+			"title": "Delete project `{0}`",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
-			"title": "Delete this file?",
+			"title": "Delete file `{0}`?",
 			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},

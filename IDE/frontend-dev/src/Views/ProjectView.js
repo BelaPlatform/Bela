@@ -3,7 +3,8 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 var example_order = require('../../../../examples/order.json');
-var addAccordionEvent = require('../utils').addAccordionEvent;
+var utils = require('../utils');
+var addAccordionEvent = utils.addAccordionEvent;
 
 class ProjectView extends View {
 
@@ -126,7 +127,7 @@ class ProjectView extends View {
     // Get the project name text from the object at the top of the editor
     var name = $('[data-current-project]')[0].innerText;
 
-    popup.title(json.popups.delete_project.title + name + '?');
+    popup.title(utils.formatString(json.popups.delete_project.title, utils.breakable(name)));
     popup.subtitle(json.popups.delete_project.text);
 
     var form = [];

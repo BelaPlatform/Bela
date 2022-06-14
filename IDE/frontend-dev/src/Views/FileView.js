@@ -261,7 +261,7 @@ class FileView extends View {
 		var name = $(e.target).data('name');
     var func = $(e.target).data('func');
 		let strings = Object.assign({}, json.popups.delete_file);
-		strings.title = 'Delete `' + name + '`?';
+		strings.title = utils.formatString(strings.title, utils.breakable(name));
 		popup.twoButtons(strings, function onSubmit(e){
 			this.emit('message', 'project-event', {func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText});
 		}.bind(this)
