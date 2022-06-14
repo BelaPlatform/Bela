@@ -31,6 +31,10 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       text-indent: 0;
+      &:hover {
+        white-space: normal;
+        word-break: break-all;
+      }
     }
     .source-file {
       position: relative;
