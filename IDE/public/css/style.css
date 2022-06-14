@@ -110,7 +110,8 @@ hr {
   display: block;
   padding-top: 10px; }
 
-.word-breakable {
+.word-breakable, .file-list .section .source-text:hover {
+  white-space: normal;
   word-break: break-all; }
 
 body.uploading {
@@ -862,9 +863,6 @@ ul.projectManager {
     text-overflow: ellipsis;
     white-space: nowrap;
     text-indent: 0; }
-    .file-list .section .source-text:hover {
-      white-space: normal;
-      word-break: break-all; }
   .file-list .section .source-file {
     position: relative; }
     .file-list .section .source-file:hover {

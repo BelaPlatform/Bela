@@ -32,8 +32,7 @@
       white-space: nowrap;
       text-indent: 0;
       &:hover {
-        white-space: normal;
-        word-break: break-all;
+        @extend .word-breakable;
       }
     }
     .source-file {
