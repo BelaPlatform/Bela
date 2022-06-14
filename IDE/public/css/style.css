@@ -110,6 +110,9 @@ hr {
   display: block;
   padding-top: 10px; }
 
+.word-breakable {
+  word-break: break-all; }
+
 body.uploading {
   cursor: progress; }
   body.uploading button.submit {

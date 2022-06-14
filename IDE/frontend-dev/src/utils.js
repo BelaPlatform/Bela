@@ -50,6 +50,7 @@ module.exports.prettySize = function(size) {
 	ret = (s).toFixed(f) + uom;
 	return ret;
 }
+
 module.exports.formatString = function (format, vargs) {
 	var args = Array.prototype.slice.call(arguments, 1);
 	return format.replace(/{(\d+)}/g, function(match, number) {
@@ -117,4 +118,8 @@ module.exports.doLargeFileUpload = function (formData, success, error){
 		success: success,
 		error: error,
 	});
+}
+
+module.exports.breakable = function (text){
+	return '<span class="word-breakable">' + text + '</span>';
 }
