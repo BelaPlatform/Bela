@@ -852,6 +852,13 @@ ul.projectManager {
     list-style: none;
     padding: 2px 0;
     text-indent: 22px; }
+  .file-list .section .source-text {
+    width: calc(100% - 77px);
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-indent: 0; }
   .file-list .section .source-file {
     position: relative; }
     .file-list .section .source-file:hover {
@@ -861,12 +868,18 @@ ul.projectManager {
       left: -10px;
       position: absolute;
       top: 5px; }
-  .file-list .section .source-text {
-    position: relative; }
   .file-list .section.is-dir > .sub-file-list {
     padding-left: 12px; }
+    .file-list .section.is-dir > .sub-file-list > li > ul {
+      padding-left: 13px;
+      padding-bottom: 0; }
     .file-list .section.is-dir > .sub-file-list > .source-file:hover {
       background-color: inherit; }
+    .file-list .section.is-dir > .sub-file-list > .source-file .source-text {
+      text-indent: 12px;
+      padding: 0; }
+    .file-list .section.is-dir > .sub-file-list > .source-file .source-text {
+      width: calc(100% - 55px); }
     .file-list .section.is-dir > .sub-file-list > .source-file > .source-text {
       text-indent: 0px; }
       .file-list .section.is-dir > .sub-file-list > .source-file > .source-text::before {
@@ -875,7 +888,7 @@ ul.projectManager {
       content: ""; }
   .file-list .section.is-dir .source-file {
     position: relative;
-    text-indent: 12px;
+    text-indent: 0px;
     padding-left: 0; }
     .file-list .section.is-dir .source-file:hover {
       background: rgba(255, 255, 0, 0.2); }
