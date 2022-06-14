@@ -260,10 +260,10 @@ var popup = {
 
 	find: selector => content.find(selector),
 
-	title: text => titleEl.text(text),
-	subtitle: text => subEl.text(text),
+	title: text => titleEl.html(text),
+	subtitle: text => subEl.html(text),
 	code: html => codeEl.html(html),
-	body: text => bodyEl.text(text),
+	body: text => bodyEl.html(text),
 	formEl: html => formEl.html(html),
 
 	append: child => content.append(child),

@@ -6469,16 +6469,16 @@ var popup = {
 	},
 
 	title: function title(text) {
-		return titleEl.text(text);
+		return titleEl.html(text);
 	},
 	subtitle: function subtitle(text) {
-		return subEl.text(text);
+		return subEl.html(text);
 	},
 	code: function code(html) {
 		return codeEl.html(html);
 	},
 	body: function body(text) {
-		return bodyEl.text(text);
+		return bodyEl.html(text);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);
