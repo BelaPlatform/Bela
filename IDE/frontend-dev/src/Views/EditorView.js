@@ -182,9 +182,15 @@ class EditorView extends View {
 		this.projectModel.setKey('readOnly', true);
 		if (!opts.fileType) opts.fileType = '0';
 
-		if (null === data || null === opts.fileName) { // file was deleted, print a warning
-				$('[data-editor-msg]').html(json.editor_view.deleted.error);
-				$('[data-editor-msg-parent]').addClass('active');
+		if (null === data || null === opts.fileName || 'binary' === opts.fileType) {
+			// file can not be viewed, print a warning
+			let err;
+			if ('binary' === opts.fileType)
+				err = json.editor_view.binary.error
+			else
+				err = json.editor_view.deleted.error; // file deleted or somehow not available
+			$('[data-editor-msg]').html(err);
+			$('[data-editor-msg-parent]').addClass('active');
 		} else if (opts.fileType.indexOf('image') !== -1){
 
 			// opening image file
@@ -242,10 +248,6 @@ class EditorView extends View {
 				// start comparison with file on disk
 				this.emit('compare-files', true);
 
-			} else if ('binary' === opts.fileType) {
-				// print a warning
-				$('[data-editor-msg]').html(json.editor_view.binary.error);
-				$('[data-editor-msg-parent]').addClass('active');
 			} else {
 
 				this.projectModel.setKey('readOnly', false);
