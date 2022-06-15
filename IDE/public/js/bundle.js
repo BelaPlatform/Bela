@@ -2311,8 +2311,6 @@ module.exports = EditorView;
 },{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2336,7 +2334,7 @@ var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 var absIndeces = ['pd'];
 var overlayActiveClass = 'active-drag-upload';
-var overlay = void 0;
+var lastOverlay = void 0;
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -2350,6 +2348,34 @@ var listCount = 0;
 function isDragEvent(e, type) {
 	return e.originalEvent.dataTransfer.types.includes(type);
 }
+
+// the old version of jQuery we are using cannot easily add/remove classes
+// from svg elements. We need to work around that.
+// See: https://stackoverflow.com/questions/8638621/jquery-svg-why-cant-i-addclass
+// Solution below is (modified) from https://stackoverflow.com/a/24194877/2958741
+/*
+ * .addClassSVG(className)
+ * Adds the specified class(es) to each of the set of matched SVG elements.
+ */
+$.fn.addClassSVG = function (className) {
+	$(this).attr('class', function (index, existingClassNames) {
+		return (existingClassNames !== undefined ? existingClassNames + ' ' : '') + className;
+	});
+	return this;
+};
+
+/*
+ * .removeClassSVG(className)
+ * Removes the specified class to each of the set of matched SVG elements.
+ */
+$.fn.removeClassSVG = function (className) {
+	$(this).attr('class', function (index, existingClassNames) {
+		if (!existingClassNames) return '';
+		var re = new RegExp(' *\\b' + className + '\\b', 'g');
+		return existingClassNames.replace(re, '');
+	});
+	return this;
+};
 
 var FileView = function (_View) {
 	_inherits(FileView, _View);
@@ -2368,52 +2394,185 @@ var FileView = function (_View) {
 			project: ""
 		};
 
-		// drag and drop file upload on editor
-		overlay = $('[data-overlay]');
-		overlay.on('dragleave', function (e) {
-			overlay.removeClass(overlayActiveClass);
+		_this.folderItems = [];
+		_this.svg = $('[data-drag-svg]');
+		var body = $('body');
+		body.off('dragenter dragover drop dragleave');
+		body.on('dragenter', function () {
+			_this.buildOverlay();
+			_this.showOverlay();
 		});
-		$('body').on('dragenter dragover drop', function (e) {
-			if (!isDragEvent(e, "Files")) return;
-			e.stopPropagation();
-			e.preventDefault();
-			if (e.type == 'dragenter') {
-				overlay.addClass(overlayActiveClass);
-			}
-			if (e.type === 'drop') {
-				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
-					// console.log(e.originalEvent.dataTransfer.files[i].size);
-					// 20mb maximum drag and drop file size
-					if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
-						var _ret = function () {
-							var that = _this;
-							overlay.addClass('no');
-							setTimeout(function () {
-								overlay.removeClass('no').removeClass(overlayActiveClass);
-								that.uploadSizeError();
-							}, 1500);
-							return {
-								v: false
-							};
-						}();
-
-						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-					} else {
-						fileQueue.push(e.originalEvent.dataTransfer.files[i]);
-					}
-				}
-				_this.processQueue();
-			}
-			return false;
+		_this.svg.on('dragleave drop', function () {
+			_this.hideOverlay();
 		});
-
 		return _this;
 	}
 
 	_createClass(FileView, [{
+		key: 'createDragPolygon',
+		value: function createDragPolygon(points, dataFunc, dataArg) {
+			//let polygon = document.createElement("polygon");
+			var polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+			this.svg.append(polygon);
+			polygon = $(polygon);
+			polygon.attr('data-drag-func', dataFunc);
+			polygon.attr('data-drag-arg', dataArg);
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var point = _step.value;
+
+					var p = this.svg[0].createSVGPoint();
+					p.x = point[0];
+					p.y = point[1];
+					polygon[0].points.appendItem(p);
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
+			this.dragFileHandler(polygon, polygon);
+			return polygon;
+		}
+	}, {
+		key: 'dragFileHandler',
+		value: function dragFileHandler(target, overlay) {
+			var _this2 = this;
+
+			var getAttr = function getAttr(e, attr) {
+				return $(e.currentTarget).attr(attr);
+			};
+			// target is the element that starts the drag-drop gesture
+			// overlay is the element which displays it.
+			// the gesture starts when entering target and ends
+			// when leaving _overlay_
+			target.off('dragenter dragover drop dragleave');
+			overlay.off('dragleave');
+			overlay.on('dragleave', function (overlay, e) {
+				if (!isDragEvent(e, "Files")) return;
+				overlay.removeClassSVG(overlayActiveClass);
+			}.bind(this, overlay));
+			// not sure why we also need dragover, but without it, drop doesn't work
+			target.on('dragenter dragover drop', function (overlay, e) {
+				if (!isDragEvent(e, "Files")) return;
+				e.stopPropagation();
+				e.preventDefault();
+				if ('dragenter' === e.type) {
+					overlay.addClassSVG(overlayActiveClass);
+				} else if (e.type == 'drop') {
+					for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
+						// 20mb maximum drag and drop file size
+						if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
+							var that = _this2;
+							var file = e.originalEvent.dataTransfer.files[i];
+							_this2.svg.addClassSVG('no');
+							that.uploadSizeError();
+							return false;
+						} else {
+							// the `data-drag-func=main` is the largest drop target.
+							// For now, we make it behave exactly as if it was
+							// `data-drag-func=folder data-drag-arg=''`
+							// (i.e.: upload files to the project's root folder).
+							var folder = void 0;
+							var attr = getAttr(e, 'data-drag-func');
+							if ('main' === attr) folder = '';else if ('folder' === attr) folder = getAttr(e, 'data-drag-arg');
+							if ('undefined' === typeof folder) continue;
+							var _file = e.originalEvent.dataTransfer.files[i];
+							_file.folder = folder;
+							_file.overlay = overlay;
+							fileQueue.push(_file);
+						}
+					}
+					_this2.processQueue();
+				}
+				return false;
+			}.bind(this, overlay));
+		}
+	}, {
+		key: 'buildOverlay',
+		value: function buildOverlay() {
+			this.svg.empty();
+			// First, draw one polygon per each folder
+			// do not draw outside the area of the"Directories" list
+			// things are complicated by the presence of the scroll on the side tab.
+			var title = $(".title-container");
+			if (!title.length) // in case we are not ready yet, don't do anything
+				return;
+			var bar = $("#toolbar");
+			var maxY = bar.offset().top - $(window).scrollTop();;
+			var directories = $(".section.is-dir");
+			var dirOffset = directories.offset() ? directories.offset().top : maxY; // if no directories, we will take up the whole surface so maxY = minY
+			var minY = Math.max(dirOffset - $(window).scrollTop(), title.offset().top - $(window).scrollTop() + title.height());
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = this.folderItems[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var listItem = _step2.value;
+
+					var overlay = listItem;
+					var folder = $("[data-folder]", listItem).attr('data-file');
+					var offset = listItem.offset();
+					var posY = offset.top - $(window).scrollTop();
+					var posX = offset.left - $(window).scrollLeft();
+					var wid = listItem.width();
+					var hei = listItem.height();
+					if (posY > maxY || posY + hei < minY) continue;
+					if (posY + hei > maxY) hei = maxY - posY;
+					if (posY < minY) {
+						hei -= minY - posY;
+						posY = minY;
+					}
+					if (hei < 15) continue;
+					var _pol = this.createDragPolygon([[posX, posY], [posX + wid, posY], [posX + wid, posY + hei], [posX, posY + hei]], 'folder', folder);
+				}
+				// now draw a polygon that covers almost everything else.
+				// We need a C-shaped polygon which skips the folder boxes above.
+				// The C's "cutout" is delimited by minY, maxY and maxX
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+
+			var menu = $('[data-tab-menu]');
+			var maxX = menu.offset().left + menu.width();
+			var pol = this.createDragPolygon([[0, 0], [this.svg.width(), 0], [this.svg.width(), minY], [maxX, minY], [maxX, maxY], [this.svg.width(), maxY], [this.svg.width(), this.svg.height()], [0, this.svg.height()]], 'main', '');
+		}
+	}, {
+		key: 'showOverlay',
+		value: function showOverlay() {
+			this.svg.addClassSVG(overlayActiveClass);
+		}
+	}, {
 		key: 'hideOverlay',
 		value: function hideOverlay() {
-			overlay.removeClass(overlayActiveClass).removeClass('no');
+			this.svg.removeClassSVG(overlayActiveClass).removeClassSVG('no');
+			$('polygon', this.svg).removeClassSVG(overlayActiveClass).removeClassSVG('no');
 		}
 
 		// UI events
@@ -2431,28 +2590,28 @@ var FileView = function (_View) {
 		value: function _getFlattenedFileList(foldersOnly) {
 			var listDir = function listDir(out, inp, base) {
 				if (!base) base = '';
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
+				var _iteratorNormalCompletion3 = true;
+				var _didIteratorError3 = false;
+				var _iteratorError3 = undefined;
 
 				try {
-					for (var _iterator = inp[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var f = _step.value;
+					for (var _iterator3 = inp[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+						var f = _step3.value;
 
 						if (!foldersOnly || isDir(f)) out.push(base + f.name);
 						if (isDir(f)) listDir(out, f.children, base + f.name + '/');
 					}
 				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
+					_didIteratorError3 = true;
+					_iteratorError3 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
+						if (!_iteratorNormalCompletion3 && _iterator3.return) {
+							_iterator3.return();
 						}
 					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
+						if (_didIteratorError3) {
+							throw _iteratorError3;
 						}
 					}
 				}
@@ -2464,12 +2623,12 @@ var FileView = function (_View) {
 	}, {
 		key: 'newFile',
 		value: async function newFile(func, base) {
-			var _this2 = this;
+			var _this3 = this;
 
 			var name = await popup.requestValidInputAsync({
 				initialValue: base ? base + '/' : '',
 				getDisallowedValues: function getDisallowedValues() {
-					return _this2._getFlattenedFileList(false);
+					return _this3._getFlattenedFileList(false);
 				},
 				strings: json.popups.create_new_file,
 				sanitise: sanitisePath
@@ -2480,12 +2639,12 @@ var FileView = function (_View) {
 	}, {
 		key: 'newFolder',
 		value: async function newFolder(func) {
-			var _this3 = this;
+			var _this4 = this;
 
 			var name = await popup.requestValidInputAsync({
 				initialValue: '',
 				getDisallowedValues: function getDisallowedValues() {
-					return _this3._getFlattenedFileList(true);
+					return _this4._getFlattenedFileList(true);
 				},
 				strings: json.popups.create_new_folder,
 				sanitise: sanitisePath
@@ -2496,9 +2655,14 @@ var FileView = function (_View) {
 	}, {
 		key: 'uploadSizeError',
 		value: function uploadSizeError() {
-			popup.twoButtons(json.popups.upload_size_error, function onSubmit() {
-				this.uploadFile();
-			}.bind(this), undefined, {
+			var _this5 = this;
+
+			popup.twoButtons(json.popups.upload_size_error, function () {
+				_this5.hideOverlay();
+				_this5.uploadFile();
+			}, function () {
+				return _this5.hideOverlay();
+			}, {
 				titleClass: 'error'
 			});
 		}
@@ -2515,20 +2679,20 @@ var FileView = function (_View) {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
 			popup.twoButtons(json.popups.upload_file, async function onSubmit(e) {
-				var _this4 = this;
+				var _this6 = this;
 
 				var formEl = $('[data-popup] form')[0];
 				var formDataOrig = new FormData(formEl);
 				var formData = new FormData();
 				var uploadFiles = 0;
 				var selectedFiles = 0;
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
+				var _iteratorNormalCompletion4 = true;
+				var _didIteratorError4 = false;
+				var _iteratorError4 = undefined;
 
 				try {
-					for (var _iterator2 = formDataOrig.entries()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var entry = _step2.value;
+					for (var _iterator4 = formDataOrig.entries()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+						var entry = _step4.value;
 
 						++selectedFiles;
 						// TODO: can we get useful directory information here?
@@ -2555,16 +2719,16 @@ var FileView = function (_View) {
 						}));
 					}
 				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
+					_didIteratorError4 = true;
+					_iteratorError4 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
+						if (!_iteratorNormalCompletion4 && _iterator4.return) {
+							_iterator4.return();
 						}
 					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
+						if (_didIteratorError4) {
+							throw _iteratorError4;
 						}
 					}
 				}
@@ -2574,11 +2738,11 @@ var FileView = function (_View) {
 					// would be great if these could be sent as part of the POST body
 					// note: for drag-and-drop files, the equivalent to these is
 					// done in ProjectManager::uploadFile on the server
-					_this4.emit('list-files');
-					_this4.emit('file-uploaded');
+					_this6.emit('list-files');
+					_this6.emit('file-uploaded');
 					popup.ok(json.popups.upload_file_success);
 				}, function (e) {
-					_this4.emit('list-files');
+					_this6.emit('list-files');
 					popup.ok({
 						title: json.popups.upload_file_error.title,
 						text: e.responseText
@@ -2591,7 +2755,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'rename',
 		value: async function rename(type, e) {
-			var _this5 = this;
+			var _this7 = this;
 
 			var popupStrings = void 0;
 			if ('file' === type) popupStrings = json.popups.rename_file;else if ('folder' === type) popupStrings = json.popups.rename_folder;else return;
@@ -2605,7 +2769,7 @@ var FileView = function (_View) {
 				getDisallowedValues: function getDisallowedValues() {
 					// remove current name (i.e.: allow rename to same, which
 					// yields NOP)
-					var arr = _this5._getFlattenedFileList(false);
+					var arr = _this7._getFlattenedFileList(false);
 					arr.splice(arr.indexOf(name), 1);
 					return arr;
 				},
@@ -2651,7 +2815,9 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this6 = this;
+			var _this8 = this;
+
+			this.folderItems = [];
 
 			// TODO: it would be great to be able to get this from this.models, but
 			// we don't actually know which one is the project model, so we cache
@@ -2670,13 +2836,13 @@ var FileView = function (_View) {
 			var resources = [];
 			var directories = [];
 			var images = [];
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion5 = true;
+			var _didIteratorError5 = false;
+			var _iteratorError5 = undefined;
 
 			try {
-				for (var _iterator3 = files[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var it = _step3.value;
+				for (var _iterator5 = files[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+					var it = _step5.value;
 
 
 					// defensive copy so that changes below to the way the size is
@@ -2711,16 +2877,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError5 = true;
+				_iteratorError5 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion5 && _iterator5.return) {
+						_iterator5.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError5) {
+						throw _iteratorError5;
 					}
 				}
 			}
@@ -2777,29 +2943,29 @@ var FileView = function (_View) {
 						var item = file_list_elements[i][j];
 						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						if (file_list_elements[i].name != i18n_dir_str) {
-							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + prettySize(item.size) + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
-								return _this6.openFile(e);
+							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + prettySize(item.size) + '</span>').attr('data-file', item.name).appendTo(listItem).on('click', function (e) {
+								return _this8.openFile(e);
 							});
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this6.renameFile(e);
+								return _this8.renameFile(e);
 							});
 							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data-name', item.name).appendTo(listItem).on('click', function (e, projName) {
-								return _this6.downloadFile(e, data.currentProject);
+								return _this8.downloadFile(e, data.currentProject);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this6.deleteFile(e);
+								return _this8.deleteFile(e);
 							});
 						} else {
 							section.addClass('is-dir');
-							var itemText = $('<div></div>').addClass('source-text').text(item.name).data('file', item.name).appendTo(listItem);
+							var itemText = $('<div></div>').addClass('source-text').text(item.name).attr('data-file', item.name).attr('data-folder', '').appendTo(listItem);
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFolder').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this6.renameFolder(e);
+								return _this8.renameFolder(e);
 							});
 							var newButton = $('<button></button>').addClass('file-new file-button fileManager').attr('title', 'New File').attr('data-func', 'newFile').attr('data-folder', item.name).appendTo(listItem).on('click', function () {
-								return _this6.newFile('newFile', event.target.dataset.folder);
+								return _this8.newFile('newFile', event.target.dataset.folder);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this6.deleteFile(e);
+								return _this8.deleteFile(e);
 							});
 							var subList = $('<ul></ul>');
 							for (var k = 0; k < item.children.length; k++) {
@@ -2807,29 +2973,31 @@ var FileView = function (_View) {
 								var path = item.name + '/' + child.name;
 								var size = typeof child.size !== 'undefined' ? prettySize(child.size) : '';
 								var subListItem = $('<li></li>').addClass('source-file');
-								var itemText = $('<div></div>').addClass('source-text').html(child.name + ' <span class="file-list-size">' + size + '</span>').data('file', path).appendTo(subListItem).on('click', function (e) {
-									return _this6.openFile(e);
+								var itemText = $('<div></div>').addClass('source-text').html(child.name + ' <span class="file-list-size">' + size + '</span>').attr('data-file', path).appendTo(subListItem).on('click', function (e) {
+									return _this8.openFile(e);
 								});
 								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', path).appendTo(subListItem).on('click', function (e) {
-									return _this6.deleteFile(e);
+									return _this8.deleteFile(e);
 								});
 								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', path).appendTo(subListItem).on('click', function (e) {
-									return _this6.renameFile(e);
+									return _this8.renameFile(e);
 								});
 								if (!child.children) {
 									var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data-name', path).appendTo(subListItem).on('click', function (e, projName) {
-										return _this6.downloadFile(e, data.currentProject);
+										return _this8.downloadFile(e, data.currentProject);
 									});
 								}
 								subListItem.appendTo(subList);
 							}
 							subList.appendTo(listItem);
+							this.folderItems.push(listItem);
 						}
 					}
 					fileList.appendTo(section);
 					section.appendTo($files);
 				}
 			}
+			this.buildOverlay(); // this is needed only in case an updated file list comes in while the overlay is active
 			if (data && data.fileName) this._fileName(data.fileName);
 		}
 	}, {
@@ -2861,7 +3029,7 @@ var FileView = function (_View) {
 	}, {
 		key: 'processQueue',
 		value: function processQueue() {
-			var _this7 = this;
+			var _this9 = this;
 
 			// keep processing the queue in the background
 			console.log("processQueue", uploadingFile, fileQueue.length);
@@ -2870,7 +3038,7 @@ var FileView = function (_View) {
 					console.log("processQueue do file upload", uploadingFile, fileQueue.length);
 					if (!uploadingFile && fileQueue.length) {
 						console.log("processQueue do file upload");
-						_this7.doFileUpload(fileQueue.pop());
+						_this9.doFileUpload(fileQueue.pop());
 					}
 				}, 0);
 			}
@@ -2878,10 +3046,10 @@ var FileView = function (_View) {
 	}, {
 		key: 'promptForOverwrite',
 		value: async function promptForOverwrite(filename) {
-			var _this8 = this;
+			var _this10 = this;
 
 			return new Promise(function (resolve, reject) {
-				var fileExists = _this8._getFlattenedFileList().includes(filename);
+				var fileExists = _this10._getFlattenedFileList().includes(filename);
 				var dont = {
 					do: false,
 					force: false
@@ -2900,7 +3068,7 @@ var FileView = function (_View) {
 							do: true,
 							force: true
 						});
-					}.bind(_this8), function onCancel() {
+					}.bind(_this10), function onCancel() {
 						if (popup.find('input[type=checkbox]').is(':checked')) {
 							askForOverwrite = false;
 							overwriteAction = 'reject';
@@ -2919,7 +3087,7 @@ var FileView = function (_View) {
 						});
 					} else {
 						resolve(dont);
-						_this8.emit('file-rejected', 'upload failed, file ' + filename + ' already exists.');
+						_this10.emit('file-rejected', 'upload failed, file ' + filename + ' already exists.');
 					}
 				} else {
 					resolve({
@@ -2939,7 +3107,8 @@ var FileView = function (_View) {
 			}
 			uploadingFile = true;
 
-			var obj = await this.promptForOverwrite(sanitise(file.name));
+			var basePath = file.folder ? file.folder + '/' : '';
+			var obj = await this.promptForOverwrite(basePath + sanitise(file.name));
 			var saveas = null;
 			if (obj.do) {
 				var isProject = void 0;
@@ -2955,11 +3124,12 @@ var FileView = function (_View) {
 					});
 					isProject = true;
 				} else {
-					saveas = sanitise(file.name);
+					saveas = basePath + sanitise(file.name);
 					isProject = false;
 				}
 				if (null !== saveas) this.actuallyDoFileUpload(file, saveas, obj.force, isProject);
 			}
+			lastOverlay = file.overlay;
 			if (null === saveas) {
 				// when the last file is actuallyDoFileUpload'ed above, the overlay is
 				// removed there upon completion
@@ -2973,20 +3143,20 @@ var FileView = function (_View) {
 	}, {
 		key: 'actuallyDoFileUpload',
 		value: async function actuallyDoFileUpload(file, saveas, force, isProject) {
-			var _this9 = this;
+			var _this11 = this;
 
 			var reader = new FileReader();
 			var onloadend = function onloadend(func, args, ev) {
 				if (func && ev) {
-					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this9.emit('file-rejected', 'error while uploading ' + file.name);else {
+					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this11.emit('file-rejected', 'error while uploading ' + file.name);else {
 						args.func = func;
 						args.fileData = ev.target.result;
 						args.force = force;
 						args.queue = fileQueue.length;
-						_this9.emit('message', 'project-event', args);
+						_this11.emit('message', 'project-event', args);
 					}
 					if (!fileQueue.length) {
-						_this9.hideOverlay();
+						_this11.hideOverlay();
 					}
 				}
 			};

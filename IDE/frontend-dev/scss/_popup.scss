@@ -166,11 +166,4 @@
     @include active();
     background: rgba(0, 0, 0, 0.3);
   }
-  &.active-drag-upload {
-    @include active();
-    background: rgba(0, 255, 122, 0.3);
-    &.no {
-      background: rgba(255, 0, 0, 0.3);
-    }
-  }
 }

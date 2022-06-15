@@ -13,7 +13,7 @@ var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 var absIndeces = ['pd'];
 const overlayActiveClass = 'active-drag-upload';
-let overlay;
+let lastOverlay;
 
 var askForOverwrite = true;
 var uploadingFile = false;
@@ -29,6 +29,35 @@ function isDragEvent(e, type)
 	return e.originalEvent.dataTransfer.types.includes(type);
 }
 
+// the old version of jQuery we are using cannot easily add/remove classes
+// from svg elements. We need to work around that.
+// See: https://stackoverflow.com/questions/8638621/jquery-svg-why-cant-i-addclass
+// Solution below is (modified) from https://stackoverflow.com/a/24194877/2958741
+/*
+ * .addClassSVG(className)
+ * Adds the specified class(es) to each of the set of matched SVG elements.
+ */
+$.fn.addClassSVG = function(className){
+	$(this).attr('class', function(index, existingClassNames) {
+		return ((existingClassNames !== undefined) ? (existingClassNames + ' ') : '') + className;
+	});
+	return this;
+};
+
+/*
+ * .removeClassSVG(className)
+ * Removes the specified class to each of the set of matched SVG elements.
+ */
+$.fn.removeClassSVG = function(className){
+	$(this).attr('class', function(index, existingClassNames) {
+	if(!existingClassNames)
+		return '';
+	var re = new RegExp(' *\\b' + className + '\\b', 'g');
+		return existingClassNames.replace(re, '');
+	});
+	return this;
+};
+
 class FileView extends View {
 
 	constructor(className, models, getProjectList){
@@ -42,44 +71,162 @@ class FileView extends View {
       project: ""
     };
 
-		// drag and drop file upload on editor
-		overlay = $('[data-overlay]');
-		overlay.on('dragleave', (e) => {
-			overlay.removeClass(overlayActiveClass);
+		this.folderItems = [];
+		this.svg = $('[data-drag-svg]');
+		let body = $('body');
+		body.off('dragenter dragover drop dragleave');
+		body.on('dragenter', () => {
+			this.buildOverlay();
+			this.showOverlay();
 		});
-		$('body').on('dragenter dragover drop', (e) => {
+		this.svg.on('dragleave drop', () => {
+			this.hideOverlay();
+		});
+	}
+
+	createDragPolygon(points, dataFunc, dataArg)
+	{
+		//let polygon = document.createElement("polygon");
+		let polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+		this.svg.append(polygon);
+		polygon = $(polygon);
+		polygon.attr('data-drag-func', dataFunc);
+		polygon.attr('data-drag-arg', dataArg);
+		for(let point of points)
+		{
+			let p = this.svg[0].createSVGPoint();
+			p.x = point[0];
+			p.y = point[1];
+			polygon[0].points.appendItem(p);
+		}
+		this.dragFileHandler(polygon, polygon);
+		return polygon;
+	}
+
+	dragFileHandler(target, overlay)
+	{
+		let getAttr = (e, attr) => {
+			return $(e.currentTarget).attr(attr);
+		}
+		// target is the element that starts the drag-drop gesture
+		// overlay is the element which displays it.
+		// the gesture starts when entering target and ends
+		// when leaving _overlay_
+		target.off('dragenter dragover drop dragleave');
+		overlay.off('dragleave');
+		overlay.on('dragleave', ((overlay, e) => {
+			if(!isDragEvent(e, "Files"))
+				return;
+			overlay.removeClassSVG(overlayActiveClass);
+		}).bind(this, overlay));
+		// not sure why we also need dragover, but without it, drop doesn't work
+		target.on('dragenter dragover drop', ((overlay, e) => {
 			if(!isDragEvent(e, "Files"))
 				return;
 			e.stopPropagation();
 			e.preventDefault();
-      if (e.type == 'dragenter') {
-        overlay.addClass(overlayActiveClass);
-      }
-			if (e.type === 'drop'){
+			if ('dragenter' === e.type) {
+				overlay.addClassSVG(overlayActiveClass);
+			}
+			else if (e.type == 'drop') {
 				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++){
-          // console.log(e.originalEvent.dataTransfer.files[i].size);
-          // 20mb maximum drag and drop file size
-          if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
-            let that = this;
-            overlay.addClass('no');
-            setTimeout(function(){
-              overlay.removeClass('no')
-                     .removeClass(overlayActiveClass);
-              that.uploadSizeError();
-            }, 1500);
-            return false;
-          } else {
-            fileQueue.push(e.originalEvent.dataTransfer.files[i])
-          }
+					// 20mb maximum drag and drop file size
+					if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
+						let that = this;
+						let file = e.originalEvent.dataTransfer.files[i];
+						this.svg.addClassSVG('no');
+						that.uploadSizeError();
+						return false;
+					} else {
+						// the `data-drag-func=main` is the largest drop target.
+						// For now, we make it behave exactly as if it was
+						// `data-drag-func=folder data-drag-arg=''`
+						// (i.e.: upload files to the project's root folder).
+						let folder;
+						let attr = getAttr(e, 'data-drag-func');
+						if('main' === attr)
+							folder = '';
+						else if('folder' === attr)
+							folder = getAttr(e, 'data-drag-arg');
+						if('undefined' === typeof(folder))
+							continue;
+						let file = e.originalEvent.dataTransfer.files[i];
+						file.folder = folder;
+						file.overlay = overlay;
+						fileQueue.push(file);
+					}
 				}
 				this.processQueue();
 			}
 			return false;
-		});
-
+		}).bind(this, overlay));
 	}
+
+	buildOverlay() {
+		this.svg.empty();
+		// First, draw one polygon per each folder
+		// do not draw outside the area of the"Directories" list
+		// things are complicated by the presence of the scroll on the side tab.
+		let title = $(".title-container");
+		if(!title.length) // in case we are not ready yet, don't do anything
+			return;
+		let bar = $("#toolbar");
+		let maxY = bar.offset().top - $(window).scrollTop();;
+		let directories = $(".section.is-dir");
+		let dirOffset = directories.offset() ? directories.offset().top : maxY; // if no directories, we will take up the whole surface so maxY = minY
+		let minY = Math.max(dirOffset- $(window).scrollTop(),
+					title.offset().top - $(window).scrollTop() + title.height());
+		for(let listItem of this.folderItems)
+		{
+			let overlay = listItem;
+			let folder = $("[data-folder]", listItem).attr('data-file');
+			let offset = listItem.offset();
+			let posY = offset.top - $(window).scrollTop();
+			let posX = offset.left - $(window).scrollLeft();
+			let wid = listItem.width();
+			let hei = listItem.height();
+			if(posY > maxY || posY + hei < minY)
+				continue;
+			if(posY + hei > maxY)
+				hei = maxY - posY;
+			if(posY < minY)
+			{
+				hei -= minY - posY
+				posY = minY;
+			}
+			if(hei < 15)
+				continue;
+			let pol = this.createDragPolygon([
+				[posX, posY],
+				[posX + wid, posY],
+				[posX + wid, posY + hei],
+				[posX, posY + hei],
+			], 'folder', folder);
+		}
+		// now draw a polygon that covers almost everything else.
+		// We need a C-shaped polygon which skips the folder boxes above.
+		// The C's "cutout" is delimited by minY, maxY and maxX
+		let menu = $('[data-tab-menu]');
+		let maxX = menu.offset().left + menu.width();
+		let pol = this.createDragPolygon([
+				[0, 0],
+				[this.svg.width(), 0],
+				[this.svg.width(), minY],
+				[maxX, minY],
+				[maxX, maxY],
+				[this.svg.width(), maxY],
+				[this.svg.width(), this.svg.height()],
+				[0, this.svg.height()],
+			], 'main', '');
+	}
+
+	showOverlay(){
+		this.svg.addClassSVG(overlayActiveClass);
+	}
+
 	hideOverlay(){
-		overlay.removeClass(overlayActiveClass).removeClass('no');
+		this.svg.removeClassSVG(overlayActiveClass).removeClassSVG('no');
+		$('polygon', this.svg).removeClassSVG(overlayActiveClass).removeClassSVG('no');
 	}
 
 	// UI events
@@ -132,10 +279,11 @@ class FileView extends View {
 
   uploadSizeError(){
 		popup.twoButtons(json.popups.upload_size_error,
-			function onSubmit(){
+			() =>{
+				this.hideOverlay();
 				this.uploadFile();
-			}.bind(this),
-			undefined,
+			},
+			() => this.hideOverlay(),
 			{
 				titleClass: 'error',
 			}
@@ -274,6 +422,7 @@ class FileView extends View {
 
 	// model events
 	_fileList(files, data){
+		this.folderItems = [];
 
 		// TODO: it would be great to be able to get this from this.models, but
 		// we don't actually know which one is the project model, so we cache
@@ -375,7 +524,7 @@ class FileView extends View {
             var itemText = $('<div></div>')
                   .addClass('source-text')
                   .html(item.name + ' <span class="file-list-size">' + prettySize(item.size) + '</span>')
-                  .data('file', item.name)
+                  .attr('data-file', item.name)
                   .appendTo(listItem)
                   .on('click', (e) => this.openFile(e));
             var renameButton = $('<button></button>')
@@ -403,7 +552,8 @@ class FileView extends View {
             var itemText = $('<div></div>')
                   .addClass('source-text')
                   .text(item.name)
-                  .data('file', item.name)
+                  .attr('data-file', item.name)
+                  .attr('data-folder', '')
                   .appendTo(listItem);
             var renameButton = $('<button></button>')
                   .addClass('file-rename file-button fileManager')
@@ -436,7 +586,7 @@ class FileView extends View {
               var itemText = $('<div></div>')
                   .addClass('source-text')
                   .html(child.name + ' <span class="file-list-size">' + size + '</span>')
-                  .data('file', path)
+                  .attr('data-file', path)
                   .appendTo(subListItem)
                   .on('click', (e) => this.openFile(e));
               var deleteButton = $('<button></button>')
@@ -464,12 +614,14 @@ class FileView extends View {
               subListItem.appendTo(subList);
             }
             subList.appendTo(listItem);
+			this.folderItems.push(listItem);
           }
 	      }
 	      fileList.appendTo(section);
 	      section.appendTo($files);
 			}
 		}
+		this.buildOverlay(); // this is needed only in case an updated file list comes in while the overlay is active
 		if (data && data.fileName) this._fileName(data.fileName);
 
 	}
@@ -576,7 +728,8 @@ class FileView extends View {
 		}
 		uploadingFile = true;
 
-		let obj = await this.promptForOverwrite(sanitise(file.name));
+		let basePath = file.folder ? file.folder + '/' : '';
+		let obj = await this.promptForOverwrite(basePath + sanitise(file.name));
 		let saveas = null;
 		if(obj.do) {
 			let isProject;
@@ -592,12 +745,13 @@ class FileView extends View {
 				});
 				isProject = true;
 			} else {
-				saveas = sanitise(file.name);
+				saveas = basePath + sanitise(file.name);
 				isProject = false
 			}
 			if(null !== saveas)
 				this.actuallyDoFileUpload(file, saveas, obj.force, isProject);
 		}
+		lastOverlay = file.overlay;
 		if(null === saveas) {
 			// when the last file is actuallyDoFileUpload'ed above, the overlay is
 			// removed there upon completion
