@@ -1315,6 +1315,8 @@ ul dl {
   width: 100vw;
   z-index: 9998;
   background: rgba(0, 0, 0, 0.3); }
+  #overlay.active-popup.no {
+    background: rgba(255, 0, 0, 0.3); }
 
 ::-webkit-scrollbar {
   width: 12px; }

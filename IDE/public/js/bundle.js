@@ -6298,6 +6298,7 @@ function callFunc(func, arg) {
 }
 
 var overlayActiveClass = 'active-popup';
+var errorClass = 'no';
 var popup = {
 	defaultStrings: {
 		cancel: json.popups.generic.cancel,
@@ -6306,7 +6307,8 @@ var popup = {
 	defaultOpts: {
 		focus: [// in reverse order of priority
 		'button[type=submit]', '.cancel', 'input[type=text]'],
-		titleClass: ''
+		titleClass: '',
+		error: false
 	},
 	isShown: function isShown() {
 		return parent.hasClass('active');
@@ -6501,6 +6503,7 @@ var popup = {
 		}
 
 		titleEl.addClass(opts.titleClass);
+		if (opts.error) _overlay.addClass(errorClass);else _overlay.removeClass(errorClass);
 	},
 	respondToEvent: function respondToEvent(callback, e) {
 		e.preventDefault();

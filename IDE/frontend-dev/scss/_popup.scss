@@ -165,5 +165,8 @@
   &.active-popup{
     @include active();
     background: rgba(0, 0, 0, 0.3);
+    &.no {
+      background: rgba(255, 0, 0, 0.3);
+    }
   }
 }

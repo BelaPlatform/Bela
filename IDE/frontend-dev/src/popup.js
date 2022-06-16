@@ -16,6 +16,7 @@ function callFunc(func, arg)
 }
 
 const overlayActiveClass = 'active-popup';
+const errorClass = 'no';
 var popup = {
 	defaultStrings: {
 		cancel: json.popups.generic.cancel,
@@ -28,6 +29,7 @@ var popup = {
 			'input[type=text]',
 		],
 		titleClass: '',
+		error: false,
 	},
 	isShown(){
 		return parent.hasClass('active');
@@ -120,6 +122,10 @@ var popup = {
 			}
 		}
 		titleEl.addClass(opts.titleClass);
+		if(opts.error)
+			overlay.addClass(errorClass);
+		else
+			overlay.removeClass(errorClass);
 	},
 
 	respondToEvent(callback, e) {
