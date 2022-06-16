@@ -2340,6 +2340,7 @@ var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
 var fileQueue = [];
+var largeFileQueue = [];
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
@@ -2475,27 +2476,18 @@ var FileView = function (_View) {
 					overlay.addClassSVG(overlayActiveClass);
 				} else if (e.type == 'drop') {
 					for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
-						// 20mb maximum drag and drop file size
-						if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
-							var that = _this2;
-							var file = e.originalEvent.dataTransfer.files[i];
-							_this2.svg.addClassSVG('no');
-							that.uploadSizeError();
-							return false;
-						} else {
-							// the `data-drag-func=main` is the largest drop target.
-							// For now, we make it behave exactly as if it was
-							// `data-drag-func=folder data-drag-arg=''`
-							// (i.e.: upload files to the project's root folder).
-							var folder = void 0;
-							var attr = getAttr(e, 'data-drag-func');
-							if ('main' === attr) folder = '';else if ('folder' === attr) folder = getAttr(e, 'data-drag-arg');
-							if ('undefined' === typeof folder) continue;
-							var _file = e.originalEvent.dataTransfer.files[i];
-							_file.folder = folder;
-							_file.overlay = overlay;
-							fileQueue.push(_file);
-						}
+						var file = e.originalEvent.dataTransfer.files[i];
+						// the `data-drag-func=main` is the largest drop target.
+						// For now, we make it behave exactly as if it was
+						// `data-drag-func=folder data-drag-arg=''`
+						// (i.e.: upload files to the project's root folder).
+						var folder = void 0;
+						var attr = getAttr(e, 'data-drag-func');
+						if ('main' === attr) folder = '';else if ('folder' === attr) folder = getAttr(e, 'data-drag-arg');
+						if ('undefined' === typeof folder) continue;
+						file.folder = folder;
+						file.overlay = overlay;
+						fileQueue.push(file);
 					}
 					_this2.processQueue();
 				}
@@ -2654,10 +2646,12 @@ var FileView = function (_View) {
 		}
 	}, {
 		key: 'uploadSizeError',
-		value: function uploadSizeError() {
+		value: function uploadSizeError(name) {
 			var _this5 = this;
 
-			popup.twoButtons(json.popups.upload_size_error, function () {
+			var strings = Object.assign({}, json.popups.upload_size_error);
+			strings.title = utils.formatString(strings.title, utils.breakable(name));
+			popup.twoButtons(strings, function () {
 				_this5.hideOverlay();
 				_this5.uploadFile();
 			}, function () {
@@ -3032,15 +3026,30 @@ var FileView = function (_View) {
 			var _this9 = this;
 
 			// keep processing the queue in the background
-			console.log("processQueue", uploadingFile, fileQueue.length);
+			console.log("processQueue, uploading?", uploadingFile, fileQueue.length);
 			if (!uploadingFile && fileQueue.length) {
 				setTimeout(function () {
 					console.log("processQueue do file upload", uploadingFile, fileQueue.length);
 					if (!uploadingFile && fileQueue.length) {
-						console.log("processQueue do file upload");
-						_this9.doFileUpload(fileQueue.pop());
+						var file = fileQueue.pop();
+						console.log("processQueue do file upload:", file.name);
+						// 20mb maximum drag and drop file size
+						if (file.size >= 20000000) {
+							// postpone large files
+							largeFileQueue.push(file.name);
+							// and keep going
+							_this9.processQueue();
+						} else {
+							_this9.doFileUpload(file);
+						}
 					}
 				}, 0);
+			} else if (largeFileQueue.length) {
+				// once we finished uploading the small files, print a
+				// single error message for all of the large ones
+				this.svg.addClassSVG('no');
+				this.uploadSizeError(largeFileQueue.join('`, `'));
+				largeFileQueue = [];
 			}
 		}
 	}, {
@@ -6878,7 +6887,7 @@ module.exports={
 			"cancel": "Cancel"
 		},
 		"upload_size_error": {
-		   "title": "Error: File is too large",
+		   "title": "Error: File(s) `{0}` too large",
 			 "text": "The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.",
 			 "button": "Try Again"
 		 }

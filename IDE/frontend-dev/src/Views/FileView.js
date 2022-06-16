@@ -19,6 +19,7 @@ var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
 var fileQueue = [];
+var largeFileQueue = [];
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
@@ -130,31 +131,22 @@ class FileView extends View {
 			}
 			else if (e.type == 'drop') {
 				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++){
-					// 20mb maximum drag and drop file size
-					if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
-						let that = this;
-						let file = e.originalEvent.dataTransfer.files[i];
-						this.svg.addClassSVG('no');
-						that.uploadSizeError();
-						return false;
-					} else {
-						// the `data-drag-func=main` is the largest drop target.
-						// For now, we make it behave exactly as if it was
-						// `data-drag-func=folder data-drag-arg=''`
-						// (i.e.: upload files to the project's root folder).
-						let folder;
-						let attr = getAttr(e, 'data-drag-func');
-						if('main' === attr)
-							folder = '';
-						else if('folder' === attr)
-							folder = getAttr(e, 'data-drag-arg');
-						if('undefined' === typeof(folder))
-							continue;
-						let file = e.originalEvent.dataTransfer.files[i];
-						file.folder = folder;
-						file.overlay = overlay;
-						fileQueue.push(file);
-					}
+					let file = e.originalEvent.dataTransfer.files[i];
+					// the `data-drag-func=main` is the largest drop target.
+					// For now, we make it behave exactly as if it was
+					// `data-drag-func=folder data-drag-arg=''`
+					// (i.e.: upload files to the project's root folder).
+					let folder;
+					let attr = getAttr(e, 'data-drag-func');
+					if('main' === attr)
+						folder = '';
+					else if('folder' === attr)
+						folder = getAttr(e, 'data-drag-arg');
+					if('undefined' === typeof(folder))
+						continue;
+					file.folder = folder;
+					file.overlay = overlay;
+					fileQueue.push(file);
 				}
 				this.processQueue();
 			}
@@ -277,8 +269,10 @@ class FileView extends View {
 		this.emit('message', 'project-event', {func, newFolder: name});
 	}
 
-  uploadSizeError(){
-		popup.twoButtons(json.popups.upload_size_error,
+  uploadSizeError(name){
+		let strings = Object.assign({}, json.popups.upload_size_error);
+		strings.title = utils.formatString(strings.title, utils.breakable(name));
+		popup.twoButtons(strings,
 			() =>{
 				this.hideOverlay();
 				this.uploadFile();
@@ -654,17 +648,33 @@ class FileView extends View {
 
 	processQueue(){
 		// keep processing the queue in the background
-		console.log("processQueue", uploadingFile, fileQueue.length)
+		console.log("processQueue, uploading?", uploadingFile, fileQueue.length)
 		if(!uploadingFile && fileQueue.length)
 		{
 			setTimeout(() => {
 				console.log("processQueue do file upload", uploadingFile, fileQueue.length)
 				if(!uploadingFile && fileQueue.length)
 				{
-					console.log("processQueue do file upload")
-					this.doFileUpload(fileQueue.pop());
+					let file = fileQueue.pop();
+					console.log("processQueue do file upload:", file.name);
+					// 20mb maximum drag and drop file size
+					if (file.size >= 20000000) {
+						// postpone large files
+						largeFileQueue.push(file.name);
+						// and keep going
+						this.processQueue();
+					} else {
+						this.doFileUpload(file);
+					}
 				}
 			}, 0);
+		} else if(largeFileQueue.length)
+		{
+			// once we finished uploading the small files, print a
+			// single error message for all of the large ones
+			this.svg.addClassSVG('no');
+			this.uploadSizeError(largeFileQueue.join('`, `'));
+			largeFileQueue = [];
 		}
 	}
 
