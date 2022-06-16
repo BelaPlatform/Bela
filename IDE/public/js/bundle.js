@@ -2403,8 +2403,19 @@ var FileView = function (_View) {
 			_this.buildOverlay();
 			_this.showOverlay();
 		});
-		_this.svg.on('dragleave drop', function () {
-			_this.hideOverlay();
+		_this.svg.on('dragover dragleave drop', function (e) {
+			if (!isDragEvent(e, "Files")) return;
+			e.preventDefault();
+			if ('dragover' === e.type) return;
+			if ('drop' === e.type) {
+				_this.svg.addClassSVG('no');
+				setTimeout(function () {
+					_this.hideOverlay();
+					_this.svg.removeClassSVG('no');
+				}, 300);
+			} else if ('dragleave' === e.type) {
+				_this.hideOverlay();
+			}
 		});
 		return _this;
 	}
@@ -2467,7 +2478,8 @@ var FileView = function (_View) {
 				if (!isDragEvent(e, "Files")) return;
 				overlay.removeClassSVG(overlayActiveClass);
 			}.bind(this, overlay));
-			// not sure why we also need dragover, but without it, drop doesn't work
+			// not sure we need dragover AND e.preventDefault() in order for drop to work
+			// Not sure how that works, but this is hinted at here https://www.w3schools.com/jsref/event_ondrop.asp
 			target.on('dragenter dragover drop', function (overlay, e) {
 				if (!isDragEvent(e, "Files")) return;
 				e.stopPropagation();
@@ -2563,8 +2575,10 @@ var FileView = function (_View) {
 	}, {
 		key: 'hideOverlay',
 		value: function hideOverlay() {
-			this.svg.removeClassSVG(overlayActiveClass);
-			$('polygon', this.svg).removeClassSVG(overlayActiveClass);
+			if (this.svg) {
+				this.svg.removeClassSVG(overlayActiveClass);
+				$('polygon', this.svg).removeClassSVG(overlayActiveClass);
+			}
 		}
 
 		// UI events

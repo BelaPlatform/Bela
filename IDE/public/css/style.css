@@ -129,6 +129,8 @@ body.uploading {
   height: 100vh; }
   [data-drag-svg].active-drag-upload {
     z-index: 1000; }
+  [data-drag-svg].no {
+    background: rgba(255, 0, 0, 0.7); }
   [data-drag-svg] polygon {
     opacity: 0.3; }
     [data-drag-svg] polygon.active-drag-upload {
