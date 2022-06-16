@@ -136,9 +136,6 @@ body {
   [data-drag-func=folder] {
     fill: rgb(0, 255, 0);
   }
-  &.no>polygon {
-    fill: rgb(255, 0, 0);
-  }
 }
 
 ul {

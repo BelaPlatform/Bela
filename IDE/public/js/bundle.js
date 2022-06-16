@@ -2563,8 +2563,8 @@ var FileView = function (_View) {
 	}, {
 		key: 'hideOverlay',
 		value: function hideOverlay() {
-			this.svg.removeClassSVG(overlayActiveClass).removeClassSVG('no');
-			$('polygon', this.svg).removeClassSVG(overlayActiveClass).removeClassSVG('no');
+			this.svg.removeClassSVG(overlayActiveClass);
+			$('polygon', this.svg).removeClassSVG(overlayActiveClass);
 		}
 
 		// UI events
@@ -2651,13 +2651,12 @@ var FileView = function (_View) {
 
 			var strings = Object.assign({}, json.popups.upload_size_error);
 			strings.title = utils.formatString(strings.title, utils.breakable(name));
+			this.hideOverlay();
 			popup.twoButtons(strings, function () {
-				_this5.hideOverlay();
 				_this5.uploadFile();
-			}, function () {
-				return _this5.hideOverlay();
-			}, {
-				titleClass: 'error'
+			}, undefined, {
+				titleClass: 'error',
+				error: true
 			});
 		}
 	}, {
@@ -3047,7 +3046,6 @@ var FileView = function (_View) {
 			} else if (largeFileQueue.length) {
 				// once we finished uploading the small files, print a
 				// single error message for all of the large ones
-				this.svg.addClassSVG('no');
 				this.uploadSizeError(largeFileQueue.join('`, `'));
 				largeFileQueue = [];
 			}

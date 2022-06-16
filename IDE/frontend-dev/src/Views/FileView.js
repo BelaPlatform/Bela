@@ -217,8 +217,8 @@ class FileView extends View {
 	}
 
 	hideOverlay(){
-		this.svg.removeClassSVG(overlayActiveClass).removeClassSVG('no');
-		$('polygon', this.svg).removeClassSVG(overlayActiveClass).removeClassSVG('no');
+		this.svg.removeClassSVG(overlayActiveClass);
+		$('polygon', this.svg).removeClassSVG(overlayActiveClass);
 	}
 
 	// UI events
@@ -272,14 +272,15 @@ class FileView extends View {
   uploadSizeError(name){
 		let strings = Object.assign({}, json.popups.upload_size_error);
 		strings.title = utils.formatString(strings.title, utils.breakable(name));
+		this.hideOverlay();
 		popup.twoButtons(strings,
 			() =>{
-				this.hideOverlay();
 				this.uploadFile();
 			},
-			() => this.hideOverlay(),
+			undefined,
 			{
 				titleClass: 'error',
+				error: true,
 			}
 		);
   }
@@ -672,7 +673,6 @@ class FileView extends View {
 		{
 			// once we finished uploading the small files, print a
 			// single error message for all of the large ones
-			this.svg.addClassSVG('no');
 			this.uploadSizeError(largeFileQueue.join('`, `'));
 			largeFileQueue = [];
 		}

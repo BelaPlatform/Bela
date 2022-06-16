@@ -137,8 +137,6 @@ body.uploading {
     fill: #00ff7a; }
   [data-drag-svg] [data-drag-func=folder] {
     fill: lime; }
-  [data-drag-svg].no > polygon {
-    fill: red; }
 
 ul {
   font-family: inconsolata; }
