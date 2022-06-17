@@ -178,6 +178,13 @@ var popup = {
 		popup.finalize(opts);
 	},
 
+	// a popup with no buttons. It must be hidden by a callback somewhere else
+	noButton(strings, opts){
+		this.initWithStrings(strings);
+		var form = [];
+		popup.finalize(opts);
+	},
+
 	// a popup with one button which will hide itself upon click
 	// To change the text on the button pass in strings.button to the strings object
 	ok(strings, opts) {

@@ -6576,6 +6576,14 @@ var popup = {
 	},
 
 
+	// a popup with no buttons. It must be hidden by a callback somewhere else
+	noButton: function noButton(strings, opts) {
+		this.initWithStrings(strings);
+		var form = [];
+		popup.finalize(opts);
+	},
+
+
 	// a popup with one button which will hide itself upon click
 	// To change the text on the button pass in strings.button to the strings object
 	ok: function ok(strings, opts) {
@@ -7085,7 +7093,7 @@ module.exports.addDropdownEvent = function (elements) {
 	};
 };
 module.exports.doLargeFileUpload = function (formData, success, error) {
-	popup.ok(json.popups.upload_file_progress);
+	popup.noButton(json.popups.upload_file_progress);
 	$.ajax({
 		type: "POST",
 		url: '/uploads',

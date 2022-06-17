@@ -107,7 +107,7 @@ module.exports.addDropdownEvent = function (elements){
 	}
 }
 module.exports.doLargeFileUpload = function (formData, success, error){
-	popup.ok(json.popups.upload_file_progress);
+	popup.noButton(json.popups.upload_file_progress);
 	$.ajax({
 		type: "POST",
 		url: '/uploads',
