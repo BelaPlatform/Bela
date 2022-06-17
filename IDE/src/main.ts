@@ -3,6 +3,8 @@ import * as http from 'http';
 import * as multer from 'multer'
 import * as child_process from 'child_process';
 import * as socket_manager from './SocketManager';
+import * as project_manager from './ProjectManager';
+import * as update_manager from './UpdateManager';
 import * as file_manager from './FileManager';
 import * as paths from './paths';
 import * as util from './utils';
@@ -11,6 +13,8 @@ import * as path from 'path';
 import * as fs from 'fs-extra-promise';
 import * as globals from './globals';
 var TerminalManager = require('./TerminalManager');
+
+let motdPath = '/etc/motd'
 
 export async function init(args : Array<any>){
 
@@ -31,6 +35,8 @@ export async function init(args : Array<any>){
 				globals.set_verbose(ideDev.verbose);
 			if(ideDev.hasOwnProperty('board'))
 				globals.set_board(ideDev.board);
+			if(ideDev.hasOwnProperty('motdPath'))
+				motdPath = ideDev.motdPath;
 		}
 	} catch (err) {}
 	let n = 0;
@@ -112,13 +118,56 @@ function setup_routes(app: express.Application){
   });
 
   app.post('/uploads', function(req, res) {
-      var upload = multer({ storage : storage}).single('data');
-      upload(req, res, function(err) {
-        if(err) {
-            return res.end("Error uploading file.");
+    var upload = multer({ storage : storage}).any();
+    upload(req, res, async function(err) {
+      let eventError = '';
+      // the POST request _may_ contain some project-events (e.g.: to move
+      // files to their final location
+      if(req.body && !err) {
+        const pairs = [
+          { string: 'project-event', manager: project_manager },
+          { string: 'update-event', manager: update_manager },
+        ];
+        for(let pair of pairs)
+        {
+          let string = pair.string;
+          let manager = pair.manager;
+          let events = req.body[string];
+          // we observe it only becomes an array if there are more than one. We
+          // force it to be an array so the loop below handles all cases
+          if(!Array.isArray(events)){
+            if(events)
+              events = [events];
+            else
+              events = [];
+          }
+          for(let event of events) {
+            let data : any;
+            try {
+              data = JSON.parse(event);
+            } catch (e) {
+              eventError += "Cannot parse `", string, "`: `", event, "`";
+              continue;
+            }
+            if(!data.func) {
+              eventError += "Missing func";
+              continue;
+            }
+            try {
+              data.fullPath = paths.uploads+'/'+data.newFile;
+              await (manager as any)[data.func](data)
+            } catch (e) {
+              eventError += e.toString() + " ";
+            }
+          }
         }
-        res.end("File is uploaded");
-      });
+      }
+      if(err || eventError) {
+        console.log(eventError);
+        return res.status(403).end("Error uploading file(s). " + eventError);
+      }
+      res.end("File successfully uploaded");
+    });
   });
 
 	// file and project downloads
@@ -133,6 +182,93 @@ function setup_routes(app: express.Application){
 	app.use('/gui', express.static(paths.gui));
 }
 
+export function get_bela_core_version(): Promise<util.Bela_Core_Version_Data>{
+	return new Promise(async (resolve, reject) => {
+		var data : any = {};
+		var updateLog : string;
+		try {
+			updateLog = await fs.readFileAsync(paths.update_log, 'utf8');
+		} catch (e) { }
+		if(updateLog) {
+			var tokens = updateLog.toString().split('\n');
+			// new update logs
+			var matches = [ /^FILENAME=/, /^DATE=/, /^SUCCESS=/, /^METHOD=/];
+			var keys = ['fileName', 'date', 'success', 'method'];
+			for(let str of tokens) {
+				for(let n in matches) {
+					var reg = matches[n];
+					if(str.match(reg)) {
+						str = str.replace(reg, '').trim();
+						data[keys[n]] = str;
+					}
+				}
+			}
+			if('true' === data.success)
+				data.success = 1;
+			else
+				data.success = 0;
+
+			if(!data.fileName && !data.date && !data.method){
+				// old update logs, for backwards compatibilty:
+				// - guess date from file's modification time
+				// - fix method
+				// - guess fileName from backup path
+				// - get success from legacy string
+				data = {};
+				var stat = await fs.statAsync(paths.update_log);
+				data.date = stat.mtime;
+				data.method = 'make update (legacy)';
+				var dir = await file_manager.read_directory(paths.update_backup);
+				if(dir && dir.length > 1)
+					data.fileName = dir[0];
+				if(-1 !== updateLog.indexOf('Update successful'))
+					data.success = 1;
+				else
+					data.success = -1; //unknown
+			}
+		}
+		var cmd = 'git -C '+paths.Bela+' describe --always --dirty';
+		child_process.exec(cmd,
+			(err, stdout, stderr) => {
+			if (err){
+				console.log('error executing: ' + cmd);
+			}
+			var ret : util.Bela_Core_Version_Data = {
+				fileName: data.fileName,
+				date: data.date,
+				method: data.method,
+				success: data.success,
+				git_desc: stdout.trim(),
+				log: updateLog,
+			}
+			resolve(ret);
+		});
+	});
+}
+
+export function get_bela_image_version(): Promise<string>{
+	return new Promise(async function(resolve, reject){
+		try {
+			var buffer = await fs.readFileAsync(motdPath, 'utf8');
+			if(!buffer) {
+				resolve('');
+				return;
+			}
+			var tokens = buffer.toString().split('\n');
+			var str : string;
+			for(str of tokens) {
+				if(str.match(/^Bela image.*/)) {
+					var ret = str.replace(/^Bela image, /, '');
+					resolve(ret);
+					return;
+				}
+			}
+		} catch (e) {
+			console.log("ERROR: ", e);
+		}
+		resolve('');
+	});
+}
 export function get_xenomai_version(): Promise<string>{
 	if(globals.local_dev)
 		return new Promise((resolve) => resolve("3.0"));

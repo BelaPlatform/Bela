@@ -380,6 +380,8 @@ module.exports = CircularBuffer;
 },{}],3:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 //// IDE controller
 module.exports = {};
 
@@ -428,8 +430,8 @@ settingsView.on('halt', function () {
 settingsView.on('warning', function (text) {
 	return consoleView.emit('warn', text);
 });
-settingsView.on('upload-update', function (data) {
-	return socket.emit('upload-update', data);
+settingsView.on('do-update', function (data) {
+	return socket.emit('do-update', data);
 });
 settingsView.on('error', function (text) {
 	return consoleView.emit('warn', text);
@@ -447,7 +449,7 @@ projectView.on('message', function (event, data) {
 });
 
 // file view
-var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings]);
+var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings], projectView.getProjectList);
 fileView.on('message', function (event, data) {
 	if (!data.currentProject && models.project.getKey('currentProject')) {
 		data.currentProject = models.project.getKey('currentProject');
@@ -460,17 +462,16 @@ fileView.on('message', function (event, data) {
 	socket.emit(event, data);
 });
 
-fileView.on('force-rebuild', function () {
-	socket.emit('process-event', {
-		event: 'rebuild',
-		currentProject: models.project.getKey('currentProject')
-	});
+fileView.on('file-uploaded', function () {
+	var restartUponUpload = parseInt(models.settings.getKey('restartUponUpload'));
+	if (restartUponUpload && models.status.getKey('running')) runProject();
 });
-fileView.on('file-rejected', function (filename) {
+fileView.on('file-rejected', function (errMsg) {
 	var timestamp = performance.now();
 	consoleView.emit('openNotification', { func: 'fileRejected', timestamp: timestamp });
-	consoleView.emit('closeNotification', { error: '... failed, file ' + filename + ' already exists. Refresh to allow overwriting', timestamp: timestamp });
+	consoleView.emit('closeNotification', { error: errMsg, timestamp: timestamp, skipPopup: true });
 });
+fileView.on('list-files', doListFiles);
 
 // editor view
 var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings], models.settings);
@@ -501,39 +502,41 @@ editorView.on('close-notification', function (data) {
 editorView.on('editor-changed', function () {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
-editorView.on('goto-docs', function (word, id) {
-	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext') {
+editorView.on('goto-docs', function (word, id, force) {
+	if (force || tabView.getOpenTab() === 'refs') {
 		documentationView.emit('open', id);
-	} else {
-		$('#iDocsLink').addClass('iDocsVisible').prop('title', 'cmd + h: ' + word).off('click').on('click', function () {
-			tabView.emit('open-tab', 'tab-5');
-			documentationView.emit('open', id);
-		});
 	}
-});
-editorView.on('clear-docs', function () {
-	return $('#iDocsLink').removeClass('iDocsVisible').off('click');
-});
-editorView.on('highlight-syntax', function (names) {
-	return socket.emit('highlight-syntax', names);
 });
 editorView.on('compare-files', function (compare) {
 	compareFiles = compare;
 	// unset the interval
 	if (!compare) setModifiedTimeInterval(undefined);
 });
+editorView.on('console-brief', function (text, id) {
+	consoleView.emit('openNotification', {
+		func: 'editor',
+		timestamp: id,
+		text: text
+	});
+	setTimeout(function (id) {
+		consoleView.emit('closeNotification', { timestamp: id, fulfillMessage: '' });
+	}.bind(null, id), 500);
+});
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings]);
 toolbarView.on('process-event', function (event) {
-	var data = {
-		event: event,
-		currentProject: models.project.getKey('currentProject')
-	};
-	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
-	if (event === 'run' || event === 'stop') toolbarView.emit('msw-start-grace', event);
-	socket.emit('process-event', data);
+	if ('run' === event) runProject();else {
+		var data = {
+			event: event,
+			currentProject: models.project.getKey('currentProject')
+		};
+		if (event === 'stop') {
+			consoleView.emit('openProcessNotification', json.ide_browser.stop);
+			toolbarView.emit('msw-start-grace', event);
+		}
+		socket.emit('process-event', data);
+	}
 });
 toolbarView.on('halt', function () {
 	socket.emit('shutdown');
@@ -593,6 +596,9 @@ documentationView.on('open-example', function (example) {
 documentationView.on('add-link', function (link, type) {
 	editorView.emit('add-link', link, type);
 });
+documentationView.on('open', function (id) {
+	documentationView.open(id);
+});
 
 // git view
 var gitView = new (require('./Views/GitView'))('git-manager', [models.git]);
@@ -614,13 +620,30 @@ var listFilesIntervalMs = 5000;
 var listFilesInterval = 0;
 
 // setup socket
-var socket = io('/IDE');
+var _socket = io('/IDE');
+// sub- minimal wrapper for socket.io to inject clientId
+var socket = {
+	on: function on(what, cb) {
+		return _socket.on(what, cb);
+	},
+	io: _socket.io,
+	emit: function emit(what, data) {
+		socket.id = _socket.id;
+		if ("object" === (typeof data === 'undefined' ? 'undefined' : _typeof(data)) && !Array.isArray(data)) data.clientId = socket.id;
+		_socket.emit(what, data);
+	}
 
-// socket events
-socket.on('report-error', function (error) {
+	// socket events
+};socket.on('report-error', function (error) {
 	return consoleView.emit('warn', error.message || error);
 });
 
+function doListFiles() {
+	var currentProject = models.project.getKey('currentProject');
+	if (currentProject) {
+		socket.emit('list-files', currentProject);
+	}
+}
 socket.on('init', function (data) {
 
 	consoleView.connect();
@@ -634,6 +657,8 @@ socket.on('init', function (data) {
 
 	$('[data-run-on-boot]').val(data.boot_project);
 
+	models.settings.setKey('belaCoreVersion', data.bela_core_version);
+	models.settings.setKey('belaImageVersion', data.bela_image_version);
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
 	console.log('running on', data.board_string);
@@ -641,12 +666,7 @@ socket.on('init', function (data) {
 	tabView.emit('boardString', data.board_string);
 
 	clearInterval(listFilesInterval);
-	listFilesInterval = setInterval(function () {
-		var currentProject = models.project.getKey('currentProject');
-		if (currentProject) {
-			socket.emit('list-files', currentProject);
-		}
-	}, listFilesIntervalMs);
+	listFilesInterval = setInterval(doListFiles, listFilesIntervalMs);
 
 	// TODO! models.status.setData(data[5]);
 
@@ -670,6 +690,9 @@ socket.on('init', function (data) {
 // project events
 socket.on('project-data', function (data) {
 
+	// if the file gets to us, it's because we requested it,
+	// so we are going to use it regardless of the current state
+	models.project.setKey('openElsewhere', false);
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
 
@@ -723,14 +746,25 @@ socket.on('disconnect', function (reason) {
 	models.project.setKey('readOnly', true);
 });
 
-socket.on('file-changed', function (project, fileName) {
-	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')) {
-		console.log('file changed!');
-		models.project.setKey('readOnly', true);
-		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
-		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
-	}
+socket.on('file-opened', function (data) {
+	fileOpenedOrChanged(data, 0);
 });
+
+socket.on('file-changed', function (data) {
+	fileOpenedOrChanged(data, 1);
+});
+
+function fileOpenedOrChanged(data, changed) {
+	var str = changed ? 'changed' : 'opened';
+	var project = data.currentProject;
+	var fileName = data.fileName;
+	var clientId = data.clientId;
+	// if someone else opened or changed our file
+	// and we arenot ignoring it
+	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName') && clientId != socket.id && !models.project.getKey('openElsewhere') && !models.project.getKey('readOnly')) {
+		if (changed) fileChangedPopup(fileName);else enterReadonlyPopup(fileName);
+	}
+}
 
 // run-on-boot
 socket.on('run-on-boot-log', function (text) {
@@ -792,17 +826,11 @@ function setModifiedTimeInterval(mtime) {
 // current file changed
 var fileChangedPopupVisible = false;
 function fileChangedPopup(fileName) {
-
 	if (fileChangedPopupVisible) return;
 
-	popup.title(json.popups.file_changed.title);
-	popup.subtitle(fileName + json.popups.file_changed.text);
-
-	var form = [];
-	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
-	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
-
-	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+	var strings = Object.assign({}, json.popups.file_changed); // make a copy ...
+	strings.text = fileName + strings.text; // ... so we can modify it
+	popup.twoButtons(strings, function (e) {
 		fileChangedPopupVisible = false;
 		e.preventDefault();
 		var data = {
@@ -812,17 +840,65 @@ function fileChangedPopup(fileName) {
 		};
 		socket.emit('project-event', data);
 		consoleView.emit('openNotification', data);
-		popup.hide();
-	});
-
-	popup.find('.cancel').on('click', function () {
-		popup.hide();
+	}, function () {
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
 	});
-
-	popup.show();
 	fileChangedPopupVisible = true;
+}
+
+function enterReadonlyPopup(fileName) {
+	if (fileChangedPopupVisible) return; //	 changed file takes priority
+	var strings = {};
+	strings.title = json.popups.enter_readonly.title;
+	strings.text = json.popups.enter_readonly.text;
+	strings.button = json.popups.enter_readonly.button;
+	strings.cancel = json.popups.enter_readonly.cancel;
+
+	// Click the OK button to put page in read-only
+	popup.oneButton(strings, function () {
+		models.project.setKey('openElsewhere', true);
+		setReadOnlyStatus(true);
+	});
+}
+
+function setReadOnlyStatus(status) {
+	if (status) {
+		$('div.read-only').addClass('active');
+		$('div.read-only').click(function () {
+			return exitReadonlyPopup();
+		});
+	} else {
+		$('div.read-only').removeClass('active');
+	}
+}
+
+function exitReadonlyPopup() {
+	var strings = {};
+	strings.title = json.popups.exit_readonly.title;
+	strings.code = '<p>' + json.popups.exit_readonly.text[0] + '</p><p>' + json.popups.exit_readonly.text[1] + '</p>';
+	strings.cancel = json.popups.exit_readonly.cancel;
+	strings.button = json.popups.exit_readonly.submit;
+	popup.twoButtons(strings,
+	// on Submit:
+	function (e) {
+		setReadOnlyStatus(false);
+		window.location.reload();
+	},
+	// on Cancel:
+	function () {
+		popup.hide();
+	});
+}
+
+// helper functions
+function runProject() {
+	editorView.flush();
+	socket.emit('process-event', {
+		event: 'run',
+		currentProject: models.project.getKey('currentProject')
+	});
+	toolbarView.emit('msw-start-grace', event);
 }
 
 // model events
@@ -1035,20 +1111,29 @@ function parseErrors(data) {
 // hotkeys
 var keypress = new window.keypress.Listener();
 
+function allCombosActive() {
+	return !popup.isShown();
+}
 keypress.simple_combo("meta s", function () {
-	toolbarView.emit('process-event', 'run');
+	allCombosActive() && toolbarView.emit('process-event', 'run');
 });
 keypress.simple_combo("meta f", function () {
-	editorView.emit('search');
+	allCombosActive() && editorView.emit('search');
 });
 keypress.simple_combo("meta o", function () {
-	tabView.emit('toggle', 'click', 'tab-control');
+	allCombosActive() && tabView.emit('toggle', 'click', 'tab-control');
 });
 keypress.simple_combo("meta k", function () {
 	consoleView.emit('clear', true);
 });
 keypress.simple_combo("meta h", function () {
-	$('#iDocsLink').trigger('click');
+	allCombosActive() && documentationView.emit('open');
+});
+keypress.simple_combo("esc", function () {
+	// remove popup on ESC
+	var done = popup.cancel();
+	// do not prevent default if we did nothing
+	return !done;
 });
 
 },{"./Models/Model":4,"./Views/ConsoleView":5,"./Views/DocumentationView":6,"./Views/EditorView":7,"./Views/FileView":8,"./Views/GitView":9,"./Views/ProjectView":10,"./Views/SettingsView":11,"./Views/TabView":12,"./Views/ToolbarView":13,"./popup":18,"./site-text.json":19,"./utils.js":20}],4:[function(require,module,exports){
@@ -1326,9 +1411,11 @@ var ConsoleView = function (_View) {
 		key: 'closeNotification',
 		value: function closeNotification(data) {
 			if (data.error) {
-				_console.reject(' ' + data.error, data.timestamp);
+				_console.reject(' ' + data.error, data.timestamp, data.skipPopup);
 			} else {
-				_console.fulfill(' done', data.timestamp);
+				var fulfillMessage = ' done';
+				if (typeof data.fulfillMessage !== 'undefined') fulfillMessage = data.fulfillMessage;
+				_console.fulfill(fulfillMessage, data.timestamp);
 			}
 		}
 	}, {
@@ -1454,7 +1541,7 @@ var ConsoleView = function (_View) {
 			} else {
 				_console.notify('Bela stopped', timestamp, true);
 				/*if (data && data.belaResult && data.belaResult.signal && data.belaResult.signal !== 'undefined'){
-    	_console.reject(' with signal '+data.belaResult.signal, timestamp, true);
+    	_console.reject(' with signal '+data.belaResult.signal, timestamp, data.skipPopup);
     } else {*/
 				_console.fulfill('', timestamp, true);
 				//}
@@ -1553,6 +1640,10 @@ var DocumentationView = function (_View) {
     value: function init() {
 
       var self = this;
+      ['context', 'api', 'utility'].forEach(function (section) {
+        var m = $('[data-docs-' + section + ']');
+        m.empty();
+      });
 
       // The API
       $.ajax({
@@ -1649,6 +1740,11 @@ var DocumentationView = function (_View) {
           }
         }
       }
+    }
+  }, {
+    key: 'open',
+    value: function open(id) {
+      console.log("TODO: open documentation tab at `", id, "`");
     }
   }]);
 
@@ -1812,6 +1908,7 @@ var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 var uploadDelay = 50;
 
 var uploadBlocked = false;
+var editorDirty = false;
 var currentFile;
 var imageUrl;
 var tmpData = {};
@@ -1826,6 +1923,8 @@ var EditorView = function (_View) {
 		_classCallCheck(this, EditorView);
 
 		var _this = _possibleConstructorReturn(this, (EditorView.__proto__ || Object.getPrototypeOf(EditorView)).call(this, className, models));
+
+		_this.projectModel = models[0];
 
 		_this.highlights = {};
 		var data = tmpData;
@@ -1864,7 +1963,7 @@ var EditorView = function (_View) {
 			var data = tmpData;
 			var opts = tmpOpts;
 			if (!uploadBlocked) {
-				_this.editorChanged();
+				_this.editorChanged(false);
 				_this.editor.session.bgTokenizer.fireUpdateEvent(0, _this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
@@ -1898,11 +1997,7 @@ var EditorView = function (_View) {
 
 		_this.on('resize', function () {
 			_this.editor.resize();
-			var data = tmpData;
-			var opts = tmpOpts;
-			if (opts.fileType && (opts.fileType == "pd" || opts.fileType.indexOf('image') !== -1)) {
-				_this.__fileData(data, opts);
-			}
+			_this.resize();
 		});
 
 		_this.on('add-link', function (link, type) {
@@ -1918,7 +2013,7 @@ var EditorView = function (_View) {
 			if (_this.linkTimeout) clearTimeout(_this.linkTimeout);
 			_this.linkTimeout = setTimeout(function () {
 				return _this.parser.highlights(_this.highlights);
-			}); //this.emit('highlight-syntax', activeWords), 100);
+			});
 		});
 
 		_this.editor.session.on('tokenizerUpdate', function (e) {
@@ -1930,6 +2025,9 @@ var EditorView = function (_View) {
 
 		_this.on('search', _this.search);
 
+		var allAltSelectors = ['data-img-display-parent', 'data-img-display', 'data-audio-parent', 'data-audio', 'data-pd-svg-parent', 'data-pd-svg', 'data-editor-msg-parent', 'data-editor-msg'];
+		allAltSelectors = '[' + allAltSelectors.join('], [') + ']'; // turn them into valid jquery selectors
+		_this.allEditorAlts = $(allAltSelectors);
 		return _this;
 	}
 
@@ -1939,39 +2037,65 @@ var EditorView = function (_View) {
 			this.editor.execCommand('find');
 		}
 	}, {
+		key: 'flush',
+		value: function flush() {
+			this.editorChanged(true);
+		}
+	}, {
 		key: 'editorChanged',
-		value: function editorChanged() {
+		value: function editorChanged(flush) {
 			var _this2 = this;
 
 			this.emit('editor-changed');
 			clearTimeout(this.uploadTimeout);
-			this.uploadTimeout = setTimeout(function () {
-				return _this2.emit('upload', _this2.editor.getValue());
-			}, uploadDelay);
+			var doUpdate = function doUpdate() {
+				editorDirty = false;
+				_this2.emit('upload', _this2.editor.getValue());
+			};
+			if (flush) {
+				if (editorDirty) doUpdate();
+			} else {
+				editorDirty = true;
+				this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
+			}
 		}
-
+	}, {
+		key: 'resize',
+		value: function resize() {
+			this.allEditorAlts.css({
+				'max-width': $('[data-editor]').width() + 'px',
+				'max-height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch
+			});
+		}
 		// model events
 		// new file saved
 
 	}, {
 		key: '__fileData',
-		value: function __fileData(data, opts) {
-			// hide the pd patch and image displays if present, and the editor
-			$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]').removeClass('active');
+		value: function __fileData(data, opts, dunno, resize) {
+			this.resize();
+			// hide all views. Below, the current one will be re-enabled
+			this.allEditorAlts.removeClass('active');
+			$('[data-editor]').removeClass('active');
+
 			tmpData = data;
 			tmpOpts = opts;
-			if (null === data) return;
 
+			this.modelChanged({ readOnly: true }, ['readOnly']);
+			this.modelChanged({ openElsewhere: false }, ['openElsewhere']);
+
+			this.projectModel.setKey('readOnly', true);
 			if (!opts.fileType) opts.fileType = '0';
 
-			if (opts.fileType.indexOf('image') !== -1) {
+			if (null === data || null === opts.fileName || 'binary' === opts.fileType) {
+				// file can not be viewed, print a warning
+				var err = void 0;
+				if ('binary' === opts.fileType) err = json.editor_view.binary.error;else err = json.editor_view.deleted.error; // file deleted or somehow not available
+				$('[data-editor-msg]').html(err);
+				$('[data-editor-msg-parent]').addClass('active');
+			} else if (opts.fileType.indexOf('image') !== -1) {
 
 				// opening image file
-				$('[data-img-display-parent], [data-img-display]').css({
-					'max-width': $('[data-editor]').width() + 'px',
-					'max-height': $('[data-editor]').height() + 'px'
-				});
-
 				$('[data-img-display-parent]').addClass('active');
 
 				$('[data-img-display]').prop('src', 'media/' + opts.fileName);
@@ -2004,18 +2128,8 @@ var EditorView = function (_View) {
 
 					// render pd patch
 					try {
-						var width = $('[data-editor]').width();
-						var height = $('[data-editor]').height() - 2;
-						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false })).css({
-							'max-width': width + 'px',
-							'height': height + 'px'
-						});
-
-						$('[data-pd-svg-parent]').addClass('active').css({
-							'max-width': width + 'px',
-							'max-height': height + 'px'
-						});
-
+						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false }));
+						$('[data-pd-svg-parent]').addClass('active');
 						this.emit('close-notification', { timestamp: timestamp });
 					} catch (e) {
 						this.emit('close-notification', {
@@ -2032,6 +2146,7 @@ var EditorView = function (_View) {
 					this.emit('compare-files', true);
 				} else {
 
+					this.projectModel.setKey('readOnly', false);
 					// show the editor
 					$('[data-editor]').addClass('active');
 
@@ -2043,6 +2158,7 @@ var EditorView = function (_View) {
 				uploadBlocked = true;
 
 				// put the file into the editor
+				if ('string' !== typeof data) data = ''; // if no data, at least empty the editor
 				this.editor.session.setValue(data, -1);
 
 				// parse the data
@@ -2093,14 +2209,32 @@ var EditorView = function (_View) {
 				enableLiveAutocompletion: parseInt(status) === 1
 			});
 		}
+	}, {
+		key: '_openElsewhere',
+		value: function _openElsewhere(status) {
+			var _this3 = this;
+
+			var magic = 23985235;
+			this.projectModel.setKey('readOnly', status);
+			if (status) {
+				$('#editor').on('keypress', function (e) {
+					_this3.emit('console-brief', json.editor_view.keypress_read_only, magic);
+				});
+			} else {
+				$('#editor').off('keypress');
+			}
+		}
+
 		// readonly status has changed
 
 	}, {
 		key: '_readOnly',
 		value: function _readOnly(status) {
 			if (status) {
+				$('.ace_content').addClass('editor_read_only');
 				this.editor.setReadOnly(true);
 			} else {
+				$('.ace_content').removeClass('editor_read_only');
 				this.editor.setReadOnly(false);
 			}
 		}
@@ -2127,7 +2261,6 @@ var EditorView = function (_View) {
 			var token = iterator.getCurrentToken();
 			if (!token || !token.range) {
 				//console.log('no range');
-				this.emit('clear-docs');
 				return;
 			}
 
@@ -2162,8 +2295,6 @@ var EditorView = function (_View) {
 					}
 				}
 			}
-
-			this.emit('clear-docs');
 		}
 	}, {
 		key: 'getData',
@@ -2180,8 +2311,6 @@ module.exports = EditorView;
 },{"../parser":17,"../site-text.json":19,"./View":14}],8:[function(require,module,exports){
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2192,19 +2321,26 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var View = require('./View');
 var popup = require('../popup');
-var sanitise = require('../utils').sanitise;
+var utils = require('../utils');
+var sanitise = utils.sanitise;
 var json = require('../site-text.json');
+var sanitisePath = function sanitisePath(name) {
+	return sanitise(name, { isPath: true });
+};
+var prettySize = utils.prettySize;
 
 var sourceIndeces = ['cpp', 'c', 's'];
 var headerIndeces = ['h', 'hh', 'hpp'];
 var imageIndeces = ['jpg', 'jpeg', 'png', 'gif'];
 var absIndeces = ['pd'];
+var overlayActiveClass = 'active-drag-upload';
+var lastOverlay = void 0;
 
 var askForOverwrite = true;
 var uploadingFile = false;
 var overwriteAction = '';
 var fileQueue = [];
-var forceRebuild = false;
+var largeFileQueue = [];
 var viewHiddenFiles = false;
 var firstViewHiddenFiles = true;
 
@@ -2214,14 +2350,44 @@ function isDragEvent(e, type) {
 	return e.originalEvent.dataTransfer.types.includes(type);
 }
 
+// the old version of jQuery we are using cannot easily add/remove classes
+// from svg elements. We need to work around that.
+// See: https://stackoverflow.com/questions/8638621/jquery-svg-why-cant-i-addclass
+// Solution below is (modified) from https://stackoverflow.com/a/24194877/2958741
+/*
+ * .addClassSVG(className)
+ * Adds the specified class(es) to each of the set of matched SVG elements.
+ */
+$.fn.addClassSVG = function (className) {
+	$(this).attr('class', function (index, existingClassNames) {
+		return (existingClassNames !== undefined ? existingClassNames + ' ' : '') + className;
+	});
+	return this;
+};
+
+/*
+ * .removeClassSVG(className)
+ * Removes the specified class to each of the set of matched SVG elements.
+ */
+$.fn.removeClassSVG = function (className) {
+	$(this).attr('class', function (index, existingClassNames) {
+		if (!existingClassNames) return '';
+		var re = new RegExp(' *\\b' + className + '\\b', 'g');
+		return existingClassNames.replace(re, '');
+	});
+	return this;
+};
+
 var FileView = function (_View) {
 	_inherits(FileView, _View);
 
-	function FileView(className, models) {
+	function FileView(className, models, getProjectList) {
 		_classCallCheck(this, FileView);
 
 		var _this = _possibleConstructorReturn(this, (FileView.__proto__ || Object.getPrototypeOf(FileView)).call(this, className, models));
 
+		_this.getProjectList = getProjectList;
+		_this.currentProject = null;
 		_this.listOfFiles = [];
 
 		var data = {
@@ -2229,56 +2395,195 @@ var FileView = function (_View) {
 			project: ""
 		};
 
-		// drag and drop file upload on editor
-		var overlay = $('[data-overlay]');
-		overlay.on('dragleave', function (e) {
-			overlay.removeClass('drag-upload').removeClass('active');
+		_this.folderItems = [];
+		_this.svg = $('[data-drag-svg]');
+		var body = $('body');
+		body.off('dragenter dragover drop dragleave');
+		body.on('dragenter', function () {
+			_this.buildOverlay();
+			_this.showOverlay();
 		});
-		$('body').on('dragenter dragover drop', function (e) {
+		_this.svg.on('dragover dragleave drop', function (e) {
 			if (!isDragEvent(e, "Files")) return;
-			e.stopPropagation();
 			e.preventDefault();
-			if (e.type == 'dragenter') {
-				overlay.addClass('active').addClass('drag-upload');
+			if ('dragover' === e.type) return;
+			if ('drop' === e.type) {
+				_this.svg.addClassSVG('no');
+				setTimeout(function () {
+					_this.hideOverlay();
+					_this.svg.removeClassSVG('no');
+				}, 300);
+			} else if ('dragleave' === e.type) {
+				_this.hideOverlay();
 			}
-			if (e.type === 'drop') {
-				for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
-					// console.log(e.originalEvent.dataTransfer.files[i].size);
-					// 20mb maximum drag and drop file size
-					if (e.originalEvent.dataTransfer.files[i].size >= 20000000) {
-						var _ret = function () {
-							var that = _this;
-							overlay.addClass('no');
-							setTimeout(function () {
-								overlay.removeClass('no').removeClass('drag-upload');
-								that.uploadSizeError();
-							}, 1500);
-							return {
-								v: false
-							};
-						}();
-
-						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-					} else {
-						_this.doFileUpload(e.originalEvent.dataTransfer.files[i]);
-					}
-					if (i == e.originalEvent.dataTransfer.files.length - 1) {
-						setTimeout(function () {
-							overlay.removeClass('active').removeClass('drag-upload').removeClass('no');
-						}, 1500);
-					}
-				}
-			}
-			return false;
 		});
-
 		return _this;
 	}
 
-	// UI events
-
-
 	_createClass(FileView, [{
+		key: 'createDragPolygon',
+		value: function createDragPolygon(points, dataFunc, dataArg) {
+			//let polygon = document.createElement("polygon");
+			var polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+			this.svg.append(polygon);
+			polygon = $(polygon);
+			polygon.attr('data-drag-func', dataFunc);
+			polygon.attr('data-drag-arg', dataArg);
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var point = _step.value;
+
+					var p = this.svg[0].createSVGPoint();
+					p.x = point[0];
+					p.y = point[1];
+					polygon[0].points.appendItem(p);
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
+			this.dragFileHandler(polygon, polygon);
+			return polygon;
+		}
+	}, {
+		key: 'dragFileHandler',
+		value: function dragFileHandler(target, overlay) {
+			var _this2 = this;
+
+			var getAttr = function getAttr(e, attr) {
+				return $(e.currentTarget).attr(attr);
+			};
+			// target is the element that starts the drag-drop gesture
+			// overlay is the element which displays it.
+			// the gesture starts when entering target and ends
+			// when leaving _overlay_
+			target.off('dragenter dragover drop dragleave');
+			overlay.off('dragleave');
+			overlay.on('dragleave', function (overlay, e) {
+				if (!isDragEvent(e, "Files")) return;
+				overlay.removeClassSVG(overlayActiveClass);
+			}.bind(this, overlay));
+			// not sure we need dragover AND e.preventDefault() in order for drop to work
+			// Not sure how that works, but this is hinted at here https://www.w3schools.com/jsref/event_ondrop.asp
+			target.on('dragenter dragover drop', function (overlay, e) {
+				if (!isDragEvent(e, "Files")) return;
+				e.stopPropagation();
+				e.preventDefault();
+				if ('dragenter' === e.type) {
+					overlay.addClassSVG(overlayActiveClass);
+				} else if (e.type == 'drop') {
+					for (var i = 0; i < e.originalEvent.dataTransfer.files.length; i++) {
+						var file = e.originalEvent.dataTransfer.files[i];
+						// the `data-drag-func=main` is the largest drop target.
+						// For now, we make it behave exactly as if it was
+						// `data-drag-func=folder data-drag-arg=''`
+						// (i.e.: upload files to the project's root folder).
+						var folder = void 0;
+						var attr = getAttr(e, 'data-drag-func');
+						if ('main' === attr) folder = '';else if ('folder' === attr) folder = getAttr(e, 'data-drag-arg');
+						if ('undefined' === typeof folder) continue;
+						file.folder = folder;
+						file.overlay = overlay;
+						fileQueue.push(file);
+					}
+					_this2.processQueue();
+				}
+				return false;
+			}.bind(this, overlay));
+		}
+	}, {
+		key: 'buildOverlay',
+		value: function buildOverlay() {
+			this.svg.empty();
+			// First, draw one polygon per each folder
+			// do not draw outside the area of the"Directories" list
+			// things are complicated by the presence of the scroll on the side tab.
+			var title = $(".title-container");
+			if (!title.length) // in case we are not ready yet, don't do anything
+				return;
+			var bar = $("#toolbar");
+			var maxY = bar.offset().top - $(window).scrollTop();;
+			var directories = $(".section.is-dir");
+			var dirOffset = directories.offset() ? directories.offset().top : maxY; // if no directories, we will take up the whole surface so maxY = minY
+			var minY = Math.max(dirOffset - $(window).scrollTop(), title.offset().top - $(window).scrollTop() + title.height());
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = this.folderItems[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var listItem = _step2.value;
+
+					var overlay = listItem;
+					var folder = $("[data-folder]", listItem).attr('data-file');
+					var offset = listItem.offset();
+					var posY = offset.top - $(window).scrollTop();
+					var posX = offset.left - $(window).scrollLeft();
+					var wid = listItem.width();
+					var hei = listItem.height();
+					if (posY > maxY || posY + hei < minY) continue;
+					if (posY + hei > maxY) hei = maxY - posY;
+					if (posY < minY) {
+						hei -= minY - posY;
+						posY = minY;
+					}
+					if (hei < 15) continue;
+					var _pol = this.createDragPolygon([[posX, posY], [posX + wid, posY], [posX + wid, posY + hei], [posX, posY + hei]], 'folder', folder);
+				}
+				// now draw a polygon that covers almost everything else.
+				// We need a C-shaped polygon which skips the folder boxes above.
+				// The C's "cutout" is delimited by minY, maxY and maxX
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+
+			var menu = $('[data-tab-menu]');
+			var maxX = menu.offset().left + menu.width();
+			var pol = this.createDragPolygon([[0, 0], [this.svg.width(), 0], [this.svg.width(), minY], [maxX, minY], [maxX, maxY], [this.svg.width(), maxY], [this.svg.width(), this.svg.height()], [0, this.svg.height()]], 'main', '');
+		}
+	}, {
+		key: 'showOverlay',
+		value: function showOverlay() {
+			this.svg.addClassSVG(overlayActiveClass);
+		}
+	}, {
+		key: 'hideOverlay',
+		value: function hideOverlay() {
+			if (this.svg) {
+				this.svg.removeClassSVG(overlayActiveClass);
+				$('polygon', this.svg).removeClassSVG(overlayActiveClass);
+			}
+		}
+
+		// UI events
+
+	}, {
 		key: 'buttonClicked',
 		value: function buttonClicked($element) {
 			var func = $element.data().func;
@@ -2287,226 +2592,224 @@ var FileView = function (_View) {
 			}
 		}
 	}, {
-		key: 'newFile',
-		value: function newFile(func, base) {
-			var _this2 = this;
+		key: '_getFlattenedFileList',
+		value: function _getFlattenedFileList(foldersOnly) {
+			var listDir = function listDir(out, inp, base) {
+				if (!base) base = '';
+				var _iteratorNormalCompletion3 = true;
+				var _didIteratorError3 = false;
+				var _iteratorError3 = undefined;
 
-			popup.title(json.popups.create_new_file.title);
-			popup.subtitle(json.popups.create_new_file.text);
-			var form = [];
-			form.push('<input type="text" placeholder="' + json.popups.create_new_file.input + '">');
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
+				try {
+					for (var _iterator3 = inp[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+						var f = _step3.value;
 
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				if (!base) {
-					_this2.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()) });
-				} else {
-					_this2.emit('message', 'project-event', { func: func, newFile: sanitise(popup.find('input[type=text]').val()), folder: base });
+						if (!foldersOnly || isDir(f)) out.push(base + f.name);
+						if (isDir(f)) listDir(out, f.children, base + f.name + '/');
+					}
+				} catch (err) {
+					_didIteratorError3 = true;
+					_iteratorError3 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion3 && _iterator3.return) {
+							_iterator3.return();
+						}
+					} finally {
+						if (_didIteratorError3) {
+							throw _iteratorError3;
+						}
+					}
 				}
-				popup.hide();
+			};
+			var flattenedFiles = [];
+			listDir(flattenedFiles, this.listOfFiles);
+			return flattenedFiles;
+		}
+	}, {
+		key: 'newFile',
+		value: async function newFile(func, base) {
+			var _this3 = this;
+
+			var name = await popup.requestValidInputAsync({
+				initialValue: base ? base + '/' : '',
+				getDisallowedValues: function getDisallowedValues() {
+					return _this3._getFlattenedFileList(false);
+				},
+				strings: json.popups.create_new_file,
+				sanitise: sanitisePath
 			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			if (null === name) return;
+			this.emit('message', 'project-event', { func: func, newFile: name });
 		}
 	}, {
 		key: 'newFolder',
-		value: function newFolder(func) {
-			var _this3 = this;
+		value: async function newFolder(func) {
+			var _this4 = this;
 
-			// build the popup content
-			popup.title(json.popups.create_new_folder.title);
-			popup.subtitle(json.popups.create_new_folder.text);
-
-			var form = [];
-			form.push('<input type="hidden"></input>');
-			form.push('<input type="text" placeholder="' + json.popups.create_new_folder.input + '">');
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_folder.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				_this3.emit('message', 'project-event', { func: func, newFolder: sanitise(popup.find('input[type=text]').val()) });
-				popup.hide();
+			var name = await popup.requestValidInputAsync({
+				initialValue: '',
+				getDisallowedValues: function getDisallowedValues() {
+					return _this4._getFlattenedFileList(true);
+				},
+				strings: json.popups.create_new_folder,
+				sanitise: sanitisePath
 			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			if (null === name) return;
+			this.emit('message', 'project-event', { func: func, newFolder: name });
 		}
 	}, {
 		key: 'uploadSizeError',
-		value: function uploadSizeError() {
-			var _this4 = this;
+		value: function uploadSizeError(name) {
+			var _this5 = this;
 
-			// build the popup content
-			popup.title("Error: File is too large").addClass("error");
-			popup.subtitle("The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.");
-
-			var form = [];
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				popup.hide();
-				_this4.uploadFile();
+			var strings = Object.assign({}, json.popups.upload_size_error);
+			strings.title = utils.formatString(strings.title, utils.breakable(name));
+			this.hideOverlay();
+			popup.twoButtons(strings, function () {
+				_this5.uploadFile();
+			}, undefined, {
+				titleClass: 'error',
+				error: true
 			});
-			popup.find('.cancel').on('click', popup.hide);
-			popup.show();
 		}
 	}, {
 		key: 'uploadFileError',
 		value: function uploadFileError() {
-			var _this5 = this;
-
-			// build the popup content
-			popup.title("Error: No file selected for upload").addClass("error");
-			popup.subtitle("No file was selected for upload");
-
-			var form = [];
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + "Try Again" + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				popup.hide();
-				_this5.uploadFile();
+			popup.twoButtons(json.popups.upload_file_nofileselected_error, function onSubmit(e) {
+				this.uploadFile();
+			}.bind(this), undefined, {
+				titleClass: 'error'
 			});
-			popup.find('.cancel').on('click', popup.hide);
-			popup.show();
 		}
 	}, {
 		key: 'uploadFile',
 		value: function uploadFile(func) {
-			var _this6 = this;
+			popup.twoButtons(json.popups.upload_file, async function onSubmit(e) {
+				var _this6 = this;
 
-			// build the popup content
-			popup.title(json.popups.upload_file.title);
-			popup.subtitle(json.popups.upload_file.text);
-
-			var form = [];
-			$('[data-popup] form').attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
-			form.push('<input type="file" name="data" data-form-file></input>');
-			form.push('</br >');
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.upload_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				var file = $('[data-form-file]')[0];
-				var location = '/projects/basic';
 				var formEl = $('[data-popup] form')[0];
-				var formData = new FormData(formEl);
-				var popupBlock = $('[data-popup-nointeraction]');
-				if (file.value.length > 0) {
-					popupBlock.addClass('active');
-					$('body').addClass('uploading');
-					popupBlock.addClass('active');
-					popup.find('.confirm').attr('disabled', true);
-					_this6.doLargeFileUpload(formData, file, location);
-				} else {
-					popup.hide();
-					_this6.uploadFileError();
+				var formDataOrig = new FormData(formEl);
+				var formData = new FormData();
+				var uploadFiles = 0;
+				var selectedFiles = 0;
+				var _iteratorNormalCompletion4 = true;
+				var _didIteratorError4 = false;
+				var _iteratorError4 = undefined;
+
+				try {
+					for (var _iterator4 = formDataOrig.entries()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+						var entry = _step4.value;
+
+						++selectedFiles;
+						// TODO: can we get useful directory information here?
+						var bareName = entry[1].name.split('\\').pop();
+						var destName = sanitise(bareName);
+						// TODO: this should check against sanitised versions of the
+						// filenames that have already been checked, so that we
+						// are forbidden to upload e.g.: 'ren er.cpp' and 'ren_er.cpp'
+						// at the same time.
+						////let file = Object.assign({}, entry[1]);
+						//file.name = sanitise(file.name);
+						var ret = await this.promptForOverwrite(destName);
+						if (ret.do) {
+							formData.append(entry[0], entry[1]);
+							uploadFiles++;
+						}
+						// bundle project-event messages in the POST in order to
+						// move the file once it's been saved _before_ returning success
+						formData.append("project-event", JSON.stringify({
+							currentProject: this.currentProject,
+							func: 'moveUploadedFile',
+							newFile: bareName,
+							sanitisedNewFile: destName
+						}));
+					}
+				} catch (err) {
+					_didIteratorError4 = true;
+					_iteratorError4 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion4 && _iterator4.return) {
+							_iterator4.return();
+						}
+					} finally {
+						if (_didIteratorError4) {
+							throw _iteratorError4;
+						}
+					}
 				}
+
+				if (!selectedFiles) this.uploadFileError();
+				if (uploadFiles) utils.doLargeFileUpload(formData, function (r) {
+					// would be great if these could be sent as part of the POST body
+					// note: for drag-and-drop files, the equivalent to these is
+					// done in ProjectManager::uploadFile on the server
+					_this6.emit('list-files');
+					_this6.emit('file-uploaded');
+					popup.ok(json.popups.upload_file_success);
+				}, function (e) {
+					_this6.emit('list-files');
+					popup.ok({
+						title: json.popups.upload_file_error.title,
+						text: e.responseText
+					});
+				});
+			}.bind(this));
+			popup.form.attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
+			popup.form.prepend('<input type="file" name="data" multiple data-form-file></input><br/><br/>');
+		}
+	}, {
+		key: 'rename',
+		value: async function rename(type, e) {
+			var _this7 = this;
+
+			var popupStrings = void 0;
+			if ('file' === type) popupStrings = json.popups.rename_file;else if ('folder' === type) popupStrings = json.popups.rename_folder;else return;
+			// Get the name of the file to be renamed:
+			var name = $(e.target).data('name');
+			var path = name;
+			popupStrings = Object.assign({}, popupStrings);
+			popupStrings.title = 'Rename `' + path + '`?';
+			var newName = await popup.requestValidInputAsync({
+				initialValue: path,
+				getDisallowedValues: function getDisallowedValues() {
+					// remove current name (i.e.: allow rename to same, which
+					// yields NOP)
+					var arr = _this7._getFlattenedFileList(false);
+					arr.splice(arr.indexOf(name), 1);
+					return arr;
+				},
+				strings: popupStrings,
+				sanitise: sanitisePath
 			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			if (null === newName) return;
+			if (newName === path) // rename to same: NOP
+				return;
+			if ('file' === type) this.emit('message', 'project-event', { func: 'renameFile', oldName: name, newFile: newName });else if ('folder' === type) this.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
+			popup.hide();
 		}
 	}, {
 		key: 'renameFile',
 		value: function renameFile(e) {
-			var _this7 = this;
-
-			// Get the name of the file to be renamed:
-			var name = $(e.target).data('name');
-			var func = $(e.target).data('func');
-			var folder = $(e.target).data('folder');
-			// build the popup content
-			popup.title('Rename ' + name + '?');
-			popup.subtitle(json.popups.rename_file.text);
-
-			var form = [];
-			form.push('<input type="text" placeholder="' + json.popups.rename_file.input + '" value="' + name + '">');
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				var newName = sanitise(popup.find('input[type=text]').val());
-				_this7.emit('message', 'project-event', { func: 'renameFile', folderName: folder, oldName: name, newFile: newName });
-				popup.hide();
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			this.rename('file', e);
 		}
 	}, {
 		key: 'renameFolder',
 		value: function renameFolder(e) {
-			var _this8 = this;
-
-			// Get the name of the file to be renamed:
-			var name = $(e.target).data('name');
-			var func = $(e.target).data('func');
-			// build the popup content
-			popup.title('Rename ' + name + '?');
-			popup.subtitle(json.popups.rename_folder.text);
-
-			var form = [];
-			form.push('<input type="text" placeholder="' + json.popups.rename_folder.input + '">');
-			form.push('</br >');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.rename_folder.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				var newName = sanitise(popup.find('input[type=text]').val());
-				_this8.emit('message', 'project-event', { func: 'renameFolder', oldName: name, newFolder: newName });
-				popup.hide();
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			this.rename('folder', e);
 		}
 	}, {
 		key: 'deleteFile',
 		value: function deleteFile(e) {
-			var _this9 = this;
-
 			// Get the name of the file to be deleted:
 			var name = $(e.target).data('name');
 			var func = $(e.target).data('func');
-			// build the popup content
-			popup.title('Delete ' + name + '?');
-			popup.subtitle(json.popups.delete_file.text);
-
-			var form = [];
-			form.push('<button type="submit" class="button popup delete">' + json.popups.delete_file.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				_this9.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
-				popup.hide();
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
-
-			popup.find('.delete').trigger('focus');
+			var strings = Object.assign({}, json.popups.delete_file);
+			strings.title = utils.formatString(strings.title, utils.breakable(name));
+			popup.twoButtons(strings, function onSubmit(e) {
+				this.emit('message', 'project-event', { func: 'deleteFile', fileName: name, currentFile: $('[data-current-file]')[0].innerText });
+			}.bind(this));
 		}
 	}, {
 		key: 'openFile',
@@ -2519,8 +2822,14 @@ var FileView = function (_View) {
 	}, {
 		key: '_fileList',
 		value: function _fileList(files, data) {
-			var _this10 = this;
+			var _this8 = this;
 
+			this.folderItems = [];
+
+			// TODO: it would be great to be able to get this from this.models, but
+			// we don't actually know which one is the project model, so we cache
+			// it here instead
+			this.currentProject = data.currentProject;
 			if (!Array.isArray(files)) return;
 
 			this.listOfFiles = files;
@@ -2534,15 +2843,18 @@ var FileView = function (_View) {
 			var resources = [];
 			var directories = [];
 			var images = [];
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
+			var _iteratorNormalCompletion5 = true;
+			var _didIteratorError5 = false;
+			var _iteratorError5 = undefined;
 
 			try {
-				for (var _iterator = files[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var _item = _step.value;
+				for (var _iterator5 = files[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+					var it = _step5.value;
 
 
+					// defensive copy so that changes below to the way the size is
+					// displayed do not affect the model
+					var _item = Object.assign({}, it);
 					// exclude hidden files
 
 					if (!viewHiddenFiles && (_item.name[0] === '.' || isDir(_item) && _item.name === 'build' || _item.name === 'settings.json' || _item.name == data.currentProject)) {
@@ -2555,12 +2867,6 @@ var FileView = function (_View) {
 					} else {
 
 						var ext = _item.name.split('.').pop();
-
-						if (_item.size < 1000000) {
-							_item.size = (_item.size / 1000).toFixed(1) + 'kb';
-						} else if (_item.size >= 1000000 && _item.size < 1000000000) {
-							_item.size = (_item.size / 1000000).toFixed(1) + 'mb';
-						}
 
 						if (sourceIndeces.indexOf(ext) !== -1) {
 							sources.push(_item);
@@ -2578,16 +2884,16 @@ var FileView = function (_View) {
 					}
 				}
 			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
+				_didIteratorError5 = true;
+				_iteratorError5 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
+					if (!_iteratorNormalCompletion5 && _iterator5.return) {
+						_iterator5.return();
 					}
 				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
+					if (_didIteratorError5) {
+						throw _iteratorError5;
 					}
 				}
 			}
@@ -2644,60 +2950,67 @@ var FileView = function (_View) {
 						var item = file_list_elements[i][j];
 						// var itemData = $('<div></div>').addClass('source-data-container').appendTo(listItem);
 						if (file_list_elements[i].name != i18n_dir_str) {
-							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + item.size + '</span>').data('file', item.name).appendTo(listItem).on('click', function (e) {
-								return _this10.openFile(e);
+							var itemText = $('<div></div>').addClass('source-text').html(item.name + ' <span class="file-list-size">' + prettySize(item.size) + '</span>').attr('data-file', item.name).appendTo(listItem).on('click', function (e) {
+								return _this8.openFile(e);
 							});
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this10.renameFile(e);
+								return _this8.renameFile(e);
 							});
-							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name).appendTo(listItem).on('click', function (e, projName) {
-								return _this10.downloadFile(e, data.currentProject);
+							var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data-name', item.name).appendTo(listItem).on('click', function (e, projName) {
+								return _this8.downloadFile(e, data.currentProject);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this10.deleteFile(e);
+								return _this8.deleteFile(e);
 							});
 						} else {
 							section.addClass('is-dir');
-							var itemText = $('<div></div>').addClass('source-text').text(item.name).data('file', item.name).appendTo(listItem);
+							var itemText = $('<div></div>').addClass('source-text').text(item.name).attr('data-file', item.name).attr('data-folder', '').appendTo(listItem);
 							var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFolder').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this10.renameFolder(e);
+								return _this8.renameFolder(e);
 							});
 							var newButton = $('<button></button>').addClass('file-new file-button fileManager').attr('title', 'New File').attr('data-func', 'newFile').attr('data-folder', item.name).appendTo(listItem).on('click', function () {
-								return _this10.newFile('newFile', event.target.dataset.folder);
+								return _this8.newFile('newFile', event.target.dataset.folder);
 							});
 							var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name).appendTo(listItem).on('click', function (e) {
-								return _this10.deleteFile(e);
+								return _this8.deleteFile(e);
 							});
 							var subList = $('<ul></ul>');
 							for (var k = 0; k < item.children.length; k++) {
 								var child = item.children[k];
-								var subListItem = $('<li></li>').addClass('source-text').text(child.name).data('file', item.name + "/" + child.name).on('click', function (e) {
-									return _this10.openFile(e);
+								var path = item.name + '/' + child.name;
+								var size = typeof child.size !== 'undefined' ? prettySize(child.size) : '';
+								var subListItem = $('<li></li>').addClass('source-file');
+								var itemText = $('<div></div>').addClass('source-text').html(child.name + ' <span class="file-list-size">' + size + '</span>').attr('data-file', path).appendTo(subListItem).on('click', function (e) {
+									return _this8.openFile(e);
 								});
-								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e) {
-									return _this10.deleteFile(e);
+								var deleteButton = $('<button></button>').addClass('file-delete file-button fileManager').attr('title', 'Delete').attr('data-func', 'deleteFile').attr('data-name', path).appendTo(subListItem).on('click', function (e) {
+									return _this8.deleteFile(e);
 								});
-								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', child.name).attr('data-folder', item.name).appendTo(subListItem).on('click', function (e) {
-									return _this10.renameFile(e);
+								var renameButton = $('<button></button>').addClass('file-rename file-button fileManager').attr('title', 'Rename').attr('data-func', 'renameFile').attr('data-name', path).appendTo(subListItem).on('click', function (e) {
+									return _this8.renameFile(e);
 								});
-								var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data_name', item.name + '/' + child.name).appendTo(subListItem).on('click', function (e, projName) {
-									return _this10.downloadFile(e, data.currentProject);
-								});
+								if (!child.children) {
+									var downloadButton = $('<button></button>').addClass('file-download file-button fileManager').attr('href-stem', '/download?project=' + data.currentProject + '&file=').attr('data-name', path).appendTo(subListItem).on('click', function (e, projName) {
+										return _this8.downloadFile(e, data.currentProject);
+									});
+								}
 								subListItem.appendTo(subList);
 							}
 							subList.appendTo(listItem);
+							this.folderItems.push(listItem);
 						}
 					}
 					fileList.appendTo(section);
 					section.appendTo($files);
 				}
 			}
+			this.buildOverlay(); // this is needed only in case an updated file list comes in while the overlay is active
 			if (data && data.fileName) this._fileName(data.fileName);
 		}
 	}, {
 		key: 'downloadFile',
 		value: function downloadFile(e, projName) {
-			var filename = $(e.target).attr('data_name');
+			var filename = $(e.target).attr('data-name');
 			var project = projName;
 			var href = $(e.target).attr('href-stem') + filename;
 			e.preventDefault(); //stop the browser from following the link
@@ -2721,178 +3034,168 @@ var FileView = function (_View) {
 			});
 		}
 	}, {
+		key: 'processQueue',
+		value: function processQueue() {
+			var _this9 = this;
+
+			// keep processing the queue in the background
+			console.log("processQueue, uploading?", uploadingFile, fileQueue.length);
+			if (!uploadingFile && fileQueue.length) {
+				setTimeout(function () {
+					console.log("processQueue do file upload", uploadingFile, fileQueue.length);
+					if (!uploadingFile && fileQueue.length) {
+						var file = fileQueue.pop();
+						console.log("processQueue do file upload:", file.name);
+						// 20mb maximum drag and drop file size
+						if (file.size >= 20000000) {
+							// postpone large files
+							largeFileQueue.push(file.name);
+							// and keep going
+							_this9.processQueue();
+						} else {
+							_this9.doFileUpload(file);
+						}
+					}
+				}, 0);
+			} else if (largeFileQueue.length) {
+				// once we finished uploading the small files, print a
+				// single error message for all of the large ones
+				this.uploadSizeError(largeFileQueue.join('`, `'));
+				largeFileQueue = [];
+			}
+		}
+	}, {
+		key: 'promptForOverwrite',
+		value: async function promptForOverwrite(filename) {
+			var _this10 = this;
+
+			return new Promise(function (resolve, reject) {
+				var fileExists = _this10._getFlattenedFileList().includes(filename);
+				var dont = {
+					do: false,
+					force: false
+				};
+				if (fileExists && askForOverwrite) {
+					popup.twoButtons({
+						title: json.popups.overwrite.title,
+						text: filename + json.popups.overwrite.text,
+						button: json.popups.overwrite.button
+					}, function onSubmit(e) {
+						if (popup.find('input[type=checkbox]').is(':checked')) {
+							askForOverwrite = false;
+							overwriteAction = 'upload';
+						}
+						resolve({
+							do: true,
+							force: true
+						});
+					}.bind(_this10), function onCancel() {
+						if (popup.find('input[type=checkbox]').is(':checked')) {
+							askForOverwrite = false;
+							overwriteAction = 'reject';
+						}
+						resolve(dont);
+					});
+					var checkbox = '<input id="popup-remember-upload" type="checkbox"><label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label<br\>';
+					popup.form.prepend(checkbox);
+					popup.find('.cancel').focus();
+				} else if (fileExists && !askForOverwrite) {
+
+					if (overwriteAction === 'upload') {
+						resolve({
+							do: true,
+							force: true
+						});
+					} else {
+						resolve(dont);
+						_this10.emit('file-rejected', 'upload failed, file ' + filename + ' already exists.');
+					}
+				} else {
+					resolve({
+						do: true,
+						force: false
+					});
+				}
+			});
+		}
+	}, {
 		key: 'doFileUpload',
-		value: function doFileUpload(file) {
-			var _this11 = this;
+		value: async function doFileUpload(file) {
 
 			if (uploadingFile) {
 				fileQueue.push(file);
 				return;
 			}
+			uploadingFile = true;
 
-			var fileExists = false;
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
-
-			try {
-				for (var _iterator2 = this.listOfFiles[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var item = _step2.value;
-
-					if (item.name === sanitise(file.name)) fileExists = true;
+			var basePath = file.folder ? file.folder + '/' : '';
+			var obj = await this.promptForOverwrite(basePath + sanitise(file.name));
+			var saveas = null;
+			if (obj.do) {
+				var isProject = void 0;
+				if (file.name.search(/\.zip$/) != -1) {
+					var newProject = sanitise(file.name.replace(/\.zip$/, ""));
+					var strings = Object.assign({}, json.popups.create_new_project_from_zip);
+					strings.title += file.name;
+					saveas = await popup.requestValidInputAsync({
+						initialValue: newProject,
+						getDisallowedValues: this.getProjectList,
+						strings: strings,
+						sanitise: sanitise
+					});
+					isProject = true;
+				} else {
+					saveas = basePath + sanitise(file.name);
+					isProject = false;
 				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
+				if (null !== saveas) this.actuallyDoFileUpload(file, saveas, obj.force, isProject);
 			}
-
-			if (file.name === 'settings.json') fileExists = true;
-
-			if (file.name === '_main.pd') forceRebuild = true;
-
-			if (fileExists && askForOverwrite) {
-
-				uploadingFile = true;
-
-				// build the popup content
-				popup.title(json.popups.overwrite.title);
-				popup.subtitle(file.name + json.popups.overwrite.text);
-
-				var form = [];
-				form.push('<input id="popup-remember-upload" type="checkbox">');
-				form.push('<label for="popup-remember-upload">' + json.popups.overwrite.tick + '</label>');
-				form.push('</br >');
-				form.push('<button type="submit" class="button confirm">' + json.popups.overwrite.button + '</button>');
-				form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-				popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-					e.preventDefault();
-					if (popup.find('input[type=checkbox]').is(':checked')) {
-						askForOverwrite = false;
-						overwriteAction = 'upload';
-					}
-					popup.hide();
-					_this11.actuallyDoFileUpload(file, true);
-					uploadingFile = false;
-					if (fileQueue.length) {
-						_this11.doFileUpload(fileQueue.pop());
-					}
-				});
-
-				popup.find('.cancel').on('click', function () {
-					if (popup.find('input[type=checkbox]').is(':checked')) {
-						askForOverwrite = false;
-						overwriteAction = 'reject';
-					}
-					popup.hide();
-					uploadingFile = false;
-					forceRebuild = false;
-					if (fileQueue.length) _this11.doFileUpload(fileQueue.pop());
-				});
-
-				popup.show();
-
-				popup.find('.cancel').focus();
-			} else if (fileExists && !askForOverwrite) {
-
-				if (overwriteAction === 'upload') this.actuallyDoFileUpload(file, !askForOverwrite);else {
-					this.emit('file-rejected', file.name);
-				}
-
-				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
-			} else {
-
-				this.actuallyDoFileUpload(file, !askForOverwrite);
-				if (fileQueue.length) this.doFileUpload(fileQueue.pop());
+			lastOverlay = file.overlay;
+			if (null === saveas) {
+				// when the last file is actuallyDoFileUpload'ed above, the overlay is
+				// removed there upon completion
+				// If the last file in the queue is not uploaded, however, we have to
+				// remove the overlay here
+				if (!fileQueue.length) this.hideOverlay();
 			}
-		}
-	}, {
-		key: 'doLargeFileUpload',
-		value: function doLargeFileUpload(formData, file, location, force) {
-			var fileName = file.value.split('\\').pop();
-			var popupBlock = $('[data-popup-nointeraction]').addClass('active');
-			var that = this;
-			$.ajax({
-				type: "POST",
-				url: '/uploads',
-				enctype: 'multipart/form-data',
-				processData: false,
-				contentType: false,
-				data: formData,
-				success: function success(r) {
-					that.emit('message', 'project-event', { func: 'moveUploadedFile', sanitisedNewFile: sanitise(fileName), newFile: fileName });
-					$('body').removeClass('uploading');
-					popupBlock.removeClass('active');
-					popup.hide();
-				},
-				error: function error(e) {
-					popup.hide();
-					popup.title(json.popups.upload_file_error.title);
-					popup.subtitle(e);
-
-					var form = [];
-					form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-					popup.find('.cancel').on('click', popup.hide);
-					$('body').removeClass('uploading');
-					popupBlock.removeClass('active');
-					popup.show();
-				}
-			});
-			this.emit('force-rebuild');
+			uploadingFile = false;
+			this.processQueue();
 		}
 	}, {
 		key: 'actuallyDoFileUpload',
-		value: function actuallyDoFileUpload(file, force) {
-			var _this12 = this;
+		value: async function actuallyDoFileUpload(file, saveas, force, isProject) {
+			var _this11 = this;
 
 			var reader = new FileReader();
-			if (forceRebuild && !fileQueue.length) {
-				forceRebuild = false;
-				this.emit('force-rebuild');
-			}
-			var uploadEmit = function uploadEmit(ev) {
-				return _this12.emit('message', 'project-event', { func: 'uploadFile', newFile: sanitise(file.name), fileData: ev.target.result, force: force });
+			var onloadend = function onloadend(func, args, ev) {
+				if (func && ev) {
+					if (ev.loaded != ev.total || ev.srcElement.error || ev.target.error || null === ev.target.result) _this11.emit('file-rejected', 'error while uploading ' + file.name);else {
+						args.func = func;
+						args.fileData = ev.target.result;
+						args.force = force;
+						args.queue = fileQueue.length;
+						_this11.emit('message', 'project-event', args);
+					}
+					if (!fileQueue.length) {
+						_this11.hideOverlay();
+					}
+				}
 			};
-
-			if (file.name.search(/\.zip$/) != -1) {
-				var newProject = sanitise(file.name.replace(/\.zip$/, ""));
-				var values = { extract: "extract", asIs: "asIs" };
-				var form = [];
-				popup.title(json.popups.create_new_project_from_zip.title + file.name);
-				popup.subtitle(json.popups.create_new_project_from_zip.text);
-
-				form.push('<input type="text" placeholder="' + json.popups.create_new_project_from_zip.input + '" value="' + newProject + '" />');
-				form.push('<p class="create_file_subtext">' + json.popups.create_new_project_from_zip.sub_text + '</p>');
-				form.push('<br/><br/>');
-				form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new_project_from_zip.button + '</button>');
-				form.push('<button type="button" class="button popup cancel">' + json.popups.generic.cancel + '</button>');
-
-				popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
-					e.preventDefault();
-					newProject = sanitise(popup.find('input[type=text]').val());
-					reader.onload = function (ev) {
-						return _this12.emit('message', 'project-event', { func: 'uploadZipProject', newFile: sanitise(file.name), fileData: ev.target.result, newProject: newProject, force: force });
-					};
-					reader.readAsArrayBuffer(file);
-					popup.hide();
+			// TODO: if something fails on the server(e.g.: project existing, file
+			// cannot be written, whatev), the rest of the queue may not be handled
+			// properly because the popup from the error will overwrite any active popup.
+			// A reset may be required.
+			if (isProject) {
+				reader.onloadend = onloadend.bind(this, 'uploadZipProject', {
+					newProject: saveas,
+					newFile: saveas + '.zip'
 				});
-				popup.find('.cancel').on('click', popup.hide);
-				popup.show();
 			} else {
-				reader.onload = uploadEmit;
-				reader.readAsArrayBuffer(file);
+				reader.onloadend = onloadend.bind(this, 'uploadFile', {
+					newFile: saveas
+				});
 			}
+			reader.readAsArrayBuffer(file);
 		}
 	}, {
 		key: '_viewHiddenFiles',
@@ -3133,7 +3436,8 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 var example_order = require('../../../../examples/order.json');
-var addAccordionEvent = require('../utils').addAccordionEvent;
+var utils = require('../utils');
+var addAccordionEvent = utils.addAccordionEvent;
 
 var ProjectView = function (_View) {
   _inherits(ProjectView, _View);
@@ -3150,6 +3454,9 @@ var ProjectView = function (_View) {
     _this.on('example-changed', function () {
       return _this.exampleChanged = true;
     });
+    _this.getProjectList = function () {
+      if (_this.projectList) return _this.projectList;else return [];
+    };
     return _this;
   }
 
@@ -3222,10 +3529,20 @@ var ProjectView = function (_View) {
         return;
       }
 
-      // build the popup content
-      popup.title(json.popups.create_new.title);
-      popup.subtitle(json.popups.create_new.text);
-
+      popup.requestValidInput({
+        getDisallowedValues: this.getProjectList,
+        strings: json.popups.create_new,
+        sanitise: sanitise
+      }, function (newProject) {
+        if (null === newProject) return;
+        _this4.emit('message', 'project-event', {
+          func: func,
+          newProject: newProject,
+          projectType: popup.find('input[type=radio]:checked').data('type')
+        });
+        $('[data-projects-select]').html('');
+        popup.hide();
+      });
       var form = [];
       form.push('<label for="popup-C" class="radio-container">C++');
       form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
@@ -3243,62 +3560,29 @@ var ProjectView = function (_View) {
       form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
       form.push('<span class="radio-button"></span>');
       form.push('</label>');
-      form.push('<input type="text" placeholder="Enter your project name">');
-      form.push('</br>');
-      form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
-      form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-        e.preventDefault();
-        var newProject = sanitise(popup.find('input[type=text]').val().trim());
-        _this4.emit('message', 'project-event', {
-          func: func,
-          newProject: newProject,
-          projectType: popup.find('input[type=radio]:checked').data('type')
-        });
-        $('[data-projects-select]').html('');
-        popup.hide();
-      });
-
-      popup.find('.cancel').on('click', popup.hide);
-
-      popup.show();
+      popup.form.prepend(form.join('\n'));
     }
   }, {
     key: 'saveAs',
-    value: function saveAs(func) {
-      var _this5 = this;
-
-      // build the popup content
-      popup.title(json.popups.save_as.title);
-      popup.subtitle(json.popups.save_as.text);
-
-      var form = [];
-      form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
-      form.push('</br >');
-      form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
-      form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-      popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-        e.preventDefault();
-        _this5.emit('message', 'project-event', { func: func, newProject: sanitise(popup.find('input[type=text]').val()) });
-        popup.hide();
+    value: async function saveAs(func) {
+      var newName = await popup.requestValidInputAsync({
+        getDisallowedValues: this.getProjectList,
+        strings: json.popups.save_as,
+        sanitise: sanitise
       });
-
-      popup.find('.cancel').on('click', popup.hide);
-
-      popup.show();
+      if (null === newName) return;
+      this.emit('message', 'project-event', { func: func, newProject: newName });
     }
   }, {
     key: 'deleteProject',
     value: function deleteProject(e) {
-      var _this6 = this;
+      var _this5 = this;
 
       // build the popup content
       // Get the project name text from the object at the top of the editor
       var name = $('[data-current-project]')[0].innerText;
 
-      popup.title(json.popups.delete_project.title + name + '?');
+      popup.title(utils.formatString(json.popups.delete_project.title, utils.breakable(name)));
       popup.subtitle(json.popups.delete_project.text);
 
       var form = [];
@@ -3308,7 +3592,7 @@ var ProjectView = function (_View) {
       popup.form.append(form.join('')).off('submit').on('submit', function (e) {
         e.preventDefault();
         $('[data-projects-select]').html('');
-        _this6.emit('message', 'project-event', { func: 'deleteProject' });
+        _this5.emit('message', 'project-event', { func: 'deleteProject' });
         popup.hide();
       });
 
@@ -3338,8 +3622,10 @@ var ProjectView = function (_View) {
         var projLen = projects.length;
       }
       $projects.attr('size', projLen - 1);
+      this.projectList = [];
       for (var i = 0; i < projLen; i++) {
         if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.') {
+          this.projectList.push(projects[i]);
           $('<li></li>').addClass('projectManager proj-li').attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function () {
             $(this).blur();
             $(this).parent().parent().removeClass('show');
@@ -3352,7 +3638,7 @@ var ProjectView = function (_View) {
   }, {
     key: '_exampleList',
     value: function _exampleList(examplesDir) {
-      var _this7 = this;
+      var _this6 = this;
 
       var $examples = $('[data-examples]');
       var oldListOrder = examplesDir;
@@ -3441,7 +3727,7 @@ var ProjectView = function (_View) {
               error: function (item, childOrder, jqXHR, textStatus) {
                 console.log("Error while retrieving order.json for ", item.name, ": ", textStatus, ". Using default ordering.");
                 generateChildren(childOrder, item, this);
-              }.bind(_this7, item, childOrder),
+              }.bind(_this6, item, childOrder),
               success: function (item, text) {
                 var newChildOrder = [];
                 text.forEach(function (item) {
@@ -3475,10 +3761,10 @@ var ProjectView = function (_View) {
                 childOrder = correctedChildOrder.concat(childOrphans);
 
                 generateChildren(childOrder, item, this);
-              }.bind(_this7, item)
+              }.bind(_this6, item)
             });
           } else {
-            generateChildren(childOrder, item, _this7);
+            generateChildren(childOrder, item, _this6);
           }
           // per section
           // item.name -> parentDiv $examples
@@ -3514,7 +3800,7 @@ var ProjectView = function (_View) {
   }, {
     key: '_libraryList',
     value: function _libraryList(librariesDir) {
-      var _this8 = this;
+      var _this7 = this;
 
       var $libraries = $('[data-libraries-list]');
       var counter = 0;
@@ -3586,7 +3872,7 @@ var ProjectView = function (_View) {
 
           // EXAMPLES:
 
-          var that = _this8;
+          var that = _this7;
           var examplesParent = $('<div></div>');
           var examplesTitle = $('<button></button>').addClass('accordion-sub').text(json.tabs.examplesTitle).attr('data-accordion-for', 'example-list-' + counter).attr('data-parent', 'libraries'); // Header for include instructions
           addAccordionEvent(examplesTitle);
@@ -3944,7 +4230,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var View = require('./View');
 var popup = require('../popup');
 var json = require('../site-text.json');
+var utils = require('../utils');
 
+var belaCoreVersionString = "Unknown";
+var belaImageVersionString = "Unknown";
 var inputChangedTimeout;
 
 var SettingsView = function (_View) {
@@ -4012,7 +4301,6 @@ var SettingsView = function (_View) {
 			var func = data.func;
 			var key = data.key;
 			var val = $element.val();
-			console.log(func, key, val);
 			if (func && this[func]) {
 				if (val) {
 					this[func](func, key, $element.val());
@@ -4145,58 +4433,74 @@ var SettingsView = function (_View) {
 	}, {
 		key: 'updateBela',
 		value: function updateBela() {
-			var _this5 = this;
+			popup.twoButtons(json.popups.update, async function onSubmit(e) {
+				var _this5 = this;
 
-			// build the popup content
-			popup.title(json.popups.update.title);
-			popup.subtitle(json.popups.update.text);
+				var formEl = $('[data-popup] form')[0];
+				var formDataOrig = new FormData(formEl);
+				var formData = new FormData();
+				console.log(formDataOrig.entries());
+				var selectedFiles = 0;
+				var file = void 0;
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
 
-			var form = [];
-			form.push('<input id="popup-update-file" type="file">');
-			form.push('</br>');
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.update.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
+				try {
+					for (var _iterator = formDataOrig.entries()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var entry = _step.value;
 
-			/*popup.form.prop({
-   	action	: 'updates',
-   	method	: 'get',
-   	enctype	: 'multipart/form-data'
-   });*/
+						file = entry[1].name.split('\\').pop();
+						formData.append(entry[0], entry[1]);
+						++selectedFiles;
+						// there will be only one because the <input> is not `multiple`
+						// TODO: write it better than this ugly-but-effective
+						// single-iteration loop
+						break;
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
 
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
+				if (file && file.search(/\.zip$/) != -1) {
+					this.emit('warning', json.settings_view.update);
+					this.emit('warning', json.settings_view.browser);
+					this.emit('warning', json.settings_view.ide);
 
-				//console.log('submitted', e);
-
-				e.preventDefault();
-
-				var file = popup.find('input[type=file]').prop('files')[0];
-
-				//console.log('input', popup.find('input[type=file]'));
-				//console.log('file', file);
-
-				if (file) {
-
-					_this5.emit('warning', json.settings_view.update);
-					_this5.emit('warning', json.settings_view.browser);
-					_this5.emit('warning', json.settings_view.ide);
-
-					popup.hide('keep overlay');
-
-					var reader = new FileReader();
-					reader.onload = function (ev) {
-						return _this5.emit('upload-update', { name: file.name, file: ev.target.result });
-					};
-					reader.readAsArrayBuffer(file);
+					formData.append("update-event", JSON.stringify({
+						currentProject: this.currentProject,
+						func: 'upload',
+						newFile: file
+					}));
+					utils.doLargeFileUpload(formData, function (r) {
+						// file has been successfully loaded, start the update.
+						// We do not do this in the POST request itself in
+						// order to avoid timeout.
+						_this5.emit('do-update');
+						popup.ok({});
+						popup.hide("keep overlay");
+					}, function (e) {
+						popup.ok({ text: "Error while uploading:", e: e });
+					});
 				} else {
 
-					_this5.emit('warning', json.settings_view.zip);
+					this.emit('warning', json.settings_view.zip);
 					popup.hide();
 				}
-			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
+			}.bind(this));
+			popup.form.attr('action', '/uploads').attr('enctype', 'multipart/form-data').attr('method', 'POST');
+			popup.form.prepend('<input type="file" name="data" data-form-file></input><br/><br/>');
 		}
 
 		// model events
@@ -4280,27 +4584,27 @@ var SettingsView = function (_View) {
 				var $this = $(this);
 				if ($this.data('func') === 'input' && key === '-Y' || $this.data('func') === 'output' && key === '-Z') {
 					var checked = false;
-					var _iteratorNormalCompletion = true;
-					var _didIteratorError = false;
-					var _iteratorError = undefined;
+					var _iteratorNormalCompletion2 = true;
+					var _didIteratorError2 = false;
+					var _iteratorError2 = undefined;
 
 					try {
-						for (var _iterator = channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-							var channel = _step.value;
+						for (var _iterator2 = channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+							var channel = _step2.value;
 
 							if (channel == $this.data('channel')) checked = true;
 						}
 					} catch (err) {
-						_didIteratorError = true;
-						_iteratorError = err;
+						_didIteratorError2 = true;
+						_iteratorError2 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion && _iterator.return) {
-								_iterator.return();
+							if (!_iteratorNormalCompletion2 && _iterator2.return) {
+								_iterator2.return();
 							}
 						} finally {
-							if (_didIteratorError) {
-								throw _iteratorError;
+							if (_didIteratorError2) {
+								throw _iteratorError2;
 							}
 						}
 					}
@@ -4459,6 +4763,56 @@ var SettingsView = function (_View) {
 				$('[data-accordion="' + exceptions['sections'][sect] + '"]').remove();
 			}
 		}
+	}, {
+		key: 'versionPopup',
+		value: function versionPopup() {
+			var strings = {};
+			strings.title = json.popups.version.title;
+			strings.button = json.popups.version.button;
+			// popup.code is the only one that accepts HTML, so we have to use that
+			// to make it pickup the line breaks
+			strings.code = utils.formatString('<p>{0}<br />{1}</p><p>{2}<br />{3}</p>', json.popups.version.image_version_label, belaImageVersionString, json.popups.version.core_version_label, belaCoreVersionString);
+			popup.ok(strings);
+		}
+	}, {
+		key: '_belaCoreVersion',
+		value: function _belaCoreVersion(ver) {
+			var format = utils.formatString;
+			var s = [];
+			var templates = json.popups.version;
+			if (ver.date || ver.fileName) {
+				var t;
+				switch (ver.success) {
+					case 0:
+						t = templates.textTemplateFailed;
+						break;
+					case 1:
+						t = templates.textTemplateSuccess;
+						break;
+					default:
+					case -1:
+						t = templates.textTemplateUnknown; // unknown success (e.g.: incomplete legacy log)
+						break;
+				}
+				if (ver.date) {
+					var date = new Date(ver.date);
+					var dateString = date.getDay() + ' ' + date.toLocaleString('default', { month: "short" }) + ' ' + date.getFullYear() + ' ' + date.toTimeString().replace(/GMT.*/, '');
+					s.push(format(t[0], dateString));
+				}
+				if (ver.fileName) s.push(format(t[1], ver.fileName));
+				if (ver.method) s.push(format(t[2], ver.method));
+				s.push(t[3]);
+			} else {
+				s.push(templates.textUnknown); // no info available
+			}
+			if (ver.git_desc) s.push(format(templates.textTemplateGitDesc, ver.git_desc));
+			belaCoreVersionString = s.join('<br \>');
+		}
+	}, {
+		key: '_belaImageVersion',
+		value: function _belaImageVersion(ver) {
+			if (ver) belaImageVersionString = ver;
+		}
 	}]);
 
 	return SettingsView;
@@ -4466,7 +4820,7 @@ var SettingsView = function (_View) {
 
 module.exports = SettingsView;
 
-},{"../popup":18,"../site-text.json":19,"./View":14}],12:[function(require,module,exports){
+},{"../popup":18,"../site-text.json":19,"../utils":20,"./View":14}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4600,6 +4954,12 @@ var TabView = function (_View) {
         // it extends horizontally before the sidebar closes.
         this.emit('change');
       }
+    }
+  }, {
+    key: 'getOpenTab',
+    value: function getOpenTab() {
+      tabs.active = $('[data-tab-for].active').data('tabFor');
+      return tabs.active;
     }
   }, {
     key: 'toggle',
@@ -5375,23 +5735,21 @@ var Console = function (_EventEmitter) {
 		}
 	}, {
 		key: 'reject',
-		value: function reject(message, id, persist) {
+		value: function reject(message, id, skipPopup) {
 			var el = document.getElementById(id);
 			//if (!el) el = this.notify(message, id);
 			var $el = $(el);
 			$el.appendTo(this.$element); //.removeAttr('id');
 			$el.html($el.html() + message);
 			$el.addClass('beaglert-console-rejectnotification');
-			var form = [];
-			popup.title('Error');
-			popup.subtitle(this.popUpComponents);
-			popup.body(message);
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
-			popup.form.empty().append(form.join(''));
-			popup.find('.popup-cancel').on('click', function () {
-				popup.hide();
-			});
-			popup.show();
+			if (!skipPopup) {
+				popup.ok({
+					title: 'Error',
+					subtitle: this.popUpComponents,
+					button: 'Cancel',
+					body: message
+				});
+			}
 			setTimeout(function () {
 				return $el.removeClass('beaglert-console-rejectnotification').addClass('beaglert-console-faded');
 			}, 500);
@@ -5932,6 +6290,12 @@ module.exports = parser;
 },{"./CircularBuffer":2}],18:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var json = require('./site-text.json');
+
 var _overlay = $('[data-overlay]');
 var parent = $('[data-popup]');
 var content = $('[data-popup-content]');
@@ -5941,14 +6305,34 @@ var codeEl = parent.find('code');
 var bodyEl = parent.find('p');
 var _formEl = parent.find('form');
 
+function callFunc(func, arg) {
+	if ('function' === typeof func) func(arg);
+}
+
+var overlayActiveClass = 'active-popup';
+var errorClass = 'no';
 var popup = {
-	show: function show() {
-		_overlay.addClass('active');
+	defaultStrings: {
+		cancel: json.popups.generic.cancel,
+		button: json.popups.generic.ok
+	},
+	defaultOpts: {
+		focus: [// in reverse order of priority
+		'button[type=submit]', '.cancel', 'input[type=text]'],
+		titleClass: '',
+		error: false
+	},
+	isShown: function isShown() {
+		return parent.hasClass('active');
+	},
+	show: function show(skipFocus) {
+		_overlay.addClass(overlayActiveClass);
 		parent.addClass('active');
-		content.find('input[type=text]').first().trigger('focus');
+		if (!skipFocus) // used for backwards compatibilty
+			content.find('input[type=text]').first().focus();
 	},
 	hide: function hide(keepOverlay) {
-		if (keepOverlay !== 'keep overlay') _overlay.removeClass('active');
+		if (keepOverlay !== 'keep overlay') _overlay.removeClass(overlayActiveClass);
 		parent.removeClass('active');
 		titleEl.removeClass('error');
 		titleEl.empty();
@@ -5958,8 +6342,326 @@ var popup = {
 		bodyEl.empty();
 		_formEl.empty();
 	},
+
+
+	// presses the cancel button, which in turns should hide the popup
+	cancel: function cancel(keepOverlay) {
+		var done = false;
+		if (this.isShown()) {
+			var selectors = ['.cancel'];
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = selectors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var s = _step.value;
+
+					var target = this.find(s);
+					if (target.length) {
+						target.click();
+						done = true;
+						break;
+					}
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+		}
+		return done;
+	},
 	overlay: function overlay() {
-		_overlay.toggleClass('active');
+		_overlay.toggleClass(overlayActiveClass);
+	},
+	initWithStrings: function initWithStrings(strings) {
+		this.seq++;
+		popup.hide();
+		// override with default values if appropriate
+		var _iteratorNormalCompletion2 = true;
+		var _didIteratorError2 = false;
+		var _iteratorError2 = undefined;
+
+		try {
+			for (var _iterator2 = Object.entries(this.defaultStrings)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+				var _step2$value = _slicedToArray(_step2.value, 2),
+				    key = _step2$value[0],
+				    value = _step2$value[1];
+
+				if (!strings.hasOwnProperty(key)) strings[key] = value;
+			}
+		} catch (err) {
+			_didIteratorError2 = true;
+			_iteratorError2 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion2 && _iterator2.return) {
+					_iterator2.return();
+				}
+			} finally {
+				if (_didIteratorError2) {
+					throw _iteratorError2;
+				}
+			}
+		}
+
+		if (strings.title) popup.title(strings.title);
+		if (strings.body) popup.body(strings.body);
+		if (strings.text) popup.subtitle(strings.text);
+		if (strings.code) popup.code(strings.code);
+	},
+	finalize: function finalize(newOpts) {
+		popup.show();
+		var opts = {};
+		var _iteratorNormalCompletion3 = true;
+		var _didIteratorError3 = false;
+		var _iteratorError3 = undefined;
+
+		try {
+			for (var _iterator3 = Object.entries(this.defaultOpts)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+				var _step3$value = _slicedToArray(_step3.value, 2),
+				    key = _step3$value[0],
+				    value = _step3$value[1];
+
+				opts[key] = value;
+			}
+		} catch (err) {
+			_didIteratorError3 = true;
+			_iteratorError3 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion3 && _iterator3.return) {
+					_iterator3.return();
+				}
+			} finally {
+				if (_didIteratorError3) {
+					throw _iteratorError3;
+				}
+			}
+		}
+
+		if ('object' === (typeof newOpts === 'undefined' ? 'undefined' : _typeof(newOpts))) {
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
+
+			try {
+				for (var _iterator4 = Object.entries(newOpts)[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var _step4$value = _slicedToArray(_step4.value, 2),
+					    key = _step4$value[0],
+					    value = _step4$value[1];
+
+					opts[key] = value;
+				}
+			} catch (err) {
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
+					}
+				} finally {
+					if (_didIteratorError4) {
+						throw _iteratorError4;
+					}
+				}
+			}
+		}
+		if (!Array.isArray(opts.focus)) opts.focus = [opts.focus];
+		var _iteratorNormalCompletion5 = true;
+		var _didIteratorError5 = false;
+		var _iteratorError5 = undefined;
+
+		try {
+			for (var _iterator5 = opts.focus[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+				var f = _step5.value;
+
+				var $tag = content.find(f).first();
+				if ($tag.length) {
+					$tag.focus();
+					var tag = $tag[0];
+					if (tag.tagName == "INPUT" && tag.value) {
+						// * 2 because Opera sometimes interprets new lines as two
+						// characters
+						var end = tag.value.length * 2;
+						tag.setSelectionRange(end, end);
+					}
+				}
+			}
+		} catch (err) {
+			_didIteratorError5 = true;
+			_iteratorError5 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion5 && _iterator5.return) {
+					_iterator5.return();
+				}
+			} finally {
+				if (_didIteratorError5) {
+					throw _iteratorError5;
+				}
+			}
+		}
+
+		titleEl.addClass(opts.titleClass);
+		if (opts.error) _overlay.addClass(errorClass);else _overlay.removeClass(errorClass);
+	},
+	respondToEvent: function respondToEvent(callback, e) {
+		e.preventDefault();
+		var previousSeq = this.seq;
+		callFunc(callback, e);
+		if (this.seq === previousSeq) // the callback may have started a new popup. In that case, we don't want to hide the new one!
+			popup.hide();
+	},
+	disableSubmit: function disableSubmit() {
+		this.form.off('submit');
+		$('button[type=submit]', this.form).addClass('button-disabled').prop('disabled', true);
+	},
+	enableSubmit: function enableSubmit() {
+		var _this = this;
+
+		this.form.on('submit', function (e) {
+			_this.respondToEvent(_this.stashedOnSubmit, e);
+		});
+		$('button[type=submit]', this.form).removeClass('button-disabled').prop('disabled', false);
+	},
+
+	// shorthands for common popup configurations.
+	// strings may have fields: title, text(subtitle), code, body, button, cancel
+
+	// A popup with two buttons - Submit and Cancel
+	// Builds the popup with the initWithStrings() function, then adds the two button callbacks.
+	twoButtons: function twoButtons(strings, onSubmit, onCancel, opts) {
+		var _this2 = this;
+
+		this.initWithStrings(strings);
+		var form = [];
+		form.push('<button type="submit" class="button popup-save confirm">' + strings.button + '</button>');
+		form.push('<button type="button" class="button cancel">' + strings.cancel + '</button>');
+
+		this.stashedOnSubmit = onSubmit;
+		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
+			_this2.respondToEvent(onSubmit, e);
+		});
+		popup.find('.cancel').on('click', function (e) {
+			_this2.respondToEvent(onCancel, e);
+		});
+		popup.finalize(opts);
+	},
+
+
+	// For popups with only one button that needs to fire an event when clicked (eg, confirmation)
+	// To work a strings.button string must be present in the strings object that's passed in
+	oneButton: function oneButton(strings, onCancel, opts) {
+		var _this3 = this;
+
+		this.initWithStrings(strings);
+		var form = [];
+		form.push('<button type="cancel" class="button popup-save">' + strings.button + '</button>');
+		popup.form.empty().append(form.join('')).find('.popup-save').on('click', function (e) {
+			_this3.respondToEvent(onCancel, e);
+		});
+		popup.finalize(opts);
+	},
+
+
+	// a popup with no buttons. It must be hidden by a callback somewhere else
+	noButton: function noButton(strings, opts) {
+		this.initWithStrings(strings);
+		var form = [];
+		popup.finalize(opts);
+	},
+
+
+	// a popup with one button which will hide itself upon click
+	// To change the text on the button pass in strings.button to the strings object
+	ok: function ok(strings, opts) {
+		var _this4 = this;
+
+		this.initWithStrings(strings);
+		var form = [];
+		form.push('<button type="submit" class="button popup cancel">' + strings.button + '</button>');
+		popup.form.empty().append(form.join('')).off('submit').on('submit', function (e) {
+			_this4.respondToEvent(undefined, e);
+		});
+		popup.finalize(opts);
+	},
+
+
+	// a popup with two buttons and an input field. The input field can be
+	// checked against an array of disallowedValues. If the name is disallowed,
+	// the submit button will be grayed out.
+	// args has: initialValue(string), getDisallowedValues(function that returns an arrayof strings), sanitise(function), strings(contains title, text, button, input, sub_text, sanitised, exists (all optional), sanitise(function))  (all optional)
+	// callback takes a single argument: a valid value or null if the popup was cancelled or the input field was empty
+	requestValidInput: function requestValidInput(args, callback) {
+		var initialValue = args.initialValue;
+		var getDisallowedValues = args.getDisallowedValues;
+		var strings = Object.assign({}, args.strings);
+		var sanitise = args.sanitise;
+		// defaults
+		if (typeof initialValue !== "string") initialValue = "";
+		if (typeof getDisallowedValues !== 'function') getDisallowedValues = function getDisallowedValues() {
+			return [];
+		};
+		if ((typeof strings === 'undefined' ? 'undefined' : _typeof(strings)) !== "object") strings = {};
+		if (typeof sanitise !== "function") sanitise = function sanitise(a) {
+			return a;
+		};
+		var _arr = ['input', 'sub_text'];
+		for (var _i = 0; _i < _arr.length; _i++) {
+			var field = _arr[_i];
+			if (typeof strings[field] !== "string") strings[field] = '';
+		}
+		popup.twoButtons(strings, function onSubmit(e) {
+			var val = popup.find('input[type=text]').val();
+			if (!val) val = null;else sanitise ? val = sanitise(val) : val;
+			callback(val);
+		}, function onCancel() {
+			callback(null);
+		});
+		var newValueInput = '<input type="text" data-name="newValue" placeholder="' + strings.input + '" value="' + initialValue + '" />' + '<span class="input-already-existing"></span>' + '<div class="input-sanitised"></div>';
+		if (strings.sub_text) newValueInput += '<p class="create_file_subtext">' + strings.sub_text + '</p>';
+		newValueInput += '<br/><br/>';
+		popup.form.prepend(newValueInput);
+		var input = $('input[data-name=newValue]', popup.form);
+		var existingWarning = $('.input-already-existing', popup.form);
+		var sanitisedWarning = $('.input-sanitised', popup.form);
+		var validateValue = function validateValue(e) {
+			var origValue = input[0].value.trim();
+			var sanValue = sanitise ? sanitise(origValue) : origValue;
+			if (sanValue !== origValue && strings.sanitised) sanitisedWarning.html(strings.sanitised + " '" + sanValue + "'");else sanitisedWarning.html('');
+			if (getDisallowedValues().includes(sanValue)) {
+				if (strings.exists) existingWarning.html(strings.exists);
+				popup.disableSubmit();
+			} else {
+				existingWarning.html('');
+				popup.enableSubmit();
+			}
+		};
+		validateValue();
+		input.on('change keypress paste input', validateValue);
+		// duplicated call, but this allows re-focus after input was created
+		popup.finalize();
+	},
+	requestValidInputAsync: async function requestValidInputAsync(args) {
+		var _this5 = this;
+
+		return new Promise(function (resolve, reject) {
+			_this5.requestValidInput(args, function (value) {
+				resolve(value);
+			});
+		});
 	},
 
 
@@ -5968,16 +6670,16 @@ var popup = {
 	},
 
 	title: function title(text) {
-		return titleEl.text(text);
+		return titleEl.html(text);
 	},
 	subtitle: function subtitle(text) {
-		return subEl.text(text);
+		return subEl.html(text);
 	},
 	code: function code(html) {
 		return codeEl.html(html);
 	},
 	body: function body(text) {
-		return bodyEl.text(text);
+		return bodyEl.html(text);
 	},
 	formEl: function formEl(html) {
 		return _formEl.html(html);
@@ -5988,6 +6690,8 @@ var popup = {
 	},
 
 	form: _formEl,
+
+	seq: 0,
 
 	exampleChanged: example
 
@@ -6008,37 +6712,44 @@ function example(cb, arg, delay, cancelCb) {
 	popup.form.append(form.join('')).off('submit').on('submit', function (e) {
 		e.preventDefault();
 		setTimeout(function () {
-			cb(arg);
+			callFunc(cb, arg);
 		}, delay);
 		popup.hide();
 	});
 
-	popup.find('.cancel').on('click', function () {
+	popup.find('.cancel').on('click', function (e) {
 		popup.hide();
-		if (cancelCb) cancelCb();
+		callFunc(cancelCb, e);
 	});
 
 	popup.show();
 
-	popup.find('.confirm').trigger('focus');
+	popup.find('.confirm').focus();
 }
 
-},{}],19:[function(require,module,exports){
+},{"./site-text.json":19}],19:[function(require,module,exports){
 module.exports={
+    "locale": "en",
 	"popups": {
     "generic": {
+      "ok": "OK",
       "cancel": "Cancel"
     },
 		"create_new": {
 			"title": "Create new project",
 			"text": "Choose the development language for this project, and give it a name:",
-			"button": "Create project"
+			"button": "Create project",
+			"input": "Enter your project name",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
 		"save_as": {
 			"title": "Save project as ...",
 			"text": "",
 			"input": "Enter your new project name",
-			"button": "Save project"
+			"button": "Save project",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
 		"delete_project": {
 			"title": "Delete this project?",
@@ -6049,40 +6760,50 @@ module.exports={
 			"title": "Create new file",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
 			"input": "Your new file name",
-			"button": "Create file"
+			"button": "Create file",
+			"exists": "This file already exists",
+			"sanitised": "This file will be saved as"
 		},
 		"create_new_project_from_zip": {
 			"title": "Create project from ",
 			"text": "Choose a name for this project:",
 			"sub_text": "To add this file to an existing project, close this window and use the Upload File button in the Project Explorer tab.",
 			"input": "New project name",
-			"button": "Create project"
+			"button": "Create project",
+			"exists": "This project already exists",
+			"sanitised": "This project will be saved as"
 		},
-    "create_new_folder": {
+		"create_new_folder": {
 			"title": "Create new folder",
 			"text": "Enter the new folder name.",
 			"input": "Your new folder name",
-			"button": "Create folder"
+			"button": "Create folder",
+			"exists": "This folder already exists",
+			"sanitised": "This folder will be saved as"
 		},
 		"rename_file": {
 			"title": "Rename this file?",
 			"input": "The new file name",
 			"text": "Enter the new file name and extension (only files with .cpp, .c or .S extensions will be compiled).",
-			"button": "Rename file"
+			"button": "Rename file",
+			"exists": "This file already exists",
+			"sanitised": "This file will be saved as"
 		},
     "rename_folder": {
 			"title": "Rename this folder?",
 			"input": "The new folder name",
 			"text": "Enter the new folder name",
-			"button": "Rename folder"
+			"button": "Rename folder",
+			"exists": "This folder already exists",
+			"sanitised": "This folder will be saved as"
 		},
 		"delete_project": {
-			"title": "Delete project ",
+			"title": "Delete project `{0}`",
 			"text": "Warning: There is no undo.",
 			"button": "Delete project"
 		},
 		"delete_file": {
-			"title": "Delete this file?",
+			"title": "Delete file `{0}`?",
 			"text": "Warning: There is no undo.",
 			"button": "Delete file"
 		},
@@ -6091,8 +6812,23 @@ module.exports={
 			"text": "Select a file to upload.",
 			"button": "Upload file"
 		},
+    "upload_file_progress": {
+			"title": "Uploading",
+			"text": "The files are being uploaded...",
+			"button": "OK"
+		},
+    "upload_file_success": {
+			"title": "Success",
+			"text": "All files uploaded successfully",
+			"button": "OK"
+		},
     "upload_file_error": {
 			"title": "Uploading file error"
+		},
+		"upload_file_nofileselected_error": {
+			"title": "Error: No file selected for upload",
+			"text": "No file was selected for upload",
+			"button": "Try Again"
 		},
 		"restore_default_project_settings": {
 			"title": "Restore default project settings?",
@@ -6119,15 +6855,21 @@ module.exports={
 			"text": "Bela was born out of research at Queen Mary University of London. It is developed and supported by the Bela team, and sold by Augmented Instruments Ltd in London, UK. For more information, please visit bela.io.",
 			"button": "Close"
 		},
-		"file_changed": {
-			"title": "File changed on disk",
-			"text": "Would you like to reload?",
-			"button": "Reload"
+		"version": {
+			"title": "Version details",
+			"image_version_label": "Image: ",
+			"core_version_label": "Core code: ",
+			"textTemplateSuccess": [ "Last updated on '{0}'", "from file '{0}'", "via '{0}'", "Update was successful"],
+			"textTemplateFailed": [ "Last attempted update on '{0}'", "from file '{0}'", "via '{0}'", "Update failed"],
+			"textTemplateUnknown": [ "Last attempted update on '{0}'", "from file '{0}'", "via '{0}'", ""],
+			"textUnknown": [ "We could not determine the last time your core code was updated" ],
+			"textTemplateGitDesc": "Git desc: '{0}'",
+			"button": "Close"
 		},
 		"overwrite": {
 			"title": "Overwrite file?",
 			"text": " already exists in this project. Overwrite?",
-			"button": "Overwite",
+			"button": "Overwrite",
 			"tick": "Don't ask me again this session"
 		},
 		"commit": {
@@ -6149,10 +6891,29 @@ module.exports={
 		},
 		"file_changed": {
 			"title": "File changed on disk",
-			"text": " has changed. Would you like to reload it?",
-			"button": "Discard changes and reload",
-			"cancel": "Don't reload, keep this version"
-		}
+			"text": "This file has been edited in another tab. Would you like to reload to discard your changes here and switch to the edited version?",
+			"button": "Yes, reload",
+			"cancel": "No, keep going"
+		},
+		"enter_readonly": {
+			"title": "This window is now read-only",
+			"text": "You have opened this file in more than one browser window. Because files can only be edited in one window at a time, this window is now in read-only mode.",
+			"button": "OK"
+		},
+		"exit_readonly": {
+			"title": "Exit read-only mode?",
+			"text": [
+				"To exit read-only mode and edit this file, click Reload. This will refresh the page and load the most recent version of this file, and you'll be able to edit it here.",
+				"To stay in read-only mode, click Cancel."
+			],
+			"submit": "Reload",
+			"cancel": "Cancel"
+		},
+		"upload_size_error": {
+		   "title": "Error: File(s) `{0}` too large",
+			 "text": "The maximum size for uploading files via drag and drop interface is 20MB. Please click 'try again' to select a file from your computer.",
+			 "button": "Try Again"
+		 }
 	},
   "tabs": {
     "includeTitle": "Include this Library",
@@ -6173,7 +6934,14 @@ module.exports={
 			"preview": "This is a preview - these objects are not editable in the browser.",
       "pd": {
         "error": "Rendering pd patch failed!"
-      }
+      },
+      "binary": {
+        "error": "This type of file cannot be displayed."
+      },
+      "deleted": {
+        "error": "This file no longer exists. Select or create another file."
+      },
+      "keypress_read_only": "This file is read-only. Open a file or refresh the page to keep editing."
 	},
 	"settings_view": {
 		"update": "Beginning update - this may take several minutes",
@@ -6226,15 +6994,58 @@ module.exports={
 },{}],20:[function(require,module,exports){
 'use strict';
 
+var json = require('./site-text.json');
+var popup = require('./popup');
 // replace most non alpha-numeric chars with '_'
 module.exports.sanitise = function (name, options) {
 	var isPath = false;
 	if (options && options.isPath) isPath = options.isPath;
 	var newName = name.replace(/[^a-zA-Z0-9\.\-\+\%\_\/~]/g, '_');
-	// if this is a folder or file name (and not a path), then we do not allow '/'
-	if (!isPath) newName = newName.replace(/[\/]/g, '_');
-	console.log("FROM: ", name, "SANITISED: ", newName);
+	if (isPath) {
+		// if this is a path, simply remove trailing slash
+		newName = newName.replace(/\/$/, '');
+	} else {
+		// otherwise do not allow any '/'
+		newName = newName.replace(/[\/]/g, '_');
+	}
 	return newName;
+};
+
+module.exports.dirname = function (path) {
+	var lastIndex = path.lastIndexOf('/');
+	return path.slice(0, lastIndex);
+};
+
+module.exports.filename = function (path) {
+	var lastIndex = path.lastIndexOf('/');
+	return path.slice(lastIndex + 1);
+};
+
+module.exports.prettySize = function (size) {
+	var ret = void 0;
+	var uom = void 0;
+	var s = void 0;
+	if (size < 1000000) {
+		s = size / 1000;
+		uom = "kB";
+	} else if (size >= 1000000 && size < 1000000000) {
+		uom = "MB";
+		s = size / 1000 / 1000;
+	} else if (size >= 1000000000) {
+		uom = "GB";
+		s = size / 1000 / 1000 / 1000;
+	}
+	var f = void 0;
+	if (s >= 100) f = 0;else if (s >= 10) f = 1;else f = 2;
+	ret = s.toFixed(f) + uom;
+	return ret;
+};
+
+module.exports.formatString = function (format, vargs) {
+	var args = Array.prototype.slice.call(arguments, 1);
+	return format.replace(/{(\d+)}/g, function (match, number) {
+		return typeof args[number] != 'undefined' ? args[number] : match;
+	});
 };
 
 // add onClick events for accordion functionality to relevant elements of the
@@ -6281,8 +7092,25 @@ module.exports.addDropdownEvent = function (elements) {
 		}
 	};
 };
+module.exports.doLargeFileUpload = function (formData, success, error) {
+	popup.noButton(json.popups.upload_file_progress);
+	$.ajax({
+		type: "POST",
+		url: '/uploads',
+		enctype: 'multipart/form-data',
+		processData: false,
+		contentType: false,
+		data: formData,
+		success: success,
+		error: error
+	});
+};
 
-},{}],21:[function(require,module,exports){
+module.exports.breakable = function (text) {
+	return '<span class="word-breakable">' + text + '</span>';
+};
+
+},{"./popup":18,"./site-text.json":19}],21:[function(require,module,exports){
 module.exports=[
   "Fundamentals",
   "Digital",

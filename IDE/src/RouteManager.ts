@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as fs from 'fs-extra-promise';
 import * as paths from './paths';
 import * as socket_manager from './SocketManager';
+import * as file_manager from './FileManager';
 import * as archiver from 'archiver';
 import * as mime from 'mime';
 
@@ -57,12 +58,15 @@ export function upload(req: express.Request, res: express.Response){
   }
 }
 
-function download_file(req: express.Request, res: express.Response){
+async function download_file(req: express.Request, res: express.Response){
 	let file = paths.projects+req.query.project+'/'+req.query.file;
   let fileName = req.query.file.split('/').pop();
 	res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
 	res.setHeader('Content-type', mime.getType(file));
 	// this should really go through the file_manager lock - TODO
+	let is_a_folder = await file_manager.directory_exists(file);
+	if(is_a_folder) // the client will error (not ideal), but the server will be fine
+		return res.status(403).end("Requested file is a folder.");
 	fs.createReadStream(file).pipe(res);
 }
 

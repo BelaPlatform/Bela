@@ -63,6 +63,7 @@ var extensionsForSyntaxCheck = ['.cpp', '.c', '.h', '.hh', '.hpp'];
 function makePath(data) {
     return paths.projects + data.currentProject + '/' + data.newFile;
 }
+var shouldRunWhenDoneUploads = undefined;
 var queuedUploads = new MostRecentQueue_1.MostRecentQueue();
 // the file data is saved robustly using a lockfile, and a syntax
 // check started if the flag is set
@@ -126,6 +127,10 @@ function processUploads() {
                 case 10: return [3 /*break*/, 0];
                 case 11:
                     lock.release();
+                    if (shouldRunWhenDoneUploads) {
+                        run(shouldRunWhenDoneUploads);
+                        shouldRunWhenDoneUploads = undefined;
+                    }
                     return [2 /*return*/];
             }
         });
@@ -141,6 +146,12 @@ function upload(data) {
                 case 0:
                     id = makePath(data);
                     queuedUploads.push(id, data);
+                    // notify all clients this file has been edited
+                    socket_manager.broadcast('file-changed', {
+                        currentProject: data.currentProject,
+                        fileName: data.newFile,
+                        clientId: data.clientId,
+                    });
                     if (!!lock.acquired) return [3 /*break*/, 2];
                     return [4 /*yield*/, lock.acquire()];
                 case 1:
@@ -157,20 +168,20 @@ function upload(data) {
 }
 exports.upload = upload;
 // this function starts a syntax check
-// if a syntax check or build process is in progress they are stopped
-// a running program is not stopped
+// if a build is in progress, syntax check is not started
+// if a syntax check is in progress it is restarted
+// in all other cases, a syntax check is started immediately
 // this can be called either from upload() or from the frontend (via SocketManager)
 function checkSyntax(data) {
     if (!data.currentProject)
         return;
     var project = data.currentProject;
-    if (processes.syntax.get_status()) {
+    if (processes.build.get_status()) {
+        // do nothing
+    }
+    else if (processes.syntax.get_status()) {
         processes.syntax.stop();
         processes.syntax.queue(function () { return processes.syntax.start(project); });
-    }
-    else if (processes.build.get_status()) {
-        processes.build.stop();
-        processes.build.queue(function () { return processes.syntax.start(project); });
     }
     else {
         processes.syntax.start(project);
@@ -182,6 +193,7 @@ exports.checkSyntax = checkSyntax;
 // any syntax check in progress is stopped
 function run(data) {
     cpu_monitor.stop();
+    clearTimeout(syntaxTimeout);
     if (processes.run.get_status()) {
         processes.run.stop();
         processes.run.queue(function () { return build_run(data.currentProject); });
@@ -197,6 +209,9 @@ function run(data) {
     else {
         build_run(data.currentProject);
     }
+    // if uploads are in progress, reschedule
+    if (queuedUploads.size)
+        shouldRunWhenDoneUploads = data;
 }
 exports.run = run;
 // this function starts a build process and when it ends it checks

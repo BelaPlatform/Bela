@@ -8,6 +8,7 @@
   &.active {
     display: block;
     z-index: 10000;
+	background-color: rgba(100, 100, 100, 0.3);
   }
 }
 
@@ -59,7 +60,7 @@
     padding: .5em;
     &[type=text] {
       margin-top: 1em;
-      width: 15em;
+      width: 400px;
     }
     &[type=file]{
       background: initial;
@@ -70,6 +71,11 @@
       color: #bdbdbd;
       font-style: italic;
     }
+  }
+  .input-already-existing {
+    color: $accent-red;
+  }
+  .input-sanitised {
   }
   /* Styles for custom radio buttons */
   .radio-container {
@@ -123,6 +129,9 @@
         background: $teal-02;
         border: 1px solid $teal-02;
       }
+      &.button-disabled {
+        background: $grey-mid;
+      }
     }
     &.cancel {
       background: $white;
@@ -145,19 +154,19 @@
 }
 
 #overlay {
-  &.active {
+@mixin active() {
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  z-index: 9998;
+}
+  &.active-popup{
+    @include active();
     background: rgba(0, 0, 0, 0.3);
-    height: 100vh;
-    left: 0;
-    position: absolute;
-    top: 0;
-    width: 100vw;
-    z-index: 9998;
-    &.drag-upload {
-      background: rgba(0, 255, 122, 0.3);
-      &.no {
-        background: rgba(255, 0, 0, 0.3);
-      }
+    &.no {
+      background: rgba(255, 0, 0, 0.3);
     }
   }
 }

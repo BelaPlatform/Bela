@@ -7,6 +7,10 @@ import * as readChunk from 'read-chunk';
 import * as fileType from 'file-type';
 import * as DecompressZip from 'decompress-zip';
 import * as fs from 'fs-extra-promise';
+import * as socket_manager from './SocketManager';
+import * as process_manager from './ProcessManager';
+import * as processes from './IDEProcesses';
+import * as ide_settings from './IDESettings';
 
 let max_file_size = 52428800;	// bytes (50Mb)
 let max_preview_size = 524288000;	// bytes (500Mb)
@@ -78,6 +82,7 @@ export async function openFile(data: any){
 	}
 	let chunk: Buffer = await readChunk(file_path, 0, 4100);
 	let file_type = await fileType(chunk);
+	data.mtime = file_stat.mtime;
 	if (file_type && (file_type.mime.includes('image') || file_type.mime.includes('audio'))){
 		await file_manager.empty_directory(paths.media);
 		await file_manager.make_symlink(file_path, paths.media+data.newFile);
@@ -90,12 +95,11 @@ export async function openFile(data: any){
 	}
 	let is_binary = await file_manager.is_binary(file_path);
 	if (is_binary){
-		data.error = 'can\'t open binary files';
-		data.fileData = 'Binary files can not be edited in the IDE';
+		data.fileData = null;
 		data.fileName = data.newFile;
 		data.newFile = undefined;
 		data.readOnly = true;
-		data.fileType = 0;
+		data.fileType = 'binary';
 		return;
 	}
 	try{
@@ -118,6 +122,11 @@ export async function openFile(data: any){
 	data.fileName = data.newFile;
 	data.newFile = undefined;
 	data.readOnly = false;
+	socket_manager.broadcast('file-opened', {
+		currentProject: data.currentProject,
+		fileName: data.fileName,
+		clientId: data.clientId,
+	});
 	return;
 }
 
@@ -200,6 +209,13 @@ export async function openExample(data: any){
 	await openProject(data);
 }
 
+async function postNewProject(data: any){
+	data.projectList = await listProjects();
+	data.currentProject = data.newProject;
+	data.newProject = undefined;
+	await openProject(data);
+}
+
 export async function newProject(data: any){
 	if(typeof(data.newProject) === "string")
 	{
@@ -214,10 +230,7 @@ export async function newProject(data: any){
 		return;
 	}
 	await file_manager.copy_directory(paths.templates+data.projectType, paths.projects+data.newProject);
-	data.projectList = await listProjects();
-	data.currentProject = data.newProject;
-	data.newProject = undefined;
-	await openProject(data);
+	await postNewProject(data);
 }
 
 export async function saveAs(data: any){
@@ -227,10 +240,7 @@ export async function saveAs(data: any){
 	}
 	await cleanProject(data);
 	await file_manager.copy_directory(paths.projects+data.currentProject, paths.projects+data.newProject);
-	data.projectList = await listProjects();
-	data.currentProject = data.newProject;
-	data.newProject = undefined;
-	await openProject(data);
+	postNewProject(data);
 }
 
 export async function deleteProject(data: any){
@@ -254,16 +264,7 @@ export async function cleanProject(data: any){
 }
 
 export async function newFile(data: any){
-  let file_name = data.newFile.split('/').pop();
-  let file_path;
-  if (data.folder) {
-    let folder = data.folder;
-    file_path = paths.projects+data.currentProject + '/' + folder + '/' + file_name;
-    data.newFile = folder + '/' + file_name;
-  } else {
-    file_path = paths.projects + data.currentProject + '/' + file_name;
-    data.newFile = file_name;
-  }
+	let file_path = paths.projects + data.currentProject + '/' + data.newFile;
 	if (await file_manager.file_exists(file_path)){
 		data.error = 'failed, file '+ file_path +' already exists!';
 		return;
@@ -294,8 +295,13 @@ export async function uploadFile(data: any){
 		return;
 	}
 	await file_manager.save_file(file_path, data.fileData);
-	data.fileList = await listFiles(data.currentProject);
-	await openFile(data);
+	if (0 === data.queue){
+		// restart if running and option ticked
+		if(await ide_settings.get_setting('restartUponUpload') && processes.run.get_status())
+			process_manager.run(data);
+		data.fileList = await listFiles(data.currentProject);
+		await openFile(data);
+	}
 }
 
 export async function uploadZipProject(data: any){
@@ -339,8 +345,7 @@ export async function uploadZipProject(data: any){
 				console.log("Strip off the top-level folder: ", source_path);
 			}
 			await file_manager.copy_directory(source_path, target_path);
-			data.currentProject = data.newProject;
-			await openProject(data);
+			await postNewProject(data);
 			_cleanup();
 			resolve();
 		});
@@ -388,28 +393,24 @@ export async function moveUploadedFile(data: any){
 }
 
 export async function renameFile(data: any){
-  let old_file_name = data.oldName;
-  let file_name = data.oldName.split('/').pop();
-  let file_path;
-  if (data.folder) {
-    let folder = data.folder + '/';
-    file_path = paths.projects + data.currentProject + '/' + folder + file_name;
-  } else {
-    file_path = paths.projects + data.currentProject + '/' + file_name;
-  }
-  let new_file_path = file_path.replace(file_name, data.newFile);
-	let file_exists = (await file_manager.file_exists(new_file_path) || await file_manager.directory_exists(file_path));
-	if (file_exists){
+	let src_name = data.oldName;
+	let dst_name = data.newFile;
+	let base_path = paths.projects + data.currentProject + '/';
+	let src_path = base_path + '/' + src_name;
+	let dst_path = base_path + '/' + dst_name;
+	let dst_exists = (await file_manager.file_exists(dst_path) || await file_manager.directory_exists(dst_path));
+	if (dst_exists){
 		data.error = 'failed, file ' + data.newFile + ' already exists!';
 		return;
 	}
-	await file_manager.rename_file(file_path, new_file_path);
-	await cleanFile(data.currentProject, data.oldName);
-  if (data.fileName == data.oldName) {
-    data.fileName = data.newFile;
-    await openFile(data);
-  }
-  data.fileList = await listFiles(data.currentProject);
+	await file_manager.rename_file(src_path, dst_path);
+	await cleanFile(data.currentProject, src_name);
+	// if the renamed file was the current file, open the new path
+	if (data.fileName == data.oldName) {
+		data.fileName = data.newFile;
+		await openFile(data);
+	}
+	data.fileList = await listFiles(data.currentProject);
 }
 
 export async function renameFolder(data: any){

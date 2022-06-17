@@ -19,6 +19,7 @@ function makePath (data : any) {
 	return paths.projects+data.currentProject+'/'+data.newFile;
 }
 
+let shouldRunWhenDoneUploads : any = undefined;
 let queuedUploads = new MostRecentQueue();
 
 // the file data is saved robustly using a lockfile, and a syntax
@@ -53,6 +54,10 @@ async function processUploads() {
 		}
 	}
 	lock.release();
+	if(shouldRunWhenDoneUploads) {
+		run(shouldRunWhenDoneUploads);
+		shouldRunWhenDoneUploads = undefined;
+	}
 }
 
 // this function gets called whenever the ace editor is modified.
@@ -60,6 +65,12 @@ async function processUploads() {
 export async function upload(data: any){
 	let id = makePath(data);
 	queuedUploads.push(id, data);
+	// notify all clients this file has been edited
+	socket_manager.broadcast('file-changed', {
+		currentProject: data.currentProject,
+		fileName: data.newFile,
+		clientId: data.clientId,
+	});
 	if(!lock.acquired) {
 		await lock.acquire();
 		// If not already running, process uploads at the first chance
@@ -70,19 +81,19 @@ export async function upload(data: any){
 }
 
 // this function starts a syntax check
-// if a syntax check or build process is in progress they are stopped
-// a running program is not stopped
+// if a build is in progress, syntax check is not started
+// if a syntax check is in progress it is restarted
+// in all other cases, a syntax check is started immediately
 // this can be called either from upload() or from the frontend (via SocketManager)
 export function checkSyntax(data: any){
 	if(!data.currentProject)
 		return;
 	let project : string = data.currentProject;
-	if (processes.syntax.get_status()){
+	if (processes.build.get_status()){
+		// do nothing
+	} else if (processes.syntax.get_status()){
 		processes.syntax.stop();
 		processes.syntax.queue(() => processes.syntax.start(project));
-	} else if (processes.build.get_status()){
-		processes.build.stop();
-		processes.build.queue( () => processes.syntax.start(project) );
 	} else {
 		processes.syntax.start(project);
 	}
@@ -93,6 +104,7 @@ export function checkSyntax(data: any){
 // any syntax check in progress is stopped
 export function run(data: any){
 	cpu_monitor.stop();
+	clearTimeout(syntaxTimeout);
 	if (processes.run.get_status()){
 		processes.run.stop();
 		processes.run.queue( () => build_run(data.currentProject) );
@@ -105,6 +117,9 @@ export function run(data: any){
 	} else {
 		build_run(data.currentProject);
 	}
+	// if uploads are in progress, reschedule
+	if(queuedUploads.size)
+		shouldRunWhenDoneUploads = data;
 }
 
 // this function starts a build process and when it ends it checks

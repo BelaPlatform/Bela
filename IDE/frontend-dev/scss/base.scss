@@ -97,6 +97,11 @@ hr {
   padding-top: 10px;
 }
 
+.word-breakable {
+  white-space: normal;
+  word-break: break-all;
+}
+
 body {
   &.uploading {
     cursor: progress;
@@ -106,6 +111,33 @@ body {
         cursor: auto!important;
       }
     }
+  }
+}
+
+[data-drag-svg] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1000;
+  width: 100vw;
+  height: 100vh;
+  &.active-drag-upload {
+    z-index: 1000;
+  }
+  &.no {
+      background: rgba(255, 0, 0, 0.7);
+  }
+  polygon {
+    opacity: 0.3;
+    &.active-drag-upload {
+      opacity: 0.6;
+    }
+  }
+  [data-drag-func=main] {
+    fill: rgb(0, 255, 122);
+  }
+  [data-drag-func=folder] {
+    fill: rgb(0, 255, 0);
   }
 }
 

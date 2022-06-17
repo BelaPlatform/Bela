@@ -52,6 +52,10 @@ var paths = require("./paths");
 var readChunk = require("read-chunk");
 var fileType = require("file-type");
 var DecompressZip = require("decompress-zip");
+var socket_manager = require("./SocketManager");
+var process_manager = require("./ProcessManager");
+var processes = require("./IDEProcesses");
+var ide_settings = require("./IDESettings");
 var max_file_size = 52428800; // bytes (50Mb)
 var max_preview_size = 524288000; // bytes (500Mb)
 function emptyObject(obj) {
@@ -152,6 +156,7 @@ function openFile(data) {
                     return [4 /*yield*/, fileType(chunk)];
                 case 14:
                     file_type = _e.sent();
+                    data.mtime = file_stat.mtime;
                     if (!(file_type && (file_type.mime.includes('image') || file_type.mime.includes('audio')))) return [3 /*break*/, 17];
                     return [4 /*yield*/, file_manager.empty_directory(paths.media)];
                 case 15:
@@ -169,12 +174,11 @@ function openFile(data) {
                 case 18:
                     is_binary = _e.sent();
                     if (is_binary) {
-                        data.error = 'can\'t open binary files';
-                        data.fileData = 'Binary files can not be edited in the IDE';
+                        data.fileData = null;
                         data.fileName = data.newFile;
                         data.newFile = undefined;
                         data.readOnly = true;
-                        data.fileType = 0;
+                        data.fileType = 'binary';
                         return [2 /*return*/];
                     }
                     _e.label = 19;
@@ -204,6 +208,11 @@ function openFile(data) {
                     data.fileName = data.newFile;
                     data.newFile = undefined;
                     data.readOnly = false;
+                    socket_manager.broadcast('file-opened', {
+                        currentProject: data.currentProject,
+                        fileName: data.fileName,
+                        clientId: data.clientId,
+                    });
                     return [2 /*return*/];
             }
         });
@@ -412,11 +421,30 @@ function openExample(data) {
     });
 }
 exports.openExample = openExample;
-function newProject(data) {
+function postNewProject(data) {
     return __awaiter(this, void 0, void 0, function () {
         var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
+                case 0:
+                    _a = data;
+                    return [4 /*yield*/, listProjects()];
+                case 1:
+                    _a.projectList = _b.sent();
+                    data.currentProject = data.newProject;
+                    data.newProject = undefined;
+                    return [4 /*yield*/, openProject(data)];
+                case 2:
+                    _b.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function newProject(data) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     if (typeof (data.newProject) === "string") {
                         data.newProject = data.newProject.trim();
@@ -427,22 +455,16 @@ function newProject(data) {
                     }
                     return [4 /*yield*/, file_manager.directory_exists(paths.projects + data.newProject)];
                 case 1:
-                    if (_b.sent()) {
+                    if (_a.sent()) {
                         data.error = 'failed, project ' + data.newProject + ' already exists!';
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, file_manager.copy_directory(paths.templates + data.projectType, paths.projects + data.newProject)];
                 case 2:
-                    _b.sent();
-                    _a = data;
-                    return [4 /*yield*/, listProjects()];
+                    _a.sent();
+                    return [4 /*yield*/, postNewProject(data)];
                 case 3:
-                    _a.projectList = _b.sent();
-                    data.currentProject = data.newProject;
-                    data.newProject = undefined;
-                    return [4 /*yield*/, openProject(data)];
-                case 4:
-                    _b.sent();
+                    _a.sent();
                     return [2 /*return*/];
             }
         });
@@ -451,30 +473,21 @@ function newProject(data) {
 exports.newProject = newProject;
 function saveAs(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0: return [4 /*yield*/, file_manager.directory_exists(paths.projects + data.newProject)];
                 case 1:
-                    if (_b.sent()) {
+                    if (_a.sent()) {
                         data.error = 'failed, project ' + data.newProject + ' already exists!';
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, cleanProject(data)];
                 case 2:
-                    _b.sent();
+                    _a.sent();
                     return [4 /*yield*/, file_manager.copy_directory(paths.projects + data.currentProject, paths.projects + data.newProject)];
                 case 3:
-                    _b.sent();
-                    _a = data;
-                    return [4 /*yield*/, listProjects()];
-                case 4:
-                    _a.projectList = _b.sent();
-                    data.currentProject = data.newProject;
-                    data.newProject = undefined;
-                    return [4 /*yield*/, openProject(data)];
-                case 5:
-                    _b.sent();
+                    _a.sent();
+                    postNewProject(data);
                     return [2 /*return*/];
             }
         });
@@ -549,20 +562,11 @@ function cleanProject(data) {
 exports.cleanProject = cleanProject;
 function newFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var file_name, file_path, folder, _a;
+        var file_path, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    file_name = data.newFile.split('/').pop();
-                    if (data.folder) {
-                        folder = data.folder;
-                        file_path = paths.projects + data.currentProject + '/' + folder + '/' + file_name;
-                        data.newFile = folder + '/' + file_name;
-                    }
-                    else {
-                        file_path = paths.projects + data.currentProject + '/' + file_name;
-                        data.newFile = file_name;
-                    }
+                    file_path = paths.projects + data.currentProject + '/' + data.newFile;
                     return [4 /*yield*/, file_manager.file_exists(file_path)];
                 case 1:
                     if (_b.sent()) {
@@ -636,14 +640,21 @@ function uploadFile(data) {
                     return [4 /*yield*/, file_manager.save_file(file_path, data.fileData)];
                 case 4:
                     _c.sent();
+                    if (!(0 === data.queue)) return [3 /*break*/, 8];
+                    return [4 /*yield*/, ide_settings.get_setting('restartUponUpload')];
+                case 5:
+                    // restart if running and option ticked
+                    if ((_c.sent()) && processes.run.get_status())
+                        process_manager.run(data);
                     _b = data;
                     return [4 /*yield*/, listFiles(data.currentProject)];
-                case 5:
+                case 6:
                     _b.fileList = _c.sent();
                     return [4 /*yield*/, openFile(data)];
-                case 6:
+                case 7:
                     _c.sent();
-                    return [2 /*return*/];
+                    _c.label = 8;
+                case 8: return [2 /*return*/];
             }
         });
     });
@@ -712,8 +723,7 @@ function uploadZipProject(data) {
                                             return [4 /*yield*/, file_manager.copy_directory(source_path, target_path)];
                                         case 2:
                                             _a.sent();
-                                            data.currentProject = data.newProject;
-                                            return [4 /*yield*/, openProject(data)];
+                                            return [4 /*yield*/, postNewProject(data)];
                                         case 3:
                                             _a.sent();
                                             _cleanup();
@@ -804,38 +814,33 @@ function moveUploadedFile(data) {
 exports.moveUploadedFile = moveUploadedFile;
 function renameFile(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var old_file_name, file_name, file_path, folder, new_file_path, file_exists, _a, _b;
+        var src_name, dst_name, base_path, src_path, dst_path, dst_exists, _a, _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    old_file_name = data.oldName;
-                    file_name = data.oldName.split('/').pop();
-                    if (data.folder) {
-                        folder = data.folder + '/';
-                        file_path = paths.projects + data.currentProject + '/' + folder + file_name;
-                    }
-                    else {
-                        file_path = paths.projects + data.currentProject + '/' + file_name;
-                    }
-                    new_file_path = file_path.replace(file_name, data.newFile);
-                    return [4 /*yield*/, file_manager.file_exists(new_file_path)];
+                    src_name = data.oldName;
+                    dst_name = data.newFile;
+                    base_path = paths.projects + data.currentProject + '/';
+                    src_path = base_path + '/' + src_name;
+                    dst_path = base_path + '/' + dst_name;
+                    return [4 /*yield*/, file_manager.file_exists(dst_path)];
                 case 1:
                     _a = (_c.sent());
                     if (_a) return [3 /*break*/, 3];
-                    return [4 /*yield*/, file_manager.directory_exists(file_path)];
+                    return [4 /*yield*/, file_manager.directory_exists(dst_path)];
                 case 2:
                     _a = (_c.sent());
                     _c.label = 3;
                 case 3:
-                    file_exists = (_a);
-                    if (file_exists) {
+                    dst_exists = (_a);
+                    if (dst_exists) {
                         data.error = 'failed, file ' + data.newFile + ' already exists!';
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, file_manager.rename_file(file_path, new_file_path)];
+                    return [4 /*yield*/, file_manager.rename_file(src_path, dst_path)];
                 case 4:
                     _c.sent();
-                    return [4 /*yield*/, cleanFile(data.currentProject, data.oldName)];
+                    return [4 /*yield*/, cleanFile(data.currentProject, src_name)];
                 case 5:
                     _c.sent();
                     if (!(data.fileName == data.oldName)) return [3 /*break*/, 7];

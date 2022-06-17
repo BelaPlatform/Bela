@@ -11,6 +11,7 @@
   </head>
 
   <body>
+    <svg data-drag-svg></svg>
 
     <div class="upper" data-upper>
 
@@ -18,6 +19,7 @@
         <span class="project">Project: <span class="current" data-current-project>None</span></span>
         <span class="file">File: <span class="current" data-current-file>None</span></span>
         <span><span class="status" data-current-status-title></span> <span class="current" data-current-status></span></span>
+        <div class="project read-only">THIS WINDOW IS IN READ-ONLY MODE. Click here to reload.</div>
       </div>
 
       <div class="toolbar" id="toolbar" data-toolbar>
@@ -62,6 +64,9 @@
       </div>
       <div id="audio-parent" data-audio-parent>
         <audio id="audio" data-audio controls></audio>
+      </div>
+      <div id="editor-msg-parent" data-editor-msg-parent>
+        <div id="editor-msg" data-editor-msg></div>
       </div>
 
       <pre id="editor" class="editor" data-editor></pre>
@@ -460,6 +465,13 @@ document.write(generateInputGain(8));
                   </tr>
 
                   <tr>
+                    <td class="left-choice">Restart upon upload:</td>
+                    <td class="right-choice">
+                      <input type="checkbox" id="restartUponUpload" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="restartUponUpload" value="1" >
+                    </td>
+                  </tr>
+
+                  <tr>
                     <td class="left-choice">Verbose build errors:</td>
                     <td class="right-choice">
                       <input type="checkbox" id="verboseErrors" class="settingsManager checkbox-slider" data-func="setIDESetting" data-key="verboseErrors" value="1" >
@@ -520,6 +532,8 @@ document.write(generateInputGain(8));
                 <button class="settingsManager" data-func="updateBela">Update Bela</button>
                 <br />
                 <button class="settingsManager" data-func="aboutPopup">About Bela</button>
+                <br />
+                <button class="settingsManager" data-func="versionPopup">Version details</button>
               </div>
 
             </div>

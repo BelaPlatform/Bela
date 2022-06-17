@@ -9351,6 +9351,7 @@ function Folding() {
         var firstRow = delta.start.row;
         var len = delta.end.row - firstRow;
         if (len === 0) {
+          if (this.foldWidgets !== null)
             this.foldWidgets[firstRow] = null;
         } else if (delta.action == 'remove') {
           if (this.foldWidgets !== null)

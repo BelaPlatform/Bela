@@ -45,36 +45,55 @@ function upload(data) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 5, , 6]);
+                    _a.trys.push([0, 3, , 4]);
                     socket_manager.broadcast('std-log', 'Upload completed, saving update file...');
                     return [4 /*yield*/, file_manager.empty_directory(paths.update)];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, file_manager.write_file(paths.update + data.name, data.file)];
+                    return [4 /*yield*/, file_manager.rename_file(data.fullPath, paths.update + '/' + data.newFile)];
                 case 2:
                     _a.sent();
-                    socket_manager.broadcast('std-log', 'unzipping and validating update...');
-                    return [4 /*yield*/, check_update()];
+                    return [3 /*break*/, 4];
                 case 3:
-                    _a.sent();
-                    socket_manager.broadcast('std-log', 'Applying update...');
-                    return [4 /*yield*/, apply_update()];
-                case 4:
-                    _a.sent();
-                    socket_manager.broadcast('std-log', 'Update complete!');
-                    socket_manager.broadcast('force-reload', '');
-                    return [3 /*break*/, 6];
-                case 5:
                     e_1 = _a.sent();
-                    console.log('update failed', e_1.toString());
+                    console.log('update file move failed', e_1.toString());
                     socket_manager.broadcast('update-error', e_1.toString());
-                    return [3 /*break*/, 6];
-                case 6: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     });
 }
 exports.upload = upload;
+function update() {
+    return __awaiter(this, void 0, void 0, function () {
+        var e_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    socket_manager.broadcast('std-log', 'unzipping and validating update...');
+                    return [4 /*yield*/, check_update()];
+                case 1:
+                    _a.sent();
+                    socket_manager.broadcast('std-log', 'Applying update...');
+                    return [4 /*yield*/, apply_update()];
+                case 2:
+                    _a.sent();
+                    socket_manager.broadcast('std-log', 'Update complete!');
+                    socket_manager.broadcast('force-reload', '');
+                    return [3 /*break*/, 4];
+                case 3:
+                    e_2 = _a.sent();
+                    console.log('update failed', e_2.toString());
+                    socket_manager.broadcast('update-error', e_2.toString());
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.update = update;
 function check_update() {
     return spawn_process('checkupdate');
 }

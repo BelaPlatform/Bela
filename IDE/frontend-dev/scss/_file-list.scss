@@ -24,6 +24,17 @@
       padding: 2px 0;
       text-indent: 22px;
     }
+    .source-text {
+      width: calc(100% - 77px); // 77  being button file- rename right(36) + its width(17) + text-indent(22) + extra padding (2)
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-indent: 0;
+      &:hover {
+        @extend .word-breakable;
+      }
+    }
     .source-file {
       position: relative;
       &:hover {
@@ -36,33 +47,45 @@
         top: 5px;
       }
     }
-    .source-text {
-      position: relative;
-    }
     &.is-dir {
-      .source-file {
-        &:hover {
-          background-color: inherit;
+      >.sub-file-list{
+        padding-left: 12px;
+        >li>ul {
+          padding-left: 13px;
+          padding-bottom: 0;
         }
-        > .source-text {
-          text-indent: 22px;
+        >.source-file {
+          &:hover {
+            background-color: inherit;
+          }
+          .source-text {
+            text-indent: 12px;
+            padding:0;
+          }
+          .source-text {
+            width: calc(100% - 55px); // 55  being button file- rename right(36) + its width(17) + extra padding (2)
+          }
+          > .source-text {
+            text-indent: 0px;
+            &::before {
+              content: "-";
+            }
+          }
           &::before {
-            content: "-";
+            content: "";
           }
         }
-        &::before {
-          content: "";
-        }
       }
-      .source-text {
+      .source-file {
         position: relative;
-        text-indent: 35px;
+        text-indent: 0px;
+        padding-left: 0;
         &:hover {
           background: rgba(255, 255, 0, 0.2);
         }
         &::before {
           content: ">";
-          left: -12px;
+          left: 0;
           position: absolute;
           top: 3px;
         }

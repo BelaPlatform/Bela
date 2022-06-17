@@ -29,6 +29,10 @@ class DocumentationView extends View {
   init(){
 
     var self = this;
+    ['context', 'api', 'utility'].forEach((section) => {
+      let m = $('[data-docs-'+section+']');
+      m.empty();
+    });
 
     // The API
     $.ajax({
@@ -85,6 +89,10 @@ class DocumentationView extends View {
     }
 
   }
+	open(id)
+	{
+		console.log("TODO: open documentation tab at `", id, "`");
+	}
 
 }
 module.exports = DocumentationView;

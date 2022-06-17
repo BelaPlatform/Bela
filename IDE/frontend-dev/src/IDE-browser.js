@@ -40,7 +40,7 @@ settingsView.on('halt', () => {
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', text => consoleView.emit('warn', text) );
-settingsView.on('upload-update', data => socket.emit('upload-update', data) );
+settingsView.on('do-update', data => socket.emit('do-update', data) );
 settingsView.on('error', text => consoleView.emit('warn', text) );
 
 // project view
@@ -55,7 +55,7 @@ projectView.on('message', (event, data) => {
 });
 
 // file view
-var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings]);
+var fileView = new (require('./Views/FileView'))('fileManager', [models.project, models.settings], projectView.getProjectList);
 fileView.on('message', (event, data) => {
 	if (!data.currentProject && models.project.getKey('currentProject')){
 		data.currentProject = models.project.getKey('currentProject');
@@ -68,17 +68,17 @@ fileView.on('message', (event, data) => {
 	socket.emit(event, data);
 });
 
-fileView.on('force-rebuild', () => {
-	socket.emit('process-event', {
-		event			: 'rebuild',
-		currentProject	: models.project.getKey('currentProject')
-	});
+fileView.on('file-uploaded', () => {
+	let restartUponUpload = parseInt(models.settings.getKey('restartUponUpload'));
+	if(restartUponUpload && models.status.getKey('running'))
+		runProject();
 });
-fileView.on('file-rejected', filename => {
+fileView.on('file-rejected', errMsg => {
 	var timestamp = performance.now();
 	consoleView.emit('openNotification', {func: 'fileRejected', timestamp});
-	consoleView.emit('closeNotification', {error: '... failed, file '+filename+' already exists. Refresh to allow overwriting', timestamp});
+	consoleView.emit('closeNotification', {error: errMsg, timestamp, skipPopup: true});
 });
+fileView.on('list-files', doListFiles);
 
 // editor view
 var editorView = new (require('./Views/EditorView'))('editor', [models.project, models.error, models.settings], models.settings);
@@ -105,39 +105,43 @@ editorView.on('close-notification', data => consoleView.emit('closeNotification'
 editorView.on('editor-changed', () => {
 	if (models.project.getKey('exampleName')) projectView.emit('example-changed');
 });
-editorView.on('goto-docs', (word, id) => {
-	if (tabView.getOpenTab() === 'tab-5' && word !== 'BelaContext'){
+editorView.on('goto-docs', (word, id, force) => {
+	if (force || tabView.getOpenTab() === 'refs'){
 		documentationView.emit('open', id);
-	} else {
-		$('#iDocsLink')
-			.addClass('iDocsVisible')
-			.prop('title', 'cmd + h: '+word)
-			.off('click').on('click', () => {
-				tabView.emit('open-tab', 'tab-5');
-				documentationView.emit('open', id);
-			});
 	}
 });
-editorView.on('clear-docs', () => $('#iDocsLink').removeClass('iDocsVisible').off('click') );
-editorView.on('highlight-syntax', (names) => socket.emit('highlight-syntax', names) );
 editorView.on('compare-files', compare => {
 	compareFiles = compare;
 	// unset the interval
 	if (!compare) setModifiedTimeInterval(undefined);
 });
+editorView.on('console-brief', (text, id) => {
+	consoleView.emit('openNotification', {
+		func: 'editor',
+		timestamp: id,
+		text
+	});
+	setTimeout(function (id) {
+		consoleView.emit('closeNotification', {timestamp: id, fulfillMessage: ''});
+	}.bind(null, id), 500);
+});
 
 // toolbar view
 var toolbarView = new (require('./Views/ToolbarView'))('toolBar', [models.project, models.error, models.status, models.settings]);
 toolbarView.on('process-event', (event) => {
-	var data = {
-		event,
-		currentProject	: models.project.getKey('currentProject')
-	};
-	//data.timestamp = performance.now();
-	if (event === 'stop') consoleView.emit('openProcessNotification', json.ide_browser.stop);
-	if (event === 'run' || event === 'stop')
-		toolbarView.emit('msw-start-grace', event);
-	socket.emit('process-event', data);
+	if('run' === event)
+		runProject();
+	else {
+		var data = {
+			event,
+			currentProject: models.project.getKey('currentProject')
+		};
+		if (event === 'stop') {
+			consoleView.emit('openProcessNotification', json.ide_browser.stop);
+			toolbarView.emit('msw-start-grace', event);
+		}
+		socket.emit('process-event', data);
+	}
 });
 toolbarView.on('halt', () => {
 	socket.emit('shutdown');
@@ -185,6 +189,9 @@ documentationView.on('open-example', (example) => {
 documentationView.on('add-link', (link, type) => {
 	editorView.emit('add-link', link, type);
 });
+documentationView.on('open', (id) => {
+	documentationView.open(id);
+});
 
 // git view
 var gitView = new (require('./Views/GitView'))('git-manager', [models.git]);
@@ -202,11 +209,28 @@ var listFilesIntervalMs = 5000;
 var listFilesInterval = 0;
 
 // setup socket
-var socket = io('/IDE');
+var _socket = io('/IDE');
+// sub- minimal wrapper for socket.io to inject clientId
+var socket = {
+	on: (what, cb) => _socket.on(what, cb),
+	io: _socket.io,
+	emit: (what, data) => {
+		socket.id = _socket.id;
+		if("object" === typeof(data) && !Array.isArray(data))
+			data.clientId = socket.id;
+		_socket.emit(what, data);
+	},
+}
 
 // socket events
 socket.on('report-error', (error) => consoleView.emit('warn', error.message || error) );
 
+function doListFiles() {
+	var currentProject = models.project.getKey('currentProject');
+	if(currentProject) {
+		socket.emit('list-files', currentProject);
+	}
+}
 socket.on('init', (data) => {
 
 	consoleView.connect();
@@ -220,6 +244,8 @@ socket.on('init', (data) => {
 
 	$('[data-run-on-boot]').val(data.boot_project);
 
+	models.settings.setKey('belaCoreVersion', data.bela_core_version);
+	models.settings.setKey('belaImageVersion', data.bela_image_version);
 	models.settings.setKey('xenomaiVersion', data.xenomai_version);
 
 	console.log('running on', data.board_string);
@@ -227,12 +253,7 @@ socket.on('init', (data) => {
 	tabView.emit('boardString', data.board_string);
 
 	clearInterval(listFilesInterval);
-	listFilesInterval = setInterval( () => {
-		var currentProject = models.project.getKey('currentProject');
-		if(currentProject) {
-			socket.emit('list-files', currentProject);
-		}
-	}, listFilesIntervalMs);
+	listFilesInterval = setInterval(doListFiles, listFilesIntervalMs);
 
 	// TODO! models.status.setData(data[5]);
 
@@ -255,6 +276,9 @@ socket.on('init', (data) => {
 // project events
 socket.on('project-data', (data) => {
 
+	// if the file gets to us, it's because we requested it,
+	// so we are going to use it regardless of the current state
+	models.project.setKey('openElsewhere', false);
 	consoleView.emit('closeNotification', data);
 	models.project.setData(data);
 
@@ -305,14 +329,33 @@ socket.on('disconnect', (reason) => {
 	models.project.setKey('readOnly', true);
 });
 
-socket.on('file-changed', (project, fileName) => {
-	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName')){
-		console.log('file changed!');
-		models.project.setKey('readOnly', true);
-		models.project.setKey('fileData', 'This file has been edited in another window. Reopen the file to continue');
-		//socket.emit('project-event', {func: 'openFile', currentProject: project, fileName: fileName});
+socket.on('file-opened', (data) => {
+	fileOpenedOrChanged(data, 0);
+})
+
+socket.on('file-changed', (data) => {
+	fileOpenedOrChanged(data, 1);
+})
+
+function fileOpenedOrChanged(data, changed) {
+	let str = changed ? 'changed' : 'opened';
+	let project = data.currentProject;
+	let fileName = data.fileName;
+	let clientId = data.clientId;
+	// if someone else opened or changed our file
+	// and we arenot ignoring it
+	if (project === models.project.getKey('currentProject')
+			&& fileName === models.project.getKey('fileName')
+			&& clientId != socket.id
+			&& !models.project.getKey('openElsewhere')
+			&& !models.project.getKey('readOnly')
+	) {
+		if(changed)
+			fileChangedPopup(fileName);
+		else
+			enterReadonlyPopup(fileName);
 	}
-});
+}
 
 // run-on-boot
 socket.on('run-on-boot-log', text => consoleView.emit('log', text) );
@@ -361,37 +404,84 @@ function setModifiedTimeInterval(mtime){
 // current file changed
 var fileChangedPopupVisible = false;
 function fileChangedPopup(fileName){
-
 	if (fileChangedPopupVisible) return;
 
-	popup.title(json.popups.file_changed.title);
-	popup.subtitle(fileName + json.popups.file_changed.text);
-
-	var form = [];
-	form.push('<button type="submit" class="button popup-save">' + json.popups.reload_file.button + '</button>');
-	form.push('<button type="button" class="button cancel">' + json.popups.reload_file.cancel + '</button>');
-
-	popup.form.append(form.join('')).off('submit').on('submit', e => {
-		fileChangedPopupVisible = false;
-		e.preventDefault();
-		var data = {
-			func			: 'openProject',
-			currentProject	: models.project.getKey('currentProject'),
-			timestamp		: performance.now()
-		};
-		socket.emit('project-event', data);
-		consoleView.emit('openNotification', data);
-		popup.hide();
-	});
-
-	popup.find('.cancel').on('click', () => {
-		popup.hide();
-		fileChangedPopupVisible = false;
-		editorView.emit('upload', editorView.getData());
-	});
-
-	popup.show();
+	var strings = Object.assign({}, json.popups.file_changed); // make a copy ...
+	strings.text = fileName + strings.text; // ... so we can modify it
+	popup.twoButtons(strings,
+		e => {
+			fileChangedPopupVisible = false;
+			e.preventDefault();
+			var data = {
+				func			: 'openProject',
+				currentProject	: models.project.getKey('currentProject'),
+				timestamp		: performance.now()
+			};
+			socket.emit('project-event', data);
+			consoleView.emit('openNotification', data);
+		},
+		() => {
+			fileChangedPopupVisible = false;
+			editorView.emit('upload', editorView.getData());
+		}
+	);
 	fileChangedPopupVisible = true;
+}
+
+function enterReadonlyPopup(fileName) {
+	if(fileChangedPopupVisible) return; //	 changed file takes priority
+	var strings = {};
+	strings.title = json.popups.enter_readonly.title;
+	strings.text = json.popups.enter_readonly.text;
+	strings.button = json.popups.enter_readonly.button;
+	strings.cancel = json.popups.enter_readonly.cancel;
+
+	// Click the OK button to put page in read-only
+	popup.oneButton(strings,
+		() => {
+			models.project.setKey('openElsewhere', true);
+			setReadOnlyStatus(true);
+		}
+	);
+}
+
+function setReadOnlyStatus(status) {
+	if (status) {
+		$('div.read-only').addClass('active');
+		$('div.read-only').click(() => exitReadonlyPopup());
+	} else {
+		$('div.read-only').removeClass('active');
+	}
+}
+
+
+function exitReadonlyPopup() {
+	var strings = {};
+	strings.title = json.popups.exit_readonly.title;
+	strings.code = '<p>' + json.popups.exit_readonly.text[0] + '</p><p>' + json.popups.exit_readonly.text[1] + '</p>';
+	strings.cancel = json.popups.exit_readonly.cancel;
+	strings.button = json.popups.exit_readonly.submit;
+	popup.twoButtons(strings,
+		// on Submit:
+		e => {
+			setReadOnlyStatus(false);
+			window.location.reload();
+		},
+		// on Cancel:
+		() => {
+			popup.hide();
+		}
+	);
+}
+
+// helper functions
+function runProject() {
+	editorView.flush();
+	socket.emit('process-event', {
+		event: 'run',
+		currentProject: models.project.getKey('currentProject'),
+	});
+	toolbarView.emit('msw-start-grace', event);
 }
 
 // model events
@@ -582,8 +672,16 @@ function parseErrors(data){
 // hotkeys
 var keypress = new window.keypress.Listener();
 
-keypress.simple_combo("meta s", function(){ toolbarView.emit('process-event', 'run') });
-keypress.simple_combo("meta f", function(){ editorView.emit('search') });
-keypress.simple_combo("meta o", function(){ tabView.emit('toggle', 'click', 'tab-control') });
+function allCombosActive() {
+	return !popup.isShown();
+}
+keypress.simple_combo("meta s", function(){ allCombosActive() && toolbarView.emit('process-event', 'run') });
+keypress.simple_combo("meta f", function(){ allCombosActive() && editorView.emit('search') });
+keypress.simple_combo("meta o", function(){ allCombosActive() && tabView.emit('toggle', 'click', 'tab-control') });
 keypress.simple_combo("meta k", function(){ consoleView.emit('clear', true) });
-keypress.simple_combo("meta h", function(){ $('#iDocsLink').trigger('click') });
+keypress.simple_combo("meta h", function(){ allCombosActive() && documentationView.emit('open') });
+keypress.simple_combo("esc", function(){ // remove popup on ESC
+	let done = popup.cancel();
+	// do not prevent default if we did nothing
+	return !done;
+});

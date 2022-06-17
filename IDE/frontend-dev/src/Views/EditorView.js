@@ -6,6 +6,7 @@ var TokenIterator = ace.require("ace/token_iterator").TokenIterator;
 const uploadDelay = 50;
 
 var uploadBlocked = false;
+let editorDirty = false;
 var currentFile;
 var imageUrl;
 var tmpData = {};
@@ -17,6 +18,7 @@ class EditorView extends View {
 
 	constructor(className, models, data){
 		super(className, models);
+		this.projectModel = models[0];
 
 		this.highlights = {};
     var data = tmpData;
@@ -56,7 +58,7 @@ class EditorView extends View {
       var data = tmpData;
       var opts = tmpOpts;
 			if (!uploadBlocked){
-				this.editorChanged();
+				this.editorChanged(false);
 				this.editor.session.bgTokenizer.fireUpdateEvent(0, this.editor.session.getLength());
 				// console.log('firing tokenizer');
 			}
@@ -96,14 +98,7 @@ class EditorView extends View {
 
 		this.on('resize', () => {
 			this.editor.resize();
-			var data = tmpData;
-			var opts = tmpOpts;
-			if (opts.fileType && (
-				opts.fileType == "pd"
-				|| opts.fileType.indexOf('image') !== -1)
-			) {
-				this.__fileData(data, opts);
-			}
+			this.resize();
 		});
 
 		this.on('add-link', (link, type) => {
@@ -118,7 +113,7 @@ class EditorView extends View {
 				activeWordIDs.push(id);
 			}*/
 			if (this.linkTimeout) clearTimeout(this.linkTimeout);
-			this.linkTimeout = setTimeout(() => this.parser.highlights(this.highlights) )//this.emit('highlight-syntax', activeWords), 100);
+			this.linkTimeout = setTimeout(() => this.parser.highlights(this.highlights) );
 		});
 
 		this.editor.session.on('tokenizerUpdate', (e) => {
@@ -130,40 +125,76 @@ class EditorView extends View {
 
     this.on('search', this.search);
 
+		let allAltSelectors = [
+			'data-img-display-parent', 'data-img-display',
+			'data-audio-parent', 'data-audio',
+			'data-pd-svg-parent', 'data-pd-svg',
+			'data-editor-msg-parent', 'data-editor-msg',
+		];
+		allAltSelectors = '['+allAltSelectors.join('], [')+']'; // turn them into valid jquery selectors
+		this.allEditorAlts = $(allAltSelectors);
 	}
 
   search(){
     this.editor.execCommand('find');
   }
 
-	editorChanged(){
+	flush(){
+		this.editorChanged(true);
+	}
+	editorChanged(flush){
 		this.emit('editor-changed');
 		clearTimeout(this.uploadTimeout);
-		this.uploadTimeout = setTimeout( () => this.emit('upload', this.editor.getValue()), uploadDelay );
+		let doUpdate = () => {
+			editorDirty = false;
+			this.emit('upload', this.editor.getValue());
+		}
+		if(flush) {
+			if(editorDirty)
+				doUpdate();
+		}
+		else {
+			editorDirty = true;
+			this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
+		}
 	}
 
+	resize() {
+		this.allEditorAlts.css({
+			'max-width'	: $('[data-editor]').width() + 'px',
+			'max-height': ($('[data-editor]').height() - 2) + 'px' // -2 because it makes for a better Pd patch
+			});
+	}
 	// model events
 	// new file saved
-	__fileData(data, opts){
-	// hide the pd patch and image displays if present, and the editor
-	$('[data-img-display-parent], [data-audio-parent], [data-pd-svg-parent], [data-editor]') .removeClass('active');
+	__fileData(data, opts, dunno, resize){
+		this.resize();
+		// hide all views. Below, the current one will be re-enabled
+		this.allEditorAlts.removeClass('active');
+		$('[data-editor]').removeClass('active');
+
     tmpData = data;
     tmpOpts = opts;
-	if(null === data)
-		return;
 
+	this.modelChanged({readOnly: true}, ['readOnly']);
+	this.modelChanged({openElsewhere: false}, ['openElsewhere']);
+
+		this.projectModel.setKey('readOnly', true);
 		if (!opts.fileType) opts.fileType = '0';
 
-		if (opts.fileType.indexOf('image') !== -1){
+		if (null === data || null === opts.fileName || 'binary' === opts.fileType) {
+			// file can not be viewed, print a warning
+			let err;
+			if ('binary' === opts.fileType)
+				err = json.editor_view.binary.error
+			else
+				err = json.editor_view.deleted.error; // file deleted or somehow not available
+			$('[data-editor-msg]').html(err);
+			$('[data-editor-msg-parent]').addClass('active');
+		} else if (opts.fileType.indexOf('image') !== -1){
 
 			// opening image file
-      $('[data-img-display-parent], [data-img-display]').css({
-				'max-width'	: $('[data-editor]').width() + 'px',
-				'max-height': $('[data-editor]').height() + 'px'
-			});
-
-			$('[data-img-display-parent]')
-      .addClass('active');
+			$('[data-img-display-parent]').addClass('active');
 
 			$('[data-img-display]').prop('src', 'media/'+opts.fileName);
 
@@ -199,23 +230,9 @@ class EditorView extends View {
 
 				// render pd patch
 				try {
-          let width = $('[data-editor]').width();
-          let height = $('[data-editor]').height() - 2;
 					$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), {svgFile: false}))
-          .css({
-						'max-width'	: width + 'px',
-						'height': height + 'px'
-					});
-
-          $('[data-pd-svg-parent]')
-          .addClass('active')
-          .css({
-						'max-width'	: width + 'px',
-						'max-height': height + 'px'
-					});
-
+					$('[data-pd-svg-parent]').addClass('active');
 					this.emit('close-notification', {timestamp});
-
 				}
 				catch(e){
 					this.emit('close-notification', {
@@ -233,9 +250,9 @@ class EditorView extends View {
 
 			} else {
 
+				this.projectModel.setKey('readOnly', false);
 				// show the editor
-        $('[data-editor]')
-        .addClass('active');
+				$('[data-editor]').addClass('active');
 
 				// stop comparison with file on disk
 				this.emit('compare-files', false);
@@ -246,6 +263,8 @@ class EditorView extends View {
 			uploadBlocked = true;
 
 			// put the file into the editor
+			if('string' !== typeof(data))
+				data = ''; // if no data, at least empty the editor
 			this.editor.session.setValue(data, -1);
 
 			// parse the data
@@ -291,11 +310,26 @@ class EditorView extends View {
 			enableLiveAutocompletion: (parseInt(status) === 1)
 		});
 	}
+
+	_openElsewhere(status){
+		const magic = 23985235;
+		this.projectModel.setKey('readOnly', status);
+		if(status) {
+			$('#editor').on('keypress', (e) => {
+				this.emit('console-brief', json.editor_view.keypress_read_only, magic);
+			});
+		} else {
+			$('#editor').off('keypress');
+		}
+	}
+
 	// readonly status has changed
 	_readOnly(status){
 		if (status){
+			$('.ace_content').addClass('editor_read_only');
 			this.editor.setReadOnly(true);
 		} else {
+			$('.ace_content').removeClass('editor_read_only');
 			this.editor.setReadOnly(false);
 		}
 	}
@@ -318,7 +352,6 @@ class EditorView extends View {
 		var token = iterator.getCurrentToken();
 		if (!token || !token.range){
 			//console.log('no range');
-			this.emit('clear-docs');
 			return;
 		}
 
@@ -332,8 +365,6 @@ class EditorView extends View {
 				return;
 			}
 		}
-
-		this.emit('clear-docs');
 	}
 
 	getData(){

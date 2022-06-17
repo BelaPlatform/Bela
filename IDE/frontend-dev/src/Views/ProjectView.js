@@ -3,7 +3,8 @@ var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
 var json = require('../site-text.json');
 var example_order = require('../../../../examples/order.json');
-var addAccordionEvent = require('../utils').addAccordionEvent;
+var utils = require('../utils');
+var addAccordionEvent = utils.addAccordionEvent;
 
 class ProjectView extends View {
 
@@ -12,6 +13,12 @@ class ProjectView extends View {
     // add extra callback registration for selectChanged
     this.$elements.on('click', 'li.proj-li', (e) => this.selectChanged($(e.currentTarget), e));
     this.on('example-changed', () => this.exampleChanged = true );
+    this.getProjectList = () => {
+      if(this.projectList)
+        return this.projectList;
+      else
+        return [];
+    }
   }
 
   // UI events
@@ -68,11 +75,22 @@ class ProjectView extends View {
     return;
   }
 
-  // build the popup content
-  popup.title(json.popups.create_new.title);
-  popup.subtitle(json.popups.create_new.text);
-
-  var form = [];
+  popup.requestValidInput({
+    getDisallowedValues: this.getProjectList,
+    strings: json.popups.create_new,
+    sanitise: sanitise,
+  }, (newProject) => {
+    if(null === newProject)
+      return;
+    this.emit('message', 'project-event', {
+      func,
+      newProject: newProject,
+      projectType: popup.find('input[type=radio]:checked').data('type')
+    });
+    $('[data-projects-select]').html('');
+    popup.hide();
+  });
+  let form = [];
   form.push('<label for="popup-C" class="radio-container">C++')
   form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>')
   form.push('<span class="radio-button"></span>')
@@ -89,54 +107,19 @@ class ProjectView extends View {
   form.push('<input id="popup-CS" type="radio" name="project-type" data-type="CS">');
   form.push('<span class="radio-button"></span>')
   form.push('</label>');
-  form.push('<input type="text" placeholder="Enter your project name">');
-  form.push('</br>');
-  form.push('<button type="submit" class="button popup confirm">' + json.popups.create_new.button + '</button>');
-  form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-  popup.form.append(form.join('')).off('submit').on('submit', e => {
-    e.preventDefault();
-    var newProject = sanitise(popup.find('input[type=text]').val().trim());
-    this.emit('message', 'project-event', {
-      func,
-      newProject	: newProject,
-      projectType	: popup.find('input[type=radio]:checked').data('type')
-    });
-    $('[data-projects-select]').html('');
-    popup.hide();
-  });
-
-  popup.find('.cancel').on('click', popup.hide );
-
-  popup.show();
-
+  popup.form.prepend(form.join('\n'));
   }
-  saveAs(func){
 
-  // build the popup content
-  popup.title(json.popups.save_as.title);
-  popup.subtitle(json.popups.save_as.text);
-
-  var form = [];
-  form.push('<input type="text" placeholder="' + json.popups.save_as.input + '">');
-  form.push('</br >');
-  form.push('<button type="submit" class="button popup confirm">' + json.popups.save_as.button + '</button>');
-  form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-  popup.form.append(form.join(''))
-                        .off('submit')
-                        .on('submit', e => {
-    e.preventDefault();
-    this.emit('message', 'project-event', {func, newProject: sanitise(popup.find('input[type=text]').val())});
-    popup.hide();
-  });
-
-  popup.find('.cancel')
-       .on('click', popup.hide );
-
-  popup.show();
-
-  }
+	async saveAs(func){
+		let newName = await popup.requestValidInputAsync({
+			getDisallowedValues: this.getProjectList,
+			strings: json.popups.save_as,
+			sanitise: sanitise,
+		});
+		if(null === newName)
+			return;
+		this.emit('message', 'project-event', {func, newProject: newName});
+	}
 
   deleteProject(e){
 
@@ -144,7 +127,7 @@ class ProjectView extends View {
     // Get the project name text from the object at the top of the editor
     var name = $('[data-current-project]')[0].innerText;
 
-    popup.title(json.popups.delete_project.title + name + '?');
+    popup.title(utils.formatString(json.popups.delete_project.title, utils.breakable(name)));
     popup.subtitle(json.popups.delete_project.text);
 
     var form = [];
@@ -184,8 +167,10 @@ class ProjectView extends View {
       var projLen = projects.length;
     }
     $projects.attr('size', (projLen - 1));
+    this.projectList = [];
     for (let i=0; i < projLen; i++){
       if (projects[i] && projects[i] !== 'undefined' && projects[i] !== 'exampleTempProject' && projects[i][0] !== '.'){
+        this.projectList.push(projects[i]);
         $('<li></li>').addClass('projectManager proj-li').attr('data-func', 'openProject').html(projects[i]).attr('data-name', projects[i]).appendTo($projects).on('click', function() {
           $(this).blur();
           $(this).parent().parent().removeClass('show');
