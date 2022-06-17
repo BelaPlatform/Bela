@@ -403,11 +403,13 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	{
 		// BelaMini Rev C requires resetting the SPI ADC via dedicated
 		// pin before we start
-		// TODO: make this dependent on whether we are using analogs at all.
-		adcNrstPin.open(belaMiniRevCAdcPin, Gpio::OUTPUT, true);
-		adcNrstPin.clear();
-		usleep(1000);
-		adcNrstPin.set();
+		if(context->analogInChannels)
+		{
+			adcNrstPin.open(belaMiniRevCAdcPin, Gpio::OUTPUT, true);
+			adcNrstPin.clear();
+			usleep(1000);
+			adcNrstPin.set();
+		}
 	}
 
 	// after setting all PRU settings, we adjust
