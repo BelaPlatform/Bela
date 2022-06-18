@@ -2,13 +2,6 @@
 #define XENOMAI_WRAPS_H
 
 #include "Bela.h"
-#if !defined(XENOMAI_MAJOR)
-#error Xenomai version not set
-#endif
-#if !defined(XENOMAI_SKIN_native) && !defined(XENOMAI_SKIN_posix)
-#error Xenomai skin unsupported or not defined
-#endif
-
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +9,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef XENOMAI_SKIN_posix
 #include <pthread.h>
 #include <mqueue.h>
 #include <sys/socket.h>
@@ -65,37 +57,19 @@ extern "C" void Bela_initRtBackend();
 int __wrap_pthread_join(pthread_t thread, void **retval);
 int __wrap_pthread_attr_init(pthread_attr_t *attr);
 int __wrap_sched_get_priority_max(int policy);
-#endif
-#endif /* XENOMAI_SKIN_posix */
 
-#ifdef XENOMAI_SKIN_native
-#include <native/task.h>
-typedef RTIME time_ns_t;
-#endif
-#ifdef XENOMAI_SKIN_posix
-#if XENOMAI_MAJOR == 3
 #include <rtdm/ipc.h>
-#else
-#include <rtdm/rtipc.h>
-#endif
 typedef long long int time_ns_t;
 typedef void *(pthread_callback_t)(void *);
-#endif
 
 inline int task_sleep_ns(long long int timens)
 {
-#ifdef XENOMAI_SKIN_native
-	return rt_task_sleep((RTIME) timens);
-#endif
-#ifdef XENOMAI_SKIN_posix
 	struct timespec req;
 	req.tv_sec = timens/1000000000;
 	req.tv_nsec = timens - req.tv_sec * 1000000000;
 	return __wrap_nanosleep(&req, NULL);
-#endif
 }
 
-#ifdef XENOMAI_SKIN_posix
 #include <error.h>
 //void error(int exitCode, int errno, char* message)
 //{
@@ -157,15 +131,7 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	{
 		return ret;
 	}
-#if XENOMAI_MAJOR == 2
-	// note the different spelling. Worst thing is that 
-	// pthread_setname_np would still compile and run (because it is a POSIX
-	// extension provided by Linux), but would not have the desired effect.
-	pthread_set_name_np(*task, taskName);
-#endif
-#if XENOMAI_MAJOR == 3
 	__wrap_pthread_setname_np(*task, taskName);
-#endif
 	// check that effective parameters match the ones we requested
 	//pthread_attr_t actualAttr;
 	//pthread_getattr_np(*task, &actualAttr);
@@ -237,7 +203,6 @@ inline int createXenomaiPipe(const char* portName, size_t poolsz)
 	}
 	return s;
 }
-#endif /* XENOMAI_SKIN_posix */
 
 #ifdef __cplusplus
 }
