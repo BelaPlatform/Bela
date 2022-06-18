@@ -2,16 +2,7 @@
 #ifndef __AuxTaskNonRT_H_INCLUDED__
 #define __AuxTaskNonRT_H_INCLUDED__ 
 
-#ifdef XENOMAI_SKIN_native
-#include <rtdk.h>
-#include <native/task.h>
-#include <native/pipe.h>
-#endif
-
-#ifdef XENOMAI_SKIN_posix
 #include <pthread.h>
-#endif
-
 #include <string>
 #include <functional>
 
@@ -38,14 +29,8 @@ class AuxTaskNonRT{
 		bool shouldStop();
 		void cleanup();
 		
-#ifdef XENOMAI_SKIN_native
-		RT_TASK task;
-		RT_PIPE pipe;
-#endif
-#ifdef XENOMAI_SKIN_posix
 		pthread_t thread;
 		int pipeSocket;
-#endif
 		
 		std::string name;
 		int pipe_fd;

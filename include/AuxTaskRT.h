@@ -6,18 +6,10 @@
 #include <string>
 #include <functional>
 
-#ifdef XENOMAI_SKIN_native
-#include <rtdk.h>
-#include <native/task.h>
-#include <native/queue.h>
-#endif
-
-#ifdef XENOMAI_SKIN_posix
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
 #include <pthread.h>
 #include <mqueue.h>
-#endif
 
 #define AUX_RT_POOL_SIZE 500000
 
@@ -42,15 +34,9 @@ class AuxTaskRT{
 		bool shouldStop();
 		void cleanup();
 		
-#ifdef XENOMAI_SKIN_native
-		RT_TASK task;
-		RT_QUEUE queue;
-#endif
-#ifdef XENOMAI_SKIN_posix
 		pthread_t thread;
 		mqd_t queueDesc;
 		std::string queueName;
-#endif
 		
 		std::string name;
 		int priority;
