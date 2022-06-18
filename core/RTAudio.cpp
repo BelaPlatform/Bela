@@ -32,22 +32,9 @@
 #include "../include/MiscUtilities.h"
 
 // Xenomai-specific includes
-#if XENOMAI_MAJOR == 3
 #include <xenomai/init.h>
-#endif
 
-#if defined(XENOMAI_SKIN_native)
-#include <native/task.h>
-#include <native/timer.h>
-#include <rtdk.h>
-#endif
-
-#if defined(XENOMAI_SKIN_posix)
-#if XENOMAI_MAJOR == 2
-#include <rtdk.h> // for rt_print_auto_init()
-#endif
 #include <pthread.h>
-#endif
 
 #include "../include/xenomai_wraps.h"
 
@@ -176,16 +163,10 @@ void Bela_HwConfig_delete(BelaHwConfig* cfg)
 }
 
 // Real-time tasks and objects
-#ifdef XENOMAI_SKIN_native
-RT_TASK gRTAudioThread;
-#endif
-#ifdef XENOMAI_SKIN_posix
 pthread_t gRTAudioThread;
 static pthread_t gFifoThread;
-#endif
-#if XENOMAI_MAJOR == 3
 int gXenomaiInited = 0;
-#endif
+
 static const char gRTAudioThreadName[] = "bela-audio";
 static const char gFifoThreadName[] = "bela-audio-fifo";
 
@@ -380,12 +361,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// Before we go ahead, let's check if Bela is alreadt running:
 	// check if another real-time thread of the same name is already running.
 	char command[200];
-#if (XENOMAI_MAJOR == 2)
-	char pathToXenomaiStat[] = "/proc/xenomai/stat";
-#endif
-#if (XENOMAI_MAJOR == 3)
 	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
-#endif
 	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
 	int ret = system(command);
 	if(ret == 0)
@@ -393,7 +369,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
 		return -1;
 	}
-#if (XENOMAI_MAJOR == 3)
 	// initialize Xenomai with manual bootstrapping if needed
 	// we cannot trust gXenomaiInited exclusively, in case the caller
 	// already initialised Xenomai.
@@ -427,7 +402,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		xenomai_init(&argc, &argv);
 	}
 	gXenomaiInited = 1;
-#endif
 #ifdef XENOMAI_CATCH_MSW
 	struct sigaction sa;
 	sigemptyset(&sa.sa_mask);
@@ -435,9 +409,6 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGDEBUG, &sa, NULL);
 #endif // XENOMAI_CATCH_MSW
-#if defined(XENOMAI_SKIN_native) || XENOMAI_MAJOR == 2
-	rt_print_auto_init(1);
-#endif
 
 	// reset this, in case it has been set before
 	gShouldStop = 0;
@@ -918,45 +889,8 @@ static int startAudioInline(){
 
 int Bela_runInSameThread()
 {
-#ifdef XENOMAI_SKIN_native
-	RT_TASK thisTask;
-	int ret = 0;
-
-	// do the initialization
-	ret = startAudioInline();
-	if(ret < 0)
-		return ret;
-
-	// turn the current thread into a Xenomai task: we become the audio thread
-	ret = rt_task_shadow(&thisTask, gRTAudioThreadName, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU);
-	if(ret == -EBUSY){
-	// task already is a Xenomai task:
-	// let's only re-adjust the priority
-		ret = rt_task_set_priority(&thisTask, BELA_AUDIO_PRIORITY);
-	}
-
-	if(ret < 0)
-	{
-		fprintf(stderr, "Error: unable to shadow Xenomai audio thread: %s \n", strerror(-ret));
-		return ret;	
-	}
-
-	ret = Bela_startAllAuxiliaryTasks();
-	if(ret < 0)
-		return ret;
-
-	// this starts the infinite loop that can only be broken out of
-	// by calling Bela_requestStop()
-	audioLoop(NULL);
-
-	// Once you get out of it, stop properly (in case you didn't already):
-	Bela_stopAudio();
-	return ret;
-#endif
-#ifdef XENOMAI_SKIN_posix
 	fprintf(stderr, "Turning the current thread into the audio thread is not supported with the POSIX skin.\n");
 	exit(1);
-#endif
 }
 
 int Bela_startAudio()
@@ -966,13 +900,6 @@ int Bela_startAudio()
 	// Create audio thread with high Xenomai priority
 	unsigned int stackSize = gAudioThreadStackSize;
 	int ret;
-#ifdef XENOMAI_SKIN_native
-	if(ret = rt_task_create(&gRTAudioThread, gRTAudioThreadName, stackSize, BELA_AUDIO_PRIORITY, T_JOINABLE | T_FPU))
-	{
-		  fprintf(stderr,"Error: unable to create Xenomai audio thread: %s \n" ,strerror(-ret));
-		  return -1;
-	}
-#endif
 
 	ret = startAudioInline();
 	if(ret < 0)
@@ -983,19 +910,6 @@ int Bela_startAudio()
 	}
 
 	// Start all RT threads
-#ifdef XENOMAI_SKIN_native
-	if(ret = rt_task_start(&gRTAudioThread, &audioLoop, 0))
-	{
-		fprintf(stderr,"Error: unable to start Xenomai audio thread: %s \n" ,strerror(-ret));
-      		return -1;
-	}
-	if(gBcf)
-	{
-		fprintf(stderr,"Error: cannot use SKIN_native with audio fifo\n");
-		return -1;
-	}
-#endif
-#ifdef XENOMAI_SKIN_posix
 	int audioPriority;
 	if(gBcf)
 	{
@@ -1017,7 +931,6 @@ int Bela_startAudio()
 		fprintf(stderr, "Error: unable to start Xenomai audio thread: %d %s\n", ret, strerror(-ret));
 		return -1;
 	}
-#endif
 
 	ret = Bela_startAllAuxiliaryTasks();
 	return ret;
@@ -1036,10 +949,6 @@ void Bela_stopAudio()
 		return;
 
 	// Now wait for threads to respond and actually stop...
-#ifdef XENOMAI_SKIN_native
-	rt_task_join(&gRTAudioThread);
-#endif
-#ifdef XENOMAI_SKIN_posix
 	void* threadReturnValue;
 	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
 	if(ret)
@@ -1052,7 +961,6 @@ void Bela_stopAudio()
 		if(ret)
 			fprintf(stderr, "Failed to join audio fifo thread: (%d) %s\n", ret, strerror(ret));
 	}
-#endif
 
 	Bela_stopAllAuxiliaryTasks();
 }
@@ -1074,9 +982,6 @@ void Bela_cleanupAudio()
 	Bela_deleteAllAuxiliaryTasks();
 
 	// Delete the audio task
-#ifdef XENOMAI_SKIN_native
-	rt_task_delete(&gRTAudioThread);
-#endif
 
 	delete gPRU;
 	delete gAudioCodec;

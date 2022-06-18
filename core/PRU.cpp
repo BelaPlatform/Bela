@@ -60,15 +60,7 @@ static int rtdm_fd_mcasp_to_pru = 0;
 #endif
 
 // Xenomai-specific includes
-#if defined(XENOMAI_SKIN_native)
-#include <native/task.h>
-#include <native/timer.h>
-#include <rtdk.h>
-#endif
-
-#if defined(XENOMAI_SKIN_posix)
 #include <pthread.h>
-#endif
 
 #include "../include/xenomai_wraps.h"
 
