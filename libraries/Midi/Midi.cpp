@@ -104,9 +104,7 @@ Midi::Midi() :
 alsaIn(NULL), alsaOut(NULL),
 inputParser(NULL), parserEnabled(false), inputEnabled(false), outputEnabled(false),
 inId(NULL), outId(NULL), outPipeName(NULL)
-#ifdef XENOMAI_SKIN_posix
 	, sock(0)
-#endif
 {
 	setup();
 }
@@ -125,12 +123,7 @@ void Midi::cleanup() {
 	free(outPipeName);
 	// dummy write so that `poll` stops polling ! 
 	//rt_pipe_write(&outPipe, NULL, 0, P_NORMAL); // does not work :(
-#ifdef XENOMAI_SKIN_native
-	rt_pipe_delete(&outPipe);
-#endif
-#ifdef XENOMAI_SKIN_posix
 	close(sock);
-#endif
 	if(alsaOut){
 		snd_rawmidi_drain(alsaOut);
 		snd_rawmidi_close(alsaOut);
@@ -328,25 +321,14 @@ int Midi::writeTo(const char* port){
 	outId = (char*)malloc((size + 1) * sizeof(char));
 	snprintf(outId, size + 1, "bela-midiOut_%s", port);
 
-#if XENOMAI_SKIN_posix || XENOMAI_MAJOR == 3
 	char outPipeNameTemplateString[] = "/proc/xenomai/registry/rtipc/xddp/%s";
-#else
-	char outPipeNameTemplateString[] = "/proc/xenomai/registry/native/pipes/%s";
-#endif
 	size = snprintf(outPipeName, 0, outPipeNameTemplateString, outId);
 	outPipeName = (char*)malloc((size + 1)*sizeof(char));
 	snprintf(outPipeName, size + 1, outPipeNameTemplateString, outId);
 	int ret;
-#ifdef XENOMAI_SKIN_native
-	ret = rt_pipe_delete(&outPipe);
-	ret = rt_pipe_create(&outPipe, port, P_MINOR_AUTO, 4096);
-	if(ret < 0){
-#endif
-#ifdef XENOMAI_SKIN_posix
 	ret = createXenomaiPipe(outId, 0);
 	sock = ret;
 	if(ret <= 0){
-#endif
 		fprintf(stderr, "Error while creating pipe %s: %s\n", outId, strerror(-ret));
 		return -1;
 	}
@@ -486,14 +468,8 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 		// which would result in incomplete messages being retrieved at
 		// the other end of the pipe.
 		ssize_t size = length < outputBytes.size() ? length : outputBytes.size();
-#ifdef XENOMAI_SKIN_native
-		int ret = rt_pipe_write(&outPipe, bytes, size, P_NORMAL);
-		if(ret < 0){
-#endif
-#ifdef XENOMAI_SKIN_posix
 		int ret = __wrap_sendto(sock, bytes, size, 0, NULL, 0);
 		if (ret != size){
-#endif
 			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
 			return -1;
 		} else {
