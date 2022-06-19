@@ -326,7 +326,7 @@ int Midi::writeTo(const char* port){
 	outPipeName = (char*)malloc((size + 1)*sizeof(char));
 	snprintf(outPipeName, size + 1, outPipeNameTemplateString, outId);
 	int ret;
-	ret = createXenomaiPipe(outId, 0);
+	ret = createBelaRtPipe(outId, 0);
 	sock = ret;
 	if(ret <= 0){
 		fprintf(stderr, "Error while creating pipe %s: %s\n", outId, strerror(-ret));
