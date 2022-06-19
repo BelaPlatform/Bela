@@ -44,16 +44,6 @@ int __wrap_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned ms
 int __wrap_mq_unlink(const char *name);
 
 extern "C" void Bela_initRtBackend();
-// Handle difference between posix API of Xenomai 2.6 and Xenomai 3
-// Some functions are not wrapped by Xenomai 2.6, so we redefine the __wrap
-// to the actual POSIX service for Xenomai 2.6 while we simply forward declare
-// the __wrap_ version for Xenomai 3
-#if XENOMAI_MAJOR == 2
-#define __wrap_pthread_join(a,b) pthread_join(a,b) // NOWRAP
-#define __wrap_pthread_attr_init(a) pthread_attr_init(a) // NOWRAP
-#define __wrap_sched_get_priority_max(a) sched_get_priority_max(a) // NOWRAP
-#endif
-#if XENOMAI_MAJOR == 3
 int __wrap_pthread_join(pthread_t thread, void **retval);
 int __wrap_pthread_attr_init(pthread_attr_t *attr);
 int __wrap_sched_get_priority_max(int policy);
