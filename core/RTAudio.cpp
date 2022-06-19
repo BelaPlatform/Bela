@@ -358,7 +358,6 @@ static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 #include <mutex>
 extern "C" void Bela_initRtBackend()
 {
-#if (XENOMAI_MAJOR == 3)
 	static std::once_flag flag;
 	std::call_once(flag, [](){
 		// initialize Xenomai with manual bootstrapping if needed
@@ -395,7 +394,6 @@ extern "C" void Bela_initRtBackend()
 		// this is no longer requi, but we keep it for backward
 		gXenomaiInited = 1;
 	});
-#endif
 }
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
@@ -405,12 +403,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	// Before we go ahead, let's check if Bela is alreadt running:
 	// check if another real-time thread of the same name is already running.
 	char command[200];
-#if (XENOMAI_MAJOR == 2)
-	char pathToXenomaiStat[] = "/proc/xenomai/stat";
-#endif
-#if (XENOMAI_MAJOR == 3)
 	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
-#endif
 	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
 	int ret = system(command);
 	if(ret == 0)
