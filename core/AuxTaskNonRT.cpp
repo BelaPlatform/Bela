@@ -46,7 +46,7 @@ void AuxTaskNonRT::__create(){
 	// create an rt_pipe
 	std::string p_name = "p_" + name;
 	int pipeSize = 65536 * 10;
-	int ret = createXenomaiPipe(p_name.c_str(), pipeSize);
+	int ret = createBelaRtPipe(p_name.c_str(), pipeSize);
 	pipeSocket = ret;
 	if(ret <= 0)
 	{
