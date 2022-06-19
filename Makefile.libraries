@@ -13,12 +13,13 @@ AT?=@
 BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
 BASE_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-DEFAULT_COMMON_FLAGS := -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
+DEFAULT_COMMON_FLAGS ?= -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
 LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
+BELA_RT_BACKEND ?=xenomai
 #all this Xenomai stuff is just for Midi.h at the moment and requires you to have run the Bela Makefile before
-SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile-$(strip $(BELA_RT_BACKEND)).inc
 include $(SYSTEM_SPECIFIC_MAKEFILE)
 $(SYSTEM_SPECIFIC_MAKEFILE):
 	make lib
