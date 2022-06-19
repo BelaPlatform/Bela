@@ -468,7 +468,7 @@ int Midi::writeOutput(midi_byte_t* bytes, unsigned int length){
 		// which would result in incomplete messages being retrieved at
 		// the other end of the pipe.
 		ssize_t size = length < outputBytes.size() ? length : outputBytes.size();
-		int ret = __wrap_sendto(sock, bytes, size, 0, NULL, 0);
+		int ret = BELA_RT_WRAP(sendto(sock, bytes, size, 0, NULL, 0));
 		if (ret != size){
 			rt_fprintf(stderr, "Error while streaming to pipe %s: %s\n", outPipeName, strerror(-ret));
 			return -1;

@@ -16,23 +16,23 @@ int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool
 	attr.mq_maxmsg = maxMsg;
 	attr.mq_msgsize = msgSize;
 	// Check if queue already exists
-	queue = __wrap_mq_open(name.c_str(), O_RDWR);
+	queue = BELA_RT_WRAP(mq_open(name.c_str(), O_RDWR));
 	if(queue != -1)
 	{
 		if(recreate)
 		{
 			// if there already is a queue with this name, try to close it.
-			__wrap_mq_close(queue);
-			__wrap_mq_unlink(name.c_str());
+			BELA_RT_WRAP(mq_close(queue));
+			BELA_RT_WRAP(mq_unlink(name.c_str()));
 		}
 	}		
 	// Open a new queue
 	int flags = O_CREAT | O_RDWR | (blocking ? 0 : O_NONBLOCK);
-	queue = __wrap_mq_open(name.c_str(), flags, 0644, &attr);
+	queue = BELA_RT_WRAP(mq_open(name.c_str(), flags, 0644, &attr));
 	if(queue < 0)
 		return -errno;
 	struct mq_attr newAttr;
-	__wrap_mq_getattr(queue, &newAttr);
+	BELA_RT_WRAP(mq_getattr(queue, &newAttr));
 	// verify that all settings have been applied (a reason for failure
 	// could be that the queue was not successfully closed above
 	if(recreate && (
@@ -48,7 +48,7 @@ int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool
 
 int DataFifo::send(const char* buf, size_t size)
 {
-	int ret = __wrap_mq_send(queue, (const char*)buf, size, 0);
+	int ret = BELA_RT_WRAP(mq_send(queue, (const char*)buf, size, 0));
 	if(ret != 0)
 		return -errno;
 	return 0;
@@ -61,7 +61,7 @@ int DataFifo::receive(char* buf, double timeoutMs)
 	if(timeoutMs)
 	{
 		struct timespec timeout;
-		__wrap_clock_gettime(CLOCK_REALTIME, &timeout);
+		BELA_RT_WRAP(clock_gettime(CLOCK_REALTIME, &timeout));
 		//struct timespec timeoutbak = timeout;
 		long oneSecondNs = 1000000000;
 		time_t timeoutS = (time_t)(timeoutMs / 1000);
@@ -83,9 +83,9 @@ int DataFifo::receive(char* buf, double timeoutMs)
 					timeout.tv_sec, timeout.tv_nsec
 					);
 #endif
-		ret = __wrap_mq_timedreceive(queue, buf, msgSize, &prio, &timeout);
+		ret = BELA_RT_WRAP(mq_timedreceive(queue, buf, msgSize, &prio, &timeout));
 	} else {
-		ret = __wrap_mq_receive(queue, buf, msgSize, &prio);
+		ret = BELA_RT_WRAP(mq_receive(queue, buf, msgSize, &prio));
 	}
 
 	if(ret < 0)
@@ -95,10 +95,10 @@ int DataFifo::receive(char* buf, double timeoutMs)
 
 int DataFifo::cleanup()
 {
-	int ret = __wrap_mq_close(queue);
+	int ret = BELA_RT_WRAP(mq_close(queue));
 	if(ret < 0)
 		return -errno;
-	ret = __wrap_mq_unlink(qName.c_str());
+	ret = BELA_RT_WRAP(mq_unlink(qName.c_str()));
 	if(ret <0)
 		return -errno;
 	return 0;

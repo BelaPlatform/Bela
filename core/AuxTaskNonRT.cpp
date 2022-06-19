@@ -63,7 +63,7 @@ void AuxTaskNonRT::__create(){
 }
 
 int AuxTaskNonRT::schedule(const void* ptr, size_t size){
-	int ret = __wrap_sendto(pipeSocket, ptr, size, 0, NULL, 0);
+	int ret = BELA_RT_WRAP(sendto(pipeSocket, ptr, size, 0, NULL, 0));
 	if(ret < 0)
 	{
 		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name.c_str(), errno, strerror(errno), size);
@@ -83,11 +83,11 @@ void AuxTaskNonRT::cleanup(){
 	lShouldStop = true;
 	// unblock and join thread
 	schedule();
-	int ret = __wrap_pthread_join(thread, NULL);
+	int ret = BELA_RT_WRAP(pthread_join(thread, NULL));
 	if (ret < 0){
 		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
 	}
-	ret = __wrap_close(pipeSocket);
+	ret = BELA_RT_WRAP(close(pipeSocket));
 	if(ret)
 	{
 		fprintf(stderr, "Error closing pipeSocket: %d %s\n", errno, strerror(errno));
