@@ -54,13 +54,13 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	newTask->args = args;
 	// Attempt to create the task
 	unsigned int stackSize = gAuxiliaryTaskStackSize;
-	if(int ret = __wrap_pthread_cond_init(&(newTask->cond), NULL))
+	if(int ret = BELA_RT_WRAP(pthread_cond_init(&(newTask->cond), NULL)))
 	{
 		fprintf(stderr, "Error: unable to create condition variable for auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
 		free(newTask);
 		return 0;
 	}
-	if(int ret = __wrap_pthread_mutex_init(&(newTask->mutex), NULL))
+	if(int ret = BELA_RT_WRAP(pthread_mutex_init(&(newTask->mutex), NULL)))
 	{
 		fprintf(stderr, "Error: unable to initialize mutex for auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
 		free(newTask);
@@ -103,12 +103,12 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 		{
 			// set the priority to maximum
 			int originalPriority = param.sched_priority;
-			param.sched_priority = __wrap_sched_get_priority_max(SCHED_FIFO);
+			param.sched_priority = BELA_RT_WRAP(sched_get_priority_max(SCHED_FIFO));
 			__wrap_pthread_setschedparam(taskToSchedule->task,
 					SCHED_FIFO, &param);
 			// just in case we have the same priority, let the
 			// other go first
-			__wrap_pthread_yield();
+			BELA_RT_WRAP(pthread_yield());
 			if(!taskToSchedule->started)
 				fprintf(stderr, "Didn't work\n");
 			// by the time we are here, the other thread has run, set the
@@ -119,13 +119,13 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 					policy, &param);
 		}
 	}
-	if(int ret = __wrap_pthread_mutex_trylock(&taskToSchedule->mutex))
+	if(int ret = BELA_RT_WRAP(pthread_mutex_trylock(&taskToSchedule->mutex)))
 	{
 		// If we cannot get the lock, then the task is probably still running.
 		return ret;
 	} else {
-		ret = __wrap_pthread_cond_signal(&taskToSchedule->cond);
-		__wrap_pthread_mutex_unlock(&taskToSchedule->mutex);
+		ret = BELA_RT_WRAP(pthread_cond_signal(&taskToSchedule->cond));
+		BELA_RT_WRAP(pthread_mutex_unlock(&taskToSchedule->mutex));
 		return 0;
 	}
 }
@@ -146,10 +146,10 @@ AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void*
 
 static void suspendCurrentTask(InternalAuxiliaryTask* task)
 {
-	__wrap_pthread_mutex_lock(&task->mutex);
+	BELA_RT_WRAP(pthread_mutex_lock(&task->mutex));
 	task->started = true;
-	__wrap_pthread_cond_wait(&task->cond, &task->mutex);
-	__wrap_pthread_mutex_unlock(&task->mutex);
+	BELA_RT_WRAP(pthread_cond_wait(&task->cond, &task->mutex));
+	BELA_RT_WRAP(pthread_mutex_unlock(&task->mutex));
 }
 // Calculation loop that can be used for other tasks running at a lower
 // priority than the audio thread. Simple wrapper for Xenomai calls.
@@ -224,12 +224,12 @@ void Bela_stopAllAuxiliaryTasks()
 		// should return true at this point. Let's make sure it does:
 		Bela_requestStop();
 		// REALLY lock the lock: we really must call _cond_signal here
-		__wrap_pthread_mutex_lock(&taskStruct->mutex);
-		__wrap_pthread_cond_signal(&taskStruct->cond);
-		__wrap_pthread_mutex_unlock(&taskStruct->mutex);
+		BELA_RT_WRAP(pthread_mutex_lock(&taskStruct->mutex));
+		BELA_RT_WRAP(pthread_cond_signal(&taskStruct->cond));
+		BELA_RT_WRAP(pthread_mutex_unlock(&taskStruct->mutex));
 
 		void* threadReturnValue;
-		__wrap_pthread_join(taskStruct->task, &threadReturnValue);
+		BELA_RT_WRAP(pthread_join(taskStruct->task, &threadReturnValue));
 	}
 }
 
@@ -242,8 +242,8 @@ void Bela_deleteAllAuxiliaryTasks()
 
 		// Delete the task
 		pthread_cancel(taskStruct->task);
-		__wrap_pthread_cond_destroy(&taskStruct->cond);
-		__wrap_pthread_mutex_destroy(&taskStruct->mutex);
+		BELA_RT_WRAP(pthread_cond_destroy(&taskStruct->cond));
+		BELA_RT_WRAP(pthread_mutex_destroy(&taskStruct->mutex));
 		// Free the name string and the struct itself
 		free(taskStruct->name);
 		free(taskStruct);

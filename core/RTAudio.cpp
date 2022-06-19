@@ -289,7 +289,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 	struct sched_param p = {
 		.sched_priority = priority,
 	};
-	__wrap_pthread_setschedparam(pthread_self(), SCHED_FIFO, &p);
+	BELA_RT_WRAP(pthread_setschedparam(pthread_self(), SCHED_FIFO, &p));
 
 	// clock_gettime is relatively expensive. We read it less often to
 	// minimise overhead. This means we lose a bit of accuracy in duration,
@@ -297,7 +297,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 	const unsigned int kGetTimeIters = 10;
 	unsigned int nextGetTime = kGetTimeIters;
 	struct timespec begin, end;
-	if(__wrap_clock_gettime(CLOCK_MONOTONIC, &begin))
+	if(BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &begin)))
 	{
 		fprintf(stderr, "Error in clock_gettime(): %d %s\n", errno, strerror(errno));
 		return 1;
@@ -311,7 +311,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 			if(!nextGetTime--)
 			{
 				nextGetTime = kGetTimeIters;
-				__wrap_clock_gettime(CLOCK_MONOTONIC, &end);
+				BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &end));
 				long long unsigned int elapsed = timespec_sub(&end, &begin);
 				if(elapsed > maxTimeNs)
 					break;
@@ -324,10 +324,10 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 				break;
 		}
 		if(intervalMs)
-			__wrap_nanosleep(&ts, NULL);
+			BELA_RT_WRAP(nanosleep(&ts, NULL));
 	}
 	if(!maxTimeNs) // we may have already gotten a more accurate timestamp above
-		__wrap_clock_gettime(CLOCK_MONOTONIC, &end);
+		BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &end));
 	long long unsigned int timeNs = timespec_sub(&end, &begin);
 	if(printStats)
 	{
@@ -380,12 +380,12 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		// object (a mutex). If it fails with EPERM, Xenomai needs to be initialized
 		// See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
 		pthread_mutex_t dummyMutex;
-		ret = __wrap_pthread_mutex_init(&dummyMutex, NULL);
+		ret = BELA_RT_WRAP(pthread_mutex_init(&dummyMutex, NULL));
 		if(0 == ret) {
 			if(gRTAudioVerbose)
 				printf("Xenomai was inited by someone else\n");
 			// success: cleanup
-			__wrap_pthread_mutex_destroy(&dummyMutex);
+			BELA_RT_WRAP(pthread_mutex_destroy(&dummyMutex));
 		} else if (EPERM == ret) {
 			xenomaiNeedsInit = true;
 			if(gRTAudioVerbose)
@@ -818,7 +818,7 @@ void fifoRender(BelaContext* context, void* userData)
 				.tv_sec = 0,
 				.tv_nsec = 5 * 1000 * 1000,
 			};
-			__wrap_nanosleep(&ts, NULL);
+			BELA_RT_WRAP(nanosleep(&ts, NULL));
 		}
 	}
 	if(rctx)
@@ -950,14 +950,14 @@ void Bela_stopAudio()
 
 	// Now wait for threads to respond and actually stop...
 	void* threadReturnValue;
-	int ret = __wrap_pthread_join(gRTAudioThread, &threadReturnValue);
+	int ret = BELA_RT_WRAP(pthread_join(gRTAudioThread, &threadReturnValue));
 	if(ret)
 	{
 		fprintf(stderr, "Failed to join audio thread: (%d) %s\n", ret, strerror(ret));
 	}
 	if(gBcf)
 	{
-		ret = __wrap_pthread_join(gFifoThread, &threadReturnValue);
+		ret = BELA_RT_WRAP(pthread_join(gFifoThread, &threadReturnValue));
 		if(ret)
 			fprintf(stderr, "Failed to join audio fifo thread: (%d) %s\n", ret, strerror(ret));
 	}
@@ -1027,7 +1027,7 @@ void Bela_cpuTic(BelaCpuData* data)
 	if(!data || !data->count)
 		return;
 	struct timespec tic;
-	__wrap_clock_gettime(CLOCK_MONOTONIC, &tic);
+	BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &tic));
 	long long unsigned int diff = timespec_sub(&tic, &data->tic);
 	data->tic = tic;
 	data->total += diff;
@@ -1045,7 +1045,7 @@ void Bela_cpuToc(BelaCpuData* data)
 {
 	if(!data || !data->count)
 		return;
-	__wrap_clock_gettime(CLOCK_MONOTONIC, &data->toc);
+	BELA_RT_WRAP(clock_gettime(CLOCK_MONOTONIC, &data->toc));
 	long long unsigned int diff = timespec_sub(&data->toc, &data->tic);
 	data->busy += diff;
 }

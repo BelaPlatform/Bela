@@ -42,7 +42,7 @@ void AuxTaskRT::__create(){
 	struct mq_attr attr;
 	attr.mq_maxmsg = 100; 
 	attr.mq_msgsize = 100000;
-	queueDesc = __wrap_mq_open(queueName.c_str(), O_CREAT | O_RDWR, 0644, &attr);
+	queueDesc = BELA_RT_WRAP(mq_open(queueName.c_str(), O_CREAT | O_RDWR, 0644, &attr));
 	if(queueDesc < 0)
 	{
 		fprintf(stderr, "Unable to open message queue %s: (%d) %s\n", queueName.c_str(), errno, strerror(errno));
@@ -59,7 +59,7 @@ void AuxTaskRT::__create(){
 }
 
 void AuxTaskRT::schedule(void* buf, size_t size){
-	if(__wrap_mq_send(queueDesc, (char*)buf, size, 0))
+	if(BELA_RT_WRAP(mq_send(queueDesc, (char*)buf, size, 0)))
 	{
 		if(!shouldStop()) fprintf(stderr, "Unable to send message to queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
 		return;
@@ -77,17 +77,17 @@ void AuxTaskRT::cleanup(){
 	lShouldStop = true;
 	// unblock and join thread
 	schedule();
-	int ret = __wrap_pthread_join(thread, NULL);
+	int ret = BELA_RT_WRAP(pthread_join(thread, NULL));
 	if (ret < 0){
 		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));
 	}
 	
-	ret = __wrap_mq_close(queueDesc);
+	ret = BELA_RT_WRAP(mq_close(queueDesc));
 	if(ret)
 	{
 		fprintf(stderr, "Error closing queueDesc: %d %s\n", errno, strerror(errno));
 	}
-	ret = __wrap_mq_unlink(queueName.c_str());
+	ret = BELA_RT_WRAP(mq_unlink(queueName.c_str()));
 	if(ret)
 	{
 		fprintf(stderr, "Error unlinking queue: %d %s\n", errno, strerror(errno));
@@ -99,7 +99,7 @@ void AuxTaskRT::empty_loop(){
 	while(!shouldStop())
 	{
 		unsigned int prio;
-		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = BELA_RT_WRAP(mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio));
 		if(ret < 0)
 		{
 			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
@@ -116,7 +116,7 @@ void AuxTaskRT::str_loop(){
 	while(!shouldStop())
 	{
 		unsigned int prio;
-		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = BELA_RT_WRAP(mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio));
 		if(ret < 0)
 		{
 			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
@@ -132,7 +132,7 @@ void AuxTaskRT::buf_loop(){
 	while(!shouldStop())
 	{
 		unsigned int prio;
-		ssize_t ret = __wrap_mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio);
+		ssize_t ret = BELA_RT_WRAP(mq_receive(queueDesc, buffer, AUX_RT_POOL_SIZE, &prio));
 		if(ret < 0)
 		{
 			if(!shouldStop()) fprintf(stderr, "Unable to receive message from queue for task %s: (%d) %s\n", name.c_str(), errno, strerror(errno));
