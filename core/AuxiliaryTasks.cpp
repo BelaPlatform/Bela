@@ -97,15 +97,15 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 		// until the other starts.
 		struct sched_param param;
 		int policy;
-		int ret = __wrap_pthread_getschedparam(taskToSchedule->task,
-				&policy, &param);
+		int ret = BELA_RT_WRAP(pthread_getschedparam(taskToSchedule->task,
+				&policy, &param));
 		if(!ret)
 		{
 			// set the priority to maximum
 			int originalPriority = param.sched_priority;
 			param.sched_priority = BELA_RT_WRAP(sched_get_priority_max(SCHED_FIFO));
-			__wrap_pthread_setschedparam(taskToSchedule->task,
-					SCHED_FIFO, &param);
+			BELA_RT_WRAP(pthread_setschedparam(taskToSchedule->task,
+					SCHED_FIFO, &param));
 			// just in case we have the same priority, let the
 			// other go first
 			BELA_RT_WRAP(pthread_yield());
@@ -115,8 +115,8 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 			// started flag, and is now waiting for the cond
 			// So, restore its schedparams
 			param.sched_priority = originalPriority;
-			__wrap_pthread_setschedparam(taskToSchedule->task,
-					policy, &param);
+			BELA_RT_WRAP(pthread_setschedparam(taskToSchedule->task,
+					policy, &param));
 		}
 	}
 	if(int ret = BELA_RT_WRAP(pthread_mutex_trylock(&taskToSchedule->mutex)))

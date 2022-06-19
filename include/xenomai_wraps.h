@@ -13,8 +13,8 @@ extern "C" {
 #include <mqueue.h>
 #include <sys/socket.h>
 
-// Forward declare __wrap_ versions of POSIX calls.
-// At link time, Xenomai will provide implementations for these
+// Forward declare wrapped versions of POSIX calls.
+// if BELA_RT_WRAP is __WRAP, then at link time, Xenomai's libcobalt will provide implementations for these
 int BELA_RT_WRAP(nanosleep(const struct timespec *req, struct timespec *rem));
 int BELA_RT_WRAP(pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg));
 int BELA_RT_WRAP(pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param));
@@ -151,11 +151,11 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	 */
 	struct rtipc_port_label plabel;
 	strcpy(plabel.label, portName);
-	int ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_LABEL,
-			 &plabel, sizeof(plabel));
+	int ret = BELA_RT_WRAP(setsockopt(s, SOL_XDDP, XDDP_LABEL,
+			 &plabel, sizeof(plabel)));
 	if(ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_setsockopt SOL_XDDP XDDP_LABEL: %d %s\n", errno, strerror(errno));
+		fprintf(stderr, "Failed call to setsockopt SOL_XDDP XDDP_LABEL: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -166,11 +166,11 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	 */
 	if(poolsz == 0)
 		poolsz = 16384; /* bytes */
-	ret = __wrap_setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
-			 &poolsz, sizeof(poolsz));
+	ret = BELA_RT_WRAP(setsockopt(s, SOL_XDDP, XDDP_POOLSZ,
+			 &poolsz, sizeof(poolsz)));
 	if(ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_setsockopt SOL_XDDP XDDP_POOLSZ: %d %s\n", errno, strerror(errno));
+		fprintf(stderr, "Failed call to setsockopt SOL_XDDP XDDP_POOLSZ: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -185,7 +185,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	ret = BELA_RT_WRAP(bind(s, (struct sockaddr *)&saddr, sizeof(saddr)));
 	if (ret)
 	{
-		fprintf(stderr, "Failed call to __wrap_bind: %d %s\n", errno, strerror(errno));
+		fprintf(stderr, "Failed call to bind: %d %s\n", errno, strerror(errno));
 		return -1;
 	}
 	return s;
