@@ -204,13 +204,16 @@ BELA_AUDIO_THREAD_NAME?=bela-audio
 XENO_CONFIG=/usr/xenomai/bin/xeno-config
 XENOMAI_SKIN=posix
 
+BELA_RT_BACKEND ?=xenomai
 # Find out what system we are running on and set system-specific variables
 # We cache these in $(SYSTEM_SPECIFIC_MAKEFILE) after every boot
-SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile.inc
+SYSTEM_SPECIFIC_MAKEFILE=/tmp/BelaMakefile-$(strip $(BELA_RT_BACKEND)).inc
 -include $(SYSTEM_SPECIFIC_MAKEFILE)
 ifeq ($(DEBIAN_VERSION),)
 # If they are not there, let's go find out ...
 DEBIAN_VERSION=$(shell grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/g")
+
+ifeq ($(strip $(BELA_RT_BACKEND)),xenomai)
 # Lazily, let's assume if we are not on 2.6 we are on 3. I sincerely hope we will survive till Xenomai 4 to see this fail
 XENOMAI_VERSION=$(shell $(XENO_CONFIG) --version | grep -o "2\.6" || echo "3")
 
@@ -225,6 +228,9 @@ DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 # remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
+else # BELA_RT_BACKEND is something else
+XENOMAI_VERSION:=none
+endif
 
 #... and cache them to the file
 $(shell printf "DEBIAN_VERSION=$(DEBIAN_VERSION)\nXENOMAI_VERSION=$(XENOMAI_VERSION)\nDEFAULT_XENOMAI_CFLAGS=$(DEFAULT_XENOMAI_CFLAGS)\nDEFAULT_XENOMAI_LDFLAGS=$(DEFAULT_XENOMAI_LDFLAGS)\n" > $(SYSTEM_SPECIFIC_MAKEFILE) )
@@ -263,8 +269,16 @@ RM := rm -rf
 LEGACY_INCLUDE_PATH := ./include/legacy
 
 INCLUDES := -I$(PROJECT_DIR) -I$(LEGACY_INCLUDE_PATH)  -I./include -I./build/pru/ -I./
+
+ifeq ($(strip $(BELA_RT_BACKEND)), xenomai)
 BELA_USE_DEFINE?=BELA_USE_RTDM
 BELA_RT_WRAP_FLAGS?=-DBELA_RT_WRAP=__WRAP
+BELA_RT_BACKEND_LDLIBS :=$(DEFAULT_XENOMAI_LDFLAGS)
+else # if BELA_RT_BACKEND is not xenomai, hardcode some stuff
+BELA_USE_DEFINE?=BELA_USE_POLL
+BELA_RT_WRAP_FLAGS?="-DBELA_RT_WRAP(call)=call" -Drt_printf=printf -D rt_fprintf=fprintf
+BELA_RT_BACKEND_LDLIBS := -lpthread -lrt
+endif
 
 ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
 
@@ -278,7 +292,7 @@ endif # SHARED
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/ -Wl,--as-needed
-BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
+BELA_CORE_LDLIBS = $(BELA_RT_BACKEND_LDLIBS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
 BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so), taken from the dependencies of the libraries of the objects included in $(LIB_EXTRA_OBJS)
 BELA_LDLIBS := $(BELA_CORE_LDLIBS)
 BELA_LDLIBS := $(filter-out -lstdc++,$(BELA_LDLIBS))
