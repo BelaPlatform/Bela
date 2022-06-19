@@ -3,7 +3,7 @@
 #include <string>
 /**
 * Uni-directional RT-safe-queue.
-* A light wrapper around __wrap_mq_...
+* A light wrapper around mq_...
 */
 class DataFifo
 {

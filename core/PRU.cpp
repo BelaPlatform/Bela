@@ -708,7 +708,7 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
         // it will often hang the system (especially for small blocksizes).
         // Not sure why this would happen, perhaps a race condition between the PRU
         // and the rtdm_driver?
-        if ((rtdm_fd_pru_to_arm = __wrap_open(rtdm_driver, O_RDWR)) < 0) {
+        if ((rtdm_fd_pru_to_arm = BELA_RT_WRAP(open(rtdm_driver, O_RDWR))) < 0) {
                 fprintf(stderr, "Failed to open the kernel driver: (%d) %s.\n", errno, strerror(errno));
                 if(errno == EBUSY) // Device or resource busy
                 {
@@ -740,7 +740,7 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
         }
         if(pruUsesMcaspIrq)
 	{
-                if ((rtdm_fd_mcasp_to_pru = __wrap_open(rtdm_driver, O_RDWR)) < 0) {
+                if ((rtdm_fd_mcasp_to_pru = BELA_RT_WRAP(open(rtdm_driver, O_RDWR))) < 0) {
                         fprintf(stderr, "Unable to open rtdm driver to register McASP interrupts: (%d) %s.\n", errno, strerror(errno));
                         return 1;
                 }
