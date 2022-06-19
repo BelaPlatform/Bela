@@ -15,37 +15,37 @@ extern "C" {
 
 // Forward declare __wrap_ versions of POSIX calls.
 // At link time, Xenomai will provide implementations for these
-int __wrap_nanosleep(const struct timespec *req, struct timespec *rem);
-int __wrap_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
-int __wrap_pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param);
-int __wrap_pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param);
-int __wrap_pthread_yield(void);
+int BELA_RT_WRAP(nanosleep(const struct timespec *req, struct timespec *rem));
+int BELA_RT_WRAP(pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg));
+int BELA_RT_WRAP(pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param));
+int BELA_RT_WRAP(pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param));
+int BELA_RT_WRAP(pthread_yield(void));
 
-int __wrap_pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);
-int __wrap_pthread_mutex_destroy(pthread_mutex_t *mutex);
-int __wrap_pthread_mutex_lock(pthread_mutex_t *mutex);
-int __wrap_pthread_mutex_trylock(pthread_mutex_t *mutex);
-int __wrap_pthread_mutex_unlock(pthread_mutex_t *mutex);
+int BELA_RT_WRAP(pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr));
+int BELA_RT_WRAP(pthread_mutex_destroy(pthread_mutex_t *mutex));
+int BELA_RT_WRAP(pthread_mutex_lock(pthread_mutex_t *mutex));
+int BELA_RT_WRAP(pthread_mutex_trylock(pthread_mutex_t *mutex));
+int BELA_RT_WRAP(pthread_mutex_unlock(pthread_mutex_t *mutex));
 
-int __wrap_pthread_cond_destroy(pthread_cond_t *cond);
-int __wrap_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr);
-int __wrap_pthread_cond_signal(pthread_cond_t *cond);
-int __wrap_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int BELA_RT_WRAP(pthread_cond_destroy(pthread_cond_t *cond));
+int BELA_RT_WRAP(pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr));
+int BELA_RT_WRAP(pthread_cond_signal(pthread_cond_t *cond));
+int BELA_RT_WRAP(pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex));
 
-int __wrap_socket(int protocol_family, int socket_type, int protocol);
-int __wrap_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
-int __wrap_bind(int fd, const struct sockaddr *my_addr, socklen_t addrlen);
-ssize_t __wrap_sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen);
+int BELA_RT_WRAP(socket(int protocol_family, int socket_type, int protocol));
+int BELA_RT_WRAP(setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen));
+int BELA_RT_WRAP(bind(int fd, const struct sockaddr *my_addr, socklen_t addrlen));
+ssize_t BELA_RT_WRAP(sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen));
 
-mqd_t __wrap_mq_open(const char *name, int oflags, ...);
-int __wrap_mq_close(mqd_t mqdes);
-ssize_t __wrap_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
-int __wrap_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio);
-int __wrap_mq_unlink(const char *name);
+mqd_t BELA_RT_WRAP(mq_open(const char *name, int oflags, ...));
+int BELA_RT_WRAP(mq_close(mqd_t mqdes));
+ssize_t BELA_RT_WRAP(mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio));
+int BELA_RT_WRAP(mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio));
+int BELA_RT_WRAP(mq_unlink(const char *name));
 
-int __wrap_pthread_join(pthread_t thread, void **retval);
-int __wrap_pthread_attr_init(pthread_attr_t *attr);
-int __wrap_sched_get_priority_max(int policy);
+int BELA_RT_WRAP(pthread_join(pthread_t thread, void **retval));
+int BELA_RT_WRAP(pthread_attr_init(pthread_attr_t *attr));
+int BELA_RT_WRAP(sched_get_priority_max(int policy));
 
 #include <rtdm/ipc.h>
 typedef long long int time_ns_t;
@@ -56,7 +56,7 @@ inline int task_sleep_ns(long long int timens)
 	struct timespec req;
 	req.tv_sec = timens/1000000000;
 	req.tv_nsec = timens - req.tv_sec * 1000000000;
-	return __wrap_nanosleep(&req, NULL);
+	return BELA_RT_WRAP(nanosleep(&req, NULL));
 }
 
 #include <error.h>
@@ -107,7 +107,7 @@ inline int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, in
 inline int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
-	if(__wrap_pthread_attr_init(&attr))
+	if(BELA_RT_WRAP(pthread_attr_init(&attr)))
 	{
 		fprintf(stderr, "Error: unable to init thread attributes\n");
 		return -1;
@@ -116,11 +116,11 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	{
 		return ret;
 	}
-	if(int ret = __wrap_pthread_create(task, &attr, callback, arg))
+	if(int ret = BELA_RT_WRAP(pthread_create(task, &attr, callback, arg)))
 	{
 		return ret;
 	}
-	__wrap_pthread_setname_np(*task, taskName);
+	BELA_RT_WRAP(pthread_setname_np(*task, taskName));
 	// check that effective parameters match the ones we requested
 	//pthread_attr_t actualAttr;
 	//pthread_getattr_np(*task, &actualAttr);
@@ -139,7 +139,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	 * endpoint is represented by a port number within the XDDP
 	 * protocol namespace.
 	 */
-	int s = __wrap_socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+	int s = BELA_RT_WRAP(socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP));
 	if (s < 0) {
 		fprintf(stderr, "Failed call to socket: %d %s\n", errno, strerror(errno));
 		return -1;
@@ -182,7 +182,7 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sipc_family = AF_RTIPC;
 	saddr.sipc_port = -1; // automatically assign port number
-	ret = __wrap_bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
+	ret = BELA_RT_WRAP(bind(s, (struct sockaddr *)&saddr, sizeof(saddr)));
 	if (ret)
 	{
 		fprintf(stderr, "Failed call to __wrap_bind: %d %s\n", errno, strerror(errno));

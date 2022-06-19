@@ -723,7 +723,7 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 #if RTDM_PRUSS_IRQ_VERSION >= 2
 	{
 		// From version 2 onwards we can set the verbose level
-		int ret = __wrap_ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_VERBOSE, 0);
+		int ret = BELA_RT_WRAP(ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_VERBOSE, 0));
 		if(ret == -1)
 			fprintf(stderr, "ioctl verbose failed: %d %s\n", errno, strerror(errno));
 		// do not fail
@@ -732,7 +732,7 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 #if RTDM_PRUSS_IRQ_VERSION >= 1
         // From version 1 onwards, we need to specify the PRU system event we want to receive interrupts from (see rtdm_pruss_irq.h)
         // For rtdm_fd_pru_to_arm we use the default mapping
-        int ret = __wrap_ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_REGISTER, pru_system_event_rtdm);
+        int ret = BELA_RT_WRAP(ioctl(rtdm_fd_pru_to_arm, RTDM_PRUSS_IRQ_REGISTER, pru_system_event_rtdm));
         if(ret == -1)
         {
                 fprintf(stderr, "ioctl failed: %d %s\n", errno, strerror(errno));
@@ -756,7 +756,7 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
                 rtdm_struct.pru_system_events_count = sizeof(pru_system_events_mcasp);
                 rtdm_struct.pru_intc_channel = mcasp_to_pru_channel;
                 rtdm_struct.pru_intc_host = mcasp_to_pru_channel;
-                int ret = __wrap_ioctl(rtdm_fd_mcasp_to_pru, RTDM_PRUSS_IRQ_REGISTER_FULL, &rtdm_struct);
+                int ret = BELA_RT_WRAP(ioctl(rtdm_fd_mcasp_to_pru, RTDM_PRUSS_IRQ_REGISTER_FULL, &rtdm_struct));
                 if(ret == -1)
                 {
                         fprintf(stderr, "ioctl failed: %d %s\n", errno, strerror(errno));
@@ -901,7 +901,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		// make sure we always sleep a tiny bit to prevent hanging the board
 		if(!highPerformanceMode) // unless the user requested us not to.
 			task_sleep_ns(sleepTime / 2);
-		int ret = __wrap_read(rtdm_fd_pru_to_arm, NULL, 0);
+		int ret = BELA_RT_WRAP(read(rtdm_fd_pru_to_arm, NULL, 0));
 		int error = testPruError();
 		if(2 == error) {
                         gShouldStop = true;
@@ -1498,10 +1498,10 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 #if defined(BELA_USE_RTDM)
         if(rtdm_fd_pru_to_arm)
-                __wrap_close(rtdm_fd_pru_to_arm);
+                BELA_RT_WRAP(close(rtdm_fd_pru_to_arm));
 #if RTDM_PRUSS_IRQ_VERSION >= 1
         if(rtdm_fd_pru_to_arm)
-                __wrap_close(rtdm_fd_mcasp_to_pru);
+                BELA_RT_WRAP(close(rtdm_fd_mcasp_to_pru));
 #endif /* RTDM_PRUSS_IRQ_VERSION */
 #endif /* BELA_USE_RTDM */
 
@@ -1553,7 +1553,7 @@ void PRU::waitForFinish()
 #endif
 #ifdef BELA_USE_RTDM
 	int value;
-	__wrap_read(rtdm_fd_pru_to_arm, &value, sizeof(value));
+	BELA_RT_WRAP(read(rtdm_fd_pru_to_arm, &value, sizeof(value)));
 #endif
 	return;
 }
