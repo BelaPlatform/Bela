@@ -47,7 +47,6 @@ int BELA_RT_WRAP(pthread_join(pthread_t thread, void **retval));
 int BELA_RT_WRAP(pthread_attr_init(pthread_attr_t *attr));
 int BELA_RT_WRAP(sched_get_priority_max(int policy));
 
-#include <rtdm/ipc.h>
 typedef long long int time_ns_t;
 typedef void *(pthread_callback_t)(void *);
 
@@ -131,8 +130,13 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	pthread_attr_destroy(&attr);
 	return 0;
 }
+
+#ifdef __COBALT__
+#include <rtdm/ipc.h>
+#endif // __COBALT__
+inline int createBelaRtPipe(const char* portName, int poolsz)
+#ifdef __COBALT__
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
-inline int createXenomaiPipe(const char* portName, int poolsz)
 {
 	/*
 	 * Get a datagram socket to bind to the RT endpoint. Each
@@ -190,6 +194,12 @@ inline int createXenomaiPipe(const char* portName, int poolsz)
 	}
 	return s;
 }
+#else // __COBALT__
+{
+#warning BelaRtPipe unsupported without COBALT
+	return -1;
+}
+#endif //__COBALT__
 
 #ifdef __cplusplus
 }
