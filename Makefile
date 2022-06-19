@@ -214,45 +214,27 @@ DEBIAN_VERSION=$(shell grep "VERSION=" /etc/os-release | sed "s/.*(\(.*\)).*/\1/
 # Lazily, let's assume if we are not on 2.6 we are on 3. I sincerely hope we will survive till Xenomai 4 to see this fail
 XENOMAI_VERSION=$(shell $(XENO_CONFIG) --version | grep -o "2\.6" || echo "3")
 
-ifeq ($(XENOMAI_VERSION),2.6)
-XENOMAI_MAJOR=2
-endif
-ifeq ($(XENOMAI_VERSION),3)
-XENOMAI_MAJOR=3
-endif
-
 # Xenomai flags
 DEFAULT_XENOMAI_CFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --cflags)
-DEFAULT_XENOMAI_CFLAGS += -DXENOMAI_SKIN_$(XENOMAI_SKIN) -DXENOMAI_MAJOR=$(XENOMAI_MAJOR)
 # Cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
 DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
 SED_REMOVE_WRAPPERS_REGEX=sed "s/-Wl,@[A-Za-z_/]*.wrappers\>//g"
-ifeq ($(XENOMAI_VERSION),2.6)
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags | $(SED_REMOVE_WRAPPERS_REGEX))
-else
-  DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX) | sed s/-Wl,--no-as-needed//)
-endif
+DEFAULT_XENOMAI_LDFLAGS := $(shell $(XENO_CONFIG) --skin=$(XENOMAI_SKIN) --ldflags --no-auto-init | $(SED_REMOVE_WRAPPERS_REGEX) | sed s/-Wl,--no-as-needed//)
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
 # remove posix wrappers if present: explicitly call __wrap_pthread_... when needed
 DEFAULT_XENOMAI_LDFLAGS := $(filter-out -Wlusr/xenomai/lib/cobalt.wrappers, $(DEFAULT_XENOMAI_LDFLAGS))
 
 #... and cache them to the file
-$(shell printf "DEBIAN_VERSION=$(DEBIAN_VERSION)\nXENOMAI_VERSION=$(XENOMAI_VERSION)\nDEFAULT_XENOMAI_CFLAGS=$(DEFAULT_XENOMAI_CFLAGS)\nDEFAULT_XENOMAI_LDFLAGS=$(DEFAULT_XENOMAI_LDFLAGS)\nXENOMAI_MAJOR=$(XENOMAI_MAJOR)\n" > $(SYSTEM_SPECIFIC_MAKEFILE) )
+$(shell printf "DEBIAN_VERSION=$(DEBIAN_VERSION)\nXENOMAI_VERSION=$(XENOMAI_VERSION)\nDEFAULT_XENOMAI_CFLAGS=$(DEFAULT_XENOMAI_CFLAGS)\nDEFAULT_XENOMAI_LDFLAGS=$(DEFAULT_XENOMAI_LDFLAGS)\n" > $(SYSTEM_SPECIFIC_MAKEFILE) )
 endif  # ifeq ($(DEBIAN_VERSION),)
 
 ifeq ($(AT),)
   $(info Running on __$(DEBIAN_VERSION)__ with Xenomai __$(XENOMAI_VERSION)__)
 endif
 
-ifeq ($(XENOMAI_VERSION),2.6)
-XENOMAI_STAT_PATH=/proc/xenomai/stat
-LIBPD_LIBS=-lpd -lpthread_rt
-endif
-ifeq ($(XENOMAI_VERSION),3)
 XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
-endif
 
 # This is used to run Bela projects from the terminal in the background
 SCREEN_NAME?=Bela
@@ -281,12 +263,7 @@ RM := rm -rf
 LEGACY_INCLUDE_PATH := ./include/legacy
 
 INCLUDES := -I$(PROJECT_DIR) -I$(LEGACY_INCLUDE_PATH)  -I./include -I./build/pru/ -I./
-ifeq ($(XENOMAI_VERSION),2.6)
-  BELA_USE_DEFINE?=BELA_USE_POLL
-endif
-ifeq ($(XENOMAI_VERSION),3)
-  BELA_USE_DEFINE?=BELA_USE_RTDM
-endif
+BELA_USE_DEFINE?=BELA_USE_RTDM
 
 ARCH_FLAGS?=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=hard
 
