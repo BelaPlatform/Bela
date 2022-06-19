@@ -18,7 +18,7 @@ bool Pipe::setup(const std::string& pipeName, size_t size, bool newBlockingRt, b
 	pipeSize = size;
 
 	name = "p_" + pipeName;
-	int ret = createXenomaiPipe(name.c_str(), pipeSize);
+	int ret = createBelaRtPipe(name.c_str(), pipeSize);
 	if(ret < 0)
 	{
 		fprintf(stderr, "Unable to create pipe %s with %u bytes: (%i) %s\n", name.c_str(), pipeSize, ret, strerror(ret));
