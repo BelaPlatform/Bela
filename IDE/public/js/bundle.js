@@ -2128,7 +2128,7 @@ var EditorView = function (_View) {
 
 					// render pd patch
 					try {
-						$('[data-pd-svg]').html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false }));
+						$('[data-pd-svg]').empty().html(pdfu.renderSvg(pdfu.parse(data), { svgFile: false, removeOld: false }));
 						$('[data-pd-svg-parent]').addClass('active');
 						this.emit('close-notification', { timestamp: timestamp });
 					} catch (e) {
