@@ -2064,7 +2064,7 @@ var EditorView = function (_View) {
 		value: function resize() {
 			this.allEditorAlts.css({
 				'max-width': $('[data-editor]').width() + 'px',
-				'max-height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch
+				'height': $('[data-editor]').height() - 2 + 'px' // -2 because it makes for a better Pd patch
 			});
 		}
 		// model events
