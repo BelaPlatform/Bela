@@ -76,7 +76,9 @@ class FileView extends View {
 		this.svg = $('[data-drag-svg]');
 		let body = $('body');
 		body.off('dragenter dragover drop dragleave');
-		body.on('dragenter', () => {
+		body.on('dragenter', (e) => {
+			if(!isDragEvent(e, "Files"))
+				return;
 			this.buildOverlay();
 			this.showOverlay();
 		});

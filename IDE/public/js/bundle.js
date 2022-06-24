@@ -2399,7 +2399,8 @@ var FileView = function (_View) {
 		_this.svg = $('[data-drag-svg]');
 		var body = $('body');
 		body.off('dragenter dragover drop dragleave');
-		body.on('dragenter', function () {
+		body.on('dragenter', function (e) {
+			if (!isDragEvent(e, "Files")) return;
 			_this.buildOverlay();
 			_this.showOverlay();
 		});
