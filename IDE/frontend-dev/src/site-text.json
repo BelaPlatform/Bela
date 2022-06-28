@@ -105,7 +105,7 @@
 			"text": "Your current project settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
-		"restore_default_IDE_settings": {
+		"restore_default_ide_settings": {
 			"title": "Restore default IDE settings?",
 			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"

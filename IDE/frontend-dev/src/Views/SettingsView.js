@@ -98,26 +98,8 @@ class SettingsView extends View {
 	}
 
 	restoreDefaultCLArgs(func){
-		// build the popup content
-		popup.title(json.popups.restore_default_project_settings.title);
-		popup.subtitle(json.popups.restore_default_project_settings.text);
-
-		var form = [];
-		form.push('<button type="submit" class="button confirm">'+json.popups.restore_default_project_settings.button+'</button>');
-		form.push('<button type="button" class="button cancel">Cancel</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			this.emit('project-settings', {func});
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
-		popup.find('.confirm').trigger('focus');
-
+		popup.twoButtons(json.popups.restore_default_project_settings,
+			() => this.emit('project-settings', {func}));
 	}
 
 	setIDESetting(func, key, value){
@@ -125,26 +107,8 @@ class SettingsView extends View {
 	}
 
 	restoreDefaultIDESettings(func){
-		// build the popup content
-		popup.title(json.popups.restore_default_ide_settings.title);
-		popup.subtitle(json.popups.restore_default_ide_settings.text);
-
-		var form = [];
-		form.push('<button type="submit" class="button popup confirm">'+json.popups.restore_default_ide_settings.button+'</button>');
-		form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-		popup.form.append(form.join('')).off('submit').on('submit', e => {
-			e.preventDefault();
-			this.emit('IDE-settings', {func});
-			popup.hide();
-		});
-
-		popup.find('.cancel').on('click', popup.hide );
-
-		popup.show();
-
-		popup.find('.confirm').trigger('focus');
-
+		popup.twoButtons(json.popups.restore_default_ide_settings,
+			() => this.emit('IDE-settings', {func}));
 	}
 
 	shutdownBBB(){

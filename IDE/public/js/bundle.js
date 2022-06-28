@@ -4335,25 +4335,9 @@ var SettingsView = function (_View) {
 		value: function restoreDefaultCLArgs(func) {
 			var _this2 = this;
 
-			// build the popup content
-			popup.title(json.popups.restore_default_project_settings.title);
-			popup.subtitle(json.popups.restore_default_project_settings.text);
-
-			var form = [];
-			form.push('<button type="submit" class="button confirm">' + json.popups.restore_default_project_settings.button + '</button>');
-			form.push('<button type="button" class="button cancel">Cancel</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				_this2.emit('project-settings', { func: func });
-				popup.hide();
+			popup.twoButtons(json.popups.restore_default_project_settings, function () {
+				return _this2.emit('project-settings', { func: func });
 			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
-
-			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'setIDESetting',
@@ -4365,25 +4349,9 @@ var SettingsView = function (_View) {
 		value: function restoreDefaultIDESettings(func) {
 			var _this3 = this;
 
-			// build the popup content
-			popup.title(json.popups.restore_default_ide_settings.title);
-			popup.subtitle(json.popups.restore_default_ide_settings.text);
-
-			var form = [];
-			form.push('<button type="submit" class="button popup confirm">' + json.popups.restore_default_ide_settings.button + '</button>');
-			form.push('<button type="button" class="button popup cancel">Cancel</button>');
-
-			popup.form.append(form.join('')).off('submit').on('submit', function (e) {
-				e.preventDefault();
-				_this3.emit('IDE-settings', { func: func });
-				popup.hide();
+			popup.twoButtons(json.popups.restore_default_ide_settings, function () {
+				return _this3.emit('IDE-settings', { func: func });
 			});
-
-			popup.find('.cancel').on('click', popup.hide);
-
-			popup.show();
-
-			popup.find('.confirm').trigger('focus');
 		}
 	}, {
 		key: 'shutdownBBB',
@@ -6833,7 +6801,7 @@ module.exports={
 			"text": "Your current project settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
 		},
-		"restore_default_IDE_settings": {
+		"restore_default_ide_settings": {
 			"title": "Restore default IDE settings?",
 			"text": "Your current IDE settings will be restored to defaults. There is no undo.",
 			"button": "Restore defaults"
