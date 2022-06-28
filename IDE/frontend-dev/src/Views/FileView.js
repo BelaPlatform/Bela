@@ -671,15 +671,12 @@ class FileView extends View {
 
 	processQueue(){
 		// keep processing the queue in the background
-		console.log("processQueue, uploading?", uploadingFile, fileQueue.length)
 		if(!uploadingFile && fileQueue.length)
 		{
 			setTimeout(() => {
-				console.log("processQueue do file upload", uploadingFile, fileQueue.length)
 				if(!uploadingFile && fileQueue.length)
 				{
 					let file = fileQueue.pop();
-					console.log("processQueue do file upload:", file.name);
 					// 20mb maximum drag and drop file size
 					if (file.size >= 20000000) {
 						// postpone large files

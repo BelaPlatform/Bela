@@ -3040,13 +3040,10 @@ var FileView = function (_View) {
 			var _this9 = this;
 
 			// keep processing the queue in the background
-			console.log("processQueue, uploading?", uploadingFile, fileQueue.length);
 			if (!uploadingFile && fileQueue.length) {
 				setTimeout(function () {
-					console.log("processQueue do file upload", uploadingFile, fileQueue.length);
 					if (!uploadingFile && fileQueue.length) {
 						var file = fileQueue.pop();
-						console.log("processQueue do file upload:", file.name);
 						// 20mb maximum drag and drop file size
 						if (file.size >= 20000000) {
 							// postpone large files
