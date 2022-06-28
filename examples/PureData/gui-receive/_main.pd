@@ -1,14 +1,13 @@
-#N canvas 64 22 1460 925 12;
+#N canvas 0 0 1280 778 12;
 #X obj 190 359 s bela_setGui;
 #X obj 144 449 r bela_guiControl;
 #N canvas 0 22 450 278 (subpatch) 0;
-#X array xy 2 float 3;
-#A 0 -0.414296 -0.214291;
+#X array xy 2 float 2;
 #X coords 0 1 2 -1 200 140 1 0 0;
 #X restore 803 444 graph;
 #X obj 520 481 metro 400;
-#X obj 178 267 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
+#X obj 178 267 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
+#000000 #000000;
 #X obj 179 249 loadbang;
 #X msg 395 312 new array xy;
 #X obj 520 514 array get xy;

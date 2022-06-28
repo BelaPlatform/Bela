@@ -1,17 +1,16 @@
-#N canvas 419 54 900 812 10;
+#N canvas 380 0 900 778 10;
 #N canvas 0 22 450 278 (subpatch) 0;
-#X array bela_multiplexer 1 float 3;
-#A 0 0;
-#X coords 0 1 1 -1 200 140 1;
+#X array bela_multiplexer 1 float 2;
+#X coords 0 1 1 -1 200 140 1 0 0;
 #X restore 34 215 graph;
-#X obj 333 129 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
+#X obj 333 129 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
+#000000 #000000;
 #X obj 297 214 t b b b b b b;
 #X obj 308 104 loadbang;
-#X obj 264 149 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
-1;
-#X obj 360 167 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
--1 -1;
+#X obj 264 149 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000 0 1;
+#X obj 360 167 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
+#000000 #000000;
 #X obj 545 124 r bela_multiplexerChannels;
 #X obj 527 177 * 8;
 #X obj 560 214 print arraySize;
@@ -48,7 +47,7 @@
 #X obj 84 577 pack f f f f f f f f f;
 #X msg 266 241 -8;
 #X obj 439 247 - 8;
-#X floatatom 490 115 5 0 0 0 - - -;
+#X floatatom 490 115 5 0 0 0 - - - 0;
 #X obj 338 294 == 56;
 #X obj 303 262 delay 5;
 #X text 590 7 ............................;
