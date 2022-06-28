@@ -143,7 +143,6 @@ class EditorView extends View {
 		this.editorChanged(true);
 	}
 	editorChanged(flush){
-		this.emit('editor-changed');
 		clearTimeout(this.uploadTimeout);
 		let doUpdate = () => {
 			editorDirty = false;
@@ -155,6 +154,7 @@ class EditorView extends View {
 		}
 		else {
 			editorDirty = true;
+			this.emit('editor-changed');
 			this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
 		}
 	}

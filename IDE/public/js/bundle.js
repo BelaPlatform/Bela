@@ -2046,7 +2046,6 @@ var EditorView = function (_View) {
 		value: function editorChanged(flush) {
 			var _this2 = this;
 
-			this.emit('editor-changed');
 			clearTimeout(this.uploadTimeout);
 			var doUpdate = function doUpdate() {
 				editorDirty = false;
@@ -2056,6 +2055,7 @@ var EditorView = function (_View) {
 				if (editorDirty) doUpdate();
 			} else {
 				editorDirty = true;
+				this.emit('editor-changed');
 				this.uploadTimeout = setTimeout(doUpdate, uploadDelay);
 			}
 		}
