@@ -106,16 +106,19 @@ void render(BelaContext *context, void *userData)
 		frequency = map(gTouchPosition[1], 0, 1, gFreqRange[0], gFreqRange[1]);
 		// Smooth frequency using low-pass filter
 		frequency = freqFilt.process(frequency);
-		// Map touch size to a frequency detuning range
+		// Map X-axis to a frequency detuning range
 		float detuning;
 		detuning = map(gTouchPosition[0], 0, 1, gDetuneRange[0], gDetuneRange[1]);
 		// Set frequency of both oscillators, taking into account the detuning
 		osc[0].setFrequency(frequency);
 		osc[1].setFrequency(frequency+ detuning);
 
+		float amplitude;
+		// Map touch size to an amplitude range
+		amplitude = map(gTouchSize, 0, 1, gAmplitudeRange[0], gAmplitudeRange[1]);
 		// Smooth changes in the amplitude of the oscillator (mapped to X-axis)
 		// using a low-pass filter
-		float amplitude = ampFilt.process(gTouchSize);
+		amplitude = ampFilt.process(amplitude);
 		// Calculate output of both oscillators and sum
 		float out = amplitude * 0.5 * (osc[0].process() + osc[1].process());
 
