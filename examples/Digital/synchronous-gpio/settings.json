@@ -1,1 +1,30 @@
-{"fileName":"render.cpp","CLArgs":{"-p":"16","-C":"8","-B":"16","-H":"-6","-N":"1","-G":0,"-M":"0","-D":"0","-A":"0","--pga-gain-left":"10","--pga-gain-right":"10","user":"--disable-cape-button-monitoring","make":"","-X":"0","audioExpander":"0","-Y":"","-Z":"","--disable-led":1}}
+{
+  "fileName": "render.cpp",
+  "CLArgs": {
+    "-p": "16",
+    "-C": "8",
+    "-B": "16",
+    "-N": "1",
+    "-G": 0,
+    "-M": "0",
+    "-D": "0",
+    "-A": "0",
+    "--pga-gain-left": "10",
+    "--pga-gain-right": "10",
+    "user": "--stop-button-pin -1",
+    "make": "",
+    "-X": "0",
+    "audioExpander": "0",
+    "-Y": "",
+    "-Z": "",
+    "--disable-led": 1,
+    "-H0,": "-6",
+    "-H1,": "-6",
+    "-H2,": "-6",
+    "-H3,": "-6",
+    "-H4,": "-6",
+    "-H5,": "-6",
+    "-H6,": "-6",
+    "-H7,": "-6"
+  }
+}
