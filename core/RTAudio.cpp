@@ -31,8 +31,7 @@
 #include "../include/BelaContextFifo.h"
 #include "../include/MiscUtilities.h"
 
-// Xenomai-specific includes
-#include <xenomai/init.h>
+int gXenomaiInited = 0;
 
 #include <pthread.h>
 
@@ -169,7 +168,6 @@ void Bela_HwConfig_delete(BelaHwConfig* cfg)
 // Real-time tasks and objects
 pthread_t gRTAudioThread;
 static pthread_t gFifoThread;
-int gXenomaiInited = 0;
 static const char gRTAudioThreadName[] = "bela-audio";
 static const char gFifoThreadName[] = "bela-audio-fifo";
 
@@ -400,7 +398,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(!settings)
 		return -1;
 	Bela_setVerboseLevel(settings->verbose);
-	// Before we go ahead, let's check if Bela is alreadt running:
+#ifdef __COBALT__
+	// Before we go ahead, let's check if Bela is already running:
 	// check if another real-time thread of the same name is already running.
 	char command[200];
 	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
@@ -411,6 +410,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
 		return -1;
 	}
+#endif // __COBALT__
 	Bela_initRtBackend();
 #ifdef XENOMAI_CATCH_MSW
 	struct sigaction sa;
