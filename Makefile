@@ -478,7 +478,7 @@ build/core/%.o: ./core/%.S
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
-	$(AT) as -o "$@" "$<"
+	$(AT) gcc -c -o "$@" "$<"
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '
@@ -534,7 +534,7 @@ $(PROJECT_DIR)/build/%$(PROJ_INFIX).o: $(PROJECT_DIR)/%.S
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: GCC Assembler'
-	$(AT) as -o "$@" "$<"
+	$(AT) gcc -c -o "$@" "$<"
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '

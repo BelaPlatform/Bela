@@ -1,3 +1,4 @@
+#ifdef __arm__
 @
 @ FormatConvert.S
 @
@@ -202,3 +203,4 @@ float_to_int16_analog_loop:
 
 	bx lr
 	
+#endif // __arm__

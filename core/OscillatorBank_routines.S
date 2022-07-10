@@ -1,3 +1,4 @@
+#ifdef __arm__
 @
 @ audio_routines.S
 @
@@ -159,3 +160,4 @@ oscbank_sample_loop:
 
     pop {r4-r11}
 	bx lr
+#endif // __arm__

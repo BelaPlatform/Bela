@@ -1,3 +1,4 @@
+#ifdef __arm__
 @
 @ audio_routines.S
 @
@@ -183,3 +184,4 @@ wavetable_interpolate_neon:
     @ TODO
 
     bx lr
+#endif // __arm__
