@@ -68,8 +68,10 @@ unsigned int read_fpscr(){
 		"fmrx	%0, fpscr			\n\t"	//r0 = FPSCR
 		: "=r"(r)
 	);
-#endif
 	return r;
+#else // __arm__
+	return 0;
+#endif
 }
 
 int is_runfast(){
