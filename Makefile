@@ -279,13 +279,18 @@ BELA_RT_WRAP_FLAGS?="-DBELA_RT_WRAP(call)=call" -Drt_printf=printf -D rt_fprintf
 BELA_RT_BACKEND_LDLIBS := -lpthread -lrt
 endif
 
-IS_AM572x ?= $(shell grep -q AI /proc/device-tree/model && echo 1 || echo 0)
+IS_TDA4VM ?=$(shell grep -q AI-64 /proc/device-tree/model && echo 1 || echo 0)
+IS_AM572x ?=$(shell grep -v AI-64 /proc/device-tree/model | grep -q AI && echo 1 || echo 0)
 
 #	Flag for using/ not using (UIO+prussdrv)/(RPROC+Mmap)
 ifeq (1,$(strip $(IS_AM572x)))
   ENABLE_PRU_UIO = 0
   ENABLE_PRU_RPROC = 1
   BOARD_COMMON_FLAGS = -DIS_AM572x
+else ifeq (1,$(strip $(IS_TDA4VM)))
+  ENABLE_PRU_UIO = 0
+  ENABLE_PRU_RPROC = 1
+  BOARD_COMMON_FLAGS = -DIS_TDA4VM
 else
   ENABLE_PRU_UIO = 1
   ENABLE_PRU_RPROC = 0

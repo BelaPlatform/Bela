@@ -1,6 +1,17 @@
 #pragma once
 const unsigned int codecI2cAddress = 0x18; // Address of TLV320AIC3104 codec
-#ifdef IS_AM572x
+#if defined(IS_TDA4VM)
+const unsigned int codecI2cBus = 5; // Bus for TLV320AIC3104 codec
+// BELOW: TODO
+const unsigned int kBelaCapeButtonPin = 111; //P9.27
+const unsigned int kAmplifierMutePin = 124; // P8.26
+const unsigned int kSpiDacChipSelectPin = 76; // P9.17
+const unsigned int kSpiAdcChipSelectPin = 209; // P9.15
+// below are for user LED D8 on BBAI
+const unsigned int kUserLedGpioPin = 71;
+const unsigned int kUserLedNumber = 4;
+const char kUserLedDefaultTrigger[] = "netdev";
+#elif defined(IS_AM572x)
 // This assumes BBAI
 const unsigned int codecI2cBus = 3; // Bus for TLV320AIC3104 codec
 const unsigned int kBelaCapeButtonPin = 111; //P9.27
@@ -11,7 +22,7 @@ const unsigned int kSpiAdcChipSelectPin = 209; // P9.15
 const unsigned int kUserLedGpioPin = 71;
 const unsigned int kUserLedNumber = 4;
 const char kUserLedDefaultTrigger[] = "netdev";
-#else // IS_AM572x
+#else
 // This assumes BBB/BBG/PB
 const unsigned int codecI2cBus = 2; // Bus for TLV320AIC3104 codec
 const unsigned int kBelaCapeButtonPin = 115; //P9.27 / P2.34
