@@ -86,6 +86,9 @@ using namespace BelaHwComponent;
 #define PRU_MEM_DIGITAL_BUFFER1_OFFSET 0x400 //Start pointer to DIGITAL_BUFFER1, which is 256 words.
                                          // 256 is the maximum number of frames allowed
 extern int gRTAudioVerbose;
+#ifdef IS_TDA4VM // for some reason, memcpy with mmap'ed PRU memory causes SIGBUS
+#define memcpy(a,b,c) do { for(size_t n = 0; n < c; ++n) { ((char*)a)[n] = ((char*)b)[n]; }} while(0)
+#endif // IS_TDA4VM
 
 class PruMemory
 {
