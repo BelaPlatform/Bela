@@ -68,12 +68,13 @@ inline int task_sleep_ns(long long int timens)
 // got this from xenomai-3/testsuite/latency/latency.c
 inline void setup_sched_parameters(pthread_attr_t *attr, int prio)
 {
-	struct sched_param p;
 	int ret;
 	ret = pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED);
 	if (ret)
 		error(1, ret, "pthread_attr_setinheritsched()");
 
+#ifndef IS_TDA4VM // for some reason, SCHED_FIFO doesn't work at the moment, at least not on "Linux BeagleBone 5.10.120-ti-arm64-r52 #1bullseye SMP PREEMPT Fri Jul 8 16:12:34 UTC 2022 aarch64 GNU/Linux"
+	struct sched_param p;
 	ret = pthread_attr_setschedpolicy(attr, prio ? SCHED_FIFO : SCHED_OTHER);
 	if (ret)
 		error(1, ret, "pthread_attr_setschedpolicy()");
@@ -82,6 +83,7 @@ inline void setup_sched_parameters(pthread_attr_t *attr, int prio)
 	ret = pthread_attr_setschedparam(attr, &p);
 	if (ret)
 		error(1, ret, "pthread_attr_setschedparam()");
+#endif // IS_TDA4VM
 }
 
 inline int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
