@@ -65,7 +65,7 @@ int AuxTaskNonRT::schedule(const void* ptr, size_t size){
 	int ret = BELA_RT_WRAP(sendto(pipeSocket, ptr, size, 0, NULL, 0));
 	if(ret < 0)
 	{
-		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %d)\n", name.c_str(), errno, strerror(errno), size);
+		rt_fprintf(stderr, "Error while sending to pipe from %s: (%d) %s (size: %zu)\n", name.c_str(), errno, strerror(errno), size);
 		return errno;
 	}
 	return 0;
