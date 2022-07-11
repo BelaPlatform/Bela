@@ -31,6 +31,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <vector>
+#include <inttypes.h>
 
 #include <sys/mman.h>
 #include <string.h>
@@ -137,7 +138,7 @@ public:
 			printf("digital: %p %p\n", pruDigitalStart[0], pruDigitalStart[1]);
 			printf("audio: %p %p %p %p\n", pruAudioOutStart[0], pruAudioOutStart[1], pruAudioInStart[0], pruAudioInStart[1]);
 			printf("analog: %p %p %p %p\n", pruAnalogOutStart[0], pruAnalogOutStart[1], pruAnalogInStart[0], pruAnalogInStart[1]);
-			printf("analog offset: %#x %#x %#x %#x\n", pruAnalogOutStart[0] - pruSharedRam, pruAnalogOutStart[1] - pruSharedRam, pruAnalogInStart[0] - pruSharedRam, pruAnalogInStart[1] - pruSharedRam);
+			printf("analog offset: %p %p %p %p\n", (void*)(pruAnalogOutStart[0] - pruSharedRam), (void*)(pruAnalogOutStart[1] - pruSharedRam), (void*)(pruAnalogInStart[0] - pruSharedRam), (void*)(pruAnalogInStart[1] - pruSharedRam));
 		}
 	}
 	void copyFromPru(int buffer)
@@ -797,7 +798,7 @@ int PRU::testPruError()
 	{
 		// only print warnings if we have been running for a while, or forced to do so
 		bool verbose = (context->audioFramesElapsed > 5000) || gRTAudioVerbose;
-		verbose && rt_fprintf(stderr, "audio frame %llu, errorCode: %d\n", context->audioFramesElapsed, errorCode);
+		verbose && rt_fprintf(stderr, "audio frame %" PRIu64 ", errorCode: %d\n", context->audioFramesElapsed, errorCode);
 		int ret;
 		switch(errorCode){
 			case ARM_ERROR_XUNDRUN:

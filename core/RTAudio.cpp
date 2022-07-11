@@ -17,6 +17,7 @@
 #include <string.h>
 #include <strings.h>
 #include <math.h>
+#include <inttypes.h>
 #include <algorithm>
 #include <iostream>
 #include <assert.h>
@@ -335,7 +336,7 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 	long long unsigned int timeNs = timespec_sub(&end, &begin);
 	if(printStats)
 	{
-		printf("frames: %llu\n", context->audioFramesElapsed);
+		printf("frames: %" PRIu64 "\n", context->audioFramesElapsed);
 		printf("wallTime: %llu.%09llus\n", timeNs / kNsInSec, timeNs % kNsInSec);
 		double wallTime = timeNs;
 		double dspTime = context->audioFramesElapsed / context->audioSampleRate * kNsInSec;
@@ -1038,7 +1039,7 @@ void Bela_cpuTic(BelaCpuData* data)
 	data->tic = tic;
 	data->total += diff;
 	data->currentCount++;
-	if(data->count == data->currentCount)
+	if(data->count == int(data->currentCount))
 	{
 		data->percentage = (double(data->busy) / data->total) * 100;
 		data->busy = 0;
