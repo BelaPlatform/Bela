@@ -2,6 +2,27 @@
 
 //#define AUDIO_CAPE // as in: CircuitCo Audio Cape (I _think_: long untested)
 
+#ifdef IS_TDA4VM
+
+//TODO: 0x0 values are TODO
+#define CLOCK_BASE 0x0 // was 0x4A005000
+#define CLOCK_MCASP0 0x0 // was 0x550
+#define CLOCK_MCASP_VALUE 0x7000002
+#define CLOCK_SPI0 0x0
+#define SPI0_BASE 0x0
+#define MCASP0_BASE 0x2B00000 // MCASP0_CFG
+#define MCASP0_DATAPORT 0x2B08000 // MCASP0_DMA
+// the "Firewall" addresses of the above are 45288000h and 45288400h respectively
+#define GPIO0 0x0
+#define GPIO1 0x0
+#define GPIO2 0x0
+#define GPIO3 0x0
+#define GPIO4 0x0
+#define GPIO5 0x0
+#define GPIO6 0x0
+#define GPIO7 0x0
+
+#endif // IS_TDA4VM
 #ifdef IS_AM572x
 
 #define CLOCK_BASE 0x4A005000
@@ -20,7 +41,9 @@
 #define GPIO7 0x48051000
 #define GPIO8 0x48053000
 
-#else // IS_AM572x
+#endif // IS_AM572x
+
+#ifndef CLOCK_BASE // catch all: am3358
 
 #define CLOCK_BASE 0x44E00000
 #define CLOCK_MCASP0 0x34
@@ -34,7 +57,7 @@
 #define GPIO2 0x481AC000
 #define GPIO3 0x481AE000,
 
-#endif // IS_AM572x
+#endif // am3358
 
 // below we select the peripherals and pins we are actually using
 #ifdef IS_AM572x
@@ -57,7 +80,9 @@
 #define MCASP_RBUF MCASP_RBUF10
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 11) // AHCLKX and AXR2 outputs
 
-#else // IS_AM572x
+#endif // IS_AM572x
+
+#ifndef SPI_BASE // catch all: am3358
 
 #define SPI_BASE SPI0_BASE
 #define CLOCK_SPI CLOCK_SPI0
@@ -80,9 +105,12 @@
 #define MCASP_RBUF MCASP_RBUF0
 #define MCASP_OUTPUT_PINS MCASP_PIN_AHCLKX | (1 << 2) // AHCLKX and AXR2 outputs
 
-#endif // IS_AM572x
+#endif // am3358
 
 #ifdef AUDIO_CAPE
+#ifdef IS_TDA4VM
+#error You should define appropriate values for AUDIO_CAPE
+#endif // IS_TDA4VM
 #ifdef IS_AM572x
 #error You should define appropriate values for AUDIO_CAPE
 #else // IS_AM572x
