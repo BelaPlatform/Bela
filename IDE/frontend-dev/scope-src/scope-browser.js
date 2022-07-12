@@ -137,12 +137,22 @@ let legend = {
     for(let n = 0; n < channelConfig.length; ++n)
     {
       let channel = channelConfig[n];
-      console.log(channel);
       let ch = $('<div></div>');
-      // channels are 1-based in the control panel, so we mirror it here
-      let content = '<div data-legend-color-label>' + (n + 1) + '</div>';
-      content += '<div data-legend-color-box style="background-color: ' + channel.color.replace('0x', '#')  + '" />';
-      ch.html(content);
+      // channels are 1-based in the control panel, so we mirror it in the
+      // text here
+      let label = $('<div data-legend-color-label />').text(n + 1);
+      let box = $('<input>');
+      box.attr('type', 'checkbox');
+      box.attr('data-key', 'enabled');
+      box.attr('data-channel', n);
+      box.attr('data-legend-color-box', '');
+      if(channelConfig[n].enabled) {
+        box.attr('checked', 'checked');
+        box.css('background-color', channel.color.replace('0x', '#'));
+      }
+      ch.append(label).append(box);
+
+      $('input', ch).on('input', (e) => channelView.inputChanged($(e.currentTarget), e));
       this.panel.append(ch);
     }
   },
@@ -346,6 +356,8 @@ function CPU(data){
       plot = false;
       ctx.clear();
       for (var i=0; i<numChannels; i++){
+        if(!channelConfig[i].enabled)
+          continue;
         ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
         let iLength = i*length;
         ctx.moveTo(0, frame[iLength] + xOff*(frame[iLength + 1] - frame[iLength]));

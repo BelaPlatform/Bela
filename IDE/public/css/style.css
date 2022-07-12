@@ -2111,10 +2111,32 @@ input[type="range"].scope-range-slider {
   z-index: 1; }
 
 [data-legend-panel] {
+  z-index: 110;
   position: absolute;
   right: 0;
   top: 5px;
   right: 5px; }
+  [data-legend-panel] input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    margin: 0;
+    border: 1px solid black; }
+  [data-legend-panel] input[type="checkbox"]:after {
+    content: ' ';
+    position: relative;
+    left: 40%;
+    top: -50%;
+    width: 60%;
+    height: 110%;
+    border: solid black;
+    border-width: 0 1px 1px 0;
+    -webkit-transform: rotate(50deg);
+            transform: rotate(50deg);
+    display: none; }
+  [data-legend-panel] input[type="checkbox"]:checked:after {
+    display: block; }
 
 [data-legend-color-label] {
   width: 20px;

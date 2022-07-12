@@ -6,6 +6,7 @@ function ChannelConfig(){
   this.yOffset = 0;
   this.color = '0xff0000';
   this.lineWeight = 1.5;
+  this.enabled = 1;
 }
 
 var channelConfig = [new ChannelConfig()];
@@ -27,7 +28,17 @@ class ChannelView extends View{
   inputChanged($element, e){
     var key = $element.data().key;
     var channel = $element.data().channel;
-    var value = (key === 'color') ? $element.val().replace('#', '0x') : parseFloat($element.val());
+    let value;
+    switch (key) {
+      case 'color':
+        value = $element.val().replace('#', '0x');
+        break;
+      case 'enabled':
+        value = $element.prop('checked');
+        break;
+      default:
+        value = parseFloat($element.val());
+    }
     if (!(key === 'color') && isNaN(value)) return;
 	if("yAmplitude" === key || "yAmplitudeSlider" === key) {
 		if("yAmplitudeSlider" === key) {
@@ -86,7 +97,7 @@ class ChannelView extends View{
           .clone(true)
           .prop('class', 'channel-view-'+(channelConfig.length))
           .appendTo($('.control-section.channel'));
-        el.find('h3').html('Channel '+(channelConfig.length));
+        el.find('[data-channel-name]').html('Channel ' + channelConfig.length);
         el.find('input').each(function(){
           $(this).data('channel', channelConfig.length-1)
         });

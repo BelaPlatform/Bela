@@ -558,6 +558,7 @@ function ChannelConfig() {
   this.yOffset = 0;
   this.color = '0xff0000';
   this.lineWeight = 1.5;
+  this.enabled = 1;
 }
 
 var channelConfig = [new ChannelConfig()];
@@ -601,7 +602,17 @@ var ChannelView = function (_View) {
     value: function inputChanged($element, e) {
       var key = $element.data().key;
       var channel = $element.data().channel;
-      var value = key === 'color' ? $element.val().replace('#', '0x') : parseFloat($element.val());
+      var value = void 0;
+      switch (key) {
+        case 'color':
+          value = $element.val().replace('#', '0x');
+          break;
+        case 'enabled':
+          value = $element.prop('checked');
+          break;
+        default:
+          value = parseFloat($element.val());
+      }
       if (!(key === 'color') && isNaN(value)) return;
       if ("yAmplitude" === key || "yAmplitudeSlider" === key) {
         if ("yAmplitudeSlider" === key) {
@@ -706,7 +717,7 @@ var ChannelView = function (_View) {
           channelConfig.push(new ChannelConfig());
           channelConfig[channelConfig.length - 1].color = colours[(channelConfig.length - 1) % colours.length];
           var el = $('.channel-view-0').clone(true).prop('class', 'channel-view-' + channelConfig.length).appendTo($('.control-section.channel'));
-          el.find('h3').html('Channel ' + channelConfig.length);
+          el.find('[data-channel-name]').html('Channel ' + channelConfig.length);
           el.find('input').each(function () {
             $(this).data('channel', channelConfig.length - 1);
           });
@@ -1475,12 +1486,24 @@ var legend = {
     this.panel.empty();
     for (var n = 0; n < channelConfig.length; ++n) {
       var channel = channelConfig[n];
-      console.log(channel);
       var ch = $('<div></div>');
-      // channels are 1-based in the control panel, so we mirror it here
-      var content = '<div data-legend-color-label>' + (n + 1) + '</div>';
-      content += '<div data-legend-color-box style="background-color: ' + channel.color.replace('0x', '#') + '" />';
-      ch.html(content);
+      // channels are 1-based in the control panel, so we mirror it in the
+      // text here
+      var label = $('<div data-legend-color-label />').text(n + 1);
+      var box = $('<input>');
+      box.attr('type', 'checkbox');
+      box.attr('data-key', 'enabled');
+      box.attr('data-channel', n);
+      box.attr('data-legend-color-box', '');
+      if (channelConfig[n].enabled) {
+        box.attr('checked', 'checked');
+        box.css('background-color', channel.color.replace('0x', '#'));
+      }
+      ch.append(label).append(box);
+
+      $('input', ch).on('input', function (e) {
+        return channelView.inputChanged($(e.currentTarget), e);
+      });
       this.panel.append(ch);
     }
   }
@@ -1625,6 +1648,7 @@ function CPU(data) {
       plot = false;
       ctx.clear();
       for (var i = 0; i < numChannels; i++) {
+        if (!channelConfig[i].enabled) continue;
         ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
         var iLength = i * length;
         ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));

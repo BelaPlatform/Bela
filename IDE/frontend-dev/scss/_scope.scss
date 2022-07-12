@@ -260,10 +260,44 @@ input[type="range"].scope-range-slider {
 }
 
 [data-legend-panel] {
+  z-index: 110;
   position: absolute;
   right: 0;
   top: 5px;
   right: 5px;
+  // Why is it so hard to style checkboxes?
+  // Below from https://stackoverflow.com/a/63192288/2958741
+
+  input[type="checkbox"] {
+	// disable default styling
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+	// reinstate pointer
+    cursor: pointer;
+	margin: 0;
+	border: 1px solid black;
+  }
+
+  input[type="checkbox"]:after {
+	// all of this is to create a tick out of two borders which are then
+	// rotated. We make it so that it exceeds the box's container slightly
+	// so we see it even if it's of the same color as the box
+    content: ' ';
+    position: relative;
+    left: 40%;
+    top: -50%;
+    width: 60%;
+    height: 110%;
+    border: solid rgba(0, 0, 0, 1); // tick
+    border-width: 0 1px 1px 0;
+	transform: rotate(50deg);
+    display: none;
+  }
+
+  input[type="checkbox"]:checked:after {
+    display: block;
+  }
 }
 
 [data-legend-color-label] {
