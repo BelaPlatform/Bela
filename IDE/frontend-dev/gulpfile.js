@@ -180,7 +180,7 @@ function startNode(callback){
 
 function rSync(callback, reload){
 
-	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '--exclude=frontend-dev', '--exclude=ide-dev.js', idePath, user+'@'+host+':'+remotePath]);
+	var ssh = spawn('rsync', ['-av', '--delete', '--exclude=settings.json', '--exclude=frontend-dev', '--exclude=ide-dev.js', '--exclude=node_modules', idePath, user+'@'+host+':'+remotePath]);
 
 	ssh.stdout.setEncoding('utf8');
 	ssh.stdout.on('data', function(data){
