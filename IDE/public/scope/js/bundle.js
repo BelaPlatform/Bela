@@ -1646,14 +1646,25 @@ function CPU(data) {
     requestAnimationFrame(plotLoop);
     if (plot) {
       plot = false;
+      console.log(ctx);
       ctx.clear();
+      var minY = 0;
+      var maxY = renderer.height;
       for (var i = 0; i < numChannels; i++) {
         if (!channelConfig[i].enabled) continue;
         ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
         var iLength = i * length;
-        ctx.moveTo(0, frame[iLength] + xOff * (frame[iLength + 1] - frame[iLength]));
+        var constrain = function constrain(v, min, max) {
+          if (v < min) return min;
+          if (v > max) return max;
+          return v;
+        };
+        var curr = constrain(frame[iLength], minY, maxY);
+        var next = constrain(frame[iLength + 1], minY, maxY);
+        ctx.moveTo(0, curr + xOff * (next - curr));
         for (var j = 1; j - xOff < length; j++) {
-          ctx.lineTo(j - xOff, frame[j + iLength]);
+          var _curr = constrain(frame[j + iLength], minY, maxY);
+          ctx.lineTo(j - xOff, _curr);
         }
       }
       renderer.render(stage);
