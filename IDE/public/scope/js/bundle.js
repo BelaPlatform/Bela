@@ -1466,11 +1466,32 @@ controlView.on('settings-event', function (key, value) {
   settings.setKey(key, value);
 });
 
+var legend = {
+  update: function update(channelConfig) {
+    if (!this.panel) {
+      this.panel = $('<div data-legend-panel/>');
+      this.panel.appendTo('body');
+    }
+    this.panel.empty();
+    for (var n = 0; n < channelConfig.length; ++n) {
+      var channel = channelConfig[n];
+      console.log(channel);
+      var ch = $('<div></div>');
+      // channels are 1-based in the control panel, so we mirror it here
+      var content = '<div data-legend-color-label>' + (n + 1) + '</div>';
+      content += '<div data-legend-color-box style="background-color: ' + channel.color.replace('0x', '#') + '" />';
+      ch.html(content);
+      this.panel.append(ch);
+    }
+  }
+};
+
 channelView.on('channelConfig', function (channelConfig) {
   worker.postMessage({
     event: 'channelConfig',
     channelConfig: channelConfig
   });
+  legend.update(channelConfig);
 });
 
 sliderView.on('slider-value', function (slider, value) {

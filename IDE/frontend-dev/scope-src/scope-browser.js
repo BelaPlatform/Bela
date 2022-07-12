@@ -125,11 +125,35 @@ controlView.on('settings-event', (key, value) => {
   settings.setKey(key, value);
 });
 
+
+let legend = {
+  update(channelConfig) {
+    if(!this.panel)
+    {
+      this.panel = $('<div data-legend-panel/>');
+      this.panel.appendTo('body')
+    }
+    this.panel.empty();
+    for(let n = 0; n < channelConfig.length; ++n)
+    {
+      let channel = channelConfig[n];
+      console.log(channel);
+      let ch = $('<div></div>');
+      // channels are 1-based in the control panel, so we mirror it here
+      let content = '<div data-legend-color-label>' + (n + 1) + '</div>';
+      content += '<div data-legend-color-box style="background-color: ' + channel.color.replace('0x', '#')  + '" />';
+      ch.html(content);
+      this.panel.append(ch);
+    }
+  },
+}
+
 channelView.on('channelConfig', (channelConfig) => {
   worker.postMessage({
     event     : 'channelConfig',
     channelConfig
   });
+  legend.update(channelConfig);
 });
 
 sliderView.on('slider-value', (slider, value) => {

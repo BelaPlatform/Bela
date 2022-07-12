@@ -2109,3 +2109,20 @@ input[type="range"].scope-range-slider {
   top: 0;
   width: 100vw;
   z-index: 1; }
+
+[data-legend-panel] {
+  position: absolute;
+  right: 0;
+  top: 5px;
+  right: 5px; }
+
+[data-legend-color-label] {
+  width: 20px;
+  display: inline-block;
+  text-align: right;
+  padding-right: 3px; }
+
+[data-legend-color-box] {
+  width: 12px;
+  height: 12px;
+  display: inline-block; }
