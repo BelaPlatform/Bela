@@ -30,6 +30,7 @@ I2c_Codec::I2c_Codec(int i2cBus, int i2cAddress, CodecType type, bool isVerbose 
 	, running(false)
 	, verbose(isVerbose)
 	, differentialInput(false)
+	, unmutedPowerStage(false)
 	, micBias(2.5)
 	, mode(InitMode_init)
 {
@@ -99,22 +100,19 @@ int I2c_Codec::startAudio(int dummy)
 
 	if(writeRegister(0x0D, 0x00))	// Headset / button press register A: disabled
 		return 1;
-	if(writeRegister(0x0E, 0x00))	// Headset / button press register B: disabled
+	if(writeRegister(0x0E, 0x80))	// Headset / button press register B:: Programs high-power outputs for ac-coupled driver configuration
 		return 1;
 	if(writeRegister(0x25, 0xC0))	// DAC power/driver register: DAC power on (left and right)
 		return 1;
 	if(writeRegister(0x26, 0x04))	// High power output driver register: Enable short circuit protection
 		return 1;
-	if(writeRegister(0x28, 0x02))	// High power output stage register: disable soft stepping
+	if(writeRegister(0x28, 0x00))	// High power output stage register: output soft-stepping disabled. Note: when enabling soft stepping it seems to take much longer than the datasheet would suggest, to the point that it's annoying on startup.
 		return 1;
 
 	if(writeRegister(0x52, 0x80))	// DAC_L1 to LEFT_LOP volume control: routed, volume 0dB
 		return 1;
 	if(writeRegister(0x5C, 0x80))	// DAC_R1 to RIGHT_LOP volume control: routed, volume 0dB
 		return 1;
-	if(writeHPVolumeRegisters())	// Send DAC to high-power outputs
-		return 1;
-
 
 	if(InitMode_noInit != mode) {
 		// see datasehet for TLV320AIC3104 from page 44
@@ -271,13 +269,10 @@ int I2c_Codec::startAudio(int dummy)
 	if(kClockSourceCodec == params.bclk)
 		usleep(10000);
 
-	// note : a small click persists, but it is unavoidable
-	// (i.e.: fading in the hpVolumeHalfDbs after it is turned on does not remove it).
+	// note : a small click persists, but we don't seem to manage to avoid it
+	if(writeHPVolumeRegisters())	// Send DAC to high-power outputs
+		return 1;
 
-	if(writeRegister(0x33, 0x0D))	// HPLOUT output level control: output level = 0dB, not muted, powered up
-		return 1;
-	if(writeRegister(0x41, 0x0D))	// HPROUT output level control: output level = 0dB, not muted, powered up
-		return 1;
 	enableLineOut(true);
 	if(writeDacVolumeRegisters(false))	// Unmute and set volume
 		return 1;
@@ -840,6 +835,45 @@ int I2c_Codec::writeHPVolumeRegisters()
 		if(writeRegister(regs[n], volumeBits | routed))
 			return 1;
 	}
+
+	// See section 3104/10.3.7 Analog High-Power Output Drivers
+	// As per https://e2e.ti.com/support/audio-group/audio/f/audio-forum/967397/tlv320aic3104-tlv320aic3104-pop-noise :
+	// First, configure the clocks/PLL/digital audio format. Once these are all configured, configure input/outputs:
+	// - For the outputs,  make sure that Soft-stepping is enabled, and if any BiQuads are being used, the filter coefficients should be programed before the DAC is powered.
+	// - Power up DACs but keep them muted, then power up output blocks (keeping them muted), once the output block is fully powered up, unmute the output block.
+	// - The HPOUTs have the option to weakly drive the outputs to the common mode voltage when powered down. in battery powered applications, this is not ideal,
+	// but for other applications this is a great way to reduce the any residual artifacts from the pop/click suppression.
+	// - Additionally, if the HPOUTs are AC coupled, make sure that P0, R14 Bit-D7 is set accordingly.
+
+	// NOTE: I cannot obtain/measure much effect from this after the capacitor with an unloaded output.
+	// However, when headphones are connected the pop is significantly reduced
+	// It seems that the write to 0x2A is the most significant in terms of reducing the pop the _first_ time the codec is started after a power up.
+	// With "Driver power-on time" < 200 ms we get more pop.
+	if(writeRegister(0x2A,
+		(0b0111 << 4) // Output Driver Pop Reduction Register: Driver power-on time = 200 ms
+		| (0b11 << 2) // Driver ramp-up step time = 4 ms
+		| (0b1 << 1) // Weakly driven output common-mode voltage is generated from band-gap reference
+	))
+		return 1;
+
+	unsigned int n = unmutedPowerStage ? 1 : 0;
+	for( ; n < 2; ++n)
+	{
+		// First time, power up while muted, then unmute and set gain.
+		// Successive times: unmute and set gain only.
+		bool unmute = n;
+		bool power = true;
+		uint8_t upperHalf = 0x0; // HPxOUT Output level control = 0 dB
+		uint8_t lowerHalf =
+			(unmute << 3)
+			| (0 << 2) // HPLOUT is weakly driven to a common-mode when powered down.
+			| (power << 0);
+		if(writeRegister(0x33, (upperHalf << 4 ) | lowerHalf)) // HPLOUT output level control
+			return 1;
+		if(writeRegister(0x41, (upperHalf << 4 ) | lowerHalf)) // HPROUT output level control
+			return 1;
+	}
+	unmutedPowerStage = true;
 	return 0;
 }
 
@@ -877,6 +911,7 @@ int I2c_Codec::stopAudio()
 		return 1;
 	if(writeRegister(0x41, 0x0C))		// HPROUT output level register: muted
 		return 1;
+	unmutedPowerStage = false;
 	if(enableLineOut(false))
 		return 1;
 	if(InitMode_noInit != mode && InitMode_noDeinit != mode) {

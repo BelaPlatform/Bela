@@ -89,6 +89,7 @@ protected:
 	bool verbose;
 	bool hpEnabled;
 	bool differentialInput;
+        bool unmutedPowerStage;
 	double micBias;
 	typedef enum
 	{
