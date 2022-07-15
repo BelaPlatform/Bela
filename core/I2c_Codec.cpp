@@ -106,7 +106,7 @@ int I2c_Codec::startAudio(int dummy)
 		return 1;
 	if(writeRegister(0x26, 0x04))	// High power output driver register: Enable short circuit protection
 		return 1;
-	if(writeRegister(0x28, 0x00))	// High power output stage register: output soft-stepping disabled. Note: when enabling soft stepping it seems to take much longer than the datasheet would suggest, to the point that it's annoying on startup.
+	if(writeRegister(0x28, 0x02))	// High power output stage register: output soft-stepping disabled. Note: when enabling soft stepping it seems to take much longer than the datasheet would suggest, to the point that it's annoying on startup.
 		return 1;
 
 	if(writeRegister(0x52, 0x80))	// DAC_L1 to LEFT_LOP volume control: routed, volume 0dB
@@ -796,8 +796,7 @@ int I2c_Codec::writeAdcVolumeRegisters(bool mute)
 // Set the volume of the headphone output
 int I2c_Codec::setHpVolume(int channel, float gain)
 {
-	int hd = (int)floorf(gain * 2 + 0.5);
-	if(setByChannel(hpVolumeHalfDbs, channel, hd))
+	if(setByChannel(hpVolume, channel, gain))
 		return 1;
 	hpEnabled = true;
 	if(running)
@@ -814,27 +813,59 @@ int I2c_Codec::enableHpOut(bool enable)
 	return 0;
 }
 
-
-// Update the headphone volume control registers
-int I2c_Codec::writeHPVolumeRegisters()
+int I2c_Codec::writeOutputLevelControlReg(std::array<unsigned char,kNumIoChannels>const & regs, std::array<float,kNumIoChannels>const & volumes, unsigned char lowerHalf)
 {
-	std::array<uint8_t,kNumIoChannels> regs = {{
-		0x2F, // DAC_L1 to HPLOUT
-		0x40, // DAC_R1 to HPROUT
-	}};
-	for(unsigned int n = 0; n < hpVolumeHalfDbs.size(); ++n)
+	for(unsigned int c = 0; c < regs.size(); ++c)
 	{
+		// if olume is positive, we set the boost here
+		float vol = volumes[c];
+		if(vol < 0)
+			vol = 0;
+		if(vol > 9)
+			vol = 9;
+		// boost is 0dB to 9dB
+		uint8_t level = vol; // zxOUT Output level control = y dB
+		if(writeRegister(regs[c], (level << 4 ) | lowerHalf))
+			return 1;
+	}
+	return 0;
+}
+
+int I2c_Codec::writeRoutingVolumeControlReg(std::array<unsigned char,kNumIoChannels>const & regs, std::array<float,kNumIoChannels>const & volumes, bool enabled)
+{
+	for(unsigned int n = 0; n < volumes.size(); ++n)
+	{
+		float vol = volumes[n];
+		// if volume is negative, we set the attenuation here
+		if(vol > 0)
+			vol = 0;
+		// TODO: getHalfDbs() is not quite the correct function here
+		// See 3104/table 10-51 : gains will be off below -18dB
+		int hd = getHalfDbs(vol);
+		// Volume is specified in half-dBs attenuation
+		// with 0 as full scale
 		int volumeBits = 0;
-		int hd = hpVolumeHalfDbs[n];
-		if(hd < 0) { // Volume is specified in half-dBs with 0 as full scale
+		if(hd < 0) {
 			volumeBits = -hd;
 			if(volumeBits > 127)
 				volumeBits = 127;
 		}
-		uint8_t routed = hpEnabled << 7; // DAC_x routed to HPxOUT ?
+		uint8_t routed = enabled << 7; // DAC_x routed to xxOUT ?
 		if(writeRegister(regs[n], volumeBits | routed))
 			return 1;
 	}
+	return 0;
+}
+
+// Update the headphone volume control registers
+int I2c_Codec::writeHPVolumeRegisters()
+{
+	static const std::array<uint8_t,kNumIoChannels> regs = {{
+		0x2F, // DAC_L1 to HPLOUT
+		0x40, // DAC_R1 to HPROUT
+	}};
+	if(writeRoutingVolumeControlReg(regs, hpVolume, hpEnabled))
+		return 1;
 
 	// See section 3104/10.3.7 Analog High-Power Output Drivers
 	// As per https://e2e.ti.com/support/audio-group/audio/f/audio-forum/967397/tlv320aic3104-tlv320aic3104-pop-noise :
@@ -863,14 +894,15 @@ int I2c_Codec::writeHPVolumeRegisters()
 		// Successive times: unmute and set gain only.
 		bool unmute = n;
 		bool power = true;
-		uint8_t upperHalf = 0x0; // HPxOUT Output level control = 0 dB
 		uint8_t lowerHalf =
 			(unmute << 3)
 			| (0 << 2) // HPLOUT is weakly driven to a common-mode when powered down.
 			| (power << 0);
-		if(writeRegister(0x33, (upperHalf << 4 ) | lowerHalf)) // HPLOUT output level control
-			return 1;
-		if(writeRegister(0x41, (upperHalf << 4 ) | lowerHalf)) // HPROUT output level control
+		static const std::array<unsigned char,kNumIoChannels> regs = {{
+			0x33, // HPLOUT output level control register
+			0x41, // HPROUT output level control register
+		}};
+		if(writeOutputLevelControlReg(regs, hpVolume, lowerHalf))
 			return 1;
 	}
 	unmutedPowerStage = true;

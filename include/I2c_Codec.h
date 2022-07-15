@@ -76,20 +76,22 @@ private:
 	enum {kNumIoChannels = 2};
 	int writeDacVolumeRegisters(bool mute);
 	int writeAdcVolumeRegisters(bool mute);
+	int writeOutputLevelControlReg(std::array<unsigned char,kNumIoChannels> const & regs, std::array<float,kNumIoChannels> const & volumes, unsigned char lowerHalf);
+	int writeRoutingVolumeControlReg(std::array<unsigned char,kNumIoChannels>const & regs, std::array<float,kNumIoChannels>const & volumes, bool enabled);
 	int writeHPVolumeRegisters();
 protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
 	std::array<int,kNumIoChannels> dacVolumeHalfDbs{};
 	std::array<int,kNumIoChannels> adcVolumeHalfDbs{};
-	std::array<int,kNumIoChannels> hpVolumeHalfDbs{};
+	std::array<float,kNumIoChannels> hpVolume{};
 	AudioCodecParams params;
 	McaspConfig mcaspConfig;
 	bool running;
 	bool verbose;
 	bool hpEnabled;
 	bool differentialInput;
-        bool unmutedPowerStage;
+	bool unmutedPowerStage;
 	double micBias;
 	typedef enum
 	{
