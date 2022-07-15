@@ -640,29 +640,53 @@ float I2c_Codec::getAudioSamplingRate(){
 	return fs;
 }
 
+static int getHalfDbs(float gain)
+{
+	return floorf(gain * 2.0 + 0.5);
+}
+
 int I2c_Codec::setInputGain(int channel, float gain){
 	const uint8_t regLeft = 0x0F;
 	const uint8_t regRight = 0x10;
 	std::vector<uint8_t> regs;
 	if(0 == channel)
+	{
 		regs = {regLeft};
+		inputGain[0] = gain;
+	}
 	else if(1 == channel)
+	{
 		regs = {regRight};
+		inputGain[1] = gain;
+	}
 	else if(channel < 0)
+	{
 		regs = {{regLeft, regRight}}; // both channels
-	if(gain > 59.5)
-		return 2; // error, gain out of range
-	unsigned short int value;
-	if(gain < 0)
-		value = 0b10000000; // PGA is muted
-	else {
-		// gain is adjustable from 0 to 59.5dB in steps of 0.5dB between 0x0 and 0x7f.
-		// Values between 0b01110111 and 0b01111111 are clipped to 59.5dB
-		value = (int)(gain * 2 + 0.5) & 0x7f;
+		inputGain[0] = inputGain[1] = gain;
+	}
+	unsigned short int pgaByte;
+	if(gain <= -96) {
+		// we consider this a mute. The "-96" threshold is pretty
+		// arbitrary, not related to the codec
+		pgaByte = 0b10000000; // PGA is muted
+	} else {
+		if(gain < 0) {
+			// PGA at 0dB, further attenuation provided by the "ADC volume"
+			gain = 0;
+		}
+		// gain is adjustable from 0 to 59.5dB in steps of 0.5dB
+		// between 0x0 and 0x7f.
+		if(gain > 59.5)
+			gain = 59.5; // can't do more than this
+		// Values between 0b01110111 and 0b01111111 are clipped
+		// to 59.5dB
+		pgaByte = (int)(getHalfDbs(gain)) & 0x7f;
 	}
 	int ret = 0;
 	for(auto& reg : regs)
-		ret |=  writeRegister(reg, value);
+		ret |=  writeRegister(reg, pgaByte);
+	if(writeAdcVolumeRegisters(false)) // set "ADC volume"
+		return 1;
 	return ret;
 }
 
@@ -683,11 +707,6 @@ static int setByChannel(T& dest, const int channel, U val)
 	return 0;
 }
 
-static int getHalfDbs(float gain)
-{
-	return floorf(gain * 2.0 + 0.5);
-}
-
 // Set the volume of the DAC output
 int I2c_Codec::setDacVolume(int channel, float gain)
 {
@@ -695,16 +714,6 @@ int I2c_Codec::setDacVolume(int channel, float gain)
 		return 1;
 	if(running)
 		return writeDacVolumeRegisters(false);
-	return 0;
-}
-
-// Set the volume of the ADC input
-int I2c_Codec::setAdcVolume(int channel, float gain)
-{
-	if(setByChannel(adcVolumeHalfDbs, channel, getHalfDbs(gain)))
-		return 1;
-	if(running)
-		return writeAdcVolumeRegisters(false);
 	return 0;
 }
 
@@ -736,15 +745,15 @@ int I2c_Codec::writeDacVolumeRegisters(bool mute)
 int I2c_Codec::writeAdcVolumeRegisters(bool mute)
 {
 	std::array<int,kNumIoChannels> volumeBits{};
-	// Volume is specified in half-dBs with 0 as full scale
-	// The codec uses 1.5dB steps so we divide this number by 3
 	for(unsigned int n = 0; n < volumeBits.size(); ++n)
 	{
-		if(adcVolumeHalfDbs[n] < 0) {
-			volumeBits[n] = -adcVolumeHalfDbs[n] / 3;
-			if(volumeBits[n] > 8)
-				volumeBits[n] = 8;
-		}
+		// The codec uses 1.5dB steps from 0dB to -12dB
+		float gain = inputGain[n];
+		if(gain > 0)
+			gain = 0;
+		volumeBits[n] = -gain / 1.5;
+		if(volumeBits[n] > 8)
+			volumeBits[n] = 8;
 	}
 
 	if(mute) {

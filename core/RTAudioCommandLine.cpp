@@ -29,7 +29,6 @@ extern const float BELA_INVALID_GAIN = 999999;
 // whether it's the first time that Bela_getopt_long is run
 static bool gFirstRun = 1;
 
-static bool parseAdcLevels(const char* arg, BelaInitSettings* settings);
 static bool parseLineOutLevels(const char* arg, BelaInitSettings* settings);
 static bool parseAudioInputGains(const char *arg, BelaInitSettings *settings);
 static bool parseHeadphoneLevels(const char *arg, BelaInitSettings *settings);
@@ -68,9 +67,9 @@ struct option gDefaultLongOptions[] =
 
 const char gDefaultShortOptions[] = "p:vN:M:C:D:A:I:H:G:B:X:Y:Z:";
 
-static void deprecatedWarning(const char* call, const char* newOne)
+static void deprecatedWarning(const char* call, const char* newOne, bool ignored = false)
 {
-	std::cerr << "Warning: " << call << " is deprecated. Use " << newOne << " instead\n";
+	std::cerr << "Warning: " << call << " is deprecated" << (ignored ? " and IGNORED" : "") << ". Use " << newOne << " instead\n";
 }
 
 BelaInitSettings* Bela_InitSettings_alloc()
@@ -108,7 +107,6 @@ void Bela_defaultSettings(BelaInitSettings *settings)
 	settings->headphoneLevel = BELA_INVALID_GAIN;
 	parseAudioInputGains("", settings);
 	parseHeadphoneLevels("", settings);
-	parseAdcLevels("", settings);
 	parseLineOutLevels("", settings);
 	settings->numMuxChannels = 0;
 	settings->audioExpanderInputs = 0;
@@ -294,7 +292,7 @@ int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptio
 			parseLineOutLevels(optarg, settings);
 			break;
 		case 'A':
-			parseAdcLevels(optarg, settings);
+			deprecatedWarning("-A/--adc-level", "--audio-input-gain", true);
 			break;
 		case 'H':
 			if(!parseHeadphoneLevels(optarg, settings))
@@ -366,7 +364,7 @@ void Bela_usage()
 {
 	std::cerr << "   --period [-p] period:               Set the hardware period (buffer) size in audio samples\n";
 	std::cerr << "   --line-out-level [-D] dBs: changains Set the line output level\n";
-	std::cerr << "   --adc-level [-A] dBs: changains     Set the ADC input level (0dB max; -12dB min)\n";
+	std::cerr << "   --adc-level [-A] dBs: changains     Set the ADC input level (0dB max; -12dB min). DEPRECATED: use --audio-input-gain instead\n";
 	std::cerr << "   --pga-gain-left dBs:                Set the Programmable Gain Amplifier for the left audio channel (0dBmin; 59.5dB max; default: " << DEFAULT_PGA_GAIN << " dB). DEPRECATED: use --audio-input-gain instead\n";
 	std::cerr << "   --pga-gain-right dBs:               Set the Programmable Gain Amplifier for the right audio channel (0dBmin; 59.5dB max; default:" << DEFAULT_PGA_GAIN << " dB). DEPRECATED: Use --audio-input-gain instead\n";
 	std::cerr << "   --audio-input-gain [-I] changains:  Set the gain for the specified audio input channels (gain: 0dB min; 59.5dB max); default: " << DEFAULT_PGA_GAIN << " dB)\n";
@@ -458,12 +456,6 @@ static bool parseChannelGainPairs(BelaChannelGainArray& cga, std::vector<BelaCha
 	cga.length = vec.size();
 	cga.data = vec.data();
 	return true;
-}
-
-static bool parseAdcLevels(const char* arg, BelaInitSettings* settings)
-{
-	static std::vector<BelaChannelGain> cg = {{ .channel = -1, .gain = DEFAULT_ADC_LEVEL, }};
-	return parseChannelGainPairs(settings->adcGains, cg, arg);
 }
 
 static bool parseLineOutLevels(const char* arg, BelaInitSettings* settings)

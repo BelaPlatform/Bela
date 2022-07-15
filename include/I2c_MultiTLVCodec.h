@@ -35,7 +35,6 @@ public:
 
 	int setInputGain(int channel, float newGain);
 	int setLineOutVolume(int channel, float gain);
-	int setAdcVolume(int channel, float gain);
 	int setHpVolume(int channel, float gain);
 	int disable();
 	int reset();

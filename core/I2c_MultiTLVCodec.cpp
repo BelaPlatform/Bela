@@ -230,12 +230,6 @@ int I2c_MultiTLVCodec::setLineOutVolume(int channel, float gain)
 	return 0;
 }
 
-int I2c_MultiTLVCodec::setAdcVolume(int channel, float gain)
-{
-	FOR_CODEC_CHANNEL_DO(setAdcVolume(channel, gain));
-	return 0;
-}
-
 int I2c_MultiTLVCodec::setHpVolume(int channel, float gain)
 {
 	FOR_CODEC_CHANNEL_DO(setHpVolume(channel, gain));

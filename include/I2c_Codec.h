@@ -58,7 +58,6 @@ public:
 	float getAudioSamplingRate();
 	int setInputGain(int channel, float gain);
 	int setDacVolume(int channel, float gain);
-	int setAdcVolume(int channel, float gain);
 	int setHpVolume(int channel, float gain);
 	int setLineOutVolume(int channel, float gain);
 	int enableHpOut(bool enable);
@@ -85,7 +84,7 @@ protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
 	std::array<int,kNumIoChannels> dacVolumeHalfDbs{};
-	std::array<int,kNumIoChannels> adcVolumeHalfDbs{};
+	std::array<float,kNumIoChannels> inputGain{};
 	std::array<float,kNumIoChannels> hpVolume{};
 	std::array<float,kNumIoChannels> lineOutVolume{};
 	AudioCodecParams params;

@@ -1175,7 +1175,7 @@ int Bela_setAdcLevel(int channel, float decibels)
 {
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setAdcVolume(channel, decibels);
+	return gAudioCodec->setInputGain(channel, decibels);
 }
 
 // Set the level of the Programmable Gain Amplifier
@@ -1193,7 +1193,6 @@ int Bela_setAudioInputGain(int channel, float decibels){
 
 // Set the level of the onboard headphone amplifier; affects headphone
 // output only (not line out or speaker)
-// 0dB is the maximum, -63.5dB is the minimum; 0.5dB steps
 int Bela_setHpLevel(int channel, float decibels)
 {
 	if(gAudioCodec == 0)

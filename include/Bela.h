@@ -27,10 +27,20 @@
 #ifndef BELA_H_
 #define BELA_H_
 #define BELA_MAJOR_VERSION 1
-#define BELA_MINOR_VERSION 12
+#define BELA_MINOR_VERSION 13
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.13.0
+// - added Bela_setLineOutLevel() which replaces Bela_setDacLevel() (though
+// with different semantics).
+// - in BelaInitSettings, dacGains is _replaced_ by lineOutGains
+// - replaced --dac-level with --line-out-level, -D now means --line-out-level
+// - replaced DEFAULT_DAC_LEVEL with DEFAULT_LINE_OUT_LEVEL
+// - removed setAdcLevel(): use setAudioInputGain() instead
+// - removed -A/--adc-gain, now ignored (non-bw-compatible)
+// - removed DEFAULT_ADC_LEVEL
+// - deprecated Bela_setDacLevel()
 // 1.12.0
 // - added Bela_cpuTic(), Bela_cpuToc(), Bela_cpuMonitoringInit(),
 // Bela_cpuMonitoringGet() and BelaCpuData.
@@ -175,12 +185,6 @@ typedef enum
  * Default level of the line out in decibels. See Bela_setLineOutLevel().
  */
 #define DEFAULT_LINE_OUT_LEVEL	0.0
-
-/**
- * Default level of the audio ADC in decibels. See Bela_setADCLevel().
- */
-#define DEFAULT_ADC_LEVEL	0.0
-
 
 /**
  * Default level of the Programmable Gain Amplifier in decibels.
@@ -458,7 +462,7 @@ typedef struct {
 	int beginMuted;
 	/// Level for the audio DAC output. DEPRECATED: ues lineOutGains
 	float dacLevel;
-	/// Level for the audio ADC input. DEPRECATED: use adcGains
+	/// Level for the audio ADC input. DEPRECATED: use audioInputGains
 	float adcLevel;
 	/// Gains for the PGA, left and right channels. DEPRECATED: use audioInputGains
 	float pgaGain[2];
@@ -528,7 +532,7 @@ typedef struct {
 	struct BelaChannelGainArray audioInputGains;
 	/// level for headphone outputs
 	struct BelaChannelGainArray headphoneGains;
-	/// Level for the audio ADC input
+	/// Level for the audio ADC input DEPRECATED: use audioInputGains
 	struct BelaChannelGainArray adcGains;
 	/// Level for the audio line level output
 	struct BelaChannelGainArray lineOutGains;

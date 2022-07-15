@@ -55,7 +55,6 @@ public:
 	bool masterIsDetected(); // CTAG face2|4
 	bool slaveIsDetected();  // CTAG Beast
 	int setLineOutVolume(int channel, float gain);
-	int setAdcVolume(int channel, float gain) { return 0; };
 	int setHpVolume(int channel, float gain) { return 0; };
 	int setInputGain(int channel, float newGain) { return 0; };
 	int disable() {return 0;};

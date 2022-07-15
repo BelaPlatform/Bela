@@ -38,7 +38,6 @@ public:
 	virtual float getSampleRate() = 0;
 	virtual int setInputGain(int channel, float newGain) = 0;
 	virtual int setLineOutVolume(int channel, float gain) = 0;
-	virtual int setAdcVolume(int channel, float gain) = 0;
 	virtual int setHpVolume(int channel, float gain) = 0;
 	virtual int disable() = 0;
 	virtual int reset() = 0;
