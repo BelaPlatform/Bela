@@ -85,7 +85,7 @@ bool setup(BelaContext *context, void *userData)
 	// set the format that you want to use for your output.
 	// Please use %f only (with modifiers).
 	// When in binary mode, this is used only for echoing to console
-	file1.setFormat("binary: %.4f %.4f\n");
+	file1.setFormat("binary: %.4f %.4f %.4f %.4f\n");
 
 	file2.setup("out.m"); //set the file name to write to
 	file2.setHeader("myvar=[\n"); //set one or more lines to be printed at the beginning of the file
