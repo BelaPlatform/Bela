@@ -60,6 +60,7 @@ public:
 	int setDacVolume(int channel, float gain);
 	int setAdcVolume(int channel, float gain);
 	int setHpVolume(int channel, float gain);
+	int setLineOutVolume(int channel, float gain);
 	int enableHpOut(bool enable);
 	int enableLineOut(bool enable);
 	int disable();
@@ -77,19 +78,22 @@ private:
 	int writeDacVolumeRegisters(bool mute);
 	int writeAdcVolumeRegisters(bool mute);
 	int writeOutputLevelControlReg(std::array<unsigned char,kNumIoChannels> const & regs, std::array<float,kNumIoChannels> const & volumes, unsigned char lowerHalf);
-	int writeRoutingVolumeControlReg(std::array<unsigned char,kNumIoChannels>const & regs, std::array<float,kNumIoChannels>const & volumes, bool enabled);
+	int writeRoutingVolumeControlReg(std::array<unsigned char,kNumIoChannels> const & regs, std::array<float,kNumIoChannels>const & volumes, bool enabled);
 	int writeHPVolumeRegisters();
+	int writeLineOutVolumeRegisters();
 protected:
 	int configureDCRemovalIIR(bool enable); //called by startAudio()
 	int codecType;
 	std::array<int,kNumIoChannels> dacVolumeHalfDbs{};
 	std::array<int,kNumIoChannels> adcVolumeHalfDbs{};
 	std::array<float,kNumIoChannels> hpVolume{};
+	std::array<float,kNumIoChannels> lineOutVolume{};
 	AudioCodecParams params;
 	McaspConfig mcaspConfig;
 	bool running;
 	bool verbose;
-	bool hpEnabled;
+	bool hpEnabled = true;
+	bool lineOutEnabled = true;
 	bool differentialInput;
 	bool unmutedPowerStage;
 	double micBias;

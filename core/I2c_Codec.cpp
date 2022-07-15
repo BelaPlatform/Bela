@@ -109,11 +109,6 @@ int I2c_Codec::startAudio(int dummy)
 	if(writeRegister(0x28, 0x02))	// High power output stage register: output soft-stepping disabled. Note: when enabling soft stepping it seems to take much longer than the datasheet would suggest, to the point that it's annoying on startup.
 		return 1;
 
-	if(writeRegister(0x52, 0x80))	// DAC_L1 to LEFT_LOP volume control: routed, volume 0dB
-		return 1;
-	if(writeRegister(0x5C, 0x80))	// DAC_R1 to RIGHT_LOP volume control: routed, volume 0dB
-		return 1;
-
 	if(InitMode_noInit != mode) {
 		// see datasehet for TLV320AIC3104 from page 44
 		if(pllEnabled) {
@@ -272,8 +267,8 @@ int I2c_Codec::startAudio(int dummy)
 	// note : a small click persists, but we don't seem to manage to avoid it
 	if(writeHPVolumeRegisters())	// Send DAC to high-power outputs
 		return 1;
-
-	enableLineOut(true);
+	if(writeLineOutVolumeRegisters())
+		return 1;
 	if(writeDacVolumeRegisters(false))	// Unmute and set volume
 		return 1;
 
@@ -909,22 +904,45 @@ int I2c_Codec::writeHPVolumeRegisters()
 	return 0;
 }
 
+// Set the volume of the line output
+int I2c_Codec::setLineOutVolume(int channel, float gain)
+{
+	if(setByChannel(lineOutVolume, channel, gain))
+		return 1;
+	lineOutEnabled = true;
+	if(running)
+		return writeLineOutVolumeRegisters();
+
+	return 0;
+}
+
 int I2c_Codec::enableLineOut(bool enable)
 {
-	char value;
-	if(enable)
-	{
-		// output level control: 0dB, not muted, powered up
-		value = 0x09;
-	} else {
-		// output level control: muted
-		value = 0x08;
-	}
-	// LEFT_LOP
-	if(writeRegister(0x56, value))
+	lineOutEnabled = enable;
+	if(running)
+		return writeLineOutVolumeRegisters();
+	return 0;
+}
+
+int I2c_Codec::writeLineOutVolumeRegisters()
+{
+	static const std::array<unsigned char,kNumIoChannels> regs = {{
+		0x52, // DAC_L1 to LEFT_LOP volume control
+		0x5C, // DAC_R1 to RIGHT_LOP volume control
+	}};
+	if(writeRoutingVolumeControlReg(regs, lineOutVolume, lineOutEnabled))
 		return 1;
-	// RIGHT_LOP
-	if(writeRegister(0x5D, value))
+
+	bool power = true;
+	bool unmute = lineOutEnabled;
+	uint8_t lowerHalf =
+		(unmute << 3)
+		| (power << 0);
+	static const std::array<unsigned char,kNumIoChannels> regsl = {{
+		0x56, // LEFT_LOP/M Output Level Control Register
+		0x5D, // RIGHT_LOP/M Output Level Control Registe
+	}};
+	if(writeOutputLevelControlReg(regsl, lineOutVolume, lowerHalf))
 		return 1;
 	return 0;
 }
