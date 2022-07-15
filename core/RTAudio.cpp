@@ -757,9 +757,9 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(setChannelGains(settings->headphoneGains, Bela_setHpLevel))
 		if(gRTAudioVerbose)
 			printf("Setting audio headphone gains: channels out of range\n");
-	if(setChannelGains(settings->dacGains, Bela_setDacLevel))
+	if(setChannelGains(settings->lineOutGains, Bela_setLineOutLevel))
 		if(gRTAudioVerbose)
-			printf("Setting audio dac gains: channels out of range\n");
+			printf("Setting audio line out gains: channels out of range\n");
 	if(setChannelGains(settings->adcGains, Bela_setAdcLevel))
 		if(gRTAudioVerbose)
 			printf("Setting audio adc gains: channels out of range\n");
@@ -1154,9 +1154,14 @@ int Bela_setDACLevel(float decibels)
 
 int Bela_setDacLevel(int channel, float decibels)
 {
+	return Bela_setLineOutLevel(channel, decibels);
+}
+
+int Bela_setLineOutLevel(int channel, float decibels)
+{
 	if(gAudioCodec == 0)
 		return -1;
-	return gAudioCodec->setDacVolume(channel, decibels);
+	return gAudioCodec->setLineOutVolume(channel, decibels);
 }
 
 // Set the level of the ADC

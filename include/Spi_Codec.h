@@ -54,7 +54,7 @@ public:
 	int reset(); // Hard reset of codec(s)
 	bool masterIsDetected(); // CTAG face2|4
 	bool slaveIsDetected();  // CTAG Beast
-	int setDacVolume(int channel, float gain);
+	int setLineOutVolume(int channel, float gain);
 	int setAdcVolume(int channel, float gain) { return 0; };
 	int setHpVolume(int channel, float gain) { return 0; };
 	int setInputGain(int channel, float newGain) { return 0; };

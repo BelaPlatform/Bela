@@ -172,9 +172,9 @@ typedef enum
  */
 
 /**
- * Default level of the audio DAC in decibels. See Bela_setDACLevel().
+ * Default level of the line out in decibels. See Bela_setLineOutLevel().
  */
-#define DEFAULT_DAC_LEVEL	0.0
+#define DEFAULT_LINE_OUT_LEVEL	0.0
 
 /**
  * Default level of the audio ADC in decibels. See Bela_setADCLevel().
@@ -456,7 +456,7 @@ typedef struct {
 
 	/// Whether to begin with the speakers muted
 	int beginMuted;
-	/// Level for the audio DAC output. DEPRECATED: ues dacGains
+	/// Level for the audio DAC output. DEPRECATED: ues lineOutGains
 	float dacLevel;
 	/// Level for the audio ADC input. DEPRECATED: use adcGains
 	float adcLevel;
@@ -530,8 +530,8 @@ typedef struct {
 	struct BelaChannelGainArray headphoneGains;
 	/// Level for the audio ADC input
 	struct BelaChannelGainArray adcGains;
-	/// Level for the audio DAC output
-	struct BelaChannelGainArray dacGains;
+	/// Level for the audio line level output
+	struct BelaChannelGainArray lineOutGains;
 
 	char unused[MAX_UNUSED_LENGTH];
 
@@ -911,19 +911,24 @@ void Bela_cpuToc(BelaCpuData* data);
 // *** Volume and level controls ***
 
 /**
- * \brief Set the level of the audio DAC.
- *
- * This function sets the level of all audio outputs (headphone, line, speaker). It does
- * not affect the level of the (non-audio) analog outputs.
+ * \brief Set the level of the audio line out.
  *
  * \b Important: do not call this function from within render(), as it does not make
  * any guarantees on real-time performance.
  *
  * \param channel The channel to set. Use a negative value to set all channels.
- * \param decibels Level of the DAC output. Valid levels range from -63.5 (lowest) to
- * 0 (highest) in steps of 0.5dB. Levels between increments of 0.5 will be rounded down.
+ * \param decibels Level of the line output. Valid values will depend on the codec in use.
  *
  * \return 0 on success, or nonzero if an error occurred.
+ */
+int Bela_setLineOutLevel(int channel, float decibel);
+
+/**
+ * \brief Set the level of the audio DAC.
+ *
+ * DEPRECATED.
+ *
+ * Use `Bela_setLineOutLevel()` instead.
  */
 int Bela_setDacLevel(int channel, float decibels);
 

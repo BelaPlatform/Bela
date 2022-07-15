@@ -34,7 +34,7 @@ public:
 	float getSampleRate();
 
 	int setInputGain(int channel, float newGain);
-	int setDacVolume(int channel, float gain);
+	int setLineOutVolume(int channel, float gain);
 	int setAdcVolume(int channel, float gain);
 	int setHpVolume(int channel, float gain);
 	int disable();

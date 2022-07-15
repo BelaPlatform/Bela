@@ -191,7 +191,7 @@ int Spi_Codec::stopAudio(){
 	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x9D);
 }
 
-int Spi_Codec::setDacVolume(const int channel, float gain) {
+int Spi_Codec::setLineOutVolume(const int channel, float gain) {
 	if(channel >= int(_dacVolumethreeEighthsDbs.size()))
 		return 1;
 	// Calculcate volume from gain dB in 3/8 dB steps und cast to int
