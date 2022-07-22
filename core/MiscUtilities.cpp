@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <sys/stat.h> // mkdir, stat
 
 using namespace StringUtils;
 using namespace IoUtils;
@@ -56,10 +57,24 @@ std::vector<char*> makeArgv(std::vector<std::string>& strings)
 namespace IoUtils
 {
 
+bool pathExists(const std::string& path)
+{
+	// https://www.systutorials.com/how-to-test-a-file-or-directory-exists-in-c/
+	struct stat buffer;
+	return (stat (path.c_str(), &buffer) == 0);
+}
+
 std::ofstream openOutput(const std::string& path, Mode mode)
 {
 	std::ofstream outputFile;
-	system(("bash -c \"mkdir -p `dirname "+path+"`\"").c_str());
+	std::vector<std::string> tokens = split(path, '/');
+	std::string dir = "";
+	for(size_t n = 0; n < tokens.size() - 1; ++n) // all but the last one
+		dir += tokens[n] + "/";
+	if(dir.size() && !pathExists(dir)) {
+		if(mkdir(dir.c_str(), 0777)) // First use of octal in C!
+			return std::ofstream(); // or throw?
+	}
 	std::ios_base::openmode openmode;
 	switch(mode) {
 		case APPEND:

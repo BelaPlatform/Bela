@@ -41,6 +41,10 @@ namespace IoUtils
 		TRUNCATE, ///<When opening a file for writing, truncate the existing content of the file.
 	} Mode;
 	/**
+	 * Check if path exists.
+	 */
+	bool pathExists(const std::string& path);
+	/**
 	 * Open a file for output.
 	 */
 	std::ofstream openOutput(const std::string& path, Mode mode = TRUNCATE);
