@@ -37,7 +37,7 @@ public:
 	int initCodec();
 	int setParameters(const AudioCodecParams& codecParams);
 	AudioCodecParams getParameters();
-	int startAudio(int dummy);
+	int startAudio(int shouldBeReady);
 	int stopAudio();
 	unsigned int getNumIns();
 	unsigned int getNumOuts();

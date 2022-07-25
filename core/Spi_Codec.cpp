@@ -181,9 +181,10 @@ int Spi_Codec::initCodec(){
 	return 0;
 }
 
-int Spi_Codec::startAudio(int dummy_parameter){
+int Spi_Codec::startAudio(int shouldBeReady){
 	// Enable PLL
 	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x9C);
+	// TODO: wait till we are ready
 }
 
 int Spi_Codec::stopAudio(){

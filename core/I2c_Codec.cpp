@@ -66,7 +66,7 @@ int I2c_Codec::initCodec()
 
 // Tell the codec to start generating audio
 // See the TLV320AIC3106 datasheet for full details of the registers
-int I2c_Codec::startAudio(int dummy)
+int I2c_Codec::startAudio(int shouldBeReady)
 {
 	if(verbose)
 		getParameters().print();
@@ -275,6 +275,34 @@ int I2c_Codec::startAudio(int dummy)
 	if(writeAdcVolumeRegisters(false))	// Unmute and set ADC volume
 		return 1;
 
+	if(shouldBeReady)
+	{
+		// let's not continue till the output is actually ready
+		// before we start rendering audio
+		bool ready = false;
+		for(unsigned int n = 0; n < 50; ++n)
+		{
+			int reg = 0x41; // HPROUT output level control register
+			int ret = readRegister(reg);
+			if(ret < 0)
+				return -1;
+			const int mask = 0b1011; // unmuted, all gains applied, fully powered up
+			if((ret & mask) != mask)
+			{
+				usleep(10000);
+				verbose && fprintf(stderr, "Polling for unmute: %x\n", ret & mask);
+			}
+			else {
+				ready = true;
+				break;
+			}
+		}
+		if(!ready)
+		{
+			fprintf(stderr, "Codec did not unmute\n");
+			return -1;
+		}
+	}
 	running = true;
 	return 0;
 }

@@ -185,9 +185,13 @@ int I2c_MultiTLVCodec::initCodec()
 }
 
 // Tell the codec to start generating audio
-int I2c_MultiTLVCodec::startAudio(int dual_rate)
+int I2c_MultiTLVCodec::startAudio(int shouldBeReady)
 {
-	FOR_EACH_CODEC_DO(startAudio(dual_rate));
+	// do all codecs, but the last one needs to wait till ready
+	int ret;
+	for(size_t n = 0; n < codecs.size(); ++n)
+		if((ret = codecs[n]->startAudio(shouldBeReady && codecs.size() - 1 == n)))
+			return ret;
 	running = true;
 	return 0;
 }

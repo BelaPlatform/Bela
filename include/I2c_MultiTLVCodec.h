@@ -27,7 +27,7 @@ public:
 		unsigned int firstSlot = 0;
 	};
 	int initCodec();
-	int startAudio(int dual_rate);
+	int startAudio(int shouldBeReady);
 	int stopAudio();
 	unsigned int getNumIns();
 	unsigned int getNumOuts();

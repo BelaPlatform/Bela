@@ -31,7 +31,7 @@ class AudioCodec
 public:
 	virtual ~AudioCodec() {};
 	virtual int initCodec() = 0;
-	virtual int startAudio(int parameter) = 0;
+	virtual int startAudio(int shouldBeReady) = 0;
 	virtual int stopAudio() = 0;
 	virtual unsigned int getNumIns() = 0;
 	virtual unsigned int getNumOuts() = 0;

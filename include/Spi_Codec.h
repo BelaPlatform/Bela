@@ -45,7 +45,7 @@ public:
 	unsigned char readRegister(unsigned char reg, CODEC_TYPE codec = MASTER_CODEC);
 
 	int initCodec();
-	int startAudio(int dummy_parameter = 0);
+	int startAudio(int shouldBeReady);
 	int stopAudio();
 	unsigned int getNumIns();
 	unsigned int getNumOuts();
