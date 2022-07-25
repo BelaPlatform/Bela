@@ -75,3 +75,59 @@ namespace AudioFileUtilities {
 	 */
 	std::vector<float> loadMono(const std::string& file);
 };
+
+#include <libraries/sndfile/sndfile.h>
+#include <thread>
+#include <array>
+
+class AudioFile
+{
+protected:
+	typedef enum {
+		kRead,
+		kWrite,
+	} Mode;
+	enum { kNumBufs = 2};
+public:
+	int setup(const std::string& path, size_t bufferSize, Mode mode);
+	size_t getLength() const { return sfinfo.frames; };
+	size_t getChannels() const { return sfinfo.channels; };
+	int getSampleRate() const { return sfinfo.samplerate; };
+	~AudioFile();
+private:
+	void cleanup();
+protected:
+	volatile size_t ioBuffer;
+	size_t ioBufferOld;
+protected:
+	void scheduleIo();
+	std::vector<float>& getRtBuffer();
+	std::array<std::vector<float>,kNumBufs> internalBuffers;
+	void threadLoop();
+	virtual void io(std::vector<float>& buffer) = 0;
+	std::thread diskIo;
+	size_t size;
+	volatile bool stop;
+	size_t readIdx;
+	size_t writeIdx;
+	SNDFILE* sndfile = NULL;
+	SF_INFO sfinfo = { 0 };
+};
+
+class AudioFileReader : public AudioFile
+{
+public:
+	int setup(const std::string& path, size_t bufferSize);
+	void getSamples(std::vector<float>& buffer);
+	float* getFrames(size_t frameCount);
+	void setIdx(size_t idx);
+	int setLoop(bool loop);
+	int setLoop(size_t start, size_t end);
+	size_t getIdx();
+private:
+	void io(std::vector<float>& buffer) override;
+	bool loop;
+	size_t loopStart;
+	size_t loopStop;
+	size_t idx;
+};
