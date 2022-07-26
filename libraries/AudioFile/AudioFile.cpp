@@ -28,7 +28,7 @@ int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode)
 	sndfile = sf_open(path.c_str(), sf_mode, &sfinfo);
 	if(!sndfile)
 		return 1;
-	readIdx = 0;
+	rtIdx = 0;
 	writeIdx = 0;
 	ramOnly = false;
 	size_t numSamples = getLength() * getChannels();
@@ -174,24 +174,24 @@ void AudioFileReader::getSamples(float* dst, size_t samplesCount)
 			(loop ? loopStop * getChannels() : inBuf.size())
 			: inBuf.size();
 		bool done = false;
-		for(; n < samplesCount && readIdx < inBufEnd; ++n)
+		for(; n < samplesCount && rtIdx < inBufEnd; ++n)
 		{
 			done = true;
-			dst[n] = inBuf[readIdx++];
+			dst[n] = inBuf[rtIdx++];
 		}
-		if(readIdx == inBufEnd)
+		if(rtIdx == inBufEnd)
 		{
 			if(ramOnly)
 			{
 				if(loop)
-					readIdx = loopStart;
+					rtIdx = loopStart;
 				else {
 					memset(dst + n, 0, (samplesCount - n) * sizeof(dst[0]));
 					n = samplesCount;
 					done = true;
 				}
 			} else {
-				readIdx = 0;
+				rtIdx = 0;
 				scheduleIo(); // this should give us a new inBuf
 			}
 		}

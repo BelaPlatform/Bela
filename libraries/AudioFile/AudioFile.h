@@ -109,7 +109,7 @@ protected:
 	size_t size;
 	volatile bool stop;
 	bool ramOnly;
-	size_t readIdx;
+	size_t rtIdx;
 	size_t writeIdx;
 	SNDFILE* sndfile = NULL;
 	SF_INFO sfinfo = { 0 };
