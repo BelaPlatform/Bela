@@ -4,7 +4,12 @@
 
 std::vector<float>& AudioFile::getRtBuffer()
 {
-	return internalBuffers[!ioBuffer];
+	size_t idx;
+	if(ramOnly)
+		idx = 0;
+	else
+		idx = !ioBuffer;
+	return internalBuffers[idx];
 }
 
 int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode)
@@ -25,15 +30,31 @@ int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode)
 		return 1;
 	readIdx = 0;
 	writeIdx = 0;
-	for(auto& b : internalBuffers)
-		b.resize(bufferSize * getChannels());
-	stop = false;
-	// fill up buffer
+	ramOnly = false;
+	size_t numSamples = getLength() * getChannels();
+	if(kRead == mode && bufferSize * kNumBufs >= numSamples)
+	{
+		ramOnly = true;
+		// empty other buffers, we will only use the first one
+		for(unsigned int n = 1; n < internalBuffers.size(); ++n)
+			internalBuffers[n].clear();
+		// the actual audio content
+		internalBuffers[0].resize(numSamples);
+	} else {
+		for(auto& b : internalBuffers)
+			b.resize(bufferSize * getChannels());
+	}
+	// fill up the first buffer
 	ioBuffer = 0;
 	io(internalBuffers[ioBuffer]);
 	ioBufferOld = ioBuffer;
-	ioBuffer = !ioBuffer;
-	diskIo = std::thread(&AudioFile::threadLoop, this);
+	// signal threadLoop() to start filling in the next buffer
+	if(!ramOnly)
+	{
+		scheduleIo();
+		stop = false;
+		diskIo = std::thread(&AudioFile::threadLoop, this);
+	}
 	return 0;
 }
 
@@ -47,13 +68,13 @@ void AudioFile::cleanup()
 
 void AudioFile::scheduleIo()
 {
+	// schedule thread
 	// TODO: detect underrun
 	ioBuffer = !ioBuffer;
 }
 
 void AudioFile::threadLoop()
 {
-	//ioBufferOld = ioBuffer;
 	while(!stop)
 	{
 		if(ioBuffer != ioBufferOld)
@@ -140,20 +161,39 @@ void AudioFileReader::io(std::vector<float>& buffer)
 
 void AudioFileReader::getSamples(std::vector<float>& outBuf)
 {
+	return getSamples(outBuf.data(), outBuf.size());
+}
+
+void AudioFileReader::getSamples(float* dst, size_t samplesCount)
+{
 	size_t n = 0;
-	while(n < outBuf.size())
+	while(n < samplesCount)
 	{
 		auto& inBuf = getRtBuffer();
+		size_t inBufEnd = ramOnly ?
+			(loop ? loopStop * getChannels() : inBuf.size())
+			: inBuf.size();
 		bool done = false;
-		for(; n < outBuf.size() && readIdx < inBuf.size(); ++n)
+		for(; n < samplesCount && readIdx < inBufEnd; ++n)
 		{
 			done = true;
-			outBuf[n] = inBuf[readIdx++];
+			dst[n] = inBuf[readIdx++];
 		}
-		if(readIdx == inBuf.size())
+		if(readIdx == inBufEnd)
 		{
-			readIdx = 0;
-			scheduleIo(); // this should give us a new inBuf
+			if(ramOnly)
+			{
+				if(loop)
+					readIdx = loopStart;
+				else {
+					memset(dst + n, 0, (samplesCount - n) * sizeof(dst[0]));
+					n = samplesCount;
+					done = true;
+				}
+			} else {
+				readIdx = 0;
+				scheduleIo(); // this should give us a new inBuf
+			}
 		}
 		if(!done){
 			break;

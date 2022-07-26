@@ -70,7 +70,7 @@ namespace AudioFileUtilities {
 	/**
 	 * Load audio samples from a file into memory.
 	 *
-	 * Simplified version of write(), which only loads the first channel of
+	 * Simplified version of load(), which only loads the first channel of
 	 * the file.
 	 */
 	std::vector<float> loadMono(const std::string& file);
@@ -108,6 +108,7 @@ protected:
 	std::thread diskIo;
 	size_t size;
 	volatile bool stop;
+	bool ramOnly;
 	size_t readIdx;
 	size_t writeIdx;
 	SNDFILE* sndfile = NULL;
@@ -117,10 +118,29 @@ protected:
 class AudioFileReader : public AudioFile
 {
 public:
+	/**
+	 * Open a file and prepare to stream it from disk.
+	 *
+	 * @param path Path to the file
+	 * @param bufferSize the size of the internal buffer. If this is larger
+	 * than the file itself, the whole file will be loaded in memory, otherwise
+	 * the file will be read from disk from a separate thread.
+	 */
 	int setup(const std::string& path, size_t bufferSize);
-	void getSamples(std::vector<float>& buffer);
-	float* getFrames(size_t frameCount);
-	void setIdx(size_t idx);
+	/**
+	 * Write interleaved samples from the file to the destination.
+	 *
+	 * @param buffer the destination buffer. Its size() must be a multiple
+	 * of getChannels().
+	 */void getSamples(std::vector<float>& buffer);
+	/**
+	 * Write interleaved samples from the file to the destination.
+	 *
+	 * @param dst the destination buffer
+	 * @param samplesCount The number of samples to write.
+	 * This has to be a multiple of getChannels().
+	 */
+	void getSamples(float* dst, size_t samplesCount);
 	int setLoop(bool loop);
 	int setLoop(size_t start, size_t end);
 	size_t getIdx();
