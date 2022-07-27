@@ -12,25 +12,28 @@ std::vector<float>& AudioFile::getRtBuffer()
 	return internalBuffers[idx];
 }
 
-int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode)
+int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode, size_t channels /* = 0 */, unsigned int sampleRate /* = 0 */)
 {
 	cleanup();
 	int sf_mode;
 	switch(mode){
 	case kWrite:
 		sf_mode = SFM_WRITE;
+		sfinfo.samplerate = sampleRate;
+		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+		sfinfo.channels = channels;
 		break;
 	case kRead:
+		sfinfo.format = 0;
 		sf_mode = SFM_READ;
 		break;
 	}
-	sfinfo.format = 0;
 	sndfile = sf_open(path.c_str(), sf_mode, &sfinfo);
 	if(!sndfile)
 		return 1;
 	rtIdx = 0;
-	writeIdx = 0;
 	ramOnly = false;
+	ioBuffer = 0;
 	size_t numSamples = getLength() * getChannels();
 	if(kRead == mode && bufferSize * kNumBufs >= numSamples)
 	{
@@ -44,14 +47,16 @@ int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode)
 		for(auto& b : internalBuffers)
 			b.resize(bufferSize * getChannels());
 	}
-	// fill up the first buffer
-	ioBuffer = 0;
-	io(internalBuffers[ioBuffer]);
 	ioBufferOld = ioBuffer;
-	// signal threadLoop() to start filling in the next buffer
+	if(kRead == mode)
+	{
+		// fill up the first buffer
+		io(internalBuffers[ioBuffer]);
+		// signal threadLoop() to start filling in the next buffer
+		scheduleIo();
+	}
 	if(!ramOnly)
 	{
-		scheduleIo();
 		stop = false;
 		diskIo = std::thread(&AudioFile::threadLoop, this);
 	}
@@ -199,4 +204,45 @@ void AudioFileReader::getSamples(float* dst, size_t samplesCount)
 			break;
 		}
 	}
+}
+
+int AudioFileWriter::setup(const std::string& path, size_t bufferSize, size_t channels, unsigned int sampleRate)
+{
+	return AudioFile::setup(path, bufferSize, kWrite, channels, sampleRate);
+}
+
+void AudioFileWriter::setSamples(std::vector<float>& buffer)
+{
+	return setSamples(buffer.data(), buffer.size());
+}
+
+void AudioFileWriter::setSamples(float const * src, size_t samplesCount)
+{
+	size_t n = 0;
+	while(n < samplesCount)
+	{
+		auto& outBuf = getRtBuffer();
+		bool done = false;
+		for(; n < samplesCount && rtIdx < outBuf.size(); ++n)
+		{
+			done = true;
+			outBuf[rtIdx++] = src[n];
+		}
+		if(rtIdx == outBuf.size())
+		{
+			rtIdx = 0;
+			scheduleIo(); // this should give us a new outBuf
+		}
+		if(!done){
+			break;
+		}
+	}
+}
+
+void AudioFileWriter::io(std::vector<float>& buffer)
+{
+	size_t count = buffer.size();
+	sf_count_t ret = sf_write_float(sndfile, buffer.data(), buffer.size());
+	if(ret != sf_count_t(buffer.size()))
+		fprintf(stderr, "Error while writing to file: %lld\n", ret);
 }

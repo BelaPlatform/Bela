@@ -88,12 +88,13 @@ protected:
 		kWrite,
 	} Mode;
 	enum { kNumBufs = 2};
+protected:
+	int setup(const std::string& path, size_t bufferSize, Mode mode, size_t channels = 0, unsigned int sampleRate = 0);
 public:
-	int setup(const std::string& path, size_t bufferSize, Mode mode);
 	size_t getLength() const { return sfinfo.frames; };
 	size_t getChannels() const { return sfinfo.channels; };
 	int getSampleRate() const { return sfinfo.samplerate; };
-	~AudioFile();
+	virtual ~AudioFile();
 private:
 	void cleanup();
 protected:
@@ -110,7 +111,6 @@ protected:
 	volatile bool stop;
 	bool ramOnly;
 	size_t rtIdx;
-	size_t writeIdx;
 	SNDFILE* sndfile = NULL;
 	SF_INFO sfinfo = { 0 };
 };
@@ -150,4 +150,27 @@ private:
 	size_t loopStart;
 	size_t loopStop;
 	size_t idx;
+};
+
+class AudioFileWriter : public AudioFile
+{
+public:
+	/**
+	 * Open a file and prepare to write to it.
+	 *
+	 * @param path Path to the file
+	 * @param bufferSize the size of the internal buffer.
+	 * @param channels the number of channels
+	 */
+	int setup(const std::string& path, size_t bufferSize, size_t channels, unsigned int sampleRate);
+	/**
+	 * Push interleaved samples to the file for writing
+	 *
+	 * @param buffer the source buffer. Its size() must be a multiple
+	 * of getChannels().
+	 */
+	void setSamples(std::vector<float>& buffer);
+	void setSamples(float const * src, size_t samplesCount);
+private:
+	void io(std::vector<float>& buffer) override;
 };
