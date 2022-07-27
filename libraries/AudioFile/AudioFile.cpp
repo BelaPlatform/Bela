@@ -152,7 +152,7 @@ void AudioFileReader::io(std::vector<float>& buffer)
 			else
 			{
 				// fill the rest with zeros
-				memset(buffer.data() + dstPtr + readcount, 0, (count - readcount) * sizeof(buffer[0]));
+				memset(buffer.data() + dstPtr, 0, count * sizeof(buffer[0]));
 				count = 0;
 			}
 		}
