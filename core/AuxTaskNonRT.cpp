@@ -32,6 +32,11 @@ void AuxTaskNonRT::create(std::string _name, std::function<void(void* buf, int s
 }
 
 void AuxTaskNonRT::__create(){
+
+	// sanitise: this could be used in paths to create pipes
+	for(auto& c : name)
+		if('/' == c || '\\' == c  || ':' == c || ' ' == c || '\t' == c || '\n' ==c || '\r' == c || '\0' == c)
+			c = '_';
 	
 	// create the xenomai task
 	int priority = 0;
