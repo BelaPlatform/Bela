@@ -1,4 +1,15 @@
 #!/bin/bash -e
+#busybox grep doesn't support -R, but only -r (i.e.: it doesn't follows symlinks).
+#Where available, we want to keep -R and use -r as a fallback.
+#The cheapest way of guessing current grep is to check whether
+#it is a symlink (busybox) or not
+[ -L `which grep` ] && {
+	grepR="grep -r"
+	BUSYBOX=true
+} || {
+	grepR="grep -R"
+	BUSYBOX=false
+}
 
 [ -z "$DETECT_LIBRARIES_VERBOSE" ] && DETECT_LIBRARIES_VERBOSE=0
 getfield() {
@@ -82,16 +93,24 @@ create_compilemakefile() {
 mkdir -p tmp/
 # Create & empty temporary files
 LIBLIST="tmp/liblist"
->"$LIBLIST"
->"tmp/libraries"
->"tmp/Makefile.inc"
+IMMEDIATE_LIBS=tmp/libraries
 TMPMKFILE="tmp/Makefile.inc"
+>"$LIBLIST"
+>"$IMMEDIATE_LIBS"
+>"$TMPMKFILE"
 
 function processBuildFolder()
 {
 	# Get included libraries on project from pre-processor's output
 	DIR=$1
-	grep -R --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" "$DIR" | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
+	if [ true == $BUSYBOX ]; then
+		> $IMMEDIATE_LIBS
+		# potentially slower: more processes spawned
+		find $DIR -name *.ii -exec grep "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" {} \; | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
+		find $DIR -name *.i -exec grep "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" {} \; | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
+	else
+		$grepR --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" "$DIR" | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
+	fi
 	MKFILEPATH="$DIR"
 }
 
@@ -127,7 +146,7 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			# Get included libraries from file
-			grep -R "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
+			$grepR "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > $IMMEDIATE_LIBS
 			MKFILEPATH=`dirname "$FILE"`
 			;;
 		--outpath)
@@ -161,7 +180,7 @@ done
 MKFILE="$MKFILEPATH/Makefile.inc"
 mkdir -p "$MKFILEPATH"
 
-cat tmp/libraries | while read L; do
+cat $IMMEDIATE_LIBS | while read L; do
 	extract_dependencies $L
 done
 
