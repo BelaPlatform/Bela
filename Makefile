@@ -609,14 +609,17 @@ distcleannoprompt: ## Same as distclean, but does not prompt for confirmation. U
 	-$(RM) build/source/* $(CORE_OBJS) $(CORE_CPP_DEPS) $(DEFAULT_MAIN_OBJS) $(DEFAULT_MAIN_CPP_DEPS) $(OUTPUT_FILE)
 	-@echo ' '
 
-runonly: ## Run PROJECT in the foreground
+RUNONLY_COMMAND:=$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
+runonly: ## Run PROJECT in the foreground with minimal dependencies check.
 runonly: $(RUN_PREREQUISITES)
 	$(AT) echo "Running" $(RUN_COMMAND)
-	$(AT) sync& cd $(RUN_FROM) && $(RUN_COMMAND)
+	$(RUNONLY_COMMAND)
 
 runfg: run
-run: ## Run PROJECT in the foreground after stopping previously running one
-run: stop Bela runonly
+run: ## Run PROJECT in the foreground after stopping previously running one and fully building it. Supports parallel builds
+run: stop Bela
+	$(AT) echo "Running" $(RUN_COMMAND)
+	$(RUNONLY_COMMAND)
 
 runide: ## Run PROJECT for IDE (foreground, no buffering)
 runide: stop Bela $(RUN_PREREQUISITES)
