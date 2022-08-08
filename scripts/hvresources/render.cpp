@@ -22,8 +22,6 @@ The Bela software is distributed under the GNU Lesser General Public License
 */
 
 #include <Bela.h>
-#include <libraries/Midi/Midi.h>
-#include <libraries/Scope/Scope.h>
 #include <cmath>
 #include <Heavy_bela.h>
 #include <string.h>
@@ -33,30 +31,45 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <DigitalChannelManager.h>
 #include <algorithm>
 #include <array>
+#include <vector>
+
+#define BELA_HV_SCOPE
+#define BELA_HV_MIDI
+#ifdef BELA_HV_DISABLE_SCOPE
+#undef BELA_HV_SCOPE
+#endif // BELA_HV_DISABLE_SCOPE
+#ifdef BELA_HV_DISABLE_MIDI
+#undef BELA_HV_MIDI
+#endif // BELA_HV_DISABLE_MIDI
 
 enum { minFirstDigitalChannel = 10 };
 
 static unsigned int gAudioChannelsInUse;
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
-unsigned int gScopeChannelsInUse;
 static unsigned int gChannelsInUse;
 static unsigned int gFirstAnalogChannel;
 static unsigned int gFirstDigitalChannel;
 static unsigned int gDigitalChannelOffset;
-static unsigned int gFirstScopeChannel;
 
 static unsigned int gDigitalSigInChannelsInUse;
 static unsigned int gDigitalSigOutChannelsInUse;
 
-float* gScopeOut;
+static unsigned int gFirstScopeChannel;
+unsigned int gScopeChannelsInUse;
+#ifdef BELA_HV_SCOPE
+#include <libraries/Scope/Scope.h>
 // Bela Scope
+float* gScopeOut;
 static Scope* scope = NULL;
+#endif // BELA_HV_SCOPE
 static char multiplexerArray[] = {"bela_multiplexer"};
 static int multiplexerArraySize = 0;
 static bool pdMultiplexerActive = false;
 bool gDigitalEnabled = 0;
 
+#ifdef BELA_HV_MIDI
+#include <libraries/Midi/Midi.h>
 // Bela Midi
 unsigned int hvMidiHashes[7]; // heavy-specific
 static std::vector<Midi*> midi;
@@ -125,6 +138,7 @@ static unsigned int getPortChannel(int* channel){
 	}
 	return port;
 }
+#endif // BELA_HV_MIDI
 
 /*
  *	HEAVY CONTEXT & BUFFERS
@@ -199,6 +213,7 @@ static void sendHook(
 
 	// More MIDI and digital messages. To obtain the hashes below, use hv_stringToHash("yourString")
 	switch (sendHash) {
+#ifdef BELA_HV_MIDI
 		case 0xfb212be8: { // bela_setMidi
 			if (!hv_msg_hasFormat(m, "sfff")) {
 				fprintf(stderr, "Wrong format for Bela_setMidi, expected:[hw 1 0 0(");
@@ -222,6 +237,7 @@ static void sendHook(
 			dumpMidi();
 			break;
 		}
+#endif // BELA_HV_MIDI
 		case 0x70418732: { // bela_setDigital
 			if(gDigitalEnabled)
 			{
@@ -259,6 +275,7 @@ static void sendHook(
 			}
 			break;
 		}
+#ifdef BELA_HV_MIDI
 		case 0xd1d4ac2: { // __hv_noteout
 			if (!hv_msg_hasFormat(m, "fff")) return;
 			midi_byte_t pitch = (midi_byte_t) hv_msg_getFloat(m, 0);
@@ -323,6 +340,7 @@ static void sendHook(
 			port < midi.size() && midi[port]->writeOutput(byte);
 			break;
 		}
+#endif // BELA_HV_MIDI
 		default: {
 			break;
 		}
@@ -359,6 +377,7 @@ bool setup(BelaContext *context, void *userData)	{
 	generateDigitalNames(gDigitalChannelsInUse, gDigitalChannelOffset, gHvDigitalInHashes);
 
 	/* HEAVY */
+#ifdef BELA_HV_MIDI
 	std::array<std::string, 8> outs = {{
 		"__hv_noteout",
 		"__hv_ctlout",
@@ -368,12 +387,12 @@ bool setup(BelaContext *context, void *userData)	{
 		"__hv_bendout",
 		"__hv_midiout",
 	}};
+#if 0
+	// uncomment this if you want to display the hashes for midi
+	// outs. Then hardcode them in the switch() in sendHook()
 	for(auto &st : outs)
-	{
-		// uncomment this if you want to display the hashes for midi
-		// outs. Then hardcode them in the switch() in sendHook()
 		printf("%s: %#x\n", st.c_str(), hv_stringToHash(st.c_str()));
-	}
+#endif
 	hvMidiHashes[kmmNoteOn] = hv_stringToHash("__hv_notein");
 //	hvMidiHashes[kmmNoteOff] = hv_stringToHash("noteoff"); // this is handled differently, see the render function
 	hvMidiHashes[kmmControlChange] = hv_stringToHash("__hv_ctlin");
@@ -389,6 +408,7 @@ bool setup(BelaContext *context, void *userData)	{
 	hvMidiHashes[kmmPolyphonicKeyPressure] = hv_stringToHash("__hv_polytouchin");
 	hvMidiHashes[kmmChannelPressure] = hv_stringToHash("__hv_touchin");
 	hvMidiHashes[kmmPitchBend] = hv_stringToHash("__hv_bendin");
+#endif // BELA_HV_MIDI
 
 	gHeavyContext = hv_bela_new_with_options(context->audioSampleRate, 10, 2, 0);
 
@@ -414,7 +434,9 @@ bool setup(BelaContext *context, void *userData)	{
 			gHvInputChannels, gHvOutputChannels);
 	printf("Channels in use:\n");
 	printf("Digital in : %u, Digital out: %u\n", gDigitalSigInChannelsInUse, gDigitalSigOutChannelsInUse);
+#ifdef BELA_HV_SCOPE
 	printf("Scope out: %u\n", gScopeChannelsInUse);
+#endif // BELA_HV_SCOPE
 
 	if(gHvInputChannels != 0) {
 		gHvInputBuffers = (float *)calloc(gHvInputChannels * context->audioFrames,sizeof(float));
@@ -430,6 +452,7 @@ bool setup(BelaContext *context, void *userData)	{
 	// Set heavy send hook
 	hv_setSendHook(gHeavyContext, sendHook);
 
+#ifdef BELA_HV_MIDI
 	// add here other devices you need
 	gMidiPortNames.push_back("hw:1,0,0");
 	//gMidiPortNames.push_back("hw:0,0,0");
@@ -447,15 +470,18 @@ bool setup(BelaContext *context, void *userData)	{
 		}
 	}
 	dumpMidi();
+#endif // BELA_HV_MIDI
 
 	if(gScopeChannelsInUse > 0){
 #if __clang_major__ == 3 && __clang_minor__ == 8
 		fprintf(stderr, "Scope currently not supported when compiling heavy with clang3.8, see #265 https://github.com/BelaPlatform/Bela/issues/265. You should specify `COMPILER gcc;` in your Makefile options\n");
 		exit(1);
 #endif
+#ifdef BELA_HV_SCOPE
 		scope = new Scope();
 		scope->setup(gScopeChannelsInUse, context->audioSampleRate);
 		gScopeOut = new float[gScopeChannelsInUse];
+#endif // BELA_HV_SCOPE
 	}
 	// Bela digital
 	if(gDigitalEnabled)
@@ -484,6 +510,7 @@ bool setup(BelaContext *context, void *userData)	{
 
 void render(BelaContext *context, void *userData)
 {
+#ifdef BELA_HV_MIDI
 	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
 		while((num = midi[port]->getParser()->numAvailableMessages()) > 0){
@@ -561,6 +588,7 @@ void render(BelaContext *context, void *userData)
 			}
 		}
 	}
+#endif // BELA_HV_MIDI
 
 	// De-interleave the data
 	if(gHvInputBuffers != NULL) {
@@ -672,6 +700,7 @@ void render(BelaContext *context, void *userData)
 		dcm.processOutput(context->digital, context->digitalFrames);
 	}
 	
+#ifdef BELA_HV_SCOPE
 	// Bela scope
 	if(gScopeChannelsInUse > 0)
 	{
@@ -688,6 +717,7 @@ void render(BelaContext *context, void *userData)
 			scope->log(gScopeOut);
 		}
 	}
+#endif // BELA_HV_SCOPE
 
 	// Interleave the output data
 	if(gHvOutputBuffers != NULL) {
@@ -719,6 +749,8 @@ void cleanup(BelaContext *context, void *userData)
 	hv_delete(gHeavyContext);
 	free(gHvInputBuffers);
 	free(gHvOutputBuffers);
+#ifdef BELA_HV_SCOPE
 	delete[] gScopeOut;
 	delete scope;
+#endif // BELA_HV_SCOPE
 }
