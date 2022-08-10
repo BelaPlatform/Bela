@@ -2276,8 +2276,6 @@ PROCESS_SPI_END:
      QBBC PROCESS_DIGITAL_END, reg_flags, FLAG_BIT_USE_DIGITAL
      DO_DIGITAL
 
-     ADD reg_digital_current, reg_digital_current, 4 //increment pointer
-
 PROCESS_DIGITAL_END:
 
 	 XOR reg_flags, reg_flags, (1 << FLAG_BIT_MCASP_RX_FIRST_FRAME) // Toggle frame flag
