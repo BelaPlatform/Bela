@@ -35,12 +35,17 @@ The Bela software is distributed under the GNU Lesser General Public License
 
 #define BELA_HV_SCOPE
 #define BELA_HV_MIDI
+#define BELA_HV_TRILL
+
 #ifdef BELA_HV_DISABLE_SCOPE
 #undef BELA_HV_SCOPE
 #endif // BELA_HV_DISABLE_SCOPE
 #ifdef BELA_HV_DISABLE_MIDI
 #undef BELA_HV_MIDI
 #endif // BELA_HV_DISABLE_MIDI
+#ifdef BELA_HV_DISABLE_TRILL
+#undef BELA_HV_TRILL
+#endif // BELA_HV_DISABLE_TRILL
 
 enum { minFirstDigitalChannel = 10 };
 
@@ -139,6 +144,47 @@ static unsigned int getPortChannel(int* channel){
 	return port;
 }
 #endif // BELA_HV_MIDI
+#ifdef BELA_HV_TRILL
+#include <libraries/Pipe/Pipe.h>
+template <typename T>
+int getIdxFromId(const char* id, std::vector<std::pair<std::string,T>>& db)
+{
+	for(unsigned int n = 0; n < db.size(); ++n)
+	{
+		if(0 == strcmp(id, db[n].first.c_str()))
+			return n;
+	}
+	return -1;
+}
+
+#include <tuple>
+#include <libraries/Trill/Trill.h>
+AuxiliaryTask gTrillTask;
+Pipe gTrillPipe;
+
+static std::vector<std::string> gTrillAcks;
+static std::vector<std::pair<std::string,Trill*>> gTouchSensors;
+// how often to read the cap sensors inputs.
+float touchSensorSleepInterval = 0.007;
+
+void readTouchSensors(void*)
+{
+	for(unsigned int n = 0; n < gTouchSensors.size(); ++n)
+	{
+		Trill& touchSensor = *gTouchSensors[n].second;
+		int ret;
+		const Trill::Device type = touchSensor.deviceType();
+		if(Trill::NONE == type)
+			ret = 1;
+		else
+			ret = touchSensor.readI2C();
+		if(!ret)
+		{
+			gTrillPipe.writeNonRt(n);
+		}
+	}
+}
+#endif // BELA_HV_TRILL
 
 /*
  *	HEAVY CONTEXT & BUFFERS
@@ -170,6 +216,17 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
+#ifdef BELA_HV_TRILL
+void setTrillPrintError()
+{
+	rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
+		"[mode <sensor_id> <prescaler_value>(\n"
+		" or\n"
+		"[threshold <sensor_id> <threshold_value>(\n"
+		" or\n"
+		"[prescaler <sensor_id> <prescaler_value>(\n");
+}
+#endif // BELA_HV_TRILL
 
 std::vector<std::string> gHvDigitalInHashes;
 void generateDigitalNames(unsigned int numDigitals, unsigned int digitalOffset, std::vector<std::string>& receiverInputNames)
@@ -181,6 +238,21 @@ void generateDigitalNames(unsigned int numDigitals, unsigned int digitalOffset, 
 	}
 }
 
+// utility in case you are having trouble matching types.
+void heavyPrintMsgTypes(const HvMessage* m)
+{
+	for(unsigned int n = 0; n < hv_msg_getNumElements(m); ++n)
+	{
+		if(hv_msg_isFloat(m, n))
+			printf("%c", 'f');
+		if(hv_msg_isSymbol(m, n))
+			printf("%c", 's');
+		if(hv_msg_isBang(m, n))
+			printf("%c", 'b');
+	}
+	printf("\n");
+}
+
 // For a message to be received here, you need to use the following syntax in Pd:
 // [send receiverName @hv_param]
 static void sendHook(
@@ -188,7 +260,12 @@ static void sendHook(
 		const char *receiverName,
 		hv_uint32_t sendHash,
 		const HvMessage *m) {
-
+#if 0 // print incoming messages for test purposes. If a message doesn't show up, remember to add @hv_param to the receiver name.
+	char* str = hv_msg_toString(m);
+	printf("sendHook: %s =>", str);
+	heavyPrintMsgTypes(m);
+	free(str);
+#endif
 	// Bela digital run-time messages
 
 	// TODO: this first block is almost an exact copy of libpd's code, should we add this to the class?
@@ -341,6 +418,114 @@ static void sendHook(
 			break;
 		}
 #endif // BELA_HV_MIDI
+#ifdef BELA_HV_TRILL
+		case 0x897da408: { // bela_setTrill
+			const size_t argc = hv_msg_getNumElements(m);
+			if(argc < 2 || !hv_msg_isSymbol(m, 0) || !hv_msg_isSymbol(m, 1))
+			{
+				rt_fprintf(stderr, "bela_setTrill: wrong format. It should be\n"
+						"[<command> <sensor_id> ...(");
+				heavyPrintMsgTypes(m);
+				return;
+			}
+			// ssfsf
+			const char* symbol = hv_msg_getSymbol(m, 0);
+			const char* sensorId = hv_msg_getSymbol(m, 1);
+			if(0 == strcmp(symbol, "new"))
+			{
+				if(
+					(argc >= 4 && !hv_msg_isSymbol(m, 3))
+					|| (argc >= 5 && !hv_msg_isFloat(m, 4))
+				)
+				{
+					rt_fprintf(stderr, "bela_setTrill wrong format. Should be:\n"
+						"[new <sensor_id> <bus> <device> <address>(\n");
+					heavyPrintMsgTypes(m);
+					return;
+				}
+				uint8_t address = 0xff;
+				if(argc >= 5)
+				{
+					address = hv_msg_getFloat(m, 4);
+				}
+				const char* name = sensorId;
+				unsigned int bus = hv_msg_getFloat(m, 2);
+				const char* deviceString = hv_msg_getSymbol(m, 3);
+				Trill::Device device = Trill::getDeviceFromName(deviceString);
+
+				Trill* trill = new Trill(bus, device, address);
+				if(Trill::NONE == trill->deviceType())
+				{
+					rt_fprintf(stderr, "Unable to create Trill %s device `%s` on bus %u at ", deviceString, name, bus);
+					if(128 < address)
+						rt_fprintf(stderr, "default address. ");
+					else
+						rt_fprintf(stderr, "address: %#x (%d). ", address, address);
+					rt_fprintf(stderr, "Is the device connected?\n");
+					return;
+				}
+				gTouchSensors.emplace_back(std::string(name), trill);
+				gTrillAcks.push_back(name);
+				//an ack is sent to Pd during the next audio callback because of https://github.com/libpd/libpd/issues/274
+				return;
+			}
+			int idx = getIdxFromId(sensorId, gTouchSensors);
+			if(idx < 0)
+			{
+				rt_fprintf(stderr, "bela_setTrill sensor_id unknown: %s\n", sensorId);
+				return;
+			}
+			if(0 == strcmp(symbol, "updateBaseline"))
+			{
+				gTouchSensors[idx].second->updateBaseline();
+				return;
+			}
+			if(0 == strcmp(symbol, "mode"))
+			{
+				if(argc < 3
+					|| !hv_msg_isSymbol(m, 2)
+				) {
+					setTrillPrintError();
+					return;
+				}
+				const char* modeString = hv_msg_getSymbol(m, 2);
+				Trill::Mode mode = Trill::getModeFromName(modeString);
+				gTouchSensors[idx].second->setMode(mode);
+			}
+			if(
+				0 == strcmp(symbol, "threshold")
+				|| 0 == strcmp(symbol, "prescaler")
+			)
+			{
+				if(
+					argc < 3
+					|| !hv_msg_isFloat(m, 2)
+				  ) {
+					setTrillPrintError();
+					return;
+				}
+				float value = hv_msg_getFloat(m, 2);
+				if(0 == strcmp(symbol, "threshold"))
+				{
+					gTouchSensors[idx].second->setNoiseThreshold(value);
+				}
+				if(0 == strcmp(symbol, "prescaler"))
+				{
+					if(Trill::prescalerMax < value || 0 > value)
+					{
+						if(0 == value)
+							value = 0;
+						if(Trill::prescalerMax < value)
+							value = Trill::prescalerMax;
+						rt_fprintf(stderr, "bela_setTrill prescaler value out of range, clipping to %u\n", value);
+					}
+					gTouchSensors[idx].second->setPrescaler(value);
+				}
+				return;
+			}
+			return;
+		}
+#endif // BELA_HV_TRILL
 		default: {
 			break;
 		}
@@ -377,7 +562,9 @@ bool setup(BelaContext *context, void *userData)	{
 	generateDigitalNames(gDigitalChannelsInUse, gDigitalChannelOffset, gHvDigitalInHashes);
 
 	/* HEAVY */
-#ifdef BELA_HV_MIDI
+#if 0
+	// uncomment this if you want to display the hashes
+	// Then hardcode them in the switch() in sendHook()
 	std::array<std::string, 8> outs = {{
 		"__hv_noteout",
 		"__hv_ctlout",
@@ -387,12 +574,12 @@ bool setup(BelaContext *context, void *userData)	{
 		"__hv_bendout",
 		"__hv_midiout",
 	}};
-#if 0
-	// uncomment this if you want to display the hashes for midi
-	// outs. Then hardcode them in the switch() in sendHook()
 	for(auto &st : outs)
 		printf("%s: %#x\n", st.c_str(), hv_stringToHash(st.c_str()));
+	for(auto& a : std::vector<std::string>{"bela_setTrill"})
+		printf("%s %#x\n", a.c_str(), hv_stringToHash(a.c_str()));
 #endif
+#ifdef BELA_HV_MIDI
 	hvMidiHashes[kmmNoteOn] = hv_stringToHash("__hv_notein");
 //	hvMidiHashes[kmmNoteOff] = hv_stringToHash("noteoff"); // this is handled differently, see the render function
 	hvMidiHashes[kmmControlChange] = hv_stringToHash("__hv_ctlin");
@@ -504,12 +691,96 @@ bool setup(BelaContext *context, void *userData)	{
 		hv_sendFloatToReceiver(gHeavyContext, hv_stringToHash("bela_multiplexerChannels"), context->multiplexerChannels);
 	}
 
+#ifdef BELA_HV_TRILL
+	gTrillTask = Bela_createAuxiliaryTask(readTouchSensors, 51, "touchSensorRead", NULL);
+	gTrillPipe.setup("trillPipe", 1024);
+#endif // BELA_HV_TRILL
 	return true;
 }
 
-
 void render(BelaContext *context, void *userData)
 {
+#ifdef BELA_HV_TRILL
+	for(auto& name : gTrillAcks)
+	{
+		unsigned int idx = getIdxFromId(name.c_str(), gTouchSensors);
+		hv_sendMessageToReceiverV(gHeavyContext, hv_stringToHash("bela_trillCreated"), 0.0f, "ssfs",
+			name.c_str(),
+			Trill::getNameFromDevice(gTouchSensors[idx].second->deviceType()).c_str(),
+			float(gTouchSensors[idx].second->getAddress()),
+			Trill::getNameFromMode(gTouchSensors[idx].second->getMode()).c_str()
+		);
+	}
+	gTrillAcks.resize(0);
+	bool doTrill = false;
+	for(auto& t : gTouchSensors)
+	{
+		if(Trill::NONE != t.second->deviceType())
+		{
+			doTrill = true;
+			break;
+		}
+	}
+	if(doTrill)
+	{
+		int idx;
+		while(gTrillPipe.readRt(idx) > 0)
+		{
+			Trill& touchSensor = *gTouchSensors[idx].second;
+			const char* sensorId = gTouchSensors[idx].first.c_str();
+			if(Trill::Device::NONE == touchSensor.deviceType())
+				continue;
+
+			const Trill::Mode mode = touchSensor.getMode();
+			HvMessage *m = NULL;
+			if(Trill::DIFF == mode || Trill::RAW == mode || Trill::BASELINE == mode)
+			{
+				size_t numElements = 1 + touchSensor.getNumChannels();
+				m = (HvMessage *)hv_alloca(hv_msg_getByteSize(numElements));
+				hv_msg_init(m, numElements, context->audioFramesElapsed);
+				for(unsigned int n = 0; n < touchSensor.getNumChannels(); ++n)
+					hv_msg_setFloat(m, 1 + n, touchSensor.rawData[n]);
+			} else if(Trill::CENTROID == mode)
+			{
+				if(touchSensor.is1D()) {
+					size_t numElements = 1 + 2 * touchSensor.getNumTouches() + 1;
+					m = (HvMessage *)hv_alloca(hv_msg_getByteSize(numElements));
+					hv_msg_init(m, numElements, context->audioFramesElapsed);
+					hv_msg_setFloat(m, 1, touchSensor.getNumTouches());
+					for(unsigned int i = 0; i < touchSensor.getNumTouches(); i++) {
+						hv_msg_setFloat(m, 2 + i * 2, touchSensor.touchLocation(i));
+						hv_msg_setFloat(m, 2 + i * 2 + 1, touchSensor.touchSize(i));
+					}
+				} else if (touchSensor.is2D()) {
+					bool touched = touchSensor.compoundTouchSize() > 0;
+					size_t numElements = 1 + 1 + touched * 3;
+					m = (HvMessage *)hv_alloca(hv_msg_getByteSize(numElements));
+					hv_msg_init(m, numElements, context->audioFramesElapsed);
+					hv_msg_setFloat(m, 1, touched);
+					if(touched)
+					{
+						hv_msg_setFloat(m, 2, touchSensor.compoundTouchHorizontalLocation());
+						hv_msg_setFloat(m, 3, touchSensor.compoundTouchLocation());
+						hv_msg_setFloat(m, 4, touchSensor.compoundTouchSize());
+					}
+				}
+			}
+			else
+				continue;
+			hv_msg_setSymbol(m, 0, sensorId);
+			hv_sendMessageToReceiver(gHeavyContext, hv_stringToHash("bela_trill"), 0, m);
+		}
+
+		static unsigned int count = 0;
+		unsigned int readIntervalSamples = touchSensorSleepInterval * context->audioSampleRate;
+		count += context->audioFrames;
+		if(count > readIntervalSamples)
+		{
+			Bela_scheduleAuxiliaryTask(gTrillTask);
+			count -= readIntervalSamples;
+		}
+	}
+#endif // BELA_HV_TRILL
 #ifdef BELA_HV_MIDI
 	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
