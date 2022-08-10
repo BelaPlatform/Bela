@@ -1,26 +1,21 @@
 #N canvas 194 41 973 615 10;
-#X obj 33 372 list;
-#X obj 33 304 metro 200;
-#X obj 33 278 loadbang;
 #X text 84 366 Throttle printing;
 #X obj 35 48 loadbang;
 #X obj 126 265 r bela_trill;
-#X obj 35 156 s bela_setTrill;
 #X text 218 262 This receives the reading from the Trill sensor.;
 #X text 167 413 [<num_touches> <position> <size>];
 #X text 618 37 You can also change settings on initialisation:;
 #X text 619 57 [prescaler <sensor_id> <value> (between 1 and 8);
 #X text 618 92 [threshold <sensor_id> <value>(between 0 and 1.0);
 #X obj 126 317 route mybar;
-#X text 175 112 <bus> is the i2c bus that yout sensor is connected
+#X text 195 112 <bus> is the i2c bus that yout sensor is connected
 to;
-#X text 176 162 <address> is the address of the sensor. If unspecified
+#X text 196 162 <address> is the address of the sensor. If unspecified
 \, the;
-#X text 199 174 default address for the device type will be used;
-#X text 175 132 <device> the type of sensor you are connecting: BAR
+#X text 219 174 default address for the device type will be used;
+#X text 195 132 <device> the type of sensor you are connecting: BAR
 SQUARE;
-#X text 186 141 CRAFT RING HEX;
-#X msg 35 93 new mybar 1 BAR;
+#X text 206 141 CRAFT RING HEX;
 #X text 600 290 device that was successfully initialised. The message
 ;
 #X text 600 300 will contain: <sensor_id> <device> <mode> <address>
@@ -28,24 +23,53 @@ SQUARE;
 #X text 599 279 bela_trillCreated will receive a message for each;
 #X obj 604 332 r bela_trillCreated;
 #X obj 604 361 print bela_trillCreated;
-#X obj 33 412 print mybar;
+#X obj 36 426 print mybar;
 #X text 218 318 Which will be prepended with the <sensor_id>;
 #X text 84 16 >>> See full documentation in examples/Trill/general-pd
 <<<;
-#X text 180 47 First initialise the Trill sensor;
-#X text 174 82 Message: [new <sensor_id> <bus> <device> <address=255>(
+#X text 200 47 First initialise the Trill sensor;
+#X text 194 82 Message: [new <sensor_id> <bus> <device> <address=255>(
 ;
 #X obj 411 432 dac~ 1 2;
 #X obj 411 401 sample-scrub;
 #X text 517 401 Use position to scrub through a sample table;
-#X connect 0 0 24 0;
-#X connect 0 0 30 0;
+#N canvas 731 155 450 300 throttle_time 0;
+#X obj 49 60 t a b;
+#X obj 50 35 inlet;
+#X obj 73 193 spigot;
+#X obj 106 166 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000 0 1;
+#X obj 73 235 outlet;
+#X obj 270 20 loadbang;
+#X obj 156 109 timer;
+#X text 96 48 Let one input through every;
+#X text 304 50 ms (at least);
+#X obj 227 22 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000;
+#X obj 154 141 >;
+#X obj 204 142 select 1;
+#X obj 270 50 200;
+#X connect 0 0 2 0;
+#X connect 0 1 6 1;
 #X connect 1 0 0 0;
-#X connect 2 0 1 0;
-#X connect 4 0 18 0;
+#X connect 2 0 4 0;
+#X connect 3 0 2 1;
 #X connect 5 0 12 0;
-#X connect 12 0 0 1;
-#X connect 18 0 6 0;
-#X connect 22 0 23 0;
-#X connect 30 0 29 0;
-#X connect 30 0 29 1;
+#X connect 6 0 10 0;
+#X connect 9 0 12 0;
+#X connect 10 0 3 0;
+#X connect 10 0 11 0;
+#X connect 11 0 6 0;
+#X connect 12 0 10 1;
+#X restore 37 389 pd throttle_time;
+#X obj 35 156 s bela_setTrill @hv_param;
+#X msg 35 93 new mybar 1 BAR;
+#X connect 1 0 29 0;
+#X connect 2 0 8 0;
+#X connect 8 0 27 0;
+#X connect 8 0 25 0;
+#X connect 17 0 18 0;
+#X connect 25 0 24 0;
+#X connect 25 0 24 1;
+#X connect 27 0 19 0;
+#X connect 29 0 28 0;

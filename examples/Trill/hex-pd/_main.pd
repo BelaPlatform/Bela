@@ -1,7 +1,4 @@
 #N canvas 273 52 941 498 10;
-#X obj 55 331 list;
-#X obj 55 291 metro 200;
-#X obj 55 265 loadbang;
 #X text 166 291 Throttle printing;
 #X obj 243 190 r bela_trill;
 #X text 360 191 This receives the reading from the Trill sensor.;
@@ -9,7 +6,6 @@
 #X obj 56 371 print hexReadings;
 #X text 191 370 [<num_touches> <x> <y> <size>];
 #X obj 35 48 loadbang;
-#X obj 35 156 s bela_setTrill;
 #X text 189 49 First initialise the Trill sensor;
 #X obj 537 19 r bela_trillCreated;
 #X obj 537 48 print bela_trillCreated;
@@ -19,11 +15,39 @@
 #X obj 243 248 route myhex;
 #X text 141 84 Message: [new <sensor_id> <bus> <device> <address=255>(
 ;
-#X connect 0 0 7 0;
+#X obj 35 156 s bela_setTrill @hv_param;
+#N canvas 731 155 450 300 throttle_time 0;
+#X obj 49 60 t a b;
+#X obj 50 35 inlet;
+#X obj 73 193 spigot;
+#X obj 106 166 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000 0 1;
+#X obj 73 235 outlet;
+#X obj 270 20 loadbang;
+#X obj 156 109 timer;
+#X text 96 48 Let one input through every;
+#X text 304 50 ms (at least);
+#X obj 227 22 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000;
+#X obj 154 141 >;
+#X obj 204 142 select 1;
+#X obj 270 50 200;
+#X connect 0 0 2 0;
+#X connect 0 1 6 1;
 #X connect 1 0 0 0;
-#X connect 2 0 1 0;
-#X connect 4 0 16 0;
-#X connect 9 0 15 0;
-#X connect 12 0 13 0;
-#X connect 15 0 10 0;
-#X connect 16 0 0 1;
+#X connect 2 0 4 0;
+#X connect 3 0 2 1;
+#X connect 5 0 12 0;
+#X connect 6 0 10 0;
+#X connect 9 0 12 0;
+#X connect 10 0 3 0;
+#X connect 10 0 11 0;
+#X connect 11 0 6 0;
+#X connect 12 0 10 1;
+#X restore 57 316 pd throttle_time;
+#X connect 1 0 12 0;
+#X connect 6 0 11 0;
+#X connect 8 0 9 0;
+#X connect 11 0 14 0;
+#X connect 12 0 15 0;
+#X connect 15 0 4 0;
