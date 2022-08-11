@@ -4,7 +4,15 @@
  */
 #include <Bela.h>
 
+#define BELA_LIBPD_TRILL
 #define BELA_LIBPD_GUI
+
+#ifdef BELA_LIBPD_DISABLE_TRILL
+#undef BELA_LIBPD_TRILL
+#endif // BELA_LIBPD_DISABLE_TRILL
+#ifdef BELA_LIBPD_DISABLE_GUI
+#undef BELA_LIBPD_GUI
+#endif // BELA_LIBPD_DISABLE_GUI
 
 #include <DigitalChannelManager.h>
 #include <stdio.h>
@@ -19,9 +27,7 @@ extern "C" {
 #include <sstream>
 #include <string.h>
 
-#define ENABLE_TRILL
-
-#if (defined(BELA_LIBPD_GUI) || defined(ENABLE_TRILL))
+#if (defined(BELA_LIBPD_GUI) || defined(BELA_LIBPD_TRILL))
 #include <libraries/Pipe/Pipe.h>
 template <typename T>
 int getIdxFromId(const char* id, std::vector<std::pair<std::string,T>>& db)
@@ -33,9 +39,9 @@ int getIdxFromId(const char* id, std::vector<std::pair<std::string,T>>& db)
 	}
 	return -1;
 }
-#endif // BELA_LIBPD_GUI || ENABLE_TRILL
+#endif // BELA_LIBPD_GUI || BELA_LIBPD_TRILL
 
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 #include <tuple>
 #include <libraries/Trill/Trill.h>
 AuxiliaryTask gTrillTask;
@@ -63,7 +69,7 @@ void readTouchSensors(void*)
 		}
 	}
 }
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 
 #ifdef BELA_LIBPD_GUI
 #include <libraries/Gui/Gui.h>
@@ -294,7 +300,7 @@ void sendDigitalMessage(bool state, unsigned int delay, void* receiverName){
 //	rt_printf("%s: %d\n", (char*)receiverName, state);
 }
 
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 void setTrillPrintError()
 {
 	rt_fprintf(stderr, "bela_setTrill format is wrong. Should be:\n"
@@ -304,7 +310,7 @@ void setTrillPrintError()
 		" or\n"
 		"[prescaler <sensor_id> <prescaler_value>(\n");
 }
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
@@ -457,7 +463,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 	}
 #endif // BELA_LIBPD_GUI
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 	if(0 == strcmp(source, "bela_setTrill"))
 	{
 		if(0 == strcmp(symbol, "new"))
@@ -571,7 +577,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 		return;
 	}
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 }
 
 void Bela_floatHook(const char *source, float value){
@@ -775,9 +781,9 @@ bool setup(BelaContext *context, void *userData)
 	libpd_bind("bela_guiOut");
 	libpd_bind("bela_setGui");
 #endif // BELA_LIBPD_GUI
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 	libpd_bind("bela_setTrill");
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 
 	// open patch:
 	gPatch = libpd_openfile(file, folder);
@@ -810,10 +816,10 @@ bool setup(BelaContext *context, void *userData)
 #endif /* PD_THREADED_IO */
 
 	dcm.setVerbose(false);
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 	gTrillTask = Bela_createAuxiliaryTask(readTouchSensors, 51, "touchSensorRead", NULL);
 	gTrillPipe.setup("trillPipe", 1024);
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 	return true;
 }
 
@@ -886,7 +892,7 @@ void render(BelaContext *context, void *userData)
 		libpd_write_array(b.name.c_str(), 0, dataBuffer.getAsFloat(), dataBuffer.getNumElements());
 	}
 #endif // BELA_LIBPD_GUI
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 	for(auto& name : gTrillAcks)
 	{
 		unsigned int idx = getIdxFromId(name.c_str(), gTouchSensors);
@@ -959,7 +965,7 @@ void render(BelaContext *context, void *userData)
 			count -= readIntervalSamples;
 		}
 	}
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 #ifdef PARSE_MIDI
 	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
@@ -1169,13 +1175,13 @@ void cleanup(BelaContext *context, void *userData)
 	{
 		delete a;
 	}
-#ifdef ENABLE_TRILL
+#ifdef BELA_LIBPD_TRILL
 	for(auto t : gTouchSensors)
 	{
 		// t.first is a std::string, so the memory will be deallocated automatically
 		delete t.second;
 	}
-#endif // ENABLE_TRILL
+#endif // BELA_LIBPD_TRILL
 	libpd_closefile(gPatch);
 	delete [] gScopeOut;
 }
