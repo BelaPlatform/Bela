@@ -141,7 +141,11 @@ SHOULD_BUILD=false
 RUN_PREREQUISITES+=lib/libbela.so lib/libbelaextra.so
 else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
+ifeq (,$(strip $(filter %.c,$(FILE_LIST)) $(filter %.cc,$(FILE_LIST)) $(filter %.cpp,$(FILE_LIST))))
 PROJECT_TYPE=libpd
+else
+PROJECT_TYPE=cpp
+endif
 else
 ifeq ($(filter $(CSOUND_FILE),$(FILE_LIST)),$(CSOUND_FILE))
 PROJECT_TYPE=cs
@@ -243,7 +247,6 @@ LIBPD_LIBS=-lpd -lpthread_rt
 endif
 ifeq ($(XENOMAI_VERSION),3)
 XENOMAI_STAT_PATH=/proc/xenomai/sched/stat
-LIBPD_LIBS=-lpd -lpthread
 endif
 
 # This is used to run Bela projects from the terminal in the background
@@ -314,7 +317,6 @@ BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by 
 BELA_LDLIBS := $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
 BELA_LDLIBS := $(filter-out -lNE10 -lstdc++,$(BELA_LDLIBS))
 ifeq ($(PROJECT_TYPE),libpd)
-BELA_LDLIBS += $(LIBPD_LIBS)
 # Objects for a system-supplied default render() file for libpd projects,
 # if the user only wants to provide the Pd files.
 DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
