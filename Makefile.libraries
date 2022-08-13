@@ -53,7 +53,7 @@ clean:
 	$(AT) rm -rf $(LIBRARY_OBJS)
 
 cleanall:
-	$(AT) for LIB in libraries/*; do echo Cleaning $$LIB; $(MAKE) -f Makefile.libraries --no-print-directory LIBRARY=`basename $$LIB` clean AT=$(AT); done
+	$(AT) rm -rf libraries/*/build
 
 $(LIBRARY_BUILD_DIR)/%.o: $(LIBRARY_DIR)/%.c
 	$(AT) $(LIBRARY_CC) -c $< -o $@ $(LIBRARY_CPPFLAGS) $(LIBRARY_CFLAGS)
