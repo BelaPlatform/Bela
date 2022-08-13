@@ -99,19 +99,29 @@ TMPMKFILE="tmp/Makefile.inc"
 >"$IMMEDIATE_LIBS"
 >"$TMPMKFILE"
 
+function set_mkfilepath()
+{
+	# set MKFILEPATH if unset or force
+	local path="$1"
+	local force="$2"
+	if [ -z "$MKFILEPATH" -o "$force" -eq 1 ]
+	then
+		MKFILEPATH="$path"
+	fi
+}
+
 function processBuildFolder()
 {
 	# Get included libraries on project from pre-processor's output
-	DIR=$1
+	DIR="$1"
 	if [ true == $BUSYBOX ]; then
-		> $IMMEDIATE_LIBS
 		# potentially slower: more processes spawned
 		find $DIR -name *.ii -exec grep "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" {} \; | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
 		find $DIR -name *.i -exec grep "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" {} \; | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
 	else
-		$grepR --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" "$DIR" | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > tmp/libraries
+		$grepR --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" "$DIR" | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> "$IMMEDIATE_LIBS"
 	fi
-	MKFILEPATH="$DIR"
+	set_mkfilepath "$DIR" 0
 }
 
 while [ $# -gt 0 ]; do
@@ -146,12 +156,12 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			# Get included libraries from file
-			$grepR "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u > $IMMEDIATE_LIBS
-			MKFILEPATH=`dirname "$FILE"`
+			$grepR "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
+			set_mkfilepath "`dirname \"$FILE\"`" 0
 			;;
 		--outpath)
 			shift
-			MKFILEPATH=$1
+			set_mkfilepath "$1" 1
 			if [ -z "$MKFILEPATH" ]; then
 				echo "Please, specify a file name."
 				exit
