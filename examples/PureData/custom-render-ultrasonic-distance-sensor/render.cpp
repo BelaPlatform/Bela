@@ -18,6 +18,7 @@
  * using libpd.
  */
 #include <Bela.h>
+#include <libraries/libpd/libpd.h>
 
 // Enable features here. These may be undef'ed below if the corresponding
 // BELA_LIBPD_DISABLE_* flag is passed
@@ -39,13 +40,11 @@
 #undef BELA_LIBPD_GUI
 #endif // BELA_LIBPD_DISABLE_GUI
 
+#define PD_THREADED_IO
+#include <libraries/libpd/libpd.h>
 #include <DigitalChannelManager.h>
 #include <stdio.h>
-#define PD_THREADED_IO
-#include <libpd/z_libpd.h>
-extern "C" {
-#include <libpd/s_stuff.h>
-};
+
 #ifdef BELA_LIBPD_MIDI
 #include <libraries/Midi/Midi.h>
 #endif // BELA_LIBPD_MIDI
