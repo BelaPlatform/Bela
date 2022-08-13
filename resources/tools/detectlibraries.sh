@@ -124,6 +124,25 @@ function processBuildFolder()
 	set_mkfilepath "$DIR" 0
 }
 
+function usage()
+{
+	echo "
+Usage:
+	$0 [[-p|--project] PROJECT_NAME] [--path path/to/folder] [--file path/to/file] [--outpath path/to/outfolde] [[-l|--library] LIBRARY_NAME]
+
+[-p|--project] PROJECT_NAME: the Bela project name to analyse for dependencies. The project
+	files must have been compiled and have generated temporary .i and .ii files
+--path path/to/folder: a folder containing .i or .ii files to analyse for dependencies
+--file path/to/file: a .i or .ii file to analyse for dependencies
+[-l|--library] LIBRARY_NAME: a Bela library to analyse for dependencies. This is done
+	parsing the lib.metadata file and not the .i or .ii files. Output is
+	written to the library's build/ folder
+--outpath path/to/outfolder: path to the output folder. Output file will be
+	\"path/to/outfolder/Makefile.inc\". If unspecified, it is inferred from the
+	path of the first entry among -p, --path, --file.
+
+Several of -p, --path, --file, can be passed and the cumulative result will be written to the output file."
+}
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-p|--project)
@@ -131,7 +150,8 @@ while [ $# -gt 0 ]; do
 			PROJECT=$1
 			if [ -z "$PROJECT" ] ; then
 				echo "Please, specify a project name."
-				exit
+				usage
+				exit 1
 			fi
 			shift
 			processBuildFolder projects/$PROJECT/build
@@ -141,18 +161,19 @@ while [ $# -gt 0 ]; do
 			BUILD_FOLDER=$1
 			if [ -z "$BUILD_FOLDER" ] ; then
 				echo "Please, specify a path to the build folder."
-				exit
+				usage
+				exit 1
 			fi
 			shift
 			processBuildFolder $BUILD_FOLDER
-			break
 			;;
 		-f|--file)
 			shift
 			FILE=$1
 			if [ -z "$FILE" ]; then
 				echo "Please, specify a file name."
-				exit
+				usage
+				exit 1
 			fi
 			shift
 			# Get included libraries from file
@@ -164,7 +185,8 @@ while [ $# -gt 0 ]; do
 			set_mkfilepath "$1" 1
 			if [ -z "$MKFILEPATH" ]; then
 				echo "Please, specify a file name."
-				exit
+				usage
+				exit 1
 			fi
 			shift
 			;;
@@ -173,7 +195,8 @@ while [ $# -gt 0 ]; do
 			LIB=$1
 			if [ -z "$LIB" ] ; then
 				echo "Please, specify a library name."
-				exit
+				usage
+				exit 1
 			fi
 			shift
 			echo $LIB
@@ -182,6 +205,7 @@ while [ $# -gt 0 ]; do
 			;;
 		*)
 			echo Unknown option $1 >&2
+			usage
 			exit 1
 			;;
 	esac
