@@ -4,9 +4,19 @@
  */
 #include <Bela.h>
 
+// Enable features here. These may be undef'ed below if the corresponding
+// BELA_LIBPD_DISABLE_* flag is passed
+#define BELA_LIBPD_SCOPE
+#define BELA_LIBPD_MIDI
 #define BELA_LIBPD_TRILL
 #define BELA_LIBPD_GUI
 
+#ifdef BELA_LIBPD_DISABLE_SCOPE
+#undef BELA_LIBPD_SCOPE
+#endif // BELA_LIBPD_DISABLE_SCOPE
+#ifdef BELA_LIBPD_DISABLE_MIDI
+#undef BELA_LIBPD_MIDI
+#endif // BELA_LIBPD_DISABLE_MIDI
 #ifdef BELA_LIBPD_DISABLE_TRILL
 #undef BELA_LIBPD_TRILL
 #endif // BELA_LIBPD_DISABLE_TRILL
@@ -21,11 +31,16 @@
 extern "C" {
 #include <libpd/s_stuff.h>
 };
+#ifdef BELA_LIBPD_MIDI
 #include <libraries/Midi/Midi.h>
+#endif // BELA_LIBPD_MIDI
+#ifdef BELA_LIBPD_SCOPE
 #include <libraries/Scope/Scope.h>
+#endif // BELA_LIBPD_SCOPE
 #include <string>
 #include <sstream>
 #include <string.h>
+#include <vector>
 
 #if (defined(BELA_LIBPD_GUI) || defined(BELA_LIBPD_TRILL))
 #include <libraries/Pipe/Pipe.h>
@@ -143,7 +158,11 @@ bool guiControlDataCallback(JSONObject& root, void* arg)
 enum { minFirstDigitalChannel = 10 };
 static unsigned int gAnalogChannelsInUse;
 static unsigned int gDigitalChannelsInUse;
+#ifdef BELA_LIBPD_SCOPE
 static unsigned int gScopeChannelsInUse = 4;
+#else // BELA_LIBPD_SCOPE
+static unsigned int gScopeChannelsInUse = 0;
+#endif // BELA_LIBPD_SCOPE
 static unsigned int gLibpdBlockSize;
 static unsigned int gChannelsInUse;
 //static const unsigned int gFirstAudioChannel = 0;
@@ -162,6 +181,7 @@ void Bela_userSettings(BelaInitSettings *settings)
 
 float* gInBuf;
 float* gOutBuf;
+#ifdef BELA_LIBPD_MIDI
 #define PARSE_MIDI
 static std::vector<Midi*> midi;
 std::vector<std::string> gMidiPortNames;
@@ -288,6 +308,7 @@ void Bela_MidiOutByte(int port, int byte){
 	}
 	port < (int)midi.size() && midi[port]->writeOutput(byte);
 }
+#endif // BELA_LIBPD_MIDI
 
 void Bela_printHook(const char *received){
 	rt_printf("%s", received);
@@ -356,6 +377,7 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 #endif // BELA_LIBPD_GUI
 }
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
+#ifdef BELA_LIBPD_MIDI
 	if(strcmp(source, "bela_setMidi") == 0)
 	{
 		if(0 == strcmp("verbose", symbol))
@@ -391,6 +413,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		dumpMidi();
 		return;
 	}
+#endif // BELA_LIBPD_MIDI
 	if(strcmp(source, "bela_setDigital") == 0){
 		// symbol is the direction, argv[0] is the channel, argv[1] (optional)
 		// is signal("sig" or "~") or message("message", default) rate
@@ -637,8 +660,10 @@ void fdLoop(void* arg){
 }
 #endif /* PD_THREADED_IO */
 
+#ifdef BELA_LIBPD_SCOPE
 Scope scope;
 float* gScopeOut;
+#endif // BELA_LIBPD_SCOPE
 void* gPatch;
 bool gDigitalEnabled = 0;
 
@@ -670,13 +695,16 @@ bool setup(BelaContext *context, void *userData)
 	if(context->digitalFrames > 0 && context->digitalChannels > 0)
 		gDigitalEnabled = 1;
 
+#ifdef BELA_LIBPD_MIDI
 	// add here other devices you need 
 	gMidiPortNames.push_back("hw:1,0,0");
 	//gMidiPortNames.push_back("hw:0,0,0");
 	//gMidiPortNames.push_back("hw:1,0,1");
-
+#endif // BELA_LIBPD_MIDI
+#ifdef BELA_LIBPD_SCOPE
 	scope.setup(gScopeChannelsInUse, context->audioSampleRate);
 	gScopeOut = new float[gScopeChannelsInUse];
+#endif // BELA_LIBPD_SCOPE
 
 	// Check first of all if the patch file exists. Will actually open it later.
 	char file[] = "_main.pd";
@@ -722,6 +750,7 @@ bool setup(BelaContext *context, void *userData)
 		}
 	}
 
+#ifdef BELA_LIBPD_MIDI
 	unsigned int n = 0;
 	while(n < gMidiPortNames.size())
 	{
@@ -735,6 +764,7 @@ bool setup(BelaContext *context, void *userData)
 		}
 	}
 	dumpMidi();
+#endif // BELA_LIBPD_MIDI
 
 	// check that we are not running with a blocksize smaller than gLibPdBlockSize
 	gLibpdBlockSize = libpd_blocksize();
@@ -748,6 +778,7 @@ bool setup(BelaContext *context, void *userData)
 	libpd_set_floathook(Bela_floatHook);
 	libpd_set_listhook(Bela_listHook);
 	libpd_set_messagehook(Bela_messageHook);
+#ifdef BELA_LIBPD_MIDI
 	libpd_set_noteonhook(Bela_MidiOutNoteOn);
 	libpd_set_controlchangehook(Bela_MidiOutControlChange);
 	libpd_set_programchangehook(Bela_MidiOutProgramChange);
@@ -755,6 +786,7 @@ bool setup(BelaContext *context, void *userData)
 	libpd_set_aftertouchhook(Bela_MidiOutAftertouch);
 	libpd_set_polyaftertouchhook(Bela_MidiOutPolyAftertouch);
 	libpd_set_midibytehook(Bela_MidiOutByte);
+#endif // BELA_LIBPD_MIDI
 
 	//initialize libpd. This clears the search path
 	libpd_init();
@@ -776,7 +808,9 @@ bool setup(BelaContext *context, void *userData)
 	for(unsigned int i = 0; i < gDigitalChannelsInUse; i++)
 		libpd_bind(gReceiverOutputNames[i].c_str());
 	libpd_bind("bela_setDigital");
+#ifdef BELA_LIBPD_MIDI
 	libpd_bind("bela_setMidi");
+#endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_GUI
 	libpd_bind("bela_guiOut");
 	libpd_bind("bela_setGui");
@@ -966,6 +1000,7 @@ void render(BelaContext *context, void *userData)
 		}
 	}
 #endif // BELA_LIBPD_TRILL
+#ifdef BELA_LIBPD_MIDI
 #ifdef PARSE_MIDI
 	int num;
 	for(unsigned int port = 0; port < midi.size(); ++port){
@@ -1058,6 +1093,7 @@ void render(BelaContext *context, void *userData)
 		}
 	}
 #endif /* PARSE_MIDI */
+#endif // BELA_LIBPD_MIDI
 	unsigned int numberOfPdBlocksToProcess = context->audioFrames / gLibpdBlockSize;
 
 	// Remember: we have non-interleaved buffers and the same sampling rate for
@@ -1139,6 +1175,7 @@ void render(BelaContext *context, void *userData)
 			dcm.processOutput(&context->digital[digitalFrameBase], gLibpdBlockSize);
 		}
 
+#ifdef BELA_LIBPD_SCOPE
 		// scope output
 		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
 			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
@@ -1146,6 +1183,7 @@ void render(BelaContext *context, void *userData)
 			}
 			scope.log(gScopeOut[0], gScopeOut[1], gScopeOut[2], gScopeOut[3]);
 		}
+#endif // BELA_LIBPD_SCOPE
 
 		// audio output
 		for(unsigned int n = 0; n < context->audioOutChannels; ++n)
@@ -1171,10 +1209,12 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
+#ifdef BELA_LIBPD_MIDI
 	for(auto a : midi)
 	{
 		delete a;
 	}
+#endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_TRILL
 	for(auto t : gTouchSensors)
 	{
@@ -1183,5 +1223,7 @@ void cleanup(BelaContext *context, void *userData)
 	}
 #endif // BELA_LIBPD_TRILL
 	libpd_closefile(gPatch);
+#ifdef BELA_LIBPD_SCOPE
 	delete [] gScopeOut;
+#endif // BELA_LIBPD_SCOPE
 }
