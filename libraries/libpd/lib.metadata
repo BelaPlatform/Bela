@@ -1,0 +1,6 @@
+name=libpd
+description=A convenience wrapper for libpd
+examples=
+license=
+LDFLAGS=
+LDLIBS=-lpd -lpthread
