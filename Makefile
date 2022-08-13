@@ -321,12 +321,14 @@ DEFAULT_PD_CPP_SRCS := ./core/default_libpd_render.cpp
 DEFAULT_PD_OBJS := $(addprefix build/core/,$(notdir $(DEFAULT_PD_CPP_SRCS:.cpp=.o)))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(DEFAULT_PD_CPP_SRCS:.cpp=.d)))
 
-# TODO: replace the below with proper parsing of default_libpd_render.ii
-include libraries/Midi/build/Makefile.link
-include libraries/Scope/build/Makefile.link
-include libraries/Gui/build/Makefile.link
-include libraries/Trill/build/Makefile.link
-include libraries/Pipe/build/Makefile.link
+DEFAULT_PD_CPP_PREP := $(DEFAULT_PD_OBJS:.o=.ii)
+LIBPD_DETECT_LIBRARES_FLAGS := $(foreach file,$(DEFAULT_PD_CPP_PREP),-f $(file))
+
+#these .ii:.o rules do nothing, but keep make happy in case there is no .ii files
+#(e.g.: when updating from a codebase that did not save preprocessed files)
+$(foreach file,$(DEFAULT_PD_CPP_PREP),\
+$(file): $(file:.ii=.o) \
+)
 endif
 
 ifndef COMPILER
@@ -459,6 +461,13 @@ ifneq (,$(filter syntax,$(MAKECMDGOALS)))
 SYNTAX_FLAG := -fsyntax-only
 endif
 
+# distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
+ifeq ($(DISTCC),1)
+ifeq ($(SYNTAX_FLAG),)
+GENERATE_PREPROCESSED := 1
+endif
+endif
+
 # Rule for Bela core C files
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
@@ -472,6 +481,18 @@ build/core/%.o: ./core/%.cpp
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
 	$(AT) $(CXX) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CPPFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CPPFLAGS) -fPIC -Wno-unused-function -Wno-unused-const-variable
+ifeq ($(GENERATE_PREPROCESSED),1)
+ifeq ($(PROJECT_TYPE),libpd)
+	$(AT) \
+		if test -n ""$(DEFAULT_PD_CPP_SRCS); then \
+			for a in $(DEFAULT_PD_CPP_SRCS); do \
+				if test "`realpath \"$$a\"`" = "`realpath \"$<\"`"; then \
+					$(CXX) $(INCLUDES) $(DEFAULT_CPPFLAGS) -w -E -o "$(@:%.o=%.ii)" "$<" $(CPPFLAGS); \
+				fi; \
+			done; \
+		fi;
+endif
+endif
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -501,13 +522,6 @@ ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo ' ...done'
 endif
 	$(AT) echo ' '
-
-# distcc does not actually store the temp files with -save-temps, so we have to generate them manually.
-ifeq ($(DISTCC),1)
-ifeq ($(SYNTAX_FLAG),)
-GENERATE_PREPROCESSED := 1
-endif
-endif
 
 # Rule for user-supplied C++ files
 $(PROJECT_DIR)/build/%$(PROJ_INFIX).o: $(PROJECT_DIR)/%.cpp
@@ -571,8 +585,8 @@ PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 $(PROJECT_DIR)/build/%.i: $(PROJECT_DIR)/build/%.o ;
 $(PROJECT_DIR)/build/%.ii: $(PROJECT_DIR)/build/%.o ;
 
-$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES)
-	$(AT)./resources/tools/detectlibraries.sh --path $(PROJECT_DIR)/build
+$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_PREPROCESSED_FILES) $(DEFAULT_PD_CPP_PREP)
+	$(AT)./resources/tools/detectlibraries.sh --path $(PROJECT_DIR)/build $(LIBPD_DETECT_LIBRARES_FLAGS)
 
 ifeq ($(RELINK),1)
   ifeq (,$(filter runide runonly,$(MAKECMDGOALS)))
