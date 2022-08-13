@@ -103,6 +103,9 @@ TMPMKFILE="tmp/Makefile.inc"
 >"$IMMEDIATE_LIBS"
 >"$TMPMKFILE"
 
+GREP_LIBRARY_REGEX='^libraries/[^/]\+/[^/]\+:'
+SED_LIBRARY_REGEX='s|.*libraries/\(.*\)/.*:|\1|'
+
 function set_mkfilepath()
 {
 	# set MKFILEPATH if unset or force
@@ -120,10 +123,9 @@ function processBuildFolder()
 	DIR="$1"
 	if [ true == $BUSYBOX ]; then
 		# potentially slower: more processes spawned
-		find $DIR -name *.ii -exec grep "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" {} \; | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
-		find $DIR -name *.i -exec grep "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" {} \; | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
+		find $DIR -name *.d -exec grep "$GREP_LIBRARY_REGEX" {} \; | sed "$SED_LIBRARY_REGEX" | sort -u >> "$IMMEDIATE_LIBS"
 	else
-		$grepR --include \*.ii --include \*.i "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" "$DIR" | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> "$IMMEDIATE_LIBS"
+		$grepR -oh --include \*.d "$GREP_LIBRARY_REGEX" "$DIR" | sed "$SED_LIBRARY_REGEX" | sort -u >> "$IMMEDIATE_LIBS"
 	fi
 	set_mkfilepath "$DIR" 0
 }
@@ -181,7 +183,7 @@ while [ $# -gt 0 ]; do
 			fi
 			shift
 			# Get included libraries from file
-			$grepR "^# [1-9]\{1,\} \"./libraries/.\{1,\}\"" $FILE | sed 's:.*"./libraries/\(.*\)/.*:\1:' | sort -u >> $IMMEDIATE_LIBS
+			$grepR "$GREP_LIBRARY_REGEX" $FILE | sed "$SED_LIBRARY_REGEX" | sort -u >> "$IMMEDIATE_LIBS"
 			set_mkfilepath "`dirname \"$FILE\"`" 0
 			;;
 		--outpath)
