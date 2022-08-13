@@ -11,6 +11,10 @@
 	BUSYBOX=false
 }
 
+SCRIPTDIR=$(dirname "$0")
+[ -z "$SCRIPTDIR" ] && SCRIPTDIR="./" || SCRIPTDIR=$SCRIPTDIR/
+cd `realpath $SCRIPTDIR`/../../
+
 [ -z "$DETECT_LIBRARIES_VERBOSE" ] && DETECT_LIBRARIES_VERBOSE=0
 getfield() {
 	awk -v pat="$1" -F"=" ' $0 ~ pat { print $2 } ' $2
@@ -159,8 +163,8 @@ while [ $# -gt 0 ]; do
 		--path)
 			shift
 			BUILD_FOLDER=$1
-			if [ -z "$BUILD_FOLDER" ] ; then
-				echo "Please, specify a path to the build folder."
+			if [ -z "$BUILD_FOLDER" -o ! -d "$BUILD_FOLDER" ] ; then
+				echo "Please, specify a valid path to the build folder."
 				usage
 				exit 1
 			fi
@@ -170,8 +174,8 @@ while [ $# -gt 0 ]; do
 		-f|--file)
 			shift
 			FILE=$1
-			if [ -z "$FILE" ]; then
-				echo "Please, specify a file name."
+			if [ -z "$FILE" -o ! -e "$FILE" ]; then
+				echo "Please, specify a valid file name."
 				usage
 				exit 1
 			fi
