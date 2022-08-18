@@ -100,7 +100,7 @@ endif #ifeq($(RUN_WITH_PRU_BIN),true)
 ifdef PROJECT
 
 #check if project dir exists
-CHECK_PROJECT_DIR_EXIST=$(shell stat $(PROJECT_DIR))
+CHECK_PROJECT_DIR_EXIST:=$(shell stat $(PROJECT_DIR))
 ifeq ($(CHECK_PROJECT_DIR_EXIST),)
 $(error $(PROJECT_DIR) does not exist)
 endif
@@ -738,7 +738,7 @@ checkupdate: ## Unzips the zip file in $(UPDATES_DIR) and checks that it contain
 	  [ $$FAIL -eq 0 ] || { echo "$$path was not found in the zip archive. Maybe it is corrupted?"; exit 1; }
 	$(AT) echo 	...done
 UPDATE_LOG?=$(BELA_DIR)/../update.log
-LOG=>> $(shell realpath $(UPDATE_LOG)) 2>&1
+LOG:=>> $(shell realpath $(UPDATE_LOG)) 2>&1
 TEE_LOG=2>&1 | tee -a $(UPDATE_LOG)
 UPDATE_LOG_INIT:=echo > $(UPDATE_LOG); \
  echo DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` $(LOG); \
