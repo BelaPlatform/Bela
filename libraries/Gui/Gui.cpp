@@ -1,6 +1,6 @@
 #include "Gui.h"
 #include <iostream>
-#include <WSServer.h>
+#include <libraries/WSServer/WSServer.h>
 
 Gui::Gui()
 {

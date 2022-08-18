@@ -1,0 +1,6 @@
+name=WSServer
+description=A simple web socket library based on libseasocks
+examples=
+license=
+LDFLAGS=
+LDLIBS=-lseasocks

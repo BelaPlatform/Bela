@@ -1,7 +1,7 @@
 #include "Scope.h"
 #include <libraries/ne10/NE10.h>
 #include <math.h>
-#include <WSServer.h>
+#include <libraries/WSServer/WSServer.h>
 #include <JSON.h>
 #include <AuxTaskRT.h>
 #include <stdexcept>

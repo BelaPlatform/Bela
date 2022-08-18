@@ -1,5 +1,5 @@
 /***** WSServer.cpp *****/
-#include <WSServer.h>
+#include "WSServer.h"
 #include <seasocks/IgnoringLogger.h>
 #include <seasocks/Server.h>
 #include <seasocks/WebSocket.h>

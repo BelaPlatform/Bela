@@ -313,9 +313,9 @@ DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 BELA_LDFLAGS = -Llib/ -Wl,--as-needed
 BELA_CORE_LDLIBS = $(DEFAULT_XENOMAI_LDFLAGS) -lprussdrv -lstdc++ # libraries needed by core code (libbela.so)
-BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so)
-BELA_LDLIBS := $(BELA_CORE_LDLIBS) $(BELA_EXTRA_LDLIBS)
-BELA_LDLIBS := $(filter-out -lNE10 -lstdc++,$(BELA_LDLIBS))
+BELA_EXTRA_LDLIBS = -lasound -lseasocks -lNE10 # additional libraries needed by extra code (libbelaextra.so), taken from the dependencies of the libraries of the objects included in $(LIB_EXTRA_OBJS)
+BELA_LDLIBS := $(BELA_CORE_LDLIBS)
+BELA_LDLIBS := $(filter-out -lstdc++,$(BELA_LDLIBS))
 ifeq ($(PROJECT_TYPE),libpd)
 # Objects for a system-supplied default render() file for libpd projects,
 # if the user only wants to provide the Pd files.
@@ -793,7 +793,7 @@ update: stop
 LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
 # some library objects are required by libbelaextra.
-LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o libraries/Midi/build/Midi_c.o
+LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/WSServer/build/WSServer.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o libraries/Midi/build/Midi_c.o
 libraries/%.o: # how to build those objects needed by libbelaextra
 	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $@
 
