@@ -400,7 +400,8 @@ endif # $(PROJECT)
 #below.
 $(shell mkdir -p  $(BUILD_DIRS) lib)
 
-PROJECT_OBJS := $(P_OBJS) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+PROJECT_OBJS_NO_P := $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+PROJECT_OBJS := $(P_OBJS) $(PROJECT_OBJS_NO_P)
 
 # Core Bela sources
 CORE_C_SRCS = $(wildcard core/*.c)
@@ -551,10 +552,12 @@ else
 
 .EXPORT_ALL_VARIABLES:
 
-PROJECT_DEPS_FILES := $(C_OBJS:%.o=%.d) $(CPP_OBJS:%.o=%.d)
 PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 
-$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_DEPS_FILES) $(DEFAULT_PD_CPP_DEPS)
+# the actual dependency is on the .d files, but as we have no rule for making
+# those .d files (and we don't want one, see above) and they are made as a side
+# effect of the .o, we depend here on the .o instead of the .d
+$(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_OBJS_NO_P) $(DEFAULT_PD_OBJS)
 	$(AT)./resources/tools/detectlibraries.sh --path $(PROJECT_DIR)/build $(LIBPD_DETECT_LIBRARES_FLAGS)
 
 ifeq ($(RELINK),1)
