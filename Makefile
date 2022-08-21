@@ -26,6 +26,10 @@
 DISTCC ?= 0 # set this to 1 to use distcc by default
 
 # an empty recipe to avoid implicit rules for .d files
+# These get generated as side effects of .c, .cpp and .S compilations, but we
+# do not want make to be aware of that, or it will try to rebuild them before all
+# operations that don't actually need to build them, e.g.: clean or when
+# EXAMPLE= is set
 %.d:
 	
 AT?=@
@@ -549,13 +553,6 @@ else
 
 PROJECT_DEPS_FILES := $(C_OBJS:%.o=%.d)
 PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
-
-#these rules do nothing, but keep make happy in case there is no .d file
-#(e.g.: when updating from a codebase that did not generate them, or if a build was stopped in an unexpected way)
-$(PROJECT_DIR)/build/%.d: $(PROJECT_DIR)/build/%.o ;
-$(foreach file,$(DEFAULT_PD_CPP_DEPS),\
-$(file): $(file:.d=.o) \
-)
 
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_DEPS_FILES) $(DEFAULT_PD_CPP_DEPS)
 	$(AT)./resources/tools/detectlibraries.sh --path $(PROJECT_DIR)/build $(LIBPD_DETECT_LIBRARES_FLAGS)
