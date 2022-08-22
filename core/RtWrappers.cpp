@@ -150,3 +150,54 @@ int createBelaRtPipe(const char* portName, int poolsz)
 	return -1;
 }
 #endif //__COBALT__
+
+#include <Bela.h>
+#define var_num_to_va_list(stream, fmt, dest) \
+{ \
+	ssize_t ret; \
+	va_list ap; \
+	va_start(ap, fmt); \
+	ret = dest(stream, fmt, ap); \
+	va_end(ap); \
+	return ret; \
+}
+
+#ifndef __COBALT__
+int rt_printf(const char *format, ...)
+{
+	var_num_to_va_list(stdout, format, rt_vfprintf)
+}
+
+int rt_fprintf(FILE *stream, const char *format, ...)
+{
+	var_num_to_va_list(stream, format, rt_vfprintf)
+}
+
+int rt_vprintf(const char *format, va_list ap)
+{
+	return rt_vfprintf(stdout, format, ap);
+}
+
+int rt_vfprintf(FILE *stream, const char *format, va_list ap)
+{
+	// this is the only one that needs to be implemented
+	return vfprintf(stream, format, ap);
+}
+#endif // __COBALT__
+
+int Bela_printf(const char *format, ...)
+{
+	var_num_to_va_list(stdout, format, Bela_vfprintf)
+}
+int Bela_fprintf(FILE *stream, const char *format, ...)
+{
+	var_num_to_va_list(stream, format, Bela_vfprintf)
+}
+int Bela_vprintf(const char *format, va_list ap)
+{
+	return Bela_vfprintf(stdout, format, ap);
+}
+int Bela_vfprintf(FILE *stream, const char *format, va_list ap)
+{
+	return rt_vfprintf(stream, format, ap);
+}
