@@ -276,7 +276,7 @@ BELA_RT_WRAP_FLAGS?=-DBELA_RT_WRAP=__WRAP
 BELA_RT_BACKEND_LDLIBS :=$(DEFAULT_XENOMAI_LDFLAGS)
 else # if BELA_RT_BACKEND is not xenomai, hardcode some stuff
 BELA_USE_DEFINE?=BELA_USE_POLL
-BELA_RT_WRAP_FLAGS?="-DBELA_RT_WRAP(call)=call" -Drt_printf=printf -D rt_fprintf=fprintf
+BELA_RT_WRAP_FLAGS?="-DBELA_RT_WRAP(call)=call"
 BELA_RT_BACKEND_LDLIBS := -lpthread -lrt
 endif
 
