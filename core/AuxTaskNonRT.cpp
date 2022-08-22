@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <vector>
+#include <string.h>
 
 extern int volatile gRTAudioVerbose;
 

@@ -4,6 +4,7 @@
 #include <Bela.h>
 #include <stdlib.h>
 #include <vector>
+#include <string.h>
 
 extern int volatile gRTAudioVerbose;
 
