@@ -1,6 +1,6 @@
 /***** AuxTaskRT.cpp *****/
 #include <AuxTaskRT.h>
-#include "../include/xenomai_wraps.h"
+#include "../include/RtWrappers.h"
 #include <Bela.h>
 #include <stdlib.h>
 #include <vector>

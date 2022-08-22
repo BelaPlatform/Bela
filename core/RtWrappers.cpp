@@ -1,57 +1,12 @@
-#ifndef XENOMAI_WRAPS_H
-#define XENOMAI_WRAPS_H
-
-#include "Bela.h"
-#include <time.h>
+#include "../include/RtWrappers.h"
 #include <stdio.h>
 #include <string.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <pthread.h>
 #include <mqueue.h>
 #include <sys/socket.h>
 
-// Forward declare wrapped versions of POSIX calls.
-// if BELA_RT_WRAP is __WRAP, then at link time, Xenomai's libcobalt will provide implementations for these
-int BELA_RT_WRAP(nanosleep(const struct timespec *req, struct timespec *rem));
-int BELA_RT_WRAP(pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg));
-int BELA_RT_WRAP(pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param));
-int BELA_RT_WRAP(pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param));
-int BELA_RT_WRAP(pthread_yield(void));
-
-int BELA_RT_WRAP(pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr));
-int BELA_RT_WRAP(pthread_mutex_destroy(pthread_mutex_t *mutex));
-int BELA_RT_WRAP(pthread_mutex_lock(pthread_mutex_t *mutex));
-int BELA_RT_WRAP(pthread_mutex_trylock(pthread_mutex_t *mutex));
-int BELA_RT_WRAP(pthread_mutex_unlock(pthread_mutex_t *mutex));
-
-int BELA_RT_WRAP(pthread_cond_destroy(pthread_cond_t *cond));
-int BELA_RT_WRAP(pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr));
-int BELA_RT_WRAP(pthread_cond_signal(pthread_cond_t *cond));
-int BELA_RT_WRAP(pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex));
-
-int BELA_RT_WRAP(socket(int protocol_family, int socket_type, int protocol));
-int BELA_RT_WRAP(setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen));
-int BELA_RT_WRAP(bind(int fd, const struct sockaddr *my_addr, socklen_t addrlen));
-ssize_t BELA_RT_WRAP(sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen));
-
-mqd_t BELA_RT_WRAP(mq_open(const char *name, int oflags, ...));
-int BELA_RT_WRAP(mq_close(mqd_t mqdes));
-ssize_t BELA_RT_WRAP(mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio));
-int BELA_RT_WRAP(mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio));
-int BELA_RT_WRAP(mq_unlink(const char *name));
-
-extern "C" void Bela_initRtBackend();
-int BELA_RT_WRAP(pthread_join(pthread_t thread, void **retval));
-int BELA_RT_WRAP(pthread_attr_init(pthread_attr_t *attr));
-int BELA_RT_WRAP(sched_get_priority_max(int policy));
-
-typedef long long int time_ns_t;
-typedef void *(pthread_callback_t)(void *);
-
-inline int task_sleep_ns(long long int timens)
+int task_sleep_ns(long long int timens)
 {
 	struct timespec req;
 	req.tv_sec = timens/1000000000;
@@ -60,14 +15,9 @@ inline int task_sleep_ns(long long int timens)
 }
 
 #include <error.h>
-//void error(int exitCode, int errno, char* message)
-//{
-	//fprintf(stderr, "Error during `%s`: %d %s\n", message, errno, strerror(errno));
-	//exit(exitCode);
-//}
 
 // got this from xenomai-3/testsuite/latency/latency.c
-inline void setup_sched_parameters(pthread_attr_t *attr, int prio)
+void setup_sched_parameters(pthread_attr_t *attr, int prio)
 {
 	struct sched_param p;
 	int ret;
@@ -85,7 +35,7 @@ inline void setup_sched_parameters(pthread_attr_t *attr, int prio)
 		error(1, ret, "pthread_attr_setschedparam()");
 }
 
-inline int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
+int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
 {
 	if(pthread_attr_setdetachstate(attr, PTHREAD_CREATE_JOINABLE))
 	{
@@ -104,7 +54,8 @@ inline int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, in
 	setup_sched_parameters(attr, prio);
 	return 0;
 }
-inline int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
+
+int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
 	if(BELA_RT_WRAP(pthread_attr_init(&attr)))
@@ -135,7 +86,7 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 #ifdef __COBALT__
 #include <rtdm/ipc.h>
 #endif // __COBALT__
-inline int createBelaRtPipe(const char* portName, int poolsz)
+int createBelaRtPipe(const char* portName, int poolsz)
 #ifdef __COBALT__
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
 {
@@ -202,9 +153,3 @@ inline int createBelaRtPipe(const char* portName, int poolsz)
 	return -1;
 }
 #endif //__COBALT__
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* XENOMAI_WRAPS_H */
