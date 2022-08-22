@@ -1,8 +1,5 @@
 #pragma once
 
-#include <time.h>
-#include <string.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
