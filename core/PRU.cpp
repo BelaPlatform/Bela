@@ -64,7 +64,7 @@ static int rtdm_fd_mcasp_to_pru = 0;
 // Xenomai-specific includes
 #include <pthread.h>
 
-#include "../include/xenomai_wraps.h"
+#include "../include/RtWrappers.h"
 
 using namespace std;
 using namespace BelaHwComponent;
