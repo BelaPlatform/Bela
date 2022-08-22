@@ -4,7 +4,8 @@
 #include <iostream>
 #include <string.h>
 
-#include "../include/xenomai_wraps.h"
+#include <pthread.h>
+#include "../include/RtWrappers.h"
 
 using namespace std;
 //
