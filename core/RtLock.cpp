@@ -1,20 +1,15 @@
 #include "../include/RtLock.h"
+#include "../include/RtWrappers.h"
 
 #include <pthread.h>
 #include <error.h>
 #include <string.h>
-#include <cobalt/sys/cobalt.h>
-#include <xenomai/init.h>
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 #include <unistd.h>
 #include <sys/syscall.h>
-
-#ifndef __COBALT__
-#error This should be compiled with __COBALT__ and the appropriate Xenomai headers in the #include path
-#endif // __COBALT__
-// All __wrap_* calls below are Xenomai libcobalt calls
+#include <stdexcept>
 
 //#define PRINT_XENO_LOCK
 
@@ -32,12 +27,15 @@ static inline pid_t getTid() {
 	return tid;
 }
 
+#ifdef __COBALT__
+#include <xenomai/init.h>
 // throughout, we use heuristics to check whether Xenomai needs to be
 // initialised and whether the current thread is a Xenomai thread.
 // See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
 static void initializeXenomai() {
 	xprintf("initializeXenomai\n");
-	int argc = 2;
+	enum { _argc = 2 };
+	int argc = _argc;
 	char blankOpt[] = "";
 #ifdef PRINT_XENO_LOCK
 	char traceOpt[] = "--trace";
@@ -45,8 +43,8 @@ static void initializeXenomai() {
 	char traceOpt[] = "";
 #endif // PRINT_XENO_LOCK
 
-	char* const argv[argc] = { blankOpt, traceOpt };
-	char* const* argvPtrs[argc] = { &argv[0], &argv[1] };
+	char* const argv[_argc] = { blankOpt, traceOpt };
+	char* const* argvPtrs[_argc] = { &argv[0], &argv[1] };
 	xenomai_init(&argc, argvPtrs);
 }
 
@@ -71,19 +69,36 @@ static bool turnIntoCobaltThread(bool recurred = false) {
 	xprintf("Turned thread %d into a Cobalt thread %s\n", tid, recurred ? "with recursion" : "");
 	return true;
 }
+#endif // __COBALT__
+
+static bool turnIntoRtThread()
+{
+#if defined __COBALT__
+	return turnIntoCobaltThread();
+#else // do nothing
+	return true;
+#endif
+}
+
+static void initializeRt()
+{
+#ifdef __COBALT__
+	initializeXenomai();
+#endif // __COBALT__
+}
 
 RtMutex::RtMutex() {
 	xprintf("Construct mutex\n");
-	if (int ret = __wrap_pthread_mutex_init(&m_mutex, NULL)) {
+	if (int ret = BELA_RT_WRAP(pthread_mutex_init(&m_mutex, NULL))) {
 		if (EPERM != ret) {
-			xprintf("__wrap_thread_mutex_init failed with %d %s\n", ret, strerror(ret));
-			return;
+			xprintf("thread_mutex_init failed with %d %s\n", ret, strerror(ret));
+			throw std::runtime_error("thread_mutex_init failed on first attempt");
 		} else {
 			xprintf("mutex init returned EPERM\n");
-			initializeXenomai();
-			if (int ret = __wrap_pthread_mutex_init(&m_mutex, NULL)) {
+			initializeRt();
+			if (int ret = BELA_RT_WRAP(pthread_mutex_init(&m_mutex, NULL))) {
 				fprintf(stderr, "Error: unable to initialize mutex : (%d) %s\n", ret, strerror(-ret));
-				return;
+				throw std::runtime_error("thread_mutex_init failed on second attempt");
 			}
 		}
 	}
@@ -93,7 +108,7 @@ RtMutex::RtMutex() {
 RtMutex::~RtMutex() {
 	xprintf("Destroy mutex %p\n", &m_mutex);
 	if (m_enabled)
-		__wrap_pthread_mutex_destroy(&m_mutex);
+		BELA_RT_WRAP(pthread_mutex_destroy(&m_mutex));
 }
 
 // a helper function to try
@@ -119,7 +134,7 @@ template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_en
 		return false;
 	} else {
 		// if we got EPERM, we are not a Xenomai thread
-		if (!turnIntoCobaltThread()) {
+		if (!turnIntoRtThread()) {
 			xfprintf(stderr, "%s %p could not turn into cobalt\n", name, id);
 			return false;
 		}
@@ -140,31 +155,30 @@ template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_en
 
 // condition resource_deadlock_would_occur instead of deadlocking. https://en.cppreference.com/w/cpp/thread/mutex/lock
 bool RtMutex::try_lock() {
-	return tryOrRetry([this]() { return __wrap_pthread_mutex_trylock(&this->m_mutex); }, m_enabled);
+	return tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_trylock(&this->m_mutex)); }, m_enabled);
 	// TODO: An implementation that can detect the invalid usage is encouraged to throw a std::system_error with error
 	// condition resource_deadlock_would_occur instead of deadlocking.
 }
 
 void RtMutex::lock() {
-	tryOrRetry([this]() { return __wrap_pthread_mutex_lock(&this->m_mutex); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_lock(&this->m_mutex)); }, m_enabled);
 }
 
 void RtMutex::unlock() {
-	tryOrRetry([this]() { return __wrap_pthread_mutex_unlock(&this->m_mutex); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_unlock(&this->m_mutex)); }, m_enabled);
 }
 
 RtConditionVariable::RtConditionVariable() {
 	xprintf("Construct CondictionVariable\n");
-	if (int ret = __wrap_pthread_cond_init(&m_cond, NULL)) {
+	if (int ret = BELA_RT_WRAP(pthread_cond_init(&m_cond, NULL))) {
 		if (EPERM != ret) {
-			xprintf("__wrap_thread_cond_init failed with %d %s\n", ret, strerror(ret));
-			return;
+			xprintf("thread_cond_init failed with %d %s\n", ret, strerror(ret));
+			throw std::runtime_error("thread_cond_init failed at first attempt");
 		} else {
 			xprintf("mutex init returned EPERM\n");
-			initializeXenomai();
-			if (int ret = __wrap_pthread_cond_init(&m_cond, NULL)) {
-				fprintf(stderr, "Error: unable to create condition variable : (%d) %s\n", ret, strerror(ret));
-				return;
+			initializeRt();
+			if (int ret = BELA_RT_WRAP(pthread_cond_init(&m_cond, NULL))) {
+				throw std::runtime_error("thread_cond_init failed at second attempt");
 			}
 		}
 	}
@@ -174,7 +188,7 @@ RtConditionVariable::RtConditionVariable() {
 RtConditionVariable::~RtConditionVariable() {
 	if (m_enabled) {
 		notify_all();
-		__wrap_pthread_cond_destroy(&m_cond);
+		BELA_RT_WRAP(pthread_cond_destroy(&m_cond));
 	}
 }
 
@@ -188,13 +202,13 @@ void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
 
 	// It may throw system_error in case of failure (transmitting any error condition from the respective call to lock
 	// or unlock). The predicate version (2) may also throw exceptions thrown by pred.
-	tryOrRetry(([this, &lck]() { return __wrap_pthread_cond_wait(&this->m_cond, &lck.mutex()->m_mutex); }), m_enabled);
+	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->m_cond, &lck.mutex()->m_mutex)); }), m_enabled);
 }
 
 void RtConditionVariable::notify_one() noexcept {
-	tryOrRetry([this]() { return __wrap_pthread_cond_signal(&this->m_cond); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_signal(&this->m_cond)); }, m_enabled);
 }
 
 void RtConditionVariable::notify_all() noexcept {
-	tryOrRetry([this]() { return __wrap_pthread_cond_broadcast(&this->m_cond); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_broadcast(&this->m_cond)); }, m_enabled);
 }
