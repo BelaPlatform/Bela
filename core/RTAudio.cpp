@@ -35,7 +35,7 @@ int gXenomaiInited = 0;
 
 #include <pthread.h>
 
-#include "../include/xenomai_wraps.h"
+#include "../include/RtWrappers.h"
 
 #include "../include/PRU.h"
 #include "../include/I2c_Codec.h"

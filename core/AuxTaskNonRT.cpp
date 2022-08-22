@@ -1,7 +1,7 @@
 /***** AuxTaskNonRT.cpp *****/
 #include "../include/Bela.h"
 #include <AuxTaskNonRT.h>
-#include "../include/xenomai_wraps.h"
+#include "../include/RtWrappers.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
