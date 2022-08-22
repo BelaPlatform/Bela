@@ -93,9 +93,7 @@ extern "C"
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdio.h>
-// these functions are currently provided by xenomai.
-// We put these declarations here so we do not have to include
-// Xenomai specific files
+
 // use attributes to provide printf-style compiler warnings
 #ifdef __GNUC__
 #define _ATTRIBUTE(attrs) __attribute__ (attrs)
@@ -103,10 +101,19 @@ extern "C"
 #define _ATTRIBUTE(attrs)
 #endif
 
+// RT-safe printing
+// these functions are currently provided by xenomai.
+// We put these declarations here so we do not have to include
+// Xenomai specific files
 int rt_printf(const char *format, ...) _ATTRIBUTE ((__format__ (__printf__, 1, 2)));
 int rt_fprintf(FILE *stream, const char *format, ...) _ATTRIBUTE ((__format__ (__printf__, 2, 3)));
-int rt_vprintf(const char *format, va_list ap)  _ATTRIBUTE ((__format__ (__printf__, 1, 0)));
-int rt_vfprintf(FILE *stream, const char *format, va_list ap)  _ATTRIBUTE ((__format__ (__printf__, 2, 0)));
+int rt_vprintf(const char *format, va_list ap) _ATTRIBUTE ((__format__ (__printf__, 1, 0)));
+int rt_vfprintf(FILE *stream, const char *format, va_list ap) _ATTRIBUTE ((__format__ (__printf__, 2, 0)));
+// these are more future-proof wrappers
+int Bela_printf(const char *format, ...) _ATTRIBUTE ((__format__ (__printf__, 1, 2)));
+int Bela_fprintf(FILE *stream, const char *format, ...) _ATTRIBUTE ((__format__ (__printf__, 2, 3)));
+int Bela_vprintf(const char *format, va_list ap) _ATTRIBUTE ((__format__ (__printf__, 1, 0)));
+int Bela_vfprintf(FILE *stream, const char *format, va_list ap) _ATTRIBUTE ((__format__ (__printf__, 2, 0)));
 
 /**
  * A type of Bela hardware.
