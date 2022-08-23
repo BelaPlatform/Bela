@@ -11,15 +11,19 @@
 #include <sys/syscall.h>
 #include <stdexcept>
 
-//#define PRINT_XENO_LOCK
 
-#ifdef PRINT_XENO_LOCK
-#define xprintf printf
-#define xfprintf fprintf
-#else // PRINT_XENO_LOCK
+//#define PRINT_RT_LOCK
+
+#ifdef PRINT_RT_LOCK
+#ifndef __COBALT__
+#include <Bela.h>
+#endif // __COBALT__
+#define xprintf rt_printf
+#define xfprintf rt_fprintf
+#else // PRINT_RT_LOCK
 #define xprintf(...)
 #define xfprintf(...)
-#endif // PRINT_XENO_LOCK
+#endif // PRINT_RT_LOCK
 
 // Standard Linux `gettid(2)` not available on Bela
 static inline pid_t getTid() {
@@ -37,11 +41,11 @@ static void initializeXenomai() {
 	enum { _argc = 2 };
 	int argc = _argc;
 	char blankOpt[] = "";
-#ifdef PRINT_XENO_LOCK
+#ifdef PRINT_RT_LOCK
 	char traceOpt[] = "--trace";
-#else // PRINT_XENO_LOCK
+#else // PRINT_RT_LOCK
 	char traceOpt[] = "";
-#endif // PRINT_XENO_LOCK
+#endif // PRINT_RT_LOCK
 
 	char* const argv[_argc] = { blankOpt, traceOpt };
 	char* const* argvPtrs[_argc] = { &argv[0], &argv[1] };
