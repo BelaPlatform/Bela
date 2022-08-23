@@ -7,18 +7,18 @@
 #define SC_CONDITION_VARIABLE_ANY_SHOULD_LOCK_BEFORE_NOTIFY
 
 // to make sure Xenomai gets initialised on time, create one object of this
-// class before any XenomaiMutex or XenomaiConditionVariable constructors
+// class before any RtMutex or RtConditionVariable constructors
 class XenomaiInitializer {
 public:
     XenomaiInitializer();
 };
 
-class XenomaiMutex {
-    friend class XenomaiConditionVariable;
+class RtMutex {
+    friend class RtConditionVariable;
 
 public:
-    XenomaiMutex();
-    ~XenomaiMutex();
+    RtMutex();
+    ~RtMutex();
 
     bool try_lock();
     void lock();
@@ -29,12 +29,12 @@ private:
     bool m_enabled = false;
 };
 
-class XenomaiConditionVariable {
+class RtConditionVariable {
 public:
-    XenomaiConditionVariable();
-    ~XenomaiConditionVariable();
+    RtConditionVariable();
+    ~RtConditionVariable();
 
-    void wait(std::unique_lock<XenomaiMutex>& lck);
+    void wait(std::unique_lock<RtMutex>& lck);
     void notify_one() noexcept;
     void notify_all() noexcept;
 

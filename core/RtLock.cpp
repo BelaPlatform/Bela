@@ -1,4 +1,4 @@
-#include "../include/XenomaiLock.h"
+#include "../include/RtLock.h"
 
 #include <pthread.h>
 #include <error.h>
@@ -74,7 +74,7 @@ static bool turnIntoCobaltThread(bool recurred = false) {
 
 XenomaiInitializer::XenomaiInitializer() { initializeXenomai(); }
 
-XenomaiMutex::XenomaiMutex() {
+RtMutex::RtMutex() {
     xprintf("Construct mutex\n");
     if (int ret = __wrap_pthread_mutex_init(&m_mutex, NULL)) {
         if (EPERM != ret) {
@@ -92,7 +92,7 @@ XenomaiMutex::XenomaiMutex() {
     m_enabled = true;
 }
 
-XenomaiMutex::~XenomaiMutex() {
+RtMutex::~RtMutex() {
     xprintf("Destroy mutex %p\n", &m_mutex);
     if (m_enabled)
         __wrap_pthread_mutex_destroy(&m_mutex);
@@ -141,21 +141,21 @@ template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_en
 #define tryOrRetry(_func_, _enabled_) tryOrRetryImpl(_func_, _enabled_, this, __func__)
 
 // condition resource_deadlock_would_occur instead of deadlocking. https://en.cppreference.com/w/cpp/thread/mutex/lock
-bool XenomaiMutex::try_lock() {
+bool RtMutex::try_lock() {
     return tryOrRetry([this]() { return __wrap_pthread_mutex_trylock(&this->m_mutex); }, m_enabled);
     // TODO: An implementation that can detect the invalid usage is encouraged to throw a std::system_error with error
     // condition resource_deadlock_would_occur instead of deadlocking.
 }
 
-void XenomaiMutex::lock() {
+void RtMutex::lock() {
     tryOrRetry([this]() { return __wrap_pthread_mutex_lock(&this->m_mutex); }, m_enabled);
 }
 
-void XenomaiMutex::unlock() {
+void RtMutex::unlock() {
     tryOrRetry([this]() { return __wrap_pthread_mutex_unlock(&this->m_mutex); }, m_enabled);
 }
 
-XenomaiConditionVariable::XenomaiConditionVariable() {
+RtConditionVariable::RtConditionVariable() {
     xprintf("Construct CondictionVariable\n");
     if (int ret = __wrap_pthread_cond_init(&m_cond, NULL)) {
         if (EPERM != ret) {
@@ -173,14 +173,14 @@ XenomaiConditionVariable::XenomaiConditionVariable() {
     m_enabled = true;
 }
 
-XenomaiConditionVariable::~XenomaiConditionVariable() {
+RtConditionVariable::~RtConditionVariable() {
     if (m_enabled) {
         notify_all();
         __wrap_pthread_cond_destroy(&m_cond);
     }
 }
 
-void XenomaiConditionVariable::wait(std::unique_lock<XenomaiMutex>& lck) {
+void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
     // If any parameter has a value that is not valid for this function (such as if lck's mutex object is not locked by
     // the calling thread), it causes undefined behavior.
 
@@ -193,10 +193,10 @@ void XenomaiConditionVariable::wait(std::unique_lock<XenomaiMutex>& lck) {
     tryOrRetry(([this, &lck]() { return __wrap_pthread_cond_wait(&this->m_cond, &lck.mutex()->m_mutex); }), m_enabled);
 }
 
-void XenomaiConditionVariable::notify_one() noexcept {
+void RtConditionVariable::notify_one() noexcept {
     tryOrRetry([this]() { return __wrap_pthread_cond_signal(&this->m_cond); }, m_enabled);
 }
 
-void XenomaiConditionVariable::notify_all() noexcept {
+void RtConditionVariable::notify_all() noexcept {
     tryOrRetry([this]() { return __wrap_pthread_cond_broadcast(&this->m_cond); }, m_enabled);
 }
