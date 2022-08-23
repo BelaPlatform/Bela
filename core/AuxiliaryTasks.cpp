@@ -6,6 +6,7 @@
 
 #include <pthread.h>
 #include "../include/RtWrappers.h"
+#include "../include/RtLock.h"
 
 using namespace std;
 //
@@ -13,8 +14,8 @@ using namespace std;
 // can schedule
 typedef struct {
 	pthread_t task;
-	pthread_cond_t cond;
-	pthread_mutex_t mutex;
+	RtConditionVariable* cond;
+	RtMutex* mutex;
 	void (*argfunction)(void*);
 	char *name;
 	int priority;
@@ -37,7 +38,7 @@ extern unsigned int gAuxiliaryTaskStackSize;
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
 	Bela_initRtBackend();
-	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
+	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)calloc(1, sizeof(InternalAuxiliaryTask));
 
 	// Populate the rest of the data structure
 	newTask->argfunction = functionToCall;
@@ -47,23 +48,24 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	newTask->args = args;
 	// Attempt to create the task
 	unsigned int stackSize = gAuxiliaryTaskStackSize;
-	if(int ret = BELA_RT_WRAP(pthread_cond_init(&(newTask->cond), NULL)))
+	int ret;
+	try {
+		newTask->cond = new RtConditionVariable;
+		newTask->mutex = new RtMutex;
+		ret = 0;
+	} catch (std::exception& e)
 	{
-		fprintf(stderr, "Error: unable to create condition variable for auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
-		free(newTask);
-		return 0;
-	}
-	if(int ret = BELA_RT_WRAP(pthread_mutex_init(&(newTask->mutex), NULL)))
-	{
-		fprintf(stderr, "Error: unable to initialize mutex for auxiliary task %s : (%d) %s\n", name, ret, strerror(-ret));
-		free(newTask);
-		return 0;
+		ret = 1;
 	}
 	// Upon calling this function, the thread will start and immediately wait
 	// on the condition variable.
-	if(int ret = create_and_start_thread(&(newTask->task), name, priority, stackSize,(pthread_callback_t*)auxiliaryTaskLoop, newTask))
+	if(!ret)
+		ret = create_and_start_thread(&(newTask->task), name, priority, stackSize,(pthread_callback_t*)auxiliaryTaskLoop, newTask);
+	if(ret)
 	{
 		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));
+		delete newTask->cond;
+		delete newTask->mutex;
 		free(newTask);
 		return 0;
 	}
@@ -112,16 +114,17 @@ int Bela_scheduleAuxiliaryTask(AuxiliaryTask task)
 					policy, &param));
 		}
 	}
-	if(int ret = BELA_RT_WRAP(pthread_mutex_trylock(&taskToSchedule->mutex)))
+	if(taskToSchedule->mutex->try_lock())
 	{
-		// If we cannot get the lock, then the task is probably still running.
-		return ret;
-	} else {
-		ret = BELA_RT_WRAP(pthread_cond_signal(&taskToSchedule->cond));
-		BELA_RT_WRAP(pthread_mutex_unlock(&taskToSchedule->mutex));
+		taskToSchedule->cond->notify_one();
+		taskToSchedule->mutex->unlock();
 		return 0;
+	} else {
+		// If we cannot get the lock, then the task is probably still running.
+		return 1;
 	}
 }
+
 AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void* arg)
 {
 	char name[11];
@@ -139,10 +142,10 @@ AuxiliaryTask Bela_runAuxiliaryTask(void (*callback)(void*), int priority, void*
 
 static void suspendCurrentTask(InternalAuxiliaryTask* task)
 {
-	BELA_RT_WRAP(pthread_mutex_lock(&task->mutex));
+	task->mutex->lock();
 	task->started = true;
-	BELA_RT_WRAP(pthread_cond_wait(&task->cond, &task->mutex));
-	BELA_RT_WRAP(pthread_mutex_unlock(&task->mutex));
+	task->cond->wait(*task->mutex);
+	task->mutex->unlock();
 }
 // Calculation loop that can be used for other tasks running at a lower
 // priority than the audio thread. Simple wrapper for Xenomai calls.
@@ -217,9 +220,9 @@ void Bela_stopAllAuxiliaryTasks()
 		// should return true at this point. Let's make sure it does:
 		Bela_requestStop();
 		// REALLY lock the lock: we really must call _cond_signal here
-		BELA_RT_WRAP(pthread_mutex_lock(&taskStruct->mutex));
-		BELA_RT_WRAP(pthread_cond_signal(&taskStruct->cond));
-		BELA_RT_WRAP(pthread_mutex_unlock(&taskStruct->mutex));
+		taskStruct->mutex->lock();
+		taskStruct->cond->notify_one();
+		taskStruct->mutex->unlock();
 
 		void* threadReturnValue;
 		BELA_RT_WRAP(pthread_join(taskStruct->task, &threadReturnValue));
@@ -235,9 +238,9 @@ void Bela_deleteAllAuxiliaryTasks()
 
 		// Delete the task
 		pthread_cancel(taskStruct->task);
-		BELA_RT_WRAP(pthread_cond_destroy(&taskStruct->cond));
-		BELA_RT_WRAP(pthread_mutex_destroy(&taskStruct->mutex));
 		// Free the name string and the struct itself
+		delete taskStruct->mutex;
+		delete taskStruct->cond;
 		free(taskStruct->name);
 		free(taskStruct);
 	}
