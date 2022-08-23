@@ -72,8 +72,6 @@ static bool turnIntoCobaltThread(bool recurred = false) {
 	return true;
 }
 
-XenomaiInitializer::XenomaiInitializer() { initializeXenomai(); }
-
 RtMutex::RtMutex() {
 	xprintf("Construct mutex\n");
 	if (int ret = __wrap_pthread_mutex_init(&m_mutex, NULL)) {
