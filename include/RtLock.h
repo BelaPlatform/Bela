@@ -27,6 +27,7 @@ public:
 	~RtConditionVariable();
 
 	void wait(std::unique_lock<RtMutex>& lck);
+	void wait(RtMutex& lck);
 	void notify_one() noexcept;
 	void notify_all() noexcept;
 

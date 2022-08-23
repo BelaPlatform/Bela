@@ -192,6 +192,10 @@ RtConditionVariable::~RtConditionVariable() {
 	}
 }
 
+void RtConditionVariable::wait(RtMutex& lck) {
+	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->m_cond, &lck.m_mutex)); }), m_enabled);
+}
+
 void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
 	// If any parameter has a value that is not valid for this function (such as if lck's mutex object is not locked by
 	// the calling thread), it causes undefined behavior.
