@@ -5,13 +5,6 @@
 // owns the lock. There is no hack around this.
 // See: https://www.xenomai.org/pipermail/xenomai/2017-October/037759.html
 
-// to make sure Xenomai gets initialised on time, create one object of this
-// class before any RtMutex or RtConditionVariable constructors
-class XenomaiInitializer {
-public:
-	XenomaiInitializer();
-};
-
 class RtMutex {
 	friend class RtConditionVariable;
 
