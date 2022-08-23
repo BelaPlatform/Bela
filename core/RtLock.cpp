@@ -87,16 +87,21 @@ static void initializeRt()
 #endif // __COBALT__
 }
 
+struct RtMutex::Private {
+	pthread_mutex_t m_mutex;
+};
+
 RtMutex::RtMutex() {
+	p = std::unique_ptr<Private>(new Private);
 	xprintf("Construct mutex\n");
-	if (int ret = BELA_RT_WRAP(pthread_mutex_init(&m_mutex, NULL))) {
+	if (int ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))) {
 		if (EPERM != ret) {
 			xprintf("thread_mutex_init failed with %d %s\n", ret, strerror(ret));
 			throw std::runtime_error("thread_mutex_init failed on first attempt");
 		} else {
 			xprintf("mutex init returned EPERM\n");
 			initializeRt();
-			if (int ret = BELA_RT_WRAP(pthread_mutex_init(&m_mutex, NULL))) {
+			if (int ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))) {
 				fprintf(stderr, "Error: unable to initialize mutex : (%d) %s\n", ret, strerror(-ret));
 				throw std::runtime_error("thread_mutex_init failed on second attempt");
 			}
@@ -106,9 +111,9 @@ RtMutex::RtMutex() {
 }
 
 RtMutex::~RtMutex() {
-	xprintf("Destroy mutex %p\n", &m_mutex);
+	xprintf("Destroy mutex %p\n", &p->m_mutex);
 	if (m_enabled)
-		BELA_RT_WRAP(pthread_mutex_destroy(&m_mutex));
+		BELA_RT_WRAP(pthread_mutex_destroy(&p->m_mutex));
 }
 
 // a helper function to try
@@ -155,29 +160,34 @@ template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_en
 
 // condition resource_deadlock_would_occur instead of deadlocking. https://en.cppreference.com/w/cpp/thread/mutex/lock
 bool RtMutex::try_lock() {
-	return tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_trylock(&this->m_mutex)); }, m_enabled);
+	return tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_trylock(&this->p->m_mutex)); }, m_enabled);
 	// TODO: An implementation that can detect the invalid usage is encouraged to throw a std::system_error with error
 	// condition resource_deadlock_would_occur instead of deadlocking.
 }
 
 void RtMutex::lock() {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_lock(&this->m_mutex)); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_lock(&this->p->m_mutex)); }, m_enabled);
 }
 
 void RtMutex::unlock() {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_unlock(&this->m_mutex)); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_unlock(&this->p->m_mutex)); }, m_enabled);
 }
 
+struct RtConditionVariable::Private {
+	pthread_cond_t m_cond;
+};
+
 RtConditionVariable::RtConditionVariable() {
+	p = std::unique_ptr<Private>(new Private);
 	xprintf("Construct CondictionVariable\n");
-	if (int ret = BELA_RT_WRAP(pthread_cond_init(&m_cond, NULL))) {
+	if (int ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))) {
 		if (EPERM != ret) {
 			xprintf("thread_cond_init failed with %d %s\n", ret, strerror(ret));
 			throw std::runtime_error("thread_cond_init failed at first attempt");
 		} else {
 			xprintf("mutex init returned EPERM\n");
 			initializeRt();
-			if (int ret = BELA_RT_WRAP(pthread_cond_init(&m_cond, NULL))) {
+			if (int ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))) {
 				throw std::runtime_error("thread_cond_init failed at second attempt");
 			}
 		}
@@ -188,12 +198,12 @@ RtConditionVariable::RtConditionVariable() {
 RtConditionVariable::~RtConditionVariable() {
 	if (m_enabled) {
 		notify_all();
-		BELA_RT_WRAP(pthread_cond_destroy(&m_cond));
+		BELA_RT_WRAP(pthread_cond_destroy(&p->m_cond));
 	}
 }
 
 void RtConditionVariable::wait(RtMutex& lck) {
-	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->m_cond, &lck.m_mutex)); }), m_enabled);
+	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->p->m_cond, &lck.p->m_mutex)); }), m_enabled);
 }
 
 void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
@@ -206,13 +216,13 @@ void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
 
 	// It may throw system_error in case of failure (transmitting any error condition from the respective call to lock
 	// or unlock). The predicate version (2) may also throw exceptions thrown by pred.
-	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->m_cond, &lck.mutex()->m_mutex)); }), m_enabled);
+	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->p->m_cond, &lck.mutex()->p->m_mutex)); }), m_enabled);
 }
 
 void RtConditionVariable::notify_one() noexcept {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_signal(&this->m_cond)); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_signal(&this->p->m_cond)); }, m_enabled);
 }
 
 void RtConditionVariable::notify_all() noexcept {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_broadcast(&this->m_cond)); }, m_enabled);
+	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_broadcast(&this->p->m_cond)); }, m_enabled);
 }
