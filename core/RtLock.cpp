@@ -11,6 +11,22 @@
 #include <sys/syscall.h>
 #include <stdexcept>
 
+// What error - if returned by the initialisation routine - means we should
+// force-initialise the RT core and try again
+#if defined(__COBALT__)
+static const int kErrShouldInit = EPERM;
+#else
+static const int kErrShouldInit = 0; // will never be true
+#endif
+
+
+// What error - if returned by the a runtime routine - means we should
+// force-turn the current thread into an RT thread and try again
+#if defined(__COBALT__)
+static const int kErrShouldTurn = EPERM;
+#else
+static const int kErrShouldTurn = 0; // will never be true
+#endif
 
 //#define PRINT_RT_LOCK
 
@@ -91,22 +107,53 @@ static void initializeRt()
 #endif // __COBALT__
 }
 
+static const char* pstrerror(int ret)
+{
+	return strerror(ret < 0 ? -ret : ret);
+}
+
+typedef pthread_mutex_t mutex_t;
+
+// TODO: can we be clever with the preprocessor?
+int mutex_lock(mutex_t* mutex)
+{
+	return BELA_RT_WRAP(pthread_mutex_lock(mutex));
+}
+
+int mutex_trylock(mutex_t* mutex)
+{
+	return BELA_RT_WRAP(pthread_mutex_trylock(mutex));
+}
+
+int mutex_unlock(mutex_t* mutex)
+{
+	return BELA_RT_WRAP(pthread_mutex_unlock(mutex));
+}
+
+int mutex_destroy(mutex_t* mutex)
+{
+	return BELA_RT_WRAP(pthread_mutex_destroy(mutex));
+}
+
 struct RtMutex::Private {
-	pthread_mutex_t m_mutex;
+	mutex_t m_mutex;
 };
 
 RtMutex::RtMutex() {
 	p = std::unique_ptr<Private>(new Private);
 	xprintf("Construct mutex\n");
-	if (int ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))) {
-		if (EPERM != ret) {
-			xprintf("thread_mutex_init failed with %d %s\n", ret, strerror(ret));
+	int ret;
+	if ((ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))))
+	{
+		if (kErrShouldInit != ret) {
+			xprintf("mutex_init failed with %d %s\n", ret, pstrerror(ret));
 			throw std::runtime_error("thread_mutex_init failed on first attempt");
 		} else {
-			xprintf("mutex init returned EPERM\n");
+			xprintf("mutex_init returned %d %s\n", ret, pstrerror(ret));
 			initializeRt();
-			if (int ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))) {
-				fprintf(stderr, "Error: unable to initialize mutex : (%d) %s\n", ret, strerror(-ret));
+			if ((ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))))
+			{
+				fprintf(stderr, "Error: unable to initialize mutex : (%d) %s\n", ret, pstrerror(ret));
 				throw std::runtime_error("thread_mutex_init failed on second attempt");
 			}
 		}
@@ -117,12 +164,12 @@ RtMutex::RtMutex() {
 RtMutex::~RtMutex() {
 	xprintf("Destroy mutex %p\n", &p->m_mutex);
 	if (m_enabled)
-		BELA_RT_WRAP(pthread_mutex_destroy(&p->m_mutex));
+		mutex_destroy(&p->m_mutex);
 }
 
 // a helper function to try
 // - call func()
-// - if it fails, try to turn the current thread into a cobalt thread and call func() again
+// - if it fails, try to turn the current thread into a RT thread and call func() again
 // - if it fails again, just fail
 // - return true if it succeeds, or false if it fails
 // id and name are just for debugging purposes, while m_enabled is there because it saves duplicating some lines
@@ -139,10 +186,10 @@ template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_en
 	// 0 is "success" (or at least meaningful failure)
 	if (0 == ret) {
 		return true;
-	} else if (EPERM != ret) {
+	} else if (kErrShouldTurn != ret) {
 		return false;
 	} else {
-		// if we got EPERM, we are not a Xenomai thread
+		// if we got kErrShouldTurn, we are not a RT thread
 		if (!turnIntoRtThread()) {
 			xfprintf(stderr, "%s %p could not turn into cobalt\n", name, id);
 			return false;
@@ -164,35 +211,63 @@ template <typename F, typename T> static bool tryOrRetryImpl(F&& func, bool m_en
 
 // condition resource_deadlock_would_occur instead of deadlocking. https://en.cppreference.com/w/cpp/thread/mutex/lock
 bool RtMutex::try_lock() {
-	return tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_trylock(&this->p->m_mutex)); }, m_enabled);
+	return tryOrRetry([this]() { return mutex_trylock(&this->p->m_mutex); }, m_enabled);
 	// TODO: An implementation that can detect the invalid usage is encouraged to throw a std::system_error with error
 	// condition resource_deadlock_would_occur instead of deadlocking.
 }
 
 void RtMutex::lock() {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_lock(&this->p->m_mutex)); }, m_enabled);
+	tryOrRetry([this]() { return mutex_lock(&this->p->m_mutex); }, m_enabled);
 }
 
 void RtMutex::unlock() {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_mutex_unlock(&this->p->m_mutex)); }, m_enabled);
+	tryOrRetry([this]() { return mutex_unlock(&this->p->m_mutex); }, m_enabled);
+}
+
+
+typedef pthread_cond_t cond_t;
+
+// TODO: can we be clever with the preprocessor?
+int cond_wait(cond_t* cond, mutex_t* mutex)
+{
+	return BELA_RT_WRAP(pthread_cond_wait(cond, mutex));
+}
+
+int cond_signal(cond_t* cond)
+{
+	return BELA_RT_WRAP(pthread_cond_signal(cond));
+}
+
+int cond_broadcast(cond_t* cond)
+{
+	return BELA_RT_WRAP(pthread_cond_broadcast(cond));
+}
+
+int cond_destroy(cond_t* cond)
+{
+	return BELA_RT_WRAP(pthread_cond_destroy(cond));
 }
 
 struct RtConditionVariable::Private {
-	pthread_cond_t m_cond;
+	cond_t m_cond;
 };
 
 RtConditionVariable::RtConditionVariable() {
 	p = std::unique_ptr<Private>(new Private);
 	xprintf("Construct CondictionVariable\n");
-	if (int ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))) {
-		if (EPERM != ret) {
-			xprintf("thread_cond_init failed with %d %s\n", ret, strerror(ret));
+	int ret;
+	if ((ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))))
+	{
+		if (kErrShouldInit != ret) {
+			xprintf("cond_init failed with %d %s\n", ret, pstrerror(ret));
 			throw std::runtime_error("thread_cond_init failed at first attempt");
 		} else {
-			xprintf("mutex init returned EPERM\n");
+			xprintf("cond_init returned %d %s\n", ret, pstrerror(ret));
 			initializeRt();
-			if (int ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))) {
-				throw std::runtime_error("thread_cond_init failed at second attempt");
+			int ret;
+			if ((ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))))
+			{
+				throw std::runtime_error("cond_init failed at second attempt");
 			}
 		}
 	}
@@ -202,12 +277,12 @@ RtConditionVariable::RtConditionVariable() {
 RtConditionVariable::~RtConditionVariable() {
 	if (m_enabled) {
 		notify_all();
-		BELA_RT_WRAP(pthread_cond_destroy(&p->m_cond));
+		cond_destroy(&p->m_cond);
 	}
 }
 
 void RtConditionVariable::wait(RtMutex& lck) {
-	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->p->m_cond, &lck.p->m_mutex)); }), m_enabled);
+	tryOrRetry(([this, &lck]() { return cond_wait(&this->p->m_cond, &lck.p->m_mutex); }), m_enabled);
 }
 
 void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
@@ -220,13 +295,13 @@ void RtConditionVariable::wait(std::unique_lock<RtMutex>& lck) {
 
 	// It may throw system_error in case of failure (transmitting any error condition from the respective call to lock
 	// or unlock). The predicate version (2) may also throw exceptions thrown by pred.
-	tryOrRetry(([this, &lck]() { return BELA_RT_WRAP(pthread_cond_wait(&this->p->m_cond, &lck.mutex()->p->m_mutex)); }), m_enabled);
+	tryOrRetry(([this, &lck]() { return cond_wait(&this->p->m_cond, &lck.mutex()->p->m_mutex); }), m_enabled);
 }
 
 void RtConditionVariable::notify_one() noexcept {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_signal(&this->p->m_cond)); }, m_enabled);
+	tryOrRetry([this]() { return cond_signal(&this->p->m_cond); }, m_enabled);
 }
 
 void RtConditionVariable::notify_all() noexcept {
-	tryOrRetry([this]() { return BELA_RT_WRAP(pthread_cond_broadcast(&this->p->m_cond)); }, m_enabled);
+	tryOrRetry([this]() { return cond_broadcast(&this->p->m_cond); }, m_enabled);
 }
