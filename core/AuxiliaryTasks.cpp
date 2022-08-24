@@ -60,7 +60,7 @@ AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int p
 	// Upon calling this function, the thread will start and immediately wait
 	// on the condition variable.
 	if(!ret)
-		ret = create_and_start_thread(&(newTask->task), name, priority, stackSize,(pthread_callback_t*)auxiliaryTaskLoop, newTask);
+		ret = create_and_start_thread(&(newTask->task), name, priority, stackSize, NULL, (pthread_callback_t*)auxiliaryTaskLoop, newTask);
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to create auxiliary task %s : (%d) %s\n", name, ret, strerror(ret));

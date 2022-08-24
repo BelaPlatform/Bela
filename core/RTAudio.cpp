@@ -936,7 +936,7 @@ int Bela_startAudio()
 		//if there is a fifo, the core audio thread below will need a higher priority
 		audioPriority = BELA_AUDIO_PRIORITY + 1;
 		// and we start an extra thread with usual audio priority in which the user's render() will run
-		ret = create_and_start_thread(&gFifoThread, gFifoThreadName, audioPriority - 1, stackSize, (pthread_callback_t*)fifoLoop, NULL);
+		ret = create_and_start_thread(&gFifoThread, gFifoThreadName, audioPriority - 1, stackSize, NULL, (pthread_callback_t*)fifoLoop, NULL);
 		if(ret)
 		{
 			fprintf(stderr, "Error: unable to start Xenomai fifo audio thread: %d %s\n", ret, strerror(-ret));
@@ -945,7 +945,7 @@ int Bela_startAudio()
 	} else {
 		audioPriority = BELA_AUDIO_PRIORITY;
 	}
-	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, audioPriority, stackSize, (pthread_callback_t*)audioLoop, NULL);
+	ret = create_and_start_thread(&gRTAudioThread, gRTAudioThreadName, audioPriority, stackSize, NULL, (pthread_callback_t*)audioLoop, NULL);
 	if(ret)
 	{
 		fprintf(stderr, "Error: unable to start Xenomai audio thread: %d %s\n", ret, strerror(-ret));
