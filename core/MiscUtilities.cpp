@@ -110,6 +110,11 @@ int writeTextFile(const std::string& path, const std::string& content, Mode mode
 	if(outputFile.is_open())
 	{
 		outputFile << content;
+		if(!outputFile.good())
+		{
+			fprintf(stderr, "File %s is no longer good after writing to it\n.", path.c_str());
+			return -1;
+		}
 		return 0;
 	}
 	fprintf(stderr, "File %s could not be opened\n.", path.c_str());
