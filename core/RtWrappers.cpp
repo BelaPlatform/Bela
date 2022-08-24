@@ -166,6 +166,79 @@ int createBelaRtPipe(const char* portName, int poolsz)
 }
 #endif //__COBALT__
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+// Standard Linux `gettid(2)` not available on Bela
+inline pid_t getTid() {
+	pid_t tid = syscall(SYS_gettid);
+	return tid;
+}
+
+#ifdef __COBALT__
+#include <xenomai/init.h>
+// throughout, we use heuristics to check whether Xenomai needs to be
+// initialised and whether the current thread is a Xenomai thread.
+// See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
+static void initializeXenomai() {
+	xprintf("initializeXenomai\n");
+	enum { _argc = 2 };
+	int argc = _argc;
+	char blankOpt[] = "";
+#ifdef PRINT_RT_LOCK
+	char traceOpt[] = "--trace";
+#else // PRINT_RT_LOCK
+	char traceOpt[] = "";
+#endif // PRINT_RT_LOCK
+
+	char* const argv[_argc] = { blankOpt, traceOpt };
+	char* const* argvPtrs[_argc] = { &argv[0], &argv[1] };
+	xenomai_init(&argc, argvPtrs);
+}
+
+static bool turnIntoCobaltThread(bool recurred = false) {
+	struct sched_param param;
+	memset(&param, 0, sizeof(param));
+	int policy;
+	// Guaranteed to succeed as pthread_self() cannot fail and pthread_getschedparam()'s only error condition is when
+	// the given thread does not exist.
+	pthread_getschedparam(pthread_self(), &policy, &param);
+	pid_t tid = getTid();
+
+	if (int ret = __wrap_sched_setscheduler(tid, policy, &param)) {
+		fprintf(stderr, "Warning: unable to turn current thread into a Xenomai thread : (%d) %s\n", -ret,
+				strerror(-ret));
+		initializeXenomai();
+		if (!recurred)
+			return turnIntoCobaltThread(true);
+		else
+			return false;
+	}
+	if(gRTAudioVerbose)
+		rt_printf("Turned thread %d into a Cobalt thread\n", tid);
+	return true;
+}
+#endif // __COBALT__
+
+bool turnIntoRtThread()
+{
+#if defined __COBALT__
+	return turnIntoCobaltThread();
+#else // do nothing
+	return true;
+#endif
+}
+
+void initializeRt()
+{
+#ifdef __COBALT__
+	initializeXenomai();
+#endif // __COBALT__
+}
+
 #include <Bela.h>
 #define var_num_to_va_list(stream, fmt, dest) \
 { \
