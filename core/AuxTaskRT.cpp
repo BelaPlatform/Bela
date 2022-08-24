@@ -52,7 +52,7 @@ void AuxTaskRT::__create(){
 	}
 	
 	// start the xenomai task
-	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, (pthread_callback_t*)AuxTaskRT::thread_func, this))
+	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, NULL, (pthread_callback_t*)AuxTaskRT::thread_func, this))
 	{
 		fprintf(stderr, "Unable to start AuxTaskRT %s: %i\n", name.c_str(), ret);
 		return;
