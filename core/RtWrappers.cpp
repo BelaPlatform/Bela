@@ -52,7 +52,7 @@ int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
 	return 0;
 }
 
-int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, pthread_callback_t* callback, void* arg)
+int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, cpu_set_t* req_cpuset, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
 	if(BELA_RT_WRAP(pthread_attr_init(&attr)))
@@ -61,6 +61,21 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 		return -1;
 	}
 	if(int ret = set_thread_stack_and_priority(&attr, stackSize, priority))
+	{
+		return ret;
+	}
+	cpu_set_t* cpuset = req_cpuset;
+	cpu_set_t our_cpuset;
+	if(!cpuset || (cpuset && !CPU_COUNT(cpuset)))
+	{
+		// not sure what is supposed to happen if you have an empty cpu_set_t
+		// so - and also as a default in case a NULL is passed in - we set all CPUs in the set
+		cpuset = &our_cpuset;
+		CPU_ZERO(cpuset);
+		for(unsigned int n = 0; n < CPU_SETSIZE; ++n)
+			CPU_SET(n, cpuset);
+	}
+	if(int ret = pthread_attr_setaffinity_np(&attr, sizeof(*cpuset), cpuset))
 	{
 		return ret;
 	}

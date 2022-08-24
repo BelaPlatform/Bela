@@ -56,7 +56,7 @@ void AuxTaskNonRT::__create(){
 	}
 	
 	// start the xenomai task
-	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, (pthread_callback_t*)AuxTaskNonRT::thread_func, this))
+	if(int ret = create_and_start_thread(&thread, name.c_str(), priority, stackSize, NULL, (pthread_callback_t*)AuxTaskNonRT::thread_func, this))
 	{
 		fprintf(stderr, "Unable to start AuxTaskNonRT %s: %i, %s\n", name.c_str(), ret, strerror(ret));
 		return;
