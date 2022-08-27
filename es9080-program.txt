@@ -62,17 +62,7 @@ w 0x90 133 0x44; //Set the Amount of dither into the NSMOD CH5/6 quantizer to be
 w 0x90 134 0x44; //Set the Amount of dither into the NSMOD CH7/8 quantizer to best linearity
 
 //DRE Registers
-w 0x90 136 0xFF; //Set the DRE to turn off the THDR at low volume for power saving, and to swap analog and digital gain at low volume for best DNR
-w 0x90 139 0xFF; //Allow DRE to still trigger is there is a small DC offset in the music. (Some recordings have small DC offsets in them)
-w 0x90 140 0x56; //Set DRE digital gain of CH1/3/5/7 to 16.37dB to match the Analog attenuate amount when DRE turns on
-w 0x90 141 0x1A; //Set DRE digital gain to CH1/3/5/7 to 16.37dB to match the Analog attenuate amount when DRE turns on
-w 0x90 142 0x56; //Set DRE digital gain to CH2/4/6/8 to 16.37dB to match the Analog attenuate amount when DRE turns on
-w 0x90 143 0x1A; //Set DRE digital gain to CH2/4/6/8 to 16.37dB to match the Analog attenuate amount when DRE turns on
-w 0x90 144 0xF1; //Set DRE ON threshold to -48dB
-w 0x90 145 0x0C; //Set DRE ON threshold to -48dB
-w 0x90 146 0x84; //Set DRE OFF threshold to -28dB
-w 0x90 147 0x81; //Set DRE OFF threshold to -28dB
-w 0x90 148 0x8F; //Set DRE decay rate (time it takes to automatically engage DRE if the signal drops below the DRE ON threshold
+w 0x90 136 0x0; //Set the DRE to turn off the THDR at low volume for power saving, and to swap analog and digital gain at low volume for best DNR
 
 //Enable Audio
 w 0x90 92 0x10; //Toggle DAC clock Resync to line up all the clocks in the DAC core for best analog performance
