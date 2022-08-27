@@ -22,9 +22,11 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 
 //TDM Registers
 w 0x90 77 0x10; //Enable Master Mode
-w 0x90 78 0x03; //Invert Master mode WS and BCK
+//GGG w 0x90 78 0x03; //Invert Master mode WS and BCK
+w 0x90 78 0x04; //GGG Do not invert Master mode WS and BCK, WS is pulse
 w 0x90 79 0x27; //Scale WS by 4 (WS = 4*256FS = 1024FS), set 8 TDM slots per frame
-w 0x90 80 0xC8; //Set TDM to Left Justified mode and WS positive valid edge, TDM_VALID_PULSE_LEN = 8
+//GGGw 0x90 80 0xC8; //Set TDM to Left Justified mode and WS positive valid edge, TDM_VALID_PULSE_LEN = 8
+w 0x90 80 0x88; //GGG Set TDM to Left Justified mode and WS positive valid edge, TDM_VALID_PULSE_LEN = 8
 w 0x90 84 0x00; //TDM_CH1_LINE_SEL = 00 (DATA2), TDM_CH1_SLOT_SEL = 0
 w 0x90 85 0x01; //TDM_CH2_LINE_SEL = 00 (DATA2), TDM_CH2_SLOT_SEL = 1
 w 0x90 86 0x02; //TDM_CH3_LINE_SEL = 00 (DATA2), TDM_CH3_SLOT_SEL = 2
