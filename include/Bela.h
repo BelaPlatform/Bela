@@ -116,6 +116,7 @@ typedef enum
 	BelaHw_BelaMiniMultiTdm, ///< Bela Mini with extra codecs and/or tdm devices
 	BelaHw_BelaMultiTdm, ///< Bela with extra codecs and/or tdm devices
 	BelaHw_BelaMiniMultiI2s, ///< Bela Mini with extra rx and tx I2S data lines.
+	BelaHw_BelaEs9080, ///< A Bela cape with Es9080 on top
 	BelaHw_Batch, ///< Dummy offline
 } BelaHw;
 

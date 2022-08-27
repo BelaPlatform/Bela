@@ -57,6 +57,7 @@
 #include "../include/I2c_MultiTLVCodec.h"
 #include "../include/I2c_MultiTdmCodec.h"
 #include "../include/I2c_MultiI2sCodec.h"
+#include "../include/Es9080_Codec.h"
 #include "../include/GPIOcontrol.h"
 extern "C" void enable_runfast();
 extern "C" void disable_runfast();
@@ -580,6 +581,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			mode = "MODE:"+codecMode;
 		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
 	}
+	else if(belaHw == BelaHw_BelaEs9080) {
+		uint8_t addr = 0x4c; // this is the write-only register
+		gAudioCodec = new Es9080_Codec(codecI2cBus, addr, gRTAudioVerbose);
+	}
 	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
 		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);
 	else if(BelaHw_BelaMiniMultiI2s == belaHw)
@@ -627,6 +632,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		case BelaHw_CtagFace:
 		case BelaHw_CtagFaceBela:
 		case BelaHw_BelaMiniMultiI2s:
+		case BelaHw_BelaEs9080:
 			gFifoFactor = settings->periodSize / 64;
 		break;
 		case BelaHw_CtagBeast:

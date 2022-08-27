@@ -583,6 +583,7 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_CtagBeast:
 	case BelaHw_CtagFaceBela:
 	case BelaHw_CtagBeastBela:
+	case BelaHw_BelaEs9080:
 		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
 	case BelaHw_Bela:
@@ -692,6 +693,8 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 		case BelaHw_CtagFaceBela:
 			//nobreak
 		case BelaHw_CtagBeastBela:
+			//nobreak
+		case BelaHw_BelaEs9080:
 			pruUsesMcaspIrq = true;
 			break;
 		case BelaHw_NoHw:
