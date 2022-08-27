@@ -16,6 +16,10 @@ namespace StringUtils
 	 */
 	std::string trim(std::string const& str);
 	/**
+	 * Parses a string as a decimal or hex integer
+	 */
+	long long int parseAsInt(std::string const& str);
+	/**
 	 * Turns a vector of strings into a vector of `char*`, useful for
 	 * generating `argv`, with the first element being a `nullptr`.
 	 * Note: the pointers are _not_ `const char*`,

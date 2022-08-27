@@ -43,6 +43,20 @@ std::string trim(std::string const& str)
 	return str.substr(first, last - first + 1);
 }
 
+
+long long int parseAsInt(std::string const& str)
+{
+	std::string st = trim(str);
+	int base = 10;
+	unsigned int offset = 0;
+	if(st.size() >= 2 && '0' == st[0] && 'x' == st[1])
+	{
+		offset = 2;
+		base = 16;
+	}
+	return strtoll(st.c_str(), NULL, base);
+}
+
 std::vector<char*> makeArgv(std::vector<std::string>& strings)
 {
 	std::vector<char*> out;
