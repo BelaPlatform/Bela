@@ -28,11 +28,12 @@ Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, bool isVerbose)
 	params.mclk = mcaspConfig.getValidAhclk(24000000);
 	params.samplingRate = params.mclk / double(kNumBits);
 	initI2C_RW(i2cBus, i2cAddress, -1);
+	gpio.open(61, Gpio::OUTPUT);
 }
 
 Es9080_Codec::~Es9080_Codec()
 {
-	//disable(); // TODO :disable
+	disable();
 }
 
 McaspConfig& Es9080_Codec::getMcaspConfig()
@@ -56,6 +57,7 @@ McaspConfig& Es9080_Codec::getMcaspConfig()
 }
 
 int Es9080_Codec::initCodec(){
+	gpio.set();
 	// check it's alive. Write a register to the write-only address and
 	// make sure it succeeds
 	return disable();
@@ -63,6 +65,7 @@ int Es9080_Codec::initCodec(){
 
 #include <MiscUtilities.h>
 int Es9080_Codec::startAudio(int dummy){
+	gpio.set();
 	//std::string program = R"HEREDOC(
 	//bla
 //)HEREDOC";
@@ -125,9 +128,8 @@ int Es9080_Codec::startAudio(int dummy){
 
 int Es9080_Codec::stopAudio()
 {
-	// TODO: mute
-	//return disable();
-	return 0; // TODO: disable
+	// TODO: mute instead of disable?
+	return disable();
 }
 
 int Es9080_Codec::setLineOutVolume(int channel, float gain)
@@ -266,4 +268,5 @@ int Es9080_Codec::reset()
 		return 1;
 	//  RESET & PLL REGISTER1: clear AO_SOFT_RESET | PLL_SOFT_RESET
 	return writeRegister(192, 0x0);
+	gpio.clear();
 }

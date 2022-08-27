@@ -2,7 +2,7 @@
 
 #include "AudioCodec.h"
 #include "I2c.h"
-#include <array>
+#include <Gpio.h>
 
 class Es9080_Codec : public I2c, public AudioCodec
 {
@@ -34,5 +34,6 @@ protected:
 	bool verbose;
 	int setAddressForReg(unsigned int reg, bool write);
 	int currentAddress = 0xFF;
+	Gpio gpio;
 };
 
