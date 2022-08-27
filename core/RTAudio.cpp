@@ -139,7 +139,7 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 	cfg->audioInChannels = pcfg->activeCodec->getNumIns();
 	cfg->audioOutChannels = pcfg->activeCodec->getNumOuts();
 	cfg->audioSampleRate = pcfg->activeCodec->getSampleRate();
-	if(!cfg->audioInChannels && cfg->audioOutChannels) {
+	if(!cfg->audioInChannels && !cfg->audioOutChannels) {
 		fprintf(stderr, "Error: 0 inputs and 0 outputs channels.\n");
 		return -1;
 	}
