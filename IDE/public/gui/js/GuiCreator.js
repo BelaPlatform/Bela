@@ -100,6 +100,9 @@ export default class GuiCreator {
 
 		let slider = guiF.add(this.parameters[p.id][guiId], name, min, max, step);
 		slider.onChange(this.sliderCallback.bind(slider));
+		slider.domElement.ondblclick = () => {
+			slider.setValue(slider.initialValue);
+		};
 		return slider;
 	}
 
