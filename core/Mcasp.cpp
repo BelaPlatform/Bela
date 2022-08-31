@@ -315,15 +315,15 @@ int McaspConfig::setPdir()
 	return 0;
 }
 
-uint32_t McaspConfig::computeTdm(unsigned int numChannels)
+uint32_t McaspConfig::computeTdm(unsigned int numSlots)
 {
 // XTDMS[31-0]: Transmitter mode during TDM time slot n.
 // 0 Transmit TDM time slot n is inactive. The transmit serializer does not shift out data during this slot.
 // 1 Transmit TDM time slot n is active. The transmit serializer shifts out
 // data during this slot according to the serializer control register (SRCTL).
-	if(0 == numChannels)
+	if(0 == numSlots)
 		return 0;
-	return (1 << numChannels) - 1;
+	return (1 << numSlots) - 1;
 }
 
 uint32_t McaspConfig::computeFifoctl(unsigned int numSerializers)
@@ -398,7 +398,8 @@ int McaspConfig::setSrctln(unsigned int n, McaspConfig::SrctlMode mode, McaspCon
 
 int McaspConfig::setChannels(unsigned int numChannels, std::vector<unsigned int>& serializers, bool input)
 {
-	uint32_t tdm = computeTdm(numChannels / serializers.size());
+	unsigned int numSlots = numChannels ? numChannels / serializers.size() : 0;
+	uint32_t tdm = computeTdm(numSlots);
 	input ? regs.rtdm = tdm : regs.xtdm = tdm;
 	uint32_t fifoctl = computeFifoctl(serializers.size());
 	input ? regs.rfifoctl = fifoctl : regs.wfifoctl = fifoctl;

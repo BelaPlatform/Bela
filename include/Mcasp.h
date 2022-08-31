@@ -63,7 +63,7 @@ public:
 	Parameters params;
 	McaspRegisters getRegisters();
 private:
-	static uint32_t computeTdm(unsigned int numChannels);
+	static uint32_t computeTdm(unsigned int numSlots);
 	static uint32_t computeFifoctl(unsigned int numSerializers);
 	int setFmt();
 	int setAfsctl();
