@@ -30,7 +30,7 @@ int AuxTaskRT::commsInit()
 	attr.mq_maxmsg = 100;
 	attr.mq_msgsize = 100000;
 	queueDesc = BELA_RT_WRAP(mq_open(queueName.c_str(), O_CREAT | O_RDWR, 0644, &attr));
-	if(queueDesc < 0)
+	if((mqd_t)-1 == queueDesc)
 		return 1;
 	return 0;
 }
