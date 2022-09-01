@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifdef __linux__
 #include <linux/i2c-dev.h>
 // heuristic to guess what version of i2c-dev.h we have:
 // the one installed with `apt-get install libi2c-dev`
@@ -16,6 +17,22 @@ typedef unsigned char i2c_char_t;
 #else
 typedef char i2c_char_t;
 #endif
+#else // __linux__
+#define I2C_SLAVE 0
+#define I2C_RDWR 0
+#define I2C_M_RD 0
+struct i2c_msg {
+int addr;
+int flags;
+int len;
+void* buf;
+};
+struct i2c_rdwr_ioctl_data {
+i2c_msg* msgs;
+size_t nmsgs;
+};
+typedef char i2c_char_t;
+#endif // __linux__
 #include <sys/ioctl.h>
 
 #define MAX_BUF_NAME 64

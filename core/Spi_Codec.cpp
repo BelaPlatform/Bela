@@ -13,7 +13,18 @@ const int RESET_PIN = 81; // GPIO2(17) P8.34
 #include <fcntl.h>
 #include <iostream>
 #include <sys/ioctl.h>
+#ifdef __linux__
 #include <linux/spi/spidev.h>
+#else // __linux__
+#define SPI_IOC_MESSAGE(...) 0
+#include <sys/types.h>
+struct spi_ioc_transfer {
+	unsigned long tx_buf;
+	unsigned long rx_buf;
+	size_t len;
+	size_t bits_per_word;
+};
+#endif // __linux__
 #include <cstring>
 #include <array>
 

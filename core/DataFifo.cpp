@@ -1,4 +1,5 @@
 #include <DataFifo.h>
+#include <sys/errno.h>
 
 DataFifo::DataFifo()
 {

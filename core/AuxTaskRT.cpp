@@ -3,6 +3,7 @@
 #include "../include/xenomai_wraps.h"
 #include <Bela.h>
 #include <stdlib.h>
+#include <sys/errno.h>
 
 extern int volatile gRTAudioVerbose;
 

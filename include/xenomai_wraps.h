@@ -10,7 +10,16 @@
 extern "C" {
 #endif
 #include <pthread.h>
+#ifdef __linux__
 #include <mqueue.h>
+#include <error.h>
+#else
+static inline void error(int exitCode, int num, const char* message)
+{
+	fprintf(stderr, "Error during `%s`: %d %s\n", message, num, strerror(num));
+	exit(exitCode);
+}
+#endif // __linux__
 #include <sys/socket.h>
 
 // Forward declare wrapped versions of POSIX calls.
@@ -19,7 +28,12 @@ int BELA_RT_WRAP(nanosleep(const struct timespec *req, struct timespec *rem));
 int BELA_RT_WRAP(pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg));
 int BELA_RT_WRAP(pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param));
 int BELA_RT_WRAP(pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param));
+#ifdef __linux__
 int BELA_RT_WRAP(pthread_yield(void));
+#else // __linux__
+#define pthread_yield pthread_yield_np
+void BELA_RT_WRAP(pthread_yield(void));
+#endif // __linux__
 
 int BELA_RT_WRAP(pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr));
 int BELA_RT_WRAP(pthread_mutex_destroy(pthread_mutex_t *mutex));
@@ -37,11 +51,13 @@ int BELA_RT_WRAP(setsockopt(int fd, int level, int optname, const void *optval, 
 int BELA_RT_WRAP(bind(int fd, const struct sockaddr *my_addr, socklen_t addrlen));
 ssize_t BELA_RT_WRAP(sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen));
 
+#ifdef __linux__
 mqd_t BELA_RT_WRAP(mq_open(const char *name, int oflags, ...));
 int BELA_RT_WRAP(mq_close(mqd_t mqdes));
 ssize_t BELA_RT_WRAP(mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio));
 int BELA_RT_WRAP(mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio));
 int BELA_RT_WRAP(mq_unlink(const char *name));
+#endif // __linux__
 
 int BELA_RT_WRAP(pthread_join(pthread_t thread, void **retval));
 int BELA_RT_WRAP(pthread_attr_init(pthread_attr_t *attr));
@@ -57,13 +73,6 @@ inline int task_sleep_ns(long long int timens)
 	req.tv_nsec = timens - req.tv_sec * 1000000000;
 	return BELA_RT_WRAP(nanosleep(&req, NULL));
 }
-
-#include <error.h>
-//void error(int exitCode, int errno, char* message)
-//{
-	//fprintf(stderr, "Error during `%s`: %d %s\n", message, errno, strerror(errno));
-	//exit(exitCode);
-//}
 
 // got this from xenomai-3/testsuite/latency/latency.c
 inline void setup_sched_parameters(pthread_attr_t *attr, int prio)
@@ -121,7 +130,9 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	{
 		return ret;
 	}
+#ifdef _GNU_SOURCE
 	BELA_RT_WRAP(pthread_setname_np(*task, taskName));
+#endif // _GNU_SOURCE
 	// check that effective parameters match the ones we requested
 	//pthread_attr_t actualAttr;
 	//pthread_getattr_np(*task, &actualAttr);

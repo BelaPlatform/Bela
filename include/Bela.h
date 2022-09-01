@@ -691,6 +691,7 @@ void Bela_defaultSettings(BelaInitSettings *settings);
  *
  * \param settings Structure holding initialisation data for Bela.
  */
+//void Bela_userSettings(BelaInitSettings *settings) __attribute__((weak));
 void Bela_userSettings(BelaInitSettings *settings);
 
 /**

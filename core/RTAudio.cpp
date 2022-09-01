@@ -472,6 +472,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	// Prepare GPIO pins for amplifier mute and status LED
 	if(settings->ampMutePin >= 0) {
+		#if 0
 		gAmplifierMutePin = settings->ampMutePin;
 		gAmplifierShouldBeginMuted = settings->beginMuted;
 
@@ -489,6 +490,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 				fprintf(stderr, "Couldn't set value on amplifier mute pin\n");
 			return -1;
 		}
+		#endif
 	}
 
 	if(settings->numAnalogInChannels != settings->numAnalogOutChannels){
