@@ -1,4 +1,5 @@
 #include <DataFifo.h>
+#include <sys/errno.h>
 
 DataFifo::DataFifo()
 {
@@ -17,7 +18,7 @@ int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool
 	attr.mq_msgsize = msgSize;
 	// Check if queue already exists
 	queue = BELA_RT_WRAP(mq_open(name.c_str(), O_RDWR));
-	if(queue != -1)
+	if((mqd_t)-1 != queue)
 	{
 		if(recreate)
 		{
@@ -29,7 +30,7 @@ int DataFifo::setup(const std::string& name, size_t msgSize, size_t maxMsg, bool
 	// Open a new queue
 	int flags = O_CREAT | O_RDWR | (blocking ? 0 : O_NONBLOCK);
 	queue = BELA_RT_WRAP(mq_open(name.c_str(), flags, 0644, &attr));
-	if(queue < 0)
+	if((mqd_t)-1 != queue)
 		return -errno;
 	struct mq_attr newAttr;
 	BELA_RT_WRAP(mq_getattr(queue, &newAttr));
