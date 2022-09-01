@@ -3,6 +3,7 @@
 #include "AudioCodec.h"
 #include "I2c.h"
 #include <Gpio.h>
+#include <array>
 
 class Es9080_Codec : public I2c, public AudioCodec
 {
@@ -26,8 +27,11 @@ public:
 	int writeRegister(unsigned int reg, unsigned int value);
 	int readRegister(unsigned char reg);
 
+private:
+	enum {kNumOutChannels = 8};
+	int writeLineOutVolumeRegisters();
 protected:
-	int configureDCRemovalIIR(bool enable); //called by startAudio()
+	std::array<float,kNumOutChannels> lineOutVolume{};
 	AudioCodecParams params;
 	McaspConfig mcaspConfig;
 	bool running;
@@ -36,4 +40,3 @@ protected:
 	int currentAddress = 0xFF;
 	Gpio gpio;
 };
-

@@ -117,12 +117,16 @@ int Es9080_Codec::startAudio(int dummy){
 		}
 	}
 
-
-	// initialise all gains to 0
-	for(unsigned int n = 0; n < getNumIns(); ++n)
-		setInputGain(n, 0);
-	for(unsigned int n = 0; n < getNumOuts(); ++n)
-		setLineOutVolume(n, 0);
+	// Register 105: VOLUME AND MONO CTRL
+	if(writeRegister(105, 0
+				| 1 << 6 // FORCE_VOLUME: Updates volume immediately after changing any of VOLUME1-VOLUME8
+				| 0 << 5 // Separated volume control (default)
+				| 0 << 4 // Separate volume control for each channel
+			))
+		return 1;
+	running = true;
+	if(writeLineOutVolumeRegisters())
+		return 1;
 	return 0;
 }
 
@@ -130,6 +134,23 @@ int Es9080_Codec::stopAudio()
 {
 	// TODO: mute instead of disable?
 	return disable();
+}
+
+template<typename T, typename U>
+static int setByChannel(T& dest, const int channel, U val)
+{
+	if(channel >= (int)dest.size())
+		return 1;
+	for(unsigned int n = 0; n < dest.size(); ++n)
+	{
+		if(channel == int(n) || channel < 0)
+		{
+			dest[n] = val;
+			if(channel >= 0)
+				break;
+		}
+	}
+	return 0;
 }
 
 int Es9080_Codec::setLineOutVolume(int channel, float gain)
@@ -143,22 +164,55 @@ int Es9080_Codec::setLineOutVolume(int channel, float gain)
 			ret |= setLineOutVolume(n, gain);
 		return ret;
 	}
-	// TODO
+	if(setByChannel(lineOutVolume, channel, gain))
+		return 1;
+	if(running)
+		return writeLineOutVolumeRegisters();
+	return 0;
+}
+
+int Es9080_Codec::writeLineOutVolumeRegisters()
+{
+	for(unsigned int n = 0; n < lineOutVolume.size(); ++n)
+	{
+		unsigned int channel = n;
+		float gain = lineOutVolume[n];
+		// Can attenuate in half-dB steps or boost in one single 18dB step.
+
+		// Registers 94:101: VOLUME1:8
+		const int attReg = 94 + channel;
+		float att = gain < 0 ? -gain : 0;
+		// half dB steps
+		unsigned int attVal = (int)(att * 2);
+		if(writeRegister(attReg, attVal))
+			return 1;
+
+		// Register 154: GAIN 18dB
+		const int boostReg = 154;
+		int boostVal = readRegister(boostReg);
+		if(boostVal < 0)
+			return 1;
+		const int bakBoostVal = boostVal;
+		// this is a digital gain control with 0 or 18dB of boost
+		if(gain >= 18)
+		{
+			// set bit
+			boostVal |= 1 << channel;
+		} else {
+			//clear bit
+			boostVal &= ~(1 << channel);
+		}
+		if(bakBoostVal != boostVal)
+		{
+			if(writeRegister(boostReg, boostVal))
+				return 1;
+		}
+	}
 	return 0;
 }
 
 int Es9080_Codec::setInputGain(int channel, float gain)
 {
-	if(channel >= int(getNumIns()))
-		return -1;
-	if(channel < 0)
-	{
-		int ret = 0;
-		for(unsigned int n = 0; n < getNumIns(); ++n)
-			ret |= setInputGain(n, gain);
-		return ret;
-	}
-	// TODO
 	return 0;
 }
 
@@ -257,6 +311,7 @@ unsigned int Es9080_Codec::getNumOuts(){
 
 int Es9080_Codec::disable()
 {
+	running = false;
 	// TODO: should we mute instead of reset?
 	return reset();
 }
