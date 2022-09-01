@@ -31,6 +31,7 @@ private:
 	enum {kNumOutChannels = 8};
 	int writeLineOutVolumeRegisters();
 protected:
+	int executeProgram(const std::string& program);
 	std::array<float,kNumOutChannels> lineOutVolume{};
 	AudioCodecParams params;
 	McaspConfig mcaspConfig;
