@@ -41,7 +41,7 @@ McaspConfig& Es9080_Codec::getMcaspConfig()
 	mcaspConfig.params.inChannels = getNumIns();
 	mcaspConfig.params.outChannels = getNumOuts();;
 	mcaspConfig.params.inSerializers = {};
-	mcaspConfig.params.outSerializers = {2};
+	mcaspConfig.params.outSerializers = {3};
 	mcaspConfig.params.numSlots = kNumSlots;
 	mcaspConfig.params.slotSize = params.slotSize;
 	mcaspConfig.params.dataSize = kDataSize;
