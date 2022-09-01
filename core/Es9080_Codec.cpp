@@ -100,7 +100,7 @@ int Es9080_Codec::executeProgram(const std::string& program)
 		unsigned int reg = parseAsInt(tokens[i++].c_str());
 		unsigned int val = parseAsInt(tokens[i++].c_str());
 		const std::string& comment = tokens[i++];
-		printf("w 0x%x %u 0x%02x // %s\n", addr, reg, val, comment.c_str());
+		verbose && printf("w 0x%x %u 0x%02x // %s\n", addr, reg, val, comment.c_str());
 		if(writeRegister(reg, val))
 		{
 			fprintf(stderr, "Error writing\n");
@@ -125,6 +125,11 @@ w 0x98 202 0x40; //Set PLL Parameters
 
 w 0x90 1 0xFF; //Enable Interpolation and modulator clocks for all 8 channels
 w 0x90 2 0x01; //Enable the TDM decoder
+)HEREDOC";
+	if(executeProgram(program))
+		return 1;
+
+	program = R"HEREDOC(
 //Sample Rate register (MCLK/fs ratio)
 //w 0x90 3 0x00; //MCLK = 128FS Eg, 49.152MHz/384kHz
 //w 0x90 3 0x01; //MCLK = 256FS Eg, 49.152MHz/192kHz
@@ -143,11 +148,13 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 
 //TDM Registers
 w 0x90 77 0x10; //Enable Master Mode
-//GGG w 0x90 78 0x03; //Invert Master mode WS and BCK
-w 0x90 78 0x04; //GGG Do not invert Master mode WS and BCK, WS is pulse
+w 0x90 78 0x04; //Do not invert Master mode WS and BCK, WS is pulse
 w 0x90 79 0x27; //Scale WS by 4 (WS = 4*256FS = 1024FS), set 8 TDM slots per frame
-//GGGw 0x90 80 0xC8; //Set TDM to Left Justified mode and WS positive valid edge, TDM_VALID_PULSE_LEN = 8
-w 0x90 80 0x88; //GGG Set TDM to Left Justified mode and WS positive valid edge, TDM_VALID_PULSE_LEN = 8
+)HEREDOC";
+	if(executeProgram(program))
+		return 1;
+	program = R"HEREDOC(
+w 0x90 80 0x88; //Set TDM to Left Justified mode and WS negative valid edge, TDM_VALID_PULSE_LEN = 8
 w 0x90 84 0x00; //TDM_CH1_LINE_SEL = 00 (DATA2), TDM_CH1_SLOT_SEL = 0
 w 0x90 85 0x01; //TDM_CH2_LINE_SEL = 00 (DATA2), TDM_CH2_SLOT_SEL = 1
 w 0x90 86 0x02; //TDM_CH3_LINE_SEL = 00 (DATA2), TDM_CH3_SLOT_SEL = 2
@@ -188,7 +195,6 @@ w 0x90 92 0x0F; //Toggle DAC clock Resync to line up all the clocks in the DAC c
 w 0x90 92 0x00; //Toggle DAC clock Resync to line up all the clocks in the DAC core for best analog performance
 w 0x90 0 0x02; //Turn on the AMP (This runs a state machine to gracefully turn on the DAC's)
 )HEREDOC";
-	//std::string program = IoUtils::readTextFile("/root/Bela/es9080-program.txt");
 	if(executeProgram(program))
 		return 1;
 
