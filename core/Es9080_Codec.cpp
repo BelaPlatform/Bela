@@ -129,41 +129,213 @@ w 0x90 2 0x01; //Enable the TDM decoder
 	if(executeProgram(program))
 		return 1;
 
-	program = R"HEREDOC(
-//Sample Rate register (MCLK/fs ratio)
-//w 0x90 3 0x00; //MCLK = 128FS Eg, 49.152MHz/384kHz
-//w 0x90 3 0x01; //MCLK = 256FS Eg, 49.152MHz/192kHz
-w 0x90 3 0x03; //MCLK = 512FS Eg, 49.152MHz/96kHz
-//w 0x90 3 0x07; //MCLK = 1024FS Eg, 49.152MHz/48kHz
+	//Register 3: DAC CONFIG
+	//Sample Rate register (MCLK/fs ratio)
+	// [5:0] SELECT_IDAC_NUM: CLK_IDAC divider. Whole number divide value + 1 for CLK_IDAC
+	// (SYS_CLK/divide_value).
+	//
+	// It's not clear from the datasheet what the IDAC does. From the
+	// reference implementation we get the following:
+	// w 0x90 3 0x00 //MCLK = 128FS Eg, 49.152MHz/384kHz
+	// w 0x90 3 0x01 //MCLK = 256FS Eg, 49.152MHz/192kHz
+	// w 0x90 3 0x03 //MCLK = 512FS Eg, 49.152MHz/96kHz
+	// w 0x90 3 0x07 //MCLK = 1024FS Eg, 49.152MHz/48kHz
+	//
+	// So it would empirically seem that SELECT_IDAC_NUM should be:
+	// kNumBits = 128 * (1 + SELECT_IDAC_NUM)
+	// Note: getting it wrong doesn't seem to cause drastic failures, but
+	// it may affect THD+N performance
+	uint8_t SELECT_IDAC_NUM = kNumBits / 128 - 1;
+	if(writeRegister(3, SELECT_IDAC_NUM))
+		return 1;
+	//Register 4: MASTER CLOCK CONFIG
+	//This sets BCK and WS frequency
+	//[6:0] SELECT_MENC_NUM: Master mode clock divider. Whole number
+	//divide value + 1 for CLK_Master (SYS_CLK/divide_value).
+	//• 7'd0: Whole number divide value + 1 = 1 (default)
+	//• 7'd1: Whole number divide value + 1 = 2
+	//• 7'd127: Whole number divide value + 1 = 128
+	//
+	// It's not clear from the datasheet what the MENC does.
+	// "ES9080Q - Configuring TDM mode" says:
+	//   'In Master Mode, REGISTER 4[6:0] SELECT_MENC_NUM is the divider for the Master Decoding Clock.'
+	//
+	// From the reference implementation we get the following:
+	// w 0x90 4 0x00; //BCK & WS = 128FS, TDM512
+	// w 0x90 4 0x01; //BCK & WS = 256FS, TDM256
+	// w 0x90 4 0x03; //BCK & WS = 512FS, TDM128
+	// w 0x90 4 0x07; //BCK & WS = 1024FS, TDM64 (I2S)
+	// (which has wrong or at least misleading comments, e.g.: 128FS => TDM512)
+	// So it would empirically seem that SELECT_MENC_NUM should be:
+	// kNumBits = 128 * (1 + SELECT_MENC_NUM)
+	// However, this doesn't seem to work for a 256-bit frame, because doing that gives us
+	// clocks that are half the speed we'd expect them to be. We "fix" that with
+	// a `/ 2`. This seems to work for a 256-bit clock. Not sure for other cases.
+	uint8_t SELECT_MENC_NUM = (kNumBits / 128 - 1) / 2;
+	if(writeRegister(4, SELECT_MENC_NUM / 2))
+		return 1;
 
-//This sets BCK and WS frequency
-w 0x90 4 0x00; //BCK & WS = 128FS, TDM512
-//w 0x90 4 0x01; //BCK & WS = 256FS, TDM256
-//w 0x90 4 0x03; //BCK & WS = 512FS, TDM128
-//w 0x90 4 0x07; //BCK & WS = 1024FS, TDM64 (I2S)
+	// Register 6: CP CLOCK DIV
+	// [7:0] CP_CLK_DIV: Specifies the clk divider for the CP clock source. Valid from 8'd0 to 8'd255.
+	//  • 8’d6: Default
+	//  • 8’dx: CP clock is SYS_CLK/((x+1)*2)
+	//  Note: CP_CLK_DIV value should reflect a CP clock source frequency of between 500kHz-1MHz
+	// w 0x90 6 0x1F; //Set the PNEG charge pump clock frequency to 705.6kHz or 768kHz (depending on MCLK being 22.5792MHz or 24.576MHz)
+	const float SYS_CLK = kNumBits * getSampleRate();
+	const float cpClockMin = 500000;
+	const float cpClockMax = 1000000;
+
+	// Find suitable value. It is unclear what's best (closet to cpClockMin, cpClockMax or in the middle ... )
+	// Here we start from the top so we'll find the closets to cpClockMax till someone else tells us otherwise.
+	float cpClock;
+	uint8_t CP_CLK_DIV;
+	for(CP_CLK_DIV = 0; CP_CLK_DIV <= 255; ++CP_CLK_DIV)
+	{
+		cpClock = SYS_CLK / ((CP_CLK_DIV + 1) * 2);
+		if(cpClock <= cpClockMax)
+			break;
+	}
+	if(cpClock < cpClockMin || cpClock > cpClockMax)
+	{
+		fprintf(stderr, "Es9080: unable to find valid CP_CLK_DIV\n");
+		return 1;
+	}
+	if(writeRegister(6, CP_CLK_DIV))
+		return 1;
+
+	program = R"HEREDOC(
 w 0x90 5 0xFF; //Enable all 8 channels Analog section.
-w 0x90 6 0x1F; //Set the PNEG charge pump clock frequency to 705.6kHz or 768kHz (depending on MCLK being 22.5792MHz or 24.576MHz)
 w 0x90 7 0xBB; //Setup automated delay sequence for analog section quietest pop
 w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to prevent muting the DAC automatically
-
-//TDM Registers
-w 0x90 77 0x10; //Enable Master Mode
-w 0x90 78 0x04; //Do not invert Master mode WS and BCK, WS is pulse
-w 0x90 79 0x27; //Scale WS by 4 (WS = 4*256FS = 1024FS), set 8 TDM slots per frame
 )HEREDOC";
 	if(executeProgram(program))
 		return 1;
-	program = R"HEREDOC(
-w 0x90 80 0x88; //Set TDM to Left Justified mode and WS negative valid edge, TDM_VALID_PULSE_LEN = 8
-w 0x90 84 0x00; //TDM_CH1_LINE_SEL = 00 (DATA2), TDM_CH1_SLOT_SEL = 0
-w 0x90 85 0x01; //TDM_CH2_LINE_SEL = 00 (DATA2), TDM_CH2_SLOT_SEL = 1
-w 0x90 86 0x02; //TDM_CH3_LINE_SEL = 00 (DATA2), TDM_CH3_SLOT_SEL = 2
-w 0x90 87 0x03; //TDM_CH4_LINE_SEL = 00 (DATA2), TDM_CH4_SLOT_SEL = 3
-w 0x90 88 0x04; //TDM_CH5_LINE_SEL = 00 (DATA2), TDM_CH5_SLOT_SEL = 4
-w 0x90 89 0x05; //TDM_CH6_LINE_SEL = 00 (DATA2), TDM_CH6_SLOT_SEL = 5
-w 0x90 90 0x06; //TDM_CH7_LINE_SEL = 00 (DATA2), TDM_CH7_SLOT_SEL = 6
-w 0x90 91 0x07; //TDM_CH8_LINE_SEL = 00 (DATA2), TDM_CH8_SLOT_SEL = 7
 
+	bool isMaster;
+	int sum = (params.bclk = kClockSourceCodec) + (params.wclk = kClockSourceCodec);
+	if(2 == sum)
+		isMaster = true;
+	else if (0 == sum)
+		isMaster = false;
+	else {
+		fprintf(stderr, "Es9080: cannot generate only one of bclk, wclk\n");
+		return 1;
+	}
+	//TDM Registers
+	//Register 77: INPUT CONFIG
+	if(writeRegister(77, 0
+			| isMaster << 4 // ENABLE_MASTER_MODE
+			| 0 << 2 // INPUT_SEL: TDM
+			| 0 << 0 // AUTO_INPUT_SELECT: disabled
+		))
+		return 1;
+	if(isMaster)
+	{
+		//Register 78: MASTER MODE CONFIG
+		bool is16Bit = (params.slotSize == 16);
+		if(writeRegister(78, 0
+				| 0 << 6 // [6]: MASTER_BCK_DIV1. I don't understand it. The examples provided leave it at 0
+				| 0 << 5 // MASTER_WS_IDLE. Sets the value of master WS when WS is idle.
+				| is16Bit ? 2 : 0 << 3 // MASTER_FRAME_LENGTH Selects the bit length in each TDM channel in master mode. "2" for 16 bit or "0" for 32 bit
+				| 1 << 2 // MASTER_WS_PULSE_MODE: Pulse WS signal (The pulse width is 1 BCK cycle.)
+				| 0 << 1 // MASTER_WS_INVERT: do not invert WS
+				| 0 << 0 // MASTER_BCK_INVERT: do not invert BCK
+			))
+			return 1;
+	}
+	//Register 79: TDM CONFIG1
+	//w 0x90 79 0x27; //Scale WS by 4 (WS = 4*256FS = 1024FS), set 8 TDM slots per frame
+	//
+	// [6:4] // MASTER_WS_SCALE In TDM master mode, tunes master BCK/WS ratio by scaling master WS. It allows more TDM slots in a fixed frame.
+	// In TDM master mode, tunes master BCK/WS ratio by scaling master WS. It allows more TDM slots in a fixed frame.
+	// • 3'd0: No scale (default)
+	// • 3'd1: Scale down WS by 2
+	// • 3'd2: Scale down WS by 4
+	// • 3'd3: Scale down WS by 8
+	// • 3'd4: Scale down WS by 16
+	// • others: Reserved
+	// Again, it's not clear from the datasheet how this works.
+	const unsigned int MASTER_WS_SCALE = 2;
+	if(writeRegister(79, 0
+			| 0 << 7 // TDM_RESYNC: let TDM decoder sync
+			| MASTER_WS_SCALE << 4
+			| 0x7 // Total TDM slot number per frame = TDM_CH_NUM + 1.
+		))
+		return 1;
+
+	// Register 80: TDM CONFIG2
+	// w 0x90 80 0x88; //Set TDM to Left Justified mode and WS negative valid edge, TDM_VALID_PULSE_LEN = 8
+	if(writeRegister(80, 0
+			| 1 << 7 // TDM_LJ_MODE: LJ mode
+			| 0 << 6 // TDM_VALID_EDGE: TDM WS valid edge: negative edge
+			| 8 << 0 // TDM_VALID_PULSE_LEN: If using 8 or more TDM channels, set to "8"
+		))
+		return 1;
+
+	// Register 81: TDM CONFIG3
+	// [7:6] TDM_BIT_WIDTH
+	// Bit width of each TDM slot.
+	// • 2'b00: 32-bit (default)
+	// • 2'b01: 24-bit
+	// • 2'b10: 16-bit
+	// • 2'b11: Reserved
+	uint8_t TDM_BIT_WIDTH;
+	switch(kSlotSize) {
+		case 32:
+			TDM_BIT_WIDTH = 0;
+			break;
+		case 24:
+			TDM_BIT_WIDTH = 1;
+			break;
+		case 16:
+			TDM_BIT_WIDTH = 16;
+			break;
+		default:
+			fprintf(stderr, "ES9080: Invalid slot size %d\n", kSlotSize);
+			return 1;
+	}
+	if(writeRegister(81, 0
+			| TDM_BIT_WIDTH << 6
+			| 0 << 5 // TDM_CHAIN_MODE: disable daisy chain
+			| 0 << 0 // TDM_DATA_LATCH_ADJ: Sets the position of the start bit within each TDM slot ...Can be moved +ve or -ve relative to MSB
+		))
+		return 1;
+
+	// Register 82: BCK/WS MONITOR CONFIG
+	if(writeRegister(82, 0)) // disable WS and BCK monitor
+		return 1;
+
+	// Register 83: TDM VALID PULSE CONFIG
+	// [7:0] TDM_VALID_PULSE_POS: The position of TDM valid pulse compared to WS valid edge.
+	// • 8’d0: Minimum
+	// • 8’d255: Maximum
+	// Note sure what this means. Let's leave it at 0 as per default
+	const uint8_t TDM_VALID_PULSE_POS = 0;
+	if(writeRegister(83, TDM_VALID_PULSE_POS))
+		return 1;
+
+	// Registers 84:91: TDM CHx CONFIG
+	for(unsigned int n = 0; n < kNumOutChannels; ++n)
+	{
+		// w 0x90 85 0x01; //TDM_CH2_LINE_SEL = 00 (DATA2), TDM_CH2_SLOT_SEL = 1
+		// w 0x90 86 0x02; //TDM_CH3_LINE_SEL = 00 (DATA2), TDM_CH3_SLOT_SEL = 2
+		// w 0x90 87 0x03; //TDM_CH4_LINE_SEL = 00 (DATA2), TDM_CH4_SLOT_SEL = 3
+		// w 0x90 88 0x04; //TDM_CH5_LINE_SEL = 00 (DATA2), TDM_CH5_SLOT_SEL = 4
+		// w 0x90 89 0x05; //TDM_CH6_LINE_SEL = 00 (DATA2), TDM_CH6_SLOT_SEL = 5
+		// w 0x90 90 0x06; //TDM_CH7_LINE_SEL = 00 (DATA2), TDM_CH7_SLOT_SEL = 6
+		// w 0x90 91 0x07; //TDM_CH8_LINE_SEL = 00 (DATA2), TDM_CH8_SLOT_SEL = 7
+		if(writeRegister(84 + n, 0
+				// TDM_VALID_PULSE_POS_MSB The position of TDM valid pulse compared to WS valid edge. MSB bit from TDM_VALID_PULSE_POS
+				| (TDM_VALID_PULSE_POS >> 6) << 7
+				| 0 << 4 // CHx data line selection. Receive from data line 1
+				// CH1 data slot selection. CH1 receives data from Mth slot. M = TDM_CH1_SLOT_SEL + 1.
+				// • 4’d0: Minimum (slot 1)
+				// • 4’d15: Maximum (slot 16)
+				| n << 0
+			))
+			return 1;
+	}
+	program = R"HEREDOC(
 w 0x90 108 0x46; //Set filter shape to Minimum phase slow roll-off, disable de-emphasis
 w 0x90 109 0xE4; //Set Dither into the IIR filters for best low level linearity
 
@@ -326,7 +498,7 @@ int Es9080_Codec::setAddressForReg(unsigned int reg, bool write)
 	if(ioctl(i2C_file, I2C_SLAVE, addr) < 0)
 	{
 		fprintf(stderr, "Failed to set i2c address\n");
-		return  1;
+		return 1;
 	}
 	currentAddress = addr;
 	return 0;
@@ -366,7 +538,6 @@ int Es9080_Codec::readRegister(unsigned char reg)
 	ret = read(i2C_file, &value, sizeof(value));
 	if(sizeof(value) != ret)
 	{
-		
 		verbose && fprintf(stderr, "Failed to read register %d on Es9080 codec\n", reg);
 		return -1;
 	}
@@ -387,7 +558,7 @@ unsigned int Es9080_Codec::getNumIns(){
 }
 
 unsigned int Es9080_Codec::getNumOuts(){
-	return 8;
+	return kNumOutChannels;
 }
 
 int Es9080_Codec::disable()
