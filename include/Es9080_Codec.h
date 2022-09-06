@@ -30,6 +30,7 @@ public:
 private:
 	enum {kNumOutChannels = 8};
 	int writeLineOutVolumeRegisters();
+	int setClocks(unsigned int divide_value, bool MASTER_BCK_DIV1, bool is16Bit, unsigned int MASTER_WS_SCALE);
 protected:
 	int executeProgram(const std::string& program);
 	std::array<float,kNumOutChannels> lineOutVolume{};

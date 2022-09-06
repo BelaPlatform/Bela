@@ -26,7 +26,7 @@ Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, bool isVerbose)
 	params.bclk = kClockSourceCodec;
 	params.wclk = kClockSourceCodec;
 	params.mclk = mcaspConfig.getValidAhclk(24000000);
-	params.samplingRate = params.mclk / double(kNumBits);
+	params.samplingRate = params.mclk / double(kNumBits) / 2;
 	initI2C_RW(i2cBus, i2cAddress, -1);
 	gpio.open(61, Gpio::OUTPUT);
 }
@@ -62,6 +62,43 @@ int Es9080_Codec::initCodec(){
 	// make sure it succeeds
 	return disable();
 }
+
+/* A test utility.
+int Es9080_Codec::setClocks(unsigned int divide_value, bool MASTER_BCK_DIV1, bool is16Bit, unsigned int MASTER_WS_SCALE)
+{
+	if(divide_value < 1 || divide_value > 128)
+	{
+		fprintf(stderr, "Es9080: invalid divide_value: %d\n", divide_value);
+		return 1;
+	}
+	if(MASTER_WS_SCALE > 4)
+	{
+		fprintf(stderr, "Es9080: invalid MASTER_WS_SCALE: %d\n", MASTER_WS_SCALE);
+		return 1;
+	}
+	uint8_t SELECT_MENC_NUM = divide_value - 1;
+	if(writeRegister(4, SELECT_MENC_NUM))
+		return 1;
+	if(writeRegister(78, 0
+			| MASTER_BCK_DIV1 << 6
+			| 0 << 5 // MASTER_WS_IDLE. Sets the value of master WS when WS is idle.
+			// MASTER_FRAME_LENGTH Selects the bit length in each TDM channel in master mode. "2" for 16 bit or "0" for 32 bit
+			// NOTE: this affects the BCK: in "16bit" it halves it.
+			| (is16Bit ? 2 : 0) << 3
+			| 1 << 2 // MASTER_WS_PULSE_MODE: Pulse WS signal (The pulse width is 1 BCK cycle.)
+			| 0 << 1 // MASTER_WS_INVERT: do not invert WS
+			| 0 << 0 // MASTER_BCK_INVERT: do not invert BCK
+		))
+		return 1;
+	if(writeRegister(79, 0
+			| 0 << 7 // TDM_RESYNC: let TDM decoder sync
+			| MASTER_WS_SCALE << 4
+			| kNumSlots - 1 // TDM_CH_NUM: Total TDM slot number per frame = TDM_CH_NUM + 1.
+		))
+		return 1;
+	return 0;
+}
+*/
 
 #include <MiscUtilities.h>
 int Es9080_Codec::executeProgram(const std::string& program)
@@ -117,8 +154,17 @@ int Es9080_Codec::executeProgram(const std::string& program)
 
 int Es9080_Codec::startAudio(int dummy){
 	gpio.set();
+	bool isMaster;
+	int sum = (kClockSourceCodec == params.bclk) + (kClockSourceCodec == params.wclk);
+	if(2 == sum)
+		isMaster = true;
+	else if (0 == sum)
+		isMaster = false;
+	else {
+		fprintf(stderr, "Es9080: cannot generate only one of bclk, wclk\n");
+		return 1;
+	}
 	std::string program = R"HEREDOC(
-//Initialize Master Mode TDM with 8 channels, MCLK = 49.152MHz, fs = 48kHz, DRE enabled, automute enabled
 w 0x98 192 0x03; //Set GPIO1 (MCLK) pad to input mode, Invert CLKHV phase for better DNR
 w 0x98 193 0xC3; //Set PLL Bypass, Remove 10k DVDD shunt to ground, set PLL input to MCLK, enable the PLL clock inputs
 w 0x98 202 0x40; //Set PLL Parameters
@@ -128,6 +174,70 @@ w 0x90 2 0x01; //Enable the TDM decoder
 )HEREDOC";
 	if(executeProgram(program))
 		return 1;
+
+	// The terms MCLK/SYS_CLK are used interchangeably in the literature and below
+	// TODO: when using PLL or different mclk source, these may have to change
+	const float SYS_CLK = params.mclk;
+	// const float MCLK = SYS_CLK;
+
+	// The way BCK and WS are divided down from MCLK when in master mode is
+	// not clear from the datasheet.
+	// Through experimentation I found the following:
+	// Only registers or fields with MASTER in the name seem to affect TDM
+	// master clocking.
+	// I.e.: it would seem that (R79)TDM CONFIG1's TDM_CH_NUM and (R81)TDM
+	// CONFIG3's TDM_BIT_WIDTH do not affect clocking, although they are
+	// probably used both in master and slave mode and so should be set
+	// appropriately.
+	// I came up with the following formulas:
+	//   BCK = MCLK / (divide_value_menc * (MASTER_BCK_DIV1 ? 1 : (is16Bit ? 4 : 2)))
+	//   i.e.: MCLK_OVER_BCK = MCLK/BCK = divide_value_menc * (MASTER_BCK_DIV1 ? 1 : (is16Bit ? 4 : 2))
+	//   WS = MCLK / (divide_value_menc * 128 * 2^MASTER_WS_SCALE)
+	//   i.e.: MCLK_OVER_WS = MCLK/WS = (divide_value_menc * 128 * 2^MASTER_WS_SCALE)
+	// where:
+	//   divide_value_menc = SELECT_MENC_NUM + 1
+	//   is16Bit s trure if params.slotSize is 16. This eventually sets MASTER_FRAME_LENGTH = is16Bit ?  2 :  0
+	//  In this light, the name "MASTER_BCK_DIV1" seems to make sense:
+	//  MASTER_BCK_DIV1 => "is the master bck divider 1?"
+	//
+	//"ES9080Q - Configuring TDM mode" says
+	//  BCLK = (TDM_CH_NUM + 1) * MASTER_FRAME_LENGTH * WS
+	//  WS = MCLK / (128 * (SELECT_IDAC_NUM + 1))
+	// But there are issues with these formulas:
+	// - TDM_CH_NUM or SELECT_IDAC_NUM demonstrably do not affect the
+	// clocking. So one may think that these are _prescriptive_ equations
+	// (i.e.: SELECT_IDAC_NUM and TDM_CH_NUM must be set so that they
+	// satisfy these equations), however:
+	// - MASTER_FRAME_LENGTH is either 2 or 0 according to the register
+	// description. In case of '0' this would make the equation invalid and
+	// that's clearly not the case.
+
+	// Note: we compute these regardless of whether we are in master mode
+	// or not, but some ot these will only be meaningful if isMaster
+	const unsigned int MCLK_OVER_BCK = 2; // TODO: get it programmaticaly
+	const unsigned int MCLK_OVER_WS = kNumBits * MCLK_OVER_BCK;
+	bool is16Bit = (params.slotSize == 16);
+	const unsigned int MASTER_BCK_DIV1 = 1; // setting this arbitrarily, because we don't know why we shouldn't.
+
+	// apply the formulas above
+	const unsigned int divide_value_menc = MCLK_OVER_BCK / (MASTER_BCK_DIV1 ? 1 : (is16Bit ? 4 : 2));
+	//   WS = MCLK / (divide_value_menc * 128 * 2^MASTER_WS_SCALE)
+	//   i.e.: MCLK_OVER_WS = MCLK/WS = (divide_value_menc * 128 * 2^MASTER_WS_SCALE)
+	const unsigned int ws_scale_factor = MCLK_OVER_WS / (divide_value_menc * 128);
+	// ws_scale_factor has to be a power of two between 2^0 and 2^4
+	unsigned int MASTER_WS_SCALE = __builtin_ctz(ws_scale_factor); // find exponent: count trailing zeros
+	if(!ws_scale_factor || (ws_scale_factor & ~(1 << MASTER_WS_SCALE)) || MASTER_WS_SCALE > 4)
+	{
+		fprintf(stderr, "Es9080: ws_scale_factor %u is not achievable\n", ws_scale_factor);
+		return 1;
+	}
+	// MASTER_FRAME_LENGTH Selects the bit length in each TDM channel in master mode. "2" for 16 bit or "0" for 32 bit
+	const unsigned int MASTER_FRAME_LENGTH = is16Bit ? 2 : 0;
+	// let's use the formula provided by the application note (see above)
+	//   WS = MCLK / (128 * (SELECT_IDAC_NUM + 1))
+	// becomes
+	//   MCLK_OVER_WS = 128 * (SELECT_IDAC_NUM + 1)
+	uint8_t SELECT_IDAC_NUM = MCLK_OVER_WS / 128 - 1;
 
 	//Register 3: DAC CONFIG
 	//Sample Rate register (MCLK/fs ratio)
@@ -143,11 +253,20 @@ w 0x90 2 0x01; //Enable the TDM decoder
 	//
 	// So it would empirically seem that SELECT_IDAC_NUM should be:
 	// kNumBits = 128 * (1 + SELECT_IDAC_NUM)
+	// This also matches with the WS equation provided reported above
+	// taken from "ES9080Q - Configuring TDM mode"
+	//
+	// Looking at "Figure 7 - Clock distribution with Registers", it seems
+	// that sets the clock divider from MCLK to "DAC interpolation path
+	// clock", which has to be 128 * Fs. This is in accordance with the formula above.
+	// E.g.: a 256-bit per frame MCLK has to be divided by 2, i.e.: SELECT_IDAC_NUM = 1
+	//
 	// Note: getting it wrong doesn't seem to cause drastic failures, but
-	// it may affect THD+N performance
-	uint8_t SELECT_IDAC_NUM = kNumBits / 128 - 1;
+	// it may affect THD+N performance and filter cutoffs (?) etc.
+	// It doesn't affect BCK or WS
 	if(writeRegister(3, SELECT_IDAC_NUM))
 		return 1;
+
 	//Register 4: MASTER CLOCK CONFIG
 	//This sets BCK and WS frequency
 	//[6:0] SELECT_MENC_NUM: Master mode clock divider. Whole number
@@ -156,23 +275,21 @@ w 0x90 2 0x01; //Enable the TDM decoder
 	//• 7'd1: Whole number divide value + 1 = 2
 	//• 7'd127: Whole number divide value + 1 = 128
 	//
-	// It's not clear from the datasheet what the MENC does.
+	// It's not 100% clear from the docs what this does.
 	// "ES9080Q - Configuring TDM mode" says:
-	//   'In Master Mode, REGISTER 4[6:0] SELECT_MENC_NUM is the divider for the Master Decoding Clock.'
-	//
-	// From the reference implementation we get the following:
-	// w 0x90 4 0x00; //BCK & WS = 128FS, TDM512
-	// w 0x90 4 0x01; //BCK & WS = 256FS, TDM256
-	// w 0x90 4 0x03; //BCK & WS = 512FS, TDM128
-	// w 0x90 4 0x07; //BCK & WS = 1024FS, TDM64 (I2S)
-	// (which has wrong or at least misleading comments, e.g.: 128FS => TDM512)
-	// So it would empirically seem that SELECT_MENC_NUM should be:
-	// kNumBits = 128 * (1 + SELECT_MENC_NUM)
-	// However, this doesn't seem to work for a 256-bit frame, because doing that gives us
-	// clocks that are half the speed we'd expect them to be. We "fix" that with
-	// a `/ 2`. This seems to work for a 256-bit clock. Not sure for other cases.
-	uint8_t SELECT_MENC_NUM = (kNumBits / 128 - 1) / 2;
-	if(writeRegister(4, SELECT_MENC_NUM / 2))
+	//   'In Master Mode, REGISTER 4[6:0] SELECT_MENC_NUM is the divider
+	//   for the Master Decoding Clock.'
+	// "Figure 7 - Clock distribution with Registers" of the datasheet
+	// shows this as divider of MCK before it goes into the Master BCK/WS
+	// gen (where it goes through another divider MASTER_WS_SCALE).
+
+	if(divide_value_menc < 1 && divide_value_menc > 128)
+	{
+		fprintf(stderr, "Es9080: cannot divide down mclk %f by %u\n", params.mclk, divide_value_menc);
+		return 1;
+	}
+	uint8_t SELECT_MENC_NUM = divide_value_menc - 1;
+	if(writeRegister(4, SELECT_MENC_NUM))
 		return 1;
 
 	// Register 6: CP CLOCK DIV
@@ -181,7 +298,6 @@ w 0x90 2 0x01; //Enable the TDM decoder
 	//  • 8’dx: CP clock is SYS_CLK/((x+1)*2)
 	//  Note: CP_CLK_DIV value should reflect a CP clock source frequency of between 500kHz-1MHz
 	// w 0x90 6 0x1F; //Set the PNEG charge pump clock frequency to 705.6kHz or 768kHz (depending on MCLK being 22.5792MHz or 24.576MHz)
-	const float SYS_CLK = kNumBits * getSampleRate();
 	const float cpClockMin = 500000;
 	const float cpClockMax = 1000000;
 
@@ -211,16 +327,6 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 	if(executeProgram(program))
 		return 1;
 
-	bool isMaster;
-	int sum = (params.bclk = kClockSourceCodec) + (params.wclk = kClockSourceCodec);
-	if(2 == sum)
-		isMaster = true;
-	else if (0 == sum)
-		isMaster = false;
-	else {
-		fprintf(stderr, "Es9080: cannot generate only one of bclk, wclk\n");
-		return 1;
-	}
 	//TDM Registers
 	//Register 77: INPUT CONFIG
 	if(writeRegister(77, 0
@@ -232,11 +338,15 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 	if(isMaster)
 	{
 		//Register 78: MASTER MODE CONFIG
-		bool is16Bit = (params.slotSize == 16);
 		if(writeRegister(78, 0
-				| 0 << 6 // [6]: MASTER_BCK_DIV1. I don't understand it. The examples provided leave it at 0
+				// [6]: MASTER_BCK_DIV1
+				// When enabled, master BCK is 128fs clock. Otherwise, BCK is less than or equal to 64fs.
+				// • 1'b0: BCK is not 128fs clock (default)
+				// • 1'b1: BCK is 128fs clock
+				// Unclear. See results of tests above
+				| MASTER_BCK_DIV1 << 6
 				| 0 << 5 // MASTER_WS_IDLE. Sets the value of master WS when WS is idle.
-				| is16Bit ? 2 : 0 << 3 // MASTER_FRAME_LENGTH Selects the bit length in each TDM channel in master mode. "2" for 16 bit or "0" for 32 bit
+				| MASTER_FRAME_LENGTH << 3
 				| 1 << 2 // MASTER_WS_PULSE_MODE: Pulse WS signal (The pulse width is 1 BCK cycle.)
 				| 0 << 1 // MASTER_WS_INVERT: do not invert WS
 				| 0 << 0 // MASTER_BCK_INVERT: do not invert BCK
@@ -254,12 +364,30 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 	// • 3'd3: Scale down WS by 8
 	// • 3'd4: Scale down WS by 16
 	// • others: Reserved
+	//
 	// Again, it's not clear from the datasheet how this works.
-	const unsigned int MASTER_WS_SCALE = 2;
+	// After some trials, it seems that the WS/BCK ratio::
+	// - is independent of TDM_CH_NUM
+	// - is independent of TDM_BIT_WIDTH
+	// - starts at 32 or 64 or 128, depending on the value of MASTER_BCK_DIV1 and MASTER_FRAME_LENGTH
+	// is further multiplied by (1 << MASTER_WS_SCALE)
+
+	if(kNumSlots > 16) {
+		fprintf(stderr, "Es9080: too many slots %u\n", kNumSlots);
+		return 1;
+	}
+	if(MASTER_WS_SCALE > 4)
+	{
+		fprintf(stderr, "Es9080: MASTER_WS_SCALE too large: %u\n", MASTER_WS_SCALE);
+		return 1;
+	}
 	if(writeRegister(79, 0
 			| 0 << 7 // TDM_RESYNC: let TDM decoder sync
 			| MASTER_WS_SCALE << 4
-			| 0x7 // Total TDM slot number per frame = TDM_CH_NUM + 1.
+			// TDM_CH_NUM: Total TDM slot number per frame = TDM_CH_NUM + 1.
+			// Note: this does not affect MASTER clocking, but it
+			// should be set correctly or some slots may not work
+			| kNumSlots - 1
 		))
 		return 1;
 
@@ -279,6 +407,8 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 	// • 2'b01: 24-bit
 	// • 2'b10: 16-bit
 	// • 2'b11: Reserved
+	// Note: again, this won't affect MASTER clocking, but it may affect
+	// the number of bits actually being considered
 	uint8_t TDM_BIT_WIDTH;
 	switch(kSlotSize) {
 		case 32:
@@ -288,7 +418,7 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 			TDM_BIT_WIDTH = 1;
 			break;
 		case 16:
-			TDM_BIT_WIDTH = 16;
+			TDM_BIT_WIDTH = 2;
 			break;
 		default:
 			fprintf(stderr, "ES9080: Invalid slot size %d\n", kSlotSize);
@@ -326,7 +456,7 @@ w 0x90 51 0x80; //Force a PLL_LOCKL signal from analog since it it bypassed to p
 		// w 0x90 91 0x07; //TDM_CH8_LINE_SEL = 00 (DATA2), TDM_CH8_SLOT_SEL = 7
 		if(writeRegister(84 + n, 0
 				// TDM_VALID_PULSE_POS_MSB The position of TDM valid pulse compared to WS valid edge. MSB bit from TDM_VALID_PULSE_POS
-				| (TDM_VALID_PULSE_POS >> 6) << 7
+				| ((0 == n)*(TDM_VALID_PULSE_POS >> 6)) << 7 // should only be set on register 84
 				| 0 << 4 // CHx data line selection. Receive from data line 1
 				// CH1 data slot selection. CH1 receives data from Mth slot. M = TDM_CH1_SLOT_SEL + 1.
 				// • 4’d0: Minimum (slot 1)
