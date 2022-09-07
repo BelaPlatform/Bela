@@ -11,22 +11,33 @@ const AudioCodecParams::TdmMode kTdmMode = kTdmModeTdm;
 const unsigned int kSlotSize = 32;
 const unsigned int kDataSize = 16;
 const unsigned int kStartingSlot = 0;
-const unsigned int kBitDelay = 0;
 const unsigned int kNumSlots = kNumBits / kSlotSize;
 
 Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, bool isVerbose)
 	: running(false)
 	, verbose(isVerbose)
 {
+	bool isMaster = true;
 	params.slotSize = kSlotSize;
 	params.startingSlot = kStartingSlot;
-	params.bitDelay = kBitDelay;
 	params.dualRate = false;
 	params.tdmMode = kTdmMode;
-	params.bclk = kClockSourceCodec;
-	params.wclk = kClockSourceCodec;
-	params.mclk = mcaspConfig.getValidAhclk(24000000);
-	params.samplingRate = params.mclk / double(kNumBits) / 2;
+	if(isMaster) {
+		params.bclk = kClockSourceCodec;
+		params.wclk = kClockSourceCodec;
+		params.mclk = mcaspConfig.getValidAhclk(24000000);
+		// setting it
+		params.samplingRate = params.mclk / double(kNumBits) / 2;
+	} else {
+		params.bclk = kClockSourceMcasp;
+		params.wclk = kClockSourceMcasp;
+		params.mclk = mcaspConfig.getValidAhclk(12000000);
+		// inferring it
+		params.samplingRate = params.mclk / kNumBits;
+	}
+	// not sure why this has to change, probably because the wclk
+	// polarity also changes below
+	params.bitDelay = (kClockSourceMcasp == params.wclk) ? 1 : 0;
 	initI2C_RW(i2cBus, i2cAddress, -1);
 	gpio.open(61, Gpio::OUTPUT);
 }
@@ -48,9 +59,12 @@ McaspConfig& Es9080_Codec::getMcaspConfig()
 	mcaspConfig.params.bitDelay = params.bitDelay;
 	mcaspConfig.params.ahclkIsInternal = true;
 	mcaspConfig.params.ahclkFreq = params.mclk;
+	mcaspConfig.params.aclkIsInternal = (kClockSourceMcasp == params.bclk);
 	mcaspConfig.params.wclkIsInternal = (kClockSourceMcasp == params.wclk);
-	mcaspConfig.params.wclkIsWord = false; // could be
-	mcaspConfig.params.wclkFalling = true;
+	mcaspConfig.params.wclkIsWord = false;
+	// when wclkFalling = true, the McASP generates what looks like an
+	// "inverted" wclk (it stays high most of the time)
+	mcaspConfig.params.wclkFalling = (kClockSourceMcasp == params.wclk) ? false : true;
 	mcaspConfig.params.externalSamplesRisingEdge = false;
 
 	return mcaspConfig;
