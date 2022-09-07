@@ -1143,6 +1143,7 @@ McaspConfig& I2c_Codec::getMcaspConfig()
 	mcaspConfig.params.bitDelay = isI2s ? params.bitDelay + 1 : params.bitDelay;
 	mcaspConfig.params.ahclkIsInternal = true;
 	mcaspConfig.params.ahclkFreq = params.mclk;
+	mcaspConfig.params.aclkIsInternal = (kClockSourceMcasp == params.bclk);
 	mcaspConfig.params.wclkIsInternal = (kClockSourceMcasp == params.wclk);
 	mcaspConfig.params.wclkIsWord = isI2s;
 	mcaspConfig.params.wclkFalling = isI2s;

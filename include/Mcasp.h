@@ -42,6 +42,7 @@ public:
 		double auxClkIn;
 		double ahclkFreq;
 		bool ahclkIsInternal;
+		bool aclkIsInternal;
 		bool wclkIsInternal;
 		bool wclkIsWord;
 		bool wclkFalling;

@@ -161,7 +161,7 @@ int McaspConfig::setAclkctl()
 // CLKXM: Transmit bit clock source bit.
 // 0 External transmit clock source from ACLKX pin.
 // 1 Internal transmit clock source from output of programmable bit clock divider.
-	s.CLKM = 0;
+	s.CLKM = params.aclkIsInternal;
 
 // CLKXDIV: 0-1Fh Transmit bit clock divide ratio bits determine the
 // divide-down ratio from AHCLKX to ACLKX.
@@ -282,7 +282,7 @@ int McaspConfig::setPdir()
 // ACLKR: Determines if ACLKR pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
-	s.ACLKR = 0;
+	s.ACLKR = params.aclkIsInternal;
 // AFSX: Determines if AFSX pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
