@@ -21,6 +21,7 @@
 #include "../include/Gpio.h"
 #include "../include/PruArmCommon.h"
 #include "../include/board_detect.h"
+#include "../include/Mcasp.h"
 
 #include <iostream>
 #include <stdlib.h>

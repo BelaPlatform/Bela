@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include "Bela.h"
 #include "Gpio.h"
-#include "AudioCodec.h"
 #include "PruManager.h"
+struct McaspRegisters;
 
 /**
  * Internal version of the BelaContext struct which does not have const
