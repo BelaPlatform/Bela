@@ -583,7 +583,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	else if(belaHw == BelaHw_BelaEs9080) {
 		uint8_t addr = 0x4c; // this is the write-only register
-		gAudioCodec = new Es9080_Codec(codecI2cBus, addr, gRTAudioVerbose);
+		gAudioCodec = new Es9080_Codec(codecI2cBus, addr, AudioCodecParams::kClockSourceCodec, 0, gRTAudioVerbose);
 	}
 	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
 		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);

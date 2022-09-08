@@ -1,4 +1,5 @@
 #include "../include/Es9080_Codec.h"
+#include <stdexcept>
 
 constexpr AudioCodecParams::TdmMode kTdmModeTdm = AudioCodecParams::kTdmModeTdm;
 constexpr AudioCodecParams::ClockSource kClockSourceMcasp = AudioCodecParams::kClockSourceMcasp;
@@ -13,25 +14,27 @@ const unsigned int kDataSize = 16;
 const unsigned int kStartingSlot = 0;
 const unsigned int kNumSlots = kNumBits / kSlotSize;
 
-Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, bool isVerbose)
+Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSource clockSource, double mclkFrequency, bool isVerbose)
 	: running(false)
 	, verbose(isVerbose)
 {
-	bool isMaster = true;
 	params.slotSize = kSlotSize;
 	params.startingSlot = kStartingSlot;
 	params.dualRate = false;
 	params.tdmMode = kTdmMode;
-	if(isMaster) {
-		params.bclk = kClockSourceCodec;
-		params.wclk = kClockSourceCodec;
+	params.bclk = clockSource;
+	params.wclk = clockSource;
+	if(kClockSourceCodec == clockSource) {
 		params.mclk = mcaspConfig.getValidAhclk(24000000);
 		// setting it
 		params.samplingRate = params.mclk / double(kNumBits) / 2;
 	} else {
-		params.bclk = kClockSourceMcasp;
-		params.wclk = kClockSourceMcasp;
-		params.mclk = mcaspConfig.getValidAhclk(12000000);
+		if(kClockSourceExternal == clockSource)
+			params.mclk = mclkFrequency;
+		else if (kClockSourceMcasp == clockSource)
+			params.mclk = mcaspConfig.getValidAhclk(12000000);
+		else
+			throw std::runtime_error("Es9080: invalid clockSource");
 		// inferring it
 		params.samplingRate = params.mclk / kNumBits;
 	}

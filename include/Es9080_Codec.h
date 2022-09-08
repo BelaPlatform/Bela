@@ -8,7 +8,7 @@
 class Es9080_Codec : public I2c, public AudioCodec
 {
 public:
-	Es9080_Codec(int i2cBus, int I2cAddress, bool verbose = false);
+	Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSource clockSource, double mclkFrequency, bool isVerbose);
 	~Es9080_Codec();
 
 	int initCodec();
