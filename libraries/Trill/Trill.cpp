@@ -288,7 +288,8 @@ int Trill::identify() {
 
 void Trill::updateRescale()
 {
-	float scale = 1 << (12 - numBits);
+	enum { kRescaleFactorsComputedAtBits = 12 };
+	float scale = (1 << (16 - numBits)) / float(1 << (16 - kRescaleFactorsComputedAtBits));
 	posRescale = 1.f / trillRescaleFactors[device_type_].pos;
 	posHRescale = 1.f / trillRescaleFactors[device_type_].posH;
 	sizeRescale = scale / trillRescaleFactors[device_type_].size;
