@@ -232,6 +232,7 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 				case BelaHw_CtagFaceBela:
 				case BelaHw_CtagBeastBela:
 				case BelaHw_BelaMultiTdm:
+				case BelaHw_BelaEs9080:
 					return 1;
 				default:
 					return 0;
