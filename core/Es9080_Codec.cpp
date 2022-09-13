@@ -43,11 +43,15 @@ Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSo
 	params.bitDelay = (kClockSourceMcasp == params.wclk) ? 1 : 0;
 	initI2C_RW(i2cBus, i2cAddress, -1);
 	gpio.open(61, Gpio::OUTPUT);
+	gpio.clear();
+	usleep(1000);
+	gpio.set();
 }
 
 Es9080_Codec::~Es9080_Codec()
 {
 	disable();
+	gpio.clear();
 }
 
 McaspConfig& Es9080_Codec::getMcaspConfig()
@@ -721,6 +725,7 @@ int Es9080_Codec::reset()
 	if(writeRegister(192, 0xC0))
 		return 1;
 	//  RESET & PLL REGISTER1: clear AO_SOFT_RESET | PLL_SOFT_RESET
-	return writeRegister(192, 0x0);
-	gpio.clear();
+	if(writeRegister(192, 0x0))
+		return 1;
+	return 0;
 }
