@@ -341,7 +341,7 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 			rt_fprintf(stderr, "Wrong format for bela_gui, the first element should be a float\n");
 			return;
 		}
-		unsigned int bufNum = libpd_get_float(&argv[1]);
+		unsigned int bufNum = libpd_get_float(&argv[0]);
 		if(libpd_is_float(&argv[1])) // if the first element is a float, we send an array of floats
 		{
 			float buf[argc - 1];
