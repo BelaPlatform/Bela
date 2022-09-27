@@ -17,7 +17,7 @@ done
 
 SOURCE=$1
 shift
-[ -z "$SOURCE" ] && {
+[ -z "$SOURCE" -o "--help" == "$SOURCE" -o "-h" == "$SOURCE" ] && {
 	echo "Usage: \`$0 [-p path/to/abstractions] path/to/project [ options to build_project.sh ]'" >&2
 	exit 1;
 }
