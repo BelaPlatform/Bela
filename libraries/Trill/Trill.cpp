@@ -503,7 +503,7 @@ void Trill::parseNewData()
 	if(CENTROID != mode_) {
 		// parse, rescale and copy data to public buffer
 		for (unsigned int i = 0; i < getNumChannels(); ++i)
-			rawData[i] = (((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) & 0x0FFF) * rawRescale;
+			rawData[i] = ((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) * rawRescale;
 	} else {
 		unsigned int locations = 0;
 		// Look for 1st instance of 0xFFFF (no touch) in the buffer
