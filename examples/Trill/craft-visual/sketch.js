@@ -85,7 +85,7 @@ function setup() {
 	belaSenderInit(radioPres, "prescaler");
 
 	radioBits = createRadio();
-	for(let n = 9; n <=12 ; ++n)
+	for(let n = 9; n <= 16; ++n)
 		radioBits.option(n);
 	radioBits.value("12");
 	belaSenderInit(radioBits, "numBits");
