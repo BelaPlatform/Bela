@@ -852,7 +852,7 @@ public:
             this->L[trans.position] += amplitude/(sample_t)2;
             trans.timeAlive += (sample_t)1.0/(sampleRate*(sample_t)2);
         }
-        for (unsigned int i=this->transients.size()-1; i>=0; i--)
+        for (int i = this->transients.size() - 1; i >= 0; i--)
         {
             Transient trans = this->transients[i];
             if (trans.timeAlive > trans.lifeTime)
