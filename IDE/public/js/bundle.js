@@ -2179,9 +2179,21 @@ var EditorView = function (_View) {
 				this.__focus(opts.focus);
 			}
 		}
-		// editor focus has changed
+		// editor theme has changed
 
 	}, {
+    key: '__darkTheme',
+    value: function __darkTheme(func, key, value) {
+
+      if (parseInt(func)) {
+        this.editor.setTheme("ace/theme/xcode_dark");
+      } else {
+        this.editor.setTheme("ace/theme/chrome");
+      }
+    }
+    // editor focus has changed
+
+  }, {
 		key: '__focus',
 		value: function __focus(data) {
 
@@ -4584,7 +4596,20 @@ var SettingsView = function (_View) {
 				}
 			});
 		}
-	}, {
+	}, { 
+    key: '_darkTheme',
+    value: function _darkTheme(func, key, value) {
+      var app = document.querySelector(".app");
+      // editor theme has changed
+      if (parseInt(func)) {
+        app.classList.remove('light');
+        app.classList.add('dark');
+      } else {
+        app.classList.remove('dark');
+        app.classList.add('light');
+      }
+    }
+  }, {
 		key: '_boardString',
 		value: function _boardString(data) {
 			var boardString;
