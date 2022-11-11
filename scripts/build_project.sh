@@ -119,10 +119,11 @@ fi
 [ -z $BBB_PROJECT_NAME ] && BBB_PROJECT_NAME="$(basename $(cd "$HOST_SOURCE_PATH" && pwd))"
 
 BBB_PROJECT_FOLDER=$BBB_PROJECT_HOME"/"$BBB_PROJECT_NAME #make sure there is no trailing slash here
-BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
 
 # The expert will have to remember to run set_date after powering up the board if needed
 [ "$BELA_EXPERT_MODE" -eq 0 ] && check_board_alive_and_set_date
+
+BBB_NETWORK_TARGET_FOLDER=$BBB_ADDRESS:$BBB_PROJECT_FOLDER
 
 # stop running process
 echo "Stop running process..."
