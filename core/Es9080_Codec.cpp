@@ -42,7 +42,7 @@ Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSo
 	// polarity also changes below
 	params.bitDelay = (kClockSourceMcasp == params.wclk) ? 1 : 0;
 	initI2C_RW(i2cBus, i2cAddress, -1);
-	gpio.open(61, Gpio::OUTPUT);
+	gpio.open(11, Gpio::OUTPUT);
 	gpio.clear();
 	usleep(1000);
 	gpio.set();
