@@ -314,6 +314,7 @@ void Bela_MidiOutPitchBend(int channel, int value) {
 	unsigned int port = getPortChannel(&channel);
 	if(gMidiVerbose >= kMidiVerbosePrintLevel)
 		rt_printf("bendout _ port: %d, channel: %d, value: %d\n", port, channel, value);
+	value += 8192; // correct for Pd's oddity
 	port < midi.size() && midi[port]->writePitchBend(channel, value);
 }
 
