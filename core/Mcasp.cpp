@@ -9,6 +9,7 @@ McaspConfig::McaspConfig()
 {
 	params = {0};
 	params.auxClkIn = 24000000;
+	regs.outSerializersDisabledSubSlots = 0x0; // Do not disable any subslots
 }
 
 double McaspConfig::getValidAhclk(double desiredClk, unsigned int* outDiv)
@@ -310,6 +311,8 @@ int McaspConfig::setPdir()
 	for(const auto& n : params.outSerializers)
 		axr |= (1 << n);
 	s.AXR = axr;
+	// how many total out channels according to McASP?
+	regs.mcaspOutChannels = params.outChannels;
 
 	memcpy(&regs.pdir, &s, sizeof(regs.pdir));
 	return 0;
@@ -490,4 +493,6 @@ void McaspConfig::print()
 	R(srctln);
 	R(wfifoctl);
 	R(rfifoctl);
+	R(mcaspOutChannels);
+	R(outSerializersDisabledSubSlots);
 }

@@ -45,13 +45,20 @@ Tlv320_Es9080_Codec::Tlv320_Es9080_Codec(int tlvI2cBus, int tlvI2cAddr, I2c_Code
 	// now instantiate it with the proper parameters
 	es9080 = new Es9080_Codec(esI2cBus, esI2cAddr, kClockSourceExternal, bclkFreq, verbose);
 	mcaspConfig.params.inChannels = primaryCodec->getNumIns() + secondaryCodec->getNumIns();
-	// McASP has to write to / read from all serializers at once. If the
-	// channel count differs among serializers, as in this case, we need to
-	// use the max and, in slots where we want only one serializer active,
-	// write dummy data to the other one.
+	// McASP has to write to / read from all active slots on all
+	// serializers at once.
+	// If the channel count differs among serializers, as in this case, we need to
+	// use the max of the two and, in slots where we want only one serializer active,
+	// write dummy data to the other one or - as in this case - disable subslots.
 	mcaspConfig.params.outChannels = 2 * std::max(primaryCodec->getNumOuts(), secondaryCodec->getNumOuts());
 	// use all serializers (assuming they are different)
 	mcaspConfig.params.outSerializers.push_back(es9080->getMcaspConfig().params.outSerializers[0]);
+	if(mcaspConfig.params.outSerializers[0] < mcaspConfig.params.outSerializers[1])
+		// if the first serialiser is TLV, disable odd subslots after the first 2
+		mcaspConfig.regs.outSerializersDisabledSubSlots = 0x5550;
+	else
+		// if the second serialiser is TLV, disable even subslots after the first 2
+		mcaspConfig.regs.outSerializersDisabledSubSlots = 0xAAA0;
 }
 
 Tlv320_Es9080_Codec::~Tlv320_Es9080_Codec()

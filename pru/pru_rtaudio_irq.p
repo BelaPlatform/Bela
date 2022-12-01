@@ -519,6 +519,11 @@ DONE:
 	AND DEST, DEST, (64-1)
 .endm
 
+.macro GET_NUM_MCASP_OUT_CHANNELS
+.mparam DEST
+	LBBO DEST, reg_comm_addr, COMM_MCASP_OUT_CHANNELS, 4
+.endm
+
 .macro GET_NUM_AUDIO_OUT_CHANNELS
 .mparam DEST
 	LSR DEST, reg_flags, FLAG_BIT_AUDIO_OUT_CHANNELS0
@@ -1335,17 +1340,28 @@ ADC_INIT_DONE:
      ADC_WRITE r2, r2
 
 SPI_INIT_DONE:	
+// this limit is because of how data is loaded in blocks from RAM and unrolled into registers. Changes to WRITE_ONE_BUFFER could extend it
+#define MCASP_MAX_CHANNELS 16
 
     // Check how many channels we have
     READ_ACTIVE_CHANNELS_INTO_FLAGS
     GET_NUM_AUDIO_IN_CHANNELS r2
-    GET_NUM_AUDIO_OUT_CHANNELS r3
-    // And that they are a valid number (at least one input OR output channel)
-    QBNE CHANNEL_COUNT_NOT_ZERO, r2, 0
-    QBNE CHANNEL_COUNT_NOT_ZERO, r3, 0
+    GET_NUM_MCASP_OUT_CHANNELS r3
+    // And that they are a valid number:
+    // at least one input OR output channel
+    ADD r4, r2, r3
+    QBEQ INIT_ERROR, r4, 0
+    // smaller than the max (yes, operator order is confusing)
+    QBLT INIT_ERROR, r2, MCASP_MAX_CHANNELS
+    QBLT INIT_ERROR, r3, MCASP_MAX_CHANNELS
+    // consistent
+    GET_NUM_AUDIO_OUT_CHANNELS r2
+    QBLT INIT_ERROR, r2, r3
+    QBA CHANNEL_COUNT_OK
+INIT_ERROR:
     SEND_ERROR_TO_ARM ARM_ERROR_INVALID_INIT
     HALT
-CHANNEL_COUNT_NOT_ZERO:
+CHANNEL_COUNT_OK:
 
 // Initialisation of PRU memory pointers and counters
     LBBO reg_frame_mcasp_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count for McASP
@@ -1604,7 +1620,7 @@ WRITE_FRAME_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_GENERIC_TDM
 	IF_NOT_BELA_MULTI_TLV_JMP_TO WRITE_FRAME_NOT_MULTI_TLV
-	GET_NUM_AUDIO_OUT_CHANNELS r2 // How many channels?
+	GET_NUM_MCASP_OUT_CHANNELS r2 // How many channels for the McASP
 WRITE_FRAME_MULTI_TLV_LOOP:
 	MCASP_WRITE_TO_DATAPORT 0x00, 4 // Write 4 bytes for each channel
 	SUB r2, r2, 1
@@ -1704,7 +1720,8 @@ INNER_EVENT_LOOP:
 NOT_NEXT_FRAME:
 
      // Check if ARM says should finish: flag is zero as long as it should run
-     LBBO r27, reg_comm_addr, COMM_SHOULD_STOP, 4
+     //LBBO r27, reg_comm_addr, COMM_SHOULD_STOP, 4
+     MOV r27, 0
      QBEQ CONTINUE_RUNNING, r27, 0
      JAL r28.w0, CLEANUP // JAL allows longer jumps than JMP, but we actually ignore r28 (will never come back)
 CONTINUE_RUNNING:
@@ -1824,13 +1841,18 @@ LOAD_AUDIO_FRAME_NOT_BELA_TLV32:
      LDI r16, 0
 
      // TLVTODO: this only works up to 16 channels based on number of registers
+     // get how many channels of audio ARM has put into memory
+     // for us to fetch
      GET_NUM_AUDIO_OUT_CHANNELS r0
-     QBGT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, 16
-     LDI r0, 16
+     QBGT LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN, r0, MCASP_MAX_CHANNELS
+     LDI r0, MCASP_MAX_CHANNELS
 LOAD_AUDIO_FRAME_MULTI_TLV_LT16CHAN:
      LSL r0, r0, 1 // 16 bits per channel
+     // ... and fetch them
      LBCO r1, C_MCASP_MEM, reg_mcasp_dac_current, b0
+     // store zeros in their place
      SBCO r9, C_MCASP_MEM, reg_mcasp_dac_current, b0
+     // increment pointer
      ADD reg_mcasp_dac_current, reg_mcasp_dac_current, r0.b0
      QBA LOAD_AUDIO_FRAME_DONE
 LOAD_AUDIO_FRAME_NOT_MULTI_TLV:
@@ -1892,6 +1914,100 @@ WRITE_AUDIO_FRAME_NOT_BELA_TLV32:
 #endif /* ENABLE_BELA_TLV32 */
 #ifdef ENABLE_BELA_GENERIC_TDM
 IF_NOT_BELA_MULTI_TLV_JMP_TO WRITE_AUDIO_FRAME_NOT_MULTI_TLV
+     LBBO r10, reg_comm_addr, COMM_SHOULD_STOP, 4
+     QBEQ CONT, r10, 0
+     HALT
+CONT:
+     LBBO r9, reg_comm_addr, COMM_MCASP_OUT_SERIALIZERS_DISABLED_SUBSLOTS, 4
+     // for each disabled slot, we shift all remaining registers forward
+     MOV r12, 0
+SHIFTING_LOOP_START:
+     QBBC SHIFTING_LOOP_NEXT, r9, 0
+     // if we are here, we need to shit forward all channels from r12 onwards
+     // to avoid messing with unused registers, we  should start from the
+     // correct instruction below based on how many subslots the mcasp has.
+     // We compute the jump destination as an offset of START_SHIFTING
+     // we need to jump (MCASP_MAX_CHANNELS - numMcaspSubSlots) blocks
+     // down; each block is two instructions wide
+     GET_NUM_MCASP_OUT_CHANNELS r0
+     MOV r10, MCASP_MAX_CHANNELS
+     // r10 = MCASP_MAX_CHANNELS - numMcaspSubSlots
+     SUB r10, r10, r0
+     // r10 is the number of blocks; each is 2 instructions wide:
+     // r10 = r10 * 2
+     LSL r10, r10, 1
+     LDI r11, START_SHIFTING
+     ADD r11, r11, r10
+     JMP r11
+START_SHIFTING:
+     // TODO: refactor this using the MVIW or MVID instructions
+     // these are not well documented and this also needs fixing prudis to
+     // understand the instructions
+     // here is an example:
+     // this (mwiD, where D means 4 bytes) copies the content of
+     // r3.w2 into r3.w0 and r4.w0 into r3.w2
+     // LDI r1.b0, &r3.w0
+     // LDI r1.b1, &r3.w2
+     // MVID *r1.b0, *r1.b1
+SS15:
+     MOV r8.w2, R8.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 15
+SS14:
+     MOV r8.w0, R7.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 14
+SS13:
+     MOV r7.w2, R7.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 13
+SS12:
+     MOV r7.w0, R6.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 12
+SS11:
+     MOV r6.w2, R6.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 11
+SS10:
+     MOV r6.w0, R5.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 10
+SS09:
+     MOV r5.w2, R5.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 9
+SS08:
+     MOV r5.w0, R4.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 8
+SS07:
+     MOV r4.w2, R4.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 7
+SS06:
+     MOV r4.w0, R3.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 6
+SS05:
+     MOV r3.w2, R3.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 5
+SS04:
+     MOV r3.w0, R2.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 4
+SS03:
+     MOV r2.w2, R2.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 3
+SS02:
+     MOV r2.w0, R1.w2
+     QBEQ SHIFTING_LOOP_NEXT, r12, 2
+SS01:
+     MOV r1.w2, R1.w0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 1
+SS00:
+     MOV r1.w0, 0
+     QBEQ SHIFTING_LOOP_NEXT, r12, 0
+SHIFTING_LOOP_NEXT:
+     LSR r9, r9, 1
+     ADD r12, r12, 1
+     QBNE SHIFTING_LOOP_START, r9, 0
+SHIFTING_LOOP_DONE:
+
+     // above, we will have shifted all the relevant data in the subslots we
+     // need it to be. Now see how many channels the McASP actually
+     // has and write to all of those
+     GET_NUM_MCASP_OUT_CHANNELS r0
+     LSL r0, r0, 1 // 16 bits per channel
      AND r9, r17, r1
      LSR r10, r1, 16
 	 MCASP_WRITE_TO_DATAPORT r9, 8
@@ -2428,7 +2544,8 @@ LED_BLINK_OFF:
      SBBO r2, r3, 0, 4       // Clear GPIO pin  
 LED_BLINK_DONE: 
      // Check if we should finish: flag is zero as long as it should run
-     LBBO r2, reg_comm_addr, COMM_SHOULD_STOP, 4
+     //LBBO r2, reg_comm_addr, COMM_SHOULD_STOP, 4
+     mov r2, 0
      QBNE CLEANUP, r2, 0
 	 JMP WRITE_ONE_BUFFER
 

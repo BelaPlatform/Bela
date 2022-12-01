@@ -58,6 +58,8 @@
 #define COMM_MCASP_CONF_SRCTLN          (COMM_MCASP_START+52) // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
 #define COMM_MCASP_CONF_WFIFOCTL        (COMM_MCASP_START+56)
 #define COMM_MCASP_CONF_RFIFOCTL        (COMM_MCASP_START+60)
+#define COMM_MCASP_OUT_CHANNELS         (COMM_MCASP_START+64)
+#define COMM_MCASP_OUT_SERIALIZERS_DISABLED_SUBSLOTS (COMM_MCASP_START+68) // 4 bytes, bitmask for 32 subslots: when it's high, send dummy data for this subslot
 
 // ARM accesses these memory locations as uint32_t
 // to avoid duplication and mistakes, we use macros to generate the values for ARM

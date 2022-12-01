@@ -378,7 +378,7 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 		analog_out_is_audio = true;
 		context->audioOutChannels = 2;
 	}
-	pru_audio_out_channels = analog_out_is_audio ? 16 : context->audioOutChannels;
+	pru_audio_out_channels = analog_out_is_audio ? context->audioOutChannels + context->analogOutChannels : context->audioOutChannels;
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(prepareGPIO(enableLed)) {
 		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
@@ -894,7 +894,7 @@ static inline int16_t audioFloatToAudioRaw(float value)
 
 static inline int16_t analogFloatToAudioRaw(float value)
 {
-#if 0
+#if 1
 	// Es9080Q EVB: FS output is scaled via inverting amp to 0V:5V, we use
 	// the full range
 	return audioFloatToAudioRaw((1.f - value) * 2.f - 1.f);
@@ -998,7 +998,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			if(stopButton.read() == 0){
 				if(++stopButtonCount > 10){
 					printf("Button pressed, quitting\n");
-					Bela_requestStop();
+	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 1;
+					//Bela_requestStop();
 				}
 			} else {
 				stopButtonCount = 0;
@@ -1378,13 +1379,15 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 				// interpolate/ZOH in the PRU and avoid extra memory copy
 				// TODO: no support here for running analogs at double sample rate
 				const unsigned int div = context->audioFrames == context->analogFrames ? 1 : 2;
+				const unsigned int minCommonChannels = context->audioOutChannels < context->analogOutChannels ? context->audioOutChannels : context->analogOutChannels;
 				for(unsigned int n = 0; n < context->audioFrames; ++n) // NOTE: audioFrames
 				{
 					unsigned int analogN = n / div;
 					for(unsigned int c = 0; c < context->analogOutChannels; ++c)
 					{
 						unsigned int srcIdx = interleaved ? analogN * context->analogOutChannels + c : c * context->analogFrames + n;
-						unsigned int audioOutC = c * 2 + 1; // * 2 + 1 : we are on the second serialiser
+						// we assume that there are two seralizers, with audio out on the first one and analog out on the second one
+						unsigned int audioOutC = c < minCommonChannels ? c * minCommonChannels + 1 : c + minCommonChannels;
 						unsigned int dstIdx = n * pru_audio_out_channels + audioOutC;
 						audioOutRaw[dstIdx] = analogFloatToAudioRaw(context->analogOut[srcIdx]);
 					}
@@ -1512,12 +1515,16 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 		float_to_int16_audio(2 * context->audioFrames, context->audioOut, audio_dac_pru_buffer);
 #else	
 		const bool handleSerialisersSplit = analog_out_is_audio;
+		const unsigned int minCommonChannelMult = handleSerialisersSplit ?
+			(context->audioOutChannels < context->analogOutChannels ? context->audioOutChannels : context->analogOutChannels)
+			: 1;
 		for(unsigned int n = 0; n < context->audioFrames; ++n)
 		{
 			for(unsigned int c = 0; c < context->audioOutChannels; ++c)
 			{
 				unsigned int srcIdx = interleaved ? n * context->audioOutChannels + c : c * context->audioFrames + n;
-				unsigned int dstIdx = n * pru_audio_out_channels + c * (handleSerialisersSplit ? 2 : 1); // * 2: the first serialiser is ours
+				// we assume that the audio serialiser is first and the analog as audio serialiser is second
+				unsigned int dstIdx = n * pru_audio_out_channels + c * minCommonChannelMult;
 				audioOutRaw[dstIdx] = audioFloatToAudioRaw(context->audioOut[srcIdx]);
 			}
 		}
