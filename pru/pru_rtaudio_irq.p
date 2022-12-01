@@ -411,11 +411,6 @@ MOV r31.b0, PRU_SYSTEM_EVENT_RTDM_WRITE_VALUE
     QBBS DEST, reg_flags, FLAG_BIT_CTAG
 .endm
 
-.macro IF_NOT_BELA_MINI_JMP_TO
-.mparam DEST
-    QBBC DEST, reg_flags, FLAG_BIT_BELA_MINI
-.endm
-
 .macro IF_NOT_BELA_MULTI_TLV_JMP_TO
 .mparam DEST
     QBBC DEST, reg_flags, FLAG_BIT_BELA_MULTI_TLV
