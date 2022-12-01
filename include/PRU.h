@@ -195,6 +195,8 @@ private:
 	int hardware_analog_frames; // The actual number of frames for the analog channels, as far as the PRU is concerned
 	bool gpio_enabled;	// Whether GPIO has been prepared
 	bool led_enabled;	// Whether a user LED is enabled
+	bool analog_out_is_audio;
+	size_t pru_audio_out_channels;
 
 	PruMemory* pruMemory;
 	volatile uint32_t *pru_buffer_comm;
