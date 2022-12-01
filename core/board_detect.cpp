@@ -228,6 +228,14 @@ bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component component)
 {
 	switch(component) {
+		case BelaCapeRevC:
+			switch(hw) {
+				case BelaHw_BelaRevC:
+					return 1;
+				default:
+					return 0;
+			}
+			break;
 		case BelaCape:
 			switch(hw) {
 				case BelaHw_Bela:

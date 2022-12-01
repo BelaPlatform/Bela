@@ -186,13 +186,12 @@ private:
 
 static unsigned int* gDigitalPins = NULL;
 
-const uint32_t userLed3GpioBase = Gpio::getBankAddress(1);
-const uint32_t userLed3GpioPinMask = 1 << 24;
 const unsigned int belaMiniLedBlue = 87;
-const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
-const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
 const unsigned int belaMiniLedRed = 89;
 const unsigned int belaMiniRevCAdcPin = 65;
+const unsigned int belaRevCLedRed = 79;
+const unsigned int belaRevCLedBlue = 81;
+const unsigned int userLed3GpioPin = 46;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
@@ -312,13 +311,16 @@ int PRU::prepareGPIO(int include_led)
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
 			gpio_set_dir(belaMiniLedBlue, OUTPUT_PIN);
-			led_enabled = true;
+		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
+			//using on-board LED
+			gpio_export(belaRevCLedBlue);
+			gpio_set_dir(belaRevCLedBlue, OUTPUT_PIN);
 		} else {
 			// Using BeagleBone's USR3 LED
 			// Turn off system function for LED3 so it can be reused by PRU
 			led_set_trigger(3, "none");
-			led_enabled = true;
 		}
+		led_enabled = true;
 	}
 
 	gpio_enabled = true;
@@ -354,6 +356,9 @@ void PRU::cleanupGPIO()
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
+		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
+			//using on-board LED
+			gpio_unexport(belaRevCLedBlue);
 		} else {
 			// Set LED back to default eMMC status
 			// TODO: make it go back to its actual value before this program,
@@ -401,14 +406,30 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
 	}
-	if(Bela_hwContains(belaHw, BelaMiniCape) && enableLed){
-		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
-		underrunLed.clear();
+	if(enableLed)
+	{
+		int err = 0;
+		unsigned int ledRed;
+		if(Bela_hwContains(belaHw, BelaMiniCape)){
+			ledRed = belaMiniLedRed;
+		} else if (Bela_hwContains(belaHw, BelaCapeRevC)){
+			ledRed = belaRevCLedRed;
+		} else
+			err = 1;
+		if(!err)
+		{
+			err = underrunLed.open(ledRed, Gpio::OUTPUT, true);
+			if(!err)
+				underrunLed.clear();
+		}
 	}
 	if(Bela_hwContains(belaHw, BelaMiniCape))
 	{
-		// BelaMini Rev C requires resetting the SPI ADC via dedicated
+		// Bela Rev C and BelaMini Rev C requires resetting the SPI ADC via dedicated
 		// pin before we start
+		// It is done here for BelaMini, while for Bela it is done in
+		// the Es9080 initialisation code, as the reset line is shared
+		// between the ADS816x and the ES9080Q
 		if(context->analogInChannels)
 		{
 			adcNrstPin.open(belaMiniRevCAdcPin, Gpio::OUTPUT, true);
@@ -597,6 +618,8 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_Salt:
 	case BelaHw_NoHw:
 		break;
+	case BelaHw_Batch: // won't actually call this function
+		break;
 	}
 	if(Bela_hwContains(belaHw, BelaMiniCape))
 		board_flags |= 1 << BOARD_FLAGS_BELA_MINI;
@@ -640,16 +663,20 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	}
 	
 	if(led_enabled) {
+		unsigned int pin;
 		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
-			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = belaMiniLedBlueGpioBase;
-			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
+			pin = belaMiniLedBlue;
+		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
+			pin = belaRevCLedBlue;
 		} else {
-			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = userLed3GpioBase;
-			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = userLed3GpioPinMask;
+			pin = userLed3GpioPin;
 		}
-	}
-	else {
+		uint32_t base = Gpio::getBankAddress(pin / 32);
+		uint32_t mask = 1 << (pin % 32);
+		pru_buffer_comm[PRU_COMM_LED_ADDRESS] = base;
+		pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = mask;
+	} else {
 		pru_buffer_comm[PRU_COMM_LED_ADDRESS] = 0;
 		pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = 0;
 	}
