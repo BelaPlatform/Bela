@@ -97,8 +97,7 @@ extern int gRTAudioVerbose;
 class PruMemory
 {
 public:
-	PruMemory(int pruNumber, InternalBelaContext* newContext, PruManager& pruManager) :
-		context(newContext)
+	PruMemory(int pruNumber, InternalBelaContext* context, PruManager& pruManager)
 	{
 		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
@@ -183,7 +182,6 @@ private:
 	std::vector<int16_t> audioIn;
 	std::vector<int16_t> audioOut;
 	std::vector<uint32_t> digital;
-	InternalBelaContext* context;
 };
 
 static unsigned int* gDigitalPins = NULL;
