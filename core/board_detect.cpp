@@ -24,6 +24,7 @@ static const std::map<std::string,BelaHw> belaHwMap = {
         {"BelaMultiTdm", BelaHw_BelaMultiTdm},
         {"BelaMiniMultiI2s", BelaHw_BelaMiniMultiI2s},
         {"BelaEs9080", BelaHw_BelaEs9080},
+        {"BelaRevC", BelaHw_BelaRevC},
         {"Batch", BelaHw_Batch},
 };
 
@@ -197,11 +198,13 @@ using namespace BelaHwComponent;
 /// can I run userHw when I actually have detectedHw?
 bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 {
+	if(userHw == detectedHw)
+		return true;
 	if(BelaHw_BelaEs9080 == userHw)
 		return true;
 	if(BelaHw_Batch == userHw)
 		return true;
-	if(userHw == BelaHw_Bela && Bela_hwContains(detectedHw, BelaCape))
+	if((userHw == BelaHw_Bela || userHw == BelaHw_BelaRevC) && Bela_hwContains(detectedHw, BelaCape))
 		return true;
 	else if(userHw == BelaHw_CtagFace && Bela_hwContains(detectedHw, CtagCape))
 		return true;
@@ -233,6 +236,7 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 				case BelaHw_CtagBeastBela:
 				case BelaHw_BelaMultiTdm:
 				case BelaHw_BelaEs9080:
+				case BelaHw_BelaRevC:
 					return 1;
 				default:
 					return 0;

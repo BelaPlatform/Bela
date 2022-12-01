@@ -140,6 +140,8 @@ static int Bela_getHwConfigPrivate(BelaHw hw, BelaHwConfig* cfg, BelaHwConfigPri
 		return 1;
 	cfg->audioInChannels = pcfg->activeCodec->getNumIns();
 	cfg->audioOutChannels = pcfg->activeCodec->getNumOuts();
+	if(BelaHw_BelaRevC == hw)
+		cfg->audioOutChannels = 2;
 	cfg->audioSampleRate = pcfg->activeCodec->getSampleRate();
 	if(!cfg->audioInChannels && !cfg->audioOutChannels) {
 		fprintf(stderr, "Error: 0 inputs and 0 outputs channels.\n");
@@ -582,7 +584,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 			mode = "MODE:"+codecMode;
 		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
 	}
-	else if(belaHw == BelaHw_BelaEs9080) {
+	else if(BelaHw_BelaEs9080 == belaHw || BelaHw_BelaRevC == belaHw) {
 		uint8_t addr = 0x4c; // this is the write-only register
 		gAudioCodec = new Tlv320_Es9080_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, addr, gRTAudioVerbose);
 	}
@@ -634,6 +636,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		case BelaHw_CtagFaceBela:
 		case BelaHw_BelaMiniMultiI2s:
 		case BelaHw_BelaEs9080:
+		case BelaHw_BelaRevC: // maybe can go in the previous case?
 			gFifoFactor = settings->periodSize / 64;
 		break;
 		case BelaHw_CtagBeast:

@@ -368,7 +368,7 @@ void PRU::cleanupGPIO()
 int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, int stopButtonPin, bool enableLed)
 {
 	belaHw = newBelaHw;
-	if(BelaHw_BelaEs9080 == belaHw)
+	if(BelaHw_BelaRevC == belaHw)
 	{
 		analog_out_is_audio = true;
 		context->audioOutChannels = 2;
@@ -589,13 +589,13 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_CtagFaceBela:
 	case BelaHw_CtagBeastBela:
 	case BelaHw_BelaEs9080:
+	case BelaHw_BelaRevC:
 		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
 	case BelaHw_Bela:
 	case BelaHw_BelaMini:
 	case BelaHw_Salt:
 	case BelaHw_NoHw:
-	default:
 		break;
 	}
 	if(Bela_hwContains(belaHw, BelaMiniCape))
@@ -700,6 +700,8 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 		case BelaHw_CtagBeastBela:
 			//nobreak
 		case BelaHw_BelaEs9080:
+			//nobreak
+		case BelaHw_BelaRevC:
 			pruUsesMcaspIrq = true;
 			break;
 		case BelaHw_NoHw:
