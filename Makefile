@@ -89,6 +89,7 @@ COMMAND_LINE_OPTIONS?=$(CL)
 ifeq ($(RUN_WITH_PRU_BIN),true)
 # Only use this one for development. You may have to run it without this option at least once, to generate 
 # include/pru_rtaudio_bin.h
+# You also have to remove build/core/PruBinary.d so that we can hide the dependency on the *_bin.h files.
 ifndef PROJECT
 $(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
 endif # ifndef PROJECT
