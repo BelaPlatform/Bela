@@ -487,7 +487,7 @@ ifeq (,$(SYNTAX_FLAG))
 endif
 	$(AT) echo ' '
 
-%.bin: pru/%.p
+%.bin: pru/%.p include/PruArmCommon.h
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
 	$(AT) pasm -V2 -L -c -b "$<" > /dev/null
@@ -495,7 +495,7 @@ ifeq (,$(SYNTAX_FLAG))
 endif
 	$(AT) echo ' '
 
-build/pru/%_bin.h: pru/%.p
+build/pru/%_bin.h: pru/%.p include/PruArmCommon.h
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
 	$(AT) pasm -V2 -L -c "$<" > /dev/null
