@@ -78,6 +78,8 @@ McaspConfig& Es9080_Codec::getMcaspConfig()
 }
 
 int Es9080_Codec::initCodec(){
+        // make sure the AHCLKX is running os the codec's registers can be accessed
+        Mcasp::startAhclkx();
 	gpio.set();
 	// check it's alive. Write a register to the write-only address and
 	// make sure it succeeds
