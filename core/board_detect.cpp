@@ -70,7 +70,7 @@ static bool detectTlv32(int bus, int address)
 
 static bool detectBelaRevC()
 {
-	Tlv320_Es9080_Codec codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, 0);
+	Tlv320_Es9080_Codec codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, es9080CodecResetPin, 0);
 	int ret = codec.initCodec();
 	if (ret == 0)
 		return true;

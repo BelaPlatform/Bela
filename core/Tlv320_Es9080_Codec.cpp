@@ -12,11 +12,11 @@ constexpr AudioCodecParams::ClockSource kClockSourceExternal = AudioCodecParams:
 	throw std::runtime_error("Tlv320_Es9080_Codec: " + err + (token != "" ? "`" + token : "") + "`\n");
 }
 
-Tlv320_Es9080_Codec::Tlv320_Es9080_Codec(int tlvI2cBus, int tlvI2cAddr, I2c_Codec::CodecType tlvType, int esI2cBus, int esI2cAddr, bool verbose)
+Tlv320_Es9080_Codec::Tlv320_Es9080_Codec(int tlvI2cBus, int tlvI2cAddr, I2c_Codec::CodecType tlvType, int esI2cBus, int esI2cAddr, int esResetPin, bool verbose)
 {
 	tlv320 = new I2c_Codec(tlvI2cBus, tlvI2cAddr, tlvType, verbose);
 	// temporarily instantiate es9080 so we can getNumIns/getNumOuts. Overridden below.
-	es9080 = new Es9080_Codec(esI2cBus, esI2cAddr, kClockSourceCodec, 0, 0);
+	es9080 = new Es9080_Codec(esI2cBus, esI2cAddr, kClockSourceCodec, esResetPin, 0, 0);
 	primaryCodec = tlv320;
 	secondaryCodec = es9080;
 	AudioCodecParams params;
@@ -43,7 +43,7 @@ Tlv320_Es9080_Codec::Tlv320_Es9080_Codec(int tlvI2cBus, int tlvI2cAddr, I2c_Code
 
 	delete es9080;
 	// now instantiate it with the proper parameters
-	es9080 = new Es9080_Codec(esI2cBus, esI2cAddr, kClockSourceExternal, bclkFreq, verbose);
+	es9080 = new Es9080_Codec(esI2cBus, esI2cAddr, kClockSourceExternal, esResetPin, bclkFreq, verbose);
 	mcaspConfig.params.inChannels = primaryCodec->getNumIns() + secondaryCodec->getNumIns();
 	// McASP has to write to / read from all active slots on all
 	// serializers at once.

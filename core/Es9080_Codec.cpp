@@ -14,7 +14,7 @@ const unsigned int kDataSize = 16;
 const unsigned int kStartingSlot = 0;
 const unsigned int kNumSlots = kNumBits / kSlotSize;
 
-Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSource clockSource, double mclkFrequency, bool isVerbose)
+Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSource clockSource, int resetPin, double mclkFrequency, bool isVerbose)
 	: running(false)
 	, verbose(isVerbose)
 {
@@ -42,7 +42,7 @@ Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSo
 	// polarity also changes below
 	params.bitDelay = (kClockSourceMcasp == params.wclk) ? 1 : 0;
 	initI2C_RW(i2cBus, i2cAddress, -1);
-	gpio.open(11, Gpio::OUTPUT);
+	gpio.open(resetPin, Gpio::OUTPUT);
 	gpio.clear();
 	usleep(1000);
 	gpio.set();

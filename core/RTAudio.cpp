@@ -585,7 +585,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
 	}
 	else if(BelaHw_BelaEs9080 == belaHw || BelaHw_BelaRevC == belaHw) {
-		gAudioCodec = new Tlv320_Es9080_Codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, gRTAudioVerbose);
+		gAudioCodec = new Tlv320_Es9080_Codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, es9080CodecResetPin, gRTAudioVerbose);
 	}
 	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
 		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);
