@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "../include/I2c_Codec.h"
+#include "../include/Tlv320_Es9080_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/bela_hw_settings.h"
 #include "../include/bela_sw_settings.h"
@@ -65,6 +66,16 @@ static bool detectTlv32(int bus, int address)
 		return false;
 	// http://www.ti.com/lit/ds/symlink/tlv320aic3104.pdf
 	// return true if detected, false otherwise
+}
+
+static bool detectBelaRevC()
+{
+	Tlv320_Es9080_Codec codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, 0);
+	int ret = codec.initCodec();
+	if (ret == 0)
+		return true;
+	else
+		return false;
 }
 
 // Returns:
@@ -169,6 +180,10 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	{
 		int ctag = detectCtag();
 		bool hasTlv32 = detectTlv32(codecI2cBus, tlv320CodecI2cAddress);
+		if(!ctag) {
+			if(detectBelaRevC())
+				return BelaHw_BelaRevC;
+		}
 		
 		if(ctag == 1)
 		{
@@ -184,7 +199,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 			else
 				hw = BelaHw_CtagBeast;
 		}
-		else{
+		else {
 			if(hasTlv32)
 				hw = BelaHw_Bela;
 		}
