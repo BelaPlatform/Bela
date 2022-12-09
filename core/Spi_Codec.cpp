@@ -360,6 +360,7 @@ McaspConfig& Spi_Codec::getMcaspConfig() {
         mcaspConfig.params.bitDelay = 1;
         mcaspConfig.params.ahclkIsInternal = true; // ignored in practice
         mcaspConfig.params.ahclkFreq = 12000000; // ignored in practice
+        mcaspConfig.params.aclkIsInternal = false;
         mcaspConfig.params.wclkIsInternal = false;
         mcaspConfig.params.wclkIsWord = true;
         mcaspConfig.params.wclkFalling = false;

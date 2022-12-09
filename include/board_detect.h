@@ -5,6 +5,7 @@
 namespace BelaHwComponent {
 typedef enum {
 	BelaCape,
+	BelaCapeRevC,
 	BelaMiniCape,
 	CtagCape,
 	PocketBeagle,

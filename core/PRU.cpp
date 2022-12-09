@@ -21,6 +21,7 @@
 #include "../include/Gpio.h"
 #include "../include/PruArmCommon.h"
 #include "../include/board_detect.h"
+#include "../include/Mcasp.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -96,12 +97,11 @@ extern int gRTAudioVerbose;
 class PruMemory
 {
 public:
-	PruMemory(int pruNumber, InternalBelaContext* newContext, PruManager& pruManager) :
-		context(newContext)
+	PruMemory(int pruNumber, InternalBelaContext* context, PruManager& pruManager, size_t audioOutChannels)
 	{
 		pruSharedRam = static_cast<char*>(pruManager.getSharedMemory());
 		audioIn.resize(context->audioInChannels * context->audioFrames);
-		audioOut.resize(context->audioOutChannels * context->audioFrames);
+		audioOut.resize(audioOutChannels * context->audioFrames);
 		digital.resize(context->digitalFrames);
 		pruAudioOutStart[0] = pruSharedRam + PRU_MEM_MCASP_OFFSET;
 		pruAudioOutStart[1] = pruSharedRam + PRU_MEM_MCASP_OFFSET + audioOut.size() * sizeof(audioOut[0]);
@@ -182,18 +182,16 @@ private:
 	std::vector<int16_t> audioIn;
 	std::vector<int16_t> audioOut;
 	std::vector<uint32_t> digital;
-	InternalBelaContext* context;
 };
 
 static unsigned int* gDigitalPins = NULL;
 
-const uint32_t userLed3GpioBase = Gpio::getBankAddress(1);
-const uint32_t userLed3GpioPinMask = 1 << 24;
 const unsigned int belaMiniLedBlue = 87;
-const uint32_t belaMiniLedBlueGpioBase = Gpio::getBankAddress(2); // GPIO2(23) is BelaMini LED blue
-const uint32_t belaMiniLedBlueGpioPinMask = 1 << 23;
 const unsigned int belaMiniLedRed = 89;
 const unsigned int belaMiniRevCAdcPin = 65;
+const unsigned int belaRevCLedRed = 81;
+const unsigned int belaRevCLedBlue = 79;
+const unsigned int userLed3GpioPin = 46;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
@@ -218,6 +216,7 @@ PRU::PRU(InternalBelaContext *input_context)
   running(false),
   analog_enabled(false),
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
+  analog_out_is_audio(false), pru_audio_out_channels(0),
   pru_buffer_comm(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
   audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
@@ -312,13 +311,16 @@ int PRU::prepareGPIO(int include_led)
 			//using on-board LED
 			gpio_export(belaMiniLedBlue);
 			gpio_set_dir(belaMiniLedBlue, OUTPUT_PIN);
-			led_enabled = true;
+		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
+			//using on-board LED
+			gpio_export(belaRevCLedBlue);
+			gpio_set_dir(belaRevCLedBlue, OUTPUT_PIN);
 		} else {
 			// Using BeagleBone's USR3 LED
 			// Turn off system function for LED3 so it can be reused by PRU
 			led_set_trigger(3, "none");
-			led_enabled = true;
 		}
+		led_enabled = true;
 	}
 
 	gpio_enabled = true;
@@ -354,6 +356,9 @@ void PRU::cleanupGPIO()
 		{
 			//using on-board LED
 			gpio_unexport(belaMiniLedBlue);
+		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
+			//using on-board LED
+			gpio_unexport(belaRevCLedBlue);
 		} else {
 			// Set LED back to default eMMC status
 			// TODO: make it go back to its actual value before this program,
@@ -368,6 +373,12 @@ void PRU::cleanupGPIO()
 int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, int stopButtonPin, bool enableLed)
 {
 	belaHw = newBelaHw;
+	if(BelaHw_BelaRevC == belaHw)
+	{
+		analog_out_is_audio = true;
+		context->audioOutChannels = 2;
+	}
+	pru_audio_out_channels = analog_out_is_audio ? context->audioOutChannels + context->analogOutChannels : context->audioOutChannels;
 	// Initialise the GPIO pins, including possibly the digital pins in the render routines
 	if(prepareGPIO(enableLed)) {
 		fprintf(stderr, "Error: unable to prepare GPIO for PRU audio\n");
@@ -390,19 +401,35 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 #if ENABLE_PRU_RPROC == 1
 	pruManager = new PruManagerRprocMmap(pru_number, gRTAudioVerbose);
 #endif	// ENABLE_PRU_RPROC
-	pruMemory = new PruMemory(pru_number, context, *pruManager);
+	pruMemory = new PruMemory(pru_number, context, *pruManager, pru_audio_out_channels);
 
 	if(0 <= stopButtonPin){
 		stopButton.open(stopButtonPin, Gpio::INPUT, false);
 	}
-	if(Bela_hwContains(belaHw, BelaMiniCape) && enableLed){
-		underrunLed.open(belaMiniLedRed, Gpio::OUTPUT);
-		underrunLed.clear();
+	if(enableLed)
+	{
+		int err = 0;
+		unsigned int ledRed;
+		if(Bela_hwContains(belaHw, BelaMiniCape)){
+			ledRed = belaMiniLedRed;
+		} else if (Bela_hwContains(belaHw, BelaCapeRevC)){
+			ledRed = belaRevCLedRed;
+		} else
+			err = 1;
+		if(!err)
+		{
+			err = underrunLed.open(ledRed, Gpio::OUTPUT, true);
+			if(!err)
+				underrunLed.clear();
+		}
 	}
 	if(Bela_hwContains(belaHw, BelaMiniCape))
 	{
-		// BelaMini Rev C requires resetting the SPI ADC via dedicated
+		// Bela Rev C and BelaMini Rev C requires resetting the SPI ADC via dedicated
 		// pin before we start
+		// It is done here for BelaMini, while for Bela it is done in
+		// the Es9080 initialisation code, as the reset line is shared
+		// between the ADS816x and the ES9080Q
 		if(context->analogInChannels)
 		{
 			adcNrstPin.open(belaMiniRevCAdcPin, Gpio::OUTPUT, true);
@@ -582,13 +609,16 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	case BelaHw_CtagBeast:
 	case BelaHw_CtagFaceBela:
 	case BelaHw_CtagBeastBela:
+	case BelaHw_BelaEs9080:
+	case BelaHw_BelaRevC:
 		board_flags |= 1 << BOARD_FLAGS_BELA_GENERIC_TDM;
 		break;
 	case BelaHw_Bela:
 	case BelaHw_BelaMini:
 	case BelaHw_Salt:
 	case BelaHw_NoHw:
-	default:
+		break;
+	case BelaHw_Batch: // won't actually call this function
 		break;
 	}
 	if(Bela_hwContains(belaHw, BelaMiniCape))
@@ -606,14 +636,14 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	if(pruUsesMcaspIrq)
 		pruBufferMcaspFrames = context->audioFrames;
 	else // TODO: it seems that PRU_COMM_BUFFER_MCASP_FRAMES is not very meaningful(cf pru_rtaudio_irq.p)
-		pruBufferMcaspFrames = pruFrames * context->audioOutChannels / 2;
+		pruBufferMcaspFrames = pruFrames * pru_audio_out_channels / 2;
 	pru_buffer_comm[PRU_COMM_BUFFER_MCASP_FRAMES] = pruBufferMcaspFrames;
 	pru_buffer_comm[PRU_COMM_SHOULD_SYNC] = 0;
 	pru_buffer_comm[PRU_COMM_SYNC_ADDRESS] = 0;
 	pru_buffer_comm[PRU_COMM_SYNC_PIN_MASK] = 0;
 	pru_buffer_comm[PRU_COMM_PRU_NUMBER] = pru_number;
 	pru_buffer_comm[PRU_COMM_ERROR_OCCURRED] = 0;
-	pru_buffer_comm[PRU_COMM_ACTIVE_CHANNELS] = ((uint16_t)context->audioOutChannels & 0xFFFF) << 16 | ((uint16_t)(context->audioInChannels) & 0xFFFF);
+	pru_buffer_comm[PRU_COMM_ACTIVE_CHANNELS] = ((uint16_t)pru_audio_out_channels & 0xFFFF) << 16 | ((uint16_t)(context->audioInChannels) & 0xFFFF);
 	memcpy((void*)(pru_buffer_comm + PRU_COMM_MCASP_CONF_PDIR), &mcaspRegisters,
 			sizeof(mcaspRegisters));
 	/* Set up multiplexer info */
@@ -633,16 +663,20 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 	}
 	
 	if(led_enabled) {
+		unsigned int pin;
 		if(Bela_hwContains(belaHw, BelaMiniCape))
 		{
-			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = belaMiniLedBlueGpioBase;
-			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = belaMiniLedBlueGpioPinMask;
+			pin = belaMiniLedBlue;
+		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
+			pin = belaRevCLedBlue;
 		} else {
-			pru_buffer_comm[PRU_COMM_LED_ADDRESS] = userLed3GpioBase;
-			pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = userLed3GpioPinMask;
+			pin = userLed3GpioPin;
 		}
-	}
-	else {
+		uint32_t base = Gpio::getBankAddress(pin / 32);
+		uint32_t mask = 1 << (pin % 32);
+		pru_buffer_comm[PRU_COMM_LED_ADDRESS] = base;
+		pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = mask;
+	} else {
 		pru_buffer_comm[PRU_COMM_LED_ADDRESS] = 0;
 		pru_buffer_comm[PRU_COMM_LED_PIN_MASK] = 0;
 	}
@@ -691,6 +725,10 @@ int PRU::start(char * const filename, const McaspRegisters& mcaspRegisters)
 		case BelaHw_CtagFaceBela:
 			//nobreak
 		case BelaHw_CtagBeastBela:
+			//nobreak
+		case BelaHw_BelaEs9080:
+			//nobreak
+		case BelaHw_BelaRevC:
 			pruUsesMcaspIrq = true;
 			break;
 		case BelaHw_NoHw:
@@ -846,6 +884,30 @@ int PRU::testPruError()
 	}
 }
 
+static inline int16_t audioFloatToAudioRaw(float value)
+{
+	int out = value * 32768.0f;
+	if(out < -32768) out = -32768;
+	else if(out > 32767) out = 32767;
+	return out;
+}
+
+static inline int16_t analogFloatToAudioRaw(float value)
+{
+#if 1
+	// Es9080Q EVB: FS output is scaled via inverting amp to 0V:5V, we use
+	// the full range
+	return audioFloatToAudioRaw((1.f - value) * 2.f - 1.f);
+#else
+	// Cape Rev C: FS outupt is scaled via non-inverting amp to -5V:5V, but
+	// we are only using the positive range of that (15 bit) when not on Pepper
+	float out = audioFloatToAudioRaw(value);
+	if(out < 0)
+		out = 0;
+	return out;
+#endif
+}
+
 // Main loop to read and write data from/to PRU
 void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData)
 {
@@ -936,7 +998,8 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			if(stopButton.read() == 0){
 				if(++stopButtonCount > 10){
 					printf("Button pressed, quitting\n");
-					Bela_requestStop();
+	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 1;
+					//Bela_requestStop();
 				}
 			} else {
 				stopButtonCount = 0;
@@ -1308,8 +1371,28 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #ifdef USE_NEON_FORMAT_CONVERSION
 			float_to_int16_analog(context->analogOutChannels * context->analogFrames, 
 								  context->analogOut, dac_pru_buffer);
-#else		
-			if(uniform_sample_rate && analogs_per_audio == 0.5)
+#else // USE_NEON_FORMAT_CONVERSION
+			if(analog_out_is_audio)
+			{
+				// currently sending to PRU all samples, despite the fact that when
+				// running analog at half sampling rate, we could actually
+				// interpolate/ZOH in the PRU and avoid extra memory copy
+				// TODO: no support here for running analogs at double sample rate
+				const unsigned int div = context->audioFrames == context->analogFrames ? 1 : 2;
+				const unsigned int minCommonChannels = context->audioOutChannels < context->analogOutChannels ? context->audioOutChannels : context->analogOutChannels;
+				for(unsigned int n = 0; n < context->audioFrames; ++n) // NOTE: audioFrames
+				{
+					unsigned int analogN = n / div;
+					for(unsigned int c = 0; c < context->analogOutChannels; ++c)
+					{
+						unsigned int srcIdx = interleaved ? analogN * context->analogOutChannels + c : c * context->analogFrames + n;
+						// we assume that there are two seralizers, with audio out on the first one and analog out on the second one
+						unsigned int audioOutC = c < minCommonChannels ? c * minCommonChannels + 1 : c + minCommonChannels;
+						unsigned int dstIdx = n * pru_audio_out_channels + audioOutC;
+						audioOutRaw[dstIdx] = analogFloatToAudioRaw(context->analogOut[srcIdx]);
+					}
+				}
+			} else if(uniform_sample_rate && analogs_per_audio == 0.5)
 			{
 				unsigned int channels = context->analogOutChannels;
 				unsigned int frames = hardware_analog_frames;
@@ -1431,28 +1514,18 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 #ifdef USE_NEON_FORMAT_CONVERSION
 		float_to_int16_audio(2 * context->audioFrames, context->audioOut, audio_dac_pru_buffer);
 #else	
-		if(interleaved)
+		const bool handleSerialisersSplit = analog_out_is_audio;
+		const unsigned int minCommonChannelMult = handleSerialisersSplit ?
+			(context->audioOutChannels < context->analogOutChannels ? context->audioOutChannels : context->analogOutChannels)
+			: 1;
+		for(unsigned int n = 0; n < context->audioFrames; ++n)
 		{
-			for(unsigned int n = 0; n < context->audioOutChannels * context->audioFrames; ++n) {
-				int out = context->audioOut[n] * 32768.0f;
-				if(out < -32768) out = -32768;
-				else if(out > 32767) out = 32767;
-				audioOutRaw[n] = (int16_t)out;
-			}
-		}
-		else
-		{
-			for(unsigned int f = 0; f < context->audioFrames; ++f)
+			for(unsigned int c = 0; c < context->audioOutChannels; ++c)
 			{
-				for(unsigned int c = 0; c < context->audioOutChannels; ++c)
-				{
-					unsigned int srcIdx = c * context->audioFrames + f;
-					unsigned int dstIdx = f * context->audioOutChannels + c;
-					int out = context->audioOut[srcIdx] * 32768.0f;
-					if(out < -32768) out = -32768;
-					else if(out > 32767) out = 32767;
-					audioOutRaw[dstIdx] = (int16_t)out;
-				}
+				unsigned int srcIdx = interleaved ? n * context->audioOutChannels + c : c * context->audioFrames + n;
+				// we assume that the audio serialiser is first and the analog as audio serialiser is second
+				unsigned int dstIdx = n * pru_audio_out_channels + c * minCommonChannelMult;
+				audioOutRaw[dstIdx] = audioFloatToAudioRaw(context->audioOut[srcIdx]);
 			}
 		}
 #endif /* USE_NEON_FORMAT_CONVERSION */

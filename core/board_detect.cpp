@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "../include/I2c_Codec.h"
+#include "../include/Tlv320_Es9080_Codec.h"
 #include "../include/Spi_Codec.h"
 #include "../include/bela_hw_settings.h"
 #include "../include/bela_sw_settings.h"
@@ -23,6 +24,8 @@ static const std::map<std::string,BelaHw> belaHwMap = {
         {"BelaMiniMultiTdm", BelaHw_BelaMiniMultiTdm},
         {"BelaMultiTdm", BelaHw_BelaMultiTdm},
         {"BelaMiniMultiI2s", BelaHw_BelaMiniMultiI2s},
+        {"BelaEs9080", BelaHw_BelaEs9080},
+        {"BelaRevC", BelaHw_BelaRevC},
         {"Batch", BelaHw_Batch},
 };
 
@@ -63,6 +66,16 @@ static bool detectTlv32(int bus, int address)
 		return false;
 	// http://www.ti.com/lit/ds/symlink/tlv320aic3104.pdf
 	// return true if detected, false otherwise
+}
+
+static bool detectBelaRevC()
+{
+	Tlv320_Es9080_Codec codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, es9080CodecResetPin, 0);
+	int ret = codec.initCodec();
+	if (ret == 0)
+		return true;
+	else
+		return false;
 }
 
 // Returns:
@@ -155,7 +168,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 		bool hasTlv32[4]; 
 		
 		for(int i = 0; i < 4; i++) {
-			hasTlv32[i] = detectTlv32(codecI2cBus, codecI2cAddress + i);
+			hasTlv32[i] = detectTlv32(codecI2cBus, tlv320CodecI2cAddress + i);
 		}
 		
 		if(hasTlv32[1] || hasTlv32[2] || hasTlv32[3])
@@ -166,7 +179,11 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	else
 	{
 		int ctag = detectCtag();
-		bool hasTlv32 = detectTlv32(codecI2cBus, codecI2cAddress);
+		bool hasTlv32 = detectTlv32(codecI2cBus, tlv320CodecI2cAddress);
+		if(!ctag) {
+			if(detectBelaRevC())
+				return BelaHw_BelaRevC;
+		}
 		
 		if(ctag == 1)
 		{
@@ -182,7 +199,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 			else
 				hw = BelaHw_CtagBeast;
 		}
-		else{
+		else {
 			if(hasTlv32)
 				hw = BelaHw_Bela;
 		}
@@ -196,9 +213,13 @@ using namespace BelaHwComponent;
 /// can I run userHw when I actually have detectedHw?
 bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 {
+	if(userHw == detectedHw)
+		return true;
+	if(BelaHw_BelaEs9080 == userHw)
+		return true;
 	if(BelaHw_Batch == userHw)
 		return true;
-	if(userHw == BelaHw_Bela && Bela_hwContains(detectedHw, BelaCape))
+	if((userHw == BelaHw_Bela || userHw == BelaHw_BelaRevC) && Bela_hwContains(detectedHw, BelaCape))
 		return true;
 	else if(userHw == BelaHw_CtagFace && Bela_hwContains(detectedHw, CtagCape))
 		return true;
@@ -222,6 +243,14 @@ bool Bela_checkHwCompatibility(BelaHw userHw, BelaHw detectedHw)
 unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component component)
 {
 	switch(component) {
+		case BelaCapeRevC:
+			switch(hw) {
+				case BelaHw_BelaRevC:
+					return 1;
+				default:
+					return 0;
+			}
+			break;
 		case BelaCape:
 			switch(hw) {
 				case BelaHw_Bela:
@@ -229,6 +258,8 @@ unsigned int Bela_hwContains(const BelaHw hw, const BelaHwComponent::Component c
 				case BelaHw_CtagFaceBela:
 				case BelaHw_CtagBeastBela:
 				case BelaHw_BelaMultiTdm:
+				case BelaHw_BelaEs9080:
+				case BelaHw_BelaRevC:
 					return 1;
 				default:
 					return 0;

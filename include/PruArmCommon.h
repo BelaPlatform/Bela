@@ -41,22 +41,25 @@
 #define COMM_ACTIVE_CHANNELS            72 // How many TDM slots contain useful data
 // the order of the following registers has to strictly follow the order of the
 // members of McaspRegisters
-#define COMM_MCASP_CONF_PDIR            76
-#define COMM_MCASP_CONF_RMASK           80
-#define COMM_MCASP_CONF_RFMT            84
-#define COMM_MCASP_CONF_AFSRCTL         88
-#define COMM_MCASP_CONF_ACLKRCTL        92
-#define COMM_MCASP_CONF_AHCLKRCTL       96
-#define COMM_MCASP_CONF_RTDM           100
-#define COMM_MCASP_CONF_XMASK          104
-#define COMM_MCASP_CONF_XFMT           108
-#define COMM_MCASP_CONF_AFSXCTL        112
-#define COMM_MCASP_CONF_ACLKXCTL       116
-#define COMM_MCASP_CONF_AHCLKXCTL      120
-#define COMM_MCASP_CONF_XTDM           124
-#define COMM_MCASP_CONF_SRCTLN         128 // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
-#define COMM_MCASP_CONF_WFIFOCTL       132
-#define COMM_MCASP_CONF_RFIFOCTL       136
+#define COMM_MCASP_START                76
+#define COMM_MCASP_CONF_PDIR            (COMM_MCASP_START+0)
+#define COMM_MCASP_CONF_RMASK           (COMM_MCASP_START+4)
+#define COMM_MCASP_CONF_RFMT            (COMM_MCASP_START+8)
+#define COMM_MCASP_CONF_AFSRCTL         (COMM_MCASP_START+12)
+#define COMM_MCASP_CONF_ACLKRCTL        (COMM_MCASP_START+16)
+#define COMM_MCASP_CONF_AHCLKRCTL       (COMM_MCASP_START+20)
+#define COMM_MCASP_CONF_RTDM            (COMM_MCASP_START+24)
+#define COMM_MCASP_CONF_XMASK           (COMM_MCASP_START+28)
+#define COMM_MCASP_CONF_XFMT            (COMM_MCASP_START+32)
+#define COMM_MCASP_CONF_AFSXCTL         (COMM_MCASP_START+36)
+#define COMM_MCASP_CONF_ACLKXCTL        (COMM_MCASP_START+40)
+#define COMM_MCASP_CONF_AHCLKXCTL       (COMM_MCASP_START+44)
+#define COMM_MCASP_CONF_XTDM            (COMM_MCASP_START+48)
+#define COMM_MCASP_CONF_SRCTLN          (COMM_MCASP_START+52) // 4 bytes, one for each of SRCTL[0]...SRCTL[3]
+#define COMM_MCASP_CONF_WFIFOCTL        (COMM_MCASP_START+56)
+#define COMM_MCASP_CONF_RFIFOCTL        (COMM_MCASP_START+60)
+#define COMM_MCASP_OUT_CHANNELS         (COMM_MCASP_START+64)
+#define COMM_MCASP_OUT_SERIALIZERS_DISABLED_SUBSLOTS (COMM_MCASP_START+68) // 4 bytes, bitmask for 32 subslots: when it's high, send dummy data for this subslot
 
 // ARM accesses these memory locations as uint32_t
 // to avoid duplication and mistakes, we use macros to generate the values for ARM

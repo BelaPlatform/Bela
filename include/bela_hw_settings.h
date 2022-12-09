@@ -1,6 +1,8 @@
 #pragma once
-const unsigned int codecI2cBus  = 2;	// Bus for TLV320AIC3104 codec
-const unsigned int codecI2cAddress  = 0x18;	// Address of TLV320AIC3104 codec
+const unsigned int codecI2cBus = 2; // Bus for TLV320AIC3104 and/or ES9080Q
+const unsigned int tlv320CodecI2cAddress = 0x18; // Address of TLV320AIC3104
+const unsigned int es9080CodecAddress = 0x4c; // write-only address of TLV320AIC3104
+const unsigned int es9080CodecResetPin = 11; // reset GPIO
 const unsigned int kBelaCapeButtonPin = 115; //P9.27 / P2.34 connected to The Button
 const unsigned int kAmplifierMutePin = 61; // P8.26 controls amplifier mute
 

@@ -89,6 +89,7 @@ COMMAND_LINE_OPTIONS?=$(CL)
 ifeq ($(RUN_WITH_PRU_BIN),true)
 # Only use this one for development. You may have to run it without this option at least once, to generate 
 # include/pru_rtaudio_bin.h
+# You also have to remove build/core/PruBinary.d so that we can hide the dependency on the *_bin.h files.
 ifndef PROJECT
 $(warning PROJECT is not defined, so RUN_WITH_PRU_BIN will be ignored)
 endif # ifndef PROJECT
@@ -416,7 +417,7 @@ CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiI2sCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o build/core/FormatConvert.o
+CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiI2sCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/es9080_codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o build/core/FormatConvert.o
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS)) $(filter-out $(CORE_CORE_OBJS),$(CORE_ASM_OBJS))
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
@@ -487,7 +488,7 @@ ifeq (,$(SYNTAX_FLAG))
 endif
 	$(AT) echo ' '
 
-%.bin: pru/%.p
+%.bin: pru/%.p include/PruArmCommon.h
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
 	$(AT) pasm -V2 -L -c -b "$<" > /dev/null
@@ -495,7 +496,7 @@ ifeq (,$(SYNTAX_FLAG))
 endif
 	$(AT) echo ' '
 
-build/pru/%_bin.h: pru/%.p
+build/pru/%_bin.h: pru/%.p include/PruArmCommon.h
 ifeq (,$(SYNTAX_FLAG))
 	$(AT) echo 'Building $<...'
 	$(AT) pasm -V2 -L -c "$<" > /dev/null

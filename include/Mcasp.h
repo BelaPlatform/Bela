@@ -24,6 +24,9 @@ struct McaspRegisters
 	uint32_t srctln;
 	uint32_t wfifoctl;
 	uint32_t rfifoctl;
+        // the below are not real registers, but it's data we pass to the PRU
+	uint32_t mcaspOutChannels;
+	uint32_t outSerializersDisabledSubSlots;
 };
 
 class McaspConfig
@@ -42,6 +45,7 @@ public:
 		double auxClkIn;
 		double ahclkFreq;
 		bool ahclkIsInternal;
+		bool aclkIsInternal;
 		bool wclkIsInternal;
 		bool wclkIsWord;
 		bool wclkFalling;
@@ -72,7 +76,10 @@ private:
 	int setPdir();
 	int setSrctln(unsigned int n, McaspConfig::SrctlMode mode, McaspConfig::SrctlDrive drive);
 	int setChannels(unsigned int numChannels, std::vector<unsigned int>& serializers, bool input);
+public:
 	McaspRegisters regs;
 };
 
-void mcasp_test(const char* name, uint32_t val1, uint32_t val2);
+namespace Mcasp {
+	void startAhclkx();
+};

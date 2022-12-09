@@ -9,6 +9,7 @@ McaspConfig::McaspConfig()
 {
 	params = {0};
 	params.auxClkIn = 24000000;
+	regs.outSerializersDisabledSubSlots = 0x0; // Do not disable any subslots
 }
 
 double McaspConfig::getValidAhclk(double desiredClk, unsigned int* outDiv)
@@ -161,7 +162,7 @@ int McaspConfig::setAclkctl()
 // CLKXM: Transmit bit clock source bit.
 // 0 External transmit clock source from ACLKX pin.
 // 1 Internal transmit clock source from output of programmable bit clock divider.
-	s.CLKM = 0;
+	s.CLKM = params.aclkIsInternal;
 
 // CLKXDIV: 0-1Fh Transmit bit clock divide ratio bits determine the
 // divide-down ratio from AHCLKX to ACLKX.
@@ -282,7 +283,7 @@ int McaspConfig::setPdir()
 // ACLKR: Determines if ACLKR pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
-	s.ACLKR = 0;
+	s.ACLKR = params.aclkIsInternal;
 // AFSX: Determines if AFSX pin functions as an input or output.
 // 0 Pin functions as input.
 // 1 Pin functions as output.
@@ -310,6 +311,8 @@ int McaspConfig::setPdir()
 	for(const auto& n : params.outSerializers)
 		axr |= (1 << n);
 	s.AXR = axr;
+	// how many total out channels according to McASP?
+	regs.mcaspOutChannels = params.outChannels;
 
 	memcpy(&regs.pdir, &s, sizeof(regs.pdir));
 	return 0;
@@ -490,4 +493,32 @@ void McaspConfig::print()
 	R(srctln);
 	R(wfifoctl);
 	R(rfifoctl);
+	R(mcaspOutChannels);
+	R(outSerializersDisabledSubSlots);
+}
+
+#include <Mmap.h>
+
+void Mcasp::startAhclkx()
+{
+	Mmap m;
+#define CLOCK_BASE   0x44E00000
+#define CLOCK_MCASP0 0x34
+// #MOV r2, 0x30002
+	char* ptr = (char*)m.map(CLOCK_BASE, 4097);
+	*(uint32_t*)(ptr + CLOCK_MCASP0) = 0x30002;
+	m.unmap();
+#define MCASP0_BASE 0x48038000
+#define MCASP_GBLCTL            0x44
+#define MCASP_PFUNC         0x10
+#define MCASP_PDIR          0x14
+	ptr = (char*)m.map(MCASP0_BASE, 4096);
+// MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
+	*(uint32_t*)(ptr + MCASP_GBLCTL) = 0x00;
+//MCASP_REG_WRITE MCASP_PFUNC, 0x00 // All pins are McASP
+	*(uint32_t*)(ptr + MCASP_PFUNC) = 0x00;
+// MCASP_REG_WRITE MCASP_PDIR, r2
+// only important bit here is bit 27 should be 1 (AHCLKX set to output)
+	*(uint32_t*)(ptr + MCASP_PDIR) = 0x0800000c;
+	m.unmap();
 }
