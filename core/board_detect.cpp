@@ -157,7 +157,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 		bool hasTlv32[4]; 
 		
 		for(int i = 0; i < 4; i++) {
-			hasTlv32[i] = detectTlv32(codecI2cBus, codecI2cAddress + i);
+			hasTlv32[i] = detectTlv32(codecI2cBus, tlv320CodecI2cAddress + i);
 		}
 		
 		if(hasTlv32[1] || hasTlv32[2] || hasTlv32[3])
@@ -168,7 +168,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	else
 	{
 		int ctag = detectCtag();
-		bool hasTlv32 = detectTlv32(codecI2cBus, codecI2cAddress);
+		bool hasTlv32 = detectTlv32(codecI2cBus, tlv320CodecI2cAddress);
 		
 		if(ctag == 1)
 		{

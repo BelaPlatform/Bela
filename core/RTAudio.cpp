@@ -576,7 +576,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		else if (2 == ctags)
 			gAudioCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
 		if(Bela_hwContains(actualHw, Tlv320aic3104))
-			gDisabledCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+			gDisabledCodec = new I2c_Codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 	}
 	else if(belaHw == BelaHw_BelaMiniMultiAudio) {
 		std::string mode;
@@ -585,16 +585,15 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
 	}
 	else if(BelaHw_BelaEs9080 == belaHw || BelaHw_BelaRevC == belaHw) {
-		uint8_t addr = 0x4c; // this is the write-only register
-		gAudioCodec = new Tlv320_Es9080_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, addr, gRTAudioVerbose);
+		gAudioCodec = new Tlv320_Es9080_Codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, gRTAudioVerbose);
 	}
 	else if(BelaHw_BelaMiniMultiTdm == belaHw || BelaHw_BelaMultiTdm == belaHw)
 		gAudioCodec = new I2c_MultiTdmCodec(codecMode != "" ? codecMode : "ADDR:2,24,3104,r", gRTAudioVerbose);
 	else if(BelaHw_BelaMiniMultiI2s == belaHw)
-		gAudioCodec = new I2c_MultiI2sCodec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+		gAudioCodec = new I2c_MultiI2sCodec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 	else if(Bela_hwContains(belaHw, Tlv320aic3104))
 	{
-		gAudioCodec = new I2c_Codec(codecI2cBus, codecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
+		gAudioCodec = new I2c_Codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, gRTAudioVerbose);
 		if(Bela_hwContains(actualHw, CtagCape))
 			gDisabledCodec = new Spi_Codec(ctagSpidevGpioCs0, ctagSpidevGpioCs1);
 	}
