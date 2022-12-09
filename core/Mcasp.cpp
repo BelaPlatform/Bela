@@ -496,3 +496,29 @@ void McaspConfig::print()
 	R(mcaspOutChannels);
 	R(outSerializersDisabledSubSlots);
 }
+
+#include <Mmap.h>
+
+void Mcasp::startAhclkx()
+{
+	Mmap m;
+#define CLOCK_BASE   0x44E00000
+#define CLOCK_MCASP0 0x34
+// #MOV r2, 0x30002
+	char* ptr = (char*)m.map(CLOCK_BASE, 4097);
+	*(uint32_t*)(ptr + CLOCK_MCASP0) = 0x30002;
+	m.unmap();
+#define MCASP0_BASE 0x48038000
+#define MCASP_GBLCTL            0x44
+#define MCASP_PFUNC         0x10
+#define MCASP_PDIR          0x14
+	ptr = (char*)m.map(MCASP0_BASE, 4096);
+// MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
+	*(uint32_t*)(ptr + MCASP_GBLCTL) = 0x00;
+//MCASP_REG_WRITE MCASP_PFUNC, 0x00 // All pins are McASP
+	*(uint32_t*)(ptr + MCASP_PFUNC) = 0x00;
+// MCASP_REG_WRITE MCASP_PDIR, r2
+// only important bit here is bit 27 should be 1 (AHCLKX set to output)
+	*(uint32_t*)(ptr + MCASP_PDIR) = 0x0800000c;
+	m.unmap();
+}
