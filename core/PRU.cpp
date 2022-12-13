@@ -894,7 +894,7 @@ static inline int16_t audioFloatToAudioRaw(float value)
 
 static inline int16_t analogFloatToAudioRaw(float value)
 {
-#if 1
+#if 0
 	// Es9080Q EVB: FS output is scaled via inverting amp to 0V:5V, we use
 	// the full range
 	return audioFloatToAudioRaw((1.f - value) * 2.f - 1.f);
@@ -998,8 +998,7 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 			if(stopButton.read() == 0){
 				if(++stopButtonCount > 10){
 					printf("Button pressed, quitting\n");
-	pru_buffer_comm[PRU_COMM_SHOULD_STOP] = 1;
-					//Bela_requestStop();
+					Bela_requestStop();
 				}
 			} else {
 				stopButtonCount = 0;
