@@ -366,14 +366,13 @@ static int batchCallbackLoop(InternalBelaContext* context, void (*render)(BelaCo
 
 static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 {
+	int ret = 0;
 	for(unsigned int n = 0; n < cga.length; n++)
 	{
 		BelaChannelGain& cg = cga.data[n];
-		int ret = cb(cg.channel, cg.gain);
-		if(ret)
-			return ret;
+		ret |= cb(cg.channel, cg.gain);
 	}
-	return 0;
+	return ret;
 }
 
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
