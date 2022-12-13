@@ -180,11 +180,6 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 	{
 		int ctag = detectCtag();
 		bool hasTlv32 = detectTlv32(codecI2cBus, tlv320CodecI2cAddress);
-		if(!ctag) {
-			if(detectBelaRevC())
-				return BelaHw_BelaRevC;
-		}
-		
 		if(ctag == 1)
 		{
 			if(hasTlv32)
@@ -200,7 +195,9 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 				hw = BelaHw_CtagBeast;
 		}
 		else {
-			if(hasTlv32)
+			if(detectBelaRevC())
+				hw = BelaHw_BelaRevC;
+			else if(hasTlv32)
 				hw = BelaHw_Bela;
 		}
 	}
