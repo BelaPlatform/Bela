@@ -21,6 +21,9 @@ $(document).ready(function() {
   } else if (board == 'BelaMiniMultiAudio') {
     a = 300;
     b = 482;
+  } else if (board == 'BelaRevC') {
+    a = 300;
+    b = 482;
   }
   else { // catch all
     board = "Bela";

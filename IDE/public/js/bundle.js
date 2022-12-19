@@ -4605,6 +4605,19 @@ var SettingsView = function (_View) {
 					inputsWithGain: 2,
 					headphones: 2
 				},
+				BelaRevC: {
+					sections: [],
+					subsections: [],
+					options: [{
+						selector: 'analog-samplerate',
+						optVal: [88200]
+					}, {
+						selector: 'analog-channels',
+						optVal: [2]
+					}],
+					inputsWithGain: 2,
+					headphones: 2
+				},
 				BelaMini: {
 					sections: ['capelet-settings'],
 					subsections: ['mute-speaker'],
