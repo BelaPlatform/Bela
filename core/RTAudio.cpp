@@ -899,7 +899,7 @@ static int startAudioInline(){
 
 	// power up and initialize audio codec
 	if(gAudioCodec->startAudio(1)) {
-		fprintf(stderr, "Error: unable to start I2C audio codec\n");
+		fprintf(stderr, "Error: unable to start audio codec\n");
 		return -1;
 	}
 
