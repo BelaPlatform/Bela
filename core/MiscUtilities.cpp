@@ -186,3 +186,27 @@ int writeValue(const std::string& path, const std::string& key, const std::strin
 }
 
 } // ConfigFileUtils
+
+namespace PinmuxUtils
+{
+	static std::string makePath(const std::string& pin)
+	{
+		return "/sys/devices/platform/ocp/ocp:" + pin + "_pinmux/state";
+	}
+
+	bool check(const std::string& pin, const std::string& desiredState)
+	{
+		return get(pin) == StringUtils::trim(desiredState);
+	}
+
+	std::string get(const std::string& pin)
+	{
+		return StringUtils::trim(IoUtils::readTextFile(makePath(pin)));
+	}
+
+	void set(const std::string& pin, const std::string& desiredState)
+	{
+		// echo $MODE > /sys/devices/platform/ocp/ocp:$PIN_pinmux/state
+		IoUtils::writeTextFile(makePath(pin), desiredState);
+	}
+}; // PinmuxUtils

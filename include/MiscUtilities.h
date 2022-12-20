@@ -93,3 +93,22 @@ namespace ConfigFileUtils {
 	 */
 	int writeValue(const std::string& file, const std::string& key, const std::string& value, IoUtils::Mode mode = IoUtils::TRUNCATE);
 }
+
+/**
+ * Utilities to manipulate pinmux via bone-pinmux-helper
+ */
+namespace PinmuxUtils
+{
+	/**
+	 * Check whether the current state of @param pin matches @param desiredState.
+	 */
+	bool check(const std::string& pin, const std::string& desiredState);
+	/**
+	 * Check the current state of @param pin
+	 */
+	std::string get(const std::string& pin);
+	/**
+	 * Set the state of @param pin
+	 */
+	void set(const std::string& pin, const std::string& desiredState);
+}
