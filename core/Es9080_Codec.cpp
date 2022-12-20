@@ -176,6 +176,18 @@ int Es9080_Codec::executeProgram(const std::string& program)
 }
 
 int Es9080_Codec::startAudio(int dummy){
+	std::string pin = "P8_33";
+	// set the pinmuxer so that P8.33 is MCASP0_AXR3
+	// echo mcasp > /sys/devices/platform/ocp/ocp:P8_33_pinmux/state
+	std::string currentState = PinmuxUtils::get(pin);
+	std::string desiredState = "mcasp";
+	if(!currentState.size())
+	{
+		printf("Es9080 without cape file for %s requires you to set the pinmux some other way\n", pin.c_str());
+	} else if(StringUtils::trim(currentState) != desiredState) {
+		verbose && printf("Changing %s from %s to %s\n", pin.c_str(), StringUtils::trim(currentState).c_str(), desiredState.c_str());
+		PinmuxUtils::set(pin, desiredState);
+	}
 	gpio.set();
 	bool isMaster;
 	int sum = (kClockSourceCodec == params.bclk) + (kClockSourceCodec == params.wclk);
