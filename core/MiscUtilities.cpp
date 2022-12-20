@@ -37,9 +37,10 @@ std::string trim(std::string const& str)
 	if(str.empty())
 		return str;
 
-	std::size_t firstScan = str.find_first_not_of(' ');
+	char spaces[] = " \n\r\t\0";
+	std::size_t firstScan = str.find_first_not_of(spaces);
 	std::size_t first = firstScan == std::string::npos ? str.length() : firstScan;
-	std::size_t last = str.find_last_not_of(' ');
+	std::size_t last = str.find_last_not_of(spaces);
 	return str.substr(first, last - first + 1);
 }
 
