@@ -6,7 +6,9 @@
 
 #include "../include/Spi_Codec.h"
 #include "../include/GPIOcontrol.h"
+#include "../include/MiscUtilities.h"
 
+static char mosiPin[] = "P8_33";
 const int RESET_PIN = 81; // GPIO2(17) P8.34
 
 #include <unistd.h>
@@ -52,6 +54,11 @@ Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, b
 	// now we can detect if there is a slave codec
 	_isBeast = slaveIsDetected();
 	_dacVolumethreeEighthsDbs.resize(_isBeast ? 16 : 8);
+	// if BelaRevC is used in combination with CTAG, there is a pin conflict
+	// between MOSI and the McASP data line used by BelaRevC.
+	// We check here whether the pin's function can be set at runtime so
+	// that in that case we can set it before using it in writeRegister().
+	_shouldPinmux = (PinmuxUtils::get(mosiPin).size() > 0);
 }
 
 Spi_Codec::~Spi_Codec(){
@@ -61,6 +68,10 @@ Spi_Codec::~Spi_Codec(){
 }
 
 int Spi_Codec::writeRegister(unsigned char reg, unsigned char value, CODEC_TYPE codec){
+	// this may have been changed externally. We could be marginally faster
+	// by caching its current state and avoid writing to it repeatedly.
+	if(_shouldPinmux)
+		PinmuxUtils::set(mosiPin, "gpio");
 	int fd;
 
 	unsigned char tx[3], rx[3];

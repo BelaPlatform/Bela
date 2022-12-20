@@ -68,6 +68,7 @@ private:
 	McaspConfig mcaspConfig;
 	bool _isBeast = false;
 	bool _verbose;
+	bool _shouldPinmux;
 };
 
 #endif /* SPI_CODEC_H_ */
