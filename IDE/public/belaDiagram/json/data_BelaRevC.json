@@ -297,6 +297,15 @@
       "tip": "tooltip"
     },
     {
+      "elemclass": "gnd",
+      "x": "61",
+      "y": "137",
+      "width": "10",
+      "height": "10",
+      "text": "GND",
+      "tip": "tooltip"
+    },
+    {
       "elemclass": "aInPin",
       "x": "72",
       "y": "137",
