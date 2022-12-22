@@ -541,6 +541,13 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		dcm.manage(channel, direction, isMessageRate);
 		return;
 	}
+	if(strcmp(source, "bela_control") == 0){
+		if(strcmp("stop", symbol) == 0){
+			rt_printf("bela_control: stop\n");
+			Bela_requestStop();
+		}
+		return;
+	}
 #ifdef BELA_LIBPD_GUI
 	if(0 == strcmp(source, "bela_setGui"))
 	{
@@ -941,6 +948,7 @@ bool setup(BelaContext *context, void *userData)
 	for(unsigned int i = 0; i < gDigitalChannelsInUse; i++)
 		libpd_bind(gReceiverOutputNames[i].c_str());
 	libpd_bind("bela_setDigital");
+	libpd_bind("bela_control");
 #ifdef BELA_LIBPD_MIDI
 	libpd_bind("bela_setMidi");
 #endif // BELA_LIBPD_MIDI
