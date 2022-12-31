@@ -829,7 +829,7 @@ function fileChangedPopup(fileName) {
 	if (fileChangedPopupVisible) return;
 
 	var strings = Object.assign({}, json.popups.file_changed); // make a copy ...
-	strings.text = fileName + strings.text; // ... so we can modify it
+	strings.text = fileName + " " + strings.text; // ... so we can modify it
 	popup.twoButtons(strings, function (e) {
 		fileChangedPopupVisible = false;
 		e.preventDefault();
