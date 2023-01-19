@@ -579,9 +579,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	else if(belaHw == BelaHw_BelaMiniMultiAudio) {
 		std::string mode;
-		if("" != codecMode)
-			mode = "MODE:"+codecMode;
-		gAudioCodec = new I2c_MultiTLVCodec("ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;"+mode, {}, gRTAudioVerbose);
+		if("" == codecMode)
+			mode = "ADDR:2,24,3104,n;ADDR:2,25,3106,n;ADDR:2,26,3106,n;ADDR:2,27,3106,n;";
+		else
+			mode = codecMode;
+		gAudioCodec = new I2c_MultiTLVCodec(mode, {}, gRTAudioVerbose);
 	}
 	else if(BelaHw_BelaEs9080 == belaHw || BelaHw_BelaRevC == belaHw) {
 		gAudioCodec = new Tlv320_Es9080_Codec(codecI2cBus, tlv320CodecI2cAddress, I2c_Codec::TLV320AIC3104, codecI2cBus, es9080CodecAddress, es9080CodecResetPin, gRTAudioVerbose);
