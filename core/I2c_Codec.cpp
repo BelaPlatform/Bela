@@ -68,6 +68,7 @@ int I2c_Codec::initCodec()
 // See the TLV320AIC3106 datasheet for full details of the registers
 int I2c_Codec::startAudio(int shouldBeReady)
 {
+	Mcasp::startAhclkx();
 	if(verbose)
 		getParameters().print();
 	// setting forceEnablePll = false will attempt (and probably fail) to use clock
@@ -260,7 +261,8 @@ int I2c_Codec::startAudio(int shouldBeReady)
 	// TODO: may need to separate the code below for non-master codecs so they enable amps after the master clock starts
 
 	// wait for the codec to stabilize before unmuting the HP amp.
-	// this gets rid of the loud pop.
+	// this gets rid of the loud pop, but it only makes sense if the mclk
+	// has been already enabled
 	if(kClockSourceCodec == params.bclk)
 		usleep(10000);
 
@@ -1100,6 +1102,7 @@ I2c_Codec::~I2c_Codec()
 {
 	if(running)
 		stopAudio();
+	Mcasp::stopAhclkx();
 }
 
 McaspConfig& I2c_Codec::getMcaspConfig()
