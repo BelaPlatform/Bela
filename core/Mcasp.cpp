@@ -499,26 +499,54 @@ void McaspConfig::print()
 
 #include <Mmap.h>
 
-void Mcasp::startAhclkx()
+static void enableMcaspClock(bool enable)
 {
-	Mmap m;
 #define CLOCK_BASE   0x44E00000
 #define CLOCK_MCASP0 0x34
 // #MOV r2, 0x30002
-	char* ptr = (char*)m.map(CLOCK_BASE, 4097);
-	*(uint32_t*)(ptr + CLOCK_MCASP0) = 0x30002;
+	Mmap m;
+	char* ptr = (char*)m.map(CLOCK_BASE, 4096);
+	// enable or disable the McASP0 clock
+	*(uint32_t*)(ptr + CLOCK_MCASP0) = enable ? 0x2 : 0x0;
 	m.unmap();
+}
+static void setAhclkxPin(bool enable)
+{
+	Mmap m;
+	// let's ensure the AHCLKX pin is set properly
 #define MCASP0_BASE 0x48038000
 #define MCASP_GBLCTL            0x44
 #define MCASP_PFUNC         0x10
 #define MCASP_PDIR          0x14
-	ptr = (char*)m.map(MCASP0_BASE, 4096);
-// MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
+	char* ptr = (char*)m.map(MCASP0_BASE, 4096);
+	uint32_t gbctlWas = *(uint32_t*)(ptr + MCASP_GBLCTL);
+	// disable before changing pinmux
+	// MCASP_REG_WRITE MCASP_GBLCTL, 0         // Disable McASP
 	*(uint32_t*)(ptr + MCASP_GBLCTL) = 0x00;
-//MCASP_REG_WRITE MCASP_PFUNC, 0x00 // All pins are McASP
+	//MCASP_REG_WRITE MCASP_PFUNC, 0x00 // All pins are McASP
 	*(uint32_t*)(ptr + MCASP_PFUNC) = 0x00;
-// MCASP_REG_WRITE MCASP_PDIR, r2
-// only important bit here is bit 27 should be 1 (AHCLKX set to output)
-	*(uint32_t*)(ptr + MCASP_PDIR) = 0x0800000c;
+	// MCASP_REG_WRITE MCASP_PDIR, r2
+	// only important bit here is bit 27 should be 1 (AHCLKX set to output)
+	*(uint32_t*)(ptr + MCASP_PDIR) = 0x0000000c | (enable << 27);
+	// restore MCASP state
+	*(uint32_t*)(ptr + MCASP_GBLCTL) = gbctlWas;
 	m.unmap();
+}
+
+static void startStopAhclkx(bool start)
+{
+	// always enable the McASP clock before attempting any operations on it
+	enableMcaspClock(true);
+	setAhclkxPin(start);
+	enableMcaspClock(start);
+}
+
+void Mcasp::startAhclkx()
+{
+	startStopAhclkx(true);
+}
+
+void Mcasp::stopAhclkx()
+{
+	startStopAhclkx(false);
 }

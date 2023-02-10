@@ -82,4 +82,5 @@ public:
 
 namespace Mcasp {
 	void startAhclkx();
+	void stopAhclkx();
 };
