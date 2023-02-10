@@ -899,12 +899,6 @@ static int startAudioInline(){
 	// make sure we have everything
 	assert(gAudioCodec != 0 && gPRU != 0);
 
-	// power up and initialize audio codec
-	if(gAudioCodec->startAudio(1)) {
-		fprintf(stderr, "Error: unable to start audio codec\n");
-		return -1;
-	}
-
 	McaspConfig mcaspConfig = gAudioCodec->getMcaspConfig();
 	if(gRTAudioVerbose)
 		mcaspConfig.print();
@@ -913,6 +907,18 @@ static int startAudioInline(){
 		fprintf(stderr, "Error: unable to start PRU from %s\n", gPRUFilename[0] ? "embedded binary" : gPRUFilename);
 		return -1;
 	}
+
+	// power up and initialize audio codec
+	if(gAudioCodec->startAudio(1)) {
+		fprintf(stderr, "Error: unable to start audio codec\n");
+		return -1;
+	}
+
+#if 0
+	usleep(100000);
+	I2c_Codec* c = (I2c_Codec*)gAudioCodec;
+	c->writeDacVolumeRegisters(false);
+#endif
 
 	if(!gAmplifierShouldBeginMuted) {
 		// First unmute the amplifier
