@@ -24,6 +24,9 @@
 #ifdef BELA_LIBPD_DISABLE_GUI
 #undef BELA_LIBPD_GUI
 #endif // BELA_LIBPD_DISABLE_GUI
+#ifdef BELA_LIBPD_DISABLE_SERIAL
+#undef BELA_LIBPD_SERIAL
+#endif // BELA_LIBPD_DISABLE_SERIAL
 
 #define PD_THREADED_IO
 #include <libraries/libpd/libpd.h>
