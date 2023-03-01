@@ -1022,7 +1022,7 @@ void render(BelaContext *context, void *userData)
 		}
 		if(!waitingForHeader)
 		{
-			char payload[header.size];
+			char payload[header.size + ('s' == header.type)]; // + 1 to add null termination if needed
 			int ret = gGuiPipe.readRt(&payload[0], header.size);
 			if(int(header.size) != ret)
 			{
@@ -1044,7 +1044,12 @@ void render(BelaContext *context, void *userData)
 			}
 			if('s' == header.type)
 			{
-				libpd_symbol(name, payload);
+				// add null termination
+				payload[header.size] = '\0';
+				// send to Pd
+				libpd_start_message(1);
+				libpd_add_symbol(payload);
+				libpd_finish_message("bela_guiControl", name);
 			}
 			waitingForHeader = true;
 		}
