@@ -1036,7 +1036,8 @@ void render(BelaContext *context, void *userData)
 					rt_fprintf(stderr, "Unexpected message length for float: %u\n", header.size);
 					continue;
 				}
-				float value = ((float*)payload)[0];
+				float value;
+				memcpy(&value, payload, sizeof(value));
 				libpd_start_message(1);
 				libpd_add_float(value);
 				libpd_finish_message("bela_guiControl", name);
