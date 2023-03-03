@@ -15,7 +15,7 @@
 //#define ENABLE_CTAG_BEAST // enables run-time selection of the CTAG Beast codecs
 #define ENABLE_BELA_TLV32 // enables run-time selection of the Bela TLV32 codec
 #define ENABLE_BELA_GENERIC_TDM // enables run-time selection of custom TDM options
-//#define ENABLE_MUXER // enables run-time selection of the Multiplexer capelet
+#define ENABLE_MUXER // enables run-time selection of the Multiplexer capelet
 // there are some issues with this code and this codec.
 // See https://github.com/BelaPlatform/Bela/issues/480
 
