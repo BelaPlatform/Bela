@@ -11336,6 +11336,9 @@ var recursParse = function(txt) {
       }
 
       nextLine()
+    } else if (chunkType === '#C') {
+      console.log("Line ignored:", line);
+      nextLine();
     } else throw new Error('invalid chunk : ' + chunkType)
 
     firstLine = false
