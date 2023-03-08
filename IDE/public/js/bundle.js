@@ -4775,7 +4775,7 @@ var SettingsView = function (_View) {
 				}
 				if (ver.date) {
 					var date = new Date(ver.date);
-					var dateString = date.getDay() + ' ' + date.toLocaleString('default', { month: "short" }) + ' ' + date.getFullYear() + ' ' + date.toTimeString().replace(/GMT.*/, '');
+					var dateString = date.getDate() + ' ' + date.toLocaleString('default', { month: "short" }) + ' ' + date.getFullYear() + ' ' + date.toTimeString().replace(/GMT.*/, '');
 					s.push(format(t[0], dateString));
 				}
 				if (ver.fileName) s.push(format(t[1], ver.fileName));

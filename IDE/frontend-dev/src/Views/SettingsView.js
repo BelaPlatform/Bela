@@ -493,7 +493,7 @@ class SettingsView extends View {
 			}
 			if(ver.date) {
 				var date = new Date(ver.date);
-				var dateString = date.getDay() + ' ' + date.toLocaleString('default', {month: "short"}) + ' '
+				var dateString = date.getDate() + ' ' + date.toLocaleString('default', {month: "short"}) + ' '
 								+ date.getFullYear() + ' ' + date.toTimeString().replace(/GMT.*/, '');
 				s.push(format(t[0], dateString));
 			}
