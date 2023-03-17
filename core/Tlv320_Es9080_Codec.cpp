@@ -44,6 +44,7 @@ Tlv320_Es9080_Codec::Tlv320_Es9080_Codec(int tlvI2cBus, int tlvI2cAddr, I2c_Code
 	delete es9080;
 	// now instantiate it with the proper parameters
 	es9080 = new Es9080_Codec(esI2cBus, esI2cAddr, kClockSourceExternal, esResetPin, bclkFreq, verbose);
+	secondaryCodec = es9080;
 	mcaspConfig.params.inChannels = primaryCodec->getNumIns() + secondaryCodec->getNumIns();
 	// McASP has to write to / read from all active slots on all
 	// serializers at once.
