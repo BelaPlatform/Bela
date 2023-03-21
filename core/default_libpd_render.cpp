@@ -746,7 +746,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 void Bela_floatHook(const char *source, float value){
 	// let's make this as optimized as possible for built-in digital Out parsing
 	// the built-in digital receivers are of the form "bela_digitalOutXX" where XX is between gLibpdDigitalChannelOffset and (gLibpdDigitalCHannelOffset+gDigitalChannelsInUse)
-	static int prefixLength = 15; // strlen("bela_digitalOut")
+	static int prefixLength = strlen("bela_digitalOut");
 	if(strncmp(source, "bela_digitalOut", prefixLength)==0){
 		if(source[prefixLength] != 0){ //the two ifs are used instead of if(strlen(source) >= prefixLength+2)
 			if(source[prefixLength + 1] != 0){
