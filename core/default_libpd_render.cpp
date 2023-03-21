@@ -759,6 +759,7 @@ void Bela_floatHook(const char *source, float value){
 				}
 			}
 		}
+		return;
 	}
 }
 
