@@ -162,7 +162,8 @@ public:
 	// Initialise and open the PRU
 	int initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate,
 				   int mux_channels,
-				   int stopButtonPin, bool enableLed);
+				   int stopButtonPin, bool enableLed,
+				   uint32_t disabledBelaDigitalChannels);
 
 	// Run the code image in pru_rtaudio_bin.h
 	int start(char * const filename, const McaspRegisters& mcaspRegisters);
@@ -213,4 +214,5 @@ private:
 	Gpio stopButton; // Monitoring the bela cape button
 	Gpio underrunLed; // Flashing an LED upon underrun
 	Gpio adcNrstPin; // Resetting the ADC on Bela Mini Rev C
+	uint32_t disabledDigitalChannels;
 };

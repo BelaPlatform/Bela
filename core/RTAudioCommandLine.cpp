@@ -22,6 +22,7 @@ enum {
 	OPT_HIGH_PERFORMANCE_MODE,
 	OPT_BOARD,
 	OPT_CODEC_MODE,
+	OPT_DISABLED_DIGITAL_CHANNELS,
 };
 
 extern const float BELA_INVALID_GAIN = 999999;
@@ -62,6 +63,7 @@ struct option gDefaultLongOptions[] =
 	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
 	{"board", 1, NULL, OPT_BOARD},
 	{"codec-mode", 1, NULL, OPT_CODEC_MODE},
+	{"disabled-digital-channels", 1, NULL, OPT_DISABLED_DIGITAL_CHANNELS},
 	{NULL, 0, NULL, 0}
 };
 
@@ -351,6 +353,16 @@ int Bela_getopt_long(int argc, char * const argv[], const char *customShortOptio
 		case OPT_CODEC_MODE:
 			settings->codecMode = strdup(optarg);
 			break;
+		case OPT_DISABLED_DIGITAL_CHANNELS:
+		{
+			uint32_t val = strtol(optarg, NULL, 10);
+			if(val == 0) // try again, this time in hex
+				val = strtol(optarg, NULL, 16);
+			if(0 == val)
+				fprintf(stderr, "--disabled-digital-channels was passed 0 as an argument (or the argument was not parsed properly)\n");
+			settings->disabledDigitalChannels = val;
+		}
+			break;
 		case '?':
 		default:
 			return c;
@@ -389,6 +401,7 @@ void Bela_usage()
 	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --board val:                        Select a different board to work with\n";
 	std::cerr << "   --codec-mode val:                   A codec-specific string representing an intialisation parameter\n";
+	std::cerr << "   --disabled-digital-channels val:    A bitmask to disable specific digital channels\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
 	std::cerr << " `changains` must be one or more `channel,gain` pairs. A negative channel number means all channels. A single value is interpreted as gain, with channel=-1\n";
 }

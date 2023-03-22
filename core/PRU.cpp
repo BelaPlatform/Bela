@@ -292,6 +292,8 @@ int PRU::prepareGPIO(int include_led)
 				if(gDigitalPins[i] == saltSwitch1Gpio)
 					continue; // leave alone this pin as it is used by bela_button.service
 			}
+			if(disabledDigitalChannels & (1 << i))
+				continue; // leave alone this pin because the user asked for it
 			if(gpio_export(gDigitalPins[i])) {
 				if(gRTAudioVerbose)
 					fprintf(stderr,"Warning: couldn't export digital GPIO pin %d\n" , gDigitalPins[i]); // this is left as a warning because if the pin has been exported by somebody else, can still be used
@@ -343,6 +345,8 @@ void PRU::cleanupGPIO()
 				if(gDigitalPins[i] == saltSwitch1Gpio)
 					continue; // leave alone this pin as it is used by bela_button.service
 			}
+			if(disabledDigitalChannels & (1 << i))
+				continue; // leave alone this pin because the user asked for it
 			if(gpio_unexport(gDigitalPins[i]))
 			{
 				// if unexport fails, we at least turn off the outputs
@@ -370,8 +374,9 @@ void PRU::cleanupGPIO()
 }
 
 // Initialise and open the PRU
-int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, int stopButtonPin, bool enableLed)
+int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, int stopButtonPin, bool enableLed, uint32_t disabledDigitalChannels)
 {
+	this->disabledDigitalChannels = disabledDigitalChannels;
 	belaHw = newBelaHw;
 	if(BelaHw_BelaRevC == belaHw)
 	{

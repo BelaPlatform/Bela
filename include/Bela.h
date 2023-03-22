@@ -31,6 +31,8 @@
 #define BELA_BUGFIX_VERSION 0
 
 // Version history / changelog:
+// 1.14.0
+// - added disabledDigitalChannels to BelaInitSettings and corresponding command-line
 // 1.13.0
 // - added Bela_setLineOutLevel() which replaces Bela_setDacLevel() (though
 // with different semantics).
@@ -162,7 +164,7 @@ typedef enum
 
 /** \cond PRIVATE */
 #define MAX_PRU_FILENAME_LENGTH 256
-#define MAX_UNUSED_LENGTH 224
+#define MAX_UNUSED_LENGTH 220
 #define MAX_PROJECTNAME_LENGTH 256
 /** \endcond */
 
@@ -538,6 +540,8 @@ typedef struct {
 	struct BelaChannelGainArray adcGains;
 	/// Level for the audio line level output
 	struct BelaChannelGainArray lineOutGains;
+	/// A bitmask of disabled digital channels
+	uint32_t disabledDigitalChannels;
 
 	char unused[MAX_UNUSED_LENGTH];
 
