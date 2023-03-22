@@ -90,6 +90,7 @@ enum { DEFAULT_INITIAL_DELAY = 0 };
 enum { DEFAULT_MONITOR_CLICK = 0 };
 enum { DEFAULT_MONITOR_HOLD = 1 };
 enum { DEFAULT_HOLD_PRESS_TIMEOUT_MS = 2000 };
+enum { DEFAULT_FORCE_POLL = 0 };
 
 static char DEFAULT_CLICK_ACTION[] = "/root/cape_button_click.sh";
 static char DEFAULT_HOLD_ACTION[] = "/root/cape_button_hold.sh";
@@ -102,6 +103,7 @@ static int INITIAL_DELAY;
 static int MONITOR_CLICK;
 static int MONITOR_HOLD;
 static int HOLD_PRESS_TIMEOUT_MS;
+static int FORCE_POLL;
 
 int gpio_is_pin_valid(int pin)
 {
@@ -326,10 +328,18 @@ int run(void)
 	int shouldUnexport = (ret == 0);
 	
 	gpio_set_dir(BUTTON_PIN, INPUT_PIN);
+	int should_poll = FORCE_POLL;
+#ifdef POLL
+	should_poll = 1;
+#endif // POLL
+
 #ifdef EDGE
-	int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
-	if (err != 0)
-		return err;
+	if(!should_poll)
+	{
+		int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
+		if (err != 0)
+			return err;
+	}
 #endif
 
 	int fd = gpio_open(BUTTON_PIN);
@@ -340,15 +350,10 @@ int run(void)
 	pfd[0].fd = fd;
 	pfd[0].events = POLLPRI;
 #endif
-
 	timestamp_ms_t pressed_at = 0;
 
 	printf("Monitoring pin `%d` (%s), will execute `%s` on click and `%s` on hold (>%dms). Button is pressed when pin is %s...\n", BUTTON_PIN, 
-#ifdef POLL
-		"poll",
-#else // POLL
-		"edge",
-#endif // POLL
+		should_poll ? "poll" : "edge",
 		MONITOR_CLICK ? CLICK_ACTION : "(nothing)", 
 		MONITOR_HOLD ? HOLD_ACTION : "(nothing)",
 		HOLD_PRESS_TIMEOUT_MS,
@@ -371,22 +376,7 @@ int run(void)
 			// otherwise wait forever
 			pollTime = -1;
 		}
-#ifdef EDGE
-		if(verbose)
-			printf("Detecting edge with timeout %d\n", pollTime);
-		int result = poll(pfd, 1, pollTime);
-		if(verbose)
-			printf("Finished detecting edge: %d\n", result);
-
-		if (result == -1)
-			break;
-
-		if (result == 0 && !pressed_at)
-			continue;
-
-		if (pfd[0].revents & POLLPRI || pollTime >= 0) // well ... this should be the case by definition
-#endif
-#ifdef POLL
+		if(should_poll)
 		{
 			int polling_start_value = is_pressed(fd);
 
@@ -423,9 +413,23 @@ int run(void)
 					}
 				}
 			}
+		} else {
+			if(verbose)
+				printf("Detecting edge with timeout %d\n", pollTime);
+			int result = poll(pfd, 1, pollTime);
+			if(verbose)
+				printf("Finished detecting edge: %d\n", result);
+
+			if (result == -1)
+				break;
+
+			if (result == 0 && !pressed_at)
+				continue;
 		}
+
 		// The following block is unconditional when POLLing
-#endif /* POLL */
+		if (should_poll
+				|| (pfd[0].revents & POLLPRI || pollTime >= 0)) // well ... this should be the case by definition
 		{
 			timestamp_ms_t timestamp = get_timestamp_ms();
 
@@ -466,8 +470,9 @@ int run(void)
 	gpio_close(fd);
 
 #ifdef EDGE
-	gpio_set_edge(BUTTON_PIN, E_NONE);
-#endif
+	if(!should_poll)
+		gpio_set_edge(BUTTON_PIN, E_NONE);
+#endif // EDGE
 	if(shouldUnexport)
 		gpio_unexport(BUTTON_PIN);
 	return 0;
@@ -490,6 +495,7 @@ void print_usage(void)
 		"\t--monitor-click <arg> Whether to monitor the click (0 or 1). Default: %d.\n"
 		"\t--monitor-hold  <arg> Whether to monitor the hold (0 or 1). Default: %d.\n"
 		"\t--hold-press-timeout-ms <arg> How long to wait before detecting a hold (ms). Default: %d.\n"
+		"\t--force-poll    If set to 1, force  polling instead of edge detection even if kernel supports edge. Default: %d\n"
 		"\t--help          Display the usage information.\n"
 		"\t--version       Show the version information.\n"
 		"\n",
@@ -500,7 +506,8 @@ void print_usage(void)
 		DEFAULT_BUTTON_PIN,
 		DEFAULT_MONITOR_CLICK,
 		DEFAULT_MONITOR_HOLD,
-		DEFAULT_HOLD_PRESS_TIMEOUT_MS
+		DEFAULT_HOLD_PRESS_TIMEOUT_MS,
+		DEFAULT_FORCE_POLL
 	);
 	print_version();
 }
@@ -515,6 +522,7 @@ int main(int argc, char **argv)
 	MONITOR_CLICK = DEFAULT_MONITOR_CLICK;
 	MONITOR_HOLD = DEFAULT_MONITOR_HOLD;
 	HOLD_PRESS_TIMEOUT_MS = DEFAULT_HOLD_PRESS_TIMEOUT_MS;
+	FORCE_POLL = DEFAULT_FORCE_POLL;
 	verbose = 0;
 	int i;
 	for (i=1; i<argc; ++i)
@@ -610,6 +618,18 @@ int main(int argc, char **argv)
 			if(i + 1 < argc){
 				++i;
 				HOLD_PRESS_TIMEOUT_MS = atoi(argv[i]);
+				continue;
+			} else {
+				fprintf(stderr, "Argument missing\n");
+				print_usage();
+				return 1;
+			}
+		}
+		if (strcmp(argv[i], "--force-poll") == 0)
+		{
+			if(i + 1 < argc){
+				++i;
+				FORCE_POLL = atoi(argv[i]);
 				continue;
 			} else {
 				fprintf(stderr, "Argument missing\n");
