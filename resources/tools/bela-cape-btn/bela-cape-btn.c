@@ -325,13 +325,13 @@ int run(void)
 	int ret = gpio_export(BUTTON_PIN);
 	int shouldUnexport = (ret == 0);
 	
+	gpio_set_dir(BUTTON_PIN, INPUT_PIN);
 #ifdef EDGE
 	int err = gpio_set_edge(BUTTON_PIN, E_BOTH);
 	if (err != 0)
 		return err;
 #endif
 
-	gpio_set_dir(BUTTON_PIN, INPUT_PIN);
 	int fd = gpio_open(BUTTON_PIN);
 
 #ifdef EDGE
