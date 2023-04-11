@@ -177,7 +177,6 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 Trill::Device Trill::probe(unsigned int i2c_bus, uint8_t i2c_address)
 {
 	Trill t;
-	t.dataBuffer.resize(kRawLength);
 	if(t.initI2C_RW(i2c_bus, i2c_address, -1)) {
 		return Trill::NONE;
 	}
@@ -249,8 +248,8 @@ Trill::Mode Trill::getModeFromName(const std::string& name)
 
 int Trill::identify() {
 	ssize_t bytesToWrite = 2;
-	char buf[2] = { kOffsetCommand, kCommandIdentify };
-	if((writeBytes(buf, bytesToWrite)) != bytesToWrite)
+	char wbuf[2] = { kOffsetCommand, kCommandIdentify };
+	if((writeBytes(wbuf, bytesToWrite)) != bytesToWrite)
 	{
 		return -1;
 	}
@@ -258,10 +257,10 @@ int Trill::identify() {
 
 	usleep(commandSleepTime); // need to give enough time to process command
 
-	readBytes(dataBuffer.data(), 4); // discard first read
-
-	ssize_t bytesToRead = 4;
-	ssize_t bytesRead = readBytes(dataBuffer.data(), bytesToRead);
+	constexpr ssize_t bytesToRead = 4;
+	uint8_t rbuf[bytesToRead];
+	readBytes(rbuf, bytesToRead); // discard first read
+	ssize_t bytesRead = readBytes(rbuf, bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
 		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
@@ -270,18 +269,19 @@ int Trill::identify() {
 	}
 
 	// if we read back just zeros, we assume the device did not respond
-	if(0 == dataBuffer[1]) {
+	if(0 == rbuf[1]) {
 		device_type_ = NONE;
 		return -1;
 	}
-	Device readDeviceType = (Device)dataBuffer[1];
+	Device readDeviceType = (Device)rbuf[1];
 	// if we do not recognize the device type, we also return an error
 	if(trillDefaults.find(readDeviceType) == trillDefaults.end()) {
 		device_type_ = NONE;
 		return -1;
 	}
 	device_type_ = readDeviceType;
-	firmware_version_ = dataBuffer[2];
+	firmware_version_ = rbuf[2];
+	// rbuf[3] is currently unused
 
 	return 0;
 }
