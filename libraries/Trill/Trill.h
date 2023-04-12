@@ -38,15 +38,22 @@ class Trill : public I2c
 			HEX = 5, ///< %Trill Hex
 			FLEX = 6, ///< %Trill Flex
 		} Device;
+		typedef enum {
+			kEventModeTouch = 0,
+			kEventModeChange = 1,
+			kEventModeAlways = 2,
+		} EventMode;
 	private:
 		Mode mode_; // Which mode the device is in
 		Device device_type_ = NONE; // Which type of device is connected (if any)
+		uint32_t frameId;
 		uint8_t address;
 		uint8_t firmware_version_; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
 		std::vector<uint8_t> dataBuffer;
 		uint16_t commandSleepTime = 10000;
 		bool preparedForDataRead_ = false;
+		bool shouldReadFrameId = false;
 		unsigned int numBits;
 		float posRescale;
 		float posHRescale;
@@ -129,6 +136,10 @@ class Trill : public I2c
 		 * Update the baseline value on the device.
 		 */
 		int updateBaseline();
+		/**
+		 * Reset the chip.
+		 */
+		int reset();
 
 		/**
 		 * \brief Read data from the device.
@@ -147,7 +158,8 @@ class Trill : public I2c
 		 * Users calling readI2C() won't need to call this method.
 		 *
 		 * @param newData A pointer to an array containing new data.
-		 * @param len The length of the array.
+		 * @param len The length of the array. For proper operation, this
+		 * should be the value returned from getBytesToRead().
 		 */
 		void newData(const uint8_t* newData, size_t len);
 
@@ -199,6 +211,17 @@ class Trill : public I2c
 		 * Get the number of capacitive channels on the device.
 		 */
 		unsigned int getNumChannels();
+		/**
+		 * Get the frameId. This is only valid if setReadFrameId(true)
+		 * has been called and firmware_version() >= 3 and at least one
+		 * read has been performed.
+		 */
+		uint16_t getFrameId() { return uint16_t(frameId); }
+		/**
+		 * Same as above, but it tries to unwrap the uint16_t counter into
+		 * a uint32_t counter.
+		 */
+		uint32_t getFrameIdUnwrapped();
 
 		/**
 		 * @name Scan Configuration Settings
@@ -284,6 +307,9 @@ class Trill : public I2c
 		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setAutoScanInterval(uint16_t interval);
+		int setEventMode(EventMode mode);
+		int setSensorMask(uint32_t mask);
+		int setReadFrameId(bool readFrameId);
 		/** @} */ // end of Scan Configuration Settings
 
 		/**
@@ -332,6 +358,10 @@ class Trill : public I2c
 		 * otherwise.
 		 */
 		bool is2D();
+		/**
+		 * Return the number of bytes to read when reading data.
+		 */
+		unsigned int getBytesToRead();
 		/**
 		 * Return the number of "button" channels on the device.
 		 */

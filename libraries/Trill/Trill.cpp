@@ -10,7 +10,8 @@ enum {
 	kCentroidLengthDefault = 20,
 	kCentroidLengthRing = 24,
 	kCentroidLength2D = 32,
-	kRawLength = 60
+	kRawLength = 60,
+	kFrameIdLength = 2,
 };
 
 enum {
@@ -22,6 +23,10 @@ enum {
 	kCommandIdac = 5,
 	kCommandBaselineUpdate = 6,
 	kCommandMinimumSize = 7,
+	kCommandEventMode = 9,
+	kCommandSensorMaskLow = 10,
+	kCommandSensorMaskHigh = 11,
+	kCommandReset = 12,
 	kCommandAutoScanInterval = 16,
 	kCommandIdentify = 255
 };
@@ -98,7 +103,6 @@ Trill::Trill(unsigned int i2c_bus, Device device, uint8_t i2c_address) {
 
 int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
-	dataBuffer.resize(kRawLength);
 	rawData.resize(kNumChannelsMax);
 	address = 0;
 	device_type_ = NONE;
@@ -432,6 +436,62 @@ int Trill::setAutoScanInterval(uint16_t interval) {
 	return 0;
 }
 
+int Trill::setEventMode(EventMode mode) {
+	if(firmware_version_ < 3)
+	{
+		fprintf(stderr, "Trill::setEventMode() unsupported with firmware version %d\n", firmware_version_);
+		return 1;
+	}
+	constexpr ssize_t bytesToWrite = 3;
+	char buf[bytesToWrite] = { kOffsetCommand, kCommandEventMode, char(mode) };
+	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
+	{
+		fprintf(stderr, "Failed to set Trill's event mode: %d\n", writtenValue);
+		return 1;
+	}
+	preparedForDataRead_ = false;
+	usleep(commandSleepTime); // need to give enough time to process command
+
+	return 0;
+}
+
+int Trill::setSensorMask(uint32_t mask)
+{
+	if(firmware_version_ < 3)
+	{
+		fprintf(stderr, "Trill::setEventMode() unsupported with firmware version %d\n", firmware_version_);
+		return 1;
+	}
+	constexpr ssize_t bytesToWrite = 4;
+	char* bMask = (char*)&mask;
+	{
+		char buf[bytesToWrite] = { kOffsetCommand, kCommandSensorMaskLow, bMask[0], bMask[1]};
+		if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
+		{
+			fprintf(stderr, "Failed to set Trill's sensor mask: %d\n", writtenValue);
+			return 1;
+		}
+		usleep(commandSleepTime); // need to give enough time to process command
+	}
+	{
+		char buf[bytesToWrite] = { kOffsetCommand, kCommandSensorMaskHigh, bMask[2], bMask[3]};
+		if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
+		{
+			fprintf(stderr, "Failed to set Trill's sensor mask: %d\n", writtenValue);
+			return 1;
+		}
+		usleep(commandSleepTime); // need to give enough time to process command
+	}
+	preparedForDataRead_ = false;
+	return 0;
+}
+
+int Trill::setReadFrameId(bool readFrameId)
+{
+	shouldReadFrameId = readFrameId;
+	return 0;
+}
+
 int Trill::updateBaseline() {
 	ssize_t bytesToWrite = 2;
 	char buf[2] = { kOffsetCommand, kCommandBaselineUpdate };
@@ -444,6 +504,19 @@ int Trill::updateBaseline() {
 	preparedForDataRead_ = false;
 	usleep(commandSleepTime); // need to give enough time to process command
 
+	return 0;
+}
+
+int Trill::reset() {
+	ssize_t bytesToWrite = 2;
+	char buf[2] = { kOffsetCommand, kCommandReset };
+	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
+	{
+		fprintf(stderr, "Failed to reset Trill: %d\n", writtenValue);
+		return 1;
+	}
+	preparedForDataRead_ = false;
+	usleep(commandSleepTime); // need to give enough time to process command
 	return 0;
 }
 
@@ -464,12 +537,9 @@ int Trill::prepareForDataRead() {
 	return 0;
 }
 
-int Trill::readI2C() {
-	if(NONE == device_type_ || readErrorOccurred)
-		return 1;
-	prepareForDataRead();
-
-	ssize_t bytesToRead = kCentroidLengthDefault;
+unsigned int Trill::getBytesToRead()
+{
+	size_t bytesToRead = kCentroidLengthDefault;
 	if(CENTROID == mode_) {
 		if(device_type_ == SQUARE || device_type_ == HEX)
 			bytesToRead = kCentroidLength2D;
@@ -478,6 +548,17 @@ int Trill::readI2C() {
 	} else {
 		bytesToRead = kRawLength;
 	}
+	bytesToRead += kFrameIdLength * shouldReadFrameId;
+	return bytesToRead;
+}
+
+int Trill::readI2C() {
+	if(NONE == device_type_ || readErrorOccurred)
+		return 1;
+	prepareForDataRead();
+
+	ssize_t bytesToRead = getBytesToRead();
+	dataBuffer.resize(bytesToRead);
 	errno = 0;
 	ssize_t bytesRead = readBytes(dataBuffer.data(), bytesToRead);
 	if (bytesRead != bytesToRead)
@@ -494,16 +575,20 @@ int Trill::readI2C() {
 
 void Trill::newData(const uint8_t* newData, size_t len)
 {
+	dataBuffer.resize(getBytesToRead());
 	memcpy(dataBuffer.data(), newData, std::min(len * sizeof(newData[0]), sizeof(dataBuffer[0]) * dataBuffer.size()));
 	parseNewData();
 }
 
 void Trill::parseNewData()
 {
+	// by the time this is called, dataBuffer will have been resized appropriately
+	size_t frameIdOffsetWords;
 	if(CENTROID != mode_) {
 		// parse, rescale and copy data to public buffer
 		for (unsigned int i = 0; i < getNumChannels(); ++i)
 			rawData[i] = ((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) * rawRescale;
+		frameIdOffsetWords = getNumChannels();
 	} else {
 		unsigned int locations = 0;
 		// Look for 1st instance of 0xFFFF (no touch) in the buffer
@@ -513,6 +598,7 @@ void Trill::parseNewData()
 				break;
 		}
 		num_touches_ = locations;
+		frameIdOffsetWords = 2 * MAX_TOUCH_1D_OR_2D;
 
 		if(device_type_ == SQUARE || device_type_ == HEX)
 		{
@@ -525,8 +611,24 @@ void Trill::parseNewData()
 					break;
 			}
 			num_touches_ |= (locations << 4);
+			frameIdOffsetWords += 2 * MAX_TOUCH_1D_OR_2D;
+		} else if(RING == device_type_) {
+			frameIdOffsetWords += 2;
 		}
 	}
+	if(shouldReadFrameId)
+	{
+		size_t offsetBytes = frameIdOffsetWords * 2;
+		uint16_t newFrameId = (dataBuffer[offsetBytes] << 8) | (dataBuffer[offsetBytes + 1]);
+		if(newFrameId < (frameId & 0xffff))
+			frameId += 0x10000;
+		// lower word is the retrieved value, upper word keeps track of wraparounds
+		frameId = (frameId & 0xffff0000) | (newFrameId);
+	}
+}
+
+uint32_t Trill::getFrameIdUnwrapped() {
+	return frameId;
 }
 
 bool Trill::is1D()
