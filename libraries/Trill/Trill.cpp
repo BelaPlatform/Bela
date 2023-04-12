@@ -24,8 +24,8 @@ enum {
 	kCommandBaselineUpdate = 6,
 	kCommandMinimumSize = 7,
 	kCommandEventMode = 9,
-	kCommandSensorMaskLow = 10,
-	kCommandSensorMaskHigh = 11,
+	kCommandChannelMaskLow = 10,
+	kCommandChannelMaskHigh = 11,
 	kCommandReset = 12,
 	kCommandAutoScanInterval = 16,
 	kCommandIdentify = 255
@@ -404,11 +404,11 @@ int Trill::setEventMode(EventMode mode) {
 	return WRITE_COMMAND_BUF(buf);
 }
 
-int Trill::setSensorMask(uint32_t mask)
+int Trill::setChannelMask(uint32_t mask)
 {
 	REQUIRE_FW_AT_LEAST(3);
 	i2c_char_t* bMask = (i2c_char_t*)&mask;
-	i2c_char_t buf[] = { kCommandSensorMaskLow, bMask[0], bMask[1] };
+	i2c_char_t buf[] = { kCommandChannelMaskLow, bMask[0], bMask[1] };
 	if(WRITE_COMMAND_BUF(buf))
 		return 1;
 	buf[0] = kCommandChannelMaskHigh;

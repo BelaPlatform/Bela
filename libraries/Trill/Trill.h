@@ -310,7 +310,7 @@ class Trill : public I2c
 		 */
 		int setAutoScanInterval(uint16_t interval);
 		int setEventMode(EventMode mode);
-		int setSensorMask(uint32_t mask);
+		int setChannelMask(uint32_t mask);
 		int setReadFrameId(bool readFrameId);
 		/** @} */ // end of Scan Configuration Settings
 
