@@ -101,6 +101,12 @@ Trill::Trill(unsigned int i2c_bus, Device device, uint8_t i2c_address) {
 	setup(i2c_bus, device, i2c_address);
 }
 
+void Trill::updateChannelMask(uint32_t mask)
+{
+	channelMask = (mask & ((1 << getDefaultNumChannels()) - 1));
+	numChannels = std::min(int(getDefaultNumChannels()), __builtin_popcount(channelMask));
+}
+
 int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
 	rawData.resize(kNumChannelsMax);
@@ -137,6 +143,15 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	}
 	// if the device was unknown it will have changed by now
 	defaults = trillDefaults.at(device_type_);
+
+	constexpr uint32_t defaultChannelMask = 0xffffffff;
+	if(firmware_version_ >= 3)
+	{
+		setChannelMask(defaultChannelMask);
+	} else {
+		// only keep track of it for internal purposes
+		updateChannelMask(defaultChannelMask);
+	}
 
 	Mode mode = defaults.mode;
 	if(setMode(mode) != 0) {
@@ -416,6 +431,7 @@ int Trill::setChannelMask(uint32_t mask)
 	buf[2] = bMask[3];
 	if(WRITE_COMMAND_BUF(buf))
 		return 1;
+	updateChannelMask(mask);
 	return 0;
 }
 
@@ -685,7 +701,12 @@ float Trill::compoundTouchSize()
 	return size;
 }
 
-unsigned int Trill::getNumChannels()
+unsigned int Trill::getNumChannels() const
+{
+	return numChannels;
+}
+
+unsigned int Trill::getDefaultNumChannels() const
 {
 	switch(device_type_) {
 		case BAR: return kNumChannelsBar;

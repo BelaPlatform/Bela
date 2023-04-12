@@ -55,6 +55,8 @@ class Trill : public I2c
 		bool preparedForDataRead_ = false;
 		bool shouldReadFrameId = false;
 		unsigned int numBits;
+		uint32_t channelMask;
+		uint8_t numChannels;
 		float posRescale;
 		float posHRescale;
 		float sizeRescale;
@@ -64,6 +66,7 @@ class Trill : public I2c
 		void parseNewData();
 		int writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name);
 		int writeCommandAndHandle(i2c_char_t command, const char* name);
+		void updateChannelMask(uint32_t mask);
 		bool readErrorOccurred;
 	public:
 		/**
@@ -210,9 +213,13 @@ class Trill : public I2c
 		 */
 		void printDetails() ;
 		/**
-		 * Get the number of capacitive channels on the device.
+		 * Get the number of capacitive channels currently active on the device.
 		 */
-		unsigned int getNumChannels();
+		unsigned int getNumChannels() const;
+		/**
+		 * Get the number of capacitive channels available on the device.
+		 */
+		unsigned int getDefaultNumChannels() const;
 		/**
 		 * Get the frameId. This is only valid if setReadFrameId(true)
 		 * has been called and firmware_version() >= 3 and at least one
