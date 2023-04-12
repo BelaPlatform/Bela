@@ -250,16 +250,41 @@ Trill::Mode Trill::getModeFromName(const std::string& name)
 	return Trill::AUTO;
 }
 
-int Trill::identify() {
-	ssize_t bytesToWrite = 2;
-	char wbuf[2] = { kOffsetCommand, kCommandIdentify };
-	if((writeBytes(wbuf, bytesToWrite)) != bytesToWrite)
+// macros to automatically print method names. Using gcc-specific __PRETTY_FUNCTION__.
+#define WRITE_COMMAND_BUF(data) writeCommandAndHandle(data, sizeof(data), __PRETTY_FUNCTION__)
+#define WRITE_COMMAND(command) writeCommandAndHandle(command, __PRETTY_FUNCTION__)
+
+int Trill::writeCommandAndHandle(i2c_char_t command, const char* name) {
+	return writeCommandAndHandle(&command, sizeof(command), name);
+}
+
+int Trill::writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name) {
+	constexpr size_t kMaxCommandBytes = 4;
+	i2c_char_t buf[1 + kMaxCommandBytes];
+	buf[0] = kOffsetCommand;
+	for(size_t n = 0; n < size; ++n)
+		buf[n + 1] = data[n];
+	int bytesToWrite = size + 1;
+	int ret = writeBytes(buf, bytesToWrite);
+	if(ret != bytesToWrite)
 	{
-		return -1;
+		fprintf(stderr, "Trill: failed to write command \"%s\"; ret: %d, errno: %d, %s.\n", name, ret, errno, strerror(errno));
+		return 1;
 	}
 	preparedForDataRead_ = false;
-
 	usleep(commandSleepTime); // need to give enough time to process command
+	return 0;
+}
+#define REQUIRE_FW_AT_LEAST(num) \
+	if(firmware_version_ < num) \
+	{ \
+		fprintf(stderr, "%s unsupported with firmware version %d, requires %d\n", __PRETTY_FUNCTION__, firmware_version_, num); \
+		return 1; \
+	}
+
+int Trill::identify() {
+	if(WRITE_COMMAND(kCommandIdentify))
+		return 1;
 
 	constexpr ssize_t bytesToRead = 4;
 	uint8_t rbuf[bytesToRead];
@@ -311,17 +336,10 @@ int Trill::setMode(Mode mode) {
 	ssize_t bytesToWrite = 3;
 	if(AUTO == mode)
 		mode = trillDefaults.at(device_type_).mode;
-	char buf[3] = { kOffsetCommand, kCommandMode, (char)mode };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's mode.\n");
-		fprintf(stderr, "%d\n", writtenValue);
+	i2c_char_t buf[] = { kCommandMode, (i2c_char_t)mode };
+	if(WRITE_COMMAND_BUF(buf))
 		return 1;
-	}
-	preparedForDataRead_ = false;
 	mode_ = mode;
-	usleep(commandSleepTime); // need to give enough time to process command
-
 	return 0;
 }
 
@@ -333,34 +351,17 @@ int Trill::setScanSettings(uint8_t speed, uint8_t num_bits) {
 		num_bits = 9;
 	if(num_bits > 16)
 		num_bits = 16;
-	char buf[4] = { kOffsetCommand, kCommandScanSettings, speed, num_bits };
-	preparedForDataRead_ = false;
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's scan settings.\n");
-		fprintf(stderr, "%d\n", writtenValue);
+	i2c_char_t buf[] = { kCommandScanSettings, speed, num_bits };
+	if(WRITE_COMMAND_BUF(buf))
 		return 1;
-	}
-	usleep(commandSleepTime); // need to give enough time to process command
 	numBits = num_bits;
 	updateRescale();
-
 	return 0;
 }
 
 int Trill::setPrescaler(uint8_t prescaler) {
-	ssize_t bytesToWrite = 3;
-	char buf[3] = { kOffsetCommand, kCommandPrescaler, prescaler };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's prescaler.\n");
-		fprintf(stderr, "%d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	i2c_char_t buf[] = { kCommandPrescaler, prescaler };
+	return WRITE_COMMAND_BUF(buf);
 }
 
 int Trill::setNoiseThreshold(float threshold) {
@@ -370,119 +371,51 @@ int Trill::setNoiseThreshold(float threshold) {
 		threshold = 255;
 	if(threshold < 0)
 		threshold = 0;
-	char thByte = char(threshold + 0.5);
-	char buf[3] = { kOffsetCommand, kCommandNoiseThreshold, thByte };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's threshold.\n");
-		fprintf(stderr, "%d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	i2c_char_t thByte = i2c_char_t(threshold + 0.5);
+	i2c_char_t buf[] = { kCommandNoiseThreshold, thByte };
+	return WRITE_COMMAND_BUF(buf);
 }
 
 
 int Trill::setIDACValue(uint8_t value) {
-	ssize_t bytesToWrite = 3;
-	char buf[3] = { kOffsetCommand, kCommandIdac, value };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's IDAC value.\n");
-		fprintf(stderr, "%d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	i2c_char_t buf[] = { kCommandIdac, value };
+	return WRITE_COMMAND_BUF(buf);
 }
 
 int Trill::setMinimumTouchSize(float minSize) {
-	ssize_t bytesToWrite = 4;
 	uint16_t size;
 	float maxMinSize = (1<<16) - 1;
 	if(maxMinSize > minSize / sizeRescale) // clipping to the max value we can transmit
 		size = maxMinSize;
 	else
 		size = minSize / sizeRescale;
-	char buf[4] = { kOffsetCommand, kCommandMinimumSize, (char)(size >> 8), (char)(size & 0xFF) };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's minimum touch size value.\n");
-		fprintf(stderr, "%d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	i2c_char_t buf[] = { kCommandMinimumSize, (i2c_char_t)(size >> 8), (i2c_char_t)(size & 0xFF) };
+	return WRITE_COMMAND_BUF(buf);
 }
 
 int Trill::setAutoScanInterval(uint16_t interval) {
-	ssize_t bytesToWrite = 4;
-	char buf[4] = { kOffsetCommand, kCommandAutoScanInterval, (char)(interval >> 8), (char)(interval & 0xFF) };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's auto scan interval.\n");
-		fprintf(stderr, "%d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	i2c_char_t buf[] = { kCommandAutoScanInterval, (i2c_char_t)(interval >> 8), (i2c_char_t)(interval & 0xFF) };
+	return WRITE_COMMAND_BUF(buf);
 }
 
 int Trill::setEventMode(EventMode mode) {
-	if(firmware_version_ < 3)
-	{
-		fprintf(stderr, "Trill::setEventMode() unsupported with firmware version %d\n", firmware_version_);
-		return 1;
-	}
-	constexpr ssize_t bytesToWrite = 3;
-	char buf[bytesToWrite] = { kOffsetCommand, kCommandEventMode, char(mode) };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's event mode: %d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	REQUIRE_FW_AT_LEAST(3);
+	i2c_char_t buf[] = { kCommandEventMode, i2c_char_t(mode) };
+	return WRITE_COMMAND_BUF(buf);
 }
 
 int Trill::setSensorMask(uint32_t mask)
 {
-	if(firmware_version_ < 3)
-	{
-		fprintf(stderr, "Trill::setEventMode() unsupported with firmware version %d\n", firmware_version_);
+	REQUIRE_FW_AT_LEAST(3);
+	i2c_char_t* bMask = (i2c_char_t*)&mask;
+	i2c_char_t buf[] = { kCommandSensorMaskLow, bMask[0], bMask[1] };
+	if(WRITE_COMMAND_BUF(buf))
 		return 1;
-	}
-	constexpr ssize_t bytesToWrite = 4;
-	char* bMask = (char*)&mask;
-	{
-		char buf[bytesToWrite] = { kOffsetCommand, kCommandSensorMaskLow, bMask[0], bMask[1]};
-		if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-		{
-			fprintf(stderr, "Failed to set Trill's sensor mask: %d\n", writtenValue);
-			return 1;
-		}
-		usleep(commandSleepTime); // need to give enough time to process command
-	}
-	{
-		char buf[bytesToWrite] = { kOffsetCommand, kCommandSensorMaskHigh, bMask[2], bMask[3]};
-		if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-		{
-			fprintf(stderr, "Failed to set Trill's sensor mask: %d\n", writtenValue);
-			return 1;
-		}
-		usleep(commandSleepTime); // need to give enough time to process command
-	}
-	preparedForDataRead_ = false;
+	buf[0] = kCommandChannelMaskHigh;
+	buf[1] = bMask[2];
+	buf[2] = bMask[3];
+	if(WRITE_COMMAND_BUF(buf))
+		return 1;
 	return 0;
 }
 
@@ -493,38 +426,19 @@ int Trill::setReadFrameId(bool readFrameId)
 }
 
 int Trill::updateBaseline() {
-	ssize_t bytesToWrite = 2;
-	char buf[2] = { kOffsetCommand, kCommandBaselineUpdate };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to set Trill's baseline.\n");
-		fprintf(stderr, "%d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-
-	return 0;
+	return WRITE_COMMAND(kCommandBaselineUpdate);
 }
 
 int Trill::reset() {
-	ssize_t bytesToWrite = 2;
-	char buf[2] = { kOffsetCommand, kCommandReset };
-	if(int writtenValue = (writeBytes(buf, bytesToWrite)) != bytesToWrite)
-	{
-		fprintf(stderr, "Failed to reset Trill: %d\n", writtenValue);
-		return 1;
-	}
-	preparedForDataRead_ = false;
-	usleep(commandSleepTime); // need to give enough time to process command
-	return 0;
+	REQUIRE_FW_AT_LEAST(3);
+	return WRITE_COMMAND(kCommandReset);
 }
 
 int Trill::prepareForDataRead() {
 	if(!preparedForDataRead_)
 	{
 		ssize_t bytesToWrite = 1;
-		char buf[1] = { kOffsetData };
+		i2c_char_t buf[1] = { kOffsetData };
 		if(writeBytes(buf, bytesToWrite) != bytesToWrite)
 		{
 			fprintf(stderr, "Failed to prepare Trill data collection\n");
@@ -533,7 +447,6 @@ int Trill::prepareForDataRead() {
 		preparedForDataRead_ = true;
 		usleep(commandSleepTime); // need to give enough time to process command
 	}
-
 	return 0;
 }
 

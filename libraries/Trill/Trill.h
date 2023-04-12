@@ -62,6 +62,8 @@ class Trill : public I2c
 		int identify();
 		void updateRescale();
 		void parseNewData();
+		int writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name);
+		int writeCommandAndHandle(i2c_char_t command, const char* name);
 		bool readErrorOccurred;
 	public:
 		/**
