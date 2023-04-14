@@ -54,7 +54,7 @@ class Trill : public I2c
 		bool dataBufferIncludesStatusByte = false;
 		std::vector<uint8_t> dataBuffer;
 		uint16_t commandSleepTime = 10000;
-		int currentReadOffset = 0;
+		size_t currentReadOffset = -1;
 		bool shouldReadFrameId = false;
 		unsigned int numBits;
 		unsigned int transmissionWidth = 16;
@@ -69,8 +69,10 @@ class Trill : public I2c
 		void updateRescale();
 		void parseNewData(bool includesStatusByte);
 		void processStatusByte(uint8_t newStatusByte);
-		int writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name);
+		int writeCommandAndHandle(const i2c_char_t* data, size_t size, const char* name);
 		int writeCommandAndHandle(i2c_char_t command, const char* name);
+		int readBytesFrom(uint8_t offset, i2c_char_t* data, size_t size, const char* name);
+		int readBytesFrom(uint8_t offset, i2c_char_t& byte, const char* name);
 		void updateChannelMask(uint32_t mask);
 		bool readErrorOccurred;
 	public:
@@ -173,14 +175,6 @@ class Trill : public I2c
 		 */
 		void newData(const uint8_t* newData, size_t len, bool includesStatusByte = false);
 
-		/**
-		 * \brief Prepare the device so that successive reads will return data.
-		 *
-		 * This should be called once before trying to read I2C bytes from the
-		 * device via an external method. It is not needed to call this when using
-		 * readI2C().
-		 */
-		int prepareForDataRead(bool shouldReadStatusByte);
 		/**
 		 * Get the device type.
 		 */

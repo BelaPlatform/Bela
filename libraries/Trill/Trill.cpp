@@ -275,12 +275,19 @@ Trill::Mode Trill::getModeFromName(const std::string& name)
 // macros to automatically print method names. Using gcc-specific __PRETTY_FUNCTION__.
 #define WRITE_COMMAND_BUF(data) writeCommandAndHandle(data, sizeof(data), __PRETTY_FUNCTION__)
 #define WRITE_COMMAND(command) writeCommandAndHandle(command, __PRETTY_FUNCTION__)
+#define READ_BYTES_FROM(offset,data,size) readBytesFrom(offset, data, size, __PRETTY_FUNCTION__)
+#define READ_BYTE_FROM(offset,byte) readBytesFrom(offset, byte, __PRETTY_FUNCTION__)
 
 int Trill::writeCommandAndHandle(i2c_char_t command, const char* name) {
 	return writeCommandAndHandle(&command, sizeof(command), name);
 }
 
-int Trill::writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name) {
+static void printErrno(int ret)
+{
+	if(-1 == ret)
+		fprintf(stderr, "errno %d, %s.\n", errno, strerror(errno));
+}
+int Trill::writeCommandAndHandle(const i2c_char_t* data, size_t size, const char* name) {
 	constexpr size_t kMaxCommandBytes = 3;
 	if(size > kMaxCommandBytes)
 	{
@@ -302,6 +309,37 @@ int Trill::writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name
 	usleep(commandSleepTime); // need to give enough time to process command
 	return 0;
 }
+
+int Trill::readBytesFrom(const uint8_t offset, i2c_char_t& byte, const char* name)
+{
+	return readBytesFrom(offset, &byte, sizeof(byte), name);
+}
+
+int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, const char* name)
+{
+	if(offset != currentReadOffset)
+	{
+		int ret = writeBytes(&offset, sizeof(offset));
+		if(ret != sizeof(offset))
+		{
+			fprintf(stderr, "%s: error while setting read offset\n", name);
+			printErrno(ret);
+			return 1;
+		}
+		currentReadOffset = offset;
+		usleep(commandSleepTime);
+	}
+	ssize_t bytesRead = readBytes(data, size);
+	if (bytesRead != size)
+	{
+		fprintf(stderr, "%s: failed to read %d bytes. ret: %d\n", name, size, bytesRead);
+		printErrno(bytesRead);
+		return 1;
+	}
+	return 0;
+
+}
+
 #define REQUIRE_FW_AT_LEAST(num) \
 	if(firmware_version_ < num) \
 	{ \
@@ -313,12 +351,9 @@ int Trill::identify() {
 	if(WRITE_COMMAND(kCommandIdentify))
 		return 1;
 
-	constexpr ssize_t bytesToRead = 4;
-	uint8_t rbuf[bytesToRead];
-	ssize_t bytesRead = readBytes(rbuf, bytesToRead);
-	if (bytesRead != bytesToRead)
+	uint8_t rbuf[3];
+	if(READ_BYTES_FROM(kOffsetCommand, rbuf, sizeof(rbuf)))
 	{
-		fprintf(stderr, "Failure to read Byte Stream. Read %d bytes, expected %d\n", bytesRead, bytesToRead);
 		device_type_ = NONE;
 		return -1;
 	}
@@ -465,21 +500,6 @@ int Trill::reset() {
 	return WRITE_COMMAND(kCommandReset);
 }
 
-int Trill::prepareForDataRead(bool shouldReadStatusByte) {
-	i2c_char_t byte = shouldReadStatusByte ? kOffsetFrameId : kOffsetChannelData;
-	if(byte != currentReadOffset)
-	{
-		if(writeBytes(&byte, sizeof(byte)) != sizeof(byte))
-		{
-			fprintf(stderr, "Failed to prepare Trill data collection\n");
-			return 1;
-		}
-		currentReadOffset = byte;
-		usleep(commandSleepTime); // need to give enough time to process command
-	}
-	return 0;
-}
-
 static unsigned int bytesFromSlots(size_t numWords, size_t transmissionWidth)
 {
 	switch(transmissionWidth)
@@ -514,17 +534,15 @@ int Trill::readI2C(bool shouldReadStatusByte) {
 	// NOTE: to avoid being too verbose, we do not check for firmware
 	// version here. On fw < 3, shouldReadStatusByte will read one more
 	// byte full of garbage.
-	prepareForDataRead(shouldReadStatusByte);
 
 	ssize_t bytesToRead = getBytesToRead(shouldReadStatusByte);
 	dataBuffer.resize(bytesToRead);
-	errno = 0;
-	ssize_t bytesRead = readBytes(dataBuffer.data(), bytesToRead);
-	if (bytesRead != bytesToRead)
+	i2c_char_t offset = shouldReadStatusByte ? kOffsetStatusByte : kOffsetChannelData;
+	if(READ_BYTES_FROM(offset, dataBuffer.data(), dataBuffer.size()))
 	{
 		num_touches_ = 0;
-		fprintf(stderr, "Trill: error while reading from device %s at address %#x (%d): %d of %d bytes read (error: %d %s)\n",
-			getNameFromDevice(device_type_).c_str(), address, address, bytesRead, bytesToRead, errno, strerror(errno));
+		fprintf(stderr, "Trill: error while reading from device %s at address %#x (%d)\n",
+			getNameFromDevice(device_type_).c_str(), address, address);
 		readErrorOccurred = true;
 		return 1;
 	}
