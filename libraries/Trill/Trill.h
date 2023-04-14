@@ -317,9 +317,13 @@ class Trill : public I2c
 		 * Alternatively, the status byte can be read as part of
 		 * reading data by calling readI2C(true).
 		 *
-		 * @return the status byte.
+		 * @return the status byte, or a negative value in case of
+		 * error. As a successful call also updates the
+		 * internal state, the caller is probably better off calling
+		 * getFrameId(), hasActivity(), hasReset() instead of parsing
+		 * the status byte directly.
 		 */
-		uint8_t readStatusByte();
+		int readStatusByte();
 		/**
 		 * Whether the device has reset since a command was last
 		 * written to it.
@@ -340,7 +344,12 @@ class Trill : public I2c
 		/**
 		 * Same as above, but it tries to unwrap the 6-bit frameId into
 		 * a uint32_t counter.
-		 * This relies on having read several status bytes over time.
+		 * This relies on reading several status bytes over time.
+		 * The counter is guaranteed monotonic, but it can only be
+		 * regarded as an actual frame counter if the status byte is
+		 * read at least once every 63 frames.
+		 *
+		 * @return the counter
 		 */
 		uint32_t getFrameIdUnwrapped();
 		/**

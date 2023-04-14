@@ -33,7 +33,7 @@ enum {
 
 enum {
 	kOffsetCommand = 0,
-	kOffsetFrameId = 3,
+	kOffsetStatusByte = 3,
 	kOffsetChannelData = 4,
 };
 
@@ -106,6 +106,7 @@ struct TrillStatusByte {
 	}
 };
 static_assert(1 == sizeof(TrillStatusByte), "size and layout of TrillStatusByte must match the Trill firmware");
+static_assert(kOffsetStatusByte + sizeof(TrillStatusByte) == kOffsetChannelData, "Assume that channel data is available immediately after the statusByte");
 
 Trill::Trill(){}
 
@@ -123,6 +124,7 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
 	rawData.resize(kNumChannelsMax);
 	address = 0;
+	frameId = 0;
 	device_type_ = NONE;
 	TrillDefaults defaults = trillDefaults.at(device);
 
@@ -566,7 +568,6 @@ void Trill::parseNewData(bool includesStatusByte)
 	size_t srcSize = this->dataBuffer.size();
 	if(!srcSize)
 		return;
-	size_t frameIdOffset;
 	if(includesStatusByte)
 	{
 		processStatusByte(src[0]);
@@ -607,7 +608,6 @@ void Trill::parseNewData(bool includesStatusByte)
 					rawData[i] = src[i] * rawRescale;
 				break;
 		}
-		frameIdOffset = bytesFromSlots(getNumChannels(), transmissionWidth);
 	} else {
 		unsigned int locations = 0;
 		// Look for 1st instance of 0xFFFF (no touch) in the buffer
@@ -617,7 +617,6 @@ void Trill::parseNewData(bool includesStatusByte)
 				break;
 		}
 		num_touches_ = locations;
-		frameIdOffset = 2 * 2 * MAX_TOUCH_1D_OR_2D;
 
 		if(device_type_ == SQUARE || device_type_ == HEX)
 		{
@@ -630,9 +629,6 @@ void Trill::parseNewData(bool includesStatusByte)
 					break;
 			}
 			num_touches_ |= (locations << 4);
-			frameIdOffset += 2 * 2 * MAX_TOUCH_1D_OR_2D;
-		} else if(RING == device_type_) {
-			frameIdOffset += 2 * 2;
 		}
 	}
 }
@@ -644,6 +640,15 @@ void Trill::processStatusByte(uint8_t newStatusByte)
 	if(newFrameId < (frameId & 0x3f))
 		frameId += 0x40;
 	frameId = (frameId & 0xffffffc0) | (newFrameId);
+}
+
+int Trill::readStatusByte()
+{
+	uint8_t newStatusByte;
+	if(READ_BYTE_FROM(kOffsetStatusByte, newStatusByte))
+		return -1;
+	processStatusByte(newStatusByte);
+	return newStatusByte;
 }
 
 bool Trill::hasReset()
