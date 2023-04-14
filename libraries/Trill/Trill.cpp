@@ -11,7 +11,6 @@ enum {
 	kCentroidLengthRing = 24,
 	kCentroidLength2D = 32,
 	kRawLength = 60,
-	kFrameIdLength = 2,
 };
 
 enum {
@@ -27,13 +26,15 @@ enum {
 	kCommandChannelMaskLow = 10,
 	kCommandChannelMaskHigh = 11,
 	kCommandReset = 12,
+	kCommandFormat = 13,
 	kCommandAutoScanInterval = 16,
 	kCommandIdentify = 255
 };
 
 enum {
 	kOffsetCommand = 0,
-	kOffsetData = 4
+	kOffsetFrameId = 3,
+	kOffsetChannelData = 4,
 };
 
 enum {
@@ -94,6 +95,17 @@ static const std::vector<struct trillRescaleFactors_t> trillRescaleFactors ={
 	{.pos = 1920, .posH = 1664, .size = 4000}, // HEX = 5,
 	{.pos = 3712, .posH = 0, .size = 1200}, // FLEX = 6,
 };
+
+struct TrillStatusByte {
+	uint8_t frameId : 6;
+	uint8_t activity : 1;
+	uint8_t initialised : 1;
+	static TrillStatusByte parse(uint8_t statusByte)
+	{
+		return *(TrillStatusByte*)(&statusByte);
+	}
+};
+static_assert(1 == sizeof(TrillStatusByte), "size and layout of TrillStatusByte must match the Trill firmware");
 
 Trill::Trill(){}
 
@@ -183,11 +195,6 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		return 9;
 	}
 
-	if(prepareForDataRead() != 0) {
-		fprintf(stderr, "Unable to prepare for reading data\n");
-		return 10;
-	}
-
 	address = i2c_address;
 	readErrorOccurred = false;
 	return 0;
@@ -274,7 +281,12 @@ int Trill::writeCommandAndHandle(i2c_char_t command, const char* name) {
 }
 
 int Trill::writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name) {
-	constexpr size_t kMaxCommandBytes = 4;
+	constexpr size_t kMaxCommandBytes = 3;
+	if(size > kMaxCommandBytes)
+	{
+		fprintf(stderr, "Trill: cannot write more than 3 bytes to the device\n");
+		return -1;
+	}
 	i2c_char_t buf[1 + kMaxCommandBytes];
 	buf[0] = kOffsetCommand;
 	for(size_t n = 0; n < size; ++n)
@@ -286,7 +298,7 @@ int Trill::writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name
 		fprintf(stderr, "Trill: failed to write command \"%s\"; ret: %d, errno: %d, %s.\n", name, ret, errno, strerror(errno));
 		return 1;
 	}
-	preparedForDataRead_ = false;
+	currentReadOffset = buf[0];
 	usleep(commandSleepTime); // need to give enough time to process command
 	return 0;
 }
@@ -435,9 +447,13 @@ int Trill::setChannelMask(uint32_t mask)
 	return 0;
 }
 
-int Trill::setReadFrameId(bool readFrameId)
+int Trill::setTransmissionFormat(uint8_t width, uint8_t shift)
 {
-	shouldReadFrameId = readFrameId;
+	i2c_char_t buf[] = { kCommandFormat, width, shift };
+	if(WRITE_COMMAND_BUF(buf))
+		return 1;
+	transmissionWidth = width;
+	transmissionRightShift = shift;
 	return 0;
 }
 
@@ -450,23 +466,35 @@ int Trill::reset() {
 	return WRITE_COMMAND(kCommandReset);
 }
 
-int Trill::prepareForDataRead() {
-	if(!preparedForDataRead_)
+int Trill::prepareForDataRead(bool shouldReadStatusByte) {
+	i2c_char_t byte = shouldReadStatusByte ? kOffsetFrameId : kOffsetChannelData;
+	if(byte != currentReadOffset)
 	{
-		ssize_t bytesToWrite = 1;
-		i2c_char_t buf[1] = { kOffsetData };
-		if(writeBytes(buf, bytesToWrite) != bytesToWrite)
+		if(writeBytes(&byte, sizeof(byte)) != sizeof(byte))
 		{
 			fprintf(stderr, "Failed to prepare Trill data collection\n");
 			return 1;
 		}
-		preparedForDataRead_ = true;
+		currentReadOffset = byte;
 		usleep(commandSleepTime); // need to give enough time to process command
 	}
 	return 0;
 }
 
-unsigned int Trill::getBytesToRead()
+static unsigned int bytesFromSlots(size_t numWords, size_t transmissionWidth)
+{
+	switch(transmissionWidth)
+	{
+		default:
+		case 16:
+			return numWords * 2;
+		case 12:
+			return numWords + (numWords + 1) / 2;
+		case 8:
+			return numWords;
+	}
+}
+unsigned int Trill::getBytesToRead(bool includesStatusByte)
 {
 	size_t bytesToRead = kCentroidLengthDefault;
 	if(CENTROID == mode_) {
@@ -475,18 +503,21 @@ unsigned int Trill::getBytesToRead()
 		if(device_type_ == RING)
 			bytesToRead = kCentroidLengthRing;
 	} else {
-		bytesToRead = kRawLength;
+		bytesToRead = bytesFromSlots(getNumChannels(), transmissionWidth);
 	}
-	bytesToRead += kFrameIdLength * shouldReadFrameId;
+	bytesToRead += sizeof(TrillStatusByte) * includesStatusByte;
 	return bytesToRead;
 }
 
-int Trill::readI2C() {
+int Trill::readI2C(bool shouldReadStatusByte) {
 	if(NONE == device_type_ || readErrorOccurred)
 		return 1;
-	prepareForDataRead();
+	// NOTE: to avoid being too verbose, we do not check for firmware
+	// version here. On fw < 3, shouldReadStatusByte will read one more
+	// byte full of garbage.
+	prepareForDataRead(shouldReadStatusByte);
 
-	ssize_t bytesToRead = getBytesToRead();
+	ssize_t bytesToRead = getBytesToRead(shouldReadStatusByte);
 	dataBuffer.resize(bytesToRead);
 	errno = 0;
 	ssize_t bytesRead = readBytes(dataBuffer.data(), bytesToRead);
@@ -498,36 +529,78 @@ int Trill::readI2C() {
 		readErrorOccurred = true;
 		return 1;
 	}
-	parseNewData();
+	parseNewData(shouldReadStatusByte);
 	return 0;
 }
 
-void Trill::newData(const uint8_t* newData, size_t len)
+void Trill::newData(const uint8_t* newData, size_t len, bool includesStatusByte)
 {
-	dataBuffer.resize(getBytesToRead());
+	// we ensure dataBuffer's size is consistent with readI2C(), regardless
+	// of how many bytes are actually passed here.
+	dataBuffer.resize(getBytesToRead(includesStatusByte));
 	memcpy(dataBuffer.data(), newData, std::min(len * sizeof(newData[0]), sizeof(dataBuffer[0]) * dataBuffer.size()));
-	parseNewData();
+	parseNewData(includesStatusByte);
 }
 
-void Trill::parseNewData()
+void Trill::parseNewData(bool includesStatusByte)
 {
 	// by the time this is called, dataBuffer will have been resized appropriately
-	size_t frameIdOffsetWords;
+	uint8_t* src = this->dataBuffer.data();
+	size_t srcSize = this->dataBuffer.size();
+	if(!srcSize)
+		return;
+	size_t frameIdOffset;
+	if(includesStatusByte)
+	{
+		processStatusByte(src[0]);
+		src++;
+		srcSize--;
+	}
+	dataBufferIncludesStatusByte = includesStatusByte;
 	if(CENTROID != mode_) {
 		// parse, rescale and copy data to public buffer
-		for (unsigned int i = 0; i < getNumChannels(); ++i)
-			rawData[i] = ((dataBuffer[2 * i] << 8) + dataBuffer[2 * i + 1]) * rawRescale;
-		frameIdOffsetWords = getNumChannels();
+		float rawRescale = this->rawRescale * (1 << transmissionRightShift);
+		switch(transmissionWidth)
+		{
+			default:
+			case 16:
+				for (unsigned int i = 0; i < getNumChannels(); ++i)
+					rawData[i] = ((src[2 * i] << 8) + src[2 * i + 1]) * rawRescale;
+				break;
+			case 12:
+				{
+					uint8_t* p = src;
+					const uint8_t* end = src + srcSize;
+					for (unsigned int i = 0; i < getNumChannels() && p < end; ++i)
+					{
+						uint16_t val;
+						if(i & 1) {
+							val = ((*p++) & 0xf0) << 4;
+							val |= *p++;
+						} else {
+							val = *p++ << 4;
+							val |= (*p & 0xf);
+						}
+						rawData[i] = val * rawRescale;
+					}
+				}
+				break;
+			case 8:
+				for (unsigned int i = 0; i < getNumChannels(); ++i)
+					rawData[i] = src[i] * rawRescale;
+				break;
+		}
+		frameIdOffset = bytesFromSlots(getNumChannels(), transmissionWidth);
 	} else {
 		unsigned int locations = 0;
 		// Look for 1st instance of 0xFFFF (no touch) in the buffer
 		for(locations = 0; locations < MAX_TOUCH_1D_OR_2D; locations++)
 		{
-			if(dataBuffer[2 * locations] == 0xFF && dataBuffer[2 * locations + 1] == 0xFF)
+			if(src[2 * locations] == 0xFF && src[2 * locations + 1] == 0xFF)
 				break;
 		}
 		num_touches_ = locations;
-		frameIdOffsetWords = 2 * MAX_TOUCH_1D_OR_2D;
+		frameIdOffset = 2 * 2 * MAX_TOUCH_1D_OR_2D;
 
 		if(device_type_ == SQUARE || device_type_ == HEX)
 		{
@@ -535,25 +608,39 @@ void Trill::parseNewData()
 			// which might be different from number of vertical touches
 			for(locations = 0; locations < MAX_TOUCH_1D_OR_2D; locations++)
 			{
-				if(dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D] == 0xFF
-					&& dataBuffer[2 * locations + 4 * MAX_TOUCH_1D_OR_2D+ 1] == 0xFF)
+				if(src[2 * locations + 4 * MAX_TOUCH_1D_OR_2D] == 0xFF
+					&& src[2 * locations + 4 * MAX_TOUCH_1D_OR_2D+ 1] == 0xFF)
 					break;
 			}
 			num_touches_ |= (locations << 4);
-			frameIdOffsetWords += 2 * MAX_TOUCH_1D_OR_2D;
+			frameIdOffset += 2 * 2 * MAX_TOUCH_1D_OR_2D;
 		} else if(RING == device_type_) {
-			frameIdOffsetWords += 2;
+			frameIdOffset += 2 * 2;
 		}
 	}
-	if(shouldReadFrameId)
-	{
-		size_t offsetBytes = frameIdOffsetWords * 2;
-		uint16_t newFrameId = (dataBuffer[offsetBytes] << 8) | (dataBuffer[offsetBytes + 1]);
-		if(newFrameId < (frameId & 0xffff))
-			frameId += 0x10000;
-		// lower word is the retrieved value, upper word keeps track of wraparounds
-		frameId = (frameId & 0xffff0000) | (newFrameId);
-	}
+}
+
+void Trill::processStatusByte(uint8_t newStatusByte)
+{
+	statusByte = newStatusByte;
+	uint8_t newFrameId = TrillStatusByte::parse(statusByte).frameId;
+	if(newFrameId < (frameId & 0x3f))
+		frameId += 0x40;
+	frameId = (frameId & 0xffffffc0) | (newFrameId);
+}
+
+bool Trill::hasReset()
+{
+	return !TrillStatusByte::parse(statusByte).initialised;
+}
+
+bool Trill::hasActivity()
+{
+	return TrillStatusByte::parse(statusByte).activity;
+}
+
+uint8_t Trill::getFrameId() {
+	return TrillStatusByte::parse(statusByte).frameId;
 }
 
 uint32_t Trill::getFrameIdUnwrapped() {
@@ -605,6 +692,7 @@ unsigned int Trill::getNumHorizontalTouches()
 	// Upper 4 bits hold number of horizontal touches
 	return (num_touches_ >> 4);
 }
+#define dbOffset (dataBufferIncludesStatusByte * sizeof(TrillStatusByte))
 
 float Trill::touchLocation(uint8_t touch_num)
 {
@@ -613,8 +701,8 @@ float Trill::touchLocation(uint8_t touch_num)
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
 
-	int location = dataBuffer[2*touch_num] * 256;
-	location += dataBuffer[2*touch_num + 1];
+	int location = dataBuffer[dbOffset + 2 * touch_num] * 256;
+	location += dataBuffer[dbOffset + 2 * touch_num + 1];
 
 	return location * posRescale;
 }
@@ -628,7 +716,10 @@ float Trill::getButtonValue(uint8_t button_num)
 	if(device_type_ != RING)
 		return -1;
 
-	return (((dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num] << 8) + dataBuffer[4*MAX_TOUCH_1D_OR_2D+2*button_num+1]) & 0x0FFF) * rawRescale;
+	return ((
+		(dataBuffer[dbOffset + 4 * MAX_TOUCH_1D_OR_2D + 2 * button_num] << 8)
+		+ dataBuffer[dbOffset + 4 * MAX_TOUCH_1D_OR_2D + 2 * button_num + 1]
+		) & 0x0FFF) * rawRescale;
 }
 
 float Trill::touchSize(uint8_t touch_num)
@@ -638,8 +729,8 @@ float Trill::touchSize(uint8_t touch_num)
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
 
-	int size = dataBuffer[2*touch_num + 2*MAX_TOUCH_1D_OR_2D] * 256;
-	size += dataBuffer[2*touch_num + 2*MAX_TOUCH_1D_OR_2D + 1];
+	int size = dataBuffer[dbOffset + 2 * touch_num + 2 * MAX_TOUCH_1D_OR_2D] * 256;
+	size += dataBuffer[dbOffset + 2 * touch_num + 2 * MAX_TOUCH_1D_OR_2D + 1];
 
 	return size * sizeRescale;
 }
@@ -651,8 +742,8 @@ float Trill::touchHorizontalLocation(uint8_t touch_num)
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
 
-	int location = dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D] * 256;
-	location += dataBuffer[2*touch_num + 4*MAX_TOUCH_1D_OR_2D+ 1];
+	int location = dataBuffer[dbOffset + 2 * touch_num + 4 * MAX_TOUCH_1D_OR_2D] * 256;
+	location += dataBuffer[dbOffset + 2 * touch_num + 4 * MAX_TOUCH_1D_OR_2D+ 1];
 
 	return location * posHRescale;
 }
@@ -664,8 +755,8 @@ float Trill::touchHorizontalSize(uint8_t touch_num)
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
 
-	int size = dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D] * 256;
-	size += dataBuffer[2*touch_num + 6*MAX_TOUCH_1D_OR_2D+ 1];
+	int size = dataBuffer[dbOffset + 2 * touch_num + 6 * MAX_TOUCH_1D_OR_2D] * 256;
+	size += dataBuffer[dbOffset + 2 * touch_num + 6* MAX_TOUCH_1D_OR_2D + 1];
 
 	return size * sizeRescale;
 }

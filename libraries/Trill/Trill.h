@@ -47,14 +47,18 @@ class Trill : public I2c
 		Mode mode_; // Which mode the device is in
 		Device device_type_ = NONE; // Which type of device is connected (if any)
 		uint32_t frameId;
+		uint8_t statusByte;
 		uint8_t address;
 		uint8_t firmware_version_; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
+		bool dataBufferIncludesStatusByte = false;
 		std::vector<uint8_t> dataBuffer;
 		uint16_t commandSleepTime = 10000;
-		bool preparedForDataRead_ = false;
+		int currentReadOffset = 0;
 		bool shouldReadFrameId = false;
 		unsigned int numBits;
+		unsigned int transmissionWidth = 16;
+		unsigned int transmissionRightShift = 0;
 		uint32_t channelMask;
 		uint8_t numChannels;
 		float posRescale;
@@ -63,7 +67,8 @@ class Trill : public I2c
 		float rawRescale;
 		int identify();
 		void updateRescale();
-		void parseNewData();
+		void parseNewData(bool includesStatusByte);
+		void processStatusByte(uint8_t newStatusByte);
 		int writeCommandAndHandle(i2c_char_t* data, size_t size, const char* name);
 		int writeCommandAndHandle(i2c_char_t command, const char* name);
 		void updateChannelMask(uint32_t mask);
@@ -152,7 +157,7 @@ class Trill : public I2c
 		 * Performs an I2C transaction with the device to retrieve new data
 		 * and parse them. Users calling this method won't need to call newData().
 		 */
-		int readI2C();
+		int readI2C(bool shouldReadStatusByte = false);
 
 		/**
 		 * \brief Set data retrieved from the device.
@@ -166,7 +171,7 @@ class Trill : public I2c
 		 * @param len The length of the array. For proper operation, this
 		 * should be the value returned from getBytesToRead().
 		 */
-		void newData(const uint8_t* newData, size_t len);
+		void newData(const uint8_t* newData, size_t len, bool includesStatusByte = false);
 
 		/**
 		 * \brief Prepare the device so that successive reads will return data.
@@ -175,7 +180,7 @@ class Trill : public I2c
 		 * device via an external method. It is not needed to call this when using
 		 * readI2C().
 		 */
-		int prepareForDataRead();
+		int prepareForDataRead(bool shouldReadStatusByte);
 		/**
 		 * Get the device type.
 		 */
@@ -220,17 +225,6 @@ class Trill : public I2c
 		 * Get the number of capacitive channels available on the device.
 		 */
 		unsigned int getDefaultNumChannels() const;
-		/**
-		 * Get the frameId. This is only valid if setReadFrameId(true)
-		 * has been called and firmware_version() >= 3 and at least one
-		 * read has been performed.
-		 */
-		uint16_t getFrameId() { return uint16_t(frameId); }
-		/**
-		 * Same as above, but it tries to unwrap the uint16_t counter into
-		 * a uint32_t counter.
-		 */
-		uint32_t getFrameIdUnwrapped();
 
 		/**
 		 * @name Scan Configuration Settings
@@ -316,9 +310,52 @@ class Trill : public I2c
 		 * @return 0 on success, or an error code otherwise.
 		 */
 		int setAutoScanInterval(uint16_t interval);
+		/**
+		 * @name Firmware 3 features
+		 * @{
+		 */
+		/**
+		 * @name Status byte
+		 * @{
+		 */
+		/**
+		 * Read the status byte from the device.
+		 * Alternatively, the status byte can be read as part of
+		 * reading data by calling readI2C(true).
+		 *
+		 * @return the status byte.
+		 */
+		uint8_t readStatusByte();
+		/**
+		 * Whether the device has reset since a command was last
+		 * written to it.
+		 * This relies on a current status byte.
+		 */
+		bool hasReset();
+		/**
+		 * Whether activity has been detected in the current frame.
+		 *
+		 * This relies on a current status byte.
+		 */
+		bool hasActivity();
+		/**
+		 * Get the frameId.
+		 * This relies on a current status byte.
+		 */
+		uint8_t getFrameId();
+		/**
+		 * Same as above, but it tries to unwrap the 6-bit frameId into
+		 * a uint32_t counter.
+		 * This relies on having read several status bytes over time.
+		 */
+		uint32_t getFrameIdUnwrapped();
+		/**
+		 * @}
+		 */
 		int setEventMode(EventMode mode);
 		int setChannelMask(uint32_t mask);
-		int setReadFrameId(bool readFrameId);
+		int setTransmissionFormat(uint8_t width, uint8_t shift);
+		/** @} */ // end of Firwmare 3 features
 		/** @} */ // end of Scan Configuration Settings
 
 		/**
@@ -370,7 +407,7 @@ class Trill : public I2c
 		/**
 		 * Return the number of bytes to read when reading data.
 		 */
-		unsigned int getBytesToRead();
+		unsigned int getBytesToRead(bool includesStatusByte);
 		/**
 		 * Return the number of "button" channels on the device.
 		 */
