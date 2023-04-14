@@ -315,7 +315,6 @@ int Trill::identify() {
 
 	constexpr ssize_t bytesToRead = 4;
 	uint8_t rbuf[bytesToRead];
-	readBytes(rbuf, bytesToRead); // discard first read
 	ssize_t bytesRead = readBytes(rbuf, bytesToRead);
 	if (bytesRead != bytesToRead)
 	{
