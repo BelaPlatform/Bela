@@ -246,7 +246,7 @@ int gpio_fd_open(unsigned int gpio, int writeFlag)
 
 	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
 
-	fd = open(buf, writeFlag | O_NONBLOCK );
+	fd = open(buf, writeFlag);
 	if (fd < 0) {
 		perror("gpio/fd_open");
 	}
