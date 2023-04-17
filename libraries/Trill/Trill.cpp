@@ -28,6 +28,7 @@ enum {
 	kCommandReset = 12,
 	kCommandFormat = 13,
 	kCommandScanTrigger = 16,
+	kCommandAck = 254,
 	kCommandIdentify = 255
 };
 
@@ -141,9 +142,10 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		return 1;
 	}
 
-	// disable scanning
-	if(setScanTrigger(kScanTriggerDisabled))
-		return 1;
+	// disable scanning so communication is faster
+	// NOTE: ignoring return of setScanTrigger(): for fw < 3, it will
+	// allegedly fail for lack of ack
+	setScanTrigger(kScanTriggerDisabled);
 	if(identify() != 0) {
 		fprintf(stderr, "Unable to identify device\n");
 		return 2;
@@ -314,8 +316,7 @@ int Trill::writeCommandAndHandle(const i2c_char_t* data, size_t size, const char
 		return 1;
 	}
 	currentReadOffset = buf[0];
-	usleep(commandSleepTime); // need to give enough time to process command
-	return 0;
+	return waitForAck(buf[1], name);
 }
 
 int Trill::readBytesFrom(const uint8_t offset, i2c_char_t& byte, const char* name)
@@ -345,7 +346,42 @@ int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, co
 		return 1;
 	}
 	return 0;
+}
 
+int Trill::waitForAck(const uint8_t command, const char* name)
+{
+	if(firmware_version_ && firmware_version_ < 3) {
+		// old firmware, use old sleep time
+		usleep(10000);
+		return 0;
+	}
+	i2c_char_t buf[2]; // TODO: make it of size 1
+	unsigned int sleep = commandSleepTime;
+	unsigned int totalSleep = 0;
+	int verbose = 0;
+	while(totalSleep < 100000)
+	{
+		usleep(sleep);
+		if(readBytesFrom(kOffsetCommand, buf, sizeof(buf), name))
+			return 1;
+		if(kCommandAck == buf[0])
+		{
+			// check second byte if not identify
+			if(kCommandIdentify == command || buf[1] == command) // debug only. TODOL remove
+			{
+
+				verbose && printf("Ack'ed %d with %d %d\n", command, buf[0], buf[1]);
+				return 0;
+			}
+		}
+		verbose && printf("sleep %d: %d %d\n", sleep, buf[0], buf[1]);
+		totalSleep += sleep;
+		sleep *= 2;
+		if(!sleep) // avoid infinite loop in case we are told not to wait for ack
+			break;
+	}
+	fprintf(stderr, "%s: failed to read ack for command %d\n",name,  command);
+	return 1;
 }
 
 #define REQUIRE_FW_AT_LEAST(num) \
@@ -356,10 +392,10 @@ int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, co
 	}
 
 int Trill::identify() {
-	if(WRITE_COMMAND(kCommandIdentify))
-		return 1;
-
-	uint8_t rbuf[3];
+	// NOTE: ignoring return of WRITE_COMMAND(): for fw < 3, it will
+	// allegedly fail for lack of ack
+	WRITE_COMMAND(kCommandIdentify);
+	i2c_char_t rbuf[3];
 	if(READ_BYTES_FROM(kOffsetCommand, rbuf, sizeof(rbuf)))
 	{
 		device_type_ = NONE;
@@ -379,7 +415,6 @@ int Trill::identify() {
 	}
 	device_type_ = readDeviceType;
 	firmware_version_ = rbuf[2];
-	// rbuf[3] is currently unused
 
 	return 0;
 }

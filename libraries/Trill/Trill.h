@@ -53,11 +53,11 @@ class Trill : public I2c
 		uint32_t frameId;
 		uint8_t statusByte;
 		uint8_t address;
-		uint8_t firmware_version_; // Firmware version running on the device
+		uint8_t firmware_version_ = 0; // Firmware version running on the device
 		uint8_t num_touches_; // Number of touches on last read
 		bool dataBufferIncludesStatusByte = false;
 		std::vector<uint8_t> dataBuffer;
-		uint16_t commandSleepTime = 10000;
+		uint16_t commandSleepTime = 1000;
 		size_t currentReadOffset = -1;
 		bool shouldReadFrameId = false;
 		unsigned int numBits;
@@ -77,6 +77,7 @@ class Trill : public I2c
 		int writeCommandAndHandle(i2c_char_t command, const char* name);
 		int readBytesFrom(uint8_t offset, i2c_char_t* data, size_t size, const char* name);
 		int readBytesFrom(uint8_t offset, i2c_char_t& byte, const char* name);
+		int waitForAck(uint8_t command, const char* name);
 		void updateChannelMask(uint32_t mask);
 		bool readErrorOccurred;
 	public:
@@ -333,8 +334,9 @@ class Trill : public I2c
 		 */
 		int readStatusByte();
 		/**
-		 * Whether the device has reset since a command was last
-		 * written to it.
+		 * Whether the device has reset since a identify command was
+		 * last written to it.
+		 *
 		 * This relies on a current status byte.
 		 */
 		bool hasReset();
