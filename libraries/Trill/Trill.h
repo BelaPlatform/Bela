@@ -43,6 +43,10 @@ class Trill : public I2c
 			kEventModeChange = 1,
 			kEventModeAlways = 2,
 		} EventMode;
+		typedef enum {
+			kScanTriggerI2c = 0x0, ///< Scan capacitive channels after every I2C transaction
+			kScanTriggerDisabled = 0xffff, ///< Do not scan capacitive channels
+		} ScanTriggerMode;
 	private:
 		Mode mode_; // Which mode the device is in
 		Device device_type_ = NONE; // Which type of device is connected (if any)
@@ -296,12 +300,16 @@ class Trill : public I2c
 		/**
 		 * Set the device to scan automatically at the specified intervals.
 		 *
-		 * @param interval The scanning period, measured in ticks of a
+		 * @param arg One of the #ScanTriggerMode values, or the
+		 * scanning period, measured in ticks of a
 		 * 32kHz clock. This effective scanning period will be limited
 		 * by the scanning speed, bit depth and any computation
-		 * happening on the device (such as touch detection). A value
-		 * of 0 disables auto scanning.
+		 * happening on the device (such as touch detection).
 		 * @return 0 on success, or an error code otherwise.
+		 */
+		int setScanTrigger(uint16_t arg);
+		/**
+		 * Deprecated, replaced by setScanTrigger().
 		 */
 		int setAutoScanInterval(uint16_t interval);
 		/**

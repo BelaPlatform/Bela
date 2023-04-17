@@ -27,7 +27,7 @@ enum {
 	kCommandChannelMaskHigh = 11,
 	kCommandReset = 12,
 	kCommandFormat = 13,
-	kCommandAutoScanInterval = 16,
+	kCommandScanTrigger = 16,
 	kCommandIdentify = 255
 };
 
@@ -141,6 +141,9 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		return 1;
 	}
 
+	// disable scanning
+	if(setScanTrigger(kScanTriggerDisabled))
+		return 1;
 	if(identify() != 0) {
 		fprintf(stderr, "Unable to identify device\n");
 		return 2;
@@ -199,6 +202,9 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 
 	address = i2c_address;
 	readErrorOccurred = false;
+
+	if(setScanTrigger(kScanTriggerI2c))
+		return 1;
 	return 0;
 }
 
@@ -457,7 +463,11 @@ int Trill::setMinimumTouchSize(float minSize) {
 }
 
 int Trill::setAutoScanInterval(uint16_t interval) {
-	i2c_char_t buf[] = { kCommandAutoScanInterval, (i2c_char_t)(interval >> 8), (i2c_char_t)(interval & 0xFF) };
+	return setScanTrigger(interval);
+}
+
+int Trill::setScanTrigger(uint16_t arg) {
+	i2c_char_t buf[] = { kCommandScanTrigger, (i2c_char_t)(arg >> 8), (i2c_char_t)(arg & 0xFF) };
 	return WRITE_COMMAND_BUF(buf);
 }
 
