@@ -38,11 +38,23 @@ class Trill : public I2c
 			HEX = 5, ///< %Trill Hex
 			FLEX = 6, ///< %Trill Flex
 		} Device;
+		/**
+		 * Controls when the EVT pin will be set when a new frame is
+		 * available. In this context, the meaning "activity is detected"
+		 * depends on the #Mode in which the device is:
+		 * - in #CENTROID mode, activity is detected if one or more
+		 *   touches are detected
+		 * - in any other mode, activity is detected if any channel
+		 *   after formatting is non-zero.
+		 */
 		typedef enum {
-			kEventModeTouch = 0,
-			kEventModeChange = 1,
-			kEventModeAlways = 2,
+			kEventModeTouch = 0, ///< Only set the EVT pin if activity is detected in the current frame
+			kEventModeChange = 1, ///< Only set the EVT pin if activity is detected in the current or past frame
+			kEventModeAlways = 2, ///< Set the EVT pin every time a new frame is available
 		} EventMode;
+		/**
+		 * Special values for the argument to setScanTrigger().
+		 */
 		typedef enum {
 			kScanTriggerI2c = 0x0, ///< Scan capacitive channels after every I2C transaction
 			kScanTriggerDisabled = 0xffff, ///< Do not scan capacitive channels
@@ -90,6 +102,18 @@ class Trill : public I2c
 		 * readings from the individual sensing channels are accessed
 		 * through #rawData.
 		 * @{
+		 * @class TAGS_canonical_return
+		 * @return 0 on success or an error code otherwise.
+		 *
+		 * @class TAGS_firmware_3_error
+		 * \note This feature is only available with devices starting
+		 * from firmware version 3. On older devices calling this
+		 * function has no effect and it will return an error.
+		 *
+		 * @class TAGS_firmware_3_undef
+		 * \note This feature is only available with devices starting from firmware
+		 * version 3. On older devices calling this function has no effect and its
+		 * return value is undefined.
 		 */
 		/**
 		 * An array containing the readings from the device's
@@ -140,7 +164,7 @@ class Trill : public I2c
 		/**
 		 * \copydoc Trill::Trill(unsigned int, Device, uint8_t)
 		 *
-		 * @return 0 upon success, an error code otherwise.
+		 * \copydoc TAGS_canonical_return
 		 */
 		int setup(unsigned int i2c_bus, Device device, uint8_t i2c_address = 255);
 
@@ -166,6 +190,12 @@ class Trill : public I2c
 		 *
 		 * Performs an I2C transaction with the device to retrieve new data
 		 * and parse them. Users calling this method won't need to call newData().
+		 *
+		 * @param shouldReadStatusByte whether or not to read the
+		 * status byte as part of the transaction. If the firmware
+		 * version is lower than 3, this should be set to `false`.
+		 *
+		 * \copydoc TAGS_canonical_return
 		 */
 		int readI2C(bool shouldReadStatusByte = false);
 
@@ -180,6 +210,8 @@ class Trill : public I2c
 		 * @param newData A pointer to an array containing new data.
 		 * @param len The length of the array. For proper operation, this
 		 * should be the value returned from getBytesToRead().
+		 * @param includesStatusByte whether #newData includes the
+		 * status byte or not.
 		 */
 		void newData(const uint8_t* newData, size_t len, bool includesStatusByte = false);
 
@@ -246,7 +278,7 @@ class Trill : public I2c
 		 *
 		 * @param mode The device mode. The special mode #AUTO, selects the
 		 * device-specific default mode for the _detected_ device type.
-		 * @return 0 on success, or an error code otherwise.
+		 * \copydoc TAGS_canonical_return
 		 */
 		int setMode(Mode mode);
 		/**
@@ -259,7 +291,7 @@ class Trill : public I2c
 		 * comprised between 0 (`CSD_ULTRA_FAST_SPEED`) and 3 (`CSD_SLOW_SPEED`)
 		 * @param num_bits The bit depth of the scanning.
 		 * Valid values are comprised between 9 and 16.
-		 * @return 0 on success, or an error code otherwise.
+		 * \copydoc TAGS_canonical_return
 		 */
 		int setScanSettings(uint8_t speed, uint8_t num_bits = 12);
 		/**
@@ -270,7 +302,7 @@ class Trill : public I2c
 		 * @param prescaler The prescaler value. Valid values are
 		 * between 0 and 8, inclusive, and map directly to values
 		 * `CSD_PRESCALER_1` to `CSD_PRESCALER_256`.
-		 * @return 0 on success, or an error code otherwise.
+		 * \copydoc TAGS_canonical_return
 		 */
 		int setPrescaler(uint8_t prescaler);
 		/**
@@ -294,14 +326,14 @@ class Trill : public I2c
 		 * This triggers a call to `CSD_SetIdacValue(value)` on the device.
 		 *
 		 * @param value the IDAC value. Valid values are between 0 and 255.
-		 * @return 0 on success, or an error code otherwise.
+		 * \copydoc TAGS_canonical_return
 		 */
 		int setIDACValue(uint8_t value);
 		/**
 		 * Set minimum touch size
 		 *
 		 * Sets the minimum touch size below which a touch is ignored.
-		 * @return 0 on success, or an error code otherwise.
+		 * \copydoc TAGS_canonical_return
 		 *
 		 */
 		int setMinimumTouchSize(float minSize);
@@ -313,7 +345,12 @@ class Trill : public I2c
 		 * 32kHz clock. This effective scanning period will be limited
 		 * by the scanning speed, bit depth and any computation
 		 * happening on the device (such as touch detection).
-		 * @return 0 on success, or an error code otherwise.
+		 *
+		 * \note Passing #kScanTriggerDisabled only disables scanning if
+		 * device_firmware_ >= 3.
+		 * \copydoc TAGS_canonical_return
+		 * \note The 32kHz clock often deviates by 10% or more from its
+		 * nominal frequency.
 		 */
 		int setScanTrigger(uint16_t arg);
 		/**
@@ -321,9 +358,40 @@ class Trill : public I2c
 		 */
 		int setAutoScanInterval(uint16_t interval);
 		/**
-		 * @name Firmware 3 features
-		 * @{
+		 * Set how the EVT pin behaves.
+		 *
+		 * @param mode an #EventMode denoting the required behaviour.
+		 *
+		 * \copydoc TAGS_canonical_return
+		 * \copydoc TAGS_firmware_3_error
 		 */
+		int setEventMode(EventMode mode);
+		/**
+		 * Set a channel mask identifying which scanning channels are
+		 * enabled.
+		 *
+		 * @param mask The channel mask. Bits 0 to 31 identify channels
+		 * 0 to 31 respectively. Bit positions higher than the value
+		 * returned by getDefaultNumChannels() are ignored.
+		 *
+		 * \copydoc TAGS_canonical_return
+		 * \copydoc TAGS_firmware_3_error
+		 */
+		int setChannelMask(uint32_t mask);
+		/**
+		 * Set the format used for transmission of non-centroid data
+		 * from the device to the host.
+		 *
+		 * @param width The data width. If a value would overflow when
+		 * stored, it is clipped.
+		 * @param shift Number of right shift operations applied on the
+		 * value before being stored in the word.
+		 *
+		 * \copydoc TAGS_canonical_return
+		 * \copydoc TAGS_firmware_3_error
+		 */
+		int setTransmissionFormat(uint8_t width, uint8_t shift);
+		/** @} */ // end of Scan Configuration Settings
 		/**
 		 * @name Status byte
 		 * @{
@@ -338,6 +406,8 @@ class Trill : public I2c
 		 * internal state, the caller is probably better off calling
 		 * getFrameId(), hasActivity(), hasReset() instead of parsing
 		 * the status byte directly.
+		 *
+		 * \copydoc TAGS_firmware_3_undef
 		 */
 		int readStatusByte();
 		/**
@@ -345,17 +415,23 @@ class Trill : public I2c
 		 * last written to it.
 		 *
 		 * This relies on a current status byte.
+		 *
+		 * \copydoc TAGS_firmware_3_error
 		 */
 		bool hasReset();
 		/**
 		 * Whether activity has been detected in the current frame.
 		 *
 		 * This relies on a current status byte.
+		 *
+		 * \copydoc TAGS_firmware_3_undef
 		 */
 		bool hasActivity();
 		/**
 		 * Get the frameId.
 		 * This relies on a current status byte.
+		 *
+		 * \copydoc TAGS_firmware_3_undef
 		 */
 		uint8_t getFrameId();
 		/**
@@ -367,16 +443,12 @@ class Trill : public I2c
 		 * read at least once every 63 frames.
 		 *
 		 * @return the counter
+		 * \copydoc TAGS_firmware_3_undef
 		 */
 		uint32_t getFrameIdUnwrapped();
 		/**
 		 * @}
 		 */
-		int setEventMode(EventMode mode);
-		int setChannelMask(uint32_t mask);
-		int setTransmissionFormat(uint8_t width, uint8_t shift);
-		/** @} */ // end of Firwmare 3 features
-		/** @} */ // end of Scan Configuration Settings
 
 		/**
 		 * @name Centroid Mode
