@@ -123,6 +123,10 @@ void Trill::updateChannelMask(uint32_t mask)
 
 int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
+	// until we find out the actual, disable the version check and allow
+	// for silent failure of commands
+	enableVersionCheck = false;
+	reset();
 	rawData.resize(kNumChannelsMax);
 	address = 0;
 	frameId = 0;
@@ -162,6 +166,8 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 	}
 	// if the device was unknown it will have changed by now
 	defaults = trillDefaults.at(device_type_);
+	// now we have a proper version, we can check against it
+	enableVersionCheck = true;
 
 	constexpr uint32_t defaultChannelMask = 0xffffffff;
 	if(firmware_version_ >= 3)
@@ -316,7 +322,10 @@ int Trill::writeCommandAndHandle(const i2c_char_t* data, size_t size, const char
 		return 1;
 	}
 	currentReadOffset = buf[0];
-	return waitForAck(buf[1], name);
+	if(kCommandReset == buf[1])
+		return usleep(500000); // it won't ack after reset ... (TODO: should it?)
+	else
+		return waitForAck(buf[1], name);
 }
 
 int Trill::readBytesFrom(const uint8_t offset, i2c_char_t& byte, const char* name)
@@ -385,7 +394,7 @@ int Trill::waitForAck(const uint8_t command, const char* name)
 }
 
 #define REQUIRE_FW_AT_LEAST(num) \
-	if(firmware_version_ < num) \
+	if(!enableVersionCheck && firmware_version_ < num) \
 	{ \
 		fprintf(stderr, "%s unsupported with firmware version %d, requires %d\n", __PRETTY_FUNCTION__, firmware_version_, num); \
 		return 1; \
