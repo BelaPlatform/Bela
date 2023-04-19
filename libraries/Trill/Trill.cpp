@@ -315,6 +315,12 @@ int Trill::writeCommandAndHandle(const i2c_char_t* data, size_t size, const char
 	for(size_t n = 0; n < size; ++n)
 		buf[n + 1] = data[n];
 	int bytesToWrite = size + 1;
+	if(verbose) {
+		printf("Writing %s :", name);
+		for(unsigned int n = 1; n < bytesToWrite; ++n)
+			printf("%d ", buf[n]);
+		printf("\n");
+	}
 	int ret = writeBytes(buf, bytesToWrite);
 	if(ret != bytesToWrite)
 	{
@@ -364,10 +370,14 @@ int Trill::waitForAck(const uint8_t command, const char* name)
 		usleep(10000);
 		return 0;
 	}
-	i2c_char_t buf[2]; // TODO: make it of size 1
+	size_t bytesToRead;
+	if(verbose)
+		bytesToRead = 3;
+	else
+		bytesToRead = 1;
+	i2c_char_t buf[bytesToRead];
 	unsigned int sleep = commandSleepTime;
 	unsigned int totalSleep = 0;
-	int verbose = 0;
 	while(totalSleep < 100000)
 	{
 		usleep(sleep);
@@ -375,15 +385,20 @@ int Trill::waitForAck(const uint8_t command, const char* name)
 			return 1;
 		if(kCommandAck == buf[0])
 		{
-			// check second byte if not identify
-			if(kCommandIdentify == command || buf[1] == command) // debug only. TODOL remove
-			{
-
-				verbose && printf("Ack'ed %d with %d %d\n", command, buf[0], buf[1]);
+			// The device places the received command number in the
+			// second byte and a command counter in the third byte.
+			// If verbose, those are read and can be inspected for
+			// debugging purposes.
+			verbose && printf("Ack'ed %d(%d) with %d %d %d\n", command, cmdCounter, buf[0], buf[1], buf[2]);
+			if(verbose && (kCommandIdentify != command) && (buf[1] != command || buf[2] != cmdCounter)) {
+				printf("^^^^^ reset cmdCounter\n");
+				cmdCounter = buf[2];
+			} else {
+				cmdCounter++;
 				return 0;
 			}
 		}
-		verbose && printf("sleep %d: %d %d\n", sleep, buf[0], buf[1]);
+		verbose && printf("sleep %d: %d %d %d\n", sleep, buf[0], buf[1], buf[2]);
 		totalSleep += sleep;
 		sleep *= 2;
 		if(!sleep) // avoid infinite loop in case we are told not to wait for ack
@@ -394,7 +409,7 @@ int Trill::waitForAck(const uint8_t command, const char* name)
 }
 
 #define REQUIRE_FW_AT_LEAST(num) \
-	if(!enableVersionCheck && firmware_version_ < num) \
+	if(enableVersionCheck && firmware_version_ < num) \
 	{ \
 		fprintf(stderr, "%s unsupported with firmware version %d, requires %d\n", __PRETTY_FUNCTION__, firmware_version_, num); \
 		return 1; \
@@ -443,6 +458,11 @@ void Trill::printDetails()
 	printf("Device type: %s (%d)\n", getNameFromDevice(device_type_).c_str(), deviceType());
 	printf("Address: %#x\n", address);
 	printf("Firmware version: %d\n", firmwareVersion());
+}
+
+void Trill::setVerbose(int verbose)
+{
+	this->verbose = verbose;
 }
 
 int Trill::setMode(Mode mode) {
@@ -539,6 +559,7 @@ int Trill::setChannelMask(uint32_t mask)
 
 int Trill::setTransmissionFormat(uint8_t width, uint8_t shift)
 {
+	REQUIRE_FW_AT_LEAST(3);
 	i2c_char_t buf[] = { kCommandFormat, width, shift };
 	if(WRITE_COMMAND_BUF(buf))
 		return 1;
@@ -698,6 +719,7 @@ void Trill::processStatusByte(uint8_t newStatusByte)
 
 int Trill::readStatusByte()
 {
+	REQUIRE_FW_AT_LEAST(3);
 	uint8_t newStatusByte;
 	if(READ_BYTE_FROM(kOffsetStatusByte, newStatusByte))
 		return -1;

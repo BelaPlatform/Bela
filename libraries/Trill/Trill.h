@@ -79,7 +79,10 @@ class Trill : public I2c
 		int readBytesFrom(uint8_t offset, i2c_char_t& byte, const char* name);
 		int waitForAck(uint8_t command, const char* name);
 		void updateChannelMask(uint32_t mask);
+		int verbose = 0;
+		uint8_t cmdCounter = 0;
 		bool readErrorOccurred;
+		bool enableVersionCheck = true;
 	public:
 		/**
 		 * @name RAW, BASELINE or DIFF mode
@@ -216,6 +219,10 @@ class Trill : public I2c
 		 * Print details about the device to standard output
 		 */
 		void printDetails() ;
+		/**
+		 * Print more details about I/O transactions as they happen.
+		 */
+		void setVerbose(int verbose);
 		/**
 		 * Get the number of capacitive channels currently active on the device.
 		 */
