@@ -317,7 +317,7 @@ int Trill::writeCommandAndHandle(const i2c_char_t* data, size_t size, const char
 	int bytesToWrite = size + 1;
 	if(verbose) {
 		printf("Writing %s :", name);
-		for(unsigned int n = 1; n < bytesToWrite; ++n)
+		for(ssize_t n = 1; n < bytesToWrite; ++n)
 			printf("%d ", buf[n]);
 		printf("\n");
 	}
@@ -354,7 +354,7 @@ int Trill::readBytesFrom(const uint8_t offset, i2c_char_t* data, size_t size, co
 		usleep(commandSleepTime);
 	}
 	ssize_t bytesRead = readBytes(data, size);
-	if (bytesRead != size)
+	if (bytesRead != ssize_t(size))
 	{
 		fprintf(stderr, "%s: failed to read %d bytes. ret: %d\n", name, size, bytesRead);
 		printErrno(bytesRead);
@@ -466,7 +466,6 @@ void Trill::setVerbose(int verbose)
 }
 
 int Trill::setMode(Mode mode) {
-	ssize_t bytesToWrite = 3;
 	if(AUTO == mode)
 		mode = trillDefaults.at(device_type_).mode;
 	i2c_char_t buf[] = { kCommandMode, (i2c_char_t)mode };
@@ -477,7 +476,6 @@ int Trill::setMode(Mode mode) {
 }
 
 int Trill::setScanSettings(uint8_t speed, uint8_t num_bits) {
-	ssize_t bytesToWrite = 4;
 	if(speed > 3)
 		speed = 3;
 	if(num_bits < 9)
@@ -498,7 +496,6 @@ int Trill::setPrescaler(uint8_t prescaler) {
 }
 
 int Trill::setNoiseThreshold(float threshold) {
-	ssize_t bytesToWrite = 3;
 	threshold = threshold * (1 << numBits);
 	if(threshold > 255)
 		threshold = 255;
