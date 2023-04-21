@@ -27,9 +27,6 @@ class UdpServer{
 		struct timeval stZeroTimeOut;
 		fd_set stReadFDS;
 		int size;
-		void *wasteBuffer;
-		int wasteBufferSize;
-		int length;
 		socklen_t fromLength;
 		struct sockaddr_in from;
 	public:

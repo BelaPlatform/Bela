@@ -25,12 +25,9 @@ bool UdpServer::setup(int aPort){
 		enabled = false;
 		return false; 
 	}
-	length = sizeof(server);
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = INADDR_ANY;
 	enabled = bindToPort(aPort);
-	wasteBufferSize = 2048;
-	wasteBuffer = malloc(wasteBufferSize);
 	memset(&stTimeOut, 0, sizeof(struct timeval));
 	return enabled;
 }
@@ -42,7 +39,7 @@ bool UdpServer::bindToPort(int aPort){
 		return false;
 	}
 	server.sin_port = htons(port);
-	if (bind(inSocket, (struct sockaddr *)&server, length) < 0){
+	if (bind(inSocket, (struct sockaddr *)&server, sizeof(server)) < 0){
 		enabled = false;
 		return false;
 	}
