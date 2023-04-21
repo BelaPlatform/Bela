@@ -50,14 +50,25 @@ bool UdpServer::bindToPort(int aPort){
 	return true;
 }
 
+int UdpServer::getBoundPort() const {
+	return enabled ? server.sin_port : -1;
+}
+
 void UdpServer::close(){
-	int ret=::close(inSocket);
-	if(ret != 0)
-		printf("Error while closing socket, errno: %d\n", errno);//Stop receiving data for this socket. If further data arrives, reject it.
-	inSocket=0;
+	if(inSocket >= 0)
+	{
+		int ret =::close(inSocket);
+		if(ret != 0)
+			fprintf(stderr, "Error while closing socket, errno: %d\n", errno);
+	}
+	inSocket = -1;
+	enabled = false;
 }
 
 int UdpServer::waitUntilReady(bool readyForReading, int timeoutMsecs){
+	return waitUntilReady(timeoutMsecs);
+}
+int UdpServer::waitUntilReady(int timeoutMsecs){
 //	If the socket is ready on return, this returns 1. If it times-out before the socket becomes ready, it returns 0. If an error occurs, it returns -1.
 	if(enabled==false)
 		return -1;
