@@ -4,9 +4,7 @@
  *  Created on: 19 May 2015
  *      Author: giulio moro
  */
-
-#ifndef UDPSERVER_H_
-#define UDPSERVER_H_
+#pragma once
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -40,34 +38,50 @@ class UdpServer{
 		~UdpServer();
 		bool setup(int aPort);
 		void cleanup();
-		bool bindToPort(int aPort);
+		/**
+		 * Get the port that the server is currently listening on
+		 */
 		int getBoundPort() const;
-		/*
+		bool bindToPort(int aPort);
+		/**
 		 * Reads bytes from the socket.
 		 *
-		 * Drop-in replacement for JUCE DatagramSocket::read()
-		 *
-			If blockUntilSpecifiedAmountHasArrived is true, the method will block until maxBytesToRead
-			bytes have been read, (or until an error occurs). If this flag is false, the method will
-			return as much data as is currently available without blocking.
+		 * @param destBuffer the destination buffer
+		 * @param maxBytesToRead the maximum number of bytes to read
+		 * @param blockUntilSpecifiedAmountHasArrived If `true`, the method
+		 * will block until @p maxBytesToRead bytes have been read, (or
+		 * until an error occurs). If it is false, the method
+		 * will return as much data as is currently available without
+		 * blocking.
 		 */
 		int read(void* destBuffer, int maxBytesToRead, bool blockUntilSpecifiedAmountHasArrived);
 		void close();
+		/**
+		 * Drain the input buffer
+		 */
 		int empty();
 		int empty(int maxCount);
-		/*
-		 * Waits until the socket is ready for reading or writing.
+		/**
+		 * Waits until the socket is ready for reading.
 		 *
-			Drop-in replacement for JUCE DatagramSocket::waitUntilReady.
-			If readyForReading is true, it will wait until the socket is ready for reading; if false, it will wait until it's ready for writing.
-			If the timeout is < 0, it will wait forever, or else will give up after the specified time.
-			If the socket is ready on return, this returns 1. If it times-out before the socket becomes ready, it returns 0. If an error occurs, it returns -1.
+		 * @param timeoutMsecs If it is < 0, it will wait forever,
+		 * or else will give up after the specified time in milliseconds.
+		 *
+		 * @return If the socket is ready on return, this returns 1.
+		 * If it times-out before the socket becomes ready, it
+		 * returns 0. If an error occurs, it returns -1.
+		 */
+		int waitUntilReady(int timeoutMsecs);
+		/**
+		 * Deprecated. Should be called with `readyForReading=true`
 		 */
 		int waitUntilReady(bool readyForReading, int timeoutMsecs);
+		/**
+		 * Get the source port for the last received message
+		 */
 		int getLastRecvPort();
+		/**
+		 * Get the source address for the last received message
+		 */
 		const char* getLastRecvAddr();
 };
-
-
-
-#endif /* UDPSERVER_H_ */
