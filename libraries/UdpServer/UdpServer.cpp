@@ -1,11 +1,9 @@
-/*
- * udpServer.cpp
- *
- *  Created on: 19 May 2015
- *      Author: giulio moro
- */
 #include "UdpServer.h"
 #include <stdexcept>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
 
 void UdpServer::cleanup(){
 	close();
@@ -96,7 +94,7 @@ int UdpServer::read(//Returns the number of bytes read, or -1 if there was an er
 	{
 		if (FD_ISSET(inSocket, &stReadFDS))
 		{
-			fromLength = sizeof(from);
+			socklen_t fromLength = sizeof(from);
 			numberOfBytes += recvfrom(inSocket, ((char*)destBuffer) + numberOfBytes, maxBytesToRead - numberOfBytes, 0, (struct sockaddr*)&from, &fromLength);
 			if(numberOfBytes < 0)
 				return -1;
