@@ -1,21 +1,5 @@
-/*
- * udpServer.h
- *
- *  Created on: 19 May 2015
- *      Author: giulio moro
- */
 #pragma once
-
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 
 class UdpServer{
 	private:
@@ -23,8 +7,6 @@ class UdpServer{
 		int enabled = false;
 		int inSocket = -1;
 		struct sockaddr_in server;
-		int size;
-		socklen_t fromLength;
 		struct sockaddr_in from;
 	public:
 		UdpServer();
