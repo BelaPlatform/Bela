@@ -51,7 +51,7 @@ void OscReceiver::setup(int port, std::function<void(oscpkt::Message* msg, const
 }
 
 int OscReceiver::waitForMessage(int timeout){
-	int ret = socket->waitUntilReady(true, timeout);
+	int ret = socket->waitUntilReady(timeout);
 	if (ret == -1){
 		fprintf(stderr, "OscReceiver: Error polling UDP socket: %d %s\n", errno, strerror(errno));
 		return -1;
