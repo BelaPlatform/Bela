@@ -103,17 +103,17 @@ int UdpServer::read(//Returns the number of bytes read, or -1 if there was an er
 		return -1;
 	}
 	int numberOfBytes = 0;
-//	do
+	do
 	{
 		if (FD_ISSET(inSocket, &stReadFDS))
 		{
 			fromLength = sizeof(from);
-			numberOfBytes += recvfrom(inSocket, destBuffer, maxBytesToRead - numberOfBytes, 0, (struct sockaddr*)&from, &fromLength);
+			numberOfBytes += recvfrom(inSocket, ((char*)destBuffer) + numberOfBytes, maxBytesToRead - numberOfBytes, 0, (struct sockaddr*)&from, &fromLength);
 			if(numberOfBytes < 0)
 				return -1;
 		}
 	}
-//	while (blockUntilSpecifiedAmountHasArrived && numberOfBytes == maxBytesToRead);
+	while (blockUntilSpecifiedAmountHasArrived && numberOfBytes < maxBytesToRead);
 	return numberOfBytes;
 }
 int UdpServer::getLastRecvPort()
