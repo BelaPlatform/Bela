@@ -123,10 +123,6 @@ void Trill::updateChannelMask(uint32_t mask)
 
 int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 {
-	// until we find out the actual, disable the version check and allow
-	// for silent failure of commands
-	enableVersionCheck = false;
-	reset();
 	rawData.resize(kNumChannelsMax);
 	address = 0;
 	frameId = 0;
@@ -145,6 +141,10 @@ int Trill::setup(unsigned int i2c_bus, Device device, uint8_t i2c_address)
 		fprintf(stderr, "Unable to initialise I2C communication\n");
 		return 1;
 	}
+	// until we find out the actual, disable the version check and allow
+	// for silent failure of commands
+	enableVersionCheck = false;
+	reset(); // this is a time-consuming NOP for fw < 3
 
 	// disable scanning so communication is faster
 	// NOTE: ignoring return of setScanTrigger(): for fw < 3, it will
