@@ -5,43 +5,32 @@
  *      Author: giulio moro
  */
 #include "UdpServer.h"
+#include <stdexcept>
 
 void UdpServer::cleanup(){
 	close();
 }
-UdpServer::UdpServer(int aPort){
-	setup(aPort);
+UdpServer::UdpServer(unsigned int port){
+	if(!setup(port))
+		throw std::runtime_error("UdpServer: could not bind to port " + std::to_string(port));
 };
 UdpServer::UdpServer(){}
 UdpServer::~UdpServer(){
 	cleanup();
 };
-bool UdpServer::setup(int aPort){
-	enabled = true;
+bool UdpServer::setup(unsigned int port){
+	close();
 	inSocket = socket(AF_INET, SOCK_DGRAM, 0);
-	if(inSocket < 0) {
-		enabled = false;
-		return false; 
-	}
+	if(inSocket < 0)
+		return enabled = false;
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = INADDR_ANY;
-	enabled = bindToPort(aPort);
-	return enabled;
-}
-
-bool UdpServer::bindToPort(int aPort){
-	port = aPort;
-	if(port < 1){
-		enabled = false;
-		return false;
-	}
+	if(port < 1 || port >= 65536)
+		return enabled = false;
 	server.sin_port = htons(port);
-	if (bind(inSocket, (struct sockaddr *)&server, sizeof(server)) < 0){
-		enabled = false;
-		return false;
-	}
-	enabled = true;
-	return true;
+	if(bind(inSocket, (struct sockaddr *)&server, sizeof(server)) < 0)
+		return enabled = false;
+	return enabled = true;
 }
 
 int UdpServer::getBoundPort() const {

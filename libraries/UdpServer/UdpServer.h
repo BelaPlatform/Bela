@@ -28,15 +28,14 @@ class UdpServer{
 		struct sockaddr_in from;
 	public:
 		UdpServer();
-		UdpServer(int aPort);
+		UdpServer(unsigned int port);
 		~UdpServer();
-		bool setup(int aPort);
+		bool setup(unsigned int aPort);
 		void cleanup();
 		/**
 		 * Get the port that the server is currently listening on
 		 */
 		int getBoundPort() const;
-		bool bindToPort(int aPort);
 		/**
 		 * Reads bytes from the socket.
 		 *
