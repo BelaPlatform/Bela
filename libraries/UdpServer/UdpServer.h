@@ -20,12 +20,9 @@
 class UdpServer{
 	private:
 		int port;
-		int enabled;
+		int enabled = false;
 		int inSocket = -1;
 		struct sockaddr_in server;
-		struct timeval stTimeOut;
-		struct timeval stZeroTimeOut;
-		fd_set stReadFDS;
 		int size;
 		socklen_t fromLength;
 		struct sockaddr_in from;
