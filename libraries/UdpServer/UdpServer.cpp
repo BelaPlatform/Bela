@@ -67,7 +67,7 @@ int UdpServer::waitUntilReady(bool readyForReading, int timeoutMsecs){
 	FD_SET(fd, &fds);
 
 int UdpServer::waitUntilReady(int timeoutMsecs){
-	if(enabled == false)
+	if(!enabled)
 		return -1;
 	fd_set stReadFDS;
 	FD_INIT(inSocket, stReadFDS);
@@ -90,7 +90,7 @@ int UdpServer::read(//Returns the number of bytes read, or -1 if there was an er
 					int maxBytesToRead,
 					bool blockUntilSpecifiedAmountHasArrived)
 {
-	if(enabled == false)
+	if(!enabled)
 		return -1;
 	fd_set stReadFDS;
 	FD_INIT(inSocket, stReadFDS);
