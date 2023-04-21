@@ -18,8 +18,6 @@ UdpServer::~UdpServer(){
 };
 bool UdpServer::setup(int aPort){
 	enabled = true;
-	stZeroTimeOut.tv_sec = 0; //set timeout to 0
-	stZeroTimeOut.tv_usec = 0;
 	inSocket = socket(AF_INET, SOCK_DGRAM, 0);
 	if(inSocket < 0) {
 		enabled = false;
@@ -28,7 +26,6 @@ bool UdpServer::setup(int aPort){
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = INADDR_ANY;
 	enabled = bindToPort(aPort);
-	memset(&stTimeOut, 0, sizeof(struct timeval));
 	return enabled;
 }
 
@@ -65,15 +62,19 @@ void UdpServer::close(){
 int UdpServer::waitUntilReady(bool readyForReading, int timeoutMsecs){
 	return waitUntilReady(timeoutMsecs);
 }
+#define FD_INIT(fd, fds) \
+	FD_ZERO(&fds); \
+	FD_SET(fd, &fds);
+
 int UdpServer::waitUntilReady(int timeoutMsecs){
-//	If the socket is ready on return, this returns 1. If it times-out before the socket becomes ready, it returns 0. If an error occurs, it returns -1.
 	if(enabled == false)
 		return -1;
+	fd_set stReadFDS;
+	FD_INIT(inSocket, stReadFDS);
 	if(timeoutMsecs < 0)
 		return select(inSocket + 1, &stReadFDS, NULL, NULL, NULL); //calling this with a NULL timeout will block indefinitely
-	FD_ZERO(&stReadFDS);
-	FD_SET(inSocket, &stReadFDS);
 	float timeOutSecs = timeoutMsecs * 0.001;
+	struct timeval stTimeOut;
 	stTimeOut.tv_sec = (long int)timeOutSecs;
 	timeOutSecs -= (int)timeOutSecs;
 	long int timeOutUsecs = timeOutSecs * 1000000;
@@ -91,9 +92,13 @@ int UdpServer::read(//Returns the number of bytes read, or -1 if there was an er
 {
 	if(enabled == false)
 		return -1;
-	FD_ZERO(&stReadFDS);
-	FD_SET(inSocket, &stReadFDS);
-	int descriptorReady = select(inSocket + 1, &stReadFDS, NULL, NULL, &stZeroTimeOut); //TODO: this is not JUCE-compliant
+	fd_set stReadFDS;
+	FD_INIT(inSocket, stReadFDS);
+	struct timeval stZeroTimeOut = {
+		.tv_sec = 0,
+		.tv_usec = 0,
+	};
+	int descriptorReady = select(inSocket + 1, &stReadFDS, NULL, NULL, &stZeroTimeOut);
 	if(descriptorReady < 0){ //an error occurred
 		return -1;
 	}
