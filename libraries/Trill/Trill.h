@@ -53,11 +53,13 @@ class Trill : public I2c
 			kEventModeAlways = 2, ///< Set the EVT pin every time a new frame is available
 		} EventMode;
 		/**
-		 * Special values for the argument to setScanTrigger().
+		 *
 		 */
 		typedef enum {
-			kScanTriggerI2c = 0x0, ///< Scan capacitive channels after every I2C transaction
-			kScanTriggerDisabled = 0xffff, ///< Do not scan capacitive channels
+			kScanTriggerDisabled = 0x0, ///< Do not scan capacitive channels.
+			kScanTriggerI2c = 0x1, ///< Scan capacitive channels after every I2C transaction
+			kScanTriggerTimer = 0x2, ///< Scan capacitive channels every time the timer set by setAutoScanInterval() expires
+			kScanTriggerI2cOrTimer = 0x3, ///< Scan capacitive channels after every I2C transaction or when timer expires, whichever comes first.
 		} ScanTriggerMode;
 	private:
 		Mode mode_; // Which mode the device is in
@@ -81,6 +83,7 @@ class Trill : public I2c
 		float posHRescale;
 		float sizeRescale;
 		float rawRescale;
+		ScanTriggerMode scanTriggerMode;
 		int identify();
 		void updateRescale();
 		void parseNewData(bool includesStatusByte);
@@ -338,23 +341,38 @@ class Trill : public I2c
 		 */
 		int setMinimumTouchSize(float minSize);
 		/**
-		 * Set the device to scan automatically at the specified intervals.
+		 * Set how the device triggers a new scan of its capacitive
+		 * channels.
 		 *
-		 * @param arg One of the #ScanTriggerMode values, or the
-		 * scanning period, measured in ticks of a
-		 * 32kHz clock. This effective scanning period will be limited
-		 * by the scanning speed, bit depth and any computation
-		 * happening on the device (such as touch detection).
+		 * @param arg One of the #ScanTriggerMode values
 		 *
-		 * \note Passing #kScanTriggerDisabled only disables scanning if
-		 * device_firmware_ >= 3.
+		 * \copydoc TAGS_firmware_3_error
 		 * \copydoc TAGS_canonical_return
-		 * \note The 32kHz clock often deviates by 10% or more from its
-		 * nominal frequency.
 		 */
-		int setScanTrigger(uint16_t arg);
+		int setScanTrigger(ScanTriggerMode scanTriggerMode);
 		/**
-		 * Deprecated, replaced by setScanTrigger().
+		 * Set the interval for scanning capacitive channels when the
+		 * device's scanning is triggered by the timer.
+		 *
+		 * @param ms the scanning period, measured in milliseconds. The
+		 * effective minimum scanning period will be limited by the scanning
+		 * speed, bit depth and any computation happening on the device
+		 * (such as touch detection). Granularity is 1 ms for values
+		 * until 255 ms and higher after that. Maximum value is just
+		 * above 2032 ms.
+		 * Scanning on timer has to be separately enabled via setScanTrigger().
+		 * When @p ms is not greater than zero, the timer is disabled.
+		 *
+		 * \note The 32kHz clock often deviates by 10% or more from its
+		 * nominal frequency, thus affecting the accuracy of the timer.
+		 */
+		int setTimerPeriod(float ms);
+		/**
+		 * Deprecated. Same as setTimerPeriod(), but the @p interval is
+		 * expressed as cycles of a 32kHz clock. On devices with
+		 * firmware 2, @p interval is used directly. On devices with
+		 * firwmare 3 or above, it is quantised to blocks of at least
+		 * 1 ms.
 		 */
 		int setAutoScanInterval(uint16_t interval);
 		/**

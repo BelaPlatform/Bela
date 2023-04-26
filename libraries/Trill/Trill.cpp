@@ -27,7 +27,9 @@ enum {
 	kCommandChannelMaskHigh = 11,
 	kCommandReset = 12,
 	kCommandFormat = 13,
-	kCommandScanTrigger = 16,
+	kCommandTimerPeriod = 14,
+	kCommandScanTrigger = 15,
+	kCommandAutoScanInterval = 16,
 	kCommandAck = 254,
 	kCommandIdentify = 255
 };
@@ -378,7 +380,7 @@ int Trill::waitForAck(const uint8_t command, const char* name)
 	i2c_char_t buf[bytesToRead];
 	unsigned int sleep = commandSleepTime;
 	unsigned int totalSleep = 0;
-	while(totalSleep < 100000)
+	while(totalSleep < 200000)
 	{
 		usleep(sleep);
 		if(readBytesFrom(kOffsetCommand, buf, sizeof(buf), name))
@@ -523,12 +525,61 @@ int Trill::setMinimumTouchSize(float minSize) {
 	return WRITE_COMMAND_BUF(buf);
 }
 
-int Trill::setAutoScanInterval(uint16_t interval) {
-	return setScanTrigger(interval);
+int Trill::setTimerPeriod(float ms) {
+	if(firmware_version_ >= 3) {
+		if(ms < 0)
+			ms = 0;
+		const float kMaxMs = 255 * 255 / 32.f;
+		if(ms > kMaxMs)
+			ms = kMaxMs;
+		// Start from a clock period of 1ms (32 cycles of the 32kHz clock)
+		uint32_t period = 32;
+		uint32_t ticks = ms + 0.5f; // round
+		while(ticks > 255) {
+			period *= 2;
+			ticks /= 2;
+		}
+		if(period > 255) {
+			// shouldn't get here
+			fprintf(stderr, "Trill:setTimerPeriod(): the requested %f ms cannot be achieved. Using %lu instead\n", ms, (unsigned long)(period * ticks / 32));
+			period = 255;
+		}
+		i2c_char_t buf[] = { kCommandTimerPeriod, i2c_char_t(period), i2c_char_t(ticks) };
+		if(WRITE_COMMAND_BUF(buf))
+			return 1;
+	} else {
+		// fw 2 had kCommandAutoScanInterval, which takes a WORD
+		// representing cycles of the 32kHz clock
+		// which was used to start the timer in one-shot mode.
+		uint16_t arg = ms * 32 + 0.5f;
+		i2c_char_t buf[] = { kCommandAutoScanInterval, (i2c_char_t)(arg >> 8), (i2c_char_t)(arg & 0xFF) };
+		if(WRITE_COMMAND_BUF(buf))
+			return 1;
+	}
+	return 0;
 }
 
-int Trill::setScanTrigger(uint16_t arg) {
-	i2c_char_t buf[] = { kCommandScanTrigger, (i2c_char_t)(arg >> 8), (i2c_char_t)(arg & 0xFF) };
+int Trill::setAutoScanInterval(uint16_t interval)
+{
+	if(setTimerPeriod(interval / 32.f))
+		return 1;
+	if(firmware_version_ >= 3) {
+		// backwards compatibility: when using v3 library with v3 fw,
+		// but the application was written for fw 2
+		if(interval) {
+			// ensure scanning on timer is enabled
+			ScanTriggerMode mode = ScanTriggerMode(scanTriggerMode | kScanTriggerTimer);
+			if(setScanTrigger(ScanTriggerMode(mode)))
+				return 1;
+		}
+	}
+	return 0;
+}
+
+int Trill::setScanTrigger(ScanTriggerMode mode) {
+	REQUIRE_FW_AT_LEAST(3);
+	scanTriggerMode = mode;
+	i2c_char_t buf[] = { kCommandScanTrigger, i2c_char_t(scanTriggerMode) };
 	return WRITE_COMMAND_BUF(buf);
 }
 
