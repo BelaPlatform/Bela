@@ -96,10 +96,17 @@ extern "C"
 // these functions are currently provided by xenomai.
 // We put these declarations here so we do not have to include
 // Xenomai specific files
-int rt_printf(const char *format, ...);
-int rt_fprintf(FILE *stream, const char *format, ...);
-int rt_vprintf(const char *format, va_list ap);
-int rt_vfprintf(FILE *stream, const char *format, va_list ap);
+// use attributes to provide printf-style compiler warnings
+#ifdef __GNUC__
+#define _ATTRIBUTE(attrs) __attribute__ (attrs)
+#else
+#define _ATTRIBUTE(attrs)
+#endif
+
+int rt_printf(const char *format, ...) _ATTRIBUTE ((__format__ (__printf__, 1, 2)));
+int rt_fprintf(FILE *stream, const char *format, ...) _ATTRIBUTE ((__format__ (__printf__, 2, 3)));
+int rt_vprintf(const char *format, va_list ap)  _ATTRIBUTE ((__format__ (__printf__, 1, 0)));
+int rt_vfprintf(FILE *stream, const char *format, va_list ap)  _ATTRIBUTE ((__format__ (__printf__, 2, 0)));
 
 /**
  * A type of Bela hardware.
