@@ -194,8 +194,20 @@ int Spi_Codec::initCodec(){
 
 int Spi_Codec::startAudio(int shouldBeReady){
 	// Enable PLL
-	return writeRegister(REG_PLL_CLK_CONTROL_0, 0x9C);
-	// TODO: wait till we are ready
+	if(writeRegister(REG_PLL_CLK_CONTROL_0, 0x9C))
+		return 1;
+	// when combined with Bela cape rev C, we need to enable the
+	// ADC by toggling its reset pin. As this pin (P8.32) is already reserved
+	// by us as part of the SPI GPIO device, we can set it here regardless
+	// of the actual board we are running on.
+	const size_t kAds816xReset = 11;
+	if(gpio_export(kAds816xReset))
+		return 1;
+	if(gpio_set_dir(kAds816xReset, OUTPUT_PIN))
+		return 1;
+	if(gpio_set_value(kAds816xReset, HIGH))
+		return 1;
+	return 0;
 }
 
 int Spi_Codec::stopAudio(){
