@@ -42,10 +42,17 @@ Es9080_Codec::Es9080_Codec(int i2cBus, int i2cAddress, AudioCodecParams::ClockSo
 	// polarity also changes below
 	params.bitDelay = (kClockSourceMcasp == params.wclk) ? 1 : 0;
 	initI2C_RW(i2cBus, i2cAddress, -1);
+
+	// toggle reset pin
 	gpio.open(resetPin, Gpio::OUTPUT);
 	gpio.clear();
 	usleep(1000);
 	gpio.set();
+	// The ADS816x is also wired on this reset pin, so we wait:
+	// ADS8166 datasheet 6.7 Switching characteristics
+	// Delay time: RST rising to READY rising is 4ms MAX
+	// However, there is typically enough time between here and the moment
+	// the PRU start, so we don't have to explicitly wait here
 }
 
 Es9080_Codec::~Es9080_Codec()
