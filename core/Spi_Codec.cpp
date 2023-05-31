@@ -205,8 +205,14 @@ int Spi_Codec::startAudio(int shouldBeReady){
 		return 1;
 	if(gpio_set_dir(kAds816xReset, OUTPUT_PIN))
 		return 1;
+	if(gpio_set_value(kAds816xReset, LOW))
+		return 1;
+	usleep(1000);
 	if(gpio_set_value(kAds816xReset, HIGH))
 		return 1;
+	// ADS8166 datasheet 6.7 Switching characteristics
+	// Delay time: RST rising to READY rising is 4ms MAX
+	usleep(4000);
 	return 0;
 }
 
