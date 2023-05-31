@@ -441,6 +441,10 @@ int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int m
 			adcNrstPin.clear();
 			usleep(1000);
 			adcNrstPin.set();
+			// ADS8166 datasheet 6.7 Switching characteristics
+			// Delay time: RST rising to READY rising is 4ms MAX
+			// However, there is typically enough time between here and the moment
+			// the PRU start, so we don't have to explicitly wait here
 		}
 	}
 
