@@ -742,7 +742,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 						value = 0;
 					if(Trill::prescalerMax < value)
 						value = Trill::prescalerMax;
-					rt_printf("bela_setTrill prescaler value out of range, clipping to %u\n", value);
+					rt_printf("bela_setTrill prescaler value out of range, clipping to %.0f\n", value);
 				}
 				gTouchSensors[idx].second->setPrescaler(value);
 			}
