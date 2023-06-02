@@ -168,6 +168,7 @@ std::string gSerialId;
 int gSerialEom;
 enum SerialType {
 	kSerialFloats,
+	kSerialBytes,
 	kSerialSymbol,
 	kSerialSymbols,
 } gSerialType = kSerialFloats;
@@ -593,27 +594,36 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		{
 			if(
 				argc < 5
-				|| !libpd_is_symbol(argv + 0)
-				|| !libpd_is_symbol(argv + 1)
-				|| !libpd_is_float(argv + 2)
-				|| !libpd_is_symbol(argv + 3)
-				|| !libpd_is_symbol(argv + 4)
+				|| !libpd_is_symbol(argv + 0) // serial_id
+				|| !libpd_is_symbol(argv + 1) // device
+				|| !libpd_is_float(argv + 2) // baudrate
+				|| !(libpd_is_symbol(argv + 3) || libpd_is_float(argv + 3)) // EOM
+				|| !libpd_is_symbol(argv + 4) // tyoe
 			)
 			{
-				fprintf(stderr, "Invalid bela_setSerial arguments. Should be: `new serial_id device baudrate EOM type`, where `EOM` is one of `newline` or `none` and `type` is one of `floats`, `symbol`, `symbols`\n");
+				fprintf(stderr, "Invalid bela_setSerial arguments. Should be:\n"
+				"`new serial_id device baudrate EOM type`,\n"
+				"where `EOM` is one of `newline` or `none` or a character (expressed as an integer"
+				"       between 0 and 255)\n"
+				"and `type` is one of `bytes`, `floats`, `symbol`, `symbols`\n");
 				return;
 			}
 			gSerialId = libpd_get_symbol(argv + 0);
 			const char* device = libpd_get_symbol(argv + 1);
 			unsigned int baudrate = libpd_get_float(argv + 2);
-			const char* eom = libpd_get_symbol(argv + 3);
-			if(0 == strcmp(eom, "newline"))
-				gSerialEom = '\n';
-			else
-				gSerialEom = -1;
+			gSerialEom = -1;
+			if(libpd_is_symbol(argv + 3)) {
+				const char* eom = libpd_get_symbol(argv + 3);
+				if(0 == strcmp(eom, "newline"))
+					gSerialEom = '\n';
+			} else if(libpd_is_float(argv + 3)) {
+				gSerialEom = libpd_get_float(argv + 3);
+			}
 			const char* type = libpd_get_symbol(argv + 4);
 			if(0 == strcmp("floats", type))
 				gSerialType = kSerialFloats;
+			else if(0 == strcmp("bytes", type))
+				gSerialType = kSerialBytes;
 			else if(0 == strcmp("symbol", type))
 				gSerialType = kSerialSymbol;
 			else if(0 == strcmp("symbols", type))
@@ -1135,6 +1145,22 @@ void render(BelaContext *context, void *userData)
 				if(kSerialSymbol == gSerialType)
 				{
 					libpd_symbol(rec, data);
+				} else if(kSerialBytes == gSerialType) {
+					if(gSerialEom >= 0) {
+						// messages are separated: send as a list
+						libpd_start_message(h.dataSize);
+						for(size_t n = 0; n < h.dataSize; ++n)
+							libpd_add_float(data[n]);
+						libpd_finish_message(rec, id);
+					} else {
+						// messages are not separated: send one byte at a time
+						for(size_t n = 0; n < h.dataSize; ++n)
+						{
+							libpd_start_message(h.dataSize);
+							libpd_add_float(data[n]);
+							libpd_finish_message(rec, id);
+						}
+					}
 				} else {
 					unsigned int nTokens = 1;
 					const uint8_t separators[] = { ' ', '\0'};
@@ -1177,7 +1203,7 @@ void render(BelaContext *context, void *userData)
 							start = n + 1;
 						}
 					}
-					libpd_finish_message("bela_serial", id);
+					libpd_finish_message(rec, id);
 				}
 			}
 			waitingFor = kHeader;
