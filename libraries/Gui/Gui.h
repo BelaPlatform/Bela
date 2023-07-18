@@ -10,6 +10,7 @@
 
 // forward declarations
 class WSServer;
+class WSServerDetails;
 
 class Gui
 {
@@ -20,10 +21,10 @@ class Gui
 
 		bool wsIsConnected = false;
 
-		void ws_connect();
-		void ws_disconnect();
-		void ws_onControlData(const char* data, unsigned int size);
-		void ws_onData(const char* data, unsigned int size);
+		void ws_connect(const std::string& address, const WSServerDetails* id);
+		void ws_disconnect(const std::string& address, const WSServerDetails* id);
+		void ws_onControlData(const std::string& address, const WSServerDetails* id, const unsigned char* data, size_t size);
+		void ws_onData(const std::string& address, const WSServerDetails* id, const unsigned char* data, size_t size);
 		int doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size);
 
 		unsigned int _port;
@@ -33,7 +34,7 @@ class Gui
 
 		// User defined functions
 		std::function<bool(JSONObject&, void*)> customOnControlData;
-		std::function<bool(const char*, unsigned int, void*)> customOnData;
+		std::function<bool(const std::string&, const WSServerDetails*, const unsigned char*, size_t, void*)> customOnData;
 
 		void* controlCallbackArg = nullptr;
 		void* binaryCallbackArg = nullptr;
@@ -107,7 +108,7 @@ class Gui
 		 * @param callbackArg: Pointer to be passed to the
 		 * callback.
 		 **/
-		void setBinaryDataCallback(std::function<bool(const char*, unsigned int, void*)> callback, void* callbackArg=nullptr){
+		void setBinaryDataCallback(std::function<bool(const std::string&, const WSServerDetails* id, const unsigned char*, size_t, void*)> callback, void* callbackArg=nullptr){
 			customOnData = callback;
 			binaryCallbackArg = callbackArg;
 		};
