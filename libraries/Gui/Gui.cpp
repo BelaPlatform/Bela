@@ -56,18 +56,16 @@ int Gui::setup(std::string projectName, unsigned int port, std::string address)
  * Called when websocket is connected.
  * Communication is started here with the server sending a 'connection' JSON object
  * with initial settings.
- * The client replies with 'connection-ack', which should be parsed accordingly.
+ * The client replies with 'connection-reply', which should be parsed accordingly.
  */
 void Gui::ws_connect(const std::string& address, const WSServerDetails* id)
 {
+	// TODO: this is currently sent to all clients, but it should only be sent to the new one
 	// send connection JSON
 	JSONObject root;
 	root[L"event"] = new JSONValue(L"connection");
 	if(!_projectName.empty())
 		root[L"projectName"] = new JSONValue(_projectName);
-
-	// Parse whatever needs to be parsed on connection
-
 	JSONValue *value = new JSONValue(root);
 	sendControl(value);
 	delete value;
@@ -79,7 +77,8 @@ void Gui::ws_connect(const std::string& address, const WSServerDetails* id)
  */
 void Gui::ws_disconnect(const std::string& address, const WSServerDetails* id)
 {
-	wsIsConnected = false;
+	if(wsConnections.count(id))
+		wsConnections.erase(id);
 }
 
 /*
@@ -104,7 +103,8 @@ void Gui::ws_onControlData(const std::string& address, const WSServerDetails* id
 	if (root.find(L"event") != root.end() && root[L"event"]->IsString()){
 		std::wstring event = root[L"event"]->AsString();
 		if (event.compare(L"connection-reply") == 0){
-			wsIsConnected = true;
+			if(!wsConnections.count(id))
+				wsConnections.insert(id);
 		}
 	}
 	delete value;
