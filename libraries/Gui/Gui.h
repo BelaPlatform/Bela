@@ -7,6 +7,7 @@
 #include <typeinfo> // for types in templates
 #include <memory>
 #include <DataBuffer.h>
+#include <set>
 
 // forward declarations
 class WSServer;
@@ -18,8 +19,7 @@ class Gui
 
 		std::vector<DataBuffer> _buffers;
 		std::unique_ptr<WSServer> ws_server;
-
-		bool wsIsConnected = false;
+		std::set<const WSServerDetails*> wsConnections;
 
 		void ws_connect(const std::string& address, const WSServerDetails* id);
 		void ws_disconnect(const std::string& address, const WSServerDetails* id);
@@ -56,7 +56,7 @@ class Gui
 		int setup(std::string projectName, unsigned int port = 5555, std::string address = "gui");
 		void cleanup();
 
-		bool isConnected(){ return wsIsConnected; };
+		size_t numConnections(){ return wsConnections.size(); };
 
 		// BUFFERS
 		/**
