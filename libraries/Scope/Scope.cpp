@@ -57,13 +57,13 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	ws_server->setup(5432);
 	ws_server->addAddress("scope_data", nullptr, nullptr, nullptr, true);
 	ws_server->addAddress("scope_control", 
-		[this](std::string address, void* buf, int size){
+		[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size){
 			scope_control_data((const char*) buf);
 		},
-		[this](std::string address){
+		[this](const std::string& address, const WSServerDetails* id){
 			scope_control_connected();
 		},
-		[this](std::string address){
+		[this](const std::string& address, const WSServerDetails* id){
 			stop();
 		});
 

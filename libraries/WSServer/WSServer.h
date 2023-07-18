@@ -13,6 +13,7 @@ namespace seasocks{
 }
 class AuxTaskNonRT;
 struct WSServerDataHandler;
+class WSServerDetails;
 
 class WSServer{
 	friend struct WSServerDataHandler;
@@ -23,7 +24,11 @@ class WSServer{
 		
 		void setup(int port);
 
-		void addAddress(std::string address, std::function<void(std::string, void*, int)> on_receive = nullptr, std::function<void(std::string)> on_connect = nullptr, std::function<void(std::string)> on_disconnect = nullptr, bool binary = false);
+		void addAddress(const std::string& address,
+				std::function<void(const std::string&, const WSServerDetails*, const unsigned char*, size_t)> on_receive = nullptr,
+				std::function<void(const std::string&, const WSServerDetails*)> on_connect = nullptr,
+				std::function<void(const std::string&, const WSServerDetails*)> on_disconnect = nullptr,
+				bool binary = false);
 		
 		int sendNonRt(const char* address, const char* str);
 		int sendNonRt(const char* address, const void* buf, unsigned int size);

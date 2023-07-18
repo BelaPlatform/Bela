@@ -18,25 +18,26 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	std::shared_ptr<seasocks::Server> server;
 	std::set<seasocks::WebSocket*> connections;
 	std::string address;
-	std::function<void(std::string, void*, int)> on_receive;
-	std::function<void(std::string)> on_connect;
-	std::function<void(std::string)> on_disconnect;
+	std::function<void(const std::string&, const WSServerDetails*, const unsigned char*, size_t)> on_receive;
+	std::function<void(const std::string&, const WSServerDetails*)> on_connect;
+	std::function<void(const std::string&, const WSServerDetails*)> on_disconnect;
 	bool binary;
 	void onConnect(seasocks::WebSocket *socket) override {
 		connections.insert(socket);
-		if(on_connect)
-			on_connect(address);
+		if(on_connect) {
+			on_connect(address, (WSServerDetails*)socket);
+		}
 	}
 	void onData(seasocks::WebSocket *socket, const char *data) override {
-		on_receive(address, (void*)data, std::strlen(data));
+		on_receive(address, (WSServerDetails*)socket, (const unsigned char*)data, std::strlen(data));
 	}
 	void onData(seasocks::WebSocket *socket, const uint8_t* data, size_t size) override {
-		on_receive(address, (void*)data, size);
+		on_receive(address, (WSServerDetails*)socket, data, size);
 	}
 	void onDisconnect(seasocks::WebSocket *socket) override {
 		connections.erase(socket);
 		if (on_disconnect)
-			on_disconnect(address);
+			on_disconnect(address, (WSServerDetails*)socket);
 	}
 };
 
@@ -72,7 +73,12 @@ void WSServer::setup(int _port) {
 	server_task->schedule();
 }
 
-void WSServer::addAddress(std::string _address, std::function<void(std::string, void*, int)> on_receive, std::function<void(std::string)> on_connect, std::function<void(std::string)> on_disconnect, bool binary){
+void WSServer::addAddress(const std::string& _address,
+				std::function<void(const std::string&, const WSServerDetails*, const unsigned char*, size_t)> on_receive,
+				std::function<void(const std::string&, const WSServerDetails*)> on_connect,
+				std::function<void(const std::string&, const WSServerDetails*)> on_disconnect,
+				bool binary)
+{
 	auto handler = std::make_shared<WSServerDataHandler>();
 	handler->server = server;
 	handler->address = _address;
