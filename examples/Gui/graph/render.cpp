@@ -94,7 +94,7 @@ void render(BelaContext *context, void *userData)
 		// Send data to GUI for visualisation once enough frames have elapsed
 		if(sendFramesElapsed > gSendPeriod * context->analogSampleRate) {
 			// If GUI is connected
-			if(gui.isConnected()) {
+			if(gui.numConnections()) {
 				// send buffers
 				gui.sendBuffer(0, gTimestamps);
 				gui.sendBuffer(1, gVoltage);
