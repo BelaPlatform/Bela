@@ -20,27 +20,27 @@ int Gui::setup(unsigned int port, std::string address)
 	ws_server = std::unique_ptr<WSServer>(new WSServer());
 	ws_server->setup(port);
 	ws_server->addAddress(_addressData,
-		[this](std::string address, void* buf, int size)
+		[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size)
 		{
-			ws_onData((const char*) buf, size);
+			ws_onData(address, id, buf, size);
 		},
 	 nullptr, nullptr, true);
 
 	ws_server->addAddress(_addressControl,
 		// onData()
-		[this](std::string address, void* buf, int size)
+		[this](const std::string& address, const WSServerDetails* id,  const unsigned char* buf, size_t size)
 		{
-			ws_onControlData((const char*) buf, size);
+			ws_onControlData(address, id, buf, size);
 		},
 		// onConnect()
-		[this](std::string address)
+		[this](const std::string& address, const WSServerDetails* id)
 		{
-			ws_connect();
+			ws_connect(address, id);
 		},
 		// onDisconnect()
-		[this](std::string address)
+		[this](const std::string& address, const WSServerDetails* id)
 		{
-			ws_disconnect();
+			ws_disconnect(address, id);
 		}
 	);
 	return 0;
@@ -58,7 +58,7 @@ int Gui::setup(std::string projectName, unsigned int port, std::string address)
  * with initial settings.
  * The client replies with 'connection-ack', which should be parsed accordingly.
  */
-void Gui::ws_connect()
+void Gui::ws_connect(const std::string& address, const WSServerDetails* id)
 {
 	// send connection JSON
 	JSONObject root;
@@ -77,19 +77,19 @@ void Gui::ws_connect()
  * Called when websocket is disconnected.
  *
  */
-void Gui::ws_disconnect()
+void Gui::ws_disconnect(const std::string& address, const WSServerDetails* id)
 {
 	wsIsConnected = false;
 }
 
 /*
- *  on_data callback for scope_control websocket
+ *  on_data callback for gui_control websocket
  *  runs on the (linux priority) seasocks thread
  */
-void Gui::ws_onControlData(const char* data, unsigned int size)
+void Gui::ws_onControlData(const std::string& address, const WSServerDetails* id, const unsigned char* data, unsigned int size)
 {
 	// parse the data into a JSONValue
-	JSONValue *value = JSON::Parse(data);
+	JSONValue *value = JSON::Parse((const char*)data);
 	if (value == NULL || !value->IsObject()){
 		fprintf(stderr, "Could not parse JSON:\n%s\n", data);
 		return;
@@ -111,9 +111,9 @@ void Gui::ws_onControlData(const char* data, unsigned int size)
 	return;
 }
 
-void Gui::ws_onData(const char* data, unsigned int size)
+void Gui::ws_onData(const std::string& address, const WSServerDetails* id, const unsigned char* data, size_t size)
 {
-	if(customOnData && !customOnData(data, size, binaryCallbackArg))
+	if(customOnData && !customOnData(address, id, data, size, binaryCallbackArg))
 	{
 		return;
 	}
