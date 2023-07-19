@@ -218,6 +218,7 @@ PRU::PRU(InternalBelaContext *input_context)
   digital_enabled(false), gpio_enabled(false), led_enabled(false),
   analog_out_is_audio(false), pru_audio_out_channels(0),
   pru_buffer_comm(0),
+  last_analog_out_frame(0), last_digital_buffer(0),
   audio_expander_input_history(0), audio_expander_output_history(0),
   audio_expander_filter_coeff(0), pruUsesMcaspIrq(false), belaHw(BelaHw_NoHw)
 {
@@ -230,12 +231,7 @@ PRU::~PRU()
 		disable();
 	exitPRUSS();
 	delete pruMemory;
-	if(gpio_enabled)
-		cleanupGPIO();
-	if(audio_expander_input_history != 0)
-		free(audio_expander_input_history);
-	if(audio_expander_output_history != 0)
-		free(audio_expander_output_history);
+	cleanup();
 }
 
 // Prepare the GPIO pins needed for the PRU
@@ -343,12 +339,12 @@ void PRU::cleanupGPIO()
 	if(digital_enabled){
 		for(unsigned int i = 0; i < context->digitalChannels; i++){
 			if(belaHw == BelaHw_Salt) {
-				if(gDigitalPins[i] == saltSwitch1Gpio)
+				if(gDigitalPins && gDigitalPins[i] == saltSwitch1Gpio)
 					continue; // leave alone this pin as it is used by bela_button.service
 			}
 			if(disabledDigitalChannels & (1 << i))
 				continue; // leave alone this pin because the user asked for it
-			if(gpio_unexport(gDigitalPins[i]))
+			if(gDigitalPins && gpio_unexport(gDigitalPins[i]))
 			{
 				// if unexport fails, we at least turn off the outputs
 				gpio_set_dir(gDigitalPins[i], OUTPUT_PIN);
@@ -377,6 +373,7 @@ void PRU::cleanupGPIO()
 // Initialise and open the PRU
 int PRU::initialise(BelaHw newBelaHw, int pru_num, bool uniformSampleRate, int mux_channels, int stopButtonPin, bool enableLed, uint32_t disabledDigitalChannels)
 {
+	cleanup();
 	this->disabledDigitalChannels = disabledDigitalChannels;
 	belaHw = newBelaHw;
 	if(BelaHw_BelaRevC == belaHw)
@@ -1602,35 +1599,29 @@ void PRU::loop(void *userData, void(*render)(BelaContext*, void*), bool highPerf
 
 	// Wait for the PRU to finish
 	task_sleep_ns(100000000);
+}
 
-	// Clean up after ourselves
+void PRU::cleanup()
+{
+	cleanupGPIO();
 	free(context->audioIn);
+	context->audioIn = 0;
 	free(context->audioOut);
-
-	if(analog_enabled) {
-		free(context->analogIn);
-		free(context->analogOut);
-		free(last_analog_out_frame);
-		if(context->multiplexerAnalogIn != 0)
-			free(context->multiplexerAnalogIn);
-		if(audio_expander_input_history != 0) {
-			free(audio_expander_input_history);
-			audio_expander_input_history = 0;
-		}
-		if(audio_expander_output_history != 0) {
-			free(audio_expander_output_history);
-			audio_expander_output_history = 0;
-		}
-	}
-
-	if(digital_enabled) {
-		free(last_digital_buffer);
-	}
-
-	context->audioIn = context->audioOut = 0;
-	context->analogIn = context->analogOut = 0;
-	context->digital = 0;
+	context->audioOut = 0;
+	free(context->analogIn);
+	context->analogIn = 0;
+	free(context->analogOut);
+	context->analogOut = 0;
+	free(last_analog_out_frame);
+	last_analog_out_frame = 0;
+	free(context->multiplexerAnalogIn);
 	context->multiplexerAnalogIn = 0;
+	free(audio_expander_input_history);
+	audio_expander_input_history = 0;
+	free(audio_expander_output_history);
+	audio_expander_output_history = 0;
+	free(last_digital_buffer);
+	last_digital_buffer = 0;
 }
 
 // Wait for an interrupt from the PRU indicate it is finished

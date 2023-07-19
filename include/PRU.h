@@ -171,6 +171,7 @@ public:
 	// Loop: read and write data from the PRU and call the user-defined audio callback
 	void loop(void *userData, void(*render)(BelaContext*, void*), bool highPerformanceMode, BelaCpuData* cpuData);
 
+	void cleanup();
 	// Wait for an interrupt from the PRU indicate it is finished
 	void waitForFinish();
 
