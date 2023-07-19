@@ -8,34 +8,69 @@
 #include "WriteFile.h"
 #include <glob.h>		// alternative to dirent.h to handle files in dirs
 #include <stdlib.h>
+#include <thread>
+#include <pthread.h>
+#include <functional>
+#include <mutex>
+#include <algorithm>
+
 //setupialise static members
 bool WriteFile::staticConstructed=false;
-AuxiliaryTask WriteFile::writeAllFilesTask=NULL;
-std::vector<WriteFile *> WriteFile::objAddrs(0);
+std::vector<WriteFile*> WriteFile::objAddrs;
 bool WriteFile::threadRunning;
 bool WriteFile::threadScheduled;
 bool WriteFile::threadIsExiting;
-int WriteFile::sleepTimeMs;
+
+class autojointhread {
+public:
+	void setup(std::function<void(void)> fun) {
+		thread = std::thread(fun);
+	}
+	~autojointhread() {
+		if(thread.joinable())
+		{
+			thread.join();
+		}
+	}
+	pthread_t native_handle() {
+		return thread.native_handle();
+	}
+	bool joinable() {
+		return thread.joinable();
+	}
+	void join() {
+		return thread.join();
+	}
+private:
+	std::thread thread;
+};
+static autojointhread writeAllFilesThread;
+static std::mutex mutex;
 
 void WriteFile::staticConstructor(){
-	if(staticConstructed==true)
+	std::unique_lock<std::mutex> lock(mutex);
+	if(staticConstructed)
 		return;
+	// if previously running thread is exiting, wait for it
+	while(writeAllFilesThread.joinable()) {
+		lock.unlock();
+		usleep(100000);
+		lock.lock();
+	}
 	staticConstructed=true;
 	threadIsExiting=false;
 	threadRunning=false;
 	threadScheduled = false;
-	writeAllFilesTask = Bela_createAuxiliaryTask(WriteFile::run, 60, "writeAllFilesTask", NULL);
+	writeAllFilesThread.setup(&WriteFile::run);
+	sched_param sch = {};
+	sch.sched_priority = 60;
+	pthread_setschedparam(writeAllFilesThread.native_handle(), SCHED_FIFO, &sch);
 }
 
 WriteFile::WriteFile(){
-	format = NULL;
-	header = NULL;
-	footer = NULL;
-	stringBuffer = NULL;
-	_filename = NULL;
 };
 
-WriteFile::WriteFile(const char* filename, bool overwrite, bool append){
+WriteFile::WriteFile(const std::string& filename, bool overwrite, bool append){
 	setup(filename, overwrite, append);
 }
 
@@ -44,39 +79,45 @@ WriteFile::~WriteFile(){
 }
 
 void WriteFile::cleanup(){
-	// this will disable all instances when
-	// you destroy the first one, but at least it's safe
+	std::unique_lock<std::mutex> lock(mutex);
+	//write all that's left
+	writeOutput(true);
+	writeFooter();
+	fflush(file);
+	fclose(file);
+	// remove from objAddrs list
+	auto it = std::find(objAddrs.begin(), objAddrs.end(), this);
+	if(it != objAddrs.end())
+		objAddrs.erase(it);
+	if(objAddrs.size())
+		return;
+	// if there are no instances left, stop the thread
 	stopThread();
-	while(threadRunning)
-		usleep(100000);
-	free(format);
-	free(header);
-	free(footer);
-	free(stringBuffer);
-	free(_filename);
+	staticConstructed = false;
+	lock.unlock();
+	// let the thread run to completion
+	if(writeAllFilesThread.joinable())
+		writeAllFilesThread.join();
 }
 
-char* WriteFile::generateUniqueFilename(const char* original)
+std::string WriteFile::generateUniqueFilename(const std::string& original)
 {
-	int originalLen = strlen(original);
+	int originalLen = original.size();
 
-	// search for a dot in the file (from the end)
+	// search for a dot in the file name (from the end)
 	int dot = originalLen;
 	for(int n = dot; n >= 0; --n)
 	{
 		if(original[n] == '.')
 			dot = n;
 	}
-	char temp[originalLen + 2];
 	int count = dot;
-	snprintf(temp, count + 1, "%s", original);
 	// add a * before the dot
-	count += sprintf(temp + count, "*") - 1;
-	count += sprintf(temp + count + 1, "%s", original + dot);
+	std::string temp = std::string({original.begin(), original.begin() + dot}) + "*" + std::string({original.begin() + dot, original.end()});
 
 	// check how many log files are already there, and choose name according to this
 	glob_t globbuf;
-	glob(temp, 0, NULL, &globbuf);
+	glob(temp.c_str(), 0, NULL, &globbuf);
 
 	int logNum;
 	int logMax = -1;
@@ -91,51 +132,44 @@ char* WriteFile::generateUniqueFilename(const char* original)
 	if(logMax == -1)
 	{
 		// use the same filename
-		char* out = (char*)malloc(sizeof(char) * (originalLen +1));
-		strcpy(out, original);
-		return out;
+		return original;
 	} else {
 		// generate a new filename
 		logNum = logMax + 1;	// new index
-		count = snprintf(NULL, 0, "%d", logNum);
-		char* out = (char*)malloc(sizeof(char) * (count + originalLen + 1));
-		count = dot;
-		snprintf(out, count + 1, "%s", original);
-		count += sprintf(out + count, "%d", logNum) - 1;
-		count += sprintf(out + count + 1, "%s", original + dot);
-		printf("File %s exists, writing to %s instead\n", original, out);
+		std::string out = std::string({original.begin(), original.begin() + dot}) + std::to_string(logNum) + std::string({original.begin() + dot, original.end()});
+		printf("File %s exists, writing to %s instead\n", original.c_str(), out.c_str());
 		return out;
 	}
 }
 
-void WriteFile::setup(const char* filename, bool overwrite, bool append){
+void WriteFile::setup(const std::string& newFilename, bool overwrite, bool append){
+	filename = newFilename;
 	if(!overwrite)
 	{
-		_filename = generateUniqueFilename(filename);
-		file = fopen(_filename, "w");
+		filename = generateUniqueFilename(filename);
+		file = fopen(filename.c_str(), "w");
 	} else {
-		printf("Overwrite %s\n", filename);
-		_filename = (char*)malloc(sizeof(char) * (strlen(filename) + 1));
+		printf("Overwrite %s\n", filename.c_str());
 		if(!append)
 		{
-			file = fopen(filename, "w");
+			file = fopen(filename.c_str(), "w");
 		} else {
-			file = fopen(filename, "a");
+			file = fopen(filename.c_str(), "a");
 		}
 	}
-	variableOpen = false;
+	fileType = kBinary;
 	lineLength = 0;
 	setEcho(false);
 	textReadPointer = 0;
 	binaryReadPointer = 0;
 	writePointer = 0;
-	sleepTimeMs = 1;
-	stringBufferLength = 1000;
-	stringBuffer = (char*)malloc(sizeof(char) * (stringBufferLength));
+	stringBuffer.resize(1000);
 	setHeader("variable=[\n");
 	setFooter("];\n");
-	staticConstructor(); //TODO: this line should be in the constructor, but cannot be because of a bug in Bela
+	staticConstructor();
+	mutex.lock();
 	objAddrs.push_back(this);
+	mutex.unlock();
 	echoedLines = 0;
 	echoPeriod = 1;
 }
@@ -161,16 +195,17 @@ void WriteFile::setBufferSize(unsigned int newSize)
 	buffer.resize(newSize);
 }
 
-void WriteFile::print(const char* string){
+void WriteFile::print(const std::string& string){
+	return;
 	if(echo == true){
 		echoedLines++;
 		if (echoedLines >= echoPeriod){
 			echoedLines = 0;
-			printf("%s", string);
+			printf("%s", string.c_str());
 		}
 	}
 	if(file != NULL && fileType != kBinary){
-		fprintf(file, "%s", string);
+		fprintf(file, "%s", string.c_str());
 	}
 }
 
@@ -178,15 +213,15 @@ void WriteFile::writeLine(){
 	if(echo == true || fileType != kBinary){
 		int stringBufferPointer = 0;
 		for(unsigned int n = 0; n < formatTokens.size(); n++){
-			int numOfCharsWritten = snprintf( &stringBuffer[stringBufferPointer], stringBufferLength - stringBufferPointer,
-								formatTokens[n], buffer[textReadPointer]);
+			int numOfCharsWritten = snprintf( &stringBuffer[stringBufferPointer], stringBuffer.size() - stringBufferPointer,
+								formatTokens[n].c_str(), buffer[textReadPointer]);
 			stringBufferPointer += numOfCharsWritten;
 			textReadPointer++;
 			if(textReadPointer >= buffer.size()){
 				textReadPointer -= buffer.size();
 			}
 		}
-		print(stringBuffer);
+		print({stringBuffer.begin(), stringBuffer.begin() + strlen(stringBuffer.data())});
 	}
 }
 
@@ -197,7 +232,7 @@ void WriteFile::setLineLength(int newLineLength){
 }
 
 void WriteFile::log(float value){
-	if(fileType != kBinary && (format == NULL || buffer.size() == 0))
+	if(fileType != kBinary && (!format.size() || !buffer.size()))
 		return;
 	buffer[writePointer] = value;
 	writePointer++;
@@ -206,7 +241,7 @@ void WriteFile::log(float value){
 	}
 	if((fileType == kText && writePointer == textReadPointer - 1) ||
 			(fileType == kBinary && writePointer == binaryReadPointer - 1)){
-		rt_fprintf(stderr, "WriteFile: %s pointers crossed, you should probably slow down your writing to disk\n", _filename);
+		rt_fprintf(stderr, "WriteFile: %s pointers crossed, you should probably slow down your writing to disk\n", filename.c_str());
 	}
 	if(threadScheduled == false){
 		startThread();
@@ -219,15 +254,11 @@ void WriteFile::log(const float* array, int length){
 	}
 }
 
-void WriteFile::setFormat(const char* newFormat){
-	allocateAndCopyString(newFormat, &format);
-	for(unsigned int n = 0; n < formatTokens.size(); n++){
-		free(formatTokens[n]);
-	}
+void WriteFile::setFormat(const std::string& format){
 	formatTokens.clear();
 	int tokenStart = 0;
 	bool firstToken = true;
-	for(unsigned int n = 0; n < strlen(format)+1; n++){
+	for(unsigned int n = 0; n < format.size() + 1; n++){
 		if(format[n] == '%' && format[n + 1] == '%'){
 			n++;
 		} else if (format[n] == '%' || format[n] == 0){
@@ -235,15 +266,10 @@ void WriteFile::setFormat(const char* newFormat){
 				firstToken = false;
 				continue;
 			}
-			char* string;
 			unsigned int tokenLength = n - tokenStart;
 			if(tokenLength == 0)
 				continue;
-			string = (char*)malloc((1+tokenLength)*sizeof(char));
-			for(unsigned int i = 0; i < tokenLength; i++){
-				string[i] = format[tokenStart + i];
-			}
-			string[tokenLength] = 0;
+			std::string string = {format.begin() + tokenStart, format.begin() + tokenStart + tokenLength};
 			formatTokens.push_back(string);
 			tokenStart = n;
 		}
@@ -257,7 +283,6 @@ int WriteFile::getNumInstances(){
 
 void WriteFile::startThread(){
 	threadScheduled = true;
-	Bela_scheduleAuxiliaryTask(writeAllFilesTask);
 }
 
 void WriteFile::stopThread(){
@@ -265,7 +290,7 @@ void WriteFile::stopThread(){
 }
 
 bool WriteFile::threadShouldExit(){
-	return(Bela_stopRequested() || threadIsExiting);
+	return threadIsExiting;
 }
 
 bool WriteFile::isThreadRunning(){
@@ -327,20 +352,9 @@ void WriteFile::writeOutput(bool flush){
 }
 
 void WriteFile::writeAllOutputs(bool flush){
+	std::lock_guard<std::mutex> lock(mutex);
 	for(unsigned int n = 0; n < objAddrs.size(); n++){
 		objAddrs[n] -> writeOutput(flush);
-	}
-}
-
-void WriteFile::writeAllHeaders(){
-	for(unsigned int n = 0; n < objAddrs.size(); n++){
-		objAddrs[n] -> writeHeader();
-	}
-}
-
-void WriteFile::writeAllFooters(){
-	for(unsigned int n = 0; n < objAddrs.size(); n++){
-		objAddrs[n] -> writeFooter();
 	}
 }
 
@@ -350,42 +364,27 @@ void WriteFile::writeHeader(){
 
 void WriteFile::writeFooter(){
 	print(footer);
-	fflush(file);
-	fclose(file);
 }
 
-void WriteFile::setHeader(const char* newHeader){
-	allocateAndCopyString(newHeader, &header);
-	sanitizeString(header);
+void WriteFile::setHeader(const std::string& newHeader){
+	header = sanitizeString(newHeader);
 }
 
-void WriteFile::setFooter(const char* newFooter){
-	allocateAndCopyString(newFooter, &footer);
+void WriteFile::setFooter(const std::string& newFooter){
+	footer = sanitizeString(newFooter);
 }
 
-void WriteFile::sanitizeString(char* string){
-	for(int unsigned n = 0; n < strlen(string); n++){ //purge %'s from the string
-		if(string[n] == '%'){
-			string[n] = ' ';
-		}
-	}
+std::string WriteFile::sanitizeString(const std::string& string){
+	std::string ret = string;
+	std::replace(ret.begin(), ret.end(), '%', ' ');
+	return ret;
 }
 
-void WriteFile::run(void* arg){
+void WriteFile::run(){
 	threadRunning = true;
-	printf("Running\n");
-	writeAllHeaders();
 	while(threadShouldExit()==false){
 		writeAllOutputs(false);
 		usleep(sleepTimeMs*1000);
 	}
-	writeAllOutputs(true);
-	writeAllFooters(); // when ctrl-c is pressed, the last line is closed and the file is closed
 	threadRunning = false;
-}
-
-void WriteFile::allocateAndCopyString(const char* source, char** destination){
-	free(*destination);
-	*destination = (char*)malloc(sizeof(char) * (strlen(source) + 1));
-	strcpy(*destination, source);
 }
