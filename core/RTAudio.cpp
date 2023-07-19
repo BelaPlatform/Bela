@@ -822,7 +822,6 @@ void audioLoop(void *)
 	// gPRU->waitForFinish();
 	gPRU->disable();
 	gAudioCodec->stopAudio();
-	gPRU->cleanupGPIO();
 
 	if(gBelaAudioThreadDone)
 		gBelaAudioThreadDone(gUserContext, gUserData);
