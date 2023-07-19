@@ -73,9 +73,9 @@ int gpio_export(unsigned int gpio)
 	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d", gpio);
 	fd = open(buf, O_RDONLY);
 	if(fd > 0) {
+		close(fd);
 		return 0;
 	}
-	close(fd);
 	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
 	if (fd < 0) {
 		perror("gpio/export");
