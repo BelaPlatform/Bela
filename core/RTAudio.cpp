@@ -794,6 +794,10 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	if(settings->setup && !(*settings->setup)(gUserContext, userData)) {
 		if(gRTAudioVerbose)
 			fprintf(stderr, "Couldn't initialise audio rendering: setup() returned false\n");
+		delete gPRU;
+		delete gAudioCodec;
+		delete gDisabledCodec;
+		delete gBcf;
 		return 1;
 	}
 
