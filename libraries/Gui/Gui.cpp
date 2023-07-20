@@ -170,6 +170,9 @@ DataBuffer& Gui::getDataBuffer( unsigned int bufferId )
 Gui::~Gui()
 {
 	cleanup();
+	// trigger the destruction of the server so that ws_disconnect is called
+	// while the object is still valid
+	ws_server.reset();
 }
 void Gui::cleanup()
 {
