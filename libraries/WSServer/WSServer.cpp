@@ -15,7 +15,6 @@ WSServer::~WSServer(){
 }
 
 struct WSServerDataHandler : seasocks::WebSocket::Handler {
-	std::shared_ptr<seasocks::Server> server;
 	std::set<seasocks::WebSocket*> connections;
 	std::string address;
 	std::function<void(const std::string&, const WSServerDetails*, const unsigned char*, size_t)> on_receive;
@@ -46,19 +45,19 @@ void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, co
 		// make a copy of the data before we send it out
 		auto data = std::make_shared<std::vector<void*> >(size);
 		memcpy(data->data(), buf, size);
-		handler->server->execute([handler, data, size]{
-			for (auto c : handler->connections){
+		for (auto c : handler->connections){
+			c->server().execute([data, size, c]{
 				c->send((uint8_t*) data->data(), size);
-			}
-		});
+			});
+		}
 	} else {
 		// make a copy of the data before we send it out
 		std::string str = (const char*)buf;
-		handler->server->execute([handler, str]{
-			for (auto c : handler->connections){
+		for (auto c : handler->connections){
+			c->server().execute([str, c]{
 				c->send(str.c_str());
-			}
-		});
+			});
+		}
 	}
 }
 
@@ -80,7 +79,6 @@ void WSServer::addAddress(const std::string& _address,
 				bool binary)
 {
 	auto handler = std::make_shared<WSServerDataHandler>();
-	handler->server = server;
 	handler->address = _address;
 	handler->on_receive = on_receive;
 	handler->on_connect = on_connect;
