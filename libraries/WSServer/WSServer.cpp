@@ -40,7 +40,10 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	}
 };
 
+// this is either called directly from sendNonRt(), or via callback when scheduled from sendRt()
 void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size){
+	if(!handler)
+		return;
 	if (handler->binary){
 		// make a copy of the data before we send it out
 		auto data = std::make_shared<std::vector<void*> >(size);
@@ -90,7 +93,16 @@ void WSServer::addAddress(const std::string& _address,
 		.thread = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT()),
 		.handler = handler,
 	};
-	address_book[_address].thread->create(std::string("WSClient_")+_address, [this, handler](void* buf, int size){ client_task_func(handler, buf, size); });
+	// do _not_ capture a shared_ptr in a lambda.
+	// See possible pitfalls here
+	// https://floating.io/2017/07/lambda-shared_ptr-memory-leak/
+	std::weak_ptr<WSServerDataHandler> wkHdl(handler);
+	address_book[_address].thread->create(std::string("WSClient_")+_address,
+		[this,wkHdl](void* buf, int size){
+			auto handler = wkHdl.lock();
+			if(handler)
+				client_task_func(handler, buf, size);
+		});
 }
 
 int WSServer::sendNonRt(const char* _address, const char* str) {
