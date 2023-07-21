@@ -44,21 +44,25 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size){
 	if(!handler)
 		return;
-	if (handler->binary){
-		// make a copy of the data before we send it out
-		auto data = std::make_shared<std::vector<void*> >(size);
-		memcpy(data->data(), buf, size);
-		for (auto c : handler->connections){
-			c->server().execute([data, size, c]{
-				c->send((uint8_t*) data->data(), size);
-			});
-		}
-	} else {
-		// make a copy of the data before we send it out
-		std::string str = (const char*)buf;
-		for (auto c : handler->connections){
-			c->server().execute([str, c]{
-				c->send(str.c_str());
+	// make a copy of the data before we send it out
+	if(handler->connections.size())
+	{
+			// make a copy of input data
+			auto data = std::make_shared<std::vector<void*> >(size);
+			memcpy(data->data(), buf, size);
+			std::weak_ptr<WSServerDataHandler> wkHdl(handler);
+			// schedule execution on the seasocks thread
+			// passing in a weak_ptr
+			(*handler->connections.begin())->server().execute([data, size, wkHdl]{
+				auto handler = wkHdl.lock();
+				if(!handler)
+					return;
+				for (auto c : handler->connections){
+					if(handler->binary)
+						c->send((uint8_t*) data->data(), size);
+					else
+						c->send((const char*)data->data());
+				}
 			});
 		}
 	}
@@ -106,7 +110,7 @@ void WSServer::addAddress(const std::string& _address,
 }
 
 int WSServer::sendNonRt(const char* _address, const char* str) {
-	return sendNonRt(_address, (const void*)str, strlen(str));
+	return sendNonRt(_address, (const void*)str, strlen(str) + 1);
 }
 
 int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size) {
