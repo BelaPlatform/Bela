@@ -3,6 +3,7 @@
 #include "../include/xenomai_wraps.h"
 #include <Bela.h>
 #include <stdlib.h>
+#include <vector>
 
 extern int volatile gRTAudioVerbose;
 
@@ -138,7 +139,8 @@ void AuxTaskRT::empty_loop(){
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
-	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
+	std::vector<char> buf(AUX_RT_POOL_SIZE);
+	char* buffer = buf.data();
 	while(!shouldStop())
 	{
 		unsigned int prio;
@@ -152,7 +154,6 @@ void AuxTaskRT::empty_loop(){
 			empty_callback();
 		}
 	}
-	free(buffer);
 #endif
 }
 void AuxTaskRT::str_loop(){
@@ -166,7 +167,8 @@ void AuxTaskRT::str_loop(){
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
-	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
+	std::vector<char> buf(AUX_RT_POOL_SIZE);
+	char* buffer = buf.data();
 	while(!shouldStop())
 	{
 		unsigned int prio;
@@ -179,7 +181,6 @@ void AuxTaskRT::str_loop(){
 		if(!shouldStop())
 			str_callback((std::string)buffer);
 	}
-	free(buffer);
 #endif
 }
 void AuxTaskRT::buf_loop(){
@@ -193,7 +194,8 @@ void AuxTaskRT::buf_loop(){
 	}
 #endif
 #ifdef XENOMAI_SKIN_posix
-	char* buffer = (char*)malloc(AUX_RT_POOL_SIZE);
+	std::vector<char> buf(AUX_RT_POOL_SIZE);
+	char* buffer = buf.data();
 	while(!shouldStop())
 	{
 		unsigned int prio;
@@ -206,7 +208,6 @@ void AuxTaskRT::buf_loop(){
 		if(!shouldStop())
 			buf_callback((void*)buffer, ret);
 	}
-	free(buffer);
 #endif
 }
 
