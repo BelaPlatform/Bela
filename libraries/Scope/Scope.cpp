@@ -550,8 +550,8 @@ void Scope::scope_control_connected(){
 	for (auto setting : settings){
 		root[setting.first] = new JSONValue(setting.second);
 	}
-	JSONValue *value = new JSONValue(root);
-	std::wstring wide = value->Stringify().c_str();
+	JSONValue value(root);
+	std::wstring wide = value.Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
 	ws_server->sendNonRt("scope_control", str.c_str());
@@ -564,8 +564,8 @@ void Scope::scope_control_data(const char* data){
 	// printf("recieved: %s\n", data);
 	
 	// parse the data into a JSONValue
-	JSONValue *value = JSON::Parse(data);
-	if (value == NULL || !value->IsObject()){
+	std::shared_ptr<JSONValue> value = std::shared_ptr<JSONValue>(JSON::Parse(data));
+	if (!value || !value->IsObject()){
 		printf("could not parse JSON:\n%s\n", data);
 		return;
 	}
@@ -585,7 +585,7 @@ void Scope::scope_control_data(const char* data){
 	parse_settings(value);
 }
 
-void Scope::parse_settings(JSONValue* value){
+void Scope::parse_settings(std::shared_ptr<JSONValue> value){
 	// printf("parsing settings\n");
 	std::vector<std::wstring> keys = value->ObjectKeys();
 	for (auto& key : keys){
