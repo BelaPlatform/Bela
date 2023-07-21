@@ -41,12 +41,21 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 };
 
 // this is either called directly from sendNonRt(), or via callback when scheduled from sendRt()
-void WSServer::client_task_func(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size){
+void WSServer::sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread){
 	if(!handler)
 		return;
 	// make a copy of the data before we send it out
 	if(handler->connections.size())
 	{
+		if(kThreadCallback == callingThread) {
+			// avoid memory copy and a lot of work
+			for (auto c : handler->connections){
+				if (handler->binary)
+					c->send((uint8_t*)buf, size);
+				else
+					c->send((const char*)buf);
+			}
+		} else {
 			// make a copy of input data
 			auto data = std::make_shared<std::vector<void*> >(size);
 			memcpy(data->data(), buf, size);
@@ -105,17 +114,17 @@ void WSServer::addAddress(const std::string& _address,
 		[this,wkHdl](void* buf, int size){
 			auto handler = wkHdl.lock();
 			if(handler)
-				client_task_func(handler, buf, size);
+				sendToAllConnections(handler, buf, size, kThreadOther);
 		});
 }
 
-int WSServer::sendNonRt(const char* _address, const char* str) {
-	return sendNonRt(_address, (const void*)str, strlen(str) + 1);
+int WSServer::sendNonRt(const char* _address, const char* str, CallingThread callingThread) {
+	return sendNonRt(_address, (const void*)str, strlen(str) + 1, callingThread);
 }
 
-int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size) {
+int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size, CallingThread callingThread) {
 	try {
-		client_task_func(address_book.at(_address).handler, buf, size);
+		sendToAllConnections(address_book.at(_address).handler, buf, size, callingThread);
 		return 0;
 	} catch (std::exception&) {
 		return -1;

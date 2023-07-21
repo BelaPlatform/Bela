@@ -558,7 +558,7 @@ void Scope::scope_control_connected(){
 	std::wstring wide = value.Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
-	ws_server->sendNonRt("scope_control", str.c_str());
+	ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback);
 }
 
 // on_data callback for scope_control websocket
