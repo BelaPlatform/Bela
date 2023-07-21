@@ -25,6 +25,10 @@ Scope::Scope(unsigned int numChannels, float sampleRate){
 
 void Scope::cleanup(){
 	dealloc();
+	// ensure that all connections are closed before
+	// destroying the object, so we avoid calling the disconnect callback
+	// after the Scope object has been destroyed
+	ws_server.reset();
 }
 Scope::~Scope(){
 	cleanup();
