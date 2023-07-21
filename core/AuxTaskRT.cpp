@@ -109,7 +109,10 @@ void AuxTaskRT::cleanup(){
 #endif
 #ifdef XENOMAI_SKIN_posix
 	// unblock and join thread
-	schedule();
+	char c = 0;
+	struct timespec absoluteTimeout = {0, 0};
+	// non blocking write, so if the queue is full it won't fail
+	__wrap_mq_timedsend(queueDesc, &c, sizeof(c), 0, &absoluteTimeout);
 	int ret = __wrap_pthread_join(thread, NULL);
 	if (ret < 0){
 		fprintf(stderr, "AuxTaskNonRT %s: unable to join thread: (%i) %s\n", name.c_str(), ret, strerror(ret));

@@ -178,7 +178,7 @@ void Gui::cleanup()
 {
 }
 
-int Gui::sendControl(JSONValue* root, WSServer::CallingThread callingThread) {
+int Gui::sendControl(const JSONValue* root, WSServer::CallingThread callingThread) {
     std::wstring wide = JSON::Stringify(root);
     std::string str(wide.begin(), wide.end());
     return ws_server->sendNonRt(_addressControl.c_str(), str.c_str(), callingThread);
