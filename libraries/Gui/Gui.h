@@ -112,9 +112,15 @@ class Gui
 			binaryCallbackArg = callbackArg;
 		};
 		/** Sends a JSON value to the control websocket.
+		 *
+		 * @param root the JSONValue to send
+		 * @param callingThread set this to WSServer::ThreadCallback if
+		 * you are calling this method from the same thread that called
+		 * the control or data callback in order to save a memory
+		 * allocation and copy. Otherwise, leave it at its default value.
 		 * @returns 0 on success, or an error code otherwise.
 		 * */
-		int sendControl(JSONValue* root, WSServer::CallingThread callingThread);
+		int sendControl(const JSONValue* root, WSServer::CallingThread callingThread);
 
 		/**
 		 * Sends a buffer (a vector) through the web-socket to the client with a given ID.
