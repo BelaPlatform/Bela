@@ -8,10 +8,9 @@
 #include <memory>
 #include <DataBuffer.h>
 #include <set>
+#include "libraries/WSServer/WSServer.h"
 
 // forward declarations
-class WSServer;
-class WSServerDetails;
 
 class Gui
 {
@@ -115,7 +114,7 @@ class Gui
 		/** Sends a JSON value to the control websocket.
 		 * @returns 0 on success, or an error code otherwise.
 		 * */
-		int sendControl(JSONValue* root);
+		int sendControl(JSONValue* root, WSServer::CallingThread callingThread);
 
 		/**
 		 * Sends a buffer (a vector) through the web-socket to the client with a given ID.

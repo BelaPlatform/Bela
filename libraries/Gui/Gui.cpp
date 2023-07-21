@@ -67,7 +67,7 @@ void Gui::ws_connect(const std::string& address, const WSServerDetails* id)
 	if(!_projectName.empty())
 		root[L"projectName"] = new JSONValue(_projectName);
 	JSONValue *value = new JSONValue(root);
-	sendControl(value);
+	sendControl(value, WSServer::kThreadCallback);
 	delete value;
 }
 
@@ -178,10 +178,10 @@ void Gui::cleanup()
 {
 }
 
-int Gui::sendControl(JSONValue* root) {
+int Gui::sendControl(JSONValue* root, WSServer::CallingThread callingThread) {
     std::wstring wide = JSON::Stringify(root);
     std::string str(wide.begin(), wide.end());
-    return ws_server->sendNonRt(_addressControl.c_str(), str.c_str());
+    return ws_server->sendNonRt(_addressControl.c_str(), str.c_str(), callingThread);
 }
 
 int Gui::doSendBuffer(const char* type, unsigned int bufferId, const void* data, size_t size)
