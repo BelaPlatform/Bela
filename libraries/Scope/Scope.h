@@ -101,7 +101,7 @@ class Scope{
         void setXParams();
         void scope_control_connected();
         void scope_control_data(const char* data);
-        void parse_settings(JSONValue* value);
+        void parse_settings(std::shared_ptr<JSONValue> value);
         
 	bool volatile isUsingOutBuffer;
 	bool volatile isUsingBuffer;
