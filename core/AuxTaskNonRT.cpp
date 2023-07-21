@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <vector>
 
 extern int volatile gRTAudioVerbose;
 
@@ -144,30 +145,28 @@ int AuxTaskNonRT::openPipe(){
 }
 
 void AuxTaskNonRT::empty_loop(){
-	void* buf = malloc(1);
+	char c;
 	while(!shouldStop()){
-		read(pipe_fd, buf, 1);
+		read(pipe_fd, &c, sizeof(c));
 		if (shouldStop())
 			break;
 		empty_callback();
 	}
-	free(buf);
 }
 void AuxTaskNonRT::str_loop(){
-	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
-	memset(buf, 0, AUX_MAX_BUFFER_SIZE);
+	std::vector<char> buffer(AUX_MAX_BUFFER_SIZE);
+	char* buf = buffer.data();
 	while(!shouldStop()){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
 		if (shouldStop())
 			break;
-		str_callback(std::string((const char*)buf));
+		str_callback(std::string(buf));
 		memset(buf, 0, size);
 	}
-	free(buf);
 }
 void AuxTaskNonRT::buf_loop(){
-	void* buf = malloc(AUX_MAX_BUFFER_SIZE);
-	memset(buf, 0, AUX_MAX_BUFFER_SIZE);
+	std::vector<char> buffer(AUX_MAX_BUFFER_SIZE);
+	char* buf = buffer.data();
 	while(!shouldStop()){
 		ssize_t size = read(pipe_fd, buf, AUX_MAX_BUFFER_SIZE);
 		if (shouldStop())
@@ -175,7 +174,6 @@ void AuxTaskNonRT::buf_loop(){
 		buf_callback(buf, size);
 		memset(buf, 0, size);
 	}
-	free(buf);
 }
 
 void AuxTaskNonRT::thread_func(void* ptr){
