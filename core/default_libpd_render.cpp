@@ -813,7 +813,7 @@ void fdLoop(void* arg){
 
 #ifdef BELA_LIBPD_SCOPE
 Scope scope;
-float* gScopeOut;
+std::vector<float> gScopeOut;
 #endif // BELA_LIBPD_SCOPE
 void* gPatch;
 bool gDigitalEnabled = 0;
@@ -857,20 +857,17 @@ bool setup(BelaContext *context, void *userData)
 #endif // BELA_LIBPD_MIDI
 #ifdef BELA_LIBPD_SCOPE
 	scope.setup(gScopeChannelsInUse, context->audioSampleRate);
-	gScopeOut = new float[gScopeChannelsInUse];
+	gScopeOut.resize(gScopeChannelsInUse);
 #endif // BELA_LIBPD_SCOPE
 
 	// Check first of all if the patch file exists. Will actually open it later.
 	char file[] = "_main.pd";
 	char folder[] = "./";
-	unsigned int strSize = strlen(file) + strlen(folder) + 1;
-	char* str = (char*)malloc(sizeof(char) * strSize);
-	snprintf(str, strSize, "%s%s", folder, file);
-	if(access(str, F_OK) == -1 ) {
-		printf("Error file %s/%s not found. The %s file should be your main patch.\n", folder, file, file);
+	std::string path = std::string(folder) + file;
+	if(access(path.c_str(), F_OK) == -1 ) {
+		printf("Error file %s not found. The %s file should be your main patch.\n", path.c_str(), file);
 		return false;
 	}
-	free(str);
 
 	// analog setup
 	gAnalogChannelsInUse = context->analogInChannels;
@@ -1462,10 +1459,10 @@ void render(BelaContext *context, void *userData)
 #ifdef BELA_LIBPD_SCOPE
 		// scope output
 		for (j = 0, p0 = gOutBuf; j < gLibpdBlockSize; ++j, ++p0) {
-			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeChannelsInUse; k++, p1 += gLibpdBlockSize) {
+			for (k = 0, p1 = p0 + gLibpdBlockSize * gFirstScopeChannel; k < gScopeOut.size(); k++, p1 += gLibpdBlockSize) {
 				gScopeOut[k] = *p1;
 			}
-			scope.log(gScopeOut[0], gScopeOut[1], gScopeOut[2], gScopeOut[3]);
+			scope.log(gScopeOut.data());
 		}
 #endif // BELA_LIBPD_SCOPE
 
@@ -1507,7 +1504,4 @@ void cleanup(BelaContext *context, void *userData)
 	}
 #endif // BELA_LIBPD_TRILL
 	libpd_closefile(gPatch);
-#ifdef BELA_LIBPD_SCOPE
-	delete [] gScopeOut;
-#endif // BELA_LIBPD_SCOPE
 }
