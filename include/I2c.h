@@ -87,4 +87,7 @@ inline ssize_t I2c::writeBytes(const void *buf, size_t count)
 	return write(i2C_file, buf, count);
 }
 
-inline I2c::~I2c(){}
+inline I2c::~I2c(){
+	if(i2C_file >= 0)
+		close(i2C_file);
+}
