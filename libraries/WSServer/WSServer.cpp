@@ -149,4 +149,7 @@ int WSServer::sendRt(const char* _address, const void* buf, unsigned int size){
 
 void WSServer::cleanup(){
 	server->terminate();
+	// wait for server to terminate and call all callbacks before
+	// destroying the objects it may depend on
+	server_task.reset();
 }
