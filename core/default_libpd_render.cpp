@@ -177,20 +177,166 @@ AuxiliaryTask gSerialOutputTask;
 
 struct serialMessageHeader
 {
-	uint32_t idSize;
-	uint32_t dataSize;
+	uint32_t idSize = 0;
+	uint32_t dataSize = 0;
+};
+enum WaitingFor {
+	kHeader,
+	kId,
+	kData,
 };
 
-void serialOutputLoop(void* arg) {
-	// TODO: implement
+struct SerialPipeState {
+	struct serialMessageHeader h;
+	enum WaitingFor waitingFor = kHeader;
+	char id[100];
+};
+
+static void processSerialPipe(bool rt, SerialPipeState& s)
+{
+	// Not sure we actually need while() below. We were using it earlier
+	// when this was coded inside render() in order to be able to perform early returns
+	while(1)
+	{
+		auto& h = s.h;
+		auto& waitingFor = s.waitingFor;
+		auto& id = s.id;
+		if(kHeader == waitingFor)
+		{
+			int ret = rt ? gSerialPipe.readRt(h) : gSerialPipe.readNonRt(h);
+			if(ret <= 0)
+				break;
+			waitingFor = kId;
+		}
+		if(kId == waitingFor)
+		{
+			if(h.idSize > sizeof(id) - 1)
+				rt_fprintf(stderr, "Serial: ID too large\n");
+			else
+			{
+				int ret = rt ? gSerialPipe.readRt(id, h.idSize) : gSerialPipe.readNonRt(id, h.idSize);
+				if(ret <= 0)
+					break;
+				if(int(h.idSize) != ret)
+				{
+					rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.idSize, ret);
+					break;
+				}
+				id[ret] = '\0'; // ensure it's null-terminated
+				waitingFor = kData;
+			}
+		}
+		if(kData == waitingFor)
+		{
+			char data[h.dataSize + 1];
+			int ret = rt ? gSerialPipe.readRt(data, h.dataSize) : gSerialPipe.readNonRt(data, h.dataSize);
+			if(ret <= 0)
+				break;
+			if(int(h.dataSize) != ret)
+			{
+				rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.dataSize, ret);
+				break;
+			}
+			if(rt)
+			{
+				// rt: forward data from pipe to Pd
+				data[h.dataSize] = '\0'; // ensure it's null-terminated
+				if(h.dataSize)
+				{
+					const char* rec = "bela_serialIn";
+					if(kSerialSymbol == gSerialType)
+					{
+						libpd_symbol(rec, data);
+					} else if(kSerialBytes == gSerialType) {
+						if(gSerialEom >= 0) {
+							// messages are separated: send as a list
+							libpd_start_message(h.dataSize);
+							for(size_t n = 0; n < h.dataSize; ++n)
+								libpd_add_float(data[n]);
+							libpd_finish_message(rec, id);
+						} else {
+							// messages are not separated: send one byte at a time
+							for(size_t n = 0; n < h.dataSize; ++n)
+							{
+								libpd_start_message(h.dataSize);
+								libpd_add_float(data[n]);
+								libpd_finish_message(rec, id);
+							}
+						}
+					} else {
+						unsigned int nTokens = 1;
+						const uint8_t separators[] = { ' ', '\0'};
+						// find number of delimiters
+						size_t start = 0;
+						for(size_t n = 0; n < sizeof(data); ++n)
+						{
+							for(size_t c = 0; c < sizeof(separators); ++c)
+							{
+								if(separators[c] == data[n] && n != start) // exclude empty tokens
+								{
+									start = n + 1;
+									nTokens++;
+								}
+							}
+						}
+						libpd_start_message(nTokens);
+						start = 0;
+						for(size_t n = 0; n < sizeof(data); ++n)
+						{
+							bool end = false;
+							for(size_t c = 0; c < sizeof(separators); ++c)
+							{
+								if(separators[c] == data[n])
+								{
+									if(start == n)
+										start++; // remove empty tokens
+									else
+										end = true;
+									break; // no need to check for more separators
+								}
+							}
+							if(end)
+							{
+								data[n] = '\0'; // ensure the string is null-terminated so the next line works
+								if(kSerialSymbols == gSerialType)
+									libpd_add_symbol(data + start);
+								else if (kSerialFloats == gSerialType)
+									libpd_add_float(atof(data + start));
+								start = n + 1;
+							}
+						}
+						libpd_finish_message(rec, id);
+					}
+				}
+			} else {
+				// non-rt: forward data from pipe to serial
+				if(h.dataSize)
+					gSerial.write(data, h.dataSize);
+			}
+			waitingFor = kHeader;
+		}
+	}
 }
 
-void serialInputLoop(void* arg) {
+static void serialOutputLoop(void* arg) {
+	// blocking read with timeout
+	gSerialPipe.setBlockingNonRt(true);
+	gSerialPipe.setTimeoutMsNonRt(100);
+	std::vector<uint8_t> rec(1024);
+	std::vector<uint8_t> id(100);
+
+	SerialPipeState serialStateNonRt {};
+	while(!Bela_stopRequested())
+	{
+		processSerialPipe(false, serialStateNonRt);
+	}
+}
+
+static void serialInputLoop(void* arg) {
 	char serialBuffer[10000];
 	unsigned int i = 0;
-	serialMessageHeader h = {
-		.idSize = strlen(gSerialId.c_str()) + 1,
-	};
+	serialMessageHeader h;
+	h.idSize = strlen(gSerialId.c_str()) + 1;
 	while(!Bela_stopRequested())
 	{
 		// read from the serial port with a timeout of 100ms
@@ -598,7 +744,7 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 				|| !libpd_is_symbol(argv + 1) // device
 				|| !libpd_is_float(argv + 2) // baudrate
 				|| !(libpd_is_symbol(argv + 3) || libpd_is_float(argv + 3)) // EOM
-				|| !libpd_is_symbol(argv + 4) // tyoe
+				|| !libpd_is_symbol(argv + 4) // type
 			)
 			{
 				fprintf(stderr, "Invalid bela_setSerial arguments. Should be:\n"
@@ -634,6 +780,34 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 			gSerialInputTask = Bela_runAuxiliaryTask(serialInputLoop, 0);
 			gSerialOutputTask = Bela_runAuxiliaryTask(serialOutputLoop, 0);
 		}
+	}
+	if(0 == strcmp(source, "bela_serialOut"))
+	{
+		if(!argc) {
+			fprintf(stderr, "Invalid bela_serialOut arguments. Should be:\n"
+			"`serial_id firstByte <other bytes>`\n");
+			return;
+		}
+		const char* id = symbol;
+		// convert floats to bytes
+		char data[argc];
+		for(size_t n = 0; n < argc; ++n)
+		{
+			t_atom *a = argv + n;
+			if(libpd_is_float(a))
+			{
+				data[n] = libpd_get_float(a);
+			} else {
+				fprintf(stderr, "bela_serialOut received non-float\n");
+				return;
+			}
+		}
+		struct serialMessageHeader h;
+		h.idSize = strlen(id);
+		h.dataSize = sizeof(data);
+		gSerialPipe.writeRt(h);
+		gSerialPipe.writeRt(id, h.idSize);
+		gSerialPipe.writeRt(data, h.dataSize);
 	}
 #endif // BELA_LIBPD_SERIAL
 #ifdef BELA_LIBPD_TRILL
@@ -1089,123 +1263,9 @@ void render(BelaContext *context, void *userData)
 	}
 #endif // BELA_LIBPD_GUI
 #ifdef BELA_LIBPD_SERIAL
-	while(gSerialInputTask) // proxy for 'isEnabled. Using `while` so we can do early return
-	{
-		enum WaitingFor_t {
-			kHeader,
-			kId,
-			kData,
-		};
-		static struct serialMessageHeader h;
-		static enum WaitingFor_t waitingFor = kHeader;
-		static char id[100];
-		if(kHeader == waitingFor)
-		{
-			int ret = gSerialPipe.readRt(h);
-			if(ret <= 0)
-				break;
-			waitingFor = kId;
-		}
-		if(kId == waitingFor)
-		{
-			if(h.idSize > sizeof(id) - 1)
-				rt_fprintf(stderr, "Serial: ID too large\n");
-			else
-			{
-				int ret = gSerialPipe.readRt(id, h.idSize);
-				if(ret <= 0)
-					break;
-				if(int(h.idSize) != ret)
-				{
-					rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.idSize, ret);
-					break;
-				}
-				id[ret] = '\0'; // ensure it's null-terminated
-				waitingFor = kData;
-			}
-		}
-		if(kData == waitingFor)
-		{
-			char data[h.dataSize + 1];
-			int ret = gSerialPipe.readRt(data, h.dataSize);
-			if(ret <= 0)
-				break;
-			if(int(h.dataSize) != ret)
-			{
-				rt_fprintf(stderr, "Invalid number of bytes read from gSerialPipe. Expected: %u, got %u\n", h.dataSize, ret);
-				break;
-			}
-			data[h.dataSize] = '\0'; // ensure it's null-terminated
-			if(h.dataSize)
-			{
-				const char* rec = "bela_serial";
-				if(kSerialSymbol == gSerialType)
-				{
-					libpd_symbol(rec, data);
-				} else if(kSerialBytes == gSerialType) {
-					if(gSerialEom >= 0) {
-						// messages are separated: send as a list
-						libpd_start_message(h.dataSize);
-						for(size_t n = 0; n < h.dataSize; ++n)
-							libpd_add_float(data[n]);
-						libpd_finish_message(rec, id);
-					} else {
-						// messages are not separated: send one byte at a time
-						for(size_t n = 0; n < h.dataSize; ++n)
-						{
-							libpd_start_message(h.dataSize);
-							libpd_add_float(data[n]);
-							libpd_finish_message(rec, id);
-						}
-					}
-				} else {
-					unsigned int nTokens = 1;
-					const uint8_t separators[] = { ' ', '\0'};
-					// find number of delimiters
-					size_t start = 0;
-					for(size_t n = 0; n < sizeof(data); ++n)
-					{
-						for(size_t c = 0; c < sizeof(separators); ++c)
-						{
-							if(separators[c] == data[n] && n != start) // exclude empty tokens
-							{
-								start = n + 1;
-								nTokens++;
-							}
-						}
-					}
-					libpd_start_message(nTokens);
-					start = 0;
-					for(size_t n = 0; n < sizeof(data); ++n)
-					{
-						bool end = false;
-						for(size_t c = 0; c < sizeof(separators); ++c)
-						{
-							if(separators[c] == data[n])
-							{
-								if(start == n)
-									start++; // remove empty tokens
-								else
-									end = true;
-								break; // no need to check for more separators
-							}
-						}
-						if(end)
-						{
-							data[n] = '\0'; // ensure the string is null-terminated so the next line works
-							if(kSerialSymbols == gSerialType)
-								libpd_add_symbol(data + start);
-							else if (kSerialFloats == gSerialType)
-								libpd_add_float(atof(data + start));
-							start = n + 1;
-						}
-					}
-					libpd_finish_message(rec, id);
-				}
-			}
-			waitingFor = kHeader;
-		}
-	}
+	static SerialPipeState serialPipeStateRt {};
+	if(gSerialInputTask)
+		processSerialPipe(true, serialPipeStateRt);
 #endif // BELA_LIBPD_SERIAL
 #ifdef BELA_LIBPD_TRILL
 	for(auto& name : gTrillAcks)
