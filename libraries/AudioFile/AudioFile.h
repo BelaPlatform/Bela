@@ -89,7 +89,7 @@ protected:
 	} Mode;
 	enum { kNumBufs = 2};
 protected:
-	int setup(const std::string& path, size_t bufferSize, Mode mode, size_t channels = 0, unsigned int sampleRate = 0);
+	int setup(const std::string& path, size_t bufferSize, Mode mode, size_t arg0 = 0, unsigned int arg1 = 0);
 public:
 	size_t getLength() const { return sfinfo.frames; };
 	size_t getChannels() const { return sfinfo.channels; };
@@ -125,8 +125,10 @@ public:
 	 * @param bufferSize the size of the internal buffer. If this is larger
 	 * than the file itself, the whole file will be loaded in memory, otherwise
 	 * the file will be read from disk from a separate thread.
+	 * @param firstFrame the first frame to start plaback from. When
+	 * looping, unless set differnetly with setLoop(), it will start back from 0.
 	 */
-	int setup(const std::string& path, size_t bufferSize);
+	int setup(const std::string& path, size_t bufferSize, size_t firstFrame = 0);
 	/**
 	 * Write interleaved samples from the file to the destination.
 	 *
