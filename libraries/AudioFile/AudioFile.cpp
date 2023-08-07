@@ -12,16 +12,19 @@ std::vector<float>& AudioFile::getRtBuffer()
 	return internalBuffers[idx];
 }
 
-int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode, size_t channels /* = 0 */, unsigned int sampleRate /* = 0 */)
+int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode, size_t arg0 /* = 0 */, unsigned int arg1 /* = 0 */)
 {
 	cleanup();
 	int sf_mode;
 	switch(mode){
-	case kWrite:
+	case kWrite: {
+		unsigned int channels = arg0;
+		unsigned int sampleRate = arg1;
 		sf_mode = SFM_WRITE;
 		sfinfo.samplerate = sampleRate;
 		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
 		sfinfo.channels = channels;
+	}
 		break;
 	case kRead:
 		sfinfo.format = 0;
@@ -50,6 +53,9 @@ int AudioFile::setup(const std::string& path, size_t bufferSize, Mode mode, size
 	ioBufferOld = ioBuffer;
 	if(kRead == mode)
 	{
+		size_t readFirstFrame = arg0;
+		if(!ramOnly)
+			sf_seek(sndfile, readFirstFrame, SEEK_SET);
 		// fill up the first buffer
 		io(internalBuffers[ioBuffer]);
 		// signal threadLoop() to start filling in the next buffer
@@ -94,10 +100,11 @@ AudioFile::~AudioFile()
 	cleanup();
 }
 
-int AudioFileReader::setup(const std::string& path, size_t bufferSize)
+int AudioFileReader::setup(const std::string& path, size_t bufferSize, size_t firstFrame)
 {
 	loop = false;
-	return AudioFile::setup(path, bufferSize, kRead);
+	idx = firstFrame;
+	return AudioFile::setup(path, bufferSize, kRead, firstFrame);
 }
 
 int AudioFileReader::setLoop(bool doLoop)
