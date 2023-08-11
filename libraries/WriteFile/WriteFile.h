@@ -126,6 +126,12 @@ public:
 	void setup(const std::string& filename, bool overwrite = false, bool append = false);
 
 	/**
+	 * Get the name of the file being written. This may be different from
+	 * the filename passed to setup() if it was called with `overwrite =
+	 * false`.
+	 */
+	const std::string& getName() { return filename; }
+	/**
 	 * Gets the distance between the write and read pointers of
 	 * the buffer that holds data to be written to disk.
 	 */
