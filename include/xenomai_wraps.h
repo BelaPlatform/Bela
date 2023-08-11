@@ -176,7 +176,7 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	return 0;
 }
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
-inline int createXenomaiPipe(const char* portName, int poolsz)
+inline int createXenomaiPipe(const char* portName, size_t poolsz)
 {
 	/*
 	 * Get a datagram socket to bind to the RT endpoint. Each

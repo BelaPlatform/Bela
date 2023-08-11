@@ -84,7 +84,7 @@ private:
 	std::string path;
 	int pipeSocket;
 	int fd = 0;
-	int pipeSize;
+	size_t pipeSize;
 	double timeoutMsRt = 0;
 	double timeoutMsNonRt = 0;
 	bool blockingRt = false;
