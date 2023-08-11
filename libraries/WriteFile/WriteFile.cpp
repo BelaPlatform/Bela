@@ -112,8 +112,10 @@ std::string WriteFile::generateUniqueFilename(const std::string& original)
 			dot = n;
 	}
 	int count = dot;
+	constexpr char sep = '+';
+	constexpr size_t sepLen = 1;
 	// add a * before the dot
-	std::string temp = std::string({original.begin(), original.begin() + dot}) + "*" + std::string({original.begin() + dot, original.end()});
+	std::string temp = std::string({original.begin(), original.begin() + dot}) + '*' + std::string({original.begin() + dot, original.end()});
 
 	// check how many log files are already there, and choose name according to this
 	glob_t globbuf;
@@ -122,21 +124,34 @@ std::string WriteFile::generateUniqueFilename(const std::string& original)
 	int logNum;
 	int logMax = -1;
 	// cycle through all and find the existing one with the highest index
-	for(unsigned int i=0; i<globbuf.gl_pathc; i++)
+	bool originalFree = true;
+	for(unsigned int i = 0; i < globbuf.gl_pathc; ++i)
 	{
-		logNum = atoi(globbuf.gl_pathv[i] + dot);
+		const char* path = globbuf.gl_pathv[i];
+		size_t len = strlen(path);
+		if(len < dot + sepLen)
+			continue;
+		if(sep != path[dot]) // quick check first
+		{
+			// this is either the same as the original or an unmatching pattern
+			if(0 == strcmp(original.c_str(), path))
+				originalFree = false;
+			continue;
+		}
+		const char* start = path + dot + 1;
+		logNum = atoi(start);
 		if(logNum > logMax)
 			logMax = logNum;
 	}
 	globfree(&globbuf);
-	if(logMax == -1)
+	if(logMax == -1 && originalFree)
 	{
 		// use the same filename
 		return original;
 	} else {
 		// generate a new filename
 		logNum = logMax + 1;	// new index
-		std::string out = std::string({original.begin(), original.begin() + dot}) + std::to_string(logNum) + std::string({original.begin() + dot, original.end()});
+		std::string out = std::string({original.begin(), original.begin() + dot}) + sep + std::to_string(logNum) + std::string({original.begin() + dot, original.end()});
 		printf("File %s exists, writing to %s instead\n", original.c_str(), out.c_str());
 		return out;
 	}
