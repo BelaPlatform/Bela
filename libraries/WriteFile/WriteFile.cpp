@@ -78,13 +78,23 @@ WriteFile::~WriteFile(){
 	cleanup();	
 }
 
-void WriteFile::cleanup(){
+void WriteFile::cleanup(bool discard){
+	if(cleaned)
+		return;
+	cleaned = true;
 	std::unique_lock<std::mutex> lock(mutex);
 	//write all that's left
 	writeOutput(true);
 	writeFooter();
 	fflush(file);
 	fclose(file);
+	if(discard)
+	{
+		int ret = unlink(filename.c_str());
+		if(ret)
+			fprintf(stderr, "Error while deleting file %s: %d %s\n", filename.c_str(), errno, strerror(errno));
+	}
+
 	// remove from objAddrs list
 	auto it = std::find(objAddrs.begin(), objAddrs.end(), this);
 	if(it != objAddrs.end())
