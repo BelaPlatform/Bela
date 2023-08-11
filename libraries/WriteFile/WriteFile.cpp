@@ -192,7 +192,7 @@ void WriteFile::setup(const std::string& newFilename, bool overwrite, bool appen
 void WriteFile::setFileType(WriteFileType newFileType){
 	fileType = newFileType;
 	if(fileType == kBinary)
-		setBufferSize(1e7);
+		setBufferSize(1e6);
 }
 void WriteFile::setEcho(bool newEcho){
 	echo=newEcho;
