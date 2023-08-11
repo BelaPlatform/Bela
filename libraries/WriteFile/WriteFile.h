@@ -38,6 +38,7 @@ private:
 	std::string filename;
 	std::vector<std::string> formatTokens;
 	bool echo;
+	bool cleaned = false;
 	static constexpr size_t sleepTimeMs = 5;
 	void writeLine();
 	void writeHeader();
@@ -144,7 +145,13 @@ public:
 	 * and 1 being buffer empty (writing to disk is fast enough).
 	 */
 	float getBufferStatus();
-	void cleanup();
+	/**
+	 * Stop the logging, flush to disk and remove the file from the writing
+	 * thread. After this, you need a new call to setup().
+	 *
+	 * @param discard Whether to delete the file after closing it.
+	 */
+	void cleanup(bool discard = false);
 	~WriteFile();
 	static int getNumInstances();
 	static void writeAllOutputs(bool flush);
