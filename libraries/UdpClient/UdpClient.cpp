@@ -52,7 +52,7 @@ static void dieUninitialized(std::string str){
 		inet_pton(AF_INET,aServerName,&destinationServer.sin_addr);
 		isSetServer=true;
 	};
-	int UdpClient::send(void * message, int size){
+	int UdpClient::send(const void * message, int size){
 		if(!enabled)
 			return -1;
 		unsigned int length;
