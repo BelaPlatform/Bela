@@ -14,9 +14,8 @@ OscSender::OscSender(int port, std::string ip_address){
 }
 OscSender::~OscSender(){}
 
-void OscSender::send_task_func(void* buf, int size){
-	OscSender* instance = this;
-	instance->socket->send(buf, size);
+void OscSender::doSendToSocket(const void* buf, size_t size) {
+	socket->send(buf, size);
 }
 
 void OscSender::setup(int port, std::string ip_address){
@@ -29,7 +28,9 @@ void OscSender::setup(int port, std::string ip_address){
 	socket->setup(port, ip_address.c_str());
 	
 	send_task = std::unique_ptr<AuxTaskNonRT>(new AuxTaskNonRT());
-	send_task->create(std::string("OscSndrTsk_") + ip_address + std::to_string(port), [this](void* buf, int size){send_task_func(buf, size); });
+	send_task->create(std::string("OscSndrTsk_") + ip_address + std::to_string(port), [this](const void* buf, int size){
+		doSendToSocket(buf, size);
+	});
 }
 
 OscSender &OscSender::newMessage(std::string address){
@@ -63,7 +64,17 @@ void OscSender::send(){
 	send_task->schedule(pw->packetData(), pw->packetSize());
 }
 
+void OscSender::sendNonRt(){
+	pw->init().addMessage(*msg);
+	doSendToSocket(pw->packetData(), pw->packetSize());
+}
+
 void OscSender::send(const oscpkt::Message& extMsg){
 	pw->init().addMessage(extMsg);
 	send_task->schedule(pw->packetData(), pw->packetSize());
+}
+
+void OscSender::sendNonRt(const oscpkt::Message& extMsg){
+	pw->init().addMessage(extMsg);
+	doSendToSocket(pw->packetData(), pw->packetSize());
 }
