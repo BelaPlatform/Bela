@@ -42,7 +42,7 @@ class UdpClient{
 		 * @param size The number of bytes to be read from memory and sent to the destination.
 		 * @return the number of bytes sent or -1 if an error occurred.
 		 */
-		int send(void* message, int size);
+		int send(const void* message, int size);
 
 		int write(const char* remoteHostname, int remotePortNumber, void* sourceBuffer, int numBytesToWrite);
 		int waitUntilReady(bool readyForReading, int timeoutMsecs);
