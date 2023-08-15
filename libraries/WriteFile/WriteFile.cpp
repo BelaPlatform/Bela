@@ -346,6 +346,10 @@ void WriteFile::writeOutput(bool flush){
 							 	 // So we make sure we only write full lines
 		writeLine();
 	}
+	if(shouldFlush) {
+		shouldFlush = false;
+		flush = true;
+	}
 	if(fileType == kBinary){
 		int numBinaryElementsToWriteAtOnce = 4096;
 		bool wasWritten = false;
@@ -412,4 +416,8 @@ void WriteFile::run(){
 		usleep(sleepTimeMs*1000);
 	}
 	threadRunning = false;
+}
+
+void WriteFile::requestFlush() {
+	shouldFlush = true;
 }
