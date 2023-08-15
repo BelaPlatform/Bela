@@ -39,6 +39,7 @@ private:
 	std::vector<std::string> formatTokens;
 	bool echo;
 	bool cleaned = false;
+	volatile bool shouldFlush = false;
 	static constexpr size_t sleepTimeMs = 5;
 	void writeLine();
 	void writeHeader();
@@ -145,6 +146,10 @@ public:
 	 * and 1 being buffer empty (writing to disk is fast enough).
 	 */
 	float getBufferStatus();
+	/**
+	 * Request that all of the data logged so far is flushed to disk.
+	 */
+	void requestFlush();
 	/**
 	 * Stop the logging, flush to disk and remove the file from the writing
 	 * thread. After this, you need a new call to setup().
