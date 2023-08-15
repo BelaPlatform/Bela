@@ -1,6 +1,7 @@
 #include "OscReceiver.h"
 #include <libraries/UdpServer/UdpServer.h>
 #include <thread>
+#include <unistd.h>
 
 constexpr unsigned int OscReceiverBlockReadUs = 50000;
 constexpr unsigned int OscReceiverSleepBetweenReadsUs = 5000;
