@@ -103,12 +103,20 @@ class OscSender{
 		 */
 		void send();
 		/**
+		 * \brief Sends the message from the non-realtime thread.
+		 */
+		void sendNonRt();
+		/**
 		 * \brief Sends a message
 		 *
 		 * Sends the message you pass in, which you will have created
 		 * externally. It is safe to call from the audio thread.
 		 */
 		void send(const oscpkt::Message& extMsg);
+		/**
+		 * \brief Sends a message from the non-realtime thread.
+		 */
+		void sendNonRt(const oscpkt::Message& extMsg);
 
         	std::unique_ptr<UdpClient> socket;
         
@@ -116,5 +124,6 @@ class OscSender{
         	std::unique_ptr<oscpkt::PacketWriter> pw;
 
 		std::unique_ptr<AuxTaskNonRT> send_task;
-		void send_task_func(void* buf, int size);
+	private:
+		void doSendToSocket(const void* buf, size_t len);
 };
