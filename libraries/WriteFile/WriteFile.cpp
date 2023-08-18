@@ -13,6 +13,10 @@
 #include <functional>
 #include <mutex>
 #include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 //setupialise static members
 bool WriteFile::staticConstructed=false;

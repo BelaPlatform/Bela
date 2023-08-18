@@ -7,13 +7,9 @@
 
 #ifndef WRITEFILE_H_
 #define WRITEFILE_H_
-#include <Bela.h>
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <string>
+#include <stdint.h>
 
 typedef enum {
 	kBinary,
