@@ -46,19 +46,19 @@ class ControlView extends View{
   buttonClicked($element, e){
     if ($element.data().key === 'upSampling'){
       if (downSampling > 1){
-        downSampling -= 1;
+        downSampling /= 2;
         this.emit('settings-event', 'downSampling', downSampling);
       } else {
-        upSampling += 1;
+        upSampling *= 2;
         this.emit('settings-event', 'upSampling', upSampling);
       }
       // this._upSampling();
     } else if ($element.data().key === 'downSampling'){
       if (upSampling > 1){
-        upSampling -= 1;
+        upSampling /= 2;
         this.emit('settings-event', 'upSampling', upSampling);
       } else {
-        downSampling += 1;
+        downSampling *= 2;
         this.emit('settings-event', 'downSampling', downSampling);
       }
       // this._downSampling();
