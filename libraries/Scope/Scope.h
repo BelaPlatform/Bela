@@ -102,13 +102,16 @@ class Scope{
         void scope_control_connected();
         void scope_control_data(const char* data);
         void parse_settings(std::shared_ptr<JSONValue> value);
+	void outBufferSetTimestamp();
+	void outBufferAppendData(size_t startptr, size_t endptr, size_t outChannelWidth);
+	void outBufferSend();
         
 	bool volatile isUsingOutBuffer;
 	bool volatile isUsingBuffer;
 	bool volatile isResizing;
 		
         // settings
-        int numChannels;
+        size_t numChannels;
         float sampleRate;
         int pixelWidth;
         int frameWidth;
@@ -132,6 +135,9 @@ class Scope{
         // buffers
         std::vector<float> buffer;
         std::vector<float> outBuffer;
+	uint32_t timestamp = 0;
+	size_t outBufferSize;
+	static constexpr size_t kTimestampSlots = sizeof(timestamp) / sizeof(outBuffer[0]);
         
         // pointers
         int writePointer;

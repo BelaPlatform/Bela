@@ -68,7 +68,8 @@ onmessage = function(e){
 
 var ws_onmessage = function(ws, e){
 
-	var inArray = new Float32Array(e.data);
+	let timestamp = new Uint32Array(e.data.slice(0, 4))[0];
+	var inArray = new Float32Array(e.data.slice(4));
 // 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
 //	console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
