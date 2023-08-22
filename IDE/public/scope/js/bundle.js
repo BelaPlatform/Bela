@@ -1668,7 +1668,6 @@ function CPU(data) {
 // plotting
 {
   var plotLoop = function plotLoop() {
-    requestAnimationFrame(plotLoop);
     if (plot) {
       plot = false;
       ctx.clear();
@@ -1686,8 +1685,20 @@ function CPU(data) {
         var curr = constrain(frame[iLength], minY, maxY);
         var next = constrain(frame[iLength + 1], minY, maxY);
         ctx.moveTo(0, curr + xOff * (next - curr));
+        var lastAlpha = 1;
         for (var j = 1; j - xOff < length; j++) {
           var _curr = constrain(frame[j + iLength], minY, maxY);
+          // when drawing incrementally, alpha will be 1 when close to the most
+          // recent and then progressively fade out for older values
+          if (oldDataSeparator >= 0) {
+            var dist = (length + oldDataSeparator - j - 1) % length;
+            var alpha = dist < length / 2 ? 1 : 1 - (dist - length / 2) / (length / 2);
+            // throttle lineStyle() calls as they are CPU-heavy
+            if (Math.abs(alpha - lastAlpha) > 0.1 || lastAlpha != 1 && alpha == 1) {
+              lastAlpha = alpha;
+              ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, alpha);
+            }
+          }
           ctx.lineTo(j - xOff, _curr);
         }
       }
@@ -1762,12 +1773,15 @@ function CPU(data) {
   var frame = void 0,
       length = void 0,
       plot = false;
+  var oldDataSeparator = -1;
 
   worker.onmessage = function (e) {
-    frame = e.data;
+    oldDataSeparator = e.data.oldDataSeparator;
+    frame = e.data.outArray;
     length = Math.floor(frame.length / numChannels);
     // if scope is paused, don't set the plot flag
     plot = !paused;
+    if (plot) requestAnimationFrame(plotLoop);
 
     // interpolate the trigger sample to get the sub-pixel x-offset
     if (settings.getKey('plotMode') == 0) {
