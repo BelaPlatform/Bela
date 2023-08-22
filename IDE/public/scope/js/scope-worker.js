@@ -82,23 +82,33 @@ var ws_onmessage = function(ws, e){
 // 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
 //	console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
-	globalArray.length = outArrayWidth;
+	let roll = false;
+	let incDrawing = downSampling > 8;
+	globalArray.length = outArrayWidth * (roll ? 2 : 1);
 	var outArray = new Float32Array(outArrayWidth);
 		
-	let roll = downSampling > 8;
-	if(roll) {
+	if(incDrawing) {
+		let globalFrameWidth = outFrameWidth * (roll ? 2 : 1);
 		let frames = inArray.length / numChannels;
 		for(let n = 0; n < frames; ++n) {
 			for(let c = 0; c < numChannels; ++c) {
 				let inIndex = c * frames + n;
-				outIndex = c * outFrameWidth + rollPtr;
+				let outIndex = c * globalFrameWidth + rollPtr;
 				globalArray[outIndex] = inToOut(c, inArray[inIndex]);
 			}
 			rollPtr++;
-			rollPtr %= outFrameWidth;
+			rollPtr %= globalFrameWidth;
 		}
-		for(let i = 0; i < outArray.length; ++i)
-			outArray[i] = globalArray[i];
+		if(roll) {
+			for(let n = 0; n < outFrameWidth; ++n) {
+				for(let c = 0; c < numChannels; ++c) {
+					let offset = (globalFrameWidth + n + rollPtr - outFrameWidth) % globalFrameWidth;
+					outArray[c * outFrameWidth + n] = globalArray[(c * globalFrameWidth + offset)];
+				}
+			}
+		} else
+			for(let i = 0; i < outArray.length; ++i)
+				outArray[i] = globalArray[i];
 	} else {
 	if (inArray.length !== inArrayWidth) {
 		console.log(inArray.length, inArrayWidth, inFrameWidth);
