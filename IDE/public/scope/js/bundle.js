@@ -868,8 +868,11 @@ var ControlView = function (_View) {
           downSampling /= 2;
           this.emit('settings-event', 'downSampling', downSampling);
         } else {
-          upSampling *= 2;
-          this.emit('settings-event', 'upSampling', upSampling);
+          if (upSampling < 64) {
+            // an arbitrary limit: higher than this and pileups start happening
+            upSampling *= 2;
+            this.emit('settings-event', 'upSampling', upSampling);
+          }
         }
         // this._upSampling();
       } else if ($element.data().key === 'downSampling') {
