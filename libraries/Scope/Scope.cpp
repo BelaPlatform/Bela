@@ -104,6 +104,8 @@ void Scope::setPlotMode(){
     
     // setup the input buffer
     frameWidth = pixelWidth/upSampling;
+    if(0 == frameWidth)
+	    frameWidth = 1; // avoid divides by zero
 	if(TIME_DOMAIN == plotMode) {
 		channelWidth = frameWidth * FRAMES_STORED;
 	} else {
