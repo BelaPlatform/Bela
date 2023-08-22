@@ -137,6 +137,7 @@ class Scope{
         std::vector<float> outBuffer;
 	uint32_t timestamp = 0;
 	size_t outBufferSize;
+	size_t rollPtr = 0;
 	static constexpr size_t kTimestampSlots = sizeof(timestamp) / sizeof(outBuffer[0]);
         
         // pointers

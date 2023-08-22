@@ -27,7 +27,7 @@ var ws_onopen = function(ws){
 	ws.onerror = undefined;
 };
 
-var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0;
+var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0, downSampling = 1;
 var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
 
 const plotModeTimeDomain = 0;
@@ -49,6 +49,7 @@ onmessage = function(e){
 	
 		numChannels = settings.numChannels;
 		upSampling = settings.upSampling;
+		downSampling = settings.downSampling;
 	
 		inFrameWidth = Math.floor(settings.frameWidth/upSampling);
 		outFrameWidth = settings.frameWidth;
@@ -66,6 +67,14 @@ onmessage = function(e){
 	}
 }
 
+let rollPtr = 0;
+let globalArray = new Array();
+let counter = 0;
+
+function inToOut(c, val) {
+	return zero * (1 - (channelConfig[c].yOffset + val) * channelConfig[c].yAmplitude);
+}
+
 var ws_onmessage = function(ws, e){
 
 	let timestamp = new Uint32Array(e.data.slice(0, 4))[0];
@@ -73,8 +82,24 @@ var ws_onmessage = function(ws, e){
 // 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
 //	console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
+	globalArray.length = outArrayWidth;
 	var outArray = new Float32Array(outArrayWidth);
 		
+	let roll = downSampling > 8;
+	if(roll) {
+		let frames = inArray.length / numChannels;
+		for(let n = 0; n < frames; ++n) {
+			for(let c = 0; c < numChannels; ++c) {
+				let inIndex = c * frames + n;
+				outIndex = c * outFrameWidth + rollPtr;
+				globalArray[outIndex] = inToOut(c, inArray[inIndex]);
+			}
+			rollPtr++;
+			rollPtr %= outFrameWidth;
+		}
+		for(let i = 0; i < outArray.length; ++i)
+			outArray[i] = globalArray[i];
+	} else {
 	if (inArray.length !== inArrayWidth) {
 		console.log(inArray.length, inArrayWidth, inFrameWidth);
 		console.log('worker: frame dropped');
@@ -91,7 +116,7 @@ var ws_onmessage = function(ws, e){
 				var second = inArray[inIndex + 1 < endOfInArray ? inIndex + 1 : endOfInArray];
 				var diff = interpolation ? u*(second-first)/upSampling : 0;
 				outIndex = channel*outFrameWidth + frame*upSampling + u;
-				outArray[outIndex] = zero * (1 - (channelConfig[channel].yOffset + (inArray[inIndex]+diff)) * channelConfig[channel].yAmplitude);
+				outArray[outIndex] = inToOut(channel, inArray[inIndex] + diff);
 			}
 		}
 		// the above will not always get to the end of outArray, depending on the ratio between upSampling and outFrameWidth
@@ -109,6 +134,7 @@ var ws_onmessage = function(ws, e){
 		while(outIndex < endOfOutArray){
 			outArray[outIndex++] = fillValue;
 		}
+	}
 	}
 //  	for(var n = 0; n < upSampling; ++n){
 // 		outArray[outArray.length - 1 - n] = outArray[outArray.length - upSampling - 1];
