@@ -268,10 +268,29 @@ void Scope::outBufferSend(){
 void Scope::triggerTimeDomain(){
 // printf("do trigger %i, %i\n", readPointer, writePointer);
     // iterate over the samples between the read and write pointers and check for / deal with triggers
+	// target approx 30 Hz
+	size_t numRollSamples = sampleRate / 30 / downSampling;
+	if(!numRollSamples)
+		numRollSamples = 1;
     while (readPointer != writePointer){
 	timestamp++;
-        // if we are currently listening for a trigger
-        if (triggerPrimed){
+	bool autoRoll = true;
+	if(downSampling > 8 && autoRoll)
+	{
+		rollPtr++;
+		if(rollPtr >= numRollSamples)
+		{
+			rollPtr = 0;
+			isUsingOutBuffer = true;
+			isUsingBuffer = true;
+			outBufferSetTimestamp();
+			outBufferAppendData((readPointer - numRollSamples + channelWidth) % channelWidth , readPointer % channelWidth, numRollSamples);
+			outBufferSend();
+			isUsingBuffer = false;
+			isUsingOutBuffer = false;
+		}
+	} else if (triggerPrimed){
+            //if we are currently listening for a trigger
             
             // if we crossed the trigger threshold
             if (triggered()){
