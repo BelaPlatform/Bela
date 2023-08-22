@@ -1,25 +1,31 @@
 
 var settings = {}, channelConfig = [];
 
-var wsAddress = "ws://" + location.host + ":5432/scope_data";
-var ws = new WebSocket(wsAddress);
-var ws_onerror = function(e){
+let wsUrl;
+function setWsCbs(ws) {
+	ws.onerror = ws_onerror.bind(null,ws);
+	ws.onopen = ws_onopen.bind(null, ws);
+	ws.onmessage = ws_onmessage.bind(null, ws);
+}
+var ws_onerror = function(ws, e){
 	setTimeout(() => {
-		ws = new WebSocket(wsAddress);
-		ws.onerror = ws_onerror;
-		ws.onopen = ws_onopen;
-		ws.onmessage = ws_onmessage;
+		ws = new WebSocket(wsUrl);
+		setWsCbs(ws);
 	}, 500);
 };
-ws.onerror = ws_onerror;
 
-var ws_onopen = function(){
+function wsConnect(wsRemote) {
+	wsUrl = wsRemote + "scope_data"
+	let ws = new WebSocket(wsUrl)
+	setWsCbs(ws);
+}
+
+var ws_onopen = function(ws){
 	ws.binaryType = 'arraybuffer';
 	console.log('scope data websocket open');
 	ws.onclose = ws_onerror;
 	ws.onerror = undefined;
 };
-ws.onopen = ws_onopen;
 
 var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0;
 var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
@@ -55,10 +61,12 @@ onmessage = function(e){
 	} else if (e.data.event === 'channelConfig'){
 		channelConfig = e.data.channelConfig;
 		//console.log(channelConfig);
+	} else if (e.data.event === 'wsConnect') {
+		wsConnect(e.data.remote);
 	}
 }
 
-var ws_onmessage = function(e){
+var ws_onmessage = function(ws, e){
 
 	var inArray = new Float32Array(e.data);
 // 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
@@ -108,4 +116,3 @@ var ws_onmessage = function(e){
 	postMessage(outArray, [outArray.buffer]);
 
 };
-ws.onmessage = ws_onmessage;
