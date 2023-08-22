@@ -32,6 +32,11 @@ class Scope{
 		NEGATIVE, ///< Trigger when crossing the threshold and the signal is decreasing
 		BOTH, ///< Trigger on any crossing of the threshold.
 	} TriggerSlope;
+	typedef enum {
+		X_NORMAL, ///< X-axis normal
+		X_INCREMENTAL, ///< X-axis incremental
+		X_ROLLING, ///< X-axis rolling
+	} XAxisBehaviour;
 
         Scope();
 	Scope(unsigned int numChannels, float sampleRate);
@@ -119,6 +124,7 @@ class Scope{
         TriggerMode triggerMode;
         unsigned int triggerChannel;
         TriggerSlope triggerDir;
+	XAxisBehaviour xAxisBehaviour = X_NORMAL;
         float triggerLevel;
         int xOffset;
         int xOffsetSamples;

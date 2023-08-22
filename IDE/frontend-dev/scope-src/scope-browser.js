@@ -478,6 +478,7 @@ settings.setData({
   triggerDir  : 0,
   triggerLevel  : 0,
   xOffset   : 0,
+  xAxisBehaviour: 0,
   upSampling  : 1,
   downSampling  : 1,
   FFTLength : 1024,

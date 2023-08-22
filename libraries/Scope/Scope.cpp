@@ -274,9 +274,9 @@ void Scope::triggerTimeDomain(){
 		numRollSamples = 1;
     while (readPointer != writePointer){
 	timestamp++;
-	bool autoRoll = true;
-	if(downSampling > 8 && autoRoll)
+	if(downSampling > 1 && X_NORMAL != xAxisBehaviour)
 	{
+		// send "rolling" blocks without waiting for a trigger
 		rollPtr++;
 		if(rollPtr >= numRollSamples)
 		{
@@ -544,6 +544,8 @@ void Scope::setSetting(std::wstring setting, float value){
 	} else if (setting.compare(L"xOffset") == 0){
         xOffset = (int)value;
         setXParams();
+	} else if (setting.compare(L"xAxisBehaviour") == 0){
+		xAxisBehaviour = (XAxisBehaviour)value;
 	} else if (setting.compare(L"upSampling") == 0){
 		stop();
         upSampling = (int)value;
