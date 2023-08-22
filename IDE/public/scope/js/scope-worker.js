@@ -151,6 +151,9 @@ var ws_onmessage = function(ws, e){
 // 		outArray[outArray.length - 1 - n] = outArray[outArray.length - upSampling - 1];
 // 	}
 	
-	postMessage(outArray, [outArray.buffer]);
+	postMessage({
+		outArray: outArray,
+		oldDataSeparator: 1 == xAxisBehaviour ? rollPtr : -1,
+	}, [outArray.buffer]);
 
 };
