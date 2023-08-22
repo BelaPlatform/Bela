@@ -27,7 +27,7 @@ var ws_onopen = function(ws){
 	ws.onerror = undefined;
 };
 
-var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0, downSampling = 1;
+var zero = 0, triggerChannel = 0, xOffset = 0, triggerLevel = 0, numChannels = 0, upSampling = 0, downSampling = 1, xAxisBehaviour = 0;
 var inFrameWidth = 0, outFrameWidth = 0, inArrayWidth = 0, outArrayWidth = 0, interpolation = 0;
 
 const plotModeTimeDomain = 0;
@@ -50,6 +50,7 @@ onmessage = function(e){
 		numChannels = settings.numChannels;
 		upSampling = settings.upSampling;
 		downSampling = settings.downSampling;
+		xAxisBehaviour = settings.xAxisBehaviour;
 	
 		inFrameWidth = Math.floor(settings.frameWidth/upSampling);
 		outFrameWidth = settings.frameWidth;
@@ -82,8 +83,8 @@ var ws_onmessage = function(ws, e){
 // 	console.log("worker: recieved buffer of length "+inArray.length, inArrayWidth);
 //	console.log(settings.frameHeight, settings.numChannels, settings.frameWidth, channelConfig);
 	
-	let roll = false;
-	let incDrawing = downSampling > 8;
+	let roll = 2 == xAxisBehaviour;
+	let incDrawing = downSampling > 1 && 0 != xAxisBehaviour;
 	globalArray.length = outArrayWidth * (roll ? 2 : 1);
 	var outArray = new Float32Array(outArrayWidth);
 		
