@@ -203,7 +203,7 @@ void Scope::postlog(){
 	isUsingBuffer = false;
     writePointer = (writePointer+1)%channelWidth;
 	
-    if (logCount++ > TRIGGER_LOG_COUNT){
+    if (logCount++ > TRIGGER_LOG_COUNT || downSampling > TRIGGER_LOG_COUNT){
         logCount = 0;
         scopeTriggerTask->schedule();
     }
