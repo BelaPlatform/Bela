@@ -1,7 +1,17 @@
 'use strict';
 
 // worker
+let remoteHost = location.hostname + ":5432";
+let qs = new URLSearchParams(location.search);
+let qsRemoteHost = qs.get("remoteHost");
+if(qsRemoteHost)
+  remoteHost = qsRemoteHost
+var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
+worker.postMessage({
+  event: 'wsConnect',
+  remote: wsRemote,
+});
 
 // models
 var Model = require('./Model');
@@ -24,20 +34,12 @@ var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 // main bela socket
 var belaSocket = io('/IDE');
 
-// scope websocket
-var ws;
-
-var wsAddress = "ws://" + location.host + ":5432/scope_control"
-ws = new WebSocket(wsAddress);
 var ws_onerror = function(e){
   setTimeout(() => {
-    ws = new WebSocket(wsAddress);
-    ws.onerror = ws_onerror;
-    ws.onopen = ws_onopen;
-    ws.onmessage = ws_onmessage;
+    ws = new WebSocket(wsUrl);
+    setWsCbs(ws)
   }, 500);
 };
-ws.onerror = ws_onerror;
 
 var ws_onopen = function(){
   ws.binaryType = 'arraybuffer';
@@ -45,7 +47,6 @@ var ws_onopen = function(){
   ws.onclose = ws_onerror;
   ws.onerror = undefined;
 };
-ws.onopen = ws_onopen;
 
 var ws_onmessage = function(msg){
   // console.log('recieved scope control message:', msg.data);
@@ -85,7 +86,16 @@ var ws_onmessage = function(msg){
     }
   }
 };
-ws.onmessage = ws_onmessage;
+function setWsCbs(ws) {
+  ws.onerror = ws_onerror;
+  ws.onopen = ws_onopen;
+  ws.onmessage = ws_onmessage;
+}
+
+// scope websocket
+let wsUrl = wsRemote + "scope_control";
+var ws = new WebSocket(wsUrl);
+setWsCbs(ws);
 
 var paused = false, oneShot = false;
 
