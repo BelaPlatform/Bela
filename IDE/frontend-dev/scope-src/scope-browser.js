@@ -4,14 +4,17 @@
 let remoteHost = location.hostname + ":5432";
 let qs = new URLSearchParams(location.search);
 let qsRemoteHost = qs.get("remoteHost");
+let qsControlOnly = qs.get("controlOnly");
 if(qsRemoteHost)
   remoteHost = qsRemoteHost
 var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
-worker.postMessage({
-  event: 'wsConnect',
-  remote: wsRemote,
-});
+if(!qsControlOnly) {
+  worker.postMessage({
+    event: 'wsConnect',
+    remote: wsRemote,
+  });
+}
 
 // models
 var Model = require('./Model');
