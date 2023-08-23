@@ -21,7 +21,11 @@ var Model = require('./Model');
 var settings = new Model();
 
 // Pixi.js renderer and stage
-var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, {transparent: true});
+var renderer = PIXI.autoDetectRenderer({
+  width: window.innerWidth,
+  heigh: window.innerHeight,
+  transparent: true,
+});
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
