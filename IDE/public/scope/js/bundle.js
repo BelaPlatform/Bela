@@ -1375,13 +1375,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var remoteHost = location.hostname + ":5432";
 var qs = new URLSearchParams(location.search);
 var qsRemoteHost = qs.get("remoteHost");
+var qsControlOnly = qs.get("controlOnly");
 if (qsRemoteHost) remoteHost = qsRemoteHost;
 var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
-worker.postMessage({
-  event: 'wsConnect',
-  remote: wsRemote
-});
+if (!qsControlOnly) {
+  worker.postMessage({
+    event: 'wsConnect',
+    remote: wsRemote
+  });
+}
 
 // models
 var Model = require('./Model');
