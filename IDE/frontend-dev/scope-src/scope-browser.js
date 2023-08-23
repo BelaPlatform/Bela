@@ -25,6 +25,9 @@ var renderer = PIXI.autoDetectRenderer({
   width: window.innerWidth,
   heigh: window.innerHeight,
   transparent: true,
+  antialias: true,
+  autoDensity: true, // somehow makes CSS compensate for increased resolution. Not sure it's needed for us
+  //resolution: 2, // sort of oversampling for antialias
 });
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
