@@ -132,7 +132,6 @@ gulp.task('scope-browserify', () => {
         .on('error', function(error){
     		console.error(error);
     		this.emit('end');
-			exit(1);
     	})
         .pipe(source('bundle.js'))
         .pipe(buffer())
@@ -150,7 +149,7 @@ gulp.task('sass', () => {
 });
 
 gulp.task('watch-local', () => {
-	//livereload.listen();
+	livereload.listen();
 	// when the browser js changes, browserify it
 	gulp.watch(['./src/**'], ['browserify']);
 	// when the scope browser js changes, browserify it
