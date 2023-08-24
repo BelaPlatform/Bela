@@ -1375,11 +1375,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var remoteHost = location.hostname + ":5432";
 var qs = new URLSearchParams(location.search);
 var qsRemoteHost = qs.get("remoteHost");
-var qsControlOnly = qs.get("controlOnly");
+var controlDisabled = qs.get("controlDisabled");
+var dataDisabled = qs.get("dataDisabled");
 if (qsRemoteHost) remoteHost = qsRemoteHost;
 var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
-if (!qsControlOnly) {
+if (!dataDisabled) {
   worker.postMessage({
     event: 'wsConnect',
     remote: wsRemote
@@ -1454,7 +1455,7 @@ var ws_onmessage = function ws_onmessage(msg) {
       console.log('could not stringify settings:', e);
       return;
     }
-    if (ws.readyState === 1) ws.send(out);
+    if (ws && ws.readyState === 1) ws.send(out);
   } else if (data.event == 'set-slider') {
     sliderView.emit('set-slider', data);
   } else if (data.event == 'set-setting') {
@@ -1469,10 +1470,13 @@ function setWsCbs(ws) {
   ws.onmessage = ws_onmessage;
 }
 
-// scope websocket
 var wsUrl = wsRemote + "scope_control";
-var ws = new WebSocket(wsUrl);
-setWsCbs(ws);
+// scope websocket
+var ws = void 0;
+if (!controlDisabled) {
+  ws = new WebSocket(wsUrl);
+  setWsCbs(ws);
+}
 
 var paused = false,
     oneShot = false;
@@ -1508,7 +1512,7 @@ controlView.on('settings-event', function (key, value) {
     console.log('error creating settings JSON', e);
     return;
   }
-  if (ws.readyState === 1) ws.send(out);
+  if (ws && ws.readyState === 1) ws.send(out);
   settings.setKey(key, value);
 });
 
@@ -1561,7 +1565,7 @@ sliderView.on('slider-value', function (slider, value) {
     console.log('could not stringify slider json:', e);
     return;
   }
-  if (ws.readyState === 1) ws.send(out);
+  if (ws && ws.readyState === 1) ws.send(out);
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -1578,7 +1582,7 @@ settings.on('set', function (data, changedKeys) {
       console.log('unable to stringify framewidth', e);
       return;
     }
-    if (ws.readyState === 1) ws.send(out);
+    if (ws && ws.readyState === 1) ws.send(out);
   } else {
     worker.postMessage({
       event: 'settings',
