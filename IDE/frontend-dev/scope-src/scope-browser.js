@@ -25,7 +25,7 @@ var settings = new Model();
 var renderer = PIXI.autoDetectRenderer({
   width: window.innerWidth,
   heigh: window.innerHeight,
-  transparent: true,
+  backgroundAlpha: 0,
   antialias: true,
   autoDensity: true, // somehow makes CSS compensate for increased resolution. Not sure it's needed for us
   //resolution: 2, // sort of oversampling for antialias
