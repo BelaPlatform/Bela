@@ -1684,6 +1684,8 @@ function CPU(data) {
   var plotLoop = function plotLoop() {
     if (plot) {
       plot = false;
+      var start = void 0;
+      if (benchmarkDrawing) start = performance.now();
       ctx.clear();
       var minY = 0;
       var maxY = renderer.height;
@@ -1718,6 +1720,19 @@ function CPU(data) {
       }
       renderer.render(stage);
       triggerStatus();
+      if (benchmarkDrawing) {
+        var stop = performance.now();
+        var dur = stop - start;
+        plotRunsSum += dur;
+        plotRunsIdx++;
+        if (plotRunsIdx >= plotRuns) {
+          var perc = plotRunsSum / (stop - plotRunsStart) * 100;
+          console.log("sum: " + plotRunsSum.toFixed(2) + ", avg: ", +perc.toFixed(2) + "%, avg fps: ", plotRuns / ((stop - plotRunsStart) / 1000));
+          plotRunsSum = 0;
+          plotRunsIdx = 0;
+          plotRunsStart = stop;
+        }
+      }
     } /*else {
       console.log('not plotting');
       }*/
@@ -1817,6 +1832,12 @@ function CPU(data) {
       */if (isNaN(xOff)) xOff = 0;
     }
   };
+
+  var benchmarkDrawing = false;
+  var plotRuns = 50;
+  var plotRunsSum = 0;
+  var plotRunsStart = 0;
+  var plotRunsIdx = 0;
 
   plotLoop();
 
