@@ -4,12 +4,13 @@
 let remoteHost = location.hostname + ":5432";
 let qs = new URLSearchParams(location.search);
 let qsRemoteHost = qs.get("remoteHost");
-let qsControlOnly = qs.get("controlOnly");
+let controlDisabled = qs.get("controlDisabled");
+let dataDisabled = qs.get("dataDisabled");
 if(qsRemoteHost)
   remoteHost = qsRemoteHost
 var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
-if(!qsControlOnly) {
+if(!dataDisabled) {
   worker.postMessage({
     event: 'wsConnect',
     remote: wsRemote,
@@ -87,7 +88,7 @@ var ws_onmessage = function(msg){
       console.log('could not stringify settings:', e);
       return;
     }
-    if (ws.readyState === 1) ws.send(out);
+    if (ws && ws.readyState === 1) ws.send(out);
   } else if (data.event == 'set-slider'){
     sliderView.emit('set-slider', data);
   } else if (data.event == 'set-setting'){
@@ -102,10 +103,13 @@ function setWsCbs(ws) {
   ws.onmessage = ws_onmessage;
 }
 
-// scope websocket
 let wsUrl = wsRemote + "scope_control";
-var ws = new WebSocket(wsUrl);
-setWsCbs(ws);
+// scope websocket
+let ws;
+if(!controlDisabled) {
+  ws = new WebSocket(wsUrl);
+  setWsCbs(ws);
+}
 
 var paused = false, oneShot = false;
 
@@ -141,7 +145,7 @@ controlView.on('settings-event', (key, value) => {
     console.log('error creating settings JSON', e);
     return;
   }
-  if (ws.readyState === 1) ws.send(out);
+  if (ws && ws.readyState === 1) ws.send(out);
   settings.setKey(key, value);
 });
 
@@ -196,7 +200,7 @@ sliderView.on('slider-value', (slider, value) => {
     console.log('could not stringify slider json:', e);
     return;
   }
-  if (ws.readyState === 1) ws.send(out)
+  if (ws && ws.readyState === 1) ws.send(out)
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -214,7 +218,7 @@ settings.on('set', (data, changedKeys) => {
       console.log('unable to stringify framewidth', e);
       return;
     }
-    if (ws.readyState === 1) ws.send(out);
+    if (ws && ws.readyState === 1) ws.send(out);
   } else {
     worker.postMessage({
       event   : 'settings',
