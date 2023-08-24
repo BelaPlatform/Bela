@@ -395,7 +395,12 @@ function CPU(data){
       for (var i=0; i<numChannels; i++){
         if(!channelConfig[i].enabled)
           continue;
-        ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, 1);
+        ctx.lineStyle({
+          width: channelConfig[i].lineWeight,
+          color: channelConfig[i].color,
+          alpha: 1,
+          native: false, // setting this to true may reduce CPU usage but only allows width: 1
+        });
         let iLength = i*length;
         let constrain = (v, min, max) => {
           if(v < min)
