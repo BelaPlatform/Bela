@@ -384,69 +384,68 @@ function CPU(data){
   let plotRunsStart = 0;
   let plotRunsIdx = 0;
   function plotLoop(){
-    if (plot){
-      plot = false;
-      let start;
-      if(benchmarkDrawing)
-        start = performance.now();
-      ctx.clear();
-      let minY = 0;
-      let maxY = renderer.height;
-      for (var i=0; i<numChannels; i++){
-        if(!channelConfig[i].enabled)
-          continue;
-        ctx.lineStyle({
-          width: channelConfig[i].lineWeight,
-          color: channelConfig[i].color,
-          alpha: 1,
-          native: false, // setting this to true may reduce CPU usage but only allows width: 1
-        });
-        let iLength = i*length;
-        let constrain = (v, min, max) => {
-          if(v < min)
-            return min;
-          if(v > max)
-            return max;
-          return v;
-        }
-        let curr = constrain(frame[iLength], minY, maxY);
-        let next = constrain(frame[iLength + 1], minY, maxY);
-        ctx.moveTo(0, curr + xOff*(next - curr));
-        let lastAlpha = 1;
-        for (var j=1; (j-xOff)<length; j++){
-          let curr = constrain(frame[j + iLength], minY, maxY);
-          // when drawing incrementally, alpha will be 1 when close to the most
-          // recent and then progressively fade out for older values
-          if(oldDataSeparator >= 0) {
-            let dist = (length + oldDataSeparator - j - 1) % length;
-            let alpha = dist < length / 2 ? 1 : 1 - (dist - length / 2) / (length / 2);
-            // throttle lineStyle() calls as they are CPU-heavy
-            if(Math.abs(alpha - lastAlpha) > 0.1 || (lastAlpha != 1 && alpha == 1)) {
-              lastAlpha = alpha;
-              ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, alpha);
-            }
+    if (!plot){
+      return
+    }
+    plot = false;
+    let start;
+    if(benchmarkDrawing)
+      start = performance.now();
+    ctx.clear();
+    let minY = 0;
+    let maxY = renderer.height;
+    for (var i=0; i<numChannels; i++){
+      if(!channelConfig[i].enabled)
+        continue;
+      ctx.lineStyle({
+        width: channelConfig[i].lineWeight,
+        color: channelConfig[i].color,
+        alpha: 1,
+        native: false, // setting this to true may reduce CPU usage but only allows width: 1
+      });
+      let iLength = i*length;
+      let constrain = (v, min, max) => {
+        if(v < min)
+          return min;
+        if(v > max)
+          return max;
+        return v;
+      }
+      let curr = constrain(frame[iLength], minY, maxY);
+      let next = constrain(frame[iLength + 1], minY, maxY);
+      ctx.moveTo(0, curr + xOff*(next - curr));
+      let lastAlpha = 1;
+      for (var j=1; (j-xOff)<length; j++){
+        let curr = constrain(frame[j + iLength], minY, maxY);
+        // when drawing incrementally, alpha will be 1 when close to the most
+        // recent and then progressively fade out for older values
+        if(oldDataSeparator >= 0) {
+          let dist = (length + oldDataSeparator - j - 1) % length;
+          let alpha = dist < length / 2 ? 1 : 1 - (dist - length / 2) / (length / 2);
+          // throttle lineStyle() calls as they are CPU-heavy
+          if(Math.abs(alpha - lastAlpha) > 0.1 || (lastAlpha != 1 && alpha == 1)) {
+            lastAlpha = alpha;
+            ctx.lineStyle(channelConfig[i].lineWeight, channelConfig[i].color, alpha);
           }
-          ctx.lineTo(j-xOff, curr);
         }
+        ctx.lineTo(j-xOff, curr);
       }
-      renderer.render(stage);
-      triggerStatus();
-      if(benchmarkDrawing) {
-        let stop = performance.now();
-        let dur = stop - start;
-        plotRunsSum += dur;
-        plotRunsIdx++;
-        if(plotRunsIdx >= plotRuns) {
-          let perc = plotRunsSum / (stop - plotRunsStart) * 100;
-          console.log("sum: " + plotRunsSum.toFixed(2) + ", avg: ", + perc.toFixed(2) + "%, avg fps: ", plotRuns / ((stop - plotRunsStart) / 1000));
-          plotRunsSum = 0;
-          plotRunsIdx = 0;
-          plotRunsStart = stop;
-        }
+    }
+    renderer.render(stage);
+    triggerStatus();
+    if(benchmarkDrawing) {
+      let stop = performance.now();
+      let dur = stop - start;
+      plotRunsSum += dur;
+      plotRunsIdx++;
+      if(plotRunsIdx >= plotRuns) {
+        let perc = plotRunsSum / (stop - plotRunsStart) * 100;
+        console.log("sum: " + plotRunsSum.toFixed(2) + ", avg: ", + perc.toFixed(2) + "%, avg fps: ", plotRuns / ((stop - plotRunsStart) / 1000));
+        plotRunsSum = 0;
+        plotRunsIdx = 0;
+        plotRunsStart = stop;
       }
-    } /*else {
-      console.log('not plotting');
-    }*/
+    }
   }
   plotLoop();
   
