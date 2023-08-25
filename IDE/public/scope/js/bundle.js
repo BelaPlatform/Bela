@@ -1408,6 +1408,14 @@ var ws_onmessage = function ws_onmessage(msg) {
     var obj = settings._getData();
     obj.event = "connection-reply";
     sendToWs(obj);
+  } else if (data.event == 'update') {
+    // this is a full update due to the setting having changed in a different tab
+    // unfortunately we don't yet have a way to handle it properly without
+    // causing a ping-pong between the two tabs.
+    // Another issue with two clients open receiving data at the same time is
+    // that they need to share the same frameWidth or it's going to be a
+    // problem!
+    // TODO: do it!
   } else if (data.event == 'set-setting') {
     if (settings.getKey(data.setting) !== undefined) {
       settings.setKey(data.setting, data.value);
