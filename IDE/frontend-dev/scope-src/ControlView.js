@@ -172,6 +172,22 @@ class ControlView extends View{
   _triggerLevel(value){
     this.$elements.filterByData('key', 'triggerLevel').val(value);
   }
+
+  _xAxisBehaviour(value){
+    this.$elements.filterByData('key', 'xAxisBehaviour').val(value);
+  }
+
+  _holdOff(value){
+    this.$elements.filterByData('key', 'holdOff').val(value);
+  }
+
+  _xOffset(value){
+    this.$elements.filterByData('key', 'xOffset').val(value);
+  }
+
+  _interpolation(value){
+    this.$elements.filterByData('key', 'interpolation').val(value);
+  }
 }
 
 module.exports = ControlView;
