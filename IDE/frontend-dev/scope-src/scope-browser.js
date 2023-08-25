@@ -45,6 +45,10 @@ var channelView = new (require('./ChannelView'))('channelView', [settings]);
 var belaSocket = io('/IDE');
 
 function sendToWs(obj) {
+  // do not send frameWidth if we are not receiving data,
+  // or the server will get confused
+  if(dataDisabled)
+    delete obj.frameWidth;
   if (ws && ws.readyState === 1) {
     let out;
     try {
@@ -117,16 +121,44 @@ if(!controlDisabled) {
 var paused = false, oneShot = false;
 
 // view events
+const kScopeWaiting = 0, kScopeTriggered = 1, kScopePaused = 2, kScopeWaitingOneShot = 3, kScopeDisabled = 4;
+function setScopeStatus(status) {
+  let d = $('#scopeStatus');
+  let trigCls = 'scope-status-triggered';
+  let waitCls = 'scope-status-waiting';
+  d.removeClass(trigCls).removeClass(waitCls);
+  switch(status) {
+    case(kScopeWaiting):
+      d.addClass(waitCls);
+      d.html('waiting');
+      break;
+    case(kScopeTriggered):
+      d.addClass(trigCls);
+      d.html('triggered');
+      break;
+    case(kScopePaused):
+      d.addClass(waitCls);
+      d.html('paused');
+      break;
+    case(kScopeWaitingOneShot):
+      d.addClass(waitCls);
+	  d.html('waiting (one-shot)');
+      break;
+    case(kScopeDisabled):
+      d.html('DISABLED');
+      break;
+  }
+}
 controlView.on('settings-event', (key, value) => {
   if (key === 'scopePause'){
     if (paused){
       paused = false;
       $('.pause-button').html('Pause plotting');
-      $('#scopeStatus').html('waiting');
+      setScopeStatus(kScopeWaiting);
     } else {
       paused = true;
       $('.pause-button').html('Resume plotting');
-      $('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
+      setScopeStatus(kScopePaused);
     }
     return;
   } else if (key === 'scopeOneShot'){
@@ -135,7 +167,7 @@ controlView.on('settings-event', (key, value) => {
       paused = false;
       $('#pauseButton').html('pause');
     }
-    $('#scopeStatus').removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting (one-shot)');
+    setScopeStatus(kScopeWaitingOneShot);
   }
   if (value === undefined) return;
   var obj = {};
@@ -428,7 +460,6 @@ function CPU(data){
   let inactiveTimeout = setTimeout(() => {
     if (!oneShot && !paused) inactiveOverlay.addClass('inactive-overlay-visible');
   }, 5000);
-  let scopeStatus = $('#scopeStatus');
   let inactiveOverlay = $('#inactive-overlay');
   function triggerStatus(){
   
@@ -437,13 +468,14 @@ function CPU(data){
     if (oneShot){
       oneShot = false;
       paused = true;
-      $('.pause-button').html('resume');
-      scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('paused');
+      $('.pause-button').html('Resume plotting');
+      setScopeStatus(kScopePaused);
     } else {
-      scopeStatus.removeClass('scope-status-waiting').addClass('scope-status-triggered').html('triggered');
+      setScopeStatus(kScopeTriggered);
       if (triggerTimeout) clearTimeout(triggerTimeout);
       triggerTimeout = setTimeout(() => {
-        if (!oneShot && !paused) scopeStatus.removeClass('scope-status-triggered').addClass('scope-status-waiting').html('waiting');
+        if (!oneShot && !paused)
+          setScopeStatus(kScopeWaiting);
       }, 1000);
       
       if (inactiveTimeout) clearTimeout(inactiveTimeout);
