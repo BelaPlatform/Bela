@@ -1027,6 +1027,26 @@ var ControlView = function (_View) {
     value: function _triggerLevel(value) {
       this.$elements.filterByData('key', 'triggerLevel').val(value);
     }
+  }, {
+    key: '_xAxisBehaviour',
+    value: function _xAxisBehaviour(value) {
+      this.$elements.filterByData('key', 'xAxisBehaviour').val(value);
+    }
+  }, {
+    key: '_holdOff',
+    value: function _holdOff(value) {
+      this.$elements.filterByData('key', 'holdOff').val(value);
+    }
+  }, {
+    key: '_xOffset',
+    value: function _xOffset(value) {
+      this.$elements.filterByData('key', 'xOffset').val(value);
+    }
+  }, {
+    key: '_interpolation',
+    value: function _interpolation(value) {
+      this.$elements.filterByData('key', 'interpolation').val(value);
+    }
   }]);
 
   return ControlView;
