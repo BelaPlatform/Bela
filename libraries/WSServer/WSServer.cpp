@@ -6,6 +6,18 @@
 #include <AuxTaskNonRT.h>
 #include <cstring>
 
+static seasocks::WebSocket* detailsToSocket(const WSServerDetails* d)
+{
+	// we remove const because the caller wouldn't know of any change
+	// done to WSServerDetails, as it doesn't know its implementation
+	// TODO: not sure how good practice this is
+	return (seasocks::WebSocket*)d;
+}
+static WSServerDetails* socketToDetails(seasocks::WebSocket* s)
+{
+	return (WSServerDetails*)s;
+}
+
 WSServer::WSServer(){}
 WSServer::WSServer(int port){
 	setup(port);
@@ -24,24 +36,24 @@ struct WSServerDataHandler : seasocks::WebSocket::Handler {
 	void onConnect(seasocks::WebSocket *socket) override {
 		connections.insert(socket);
 		if(on_connect) {
-			on_connect(address, (WSServerDetails*)socket);
+			on_connect(address, socketToDetails(socket));
 		}
 	}
 	void onData(seasocks::WebSocket *socket, const char *data) override {
-		on_receive(address, (WSServerDetails*)socket, (const unsigned char*)data, std::strlen(data));
+		on_receive(address, socketToDetails(socket), (const unsigned char*)data, std::strlen(data));
 	}
 	void onData(seasocks::WebSocket *socket, const uint8_t* data, size_t size) override {
-		on_receive(address, (WSServerDetails*)socket, data, size);
+		on_receive(address, socketToDetails(socket), data, size);
 	}
 	void onDisconnect(seasocks::WebSocket *socket) override {
 		connections.erase(socket);
 		if (on_disconnect)
-			on_disconnect(address, (WSServerDetails*)socket);
+			on_disconnect(address, socketToDetails(socket));
 	}
 };
 
 // this is either called directly from sendNonRt(), or via callback when scheduled from sendRt()
-void WSServer::sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread){
+void WSServer::sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread, const WSServerDetails* except){
 	if(!handler)
 		return;
 	// make a copy of the data before we send it out
@@ -50,6 +62,12 @@ void WSServer::sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler
 		if(kThreadCallback == callingThread) {
 			// avoid memory copy and a lot of work
 			for (auto c : handler->connections){
+				if(c == detailsToSocket(except)){
+					// skip at most one connection. This is typically useful if you want
+					// to broadcast data to several clients, excluding the one that may
+					// have originated them
+					continue;
+				}
 				if (handler->binary)
 					c->send((uint8_t*)buf, size);
 				else
@@ -114,17 +132,17 @@ void WSServer::addAddress(const std::string& _address,
 		[this,wkHdl](void* buf, int size){
 			auto handler = wkHdl.lock();
 			if(handler)
-				sendToAllConnections(handler, buf, size, kThreadOther);
+				sendToAllConnections(handler, buf, size, kThreadOther, nullptr);
 		});
 }
 
-int WSServer::sendNonRt(const char* _address, const char* str, CallingThread callingThread) {
-	return sendNonRt(_address, (const void*)str, strlen(str) + 1, callingThread);
+int WSServer::sendNonRt(const char* _address, const char* str, CallingThread callingThread, const WSServerDetails* src) {
+	return sendNonRt(_address, (const void*)str, strlen(str) + 1, callingThread, src);
 }
 
-int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size, CallingThread callingThread) {
+int WSServer::sendNonRt(const char* _address, const void* buf, unsigned int size, CallingThread callingThread, const WSServerDetails* src) {
 	try {
-		sendToAllConnections(address_book.at(_address).handler, buf, size, callingThread);
+		sendToAllConnections(address_book.at(_address).handler, buf, size, callingThread, src);
 		return 0;
 	} catch (std::exception&) {
 		return -1;

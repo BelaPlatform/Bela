@@ -34,8 +34,8 @@ class WSServer{
 				std::function<void(const std::string&, const WSServerDetails*)> on_disconnect = nullptr,
 				bool binary = false);
 		
-		int sendNonRt(const char* address, const char* str, CallingThread callingThread = kThreadOther);
-		int sendNonRt(const char* address, const void* buf, unsigned int size, CallingThread callingThread = kThreadOther);
+		int sendNonRt(const char* address, const char* str, CallingThread callingThread = kThreadOther, const WSServerDetails* except = nullptr);
+		int sendNonRt(const char* address, const void* buf, unsigned int size, CallingThread callingThread = kThreadOther, const WSServerDetails* except = nullptr);
 		int sendRt(const char* address, const char* str);
 		int sendRt(const char* address, const void* buf, unsigned int size);
 		
@@ -53,5 +53,5 @@ class WSServer{
 		std::map<std::string, AddressBookItem> address_book;
 		std::unique_ptr<AuxTaskNonRT> server_task;
 		
-		void sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread);
+		void sendToAllConnections(std::shared_ptr<WSServerDataHandler> handler, const void* buf, unsigned int size, CallingThread callingThread, const WSServerDetails* except);
 };
