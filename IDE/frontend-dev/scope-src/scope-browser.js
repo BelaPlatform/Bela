@@ -10,7 +10,12 @@ if(qsRemoteHost)
   remoteHost = qsRemoteHost
 var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
-if(!dataDisabled) {
+if(dataDisabled) {
+  $('#ide-cpu').hide();
+  $('#bela-cpu').hide();
+  $('#scopeMouseX').hide();
+  $('#scopeMouseY').hide();
+} else {
   worker.postMessage({
     event: 'wsConnect',
     remote: wsRemote,
@@ -38,6 +43,8 @@ var stage = new PIXI.Container();
 
 // views
 var controlView = new (require('./ControlView'))('scope-controls', [settings]);
+if(dataDisabled)
+  controlView.controlsVisibility(true);
 var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', [settings], renderer);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
 
@@ -123,6 +130,8 @@ var paused = false, oneShot = false;
 // view events
 const kScopeWaiting = 0, kScopeTriggered = 1, kScopePaused = 2, kScopeWaitingOneShot = 3, kScopeDisabled = 4;
 function setScopeStatus(status) {
+  if(dataDisabled)
+    status = kScopeDisabled;
   let d = $('#scopeStatus');
   let trigCls = 'scope-status-triggered';
   let waitCls = 'scope-status-waiting';
