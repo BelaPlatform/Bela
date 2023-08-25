@@ -1074,7 +1074,7 @@ var Model = function (_EventEmitter) {
 		}
 	}, {
 		key: 'setData',
-		value: function setData(newData) {
+		value: function setData(newData, onlyIfChanged) {
 			if (!newData) return;
 			var newKeys = [];
 			for (var key in newData) {
@@ -1087,7 +1087,7 @@ var Model = function (_EventEmitter) {
 				//console.log('changed setdata');
 				this.emit('change', this._getData(), newKeys);
 			}
-			this.emit('set', this._getData(), Object.keys(newData));
+			if (!onlyIfChanged || newKeys.length) this.emit('set', this._getData(), Object.keys(newData));
 		}
 	}, {
 		key: 'setKey',
@@ -1369,6 +1369,8 @@ var ws_onmessage = function ws_onmessage(msg) {
       return;
     }
     if (ws && ws.readyState === 1) ws.send(out);
+  } else if (data.event == 'update') {
+    settings.setData(data, true);
   } else if (data.event == 'set-setting') {
     if (settings.getKey(data.setting) !== undefined) {
       settings.setKey(data.setting, data.value);

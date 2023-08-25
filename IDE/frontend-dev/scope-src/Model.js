@@ -12,7 +12,7 @@ class Model extends EventEmitter{
 		return this._getData()[key];
 	}
 	
-	setData(newData){
+	setData(newData, onlyIfChanged){
 		if (!newData) return;
 		var newKeys = [];
 		for (let key in newData){
@@ -25,7 +25,8 @@ class Model extends EventEmitter{
 			//console.log('changed setdata');
 			this.emit('change', this._getData(), newKeys);
 		}
-		this.emit('set', this._getData(), Object.keys(newData));
+       if(!onlyIfChanged || newKeys.length)
+		  this.emit('set', this._getData(), Object.keys(newData));
 	}
 	
 	setKey(key, value){

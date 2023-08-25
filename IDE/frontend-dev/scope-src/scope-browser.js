@@ -88,6 +88,8 @@ var ws_onmessage = function(msg){
       return;
     }
     if (ws && ws.readyState === 1) ws.send(out);
+  } else if (data.event == 'update') {
+    settings.setData(data, true);
   } else if (data.event == 'set-setting'){
     if (settings.getKey(data.setting) !== undefined) {
       settings.setKey(data.setting, data.value);
