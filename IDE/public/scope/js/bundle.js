@@ -1342,11 +1342,24 @@ var stage = new PIXI.Container();
 
 // views
 var controlView = new (require('./ControlView'))('scope-controls', [settings]);
-var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
+var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', [settings], renderer);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
 
 // main bela socket
 var belaSocket = io('/IDE');
+
+function sendToWs(obj) {
+  if (ws && ws.readyState === 1) {
+    var out = void 0;
+    try {
+      var _out = JSON.stringify(obj);
+      ws.send(_out);
+    } catch (e) {
+      console.log('could not stringify settings:', e);
+      return;
+    }
+  }
+}
 
 var ws_onerror = function ws_onerror(e) {
   setTimeout(function () {
@@ -1381,14 +1394,7 @@ var ws_onmessage = function ws_onmessage(msg) {
 
     var obj = settings._getData();
     obj.event = "connection-reply";
-    var out;
-    try {
-      out = JSON.stringify(obj);
-    } catch (e) {
-      console.log('could not stringify settings:', e);
-      return;
-    }
-    if (ws && ws.readyState === 1) ws.send(out);
+    sendToWs(obj);
   } else if (data.event == 'set-setting') {
     if (settings.getKey(data.setting) !== undefined) {
       settings.setKey(data.setting, data.value);
@@ -1436,14 +1442,7 @@ controlView.on('settings-event', function (key, value) {
   if (value === undefined) return;
   var obj = {};
   obj[key] = value;
-  var out;
-  try {
-    out = JSON.stringify(obj);
-  } catch (e) {
-    console.log('error creating settings JSON', e);
-    return;
-  }
-  if (ws && ws.readyState === 1) ws.send(out);
+  sendToWs(obj);
   settings.setKey(key, value);
 });
 
@@ -1494,14 +1493,7 @@ settings.on('set', function (data, changedKeys) {
   if (changedKeys.indexOf('frameWidth') !== -1) {
     var xTimeBase = Math.max(Math.floor(1000 * (data.frameWidth / 8) / data.sampleRate), 1);
     settings.setKey('xTimeBase', xTimeBase);
-    var out;
-    try {
-      out = JSON.stringify({ frameWidth: data.frameWidth });
-    } catch (e) {
-      console.log('unable to stringify framewidth', e);
-      return;
-    }
-    if (ws && ws.readyState === 1) ws.send(out);
+    sendToWs({ frameWidth: data.frameWidth });
   } else {
     worker.postMessage({
       event: 'settings',
