@@ -824,17 +824,21 @@ var ControlView = function (_View) {
   }
 
   _createClass(ControlView, [{
-    key: 'toggleControls',
-    value: function toggleControls() {
-      if (controls) {
-        controls = false;
-        $('#control-panel').addClass('hidden');
-        $('.overlay').removeClass('active');
-      } else {
-        controls = true;
+    key: 'controlsVisibility',
+    value: function controlsVisibility(show) {
+      controls = show;
+      if (show) {
         $('#control-panel').removeClass('hidden');
         $('.overlay').addClass('active');
+      } else {
+        $('#control-panel').addClass('hidden');
+        $('.overlay').removeClass('active');
       }
+    }
+  }, {
+    key: 'toggleControls',
+    value: function toggleControls() {
+      this.controlsVisibility(!controls);
     }
   }, {
     key: 'keyHandler',
