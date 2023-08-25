@@ -542,7 +542,7 @@ var BackgroundView = function (_View) {
 
 module.exports = BackgroundView;
 
-},{"./View":7}],3:[function(require,module,exports){
+},{"./View":6}],3:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -786,7 +786,7 @@ $.fn.filterByData = function (prop, val) {
   });
 };
 
-},{"./View":7}],4:[function(require,module,exports){
+},{"./View":6}],4:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1059,7 +1059,7 @@ $.fn.filterByData = function (prop, val) {
   });
 };
 
-},{"./View":7}],5:[function(require,module,exports){
+},{"./View":6}],5:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1168,89 +1168,6 @@ function _equals(a, b, log) {
 }
 
 },{"events":1}],6:[function(require,module,exports){
-'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var View = require('./View');
-
-var SliderView = function (_View) {
-	_inherits(SliderView, _View);
-
-	function SliderView(className, models) {
-		_classCallCheck(this, SliderView);
-
-		var _this = _possibleConstructorReturn(this, (SliderView.__proto__ || Object.getPrototypeOf(SliderView)).call(this, className, models));
-
-		_this.on('set-slider', function (args) {
-			$('#scopeSlider' + args.slider).find('input[type=range]').prop('min', args.min).prop('max', args.max).prop('step', args.step).val(args.value).siblings('input[type=number]').prop('min', args.min).prop('max', args.max).prop('step', args.step).val(args.value).siblings('h1').html(args.name == 'Slider' ? 'Slider ' + args.slider : args.name);
-
-			var inputs = $('#scopeSlider' + args.slider).find('input[type=number]');
-			inputs.filterByData('key', 'min').val(args.min);
-			inputs.filterByData('key', 'max').val(args.max);
-			inputs.filterByData('key', 'step').val(args.step);
-		});
-
-		return _this;
-	}
-
-	_createClass(SliderView, [{
-		key: 'inputChanged',
-		value: function inputChanged($element, e) {
-
-			var key = $element.data().key;
-			var slider = $element.data().slider;
-			var value = $element.val();
-
-			if (key === 'value') {
-				this.emit('slider-value', parseInt(slider), parseFloat(value));
-			} else {
-				$element.closest('div.sliderView').find('input[type=range]').prop(key, value).siblings('input[type=number]').prop(key, value);
-			}
-
-			$element.siblings('input').val(value);
-		}
-	}, {
-		key: '_numSliders',
-		value: function _numSliders(val) {
-			var _this2 = this;
-
-			var el = $('#scopeSlider0');
-
-			$('#sliderColumn').empty();
-
-			if (val == 0) {
-				el.appendTo($('#sliderColumn')).css('display', 'none');
-			}
-
-			for (var i = 0; i < val; i++) {
-				var slider = el.clone(true).prop('id', 'scopeSlider' + i).appendTo($('#sliderColumn')).css('display', 'block');
-
-				slider.find('input').data('slider', i).on('input', function (e) {
-					return _this2.inputChanged($(e.currentTarget), e);
-				});
-			}
-		}
-	}]);
-
-	return SliderView;
-}(View);
-
-module.exports = SliderView;
-
-$.fn.filterByData = function (prop, val) {
-	return this.filter(function () {
-		return $(this).data(prop) == val;
-	});
-};
-
-},{"./View":7}],7:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1379,19 +1296,15 @@ var View = function (_EventEmitter) {
 
 module.exports = View;
 
-},{"events":1}],8:[function(require,module,exports){
+},{"events":1}],7:[function(require,module,exports){
 'use strict';
 
 var scope = require('./scope-browser');
 
-},{"./scope-browser":9}],9:[function(require,module,exports){
+},{"./scope-browser":8}],8:[function(require,module,exports){
 'use strict';
 
 // worker
-
-var _settings$setData;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 var remoteHost = location.hostname + ":5432";
 var qs = new URLSearchParams(location.search);
@@ -1431,7 +1344,6 @@ var stage = new PIXI.Container();
 var controlView = new (require('./ControlView'))('scope-controls', [settings]);
 var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
-var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // main bela socket
 var belaSocket = io('/IDE');
@@ -1477,8 +1389,6 @@ var ws_onmessage = function ws_onmessage(msg) {
       return;
     }
     if (ws && ws.readyState === 1) ws.send(out);
-  } else if (data.event == 'set-slider') {
-    sliderView.emit('set-slider', data);
   } else if (data.event == 'set-setting') {
     if (settings.getKey(data.setting) !== undefined) {
       settings.setKey(data.setting, data.value);
@@ -1575,18 +1485,6 @@ channelView.on('channelConfig', function (channelConfig) {
     channelConfig: channelConfig
   });
   legend.update(channelConfig);
-});
-
-sliderView.on('slider-value', function (slider, value) {
-  var obj = { event: "slider", slider: slider, value: value };
-  var out;
-  try {
-    out = JSON.stringify(obj);
-  } catch (e) {
-    console.log('could not stringify slider json:', e);
-    return;
-  }
-  if (ws && ws.readyState === 1) ws.send(out);
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -1917,10 +1815,9 @@ function CPU(data) {
   });
 }
 
-settings.setData((_settings$setData = {
+settings.setData({
   numChannels: 2,
   sampleRate: 44100,
-  numSliders: 0,
   frameWidth: 1280,
   plotMode: 0,
   triggerMode: 0,
@@ -1934,9 +1831,10 @@ settings.setData((_settings$setData = {
   FFTLength: 1024,
   FFTXAxis: 0,
   FFTYAxis: 0,
-  holdOff: 0
-}, _defineProperty(_settings$setData, "numSliders", 0), _defineProperty(_settings$setData, "interpolation", 0), _settings$setData));
+  holdOff: 0,
+  interpolation: 0
+});
 
-},{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5,"./SliderView":6}]},{},[8])
+},{"./BackgroundView":2,"./ChannelView":3,"./ControlView":4,"./Model":5}]},{},[7])
 
 //# sourceMappingURL=bundle.js.map
