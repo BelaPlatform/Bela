@@ -11,6 +11,7 @@
 // forward declarations
 class WSServer;
 class JSONValue;
+class WSServerDetails;
 // typedef std::map<std::wstring, JSONValue*> JSONObject;
 class AuxTaskRT;
 
@@ -104,8 +105,9 @@ class Scope{
         void setPlotMode();
         void doFFT();
         void setXParams();
-        void scope_control_connected();
-        void scope_control_data(const char* data);
+	void scope_control_connected(const WSServerDetails* src);
+	void scope_control_data(const char* data, const WSServerDetails* src);
+	void sendSettings(const JSONValue& value, const WSServerDetails* src);
         void parse_settings(std::shared_ptr<JSONValue> value);
 	void outBufferSetTimestamp();
 	void outBufferAppendData(size_t startptr, size_t endptr, size_t outChannelWidth);

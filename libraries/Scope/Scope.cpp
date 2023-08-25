@@ -62,12 +62,14 @@ void Scope::setup(unsigned int _numChannels, float _sampleRate){
 	ws_server->addAddress("scope_data", nullptr, nullptr, nullptr, true);
 	ws_server->addAddress("scope_control", 
 		[this](const std::string& address, const WSServerDetails* id, const unsigned char* buf, size_t size){
-			scope_control_data((const char*) buf);
+			scope_control_data((const char*) buf, id);;
 		},
 		[this](const std::string& address, const WSServerDetails* id){
-			scope_control_connected();
+			scope_control_connected(id);
 		},
 		[this](const std::string& address, const WSServerDetails* id){
+			// TODO: no need to stop here. Should only stop if
+			// number of connections goes to zero.
 			stop();
 		});
 
@@ -582,7 +584,7 @@ void Scope::setSetting(std::wstring setting, float value){
 // (i.e numChannels, sampleRate)
 // JS replies with "connection-reply" which is parsed
 // by scope_control_data()
-void Scope::scope_control_connected(){
+void Scope::scope_control_connected(const WSServerDetails* src){
 	
 	// printf("connection!\n");
 	
@@ -593,17 +595,21 @@ void Scope::scope_control_connected(){
 		root[setting.first] = new JSONValue(setting.second);
 	}
 	JSONValue value(root);
+	sendSettings(value, src);
+}
+
+void Scope::sendSettings(const JSONValue& value, const WSServerDetails* src) {
 	std::wstring wide = value.Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	// printf("sending JSON: \n%s\n", str.c_str());
-	ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback);
+	ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback, src);
 }
 
 // on_data callback for scope_control websocket
 // runs on the (linux priority) seasocks thread
-void Scope::scope_control_data(const char* data){
+void Scope::scope_control_data(const char* data, const WSServerDetails* src){
 	
-	// printf("recieved: %s\n", data);
+	// printf("received: %s\n", data);
 	
 	// parse the data into a JSONValue
 	std::shared_ptr<JSONValue> value = std::shared_ptr<JSONValue>(JSON::Parse(data));
@@ -620,11 +626,13 @@ void Scope::scope_control_data(const char* data){
 		if (event.compare(L"connection-reply") == 0){
 			// parse all settings and start scope
 			parse_settings(value);
+			sendSettings(*value, src);
 			start();
 		}
 		return;
 	}
 	parse_settings(value);
+	sendSettings(*value, src);
 }
 
 void Scope::parse_settings(std::shared_ptr<JSONValue> value){
