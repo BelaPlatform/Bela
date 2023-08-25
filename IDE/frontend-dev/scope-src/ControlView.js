@@ -12,16 +12,18 @@ class ControlView extends View{
     this.addGenericHandlers();
   }
 
-  toggleControls(){
-    if (controls) {
-      controls = false;
-      $('#control-panel').addClass('hidden');
-      $('.overlay').removeClass('active');
-    } else {
-      controls = true;
+  controlsVisibility(show) {
+    controls = show;
+    if(show) {
       $('#control-panel').removeClass('hidden');
       $('.overlay').addClass('active');
+    } else {
+      $('#control-panel').addClass('hidden');
+      $('.overlay').removeClass('active');
     }
+  }
+  toggleControls(){
+    this.controlsVisibility(!controls);
   }
 
   keyHandler(e){
