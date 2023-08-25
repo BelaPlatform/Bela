@@ -40,7 +40,6 @@ var stage = new PIXI.Container();
 var controlView = new (require('./ControlView'))('scope-controls', [settings]);
 var backgroundView = new (require('./BackgroundView'))('scopeBG', [settings], renderer);
 var channelView = new (require('./ChannelView'))('channelView', [settings]);
-var sliderView = new (require('./SliderView'))('sliderView', [settings]);
 
 // main bela socket
 var belaSocket = io('/IDE');
@@ -89,8 +88,6 @@ var ws_onmessage = function(msg){
       return;
     }
     if (ws && ws.readyState === 1) ws.send(out);
-  } else if (data.event == 'set-slider'){
-    sliderView.emit('set-slider', data);
   } else if (data.event == 'set-setting'){
     if (settings.getKey(data.setting) !== undefined) {
       settings.setKey(data.setting, data.value);
@@ -188,19 +185,6 @@ channelView.on('channelConfig', (channelConfig) => {
     channelConfig
   });
   legend.update(channelConfig);
-});
-
-sliderView.on('slider-value', (slider, value) => {
-  var obj = {event: "slider", slider, value};
-  var out;
-  try{
-    out = JSON.stringify(obj);
-  }
-  catch(e){
-    console.log('could not stringify slider json:', e);
-    return;
-  }
-  if (ws && ws.readyState === 1) ws.send(out)
 });
 
 belaSocket.on('cpu-usage', CPU);
@@ -524,7 +508,6 @@ function CPU(data){
 settings.setData({
   numChannels : 2,
   sampleRate  : 44100,
-  numSliders  : 0,
   frameWidth  : 1280,
   plotMode  : 0,
   triggerMode : 0,
@@ -539,7 +522,6 @@ settings.setData({
   FFTXAxis  : 0,
   FFTYAxis  : 0,
   holdOff   : 0,
-  numSliders  : 0,
   interpolation : 0
 });
 
