@@ -47,10 +47,17 @@ class BackgroundView extends View{
 		for (var i=1; i<numVLines; i++){
 			ctx.moveTo(canvas.width/2 + i*xPixels, 0);
 			ctx.lineTo(canvas.width/2 + i*xPixels, canvas.height);
-			ctx.fillText((i*mspersample).toPrecision(2), canvas.width/2 + i*xPixels, canvas.height/2+11);
+			let val = (i * mspersample);
+			if(val < 10)
+				val = val.toFixed(2);
+			else if(val < 100)
+				val = val.toFixed(1);
+			else
+				val = val.toFixed(0);
+			ctx.fillText(val, canvas.width/2 + i*xPixels, canvas.height/2+11);
 			ctx.moveTo(canvas.width/2 - i*xPixels, 0);
 			ctx.lineTo(canvas.width/2 - i*xPixels, canvas.height);
-			ctx.fillText((-i*mspersample).toPrecision(2), canvas.width/2 - i*xPixels, canvas.height/2+11);
+			ctx.fillText("-" + val, canvas.width/2 - i*xPixels, canvas.height/2+11);
 		}
 		
 		var numHLines = 6;
