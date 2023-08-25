@@ -1313,8 +1313,12 @@ var scope = require('./scope-browser');
 var remoteHost = location.hostname + ":5432";
 var qs = new URLSearchParams(location.search);
 var qsRemoteHost = qs.get("remoteHost");
-var controlDisabled = qs.get("controlDisabled");
-var dataDisabled = qs.get("dataDisabled");
+var controlDisabled = parseInt(qs.get("controlDisabled"));
+var dataDisabled = parseInt(qs.get("dataDisabled"));
+var forceWebGl = parseInt(qs.get("forceWebGl"));
+var antialias = parseInt(qs.get("antialias"));
+var resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
+
 if (qsRemoteHost) remoteHost = qsRemoteHost;
 var wsRemote = "ws://" + remoteHost + "/";
 var worker = new Worker("js/scope-worker.js");
@@ -1339,10 +1343,12 @@ var renderer = PIXI.autoDetectRenderer({
   width: window.innerWidth,
   heigh: window.innerHeight,
   backgroundAlpha: 0,
-  antialias: true,
-  autoDensity: true // somehow makes CSS compensate for increased resolution. Not sure it's needed for us
-  //resolution: 2, // sort of oversampling for antialias
+  antialias: antialias,
+  forceCanvas: !forceWebGl,
+  autoDensity: true, // somehow makes CSS compensate for increased resolution. Not sure it's needed for us
+  resolution: resolution // sort of oversampling for antialias
 });
+console.log(renderer);
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
