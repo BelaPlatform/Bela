@@ -160,14 +160,14 @@ var ws_onmessage = function(ws, e){
 
 // load test
 /*
-let testArray = new Float32Array(0);
 let testPtr = 0;
 setInterval(() => {
+	let testArray = new Float32Array(0);
 	if(testArray.length != outArrayWidth) {
 		testArray = new Float32Array(outArrayWidth);
 		for(let n = 0; n < outFrameWidth ; ++n) {
 			for(let c = 0; c < numChannels ; ++c) {
-				testArray[c * outFrameWidth + n] = (n + testPtr) / outFrameWidth* 150 + c * 150;
+				testArray[c * outFrameWidth + n ] = ((n % (outFrameWidth / 2)) + testPtr) / outFrameWidth* 150 + c * 150;
 			}
 		}
 		testPtr += 10;
