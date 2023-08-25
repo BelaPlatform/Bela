@@ -4,8 +4,12 @@
 let remoteHost = location.hostname + ":5432";
 let qs = new URLSearchParams(location.search);
 let qsRemoteHost = qs.get("remoteHost");
-let controlDisabled = qs.get("controlDisabled");
-let dataDisabled = qs.get("dataDisabled");
+let controlDisabled = parseInt(qs.get("controlDisabled"));
+let dataDisabled = parseInt(qs.get("dataDisabled"));
+let forceWebGl = parseInt(qs.get("forceWebGl"));
+let antialias = parseInt(qs.get("antialias"));
+let resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
+
 if(qsRemoteHost)
   remoteHost = qsRemoteHost
 var wsRemote = "ws://" + remoteHost + "/";
@@ -31,10 +35,12 @@ var renderer = PIXI.autoDetectRenderer({
   width: window.innerWidth,
   heigh: window.innerHeight,
   backgroundAlpha: 0,
-  antialias: true,
+  antialias: antialias,
+  forceCanvas: !forceWebGl,
   autoDensity: true, // somehow makes CSS compensate for increased resolution. Not sure it's needed for us
-  //resolution: 2, // sort of oversampling for antialias
+  resolution: resolution, // sort of oversampling for antialias
 });
+console.log(renderer)
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
