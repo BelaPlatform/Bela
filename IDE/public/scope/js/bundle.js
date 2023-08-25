@@ -819,6 +819,7 @@ var ControlView = function (_View) {
     $('body').on('keydown', function (e) {
       return _this.keyHandler(e);
     });
+    _this.addGenericHandlers();
     return _this;
   }
 
@@ -1008,24 +1009,22 @@ var ControlView = function (_View) {
       }
     }
   }, {
-    key: '_triggerMode',
-    value: function _triggerMode(value) {
-      this.$elements.filterByData('key', 'triggerMode').val(value);
-    }
-  }, {
-    key: '_triggerChannel',
-    value: function _triggerChannel(value) {
-      this.$elements.filterByData('key', 'triggerChannel').val(value);
-    }
-  }, {
-    key: '_triggerDir',
-    value: function _triggerDir(value) {
-      this.$elements.filterByData('key', 'triggerDir').val(value);
-    }
-  }, {
-    key: '_triggerLevel',
-    value: function _triggerLevel(value) {
-      this.$elements.filterByData('key', 'triggerLevel').val(value);
+    key: 'addGenericHandlers',
+    value: function addGenericHandlers() {
+      var _this2 = this;
+
+      var genericHandlers = ["triggerMode", "triggerChannel", "triggerDir", "triggerLevel", "xAxisBehaviour", "holdOff", "xOffset", "interpolation"];
+
+      var _loop = function _loop(n) {
+        var h = genericHandlers[n];
+        _this2["_" + h] = function (value) {
+          _this2.$elements.filterByData('key', h).val(value);
+        };
+      };
+
+      for (var n = 0; n < genericHandlers.length; ++n) {
+        _loop(n);
+      }
     }
   }, {
     key: '_xAxisBehaviour',

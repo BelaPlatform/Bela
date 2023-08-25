@@ -9,6 +9,7 @@ class ControlView extends View{
     super(className, models);
     $('#controlsButton, .overlay').on('click', () => this.toggleControls());
     $('body').on('keydown', (e) => this.keyHandler(e));
+    this.addGenericHandlers();
   }
 
   toggleControls(){
@@ -157,20 +158,23 @@ class ControlView extends View{
     }
   }
 
-  _triggerMode(value){
-    this.$elements.filterByData('key', 'triggerMode').val(value);
-  }
-
-  _triggerChannel(value){
-    this.$elements.filterByData('key', 'triggerChannel').val(value);
-  }
-
-  _triggerDir(value){
-    this.$elements.filterByData('key', 'triggerDir').val(value);
-  }
-
-  _triggerLevel(value){
-    this.$elements.filterByData('key', 'triggerLevel').val(value);
+  addGenericHandlers() {
+    let genericHandlers = [
+      "triggerMode",
+      "triggerChannel",
+      "triggerDir",
+      "triggerLevel",
+      "xAxisBehaviour",
+      "holdOff",
+      "xOffset",
+      "interpolation",
+    ];
+    for(let n = 0; n < genericHandlers.length; ++n) {
+      let h = genericHandlers[n];
+      this["_" + h] = (value) => {
+        this.$elements.filterByData('key', h).val(value);
+      }
+    }
   }
 
   _xAxisBehaviour(value){
