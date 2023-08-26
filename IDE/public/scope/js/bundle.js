@@ -1789,22 +1789,10 @@ function CPU(data) {
 
     // interpolate the trigger sample to get the sub-pixel x-offset
     if (settings.getKey('plotMode') == 0) {
-      //    if (upSampling == 1){
       var one = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset - 1] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
       var two = Math.abs(frame[Math.floor(triggerChannel * length + length / 2) + xOffset] + height / 2 * ((channelConfig[triggerChannel].yOffset + triggerLevel) / channelConfig[triggerChannel].yAmplitude - 1));
       xOff = one / (one + two) - 1.5;
-      /*    } else {
-            for (var i=0; i<=(upSampling*2); i++){
-              let one = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling-i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-              let two = frame[Math.floor(triggerChannel*length+length/2)+xOffset*upSampling+i] + (height/2) * ((channelConfig[triggerChannel].yOffset + triggerLevel)/channelConfig[triggerChannel].yAmplitude - 1);
-              if ((one > triggerLevel && two < triggerLevel) || (one < triggerLevel && two > triggerLevel)){
-                xOff = i*(Math.abs(one)/(Math.abs(one)+Math.abs(two))-1);
-                break;
-              }
-            }
-          }
-          console.log(xOff);
-      */if (isNaN(xOff)) xOff = 0;
+      if (isNaN(xOff)) xOff = 0;
     }
   };
 
