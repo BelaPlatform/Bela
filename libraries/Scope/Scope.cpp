@@ -589,18 +589,17 @@ void Scope::scope_control_connected(const WSServerDetails* src){
 	// printf("connection!\n");
 	
 	// send connection JSON
+	sendSettings("connection", nullptr);
+}
+
+void Scope::sendSettings(const char* event, const WSServerDetails* src) {
 	JSONObject root;
-	root[L"event"] = new JSONValue(L"connection");
+	root[L"event"] = new JSONValue(JSON::s2ws(event));
 	for (auto setting : settings){
 		root[setting.first] = new JSONValue(setting.second);
 	}
 	JSONValue value(root);
-	sendSettings(value, src);
-}
-
-void Scope::sendSettings(const JSONValue& value, const WSServerDetails* src) {
-	std::wstring wide = value.Stringify().c_str();
-	std::string str( wide.begin(), wide.end() );
+	std::string str = JSON::ws2s(value.Stringify());
 	// printf("sending JSON: \n%s\n", str.c_str());
 	ws_server->sendNonRt("scope_control", str.c_str(), WSServer::kThreadCallback, src);
 }
@@ -624,15 +623,13 @@ void Scope::scope_control_data(const char* data, const WSServerDetails* src){
 		std::wstring event = root[L"event"]->AsString();
 		// std::wcout << "event: " << event << "\n";
 		if (event.compare(L"connection-reply") == 0){
-			// parse all settings and start scope
-			parse_settings(value);
-			sendSettings(*value, src);
+			// start scope
 			start();
 		}
 		return;
 	}
 	parse_settings(value);
-	sendSettings(*value, src);
+	sendSettings("update", src);
 }
 
 void Scope::parse_settings(std::shared_ptr<JSONValue> value){
