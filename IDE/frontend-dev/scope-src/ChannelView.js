@@ -9,7 +9,7 @@ function ChannelConfig(){
   this.enabled = 1;
 }
 
-var channelConfig = [new ChannelConfig()];
+var channelConfig = [];
 var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xff8800', '0xff00ff', '0x00ffff', '0x888800', '0xff8888'];
 
 var tdGainVal = 1, tdOffsetVal = 0, tdGainMin = 0.5, tdGainMax = 2, tdOffsetMin = -5, tdOffsetMax = 5;
@@ -91,17 +91,25 @@ class ChannelView extends View{
       }
     } else if (numChannels > channelConfig.length){
       while(numChannels > channelConfig.length){
-        channelConfig.push(new ChannelConfig());
-        channelConfig[channelConfig.length-1].color = colours[(channelConfig.length-1)%colours.length];
-        var el = $('.channel-view-0')
+        let cf = new ChannelConfig();
+        channelConfig.push(cf);
+        cf.color = this.colors[(channelConfig.length - 1) % this.colors.length];
+        var el = $('.channel-view-template')
           .clone(true)
           .prop('class', 'channel-view-'+(channelConfig.length))
+          .prop('style', '') // remove display: none
           .appendTo($('.control-section.channel'));
         el.find('[data-channel-name]').html('Channel ' + channelConfig.length);
         el.find('input').each(function(){
           $(this).data('channel', channelConfig.length-1)
         });
-        el.find('input[type=color]').val(colours[(channelConfig.length-1)%colours.length].replace('0x', '#'));
+        for(let key in cf) {
+          let prop = el.find('input[data-key=' + key + ']');
+          if('color' === key)
+            prop.val(cf.color.replace('0x', '#'));
+          else
+            prop.val(cf[key]);
+        }
       }
     }
     this.emit('channelConfig', channelConfig);
