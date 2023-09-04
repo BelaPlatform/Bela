@@ -324,6 +324,7 @@ var BackgroundView = function (_View) {
 		var _this = _possibleConstructorReturn(this, (BackgroundView.__proto__ || Object.getPrototypeOf(BackgroundView)).call(this, className, models));
 
 		_this.darkMode = models[1].getKey('darkMode');
+		_this.showLabels = models[1].getKey('showLabels');
 		var saveCanvas = document.getElementById('saveCanvas');
 		_this.canvas = document.getElementById('scopeBG');
 		saveCanvas.addEventListener('click', function () {
@@ -365,16 +366,16 @@ var BackgroundView = function (_View) {
 			ctx.lineWidth = this.darkMode ? 1 : 0.2;
 			ctx.setLineDash([]);
 			ctx.beginPath();
-			ctx.fillText(0, canvas.width / 2, canvas.height / 2 + 11);
+			if (this.showLabels) ctx.fillText(0, canvas.width / 2, canvas.height / 2 + 11);
 			for (var i = 1; i < numVLines; i++) {
 				ctx.moveTo(canvas.width / 2 + i * xPixels, 0);
 				ctx.lineTo(canvas.width / 2 + i * xPixels, canvas.height);
 				var val = i * mspersample;
 				if (val < 10) val = val.toFixed(2);else if (val < 100) val = val.toFixed(1);else val = val.toFixed(0);
-				ctx.fillText(val, canvas.width / 2 + i * xPixels, canvas.height / 2 + 11);
+				if (this.showLabels) ctx.fillText(val, canvas.width / 2 + i * xPixels, canvas.height / 2 + 11);
 				ctx.moveTo(canvas.width / 2 - i * xPixels, 0);
 				ctx.lineTo(canvas.width / 2 - i * xPixels, canvas.height);
-				ctx.fillText("-" + val, canvas.width / 2 - i * xPixels, canvas.height / 2 + 11);
+				if (this.showLabels) ctx.fillText("-" + val, canvas.width / 2 - i * xPixels, canvas.height / 2 + 11);
 			}
 
 			var numHLines = 6;
@@ -482,7 +483,7 @@ var BackgroundView = function (_View) {
 						val = (Math.pow(Math.E, -Math.log(1 / window.innerWidth) * i / numVlines) * (this.models[0].getKey('sampleRate') / (2 * window.innerWidth)) * (data.upSampling / data.downSampling)).toFixed(0);
 					}
 
-					ctx.fillText(val, i * window.innerWidth / numVlines, canvas.height - 2);
+					if (this.showLabels) ctx.fillText(val, i * window.innerWidth / numVlines, canvas.height - 2);
 				}
 			}
 
@@ -505,6 +506,12 @@ var BackgroundView = function (_View) {
 			ctx.lineTo(canvas.width, canvas.height);
 
 			ctx.stroke();
+		}
+	}, {
+		key: '_showLabels',
+		value: function _showLabels(value, data) {
+			this.showLabels = value;
+			this.repaintBG(this.models[0].getKey('xTimeBase'), this.models[0]._getData());
 		}
 	}, {
 		key: '_darkMode',
@@ -1340,6 +1347,7 @@ var forceWebGl = parseInt(qs.get("forceWebGl"));
 var antialias = parseInt(qs.get("antialias"));
 var resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
 var darkMode = qs.get("darkMode") ? parseInt(qs.get("darkMode")) : 0;
+var showLabels = qs.get("showLabels") ? parseInt(qs.get("showLabels")) : 0;
 
 if (qsRemoteHost) remoteHost = qsRemoteHost;
 var wsRemote = "ws://" + remoteHost + "/";
@@ -1361,6 +1369,7 @@ var Model = require('./Model');
 var settings = new Model();
 var tabSettings = new Model();
 tabSettings.setKey('darkMode', darkMode);
+tabSettings.setKey('showLabels', showLabels);
 var allSettings = [settings, tabSettings];
 
 // Pixi.js renderer and stage
@@ -1525,6 +1534,9 @@ controlView.on('settings-event', function (key, value) {
     setScopeStatus(kScopeWaitingOneShot);
   } else if (key === 'darkMode') {
     tabSettings.setKey('darkMode', !tabSettings.getKey('darkMode'));
+    return; // do not send via websocket
+  } else if (key === 'showLabels') {
+    tabSettings.setKey('showLabels', !tabSettings.getKey('showLabels'));
     return; // do not send via websocket
   }
   if (value === undefined) return;
