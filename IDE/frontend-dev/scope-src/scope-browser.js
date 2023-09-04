@@ -10,6 +10,7 @@ let forceWebGl = parseInt(qs.get("forceWebGl"));
 let antialias = parseInt(qs.get("antialias"));
 let resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
 let darkMode = qs.get("darkMode") ? parseInt(qs.get("darkMode")) : 0;
+let showLabels = qs.get("showLabels") ? parseInt(qs.get("showLabels")) : 0;
 
 if(qsRemoteHost)
   remoteHost = qsRemoteHost
@@ -32,6 +33,7 @@ var Model = require('./Model');
 var settings = new Model();
 var tabSettings = new Model();
 tabSettings.setKey('darkMode', darkMode);
+tabSettings.setKey('showLabels', showLabels);
 var allSettings = [ settings, tabSettings ];
 
 // Pixi.js renderer and stage
@@ -197,6 +199,9 @@ controlView.on('settings-event', (key, value) => {
     setScopeStatus(kScopeWaitingOneShot);
   } else if (key === 'darkMode') {
     tabSettings.setKey('darkMode', !tabSettings.getKey('darkMode'));
+    return; // do not send via websocket
+  } else if (key === 'showLabels') {
+    tabSettings.setKey('showLabels', !tabSettings.getKey('showLabels'));
     return; // do not send via websocket
   }
   if (value === undefined) return;
