@@ -323,6 +323,7 @@ var BackgroundView = function (_View) {
 
 		var _this = _possibleConstructorReturn(this, (BackgroundView.__proto__ || Object.getPrototypeOf(BackgroundView)).call(this, className, models));
 
+		_this.darkMode = models[1].getKey('darkMode');
 		var saveCanvas = document.getElementById('saveCanvas');
 		_this.canvas = document.getElementById('scopeBG');
 		saveCanvas.addEventListener('click', function () {
@@ -341,7 +342,7 @@ var BackgroundView = function (_View) {
 			canvas.height = window.innerHeight;
 			var ctx = canvas.getContext('2d');
 			ctx.rect(0, 0, canvas.width, canvas.height);
-			ctx.fillStyle = "white";
+			ctx.fillStyle = this.darkMode ? "black" : "white";
 			ctx.fill();
 			//ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -357,11 +358,11 @@ var BackgroundView = function (_View) {
 			//console.log(xTime);
 
 			//faint lines
-			ctx.strokeStyle = '#000000';
-			ctx.fillStyle = "grey";
+			ctx.strokeStyle = this.darkMode ? '#fff' : '#000';
+			ctx.fillStyle = this.darkMode ? '#fff' : '#000';
 			ctx.font = "14px inconsolata";
 			ctx.textAlign = "center";
-			ctx.lineWidth = 0.2;
+			ctx.lineWidth = this.darkMode ? 1 : 0.2;
 			ctx.setLineDash([]);
 			ctx.beginPath();
 			ctx.fillText(0, canvas.width / 2, canvas.height / 2 + 11);
@@ -418,6 +419,7 @@ var BackgroundView = function (_View) {
 			//dashed lines
 			ctx.beginPath();
 			ctx.setLineDash([2, 5]);
+			ctx.lineWidth = this.darkMode ? 0.5 : 0.2;
 
 			ctx.moveTo(0, canvas.height * 3 / 4);
 			ctx.lineTo(canvas.width, canvas.height * 3 / 4);
@@ -459,7 +461,7 @@ var BackgroundView = function (_View) {
 			var numVlines = 10;
 
 			//faint lines
-			ctx.strokeStyle = '#000000';
+			ctx.strokeStyle = this.darkMode ? '#fff' : '#000';
 			ctx.fillStyle = "grey";
 			ctx.font = "14px inconsolata";
 			ctx.textAlign = "center";
@@ -503,6 +505,12 @@ var BackgroundView = function (_View) {
 			ctx.lineTo(canvas.width, canvas.height);
 
 			ctx.stroke();
+		}
+	}, {
+		key: '_darkMode',
+		value: function _darkMode(value, data) {
+			this.darkMode = value;
+			this.repaintBG(this.models[0].getKey('xTimeBase'), this.models[0]._getData());
 		}
 	}, {
 		key: '__xTimeBase',
@@ -564,7 +572,6 @@ function ChannelConfig() {
 }
 
 var channelConfig = [];
-var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xff8800', '0xff00ff', '0x00ffff', '0x888800', '0xff8888'];
 
 var tdGainVal = 1,
     tdOffsetVal = 0,
@@ -593,7 +600,11 @@ var ChannelView = function (_View) {
   function ChannelView(className, models) {
     _classCallCheck(this, ChannelView);
 
-    return _possibleConstructorReturn(this, (ChannelView.__proto__ || Object.getPrototypeOf(ChannelView)).call(this, className, models));
+    var _this = _possibleConstructorReturn(this, (ChannelView.__proto__ || Object.getPrototypeOf(ChannelView)).call(this, className, models));
+
+    _this.darkMode = _this.models[1].getKey('darkMode');
+    _this.colors = ['0xff0000', '0x94d6ff', '0x00ff00', '0xff8800', '0xff00ff', '0x00ffff', '0x888800', '0xff8888'];
+    return _this;
   }
 
   // UI events
@@ -704,6 +715,11 @@ var ChannelView = function (_View) {
         this.$elements.filterByData('key', 'yAmplitude').filterByData('channel', i).val(channelConfig[i].yAmplitude);
         this.$elements.filterByData('key', 'yOffset').filterByData('channel', i).val(channelConfig[i].yOffset);
       }
+    }
+  }, {
+    key: '_darkMode',
+    value: function _darkMode(val) {
+      this.darkMode = val;
     }
   }, {
     key: '_numChannels',
@@ -1323,6 +1339,7 @@ var dataDisabled = parseInt(qs.get("dataDisabled"));
 var forceWebGl = parseInt(qs.get("forceWebGl"));
 var antialias = parseInt(qs.get("antialias"));
 var resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
+var darkMode = qs.get("darkMode") ? parseInt(qs.get("darkMode")) : 0;
 
 if (qsRemoteHost) remoteHost = qsRemoteHost;
 var wsRemote = "ws://" + remoteHost + "/";
@@ -1342,6 +1359,9 @@ if (dataDisabled) {
 // models
 var Model = require('./Model');
 var settings = new Model();
+var tabSettings = new Model();
+tabSettings.setKey('darkMode', darkMode);
+var allSettings = [settings, tabSettings];
 
 // Pixi.js renderer and stage
 var renderer = PIXI.autoDetectRenderer({
@@ -1361,10 +1381,10 @@ $('.scopeWrapper').append(renderer.view);
 var stage = new PIXI.Container();
 
 // views
-var controlView = new (require('./ControlView'))('scope-controls', [settings]);
+var controlView = new (require('./ControlView'))('scope-controls', allSettings);
 if (dataDisabled) controlView.controlsVisibility(true);
-var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', [settings], renderer);
-var channelView = new (require('./ChannelView'))('channelView', [settings]);
+var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', allSettings, renderer);
+var channelView = new (require('./ChannelView'))('channelView', allSettings);
 
 // main bela socket
 var belaSocket = io('/IDE');
@@ -1503,6 +1523,9 @@ controlView.on('settings-event', function (key, value) {
       $('#pauseButton').html('pause');
     }
     setScopeStatus(kScopeWaitingOneShot);
+  } else if (key === 'darkMode') {
+    tabSettings.setKey('darkMode', !tabSettings.getKey('darkMode'));
+    return; // do not send via websocket
   }
   if (value === undefined) return;
   var obj = {};

@@ -9,6 +9,7 @@ let dataDisabled = parseInt(qs.get("dataDisabled"));
 let forceWebGl = parseInt(qs.get("forceWebGl"));
 let antialias = parseInt(qs.get("antialias"));
 let resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
+let darkMode = qs.get("darkMode") ? parseInt(qs.get("darkMode")) : 0;
 
 if(qsRemoteHost)
   remoteHost = qsRemoteHost
@@ -29,6 +30,9 @@ if(dataDisabled) {
 // models
 var Model = require('./Model');
 var settings = new Model();
+var tabSettings = new Model();
+tabSettings.setKey('darkMode', darkMode);
+var allSettings = [ settings, tabSettings ];
 
 // Pixi.js renderer and stage
 var renderer = PIXI.autoDetectRenderer({
@@ -48,11 +52,11 @@ $('.scopeWrapper').append(renderer.view);
 var stage = new PIXI.Container();
 
 // views
-var controlView = new (require('./ControlView'))('scope-controls', [settings]);
+var controlView = new (require('./ControlView'))('scope-controls', allSettings);
 if(dataDisabled)
   controlView.controlsVisibility(true);
-var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', [settings], renderer);
-var channelView = new (require('./ChannelView'))('channelView', [settings]);
+var backgroundView = dataDisabled ? {} : new (require('./BackgroundView'))('scopeBG', allSettings, renderer);
+var channelView = new (require('./ChannelView'))('channelView', allSettings);
 
 // main bela socket
 var belaSocket = io('/IDE');
@@ -191,6 +195,9 @@ controlView.on('settings-event', (key, value) => {
       $('#pauseButton').html('pause');
     }
     setScopeStatus(kScopeWaitingOneShot);
+  } else if (key === 'darkMode') {
+    tabSettings.setKey('darkMode', !tabSettings.getKey('darkMode'));
+    return; // do not send via websocket
   }
   if (value === undefined) return;
   var obj = {};
