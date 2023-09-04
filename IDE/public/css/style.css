@@ -1995,6 +1995,9 @@ button.scope-controls {
       display: inline;
       margin-left: 165px; }
 
+body.darkMode .mini-dropdown select[data-key=plotMode] {
+  color: white; }
+
 .number-box[type=number] {
   border: 0;
   font-family: inconsolata;
@@ -2143,6 +2146,8 @@ input[type="range"].scope-range-slider {
   display: inline-block;
   text-align: right;
   padding-right: 3px; }
+  body.darkMode [data-legend-color-label] {
+    color: white; }
 
 [data-legend-color-box] {
   width: 12px;
