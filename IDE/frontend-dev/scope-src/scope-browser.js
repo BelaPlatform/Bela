@@ -10,7 +10,7 @@ let forceWebGl = parseInt(qs.get("forceWebGl"));
 let antialias = parseInt(qs.get("antialias"));
 let resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
 let darkMode = qs.get("darkMode") ? parseInt(qs.get("darkMode")) : 0;
-let showLabels = qs.get("showLabels") ? parseInt(qs.get("showLabels")) : 0;
+let showLabels = qs.get("showLabels") ? parseInt(qs.get("showLabels")) : 1;
 
 if(qsRemoteHost)
   remoteHost = qsRemoteHost

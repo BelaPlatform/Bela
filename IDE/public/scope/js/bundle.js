@@ -1347,7 +1347,7 @@ var forceWebGl = parseInt(qs.get("forceWebGl"));
 var antialias = parseInt(qs.get("antialias"));
 var resolution = qs.get("resolution") ? parseInt(qs.get("resolution")) : 1;
 var darkMode = qs.get("darkMode") ? parseInt(qs.get("darkMode")) : 0;
-var showLabels = qs.get("showLabels") ? parseInt(qs.get("showLabels")) : 0;
+var showLabels = qs.get("showLabels") ? parseInt(qs.get("showLabels")) : 1;
 
 if (qsRemoteHost) remoteHost = qsRemoteHost;
 var wsRemote = "ws://" + remoteHost + "/";
