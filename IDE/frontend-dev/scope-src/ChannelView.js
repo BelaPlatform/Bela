@@ -5,7 +5,7 @@ function ChannelConfig(){
   this.yAmplitude = 1;
   this.yOffset = 0;
   this.color = '0xff0000';
-  this.lineWeight = 1.5;
+  this.lineWeight = 5;
   this.enabled = 1;
 }
 
