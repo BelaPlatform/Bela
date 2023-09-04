@@ -10,7 +10,6 @@ function ChannelConfig(){
 }
 
 var channelConfig = [];
-var colours = ['0xff0000', '0x0000ff', '0x00ff00', '0xff8800', '0xff00ff', '0x00ffff', '0x888800', '0xff8888'];
 
 var tdGainVal = 1, tdOffsetVal = 0, tdGainMin = 0.5, tdGainMax = 2, tdOffsetMin = -5, tdOffsetMax = 5;
 var FFTNGainVal = 1, FFTNOffsetVal = -0.005, FFTNGainMin = 0.5, FFTNGainMax = 2, FFTNOffsetMin = -1, FFTNOffsetMax = 1;
@@ -22,6 +21,17 @@ class ChannelView extends View{
 
   constructor(className, models){
     super(className, models);
+    this.darkMode = this.models[1].getKey('darkMode');
+    this.colors = [
+      '0xff0000',
+      '0x94d6ff',
+      '0x00ff00',
+      '0xff8800',
+      '0xff00ff',
+      '0x00ffff',
+      '0x888800',
+      '0xff8888'
+    ];
   }
 
   // UI events
@@ -80,6 +90,10 @@ class ChannelView extends View{
       this.$elements.filterByData('key', 'yAmplitude').filterByData('channel', i).val(channelConfig[i].yAmplitude);
       this.$elements.filterByData('key', 'yOffset').filterByData('channel', i).val(channelConfig[i].yOffset);
     }
+  }
+
+  _darkMode(val){
+    this.darkMode = val;
   }
 
   _numChannels(val){

@@ -5,6 +5,7 @@ class BackgroundView extends View{
 
 	constructor(className, models, renderer){
 		super(className, models);
+		this.darkMode = models[1].getKey('darkMode');
 		var saveCanvas =  document.getElementById('saveCanvas');
 		this.canvas = document.getElementById('scopeBG');
 		saveCanvas.addEventListener('click', () => {
@@ -20,7 +21,7 @@ class BackgroundView extends View{
 		canvas.height = window.innerHeight;
 		var ctx = canvas.getContext('2d');
 		ctx.rect(0, 0, canvas.width, canvas.height);
-		ctx.fillStyle="white";
+		ctx.fillStyle = this.darkMode ? "black" : "white";
 		ctx.fill();
 		//ctx.clearRect(0, 0, canvas.width, canvas.height);
 		
@@ -36,11 +37,11 @@ class BackgroundView extends View{
 		//console.log(xTime);
 
 		//faint lines
-		ctx.strokeStyle = '#000000';
-		ctx.fillStyle="grey";
+		ctx.strokeStyle = this.darkMode ? '#fff' : '#000';
+		ctx.fillStyle= this.darkMode ? '#fff' : '#000';
 		ctx.font = "14px inconsolata";
 		ctx.textAlign = "center";
-		ctx.lineWidth = 0.2;
+		ctx.lineWidth = this.darkMode ? 1 : 0.2;
 		ctx.setLineDash([]);
 		ctx.beginPath();
 		ctx.fillText(0, canvas.width/2, canvas.height/2+11);
@@ -102,6 +103,7 @@ class BackgroundView extends View{
 		//dashed lines
 		ctx.beginPath();
 		ctx.setLineDash([2, 5]);
+		ctx.lineWidth = this.darkMode ? 0.5 : 0.2;
 		
 		ctx.moveTo(0, canvas.height*3/4);
 		ctx.lineTo(canvas.width, canvas.height*3/4);
@@ -142,7 +144,7 @@ class BackgroundView extends View{
 		var numVlines = 10;
 		
 		//faint lines
-		ctx.strokeStyle = '#000000';
+		ctx.strokeStyle = this.darkMode ? '#fff' : '#000';
 		ctx.fillStyle="grey";
 		ctx.font = "14px inconsolata";
 		ctx.textAlign = "center";
@@ -187,6 +189,11 @@ class BackgroundView extends View{
 		ctx.stroke();
 	}
 	
+	_darkMode(value, data) {
+		this.darkMode = value;
+		this.repaintBG(this.models[0].getKey('xTimeBase'), this.models[0]._getData());
+	}
+
 	__xTimeBase(value, data){
 		//console.log(value);
 		this.repaintBG(value, data);
