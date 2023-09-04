@@ -6,6 +6,7 @@ class BackgroundView extends View{
 	constructor(className, models, renderer){
 		super(className, models);
 		this.darkMode = models[1].getKey('darkMode');
+		this.showLabels = models[1].getKey('showLabels');
 		var saveCanvas =  document.getElementById('saveCanvas');
 		this.canvas = document.getElementById('scopeBG');
 		saveCanvas.addEventListener('click', () => {
@@ -44,7 +45,8 @@ class BackgroundView extends View{
 		ctx.lineWidth = this.darkMode ? 1 : 0.2;
 		ctx.setLineDash([]);
 		ctx.beginPath();
-		ctx.fillText(0, canvas.width/2, canvas.height/2+11);
+		if(this.showLabels)
+			ctx.fillText(0, canvas.width/2, canvas.height/2+11);
 		for (var i=1; i<numVLines; i++){
 			ctx.moveTo(canvas.width/2 + i*xPixels, 0);
 			ctx.lineTo(canvas.width/2 + i*xPixels, canvas.height);
@@ -55,10 +57,12 @@ class BackgroundView extends View{
 				val = val.toFixed(1);
 			else
 				val = val.toFixed(0);
-			ctx.fillText(val, canvas.width/2 + i*xPixels, canvas.height/2+11);
+			if(this.showLabels)
+				ctx.fillText(val, canvas.width/2 + i*xPixels, canvas.height/2+11);
 			ctx.moveTo(canvas.width/2 - i*xPixels, 0);
 			ctx.lineTo(canvas.width/2 - i*xPixels, canvas.height);
-			ctx.fillText("-" + val, canvas.width/2 - i*xPixels, canvas.height/2+11);
+			if(this.showLabels)
+				ctx.fillText("-" + val, canvas.width/2 - i*xPixels, canvas.height/2+11);
 		}
 		
 		var numHLines = 6;
@@ -164,7 +168,8 @@ class BackgroundView extends View{
 					val = (Math.pow(Math.E, -(Math.log(1/window.innerWidth))*i/numVlines) * (this.models[0].getKey('sampleRate')/(2*window.innerWidth)) * (data.upSampling/data.downSampling)).toFixed(0);
 				}
 				
-				ctx.fillText(val, i*window.innerWidth/numVlines, canvas.height-2);
+				if(this.showLabels)
+					ctx.fillText(val, i*window.innerWidth/numVlines, canvas.height-2);
 			}
 		}
 		
@@ -189,6 +194,11 @@ class BackgroundView extends View{
 		ctx.stroke();
 	}
 	
+	_showLabels(value, data){
+		this.showLabels = value;
+		this.repaintBG(this.models[0].getKey('xTimeBase'), this.models[0]._getData());
+	}
+
 	_darkMode(value, data) {
 		this.darkMode = value;
 		this.repaintBG(this.models[0].getKey('xTimeBase'), this.models[0]._getData());
