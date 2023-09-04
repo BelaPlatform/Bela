@@ -32,9 +32,21 @@ if(dataDisabled) {
 var Model = require('./Model');
 var settings = new Model();
 var tabSettings = new Model();
-tabSettings.setKey('darkMode', darkMode);
-tabSettings.setKey('showLabels', showLabels);
 var allSettings = [ settings, tabSettings ];
+
+let toggleDarkMode = () => {
+  let newState = !tabSettings.getKey('darkMode');
+  setDarkMode(newState);
+}
+let setDarkMode = (newState) => {
+  tabSettings.setKey('darkMode', newState);
+  if(newState)
+    $('body').addClass('darkMode');
+  else
+    $('body').removeClass('darkMode');
+}
+setDarkMode(darkMode);
+tabSettings.setKey('showLabels', showLabels);
 
 // Pixi.js renderer and stage
 var renderer = PIXI.autoDetectRenderer({
@@ -198,7 +210,7 @@ controlView.on('settings-event', (key, value) => {
     }
     setScopeStatus(kScopeWaitingOneShot);
   } else if (key === 'darkMode') {
-    tabSettings.setKey('darkMode', !tabSettings.getKey('darkMode'));
+    toggleDarkMode();
     return; // do not send via websocket
   } else if (key === 'showLabels') {
     tabSettings.setKey('showLabels', !tabSettings.getKey('showLabels'));
