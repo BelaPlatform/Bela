@@ -573,6 +573,30 @@ void setTrillPrintError()
 }
 #endif // BELA_LIBPD_TRILL
 
+static void belaSystem(const char* first, int argc, t_atom* argv)
+{
+	printf("belaSystem %s, %d\n", first, argc);
+	std::string cmd = first ? first : "";
+	for(size_t n = 0; n < argc; ++n)
+	{
+		cmd += " ";
+		if(libpd_is_float(argv + n)) {
+			float arg = libpd_get_float(argv + n);
+			if(arg == (int)arg)
+				cmd += std::to_string((int)arg);
+			else
+				cmd += std::to_string(arg);
+		} else if(libpd_is_symbol(argv + n)) {
+			cmd += libpd_get_symbol(argv + n);
+		} else {
+			fprintf(stderr, "Error: argument %d of bela_system is not a float or symbol. Command so far: '%s', this will be discarded\n", n, cmd.c_str());
+			return;
+		}
+	}
+	printf("system(\"%s\");\n", cmd.c_str());
+	system(cmd.c_str());
+}
+
 void Bela_listHook(const char *source, int argc, t_atom *argv)
 {
 #ifdef BELA_LIBPD_GUI
@@ -615,6 +639,12 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 		return;
 	}
 #endif // BELA_LIBPD_GUI
+	if(0 == strcmp(source, "bela_system"))
+	{
+		printf("list: %d\n", argc);
+		belaSystem(nullptr, argc, argv);
+		return;
+	}
 }
 void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *argv){
 #ifdef BELA_LIBPD_MIDI
@@ -690,6 +720,10 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		}
 		dcm.manage(channel, direction, isMessageRate);
 		return;
+	}
+	if(strcmp(source, "bela_system") == 0){
+		printf("msg: %s %d\n", symbol, argc);
+		belaSystem(symbol, argc, argv);
 	}
 	if(strcmp(source, "bela_control") == 0){
 		if(strcmp("stop", symbol) == 0){
@@ -1134,6 +1168,7 @@ bool setup(BelaContext *context, void *userData)
 		libpd_bind(gReceiverOutputNames[i].c_str());
 	libpd_bind("bela_setDigital");
 	libpd_bind("bela_control");
+	libpd_bind("bela_system");
 #ifdef BELA_LIBPD_MIDI
 	libpd_bind("bela_setMidi");
 #endif // BELA_LIBPD_MIDI
