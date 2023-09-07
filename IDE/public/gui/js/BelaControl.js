@@ -3,7 +3,7 @@ import GuiHandler from './GuiHandler.js'
 import * as utils from './utils.js'
 
 export default class BelaControl extends BelaWebSocket {
-	constructor(port=5555, address='gui_control', ip=location.host) {
+	constructor(port=5555, address='gui_control', ip=location.hostname) {
 		super(port, address, ip)
 
 		this.projectName = null;

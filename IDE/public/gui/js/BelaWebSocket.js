@@ -1,5 +1,5 @@
 export default class BelaWebSocket {
-    constructor(port, address, ip = location.host) {
+    constructor(port, address, ip = location.hostname) {
         this.port = port;
         this.address = address;
         this.ip = ip;

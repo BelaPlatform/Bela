@@ -2,7 +2,7 @@ import BelaData from './BelaData.js'
 import BelaControl from './BelaControl.js'
 
 export default class Bela {
-	constructor(ip=location.host) {
+	constructor(ip=location.hostname) {
 		this.port = 5555
 		this.addresses = {
 			data:    'gui_data',
