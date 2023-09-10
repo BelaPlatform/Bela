@@ -47,7 +47,7 @@
 #X obj 790 369 tabwrite~ sample-1;
 #X obj 945 417 s sampleLength1;
 #X obj 22 418 phasor~ 1;
-#X obj 864 230 delay 200;
+#X obj 864 230 delay 3;
 #X obj 170 387 expr 44100/$f1;
 #X obj 22 395 *~;
 #X msg 19 228 read -resize greek-rumba.wav sample-1;
