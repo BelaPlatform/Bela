@@ -375,27 +375,8 @@ static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 	return ret;
 }
 
-int Bela_initAudio(BelaInitSettings *settings, void *userData)
+extern "C" void Bela_initRtBackend()
 {
-	if(!settings)
-		return -1;
-	Bela_setVerboseLevel(settings->verbose);
-	// Before we go ahead, let's check if Bela is alreadt running:
-	// check if another real-time thread of the same name is already running.
-	char command[200];
-#if (XENOMAI_MAJOR == 2)
-	char pathToXenomaiStat[] = "/proc/xenomai/stat";
-#endif
-#if (XENOMAI_MAJOR == 3)
-	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
-#endif
-	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
-	int ret = system(command);
-	if(ret == 0)
-	{
-		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
-		return -1;
-	}
 #if (XENOMAI_MAJOR == 3)
 	// initialize Xenomai with manual bootstrapping if needed
 	// we cannot trust gXenomaiInited exclusively, in case the caller
@@ -408,7 +389,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 		// object (a mutex). If it fails with EPERM, Xenomai needs to be initialized
 		// See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
 		pthread_mutex_t dummyMutex;
-		ret = __wrap_pthread_mutex_init(&dummyMutex, NULL);
+		int ret = __wrap_pthread_mutex_init(&dummyMutex, NULL);
 		if(0 == ret) {
 			if(gRTAudioVerbose)
 				printf("Xenomai was inited by someone else\n");
@@ -431,6 +412,29 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 	gXenomaiInited = 1;
 #endif
+}
+int Bela_initAudio(BelaInitSettings *settings, void *userData)
+{
+	if(!settings)
+		return -1;
+	Bela_setVerboseLevel(settings->verbose);
+	// Before we go ahead, let's check if Bela is alreadt running:
+	// check if another real-time thread of the same name is already running.
+	char command[200];
+#if (XENOMAI_MAJOR == 2)
+	char pathToXenomaiStat[] = "/proc/xenomai/stat";
+#endif
+#if (XENOMAI_MAJOR == 3)
+	char pathToXenomaiStat[] = "/proc/xenomai/sched/stat";
+#endif
+	snprintf(command, 199, "grep %s %s", gRTAudioThreadName, pathToXenomaiStat);
+	int ret = system(command);
+	if(ret == 0)
+	{
+		fprintf(stderr, "Error: Bela is already running in another process. Cannot start.\n");
+		return -1;
+	}
+	Bela_initRtBackend();
 #ifdef XENOMAI_CATCH_MSW
 	struct sigaction sa;
 	sigemptyset(&sa.sa_mask);

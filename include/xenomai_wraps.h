@@ -51,6 +51,7 @@ ssize_t __wrap_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *
 int __wrap_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio);
 int __wrap_mq_unlink(const char *name);
 
+extern "C" void Bela_initRtBackend();
 // Handle difference between posix API of Xenomai 2.6 and Xenomai 3
 // Some functions are not wrapped by Xenomai 2.6, so we redefine the __wrap
 // to the actual POSIX service for Xenomai 2.6 while we simply forward declare
@@ -175,9 +176,11 @@ inline int create_and_start_thread(pthread_t* task, const char* taskName, int pr
 	pthread_attr_destroy(&attr);
 	return 0;
 }
+
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
 inline int createXenomaiPipe(const char* portName, size_t poolsz)
 {
+	Bela_initRtBackend();
 	/*
 	 * Get a datagram socket to bind to the RT endpoint. Each
 	 * endpoint is represented by a port number within the XDDP
