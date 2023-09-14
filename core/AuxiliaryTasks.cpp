@@ -8,11 +8,6 @@
 #include <native/task.h>
 #endif
 
-#ifdef XENOMAI_SKIN_posix
-#include <pthread.h>
-extern int gXenomaiInited;
-#endif
-
 #include "../include/xenomai_wraps.h"
 
 using namespace std;
@@ -49,14 +44,7 @@ void auxiliaryTaskLoop(void *taskStruct);
 extern unsigned int gAuxiliaryTaskStackSize;
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
-#if XENOMAI_MAJOR == 3
-	// if a program calls this before xenomai is inited, let's init it here with empty arguments.
-	if(!gXenomaiInited)
-	{
-		fprintf(stderr, "Error: You should call Bela_initAudio() before calling Bela_createAuxiliaryTask()\n");
-		return 0;
-	}
-#endif
+	Bela_initRtBackend()
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
 	// Populate the rest of the data structure
