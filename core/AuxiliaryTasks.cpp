@@ -44,7 +44,7 @@ void auxiliaryTaskLoop(void *taskStruct);
 extern unsigned int gAuxiliaryTaskStackSize;
 AuxiliaryTask Bela_createAuxiliaryTask(void (*functionToCall)(void* args), int priority, const char *name, void* args)
 {
-	Bela_initRtBackend()
+	Bela_initRtBackend();
 	InternalAuxiliaryTask *newTask = (InternalAuxiliaryTask*)malloc(sizeof(InternalAuxiliaryTask));
 
 	// Populate the rest of the data structure
