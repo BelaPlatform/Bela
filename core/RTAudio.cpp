@@ -375,14 +375,17 @@ static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 	return ret;
 }
 
+#include <mutex>
 extern "C" void Bela_initRtBackend()
 {
 #if (XENOMAI_MAJOR == 3)
-	// initialize Xenomai with manual bootstrapping if needed
-	// we cannot trust gXenomaiInited exclusively, in case the caller
-	// already initialised Xenomai.
-	bool xenomaiNeedsInit = false;
-	if(!gXenomaiInited) {
+	static std::once_flag flag;
+	std::call_once(flag, [](){
+		// initialize Xenomai with manual bootstrapping if needed
+		// we cannot trust gXenomaiInited exclusively, in case the caller
+		// already initialised Xenomai, so first we check if it is
+		// actually working.
+		bool xenomaiNeedsInit = false;
 		if(gRTAudioVerbose)
 			printf("Xenomai not explicitly inited\n");
 		// To figure out if we need to intialize it, attempt to create a Cobalt
@@ -404,13 +407,14 @@ extern "C" void Bela_initRtBackend()
 			if(gRTAudioVerbose)
 				printf("Xenomai is in unknown state\n");
 		}
-	}
-	if(xenomaiNeedsInit) {
-		int argc = 0;
-		char *const *argv;
-		xenomai_init(&argc, &argv);
-	}
-	gXenomaiInited = 1;
+		if(xenomaiNeedsInit) {
+			int argc = 0;
+			char *const *argv;
+			xenomai_init(&argc, &argv);
+		}
+		// this is no longer requi, but we keep it for backward
+		gXenomaiInited = 1;
+	});
 #endif
 }
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
