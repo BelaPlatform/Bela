@@ -579,7 +579,8 @@ static void belaSystem(const char* first, int argc, t_atom* argv)
 	std::string cmd = first ? first : "";
 	for(size_t n = 0; n < argc; ++n)
 	{
-		cmd += " ";
+		if(0 != n || first)
+			cmd += " ";
 		if(libpd_is_float(argv + n)) {
 			float arg = libpd_get_float(argv + n);
 			if(arg == (int)arg)
