@@ -14,7 +14,7 @@ bool Pipe::setup(const std::string& pipeName, size_t size, bool newBlockingRt, b
 {
 	if(fd)
 		cleanup();
-	fd = 0;
+	fd = -1;
 	pipeSize = size;
 
 	name = "p_" + pipeName;
