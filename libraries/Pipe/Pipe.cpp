@@ -1,7 +1,12 @@
 #include "Pipe.h"
-#include <xenomai_wraps.h>
+#include <RtWrappers.h>
 #include <stdexcept>
 #include <sys/select.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 std::string Pipe::defaultName;
 
 Pipe::Pipe(const std::string& pipeName, size_t size, bool newBlockingRt, bool newBlockingNonRt)
