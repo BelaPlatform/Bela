@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 
+//#define CATCH_MSW
+
 int task_sleep_ns(long long int timens)
 {
 	struct timespec req;
@@ -52,6 +54,59 @@ int set_thread_stack_and_priority(pthread_attr_t *attr, int stackSize, int prio)
 	return 0;
 }
 
+#ifdef CATCH_MSW
+#ifdef __COBALT__
+#include <sys/types.h>
+#include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
+#include <execinfo.h>
+
+static const char *sigdebug_msg[] = {
+	[SIGDEBUG_UNDEFINED] = "latency: received SIGXCPU for unknown reason",
+	[SIGDEBUG_MIGRATE_SIGNAL] = "received signal",
+	[SIGDEBUG_MIGRATE_SYSCALL] = "invoked syscall",
+	[SIGDEBUG_MIGRATE_FAULT] = "triggered fault",
+	[SIGDEBUG_MIGRATE_PRIOINV] = "affected by priority inversion",
+	[SIGDEBUG_NOMLOCK] = "Xenomai: process memory not locked "
+	"(missing mlockall?)",
+	[SIGDEBUG_WATCHDOG] = "Xenomai: watchdog triggered "
+	"(period too short?)",
+};
+
+void sigdebug_handler(int sig, siginfo_t *si, void *context)
+{
+	const char fmt[] = "Mode switch (reason: %s). Backtrace:\n";
+	unsigned int cause = sigdebug_reason(si);
+	static char buffer[256];
+	static void *bt[200];
+	unsigned int n;
+
+	if (cause > SIGDEBUG_WATCHDOG)
+		cause = SIGDEBUG_UNDEFINED;
+
+	switch(cause) {
+	case SIGDEBUG_UNDEFINED:
+	case SIGDEBUG_NOMLOCK:
+	case SIGDEBUG_WATCHDOG:
+		/* These errors are lethal, something went really wrong. */
+		n = snprintf(buffer, sizeof(buffer), "%s\n", sigdebug_msg[cause]);
+		write(STDERR_FILENO, buffer, n);
+		exit(EXIT_FAILURE);
+	}
+
+	/* Retrieve the current backtrace, and decode it to stdout. */
+	n = snprintf(buffer, sizeof(buffer), fmt, sigdebug_msg[cause]);
+	n = write(STDERR_FILENO, buffer, n);
+	n = backtrace(bt, sizeof(bt)/sizeof(bt[0]));
+	backtrace_symbols_fd(bt, n, STDERR_FILENO);
+
+	//signal(sig, SIG_DFL);
+	//kill(getpid(), sig);
+}
+#endif // __COBALT__
+#endif // CATCH_MSW
+
 int create_and_start_thread(pthread_t* task, const char* taskName, int priority, int stackSize, cpu_set_t* req_cpuset, pthread_callback_t* callback, void* arg)
 {
 	pthread_attr_t attr;
@@ -92,6 +147,14 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 	//printf("measured stack: %d, requested stack: %d\n", stk, stackSize);
 
 	pthread_attr_destroy(&attr);
+
+#ifdef CATCH_MSW
+	struct sigaction sa;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = sigdebug_handler;
+	sa.sa_flags = SA_SIGINFO;
+	sigaction(SIGDEBUG, &sa, NULL);
+#endif // CATCH_MSW
 	return 0;
 }
 
