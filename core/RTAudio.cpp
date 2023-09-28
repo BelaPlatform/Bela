@@ -302,46 +302,6 @@ static int setChannelGains(BelaChannelGainArray& cga, int (*cb)(int, float))
 	return ret;
 }
 
-#include <mutex>
-extern "C" void Bela_initRtBackend()
-{
-	static std::once_flag flag;
-	std::call_once(flag, [](){
-		// initialize Xenomai with manual bootstrapping if needed
-		// we cannot trust gXenomaiInited exclusively, in case the caller
-		// already initialised Xenomai, so first we check if it is
-		// actually working.
-		bool xenomaiNeedsInit = false;
-		if(gRTAudioVerbose)
-			printf("Xenomai not explicitly inited\n");
-		// To figure out if we need to intialize it, attempt to create a Cobalt
-		// object (a mutex). If it fails with EPERM, Xenomai needs to be initialized
-		// See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
-		pthread_mutex_t dummyMutex;
-		int ret = BELA_RT_WRAP(pthread_mutex_init(&dummyMutex, NULL));
-		if(0 == ret) {
-			if(gRTAudioVerbose)
-				printf("Xenomai was inited by someone else\n");
-			// success: cleanup
-			BELA_RT_WRAP(pthread_mutex_destroy(&dummyMutex));
-		} else if (EPERM == ret) {
-			xenomaiNeedsInit = true;
-			if(gRTAudioVerbose)
-				printf("Xenomai is going to be inited by us\n");
-		} else {
-			// it could fail for other reasons, but we couldn't do much about it anyhow.
-			if(gRTAudioVerbose)
-				printf("Xenomai is in unknown state\n");
-		}
-		if(xenomaiNeedsInit) {
-			int argc = 0;
-			char *const *argv;
-			xenomai_init(&argc, &argv);
-		}
-		// this is no longer requi, but we keep it for backward
-		gXenomaiInited = 1;
-	});
-}
 int Bela_initAudio(BelaInitSettings *settings, void *userData)
 {
 	if(!settings)
