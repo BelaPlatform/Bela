@@ -65,8 +65,6 @@ void Bela_initRtBackend();
 
 bool turnIntoRtThread();
 
-void initializeRt();
-
 #ifdef __cplusplus
 }
 #endif

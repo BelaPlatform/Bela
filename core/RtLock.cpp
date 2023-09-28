@@ -11,15 +11,6 @@
 #include <sys/syscall.h>
 #include <stdexcept>
 
-// What error - if returned by the initialisation routine - means we should
-// force-initialise the RT core and try again
-#if defined(__COBALT__)
-static const int kErrShouldInit = EPERM;
-#else
-static const int kErrShouldInit = 0; // will never be true
-#endif
-
-
 // What error - if returned by the a runtime routine - means we should
 // force-turn the current thread into an RT thread and try again
 #if defined(__COBALT__)
@@ -74,23 +65,14 @@ struct RtMutex::Private {
 };
 
 RtMutex::RtMutex() {
+	Bela_initRtBackend();
 	p = std::unique_ptr<Private>(new Private);
 	xprintf("Construct mutex\n");
 	int ret;
 	if ((ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))))
 	{
-		if (kErrShouldInit != ret) {
-			xprintf("mutex_init failed with %d %s\n", ret, pstrerror(ret));
-			throw std::runtime_error("thread_mutex_init failed on first attempt");
-		} else {
-			xprintf("mutex_init returned %d %s\n", ret, pstrerror(ret));
-			initializeRt();
-			if ((ret = BELA_RT_WRAP(pthread_mutex_init(&p->m_mutex, NULL))))
-			{
-				fprintf(stderr, "Error: unable to initialize mutex : (%d) %s\n", ret, pstrerror(ret));
-				throw std::runtime_error("thread_mutex_init failed on second attempt");
-			}
-		}
+		xprintf("mutex_init failed with %d %s\n", ret, pstrerror(ret));
+		throw std::runtime_error("thread_mutex_init failed on first attempt");
 	}
 	m_enabled = true;
 }
@@ -187,22 +169,15 @@ struct RtConditionVariable::Private {
 };
 
 RtConditionVariable::RtConditionVariable() {
+	Bela_initRtBackend();
 	p = std::unique_ptr<Private>(new Private);
 	xprintf("Construct CondictionVariable\n");
 	int ret;
 	if ((ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))))
 	{
-		if (kErrShouldInit != ret) {
+		if (ret) {
 			xprintf("cond_init failed with %d %s\n", ret, pstrerror(ret));
 			throw std::runtime_error("thread_cond_init failed at first attempt");
-		} else {
-			xprintf("cond_init returned %d %s\n", ret, pstrerror(ret));
-			initializeRt();
-			int ret;
-			if ((ret = BELA_RT_WRAP(pthread_cond_init(&p->m_cond, NULL))))
-			{
-				throw std::runtime_error("cond_init failed at second attempt");
-			}
 		}
 	}
 	m_enabled = true;
