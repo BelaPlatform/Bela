@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
+#include <mutex>
 
+extern int gRTAudioVerbose;
 //#define CATCH_MSW
 
 int task_sleep_ns(long long int timens)
@@ -161,7 +164,7 @@ int create_and_start_thread(pthread_t* task, const char* taskName, int priority,
 #ifdef __COBALT__
 #include <rtdm/ipc.h>
 #endif // __COBALT__
-int createBelaRtPipe(const char* portName, int poolsz)
+int createBelaRtPipe(const char* portName, size_t poolsz)
 #ifdef __COBALT__
 // from xenomai-3/demo/posix/cobalt/xddp-echo.c
 {
@@ -246,23 +249,8 @@ inline pid_t getTid() {
 // throughout, we use heuristics to check whether Xenomai needs to be
 // initialised and whether the current thread is a Xenomai thread.
 // See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
-static void initializeXenomai() {
-	xprintf("initializeXenomai\n");
-	enum { _argc = 2 };
-	int argc = _argc;
-	char blankOpt[] = "";
-#ifdef PRINT_RT_LOCK
-	char traceOpt[] = "--trace";
-#else // PRINT_RT_LOCK
-	char traceOpt[] = "";
-#endif // PRINT_RT_LOCK
-
-	char* const argv[_argc] = { blankOpt, traceOpt };
-	char* const* argvPtrs[_argc] = { &argv[0], &argv[1] };
-	xenomai_init(&argc, argvPtrs);
-}
-
-static bool turnIntoCobaltThread(bool recurred = false) {
+static bool turnIntoCobaltThread() {
+	Bela_initRtBackend();
 	struct sched_param param;
 	memset(&param, 0, sizeof(param));
 	int policy;
@@ -274,11 +262,7 @@ static bool turnIntoCobaltThread(bool recurred = false) {
 	if (int ret = __wrap_sched_setscheduler(tid, policy, &param)) {
 		fprintf(stderr, "Warning: unable to turn current thread into a Xenomai thread : (%d) %s\n", -ret,
 				strerror(-ret));
-		initializeXenomai();
-		if (!recurred)
-			return turnIntoCobaltThread(true);
-		else
-			return false;
+		return false;
 	}
 	if(gRTAudioVerbose)
 		rt_printf("Turned thread %d into a Cobalt thread\n", tid);
@@ -295,11 +279,56 @@ bool turnIntoRtThread()
 #endif
 }
 
-void initializeRt()
+void Bela_initRtBackend()
 {
+	static std::once_flag flag;
+	std::call_once(flag, [](){
 #ifdef __COBALT__
-	initializeXenomai();
+		// initialize Xenomai with manual bootstrapping if needed
+		// we cannot trust gXenomaiInited exclusively, in case the caller
+		// already initialised Xenomai, so first we check if it is
+		// actually working.
+		bool xenomaiNeedsInit = false;
+		if(gRTAudioVerbose)
+			printf("Xenomai not explicitly inited\n");
+		// To figure out if we need to intialize it, attempt to create a Cobalt
+		// object (a mutex). If it fails with EPERM, Xenomai needs to be initialized
+		// See https://www.xenomai.org/pipermail/xenomai/2019-January/040203.html
+		pthread_mutex_t dummyMutex;
+		int ret = __wrap_pthread_mutex_init(&dummyMutex, NULL);
+		if(0 == ret) {
+			if(gRTAudioVerbose)
+				printf("Xenomai was inited by someone else\n");
+			// success: cleanup
+			__wrap_pthread_mutex_destroy(&dummyMutex);
+		} else if (EPERM == ret) {
+			xenomaiNeedsInit = true;
+			if(gRTAudioVerbose)
+				printf("Xenomai is going to be inited by us\n");
+		} else {
+			// it could fail for other reasons, but we couldn't do much about it anyhow.
+			if(gRTAudioVerbose)
+				printf("Xenomai is in unknown state\n");
+		}
+		if(xenomaiNeedsInit) {
+			static constexpr int _argc = 2;
+			int argc = _argc;
+			char blankOpt[] = "";
+#ifdef PRINT_RT_LOCK
+			char traceOpt[] = "--trace";
+#else // PRINT_RT_LOCK
+			char traceOpt[] = "";
+#endif // PRINT_RT_LOCK
+			char* const argv[_argc] = { blankOpt, traceOpt };
+			char* const* argvPtrs[_argc] = { &argv[0], &argv[1] };
+			xenomai_init(&argc, argvPtrs);
+		}
 #endif // __COBALT__
+		// this is no longer required, but we keep it for backward
+		// compatibility
+		extern int gXenomaiInited;
+		gXenomaiInited = 1;
+	});
 }
 
 #include <Bela.h>
