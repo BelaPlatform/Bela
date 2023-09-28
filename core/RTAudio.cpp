@@ -51,58 +51,7 @@ extern "C" void disable_runfast();
 
 // ARM interrupt number for PRU event EVTOUT7
 #define PRU_RTAUDIO_IRQ		21
-//#define XENOMAI_CATCH_MSW // get SIGDEBUG when a mode switch takes place
 
-#ifdef XENOMAI_CATCH_MSW
-#include <sys/types.h>
-#include <pthread.h>
-#include <signal.h>
-#include <unistd.h>
-#include <execinfo.h>
-
-static const char *sigdebug_msg[] = {
-	[SIGDEBUG_UNDEFINED] = "latency: received SIGXCPU for unknown reason",
-	[SIGDEBUG_MIGRATE_SIGNAL] = "received signal",
-	[SIGDEBUG_MIGRATE_SYSCALL] = "invoked syscall",
-	[SIGDEBUG_MIGRATE_FAULT] = "triggered fault",
-	[SIGDEBUG_MIGRATE_PRIOINV] = "affected by priority inversion",
-	[SIGDEBUG_NOMLOCK] = "Xenomai: process memory not locked "
-	"(missing mlockall?)",
-	[SIGDEBUG_WATCHDOG] = "Xenomai: watchdog triggered "
-	"(period too short?)",
-};
-
-void sigdebug_handler(int sig, siginfo_t *si, void *context)
-{
-	const char fmt[] = "Mode switch (reason: %s). Backtrace:\n";
-	unsigned int cause = sigdebug_reason(si);
-	static char buffer[256];
-	static void *bt[200];
-	unsigned int n;
-
-	if (cause > SIGDEBUG_WATCHDOG)
-		cause = SIGDEBUG_UNDEFINED;
-
-	switch(cause) {
-	case SIGDEBUG_UNDEFINED:
-	case SIGDEBUG_NOMLOCK:
-	case SIGDEBUG_WATCHDOG:
-		/* These errors are lethal, something went really wrong. */
-		n = snprintf(buffer, sizeof(buffer), "%s\n", sigdebug_msg[cause]);
-		write(STDERR_FILENO, buffer, n);
-		exit(EXIT_FAILURE);
-	}
-
-	/* Retrieve the current backtrace, and decode it to stdout. */
-	n = snprintf(buffer, sizeof(buffer), fmt, sigdebug_msg[cause]);
-	n = write(STDERR_FILENO, buffer, n);
-	n = backtrace(bt, sizeof(bt)/sizeof(bt[0]));
-	backtrace_symbols_fd(bt, n, STDERR_FILENO);
-
-	//signal(sig, SIG_DFL);
-	//kill(getpid(), sig);
-}
-#endif // XENOMAI_CATCH_MSW
 using namespace std;
 using namespace BelaHwComponent;
 
@@ -412,13 +361,7 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 #endif // __COBALT__
 	Bela_initRtBackend();
-#ifdef XENOMAI_CATCH_MSW
-	struct sigaction sa;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = sigdebug_handler;
-	sa.sa_flags = SA_SIGINFO;
-	sigaction(SIGDEBUG, &sa, NULL);
-#endif // XENOMAI_CATCH_MSW
+	turnIntoRtThread();
 
 	// reset this, in case it has been set before
 	gShouldStop = 0;
@@ -790,6 +733,8 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 void audioLoop(void *)
 {
 #ifdef XENOMAI_CATCH_MSW
+	// TODO: this has to be enabled manually alongside the
+	// CATCH_MSW in RtWrappers.cpp when using __COBALT__
 	pthread_setmode_np(0, PTHREAD_WARNSW, NULL);
 #endif // XENOMAI_CATCH_MSW
 	if(gRTAudioVerbose)
