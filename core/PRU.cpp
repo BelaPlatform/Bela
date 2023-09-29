@@ -22,6 +22,7 @@
 #include "../include/PruArmCommon.h"
 #include "../include/board_detect.h"
 #include "../include/Mcasp.h"
+#include "../include/bela_hw_settings.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -191,7 +192,6 @@ const unsigned int belaMiniLedRed = 89;
 const unsigned int belaMiniRevCAdcPin = 65;
 const unsigned int belaRevCLedRed = 81;
 const unsigned int belaRevCLedBlue = 79;
-const unsigned int userLed3GpioPin = 46;
 const unsigned int underrunLedDuration = 20000;
 const unsigned int saltSwitch1Gpio = 60; // P9_12
 
@@ -320,7 +320,8 @@ int PRU::prepareGPIO(int include_led)
 		} else {
 			// Using BeagleBone's USR3 LED
 			// Turn off system function for LED3 so it can be reused by PRU
-			led_set_trigger(3, "none");
+			led_set_trigger(kUserLedNumber, "none");
+			led_enabled = true;
 		}
 		led_enabled = true;
 	}
@@ -364,10 +365,10 @@ void PRU::cleanupGPIO()
 			//using on-board LED
 			gpio_unexport(belaRevCLedBlue);
 		} else {
-			// Set LED back to default eMMC status
+			// Set LED back to default status
 			// TODO: make it go back to its actual value before this program,
 			// rather than the system default
-			led_set_trigger(3, "mmc1");
+			led_set_trigger(kUserLedNumber, kUserLedDefaultTrigger);
 		}
 	}
 	gpio_enabled = false;
@@ -675,7 +676,7 @@ void PRU::initialisePruCommon(const McaspRegisters& mcaspRegisters)
 		} else if(Bela_hwContains(belaHw, BelaCapeRevC)) {
 			pin = belaRevCLedBlue;
 		} else {
-			pin = userLed3GpioPin;
+			pin = kUserLedGpioPin;
 		}
 		uint32_t base = Gpio::getBankAddress(pin / 32);
 		uint32_t mask = 1 << (pin % 32);
