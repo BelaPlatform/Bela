@@ -392,7 +392,32 @@ CORE_ASM_SRCS := $(wildcard core/*.S)
 CORE_ASM_OBJS := $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.o)))
 ALL_DEPS += $(addprefix build/core/,$(notdir $(CORE_ASM_SRCS:.S=.d)))
 
-CORE_CORE_OBJS := build/core/RTAudio.o build/core/PRU.o build/core/RTAudioCommandLine.o build/core/I2c_Codec.o build/core/I2c_MultiTLVCodec.o build/core/I2c_MultiI2sCodec.o build/core/I2c_MultiTdmCodec.o build/core/Spi_Codec.o build/core/Es9080_Codec.o build/core/Tlv320_Es9080_Codec.o build/core/math_runfast.o build/core/GPIOcontrol.o build/core/PruBinary.o build/core/board_detect.o build/core/DataFifo.o build/core/BelaContextFifo.o build/core/BelaContextSplitter.o build/core/MiscUtilities.o build/core/Mmap.o build/core/Mcasp.o build/core/PruManager.o build/core/FormatConvert.o build/core/RtWrappers.o
+CORE_CORE_OBJS := \
+build/core/BelaContextFifo.o \
+build/core/BelaContextSplitter.o \
+build/core/DataFifo.o \
+build/core/Es9080_Codec.o \
+build/core/FormatConvert.o \
+build/core/GPIOcontrol.o \
+build/core/I2c_Codec.o \
+build/core/I2c_MultiI2sCodec.o \
+build/core/I2c_MultiTLVCodec.o \
+build/core/I2c_MultiTdmCodec.o \
+build/core/Mcasp.o \
+build/core/MiscUtilities.o \
+build/core/Mmap.o \
+build/core/PRU.o \
+build/core/PruBinary.o \
+build/core/PruManager.o \
+build/core/RTAudio.o \
+build/core/RTAudioCommandLine.o \
+build/core/RtWrappers.o \
+build/core/Spi_Codec.o \
+build/core/Tlv320_Es9080_Codec.o \
+build/core/board_detect.o \
+build/core/math_runfast.o \
+# this line intentionally left blank (it's not)
+
 EXTRA_CORE_OBJS := $(filter-out $(CORE_CORE_OBJS), $(CORE_OBJS)) $(filter-out $(CORE_CORE_OBJS),$(CORE_ASM_OBJS))
 # Objects for a system-supplied default main() file, if the user
 # only wants to provide the render functions.
