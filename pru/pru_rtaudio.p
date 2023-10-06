@@ -1,6 +1,8 @@
 .origin 0
 .entrypoint START
 
+// #define USE_MCASP // enable this to actually use audio
+
 #include "../include/PruArmCommon.h"
 
 #define DBOX_CAPE	// Define this to use new cape hardware
@@ -942,6 +944,7 @@ ADC_INIT_DONE:
      ADC_WRITE r2, r2
 SPI_INIT_DONE:	
 
+#ifdef USE_MCASP
     // enable MCASP interface clock in PRCM
     MOV r2, CLOCK_MCASP_VALUE
     MOV r3, CLOCK_BASE + CLOCK_MCASP0
@@ -1016,6 +1019,7 @@ MCASP_REG_WRITE_EXT MCASP_XBUF, 0x00		// Write to the transmit buffer to prevent
 
 MCASP_REG_SET_BIT_AND_POLL MCASP_RGBLCTL, (1 << 4)	// Set RFRST
 MCASP_REG_SET_BIT_AND_POLL MCASP_XGBLCTL, (1 << 12)	// Set XFRST
+#endif // USE_MCASP
 
 // Initialisation
     LBBO reg_frame_total, reg_comm_addr, COMM_BUFFER_MCASP_FRAMES, 4  // Total frame count (SPI; 0.5x-2x for McASP)
@@ -1063,7 +1067,8 @@ SPI_INIT_BUFFER_DONE:
 */
 // Here we are out of sync by one TDM slot since the 0 word transmitted above will have occupied
 // the first output slot. Send one more word before jumping into the loop.
-MCASP_DAC_WAIT_BEFORE_LOOP:	
+#ifdef USE_MCASP
+MCASP_DAC_WAIT_BEFORE_LOOP:
      LBBO r2, reg_mcasp_addr, MCASP_XSTAT, 4
      QBBC MCASP_DAC_WAIT_BEFORE_LOOP, r2, MCASP_XSTAT_XDATA_BIT
 
@@ -1077,7 +1082,7 @@ MCASP_ADC_WAIT_BEFORE_LOOP:
      QBBC MCASP_ADC_WAIT_BEFORE_LOOP, r2, MCASP_RSTAT_RDATA_BIT
 
      MCASP_REG_READ_EXT MCASP_RBUF, r2
-	
+#endif // USE_MCASP
 WRITE_ONE_BUFFER:
 
      // Write a single buffer of DAC samples and read a buffer of ADC samples
@@ -1144,12 +1149,13 @@ MCASP_DAC_HIGH_WORD:
      // sends exactly two SPI channels.
      // Wait for McASP XSTAT[XDATA] to set indicating we can write more data
 MCASP_WAIT_XSTAT:
+#ifdef USE_MCASP
      LBBO r2, reg_mcasp_addr, MCASP_XSTAT, 4
      QBBS START, r2, MCASP_XSTAT_XUNDRN_BIT // if underrun occurred, reset the PRU
      QBBC MCASP_WAIT_XSTAT, r2, MCASP_XSTAT_XDATA_BIT
 
      MCASP_REG_WRITE_EXT MCASP_XBUF, r7
-	
+#endif // USE_MCASP
      // Same idea with ADC: even iterations, load the sample into the low word, odd
      // iterations, load the sample into the high word and store
      // QBBS MCASP_ADC_HIGH_WORD, r1, 1
@@ -1160,6 +1166,7 @@ MCASP_ADC_LOW_WORD:
 	
      // Now wait for a received word to become available from the audio ADC
 MCASP_WAIT_RSTAT_LOW:
+#ifdef USE_MCASP
      LBBO r2, reg_mcasp_addr, MCASP_RSTAT, 4
      QBBC MCASP_WAIT_RSTAT_LOW, r2, MCASP_RSTAT_RDATA_BIT
 
@@ -1167,11 +1174,13 @@ MCASP_WAIT_RSTAT_LOW:
      MCASP_REG_READ_EXT MCASP_RBUF, r3
      MOV r2, 0xFFFF
      AND reg_mcasp_adc_data, r3, r2
+#endif // USE_MCASP
      QBA MCASP_ADC_DONE
 
 MCASP_ADC_HIGH_WORD:	
      // Wait for a received word to become available from the audio ADC
 MCASP_WAIT_RSTAT_HIGH:
+#ifdef USE_MCASP
      LBBO r2, reg_mcasp_addr, MCASP_RSTAT, 4
      QBBC MCASP_WAIT_RSTAT_HIGH, r2, MCASP_RSTAT_RDATA_BIT
 
@@ -1179,11 +1188,20 @@ MCASP_WAIT_RSTAT_HIGH:
      MCASP_REG_READ_EXT MCASP_RBUF, r3
      LSL r3, r3, 16
      OR reg_mcasp_adc_data, reg_mcasp_adc_data, r3
+#endif // USE_MCASP
 
      // Now store the result and increment the pointer
      SBCO reg_mcasp_adc_data, C_MCASP_MEM, reg_mcasp_adc_current, 4
      ADD reg_mcasp_adc_current, reg_mcasp_adc_current, 4
-MCASP_ADC_DONE:	
+MCASP_ADC_DONE:
+#ifdef USE_MCASP
+#else // USE_MCASP
+// wait here. Tune the sleep to set the sampling rate
+MOV r2, 2000
+WAIT_NOMCASP:
+SUB r2, r2, 1
+QBNE WAIT_NOMCASP, r2, 0
+#endif // USE_MCASP
      QBBC SPI_SKIP_WRITE, reg_flags, FLAG_BIT_USE_SPI
 
 QBBS SPI_SKIP_DAC_WRITE_0, reg_flags, FLAG_BIT_SHOULD_SKIP_DAC

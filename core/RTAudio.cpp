@@ -11,7 +11,7 @@
  */
 
 //TODO: Improve error detection for Spi_Codec (i.e. evaluate return value)
-
+#define RUN_WITHOUT_CAPE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -386,7 +386,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 	}
 
 	// Initialise the rendering environment: sample rates, frame counts, numbers of channels
+#ifdef RUN_WITHOUT_CAPE
+	BelaHw actualHw = BelaHw_Bela;
+#else // RUN_WITHOUT_CAPE
 	BelaHw actualHw = Bela_detectHw(BelaHwDetectMode_Cache);
+#endif // RUN_WITHOUT_CAPE
 	if(gRTAudioVerbose)
 		printf("Detected hardware: %s\n", getBelaHwName(actualHw).c_str());
 	// Check for user-selected hardware, either on the command line ...
@@ -611,7 +615,11 @@ int Bela_initAudio(BelaInitSettings *settings, void *userData)
 
 	if(gAudioCodec->initCodec()) {
 		cerr << "Error: unable to initialise audio codec\n";
+#ifdef RUN_WITHOUT_CAPE
+                // all good
+#else // RUN_WITHOUT_CAPE
 		return 1;
+#endif // RUN_WITHOUT_CAPE
 	}
 
 	// TODO: add more argument checks
@@ -762,7 +770,11 @@ static int startAudioInline(){
 	// power up and initialize audio codec
 	if(gAudioCodec->startAudio(1)) {
 		fprintf(stderr, "Error: unable to start audio codec\n");
+#ifdef RUN_WITHOUT_CAPE
+                // all good
+#else // RUN_WITHOUT_CAPE
 		return -1;
+#endif // RUN_WITHOUT_CAPE
 	}
 
 	McaspConfig mcaspConfig = gAudioCodec->getMcaspConfig();
