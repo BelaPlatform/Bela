@@ -19,6 +19,7 @@ class Gui
 		std::vector<DataBuffer> _buffers;
 		std::unique_ptr<WSServer> ws_server;
 		std::set<const WSServerDetails*> wsConnections;
+		std::set<const WSServerDetails*> wsActiveConnections;
 
 		void ws_connect(const std::string& address, const WSServerDetails* id);
 		void ws_disconnect(const std::string& address, const WSServerDetails* id);
@@ -56,6 +57,7 @@ class Gui
 		void cleanup();
 
 		size_t numConnections(){ return wsConnections.size(); };
+		size_t numActiveConnections(){ return wsActiveConnections.size(); };
 
 		// BUFFERS
 		/**
