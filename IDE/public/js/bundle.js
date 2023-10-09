@@ -5111,8 +5111,20 @@ var ToolbarView = function (_View) {
 			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('[data-toolbar-scope]').on('click', function () {
-			window.open('scope');
+		var openUrl = function openUrl(url, evt) {
+			// set a target name so that the same tab is used if it was
+			// previously opened
+			var target = location.host + "/url";
+			if (evt) {
+				// if a modifier is pressed, then just "open" it and the
+				// browser will figure out what the modifier means (e.g.: new
+				// tab vs new window)
+				if (evt.altKey || evt.ctrlKey || evt.shiftKey || evt.metaKey) target = undefined;
+			}
+			window.open(url, target);
+		};
+		$('[data-toolbar-scope]').on('click', function (evt) {
+			openUrl('scope', evt);
 		});
 
 		$('[data-toolbar-gui]').mouseover(function () {
@@ -5121,9 +5133,8 @@ var ToolbarView = function (_View) {
 			$('[data-toolbar-controltext2]').html('');
 		});
 
-		$('[data-toolbar-gui]').on('click', function () {
-			// window.open('gui');
-			window.open('gui');
+		$('[data-toolbar-gui]').on('click', function (evt) {
+			openUrl('gui', evt);
 		});
 		return _this;
 	}
