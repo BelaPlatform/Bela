@@ -241,12 +241,12 @@ static int initBatch(BelaInitSettings *settings, InternalBelaContext* ctx, const
 {
 	gBatchParams = codecMode;
 	ctx->audioFrames = settings->periodSize;
-	ctx->audioInChannels = 12;
-	ctx->audioOutChannels = 12;
+	ctx->audioInChannels = 2;
+	ctx->audioOutChannels = 2;
 	ctx->digitalChannels = 16;
 	ctx->analogInChannels = settings->numAnalogInChannels;
 	ctx->analogOutChannels = settings->numAnalogOutChannels;
-	ctx->analogFrames = ctx->audioFrames / 2;
+	ctx->analogFrames = settings->uniformSampleRate ? ctx->audioFrames : ctx->audioFrames / 2;
 	ctx->digitalFrames = ctx->audioFrames;
 	ctx->audioSampleRate = 44100;
 	ctx->digitalSampleRate = ctx->audioSampleRate;
