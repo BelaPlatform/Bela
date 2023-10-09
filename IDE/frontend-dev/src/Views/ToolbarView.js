@@ -80,9 +80,22 @@ class ToolbarView extends View {
 				$('[data-toolbar-controltext2]').html('');
 			});
 
+		let openUrl = (url, evt) => {
+			// set a target name so that the same tab is used if it was
+			// previously opened
+			let target = location.host + "/url";
+			if(evt) {
+				// if a modifier is pressed, then just "open" it and the
+				// browser will figure out what the modifier means (e.g.: new
+				// tab vs new window)
+				if(evt.altKey || evt.ctrlKey || evt.shiftKey || evt.metaKey)
+					target = undefined;
+			}
+			window.open(url, target);
+		};
     $('[data-toolbar-scope]')
-      .on('click', function(){
-        window.open('scope');
+      .on('click', function(evt){
+        openUrl('scope', evt)
       });
 
     $('[data-toolbar-gui]')
@@ -94,9 +107,8 @@ class ToolbarView extends View {
 			});
 
     $('[data-toolbar-gui]')
-      .on('click', function(){
-        // window.open('gui');
-        window.open('gui');
+      .on('click', function(evt){
+        openUrl('gui', evt);
       });
 	}
 
