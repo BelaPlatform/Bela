@@ -823,6 +823,16 @@ function setModifiedTimeInterval(mtime) {
 	}, 5000);
 }
 
+function reopenFile() {
+	// Not sure how to get the name of the current file without passing it in
+	// So we actually reopen the project instead.
+	var data = {
+		func: 'openProject',
+		currentProject: models.project.getKey('currentProject'),
+		timestamp: performance.now()
+	};
+	socket.emit('project-event', data);
+}
 // current file changed
 var fileChangedPopupVisible = false;
 function fileChangedPopup(fileName) {
@@ -833,13 +843,7 @@ function fileChangedPopup(fileName) {
 	popup.twoButtons(strings, function (e) {
 		fileChangedPopupVisible = false;
 		e.preventDefault();
-		var data = {
-			func: 'openProject',
-			currentProject: models.project.getKey('currentProject'),
-			timestamp: performance.now()
-		};
-		socket.emit('project-event', data);
-		consoleView.emit('openNotification', data);
+		reopenFile();
 	}, function () {
 		fileChangedPopupVisible = false;
 		editorView.emit('upload', editorView.getData());
@@ -883,7 +887,8 @@ function exitReadonlyPopup() {
 	// on Submit:
 	function (e) {
 		setReadOnlyStatus(false);
-		window.location.reload();
+		e.preventDefault();
+		reopenFile();
 	},
 	// on Cancel:
 	function () {
