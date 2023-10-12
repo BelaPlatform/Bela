@@ -763,7 +763,7 @@ function fileOpenedOrChanged(data, changed) {
 	// and we arenot ignoring it
 	if (project === models.project.getKey('currentProject') && fileName === models.project.getKey('fileName') && clientId != socket.id && !models.project.getKey('openElsewhere') && !models.project.getKey('readOnly')) {
 		if (changed) fileChangedPopup(fileName);else enterReadonlyPopup(fileName);
-	}
+	} else setReadOnlyStatus(false);
 }
 
 // run-on-boot

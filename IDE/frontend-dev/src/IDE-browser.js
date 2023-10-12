@@ -354,7 +354,8 @@ function fileOpenedOrChanged(data, changed) {
 			fileChangedPopup(fileName);
 		else
 			enterReadonlyPopup(fileName);
-	}
+	} else
+		setReadOnlyStatus(false);
 }
 
 // run-on-boot
