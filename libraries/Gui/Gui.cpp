@@ -77,8 +77,9 @@ void Gui::ws_connect(const std::string& address, const WSServerDetails* id)
  */
 void Gui::ws_disconnect(const std::string& address, const WSServerDetails* id)
 {
-	if(wsConnections.count(id))
-		wsConnections.erase(id);
+	for(auto& wsc : {&wsConnections, &wsActiveConnections})
+		if(wsc->count(id))
+			wsc->erase(id);
 }
 
 /*
