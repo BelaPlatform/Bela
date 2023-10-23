@@ -161,6 +161,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 		else
 			return Bela_detectHw(BelaHwDetectMode_Scan);
 	}
+	bool hasBelaRevC = detectBelaRevC();
 
 	BelaHw hw = BelaHw_NoHw;
 	if(is_belamini())
@@ -195,7 +196,7 @@ BelaHw Bela_detectHw(const BelaHwDetectMode mode)
 				hw = BelaHw_CtagBeast;
 		}
 		else {
-			if(detectBelaRevC())
+			if(hasBelaRevC)
 				hw = BelaHw_BelaRevC;
 			else if(hasTlv32)
 				hw = BelaHw_Bela;
