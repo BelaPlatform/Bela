@@ -21,8 +21,12 @@ const int RESET_PIN = 81; // GPIO2(17) P8.34
 
 Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, bool isVerbose /* = false */)
 {
-
 	_verbose = isVerbose;
+	// if BelaRevC is used in combination with CTAG, there is a pin conflict
+	// between MOSI and the McASP data line used by BelaRevC.
+	// We check here whether the pin's function can be set at runtime so
+	// that in that case we can set it before using it in writeRegister().
+	_shouldPinmux = (PinmuxUtils::get(mosiPin).size() > 0);
 	// Open SPI devices
 	if ((_fd_master = open(spidev_gpio_cs0, O_RDWR)) < 0)
 		_verbose && fprintf(stderr, "Failed to open spidev device for master codec.\n");
@@ -54,11 +58,6 @@ Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, b
 	// now we can detect if there is a slave codec
 	_isBeast = slaveIsDetected();
 	_dacVolumethreeEighthsDbs.resize(_isBeast ? 16 : 8);
-	// if BelaRevC is used in combination with CTAG, there is a pin conflict
-	// between MOSI and the McASP data line used by BelaRevC.
-	// We check here whether the pin's function can be set at runtime so
-	// that in that case we can set it before using it in writeRegister().
-	_shouldPinmux = (PinmuxUtils::get(mosiPin).size() > 0);
 }
 
 Spi_Codec::~Spi_Codec(){
