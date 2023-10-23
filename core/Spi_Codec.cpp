@@ -27,6 +27,19 @@ Spi_Codec::Spi_Codec(const char* spidev_gpio_cs0, const char* spidev_gpio_cs1, b
 	// We check here whether the pin's function can be set at runtime so
 	// that in that case we can set it before using it in writeRegister().
 	_shouldPinmux = (PinmuxUtils::get(mosiPin).size() > 0);
+	// export SPI pins
+	// P8.14
+	for(auto pin : {
+			26, // P8.14 MISO
+			27, // P8.17 CS0
+			10, // P8.31 CS1
+			11, // P8.32 CLK
+			9, // P8.33 MOSI
+		})
+	{
+		gpio_export(pin);
+		gpio_set_dir(pin, 26 == pin ? INPUT_PIN : OUTPUT_PIN);
+	}
 	// Open SPI devices
 	if ((_fd_master = open(spidev_gpio_cs0, O_RDWR)) < 0)
 		_verbose && fprintf(stderr, "Failed to open spidev device for master codec.\n");
