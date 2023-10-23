@@ -321,6 +321,7 @@ void Bela_initRtBackend()
 #endif // PRINT_RT_LOCK
 			char* const argv[_argc] = { blankOpt, traceOpt };
 			char* const* argvPtrs[_argc] = { &argv[0], &argv[1] };
+			optind = 1;
 			xenomai_init(&argc, argvPtrs);
 		}
 #endif // __COBALT__
