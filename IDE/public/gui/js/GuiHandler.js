@@ -1,6 +1,7 @@
 import * as utils from './utils.js'
 import GuiCreator from './GuiCreator.js'
 
+let qs = new URLSearchParams(window.location.search);
 export default class GuiHandler {
 	constructor(control, parentId='gui') {
 		this.control = control;
@@ -69,9 +70,8 @@ export default class GuiHandler {
 			let projName = null;
 			history.replaceState(null, null, ' ');
 
-			let queryString = new URLSearchParams(window.location.search);
-			if(queryString.has('project'))
-				projName = queryString.get('project');
+			if(qs.has('project'))
+				projName = qs.get('project');
 
 			projName = projName || that.control.projectName;
 
@@ -178,15 +178,16 @@ export default class GuiHandler {
 		that.control.target.resolve = null;
 	}
 
-	loadSketch(projectName, parentSection, dom, sketchName='sketch', resources=null, defaultSource = "/gui/p5-sketches/sketch.js") {
+	loadSketch(projectName, parentSection, dom, sketchName='sketch.js', resources=null, defaultSource = "/gui/p5-sketches/sketch.js") {
 		resources = (resources == null || Array.isArray(resources)) ? resources : [resources];
 		let resourcePromises = [];
 		if(resources != null)
 			resources.forEach(r => resourcePromises.push(this.control.loadResource("/projects/"+projectName+"/"+r)) );
 
-		console.log("Loading "+projectName+" ...");
-
-		let sketchSource = "/projects/"+projectName+"/"+sketchName+".js";
+		if(qs.has("sketchName"))
+			sketchName = qs.get("sketchName");
+		let sketchSource = "/projects/"+projectName+"/"+sketchName;
+		console.log("Loading project: "+projectName+", file: " + sketchSource);
 
 		let sketch = utils.loadScript(sketchSource, parentSection, dom);
 
