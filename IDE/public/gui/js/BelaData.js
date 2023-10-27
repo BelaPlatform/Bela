@@ -1,7 +1,7 @@
 import BelaWebSocket from './BelaWebSocket.js'
 
 export default class BelaData extends BelaWebSocket {
-	constructor(port=5555, address='gui_data', ip=location.hostname) {
+	constructor(port, address, ip) {
 		super(port, address, ip)
 
         this.buffers = new Array();
