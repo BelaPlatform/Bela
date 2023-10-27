@@ -1,18 +1,5 @@
 import * as utils from './utils.js'
 import GuiCreator from './GuiCreator.js'
-function setup() {
-	console.log("P5 setup");
-}
-
-function draw() {
-	console.log("DRAW")
-	background(0); // Set the background to black
-	y = y - 1;
-	if (y < 0) {
-		y = height;
-	}
-	line(0, y, width, y);
-}
 
 export default class GuiHandler {
 	constructor(control, parentId='gui') {
