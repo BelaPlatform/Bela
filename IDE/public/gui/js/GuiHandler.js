@@ -178,16 +178,23 @@ export default class GuiHandler {
 		that.control.target.resolve = null;
 	}
 
-	loadSketch(projectName, parentSection, dom, sketchName='sketch.js', resources=null, defaultSource = "/gui/p5-sketches/sketch.js") {
+	loadSketch(projectName, parentSection, dom, resources=null, defaultSource = "/gui/p5-sketches/sketch.js") {
 		resources = (resources == null || Array.isArray(resources)) ? resources : [resources];
 		let resourcePromises = [];
+		let projectPath;
+		let sketchSource;
+		if("/" === projectName[0])
+		{
+			// an absolute path: take it at face value
+			sketchSource = projectName;
+		} else {
+			sketchSource = "/projects/" + projectName + "/sketch.js";
+		}
+		let projectDir = sketchSource.split("/").slice(0, -1).join("/");
 		if(resources != null)
-			resources.forEach(r => resourcePromises.push(this.control.loadResource("/projects/"+projectName+"/"+r)) );
+			resources.forEach(r => resourcePromises.push(this.control.loadResource(projectDir + "/" + r)) );
 
-		if(qs.has("sketchName"))
-			sketchName = qs.get("sketchName");
-		let sketchSource = "/projects/"+projectName+"/"+sketchName;
-		console.log("Loading project: "+projectName+", file: " + sketchSource);
+		console.log("Loading 'project': " + projectName + ", file: " + sketchSource, ", from:" + projectDir);
 
 		let sketch = utils.loadScript(sketchSource, parentSection, dom);
 
