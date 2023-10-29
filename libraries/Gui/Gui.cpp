@@ -46,7 +46,7 @@ int Gui::setup(unsigned int port, std::string address)
 	return 0;
 }
 
-int Gui::setup(std::string projectName, unsigned int port, std::string address)
+int Gui::setup(const std::string& projectName, unsigned int port, const std::string& address)
 {
 	_projectName = std::wstring(projectName.begin(), projectName.end());
 	setup(port, address);
