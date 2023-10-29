@@ -48,12 +48,17 @@ class Gui
 		/**
 		 * Sets the web socket communication between server and client.
 		 * Two different web socket connections will be configured, one for control data and the other one for raw binary data. 
-		 * @param port Port on which to stablish the the web socket communication.
-		 * @param address Base address used to stalish the web socket communication.
-		 * @param projectName Project name to be sent to via the web-socket to the client.
+		 * @param projectName Project name to be sent to via the
+		 * websocket to the client. If it starts with a "/" it is
+		 * interpreted as a full path to the .js file to be loaded and
+		 * it has to be a valid path on the webserver. Otherwise, it is
+		 * used to build the path assuming the js file to be called
+		 * sketch.js and located in the project folder.
+		 * @param port Port on which to establish the web socket communication.
+		 * @param address Base address used to establish the web socket communication.
 		 * @returns 0 if web sockets have been configured.
 		 **/
-		int setup(std::string projectName, unsigned int port = 5555, std::string address = "gui");
+		int setup(const std::string& projectName, unsigned int port = 5555, const std::string& address = "gui");
 		void cleanup();
 
 		size_t numConnections(){ return wsConnections.size(); };
