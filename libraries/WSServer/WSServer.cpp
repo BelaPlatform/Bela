@@ -110,7 +110,7 @@ void WSServer::addAddress(const std::string& _address,
 	// See possible pitfalls here
 	// https://floating.io/2017/07/lambda-shared_ptr-memory-leak/
 	std::weak_ptr<WSServerDataHandler> wkHdl(handler);
-	address_book[_address].thread->create(std::string("WSClient_")+_address,
+	address_book[_address].thread->create(std::string("WSClient_")+_address+std::to_string(port),
 		[this,wkHdl](void* buf, int size){
 			auto handler = wkHdl.lock();
 			if(handler)
