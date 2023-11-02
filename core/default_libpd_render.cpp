@@ -11,6 +11,7 @@
 #define BELA_LIBPD_TRILL
 #define BELA_LIBPD_GUI
 #define BELA_LIBPD_SERIAL
+#define BELA_LIBPD_SYSTEM_THREADED
 
 #ifdef BELA_LIBPD_DISABLE_SCOPE
 #undef BELA_LIBPD_SCOPE
@@ -27,6 +28,9 @@
 #ifdef BELA_LIBPD_DISABLE_SERIAL
 #undef BELA_LIBPD_SERIAL
 #endif // BELA_LIBPD_DISABLE_SERIAL
+#ifdef BELA_LIBPD_DISABLE_SYSTEM_THREADD
+#undef BELA_LIBPD_SYSTEM_THREADED
+#endif // BELA_LIBPD_DISABLE_SYSTEM_THREADD
 
 #define PD_THREADED_IO
 #include <libraries/libpd/libpd.h>
@@ -573,10 +577,23 @@ void setTrillPrintError()
 }
 #endif // BELA_LIBPD_TRILL
 
+static void systemDoSystem(const char* cmd)
+{
+	rt_printf("system(\"%s\");\n", cmd);
+	system(cmd);
+}
+#ifdef BELA_LIBPD_SYSTEM_THREADED
+#include <AuxTaskNonRT.h>
+static AuxTaskNonRT systemTask("systemTask", [](void* buf, int size) {
+	systemDoSystem((const char*)buf);
+});
+
+#endif // BELA_LIBPD_SYSTEM_THREADED
+
 static void belaSystem(const char* first, int argc, t_atom* argv)
 {
-	printf("belaSystem %s, %d\n", first, argc);
-	std::string cmd = first ? first : "";
+	static std::string cmd; // make it static to try and avoid repeated allocations
+	cmd = first ? first : "";
 	for(size_t n = 0; n < argc; ++n)
 	{
 		if(0 != n || first)
@@ -590,12 +607,15 @@ static void belaSystem(const char* first, int argc, t_atom* argv)
 		} else if(libpd_is_symbol(argv + n)) {
 			cmd += libpd_get_symbol(argv + n);
 		} else {
-			fprintf(stderr, "Error: argument %d of bela_system is not a float or symbol. Command so far: '%s', this will be discarded\n", n, cmd.c_str());
+			rt_fprintf(stderr, "Error: argument %d of bela_system is not a float or symbol. Command so far: '%s', this will be discarded\n", n, cmd.c_str());
 			return;
 		}
 	}
-	printf("system(\"%s\");\n", cmd.c_str());
-	system(cmd.c_str());
+#ifdef BELA_LIBPD_SYSTEM_THREADED
+	systemTask.schedule(cmd.c_str(), cmd.size());
+#else // BELA_LIBPD_SYSTEM_THREADED
+	systemDoSystem(cmd.c_str());
+#endif // // BELA_LIBPD_SYSTEM_THREADED
 }
 
 void Bela_listHook(const char *source, int argc, t_atom *argv)
@@ -642,7 +662,6 @@ void Bela_listHook(const char *source, int argc, t_atom *argv)
 #endif // BELA_LIBPD_GUI
 	if(0 == strcmp(source, "bela_system"))
 	{
-		printf("list: %d\n", argc);
 		belaSystem(nullptr, argc, argv);
 		return;
 	}
@@ -723,8 +742,8 @@ void Bela_messageHook(const char *source, const char *symbol, int argc, t_atom *
 		return;
 	}
 	if(strcmp(source, "bela_system") == 0){
-		printf("msg: %s %d\n", symbol, argc);
 		belaSystem(symbol, argc, argv);
+		return;
 	}
 	if(strcmp(source, "bela_control") == 0){
 		if(strcmp("stop", symbol) == 0){
