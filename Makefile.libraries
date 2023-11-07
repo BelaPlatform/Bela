@@ -13,7 +13,8 @@ AT?=@
 BELA_USE_DEFINE:=BELA_USE_RTDM
 DEBIAN_VERSION :=stretch
 BASE_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-DEFAULT_COMMON_FLAGS ?= -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math -fPIC
+DEFAULT_COMMON_FLAGS ?= -O3 -g -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize -ffast-math
+DEFAULT_COMMON_FLAGS += -fPIC # ensure it's always set
 LIBRARY_CXXFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 LIBRARY_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
