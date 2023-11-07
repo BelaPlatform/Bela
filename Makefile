@@ -143,7 +143,7 @@ endif # heavy-unzip-archive
 ifeq ($(filter $(SUPERCOLLIDER_FILE),$(FILE_LIST)),$(SUPERCOLLIDER_FILE))
 PROJECT_TYPE=sc
 SHOULD_BUILD=false
-RUN_PREREQUISITES+=lib/libbela.so lib/libbelaextra.so
+RUN_PREREQUISITES+=lib
 else
 ifeq ($(filter $(LIBPD_FILE),$(FILE_LIST)),$(LIBPD_FILE))
 ifeq (,$(strip $(filter %.c,$(FILE_LIST)) $(filter %.cc,$(FILE_LIST)) $(filter %.cpp,$(FILE_LIST))))
@@ -551,13 +551,12 @@ ifeq ($(SHOULD_BUILD),false)
 $(OUTPUT_FILE):
 else
 
-.EXPORT_ALL_VARIABLES:
-
 PROJECT_LIBRARIES_MAKEFILE := $(PROJECT_DIR)/build/Makefile.inc
 
 # the actual dependency is on the .d files, but as we have no rule for making
 # those .d files (and we don't want one, see above) and they are made as a side
 # effect of the .o, we depend here on the .o instead of the .d
+.EXPORT_ALL_VARIABLES:
 $(PROJECT_LIBRARIES_MAKEFILE): $(PROJECT_OBJS_NO_P) $(DEFAULT_PD_OBJS)
 	$(AT)./resources/tools/detectlibraries.sh --path $(PROJECT_DIR)/build $(LIBPD_DETECT_LIBRARES_FLAGS)
 
@@ -787,6 +786,7 @@ LIB_EXTRA_SO = libbelaextra.so
 LIB_EXTRA_A = libbelaextra.a
 # some library objects are required by libbelaextra.
 LIB_EXTRA_OBJS = $(EXTRA_CORE_OBJS) build/core/GPIOcontrol.o libraries/Scope/build/Scope.o libraries/WSServer/build/WSServer.o libraries/UdpClient/build/UdpClient.o libraries/UdpServer/build/UdpServer.o libraries/Midi/build/Midi.o libraries/Midi/build/Midi_c.o
+.EXPORT_ALL_VARIABLES:
 libraries/%.o: # how to build those objects needed by libbelaextra
 	$(AT) $(MAKE) -f Makefile.linkbela --no-print-directory $@
 
