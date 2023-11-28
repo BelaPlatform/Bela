@@ -1019,7 +1019,7 @@ int I2c_Codec::writeRegister(unsigned int reg, unsigned int value)
 {
 	char buf[2] = { static_cast<char>(reg & 0xFF), static_cast<char>(value & 0xFF) };
 
-	if(write(i2C_file, buf, 2) != 2)
+	if(writeBytes(buf, 2) != 2)
 	{
 		verbose && fprintf(stderr, "Failed to write register %d on I2c codec\n", reg);
 		return 1;
