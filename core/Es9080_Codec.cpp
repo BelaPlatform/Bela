@@ -684,7 +684,7 @@ int Es9080_Codec::writeRegister(unsigned int reg, unsigned int value)
 		return 1;
 
 	char buf[2] = { static_cast<char>(reg & 0xFF), static_cast<char>(value & 0xFF) };
-	if(write(i2C_file, buf, sizeof(buf)) != sizeof(buf))
+	if(writeBytes(buf, sizeof(buf)) != sizeof(buf))
 	{
 		verbose && fprintf(stderr, "Failed to write register %d on Es9080 codec\n", reg);
 		return 1;
@@ -699,7 +699,7 @@ int Es9080_Codec::readRegister(unsigned char reg)
 		return 1;
 
 	// first, write the address of the register you want to read
-	int ret = write(i2C_file, &reg, sizeof(reg));
+	int ret = writeBytes(&reg, sizeof(reg));
 	if(sizeof(reg) != ret)
 	{
 		verbose && fprintf(stderr, "Failed to write register %d on Es9080 codec\n", reg);
@@ -707,7 +707,7 @@ int Es9080_Codec::readRegister(unsigned char reg)
 	}
 	// then read the content of the address you specified
 	unsigned char value;
-	ret = read(i2C_file, &value, sizeof(value));
+	ret = readBytes(&value, sizeof(value));
 	if(sizeof(value) != ret)
 	{
 		verbose && fprintf(stderr, "Failed to read register %d on Es9080 codec\n", reg);
