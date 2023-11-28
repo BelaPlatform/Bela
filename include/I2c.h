@@ -79,12 +79,12 @@ inline int I2c::closeI2C()
 
 inline ssize_t I2c::readBytes(void *buf, size_t count)
 {
-	return read(i2C_file, buf, count);
+	return ::read(i2C_file, buf, count);
 }
 
 inline ssize_t I2c::writeBytes(const void *buf, size_t count)
 {
-	return write(i2C_file, buf, count);
+	return ::write(i2C_file, buf, count);
 }
 
 inline I2c::~I2c(){
