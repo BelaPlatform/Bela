@@ -27,6 +27,7 @@ protected:
 	int i2C_bus;
 	int i2C_address;
 	int i2C_file;
+	ssize_t doIoctl(int address, i2c_char_t* data, int length, unsigned int flags);
 public:
 	ssize_t readBytes(void* buf, size_t count);
 	ssize_t writeBytes(const void* buf, size_t count);
@@ -34,7 +35,8 @@ public:
 	I2c(I2c&&) = delete;
 	int initI2C_RW(int bus, int address, int file);
 	int closeI2C();
-
+	ssize_t readRaw(int address, i2c_char_t *data, int length, bool repeated = false);
+	ssize_t writeRaw(int address, const i2c_char_t *data, int length, bool repeated = false);
 	virtual ~I2c();
 };
 
@@ -85,6 +87,38 @@ inline ssize_t I2c::readBytes(void *buf, size_t count)
 inline ssize_t I2c::writeBytes(const void *buf, size_t count)
 {
 	return ::write(i2C_file, buf, count);
+}
+
+inline ssize_t I2c::doIoctl(int address, i2c_char_t* data, int length, unsigned int flags)
+{
+	struct i2c_rdwr_ioctl_data packets;
+	struct i2c_msg message;
+	message.addr = address;
+	message.flags = flags;
+	message.len = length;
+	message.buf = data;
+	packets.msgs = &message;
+	packets.nmsgs = 1;
+	int ret;
+	if((ret = ioctl(i2C_file, I2C_RDWR, &packets)) < 0)
+	{
+		fprintf(stderr, "Failed to do ioctl for %d bytes on I2C at addr %d with flags %d: %d\n", length, address, flags, ret);
+		return -1;
+	} else
+		fprintf(stderr, "Successful to do ioctl for %d bytes on I2C at addr %d with flags %d: %d\n", length, address, flags, ret);
+	return  length;
+
+}
+inline ssize_t I2c::readRaw(int address, i2c_char_t *data, int length, bool repeated)
+{
+	unsigned int flags = I2C_M_RD | (repeated ? I2C_M_NOSTART : 0);
+	return doIoctl(address, data, length, flags);
+}
+
+inline ssize_t I2c::writeRaw(int address, const i2c_char_t *data, int length, bool repeated)
+{
+	unsigned int flags = (repeated ? I2C_M_NOSTART : 0);
+	return doIoctl(address, (i2c_char_t*)data, length, flags);
 }
 
 inline I2c::~I2c(){
