@@ -702,7 +702,7 @@ int Es9080_Codec::readRegister(unsigned char reg)
 	int ret = writeBytes(&reg, sizeof(reg));
 	if(sizeof(reg) != ret)
 	{
-		verbose && fprintf(stderr, "Failed to write register %d on Es9080 codec\n", reg);
+		verbose && fprintf(stderr, "Failed to read register %d on Es9080 codec\n", reg);
 		return -1;
 	}
 	// then read the content of the address you specified
