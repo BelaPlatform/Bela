@@ -333,6 +333,7 @@ void Bela_initRtBackend()
 }
 
 #include <Bela.h>
+#include <stdarg.h>
 #define var_num_to_va_list(stream, fmt, dest) \
 { \
 	ssize_t ret; \
