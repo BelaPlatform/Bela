@@ -279,6 +279,7 @@ bool turnIntoRtThread()
 #endif
 }
 
+int gXenomaiInited = 0;
 void Bela_initRtBackend()
 {
 	static std::once_flag flag;
@@ -327,7 +328,6 @@ void Bela_initRtBackend()
 #endif // __COBALT__
 		// this is no longer required, but we keep it for backward
 		// compatibility
-		extern int gXenomaiInited;
 		gXenomaiInited = 1;
 	});
 }

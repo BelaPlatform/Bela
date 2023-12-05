@@ -31,8 +31,6 @@
 #include "../include/BelaContextFifo.h"
 #include "../include/MiscUtilities.h"
 
-int gXenomaiInited = 0;
-
 #include <pthread.h>
 
 #include "../include/RtWrappers.h"
